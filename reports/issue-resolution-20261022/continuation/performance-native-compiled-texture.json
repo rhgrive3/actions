@@ -1,0 +1,256 @@
+{
+  "status": "diagnostic-two-contexts-compiled-texture-only",
+  "hardwareClaim": false,
+  "improvementClaimAllowed": false,
+  "historicalABPerformed": false,
+  "source": {
+    "sourceSha": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+    "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+    "revision": "e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5"
+  },
+  "diagnostic": {
+    "kind": "same-native-two-context-compiled-texture-observation",
+    "compiledTextureCollectorSha256": "d8c23203f5a25cf1ae5947cdc8bca28ff6e10070d1cfe8a6d54688ece9506a8e",
+    "actualDrawCollectorSha256": "79a1a4da76209bfe8b11a049788ce64d7776315acf7e787e1fd7f4989e9bfbb9",
+    "harnessSha256": "1791a6ad803291154b530559d19ac1a00eee1a0634473aa6334a381242eba71d",
+    "doesNotReplaceCalibration": true,
+    "exactPixelGateRetained": true,
+    "inputCollectorFunctionSha256": "9aa4913e086e4443e029ddd3b81a6ec823cc09ae98f75e4e046f67d09481af8e",
+    "bootstrapRandomFixtureUnchanged": true,
+    "gpuColorTargetsRequested": true,
+    "observations": [
+      "Character material uniforms",
+      "environment/post uniforms",
+      "actual scene draw order and matrices",
+      "geometry ranges",
+      "GL shader source hashes",
+      "exact geometry/index/instance/bone source bytes and GTAO/sampler/image SHA256",
+      "optional actual-frame CPU profile"
+    ]
+  },
+  "rawEvidence": ".browser-evidence/continuation-performance/native-compiled-texture-diagnostic/whole-game-calibrate.json",
+  "rawEvidenceSha256": "f57a3048021a4ef67489791edd31a7a82e648c57705e99739b9758ac03614dd6",
+  "pixelSha256": [
+    "9fa1b417e6d97bcf0379c5946781ef7d2bd947c813c77ceaf42e26a0bc17b2c4",
+    "9fa1b417e6d97bcf0379c5946781ef7d2bd947c813c77ceaf42e26a0bc17b2c4"
+  ],
+  "pixelDifferenceReproduced": false,
+  "strictFourTrialCalibrationStillRejected": true,
+  "actualDrawTranscriptsByteEqual": true,
+  "actualDrawTranscriptSha256": "b145505b96429450e36a2794e6894f45d0135b747c0f10527f9df07894c4bfef",
+  "sameTranscriptAsEarlierPixelFailingPair": true,
+  "gpuTextureContentsObserved": 4,
+  "gpuTextureContentsEqual": true,
+  "textures": [
+    {
+      "uniforms": [
+        "tLens"
+      ],
+      "sourceEqual": true,
+      "source": {
+        "kind": "gpu-only-or-unavailable"
+      },
+      "gpu": {
+        "unobserved": "Missing GPU allocation or unsupported texture dimension"
+      },
+      "gpuReceiptEqual": true,
+      "gpuBytesObserved": false,
+      "gpuBytesEqual": null
+    },
+    {
+      "uniforms": [
+        "dfgLUT"
+      ],
+      "sourceEqual": true,
+      "source": {
+        "kind": "typed-array",
+        "arrayType": "Uint16Array",
+        "byteLength": 1024,
+        "sha256": "b41ba8e2bd29fa007dfbf034d4d58b853f378062183847846b1f6d228f2c7e79"
+      },
+      "gpu": {
+        "format": 33319,
+        "type": 5131,
+        "arrayType": "Uint16Array",
+        "byteLength": 1024,
+        "sha256": "b41ba8e2bd29fa007dfbf034d4d58b853f378062183847846b1f6d228f2c7e79"
+      },
+      "gpuReceiptEqual": true,
+      "gpuBytesObserved": true,
+      "gpuBytesEqual": true
+    },
+    {
+      "uniforms": [
+        "uMainInkProfiles"
+      ],
+      "sourceEqual": true,
+      "source": {
+        "kind": "typed-array",
+        "arrayType": "Uint8Array",
+        "byteLength": 8192,
+        "sha256": "cb3e8d506162b9f39adfb3eaf9ffc30a82b3cc0228537727d64f9464f2d1a8d0"
+      },
+      "gpu": {
+        "format": 6408,
+        "type": 5121,
+        "arrayType": "Uint8Array",
+        "byteLength": 8192,
+        "sha256": "cb3e8d506162b9f39adfb3eaf9ffc30a82b3cc0228537727d64f9464f2d1a8d0"
+      },
+      "gpuReceiptEqual": true,
+      "gpuBytesObserved": true,
+      "gpuBytesEqual": true
+    },
+    {
+      "uniforms": [
+        "s3Ring"
+      ],
+      "sourceEqual": true,
+      "source": {
+        "kind": "typed-array",
+        "arrayType": "Uint8Array",
+        "byteLength": 32768,
+        "sha256": "0169fc8b7f1400c1c6cbe3250a9c321206c5a5e8c3c9b1d15146c50a6bc65aa8"
+      },
+      "gpu": {
+        "format": 6403,
+        "type": 5121,
+        "arrayType": "Uint8Array",
+        "byteLength": 32768,
+        "sha256": "0169fc8b7f1400c1c6cbe3250a9c321206c5a5e8c3c9b1d15146c50a6bc65aa8"
+      },
+      "gpuReceiptEqual": true,
+      "gpuBytesObserved": true,
+      "gpuBytesEqual": true
+    },
+    {
+      "uniforms": [
+        "s3Splash"
+      ],
+      "sourceEqual": true,
+      "source": {
+        "kind": "typed-array",
+        "arrayType": "Uint8Array",
+        "byteLength": 16384,
+        "sha256": "381ebe0bf48093ea8cdebe831304daa7e88ce3bd672e48d1794ae652e3f442d9"
+      },
+      "gpu": {
+        "format": 6403,
+        "type": 5121,
+        "arrayType": "Uint8Array",
+        "byteLength": 16384,
+        "sha256": "381ebe0bf48093ea8cdebe831304daa7e88ce3bd672e48d1794ae652e3f442d9"
+      },
+      "gpuReceiptEqual": true,
+      "gpuBytesObserved": true,
+      "gpuBytesEqual": true
+    }
+  ],
+  "tLensActualUniforms": [
+    [
+      0
+    ],
+    [
+      0
+    ]
+  ],
+  "tLensSourceGuard": "inkwave-public/src/fx/screenfx.js: if (uLensOn > 0.5), contains all tLens samples.",
+  "gpuTargetDifferences": [
+    {
+      "owners": [
+        "composer/renderTarget1"
+      ],
+      "a": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 1152000,
+          "sha256": "6a78471cf7099226292a041f44fbde328bbdef5d4b3a2549b510f322f7a4660f"
+        }
+      ],
+      "b": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 1152000,
+          "sha256": "3c62efa0a9f33179b937a20314e87449f886735fedbe9c785969a09cf3e279f3"
+        }
+      ]
+    },
+    {
+      "owners": [
+        "composer/renderTarget2"
+      ],
+      "a": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 1152000,
+          "sha256": "23968891d61dfd27c5a302365838c994e27997087d4bff0bc70334da38b9bdb0"
+        }
+      ],
+      "b": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 1152000,
+          "sha256": "e1263e535e254451eb0c0398c6011584b4d03b2a9391d359778129624d5ea923"
+        }
+      ]
+    }
+  ],
+  "cpuInputSectionsEqual": {
+    "buffers": true,
+    "textures": true,
+    "meshStates": false,
+    "lightStates": true,
+    "cameraState": true,
+    "materialStates": true,
+    "shaderSources": true,
+    "gpuColorTargets": false,
+    "limits": true
+  },
+  "unusedCacheDifferences": {
+    "count": 128,
+    "allInkVolumeRoller": true,
+    "changedFields": [
+      "modelView",
+      "normalMatrix"
+    ],
+    "drawnIntersection": []
+  },
+  "allFrameCallsEqual": true,
+  "comparability": [
+    {
+      "ordinal": 0,
+      "variant": "C",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": true,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": true,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    }
+  ],
+  "ownedProcessesAllExited": true,
+  "preflight": "compiled-texture-preflight.json",
+  "limits": [
+    "This two-context pair has exact final RGBA; it does not reverse the earlier strict native four-trial rejection.",
+    "Four allocated hidden textures are exact in a pair whose HDR composer targets differ; tLens allocation is absent and its active GL branch uniform is zero.",
+    "The actual fallback texture contents bound to tLens remain unobserved. Equal missing/unobserved receipts are not GPU-byte equality.",
+    "Other sampled GPU texture contents, actual GPU vertex buffers, shader compiler output/binaries and shadow/depth contents remain unobserved.",
+    "No cause, runtime fix or comparative performance improvement is established."
+  ]
+}

@@ -1,0 +1,331 @@
+{
+  "issue": 1434,
+  "status": "same-native-repeatability-rejected",
+  "nativeSourceSha": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+  "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+  "harnessSha256": "2e918eeb0ba65afe52c0ff701131597024396551dc61ee73145b9559bdf0889f",
+  "rawEvidence": ".browser-evidence/continuation-performance/native-state-diagnostic/whole-game-calibrate.json",
+  "rawEvidenceSha256": "924dc1b9e8cf7705f0ae94835ed6a3fd16ff081867b9de12444ad53c09da7f41",
+  "runtimeChangedForProbe": false,
+  "comparisonValid": false,
+  "improvementClaimAllowed": false,
+  "scenario": {
+    "stage": "tidewater",
+    "kind": "normal",
+    "viewport": [
+      480,
+      300
+    ],
+    "warmup": 30,
+    "samplesPerContext": 6,
+    "actors": 8,
+    "playerControllers": 1,
+    "botBrains": 7,
+    "enabledPwa": true,
+    "audioMusicWorker": true
+  },
+  "comparability": [
+    {
+      "ordinal": 0,
+      "variant": "C",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": true,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": false,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    }
+  ],
+  "stateDifferences": [
+    {
+      "ordinal": 0,
+      "variant": "C",
+      "start": [],
+      "end": []
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "start": [],
+      "end": []
+    }
+  ],
+  "pixelDifferences": [
+    {
+      "x": 270,
+      "yBottom": 128,
+      "channel": 1,
+      "a": 60,
+      "b": 59
+    }
+  ],
+  "trials": [
+    {
+      "ordinal": 0,
+      "variant": "C",
+      "pixelSha256": "9fa1b417e6d97bcf0379c5946781ef7d2bd947c813c77ceaf42e26a0bc17b2c4",
+      "invariants": {
+        "allEightAlive": true,
+        "allControllersUpdated": true,
+        "fixedScale": true,
+        "nonemptyRender": true,
+        "audioOn": true,
+        "stableDrawingBuffer": true,
+        "nonblankImage": true
+      },
+      "errors": [],
+      "programCount": 172,
+      "opaqueDrawItems": 94,
+      "transparentDrawItems": 19,
+      "cpuProfile": {
+        "path": ".browser-evidence/continuation-performance/native-state-diagnostic/trial-0-C.cpuprofile",
+        "sha256": "fa49dfeb4cee18e61b63af6980715d78ea19b0bd212a9b3f2d80b18e21ab7fe6"
+      }
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "pixelSha256": "aa1eb4e0a32fc3e9d230de973e9c257d1427a3b410307dc8c118d04187b68957",
+      "invariants": {
+        "allEightAlive": true,
+        "allControllersUpdated": true,
+        "fixedScale": true,
+        "nonemptyRender": true,
+        "audioOn": true,
+        "stableDrawingBuffer": true,
+        "nonblankImage": true
+      },
+      "errors": [],
+      "programCount": 172,
+      "opaqueDrawItems": 94,
+      "transparentDrawItems": 19,
+      "cpuProfile": {
+        "path": ".browser-evidence/continuation-performance/native-state-diagnostic/trial-1-B.cpuprofile",
+        "sha256": "7edd6d4d9cfcd0d74a2bcddc4869fc9df3f5a4d3e27b3e50baf3c99fcfb6a7a6"
+      }
+    }
+  ],
+  "observedInputs": [
+    "Full double precision world/camera/projection matrices and Character uniforms; no toFixed/rounding in serializer.",
+    "Actual sorted scene mesh draw order, geometry draw ranges and material scalar properties.",
+    "Environment/grade/screen uniforms and diagnostic FNV32 hashes of actual compiled GL shader sources.",
+    "Gameplay/world-pose/GPU bone matrix arrays, RNG endpoint, projectiles, paint ownership and per-frame workload."
+  ],
+  "notYetObserved": [
+    "Complete geometry/index/instance source-buffer bytes.",
+    "GTAO/other sampled texture source bytes and sampler completeness.",
+    "Actual GPU-only render-target/PMREM/shadow contents and stage-by-stage intermediate output."
+  ],
+  "cpuFirstTrial": {
+    "profileSha256": "fa49dfeb4cee18e61b63af6980715d78ea19b0bd212a9b3f2d80b18e21ab7fe6",
+    "totalProfileMs": 11128.444,
+    "frameDescendantMs": 199.791,
+    "topSelf": [
+      {
+        "name": "Zc.render",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 4228,
+        "sampleMs": 20.075
+      },
+      {
+        "name": "it",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 4204,
+        "sampleMs": 17.563
+      },
+      {
+        "name": "_drawTank",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/src/ui/hud.js",
+        "line": 16,
+        "sampleMs": 13.482
+      },
+      {
+        "name": "_t",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 4204,
+        "sampleMs": 9.38
+      },
+      {
+        "name": "fk",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/src/game/motion/source-bank.js",
+        "line": 1,
+        "sampleMs": 8.032
+      },
+      {
+        "name": "updateMatrixWorld",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 5,
+        "sampleMs": 7.766
+      },
+      {
+        "name": "updateWorldMatrix",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 5,
+        "sampleMs": 7.509
+      },
+      {
+        "name": "bindVertexArray",
+        "url": "",
+        "line": -1,
+        "sampleMs": 6.331
+      },
+      {
+        "name": "vd",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 4228,
+        "sampleMs": 5.786
+      },
+      {
+        "name": "setValue",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 4126,
+        "sampleMs": 5.287
+      },
+      {
+        "name": "multiplyMatrices",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 5,
+        "sampleMs": 4.541
+      },
+      {
+        "name": "update",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 5,
+        "sampleMs": 4.486
+      },
+      {
+        "name": "raycast",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/src/game/physics.js",
+        "line": 0,
+        "sampleMs": 4.274
+      },
+      {
+        "name": "update",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/src/game/actor.js",
+        "line": 1,
+        "sampleMs": 3.96
+      },
+      {
+        "name": "A",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 4204,
+        "sampleMs": 3.577
+      },
+      {
+        "name": "d",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 3831,
+        "sampleMs": 3.253
+      },
+      {
+        "name": "J.r.update",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/patches/splatoon3/runtime/sub-ready.mjs",
+        "line": 0,
+        "sampleMs": 3.038
+      },
+      {
+        "name": "s",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 4228,
+        "sampleMs": 2.481
+      },
+      {
+        "name": "set y",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 5,
+        "sampleMs": 2.413
+      },
+      {
+        "name": "xd",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 4228,
+        "sampleMs": 2.273
+      },
+      {
+        "name": "l",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 4080,
+        "sampleMs": 2.237
+      },
+      {
+        "name": "ripple",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/src/world/paint.js",
+        "line": 199,
+        "sampleMs": 2.189
+      },
+      {
+        "name": "xl",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 4228,
+        "sampleMs": 2.187
+      },
+      {
+        "name": "Q.n._buildPose",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/patches/splatoon3/runtime/bomb-motion.mjs",
+        "line": 0,
+        "sampleMs": 1.931
+      },
+      {
+        "name": "cn",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/patches/splatoon3/runtime/weapons-fidelity.mjs",
+        "line": 1,
+        "sampleMs": 1.896
+      },
+      {
+        "name": "m._applyPose",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/patches/splatoon3/runtime/special-motion.mjs",
+        "line": 19,
+        "sampleMs": 1.78
+      },
+      {
+        "name": "upload",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 4126,
+        "sampleMs": 1.771
+      },
+      {
+        "name": "normalize",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 5,
+        "sampleMs": 1.512
+      },
+      {
+        "name": "E",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/patches/splatoon3/runtime/special-motion.mjs",
+        "line": 19,
+        "sampleMs": 1.369
+      },
+      {
+        "name": "v",
+        "url": "http://127.0.0.1:37165/C/_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "line": 4204,
+        "sampleMs": 1.285
+      }
+    ],
+    "limits": [
+      "Six software-rendered frames; sampled function wall time can include native GPU waits. Not physical-device CPU/GPU or FPS.",
+      "Endpoint observation/hash/capture outside Game._frame excluded from these descendant rows."
+    ]
+  },
+  "limits": [
+    "Two same-native diagnostic contexts, not four-trial strict calibration or eight-trial ABBA/BAAB.",
+    "No production runtime/module substitution. PWA, real audio/music and exact pixel gate remain enabled.",
+    "Parallel non-browser source test may contend for CPU. No comparative timing, hardware FPS or improvement inference.",
+    "The sky scalar-cache defect is real at theme changes but not demonstrated as the cause of this steady-theme mismatch.",
+    "No unmeasured quality feature is enabled (#1565 G0 remains pending).",
+    "First-probe standard JSON preserves ordinary finite doubles without explicit rounding but collapses signed zero/nonfinite values; the prepared next collector tags them explicitly."
+  ],
+  "subsequentEvidence": {
+    "exactInput": "performance-native-input.json",
+    "actualDraws": "performance-native-actual-draw.json",
+    "correction": "Medium AO is disabled; initial GTAO-noise hypothesis rejected. notYetObserved records this earlier checkpoint, not the current complete investigation state."
+  }
+}

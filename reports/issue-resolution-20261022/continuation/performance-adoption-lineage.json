@@ -1,0 +1,63 @@
+{
+  "status": "source-lineage-review-only",
+  "issue": 1434,
+  "adoptionPullRequest": "https://github.com/rhgrive3/actions/pull/1427",
+  "historicalPair": {
+    "baseline": "f11d7e2d8908f61dcb4ef6b42d0a20aa9dcb993a",
+    "candidate": "3acf39f76bc9124ed4c7f153a6c9d60ed89c6e84"
+  },
+  "reviewedSource": "55c643dfb8a9da75fa6e383e549d9c81721822d1",
+  "features": {
+    "rootHairSpring": {
+      "file": "patches/local-quality/root-hair-spring-adapter.mjs",
+      "historicalCandidateSha256": "1603003244432df3d756b82665e795dad43129b73941ed447d9597ac1d5e8dc0",
+      "reviewedSourceSha256": "1603003244432df3d756b82665e795dad43129b73941ed447d9597ac1d5e8dc0",
+      "exactFileEqual": true,
+      "productionImportAndCallPresent": true
+    },
+    "zeroEulerCoefficients": {
+      "historicalFile": "patches/local-quality/pose-rotation-adapter.mjs",
+      "currentFile": "inkwave-public/src/game/motion/source-bank.js",
+      "currentFileSha256": "8e9fe1c5da17e61b320362000b98eeead3ed1bb4a3f9f6f6388542d3f5471e86",
+      "integratedInSource": true
+    },
+    "nativeTextureMembershipIndex": {
+      "file": "patches/native-stages/runtime/native-load.mjs",
+      "currentIndexPresent": true
+    },
+    "composer": {
+      "file": "patches/local-quality/composer-format-adapter.mjs",
+      "candidateToCurrentDiff": "diff --git a/patches/local-quality/composer-format-adapter.mjs b/patches/local-quality/composer-format-adapter.mjs\nindex 1b25da5a..bb583e28 100644\n--- a/patches/local-quality/composer-format-adapter.mjs\n+++ b/patches/local-quality/composer-format-adapter.mjs\n@@ -107,7 +107,7 @@ export function selectComposerTargetFormat(THREE, renderer, {\n       format: THREE.RGBFormat,\n       type: THREE.UnsignedInt101111Type,\n       samples: 0,\n-      depthBuffer: true,\n+      depthBuffer: false,\n     });\n     renderer.initRenderTarget(probe);\n     renderer.setRenderTarget(probe);\n"
+    }
+  },
+  "priorAdoptionFeatureFilesPresent": {
+    "patches/local-quality/intermediate-tick-budget.mjs": {
+      "baseline": "df894f2bd6b7c4492cc503f9f046cfc8a8f4573db6ef036cb2957c2fd42383a7",
+      "candidate": "df894f2bd6b7c4492cc503f9f046cfc8a8f4573db6ef036cb2957c2fd42383a7",
+      "reviewedSource": "df894f2bd6b7c4492cc503f9f046cfc8a8f4573db6ef036cb2957c2fd42383a7"
+    },
+    "patches/local-quality/kid-shadow-proxy.mjs": {
+      "baseline": "3fa459a904a8712e975796fda54dcf2f55887e45ae5ff0a8b7fb222c9fb9be65",
+      "candidate": "3fa459a904a8712e975796fda54dcf2f55887e45ae5ff0a8b7fb222c9fb9be65",
+      "reviewedSource": "3fa459a904a8712e975796fda54dcf2f55887e45ae5ff0a8b7fb222c9fb9be65"
+    },
+    "patches/splatoon3/runtime/hit-spawn-motion.mjs": {
+      "baseline": "2bd55461ae57fc6f2a7d6b2ee37d8f7ee3f7847896b83b3659e426ea0e7d227c",
+      "candidate": "2bd55461ae57fc6f2a7d6b2ee37d8f7ee3f7847896b83b3659e426ea0e7d227c",
+      "reviewedSource": "2bd55461ae57fc6f2a7d6b2ee37d8f7ee3f7847896b83b3659e426ea0e7d227c"
+    },
+    "patches/splatoon3/runtime/special-motion.mjs": {
+      "baseline": "e1696e3a4a8df331980f75c41560871d07fea106e9fd20282cdc64f7013ad20f",
+      "candidate": "e1696e3a4a8df331980f75c41560871d07fea106e9fd20282cdc64f7013ad20f",
+      "reviewedSource": "e7b7bc4609b1ec424a3ec583ca4d47c680320bbe55b72c59404e7369b90005e0"
+    }
+  },
+  "historicalABPerformed": false,
+  "improvementClaimAllowed": false,
+  "limits": [
+    "Both historical variants already include #1427 features; their A/B cannot isolate the total #1427 adoption effect.",
+    "No graph ancestry claim from shallow Git history; entries are pinned source-blob evidence.",
+    "Fixed desktop single-final-tick normal shooter fixture omits touch shadow proxies, intermediate catch-up ticks, special activation/first-use compilation, and native loading.",
+    "Historical effects would not establish current-main whole-game improvements or physical device FPS."
+  ]
+}

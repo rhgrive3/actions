@@ -1,0 +1,483 @@
+{
+  "issue": 1434,
+  "status": "two-context-byte-observation-complete-not-calibration",
+  "sourceSha": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+  "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+  "runtimeSubstitution": false,
+  "rngFixtureChanged": false,
+  "bootstrapRngEqual": true,
+  "rawEvidence": ".browser-evidence/continuation-performance/native-input-diagnostic/whole-game-calibrate.json",
+  "rawEvidenceSha256": "610e4ccebd45d09735df43923ee8ca9474f7d90391f5809015ac1a453ca3f39f",
+  "harnessSha256": "4e2cf9af367382a89aeeddd790121d640f99f8be50019f0b637cc57c852592fd",
+  "collectorFunctionSha256": "9aa4913e086e4443e029ddd3b81a6ec823cc09ae98f75e4e046f67d09481af8e",
+  "collectorPreflight": {
+    "path": ".browser-evidence/continuation-performance/input-collector-preflight.json",
+    "sha256": "7c649cee8d180a156597aff7183f3349e3dbd1292ce0c604fd0cd4005c6745e3",
+    "status": "passed",
+    "targets": 5,
+    "faces": 10
+  },
+  "sourceRegressions": 5,
+  "inputCounts": {
+    "buffers": 3031,
+    "textures": 48,
+    "meshStates": 488,
+    "lightStates": 2,
+    "materialStates": 175,
+    "shaderSources": 172,
+    "gpuColorTargets": 15,
+    "limits": 3
+  },
+  "inputEquality": {
+    "buffers": true,
+    "textures": true,
+    "materialStates": true,
+    "shaderSources": true,
+    "lightStates": true,
+    "cameraState": true
+  },
+  "activeMeshStateEqual": true,
+  "inactiveOldMatrixDifferences": {
+    "meshes": [
+      "Scene:0/FX:12/InkVolume:shooter:0:0:12",
+      "Scene:0/FX:12/InkVolume:shooter:0:0:8",
+      "Scene:0/FX:12/InkVolume:shooter:0:0:fringe:13",
+      "Scene:0/FX:12/InkVolume:shooter:0:0:fringe:9",
+      "Scene:0/FX:12/InkVolume:shooter:0:1:10",
+      "Scene:0/FX:12/InkVolume:shooter:0:1:14",
+      "Scene:0/FX:12/InkVolume:shooter:0:1:fringe:11",
+      "Scene:0/FX:12/InkVolume:shooter:0:1:fringe:15"
+    ],
+    "scalarDifferences": 168,
+    "note": "Only stale modelView/normalMatrix caches of eight meshes absent from the final draw list differ."
+  },
+  "gpuColorTargets": [
+    {
+      "owners": [
+        "environment/_envRT"
+      ],
+      "width": 768,
+      "height": 1024,
+      "sameBytes": true,
+      "a": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 6291456,
+          "sha256": "97a0f78a52f424145828088c1864a2878af588ff69966dbd63e747111934d3f0"
+        }
+      ],
+      "b": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 6291456,
+          "sha256": "97a0f78a52f424145828088c1864a2878af588ff69966dbd63e747111934d3f0"
+        }
+      ]
+    },
+    {
+      "owners": [
+        "environment/_cloudRT"
+      ],
+      "width": 2048,
+      "height": 640,
+      "sameBytes": true,
+      "a": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 10485760,
+          "sha256": "d4a1a8d26015b35d86882a659997df0a9388dcb9729dbd27f1977a177d07d24c"
+        }
+      ],
+      "b": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 10485760,
+          "sha256": "d4a1a8d26015b35d86882a659997df0a9388dcb9729dbd27f1977a177d07d24c"
+        }
+      ]
+    },
+    {
+      "owners": [
+        "composer/renderTarget1"
+      ],
+      "width": 480,
+      "height": 300,
+      "sameBytes": false,
+      "a": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 1152000,
+          "sha256": "6a78471cf7099226292a041f44fbde328bbdef5d4b3a2549b510f322f7a4660f"
+        }
+      ],
+      "b": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 1152000,
+          "sha256": "635554ba354f9acddc4d92db5fd7869e65b0f117cd43b25ebed0a9202024eaff"
+        }
+      ]
+    },
+    {
+      "owners": [
+        "composer/renderTarget2"
+      ],
+      "width": 480,
+      "height": 300,
+      "sameBytes": false,
+      "a": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 1152000,
+          "sha256": "23968891d61dfd27c5a302365838c994e27997087d4bff0bc70334da38b9bdb0"
+        }
+      ],
+      "b": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 1152000,
+          "sha256": "951c1594dcbdcd1e03624a38593b66de3451e8d3f4ee5337cadabd8e6700ebb0"
+        }
+      ]
+    },
+    {
+      "owners": [
+        "composer/1/h/renderTargetsHorizontal/0"
+      ],
+      "width": 240,
+      "height": 150,
+      "sameBytes": true,
+      "a": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 288000,
+          "sha256": "0e89e5d755de20a0a96681c385ffcd1c64e8ae3b7d56d1c7c0c351a81cc46513"
+        }
+      ],
+      "b": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 288000,
+          "sha256": "0e89e5d755de20a0a96681c385ffcd1c64e8ae3b7d56d1c7c0c351a81cc46513"
+        }
+      ]
+    },
+    {
+      "owners": [
+        "composer/1/h/renderTargetsHorizontal/1"
+      ],
+      "width": 120,
+      "height": 75,
+      "sameBytes": true,
+      "a": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 72000,
+          "sha256": "b39d3344399aefec07e72c3d9d2a67ae3e2c2826352b698e022e893695e67203"
+        }
+      ],
+      "b": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 72000,
+          "sha256": "b39d3344399aefec07e72c3d9d2a67ae3e2c2826352b698e022e893695e67203"
+        }
+      ]
+    },
+    {
+      "owners": [
+        "composer/1/h/renderTargetsHorizontal/2"
+      ],
+      "width": 60,
+      "height": 38,
+      "sameBytes": true,
+      "a": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 18240,
+          "sha256": "b47d25dd31664c373733cefb5b5fff992c0e8b4532e7b1c5858e83ea34805c7b"
+        }
+      ],
+      "b": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 18240,
+          "sha256": "b47d25dd31664c373733cefb5b5fff992c0e8b4532e7b1c5858e83ea34805c7b"
+        }
+      ]
+    },
+    {
+      "owners": [
+        "composer/1/h/renderTargetsHorizontal/3"
+      ],
+      "width": 30,
+      "height": 19,
+      "sameBytes": true,
+      "a": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 4560,
+          "sha256": "535754f7b19e42717738950eaed2b8d0d411cb567b0a2e24a2bded470f3d2238"
+        }
+      ],
+      "b": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 4560,
+          "sha256": "535754f7b19e42717738950eaed2b8d0d411cb567b0a2e24a2bded470f3d2238"
+        }
+      ]
+    },
+    {
+      "owners": [
+        "composer/1/h/renderTargetsHorizontal/4"
+      ],
+      "width": 15,
+      "height": 10,
+      "sameBytes": true,
+      "a": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 1200,
+          "sha256": "4a62dcc4a748c9ef0581807ce709d50d243fccd833e8697e41fdf52ee5d9c41f"
+        }
+      ],
+      "b": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 1200,
+          "sha256": "4a62dcc4a748c9ef0581807ce709d50d243fccd833e8697e41fdf52ee5d9c41f"
+        }
+      ]
+    },
+    {
+      "owners": [
+        "composer/1/h/renderTargetsVertical/0"
+      ],
+      "width": 240,
+      "height": 150,
+      "sameBytes": true,
+      "a": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 288000,
+          "sha256": "c2695f76c4f7e3b1a48cf45d7fd4b9d21a9dede4c4a864d8fc152a773d24fc98"
+        }
+      ],
+      "b": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 288000,
+          "sha256": "c2695f76c4f7e3b1a48cf45d7fd4b9d21a9dede4c4a864d8fc152a773d24fc98"
+        }
+      ]
+    },
+    {
+      "owners": [
+        "composer/1/h/renderTargetsVertical/1"
+      ],
+      "width": 120,
+      "height": 75,
+      "sameBytes": true,
+      "a": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 72000,
+          "sha256": "b39d3344399aefec07e72c3d9d2a67ae3e2c2826352b698e022e893695e67203"
+        }
+      ],
+      "b": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 72000,
+          "sha256": "b39d3344399aefec07e72c3d9d2a67ae3e2c2826352b698e022e893695e67203"
+        }
+      ]
+    },
+    {
+      "owners": [
+        "composer/1/h/renderTargetsVertical/2"
+      ],
+      "width": 60,
+      "height": 38,
+      "sameBytes": true,
+      "a": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 18240,
+          "sha256": "b47d25dd31664c373733cefb5b5fff992c0e8b4532e7b1c5858e83ea34805c7b"
+        }
+      ],
+      "b": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 18240,
+          "sha256": "b47d25dd31664c373733cefb5b5fff992c0e8b4532e7b1c5858e83ea34805c7b"
+        }
+      ]
+    },
+    {
+      "owners": [
+        "composer/1/h/renderTargetsVertical/3"
+      ],
+      "width": 30,
+      "height": 19,
+      "sameBytes": true,
+      "a": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 4560,
+          "sha256": "535754f7b19e42717738950eaed2b8d0d411cb567b0a2e24a2bded470f3d2238"
+        }
+      ],
+      "b": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 4560,
+          "sha256": "535754f7b19e42717738950eaed2b8d0d411cb567b0a2e24a2bded470f3d2238"
+        }
+      ]
+    },
+    {
+      "owners": [
+        "composer/1/h/renderTargetsVertical/4"
+      ],
+      "width": 15,
+      "height": 10,
+      "sameBytes": true,
+      "a": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 1200,
+          "sha256": "4a62dcc4a748c9ef0581807ce709d50d243fccd833e8697e41fdf52ee5d9c41f"
+        }
+      ],
+      "b": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 1200,
+          "sha256": "4a62dcc4a748c9ef0581807ce709d50d243fccd833e8697e41fdf52ee5d9c41f"
+        }
+      ]
+    },
+    {
+      "owners": [
+        "composer/1/h/renderTargetBright"
+      ],
+      "width": 240,
+      "height": 150,
+      "sameBytes": true,
+      "a": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 288000,
+          "sha256": "0e89e5d755de20a0a96681c385ffcd1c64e8ae3b7d56d1c7c0c351a81cc46513"
+        }
+      ],
+      "b": [
+        {
+          "face": 0,
+          "format": 6408,
+          "type": 5131,
+          "byteLength": 288000,
+          "sha256": "0e89e5d755de20a0a96681c385ffcd1c64e8ae3b7d56d1c7c0c351a81cc46513"
+        }
+      ]
+    }
+  ],
+  "pixelHashes": [
+    "9fa1b417e6d97bcf0379c5946781ef7d2bd947c813c77ceaf42e26a0bc17b2c4",
+    "9fa1b417e6d97bcf0379c5946781ef7d2bd947c813c77ceaf42e26a0bc17b2c4"
+  ],
+  "strictFinalPixelEqual": true,
+  "comparability": [
+    {
+      "ordinal": 0,
+      "variant": "C",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": true,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": true,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    }
+  ],
+  "backgroundComparable": true,
+  "drawCallsEqual": true,
+  "comparisonValid": false,
+  "improvementClaimAllowed": false,
+  "limits": [
+    "Two contexts do not establish the required four-trial self-calibration or eight-trial actual-candidate ABBA/BAAB.",
+    "Medium active composer has no GTAO; its procedural-noise hypothesis is rejected for this condition.",
+    "Only two HDR composer GPU color targets differ. All 13 other sampled targets (PMREM/cloud/Bloom) match exactly. Intermediate target differences did not cross the final 8-bit quantization boundary in this run.",
+    "Depth/shadow-map content and current GPU buffer contents remain unobserved; CPU source bytes/sampler equality does not prove driver input-history equality.",
+    "Standard numeric JSON loss is addressed in this collector: signed zero and nonfinite numbers are tagged; typed arrays/images/shader sources use SHA-256.",
+    "No hardware, timing improvement or device-FPS claim."
+  ]
+}

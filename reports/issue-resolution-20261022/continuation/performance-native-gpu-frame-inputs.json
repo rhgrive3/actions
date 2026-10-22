@@ -1,0 +1,346 @@
+{
+  "status": "diagnostic-two-contexts-gpu-frame-inputs-only",
+  "hardwareClaim": false,
+  "improvementClaimAllowed": false,
+  "historicalABPerformed": false,
+  "strictFourTrialCalibrationStillRejected": true,
+  "source": {
+    "sourceSha": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+    "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+    "revision": "e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5"
+  },
+  "diagnostic": {
+    "kind": "same-native-two-context-gpu-frame-input-observation",
+    "actualDrawCollectorSha256": "79a1a4da76209bfe8b11a049788ce64d7776315acf7e787e1fd7f4989e9bfbb9",
+    "trackerFunctionSha256": "651f23d39d4a38dec598762f58a89e20f0b633232bf6e2d239a0abc9150661dd",
+    "gpuCollectorFunctionSha256": "a061191af873f99d0d688d596e97aa783f5d8ee6cfe67800255f5d1bd35f3bf8",
+    "harnessSha256": "b17c0b76dd59e6cc7d1a3d1a2c3de0ea3d2a94131d3c583f43478b04544ef14f",
+    "doesNotReplaceCalibration": true,
+    "exactPixelGateRetained": true,
+    "inputCollectorFunctionSha256": "9aa4913e086e4443e029ddd3b81a6ec823cc09ae98f75e4e046f67d09481af8e",
+    "bootstrapRandomFixtureUnchanged": true,
+    "gpuColorTargetsRequested": true,
+    "observations": [
+      "Character material uniforms",
+      "environment/post uniforms",
+      "actual scene draw order and matrices",
+      "geometry ranges",
+      "GL shader source hashes",
+      "exact geometry/index/instance/bone source bytes and GTAO/sampler/image SHA256",
+      "optional actual-frame CPU profile"
+    ]
+  },
+  "browser": "151.0.7922.34",
+  "rawEvidence": ".browser-evidence/continuation-performance/native-gpu-frame-input-diagnostic/whole-game-calibrate.json",
+  "rawEvidenceSha256": "e7d049239da83fed05253eb288c90814d656478da5c777ce9ed2a8f485f96b8a",
+  "error": null,
+  "cleanupError": null,
+  "ownership": {
+    "initial": [
+      {
+        "pid": 57444,
+        "ppid": 57409,
+        "state": "S",
+        "startTicks": "2269999",
+        "role": "chrome"
+      },
+      {
+        "pid": 57448,
+        "ppid": 57444,
+        "state": "S",
+        "startTicks": "2270003",
+        "role": "zygote"
+      },
+      {
+        "pid": 57451,
+        "ppid": 57444,
+        "state": "S",
+        "startTicks": "2270003",
+        "role": "zygote"
+      },
+      {
+        "pid": 57473,
+        "ppid": 57448,
+        "state": "S",
+        "startTicks": "2270006",
+        "role": "gpu-process"
+      },
+      {
+        "pid": 57482,
+        "ppid": 57444,
+        "state": "S",
+        "startTicks": "2270007",
+        "role": "utility"
+      },
+      {
+        "pid": 57489,
+        "ppid": 57451,
+        "state": "S",
+        "startTicks": "2270009",
+        "role": "utility"
+      }
+    ],
+    "final": [
+      {
+        "pid": 57444,
+        "ppid": 57409,
+        "state": "S",
+        "startTicks": "2269999",
+        "role": "chrome"
+      },
+      {
+        "pid": 57448,
+        "ppid": 57444,
+        "state": "S",
+        "startTicks": "2270003",
+        "role": "zygote"
+      },
+      {
+        "pid": 57451,
+        "ppid": 57444,
+        "state": "S",
+        "startTicks": "2270003",
+        "role": "zygote"
+      },
+      {
+        "pid": 57473,
+        "ppid": 57448,
+        "state": "S",
+        "startTicks": "2270006",
+        "role": "gpu-process"
+      },
+      {
+        "pid": 57482,
+        "ppid": 57444,
+        "state": "S",
+        "startTicks": "2270007",
+        "role": "utility"
+      },
+      {
+        "pid": 57489,
+        "ppid": 57451,
+        "state": "S",
+        "startTicks": "2270009",
+        "role": "utility"
+      },
+      {
+        "pid": 57662,
+        "ppid": 57444,
+        "state": "S",
+        "startTicks": "2275832",
+        "role": "utility"
+      },
+      {
+        "pid": 57743,
+        "ppid": 57451,
+        "state": "Z",
+        "startTicks": "2282598",
+        "role": "chrome"
+      }
+    ],
+    "allTerminated": true
+  },
+  "pixelSha256": [
+    "4a2ec73ec20382236acc09f1ea42b8fb3f58b4704fd43cd26986b7fc829e8eec",
+    "4a2ec73ec20382236acc09f1ea42b8fb3f58b4704fd43cd26986b7fc829e8eec"
+  ],
+  "actualDrawTranscriptsByteEqual": true,
+  "gpuInputReceipts": [
+    {
+      "path": "trial-0-C.gpu-inputs.json",
+      "sha256": "021e3a398ce8a9b32396436955eca6cffa3b550a93571bbffff2342c02517f15",
+      "draws": 208,
+      "buffers": 392,
+      "textures": 45,
+      "capturedBytes": 174726880,
+      "limits": [
+        "Captures actual enabled VAO attribute and indexed GPU buffer bytes, allocated tracked sampler mip/face/layer color values, and supported depth texelFetch values.",
+        "Depth values pass through R32F shader sampling; native depth/stencil storage bits and stencil texture contents are not directly exposed.",
+        "Renderbuffer contents, including multisample blit read inputs, are unobserved; only their attachment/storage metadata and downstream sampled textures are captured.",
+        "Compressed/copy allocation metadata and unsupported/nonrenderable texture levels or budget excess remain explicitly unobserved.",
+        "Additional synchronous queries/readbacks and auxiliary depth sampling prohibit timing claims."
+      ]
+    },
+    {
+      "path": "trial-1-B.gpu-inputs.json",
+      "sha256": "94cfc64984b419ac0ae098e32a172574d14295ba728ccc913d2bb900e15a33ef",
+      "draws": 208,
+      "buffers": 392,
+      "textures": 45,
+      "capturedBytes": 174726880,
+      "limits": [
+        "Captures actual enabled VAO attribute and indexed GPU buffer bytes, allocated tracked sampler mip/face/layer color values, and supported depth texelFetch values.",
+        "Depth values pass through R32F shader sampling; native depth/stencil storage bits and stencil texture contents are not directly exposed.",
+        "Renderbuffer contents, including multisample blit read inputs, are unobserved; only their attachment/storage metadata and downstream sampled textures are captured.",
+        "Compressed/copy allocation metadata and unsupported/nonrenderable texture levels or budget excess remain explicitly unobserved.",
+        "Additional synchronous queries/readbacks and auxiliary depth sampling prohibit timing claims."
+      ]
+    }
+  ],
+  "gpuSectionsExact": {
+    "draws": true,
+    "events": true,
+    "buffers": true,
+    "textures": false,
+    "framebuffers": true
+  },
+  "differingResources": [
+    {
+      "kind": "textures",
+      "ordinal": 29,
+      "snapshot": 0,
+      "differences": [
+        {
+          "path": "/levels/0/sha256",
+          "a": "d1f2d4b8831bedc39cb6b89580c37a2c7396deccc1ac2d6b377e06694157a0e3",
+          "b": "222fb4892abebe97a99b005cf73827055c7222a0c04686497a5cec6dfc3baab5"
+        }
+      ]
+    },
+    {
+      "kind": "textures",
+      "ordinal": 29,
+      "snapshot": 1,
+      "differences": [
+        {
+          "path": "/levels/0/sha256",
+          "a": "d1f2d4b8831bedc39cb6b89580c37a2c7396deccc1ac2d6b377e06694157a0e3",
+          "b": "222fb4892abebe97a99b005cf73827055c7222a0c04686497a5cec6dfc3baab5"
+        }
+      ]
+    },
+    {
+      "kind": "textures",
+      "ordinal": 41,
+      "snapshot": 0,
+      "differences": [
+        {
+          "path": "/levels/0/sha256",
+          "a": "fcae2402b1faeb7961bb243220d7a1c4b98a8bcb178327fad31574802ccf43ef",
+          "b": "0b8191a7b26075c6ecfc8edc92331113ddec932d645f62d7d57f89653ee316d6"
+        }
+      ]
+    },
+    {
+      "kind": "textures",
+      "ordinal": 29,
+      "snapshot": 2,
+      "differences": [
+        {
+          "path": "/levels/0/sha256",
+          "a": "f0915a370e6fa9e3ba3eb764eb365d6eb80a14e26d987c307edb9eeee36f3dfb",
+          "b": "5ce8239fe1d85175e28859ad1ee223f2a4b41bbbf4c230a8518645f626fa1131"
+        }
+      ]
+    }
+  ],
+  "firstDrawsUsingDifferingTextures": [
+    {
+      "draw": 192,
+      "samplers": [
+        {
+          "uniform": "tDiffuse",
+          "texture": {
+            "ordinal": 29,
+            "snapshot": 0
+          }
+        }
+      ]
+    },
+    {
+      "draw": 205,
+      "samplers": [
+        {
+          "uniform": "tDiffuse",
+          "texture": {
+            "ordinal": 29,
+            "snapshot": 1
+          }
+        }
+      ]
+    },
+    {
+      "draw": 206,
+      "samplers": [
+        {
+          "uniform": "tDiffuse",
+          "texture": {
+            "ordinal": 41,
+            "snapshot": 0
+          }
+        }
+      ]
+    },
+    {
+      "draw": 207,
+      "samplers": [
+        {
+          "uniform": "tDiffuse",
+          "texture": {
+            "ordinal": 29,
+            "snapshot": 2
+          }
+        }
+      ]
+    }
+  ],
+  "firstGpuInputDifferences": [
+    {
+      "path": "/textures/28/levels/0/sha256",
+      "a": "d1f2d4b8831bedc39cb6b89580c37a2c7396deccc1ac2d6b377e06694157a0e3",
+      "b": "222fb4892abebe97a99b005cf73827055c7222a0c04686497a5cec6dfc3baab5"
+    },
+    {
+      "path": "/textures/41/levels/0/sha256",
+      "a": "d1f2d4b8831bedc39cb6b89580c37a2c7396deccc1ac2d6b377e06694157a0e3",
+      "b": "222fb4892abebe97a99b005cf73827055c7222a0c04686497a5cec6dfc3baab5"
+    },
+    {
+      "path": "/textures/42/levels/0/sha256",
+      "a": "fcae2402b1faeb7961bb243220d7a1c4b98a8bcb178327fad31574802ccf43ef",
+      "b": "0b8191a7b26075c6ecfc8edc92331113ddec932d645f62d7d57f89653ee316d6"
+    },
+    {
+      "path": "/textures/44/levels/0/sha256",
+      "a": "f0915a370e6fa9e3ba3eb764eb365d6eb80a14e26d987c307edb9eeee36f3dfb",
+      "b": "5ce8239fe1d85175e28859ad1ee223f2a4b41bbbf4c230a8518645f626fa1131"
+    }
+  ],
+  "explicitUnobservedTextureLevels": [],
+  "comparability": [
+    {
+      "ordinal": 0,
+      "variant": "C",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": true,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": true,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    }
+  ],
+  "backgroundComparable": true,
+  "preflight": {
+    "path": ".browser-evidence/continuation-performance/gpu-frame-input-preflight.json",
+    "sha256": "9f6f7c77e1ef044545d1b67da2f8c2e9ce7deb9a7a0ee38eb2e3cf9e6824f0c9"
+  },
+  "limits": [
+    "Final bounded diagnostic only; neither two contexts nor an observer pass can replace failed strict four-trial native calibration.",
+    "GPU buffer values and renderable color texture readbacks are observed. Depth values pass through texelFetch to R32F, not native depth/stencil storage bits.",
+    "Renderbuffer contents and otherwise unsampled blit input contents remain unobserved; attachment/storage metadata and downstream sampled textures do not prove their byte equality.",
+    "Raw-depth control does not verify nonzero TEXTURE_COMPARE_MODE/sampler2DShadow restoration; rejected initial shadow fixture and exploration logs are retained.",
+    "Unsupported/nonrenderable/compressed/copy allocations and explicit budget exclusions remain unobserved. No GPU-driver cause is established.",
+    "Additional upload tracking, GL reflection, readbacks and auxiliary depth sampling prevent timing/performance claims.",
+    "No runtime/source substitution or pixel tolerance relaxation. Historical f11/3acf A/B remains unexecuted; iPad/Android/hardware acceptance remains open."
+  ],
+  "localization": "The first differing sampled texture is composer/renderTarget2/readBuffer HDR at actual draw192, the bloom bright pass. Draws190/191 target its multisample RBO; its native contents and resolve source samples are unobserved, so this does not isolate shader, raster, resolve or driver cause. Later differing sampled snapshots appear at draws205/206/207; final 8-bit RGBA matches in this pair.",
+  "gpuReadbackPayloadPolicy": "174726880 transient GPU readback bytes per context were SHA256 hashed in browser; payload fields deleted before JSON and never persisted. Published records contain metadata/hash only, with no private GPU geometry/texture byte payload."
+}

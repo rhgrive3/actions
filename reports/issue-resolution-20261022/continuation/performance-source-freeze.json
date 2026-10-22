@@ -1,0 +1,204 @@
+{
+  "branch": "diagnostic/actions-performance-20261022",
+  "productionPR": false,
+  "doNotMerge": true,
+  "runtimeChanged": false,
+  "archiveRecompression": {
+    "sourceHelperHarnessTestsAndRawMemberContentsChanged": false,
+    "originalGzipSha256": "d69bc0aa75210253a3700a4cab7bb72c2898fb3a05f222bf7f0c2b4ff4522364",
+    "publishedXzSha256": "3b8bb0c5bcb6522039825c1cb266d062d0f90f5dd2a7fe3b95e5069ac6436a3d",
+    "tarStreamSha256": "02d6e0cf9dbc5e7e3f325c9ee1248c6b924bc3ec3e9dc817030ccb6125aab7e5"
+  },
+  "paths": [
+    {
+      "path": "reports/issue-resolution-20261022/continuation/issue845-source-audit-raw.tar.gz",
+      "bytes": 29219,
+      "sha256": "e821b21c3cfa79297f5a2e40eaa8c3344b5c352bc67d6957ab30403a69944673"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/issue845-source-audit.json",
+      "bytes": 13270,
+      "sha256": "e89ebe811300eb5f97fc9038d69109c865960dfe20d282674e5aa5702441269a"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-adoption-lineage.json",
+      "bytes": 3854,
+      "sha256": "93784e78440a60d789e09c5407f9736d9842aa9ee49bb44187f2594fac951560"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-adoption-lineage.md",
+      "bytes": 2122,
+      "sha256": "d6937d7785a1d0c4301e8fea222823a564f1b8566222c75973f75aa73be1dc20"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-native-actual-draw.json",
+      "bytes": 3047,
+      "sha256": "34c7e1087727df60383dc1585768c7c12f5015dfc86f2b33186310887d3872bd"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-native-actual-draw.md",
+      "bytes": 2500,
+      "sha256": "0808524f19187af38730c26630109254ba933b2f2cc252912cc992c03e8b7079"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-native-ci151.json",
+      "bytes": 7289,
+      "sha256": "02512ab3d718fe86aa026667f8b6fe9dc41b59783bb975c134ca49350d238133"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-native-ci151.md",
+      "bytes": 2792,
+      "sha256": "40b22316bf256e29e2b3ff7796242803b324ff91de281c319071b1425f08d25c"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-native-compiled-texture.json",
+      "bytes": 7858,
+      "sha256": "8af2a69471b57d29c7bf8bab0e15292ab9287223f10699916199fca6a3897be9"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-native-compiled-texture.md",
+      "bytes": 3217,
+      "sha256": "6e911638e3ee8ecccdec69fb8bb0abf197b95e288b54028ec96ff3cd0a92052b"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-native-fresh-process.json",
+      "bytes": 4374,
+      "sha256": "b2d8eabec99cae3248298e7e2508a50e9add734a5bc935d7c1ce0c00e03e68de"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-native-fresh-process.md",
+      "bytes": 2147,
+      "sha256": "95a207dc123edf143036460f40e1a7ce45275732db0674650e9796ba4792b005"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-native-gpu-frame-inputs.json",
+      "bytes": 11885,
+      "sha256": "bd296be228558f3513d4bac98a6513000592292a32fcfcf11b14483cd0b874d3"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-native-gpu-frame-inputs.md",
+      "bytes": 2865,
+      "sha256": "64a0c936d930dae0dddb5e9f7f5fc5ea5d26059f70711460c7fb843013f008b3"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-native-input.json",
+      "bytes": 12803,
+      "sha256": "1eb106cbb76ed69760fbdfb4820c6614e700ed973401a21b186e652f881dbbc8"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-native-input.md",
+      "bytes": 2061,
+      "sha256": "7b66b3e9507075f6d3ce2bfc88da971720a2354028c10ff59b678fba4ea067e7"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-native-state.json",
+      "bytes": 12498,
+      "sha256": "582c7920730f2bfbd203dcd596a5b508690bbf76ef259c284fe13307e4b96e49"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-native-state.md",
+      "bytes": 2576,
+      "sha256": "9bd63a57c6779c4ff88437016be74c353ecf73310ff0d5f6fb208b178bcf2f5f"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-publication-audit.json",
+      "bytes": 4735,
+      "sha256": "41efdc5c1173a7e7550b5edca09b233cef23007dfdc1509019add0d699c31fbd"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-render-observer-artifacts.json",
+      "bytes": 33020,
+      "sha256": "579bf0a50f074e4acef3c855367f73e86d38076ef416d359d9df66d86c7af023"
+    },
+    {
+      "path": "reports/issue-resolution-20261022/continuation/performance-render-observer-raw.tar.xz",
+      "bytes": 1134424,
+      "sha256": "3b8bb0c5bcb6522039825c1cb266d062d0f90f5dd2a7fe3b95e5069ac6436a3d"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/README.md",
+      "bytes": 7276,
+      "sha256": "038e25975113e368517cfdf40d354cf7b0556a81a1e9eca001f06330c1ae6103"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/check-actual-draw-observer.mjs",
+      "bytes": 6236,
+      "sha256": "d65b0f218873e62cbfe6a8251cd07f821efb0fbeca68ba59ec82fc8646e1a23c"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/check-compiled-texture-observer.mjs",
+      "bytes": 5810,
+      "sha256": "b7ffc1387e64f129b7237263092bd7d720964b195712a978b4abf71d6b1549b8"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/check-gpu-frame-inputs.mjs",
+      "bytes": 12493,
+      "sha256": "36aab340a573b40a1bd4a4b7f61e581e61745491c9ffdb4b18355bdb549bc1f6"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/measure-native-actual-draw.mjs",
+      "bytes": 34282,
+      "sha256": "f231476d722eb864a4301a06dd5cedc36c3d1fc1a0c4b93687075a781f6435be"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/measure-native-ci-browser-control.mjs",
+      "bytes": 36127,
+      "sha256": "faa08d214403130945c6987375d65e3d5444648e6d5d8bf9829f6285d220a8bf"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/measure-native-compiled-texture.mjs",
+      "bytes": 34805,
+      "sha256": "1791a6ad803291154b530559d19ac1a00eee1a0634473aa6334a381242eba71d"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/measure-native-fresh-process.mjs",
+      "bytes": 35214,
+      "sha256": "785381554562420bfb9cb97bac0b80f75a4a0ae1928f2efcd618d0aac22e9223"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/measure-native-gpu-frame-inputs.mjs",
+      "bytes": 37519,
+      "sha256": "b17c0b76dd59e6cc7d1a3d1a2c3de0ea3d2a94131d3c583f43478b04544ef14f"
+    },
+    {
+      "path": "scripts/lib/inkwave-actual-draw-receipts.mjs",
+      "bytes": 8044,
+      "sha256": "d4d0fc36fd2c97408c67d5d09a623abf93823deefcfb1535de74830c3b65461e"
+    },
+    {
+      "path": "scripts/lib/inkwave-compiled-texture-receipts.mjs",
+      "bytes": 5750,
+      "sha256": "8e56c33c552377f163ba693904c3bcba23a76af78725199ed129a91a1f504269"
+    },
+    {
+      "path": "scripts/lib/inkwave-gpu-frame-inputs.mjs",
+      "bytes": 26839,
+      "sha256": "30eb15833dfb793815a3e1887c321142aeb96da61f9c2e1d643b12027cd3ac2f"
+    },
+    {
+      "path": "scripts/lib/inkwave-render-input-receipts.mjs",
+      "bytes": 11736,
+      "sha256": "feaf3a450fd059c86cdb3eaa341a50a360db8504e21d312c60d35895ddf4b950"
+    },
+    {
+      "path": "scripts/tests/inkwave-actual-draw-receipts.test.mjs",
+      "bytes": 3414,
+      "sha256": "21fe5bdbc19861fd1efb034a87274c69b7b1981419a47660c4640aef835b8011"
+    },
+    {
+      "path": "scripts/tests/inkwave-compiled-texture-receipts.test.mjs",
+      "bytes": 3201,
+      "sha256": "000a5697133395e3f38db0dd0dcc859ea089e82b9fae4a25d44e32b3367e35f6"
+    },
+    {
+      "path": "scripts/tests/inkwave-gpu-frame-inputs.test.mjs",
+      "bytes": 4906,
+      "sha256": "1c0ca80e4a4bb8984e21a38f0e89d112c18748737283446a2abb3325cae63349"
+    },
+    {
+      "path": "scripts/tests/inkwave-render-input-receipts.test.mjs",
+      "bytes": 4051,
+      "sha256": "5dcb570b35c4d07b7fb4fa6e4f1fd5fb74cf7dec99a060016b650eecace4dd16"
+    }
+  ]
+}

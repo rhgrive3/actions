@@ -1,0 +1,163 @@
+{
+  "status": "rejected-native-self-control",
+  "hardwareClaim": false,
+  "improvementClaimAllowed": false,
+  "source": {
+    "sourceSha": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+    "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+    "revision": "e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5"
+  },
+  "harnessSha256": "a86597b66709fd68d8bee0fcccf2c50e725014b5cae69f6904804d5a167b0178",
+  "rawEvidence": ".browser-evidence/continuation-performance/native-fresh-process-control/whole-game-calibrate.json",
+  "rawEvidenceSha256": "878deb0b4095d3dae877f702ad6bdc6615eb6bac3823014ce9be4efe77308bb1",
+  "order": [
+    "C",
+    "B",
+    "B",
+    "C"
+  ],
+  "visualValidation": {
+    "CRepeatExact": true,
+    "BRepeatExact": false,
+    "CBExact": true,
+    "accepted": false,
+    "allowedChange": "none; exact pixels and workload required for both current refs"
+  },
+  "comparability": [
+    {
+      "ordinal": 0,
+      "variant": "C",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": true,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": true,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    },
+    {
+      "ordinal": 2,
+      "variant": "B",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": false,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    },
+    {
+      "ordinal": 3,
+      "variant": "C",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": true,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    }
+  ],
+  "pixelDifferences": [
+    {
+      "ordinal": 0,
+      "variant": "C",
+      "changedChannels": 0,
+      "changes": []
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "changedChannels": 0,
+      "changes": []
+    },
+    {
+      "ordinal": 2,
+      "variant": "B",
+      "changedChannels": 1,
+      "changes": [
+        {
+          "x": 270,
+          "bottomY": 128,
+          "channel": "G",
+          "first": 60,
+          "trial": 59
+        }
+      ]
+    },
+    {
+      "ordinal": 3,
+      "variant": "C",
+      "changedChannels": 0,
+      "changes": []
+    }
+  ],
+  "ownedScopesAllClosed": true,
+  "historicalABPerformed": false,
+  "limits": [
+    "GPU process isolation failed to restore strict same-native repeatability.",
+    "All exact endpoint state/workload gates pass; these observations do not prove driver causality.",
+    "CPU upload-source bytes and GPU color targets were observed. Actual draw uniforms, current GPU vertex-buffer contents and shadow/depth contents remain unobserved."
+  ],
+  "trials": [
+    {
+      "ordinal": 0,
+      "variant": "C",
+      "pixelSha256": "9fa1b417e6d97bcf0379c5946781ef7d2bd947c813c77ceaf42e26a0bc17b2c4",
+      "invariants": {
+        "allEightAlive": true,
+        "allControllersUpdated": true,
+        "fixedScale": true,
+        "nonemptyRender": true,
+        "audioOn": true,
+        "stableDrawingBuffer": true,
+        "nonblankImage": true
+      }
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "pixelSha256": "9fa1b417e6d97bcf0379c5946781ef7d2bd947c813c77ceaf42e26a0bc17b2c4",
+      "invariants": {
+        "allEightAlive": true,
+        "allControllersUpdated": true,
+        "fixedScale": true,
+        "nonemptyRender": true,
+        "audioOn": true,
+        "stableDrawingBuffer": true,
+        "nonblankImage": true
+      }
+    },
+    {
+      "ordinal": 2,
+      "variant": "B",
+      "pixelSha256": "aa1eb4e0a32fc3e9d230de973e9c257d1427a3b410307dc8c118d04187b68957",
+      "invariants": {
+        "allEightAlive": true,
+        "allControllersUpdated": true,
+        "fixedScale": true,
+        "nonemptyRender": true,
+        "audioOn": true,
+        "stableDrawingBuffer": true,
+        "nonblankImage": true
+      }
+    },
+    {
+      "ordinal": 3,
+      "variant": "C",
+      "pixelSha256": "9fa1b417e6d97bcf0379c5946781ef7d2bd947c813c77ceaf42e26a0bc17b2c4",
+      "invariants": {
+        "allEightAlive": true,
+        "allControllersUpdated": true,
+        "fixedScale": true,
+        "nonemptyRender": true,
+        "audioOn": true,
+        "stableDrawingBuffer": true,
+        "nonblankImage": true
+      }
+    }
+  ]
+}

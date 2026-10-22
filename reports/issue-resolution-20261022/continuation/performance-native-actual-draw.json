@@ -1,0 +1,84 @@
+{
+  "status": "diagnostic-two-contexts-actual-draw-only",
+  "source": {
+    "sourceSha": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+    "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+    "revision": "e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5"
+  },
+  "hardwareClaim": false,
+  "improvementClaimAllowed": false,
+  "diagnostic": {
+    "kind": "same-native-two-context-actual-draw-observation",
+    "actualDrawCollectorSha256": "79a1a4da76209bfe8b11a049788ce64d7776315acf7e787e1fd7f4989e9bfbb9",
+    "harnessSha256": "a240cf0d1479db25c830d2c7c986012619752152cdfb5c93495b33e7f476528a",
+    "doesNotReplaceCalibration": true,
+    "exactPixelGateRetained": true,
+    "inputCollectorFunctionSha256": "9aa4913e086e4443e029ddd3b81a6ec823cc09ae98f75e4e046f67d09481af8e",
+    "bootstrapRandomFixtureUnchanged": true,
+    "gpuColorTargetsRequested": true,
+    "observations": [
+      "Character material uniforms",
+      "environment/post uniforms",
+      "actual scene draw order and matrices",
+      "geometry ranges",
+      "GL shader source hashes",
+      "exact geometry/index/instance/bone source bytes and GTAO/sampler/image SHA256",
+      "optional actual-frame CPU profile"
+    ]
+  },
+  "rawEvidence": ".browser-evidence/continuation-performance/native-actual-draw-diagnostic/whole-game-calibrate.json",
+  "rawEvidenceSha256": "575622ae7040572462e6c89cdb26a2fdb36e3df6aa6781dc290a6afc243faa73",
+  "actualDrawsAllExact": true,
+  "drawsPerContext": 208,
+  "programsPerContext": 65,
+  "activeUniformQueriesPerContext": 4633,
+  "pixelDifferences": [
+    {
+      "x": 270,
+      "bottomY": 128,
+      "channel": "G",
+      "a": 60,
+      "b": 59
+    }
+  ],
+  "comparability": [
+    {
+      "ordinal": 0,
+      "variant": "C",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": true,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": false,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    }
+  ],
+  "ownedProcessesAllExited": true,
+  "unmappedUniformTextures": [
+    "uMainInkProfiles",
+    "dfgLUT",
+    "s3Ring",
+    "s3Splash",
+    "tLens"
+  ],
+  "controls": {
+    "preflight": "actual-draw-preflight.json",
+    "smallNativeObservedRestoredExact": true,
+    "gameFirstContextEqualsPreviousNativeSha": true
+  },
+  "limits": [
+    "Uniforms, sampler unit/bindings/parameters, draw order/args, fixed-function GL state and shader sources are observed immediately before real draws.",
+    "Unknown GPU texture handles have ordinal identities only; their content/production owner is not yet captured by this run.",
+    "Actual GPU vertex bytes, GPU texture contents and shadow/depth contents remain unobserved.",
+    "No driver cause, calibrated historical comparison or timing improvement is established.",
+    "One unmapped framebuffer uses encounter ordinal identity, not a captured production owner."
+  ]
+}

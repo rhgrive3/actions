@@ -1,0 +1,755 @@
+{
+  "schema": 1,
+  "purpose": "Strict unchanged-native renderer controls; DO NOT MERGE diagnostic branch only; no timing improvement claim.",
+  "archive": {
+    "path": "reports/issue-resolution-20261022/continuation/performance-render-observer-raw.tar.xz",
+    "bytes": 1134424,
+    "sha256": "3b8bb0c5bcb6522039825c1cb266d062d0f90f5dd2a7fe3b95e5069ac6436a3d"
+  },
+  "members": [
+    {
+      "path": ".browser-evidence/continuation-performance/actual-draw-preflight.json",
+      "bytes": 54441,
+      "sha256": "366f0fc0c0bbc934068d1360e0df94ba0928b61f27cb4b1885e14e2879f21dfd"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/compiled-texture-preflight.json",
+      "bytes": 8734,
+      "sha256": "5d9fd4ffd6739172a2d47b43cf954b9983373652b93ba1b3ace0cd693df30af3"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/gpu-frame-input-preflight.json",
+      "bytes": 27839,
+      "sha256": "9f6f7c77e1ef044545d1b67da2f8c2e9ce7deb9a7a0ee38eb2e3cf9e6824f0c9"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/input-collector-preflight.json",
+      "bytes": 11141,
+      "sha256": "7c649cee8d180a156597aff7183f3349e3dbd1292ce0c604fd0cd4005c6745e3"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-actual-draw-diagnostic/actual-draw-differences.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-actual-draw-diagnostic/owned-processes.json",
+      "bytes": 7624,
+      "sha256": "20a0ecb5d2f341d8befafd0166ba6aaa2aa5709e5451786b52bd01ceab3e43c9"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-actual-draw-diagnostic/pixel-differences.json",
+      "bytes": 91,
+      "sha256": "ee374d3b0e038ff5e9cd98e3ebd0741f50e7c80b4efa847ab10c9ffe3f9fe1a1"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-actual-draw-diagnostic/trial-0-C.draws.json",
+      "bytes": 4478190,
+      "sha256": "b145505b96429450e36a2794e6894f45d0135b747c0f10527f9df07894c4bfef"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-actual-draw-diagnostic/trial-1-B.draws.json",
+      "bytes": 4478190,
+      "sha256": "b145505b96429450e36a2794e6894f45d0135b747c0f10527f9df07894c4bfef",
+      "archiveHardLinkTo": ".browser-evidence/continuation-performance/native-actual-draw-diagnostic/trial-0-C.draws.json"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-actual-draw-diagnostic/whole-game-calibrate.json",
+      "bytes": 13699229,
+      "sha256": "575622ae7040572462e6c89cdb26a2fdb36e3df6aa6781dc290a6afc243faa73"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-ci151-control/input-category-differences.json",
+      "bytes": 1718,
+      "sha256": "6fb19f3c1407444f6fb70d9ba7fa844c63a84a55a00226a52f05ca0f4a1db171"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-ci151-control/owned-processes-final.json",
+      "bytes": 97,
+      "sha256": "6ffa6ebbd4638ba5f59abe4b36d354ba85091a3c33dfe859fc28be820713211a"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-ci151-control/pixel-differences.json",
+      "bytes": 965,
+      "sha256": "b0f896fbdd98baaf044c293e5daa6c4fb2e00440a880b610d25960ef8a62d953"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-ci151-control/whole-game-calibrate.json",
+      "bytes": 27186938,
+      "sha256": "7d8a88e168b3a3b529ced7c2fbb92e0f61b9e22acc7a6ede96cb2c50a6ba1354"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-compiled-texture-diagnostic/inactive-mesh-cache-differences.json",
+      "bytes": 17439,
+      "sha256": "c7b2b3a0f7c060c88e1255aaf975de37af7a9b586942fc9918552e4d8d7ff2d5"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-compiled-texture-diagnostic/inactive-mesh-cache-summary.json",
+      "bytes": 138,
+      "sha256": "63959eb15c017767f28f0426f651017baec7cb29a3dec2b99d163322cc73854c"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-compiled-texture-diagnostic/input-category-differences.json",
+      "bytes": 1356,
+      "sha256": "4cb4e4961e11c2b6e772538b3bbf05d2ae9a1a88bf1cf51f8921b05b6df50314"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-compiled-texture-diagnostic/owned-processes.json",
+      "bytes": 7614,
+      "sha256": "cbf3a884faec2244d9a8066c2d44b35f6ce3dd1f8f9c24596c392e1087ee2d96"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-compiled-texture-diagnostic/texture-differences.json",
+      "bytes": 3462,
+      "sha256": "88b0f261009dc702c6e9342cd009b0938b4e6fe656cb573c1b5075875d202ea9"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-compiled-texture-diagnostic/trial-0-C.draws.json",
+      "bytes": 4478190,
+      "sha256": "b145505b96429450e36a2794e6894f45d0135b747c0f10527f9df07894c4bfef",
+      "archiveHardLinkTo": ".browser-evidence/continuation-performance/native-actual-draw-diagnostic/trial-0-C.draws.json"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-compiled-texture-diagnostic/trial-1-B.draws.json",
+      "bytes": 4478190,
+      "sha256": "b145505b96429450e36a2794e6894f45d0135b747c0f10527f9df07894c4bfef",
+      "archiveHardLinkTo": ".browser-evidence/continuation-performance/native-actual-draw-diagnostic/trial-0-C.draws.json"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-compiled-texture-diagnostic/whole-game-calibrate.json",
+      "bytes": 13752307,
+      "sha256": "f57a3048021a4ef67489791edd31a7a82e648c57705e99739b9758ac03614dd6"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-fresh-process-control/input-category-differences.json",
+      "bytes": 3620,
+      "sha256": "5092fe9aead37ea0472ff4ee81fa5bbe7aa7d69f259d962a77b76898d84e97c5"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-fresh-process-control/pixel-differences.json",
+      "bytes": 495,
+      "sha256": "6052c2c40633323f3509c602ca19c921c2dee8971016dfef0d70941c941f9e03"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-fresh-process-control/whole-game-calibrate.json",
+      "bytes": 27185988,
+      "sha256": "878deb0b4095d3dae877f702ad6bdc6615eb6bac3823014ce9be4efe77308bb1"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-gpu-frame-input-diagnostic/trial-0-C.draws.json",
+      "bytes": 4478190,
+      "sha256": "b145505b96429450e36a2794e6894f45d0135b747c0f10527f9df07894c4bfef",
+      "archiveHardLinkTo": ".browser-evidence/continuation-performance/native-actual-draw-diagnostic/trial-0-C.draws.json"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-gpu-frame-input-diagnostic/trial-0-C.gpu-inputs.json",
+      "bytes": 884170,
+      "sha256": "021e3a398ce8a9b32396436955eca6cffa3b550a93571bbffff2342c02517f15"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-gpu-frame-input-diagnostic/trial-1-B.draws.json",
+      "bytes": 4478190,
+      "sha256": "b145505b96429450e36a2794e6894f45d0135b747c0f10527f9df07894c4bfef",
+      "archiveHardLinkTo": ".browser-evidence/continuation-performance/native-actual-draw-diagnostic/trial-0-C.draws.json"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-gpu-frame-input-diagnostic/trial-1-B.gpu-inputs.json",
+      "bytes": 884170,
+      "sha256": "94cfc64984b419ac0ae098e32a172574d14295ba728ccc913d2bb900e15a33ef"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-gpu-frame-input-diagnostic/whole-game-calibrate.json",
+      "bytes": 13701644,
+      "sha256": "e7d049239da83fed05253eb288c90814d656478da5c777ce9ed2a8f485f96b8a"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-input-diagnostic/input-differences.json",
+      "bytes": 16389,
+      "sha256": "4cabc05f32e2a8a16dbd2b03ca827ae98ece01439c45ff740fca674785ef33f0"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-input-diagnostic/whole-game-calibrate.json",
+      "bytes": 13696088,
+      "sha256": "610e4ccebd45d09735df43923ee8ca9474f7d90391f5809015ac1a453ca3f39f"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-state-diagnostic/pixel-differences.json",
+      "bytes": 89,
+      "sha256": "e07b521417e59fdc59efeba783b1349425d946e6b409bf2d93072d474ec641a5"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-state-diagnostic/trial-0-C.cpuprofile",
+      "bytes": 199722,
+      "sha256": "fa49dfeb4cee18e61b63af6980715d78ea19b0bd212a9b3f2d80b18e21ab7fe6"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-state-diagnostic/trial-1-B.cpuprofile",
+      "bytes": 192705,
+      "sha256": "7edd6d4d9cfcd0d74a2bcddc4869fc9df3f5a4d3e27b3e50baf3c99fcfb6a7a6"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-state-diagnostic/whole-game-calibrate.json",
+      "bytes": 7041451,
+      "sha256": "924dc1b9e8cf7705f0ae94835ed6a3fd16ff081867b9de12444ad53c09da7f41"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/actual-draw-preflight-control.log",
+      "bytes": 161,
+      "sha256": "31d76207c7385af0f14b2e2f95aed485bb38751d46b0d1ec470f56b7314a2d64"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/actual-draw-preflight.mjs",
+      "bytes": 6038,
+      "sha256": "7e72cf258844153aa6a37a654caf73e1d5f8c96fa8f83035e482232fdf2e6be8"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/all-render-observer-source-tests.log",
+      "bytes": 1560,
+      "sha256": "19dd68cc41780b1a280015bd65c49de50c74d8cc168fe47efeba5e3db83ae4b1"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/compiled-texture-preflight-public.log",
+      "bytes": 33,
+      "sha256": "3f44fe76f0152575e97f9bd8985030217722b46dae713251bd46989676114f87"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/cpu-first-trial-summary.json",
+      "bytes": 7182,
+      "sha256": "c01f69f0bccff939b9ec282900d5d0a14c3498d2a6e37d7e9404cfbfdb233ec8"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/gpu-frame-input-preflight-debug.log",
+      "bytes": 4111,
+      "sha256": "0848cc4f8614fc43e15fdb65436a9048a6c721fa3390198348d675727ef26946"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/gpu-frame-input-preflight-debug10.log",
+      "bytes": 347,
+      "sha256": "7d3b6b0ba7238b0b0549ddc82350e906b8ee2050dc2e71ebad9fa3536a4b0570"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/gpu-frame-input-preflight-debug11.log",
+      "bytes": 208,
+      "sha256": "1dc2e964c9470cb8937ae9584cbbbf8fb2af87eb0c1cd2466aecb1102e220c5f"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/gpu-frame-input-preflight-debug2.log",
+      "bytes": 1502,
+      "sha256": "1d06a9df9ce1684358d2de04e3f3e80f2c9d61fcf3fa65ad4c0e6f9fc089af31"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/gpu-frame-input-preflight-debug3.log",
+      "bytes": 342,
+      "sha256": "848dbce913efc74a0c8718a3fb4c20e3e4a45256d34aa3fc39a9e61856fb2638"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/gpu-frame-input-preflight-debug4.log",
+      "bytes": 347,
+      "sha256": "4780154b129d3ddb7301f14ec02dcabaa05b68b0350f4d0f0a8d826a7f4c869e"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/gpu-frame-input-preflight-debug5.log",
+      "bytes": 347,
+      "sha256": "4780154b129d3ddb7301f14ec02dcabaa05b68b0350f4d0f0a8d826a7f4c869e",
+      "archiveHardLinkTo": ".ci-scratch/continuation-performance/gpu-frame-input-preflight-debug4.log"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/gpu-frame-input-preflight-debug6.log",
+      "bytes": 347,
+      "sha256": "4780154b129d3ddb7301f14ec02dcabaa05b68b0350f4d0f0a8d826a7f4c869e",
+      "archiveHardLinkTo": ".ci-scratch/continuation-performance/gpu-frame-input-preflight-debug4.log"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/gpu-frame-input-preflight-debug7.log",
+      "bytes": 1299,
+      "sha256": "24694dcff8c288385bbc94f132c6cde1f1e3a89c9ce4a0896b0afe41c751743e"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/gpu-frame-input-preflight-debug8.log",
+      "bytes": 897,
+      "sha256": "9f4d661b0b241da2020b3ad1e3ae0f18abbdddae20f18b9206804d404b58bafc"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/gpu-frame-input-preflight-debug9.log",
+      "bytes": 1347,
+      "sha256": "df9e6d76bd128e54d1a629cbc6c30f44ba264cfd09201a04b53a4a6331d50a7a"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/gpu-frame-input-preflight-final.log",
+      "bytes": 56,
+      "sha256": "f532444c9ce87eb56860b9e920ce4cbcd10b0e568ed0962456a8e3f8d09936c8"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/gpu-frame-input-preflight-release.log",
+      "bytes": 56,
+      "sha256": "f532444c9ce87eb56860b9e920ce4cbcd10b0e568ed0962456a8e3f8d09936c8",
+      "archiveHardLinkTo": ".ci-scratch/continuation-performance/gpu-frame-input-preflight-final.log"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/gpu-frame-input-preflight.log",
+      "bytes": 1236,
+      "sha256": "a1b54757d21b69349a57e90c0473ace131d9b1bdee038ec655ba9a9b403672f6"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/gpu-frame-input-source-tests-final.log",
+      "bytes": 576,
+      "sha256": "7f950591931fec9a55b36cc0ae4c66635f0efd701e7504888ccbff48e49af386"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/gpu-frame-input-source-tests.log",
+      "bytes": 573,
+      "sha256": "1ea05dd2d2aa0d1fce2a0d228ccec7c2bf8eed936067ef808c8abbdc219c914b"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/independent-final-integration-review.json",
+      "bytes": 1804,
+      "sha256": "29b4c0be3750542c6ab8524b0efbff6291e2498bd3ed744ae6db9db02706714e"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/independent-final-integration-review.md",
+      "bytes": 1265,
+      "sha256": "c98a8ec531bf7e2f90c022a0e3a40b9a6185ecddc03472a36e618c63990bc532"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/independent-final-review.json",
+      "bytes": 949,
+      "sha256": "a13ca6e1347ea80fbd719d9e5a5c2001d57a7b8fb10b095fd44d6ae14dd8dbd1"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/independent-final-review.md",
+      "bytes": 1200,
+      "sha256": "19c50f3b177213657e6d1ff5a89135fe4258104e250d6641de4b34617db22aee"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/independent-initial-review.json",
+      "bytes": 3823,
+      "sha256": "9d9fc818bce780b39b5b8a1cb35cdddeb149354acfcf589b9a19629ebfe1ce7c"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/independent-preflight1-review.json",
+      "bytes": 2895,
+      "sha256": "d2511680916ee6add0a0547f447b42dc8a10c9233c4de51a5d4af44fa424a526"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/independent-preflight1-review.md",
+      "bytes": 1443,
+      "sha256": "aef23640a1b48949795e43180f29e6753eda13176d205922c655460c27106de5"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/independent-preflight2-review.json",
+      "bytes": 2302,
+      "sha256": "1a4f32bae8adb2948c25aa730074157af918e54c34f45352e56be3bd2c50d889"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/independent-preflight2-review.md",
+      "bytes": 1340,
+      "sha256": "d9de30ab7b1a83c79db1c446b22b78367a9008969599a353a272fe915e59d731"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/independent-revision2-review.json",
+      "bytes": 2918,
+      "sha256": "aaa9dcbda232bc9f4b089175714f4517cd1ce7b76a5c5b3083b71d8ea13ae7d3"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/independent-revision2-review.md",
+      "bytes": 1445,
+      "sha256": "e0c86c2458186f32859cde6e57ef6565622b60c85ae3519e29bf28060f563ea5"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/independent-revision3-review.json",
+      "bytes": 2312,
+      "sha256": "65ea252f66999e03b61d791617f1af959d0283dfd36e00794b2fadcec61e96d7"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/independent-revision3-review.md",
+      "bytes": 1169,
+      "sha256": "a327c70665164669f941e5e0f43df4fe3a3ffca71e1993f805395c369560192f"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/independent-two-context-review.json",
+      "bytes": 2779,
+      "sha256": "6d8892304f3ef8e019ca24feefd433129e9e3b5ef29c2b73ae986cf3fccd5d64"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/independent-two-context-review.md",
+      "bytes": 1420,
+      "sha256": "2dd9ee34d477f90cd2051ee69764586e84e4ea8aefaacfafe72a017c69a3a85e"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/input-collector-preflight-final.log",
+      "bytes": 161,
+      "sha256": "31d76207c7385af0f14b2e2f95aed485bb38751d46b0d1ec470f56b7314a2d64",
+      "archiveHardLinkTo": ".ci-scratch/continuation-performance/actual-draw-preflight-control.log"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/input-collector-preflight.mjs",
+      "bytes": 4472,
+      "sha256": "3bfec627e5fc0bc747591ae392ad849a7be354be6c876ff89c5e6fc89702ba74"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/native-actual-draw-diagnostic.log",
+      "bytes": 3580,
+      "sha256": "787a61fb5332c830a06c993cc1e80bee376ee77b58ca320f5a4e2a379c6a6c63"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/native-actual-draw-diagnostic.mjs",
+      "bytes": 34345,
+      "sha256": "a240cf0d1479db25c830d2c7c986012619752152cdfb5c93495b33e7f476528a"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/native-ci151-control.log",
+      "bytes": 5854,
+      "sha256": "4aeac433888f4470e9a5ea8d88a5d1216341a9bd15bd8ea506d6dbe1b58701a3"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/native-compiled-texture-diagnostic.log",
+      "bytes": 3662,
+      "sha256": "2631ffab7b6081fd09d1ee4391e3bf3b7021bfd3c810d42de8d95fcc48605205"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/native-fresh-process-control.log",
+      "bytes": 5785,
+      "sha256": "dd4336047a64e9e8a891b726a02e8747a8507617cf4a15bb8ce43ce3f9224ff9"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/native-fresh-process-control.mjs",
+      "bytes": 35256,
+      "sha256": "a86597b66709fd68d8bee0fcccf2c50e725014b5cae69f6904804d5a167b0178"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/native-gpu-frame-input-diagnostic.log",
+      "bytes": 3606,
+      "sha256": "7bc42962e166d2b737022fa04c27655bfdf7047e93eeb4cee02d197f9efb3209"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/native-input-diagnostic.log",
+      "bytes": 3612,
+      "sha256": "88c450ceeac4718713f2ac9215e190d1679e2dfeb5fba6ff11771b28fe9ba399"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/native-input-diagnostic.mjs",
+      "bytes": 33322,
+      "sha256": "4e2cf9af367382a89aeeddd790121d640f99f8be50019f0b637cc57c852592fd"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/native-self-state-diagnostic.mjs",
+      "bytes": 31914,
+      "sha256": "2e918eeb0ba65afe52c0ff701131597024396551dc61ee73145b9559bdf0889f"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/native-state-diagnostic.log",
+      "bytes": 3656,
+      "sha256": "c0b115c7af1e02ee5ec048e1b8daa1f2c9d61688eb793c049e9ebf1817dadc75"
+    },
+    {
+      "path": ".ci-scratch/continuation-performance/published-harness-map.json",
+      "bytes": 2174,
+      "sha256": "83739862758342e9a5a5c2b95e6618053582410b83f8e2fa6ecafb9d340026ef"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/README.md",
+      "bytes": 6489,
+      "sha256": "479b4337bf6b6120c79870bb8059f310481adaa8e9fab8bdd21d7631e92a416e"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/check-actual-draw-observer.mjs",
+      "bytes": 6236,
+      "sha256": "d65b0f218873e62cbfe6a8251cd07f821efb0fbeca68ba59ec82fc8646e1a23c"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/check-compiled-texture-observer.mjs",
+      "bytes": 5810,
+      "sha256": "b7ffc1387e64f129b7237263092bd7d720964b195712a978b4abf71d6b1549b8"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/check-gpu-frame-inputs.mjs",
+      "bytes": 12493,
+      "sha256": "36aab340a573b40a1bd4a4b7f61e581e61745491c9ffdb4b18355bdb549bc1f6"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/measure-native-actual-draw.mjs",
+      "bytes": 34282,
+      "sha256": "f231476d722eb864a4301a06dd5cedc36c3d1fc1a0c4b93687075a781f6435be"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/measure-native-ci-browser-control.mjs",
+      "bytes": 36127,
+      "sha256": "faa08d214403130945c6987375d65e3d5444648e6d5d8bf9829f6285d220a8bf"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/measure-native-compiled-texture.mjs",
+      "bytes": 34805,
+      "sha256": "1791a6ad803291154b530559d19ac1a00eee1a0634473aa6334a381242eba71d"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/measure-native-fresh-process.mjs",
+      "bytes": 35214,
+      "sha256": "785381554562420bfb9cb97bac0b80f75a4a0ae1928f2efcd618d0aac22e9223"
+    },
+    {
+      "path": "scripts/diagnostics/inkwave-performance/measure-native-gpu-frame-inputs.mjs",
+      "bytes": 37519,
+      "sha256": "b17c0b76dd59e6cc7d1a3d1a2c3de0ea3d2a94131d3c583f43478b04544ef14f"
+    },
+    {
+      "path": "scripts/lib/inkwave-actual-draw-receipts.mjs",
+      "bytes": 8044,
+      "sha256": "d4d0fc36fd2c97408c67d5d09a623abf93823deefcfb1535de74830c3b65461e"
+    },
+    {
+      "path": "scripts/lib/inkwave-compiled-texture-receipts.mjs",
+      "bytes": 5750,
+      "sha256": "8e56c33c552377f163ba693904c3bcba23a76af78725199ed129a91a1f504269"
+    },
+    {
+      "path": "scripts/lib/inkwave-gpu-frame-inputs.mjs",
+      "bytes": 26839,
+      "sha256": "30eb15833dfb793815a3e1887c321142aeb96da61f9c2e1d643b12027cd3ac2f"
+    },
+    {
+      "path": "scripts/lib/inkwave-render-input-receipts.mjs",
+      "bytes": 11736,
+      "sha256": "feaf3a450fd059c86cdb3eaa341a50a360db8504e21d312c60d35895ddf4b950"
+    },
+    {
+      "path": "scripts/lib/inkwave-runtime-evidence.mjs",
+      "bytes": 6255,
+      "sha256": "2b27816952ff5e871b36d0e9dc7b34c9ecba0886852b052e58f9b34506b6a2db"
+    },
+    {
+      "path": "scripts/tests/inkwave-actual-draw-receipts.test.mjs",
+      "bytes": 3414,
+      "sha256": "21fe5bdbc19861fd1efb034a87274c69b7b1981419a47660c4640aef835b8011"
+    },
+    {
+      "path": "scripts/tests/inkwave-compiled-texture-receipts.test.mjs",
+      "bytes": 3201,
+      "sha256": "000a5697133395e3f38db0dd0dcc859ea089e82b9fae4a25d44e32b3367e35f6"
+    },
+    {
+      "path": "scripts/tests/inkwave-gpu-frame-inputs.test.mjs",
+      "bytes": 4906,
+      "sha256": "1c0ca80e4a4bb8984e21a38f0e89d112c18748737283446a2abb3325cae63349"
+    },
+    {
+      "path": "scripts/tests/inkwave-render-input-receipts.test.mjs",
+      "bytes": 4051,
+      "sha256": "5dcb570b35c4d07b7fb4fa6e4f1fd5fb74cf7dec99a060016b650eecace4dd16"
+    }
+  ],
+  "localMediaOnly": [
+    {
+      "path": ".browser-evidence/continuation-performance/native-actual-draw-diagnostic/trial-0-C.png",
+      "bytes": 300624,
+      "sha256": "7eae20db2dd5b308bbf7ef910251e541044871d544229e45d51731026da08108"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-actual-draw-diagnostic/trial-0-C.rgba",
+      "bytes": 576000,
+      "sha256": "9fa1b417e6d97bcf0379c5946781ef7d2bd947c813c77ceaf42e26a0bc17b2c4"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-actual-draw-diagnostic/trial-1-B.png",
+      "bytes": 300622,
+      "sha256": "05270914c060954934a71c5433d8f1381b62b01a0a445dd44d86170c0c520380"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-actual-draw-diagnostic/trial-1-B.rgba",
+      "bytes": 576000,
+      "sha256": "aa1eb4e0a32fc3e9d230de973e9c257d1427a3b410307dc8c118d04187b68957"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-ci151-control/trial-0-C.png",
+      "bytes": 300623,
+      "sha256": "133890d2a5ad8375dc911d625a6bb1ccde8fdb1f5b1332bf75970c65f200246d"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-ci151-control/trial-0-C.rgba",
+      "bytes": 576000,
+      "sha256": "4a2ec73ec20382236acc09f1ea42b8fb3f58b4704fd43cd26986b7fc829e8eec"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-ci151-control/trial-1-B.png",
+      "bytes": 300596,
+      "sha256": "f57c6002b3357d9d91629ea6a7f91a520fbbecc284b581475c263c0e87be67ac"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-ci151-control/trial-1-B.rgba",
+      "bytes": 576000,
+      "sha256": "b3a53068373b54a5a531407e918089f4832ba25ca016b050b91759bf2fa8ac2f"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-ci151-control/trial-2-B.png",
+      "bytes": 300623,
+      "sha256": "133890d2a5ad8375dc911d625a6bb1ccde8fdb1f5b1332bf75970c65f200246d"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-ci151-control/trial-2-B.rgba",
+      "bytes": 576000,
+      "sha256": "4a2ec73ec20382236acc09f1ea42b8fb3f58b4704fd43cd26986b7fc829e8eec"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-ci151-control/trial-3-C.png",
+      "bytes": 300623,
+      "sha256": "133890d2a5ad8375dc911d625a6bb1ccde8fdb1f5b1332bf75970c65f200246d"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-ci151-control/trial-3-C.rgba",
+      "bytes": 576000,
+      "sha256": "4a2ec73ec20382236acc09f1ea42b8fb3f58b4704fd43cd26986b7fc829e8eec"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-compiled-texture-diagnostic/trial-0-C.png",
+      "bytes": 300624,
+      "sha256": "7eae20db2dd5b308bbf7ef910251e541044871d544229e45d51731026da08108"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-compiled-texture-diagnostic/trial-0-C.rgba",
+      "bytes": 576000,
+      "sha256": "9fa1b417e6d97bcf0379c5946781ef7d2bd947c813c77ceaf42e26a0bc17b2c4"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-compiled-texture-diagnostic/trial-1-B.png",
+      "bytes": 300624,
+      "sha256": "7eae20db2dd5b308bbf7ef910251e541044871d544229e45d51731026da08108"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-compiled-texture-diagnostic/trial-1-B.rgba",
+      "bytes": 576000,
+      "sha256": "9fa1b417e6d97bcf0379c5946781ef7d2bd947c813c77ceaf42e26a0bc17b2c4"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-fresh-process-control/trial-0-C.png",
+      "bytes": 300624,
+      "sha256": "7eae20db2dd5b308bbf7ef910251e541044871d544229e45d51731026da08108"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-fresh-process-control/trial-0-C.rgba",
+      "bytes": 576000,
+      "sha256": "9fa1b417e6d97bcf0379c5946781ef7d2bd947c813c77ceaf42e26a0bc17b2c4"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-fresh-process-control/trial-1-B.png",
+      "bytes": 300624,
+      "sha256": "7eae20db2dd5b308bbf7ef910251e541044871d544229e45d51731026da08108"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-fresh-process-control/trial-1-B.rgba",
+      "bytes": 576000,
+      "sha256": "9fa1b417e6d97bcf0379c5946781ef7d2bd947c813c77ceaf42e26a0bc17b2c4"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-fresh-process-control/trial-2-B.png",
+      "bytes": 300622,
+      "sha256": "05270914c060954934a71c5433d8f1381b62b01a0a445dd44d86170c0c520380"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-fresh-process-control/trial-2-B.rgba",
+      "bytes": 576000,
+      "sha256": "aa1eb4e0a32fc3e9d230de973e9c257d1427a3b410307dc8c118d04187b68957"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-fresh-process-control/trial-3-C.png",
+      "bytes": 300624,
+      "sha256": "7eae20db2dd5b308bbf7ef910251e541044871d544229e45d51731026da08108"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-fresh-process-control/trial-3-C.rgba",
+      "bytes": 576000,
+      "sha256": "9fa1b417e6d97bcf0379c5946781ef7d2bd947c813c77ceaf42e26a0bc17b2c4"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-gpu-frame-input-diagnostic/trial-0-C.png",
+      "bytes": 300623,
+      "sha256": "133890d2a5ad8375dc911d625a6bb1ccde8fdb1f5b1332bf75970c65f200246d"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-gpu-frame-input-diagnostic/trial-0-C.rgba",
+      "bytes": 576000,
+      "sha256": "4a2ec73ec20382236acc09f1ea42b8fb3f58b4704fd43cd26986b7fc829e8eec"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-gpu-frame-input-diagnostic/trial-1-B.png",
+      "bytes": 300623,
+      "sha256": "133890d2a5ad8375dc911d625a6bb1ccde8fdb1f5b1332bf75970c65f200246d"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-gpu-frame-input-diagnostic/trial-1-B.rgba",
+      "bytes": 576000,
+      "sha256": "4a2ec73ec20382236acc09f1ea42b8fb3f58b4704fd43cd26986b7fc829e8eec"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-input-diagnostic/trial-0-C.png",
+      "bytes": 300624,
+      "sha256": "7eae20db2dd5b308bbf7ef910251e541044871d544229e45d51731026da08108"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-input-diagnostic/trial-0-C.rgba",
+      "bytes": 576000,
+      "sha256": "9fa1b417e6d97bcf0379c5946781ef7d2bd947c813c77ceaf42e26a0bc17b2c4"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-input-diagnostic/trial-1-B.png",
+      "bytes": 300624,
+      "sha256": "7eae20db2dd5b308bbf7ef910251e541044871d544229e45d51731026da08108"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-input-diagnostic/trial-1-B.rgba",
+      "bytes": 576000,
+      "sha256": "9fa1b417e6d97bcf0379c5946781ef7d2bd947c813c77ceaf42e26a0bc17b2c4"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-state-diagnostic/trial-0-C.png",
+      "bytes": 300624,
+      "sha256": "7eae20db2dd5b308bbf7ef910251e541044871d544229e45d51731026da08108"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-state-diagnostic/trial-0-C.rgba",
+      "bytes": 576000,
+      "sha256": "9fa1b417e6d97bcf0379c5946781ef7d2bd947c813c77ceaf42e26a0bc17b2c4"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-state-diagnostic/trial-1-B.png",
+      "bytes": 300622,
+      "sha256": "05270914c060954934a71c5433d8f1381b62b01a0a445dd44d86170c0c520380"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/native-state-diagnostic/trial-1-B.rgba",
+      "bytes": 576000,
+      "sha256": "aa1eb4e0a32fc3e9d230de973e9c257d1427a3b410307dc8c118d04187b68957"
+    }
+  ],
+  "mediaPolicy": "PNG/RGBA remain local; hashes and byte lengths are published. Raw JSON/logs/transcripts, executed originals, portable harnesses and helper/test sources are archived.",
+  "historicalABPerformed": false,
+  "improvementClaimAllowed": false,
+  "archiveFormat": "XZ-compressed unchanged tar stream",
+  "extractCommand": "tar -xJf reports/issue-resolution-20261022/continuation/performance-render-observer-raw.tar.xz",
+  "recompressionProvenance": {
+    "originalGzip": {
+      "path": "reports/issue-resolution-20261022/continuation/performance-render-observer-raw.tar.gz",
+      "bytes": 12721009,
+      "sha256": "d69bc0aa75210253a3700a4cab7bb72c2898fb3a05f222bf7f0c2b4ff4522364",
+      "gitBlob": "602bae0bd7bc2282fed23987be94daabb84f588a",
+      "retainedLocalPath": "/workspace/actions/reports/issue-resolution-20261022/continuation/performance-render-observer-raw.tar.gz"
+    },
+    "publishedXz": {
+      "path": "reports/issue-resolution-20261022/continuation/performance-render-observer-raw.tar.xz",
+      "bytes": 1134424,
+      "sha256": "3b8bb0c5bcb6522039825c1cb266d062d0f90f5dd2a7fe3b95e5069ac6436a3d"
+    },
+    "compression": {
+      "format": "XZ",
+      "lzmaPreset": 6
+    },
+    "tarStream": {
+      "bytes": 123760640,
+      "sha256": "02d6e0cf9dbc5e7e3f325c9ee1248c6b924bc3ec3e9dc817030ccb6125aab7e5",
+      "originalGzipAndPublishedXzExact": true
+    },
+    "membersVerified": 104,
+    "allMemberBytesLengthsAndSha256Exact": true,
+    "sourceHelperHarnessTestsAndRawMemberContentsChanged": false,
+    "base64Length": 1512568,
+    "requestLimitBytes": 16777216
+  }
+}

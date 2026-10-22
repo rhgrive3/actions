@@ -1,0 +1,262 @@
+{
+  "status": "rejected-native-self-control",
+  "hardwareClaim": false,
+  "improvementClaimAllowed": false,
+  "historicalABPerformed": false,
+  "source": {
+    "sourceSha": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+    "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+    "revision": "e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5"
+  },
+  "environment": {
+    "browser": "151.0.7922.34",
+    "playwright": "1.62.1",
+    "node": "v24.19.0",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "launch": {
+      "executablePath": "/workspace/actions/.browser-cache/chromium-1234/chrome-linux64/chrome",
+      "headless": true,
+      "chromiumSandbox": false,
+      "args": [
+        "--no-sandbox",
+        "--disable-dev-shm-usage",
+        "--use-angle=swiftshader",
+        "--enable-unsafe-swiftshader"
+      ]
+    }
+  },
+  "diagnostic": {
+    "kind": "same-native-pinned-ci-browser-fresh-control",
+    "browserCondition": "Pinned CI Chromium151; separate condition from earlier Chromium143, no runtime/source changes",
+    "playwrightVersion": "1.62.1",
+    "requiredBrowser": "151.0.7922.34",
+    "bootGateMs": 180000,
+    "harnessSha256": "faa08d214403130945c6987375d65e3d5444648e6d5d8bf9829f6285d220a8bf",
+    "doesNotReplaceCalibration": true,
+    "exactPixelGateRetained": true,
+    "inputCollectorFunctionSha256": "9aa4913e086e4443e029ddd3b81a6ec823cc09ae98f75e4e046f67d09481af8e",
+    "bootstrapRandomFixtureUnchanged": true,
+    "gpuColorTargetsRequested": true,
+    "observations": [
+      "Character material uniforms",
+      "environment/post uniforms",
+      "actual scene draw order and matrices",
+      "geometry ranges",
+      "GL shader source hashes",
+      "exact geometry/index/instance/bone source bytes and GTAO/sampler/image SHA256",
+      "optional actual-frame CPU profile"
+    ]
+  },
+  "rawEvidence": ".browser-evidence/continuation-performance/native-ci151-control/whole-game-calibrate.json",
+  "rawEvidenceSha256": "7d8a88e168b3a3b529ced7c2fbb92e0f61b9e22acc7a6ede96cb2c50a6ba1354",
+  "supervisorDeadlineSeconds": 1200,
+  "bootGateSeconds": 180,
+  "prior143BootWaitSeconds": 900,
+  "order": [
+    "C",
+    "B",
+    "B",
+    "C"
+  ],
+  "pixelSha256": [
+    "4a2ec73ec20382236acc09f1ea42b8fb3f58b4704fd43cd26986b7fc829e8eec",
+    "b3a53068373b54a5a531407e918089f4832ba25ca016b050b91759bf2fa8ac2f",
+    "4a2ec73ec20382236acc09f1ea42b8fb3f58b4704fd43cd26986b7fc829e8eec",
+    "4a2ec73ec20382236acc09f1ea42b8fb3f58b4704fd43cd26986b7fc829e8eec"
+  ],
+  "pixelDifferences": [
+    {
+      "ordinal": 0,
+      "variant": "C",
+      "changedChannels": 0,
+      "changedPixels": 0,
+      "maxAbsDelta": 0,
+      "firstDifferences": []
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "changedChannels": 3,
+      "changedPixels": 1,
+      "maxAbsDelta": 2,
+      "firstDifferences": [
+        {
+          "x": 208,
+          "bottomY": 131,
+          "channel": "R",
+          "first": 94,
+          "trial": 96
+        },
+        {
+          "x": 208,
+          "bottomY": 131,
+          "channel": "G",
+          "first": 49,
+          "trial": 51
+        },
+        {
+          "x": 208,
+          "bottomY": 131,
+          "channel": "B",
+          "first": 199,
+          "trial": 201
+        }
+      ]
+    },
+    {
+      "ordinal": 2,
+      "variant": "B",
+      "changedChannels": 0,
+      "changedPixels": 0,
+      "maxAbsDelta": 0,
+      "firstDifferences": []
+    },
+    {
+      "ordinal": 3,
+      "variant": "C",
+      "changedChannels": 0,
+      "changedPixels": 0,
+      "maxAbsDelta": 0,
+      "firstDifferences": []
+    }
+  ],
+  "comparability": [
+    {
+      "ordinal": 0,
+      "variant": "C",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": true,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": false,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    },
+    {
+      "ordinal": 2,
+      "variant": "B",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": true,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    },
+    {
+      "ordinal": 3,
+      "variant": "C",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": true,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    }
+  ],
+  "inputCategories": [
+    {
+      "ordinal": 0,
+      "variant": "C",
+      "equalSections": {
+        "buffers": true,
+        "textures": true,
+        "meshStates": true,
+        "lightStates": true,
+        "cameraState": true,
+        "materialStates": true,
+        "shaderSources": true,
+        "gpuColorTargets": true,
+        "limits": true
+      },
+      "differentGpuColorTargets": []
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "equalSections": {
+        "buffers": true,
+        "textures": true,
+        "meshStates": true,
+        "lightStates": true,
+        "cameraState": true,
+        "materialStates": true,
+        "shaderSources": true,
+        "gpuColorTargets": false,
+        "limits": true
+      },
+      "differentGpuColorTargets": [
+        [
+          "composer/renderTarget1"
+        ],
+        [
+          "composer/renderTarget2"
+        ]
+      ]
+    },
+    {
+      "ordinal": 2,
+      "variant": "B",
+      "equalSections": {
+        "buffers": true,
+        "textures": true,
+        "meshStates": true,
+        "lightStates": true,
+        "cameraState": true,
+        "materialStates": true,
+        "shaderSources": true,
+        "gpuColorTargets": false,
+        "limits": true
+      },
+      "differentGpuColorTargets": [
+        [
+          "composer/renderTarget1"
+        ],
+        [
+          "composer/renderTarget2"
+        ]
+      ]
+    },
+    {
+      "ordinal": 3,
+      "variant": "C",
+      "equalSections": {
+        "buffers": true,
+        "textures": true,
+        "meshStates": true,
+        "lightStates": true,
+        "cameraState": true,
+        "materialStates": true,
+        "shaderSources": true,
+        "gpuColorTargets": false,
+        "limits": true
+      },
+      "differentGpuColorTargets": [
+        [
+          "composer/renderTarget1"
+        ],
+        [
+          "composer/renderTarget2"
+        ]
+      ]
+    }
+  ],
+  "ownership": {
+    "allScopesReportedTerminated": true,
+    "allRecordedProcessesNowExited": true,
+    "live": []
+  },
+  "runtimeSubstitutions": false,
+  "actualDrawOrCompiledMaterialHooks": false,
+  "limits": [
+    "Pinned CI browser/Playwright condition only; local Node24 differs from official Node22. This is not a complete official CI run.",
+    "All four native trials complete; strict pixel rejection remains. No historical timing A/B was run.",
+    "Earlier Chromium143 failures remain separate valid observations; changing the browser does not establish a runtime optimization or driver cause.",
+    "CPU upload-source equality does not prove equality of all actual GPU textures/vertex buffers/depth or shader compiler output.",
+    "Physical-device performance, native offscreen core reduction and G0 quality adoption remain unaccepted."
+  ]
+}

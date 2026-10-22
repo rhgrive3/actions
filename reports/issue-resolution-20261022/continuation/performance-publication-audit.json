@@ -1,0 +1,106 @@
+{
+  "status": "passed",
+  "archiveSha256": "3b8bb0c5bcb6522039825c1cb266d062d0f90f5dd2a7fe3b95e5069ac6436a3d",
+  "membersVerified": 104,
+  "allMemberLengthsAndSha256Exact": true,
+  "hardLinksResolvedAndContentVerified": true,
+  "excludedPrivateAssetMediaExtensions": true,
+  "rawGpuBufferTexturePayloadsPublished": false,
+  "gpuReadbackPolicy": "GPU readback values are hashed in browser and payload fields discarded before JSON serialization; transient readback arrays were not persisted.",
+  "pngRgbaPolicy": "Ignored local files only with member path/length/SHA256 receipts, not archived.",
+  "credentialSignatureFindings": [],
+  "auditLimits": [
+    "Credential signature scan covers common GitHub/AWS/live-key/private-key patterns and exact curated paths, not a universal secret detector.",
+    "Public shader text, ordinary GL uniforms, matrices and CPU endpoint state are present; private asset/GPU geometry byte payloads are excluded."
+  ],
+  "curatedSourceAndReportSignatureFindings": [],
+  "additionalIssue845Archive": {
+    "sha256": "e821b21c3cfa79297f5a2e40eaa8c3344b5c352bc67d6957ab30403a69944673",
+    "members": [
+      {
+        "path": ".ci-scratch/continuation-browser/issue845-fresh.json",
+        "bytes": 26248,
+        "sha256": "4fc19b4c5725d6b939e49553acafd97d9f2a96c7db4859346f2a510d6cda615f"
+      },
+      {
+        "path": ".ci-scratch/continuation-browser/audit845-native-first.mjs",
+        "bytes": 4927,
+        "sha256": "973374f852245c9f24cb55384e1604795134123aaaa5701c0e23d6fa1c0d05c4"
+      },
+      {
+        "path": ".ci-scratch/continuation-browser/audit845-native-first.log",
+        "bytes": 1795,
+        "sha256": "e4f29acccace5072b22dd9d14384973540a422a2158e5a48a3ad0bb5e834548f"
+      },
+      {
+        "path": ".ci-scratch/continuation-browser/audit845-native.mjs",
+        "bytes": 5237,
+        "sha256": "81ddb874614a117e0dd735193effa544ed2eab9ec8c509d6df69dde7c4c571cd"
+      },
+      {
+        "path": ".ci-scratch/continuation-browser/audit845-native.log",
+        "bytes": 2713,
+        "sha256": "640892a72fd32c758a16881d2639d8634f6a17852c0d011e4d00e04063dc026a"
+      },
+      {
+        "path": ".ci-scratch/continuation-browser/audit845-native-result.json",
+        "bytes": 4216,
+        "sha256": "df7ed4fa14ec9dde1fbf186983386a26d1fa3a66344da891742000b3a87dcec8"
+      },
+      {
+        "path": ".ci-scratch/continuation-browser/audit845-hair-negative.mjs",
+        "bytes": 4712,
+        "sha256": "6ebdd14845eb4f7e2ba591880d5019c345fcf0b9dec82c312a2921df5bcee619"
+      },
+      {
+        "path": ".ci-scratch/continuation-browser/audit845-hair-negative.log",
+        "bytes": 1215,
+        "sha256": "dacd5d2d631708c14b8e50f03df5b547003f4465cb8c395424d2bac1dbc2e8bd"
+      },
+      {
+        "path": ".ci-scratch/continuation-browser/audit845-hair-negative-result.json",
+        "bytes": 1486,
+        "sha256": "7e7a18f11cf70c1d9ec243b9e8e038e9c38a11896aaf51dac1b4fe0eaa1b78d6"
+      },
+      {
+        "path": ".ci-scratch/continuation-browser/source-controller-composed.mjs.txt",
+        "bytes": 44653,
+        "sha256": "fe58f1e54f2588a4f24cdfbe0727664ea4404593d4d3e8d181eab524aa2835c0"
+      }
+    ],
+    "privateAssetMediaExtensionsAbsent": true,
+    "credentialSignatureFindings": []
+  },
+  "archivePath": "reports/issue-resolution-20261022/continuation/performance-render-observer-raw.tar.xz",
+  "archiveBytes": 1134424,
+  "extractCommand": "tar -xJf reports/issue-resolution-20261022/continuation/performance-render-observer-raw.tar.xz",
+  "recompressionValidation": {
+    "originalGzip": {
+      "path": "reports/issue-resolution-20261022/continuation/performance-render-observer-raw.tar.gz",
+      "bytes": 12721009,
+      "sha256": "d69bc0aa75210253a3700a4cab7bb72c2898fb3a05f222bf7f0c2b4ff4522364",
+      "gitBlob": "602bae0bd7bc2282fed23987be94daabb84f588a",
+      "retainedLocalPath": "/workspace/actions/reports/issue-resolution-20261022/continuation/performance-render-observer-raw.tar.gz"
+    },
+    "publishedXz": {
+      "path": "reports/issue-resolution-20261022/continuation/performance-render-observer-raw.tar.xz",
+      "bytes": 1134424,
+      "sha256": "3b8bb0c5bcb6522039825c1cb266d062d0f90f5dd2a7fe3b95e5069ac6436a3d"
+    },
+    "compression": {
+      "format": "XZ",
+      "lzmaPreset": 6
+    },
+    "tarStream": {
+      "bytes": 123760640,
+      "sha256": "02d6e0cf9dbc5e7e3f325c9ee1248c6b924bc3ec3e9dc817030ccb6125aab7e5",
+      "originalGzipAndPublishedXzExact": true
+    },
+    "membersVerified": 104,
+    "allMemberBytesLengthsAndSha256Exact": true,
+    "sourceHelperHarnessTestsAndRawMemberContentsChanged": false,
+    "base64Length": 1512568,
+    "requestLimitBytes": 16777216
+  },
+  "allMemberBytesUnchangedFromOriginalGzip": true
+}
