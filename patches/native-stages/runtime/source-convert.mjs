@@ -24,6 +24,8 @@ class BufferBuilder{
  constructor(Type,initial=4096){this.Type=Type;this.array=new Type(initial);this.length=0;}
  push(...values){if(this.length+values.length>this.array.length){const a=new this.Type(Math.max(this.length+values.length,this.array.length*2));a.set(this.array);this.array=a;}this.array.set(values,this.length);this.length+=values.length;}
  finish(){return this.array.slice(0,this.length);}
+ // Keep common scratch reusable, but do not pin a giant object's high-water allocation.
+ reset(){this.length=0;if(this.array.length>16384)this.array=new this.Type(4096);}
 }
 function lines(text,visit){let start=0;while(start<text.length){let end=text.indexOf('\n',start);if(end<0)end=text.length;visit(text.slice(start,end).trimEnd());start=end+1;}}
 const any=(s,words)=>words.some(w=>s.includes(w));
@@ -58,7 +60,8 @@ export function parseSourceOBJ(text,semantics){
   geometry.push(g);indexChunks.push(ix.finish());
   objects.push({name,material,vo,vc:count,io,ic:ix.length,bounds:[min,max],sourceHasUV:!!uv.length,...classify(name,material,semantics)});
   vo+=count;io+=ix.length;uvOffset+=uv.length/2;normalOffset+=n.length/3;
-  v=new BufferBuilder(Float32Array);n=new BufferBuilder(Float32Array);uv=new BufferBuilder(Float32Array);ix=new BufferBuilder(Uint32Array);
+  // Geometry and index chunks above own copies. Reuse only the private per-object scratch buffers.
+  v.reset();n.reset();uv.reset();ix.reset();
  }
  lines(text,l=>{
   if(l.startsWith('o ')){flush();name=l.slice(2).trim();material=null;}
