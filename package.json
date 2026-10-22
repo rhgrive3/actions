@@ -18,7 +18,8 @@
     "test:quality": "node --experimental-vm-modules --experimental-global-webcrypto --test patches/local-quality/tests/nav-heuristic.test.mjs patches/local-quality/tests/pose-rotation.test.mjs patches/local-quality/tests/motion-fk-hotpath.test.mjs patches/local-quality/tests/prop-atlas.test.mjs patches/local-quality/tests/prop-retention.test.mjs && node patches/local-quality/tests/performance-v2-ao.test.mjs && node patches/local-quality/tests/performance-v2-geometry.test.mjs && node patches/local-quality/tests/performance-v2-topology.test.mjs",
     "test:backup": "python3 -m unittest discover -s tools/backup/tests -p \"test_*.py\" -v",
     "bench:aplus": "node scripts/benchmark-aplus-verification.mjs",
-    "test": "npm run check:patches && npm run audit:migration && npm run test:direct-source && npm run test:quality && npm run test:relay && npm run test:backup"
+    "test": "npm run check:patches && npm run audit:migration && npm run test:direct-source && npm run test:quality && npm run test:relay && npm run test:backup && npm run test:queue-recovery",
+    "test:queue-recovery": "node --test patches/local-quality/tests/queue-30-lifecycle.test.mjs patches/local-quality/tests/queue-30-audio.test.mjs patches/local-quality/tests/queue-30-ribbons.test.mjs patches/local-quality/tests/special-vfx-zero-drag-parity.test.mjs patches/local-quality/tests/lobby-reflection-lifecycle.test.mjs"
   },
   "devDependencies": {
     "esbuild": "0.28.2"
