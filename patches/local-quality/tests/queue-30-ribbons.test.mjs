@@ -103,3 +103,32 @@ test('empty RibbonPool retains one warm upload and reinitializes after clearing'
   for (let i = 0; i < 100; i++) p.update(i + 2, { x: 0, y: 1, z: 4 });
   assert.deepStrictEqual(attrs.map(a => a.updates), after);
 });
+
+
+test('idle ShapePool preserves warmed instancing without 4 redundant uploads per frame', () => {
+  const begin = source.indexOf('class ShapePool {');
+  const finish = source.indexOf('// The kit attached to one FX instance', begin);
+  assert.ok(begin > 0 && finish > begin);
+  class InstancedBufferGeometry extends BufferGeometry {}
+  class InstancedBufferAttribute extends BufferAttribute {}
+  const STHREE = { ...THREE, InstancedBufferGeometry, InstancedBufferAttribute };
+  const ShapePool = new Function('THREE', source.slice(begin, finish) + '\nreturn ShapePool;')(STHREE);
+  const geo = new BufferGeometry();
+  geo.setAttribute('position', new BufferAttribute(new Float32Array(12), 3));
+  geo.dispose = () => {};
+  const pool = new ShapePool(STHREE, 'idle-test', geo, 8,
+    ['iA', 'iB', 'iCol', 'iPar'], '', '', false, { value: 0 });
+  pool.update(1 / 60);
+  assert.deepStrictEqual(pool.buf.map(a => a.updates), [1, 1, 1, 1]);
+  for (let i = 0; i < 180; i++) pool.update(1 / 60);
+  assert.deepStrictEqual(pool.buf.map(a => a.updates), [1, 1, 1, 1]);
+  pool.add(10, new Float32Array(16));
+  pool.update(1 / 60);
+  assert.deepStrictEqual(pool.buf.map(a => a.updates), [2, 2, 2, 2]);
+  pool.clear();
+  pool.update(1 / 60);
+  assert.deepStrictEqual(pool.buf.map(a => a.updates), [3, 3, 3, 3]);
+  for (let i = 0; i < 60; i++) pool.update(1 / 60);
+  assert.deepStrictEqual(pool.buf.map(a => a.updates), [3, 3, 3, 3]);
+  assert.equal(pool.mesh.geometry.instanceCount, 1);
+});
