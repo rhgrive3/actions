@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // Native gameplay + separate inspection camera. No physical GPU/retail fidelity claim.
+import {createWiperResourceLifecycle,isWiperResourceLifecycleWarning} from './lib/inkwave-wiper-resource-lifecycle.mjs';
 import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {inspectWiperSceneOcclusion} from './lib/inkwave-wiper-occlusion.mjs';
@@ -42,7 +43,8 @@ try{
  page=await browser.newPage({viewport:{width:960,height:720}});
  page.on('response',response=>{const key=new URL(response.url()).pathname.slice(1);if(!replacements.has(key)&&key!==dummyPath)return;
   responsePending.push(response.body().then(bytes=>consumed.set(key,hash(bytes))).catch(e=>responseErrors.push(e.message)));});
- page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+ page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'||(m.type()==='warning'&&isWiperResourceLifecycleWarning(m.text())))errors.push(m.text());});
+ await page.addInitScript('window.__createWiperResourceLifecycle='+createWiperResourceLifecycle.toString());
  await page.addInitScript('window.__readWiperAmbientState='+readWiperAmbientState.toString());
  if(rngDiagnostic)await page.addInitScript('window.__createWiperAmbientObserver='+createWiperAmbientObserver.toString());
  await page.addInitScript(({id,rngDiagnostic})=>{
@@ -91,6 +93,8 @@ try{
           if(window.__G?.game!==game||!game.frozen||typeof game.debug?.freeze!=='function')
             throw Error('Native game publication did not complete before first frame');
           game.debug.freeze();
+          window.__wiperResources=window.__createWiperResourceLifecycle(window.__G,game);
+          window.__wiperResources.snapshot('native-publication');
           boundary.clocks=window.__wiperClocks();
         });
       }});
@@ -101,6 +105,7 @@ try{
    if(JSON.stringify(window.__wiperBootFreeze?.clocks)!==JSON.stringify(window.__wiperClocks()))throw Error('Scene drift before range');
    observer?.setPhase('trusted-entry');observer?.mark('before-entry-seed-reset');window.__wiperResetSeed();observer?.mark('after-entry-seed-reset');g.api.setLoadout({weapon:id});
    if(g.api.getLoadout()?.weapon!==id)throw Error('Native loadout selection failed');
+   window.__wiperResources.snapshot('trusted-entry');
    window.__wiperEntry={trusted:true,clocks:window.__wiperClocks(),rng:window.__wiperRng()};
   },true);
  },{id,rngDiagnostic});
@@ -115,10 +120,12 @@ try{
   window.__wiperObserver?.setPhase('readiness');
   const startupTiming={beforeReadiness:performance.now()};const readiness=await window.__awaitWiperSources(G,TargetDummyCharacter);
   startupTiming.afterReadiness=performance.now();
+  await window.__wiperResources.settle('range-ready');
   if(!Object.hasOwn(Object.getPrototypeOf(G.projectiles),Symbol.for('inkwave.s3.projectile-shapes.v1')))throw Error('Missing native shape installer');
   g.debug.freezeBots();g.input.keys.clear();g.input.pressed.clear();g.debug.fire(false);g.R.setDynamicScale(1);
   const aim=()=>{G.rig.yaw=0;G.rig.pitch=.06;};
   window.__wiperObserver?.setPhase('warm');window.__wiperObserver?.mark('before-warm-seed-reset');window.__wiperResetSeed();window.__wiperObserver?.mark('after-warm-seed-reset');startupTiming.warmStart=performance.now();for(let i=0;i<60;i++){aim();g._frame(1/60);}startupTiming.warmEnd=performance.now();
+  await window.__wiperResources.settle('after-native-warm');
   if(!a.alive||!a.grounded||G.projectiles.list.length)throw Error('Unsettled native stance or preexisting projectile');
   if(!window.__validWiperProfileStyle(g.profile.style)||!window.__validWiperProfileStyle(a.character.style))throw Error('Native profile/style binding mismatch');
   window.__wiperObserver?.mark('after-warm');const beforeReset=window.__wiperRng();window.__wiperResetSeed();window.__wiperObserver?.mark('after-capture-seed-reset');window.__wiperObserver?.setPhase('setup-tail');
@@ -140,6 +147,7 @@ try{
   window.__wiperStep={tick:-1,async step(tick,capture){
    if(tick!==this.tick+1)throw Error('Nonconsecutive native frame');this.tick=tick;
    window.__wiperObserver?.setPhase('native:'+tick);
+   if(tick===0){await window.__wiperResources.settle('pre-tick-zero');}
    aim();g.debug.fire(tick<(action==='charged'?80:2));G.renderer.info.reset();
    const t=performance.now();g._frame(1/60);const frameCpuMs=performance.now()-t;window.__wiperObserver?.mark('native-end');window.__wiperObserver?.setPhase('post-native:'+tick);
    const nativeRender={...r.info.render},memory={...r.info.memory};
@@ -176,13 +184,14 @@ try{
    if(owned.length)capturedLive=true;
    if(gl.getError())throw Error('WebGL error');
    window.__wiperObserver?.setPhase('await-gap:'+tick);
-   return {tick,state,axes,paintHash,paintEvents:paints.slice(),aimTrace:aimTrace.slice(),nativeRender,memory,frameCpuMs,phases,images,census:window.__wiperCensus(G,G.scene,TargetDummyCharacter)};
+   return {resourceLifecycle:tick===0?window.__wiperResources.records:null,tick,state,axes,paintHash,paintEvents:paints.slice(),aimTrace:aimTrace.slice(),nativeRender,memory,frameCpuMs,phases,images,census:window.__wiperCensus(G,G.scene,TargetDummyCharacter)};
   },finish(){g.debug.fire(false);G.paint.splat=originalSplat;G.projectiles._aimFrom=originalAim;
    if(!costProbe&&!rngDiagnostic&&(!seen||!firstBirth||!expired))throw Error('Native slash birth and termination required');
    let gpuDrained=false;if(dentalPilot||rngDiagnostic){if(dentalPilot){const shape=G.projectiles._s3Shapes;if(this.tick-lastRelatedGeometryTick<21)throw Error('Need 21 native frames after last related geometry for slash speck lifetime');if(shape.slashV.count!==0||shape.slashH.count!==0||shape.sheets.mesh.count!==0)throw Error('Related slash/sheet geometry still live at final native tick');}const drainStart=performance.now();gl.finish();window.__wiperFinalDrainMs=performance.now()-drainStart;if(gl.getError())throw Error('Final GPU drain error');gpuDrained=true;}
    return {firstBirth,firstRetirement,expired,aimTrace,paintEvents:paints,gpuDrained,relatedFx:{lastGeometryTick:lastRelatedGeometryTick,finalTick:this.tick,speckTailFrames:21},final:physical()};}};
-  return {startupTiming,costProbe,dentalPilot,capturePolicy:dentalPilot?{continuous:{view:'front',firstTick:75,lastTick:160},top:'pre-release, actual birth, actual retirement, final frame',unchangedControls:'pending native acceptance'}:null,initial,dummyModuleUrl:dummyUrl,startupRngBeforeReset:beforeReset,target:target.toArray(),quality:g.settings.quality,atlasSize:G.paint.size,palette:{colorblind:g.settings.colorblind,teams:G.teamColors.map(c=>c.getHex()),local:a.color.getHex()},scope:'native simulation plus separate inspection-camera raw renderer; not native postprocessed view; CPU diagnostic not performance acceptance'};
+  return {resourceLifecycle:window.__wiperResources.records,startupTiming,costProbe,dentalPilot,capturePolicy:dentalPilot?{continuous:{view:'front',firstTick:75,lastTick:160},top:'pre-release, actual birth, actual retirement, final frame',unchangedControls:'pending native acceptance'}:null,initial,dummyModuleUrl:dummyUrl,startupRngBeforeReset:beforeReset,target:target.toArray(),quality:g.settings.quality,atlasSize:G.paint.size,palette:{colorblind:g.settings.colorblind,teams:G.teamColors.map(c=>c.getHex()),local:a.color.getHex()},scope:'native simulation plus separate inspection-camera raw renderer; not native postprocessed view; CPU diagnostic not performance acceptance'};
  },{id,action,dummyPath,costProbe,dentalPilot,rngDiagnostic,visibilityProbe});
+ console.log(JSON.stringify({schema:1,status:'wiper-resource-lifecycle',records:setup.resourceLifecycle}));
  nodeTimings.afterSetup=performance.now();
  const frames=[],pilot=id==='s3-saber-heavy'&&action==='charged';
  result={setup,frames,status:'partial',costProbe};
@@ -191,6 +200,7 @@ try{
   const transferStart=performance.now();
   const row=await page.evaluate(({tick,capture})=>window.__wiperStep.step(tick,capture),{tick,capture:costProbe?tick%2===0:pilot||[0,90,120,160].includes(tick)});
   row.nodeEvaluateWallMs=performance.now()-transferStart;const saveStart=performance.now();
+  if(row.resourceLifecycle)console.log(JSON.stringify({schema:1,status:'wiper-resource-lifecycle',records:row.resourceLifecycle}));
   for(const im of row.images){const bytes=Buffer.from(im.png,'base64');delete im.png;assert.ok(bytes.length>1000);assert.equal(bytes.subarray(1,4).toString(),'PNG');const file=action+'-'+im.view+'-'+String(tick).padStart(4,'0')+'.png';fs.writeFileSync(path.join(out,file),bytes);im.file=file;im.pngSha256=hash(bytes);}
   row.pngDecodeWriteHashMs=performance.now()-saveStart;frames.push(row);
   fs.writeFileSync(path.join(out,'partial-frames.json'),JSON.stringify({status:'partial',setup,frames,nodeTimings,costProbe}));
@@ -206,6 +216,7 @@ try{
  result={setup,completion,frames,ambientObservation,dt:1/60,frameCount:frames.length,visibilityProbe,rngDiagnostic,costProbe,dentalPilot,nodeTimings,finalGpuDrainMs:dentalPilot?await page.evaluate(()=>window.__wiperFinalDrainMs):null,variant,id,action,pilot,physicalGpuMeasured:false,performanceAccepted:false};
 }catch(e){failure=e;}
 finally{
+ if(page){try{const records=await page.evaluate(()=>window.__wiperResources?.records??[]);result??={};result.resourceLifecycle=records;console.log(JSON.stringify({schema:1,status:'wiper-resource-lifecycle-final',records}));}catch(e){errors.push('resource-lifecycle-recovery: '+e.message);}}
  if(rngDiagnostic&&page){try{const partial=await page.evaluate(()=>window.__wiperObserver?.report());result??={};result.ambientObservation??=partial;}catch(e){errors.push('observer-recovery: '+e.message);}}
  await browser?.close();await new Promise(r=>server.close(r));
  const receipt={status:failure?'failed':visibilityProbe?'visibility-diagnostic-only':rngDiagnostic?'rng-diagnostic-only':costProbe?'cost-diagnostic-only':'passed',head,baseline,variant,id,action,inputHash:manifest.inputHash,contentHash:manifest.contentHash,binding,loaded:[...loaded],consumed:[...consumed],responseErrors,result,errors,error:failure?.stack};
