@@ -230,13 +230,19 @@ export function installWeaponAudioEngine(Engine){
   };
   const init=p.init;p.init=function(...args){
     const result=init.apply(this,args);
-    if(this.ctx)for(const id of this._warmWeapons||[])this.prepareWeapon(id,{urgent:true});
+    if(this.ctx){
+      // Predecode the very short exact recorded phrase on audio unlock.
+      // This is asynchronous: no main-thread charging-frame allocations or
+      // blocking UI gesture, and no repeated network fetches per charge.
+      chargerRiseBuffer(this.ctx).catch(()=>{});
+      for(const id of this._warmWeapons||[])this.prepareWeapon(id,{urgent:true});
+    }
     return result;
   };
-  p.prewarmChargerChargeRise=function(duration){
+  p.prewarmChargerChargeRise=function(){
     if(!this.ctx)return false;
-    try{chargerRiseBuffer(this.ctx,duration);return true;}
-    catch{return false;} // Unsupported / memory-limited context cannot break weapon admission.
+    chargerRiseBuffer(this.ctx).catch(()=>{});
+    return true;
   };
   p.playChargerChargeRise=function(options){
     try{return playChargerRise(this,options);}
