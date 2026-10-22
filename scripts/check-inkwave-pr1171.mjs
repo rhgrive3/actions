@@ -40,8 +40,15 @@ try {
       const el=hud.ret.querySelector(k==='l'||k==='r'?'.iw-ret__twin.'+k:'.iw-ret__'+k);
       const css=getComputedStyle(el);return [k,css.visibility!=='hidden'&&Number(css.opacity)>.01];
     }));
-    const normal=shape();hud.ret.classList.add('is-lock');await new Promise(r=>setTimeout(r,240));
-    const locked=shape();hud.ret.classList.remove('is-lock');await new Promise(r=>setTimeout(r,240));const restored=shape();
+    const settle=async()=>{
+      shape(); // Flush the style change before observing native CSS transitions.
+      const transitions=hud.ret.getAnimations({subtree:true}).filter(a=>Number.isFinite(a.effect.getComputedTiming().endTime));
+      let deadline;
+      try{await Promise.race([Promise.all(transitions.map(a=>a.finished)),new Promise((_,reject)=>{deadline=setTimeout(()=>reject(Error('Reticle CSS transition did not finish')),2000);})]);}
+      finally{clearTimeout(deadline);}
+    };
+    const normal=shape();hud.ret.classList.add('is-lock');await settle();
+    const locked=shape();hud.ret.classList.remove('is-lock');await settle();const restored=shape();
     const THREE=await import('three');const {PaintSystem}=await import('/src/world/paint.js');const {G}=await import('/src/core/ctx.js');
     G.netm=null;G.settings={quality:'low'};G.actors=[];
     // Native built Character gun hierarchy, Projectiles/beam and world sweep.

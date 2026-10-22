@@ -32,7 +32,9 @@ CPU/GPU の共有輪郭と回転時の走査範囲の修正は既に main に存
 
 - 関連する snapshot / transport / reliability / relay の90テスト成功。
 - `npm test` 成功（main更新前の作業ツリー）。最新 main のカタログ変更は別途取り込み済み。
-- network 全体検査では既存の `combat-pvp-cap-queue.metadata.test.mjs` の Kraken fallback fixture が失敗。変更を含まない main `26a4db412` の独立 worktree でも同じ失敗を確認した。assertion や本番 admission は緩和していない。全 network suite の成功は主張しない。
-- ブラウザの成功 receipt はまず contentHash `55cb3e9387d56aee2644f5c6ffa02e77593e707678c8cc8b6ec7e36bd9aa43d5` で取得。最新 main 取り込み後の build と同一 PR HEAD も CI で検査する。
+- network 全体検査では既存の `combat-pvp-cap-queue.metadata.test.mjs` の Kraken fallback fixture が失敗。変更を含まない main `26a4db412` の独立 worktree でも同じ失敗を確認した。assertion や本番 admission は緩和していない。不足していた fixture の contact/special snapshot map と、明示的な synthetic receipt を補い、active flag だけ／期限切れ receipt の拒否も追加した。既存の上限・証明消費 assertion は維持して2テスト成功。全 network suite の成功は主張しない。
+- ブラウザの成功 receipt はまず contentHash `55cb3e9387d56aee2644f5c6ffa02e77593e707678c8cc8b6ec7e36bd9aa43d5` で取得。最新 main 取り込み後の contentHash は `799052359c1d668012b4b5b4aacfa2547138b351ccd4ec82737b12fd6fbcef15`。同一 PR HEAD も CI で検査する。
 - Linux Playwright WebKit は実エンジン。physical iPad / Nintendo 本家の計測ではない。
 - #1671 / #1757 / #845 / #1434 などの実機性能、#1789 / #287 / #725 / #532 などの未校正物理・入力、#1708 / #1565 / #1097 / #1116 などの本家アセット・アニメーション根拠を必要とする残課題は未完のまま。根拠のない数値調整や issue の一括 close はしない。
+
+最終描画検査では既存の reticle 復帰検査が固定240ms待機で遷移途中を読むケースを確認した。style を確定してから実 CSS transition の finished を上限2秒で待つ fixture に変更し、復帰の期待値は維持した。ゲーム側の遷移時間や表示は変更しない。
