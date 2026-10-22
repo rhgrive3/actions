@@ -8,10 +8,13 @@ const start=source.indexOf('    const relayout = () => {');
 const end=source.indexOf("    window.addEventListener('resize', relayout",start);
 assert.ok(start>0&&end>start,'test must exercise current production relayout body');
 const relayoutCode=source.slice(start,end);
-const destStart=source.indexOf('  destroy()');
-const endDestroy=source.indexOf('\n  }',destStart)+4;
-assert.ok(destStart>0&&endDestroy>destStart,'destroy method must remain discoverable');
-const rawDestroy=source.slice(destStart,endDestroy).trim().replace(/^destroy\(\)/,'function destroy()');
+const destroyLine=source.match(/^  destroy\(\) \{[^\n]+\}$/m)?.[0];
+assert.ok(destroyLine,'reliability adapter must retain the original destroy anchor');
+const rawDestroy=destroyLine.trim().replace(/^destroy\(\)/,'function destroy()');
+const setupStart=source.indexOf("    this._abort.signal.addEventListener('abort'");
+const setupEnd=source.indexOf('    if (!this.active) return;',setupStart);
+assert.ok(setupStart>0&&setupEnd>setupStart,'abort listener must own rAF cleanup');
+const setup=source.slice(setupStart,setupEnd);
 function rig(){
  const frames=new Map();let next=1,cancelled=[];
  const requestAnimationFrame=cb=>{const id=next++;frames.set(id,cb);return id;};
@@ -19,10 +22,12 @@ function rig(){
  const ctx={requestAnimationFrame,cancelAnimationFrame,document:{documentElement:{classList:{remove(){}}}}};
  const make=vm.runInNewContext('(function(){\n'+relayoutCode+'\nreturn relayout;})',ctx);
  const destroy=vm.runInNewContext('('+rawDestroy+')',ctx);
+ const register=vm.runInNewContext('(function(){\n'+setup+'\n})',ctx);
  const counts={resync:0,reset:0,layout:0,coordinates:0,stopped:0,removed:0};
  const obj={_relayoutRaf:null,_abort:new AbortController(),gyro:{resync(){counts.resync++;},stop(){counts.stopped++;}},
   resetPointers(){counts.reset++;},_layoutAll(){counts.layout++;if(this.editing)counts.coordinates++;},
   editing:true,root:{remove(){counts.removed++;}}};
+ register.call(obj);
  return {counts,frames,cancelled,obj,relayout:make.call(obj),destroy:()=>destroy.call(obj)};
 }
 test('three native viewport events coalesce to one layout but all cancel gestures and resync gyro',()=>{
