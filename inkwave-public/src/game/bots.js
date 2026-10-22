@@ -305,15 +305,18 @@ export class BotBrain {
   // Low on health mid-duel: head for own ink away from the threat (swim = heal + hard to spot), then come back.
   _pickRetreat() {
     const a = this.a, t = this.target;
-    let bestP = null, bs = -Infinity;
+    let bestP = null, bs = -Infinity, threatBaseDistance;
     for (let i = 0; i < 16; i++) {
       const ang = Math.random() * Math.PI * 2, r = 3 + Math.random() * 8;
       _v.set(a.pos.x + Math.cos(ang) * r, a.pos.y, a.pos.z + Math.sin(ang) * r);
       const st = G.paint.regionStats(_v.x, _v.y, _v.z, 1.4, a.team, _stats);
       if (!st.n) continue;
-      const away = t ? Math.hypot(_v.x - t.pos.x, _v.z - t.pos.z) - Math.hypot(a.pos.x - t.pos.x, a.pos.z - t.pos.z) : 0;
-      const score = st.own * 6 + away * 0.8 - r * 0.15 + (t && !G.physics.los(_v2.set(_v.x, _v.y + 1, _v.z), _v3.set(t.pos.x, t.pos.y + 1, t.pos.z)) ? 4 : 0);
-      if (score > bs) { bs = score; bestP = _v.clone(); }
+      const away = t ? Math.hypot(_v.x - t.pos.x, _v.z - t.pos.z) - (threatBaseDistance ??= Math.hypot(a.pos.x - t.pos.x, a.pos.z - t.pos.z)) : 0;
+      const baseScore = st.own * 6 + away * 0.8 - r * 0.15;
+      // The optional LOS cover bonus is at most four; a loser cannot replace the best.
+      if (baseScore + (t ? 4 : 0) <= bs) continue;
+      const score = baseScore + (t && !G.physics.los(_v2.set(_v.x, _v.y + 1, _v.z), _v3.set(t.pos.x, t.pos.y + 1, t.pos.z)) ? 4 : 0);
+      if (score > bs) { bs = score; if (bestP) bestP.copy(_v); else bestP = _v.clone(); }
     }
     if (bestP) this._pathTo(bestP, 0.5); else this.path = null;
     this.repath = 1.0;
@@ -410,7 +413,7 @@ export class BotBrain {
       const ang = Math.random() * Math.PI * 2, r = 1 + Math.random() * 7;
       _v.set(a.pos.x + Math.cos(ang) * r, a.pos.y, a.pos.z + Math.sin(ang) * r);
       const st = G.paint.regionStats(_v.x, _v.y, _v.z, 1.2, a.team, _stats);
-      if (st.n && st.own > 0.6 && r < bd) { bd = r; bestP = _v.clone(); }
+      if (st.n && st.own > 0.6 && r < bd) { bd = r; if (bestP) bestP.copy(_v); else bestP = _v.clone(); }
     }
     if (bestP) this._pathTo(bestP, 0.4);
     else { this.path = null; }
@@ -694,7 +697,7 @@ export class BotBrain {
         const st = G.paint.regionStats(_v.x, _v.y, _v.z, 2.2, a.team, _stats);
         if (!st.n || boss.hz.threat(_v.x, _v.y, _v.z, 1.5).level > 0) continue;
         const sc = st.enemy - r * 0.02;
-        if (sc > bs) { bs = sc; bestP = _v.clone(); }
+        if (sc > bs) { bs = sc; if (bestP) bestP.copy(_v); else bestP = _v.clone(); }
       }
       if (bestP && Math.random() < 0.7) { this._pathTo(bestP, 0.4); return; }
     }
@@ -726,14 +729,16 @@ export class BotBrain {
   _bossEvade(boss, th) {
     const a = this.a, nav = G.nav;
     let best = -1, bs = -Infinity;
+    const escapeAngle = Math.atan2(th.ax, th.az);
     for (let i = 0; i < 12; i++) {
-      const ang = Math.atan2(th.ax, th.az) + (Math.random() - 0.5) * 2.4, r = 3 + Math.random() * 5;
-      _v.set(a.pos.x + Math.sin(ang) * r, a.pos.y, a.pos.z + Math.cos(ang) * r);
+      const ang = escapeAngle + (Math.random() - 0.5) * 2.4, r = 3 + Math.random() * 5;
+      const sinAng = Math.sin(ang), cosAng = Math.cos(ang);
+      _v.set(a.pos.x + sinAng * r, a.pos.y, a.pos.z + cosAng * r);
       const id = nav.nearest(_v, 1.2);
       if (id < 0) continue;
       const n = nav.nodes[id];
       const t = boss.hz.threat(n.x, n.y, n.z, 1.6);
-      const s = -t.level * 8 - Math.hypot(n.x - a.pos.x, n.z - a.pos.z) * 0.25 + (Math.sin(ang) * th.ax + Math.cos(ang) * th.az) * 1.5 + Math.random() * 0.5;
+      const s = -t.level * 8 - Math.hypot(n.x - a.pos.x, n.z - a.pos.z) * 0.25 + (sinAng * th.ax + cosAng * th.az) * 1.5 + Math.random() * 0.5;
       if (s > bs) { bs = s; best = id; }
     }
     if (best < 0) return;
