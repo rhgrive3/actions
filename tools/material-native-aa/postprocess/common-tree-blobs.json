@@ -1,0 +1,75 @@
+{
+  "commit": "cc0c90afe8031643e6a890974f8f44a40a30509e",
+  "tree": "de64f6d82cdf518b9acbc4ce3ae7c897509b406c",
+  "blobs": [
+    {
+      "path": "inkwave-public/src/config.js",
+      "sha": "7c505dd080d4d01461b2b1480b4b412c4d655d21"
+    },
+    {
+      "path": "inkwave-public/src/core/ctx.js",
+      "sha": "637789587ff84ddeea2aeb01b6e7e4ad83343c76"
+    },
+    {
+      "path": "inkwave-public/src/core/renderer.js",
+      "sha": "d5bbbe358a2928fd57d5210bfeb0f26946571e98"
+    },
+    {
+      "path": "inkwave-public/src/fx/screenfx.js",
+      "sha": "1584cd2b7acf43cbfc613ad2c0d2a0a608acd08f"
+    },
+    {
+      "path": "inkwave-public/src/game/inkFlight.js",
+      "sha": "eeab25571d40ad4ad7656235965ee1efacda80fa"
+    },
+    {
+      "path": "inkwave-public/vendor/three/build/three.core.js",
+      "sha": "0a1d6cb9ef3cabc97a50bd02394c85e8d1c513c2"
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/math/SimplexNoise.js",
+      "sha": "3f251002e2b2a319b1491cb8c489128225cfb8e4"
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/postprocessing/EffectComposer.js",
+      "sha": "a16d97eabad3998f6a688f1d44a27f4135a2628c"
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/postprocessing/GTAOPass.js",
+      "sha": "a2ced81be8322872b30fb4085851158109ed499c"
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/postprocessing/MaskPass.js",
+      "sha": "3a2afff8cf261faa6972d87c4843580901eac7ad"
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/postprocessing/OutputPass.js",
+      "sha": "1366c6e1906e22cb556d24ae58bcf9efc24cca33"
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/postprocessing/Pass.js",
+      "sha": "50acb4784ee0d67f34f5efcb574b55d0b083c81b"
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/postprocessing/ShaderPass.js",
+      "sha": "ce72fcf13ec3daff78b940fe2bfc78def01729e8"
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/shaders/CopyShader.js",
+      "sha": "6deb24849e1dd080f35af75728d29028920f1fb3"
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/shaders/GTAOShader.js",
+      "sha": "2ca4ef0f94ca803efd63841157ee8e7408247f0f"
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/shaders/OutputShader.js",
+      "sha": "5f257829fe655f74252d67585e1d63e035c05b67"
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/shaders/PoissonDenoiseShader.js",
+      "sha": "ff3e45feb6d75d0da0bf5fb034a52230ba78243e"
+    }
+  ],
+  "scope": "Verified official COMMON tree excerpt: only the 17 loaded native source paths."
+}
