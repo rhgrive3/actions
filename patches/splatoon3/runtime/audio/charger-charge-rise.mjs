@@ -62,14 +62,16 @@ export function chargerRiseBuffer(ctx,seconds=RISE_REFERENCE.defaultSeconds){
   const sound=synthesizeChargerRise(ctx,key);
   group.set(key,sound);return sound;
 }
-export function playChargerRise(audio,{duration=RISE_REFERENCE.defaultSeconds,volume=.55}={}){
+export function playChargerRise(audio,{duration=RISE_REFERENCE.defaultSeconds,volume=.55,pos=null}={}){
   const ctx=audio?.ctx,target=audio?.sfxIn;
   if(!ctx||!target||typeof ctx.createGain!=='function'||typeof ctx.createBufferSource!=='function')return null;
   const amount=clamp(Number(volume)||0,0,1);if(amount<=0)return null;
   const buffer=chargerRiseBuffer(ctx,duration);
   const source=ctx.createBufferSource(),gain=ctx.createGain(),now=ctx.currentTime;
   source.buffer=buffer;source.loop=false;source.playbackRate.value=1;
-  source.connect(gain);gain.connect(target);
+  const validPos=pos&&[pos.x,pos.y,pos.z].every(Number.isFinite);
+  const panner=validPos&&typeof audio._panner==='function'?audio._panner(pos,3):null;
+  source.connect(gain);gain.connect(panner||target);if(panner)panner.connect(target);
   gain.gain.setValueAtTime(0,now);gain.gain.linearRampToValueAtTime(amount,now+.006);
   let stopped=false,ended=false;
   const handle={
@@ -82,7 +84,7 @@ export function playChargerRise(audio,{duration=RISE_REFERENCE.defaultSeconds,vo
       try{source.stop(t+d);}catch{}
     }
   };
-  source.onended=()=>{ended=true;try{source.disconnect();gain.disconnect();}catch{}};
+  source.onended=()=>{ended=true;try{source.disconnect();gain.disconnect();panner?.disconnect?.();}catch{}};
   source.start(now);
   return handle;
 }
