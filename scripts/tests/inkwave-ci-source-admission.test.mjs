@@ -92,6 +92,8 @@ for (const [workflow, names] of Object.entries(jobs)) for (const job of names) {
   });
 }
 
+const a350Branch = 'inkwave/runtime-main-a350-integration-20261022';
+const a350Epoch = {mode:'maina350-byte-identical-paint-source-epoch',sha:'a350b6b89e4cb86abe37273db6315c74085f8ac5'};
 const epoch = {mode: 'maine1f-byte-identical-paint-source-epoch', sha: 'e1fa66ad8465bf87caaf232d51543def72c35875'};
 const controlName = 'Bind reviewed source controls to declared immutable Git source leaves';
 const prepareName = 'Replay reviewed Roller births, pool reset and pinned paint in the main reference';
@@ -134,6 +136,11 @@ function sourceRouteContract(source) {
       assert.ok(body.includes('          ' + name + ': ${{ ' + value + ' }}\n'), name + ': dynamic immutable event declaration');
   }
   const cases = [
+    [context(a350Branch, '1788'), true, true, 'a350'],
+    [context(a350Branch + '-unreviewed', '1788'), false, true, 'legacy'],
+    [context(a350Branch, '1788', {baseRef: 'not-main'}), false, true, 'legacy'],
+    [context(a350Branch, '1788', {event: 'workflow_dispatch'}), false, true, 'legacy'],
+    [context(a350Branch, '1788', {side: 'after'}), false, false, 'none'],
     [context(runtimeBranch, '1770'), true, true, 'current'],
     [context(runtimeBranch, '1758'), true, true, 'current'],
     [context(runtimeBranch, '1758', {baseRef: 'not-main'}), true, true, 'declared-legacy'],
@@ -155,14 +162,15 @@ function sourceRouteContract(source) {
     const {result, calls} = probe(body, c); assert.equal(result.status, 0, result.stderr); assert.equal(calls.length, 1);
     const script = index === 0 ? 'check-inkwave-current-pair-controls' : 'prepare-inkwave-projectile-baseline';
     const receipt = index === 0 ? 'current-pair-controls' : 'baseline-birth-adjustment';
+    const chosenEpoch = route === 'a350' ? a350Epoch : epoch;
     const wanted = [`scripts/${script}.mjs`, '--baseline', '.ci-baseline', '--candidate', '.',
       ...(route === 'legacy' ? [] : ['--base-sha', '1'.repeat(40), '--candidate-sha', '2'.repeat(40)]),
-      ...(route === 'current' ? ['--expected-mode', epoch.mode, '--expected-source-base', epoch.sha, '--expected-source-head', epoch.sha] : []),
+      ...(['current','a350'].includes(route) ? ['--expected-mode', chosenEpoch.mode, '--expected-source-base', chosenEpoch.sha, '--expected-source-head', chosenEpoch.sha] : []),
       '--receipt', `.ci-scratch/projectile-visuals/before/${receipt}.json`];
     assert.deepEqual(calls[0], wanted, route + ': exact original/new consumer arguments');
   }
-  for (const body of bodies) {
-    const {result, calls} = probe(body, context(runtimeBranch, '1770'), 42);
+  for (const body of bodies) for (const selectedBranch of [runtimeBranch,a350Branch]) {
+    const {result, calls} = probe(body, context(selectedBranch, '1770'), 42);
     assert.equal(result.status, 42, 'current-epoch rejection must stop the step');
     assert.equal(calls.length, 1, 'no retry or legacy fallback after current-epoch rejection');
   }
@@ -185,10 +193,13 @@ test('workflow policy rejects missing/changed epoch flags, unsafe selection, fal
     source.replace('DECLARED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}', 'DECLARED_HEAD_SHA: ${{ github.sha }}'),
     source.replace('if [ "$PAIR_EVENT_NAME" = "pull_request" ] && ', 'if '),
     source.replace(' && [ "$PAIR_BASE_REF" = "main" ]', ''),
-    source.replace('current-pair-controls.json\n          else', 'current-pair-controls.json || true\n          else'),
+    source.replace('current-pair-controls.json\n', 'current-pair-controls.json || true\n'),
     source.replace('          else\n            node scripts/check-inkwave-current-pair-controls.mjs',
       '          else\n            node scripts/check-inkwave-current-pair-controls.mjs' + currentCall),
-  ].entries()) assert.throws(() => sourceRouteContract(changed), undefined, 'policy mutation ' + mutation);
+    source.replace(a350Epoch.mode, 'unknown-a350-epoch'),
+    source.replace('--expected-source-base '+a350Epoch.sha, '--expected-source-base '+'f'.repeat(40)),
+    source.replace('--expected-source-head '+a350Epoch.sha, '--expected-source-head '+'f'.repeat(40)),
+  ].entries()) { assert.notEqual(changed, source, 'mutation must actually change workflow '+mutation); assert.throws(() => sourceRouteContract(changed), undefined, 'policy mutation ' + mutation); }
 });
 
 test('current-epoch tests and fixture-only changes retain mandatory source and native comparison gates', () => {

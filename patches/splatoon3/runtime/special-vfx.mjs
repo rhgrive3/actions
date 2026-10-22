@@ -66,6 +66,7 @@ class Director {
     const T = this.THREE;
     this.kit = new SpecialVfxKit(T, fx.root, fx.q ?? 1, inkLightUniforms(T, fx));
     this.tracks = new Map(); this.rounds = new Map(); this.objects = new Map(); this.lasers = new Map();
+    this.inkjetImpacts = new WeakSet();
     this.domes = new Map(); this.coolers = new Map(); this.fists = new Map(); this.storms = new Map();
     this.v = [0, 1, 2, 3, 4, 5, 6, 7].map(() => new T.Vector3());
     this.up = new T.Vector3(0, 1, 0); this.c = new T.Color(); this.camPos = new T.Vector3(0, 10, 0);
@@ -287,6 +288,7 @@ class Director {
     for (const record of this.fists.values()) releaseFistModel(record);
     for (const [a, t] of this.tracks) this.endTrack(a, t);
     for (const m of [this.tracks, this.rounds, this.objects, this.lasers, this.domes, this.coolers, this.fists, this.storms]) m.clear();
+    this.inkjetImpacts = new WeakSet();
     this.kit.clear();
   }
   updateWailLasers(dt) {
@@ -333,7 +335,21 @@ class Director {
       seen.add(p); r.age += dt; r.last.copy(p.pos); if (p.vel) r.vel.copy(p.vel);
       if (this.near(p.pos, 90)) this.call(spec.frame, r, p, dt);
     }
-    for (const [p, r] of this.rounds) if (!seen.has(p)) { this.finishRound(r, true); this.rounds.delete(p); }
+    for (const [p, r] of this.rounds) if (!seen.has(p)) { this.finishRound(r, r.wid !== 'inkjet'); this.rounds.delete(p); }
+  }
+  // Inkjet's native burst owns its terminal point. A missing list entry is
+  // not an impact: it may be cleared, recycled or removed without a burst.
+  inkjetImpact(p, x, y, z) {
+    if (this.inkjetImpacts.has(p)) return;
+    this.inkjetImpacts.add(p);
+    const r = this.rounds.get(p);
+    if (r) { this.finishRound(r, false); this.rounds.delete(p); }
+    this.call(ROUND_FX.inkjet.impact, { last: new this.THREE.Vector3(x, y, z), color: this.rgb(p.owner, p.team) });
+  }
+  resetInkjetRound(p) {
+    this.inkjetImpacts.delete(p);
+    const r = this.rounds.get(p);
+    if (r?.wid === 'inkjet') { this.finishRound(r, false); this.rounds.delete(p); }
   }
   finishRound(r, impact) {
     for (const rib of Object.values(r.d)) if (rib?.pts) { this.kit.ribbons.end(rib); this.kit.glowRibbons.end(rib); }
@@ -1431,7 +1447,7 @@ function groundBelowPoint(self, p, fallback) {
 const directors = new WeakMap();
 export function specialVfxDirector(fx) { return fx?.s3SpecialVfx || directors.get(fx) || null; }
 export function installSpecialVfx(api) {
-  const { FX, on, G } = api;
+  const { FX, Projectiles, on, G } = api;
   if (!FX?.prototype?.update || FX.prototype[INSTALL]) return api;
   Object.defineProperty(FX.prototype, INSTALL, { value: true });
   const ensure = (fx) => {
@@ -1458,6 +1474,24 @@ export function installSpecialVfx(api) {
   const dispose = FX.prototype.dispose;
   if (dispose) FX.prototype.dispose = function (...args) { const d = directors.get(this); if (d) { d.clear(); d.kit.dispose(); directors.delete(this); delete this.s3SpecialVfx; } return dispose.apply(this, args); };
   const route = (e) => { const d = G.fx && G.fx.s3SpecialVfxEnabled !== false && directors.get(G.fx); if (d) d.event(e); };
+  const P = Projectiles?.prototype, blast = P?._blastBurst, fresh = P?._new;
+  // Terrain bursts re-enter through a deferred snapshot with no live position.
+  // Observe the actual projectile terminal once, not its later gameplay flush.
+  if (typeof blast === 'function') P._blastBurst = function (p, at, ...args) {
+    const inkjet = this === G.projectiles && p?.wid === 'inkjet' && finite(p.pos?.x) && finite(p.pos?.y) && finite(p.pos?.z) && finite(at?.x) && finite(at?.y) && finite(at?.z);
+    // Preserve the native terminal coordinates before chained callbacks reuse
+    // their scratch vectors. Do not alter the projectile or gameplay result.
+    const x = inkjet ? at.x : 0, y = inkjet ? at.y : 0, z = inkjet ? at.z : 0;
+    const out = blast.call(this, p, at, ...args);
+    const d = inkjet && G.fx?.s3SpecialVfxEnabled !== false && directors.get(G.fx);
+    if (d) d.call(d.inkjetImpact, p, x, y, z);
+    return out;
+  };
+  if (typeof fresh === 'function') P._new = function (...args) {
+    const p = fresh.apply(this, args), d = this === G.projectiles && directors.get(G.fx);
+    if (d) d.call(d.resetInkjetRound, p);
+    return p;
+  };
   on?.('all:special', (e) => { if (!e?.actor?.remote) route(e); });
   api.specialVfxReplay = route;
   return api;

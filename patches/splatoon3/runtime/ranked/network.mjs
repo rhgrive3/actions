@@ -1,3 +1,4 @@
+import { validRainmakerShotOrigin } from './rainmaker-shot-origin.mjs';
 import { validRankedSnapshot } from './engine.mjs';
 import { admitRankedPose, bindRankedInput, rankedInputFor } from './pose-admission.mjs';
 import { noteRankedBarrierShots, queueRankedBarrierHit, resetRankedBarrierAdmission } from './barrier-admission.mjs';
@@ -205,7 +206,7 @@ function validEvent(e) {
   if (e.team !== undefined && e.team !== 0 && e.team !== 1) return false;
   if (e.kind.startsWith('rainmaker-')) {
     if (!finiteVector(e.pos)) return false;
-    if (e.kind === 'rainmaker-shot' && (!finiteVector(e.aim) || !Number.isFinite(e.speed) || e.speed < 0 || e.speed > 300)) return false;
+    if (e.kind === 'rainmaker-shot' && (!validRainmakerShotOrigin(e.shotOrigin, e) || !finiteVector(e.aim) || !Number.isFinite(e.speed) || e.speed < 0 || e.speed > 300)) return false;
     for (const key of ['damage', 'blastDamage', 'outerDamage', 'radius', 'paintRadius', 'nearRadius', 'directRange', 'effectiveRange', 'launchY', 'recoil', 'trailRadius']) if (e[key] !== undefined && (!Number.isFinite(e[key]) || e[key] < 0 || e[key] > 2000)) return false;
   }
   if (e.kind === 'clam-paint' && (!finiteVector(e.pos) || !Number.isFinite(e.radius) || e.radius <= 0 || e.radius > 1)) return false;
