@@ -92,6 +92,18 @@ test('issue #1750: flat-floor Bloblobber 0/-20/-45 flight logs all four rounds',
       assert.equal(contacts.length, 2, 'two physical rebounds, then third-floor termination');
       rounds.push({ sourceUnit, index, initialSpeed: Number((p.catalog.descriptor.packet?.SpawnSpeedGround ?? 0).toFixed(5)), contacts, endpoint, startZ: Number(startZ.toFixed(5)) });
     }
+    if(scenario==='current'&&degrees===-45){
+      assert.ok(rounds[0].endpoint.z>19.5,'first large bubble preserves its long baseline');
+      for(const small of rounds.slice(1)){
+        assert.ok(small.endpoint.z>18,
+          'a -45 degree small bubble must preserve its floor-tangential speed');
+        assert.ok(small.contacts[0].vz>20,
+          'the first floor rebound must not shrink the outgoing forward component');
+      }
+    }
+    if(scenario==='current'&&degrees===0)
+      assert.ok(rounds.every(p=>p.endpoint.z>26),
+        'a level four-bubble shot must keep its source-consistent forward trajectory');
     result.push({ scenario, degrees, rounds });
   }
   console.log('BLOBLOBBER_FLAT_BOUNCE_AUDIT ' + JSON.stringify({
