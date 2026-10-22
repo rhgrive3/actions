@@ -5770,3 +5770,14 @@ See [regression analysis and evidence](weapon-regressions-20261021/README.md). F
 - 実装: `patches/splatoon3/runtime/respawn-lifecycle.mjs`、`runtime/squid-spawn-presentation.mjs`、`patches/native-stages/adapter.mjs`。再現はTurfの通常開始、FIREせず待機。初期8人、両チーム、30/60/120 Hzでintro中の位置・共有発射・実衝突による着地を確認。オンラインは2-peer CPU fixtureで人間・ボット双方の所有者追従を確認。
 - 検証: 開始タイミング3件、オンライン6件、スポナー描画10件が成功。旧main lifecycleに戻す負の対照では開始タイミング3件すべて失敗。ブラウザと統合PRの検証結果は [統合記録](opening-spawn-pr-integration-20261022.md) を参照。
 - 未確認: Switch実機の開始フレーム、発射までの正確な猶予、実ネットワーク遅延、物理GPU/iPad性能・本家の描画一致。既存1秒の開始待機・飛行はINKWAVE校正値として維持。
+# 2026-10-22: resource/input lifetime issue batch
+
+Seven bounded fixes are composed from PRs #1779–#1782, #1784 and #1788 on
+main `a350b6b89`: zero-drag sprite arithmetic, stage RegExp reuse, shared BOT aim
+expression, shadow-only composer retention, LOW lobby reflection release,
+exception-safe reflection state, and instance-owned Input listener disposal.
+See [scope and verification](inkwave-issue-batch-20261022.md).
+Splatoon 3 Ver.11.3.0 remains the reference; movement, firing, paint, damage and
+input mapping values are not retuned. Controlled local regressions distinguish
+these lifecycle changes from retail/device comparison. Physical iPad memory/FPS,
+Switch controls and all remaining calibration issues are unverified.

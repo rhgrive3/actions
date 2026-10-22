@@ -78,6 +78,8 @@ function renderer(fail = '') {
     xr: { enabled: true }, shadowMap: { autoUpdate: true, needsUpdate: true },
     state: { buffers: { depth: { setMask() { if (fail === 'mask') throw Error('mask'); } } } },
     getRenderTarget() { return this.target; },
+    getActiveCubeFace() { return 0; },
+    getActiveMipmapLevel() { return 0; },
     getDrawingBufferSize(out) { out.set(initial.width, initial.height); },
     setRenderTarget(t) { if (fail === 'bind' && t !== initial) throw Error('bind'); this.target = t; },
     clear() { if (fail === 'clear') throw Error('clear'); },
@@ -136,4 +138,51 @@ test('HIGH/LOW/MEDIUM cycles free GPU targets exactly once and rebind fresh text
     assert.equal(refl.on.value, 1);
   }
   assert.equal(first.disposals, 1);
+});
+
+test('nested reflection restores the active cube face and mip level', () => {
+  const h = lobby(), r = renderer();
+  r.face = 4; r.mip = 2;
+  r.getActiveCubeFace = () => r.face;
+  r.getActiveMipmapLevel = () => r.mip;
+  r.setRenderTarget = (target, face = 0, mip = 0) => {
+    r.target = target; r.face = face; r.mip = mip;
+  };
+  h.ground.onBeforeRender(r, {}, new Camera());
+  assertRestored(h, r);
+  assert.equal(r.face, 4);
+  assert.equal(r.mip, 2);
+});
+
+test('restoration failure preserves the original render error and restores object flags', () => {
+  const h = lobby(), r = renderer();
+  const original = new Error('original render failure');
+  r.render = () => { throw original; };
+  const bind = r.setRenderTarget.bind(r);
+  r.setRenderTarget = target => {
+    if (target === r.initial) throw new Error('secondary restore failure');
+    bind(target);
+  };
+  assert.throws(() => h.ground.onBeforeRender(r, {}, new Camera()), error => error === original);
+  assert.equal(h._inRefl, false);
+  assert.equal(h.ground.visible, true);
+  assert.equal(r.autoClear, true);
+  assert.equal(r.xr.enabled, true);
+  assert.equal(r.shadowMap.autoUpdate, true);
+  assert.equal(r.shadowMap.needsUpdate, true);
+  assert.equal(h.mats.ground.userData.refl.on.value, 0);
+});
+
+test('restoration failure after a successful pass propagates and leaves reflection disabled', () => {
+  const h = lobby(), r = renderer();
+  const failure = new Error('restore failure');
+  const bind = r.setRenderTarget.bind(r);
+  r.setRenderTarget = target => {
+    if (target === r.initial) throw failure;
+    bind(target);
+  };
+  assert.throws(() => h.ground.onBeforeRender(r, {}, new Camera()), error => error === failure);
+  assert.equal(h._inRefl, false);
+  assert.equal(h.ground.visible, true);
+  assert.equal(h.mats.ground.userData.refl.on.value, 0);
 });
