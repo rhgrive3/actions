@@ -4,6 +4,7 @@ import { usesBucketSlosherSheet } from './projectile-visuals.mjs';
 import { constrainMuzzle } from './camera-aim-controls.mjs';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst, catalogSplashNearestSlot, catalogSplashRadius } from './catalog-splash-paint.mjs';
+import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
 import { mainInkFootprint, mainInkBurstFootprint } from './main-ink-footprints.mjs';
 import { installRollerContactPaint, rollerContactDepth, rollerPaintHalfWidth } from './roller-contact-paint.mjs';
@@ -830,6 +831,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
     });
     if(r.family==='roller'&&(key==='vertical'||key==='horizontal'))paintCatalogRollerNearest(a,group);
+    // Bloblobber's pinned 11.3.0 NearestParam owns a separate foot-paint
+    // release stamp (width 2.2, depth 1.2), not a damage collider. Added
+    // catalog Sloshers previously skipped it entirely. Reuse the existing
+    // native Slosher paint owner: deterministic seed, no remote authority,
+    // grounded-only admission and zero projectile/RNG side effects.
+    if(r.sourceActor==='WeaponSlosherBathtub')
+      paintSlosherNearest(G,a,r.parameters,1,s.bloblobberNearestSerial=(s.bloblobberNearestSerial||0)+1);
     notify(a,r,at,direction,charge);
   }
   // Added Rollers (Dynamo, Carbon, Flingza, Big Swig) used to paint only where
