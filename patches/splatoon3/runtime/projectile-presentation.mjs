@@ -115,6 +115,21 @@ export function catalogBubbleRadiusScale(totalBounces){
   return Math.pow(.75,Math.max(0,Math.floor(totalBounces||0)));
 }
 
+// The small bubbles' sourced BounceAfterMaxSpeed bounds the speed away from
+// the impacted FLOOR. Do not rescale the full velocity vector: that discards
+// tangent momentum on shallow/downward shots and shortens their rebound reach.
+// The precise retail internal branch is unavailable, so keep this isolated as
+// an INKWAVE physical model that can be checked against captured trajectories.
+export function catalogBubbleLimitGroundNormalSpeed(velocity, normal, perFrameLimit, hz=60){
+  if(!Number.isFinite(perFrameLimit)||perFrameLimit<0||!normal)return velocity;
+  const lengthSq=normal.lengthSq();
+  if(!(lengthSq>1e-12))return velocity;
+  const normalSpeed=velocity.dot(normal)/Math.sqrt(lengthSq);
+  const maxSpeed=perFrameLimit*hz;
+  if(normalSpeed>maxSpeed)velocity.addScaledVector(normal,(maxSpeed-normalSpeed)/Math.sqrt(lengthSq));
+  return velocity;
+}
+
 // Source-owned, fixed-60Hz falling paint drops already live in _s3SplashDrops.
 // Draw their actual positions, NOT a guessed second visual trajectory.
 // This path never modifies collision, lifetime, landing paint or network state.

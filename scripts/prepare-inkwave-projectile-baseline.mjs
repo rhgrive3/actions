@@ -1,21 +1,23 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
+import {parseSourceAdmissionArgs, assertReceiptSeparate} from './lib/inkwave-source-admission-cli.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { verifyDeclaredPaintSources } from './lib/inkwave-declared-paint-source-pair.mjs';
 import { alignRollerBirthBaseline, alignProjectilePoolBaseline, assertUnchangedRollerSource } from './lib/inkwave-roller-birth-baseline.mjs';
-import { MAIN_INK_BASELINE_PATHS, planMainInkBaseline } from './lib/inkwave-main-ink-baseline.mjs';
+import { MAINE1F_PAINT_SOURCE_PAIR, MAIN9FE_PAINT_SOURCE_PAIR, MAIN_INK_BASELINE_PATHS, planMainInkBaseline } from './lib/inkwave-main-ink-baseline.mjs';
 
-const arg = name => {
-  const at = process.argv.indexOf(name);
-  assert.ok(at >= 0 && process.argv[at + 1], 'required ' + name);
-  return path.resolve(process.argv[at + 1]);
-};
+const options = parseSourceAdmissionArgs(process.argv.slice(2), ['--baseline', '--candidate', '--receipt', '--base-sha', '--candidate-sha', '--base-git-root', '--candidate-git-root', '--expected-mode', '--expected-source-base', '--expected-source-head'], ['--baseline', '--candidate', '--receipt']);
+const value = name => options.get(name) ?? null;
+const arg = name => path.resolve(value(name));
 const baseline = arg('--baseline'), candidate = arg('--candidate'), receipt = arg('--receipt');
 assert.notEqual(fs.realpathSync(baseline), fs.realpathSync(candidate), 'the reference must be a separate checkout');
 const file = 'patches/splatoon3/runtime/weapons-fidelity.mjs';
 const profile = 'patches/splatoon3/profile.json';
+const receiptInputs = [...MAIN_INK_BASELINE_PATHS, profile];
+const receiptGitRoots = [value('--base-git-root') || baseline, value('--candidate-git-root') || candidate];
+assertReceiptSeparate(receipt, [baseline, candidate], receiptInputs, receiptGitRoots);
 assertUnchangedRollerSource(JSON.parse(fs.readFileSync(path.join(baseline, profile))), JSON.parse(fs.readFileSync(path.join(candidate, profile))));
 
 const readSource = (root, rel) => {
@@ -24,16 +26,29 @@ const readSource = (root, rel) => {
 };
 const originals = new Map(MAIN_INK_BASELINE_PATHS.map(rel => [rel, readSource(baseline, rel)]));
 const candidates = new Map(MAIN_INK_BASELINE_PATHS.map(rel => [rel, readSource(candidate, rel)]));
-const value = name => {const at=process.argv.indexOf(name);return at<0?null:process.argv[at+1];};
+const expectationFlags = ['--expected-mode','--expected-source-base','--expected-source-head'];
+const hasExpectation = expectationFlags.some(flag => options.has(flag));
+let expectedPair = null;
+if (hasExpectation) {
+  const values = expectationFlags.map(flag => {
+    assert.ok(options.has(flag), 'complete ' + flag);
+    return value(flag);
+  });
+  expectedPair={mode:values[0],sourceBase:values[1],sourceHead:values[2]};
+}
 const declaredFlags=['--base-sha','--candidate-sha','--base-git-root','--candidate-git-root'];
-const hasDeclared=declaredFlags.some(flag=>process.argv.includes(flag));
+const hasDeclared=declaredFlags.some(flag=>options.has(flag));
+if(expectedPair?.mode === MAIN9FE_PAINT_SOURCE_PAIR.mode)
+ assert.ok(hasDeclared,'main9fe source epoch requires declared immutable Git source commits');
+if(expectedPair?.mode === MAINE1F_PAINT_SOURCE_PAIR.mode)
+ assert.ok(hasDeclared,'maine1f source epoch requires declared immutable Git source commits');
 let declared=null,declaredExpected=null;
 if(hasDeclared){
- for(const flag of ['--base-sha','--candidate-sha'])assert.ok(value(flag)&&process.argv.indexOf(flag)===process.argv.lastIndexOf(flag),'complete unique '+flag);
+ for(const flag of ['--base-sha','--candidate-sha'])assert.ok(value(flag),'complete '+flag);
  declared=verifyDeclaredPaintSources({baseline:originals,candidate:candidates,
   baseGitRoot:value('--base-git-root')||baseline,candidateGitRoot:value('--candidate-git-root')||candidate,
   baseSha:value('--base-sha'),candidateSha:value('--candidate-sha')});
- const immutablePlan=planMainInkBaseline(declared.baseline,declared.candidate);
+ const immutablePlan=planMainInkBaseline(declared.baseline,declared.candidate,expectedPair);
  declaredExpected=Object.fromEntries(['mode','sourceBase','sourceHead'].map(key=>[key,immutablePlan.evidence[key]]));
  assert.ok(Object.values(declaredExpected).every(v=>typeof v==='string'&&v),'declared pair requires exact admitted source epoch');
 }
@@ -48,18 +63,6 @@ const birth = alignRollerBirthBaseline(original, subject);
 const pool = alignProjectilePoolBaseline(birth.source, subject);
 const planned = new Map(originals);
 planned.set(file, pool.source);
-const expectationFlags = ['--expected-mode','--expected-source-base','--expected-source-head'];
-const hasExpectation = expectationFlags.some(flag => process.argv.includes(flag));
-let expectedPair = null;
-if (hasExpectation) {
-  const values = expectationFlags.map(flag => {
-    const at=process.argv.indexOf(flag);
-    assert.ok(at>=0 && process.argv[at+1] && !process.argv[at+1].startsWith('--'),'complete '+flag);
-    assert.equal(process.argv.lastIndexOf(flag),at,'duplicate '+flag);
-    return process.argv[at+1];
-  });
-  expectedPair={mode:values[0],sourceBase:values[1],sourceHead:values[2]};
-}
 if(declaredExpected){
  if(expectedPair)assert.deepEqual(expectedPair,declaredExpected,'explicit expectation must match declared immutable source epoch');
  expectedPair=declaredExpected;
@@ -85,6 +88,22 @@ if (paint.evidence.mode === 'current-pair-with-gameplay-differences') {
   evidence.scope = 'Preserve the exact reviewed current main/candidate source pair without replay or production writes. Gameplay differences remain; physical-state and image equivalence require the independent browser comparison.';
 }
 
+if (paint.evidence.mode === MAIN9FE_PAINT_SOURCE_PAIR.mode) {
+  assert.ok(declared, 'main9fe source epoch requires declared immutable Git verification');
+  assert.equal(changes.length, 0, 'main9fe source epoch must not replay birth or pool source');
+  assert.equal(writes.length, 0, 'main9fe source epoch must preserve all input bytes');
+  evidence.mode = paint.evidence.mode;
+  evidence.scope = 'Preserve the explicitly selected main9fe thirteen-leaf paint source epoch without replay or production writes. The epoch includes changed Bloblobber floor-contact physics relative to PR1746; cross-epoch equivalence is not claimed. Exact source identity is not evidence of an improvement or compiled, physical-state, RNG or image equivalence; independent comparison remains required.';
+}
+
+if (paint.evidence.mode === MAINE1F_PAINT_SOURCE_PAIR.mode) {
+  assert.ok(declared, 'maine1f source epoch requires declared immutable Git verification');
+  assert.equal(changes.length, 0, 'maine1f source epoch must not replay birth or pool source');
+  assert.equal(writes.length, 0, 'maine1f source epoch must preserve all input bytes');
+  evidence.mode = paint.evidence.mode;
+  evidence.scope = 'Preserve the explicitly selected maine1f thirteen-leaf paint source epoch without replay or production writes. The epoch includes changed Bloblobber floor-normal rebound cap physics relative to main9fe/f8, preserving tangential velocity; cross-epoch equivalence is not claimed. Exact source identity is not evidence of an improvement or compiled, physical-state, RNG or image equivalence; independent comparison remains required.';
+}
+
 if (paint.evidence.mode === 'pr1746-byte-identical-current-paint') {
   assert.equal(changes.length,0,'exact identity must not replay birth or pool source');
   assert.equal(writes.length,0,'exact identity must preserve all input bytes');
@@ -107,10 +126,12 @@ if (currentOwners.length) {
 
 // This is a validation transaction, not a claim of crash-atomic filesystem
 // writes: every known/unknown-source check finishes before the first write.
+assertReceiptSeparate(receipt, [baseline, candidate], receiptInputs, receiptGitRoots);
 for (const [rel, value] of writes) {
   fs.mkdirSync(path.dirname(path.join(baseline, rel)), { recursive: true });
   fs.writeFileSync(path.join(baseline, rel), value);
 }
+assertReceiptSeparate(receipt, [baseline, candidate], receiptInputs, receiptGitRoots);
 fs.mkdirSync(path.dirname(receipt), { recursive: true });
 fs.writeFileSync(receipt, JSON.stringify(evidence, null, 2) + '\n');
 console.log(JSON.stringify({ receipt, changes: changes.map(row => row.name),

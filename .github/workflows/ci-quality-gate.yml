@@ -38,7 +38,7 @@ jobs:
           python-version: '3.11'
 
       - name: Verify immutable CI source admission contracts
-        run: node --test scripts/tests/inkwave-ci-source-admission.test.mjs
+        run: node --test scripts/tests/inkwave-ci-source-admission.test.mjs scripts/tests/inkwave-main9fe-paint-admission.test.mjs scripts/tests/inkwave-maine1f-paint-admission.test.mjs
 
       - name: Verify Patch Composition & Upstream Locks
         run: node scripts/check-inkwave-patches.mjs --quick
