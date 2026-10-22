@@ -7,6 +7,7 @@ import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { summarizeDetailRigFailure } from './lib/inkwave-motion-detail-failure-summary.mjs';
 
 // Exported checks run against the same WebGL records in focused failure tests.
 export function pixelDifference(a,b) {
@@ -494,7 +495,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
   if(errors.length)throw Error('Detail animation/shader errors: '+errors.join('; '));
 }catch(error){failure=error;try{if(page)result={...(result||{}),progress:await page.evaluate(()=>globalThis.motionProbeProgress||null)};}catch{};try{await page?.screenshot({path:path.join(output,'motion-detail-failed.png'),timeout:10000});}catch{}}
 finally{for(const cleanup of [()=>browser?.close(),()=>server?.listening?new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve())):null])try{await cleanup();}catch(error){failure ||= error;}}
-if(failure){if(result?.data){const diagnostic={...result,status:'failed',message:String(failure.message||failure).slice(0,2500)};delete diagnostic.images;fs.writeFileSync(path.join(output,'motion-detail-failed-native.json.writing'),JSON.stringify(diagnostic,null,2)+'\n');fs.renameSync(path.join(output,'motion-detail-failed-native.json.writing'),path.join(output,'motion-detail-failed-native.json'));}publish({status:'failed',contentHash:manifest?.contentHash||null,build:manifest?.build||null,message:String(failure.message||failure).slice(0,2500),errors,loaded:[...new Set(loaded)].slice(0,200),progress:result?.progress||lastProgress||null,casesFinished:result?.data?.length||lastProgress?.casesFinished||0});console.error(JSON.stringify({status:'failed',message:String(failure.message||failure).slice(0,1200),evidence:path.join(output,'motion-detail-result.json')}));process.exitCode=1;return;}
+if(failure){console.error('[motion-detail-rig-diagnostic] '+JSON.stringify(summarizeDetailRigFailure(result)));if(result?.data){const diagnostic={...result,status:'failed',message:String(failure.message||failure).slice(0,2500)};delete diagnostic.images;fs.writeFileSync(path.join(output,'motion-detail-failed-native.json.writing'),JSON.stringify(diagnostic,null,2)+'\n');fs.renameSync(path.join(output,'motion-detail-failed-native.json.writing'),path.join(output,'motion-detail-failed-native.json'));}publish({status:'failed',contentHash:manifest?.contentHash||null,build:manifest?.build||null,message:String(failure.message||failure).slice(0,2500),errors,loaded:[...new Set(loaded)].slice(0,200),progress:result?.progress||lastProgress||null,casesFinished:result?.data?.length||lastProgress?.casesFinished||0});console.error(JSON.stringify({status:'failed',message:String(failure.message||failure).slice(0,1200),evidence:path.join(output,'motion-detail-result.json')}));process.exitCode=1;return;}
 Object.assign(result,{errors,loaded:[...new Set(loaded)],build:manifest.build,status:'passed'});publish(result);
 console.log(JSON.stringify({status:result.status,contentHash:result.contentHash,cases:result.cases,verifiedModules:result.loaded.length,summary:result.summary}));
 }
