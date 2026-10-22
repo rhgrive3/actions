@@ -1,0 +1,587 @@
+{
+  "issue": 1711,
+  "status": "passed",
+  "sourceSha": "856a269afd61c5e3059418f4712d64ebec35b4c6",
+  "contentHash": "d3604606f2c693eb26e599a3001f404e2e78c211fd75e04dc9800ffd34ee71b9",
+  "inputHash": "02c90a917b959931f6194acb8e6c593aa44451d5730c2e6212a60ea280264469",
+  "revision": "817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f",
+  "browserVersion": "151.0.7922.34",
+  "conditions": {
+    "scenario": "sw",
+    "orders": [
+      "AA"
+    ],
+    "A": "same-page reload",
+    "B": "close old page, open cached new page",
+    "quality": "low",
+    "viewport": [
+      1024,
+      768
+    ],
+    "serviceWorkers": "allow",
+    "physicalDevice": false
+  },
+  "naturalServiceWorker": {
+    "controller": "http://127.0.0.1:43181/sw.js",
+    "cache": "inkwave-startup-v2:/:817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f",
+    "entries": 486,
+    "controlWaitMs": 95.278161000002
+  },
+  "supervisor": {
+    "command": [
+      "node",
+      "--max-old-space-size=1024",
+      "scripts/benchmark-inkwave-startup-reload.mjs",
+      "--site",
+      "/workspace/actions/.built-site/issue1711-source856",
+      "--source-sha",
+      "856a269afd61c5e3059418f4712d64ebec35b4c6",
+      "--evidence-dir",
+      "/workspace/actions/.browser-evidence/continuation-20261022/startup-sw",
+      "--scenario",
+      "sw",
+      "--profile-dir",
+      "/workspace/actions/.browser-profile-continuation-startup-sw"
+    ],
+    "elapsedSeconds": 151.79898918800063,
+    "exitCode": 0,
+    "outerDeadlineSeconds": 600,
+    "timedOut": false,
+    "manifestUnchanged": true,
+    "manifestSha256": "63d819c4c0319babc7076d44d33fe7a760e82a88a8a7da8b1ffb91c769df64b7",
+    "sourceCommit": "856a269afd61c5e3059418f4712d64ebec35b4c6",
+    "playwright": "1.62.1"
+  },
+  "scope": "Naturally installed and controlled persistent-profile Service Worker warm reloads on original 856/d360 and Chromium151; native observation, no runtime optimization or device performance claim",
+  "samples": [
+    {
+      "label": "AA-0-cold",
+      "condition": "cold",
+      "order": "AA",
+      "htmlResponseEndMs": 21.700000001117587,
+      "domInteractiveMs": 273.80000000074506,
+      "htmlResponseToInteractiveMs": 252.09999999809264,
+      "gpuDestroyCoverageMs": 0,
+      "gpuDestroyFractionOfPhase": 0.0,
+      "menuInteractiveMs": 38264.20000000112,
+      "pageCloseMs": 0,
+      "newPageMs": 0,
+      "menuIncludingPageReplacementMs": 38264.20000000112,
+      "server": {
+        "requests": 505,
+        "bodyBytes": 30840930,
+        "status304": 0
+      },
+      "controller": null,
+      "mainDocumentResponses": [
+        {
+          "url": "http://127.0.0.1:43181/",
+          "status": 200,
+          "resourceType": "Document",
+          "frameId": "21B1550AAAE21A5E7CF48454500DDF54",
+          "fromDiskCache": false,
+          "fromServiceWorker": false
+        }
+      ],
+      "nativeEvents": [
+        {
+          "name": "Receive mojo message",
+          "processId": 30857,
+          "threadId": 30857,
+          "startFromHtmlResponseMs": 2.284999998092651,
+          "wholeEventWallMs": 23.139,
+          "wholeEventThreadCpuMs": 19.41,
+          "clippedPhaseWallMs": 23.139,
+          "args": {
+            "chrome_mojo_event_info": {
+              "data_num_bytes": 5184,
+              "ipc_hash": 1138358817,
+              "mojo_interface_method": {
+                "native_symbol": {
+                  "mapping_id": 2,
+                  "rel_pc": 81266048
+                }
+              },
+              "mojo_interface_tag": "content.mojom.NavigationClient",
+              "payload_size": 5104
+            }
+          }
+        }
+      ],
+      "urlAttributedRecordedWork": [
+        {
+          "pid": 30857,
+          "tid": 30888,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 51.424,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30888,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 51.418,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30888,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/special-device-flight.mjs",
+          "coveredMs": 19.18,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30888,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/special-device-flight.mjs",
+          "coveredMs": 19.137,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30857,
+          "name": "NavigationBodyLoader::StartLoadingBody",
+          "url": "http://127.0.0.1:43181/",
+          "coveredMs": 15.255,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30857,
+          "name": "NavigationBodyLoader::OnReadable",
+          "url": "http://127.0.0.1:43181/",
+          "coveredMs": 15.226,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30857,
+          "name": "NavigationBodyLoader::ReadFromDataPipe",
+          "url": "http://127.0.0.1:43181/",
+          "coveredMs": 15.224,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30887,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/source-shot-footprint.mjs",
+          "coveredMs": 14.402,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30887,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/source-shot-footprint.mjs",
+          "coveredMs": 14.398,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30862,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/roller-contact-paint.mjs",
+          "coveredMs": 13.62,
+          "events": 1
+        }
+      ],
+      "traceSha256": "93efefe50b5ebaa2b8c1e35de3069b8c9d07ca2a037051dff6a8abb2b9724165",
+      "traceBytes": 8575684,
+      "traceDataLoss": false
+    },
+    {
+      "label": "AA-1-A",
+      "condition": "A",
+      "order": "AA",
+      "htmlResponseEndMs": 11.900000000372529,
+      "domInteractiveMs": 13838.900000000373,
+      "htmlResponseToInteractiveMs": 13827,
+      "gpuDestroyCoverageMs": 12688.646,
+      "gpuDestroyFractionOfPhase": 0.9176716569031605,
+      "menuInteractiveMs": 44810.699999999255,
+      "pageCloseMs": 0,
+      "newPageMs": 0,
+      "menuIncludingPageReplacementMs": 44810.699999999255,
+      "server": {
+        "requests": 1,
+        "bodyBytes": 0,
+        "status304": 1
+      },
+      "controller": "http://127.0.0.1:43181/sw.js",
+      "mainDocumentResponses": [
+        {
+          "url": "http://127.0.0.1:43181/",
+          "status": 200,
+          "resourceType": "Document",
+          "frameId": "21B1550AAAE21A5E7CF48454500DDF54",
+          "fromDiskCache": false,
+          "fromServiceWorker": true
+        }
+      ],
+      "nativeEvents": [
+        {
+          "name": "Receive mojo message",
+          "processId": 30857,
+          "threadId": 30857,
+          "startFromHtmlResponseMs": 1.565,
+          "wholeEventWallMs": 13553.27,
+          "wholeEventThreadCpuMs": 22.469,
+          "clippedPhaseWallMs": 13553.27,
+          "args": {
+            "chrome_mojo_event_info": {
+              "data_num_bytes": 6232,
+              "ipc_hash": 1138358817,
+              "mojo_interface_method": {
+                "native_symbol": {
+                  "mapping_id": 2,
+                  "rel_pc": 81266048
+                }
+              },
+              "mojo_interface_tag": "content.mojom.NavigationClient",
+              "payload_size": 6144
+            }
+          }
+        },
+        {
+          "name": "GpuChannel::OnDestroyCommandBuffer",
+          "processId": 30845,
+          "threadId": 30845,
+          "startFromHtmlResponseMs": 818.543,
+          "wholeEventWallMs": 12688.646,
+          "wholeEventThreadCpuMs": 554.991,
+          "clippedPhaseWallMs": 12688.646,
+          "args": {
+            "route_id": 4
+          }
+        }
+      ],
+      "urlAttributedRecordedWork": [
+        {
+          "pid": 30857,
+          "tid": 30862,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 58.161,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30862,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/vendor/three/build/three.module.js",
+          "coveredMs": 58.152,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30864,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/native-stages/runtime/engine.mjs",
+          "coveredMs": 42.779,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30864,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/native-stages/runtime/engine.mjs",
+          "coveredMs": 42.774,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30857,
+          "name": "NavigationBodyLoader::StartLoadingBody",
+          "url": "http://127.0.0.1:43181/",
+          "coveredMs": 35.577,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30857,
+          "name": "NavigationBodyLoader::OnReadable",
+          "url": "http://127.0.0.1:43181/",
+          "coveredMs": 35.558,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30857,
+          "name": "NavigationBodyLoader::ReadFromDataPipe",
+          "url": "http://127.0.0.1:43181/",
+          "coveredMs": 35.555,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30864,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/s3-sweps-assets.mjs",
+          "coveredMs": 17.537,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30864,
+          "name": "v8.parseOnBackground",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/s3-sweps-assets.mjs",
+          "coveredMs": 17.533,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30864,
+          "name": "BackgroundJSStreamManager::RunScriptStreamingTask",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/weapon-recipes.mjs",
+          "coveredMs": 15.805,
+          "events": 1
+        }
+      ],
+      "traceSha256": "e4311894e8e38c0a8d3bd47a11a25941ad54487a63714e2218c6c8ee71e6f8a4",
+      "traceBytes": 14837676,
+      "traceDataLoss": false
+    },
+    {
+      "label": "AA-2-A",
+      "condition": "A",
+      "order": "AA",
+      "htmlResponseEndMs": 16.199999999254942,
+      "domInteractiveMs": 15029.799999998882,
+      "htmlResponseToInteractiveMs": 15013.599999998092,
+      "gpuDestroyCoverageMs": 12802.35,
+      "gpuDestroyFractionOfPhase": 0.8527168700379407,
+      "menuInteractiveMs": 44857.699999999255,
+      "pageCloseMs": 0,
+      "newPageMs": 0,
+      "menuIncludingPageReplacementMs": 44857.699999999255,
+      "server": {
+        "requests": 2,
+        "bodyBytes": 0,
+        "status304": 2
+      },
+      "controller": "http://127.0.0.1:43181/sw.js",
+      "mainDocumentResponses": [
+        {
+          "url": "http://127.0.0.1:43181/",
+          "status": 200,
+          "resourceType": "Document",
+          "frameId": "21B1550AAAE21A5E7CF48454500DDF54",
+          "fromDiskCache": false,
+          "fromServiceWorker": true
+        }
+      ],
+      "nativeEvents": [
+        {
+          "name": "Receive mojo message",
+          "processId": 30857,
+          "threadId": 30857,
+          "startFromHtmlResponseMs": -1.94,
+          "wholeEventWallMs": 14958.807,
+          "wholeEventThreadCpuMs": 39.777,
+          "clippedPhaseWallMs": 14956.867,
+          "args": {
+            "chrome_mojo_event_info": {
+              "data_num_bytes": 6368,
+              "ipc_hash": 1138358817,
+              "mojo_interface_method": {
+                "native_symbol": {
+                  "mapping_id": 1,
+                  "rel_pc": 81266048
+                }
+              },
+              "mojo_interface_tag": "content.mojom.NavigationClient",
+              "payload_size": 6280
+            }
+          }
+        },
+        {
+          "name": "GpuChannel::OnDestroyCommandBuffer",
+          "processId": 30845,
+          "threadId": 30845,
+          "startFromHtmlResponseMs": 2082.605,
+          "wholeEventWallMs": 12802.35,
+          "wholeEventThreadCpuMs": 80.501,
+          "clippedPhaseWallMs": 12802.35,
+          "args": {
+            "route_id": 7
+          }
+        }
+      ],
+      "urlAttributedRecordedWork": [
+        {
+          "pid": 30857,
+          "tid": 30857,
+          "name": "NavigationBodyLoader::StartLoadingBody",
+          "url": "http://127.0.0.1:43181/",
+          "coveredMs": 46.672,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30857,
+          "name": "NavigationBodyLoader::OnReadable",
+          "url": "http://127.0.0.1:43181/",
+          "coveredMs": 46.651,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30857,
+          "name": "NavigationBodyLoader::ReadFromDataPipe",
+          "url": "http://127.0.0.1:43181/",
+          "coveredMs": 46.649,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30857,
+          "name": "FunctionCall",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/src/core/renderer.js",
+          "coveredMs": 5.428,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30857,
+          "name": "FunctionCall",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/local-quality/platform-lifecycle.mjs",
+          "coveredMs": 4.432,
+          "events": 2
+        },
+        {
+          "pid": 30857,
+          "tid": 31056,
+          "name": "FunctionCall",
+          "url": "http://127.0.0.1:43181/sw.js",
+          "coveredMs": 4.166,
+          "events": 38
+        },
+        {
+          "pid": 30857,
+          "tid": 30864,
+          "name": "ThrottlingURLLoader::OnReceiveResponse",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/render.mjs",
+          "coveredMs": 3.654,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30864,
+          "name": "MojoURLLoaderClient::OnReceiveResponse",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/render.mjs",
+          "coveredMs": 3.646,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30864,
+          "name": "BackgroundProcessor::MaybeStartProcessingResponse",
+          "url": "http://127.0.0.1:43181/_versions/817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f/patches/splatoon3/runtime/audio/render.mjs",
+          "coveredMs": 3.611,
+          "events": 1
+        },
+        {
+          "pid": 30857,
+          "tid": 30857,
+          "name": "EvaluateScript",
+          "url": "http://127.0.0.1:43181/",
+          "coveredMs": 1.374,
+          "events": 2
+        }
+      ],
+      "traceSha256": "bad661138883994d5ecd840a76c75c1182a22a7184906baa9be2d4d38c334ce2",
+      "traceBytes": 7996547,
+      "traceDataLoss": false
+    }
+  ],
+  "medianByCondition": {
+    "cold": {
+      "htmlResponseToInteractiveMs": 252.09999999809264,
+      "gpuDestroyCoverageMs": 0,
+      "menuInteractiveMs": 38264.20000000112,
+      "pageCloseMs": 0,
+      "newPageMs": 0,
+      "menuIncludingPageReplacementMs": 38264.20000000112
+    },
+    "A": {
+      "htmlResponseToInteractiveMs": 14420.299999999046,
+      "gpuDestroyCoverageMs": 12745.498,
+      "menuInteractiveMs": 44834.199999999255,
+      "pageCloseMs": 0.0,
+      "newPageMs": 0.0,
+      "menuIncludingPageReplacementMs": 44834.199999999255
+    }
+  },
+  "interpretation": "Inspect both controlled SW reload native events and their GPU-destruction fraction; the HTTP mechanism is not assumed. Native event wall duration is distinct from thread CPU. No runtime optimization is claimed.",
+  "limits": [
+    "Trace intervals describe recorded wall time; thread CPU is native whole-event tdur, not an invented utilization estimate. Nested named events overlap and are not added as total CPU.",
+    "Original build and browser are matched, but host resources and tracing overhead differ from the historical official run. The source and emitted suites ended before this SW experiment.",
+    "This trace adds controlled SW warm; persistent browser-restart still has historical success receipts but no new native trace in this experiment.",
+    "No physical GPU/iOS/Android, deployment/TLS or generic browser performance claim. No runtime code, original 180-second readiness gate or cache response substitution was changed.",
+    "Native renderer/GPU intervals and temporal ordering localize the wait, but this trace does not contain a uniquely joined renderer-to-GPU synchronous IPC reply flow or native call stack. It is not an intervention proving that GPU destruction alone causes every part of the wait."
+  ],
+  "evidence": [
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-sw/AA-0-cold.trace.json",
+      "bytes": 8575684,
+      "sha256": "93efefe50b5ebaa2b8c1e35de3069b8c9d07ca2a037051dff6a8abb2b9724165"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-sw/AA-1-A.trace.json",
+      "bytes": 14837676,
+      "sha256": "e4311894e8e38c0a8d3bd47a11a25941ad54487a63714e2218c6c8ee71e6f8a4"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-sw/AA-2-A.trace.json",
+      "bytes": 7996547,
+      "sha256": "bad661138883994d5ecd840a76c75c1182a22a7184906baa9be2d4d38c334ce2"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-sw/benchmark-used.mjs",
+      "bytes": 10995,
+      "sha256": "1ee3e35e9daa8e71746f3d8097e50cee1e2006db9bd1a33d85b3ff8e5f0d43a3"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-sw/console.log",
+      "bytes": 616,
+      "sha256": "93e5c77faa0a0f2016b4a8346d46cdcd067d3465d1f863d2bc96572a48520ac6"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-sw/environment.json",
+      "bytes": 11439,
+      "sha256": "0341f709a3923212f4384e2f03f646e66c95a1618885fc62a1640a0d9e3990b2"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-sw/runtime-evidence-used.mjs",
+      "bytes": 6255,
+      "sha256": "2b27816952ff5e871b36d0e9dc7b34c9ecba0886852b052e58f9b34506b6a2db"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-sw/source-build.json",
+      "bytes": 817,
+      "sha256": "ce95e67030e059298f20833308675ce9c542840a53c68f260f4fc275f54c7ebf"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-sw/startup-reload-result.json",
+      "bytes": 668914,
+      "sha256": "d4362aaf87b02d3ae42938bdad15b6d17cbb46757f39ed4ed5b6e5784cc24915"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-sw/supervisor.json",
+      "bytes": 788,
+      "sha256": "e5b466ef1361f6eba5ecb89f3616e6cb44080cc55e402076365b0830d2063a62"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/startup-sw/trace-summary-used.mjs",
+      "bytes": 2867,
+      "sha256": "a06d91b6cea74cb6018b8904d2d1ad1ff7abfb8d0af5b931d42cabc3ee681c87"
+    }
+  ],
+  "preservedObserverFailure": ".browser-evidence/continuation-20261022/startup-reload-observer-cap/",
+  "observedFinding": "Both naturally controlled SW reloads show the same native renderer NavigationClient/GPU command-buffer destruction wait as the independent HTTP experiment; GPU destruction overlaps 85.27–91.77% of the HTML-response-to-interactive phase. No runtime optimization is claimed."
+}

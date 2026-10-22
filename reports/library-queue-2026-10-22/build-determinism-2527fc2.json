@@ -1,0 +1,20 @@
+{
+  "sourceSha": "2527fc2b64a0fb52ab9316879470adf566fbfe67",
+  "measurementKind": "local ordered independent full production builds; all emitted file bytes SHA256 compared; no device timing claim",
+  "builds": [
+    {
+      "concurrency": 1,
+      "seconds": 11.69999965399984,
+      "files": 2069,
+      "contentHash": "0faa87071b5cf28b61cd60ea8f1c7fcc3d5e90a95144ac7062eaf741f99e5c9b"
+    },
+    {
+      "concurrency": 4,
+      "seconds": 9.667103163999855,
+      "files": 2069,
+      "contentHash": "0faa87071b5cf28b61cd60ea8f1c7fcc3d5e90a95144ac7062eaf741f99e5c9b"
+    }
+  ],
+  "differentPaths": [],
+  "equal": true
+}

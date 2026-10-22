@@ -216,13 +216,13 @@ const _ld = [0, 0, 0];
 function blockCandidates(block, a, b, r) {
   // transform the swept segment into the block's own orthonormal frame
   const c = block.center, ax = block.axes;
-  const d = { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z };
-  const s = { x: a.x - c.x, y: a.y - c.y, z: a.z - c.z };
+  const dx=b.x-a.x,dy=b.y-a.y,dz=b.z-a.z;
+  const sx=a.x-c.x,sy=a.y-c.y,sz=a.z-c.z;
   const h = [block.half.x, block.half.y, block.half.z];
   for (let k = 0; k < 3; k++) {
     const A = ax[k];
-    _ld[k] = d.x * A.x + d.y * A.y + d.z * A.z;
-    _inv[k] = s.x * A.x + s.y * A.y + s.z * A.z;
+    _ld[k] = dx * A.x + dy * A.y + dz * A.z;
+    _inv[k] = sx * A.x + sy * A.y + sz * A.z;
   }
   const len2 = _ld[0] * _ld[0] + _ld[1] * _ld[1] + _ld[2] * _ld[2];
   if (len2 < 1e-18) return null;                 // zero-length step
@@ -244,13 +244,9 @@ function blockCandidates(block, a, b, r) {
       const t = (plane - _inv[k]) / D;
       if (t < -1e-9 || t > 1 + 1e-9) continue;
       // the other two axes must be inside their own extent
-      const oa = [], ob = [];
-      let n = 0;
-      for (let m = 0; m < 3; m++) { if (m === k) continue; oa[n] = _inv[m] + t * _ld[m]; n += 1; }
-      n = 0;
-      for (let m = 0; m < 3; m++) { if (m === k) continue; ob[n] = _inv[m] + t * _ld[m]; n += 1; }
-      const other = [0, 1, 2].filter((m) => m !== k);
-      if (Math.abs(oa[0]) > h[other[0]] + 1e-9 || Math.abs(oa[1]) > h[other[1]] + 1e-9) continue;
+      const u=k===0?1:0,v=k===2?1:2;
+      const ou=_inv[u]+t*_ld[u],ov=_inv[v]+t*_ld[v];
+      if (Math.abs(ou) > h[u] + 1e-9 || Math.abs(ov) > h[v] + 1e-9) continue;
       if (t < bestT) { bestT = t; bestKind = 0; bestAxis = k; bestSign = sgn; }
     }
   }
@@ -271,7 +267,8 @@ function blockCandidates(block, a, b, r) {
         if (disc < 0) continue;
         const root = Math.sqrt(disc);
         // both roots: the entry is the earlier one still inside the edge extent
-        for (const t of [(-qb - root) / (2 * qa), (-qb + root) / (2 * qa)]) {
+        for (let rootIndex=0;rootIndex<2;rootIndex++) {
+          const t=rootIndex===0?(-qb-root)/(2*qa):(-qb+root)/(2*qa);
           if (t < -1e-9 || t > 1 + 1e-9) continue;
           const oa = _inv[axis] + t * _ld[axis];
           if (Math.abs(oa) > h[axis] + 1e-9) continue;
@@ -323,9 +320,9 @@ function closestOnBlock(block, px, py, pz) {
 }
 
 // Fills the native-shaped Hit for a swept sphere. Returns true when it hit.
-function sweepFill(out, a, b, hit) {
+function sweepFill(out, a, b, radius) {
   const level = out.__level;
-  const r = hit.radius > 0 ? hit.radius : 0;
+  const r = radius > 0 ? radius : 0;
   // The broadphase rect must contain the whole SPHERE, not just the centre line.
   // Un-expanded, a block whose face the shell only grazes lies outside the rect
   // and is never even considered, so the grazing contact was silently lost. The
@@ -400,7 +397,7 @@ function sweepFill(out, a, b, hit) {
 // is a contact query only; the caller's native loop remains the motion owner.
 export function kitSweepSphereBlocks(level, a, b, radius, out) {
   out.__level=level;
-  sweepFill(out,a,b,{radius});
+  sweepFill(out,a,b,radius);
   return out;
 }
 
@@ -413,8 +410,7 @@ export function kitTrizookaWorldSweep(system, p, out, physics) {
   if (!level?.blocks?.length) return physics.segment(p.prev, p.pos, out, true);
   out.__level = level;
   // an already-overlapping shell is in contact at t = 0
-  const probe = { radius: r };
-  if (!sweepFill(out, p.prev, p.pos, probe)) return physics.segment(p.prev, p.pos, out, true);
+  if (!sweepFill(out, p.prev, p.pos, r)) return physics.segment(p.prev, p.pos, out, true);
   return out;
 }
 

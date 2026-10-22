@@ -3,7 +3,10 @@
 // production relay handler. No public deployment, third-party assets stay local.
 import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import assert from 'node:assert/strict';import crypto from 'node:crypto';
 import {chromium} from 'playwright';import {WebSocketServer} from 'ws';import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
+import {ownerClockRelayProbe,runOwnerClockBrowser,verifyOwnerClockSite} from './lib/inkwave-owner-clock-browser.mjs';
+const ownerClockOnly=process.argv.includes('--owner-clock');
 const site=path.resolve(process.argv[2]||'_site-native'),out=path.resolve(process.argv[3]||'.browser-evidence/native-online');fs.mkdirSync(out,{recursive:true});
+if(ownerClockOnly)verifyOwnerClockSite(site,process.env.OWNER_CLOCK_SOURCE_SHA);
 const mime={'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.png':'image/png','.woff2':'font/woff2','.svg':'image/svg+xml','.webp':'image/webp'},hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 const server=http.createServer((req,res)=>{try{const url=new URL(req.url,'http://local'),rel=decodeURIComponent(url.pathname),file=path.resolve(site,'.'+(rel==='/'?'/index.html':rel));if(!file.startsWith(site+'/')||!fs.statSync(file).isFile())throw Error();res.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream'});fs.createReadStream(file).pipe(res);}catch{res.writeHead(404);res.end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const relay=new WebSocketServer({host:'127.0.0.1',port:0});await new Promise(r=>relay.once('listening',r));const rooms=new Map(),trace=[];let packets=0,lastCase,lastEvidence;
@@ -16,10 +19,11 @@ function traceTick(raw,name){
  }catch{}
 }
 const connectRelay=createLocalRelay({rooms});
+const ownerClockRelay=ownerClockOnly?ownerClockRelayProbe(relay):null;
 relay.on('connection',(ws,req)=>connectRelay(ws,req,{receive:raw=>{packets++;traceTick(raw,new URL(req.url,'http://local').searchParams.get('name'));}}));
 const address='http://127.0.0.1:'+server.address().port+'/?map=tidewater&relay='+encodeURIComponent('ws://127.0.0.1:'+relay.address().port);
 const proxyURL=process.env.HTTPS_PROXY?new URL(process.env.HTTPS_PROXY):null,proxy=proxyURL?{server:proxyURL.origin,username:decodeURIComponent(proxyURL.username),password:decodeURIComponent(proxyURL.password),bypass:'127.0.0.1,localhost'}:undefined;
-const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,proxy,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--use-angle=swiftshader','--enable-unsafe-swiftshader']});const pages=[],errors=[],results=[];
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,proxy:ownerClockOnly?undefined:proxy,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--use-angle=swiftshader','--enable-unsafe-swiftshader']});const pages=[],errors=[],results=[];
 try{
  for(let i=0;i<2;i++){
   const context=await browser.newContext({viewport:{width:800,height:600}});await context.grantPermissions(['local-network-access']);const page=await context.newPage();pages.push(page);
@@ -27,10 +31,11 @@ try{
   await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,musicVolume:0})));
   console.log('boot peer '+i);await page.goto(address,{waitUntil:'domcontentloaded'});await page.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});
   await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});
-  assert.equal(await page.locator('#boot-error').textContent(),'');await page.evaluate(()=>{NG.game.debug.freeze();NG.game._skipRender=true;NG.game.menus.launchLobby=async()=>{};});
+  assert.equal(await page.locator('#boot-error').textContent(),'');await page.evaluate(ownerClockOnly=>{NG.game.debug.freeze();NG.game._skipRender=true;if(!ownerClockOnly)NG.game.menus.launchLobby=async()=>{};},ownerClockOnly);
   await page.evaluate(()=>{globalThis.nativePaintTrace=[];const proto=Object.getPrototypeOf(NG.paint),fn=proto.splat;proto.splat=function(center,radius,team,opts={}){const nm=NG.netm,row={stage:this.level.layout.id,match:nm?.cfg.id,network:!!nm,applying:!!nm?.applying,point:center.toArray(),radius,team,kind:opts.kind,face:opts.face,instant:opts.instant,cosmetic:opts.cosmetic,remoteSequence:opts.__netOrder?.seq},result=fn.call(this,center,radius,team,opts);row.sequence=nm?._paintClockState?.applied.get(nm.myId);row.claimed=result;nativePaintTrace.push(row);if(nativePaintTrace.length>2000)nativePaintTrace.shift();return result;};});
  }
- for(const id of (process.env.NATIVE_STAGE_IDS||'scorch,hagglefish,inkblot,mako,brinewater').split(','))for(const mode of (process.env.NATIVE_ONLINE_MODES||'turf,zones,tower,rainmaker,clams').split(',')){
+ if(ownerClockOnly){results.push(await runOwnerClockBrowser({pages,relay:ownerClockRelay,site,out,sourceSha:process.env.OWNER_CLOCK_SOURCE_SHA}));}
+ else for(const id of (process.env.NATIVE_STAGE_IDS||'scorch,hagglefish,inkblot,mako,brinewater').split(','))for(const mode of (process.env.NATIVE_ONLINE_MODES||'turf,zones,tower,rainmaker,clams').split(',')){
   console.log('online '+id+' '+mode);
   lastCase={id,mode};lastEvidence=null;trace.length=0;await Promise.all(pages.map(p=>p.evaluate(()=>nativePaintTrace.length=0)));
   const code=await pages[0].evaluate(()=>NG.net.create('Native Host'));await pages[1].evaluate(c=>NG.net.join(c,'Native Guest'),code);

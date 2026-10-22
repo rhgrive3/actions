@@ -1,0 +1,233 @@
+{
+  "scope": "Candidate identity audit only; recording/event/11.3.0 authenticity not established. No audio binary installed or redistributed.",
+  "candidatesPublicProject": "https://scratch.mit.edu/projects/964466348/",
+  "records": [
+    {
+      "name": "dread",
+      "bytes": 60696,
+      "md5": "ca26c31fc4f611481ad0a35d5fc2c97e",
+      "sha256": "cb5559f13051b7eeee0017950ebd1de9b25f22a949b1beafed9019a92226ff32",
+      "decodedRate": 48000,
+      "decodedFrames": 30326,
+      "decodedDurationSeconds": 0.6317916666666666,
+      "peak": 0.52734375,
+      "rms": 0.22731653160685958,
+      "wave": {
+        "sampleRate": 48000,
+        "channels": 1,
+        "sampleWidth": 2,
+        "frames": 30326
+      },
+      "publicSource": "https://assets.scratch.mit.edu/internalapi/asset/ca26c31fc4f611481ad0a35d5fc2c97e.wav/get/"
+    },
+    {
+      "name": "heavy-edit",
+      "bytes": 225144,
+      "md5": "f16d7fcdc477c6c9453ef3109681bf3d",
+      "sha256": "75c1200e63dc6594512ae005df95881f26fdd7f52c28ddd5c47bdc49238b1e62",
+      "decodedRate": 48000,
+      "decodedFrames": 112550,
+      "decodedDurationSeconds": 2.3447916666666666,
+      "peak": 0.75,
+      "rms": 0.2761892783320679,
+      "wave": {
+        "sampleRate": 48000,
+        "channels": 1,
+        "sampleWidth": 2,
+        "frames": 112550
+      },
+      "publicSource": "https://assets.scratch.mit.edu/internalapi/asset/f16d7fcdc477c6c9453ef3109681bf3d.wav/get/"
+    },
+    {
+      "name": "heavy-edit-2",
+      "bytes": 12954,
+      "md5": "1954809141485166e916a344dcc0976f",
+      "sha256": "274a6639e7fe48b6aae51e4ffd3f283c416f543ef91ce7ecc344a0da91300900",
+      "decodedRate": 48000,
+      "decodedFrames": 6455,
+      "decodedDurationSeconds": 0.13447916666666668,
+      "peak": 0.5625,
+      "rms": 0.2722220161133405,
+      "wave": {
+        "sampleRate": 48000,
+        "channels": 1,
+        "sampleWidth": 2,
+        "frames": 6455
+      },
+      "publicSource": "https://assets.scratch.mit.edu/internalapi/asset/1954809141485166e916a344dcc0976f.wav/get/"
+    },
+    {
+      "name": "decav-horizontal",
+      "bytes": 100950,
+      "md5": "1bfe6cfbc73c28a5c293e67e5f1de96c",
+      "sha256": "278606a73e082c09481699b8c9862a94a14a805a49fbbf22c72af25ceff8d648",
+      "decodedRate": 48000,
+      "decodedFrames": 50453,
+      "decodedDurationSeconds": 1.0511041666666667,
+      "peak": 1.0,
+      "rms": 0.21404570158170907,
+      "wave": {
+        "sampleRate": 48000,
+        "channels": 1,
+        "sampleWidth": 2,
+        "frames": 50453
+      },
+      "publicSource": "https://assets.scratch.mit.edu/internalapi/asset/1bfe6cfbc73c28a5c293e67e5f1de96c.wav/get/"
+    },
+    {
+      "name": "decav-vertical",
+      "bytes": 84426,
+      "md5": "adb36185dbd6c1712fec7558469403df",
+      "sha256": "8d6ea1cb93d6c93b71dbda4c94756bdbe2afab050a8af24b964b67fb232a103e",
+      "decodedRate": 48000,
+      "decodedFrames": 42191,
+      "decodedDurationSeconds": 0.8789791666666666,
+      "peak": 1.0,
+      "rms": 0.2555082746907478,
+      "wave": {
+        "sampleRate": 48000,
+        "channels": 1,
+        "sampleWidth": 2,
+        "frames": 42191
+      },
+      "publicSource": "https://assets.scratch.mit.edu/internalapi/asset/adb36185dbd6c1712fec7558469403df.wav/get/"
+    },
+    {
+      "name": "decav-charge",
+      "bytes": 92244,
+      "md5": "83d3bbf9f086fffcf84579034468c4ab",
+      "sha256": "c0736f96b63c7b86f51808cb18da096d2da3c2e5792b6933d17e1d17f0727c17",
+      "decodedRate": 48000,
+      "decodedFrames": 46100,
+      "decodedDurationSeconds": 0.9604166666666667,
+      "peak": 1.0,
+      "rms": 0.2699909968638996,
+      "wave": {
+        "sampleRate": 48000,
+        "channels": 1,
+        "sampleWidth": 2,
+        "frames": 46100
+      },
+      "publicSource": "https://assets.scratch.mit.edu/internalapi/asset/83d3bbf9f086fffcf84579034468c4ab.wav/get/"
+    },
+    {
+      "name": "decav-step",
+      "bytes": 44238,
+      "md5": "192edc8c40f0d8f4d70c9299ec1ad33a",
+      "sha256": "c47d54ed178b530da9af4346ae8c740e52de51742717b59119c4276f98e5318a",
+      "decodedRate": 48000,
+      "decodedFrames": 22097,
+      "decodedDurationSeconds": 0.4603541666666667,
+      "peak": 1.0,
+      "rms": 0.21315489901615972,
+      "wave": {
+        "sampleRate": 48000,
+        "channels": 1,
+        "sampleWidth": 2,
+        "frames": 22097
+      },
+      "publicSource": "https://assets.scratch.mit.edu/internalapi/asset/192edc8c40f0d8f4d70c9299ec1ad33a.wav/get/"
+    },
+    {
+      "name": "spinner-shot",
+      "bytes": 12717,
+      "md5": "021f69bc33dbf01bba94cd64fb8c0b2f",
+      "sha256": "2065118e74a5ef2e82efd11cf5bcce2a9471fd802d4d7745faba0c474bf838cc",
+      "decodedRate": 48000,
+      "decodedFrames": 22574,
+      "decodedDurationSeconds": 0.47029166666666666,
+      "peak": 0.08683786541223526,
+      "rms": 0.01501589889202226
+    },
+    {
+      "name": "spinner-charge",
+      "bytes": 272762,
+      "md5": "80172528a3f00f6c681786fade4b19e1",
+      "sha256": "53daf1ad24a3f4ec8dc208d1bf81cb4de1953aa54d6d2b67e5719e7a9bcee209",
+      "decodedRate": 48000,
+      "decodedFrames": 542424,
+      "decodedDurationSeconds": 11.3005,
+      "peak": 0.13779443502426147,
+      "rms": 0.017145115110740024
+    },
+    {
+      "name": "spinner-stream",
+      "bytes": 252909,
+      "md5": "504183cae5520c5ec52737f4abd33253",
+      "sha256": "0b288a0e11a8c7c082710ac86bfd0c8a354e1400726e2c4eaa7d6cfe80d76970",
+      "decodedRate": 48000,
+      "decodedFrames": 502830,
+      "decodedDurationSeconds": 10.475625,
+      "peak": 0.0721709281206131,
+      "rms": 0.00845692386479252
+    }
+  ],
+  "comparisons": [
+    {
+      "candidate": "heavy-edit",
+      "reference": "spinner-shot",
+      "templateIsCandidate": false,
+      "normalizedPearsonPeakAbsolute": 0.11779505503089523,
+      "signedPeak": -0.11779505503089523,
+      "longerWaveOffsetSeconds": 1.5733541666666666,
+      "comparedFrames": 22574,
+      "candidateDurationComparedFraction": 0.20056863616170592,
+      "method": "Maximum absolute zero-mean normalized waveform correlation at unchanged pitch/time, arbitrary integer-sample alignment, decoded mono 48000 Hz"
+    },
+    {
+      "candidate": "heavy-edit",
+      "reference": "spinner-charge",
+      "templateIsCandidate": true,
+      "normalizedPearsonPeakAbsolute": 0.027804909991027423,
+      "signedPeak": 0.027804909991027423,
+      "longerWaveOffsetSeconds": 0.15725,
+      "comparedFrames": 112550,
+      "candidateDurationComparedFraction": 1.0,
+      "method": "Maximum absolute zero-mean normalized waveform correlation at unchanged pitch/time, arbitrary integer-sample alignment, decoded mono 48000 Hz"
+    },
+    {
+      "candidate": "heavy-edit",
+      "reference": "spinner-stream",
+      "templateIsCandidate": true,
+      "normalizedPearsonPeakAbsolute": 0.026640847128058844,
+      "signedPeak": -0.026640847128058844,
+      "longerWaveOffsetSeconds": 1.1858125,
+      "comparedFrames": 112550,
+      "candidateDurationComparedFraction": 1.0,
+      "method": "Maximum absolute zero-mean normalized waveform correlation at unchanged pitch/time, arbitrary integer-sample alignment, decoded mono 48000 Hz"
+    },
+    {
+      "candidate": "heavy-edit-2",
+      "reference": "spinner-shot",
+      "templateIsCandidate": true,
+      "normalizedPearsonPeakAbsolute": 0.11001555977393539,
+      "signedPeak": 0.11001555977393539,
+      "longerWaveOffsetSeconds": 0.03829166666666667,
+      "comparedFrames": 6455,
+      "candidateDurationComparedFraction": 1.0,
+      "method": "Maximum absolute zero-mean normalized waveform correlation at unchanged pitch/time, arbitrary integer-sample alignment, decoded mono 48000 Hz"
+    },
+    {
+      "candidate": "heavy-edit-2",
+      "reference": "spinner-charge",
+      "templateIsCandidate": true,
+      "normalizedPearsonPeakAbsolute": 0.1116956017697065,
+      "signedPeak": -0.1116956017697065,
+      "longerWaveOffsetSeconds": 0.3616875,
+      "comparedFrames": 6455,
+      "candidateDurationComparedFraction": 1.0,
+      "method": "Maximum absolute zero-mean normalized waveform correlation at unchanged pitch/time, arbitrary integer-sample alignment, decoded mono 48000 Hz"
+    },
+    {
+      "candidate": "heavy-edit-2",
+      "reference": "spinner-stream",
+      "templateIsCandidate": true,
+      "normalizedPearsonPeakAbsolute": 0.15563177628773273,
+      "signedPeak": 0.15563177628773273,
+      "longerWaveOffsetSeconds": 0.23602083333333335,
+      "comparedFrames": 6455,
+      "candidateDurationComparedFraction": 1.0,
+      "method": "Maximum absolute zero-mean normalized waveform correlation at unchanged pitch/time, arbitrary integer-sample alignment, decoded mono 48000 Hz"
+    }
+  ]
+}

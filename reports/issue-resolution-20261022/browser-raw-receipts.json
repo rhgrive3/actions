@@ -1,0 +1,165 @@
+{
+  "archive": "browser-raw-receipts.tar.gz",
+  "sha256": "dae863fcb07e06321ef8e6a6a4380b3212c8795317a18a0dfe89303807584e84",
+  "bytes": 128779,
+  "format": "gzip-compressed tar of unchanged browser JSON and console logs",
+  "restore": "From this report directory: tar -xzf browser-raw-receipts.tar.gz",
+  "localUncompressedDirectory": "/workspace/actions/.browser-evidence/issue-resolution-20261022/raw-receipts",
+  "files": [
+    {
+      "path": "reliability-repeated/1/chromium-pad-map-evidence.json",
+      "bytes": 6856,
+      "sha256": "52a80a594be1f7e5c9e5b370d8eac7c4f53aa13ddc610885f8df9878c163de34"
+    },
+    {
+      "path": "reliability-repeated/1/chromium-pad-map-negative.json",
+      "bytes": 1045,
+      "sha256": "57fb5bdd581d2cba515204d738d0318fbef67b4242d0b3101508691563e54da7"
+    },
+    {
+      "path": "reliability-repeated/1/console.log",
+      "bytes": 388,
+      "sha256": "9997e807d6fc2828dda843b7deb51163aa2c6a217a29c287f02eb45c2d447c3f"
+    },
+    {
+      "path": "reliability-repeated/1/reliability-browser-result.json",
+      "bytes": 84701,
+      "sha256": "c749d7e42ef55f8ce04d9b79ae6a194ce3d8071346cceea52ceac7434e8e65b2"
+    },
+    {
+      "path": "reliability-repeated/1/webkit-pad-map-evidence.json",
+      "bytes": 6764,
+      "sha256": "cb90bdefb1627abdbcc3a449951d8add88ed85a2fa149c8a9a7f9af7b748e626"
+    },
+    {
+      "path": "reliability-repeated/1/webkit-pad-map-negative.json",
+      "bytes": 1043,
+      "sha256": "8d8b08c9fe64b33cf6c5dbdb4f67c956b4e56d3cfb0e016feed7f0660cde3f1a"
+    },
+    {
+      "path": "reliability-repeated/2/chromium-pad-map-evidence.json",
+      "bytes": 6848,
+      "sha256": "a27a6db1bb8b6f43279e5d15f2dce4b1a4022068e00b2e05a994b84accc96e9c"
+    },
+    {
+      "path": "reliability-repeated/2/chromium-pad-map-negative.json",
+      "bytes": 1045,
+      "sha256": "5dfc6d8666ee6ebe6adef71ffd89cc5cad0180d0c7445faf090ed64dd217cdd1"
+    },
+    {
+      "path": "reliability-repeated/2/console.log",
+      "bytes": 388,
+      "sha256": "9997e807d6fc2828dda843b7deb51163aa2c6a217a29c287f02eb45c2d447c3f"
+    },
+    {
+      "path": "reliability-repeated/2/reliability-browser-result.json",
+      "bytes": 84693,
+      "sha256": "f16e7be3f02acb665b138119fa9c41d4394a740a6beb65117fe09ed29ea8ce80"
+    },
+    {
+      "path": "reliability-repeated/2/webkit-pad-map-evidence.json",
+      "bytes": 6764,
+      "sha256": "e60ac8d8ce32a279facf106ca11984c271cb67348b7215bc3c7226546def6b28"
+    },
+    {
+      "path": "reliability-repeated/2/webkit-pad-map-negative.json",
+      "bytes": 1043,
+      "sha256": "8d8b08c9fe64b33cf6c5dbdb4f67c956b4e56d3cfb0e016feed7f0660cde3f1a"
+    },
+    {
+      "path": "reliability-repeated/3/chromium-pad-map-evidence.json",
+      "bytes": 6857,
+      "sha256": "38e42474fa877b461ebd142f59a227abb17050eebee777d12a1d2f495d5645a0"
+    },
+    {
+      "path": "reliability-repeated/3/chromium-pad-map-negative.json",
+      "bytes": 1045,
+      "sha256": "8af269db14d701a47ebc9491cda1fd9442a43b229acab851b96140b0b950acb9"
+    },
+    {
+      "path": "reliability-repeated/3/console.log",
+      "bytes": 388,
+      "sha256": "9997e807d6fc2828dda843b7deb51163aa2c6a217a29c287f02eb45c2d447c3f"
+    },
+    {
+      "path": "reliability-repeated/3/reliability-browser-result.json",
+      "bytes": 84715,
+      "sha256": "fb4945a3c16283093ca61d0974573bed703f54f731bd2dbc3b7e8e5abaca242b"
+    },
+    {
+      "path": "reliability-repeated/3/webkit-pad-map-evidence.json",
+      "bytes": 6777,
+      "sha256": "680eb44c5321d100dcc3b0080918f254633b54ca2f4f30d52439fe603905f932"
+    },
+    {
+      "path": "reliability-repeated/3/webkit-pad-map-negative.json",
+      "bytes": 1043,
+      "sha256": "8d8b08c9fe64b33cf6c5dbdb4f67c956b4e56d3cfb0e016feed7f0660cde3f1a"
+    },
+    {
+      "path": "reliability-repeated/supervisor-result.json",
+      "bytes": 2121,
+      "sha256": "c1b25f3bf0838b08355c9eae3544f5f4dcb2976fe870df5f56faf744f89af9d6"
+    },
+    {
+      "path": "rematch-bounded/chromium/console.log",
+      "bytes": 430,
+      "sha256": "88834cab161dd7a8517ad150796a3762562aa03e183c097e1be713d10f5b93c7"
+    },
+    {
+      "path": "rematch-bounded/chromium/rematch-lifecycle-result.json",
+      "bytes": 16048,
+      "sha256": "7d697ebe851b5e9c5d66b4ec3f7c1deb8c6c6a2dadc179bb6465518b70ac2aa7"
+    },
+    {
+      "path": "rematch-bounded/chromium/supervisor-result.json",
+      "bytes": 851,
+      "sha256": "f7b1bcc1e43e6d69157e2a8c926a1c3e9eb6e8d005d9024548fbd20df45f7701"
+    },
+    {
+      "path": "rematch-bounded/chromium-ready/console.log",
+      "bytes": 458,
+      "sha256": "c4884c7e0b19379a5bc1dad2693feb6208945a68555955186343f318f230c387"
+    },
+    {
+      "path": "rematch-bounded/chromium-ready/rematch-lifecycle-result.json",
+      "bytes": 175433,
+      "sha256": "8f1519679ea8078b56d79db009ebb9d3de5bf76d5fbe2db84e17a217b9143289"
+    },
+    {
+      "path": "rematch-bounded/chromium-ready/supervisor-result.json",
+      "bytes": 945,
+      "sha256": "44c44d8b47fbdae26d5c635a7a50de3a045bc932ddb23d9283a2221d94ca6d6e"
+    },
+    {
+      "path": "rematch-bounded/webkit/console.log",
+      "bytes": 1306,
+      "sha256": "180d712684827f626e4008cd52b42b4126952e9c717e0b2335acd31fe910d933"
+    },
+    {
+      "path": "rematch-bounded/webkit/rematch-lifecycle-result.json",
+      "bytes": 1510,
+      "sha256": "5c74229b3eaf1c01b685395edfe7129e297c8ecd9ab0ef41ed98bbfc7cb4dd3d"
+    },
+    {
+      "path": "rematch-bounded/webkit/supervisor-result.json",
+      "bytes": 844,
+      "sha256": "410a2539a3aea5464dd28ff5ac122de303215400618c372fb45658925a639c21"
+    },
+    {
+      "path": "rematch-bounded/webkit-ready/console.log",
+      "bytes": 216,
+      "sha256": "ff38509129cacd8581cfe3804368b9c26b1090f2ba865cde832ad199eac90122"
+    },
+    {
+      "path": "rematch-bounded/webkit-ready/rematch-lifecycle-result.json",
+      "bytes": 387338,
+      "sha256": "a2b46c05b053d2625acfce2f6f17fb8ac6de285730034647680aa89bda029acc"
+    },
+    {
+      "path": "rematch-bounded/webkit-ready/supervisor-result.json",
+      "bytes": 1138,
+      "sha256": "86ab6420770d589608e5321ffc442a15da434df4bbdeafdbe0f67bf70074633f"
+    }
+  ]
+}

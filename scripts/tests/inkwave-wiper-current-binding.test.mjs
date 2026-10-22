@@ -36,3 +36,57 @@ function pair(){const {manifest,binding}=fixture(),bytes=Buffer.alloc(1024);Buff
 test('visibility prefix passes only as diagnostic, not full capture',()=>{const p=pair();assert.equal(verifyVisibilityPair(p.a,p.b,p.manifest,p.binding,p.read).status,'visibility-prefix-gates-passed');});
 for(const [label,mutate]of [['RNG divergence',p=>p.b.result.frames[0].state.rng=2],['paint divergence',p=>p.b.result.frames[1].paintHash='different'],['resource divergence',p=>p.b.result.frames[0].nativeRender.calls=2],['scissor crop',p=>p.b.result.frames[1].images[0].fullFrame.scissorTest=true],['near fade',p=>p.b.result.frames[1].images[0].flightCoverage.slashV.minDepth=1],['PNG tamper',p=>p.read=()=>Buffer.alloc(1024)],['old successful receipt',p=>p.a.status='passed'],['no visible change',p=>p.b.result.frames[1].images.forEach(x=>x.pixelHash='A')],['missing consumed module',p=>p.a.consumed=[]],['missing ambient schema',p=>delete p.a.result.setup.initial.ambientState.schema]])test('visibility rejects '+label,()=>{const p=pair();mutate(p);assert.throws(()=>verifyVisibilityPair(p.a,p.b,p.manifest,p.binding,p.read));});
 test('full comparator retains tail, seed, paint, coverage and unchanged-control gates',()=>{const body=fs.readFileSync(new URL('../check-inkwave-wiper-plane-paired.mjs',import.meta.url),'utf8');for(const text of ['same(A.completion,B.completion)','paintHash','paintEvents','nativeRender','assertWiperCoverageImage','assert.equal(A.frameCount,161)',"assert.equal(r.status,'passed')","controlsOnly","same(p.pixelHash,q.pixelHash)"])assert.ok(body.includes(text),text);assert.ok(!body.includes('0430673'));});
+
+// QA-only reporting must never admit a mismatching pair or alter successful output.
+import {assertVisibilityPairField} from '../check-inkwave-wiper-visibility-pair.mjs';
+test('successful visibility pair emits nothing and keeps exact result and input receipts',()=>{
+ const p=pair(),before=structuredClone([p.a,p.b]),lines=[];
+ const result=verifyVisibilityPair(p.a,p.b,p.manifest,p.binding,p.read,line=>lines.push(line));
+ assert.deepEqual(lines,[]);assert.deepEqual([p.a,p.b],before);
+ assert.deepEqual(result,{status:'visibility-prefix-gates-passed',source:WIPER_SOURCE,frames:2,scope:'First live full-frame views only; retirement, tail, unchanged controls, visual review and performance remain unaccepted'});
+});
+for(const [field,mutate] of [
+ ['state',r=>r.state.rng++],['paintHash',r=>r.paintHash='different'],['paintEvents',r=>r.paintEvents.push({tick:1})],['aimTrace',r=>r.aimTrace.push({tick:1})],
+ ['memory',r=>r.memory={geometries:283,textures:48}],['census',r=>r.census={different:true}],
+ ...['calls','triangles','points','lines'].map(k=>['nativeRender.'+k,r=>r.nativeRender[k]++]),['axes.counts',r=>r.axes.counts.slashV++]
+])test('first divergence reports exact tick and '+field+' without weakening its assertion',()=>{
+ const p=pair(),lines=[],a=p.a.result.frames[1],b=p.b.result.frames[1];a.memory={geometries:297,textures:47};b.memory={...a.memory};mutate(b);
+ const before=structuredClone([p.a,p.b]);let error;
+ try{verifyVisibilityPair(p.a,p.b,p.manifest,p.binding,p.read,line=>lines.push(line));}catch(e){error=e;}
+ assert.equal(error?.code,'ERR_ASSERTION');assert.equal(lines.length,1);
+ const report=JSON.parse(lines[0]);assert.equal(report.tick,1);assert.equal(report.field,field);assert.equal(report.status,'visibility-first-divergence');
+ for(const [key,row]of [['A',a],['B',b]])assert.deepEqual(report[key],{tick:1,memory:row.memory,census:row.census,nativeRender:row.nativeRender});
+ assert.deepEqual([p.a,p.b],before);
+});
+test('diagnostic precedes rethrow of the identical original assertion object',()=>{
+ const row={tick:103,memory:{},census:{},nativeRender:{}},events=[];let primary;
+ try{assert.deepEqual(297,283,'memory');}catch(e){primary=e;}
+ try{assertVisibilityPairField(103,'memory',row,row,()=>{throw primary;},line=>events.push(JSON.parse(line)));}catch(e){assert.strictEqual(e,primary);events.push('caught');}
+ assert.equal(events[0].tick,103);assert.equal(events[0].field,'memory');assert.equal(events[1],'caught');
+ assert.equal(primary.message.includes('memory'),true);assert.equal(primary.actual,297);assert.equal(primary.expected,283);assert.equal(primary.operator,'deepStrictEqual');
+});
+for(const reason of ['cyclic','bigint','throwing-toJSON','throwing-sink'])test('diagnostic '+reason+' cannot hide original failure',()=>{
+ const row={tick:0,memory:{},census:{},nativeRender:{}},primary=new assert.AssertionError({message:'memory',actual:297,expected:283,operator:'deepStrictEqual'});
+ if(reason==='cyclic')row.census.self=row.census;
+ if(reason==='bigint')row.memory.bytes=1n;
+ if(reason==='throwing-toJSON')row.census.toJSON=()=>{throw Error('serialization');};
+ let caught;try{assertVisibilityPairField(0,'memory',row,row,()=>{throw primary;},()=>{if(reason==='throwing-sink')throw Error('write failed');});}catch(e){caught=e;}
+ assert.strictEqual(caught,primary);
+});
+test('actual pair mismatch still rejects when diagnostic delivery fails',()=>{
+ const p=pair();p.b.result.frames[0].memory={geometries:1};let caught;
+ try{verifyVisibilityPair(p.a,p.b,p.manifest,p.binding,p.read,()=>{throw Error('diagnostic unavailable');});}catch(e){caught=e;}
+ assert.equal(caught?.code,'ERR_ASSERTION');assert.equal(caught.operator,'deepStrictEqual');assert.match(caught.message,/memory/);assert.deepEqual(caught.actual,{});assert.deepEqual(caught.expected,{geometries:1});
+});
+
+const firstDivergenceBranch='diagnostic/wiper-first-divergence-20261022';
+test('fresh first-divergence branch is PR-only, avoiding duplicate push capture',()=>{
+ const pushBranches=workflow.match(/  push:\n    branches: \[([^\]]+)\]/)?.[1].split(',').map(x=>x.trim());
+ assert.deepEqual(pushBranches,[diagnosticBranch]);assert.equal(pushBranches.includes(firstDivergenceBranch),false);
+ assert.equal(evaluatePredicate(jobExpression,event('pull_request',firstDivergenceBranch)),true);
+ for(const [branch,repo]of [[firstDivergenceBranch,'other/actions'],[firstDivergenceBranch+'-other','rhgrive3/actions'],['feature/other','rhgrive3/actions']])assert.equal(evaluatePredicate(jobExpression,event('pull_request',branch,repo)),false);
+ // The existing changed test path admits the PR; no broad path or push filter is added.
+ assert.ok(workflow.includes('      - scripts/tests/inkwave-wiper-current-binding.test.mjs'));
+ for(const expression of fullExpressions)for(const full_capture of [undefined,false,true])assert.equal(evaluatePredicate(expression,event('pull_request',firstDivergenceBranch),{full_capture}),false);
+ const checkout=workflow.match(/ref: \$\{\{ (.+) \}\}/)?.[1];assert.equal(evaluatePredicate(checkout,event('pull_request',firstDivergenceBranch)),'head-sha');
+});

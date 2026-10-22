@@ -68,7 +68,18 @@ try {
   }, null, 2) + '\n');
   const concurrency = Number(process.env.INKWAVE_TEST_CONCURRENCY || 4);
   if (!Number.isInteger(concurrency) || concurrency < 1) throw Error('INKWAVE_TEST_CONCURRENCY must be a positive integer');
-  const result = await runLoggedTestProcess(process.execPath, ['--experimental-vm-modules', '--test', `--test-concurrency=${concurrency}`, ...shardFiles], { cwd: ROOT, env: { ...process.env, INKWAVE_UPSTREAM_SOURCE: SRC }, logFile: log });
+  // Keep Turf in the discovered/sharded inventory, but execute its unchanged
+  // fourteen bodies via bounded children rather than one accumulating process.
+  const turfFile = path.join(PATCH_ROOT, 'tests/turf-finish.test.mjs');
+  const ordinaryFiles = shardFiles.filter(file => file !== turfFile);
+  if (shardFiles.includes(turfFile)) {
+    if (SRC !== path.join(ROOT, 'inkwave-public')) throw Error('Isolated Turf requires the checkout production source');
+    const turf = await runLoggedTestProcess(process.execPath, ['scripts/run-inkwave-turf-finish-isolated.mjs', ROOT, 'source', path.join(logDir, 'turf-finish')], { cwd: ROOT, env: process.env, logFile: path.join(logDir, 'turf-finish.log') });
+    if (turf.status !== 0) throw Error(`Isolated Turf failed (exit ${turf.status}); evidence: ${logDir}/turf-finish`);
+  }
+  const result = ordinaryFiles.length
+    ? await runLoggedTestProcess(process.execPath, ['--experimental-vm-modules', '--test', `--test-concurrency=${concurrency}`, ...ordinaryFiles], { cwd: ROOT, env: { ...process.env, INKWAVE_UPSTREAM_SOURCE: SRC }, logFile: log })
+    : (fs.writeFileSync(log, 'All selected files executed through isolated Turf.\n'), {status: 0});
   result.stdout = fs.readFileSync(log, 'utf8');
   result.stderr = '';
   if (result.status !== 0) {

@@ -78,35 +78,21 @@ export function adaptPaintMipmaps(rel, code) {
     'clear mip tracking and sync'
   );
 
-  // 3. In _drawQuads: only trigger Three.js mip generation when _mipRequested is set.
-  code = replaceOnce(
-    code,
-    `    r.autoClear = false;\n` +
-    `    r.setRenderTarget(this.rt);\n` +
-    `    r.render(this.scene, this.cam);\n` +
-    `    r.setRenderTarget(prev);\n` +
-    `    r.autoClear = ac;`,
-    `    const needMip = !!this._mipRequested;\n` +
-    `    if (needMip) {\n` +
-    `      this.rt.texture.generateMipmaps = true;\n` +
-    `    }\n` +
-    `    try {\n` +
-    `      r.autoClear = false;\n` +
-    `      r.setRenderTarget(this.rt);\n` +
-    `      r.render(this.scene, this.cam);\n` +
-    `    } finally {\n` +
-    `      if (needMip) {\n` +
-    `        this.rt.texture.generateMipmaps = false;\n` +
-    `        this._mipRequested = false;\n` +
-    `        this._lastMipClock = this.clock;\n` +
-    `        this._mipsDirty = false;\n` +
-    `        this._mipRebuildCount = (this._mipRebuildCount || 0) + 1;\n` +
-    `      }\n` +
-    `      r.setRenderTarget(prev);\n` +
-    `      r.autoClear = ac;\n` +
-    `    }`,
-    'bounded mip regeneration on render target draw'
-  );
+  // Preserve both the base source contract and the earlier ownership adapter's fail-closed draw.
+  const guardedDraw='    if(this._paintRenderError)throw this._paintRenderError;\n    try { r.autoClear=false;r.setRenderTarget(this.rt);r.render(this.scene,this.cam); }\n    catch(error){this._paintRenderError=error;throw error;}\n    finally { try { r.setRenderTarget(prev); } finally { r.autoClear=ac; } }';
+  const nativeDraw='    r.autoClear = false;\n    r.setRenderTarget(this.rt);\n    r.render(this.scene, this.cam);\n    r.setRenderTarget(prev);\n    r.autoClear = ac;';
+  code=replaceOnce(code,code.includes(guardedDraw)?guardedDraw:nativeDraw,`    if(this._paintRenderError)throw this._paintRenderError;
+    const needMip=!!this._mipRequested;let completed=false;
+    if(needMip)this.rt.texture.generateMipmaps=true;
+    try {r.autoClear=false;r.setRenderTarget(this.rt);r.render(this.scene,this.cam);completed=true;}
+    catch(error){this._paintRenderError=error;throw error;}
+    finally {
+      if(needMip){
+        this.rt.texture.generateMipmaps=false;
+        if(completed){this._mipRequested=false;this._lastMipClock=this.clock;this._mipsDirty=false;this._mipRebuildCount=(this._mipRebuildCount||0)+1;}
+      }
+      try{r.setRenderTarget(prev);}finally{r.autoClear=ac;}
+    }`,'bounded mip regeneration on render target draw');
 
   // 4. In flush: evaluate presentation policy and add _regenerateMipmaps helper.
   code = replaceOnce(

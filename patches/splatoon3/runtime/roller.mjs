@@ -1256,7 +1256,12 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       const age = state.elapsed < state.windup
         ? state.elapsed / state.windup * .23
         : .23 + (state.elapsed - state.windup) / Math.max(1 / 60, state.interval - state.windup) * .45;
-      const base = P.slice();
+      const depth=this._s3FlickPoseDepth||0,pool=this._s3FlickPoseScratch||=([]);
+      let base=pool[depth];
+      if(!base||base.length!==P.length||base.constructor!==P.constructor)base=pool[depth]=new P.constructor(P.length);
+      for(let i=0;i<P.length;i++)base[i]=P[i];
+      this._s3FlickPoseDepth=depth+1;
+      try{
       flick.call(this, P, age);
       const curve = horizontalRollerPose(state.elapsed, state.windup, state.swingInterval ?? state.interval, state.swingShape, state.holdRoll === true);
       for (let i = 0; i < 3; i++) {
@@ -1265,6 +1270,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       }
       const weight = ease(state.elapsed / (3 / 60)) * (state.released && state.rolling ? 1 - this.wRoll : 1);
       for (let i = 0; i < P.length; i++) P[i] = mix(base[i], P[i], weight);
+      }finally{this._s3FlickPoseDepth=depth;}
       return;
     }
     const p = verticalRollerPose(state.elapsed, state.windup, state.swingInterval ?? state.interval, state.swingShape, state.holdRoll === true), w = p.weight * (state.released && state.rolling ? 1 - this.wRoll : 1);

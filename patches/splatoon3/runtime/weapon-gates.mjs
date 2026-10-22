@@ -23,6 +23,24 @@ export function blasterCancellationEdge(actor, runner) {
     latch: !!intent.fire && (subEdge || squidEdge),
   };
 }
+// Keep each admitted object's independent spread snapshot. Only the accessor
+// functions are reused when their captured runner/input/boolean are identical.
+// Weak keys allow one-off test/extension inputs and disposed runners to retire.
+const gateDescriptors=new WeakMap();
+function makeInputGateDescriptors(r,input,subBlocked) {
+  return Object.getOwnPropertyDescriptors({
+    get fire(){return r.s3BlasterCancelLatch?false:input.fire;},
+    get firePressed(){return r.s3BlasterCancelLatch?false:input.firePressed;},
+    get sub(){return subBlocked?false:input.sub;},
+    get subReleased(){return subBlocked?false:input.subReleased;},
+  });
+}
+function inputGateDescriptors(r,input,subBlocked) {
+  if((typeof input!=='object'&&typeof input!=='function')||input===null)return makeInputGateDescriptors(r,input,subBlocked);
+  let byInput=gateDescriptors.get(r);if(!byInput){byInput=new WeakMap();gateDescriptors.set(r,byInput);}
+  let modes=byInput.get(input);if(!modes){modes=[];byInput.set(input,modes);}
+  const index=subBlocked?1:0;return modes[index]||=(makeInputGateDescriptors(r,input,subBlocked));
+}
 const INSTALLED = Symbol.for('inkwave.s3.weapon-gates.v1');
 const elapsed = (value, dt) => value - dt <= EPS ? 0 : value - dt;
 // The existing actual-shot clock is16F for squid admission. Sub preparation
@@ -82,12 +100,8 @@ export function installWeaponGates({ Actor, WeaponRunner, Projectiles }) {
     // No channel changes are needed in steady state. Preserve the caller's
     // input identity so the independent Dualies/Slosher gate stays allocation-free.
     if (!subBlocked && !r.s3BlasterCancelLatch) return update.call(this, dt, input);
-    const admitted = { ...input,
-      get fire() { return r.s3BlasterCancelLatch ? false : input.fire; },
-      get firePressed() { return r.s3BlasterCancelLatch ? false : input.firePressed; },
-      get sub() { return subBlocked ? false : input.sub; },
-      get subReleased() { return subBlocked ? false : input.subReleased; },
-    };
+    const admitted = { ...input };
+    Object.defineProperties(admitted,inputGateDescriptors(r,input,subBlocked));
     return update.call(this, dt, admitted);
   };
   const charger = wr._charger;

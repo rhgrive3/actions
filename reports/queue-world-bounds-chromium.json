@@ -1,0 +1,351 @@
+{
+  "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.0 Safari/537.36",
+  "frames": [
+    [
+      {
+        "calls": 9,
+        "triangles": 119090
+      },
+      {
+        "calls": 17,
+        "triangles": 116215
+      }
+    ],
+    [
+      {
+        "calls": 9,
+        "triangles": 119090
+      },
+      {
+        "calls": 16,
+        "triangles": 113340
+      }
+    ],
+    [
+      {
+        "calls": 9,
+        "triangles": 119090
+      },
+      {
+        "calls": 14,
+        "triangles": 96202
+      }
+    ],
+    [
+      {
+        "calls": 9,
+        "triangles": 119090
+      },
+      {
+        "calls": 13,
+        "triangles": 89531
+      }
+    ],
+    [
+      {
+        "calls": 9,
+        "triangles": 119090
+      },
+      {
+        "calls": 13,
+        "triangles": 89531
+      }
+    ],
+    [
+      {
+        "calls": 9,
+        "triangles": 119090
+      },
+      {
+        "calls": 13,
+        "triangles": 89531
+      }
+    ],
+    [
+      {
+        "calls": 9,
+        "triangles": 119090
+      },
+      {
+        "calls": 13,
+        "triangles": 89531
+      }
+    ],
+    [
+      {
+        "calls": 9,
+        "triangles": 119090
+      },
+      {
+        "calls": 15,
+        "triangles": 102873
+      }
+    ],
+    [
+      {
+        "calls": 9,
+        "triangles": 119090
+      },
+      {
+        "calls": 13,
+        "triangles": 89531
+      }
+    ],
+    [
+      {
+        "calls": 9,
+        "triangles": 119090
+      },
+      {
+        "calls": 12,
+        "triangles": 86656
+      }
+    ]
+  ],
+  "uploads": [
+    12,
+    0
+  ],
+  "propTrials": [
+    {
+      "stage": "tidewater",
+      "placements": 144,
+      "materialBuckets": 9,
+      "split": 2,
+      "views": [
+        {
+          "counts": [
+            {
+              "calls": 9,
+              "triangles": 131518
+            },
+            {
+              "calls": 14,
+              "triangles": 130997
+            }
+          ],
+          "differences": 0
+        },
+        {
+          "counts": [
+            {
+              "calls": 9,
+              "triangles": 131518
+            },
+            {
+              "calls": 12,
+              "triangles": 128904
+            }
+          ],
+          "differences": 0
+        },
+        {
+          "counts": [
+            {
+              "calls": 9,
+              "triangles": 131518
+            },
+            {
+              "calls": 12,
+              "triangles": 128904
+            }
+          ],
+          "differences": 0
+        },
+        {
+          "counts": [
+            {
+              "calls": 9,
+              "triangles": 131518
+            },
+            {
+              "calls": 13,
+              "triangles": 129425
+            }
+          ],
+          "differences": 0
+        },
+        {
+          "counts": [
+            {
+              "calls": 9,
+              "triangles": 131518
+            },
+            {
+              "calls": 13,
+              "triangles": 129425
+            }
+          ],
+          "differences": 0
+        },
+        {
+          "counts": [
+            {
+              "calls": 9,
+              "triangles": 131518
+            },
+            {
+              "calls": 12,
+              "triangles": 128904
+            }
+          ],
+          "differences": 0
+        },
+        {
+          "counts": [
+            {
+              "calls": 9,
+              "triangles": 131518
+            },
+            {
+              "calls": 12,
+              "triangles": 128904
+            }
+          ],
+          "differences": 0
+        },
+        {
+          "counts": [
+            {
+              "calls": 9,
+              "triangles": 131518
+            },
+            {
+              "calls": 14,
+              "triangles": 130997
+            }
+          ],
+          "differences": 0
+        }
+      ]
+    },
+    {
+      "stage": "cargo",
+      "placements": 223,
+      "materialBuckets": 9,
+      "split": 5,
+      "views": [
+        {
+          "counts": [
+            {
+              "calls": 9,
+              "triangles": 428458
+            },
+            {
+              "calls": 24,
+              "triangles": 428458
+            }
+          ],
+          "differences": 0
+        },
+        {
+          "counts": [
+            {
+              "calls": 9,
+              "triangles": 428458
+            },
+            {
+              "calls": 24,
+              "triangles": 428458
+            }
+          ],
+          "differences": 0
+        },
+        {
+          "counts": [
+            {
+              "calls": 9,
+              "triangles": 428458
+            },
+            {
+              "calls": 24,
+              "triangles": 428458
+            }
+          ],
+          "differences": 0
+        },
+        {
+          "counts": [
+            {
+              "calls": 9,
+              "triangles": 428458
+            },
+            {
+              "calls": 24,
+              "triangles": 428458
+            }
+          ],
+          "differences": 0
+        },
+        {
+          "counts": [
+            {
+              "calls": 9,
+              "triangles": 428458
+            },
+            {
+              "calls": 24,
+              "triangles": 428458
+            }
+          ],
+          "differences": 0
+        },
+        {
+          "counts": [
+            {
+              "calls": 9,
+              "triangles": 428458
+            },
+            {
+              "calls": 24,
+              "triangles": 428458
+            }
+          ],
+          "differences": 0
+        },
+        {
+          "counts": [
+            {
+              "calls": 9,
+              "triangles": 428458
+            },
+            {
+              "calls": 24,
+              "triangles": 428458
+            }
+          ],
+          "differences": 0
+        },
+        {
+          "counts": [
+            {
+              "calls": 9,
+              "triangles": 428458
+            },
+            {
+              "calls": 24,
+              "triangles": 428458
+            }
+          ],
+          "differences": 0
+        }
+      ]
+    }
+  ],
+  "staticBatches": [
+    [
+      "terrain",
+      4
+    ],
+    [
+      "staticScenery",
+      4
+    ],
+    [
+      "city",
+      4
+    ]
+  ],
+  "status": "passed",
+  "policy": "dynamic envelopes ship; both independently measured static source-range splits rejected"
+}

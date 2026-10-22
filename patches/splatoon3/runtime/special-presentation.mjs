@@ -269,7 +269,8 @@ export function installSpecialModels(api) {
   const inkMat = (color) => new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.08, roughness: 0.42, metalness: 0.1 });
   const v = new THREE.Vector3(), q = new THREE.Quaternion(), fwd = new THREE.Vector3(0, 0, 1), grip = new THREE.Vector3(), pole = new THREE.Vector3();
   const leanQ = new THREE.Quaternion(), leanAxis = new THREE.Vector3(1, 0, 0), pivotA = new THREE.Vector3(), pivotB = new THREE.Vector3(), keep = new THREE.Matrix4(), inv = new THREE.Matrix4();
-  const up = new THREE.Vector3(0, 1, 0), tailSpeakers = new Map();
+  const up = new THREE.Vector3(0, 1, 0), tailSpeakers = new Map(),speakerSeen=new Set();
+  const roundSeen=new WeakMap();
   let speakerMarks = new WeakMap();
   function observeSpeaker(e) {
     if (e?.id === 'killerWail' && e.actor && e.action === 'activate') { speakerMarks.delete(e.actor); return; }
@@ -285,7 +286,7 @@ export function installSpecialModels(api) {
   // when optional FX are absent or disabled.
   api.specialModelsReplay = observeSpeaker;
   function syncTailSpeakers(system) {
-    const seen = new Set();
+    const seen = speakerSeen;seen.clear();
     const draw = (actor, activation, index, origin, target) => {
       let slots = tailSpeakers.get(actor);
       if (!slots) { slots = new Map(); tailSpeakers.set(actor, slots); }
@@ -398,12 +399,13 @@ export function installSpecialModels(api) {
     for (const [o, pres] of shown) if (o.dead || !live.includes(o)) { disposeModel(pres.group); shown.delete(o); }
     // Projectiles (pooled records: key on identity + activation seed).
     const rounds = system[ROUNDS] ||= new Map(), list = system.list || [];
-    const seen = new Set();
+    let seen=roundSeen.get(system);if(!seen){seen=new Set();roundSeen.set(system,seen);}seen.clear();
     for (const p of list) {
       const spec = SPECIAL_PROJECTILE_MODELS[p?.wid];
       if (!spec || !p.pos) continue;
       let r = rounds.get(p);
-      const tag = `${p.wid}:${p.s3AllSpecialSeed ?? p.seed}`;
+      const changed=!r||r.identityWid!==p.wid||r.identitySeed!==p.seed||r.identitySpecialSeed!==p.s3AllSpecialSeed;
+      const tag=changed?`${p.wid}:${p.s3AllSpecialSeed ?? p.seed}`:r.tag;
       if (r && r.tag !== tag) { disposeModel(r.group); rounds.delete(p); r = null; }
       if (!r) {
         const m = buildSubModel(THREE, spec.model, inkMat(colorOf(p.owner, p.team)));
@@ -413,6 +415,7 @@ export function installSpecialModels(api) {
         m.root.scale.setScalar(spec.scale);
         r.group.add(m.root); G.scene?.add?.(r.group); rounds.set(p, r);
       }
+      r.identityWid=p.wid;r.identitySeed=p.seed;r.identitySpecialSeed=p.s3AllSpecialSeed;
       seen.add(p);
       if (spec.hideBlob) { p.vis = 1e-4; p.sats = 0; }
       r.group.position.copy(p.pos);
@@ -421,6 +424,7 @@ export function installSpecialModels(api) {
       if (spec.spin && r.model.groups.ribbons) r.model.groups.ribbons.rotation.y += dt * 6;
     }
     for (const [p, r] of rounds) if (!seen.has(p)) { disposeModel(r.group); rounds.delete(p); }
+    seen.clear();
   }
   const update = Projectiles.prototype.update;
   Projectiles.prototype.update = function (dt, ...args) {
@@ -526,11 +530,11 @@ export function installSpecialModels(api) {
     s.line.visible = on;
     if (!on) return;
     const hand = ch.bones?.handR, from = v; (hand ? hand.getWorldPosition(from) : from.copy(ch.actor.pos).setY(ch.actor.pos.y + 1));
-    const to = state.zipTarget.clone();
+    const to = (s.zipLineTarget ||= new THREE.Vector3()).copy(state.zipTarget);
     if (state.phase === 'hookFlight') to.lerpVectors(from, to, clamp01((state.hookFlightT || 0) / Math.max(1e-6, state.hookFlightDuration || 0)));
     const d = to.sub(from), len = d.length();
     s.line.position.copy(from); s.line.scale.set(1, Math.max(0.01, len), 1);
-    if (len > 1e-6) s.line.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.divideScalar(len));
+    if (len > 1e-6) s.line.quaternion.setFromUnitVectors(up, d.divideScalar(len));
   }
   function pose(ch, s, dt) {
     const a = ch.actor, state = a._s3AllSpecialState?.id === s.id ? a._s3AllSpecialState : null, t = G.time || 0;
@@ -594,14 +598,14 @@ export function installSpecialModels(api) {
       const phase = state?.phase ?? a.specialActive?.phase, age = t - s.startedAt;
       const target = phase === 'dash' ? 0.72 : phase === 'brake' ? 0.55 : phase === 'recovery' ? 0.2 : 0.35 * smooth(age / 0.3);
       s.lean = (s.lean ?? 0) + (target - (s.lean ?? 0)) * Math.min(1, dt * 9);
-      const holders = s.devices.map(d => { d.holder.updateWorldMatrix(true, false); return [d.holder, d.holder.matrixWorld.clone()]; });
+      for(const d of s.devices){d.holder.updateWorldMatrix(true,false);(d.reefWorld ||= new THREE.Matrix4()).copy(d.holder.matrixWorld);}
       pivotA.set(0, 0.62, 0).applyQuaternion(ch.kid.quaternion);
       leanQ.setFromAxisAngle(leanAxis, s.lean); ch.kid.quaternion.multiply(leanQ);
       pivotB.set(0, 0.62, 0).applyQuaternion(ch.kid.quaternion);
       ch.kid.position.add(pivotA).sub(pivotB); ch.kid.position.y -= 0.16 * s.lean;
       ch.kid.updateMatrixWorld(true);
-      for (const [h, world] of holders) {
-        inv.copy(h.parent.matrixWorld).invert(); keep.multiplyMatrices(inv, world);
+      for (const d of s.devices) {
+        const h=d.holder;inv.copy(h.parent.matrixWorld).invert(); keep.multiplyMatrices(inv, d.reefWorld);
         keep.decompose(h.position, h.quaternion, h.scale); h.updateMatrixWorld(true);
       }
     }

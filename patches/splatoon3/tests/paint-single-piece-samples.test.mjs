@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-const load=async (file,salt='')=>import('data:text/javascript;base64,'+Buffer.from(fs.readFileSync(new URL(file,import.meta.url),'utf8')+'\nexport {prepareAncillary,pointInsideAncillary};\n// '+salt).toString('base64'));
+const load=async (file,salt='')=>import('data:text/javascript;base64,'+Buffer.from(fs.readFileSync(new URL(file,import.meta.url),'utf8').replace(/from '(\.\/[^']+)'/g, (_, rel) => 'from ' + JSON.stringify(new URL(rel,new URL(file,import.meta.url)).href))+'\nexport {prepareAncillary,pointInsideAncillary};\n// '+salt).toString('base64'));
 const old=await load('./fixtures/paint-piece-ownership-baseline.mjs');
 const current=await load('../runtime/paint-ownership.mjs');
 // Keep the original allocating shape formulas as the independent value oracle.

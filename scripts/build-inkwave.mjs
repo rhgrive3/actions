@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import {dedupeVersionedVolumeAssets} from './lib/inkwave-volume-packaging.mjs';
+import {compactInstalledAudioManifest} from './lib/inkwave-audio-manifest.mjs';
 import { NATIVE_ROOT, nativeStageIdentity,NATIVE_RUNTIME_EXTERNALS, prepareNativeStageBuild, copyLocalNativeAssets } from './lib/inkwave-native-stages.mjs';
 import { adaptBuildSource } from './inkwave-source-composition.mjs';
 // Build the INKWAVE GitHub Pages site with the independent gameplay patches applied to the output tree.
@@ -74,7 +76,8 @@ const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).filter(d => d
   const p = path.join(dir, d.name);
   return d.isDirectory() ? walk(p) : [p];
 });
-const gz = (buf) => zlib.gzipSync(buf, { level: 9 }).length;
+const reportGzip = process.env.INKWAVE_BUILD_REPORT_GZIP === '1';
+const gz = (buf) => reportGzip ? zlib.gzipSync(buf, { level: 9 }).length : 0;
 const kb = (n) => `${(n / 1024).toFixed(0)} KB`;
 let compactedLiteralBytes = 0;
 const compactedLiteralBytesByFile = new Map();
@@ -85,8 +88,37 @@ const compactEsm = (code, file) => {
   return compacted.code;
 };
 
+const dependencySpecs = new Map(), composedOwners = new Map();
+function composeSource(rel, source) {
+  const code=adaptBuildSource(rel,source), specs=[];
+  if (/\.m?js$/.test(rel)) {
+    for(const m of code.matchAll(/(?:^|[;\n}])\s*(?:import|export)\s+(?:[\w*{}\s,$]+\s+from\s+)?['"]([^'"]+)['"]/g)) specs.push(m[1]);
+    for(const m of code.matchAll(/(?:loadModule|import)\(\s*['"]([^'"]+\.js)['"]/g)) specs.push(m[1]);
+    dependencySpecs.set(rel.split(path.sep).join('/'),specs);
+  }
+  if(['src/main.js','src/game/character.js','src/audio/music.js'].includes(rel)) composedOwners.set(rel,code);
+  return code;
+}
+// Composition stays synchronous in walk order; only independent output work
+// runs concurrently. Each stage flushes before overlays or dependency scans.
+const transformLimit=Number(process.env.INKWAVE_BUILD_TRANSFORM_CONCURRENCY || 4);
+if(!Number.isSafeInteger(transformLimit)||transformLimit<1||transformLimit>8) throw Error('Invalid transform concurrency (1..8)');
+const transforms=new Set();let transformError=null;
+async function stageTransform(code, options, accept) {
+  if(transformError) throw transformError;
+  const task=Promise.resolve().then(()=>transform(code,options)).then(accept).catch(error=>{transformError ||= error;}).finally(()=>transforms.delete(task));
+  transforms.add(task);
+  if(transforms.size>=transformLimit) await Promise.race(transforms);
+  if(transformError) throw transformError;
+}
+async function finishTransforms() {
+  await Promise.all(transforms);
+  if(transformError) throw transformError;
+}
+
 // Build as a transaction: only a fully patched, validated tree replaces OUT.
-const nativePrepared = prepareNativeStageBuild(process.env.INKWAVE_NATIVE_STAGE_ASSETS);
+const nativeSourceIdentity=nativeStageIdentity();
+const nativePrepared = prepareNativeStageBuild(process.env.INKWAVE_NATIVE_STAGE_ASSETS,nativeSourceIdentity);
 const BUILD = OUT + '.building';
 fs.rmSync(BUILD, { recursive: true, force: true });
 let rawJs = 0, minJs = 0, gzRaw = 0, gzMin = 0, rawCss = 0, minCss = 0;
@@ -98,27 +130,38 @@ for (const file of walk(SRC)) {
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   const ext = path.extname(file);
   if (ext === '.js' || ext === '.mjs' || ext === '.css') {
-    const code = adaptBuildSource(rel, fs.readFileSync(file, 'utf8'));
+    const code = composeSource(rel, fs.readFileSync(file, 'utf8'));
+    // These exact production inputs are reread/composed by the mandatory
+    // Three bundle below, which replaces module and removes core. Copying
+    // composed source here keeps the intermediate paths/diagnostics intact
+    // without minifying two outputs that can never be published. Diagnostics
+    // and no-shake builds still take the original standalone transform path.
+    const replacedThree = !unminified && process.env.INKWAVE_NO_THREE_SHAKE !== '1' &&
+      /^(?:vendor\/three\/build\/three\.(?:core|module)\.js)$/.test(rel.split(path.sep).join('/')) &&
+      fs.existsSync(path.join(SRC, 'vendor/three/build/three.module.js'));
+    if (replacedThree) { fs.writeFileSync(dst, code); continue; }
     const esm = ext === '.mjs' || (ext === '.js' && (rel.startsWith('src/') || rel.startsWith('vendor/three/jsm/')));
-    const res = await transform(code, {
+    await stageTransform(code, {
       loader: ext === '.css' ? 'css' : 'js', format: esm ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: rel,
-    });
+    }, res => {
     const output = esm && !unminified ? compactEsm(res.code, rel.split(path.sep).join('/')) : res.code;
     fs.writeFileSync(dst, output);
     if (ext === '.css') { rawCss += code.length; minCss += output.length; }
     else { rawJs += Buffer.byteLength(code); minJs += Buffer.byteLength(output); gzRaw += gz(Buffer.from(code)); gzMin += gz(Buffer.from(output)); }
-  } else if (rel === 'index.html') fs.writeFileSync(dst, adaptBuildSource(rel, fs.readFileSync(file, 'utf8')));
+    });
+  } else if (rel === 'index.html') fs.writeFileSync(dst, composeSource(rel, fs.readFileSync(file, 'utf8')));
   else fs.copyFileSync(file, dst);
 }
 // .mjs files have private module scope. ESM output lets esbuild shorten those
 // bindings while preserving every exported name, import, and numeric value.
+await finishTransforms();
 for (const file of walk(PATCH_ROOT)) {
   const rel = path.relative(PATCH_ROOT, file);
   if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel === 'upstream-lock.json' || BUILD_ONLY_PATCH_MODULES.has('patches/splatoon3/' + rel.split(path.sep).join('/'))) continue;
   // Pinned source/audit tables are input evidence for tests and profile generation,
   // never fetched by the browser. Keep them in Git, but exclude their JSON from
   // the deployed PWA asset/hash manifest and the bounded Service Worker.
-  if (rel.startsWith('reference/') && rel.endsWith('.json')) continue;
+  if (rel.startsWith('reference/') && rel.endsWith('.json') || rel === 'reference/weapon-models/shooters-b-baseline.mjs.txt' || rel === 'reference/weapon-models/squeezer-stripes-f7.mjs.txt') continue;
   // Scorch menu artwork belongs at the shared stage asset URLs, not under the
   // patch source namespace. Merge only its stage manifest entry below.
   if (rel.startsWith('assets/stages/')) continue;
@@ -129,6 +172,7 @@ for (const file of walk(PATCH_ROOT)) {
   // one worker manifest entry instead of thirteen. kit.mjs stays its own module.
   if (!unminified && WEAPON_MODEL_FAMILY.test(relPosix)) continue;
   if (!unminified && relPosix === 'runtime/weapon-models/registry.mjs') {
+    await finishTransforms();
     const res = await esbuild.build({
       entryPoints: [file], bundle: true, format: 'esm', minify: true, charset: 'utf8', legalComments: 'inline', write: false, logLevel: 'warning',
       plugins: [{ name: 'weapon-model-families', setup(b) {
@@ -136,7 +180,7 @@ for (const file of walk(PATCH_ROOT)) {
           (args.importer.startsWith(path.dirname(file)) && WEAPON_MODEL_FAMILY.test('runtime/weapon-models/' + args.path.replace(/^\.\//, '')))
           ? undefined : { path: args.path, external: true });
         b.onLoad({ filter: /\.mjs$/ }, args => ({ loader: 'js',
-          contents: adaptBuildSource('patches/splatoon3/' + path.relative(PATCH_ROOT, args.path).split(path.sep).join('/'), fs.readFileSync(args.path, 'utf8')) }));
+          contents: composeSource('patches/splatoon3/' + path.relative(PATCH_ROOT, args.path).split(path.sep).join('/'), fs.readFileSync(args.path, 'utf8')) }));
       } }],
     });
     fs.writeFileSync(dst, compactEsm(res.outputFiles[0].text, 'patches/splatoon3/' + relPosix));
@@ -144,9 +188,12 @@ for (const file of walk(PATCH_ROOT)) {
   }
   if (/\.(m?js|css)$/.test(rel)) {
     const patchRel = 'patches/splatoon3/' + rel.split(path.sep).join('/');
-    const code = adaptBuildSource(patchRel, fs.readFileSync(file, 'utf8'));
-    const res = await transform(code, { loader: rel.endsWith('.css') ? 'css' : 'js', format: rel.endsWith('.mjs') ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: patchRel });
-    fs.writeFileSync(dst, rel.endsWith('.mjs') && !unminified ? compactEsm(res.code, patchRel) : res.code);
+    const code = composeSource(patchRel, fs.readFileSync(file, 'utf8'));
+    await stageTransform(code, { loader: rel.endsWith('.css') ? 'css' : 'js', format: rel.endsWith('.mjs') ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: patchRel }, res => {
+      fs.writeFileSync(dst, rel.endsWith('.mjs') && !unminified ? compactEsm(res.code, patchRel) : res.code);
+    });
+  } else if (rel === 'runtime/audio/real-s3-installed.json') {
+    fs.writeFileSync(dst,compactInstalledAudioManifest(fs.readFileSync(file,'utf8')));
   } else if (rel === 'profile.json') {
     // Retain main's compact profile in all emitted builds while keeping the
     // PR's explicit parsed-value check and the production precache budget.
@@ -155,6 +202,7 @@ for (const file of walk(PATCH_ROOT)) {
     fs.writeFileSync(dst, compact);
   } else fs.copyFileSync(file, dst);
 }
+await finishTransforms();
 for (const file of walk(QUALITY_ROOT)) {
   const rel = path.relative(QUALITY_ROOT, file);
   // Exclude only audited transformers; mixed runtime/adapter helpers remain shipped.
@@ -163,14 +211,16 @@ for (const file of walk(QUALITY_ROOT)) {
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   if (/\.(m?js|css)$/.test(rel)) {
     const patchRel = 'patches/local-quality/' + rel.split(path.sep).join('/');
-    const res = await transform(adaptBuildSource(patchRel, fs.readFileSync(file, 'utf8')), { loader: rel.endsWith('.css') ? 'css' : 'js', format: rel.endsWith('.mjs') ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: patchRel });
-    fs.writeFileSync(dst, rel.endsWith('.mjs') && !unminified ? compactEsm(res.code, patchRel) : res.code);
+    await stageTransform(composeSource(patchRel, fs.readFileSync(file, 'utf8')), { loader: rel.endsWith('.css') ? 'css' : 'js', format: rel.endsWith('.mjs') ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: patchRel }, res => {
+      fs.writeFileSync(dst, rel.endsWith('.mjs') && !unminified ? compactEsm(res.code, patchRel) : res.code);
+    });
   } else fs.copyFileSync(file, dst);
 }
 
 // Scorch menu images overlay the upstream stage path while the upstream tree
 // remains frozen. The stage manifest receives the Scorch entry; loading-cache
 // then hashes all four files into its immutable asset allowlist.
+await finishTransforms();
 overlayScorchStageAssets(BUILD);
 
 // The reliability/network overlays are independent from splatoon3 and local-quality.
@@ -192,6 +242,7 @@ for (const [root, prefix] of [
     const dst = path.join(BUILD, prefix, rel);
     fs.mkdirSync(path.dirname(dst), { recursive: true });
     if (prefix === 'patches/native-stages' && ['runtime/engine.mjs','runtime/registry.mjs','runtime/source-worker.mjs'].includes(rel) && !unminified) {
+      await finishTransforms();
       const bundled = await esbuild.build({ entryPoints:[file], bundle:true, format:'esm', minify:true, charset:'utf8', write:false,
         external:NATIVE_RUNTIME_EXTERNALS, legalComments:'inline' });
       fs.writeFileSync(dst,bundled.outputFiles[0].contents); continue;
@@ -200,12 +251,13 @@ for (const [root, prefix] of [
       const sourcefile = prefix + '/' + rel;
       const nativeConfig = prefix === 'patches/native-stages' && rel === 'runtime/build-config.mjs';
       const source = nativeConfig ? `export const nativeStageBuild = ${JSON.stringify(nativePrepared?.config || null)};` : fs.readFileSync(file, 'utf8');
-      const result = await transform(adaptBuildSource(sourcefile, source), {
+      await stageTransform(composeSource(sourcefile, source), {
         loader: rel.endsWith('.css') ? 'css' : 'js',
         format: rel.endsWith('.mjs') ? 'esm' : undefined,
         minify: true, charset: 'utf8', legalComments: 'inline', sourcefile,
+      }, result => {
+        fs.writeFileSync(dst, rel.endsWith('.mjs') && !unminified ? compactEsm(result.code, prefix + '/' + rel) : result.code);
       });
-      fs.writeFileSync(dst, rel.endsWith('.mjs') && !unminified ? compactEsm(result.code, prefix + '/' + rel) : result.code);
     } else fs.copyFileSync(file, dst);
   }
 }
@@ -213,6 +265,7 @@ for (const [root, prefix] of [
 // Practice Range layer: runtime modules + stylesheet under patches/practice-range/ (tests, docs, the adapter and the
 // offline bake tools stay out), its stage assets (lightmap, menu art) overlaid at their upstream paths — never over an
 // existing upstream file.
+await finishTransforms();
 for (const file of walk(RANGE_ROOT)) {
   const rel = path.relative(RANGE_ROOT, file).split(path.sep).join('/');
   if (rel.startsWith('tests/') || rel.startsWith('tools/') || rel.endsWith('.md') || rel === 'adapter.mjs') continue;
@@ -226,11 +279,14 @@ for (const file of walk(RANGE_ROOT)) {
   const dst = path.join(BUILD, 'patches/practice-range', rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   if (/\.(m?js|css)$/.test(rel)) {
-    const res = await transform(fs.readFileSync(file, 'utf8'), { loader: rel.endsWith('.css') ? 'css' : 'js', format: rel.endsWith('.mjs') ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: 'patches/practice-range/' + rel });
     const patchRel = 'patches/practice-range/' + rel;
+    await stageTransform(fs.readFileSync(file, 'utf8'), { loader: rel.endsWith('.css') ? 'css' : 'js', format: rel.endsWith('.mjs') ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: 'patches/practice-range/' + rel }, res => {
     fs.writeFileSync(dst, rel.endsWith('.mjs') && !unminified ? compactEsm(res.code, patchRel) : res.code);
+    });
   } else fs.copyFileSync(file, dst);
 }
+
+await finishTransforms();
 
 // Re-encode every final lightmap once after upstream, Scorch, and Range assets
 // have been overlaid. Keep all five assets offline and verify exact pixels.
@@ -276,7 +332,7 @@ if (!unminified && fs.existsSync(path.join(THREE_DIR, 'three.module.js')) && pro
   const before = fs.statSync(path.join(BUILD, 'vendor/three/build/three.module.js')).size + fs.statSync(path.join(BUILD, 'vendor/three/build/three.core.js')).size;
   fs.writeFileSync(path.join(BUILD, 'vendor/three/build/three.module.js'), compactEsm(Buffer.from(out).toString('utf8'), 'vendor/three/build/three.module.js'));
   fs.rmSync(path.join(BUILD, 'vendor/three/build/three.core.js'));
-  console.log(`three.js: ${keep.length} of ${exported.size} exports kept · ${kb(before)} → ${kb(out.length)} (gzip ${kb(gz(Buffer.from(out)))})`);
+  console.log(`three.js: ${keep.length} of ${exported.size} exports kept · ${kb(before)} → ${kb(out.length)} ${reportGzip ? `(gzip ${kb(gz(Buffer.from(out)))})` : '(gzip diagnostics disabled)'}`);
 }
 
 // The current audio route no longer imports this authored helper. Preserve its
@@ -299,8 +355,7 @@ if (fs.existsSync(audioOrphan)) {
         : src ? 'import ' + JSON.stringify(src[1]) + ';' : match[2]);
     }
   }
-  const composedOwners = new Map(['src/main.js', 'src/game/character.js', 'src/audio/music.js'].map(rel =>
-    [rel, adaptBuildSource(rel, fs.readFileSync(path.join(SRC, rel), 'utf8'))]));
+
   const decision = reviewedAudioOrphanDecision(fs.readFileSync(path.join(projectRoot, REVIEWED_AUDIO_ORPHAN), 'utf8'), modules, composedOwners);
   if (decision.omit) fs.unlinkSync(audioOrphan);
   console.log('reviewed audio helper: ' + (decision.omit ? 'omitted' : 'retained') + ' (' + decision.reason + ')');
@@ -329,15 +384,16 @@ const visit = (rel) => {
   // its emitted imports, not its pre-bundle source imports: the family files
   // do not ship separately and would hide their shared kit.mjs dependency.
   const emittedRegistry = !unminified && (rel === 'patches/splatoon3/runtime/weapon-models/registry.mjs' || rel.startsWith('patches/native-stages/runtime/'));
-  const s = emittedRegistry ? fs.readFileSync(abs, 'utf8')
-    : fs.existsSync(original) ? adaptBuildSource(rel, fs.readFileSync(original, 'utf8')) : fs.readFileSync(abs, 'utf8');
-  // esbuild emits import{...}from"./kit.mjs" without spaces. Parse the
-  // emitted weapon-family bundle rather than regex-scanning its source graph:
-  // otherwise kit.mjs is a live static import absent from the offline precache.
-  const specs = emittedRegistry ? staticEsModuleImports(s) : [];
-  if (!emittedRegistry) {
-    for (const m of s.matchAll(/(?:^|[;\n}])\s*(?:import|export)\s+(?:[\w*{}\s,$]+\s+from\s+)?['"]([^'"]+)['"]/g)) specs.push(m[1]);
-    for (const m of s.matchAll(/(?:loadModule|import)\(\s*['"]([^'"]+\.js)['"]/g)) specs.push(m[1]);
+  let specs = !emittedRegistry && dependencySpecs.get(rel);
+  if(!specs) {
+    const s = emittedRegistry ? fs.readFileSync(abs,'utf8')
+      : fs.existsSync(original) ? composeSource(rel,fs.readFileSync(original,'utf8')) : fs.readFileSync(abs,'utf8');
+    if(emittedRegistry) specs=staticEsModuleImports(s);
+    else {
+      specs=[];
+      for(const m of s.matchAll(/(?:^|[;\n}])\s*(?:import|export)\s+(?:[\w*{}\s,$]+\s+from\s+)?['"]([^'"]+)['"]/g)) specs.push(m[1]);
+      for(const m of s.matchAll(/(?:loadModule|import)\(\s*['"]([^'"]+\.js)['"]/g)) specs.push(m[1]);
+    }
   }
   for (const sp of specs) visit(resolve(rel, sp));
   order.push(rel);
@@ -352,6 +408,8 @@ visit('patches/splatoon3/runtime/audio/blaster-hit.mjs');
 // own immutable offline dependencies. The source payload stays outside it.
 visit('patches/native-stages/runtime/native-world.mjs');
 visit('patches/native-stages/runtime/source-worker.mjs');
+visit('patches/splatoon3/runtime/audio/reverb-worker.mjs');
+visit('patches/splatoon3/runtime/audio/grain-worker.mjs');
 // #61's accepted startup baseline preloaded 145 modules (131 core + 14 range).
 // Later workstreams add these runtime dependencies to the static graph. Keep
 // them in the immutable revision + Service Worker precache, but let their
@@ -359,6 +417,19 @@ visit('patches/native-stages/runtime/source-worker.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  // Optional builder packs remain revisioned/offline-precached, never HTML preload hints.
+  'src/world/props.js',
+  'src/world/stages/index.js',
+  'src/world/props-marina-vessels.js',
+  'src/world/props-marina-dock.js',
+  'src/world/stages/cargo/props.js',
+  'patches/splatoon3/runtime/audio/grain-texture.mjs',
+  'patches/splatoon3/runtime/audio/grain-prewarm.mjs',
+  'patches/splatoon3/runtime/audio/grain-worker.mjs',
+  // Reverb preparation remains an ordinary module/Worker fetch, with immutable offline coverage.
+  'patches/splatoon3/runtime/audio/reverb-impulse.mjs',
+  'patches/splatoon3/runtime/audio/reverb-prewarm.mjs',
+  'patches/splatoon3/runtime/audio/reverb-worker.mjs',
   'patches/native-stages/runtime/native-world.mjs',
   'patches/native-stages/runtime/source-menu.mjs',
   'patches/native-stages/runtime/source-worker.mjs',
@@ -568,13 +639,14 @@ fs.writeFileSync(path.join(BUILD, 'index.html'), loadingHTML);
 fs.writeFileSync(path.join(BUILD, '.nojekyll'), '');
 // Give the entire module/asset tree an immutable URL. A cached old module must
 // never import a newer profile or dependency after the next OSS update.
-const revision = sha256(JSON.stringify(walk(BUILD).sort().map(file => [path.relative(BUILD,file),sha256(fs.readFileSync(file))])));
+const revision = sha256(JSON.stringify(walk(BUILD).sort().map(file => { const rel=path.relative(BUILD,file); return [rel,loadingPlan.assets[rel.split(path.sep).join('/')]?.[1] ?? sha256(fs.readFileSync(file))]; })));
 const versionFiles = walk(BUILD);
 for (const file of versionFiles) {
   const rel = path.relative(BUILD,file);
   if (rel === 'index.html' || rel === '.nojekyll') continue;
   const dst = path.join(BUILD,'_versions',revision,rel); fs.mkdirSync(path.dirname(dst),{recursive:true}); fs.copyFileSync(file,dst);
 }
+const volumePackaging=dedupeVersionedVolumeAssets(BUILD,revision);
 // Place base before the import map so all relative imports, preload hints,
 // stylesheet URLs and runtime fetches resolve within the same revision.
 fs.writeFileSync(path.join(BUILD,'index.html'), loadingHTML.replace('<head>', `<head>\n<base href="./_versions/${revision}/">`));
@@ -590,11 +662,12 @@ for (const [file, hash] of Object.entries(identity.build.range)) identity.files[
 for (const [file, hash] of Object.entries(identity.build.loadingCache.source)) identity.files['loading-cache/' + file] = hash;
 // Direct script helpers also control composition, packaging and worker output.
 // Include them in the same input hash and committed-source checks as overlays.
-for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-module-imports.mjs', 'lib/inkwave-reviewed-audio-orphan.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-source-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-lightmap.mjs']) {
+for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-module-imports.mjs', 'lib/inkwave-reviewed-audio-orphan.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-source-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-lightmap.mjs', 'lib/inkwave-audio-manifest.mjs', 'lib/inkwave-volume-packaging.mjs']) {
   identity.files['build-script/' + file] = sha256(fs.readFileSync(new URL(file, import.meta.url)));
 }
-for (const [file, hash] of Object.entries(nativeStageIdentity())) identity.files['native-stages/' + file] = hash;
+for (const [file, hash] of Object.entries(nativeSourceIdentity)) identity.files['native-stages/' + file] = hash;
 identity.build.nativeStages = nativePrepared?.config || null;
+identity.build.volumePackaging=volumePackaging;
 identity.files['build-script/lib/inkwave-native-stages.mjs'] = sha256(fs.readFileSync(new URL('lib/inkwave-native-stages.mjs', import.meta.url)));
 identity.inputHash = sha256(JSON.stringify(identity.files));
 fs.writeFileSync(path.join(BUILD, 'inkwave-build.json'), JSON.stringify(identity, null, 2) + '\n');
@@ -603,7 +676,7 @@ fs.rmSync(OUT, { recursive: true, force: true });
 fs.renameSync(BUILD, OUT);
 console.log(`patch: splatoon3+quality+range · build ${identity.contentHash.slice(0, 12)}`);
 
-console.log(`JS : ${kb(rawJs)} → ${kb(minJs)}  (gzip ${kb(gzRaw)} → ${kb(gzMin)})`);
+console.log(`JS transforms (excludes replaced Three inputs): ${kb(rawJs)} → ${kb(minJs)}  ${reportGzip ? `(gzip ${kb(gzRaw)} → ${kb(gzMin)})` : '(gzip diagnostics disabled; set INKWAVE_BUILD_REPORT_GZIP=1)'}`);
 console.log(`CSS: ${kb(rawCss)} → ${kb(minCss)}`);
 const cachedLiteralBytesSaved = loadingPlan.precache.reduce((sum, file) => sum + (compactedLiteralBytesByFile.get(file) || 0), 0);
 console.log(`repeated module strings: saved ${compactedLiteralBytes} bytes total, ${cachedLiteralBytesSaved} in the offline precache`);

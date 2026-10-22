@@ -86,12 +86,15 @@ import { adaptPerfReadout } from './perf-readout-adapter.mjs';
 import { adaptFxEmptyPools } from './fx-empty-pools-adapter.mjs';
 import { adaptCollisionHotpath } from './collision-hotpath-adapter.mjs';
 import { adaptRuntimeFrameScratch } from './runtime-frame-scratch-adapter.mjs';
+import { adaptShoeReadTransform } from './shoe-read-transform-adapter.mjs';
+import { adaptSceneryBounds } from './scenery-bounds-adapter.mjs';
 import { adaptReflSkip } from './refl-skip-adapter.mjs';
 import { adaptFinishTape } from './finish-tape-adapter.mjs';
 import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'character-shadow-batch-adapter.mjs', 'character-shadow-batch.mjs',
   'ink-micro-surface-adapter.mjs',
   'headgear-adapter.mjs', 'headgear/catalog.mjs', 'headgear/lifecycle.mjs', 'headgear/armor-helmet.js', 'headgear/two-line-mesh.js', 'headgear/camo-headphones.js', 'headgear/character-headgear-ink-black-flap-cap.js',
   'view-settings.mjs',
@@ -116,7 +119,7 @@ const IDENTITY_FILES = [
   'issue-190-adapter.mjs', 'paint-mipmap-probe.mjs', 'issue-472-adapter.mjs',
   'screenfx-damage-reset-adapter.mjs', 'composer-format-adapter.mjs', 'composer-target-adapter.mjs', 'screenfx-lens-release-adapter.mjs', 'actor-weapon-input-adapter.mjs', 'bot-refill-release-adapter.mjs', 'bot-edge-guard-adapter.mjs',
   'fx-actor-lifetime-adapter.mjs',
-  'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs',
+  'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs', 'layout-sample.mjs',
   'hud-authority-adapter.mjs', 's3-hud-look-adapter.mjs', 's3-squid-look-adapter.mjs', 'swim-splash-adapter.mjs', 'swim-surface.mjs', 's3-face-look-adapter.mjs', 'fonts/iw-s3-digits.woff2', 'fonts/iw-s3-jp.woff2', 'fonts/OFL-RoundedMplus1c.txt', 'hud/s3-squid-badge.svg',
   'result-continuation-adapter.mjs', 'result-continuation.mjs',
   'showcase-shadow.mjs', 'showcase-shadow-adapter.mjs', 'showcase-alpha-adapter.mjs',
@@ -129,7 +132,7 @@ const IDENTITY_FILES = [
   'score-reticle-adapter.mjs', 'map-teammate-status-adapter.mjs',
   'issue-461-sfx-mute.mjs', 'issue-480-camera-shake-fidelity.mjs',
   'audio-listener-adapter.mjs', 'runtime/audio-listener.mjs',
-  'resource-adapter.mjs', 'resource-budget.mjs', 'portrait-work.mjs', 'depth-cache.mjs',
+  'resource-adapter.mjs', 'shadow-visibility-pass.mjs', 'resource-budget.mjs', 'portrait-work.mjs', 'depth-cache.mjs',
   'aim-profile-adapter.mjs', 'aim-profile.mjs', 'medal-adapter.mjs',
   'resource-adapter.mjs', 'resource-budget.mjs', 'depth-cache.mjs',
   'hud-authority-adapter.mjs',
@@ -151,7 +154,7 @@ const IDENTITY_FILES = [
   'bot-navigation-adapter.mjs', 'bot-navigation.mjs', 'firefight-tier-budget.mjs',
   'root-hair-spring-adapter.mjs',
   'collision-hotpath-adapter.mjs',
-  'runtime-frame-scratch-adapter.mjs',
+  'geometry-build-storage.mjs', 'geometry-build-storage-adapter.mjs', 'runtime-frame-scratch-adapter.mjs', 'motion-diagnostics.mjs', 'shoe-read-transform-adapter.mjs', 'scenery-bounds-adapter.mjs',
   'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'range-frame-pacing-adapter.mjs',
 ];
 
@@ -178,6 +181,7 @@ export function adaptQualitySource(rel, code) {
   const paced = adaptRangeFramePacing(rel, framed);
   let broadphased = adaptCollisionHotpath(rel, paced, replaceOnce);
   if (rel === 'src/game/physics.js') {
+    broadphased = replaceOnce(broadphased, '        if (tmin > tmax) { miss = true; break; }', '        if (tmin > tmax || tmin > best) { miss = true; break; }', 'reject OBB slabs beyond the current nearest hit');
     broadphased = replaceOnce(broadphased,
       '    const yLo = Math.min(origin.y, ey) - 1e-6;\n    const yHi = Math.max(origin.y, ey) + 1e-6;',
       '    const yLo = Math.min(origin.y, ey) - 1e-6;\n    const yHi = Math.max(origin.y, ey) + 1e-6;\n    const xLo = Math.min(origin.x, ex) - 1e-6, xHi = Math.max(origin.x, ex) + 1e-6;\n    const zLo = Math.min(origin.z, ez) - 1e-6, zHi = Math.max(origin.z, ez) + 1e-6;',
@@ -190,7 +194,7 @@ export function adaptQualitySource(rel, code) {
   const painted = adaptFxEmptyPools(rel, adaptPerfReadout(rel, adaptPaintHotpath(rel, broadphased, replaceOnce), replaceOnce), replaceOnce);
   const lazy = adaptComposerTarget(rel, adaptDistanceHotpath(rel, painted, replaceOnce), replaceOnce);
   const navigated = adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
-  const botNav = adaptBotNavigation(rel, adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce)), replaceOnce), replaceOnce);
+  const botNav = adaptBotNavigation(rel, adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, adaptSceneryBounds(rel, adaptShoeReadTransform(rel, navigated, replaceOnce), replaceOnce), replaceOnce)), replaceOnce), replaceOnce);
   return adaptMotionSampleFkRange(rel, adaptSettingsUi(rel, adaptEnginePerformanceHotpaths(rel, botNav, replaceOnce), replaceOnce), replaceOnce);
 }
 

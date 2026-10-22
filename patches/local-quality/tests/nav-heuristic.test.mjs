@@ -81,7 +81,8 @@ test('heuristic optimization is owned by readable source, not applied by a build
   assert.doesNotMatch(quality, /adaptNavHeuristic/);
   assert.doesNotMatch(s3, /if \(rel === 'src\/game\/nav\.js'\)/);
   assert.doesNotMatch(native, /if\(rel==='src\/game\/nav\.js'\)/);
-  assert.match(source, /import \{ buildNativeNav \} from/);
+  assert.match(source, /import \{ buildNativeNav, buildNativeNavAsync \} from/);
+  assert.match(source, /await buildNativeNavAsync\(graph, options\)/);
   assert.match(source, /this\._heap \|\| \(this\._heap = new Heap\(\)\)/);
   assert.match(source, /if \(acceptEdge && !acceptEdge\(e\)\) continue/);
   assert.match(source, /this\._h = new Float64Array\(N\)/);

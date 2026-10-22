@@ -1,8 +1,8 @@
 // Set dressing per stage: PropKit placements (see src/world/props.js). Everything listed for team 0's half is mirrored
 // by the map's 180° rotation (x,z → -x,-z, rotY + π) exactly like the level blocks, so both sides stay identical.
 // Only `mirror: false` items are placed once.
-import { HALYARD_VESSELS } from './props-marina-vessels.js';
-import { STAGES } from './stages/index.js';
+import { HALYARD_VESSELS } from './props-marina-placements.js';
+import { STAGES } from './stages/data.js';
 
 const P = Math.PI;
 

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {canvasCssSize} from '../layout-sample.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 
 const source=adaptBuildSource('src/ui/hud.js',fs.readFileSync(new URL('../../../inkwave-public/src/ui/hud.js',import.meta.url),'utf8'));
@@ -16,7 +17,7 @@ function rig(width,height,dpr=1,code=source) {
     arcTo(...v){assert(v.every(Number.isFinite));if(v[4]<0)throw new RangeError('negative arc radius '+v[4]);this.ops.push(['arcTo',...v]);}
     roundRect(x,y,w,h,r){assert([x,y,w,h,...r].every(Number.isFinite));if(r.some(v=>v<0))throw new RangeError('negative roundRect radius '+Math.min(...r));this.ops.push(['roundRect',x,y,w,h,...r]);}
   }
-  const Hud=new Function('Path2D','devicePixelRatio','shade','return class {'+code.slice(begin,end)+'}')(Path,dpr,s=>s);
+  const Hud=new Function('Path2D','devicePixelRatio','shade','canvasCssSize','return class {'+code.slice(begin,end)+'}')(Path,dpr,s=>s,canvasCssSize);
   const h=new Hud();Object.assign(h,{_L:{},_tank:{t:0,level:.5,bubbles:[]},tankCanvas:{clientWidth:width,clientHeight:height,width:0,height:0},tankCtx:new Proxy({},{get:(_o,name)=>(...args)=>draws.push([name,...args]),set:(_o,name,value)=>{draws.push(['set',name,value]);return true;}})});
   return {h,paths,draws,draw(){h._drawTank(1/60,.7,false,true);return h._tankCache;}};
 }

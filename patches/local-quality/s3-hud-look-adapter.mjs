@@ -144,7 +144,8 @@ const S3_DRAW_TANK = `  _drawTank(dt, sub, low, nosub) {
     // meniscus line, and a thin white line marks the sub-weapon cost. No gloss, no bubbles.
     const T = this._tank, c = this.tankCtx, cv = this.tankCanvas;
     const dpr = Math.min(2, devicePixelRatio || 1);
-    const cw = cv.clientWidth || 18, chh = cv.clientHeight || 74;
+    const size = canvasCssSize(this, cv);
+    const cw = size.width || 18, chh = size.height || 74;
     const W = Math.round(cw * dpr), H = Math.round(chh * dpr);
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
     const L = this._L;
@@ -229,17 +230,26 @@ const TANK_TUBE = `  _s3TankTube(ink, dt) {
     if (!L.tubeGeo || L.tubeGeo.vw !== vw || L.tubeGeo.vh !== vh)
       L.tubeGeo = { vw, vh, l: this.tank.offsetLeft, t: this.tank.offsetTop, h: this.tank.offsetHeight, w: this.tank.offsetWidth };
     const g = L.tubeGeo;
-    const x0 = g.w * 0.1, y0 = g.h * 0.94, x1 = -g.l * 0.72, y1 = -g.t + g.l * 0.08;
-    const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len;
+    let basis = g.basis;
+    if (!basis || basis.w !== g.w || basis.h !== g.h || basis.l !== g.l || basis.t !== g.t) {
+      const x0 = g.w * 0.1, y0 = g.h * 0.94, x1 = -g.l * 0.72, y1 = -g.t + g.l * 0.08;
+      const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy) || 1;
+      basis = g.basis = { w: g.w, h: g.h, l: g.l, t: g.t, len, nx: -dy / len, ny: dx / len, points: [] };
+      for (let i = 0; i <= 18; i++) {
+        const u = i / 18;
+        basis.points.push({ x: x0 + dx * u, y: y0 + dy * u, env: Math.sin(Math.PI * u), u15: u * 15, u31: u * 31 });
+      }
+    }
+    const { len, nx, ny } = basis;
     const flowing = ink < 0.995;
     L.tubePhase = ((L.tubePhase || 0) + dt * (flowing ? 11 : 3)) % (Math.PI * 2000);
     const beat = flowing ? 0.55 + 0.45 * Math.max(0, Math.sin(T.t * 8.5)) ** 2 : 0.35;
     const amp = Math.min(5, len * 0.07) * beat;
     let d = '';
     for (let i = 0; i <= 18; i++) {
-      const u = i / 18, env = Math.sin(Math.PI * u);
-      const o = env * amp * (Math.sin(u * 15 + L.tubePhase) + 0.25 * Math.sin(u * 31 + L.tubePhase * 1.6));   // u = 0 is the tank foot: + phase travels into the tank
-      d += (i ? 'L' : 'M') + (x0 + dx * u + nx * o).toFixed(1) + ' ' + (y0 + dy * u + ny * o).toFixed(1);
+      const p = basis.points[i];
+      const o = p.env * amp * (Math.sin(p.u15 + L.tubePhase) + 0.25 * Math.sin(p.u31 + L.tubePhase * 1.6));   // u = 0 is the tank foot: + phase travels into the tank
+      d += (i ? 'L' : 'M') + (p.x + nx * o).toFixed(1) + ' ' + (p.y + ny * o).toFixed(1);
     }
     this._tube[0].setAttribute('d', d); this._tube[1].setAttribute('d', d);
   }

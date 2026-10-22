@@ -1,5 +1,9 @@
 # INKWAVE とスプラトゥーン3の挙動比較
 
+## 2026-10-22：インク表面の質感（見た目のみ）
+
+床・壁インクのシェーダーだけを変更した（[記録](ink-reflection-lines-20261022/README.md)）。塗り判定・所有・移動・射撃・カメラは変えていないため、操作時の挙動差は増減しない。参照は任天堂公式（オーストラリア・フィリピン）の試合・サーモンラン画像と、Nintendo 提供のステージ画像（海女美術大学・ユノハナ大渓谷）。版・ブキ・経過時間は不明。観察した本家の特徴（乾いた面も艶がある、白いハイライトは周囲の反射で、大きなうねりや重なった塗りの輪郭・縁に沿う細い線、線の間と縁まで均一なチーム色、太陽側にぼやけた光の塊が無い）に合わせ、顔料層の広い鏡面反射を消し、乾いた後もコートの艶を保ち、ゲル法線を大きなうねりだけにし、空の反射を雲の縁の明るさの帯で白い線として映し、塗りごとの色ばらつきの段差から塗りの輪郭に丸い縁を付けた。比較は Chromium/SwiftShader の本番ビルド同士の画面と連続フレームで、本家の実機・同条件の比較ではない。物の映り込み、本家でインクが乾いて変化しないこと、どの塗りが上に乗るか、空のテーマ・原典ステージ・壁・低画質経路・実機での見え方は**未確認**。
+
 ## 2026-10-21：メニュー選択リングの表示開始とタッチ押下中のボタン位置（UI のみ、#1432・#1430）
 
 試合中の移動・射撃・塗りなどのゲームロジックは変更していない。
@@ -5772,6 +5776,58 @@ See [regression analysis and evidence](weapon-regressions-20261021/README.md). F
 - 未確認: Switch実機の開始フレーム、発射までの正確な猶予、実ネットワーク遅延、物理GPU/iPad性能・本家の描画一致。既存1秒の開始待機・飛行はINKWAVE校正値として維持。
 
 
+## 2026-10-22: Catalogue TIME UP cancellation
+
+The existing 11.3.0 target and already-authored fixed-step weapon data are unchanged. Reproduction: start an added Slosher/Roller/Brella/Splatana windup, then invoke the authoritative `cancelPendingInput` neutralization before its scheduled birth. Previously catalogue `pending` survived that legacy input reset; the catalogue now invokes its existing hard-cancel owner, invalidating pending/deferred births. The composed regression starts a real added Slosher windup, neutralizes input, advances 120 ticks and confirms no projectile is emitted. This is internal lifecycle verification; retail Switch timing, browser/device presentation and native performance remain unverified. Details and open optimization proposals: [weapon queue batch](inkwave-queue-weapons-2026-10-22.md).
+
+## 2026-10-22 special/sub/paint queue batch
+
+See [special/sub/paint queue repair record](inkwave-queue-specials-2026-10-22.md). The ancillary-only live minimap invalidation and atlas renderer failure recovery are corrected; existing 11.3.0 timing/constants and authority are retained. Numerical/logic verification is distinct from the still-unperformed retail-device, full native-asset and browser GPU comparisons. Paint-history reclamation and escaped ShapePool handle reuse remain explicitly open.
+
+
+## 2026-10-22 paint/wake queue follow-up
+
+The same [queue repair record](inkwave-queue-specials-2026-10-22.md) now includes row-batched minimap bounds with exact dirty-generation totals, turf-only coverage invalidation with unknown-writer fallback, a lease-maintained opposing-growth cold guard, and inactive SwimWake upload elimination. Existing uniforms, shader program, point order, paint/network version and overlap completion order are retained. Exact composed regressions cover 30/60/120 Hz wake transitions, rotated/dead native body cells and seeded growth completion order. The raw ShapePool storage-reuse proposal is rejected by an executable stale-handle counterexample; safe allocations and paint history IDs remain unchanged. No new retail/Switch or GPU performance acceptance is asserted.
+
+
+### Library queue 2026-10-22: retreat LOS bound and shadow ancestry
+
+- Reference remains Splatoon3 11.3.0; this preserves existing INKWAVE decisions and shadow inputs, with no claim of hardware parity or device timing.
+- Retreat samples the same16 candidates and consumes exactly the same RNG; only LOS for candidates unable to beat the current score even with the full4-point cover bonus is skipped. Actual method controls over5000 seeded cases retain chosen destination, route request and repath state.
+- Shadow caster ancestry is shared only inside a synchronous `_checkMoved` validation pass. Weak node records expire each pass; detach/reparent/visibility changes are re-read next pass, and every matrix/instance/geometry/count/castShadow demotion remains intact.75000 node controls and actual composed fault/demotion tests pass. Browser shadow pixels/device performance remain CI/physical acceptance.
+The paint-history queue's safe alternative is now implemented: local order metadata uses numeric wrapping sequences while every returned ID, network receipt and precedence result remains stable. 35 order/authority/temporal/hidden/native tests pass, including 100,000 baseline attempts. A negative control proves erasing or reusing a returned ID changes delayed comparator authority; no truncation or ID reuse is performed.
+
+
+### Library queue 2026-10-22: shared character shadow warm pass
+
+- Splatoon3 reference remains11.3.0; loading-only coordination does not alter movement, fire timing, pose or game clocks. Each Character still prepares and compiles all own LOD/dither/weapon variants.
+- The coordinator keeps actual temporary mesh/group objects and original root parents, with a bounded8-character shadow-only batch for one shared directional light. Existing known presentation wrappers retain method provenance; custom warmers keep the original zero-argument call. Late completions, mismatched lights and extra characters use the native individual path.
+- Native Chromium153 software WebGL control over8 varied Characters: shadow passes/depth clears8→1, exact253draws retained, same31program cache keys, zero additional shader compilations. Node ownership/cancel/late/fault tests retain visibility, temporary-group cleanup, render target and shadow flags; failed combined GPU draws retry individual roots. This is not a physical iPad/WebKit memory or GPU-timing claim.
+### 2026-10-22 Library PropKit failure transaction
+
+Presentation/lifecycle correction only; no Nintendo 11.3.0 movement, combat, numerical weapon or ink rule is changed. The production reliability layer already prepares props detached from the scene; its failure path now clears partial collision boxes before constructing the fallback level. PropKit owns its atlas before drawing, stores each material as it is created, initializes disposal state before fallible work, and publishes its group only after construction succeeds. Constructor failure rolls back resources and asynchronous font redraw cannot revive them. Dispose is idempotent.
+
+Validation: 10 native PropKit tests passed, including actual canvas failures at all three image-generation sites, full material failure, composed add/build failures, collider ordering, retained geometry/animation, rematch/rebuild and mobile atlas behavior. This is no claim of real-device memory/FPS improvement or new Splatoon 3 parity.
+
+
+### 2026-10-22 Library shared outfit shoe buffers
+
+Shared shoe prototypes now feed Builder directly through an optional read transform and winding order. The transform repeats the old Float32 write boundaries and normal-matrix normalization, including mirrorX's extra X-normal flip. All material/UV/ex/skin callbacks still observe the same transformed coordinates. This preserves the existing appearance rather than correcting the historical normal rule. All five detail levels (0…4) matched the original clone→mirror→translate path byte-for-byte for every final attribute and index, and shared source buffers remained immutable. Measured clone counts fell from twice the number of shoe parts to zero at each level. These are once-per-LOD initialization allocation counts, not per-frame performance or new Nintendo behavior parity claims.
+## 2026-10-22 exact audio preparation follow-up
+
+The [queue repair record](inkwave-queue-specials-2026-10-22.md) now completes all66 assigned records (62fixed, one alreadyfixed, oneduplicate, tworejected). Dual IR prewarm uses only a ready speculative48kHz pair matching the actual context, otherwise immediate canonical sync fallback; it creates no early AudioContext or unlock delay. Grain prewarm uses an actual-rate Worker, unchanged per-kind PRNG/Float32 order and original cached AudioBuffer identity, with urgent sync and generation-safe failure fallback. All124 audio cases and16 ownership gates pass. Raw spatial AudioNode reuse is rejected by an actual public-play stale AudioParam counterexample; no pooling is adopted. The root Chromium153 gate compares 3,837,240 Float32 samples across five grain kernels and two stereo impulse pairs at44.1/48/96kHz byte-for-byte. WebKit/device audible/performance acceptance remains unmeasured.
+
+
+### 2026-10-22 Library mural redraw counterfactual rejected
+
+The requested unconditional replacement of shared mural ImageData copying with redraw was tested using the actual mural source, loaded Titan One/Rubik fonts, real stage modules and Chromium 153 Canvas2D at DPR2. Across 47 stage states (including 20 Halyard/shared round trips), placements, dimensions and 47 texture disposal events agreed, but 46 states differed in pixels. The first Halyard transition differed at byte148022: original163 versus redraw159. Total full-atlas oracle reads compared 587,202,560 bytes. The redraw eliminated46 ImageData calls and had a lower mean setStage duration in this software Chromium run, but violated the exact visual acceptance condition. The production ImageData policy is therefore retained; this is an evidence-based rejected direction, not a claim of device parity or impossibility of all future mural optimizations. The executable browser audit is scripts/tests/inkwave-mural-resize-browser.test.mjs (requires explicit Chromium/Playwright environment paths).
+
+
+### 2026-10-22 Library animated world render envelopes
+
+Splatoon3 reference remains11.3.0; this is presentation/render admission only. Environment sailboats, buoys and shader-flapping gulls, and PropKit fan/turbine/blink/cloth meshes receive conservative bounds enclosing their complete motion and shader-deformation ranges. Native per-camera Three.js culling occurs before instance uploads; absolute-time CPU matrices and animation phases remain current while offscreen, so the first visible frame needs no catch-up. Nonfinite native flag data retains the original uncullable fallback. Static tree aggregate bounds use the original geometry. Repeating the same blink Float32 values no longer dirties its color attribute.
+
+Actual source tests compare original scenery/RNG/matrices at seven widely separated times, check every shader-deformed vertex against its sphere, and retain identical shared geometry bytes. Actual Chromium153 WebGL control over12 offscreen frames reports instance bufferSubData calls12→0; first visible frame pixels match exactly. This is a real renderer ordering observation, not an iPad/WebKit timing/RAM or Nintendo behavior-parity claim. The separate static four-range trial remains test-only: it retains exact pixels in10 camera views but increases scenery submissions9→12–17 despite fewer triangles, so it is not shipped.
 ## 2026-10-22: Draftを含むPR #1777–#1791の統合確認
 
 対象は公開版 `inkwave-public/`。#1778は#1787、#1777は#1786、#1784は#1791の後続修正を含めて履歴を保持し、#1779–#1783、#1788、#1790を統合する。本家比較は既存のSplatoon 3 11.3.0の出典・条件を継承し、新たな実機値は確定しない。
@@ -5835,3 +5891,105 @@ CPU回帰の成功は物理GPU/実機性能の受け入れではない。Splatoo
 
 
 最終確認: runtime `df83a5c4265a9c8738d930dabaffb43cd31ae902` / build contentHash `7b0b597f308f86d2d9607e2a5e0e5f122fa7e0a7435810512039de7014565533` の総合active browserが成功した。65 canonical kit、14 defaults、装備12select、実キーボード移動・接地・射撃/塗り、20Hz時の3秒進行、finite velocity、752 responseの同一性とpage errors 0を確認した。実music Workerの作成元・97-byte body/hash・cleanupを含むnative試験7件、過去の固定gate20件、追加source admission24件も通過した。これはChromium 153 / SwiftShaderでの公開版の回帰確認であり、物理端末FPSやSwitch実機・完了動画の受け入れではない。GitHub上のCI待機は別に残る。
+
+
+Loading-only shadow preparation now drops disposed/replaced Character root/kid entries before compile, draw and error retry. Actual native disposal while another compile is pending is covered; healthy entries continue and every retained temporary group is cleared. No movement, fire, pose or game clock changes.
+
+
+### 2026-10-22 Library Flick/Slosh suffix trial rejected
+
+A six-case executable counterfactual uses the actual production-composed Projectiles methods for roller and slosher. Synchronous public weapon:fire callbacks remove earlier entries, reverse the list, or recycle/reinsert an old object while a volley is being created. Replacing the identity-membership Set with a saved list-length suffix changes which objects receive the shared damage group in every case. The production Set remains unchanged, retaining existing per-volley damage authority. The counterexample runs against combined rootd7f8f43 (6passed); it is not a performance or Nintendo frame-parity measurement.
+
+
+### 2026-10-22 Library static PropKit partition trial rejected
+
+PropKit was measured independently of background scenery using the actual dressingFor→PropKit.add/build geometry, materials and atlas. A test-only four-range contiguous source-index split shares immutable source buffers and retains triangle order/sort centre. Chromium153 renders two canonical stages across16camera views with exact pixel equality, but increases submissions in all views: Tidewater144placements/9material buckets goes9→12–14draws (131,518→128,904–130,997triangles), while Cargo223placements/9buckets goes9→24draws with428,458triangles unchanged. The tested split is not adopted; original static material batching remains. This is a measured rejection of this candidate, not proof that all future spatial policies cannot help or an iPad GPU timing measurement.
+
+
+### 2026-10-22 final native route/readback integration
+
+Splatoon3 reference remains11.3.0. The inferred Tower route fallback now preserves the NavGraph prototype when deriving constrained topology, including the canonical path→_pathUncached delegation, while isolating its A* heap and planning memo. This fixes an integration TypeError that prevented otherwise supported opposing-pad routes from completing. Three opposing spawn-axis cases exercise the constrained fallback, preserve clearance/boarding/opposed-half checks and verify the published graph's memo/heap remain untouched. Human climb and same-bank source routes remain rejected; no new retail geometry or frame calibration is claimed.
+
+The normal-readback oracle now compares the frozen actual preimage with rectangle-aware Canvas readbacks. A1024² RG normal retains byte-exact final output: two original full readbacks become sixteen64-row classification strips plus one full owned reconstruction destination, with one canvas/draw instead of two. Total readback bytes remain8,388,608; this is not a claim that total bytes or physical-device RSS halved. Recovery-clock extraction accepts the existing elapsed-dt pad-menu owner without changing its30/60/120Hz rollback checks.
+
+### 2026-10-22 native two-client combat fixture motion epoch
+
+Splatoon3 reference remains 11.3.0; no runtime aim, projectile, damage or hurtbox calibration changes. The final two-browser combat gate had omitted the production fixed clock's `beginActorMotionTick` while manually stepping native components after opening. A remote target could retain its last opening position as the start of every collision interval after owner-only QA relocation. The captured launch actually crosses the stationary target capsule; a production-composed emitted-round counterexample reproduces the old miss (100 HP) and the canonical tick-origin capture restores exactly one native 36 contact (64 HP). QA now follows the native network update → game clock → actor-origin capture → actor updates → projectile sweep order. The opening readiness and 10-game-second limit, owner-only relocation, real relay, projectile contact and same-ID 220 rejection / 36 admission assertions remain intact. This is fixture correctness, not new Nintendo geometry/frame parity evidence; real two-browser confirmation is still required.
+
+
+### 2026-10-22 snapshot clock trial rejected after native startup counterexample
+
+The native two-client investigation reproduced a preexisting guard limitation: an ordered packet processed about twelve wall-clock seconds late can become the adjacent receive-time anchor, causing subsequent batched packets to be rejected indefinitely. A proposed fixed first-packet sender/receiver anchor recovered that trace and blocked repeated grace spending, but a second real-browser run proved it could permanently reject healthy traffic after a delayed very first snapshot. That candidate is rejected; the original production clock guard and terminal handling are retained. Accepting arbitrary bootstrap catch-up while rejecting an indistinguishable forged jump needs independent timing evidence and remains covered by canonical open issue #1767, outside the original369-record snapshot. A warm-session combat QA does not close that cold-start runtime issue. Reference remains Splatoon3 11.3.0; no new retail behavior or device performance parity is established.
+
+The two-browser QA opening uses paired, wall-paced60Hz full native `_frame` calls under the existing audit freeze, with only draw suppressed. Native input/controller, fixed clock, transport, actor capture and projectile orchestration remain active; the original read-only readiness and ten-game-second failure bound remain. Scenario wire receipts are copied before browser teardown; teardown no-contest traffic is retained separately. Actual loop tests cover asymmetric readiness, the fixed step cap, accelerated game-time deadline and draw-flag restoration. This QA scheduling does not resolve or validate the independent long-delay admission limitation; real two-browser confirmation remains required.
+
+## 2026-10-22 — 追加67件のキュー対応
+
+
+参照本家は Splatoon 3 11.3.0。原369件の後に凍結した追加67件を公開版へ照合し、採用/既存対応/見送り/重複を分けた。対応内容・反例・検証は [追加対応一覧](library-queue-added-2026-10-22/queue-dispositions.md) と分野別記録を参照。実装判断はPR #1815の最終CI・マージ・公開済みの宣言ではない。
+
+追加67件の判断: `{'fixed': 57, 'rejected': 6, 'already_fixed': 3, 'duplicate': 1}`。元369件と合わせた436件は `{'fixed': 387, 'already_fixed': 28, 'rejected': 16, 'duplicate': 5}`。採用見送りと既存対応を新規修正件数には含めない。
+
+| 関連挙動 | INKWAVE側の変更・維持条件 | 確認範囲と残る差分 |
+|---|---|---|
+| 歩行・旋回・ジャンプ・壁/接地・カメラ | source motion足ターゲットを使用骨だけへ限定し、yaw/gyroの同一フレーム計算を共有。移動/加速/最高速/旋回/ジャンプ係数は変更しない。 | 実Player00 bankの30/60/120Hz、骨TRS/world行列/接地/skeleton/muzzleとcameraの実合成前後比較。未公開の本家数値や実機一致を新たに確定しない。 |
+| 射撃・サブ・スペシャル・塗り | Booyah成長用配置、Trizooka/Cooler/Storm等の所有scratchと衝突計算、Torpedo形状資源、武器カタログを再利用。順序/乱数/符号付きゼロ/非有限fallback/再入/複製材質/射出・接触・塗りの既存ownerを維持。 | exact source対照・slope/30/60/120Hzの対象回帰。疎Sloshing Machineのcache項目をvalidatorと同じoptional fieldへ修正。受信認証やダメージ上限は緩和しない。本家実機parityは未測定。 |
+| ネットワーク・被弾・死亡塗り | STARTING中の認証済host交代で既存READYを新hostへ再送し、旧epoch timerを無効化。証拠prune/scanと決定的death planの準備のみ共有。 | 実composed Session/NetMatch/Actor、複数交代/読み込み中/旧host所有権/12秒fallback・replay/owner/life checks。parser getter順とproof retention aliasを変える提案は反例付きで見送り。独立cold-start時計問題#1767は継続。 |
+| ランク・ミニマップ・UI | objectiveのみの変化も既存30Hz枠内で合成し、静的route投影を再利用。疎配列/継承index/番号/色の既存forEach意味を維持。HUD文字・badge・audio previewの不要な再準備を抑制。 | 実composed Canvas/DOM/閾値/イベント比較。nearest検証とTurf強制band削除は数値/flash反例付きで見送り。採用前後同一性は本家のUIやルール完全一致の証明ではない。 |
+| 音声・描画・素材ロード | transaction内のSHA256計算、verified raw Brush PCM、noise作業領域、bank準備を共有。Flow可視LOD/ink sheet/tank shader入力とDecor最終属性を維持。native OBJ長さは既存inventoryとLFS pointerの認証済metadataに限定。 | noise実関数28条件2,217,392 samples一致、context/破棄/cancel/署名不一致control。OBJ18対象は64MiB以内の直接書込み、5大型とunknownは元fallback。公開base/dither material変更を逃すcreation-only coatingは見送り、mural案は既存pixel反例との重複。実機RAM/FPS/GC軽減幅は未測定。 |
+| 地形・未選択prop pack・ビルド | 最終判断と測定根拠はgeometryおよびprops個別記録を参照。CIは必要gate/fan-in/immutable sourceを維持し、検証済みsparse projectionと破棄されるThree一段目minifyのみ削減。 | 範囲外modeler取得の削減とcurrent全2090 artifact byte一致を確認したCI単独receiptは変更前runtimeに対応。追加runtime全体は別の最新build/browser receiptへ束縛する。速度悪化/未測定項目を解消扱いしない。 |
+
+実装前後のソース・数値・描画入力比較、実ブラウザーの受け入れ、Splatoon 3実機比較は区別する。物理iPad mini 6/Safari/WebKit、端末RAM/GC/FPS、エンドツーエンド音声遅延、本家retail挙動の未測定範囲はこの対応で閉じない。既存実機計測トラック#1757と時計問題#1767は独立して継続する。
+
+# 2026-10-22 追補: 遅延 snapshot clock と入力・塗り検査
+
+- 対象: 公開版の #1767。起動で遅れて処理された初回 tick が後続の正当な更新を永久に拒否する場合、リレー認証済みの転送間隔で同じ5秒の進行上限を評価する。未対応リレーでは従来経路。送信者 JSON の時刻は信用しない。補間時計、所有権、life、再送、hit/paint の検査は維持する。
+- 再現・影響: sender `124.04→175.665` / local37.3秒で旧経路は位置更新が止まり、新経路は進む。Chromium / WebKit 各2クライアントでも、実時計と6.2秒の受信保留を用いて確認。本番リレーの別途公開が必要。
+- #1430 は実タッチ入力の30/60/120 Hz の押下所有権・解除・再押下検査を追加。歴史的失敗の原因確定とはしない。#1165 は CPU/GPU Roller を576ケース・589,824セルへ拡張し、211本の重ね塗り、Judd の515対509セルを30/60/120/144 Hzで照合した。
+- 本家基準は従来の Splatoon 3 Ver.11.3.0、Leanny/splat3 `7280ff9cde8bb1c5dcef46c700c326471584d2e6`。今回の変更は INKWAVE 内部の通信・入力・所有権の整合性であり、本家の非公開パラメータ・曲線や physical iPad の性能を推測していない。詳細・制約は `reports/inkwave-remaining-issues-20261022.md`。
+
+## 2026-10-22: 破損した保存戦績の復旧
+
+main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、公開版の既存boot/Turf/Boss結果normalizerで、保存済み `wins`・`matches`・`totalTurf` の不正な型・負数・安全でない整数を0へ復旧する。例えば `totalTurf: '120'` の保存を読み、500点を得ると、修正前は文字列 `120500` を保存していた。修正後は破損値を0へ戻し、数値500を保存する。正常な保存値・XP曲線・試合の塗り集計・武器/移動/入力の数値は維持する。
+
+Splatoon 3 Ver.11.3.0を既存の比較対象として継承するが、本家の破損セーブ復旧仕様は未確認。この変更はINKWAVE固有の永続化の型不整合を直すもので、Switch実機との一致やゲーム物理の改善を認定しない。実際の合成GameソースのbootとTurf/Bossの集計・保存ブロックを使った回帰で勝敗・再読込・正常値保持を確認した。実ブラウザ・本家実機の比較は未実施。再現、検証、別領域の信頼性改善は [今回の記録](independent-reliability-improvements-20261022.md) を参照。
+
+## 2026-10-22: #1767 bind前のowner clock admission
+
+公開版のNetSessionはNetMatchを公開してから実Match構築をawaitする。実Matchへのbind前に届くtickが、actor timelineのないままowner clock基準を作る経路を修正した。network adapterは `this.match` が存在するまでtickを受理しない。既存peerを置換/消去せず、5秒未来許容・単調増加・replay・owner・life・paint/hit保護の判定は変更しない。本家の武器数値・移動/発射ロジックの変更はない。
+
+Node v24.19.0の本番合成VMで新規3件と隣接9件、計12/12成功。原本adapterで新規テスト2失敗/1成功を別作業木に保存した。既知pre-bind経路の修正であり、元native runの遅延起点は未確認。bind済みキューのcatch-up、実2ブラウザcold-start/reconnect、Switch 11.3.0との実機比較は未実行で、#1767全解消とはしない。詳細と実ログは `reports/issue-resolution-20261022/network-security.md` / `.json`。#1665/#1666はownerのactionとhit同時偽造が残り、trusted receiver/hostでweapon/input/ink/cooldown/contactを再構成するauthority設計が必要。
+
+
+## 2026-10-22: #1812 追加ローラー・フデの実Actor照準受入行列（試験追加のみ）
+
+- **本家の根拠・条件**: Splatoon 3 Ver.11.3.0、Leanny/splat3 `7280ff9cde8bb1c5dcef46c700c326471584d2e6` のソースレコード。ギアなし、静止、ローラーは地上横振りと受理されたジャンプの縦振り、フデは実際の押し直しによる左右2振り。既存 #1819 のカメラ aimDir 接続を評価し、任天堂エンジン式の完全復元とはしない。
+- **INKWAVE 実装箇所**: `patches/splatoon3/tests/catalog-source-launch-1130.test.mjs` に3試験追加。ゲーム実装の変更なし。Octobrushを含む7武器11攻撃mode、照準 -70/-45/0/+40/+70度、stale/close-ground reticle、30/60/120Hz描画スケジュールの330条件で FixedClock → Actor.update → WeaponRunner → Projectiles を駆動する。各source unitの出生速度・数・network tuple、reticle/描画周波数間の出生時刻・座標・速度一致を確認する。実PhysicsのOBB近壁22条件と、旧reticle収束経路を復元すると不一致を検出する対照2条件も追加した。
+- **再現・影響**: 各武器で上下照準し、照準点だけを遠方水平・近い地面に置き換える。フデを押し直して両振りを発生させる。既存修正を外すとCarbon横振りとOctobrushでカメラ出生速度の期待が失敗する。現行mainでは全条件を通過し、新しいruntime不具合は再現しなかった。
+- **確認状態**: Node24.19.0、384MiB、serial、90秒上限で9/9 pass、5.38秒。初回追加試験は斜めray方向の0.02余白をZ軸余白と誤認した期待が1件失敗し、実OBB表面の外に出生する期待へ訂正した。ソースfixtureでは移動積分とCharacter姿勢をstubにしており、ブラウザ描画、aimReady/socket較正、実ステージ、本家実機・音・動作の一致とは区別する。#1812は未確認項目を残してOpen維持。詳細 `reports/issue-resolution-20261022/weapons.md` と `.json`。
+
+
+## 2026-10-22: #845 ネイティブ地形の支持判定と #1671 有限計測
+
+- #845: `patches/local-quality/offline-offscreen-budget.mjs` の静的OBB近道は、NativeLevelのchart rectangle境界を地面として扱い、source triangleのない穴でも支持を返していた。実NativeLevel/NativePhysicsの半三角形fixtureで原本は高さ0、元のCharacter._groundは支持なしの0.2を返す不一致を再現した。nativeでは近道からnullを返し、元のsource triangle/dynamic raycastへ戻す。legacy OBBの削減、弾/マズル/移動/時計の所有は維持する。実地形三角形内・穴・動的支持の対照を追加し、既存全11件と独立レビューの11件が成功。物理iPadの性能・本家11.3.0の足運び一致は未確認である。
+- #1671: 同じ操作条件の30秒計測を保存できるよう、既存opt-in hitch tracerに明示的なstartCapture/stopCapture/captureReportを追加した。30秒・4000frame・4MiB compact UTF-8の最初の上限で停止し、理由と観測数を記録する。通常HUDとゲーム挙動は変えず、pending GPU/遅延long-taskを後付けせず記録時snapshotとして扱う。15件と独立レビュー15件成功。これは計測手段の追加でありiPadのFPS改善やGPU実測の証明ではない。手順・限界は `reports/issue-resolution-20261022/performance.md`。
+
+
+## 2026-10-22 継続: #1767 owner-clock単独epoch
+
+`patches/network-replication/owner-clock.mjs` はbind後の受信側128bit nonce challengeで時計の初期起点を確定する。元request送信local時刻とACK sender timestampをpeer/matchごと固定し、既存5秒の未来許容を累積上限として扱う。同じnonceの再送で2秒TTLを延長せず、確定originを後続ACKやhost変更でrebaseしない。current実NetSessionは初回から必須で、`iw-gameplay-20261022-owner-clock-v1` は旧形式へのdowngradeを許さない。raw wireの待機上限はpeerごと64packet/256KiB、leave/disposeで証明と待機queueを退役する。既存event/life/paint/hitの入場所有を維持し、武器・移動・発射数値は変更しない。
+
+独立treeは`855b0e187f4e6a367c21ac12745520f3c356c29a`を起点に時計部分だけを移植する。Charger contact module/identity、full-fire anchor、combat authority/runtime変更は持ち込まない。clock moduleとorigin guard、新規2testは76873fcの受入sourceと同一bytesである。Splatoon 3 11.3.0は比較参照だが、小売版network protocolの非公開数値は推測せず、Switch実機比較を解消扱いにしない。
+
+別の固定source76873fcでは、実Tidewater/Match/Actor/Character、実NetSession `_begin`、2つの独立Chromium contextと実WebSocket/production Worker relayでcold-start・同室rematch・socket reconnectの3局面を確認した。6方向すべてで7秒超の遅延初回→最新tickを受理し、同じ実受信timestamp対は旧arrival-origin guardでは拒否される。時計/peerの書換えやguard無効化はなく、証明origin不変、Actor buffer、Match playing、通常snapshot進行を確認した。これは独立clock-only tree自体のブラウザ受入ではない。固定sourceと手順・raw hashは`reports/issue-resolution-20261022/continuation/clock-native-browser.json`、独立treeのsource/build/回帰は`clock-only-release.json`へ別記する。
+
+
+### #1767 独立clock-only source自身のnative追補
+
+独立source`2d2b8aa25795f351f6e206488c89af7255595be6`、input`c2722d71…`/content`34bb3936…`の固定buildで、実Tidewater/Match/Actor/Characterと実WebSocket/production relayを用いる3局面・6方向も成功した。実行evidence HEAD`50f8843e…`との差分はreport3fileだけで、1,364input全部の同一性を再照合した。8nonce query/6reply、origin固定、Actor buffer7〜10、Match playingと後続snapshot進行、page/console error0、実描画80/82call・context lossなしを確認。全6組の実受信対は旧arrival-origin guardではfalseとなる。PNGはlocal保持＋SHA一覧、公開rawはJSON/logのみ。source/evidence commit、local upgrade shim、単一Chromium内2context、手動native frame、Switch/物理端末未計測の範囲は`reports/issue-resolution-20261022/continuation/clock-only-native-browser.json`へ明記し、768の過去受入と分けた。
+
+## 2026-10-22: 表示名・振動・ロッカーの追加復旧
+
+main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、翻訳辞書の継承プロパティに一致するプレイヤー名が壊れる問題、機器切替後に古い強振動の優先状態が残る問題、ロッカー背景描画失敗後のrenderer状態漏れを修正する。表示名は修正前後のChromium実DOM比較、振動は合成Inputのactuatorコマンド記録、ロッカーは元例外・target/cube面/mipの失敗注入回帰と最適化生成物で確認した。
+
+既存の振動時間・振幅・入力所有権、正常な描画構成、ゲームの移動・射撃・塗りの数値は保持する。Splatoon 3 Ver.11.3.0の比較条件を継承するが、本家の振動仕様・実機の触感・Switchとの描画一致は未確認。ブラウザの本文転送期限修正も含む再現・コマンド・制約は [追加の検証記録](reliability-more-20261022/README.md) を参照。

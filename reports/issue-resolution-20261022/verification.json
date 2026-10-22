@@ -1,0 +1,53 @@
+{
+  "baseline": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+  "node": "24.19.0",
+  "verification": {
+    "changedSuites": {
+      "pass": 54,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "durationMs": 34271.292644,
+      "heapMiBPerChild": 384,
+      "concurrency": 1,
+      "timeoutSeconds": 180,
+      "log": ".ci-scratch/issue-resolution-20261022/final-regressions.log"
+    },
+    "directSourceOwnership": {
+      "pass": 20,
+      "fail": 0
+    },
+    "quickCompatibility": "passed",
+    "sourceMigrationAudit": "passed",
+    "initialProductionBuild": "passed",
+    "initialStartupBudget": "passed",
+    "finalProductionBuild": {
+      "status": "passed",
+      "receipt": "final-build.json",
+      "verifiedRemoteSourceCommit": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+      "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4"
+    },
+    "finalReliability": {
+      "status": "passed",
+      "receipt": "final-reliability.json",
+      "repeatsPerEngine": 3,
+      "checks": 234
+    }
+  },
+  "changedSourceSha256": {
+    "patches/local-quality/offline-offscreen-budget.mjs": "84556c921079c972079ad024a63d8019d01b9605afa428d3582236aeaa56bb01",
+    "patches/local-quality/range-hitch-tracer.mjs": "265b4e71d67895792f75ba30ce325df14d0d06403d1377a2fec30181fef59c6a",
+    "patches/network-replication/adapter.mjs": "9312d6d19ca560836f821e630ced0d760361423f505c6f972b6c68aebe60986f",
+    "patches/splatoon3/tests/catalog-source-launch-1130.test.mjs": "77fe7111525324b9bc50e04baa0d8c06b9c3031c674a88762cc7c378035484ed",
+    "scripts/check-inkwave-rematch-lifecycle.mjs": "31100ccadcf8ed096080286b543fb050b0d033103189711a7344ed45c6a36951",
+    "scripts/lib/inkwave-rematch-engine.mjs": "5775f76c623b26b4f9732a2c56296e0dc0a19960985b9cf5d25d65b0a86e4c77"
+  },
+  "independentReviews": {
+    "networkAndCapture": "no blockers; 18 independent tests passed",
+    "nativeGroundAndBrowserEngine": "no blockers; 26 independent tests passed"
+  },
+  "limits": [
+    "Physical iPad, hardware performance and proprietary 11.3.0 source acceptance remain unverified.",
+    "Chromium/WebKit browser receipts identify their own exact build hashes; preliminary full rematch uses dd84, final repeated input acceptance uses 46e0."
+  ]
+}

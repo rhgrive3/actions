@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { validActorSnapshotRow } from '../../patches/network-replication/snapshot-guard.mjs';
 import { installCombatProvenance,combatAdmission } from '../../patches/network-replication/combat-provenance.mjs';
 
 import fs from 'node:fs';
@@ -29,11 +30,11 @@ const kinds=Object.fromEntries(weapons.init.properties.map(p=>{
   const k=p.value.properties.find(p=>p.key.name==='kind');
   assert.equal(k.value.type,'Literal');return[p.key.name||p.key.value,{kind:k.value.value}];
 }));
-const names=['HIT_SEQUENCE_WINDOW','IW_HIT_MAX_DAMAGE','IW_HIT_CAUSES','IW_ANGLE_SHOOTER_HIT_MAX','IW_CATALOGUE_SUB_HIT_MAX','hitSafe','hitAuthorityRow','iwRemoteHitPayloadAllowed','iwRemoteHitReceiptAllowed'];
+const names=['unpackActor','readHitAuthorityState','HIT_SEQUENCE_WINDOW','IW_HIT_MAX_DAMAGE','IW_HIT_CAUSES','IW_ANGLE_SHOOTER_HIT_MAX','IW_CATALOGUE_SUB_HIT_MAX','hitSafe','hitAuthorityRow','iwRemoteHitPayloadAllowed','iwRemoteHitReceiptAllowed'];
 const policySource=names.map(n=>declaration(native,n)).join('\n')+'\n'+
   ['BLASTER_KNOCKBACK','validBlasterKnockback'].map(n=>declaration(fidelity,n)).join('\n')+'\n'+
   declaration(finalDamage,'validDamageGroup')+'\nconst WEAPONS='+JSON.stringify(kinds)+';\n'+
-  '({payload:iwRemoteHitPayloadAllowed,receipt:iwRemoteHitReceiptAllowed,caps:IW_CATALOGUE_SUB_HIT_MAX})';
+  '({unpack:unpackActor,payload:iwRemoteHitPayloadAllowed,receipt:iwRemoteHitReceiptAllowed,caps:IW_CATALOGUE_SUB_HIT_MAX})';
 const policy=new vm.Script(policySource).runInNewContext(Object.create(null),{timeout:1000,contextCodeGeneration:{strings:false,wasm:false}});
 
 const actor=(kind='shooter',special='storm')=>({
@@ -58,6 +59,13 @@ class Stub {
   _tick(from,d){
     if(this.peers.get(from)?.lastTs>=d.ts)return;
     const peer=this.peers.get(from)||{};peer.lastTs=d.ts;this.peers.set(from,peer);
+    // Model native acceptance before the provenance wrapper observes the row.
+    for(const row of d.a||[]){
+      const a=this.byNid.get(row?.[0]);
+      if(!validActorSnapshotRow(row,d.ts)||!a?.remote||a.owner!==from)continue;
+      const snap=policy.unpack(row,d.ts);snap.life=Math.max(a.netLife||0,a.net.lastLife||0);
+      a.net.buf=[snap];a.net.lastLife=snap.life;
+    }
     for(const e of d.e||[])if(e[1]==='ac'&&e[2]==='sub'){
       const a=this.byNid.get(e[3]);if(!a)continue;
       a.net.buf=[{t:d.ts,life:e[4],x:0,y:0,z:0}];
@@ -87,6 +95,20 @@ installCombatProvenance(Stub,{hitPayloadAllowed:policy.payload,hitReceiptAllowed
 function fire(nm,{id=1,at=100,origin=[0,1,0],dir=[0,0,45],kind='shooter'}={}) {
   nm._tick('peerA',{k:'t',ts:at+.05,a:[[id,0,0,0]],
     e:[[at,'p',id,'shot',kind,...origin,...dir]]});
+}
+function observeRollerContact(nm,{from='peerA',flags=257,life=0,at=100,x=0}={}) {
+  const a=nm.byNid.get(1);
+  const row=[a.nid,x,0,0,0,0,0,0,0,0,flags,100,100,0,0,0,0,0,0,1,0];
+  assert.equal(validActorSnapshotRow(row,at),true);
+  nm._tick(from,{k:'t',ts:at,a:[row],e:[]});
+  return nm._combatProvenance?.contactSnapshots.get(a)?.at;
+}
+function rollingSnapshot(nm){
+  const a=nm.byNid.get(1);
+  const row=[a.nid,a.pos.x,a.pos.y,a.pos.z,0,0,0,0,0,0,257,100,100,0,0,0,0,0,0,1,0];
+  assert.equal(validActorSnapshotRow(row,100),true);
+  nm._tick('peerA',{k:'t',ts:100,a:[row],e:[]});
+  return performance.now()/1000;
 }
 function hit(v=2,h=1,w='shooter'){return{k:'hit',m:'test-match',a:1,v,d:Math.min(36,policy.caps[w]??36),w,h,l:0}};
 function boss(q=1,c=-1,weak=0,w='shooter',d=36){return{k:'bhit',m:'test-match',a:1,d,w,q,c,l:0,weak}};
@@ -145,11 +167,13 @@ test('roller damage uses a short observed contact gate and target range',()=>{
   const nm=new Stub(),a=nm.byNid.get(1);
   a.weapon.id='roller';a.weapon.kind='roller';a.net.cur.f=256;
   nm.byNid.get(2).pos.z=1.1;
-  assert.equal(combatAdmission(nm,'peerA',hit(2,1,'roller'),'pvp',5),true);
-  assert.equal(combatAdmission(nm,'peerA',hit(2,2,'roller'),'pvp',5.1),false);
-  assert.equal(combatAdmission(nm,'peerA',hit(2,3,'roller'),'pvp',5.6),true);
+  assert.equal(combatAdmission(nm,'peerA',hit(2,99,'roller'),'pvp',performance.now()/1000),false,'raw render flags cannot mint contact');
+  const t=rollingSnapshot(nm);
+  assert.equal(combatAdmission(nm,'peerA',hit(2,1,'roller'),'pvp',t),true);
+  assert.equal(combatAdmission(nm,'peerA',hit(2,2,'roller'),'pvp',t+.1),false);
+  assert.equal(combatAdmission(nm,'peerA',hit(2,3,'roller'),'pvp',t+.6),true);
   nm.byNid.get(2).pos.z=20;
-  assert.equal(combatAdmission(nm,'peerA',hit(2,4,'roller'),'pvp',6.3),false);
+  assert.equal(combatAdmission(nm,'peerA',hit(2,4,'roller'),'pvp',t+1.3),false);
 });
 test('occluded projectile segment is checked with engine Vector3 inputs',()=>{
   const nm=new Stub();
@@ -197,6 +221,7 @@ test('rolling into a crablet uses contact proof despite generic crab damage mark
   const nm=new Stub(),a=nm.byNid.get(1);
   a.weapon.id='roller';a.weapon.kind='roller';a.net.cur.f=256;
   nm.match.boss.crabs.get(7).z=1;
+  rollingSnapshot(nm);
   nm.onMessage('peerA',boss(1,7,0,'crab',140));
   assert.equal(nm.bossCalls.length,1);
   nm.onMessage('peerA',boss(2,7,0,'crab',140));
@@ -537,4 +562,32 @@ test('shot pairing uses the muzzle, not a load-dependent millisecond gap',()=>{
   const other=new Stub();
   other._tick('peerA',{k:'t',ts:100.05,a:[[1,0,0,0]],e:[[100,'p',1,'shot','shooter',0,1,0,0,0,45],ev(100.001,[1.5,1,0])]});
   assert.equal(other._combatProvenance.proofs.get('peerA').length,2,'a fire event at another muzzle is not that birth');
+});
+
+test('roller contact cannot be minted from pose flags without a fresh matching accepted snapshot',()=>{
+  for(const scenario of ['absent','dead','notRolling','wrongOwner','oldLife','stale','future','farSnapshot','replayedTick']){
+    const nm=new Stub(),a=nm.byNid.get(1);
+    a.weapon.id='roller';a.weapon.kind='roller';a.net.cur.f=257;
+    nm.byNid.get(2).pos.z=1;nm.match.boss.crabs.get(7).z=1;
+    const opts={flags:scenario==='dead'?256:scenario==='notRolling'?1:257,
+      from:scenario==='wrongOwner'?'otherPeer':'peerA',x:scenario==='farSnapshot'?20:0};
+    let t=performance.now()/1000;
+    if(scenario!=='absent')t=observeRollerContact(nm,opts)??t;
+    if(scenario==='oldLife')a.netLife=1;
+    if(scenario==='stale')t+=10;
+    if(scenario==='future')t-=1;
+    if(scenario==='replayedTick'){
+      // A duplicate packet cannot refresh the receipt's receive time.
+      const receipt=nm._combatProvenance.contactSnapshots.get(a);
+      const before={at:receipt.at,origin:[...receipt.origin]};
+      observeRollerContact(nm,{at:100,x:20});
+      assert.equal(receipt.at,before.at,'duplicate cannot refresh receive time');
+      assert.deepEqual(receipt.origin,before.origin,'changed duplicate row cannot replace receipt origin');
+      t+=10;
+    }
+    assert.equal(combatAdmission(nm,'peerA',hit(2,1,'roller'),'pvp',t),false,scenario);
+    assert.equal(combatAdmission(nm,'peerA',boss(1,7,0,'crab',140),'boss',t),false,'crablet '+scenario);
+    assert.equal(nm.hitCalls.length,0,scenario);
+    assert.equal(nm.bossCalls.length,0,scenario);
+  }
 });

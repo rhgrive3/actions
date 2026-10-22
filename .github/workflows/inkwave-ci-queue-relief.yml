@@ -1,0 +1,120 @@
+name: INKWAVE queued PR check relief
+# One-shot on this maintenance branch; optional manual dry run after merge. No schedule.
+on:
+  push:
+    branches: ['ci/queue-relief-20261022']
+    paths: ['.github/workflows/inkwave-ci-queue-relief.yml']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Only report obsolete queued PR checks'
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  actions: write
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: inkwave-queue-relief
+  cancel-in-progress: false
+
+jobs:
+  prune-stale-queued:
+    if: github.repository == 'rhgrive3/actions'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Cancel only obsolete queued PR-head jobs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && 'true' || 'false' }}
+        run: |
+          node --input-type=module <<'NODE'
+          import process from 'node:process';
+          
+          const repo = process.env.GITHUB_REPOSITORY;
+          const token = process.env.GITHUB_TOKEN;
+          if (repo !== 'rhgrive3/actions' || !token) {
+            throw new Error('Queue cleanup requires this repository and its Actions token');
+          }
+          const dryRun = process.env.DRY_RUN === 'true';
+          const base = 'https://api.github.com/repos/' + repo;
+          async function api(path, options = {}) {
+            const response = await fetch(base + path, {
+              ...options,
+              headers: {
+                Accept: 'application/vnd.github+json',
+                Authorization: 'Bearer ' + token,
+                'X-GitHub-Api-Version': '2022-11-28',
+                ...options.headers,
+              },
+            });
+            if (!response.ok) {
+              throw new Error(options.method + ' ' + path + ': HTTP ' + response.status + ' ' + (await response.text()).slice(0, 250));
+            }
+            if (response.status === 204 || response.status === 202) return null;
+            return response.json();
+          }
+          
+          const candidates = new Map();
+          for (const status of ['queued', 'pending']) {
+            for (let page = 1; page <= 30; page++) {
+              const result = await api('/actions/runs?status=' + status + '&per_page=100&page=' + page);
+              for (const run of result.workflow_runs || []) {
+                if (run.event === 'pull_request') candidates.set(run.id, run);
+              }
+              if ((result.workflow_runs || []).length < 100) break;
+              if (page === 30) throw new Error('Queue pagination cap reached: refusing partial cleanup');
+            }
+          }
+          const prCache = new Map();
+          const report = { inspected: candidates.size, obsolete: 0, cancelled: 0, dryRun, untouched: 0, errors: [] };
+          for (const run of candidates.values()) {
+            // Never touch manual dispatches, main pushes, external forks or ambiguous PR associations.
+            const linked = run.pull_requests || [];
+            if (linked.length !== 1 || !Number.isInteger(linked[0].number)) {
+              report.untouched++;
+              continue;
+            }
+            const number = linked[0].number;
+            try {
+              let pr = prCache.get(number);
+              if (!pr) {
+                pr = await api('/pulls/' + number);
+                prCache.set(number, pr);
+              }
+              if (pr.head.repo?.full_name !== repo) {
+                report.untouched++;
+                continue;
+              }
+              const obsolete = pr.state !== 'open' || run.head_sha !== pr.head.sha;
+              if (!obsolete) {
+                report.untouched++;
+                continue;
+              }
+              report.obsolete++;
+              if (dryRun) {
+                console.log('DRY RUN ' + run.id + ' PR#' + number + ' ' + run.name);
+                continue;
+              }
+              // A completed or newly executing run is not cleanup fodder. Recheck just before POST.
+              const latest = await api('/actions/runs/' + run.id);
+              if (!['queued', 'pending'].includes(latest.status) ||
+                  latest.event !== 'pull_request' || latest.head_sha !== run.head_sha) {
+                report.untouched++;
+                continue;
+              }
+              await api('/actions/runs/' + run.id + '/cancel', { method: 'POST' });
+              report.cancelled++;
+              console.log('CANCELLED ' + run.id + ' PR#' + number + ' ' + run.name);
+            } catch (error) {
+              report.errors.push({ run: run.id, error: String(error) });
+              console.error('FAILED ' + run.id + ': ' + error);
+            }
+          }
+          console.log('CI_QUEUE_RELIEF_RESULT ' + JSON.stringify(report));
+          if (report.errors.length) process.exitCode = 1;
+          NODE

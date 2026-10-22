@@ -1,0 +1,143 @@
+{
+  "schema": 1,
+  "date_utc": "2026-10-22",
+  "repository": "rhgrive3/actions",
+  "baseline_sha": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+  "issues": [
+    {
+      "number": 1757,
+      "status": "partial-implementation-shipped-device-acceptance-pending",
+      "evidence": "PR #1748 merged as 35399aad; latest issue comment explicitly retains OPEN.",
+      "remaining": [
+        "Matched physical iPad mini 6 legacy Turf stage/workload captures",
+        "Before/after CPU p50/p95, GPU/context stability and observable stutter"
+      ],
+      "code": [
+        "patches/local-quality/adapter.mjs"
+      ],
+      "url": "https://github.com/rhgrive3/actions/issues/1757"
+    },
+    {
+      "number": 1671,
+      "status": "diagnostic-gap-repaired-device-fix-unverified",
+      "evidence": "PR #1764 merged as 391ec2b8; existing latest-240-frame / recent-12-hitch export cannot preserve a full 30-second native workload. This change adds explicit bounded per-frame capture.",
+      "remaining": [
+        "Run original physical iPad native stage and legacy baseline with same roster, stage location and inputs",
+        "Identify dominant inclusive CPU scope and verify output-preserving optimization",
+        "Measure device p50/p95/p99 and context stability; no measured FPS claim here"
+      ],
+      "code": [
+        "patches/local-quality/range-hitch-tracer.mjs",
+        "patches/local-quality/tests/range-hitch-tracer.test.mjs"
+      ],
+      "url": "https://github.com/rhgrive3/actions/issues/1671"
+    },
+    {
+      "number": 642,
+      "status": "partial-implementation-shipped-device-acceptance-pending",
+      "evidence": "Lazy composer, packed R11F/G11F/B10F grade target with RGBA16F scene target, and target1 depth elimination have shipped (#1177/#1183/#1515). Both targets still exist in visible gameplay.",
+      "remaining": [
+        "Physical iOS/Android GPU-memory before/after LOW/MEDIUM/HIGH",
+        "Actual-device FBO compatibility, color/ScreenFX/FXAA visual acceptance",
+        "Orientation/resize/context stability"
+      ],
+      "code": [
+        "patches/local-quality/composer-target-adapter.mjs",
+        "patches/local-quality/composer-format-adapter.mjs"
+      ],
+      "url": "https://github.com/rhgrive3/actions/issues/642"
+    },
+    {
+      "number": 845,
+      "status": "native-source-support-bug-fixed-device-acceptance-pending",
+      "evidence": "Remote and offline bot visual budgets exist. Current offline helper admits live long-undrawn bots and preserves core muzzle pose while deferring decoration; latest issue wording about menu-only scope is incomplete. Dedicated production-composed tests pass. A real NativeLevel/NativePhysics half-square source fixture reproduces false ground across the source triangle hole: native returns root y=0.2 (no hit), old bounding-box shortcut returns 0.0. Native worlds now fall back to the original physics ray; legacy OBB optimization remains unchanged.",
+      "remaining": [
+        "Physical mobile 10-second camera-away/reentry CPU trace",
+        "Real rendered reentry appearance and authoritative muzzle checks under native source geometry",
+        "Broader real native-stage terrain/muzzle review beyond the source-triangle hole regression"
+      ],
+      "code": [
+        "patches/local-quality/offscreen-visual-budget.mjs",
+        "patches/local-quality/offline-offscreen-budget.mjs",
+        "patches/local-quality/tests/offline-offscreen-budget.test.mjs"
+      ],
+      "url": "https://github.com/rhgrive3/actions/issues/845"
+    },
+    {
+      "number": 1434,
+      "status": "measurement-blocked-by-strict-calibration",
+      "evidence": "Historical diagnostic calibration rejected exact completed-pixel repeatability, including native/native control. No approved ABBA/BAAB performance result. Dedicated benchmark script is not in current production main.",
+      "remaining": [
+        "Reestablish strict repeated-image/workload equivalence on pinned current refs",
+        "Only after calibration passes, run bounded independent ABBA/BAAB trials",
+        "Keep DO NOT MERGE diagnostic benchmark out of production"
+      ],
+      "url": "https://github.com/rhgrive3/actions/issues/1434"
+    }
+  ],
+  "changes": {
+    "capture": "explicit opt-in 30-second per-recorded-frame capture, stopped by duration/frame/UTF-8 byte limit",
+    "defaults": {
+      "duration_ms": 30000,
+      "frame_limit": 4000,
+      "capture_json_byte_limit": 4194304,
+      "reserved_metadata_bytes": 4096
+    },
+    "normal_gameplay": "unchanged; tracer remains lazily loaded only under profileRange=1",
+    "hud": "existing rolling HUD remains unchanged",
+    "gpu": "record-time available samples only; late GPU/longtask results are not backfilled into immutable capture frames",
+    "native_ground": "Skip legacy OBB ground shortcut on level.native; defer to existing Character._ground / NativePhysics.raycast and preserve exact source triangles and dynamic support."
+  },
+  "verification": [
+    {
+      "command": "timeout 100s node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 patches/local-quality/tests/offline-offscreen-budget.test.mjs patches/local-quality/tests/offscreen-visual-budget.test.mjs patches/local-quality/tests/composer-residual-642.test.mjs patches/local-quality/tests/composer-target-adapter.test.mjs patches/local-quality/tests/range-hitch-tracer.test.mjs",
+      "node": "24.19.0",
+      "pass": 48,
+      "fail": 0,
+      "duration_ms": 34043.894047,
+      "scope": "unchanged baseline local source fixtures",
+      "warnings": [
+        "Optional source-motion dynamic-import callback warning in existing offscreen fixture; process exit 0 and no skipped tests."
+      ]
+    },
+    {
+      "command": "node --experimental-vm-modules --test patches/local-quality/tests/range-hitch-tracer.test.mjs",
+      "node": "24.19.0",
+      "pass": 15,
+      "fail": 0,
+      "duration_ms": 630.427732,
+      "scope": "modified tracer including three new bounded-capture regressions"
+    },
+    {
+      "command": "timeout 80s node --max-old-space-size=512 --experimental-vm-modules --test --test-name-pattern=\"native offscreen ground\" patches/local-quality/tests/offline-offscreen-budget.test.mjs",
+      "scope": "new real NativeLevel/NativePhysics source triangle hole regression against original helper",
+      "pass": 0,
+      "fail": 1,
+      "expected_failure": true,
+      "error": "0 !== 0.2: offscreen shortcut manufactured object-bounding-box support across missing source triangle"
+    },
+    {
+      "command": "timeout 100s node --max-old-space-size=512 --experimental-vm-modules --test patches/local-quality/tests/offline-offscreen-budget.test.mjs",
+      "scope": "after native fallback fix, existing full offline visual/muzzle/ground regression suite plus source triangle hole test",
+      "node": "24.19.0",
+      "pass": 11,
+      "fail": 0,
+      "duration_ms": 19321.925265
+    },
+    {
+      "command": "timeout 80s node --max-old-space-size=512 --experimental-vm-modules --test --test-name-pattern=\"native offscreen ground\" patches/local-quality/tests/offline-offscreen-budget.test.mjs",
+      "scope": "final source triangle, hole and added dynamic support assertions",
+      "node": "24.19.0",
+      "pass": 1,
+      "fail": 0,
+      "duration_ms": 10836.496479
+    }
+  ],
+  "limits": [
+    "No physical iPad/Android GPU capture or device timing performed",
+    "No new whole-game FPS, native hardware parity or visual acceptance claimed",
+    "Source fixture tests do not constitute browser/GPU tests",
+    "Capture serialization/UTF-8 admission adds opt-in diagnostic CPU and bounded memory overhead; not benchmarked on device",
+    "No remote writes, issue closure, merge, publish or deployment performed by this agent"
+  ]
+}

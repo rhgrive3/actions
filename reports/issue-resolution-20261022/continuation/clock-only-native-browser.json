@@ -1,0 +1,339 @@
+{
+  "status": "passed",
+  "issue": 1767,
+  "scope": "owner-clock acceptance only; later Charger air/keep changes are excluded from this foundation build",
+  "sourceSha": "2d2b8aa25795f351f6e206488c89af7255595be6",
+  "checkedInputs": 1364,
+  "inputHash": "c2722d71bdd095d0467ff7f9fd2085fb4b8f3716e2fddb091b07ce34e6251d8e",
+  "contentHash": "34bb39363ccdf22e70ad5a798bd246fde9cb13763587ebe94f250ec64233f1f1",
+  "revision": "a3bc9a7248c8340667783453abb1dee1e1fea807f05b62a348c69d25dbbee7c7",
+  "relaySha256": "54cd3a92c3f56f94b6106fb2d543a3d40a0cc9dd613d2e37bc22fdb7a5be0ec0",
+  "harnessSha256": {
+    "scripts/check-inkwave-native-online.mjs": "46882cda2600f91030e997e791c33b097fa69aeca127da1f75b83d98aca2126f",
+    "scripts/lib/inkwave-owner-clock-browser.mjs": "0642c58a83c0175552e8de02f146ee841c7d5f68f42c77f48a3fbbb9148d97ce",
+    "scripts/lib/inkwave-local-relay-fixture.mjs": "52e8ebed76e2be36471bc0f05a28e9a911d8d25f80accdca9fb213c2e5ee359a"
+  },
+  "browserVersion": "154.0.8037.57",
+  "browserContexts": 2,
+  "transport": "real browser WebSocket + production Worker fetch / RoomDurableObject",
+  "world": "full production Game/Match/stage/Actor/Character; low-quality renderer",
+  "controls": "native real performance.now; guards and peer state unchanged; native frame stepping with skipped render between screenshots",
+  "relayFault": "hold first/newest owner ticks for at least seven real seconds; discard superseded intermediate ticks explicitly",
+  "requestCount": 8,
+  "replyCount": 6,
+  "render": [
+    {
+      "drawCalls": 80,
+      "triangles": 342582,
+      "contextLost": false
+    },
+    {
+      "drawCalls": 82,
+      "triangles": 345630,
+      "contextLost": false
+    }
+  ],
+  "limits": [
+    "Local Node adapts the Cloudflare WebSocket upgrade; not the deployed relay service.",
+    "Two isolated browser contexts share one Chromium process.",
+    "Software rendering and manually scheduled native frames do not establish physical-device frame pacing or Switch parity."
+  ],
+  "date": "2026-10-22",
+  "compat": "iw-gameplay-20261022-owner-clock-v1",
+  "sourceCodeCommit": "2d2b8aa25795f351f6e206488c89af7255595be6",
+  "executionEvidenceHead": "50f8843ec4633de2a28523db37d317349baca2b0",
+  "runtimeInputsEqualAtExecutionHead": true,
+  "executionEvidenceOnlyPaths": [
+    "reports/issue-resolution-20261022/continuation/clock-only-cpu-raw-json-log.tar.gz",
+    "reports/issue-resolution-20261022/continuation/clock-only-release.json",
+    "reports/issue-resolution-20261022/continuation/clock-only-release.md"
+  ],
+  "cleanup": {
+    "nativeProcessExit": 0,
+    "ownedNodePID": 32773,
+    "ownedChromiumPID": 32797,
+    "bothAbsentAfterCompletion": true,
+    "checkedAt": "2026-10-22T13:56:21.250318+00:00"
+  },
+  "errors": [],
+  "cases": [
+    {
+      "label": "cold-start",
+      "match": "y6f2ve",
+      "members": [
+        "p_o5ve9uv",
+        "p_bf7c5qf"
+      ],
+      "nativeBeginObserved": true,
+      "nativeClock": true,
+      "proofOriginsFixed": true,
+      "playing": true,
+      "acceptedTimestamps": [
+        55.582,
+        90.451
+      ],
+      "actorBufferLengths": [
+        [
+          10
+        ],
+        [
+          10
+        ]
+      ],
+      "originalGuard": [
+        {
+          "peer": "p_bf7c5qf",
+          "firstTimestamp": 44.389,
+          "firstReceivedAt": 86.32609999999963,
+          "caughtUpTimestamp": 51.386,
+          "caughtUpReceivedAt": 86.4,
+          "oldGateAccepted": false
+        },
+        {
+          "peer": "p_o5ve9uv",
+          "firstTimestamp": 78.742,
+          "firstReceivedAt": 51.42090000000037,
+          "caughtUpTimestamp": 86.406,
+          "caughtUpReceivedAt": 51.52710000000149,
+          "oldGateAccepted": false
+        }
+      ],
+      "fault": {
+        "label": "cold-start",
+        "startedAt": 1792677128005,
+        "active": true,
+        "peers": [
+          {
+            "destination": "Clock Guest",
+            "from": "p_o5ve9uv",
+            "firstTs": 78.742,
+            "lastTs": 86.252,
+            "firstHeldAt": 1792677129870,
+            "lastHeldAt": 1792677137335,
+            "firstSha256": "30cbcabd9813e6ee95796c52b6ddbfc220e640d44585fd338f954d7ba823216b",
+            "lastSha256": "c6e781e2d89efb386a559f85ba3e79704f86b3f9a51191b7977f13f36557d481",
+            "ticks": 65,
+            "discardedIntermediate": 63
+          },
+          {
+            "destination": "Clock Host",
+            "from": "p_bf7c5qf",
+            "firstTs": 44.389,
+            "lastTs": 51.386,
+            "firstHeldAt": 1792677130382,
+            "lastHeldAt": 1792677137374,
+            "firstSha256": "fdb97bab572939ec7a7fbe3a85dc6d301b7a7f444f60b73559b893d5f567fe8b",
+            "lastSha256": "d3b4e82842b9462a5f2cb2cd4be0f86918c7089a1c281d77d846aed68d6c376f",
+            "ticks": 65,
+            "discardedIntermediate": 63
+          }
+        ]
+      }
+    },
+    {
+      "label": "same-room-rematch",
+      "match": "5rba28",
+      "members": [
+        "p_o5ve9uv",
+        "p_bf7c5qf"
+      ],
+      "nativeBeginObserved": true,
+      "nativeClock": true,
+      "proofOriginsFixed": true,
+      "playing": true,
+      "acceptedTimestamps": [
+        77.813,
+        112.715
+      ],
+      "actorBufferLengths": [
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ],
+      "originalGuard": [
+        {
+          "peer": "p_bf7c5qf",
+          "firstTimestamp": 66.747,
+          "firstReceivedAt": 108.68890000000037,
+          "caughtUpTimestamp": 73.735,
+          "caughtUpReceivedAt": 108.75280000000075,
+          "oldGateAccepted": false
+        },
+        {
+          "peer": "p_o5ve9uv",
+          "firstTimestamp": 101.649,
+          "firstReceivedAt": 73.78390000000037,
+          "caughtUpTimestamp": 108.637,
+          "caughtUpReceivedAt": 73.8555,
+          "oldGateAccepted": false
+        }
+      ],
+      "fault": {
+        "label": "same-room-rematch",
+        "startedAt": 1792677144976,
+        "active": true,
+        "peers": [
+          {
+            "destination": "Clock Guest",
+            "from": "p_o5ve9uv",
+            "firstTs": 101.649,
+            "lastTs": 108.637,
+            "firstHeldAt": 1792677152731,
+            "lastHeldAt": 1792677159719,
+            "firstSha256": "01b1c663bbb6fb255ac7b628dc77998a16dea5acae61d1ac41883087c87614e3",
+            "lastSha256": "bf707f6a549b3cacf2c132e31ab72455f17d94baf7ada84859fc909527661032",
+            "ticks": 64,
+            "discardedIntermediate": 62
+          },
+          {
+            "destination": "Clock Host",
+            "from": "p_bf7c5qf",
+            "firstTs": 66.747,
+            "lastTs": 73.735,
+            "firstHeldAt": 1792677152731,
+            "lastHeldAt": 1792677159718,
+            "firstSha256": "9df4f363b3d2941b418b013975a6d72ba94f7d40b0d0f1387d4b8586ff098498",
+            "lastSha256": "af0eafbb1270e53b7a8b609206d9b15f65068de1f6920b9f41958e40360fb2b2",
+            "ticks": 64,
+            "discardedIntermediate": 62
+          }
+        ]
+      }
+    },
+    {
+      "label": "socket-reconnect",
+      "match": "pbndhd",
+      "members": [
+        "p_7d90vw1",
+        "p_u3epe08"
+      ],
+      "nativeBeginObserved": true,
+      "nativeClock": true,
+      "proofOriginsFixed": true,
+      "playing": true,
+      "acceptedTimestamps": [
+        91.22,
+        126.122
+      ],
+      "actorBufferLengths": [
+        [
+          8
+        ],
+        [
+          7
+        ]
+      ],
+      "originalGuard": [
+        {
+          "peer": "p_u3epe08",
+          "firstTimestamp": 80.191,
+          "firstReceivedAt": 122.11869999999925,
+          "caughtUpTimestamp": 87.3,
+          "caughtUpReceivedAt": 122.20830000000075,
+          "oldGateAccepted": false
+        },
+        {
+          "peer": "p_7d90vw1",
+          "firstTimestamp": 115.09,
+          "firstReceivedAt": 87.21720000000111,
+          "caughtUpTimestamp": 122.198,
+          "caughtUpReceivedAt": 87.31130000000074,
+          "oldGateAccepted": false
+        }
+      ],
+      "fault": {
+        "label": "socket-reconnect",
+        "startedAt": 1792677165020,
+        "active": true,
+        "peers": [
+          {
+            "destination": "Clock Guest",
+            "from": "p_7d90vw1",
+            "firstTs": 115.09,
+            "lastTs": 122.051,
+            "firstHeldAt": 1792677166174,
+            "lastHeldAt": 1792677173132,
+            "firstSha256": "436c8144970df12aec9f98dba0130ab54171d544b052bbf489ad586cd7a8325e",
+            "lastSha256": "d099317a75eb40fe4706c7aea2030e73f1b6341f1532a84d69ab5f0dffe4a7d0",
+            "ticks": 63,
+            "discardedIntermediate": 61
+          },
+          {
+            "destination": "Clock Host",
+            "from": "p_u3epe08",
+            "firstTs": 80.191,
+            "lastTs": 87.149,
+            "firstHeldAt": 1792677166176,
+            "lastHeldAt": 1792677173132,
+            "firstSha256": "6b51e153fff73954244bd316d0b018de4c398d27293e54b1b781a891868571c5",
+            "lastSha256": "51061917066fd6987dd8823f614c9262c502756453bd8c3346dd73b382ecaa7a",
+            "ticks": 63,
+            "discardedIntermediate": 61
+          }
+        ]
+      }
+    }
+  ],
+  "localScreenshots": [
+    {
+      "path": ".browser-evidence/owner-clock-only-native/clock-reconnect-peer-0.png",
+      "bytes": 502900,
+      "sha256": "c45765a51fbd9a465d77d24d0db5c7ec52ab00e473eba76cc8d2bfcf1d45a374",
+      "localOnly": true
+    },
+    {
+      "path": ".browser-evidence/owner-clock-only-native/clock-reconnect-peer-1.png",
+      "bytes": 510259,
+      "sha256": "589a82d606b2d78993eaa4bbea9dd6dacae4325b82286319df6f562837062336",
+      "localOnly": true
+    }
+  ],
+  "rawArchive": {
+    "path": "clock-only-native-raw-json-log.tar.gz",
+    "bytes": 81301,
+    "sha256": "2fe76663727df57702c93711e73cc35274f078193a2a60b80fcd0cf5dc52dbde",
+    "files": [
+      {
+        "path": ".browser-evidence/owner-clock-only-native/owner-clock-browser.json",
+        "bytes": 258426,
+        "sha256": "d65005166daacd3d87f82b9dfb236b8fb4258a2b7a703afbb3e0fbba364847f7"
+      },
+      {
+        "path": ".browser-evidence/owner-clock-only-native/online.json",
+        "bytes": 297296,
+        "sha256": "d084d9fc1e9883f00601d9923687bdf1ed0d31e9903f46a8bcdb3ef9b3eb54b6"
+      },
+      {
+        "path": ".ci-scratch/owner-clock-only/native-browser.log",
+        "bytes": 130,
+        "sha256": "7a4f5d7ff36b07d9b02356e42a3616848cfbf2004f8b8ef67a12569f9dce158c"
+      },
+      {
+        "path": ".ci-scratch/owner-clock-only/execution-head-preflight.json",
+        "bytes": 1205,
+        "sha256": "c5acabd63f770221593299d2e9a1b5b90f8356a5885978e90909ab32c866844a"
+      },
+      {
+        "path": ".ci-scratch/owner-clock-only/native-cleanup.json",
+        "bytes": 171,
+        "sha256": "6ddd1828c5d66d7da0df7473a47a224ab67535801b1dab15bb895679bbf2d7ec"
+      }
+    ],
+    "readbackVerified": true,
+    "contents": "JSON/log only; no PNG or audio"
+  },
+  "publicRawCredentialReview": {
+    "filesChecked": 5,
+    "matches": {
+      "bearer": 0,
+      "signedUrl": 0,
+      "credentialPrefix": 0
+    },
+    "conclusion": "No bearer/auth credentials or signed URLs; local QA room/member identifiers and receiver nonces are retained as non-secret protocol evidence."
+  },
+  "command": "OWNER_CLOCK_SOURCE_SHA=2d2b8aa25795f351f6e206488c89af7255595be6 timeout --kill-after=10s 900s node --max-old-space-size=1024 scripts/check-inkwave-native-online.mjs .built-site/owner-clock-2d2b8aa .browser-evidence/owner-clock-only-native --owner-clock",
+  "acceptanceLimit": "Clock startup/reconnect only; no deployed relay latency, human movement/combat, physical-device performance or Switch parity claim. Final screenshots retain the normal click-to-launch spawn prompt."
+}

@@ -178,11 +178,14 @@ export const INK_PROFILE_SECTIONS = Object.freeze([
   ],
 ].map(sections => Object.freeze(sections.map(section => Object.freeze(section)))));
 
+const SHOT_FAMILIES = Object.freeze(['shooter','dualies','splatling','blaster','stringer','brella']);
+const BURST_FAMILIES = Object.freeze(['blaster','stringer','splatana','slosher']);
+
 export function mainInkFootprint(weapon, contact = false) {
   const kind = typeof weapon === 'string' ? weapon : weapon?.catalogRecord?.family ?? weapon?.family ?? weapon?.kind;
   if (contact) return kind === 'brush' || kind === 'roller' ? 'ink-contact' : null;
   if (kind === 'charger') return CHARGER_FOOTPRINT;
-  if (['shooter','dualies','splatling','blaster','stringer','brella'].includes(kind)) return 'ink-shot';
+  if (SHOT_FAMILIES.includes(kind)) return 'ink-shot';
   // Individual Saber drops form a scalloped ribbon; the source drop schedule
   // and depth, rather than a single giant stamp, make the complete slash.
   if (kind === 'splatana') return 'ink-brush';
@@ -200,7 +203,7 @@ export function mainInkFootprint(weapon, contact = false) {
 // Keep phase selection explicit; do not infer from the owner's current weapon.
 export function mainInkBurstFootprint(weapon) {
   const family=typeof weapon==='string'?weapon:weapon?.catalogRecord?.family??weapon?.family??weapon?.kind;
-  return ['blaster','stringer','splatana','slosher'].includes(family)?'ink-blast-rectified':null;
+  return BURST_FAMILIES.includes(family)?'ink-blast-rectified':null;
 }
 
 // Pure data, created once, shared by every paint world. RG hold positive

@@ -10,19 +10,42 @@ import pathlib
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 
 revision = '0611f51b35c9736ee986fb2218461e2585b7875e'
 
 
+class _TransientTransferError(Exception):
+    """Internal marker: only network open/read may produce a retry request."""
+
+
+def _network_call(operation, *args, **kwargs):
+    try:
+        return operation(*args, **kwargs)
+    except (ConnectionResetError, TimeoutError) as error:
+        raise _TransientTransferError() from error
+    except urllib.error.URLError as error:
+        # HTTP/auth errors, TLS/certificate failures and unknown reasons are fatal.
+        if (not isinstance(error, urllib.error.HTTPError)
+                and isinstance(error.reason, (ConnectionResetError, TimeoutError))):
+            raise _TransientTransferError() from error
+        raise
+
+
 def fetch(url, target, algorithm, expected, git_blob=False, receipt=None):
     receipt = receipt if receipt is not None else {}
-    # Retry only a demonstrably incomplete successful HTTP transfer. Keep the
-    # same URL and digest; complete wrong bodies and access errors remain fatal.
+    # At most three attempts total, for incomplete HTTP200 bodies or narrowly
+    # classified network resets/timeouts. Same URL/digest and180s socket timeout;
+    # no retry of complete wrong bodies, access/TLS errors or filesystem failures.
     for attempt in range(1, 4):
         receipt['attemptCount'] = attempt
         try:
             return _fetch_once(url, target, algorithm, expected, git_blob, receipt)
+        except _TransientTransferError as error:
+            if attempt == 3:
+                raise error.__cause__
+            time.sleep(attempt)
         except ValueError:
             if not (attempt < 3 and receipt.get('status') == 2
                     and receipt.get('httpStatus') == 200
@@ -52,12 +75,12 @@ def _fetch_once(url, target, algorithm, expected, git_blob=False, receipt=None):
         return
     temporary = target.with_suffix(target.suffix + '.download')
     try:
-        with urllib.request.urlopen(url, timeout=180) as response, temporary.open('wb') as output:
+        with _network_call(urllib.request.urlopen, url, timeout=180) as response, temporary.open('wb') as output:
             receipt['httpStatus'] = response.getcode() or 0
             length = response.headers.get('Content-Length', '')
             if length.isascii() and length.isdigit():
                 receipt['contentLength'] = int(length)
-            while block := response.read(1 << 20):
+            while block := _network_call(response.read, 1 << 20):
                 output.write(block)
                 receipt['bytes'] += len(block)
         actual = digest(temporary)

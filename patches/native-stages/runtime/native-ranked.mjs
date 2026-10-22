@@ -109,7 +109,10 @@ export function nativeTowerRoute(G,common,paintable,middle,ends,mx,mz,dz){
    if(!edgeCache.has(key))edgeCache.set(key,clearance.clear(position(n.id,lift),position(e.to,lift)));
    return edgeCache.get(key);
   }):[]}));
-  const graph={...N,nodes,valid:allowed,validIds:common.filter(id=>allowed[id]),_g:null,_from:null,_seen:null,_closed:null,_stamp:0,path:N.path};
+  // Preserve the canonical NavGraph method owner: path delegates to its
+  // prototype's _pathUncached. Candidate topology must never borrow a planning
+  // memo or heap from the published graph it was derived from.
+  const graph=Object.assign(Object.create(Object.getPrototypeOf(N)),N,{nodes,valid:allowed,validIds:common.filter(id=>allowed[id]),_h:null,_g:null,_from:null,_seen:null,_closed:null,_heap:null,_pathMemo:null,_pathMemoPool:null,_stamp:0,path:N.path});
   let selected;try{selected=nativeRankedComponent(graph,paintable.filter(id=>allowed[id]),[],oppositeHalves);}catch{attempts.push({halfSize,lift,allowed:graph.validIds.length,component:0});continue;}
   graph.valid.fill(0);for(const id of selected.common)graph.valid[id]=1;graph.validIds=selected.common;
   const center=nearest(selected.paintable,mx,mz),first=nearest(selected.common,...point(-dz)),last=nearest(selected.common,...point(dz));

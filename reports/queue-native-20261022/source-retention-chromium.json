@@ -1,0 +1,75 @@
+{
+  "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.0 Safari/537.36",
+  "initial": {
+    "locks": true,
+    "estimate": {
+      "quota": 2149789074,
+      "usage": 2305426,
+      "usageDetails": {
+        "caches": 2305426
+      }
+    },
+    "rows": [
+      {
+        "name": "inkwave-native-source-v2-largeB",
+        "bodyBytes": 800000
+      },
+      {
+        "name": "inkwave-native-source-v2-a",
+        "bodyBytes": 100000
+      },
+      {
+        "name": "inkwave-native-source-v2-b",
+        "bodyBytes": 100000
+      },
+      {
+        "name": "inkwave-native-source-v2-c",
+        "bodyBytes": 100000
+      },
+      {
+        "name": "inkwave-native-source-v2-d",
+        "bodyBytes": 100000
+      },
+      {
+        "name": "inkwave-native-source-v2-e",
+        "bodyBytes": 100000
+      }
+    ],
+    "times": [
+      {
+        "id": "largeA",
+        "ms": 66.19999999925494
+      },
+      {
+        "id": "largeB",
+        "ms": 44.5
+      },
+      {
+        "id": "a",
+        "ms": 26.900000002235174
+      },
+      {
+        "id": "b",
+        "ms": 41.5
+      },
+      {
+        "id": "c",
+        "ms": 40.900000002235174
+      },
+      {
+        "id": "d",
+        "ms": 35.100000001490116
+      },
+      {
+        "id": "e",
+        "ms": 32.80000000074506
+      }
+    ]
+  },
+  "offlineRevisit": {
+    "bytes": 100000,
+    "additionalFetches": 0
+  },
+  "corruptOfflineRejected": true,
+  "fetches": 8
+}

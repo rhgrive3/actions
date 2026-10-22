@@ -21,10 +21,13 @@ export function markActorMotionDiscontinuity(actor) {
   if (actor) actor.s3MotionEpoch = (actor.s3MotionEpoch || 0) + 1;
 }
 
+// An offline paused tick advances identity without visiting frozen actors.
+export function advanceActorMotionTick() { tickNow++; }
+
 // Called once per fixed simulation tick before any actor moves (clock.mjs),
 // including the results-branch remote sample application.
 export function beginActorMotionTick(actors) {
-  tickNow++;
+  advanceActorMotionTick();
   // A harness without an actor list still advances the tick: records from
   // earlier ticks then fail the tick match and sweeps fall back to the single
   // current pose.

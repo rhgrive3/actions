@@ -1,0 +1,38 @@
+{
+  "scope": "V8 actual Character._screenPx with8realObject3Droots; cheapgetSize fixture follows vendored logical-size getter; cache has explicit viewportrevision supplied by fixture, not a production resize mechanism",
+  "node": "v24.19.0",
+  "comparisons": 8000,
+  "callsPerRound": 400000,
+  "rounds": 9,
+  "baselineMs": 33.90590699999996,
+  "candidateMs": 27.792219999999986,
+  "ratio": 0.8196866699363041,
+  "pairedMeanDifference95PercentBootstrapMs": [
+    -4.117260555555554,
+    0.7250838888888766
+  ],
+  "baselineSamples": [
+    35.201847999999984,
+    34.20009200000004,
+    34.66471200000001,
+    30.275864000000013,
+    30.237437,
+    33.90590699999996,
+    35.50910399999998,
+    24.375244000000066,
+    25.826998000000003
+  ],
+  "candidateSamples": [
+    34.762517,
+    36.070205000000016,
+    35.965670999999986,
+    30.345077000000003,
+    27.792219999999986,
+    26.31562200000002,
+    26.98065799999995,
+    25.132116999999994,
+    27.524985000000015
+  ],
+  "decision": "reject-no-established-gain-in-reviewed-cache",
+  "limitations": "No iPad/WebKit timing, GPU/FPS or universal rejection of future orchestration-level batching."
+}

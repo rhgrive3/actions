@@ -13,9 +13,9 @@ export function sweepNativeCatalogueSphere(physics,from,to,r0,r1,out,skipGrates,
   state={physics:{level:view},hit:{point:scratchVector(from),normal:scratchVector(from)}};catalogueViews.set(level,state);
  }
  const source=level.triangleWorld.sweepSphere(from,to,r0,{ignoreGrates:skipGrates,endRadius:r1});
- const moving=sweepOBB(state.physics,from,to,r0,r1,state.hit,skipGrates);
+ const moving=level.blocks.length===level.staticBlockCount?null:sweepOBB(state.physics,from,to,r0,r1,state.hit,skipGrates);
  out.hit=false;out.dist=from.distanceTo(to);out.block=out.face=out.triangle=-1;out.u=out.v=0;
- if(moving.hit&&(!source||moving.dist<source.distance)){
+ if(moving?.hit&&(!source||moving.dist<source.distance)){
   out.hit=true;out.dist=moving.dist;out.point.copy(moving.point);out.normal.copy(moving.normal);
   out.block=moving.block;out.face=moving.face;out.u=moving.u||0;out.v=moving.v||0;return out;
  }
@@ -35,9 +35,9 @@ export function sweepNativeLevelSphere(level,from,to,radius,out,skipGrates,sweep
   state={view,hit:{point:scratchVector(from),normal:scratchVector(from)}};dynamicViews.set(level,state);
  }
  const source=level.triangleWorld.sweepSphere(from,to,radius,{ignoreGrates:skipGrates});
- const moving=sweepOBB(state.view,from,to,radius,state.hit,skipGrates);
+ const moving=level.blocks.length===level.staticBlockCount?null:sweepOBB(state.view,from,to,radius,state.hit,skipGrates);
  out.hit=false;out.dist=from.distanceTo(to);out.block=out.face=out.triangle=-1;out.u=out.v=0;
- if(moving.hit&&(!source||moving.dist<source.distance)){
+ if(moving?.hit&&(!source||moving.dist<source.distance)){
   out.hit=true;out.dist=moving.dist;out.point.copy(moving.point);out.normal.copy(moving.normal);
   out.block=moving.block;out.face=moving.face;out.u=moving.u||0;out.v=moving.v||0;return out;
  }

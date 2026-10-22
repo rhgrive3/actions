@@ -89,12 +89,13 @@ for(const dt of [1/30,1/60,1/144])test('TripleQuick source-default gravity creat
  a.weaponRunner.update(0,{fire:false});a.weaponRunner.catalogState.paintShotOrdinal=2; // forced nearest slot 3
  const stamps=[];const splat=paint.splat;
  paint.splat=function(...args){const value=splat.apply(this,args);stamps.push({time:f.G.time,value,owner:args[3]?.claimOwner,kind:args[3]?.kind});return value;};
- emitMainShot(f,a);const p=f.G.projectiles.list.at(-1);
- assert.equal(p.catalog.descriptor.splashCount,1);
+ emitMainShot(f,a);const p=f.G.projectiles.list.at(-1),catalog=p.catalog;
+ assert.equal(catalog.descriptor.splashCount,1);
  assert.ok(p.catalog.descriptor.splashDropSpec);
  assert.equal(stamps.length,0,'no eager nearest paint');
  for(let i=0;i<Math.ceil(3/dt);i++){f.G.time+=dt;f.G.projectiles.update(dt);paint.advanceSimulation(dt);}
- assert.equal(p.catalog.dropCount,1);
+ assert.equal(catalog.dropCount,1,'the retained flight receipt records its physical splash');
+ assert.equal(p.catalog,null,'retirement releases projectile references after the completed flight');
  assert.ok(stamps.some(x=>x.kind==='source-splash'&&x.time>.01),'one physical droplet lands after flight');
  assert.ok(stamps.every(x=>x.owner===a));
  assert.ok(paint.counts[0]>0);

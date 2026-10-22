@@ -2,8 +2,8 @@
 // continue to render paint but cannot alter the Turf War judge.
 //
 // The live HUD (turf lead / team snapshot) asks for coverage every frame, and
-// the cache below is invalidated by every paint write, so this scan runs on
-// nearly every frame of active painting. Faces, weights and occlusion are
+// the cache below follows point-eligible turf writes. Wall-only ownership still
+// advances the global paint version without rescanning turf. Faces, weights and occlusion are
 // static for a grid, so their cell list is built once per grid and the scan
 // only reads team ownership. Cells are visited in the original face/cell order
 // with the original per-face weight, so every sum is bit-identical.
@@ -54,12 +54,30 @@ export function indexedFloorCoverage(paint) {
   }
   return area > 0 ? [t0 / area, t1 / area] : [0, 0];
 }
+// A version change outside the known writers remains a full invalidation. This
+// includes clear, grid rebuilds and extensions that only know the public token.
+function observePaintVersion(paint) {
+  if (paint._s3ObservedPaintVersion !== paint.version) {
+    paint._s3TurfVersion = (paint._s3TurfVersion || 0) + 1;
+    paint._s3ObservedPaintVersion = paint.version;
+  }
+}
+export function notePaintMutation(paint, turfChanged) {
+  observePaintVersion(paint);
+  if (turfChanged) paint._s3TurfVersion++;
+  paint.version++;
+  paint._s3ObservedPaintVersion = paint.version;
+}
 export function installScoring({ PaintSystem }) {
-  PaintSystem.prototype.coverage = function () {
-    if (this._s3CoverageVersion !== this.version || this._s3CoverageGrid !== this.grid) {
+  PaintSystem.prototype.coverage = function (out = null) {
+    observePaintVersion(this);
+    if (this._s3CoverageVersion !== this._s3TurfVersion || this._s3CoverageGrid !== this.grid ||
+        this._s3CoverageDead !== this.dead || this._s3CoverageFaces !== this.paintFaces) {
       this._s3Coverage = indexedFloorCoverage(this);
-      this._s3CoverageVersion = this.version; this._s3CoverageGrid = this.grid;
+      this._s3CoverageVersion = this._s3TurfVersion; this._s3CoverageGrid = this.grid;
+      this._s3CoverageDead = this.dead; this._s3CoverageFaces = this.paintFaces;
     }
+    if (out) { out[0] = this._s3Coverage[0]; out[1] = this._s3Coverage[1]; out.length = 2; return out; }
     return this._s3Coverage.slice();
   };
 }

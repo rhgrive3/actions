@@ -100,7 +100,7 @@ export function installKitAudio(api,{listen,options}){
    if(row&&(row.id!==id||!this.alive||!loopEvent||!row.handle?.playing)){
      row.handle?.stop(.1);active.delete(this);row=null;
    }
-   if(loopEvent&&this.alive&&KIT_AUDIO['special:'+id]){
+   if(loopEvent&&this.alive&&KIT_AUDIO['special:'+id]&&(row||G.audio?._realS3Loader?.declares('special:'+id,loopEvent)!==false)){
      if(!row){row={id,handle:G.audio?.loopWeapon?.('special:'+id,loopEvent,{...options(this,this.pos,.25),pitch:.85})};if(row.handle)active.set(this,row);}
      row?.handle?.set({pos:this.isLocal?undefined:this.pos,volume:.25});
    }return result;};

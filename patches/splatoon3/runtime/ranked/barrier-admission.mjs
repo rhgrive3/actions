@@ -133,7 +133,7 @@ export function noteRankedBarrierShots(nm,from,packet,now) {
   }
   if(receipts.length) nm.rankedBarrierProofs.set(from,receipts.slice(-MAX_SHOTS));
   if(keys.size) nm.rankedBarrierEventKeys.set(from,keys);
-  flushRankedBarrierHits(nm,now);
+  if(active(nm) && Number.isFinite(now)) flushAfterPrune(nm);
 }
 export function queueRankedBarrierHit(nm,from,d,now) {
   if(!active(nm) || !Number.isFinite(now)) return false;
@@ -148,12 +148,15 @@ export function queueRankedBarrierHit(nm,from,d,now) {
   if(d.seq<=watermark || pending.some(h=>h.data.seq===d.seq) || pending.length>=MAX_PENDING) return false;
   pending.push({data:{id:d.id,seq:d.seq,damage:d.damage,pos:[...d.pos]},at:now});
   nm.rankedBarrierPending.set(from,pending);
-  flushRankedBarrierHits(nm,now);
+  if(active(nm) && Number.isFinite(now)) flushAfterPrune(nm);
   return true;
 }
 export function flushRankedBarrierHits(nm,now) {
   if(!active(nm) || !Number.isFinite(now)) return;
   prune(nm,now);
+  flushAfterPrune(nm);
+}
+function flushAfterPrune(nm) {
   const shield=shieldOf(nm);
   for(const [peer,pending] of nm.rankedBarrierPending) {
     const shots=nm.rankedBarrierProofs.get(peer)||[];

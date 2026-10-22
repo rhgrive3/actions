@@ -1,0 +1,1297 @@
+{
+  "float64_and_null": {
+    "GEOMETRY_LEVEL_TIMINGS": [
+      {
+        "id": "tidewater",
+        "kind": "solid",
+        "atlas": false,
+        "vertices": 7212,
+        "index": 14994,
+        "oldMs": 41.180571999999984,
+        "newMs": 48.01580000000001
+      },
+      {
+        "id": "tidewater",
+        "kind": "grate",
+        "atlas": false,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.2574210000000221,
+        "newMs": 0.17588100000000395
+      },
+      {
+        "id": "tidewater",
+        "kind": "all",
+        "atlas": false,
+        "vertices": 7212,
+        "index": 14994,
+        "oldMs": 41.921972000000096,
+        "newMs": 45.26168500000006
+      },
+      {
+        "id": "tidewater",
+        "kind": "none",
+        "atlas": false,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.19834400000002006,
+        "newMs": 0.14561600000001818
+      },
+      {
+        "id": "tidewater",
+        "kind": "solid",
+        "atlas": true,
+        "vertices": 7212,
+        "index": 14994,
+        "oldMs": 35.33613200000002,
+        "newMs": 43.35864700000002
+      },
+      {
+        "id": "tidewater",
+        "kind": "grate",
+        "atlas": true,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.23360700000012002,
+        "newMs": 0.18913999999995212
+      },
+      {
+        "id": "tidewater",
+        "kind": "all",
+        "atlas": true,
+        "vertices": 7212,
+        "index": 14994,
+        "oldMs": 34.37058100000013,
+        "newMs": 22.969980000000078
+      },
+      {
+        "id": "tidewater",
+        "kind": "none",
+        "atlas": true,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.08957299999997304,
+        "newMs": 0.07387999999991735
+      },
+      {
+        "id": "kelpline",
+        "kind": "solid",
+        "atlas": false,
+        "vertices": 7612,
+        "index": 15762,
+        "oldMs": 29.600999999999885,
+        "newMs": 32.286890000000085
+      },
+      {
+        "id": "kelpline",
+        "kind": "grate",
+        "atlas": false,
+        "vertices": 232,
+        "index": 432,
+        "oldMs": 1.3223519999999098,
+        "newMs": 1.3971820000001571
+      },
+      {
+        "id": "kelpline",
+        "kind": "all",
+        "atlas": false,
+        "vertices": 7844,
+        "index": 16194,
+        "oldMs": 37.37400600000001,
+        "newMs": 34.355048000000124
+      },
+      {
+        "id": "kelpline",
+        "kind": "none",
+        "atlas": false,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.1019819999999072,
+        "newMs": 0.0800179999998818
+      },
+      {
+        "id": "kelpline",
+        "kind": "solid",
+        "atlas": true,
+        "vertices": 7612,
+        "index": 15762,
+        "oldMs": 24.644214000000147,
+        "newMs": 30.23399500000005
+      },
+      {
+        "id": "kelpline",
+        "kind": "grate",
+        "atlas": true,
+        "vertices": 232,
+        "index": 432,
+        "oldMs": 1.5795619999998962,
+        "newMs": 1.4763799999998355
+      },
+      {
+        "id": "kelpline",
+        "kind": "all",
+        "atlas": true,
+        "vertices": 7844,
+        "index": 16194,
+        "oldMs": 27.44659999999999,
+        "newMs": 33.718452999999954
+      },
+      {
+        "id": "kelpline",
+        "kind": "none",
+        "atlas": true,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.21544900000003508,
+        "newMs": 0.1229120000000421
+      },
+      {
+        "id": "cargo",
+        "kind": "solid",
+        "atlas": false,
+        "vertices": 12848,
+        "index": 26664,
+        "oldMs": 60.622167999999874,
+        "newMs": 63.313490999999885
+      },
+      {
+        "id": "cargo",
+        "kind": "grate",
+        "atlas": false,
+        "vertices": 324,
+        "index": 666,
+        "oldMs": 2.1339649999999892,
+        "newMs": 2.229415999999901
+      },
+      {
+        "id": "cargo",
+        "kind": "all",
+        "atlas": false,
+        "vertices": 13172,
+        "index": 27330,
+        "oldMs": 59.62421900000004,
+        "newMs": 63.408781999999974
+      },
+      {
+        "id": "cargo",
+        "kind": "none",
+        "atlas": false,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.1460869999998522,
+        "newMs": 0.09039499999994405
+      },
+      {
+        "id": "cargo",
+        "kind": "solid",
+        "atlas": true,
+        "vertices": 12848,
+        "index": 26664,
+        "oldMs": 64.07123399999978,
+        "newMs": 62.68597
+      },
+      {
+        "id": "cargo",
+        "kind": "grate",
+        "atlas": true,
+        "vertices": 324,
+        "index": 666,
+        "oldMs": 2.046154999999999,
+        "newMs": 2.06542300000001
+      },
+      {
+        "id": "cargo",
+        "kind": "all",
+        "atlas": true,
+        "vertices": 13172,
+        "index": 27330,
+        "oldMs": 46.14388299999973,
+        "newMs": 49.09859600000027
+      },
+      {
+        "id": "cargo",
+        "kind": "none",
+        "atlas": true,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.19745199999988472,
+        "newMs": 0.10080900000002657
+      },
+      {
+        "id": "halyard",
+        "kind": "solid",
+        "atlas": false,
+        "vertices": 5956,
+        "index": 12318,
+        "oldMs": 21.85290299999997,
+        "newMs": 20.111801000000014
+      },
+      {
+        "id": "halyard",
+        "kind": "grate",
+        "atlas": false,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.07997900000009395,
+        "newMs": 0.05916799999977229
+      },
+      {
+        "id": "halyard",
+        "kind": "all",
+        "atlas": false,
+        "vertices": 5956,
+        "index": 12318,
+        "oldMs": 19.07399200000009,
+        "newMs": 19.374456999999893
+      },
+      {
+        "id": "halyard",
+        "kind": "none",
+        "atlas": false,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.07324800000014875,
+        "newMs": 0.05526200000031167
+      },
+      {
+        "id": "halyard",
+        "kind": "solid",
+        "atlas": true,
+        "vertices": 5956,
+        "index": 12318,
+        "oldMs": 25.53365299999996,
+        "newMs": 18.57208700000001
+      },
+      {
+        "id": "halyard",
+        "kind": "grate",
+        "atlas": true,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.13404899999977715,
+        "newMs": 0.08474599999999555
+      },
+      {
+        "id": "halyard",
+        "kind": "all",
+        "atlas": true,
+        "vertices": 5956,
+        "index": 12318,
+        "oldMs": 22.33004600000004,
+        "newMs": 20.258688999999777
+      },
+      {
+        "id": "halyard",
+        "kind": "none",
+        "atlas": true,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.12251100000003134,
+        "newMs": 0.10871099999985745
+      },
+      {
+        "id": "range",
+        "kind": "solid",
+        "atlas": false,
+        "vertices": 17658,
+        "index": 36861,
+        "oldMs": 61.290359999999964,
+        "newMs": 65.0153250000003
+      },
+      {
+        "id": "range",
+        "kind": "grate",
+        "atlas": false,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.19088300000021263,
+        "newMs": 0.1785450000002129
+      },
+      {
+        "id": "range",
+        "kind": "all",
+        "atlas": false,
+        "vertices": 17658,
+        "index": 36861,
+        "oldMs": 62.76822200000015,
+        "newMs": 61.33132999999998
+      },
+      {
+        "id": "range",
+        "kind": "none",
+        "atlas": false,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.09617299999990792,
+        "newMs": 0.07331900000008318
+      },
+      {
+        "id": "range",
+        "kind": "solid",
+        "atlas": true,
+        "vertices": 17658,
+        "index": 36861,
+        "oldMs": 61.68026899999995,
+        "newMs": 63.299749999999676
+      },
+      {
+        "id": "range",
+        "kind": "grate",
+        "atlas": true,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.202350000000024,
+        "newMs": 0.12063899999975547
+      },
+      {
+        "id": "range",
+        "kind": "all",
+        "atlas": true,
+        "vertices": 17658,
+        "index": 36861,
+        "oldMs": 64.32341799999995,
+        "newMs": 69.5067570000001
+      },
+      {
+        "id": "range",
+        "kind": "none",
+        "atlas": true,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.09333899999955975,
+        "newMs": 0.10018900000022768
+      }
+    ],
+    "GEOMETRY_SCENERY_CAPACITY": [
+      {
+        "baseline": true,
+        "totalMs": 3700.80057,
+        "merges": [
+          {
+            "label": "static",
+            "parts": 450,
+            "vertices": 34500,
+            "sourceBytes": 1380000,
+            "live": 2760000,
+            "peak": 2760000,
+            "allocations": 4,
+            "ms": 1.5949239999999918,
+            "finalBytes": 1380000
+          },
+          {
+            "label": "city",
+            "parts": 1755,
+            "vertices": 80052,
+            "sourceBytes": 4162704,
+            "live": 8325408,
+            "peak": 8325408,
+            "allocations": 5,
+            "ms": 6.037857000000258,
+            "finalBytes": 4162704
+          },
+          {
+            "label": "trees",
+            "parts": 3,
+            "vertices": 468,
+            "sourceBytes": 18720,
+            "live": 37440,
+            "peak": 37440,
+            "allocations": 4,
+            "ms": 0.12376399999993737,
+            "finalBytes": 18720
+          }
+        ]
+      },
+      {
+        "baseline": false,
+        "totalMs": 3862.0539420000005,
+        "merges": [
+          {
+            "label": "static",
+            "parts": 450,
+            "vertices": 34500,
+            "sourceBytes": 1380000,
+            "live": 1380000,
+            "peak": 1794000,
+            "allocations": 4,
+            "ms": 3.4562130000012985,
+            "finalBytes": 1380000
+          },
+          {
+            "label": "city",
+            "parts": 1755,
+            "vertices": 80052,
+            "sourceBytes": 4162704,
+            "live": 4162704,
+            "peak": 5123328,
+            "allocations": 5,
+            "ms": 28.46885900000052,
+            "finalBytes": 4162704
+          },
+          {
+            "label": "trees",
+            "parts": 3,
+            "vertices": 468,
+            "sourceBytes": 18720,
+            "live": 18720,
+            "peak": 24336,
+            "allocations": 4,
+            "ms": 0.2977819999996427,
+            "finalBytes": 18720
+          }
+        ]
+      }
+    ],
+    "GEOMETRY_LEVEL_CAPACITY": {
+      "vertices": 17658,
+      "indexValues": 36861,
+      "oldNumericArrayElements": 478311,
+      "constructionBytes": 2199552,
+      "peak": 2411448,
+      "finalBytes": 1839522
+    },
+    "GEOMETRY_WARM_TIMINGS": [
+      {
+        "id": "tidewater",
+        "oldMedianMs": 26.54733700000179,
+        "newMedianMs": 29.460235000000466,
+        "oldSamples": [
+          28.71283499999845,
+          26.54733700000179,
+          26.346638999999413,
+          33.84414700000161,
+          22.369951999999103
+        ],
+        "newSamples": [
+          30.935115000000224,
+          29.460235000000466,
+          28.422602000000552,
+          25.90547499999957,
+          34.033957999999984
+        ]
+      },
+      {
+        "id": "kelpline",
+        "oldMedianMs": 32.19064199999957,
+        "newMedianMs": 34.87026100000003,
+        "oldSamples": [
+          33.82160300000032,
+          31.722485000000233,
+          32.19064199999957,
+          41.823381000000154,
+          30.68757800000094
+        ],
+        "newSamples": [
+          40.996382999999696,
+          34.87026100000003,
+          35.06341900000007,
+          34.38808499999868,
+          33.03390399999989
+        ]
+      },
+      {
+        "id": "cargo",
+        "oldMedianMs": 65.24124999999913,
+        "newMedianMs": 69.84397600000011,
+        "oldSamples": [
+          62.52977099999953,
+          65.24124999999913,
+          66.02228900000046,
+          66.10444199999984,
+          63.74511600000005
+        ],
+        "newSamples": [
+          54.723705000000336,
+          72.23655099999996,
+          71.33155700000134,
+          69.5775909999993,
+          69.84397600000011
+        ]
+      },
+      {
+        "id": "halyard",
+        "oldMedianMs": 25.65104599999904,
+        "newMedianMs": 28.34815300000082,
+        "oldSamples": [
+          25.220165999999153,
+          25.809790999999677,
+          25.65104599999904,
+          25.775730999999723,
+          24.33374999999978
+        ],
+        "newSamples": [
+          27.329078000000663,
+          28.632544999998572,
+          28.767604999999094,
+          28.34815300000082,
+          24.484253000000535
+        ]
+      },
+      {
+        "id": "range",
+        "oldMedianMs": 87.63363499999832,
+        "newMedianMs": 91.81809000000067,
+        "oldSamples": [
+          87.63363499999832,
+          86.32876599999872,
+          88.68796099999963,
+          113.61732400000255,
+          86.85153200000059
+        ],
+        "newSamples": [
+          91.81809000000067,
+          91.69630999999936,
+          90.60448700000052,
+          93.66990199999782,
+          105.73958199999834
+        ]
+      }
+    ],
+    "GEOMETRY_CITY_MERGE_WARM": {
+      "parts": 1755,
+      "vertices": 80052,
+      "vendorMs": 4.048167000000831,
+      "deleteMs": 7.6128459999999905,
+      "nullMs": 5.826857000000018,
+      "samples": [
+        [
+          4.507228999998915,
+          2.585165999997116,
+          4.048167000000831,
+          4.2465010000014445,
+          2.298810999996931,
+          2.09081199999855
+        ],
+        [
+          9.55349600000045,
+          5.769992000001366,
+          5.133458000000246,
+          7.6128459999999905,
+          7.8170200000022305,
+          6.436140999998315
+        ],
+        [
+          5.233144999998331,
+          4.996545000001788,
+          5.826857000000018,
+          6.659632999999303,
+          6.467196999998123,
+          5.469646999998076
+        ]
+      ]
+    }
+  },
+  "hybrid_decision": {
+    "GEOMETRY_LEVEL_CAPACITY": {
+      "vertices": 17658,
+      "indexValues": 36861,
+      "oldNumericArrayElements": 478311,
+      "constructionBytes": 1757184,
+      "peak": 2214456,
+      "finalBytes": 1839522
+    },
+    "GEOMETRY_WARM_TIMINGS": [
+      {
+        "id": "tidewater",
+        "oldMedianMs": 26.926594000000023,
+        "newMedianMs": 27.666201999999885,
+        "oldSamples": [
+          46.22967599999993,
+          26.926594000000023,
+          25.542835999999852,
+          26.7059569999999,
+          27.011301000000003
+        ],
+        "newSamples": [
+          39.381975999999895,
+          27.371063999999933,
+          27.666201999999885,
+          28.097643000000062,
+          26.020970000000034
+        ]
+      },
+      {
+        "id": "kelpline",
+        "oldMedianMs": 25.215022999999974,
+        "newMedianMs": 24.815069999999878,
+        "oldSamples": [
+          30.875627000000122,
+          22.559991999999966,
+          23.500557999999955,
+          28.61457100000007,
+          25.215022999999974
+        ],
+        "newSamples": [
+          24.00245300000006,
+          23.086614000000054,
+          24.815069999999878,
+          27.442570999999816,
+          24.937041000000136
+        ]
+      },
+      {
+        "id": "cargo",
+        "oldMedianMs": 66.75643500000024,
+        "newMedianMs": 58.46203199999991,
+        "oldSamples": [
+          71.25732700000026,
+          63.468213000000105,
+          66.75643500000024,
+          70.78622799999994,
+          63.001842000000124
+        ],
+        "newSamples": [
+          81.084386,
+          65.02036799999996,
+          57.88699899999983,
+          58.240182000000004,
+          58.46203199999991
+        ]
+      },
+      {
+        "id": "halyard",
+        "oldMedianMs": 18.43743200000017,
+        "newMedianMs": 18.52586599999995,
+        "oldSamples": [
+          18.43743200000017,
+          19.76328999999987,
+          17.82270900000003,
+          19.190524000000096,
+          18.416134000000056
+        ],
+        "newSamples": [
+          19.527090000000044,
+          17.000397999999677,
+          17.747175999999854,
+          18.52586599999995,
+          19.609534000000167
+        ]
+      },
+      {
+        "id": "range",
+        "oldMedianMs": 79.32626200000004,
+        "newMedianMs": 68.05738399999973,
+        "oldSamples": [
+          99.73288500000035,
+          62.23021299999982,
+          60.67562600000019,
+          90.78312700000015,
+          79.32626200000004
+        ],
+        "newSamples": [
+          60.53204400000004,
+          58.77675799999997,
+          68.05738399999973,
+          73.17741500000011,
+          83.18437300000005
+        ]
+      }
+    ]
+  },
+  "hybrid_shipping": {
+    "GEOMETRY_LEVEL_TIMINGS": [
+      {
+        "id": "tidewater",
+        "kind": "solid",
+        "atlas": false,
+        "vertices": 7212,
+        "index": 14994,
+        "oldMs": 36.54580899999996,
+        "newMs": 37.61461500000007
+      },
+      {
+        "id": "tidewater",
+        "kind": "grate",
+        "atlas": false,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.389047000000005,
+        "newMs": 0.23246500000004744
+      },
+      {
+        "id": "tidewater",
+        "kind": "all",
+        "atlas": false,
+        "vertices": 7212,
+        "index": 14994,
+        "oldMs": 47.59260999999992,
+        "newMs": 41.36269500000003
+      },
+      {
+        "id": "tidewater",
+        "kind": "none",
+        "atlas": false,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.20164899999997488,
+        "newMs": 0.15413899999998648
+      },
+      {
+        "id": "tidewater",
+        "kind": "solid",
+        "atlas": true,
+        "vertices": 7212,
+        "index": 14994,
+        "oldMs": 35.716038000000026,
+        "newMs": 30.19034799999997
+      },
+      {
+        "id": "tidewater",
+        "kind": "grate",
+        "atlas": true,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.30629499999997734,
+        "newMs": 0.15237700000000132
+      },
+      {
+        "id": "tidewater",
+        "kind": "all",
+        "atlas": true,
+        "vertices": 7212,
+        "index": 14994,
+        "oldMs": 24.9263719999999,
+        "newMs": 27.50772699999993
+      },
+      {
+        "id": "tidewater",
+        "kind": "none",
+        "atlas": true,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.14265199999999822,
+        "newMs": 0.08380400000010013
+      },
+      {
+        "id": "kelpline",
+        "kind": "solid",
+        "atlas": false,
+        "vertices": 7612,
+        "index": 15762,
+        "oldMs": 30.061165999999957,
+        "newMs": 30.967030000000022
+      },
+      {
+        "id": "kelpline",
+        "kind": "grate",
+        "atlas": false,
+        "vertices": 232,
+        "index": 432,
+        "oldMs": 1.2501760000000104,
+        "newMs": 1.723707000000104
+      },
+      {
+        "id": "kelpline",
+        "kind": "all",
+        "atlas": false,
+        "vertices": 7844,
+        "index": 16194,
+        "oldMs": 39.06121099999996,
+        "newMs": 34.955648999999994
+      },
+      {
+        "id": "kelpline",
+        "kind": "none",
+        "atlas": false,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.09150500000009743,
+        "newMs": 0.05660400000010668
+      },
+      {
+        "id": "kelpline",
+        "kind": "solid",
+        "atlas": true,
+        "vertices": 7612,
+        "index": 15762,
+        "oldMs": 26.497086999999965,
+        "newMs": 25.38516800000002
+      },
+      {
+        "id": "kelpline",
+        "kind": "grate",
+        "atlas": true,
+        "vertices": 232,
+        "index": 432,
+        "oldMs": 1.0999320000000807,
+        "newMs": 0.8446429999999054
+      },
+      {
+        "id": "kelpline",
+        "kind": "all",
+        "atlas": true,
+        "vertices": 7844,
+        "index": 16194,
+        "oldMs": 26.348207000000002,
+        "newMs": 26.214709000000084
+      },
+      {
+        "id": "kelpline",
+        "kind": "none",
+        "atlas": true,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.1929360000001452,
+        "newMs": 0.21274600000015198
+      },
+      {
+        "id": "cargo",
+        "kind": "solid",
+        "atlas": false,
+        "vertices": 12848,
+        "index": 26664,
+        "oldMs": 49.34791999999993,
+        "newMs": 44.549794999999904
+      },
+      {
+        "id": "cargo",
+        "kind": "grate",
+        "atlas": false,
+        "vertices": 324,
+        "index": 666,
+        "oldMs": 1.881151999999929,
+        "newMs": 1.5669849999999315
+      },
+      {
+        "id": "cargo",
+        "kind": "all",
+        "atlas": false,
+        "vertices": 13172,
+        "index": 27330,
+        "oldMs": 55.81491899999992,
+        "newMs": 47.64169300000003
+      },
+      {
+        "id": "cargo",
+        "kind": "none",
+        "atlas": false,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.10389400000008209,
+        "newMs": 0.1240139999999883
+      },
+      {
+        "id": "cargo",
+        "kind": "solid",
+        "atlas": true,
+        "vertices": 12848,
+        "index": 26664,
+        "oldMs": 52.294482000000016,
+        "newMs": 51.07288399999993
+      },
+      {
+        "id": "cargo",
+        "kind": "grate",
+        "atlas": true,
+        "vertices": 324,
+        "index": 666,
+        "oldMs": 2.0534969999998793,
+        "newMs": 1.8067510000000766
+      },
+      {
+        "id": "cargo",
+        "kind": "all",
+        "atlas": true,
+        "vertices": 13172,
+        "index": 27330,
+        "oldMs": 70.77906500000017,
+        "newMs": 52.79514900000004
+      },
+      {
+        "id": "cargo",
+        "kind": "none",
+        "atlas": true,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.17395799999985684,
+        "newMs": 0.09283800000002884
+      },
+      {
+        "id": "halyard",
+        "kind": "solid",
+        "atlas": false,
+        "vertices": 5956,
+        "index": 12318,
+        "oldMs": 19.326567999999952,
+        "newMs": 17.064862000000176
+      },
+      {
+        "id": "halyard",
+        "kind": "grate",
+        "atlas": false,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.09859699999969962,
+        "newMs": 0.06523699999979726
+      },
+      {
+        "id": "halyard",
+        "kind": "all",
+        "atlas": false,
+        "vertices": 5956,
+        "index": 12318,
+        "oldMs": 18.8551480000001,
+        "newMs": 17.9110069999997
+      },
+      {
+        "id": "halyard",
+        "kind": "none",
+        "atlas": false,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.09963800000014089,
+        "newMs": 0.06768000000010943
+      },
+      {
+        "id": "halyard",
+        "kind": "solid",
+        "atlas": true,
+        "vertices": 5956,
+        "index": 12318,
+        "oldMs": 19.239477999999963,
+        "newMs": 20.143219000000045
+      },
+      {
+        "id": "halyard",
+        "kind": "grate",
+        "atlas": true,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.16434400000025562,
+        "newMs": 0.08574700000008306
+      },
+      {
+        "id": "halyard",
+        "kind": "all",
+        "atlas": true,
+        "vertices": 5956,
+        "index": 12318,
+        "oldMs": 19.397933999999623,
+        "newMs": 17.420618999999988
+      },
+      {
+        "id": "halyard",
+        "kind": "none",
+        "atlas": true,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.20615600000019185,
+        "newMs": 0.08093000000008033
+      },
+      {
+        "id": "range",
+        "kind": "solid",
+        "atlas": false,
+        "vertices": 17658,
+        "index": 36861,
+        "oldMs": 78.71223499999996,
+        "newMs": 65.07545699999991
+      },
+      {
+        "id": "range",
+        "kind": "grate",
+        "atlas": false,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.12412399999993795,
+        "newMs": 0.08599699999967925
+      },
+      {
+        "id": "range",
+        "kind": "all",
+        "atlas": false,
+        "vertices": 17658,
+        "index": 36861,
+        "oldMs": 68.51469499999985,
+        "newMs": 59.42648800000006
+      },
+      {
+        "id": "range",
+        "kind": "none",
+        "atlas": false,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.10048999999980879,
+        "newMs": 0.0638850000000275
+      },
+      {
+        "id": "range",
+        "kind": "solid",
+        "atlas": true,
+        "vertices": 17658,
+        "index": 36861,
+        "oldMs": 63.46639400000004,
+        "newMs": 64.65094200000021
+      },
+      {
+        "id": "range",
+        "kind": "grate",
+        "atlas": true,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.26132800000004863,
+        "newMs": 0.08666799999991781
+      },
+      {
+        "id": "range",
+        "kind": "all",
+        "atlas": true,
+        "vertices": 17658,
+        "index": 36861,
+        "oldMs": 71.81410600000027,
+        "newMs": 79.61003899999969
+      },
+      {
+        "id": "range",
+        "kind": "none",
+        "atlas": true,
+        "vertices": 0,
+        "index": 0,
+        "oldMs": 0.19523900000012873,
+        "newMs": 0.06353399999989051
+      }
+    ],
+    "GEOMETRY_SCENERY_CAPACITY": [
+      {
+        "baseline": true,
+        "totalMs": 3889.308056,
+        "merges": [
+          {
+            "label": "static",
+            "parts": 450,
+            "vertices": 34500,
+            "sourceBytes": 1380000,
+            "live": 2760000,
+            "peak": 2760000,
+            "allocations": 4,
+            "ms": 1.2442070000006424,
+            "finalBytes": 1380000
+          },
+          {
+            "label": "city",
+            "parts": 1755,
+            "vertices": 80052,
+            "sourceBytes": 4162704,
+            "live": 8325408,
+            "peak": 8325408,
+            "allocations": 5,
+            "ms": 4.890077000000019,
+            "finalBytes": 4162704
+          },
+          {
+            "label": "trees",
+            "parts": 3,
+            "vertices": 468,
+            "sourceBytes": 18720,
+            "live": 37440,
+            "peak": 37440,
+            "allocations": 4,
+            "ms": 0.07963900000049762,
+            "finalBytes": 18720
+          }
+        ]
+      },
+      {
+        "baseline": false,
+        "totalMs": 3853.006081999999,
+        "merges": [
+          {
+            "label": "static",
+            "parts": 450,
+            "vertices": 34500,
+            "sourceBytes": 1380000,
+            "live": 1380000,
+            "peak": 1794000,
+            "allocations": 4,
+            "ms": 4.4512439999998605,
+            "finalBytes": 1380000
+          },
+          {
+            "label": "city",
+            "parts": 1755,
+            "vertices": 80052,
+            "sourceBytes": 4162704,
+            "live": 4162704,
+            "peak": 5123328,
+            "allocations": 5,
+            "ms": 18.025024000000485,
+            "finalBytes": 4162704
+          },
+          {
+            "label": "trees",
+            "parts": 3,
+            "vertices": 468,
+            "sourceBytes": 18720,
+            "live": 18720,
+            "peak": 24336,
+            "allocations": 4,
+            "ms": 0.3572199999998702,
+            "finalBytes": 18720
+          }
+        ]
+      }
+    ],
+    "GEOMETRY_LEVEL_CAPACITY": {
+      "vertices": 17658,
+      "indexValues": 36861,
+      "oldNumericArrayElements": 478311,
+      "constructionBytes": 1757184,
+      "peak": 2214456,
+      "finalBytes": 1839522
+    },
+    "GEOMETRY_WARM_TIMINGS": [
+      {
+        "id": "tidewater",
+        "oldMedianMs": 27.194172000001345,
+        "newMedianMs": 22.683686000000307,
+        "oldSamples": [
+          38.0475809999989,
+          27.194172000001345,
+          26.31825899999967,
+          27.61496199999965,
+          23.06178600000021
+        ],
+        "newSamples": [
+          35.317229999998744,
+          20.129045000001497,
+          24.070012999998653,
+          22.683686000000307,
+          21.190440000000308
+        ]
+      },
+      {
+        "id": "kelpline",
+        "oldMedianMs": 24.565668000001097,
+        "newMedianMs": 23.710669000000053,
+        "oldSamples": [
+          22.792977999999493,
+          33.690755999999965,
+          33.26263199999994,
+          23.163838000000396,
+          24.565668000001097
+        ],
+        "newSamples": [
+          23.710669000000053,
+          21.82181700000001,
+          29.9658500000005,
+          24.584029999999984,
+          23.5636599999998
+        ]
+      },
+      {
+        "id": "cargo",
+        "oldMedianMs": 46.130041999998866,
+        "newMedianMs": 44.203364000000875,
+        "oldSamples": [
+          51.81872400000066,
+          46.130041999998866,
+          45.248099000000366,
+          46.11504999999852,
+          47.27783500000078
+        ],
+        "newSamples": [
+          44.203364000000875,
+          56.39252899999883,
+          44.230263999999806,
+          43.97968200000105,
+          43.65311699999984
+        ]
+      },
+      {
+        "id": "halyard",
+        "oldMedianMs": 18.18548600000031,
+        "newMedianMs": 17.533784000001106,
+        "oldSamples": [
+          41.725603000000774,
+          18.81656800000019,
+          17.84852099999989,
+          17.881831000000602,
+          18.18548600000031
+        ],
+        "newSamples": [
+          17.533784000001106,
+          18.07420600000114,
+          16.906253999999535,
+          17.11053600000014,
+          19.458214999998745
+        ]
+      },
+      {
+        "id": "range",
+        "oldMedianMs": 80.64029499999924,
+        "newMedianMs": 59.271820999998454,
+        "oldSamples": [
+          80.64029499999924,
+          82.09403200000088,
+          80.67014899999958,
+          74.1527100000003,
+          73.70010799999909
+        ],
+        "newSamples": [
+          76.72123099999953,
+          70.7998090000001,
+          58.94801000000007,
+          53.741455000001224,
+          59.271820999998454
+        ]
+      }
+    ],
+    "GEOMETRY_CITY_MERGE_WARM": {
+      "parts": 1755,
+      "vertices": 80052,
+      "vendorMs": 2.9390710000006948,
+      "deleteMs": 7.774434999999357,
+      "nullMs": 7.243698000002041,
+      "samples": [
+        [
+          2.9390710000006948,
+          3.677357000000484,
+          5.0714050000024145,
+          2.6618890000027022,
+          2.7000069999994594,
+          2.595020000000659
+        ],
+        [
+          7.774434999999357,
+          6.571369999997842,
+          9.395340999999462,
+          8.559930999999779,
+          5.9491369999996095,
+          6.209743999999773
+        ],
+        [
+          7.082339000000502,
+          7.243698000002041,
+          7.480768999997963,
+          7.21096899999975,
+          5.6864669999995385,
+          8.086608000001434
+        ]
+      ]
+    }
+  },
+  "baseline": "8de71b09cd7a3bc05fa4ce06b00f99687beb44ad",
+  "measurement_scope": "Node shared host; measured explicit owned typed storage capacity and source slot counts, not process RAM, GC, browser GPU or device FPS.",
+  "environment_production_composed_sha256": "87afc8d716b274219a9d38fc93a01ecad0f2b69f7847204ac6264169768fd97f",
+  "candidate_source_sha256": {
+    "patches/local-quality/tests/fixtures/geometry-storage/scenery-owned-merge.mjs": "10d6c2cb59f73dd09989a002123159947353ccd2455e230e17376cc26d50811b",
+    "patches/local-quality/tests/fixtures/geometry-storage/scenery-owned-adapter.mjs": "dba98a2d81bc683eb6430c1c0e06fb44412a47cf407f16aac2b5b57314d30389",
+    "patches/local-quality/tests/fixtures/geometry-storage/float64-chunk-adapter.mjs": "698297f4ba5a3905c5583cc93d39843744b2a10a24340951e664f3fd6e1e40e3",
+    "patches/local-quality/tests/fixtures/geometry-storage/float64-chunk-runtime.mjs": "4b872f8a3f78f881b5e010d79137f54f6e39772df22289ec8880139289ee8f1a"
+  },
+  "public_attribute_followup": {
+    "passed": 5,
+    "failed": 0,
+    "skipped": 0,
+    "backing": "Float32/Uint16/Uint32 subclass constructor receives full output ArrayBuffer; exact same backing verified; no second data copy.",
+    "retains": [
+      "constructor.name",
+      "instanceof within each runtime realm",
+      "normalized",
+      "gpuType",
+      "index >=65535 threshold",
+      "byteOffset zero",
+      "full buffer length"
+    ]
+  }
+}

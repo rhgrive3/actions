@@ -23,10 +23,18 @@ test('actual Environment cloud target and uniform obey budget, strips cover comp
     assert.equal(rt.width,q.cloudWidth);assert.equal(rt.height,q.cloudHeight);
     assert.equal(rt.texture.type,THREE.HalfFloatType);assert.equal(rt.texture.generateMipmaps,false);assert.equal(rt.depthBuffer,false);assert.equal(rt.stencilBuffer,false);
     assert.deepEqual(Array.from(e._cloudMat.uniforms.uRes.value.toArray()),[q.cloudWidth,q.cloudHeight]);
-    const strips=[]; e.renderer={autoClear:true,xr:{enabled:true},getRenderTarget:()=>null,setRenderTarget(){},setClearColor(){},clear(){},render(){strips.push(rt.scissor.toArray());}};
+    const strips=[], previous={id:'previous-target'}, clearColor=new THREE.Color(.2,.3,.4), initialColor=clearColor.clone();
+    let target=previous, clearAlpha=.4, lastTargetArgs;
+    e.renderer={autoClear:true,xr:{enabled:true},getRenderTarget:()=>target,
+      getActiveCubeFace:()=>3,getActiveMipmapLevel:()=>2,
+      setRenderTarget(...args){target=args[0];lastTargetArgs=args;},
+      getClearColor:c=>c.copy(clearColor),getClearAlpha:()=>clearAlpha,
+      setClearColor(color,alpha){clearColor.set(color);clearAlpha=alpha;},
+      clear(){},render(){strips.push(rt.scissor.toArray());}};
     e._bakeClouds({sunColor:'#ffffff',sunIntensity:2.75});
     assert.equal(strips.length,10);assert.equal(strips.reduce((n,s)=>n+s[2]*s[3],0),q.cloudWidth*q.cloudHeight);
     assert.equal(rt.scissorTest,false);assert.equal(e.renderer.autoClear,true);assert.equal(e.renderer.xr.enabled,true);
+    assert.deepEqual(lastTargetArgs,[previous,3,2]);assert.deepEqual(clearColor,initialColor);assert.equal(clearAlpha,.4);
     rt.dispose();e._cloudMat.dispose();
   }
 });

@@ -33,8 +33,11 @@ export function adaptBotRefillRelease(rel, code, once) {
     '        // no ink here: paint a puddle to swim in\n        it.squid = false; it.fire = true;',
     '        // no ink here: paint a puddle to swim in\n        it.squid = false; it.fire = this._puddleFire(dt);',
     'bot refill puddle (turf)');
-  return once(code,
+  code = once(code,
     '{ it.squid = false; it.fire = true; wantPitch = -1.0; }',
     '{ it.squid = false; it.fire = this._puddleFire(dt); wantPitch = -1.0; }',
     'bot refill puddle (boss)');
+  const remaining = '      it.squid = a.groundTeam === 1 || this._pathRemaining() > 2;\n      if (a.groundTeam !== 1 && this._pathRemaining() < 1.5';
+  if (code.split(remaining).length - 1 !== 2) throw new Error('bot refill distance sharing conflict');
+  return code.replaceAll(remaining, '      const onOwnInk = a.groundTeam === 1;\n      const remaining = onOwnInk ? 0 : this._pathRemaining();\n      it.squid = onOwnInk || remaining > 2;\n      if (!onOwnInk && remaining < 1.5');
 }

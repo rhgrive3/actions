@@ -116,6 +116,10 @@ function chainRenderCatchup(ch, tierSet, nativeUpdateHair, nativeUpdateMaterials
 
 function queryStaticGround(ch, x, z, n, G) {
   const level = G?.level;
+  // Native blocks are paint-chart rectangles and object bounding boxes, not
+  // the source triangle colliders. Preserve NativePhysics.raycast (including
+  // dynamic support) instead of manufacturing ground across holes/bounds.
+  if (level?.native) return null;
   if (typeof level?.queryBlocks !== 'function' || !Array.isArray(level.blocks)) return null;
   const ry = ch.root.position.y;
   const originY = ry + 0.55, maxDist = 1.25;

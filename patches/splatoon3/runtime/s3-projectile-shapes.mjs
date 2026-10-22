@@ -78,6 +78,22 @@ export function s3ShapeKind(p) {
   }
 }
 
+// Metadata may be completed after _push (notably ghost catalogue births) or
+// retagged by a special owner. Check the actual dependencies, not projectile
+// age, so every such transition falls back to the original classifier.
+export function cachedS3ShapeKind(p) {
+  const catalog=p.catalog,wid=p.wid;
+  const record=catalog?.r||(p._s3ShapeRecordWid===wid?p._s3ShapeRecord:RECORDS.get(wid));
+  const key=catalog?.descriptor?.key,family=record?.family,actor=record?.sourceActor;
+  if(p._s3ShapeCached&&p._s3ShapeType===p.type&&p._s3ShapeSpecial===p.s3SpecialWeapon&&
+     p._s3ShapeRecordWid===wid&&p._s3ShapeRecord===record&&p._s3ShapeHasCatalog===!!catalog&&
+     p._s3ShapeKey===key&&p._s3ShapeFamily===family&&p._s3ShapeActor===actor)return p._s3ShapeValue;
+  p._s3ShapeCached=true;p._s3ShapeType=p.type;p._s3ShapeSpecial=p.s3SpecialWeapon;
+  p._s3ShapeRecordWid=wid;p._s3ShapeRecord=record;p._s3ShapeHasCatalog=!!catalog;
+  p._s3ShapeKey=key;p._s3ShapeFamily=family;p._s3ShapeActor=actor;
+  return p._s3ShapeValue=s3ShapeKind(p);
+}
+
 // "saber-vertical" is the charged attack selector, not a rendering plane.
 // Dental/Decavitator's charged wave remains horizontal (S3 11.3.0
 // WeaponSaberHeavy: BulletSaberVerticalParam.CollisionParam offsets are X-only).
@@ -354,7 +370,7 @@ function drawRadius(p) { return p.vis || p.size || 0.1; }
 // Native rounds keep their drawn radius, catalog Shooters share 0.1.
 function shotRadius(p) { return p.catalog ? 0.1 : p.vis || 0.1; }
 
-export function bodyParams(p, kind, sp) {
+export function bodyParams(p, kind, sp, out = {}) {
   const travel = p.start ? p.start.distanceTo(p.pos) : Infinity;
   const grow = clamp(p.age * 20, 0.15, 1);
   if (kind === 'shot') {
@@ -362,7 +378,7 @@ export function bodyParams(p, kind, sp) {
     const length = Math.max(0, Math.min(travel, sp * shotTailFrames(p) / 60) - R);
     const frames = p.age * 60;
     const rag = clamp(1 - (frames - 1) / S3_SHAPE.shot.raggedFrames, 0, 1);
-    return { R, L: length / Math.max(R, 1e-4), kind: BODY_KIND.shot, rag };
+    out.R=R;out.L=length/Math.max(R,1e-4);out.kind=BODY_KIND.shot;out.rag=rag;return out;
   }
   const c = p.catalog?.descriptor?.c;
   const collider = finite(c?.InitRadiusForPlayer, finite(p.size, 0.2));
@@ -372,12 +388,12 @@ export function bodyParams(p, kind, sp) {
   if (kind === 'arrow' && p.catalog?.stuck) length = cfg.stuckLengthRadii * R;
   // A braked pellet has no streak left: it falls as a rounded drop.
   if (kind === 'pellet' && length < cfg.minLengthRadii * R)
-    return { R, L: Math.max(0.4, length / Math.max(R, 1e-4)), kind: BODY_KIND.shot, rag: 0 };
+    {out.R=R;out.L=Math.max(0.4,length/Math.max(R,1e-4));out.kind=BODY_KIND.shot;out.rag=0;return out;}
   const L = Math.max(cfg.minLengthRadii, length / Math.max(R, 1e-4));
   // S3 Tri-Stringer arrows fray into thin torn sheets along their back half
   // (About video 03, 1.78-1.82 s); a stuck arrow is a clean stub.
   const rag = kind === 'arrow' && !p.catalog?.stuck ? 0.55 : 0;
-  return { R, L, kind: BODY_KIND[kind], rag };
+  out.R=R;out.L=L;out.kind=BODY_KIND[kind];out.rag=rag;return out;
 }
 
 // Blob-mesh entries (glossy ink balls) appended inside the existing draw pass:
@@ -469,7 +485,7 @@ export function drawS3Shapes(system, THREE, G) {
     }
     if (kind === 'shot' || kind === 'pellet' || kind === 'arrow') {
       if (nb >= MAX_BODY) continue;
-      const b = bodyParams(p, kind, sp);
+      const b = bodyParams(p, kind, sp, R.bodyScratch||=( {} ));
       if (!(b.R > 0)) continue;
       q.setFromUnitVectors(Z, f);
       // roll the cross-section with the seed so torn tails differ per round
@@ -565,8 +581,8 @@ export function drawS3Shapes(system, THREE, G) {
 }
 
 // Classify every live projectile before the native pass (which skips
-// p.s3Shape), then draw the dedicated meshes. Classification is recomputed
-// each frame, so pooled projectile reuse can never inherit a stale shape.
+// p.s3Shape), then draw the dedicated meshes. Dependency checks invalidate
+// classification after pooled reuse, late ghost metadata or special retagging.
 export function installS3ProjectileShapes(api) {
   const { Projectiles, THREE, G } = api || {};
   const P = Projectiles?.prototype;
@@ -574,7 +590,7 @@ export function installS3ProjectileShapes(api) {
   Object.defineProperty(P, INSTALLED, { value: true });
   const draw = P._draw, clear = P.clear;
   P._draw = function (...args) {
-    for (const p of this.list) p.s3Shape = s3ShapeKind(p);
+    for (const p of this.list) p.s3Shape = cachedS3ShapeKind(p);
     const result = draw.apply(this, args);
     this.s3ShapeCounts = drawS3Shapes(this, THREE, G);
     return result;

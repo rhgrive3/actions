@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const source = fs.readFileSync(new URL('../runtime/paint-ownership.mjs', import.meta.url), 'utf8');
-const load = code => import('data:text/javascript;base64,' + Buffer.from(code + '\nexport {prepareAncillary,cellIsSolidlyVisible};\n').toString('base64'));
+const load = code => import('data:text/javascript;base64,' + Buffer.from(code.replace(/from '(\.\/[^']+)'/g, (_, rel) => 'from ' + JSON.stringify(new URL('../runtime/' + rel, import.meta.url).href)) + '\nexport {prepareAncillary,cellIsSolidlyVisible};\n').toString('base64'));
 const current = await load(source);
 const baseline = await import('data:text/javascript;base64,' + Buffer.from(fs.readFileSync(new URL('./fixtures/paint-piece-ownership-baseline.mjs', import.meta.url), 'utf8') + '\nexport {prepareAncillary};\n').toString('base64'));
 const start = source.indexOf('  // #1671: nearly every test of a growing bomb');

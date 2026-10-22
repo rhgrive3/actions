@@ -15,6 +15,12 @@
 //                       for the coalesced dirty rectangle between the two
 //                       whole-map cases that genuinely need one.
 export function adaptMinimapDirty(rel, code, replaceOnce) {
+  if(rel==='src/game/minimap.js'&&!code.includes('const STORM_LINE_DASH=')){
+    code="const STORM_LINE_DASH=Object.freeze([4,4]),SOLID_LINE_DASH=Object.freeze([]);\n"+code;
+    code=replaceOnce(code,'c.setLineDash([4, 4]);','c.setLineDash(STORM_LINE_DASH);','reuse storm minimap dash');
+    code=replaceOnce(code,'c.setLineDash([]);','c.setLineDash(SOLID_LINE_DASH);','reuse solid minimap dash');
+  }
+
   if (rel === 'src/world/paint.js') {
     // Idempotent when both hooks are already present: a higher composition layer
     // (e.g. local-quality) may re-compose an already-built tree. Any partial

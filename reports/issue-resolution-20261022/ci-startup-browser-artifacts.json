@@ -1,0 +1,186 @@
+{
+  "schema": 1,
+  "scope": "Large browser images retained locally outside versioned reports; original result JSON paths resolve through this map",
+  "artifacts": [
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/1/chromium-pad-map-no-text-icon.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/1/chromium-pad-map-no-text-icon.png",
+      "sha256": "a159c59cc66edb457d766c1a9b79a03e2012ea339df823ee8006c708eb91adf4",
+      "bytes": 480647
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/1/chromium-pad-map-selection-next.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/1/chromium-pad-map-selection-next.png",
+      "sha256": "cce27c9e52a3293d5f54e34be7dd8bbc896da0dbb59129c5ef71723af47ae5ed",
+      "bytes": 489791
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/1/chromium-pad-map-selection.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/1/chromium-pad-map-selection.png",
+      "sha256": "fddcf2573856406304a0fca72dbc97adcd9261f13df0be982baf7ef9d4e987f8",
+      "bytes": 483198
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/1/chromium-portrait-guard.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/1/chromium-portrait-guard.png",
+      "sha256": "91116cc1a0cd9d98d6919ffc8555ff76f4be22593c3a2f47ba8727c3fc27f199",
+      "bytes": 21037
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/1/chromium-tablet-controls.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/1/chromium-tablet-controls.png",
+      "sha256": "5cbbac516cbf915a22583c35dbcd4661e0a26afc45e20be161a8ca44d108d882",
+      "bytes": 225222
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/1/webkit-pad-map-no-text-icon.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/1/webkit-pad-map-no-text-icon.png",
+      "sha256": "24a2ae9972a960fef39219061e1338a44081547272dba4b24259edb7ae49ff3c",
+      "bytes": 237079
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/1/webkit-pad-map-selection-next.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/1/webkit-pad-map-selection-next.png",
+      "sha256": "0a34ebd88dabc7c531b5df414cc804a1e9dcc08d86e9c2b8b4438e3c2fd78755",
+      "bytes": 241397
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/1/webkit-pad-map-selection.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/1/webkit-pad-map-selection.png",
+      "sha256": "6060ba17b10dc66dc27d9849e0a464aed14767c30c9747ecc846741987ccc224",
+      "bytes": 244013
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/1/webkit-portrait-guard.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/1/webkit-portrait-guard.png",
+      "sha256": "ac7d28349643973b19b94193bdd0450c82ca97b9cc56daa4052ab4a46a9b028c",
+      "bytes": 25313
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/1/webkit-tablet-controls.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/1/webkit-tablet-controls.png",
+      "sha256": "18ff6c13946b4ce258c1911b28e1dde6bc0877e3e9177981b5ebffcd50a869c6",
+      "bytes": 211908
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/2/chromium-pad-map-no-text-icon.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/2/chromium-pad-map-no-text-icon.png",
+      "sha256": "4e73a3fc05cb2025fd02291d162a6e8c6e1a033a74ef36c3f387abade08c94c7",
+      "bytes": 481727
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/2/chromium-pad-map-selection-next.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/2/chromium-pad-map-selection-next.png",
+      "sha256": "be739fbb60669196103194b735c10d54b62373a81118a77eac31e370fa1d388b",
+      "bytes": 486295
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/2/chromium-pad-map-selection.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/2/chromium-pad-map-selection.png",
+      "sha256": "a8a0413552d1de697a0323378d0dc4226f7be6e97121c5c0b7323f1585f231f9",
+      "bytes": 483282
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/2/chromium-portrait-guard.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/2/chromium-portrait-guard.png",
+      "sha256": "91116cc1a0cd9d98d6919ffc8555ff76f4be22593c3a2f47ba8727c3fc27f199",
+      "bytes": 21037
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/2/chromium-tablet-controls.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/2/chromium-tablet-controls.png",
+      "sha256": "35eb82499650324f8c2dcd0f3ba9e25d6f1757f724d40657a8faf42a3f07dc9b",
+      "bytes": 223086
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/2/webkit-pad-map-no-text-icon.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/2/webkit-pad-map-no-text-icon.png",
+      "sha256": "555448a64cf60d1d089b94263278946dc8fda7d8120b76db6cb149bbc814894e",
+      "bytes": 244907
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/2/webkit-pad-map-selection-next.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/2/webkit-pad-map-selection-next.png",
+      "sha256": "4dca1c9f0cfd63a3f53243c42fe97a899a9e99b0fc13ab69c3dd5e0e383625ae",
+      "bytes": 250043
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/2/webkit-pad-map-selection.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/2/webkit-pad-map-selection.png",
+      "sha256": "f8378795058b184b8434f0a206539c82854e9507158f86b4263dd13322d2e584",
+      "bytes": 247109
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/2/webkit-portrait-guard.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/2/webkit-portrait-guard.png",
+      "sha256": "ac7d28349643973b19b94193bdd0450c82ca97b9cc56daa4052ab4a46a9b028c",
+      "bytes": 25313
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/2/webkit-tablet-controls.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/2/webkit-tablet-controls.png",
+      "sha256": "18ff6c13946b4ce258c1911b28e1dde6bc0877e3e9177981b5ebffcd50a869c6",
+      "bytes": 211908
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/3/chromium-pad-map-no-text-icon.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/3/chromium-pad-map-no-text-icon.png",
+      "sha256": "23a21e8c886c72636f27a4d09e0e18228982fee180affd6cc42d453de3748d92",
+      "bytes": 483836
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/3/chromium-pad-map-selection-next.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/3/chromium-pad-map-selection-next.png",
+      "sha256": "0b93d74d49f9aa58bfe4138339c76f5f6315b9b4850dbc2528c96777b99b8031",
+      "bytes": 483926
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/3/chromium-pad-map-selection.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/3/chromium-pad-map-selection.png",
+      "sha256": "819b63fc8c242dc3a2caf18b0af140ef23fa1a2b02ceb86f6ba4f3491f55f072",
+      "bytes": 483181
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/3/chromium-portrait-guard.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/3/chromium-portrait-guard.png",
+      "sha256": "91116cc1a0cd9d98d6919ffc8555ff76f4be22593c3a2f47ba8727c3fc27f199",
+      "bytes": 21037
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/3/chromium-tablet-controls.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/3/chromium-tablet-controls.png",
+      "sha256": "db112498e30e0aadbf21f9a7a9c0b3abfda50fddffc2f74ad89760225a6be6bc",
+      "bytes": 223205
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/3/webkit-pad-map-no-text-icon.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/3/webkit-pad-map-no-text-icon.png",
+      "sha256": "c0c00024dc65abb5623c30385d66e209ed58c6cca12115872819d0c3470e878c",
+      "bytes": 241858
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/3/webkit-pad-map-selection-next.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/3/webkit-pad-map-selection-next.png",
+      "sha256": "574b797c52c29cf6f0113e5cf72ce60b8eb22429cedd5de4b362134af228c416",
+      "bytes": 245742
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/3/webkit-pad-map-selection.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/3/webkit-pad-map-selection.png",
+      "sha256": "e860e116e8c5fa10fe2e7d5512061cf306df8ab43b9642b025935c3e479ec4dd",
+      "bytes": 249831
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/3/webkit-portrait-guard.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/3/webkit-portrait-guard.png",
+      "sha256": "ac7d28349643973b19b94193bdd0450c82ca97b9cc56daa4052ab4a46a9b028c",
+      "bytes": 25313
+    },
+    {
+      "originalReportPath": "reports/issue-resolution-20261022/reliability-repeated/3/webkit-tablet-controls.png",
+      "retainedPath": "/workspace/actions/.browser-evidence/issue-resolution-20261022/reliability-repeated/3/webkit-tablet-controls.png",
+      "sha256": "18ff6c13946b4ce258c1911b28e1dde6bc0877e3e9177981b5ebffcd50a869c6",
+      "bytes": 211908
+    }
+  ]
+}

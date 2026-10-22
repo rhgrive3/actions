@@ -36,7 +36,7 @@ test('completed and partial paint trees cannot bypass the raw-source build conne
   // signature while silently removing turf accounting or active growth rendering.
   for (const connection of [
     'claimed += cellA;',
-    'else { this.growing.push(g); growth = null; }',
+    'this.growing.push(g);',
     '        changed = true;',
     'if (this._inkMark) this._inkMark(f, i, j);',
     'installIssue570PaintPresentation(PaintSystem)',

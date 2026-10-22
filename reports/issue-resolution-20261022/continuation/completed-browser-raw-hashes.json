@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "archive": {
+    "path": "reports/issue-resolution-20261022/continuation/completed-browser-raw.tar.gz",
+    "bytes": 141980,
+    "sha256": "fd961cf1b5879098edb71d1036c2068a93aff91e388de5ea9f59d8118186f30e",
+    "format": "gzip mtime=0, tar regular files only, original repository-relative paths, deterministic metadata"
+  },
+  "buildContentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+  "scope": "Frozen final build receipts only; not whole concurrent working tree, CI, deployment, physical GPU or Nintendo parity attestation. Public-boot suite excluded while ongoing.",
+  "entries": [
+    {
+      "path": ".browser-evidence/continuation-20261022/rematch-chromium-exclusive/console.log",
+      "bytes": 216,
+      "sha256": "ff38509129cacd8581cfe3804368b9c26b1090f2ba865cde832ad199eac90122",
+      "issue": 1432,
+      "engine": "chromium",
+      "role": "accepted-normal"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/rematch-chromium-exclusive/rematch-lifecycle-result.json",
+      "bytes": 401028,
+      "sha256": "e6ad905f2fe9570f48453316ae1529783fea09d786351f5d5e561e5d89a80865",
+      "issue": 1432,
+      "engine": "chromium",
+      "role": "accepted-normal"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/rematch-chromium-exclusive/supervisor.json",
+      "bytes": 747,
+      "sha256": "31461f2529f4f65ce5011597d37a9371290bd3e1b1b5012a46418ee4ff223c50",
+      "issue": 1432,
+      "engine": "chromium",
+      "role": "accepted-normal"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/rematch-webkit-final/console.log",
+      "bytes": 216,
+      "sha256": "ff38509129cacd8581cfe3804368b9c26b1090f2ba865cde832ad199eac90122",
+      "issue": 1432,
+      "engine": "webkit",
+      "role": "accepted-normal"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/rematch-webkit-final/rematch-lifecycle-result.json",
+      "bytes": 396344,
+      "sha256": "df66bce9580a7467aaf4b51b252bac74e87f59adf87f238b825b6651d825f08a",
+      "issue": 1432,
+      "engine": "webkit",
+      "role": "accepted-normal"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/rematch-webkit-final/supervisor.json",
+      "bytes": 736,
+      "sha256": "82d4de565b4a0e6bc07978aefdcc57a05550ebdb3b236f06bceb482625fe27d7",
+      "issue": 1432,
+      "engine": "webkit",
+      "role": "accepted-normal"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/composer-context/chromium.json",
+      "bytes": 82183,
+      "sha256": "194498c3fdd2224bb46eff815f60dd3beea22d0769f55b328df6df16127bc95e",
+      "issue": 642,
+      "engine": "chromium",
+      "role": "browser-only-accepted-physical-gpu-pending"
+    },
+    {
+      "path": ".browser-evidence/continuation-performance/composer-context/webkit.json",
+      "bytes": 82173,
+      "sha256": "a6c47a511bcaed5c1a14d10236c201bd379a6734156590a69a6f089c9e089306",
+      "issue": 642,
+      "engine": "webkit",
+      "role": "browser-only-accepted-physical-gpu-pending"
+    },
+    {
+      "path": ".browser-evidence/issue-1165-live/latest-normal/result.json",
+      "bytes": 46855,
+      "sha256": "f4613fca0f4e09e7f3f9def8da004ca9b0f5e52655d380cebc31403ee8dae51a",
+      "issue": 1165,
+      "engine": "chromium",
+      "role": "accepted-normal"
+    },
+    {
+      "path": ".browser-evidence/issue-1165-live/negative-old-scan/failure.json",
+      "bytes": 44613,
+      "sha256": "bf927ac8263fdc0f68be2c0378f1ce4f1befe34043e65ff5871fa42ca333d035",
+      "issue": 1165,
+      "engine": "chromium",
+      "role": "declared-counterfactual-expected-failure"
+    },
+    {
+      "path": ".browser-evidence/issue-1165-live/negative-original-core/failure.json",
+      "bytes": 44612,
+      "sha256": "192ad2f32a4e652c047635b2f45824feb54478926bc78fed650d175a58ca515e",
+      "issue": 1165,
+      "engine": "chromium",
+      "role": "declared-counterfactual-expected-failure"
+    },
+    {
+      "path": ".browser-evidence/issue-1165-live/parent-review/result.json",
+      "bytes": 46855,
+      "sha256": "aa7e2791b3a81de9e52c495c65112efe6180513eb67e970c2153347a7fdbface",
+      "issue": 1165,
+      "engine": "chromium",
+      "role": "independent-accepted-normal"
+    }
+  ],
+  "excludedExistingAttempts": [
+    {
+      "path": ".browser-evidence/continuation-20261022/rematch-chromium/console.log",
+      "bytes": 582,
+      "sha256": "b8e2de139ec8f0f1e99cdfa1ca218eb2a01321dfa5158bdba6719465c129342b",
+      "reason": "Superseded 600-second supervisor timeout under overlapping browser workload; not the accepted exclusive run."
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/rematch-chromium/rematch-lifecycle-result.json",
+      "bytes": 212525,
+      "sha256": "fc97f271446cce43823e5ef1c4d8d09a68fa195005b4b786f75e85c581b72e42",
+      "reason": "Superseded 600-second supervisor timeout under overlapping browser workload; not the accepted exclusive run."
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/rematch-chromium/supervisor.json",
+      "bytes": 721,
+      "sha256": "9fcf6b654408692cade457c77576111120ef2da3cabd097addfbd41913b5c471",
+      "reason": "Superseded 600-second supervisor timeout under overlapping browser workload; not the accepted exclusive run."
+    },
+    {
+      "path": ".browser-evidence/issue-1165-live/chromium/result.json",
+      "bytes": 46574,
+      "sha256": "a25de3aaa6adddd503a2f3de124ca856335add1293f8aa6994e16e6b9d05ef32",
+      "reason": "Earlier successful subset without the final independent bot painting and counterfactual witnesses; replaced by latest-normal and parent-review."
+    }
+  ],
+  "supersededOverwrittenAttempts": [
+    {
+      "path": ".browser-evidence/issue-1165-live/latest-normal/failure.json",
+      "retained": false,
+      "reason": "Fixture camera absent on first added actual-projectile run; corrected fixture and completed final normal. This stale failure was removed and is not archived."
+    },
+    {
+      "path": ".browser-evidence/issue-1165-live/negative-old-scan/result.json",
+      "retained": false,
+      "reason": "Initial radius-1 witness was hidden by half-cell slack and passed the old scan. Replaced by radius-5 lower-scan witness; final same-gate negative fails as intended. Stale result removed."
+    }
+  ],
+  "composerEarlierAttempts": [
+    "Earlier QA incorrectly expected automatic drawing after restoration; failed because actual runtime deliberately requires reload to preserve CPU-score/GPU-paint consistency. Corrected the expectation without changing production.",
+    "Restoring inside the lost-event microtask timed out in Chromium; final probe yields a full task and bounds both GL events to 10 seconds.",
+    "Chromium pixel-only run overlapped another agent GPU workload. No duration or performance comparison uses these runs."
+  ],
+  "contentsBoundary": "Only explicitly listed JSON and console logs. No images, private audio, signed URLs, credentials, public-boot receipts or source binaries.",
+  "restore": "From a clean directory or repository root: tar -xzf <path-to-completed-browser-raw.tar.gz>. Paths restore under .browser-evidence/. Verify each sha256 against entries."
+}

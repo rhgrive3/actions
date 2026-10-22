@@ -1280,12 +1280,27 @@ function addShoes(B, lv) {
   const parts = shoeParts(lv);
   for (const [s, sx] of [['L', 1], ['R', -1]]) {
     const F = K.REST['foot' + s];
+    const move = new THREE.Matrix4().makeTranslation(F.x, 0, F.z);
+    const moveNormal = new THREE.Matrix3().getNormalMatrix(move);
+    const mirror = sx < 0 ? new THREE.Matrix4().makeScale(-1, 1, 1) : null;
+    const mirrorNormal = mirror ? new THREE.Matrix3().getNormalMatrix(mirror) : null;
+    const round = v => v.set(Math.fround(v.x), Math.fround(v.y), Math.fround(v.z));
+    // Reproduce each original BufferGeometry Float32 write and normal
+    // normalization, including mirrorX's second X-normal flip. Callbacks in
+    // Builder see exactly the old transformed coordinates, without cloning
+    // immutable shared position/normal/UV/index buffers for either foot.
+    const readTransform = (p, n) => {
+      if (mirror) {
+        round(p.applyMatrix4(mirror));
+        round(n.applyNormalMatrix(mirrorNormal)); n.x = -n.x;
+      }
+      round(p.applyMatrix4(move)); round(n.applyNormalMatrix(moveNormal));
+    };
     for (const pt of parts) {
-      const g = pt.geo.clone();
-      if (sx < 0) K.mirrorX(g);
-      g.translate(F.x, 0, F.z);
+      const g = pt.geo;
       const uvA = g.attributes.uv;
       B.add(g, {
+        readTransform, flipWinding: sx < 0,
         ex: typeof pt.ex === 'function' ? (p, i) => pt.ex(p, i, uvA) : pt.ex,
         uv: pt.uvFn ? (i) => pt.uvFn(i) : !!pt.uv,
         v3: pt.v3,

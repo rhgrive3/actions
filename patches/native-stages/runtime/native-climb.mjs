@@ -72,7 +72,9 @@ export function updateNativeClimb(brain,G,dt){
  if(index===0&&brain.path.length>1&&a.pos.distanceTo(new THREE.Vector3(...[N.nodes[brain.path[0]].x,N.nodes[brain.path[0]].y,N.nodes[brain.path[0]].z]))<.8)index=1;
  const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=from?.nb.find(e=>e.to===to?.id&&e.type==='climb'&&(!e.climb?.kind||e.climb.kind==='straight'));
  if(!edge){brain._nativeClimb=null;return false;}
- let c=edge.climb;const upper=new THREE.Vector3(...c.upper),lower=new THREE.Vector3(...c.lower),normal=new THREE.Vector3(...c.normal),spine=new THREE.Vector3(...c.spine);
+ let c=edge.climb;
+ const scratch=brain._nativeClimbVectors||(brain._nativeClimbVectors={upper:new THREE.Vector3(),lower:new THREE.Vector3(),normal:new THREE.Vector3(),spine:new THREE.Vector3()});
+ const upper=scratch.upper.fromArray(c.upper),lower=scratch.lower.fromArray(c.lower),normal=scratch.normal.fromArray(c.normal),spine=scratch.spine.fromArray(c.spine);
  if(Math.hypot(a.pos.x-upper.x,a.pos.z-upper.z)<.65&&Math.abs(a.pos.y-upper.y)<.16&&a.grounded){brain.pi=index+1;brain._nativeClimb=null;brain.noProg=0;return false;}
  if(Math.hypot(a.pos.x-lower.x,a.pos.z-lower.z)>Math.hypot(...[c.paintStance[0]-lower.x,c.paintStance[2]-lower.z])+2.5&&!a.climbing)return false;
  brain.pi=index;

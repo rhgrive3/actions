@@ -1,0 +1,200 @@
+{
+  "reviewed_sha": "73cabff837beae0987b9b1265d55dcc6ffb6cd06",
+  "base_sha": "8de71b09cd7a3bc05fa4ce06b00f99687beb44ad",
+  "repository": "/workspace/scratch/1dcd5205fbb6/actions",
+  "read_only": true,
+  "scope": {
+    "assets": [
+      "[QUEUE][INKWAVE][Optimization] decor-lamp-template-geometry-reuse-before-merge.md",
+      "[QUEUE][INKWAVE][Optimization] decor-palm-fronds-preallocate-typed-vertex-and-index-buffers.md",
+      "[QUEUE][INKWAVE][Optimization] decor-reuse-spawn-emblem-canvas-for-flags.md",
+      "[QUEUE][INKWAVE][Optimization] flow-shell-skip-inactive-lod-tier-matrix-sync.md",
+      "[QUEUE][INKWAVE][Optimization] native-source-progress-chunks-double-buffer.md",
+      "[QUEUE][INKWAVE][Optimization] reuse-verified-legacy-lightmap-across-stage-reentry.md",
+      "[QUEUE][INKWAVE][Optimization] s3-ink-sheets-arrow-unused-frame-basis-work.md",
+      "[QUEUE][INKWAVE][Optimization] s3-ink-sheets-splash-cone-render-object-churn.md",
+      "[QUEUE][INKWAVE][Optimization] squid-ink-tank-tube-cache-static-wave-basis.md"
+    ],
+    "ci": [
+      "[QUEUE][INKWAVE][Optimization] coalesce-superseded-aplus-quality-gate-runs.md",
+      "[QUEUE][INKWAVE][Optimization] main-weapon-jobs-sparse-checkout-and-blob-filter.md",
+      "[QUEUE][INKWAVE][Optimization] main-weapon-workflow-path-filters-miss-eleven-executed-tests.md",
+      "[QUEUE][INKWAVE][Optimization] skip-discarded-threejs-first-pass-minification.md",
+      "[QUEUE][INKWAVE][Optimization] validate-matrix-sparse-checkout-reduce-unrelated-modeler-and-report-blobs.md"
+    ],
+    "excluded": [
+      "props2: mural-height-switch and spawn-coating-event-driven",
+      "unfinished geometry work"
+    ]
+  },
+  "findings": [
+    {
+      "id": "assets-source-progress-unreachable",
+      "priority": "P2",
+      "status": "closed",
+      "title": "Wire the streaming fast path into the actual OBJ progress load before closing this queue",
+      "paths": [
+        {
+          "path": "patches/native-stages/runtime/source-cache.mjs",
+          "lines": [
+            71,
+            82
+          ]
+        },
+        {
+          "path": "patches/native-stages/runtime/source-worker.mjs",
+          "lines": [
+            37,
+            43
+          ]
+        },
+        {
+          "path": "patches/local-quality/tests/added-assets-load-ownership.test.mjs",
+          "lines": [
+            10,
+            18
+          ]
+        }
+      ],
+      "evidence": "The new direct destination requires expected.bytes. The sole real onProgress call is source-worker OBJ download, whose expected object contains only sha256. All bytes-bearing MTL/nativeLoad calls omit onProgress. Actual source-worker execution with its production branch logic recorded OBJ progress=true, expected.bytes absent, directPreallocationEligible=false; MTL progress=false, expected.bytes=3, eligible=false. Thus nonconstrained cold OBJ loading retains chunks plus joined output, exactly the peak targeted by the queue. Existing new unit tests synthesize bytes+progress and never execute the caller wiring.",
+      "impact": "Optimization is dead for real game downloads; queue/report claim of reduced production buffering is not established. Integrity checks and stream cleanup remain sound.",
+      "suggested_action": "Use an authenticated actual media-OBJ byte size in the progress call, or a safe different streaming approach, with an integration test exercising source-worker. Do not pass source-tree f.size blindly: Vss_Yunohana.obj inventory size133 describes the Git LFS pointer, not the media OBJ. Alternatively retain/reject this queue as unimplemented with a concrete reason.",
+      "mutations_performed": false,
+      "closure": {
+        "reviewed_sha": "8d33fdab273188db83f239bd766cc0fb1e258c63",
+        "source_commit": "507a434a",
+        "result": "Closed: production nonconstrained worker now passes authenticated actual LFS payload bytes together with the progress callback. Constrained worker retains prior no-size/no-progress contract; unknown/new SHA retains fallback.",
+        "paths": [
+          "patches/native-stages/runtime/source-worker.mjs:36-40",
+          "patches/native-stages/runtime/source-catalog.mjs:27-56",
+          "patches/native-stages/runtime/source-cache.mjs:71-89",
+          "patches/native-stages/tests/source-object-size.test.mjs:12-57"
+        ],
+        "independent_evidence": "Read-only inspected the actual worker wiring and real SHA-keyed sourceObjectBytes lookup. Independently validated all23 bundled inventories against pinned SHA256, reconstructed canonical LFS pointers using stage payload oid plus proposed byte size, and matched Git blob SHA1 plus pointer size. Exactly18 payloads satisfy existing64MiB upfront bound;5 oversized payloads retain checked chunk fallback. Unknown SHA returns undefined. No HTTP Content-Length enters allocation authority. Source SHA256/byte verification still precedes cache publication.",
+        "reported_test_result": {
+          "source": "root/author reported; not rerun during closure review",
+          "passed": 47,
+          "failed": 0
+        },
+        "new_findings": [],
+        "mutations_performed": false
+      }
+    }
+  ],
+  "review_checks": [
+    {
+      "area": "mandatory workflow admission",
+      "paths": [
+        ".github/workflows/ci-quality-gate.yml",
+        ".github/workflows/validate-inkwave-update.yml",
+        ".github/workflows/inkwave-main-weapons.yml"
+      ],
+      "result": "No additional finding. A+ group separates PR/main identities, preserves running evidence with cancel-in-progress:false. Immutable refs/checks remain. Validate retains always() and requires successful core plus matrix aggregate. Historical pinned baseline remains full checkout. Added main-weapon test entrypoints are covered for push and PR."
+    },
+    {
+      "area": "sparse dependency closure",
+      "paths": [
+        "scripts/tests/inkwave-added-ci-contracts.test.mjs",
+        "reports/library-queue-added-2026-10-22/ci/checkout-projections.json",
+        "reports/library-queue-added-2026-10-22/ci/sparse-build-parity.json"
+      ],
+      "result": "No additional finding. Conservative projection retains root files and complete source/patch/scripts/server/test/report/docs trees, excludes modeler only within tools; static code search finds no modeler dependency. Existing sparse-build receipt claims identical2090 artifact bytes at its recorded projection SHA; not treated as a new combined-HEAD build proof."
+    },
+    {
+      "area": "discarded Three transform",
+      "paths": [
+        "scripts/build-inkwave.mjs",
+        "reports/library-queue-added-2026-10-22/ci/build-byte-parity.json"
+      ],
+      "result": "No additional finding. Skip predicate matches the existing mandatory later bundle predicate; both inputs are composed in first copy and actual bundle reads composed originals. Module is overwritten, core removed. Explicit unminified and no-shake paths keep original transforms. Output/no-shake receipt reviewed; no broad build rerun."
+    },
+    {
+      "area": "source-cache trust and cleanup",
+      "paths": [
+        "patches/native-stages/runtime/source-cache.mjs",
+        "patches/native-stages/runtime/source-inventory.mjs",
+        "patches/native-stages/runtime/source-worker.mjs"
+      ],
+      "result": "Aside from unreachable fast path, header is display-only, allocation uses capped per-file metadata, size/hash checks precede cache publication, read failure/overflow releases reader and cancels incomplete streams. Unknown size correctly keeps exact old fallback."
+    },
+    {
+      "area": "metadata and GPU ownership",
+      "paths": [
+        "patches/local-quality/runtime-frame-scratch-adapter.mjs",
+        "inkwave-public/src/main.js",
+        "inkwave-public/src/world/level.js",
+        "patches/local-quality/tests/added-assets-load-ownership.test.mjs"
+      ],
+      "result": "No additional finding. Four-entry per-Game cache stores only frozen metadata triples, recomputes current layout mapping/hash, evicts mismatch and refetches. Texture loader still creates independently world-owned GPU textures; no inactive GPU cache or changed disposal route."
+    },
+    {
+      "area": "decor private templates, disposal and output",
+      "paths": [
+        "inkwave-public/src/world/decor.js",
+        "patches/local-quality/tests/added-assets-decor-parity.test.mjs"
+      ],
+      "result": "No additional finding. Templates are scoped to one build and native arm direction, deep-copy via base BufferGeometry, disposed by finally on success/failure. Output copies remain private. Palm count/index type and Float32 write timing preserve downstream normals; emblem Canvas shares immutable pixels while textures remain separate owners."
+    },
+    {
+      "area": "visible rendering transforms",
+      "paths": [
+        "patches/splatoon3/runtime/flow-motion.mjs",
+        "patches/splatoon3/runtime/s3-ink-sheets.mjs",
+        "patches/local-quality/s3-hud-look-adapter.mjs",
+        "patches/local-quality/tests/added-assets-render-parity.test.mjs"
+      ],
+      "result": "No additional finding. Hidden Flow shells resync before visible rendering. Arrow override precedence and basis reads are preserved. Cone scratch belongs to each renderer; public default result remains fresh. HUD basis invalidates on viewport/geometry changes and retains arithmetic order."
+    }
+  ],
+  "independent_verification": [
+    {
+      "command": "node --test scripts/tests/inkwave-added-ci-contracts.test.mjs",
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "command": "Execute unchanged actual source-worker handler with sourceBytes recorder, nonconstrainedClient=false; stop after real download wiring",
+      "result": {
+        "obj": {
+          "expected_fields": [
+            "sha256"
+          ],
+          "progress": true,
+          "direct_preallocation_eligible": false
+        },
+        "mtl": {
+          "expected_fields": [
+            "bytes",
+            "gitSha1"
+          ],
+          "progress": false,
+          "direct_preallocation_eligible": false
+        }
+      }
+    },
+    {
+      "command": "Compare four added-assets before fixtures directly with git show8de71b09:path",
+      "result": "All four byte-equal to exact base",
+      "sha256": {
+        "decor-before.mjs.txt": "64fb64c69c22354da24b90974e995ed7db865a6d9acca4d2ecb675ffacb1333c",
+        "hud-look-before.mjs.txt": "32d9e1461921100bbf9fdb5fcf8ef731e05b8fe5bd4d35dd901d66cf3b2755c4",
+        "ink-sheets-before.mjs.txt": "5730d0889efebc16b2e266c3875b41775d0ec2094e28788500bfd8507cfc0163",
+        "source-cache-before.mjs.txt": "67bdf6308e00d8475e67678f1ed8060be12d37f3052477030cc8a359688b2911"
+      }
+    },
+    {
+      "command": "Read-only canonical LFS pointer/inventory authentication over all23 current stages at8d33fdab",
+      "result": {
+        "authenticated_stages": 23,
+        "direct_allocation_eligible": 18,
+        "oversize_fallback": 5,
+        "unknown_size_fallback": true
+      },
+      "test_suite_rerun": false
+    }
+  ],
+  "limitations": "Read-only peer review. No source/workflow changes, broad tests, build or browser/device runs. Existing untracked combined-build and modeler files in the integration worktree were not touched.",
+  "closure_review_sha": "8d33fdab273188db83f239bd766cc0fb1e258c63",
+  "open_findings": 0
+}

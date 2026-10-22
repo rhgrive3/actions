@@ -257,13 +257,12 @@ export function clusterDecimate(src, cell, precomputed = null) {
   // the existing cluster result; nonweapon geometries take the original path.
   if (A.aMat && A.color) {
     const attributes = out.attributes, extras = [], splits = new Map(), remapped = [];
+    const sourceMat = A.aMat, sourceColor = A.color, clusterMat = attributes.aMat, clusterColor = attributes.color;
     for (let i = 0; i < tris.length; i++) {
       const cluster = tris[i], original = sourceCorners[i];
-      const same = ['aMat', 'color'].every(name => {
-        const a = A[name], b = attributes[name];
-        for (let k = 0; k < a.itemSize; k++) if (a.getComponent(original, k) !== b.getComponent(cluster, k)) return false;
-        return true;
-      });
+      let same = true;
+      for (let k = 0; k < sourceMat.itemSize; k++) if (sourceMat.getComponent(original, k) !== clusterMat.getComponent(cluster, k)) { same = false; break; }
+      if (same) for (let k = 0; k < sourceColor.itemSize; k++) if (sourceColor.getComponent(original, k) !== clusterColor.getComponent(cluster, k)) { same = false; break; }
       if (same) { remapped.push(cluster); continue; }
       const values = [cluster];
       for (const name of ['aMat', 'color']) for (let k = 0; k < A[name].itemSize; k++) values.push(A[name].getComponent(original, k));

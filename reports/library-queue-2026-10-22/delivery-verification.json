@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "sourceSha": "09e9d6e4431d0c2a0acd75002d846d972f6bb6e9",
+  "status": "local-validation-complete-github-ci-pending",
+  "queueSnapshot": 369,
+  "implemented": 330,
+  "alreadyFixed": 25,
+  "notAdopted": 10,
+  "duplicates": 4,
+  "finalContracts": {
+    "tests": 81,
+    "pass": 81,
+    "fail": 0,
+    "skip": 0
+  },
+  "runtimeContentHash": "5f16766fb6147b8a34498fdb1481417edf1fa35ea4cac54163a3fcbc9d6ce9aa",
+  "activeBrowser": {
+    "testedSource": "975b3c33",
+    "responses": 765,
+    "errors": 0,
+    "scope": "All current production build inputs and artifacts match the previously tested immutable build."
+  },
+  "combat": {
+    "status": "passed",
+    "source": "09e9d6e4431d0c2a0acd75002d846d972f6bb6e9",
+    "receipt": "combat-ceiling-native-warm-09e9d6e4.json",
+    "scope": "Full native Game/Actor/Projectiles/NetMatch; draw-suppressed native RAF startup then deterministic native component steps; separate warm-session combat QA, cold-start #1767 remains open; no Actor damage or receiver admission replacement"
+  },
+  "openIndependentIssue": "https://github.com/rhgrive3/actions/issues/1767",
+  "rejectedTrial": "rejected-clock-anchor-trial.json",
+  "ci": "Required final-head GitHub CI still pending; no merge claim."
+}

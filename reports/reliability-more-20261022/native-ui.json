@@ -1,0 +1,168 @@
+{
+  "browser": "154.0.8037.57",
+  "measurement": "emitted modules and native DOM; no game/GPU claim",
+  "receipts": [
+    {
+      "lane": "candidate",
+      "lang": "ja",
+      "mode": "kbm",
+      "values": 13,
+      "failures": []
+    },
+    {
+      "lane": "candidate",
+      "lang": "ja",
+      "mode": "pad",
+      "values": 13,
+      "failures": []
+    },
+    {
+      "lane": "candidate",
+      "lang": "ja",
+      "mode": "touch",
+      "values": 13,
+      "failures": []
+    },
+    {
+      "lane": "candidate",
+      "lang": "en",
+      "mode": "kbm",
+      "values": 13,
+      "failures": []
+    },
+    {
+      "lane": "candidate",
+      "lang": "en",
+      "mode": "pad",
+      "values": 13,
+      "failures": []
+    },
+    {
+      "lane": "candidate",
+      "lang": "en",
+      "mode": "touch",
+      "values": 13,
+      "failures": []
+    },
+    {
+      "lane": "baseline",
+      "lang": "ja",
+      "mode": "kbm",
+      "values": 13,
+      "failures": [
+        "constructor: TypeError: t.replace is not a function",
+        "__defineGetter__: TypeError: t.replace is not a function",
+        "__defineSetter__: TypeError: t.replace is not a function",
+        "hasOwnProperty: TypeError: t.replace is not a function",
+        "__lookupGetter__: TypeError: t.replace is not a function",
+        "__lookupSetter__: TypeError: t.replace is not a function",
+        "isPrototypeOf: TypeError: t.replace is not a function",
+        "propertyIsEnumerable: TypeError: t.replace is not a function",
+        "toString: TypeError: t.replace is not a function",
+        "valueOf: TypeError: t.replace is not a function",
+        "__proto__: TypeError: t.replace is not a function",
+        "toLocaleString: TypeError: t.replace is not a function"
+      ]
+    },
+    {
+      "lane": "baseline",
+      "lang": "ja",
+      "mode": "pad",
+      "values": 13,
+      "failures": [
+        "constructor: TypeError: t.replace is not a function",
+        "__defineGetter__: TypeError: t.replace is not a function",
+        "__defineSetter__: TypeError: t.replace is not a function",
+        "hasOwnProperty: TypeError: t.replace is not a function",
+        "__lookupGetter__: TypeError: t.replace is not a function",
+        "__lookupSetter__: TypeError: t.replace is not a function",
+        "isPrototypeOf: TypeError: t.replace is not a function",
+        "propertyIsEnumerable: TypeError: t.replace is not a function",
+        "toString: TypeError: t.replace is not a function",
+        "valueOf: TypeError: t.replace is not a function",
+        "__proto__: TypeError: t.replace is not a function",
+        "toLocaleString: TypeError: t.replace is not a function"
+      ]
+    },
+    {
+      "lane": "baseline",
+      "lang": "ja",
+      "mode": "touch",
+      "values": 13,
+      "failures": [
+        "constructor: TypeError: t.replace is not a function",
+        "__defineGetter__: TypeError: t.replace is not a function",
+        "__defineSetter__: TypeError: t.replace is not a function",
+        "hasOwnProperty: TypeError: t.replace is not a function",
+        "__lookupGetter__: TypeError: t.replace is not a function",
+        "__lookupSetter__: TypeError: t.replace is not a function",
+        "isPrototypeOf: TypeError: t.replace is not a function",
+        "propertyIsEnumerable: TypeError: t.replace is not a function",
+        "toString: TypeError: t.replace is not a function",
+        "valueOf: TypeError: t.replace is not a function",
+        "__proto__: TypeError: t.replace is not a function",
+        "toLocaleString: TypeError: t.replace is not a function"
+      ]
+    },
+    {
+      "lane": "baseline",
+      "lang": "en",
+      "mode": "kbm",
+      "values": 13,
+      "failures": [
+        "constructor: TypeError: t.replace is not a function",
+        "__defineGetter__: TypeError: t.replace is not a function",
+        "__defineSetter__: TypeError: t.replace is not a function",
+        "hasOwnProperty: TypeError: t.replace is not a function",
+        "__lookupGetter__: TypeError: t.replace is not a function",
+        "__lookupSetter__: TypeError: t.replace is not a function",
+        "isPrototypeOf: TypeError: t.replace is not a function",
+        "propertyIsEnumerable: TypeError: t.replace is not a function",
+        "toString: TypeError: t.replace is not a function",
+        "valueOf: TypeError: t.replace is not a function",
+        "__proto__: TypeError: t.replace is not a function",
+        "toLocaleString: TypeError: t.replace is not a function"
+      ]
+    },
+    {
+      "lane": "baseline",
+      "lang": "en",
+      "mode": "pad",
+      "values": 13,
+      "failures": [
+        "constructor: TypeError: t.replace is not a function",
+        "__defineGetter__: TypeError: t.replace is not a function",
+        "__defineSetter__: TypeError: t.replace is not a function",
+        "hasOwnProperty: TypeError: t.replace is not a function",
+        "__lookupGetter__: TypeError: t.replace is not a function",
+        "__lookupSetter__: TypeError: t.replace is not a function",
+        "isPrototypeOf: TypeError: t.replace is not a function",
+        "propertyIsEnumerable: TypeError: t.replace is not a function",
+        "toString: TypeError: t.replace is not a function",
+        "valueOf: TypeError: t.replace is not a function",
+        "__proto__: TypeError: t.replace is not a function",
+        "toLocaleString: TypeError: t.replace is not a function"
+      ]
+    },
+    {
+      "lane": "baseline",
+      "lang": "en",
+      "mode": "touch",
+      "values": 13,
+      "failures": [
+        "constructor: TypeError: t.replace is not a function",
+        "__defineGetter__: TypeError: t.replace is not a function",
+        "__defineSetter__: TypeError: t.replace is not a function",
+        "hasOwnProperty: TypeError: t.replace is not a function",
+        "__lookupGetter__: TypeError: t.replace is not a function",
+        "__lookupSetter__: TypeError: t.replace is not a function",
+        "isPrototypeOf: TypeError: t.replace is not a function",
+        "propertyIsEnumerable: TypeError: t.replace is not a function",
+        "toString: TypeError: t.replace is not a function",
+        "valueOf: TypeError: t.replace is not a function",
+        "__proto__: TypeError: t.replace is not a function",
+        "toLocaleString: TypeError: t.replace is not a function"
+      ]
+    }
+  ]
+}

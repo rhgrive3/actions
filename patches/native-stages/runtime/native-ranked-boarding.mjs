@@ -34,7 +34,7 @@ export function updateNativeTowerBoarding(brain,G,engine,dt){
  if(nativeTowerRider(G,a)){brain._nativeTowerBoarding=null;return false;}
  const deck=w.towerBlock?.center;
  if(!deck||Math.hypot(deck.x-state.target.x,deck.z-state.target.z)>.15||Math.abs(w._towerDeckTop-state.target.y)>.1){brain._nativeTowerBoarding=null;brain.repath=0;return false;}
- const p=state.proof,start=new THREE.Vector3(...p.start),end=new THREE.Vector3(...p.end),it=a.intent;
+ const p=state.proof,start=(state.startScratch||(state.startScratch=new THREE.Vector3())).fromArray(p.start),end=(state.endScratch||(state.endScratch=new THREE.Vector3())).fromArray(p.end),it=a.intent;
  if(state.phase==='approach'){
   const node=G.nav.nodes[p.sourceNode];
   if(!nativeSourceFootSupported(G,a,node)||Math.hypot(a.pos.x-start.x,a.pos.z-start.z)>.18||Math.hypot(a.vel.x,a.vel.z)>.65)return false;

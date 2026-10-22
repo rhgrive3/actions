@@ -1,0 +1,14 @@
+{
+  "sourceSha": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+  "sourceTree": "9aa183e43a45516344c81a064470c5913cd8a06b",
+  "status": "passed",
+  "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+  "inputHash": "d10d948ff89e8d3a03e547c95fb46fbbf4d4892b3322f9c00c20de7f4fb457eb",
+  "revision": "e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5",
+  "verifiedDeclaredInputs": 1362,
+  "verifiedArtifacts": 2016,
+  "scope": "Complete final production build checked against committed source bytes; not a browser or device performance measurement.",
+  "localSourceSha": "0fc2fa5b8b65537ca24a080eee272b82cff1082d",
+  "remoteSourceUrl": "https://github.com/rhgrive3/actions/commit/f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+  "remoteTreeMatchesLocal": true
+}

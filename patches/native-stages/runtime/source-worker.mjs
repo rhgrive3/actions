@@ -1,7 +1,24 @@
-import {SOURCE_RECIPE,SOURCE_STAGES,sourceURL} from './source-catalog.mjs';
+import {SOURCE_RECIPE,SOURCE_STAGES,sourceURL,sourceObjectBytes} from './source-catalog.mjs';
 import {convertSource} from './source-convert.mjs';
 import {sourceBytes,sourceTree,readDerived,writeDerived} from './source-cache.mjs';
 const buffers=['vertices','indices','triangles','normals','flags','objectIds','nodes','order','triangleFace','mask'];
+// Keep the complete object ordinal table used by collision objectIds. Only
+// inactive, never-rendered position/index payloads are omitted from transport.
+function compactInactiveDisplay(data){
+ const objects=data.manifest?.objects;
+ if(!Array.isArray(objects)||!objects.some(o=>!o.active&&o.vc>0)||data.manifest.placementReceipt)return data;
+ let vertices=0,indices=0;for(const o of objects)if(o.active){vertices+=o.vc;indices+=o.ic;}
+ const packedVertices=new Float32Array(vertices*8),packedIndices=new Uint32Array(indices);let vo=0,io=0;
+ const packedObjects=objects.map(o=>{
+  const result={...o,vo,io,vc:o.active?o.vc:0,ic:o.active?o.ic:0};
+  if(o.active){packedVertices.set(data.vertices.subarray(o.vo*8,(o.vo+o.vc)*8),vo*8);packedIndices.set(data.indices.subarray(o.io,o.io+o.ic),io);vo+=o.vc;io+=o.ic;}
+  return result;
+ });
+ data.vertices=packedVertices;data.indices=packedIndices;
+ data.manifest={...data.manifest,sourceGeometry:data.manifest.sourceGeometry||data.manifest.geometry,objects:packedObjects,geometry:{...data.manifest.geometry,vertices,triangles:indices/3}};
+ return data;
+}
+
 self.onmessage=async({data:{id,runtimeSha256,constrainedClient=false}})=>{
  try{
   const stage=SOURCE_STAGES.find(s=>s.id===id);if(!stage)throw Error('Unknown source stage');
@@ -16,15 +33,19 @@ self.onmessage=async({data:{id,runtimeSha256,constrainedClient=false}})=>{
   let data=constrained?null:await readDerived(key),cached=!!data;
   if(!data){
    self.postMessage({progress:'download',id});
+   const objectPin={sha256:stage.sourceSha256};
+   // Authenticated LFS payload length; inventory blob sizes describe pointers.
+   if(!constrained)objectPin.bytes=sourceObjectBytes(stage);
    const [obj,tree]=await Promise.all([
-    sourceBytes(id,sourceURL(stage,stage.internal+'.obj'),{sha256:stage.sourceSha256},undefined,constrained?undefined:p=>self.postMessage({progress:'download',id,...p})),
+    sourceBytes(id,sourceURL(stage,stage.internal+'.obj'),objectPin,undefined,constrained?undefined:p=>self.postMessage({progress:'download',id,...p})),
     sourceTree(id,stage.tree),
    ]);
    self.postMessage({progress:'download',id,bytes:obj.byteLength,total:obj.byteLength});
    const files={};for(const f of tree.tree)if(f.type==='blob'){if(f.path.startsWith('/')||f.path.split('/').some(p=>p==='..'||p===''))throw Error('Unsafe source path');files[f.path]={bytes:f.size,gitSha1:f.sha};}
    const name=stage.internal+'.mtl';if(!files[name])throw Error('Missing pinned MTL');
    const mtl=await sourceBytes(id,sourceURL(stage,name),files[name]);
-   data=convertSource(stage,new TextDecoder().decode(obj),new TextDecoder().decode(mtl),files,p=>self.postMessage({progress:p,id}));
+   data=convertSource(stage,new Uint8Array(obj),new TextDecoder().decode(mtl),files,p=>self.postMessage({progress:p,id}));
+   data=compactInactiveDisplay(data);
    // Derived IndexedDB writes clone every large typed array before the
    // renderer takes ownership. Avoid that competing peak on small devices.
    // CacheStorage still retains the authenticated downloaded source.

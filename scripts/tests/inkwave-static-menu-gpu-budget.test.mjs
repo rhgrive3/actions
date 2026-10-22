@@ -102,7 +102,8 @@ test('deferred weapon card uses the precise upstream-composed catalogue icon and
   };
   const result = deferPrimaryWeaponIcon(row, replace);
   assert.match(result.grid, /html: deferArt \? '' : weaponIcon\(w\.modelKind \|\| w\.kind \|\| id\)/);
-  assert.equal(result.hydration, 'weaponIcon(w.modelKind || w.kind || card._wid)');
+  assert.equal(result.hydration, 'weaponIcon(w.modelKind || w.kind || id)');
+  assert.match(composed('src/ui/menus.js'), /const id = card\._wid, i = card\._weaponArtIndex, w = Ws\[id\];/);
   assert.throws(() => deferPrimaryWeaponIcon(row + '\n' + row, replace), /expected one/);
   assert.throws(() => deferPrimaryWeaponIcon('', replace), /expected one/);
 });

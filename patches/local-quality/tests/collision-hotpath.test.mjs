@@ -164,3 +164,33 @@ test('raycast height rejection avoids OBB dot-products without dropping visible 
   assert.equal(changedHits, hits);
   assert.ok(prunedDots < nativeDots * .6, 'actual expensive OBB dot operations: ' + nativeDots + ' -> ' + prunedDots);
 });
+
+const groundOut=()=>({hit:false,y:0,normal:new V(0,1,0),block:-1,face:-1,u:0,v:0,center:false,grate:false});
+function sameGround(a,b,label){for(const key of ['hit','y','block','face','u','v','center','grate'])assert.equal(b[key],a[key],label+' '+key);assert.deepEqual([b.normal.x,b.normal.y,b.normal.z],[a.normal.x,a.normal.y,a.normal.z],label+' normal');}
+test('batched ground columns preserve all fields and exact ray ordering on seams, slopes, ledges and grates',()=>{
+ const n=make(Native),f=make(Faster),rand=random(352432),a=groundOut(),b=groundOut();let originalQueries=0,optimizedQueries=0,batches=0;
+ for(const [fixture,count]of [[n,()=>originalQueries++],[f,()=>optimizedQueries++]]){const next=fixture.level._nextQueryStamp;fixture.level._nextQueryStamp=function(){count();return next.call(this);};}
+ const batch=f.level.queryGroundColumns;f.level.queryGroundColumns=function(...args){batches++;return batch.apply(this,args);};
+ for(let i=0;i<20000;i++){
+  const x=i%3===0?-64+(i%33)*4:rand()*140-70,z=i%5===0?-64+(i%33)*4:rand()*140-70,y=rand()*45-8,foot=i%11===0?-rand()*2:rand()*2;
+  const up=.1+rand()*4,down=.1+rand()*6,skip=i%7===0,step=rand()*.5;
+  n.physics.groundProbe(x,y,z,up,down,foot,a,skip,step);f.physics.groundProbe(x,y,z,up,down,foot,b,skip,step);sameGround(a,b,'probe'+i);
+ }
+ assert.equal(originalQueries,180000);assert.equal(optimizedQueries,0);assert.equal(batches,20000);assert(f.physics._groundColumns.every(v=>v===null));
+ // Equal-height, duplicated support surfaces deliberately choose the last
+ // block in the original bucket, and grates still participate by caller flag.
+ for(const pair of [n,f]){pair.level.blocks=[...spec.slice(0,2)].map((_,id)=>({id,solid:true,grate:id===1,center:new V(0,0,0),half:new V(3,1,3),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)],aabbMin:new V(-3,-1,-3),aabbMax:new V(3,1,3),faces:Array(6).fill(-1)}));pair.level._buildHash();}
+ for(const skip of [false,true]){n.physics.groundProbe(0,1,0,.5,2,.8,a,skip);f.physics.groundProbe(0,1,0,.5,2,.8,b,skip);sameGround(a,b,'tie');assert.equal(b.block,skip?0:1);}
+ // No cached column survives a moving support/hash rebuild.
+ for(const pair of [n,f]){for(const block of pair.level.blocks){block.center.y=-2;block.aabbMin.y=-3;block.aabbMax.y=-1;}pair.level._buildHash();}
+ n.physics.groundProbe(0,1,0,.5,4,.8,a);f.physics.groundProbe(0,1,0,.5,4,.8,b);sameGround(a,b,'moved');assert.equal(b.y,-1);
+});
+test('overridden raycast/query and subclass/native ownership retain ordinary nine calls',()=>{
+ for(const kind of ['raycast','queryBlocks','subclass']){
+  const f=make(Faster);let calls=0;
+  if(kind==='raycast'){const original=f.physics.raycast;f.physics.raycast=function(...args){calls++;return original.apply(this,args);};}
+  if(kind==='queryBlocks'){const original=f.level.queryBlocks;f.level.queryBlocks=function(...args){calls++;return original.apply(this,args);};}
+  if(kind==='subclass'){class Other extends Faster.Level{};Object.setPrototypeOf(f.level,Other.prototype);const next=f.level._nextQueryStamp;f.level._nextQueryStamp=function(){calls++;return next.call(this);};}
+  f.physics.groundProbe(0,1,0,1,3,.5,groundOut());assert.equal(calls,9,kind);
+ }
+});

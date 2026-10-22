@@ -14,6 +14,7 @@ import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 import { adaptRange } from '../../practice-range/adapter.mjs';
 import { installOfflineOffscreenBudget, offlineBudgeted, GRACE_FRAMES } from '../offline-offscreen-budget.mjs';
 import { qualityIdentity } from '../adapter.mjs';
+import { buildSourceBVH } from '../../native-stages/runtime/source-convert.mjs';
 
 const compose = (rel, code) => adaptRange(rel, adaptNetworkSource(rel,
   adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
@@ -21,7 +22,7 @@ const api = await fixture({
   productionComposition: true,
   fullRuntime: true,
   adaptRuntime: compose,
-  extraExports: "export { Character } from './inkwave-public/src/game/character.js'; export { installQuality } from './patches/local-quality/install.mjs';",
+  extraExports: "export { Character } from './inkwave-public/src/game/character.js'; export { installQuality } from './patches/local-quality/install.mjs'; export { NativeLevel } from './patches/native-stages/runtime/native-level.mjs'; export { NativePhysics } from './patches/native-stages/runtime/native-physics.mjs';",
 });
 const { G, THREE } = api;
 const DT = 1 / 60;
@@ -151,6 +152,57 @@ test('wiring: only bot identity is added to Character state; install is idempote
   actor._finishFrame(DT);
   assert.equal(actor.anim.isBot, true, 'Actor._finishFrame carries bot identity in the presentation record');
   ch.dispose();
+});
+
+test('native offscreen ground uses source triangles, including holes in chart/object bounding rectangles', () => {
+  resetWorld();
+  // The chart and object bound the whole square; only its x+z<=0 half
+  // contains an original source triangle. Bounding rectangles are not terrain.
+  const triangles = new Float32Array([-2, 0, -2, -2, 0, 2, 2, 0, -2]);
+  const data = { triangles, ...buildSourceBVH(triangles),
+    normals: new Float32Array([0, 1, 0]), flags: new Uint32Array([3]),
+    objectIds: new Uint32Array([0]), triangleFace: new Int32Array([0]),
+    mask: new Uint8Array(), manifest: {
+      id: 'offscreen-triangle-hole',
+      bounds: {minX: -4, maxX: 4, minZ: -4, maxZ: 4},
+      spawnPads: [[-3, 0, -3], [3, 0, 3]], spawnBarrier: 0,
+      objects: [{collidable: true, bounds: [[-2, -0.2, -2], [2, 0, 2]]}],
+      faces: [{n: [0, 1, 0], u: [1, 0, 0], v: [0, 0, 1],
+        origin: [-2, 0, -2], su: 4, sv: 4, triangles: [0],
+        bounds: [[-2, 0, -2], [2, 0, 2]]}],
+    },
+  };
+  G.level = new api.NativeLevel(data);
+  G.physics = new api.NativePhysics(G.level);
+  const {ch} = makeBot();
+  ch.phys = G.physics;
+  ch.root.position.y = 0.2;
+  const before = Array.from(data.triangles);
+  try {
+    for (const [x, z, expected] of [[-1, -1, 0], [1, 1, 0.2]]) {
+      const sourceHit = G.physics.raycast(new THREE.Vector3(x, 0.75, z),
+        new THREE.Vector3(0, -1, 0), 1.25);
+      assert.equal(sourceHit.hit, expected === 0, 'real native triangle oracle');
+      ch._oobGroundBudget = false;
+      const normal = new THREE.Vector3();
+      const native = ch._ground(x, z, normal);
+      const nativeNormal = normal.toArray();
+      assert.equal(native, expected);
+      ch._oobGroundBudget = true;
+      assert.equal(ch._ground(x, z, normal), native,
+        'offscreen native support must equal source-owned ground inside and outside triangles');
+      assert.deepEqual(normal.toArray(), nativeNormal);
+    }
+    G.level._addBlock({kind: 'box', min: [0.5, -0.1, 0.5],
+      max: [1.5, 0.1, 1.5], paint: false, hidden: true});
+    ch._oobGroundBudget = false;
+    const dynamic = ch._ground(1, 1);
+    assert.ok(Math.abs(dynamic - 0.1) < 1e-12, 'real dynamic support above the source hole');
+    ch._oobGroundBudget = true;
+    assert.equal(ch._ground(1, 1), dynamic, 'native fallback preserves moving/dynamic support');
+    assert.equal(ch._oobRaycastsSkipped, 0, 'native worlds retain the original physics query');
+    assert.deepEqual(Array.from(data.triangles), before);
+  } finally { ch._oobGroundBudget = false; ch.dispose(); }
 });
 
 test('long-undrawn offline bot: no foot-IK raycasts or hair integration, while pose and clocks continue', () => {

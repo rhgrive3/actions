@@ -10,6 +10,12 @@ export function resolve(specifier, context, nextResolve) {
   // Keep the source checkout bridge explicit; unresolved files still fail in Node.
   if (specifier.startsWith('.') && context.parentURL) {
     const target = new URL(specifier, context.parentURL);
+    // A queried compatibility facade must retain the fixture's isolated registry.
+    if (target.pathname === sourceRoot.replace(/\/$/, '') + '/src/world/props-core.js' &&
+        new URL(context.parentURL).pathname.endsWith('/src/world/props.js')) {
+      target.search = new URL(context.parentURL).search;
+      return nextResolve(target.href, context);
+    }
     const sourcePatches = pathToFileURL(sourceRoot + '/patches/');
     const repoPatches = new URL('../../../patches/', import.meta.url);
     const repoSource = new URL('../../../src/', import.meta.url);
@@ -34,7 +40,9 @@ export async function load(url, context, nextLoad) {
     if (!legacy) source = adaptQualitySource('src/world/props.js', source);
     if (target.searchParams.get('practice') === 'true') {
       const registration = new URL('./fixtures/pr183/props.mjs', import.meta.url).href;
-      source = 'import { register as registerPractice } from ' + JSON.stringify(registration) + ';\n' + source.replace('export class PropKit {', 'registerPractice(D, {});\nexport class PropKit {');
+      source = 'import { register as registerPractice } from ' + JSON.stringify(registration) + ';\n' + (legacy
+        ? source.replace('export class PropKit {', 'registerPractice(D, {});\nexport class PropKit {')
+        : source.replace('registerPropPack(id, stage.register)', "registerPropPack(id, id === 'range' ? registerPractice : stage.register)"));
     }
     return { format: 'module', source, shortCircuit: true };
   }

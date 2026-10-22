@@ -272,32 +272,35 @@ export class Decor {
   _buildLamps() {
     const L = this.level.layout;
     const pts = [...L.decor.lamps, ...L.decor.lamps.map(([x, z]) => [-x, -z])];
-    const body = [], glass = [];
+    const body = [], glass = [], templates = new Map();
     const IRON = 0x2f3947, GOLD = 0xd9b45a, CREAM = 0xf1ece0;
-    for (const [x, z] of pts) {
+    try { for (const [x, z] of pts) {
       const y = Math.max(0, this.level.groundHeight(x, z));
       const dir = x > 0 ? -1 : 1;     // arm reaches toward the arena centre
+      let shapes = templates.get(dir); if (!shapes) templates.set(dir, shapes = []);
+      let shapeIndex = 0;
+      const take = make => { const index = shapeIndex++; const template = shapes[index] || (shapes[index] = make()); return new THREE.BufferGeometry().copy(template); };
       const put = (g, c, k) => { g.translate(x, y, z); body.push(tint(g, c, k)); };
-      put(lathe([[0, 0], [0.27, 0], [0.28, 0.04], [0.24, 0.1], [0.24, 0.16], [0.2, 0.2], [0.19, 0.42], [0.21, 0.46], [0.15, 0.52], [0.12, 0.62], [0.1, 0.7], [0, 0.7]], 20), IRON);
+      put(take(() => lathe([[0, 0], [0.27, 0], [0.28, 0.04], [0.24, 0.1], [0.24, 0.16], [0.2, 0.2], [0.19, 0.42], [0.21, 0.46], [0.15, 0.52], [0.12, 0.62], [0.1, 0.7], [0, 0.7]], 20)), IRON);
       // fluted shaft: slender lathe with a slight taper
-      put(lathe([[0.1, 0.7], [0.085, 0.9], [0.075, 3.6], [0.068, 5.05], [0, 5.05]], 14), IRON);
-      for (const yy of [0.9, 2.6, 4.55]) put(at(new THREE.TorusGeometry(0.088, 0.018, 6, 20), 0, yy, 0, Math.PI / 2), GOLD);
+      put(take(() => lathe([[0.1, 0.7], [0.085, 0.9], [0.075, 3.6], [0.068, 5.05], [0, 5.05]], 14)), IRON);
+      for (const yy of [0.9, 2.6, 4.55]) put(take(() => at(new THREE.TorusGeometry(0.088, 0.018, 6, 20), 0, yy, 0, Math.PI / 2)), GOLD);
       // swan-neck arm with a scroll brace
-      put(tube([[0, 4.9, 0], [0.18 * dir, 5.18, 0], [0.55 * dir, 5.22, 0], [0.9 * dir, 5.08, 0]], 0.032, 7), IRON);
-      put(tube([[0.02 * dir, 4.45, 0], [0.22 * dir, 4.62, 0], [0.4 * dir, 4.95, 0], [0.5 * dir, 5.18, 0]], 0.016, 5), IRON);
-      put(at(new THREE.SphereGeometry(0.06, 10, 8), 0, 5.12, 0), GOLD);
+      put(take(() => tube([[0, 4.9, 0], [0.18 * dir, 5.18, 0], [0.55 * dir, 5.22, 0], [0.9 * dir, 5.08, 0]], 0.032, 7)), IRON);
+      put(take(() => tube([[0.02 * dir, 4.45, 0], [0.22 * dir, 4.62, 0], [0.4 * dir, 4.95, 0], [0.5 * dir, 5.18, 0]], 0.016, 5)), IRON);
+      put(take(() => at(new THREE.SphereGeometry(0.06, 10, 8), 0, 5.12, 0)), GOLD);
       // lantern: hood, cage bars, finial, bottom cup
       const hx = 0.92 * dir;
-      put(at(lathe([[0, 0.3], [0.08, 0.29], [0.26, 0.12], [0.3, 0.08], [0.29, 0.06], [0.1, 0.06], [0, 0.06]], 20), hx, 4.92, 0), IRON);
-      put(at(new THREE.SphereGeometry(0.05, 10, 8), hx, 5.26, 0), GOLD);
-      put(at(lathe([[0, -0.26], [0.07, -0.25], [0.13, -0.2], [0.15, -0.16], [0, -0.16]], 16), hx, 4.92, 0), IRON);
-      for (let k = 0; k < 4; k++) { const a = (k / 4) * TAU + 0.4; put(at(new THREE.CylinderGeometry(0.011, 0.011, 0.26, 5), hx + Math.cos(a) * 0.16, 4.89, Math.sin(a) * 0.16), IRON); }
-      const gl = lathe([[0.001, -0.18], [0.1, -0.16], [0.17, -0.05], [0.18, 0.02], [0.13, 0.07], [0.001, 0.08]], 18);
+      put(take(() => at(lathe([[0, 0.3], [0.08, 0.29], [0.26, 0.12], [0.3, 0.08], [0.29, 0.06], [0.1, 0.06], [0, 0.06]], 20), hx, 4.92, 0)), IRON);
+      put(take(() => at(new THREE.SphereGeometry(0.05, 10, 8), hx, 5.26, 0)), GOLD);
+      put(take(() => at(lathe([[0, -0.26], [0.07, -0.25], [0.13, -0.2], [0.15, -0.16], [0, -0.16]], 16), hx, 4.92, 0)), IRON);
+      for (let k = 0; k < 4; k++) { const a = (k / 4) * TAU + 0.4; put(take(() => at(new THREE.CylinderGeometry(0.011, 0.011, 0.26, 5), hx + Math.cos(a) * 0.16, 4.89, Math.sin(a) * 0.16)), IRON); }
+      const gl = take(() => lathe([[0.001, -0.18], [0.1, -0.16], [0.17, -0.05], [0.18, 0.02], [0.13, 0.07], [0.001, 0.08]], 18));
       gl.translate(x + hx, y + 4.93, z);
       glass.push(tint(gl, CREAM));
-      const bulb = new THREE.SphereGeometry(0.075, 12, 8); bulb.translate(x + hx, y + 4.9, z);
+      const bulb = take(() => new THREE.SphereGeometry(0.075, 12, 8)); bulb.translate(x + hx, y + 4.9, z);
       glass.push(tint(bulb, 0xfff1cf, 1.0));
-    }
+    }} finally { for (const shapes of templates.values()) for (const geometry of shapes) geometry.dispose(); }
     if (!pts.length) return;
     const bodyMesh = new THREE.Mesh(merge(body), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.42, metalness: 0.55 }));
     bodyMesh.castShadow = true; bodyMesh.receiveShadow = true; bodyMesh.name = 'lamps:body';
@@ -343,15 +346,18 @@ export class Decor {
       trunks.push(tint(at(new THREE.SphereGeometry(0.2, 12, 8), top.x, top.y + 0.02, top.z), 0x6f5236));
       for (let k = 0; k < 4; k++) { const a = (k / 4) * TAU + rnd(); trunks.push(tint(at(new THREE.SphereGeometry(0.11, 10, 8), top.x + Math.cos(a) * 0.15, top.y - 0.14, top.z + Math.sin(a) * 0.15), 0x5b4a2c)); }
       // fronds: arching rib with ~36 narrow drooping leaflets each (V-folded), dark at the base → light at the tips
-      const nf = 12;
-      const pos = [], col = [], sway = [], idx = [];
-      const vtx = (px, py, pz, c, s) => { pos.push(px, py, pz); col.push(c.r, c.g, c.b); sway.push(s); return pos.length / 3 - 1; };
+      const nf = 12, S = 18, vertexCount = nf * ((S + 1) * 2 + (S - 2) * 2 * 4), indexCount = nf * (S * 6 + (S - 2) * 2 * 9);
+      const pos = new Float32Array(vertexCount * 3), col = new Float32Array(vertexCount * 3), sway = new Float32Array(vertexCount);
+      const idx = vertexCount > 65535 ? new Uint32Array(indexCount) : new Uint16Array(indexCount);
+      let vertexCursor = 0, indexCursor = 0;
+      const vtx = (px, py, pz, c, s) => { const i = vertexCursor++, o = i * 3; pos[o] = px; pos[o + 1] = py; pos[o + 2] = pz; col[o] = c.r; col[o + 1] = c.g; col[o + 2] = c.b; sway[i] = s; return i; };
+      const triangle = (a, b, c) => { idx[indexCursor++] = a; idx[indexCursor++] = b; idx[indexCursor++] = c; };
       const dark = new THREE.Color(0x356f35), light = new THREE.Color(0x86c55e), dry = new THREE.Color(0x9fa04a), cc = new THREE.Color(), ct = new THREE.Color();
       for (let f = 0; f < nf; f++) {
         const lower = f % 3 === 2;
         const az = (f / nf) * TAU + rnd() * 0.35, len = (lower ? 2.0 : 2.3) + rnd() * 0.5, lift = lower ? 0.05 : f % 2 ? 0.55 : 0.35;
         const dx = Math.cos(az), dz = Math.sin(az), sx = -dz, sz = dx;
-        const S = 18, rib = [];
+        const rib = [];
         for (let s = 0; s <= S; s++) {
           const t = s / S;
           rib.push([top.x + dx * len * t, top.y + 0.05 + lift * t - (lower ? 1.7 : 1.35) * t * t, top.z + dz * len * t, t]);
@@ -362,7 +368,7 @@ export class Decor {
           cc.copy(dark).lerp(light, t * 0.5);
           const w = 0.03 * (1 - t * 0.7);
           const a = vtx(px + sx * w, py + 0.01, pz + sz * w, cc, t), b = vtx(px - sx * w, py + 0.01, pz - sz * w, cc, t);
-          if (pa >= 0) idx.push(pa, a, b, pa, b, pb);
+          if (pa >= 0) { triangle(pa, a, b); triangle(pa, b, pb); }
           pa = a; pb = b;
         }
         // leaflets
@@ -381,15 +387,16 @@ export class Decor {
             const b1 = vtx(px + (tx / tl) * 0.035, py, pz + (tz / tl) * 0.035, cc, t);
             const mid = vtx(px * 0.45 + tipx * 0.55, py * 0.45 + tipy * 0.55 + 0.04, pz * 0.45 + tipz * 0.55, cc, Math.min(1, t + 0.05));
             const tip = vtx(tipx, tipy, tipz, ct, Math.min(1, t + 0.15));
-            idx.push(b0, b1, mid, b0, mid, tip, b1, tip, mid);
+            triangle(b0, b1, mid); triangle(b0, mid, tip); triangle(b1, tip, mid);
           }
         }
       }
+      if (vertexCursor !== vertexCount || indexCursor !== indexCount) throw new Error('Palm frond allocation mismatch');
       const fg = new THREE.BufferGeometry();
-      fg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-      fg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-      fg.setAttribute('sway', new THREE.Float32BufferAttribute(sway, 1));
-      fg.setIndex(idx);
+      fg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      fg.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      fg.setAttribute('sway', new THREE.BufferAttribute(sway, 1));
+      fg.setIndex(new THREE.BufferAttribute(idx, 1));
       fg.computeVertexNormals();
       fronds.push(fg);
     }
@@ -435,7 +442,7 @@ export class Decor {
     this.flagTex = new THREE.CanvasTexture((() => {
       const cv = document.createElement('canvas'); cv.width = 512; cv.height = 320;
       const x = cv.getContext('2d'); x.clearRect(0, 0, 512, 320);
-      x.drawImage(emblemCanvas(256, true), 256 - 120, 160 - 120, 240, 240);
+      x.drawImage(this.emblem.image, 256 - 120, 160 - 120, 240, 240);
       // two thin wave stripes under the emblem
       x.strokeStyle = '#fff'; x.lineWidth = 7; x.lineCap = 'round';
       for (const yy of [276, 298]) { x.beginPath(); for (let i = 0; i <= 24; i++) { const px = 120 + (i / 24) * 272; x.lineTo(px, yy + Math.sin(i * 0.9) * 6); } x.stroke(); }

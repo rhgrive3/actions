@@ -1,3 +1,4 @@
+import { strokeTowerRoute, objectiveOverlayChanged } from './minimap-cache.mjs';
 import { rankedText } from './strings.mjs';
 const RULE_LABELS = Object.freeze({ zones: 'SPLAT ZONES', tower: 'TOWER CONTROL', rainmaker: 'RAINMAKER', clams: 'CLAM BLITZ' });
 const clamp01 = n => Math.max(0, Math.min(1, Number.isFinite(n) ? n : 0));
@@ -107,6 +108,8 @@ export function objectiveText(engine, G, api = {}) {
   return '';
 }
 
+function writeHudText(node, text) { if (node.textContent !== text) node.textContent = text; }
+
 function updateHud(hud, G, api) {
   const t = (text, vars) => rankedText(api.LANG, text, vars);
   const engine = rankedOf(G);
@@ -120,31 +123,38 @@ function updateHud(hud, G, api) {
     hud.el.appendChild(el);
     hud._rankedHud = el;
   }
-  el.hidden = !engine;
+  if (el.hidden !== !engine) el.hidden = !engine;
   if (!engine) return;
+  const refs = hud._rankedHudRefs?.root === el ? hud._rankedHudRefs : (hud._rankedHudRefs = {
+    root: el, rule: el.querySelector('.iw-ranked-hud__rule'), teams: el.querySelectorAll('[data-team]'),
+    counts: el.querySelectorAll('[data-count]'), penalties: el.querySelectorAll('[data-penalty]'),
+    clock: el.querySelector('.iw-ranked-hud__clock'), objective: el.querySelector('.iw-ranked-hud__objective'), hint: el.querySelector('.iw-ranked-hud__hint'),
+  });
   const names = G.palette?.names || G.match?.palette?.names;
-  el.dataset.mode = engine.mode;
-  el.querySelector('.iw-ranked-hud__rule').textContent = t(RULE_LABELS[engine.mode]);
-  el.querySelectorAll('[data-team]').forEach(node => {
+  if (el.dataset.mode !== engine.mode) el.dataset.mode = engine.mode;
+  writeHudText(refs.rule, t(RULE_LABELS[engine.mode]));
+  refs.teams.forEach(node => {
     const team = Number(node.dataset.team);
-    node.textContent = t(teamName(team, names));
-    node.style.setProperty('--rkt', G.teamHex?.[team] || (team ? '#3675ff' : '#ff8a14'));
+    writeHudText(node, t(teamName(team, names)));
+    const color = G.teamHex?.[team] || (team ? '#3675ff' : '#ff8a14');
+    if (node._rankedColor !== color) { node.style.setProperty('--rkt', color); node._rankedColor = color; }
   });
-  el.querySelectorAll('[data-count]').forEach(node => {
+  refs.counts.forEach(node => {
     const team = Number(node.dataset.count);
-    node.textContent = String(Math.ceil(finite(engine.counts?.[team], 100)));
-    node.classList.toggle('is-leading', engine.leader === team);
+    writeHudText(node, String(Math.ceil(finite(engine.counts?.[team], 100))));
+    const leading = engine.leader === team;
+    if (node._rankedLeading !== leading) { node.classList.toggle('is-leading', leading); node._rankedLeading = leading; }
   });
-  el.querySelectorAll('[data-penalty]').forEach(node => {
+  refs.penalties.forEach(node => {
     const team = Number(node.dataset.penalty), penalty = Math.ceil(finite(engine.penalties?.[team]));
-    node.textContent = penalty > 0 ? t('PEN {n}', { n: penalty }) : '';
+    writeHudText(node, penalty > 0 ? t('PEN {n}', { n: penalty }) : '');
   });
   const clock = engine.overtime ? t('OT {time}', { time: fmtClock(engine.overtimeElapsed) }) : fmtClock(engine.time);
-  el.querySelector('.iw-ranked-hud__clock').textContent = clock;
-  el.querySelector('.iw-ranked-hud__objective').textContent = objectiveText(engine, G, api);
-  const hint = el.querySelector('.iw-ranked-hud__hint');
-  hint.hidden = engine.mode !== 'clams';
-  hint.textContent = engine.mode === 'clams' ? t(api.TXT?.mode === 'touch' ? 'THROW' : api.TXT?.mode === 'pad' ? 'THROW [A]' : 'THROW [C]') : '';
+  writeHudText(refs.clock, clock);
+  writeHudText(refs.objective, objectiveText(engine, G, api));
+  const hint = refs.hint;
+  if (hint.hidden !== (engine.mode !== 'clams')) hint.hidden = engine.mode !== 'clams';
+  writeHudText(hint, engine.mode === 'clams' ? t(api.TXT?.mode === 'touch' ? 'THROW' : api.TXT?.mode === 'pad' ? 'THROW [A]' : 'THROW [C]') : '');
 }
 
 function rankedJudge(hud, engine, data = {}, G = {}, api = {}) {
@@ -227,8 +237,10 @@ function drawObjectives(minimap, engine, G) {
   } else if (engine.mode === 'tower') {
     const path = stage.tower?.path || [];
     if (path.length > 1) {
-      ctx.beginPath(); path.forEach((p, i) => { const v = pos3(p); if (!v) return; const xy = minimap.toCanvas(v[0], v[2], { x: 0, y: 0 }); if (!i) ctx.moveTo(xy.x, xy.y); else ctx.lineTo(xy.x, xy.y); });
-      ctx.strokeStyle = '#fff'; ctx.globalAlpha = .58; ctx.lineWidth = Math.max(2, minimap.s * .32); ctx.stroke();
+      if (!strokeTowerRoute(minimap, stage, path, ctx)) {
+        ctx.beginPath(); path.forEach((p, i) => { const v = pos3(p); if (!v) return; const xy = minimap.toCanvas(v[0], v[2], { x: 0, y: 0 }); if (!i) ctx.moveTo(xy.x, xy.y); else ctx.lineTo(xy.x, xy.y); });
+        ctx.strokeStyle = '#fff'; ctx.globalAlpha = .58; ctx.lineWidth = Math.max(2, minimap.s * .32); ctx.stroke();
+      }
     }
     const position = state.position || path[Math.round(finite(stage.tower?.centerIndex, Math.floor(path.length / 2)))];
     marker(ctx, minimap, position, state.controllingTeam === 0 || state.controllingTeam === 1 ? colors[state.controllingTeam] : '#ffe28a', 'T', 6);
@@ -291,6 +303,11 @@ export function installRankedUi(api = {}) {
   if (Minimap?.prototype?._compose && !Minimap.prototype._rankedUiWrapped) {
     const proto = Minimap.prototype, compose = proto._compose;
     Object.defineProperty(proto, '_rankedUiWrapped', { value: true });
+    const update = proto.update;
+    if (typeof update === 'function') proto.update = function (dt, force) {
+      if (objectiveOverlayChanged(this, rankedOf(G), G)) this._composeDirty = true;
+      return update.call(this, dt, force);
+    };
     proto._compose = function (dt) {
       const result = compose.call(this, dt);
       drawObjectives(this, rankedOf(G), G);

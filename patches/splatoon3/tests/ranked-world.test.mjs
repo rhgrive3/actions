@@ -308,3 +308,22 @@ test('objective visuals stay mode-specific and Rainmaker markers reflect rule st
   clams.dispose();
   assert.equal(level.blocks.some(block => block.tag === 'ranked-tower' && block.solid), false);
 });
+
+
+test('non-Tower teardown retains live spatial query order across five stages and wrap', () => {
+  for (const id of MAP_IDS) for (const mode of ['zones', 'rainmaker', 'clams']) {
+    const level = new f.Level(f.MAP_LAYOUTS[id]);
+    Object.assign(f.G, { level, physics: new f.Physics(level), paint: null, scene: new f.THREE.Scene() });
+    const stage = f.createRankedStage(f.G, mode);
+    const world = new f.RankedWorld({ G: f.G, THREE: f.THREE, Hit: f.Hit }, { mode, actors: [] }, stage);
+    const B = level.bounds, queries = [];
+    for (let x = B.minX; x <= B.maxX; x += 5) for (let z = B.minZ; z <= B.maxZ; z += 5) queries.push([x - 3, z - 3, x + 3, z + 3]);
+    const before = queries.map(q => Array.from(level.queryBlocks(...q, [])));
+    const buffer = level.blockStamp;
+    world.dispose();
+    assert.equal(level.blockStamp, buffer, id + ' ' + mode + ' retains owned buffer');
+    assert.deepEqual(queries.map(q => Array.from(level.queryBlocks(...q, []))), before);
+    level._stamp = 0xffffffff;
+    assert.deepEqual(queries.map(q => Array.from(level.queryBlocks(...q, []))), before, 'safe native stamp wrap');
+  }
+});

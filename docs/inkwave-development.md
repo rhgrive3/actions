@@ -18,7 +18,7 @@
 - ローカルの静的配信と Python 製の検証には Python 3。
 - ブラウザ検証には Playwright と対象ブラウザ。検証スクリプトによって `ws` などの追加依存があります。
 
-ルートに `package.json` はありません。ビルド用ツールは次のコマンドで導入します。`server/package.json` はリレー用の別パッケージです。
+ルートの `package.json` にビルド・検証スクリプトと `esbuild` の固定バージョンを定義しています。ビルド用ツールは次のコマンドで導入します。`server/package.json` はリレー用の別パッケージです。
 
 ```sh
 npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2

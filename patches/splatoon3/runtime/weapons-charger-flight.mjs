@@ -239,12 +239,12 @@ export function installChargerFlight(api,completion) {
     const length=Math.min(job.speed*dt,Math.max(0,job.range-job.travel));
     job.pos.copy(job.prev).addScaledVector(job.dir,length);
     const world=sweptWorldHit(G.physics,job.prev,job.pos,collision.InitRadiusForField,collision.EndRadiusForField,job.hit,true);
-    let distance=world.hit?world.dist:length,ended=world.hit,normal=world.hit?world.normal.clone():job.dir.clone().negate(),target=null;
+    let distance=world.hit?world.dist:length,ended=world.hit,normal=world.hit?world.normal.clone():null,target=null;
     const defense=system.kitDefenseCandidate?.({owner:job.owner,team:job.team,prev:job.prev,pos:job.pos,vel:job.dir,damage:job.damage,type:'beam',size:0,ghost:job.ghost,full:!!job.full});
     if(defense&&(!world.hit||defense.distance<world.dist-EPS)){distance=defense.distance;ended=true;target='defense';normal=job.dir.clone().negate();}
     const boss=G.boss?.segHit(job.prev,job.pos,collision.InitRadiusForPlayer);
     if(boss&&boss.dist<distance-EPS){distance=boss.dist;ended=true;normal=job.dir.clone().negate();target='boss';}
-    const actors=[];
+    const actors=job.hitCandidates||=([]);actors.length=0;
     for(const actor of G.actors){
       // Partial rounds meet allied bodies; full rounds retain teammate piercing.
       if(!actor.alive||actor===job.owner||(job.full&&actor.team===job.team)||job.seen.has(actor))continue;
@@ -264,9 +264,9 @@ export function installChargerFlight(api,completion) {
         collision.InitRadiusForPlayer,collision.EndRadiusForPlayer);
       if(chargerActorBeforeStop(t,length,distance))actors.push({actor,d:t*length});
     }
-    actors.sort((a,b)=>a.d-b.d||String(a.actor.nid??a.actor.name).localeCompare(String(b.actor.nid??b.actor.name)));
+    if(actors.length>1)actors.sort((a,b)=>a.d-b.d||String(a.actor.nid??a.actor.name).localeCompare(String(b.actor.nid??b.actor.name)));
     const amount=job.damage;
-    for(const a of actors){
+    try{for(const a of actors){
       job.seen.add(a.actor);if(!job.ghost&&a.actor.team!==job.team){
         const previous=job.owner._sourceChargerAudioHit;
         job.owner._sourceChargerAudioHit={chargerDirect:true,charge:job.charge};
@@ -275,6 +275,7 @@ export function installChargerFlight(api,completion) {
       }
       if(!job.full){distance=a.d;ended=true;target=a.actor;normal=job.dir.clone().negate();break;}
     }
+    }finally{actors.length=0;}
     if(target==='boss'&&!job.ghost)G.boss.hit(job.owner,amount,boss.target,job.weapon.id,boss.point.clone());
     if(target==='defense')defense.onHit();
     job.pos.copy(job.prev).addScaledVector(job.dir,distance);job.travel+=distance;
@@ -282,6 +283,7 @@ export function installChargerFlight(api,completion) {
     if(job.beam){job.beam.mesh.scale.z=Math.max(.0001,job.travel);job.beam.mesh.material.uniforms.uLen.value=Math.max(.0001,job.travel);}
     ended=ended||job.travel+EPS>=job.range;
     if(ended){
+      normal||=job.dir.clone().negate();
       // Final trail stamp at the stopping point, never beyond an obstruction.
       if(!job.ghost && target!=='defense' && !(world.hit && !target)){
         job.owner.addTurf(splatTravelPoint(system,job,job.pos,chargerPaintWorldRadius(job.paint.width)*job.paint.terminalRate,true));

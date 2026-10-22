@@ -169,7 +169,10 @@ test('#895 adapter anchors are exact, unique and fail-closed; #419 anchors survi
   const raw = read('inkwave-public/src/world/paint.js');
   const out = compose('src/world/paint.js');
   assert.notEqual(out, raw);
-  assert.match(out, /this\.grid\[k\] = val;\n        changed = true;\n        if \(this\._inkMark\) this\._inkMark\(f, i, j\);/);
+  // Accepted body cells are now coalesced by affine row extrema; retain the
+  // original per-cell callback as the explicit fallback and the exact row count.
+  assert.ok(out.includes('this.grid[k] = val;\n        changed = true;\n        if (this._inkMarkRow) { if (f.turf && !this.dead[k]) { dirtyMin = Math.min(dirtyMin, i); dirtyMax = Math.max(dirtyMax, i); dirtyCount++; } } else if (this._inkMark) this._inkMark(f, i, j);'));
+  assert.ok(out.includes('if (dirtyCount && this._inkMarkRow) this._inkMarkRow(f, dirtyMin, dirtyMax, j, dirtyCount);'));
   assert.match(out, /this\.version\+\+;\n    if \(this\.inkDirty\) this\.inkDirty\.full = true;/);
   // The build-only public adapter rejects a completed or partial BUILD tree.
   // Only the narrow #895 sub-adapter recognizes its own complete hooks.

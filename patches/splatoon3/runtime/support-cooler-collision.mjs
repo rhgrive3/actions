@@ -78,21 +78,28 @@ function passActor(a,isSquid){
   const r=a.weaponRunner;
   return isSquid||a.form==='squid'||!!r?.dodge||!!r?.s3DualiesGlide||a.specialActive?.id==='crabTank';
 }
-function actorContact(a,isSquid){
+const actorSweepFrames=new WeakMap();
+function actorSweepFrame(){
+  return {flat:{blocks:[],faces:[],queryBlocks:null},capacity:[],out:new api.Hit(),
+    start:new api.THREE.Vector3(),end:new api.THREE.Vector3()};
+}
+function actorContact(a,isSquid,scratch){
   if(passActor(a,isSquid)||a.remote||!a.alive||!api.G.projectiles)return null;
   const r=api.PLAYER.s3HumanoidTerrainRadiusRaw*api.PLAYER.s3TerrainDistanceScale||api.PLAYER.radius;
   const height=api.PLAYER.height,lift=api.PLAYER.stepUp,from=a._s3CoolerMovementStart||a.pos;
   const {THREE}=api,level=levelFor(api.G.projectiles);if(!level.blocks.length)return null;
-  const flat={blocks:[],faces:[],queryBlocks:level.queryBlocks};
+  const flat=scratch.flat;flat.blocks.length=0;flat.queryBlocks=level.queryBlocks;
   for(const block of level.blocks){
     const min=block.center.y-block.half.y,max=block.center.y+block.half.y;
     if(a.pos.y+height<min||a.pos.y+lift>max)continue;
     // Project only the horizontal capsule; the stand never becomes a roof.
-    flat.blocks.push({...block,id:flat.blocks.length,center:new THREE.Vector3(block.center.x,0,block.center.z),
-      half:new THREE.Vector3(block.half.x,1e4,block.half.z)});
+    const index=flat.blocks.length,q=scratch.capacity[index] ||= {center:new THREE.Vector3(),half:new THREE.Vector3()};
+    const center=q.center,half=q.half;Object.assign(q,block);
+    q.id=index;q.center=center.set(block.center.x,0,block.center.z);q.half=half.set(block.half.x,1e4,block.half.z);
+    flat.blocks.push(q);
   }
   if(!flat.blocks.length)return null;
-  const out=new api.Hit(),start=new THREE.Vector3(from.x,0,from.z),end=new THREE.Vector3(a.pos.x,0,a.pos.z);
+  const out=scratch.out,start=scratch.start.set(from.x,0,from.z),end=scratch.end.set(a.pos.x,0,a.pos.z);
   kitSweepSphereBlocks(flat,start,end,r,out);if(!out.hit)return null;
   const block=flat.blocks[out.block],normal=out.normal;
   if(out.dist>EPS){a.pos.x=out.point.x+normal.x*(r+EPS);a.pos.z=out.point.z+normal.z*(r+EPS);}
@@ -128,9 +135,21 @@ export function installCoolerCollision(context){
     try{return move.call(this,dt,isSquid,...args);}finally{this._s3CoolerMovementStart=null;}
   };
   Actor.prototype._resolve=function(isSquid,...args){
-    const n=actorContact(this,isSquid),result=resolve.call(this,isSquid,...args);
-    if(n){const into=this.vel.x*n.x+this.vel.z*n.z;if(into<0){this.vel.x-=n.x*into;this.vel.z-=n.z*into;}
-      if(!this.contacts.wall){this.contacts.wall=true;this.contacts.wallNormal.copy(n);this.contacts.wallBlock=-1;}}
-    return result;
+    if(passActor(this,isSquid)||this.remote||!this.alive||!api.G.projectiles?._s3SupportCoolers?.length)
+      return resolve.call(this,isSquid,...args);
+    // Lease per Actor and nesting depth: the delegated resolver can reenter
+    // without replacing the outer contact normal or retaining retired stands.
+    let pool=actorSweepFrames.get(this);
+    if(!pool){pool={depth:0,frames:[]};actorSweepFrames.set(this,pool);}
+    const depth=pool.depth++,scratch=pool.frames[depth] ||= actorSweepFrame();
+    try{
+      const n=actorContact(this,isSquid,scratch),result=resolve.call(this,isSquid,...args);
+      if(n){const into=this.vel.x*n.x+this.vel.z*n.z;if(into<0){this.vel.x-=n.x*into;this.vel.z-=n.z*into;}
+        if(!this.contacts.wall){this.contacts.wall=true;this.contacts.wallNormal.copy(n);this.contacts.wallBlock=-1;}}
+      return result;
+    }finally{
+      for(const block of scratch.flat.blocks){block.stand=null;block.axes=null;block.faces=null;}
+      scratch.flat.blocks.length=0;pool.depth--;
+    }
   };
 }

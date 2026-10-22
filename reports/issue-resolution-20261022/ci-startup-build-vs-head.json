@@ -1,0 +1,42 @@
+{
+  "head": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+  "contentHash": "dd84f9593a20aefedd0f497ece4d57b8aa59a20a25f4e63c331fd80f10a054ce",
+  "checkedInputs": 1363,
+  "mismatches": [
+    {
+      "key": "local-quality/range-hitch-tracer.mjs",
+      "path": "patches/local-quality/range-hitch-tracer.mjs",
+      "buildHash": "66048ff138697b0ba60af449d9d9b3637578cb0d56c23b1e3880db998c2845b2",
+      "committedHash": "2b7d76a158c9818311ca4826c644c335b2edf38a0dd1d0332eaeb6fdd2b37772",
+      "currentWorkingTreeHash": "265b4e71d67895792f75ba30ce325df14d0d06403d1377a2fec30181fef59c6a",
+      "currentWorkingTreeMatchesBuild": false
+    },
+    {
+      "key": "network-replication/adapter.mjs",
+      "path": "patches/network-replication/adapter.mjs",
+      "buildHash": "9312d6d19ca560836f821e630ced0d760361423f505c6f972b6c68aebe60986f",
+      "committedHash": "05ac34446e8f9c9c6b2ab3035018360dddcfb5ea5e2d66ba175207ce390d1ff9",
+      "currentWorkingTreeHash": "9312d6d19ca560836f821e630ced0d760361423f505c6f972b6c68aebe60986f",
+      "currentWorkingTreeMatchesBuild": true
+    }
+  ],
+  "scope": "all declared build input blobs and build script, compared to current committed HEAD; generated artifacts separately checked by browser harness",
+  "finalCommitComparison": {
+    "head": "0fc2fa5b8b65537ca24a080eee272b82cff1082d",
+    "checkedInputs": 1363,
+    "mismatches": [
+      {
+        "key": "local-quality/offline-offscreen-budget.mjs",
+        "path": "patches/local-quality/offline-offscreen-budget.mjs",
+        "buildHash": "f60b8861df44adf5ab2db46a5222340cf6f05e98dacb4f61eebc072d747521ae",
+        "committedHash": "84556c921079c972079ad024a63d8019d01b9605afa428d3582236aeaa56bb01"
+      },
+      {
+        "key": "local-quality/range-hitch-tracer.mjs",
+        "path": "patches/local-quality/range-hitch-tracer.mjs",
+        "buildHash": "66048ff138697b0ba60af449d9d9b3637578cb0d56c23b1e3880db998c2845b2",
+        "committedHash": "265b4e71d67895792f75ba30ce325df14d0d06403d1377a2fec30181fef59c6a"
+      }
+    ]
+  }
+}

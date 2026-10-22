@@ -177,7 +177,7 @@ function clipLayout(bank, c) {
     if (animated[b]) { fixed.push(null); continue; }
     rotationFromRaw(q, c.rotationMode, raw, b * STRIDE); fixed.push([q._x, q._y, q._z, q._w]);
   }
-  return {dst, sorted, fixed};
+  return {dst, sorted, fixed, baseView: data.subarray(c.base, c.base + n * STRIDE)};
 }
 
 export class SourceBank {
@@ -212,7 +212,7 @@ export class SourceBank {
     let layout = this.layouts.get(c);
     if (!layout) { layout = clipLayout(this, c); this.layouts.set(c, layout); }
     const data = this.data, raw = out.raw;
-    raw.set(data.subarray(c.base, c.base + raw.length));
+    raw.set(layout.baseView);
     // Each output pose remembers the last key segment per curve; playback
     // normally stays in, or steps to the next, segment. The hint is only used
     // when it is exactly the segment the binary search would select.

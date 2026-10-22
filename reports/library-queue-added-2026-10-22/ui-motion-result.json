@@ -1,0 +1,234 @@
+[
+  {
+    "name": "[QUEUE][INKWAVE][Optimization] camera-rig-follow-share-yaw-trigonometry.md",
+    "status": "fixed",
+    "reason": "Shared canonical first-follow yaw sin/cos; retained late flight refresh and overridden-forward call/mutation path.",
+    "files": [
+      "patches/local-quality/added-ui-motion-adapter.mjs",
+      "inkwave-public/src/game/cameraRig.js"
+    ],
+    "tests": [
+      "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+      "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+      "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+      "source migration audit (109 files,0 failures)",
+      "check-inkwave-patches --quick (pass)"
+    ],
+    "evidence": "Full production camera pose/spring/collision follow parity at30/60/120Hz, late superjump yaw and forward override.",
+    "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+  },
+  {
+    "name": "[QUEUE][INKWAVE][Optimization] gyro-raw-rate-quaternion-temporary-arrays.md",
+    "status": "fixed",
+    "reason": "Scalar raw quaternion integration removes intermediate operands/map while allocating a fresh owned output and retaining arithmetic/filter order.",
+    "files": [
+      "patches/local-quality/gyro.mjs"
+    ],
+    "tests": [
+      "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+      "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+      "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+      "source migration audit (109 files,0 failures)",
+      "check-inkwave-patches --quick (pass)"
+    ],
+    "evidence": "20,000 component-exact A/B samples, timestamp/filter reference ownership; existing handoff and stationary tests.",
+    "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+  },
+  {
+    "name": "[QUEUE][INKWAVE][Optimization] hud-crosshair-unchanged-cone-fov-trig-cache.md",
+    "status": "fixed",
+    "reason": "Memoized unchanged cone/FOV/viewport trigonometry with Object.is scalar keys and original formula on miss.",
+    "files": [
+      "patches/local-quality/added-ui-motion-adapter.mjs",
+      "inkwave-public/src/main.js"
+    ],
+    "tests": [
+      "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+      "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+      "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+      "source migration audit (109 files,0 failures)",
+      "check-inkwave-patches --quick (pass)"
+    ],
+    "evidence": "2,000 actual-fragment numeric A/B frames, roller/NaN/FOV/cone/height changes and fewer tan calls.",
+    "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+  },
+  {
+    "name": "[QUEUE][INKWAVE][Optimization] hud-map-squad-unchanged-key-formatting.md",
+    "status": "fixed",
+    "reason": "Skip unchanged raw squad/map formatting only while existing display-key owner matches; preserve canvas/reset/DOM slot invalidation.",
+    "files": [
+      "patches/local-quality/added-ui-motion-adapter.mjs",
+      "inkwave-public/src/ui/hud.js"
+    ],
+    "tests": [
+      "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+      "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+      "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+      "source migration audit (109 files,0 failures)",
+      "check-inkwave-patches --quick (pass)"
+    ],
+    "evidence": "Actual method DOM/event equality across roster death/ready/respawn/empty, map expansion/canvas/resize/safe-area/reset; reduced formatting.",
+    "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+  },
+  {
+    "name": "[QUEUE][INKWAVE][Optimization] hud-marker-direct-metadata-skip-name-map-lookup.md",
+    "status": "fixed",
+    "reason": "Complete direct metadata avoids actor lookup; incomplete/Lab metadata lazily uses the same original lookup and match disposal.",
+    "files": [
+      "patches/local-quality/added-ui-motion-adapter.mjs",
+      "inkwave-public/src/ui/hud.js"
+    ],
+    "tests": [
+      "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+      "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+      "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+      "source migration audit (109 files,0 failures)",
+      "check-inkwave-patches --quick (pass)"
+    ],
+    "evidence": "Complete metadata:0 scans vs60 baseline; fallback/roster output equality and actual releaseMatchActors disposal.",
+    "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+  },
+  {
+    "name": "[QUEUE][INKWAVE][Optimization] hud-timer-and-turf-skip-unchanged-text-formatting.md",
+    "status": "fixed",
+    "reason": "Cache quantized timer/turf text formatting; leave every threshold, pulse, accumulator and interpolation step live.",
+    "files": [
+      "patches/local-quality/added-ui-motion-adapter.mjs",
+      "inkwave-public/src/ui/hud.js"
+    ],
+    "tests": [
+      "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+      "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+      "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+      "source migration audit (109 files,0 failures)",
+      "check-inkwave-patches --quick (pass)"
+    ],
+    "evidence": "30/60/120Hz actual-source DOM/event/numeric parity including thresholds/NaN/Infinity/reset; fewer formatting calls.",
+    "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+  },
+  {
+    "name": "[QUEUE][INKWAVE][Optimization] locomotion-profile-hoist-hair-child-topology-per-bank.md",
+    "status": "already_fixed",
+    "reason": "Already implemented by adapter.mjs in the composed production profile: bank._hairMeta caches child indices and terminal rest directions.",
+    "files": [
+      "patches/local-quality/adapter.mjs"
+    ],
+    "tests": [
+      "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+      "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+      "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+      "source migration audit (109 files,0 failures)",
+      "check-inkwave-patches --quick (pass)"
+    ],
+    "evidence": "New composed source assertion confirms bank-owned metadata and metadata sampling loop; real source-bank motion parity covers unchanged composed profiles.",
+    "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+  },
+  {
+    "name": "[QUEUE][INKWAVE][Optimization] results-awards-advance-monotonic-badge-reveal-index.md",
+    "status": "fixed",
+    "reason": "Monotonic next-badge index visits each newly due item once; finish fills all badges then advances index to queue length.",
+    "files": [
+      "patches/local-quality/added-ui-motion-adapter.mjs",
+      "inkwave-public/src/ui/menus.js"
+    ],
+    "tests": [
+      "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+      "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+      "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+      "source migration audit (109 files,0 failures)",
+      "check-inkwave-patches --quick (pass)"
+    ],
+    "evidence": "Actual reveal block parity for0/1/8/24 badges at30/60/120Hz, strict boundary/hitch/frame-order; candidate showBadge calls<=badge count.",
+    "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+  },
+  {
+    "name": "[QUEUE][INKWAVE][Optimization] settings-audio-preview-precompute-spectrum-and-idle-muted-bars.md",
+    "status": "fixed",
+    "reason": "Precomputed18 spectra, then skip bars only after mute envelope is provably under the existing clamp floor; time/smoothing always advance.",
+    "files": [
+      "patches/local-quality/added-ui-motion-adapter.mjs",
+      "inkwave-public/src/ui/menu-art.js"
+    ],
+    "tests": [
+      "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+      "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+      "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+      "source migration audit (109 files,0 failures)",
+      "check-inkwave-patches --quick (pass)"
+    ],
+    "evidence": "Every18 bar string plus caption/class parity at30/60/120Hz through mute/unmute/master changes/zero/hitch/Infinity/NaN dt; fewer sine calls and writes.",
+    "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+  },
+  {
+    "name": "[QUEUE][INKWAVE][Optimization] settings-scroll-edge-fades-invalidate-on-scroll-and-resize.md",
+    "status": "already_fixed",
+    "reason": "Already implemented in settings-ui-adapter.mjs: dirty layout, ResizeObserver, scroll/resize invalidation, no-observer fallback and cleanup.",
+    "files": [
+      "patches/local-quality/settings-ui-adapter.mjs"
+    ],
+    "tests": [
+      "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+      "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+      "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+      "source migration audit (109 files,0 failures)",
+      "check-inkwave-patches --quick (pass)"
+    ],
+    "evidence": "New actual composed scroll block test validates stationary read suppression, edge refresh/fallback and disposal wiring.",
+    "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+  },
+  {
+    "name": "[QUEUE][INKWAVE][Optimization] showcase-results-static-bomb-plan-eliminate-per-frame-literals.md",
+    "status": "fixed",
+    "reason": "Hoisted frozen seven-row plan retaining original while comparison, counter increments, missing-slot handling and RNG/drop order.",
+    "files": [
+      "patches/local-quality/added-ui-motion-adapter.mjs",
+      "inkwave-public/src/game/showcase.js"
+    ],
+    "tests": [
+      "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+      "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+      "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+      "source migration audit (109 files,0 failures)",
+      "check-inkwave-patches --quick (pass)"
+    ],
+    "evidence": "Actual schedule block A/B for1–4 slots and30/60/120Hz, strict thresholds, hitches/rematch; exact RNG count/drop arguments.",
+    "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+  },
+  {
+    "name": "[QUEUE][INKWAVE][Optimization] source-bimanual-grip-stop-converged-projection-iterations.md",
+    "status": "already_fixed",
+    "reason": "Already implemented by adapter.mjs in the composed source controller: squared-distance constraint checks and changed=false iteration break.",
+    "files": [
+      "patches/local-quality/adapter.mjs"
+    ],
+    "tests": [
+      "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+      "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+      "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+      "source migration audit (109 files,0 failures)",
+      "check-inkwave-patches --quick (pass)"
+    ],
+    "evidence": "New composed source assertion confirms converged exit; real source-bank motion parity covers unchanged source controller behavior.",
+    "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+  },
+  {
+    "name": "[QUEUE][INKWAVE][Optimization] source-motion-sparse-foot-target-storage.md",
+    "status": "fixed",
+    "reason": "Sparse initialize six gait and two upper-leg balance targets with unchanged lengths/independent ownership; invalid indices retain dense fallback.",
+    "files": [
+      "patches/local-quality/added-ui-motion-adapter.mjs",
+      "inkwave-public/src/game/motion/gait-targets.js",
+      "inkwave-public/src/game/motion/source-controller.js",
+      "inkwave-public/src/game/motion/body-balance.js"
+    ],
+    "tests": [
+      "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+      "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+      "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+      "source migration audit (109 files,0 failures)",
+      "check-inkwave-patches --quick (pass)"
+    ],
+    "evidence": "Actual real-bank full pose/contact/skeleton/muzzle parity at30/60/120Hz;6/2 initialized targets, distinct instances and invalid-index fallback.",
+    "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+  }
+]

@@ -1,0 +1,129 @@
+{
+  "schema": 1,
+  "date": "2026-10-22",
+  "repository": "rhgrive3/actions",
+  "baselineCommit": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+  "measurementContext": "Shared working tree during parallel issue work; served GPU module hashes are retained in motion-paint-roller-gpu.json. Not a canonical emitted build or exact pristine-main acceptance.",
+  "runtimeChanges": 0,
+  "issueClosures": 0,
+  "existingRegressionTestsPassed": 18,
+  "newGpuProof": "motion-paint-roller-gpu.json",
+  "issues": [
+    {
+      "number": 1708,
+      "status": "blocked-source-evidence",
+      "existingImplementation": "2022 same-family proxy recordings for eleven later-added mains; explicitly not target-weapon 11.3.0 recordings",
+      "evidence": [
+        "patches/splatoon3/runtime/audio/borrowed-recorded-mains.mjs",
+        "patches/splatoon3/runtime/audio/real-s3-installed.json"
+      ],
+      "remaining": [
+        "Legitimately obtained updated Sound/Resource/*.bars.zs or permitted equivalent for all eleven mains",
+        "Version/container/event provenance and SHA256",
+        "Native cue/event/listening comparisons; redistribution rights before public binary inclusion"
+      ],
+      "newVerification": "audio-borrowed-recorded-mains.test.mjs: 3/3; verifies only proxy behavior",
+      "closeRecommended": false
+    },
+    {
+      "number": 1565,
+      "status": "blocked-baseline-and-device-measurements",
+      "existingImplementation": "Existing source motion/IK/LOD/paint/FX retained; narrow double-sided grate-lighting correction has historical focused browser evidence",
+      "evidence": [
+        "reports/inkwave-grate-normal-2026-10-17/README.md",
+        "https://github.com/rhgrive3/actions/issues/1565"
+      ],
+      "remaining": [
+        "G0 fixed production build/source workload baseline",
+        "Calibrated whole-game A/B (#1434), physical iPad/Android performance/resource checks",
+        "Reference-supported gait/readability improvements before any conditional pose-search prototype"
+      ],
+      "newVerification": "Read-only implementation/plan review; no new performance experiment or runtime feature enabled",
+      "closeRecommended": false
+    },
+    {
+      "number": 952,
+      "status": "blocked-retail-formula-and-trace",
+      "existingImplementation": "Grounded charge-only .05-per-reference-frame exponential deceleration model; .9 remains explicitly unmapped",
+      "evidence": [
+        "patches/splatoon3/runtime/splatling.mjs",
+        "https://github.com/rhgrive3/actions/issues/952#issuecomment-6099887992"
+      ],
+      "remaining": [
+        "11.3.0 meaning, units, integration law and start frame for VelGnd_Bias_Charge=.9 and VelGnd_DownRt_Charge=.05",
+        "Fixed-60Hz original Heavy Splatling run-to-charge speed/distance trace"
+      ],
+      "newVerification": "splatling-charge-decel-1188.test.mjs: 4/4 including 30/60/120 Hz and unrelated movement controls",
+      "closeRecommended": false
+    },
+    {
+      "number": 997,
+      "status": "blocked-s3-motion-reference",
+      "existingImplementation": "Shared gait clock, direction-independent weak-diagonal cadence, Wii U source reference/retarget and weakDiagonalWalkTrace already exist",
+      "evidence": [
+        "patches/splatoon3/runtime/walk.mjs",
+        "patches/splatoon3/reference/legacy-walk-retarget-2026-10-08.md",
+        "https://github.com/rhgrive3/actions/issues/997#issuecomment-6095529024"
+      ],
+      "remaining": [
+        "Actual 11.3.0 ordinary locomotion clip/state selection and playback law",
+        "Synchronized weak-input magnitude/direction captures with root-yaw held fixed",
+        "Base motion vs IK, local/remote and render-rate comparisons"
+      ],
+      "newVerification": "legacy-walk-reference.test.mjs selected provenance/weak-diagonal diagnostics: 2/2",
+      "closeRecommended": false
+    },
+    {
+      "number": 1165,
+      "status": "implementation-present-browser-slice-now-verified",
+      "existingImplementation": "Shared emitted CPU/GPU triangular SDF with zero inset; conservative rotated-corner CPU scan bound already present",
+      "evidence": [
+        "patches/splatoon3/issue-batch-1171-adapter.mjs",
+        "scripts/inkwave-source-composition.mjs",
+        "scripts/tests/inkwave-roller-band-cpu-gpu-1165.test.mjs",
+        "motion-paint-roller-gpu.json"
+      ],
+      "remaining": [
+        "Non-instantaneous paint growth/overlap at 30/60/120/144Hz rendering with common fixed input",
+        "Bot decisions, complete small-margin match/Judd outcome and ordinary runtime movement/refill/enemy-ink edge behavior",
+        "Physical-device appearance; no original-game stencil parity claim"
+      ],
+      "newVerification": "Grid regression 3/3 (238140 cell combinations); real Chromium154 SwiftShader atlas readback 120 cases/20280 samples, 694 AA-bound samples separately excluded, 19586 hard ownership comparisons with zero mismatches; sampleWorld/coverage checks; opposing-team repaint",
+      "closeRecommended": false
+    },
+    {
+      "number": 1116,
+      "status": "blocked-s3-jump-curves-and-selection",
+      "existingImplementation": "Local family and ordinary/firing candidate selection already exists; loaded Wii U retarget owns air hips/legs, mostly Nrml and Splatling Glng; known start-name/crossfade fixes already present",
+      "evidence": [
+        "patches/splatoon3/runtime/jump-motion.mjs",
+        "patches/splatoon3/reference/jump-motion-comparison-2026-10-03.md",
+        "patches/splatoon3/tests/source-jump-family.test.mjs"
+      ],
+      "remaining": [
+        "Current 11.3.0 actual Jump/JumpShoot clip selection rather than candidate names",
+        "Family-specific source curves/timing and action/gear mapping",
+        "Rendered browser/local/remote and synchronized original-game comparisons"
+      ],
+      "newVerification": "jump-motion.test.mjs candidate-name/corpus checks selected: 2/2; not rendered retail-curve validation",
+      "closeRecommended": false
+    },
+    {
+      "number": 1097,
+      "status": "blocked-s3-hit-curves-and-selection",
+      "existingImplementation": "Native-upper class-shaping layer and gameplay-muzzle isolation already present; source-owned upper body skips invisible shaping and uses generic Wii U Damage one-shot",
+      "evidence": [
+        "patches/splatoon3/runtime/weapon-hit-reaction.mjs",
+        "patches/splatoon3/reference/weapon-hit-reaction-comparison-2026-10-09.md",
+        "patches/splatoon3/tests/issue-1097-source-hit-owner.test.mjs"
+      ],
+      "remaining": [
+        "Current 11.3.0 damage chooser, family curves and onset/peak/recovery timing",
+        "Source-owned family hit poses with original-game evidence",
+        "Full rendered/network/death-lifecycle and physical-device acceptance"
+      ],
+      "newVerification": "issue-1097-hit-reaction.test.mjs selected class names/gameplay/ID independence: 3/3; source-loaded native-upper Roller/Dualies/Slosher subset: 1/1; original full source-loaded suite exceeded 60s and is not counted as pass",
+      "closeRecommended": false
+    }
+  ]
+}

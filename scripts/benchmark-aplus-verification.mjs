@@ -117,13 +117,12 @@ function benchmarkComposedProductionBuildParity() {
     "  // the existing cluster result; nonweapon geometries take the original path.\n" +
     "  if (A.aMat && A.color) {\n" +
     "    const attributes = out.attributes, extras = [], splits = new Map(), remapped = [];\n" +
+    "    const sourceMat = A.aMat, sourceColor = A.color, clusterMat = attributes.aMat, clusterColor = attributes.color;\n" +
     "    for (let i = 0; i < tris.length; i++) {\n" +
     "      const cluster = tris[i], original = sourceCorners[i];\n" +
-    "      const same = ['aMat', 'color'].every(name => {\n" +
-    "        const a = A[name], b = attributes[name];\n" +
-    "        for (let k = 0; k < a.itemSize; k++) if (a.getComponent(original, k) !== b.getComponent(cluster, k)) return false;\n" +
-    "        return true;\n" +
-    "      });\n" +
+    "      let same = true;\n" +
+    "      for (let k = 0; k < sourceMat.itemSize; k++) if (sourceMat.getComponent(original, k) !== clusterMat.getComponent(cluster, k)) { same = false; break; }\n" +
+    "      if (same) for (let k = 0; k < sourceColor.itemSize; k++) if (sourceColor.getComponent(original, k) !== clusterColor.getComponent(cluster, k)) { same = false; break; }\n" +
     "      if (same) { remapped.push(cluster); continue; }\n" +
     "      const values = [cluster];\n" +
     "      for (const name of ['aMat', 'color']) for (let k = 0; k < A[name].itemSize; k++) values.push(A[name].getComponent(original, k));\n" +

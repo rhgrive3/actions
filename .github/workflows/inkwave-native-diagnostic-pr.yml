@@ -1,0 +1,370 @@
+name: INKWAVE frozen native diagnostic PR route
+# One-shot diagnostic transport only. Never a Validate acceptance gate or merge route.
+on:
+  pull_request:
+    types: [opened]
+    branches: [inkwave/qa-browser-followon-20261022]
+    paths:
+      - .github/workflows/inkwave-native-diagnostic-pr.yml
+      - tools/native-diagnostic-pr/route.test.mjs
+permissions:
+  contents: read
+concurrency:
+  group: inkwave-native-diagnostic-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+jobs:
+  network-opening-diagnostic:
+    if: github.event_name == 'pull_request' && github.event.action == 'opened' && github.repository == 'rhgrive3/actions' && github.event.pull_request.head.repo.full_name == 'rhgrive3/actions' && github.event.pull_request.base.repo.full_name == 'rhgrive3/actions' && github.head_ref == 'diagnostic/native-ci-route-20261022' && github.base_ref == 'inkwave/qa-browser-followon-20261022' && github.event.pull_request.base.sha == 'c364095373b0d92201dd76af67351bf111af85f8' && github.event.pull_request.state == 'open'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SOURCE_SHA: c364095373b0d92201dd76af67351bf111af85f8
+      WORKFLOW_SHA: ${{ github.workflow_sha }}
+      ROUTE_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      CI_STORAGE: /mnt/workspace/inkwave-network-opening-${{ github.run_id }}-${{ github.run_attempt }}
+      TMPDIR: ${{ github.workspace }}/.ci-scratch
+      TMP: ${{ github.workspace }}/.ci-scratch
+      TEMP: ${{ github.workspace }}/.ci-scratch
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.browser-cache
+    steps:
+      - name: Checkout immutable accepted QA source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+      - name: Checkout immutable executing route
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: .diagnostic-route/execution
+          sparse-checkout: |
+            .github/workflows/inkwave-native-diagnostic-pr.yml
+            tools/native-diagnostic-pr/route.test.mjs
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Checkout immutable PR route head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: .diagnostic-route/head
+          sparse-checkout: |
+            .github/workflows/inkwave-native-diagnostic-pr.yml
+            tools/native-diagnostic-pr/route.test.mjs
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Verify separate route and accepted source identities
+        run: |
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$WORKFLOW_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$ROUTE_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$SOURCE_SHA" = c364095373b0d92201dd76af67351bf111af85f8
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git -C .diagnostic-route/execution rev-parse HEAD)" = "$WORKFLOW_SHA"
+          test "$(git -C .diagnostic-route/head rev-parse HEAD)" = "$ROUTE_HEAD_SHA"
+          cmp .diagnostic-route/execution/.github/workflows/inkwave-native-diagnostic-pr.yml .diagnostic-route/head/.github/workflows/inkwave-native-diagnostic-pr.yml
+          cmp .diagnostic-route/execution/tools/native-diagnostic-pr/route.test.mjs .diagnostic-route/head/tools/native-diagnostic-pr/route.test.mjs
+          printf '%s  %s\n' '2a4e5368da0a4ba3cf3514663dd512000a8f4390dd0c07db33f97c4cea39d5ec' '.github/workflows/validate-inkwave-update.yml' | sha256sum --check --strict
+          mkdir -p .diagnostic-route/evidence
+          printf 'route_workflow_sha=%s\nroute_pr_head_sha=%s\naccepted_qa_source_sha=%s\n' "$WORKFLOW_SHA" "$ROUTE_HEAD_SHA" "$SOURCE_SHA" > .diagnostic-route/evidence/identity.txt
+      - name: Setup pinned Node for route guards
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify bounded PR route contracts
+        env:
+          DIAGNOSTIC_ACCEPTED_ROOT: ${{ github.workspace }}
+          DIAGNOSTIC_LANE: network-opening-diagnostic
+        run: node --test .diagnostic-route/head/tools/native-diagnostic-pr/route.test.mjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prepare bounded diagnostic storage
+        run: |
+          mkdir -p .ci-scratch .built-site
+          test "$(realpath -m "$CI_STORAGE")" = "$CI_STORAGE"
+          sudo mkdir -p "$CI_STORAGE"
+          sudo chown "$(id -u):$(id -g)" "$CI_STORAGE"
+          test "$(realpath "$CI_STORAGE")" = "$CI_STORAGE"
+          mkdir -p "$CI_STORAGE/evidence/combat-ceiling"
+          browser_tmp=/mnt/workspace/.dev-state/agent-work/cache/iwrui
+          test "$(realpath -m "$browser_tmp")" = "$browser_tmp"
+          sudo mkdir -p "$browser_tmp"
+          sudo chown "$(id -u):$(id -g)" "$browser_tmp"
+      - name: Verify scoped network diagnostic workflow contracts
+        run: node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs
+      - name: Verify native placement and bounded diagnostic contracts
+        run: node --test scripts/tests/inkwave-combat-ceiling-placement.test.mjs scripts/tests/inkwave-opening-peer-diagnostic.test.mjs
+      - name: Install pinned build and browser dependencies
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps chromium
+      - name: Build the exact source without production overrides
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public .built-site/_site
+          git rev-parse HEAD > .built-site/_site-source-sha.txt
+          test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"
+      - name: Diagnose native opening with unchanged combat assertions
+        run: node scripts/check-inkwave-combat-ceiling-browser.mjs --site .built-site/_site --source-sha "$SOURCE_SHA" --evidence-dir "$CI_STORAGE/evidence/combat-ceiling"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-network-opening-diagnostic-${{ env.SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: warn
+          path: ${{ env.CI_STORAGE }}/evidence/combat-ceiling/
+          retention-days: 14
+      - name: Preserve route identity separately from native source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: network-opening-diagnostic-route-identity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .diagnostic-route/evidence/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+
+  wall-render-diagnostic:
+    if: github.event_name == 'pull_request' && github.event.action == 'opened' && github.repository == 'rhgrive3/actions' && github.event.pull_request.head.repo.full_name == 'rhgrive3/actions' && github.event.pull_request.base.repo.full_name == 'rhgrive3/actions' && github.head_ref == 'diagnostic/native-ci-route-20261022' && github.base_ref == 'inkwave/qa-browser-followon-20261022' && github.event.pull_request.base.sha == 'c364095373b0d92201dd76af67351bf111af85f8' && github.event.pull_request.state == 'open'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SOURCE_SHA: c364095373b0d92201dd76af67351bf111af85f8
+      WORKFLOW_SHA: ${{ github.workflow_sha }}
+      ROUTE_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      CI_STORAGE: /mnt/workspace/inkwave-wall-render-${{ github.run_id }}-${{ github.run_attempt }}
+      TMPDIR: ${{ github.workspace }}/.ci-scratch
+      TMP: ${{ github.workspace }}/.ci-scratch
+      TEMP: ${{ github.workspace }}/.ci-scratch
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.browser-cache
+    steps:
+      - name: Checkout immutable accepted QA source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+      - name: Checkout immutable executing route
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: .diagnostic-route/execution
+          sparse-checkout: |
+            .github/workflows/inkwave-native-diagnostic-pr.yml
+            tools/native-diagnostic-pr/route.test.mjs
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Checkout immutable PR route head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: .diagnostic-route/head
+          sparse-checkout: |
+            .github/workflows/inkwave-native-diagnostic-pr.yml
+            tools/native-diagnostic-pr/route.test.mjs
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Verify separate route and accepted source identities
+        run: |
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$WORKFLOW_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$ROUTE_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$SOURCE_SHA" = c364095373b0d92201dd76af67351bf111af85f8
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git -C .diagnostic-route/execution rev-parse HEAD)" = "$WORKFLOW_SHA"
+          test "$(git -C .diagnostic-route/head rev-parse HEAD)" = "$ROUTE_HEAD_SHA"
+          cmp .diagnostic-route/execution/.github/workflows/inkwave-native-diagnostic-pr.yml .diagnostic-route/head/.github/workflows/inkwave-native-diagnostic-pr.yml
+          cmp .diagnostic-route/execution/tools/native-diagnostic-pr/route.test.mjs .diagnostic-route/head/tools/native-diagnostic-pr/route.test.mjs
+          printf '%s  %s\n' '2a4e5368da0a4ba3cf3514663dd512000a8f4390dd0c07db33f97c4cea39d5ec' '.github/workflows/validate-inkwave-update.yml' | sha256sum --check --strict
+          mkdir -p .diagnostic-route/evidence
+          printf 'route_workflow_sha=%s\nroute_pr_head_sha=%s\naccepted_qa_source_sha=%s\n' "$WORKFLOW_SHA" "$ROUTE_HEAD_SHA" "$SOURCE_SHA" > .diagnostic-route/evidence/identity.txt
+      - name: Setup pinned Node for route guards
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify bounded PR route contracts
+        env:
+          DIAGNOSTIC_ACCEPTED_ROOT: ${{ github.workspace }}
+          DIAGNOSTIC_LANE: wall-render-diagnostic
+        run: node --test .diagnostic-route/head/tools/native-diagnostic-pr/route.test.mjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prepare bounded diagnostic storage
+        run: |
+          mkdir -p .ci-scratch .built-site
+          test "$(realpath -m "$CI_STORAGE")" = "$CI_STORAGE"
+          sudo mkdir -p "$CI_STORAGE"
+          sudo chown "$(id -u):$(id -g)" "$CI_STORAGE"
+          test "$(realpath "$CI_STORAGE")" = "$CI_STORAGE"
+          mkdir -p "$CI_STORAGE/evidence/wall"
+          printf 'source=%s\nworkflow=%s\n' "$SOURCE_SHA" "$WORKFLOW_SHA" > "$CI_STORAGE/evidence/wall/source-identity.txt"
+          browser_tmp=/mnt/workspace/.dev-state/agent-work/cache/iwrui
+          test "$(realpath -m "$browser_tmp")" = "$browser_tmp"
+          sudo mkdir -p "$browser_tmp"
+          sudo chown "$(id -u):$(id -g)" "$browser_tmp"
+      - name: Verify scoped wall workflow and source contracts
+        run: |
+          node --test scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs
+          node --experimental-vm-modules --test patches/splatoon3/tests/wall-render-gates.test.mjs patches/splatoon3/tests/wall-render-production-contract.test.mjs
+      - name: Install pinned build and browser dependencies
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps chromium
+      - name: Build the exact source without production overrides
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public .built-site/_site
+          git rev-parse HEAD > .built-site/_site-source-sha.txt
+          test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"
+      - name: Verify emitted wall production contract
+        run: INKWAVE_BUILT_SITE=.built-site/_site node --experimental-vm-modules --test patches/splatoon3/tests/wall-render-production-contract.test.mjs
+      - name: Verify full native wall rendering and GPU disposal
+        run: node scripts/check-inkwave-wall-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/wall" --profile-dir "$CI_STORAGE/cache/wall" --exact-source
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-wall-render-diagnostic-${{ env.SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: warn
+          path: ${{ env.CI_STORAGE }}/evidence/wall/
+          retention-days: 14
+      - name: Preserve route identity separately from native source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wall-render-diagnostic-route-identity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .diagnostic-route/evidence/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+
+  wiper-lifecycle-diagnostic:
+    if: github.event_name == 'pull_request' && github.event.action == 'opened' && github.repository == 'rhgrive3/actions' && github.event.pull_request.head.repo.full_name == 'rhgrive3/actions' && github.event.pull_request.base.repo.full_name == 'rhgrive3/actions' && github.head_ref == 'diagnostic/native-ci-route-20261022' && github.base_ref == 'inkwave/qa-browser-followon-20261022' && github.event.pull_request.base.sha == 'c364095373b0d92201dd76af67351bf111af85f8' && github.event.pull_request.state == 'open'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      SOURCE_SHA: 8b18f6e99437dd148ad4a095bb85f3c1ff709eaf
+      WORKFLOW_SHA: ${{ github.workflow_sha }}
+      ROUTE_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Checkout immutable accepted QA source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+      - name: Checkout immutable executing route
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: .diagnostic-route/execution
+          sparse-checkout: |
+            .github/workflows/inkwave-native-diagnostic-pr.yml
+            tools/native-diagnostic-pr/route.test.mjs
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Checkout immutable PR route head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: .diagnostic-route/head
+          sparse-checkout: |
+            .github/workflows/inkwave-native-diagnostic-pr.yml
+            tools/native-diagnostic-pr/route.test.mjs
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Verify separate route and accepted source identities
+        run: |
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$WORKFLOW_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$ROUTE_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$SOURCE_SHA" = 8b18f6e99437dd148ad4a095bb85f3c1ff709eaf
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git -C .diagnostic-route/execution rev-parse HEAD)" = "$WORKFLOW_SHA"
+          test "$(git -C .diagnostic-route/head rev-parse HEAD)" = "$ROUTE_HEAD_SHA"
+          cmp .diagnostic-route/execution/.github/workflows/inkwave-native-diagnostic-pr.yml .diagnostic-route/head/.github/workflows/inkwave-native-diagnostic-pr.yml
+          cmp .diagnostic-route/execution/tools/native-diagnostic-pr/route.test.mjs .diagnostic-route/head/tools/native-diagnostic-pr/route.test.mjs
+          printf '%s  %s\n' '64a1b5d85cbfb1951e18be5d56d61cc60eb072848ff190cc8cb0e1362791ce89' '.github/workflows/inkwave-wiper-rng-observation.yml' | sha256sum --check --strict
+          printf '%s  %s\n' '2b70faf7b45de067aa2f907357b899cc10d509d4c43fd6480f8a106878bd79cc' 'scripts/check-inkwave-wiper-plane-native.mjs' | sha256sum --check --strict
+          printf '%s  %s\n' '56c6f616d7926efe4fbc854bd33aa62d64cd88dd51e44e9e76b079c214bd2fb3' 'scripts/lib/inkwave-wiper-resource-lifecycle.mjs' | sha256sum --check --strict
+          printf '%s  %s\n' 'eb9faeb0a5c06db4e5c8ec7829eb36dc338754978392ca4238233e9ac0e77914' 'scripts/tests/inkwave-wiper-resource-lifecycle.test.mjs' | sha256sum --check --strict
+          mkdir -p .diagnostic-route/evidence
+          printf 'route_workflow_sha=%s\nroute_pr_head_sha=%s\naccepted_qa_source_sha=%s\n' "$WORKFLOW_SHA" "$ROUTE_HEAD_SHA" "$SOURCE_SHA" > .diagnostic-route/evidence/identity.txt
+      - name: Setup pinned Node for route guards
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify bounded PR route contracts
+        env:
+          DIAGNOSTIC_ACCEPTED_ROOT: ${{ github.workspace }}
+          DIAGNOSTIC_LANE: wiper-lifecycle-diagnostic
+        run: node --test .diagnostic-route/head/tools/native-diagnostic-pr/route.test.mjs
+      - uses: actions/checkout@v4
+        with:
+          ref: c0938a3f84768474df91713f7b372f9d7f8fe96a
+          path: work/source
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Record independently verified Wiper runtime and reference identities
+        run: |
+          test "$(git -C work/source rev-parse HEAD)" = c0938a3f84768474df91713f7b372f9d7f8fe96a
+          test "$(git -C work/source rev-parse HEAD^{tree})" = 97b9938391f156dc332f6a56ac6fe3d21d9f9dc7
+          git -C work/source cat-file -e 7581ca9be8cf87d253918b8abb3b8ebe728c2093^{commit}
+          printf 'runtime_source_sha=%s\nruntime_source_tree=%s\nreference_sha=%s\n' c0938a3f84768474df91713f7b372f9d7f8fe96a 97b9938391f156dc332f6a56ac6fe3d21d9f9dc7 7581ca9be8cf87d253918b8abb3b8ebe728c2093 >> .diagnostic-route/evidence/identity.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify immutable source and reference Git objects
+        run: |
+          test "$(git -C work/source rev-parse HEAD)" = c0938a3f84768474df91713f7b372f9d7f8fe96a
+          test "$(git -C work/source rev-parse HEAD^{tree})" = 97b9938391f156dc332f6a56ac6fe3d21d9f9dc7
+          git -C work/source cat-file -e 7581ca9be8cf87d253918b8abb3b8ebe728c2093^{commit}
+      - name: Install pinned build and capture tools
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+      - name: Validate QA helpers
+        run: node --test scripts/tests/inkwave-wiper-*.test.mjs
+      - name: Build complete immutable production source exactly once
+        working-directory: work/source
+        run: node scripts/build-inkwave.mjs inkwave-public ../site
+      - name: Derive and verify historical visual-only overlay from actual new build
+        run: node scripts/prepare-inkwave-wiper-current-overlay.mjs work/source work/site work/overlay
+      - name: Capture only the first live full-frame views before long capture
+        run: |
+          for variant in A B; do
+            timeout 20m node scripts/check-inkwave-wiper-plane-native.mjs work/site work/source work/overlay work/visibility/$variant $variant s3-saber-heavy charged --visibility-probe
+          done
+          node scripts/check-inkwave-wiper-visibility-pair.mjs work/site work/source work/overlay work/visibility
+      - name: Capture continuous Dental pilot only after strict visibility admission
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_capture == true }}
+        run: |
+          for variant in A B; do
+            timeout 35m node scripts/check-inkwave-wiper-plane-native.mjs work/site work/source work/overlay work/full/s3-saber-heavy-charged-$variant $variant s3-saber-heavy charged --dental-pilot
+          done
+          node scripts/check-inkwave-wiper-plane-paired.mjs work/site work/source work/overlay work/full --compare-dental-only
+      - name: Verify unchanged native controls after Dental pair admission
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_capture == true }}
+        run: node scripts/check-inkwave-wiper-plane-paired.mjs work/site work/source work/overlay work/controls --controls-only
+      - name: Preserve fresh receipts and original full frames including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wiper-current-c0938a3-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            work/site/inkwave-build.json
+            work/overlay/
+            work/visibility/
+            work/full/
+            work/controls/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Preserve route identity separately from native source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wiper-lifecycle-diagnostic-route-identity-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .diagnostic-route/evidence/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+

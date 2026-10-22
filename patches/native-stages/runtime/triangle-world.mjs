@@ -78,6 +78,14 @@ export class TriangleWorld {
   }
   } finally {this._releaseStack(stack);}
  }
+ // A scalar, conservative precheck only; queryBox's public candidate order is unchanged.
+ triangleOverlapsBounds(id,x0,y0,z0,x1,y1,z1){
+  if(!Number.isFinite(x0+y0+z0+x1+y1+z1))return true;
+  const a=this.triangles,i=id*9;
+  return !(Math.min(a[i],a[i+3],a[i+6])>x1||Math.max(a[i],a[i+3],a[i+6])<x0||
+   Math.min(a[i+1],a[i+4],a[i+7])>y1||Math.max(a[i+1],a[i+4],a[i+7])<y0||
+   Math.min(a[i+2],a[i+5],a[i+8])>z1||Math.max(a[i+2],a[i+5],a[i+8])<z0);
+ }
  /** Continuous sphere contact with unchanged source faces, edges and vertices.
   * Each feature yields a linear/quadratic earliest entry, including a linearly
   * changing radius. The BVH and contact/material selection stay authoritative. */
@@ -87,29 +95,30 @@ export class TriangleWorld {
   delta.subVectors(to,from);const lengthSquared=delta.lengthSq(),length=Math.sqrt(lengthSquared);
   const maxRadius=Math.max(radius,endRadius),change=endRadius-radius;
   box.min.copy(from).min(to).addScalar(-maxRadius-1e-9);box.max.copy(from).max(to).addScalar(maxRadius+1e-9);
-  let best=Infinity,bestReference=null,result=null;this.queryCount++;
+  let best=Infinity,bestReference=null,bestTriangle=-1,bestTime=0,px=0,py=0,pz=0,nx=0,ny=0,nz=0;this.queryCount++;
   this.queryBox(box.min,box.max,id=>{
    if(ignoreGrates&&(this.flags[id]&4))return;
+   if(!this.triangleOverlapsBounds(id,box.min.x,box.min.y,box.min.z,box.max.x,box.max.y,box.max.z))return;
    const tri=this.triangle(id);this.triangleTests++;
-   let time=sphereTriangleEntry(tri,from,delta,radius,change,probe,normal);
+   let time=sphereTriangleEntry(tri,from,delta,radius,change,probe,normal,lengthSquared);
    if(time===Infinity)return;
    const analyticTime=time;
-   if(result&&Math.abs(time-best)<=1e-9){
+   if(bestTriangle>=0&&Math.abs(time-best)<=1e-9){
     // Original distance searches quantise almost simultaneous source contacts.
     // Preserve their selected triangle/material only for these ambiguous hits;
     // far-away candidates never incur the old per-triangle search cost.
-    if(bestReference===null)bestReference=this._sphereDistanceEntry(from,to,delta,radius,change,this.triangle(result.triangle),probe);
+    if(bestReference===null)bestReference=this._sphereDistanceEntry(from,to,delta,radius,change,this.triangle(bestTriangle),probe);
     const reference=this._sphereDistanceEntry(from,to,delta,radius,change,this.triangle(id),probe);
-    if(reference===Infinity||reference>bestReference||reference===bestReference&&id>result.triangle)return;
+    if(reference===Infinity||reference>bestReference||reference===bestReference&&id>bestTriangle)return;
     time=reference;bestReference=reference;
    }else {if(time>best)return;bestReference=null;}
    probe.copy(from).addScaledVector(delta,time);this._capsuleDistance(probe,probe,this.triangle(id));
    normal.subVectors(probe,this._bestp);
    if(normal.lengthSq()<1e-20){normal.fromArray(this.normals,id*3);if(normal.dot(delta)>0)normal.negate();}
    else normal.normalize();
-   best=analyticTime;result={triangle:id,time,distance:time*length,point:this._bestp.clone(),normal:normal.clone(),flags:this.flags[id],object:this.objectIds[id]};
+   best=analyticTime;bestTriangle=id;bestTime=time;px=this._bestp.x;py=this._bestp.y;pz=this._bestp.z;nx=normal.x;ny=normal.y;nz=normal.z;
   });
-  return result;
+  return bestTriangle<0?null:{triangle:bestTriangle,time:bestTime,distance:bestTime*length,point:new THREE.Vector3(px,py,pz),normal:new THREE.Vector3(nx,ny,nz),flags:this.flags[bestTriangle],object:this.objectIds[bestTriangle]};
  }
  // The previous source entry equation is retained solely to resolve
  // sub-nanosegment contact ordering, with its original brackets/iterations.
@@ -149,7 +158,21 @@ export class TriangleWorld {
   }
   outP.copy(a).addScaledVector(u,s);outQ.copy(c).addScaledVector(v,t);return outP.distanceToSquared(outQ);
  }
+ _pointTriangleDistance(point,tri){
+  const bp=this._bestp,bs=this._bests,cp=this._cp,sp=this._sp,v=this._v,w=this._w;
+  tri.closestPointToPoint(point,cp);let best=cp.distanceToSquared(point);bp.copy(cp);bs.copy(point);
+  // Match the original degenerate-segment edge formula and its rounding,
+  // rather than replacing it with the Triangle helper's different tie path.
+  for(let i=0;i<3;i++){
+   const a=i===0?tri.a:i===1?tri.b:tri.c,b=i===0?tri.b:i===1?tri.c:tri.a;
+   v.subVectors(b,a);w.subVectors(point,a);const C=v.dot(v),E=v.dot(w),t=clamp(E/(C||1),0,1);
+   sp.set(point.x+0,point.y+0,point.z+0);cp.copy(a).addScaledVector(v,t);
+   const ds=sp.distanceToSquared(cp);if(ds<best){best=ds;bp.copy(cp);bs.copy(sp);}
+  }
+  return Math.sqrt(best);
+ }
  _capsuleDistance(s0,s1,tri){
+  if(s0===s1)return this._pointTriangleDistance(s0,tri);
   const bp=this._bestp,bs=this._bests,cp=this._cp,sp=this._sp;
   tri.closestPointToPoint(s0,cp);let best=cp.distanceToSquared(s0);bp.copy(cp);bs.copy(s0);
   tri.closestPointToPoint(s1,cp);let ds=cp.distanceToSquared(s1);if(ds<best){best=ds;bp.copy(cp);bs.copy(s1);}

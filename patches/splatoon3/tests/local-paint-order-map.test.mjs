@@ -4,10 +4,11 @@ import { installIssue264PaintOwnership as oldInstall } from './fixtures/paint-pi
 import { installIssue264PaintOwnership as install } from '../runtime/paint-ownership.mjs';
 const contract={kind:{speck:7},shapes:[],reach:[],dripReach:4};
 function make(fn){class Paint{ splat(){} flush(){} _emitGrowth(){} }fn(Paint,contract);const p=new Paint();p.grid=new Uint8Array(16);return p;}
-test('local IDs and order precedence retain exact records without unused local map entries',()=>{
+test('local IDs and order precedence retain exact metadata without unused local objects/map entries',()=>{
  const a=make(oldInstall),b=make(install);
  for(let i=0;i<10000;i++){assert.equal(b._paintOrderId(),a._paintOrderId());if(i%7===0){const o={clock:i,peer:'a',seq:i+1};assert.equal(b._paintOrderId(o),a._paintOrderId(o));assert.equal(b._paintOrderId(o),a._paintOrderId(o));}}
- assert.deepEqual(b._paintOrderRecords,a._paintOrderRecords);
+ assert.deepEqual(b._paintOrderRecords.map(r=>typeof r==='number'?{local:true,seq:r,legacy:false}:r),a._paintOrderRecords);
+ assert.equal(b._paintOrderRecords.filter(r=>typeof r==='number').length,10000,'local metadata is packed as numeric sequences');
  assert.equal(a._paintOrderIds.size-b._paintOrderIds.size,10000);
  assert.equal([...b._paintOrderIds.keys()].some(k=>k.startsWith('local:')),false);
  for(let i=1;i<b._paintOrderRecords.length;i+=97)for(let j=1;j<b._paintOrderRecords.length;j+=113)assert.equal(b._paintOrderComesAfter(i,j),a._paintOrderComesAfter(i,j));
