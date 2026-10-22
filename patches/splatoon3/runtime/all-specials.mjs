@@ -30,6 +30,7 @@ import { activeSpecialGaugeState, syncActiveSpecialGauge, startActiveSpecialGaug
 import { kitTrizookaSteppedBands } from './trizooka-collision.mjs';
 import { configureCrabProjectile, paintCrabFlight, crabShooterDamage, withCrabImpactPaint, startCrabWallDrop } from './crab-tank-projectile.mjs';
 import { CRAB_TANK_RIG, crabTankShotGeometry } from './crab-tank-aim.mjs';
+import { SPECIAL_DEVICES } from './special-presentation.mjs';
 import { updateCrabSplashVisuals, clearCrabSplashVisuals } from './crab-tank-splash-visual.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.all-specials.install.v1');
@@ -1094,11 +1095,40 @@ function launchMissileStep(rt, actor, state) {
   }else state.nextMissileAt+=4/FPS;
   return true;
 }
+// Inkjet aim: the round leaves the held Inkjet cannon (the presentation
+// device mount, kid space) and must travel to the reticle point. The
+// direction is taken from that same launch point; aimDirection() measured
+// from the feet while the round left the chest, a parallel 1.05 WU offset
+// that put every shot above the reticle. A cannon mount inside geometry
+// (hugging a wall) falls back to the chest, as the main-weapon muzzle does. 11.3.0 WeaponSpJetpack gives the launcher only MoveParam.Distance=30
+// and no player-velocity addition (SpawnBulletAdditionMovePlayerParam rates 0);
+// the round is a Blaster-type straight shot that bursts at that range or on
+// contact. Its speed is not in the table: 21 WU/s is the existing INKWAVE
+// calibration, kept unchanged.
+export const INKJET_RANGE=30, INKJET_SPEED=21;
+const INKJET_CANNON=SPECIAL_DEVICES.inkjet.find(device=>device.aim).pos;
+export function inkjetLaunchOrigin(rt,actor,out) {
+  const [x,y,z]=INKJET_CANNON,yaw=actor.yaw||0,c=Math.cos(yaw),s=Math.sin(yaw);
+  out.set(actor.pos.x+x*c+z*s,actor.pos.y+y,actor.pos.z-x*s+z*c);
+  const physics=rt.api.G.physics,chest=rt.v3.set(actor.pos.x,actor.pos.y+1.05,actor.pos.z);
+  if(typeof physics?.los==='function'&&!physics.los(chest,out))out.copy(chest);
+  return out;
+}
+export function inkjetLaunchDirection(actor,origin,out) {
+  const target=actor.aimPoint;
+  out.set(0,0,0);
+  if(target&&finite(target.x)&&finite(target.y)&&finite(target.z))out.copy(target).sub(origin);
+  // A reticle point inside the body or behind the view keeps the camera ray.
+  if(out.lengthSq()<4||(actor.aimDir&&out.dot(actor.aimDir)<0))out.copy(actor.aimDir||out);
+  if(out.lengthSq()<1e-9)out.set(Math.sin(actor.aimYaw||0),0,Math.cos(actor.aimYaw||0));
+  return out.normalize();
+}
 function launchInkjet(rt,actor,state) {
-  const origin=rt.v0.set(actor.pos.x,actor.pos.y+1.05,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
-  launch(rt,actor,'inkjet',origin,dir,{speed:21,grav:13,drag:.06,life:1.55,arc:.3,seed:nextSeed(state),size:.24,
+  const origin=inkjetLaunchOrigin(rt,actor,rt.v0).clone(),dir=inkjetLaunchDirection(actor,origin,rt.v1);
+  launch(rt,actor,'inkjet',origin,dir,{speed:INKJET_SPEED,grav:0,drag:0,straight:INKJET_RANGE/INKJET_SPEED+1,
+    life:INKJET_RANGE/INKJET_SPEED,seed:nextSeed(state),size:.24,
     paintRadius:gearCurve(state.specialPowerAP,3.2,3.6,4)});
-  emitAction(rt,actor,'inkjet',state.serial,'shot',origin,rt.v2.copy(origin).addScaledVector(dir,20),nextSeed(state));
+  emitAction(rt,actor,'inkjet',state.serial,'shot',origin,rt.v2.copy(origin).addScaledVector(dir,INKJET_RANGE),nextSeed(state));
 }
 function throwBooyah(rt,actor,state,charge) {
   const origin=rt.v0.set(actor.pos.x,actor.pos.y+1.2,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
