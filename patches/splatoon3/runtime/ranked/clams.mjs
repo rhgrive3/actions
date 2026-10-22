@@ -320,7 +320,10 @@ export class ClamsRule {
 
   removeActor(id) {
     const team = this.state.actorTeams[id] ?? this.state.inventories[id]?.team;
-    this._dropInventory(id, this.state.actorPositions[id], team);
+    // Match removal and peer departure run outside rule.update(). Reuse the
+    // last authoritative frame's live floor query, just like a death drop;
+    // otherwise a disconnected holder creates grounded clams over a void.
+    this._dropInventory(id, this.state.actorPositions[id], team, this.engine?.frame);
     delete this.state.inventories[id];
     delete this.state.actorPositions[id];
     delete this.state.actorTeams[id];

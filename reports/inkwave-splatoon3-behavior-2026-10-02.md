@@ -5835,3 +5835,8 @@ CPU回帰の成功は物理GPU/実機性能の受け入れではない。Splatoo
 
 
 最終確認: runtime `df83a5c4265a9c8738d930dabaffb43cd31ae902` / build contentHash `7b0b597f308f86d2d9607e2a5e0e5f122fa7e0a7435810512039de7014565533` の総合active browserが成功した。65 canonical kit、14 defaults、装備12select、実キーボード移動・接地・射撃/塗り、20Hz時の3秒進行、finite velocity、752 responseの同一性とpage errors 0を確認した。実music Workerの作成元・97-byte body/hash・cleanupを含むnative試験7件、過去の固定gate20件、追加source admission24件も通過した。これはChromium 153 / SwiftShaderでの公開版の回帰確認であり、物理端末FPSやSwitch実機・完了動画の受け入れではない。GitHub上のCI待機は別に残る。
+
+
+### 2026-10-22 ガチアサリの切断・Actor除去時の水中残留
+
+Splatoon 3 Ver.11.3.0のガチアサリを比較対象に、所持者の除去が床問い合わせを欠いたまま所持品を接地扱いにする不具合を修正した。水没位置で最後のガチアサリが残り、延長戦を約10秒継続させる制御再現を確認。最後のauthoritative frameの床問い合わせを通常の落下所有者へ渡し、30/60/120Hz・両チームで次のルール更新の消滅・終了を確認した。陸上・低い足場・空中・重複除去・snapshot引き継ぎと実NetMatch.onLeaveを含む新規10件、既存57件、本番ビルド、実minify出力のChromiumルールfixture24条件が成功。通常起動ゲームの描画・実relay通信・Switchでの切断規則一致は未確認。根拠・再現・制約は [専用記録](inkwave-clam-removal-support-2026-10-22.md)。
