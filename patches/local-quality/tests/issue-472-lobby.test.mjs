@@ -25,7 +25,20 @@ test('touch maps every raw quality to native LOW; desktop passes through nativel
   assert.match(lobby, /low:\s*\{\s*refl:\s*0,\s*shadow:\s*1024/);
   // Native LOW reflection fallback is the env map (no nested scene render).
   assert.match(lobby, /if \(this\._inRefl \|\| !this\.Q\.refl\) return;/);
-  assert.match(lobby, /if \(!this\.Q\.refl\) this\.mats\.ground\.userData\.refl\.on\.value = 0;/);
+  const quality = lobby.match(/const QUALITY = (\{[\s\S]*?\n\});/);
+  const start = lobby.indexOf('  setQuality(q) {'), end = lobby.indexOf('  stats() {', start);
+  assert.ok(quality && start > 0 && end > start, 'exercise the actual LOW quality method');
+  const setQuality = new Function('QUALITY', 'return function ' + lobby.slice(start, end))(new Function('return ' + quality[1])());
+  const refl = { on: { value: 1 }, tex: { value: {} } };
+  let disposed = 0;
+  const instance = { mats: { ground: { userData: { refl } } },
+    lights: { key: { shadow: { mapSize: { x: 1024 }, map: null } }, vend: {}, sweep: {} },
+    steam: {}, _rRT: { dispose() { disposed++; } } };
+  setQuality.call(instance, 'low');
+  assert.equal(refl.on.value, 0, 'native LOW must disable reflection sampling');
+  assert.equal(refl.tex.value, null, 'native LOW releases the unused sampler');
+  assert.equal(disposed, 1);
+  assert.equal(instance._rRT, null);
 });
 
 test('lobby shadow cadence: LOW 1/3 frames, desktop HIGH/MEDIUM every frame', () => {
