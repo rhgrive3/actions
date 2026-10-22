@@ -32,6 +32,8 @@ import { dashTurnBreakActive } from './movement-physics.mjs';
 import { reverseShotRelease } from './shooter-movement.mjs';
 import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale, catalogBubbleSurfaceNormalY, catalogBubbleLimitGroundNormalSpeed } from './projectile-presentation.mjs';
 import { resetBloblobberYawSweep, sampleBloblobberWindupYaw, bloblobberSweepOffset } from './bloblobber-launch-sweep.mjs';
+import { catalogRollerSourcePitch, catalogUnitYawBase, catalogSlosherYawScatter,
+  catalogSlosherHasSweptAim, catalogBrushNearestDue } from './catalog-source-launch.mjs';
 import { installS3ProjectileShapes } from './s3-projectile-shapes.mjs';
 import { installCatalogPoseBirth } from './catalog-pose-birth.mjs';
 import { addedFamilySplash, brellaSplashPlan, collectBrellaSplashes } from './added-family-paint.mjs';
@@ -794,13 +796,19 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // when the shared aimPoint is stale, occluded, or on nearby geometry.
     // Native Sloshers already use aimDir for their launch/shot-guide owner.
     // Retain the collision-safe muzzle and each unit's explicit rotation.
-    if(key==='slosh'&&a.aimDir?.lengthSq()>EPS)
+    // The native Roller owner, like Slosher, uses the admitted camera pitch.
+    // Holding a stale/nearby world aimPoint must not flatten down-45° flicks.
+    // Keep explicit per-unit pitch/yaw offsets below, and the safe muzzle.
+    if((key==='slosh'||key==='horizontal'||key==='vertical'||key==='brush')&&
+       a.aimDir?.lengthSq()>EPS)
       direction.copy(a.aimDir).normalize();
     // Mirrors the mature S3 Slosher cumulative firing-interval sweep:
     // the later Bloblobber bubbles are born 5F apart, but their four yaw
     // headings are resolved at admission from the last windup sample.
     // A post-release camera turn must not re-aim already committed bubbles.
+    const hasSlosherSweep=key==='slosh'&&catalogSlosherHasSweptAim(weaponParam(r),r.sourceActor);
     let blobSweepOrder=0,blobSweepFrames=0;
+    const brushLeftToRight=key==='brush' && (s.swingCount%2===1);
     group.Unit.forEach((u,j)=> {
       const desc=mode(r,key,j,charge), count=finite(u.BulletNum,1);
       for(let i=0;i<count;i++) {
@@ -815,7 +823,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const fan=r.family==='roller'&&key==='horizontal'
           ? rollerSpeedSwerveDegrees(u,i,count,sampledSpeed)
           : (count===1?0:lerp(-finite(u.SpawnWideDegree,0)/2,finite(u.SpawnWideDegree,0)/2,i/(count-1)));
-        if(r.sourceActor==='WeaponSlosherBathtub'){
+        if(hasSlosherSweep){
           if(blobSweepOrder>0)blobSweepFrames+=finite(u.AfterOffsetDelayFrame,0);
           blobSweepOrder++;
         }
@@ -824,12 +832,16 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         // Bloblobber overrides it to 0.3; other sourced Sloshers keep the
         // existing native policy. The 10-degree per-tick upper bound is
         // applied to the raw camera step before this actor-specific rate.
-        const yaw=finite(u.BaseRotateYDegree,0)+fan+
-          (r.sourceActor==='WeaponSlosherBathtub'
+        const yaw=catalogUnitYawBase(u,key,i,brushLeftToRight)+fan+
+          (hasSlosherSweep
             ?bloblobberSweepOffset(s.bloblobberYawStep,blobSweepFrames,
               finite(weaponParam(r).FrameOffsetDegreeRate,1),
-              finite(weaponParam(r).FrameOffsetMaxDegree,10))/RAD:0);
-        const aim=angle(direction,yaw,finite(u.SpawnRotateXDegree,finite(u.SpawnRotateXDegreeBase,0)));
+              finite(weaponParam(r).FrameOffsetMaxDegree,10))/RAD:0)+
+          (key==='slosh'?catalogSlosherYawScatter(u,i):0);
+        const pitch=key==='vertical'
+          ?catalogRollerSourcePitch(u,i,true)
+          :finite(u.SpawnRotateXDegree,finite(u.SpawnRotateXDegreeBase,0));
+        const aim=angle(direction,yaw,pitch);
         const d={...desc,index:i};
         const sourceLiftRate=finite(u.AddSpawnSpeedYRateByXZ,finite(u.AddSpawnSpeedYRateBySpeed,0));
         // S3 AddSpawnSpeedYRateByXZ scales the HORIZONTAL launch component.
@@ -857,13 +869,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
     });
     if(r.family==='roller'&&(key==='vertical'||key==='horizontal'))paintCatalogRollerNearest(a,group);
-    // Bloblobber's pinned 11.3.0 NearestParam owns a separate foot-paint
-    // release stamp (width 2.2, depth 1.2), not a damage collider. Added
-    // catalog Sloshers previously skipped it entirely. Reuse the existing
-    // native Slosher paint owner: deterministic seed, no remote authority,
-    // grounded-only admission and zero projectile/RNG side effects.
-    if(r.sourceActor==='WeaponSlosherBathtub')
-      paintSlosherNearest(G,a,r.parameters,1,s.bloblobberNearestSerial=(s.bloblobberNearestSerial||0)+1);
+    if(key==='brush')paintCatalogBrushNearest(a,group,s.brushNearestOrdinal);
+    // Every added Slosher owns independent NearestParam ground paint in
+    // 11.3.0, not just Bloblobber. The native Slosher owner already validates
+    // paint-only radius, depth, authority and grounded state.
+    if(key==='slosh'&&r.parameters.NearestParam)
+      paintSlosherNearest(G,a,r.parameters,1,s.slosherNearestSerial=(s.slosherNearestSerial||0)+1);
     notify(a,r,at,direction,charge);
   }
   // Added Rollers (Dynamo, Carbon, Flingza, Big Swig) used to paint only where
@@ -876,6 +887,18 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     try{spec=rollerVerticalPaintSpec(group,1,1);}catch{return;}
     p.catalog.rollerFlight={spec,distance:0,index:0,last:p.pos.clone(),sample:p.pos.clone(),
       direction:p.pos.clone(),wallSplash:null};
+  }
+  function paintCatalogBrushNearest(a,group,serial) {
+    if(!catalogBrushNearestDue(group,serial)||a.remote||a.alive===false||a.grounded===false)return;
+    const n=group.SplashNearestParam.SpawnParam,o=n?.Offset;
+    if(!(n?.PaintWidthHalf>0)||!o||![o.X,o.Y,o.Z].every(Number.isFinite))return;
+    const yaw=a.yaw,fx=Math.sin(yaw),fz=Math.cos(yaw),rx=Math.cos(yaw),rz=-fx;
+    // The source's offset is yaw-local; begin a short query just above the
+    // player's grounded feet. No fabricated turf under airborne flicks.
+    base.set(a.pos.x+rx*o.X+fx*o.Z,a.pos.y+.25,a.pos.z+rz*o.X+fz*o.Z);
+    const h=G.physics.raycast(base,down,Math.abs(o.Y)+.5,floorHit,true);
+    if(h.hit&&h.normal.y>=.5)
+      paint(a,h.point,n.PaintWidthHalf,finite(n.PaintDepthScale,1),null,h.face,mainInkFootprint(a.weapon));
   }
   function paintCatalogRollerNearest(a,group) {
     const n=group?.SplashNearestParam?.SpawnParam,o=n?.Offset;
@@ -1649,6 +1672,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         // must not unlock a 1F follow-up immediately when that first shot emits.
         runner.cooldown=(brush?windup+communityRepeat-(s.swingCount===0?1:0)-1:windup+finite(t.PostDelayFrame,21))/HZ;
         runner.rolling=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;s.swingCount++;
+        if(brush)s.brushNearestOrdinal=(s.brushNearestOrdinal||0)+1;
       }
     }else if(input.fire&&a.grounded&&!s.pending&&runner.cooldown<=EPS){runner.rolling=true;rolling(runner,r,dt);}
     else {runner.rolling=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;}
@@ -1657,7 +1681,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(!input.fire||runner.cooldown>EPS||s.pending)return;
     const a=runner.a,t=weaponParam(r);
     if(pay(runner,finite(t.InkConsume,.076)*100*inkMod(runner.a))) {
-      if(r.sourceActor==='WeaponSlosherBathtub')resetBloblobberYawSweep(s);
+      if(catalogSlosherHasSweptAim(t,r.sourceActor))resetBloblobberYawSweep(s);
       beginPending(s,finite(t.SwingLiftFrame,12),()=>{emitUnits(runner,r,'slosh');runner.firingT=.35;});
       // The source-funded SwingLiftFrame also owns the original Slosher heave.
       runner.slosh=0;runner.firingT=.35;a.fireFacing=.5;
@@ -1961,6 +1985,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // existing recovery. Its preparation starts once that same clock expires.
     if(input.sub&&!throwBlocked||a.specialActive||a.superJumpState||!a.alive||r.family==='dualies'&&a.form==='squid'||r.family==='brella'&&a.form!=='kid')cancel(this);
     if(r.family==='splatana'&&a.form!=='kid'&&(s.pending||s.melee||s.lunge))cancel(this);
+    if(r.family==='brush'){
+      // Wiki: the foot-paint phase restarts after about 40F without a flick.
+      if(input.fire||s.pending)s.brushNearestIdle=0;
+      else if((s.brushNearestIdle=(s.brushNearestIdle||0)+dt*HZ)>40)
+        s.brushNearestOrdinal=0;
+    }
     // Rebuild/cure belong to elapsed weapon life, including squid form and
     // sub/special use. Previously both clocks lived behind the kid/fire gate.
     if(r.family==='brella'&&Number.isFinite(dt)&&dt>0&&!a.remote&&a.alive){
@@ -2014,11 +2044,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // Snapshot the latest 60Hz aim delta while the admitted Bloblobber
     // swing winds up. This is the same input sample used by native Sloshers;
     // only the later bubble yaw offsets depend on it.
-    if(r.sourceActor==='WeaponSlosherBathtub'&&s.pending)
+    if(r.family==='slosher'&&s.pending&&catalogSlosherHasSweptAim(weaponParam(r),r.sourceActor))
       sampleBloblobberWindupYaw(s,a.aimDir);
     if(s.pending){s.pending.remaining-=dt;if(s.pending.remaining<=EPS){
       const pending=s.pending;s.pending=null;pending.fire();
-      if(r.sourceActor==='WeaponSlosherBathtub')resetBloblobberYawSweep(s);
+      if(r.family==='slosher'&&catalogSlosherHasSweptAim(weaponParam(r),r.sourceActor))
+        resetBloblobberYawSweep(s);
     }}
     if(r.family==='slosher')this.slosh=s.pending?Math.max(0,a.weapon.windup-s.pending.remaining):-1;
     if(a.form!=='kid'||input.sub||this.aimingSub){
