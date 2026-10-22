@@ -1,0 +1,161 @@
+{
+  "scope": "Immutable shared candidate build 8c108a; actual source pose/Actor/FX/Physics/WebGL diagnostic draws, not isolated publication build",
+  "receipts": [
+    {
+      "name": "pose-lip-matrix",
+      "path": ".browser-evidence/continuation-weapons/pose-lip-matrix/result.json",
+      "sha256": "0ef176f850e76018159589e618bd2e8b35d12088f847b4eb7db98b24aa5a7e7c",
+      "status": "passed",
+      "invocationExitCode": 0,
+      "contentHash": "8c108a1c65f8c22912494a2cdb030a64037f300120f1ea04c5849b68c9575864",
+      "inputHash": "8a795a368163dca31773d6bbf3422faa73ed8e99f8b5c9e9cdb317b8e58a61cf",
+      "scriptSha256": "e0223a2e7fa1d41d73efb4807c59909fa708e35bb0d850d4f45ac4e80edc1752",
+      "plan": {
+        "ids": [
+          "s3-maneuver-stepper",
+          "s3-slosher-washtub"
+        ],
+        "rates": [
+          30,
+          60,
+          120
+        ],
+        "pitches": [
+          -45,
+          0,
+          40
+        ],
+        "walls": [
+          "open",
+          "wall"
+        ],
+        "swing": "horizontal",
+        "reticle": "aligned",
+        "renderPolicy": "diagnostic",
+        "stage": "synthetic"
+      },
+      "cases": 36,
+      "fixedTicks": 4320,
+      "births": 288,
+      "actualWebglDraws": 144,
+      "images": 72,
+      "allSourceReadyActive": true,
+      "maxGlError": 0,
+      "nativeSphereInstancesChecked": 12,
+      "maxNativeSphereError": 1.0190721489362014e-07,
+      "caseDurationMsTotal": 52967.199999999255,
+      "observation": "Quad native-volume back was not yet fixed/observed in this pre-final candidate. No projectile history samples were owned by either Quad native volume or Explosher native sphere; null means unobserved, not zero error."
+    },
+    {
+      "name": "flick-tidewater-horizontal",
+      "path": ".browser-evidence/continuation-weapons/flick-tidewater-horizontal/result.json",
+      "sha256": "3e415ecf488850b673d6348e6015ec5b81743e1060ed0a41cd9d30547006be47",
+      "status": "passed",
+      "invocationExitCode": 0,
+      "contentHash": "8c108a1c65f8c22912494a2cdb030a64037f300120f1ea04c5849b68c9575864",
+      "inputHash": "8a795a368163dca31773d6bbf3422faa73ed8e99f8b5c9e9cdb317b8e58a61cf",
+      "scriptSha256": "e0223a2e7fa1d41d73efb4807c59909fa708e35bb0d850d4f45ac4e80edc1752",
+      "plan": {
+        "ids": [
+          "roller",
+          "s3-roller-compact",
+          "s3-roller-heavy",
+          "s3-roller-hunter",
+          "s3-roller-wide",
+          "s3-brush-mini",
+          "s3-brush-normal",
+          "s3-brush-heavy"
+        ],
+        "rates": [
+          30,
+          60,
+          120
+        ],
+        "pitches": [
+          -45
+        ],
+        "walls": [
+          "open",
+          "wall"
+        ],
+        "swing": "horizontal",
+        "reticle": "stale",
+        "renderPolicy": "diagnostic",
+        "stage": "tidewater"
+      },
+      "cases": 48,
+      "fixedTicks": 5760,
+      "births": 618,
+      "actualWebglDraws": 162,
+      "images": 66,
+      "allSourceReadyActive": true,
+      "maxGlError": 0,
+      "nativeSphereInstancesChecked": 0,
+      "maxNativeSphereError": 0,
+      "caseDurationMsTotal": 55730.20000000112,
+      "observation": "Quad native-volume back was not yet fixed/observed in this pre-final candidate. No projectile history samples were owned by either Quad native volume or Explosher native sphere; null means unobserved, not zero error."
+    },
+    {
+      "name": "flick-tidewater-vertical",
+      "path": ".browser-evidence/continuation-weapons/flick-tidewater-vertical/result.json",
+      "sha256": "44d8348f0028640933ae9b1e3c8bb542aa4761e01628909291388c9df9039ece",
+      "status": "passed",
+      "invocationExitCode": 0,
+      "contentHash": "8c108a1c65f8c22912494a2cdb030a64037f300120f1ea04c5849b68c9575864",
+      "inputHash": "8a795a368163dca31773d6bbf3422faa73ed8e99f8b5c9e9cdb317b8e58a61cf",
+      "scriptSha256": "e0223a2e7fa1d41d73efb4807c59909fa708e35bb0d850d4f45ac4e80edc1752",
+      "plan": {
+        "ids": [
+          "roller",
+          "s3-roller-compact",
+          "s3-roller-heavy",
+          "s3-roller-hunter",
+          "s3-roller-wide"
+        ],
+        "rates": [
+          30,
+          60,
+          120
+        ],
+        "pitches": [
+          -45
+        ],
+        "walls": [
+          "open",
+          "wall"
+        ],
+        "swing": "vertical",
+        "reticle": "stale",
+        "renderPolicy": "diagnostic",
+        "stage": "tidewater"
+      },
+      "cases": 30,
+      "fixedTicks": 3600,
+      "births": 228,
+      "actualWebglDraws": 90,
+      "images": 30,
+      "allSourceReadyActive": true,
+      "maxGlError": 0,
+      "nativeSphereInstancesChecked": 0,
+      "maxNativeSphereError": 0,
+      "caseDurationMsTotal": 31727.39999999851,
+      "observation": "Quad native-volume back was not yet fixed/observed in this pre-final candidate. No projectile history samples were owned by either Quad native volume or Explosher native sphere; null means unobserved, not zero error."
+    }
+  ],
+  "limits": [
+    "Every fixed simulation tick and cadence syncVisuals retained; only initial/first/steady/final actual draws.",
+    "Rollers admit one volley and one emission image phase; Brushes retain both actual repress strokes and first/steady images.",
+    "Tidewater uses unchanged MAP_LAYOUTS and Level.buildGeometry with disclosed plain material/lighting; no native Nintendo stage claim.",
+    "Renderer-owner correction and final isolated build proof are pending separately."
+  ],
+  "finalIsolatedBuildAcceptance": {
+    "receipt": "weapon-only-final-acceptance.json",
+    "contentHash": "d3d77b98076f1f1ca251c9c6968e1339bc648de1239720883e71204ec39bd718",
+    "inputHash": "84571b440d934b2d576c7699ae48c420d5aa9c83db5f8a6f217a03f1d45a452e",
+    "emittedPositiveTests": 5,
+    "pass": 5,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 42972.408676
+  }
+}

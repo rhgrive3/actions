@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "sourceCommit": "8285792d004c9d6bd9238db794e8b7ec498c7555",
+  "worktree": "/workspace/scratch/actions-weapons-stage-acceptance",
+  "site": ".built-site/weapons-931e4c4a",
+  "contentHash": "d3d77b98076f1f1ca251c9c6968e1339bc648de1239720883e71204ec39bd718",
+  "inputHash": "84571b440d934b2d576c7699ae48c420d5aa9c83db5f8a6f217a03f1d45a452e",
+  "manifestSha256": "7c41894bde7c596c91296262711ff0f2f41736add17be3c439d16f7ee033e998",
+  "sourceInputsChecked": 1362,
+  "artifactsChecked": 2016,
+  "mismatches": [],
+  "harnessSha256": "439f276a5048db8ed91ece5b78985fb332b56da9464eb8245608ccdfc6ef2ad5",
+  "harnessIsBuildInput": false,
+  "note": "Harness-only observer correction does not occur in the manifest input set; all application input bytes and every emitted artifact match the immutable build.",
+  "applicationSourceCommit": "931e4c4af71ecc48f6648828aee2dff16a30f5f3",
+  "publicApplicationSourceCommit": "8783eb8",
+  "publicHarnessQaCommit": "d92656c",
+  "publicHarnessQaTree": "7f41ef"
+}

@@ -1,0 +1,591 @@
+{
+  "reference": "Splatoon 3 11.3.0; KiTrix display source is not verified 11.3.0 native collision or units",
+  "scope": "private source-bound Urchin physical-only diagnostic, not rendered/retailed stage acceptance",
+  "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+  "sourceObjBytes": 64033907,
+  "sourceTree": "3ea9e36f296ab6f6b9c636abc1cc401ce1768f07",
+  "sourceSha256": "17f3c5645505f75d58b99d5333cb8d2f710e230a3278c18a64e47258c2ec942c",
+  "audit": {
+    "schema": 1,
+    "scope": "Urchin only; all other source meshes are outside this diagnostic",
+    "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "converterSha256": "9c83da6c0298a2ff2eec577d3f7c0c91ad5c89070e14dfebec38a08edd02d23f",
+    "status": "passed",
+    "stages": [
+      {
+        "id": "urchin",
+        "sourceSha256": "17f3c5645505f75d58b99d5333cb8d2f710e230a3278c18a64e47258c2ec942c",
+        "vertices": 534545,
+        "displayTriangles": 407073,
+        "activeTriangles": 202908,
+        "collisionTriangles": 196759,
+        "sourceDegenerateTriangles": 16,
+        "structuralGroundObjects": 3,
+        "bvhNodes": 33069,
+        "bvhLeaves": 16535,
+        "paintFaces": 56161,
+        "gridCells": 2573178,
+        "derivedFiles": {
+          "vertices.bin": {
+            "bytes": 17105440,
+            "sha256": "7205dcc6201080350bffb359de1eb92b5429b87c72950518d669b7d75cdd7dc9"
+          },
+          "indices.bin": {
+            "bytes": 4884876,
+            "sha256": "98e3678e175c10c5a6f021a01a6f946c3e669a444452ccb4792f7dc060717430"
+          },
+          "collision.bin": {
+            "bytes": 7083324,
+            "sha256": "f03ef98d58b5b07de58cfefcdd602df69478f6de4b34253789ef7bafd2727a2c"
+          },
+          "normals.bin": {
+            "bytes": 2361108,
+            "sha256": "19eadd578ac76a370f521f75ef6152362dda40c329fb41de64b57a56992672bc"
+          },
+          "flags.bin": {
+            "bytes": 787036,
+            "sha256": "441f63fdcd48f9c73ab07a8cf616ea7f217301f73969459573a2b3b0a937dc76"
+          },
+          "objects.bin": {
+            "bytes": 787036,
+            "sha256": "e99454a936b6f88db8b3d1352bb3552e8a684734b20449d2855c841fecad50c7"
+          },
+          "bvh.bin": {
+            "bytes": 1058208,
+            "sha256": "9f170c3b4573a936febf28dd464fd29e8c9051d031d7846f19d89c593a29738e"
+          },
+          "order.bin": {
+            "bytes": 787036,
+            "sha256": "459d3ec8b74000a8091fd9e0fc1e509b73d8b70e9bbcb1024a9e732b5dd002ec"
+          },
+          "triangleFace.bin": {
+            "bytes": 787036,
+            "sha256": "b370b60a83701abfec852a9a9dd8a1b71047327af7ad1d2d17fee7a11fba977b"
+          },
+          "mask.bin": {
+            "bytes": 2573178,
+            "sha256": "7f64c14599a45e99a817a2a5a5e57a2ebc44a9a38ef39ef22534ed81cbe5d54b"
+          },
+          "manifest.json": {
+            "bytes": 29679904,
+            "sha256": "124c8d240bc37199814975db023554e0a043170b206a1ce707971c3a8e4c490d"
+          }
+        },
+        "sourceGeometrySha256": "7205dcc6201080350bffb359de1eb92b5429b87c72950518d669b7d75cdd7dc9",
+        "sourceIndexSha256": "98e3678e175c10c5a6f021a01a6f946c3e669a444452ccb4792f7dc060717430",
+        "conversionAndAuditMilliseconds": 4125.156621
+      }
+    ]
+  },
+  "prepareLog": ".ci-scratch/continuation-weapons/urchin-prepare.log",
+  "canonicalTest": {
+    "command": "INKWAVE_NATIVE_STAGE_ASSETS=/workspace/actions/.codex-stage-sources/continuation-weapons/physics-only timeout --kill-after=5s 150s flock -n .ci-scratch/native-stage-cpu-heavy.lock node --max-old-space-size=1536 --experimental-vm-modules --test --test-reporter=tap --test-concurrency=1 patches/native-stages/tests/native-arena-basis.test.mjs",
+    "tests": 3,
+    "pass": 3,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 19272.629555,
+    "conditions": 60,
+    "log": ".ci-scratch/continuation-weapons/urchin-native-arena-final.tap"
+  },
+  "cases": [
+    {
+      "team": 0,
+      "hz": 30,
+      "opening": true,
+      "slot": -1,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 30,
+      "opening": true,
+      "slot": 0,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 30,
+      "opening": true,
+      "slot": 1,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 30,
+      "opening": true,
+      "slot": 2,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 30,
+      "opening": true,
+      "slot": 3,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 30,
+      "opening": false,
+      "slot": -1,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 30,
+      "opening": false,
+      "slot": 0,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 30,
+      "opening": false,
+      "slot": 1,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 30,
+      "opening": false,
+      "slot": 2,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 30,
+      "opening": false,
+      "slot": 3,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 60,
+      "opening": true,
+      "slot": -1,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 60,
+      "opening": true,
+      "slot": 0,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 60,
+      "opening": true,
+      "slot": 1,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 60,
+      "opening": true,
+      "slot": 2,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 60,
+      "opening": true,
+      "slot": 3,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 60,
+      "opening": false,
+      "slot": -1,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 60,
+      "opening": false,
+      "slot": 0,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 60,
+      "opening": false,
+      "slot": 1,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 60,
+      "opening": false,
+      "slot": 2,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 60,
+      "opening": false,
+      "slot": 3,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 120,
+      "opening": true,
+      "slot": -1,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 120,
+      "opening": true,
+      "slot": 0,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 120,
+      "opening": true,
+      "slot": 1,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 120,
+      "opening": true,
+      "slot": 2,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 120,
+      "opening": true,
+      "slot": 3,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 120,
+      "opening": false,
+      "slot": -1,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 120,
+      "opening": false,
+      "slot": 0,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 120,
+      "opening": false,
+      "slot": 1,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 120,
+      "opening": false,
+      "slot": 2,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 0,
+      "hz": 120,
+      "opening": false,
+      "slot": 3,
+      "yaw": -1.3521273809209546,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 30,
+      "opening": true,
+      "slot": -1,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 30,
+      "opening": true,
+      "slot": 0,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 30,
+      "opening": true,
+      "slot": 1,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 30,
+      "opening": true,
+      "slot": 2,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 30,
+      "opening": true,
+      "slot": 3,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 30,
+      "opening": false,
+      "slot": -1,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 30,
+      "opening": false,
+      "slot": 0,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 30,
+      "opening": false,
+      "slot": 1,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 30,
+      "opening": false,
+      "slot": 2,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 30,
+      "opening": false,
+      "slot": 3,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 60,
+      "opening": true,
+      "slot": -1,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 60,
+      "opening": true,
+      "slot": 0,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 60,
+      "opening": true,
+      "slot": 1,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 60,
+      "opening": true,
+      "slot": 2,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 60,
+      "opening": true,
+      "slot": 3,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 60,
+      "opening": false,
+      "slot": -1,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 60,
+      "opening": false,
+      "slot": 0,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 60,
+      "opening": false,
+      "slot": 1,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 60,
+      "opening": false,
+      "slot": 2,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 60,
+      "opening": false,
+      "slot": 3,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 120,
+      "opening": true,
+      "slot": -1,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 120,
+      "opening": true,
+      "slot": 0,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 120,
+      "opening": true,
+      "slot": 1,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 120,
+      "opening": true,
+      "slot": 2,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 120,
+      "opening": true,
+      "slot": 3,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 120,
+      "opening": false,
+      "slot": -1,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 120,
+      "opening": false,
+      "slot": 0,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 120,
+      "opening": false,
+      "slot": 1,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 120,
+      "opening": false,
+      "slot": 2,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    },
+    {
+      "team": 1,
+      "hz": 120,
+      "opening": false,
+      "slot": 3,
+      "yaw": 1.7894652726688387,
+      "grounded": true
+    }
+  ],
+  "preservedFailures": [
+    "urchin-native-arena.tap: unchanged fixture has no playing state",
+    "urchin-native-arena-diagnostic.tap: added per-case logging identified first condition; logging also accidentally referenced undefined Tidewater variables, no result promoted",
+    "urchin-native-arena-playing.tap: initial bot observed midflight at 1.5s; diagnostic instrumentation not promoted",
+    "urchin-native-arena-fixed.tap: separate concurrent C1088 composition anchor mismatch",
+    "urchin-native-arena-built.tap: frozen ordinary build omits native rule-availability.mjs, no emitted Urchin coverage claimed"
+  ],
+  "fileHashes": {
+    "patches/native-stages/tests/native-arena-basis.test.mjs": "62df1edeff8baea5baa78b9ac78c28edd2a282ee81f3b665b5188436a3700f0c",
+    "patches/splatoon3/tests/issue-1607-zipcaster-retry-boundary.test.mjs": "ac395ed50752436243f2e8c7cbd3659859119de1c752801a234eaf96a671beb1",
+    "scripts/check-inkwave-catalog-pose-birth-browser.mjs": "125f625c2db3bf463eb9d1ab7104be0fb8072331c194f2126683a92beb482ac0"
+  },
+  "limits": [
+    "Private OBJ/MTL/tree and numeric derivatives stay ignored; no textures downloaded or source payload published.",
+    "The original untouched baseline failure remains, while the canonical corrected fixture passed all unchanged assertions.",
+    "Physics-only synthetic Actor/Character fixture scope; original public source export does not establish retail collision masks, world scale or placements.",
+    "No Nintendo Switch physical capture or hardware FPS."
+  ]
+}

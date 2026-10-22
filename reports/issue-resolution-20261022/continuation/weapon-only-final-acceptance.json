@@ -1,0 +1,516 @@
+{
+  "status": "passed_with_explicit_remaining_1431_calibration",
+  "applicationSourceCommit": "931e4c4af71ecc48f6648828aee2dff16a30f5f3",
+  "publicApplicationEquivalent": "8783eb8; tree83581d per parent whole-tree GitHub readback",
+  "qaCommit": "8285792d004c9d6bd9238db794e8b7ec498c7555",
+  "contentHash": "d3d77b98076f1f1ca251c9c6968e1339bc648de1239720883e71204ec39bd718",
+  "inputHash": "84571b440d934b2d576c7699ae48c420d5aa9c83db5f8a6f217a03f1d45a452e",
+  "mainAcceptedUniqueConditions": 114,
+  "mainFixedTicks": 13680,
+  "mainCadenceFrames": 15960,
+  "mainActualWebglDraws": 396,
+  "mainBirths": 1134,
+  "mainEmissionImages": 168,
+  "quadNativeVolumeConnectionsChecked": 150,
+  "maxQuadBackError": 5.48736542745138e-08,
+  "maxQuadRodError": 1.8967710893565806e-07,
+  "quadHistorySamplesChecked": 0,
+  "quadAllThreeVisibleInMainCamera": 0,
+  "allOwnedBrowsersClosed": true,
+  "receipts": [
+    {
+      "label": "quadReady",
+      "sourceReceipt": ".browser-evidence/weapons-final/quad-steady-ready/result.json",
+      "sha256": "f2f0ce13ef46c4c3a190c3bcbc165423c7da02b218960caf186554302cbe2281",
+      "status": "passed",
+      "invocationExitCode": 0,
+      "scriptSha256": "439f276a5048db8ed91ece5b78985fb332b56da9464eb8245608ccdfc6ef2ad5",
+      "selectedId": "s3-maneuver-stepper",
+      "acceptedCases": 18,
+      "acceptedBirths": 252,
+      "actualDraws": 72,
+      "emissionImages": 36,
+      "plan": {
+        "ids": [
+          "s3-maneuver-stepper"
+        ],
+        "rates": [
+          30,
+          60,
+          120
+        ],
+        "pitches": [
+          -45,
+          0,
+          40
+        ],
+        "walls": [
+          "open",
+          "wall"
+        ],
+        "swing": "horizontal",
+        "reticle": "aligned",
+        "renderPolicy": "diagnostic",
+        "stage": "synthetic"
+      },
+      "allReadyActive": true
+    },
+    {
+      "label": "explosher",
+      "sourceReceipt": ".browser-evidence/weapons-final/pose-observed/result.json",
+      "sha256": "fce7030e8ea11e3da493cfd7d372fc1612afb29c66f3b2d206ed5b3f5531c346",
+      "status": "passed",
+      "invocationExitCode": 0,
+      "scriptSha256": "9aa993c8da8400135f18ac7386fa37a4fdfa9b5cfcf012b8fa37e20857b0c15e",
+      "selectedId": "s3-slosher-washtub",
+      "acceptedCases": 18,
+      "acceptedBirths": 36,
+      "actualDraws": 72,
+      "emissionImages": 36,
+      "plan": {
+        "ids": [
+          "s3-maneuver-stepper",
+          "s3-slosher-washtub"
+        ],
+        "rates": [
+          30,
+          60,
+          120
+        ],
+        "pitches": [
+          -45,
+          0,
+          40
+        ],
+        "walls": [
+          "open",
+          "wall"
+        ],
+        "swing": "horizontal",
+        "reticle": "aligned",
+        "renderPolicy": "diagnostic",
+        "stage": "synthetic"
+      },
+      "allReadyActive": true
+    },
+    {
+      "label": "tidewaterHorizontal",
+      "sourceReceipt": ".browser-evidence/weapons-final/flick-horizontal/result.json",
+      "sha256": "cbeb400fbca200443a0ef89dcb00f1dd5b0540ac4ee987671364b278d7ef430b",
+      "status": "passed",
+      "invocationExitCode": 0,
+      "scriptSha256": "bde824536aec8d51c567513b57fe5ae4f641d6c193d6171e599e631afcd17a77",
+      "selectedId": null,
+      "acceptedCases": 48,
+      "acceptedBirths": 618,
+      "actualDraws": 162,
+      "emissionImages": 66,
+      "plan": {
+        "ids": [
+          "roller",
+          "s3-roller-compact",
+          "s3-roller-heavy",
+          "s3-roller-hunter",
+          "s3-roller-wide",
+          "s3-brush-mini",
+          "s3-brush-normal",
+          "s3-brush-heavy"
+        ],
+        "rates": [
+          30,
+          60,
+          120
+        ],
+        "pitches": [
+          -45
+        ],
+        "walls": [
+          "open",
+          "wall"
+        ],
+        "swing": "horizontal",
+        "reticle": "stale",
+        "renderPolicy": "diagnostic",
+        "stage": "tidewater"
+      },
+      "allReadyActive": true
+    },
+    {
+      "label": "tidewaterVertical",
+      "sourceReceipt": ".browser-evidence/weapons-final/flick-vertical/result.json",
+      "sha256": "50beb45a4c06fa58a0ce97a2eeda1477192761150f379f3f093a612f839ace79",
+      "status": "passed",
+      "invocationExitCode": 0,
+      "scriptSha256": "9aa993c8da8400135f18ac7386fa37a4fdfa9b5cfcf012b8fa37e20857b0c15e",
+      "selectedId": null,
+      "acceptedCases": 30,
+      "acceptedBirths": 228,
+      "actualDraws": 90,
+      "emissionImages": 30,
+      "plan": {
+        "ids": [
+          "roller",
+          "s3-roller-compact",
+          "s3-roller-heavy",
+          "s3-roller-hunter",
+          "s3-roller-wide"
+        ],
+        "rates": [
+          30,
+          60,
+          120
+        ],
+        "pitches": [
+          -45
+        ],
+        "walls": [
+          "open",
+          "wall"
+        ],
+        "swing": "vertical",
+        "reticle": "stale",
+        "renderPolicy": "diagnostic",
+        "stage": "tidewater"
+      },
+      "allReadyActive": true
+    }
+  ],
+  "quadFirstPredictionSteady": {
+    "conditions": 18,
+    "fullRows": "aggregate/weapon-only-final-acceptance.full.json#/quadFirstPredictionSteady",
+    "representative": {
+      "hz": 60,
+      "pitch": 0,
+      "wall": false,
+      "firstRaw": {
+        "tick": 30,
+        "hand": 1,
+        "selectedHand": 1,
+        "preAimReady": 0,
+        "postAimReady": 0.3069593799135585,
+        "physicalSocketGap": 0.133089194578441,
+        "poseConnectionSocketGap": 0,
+        "fxError": 0,
+        "poseOffsetPresent": true
+      },
+      "firstRightPrediction": {
+        "tick": 36,
+        "hand": null,
+        "selectedHand": 0,
+        "preAimReady": 0.8891968416376661,
+        "postAimReady": 0.9232089104210319,
+        "physicalSocketGap": 0.029154853920751046,
+        "poseConnectionSocketGap": 0.029154853920751046,
+        "fxError": null,
+        "poseOffsetPresent": false
+      },
+      "steadyRaw": {
+        "tick": 42,
+        "hand": 1,
+        "selectedHand": 1,
+        "preAimReady": 0.9877226600969317,
+        "postAimReady": 0.9914913047405655,
+        "physicalSocketGap": 0.01720906305068524,
+        "poseConnectionSocketGap": 0,
+        "fxError": 0,
+        "poseOffsetPresent": true
+      },
+      "imagePhases": [
+        {
+          "phase": "first",
+          "frame": 30,
+          "tick": 31,
+          "birthCount": 1,
+          "preAimReadyAtEmission": 0,
+          "originEqualsPrePoseSocket": true,
+          "hasPoseConnection": true
+        },
+        {
+          "phase": "steady",
+          "frame": 42,
+          "tick": 43,
+          "birthCount": 3,
+          "preAimReadyAtEmission": 0.9877226600969317,
+          "originEqualsPrePoseSocket": true,
+          "hasPoseConnection": true
+        }
+      ]
+    },
+    "note": "First native prediction and fully-ready steady remain distinct. All18 complete rows, coordinates, emitted offsets and source scopes are preserved in the full aggregate."
+  },
+  "separateAllPartsControl": "quad-all-parts-camera.json",
+  "emittedPositive": {
+    "log": ".ci-scratch/weapons-final/emitted-positive.log",
+    "sha256": "2db014ba9355fe29e16824e7421385ab5b33363810866864114435fb3ff091a6",
+    "tests": 5,
+    "pass": 5,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 42972.408676,
+    "selection": "actual780flight + actual Quad shipped native volume/authority + all3Dynamo tests; source-only mutation controls are not counted",
+    "observations": [
+      {
+        "quadNativeVolumePose": [
+          {
+            "hz": 30,
+            "wall": false,
+            "connected": 20,
+            "unchanged": 33,
+            "detached": 26,
+            "maxBackError": 9.345507996927025e-07,
+            "minOldOwnerGap": 0.03825822733406415,
+            "wireBirths": 14,
+            "paintCalls": 37,
+            "source": {
+              "status": "ready",
+              "active": true
+            }
+          },
+          {
+            "hz": 60,
+            "wall": false,
+            "connected": 20,
+            "unchanged": 33,
+            "detached": 26,
+            "maxBackError": 9.345507996927025e-07,
+            "minOldOwnerGap": 0.03825822733406415,
+            "wireBirths": 14,
+            "paintCalls": 37,
+            "source": {
+              "status": "ready",
+              "active": true
+            }
+          },
+          {
+            "hz": 120,
+            "wall": false,
+            "connected": 20,
+            "unchanged": 33,
+            "detached": 26,
+            "maxBackError": 9.345507996927025e-07,
+            "minOldOwnerGap": 0.03825822733406415,
+            "wireBirths": 14,
+            "paintCalls": 37,
+            "source": {
+              "status": "ready",
+              "active": true
+            }
+          },
+          {
+            "hz": 30,
+            "wall": true,
+            "connected": 0,
+            "unchanged": 0,
+            "detached": 0,
+            "maxBackError": null,
+            "minOldOwnerGap": null,
+            "wireBirths": 14,
+            "paintCalls": 54,
+            "source": {
+              "status": "ready",
+              "active": true
+            }
+          },
+          {
+            "hz": 60,
+            "wall": true,
+            "connected": 0,
+            "unchanged": 0,
+            "detached": 0,
+            "maxBackError": null,
+            "minOldOwnerGap": null,
+            "wireBirths": 14,
+            "paintCalls": 54,
+            "source": {
+              "status": "ready",
+              "active": true
+            }
+          },
+          {
+            "hz": 120,
+            "wall": true,
+            "connected": 0,
+            "unchanged": 0,
+            "detached": 0,
+            "maxBackError": null,
+            "minOldOwnerGap": null,
+            "wireBirths": 14,
+            "paintCalls": 54,
+            "source": {
+              "status": "ready",
+              "active": true
+            }
+          }
+        ]
+      },
+      {
+        "dynamoAuthority": [
+          {
+            "kind": "player",
+            "unit": 0,
+            "before": 1000,
+            "after": 820,
+            "damage": 180,
+            "resolvedDamage": 0
+          },
+          {
+            "kind": "player",
+            "unit": 1,
+            "before": 1000,
+            "after": 1000,
+            "damage": 0,
+            "resolvedDamage": 0
+          },
+          {
+            "kind": "player",
+            "unit": "native",
+            "before": 1000,
+            "after": 850,
+            "damage": 150,
+            "resolvedDamage": 150
+          },
+          {
+            "kind": "beakon",
+            "unit": 0,
+            "before": 1000,
+            "after": 481.6,
+            "damage": 518.4,
+            "resolvedDamage": 180
+          },
+          {
+            "kind": "beakon",
+            "unit": 1,
+            "before": 1000,
+            "after": 1000,
+            "damage": 0,
+            "resolvedDamage": 0
+          },
+          {
+            "kind": "beakon",
+            "unit": "native",
+            "before": 1000,
+            "after": 568,
+            "damage": 432,
+            "resolvedDamage": 150
+          },
+          {
+            "kind": "canopy",
+            "unit": 0,
+            "before": 200,
+            "after": 20,
+            "damage": 180,
+            "resolvedDamage": 180
+          },
+          {
+            "kind": "canopy",
+            "unit": 1,
+            "before": 200,
+            "after": 200,
+            "damage": 0,
+            "resolvedDamage": 0
+          },
+          {
+            "kind": "canopy",
+            "unit": "native",
+            "before": 200,
+            "after": 50,
+            "damage": 150,
+            "resolvedDamage": 150
+          }
+        ]
+      },
+      {
+        "dynamoSecondaryPaint": {
+          "index": 0,
+          "paintCalls": 2,
+          "claimed": 10.125,
+          "turf": 10.125
+        }
+      },
+      {
+        "dynamoSecondaryPaint": {
+          "index": 1,
+          "paintCalls": 2,
+          "claimed": 10.1875,
+          "turf": 10.1875
+        }
+      },
+      {
+        "dynamoBubblerAuthority": [
+          {
+            "unit": 0,
+            "damage": 1164.9142459443065,
+            "contacts": [
+              {
+                "cachedAtQuery": 0,
+                "settledDamage": 1164.9142459443062,
+                "resolvedProjectileDamage": 101.12102829377659,
+                "applied": 1164.9142459443062,
+                "hpDamage": 1164.9142459443065,
+                "fieldDamage": 0
+              }
+            ]
+          },
+          {
+            "unit": 1,
+            "damage": 0,
+            "contacts": []
+          },
+          {
+            "unit": "native",
+            "damage": 1020.7038939505983,
+            "contacts": [
+              {
+                "cachedAtQuery": 1020.7038939505991,
+                "settledDamage": 1020.7038939505991,
+                "resolvedProjectileDamage": 150,
+                "applied": 1020.7038939505991,
+                "hpDamage": 1020.7038939505983,
+                "fieldDamage": 0
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "retainedEarlierDiagnostics": [
+    {
+      "path": ".browser-evidence/weapons-final/pose/result.json",
+      "purpose": "original36 observed no native connection samples because observer incorrectly required the head also visible; not used as native-volume alignment acceptance"
+    },
+    {
+      "path": ".browser-evidence/weapons-final/observer-debug/result.json",
+      "purpose": "actual submit confirmed back/rod visible and head culled"
+    },
+    {
+      "path": ".browser-evidence/weapons-final/pose-observed/result.json",
+      "purpose": "second-shot pre-ready prediction image retained separately; Explosher18 accepted independently"
+    },
+    {
+      "path": ".browser-evidence/weapons-final/quad-all-parts/result.json",
+      "purpose": "first all3-part phase; initial second-shot image correctly remains unconnected prediction"
+    }
+  ],
+  "limits": [
+    "This is diagnostic sparse actual drawing; every simulation/cadence sync is retained, but not every-frame WebGL/performance acceptance.",
+    "Native predicted/fallback births retain no pose offset; their remaining physical-versus-raw-socket gap is not called fixed.",
+    "Quad two authored ring centres do not establish the authentic Nintendo aperture. #1431 remains open for that calibration and its complete first-phase assessment.",
+    "The source-loaded animation bank is not a verified Nintendo11.3.0 animation bank; no Nintendo hardware or iPad/Safari parity is claimed.",
+    "#1812 diagnostic architecture conditions are separately mapped and may close; no full-retail condition is invented."
+  ],
+  "renderedVisualInspection": [
+    "quad-all-parts-ready first and steady PNGs: complete source native rods are visibly drawn from the animated weapons to the physical tips.",
+    "Explosher60Hz/0/open first PNG: authored front burner and muzzle FX are visible; no authentic Nintendo aperture claim."
+  ],
+  "fullAggregate": {
+    "archive": "weapon-only-raw-evidence.tar.gz",
+    "archiveSha256": "f6cc29002cc4a7041eb4409405c077e8c1054e5414661bd8bbd7aa1c02624cee",
+    "archiveMember": "aggregate/weapon-only-final-acceptance.full.json",
+    "sha256": "6bbf1812db4782c1e2e2c7e10df300e66c944ce42931fd464ce696d0c6984d64",
+    "bytes": 3312124,
+    "originalSelectedCaseCount": 114,
+    "note": "Extract this member for the exact original full aggregate, including all selectedCases; no evidence was discarded."
+  },
+  "rawEvidenceIndex": "weapon-only-raw-hashes.json"
+}
