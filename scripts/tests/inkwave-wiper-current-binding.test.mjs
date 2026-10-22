@@ -1,6 +1,31 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import {WIPER_SOURCE,WIPER_TREE,WIPER_BASELINE,WIPER_MODULES,assertWiperCurrentBinding} from '../lib/inkwave-wiper-current-binding.mjs';
 import {verifyVisibilityPair} from '../check-inkwave-wiper-visibility-pair.mjs';import {hash} from '../lib/inkwave-runtime-evidence.mjs';
+const workflow=fs.readFileSync(new URL('../../.github/workflows/inkwave-wiper-rng-observation.yml',import.meta.url),'utf8');
+const diagnosticBranch='diagnostic/wiper-rng-observation-20261021';
+const jobExpression=workflow.match(/  capture:\n    if: \$\{\{ (.+) \}\}/)?.[1];
+const fullExpressions=[...workflow.matchAll(/        if: \$\{\{ (.+) \}\}/g)].map(x=>x[1]);
+// These predicates use only boolean operators, equality and context properties shared by JS/GitHub expressions.
+function evaluatePredicate(expression,github,inputs={}){assert.ok(expression);return Function('github','inputs','return ('+expression+');')(github,inputs);}
+function event(name,branch=diagnosticBranch,repo='rhgrive3/actions'){return {event_name:name,head_ref:branch,repository:'rhgrive3/actions',event:{pull_request:{head:{repo:{full_name:repo},sha:'head-sha'}}},sha:'event-sha'};}
+test('workflow adds only the seven intended PR path filters and preserves exact push branch',()=>{
+ const paths=workflow.match(/  pull_request:\n    paths:\n([\s\S]*?)  workflow_dispatch:/)?.[1].trim().split('\n').map(x=>x.trim().slice(2));
+ assert.deepEqual(paths,['.github/workflows/inkwave-wiper-rng-observation.yml','scripts/check-inkwave-wiper-plane-native.mjs','scripts/lib/inkwave-wiper-flight-coverage.mjs','scripts/lib/inkwave-wiper-occlusion.mjs','scripts/tests/inkwave-wiper-current-binding.test.mjs','scripts/tests/inkwave-wiper-flight-coverage.test.mjs','scripts/tests/inkwave-wiper-occlusion.test.mjs']);
+ assert.ok(workflow.includes('  push:\n    branches: ['+diagnosticBranch+']'));assert.ok(!workflow.includes('pull_request_target:'));
+});
+for(const [label,context,expected]of [['own diagnostic PR',event('pull_request'),true],['unrelated PR',event('pull_request','feature/other'),false],['same-name fork PR',event('pull_request',diagnosticBranch,'someone/actions'),false],['missing PR branch',event('pull_request',''),false],['push',event('push',''),true],['manual dispatch',event('workflow_dispatch',''),true]])test('capture admission '+label,()=>assert.equal(evaluatePredicate(jobExpression,context),expected));
+test('bounded is the dispatch default and both long steps require explicit manual true',()=>{
+ assert.match(workflow,/full_capture:\n\s+description:[^\n]+\n\s+type: boolean\n\s+default: false/);assert.equal(fullExpressions.length,2);
+ for(const expression of fullExpressions){for(const name of ['pull_request','push','workflow_dispatch'])for(const value of [undefined,false,true])assert.equal(evaluatePredicate(expression,event(name),{full_capture:value}),name==='workflow_dispatch'&&value===true,`${name}/${value}`);}
+});
+test('PR checks out its exact QA head while push/dispatch use their event SHA',()=>{
+ const expression=workflow.match(/ref: \$\{\{ (.+) \}\}/)?.[1];assert.equal(evaluatePredicate(expression,event('pull_request')),'head-sha');
+ for(const name of ['push','workflow_dispatch']){const context=event(name);context.event.pull_request={head:{}};assert.equal(evaluatePredicate(expression,context),'event-sha');}
+});
+test('trigger amendment keeps pinned source, strict visibility and failure artifact preservation',()=>{
+ for(const text of ['ref: '+WIPER_SOURCE,WIPER_TREE,WIPER_BASELINE,'timeout-minutes: 180','timeout 20m','--visibility-probe','check-inkwave-wiper-visibility-pair.mjs','if: always()','retention-days: 14','contents: read'])assert.ok(workflow.includes(text),text);
+ assert.equal((workflow.match(/run: node scripts\/build-inkwave.mjs/g)||[]).length,1);assert.equal((workflow.match(/persist-credentials: false/g)||[]).length,2);
+});
 function fixture(){const manifest={contentHash:'a'.repeat(64),inputHash:'b'.repeat(64),build:{revision:'c'.repeat(64),esbuild:'0.28.2',optimization:'esbuild-minify'},artifacts:{}};const modules=Object.entries(WIPER_MODULES).map(([name,p])=>({name,rel:'patches/splatoon3/runtime/'+name,candidateSourceSha256:p.candidate,baselineSourceSha256:p.baseline,candidateEmittedSha256:'d'.repeat(64),baselineEmittedSha256:'e'.repeat(64)}));for(const m of modules)manifest.artifacts['_versions/'+manifest.build.revision+'/'+m.rel]=m.candidateEmittedSha256;const binding={schema:1,candidate:WIPER_SOURCE,sourceTree:WIPER_TREE,baseline:WIPER_BASELINE,contentHash:manifest.contentHash,inputHash:manifest.inputHash,revision:manifest.build.revision,compiler:'0.28.2',modules};return {manifest,binding};}
 test('binds actual new production hash without inventing an artifact identity',()=>{const {manifest,binding}=fixture();assertWiperCurrentBinding(manifest,binding);});
 for(const [label,mutate]of [

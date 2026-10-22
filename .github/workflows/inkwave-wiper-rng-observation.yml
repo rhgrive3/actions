@@ -2,6 +2,15 @@ name: INKWAVE current-source Wiper native QA
 on:
   push:
     branches: [diagnostic/wiper-rng-observation-20261021]
+  pull_request:
+    paths:
+      - .github/workflows/inkwave-wiper-rng-observation.yml
+      - scripts/check-inkwave-wiper-plane-native.mjs
+      - scripts/lib/inkwave-wiper-flight-coverage.mjs
+      - scripts/lib/inkwave-wiper-occlusion.mjs
+      - scripts/tests/inkwave-wiper-current-binding.test.mjs
+      - scripts/tests/inkwave-wiper-flight-coverage.test.mjs
+      - scripts/tests/inkwave-wiper-occlusion.test.mjs
   workflow_dispatch:
     inputs:
       full_capture:
@@ -12,11 +21,13 @@ permissions:
   contents: read
 jobs:
   capture:
+    if: ${{ github.event_name != 'pull_request' || (github.head_ref == 'diagnostic/wiper-rng-observation-20261021' && github.event.pull_request.head.repo.full_name == github.repository) }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
@@ -52,14 +63,14 @@ jobs:
           done
           node scripts/check-inkwave-wiper-visibility-pair.mjs work/site work/source work/overlay work/visibility
       - name: Capture continuous Dental pilot only after strict visibility admission
-        if: ${{ inputs.full_capture }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_capture == true }}
         run: |
           for variant in A B; do
             timeout 35m node scripts/check-inkwave-wiper-plane-native.mjs work/site work/source work/overlay work/full/s3-saber-heavy-charged-$variant $variant s3-saber-heavy charged --dental-pilot
           done
           node scripts/check-inkwave-wiper-plane-paired.mjs work/site work/source work/overlay work/full --compare-dental-only
       - name: Verify unchanged native controls after Dental pair admission
-        if: ${{ inputs.full_capture }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_capture == true }}
         run: node scripts/check-inkwave-wiper-plane-paired.mjs work/site work/source work/overlay work/controls --controls-only
       - name: Preserve fresh receipts and original full frames including failures
         if: always()
