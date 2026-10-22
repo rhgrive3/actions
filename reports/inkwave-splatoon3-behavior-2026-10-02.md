@@ -5865,3 +5865,8 @@ Node v24.19.0の本番合成VMで新規3件と隣接9件、計12/12成功。原�
 独立treeは`855b0e187f4e6a367c21ac12745520f3c356c29a`を起点に時計部分だけを移植する。Charger contact module/identity、full-fire anchor、combat authority/runtime変更は持ち込まない。clock moduleとorigin guard、新規2testは76873fcの受入sourceと同一bytesである。Splatoon 3 11.3.0は比較参照だが、小売版network protocolの非公開数値は推測せず、Switch実機比較を解消扱いにしない。
 
 別の固定source76873fcでは、実Tidewater/Match/Actor/Character、実NetSession `_begin`、2つの独立Chromium contextと実WebSocket/production Worker relayでcold-start・同室rematch・socket reconnectの3局面を確認した。6方向すべてで7秒超の遅延初回→最新tickを受理し、同じ実受信timestamp対は旧arrival-origin guardでは拒否される。時計/peerの書換えやguard無効化はなく、証明origin不変、Actor buffer、Match playing、通常snapshot進行を確認した。これは独立clock-only tree自体のブラウザ受入ではない。固定sourceと手順・raw hashは`reports/issue-resolution-20261022/continuation/clock-native-browser.json`、独立treeのsource/build/回帰は`clock-only-release.json`へ別記する。
+
+
+### #1767 独立clock-only source自身のnative追補
+
+独立source`2d2b8aa25795f351f6e206488c89af7255595be6`、input`c2722d71…`/content`34bb3936…`の固定buildで、実Tidewater/Match/Actor/Characterと実WebSocket/production relayを用いる3局面・6方向も成功した。実行evidence HEAD`50f8843e…`との差分はreport3fileだけで、1,364input全部の同一性を再照合した。8nonce query/6reply、origin固定、Actor buffer7〜10、Match playingと後続snapshot進行、page/console error0、実描画80/82call・context lossなしを確認。全6組の実受信対は旧arrival-origin guardではfalseとなる。PNGはlocal保持＋SHA一覧、公開rawはJSON/logのみ。source/evidence commit、local upgrade shim、単一Chromium内2context、手動native frame、Switch/物理端末未計測の範囲は`reports/issue-resolution-20261022/continuation/clock-only-native-browser.json`へ明記し、768の過去受入と分けた。
