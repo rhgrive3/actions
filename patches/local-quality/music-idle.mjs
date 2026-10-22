@@ -1,12 +1,14 @@
+import { startMusicClock, stopMusicClock } from './music-clock.mjs';
 const INSTALLED = Symbol.for('inkwave.music.idle.v1');
 // Own only music scheduling. Never suspend the shared SFX AudioContext.
 export function installMusicIdle(MusicEngine, env = globalThis) {
   const P = MusicEngine.prototype;
   if (Object.hasOwn(P, INSTALLED)) return;
   Object.defineProperty(P, INSTALLED, { value: true });
-  const play = P.play, start = P._startTimer, tick = P._tick, dispose = P.dispose;
+  const play = P.play, tick = P._tick, dispose = P.dispose;
   const state = m => m._musicIdle || (m._musicIdle = { enabled: true, wanted: undefined });
   function stopTimer(m) {
+    if (stopMusicClock(m)) return;
     if (m.worker) { const w = m.worker; m.worker = null; w.onmessage = w.onerror = null; w.terminate(); }
     if (m.timer != null) env.clearInterval(m.timer);
     m.timer = null;
@@ -31,7 +33,7 @@ export function installMusicIdle(MusicEngine, env = globalThis) {
   };
   P._startTimer = function () {
     if (!state(this).enabled || !this.ctx || this.offline || !this.players.length || this.worker || this.timer != null) return;
-    return start.call(this);
+    return startMusicClock(this, env);
   };
   P._tick = function () {
     if (!state(this).enabled) return;
