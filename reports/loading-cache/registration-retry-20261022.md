@@ -53,4 +53,7 @@ paths were excluded from this change.
 The VM runs the actual startup runtime with a stubbed bootstrap and browser APIs.
 It establishes registration scheduling logic, not a native browser install,
 offline readiness, GPU behavior, or physical iPad performance. Production build
-and emitted-module checks are handled by the parent integration work.
+and startup budget checks passed in the parent integration work. The final test
+accepts `INKWAVE_BUILT_SITE=_site` and runs the same six cases against the
+optimized emitted startup module; all six passed independently in both modes.
+The bootstrap import is the only expression replaced in either runtime.

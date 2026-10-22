@@ -2,9 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import path from 'node:path';
 
-const source = fs.readFileSync(new URL('../runtime/startup.mjs', import.meta.url), 'utf8');
-const bootstrap = "await import('../../splatoon3/bootstrap.mjs');";
+const source = fs.readFileSync(process.env.INKWAVE_BUILT_SITE
+  ? path.join(process.env.INKWAVE_BUILT_SITE, 'patches/loading-cache/runtime/startup.mjs')
+  : new URL('../runtime/startup.mjs', import.meta.url), 'utf8');
+const bootstraps = source.match(/await import\((['"])\.\.\/\.\.\/splatoon3\/bootstrap\.mjs\1\)/g);
+assert.equal(bootstraps?.length, 1, 'one actual bootstrap import in source or emitted runtime');
+const [bootstrap] = bootstraps;
 assert.equal(source.split(bootstrap).length, 2);
 
 async function fixture(register, { screen = 'title', idleCallback = true } = {}) {
@@ -34,7 +39,7 @@ async function fixture(register, { screen = 'title', idleCallback = true } = {})
     clearTimeout: id => timers.delete(id),
     __importBootstrap: async () => {}, console
   });
-  await vm.runInContext(`(async () => {${source.replace(bootstrap, 'await __importBootstrap();')}\n})()`, context);
+  await vm.runInContext(`(async () => {${source.replace(bootstrap, 'await __importBootstrap()')}\n})()`, context);
   context.window.__inkwaveStartup.engineReady({});
   return {
     ui, events, idle, timers, report: context.window.__inkwaveStartup.report,

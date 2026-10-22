@@ -5835,3 +5835,10 @@ CPU回帰の成功は物理GPU/実機性能の受け入れではない。Splatoo
 
 
 最終確認: runtime `df83a5c4265a9c8738d930dabaffb43cd31ae902` / build contentHash `7b0b597f308f86d2d9607e2a5e0e5f122fa7e0a7435810512039de7014565533` の総合active browserが成功した。65 canonical kit、14 defaults、装備12select、実キーボード移動・接地・射撃/塗り、20Hz時の3秒進行、finite velocity、752 responseの同一性とpage errors 0を確認した。実music Workerの作成元・97-byte body/hash・cleanupを含むnative試験7件、過去の固定gate20件、追加source admission24件も通過した。これはChromium 153 / SwiftShaderでの公開版の回帰確認であり、物理端末FPSやSwitch実機・完了動画の受け入れではない。GitHub上のCI待機は別に残る。
+
+
+## 2026-10-22: 破損した保存戦績の復旧
+
+main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、公開版の既存boot/Turf/Boss結果normalizerで、保存済み `wins`・`matches`・`totalTurf` の不正な型・負数・安全でない整数を0へ復旧する。例えば `totalTurf: '120'` の保存を読み、500点を得ると、修正前は文字列 `120500` を保存していた。修正後は破損値を0へ戻し、数値500を保存する。正常な保存値・XP曲線・試合の塗り集計・武器/移動/入力の数値は維持する。
+
+Splatoon 3 Ver.11.3.0を既存の比較対象として継承するが、本家の破損セーブ復旧仕様は未確認。この変更はINKWAVE固有の永続化の型不整合を直すもので、Switch実機との一致やゲーム物理の改善を認定しない。実際の合成GameソースのbootとTurf/Bossの集計・保存ブロックを使った回帰で勝敗・再読込・正常値保持を確認した。実ブラウザ・本家実機の比較は未実施。再現、検証、別領域の信頼性改善は [今回の記録](independent-reliability-improvements-20261022.md) を参照。
