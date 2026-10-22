@@ -295,7 +295,18 @@ export class AudioEngine {
       v.dispose();
       return null;
     }
-    v.ondispose = () => { voice.done = true; };
+    v.ondispose = () => {
+      voice.done = true;
+      // Release finished nodes without waiting for this sound ID to play again.
+      const i = this.voices.indexOf(voice);
+      if (i >= 0) this.voices.splice(i, 1);
+      const owners = this.byName.get(name);
+      if (owners) {
+        const j = owners.indexOf(voice);
+        if (j >= 0) owners.splice(j, 1);
+        if (!owners.length && this.byName.get(name) === owners) this.byName.delete(name);
+      }
+    };
     v.finish();
     list.push(voice); this.voices.push(voice);
     this.counts.played++;
@@ -379,7 +390,8 @@ export class AudioEngine {
     for (const h of [...this.loops]) h.stop(fade);
     if (!this.ctx) return;
     const now = this.ctx.currentTime;
-    for (const vc of this.voices) this._steal(vc, now);
+    // ondispose may now unlink completed voices synchronously during steal.
+    for (const vc of [...this.voices]) this._steal(vc, now);
     this.voices.length = 0; this.byName.clear();
   }
 
