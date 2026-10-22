@@ -5,7 +5,7 @@ import {assertWiperFullFrame,assertWiperCoverageImage,assertWiperFlightCoverage}
 const camera=()=>({fov:50,aspect:960/720,near:.05,far:250,zoom:1,filmOffset:0,view:null});
 const fullFrame=()=>({viewport:[0,0,960,720],size:[960,720],scissorTest:false});
 const counts={slashH:0,slashV:2};
-const image=()=>({view:'front',camera:camera(),fullFrame:fullFrame(),flightCoverage:{
+const image=()=>({view:'front',camera:camera(),fullFrame:fullFrame(),occlusion:{schema:1,method:'opaque-scene-triangle-rays-v1',samplesPerInstance:12,consideredMeshes:1,transparentMeshes:0,meshes:[{instances:0,samples:0},{instances:2,samples:24}],blocked:[]},flightCoverage:{
   slashH:{instances:0,vertices:0},slashV:{instances:2,vertices:696,minDepth:12,maxNdc:.6,margin:.9}}});
 class Value { constructor(){this.value=[];} toArray(){return this.value;} fromArray(a){this.value=[...a];return this;} }
 const THREE={Vector2:Value,Vector4:Value};
@@ -15,7 +15,7 @@ function renderer(){const frame=fullFrame();return {...frame,target:null,
 
 test('strict pair accepts complete full-frame flight and retired receipts',()=>{
  assert.equal(assertWiperCoverageImage(image(),counts),true);
- const retired=image();retired.flightCoverage.slashV={instances:0,vertices:0};
+ const retired=image();retired.flightCoverage.slashV={instances:0,vertices:0};retired.occlusion.meshes[1]={instances:0,samples:0};
  assert.equal(assertWiperCoverageImage(retired,{slashH:0,slashV:0}),true);
 });
 for(const [name,mutate] of [

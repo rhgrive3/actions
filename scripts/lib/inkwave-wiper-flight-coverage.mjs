@@ -1,3 +1,4 @@
+import {assertWiperOcclusionReceipt} from './inkwave-wiper-occlusion.mjs';
 // QA only. Fixed full-frame inspection cameras, shared by both variants.
 // No projectile-following, dynamic fit, runtime, light, palette or crop edits.
 export function configureWiperCoverageCamera(THREE, camera, anchor, view) {
@@ -7,7 +8,7 @@ export function configureWiperCoverageCamera(THREE, camera, anchor, view) {
   camera.near = .05; camera.far = 250;
   camera.zoom = 1; camera.clearViewOffset();
   camera.position.copy(focus).add(view === 'front'
-    ? new THREE.Vector3(.2, 5, 18) : new THREE.Vector3(0, 20, -.01));
+    ? new THREE.Vector3(.2, 26, 24) : new THREE.Vector3(0, 34, -.01));
   camera.up.set(0, 1, 0); camera.lookAt(focus);
   camera.updateMatrixWorld(true); camera.updateProjectionMatrix();
 }
@@ -80,5 +81,6 @@ export function assertWiperCoverageImage(image, counts) {
         || row.minDepth > camera.far || !Number.isFinite(row.maxNdc)
         || row.maxNdc < 0 || row.maxNdc > .9) fail();
   }
+  assertWiperOcclusionReceipt(image.occlusion, counts);
   return true;
 }

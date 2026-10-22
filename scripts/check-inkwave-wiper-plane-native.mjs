@@ -2,6 +2,7 @@
 // Native gameplay + separate inspection camera. No physical GPU/retail fidelity claim.
 import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
+import {inspectWiperSceneOcclusion} from './lib/inkwave-wiper-occlusion.mjs';
 import {configureWiperCoverageCamera,assertWiperFlightCoverage,assertWiperFullFrame} from './lib/inkwave-wiper-flight-coverage.mjs';
 import {createWiperAmbientObserver} from './lib/inkwave-wiper-ambient-observer.mjs';
 import {readWiperAmbientState} from './lib/inkwave-wiper-ambient-state.mjs';
@@ -104,7 +105,7 @@ try{
   },true);
  },{id,rngDiagnostic});
  nodeTimings.beforeEntry=performance.now();const entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:300000});
- await page.evaluate('window.__awaitWiperSources='+awaitWiperSceneSources.toString()+';window.__wiperCensus='+wiperSceneCensus.toString()+';window.__validWiperProfileStyle='+validWiperProfileStyle.toString()+';window.__configureWiperCoverageCamera='+configureWiperCoverageCamera.toString()+';window.__assertWiperFlightCoverage='+assertWiperFlightCoverage.toString()+';window.__assertWiperFullFrame='+assertWiperFullFrame.toString());
+ await page.evaluate('window.__awaitWiperSources='+awaitWiperSceneSources.toString()+';window.__wiperCensus='+wiperSceneCensus.toString()+';window.__validWiperProfileStyle='+validWiperProfileStyle.toString()+';window.__configureWiperCoverageCamera='+configureWiperCoverageCamera.toString()+';window.__assertWiperFlightCoverage='+assertWiperFlightCoverage.toString()+';window.__assertWiperFullFrame='+assertWiperFullFrame.toString()+';window.__inspectWiperSceneOcclusion='+inspectWiperSceneOcclusion.toString());
  nodeTimings.afterEntry=performance.now();
  const setup=await page.evaluate(async({id,action,dummyPath,costProbe,dentalPilot,rngDiagnostic,visibilityProbe})=>{
   const THREE=await import('three'),G=window.__G,g=window.__inkwave,a=G.local;
@@ -164,10 +165,11 @@ try{
     const before=JSON.stringify(physical()),prevTarget=r.getRenderTarget(),prevAuto=r.autoClear;
     window.__configureWiperCoverageCamera(THREE,camera,target,view);
     const flightCoverage={slashH:window.__assertWiperFlightCoverage(THREE,shape.slashH,camera),slashV:window.__assertWiperFlightCoverage(THREE,shape.slashV,camera)};
+    const occlusion=window.__inspectWiperSceneOcclusion(THREE,G.scene,[shape.slashH,shape.slashV,shape.sheets.mesh],camera);
     try{r.setRenderTarget(null);r.autoClear=true;const fullFrame=window.__assertWiperFullFrame(THREE,r,camera);const renderStart=performance.now();r.render(G.scene,camera);const submitEnd=performance.now();
      const readStart=performance.now();const pixels=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,pixels);const readEnd=performance.now();
      let lo=255,hi=0;for(let j=0;j<pixels.length;j+=4){const v=(pixels[j]+pixels[j+1]+pixels[j+2])/3;lo=Math.min(lo,v);hi=Math.max(hi,v);}
-     if(hi-lo<8)throw Error('Flat inspection frame');const pixelHash=await fingerprint(pixels),encodeStart=performance.now(),png=r.domElement.toDataURL('image/png').split(',')[1],encodeEnd=performance.now();phases.inspection.push({view,submitMs:submitEnd-renderStart,readPixelsWithQueuedGpuMs:readEnd-readStart,pixelCheckHashMs:encodeStart-readEnd,pngEncodeMs:encodeEnd-encodeStart});images.push({view,pixelHash,png,camera:gameCamera(camera),flightCoverage,fullFrame});
+     if(hi-lo<8)throw Error('Flat inspection frame');const pixelHash=await fingerprint(pixels),encodeStart=performance.now(),png=r.domElement.toDataURL('image/png').split(',')[1],encodeEnd=performance.now();phases.inspection.push({view,submitMs:submitEnd-renderStart,readPixelsWithQueuedGpuMs:readEnd-readStart,pixelCheckHashMs:encodeStart-readEnd,pngEncodeMs:encodeEnd-encodeStart});images.push({view,pixelHash,png,camera:gameCamera(camera),flightCoverage,fullFrame,occlusion});
     }finally{r.setRenderTarget(prevTarget);r.autoClear=prevAuto;}
     if(JSON.stringify(physical())!==before)throw Error('Inspection render changed gameplay camera/physics/aim/clock/RNG');
    }
