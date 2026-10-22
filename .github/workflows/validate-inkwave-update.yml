@@ -291,13 +291,17 @@ jobs:
         run: |
           node --test scripts/tests/inkwave-local-references.test.mjs
           node scripts/check-inkwave-local-references.mjs .
+      - name: Verify projectile UI admission and boolean gate contracts
+        run: node --test scripts/tests/inkwave-projectile-atomic-intro.test.mjs scripts/tests/inkwave-projectile-capture-ui.test.mjs scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-boolean-gate.test.mjs
       - name: Build patched site at the checkout commit
         run: |
           node --test scripts/tests/inkwave-worker-compaction.test.mjs scripts/tests/inkwave-reviewed-audio-orphan.test.mjs
           node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site
-          INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs
+          INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs scripts/tests/inkwave-three-composition.test.mjs
           git rev-parse HEAD > _site-source-sha.txt
+      - name: Verify emitted Charger grip reach and protected trajectory
+        run: INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/charger-native-grip-reach.test.mjs patches/splatoon3/tests/charger-protected-trajectory.test.mjs
       - name: Verify exact emitted owner-bound launch packets and ghosts
         run: |
           manifest_sha=$(sha256sum _site/inkwave-build.json | cut -d ' ' -f1)

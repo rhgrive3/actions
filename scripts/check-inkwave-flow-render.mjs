@@ -429,6 +429,17 @@ async function main() {
         const survivorNative = globalThis.flowPixelDifference(survivorBefore, (() => { survivor.root.visible = false; const p = render('beauty'); survivor.root.visible = true; return p; })());
         const borrowedArrays = new Set([...sources.values()].flatMap(r => [r.index.array, ...r.attributes.map(([, a]) => a.array)]));
         const buffers = new Set([...borrowedArrays].map(a => uploads.get(a)).filter(Boolean));
+        // Diagnostic only: preserve the original conjunctive acceptance below.
+        globalThis.flowBufferOwnership = {
+          stage: 'before-owner-disposal', owner: ch.sourceMotion?.status ?? null,
+          survivor: survivor.sourceMotion?.status ?? null,
+          sources: [...sources].map(([source, r]) => ({ name: source.name,
+            sharedIndex: survivor.root.getObjectsByProperty('isMesh', true).some(mesh => mesh.geometry?.index === source.geometry.index),
+            arrays: [['index', r.index], ...r.attributes.map(([name, attribute]) => [name, attribute])].map(([name, attribute]) => ({
+              name, uploaded: uploads.has(attribute.array), alive: uploads.has(attribute.array) && gl.isBuffer(uploads.get(attribute.array)),
+            })),
+          })),
+        };
         assert([...borrowedArrays].every(a => uploads.has(a) && gl.isBuffer(uploads.get(a)))
           && buffers.size > 0 && [...sources.keys()].some(source => survivor.root.getObjectsByProperty('isMesh', true)
           .some(mesh => mesh.geometry?.index === source.geometry.index)), 'No native shared geometry/GPU buffers');
@@ -485,6 +496,7 @@ async function main() {
     failure = error;
     if (error.flowCurveParity) result = { ...(result || {}), curveParity: error.flowCurveParity };
     try { if (page) result = { ...(result || {}), progress: await page.evaluate(() => globalThis.flowProbeProgress || null) }; } catch {}
+    try { if (page) result = { ...(result || {}), bufferOwnership: await page.evaluate(() => globalThis.flowBufferOwnership || null) }; } catch {}
     try { await page?.screenshot({ path: path.join(output, 'flow-render-failed.png'), timeout: 10000 }); } catch {}
   } finally {
     try { routeDrain = await drainFlowRoutes(page); }
