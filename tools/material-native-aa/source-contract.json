@@ -1,0 +1,9 @@
+{
+  "common": "cc0c90afe8031643e6a890974f8f44a40a30509e",
+  "blobs": {
+    "patches/local-quality/portrait-work.mjs": "68dcbf11d820a5e83ae115cb28471153e3db397e",
+    "inkwave-public/src/game/showcase.js": "02ab7f694f6d16aa02420d660fd846b1a99a894a",
+    "inkwave-public/vendor/three/build/three.module.js": "c52087acfabae80efabb8cc05e3a1d96e35a1426",
+    "inkwave-public/vendor/three/build/three.core.js": "0a1d6cb9ef3cabc97a50bd02394c85e8d1c513c2"
+  }
+}
