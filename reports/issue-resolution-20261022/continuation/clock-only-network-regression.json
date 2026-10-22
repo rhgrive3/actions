@@ -1,0 +1,232 @@
+{
+  "date": "2026-10-22",
+  "issue": 1767,
+  "scope": "CPU-only shipping regression for the independent owner-clock release; no GPU/browser launched",
+  "status": "all_scoped_workflow_checks_passed",
+  "baseline": "855b0e187f4e6a367c21ac12745520f3c356c29a",
+  "initialExecutionCommit": "fcdbd7eb4bb4965c8aeb676a8f888fbdbc5c663d",
+  "finalExecutionCommit": "f0c7ddec97071beb5314482ae6963c9254a9953a",
+  "finalExecutionTree": "31a36553eac1d3ec371bda8d13885f26978109b5",
+  "testFixCommits": [
+    "7d8da8434173f423889c2d9e3a5a99fcd9b32d01",
+    "f0c7ddec97071beb5314482ae6963c9254a9953a"
+  ],
+  "changedPaths": [
+    "patches/network-replication/tests/combat-pvp-cap-queue.metadata.test.mjs",
+    "patches/network-replication/tests/issue-1033-handoff-hit.test.mjs",
+    "patches/network-replication/tests/issue-1185-match-boundary-hit.test.mjs",
+    "patches/network-replication/tests/roller-clothing-fixture.mjs",
+    "scripts/tests/inkwave-combat-provenance.test.mjs",
+    "scripts/tests/inkwave-open-pr-source-pairs.test.mjs"
+  ],
+  "runtimeChangedPaths": [],
+  "assertionsRemoved": false,
+  "guardDisabledOrStubbed": false,
+  "environment": {
+    "node": "v24.19.0",
+    "availableCpus": 4,
+    "testConcurrency": 1,
+    "initialHeapMiB": 1024,
+    "finalHeap": "Node default, measured V8 limit 4288 MiB",
+    "sourceTimeoutSeconds": 1800,
+    "workflowNodeMajor": 22,
+    "versionLimitation": "Local Node24 execution is not a substitute for the configured Node22 CI run."
+  },
+  "workflow": ".github/workflows/validate-inkwave-update.yml",
+  "initialSource": {
+    "tests": 699,
+    "pass": 668,
+    "fail": 31,
+    "cancelled": 0,
+    "skipped": 0,
+    "duration_ms": 1047735.242843,
+    "failures": [
+      "PvP caps preserve exact boundaries, proof accounting, Boss and unrelated routes",
+      "composed normal hit ACK retires both pending records once",
+      "composed ACK from the departed owner can settle after the same-life actor is adopted",
+      "composed owner ACK survives a pre-hit snapshot and a later post-hit snapshot without HP rollback",
+      "composed lethal ACK transfers death to the adopter without replaying the hit",
+      "composed wrong-owner and malformed receipts cannot transfer HP state",
+      "composed owner handoff preserves HP recovery newer than its accepted-hit watermark",
+      "composed same-life owner epochs merge concurrent hits regardless of ACK delivery order",
+      "composed late owner ACK survives the actual V to H to C two-hop handoff",
+      "composed concurrent old/new hits reconcile ACK and packed snapshots in either order",
+      "composed cumulative lethal damage across chained owners produces one splat",
+      "composed owner checkpoint chain remains bounded and legacy checkpoint tuples still decode",
+      "composed malformed authority ACK leaves the exact hit receipt pending for a valid ACK",
+      "composed multiple owner ACKs reconcile by life revision when they arrive out of order",
+      "composed victim respawn retires a previous-life ACK while attacker respawn suppresses old progression",
+      "composed ordinary hit to a host-owned victim is acknowledged and deduplicated",
+      "composed lethal hit survives guest handoff and produces one splat",
+      "composed handoff outcome is invariant across 30/60/120 Hz render callback schedules",
+      "bounded hit admission preserves all 64 accepted routes and rejects the next hit explicitly",
+      "composed relay NACK follows chained owner transfers and accepts only the final owner ACK",
+      "composed stale-life NACK and Practice Range removal retire without damage or reroute",
+      "production mapNoBots cargo removes the actor and retires its hit without rerouting",
+      "composed hit receipt accepts a delayed retry before rejecting duplicate identity",
+      "composed hit dedupe retains the inclusive 65,536-id window without scanning its Set",
+      "bind, disposal, and the production session close path retire hit state before reconnect",
+      "\\#1185 an old-match hit cannot damage a reused actor or consume the new match first hit sequence",
+      "\\#1185 an old-match ACK cannot settle a new pending hit or award new-match progression",
+      "patches/network-replication/tests/outbound-prefix.test.mjs",
+      "patches/network-replication/tests/roller-unit-replication.test.mjs",
+      "installed NetMatch carries owner-selected vertical Roller state through landing and recovery",
+      "patches/network-replication/tests/slosher-impact-paint-admission.test.mjs"
+    ]
+  },
+  "initialFailureClassification": {
+    "missingRealOwnerClockHelpers": 26,
+    "missingRealTextEncoderInVm": 1,
+    "baselineMetadataMissingCurrentStateAndReceipt": 1,
+    "heapLimitSigabrtFiles": 3
+  },
+  "finalSource": {
+    "tests": 788,
+    "pass": 788,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "duration_ms": 991397.942477,
+    "failures": []
+  },
+  "targetedFixtures": {
+    "tests": 30,
+    "pass": 30,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "duration_ms": 17893.888661,
+    "failures": []
+  },
+  "targetedMetadata": {
+    "tests": 2,
+    "pass": 2,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "duration_ms": 150.959862,
+    "failures": []
+  },
+  "baselineMetadata": {
+    "tests": 1,
+    "pass": 0,
+    "fail": 1,
+    "cancelled": 0,
+    "skipped": 0,
+    "duration_ms": 203.953435,
+    "failures": [
+      "PvP caps preserve exact boundaries, proof accounting, Boss and unrelated routes"
+    ]
+  },
+  "baselineWorkflowFourTitles": {
+    "tests": 4,
+    "pass": 0,
+    "fail": 4,
+    "cancelled": 0,
+    "skipped": 0,
+    "duration_ms": 811.69403,
+    "failures": [
+      "roller damage uses a short observed contact gate and target range",
+      "rolling into a crablet uses contact proof despite generic crab damage marker",
+      "pose PR1746 complete pair preserves source identity and rejects every unknown leaf",
+      "pose PR1746 rejects partially reverted historical candidate epochs"
+    ]
+  },
+  "combatHitCeilingsCheck": {
+    "exitCode": 0,
+    "tableWritten": false
+  },
+  "exactSourceComparison": {
+    "status": "passed",
+    "cases": 28,
+    "sourceSha": "26babd6690fff7d9b4f149b12b9df30bc1ac8a26",
+    "integrator": "actual native Projectiles._step and update; no shadow physics",
+    "maxFixedPositionError": 0.009664451899809023,
+    "log": "network-comparison-final.log",
+    "metrics": "comparison-metrics-final.json"
+  },
+  "buildInputVerification": {
+    "sourceCodeCommit": "2d2b8aa25795f351f6e206488c89af7255595be6",
+    "executionCommit": "26babd6690fff7d9b4f149b12b9df30bc1ac8a26",
+    "executionTree": "15f515ed553632dcecdd7b8463b7c665cc04dea5",
+    "checkedInputs": 1364,
+    "inputMismatches": [],
+    "checkedArtifacts": 2018,
+    "artifactMismatches": [],
+    "runtimeOrTestChangedPaths": [
+      "patches/network-replication/tests/combat-pvp-cap-queue.metadata.test.mjs",
+      "patches/network-replication/tests/issue-1033-handoff-hit.test.mjs",
+      "patches/network-replication/tests/issue-1185-match-boundary-hit.test.mjs",
+      "patches/network-replication/tests/roller-clothing-fixture.mjs"
+    ],
+    "onlyTestPathsChanged": true,
+    "inputHash": "c2722d71bdd095d0467ff7f9fd2085fb4b8f3716e2fddb091b07ce34e6251d8e",
+    "contentHash": "34bb39363ccdf22e70ad5a798bd246fde9cb13763587ebe94f250ec64233f1f1",
+    "revision": "a3bc9a7248c8340667783453abb1dee1e1fea807f05b62a348c69d25dbbee7c7",
+    "manifestSha256": "70a4d65e2301ffbfa0a7ccf5790dbee050376a589824b6b11d4fdc365f86cac3",
+    "fullSuiteCodeChangedAfterItsRun": false,
+    "scriptOnlyQaChangesAfterFullSuite": [
+      "scripts/tests/inkwave-combat-provenance.test.mjs",
+      "scripts/tests/inkwave-open-pr-source-pairs.test.mjs"
+    ]
+  },
+  "rawArchive": {
+    "path": "clock-only-network-regression-raw-json-log.tar.gz",
+    "bytes": 247417,
+    "sha256": "f14e5a1038c2d777b032c70853390d02fc4a144e864138705c1c619c1ae4cfff",
+    "members": 19,
+    "readbackHashesVerified": true,
+    "pngIncluded": false,
+    "credentialMatches": []
+  },
+  "limitations": [
+    "No runtime or guard implementation changed during this regression task. Full 120-file network suite ran at f0c7ddec; only two disjoint scripts/tests files changed afterward for the related 70-case workflow batch.",
+    "Initial 1024 MiB run completed all file processes but aborted three large fixture processes with SIGABRT; final normal-heap run executes all 788 cases, with no skip/cancel/failure.",
+    "The native browser acceptance remains the independent source2d2b8aa receipt; this CPU-only run verifies all 1364 build inputs and 2018 artifacts unchanged and launches no browser.",
+    "Splatoon 3 reference remains 11.3.0; no retail network internals or unpublished timing values are inferred."
+  ],
+  "qaFixCommit": "26babd6690fff7d9b4f149b12b9df30bc1ac8a26",
+  "finalQaTree": "15f515ed553632dcecdd7b8463b7c665cc04dea5",
+  "workflowCombatInitial": {
+    "tests": 70,
+    "pass": 66,
+    "fail": 4,
+    "cancelled": 0,
+    "skipped": 0,
+    "duration_ms": 7486.553083,
+    "failures": [
+      "roller damage uses a short observed contact gate and target range",
+      "rolling into a crablet uses contact proof despite generic crab damage marker",
+      "pose PR1746 complete pair preserves source identity and rejects every unknown leaf",
+      "pose PR1746 rejects partially reverted historical candidate epochs"
+    ]
+  },
+  "workflowCombatFinal": {
+    "tests": 70,
+    "pass": 70,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "duration_ms": 9572.667164,
+    "failures": []
+  },
+  "historicalPoseInput": {
+    "commit": "f31238a48b9d1a4af2d4f5f5f9182af777a79c83",
+    "verifiedLeaves": 16,
+    "fixtureSha256": "46f36dda36be5871c1ecc077a5614b13d1a3e87c3cf7879e484c82e4b72ccddd",
+    "fixtureUnchangedFromBaseline855": true,
+    "gateAllowlistChanged": false,
+    "currentAdapterDriftRejectAdded": true
+  },
+  "baselineFailureCorrections": [
+    "Cap metadata fixture uses actual state(nm) initialization plus the accepted active Special receipt required by its intentionally synthetic cap-only boundary; fourteen direct and five wrapper checks remain.",
+    "Modeled Roller fixtures supply an accepted contactSnapshots receipt after actual state initialization; original contact/range/cooldown assertions remain, and retained presentation alone is explicitly rejected.",
+    "Historical PR1746 pose inputs come from the existing frozen sixteen-leaf archive, verified against exact f312 Git blobs and unchanged reviewed pins. Current checkout adapter drift explicitly rejects; all missing/modified/mixed negative loops remain."
+  ],
+  "optionalEmittedPriorResult": {
+    "passed": 64,
+    "failed": 3,
+    "scope": "Three existing source-text/AST extraction checks cannot inspect normal minified output; not rerun by this CPU regression task.",
+    "receipt": "clock-only-release.json"
+  }
+}

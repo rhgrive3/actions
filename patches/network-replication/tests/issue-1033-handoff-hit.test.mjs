@@ -14,6 +14,7 @@ import { C1088_SURGE_TAG, clearRemoteC1088Surge } from '../issue-1088-surge-pres
 import { clearRemoteRollerPresentation } from '../roller-presentation.mjs';
 import { clearRemoteDodgeClock } from '../../splatoon3/runtime/remote-dodge-clock.mjs';
 import { KIT_FORWARD } from '../../splatoon3/runtime/kit-network.mjs';
+import { beginOwnerClock, closeOwnerClock, handleOwnerClockMessage, retireOwnerClock } from '../owner-clock.mjs';
 import { dualiesNetworkAction, dualiesNetworkDirection, dualiesNetworkLock } from '../../splatoon3/runtime/catalog-dualies-motion.mjs';
 
 const raw = fs.readFileSync(new URL('../../../inkwave-public/src/net/netmatch.js', import.meta.url), 'utf8');
@@ -115,6 +116,7 @@ function makeWorld(id) {
     'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'objectShredderEquipped', 'withObjectHitGear', 'clearRemoteC1088Surge',
     'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'C1088_SURGE_TAG',
     'retireDisconnectedMainProjectiles', 'clearRemoteDodgeClock', 'KIT_FORWARD', 'acceptPaintTick', 'forgetPaintPeer', 'transferPaintOwner',
+    'beginOwnerClock', 'closeOwnerClock', 'handleOwnerClockMessage', 'retireOwnerClock',
     `${helpers}\n${ghostHelper}\n${dropCleanup}\n${hitLimits}\n${hitAuthoritySource}\n${forwardList}\nreturn class NetMatchHarness {
 ${methods}
   _setupActor() {}
@@ -132,6 +134,7 @@ ${methods}
     () => {}, respawnPunisherEquipped, withHitPunisher, objectShredderEquipped, withObjectHitGear, clearRemoteC1088Surge,
     WEAPONS, validDamageGroup, clearRemoteRollerPresentation, C1088_SURGE_TAG,
     retireDisconnectedMainProjectiles, clearRemoteDodgeClock, KIT_FORWARD, acceptPaintTick, forgetPaintPeer, transferPaintOwner,
+    beginOwnerClock, closeOwnerClock, handleOwnerClockMessage, retireOwnerClock,
   );
   const net = new NetMatchHarness();
   Object.assign(net, {
