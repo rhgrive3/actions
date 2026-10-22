@@ -4,13 +4,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {createRequire} from 'node:module';
+import {WebSocket, WebSocketServer} from 'ws';
 import {sourceLoadedActorFixture} from './source-loaded-actor-fixture.mjs';
 import {fixture} from './source-fixture.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {createLocalRelay} from '../../../scripts/lib/inkwave-local-relay-fixture.mjs';
-const require=createRequire(import.meta.url);
-let ws;try{ws=require('ws');}catch{const b=require(process.env.INKWAVE_WS_BUNDLE || '/opt/codex/cua_node/lib/node_modules/playwright-core/lib/utilsBundle.js');ws={WebSocket:b.ws,WebSocketServer:b.wsServer};}
+// Installed explicitly by the native object QA workflow; use ws public APIs,
+// never a runner-specific Playwright bundle or a mocked WebSocket transport.
 // Legacy peers always load preserved source; the native current/current case
 // uses INKWAVE_BUILT_SITE when supplied, including the emitted Transport.
 let sourceFixture=fixture;
@@ -26,7 +26,7 @@ const stage={id:'native-peer-origin',rainmaker:{center:[0,0,0],goals:[[0,0,100],
 const plain=x=>JSON.parse(JSON.stringify(x));
 const pause=()=>new Promise(r=>setTimeout(r,5));
 async function until(fn,label){for(let i=0;i<200;i++){if(fn())return;await pause();}assert.fail('Timed out: '+label);}
-async function relay(){const server=new ws.WebSocketServer({host:'127.0.0.1',port:0});await new Promise(r=>server.once('listening',r));const rooms=new Map(),wire=[];const connect=createLocalRelay({rooms});server.on('connection',(socket,request)=>connect(socket,request,{receive:text=>wire.push(text)}));return{rooms,wire,url:'ws://127.0.0.1:'+server.address().port,close:()=>new Promise(r=>server.close(r))};}
+async function relay(){const server=new WebSocketServer({host:'127.0.0.1',port:0});await new Promise(r=>server.once('listening',r));const rooms=new Map(),wire=[];const connect=createLocalRelay({rooms});server.on('connection',(socket,request)=>connect(socket,request,{receive:text=>wire.push(text)}));return{rooms,wire,url:'ws://127.0.0.1:'+server.address().port,close:()=>new Promise(r=>server.close(r))};}
 async function peer(r,{token=null,legacy=false,native=false}={}){
  const replace=(rel,code)=>adaptBuildSource(rel,rel==='src/net/transport.js'&&token?code.replace(/export const COMPAT = '[^']+';/,`export const COMPAT = '${token}';`):code);
  let f;
@@ -36,7 +36,7 @@ async function peer(r,{token=null,legacy=false,native=false}={}){
    adaptRuntime:(rel,code)=>{const p=new URL('./fixtures/rainmaker-pre-origin/'+rel.split('/').at(-1)+'.txt',import.meta.url);return legacy&&rel.startsWith('patches/splatoon3/runtime/ranked/')&&fs.existsSync(p)?fs.readFileSync(p,'utf8'):code;},
    extraExports:extraExports.replaceAll("'./src/","'./inkwave-public/src/")+"export {installRanked,buildFrame} from './patches/splatoon3/runtime/ranked/install.mjs'; export {RankedEngine} from './patches/splatoon3/runtime/ranked/engine.mjs';"});f.installRanked(f);
  }
- let clock=100000;f.configurePeer({WebSocket:ws.WebSocket,setInterval,clearInterval,location:{search:'?relay='+encodeURIComponent(r.url),hostname:'localhost'},performance:{now:()=>clock},structuredClone});
+ let clock=100000;f.configurePeer({WebSocket,setInterval,clearInterval,location:{search:'?relay='+encodeURIComponent(r.url),hostname:'localhost'},performance:{now:()=>clock},structuredClone});
  const session=new f.NetSession();const p={f,session,starts:0,events:[],births:[],paint:[],damage:[],stepTime(dt=1/60){clock+=dt*1000;f.G.time+=dt;}};
  f.G.game={profile:{weapon:'shooter',name:'Origin peer'},mapDef:{id:'tidewater'},settings:{},startNetMatch:async()=>{p.starts++;},netMatchGo(){}};
  p.close=()=>{session.leave(true);p.match?.rankedEffects?.dispose();f.reset?.();};return p;

@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { staticEsModuleImports } from '../lib/inkwave-module-imports.mjs';
 import assert from 'node:assert/strict';
 import { MUSIC_TIMER_SOURCE as body, verifyMusicWorkers } from '../lib/inkwave-roller-blob-provenance.mjs';
 import { hashBytes, recordLoadedModuleResponse, verifyLoadedModules } from '../lib/inkwave-roller-uuid-comparison.mjs';
@@ -70,21 +71,79 @@ test('collector never flattens blob protocol or exempts unknown executable respo
   assert.throws(()=>verifyLoadedModules(a.loaded,a.manifest,null,a.evidence),/Unbound loaded module/);
 });
 
+// Match the shipped immutable module tree, including every patched dependency.
+// A two-file server is insufficient: music imports audio/platform patches too.
+function nativeProbeFiles(manifest, readFile) {
+  assert.match(manifest.build?.revision ?? '', /^[a-f0-9]{64}$/, 'Missing build revision');
+  const prefix = `_versions/${manifest.build.revision}/`;
+  const owner = prefix + 'src/audio/music.js';
+  assert(Object.hasOwn(manifest.artifacts, owner), 'Missing versioned music owner');
+  const files = new Map(), pending = ['/' + owner];
+  while (pending.length) {
+    const url = pending.pop();
+    if (files.has(url)) continue;
+    const rel = url.slice(1);
+    assert(rel.startsWith(prefix) && /\.(?:js|mjs)$/.test(rel), 'Native dependency escaped build revision');
+    assert(rel.split('/').every(part => part && part !== '.' && part !== '..') && !/[\\?#%]/.test(rel), 'Invalid probe artifact path');
+    assert(Object.hasOwn(manifest.artifacts, rel), `Missing manifest-bound native dependency: ${rel}`);
+    const bytes = readFile(rel);
+    assert.equal(hashBytes(bytes), manifest.artifacts[rel], `Probe serves actual manifest-bound bytes: ${rel}`);
+    files.set(url, bytes);
+    for (const specifier of staticEsModuleImports(bytes.toString())) {
+      assert(specifier.startsWith('./') || specifier.startsWith('../'), 'Unexpected native dependency import');
+      const dependency = new URL(specifier, 'http://localhost' + url);
+      assert.equal(dependency.search + dependency.hash, '', 'Unexpected native dependency suffix');
+      pending.push(dependency.pathname);
+    }
+  }
+  return { owner: '/' + owner, files };
+}
+
+test('native probe serves the manifest revision and complete patched module graph, never root or foreign aliases', () => {
+  const revision = 'a'.repeat(64), prefix = `_versions/${revision}/`;
+  const modules = {
+    'src/audio/music.js': 'import "../../patches/audio.mjs"; import "./streamedTrack.js";',
+    'src/audio/streamedTrack.js': 'export {};',
+    'patches/audio.mjs': 'import "./lifecycle.mjs";',
+    'patches/lifecycle.mjs': 'export {};',
+  };
+  const bytes = Object.fromEntries(Object.entries(modules).map(([rel, text]) => [prefix + rel, Buffer.from(text)]));
+  const manifest = { build: { revision }, artifacts: Object.fromEntries(Object.entries(bytes).map(([rel, text]) => [rel, hashBytes(text)])) };
+  manifest.artifacts['src/audio/music.js'] = hashBytes('wrong root');
+  manifest.artifacts['_versions/' + 'b'.repeat(64) + '/src/audio/music.js'] = hashBytes('wrong revision');
+  const probe = nativeProbeFiles(manifest, rel => bytes[rel]);
+  assert.equal(probe.owner, '/' + prefix + 'src/audio/music.js');
+  assert.equal(probe.files.size, 4);
+  for (const [url, text] of probe.files) {
+    for (const match of text.toString().matchAll(/import "([^"]+)"/g)) {
+      assert(probe.files.has(new URL(match[1], 'http://localhost' + url).pathname), 'Every transitive import is served');
+    }
+  }
+  assert(!probe.files.has('/src/audio/music.js'));
+  assert(!probe.files.has('/_versions/' + 'b'.repeat(64) + '/src/audio/music.js'));
+  assert.throws(() => nativeProbeFiles(manifest, () => Buffer.from('altered')), /manifest-bound bytes/);
+  const missing = structuredClone(manifest); delete missing.artifacts[prefix + 'src/audio/music.js'];
+  assert.throws(() => nativeProbeFiles(missing, rel => bytes[rel]), /Missing versioned music owner/);
+  const missingDependency = structuredClone(manifest); delete missingDependency.artifacts[prefix + 'patches/lifecycle.mjs'];
+  assert.throws(() => nativeProbeFiles(missingDependency, rel => bytes[rel]), /Missing manifest-bound native dependency/);
+  const wrong = structuredClone(manifest); wrong.build.revision = 'c'.repeat(64);
+  assert.throws(() => nativeProbeFiles(wrong, rel => bytes[rel]), /Missing versioned music owner/);
+  const escapedBytes = { ...bytes, [prefix + 'patches/lifecycle.mjs']: Buffer.from('import "../../../../escape.mjs";') };
+  const escaped = structuredClone(manifest); escaped.artifacts[prefix + 'patches/lifecycle.mjs'] = hashBytes(escapedBytes[prefix + 'patches/lifecycle.mjs']);
+  assert.throws(() => nativeProbeFiles(escaped, rel => escapedBytes[rel]), /escaped build revision/);
+});
+
 test('real browser observes exact built native music Worker response and creator', { skip: !process.env.INKWAVE_ROLLER_WORKER_SITE }, async () => {
   const fs = await import('node:fs'), path = await import('node:path'), http = await import('node:http');
   const { chromium } = await import('playwright');
   const { observeBlobCreation } = await import('../lib/inkwave-roller-blob-provenance.mjs');
   const site = path.resolve(process.env.INKWAVE_ROLLER_WORKER_SITE);
   const manifest = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json')));
-  const files = {};
-  for (const rel of ['src/audio/music.js', 'src/audio/streamedTrack.js']) {
-    files['/' + rel] = fs.readFileSync(path.join(site, rel));
-    assert.equal(hashBytes(files['/' + rel]), manifest.artifacts[rel], 'Probe serves actual manifest-bound bytes');
-  }
+  const { owner, files } = nativeProbeFiles(manifest, rel => fs.readFileSync(path.join(site, rel)));
   const server = http.createServer((req, res) => {
     res.setHeader('content-type', req.url === '/' ? 'text/html' : 'text/javascript');
     if (req.url === '/') res.end('<html><body>Native music Worker provenance probe</body></html>');
-    else if (files[req.url]) res.end(files[req.url]);
+    else if (files.has(req.url)) res.end(files.get(req.url));
     else { res.writeHead(404); res.end(); }
   });
   await new Promise(r => server.listen(0, '127.0.0.1', r));
@@ -97,10 +156,10 @@ test('real browser observes exact built native music Worker response and creator
     page.on('worker', worker => evidence.workers.push(worker.url()));
     page.on('response', response => tasks.push(recordLoadedModuleResponse(response, origin, loaded, evidence).catch(error => errors.push(String(error)))));
     await page.goto(origin);
-    await page.evaluate(async () => {
-      const { MusicEngine } = await import('/src/audio/music.js');
+    await page.evaluate(async owner => {
+      const { MusicEngine } = await import(owner);
       window.engine = new MusicEngine(); window.engine._startTimer();
-    });
+    }, owner);
     await page.waitForFunction(() => !!window.engine?.worker);
     // Wait for the actual blob response callback, not only Worker construction.
     const deadline = Date.now() + 10000;
@@ -109,6 +168,8 @@ test('real browser observes exact built native music Worker response and creator
     await Promise.all(tasks); assert.deepEqual(errors, []);
     const verified = verifyMusicWorkers(evidence, loaded, manifest);
     assert.equal(verified.length, 1);
+    assert.equal(verified[0].owner, owner.slice(1));
+    assert.equal(verified[0].bytes, 90);
     assert.equal(verified[0].sha256, hashBytes(body));
     // Same exact body from a foreign source is still not authorized.
     const foreign = structuredClone(evidence);

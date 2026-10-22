@@ -33,6 +33,7 @@ on:
       - 'patches/splatoon3/tests/burst-contact-phases.test.mjs'
       - 'scripts/check-inkwave-splashdown-browser.mjs'
       - 'scripts/lib/inkjet-terminal-probe.mjs'
+      - 'scripts/tests/inkjet-terminal-probe-lifecycle.test.mjs'
       - 'scripts/generate-inkwave-source-proof.py'
       - '.github/workflows/inkwave-specials-1130.yml'
   workflow_dispatch:
@@ -98,7 +99,8 @@ jobs:
             patches/splatoon3/tests/inkjet-vfx-cadence.test.mjs \
             patches/splatoon3/tests/inkjet-vfx-pool-budget.test.mjs \
             patches/splatoon3/tests/inkjet-vfx-production.test.mjs \
-            patches/splatoon3/tests/inkjet-vfx-terminal-impact.test.mjs
+            patches/splatoon3/tests/inkjet-vfx-terminal-impact.test.mjs \
+            scripts/tests/inkjet-terminal-probe-lifecycle.test.mjs
       - name: Public sub and current catalogue lifecycle regressions
         run: |
           node --experimental-vm-modules --test --test-concurrency=2 \

@@ -8,6 +8,16 @@ export function terminalWallLayout(birth=null) {
   if(birth)single.push({kind:'box',min:[birth.x-5,0,birth.z+.05],max:[birth.x+5,Math.max(10,birth.y+3),birth.z+1.05]});
   return {bounds:{minX:-12,maxX:12,minZ:-12,maxZ:12},spawnPads:[[-10,0,0],[10,0,0]],spawnBarrier:0,half:[],single};
 }
+// Match main.js FX wiring: setCollider installs the production director before
+// any actor activation. Resolve G.physics on every call because the controlled
+// near-wall world is rebuilt at each native projectile birth.
+export function wireTerminalFxCollider(api, fx) {
+  const hit = new api.Hit();
+  fx.setCollider((from, to) => {
+    const h = api.G.physics.segment(from, to, hit, true);
+    return h.hit ? { point: h.point, normal: h.normal } : null;
+  });
+}
 export async function runInkjetTerminalProbe({api,THREE,G,scene,renderer,camera,Level,applyCatalogueChoice,hz,draw,pixels,changed,expect,cases,images}) {
   const dt=1/hz, assert=(ok,label)=>{expect(ok,label);if(!ok)throw new Error(label);};
   const equal=(a,b,label)=>assert(JSON.stringify(a)===JSON.stringify(b),label);
@@ -38,6 +48,7 @@ export async function runInkjetTerminalProbe({api,THREE,G,scene,renderer,camera,
   }
   function setup() {
     G.time=0;G.netm=null;world();G.projectiles=new api.Projectiles(scene);G.fx=new api.FX(scene,{quality:.35});
+    wireTerminalFxCollider(api,G.fx);
     assert(!!G.fx.s3SpecialVfx,'production-composed Inkjet director');
     return {system:G.projectiles,fx:G.fx,d:G.fx.s3SpecialVfx};
   }

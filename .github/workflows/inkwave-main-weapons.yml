@@ -231,6 +231,7 @@ jobs:
           # Raw83 source/build/manifests are never changed. This creates a separate
           # QA-only response overlay using the existing production source adapter.
           INKWAVE_ROLLER_BASELINE_SOURCE=work/roller-grip-baseline INKWAVE_ROLLER_BASELINE_SITE=work/roller-grip-site-baseline INKWAVE_ROLLER_WORKER_SITE=work/roller-grip-site-baseline node --test scripts/tests/inkwave-roller-uuid-comparison.test.mjs scripts/tests/inkwave-roller-blob-provenance.test.mjs
+          INKWAVE_ROLLER_WORKER_SITE=work/roller-grip-site-candidate node --test scripts/tests/inkwave-roller-blob-provenance.test.mjs
           node scripts/lib/inkwave-roller-uuid-comparison.mjs work/roller-grip-baseline work/roller-grip-site-baseline work/roller-grip-evidence/uuid-isolation > work/roller-grip-evidence/uuid-isolation-build.json
       - name: Capture baseline at the shipped 180-tick rolling state
         id: baseline_capture

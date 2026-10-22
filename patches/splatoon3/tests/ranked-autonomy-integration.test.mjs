@@ -9,6 +9,7 @@ const RANKED_EXPORTS = `
   export { NetSession } from './inkwave-public/src/net/session.js';
   export { NavGraph } from './inkwave-public/src/game/nav.js';
   export { installRanked, buildFrame } from './patches/splatoon3/runtime/ranked/install.mjs';
+  export { validRainmakerShotOrigin } from './patches/splatoon3/runtime/ranked/rainmaker-shot-origin.mjs';
   export { createRankedEffects } from './patches/splatoon3/runtime/ranked/combat.mjs';
   export { RankedEngine } from './patches/splatoon3/runtime/ranked/engine.mjs';
   export { createRankedStage, RankedWorld } from './patches/splatoon3/runtime/ranked/world.mjs';
@@ -43,6 +44,7 @@ function paintRenderer(THREE) {
 
 const f = await fixture({
   fullRuntime: true,
+  includeCharacter: true,
   adaptNative: adaptBuildSource,
   adaptRuntime: adaptBuildSource,
   extraExports: RANKED_EXPORTS,
@@ -78,10 +80,14 @@ function start(mode, { inactiveTeams = [] } = {}) {
   match.rankedEffects = f.createRankedEffects({ ...f.installedRuntime, G: f.G, THREE: f.THREE,
     Hit: f.Hit, emit: f.emit }, match);
   for (const team of [0, 1]) for (const slot of [0, 1]) {
-    const actor = f.make('shooter');
+    // Rainmaker's release origin is sampled from the native final objective pose.
+    const actor = mode === 'rainmaker'
+      ? new f.Actor({ team, name: 'bot', weapon: 'shooter', CharacterClass: f.Character })
+      : f.make('shooter');
+    actor.character.actor = actor;
     actor.team = team; actor.slot = slot; actor.isBot = true; actor.nid = `${team}:${slot}`;
     delete actor._integrate; delete actor._finishFrame; delete actor._spawnBarrier;
-    actor.character.update = () => {}; // display-only fixture stub; Actor movement and weapons stay native
+    if (mode !== 'rainmaker') actor.character.update = () => {}; // Other modes retain display-only stubs.
     const pad = level.spawnPads[team];
     const angle = (slot / 4) * Math.PI * 2 + 0.6;
     actor.spawnAt(new f.THREE.Vector3(pad.x + Math.cos(angle) * 1.2, pad.y, pad.z + Math.sin(angle) * 1.2), team === 0 ? 0 : Math.PI);
@@ -95,7 +101,7 @@ function start(mode, { inactiveTeams = [] } = {}) {
   return match;
 }
 
-function frameFor(match) { return f.buildFrame(match, { G: f.G }); }
+function frameFor(match) { return f.buildFrame(match, f.installedRuntime); }
 
 function step(match, frames, metrics, until = null) {
   const ranked = match.ranked;
@@ -119,6 +125,12 @@ function step(match, frames, metrics, until = null) {
     ranked.update(DT, frame);
     const events = ranked.events.splice(0);
     for (const event of events) {
+      if (event.kind === 'rainmaker-shot') {
+        const carrier = match.actors.find(a => String(a.nid) === String(event.actorId));
+        assert.ok(carrier?.character instanceof f.Character);
+        assert.equal(Object.hasOwn(carrier, '_finishFrame'), false);
+        assert.ok(f.validRainmakerShotOrigin(event.shotOrigin, event), 'bot release uses the guarded native grip');
+      }
       metrics.events.set(event.kind, (metrics.events.get(event.kind) || 0) + 1);
       if (match.mode === 'rainmaker' && ['rainmaker-pop', 'rainmaker-pickup', 'rainmaker-shot', 'rainmaker-drop', 'checkpoint'].includes(event.kind)) {
         metrics.rainmakerEvents.push({ frame: i, kind: event.kind, actorId: event.actorId ?? event.id,
