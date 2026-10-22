@@ -26,6 +26,8 @@ on:
       - 'patches/splatoon3/tests/sub-community-behavior.test.mjs'
       - 'patches/splatoon3/tests/curling-community-fidelity.test.mjs'
       - 'patches/splatoon3/tests/catalogue-integration.test.mjs'
+      - 'patches/splatoon3/tests/catalogue-session-tick-admission.test.mjs'
+      - 'patches/splatoon3/tests/catalogue-tick-admission.test.mjs'
       - 'patches/splatoon3/tests/tacticooler-gauge-lock.test.mjs'
       - 'patches/splatoon3/tests/kit-trizooka*.test.mjs'
       - 'patches/splatoon3/tests/trizooka-birth-swim.test.mjs'
@@ -109,6 +111,8 @@ jobs:
             patches/splatoon3/tests/sub-community-behavior.test.mjs \
             patches/splatoon3/tests/curling-community-fidelity.test.mjs \
             patches/splatoon3/tests/catalogue-integration.test.mjs \
+            patches/splatoon3/tests/catalogue-session-tick-admission.test.mjs \
+            patches/splatoon3/tests/catalogue-tick-admission.test.mjs \
             patches/splatoon3/tests/tacticooler-gauge-lock.test.mjs \
             patches/splatoon3/tests/kit-trizooka-geometry.test.mjs \
             patches/splatoon3/tests/kit-trizooka-native.test.mjs \
@@ -183,6 +187,8 @@ jobs:
             patches/splatoon3/tests/sub-community-behavior.test.mjs \
             patches/splatoon3/tests/curling-community-fidelity.test.mjs \
             patches/splatoon3/tests/catalogue-integration.test.mjs \
+            patches/splatoon3/tests/catalogue-session-tick-admission.test.mjs \
+            patches/splatoon3/tests/catalogue-tick-admission.test.mjs \
             patches/splatoon3/tests/tacticooler-gauge-lock.test.mjs \
             patches/splatoon3/tests/kit-trizooka.test.mjs \
             patches/splatoon3/tests/kit-trizooka-geometry.test.mjs \

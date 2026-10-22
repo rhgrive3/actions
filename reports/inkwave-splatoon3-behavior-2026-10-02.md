@@ -5870,3 +5870,12 @@ Node v24.19.0の本番合成VMで新規3件と隣接9件、計12/12成功。原�
 ### #1767 独立clock-only source自身のnative追補
 
 独立source`2d2b8aa25795f351f6e206488c89af7255595be6`、input`c2722d71…`/content`34bb3936…`の固定buildで、実Tidewater/Match/Actor/Characterと実WebSocket/production relayを用いる3局面・6方向も成功した。実行evidence HEAD`50f8843e…`との差分はreport3fileだけで、1,364input全部の同一性を再照合した。8nonce query/6reply、origin固定、Actor buffer7〜10、Match playingと後続snapshot進行、page/console error0、実描画80/82call・context lossなしを確認。全6組の実受信対は旧arrival-origin guardではfalseとなる。PNGはlocal保持＋SHA一覧、公開rawはJSON/logのみ。source/evidence commit、local upgrade shim、単一Chromium内2context、手動native frame、Switch/物理端末未計測の範囲は`reports/issue-resolution-20261022/continuation/clock-only-native-browser.json`へ明記し、768の過去受入と分けた。
+
+
+## 2026-10-22 継続: catalogue sidecar と受入済みowner tickの同期
+
+比較参照はSplatoon 3 11.3.0。サブ・スペシャルの選択値、攻撃・移動・発射の数値や挙動は変更しない。Nintendoのnetwork実装・非公開の受信判定は未確認のままとし、本修正を本家protocolの再現とは扱わない。
+
+INKWAVEの `patches/splatoon3/runtime/catalogue.mjs` では、native `_tick` が時刻を拒否しても、到着した `ts` が過去の受入値より大きいだけで `ck` の装備を変更していた。実composed受信の1000/torpedo受入後、1014/bombがclockで拒否されても装備だけ変わる反例に対応し、native処理後のpeer.lastTsが当該message.tsへ実際に進んだ場合だけsidecarを適用する。既存membership・actor owner・life・選択値の判定は維持する。prebind/future/stale/foreign/malformedの拒否不変と正常更新、実NetSession v1 freshness proofを専用回帰で検証し、既存clock再接続群とcompiled production形式も別記する。
+
+Node22でsource全対象92case（既存clock25含む）と通常production compiled20caseを確認した。人工1GiB capでpaint-authority1fileがOOMした初回78pass＋module失敗を保全し、同一sourceを通常heapで14/14完遂して分離集計する。旧compiledの実Session v1 future反例はkitだけ変わって失敗し、新compiledは実読込20回すべてmanifest SHA一致で通過した。独立source/test reviewおよび1364Git入力・2018出力の照合、fixture境界と既存browser証拠を別sourceに維持する範囲は `reports/issue-resolution-20261022/continuation/catalogue-admitted-ticks.json` に記録した。
