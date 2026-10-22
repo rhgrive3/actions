@@ -597,6 +597,7 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
     // the match-load fade (main.js _warmCharacters, 8 s cap) also waits for the keeper programs to link
     return keep&&typeof done?.then==='function'?done.then(v=>keep.then(()=>v)):done;
   };
+  if(typeof warmAll==='function')Object.defineProperty(cp.warmAll,Symbol.for('inkwave.characterWarmParent'),{value:warmAll});
   function presentationState(ch){let m=presentationMap(ch).get(ch);if(m)return m;
     m={kind:null,models:new Map(),model:null,weapon:null,error:0,shotAt:-Infinity,shotSerial:0,
       a:new THREE.Vector3(),b:new THREE.Vector3(),p:new THREE.Vector3(),dir:new THREE.Vector3(),q:new THREE.Quaternion(),handQ:new THREE.Quaternion(),

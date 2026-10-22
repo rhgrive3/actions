@@ -180,3 +180,55 @@ two-step ImageBitmap route. It disproves byte equivalence for the transparent
 413x257→128 fixture: one channel differs by one byte (both hashes in the receipt).
 1024²→128 and 4096x512→256 fixtures match. Therefore the two-stage resize queue
 remains blocked by a concrete output difference, and the existing route remains.
+
+## Follow-up: conservative source cache retention
+
+With Web Locks and StorageManager estimates, extra stage caches fit within the
+sum of the largest two actually observed stage body sizes. The quota ceiling
+also leaves one largest-stage body of estimated free space. There is no fixed
+MiB cap or unbounded policy. Equal-sized stages may still retain only two. This
+is a verified-response-body budget; browser metadata/disk overhead is not an
+exactly measured body allocation. Missing capabilities, denied/invalid estimates,
+legacy or uncertain accounting keep the old two-slot policy.
+
+The shared origin ledger has a SHA256 seal and a pending marker. Stage records
+also become pending before a CacheStorage body write. Each Cache.put replaces
+one record atomically; an interrupted final commit is never interpreted as a
+trusted count. Web Locks serialize writers across page/worker realms. A pending/
+corrupt ledger is rebuilt from stage records, unknown records force two slots,
+and quota failures retry after evicting only cold stages. The active writer is
+preserved. Source asset authentication still runs independently on every read;
+accounting neither supplies nor bypasses any source hash. Current-stage metadata
+and a compact origin ledger are read per write; cold stage scans occur at slot
+entry/recovery, avoiding whole retained-stage scans per PNG.
+
+13 policy tests cover mixed/equal sizes, LRU, denied/invalid estimates, headroom,
+unknown/pending/corrupt accounting, failed commits, quota retry and 20 concurrent
+writes. With source-cache, texture, inventory and input-identity controls, 80 tests
+pass. Production build and quick patch checks pass. Actual Chromium CacheStorage/
+Web Locks controls retain six stages / 1,300,000 body bytes after observing a
+1,000,000 + 800,000 byte pair and five 100,000 byte stages. A retained old stage
+revisits offline with zero extra HTTP calls; corrupt cached bytes still fail
+closed offline. The receipt records real cache names, body sizes and operation
+times. New-stage cache/accounting work in this small synthetic run takes roughly
+27–66 ms; extra metadata writes are a tradeoff for retention, not a claimed cold
+startup speedup. Physical iPad/Safari purge behavior and device p95 remain unknown.
+
+## Follow-up: rejected incremental SHA1 candidate
+
+Fetched `@noble/hashes@1.8.0` from its official npm tarball and verified registry
+SHA512 integrity. No upstream algorithm was changed. Upstream explicitly excludes
+SHA1 from its independent Cure53 audit, so this is a vetted upstream candidate,
+not independently audited SHA1. Twenty standard SHA1/chunk-boundary controls
+(including empty, abc, long RFC message and million-a) and 260 Git-blob length
+controls match canonical vectors / Node crypto.
+
+Isolated Node forks measure 1/16/64 MiB payloads. At 64 MiB, WebCrypto plus the
+existing explicit copy takes 106.8 ms with 242,368,512-byte peak RSS; incremental
+JavaScript takes 245.5 ms with 112,402,432-byte peak RSS. Explicit ArrayBuffer growth
+is 67,108,878 versus 64 bytes. At 1 MiB the times are 2.35 versus 8.05 ms, and at
+16 MiB 25.90 versus 62.98 ms. These single-process controls are not device
+benchmarks or statistical guarantees. The lower-memory candidate costs 2.3–3.4x
+CPU and would move PNG verification onto the rendering thread. It was rejected
+as the default; runtime remains WebCrypto and no new hash dependency ships.
+The tool and receipt preserve the evidence for the remaining blocked queue item.

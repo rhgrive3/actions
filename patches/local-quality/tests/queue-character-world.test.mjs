@@ -302,3 +302,19 @@ test('shared rim derivation exactly observes live sky and camera mutations while
   assert.ok(derivations<100,'stable shared world inputs derive once rather than per character: '+derivations);
   CHAR_RIM.k=0;const a=state(),b=state();a.u.uIwRimL.value.set(.3,.1,.8);b.u.uIwRimL.value.copy(a.u.uIwRimL.value);before.call(a);after.call(b);assert.deepEqual(b.u,a.u,'rim0 retains each caller existing direction');
 });
+
+test('marina reflection skips only a provably upward perspective cone above the complete wave envelope', () => {
+  const source=patch('src/world/environment.js'),outside=new Function('THREE','return function '+method(source,'_iwSeaOutsideView'))(THREE),state={sea:new THREE.Mesh()};state.sea.position.y=-1.6;state.sea.updateMatrixWorld(true);
+  const prefix=method(source,'_renderReflection').split('    if (!this._reflRT) {')[0]+' return "render"; }';
+  const reflect=new Function('G','WATER_Y','_rv','return function '+prefix)({settings:{quality:'high'}},-1.6,[new THREE.Vector3()]);let rejected=0,retained=0,cases=0;
+  for(const fov of [30,60,100])for(const aspect of [.6,1,2])for(const pitch of [-.2,0,.5,1.2,Math.PI/2])for(const roll of [0,.6,1.4])for(const yaw of [0,.3,1.1]){
+    cases++;const camera=new THREE.PerspectiveCamera(fov,aspect,.1,1000);camera.position.set(3,2,7);camera.rotation.set(pitch,yaw,roll,'YXZ');camera.setViewOffset(1600,900,100,30,1300,800);camera.updateMatrixWorld(true);
+    const skip=outside.call(state,camera);if(skip){rejected++;for(let y=0;y<=10;y++)for(let x=0;x<=10;x++){const ray=new THREE.Vector3(x/5-1,y/5-1,.5).unproject(camera).sub(camera.position);assert.ok(ray.y>0,'every interior ray points away from the complete water envelope');}}else retained++;
+    const env={...state,U:{uReflOn:{value:1}},_marina:true,_frameId:1,reflections:true,_iwSeaOutsideView:outside};
+    assert.equal(reflect.call(env,{}, {},camera),skip?undefined:'render');assert.equal(env._reflFrame,skip?undefined:1,'invisible alternate view does not claim same-frame reflection');
+  }
+  assert.ok(rejected>0&&retained>0);assert.equal(cases,405);
+  const camera=new THREE.PerspectiveCamera(60,1,.1,1000);camera.position.y=-1.44;camera.rotation.x=Math.PI/2;camera.updateMatrixWorld(true);assert.equal(outside.call(state,camera),false,'camera inside maximum wave envelope must render');
+  camera.position.y=3;camera.updateMatrixWorld(true);const env={...state,U:{uReflOn:{value:1}},_marina:true,_frameId:8,reflections:true,_iwSeaOutsideView:outside};assert.equal(reflect.call(env,{}, {},camera),undefined);camera.rotation.x=-.3;camera.updateMatrixWorld(true);assert.equal(reflect.call(env,{}, {},camera),'render','first visible view in same frame updates immediately');
+  state.sea.rotation.z=.1;state.sea.updateMatrixWorld(true);camera.rotation.x=Math.PI/2;camera.updateMatrixWorld(true);assert.equal(outside.call(state,camera),false,'unproven transformed sea falls back');assert.equal(outside.call(state,new THREE.OrthographicCamera()),false);
+});

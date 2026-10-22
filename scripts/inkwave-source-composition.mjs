@@ -1,5 +1,7 @@
+import { adaptCharacterShadowBatch } from '../patches/local-quality/character-shadow-batch-adapter.mjs';
 import { adaptQueueNetworkUi } from '../patches/reliability/queue-network-ui-adapter.mjs';
-import { adaptRankedSplatBatch } from '../patches/splatoon3/ranked-splat-batch-adapter.mjs';
+import { adaptInkRipplePresentation } from '../patches/local-quality/ink-ripple-presentation-adapter.mjs';
+import { adaptShowcaseIdlePools } from '../patches/local-quality/showcase-idle-pools-adapter.mjs';
 import { adaptQueueNine } from '../patches/reliability/queue-nine-final-adapter.mjs';
 import { adaptCombatProvenance } from '../patches/network-replication/combat-provenance-adapter.mjs';
 import { adaptWeaponOpponentPreview } from '../patches/splatoon3/weapon-opponent-preview-adapter.mjs';
@@ -52,7 +54,8 @@ export function adaptBuildSource(rel, code) {
   code = adaptRange(rel, code);
   code = adaptRanked(rel, code);
   code = adaptNativeStages(rel, code);
-  code = adaptRankedSplatBatch(rel, code, replaceOnce);
+  code = adaptShowcaseIdlePools(rel, code, replaceOnce);
+  code = adaptInkRipplePresentation(rel, code, replaceOnce);
   // Audio patches are applied before the verified final camera pass.
   // The camera adapter must retain the terminal fail-closed position.
   code = adaptWeaponAudio(rel, code);
@@ -62,7 +65,7 @@ export function adaptBuildSource(rel, code) {
   code = adaptRollerBandParity(rel, code);
   code = adaptWeaponOpponentPalette(rel, code);
   code = adaptWeaponOpponentPreview(rel, code);
-  return adaptQueueNetworkUi(rel, adaptCombatProvenance(rel, applyZevantDisplayName(rel, adaptLoadingScreen(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce))))));
+  return adaptCharacterShadowBatch(rel, adaptQueueNetworkUi(rel, adaptCombatProvenance(rel, applyZevantDisplayName(rel, adaptLoadingScreen(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce)))))), replaceOnce);
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream

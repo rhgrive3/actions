@@ -100,7 +100,7 @@ test('the actual build block scans import-map targets and removes only the stage
     files.set(LOADING_ROOT+'/runtime/startup.mjs',''); files.set(LOADING_ROOT+'/sw.js','');
     let result;
     vm.runInNewContext(block, { BUILD, SRC, LOADING_ROOT, projectRoot, path, REVIEWED_AUDIO_ORPHAN,
-      console:{log(){}}, adaptBuildSource:(_file,code)=>code,
+      console:{log(){}}, adaptBuildSource:(_file,code)=>code, composedOwners:new Map(owners),
       reviewedAudioOrphanDecision(...args){return result=reviewedAudioOrphanDecision(...args);},
       walk:dir=>[...files.keys()].filter(file=>file.startsWith(dir+'/')),
       fs:{existsSync:file=>files.has(file),readFileSync:file=>{assert.ok(files.has(file),file);return files.get(file);},unlinkSync:file=>deleted.push(file)},

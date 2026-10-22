@@ -3,7 +3,15 @@
 function once(code,from,to,label){if(!code.includes(from))throw new Error('audio adapter anchor: '+label);return code.replace(from,to);}
 export function adaptWeaponAudio(rel,code){
   if(rel==='src/audio/audio.js'){
-    code="import { connectOutputSafety } from '../../patches/splatoon3/runtime/audio/output-safety.mjs';\nimport { installWeaponAudioEngine } from '../../patches/splatoon3/runtime/audio/engine.mjs';\nimport { audioEmitterKey, selectVictim } from '../../patches/splatoon3/runtime/audio/bank.mjs';\n"+code;
+    code="import { TEX, texture } from '../../patches/splatoon3/runtime/audio/grain-texture.mjs';\nimport { prewarmGrainTextures, installGrainPrewarmCleanup } from '../../patches/splatoon3/runtime/audio/grain-prewarm.mjs';\nimport { ReverbPrewarm, installReverbPrewarmCleanup } from '../../patches/splatoon3/runtime/audio/reverb-prewarm.mjs';\nimport { connectOutputSafety } from '../../patches/splatoon3/runtime/audio/output-safety.mjs';\nimport { installWeaponAudioEngine } from '../../patches/splatoon3/runtime/audio/engine.mjs';\nimport { audioEmitterKey, selectVictim } from '../../patches/splatoon3/runtime/audio/bank.mjs';\n"+code;
+    const grainStart = code.indexOf('const TEX = {'), grainEnd = code.indexOf('/* ------------------------------------------------------------------------------------------------------------\n * Engine', grainStart);
+    if (grainStart < 0 || grainEnd < grainStart) throw new Error('audio adapter anchor: shared grain implementation');
+    code = code.slice(0, grainStart) + 'export { texture };\n\n' + code.slice(grainEnd);
+    code=once(code, '  _warm() {', '  _warm() {\n    if (prewarmGrainTextures(this, () => this._warm())) return;', 'off-thread context-owned grain prewarm with original timers fallback');
+    code=once(code, '    this.music = musicSingleton;', '    this.music = musicSingleton;\n    this._reverbPrewarm = new ReverbPrewarm();', 'start bounded speculative reverb preparation without creating/unlocking context');
+    code=once(code, '    this.ctx = ctx;', '    this.ctx = ctx;\n    const preparedReverbs = this._reverbPrewarm?.take(ctx, this.opts.music !== false); this._reverbPrewarm = null;', 'accept only actual context sample rate');
+    code=once(code, 'this.conv.buffer = makeImpulse(ctx, 1.5, 3.4, { pre: 0.012, seed: 3 });', 'this.conv.buffer = preparedReverbs?.[0] || makeImpulse(ctx, 1.5, 3.4, { pre: 0.012, seed: 3 });', 'ready SFX reverb or immediate original fallback');
+    code=once(code, 'this.music._init(ctx, this.musicBus, { offline: this.offline });', 'this.music._init(ctx, this.musicBus, { offline: this.offline, impulse: preparedReverbs?.[1] });', 'independent ready music reverb');
     code=once(code,'hp.connect(glue); glue.connect(lim); lim.connect(ctx.destination);','hp.connect(glue); glue.connect(lim); this.outputSafety=connectOutputSafety(ctx,lim);','sample peak protection');
     code=once(code,'const d = SFX[name];','const d = this.resolveWeaponSound?.(name) || SFX[name];','definitions');
     code=once(code,'const t = Math.max(now, o.at ?? now) + (o.delay || 0);',`const t = Math.max(now, Number.isFinite(o.at) ? o.at : now) + Math.max(0, Number.isFinite(o.delay) ? o.delay : 0);
@@ -21,7 +29,7 @@ export function adaptWeaponAudio(rel,code){
     voice.priority=priority;
     const obstruction=Math.min(1,Math.max(0,Number(o.occlusion)||0));
     if(obstruction&&voice.lp){voice.lp.frequency.value=Math.min(voice.lp.frequency.value,22000*Math.pow(.055,obstruction));voice.vol*=1-obstruction*.38;voice.out.gain.value=voice.vol;}`,'spatial priority');
-    code=once(code,'export const audio = new AudioEngine();','installWeaponAudioEngine(AudioEngine);\nexport const audio = new AudioEngine();','installation');
+    code=once(code,'export const audio = new AudioEngine();','installWeaponAudioEngine(AudioEngine);\ninstallReverbPrewarmCleanup(AudioEngine);\ninstallGrainPrewarmCleanup(AudioEngine);\nexport const audio = new AudioEngine();','installation');
   }
   if(rel==='src/game/weapons.js'){
     code=code.replace("emit('bomb:explode', { actor: b.owner,","emit('bomb:explode', { subId:b.s3Sub?.id||'bomb',actor:b.owner,");
@@ -168,6 +176,12 @@ export function adaptWeaponAudio(rel,code){
         // Reuse already-loaded runtime audio for hit classification, preserving the core preload graph.
   }
   if(rel==='src/audio/music.js'){
+    const impulseStart = code.indexOf('export function makeImpulse('), impulseEnd = code.indexOf('\n// tanh drive curve', impulseStart);
+    if (impulseStart < 0 || impulseEnd < impulseStart) throw new Error('audio adapter anchor: shared impulse implementation');
+    code = "import { buildImpulse } from '../../patches/splatoon3/runtime/audio/reverb-impulse.mjs';\n" + code.slice(0, impulseStart) +
+      'export function makeImpulse(ctx, seconds = 1.6, decay = 3.2, opt = {}) { return buildImpulse(ctx, seconds, decay, opt); }\n' + code.slice(impulseEnd);
+    code=once(code, 'conv.buffer = makeImpulse(ctx, 2.2, 2.4, { seed: 5, bright: 0.7, dark: 0.08 });', 'conv.buffer = opt.impulse || makeImpulse(ctx, 2.2, 2.4, { seed: 5, bright: 0.7, dark: 0.08 });', 'ready music reverb or immediate original fallback');
+
     code="import { installOriginalAudioScore } from '../../patches/splatoon3/runtime/audio/music-score.mjs';\n"+code;
     code=once(code,'const compiled = new Map();','installOriginalAudioScore(SONGS);\nconst compiled = new Map();','original score');
     const streamingGrid = 'if (cur && !element && !(cur instanceof StreamedTrack) && fade > 0 && cur.song.bpm === song.bpm)';

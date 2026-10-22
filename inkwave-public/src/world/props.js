@@ -3098,11 +3098,9 @@ export class PropKit {
     this.quality = opts.quality || 'high';
     this.qf = { low: 0.6, medium: 0.8, high: 1 }[this.quality] ?? 1;
     this.group = new THREE.Group(); this.group.name = 'props';
-    if (scene) scene.add(this.group);
     this.uTime = { value: 0 };
     this.teamColors = [new THREE.Color('#ff8a14'), new THREE.Color('#2f5bff')];
     this._headless = !!opts.headless || typeof document === 'undefined';
-    if (!this._headless) this._makeMaterials();
     this._buckets = new Map();
     this._placements = [];   // lightweight {type, o} records: regenerate build buckets on rebuild
     this._released = false;  // true once build() has released the consumed static buckets
@@ -3112,11 +3110,20 @@ export class PropKit {
     this._B = new Builder(this);
     this.count = 0;
     this.lastTris = 0;
+    // Own every partial allocation before any canvas/material work can throw.
+    // Do not publish the group until construction has completed.
+    try {
+      if (!this._headless) this._makeMaterials();
+      if (scene) scene.add(this.group);
+    } catch (error) {
+      try { this.dispose(); } catch { /* preserve the construction failure */ }
+      throw error;
+    }
   }
 
   _makeMaterials() {
     const cv = document.createElement('canvas'), size = propAtlasDimension(this); cv.width = size; cv.height = size;
-    const atlas = new THREE.CanvasTexture(cv);
+    const atlas = this.atlas = new THREE.CanvasTexture(cv);
     atlas.colorSpace = THREE.SRGBColorSpace; atlas.anisotropy = 8;
     const redraw = () => {
       if (this._disposed) return;
@@ -3129,27 +3136,25 @@ export class PropKit {
     this._propAtlasRedraw = redraw;
     redraw();
     loadFonts().then(() => { if (!this._disposed) redraw(); });
-    this.atlas = atlas;
     this.chain = canvasTex(128, 128, (x, w, h) => {
       x.clearRect(0, 0, w, h); x.strokeStyle = '#fff'; x.lineWidth = 7; x.lineCap = 'round';
       for (const o of [-w, 0, w]) { x.beginPath(); x.moveTo(o, 0); x.lineTo(o + w, h); x.stroke(); x.beginPath(); x.moveTo(o + w, 0); x.lineTo(o, h); x.stroke(); }
     }, true);
     this.blobTex = canvasTex(64, 64, (x, w, h) => { const g = x.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.45, 'rgba(255,255,255,0.7)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); });
     this.blobTex.colorSpace = THREE.NoColorSpace;
-    this.mat = {
-      paint: new THREE.MeshStandardMaterial({ map: atlas, vertexColors: true, roughness: 0.6, metalness: 0, alphaTest: 0.5 }),
-      gloss: new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.36, metalness: 0, clearcoat: 0.65, clearcoatRoughness: 0.2 }),
-      metal: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.33, metalness: 0.7 }),
-      wood: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.74, metalness: 0 }),
-      rubber: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.86, metalness: 0 }),
-      foliage: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7, metalness: 0, side: THREE.DoubleSide }),
-      glow: new THREE.MeshBasicMaterial({ map: atlas, vertexColors: true }),
-      fence: new THREE.MeshStandardMaterial({ map: this.chain, vertexColors: true, alphaTest: 0.4, side: THREE.DoubleSide, metalness: 0.5, roughness: 0.4 }),
-      blob: new THREE.MeshBasicMaterial({ map: this.blobTex, color: 0x1c2233, transparent: true, opacity: 0.38, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
-      blink: new THREE.MeshBasicMaterial({ color: 0xffffff }),
-      cloth: clothMaterial(atlas, this.uTime),
-      clothDepth: clothDepthMaterial(this.uTime),
-    };
+    this.mat = {};
+    this.mat.paint = new THREE.MeshStandardMaterial({ map: atlas, vertexColors: true, roughness: 0.6, metalness: 0, alphaTest: 0.5 });
+    this.mat.gloss = new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.36, metalness: 0, clearcoat: 0.65, clearcoatRoughness: 0.2 });
+    this.mat.metal = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.33, metalness: 0.7 });
+    this.mat.wood = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.74, metalness: 0 });
+    this.mat.rubber = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.86, metalness: 0 });
+    this.mat.foliage = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7, metalness: 0, side: THREE.DoubleSide });
+    this.mat.glow = new THREE.MeshBasicMaterial({ map: atlas, vertexColors: true });
+    this.mat.fence = new THREE.MeshStandardMaterial({ map: this.chain, vertexColors: true, alphaTest: 0.4, side: THREE.DoubleSide, metalness: 0.5, roughness: 0.4 });
+    this.mat.blob = new THREE.MeshBasicMaterial({ map: this.blobTex, color: 0x1c2233, transparent: true, opacity: 0.38, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    this.mat.blink = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    this.mat.cloth = clothMaterial(atlas, this.uTime);
+    this.mat.clothDepth = clothDepthMaterial(this.uTime);
     this.mat.fence.alphaToCoverage = true;
   }
 
@@ -3350,14 +3355,15 @@ export class PropKit {
   }
 
   dispose() {
+    if (this._disposed) return;
+    this._disposed = true;
     try {
       this.clear();
-      this._disposed = true;
       if (this.mat) for (const k in this.mat) this.mat[k].dispose();
       for (const k in this._tpl) this._tpl[k].dispose();
       this.atlas?.dispose(); this.chain?.dispose(); this.blobTex?.dispose();
-      this.group.removeFromParent();
     } finally {
+      this.group.removeFromParent();
       this._propAtlasRedraw = null;
     }
   }

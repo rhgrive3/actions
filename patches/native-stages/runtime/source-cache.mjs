@@ -1,4 +1,5 @@
-// Two private browser-cache slots. Nothing is uploaded or added to the PWA
+// Private browser-cache slots with conservative byte-based optional retention.
+// Nothing is uploaded or added to the PWA
 // revision/precache. Failures/quota restrictions fall back to ordinary loading.
 const PREFIX='inkwave-native-source-v2-',DB='inkwave-native-derived-v2';
 // BEGIN GENERATED PINNED SOURCE INVENTORIES
@@ -37,6 +38,10 @@ async function slots(id){
 }
 async function openSlots(id){
  if(!globalThis.caches)return null;
+ if(globalThis.navigator?.storage?.estimate&&navigator.locks?.request){
+  const {managedSourceSlot}=await import('./source-retention.mjs');
+  try{return await managedSourceSlot(id,PREFIX);}catch{}
+ }
  const names=(await caches.keys()).filter(n=>n.startsWith(PREFIX));
  const name=PREFIX+id;
  // Cache names are stable per pinned stage; touch by updating a small marker.
@@ -64,10 +69,10 @@ export async function sourceBytes(id,url,expected,signal,onProgress){
   while(true){const {done,value}=await reader.read();if(done)break;chunks.push(value);count+=value.byteLength;if(performance.now()-last>150){onProgress({bytes:count,total});last=performance.now();}}
   const result=new Uint8Array(count);let at=0;for(const c of chunks){result.set(c,at);at+=c.length;}bytes=result.buffer;
  }else bytes=await r.arrayBuffer();
- await verifySourceBytes(bytes,expected);try{await cache?.put(url,new Response(bytes));}catch{}
+ await verifySourceBytes(bytes,expected);try{if(cache?._nativePut)await cache._nativePut(url,bytes);else await cache?.put(url,new Response(bytes));}catch{}
  return bytes;
 }
-// File-list metadata shares the existing two raw-source cache slots. It does
+// File-list metadata shares the existing raw-source cache slots. It does
 // not read or retain derived geometry and is independent of IndexedDB schema.
 function checkedSourceTree(tree,pinned){
  if(!tree||tree.sha!==pinned||tree.truncated!==false||!Array.isArray(tree.tree))throw Error('Unpinned source file list');

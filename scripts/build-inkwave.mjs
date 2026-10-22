@@ -399,6 +399,8 @@ visit('patches/splatoon3/runtime/audio/blaster-hit.mjs');
 // own immutable offline dependencies. The source payload stays outside it.
 visit('patches/native-stages/runtime/native-world.mjs');
 visit('patches/native-stages/runtime/source-worker.mjs');
+visit('patches/splatoon3/runtime/audio/reverb-worker.mjs');
+visit('patches/splatoon3/runtime/audio/grain-worker.mjs');
 // #61's accepted startup baseline preloaded 145 modules (131 core + 14 range).
 // Later workstreams add these runtime dependencies to the static graph. Keep
 // them in the immutable revision + Service Worker precache, but let their
@@ -406,6 +408,13 @@ visit('patches/native-stages/runtime/source-worker.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  'patches/splatoon3/runtime/audio/grain-texture.mjs',
+  'patches/splatoon3/runtime/audio/grain-prewarm.mjs',
+  'patches/splatoon3/runtime/audio/grain-worker.mjs',
+  // Reverb preparation remains an ordinary module/Worker fetch, with immutable offline coverage.
+  'patches/splatoon3/runtime/audio/reverb-impulse.mjs',
+  'patches/splatoon3/runtime/audio/reverb-prewarm.mjs',
+  'patches/splatoon3/runtime/audio/reverb-worker.mjs',
   'patches/native-stages/runtime/native-world.mjs',
   'patches/native-stages/runtime/source-menu.mjs',
   'patches/native-stages/runtime/source-worker.mjs',

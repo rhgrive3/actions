@@ -872,23 +872,20 @@ export class RankedWorld {
 
   captureZone(index, team) {
     if (!validTeam(team) || typeof this.paint?.splat !== 'function') return 0;
-    const capture = () => {
-      let claimed = 0;
-      for (const entry of this._zoneCells[index] || []) {
-        const { face, cell, i, j } = entry;
-        const center = floorCellCenter(face, i, j, this._zoneCapturePoint || (this._zoneCapturePoint = new this.THREE.Vector3()));
-        // Use the native splat path (CPU grid, ink atlas, and online splat
-        // recording) restricted to each live turf face. Each exposed cell gets a
-        // centered stamp, so capture never reaches walls or a hidden floor.
-        const radius = Math.max(0.08, Math.min(0.42, Math.hypot(face.cu, face.cv) * 0.72));
-        claimed += this.paint.splat(center, radius, team, {
-          seed: ((index + 1) * 0x9e3779b1 + (cell + 1) * 0x85ebca6b) >>> 0,
-          kind: 'blast', instant: true, face: face.id,
-        }) || 0;
-      }
-      return claimed;
-    };
-    return typeof this.paint.withSplatBatch === 'function' ? this.paint.withSplatBatch(capture) : capture();
+    let claimed = 0;
+    for (const entry of this._zoneCells[index] || []) {
+      const { face, cell, i, j } = entry;
+      const center = floorCellCenter(face, i, j, this._zoneCapturePoint || (this._zoneCapturePoint = new this.THREE.Vector3()));
+      // Use the native splat path (CPU grid, ink atlas, and online splat
+      // recording) restricted to each live turf face. Each exposed cell gets a
+      // centered stamp, so capture never reaches walls or a hidden floor.
+      const radius = Math.max(0.08, Math.min(0.42, Math.hypot(face.cu, face.cv) * 0.72));
+      claimed += this.paint.splat(center, radius, team, {
+        seed: ((index + 1) * 0x9e3779b1 + (cell + 1) * 0x85ebca6b) >>> 0,
+        kind: 'blast', instant: true, face: face.id,
+      }) || 0;
+    }
+    return claimed;
   }
 
   floorAt(x, z, yMax) {

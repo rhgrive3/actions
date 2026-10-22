@@ -16,6 +16,32 @@ export function adaptRuntimeFrameScratch(rel, code, replaceOnce) {
     this._cloudScene?.traverse(o => { o.geometry?.dispose(); });
     this._envScene?.clear(); this._cloudScene?.clear();
     if (this._envRT) this._envRT.dispose();`, 'dispose offscreen sky materials and cloud triangle geometry');
+    patch('  _renderReflection(renderer, scene, camera) {',
+      `  _iwSeaOutsideView(camera) {
+    // SEA_VERT adds swell with |.45 sin + .35 sin + .20 sin| <= 1
+    // and swellAmp <= .16. Keep .01m and angular margins at the horizon.
+    if (!camera?.isPerspectiveCamera || camera.isArrayCamera || !this.sea) return false;
+    const sea = this.sea.matrixWorld.elements, world = camera.matrixWorld.elements, projection = camera.projectionMatrix.elements;
+    if (sea[1] !== 0 || sea[9] !== 0 || world[3] !== 0 || world[7] !== 0 || world[11] !== 0 || world[15] !== 1 ||
+        projection[3] !== 0 || projection[7] !== 0 || projection[11] !== -1 || projection[15] !== 0 ||
+        !(world[13] > sea[13] + .17)) return false;
+    const scratch = this._iwSeaView || (this._iwSeaView = { inverse: new THREE.Matrix4(), ray: new THREE.Vector3() });
+    scratch.inverse.copy(camera.projectionMatrix).invert();
+    const ray = scratch.ray;
+    for (let corner = 0; corner < 4; corner++) {
+      ray.set(corner & 1 ? 1 : -1, corner & 2 ? 1 : -1, .5).applyMatrix4(scratch.inverse).applyMatrix4(camera.matrixWorld);
+      ray.x -= world[12]; ray.y -= world[13]; ray.z -= world[14];
+      const length = ray.length();
+      if (!Number.isFinite(length) || !(ray.y > length * 1e-5)) return false;
+    }
+    return true;
+  }
+
+  _renderReflection(renderer, scene, camera) {`, 'conservative sea wave-envelope visibility predicate');
+    patch('    this._reflFrame = this._frameId;',
+      '    if (this._iwSeaOutsideView(camera)) return;\n    this._reflFrame = this._frameId;', 'invisible sea cannot consume a frame or trigger a reflection render');
+    const seaEnvelope = "const GLSL_SWELL = /* glsl */`\n// long gentle swell; returns height (unit amplitude) and writes gradient\nfloat swell(vec2 p, float t, out vec2 g) {\n  float h = 0.0; g = vec2(0.0);\n  vec2 k; float ph;\n  k = vec2(0.110, 0.047); ph = dot(p, k) + t * 0.95;        h += 0.45 * sin(ph); g += 0.45 * k * cos(ph);\n  k = vec2(-0.052, 0.097); ph = dot(p, k) + t * 1.13 + 1.7; h += 0.35 * sin(ph); g += 0.35 * k * cos(ph);\n  k = vec2(0.173, -0.141); ph = dot(p, k) + t * 1.61 + 4.1; h += 0.20 * sin(ph); g += 0.20 * k * cos(ph);\n  return h;\n}\nfloat swellAmp(float dDeck) { return mix(0.035, 0.16, smoothstep(3.0, 70.0, dDeck)); }\n`;";
+    patch(seaEnvelope, seaEnvelope, 'validate the exact swell envelope before rejecting any reflection');
     // Planar marina reflection draws reuse scratch lists. The list of scene
     // objects and its original visibility snapshot keep their exact order.
     // No reference is retained beyond the draw, including renderer failures.
@@ -216,6 +242,17 @@ export function adaptRuntimeFrameScratch(rel, code, replaceOnce) {
       'reuse matrix for foot projection');
   }
   if (rel === 'src/game/motion/source-controller.js') {
+    patch("import * as THREE from 'three';", "import {initMotionDiagnostics,motionDebug,manualMotionDebug,motionDebugScalar,motionDebugBody,motionDebugSquid} from '../../../patches/local-quality/motion-diagnostics.mjs';\nimport * as THREE from 'three';", "lazy detached motion diagnostics 0");
+    patch("this.fallbacks=new Set();", "this.fallbacks=initMotionDiagnostics(this);", "lazy detached motion diagnostics 1");
+    patch("this.manual=null;this.debug={};this.loadToken=0;", "this.manual=null;this.loadToken=0;", "lazy detached motion diagnostics 2");
+    patch("  this.debug={status:this.status,variant:this.variant,state,family,speed:this.speed,pivoting:this.pivoting,pivotTurnRate:this.turnRate,phase:this.phase,stride,stepAmplitude,cadenceHz,authoredCadenceHz:nominalCadence,run,shootBlend:this.shootBlend,sourceUpper:this.sourceUpper,clips:this.currentClips,contact:[...this.contact],fallbacks:[...this.fallbacks]};", "  motionDebug(this,state,family,stride,stepAmplitude,cadenceHz,nominalCadence,run);", "lazy detached motion diagnostics 3");
+    patch("this.debug={status:this.status,state:this.state,variant:this.variant,clips:this.currentClips};", "manualMotionDebug(this);", "lazy detached motion diagnostics 4");
+    patch("this.debug.fallback='native modern dodge/special action';", "motionDebugScalar(this,'fallback','native modern dodge/special action');", "lazy detached motion diagnostics 5");
+    patch("this.debug.groundMode=this.pivoting?'pivot-free':this.turnGroundDisable?'turn-free':groundEnabled?'plant':'air-free';", "motionDebugScalar(this,'groundMode',this.pivoting?'pivot-free':this.turnGroundDisable?'turn-free':groundEnabled?'plant':'air-free');", "lazy detached motion diagnostics 6");
+    patch("this.debug.bodyBalance={enabled:balanceActive,reachCorrection:this.bodyBalance.reachCorrection};", "motionDebugBody(this,balanceActive,this.bodyBalance.reachCorrection);", "lazy detached motion diagnostics 7");
+    patch("this.debug.gripFitMeters=this.fitR.distanceTo(this.handP);", "motionDebugScalar(this,'gripFitMeters',this.fitR.distanceTo(this.handP));", "lazy detached motion diagnostics 8");
+    patch("this.debug.squid={name,frame};", "motionDebugSquid(this,name,frame);", "lazy detached motion diagnostics 9");
+
     patch('  const timing=motionCadence({speed:this.speed,walkSpeed:this.walkSpeed,runSpeed:this.runSpeed,runWeight:run,nominalHz:nominalCadence,stride});',
       '  const cadenceArg=this._iwCadenceArg||(this._iwCadenceArg={}),cadenceOut=this._iwCadenceOut||(this._iwCadenceOut={});\n  cadenceArg.speed=this.speed;cadenceArg.walkSpeed=this.walkSpeed;cadenceArg.runSpeed=this.runSpeed;cadenceArg.runWeight=run;cadenceArg.nominalHz=nominalCadence;cadenceArg.stride=stride;\n  const timing=motionCadence(cadenceArg,cadenceOut);',
       'own cadence input and result records per motion controller');

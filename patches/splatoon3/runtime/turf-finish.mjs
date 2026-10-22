@@ -117,10 +117,12 @@ export function requestTurfFinish(match) {
   if (match.s3DeadlineStep && !match.bossMode) match.s3FinishPending = true;
   else match.setState('finish');
 }
-export function simulateMatchInterval(match, dt, G) {
+// Frozen offline worlds retain controller neutralization/gyro cancellation
+// while the clock may omit their unchanged collision-derived aim query.
+export function simulateMatchInterval(match, dt, G, aim = true) {
   const advance = (span, controller = true) => {
     if (!(span > 0)) return;
-    if (controller) { match.updateController(span); match.controller?.computeAim?.(true); }
+    if (controller) { match.updateController(span); if (aim) match.controller?.computeAim?.(true); }
     match.update(span);
     if (!match.paused) G.projectiles.update(span);
     if (!match.paused) match.advanceRanked?.(span);

@@ -86,12 +86,14 @@ import { adaptPerfReadout } from './perf-readout-adapter.mjs';
 import { adaptFxEmptyPools } from './fx-empty-pools-adapter.mjs';
 import { adaptCollisionHotpath } from './collision-hotpath-adapter.mjs';
 import { adaptRuntimeFrameScratch } from './runtime-frame-scratch-adapter.mjs';
+import { adaptShoeReadTransform } from './shoe-read-transform-adapter.mjs';
 import { adaptReflSkip } from './refl-skip-adapter.mjs';
 import { adaptFinishTape } from './finish-tape-adapter.mjs';
 import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'character-shadow-batch-adapter.mjs', 'character-shadow-batch.mjs',
   'ink-micro-surface-adapter.mjs',
   'headgear-adapter.mjs', 'headgear/catalog.mjs', 'headgear/lifecycle.mjs', 'headgear/armor-helmet.js', 'headgear/two-line-mesh.js', 'headgear/camo-headphones.js', 'headgear/character-headgear-ink-black-flap-cap.js',
   'view-settings.mjs',
@@ -151,7 +153,7 @@ const IDENTITY_FILES = [
   'bot-navigation-adapter.mjs', 'bot-navigation.mjs', 'firefight-tier-budget.mjs',
   'root-hair-spring-adapter.mjs',
   'collision-hotpath-adapter.mjs',
-  'runtime-frame-scratch-adapter.mjs',
+  'runtime-frame-scratch-adapter.mjs', 'motion-diagnostics.mjs', 'shoe-read-transform-adapter.mjs',
   'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'range-frame-pacing-adapter.mjs',
 ];
 
@@ -191,7 +193,7 @@ export function adaptQualitySource(rel, code) {
   const painted = adaptFxEmptyPools(rel, adaptPerfReadout(rel, adaptPaintHotpath(rel, broadphased, replaceOnce), replaceOnce), replaceOnce);
   const lazy = adaptComposerTarget(rel, adaptDistanceHotpath(rel, painted, replaceOnce), replaceOnce);
   const navigated = adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
-  const botNav = adaptBotNavigation(rel, adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce)), replaceOnce), replaceOnce);
+  const botNav = adaptBotNavigation(rel, adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, adaptShoeReadTransform(rel, navigated, replaceOnce), replaceOnce)), replaceOnce), replaceOnce);
   return adaptMotionSampleFkRange(rel, adaptSettingsUi(rel, adaptEnginePerformanceHotpaths(rel, botNav, replaceOnce), replaceOnce), replaceOnce);
 }
 

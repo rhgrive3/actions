@@ -2,8 +2,10 @@
 // Keep this explicit: other *-adapter modules export real runtime helpers.
 // Regression tests require transformer-only exports and reject runtime imports.
 export const BUILD_ONLY_PATCH_MODULES = new Set([
-  'patches/splatoon3/ranked-splat-batch-adapter.mjs',
+  'patches/local-quality/character-shadow-batch-adapter.mjs',
   'patches/reliability/queue-network-ui-adapter.mjs',
+  'patches/local-quality/ink-ripple-presentation-adapter.mjs',
+  'patches/local-quality/showcase-idle-pools-adapter.mjs',
   // Retained main originals are source transformers, not browser modules.
   'patches/local-quality/nav-heuristic-adapter.mjs',
   'patches/local-quality/prop-atlas-adapter.mjs',
@@ -89,6 +91,7 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/portrait-guard-adapter.mjs',
   'patches/local-quality/refl-skip-adapter.mjs',
   'patches/local-quality/runtime-frame-scratch-adapter.mjs',
+  'patches/local-quality/shoe-read-transform-adapter.mjs',
   'patches/local-quality/resource-adapter.mjs',
   'patches/local-quality/result-continuation-adapter.mjs',
   'patches/local-quality/score-reticle-adapter.mjs',

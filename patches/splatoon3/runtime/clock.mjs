@@ -3,7 +3,7 @@ import { terminalRecoveryRequired, installRecoveryEntryGuards } from './recovery
 import { simulateMatchInterval } from './turf-finish.mjs';
 // Render cadence is independent of the 60 Hz gameplay clock.
 import { idleAttractMenuBudget, MENU_ATTRACT_STEP } from '../../local-quality/idle-resources.mjs';
-import { beginActorMotionTick } from './actor-motion.mjs';
+import { beginActorMotionTick, advanceActorMotionTick } from './actor-motion.mjs';
 
 export const STEP = 1 / 60;
 
@@ -103,6 +103,7 @@ export function runSimulation(game, dt) {
   game._s3Ticked = clock.advance(dt, step => {
     // Offline pause must freeze the same gameplay clock as actors/projectiles (#707).
     const gameplayPaused = !!(m && m.paused && !m.attract);
+    const offlinePaused = gameplayPaused && !G.netm;
     if (!gameplayPaused) G.time += step;
     if (m && !(covered && m.attract)) {
       // The menu budget limits drawing, never the physical integration step.
@@ -120,7 +121,8 @@ export function runSimulation(game, dt) {
         // #1040: capture every actor's start-of-tick pose BEFORE any of them
         // moves this tick. The projectile sweep below runs after m.update, so
         // round segment and actor interval then cover the SAME fixed step.
-        beginActorMotionTick(G.actors);
+        if (offlinePaused) advanceActorMotionTick();
+        else beginActorMotionTick(G.actors);
         // Results keep input/presentation/network cadence without advancing local
         // authoritative actor/projectile simulation. Menu attract budgeting remains
         // independent and applies only when that attract match owns the menu backdrop.
@@ -128,7 +130,7 @@ export function runSimulation(game, dt) {
         if (results && G.netm) {
           if (!m.paused) for (const a of m.actors || []) if (a.remote && G.netm.applyRemote) G.netm.applyRemote(a, simDt);
         } else if (!results) {
-          simulateMatchInterval(m, simDt, G);
+          simulateMatchInterval(m, simDt, G, !offlinePaused);
         }
         if (m.attract && !m.paused) game._updateAttract(simDt);
         else if (m.state === 'playing' && m.local?.alive && (game.rig.mode !== 'follow' || game.rig.target !== m.local)) game.rig.follow(m.local, true);

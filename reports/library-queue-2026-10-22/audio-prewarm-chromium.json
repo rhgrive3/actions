@@ -1,0 +1,27 @@
+{
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.0 Safari/537.36",
+  "results": [
+    {
+      "sampleRate": 44100,
+      "grainKinds": 5,
+      "stereoIRs": 2,
+      "comparedSamples": 899640,
+      "bitExact": true
+    },
+    {
+      "sampleRate": 48000,
+      "grainKinds": 5,
+      "stereoIRs": 2,
+      "comparedSamples": 979200,
+      "bitExact": true
+    },
+    {
+      "sampleRate": 96000,
+      "grainKinds": 5,
+      "stereoIRs": 2,
+      "comparedSamples": 1958400,
+      "bitExact": true
+    }
+  ],
+  "passed": true
+}

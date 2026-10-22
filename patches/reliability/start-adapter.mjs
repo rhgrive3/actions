@@ -154,7 +154,7 @@ export function adaptStart(rel, code) {
     source = replaceOnce(source, '        this.props = new this.PropKit(scene, { castShadow: true, quality: this.settings.quality });', '        props = new this.PropKit(null, { castShadow: true, quality: this.settings.quality });', 'detached props construction');
     source = replaceOnce(source, '          const r = this.props.add(it.type, it);', '          const r = props.add(it.type, it);', 'detached props colliders');
     source = replaceOnce(source, '        this.props.build();', '        props.build();', 'detached props build');
-    source = replaceOnce(source, "      } catch (e) { console.error('[inkwave] props failed', e); this.props = null; }", "      } catch (e) { console.error('[inkwave] props failed', e); props?.dispose?.(); props = null; }", 'failed detached props cleanup');
+    source = replaceOnce(source, "      } catch (e) { console.error('[inkwave] props failed', e); this.props = null; }", "      } catch (e) { console.error('[inkwave] props failed', e); props?.dispose?.(); props = null; colliders.length = 0; }", 'failed detached props cleanup');
     source = replaceOnce(source,
       '    const level = (G.level = new Level(MAP_LAYOUTS[layoutId], colliders));\n    G.physics = new Physics(level);\n    const lightmap = await this._loadLightmap(level, layoutId);',
       [
