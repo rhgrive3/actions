@@ -308,6 +308,7 @@ async function openGameContext({ mobile = false } = {}) {
       const g = window.__inkwave, G = window.__G, m = g?.match;
       return { observedAtMs:Date.now(),atomicIntro:window.__iwProjectileAtomicIntroReceipt??null,
         captureUi:window.__iwProjectileCaptureUiReceipt??null,
+        captureUiHistory:window.__iwProjectileCaptureUiHistory??null,
         mode: G?.mode, state: m?.state, stateT: m?.stateT, attract: m?.attract,
         matchIdentity: m === G?.match, local: m?.local?.isLocal, controller: !!m?.controller, debug: !!g?.debug,
         projectiles: !!G?.projectiles,

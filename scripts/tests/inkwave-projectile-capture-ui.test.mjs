@@ -163,3 +163,56 @@ test('harness integrates gate before atomic intro, before freeze, and both scree
   assert.equal((s.match(/const deadline = Date.now\(\) \+ NATIVE_BOOT_TIMEOUT_MS/g) || []).length, 1);
   assert.ok(s.includes('captureUi:window.__iwProjectileCaptureUiReceipt??null'));
 });
+
+test('HUD observation distinguishes own and ancestor opacity without native writes', () => {
+  const f = fixture('intro'), parent = f.node(); f.hud.parentElement = parent; parent.style.opacity = '.5';
+  f.hud.style.opacity = '0';
+  const timing = Object.freeze({ duration: 350, localTime: 0, progress: 0, iterations: 1, activeDuration: 350 });
+  const animation = Object.freeze({ id: 'fade', transitionProperty: 'opacity', playState: 'running', pending: true,
+    currentTime: 0, startTime: null, playbackRate: 1, effect: Object.freeze({ target: f.hud, getComputedTiming: () => timing }) });
+  f.hud.getAnimations = options => { assert.equal(options.subtree, false); return [animation]; };
+  const before = JSON.stringify({ style: f.hud.style, parent: parent.style, match: f.match, calls: f.calls });
+  const r = f.read({ phase: 'admission', allowIntro: true, settled: false });
+  assert.equal(r.ready, false); assert.ok(r.failed.includes('hud'));
+  assert.equal(r.hud.observation.ancestors[0].opacity, '0');
+  assert.equal(r.hud.observation.ancestors[1].opacity, '.5');
+  assert.equal(r.hud.observation.animations[0].currentTime, 0);
+  assert.equal(r.hud.observation.animations[0].timing.duration, 350);
+  assert.equal(r.hud.observation.animations[0].targetIsHud, true);
+  assert.equal(JSON.stringify({ style: f.hud.style, parent: parent.style, match: f.match, calls: f.calls }), before);
+  assert.equal(animation.playState, 'running'); assert.equal(animation.currentTime, 0);
+});
+
+test('admission first/recent history remains bounded and detached from returned receipts', () => {
+  const f = fixture('intro'); let last;
+  for(let i=0;i<100;i++){ f.tick(250); last=f.read({phase:'admission',allowIntro:true,settled:false}); }
+  const h=f.window.__iwProjectileCaptureUiHistory;
+  assert.equal(h.admissionCount,100); assert.equal(h.first.length,4); assert.equal(h.recent.length,8); assert.equal(h.omitted,88);
+  assert.deepEqual(Array.from(h.first,x=>x.attempt),[1,2,3,4]);
+  assert.deepEqual(Array.from(h.recent,x=>x.attempt),[93,94,95,96,97,98,99,100]);
+  last.hud.observation.ancestors[0].opacity='tampered';
+  assert.equal(h.recent[7].hud.observation.ancestors[0].opacity,'1');
+  f.read({phase:'capture'});assert.equal(h.admissionCount,100);
+  assert.doesNotThrow(()=>JSON.parse(JSON.stringify(h)));
+});
+
+test('ancestor and animation observation caps preserve complete original visibility gate', () => {
+  const f=fixture();let node=f.hud;
+  for(let i=0;i<20;i++){node.parentElement=f.node();node=node.parentElement;}
+  node.style.opacity='0';
+  f.hud.getAnimations=()=>Array.from({length:30},()=>({currentTime:Infinity,playState:'running',effect:{target:f.hud,getComputedTiming:()=>({duration:Infinity})}}));
+  const r=f.read();assert.equal(r.ready,false);assert.ok(r.failed.includes('hud'));
+  assert.equal(r.hud.observation.ancestors.length,16);assert.equal(r.hud.observation.ancestorsTruncated,true);
+  assert.equal(r.hud.observation.animations.length,16);assert.equal(r.hud.observation.animationsTotal,30);
+  assert.equal(r.hud.observation.animationsTruncated,true);assert.equal(r.hud.observation.animations[0].currentTime,'Infinity');
+  assert.doesNotThrow(()=>JSON.parse(JSON.stringify(r)));
+});
+
+test('absent or failing animation APIs remain explicitly unobserved without changing readiness', () => {
+  const f=fixture();let r=f.read();assert.equal(r.ready,true);assert.equal(r.hud.observation.animationsAvailable,false);
+  f.hud.getAnimations=()=>{throw Error('unavailable');};r=f.read();assert.equal(r.ready,true);
+  assert.match(r.hud.observation.errors[0],/animations: unavailable/);
+  f.hud.style.opacity='0';assert.throws(()=>f.read({phase:'admission',requireReady:true}),/Native capture UI/);
+  assert.equal(f.window.__iwProjectileCaptureUiHistory.first[0].ready,false);
+  assert.ok(f.window.__iwProjectileCaptureUiHistory.first[0].failed.includes('hud'));
+});

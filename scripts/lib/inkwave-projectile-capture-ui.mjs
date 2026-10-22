@@ -1,6 +1,48 @@
 // QA-only observer. Never completes UI, changes match state, or hides overlays.
 // Install before navigation; all receipts are plain JSON, not renderer objects.
 export function installProjectileCaptureUiGate() {
+  // Observation caps bound retained JSON, not native DOM or animation state.
+  const history = { schema: 1, admissionCount: 0, first: [], recent: [], omitted: 0,
+    limits: { first: 4, recent: 8, ancestors: 16, animations: 16 } };
+  window.__iwProjectileCaptureUiHistory = history;
+  const text = value => typeof value === 'string' ? value.slice(0, 160) : null;
+  const scalar = value => value == null ? null : typeof value === 'number'
+    ? Number.isFinite(value) ? value : String(value) : text(value);
+  const observeHud = el => {
+    const out = { available: !!el, ancestors: [], ancestorsTruncated: false,
+      animations: [], animationsAvailable: false, animationsTotal: null, animationsTruncated: false, errors: [] };
+    if (!el) return out;
+    try {
+      let node = el;
+      for (; node && out.ancestors.length < 16; node = node.parentElement) {
+        const s = getComputedStyle(node);
+        out.ancestors.push({ own: node === el, tag: text(node.tagName), id: text(node.id),
+          classes: text(String(node.className || '')), opacity: text(s.opacity),
+          inlineOpacity: text(node.style?.opacity), display: text(s.display), visibility: text(s.visibility),
+          transitionProperty: text(s.transitionProperty), transitionDuration: text(s.transitionDuration),
+          transitionDelay: text(s.transitionDelay), animationName: text(s.animationName),
+          animationPlayState: text(s.animationPlayState) });
+      }
+      out.ancestorsTruncated = !!node;
+    } catch (error) { out.errors.push('styles: ' + String(error?.message || error).slice(0, 160)); }
+    try {
+      if (typeof el.getAnimations === 'function') {
+        const animations = el.getAnimations({ subtree: false });
+        out.animationsAvailable = true; out.animationsTotal = animations.length;
+        out.animationsTruncated = animations.length > 16;
+        for (const a of animations.slice(0, 16)) {
+          const t = a.effect?.getComputedTiming?.();
+          out.animations.push({ id: text(a.id), animationName: text(a.animationName),
+            transitionProperty: text(a.transitionProperty), playState: text(a.playState),
+            pending: a.pending === true, currentTime: scalar(a.currentTime), startTime: scalar(a.startTime),
+            playbackRate: scalar(a.playbackRate), targetIsHud: a.effect?.target === el,
+            timing: t ? Object.fromEntries(['delay','endDelay','duration','iterations','endTime','activeDuration',
+              'localTime','progress','currentIteration'].map(k => [k, scalar(t[k])])) : null });
+        }
+      }
+    } catch (error) { out.errors.push('animations: ' + String(error?.message || error).slice(0, 160)); }
+    return out;
+  };
   window.__iwProjectileCaptureUiGate = ({ phase = 'capture', allowIntro = false,
     settled = true, requireReady = false } = {}) => {
     const g = window.__inkwave, G = window.__G, m = g?.match;
@@ -59,8 +101,18 @@ export function installProjectileCaptureUiGate() {
       renderer: r.gameOwner && r.rendererOwner && r.canvasOwner && r.canvasCount === 1 &&
         r.dom.tag === 'CANVAS' && r.dom.visible && r.canvasSize.every((size, i) => size > 0 && size === r.drawingBuffer[i]),
     };
+    receipt.hud.observation = observeHud(hud?.el);
     receipt.failed = Object.keys(checks).filter(key => !checks[key]);
     receipt.ready = receipt.failed.length === 0;
+    if (phase === 'admission') {
+      history.admissionCount++;
+      const sample = JSON.parse(JSON.stringify({ attempt: history.admissionCount, observedAtMs: receipt.observedAtMs,
+        state: receipt.native.state, stateT: scalar(m?.stateT), ready: receipt.ready, failed: receipt.failed,
+        hud: receipt.hud }));
+      if (history.first.length < 4) history.first.push(sample);
+      else { history.recent.push(sample); if (history.recent.length > 8) history.recent.shift(); }
+      history.omitted = history.admissionCount - history.first.length - history.recent.length;
+    }
     window.__iwProjectileCaptureUiReceipt = receipt;
     if (receipt.ready && phase === 'admission') window.__iwProjectileCaptureUiAdmission = receipt;
     if (receipt.ready && phase === 'playing') window.__iwProjectileCaptureUiPlaying = receipt;
