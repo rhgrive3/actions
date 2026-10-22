@@ -11,6 +11,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { runTouchTransitionCases, withWindowFocusRestored, runHybridKeyboardMapCases } from './inkwave-touch-transition-cases.mjs';
 import { runFocusLossCase } from './inkwave-focus-loss-case.mjs';
+import { checkHeldTouchRepress } from './lib/inkwave-held-touch-repress.mjs';
 import { waitForNativePadMap, readPadMapScreenshot, assertPadMapEvidence } from './lib/inkwave-pad-map-evidence.mjs';
 
 const option = name => { const i = process.argv.indexOf(name); assert(i >= 0 && process.argv[i + 1], 'Required ' + name); return path.resolve(process.argv[i + 1]); };
@@ -588,23 +589,7 @@ try {
       assert.equal(await page.evaluate(() => actionDodges), 0);
       await page.evaluate(() => advance(1 / 120));
       assert.equal(await page.evaluate(() => actionDodges), 1);
-      await page.evaluate(() => {
-        // A separate held-input trial begins from neutral admission state.
-        // Pressing jump again during the preceding tap's active roll is illegal.
-        actionActor.weaponRunner.reset(); actionActor.grounded = true;
-        actionActor.jumpBuffer = 0; actionActor._prevIntent.jump = false;
-        mobile.reset(); mobile.moveX = .8; actionDodges = 0;
-        const pointer = (id, pointerId, type) => {
-          const el = document.querySelector(`[data-c="${id}"]`), r = el.getBoundingClientRect();
-          el.dispatchEvent(new PointerEvent(type, { pointerId, pointerType: 'touch', bubbles: true, cancelable: true, clientX: r.x + r.width / 2, clientY: r.y + r.height / 2 }));
-        };
-        window.actionPointer = pointer;
-        pointer('fire', 501, 'pointerdown'); pointer('jump', 502, 'pointerdown');
-        for (let i = 0; i < 31; i++) advance(1 / 60);
-        pointer('jump', 502, 'pointerup'); pointer('jump', 503, 'pointerdown');
-        advance(1 / 120); advance(1 / 120);
-        for (let i = 0; i < 60; i++) advance(1 / 60);
-      });
+      entry.heldTouchRepress = await checkHeldTouchRepress(page);
       assert.equal(await page.evaluate(() => actionDodges), 2, 'held touch release/repress reaches real Character once');
       await page.evaluate(() => { actionPointer('jump', 503, 'pointerup'); actionPointer('fire', 501, 'pointerup'); advance(1 / 60); });
       assert.equal(await page.evaluate(() => actionActor.intent.jump), false);

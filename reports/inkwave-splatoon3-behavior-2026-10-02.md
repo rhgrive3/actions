@@ -5835,3 +5835,9 @@ CPU回帰の成功は物理GPU/実機性能の受け入れではない。Splatoo
 
 
 最終確認: runtime `df83a5c4265a9c8738d930dabaffb43cd31ae902` / build contentHash `7b0b597f308f86d2d9607e2a5e0e5f122fa7e0a7435810512039de7014565533` の総合active browserが成功した。65 canonical kit、14 defaults、装備12select、実キーボード移動・接地・射撃/塗り、20Hz時の3秒進行、finite velocity、752 responseの同一性とpage errors 0を確認した。実music Workerの作成元・97-byte body/hash・cleanupを含むnative試験7件、過去の固定gate20件、追加source admission24件も通過した。これはChromium 153 / SwiftShaderでの公開版の回帰確認であり、物理端末FPSやSwitch実機・完了動画の受け入れではない。GitHub上のCI待機は別に残る。
+# 2026-10-22 追補: 遅延 snapshot clock と入力・塗り検査
+
+- 対象: 公開版の #1767。起動で遅れて処理された初回 tick が後続の正当な更新を永久に拒否する場合、リレー認証済みの転送間隔で同じ5秒の進行上限を評価する。未対応リレーでは従来経路。送信者 JSON の時刻は信用しない。補間時計、所有権、life、再送、hit/paint の検査は維持する。
+- 再現・影響: sender `124.04→175.665` / local37.3秒で旧経路は位置更新が止まり、新経路は進む。Chromium / WebKit 各2クライアントでも、実時計と6.2秒の受信保留を用いて確認。本番リレーの別途公開が必要。
+- #1430 は実タッチ入力の30/60/120 Hz の押下所有権・解除・再押下検査を追加。歴史的失敗の原因確定とはしない。#1165 は CPU/GPU Roller を576ケース・589,824セルへ拡張し、211本の重ね塗り、Judd の515対509セルを30/60/120/144 Hzで照合した。
+- 本家基準は従来の Splatoon 3 Ver.11.3.0、Leanny/splat3 `7280ff9cde8bb1c5dcef46c700c326471584d2e6`。今回の変更は INKWAVE 内部の通信・入力・所有権の整合性であり、本家の非公開パラメータ・曲線や physical iPad の性能を推測していない。詳細・制約は `reports/inkwave-remaining-issues-20261022.md`。

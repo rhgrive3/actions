@@ -4,8 +4,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import { chromium } from 'playwright';
 const site = path.resolve(process.argv[2] || '_site');
+const evidence = process.argv[3] ? path.resolve(process.argv[3]) : null;
+const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'),'utf8'));
+const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash,'build identity');
+for(const [file,digest] of Object.entries(manifest.artifacts))
+  assert.equal(hash(fs.readFileSync(path.join(site,file))),digest,'published artifact '+file);
 const mime = { '.js':'text/javascript', '.mjs':'text/javascript', '.css':'text/css', '.json':'application/json' };
 const server = http.createServer((req,res) => {
   if (req.url === '/__probe') {
@@ -106,14 +113,17 @@ try {
     const face={paintable:true,turf:true,origin:v(0,0,0),u:v(1,0,0),v:v(0,0,1),n:v(0,1,0),su:8,sv:8,block:0,wall:false};
     const level={faces:[face],blocks:[{aabbMin:v(0,-1,0),aabbMax:v(8,1,8),faces:[0,-1,-1,-1,-1,-1]}],pointInside:()=>false,queryBlocks:()=>[0]};
     const paint=new PaintSystem(renderer,level,{atlasSize:512,maxDensity:60,cell:.25});G.paint=paint;
-    let cells=0,edgeTolerance=0,witness=false;
-    const pixel=new Uint8Array(4), r=.62;
-    for(const seed of [0,Math.PI/60,.1,.5,.99]) for(const angle of [0,.3,1.3,2.8]) for(const team of [0,1]) {
+    let cells=0,edgeTolerance=0,witness=false,paintCases=0,cadencePairs=0;
+    const ownershipByCase=new Map();
+    const pixel=new Uint8Array(4),atlasPixels=new Uint8Array(paint.rt.width*paint.rt.height*4);
+    for(const hz of [30,60,120,144]) for(const r of [.3,.62,1])
+    for(const seed of [0,Math.PI/60,.1,.4125,.5,.99]) for(const angle of [0,.3,1.3,2.8]) for(const team of [0,1]) {
       paint.clear();const other=1-team;
-      paint.splat(v(4,0,4),100,other,{seed:0,kind:'shot',instant:true});paint.flush(1/60);
+      paint.splat(v(4,0,4),100,other,{seed:0,kind:'shot',instant:true});paint.flush(1/hz);
       const x=3.125,z=3.125-.73*r,dx=Math.cos(angle),dz=Math.sin(angle);
-      paint.splat(v(x,0,z),r,team,{seed,kind:'roll',stretch:v(dx,0,dz),instant:true});paint.flush(1/60);
-      for(let j=8;j<18;j++)for(let i=8;i<18;i++){
+      paint.splat(v(x,0,z),r,team,{seed,kind:'roll',stretch:v(dx,0,dz),instant:true});paint.flush(1/hz);
+      renderer.readRenderTargetPixels(paint.rt,0,0,paint.rt.width,paint.rt.height,atlasPixels);
+      for(let j=0;j<face.nv;j++)for(let i=0;i<face.nu;i++){
         const u=(i+.5)*face.cu,w=(j+.5)*face.cv,px=u-x,py=w-z;
         const along=px*dx+py*dz,across=-px*dz+py*dx;
         // The installed #1165 core is a pair of triangular waves, not the
@@ -123,7 +133,7 @@ try {
         const a=Math.abs(along)-r*.55,b=Math.abs(across)-r*.62-wob;
         const sd=Math.hypot(Math.max(a,0),Math.max(b,0))+Math.min(Math.max(a,b),0)-r*.1;
         const ax=Math.floor(face.atlas.x+face.atlas.pad+u*face.atlas.ppm),ay=Math.floor(face.atlas.y+face.atlas.pad+w*face.atlas.ppm);
-        renderer.readRenderTargetPixels(paint.rt,ax,ay,1,1,pixel);
+        pixel.set(atlasPixels.subarray((ay*paint.rt.width+ax)*4,(ay*paint.rt.width+ax)*4+4));
         const gpu=(pixel[0]>=128?2:1),cpu=paint.sample(0,u,w);cells++;
         if(gpu!==cpu){
           // Raster ownership is binary while the real fragment resolves a
@@ -143,11 +153,48 @@ try {
       }
       const counts=[0,0];for(let k=0;k<paint.grid.length;k++)if(!paint.dead[k]&&paint.grid[k])counts[paint.grid[k]-1]++;
       const cov=paint.coverage();for(let t=0;t<2;t++)if(Math.abs(cov[t]-counts[t]/paint.turfTotal)>1e-12)throw Error('Coverage differs from ownership');
+      const key=JSON.stringify([r,seed,angle,team]);
+      let digest=2166136261;for(const owner of paint.grid)digest=Math.imul(digest^owner,16777619)>>>0;
+      if(ownershipByCase.has(key)){
+        if(ownershipByCase.get(key)!==digest)throw Error('Roller ownership changed with render cadence '+JSON.stringify({hz,key}));
+        cadencePairs++;
+      }else ownershipByCase.set(key,digest);
+      paintCases++;
+    }
+    // Overlapping real Roller strokes over enemy Turf, ending just across the
+    // scoring midpoint. Exercise consumer APIs and the native Judd path rather
+    // than deriving a result from a second handwritten scoring implementation.
+    const {Match}=await import('/src/game/match.js');
+    const overlap=[];
+    for(const hz of [30,60,120,144]) {
+      paint.clear();paint.splat(v(4,0,4),100,1,{seed:0,kind:'shot',instant:true});
+      let strokes=0;
+      outer:for(let x=.125;x<8;x+=.375)for(let z=.125;z<8;z+=.375) {
+        paint.splat(v(x,0,z),.62,0,{seed:[0,Math.PI/60,.5,.99][strokes%4],kind:'roll',stretch:v(0,0,1),instant:true});
+        strokes++;if(paint.coverage()[0]>.5)break outer;
+      }
+      paint.flush(1/hz);
+      renderer.readRenderTargetPixels(paint.rt,0,0,paint.rt.width,paint.rt.height,atlasPixels);
+      const gpuCounts=[0,0];
+      for(let j=0;j<face.nv;j++)for(let i=0;i<face.nu;i++) {
+        const u=(i+.5)*face.cu,w=(j+.5)*face.cv;
+        const ax=Math.floor(face.atlas.x+face.atlas.pad+u*face.atlas.ppm),ay=Math.floor(face.atlas.y+face.atlas.pad+w*face.atlas.ppm);
+        const gpu=atlasPixels[(ay*paint.rt.width+ax)*4]>=128?2:1,cpu=paint.sampleWorld(0,v(u,0,w));
+        if(cpu!==gpu)throw Error('Overlapping Roller visible ownership disagrees '+JSON.stringify({hz,u,w,cpu,gpu}));
+        const region=paint.regionStats(u,0,w,.01,0);
+        if(region.n!==1||region.own!==(cpu===1?1:0)||region.enemy!==(cpu===2?1:0)||region.empty!==0)throw Error('Roller bot region/sample disagreement');
+        gpuCounts[gpu-1]++;
+      }
+      const match=Object.create(Match.prototype);match.setState=state=>{match.state=state;};match._judge();
+      const coverage=gpuCounts.map(n=>n/paint.turfTotal);
+      if(match.result.winner!==0||match.state!=='judge'||coverage.some((n,t)=>n!==match.result.coverage[t]))throw Error('Judd disagrees with rendered overlapping Roller turf');
+      if(coverage[0]-.5>30/paint.turfTotal)throw Error('Missing narrow score-margin witness');
+      overlap.push({hz,strokes,gpuCounts,coverage,winner:match.result.winner});
     }
     // The shared Roller outline is also used by Dualies. Its radius conversion
     // must preserve the sourced 1.8 half-width in the actual GPU footprint.
     const {slideStampRadius}=await import('/patches/splatoon3/runtime/dualies-slide-paint.mjs');
-    const atlasPixels=new Uint8Array(paint.rt.width*paint.rt.height*4);let slideWidths=0;
+    let slideWidths=0;
     for(const seed of [0,.1,.5,.99]) for(const angle of [0,.3,Math.PI/2]) {
       paint.clear();paint.splat(v(4,.03,4),slideStampRadius(1.8),0,{seed,kind:'roll',stretch:v(Math.sin(angle),0,Math.cos(angle)),instant:true});paint.flush(1/60);
       renderer.readRenderTargetPixels(paint.rt,0,0,paint.rt.width,paint.rt.height,atlasPixels);
@@ -170,14 +217,22 @@ try {
     Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});paint.splat(v(4,0,4),.62,0,{seed:0,kind:'roll',stretch:v(1,0,0),instant:true});
     paint.clear();const cleared=paint._hiddenQuads===null&&!paint._hiddenPaintGrowth?.size;delete document.hidden;
     paint.dispose();renderer.dispose();
-    return {chargerPoses,coverWitness,blockedFallback,normal,locked,restored,cells,edgeTolerance,witness,slideWidths,hidden,resumed,cleared};
+    return {chargerPoses,coverWitness,blockedFallback,normal,locked,restored,cells,paintCases,cadencePairs,edgeTolerance,witness,overlap,slideWidths,hidden,resumed,cleared};
   });
   assert.equal(result.chargerPoses,6);assert.equal(result.coverWitness,true);assert.equal(result.blockedFallback,true);
   assert.deepEqual(result.normal,{l:true,r:true,merged:false,lock:false});
   assert.deepEqual(result.locked,{l:false,r:false,merged:true,lock:false});
   assert.deepEqual(result.restored,result.normal);
   assert.equal(result.slideWidths,12);
+  assert.equal(result.paintCases,576);
+  assert.equal(result.cadencePairs,432);
+  assert.ok(result.cells>=580000,'all grid cells across the complete Roller matrix must be checked');
+  assert.equal(result.overlap.length,4);
+  for(const row of result.overlap.slice(1))assert.deepEqual(row.gpuCounts,result.overlap[0].gpuCounts,'overlap scoring is cadence-independent');
   assert.equal(result.witness,true);assert.equal(result.hidden.draws,0);assert.equal(result.hidden.pending,6100);
   assert.equal(result.hidden.owner,2);assert.ok(result.resumed.draws>0);assert.equal(result.resumed.pending,0);assert.equal(result.resumed.gpuOwner,2);assert.equal(result.cleared,true);
-  assert.deepEqual(errors,[]);console.log(JSON.stringify(result,null,2));
+  assert.deepEqual(errors,[]);
+  const receipt={contentHash:manifest.contentHash,inputHash:manifest.inputHash,browser:browser.version(),status:'passed',...result};
+  if(evidence){fs.mkdirSync(evidence,{recursive:true});fs.writeFileSync(path.join(evidence,'roller-ownership-result.json'),JSON.stringify(receipt,null,2)+'\n');}
+  console.log(JSON.stringify(receipt,null,2));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
