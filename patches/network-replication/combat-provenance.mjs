@@ -436,7 +436,7 @@ function enqueue(nm,from,d,type,t) {
   if(oversizedPvpSpecial(d,type))return;
   if(!matchIdOk(nm,d) || !safe(d.a) || !ownerActor(nm,from,d.a) ||
     !safe(d[type==='pvp'?'h':'q']) || d[type==='pvp'?'h':'q']<1 ||
-    !finite(d.d) || d.d<0 || d.d>2000 ||
+    !finite(d.d) || d.d<0 || (type==='boss'&&d.d===0) || d.d>2000 ||
     typeof d.w!=='string' || d.w.length>64 || !equippedCause(nm.byNid.get(d.a),d,type) ||
     !withinCeiling(nm,nm.byNid.get(d.a),d,type))return;
   if(d.bg!==undefined && (!Array.isArray(d.bg) || d.bg.length!==7 ||
@@ -456,6 +456,7 @@ function enqueue(nm,from,d,type,t) {
 }
 export function combatAdmission(nm,from,d,type,t=now(),sprinklerScope=null) {
   if(!nm || nm._disposed || !d || (type!=='boss'&&type!=='pvp'))return false;
+  if(type==='boss'&&(!finite(d.d)||d.d<=0))return false;
   const s=state(nm);prune(s,t);
   const a=ownerActor(nm,from,d.a);
   if(!a || !matchIdOk(nm,d) || !safe(d[type==='pvp'?'h':'q']) || d[type==='pvp'?'h':'q']<1)return false;
