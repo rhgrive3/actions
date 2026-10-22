@@ -10,6 +10,8 @@ import { PLAYER, DIFFICULTY, SUB } from '../config.js';
 
 const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3();
 const _stats = { own: 0, enemy: 0, empty: 0, n: 0 };
+// Pure per-tick aim wobble shared by ordinary and boss bot logic.
+const botAimWander = (x) => Math.sin(x) * 0.6 + Math.sin(x * 2.27 + 1.3) * 0.4;
 
 const botBehaviorKind = (weapon) => {
   // Catalogue firing family, not the shared `kind: 'catalog'` rendering key.
@@ -140,9 +142,9 @@ export class BotBrain {
       // human aim error: a slow wander plus an acquisition error that settles over the reaction time
       const e = this.diff.aimError;
       const acq = Math.exp(-this.acqT / Math.max(0.12, this.diff.reaction * 0.9));
-      const wander = (x) => Math.sin(x) * 0.6 + Math.sin(x * 2.27 + 1.3) * 0.4;
-      wantYaw = idealYaw + e * (0.75 * wander(this.t * 1.7 + this.ph1) + 2.4 * acq * this.acqSignY);
-      wantPitch = idealPitch + e * 0.6 * (0.75 * wander(this.t * 2.1 + this.ph2) + 1.6 * acq * this.acqSignP);
+
+      wantYaw = idealYaw + e * (0.75 * botAimWander(this.t * 1.7 + this.ph1) + 2.4 * acq * this.acqSignY);
+      wantPitch = idealPitch + e * 0.6 * (0.75 * botAimWander(this.t * 2.1 + this.ph2) + 1.6 * acq * this.acqSignP);
       if (this.mode === 'fight') {
         // movement in combat: keep preferred distance + eased strafing (+ swim in to close distance)
         const pref = family === 'charger' ? range * 0.8 : family === 'roller' ? 0.5 : range * 0.7;
@@ -305,15 +307,19 @@ export class BotBrain {
   // Low on health mid-duel: head for own ink away from the threat (swim = heal + hard to spot), then come back.
   _pickRetreat() {
     const a = this.a, t = this.target;
-    let bestP = null, bs = -Infinity;
+    let bestP = null, bs = -Infinity, threatBaseDistance;
+    let threatDistanceReady = false;
     for (let i = 0; i < 16; i++) {
       const ang = Math.random() * Math.PI * 2, r = 3 + Math.random() * 8;
       _v.set(a.pos.x + Math.cos(ang) * r, a.pos.y, a.pos.z + Math.sin(ang) * r);
       const st = G.paint.regionStats(_v.x, _v.y, _v.z, 1.4, a.team, _stats);
       if (!st.n) continue;
-      const away = t ? Math.hypot(_v.x - t.pos.x, _v.z - t.pos.z) - Math.hypot(a.pos.x - t.pos.x, a.pos.z - t.pos.z) : 0;
-      const score = st.own * 6 + away * 0.8 - r * 0.15 + (t && !G.physics.los(_v2.set(_v.x, _v.y + 1, _v.z), _v3.set(t.pos.x, t.pos.y + 1, t.pos.z)) ? 4 : 0);
-      if (score > bs) { bs = score; bestP = _v.clone(); }
+      if (t && !threatDistanceReady) { threatBaseDistance = Math.hypot(a.pos.x - t.pos.x, a.pos.z - t.pos.z); threatDistanceReady = true; }
+      const away = t ? Math.hypot(_v.x - t.pos.x, _v.z - t.pos.z) - threatBaseDistance : 0;
+      const base = st.own * 6 + away * 0.8 - r * 0.15;
+      if (base + (t ? 4 : 0) <= bs) continue;
+      const score = base + (t && !G.physics.los(_v2.set(_v.x, _v.y + 1, _v.z), _v3.set(t.pos.x, t.pos.y + 1, t.pos.z)) ? 4 : 0);
+      if (score > bs) { bs = score; bestP = (this._bestGoalPosition || (this._bestGoalPosition = new THREE.Vector3())).copy(_v); }
     }
     if (bestP) this._pathTo(bestP, 0.5); else this.path = null;
     this.repath = 1.0;
@@ -399,7 +405,7 @@ export class BotBrain {
     this.goalTimer = 4 + Math.random() * 3;
     if (best < 0) return;
     const n = nav.nodes[best];
-    this._pathTo(_v3.set(n.x, n.y, n.z), 0.3);
+    this._pathTo(n, 0.3);
   }
 
   _pickRefill() {
@@ -410,7 +416,7 @@ export class BotBrain {
       const ang = Math.random() * Math.PI * 2, r = 1 + Math.random() * 7;
       _v.set(a.pos.x + Math.cos(ang) * r, a.pos.y, a.pos.z + Math.sin(ang) * r);
       const st = G.paint.regionStats(_v.x, _v.y, _v.z, 1.2, a.team, _stats);
-      if (st.n && st.own > 0.6 && r < bd) { bd = r; bestP = _v.clone(); }
+      if (st.n && st.own > 0.6 && r < bd) { bd = r; bestP = (this._bestGoalPosition || (this._bestGoalPosition = new THREE.Vector3())).copy(_v); }
     }
     if (bestP) this._pathTo(bestP, 0.4);
     else { this.path = null; }
@@ -570,9 +576,9 @@ export class BotBrain {
       aimDist = _v2.length();
       const e = this.diff.aimError * 0.8;
       const acq = Math.exp(-this.acqT / Math.max(0.12, this.diff.reaction * 0.9));
-      const wander = (x) => Math.sin(x) * 0.6 + Math.sin(x * 2.27 + 1.3) * 0.4;
-      wantYaw = idealYaw + e * (0.75 * wander(this.t * 1.7 + this.ph1) + 2.4 * acq * this.acqSignY);
-      wantPitch = idealPitch + e * 0.6 * (0.75 * wander(this.t * 2.1 + this.ph2) + 1.6 * acq * this.acqSignP);
+
+      wantYaw = idealYaw + e * (0.75 * botAimWander(this.t * 1.7 + this.ph1) + 2.4 * acq * this.acqSignY);
+      wantPitch = idealPitch + e * 0.6 * (0.75 * botAimWander(this.t * 2.1 + this.ph2) + 1.6 * acq * this.acqSignP);
       this.target = T;
       const range = this._range() + (T.crab ? 0 : T.rad * 0.6);
       const inRange = dist < range * (family === 'charger' ? 1.0 : 1.05);
@@ -637,34 +643,52 @@ export class BotBrain {
   // what to shoot: a crablet that's closing in, else the part of the boss worth hitting that it can see
   _bossPerceive(boss) {
     const a = this.a, eye = _v3.copy(a.pos); eye.y += 1.2;
-    let T = null;
+    let T = null, bestCrab = null, bestCrabDistance = Infinity;
     for (const c of boss.crabs.values()) {
       if (c.dead) continue;
       const d = Math.hypot(c.x - a.pos.x, c.z - a.pos.z);
-      if (d > 9 || (T && d >= T.dist)) continue;
+      if (d > 9 || (bestCrab && d >= bestCrabDistance)) continue;
       if (!G.physics.los(eye, _v.set(c.x, c.y + 0.35, c.z))) continue;
-      T = { crab: c, pos: new THREE.Vector3(c.x, c.y + 0.35, c.z), rad: 0.5, dist: d, los: true };
+      bestCrab = c; bestCrabDistance = d;
     }
-    if (T) { T.pos.set(T.crab.x, T.crab.y + 0.35, T.crab.z); }
+    if (bestCrab) {
+      T = this.bTgt?.crab === bestCrab ? this.bTgt : { crab: bestCrab, pos: new THREE.Vector3(), rad: 0.5, dist: bestCrabDistance, los: true };
+      T.pos.set(bestCrab.x, bestCrab.y + 0.35, bestCrab.z); T.dist = bestCrabDistance; T.los = true;
+    }
     else if (boss.visible && !boss.dead) {
       // keep a chosen spot for a while; the belly (when open) and the eyes are worth 2.5×
       this.shapeT = (this.shapeT || 0) - 0.2;
-      const shapes = boss.model.hitShapes.filter((h) => h.active);
-      const belly = shapes.find((h) => h.weak && h.socket === 'belly');
+      const shapes = boss.model.hitShapes;
+      let belly;
+      for (const h of shapes) if (h.active && h.weak && h.socket === 'belly') { belly = h; break; }
+      let pickAlreadyVisible = false;
       let pick = this.bTgt && !this.bTgt.crab && this.shapeT > 0 && this.bTgt.shape.active ? this.bTgt.shape : null;
       if (belly && pick !== belly) pick = null;
       if (!pick) {
         this.shapeT = 1.2 + Math.random() * 1.5;
         const eyes = botBehaviorKind(this.a.weapon) === 'charger' || Math.random() < 0.25 + this.diff.fireDiscipline * 0.3;
-        const order = shapes.slice().sort((h1, h2) => {
-          const s = (h) => (h === belly ? -100 : h.weak && eyes ? -50 : h.weak ? 10 : 0) + h.pos.distanceTo(eye);
-          return s(h1) - s(h2);
-        });
-        for (const h of order) if (G.physics.los(eye, h.pos)) { pick = h; break; }
-        if (!pick) pick = order.find((h) => !h.weak) || null;
+        const order = this._bossShapeOrder || (this._bossShapeOrder = []);
+        const records = this._bossShapeRecords || (this._bossShapeRecords = []);
+        let count = 0;
+        try {
+        for (const h of shapes) if (h.active) {
+          const row = records[count] || (records[count] = { shape: null, score: 0 });
+          order[count] = row;
+          row.shape = h;
+          row.score = (h === belly ? -100 : h.weak && eyes ? -50 : h.weak ? 10 : 0) + h.pos.distanceTo(eye);
+          count++;
+        }
+        order.length = count;
+        order.sort((a, b) => a.score - b.score);
+        for (const row of order) if (G.physics.los(eye, row.shape.pos)) { pick = row.shape; pickAlreadyVisible = true; break; }
+        if (!pick) for (const row of order) if (!row.shape.weak) { pick = row.shape; break; }
+        } finally {
+          // Scratch must not retain old stage/model objects, even on a failed ray.
+          for (const row of records) row.shape = null;
+        }
       }
       if (pick) {
-        const los = G.physics.los(eye, pick.pos);
+        const los = pickAlreadyVisible || G.physics.los(eye, pick.pos);
         T = this.bTgt && this.bTgt.shape === pick ? this.bTgt : { shape: pick, rad: pick.r * 0.85, weak: pick.weak, dist: pick.pos.distanceTo(a.pos) };
         T.los = los;
       }
@@ -694,7 +718,7 @@ export class BotBrain {
         const st = G.paint.regionStats(_v.x, _v.y, _v.z, 2.2, a.team, _stats);
         if (!st.n || boss.hz.threat(_v.x, _v.y, _v.z, 1.5).level > 0) continue;
         const sc = st.enemy - r * 0.02;
-        if (sc > bs) { bs = sc; bestP = _v.clone(); }
+        if (sc > bs) { bs = sc; bestP = (this._bestGoalPosition || (this._bestGoalPosition = new THREE.Vector3())).copy(_v); }
       }
       if (bestP && Math.random() < 0.7) { this._pathTo(bestP, 0.4); return; }
     }
@@ -713,32 +737,35 @@ export class BotBrain {
       if (Math.hypot(n.x - _v.x, n.z - _v.z) > 2.5) continue;
       let s = -Math.hypot(n.x - a.pos.x, n.z - a.pos.z) * 0.08 + Math.random();
       if (boss.hz.threat(n.x, n.y, n.z, 1.5).level > 0) s -= 6;
+      if (s + 3 <= bs) continue;
       if (G.physics.los(_v2.set(n.x, n.y + 1.3, n.z), _v3.set(bx, boss.pos.y + 2.5, bz))) s += 3;
       for (const m of mates) { const g = nav.nodes[m.bot.goal]; if (Math.hypot(g.x - n.x, g.z - n.z) < 4) s -= 2.5; }
       if (s > bs) { bs = s; best = id; }
     }
     if (best < 0) { this.path = null; return; }
     const n = nav.nodes[best];
-    this._pathTo(_v.set(n.x, n.y, n.z), 1.0);
+    this._pathTo(n, 1.0);
   }
 
   // out of a telegraph: the reachable spot nearby with the least danger, biased along the escape direction
   _bossEvade(boss, th) {
     const a = this.a, nav = G.nav;
     let best = -1, bs = -Infinity;
+    const escapeAngle = Math.atan2(th.ax, th.az);
     for (let i = 0; i < 12; i++) {
-      const ang = Math.atan2(th.ax, th.az) + (Math.random() - 0.5) * 2.4, r = 3 + Math.random() * 5;
-      _v.set(a.pos.x + Math.sin(ang) * r, a.pos.y, a.pos.z + Math.cos(ang) * r);
+      const ang = escapeAngle + (Math.random() - 0.5) * 2.4, r = 3 + Math.random() * 5;
+      const sinAng = Math.sin(ang), cosAng = Math.cos(ang);
+      _v.set(a.pos.x + sinAng * r, a.pos.y, a.pos.z + cosAng * r);
       const id = nav.nearest(_v, 1.2);
       if (id < 0) continue;
       const n = nav.nodes[id];
       const t = boss.hz.threat(n.x, n.y, n.z, 1.6);
-      const s = -t.level * 8 - Math.hypot(n.x - a.pos.x, n.z - a.pos.z) * 0.25 + (Math.sin(ang) * th.ax + Math.cos(ang) * th.az) * 1.5 + Math.random() * 0.5;
+      const s = -t.level * 8 - Math.hypot(n.x - a.pos.x, n.z - a.pos.z) * 0.25 + (sinAng * th.ax + cosAng * th.az) * 1.5 + Math.random() * 0.5;
       if (s > bs) { bs = s; best = id; }
     }
     if (best < 0) return;
     const n = nav.nodes[best];
-    this._pathTo(_v.set(n.x, n.y, n.z), 1.0);
+    this._pathTo(n, 1.0);
     this.goalTimer = 0.8;
   }
 }

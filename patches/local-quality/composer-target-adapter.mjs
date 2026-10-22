@@ -66,6 +66,19 @@ export function createLazyComposerTarget(createNative, {
         throw error;
       }
     },
+    insertPass(pass, index) {
+      assertLive();
+      passes.splice(index, 0, pass);
+      try { native?.insertPass(pass, index); }
+      catch (error) { passes.splice(index, 1); throw error; }
+    },
+    removePass(pass) {
+      assertLive();
+      const index = passes.indexOf(pass);
+      if (index < 0) return;
+      native?.removePass(pass);
+      passes.splice(index, 1);
+    },
     setPixelRatio(value) {
       assertLive();
       const changed = state.pixelRatio !== value;

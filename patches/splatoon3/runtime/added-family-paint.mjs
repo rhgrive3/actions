@@ -48,16 +48,17 @@ export function collectBrellaSplashes(node, projectile, end, ended, release) {
   while(volley.next<plan.count){
     const i=volley.next,at=plan.first+i*plan.spacing;
     if(!volley.nodes.every(n=>n.ended||n.distance+1e-9>=at))break;
-    const samples=volley.nodes.map(n=>n.samples.get(i));
-    const points=samples.filter(Boolean).map(s=>s.point);
+    let centre=null,count=0,birthFrame=-Infinity;
+    for(const n of volley.nodes){
+      const sample=n.samples.get(i);
+      birthFrame=Math.max(birthFrame,sample?.frame??n.endFrame??0);
+      if(sample){centre||=sample.point.clone().set(0,0,0);centre.add(sample.point);count++;}
+    }
     // Projectiles consume all their substeps before the next pellet. A ready
     // volley may therefore depend on a later substep of an earlier member.
-    const birthFrame=Math.max(...volley.nodes.map((n,index)=>samples[index]?.frame??n.endFrame??0));
-    if(points.length){
-      const centre=points[0].clone().set(0,0,0);
-      for(const point of points)centre.add(point);
-      centre.multiplyScalar(1/points.length);
-      const active=volley.nodes.length>1?(points.length-1)/(volley.nodes.length-1):1,p=plan.source;
+    if(count){
+      centre.multiplyScalar(1/count);
+      const active=volley.nodes.length>1?(count-1)/(volley.nodes.length-1):1,p=plan.source;
       const radius=p.SplashPaintWidthOneActive+(p.SplashPaintWidthFullActive-p.SplashPaintWidthOneActive)*active;
       const depth=p.SplashPaintDepthScaleOneActive+(p.SplashPaintDepthScaleFullActive-p.SplashPaintDepthScaleOneActive)*active;
       release(centre,radius,{ gravity:ADDED_PAINT_MODEL.gravity*3600,drag:SPLASH_DROP_AIR_RESIST,

@@ -11,7 +11,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 import {WebSocketServer} from 'ws';
 import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
-import {installCombatPlacementQA,advanceUntilNativeShotProof} from './lib/inkwave-combat-ceiling-placement.mjs';
+import {installCombatPlacementQA,advanceUntilNativeShotProof,advanceUntilNativePlacement} from './lib/inkwave-combat-ceiling-placement.mjs';
 import {verifyRuntimeBuild, persistentDirectory, hash} from './lib/inkwave-runtime-evidence.mjs';
 import {serveProjectileCaptureFile} from './lib/inkwave-projectile-http-file.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
@@ -97,18 +97,21 @@ try {
  await Promise.all(pages.map(p=>p.evaluate(({attacker,placement})=>{
   const G=__G,V=G.camera.position.constructor;G.projectiles.clear();
   for(const a of G.match.actors){
+   if(a.remote)continue;
    const pos=placement[a.nid===attacker?0:1],other=placement[a.nid===attacker?1:0];
    a.spawnAt(new V(...pos),Math.atan2(other[0]-pos[0],other[2]-pos[2]));
+   // Mark the QA relocation exactly as a native teleport. Peers must receive
+   // and sample it through the unchanged production 20Hz owner snapshots.
+   a.netTp=(a.netTp||0)+1;
    a.invuln=0;a.grounded=true;a.kidT=99;a.ink=100;a.intent.move.set(0,0,0);
    for(const k of ['fire','jump','squid','sub','special']){a.intent[k]=false;a._prevIntent[k]=false;}
    a.aimDir.set(other[0]-pos[0],other[1]-pos[1],other[2]-pos[2]).normalize();a.aimYaw=a.yaw;a.aimPitch=0;
    a.aimPoint.set(...other).add(new V(0,1.05,0));a.weaponRunner.reset();
    a.character.root.position.copy(a.pos);a.character.root.rotation.y=a.yaw;a.character.root.updateMatrixWorld(true);
-   if(a.net?.buf)a.net.buf.length=0;
   }
   G.scene.updateMatrixWorld(true);
  },{attacker,placement})));
- const step=async()=>{await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement})=>{
+ const step=async({realtime=false}={})=>{await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement})=>{
   const G=__G,dt=1/60;G.time+=dt;G.net.update(dt);
   for(const a of G.match.actors){
    if(a.remote)G.netm.applyRemote(a,dt);
@@ -136,10 +139,14 @@ try {
    }
   }
   G.projectiles.update(dt);
- },{attacker,victim,placement})));await new Promise(resolve=>setTimeout(resolve,0));};
- for(let i=0;i<12;i++)await step();
- report.settled=await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement})=>
-  __ceilingPlacement.inspect({attacker,victim,requested:placement}),{attacker,victim,placement})));
+ },{attacker,victim,placement})));await new Promise(resolve=>setTimeout(resolve,realtime?1000/60:0));};
+ const placementAdvance=await advanceUntilNativePlacement({step:()=>step({realtime:true}),inspect:async()=>{
+  const settled=await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement})=>
+   __ceilingPlacement.inspect({attacker,victim,requested:placement}),{attacker,victim,placement})));
+  for(let i=0;i<2;i++)assert(Math.hypot(...settled[0].points[i].map((v,k)=>v-settled[1].points[i][k]))<=.05,'Both peers must agree on the settled native positions');
+  return settled;
+ }});
+ report.placementAdvance={steps:placementAdvance.steps};report.settled=placementAdvance.settled;
  for(let i=0;i<2;i++)assert(Math.hypot(...report.settled[0].points[i].map((v,k)=>v-report.settled[1].points[i][k]))<=.05,'Both peers must agree on the settled native positions');
  report.aim=await guest.evaluate(({attacker,victim,placement})=>__ceilingPlacement.aim({attacker,victim,requested:placement}),{attacker,victim,placement});
  report.phase='arm-packet-observers';

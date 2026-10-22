@@ -47,7 +47,23 @@ import { SPLASH_SHOOTER_PAINT_DEFAULTS, SPLASH_SHOOTER_SPAWN_DEFAULTS, SPLASH_DR
 // defaults share the provenance documented in blaster-flight-paint.mjs.
 // Families without these source fields stay on their existing path; this does
 // not invent missing slosher/roller/stringer physics or certify retail parity.
+const dropSpecCache=new WeakMap();
+const DROP_SPEC_FIELDS=Object.freeze([
+  ['MoveParam','FreeGravity'],['MoveParam','$type'],
+  ['SplashPaintParam','DepthScaleMax'],['SplashPaintParam','DepthScaleMin'],
+  ['SplashPaintParam','DepthMaxDropHeight'],['SplashPaintParam','DepthMinDropHeight'],
+  ['SplashSpawnParam','RandomSpawnVelXMax'],['SplashSpawnParam','RandomSpawnVelYMax'],
+  ['SplashSpawnParam','RandomSpawnVelZMin'],['SplashSpawnParam','RandomSpawnVelZMax'],
+]);
 export function catalogSplashDropSpec(source, sourceActor = null, shotMode = 'normal') {
+  const cached=source&&dropSpecCache.get(source);
+  if(cached&&cached.actor===sourceActor&&cached.mode===shotMode&&cached.move===source.MoveParam&&
+      cached.spawn===source.SplashSpawnParam&&cached.paint===source.SplashPaintParam&&
+      cached.hasGravity===Object.hasOwn(source.MoveParam||{},'FreeGravity')){
+    let same=true;
+    for(let i=0;i<DROP_SPEC_FIELDS.length;i++){const [group,key]=DROP_SPEC_FIELDS[i];if(!Object.is(source[group]?.[key],cached.values[i])){same=false;break;}}
+    if(same)return cached.result;
+  }
   const move = source?.MoveParam;
   // Inkipedia Shooter_data_S3 records FreeGravity=0.016 as the default of
   // spl__BulletSimpleMoveParam. The packed catalogue intentionally strips
@@ -67,11 +83,14 @@ export function catalogSplashDropSpec(source, sourceActor = null, shotMode = 'no
   const random={...SPLASH_SHOOTER_SPAWN_DEFAULTS,...spawn};
   if(![paint.DepthScaleMax,paint.DepthScaleMin,paint.DepthMaxDropHeight,paint.DepthMinDropHeight,
     random.RandomSpawnVelXMax,random.RandomSpawnVelYMax,random.RandomSpawnVelZMin,random.RandomSpawnVelZMax].every(Number.isFinite))return null;
-  return Object.freeze({gravity:gravity*3600,drag:SPLASH_DROP_AIR_RESIST,surfaceOnly:true,
+  const result=Object.freeze({gravity:gravity*3600,drag:SPLASH_DROP_AIR_RESIST,surfaceOnly:true,
     depthScaleMax:paint.DepthScaleMax,depthScaleMin:paint.DepthScaleMin,
     dropHeightMax:paint.DepthMaxDropHeight,dropHeightMin:paint.DepthMinDropHeight,
     randomVelocity:Object.freeze({x:random.RandomSpawnVelXMax*60,y:random.RandomSpawnVelYMax*60,
       zMin:random.RandomSpawnVelZMin*60,zMax:random.RandomSpawnVelZMax*60})});
+  dropSpecCache.set(source,{actor:sourceActor,mode:shotMode,move,spawn,paint:paintSource,
+    hasGravity:Object.hasOwn(move,'FreeGravity'),values:DROP_SPEC_FIELDS.map(([group,key])=>source[group]?.[key]),result});
+  return result;
 }
 
 // Map an explicit WidthHalf x (WidthHalf * depth) envelope to the existing

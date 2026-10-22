@@ -1,3 +1,4 @@
+import { advanceIntroPresentation } from './intro-presentation.mjs';
 import { terminalRecoveryRequired, installRecoveryEntryGuards } from './recovery-gate.mjs';
 import { simulateMatchInterval } from './turf-finish.mjs';
 // Render cadence is independent of the 60 Hz gameplay clock.
@@ -28,6 +29,14 @@ export function withSeparatedPresentationRandom(run) {
   if (base === presentationRandom) return run();
   tickRandom = base; Math.random = presentationRandom;
   try { return run(); }
+  finally { if (Math.random === presentationRandom) Math.random = base; tickRandom = null; }
+}
+// Same ownership boundary for the hot frame call, with no per-frame closure.
+export function withSeparatedPresentationRandomInvoke(run, receiver, dt) {
+  const base = Math.random;
+  if (base === presentationRandom) return run.call(receiver, dt);
+  tickRandom = base; Math.random = presentationRandom;
+  try { return run.call(receiver, dt); }
   finally { if (Math.random === presentationRandom) Math.random = base; tickRandom = null; }
 }
 function runTickWithGameplayRandom(tick, step) {
@@ -81,9 +90,10 @@ export function runSimulation(game, dt) {
     // Epoch change never resurrects stale input; no carried snapshot remains.
     pending.clear();
   }
-  game._padMenus();
+  game._padMenus(dt);
   G.net?.update?.(dt);
   const m = game.match, covered = !!game.showcase?.fullFrame;
+  advanceIntroPresentation(game);
   const menuAttractBudget = idleAttractMenuBudget(game, G);
   const menuRenderElapsed = menuAttractBudget ? (game._menuAttractRenderElapsed || 0) + dt : 0;
   game._menuAttractFrame = false;
@@ -126,7 +136,8 @@ export function runSimulation(game, dt) {
     }
     // Delayed paint owns turf/special credit, so it shares gameplay time.
     // Consume paused clock ticks without accumulating paint debt for resume.
-    if (!gameplayPaused) G.paint?.advanceSimulation?.(step);
+    if (!gameplayPaused && !(covered && m?.attract)) G.paint?.advanceSimulation?.(step);
+    advanceIntroPresentation(game);
     game.input.endFrame();
     // Mouse and touch deltas are displacements, not velocities: consume once.
     if (game.input.mobile) game.input.mobile.lookDX = game.input.mobile.lookDY = 0;
@@ -157,7 +168,7 @@ export function installGame(Game) {
   if (typeof frame === 'function' && !frame.s3SeparatedRandom) {
     const separated = function (dt) {
       if (terminalRecoveryRequired(this)) return;
-      return withSeparatedPresentationRandom(() => frame.call(this, dt));
+      return withSeparatedPresentationRandomInvoke(frame, this, dt);
     };
     separated.s3SeparatedRandom = true;
     Game.prototype._frame = separated;

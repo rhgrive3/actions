@@ -59,7 +59,8 @@ export class StreamedTrack {
     this.stopAt = end;
     clearTimeout(this._pauseTimer);
     this._pauseTimer = setTimeout(() => {
-      if (!this.disposed) this.element.pause();
+      this._pauseTimer = null;
+      if (!this.disposed) { this.element.pause(); this.engine.retireStream?.(this); }
     }, Math.max(0, (end - now) * 1000) + 30);
   }
 

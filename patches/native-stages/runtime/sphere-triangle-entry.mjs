@@ -17,7 +17,7 @@ function quadraticEntry(A,B,C,lo=0,hi=1){
  return b>=lo&&b<=hi?b:Infinity;
 }
 
-export function sphereTriangleEntry(triangle,from,delta,radius,change,probe,normal){
+export function sphereTriangleEntry(triangle,from,delta,radius,change,probe,normal,lengthSquared=delta.lengthSq()){
  // Match the existing distance-gap tolerance, rather than enlarging gameplay
  // radii or the broadphase. All input geometry and eligibility remain intact.
  const r=radius+1e-10;
@@ -35,7 +35,7 @@ export function sphereTriangleEntry(triangle,from,delta,radius,change,probe,norm
   probe.copy(from).addScaledVector(delta,t).addScaledVector(normal,-(signed+speed*t));
   if(triangle.containsPoint(probe))best=t;
  }
- const distanceA=delta.lengthSq()-change*change;
+ const distanceA=lengthSquared-change*change;
  for(let i=0;i<3;i++){
   const a=i===0?triangle.a:i===1?triangle.b:triangle.c;
   const b=i===0?triangle.b:i===1?triangle.c:triangle.a;

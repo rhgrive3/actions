@@ -14,9 +14,10 @@ export class SwimWake {
       actor: null, pts: [], k: 0, speedK: 0, fwd: new THREE.Vector3(0, 0, 1), head: new THREE.Vector3(), last: null, swimming: false,
     }));
     this._cand = [];
+    this._wakeUpload = null;
   }
 
-  reset() { for (const s of this.slots) { s.actor = null; s.pts.length = 0; s.k = 0; s.last = null; s.swimming = false; } }
+  reset() { this._wakeUpload = null; for (const s of this.slots) { s.actor = null; s.pts.length = 0; s.k = 0; s.last = null; s.swimming = false; } }
 
   update(dt, U, camPos) {
     if (!U || !U.uWake) return;
@@ -78,6 +79,11 @@ export class SwimWake {
     }
     // upload
     const W = U.uWake.value, B = U.uWakeB.value, H = U.uSwimH.value, F = U.uSwimF.value;
+    // Tail sentinels remain valid until a live point overwrites them. Rebinding
+    // any uniform array (or reset) starts a fresh upload epoch.
+    let upload = this._wakeUpload;
+    if (!upload || upload.W !== W || upload.B !== B || upload.H !== H || upload.F !== F)
+      upload = this._wakeUpload = { W, B, H, F, counts: [-1, -1, -1, -1], active: [true, true, true, true] };
     for (let si = 0; si < SLOTS; si++) {
       const s = this.slots[si], base = si * PTS;
       let n = 0;
@@ -98,10 +104,12 @@ export class SwimWake {
         } else B[si].set(0, -999, 0, 0);
         H[si].set(s.head.x, s.head.y, s.head.z, s.k);
         F[si].set(s.fwd.x, s.fwd.y, s.fwd.z, s.speedK);
-      } else {
+      } else if (upload.active[si]) {
         B[si].set(0, -999, 0, 0); H[si].set(0, -999, 0, 0);
       }
-      for (let i = n; i < PTS; i++) W[base + i].set(0, 0, 0, BREAK);
+      const previous = upload.counts[si];
+      for (let i = n; i < (previous < 0 ? PTS : previous); i++) W[base + i].set(0, 0, 0, BREAK);
+      upload.counts[si] = n; upload.active[si] = !!s.actor;
     }
   }
 }

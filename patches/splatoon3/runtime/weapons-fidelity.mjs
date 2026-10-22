@@ -4,7 +4,7 @@ import { VARIANT_BASE_WEAPON } from './alternate-weapon-kits-data.mjs';
 import { configureRollerVerticalPaint, paintRollerVerticalFlight } from './roller-vertical-paint.mjs';
 import { paintRollerMaximumWidth } from './roller-max-paint.mjs';
 import { queueRollerContactPaint, rollerContactDepth, rollerPaintHalfWidth } from './roller-contact-paint.mjs';
-import { configureBlasterFlightPaint, paintBlasterFlight, spawnSplashDrop, advanceSplashDrops } from './blaster-flight-paint.mjs';
+import { configureBlasterFlightPaint, paintBlasterFlight, spawnSplashDrop, advanceSplashDrops, clearSplashDrops } from './blaster-flight-paint.mjs';
 import { applyBlasterBurstKnockback } from './main-knockback.mjs';
 import { dualiesGuideInputsChanged } from './dualies-guide-cache.mjs';
 import { installDualiesSlidePaint } from './dualies-slide-paint.mjs';
@@ -793,8 +793,8 @@ export function applyFidelityBlasterBurstPaint(system, p, point, direct) {
   const dirs = blasterBurstAxisDirections(contract);
   const ray = system._s3BlasterBurstAxisDir || (system._s3BlasterBurstAxisDir = new api.THREE.Vector3());
   const hit = system._s3BlasterBurstAxisHit || (system._s3BlasterBurstAxisHit = new api.Hit());
-  const seen = new Set();
-  for (let i = 0; i < dirs.length; i++) {
+  const pool=system._s3BlasterBurstSeenPool||=([]),seen=pool.pop()||new Set();
+  try{for (let i = 0; i < dirs.length; i++) {
     const d = dirs[i]; ray.set(d.x, d.y, d.z);
     const h = api.G.physics.raycast(point, ray, burst.radius, hit, true);
     if (!eligibleWallDropHit(h)) continue;
@@ -802,7 +802,7 @@ export function applyFidelityBlasterBurstPaint(system, p, point, direct) {
     if (seen.has(key)) continue;
     seen.add(key);
     startDetachedWallDrop(system, p, h, burst.move, burst.paint, 'burst', 0x1027 + i);
-  }
+  }}finally{seen.clear();if(pool.length<4)pool.push(seen);}
   return true;
 }
 
@@ -1826,7 +1826,7 @@ export function installWeaponsFidelity(context,profile) {
     for(const p of [this._s3ShooterImpact,this._s3SlosherGuideProjectile,this._s3BlasterGuideProjectile,
       ...(this._s3DualiesGuideProjectiles||[])])if(p)p.owner=null;
     if(context.G?.projectiles===this&&context._shotGuide?.probe)context._shotGuide.probe.owner=null;
-    this._s3DetachedWallDrops?.splice(0);this._s3SplashDrops?.splice(0);return result;
+    this._s3DetachedWallDrops?.splice(0);clearSplashDrops(this);return result;
   };
   Projectiles.prototype.update=function(dt){advanceDetachedWallDrops(this,dt);advanceSplashDrops(this,dt,context.G,Number.isFinite(context.PLAYER?.waterY)?context.PLAYER.waterY:-Infinity);return updateSystem.call(this,dt);};
   Projectiles.prototype._new=function(...args){

@@ -246,7 +246,12 @@ function anchors(ch, s) {
   if (ch.kidForm) {
     for (let i = 0; i < 3; i++) ch.root.worldToLocal(s.bones[i].getWorldPosition(s.anchors[i]));
   } else {
-    ch.root.worldToLocal(ch.squid.pivot.getWorldPosition(s.anchors[0]));
+    // A source swimmer's pivot is intentionally below the ink surface. Flow
+    // particles stay above its authoritative foot/surface origin; following
+    // the submerged pivot hides the entire active glint envelope in the floor.
+    if (ch.form === 'swim' && ch.grounded) ch.root.getWorldPosition(s.anchors[0]);
+    else ch.squid.pivot.getWorldPosition(s.anchors[0]);
+    ch.root.worldToLocal(s.anchors[0]);
     s.anchors[1].copy(s.anchors[0]); s.anchors[2].copy(s.anchors[0]);
   }
 }
@@ -278,7 +283,8 @@ function draw(ch, s, THREE) {
     const radial = radius * (.36 + (i % 5) * .13 + burst * .6);
     s.point.copy(s.anchors[i % 3]);
     s.point.x += Math.cos(angle) * radial; s.point.z += Math.sin(angle) * radial;
-    s.point.y += (phase - .5) * leg * (ch.kidForm ? .75 : .35);
+    const verticalPhase = ch.form === 'swim' && ch.grounded ? phase : phase - .5;
+    s.point.y += verticalPhase * leg * (ch.kidForm ? .75 : .35);
     const duty = .24 + .58 * burst;
     const life = phase < duty ? Math.sin(phase / duty * Math.PI) ** 4 : 0;
     const size = leg * (.14 + .12 * life + .1 * burst);

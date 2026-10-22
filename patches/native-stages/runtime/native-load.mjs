@@ -55,38 +55,44 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
    const job=jobs.get(file);if(job)(job.materials||(job.materials=[])).push(m);
   }
  }
- const checkAbort=()=>{if(signal?.aborted)throw new DOMException('Aborted','AbortError');};
+ let failure=null;
+ const checkAbort=()=>{if(failure)throw failure;if(signal?.aborted)throw new DOMException('Aborted','AbortError');};
  let next=0;const rows=[...jobs];
- const worker=async()=>{while(next<rows.length){
+ const worker=async()=>{try{while(next<rows.length){
   checkAbort();
   const [file,job]=rows[next++],{role}=job;let {encoding}=job;const buffer=await verified(id,file,data.integrity,signal);checkAbort();const blob=new Blob([buffer],{type:'image/png'});
   let bitmap,texture,transferred=false;
   try{
   bitmap=await createImageBitmap(blob,{imageOrientation:'flipY'});checkAbort();const ratio=Math.min(1,job.roleLimit/Math.max(bitmap.width,bitmap.height));
   if(ratio<1){const original=bitmap;bitmap=null;try{bitmap=await createImageBitmap(original,{resizeWidth:Math.max(1,Math.round(original.width*ratio)),resizeHeight:Math.max(1,Math.round(original.height*ratio)),resizeQuality:'high'});}finally{original.close();}checkAbort();}
-   let pixels;
-   const readPixels=()=>{if(!pixels){const canvas=new OffscreenCanvas(bitmap.width,bitmap.height),ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0);pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;}return pixels;};
+   let pixels,canvas,ctx;
+   const pixelContext=()=>{if(!ctx){canvas=new OffscreenCanvas(bitmap.width,bitmap.height);ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0);}return ctx;};
+   // Keep the identical full canvas/drawImage and its colour conversion. Only
+   // the JS readback is bounded: rows retain the original accumulation order.
+   const scanPixels=visit=>{const context=pixelContext();for(let y=0;y<bitmap.height;y+=64){const p=context.getImageData(0,y,bitmap.width,Math.min(64,bitmap.height-y)).data;if(visit(p)===false)break;}};
+   // Mutating normal reconstruction still needs one full owned destination.
+   const readPixels=()=>{if(!pixels)pixels=pixelContext().getImageData(0,0,bitmap.width,bitmap.height).data;return pixels;};
   if(data.manifest.sourceMode==='browser-direct'){
    const matched=job.materials;
    if(role==='albedo'){
-    let alpha=false;const pngType=new Uint8Array(buffer)[25];if(pngType===6||pngType===4){const p=readPixels();for(let i=3;i<p.length;i+=4)if(p[i]<250){alpha=true;break;}}
+    let alpha=false;const pngType=new Uint8Array(buffer)[25];if(pngType===6||pngType===4)scanPixels(p=>{for(let i=3;i<p.length;i+=4)if(p[i]<250){alpha=true;return false;}});
     for(const m of matched)if(m.albedo===file)m.hasAlpha=alpha;
    }
    // Each role only consults a subset of channels. Preserve the original
    // accumulation order and exact channel threshold tests.
    if(role==='normal'){
-    const p=readPixels(),count=p.length/4;let mean2=0,unorm=0,signed=0;
-    for(let i=0;i<p.length;i+=4){
+    const count=bitmap.width*bitmap.height;let mean2=0,unorm=0,signed=0;
+    scanPixels(p=>{for(let i=0;i<p.length;i+=4){
      mean2+=p[i+2];
      const x=p[i]/127.5-1,y=p[i+1]/127.5-1;
      const sx=(p[i]>127?p[i]-256:p[i])/127,sy=(p[i+1]>127?p[i+1]-256:p[i+1])/127;
      unorm+=x*x+y*y>1.02;signed+=sx*sx+sy*sy>1.02;
-    }
+    }});
     encoding=mean2/count<1?(signed/count+.1<unorm/count?'signed-byte-rg':'unorm-rg'):'rgb';
     for(const m of matched)m.normalEncoding=encoding;
    }else if(role==='roughness'||role==='opacity'){
-    const p=readPixels(),count=p.length/4;let mean0=0,mean1=0,lo0=255,hi0=0;
-    for(let i=0;i<p.length;i+=4){const r=p[i];mean0+=r;mean1+=p[i+1];if(r<lo0)lo0=r;if(r>hi0)hi0=r;}
+    const count=bitmap.width*bitmap.height;let mean0=0,mean1=0,lo0=255,hi0=0;
+    scanPixels(p=>{for(let i=0;i<p.length;i+=4){const r=p[i];mean0+=r;mean1+=p[i+1];if(r<lo0)lo0=r;if(r>hi0)hi0=r;}});
     const ch=mean1/count<1&&(mean0/count>2||hi0-lo0>4)?'r':'g';
     for(const m of matched)m.channels[role]=ch;
    }
@@ -98,9 +104,9 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
   }else texture=new THREE.Texture(bitmap);
   texture.colorSpace=['albedo','emissive'].includes(role)?THREE.SRGBColorSpace:THREE.NoColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;textures.set(file,texture);transferred=true;
   }finally{if(!transferred){bitmap?.close();texture?.dispose();}}
- }};
+ }}catch(error){if(!failure)failure=error;throw error;}};
  // Bound concurrent full-resolution decode/upload peaks; the same images and filters are used.
   const results=await Promise.allSettled(Array.from({length:Math.min(rows.length,textureLimit?2:quality==='high'?2:3)},worker));const failed=results.find(r=>r.status==='rejected');
- if(failed||signal?.aborted){for(const t of textures.values()){t.image?.close?.();t.dispose();}throw failed?.reason||new DOMException('Aborted','AbortError');}
+ if(failed||signal?.aborted){for(const t of textures.values()){t.image?.close?.();t.dispose();}throw failure||failed?.reason||new DOMException('Aborted','AbortError');}
  return textures;
 }

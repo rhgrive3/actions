@@ -31,7 +31,7 @@ export class Level {
         : { kind: 'box', min: c.min, max: c.max, paint: false, hidden: true, color: '#888888', roof: !!c.roof, rail: !!c.rail, perch: !!c.perch }))];
     for (const d of defs) this._addBlock(d);
     this.hasRails = this.blocks.some((b) => b.rail);   // (actors only run the railing foot check where there are rails)
-    this._buildHash();
+    if (!L.skipInitialSpatialHash) this._buildHash();
     for (const b of this.blocks) this._buildFaces(b);
   }
 
@@ -124,10 +124,48 @@ export class Level {
   _hxi(x) { return Math.max(0, Math.min(this.hw - 1, Math.floor((x - this.hx0) / this.hashCell))); }
   _hzi(z) { return Math.max(0, Math.min(this.hd - 1, Math.floor((z - this.hz0) / this.hashCell))); }
 
+  // A static face has one immutable owning block. AABB clipping in splat
+  // still admits exactly the same paint; unusual/custom query owners fall back.
+  queryFaceBlock(face, out) {
+    if (this.queryBlocks !== Level.prototype.queryBlocks) return null;
+    const f = this.faces[face], id = f?.block, b = this.blocks[id];
+    if (!b || !Number.isInteger(id) || !b.faces.includes(face) ||
+        (Number.isInteger(this.staticBlockCount) && id >= this.staticBlockCount)) return null;
+    out.length = 0; out.push(id); return out;
+  }
+
+  _nextQueryStamp() {
+    let next = (this._stamp + 1) >>> 0;
+    if (next === 0) { this.blockStamp.fill(0); next = 1; }
+    this._stamp = next;
+    return next;
+  }
+
+  // Borrow the exact single-cell candidate order for each vertical foot ray.
+  // One-cell footprints share a bucket without stamps or nine array copies.
+  // Recomputed every probe; dynamic hash rebuilds cannot leave stale buckets.
+  queryGroundColumns(x, z, foot, ring, out) {
+    if (this.constructor !== Level || this.queryBlocks !== Level.prototype.queryBlocks ||
+        this._hxi !== Level.prototype._hxi || this._hzi !== Level.prototype._hzi ||
+        !Number.isFinite(x) || !Number.isFinite(z) || !Number.isFinite(foot)) return null;
+    const extent = Math.abs(foot), x0 = this._hxi(x - extent), x1 = this._hxi(x + extent);
+    const z0 = this._hzi(z - extent), z1 = this._hzi(z + extent);
+    out.length = ring.length + 1;
+    if (x0 === x1 && z1 === z0) {
+      const cell = this.hash[z0 * this.hw + x0];
+      for (let i = 0; i < out.length; i++) out[i] = cell;
+    } else {
+      out[0] = this.hash[this._hzi(z) * this.hw + this._hxi(x)];
+      for (let i = 0; i < ring.length; i++) out[i + 1] = this.hash[
+        this._hzi(z + ring[i][1] * foot) * this.hw + this._hxi(x + ring[i][0] * foot)];
+    }
+    return out;
+  }
+
   // Unique block ids whose hash cells overlap the XZ rectangle.
   queryBlocks(minX, minZ, maxX, maxZ, out) {
     out.length = 0;
-    const st = ++this._stamp;
+    const st = this._nextQueryStamp();
     const x0 = this._hxi(minX), x1 = this._hxi(maxX), z0 = this._hzi(minZ), z1 = this._hzi(maxZ);
     for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) {
       const cell = this.hash[z * this.hw + x];
@@ -144,6 +182,18 @@ export class Level {
     return Math.abs(_v2.dot(b.axes[0])) < b.half.x + pad &&
       Math.abs(_v2.dot(b.axes[1])) < b.half.y + pad &&
       Math.abs(_v2.dot(b.axes[2])) < b.half.z + pad;
+  }
+
+  // Initialization-only fast path. Derived or overridden worlds retain the ordinary query contract.
+  pointInsideGrid(p, exclude = -1) {
+    if(this.constructor!==Level||this.pointInside!==Level.prototype.pointInside||this.queryBlocks!==Level.prototype.queryBlocks||
+        !Number.isFinite(p.x)||!Number.isFinite(p.z))return this.pointInside(p,0,exclude);
+    const x=this._hxi(p.x-.01),z=this._hzi(p.z-.01);
+    if(x!==this._hxi(p.x+.01)||z!==this._hzi(p.z+.01))return this.pointInside(p,0,exclude);
+    for(const id of this.hash[z*this.hw+x]){
+      if(id===exclude)continue;const b=this.blocks[id];if(!b.solid)continue;
+      if(this.pointInBlock(b,p,0))return true;
+    }return false;
   }
 
   pointInside(p, pad = 0, exclude = -1) {

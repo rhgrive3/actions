@@ -37,6 +37,7 @@ const STEP_FRAMES_PER_SECOND = 60;
 // A splash that has not reached terrain after 4 s of free fall (> 450 world
 // units at Blaster FreeGravity) has left every authored stage. Bound the queue.
 const MAX_DROP_FRAMES = 240;
+const MAX_POOLED_DROP_RECORDS = 256;
 // Authoritative paint is bounded by accepted weapon cadence and the 240-frame
 // lifetime, not a visual capacity. Evicting the oldest drop at 512 silently
 // erased future floor ownership in crowded fights. Drawing has its own cap.
@@ -150,14 +151,21 @@ export function spawnSplashDrop(game, { owner, team, seed, salt = 0, from, direc
   // Precision): X/Y symmetric, Z in [ZMin, ZMax] along the shot direction.
   const vx = random ? (unit(1) * 2 - 1) * random.x : 0, vy = random ? (unit(2) * 2 - 1) * random.y : 0;
   const vz = random ? random.zMin + unit(3) * (random.zMax - random.zMin) : 0;
-  const drop = {
+  const pool=game.projectiles._s3SplashDropPool||=([]);
+  let drop=pool.pop();
+  if(!drop||drop.pos.constructor!==V)drop={pos:new V(),vel:new V(),next:new V(),hit:hitRecord(from)};
+  const collision=drop.hit;
+  collision.hit=false;collision.dist=0;collision.block=collision.face=-1;collision.u=collision.v=0;
+  collision.point.set(0,0,0);collision.normal.set(0,0,0);
+  Object.assign(drop,{
     owner, team, seed: unit(0), radius, spec, depth, kind, footprint,
     dirX: fx, dirZ: fz, spawnY: from.y, releaseX: from.x, releaseZ: from.z, frames: 0,
     carry: Number.isFinite(catchUpSeconds) && catchUpSeconds > 0 ? catchUpSeconds * STEP_FRAMES_PER_SECOND : 0,
-    pos: new V(from.x, from.y, from.z),
-    vel: new V(fx * vz - fz * vx, vy - Math.max(0, initialDownSpeed), fz * vz + fx * vx),
-    next: new V(), hit: null,
-  };
+    landing:null,landingDepth:undefined,drawRadius:undefined,sourceActor:undefined,_s3SplashDropPooled:false,
+  });
+  drop.pos.set(from.x,from.y,from.z);
+  drop.vel.set(fx*vz-fz*vx,vy-Math.max(0,initialDownSpeed),fz*vz+fx*vx);
+  drop.next.set(0,0,0);
   queue.push(drop);
   return drop;
 }
@@ -213,6 +221,23 @@ function hitRecord(v) {
   return { hit: false, dist: 0, point: v.clone(), normal: v.clone(), block: -1, face: -1, u: 0, v: 0 };
 }
 
+// Drop records are mutable live simulation leases, like the projectile head
+// pool. Landing telemetry is a separate primitive snapshot and is never reused.
+function recycleSplashDrop(system,drop,epoch) {
+  if(drop._s3SplashDropPooled)return;
+  drop.owner=null;drop.spec=null;drop.footprint=null;
+  drop.sourceActor=undefined;drop.drawRadius=undefined;
+  drop.hit.block=drop.hit.face=-1;
+  if((system._s3SplashDropEpoch||0)!==epoch)return;
+  const pool=system._s3SplashDropPool||=([]);
+  if(pool.length<MAX_POOLED_DROP_RECORDS){drop._s3SplashDropPooled=true;pool.push(drop);}
+}
+export function clearSplashDrops(system) {
+  system._s3SplashDropEpoch=(system._s3SplashDropEpoch||0)+1;
+  for(const drop of system._s3SplashDrops||[]){drop.owner=null;drop.spec=null;drop.footprint=null;}
+  system._s3SplashDrops?.splice(0);system._s3SplashDropPool?.splice(0);
+}
+
 // Fixed-step integrator shared by every queued splash. Rendering cadence only
 // changes how many whole reference frames are consumed per call.
 export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
@@ -222,7 +247,7 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
   if (!queue?.length || !Number.isFinite(dt) || dt < 0) return 0;
   const physics = game?.physics;
   let landed = 0, write = 0;
-  const landings = [];
+  const landings = [],retired=[],epoch=system._s3SplashDropEpoch||0;
   for (let i = 0; i < queue.length; i++) {
     const d = queue[i];
     let done = !physics?.segment || !d.owner || d.owner.remote;
@@ -244,7 +269,7 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
       stepTime += step;
       if (d.frames >= MAX_DROP_FRAMES || d.pos.y < waterY - 2) done = true;
     }
-    if (!done) queue[write++] = d;
+    if (!done) queue[write++] = d;else retired.push(d);
   }
   // Stable linear compaction: landing a large volley no longer repeatedly
   // shifts all later drops. Survivors retain their deterministic order.
@@ -253,7 +278,8 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
   // 30Hz update. Apply them by collision time, not by queue iteration order;
   // otherwise the earlier landing can incorrectly overwrite the later one.
   landings.sort((a,b)=>a.time-b.time);
-  for(const landing of landings)landSplashDrop(game,landing.drop,landing.hit);
+  try{for(const landing of landings)landSplashDrop(game,landing.drop,landing.hit);}
+  finally{for(const drop of retired)recycleSplashDrop(system,drop,epoch);}
   return landed;
 }
 

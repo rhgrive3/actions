@@ -52,7 +52,7 @@ export function nativeSurgeTransition(graph,lower,upper){
   if(holdY<lower.y+.3)continue;
   for(let y=lower.y;y<=holdY+.04;y+=.025)if(!P.bodyFits(spine.clone().setY(y),squid,PLAYER.squidBodyLift,PLAYER.squidHeight,true,.003)){valid=false;break;}
   if(!valid)continue;
-  const touchdowns=[];
+  const touchdowns=[],runSpeed=Math.max(weightSpeedCurve('shooter','run')[0]*60,PLAYER.airMinSpeed);
   for(const hz of [30,60,120])for(const slack of [0,.15]){
    const dt=1/hz,pos=spine.clone().setY(holdY+slack),previous=pos.clone(),contacts=makeContacts();
    // Neutral charging removes wall-normal bias. The ordinary release tick
@@ -63,7 +63,7 @@ export function nativeSurgeTransition(graph,lower,upper){
    if(!valid)break;
    const velocity=flightDirection.clone().multiplyScalar(1.2);velocity.y=cfg.velocity;const hit=new Hit();let touchdown=null;
    for(let frame=0;frame<hz*3;frame++){
-    previous.copy(pos);stepGroundVelocity(velocity,flightDirection.x,flightDirection.z,Math.max(weightSpeedCurve('shooter','run')[0]*60,PLAYER.airMinSpeed),PLAYER.airAccel,dt);
+    previous.copy(pos);stepGroundVelocity(velocity,flightDirection.x,flightDirection.z,runSpeed,PLAYER.airAccel,dt);
     let gravity=PLAYER.gravity;if(velocity.y<0)gravity*=PLAYER.fallGravityMul;if(Math.abs(velocity.y)<PLAYER.apexBand)gravity*=PLAYER.apexGravityMul;velocity.y=Math.max(-PLAYER.maxFall,velocity.y-gravity*dt);pos.addScaledVector(velocity,dt);
     if(!sweep.clear(previous,pos,human,PLAYER.stepUp,PLAYER.height)){valid=false;break;}
     if(velocity.y<=.5){P.groundProbe(pos.x,pos.y,pos.z,Math.max(previous.y,pos.y)-pos.y+PLAYER.ledgeAssist,.02,PLAYER.footRadius,hit,false);if(hit.hit&&hit.y>=pos.y-.02){pos.y=hit.y;touchdown=pos.clone();break;}}

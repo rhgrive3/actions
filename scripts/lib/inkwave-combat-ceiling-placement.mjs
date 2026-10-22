@@ -84,3 +84,15 @@ export async function advanceUntilNativeShotProof({step,hasProof,remainingSteps}
   }
   return {steps,ready};
 }
+
+// Placement is an owner-authored teleport followed by the real transport and
+// delayed proxy timeline. Never overwrite proxies with a desired test pose.
+export async function advanceUntilNativePlacement({step,inspect,remainingSteps=60}) {
+  if(!Number.isSafeInteger(remainingSteps)||remainingSteps<1||remainingSteps>120)throw Error('Invalid native placement step budget');
+  let last;
+  for(let steps=1;steps<=remainingSteps;steps++) {
+    await step();
+    try {return {steps,settled:await inspect()};} catch(error) {last=error;}
+  }
+  throw last || Error('Native placement did not converge');
+}

@@ -5770,3 +5770,25 @@ See [regression analysis and evidence](weapon-regressions-20261021/README.md). F
 - 実装: `patches/splatoon3/runtime/respawn-lifecycle.mjs`、`runtime/squid-spawn-presentation.mjs`、`patches/native-stages/adapter.mjs`。再現はTurfの通常開始、FIREせず待機。初期8人、両チーム、30/60/120 Hzでintro中の位置・共有発射・実衝突による着地を確認。オンラインは2-peer CPU fixtureで人間・ボット双方の所有者追従を確認。
 - 検証: 開始タイミング3件、オンライン6件、スポナー描画10件が成功。旧main lifecycleに戻す負の対照では開始タイミング3件すべて失敗。ブラウザと統合PRの検証結果は [統合記録](opening-spawn-pr-integration-20261022.md) を参照。
 - 未確認: Switch実機の開始フレーム、発射までの正確な猶予、実ネットワーク遅延、物理GPU/iPad性能・本家の描画一致。既存1秒の開始待機・飛行はINKWAVE校正値として維持。
+
+
+## 2026-10-22: Catalogue TIME UP cancellation
+
+The existing 11.3.0 target and already-authored fixed-step weapon data are unchanged. Reproduction: start an added Slosher/Roller/Brella/Splatana windup, then invoke the authoritative `cancelPendingInput` neutralization before its scheduled birth. Previously catalogue `pending` survived that legacy input reset; the catalogue now invokes its existing hard-cancel owner, invalidating pending/deferred births. The composed regression starts a real added Slosher windup, neutralizes input, advances 120 ticks and confirms no projectile is emitted. This is internal lifecycle verification; retail Switch timing, browser/device presentation and native performance remain unverified. Details and open optimization proposals: [weapon queue batch](inkwave-queue-weapons-2026-10-22.md).
+
+## 2026-10-22 special/sub/paint queue batch
+
+See [special/sub/paint queue repair record](inkwave-queue-specials-2026-10-22.md). The ancillary-only live minimap invalidation and atlas renderer failure recovery are corrected; existing 11.3.0 timing/constants and authority are retained. Numerical/logic verification is distinct from the still-unperformed retail-device, full native-asset and browser GPU comparisons. Paint-history reclamation and escaped ShapePool handle reuse remain explicitly open.
+
+
+## 2026-10-22 paint/wake queue follow-up
+
+The same [queue repair record](inkwave-queue-specials-2026-10-22.md) now includes row-batched minimap bounds with exact dirty-generation totals, turf-only coverage invalidation with unknown-writer fallback, a lease-maintained opposing-growth cold guard, and inactive SwimWake upload elimination. Existing uniforms, shader program, point order, paint/network version and overlap completion order are retained. Exact composed regressions cover 30/60/120 Hz wake transitions, rotated/dead native body cells and seeded growth completion order. The raw ShapePool storage-reuse proposal is rejected by an executable stale-handle counterexample; safe allocations and paint history IDs remain unchanged. No new retail/Switch or GPU performance acceptance is asserted.
+
+
+### Library queue 2026-10-22: retreat LOS bound and shadow ancestry
+
+- Reference remains Splatoon3 11.3.0; this preserves existing INKWAVE decisions and shadow inputs, with no claim of hardware parity or device timing.
+- Retreat samples the same16 candidates and consumes exactly the same RNG; only LOS for candidates unable to beat the current score even with the full4-point cover bonus is skipped. Actual method controls over5000 seeded cases retain chosen destination, route request and repath state.
+- Shadow caster ancestry is shared only inside a synchronous `_checkMoved` validation pass. Weak node records expire each pass; detach/reparent/visibility changes are re-read next pass, and every matrix/instance/geometry/count/castShadow demotion remains intact.75000 node controls and actual composed fault/demotion tests pass. Browser shadow pixels/device performance remain CI/physical acceptance.
+The paint-history queue's safe alternative is now implemented: local order metadata uses numeric wrapping sequences while every returned ID, network receipt and precedence result remains stable. 35 order/authority/temporal/hidden/native tests pass, including 100,000 baseline attempts. A negative control proves erasing or reusing a returned ID changes delayed comparator authority; no truncation or ID reuse is performed.

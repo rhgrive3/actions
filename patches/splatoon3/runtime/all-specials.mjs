@@ -89,7 +89,10 @@ const descriptions = Object.freeze({
   waveBreaker: { radius: 27, paintRadius: 0, damageMax: 45, damageMin: 45, directDamage: 45, splashBands: [[27, 45]] },
 });
 
+let activeStampCount=0;
 const actorStates = new WeakMap();
+function setActorState(actor,state){const old=actorStates.get(actor);if(old?.id==='ultraStamp')activeStampCount--;if(state?.id==='ultraStamp')activeStampCount++;actorStates.set(actor,state);}
+function deleteActorState(actor){if(actorStates.get(actor)?.id==='ultraStamp')activeStampCount--;return actorStates.delete(actor);}
 const booyahAfterArmor = new WeakMap();
 const runtimes = new WeakMap();
 const replaySeen = new WeakMap();
@@ -815,10 +818,10 @@ function candidate(rt, p, start, end) {
     const c=breakerCandidate(rt,p,start,end,object)||chumpCandidate(rt,p,start,end,object);
     if(c&&(!best||c.distance<best.distance))best=c;
   }
-  for(const owner of rt.api.G.actors||[]) {
+  if(activeStampCount>0)for(const owner of rt.api.G.actors||[]) {
     const state=actorStates.get(owner);
     if(!state||state.id!=='ultraStamp'||state.phase==='throw'||!owner?.alive||owner.team===p?.team)continue;
-    if(state.expiresAt&&rt.api.G.time>state.expiresAt){actorStates.delete(owner);continue;}
+    if(state.expiresAt&&rt.api.G.time>state.expiresAt){deleteActorState(owner);continue;}
     const d=stampGuardCandidate(rt,p,start,end,owner,state);
     if(d&&(!best||d.distance<best.distance))best=d;
   }
@@ -960,7 +963,8 @@ function stepWailPairs(rt,actor,state){
     // terminal tracking/fade after death remains unmeasured.
     if(pair.target&&(!pair.target.alive||actorLife(pair.target)!==pair.targetLife))pair.targetRetired=true;
     if(pair.target?.alive&&!pair.targetRetired){
-      pair.trace.push({t:state.t,pos:pair.target.pos.clone()});
+      const reusable=pair.trace.length>2&&pair.trace[1].t<state.t-WAIL_TRACK_DELAY-5/FPS?pair.trace.shift():null;
+      const sample=reusable||{t:0,pos:pair.target.pos.clone()};sample.t=state.t;sample.pos.copy(pair.target.pos);pair.trace.push(sample);
       // Keep the two samples bracketing the delayed damage tick. A fixed
       // 20-element ring covered only 1/6 second at 120 Hz.
       const earliest=state.t-WAIL_TRACK_DELAY-5/FPS;
@@ -1058,7 +1062,7 @@ function selectTargets(rt, actor, max=4, range=32) {
     const dot=offset.normalize().dot(dir);if(dot<=0)continue;
     if(actor.specialActive?.id==='tentaMissiles'){
       const ap=actorStates.get(actor)?.specialPowerAP||0,camera=rt.api.G.camera;
-      if(camera?.isPerspectiveCamera){const projected=target.pos.clone();projected.y+=.7;projected.project(camera);
+      if(camera?.isPerspectiveCamera){const projected=(rt._missilePreview ||= target.pos.clone()).copy(target.pos);projected.y+=.7;projected.project(camera);
         const aspect=camera.aspect||1,limit=gearCurve(ap,140,190,240)/360;
         if(projected.z< -1||Math.hypot(projected.x*aspect,projected.y)>limit)continue;
       }else if(dot<.94)continue;
@@ -1220,11 +1224,11 @@ function inkstrikePaint(rt,o,elapsed){
   // calibration, but never substitute damage radius7.7 or an unbounded floor.
   const radius=.5+6.5*clamp(elapsed/(50/FPS),0,1),stamp=Math.min(.78,radius),ring=radius-stamp,n=ring>0?20:1;
   for(let i=0;i<n;i++){
-    const angle=i/n*Math.PI*2,from=new rt.api.THREE.Vector3(o.pos.x+Math.cos(angle)*ring,o.pos.y+7.5,o.pos.z+Math.sin(angle)*ring);
+    const angle=i/n*Math.PI*2,from=(o._inkstrikeProbe ||= new rt.api.THREE.Vector3()).set(o.pos.x+Math.cos(angle)*ring,o.pos.y+7.5,o.pos.z+Math.sin(angle)*ring);
     const hit=rt.api.G.physics?.raycast?.(from,rt.down,13.5,rt.hit,true);let point=null;
-    if(hit?.hit&&hit.normal?.y>.4&&hit.point.y>=o.pos.y-6-1e-8&&hit.point.y<=o.pos.y+7.5+1e-8)point=hit.point.clone().addScaledVector(hit.normal,.08);
+    if(hit?.hit&&hit.normal?.y>.4&&hit.point.y>=o.pos.y-6-1e-8&&hit.point.y<=o.pos.y+7.5+1e-8)point=(o._inkstrikePoint ||= new rt.api.THREE.Vector3()).copy(hit.point).addScaledVector(hit.normal,.08);
     else {const floor=rt.api.G.level?.groundHeight?.(from.x,from.z,from.y);
-      if(finite(floor)&&floor>=o.pos.y-6&&floor<=o.pos.y+7.5)point=from.clone().setY(floor+.08);}
+      if(finite(floor)&&floor>=o.pos.y-6&&floor<=o.pos.y+7.5)point=(o._inkstrikePoint ||= new rt.api.THREE.Vector3()).copy(from).setY(floor+.08);}
     if(point)paintStamp(rt,o.owner,point,stamp,seedUnit(o.seed,(o.paintPulse||0)*32+i));
   }
   o.paintPulse=(o.paintPulse||0)+1;
@@ -1389,7 +1393,7 @@ function endSpecial(rt,actor,reason='duration') {
   if(state.ballMesh){disposeMesh(rt,{mesh:state.ballMesh});state.ballMesh=null;}
   if(actor.specialActive?.id===state.id)actor.specialActive=null;
   if(actor._s3AllSpecialState===state)actor._s3AllSpecialState=null;
-  actorStates.delete(actor);
+  deleteActorState(actor);
   actor.form='kid';
   return state;
 }
@@ -1556,8 +1560,8 @@ function updateWorld(rt,dt) {
     const o=list[i];if(!o||o.dead){list.splice(i,1);continue;}
     o.age+=dt;
     if(o.phase==='flight'&&o.vel&&['marker','wave','screen'].includes(o.kind)){
-      const from=o.pos.clone();
-      const hit=stepSpecialDeviceFlight(rt.api,o,dt,rt.hit);
+      const from=(o._flightFrom ||= o.pos.clone()).copy(o.pos);
+      const hit=stepSpecialDeviceFlight(rt.api,o,dt,rt.hit,from);
       o.mesh?.position.copy(o.pos);
       if(o.kind==='screen'||o.kind==='wave'){
         // Chimney MoveParam.DamageValueForDamageTag=4000 (400 HP) is the
@@ -1643,7 +1647,7 @@ function updateWorld(rt,dt) {
       o.contactTimes ||= new Map();
       for(const victim of rt.api.G.actors||[]){
         if(!victim?.alive||victim.team===o.team)continue;
-        const dx=victim.pos.x-o.pos.x,dz=victim.pos.z-o.pos.z,dy=victim.pos.y-o.pos.y,d=Math.hypot(dx,dz);
+        const dx=victim.pos.x-o.pos.x,dz=victim.pos.z-o.pos.z,dy=victim.pos.y-o.pos.y,d=Math.abs(dx)>Math.max(o.maxRadius*markRatio,1.2)+1e-9||Math.abs(dz)>Math.max(o.maxRadius*markRatio,1.2)+1e-9?Infinity:Math.hypot(dx,dz);
         if(frame<=57+1e-8&&d<=o.maxRadius*markRatio&&dy>=-5.2&&dy<=2.8){
           victim.s3 ||= {};victim.s3.revealedUntil ||= {};
           // Detection has source radius records through57F; MarkingFrame45
@@ -1708,7 +1712,8 @@ function updateWorld(rt,dt) {
             }
           }
         }
-        o.previous.set(victim,{pos:victim.pos.clone(),screen:o.pos.clone()});
+        if(previous){previous.pos.copy(victim.pos);previous.screen.copy(o.pos);}
+        else o.previous.set(victim,{pos:victim.pos.clone(),screen:o.pos.clone()});
       }
       screenDamageObjects(rt,o,oldScreenPos,o.pos);o.lastObjectScreenPos=o.pos.clone();
       paintScreenDrops(rt,o,deviceAge);
@@ -1755,7 +1760,7 @@ function activeStep(rt,actor,dt) {
     if(state.id==='zipcaster')clearZipcasterArmor(actor);
     if(actor.specialActive===state.controlToken)actor.specialActive=null;
     if(actor._s3AllSpecialState===state)actor._s3AllSpecialState=null;
-    actorStates.delete(actor);return;
+    deleteActorState(actor);return;
   }
   const edges=inputEdges(actor,state);
   state.t+=dt;s.t=state.t;
@@ -2173,7 +2178,7 @@ function makeState(rt,actor,id) {
     state.hookInk=gearCurve(ap,.04,.025,.015);state.inkPerSecond=gearCurve(ap,.15,.1305,.12);
     state.duration=150/state.inkDrainPerSecond;}
 
-  actorStates.set(actor,state);actor._s3AllSpecialState=state;
+  setActorState(actor,state);actor._s3AllSpecialState=state;
   actor.specialActive={id,t:0,phase:state.phase,armor:false,armorHP:state.armorHP,activation:serial};
   state.controlToken=actor.specialActive;
   startActiveSpecialGauge(actor,state,rt.api.G);
@@ -2248,7 +2253,7 @@ function installRuntime(api) {
     rt.system=api.G.projectiles||rt.system;
     if(this.remote){
       const state=actorStates.get(this);
-      if(state?.gaugeTracked){endActiveSpecialGauge(this);actorStates.delete(this);if(this._s3AllSpecialState===state)this._s3AllSpecialState=null;}
+      if(state?.gaugeTracked){endActiveSpecialGauge(this);deleteActorState(this);if(this._s3AllSpecialState===state)this._s3AllSpecialState=null;}
       this.specialActive=null;return undefined;
     }
     if(id==='crabTank'){
@@ -2602,9 +2607,9 @@ export function replaySpecial(api,event) {
   }
   if(actor.remote&&event.id==='ultraStamp'){
     const state=actorStates.get(actor);
-    if(event.action==='activate')actorStates.set(actor,{id:'ultraStamp',serial:event.activation,seed:event.seed,phase:'active',stampHolding:false,stampCount:0,expiresAt:api.G.time+(finite(event.duration)?event.duration:7.5)});
+    if(event.action==='activate')setActorState(actor,{id:'ultraStamp',serial:event.activation,seed:event.seed,phase:'active',stampHolding:false,stampCount:0,expiresAt:api.G.time+(finite(event.duration)?event.duration:7.5)});
     else if(state?.id==='ultraStamp'&&state.serial===event.activation){
-      if(event.action==='throw'||event.action==='end')actorStates.delete(actor);
+      if(event.action==='throw'||event.action==='end')deleteActorState(actor);
       else if(event.action==='swing'||event.action==='jumpSwing'){state.stampHolding=true;state.stampCount=1;}
       else if(event.action==='swingEnd'){state.stampHolding=false;state.stampCount=0;}
     }

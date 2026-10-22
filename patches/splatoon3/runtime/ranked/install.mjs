@@ -169,27 +169,47 @@ function prepareCarrier(api, actor) {
 }
 
 export function buildFrame(match, api) {
-  const nm = api.G.netm, inputs = {};
-  const actors = match.actors.map(a => {
+  let scratch = match._rankedFrameScratch;
+  if (!scratch) {
+    const frame = { actors: [], inputs: {}, zoneCoverage: [], barrierHits: [],
+      floorAt: (x, z, yMax) => match.rankedWorld.floorAt(x, z, yMax), fallDeathY: api.PLAYER?.fallDeathY,
+      blocked: (a, b) => match.rankedWorld.blocked(a, b) };
+    scratch = match._rankedFrameScratch = { frame, rows: new WeakMap(), inputIds: [] };
+  }
+  const frame = scratch.frame, inputs = frame.inputs, actors = frame.actors, nm = api.G.netm;
+  for (const id of scratch.inputIds) delete inputs[id];
+  scratch.inputIds.length = 0; actors.length = match.actors.length;
+  for (let index = 0; index < match.actors.length; index++) {
+    const a = match.actors[index];
+    let owned = scratch.rows.get(a);
+    if (!owned) { owned = { row: { pos: [0, 0, 0] }, input: { fire: false, throw: false, aim: null } }; scratch.rows.set(a, owned); }
     const id = actorId(a), received = a.remote && nm?.isHost ? rankedInputFor(nm.rankedInputs?.get(id),a,match,nm) : a._rankedInput;
     const age = a.remote && received ? api.G.time - received.at : 0;
     const cmd = !a.remote || Number.isFinite(age) && age >= 0 && age < .75 ? received : null;
-    if (cmd) inputs[id] = { fire: !!cmd.fire, throw: !!cmd.throw, aim: cmd.aim };
+    if (cmd) {
+      owned.input.fire = !!cmd.fire; owned.input.throw = !!cmd.throw; owned.input.aim = cmd.aim;
+      inputs[id] = owned.input; scratch.inputIds.push(id);
+    }
     if (a.remote && received) received.throw = false;
     if (!a.remote) { a.intent.throw = false; if (!nm || nm.isHost) a._rankedThrowPending = false; }
     const hostRemote = a.remote && nm?.isHost && nm.match === match;
     const pose = hostRemote ? nm.rankedPose?.get(id) : null;
     const admitted = pose?.actor === a && pose.match === match && pose.session === nm.s && pose.owner === a.owner && pose.life === a.net?.lastLife;
-    const objectivePos = hostRemote && admitted ? [...pose.last.pos] : a.pos.toArray();
+    const objectivePos = owned.row.pos;
+    if (hostRemote && admitted) { objectivePos[0] = pose.last.pos[0]; objectivePos[1] = pose.last.pos[1]; objectivePos[2] = pose.last.pos[2]; }
+    else { objectivePos[0] = a.pos.x; objectivePos[1] = a.pos.y; objectivePos[2] = a.pos.z; }
     const special = objectiveSpecialFor(a, a.remote ? cmd : null);
     const specialDeployed = special === 'storm' && (a.specialActive?.t > 0 || (a.remote && cmd?.specialDeployed === true));
-    // Support/form travel with the admitted pose, not the interpolated proxy.
     const grounded = hostRemote ? admitted && pose.last.grounded === true : a.grounded;
     const swimming = hostRemote && admitted ? pose.last.squid === true : a.form === 'squid';
-    return { special, specialDeployed, clamDrop: a.remote && cmd ? cmd.clamDrop : a._rankedClamDrop || 0, id, team: a.team, pos: objectivePos, alive: a.alive && !a.s3Disconnected && (!hostRemote || admitted), grounded,
-      remote: a.remote, onTower: !!a._rankedOnTower, weight: a.weapon.weight || 'middle', swimming, slot: a.slot };
-  });
-  return { actors, inputs, zoneCoverage: match.rankedWorld.zoneCoverage(), barrierHits: match.rankedBarrierHits.splice(0),
-    floorAt: (x, z, yMax) => match.rankedWorld.floorAt(x, z, yMax), fallDeathY: api.PLAYER?.fallDeathY,
-    blocked: (a, b) => match.rankedWorld.blocked(a, b) };
+    const row = owned.row;
+    row.special = special; row.specialDeployed = specialDeployed; row.clamDrop = a.remote && cmd ? cmd.clamDrop : a._rankedClamDrop || 0;
+    row.id = id; row.team = a.team; row.alive = a.alive && !a.s3Disconnected && (!hostRemote || admitted); row.grounded = grounded;
+    row.remote = a.remote; row.onTower = !!a._rankedOnTower; row.weight = a.weapon.weight || 'middle'; row.swimming = swimming; row.slot = a.slot;
+    actors[index] = row;
+  }
+  frame.zoneCoverage = match.mode === 'zones' ? match.rankedWorld.zoneCoverage() : match.rankedWorld._emptyZoneCoverage || match.rankedWorld.zoneCoverage();
+  frame.barrierHits = match.rankedBarrierHits.splice(0);
+  frame.fallDeathY = api.PLAYER?.fallDeathY;
+  return frame;
 }

@@ -49,10 +49,15 @@ export function adaptResourceSource(rel, code, replace) {
     patch('    U.uReflOn.value = 1;', '    this._reflPolicy = this._reflPendingPolicy; this._reflRenderedFrame = this._frameId;\n    U.uReflOn.value = 1;', 'commit successful reflection');
   }
   if (rel === 'src/core/shadowcache.js') {
+    code = "import { beginShadowVisibilityPass, shadowVisibleForPass } from '../../patches/local-quality/shadow-visibility-pass.mjs';\n" + code;
+    patch('  _checkMoved() {\n    let moved = false;', '  _checkMoved() {\n    const visibility = beginShadowVisibilityPass(this);\n    let moved = false;', 'pass-scoped ancestor visibility epoch');
+    patch('s.vis !== this._visible(o)', 's.vis !== shadowVisibleForPass(o, visibility)', 'shared ancestor visibility within one validation pass');
     code = "import { installDepthOnlyShadowCache, attachDepthCacheLifecycle } from '../../patches/local-quality/depth-cache.mjs';\n" + code;
     patch('      return self._render(this, lights, scene, camera);\n    };',
       '      return self._render(this, lights, scene, camera);\n    };\n    attachDepthCacheLifecycle(this, G);', 'depth lifecycle');
     patch('        this._ensureCache(w, hh);', '        this._ensureCache(w, hh, sh.map.depthTexture?.type);', 'match native depth format');
+    patch('        orig.call(sm, lights, scene, camera);\n        for (const o of dyn) o.castShadow = true;',
+      '        try { orig.call(sm, lights, scene, camera); }\n        finally { for (const o of dyn) o.castShadow = true; }', 'restore dynamic casters after failed first shadow pass');
     code += '\ninstallDepthOnlyShadowCache(ShadowCache);\n';
   }
   return code;

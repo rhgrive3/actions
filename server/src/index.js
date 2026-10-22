@@ -11,7 +11,7 @@ const MAX_FRAME_BYTES = 64 * 1024;
 const FRAME_RATE = 80, FRAME_BURST = 160;
 const BYTE_RATE = 256 * 1024, BYTE_BURST = 512 * 1024;
 const MAX_BACKLOG_BYTES = 512 * 1024;
-const encoder = new TextEncoder();
+import { utf8ByteLength } from '../../patches/network-replication/utf8-length.mjs';
 const decoder = new TextDecoder();
 
 function validRelayPayload(payload) {
@@ -99,9 +99,10 @@ export class RoomDurableObject {
   }
 
   _restoreHibernatedSockets() {
-    if (typeof this.state?.getWebSockets !== 'function') return;
+    if (this._hibernatedSocketsRestored || typeof this.state?.getWebSockets !== 'function') return;
     let sockets;
     try { sockets = this.state.getWebSockets(); } catch { return; }
+    this._hibernatedSocketsRestored = true;
     if (!sockets || !sockets.length) return;
     for (const ws of sockets) {
       if (this._memberBySocket(ws)) continue;
@@ -297,7 +298,7 @@ export class RoomDurableObject {
     if (!s || !this.members.has(id) || this.members.get(id).ws !== ws) return;
 
     // Enforce byte quotas before JSON.parse or forwarding to up to seven peers.
-    const size = s.length > MAX_FRAME_BYTES ? s.length : encoder.encode(s).byteLength;
+    const size = s.length > MAX_FRAME_BYTES ? s.length : utf8ByteLength(s);
     if (size > MAX_FRAME_BYTES) {
       try { ws.close(1009, 'Message too large'); } catch {}
       this._cleanupMember(id, ws);

@@ -4,7 +4,7 @@ import { PLAYER } from '../config.js';
 import { Hit } from './physics.js';
 import { capsuleEntry, sweepLevelSphere } from './inkCollision.js';
 import { INK_DT, INK_HZ, INK_LENGTH_SCALE, INK_PROFILES, INK_MODEL, INK_PROTOCOL,
-  advanceInkFrame, damageAt, paintShape, splashShape, splashPlan, seededUnit } from './inkFlight.js';
+  advanceInkFrame, damageAt, paintShape, splashShape, runtimeSplashPlan, seededUnit } from './inkFlight.js';
 const EPS = 1e-9;
 const Z = new THREE.Vector3(0, 0, 1);
 
@@ -28,7 +28,7 @@ export class InkFlightRuntime {
     const profile = typeof key === 'string' && Object.hasOwn(INK_PROFILES, key) ? INK_PROFILES[key] : null;
     if (!profile || !Number.isSafeInteger(sequence) || sequence < 0 || !Number.isFinite(seed) || seed < 0 || seed >= 1) return false;
     p.inkProfile = profile; p.inkKey = key; p.inkSequence = sequence;
-    p.inkPlan = splashPlan(profile, sequence); p.seed = seed;
+    p.inkPlan = runtimeSplashPlan(profile, sequence); p.seed = seed;
     p.inkFrame = 0; p.inkPhase = 0; p.inkCarry = 0; p.inkTravel = 0; p.inkSpawned = 0;
     p.inkBirth = this.time; p.inkPeak = p.pos.y;
     p.inkPlayerRadius = (locked && profile.collision.playerLocked || profile.collision.player) * INK_LENGTH_SCALE;

@@ -9,6 +9,7 @@
 import { SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
 import { mainInkFootprint } from './main-ink-footprints.mjs';
 const EPS = 1e-10;
+const nearestScratch=new WeakMap();
 
 export function slosherNearestPaintSpec(source, scale = 1) {
   const nearest = source?.NearestParam;
@@ -36,8 +37,22 @@ function seedFor(actor, sequence) {
 export function paintSlosherNearest(game, actor, source, scale = 1, sequence = 1, scratch = null) {
   if (!actor || actor.remote || actor.alive === false || actor.grounded === false ||
       !game?.paint || !game?.physics) return 0;
-  const spec = slosherNearestPaintSpec(source, scale);
   if (typeof actor.pos?.clone !== 'function') return 0;
+  let pool=null,lease=null;
+  if(!scratch){
+    pool=nearestScratch.get(actor);if(!pool){pool=[];nearestScratch.set(actor,pool);}
+    lease=pool.pop()||{};
+    const n=source?.NearestParam,p=n?.DrawSizeCollisionPaintParam,c=p?.CollisionParam;
+    if(lease.source!==source||lease.scale!==scale||lease.width!==p?.PaintWidthHalf||lease.depth!==p?.PaintDepthScale||
+       lease.player0!==c?.InitRadiusForPlayer||lease.player1!==c?.EndRadiusForPlayer){
+      lease.spec=slosherNearestPaintSpec(source,scale);lease.source=source;lease.scale=scale;
+      lease.width=p.PaintWidthHalf;lease.depth=p.PaintDepthScale;lease.player0=c.InitRadiusForPlayer;lease.player1=c.EndRadiusForPlayer;
+    }
+    lease.from||=actor.pos.clone();lease.down||=actor.pos.clone();lease.point||=actor.pos.clone();lease.dir||=actor.pos.clone();
+    lease.hit||={hit:false,point:actor.pos.clone(),normal:actor.pos.clone()};scratch=lease;
+  }
+  const spec=lease?.spec||slosherNearestPaintSpec(source,scale);
+  try{
 
   const from = scratch?.from ?? actor.pos.clone();
   const down = scratch?.down ?? actor.pos.clone();
@@ -66,4 +81,5 @@ export function paintSlosherNearest(game, actor, source, scale = 1, sequence = 1
   });
   if (Number.isFinite(area) && area) actor.addTurf?.(area);
   return Number.isFinite(area) ? area : 0;
+  }finally{if(lease&&pool.length<4)pool.push(lease);}
 }

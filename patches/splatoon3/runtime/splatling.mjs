@@ -5,6 +5,8 @@ const EPS = 1e-10;
 const clamp01 = value => Math.max(0, Math.min(1, value));
 const INSTALLED = Symbol.for('inkwave.s3.splatling.v1');
 const sampledSpeedViews = new WeakMap();
+const LOG_HALF=Math.log(.5);
+let lastSpeedMedian=NaN,lastSpeedExponent=0;
 
 function cancelSplatlingStream(runner, refund, inkMax) {
   const state = runner?.s3Spin, actor = runner?.a;
@@ -97,7 +99,8 @@ export function sampleSplatlingSpeed(base, rate, bias, uniform) {
   if (!Number.isFinite(rate) || rate <= 0) return base;
   const signed = clamp01(uniform) * 2 - 1;
   const median = Number.isFinite(bias) && bias > 0 && bias < 1 ? bias : .5;
-  const magnitude = Math.pow(Math.abs(signed), Math.log(median) / Math.log(.5));
+  if(median!==lastSpeedMedian){lastSpeedMedian=median;lastSpeedExponent=Math.log(median)/LOG_HALF;}
+  const magnitude = Math.pow(Math.abs(signed), lastSpeedExponent);
   return Math.max(0, base * (1 + Math.sign(signed) * rate * magnitude));
 }
 
@@ -144,9 +147,13 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
   if (Actor?.prototype._horizontal) {
     const horizontal = Actor.prototype._horizontal;
     Actor.prototype._horizontal = function (dt, squid, onEnemy, ...rest) {
-      const runner = this.weaponRunner, before = Math.hypot(this.vel.x, this.vel.z);
+      const runner = this.weaponRunner;
+      const family=this.weapon?.catalogRecord?.family;
+      const candidate=family==='splatling'||(!family&&this.weapon?.kind==='splatling')||runner?.charging;
+      const before = candidate ? Math.hypot(this.vel.x, this.vel.z) : 0;
       const value = horizontal.call(this, dt, squid, onEnemy, ...rest);
       if (runner?.s3SplatlingChargeDecel) runner.s3SplatlingChargeDecel = undefined;
+      if(!candidate)return value;
       const chargeDownRate = splatlingChargeDownRate(profile, this.weapon);
       if (!(dt > 0) || !(chargeDownRate > 0) || squid || onEnemy || !this.grounded ||
           !runner?.charging || runner.streaming || runner.dodge || (runner.lockT || 0) > 0) return value;

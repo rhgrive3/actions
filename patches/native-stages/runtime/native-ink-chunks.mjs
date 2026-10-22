@@ -10,7 +10,7 @@ export function partitionNativeInk(geometry,tileSize=16){
  if(geometry.index||p.count%3)throw new Error('Native ink partition requires complete non-indexed triangles');
  for(let i=0;i<p.count;i+=3){
   const x=(p.getX(i)+p.getX(i+1)+p.getX(i+2))/3,y=(p.getY(i)+p.getY(i+1)+p.getY(i+2))/3,z=(p.getZ(i)+p.getZ(i+1)+p.getZ(i+2))/3;
-  const key=[Math.floor(x/tileSize),Math.floor(y/tileSize),Math.floor(z/tileSize)].join(',');
+  const key=Math.floor(x/tileSize)+','+Math.floor(y/tileSize)+','+Math.floor(z/tileSize);
   let g=groups.get(key);if(!g){g={key,indices:[],bounds:new THREE.Box3()};groups.set(key,g);}
   for(let j=i;j<i+3;j++){g.indices.push(j);g.bounds.expandByPoint(point.set(p.getX(j),p.getY(j),p.getZ(j)));}
  }
@@ -77,6 +77,8 @@ export class NativeInkMesh extends THREE.Mesh {
     for (let tile = 0; tile < chunks.length; tile++) {
       const ix = chunks[tile].index;
       for (let j = 0; j < ix.count; j += 3) this._triangleTile[ix.getX(j) / 3] = tile;
+      // The per-tile index is construction-only; visibility uses triangleTile.
+      chunks[tile].setIndex(null);
     }
 
     // The source is non-indexed. Precompute ascending contiguous runs in
@@ -129,7 +131,7 @@ export class NativeInkMesh extends THREE.Mesh {
     if (paint.grid?.some?.(value => value !== 0)) {
       this._painted.fill(1);
       this._paintedCount = this._painted.length;
-      this._facePainted?.fill(1);
+      this._facePainted?.fill(1);this._paintedFaceWords?.fill(0xffffffff);
     }
     this._lastViewValid = false;
     this._visible.fill(255);
@@ -159,10 +161,11 @@ export class NativeInkMesh extends THREE.Mesh {
   }
 
   clearPainted() {
+    this._lastPaintBounds=null;
     if (!this._painted) return;
     this._painted.fill(0);
     this._paintedCount = 0;
-    this._facePainted?.fill(0);
+    this._facePainted?.fill(0);this._paintedFaceWords?.fill(0);
     this._faceDirty = true;
     this._lastViewValid = false;
     this._visible.fill(255);
@@ -186,12 +189,16 @@ export class NativeInkMesh extends THREE.Mesh {
     const hiY = o.y + Math.max(u.y * u0, u.y * u1) + Math.max(v.y * v0, v.y * v1) + 0.05;
     const loZ = o.z + Math.min(u.z * u0, u.z * u1) + Math.min(v.z * v0, v.z * v1) - 0.05;
     const hiZ = o.z + Math.max(u.z * u0, u.z * u1) + Math.max(v.z * v0, v.z * v1) + 0.05;
-    if (![loX, hiX, loY, hiY, loZ, hiZ].every(Number.isFinite)) {
+    if (!(Number.isFinite(loX)&&Number.isFinite(hiX)&&Number.isFinite(loY)&&Number.isFinite(hiY)&&Number.isFinite(loZ)&&Number.isFinite(hiZ))) {
       this._painted.fill(1);
       this._paintedCount = this._painted.length;
       this._lastViewValid = false;
       return;
     }
+    const cacheable=!!this._faceIndex?.has(face),memo=this._lastPaintBounds;
+    if(cacheable&&memo&&memo.geometry===this.geometry&&memo.chunks===this.chunks&&memo.binding===this._paintBinding&&
+        memo.loX===loX&&memo.hiX===hiX&&memo.loY===loY&&memo.hiY===hiY&&memo.loZ===loZ&&memo.hiZ===hiZ)return;
+    if(cacheable){const next=this._lastPaintBounds ||= {};next.geometry=this.geometry;next.chunks=this.chunks;next.binding=this._paintBinding;next.loX=loX;next.hiX=hiX;next.loY=loY;next.hiY=hiY;next.loZ=loZ;next.hiZ=hiZ;}
     let changed = false, intersectsSource = false;
     const list = this._faceChunks(face), count = list ? list.length : this.chunks.length;
     for (let k = 0; k < count; k++) {
@@ -231,7 +238,7 @@ export class NativeInkMesh extends THREE.Mesh {
     const hiY = o.y + Math.max(u.y * u0, u.y * u1) + Math.max(v.y * v0, v.y * v1) + 0.05;
     const loZ = o.z + Math.min(u.z * u0, u.z * u1) + Math.min(v.z * v0, v.z * v1) - 0.05;
     const hiZ = o.z + Math.max(u.z * u0, u.z * u1) + Math.max(v.z * v0, v.z * v1) + 0.05;
-    if (!(u0 < u1 && v0 < v1) || ![loX, hiX, loY, hiY, loZ, hiZ].every(Number.isFinite)) return null;
+    if (!(u0 < u1 && v0 < v1) || !(Number.isFinite(loX)&&Number.isFinite(hiX)&&Number.isFinite(loY)&&Number.isFinite(hiY)&&Number.isFinite(loZ)&&Number.isFinite(hiZ))) return null;
     const lists = this._faceChunkLists || (this._faceChunkLists = new Map());
     const e = lists.get(face);
     if (e && e.chunks === this.chunks && e.loX === loX && e.hiX === hiX && e.loY === loY && e.hiY === hiY && e.loZ === loZ && e.hiZ === hiZ) return e.list;
@@ -250,7 +257,7 @@ export class NativeInkMesh extends THREE.Mesh {
    * has reached has no ink texels, so its triangles need no draw. Any mismatch
    * leaves this map off and keeps the tile-only selection. */
   _bindFaces(paint) {
-    this._faceIndex = this._faceStart = this._facePainted = null;
+    this._faceIndex = this._faceStart = this._facePainted = this._paintedFaceWords = null;
     this._faceDirty = true;
     const triangles = this._triangleTile.length, index = new Map(), starts = [0];
     for (const f of paint.paintFaces || []) {
@@ -263,6 +270,7 @@ export class NativeInkMesh extends THREE.Mesh {
     this._faceIndex = index;
     this._faceStart = Uint32Array.from(starts);
     this._facePainted = new Uint8Array(index.size);
+    this._paintedFaceWords = new Uint32Array(Math.ceil(index.size/32));
   }
 
   _markFace(face) {
@@ -271,15 +279,16 @@ export class NativeInkMesh extends THREE.Mesh {
     const id = this._faceIndex.get(face);
     if (id === undefined) {
       // An atlas write outside the bound chart list: fail open to tiles.
-      this._faceIndex = this._faceStart = this._facePainted = null;
+      this._faceIndex = this._faceStart = this._facePainted = this._paintedFaceWords = null;
     } else if (painted[id]) return;
-    else painted[id] = 1;
+    else {painted[id] = 1;this._paintedFaceWords[id>>>5]|=1<<(id&31);}
     this._faceDirty = true;
     this._lastViewValid = false;
   }
 
   _detachPaint() {
-    this._faceIndex = this._faceStart = this._facePainted = null;
+    this._lastPaintBounds=null;
+    this._faceIndex = this._faceStart = this._facePainted = this._paintedFaceWords = null;
     const binding = this._paintBinding;
     if (!binding) return;
     if (binding.paint._pushQuad === binding.wrappedPush) binding.paint._pushQuad = binding.push;
@@ -335,12 +344,16 @@ export class NativeInkMesh extends THREE.Mesh {
       // Painted charts in visible tiles, still in source triangle order.
       const starts = this._faceStart, tileOf = this._triangleTile, visible = this._visible;
       let count = 0;
-      for (let face = 0; face < faces.length; face++) {
-        if (!faces[face]) continue;
+      for(let wordIndex=0;wordIndex<this._paintedFaceWords.length;wordIndex++){
+        let word=this._paintedFaceWords[wordIndex];
+        while(word){
+        const bit=31-Math.clz32(word&-word),face=wordIndex*32+bit;word=(word&(word-1))>>>0;
+        if(face>=faces.length)continue;
         for (let tri = starts[face], end = starts[face + 1]; tri < end; tri++) {
           if (!visible[tileOf[tri]]) continue;
           const i = tri * 3;
           index[count++] = i; index[count++] = i + 1; index[count++] = i + 2;
+        }
         }
       }
       this.geometry.setDrawRange(0, count);

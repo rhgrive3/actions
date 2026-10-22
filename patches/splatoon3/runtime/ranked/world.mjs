@@ -7,11 +7,12 @@ import { createRainmakerModel, createRainmakerPresentation } from './rainmaker-m
 const TEAM_INK_FALLBACK = [0x35c9df, 0xf35bce];
 const NEUTRAL = 0x9ceff2;
 const EPSILON = 1e-6;
+const INVALID_BEARING = [0, 0, 1];
 
 const finite = Number.isFinite;
 const validTeam = team => team === 0 || team === 1;
-const vec = value => Array.isArray(value) && value.length >= 3 && value.slice(0, 3).every(finite)
-  ? value.slice(0, 3) : null;
+const vec = value => Array.isArray(value) && value.length >= 3 && finite(value[0]) && finite(value[1]) && finite(value[2])
+  ? value : null;
 const idKey = value => value === null || value === undefined ? '' : String(value);
 
 function setVec(target, value) {
@@ -22,33 +23,17 @@ function setVec(target, value) {
   return target;
 }
 
-function segmentAt(path, progress) {
-  if (!Array.isArray(path) || path.length < 2) return [0, 0, 1];
-  const p = Math.max(0, Math.min(1, finite(progress) ? progress : 0.5));
-  let total = 0;
-  const lengths = [];
-  for (let i = 1; i < path.length; i++) {
-    const a = path[i - 1], b = path[i];
-    const length = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
-    lengths.push(length); total += length;
-  }
-  let at = total * p;
-  for (let i = 0; i < lengths.length; i++) {
-    if (at <= lengths[i] || i === lengths.length - 1) {
-      const a = path[i], b = path[i + 1];
-      const dx = b[0] - a[0], dz = b[2] - a[2], d = Math.hypot(dx, dz);
-      return d > EPSILON ? [dx / d, dz / d] : [0, 1];
-    }
-    at -= lengths[i];
-  }
-  return [0, 1];
-}
-
 function floorCellCenter(face, i, j, out) {
   return out.copy(face.origin)
     .addScaledVector(face.u, (i + 0.5) * face.cu)
     .addScaledVector(face.v, (j + 0.5) * face.cv)
     .addScaledVector(face.n, 0.06);
+}
+
+// Debug inspection retains `center` without one persistent Vector3 per cell.
+class RankedZoneCell {
+  constructor(face, cell, area, i, j) { this.face = face; this.cell = cell; this.area = area; this.i = i; this.j = j; }
+  get center() { return floorCellCenter(this.face, this.i, this.j, this.face.origin.clone()); }
 }
 
 function updateBlockBounds(block) {
@@ -103,15 +88,24 @@ export class RankedWorld {
     this._towerProgress = this._centerProgress();
     this._towerPath = stage?.tower?.path || [];
     this._towerLengths = [0];
+    this._towerSegmentLengths = [];
     for (let i = 1; i < this._towerPath.length; i++) {
       const a = this._towerPath[i - 1], b = this._towerPath[i];
-      this._towerLengths.push(this._towerLengths[i - 1] + Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]));
+      const length = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+      this._towerSegmentLengths.push(length); this._towerLengths.push(this._towerLengths[i - 1] + length);
     }
     this._towerPathTotal = this._towerLengths.at(-1) || 0;
+    this._towerBearings = [];
+    for (let i = 1; i < this._towerPath.length; i++) {
+      const a = this._towerPath[i - 1], b = this._towerPath[i], dx = b[0] - a[0], dz = b[2] - a[2], d = Math.hypot(dx, dz);
+      this._towerBearings.push(d > EPSILON ? [dx / d, dz / d] : [0, 1]);
+    }
     this._towerHalfWidth = Math.max(0.8, Math.min(1.4, Number(stage?.tower?.halfSize) || 1.4));
     this._towerHalfLength = this._towerHalfWidth;
     this._towerDeckTop = 0;
     this._zoneMaterials = [];
+    this._zoneColorValues = [];
+    this._emptyZoneCoverage = Object.freeze((stage?.zones || []).map(() => Object.freeze([0, 0])));
     this._zoneCells = [];
     this._clamMarkers = new Map();
     this._inventoryMarkers = new Map();
@@ -602,27 +596,38 @@ export class RankedWorld {
     const riders = carry ? this._collectRiderOffsets() : [];
     const target = this._towerPosition(engine);
     setVec(this._position, target);
-    const [dx, dz] = segmentAt(this.stage?.tower?.path || [], engine?.rule?.state?.progress ?? this._towerProgress);
+    const progress = engine?.rule?.state?.progress ?? this._towerProgress;
+    let at = this._towerPathTotal * Math.max(0, Math.min(1, finite(progress) ? progress : 0.5)), bearing = INVALID_BEARING;
+    for (let i = 0; i < this._towerBearings.length; i++) {
+      const length = this._towerSegmentLengths[i];
+      if (at <= length || i === this._towerBearings.length - 1) { bearing = this._towerBearings[i]; break; }
+      at -= length;
+    }
+    const [dx, dz] = bearing;
     this._forward.set(dx, 0, dz).normalize();
     this._side.set(this._forward.z, 0, -this._forward.x).normalize();
     const yaw = Math.atan2(dx, dz);
+    const transformChanged = !this._towerTransformReady || !this._position.equals(this._lastPosition) || yaw !== this._towerYaw;
     this.towerBlock.center.set(this._position.x, this._position.y - 0.12, this._position.z);
     this.towerBlock.axes[0].set(Math.cos(yaw), 0, -Math.sin(yaw));
     this.towerBlock.axes[1].set(0, 1, 0);
     this.towerBlock.axes[2].set(Math.sin(yaw), 0, Math.cos(yaw));
-    updateBlockBounds(this.towerBlock);
+    if (transformChanged) updateBlockBounds(this.towerBlock);
     if (this.towerPoleBlock) {
       this.towerPoleBlock.center.set(this._position.x, this._position.y + 0.945, this._position.z);
       this.towerPoleBlock.axes[0].copy(this.towerBlock.axes[0]);
       this.towerPoleBlock.axes[1].copy(this.towerBlock.axes[1]);
       this.towerPoleBlock.axes[2].copy(this.towerBlock.axes[2]);
-      updateBlockBounds(this.towerPoleBlock);
+      if (transformChanged) updateBlockBounds(this.towerPoleBlock);
     }
     this._towerDeckTop = this._position.y;
-    this.tower.position.copy(this._position);
-    this.tower.rotation.y = yaw;
-    this.tower.updateMatrixWorld(true);
-    this._updateTowerPaintGeometry();
+    if (transformChanged) {
+      this.tower.position.copy(this._position);
+      this.tower.rotation.y = yaw;
+      this.tower.updateMatrixWorld(true);
+      this._updateTowerPaintGeometry();
+      this._towerTransformReady = true; this._towerYaw = yaw;
+    }
     for (const rider of riders) {
       const { actor, x, y, z } = rider;
       actor.pos.copy(this.towerBlock.center)
@@ -659,7 +664,8 @@ export class RankedWorld {
     const zones = state?.zones;
     for (let i = 0; i < this._zoneMaterials.length; i++) {
       const team = Array.isArray(zones) ? zones[i]?.team : -1;
-      this._zoneMaterials[i].color.setHex(validTeam(team) ? this.teamInk[team] : NEUTRAL);
+      const color = validTeam(team) ? this.teamInk[team] : NEUTRAL;
+      if (this._zoneColorValues[i] !== color) { this._zoneMaterials[i].color.setHex(color); this._zoneColorValues[i] = color; }
     }
   }
 
@@ -674,8 +680,8 @@ export class RankedWorld {
     if (this.mode !== 'rainmaker' || !this.rainmaker) return;
     let position = vec(rainmaker?.pos) || this.stage?.rainmaker?.center || [0, 0, 0];
     const carrier = this._findActor(rainmaker?.carrier);
-    if (carrier?.pos && validTeam(carrier.team)) position = [carrier.pos.x, carrier.pos.y, carrier.pos.z];
-    this.rainmaker.position.set(position[0], position[1], position[2]);
+    if (carrier?.pos && validTeam(carrier.team)) this.rainmaker.position.copy(carrier.pos);
+    else this.rainmaker.position.set(position[0], position[1], position[2]);
     if (carrier) this.rainmaker.rotation.y = 0;
     else this.rainmaker.rotation.y += 0.018;
     const barrier = rainmaker?.barrier || {};
@@ -690,7 +696,7 @@ export class RankedWorld {
     this.rainmakerShield.material.opacity = 0.12 + 0.14 * pressure;
     this.rainmakerCarrier.visible = !!carrier;
     if (carrier?.pos) this.rainmakerCarrier.position.set(carrier.pos.x, carrier.pos.y + 2.45, carrier.pos.z);
-    else this.rainmakerCarrier.position.copy(this.rainmaker.position).add(new this.THREE.Vector3(0, 2.2, 0));
+    else { this.rainmakerCarrier.position.copy(this.rainmaker.position); this.rainmakerCarrier.position.y += 2.2; }
     const charge = rainmaker?.charge?.value || 0;
     this.rainmakerPresentation.update(carrier, charge);
     const checkpoints = rainmaker?.checkpoint?.passed;
@@ -732,6 +738,7 @@ export class RankedWorld {
     const power = clam.kind === 'power';
     const resources = power ? this.powerClamResources : this.smallClamResources;
     if (marker) {
+      if (marker.kind === clam.kind) return marker;
       marker.mesh.geometry = resources.geometry; marker.mesh.material = resources.material;
       marker.kind = clam.kind;
       marker.mesh.name = power ? `power-clam-${key}` : `clam-${key}`;
@@ -832,15 +839,18 @@ export class RankedWorld {
           if (finite(zone.heightTolerance) && Math.abs(p.y - cy) > Math.max(0, zone.heightTolerance) + EPSILON) continue;
           if (p.x < cx - width / 2 - EPSILON || p.x > cx + width / 2 + EPSILON
             || p.z < cz - depth / 2 - EPSILON || p.z > cz + depth / 2 + EPSILON) continue;
-          this._zoneCells[index].push({ face, cell, area: face.cu * face.cv, center: p.clone() });
+          this._zoneCells[index].push(new RankedZoneCell(face, cell, face.cu * face.cv, i, j));
         }
       }
     }
   }
 
   zoneCoverage() {
-    const zones = this.stage?.zones || [];
-    return zones.map((_, index) => {
+    const zones = this.stage?.zones || [], paint = this.paint, grid = paint?.grid, version = paint?.version;
+    const cached = this._zoneCoverageCache;
+    if (grid && finite(version) && cached?.paint === paint && cached.grid === grid && cached.version === version
+      && cached.cells === this._zoneCells && cached.zones === zones && cached.value.length === zones.length) return cached.value;
+    const value = zones.map((_, index) => {
       const area = [0, 0, 0];
       for (const entry of this._zoneCells[index] || []) {
         area[0] += entry.area;
@@ -851,23 +861,34 @@ export class RankedWorld {
       if (area[0] <= 0) return [0, 0];
       return [area[1] / area[0], area[2] / area[0]];
     });
+    if (grid && finite(version)) {
+      // Production clear, stamped paint and owner replay all advance version.
+      // A replaced grid/index invalidates even if its numeric version repeats.
+      for (const pair of value) Object.freeze(pair); Object.freeze(value);
+      this._zoneCoverageCache = { paint, grid, version, cells: this._zoneCells, zones, value };
+    }
+    return value;
   }
 
   captureZone(index, team) {
     if (!validTeam(team) || typeof this.paint?.splat !== 'function') return 0;
-    let claimed = 0;
-    for (const entry of this._zoneCells[index] || []) {
-      const { face, cell, center } = entry;
-      // Use the native splat path (CPU grid, ink atlas, and online splat
-      // recording) restricted to each live turf face. Each exposed cell gets a
-      // centered stamp, so capture never reaches walls or a hidden floor.
-      const radius = Math.max(0.08, Math.min(0.42, Math.hypot(face.cu, face.cv) * 0.72));
-      claimed += this.paint.splat(center, radius, team, {
-        seed: ((index + 1) * 0x9e3779b1 + (cell + 1) * 0x85ebca6b) >>> 0,
-        kind: 'blast', instant: true, face: face.id,
-      }) || 0;
-    }
-    return claimed;
+    const capture = () => {
+      let claimed = 0;
+      for (const entry of this._zoneCells[index] || []) {
+        const { face, cell, i, j } = entry;
+        const center = floorCellCenter(face, i, j, this._zoneCapturePoint || (this._zoneCapturePoint = new this.THREE.Vector3()));
+        // Use the native splat path (CPU grid, ink atlas, and online splat
+        // recording) restricted to each live turf face. Each exposed cell gets a
+        // centered stamp, so capture never reaches walls or a hidden floor.
+        const radius = Math.max(0.08, Math.min(0.42, Math.hypot(face.cu, face.cv) * 0.72));
+        claimed += this.paint.splat(center, radius, team, {
+          seed: ((index + 1) * 0x9e3779b1 + (cell + 1) * 0x85ebca6b) >>> 0,
+          kind: 'blast', instant: true, face: face.id,
+        }) || 0;
+      }
+      return claimed;
+    };
+    return typeof this.paint.withSplatBatch === 'function' ? this.paint.withSplatBatch(capture) : capture();
   }
 
   floorAt(x, z, yMax) {
@@ -922,12 +943,15 @@ export class RankedWorld {
     }
     const level = this.level;
     const removal = [[this.towerPoleBlockId, this.towerPoleBlock], [this.towerBlockId, this.towerBlock]];
+    if (level) {
+      const pole = this.towerPoleBlock ? this.towerPoleBlockId : -1, tower = this.towerBlock ? this.towerBlockId : -1;
+      for (const bucket of level.hash || []) {
+        if (Number.isInteger(pole) && pole >= 0) { const at = bucket.indexOf(pole); if (at >= 0) bucket.splice(at, 1); }
+        if (Number.isInteger(tower) && tower >= 0) { const at = bucket.indexOf(tower); if (at >= 0) bucket.splice(at, 1); }
+      }
+    }
     if (level) for (const [id, block] of removal) {
       if (!block || !Number.isInteger(id) || id < 0) continue;
-      for (const bucket of level.hash || []) {
-        const at = bucket.indexOf(id);
-        if (at >= 0) bucket.splice(at, 1);
-      }
       if (level.blocks?.[id] === block && id === level.blocks.length - 1) {
         level.blocks.pop();
       } else {

@@ -21,6 +21,7 @@ export class RankedEngine {
     this.overtime = false; this.overtimeElapsed = 0; this.overtimeTeam = -1;
     this.winner = null; this.reason = null; this.knockout = false;
     this.events = []; this.revision = 0; this.frame = { actors: [], inputs: {} };
+    this._rankedCountSetter = RankedEngine.prototype.setCount; this._rankedFinish = RankedEngine.prototype.finish;
     this.rule = new RULES[mode](this, stage);
   }
   setCount(team, value) {
@@ -70,7 +71,7 @@ export class RankedEngine {
     this.frame = frame;
     // Native clock calls are 60Hz. Splitting arbitrary callers preserves timer
     // and boundary ordering and makes regression tests exercise the same rules.
-    let left = dt;
+    let left = dt, disarmedFrame = null;
     while (left > 1e-10 && this.winner === null) {
       const step = Math.min(left, 1 / 60, this.overtime ? Infinity : Math.max(this.time, 1e-10));
       this.elapsed += step;
@@ -89,7 +90,7 @@ export class RankedEngine {
       }
       this.revision++; left -= step;
       // Edges/hits describe this interval, not every catch-up subinterval.
-      if (left > 1e-10) frame = { ...frame, barrierHits: [], inputs: Object.fromEntries(Object.entries(frame.inputs || {}).map(([id, input]) => [id, { ...input, throw: false }])) };
+      if (left > 1e-10) frame = disarmedFrame || (disarmedFrame = { ...frame, barrierHits: [], inputs: Object.fromEntries(Object.entries(frame.inputs || {}).map(([id, input]) => [id, { ...input, throw: false }])) });
     }
   }
   snapshot() {
@@ -106,8 +107,8 @@ export class RankedEngine {
     if (this.mode === 'zones' && s.rule.zones.length !== this.stage.zones.length) return false;
     // Restore into a candidate first: a malformed rule must not partially
     // replace the clock/result or leave the next host with unusable state.
-    const candidate = new RULES[this.mode](this, this.stage);
-    try { candidate.restore(structuredClone(s.rule)); } catch { return false; }
+    const candidate = new RULES[this.mode](this, this.stage, { seedInitial: false });
+    try { candidate.restore(s.rule, { returnSnapshot: false }); } catch { return false; }
     for (const k of ['revision', 'time', 'elapsed', 'leader', 'overtime', 'overtimeTeam', 'overtimeElapsed', 'winner', 'reason', 'knockout']) this[k] = s[k];
     this.counts = [...s.counts]; this.penalties = [...s.penalties];
     this.rule = candidate; this.events.length = 0;

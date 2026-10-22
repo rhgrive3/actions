@@ -85,15 +85,15 @@ export async function buildNativeWorld(game,map,current){
   inkMesh=new NativeInkMesh(inkGeometry,inkMat).bindPaint(paint);
   status.update('navigation');await new Promise(resolve=>requestAnimationFrame(resolve));
   if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
-  const navStart=performance.now(),nav=new NavGraph(level,physics);
+  const navStart=performance.now(),nav=await NavGraph.createNative(level,physics,{signal,current});
   // Minimap preparation must use this detached world's navigation, not G.nav
   // which still belongs to the current world until publication below.
   level.nativeNav=nav;
-  if(!current())throw new DOMException('Aborted','AbortError');
+  if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
   // The minimap's global CURRENT is not touched until final commit.
   const minimap=new Minimap(level,paint,Math.min(3,512/Math.max(level.bounds.maxX-level.bounds.minX,level.bounds.maxZ-level.bounds.minZ)),{deferActivation:true});
   const wake=new SwimWake();
-  const nextWorld={display,level,textureProfile:{data,quality,caps:textureCaps},disposed:false,metrics:{loadMilliseconds:performance.now()-start,navMilliseconds:performance.now()-navStart,shaderWarmMilliseconds,vertices:data.manifest.geometry.vertices,triangles:data.manifest.geometry.triangles,faces:level.faces.length,gridBytes:paint.grid.byteLength,atlas:paint.size,ppm:paint.ppm,textureCount:textures.size,textureLimit,quality,version1130Verified:false},
+  const nextWorld={display,level,textureProfile:{data,quality,caps:textureCaps},disposed:false,metrics:{loadMilliseconds:performance.now()-start,navMilliseconds:performance.now()-navStart,navBuild:nav.nativeBuildMetrics,shaderWarmMilliseconds,vertices:data.manifest.geometry.vertices,triangles:data.manifest.geometry.triangles,faces:level.faces.length,gridBytes:paint.grid.byteLength,atlas:paint.size,ppm:paint.ppm,textureCount:textures.size,textureLimit,quality,version1130Verified:false},
    dispose(){
     if(this.disposed)return;
     this.disposed=true;this.textureProfile=null;

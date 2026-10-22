@@ -10,6 +10,7 @@ export function canThrowClam(actor) {
 }
 export function canCollectRainmaker(actor) { return !NO_HOCO_PICKUP.has(actor?.special); }
 const EPS = 1e-8;
+const EMPTY_BASKET_TRANSITIONS = Object.freeze([]);
 // Wiki says a little over one second; 1.2s is local timing pending hardware.
 export const CLAM_BARRIER_BREAK_SECONDS = 1.2;
 const MAX_SMALL_CLAMS = 7;
@@ -102,11 +103,11 @@ function makeState(stage) {
  * effects are emitted as bounded engine events for the runtime to consume.
  */
 export class ClamsRule {
-  constructor(engine, stage = {}) {
+  constructor(engine, stage = {}, { seedInitial = true } = {}) {
     this.engine = engine;
     this.stage = stage;
     this.state = makeState(stage);
-    this._seedInitialClams();
+    if (seedInitial) this._seedInitialClams();
   }
 
   _event(kind, data = {}) {
@@ -190,13 +191,21 @@ export class ClamsRule {
   }
 
   _hasPower(team) {
-    if (Object.values(this.state.inventories).some(inv => inv?.team === team && inv.power)) return true;
+    if (this._teamHasHeldPower(team)) return true;
     return this.state.clams.some(clam => clam.kind === 'power' && clam.team === team && clam.expiresIn !== 0);
   }
 
-  _teamHasHeldPower(team) {
-    return Object.values(this.state.inventories).some(inv => inv?.team === team && inv.power);
+  _heldPowerMask() {
+    let mask = 0;
+    for (const key in this.state.inventories) if (Object.hasOwn(this.state.inventories, key)) {
+      const inv = this.state.inventories[key];
+      if (inv?.power && validTeam(inv.team)) mask |= 1 << inv.team;
+      if (mask === 3) break;
+    }
+    return mask;
   }
+
+  _teamHasHeldPower(team) { return !!(this._heldPowerMask() & (1 << team)); }
 
   _spawnGroup(frame) {
     const points = this._spawnPoints();
@@ -258,6 +267,7 @@ export class ClamsRule {
   }
 
   _actorList(frame) {
+    if (frame === this._tickActorFrame) return this._tickActors;
     return Array.isArray(frame?.actors) ? frame.actors.filter(actor => actor && actor.id != null && validTeam(actor.team) && Array.isArray(actor.pos)) : [];
   }
 
@@ -376,12 +386,16 @@ export class ClamsRule {
 
   _processPickups(frame) {
     const actors = this._actorList(frame).filter(actor => actor.alive !== false && canCollectClam(actor));
-    for (const clam of [...this.state.clams]) {
-      if (!clam.grounded) continue;
-      for (const actor of actors) {
-        if (this._pickup(clam, actor, frame)) break;
+    const depth = this._pickupDepth || 0, snapshots = this._pickupSnapshots || (this._pickupSnapshots = []);
+    const field = snapshots[depth] || (snapshots[depth] = []);
+    this._pickupDepth = depth + 1; field.length = this.state.clams.length;
+    for (let i = 0; i < field.length; i++) field[i] = this.state.clams[i];
+    try {
+      for (const clam of field) {
+        if (!clam.grounded) continue;
+        for (const actor of actors) if (this._pickup(clam, actor, frame)) break;
       }
-    }
+    } finally { field.length = 0; this._pickupDepth = depth; }
   }
 
   _throw(actor, input, frame) {
@@ -574,27 +588,26 @@ export class ClamsRule {
   }
 
   _advanceBasketTimers(dt, frame) {
-    const ready = [];
-    const newlyOpened = new Map();
+    let ready = null, newlyOpened = null;
     for (const basket of this.state.baskets) if (basket.pendingBreak) {
       basket.pendingBreak.remaining -= dt;
-      if (basket.pendingBreak.remaining <= EPS) ready.push(basket);
+      if (basket.pendingBreak.remaining <= EPS) (ready || (ready = [])).push(basket);
     }
-    ready.sort((a, b) => a.pendingBreak.remaining - b.pendingBreak.remaining || a.pendingBreak.sequence - b.pendingBreak.sequence);
-    for (const basket of ready) {
+    ready?.sort((a, b) => a.pendingBreak.remaining - b.pendingBreak.remaining || a.pendingBreak.sequence - b.pendingBreak.sequence);
+    for (const basket of ready || EMPTY_BASKET_TRANSITIONS) {
       const drill = basket.pendingBreak; basket.pendingBreak = null;
       if (basket.tucked || basket.cooldown > 0) {
         const floor = this._floorAt(frame, drill.pos[0], drill.pos[2], drill.pos[1] + 0.25);
         this._newClam('power', basket.team, [drill.pos[0], floor ?? drill.pos[1], drill.pos[2]]);
       } else {
         this._openBasket(basket.team, drill.pos);
-        newlyOpened.set(basket.team, Math.max(0, -drill.remaining));
+        (newlyOpened || (newlyOpened = new Map())).set(basket.team, Math.max(0, -drill.remaining));
       }
       if (this.engine?.winner != null) return;
     }
     for (const basket of this.state.baskets) {
       if (basket.barrierOpen) {
-        basket.openTimer = Math.max(0, basket.openTimer - (newlyOpened.get(basket.team) ?? dt));
+        basket.openTimer = Math.max(0, basket.openTimer - (newlyOpened?.get(basket.team) ?? dt));
         if (basket.openTimer <= EPS) this._closeBasket(basket.team, frame);
       } else if (basket.cooldown > 0) {
         basket.cooldown = Math.max(0, basket.cooldown - dt);
@@ -607,8 +620,8 @@ export class ClamsRule {
     }
   }
 
-  _collectFromProjectile(clam, actor, frame, contact = clam.pos) {
-    const bodyCenter = add(vec(actor.pos), [0, 0.9, 0]);
+  _collectFromProjectile(clam, actor, frame, contact = clam.pos, bodyCenter = null) {
+    if (!bodyCenter) { bodyCenter = vec(actor.pos); bodyCenter[1] += 0.9; }
     if (!actor.alive || !canCollectClam(actor) || this._distanceSq(bodyCenter, contact) > 0.72 ** 2) return false;
     if (clam.kind === 'power' && clam.team !== actor.team) return false;
     const inv = this._inventory(actor.id, actor.team);
@@ -640,7 +653,9 @@ export class ClamsRule {
     while (remaining > EPS && steps++ < 300) {
       const step = Math.min(remaining, 1 / 30);
       remaining -= step;
-      for (const clam of [...this.state.clams]) {
+      const field = this.state.clams, fieldLength = field.length;
+    for (let fieldIndex = 0; fieldIndex < fieldLength; fieldIndex++) {
+      const clam = field[fieldIndex];
         clam.age += step;
         if (clam.grounded) continue;
         const previous = [...clam.pos];
@@ -662,8 +677,9 @@ export class ClamsRule {
           if (actor.alive === false || actor.id === clam.thrower) continue;
           // Use the swept contact for admission too. Rechecking the old birth
           // point loses grazing catches even at the ordinary 60Hz throw speed.
-          const contact = this._segmentClosestPoint(add(vec(actor.pos), [0, 0.9, 0]), previous, next);
-          if (this._collectFromProjectile(clam, actor, frame, contact)) {
+          const bodyCenter = vec(actor.pos); bodyCenter[1] += 0.9;
+          const contact = this._segmentClosestPoint(bodyCenter, previous, next);
+          if (this._collectFromProjectile(clam, actor, frame, contact, bodyCenter)) {
             this.state.clams = this.state.clams.filter(item => item.id !== clam.id);
             actorHit = true;
             break;
@@ -700,7 +716,9 @@ export class ClamsRule {
 
   _expireAndAge(dt) {
     if (!dt) return;
-    for (const clam of [...this.state.clams]) {
+    const field = this.state.clams, fieldLength = field.length;
+    for (let fieldIndex = 0; fieldIndex < fieldLength; fieldIndex++) {
+      const clam = field[fieldIndex];
       if (clam.persistent || !Number.isFinite(clam.expiresIn)) continue;
       clam.expiresIn -= dt;
       if (clam.expiresIn <= EPS) {
@@ -799,24 +817,28 @@ export class ClamsRule {
         return;
       }
     }
-    if (this._hasPower(overtime.losingTeam)) overtime.requiresPowerOpportunity = true;
-    if (overtime.waitingForOpen && overtime.requiresPowerOpportunity && !this._hasPower(overtime.losingTeam) && !losingBasket.pendingBreak) {
+    const hasPower = this._hasPower(overtime.losingTeam);
+    if (hasPower) overtime.requiresPowerOpportunity = true;
+    if (overtime.waitingForOpen && overtime.requiresPowerOpportunity && !hasPower && !losingBasket.pendingBreak) {
       this._finish(overtime.winningTeam, 'clam-overtime-power-clams-lost');
     }
   }
 
   _passiveSpecial(dt) {
     if (typeof this.engine?.special !== 'function' || this.state.baskets.some(basket => basket.barrierOpen)) return;
-    const held = [this._teamHasHeldPower(0), this._teamHasHeldPower(1)];
+    const mask = this._heldPowerMask(), held0 = !!(mask & 1), held1 = !!(mask & 2);
     const losing = this._leadingTeam();
-    if (held[0] !== held[1]) {
-      this.engine.special(held[0] ? 0 : 1, 3 * dt);
+    if (held0 !== held1) {
+      this.engine.special(held0 ? 0 : 1, 3 * dt);
     } else if (validTeam(losing)) this.engine.special(1 - losing, 3 * dt);
   }
 
   _update(dt, frame = {}) {
     dt = validDt(dt);
     if (this.engine?.winner != null) return;
+    const previousFrame = this._tickActorFrame, previousActors = this._tickActors;
+    this._tickActors = this._actorList(frame); this._tickActorFrame = frame;
+    try {
     this._expireAndAge(dt);
     this._registerActors(frame);
     this._advanceBasketTimers(dt, frame);
@@ -828,6 +850,7 @@ export class ClamsRule {
     this._processThrows(frame);
     this._updateOvertimeState(dt);
     this._passiveSpecial(dt);
+    } finally { this._tickActorFrame = previousFrame; this._tickActors = previousActors; }
   }
 
   update(dt, frame) {
@@ -846,7 +869,7 @@ export class ClamsRule {
     return clone(this.state);
   }
 
-  restore(state) {
+  restore(state, { returnSnapshot = true } = {}) {
     this.state = clone(state);
     if (!Array.isArray(this.state.clams)) this.state.clams = [];
     if (!this.state.inventories || typeof this.state.inventories !== 'object') this.state.inventories = {};
@@ -858,7 +881,7 @@ export class ClamsRule {
     if (!this.state.overtime || typeof this.state.overtime !== 'object') this.state.overtime = makeState(this.stage).overtime;
     if (!Number.isFinite(this.state.spawnTimer)) this.state.spawnTimer = NORMAL_SPAWN_SECONDS;
     if (!Number.isSafeInteger(this.state.nextClamId)) this.state.nextClamId = this.state.clams.length + 1;
-    return this.snapshot();
+    return returnSnapshot ? this.snapshot() : this.state;
   }
 
   botGoal(actor, frame = {}) {
@@ -895,10 +918,18 @@ export class ClamsRule {
       && typeof frame.botGoalRoute === 'function';
     const canCollect = !inv.power && (inv.small < MAX_SMALL_CLAMS || sourceFinalClam);
     if (canCollect) {
-      const candidates = this.state.clams.filter(clam => clam.grounded && (clam.kind === 'small' || clam.team === actor.team));
-      candidates.sort((a, b) => this._distanceSq(position, a.pos) - this._distanceSq(position, b.pos));
-      const clam = candidates.find(item => reachable(item.pos)
-        && (!sourceFinalClam || frame.botGoalRoute(actor,item.pos) === true));
+      let nearest = null, nearestDistance = Infinity;
+      for (const item of this.state.clams) if (item.grounded && (item.kind === 'small' || item.team === actor.team)) {
+        const d = this._distanceSq(position, item.pos);
+        if (!nearest || d < nearestDistance) { nearest = item; nearestDistance = d; }
+      }
+      const canReach = item => reachable(item.pos) && (!sourceFinalClam || frame.botGoalRoute(actor,item.pos) === true);
+      let clam = nearest && canReach(nearest) ? nearest : null;
+      if (!clam && nearest) {
+        const candidates = this.state.clams.filter(item => item.grounded && (item.kind === 'small' || item.team === actor.team));
+        candidates.sort((a, b) => this._distanceSq(position, a.pos) - this._distanceSq(position, b.pos));
+        clam = candidates.find(item => item !== nearest && canReach(item));
+      }
       if (clam) return { pos: [...clam.pos], action: 'collect', aim: aimAt(clam.pos) };
     }
 

@@ -38,7 +38,7 @@ export function adaptBotNavigation(rel, code, once) {
     '      choices.push({ id, score });', 'rank candidates');
   patch('      for (const m of mates) if (m.bot.goal >= 0) { const g = nav.nodes[m.bot.goal]; if (Math.hypot(g.x - n.x, g.z - n.z) < 7) score -= 4; }',
     "      for (const m of mates) if (m.alive && m.bot.mode === 'paint' && m.bot.path && m.bot.goal >= 0) { const g = nav.nodes[m.bot.goal]; if (g && Math.abs(g.y - n.y) < 1.2 && Math.hypot(g.x - n.x, g.z - n.z) < 7) score -= 4; }", 'spread around live same-floor goals');
-  patch('    if (best < 0) return;\n    const n = nav.nodes[best];\n    this._pathTo(_v3.set(n.x, n.y, n.z), 0.3);',
+  patch('    if (best < 0) return;\n    const n = nav.nodes[best];\n    this._pathTo(n, 0.3);',
     `    choices.sort((a, b) => b.score - a.score);
     // Try at most three distinct goals. A one-way drop or isolated height must
     // not trigger sixteen new paint scans on every simulation tick.
@@ -48,7 +48,7 @@ export function adaptBotNavigation(rel, code, once) {
       if (tried.size >= 3) break;
       tried.add(choice.id);
       const n = nav.nodes[choice.id];
-      if (this._pathTo(_v3.set(n.x, n.y, n.z), 0.3)) return;
+      if (this._pathTo(n, 0.3)) return;
       rememberBotGoalFailure(this, nav, choice.id);
     }
     this.path = null; this.goal = -1;

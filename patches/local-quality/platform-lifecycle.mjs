@@ -160,18 +160,26 @@ export class PlatformFrameDriver {
   _queueRAF() {
     if (!this.running || !this.owner.active || this.disposed || this.raf !== null || this.timer !== null) return;
     const generation = this.generation;
-    this.raf = this.env.requestAnimationFrame(now => this._callback(now, generation));
+    if (this._rafGeneration !== generation) {
+      this._rafGeneration = generation;
+      this._rafCallback = now => this._callback(now, generation);
+    }
+    this.raf = this.env.requestAnimationFrame(this._rafCallback);
     this.metrics.schedules++;
   }
   _queueTimer(delay) {
     if (!this.running || !this.owner.active || this.disposed || this.raf !== null || this.timer !== null) return;
     if (typeof this.env.setTimeout !== 'function') { this._queueRAF(); return; }
     const generation = this.generation;
-    this.timer = this.env.setTimeout(() => {
-      if (generation !== this.generation) return;
-      this.timer = null; this.metrics.timerWakes++;
-      if (this.running && this.owner.active && !this.disposed) this._queueRAF();
-    }, Math.max(0, delay));
+    if (this._timerGeneration !== generation) {
+      this._timerGeneration = generation;
+      this._timerCallback = () => {
+        if (generation !== this.generation) return;
+        this.timer = null; this.metrics.timerWakes++;
+        if (this.running && this.owner.active && !this.disposed) this._queueRAF();
+      };
+    }
+    this.timer = this.env.setTimeout(this._timerCallback, Math.max(0, delay));
     this.metrics.timerSchedules++;
   }
   _scheduleNext(frameTime) {
@@ -190,7 +198,24 @@ export class PlatformFrameDriver {
     // Queue RAF just before the target so timer rounding does not miss a vsync
     // by a fraction of a millisecond. Keep the absolute grid when work runs late.
     const lead = 1;
-    while (this.nextDeadline <= now + lead) this.nextDeadline += interval;
+    const limit = now + lead;
+    while (this.nextDeadline <= limit) {
+      const current = this.nextDeadline, next = current + interval;
+      // Within one floating-point exponent bin, repeated additions advance
+      // by the same representable increment. Skip whole runs of that exact
+      // increment, leaving the exponent boundary to ordinary addition. This
+      // retains legacy rounding even when the lead lands exactly on a slot.
+      const increment = next - current;
+      if (current > 0 && increment > 0 && Number.isFinite(limit) &&
+          next + interval - next === increment) {
+        const edge = 2 ** (Math.floor(Math.log2(current)) + 1);
+        const room = Math.floor((edge - current) / increment) - 1;
+        const wanted = Math.floor((limit - current) / increment) + 1;
+        const count = Math.min(room, wanted);
+        if (count > 1) { this.nextDeadline = current + count * increment; continue; }
+      }
+      this.nextDeadline = next;
+    }
     this._queueTimer(this.nextDeadline - now - lead);
   }
   reset(reason) {

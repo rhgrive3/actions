@@ -53,7 +53,7 @@ test('inactive stage objects do not decode unused textures, preserving every act
  assert.equal(r.error,null);
 });
 
-for(const failure of ['decode','setup','cache'])test('worker '+failure+' failure retains original error and once-only cleanup',async()=>{const r=await scenario(source,{cancelAt:'never',failure});assert.equal(r.error,'Error');assert.ok(r.closes.every(n=>n===1));assert.ok(r.disposes.every(n=>n===1));assert.equal(r.decode,failure==='cache'?7:8);assert.equal(r.textures,failure==='setup'?8:7);});
+for(const failure of ['decode','setup','cache'])test('worker '+failure+' failure retains original error and once-only cleanup',async()=>{const r=await scenario(source,{cancelAt:'never',failure});assert.equal(r.error,'Error');assert.ok(r.closes.every(n=>n===1));assert.ok(r.disposes.every(n=>n===1));const expected={decode:[1,0],setup:[1,1],cache:[0,0]}[failure];assert.deepEqual([r.decode,r.textures],expected,'the failed two-worker batch must not start remaining jobs');});
 
 test('abort after first ownership transfer disposes retained texture once',async()=>{const r=await scenario(source,{cancelAt:'transferred'});console.log(JSON.stringify({cancelAt:'transferred',...r}));assert.equal(r.textures,true?1:8);assert.ok(r.closes.every(n=>n===1));assert.ok(r.disposes.every(n=>n===1));});
 const names=['a','n','r','o','e'],rgba={a:[16,32,48,180],n:[255,0,0,255],r:[64,0,0,255],o:[192,0,0,255],e:[4,5,6,255]};
@@ -75,7 +75,7 @@ async function run(source,resize,failResize=false){
  const main=new vm.SourceTextModule(source.toString(),{context});await main.link(s=>{assert.ok(modules[s],s);return modules[s]});await main.evaluate();
  const materials={test:{albedo:'a.png',maps:{normal:'n.png',roughness:'r.png',opacity:'o.png',emissive:'e.png'},channels:{}}};
  let result,error;try{result=await main.namespace.loadNativeTextures('synthetic',{manifest:{sourceMode:'browser-direct',materials},integrity},{capabilities:{getMaxAnisotropy:()=>16}},'high',undefined,resize?4:1024)}catch(e){error=e}
- if(failResize){assert.equal(error,intended);assert.ok(bitmap.length>1);assert.ok(textures.length>0);assert.ok(bitmap.every(b=>b.closes===1));assert.ok(textures.every(t=>t.disposed===1));return{decode:bitmap.length,textures:textures.length,closes:bitmap.map(b=>b.closes),disposes:textures.map(t=>t.disposed),error:error.message}}assert.equal(error,undefined);
+ if(failResize){assert.equal(error,intended);assert.ok(bitmap.length>=1&&bitmap.length<=2,'only the in-flight worker batch may decode');assert.ok(textures.length<=1,'remaining textures must not be constructed');assert.ok(bitmap.every(b=>b.closes===1));assert.ok(textures.every(t=>t.disposed===1));return{decode:bitmap.length,textures:textures.length,closes:bitmap.map(b=>b.closes),disposes:textures.map(t=>t.disposed),error:error.message}}assert.equal(error,undefined);
  assert.equal(result.size,5);assert.equal(reads,5);assert.equal(fetches,0);assert.equal(materials.test.hasAlpha,true);assert.equal(materials.test.normalEncoding,'signed-byte-rg');assert.deepEqual(materials.test.channels,{opacity:'r',roughness:'r'});
  const snapshot={materials,rows:[...result].sort(([a],[b])=>a.localeCompare(b)).map(([name,t])=>{assert.equal(t.disposed,0);assert.equal(t.colorSpace,['a.png','e.png'].includes(name)?'srgb':'none');assert.equal(t.wrapS,'repeat');assert.equal(t.wrapT,'repeat');assert.equal(t.anisotropy,4);assert.equal(t.needsUpdate,true);assert.equal(t.image.width,resize?4:8);assert.equal(t.image.height,resize?4:8);
  if(name==='n.png'){assert.equal(t.dataTexture,true);assert.equal(t.generateMipmaps,true);assert.equal(t.minFilter,'linear-mip');assert.deepEqual(Array.from(t.image.data.slice(0,4)),[126,128,255,255]);}
@@ -87,6 +87,6 @@ async function run(source,resize,failResize=false){
 }
 
 for(const resize of [false,true])test('browser-direct pixel metadata and ownership, resize='+resize,async()=>{const r=await run(baseline,resize);assert.equal(r.decoded,resize?10:5);assert.equal(r.disposed.length,5);});
-test('resize rejection preserves sibling cleanup and original error',async()=>{const r=await run(baseline,true,true);assert.equal(r.decode,9);assert.equal(r.textures,4);});
+test('resize rejection preserves sibling cleanup and original error',async()=>{const r=await run(baseline,true,true);assert.equal(r.decode,1);assert.equal(r.textures,0);});
 
 }

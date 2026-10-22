@@ -597,6 +597,7 @@ export function inkVacActorContact(owner, victim) {
   return Number.isFinite(firstEntry(state, point, point)) && !!api.G.physics?.los?.(state._org, point);
 }
 function actorInVortex(victim) {
+  if(liveStates.size===0)return false;
   return !victim.remote && victim.alive && (api.G.actors || []).some(owner => inkVacActorContact(owner, victim));
 }
 // #1149: the Dualies dodge-roll cost (rollInk) is multiplied by the sourced
@@ -699,7 +700,7 @@ function inkVacUpdate(a, dt) {
   if (state.sucking)state.inhaleAge+=eligible;else state.inhaleAge=0;
   if (!a.remote && !state.remote && state.sucking) {
     paintInhaleFeet(state,eligible);
-    const seen = new Set(); let count = 0;
+    const seen = state._inhaleActorSeen ||= new Set();seen.clear(); let count = 0;
     for (const victim of api.G.actors || []) {
       const identity = victim.nid === undefined ? victim : `${victim.owner}:${victim.nid}`;
       if (seen.has(identity)) continue; seen.add(identity);
@@ -707,7 +708,8 @@ function inkVacUpdate(a, dt) {
     }
     const amount = count * eligible * INK_VAC_CALIBRATION.actorContactDamagePerSecond;
     if (amount > 0) creditCharge(state, amount, false);
-    damageInhaleObjects(state, eligible, new Set());
+    const objectSeen=state._inhaleObjectSeen ||= new Set();objectSeen.clear();
+    try{damageInhaleObjects(state, eligible, objectSeen);}finally{seen.clear();objectSeen.clear();}
   }else state.footPaintAccum=0;
   state.t += dt;
   updateVisual(state);

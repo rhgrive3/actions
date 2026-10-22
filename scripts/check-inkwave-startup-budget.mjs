@@ -1,13 +1,15 @@
 #!/usr/bin/env node
+import {createArtifactDigests} from './lib/inkwave-artifact-digests.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from './lib/inkwave-build-only-modules.mjs';
 import { normalizeCacheAssets } from './lib/inkwave-cache-manifest.mjs';
 import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import crypto from 'node:crypto';
 import {parse} from '../patches/loading-cache/vendor/acorn.mjs';
 import {PRECACHE_BUDGET_BYTES,REVISION_BUDGET_BYTES,WORKER_BUDGET_BYTES,INITIAL_JS_BUDGET_BYTES,RANGE_PRELOAD_BUDGET_BYTES,STARTUP_ENTRY_BUDGET_BYTES,CRITICAL_HTML_BUDGET_BYTES} from '../patches/loading-cache/adapter.mjs';
 const root=path.resolve(process.argv[2]||'_site');const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+const digest=createArtifactDigests(root);
 const identity=JSON.parse(fs.readFileSync(path.join(root,'inkwave-build.json')));
 assert.equal(hash(JSON.stringify(identity.artifacts)),identity.contentHash,'artifact manifest identity');
-for(const[file,sha]of Object.entries(identity.artifacts))assert.equal(hash(fs.readFileSync(path.join(root,file))),sha,'artifact '+file);
+for(const[file,sha]of Object.entries(identity.artifacts))assert.equal(digest(file).sha256,sha,'artifact '+file);
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');const revision=html.match(/<base href="\.\/_versions\/([a-f0-9]{64})\/">/)?.[1];assert.equal(revision,identity.build.revision);
 const preloads=[...html.matchAll(/<link rel="modulepreload" href="\.\/([^"]+)">/g)].map(m=>m[1]);assert.equal(new Set(preloads).size,preloads.length);
 const rangePreloads=preloads.filter(file=>file.startsWith('patches/practice-range/'));
@@ -39,7 +41,8 @@ const core=new Set(config.precache);assert.equal(core.size,config.precache.lengt
 const importMap=JSON.parse(html.match(/<script type="importmap">([\s\S]*?)<\/script>/)[1]).imports;
 const resolve=(from,spec)=>{for(const[k,v]of Object.entries(importMap).sort((a,b)=>b[0].length-a[0].length))if(k.endsWith('/')?spec.startsWith(k):spec===k)return path.posix.normalize(v.replace(/^\.\//,'')+(k.endsWith('/')?spec.slice(k.length):''));return spec.startsWith('.')?path.posix.normalize(path.posix.join(path.posix.dirname(from),spec)):null;};
 for(const file of core){
- const bytes=fs.readFileSync(path.join(root,'_versions',revision,file));assert.equal(hash(bytes),config.assets[file].sha256,'cache digest '+file);assert.equal(bytes.length,config.assets[file].bytes);
+ const rel=path.join('_versions',revision,file), actual=digest(rel);assert.equal(actual.sha256,config.assets[file].sha256,'cache digest '+file);assert.equal(actual.bytes,config.assets[file].bytes);
+ const bytes=/\.m?js$|\.css$/.test(file)?fs.readFileSync(path.join(root,rel)):null;
  if(/\.m?js$/.test(file)){
   const program=parse(bytes.toString(),{ecmaVersion:'latest',sourceType:'module'});
   for(const imp of program.body.filter(n=>['ImportDeclaration','ExportAllDeclaration','ExportNamedDeclaration'].includes(n.type)&&n.source)){
@@ -48,7 +51,7 @@ for(const file of core){
  }
  if(file.endsWith('.css'))for(const match of bytes.toString().matchAll(/@import\s*(?:url\()?['"]([^'"]+)['"]/g))assert(core.has(resolve(file,'./'+match[1])),`CSS import missing: ${file} -> ${match[1]}`);
 }
-for(const file of Object.keys(config.assets)){assert(!BUILD_ONLY_PATCH_MODULES.has(file),'build-only source transformer published: '+file);assert(!file.includes('..'));const bytes=fs.readFileSync(path.join(root,'_versions',revision,file));assert.equal(hash(bytes),config.assets[file].sha256);}
+for(const file of Object.keys(config.assets)){assert(!BUILD_ONLY_PATCH_MODULES.has(file),'build-only source transformer published: '+file);assert(!file.includes('..'));const actual=digest(path.join('_versions',revision,file));assert.equal(actual.sha256,config.assets[file].sha256);assert.equal(actual.bytes,config.assets[file].bytes);}
 assert(!fs.readFileSync(path.join(root,'src/main.js'),'utf8').includes('.png?h='),'lightmap URL must match precache');
 // The normal install still belongs to the menu runtime. A failed module entry
 // cannot reach it, so allow only the exact reviewed inline failure recovery.

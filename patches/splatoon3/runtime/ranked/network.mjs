@@ -1,4 +1,3 @@
-import { validRankedSnapshot } from './engine.mjs';
 import { admitRankedPose, bindRankedInput, rankedInputFor } from './pose-admission.mjs';
 import { noteRankedBarrierShots, queueRankedBarrierHit, resetRankedBarrierAdmission } from './barrier-admission.mjs';
 import { withObjectDamageCause } from '../sub-resistance.mjs';
@@ -213,7 +212,7 @@ function validEvent(e) {
 }
 export function acceptState(nm, packet) {
   const m = nm.match, engine = m?.ranked;
-  if (!engine || packet.match !== nm.cfg.id || packet.host !== nm.s.hostId || !validRankedSnapshot(packet.state, engine.mode, engine.stage.id)) return false;
+  if (!engine || packet.match !== nm.cfg.id || packet.host !== nm.s.hostId) return false;
   let ok = false;
   try { ok = engine.restore(packet.state); } catch { return false; }
   if (!ok) return false;

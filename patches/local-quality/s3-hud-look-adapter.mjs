@@ -144,7 +144,8 @@ const S3_DRAW_TANK = `  _drawTank(dt, sub, low, nosub) {
     // meniscus line, and a thin white line marks the sub-weapon cost. No gloss, no bubbles.
     const T = this._tank, c = this.tankCtx, cv = this.tankCanvas;
     const dpr = Math.min(2, devicePixelRatio || 1);
-    const cw = cv.clientWidth || 18, chh = cv.clientHeight || 74;
+    const size = canvasCssSize(this, cv);
+    const cw = size.width || 18, chh = size.height || 74;
     const W = Math.round(cw * dpr), H = Math.round(chh * dpr);
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
     const L = this._L;

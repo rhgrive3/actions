@@ -29,14 +29,25 @@ export function installMusicIdle(MusicEngine, env = globalThis) {
     if (this.players.length && !this.offline) this._startTimer();
     return result;
   };
+  P.retireStream = function (player) {
+    if (!player?.element || player === this._preloadedFile?.player || !this.players.includes(player)) return false;
+    if (!player.disposed && (!player.element.paused || !Number.isFinite(player.stopAt) || this.now() < player.stopAt)) return false;
+    player.dispose();
+    const at = this.players.indexOf(player); if (at >= 0) this.players.splice(at, 1);
+    if (this.current === player) this.current = null;
+    return true;
+  };
   P._startTimer = function () {
+    for (let i = this.players.length - 1; i >= 0; i--) this.retireStream(this.players[i]);
+    if (!this.players.some(player => !player.element && !player.disposed)) { stopTimer(this); return; }
     if (!state(this).enabled || !this.ctx || this.offline || !this.players.length || this.worker || this.timer != null) return;
     return start.call(this);
   };
   P._tick = function () {
     if (!state(this).enabled) return;
     const result = tick.call(this);
-    if (!this.players.length) stopTimer(this);
+    for (let i = this.players.length - 1; i >= 0; i--) this.retireStream(this.players[i]);
+    if (!this.players.some(player => !player.element && !player.disposed)) stopTimer(this);
     return result;
   };
   P.dispose = function (...args) {

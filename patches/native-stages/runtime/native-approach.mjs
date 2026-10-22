@@ -96,14 +96,14 @@ export function nativeApproachJumpTransition(graph,lower,upper){
  const cache=graph._nativeApproachJumpCache||(graph._nativeApproachJumpCache=new Map()),key=lower.id+':'+upper.id;if(cache.has(key))return cache.get(key);cache.set(key,null);
  const down=new THREE.Vector3(0,-1,0),start=new THREE.Vector3(lower.x,lower.y,lower.z),goal=new THREE.Vector3(upper.x,upper.y,upper.z),r=radius(false),sweep=graph._nativeApproachClearance||(graph._nativeApproachClearance=nativeDropClearance(L));
  for(const point of [start,goal]){const h=P.raycast(point.clone().setY(point.y+.1),down,.3);if(!h.hit||h.triangle<0||h.block<0||h.block>=L.staticBlockCount||h.normal.y<=.68||Math.abs(h.point.y-point.y)>.16||!P.bodyFits(point,r,PLAYER.stepUp,PLAYER.height,false,.003))return null;}
- const trials=[];
+ const trials=[],runSpeed=Math.max(weightSpeedCurve('shooter','run')[0]*60,PLAYER.airMinSpeed);
  for(const hz of [30,60,120])for(const slack of [-.025,0,.025]){
   const dt=1/hz,pos=start.clone(),velocity=new THREE.Vector3(),previous=pos.clone(),contact=makeContacts(),hit=new Hit();pos.x+=Math.abs(dz)>1e-6?slack:0;pos.z+=Math.abs(dx)>1e-6?slack:0;
   let landed=false,grounded=true;
   for(let frame=0;frame<hz*4;frame++){
    const vx=goal.x-pos.x,vz=goal.z-pos.z,length=Math.hypot(vx,vz),mx=length>1e-6?vx/length:0,mz=length>1e-6?vz/length:0;previous.copy(pos);
    if(frame===1&&LEGACY_JUMP_FEEL.enabled&&60*dt<=LEGACY_JUMP_FEEL.holdFrames&&velocity.y>0)velocity.y*=LEGACY_JUMP_FEEL.releaseRate;
-   stepGroundVelocity(velocity,mx,mz,Math.max(weightSpeedCurve('shooter','run')[0]*60,PLAYER.airMinSpeed),frame===0?(PLAYER.s3GroundAccel??36):PLAYER.airAccel,dt);
+   stepGroundVelocity(velocity,mx,mz,runSpeed,frame===0?(PLAYER.s3GroundAccel??36):PLAYER.airAccel,dt);
    if(frame===0)velocity.y=PLAYER.jumpVel;
    let gravity=PLAYER.gravity;if(velocity.y<0)gravity*=PLAYER.fallGravityMul;if(Math.abs(velocity.y)<PLAYER.apexBand)gravity*=PLAYER.apexGravityMul;velocity.y=Math.max(-PLAYER.maxFall,velocity.y-gravity*dt);pos.addScaledVector(velocity,dt);
    contact.ground=contact.wall=contact.ceiling=false;P.collideBody(pos,r,PLAYER.stepUp,PLAYER.height,contact,false,false);if(contact.ceiling&&velocity.y>0)velocity.y=0;
@@ -119,8 +119,9 @@ export function nativeApproachJumpTransition(graph,lower,upper){
  const edge={to:upper.id,type:'climb',cost:st*2+4,climb:{kind:'gap-jump',lower:start.toArray(),upper:goal.toArray(),trials,assurance:'Original static support, nine continuous human-capsule ordinary short-press jump forecasts with full-stick target steering; retained NoPaint collision; player-only edge excluded from Tower'}};cache.set(key,edge);return edge;
 }
 
+const APPROACH_EYE_OFFSET=new THREE.Vector3(0,-1.05,0);
 function approachAim(brain,a,point,dt){
- const aim=new THREE.Vector3(...point).sub(a.pos).add(new THREE.Vector3(0,-1.05,0)),yaw=Math.atan2(aim.x,aim.z),pitch=Math.max(-1.1,Math.min(1,Math.atan2(aim.y,Math.hypot(aim.x,aim.z)))),turn=6*dt;
+ const aim=(brain._nativeApproachAim||(brain._nativeApproachAim=new THREE.Vector3())).fromArray(point).sub(a.pos).add(APPROACH_EYE_OFFSET),yaw=Math.atan2(aim.x,aim.z),pitch=Math.max(-1.1,Math.min(1,Math.atan2(aim.y,Math.hypot(aim.x,aim.z)))),turn=6*dt;
  const delta=Math.atan2(Math.sin(yaw-a.aimYaw),Math.cos(yaw-a.aimYaw));a.aimYaw=brain.aimYaw=a.aimYaw+Math.max(-turn,Math.min(turn,delta));a.aimPitch=brain.aimPitch=a.aimPitch+Math.max(-turn,Math.min(turn,pitch-a.aimPitch));a.aimPoint.fromArray(point);
  return Math.abs(delta)<.08&&Math.abs(pitch-a.aimPitch)<.08;
 }
@@ -132,10 +133,11 @@ export function updateNativeApproach(brain,G,dt){
  if(!brain.path||!a.alive||a.s3?.squidSpawn||a.superJumpState||a.specialActive||nativeTowerRider(G,a)||brain._nativeTowerBoarding){brain._nativeApproach=null;return false;}
  const prior=brain._nativeApproach;if(prior&&(prior.actor!==a||prior.life!==(a.netLife||0)||prior.level!==G.level||prior.nav!==N||prior.match!==G.match||prior.mode!==brain.mode)){brain._nativeApproach=null;brain.path=null;brain.repath=brain.goalTimer=0;return false;}
  let index=brain.pi;if(index===0&&brain.path.length>1){const n=N.nodes[brain.path[0]];if(n&&Math.hypot(a.pos.x-n.x,a.pos.z-n.z)<.8&&Math.abs(a.pos.y-n.y)<.3)index=1;}
- const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=from?.nb.find(e=>e.to===to?.id&&['approach','gap-jump'].includes(e.climb?.kind));
+ const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=from?.nb.find(e=>e.to===to?.id&&(e.climb?.kind==='approach'||e.climb?.kind==='gap-jump'));
  if(!edge){brain._nativeApproach=null;return false;}
  if(!nativeApproachEdgeAllowed(a,edge)){brain.path=null;brain.repath=brain.goalTimer=0;brain._nativeApproach=null;return false;}
- const c=edge.climb,goal=new THREE.Vector3(...c.upper),start=new THREE.Vector3(...c.lower),input=a.intent,state=brain._nativeApproach?.edge===edge&&brain._nativeApproach.path===brain.path&&brain._nativeApproach.match===G.match&&brain._nativeApproach.mode===brain.mode&&brain._nativeApproach.actor===a&&brain._nativeApproach.life===(a.netLife||0)?brain._nativeApproach:(brain._nativeApproach={edge,path:brain.path,level:G.level,nav:N,match:G.match,mode:brain.mode,actor:a,life:a.netLife||0,phase:c.kind==='gap-jump'?'plant':'paint',seconds:0});
+ const scratch=brain._nativeApproachVectors||(brain._nativeApproachVectors={goal:new THREE.Vector3(),start:new THREE.Vector3(),delta:new THREE.Vector3(),normal:new THREE.Vector3(),direction:new THREE.Vector3(),stance:new THREE.Vector3(),takeoff:new THREE.Vector3()});
+ const c=edge.climb,goal=scratch.goal.fromArray(c.upper),start=scratch.start.fromArray(c.lower),input=a.intent,state=brain._nativeApproach?.edge===edge&&brain._nativeApproach.path===brain.path&&brain._nativeApproach.match===G.match&&brain._nativeApproach.mode===brain.mode&&brain._nativeApproach.actor===a&&brain._nativeApproach.life===(a.netLife||0)?brain._nativeApproach:(brain._nativeApproach={edge,path:brain.path,level:G.level,nav:N,match:G.match,mode:brain.mode,actor:a,life:a.netLife||0,phase:c.kind==='gap-jump'?'plant':'paint',seconds:0});
  if(state.level!==G.level||state.nav!==N){brain._nativeApproach=null;return false;}
  state.seconds+=dt;if(state.seconds>55){brain.path=null;brain.repath=brain.goalTimer=0;brain._nativeApproach=null;return false;}
  brain.pi=index;brain.noProg=0;input.fire=input.squid=input.jump=input.sub=input.special=input.throw=false;input.move.set(0,0,0);
@@ -143,22 +145,23 @@ export function updateNativeApproach(brain,G,dt){
  if((c.kind==='gap-jump'&&state.phase==='flight'||c.kind==='approach'&&state.phase==='attach')&&(a.s3JumpSerial||0)===state.jumpSerial&&a.grounded){brain.path=null;brain.repath=brain.goalTimer=0;brain._nativeApproach=null;return true;}
  if(c.kind==='gap-jump'&&state.phase==='flight'&&a.grounded&&(Math.hypot(a.pos.x-goal.x,a.pos.z-goal.z)>.25||Math.abs(a.pos.y-goal.y)>.16||!nativeSourceFootSupported(G,a,to))){brain.path=null;brain.repath=brain.goalTimer=0;brain._nativeApproach=null;return true;}
  if(a.grounded&&nativeSourceFootSupported(G,a,to)){
-  const delta=goal.clone().sub(a.pos).setY(0);if(delta.length()<.18&&Math.hypot(a.vel.x,a.vel.z)<.65){brain.pi=index+1;brain._nativeApproach=null;return false;}
+  const delta=scratch.delta.copy(goal).sub(a.pos).setY(0);if(delta.length()<.18&&Math.hypot(a.vel.x,a.vel.z)<.65){brain.pi=index+1;brain._nativeApproach=null;return false;}
   if(state.phase==='human'||state.phase==='flight'){const length=delta.length();if(length>1e-6)input.move.copy(delta).multiplyScalar(Math.min(.35,Math.max(.03,(length-.09)*.65))/length);return true;}
  }
  if(c.kind==='gap-jump'){
-  const delta=(state.phase==='plant'?start:goal).clone().sub(a.pos).setY(0),d=delta.length();
+  const delta=scratch.delta.copy(state.phase==='plant'?start:goal).sub(a.pos).setY(0),d=delta.length();
   if(state.phase==='plant'){
    if(d>.025||Math.hypot(a.vel.x,a.vel.z)>.08||!nativeSourceFootSupported(G,a,from)){if(d>.015)input.move.copy(delta).multiplyScalar(Math.min(.25,Math.max(.03,(d-.015)*.65))/d);return true;}
    state.phase='flight';state.jumpSerial=a.s3JumpSerial||0;input.jump=true;
   }
-  const direction=goal.clone().sub(a.pos).setY(0);if(direction.lengthSq()>1e-12)input.move.copy(direction).normalize();return true;
+  const direction=scratch.delta.copy(goal).sub(a.pos).setY(0);if(direction.lengthSq()>1e-12)input.move.copy(direction).normalize();return true;
  }
- const normal=new THREE.Vector3(...c.normal),direction=normal.clone().negate(),stance=new THREE.Vector3(...c.paintStance),takeoff=new THREE.Vector3(...c.takeoff),spine=new THREE.Vector3(...c.spine);
+ const normal=scratch.normal.fromArray(c.normal),direction=scratch.direction.copy(normal).negate(),stance=scratch.stance.fromArray(c.paintStance),takeoff=scratch.takeoff.fromArray(c.takeoff);
  if(state.phase==='human'){input.move.copy(direction);return true;}
  if(state.phase==='paint'){
   const delta=stance.sub(a.pos).setY(0),distance=delta.length();if(distance>.08||Math.hypot(a.vel.x,a.vel.z)>.1){if(distance>.04)input.move.copy(delta).multiplyScalar(Math.min(.35,Math.max(.03,(distance-.04)*.65))/distance);return true;}
-  const missing=[...c.floors,...c.samples].find(s=>G.paint.sample(s.face,s.u,s.v)!==a.team+1);
+  let missing;for(const sample of c.floors){if(G.paint.sample(sample.face,sample.u,sample.v)!==a.team+1){missing=sample;break;}}
+  if(!missing)for(const sample of c.samples){if(G.paint.sample(sample.face,sample.u,sample.v)!==a.team+1){missing=sample;break;}}
   if(a.ink<=PLAYER.inkMax*.15)state.refilling=true;if(state.refilling&&a.ink>=PLAYER.inkMax*.9)state.refilling=false;
   if(state.refilling){input.squid=true;return true;}
   if(missing){const aimed=approachAim(brain,a,missing.point,dt);input.fire=aimed&&!a.weaponRunner?.s3ShooterCancelMain;return true;}
@@ -167,8 +170,8 @@ export function updateNativeApproach(brain,G,dt){
  }
  input.squid=true;input.move.copy(direction);
  if(state.phase==='run'){
-  const lateral=takeoff.clone().sub(a.pos).setY(0);lateral.addScaledVector(direction,-lateral.dot(direction));input.move.addScaledVector(lateral,3).normalize();
-  if(a.pos.clone().sub(takeoff).dot(direction)>=0){input.jump=true;state.phase='attach';return true;}
+  const lateral=scratch.delta.copy(takeoff).sub(a.pos).setY(0);lateral.addScaledVector(direction,-lateral.dot(direction));input.move.addScaledVector(lateral,3).normalize();
+  if(scratch.delta.copy(a.pos).sub(takeoff).dot(direction)>=0){input.jump=true;state.phase='attach';return true;}
  }
  if(state.phase==='attach'){
   input.jump=true;
@@ -183,6 +186,9 @@ export function updateNativeApproach(brain,G,dt){
 /** Forecasts intentionally qualify the zero-AP canonical Shooter only. Other
  * loadouts retain their existing source routes until independently measured. */
 export function nativeApproachEdgeAllowed(actor,edge){
- if(!['approach','gap-jump'].includes(edge.climb?.kind))return true;
- return actor?.weaponId==='shooter'&&Object.values(actor.s3?.abilityPoints||{}).every(value=>value===0);
+ if(edge.climb?.kind!=='approach'&&edge.climb?.kind!=='gap-jump')return true;
+ if(actor?.weaponId!=='shooter')return false;
+ const points=actor.s3?.abilityPoints;if(!points)return true;
+ for(const key in points)if(Object.hasOwn(points,key)&&points[key]!==0)return false;
+ return true;
 }

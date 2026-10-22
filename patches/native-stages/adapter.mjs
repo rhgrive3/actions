@@ -162,7 +162,7 @@ const game = new Game();`);
   once('  _layout(maxDensity) {','  _layout(maxDensity) {\n    if (this.level.native) return layoutNativePaint(this, maxDensity);');
   // #1671: same ids/order as queryBlocks plus the loop's own first y rejection.
   once('    const ids = this.level.queryBlocks(center.x - reach, center.z - reach, center.x + reach, center.z + reach, this._qb || (this._qb = []));',
-   '    const ids = this.level.queryBlocksBand ? this.level.queryBlocksBand(center.x - reach, center.z - reach, center.x + reach, center.z + reach, this._qb || (this._qb = []), center.y, reach, 0) : this.level.queryBlocks(center.x - reach, center.z - reach, center.x + reach, center.z + reach, this._qb || (this._qb = []));');
+   '    const faceIds = Number.isInteger(opts.face) && opts.face >= 0 ? this.level.queryFaceBlock?.(opts.face, this._qb || (this._qb = [])) : null;\n    const ids = faceIds || (this.level.queryBlocksBand ? this.level.queryBlocksBand(center.x - reach, center.z - reach, center.x + reach, center.z + reach, this._qb || (this._qb = []), center.y, reach, 0) : this.level.queryBlocks(center.x - reach, center.z - reach, center.x + reach, center.z + reach, this._qb || (this._qb = [])));');
   once('    const ids = this.level.queryBlocks(x - radius, z - radius, x + radius, z + radius, this._qr || (this._qr = []));',
    '    const ids = this.level.queryBlocksBand ? this.level.queryBlocksBand(x - radius, z - radius, x + radius, z + radius, this._qr || (this._qr = []), y, 2.5, 1) : this.level.queryBlocks(x - radius, z - radius, x + radius, z + radius, this._qr || (this._qr = []));');
   once('    const shouldRebuild = this._mipsDirty &&', '    const shouldRebuild = !this.level.native && this._mipsDirty &&');
@@ -229,7 +229,7 @@ const game = new Game();`);
  }
  if(rel==='src/game/minimap.js'){
   code="import { buildNativeMinimap } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
-  once('  _build() {','  _build() {\n    if (this.level.native) return buildNativeMinimap(this);');
+  once('  _build() {','  _build() {\n    if (this.level.native) return buildNativeMinimap(this, this._worldX === Minimap.prototype._worldX && this._worldZ === Minimap.prototype._worldZ);');
  }
  if(rel==='patches/local-quality/world-quality.mjs'){
   code="import { applyNativeQuality } from '../native-stages/runtime/engine.mjs';\n"+code;
@@ -260,7 +260,10 @@ const game = new Game();`);
   code="import { nativePieceHasInterior, nativeAncillaryCanClaim, nativeAncillaryMaskFind, nativeAncillaryMaskStore, nativeAncillaryMaskReplace, nativeSettledAncillarySlot, nativeSettledAncillaryMatches, nativeStoreSettledAncillary } from '../../native-stages/runtime/native-paint.mjs';\n"+code;
   once('  let claimed = 0, changed = false;\n  for (let n = 0; n < E.length; n += 7)', '  let claimed = 0, changed = false;\n  const nativeMasks = paint.level?.native ? new Map() : null;\n  let nativeView = null;\n  for (let n = 0; n < E.length; n += 7)');
   once('    if (!face?.atlas || dn >= g.R || face.cu <= 0 || face.cv <= 0) continue;', '    if (!face?.atlas || dn >= g.R || face.cu <= 0 || face.cv <= 0 || (nativeMasks && face.nativeEmpty)) continue;');
-  once('      const previousOrder = paint._paintOwnershipOrder[index] || 0;', '      if (nativeMasks && paint.dead[index]) { visit[index] = stamp; return true; }\n      const previousOrder = paint._paintOwnershipOrder[index] || 0;');
+  if(code.includes('function visitAncillaryCell('))
+    once(' const previousOrder=paint._paintOwnershipOrder[index]||0;',' if(paint.level?.native&&paint.dead[index]){visit[index]=stamp;return 1;}\n const previousOrder=paint._paintOwnershipOrder[index]||0;');
+  else
+    once('      const previousOrder = paint._paintOwnershipOrder[index] || 0;', '      if (nativeMasks && paint.dead[index]) { visit[index] = stamp; return true; }\n      const previousOrder = paint._paintOwnershipOrder[index] || 0;');
   once('    const cellArea = face.cu * face.cv;', '    if (nativeMasks && !nativeAncillaryCanClaim(g.R, dn, face.atlas.ppm, true)) continue;\n    const cellArea = face.cu * face.cv;');
   // Fail closed if a future source changes the SDF constants behind the bound.
   for (const term of ['0.055 + 0.06 * h3','tipR * (1.6 + 1.4 * h2)','0.028 + 0.085 * h3','0.042 + 0.04 * h3','1.2 + 0.35 * p.h2']) if (!code.includes(term)) throw Error('Native ancillary bound needs review: '+term);

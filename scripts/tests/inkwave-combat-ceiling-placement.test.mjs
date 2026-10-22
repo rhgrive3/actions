@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {installCombatPlacementQA,advanceUntilNativeShotProof} from '../lib/inkwave-combat-ceiling-placement.mjs';
+import {installCombatPlacementQA,advanceUntilNativeShotProof,advanceUntilNativePlacement} from '../lib/inkwave-combat-ceiling-placement.mjs';
 
 // These are bounded helper contracts plus the real Actor barrier method,
 // not a substitute for the browser's actual Physics/Actor settle gate.
@@ -132,4 +132,19 @@ test('proof advance remains bounded and does not invent an unavailable receipt',
  const ready=await advanceUntilNativeShotProof({remainingSteps:60,hasProof:()=>true,step:async()=>{throw Error('extra step');}});
  assert.deepEqual(ready,{steps:0,ready:true});
  for(const remainingSteps of [-1,61,NaN,.5])await assert.rejects(advanceUntilNativeShotProof({remainingSteps,hasProof:()=>false,step:async()=>{}}),/step budget/);
+});
+
+test('placement waits bounded real component steps for independently inspected peers',async()=>{
+ let steps=0,inspections=0;
+ const settled=[{points:[[0,0,0],[0,0,2]]},{points:[[0,0,0],[0,0,2]]}];
+ const result=await advanceUntilNativePlacement({step:async()=>{steps++;},inspect:async()=>{inspections++;if(steps<4)throw Error('old owner snapshot');return settled;},remainingSteps:6});
+ assert.deepEqual(result,{steps:4,settled});assert.equal(inspections,4);
+ let missing=0;const failure=Error('Combat placement: native settle moved selected placement');
+ await assert.rejects(advanceUntilNativePlacement({step:async()=>{missing++;},inspect:async()=>{throw failure;},remainingSteps:3}),e=>e===failure);
+ assert.equal(missing,3);
+ for(const remainingSteps of [0,-1,121,.5])await assert.rejects(advanceUntilNativePlacement({step:async()=>{},inspect:async()=>settled,remainingSteps}),/step budget/);
+ const source=fs.readFileSync(new URL('../check-inkwave-combat-ceiling-browser.mjs',import.meta.url),'utf8');
+ assert.match(source,/for\(const a of G\.match\.actors\)\{\s*if\(a\.remote\)continue;/);
+ assert.match(source,/a\.netTp=\(a\.netTp\|\|0\)\+1/);
+ assert(!source.includes('a.net.buf.length=0'),'never erase native remote snapshot history to force a pose');
 });

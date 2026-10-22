@@ -58,7 +58,10 @@ test('integration retains immutable source and independently rebuilt artifact id
     "PR validation uses its immutable head, explicit dispatch takes precedence, push falls back to github.sha");
   assert.equal(pinnedCheckoutCount, checkoutCount);
   assert.ok(workflow.includes('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"'));
-  assert.ok(workflow.includes('node scripts/build-inkwave.mjs inkwave-public .built-site/_site'));
+  assert.ok(workflow.includes('node scripts/build-inkwave.mjs inkwave-public _site'));
+  assert.ok(workflow.includes('tar -xf .built-site/immutable-site.tar -C .built-site'));
+  assert.ok(workflow.includes("needs: build_site"));
+  assert.ok(workflow.includes("assert.equal(JSON.parse(fs.readFileSync('.built-site/_site/inkwave-build.json')).contentHash,process.env.EXPECTED_CONTENT_HASH)"));
   assert.ok(workflow.includes('test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"'));
   assert.ok(workflow.includes("assert reports['game/browser-result.json']['sourceSha']==os.environ['SOURCE_SHA']"));
 });
@@ -268,7 +271,7 @@ test('emitted Bot respawn and retry regressions reuse the complete production si
   const marker = '      - name: Verify emitted Bot navigation respawn and retry state';
   assert.equal(validate.split(marker).length - 1, 1);
   const at = validate.indexOf(marker);
-  const build = validate.indexOf('node scripts/build-inkwave.mjs inkwave-public _site');
+  const build = validate.indexOf('tar -xf immutable-site.tar');
   const receipt = validate.indexOf('git rev-parse HEAD > _site-source-sha.txt');
   assert.ok(build >= 0 && receipt > build && at > receipt, 'use the completed production build');
   const end = validate.indexOf('\n      - name:', at + marker.length);
@@ -350,7 +353,7 @@ test('emitted streamed music gate runs all twenty-two cases on the built runtime
   streamedMusicRegistrationContract(tests);
   const core = workflow.slice(workflow.indexOf('  validate_core:'), workflow.indexOf('  patch_tests:'));
   assert.ok(core.includes(match[0]), 'required validate core owns emitted music');
-  assert.ok(core.indexOf('node scripts/build-inkwave.mjs') >= 0 && core.indexOf('node scripts/build-inkwave.mjs') < core.indexOf(match[0]), 'same immutable build runs first');
+  assert.ok(core.indexOf('tar -xf immutable-site.tar') >= 0 && core.indexOf('tar -xf immutable-site.tar') < core.indexOf(match[0]), 'same source-bound immutable build is verified first');
 });
 
 

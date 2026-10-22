@@ -1,3 +1,4 @@
+import { audioLoadDeadline } from './load-deadline.mjs';
 /**
  * Optional 2022 Splatoon 3 MP3 source bank. No game-owned MP3 is bundled here.
  * The user installs an authorized `s3-real` directory alongside this module.
@@ -22,7 +23,7 @@ export class RealS3SampleLoader {
     this.bank=bank;this.fetcher=fetcher;this.assetFetcher=assetFetcher||((url)=>sameModuleFetch(url,fetcher));
     this.manifestURL=manifestURL;this.manifestPromise=null;this.queue=Promise.resolve();this.inFlight=new Map();
     this.loaded=new Set();this.notMapped=new Set();this.retryAfter=new Map();this.status='uninitialized';this.errors=[];this.declaredEvents=null;
-    this.manifestRetryAt=0;
+    this.manifestRetryAt=0;this.pendingJobs=[];this.draining=false;this.clipIndex=null;
     this.bank.authorized.fetcher=this.assetFetcher;
     this.bank.authorized.maxBytes=Math.max(this.bank.authorized.maxBytes,AUDIO_CACHE_BYTES);
   }
@@ -31,18 +32,22 @@ export class RealS3SampleLoader {
     if(!this._current())return Promise.resolve(null);
     if(!this.manifestPromise)this.manifestPromise=(async()=>{
       try{
-        const r=await this.fetcher(this.manifestURL);
+        const r=await audioLoadDeadline(this.fetcher(this.manifestURL));
         if(!this._current())return null;
         if(!r?.ok)throw new Error('Real-S3 pack manifest unavailable ('+(r?.status||'fetch failed')+')');
-        const data=await r.json();
+        const data=await audioLoadDeadline(r.json());
         if(!this._current())return null;
         const clips=validateAuthorizedManifest(data);
         // Never fetch arbitrary sourceDrive URLs: only same-origin local assets.
         for(const c of clips)if(!/^s3-real\/[A-Za-z0-9_.+()\-]+\.mp3$/i.test(c.file))throw new Error('Unsafe real-S3 asset path');
-        this.declaredEvents=new Set(clips.map(c=>`${c.id}:${c.event}`));
+        this.declaredEvents=new Set();this.clipIndex=new Map();
+        for(const c of clips){
+          const key=`${c.id}:${c.event}`;this.declaredEvents.add(key);
+          for(const indexKey of [key,c.id+':*']){let rows=this.clipIndex.get(indexKey);if(!rows)this.clipIndex.set(indexKey,rows=[]);rows.push(c);}
+        }
         this.status='ready';return {...data,clips};
       }catch(error){if(!this._current())return null;this.status='unavailable';this.declaredEvents=null;this.manifestRetryAt=Date.now()+4000;
-        this.errors.push(String(error?.message||error));return null;}
+        this._error(error?.message||error);return null;}
     })();
     return this.manifestPromise;
   }
@@ -52,7 +57,7 @@ export class RealS3SampleLoader {
   // Event-aware demand paging. A previous v10 `loaded` bit stayed true even
   // after a 40 MiB LRU eviction, permanently skipping future real-file loads.
   // Re-check the actual decoded resident events instead of that stale bit.
-  ensure(id,event=null){
+  ensure(id,event=null,{priority=false}={}){
     if(!this._current())return Promise.resolve({loaded:0,cancelled:true});
     if(!id)return Promise.resolve({loaded:0,unavailable:false});
     // A 503 at startup must not permanently disable audio for the entire
@@ -63,13 +68,18 @@ export class RealS3SampleLoader {
     }
     const key=id+':'+(event||'*');
     if(this.notMapped.has(key))return Promise.resolve({loaded:0,missing:true});
-    if(this.inFlight.has(key))return this.inFlight.get(key);
-    const job=this.queue.catch(()=>{}).then(async()=>{
+    if(this.inFlight.has(key)){
+      if(priority){const at=this.pendingJobs.findIndex(row=>row.key===key);if(at>0)this.pendingJobs.unshift(this.pendingJobs.splice(at,1)[0]);}
+      return this.inFlight.get(key);
+    }
+    const resident=this.clipIndex?.get(key);
+    if(this.status==='ready'&&resident?.length&&resident.every(c=>this.bank.authorized.loaded.has(this.bank.authorized.key(c.id,c.event,c.variant))))return Promise.resolve({loaded:0,cached:true});
+    const work=async()=>{
       if(!this._current())return {loaded:0,cancelled:true};
       const data=await this.getManifest();
       if(!this._current())return {loaded:0,cancelled:true};
       if(!data)return {loaded:0,unavailable:true};
-      const selected=data.clips.filter(c=>c.id===id&&(!event||c.event===event));
+      const selected=this.clipIndex?.get(key)||[];
       if(!selected.length){this.notMapped.add(key);return {loaded:0,missing:true};}
       const missing=selected.filter(c=>!this.bank.authorized.loaded.has(this.bank.authorized.key(c.id,c.event,c.variant)));
       if(!missing.length){this.loaded.add(id);return {loaded:0,cached:true};}
@@ -79,11 +89,12 @@ export class RealS3SampleLoader {
       const result=await this.bank.authorized.load({...data,clips:missing},
         {baseURL:'./',replace:false,concurrency:2});
       if(!this._current())return {...result,loaded:0,cancelled:true};
-      if(result?.errors?.length){this.errors.push(...result.errors.map(e=>id+': '+e.error));
+      if(result?.errors?.length){for(const error of result.errors)this._error(id+': '+error.error);
         this.retryAfter.set(key,Date.now()+4000);}
       if(result?.loaded>0)this.loaded.add(id);
       return result;
-    });
+    };
+    const job=this._schedule(work,key,priority);
     // Cleanup belongs to the same promise returned to callers. Otherwise
     // an immediate second START can observe the previous failed, already-
     // fulfilled job and never actually retry the 2022 MP3.
@@ -92,6 +103,19 @@ export class RealS3SampleLoader {
     this.queue=tracked.catch(()=>{});
     return tracked;
   }
+  _schedule(work,key,priority){
+    const job=new Promise((resolve,reject)=>{
+      const row={work,key,resolve,reject};
+      if(priority)this.pendingJobs.unshift(row);else this.pendingJobs.push(row);
+    });
+    if(!this.draining){this.draining=true;Promise.resolve().then(()=>this._drain());}
+    return job;
+  }
+  async _drain(){
+    try{while(this.pendingJobs.length){const row=this.pendingJobs.shift();try{row.resolve(await row.work());}catch(error){row.reject(error);}}}
+    finally{this.draining=false;}
+  }
+  _error(message){this.errors.push(String(message));if(this.errors.length>32)this.errors.splice(0,this.errors.length-32);}
   stats(){return {status:this.status,loadedKinds:this.loaded.size,pendingKinds:this.inFlight.size,
     errors:this.errors.slice(-6),unmappedEvents:this.notMapped.size,manifestURL:String(this.manifestURL),cacheBytes:this.bank.authorized.bytes};}
 }

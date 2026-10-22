@@ -1,3 +1,4 @@
+import { audioLoadDeadline } from './load-deadline.mjs';
 /**
  * Optional operator-provided sound library. No Nintendo or reference WAVs are bundled.
  * Replacement is transactional: an in-progress download NEVER changes the live bank.
@@ -135,11 +136,17 @@ export class AuthorizedSamplePack {
     const cancelled=Symbol('cancelled audio sample load');
     const next=replace?new Map():new Map(this.loaded);
     let total=replace?0:decodedBytes(next),done=0,repairs=0,cursor=0;
-    const errors=[],decoded=new Map();
+    const errors=[],decoded=new Map(),remainingFiles=new Map(),bufferRefs=new Map();
+    for(const clip of valid)remainingFiles.set(clip.file,(remainingFiles.get(clip.file)||0)+1);
+    for(const row of next.values())bufferRefs.set(row.buffer,(bufferRefs.get(row.buffer)||0)+1);
+    const removeRow=key=>{const row=next.get(key);if(!row)return;next.delete(key);const count=bufferRefs.get(row.buffer)-1;
+      if(count)bufferRefs.set(row.buffer,count);else{bufferRefs.delete(row.buffer);total-=row.bytes;}};
+    const insertRow=(key,row)=>{removeRow(key);const count=bufferRefs.get(row.buffer)||0;
+      if(!count)total+=row.bytes;bufferRefs.set(row.buffer,count+1);next.set(key,row);};
     // The same file can back multiple variants: download/decode it once per import.
     const getDecoded=(clip)=>{
       if(decoded.has(clip.file))return decoded.get(clip.file);
-      const promise=(async()=>{
+      const promise=audioLoadDeadline((async()=>{
         const url=baseURL.replace(/\/$/,'')+'/'+clip.file;
         if(!current())throw cancelled;
         const res=await this.fetcher(url);
@@ -157,7 +164,7 @@ export class AuthorizedSamplePack {
            !Number.isInteger(pcm.numberOfChannels)||pcm.numberOfChannels<1||pcm.numberOfChannels>8)
           throw new Error('Invalid decoded sample');
         return {bytes,pcm};
-      })();
+      })());
       decoded.set(clip.file,promise);return promise;
     };
     const jobs=Array.from({length:Math.min(concurrency,Math.max(1,valid.length))},async()=>{
@@ -167,7 +174,7 @@ export class AuthorizedSamplePack {
           // Reuse an already verified, byte-identical source buffer across IDs.
           // The same source is intentionally referenced by e.g. several chargers.
           // Loop endpoints/repair mode must match, so no PCM is ever reinterpreted.
-          const existing=[...next.values()].find(row=>canReusePCM(row,clip));
+          let existing;for(const row of next.values())if(canReusePCM(row,clip)){existing=row;break;}
           let buffer;
           if(existing){buffer=existing.buffer;}
           else {
@@ -188,22 +195,19 @@ export class AuthorizedSamplePack {
           const cost=buffer.length*buffer.numberOfChannels*4;
           if(!Number.isSafeInteger(cost)||cost<=0)throw new Error('Invalid decoded sample size');
           const key=this.key(clip.id,clip.event,clip.variant);
-          const candidate=new Map(next);candidate.delete(key);
-          candidate.set(key,Object.freeze({...clip,buffer,bytes:cost}));
-          let candidateBytes=decodedBytes(candidate);
-          // Evict oldest rows only if their LAST reference is removed. A playing
-          // BufferSource retains its own buffer until the sound finishes.
-          while(candidateBytes>this.maxBytes&&candidate.size>1){
-            const victim=candidate.keys().next().value;
+          // A valid single buffer always fits after older entries are evicted;
+          // reject before changing the transaction if even that is impossible.
+          if(cost>this.maxBytes)throw new Error('Sample cache budget exceeded');
+          insertRow(key,Object.freeze({...clip,buffer,bytes:cost}));
+          while(total>this.maxBytes&&next.size>1){
+            const victim=next.keys().next().value;
             if(victim===key)break;
-            candidate.delete(victim);candidateBytes=decodedBytes(candidate);
+            removeRow(victim);
           }
-          if(candidateBytes>this.maxBytes)throw new Error('Sample cache budget exceeded');
-          next.clear();for(const [name,row] of candidate)next.set(name,row);
-          total=candidateBytes;
           done++;
         }catch(e){if(e!==cancelled && current())errors.push({file:clip.file,id:clip.id,event:clip.event,error:String(e?.message||e)});}
-        finally{this.pending--;}
+        finally{this.pending--;const remaining=remainingFiles.get(clip.file)-1;
+          if(remaining)remainingFiles.set(clip.file,remaining);else{remainingFiles.delete(clip.file);decoded.delete(clip.file);}}
       }
     });
     await Promise.all(jobs);

@@ -126,8 +126,7 @@ export class BossNav {
   isPlan(x, z) { const i = this.cell(x, z); return i >= 0 && !!this.plan[i]; }
 
   // the whole footprint fits: claws/legs clear of walls, body over floor
-  poseOk(x, z, yaw) {
-    const s = Math.sin(yaw), c = Math.cos(yaw);
+  poseOk(x, z, yaw, s = Math.sin(yaw), c = Math.cos(yaw)) {
     for (const b of WALL_BODY) if (this.wallClear(x + s * b.z, z + c * b.z) < b.r) return false;
     for (const b of FLOOR_BODY) if (this.floorClear(x + s * b.z, z + c * b.z) < b.r) return false;
     return true;
@@ -144,7 +143,7 @@ export class BossNav {
   cast(x, z, yaw, maxDist, stepLen = 0.25) {
     const s = Math.sin(yaw), c = Math.cos(yaw);
     let d = 0;
-    while (d + stepLen <= maxDist && this.poseOk(x + s * (d + stepLen), z + c * (d + stepLen), yaw)) d += stepLen;
+    while (d + stepLen <= maxDist && this.poseOk(x + s * (d + stepLen), z + c * (d + stepLen), yaw, s, c)) d += stepLen;
     let wall = false;
     if (d + stepLen <= maxDist) {
       // what's just ahead of the claws: a wall bonks; an edge or the pad makes it dig in and skid

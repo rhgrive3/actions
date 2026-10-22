@@ -23,12 +23,11 @@ export function slideStampRadius(halfWidth) {
   return Math.hypot(halfWidth / ROLL_LATERAL_HALF, SURFACE_OFFSET);
 }
 
-function stampSeed(id, token, index) {
+function stampSeedPrefix(id, token) {
   let seed = 2166136261;
   for (const c of String(id)) seed = Math.imul(seed ^ c.charCodeAt(0), 16777619);
   seed = Math.imul(seed ^ token, 16777619);
-  seed = Math.imul(seed ^ index, 16777619);
-  return (seed >>> 0) / 4294967296;
+  return seed;
 }
 
 export function paintDualiesSlide(game, runner, weapon, ending = false) {
@@ -45,9 +44,14 @@ export function paintDualiesSlide(game, runner, weapon, ending = false) {
       hit: { point: actor.pos.clone(), normal: actor.pos.clone(), hit: false },
       direction: actor.pos.clone(), connected: false, carry: 0, index: 0, lastStamp: null };
   }
+  const depth=state.stampDepth||0,points=state.stampPoints||=([]);
+  const stampPoint=points[depth]||=(actor.pos.clone());state.stampDepth=depth+1;
+  try{
   const direction = runner._dodgeDir;
   if (!direction || !(Math.hypot(direction.x, direction.z) > EPS)) return 0;
   state.direction.copy(direction).setY(0).normalize();
+  const id=actor.nid??'local',token=state.token??0;
+  if(state.seedId!==id||state.seedToken!==token){state.seedId=id;state.seedToken=token;state.seedPrefix=stampSeedPrefix(id,token);}
   let area = 0;
   const stamp = point => {
     state.from.copy(point).setY(point.y + .35);
@@ -56,10 +60,10 @@ export function paintDualiesSlide(game, runner, weapon, ending = false) {
     state.sample.copy(hit.point).addScaledVector(hit.normal, SURFACE_OFFSET);
     const painted = game.paint.splat(state.sample, slideStampRadius(half), actor.team, {
       kind: 'roll', stretch: state.direction, stretchAmt: 0, claimOwner: actor,
-      seed: stampSeed(actor.nid ?? 'local', state.token ?? 0, state.index++)
+      seed: (Math.imul(state.seedPrefix ^ state.index++,16777619)>>>0)/4294967296
     });
     if (Number.isFinite(painted)) area += painted;
-    state.lastStamp = point.clone();
+    (state.lastStamp||=point.clone()).copy(point);
   };
   if (!actor.grounded) {
     state.connected = false; state.initial = null; state.carry = 0; state.last.copy(actor.pos);
@@ -77,7 +81,7 @@ export function paintDualiesSlide(game, runner, weapon, ending = false) {
     } else if (distance > EPS) {
       let along = spacing - state.carry;
       for (; along <= distance + EPS; along += spacing) {
-        const point = state.last.clone().lerp(actor.pos, Math.min(1, along / distance));
+        const point = stampPoint.copy(state.last).lerp(actor.pos, Math.min(1, along / distance));
         stamp(point);
       }
       state.carry = (state.carry + distance) % spacing;
@@ -88,6 +92,7 @@ export function paintDualiesSlide(game, runner, weapon, ending = false) {
   if (ending && (!state.lastStamp || state.lastStamp.distanceToSquared(actor.pos) > EPS * EPS)) stamp(actor.pos);
   if (area) actor.addTurf(area);
   return area;
+  }finally{state.stampDepth=depth;}
 }
 
 export function installDualiesSlidePaint({ WeaponRunner, WEAPONS, G }, profile) {

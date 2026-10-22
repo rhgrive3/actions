@@ -99,7 +99,7 @@ export function stormRainContains(c, a, baseRadius, scale = stormRainScale(c)) {
 // unlike stormRainContains this accepts world objects without an `alive` flag.
 export function stormRainObjectContains(c, object, baseRadius, scale = stormRainScale(c)) {
   const p = c.group?.position, point = object?.pos;
-  if (!p || !point || ![p.x,p.y,p.z,point.x,point.y,point.z,baseRadius,scale].every(Number.isFinite) ||
+  if (!p || !point || !(Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.z)&&Number.isFinite(point.x)&&Number.isFinite(point.y)&&Number.isFinite(point.z)&&Number.isFinite(baseRadius)&&Number.isFinite(scale)) ||
       baseRadius < 0 || point.y > p.y || point.y + 1.2 < p.y - 0.8 - STORM_RAIN_REACH) return false;
   const radius = baseRadius * scale;
   const dx = point.x - p.x, dz = point.z - p.z;

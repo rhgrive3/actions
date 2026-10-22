@@ -1,3 +1,4 @@
+import { audioLoadDeadline } from './load-deadline.mjs';
 import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX, mainAudioSourceId } from './bank.mjs';
 import { RealS3SampleLoader } from './real-s3-loader.mjs';
 import { blasterHitCuePitch } from './blaster-hit.mjs';
@@ -91,7 +92,7 @@ export function installWeaponAudioEngine(Engine){
     let timeoutId;
     let result;
     try{result=await Promise.race([
-      loader.ensure(id,'fire'),
+      loader.ensure(id,'fire',{priority:true}),
       new Promise((_,reject)=>{timeoutId=setTimeout(()=>reject(new Error('本家射撃MP3の読み込みが完了しません: '+id)),12000);})
     ]);}finally{clearTimeout(timeoutId);}
     const recorded=loader.declares(id,'fire');
@@ -116,7 +117,7 @@ export function installWeaponAudioEngine(Engine){
       family==='splatling'?['charge','spin','ready']:[];
     for(const event of required){
       if(loader.declares(id,event)!==true)continue;
-      await loader.ensure(id,event);
+      await audioLoadDeadline(loader.ensure(id,event,{priority:true}),12000);
       if(!bank.authorized.byEvent.has(id+':'+event))
         throw new Error('本家チャージ・射撃MP3の準備に失敗しました: '+id+'/'+event);
     }
@@ -139,7 +140,7 @@ export function installWeaponAudioEngine(Engine){
     // these independent cues may still use their own isolated sound fixtures.
     for(const cue of ['combat:critical','combat:damage','combat:ink_focus_normal','combat:ink_focus_strong','combat:splat']){
       if(loader.declares(cue,'fire')!==true)continue;
-      const row=await loader.ensure(cue,'fire');
+      const row=await audioLoadDeadline(loader.ensure(cue,'fire',{priority:true}),12000);
       if(!bank.authorized.byEvent.has(cue+':fire')){
         const why=row?.errors?.[0]?.error||loader.errors?.at(-1)||'source asset missing';
         throw new Error('本家命中・撃破SEを読み込めません: '+cue+' ('+why+')');
@@ -147,6 +148,8 @@ export function installWeaponAudioEngine(Engine){
     }
     return {ready:true,id,recording:'fire'};
   };
+  const requireMain=p.requireRecordedMainShot;
+  p.requireRecordedMainShot=function(...args){return audioLoadDeadline(requireMain.apply(this,args),20000,'Recorded audio START preparation timed out');};
   // Preserve the exact admitted projectile clock: never delay a missed one-shot.
   // Preload after a first cold miss; the following shots will use real samples.
   p.playWeapon=function(id,event='fire',options={}){
@@ -202,6 +205,7 @@ export function installWeaponAudioEngine(Engine){
     id=borrowedRecordedMainId(mainAudioSourceId(id));
     const bank=this.weaponBank(),name=bank?.name(id,event);
     if(!name)return null;
+    if(id.startsWith('special:')&&this._realS3Loader?.declares(id,event)===false)return null;
     if(bank.authorized.byEvent.has(`${id}:${event}`))return this.loop(name,options);
     // A loop can begin after its source is decoded, provided the effect still
     // exists. Returning a permanent silent handle here leaves special effects
