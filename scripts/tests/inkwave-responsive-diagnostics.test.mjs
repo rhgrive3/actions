@@ -123,3 +123,87 @@ test('required CI explicitly includes diagnostic tests in its existing unit step
   assert(step[1].includes('scripts/tests/inkwave-responsive-diagnostics.test.mjs'));
   assert.equal((workflow.match(/scripts\/tests\/inkwave-responsive-diagnostics\.test\.mjs/g) || []).length, 1);
 });
+
+
+import os from 'node:os';
+import { createResponsiveProgressWriter } from '../lib/inkwave-responsive-diagnostics.mjs';
+
+function fixture(t) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'responsive-progress-'));
+  t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
+  const file = path.join(dir, 'progress.json');
+  const diagnostics = createResponsiveDiagnostics({onChange: createResponsiveProgressWriter(file, {engine:'webkit',name:'small-phone'})});
+  return { diagnostics, file, read: () => JSON.parse(fs.readFileSync(file, 'utf8')) };
+}
+
+test('successful stages persist incremental diagnostics without asserting acceptance', async t => {
+  const {diagnostics:d,read,file} = fixture(t);
+  d.record('case-start');
+  assert.equal(read().diagnostics.lastCompletedStage, null);
+  d.stage('settings');
+  assert.equal(read().diagnostics.lastCompletedStage, 'settings');
+  d.stage('loadout');
+  d.record('context-close-start');
+  await d.close(async () => {});
+  const result = read();
+  assert.equal(result.kind, 'responsive-diagnostic-progress');
+  assert.equal(result.engine, 'webkit');
+  assert.equal(result.name, 'small-phone');
+  assert.equal(result.diagnostics.lastCompletedStage, 'loadout');
+  assert.equal(result.diagnostics.firstError, null);
+  assert.equal(result.diagnostics.events.at(-1).type, 'context-close-complete');
+  assert.equal('status' in result, false);
+  assert.equal(fs.existsSync(file+'.pending'), false);
+});
+
+test('first error is on disk before a never-resolving optional failure inspection', t => {
+  const {diagnostics:d,read} = fixture(t);
+  const original = new Error('original assertion');
+  d.stage('setup-stage:umami');
+  let inspected = false;
+  void collectResponsiveFailure({entry:{},error:original,diagnostics:d,page:{isClosed:()=>false},
+    readInteraction: () => { inspected = true; assert.equal(read().diagnostics.firstError.message, original.message); return new Promise(()=>{}); },
+    captureFailure: () => { throw new Error('must not run'); }});
+  assert.equal(inspected, true);
+  assert.equal(read().diagnostics.lastCompletedStage, 'setup-stage:umami');
+  assert.equal(read().diagnostics.firstError.message, original.message);
+});
+
+test('completed failure receipt survives never-resolving context cleanup', async t => {
+  const {diagnostics:d,read} = fixture(t);
+  const entry = {};
+  await collectResponsiveFailure({entry,error:new Error('assertion failed'),diagnostics:d,page:{isClosed:()=>false},
+    readInteraction:async()=>({screen:'lobby'}),captureFailure:async()=>{}});
+  d.record('context-close-start');
+  void d.close(() => new Promise(()=>{}));
+  const result = read();
+  assert.equal(entry.status, 'failed');
+  assert.equal(result.diagnostics.firstError.message, 'assertion failed');
+  assert.equal(result.diagnostics.events.at(-1).type, 'context-close-start');
+});
+
+test('cleanup failure persists but cannot replace the original error', async t => {
+  const {diagnostics:d,read} = fixture(t);
+  d.fail(new Error('first assertion'));
+  await d.close(async()=>{throw new Error('cleanup failed');});
+  assert.equal(read().diagnostics.firstError.message, 'first assertion');
+  assert.equal(read().diagnostics.events.at(-1).type, 'context-close-error');
+});
+
+test('sole cleanup failure remains rejecting and is persisted', async t => {
+  const {diagnostics:d,read} = fixture(t);
+  await assert.rejects(d.close(async()=>{throw new Error('cleanup only');}), /cleanup only/);
+  assert.equal(read().diagnostics.firstError.message, 'cleanup only');
+});
+
+test('progress write failure is visible but cannot replace original acceptance errors', async t => {
+  const warnings = [];
+  t.mock.method(console, 'error', message => warnings.push(JSON.parse(message)));
+  const d = createResponsiveDiagnostics({onChange:()=>{throw Error('disk full');}});
+  const original = Error('actual assertion');
+  d.fail(original);
+  await d.close(async()=>{throw Error('secondary cleanup');});
+  assert.equal(d.snapshot().firstError.message, original.message);
+  assert(warnings.length >= 2);
+  assert(warnings.every(row => row.event === 'responsive-progress-write-error' && row.error === 'disk full'));
+});
