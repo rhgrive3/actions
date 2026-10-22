@@ -282,9 +282,61 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles
   const trigger = P.trigger, updateStates = P._updateStates, poseWeapon = P._poseWeapon;
   const poseSlosh = P._poseSlosh, animWeapon = P._animWeapon, nativeRecoil = P._recoil;
   const setWeapon = P.setWeapon, setVisible = P.setVisible, dispose = P.dispose;
-  const solveLimb = P._solveLimb;
+  const solveLimb = P._solveLimb, chargerReaches = new WeakMap();
   P._solveLimb = function (limb, target, pole, endQuat, weight, slot) {
     const A = this.P;
+    // Native Charger landing can exhaust the existing clavicle retries while
+    // both hands still own their real sockets. Preserve those retries and the
+    // first-error feedback; only the remaining unreachable weapon translation
+    // is corrected, without changing sockets, limb lengths or the shared IK.
+    const chargerHeld = this.weaponKind === 'charger' && enabled(this) &&
+      this.kidForm && !this.dual && !this.dance && !activeSpecial(this, T) &&
+      this.sourceMotion?.active && !this.sourceMotion.sourceUpper &&
+      A[C.IKR] > .99 && A[C.IKL] > .99 && (A[C.LTW] || 0) < .001;
+    if (chargerHeld && limb === this.limbs.armR) {
+      let x = chargerReaches.get(this);
+      if (!x) {
+        x = { right: new THREE.Vector3(), left: new THREE.Vector3(), delta: new THREE.Vector3(),
+          rightTarget: new THREE.Vector3(), rightPole: new THREE.Vector3(),
+          leftTarget: new THREE.Vector3(), leftPole: new THREE.Vector3(),
+          rightQ: new THREE.Quaternion(), leftQ: new THREE.Quaternion(), parentQ: new THREE.Quaternion() };
+        chargerReaches.set(this, x);
+      }
+      x.valid = !!endQuat && weight > .99 && slot === 1;
+      x.weapon = this.weapon; x.leftSolves = 0; x.used = false;
+      x.clavicleY = this.bones.clavL.rotation.y;
+      x.rightWeight = weight; x.rightPole.copy(pole);
+    } else if (chargerHeld && limb === this.limbs.armL && endQuat && weight > .99 && slot === 0) {
+      const x = chargerReaches.get(this);
+      if (x?.valid && x.weapon === this.weapon && !x.used) {
+        x.leftSolves++;
+        // Match the native three-retry / .55-radian stop, not a new IK budget.
+        const exhausted = x.leftSolves >= 4 || this.bones.clavL.rotation.y <= x.clavicleY - .55;
+        if (exhausted) {
+          const R = this.limbs.armR, L = this.limbs.armL;
+          const minL = Math.abs(L.a - L.b) + .001, maxL = (L.a + L.b) * .9995;
+          const minR = Math.abs(R.a - R.b) + .001, maxR = (R.a + R.b) * .9995;
+          this._kidXform(L.up, x.left, x.parentQ);
+          x.delta.subVectors(target, x.left);
+          const distance = x.delta.length();
+          if (Number.isFinite(distance) && distance > maxL + .0005 && maxL > minL) {
+            x.delta.multiplyScalar((maxL - .000001) / distance - 1);
+            this._kidXform(R.up, x.right, x.parentQ);
+            this._kidXform(R.end, x.rightTarget, x.rightQ);
+            x.rightTarget.add(x.delta);
+            const rightDistance = x.rightTarget.distanceTo(x.right);
+            if (rightDistance >= minR && rightDistance <= maxR) {
+              // Save native scratch arguments before the one additional right
+              // solve; the original final left solve still runs exactly once.
+              x.leftTarget.copy(target).add(x.delta);
+              x.leftPole.copy(pole); x.leftQ.copy(endQuat); x.used = true;
+              solveLimb.call(this, R, x.rightTarget, x.rightPole, x.rightQ, x.rightWeight, 1);
+              return solveLimb.call(this, limb, x.leftTarget, x.leftPole, x.leftQ, weight, slot);
+            }
+          }
+        }
+      }
+    }
     if (enabled(this) && this.kidForm && !this.dance && !activeSpecial(this, T) &&
       limb === this.limbs.armR && endQuat && weight > .99 &&
       ['slosher', 'splatling', 'blaster'].includes(this.weaponKind)) {

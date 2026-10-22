@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import crypto from 'node:crypto';
 import { observeStreamedMusic } from '../lib/inkwave-streamed-music-diagnostics.mjs';
+import { installProjectileCaptureUiGate, withProjectileCaptureUi } from '../lib/inkwave-projectile-capture-ui.mjs';
 const assetURL='http://127.0.0.1:9999/_versions/rev/assets/audio/Jet_Arrow.mp3';
 async function fixture({ fail=false, ownerGlobal='__G' }={}) {
  const events=new Map(), calls=[], receipt={};
@@ -58,6 +59,17 @@ test('runner keeps historical workload and failure gates after reviewed capture 
  assert.ok(runner.includes(gate));assert.ok(runner.includes("report.status = report.errors.length ? 'failed' : 'passed';"));
  let restored=runner;
  const revert=(current,prior)=>{assert.equal(restored.split(current).length,2);restored=restored.replace(current,prior);};
+ // Reviewed native UI admission/capture and bounded history additions only.
+ revert("import { installProjectileCaptureRoster } from './lib/inkwave-projectile-ci-roster.mjs';\nimport { installProjectileCaptureUiGate, withProjectileCaptureUi } from './lib/inkwave-projectile-capture-ui.mjs';\n\n","import { installProjectileCaptureRoster } from './lib/inkwave-projectile-ci-roster.mjs';\n\n");
+ revert("    harnessSha256: hash(fs.readFileSync(fileURLToPath(import.meta.url))),\n    captureUiGateSha256: hash(fs.readFileSync(new URL('./lib/inkwave-projectile-capture-ui.mjs', import.meta.url))),\n    capture: 'Normal INKWAVE bootstrap then real PLAY/TURF/Tidewater/START menu gestures into full match; production Projectiles fire methods; live stage Physics, Paint and FX update; native Three/WebGL renderer screenshots.',\n","    harnessSha256: hash(fs.readFileSync(fileURLToPath(import.meta.url))),\n    capture: 'Normal INKWAVE bootstrap then real PLAY/TURF/Tidewater/START menu gestures into full match; production Projectiles fire methods; live stage Physics, Paint and FX update; native Three/WebGL renderer screenshots.',\n");
+ revert("  await page.addInitScript(installAudioTimingObserver);\n  await page.addInitScript(installProjectileCaptureUiGate);\n  await page.addInitScript(({ setting, bootSeed }) => {\n","  await page.addInitScript(installAudioTimingObserver);\n  await page.addInitScript(({ setting, bootSeed }) => {\n");
+ revert("    const atomicReceipt = await requireAtomicIntro(page,\n      atomicIntroFunction(completeNativeTurfIntro,\n        withProjectileCaptureUi(playingReady,{phase:'playing',settled:false}),\n        withProjectileCaptureUi(admissionReady,{phase:'admission',allowIntro:true,settled:false})),\n      deadline,{receipt:phaseReceipt.atomicIntro={}});\n    phaseMark('admission','end');\n","    const atomicReceipt = await requireAtomicIntro(page,\n      atomicIntroFunction(completeNativeTurfIntro,playingReady,admissionReady),deadline,{receipt:phaseReceipt.atomicIntro={}});\n    phaseMark('admission','end');\n");
+ revert("    (report.provenance.atomicPlayingReceipts ||= []).push({mobile,...atomicReceipt.readiness,playingReady:atomicReceipt.playingReady});\n    // Let native timers/animations remove startup banners. This remains inside\n    // the original admission deadline; no forced HUD reveal or overlay removal.\n    phaseMark('ui','begin');\n    await requireNativePhase(() => window.__iwProjectileCaptureUiGate({phase:'settled'}).ready === true, 'native UI completion');\n    phaseMark('ui','end');\n    (report.provenance.nativeUiReceipts ||= []).push({mobile,...await page.evaluate(() => ({\n      admission:window.__iwProjectileCaptureUiAdmission, playing:window.__iwProjectileCaptureUiPlaying,\n      settled:window.__iwProjectileCaptureUiReceipt,\n    }))});\n  } catch (error) {\n","    (report.provenance.atomicPlayingReceipts ||= []).push({mobile,...atomicReceipt.readiness,playingReady:atomicReceipt.playingReady});\n  } catch (error) {\n");
+ revert("      return { observedAtMs:Date.now(),atomicIntro:window.__iwProjectileAtomicIntroReceipt??null,\n        captureUi:window.__iwProjectileCaptureUiReceipt??null,\n        captureUiHistory:window.__iwProjectileCaptureUiHistory??null,\n        mode: G?.mode, state: m?.state, stateT: m?.stateT, attract: m?.attract,\n","      return { observedAtMs:Date.now(),atomicIntro:window.__iwProjectileAtomicIntroReceipt??null,\n        mode: G?.mode, state: m?.state, stateT: m?.stateT, attract: m?.attract,\n");
+ revert("  }\n  const placement = await page.evaluate(() => {\n","  }\n  await page.waitForFunction(() => !document.querySelector('.iw-lineup') && !!window.__inkwave?.hud?._visible, null, { timeout: 30000 }).catch(() => {});\n  const placement = await page.evaluate(() => {\n");
+ revert("    const g = window.__inkwave, G = window.__G;\n    window.__iwProjectileCaptureUiGate({phase:'before-freeze',requireReady:true});\n    g.debug.freeze(); g.debug.freezeBots();\n","    const g = window.__inkwave, G = window.__G;\n    g.debug.freeze(); g.debug.freezeBots();\n");
+ revert("  const target = path.join(evidence, name);\n  runtime.captureUi = await page.evaluate(() => window.__iwProjectileCaptureUiGate({phase:'before-screenshot',requireReady:true}));\n  await page.screenshot({ path: target, animations: 'disabled', timeout: 90000 });\n","  const target = path.join(evidence, name);\n  await page.screenshot({ path: target, animations: 'disabled', timeout: 90000 });\n");
+ revert("    const cropTarget = path.join(evidence, cropFile);\n    runtime.cropCaptureUi = await page.evaluate(() => window.__iwProjectileCaptureUiGate({phase:'before-crop',requireReady:true}));\n    await page.screenshot({ path: cropTarget, clip: runtime.projectileCrop, animations: 'disabled', timeout: 90000 });\n","    const cropTarget = path.join(evidence, cropFile);\n    await page.screenshot({ path: cropTarget, clip: runtime.projectileCrop, animations: 'disabled', timeout: 90000 });\n");
  // Reviewed capture updates since adc983c3: checkout identity, HTTP file serving,
  // atomic admission/intro and bounded failure diagnostics. Restore only these
  // explicit hunks before the unchanged historical workload/failure-gate hash.
@@ -170,7 +182,7 @@ async function lifecycleFixture({failAt=null,closeFailure=false}={}) {
   if(name==='Tracing.end')events.get('Tracing.tracingComplete')?.({});return {metrics:[]};
  }};
  const page={on:()=>{},setDefaultTimeout:()=>{},isClosed:()=>false,bringToFront:async()=>{},
-  addInitScript:async()=>{if(failAt==='open-init')throw primary;},goto:async()=>{if(failAt==='open-goto')throw primary;},
+  addInitScript:async(fn)=>{calls.push('init:'+fn.name);if(failAt==='open-init'||failAt==='open-ui-init'&&fn===installProjectileCaptureUiGate)throw primary;if(fn===installProjectileCaptureUiGate)vm.runInNewContext('('+fn.toString()+')()',{window:state});},goto:async()=>{if(failAt==='open-goto')throw primary;},
   waitForFunction:async()=>{if(failAt==='performance-warmup')throw primary;},evaluate:async(fn,arg)=>{
    if(arg?.ownerGlobal){calls.push('snapshot');return vm.runInNewContext('('+fn.toString()+')(arg)',{window:state,arg});}
    const text=fn.toString();
@@ -186,11 +198,11 @@ async function lifecycleFixture({failAt=null,closeFailure=false}={}) {
  }};
  const realm={browser:{newContext:async()=>context},report,observeStreamedMusic,sourceIdentity:{checkoutSha:'a'.repeat(40),eventSha:null,checkoutIdentityStatus:'verified-git-head'},manifest:{build:{revision:'rev'}},address:'http://127.0.0.1:9999/',
   URL,Date,setTimeout,clearTimeout,process:{env:{}},quality:'low',BOOT_SEED:1,NATIVE_BOOT_TIMEOUT_MS:50,MIN_PERFORMANCE_FRAMES:3,PERFORMANCE_TIMEOUT_MS:200,durationMs:50,
-  installAudioTimingObserver(){},audioBuildManifestReceipt:()=>({}),audioDiagnosticURL:x=>x,audioReceiptSha256:()=>'',site:'/site',mimeErrors:[],
+  installProjectileCaptureUiGate,withProjectileCaptureUi,installAudioTimingObserver(){},audioBuildManifestReceipt:()=>({}),audioDiagnosticURL:x=>x,audioReceiptSha256:()=>'',site:'/site',mimeErrors:[],
   startProjectileThroughMenu:async()=>{if(failAt==='open-menu')throw primary;},completeNativeTurfIntro(){},atomicIntroFunction(){},
   requireAtomicIntro:async()=>({intro:{},readiness:{},playingReady:true}),installProjectileCaptureRoster(){}};
  vm.createContext(realm);vm.runInContext(summaryText+'\n'+openText+'\n'+performanceText,realm);
- return {realm,report,calls,primary,cleanup,context,page};
+ return {realm,report,calls,primary,cleanup,context,page,state};
 }
 const assertClosed=(f)=>{
  assert.equal(f.calls.filter(x=>x==='context-close').length,1,'one observed context close');
@@ -199,7 +211,7 @@ const assertClosed=(f)=>{
  assert.equal(receipt.network.at(-1).phase,'context-close');assert.equal(receipt.network.at(-1).autoAccepted,false);
  assert.ok(f.calls.lastIndexOf('snapshot')<f.calls.indexOf('context-close'),'snapshot precedes context close');
 };
-for(const failAt of ['open-init','open-goto','open-menu','open-placement'])test('open route closes observed context after '+failAt+' and preserves the error',async()=>{
+for(const failAt of ['open-init','open-ui-init','open-goto','open-menu','open-placement'])test('open route closes observed context after '+failAt+' and preserves the error',async()=>{
  const f=await lifecycleFixture({failAt});await assert.rejects(f.realm.openGameContext(),e=>e===f.primary);assertClosed(f);
 });
 for(const failAt of ['performance-enable','performance-warmup','performance-window'])test('performance route closes observed context after '+failAt,async()=>{
@@ -280,4 +292,18 @@ test('cleanup-only diagnostics are bounded and do not truncate an existing prima
 test('browser close rejection persists result before a delayed server close callback',async()=>{
  const f=await outerFixture({browserFailure:true,serverPending:true});assert.equal(f.persistedWhileServerPending,true);
  assert.equal(f.report.status,'failed');assert.equal(f.exitCode,1);assert.equal(f.report.error,f.tertiary.stack);
+});
+
+
+// These run the real installer in the extracted-open fixture; no browser readiness is claimed.
+test('real UI installer dependency is installed before native navigation and preserves observed cleanup',async()=>{
+ const f=await lifecycleFixture();const opened=await f.realm.openGameContext();
+ assert.equal(typeof f.state.__iwProjectileCaptureUiGate,'function');
+ assert.equal(f.state.__iwProjectileCaptureUiHistory.admissionCount,0);
+ assert.ok(f.calls.indexOf('init:installAudioTimingObserver')<f.calls.indexOf('init:installProjectileCaptureUiGate'));
+ await opened.close();assertClosed(f);
+});
+test('missing UI installer fails initialization and still closes the observed context',async()=>{
+ const f=await lifecycleFixture();delete f.realm.installProjectileCaptureUiGate;
+ await assert.rejects(f.realm.openGameContext(),/installProjectileCaptureUiGate is not defined/);assertClosed(f);
 });
