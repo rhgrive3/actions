@@ -25,3 +25,18 @@ Historical defect on main, after PR #1740 merged: `patches/splatoon3/runtime/aud
 ## Acceptance boundaries
 
 Run relevant audio + weapon tests, composed startup/build, CI browser and real audio routes. Verify no extra Charger `loopWeapon('charge')` call survives build composition; test 60/30/120fps hold and native/catalog cases, local/remote form changes, and charge-keep expiry. Confirm output in a device/browser and compare with a legitimate independently recorded S3 source before any **full-parity** claim. No additional copyrighted audio file is committed.
+
+
+## 2026-10-22 follow-up: rise reproduced directly in repository source
+
+After the S2 soundtrack's first sound interval was measured (~1.18 seconds from short mechanical attack through the end of the ascending chirp), the user requested that normal INKWAVE operation **not** require them to import a file from a phone/tablet.
+
+**Implementation in this PR**:
+
+1. `patches/splatoon3/runtime/audio/charger-charge-rise.mjs` generates new, deterministic 1-channel PCM through the existing Web Audio SFX bus. Its dominant pitched component follows the separately measured Splatune 2 spectral **ridge** from ~1017Hz to ~6967Hz over a near-linear ~0.91-second interval, with soft onset/fade and a low-noise overtone texture. This is an independently synthesized approximation, **not the original Nintendo soundtrack bytes**, and is not a recovered S3 SLINK parameter curve.
+2. The pre-existing, short, recorded 2022 S3 `HoldNoise` clip remains an independent **one-shot start click**. The new rise starts on the same charge admission edge and is stopped by release, squid conversion, damage/reset, match disposal and weapon switch. Charge-keep emergence fires only the short click, **not the first-charge-up again**.
+3. The generated clip duration is capped by the actual equipped weapon's `chargeTime` parameter (bounded 0.4–2.4 seconds); a WeakMap caches a maximum of six per-AudioContext output buffers to avoid per-frame allocations. Under low ink/airborne slowing the fixed clip duration is still an approximation, not a source-verified frame-perfect match.
+4. Nearby remote Charger owners start the same unique rise on their admitted network charge edge, with original clicks and HRTF panning, stop on observed release/cancel, and clean up on remote removal. Real Spinner and Roller loops remain intact.
+5. `patches/splatoon3/tests/charger-charge-rise.test.mjs` tests increasing dominant spectral frequency, bounded finite PCM, no clipping/seam pops, bus hookup, spatialized voice, release cancellation and absence of an obsolete local importer. The dedicated v11 audio CI now explicitly executes it.
+
+The earlier on-device song import UI, IndexedDB code, copyrighted audio file transfer and local manual selection were removed entirely. **The reproduced sound is included as source code in the GitHub PR and requires no user setup.** The copyrighted Splatune 2 FLAC/MP3/1.215-second excerpt was used only as a *measurement reference* outside GitHub. No Nintendo waveform is embedded, uploaded or vendored. Do not claim this generated sound is bit-identical to the official soundtrack or S3 retail gameplay without a separate legally supplied source sample and validation.
