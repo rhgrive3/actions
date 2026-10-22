@@ -13,7 +13,12 @@ test('last 60Hz windup yaw sample handles wrap, idle and native 10-degree clamp'
   const s={};
   close(sampleBloblobberWindupYaw(s,{x:0,z:1}),0,'initial heading has no artificial sweep');
   close(sampleBloblobberWindupYaw(s,{x:Math.sin(.04),z:Math.cos(.04)}),.04,'last-step angle');
-  close(bloblobberSweepOffset(s.bloblobberYawStep,5),.2,'first small bubble at source 5F interval');
+  close(bloblobberSweepOffset(s.bloblobberYawStep,5,.3,10),.06,
+    'first small bubble uses sourced 0.3 × cumulative 5F');
+  close(bloblobberSweepOffset(.04,15,.3,10),10*Math.PI/180,
+    'fourth bubble cannot exceed the default maximum 10-degree sweep');
+  close(bloblobberSweepOffset(-.04,15,.3,10),-10*Math.PI/180,
+    'source max sweep is symmetric for negative turns');
   close(sampleBloblobberWindupYaw(s,{x:Math.sin(1),z:Math.cos(1)}),BLOBLOBBER_MAX_SWEEP_STEP,'native shared 10-degree limit');
   resetBloblobberYawSweep(s);
   close(sampleBloblobberWindupYaw(s,{x:0,z:-1}),0,'fresh windup ignores previous action');
@@ -48,7 +53,8 @@ test('real Bloblobber runner fans four emitted bubbles from aim motion DURING wi
     'pinned 11.3.0 Bloblobber uses a 0.3 angular sweep multiplier');
   const positions=[0,5,10,15];
   for(let i=0;i<4;i++){
-    const expected=.04*positions[i]*source.parameters.WeaponParam.FrameOffsetDegreeRate;
+    const expected=Math.min(.04*positions[i]*source.parameters.WeaponParam.FrameOffsetDegreeRate,
+      10*Math.PI/180);
     close(turn(rotating.angles[i],rotating.angles[0]),expected,
       `source 0.3-adjusted cumulative 5-frame fan offset for bubble ${i+1}`);
   }
