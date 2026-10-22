@@ -1,14 +1,18 @@
+import fs from 'node:fs';
+
 // Bounded evidence only. No browser retry, deadline, or acceptance changes.
 export const boundedText = (value, limit = 4096) => String(value ?? '').slice(0, limit);
 const errorRecord = error => ({ name: boundedText(error?.name || 'Error', 80),
   message: boundedText(error?.message ?? error), stack: boundedText(error?.stack || '', 8192) });
 
-export function createResponsiveDiagnostics({ now = () => Date.now(), maxEvents = 32 } = {}) {
+export function createResponsiveDiagnostics({ now = () => Date.now(), maxEvents = 32, onChange = () => {} } = {}) {
   const started = now(), events = [];
   let firstError = null, lastCompletedStage = null, pageUnavailable = false, droppedEvents = 0;
   const record = (type, detail = '') => {
     if (events.length === maxEvents) { events.shift(); droppedEvents++; }
     events.push({ ms: Math.max(0, now() - started), type: boundedText(type, 80), detail: boundedText(detail, 1024) });
+    try { onChange(snapshot()); }
+    catch (error) { console.error(JSON.stringify({ event: 'responsive-progress-write-error', error: boundedText(error?.message ?? error) })); }
   };
   const fail = error => { if (!firstError) { firstError = errorRecord(error); record('first-error', firstError.message); } };
   const snapshot = () => ({ firstError, lastCompletedStage, pageUnavailable,
@@ -48,4 +52,14 @@ export function boundedChildStderr(value, limit = 65536) {
   const text = String(value ?? '');
   return { text: text.slice(-limit), totalChars: text.length,
     retainedChars: Math.min(text.length, limit), truncated: text.length > limit };
+}
+
+// Separate progress evidence, never an acceptance receipt. Persist before any
+// subsequent browser await so a stalled diagnostic or cleanup retains the cause.
+export function createResponsiveProgressWriter(file, identity) {
+  return diagnostics => {
+    const receipt = { kind: 'responsive-diagnostic-progress', ...identity, diagnostics };
+    fs.writeFileSync(file + '.pending', JSON.stringify(receipt, null, 2) + '\n');
+    fs.renameSync(file + '.pending', file);
+  };
 }

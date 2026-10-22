@@ -42,6 +42,24 @@ export function installInputPlatform(Input, env = globalThis) {
   if (Object.hasOwn(P, INSTALLED)) return;
   Object.defineProperty(P, INSTALLED, { value: true });
   const owner = getPlatformLifecycle(env), initialBlur = owner.metrics.blurs, initiallyFocused = owner.focused;
+  P._listenPlatform = function (target, type, callback, options) {
+    target.addEventListener(type, callback, options);
+    (this._platformInputListeners ||= []).push({ target, type, callback,
+      capture: typeof options === 'boolean' ? options : !!options?.capture });
+  };
+  P.disposePlatform = function () {
+    if (this._platformInputDisposed) return;
+    this._platformInputDisposed = true;
+    for (const { target, type, callback, capture } of this._platformInputListeners || [])
+      target.removeEventListener(type, callback, capture);
+    this._platformInputListeners = null;
+    // A deferred pointer-lock rejection must not retry for this retired owner.
+    this.enabled = false;
+    this._pointerLockCancelled = true;
+    if (this._pointerLockPending) this._pointerLockPending.cancelled = true;
+    this.onKey = this.onDevice = this.onUnlock = null;
+    this.mobile?.destroy?.();
+  };
   const poll = P.pollPad, axis = P.padAxis, stick = P.padStick, value = P.padValue, button = P.padButton;
   P.pollPad = function (...args) {
     // Remember initial unfocus even if focus arrives before the first poll.

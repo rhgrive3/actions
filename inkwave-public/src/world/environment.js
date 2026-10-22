@@ -1575,6 +1575,8 @@ export class Environment {
     const prev = r.getRenderTarget(), ac = r.autoClear, xr = r.xr.enabled;
     const rt = this._cloudRT;
     const wasScissored = rt.scissorTest, scissor = rt.scissor.clone();
+    const face = r.getActiveCubeFace?.(), mip = r.getActiveMipmapLevel?.();
+    let bakeFailed = false;
     try {
       r.autoClear = false; r.xr.enabled = false;
       r.setRenderTarget(rt);
@@ -1586,10 +1588,12 @@ export class Environment {
         r.setRenderTarget(rt);
         r.render(this._cloudScene, this._cloudCam);
       }
-    } finally {
+    } catch (error) { bakeFailed = true; throw error; }
+    finally {
       rt.scissor.copy(scissor); rt.scissorTest = wasScissored;
-      r.setRenderTarget(prev);
-      r.autoClear = ac; r.xr.enabled = xr;
+      try { r.setRenderTarget(prev, face, mip); }
+      catch (error) { if (!bakeFailed) throw error; }
+      finally { r.autoClear = ac; r.xr.enabled = xr; }
     }
   }
 

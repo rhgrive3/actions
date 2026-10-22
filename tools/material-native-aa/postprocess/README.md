@@ -1,6 +1,6 @@
 # Diagnostic-only postprocess owner evidence
 
-This extension is based on QA head 5625829733c77afa6ff26c89a4b067a1cf4643d4 and immutable COMMON cc0c90afe8031643e6a890974f8f44a40a30509e. It does not modify canonical frame/paired scripts or runtime files.
+This extension is rebased from reviewed QA head ea92ea510b485a04e5a58558c422e2c21db7b2c2 and immutable COMMON c0938a3f84768474df91713f7b372f9d7f8fe96a. Current-main source/tree pins and explicit production/control routing change: B is untouched production; A is its exact approved two-amplitude inverse. Executable frame ordering, gates and timing are unchanged. Runtime files are not modified.
 
 The generated settled-only frame observes nine existing native postprocess owners in geometry snapshots. The generated A/A paired program adds only their explicit semantic identity mappings. Raw UUID evidence and equality results remain separate. Unknown references, strict source/loaded/RNG state, all full-frame and sequential pixel gates, 28 native frames, deadlines and performanceAccepted:false remain unchanged. This adds no render, GPU readback, material edit or cache creation. CPU observation is not timing neutral and is not part of normal performance samples.
 
@@ -9,3 +9,5 @@ The compressed historical fixture is exactly the selected old A1 snapshot, with 
 Tests need a separate immutable COMMON source tree supplied through INKWAVE_MATERIAL_COMMON_SOURCE. Run the existing repository test command with --experimental-vm-modules; the native constructor fixture uses Node VM source modules. A thin local source cache made of symlinks additionally needs --preserve-symlinks locally; normal CI Git checkouts do not.
 
 The wrapper saves pre-extension and final executable hashes, helper bodies and exact launch arguments before spawning. It rechecks helper/executable/import bodies after child completion. Only A1/A2 are eligible; no B or normal performance run is enabled by this extension. Historical 562582 A1 sequential-repeat failure remains failed. A future capture would be new evidence, not relabelling that result.
+
+This is a separately prepared current-main production-B/controlled-A candidate. The published ea92 cc0 diagnostic and its historical fixture remain unchanged. Source/CPU tests do not establish the full current-main distributed build, native A/A repeatability or material/performance acceptance.

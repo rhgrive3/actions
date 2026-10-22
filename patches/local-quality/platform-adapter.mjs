@@ -59,6 +59,16 @@ export function adaptPlatformSource(rel, code) {
       if (blocks.length !== 1 || !blocks[0][0].includes('this.keys.clear()') || !blocks[0][0].includes('this.padPressed.clear()')) throw new Error('INKWAVE platform anchor mismatch: input blur owner');
       code = code.replace(blocks[0][0], '    // Stale input is cleared by the PlatformLifecycle owner.');
     }
+    // Capture only this Input constructor's listeners, including earlier
+    // reliability adapters. Preserve callback identity and all listener options.
+    const start = code.indexOf('  constructor(canvas) {');
+    const end = code.indexOf('    this.mobile = new MobileInput(canvas, this);', start);
+    if (start < 0 || end < start) throw new Error('INKWAVE platform anchor mismatch: input listener lifetime');
+    const body = code.slice(start, end);
+    const listeners = [...body.matchAll(/\b(window|document)\.addEventListener\(/g)];
+    if (listeners.length !== 10) throw new Error('INKWAVE platform anchor mismatch: input listener inventory');
+    code = code.slice(0, start) + body.replace(/\b(window|document)\.addEventListener\(/g,
+      'this._listenPlatform($1, ') + code.slice(end);
     return install(code, 'platform-input', 'installInputPlatform', 'Input');
   }
   if (rel === 'src/audio/audio.js') return install(code, 'platform-audio', 'installAudioPlatform', 'AudioEngine');

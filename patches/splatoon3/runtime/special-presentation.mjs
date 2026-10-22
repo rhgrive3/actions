@@ -207,12 +207,16 @@ function animateDevice(a, s, d, spec, state, t, dt) {
     // turns it to lead. In model space afterwards: x = side, y = length (mantle forward), z = up.
     const M = SPECIAL_DEVICE_MOTION.kraken, speed = Math.hypot(a.vel?.x || 0, a.vel?.z || 0), vy = a.vel?.y || 0, air = a.grounded === false;
     const phase = state?.phase ?? a.specialActive?.phase ?? remoteKrakenPhase(a);
+    // Integrate body phase, as for the arms: multiplying absolute match time by
+    // changing speed rephases the mantle and its contact lift even at dt=0.
+    s.krakenBodyClock = ((s.krakenBodyClock || 0) + Math.max(0, dt) * (5 + speed * 0.8)) % (Math.PI * 2);
+    const bodyWave = Math.sin(s.krakenBodyClock);
     const emerge = easeOutBack(age / M.emerge), e = Math.max(0.01, emerge);
     let sx = 1, len = 1, up = 1;
     if (phase === 'charge') { const k = smooth((state?.chargeT || 0) / M.charge); len = 1 - 0.18 * k; sx = 1 + 0.12 * k; up = 1 + 0.1 * k + 0.02 * Math.sin(t * 40) * k; }
     else if (phase === 'dash') { len = 1.28; sx = 0.88; up = 0.86; }
     else if (phase === 'finish') { const k = smooth((age - (state?.duration ?? age)) / 0.8); sx = up = 1 - 0.55 * k; len = 1 - 0.6 * k; }
-    else { const b = Math.sin(t * (5 + speed * 0.8)) * 0.04; up += b; len -= b * 0.5; }
+    else { const b = bodyWave * 0.04; up += b; len -= b * 0.5; }
     const land = kick(t - (marks.jump ?? -99), 10); up -= 0.28 * land; sx += 0.16 * land; len += 0.1 * land;
     s.krakenPitch = (s.krakenPitch ?? 0) + (clamp01((vy + 6) / 14) * 0.8 - 0.25 - (s.krakenPitch ?? 0)) * Math.min(1, dt * 10) * (air ? 1 : 0)
       + (air ? 0 : -(s.krakenPitch ?? 0) * Math.min(1, dt * 12));
@@ -227,7 +231,7 @@ function animateDevice(a, s, d, spec, state, t, dt) {
     let minY = Infinity;
     for (let i = 0; i < pts.length; i += 3) { const y = ry0 * sx * pts[i] + ry1 * len * pts[i + 1] + ry2 * up * pts[i + 2]; if (y < minY) minY = y; }
     const lift = Number.isFinite(minY) ? -minY * spec.scale * e : 0.25 * up * e;
-    d.holder.position.set(0, lift + 0.025 * Math.abs(Math.sin(t * (5 + speed * 0.8))) * (air ? 0 : 1), -1.15 * len * e);
+    d.holder.position.set(0, lift + 0.025 * Math.abs(bodyWave) * (air ? 0 : 1), -1.15 * len * e);
     advanceKrakenArms(s,speed,phase,dt);
     if (g.legL) g.legL.rotation.set(s.krakenArmX,0,s.krakenArmZ);
     if (g.legR) g.legR.rotation.set(s.krakenArmX,0,-s.krakenArmZ);

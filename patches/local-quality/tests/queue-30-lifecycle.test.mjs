@@ -102,7 +102,7 @@ test('cloud bake restores renderer and target-scissor state after strip draw fai
   assert.ok(start >= 0 && end > start);
   const H = new Function('lin', 'CLOUD_W', 'CLOUD_H', 'return class H {\n' +
     src.slice(start, end) + '\n}')(() => ({ ok: true }), 32, 20);
-  for (const failAt of [1, 5, 10]) {
+  for (const failAt of [1, 5, 10]) for (const restoreFails of [false, true]) {
     const h = new H();
     const saved = { old: true };
     const scissor = { x: 4, y: 5, z: 6, w: 7,
@@ -115,16 +115,16 @@ test('cloud bake restores renderer and target-scissor state after strip draw fai
       uSunCol: { value: { copy() {} } }, uCov: { value: null }, uSeed: { value: null },
     } };
     h._cloudScene = {}; h._cloudCam = {};
-    let drawn = 0;
+    let drawn = 0; const primary = new Error('cloud-strip-failed');
     const r = h.renderer = {
       target: saved, autoClear: true, xr: { enabled: true },
       getRenderTarget() { return this.target; },
-      setRenderTarget(t) { this.target = t; },
+      setRenderTarget(t) { if (t === saved && restoreFails) throw Error('restore-failed'); this.target = t; },
       setClearColor() {}, clear() {},
-      render() { if (++drawn === failAt) throw new Error('cloud-strip-failed'); },
+      render() { if (++drawn === failAt) throw primary; },
     };
-    assert.throws(() => h._bakeClouds({ sunColor: 1, skySun: 2 }), /cloud-strip-failed/);
-    assert.equal(r.target, saved);
+    assert.throws(() => h._bakeClouds({ sunColor: 1, skySun: 2 }), error => error === primary);
+    if (!restoreFails) assert.equal(r.target, saved);
     assert.equal(r.autoClear, true);
     assert.equal(r.xr.enabled, true);
     assert.equal(rt.scissorTest, false);

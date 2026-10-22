@@ -10,6 +10,8 @@ import { PLAYER, DIFFICULTY, SUB } from '../config.js';
 
 const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3();
 const _stats = { own: 0, enemy: 0, empty: 0, n: 0 };
+// Pure per-tick aim wobble shared by ordinary and boss bot logic.
+const botAimWander = (x) => Math.sin(x) * 0.6 + Math.sin(x * 2.27 + 1.3) * 0.4;
 // Per-graph memo of the exact nearest() answer at a known node position.
 // Lazy verification handles duplicate/multilevel positions with no guesswork.
 const _nodeGoalLookup = new WeakMap();
@@ -143,9 +145,9 @@ export class BotBrain {
       // human aim error: a slow wander plus an acquisition error that settles over the reaction time
       const e = this.diff.aimError;
       const acq = Math.exp(-this.acqT / Math.max(0.12, this.diff.reaction * 0.9));
-      const wander = (x) => Math.sin(x) * 0.6 + Math.sin(x * 2.27 + 1.3) * 0.4;
-      wantYaw = idealYaw + e * (0.75 * wander(this.t * 1.7 + this.ph1) + 2.4 * acq * this.acqSignY);
-      wantPitch = idealPitch + e * 0.6 * (0.75 * wander(this.t * 2.1 + this.ph2) + 1.6 * acq * this.acqSignP);
+
+      wantYaw = idealYaw + e * (0.75 * botAimWander(this.t * 1.7 + this.ph1) + 2.4 * acq * this.acqSignY);
+      wantPitch = idealPitch + e * 0.6 * (0.75 * botAimWander(this.t * 2.1 + this.ph2) + 1.6 * acq * this.acqSignP);
       if (this.mode === 'fight') {
         // movement in combat: keep preferred distance + eased strafing (+ swim in to close distance)
         const pref = family === 'charger' ? range * 0.8 : family === 'roller' ? 0.5 : range * 0.7;
@@ -588,9 +590,9 @@ export class BotBrain {
       aimDist = _v2.length();
       const e = this.diff.aimError * 0.8;
       const acq = Math.exp(-this.acqT / Math.max(0.12, this.diff.reaction * 0.9));
-      const wander = (x) => Math.sin(x) * 0.6 + Math.sin(x * 2.27 + 1.3) * 0.4;
-      wantYaw = idealYaw + e * (0.75 * wander(this.t * 1.7 + this.ph1) + 2.4 * acq * this.acqSignY);
-      wantPitch = idealPitch + e * 0.6 * (0.75 * wander(this.t * 2.1 + this.ph2) + 1.6 * acq * this.acqSignP);
+
+      wantYaw = idealYaw + e * (0.75 * botAimWander(this.t * 1.7 + this.ph1) + 2.4 * acq * this.acqSignY);
+      wantPitch = idealPitch + e * 0.6 * (0.75 * botAimWander(this.t * 2.1 + this.ph2) + 1.6 * acq * this.acqSignP);
       this.target = T;
       const range = this._range() + (T.crab ? 0 : T.rad * 0.6);
       const inRange = dist < range * (family === 'charger' ? 1.0 : 1.05);

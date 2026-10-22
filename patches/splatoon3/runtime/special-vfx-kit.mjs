@@ -255,6 +255,7 @@ class SpritePool {
     for (let j = this.n - 1; j >= 0; j--) {
       const i = j * S; p[i + 6] += dt;
       if (p[i + 6] >= p[i + 7]) { this._kill(j); continue; }
+      // Exact zero drag needs no exponential for finite dt; preserve NaN for non-finite time deltas.
       const drag = p[i + 10] === 0 && Number.isFinite(dt) ? 1 : Math.exp(-p[i + 10] * dt);
       p[i + 3] *= drag; p[i + 5] *= drag; p[i + 4] = p[i + 4] * drag - p[i + 11] * dt + p[i + 22] * dt;
       p[i] += p[i + 3] * dt; p[i + 1] += p[i + 4] * dt; p[i + 2] += p[i + 5] * dt; p[i + 17] += p[i + 18] * dt;

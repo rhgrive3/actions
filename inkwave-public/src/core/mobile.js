@@ -68,6 +68,13 @@ export class MobileInput {
     this._ptr = new Map();                // pointerId → { kind, id, x, y, ... }
     this._stick = { id: -1, ox: 0, oy: 0, x: 0, y: 0 };
     this._abort = new AbortController();
+    this._relayoutRaf = null;
+    // Reliability's build adapter owns destroy(); register independent resource cleanup
+    // on the shared abort signal so patch contracts and pending rAF cancellation coexist.
+    this._abort.signal.addEventListener('abort', () => {
+      if (this._relayoutRaf !== null) cancelAnimationFrame(this._relayoutRaf);
+      this._relayoutRaf = null;
+    }, { once: true });
     if (!this.active) return;
     this._install();
   }
@@ -192,7 +199,17 @@ export class MobileInput {
 
     window.addEventListener('blur', () => this.reset(), { signal: sig });
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.reset(); else this.gyro.resync(); }, { signal: sig });
-    const relayout = () => { this.gyro.resync(); this.resetPointers(); requestAnimationFrame(() => this._layoutAll()); };
+    const relayout = () => {
+      // Input and gyro cancellation remain synchronous for every native viewport event.
+      this.gyro.resync(); this.resetPointers();
+      // Safari may emit resize, orientationchange and screen.orientation.change
+      // before one frame. Measure the final viewport only once per frame.
+      if (this._relayoutRaf !== null) return;
+      this._relayoutRaf = requestAnimationFrame(() => {
+        this._relayoutRaf = null;
+        if (!this._abort.signal.aborted) this._layoutAll();
+      });
+    };
     window.addEventListener('resize', relayout, { signal: sig });
     screen.orientation?.addEventListener?.('change', relayout, { signal: sig });
     window.addEventListener('orientationchange', relayout, { signal: sig });

@@ -1380,26 +1380,31 @@ export class MusicEngine {
 
   _startTimer() {
     const tick = () => this._tick();
+    this._startingTimer = true; this._workerFailed = false;
     try {
       const src = 'let id=0;onmessage=(e)=>{clearInterval(id);if(e.data>0)id=setInterval(()=>postMessage(0),e.data)}';
       const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
       this.worker = new Worker(url);
       this.worker.onmessage = tick;
+      this.worker.postMessage(0); // Validate startup without starting an idle procedural clock.
       this.worker.onerror = () => {
         const dead = this.worker; this.worker = null;
         dead?.terminate();
+        this._workerFailed = true;
         this._proceduralClock = false;
         this._syncTimer();
       };
       setTimeout(() => URL.revokeObjectURL(url), 5000);
-    } catch (e) { this.worker = null; }
-    this._syncTimer();
+    } catch (e) { this._workerFailed = true; this.worker = null; }
+    this._proceduralClock = false;
+    try { this._syncTimer(); } finally { this._startingTimer = false; }
   }
 
   _syncTimer() {
     if (!this.ctx || this.offline) return;
     // HTMLMediaElement owns the real MP3 clock: no procedural lookahead is due.
     const active = this.players.some(p => !(p instanceof StreamedTrack));
+    if (active && !this.worker && !this.timer && !this._startingTimer && !this._workerFailed) { this._startTimer(); return; }
     if (active === !!this._proceduralClock) return;
     this._proceduralClock = active;
     if (this.worker) this.worker.postMessage(active ? TICK_MS : 0);

@@ -78,6 +78,8 @@ function renderer(fail = '') {
     xr: { enabled: true }, shadowMap: { autoUpdate: true, needsUpdate: true },
     state: { buffers: { depth: { setMask() { if (fail === 'mask') throw Error('mask'); } } } },
     getRenderTarget() { return this.target; },
+    getActiveCubeFace() { return 0; },
+    getActiveMipmapLevel() { return 0; },
     getDrawingBufferSize(out) { out.set(initial.width, initial.height); },
     setRenderTarget(t) { if (fail === 'bind' && t !== initial) throw Error('bind'); this.target = t; },
     clear() { if (fail === 'clear') throw Error('clear'); },
@@ -136,4 +138,159 @@ test('HIGH/LOW/MEDIUM cycles free GPU targets exactly once and rebind fresh text
     assert.equal(refl.on.value, 1);
   }
   assert.equal(first.disposals, 1);
+});
+
+function reflectionOutcome(h, r) {
+  try {
+    h.ground.onBeforeRender(r, {}, new Camera());
+    return { threw: false };
+  } catch (error) {
+    return { threw: true, error };
+  }
+}
+function precedenceFixture({ renderError, restoreError, failRender = false, failRestore = false } = {}) {
+  const h = lobby(), r = renderer();
+  let renders = 0, restores = 0;
+  r.render = () => { renders++; if (failRender) throw renderError; };
+  r.setRenderTarget = function (target) {
+    if (target === this.initial) {
+      restores++;
+      if (failRestore) throw restoreError;
+    }
+    this.target = target;
+  };
+  return { h, r, counts: () => ({ renders, restores }) };
+}
+function assertLocalCleanup(h, r) {
+  assert.equal(h._inRefl, false);
+  for (const object of [h.ground, h.steam, h.curbs]) assert.equal(object.visible, true);
+  assert.equal(r.xr.enabled, true);
+  assert.equal(r.shadowMap.autoUpdate, true);
+  assert.equal(r.shadowMap.needsUpdate, true);
+  assert.equal(r.autoClear, true);
+}
+
+test('error precedence: successful pass restores target and enables reflection', () => {
+  const { h, r, counts } = precedenceFixture();
+  assert.deepEqual(reflectionOutcome(h, r), { threw: false });
+  assertRestored(h, r);
+  assert.equal(h.mats.ground.userData.refl.on.value, 1);
+  assert.deepEqual(counts(), { renders: 1, restores: 1 });
+});
+test('error precedence: render-only failure keeps exact error identity and cause', () => {
+  const cause = Object.freeze({ reason: 'render cause' });
+  const error = Object.freeze(new Error('render failure', { cause }));
+  const { h, r, counts } = precedenceFixture({ failRender: true, renderError: error });
+  const result = reflectionOutcome(h, r);
+  assert.equal(result.threw, true);
+  assert.equal(result.error, error);
+  assert.equal(result.error.cause, cause);
+  assertRestored(h, r);
+  assert.equal(h.mats.ground.userData.refl.on.value, 0);
+  assert.deepEqual(counts(), { renders: 1, restores: 1 });
+});
+test('error precedence: sole restoration failure is not swallowed', () => {
+  const cause = Object.freeze({ reason: 'restore cause' });
+  const error = Object.freeze(new Error('restore failure', { cause }));
+  const { h, r, counts } = precedenceFixture({ failRestore: true, restoreError: error });
+  const result = reflectionOutcome(h, r);
+  assert.equal(result.threw, true);
+  assert.equal(result.error, error);
+  assert.equal(result.error.cause, cause);
+  assertLocalCleanup(h, r);
+  assert.equal(r.target, h._rRT, 'failed restoration cannot promise framebuffer recovery');
+  assert.equal(h.mats.ground.userData.refl.on.value, 0);
+  assert.deepEqual(counts(), { renders: 1, restores: 1 });
+});
+test('error precedence: simultaneous failures retain primary identity/cause, including falsy throws', () => {
+  const cause = Object.freeze({ reason: 'original cause' });
+  const primary = Object.freeze(new Error('primary', { cause }));
+  const secondary = Object.freeze(new Error('secondary'));
+  for (const renderError of [primary, null, undefined, false, 0, '']) {
+    const { h, r, counts } = precedenceFixture({
+      failRender: true, renderError, failRestore: true, restoreError: secondary,
+    });
+    const result = reflectionOutcome(h, r);
+    assert.equal(result.threw, true);
+    assert.equal(result.error, renderError);
+    if (renderError === primary) assert.equal(result.error.cause, cause);
+    assertLocalCleanup(h, r);
+    assert.equal(h.mats.ground.userData.refl.on.value, 0);
+    assert.deepEqual(counts(), { renders: 1, restores: 1 });
+  }
+});
+test('error precedence: nested callback is guarded and mixed visibility/flags survive', () => {
+  const h = lobby(), r = renderer();
+  h.steam.visible = false;
+  r.xr.enabled = false; r.shadowMap.autoUpdate = false;
+  r.shadowMap.needsUpdate = false; r.autoClear = false;
+  let renders = 0;
+  r.render = () => {
+    renders++;
+    assert.equal(h._inRefl, true);
+    assert.equal(h.ground.visible, false);
+    h.ground.onBeforeRender(r, {}, new Camera());
+    assert.equal(h._inRefl, true);
+    assert.equal(r.target, h._rRT);
+  };
+  assert.deepEqual(reflectionOutcome(h, r), { threw: false });
+  assert.equal(renders, 1);
+  assert.equal(h._inRefl, false);
+  assert.equal(h.ground.visible, true);
+  assert.equal(h.steam.visible, false);
+  assert.equal(h.curbs.visible, true);
+  assert.equal(r.xr.enabled, false);
+  assert.equal(r.shadowMap.autoUpdate, false);
+  assert.equal(r.shadowMap.needsUpdate, false);
+  assert.equal(r.autoClear, false);
+  assert.equal(r.target, r.initial);
+  assert.equal(h.mats.ground.userData.refl.on.value, 1);
+});
+
+
+test('nested reflection restores the active cube face and mip level', () => {
+  const h = lobby(), r = renderer();
+  r.face = 4; r.mip = 2;
+  r.getActiveCubeFace = () => r.face;
+  r.getActiveMipmapLevel = () => r.mip;
+  r.setRenderTarget = (target, face = 0, mip = 0) => {
+    r.target = target; r.face = face; r.mip = mip;
+  };
+  h.ground.onBeforeRender(r, {}, new Camera());
+  assertRestored(h, r);
+  assert.equal(r.face, 4);
+  assert.equal(r.mip, 2);
+});
+
+test('restoration failure preserves the original render error and restores object flags', () => {
+  const h = lobby(), r = renderer();
+  const original = new Error('original render failure');
+  r.render = () => { throw original; };
+  const bind = r.setRenderTarget.bind(r);
+  r.setRenderTarget = target => {
+    if (target === r.initial) throw new Error('secondary restore failure');
+    bind(target);
+  };
+  assert.throws(() => h.ground.onBeforeRender(r, {}, new Camera()), error => error === original);
+  assert.equal(h._inRefl, false);
+  assert.equal(h.ground.visible, true);
+  assert.equal(r.autoClear, true);
+  assert.equal(r.xr.enabled, true);
+  assert.equal(r.shadowMap.autoUpdate, true);
+  assert.equal(r.shadowMap.needsUpdate, true);
+  assert.equal(h.mats.ground.userData.refl.on.value, 0);
+});
+
+test('restoration failure after a successful pass propagates and leaves reflection disabled', () => {
+  const h = lobby(), r = renderer();
+  const failure = new Error('restore failure');
+  const bind = r.setRenderTarget.bind(r);
+  r.setRenderTarget = target => {
+    if (target === r.initial) throw failure;
+    bind(target);
+  };
+  assert.throws(() => h.ground.onBeforeRender(r, {}, new Camera()), error => error === failure);
+  assert.equal(h._inRefl, false);
+  assert.equal(h.ground.visible, true);
+  assert.equal(h.mats.ground.userData.refl.on.value, 0);
 });

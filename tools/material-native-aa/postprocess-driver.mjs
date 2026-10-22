@@ -4,8 +4,8 @@ import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {sha256,SEQUENCED_FRAME_SHA256} from './entry-driver.mjs';
 export const OWNER_BODIES={
- 'postprocess-owners.mjs':'e873d6c6c616ffe492b46db2c96ed53e3ad239bb2e7e27299aff2a04294e1e3e',
- 'register-postprocess.mjs':'1e2d0184ac2b3c6fef7561816ab025b359aa5bdec73182b2221566e9a8d0e527',
+ 'postprocess-owners.mjs':'6fd791ef0219afa1428244f75042910212606de435f730753a47bce0ffb386ee',
+ 'register-postprocess.mjs':'7c6945139a82c4fe1deed96f0c1aa07af088fd691f142d7e24a3f23b47d1d0d5',
  'semantic-identity.mjs':'c1584de11703191c93e69b8db8c596f757b4a1195667c7aaf4d9346bb3fe0650'
 };
 const readBodies=()=>Object.fromEntries(Object.keys(OWNER_BODIES).map(name=>[name,fs.readFileSync(new URL('./postprocess/'+name,import.meta.url),'utf8')]));

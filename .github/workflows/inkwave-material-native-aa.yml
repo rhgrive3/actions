@@ -1,7 +1,7 @@
 name: INKWAVE common-source material A/A preflight
 on:
   pull_request:
-    branches: ['preparation/ink-material-normal-admission-20261022']
+    branches: ['main']
     paths:
       - 'tools/material-native-aa/**'
       - '.github/workflows/inkwave-material-native-aa.yml'
@@ -9,7 +9,7 @@ permissions:
   contents: read
 jobs:
   bounded-native-aa:
-    if: github.head_ref == 'diagnostic/ink-material-native-aa-20261022'
+    if: github.head_ref == 'diagnostic/ink-material-native-aa-20261022' || github.head_ref == 'diagnostic/ink-material-native-aa-phase-20261022'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -19,7 +19,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: cc0c90afe8031643e6a890974f8f44a40a30509e
+          ref: c0938a3f84768474df91713f7b372f9d7f8fe96a
           path: work/material-source
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -31,10 +31,10 @@ jobs:
           QA_HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           test "$(git rev-parse HEAD)" = "$QA_HEAD"
-          test "$(git -C work/material-source rev-parse HEAD)" = 'cc0c90afe8031643e6a890974f8f44a40a30509e'
-          test "$(git -C work/material-source rev-parse 'HEAD^{tree}')" = 'de64f6d82cdf518b9acbc4ce3ae7c897509b406c'
-          test "$(sha256sum scripts/check-inkwave-material-native-paired.mjs | cut -d' ' -f1)" = 'ebb6ed23463fd1313692dd391dafe3522d663e209b65c794ab71c3aff6b81be8'
-          test "$(sha256sum scripts/check-inkwave-material-native-frame.mjs | cut -d' ' -f1)" = '440a225f6f27ddf5fdf6880b5fc2448f9ea97707cb46b3bc8762a9e58fe6119e'
+          test "$(git -C work/material-source rev-parse HEAD)" = 'c0938a3f84768474df91713f7b372f9d7f8fe96a'
+          test "$(git -C work/material-source rev-parse 'HEAD^{tree}')" = '97b9938391f156dc332f6a56ac6fe3d21d9f9dc7'
+          test "$(sha256sum scripts/check-inkwave-material-native-paired.mjs | cut -d' ' -f1)" = '723b9df56eeb2ec0b37572d1466e7cca2754a36032d5b79a35330aeb9cc8c603'
+          test "$(sha256sum scripts/check-inkwave-material-native-frame.mjs | cut -d' ' -f1)" = '74abb8bbebbff8ef1641ee693d4819e4646fabf87af6b69dfd31b194b699d752'
           INKWAVE_MATERIAL_COMMON_SOURCE="$PWD/work/material-source" node --experimental-vm-modules --test scripts/tests/material-native-common/*.test.mjs tools/material-native-aa/*.test.mjs
       - run: npx playwright install --with-deps chromium
       - name: Build the immutable common runtime once, without the whole-game test suite
@@ -46,7 +46,7 @@ jobs:
           export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
           export INKWAVE_BUILT_SITE="$GITHUB_WORKSPACE/work/material-site"
           (cd work/material-source && node --test scripts/tests/inkwave-three-composition.test.mjs)
-      - name: Reproduce production material bytes and bind the unused approved B overlay
+      - name: Prove current production B bytes and bind controlled inverse A only
         run: node scripts/prepare-inkwave-material-common.mjs work/material-source work/material-site work/material-overlay
       - name: Capture independent A1/A2 only with all strict entry, history and pixel gates
         run: node tools/material-native-aa/run.mjs work/material-site work/material-source work/material-overlay/inkShading.js work/material-aa

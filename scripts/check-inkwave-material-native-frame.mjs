@@ -253,18 +253,18 @@ const settledDiagnostic=mode==='--settled-diagnostic',diagnostic=mode==='--diagn
 assert.ok(['A','B'].includes(variant));
 const site=path.resolve(siteArg),source=path.resolve(sourceArg),out=path.resolve(outArg),hash=x=>createHash('sha256').update(x).digest('hex');
 fs.mkdirSync(out,{recursive:true});
-const sourceSha='cc0c90afe8031643e6a890974f8f44a40a30509e';assert.match(sourceSha,/^[0-9a-f]{40}$/,'reviewed common runtime head must be fixed before execution');const manifest=verifyRuntimeBuild(site,source,sourceSha);
+const sourceSha='c0938a3f84768474df91713f7b372f9d7f8fe96a';assert.match(sourceSha,/^[0-9a-f]{40}$/,'reviewed common runtime head must be fixed before execution');const manifest=verifyRuntimeBuild(site,source,sourceSha);
 const overlay=fs.readFileSync(overlayArg),bound=JSON.parse(fs.readFileSync(path.join(path.dirname(overlayArg),'receipt.json'),'utf8'));
 assert.equal(bound.sourceSha,sourceSha);assert.equal(bound.contentHash,manifest.contentHash);assert.equal(bound.inputHash,manifest.inputHash);assert.equal(bound.revision,manifest.build.revision);assert.equal(bound.modulePath,'src/world/inkShading.js');
-assert.equal(bound.sourceTree,'de64f6d82cdf518b9acbc4ce3ae7c897509b406c');assert.equal(bound.commonVariant,'A');assert.equal(bound.overlayVariant,'B');assert.equal(hash(overlay),bound.candidateEmittedSha256);
+assert.equal(bound.sourceTree,'97b9938391f156dc332f6a56ac6fe3d21d9f9dc7');assert.equal(bound.commonVariant,'B');assert.equal(bound.overlayVariant,'A');assert.equal(hash(overlay),bound.baselineEmittedSha256);
 const prefix='/_versions/'+manifest.build.revision+'/',target=prefix+bound.modulePath;
-assert.equal(hash(fs.readFileSync(path.join(site,target))),bound.baselineEmittedSha256);
+assert.equal(hash(fs.readFileSync(path.join(site,target))),bound.candidateEmittedSha256);
 const loaded=new Map(),errors=[],mime={'.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.html':'text/html','.css':'text/css','.png':'image/png','.webp':'image/webp','.woff2':'font/woff2','.mp3':'audio/mpeg','.svg':'image/svg+xml'};
 const server=http.createServer((req,res)=>{try{
  const p=new URL(req.url,'http://localhost').pathname,file=path.resolve(site,'.'+(p==='/'?'/index.html':decodeURIComponent(p)));
  if(!file.startsWith(site+path.sep))throw Error('outside site');
  const key=path.relative(site,file).split(path.sep).join('/'),original=fs.readFileSync(file);assert.equal(hash(original),manifest.artifacts[key]);
- const bytes=variant==='B'&&p===target?overlay:original;loaded.set(key,hash(bytes));
+ const bytes=variant==='A'&&p===target?overlay:original;loaded.set(key,hash(bytes));
  res.setHeader('content-type',mime[path.extname(file)]||'application/octet-stream');res.end(bytes);
 }catch{res.writeHead(404);res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));

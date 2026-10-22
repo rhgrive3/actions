@@ -5770,3 +5770,56 @@ See [regression analysis and evidence](weapon-regressions-20261021/README.md). F
 - 実装: `patches/splatoon3/runtime/respawn-lifecycle.mjs`、`runtime/squid-spawn-presentation.mjs`、`patches/native-stages/adapter.mjs`。再現はTurfの通常開始、FIREせず待機。初期8人、両チーム、30/60/120 Hzでintro中の位置・共有発射・実衝突による着地を確認。オンラインは2-peer CPU fixtureで人間・ボット双方の所有者追従を確認。
 - 検証: 開始タイミング3件、オンライン6件、スポナー描画10件が成功。旧main lifecycleに戻す負の対照では開始タイミング3件すべて失敗。ブラウザと統合PRの検証結果は [統合記録](opening-spawn-pr-integration-20261022.md) を参照。
 - 未確認: Switch実機の開始フレーム、発射までの正確な猶予、実ネットワーク遅延、物理GPU/iPad性能・本家の描画一致。既存1秒の開始待機・飛行はINKWAVE校正値として維持。
+
+
+## 2026-10-22: Draftを含むPR #1777–#1791の統合確認
+
+対象は公開版 `inkwave-public/`。#1778は#1787、#1777は#1786、#1784は#1791の後続修正を含めて履歴を保持し、#1779–#1783、#1788、#1790を統合する。本家比較は既存のSplatoon 3 11.3.0の出典・条件を継承し、新たな実機値は確定しない。
+
+- ホコは所有者・lifeに束縛した発射時の胴体と実際の銃口を固定し、射出直後の遮蔽物を検査する。近接壁で再現する銃口貫通・遠隔イベントの不正な原点を抑制する。軌道の重力・抗力・ヒューズは既存のローカル較正のままで、本家との数値一致は未確認。
+- ジェットパックはネイティブの着弾点から終端VFXを一度だけ生成し、同一フレーム着弾・プール再利用・リモートの死亡済み所有者を検査する。通信側は受理済みスナップショットに接触・スペシャルの証拠を束縛し、無効な行や後着したポーズだけで過去の攻撃を正当化しない。射撃間隔や本家ダメージを変更する統合ではない。
+- モバイルの生ソースでリサイズ描画をまとめ、公開版の既存TouchRelayoutで物理回転とキーボード由来リサイズの区別を保つ。gyro破棄とrelayoutのビルド接続を現行ソースへ更新した。入力リスナーの破棄、LOW時のロビーHDR解放、影のみの切替時のcomposer維持、Botの純粋な照準揺れ共有、OBJの正規表現再利用、ゼロ抗力の指数演算省略は操作・資源・乱数の既存回帰で確認する。Switch実機の比較には代えない。
+- Flowのglint位置初期化、ネイティブQAの配置・依存モジュール・provenance・診断出力を統合する。材質A/AおよびWiperは固定した過去ソースと厳格な入場条件を保持した診断基盤として扱い、A/B性能向上・長時間連続キャプチャ・全ピクセル遮蔽・本家実機一致の受け入れを表明しない。
+- 統合時に発見したQA前提を修正した。Tidewaterの初期射出テストは実際のplaying状態を設定し、Inkjetの有料発動は現行の継続消費ゲージ（発動直後は満額）と発動回数を検証する。材質A/Aのworkflowテストはレビュー済みの診断用2ブランチだけを厳密に許可する。
+
+CPU/ソース回帰・公開版の生成物検証・ブラウザの描画検査は別々に記録する。ネイティブGPU性能・Switch実機・原本ステージ全体の受け入れは未確認のままとする。
+# 2026-10-22: resource/input lifetime issue batch
+
+Seven bounded fixes are composed from PRs #1779–#1782, #1784 and #1788 on
+main `a350b6b89`: zero-drag sprite arithmetic, stage RegExp reuse, shared BOT aim
+expression, shadow-only composer retention, LOW lobby reflection release,
+exception-safe reflection state, and instance-owned Input listener disposal.
+See [scope and verification](inkwave-issue-batch-20261022.md).
+Splatoon 3 Ver.11.3.0 remains the reference; movement, firing, paint, damage and
+input mapping values are not retuned. Controlled local regressions distinguish
+these lifecycle changes from retail/device comparison. Physical iPad memory/FPS,
+Switch controls and all remaining calibration issues are unverified.
+
+
+### 同日追加PR #1792–#1795と更新headの追従
+
+作業中に開かれた#1792–#1795、および#1783/#1786の追加修正も統合する。#1795のcube face/mip level復旧と既存LOWテスト更新を、#1791の元例外保持・falsy例外の扱いと併存させる。#1792は広告Content-Lengthを下回るHTTP 200かつdigest不一致に限り同じURL/固定digestで最大3回試行する取得修復で、ソース同一性の検査は維持する。
+
+#1794では11.3.0の固定済みSlosher UnitのAddSpawnSpeedYRateByXZを水平速度に適用し、Explosher等の上下照準は安全な銃口からカメラyaw/pitchを用いる。-85/-45/-20/0/40/85度と古い照準点・近い床の対照をソース回帰で確認する。Switch実機の軌道・命中率・射程測定を新たに確定するものではない。
+
+#1793の有料InkjetゲージQAを採用し、発動前のready、1回の発動、継続消費、二重発動・dead/remoteの拒否を保持する。実WebGLの第三ghost検証で、終端レシピと実際の形状記録は存在する一方、全FX合成時の形状on/off差分が0となった。以前のFXを消しても再現するため、過去の煙だけが原因とは確定しない。paired readbackでは他のFXメッシュを一時的に非表示にし、実際のworld/Character深度を保持して終端形状の描画を分離する。完全な合成は直後に復元しPNGは全FXで撮る。projectile/physics/paint/終端イベントや可視ピクセル閾値は変更しない。これは分離した描画回帰であり、連続戦闘全体の視認性受け入れではない。
+
+
+### 最終統合: #1797–#1799 / 現行main ceb58追従
+
+#1797のa350固定14-leaf paint入場条件と否定対照を保持し、すでにmainへ反映された#1794後の `ceb58f24d8188d3a5179e013399ba37ef4c41f47` に対して別の厳密な14-leaf同一性epochを追加した。過去のtupleは書き換えず、現行統合ブランチのみを明示的に選び、宣言Git head・1バイト編集・欠損・混合を拒否する。poseについてもmain ceb58 / 公開済み統合 addc82 の16-leafを固定し、元のソースを再生せず差分を独立したnative-state/image検査に残す。これはcompiled/physics/RNG/imageの一致を宣言するものではない。
+
+#1799と#1797のTidewater試験を統合してplaying時のaim→flight→実際の着地を確認する。#1798ではクラーケン胴体と接地liftの位相をdtで積算し、停止中(dt=0)の速度変更で胴体だけが跳ねる表示差分を修正する。腕・geometry・移動速度・攻撃・塗りの仕様は変更しない。30/60/120Hzと試合経過0/100秒のCPU表示回帰を確認する。壁・空中・ノックバック・本家実機の同等性は未確認。
+
+統合版の生成物に対してChromium 153 / SwiftShaderでFlow 11シナリオ（normal/depth/AOのpixel同一性、native GPU buffer破棄を含む）、影切替20回、反射切替20回、Input交換10回（登録100/解除100、LOW textures 3→2）を確認した。Inkjetの60Hz native paid shots・3回のpool再利用・3回のghost（dead ownerを含む）も実際のWebGL/Physics/GPU PaintSystem/NetMatchで通過した。terminalのink形状pixelは他FXのみを一時的に隠した分離検査であり、完全合成PNGと区別する。物理GPU・実機性能・本家比較や全CI成功を意味しない。
+
+
+## 2026-10-22: 追加PR #1800 / #1801の統合
+
+#1800は取得・変換・監査したUrchinの数値バッファ10個とmanifestを、監査時のbyte数/SHA256で固定したprivate physics-only診断である。受け入れゲートを緩めず、欠損・改変・skipを失敗として残す。小さなsynthetic receipt回帰5件は成功したが、原本転送・全60設定ケース・native地形・本家実機の一致は未確認。
+
+#1801の30項目を、ロビーの元例外/cube face/mip復旧、既存のBloblobber/Explosher、Input寿命、ホコ銃口と通信証拠を保持して統合する。TIME UPではホストBOTのcatalogue保留射撃も入力中立化の公開hookで退役させ、試合終了後にwindupが実弾化しないようにする。他のBOT探索・ホコ候補/チェックポイント・アサリのtimers、音声PCM/LRU/実録サンプル、VFX空pool/リボン、FIFO先頭の不要配列は既存順序・資源・可変dt回帰で確認する。測定していないFPS向上や本家の未公開数値は確定しない。
+
+統合時にBGM/非表示/ミュート/Worker失敗のビルド接続が衝突したため、実録streamはproceduralな25ms clockを止め、合成曲への切替はWorkerを優先し、故障時は1個のintervalへfallbackするよう整合した。mute/非表示/古いfailure callback/URLの退役は維持し、stream→合成→pause/resume→mute/unmuteを本番合成ソースで追加確認する。BOTの既知nodeキャッシュ後にもnativeの動的な目標補正を適用し、既存の到達不能fallbackと再試行予算を保持する。雲bakeはscissor/renderer/cube face/mipの復旧と、復旧失敗時の元例外・flags保持を確認する。
+
+CPU回帰の成功は物理GPU/実機性能の受け入れではない。Splatoon 3比較は既存11.3.0の参照・条件を継承し、新規の実機frame値は追加しない。追加変更の本番ビルド、音声・BOT・ルール/通信の関連回帰を検証し、最終生成物の描画検証を別に記録する。

@@ -1,3 +1,4 @@
+import { validRainmakerShotOrigin, rainmakerShotOwnerMatches } from './rainmaker-shot-origin.mjs';
 // Pure Rainmaker rule state. The host owns actor identity, movement modifiers,
 // weapon admission, networking and presentation; this module emits only rule
 // events and reads the small frame contract documented next to the ranked rules.
@@ -484,6 +485,9 @@ export class RainmakerRule {
     // Recovery and both one-frame windups consume elapsed time, including
     // overshoot at low frame rates. A release is latched, never fired twice.
     if (c.pending) {
+      if (c.pending.shotOrigin && !rainmakerShotOwnerMatches(c.pending.shotOrigin, actor)) {
+        this.state.charge = emptyCharge(); return;
+      }
       const used = Math.min(remaining, c.delay); c.delay -= used; remaining -= used;
       if (c.delay > 1e-9) return;
       this._event('rainmaker-shot', c.pending); c.pending = null;
@@ -538,9 +542,16 @@ export class RainmakerRule {
         ? inputAim.slice(0, 3) : [0, 0, actor.team === 0 ? 1 : -1];
       const length = Math.hypot(...aim);
       aim = length > 0 ? aim.map(value => value / length) : [0, 0, actor.team === 0 ? 1 : -1];
+      const sourceOrigin = actor.rainmakerShotOrigin;
+      const validOrigin = validRainmakerShotOrigin(sourceOrigin, { actorId: actor.id, team: actor.team, pos: positionOf(actor) })
+        && rainmakerShotOwnerMatches(sourceOrigin, actor);
+      // Headless rule simulations may omit presentation. Runtime frames may
+      // not silently fall back to the old body-centred physical projectile.
+      if (actor.rainmakerShotRequired && !validOrigin) { this.state.charge = emptyCharge(); return; }
       const id = this.state.shotSequence++;
       c.pending = {
         id, actorId: String(actor.id), team: actor.team, pos: positionOf(actor), aim, charge,
+        ...(validOrigin ? { shotOrigin: { ...sourceOrigin, body: sourceOrigin.body.slice(), muzzle: sourceOrigin.muzzle.slice() } } : {}),
         damage, blastDamage, outerDamage, radius, nearRadius,
         directRange, nearRange, effectiveRange, paintRadius, speed,
         launchY: nativeSpeedToWorldPerSecond(fullCharge ? .28 : .14 + .07 * partialCharge),

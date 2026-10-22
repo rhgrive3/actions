@@ -201,7 +201,7 @@ const game = new Game();`);
   }
   _edgeGuardUncached(a, mv) {`);
 
-  once('    const g = nav.nearest(pos, maxUp);','    const g = nativeCombatPathGoal(this,G,pos,nav.nearest(pos,maxUp));');
+  once('    this.repath = 0.8 + Math.random() * 0.4;','    g = nativeCombatPathGoal(this,G,pos,g);\n    this.repath = 0.8 + Math.random() * 0.4;');
   once('    this.path = p; this.pi =', '    if (G.level.native) this._nativeCombatPath={nav,level:G.level,physics:G.physics,path:p,goal:g};\n    this.path = p; this.pi =');
   once('      if (this.repath <= 0) this._pathTo(this.target.pos, 0.6);','      if (this.repath <= 0 && !nativeOrdinaryJumpCommitted(this,G)) this._pathTo(this.target.pos, 0.6);');
 

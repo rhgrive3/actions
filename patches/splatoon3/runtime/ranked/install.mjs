@@ -1,3 +1,4 @@
+import { captureRainmakerShotOrigin, rainmakerActorLife, rainmakerActorOwner } from './rainmaker-shot-origin.mjs';
 import { Match } from '../../../../src/game/match.js';
 import { BotBrain } from '../../../../src/game/bots.js';
 import { NetSession } from '../../../../src/net/session.js';
@@ -186,7 +187,11 @@ export function buildFrame(match, api) {
     // Support/form travel with the admitted pose, not the interpolated proxy.
     const grounded = hostRemote ? admitted && pose.last.grounded === true : a.grounded;
     const swimming = hostRemote && admitted ? pose.last.squid === true : a.form === 'squid';
-    return { special, specialDeployed, clamDrop: a.remote && cmd ? cmd.clamDrop : a._rankedClamDrop || 0, id, team: a.team, pos: objectivePos, alive: a.alive && !a.s3Disconnected && (!hostRemote || admitted), grounded,
+    const shotRequired = match.mode === 'rainmaker' && match.ranked.rule.state.carrier === id;
+    const charge = shotRequired ? match.ranked.rule.state.charge : null;
+    const shotOrigin = shotRequired && charge?.firing && !cmd?.fire && !swimming && (!hostRemote || admitted)
+      ? captureRainmakerShotOrigin(api.THREE, a, id, objectivePos, cmd?.aim || a.aimDir?.toArray()) : null;
+    return { life: rainmakerActorLife(a), owner: rainmakerActorOwner(a), rainmakerShotRequired: shotRequired, rainmakerShotOrigin: shotOrigin, special, specialDeployed, clamDrop: a.remote && cmd ? cmd.clamDrop : a._rankedClamDrop || 0, id, team: a.team, pos: objectivePos, alive: a.alive && !a.s3Disconnected && (!hostRemote || admitted), grounded,
       remote: a.remote, onTower: !!a._rankedOnTower, weight: a.weapon.weight || 'middle', swimming, slot: a.slot };
   });
   // Other ranked modes expose the same all-zero zone snapshot, but never

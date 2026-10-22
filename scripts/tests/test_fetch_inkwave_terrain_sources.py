@@ -40,7 +40,8 @@ class FetchTests(unittest.TestCase):
         self.receipt = {}
 
     def fetch(self, body, **kwargs):
-        with mock.patch.object(FETCH.urllib.request, 'urlopen', return_value=Response(body, **kwargs)) as request:
+        with mock.patch.object(FETCH.urllib.request, 'urlopen', side_effect=lambda *a, **k: Response(body, **kwargs)) as request, \
+             mock.patch.object(FETCH.time, 'sleep'):
             FETCH.fetch('https://example.invalid/synthetic', self.target, 'sha256', ABC_SHA256, receipt=self.receipt)
         return request
 
@@ -78,6 +79,39 @@ class FetchTests(unittest.TestCase):
         self.assertEqual(self.receipt['contentLength'], 3)
         self.assertEqual(bytes(self.receipt['actualDigest']).hex(), hashlib.sha256(b'ab').hexdigest())
         self.assertFalse(self.target.with_suffix('.obj.download').exists())
+
+    def test_short_transfer_retries_same_source_and_verifies_digest(self):
+        with mock.patch.object(FETCH.urllib.request, 'urlopen',
+                               side_effect=[Response(b'ab', length=3), Response(b'abc')]) as request, \
+             mock.patch.object(FETCH.time, 'sleep') as sleep:
+            FETCH.fetch('https://example.invalid/synthetic', self.target, 'sha256', ABC_SHA256, receipt=self.receipt)
+        self.assertEqual(request.call_count, 2)
+        self.assertEqual(request.call_args_list[0], request.call_args_list[1])
+        sleep.assert_called_once_with(1)
+        self.assertEqual(self.target.read_bytes(), b'abc')
+        self.assertEqual(self.receipt['attemptCount'], 2)
+        self.assertEqual(bytes(self.receipt['actualDigest']).hex(), ABC_SHA256)
+        self.assert_numeric(self.receipt)
+
+    def test_repeated_short_transfers_stop_after_three_attempts(self):
+        with mock.patch.object(FETCH.urllib.request, 'urlopen',
+                               side_effect=lambda *a, **k: Response(b'ab', length=3)) as request, \
+             mock.patch.object(FETCH.time, 'sleep') as sleep, self.assertRaises(ValueError):
+            FETCH.fetch('unused', self.target, 'sha256', ABC_SHA256, receipt=self.receipt)
+        self.assertEqual(request.call_count, 3)
+        self.assertEqual(sleep.call_count, 2)
+        self.assertEqual(self.receipt['attemptCount'], 3)
+        self.assertFalse(self.target.exists())
+        self.assertFalse(self.target.with_suffix('.obj.download').exists())
+
+    def test_retry_does_not_accept_complete_corrupt_body(self):
+        with mock.patch.object(FETCH.urllib.request, 'urlopen',
+                               side_effect=[Response(b'ab', length=3), Response(b'abd')]) as request, \
+             mock.patch.object(FETCH.time, 'sleep'), self.assertRaises(ValueError):
+            FETCH.fetch('unused', self.target, 'sha256', ABC_SHA256, receipt=self.receipt)
+        self.assertEqual(request.call_count, 2)
+        self.assertEqual(self.receipt['status'], 2)
+        self.assertFalse(self.target.exists())
 
     def test_error_payloads_never_become_models_or_receipts(self):
         for body in (b'<html>private service error</html>',

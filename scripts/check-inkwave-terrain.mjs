@@ -4,6 +4,7 @@ import fs from 'node:fs';import path from 'node:path';import crypto from 'node:c
 import {nativeStageCatalog} from './lib/inkwave-native-stages.mjs';
 import {convertSource} from '../patches/native-stages/runtime/source-convert.mjs';
 import {SOURCE_COMMIT} from '../patches/native-stages/runtime/source-catalog.mjs';
+import {terrainFileReceipt} from './lib/inkwave-terrain-receipt.mjs';
 import {validateNativeGeometry} from '../patches/native-stages/tools/validate-geometry.mjs';
 const [rootArg,outArg,assetsArg,baselineArg]=process.argv.slice(2);
 assert(rootArg&&outArg,'Usage: check-inkwave-terrain.mjs <private-sources-by-id> <summary.json> [private-derived-output] [baseline-converter.mjs]');
@@ -28,12 +29,18 @@ try{
     restored.push({name:b.name,sourceTriangles:b.ic/3,collisionTriangles:data.objectIds.reduce((n,id)=>n+(id===i),0)});
    }
   }
-  if(assets){
-   const target=path.join(assets,s.id);fs.mkdirSync(target,{recursive:true});
-   for(const [key,file] of Object.entries({vertices:'vertices',indices:'indices',triangles:'collision',normals:'normals',flags:'flags',objectIds:'objects',nodes:'bvh',order:'order',triangleFace:'triangleFace',mask:'mask'}))fs.writeFileSync(path.join(target,file+'.bin'),new Uint8Array(data[key].buffer));
-   fs.writeFileSync(path.join(target,'manifest.json'),JSON.stringify(data.manifest));
+  // Bind every audited byte, including collision attributes, paint mask and
+  // serialized manifest. A later seal must not bless modified derivatives.
+  const derivedFiles={},target=assets&&path.join(assets,s.id);
+  if(target)fs.mkdirSync(target,{recursive:true});
+  for(const [key,file] of Object.entries({vertices:'vertices',indices:'indices',triangles:'collision',normals:'normals',flags:'flags',objectIds:'objects',nodes:'bvh',order:'order',triangleFace:'triangleFace',mask:'mask'})){
+   const bytes=new Uint8Array(data[key].buffer);derivedFiles[file+'.bin']=terrainFileReceipt(bytes);
+   if(target)fs.writeFileSync(path.join(target,file+'.bin'),bytes);
   }
-  summary.stages.push({id:s.id,sourceSha256:s.sourceSha256,...audit,sourceGeometrySha256:hash(Buffer.from(data.vertices.buffer)),sourceIndexSha256:hash(Buffer.from(data.indices.buffer)),displayTopologyUnchanged:baseline?true:null,restored,conversionAndAuditMilliseconds:performance.now()-start});save();console.log(s.id+' audited; restored objects '+restored.length);
+  const manifestBytes=Buffer.from(JSON.stringify(data.manifest));derivedFiles['manifest.json']=terrainFileReceipt(manifestBytes);
+  if(target)fs.writeFileSync(path.join(target,'manifest.json'),manifestBytes);
+  summary.stages.push({id:s.id,sourceSha256:s.sourceSha256,...audit,derivedFiles,sourceGeometrySha256:hash(Buffer.from(data.vertices.buffer)),sourceIndexSha256:hash(Buffer.from(data.indices.buffer)),displayTopologyUnchanged:baseline?true:null,restored,conversionAndAuditMilliseconds:performance.now()-start});save();console.log(s.id+' audited; restored objects '+restored.length);
  }
  assert.equal(summary.stages.length,catalog.stages.length);summary.status='passed';
 }catch(error){summary.status='failed';summary.error=error.stack;throw error;}finally{save();}
+
