@@ -114,6 +114,14 @@ test('Charger onset occurs once on initial hold and again only after real stored
  assert.equal(f.calls.filter(c=>c.id==='s3-charger-normalscope'&&c.event==='charge').length,0,
    'scoped model must never play a fabricated charge-keep emergence click');
 
+ // Goo Tuber may retain a legal partial shot. Do not add a full-only
+ // sound restriction on top of the gameplay-owned stored-charge record.
+ const goo=f.make('s3-charger-keeper');goo.form='kid';goo.isLocal=true;
+ goo.weaponRunner.s3Stored={charge:.5,resurfaced:false};
+ f.emit('actor:form',{actor:goo,form:'squid'});
+ f.emit('actor:form',{actor:goo,form:'kid'});
+ assert.equal(f.calls.filter(c=>c.id==='s3-charger-keeper'&&c.event==='charge').length,1,
+   'stored partial charge on Goo Tuber triggers one emergence cue');
  a.setWeapon('shooter');f.emit('actor:form',{actor:a,form:'kid'});
  assert.equal(onsets().length,2,'weapon switching clears Charger onset routing');
 });
