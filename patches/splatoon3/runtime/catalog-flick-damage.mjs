@@ -26,7 +26,7 @@ export function catalogRollerDamageTable(damage,key,point,start,sectorYaw){
   const relative=Math.abs(Math.atan2(Math.sin(azimuth),Math.cos(azimuth)));
   return relative>(inside.Degree||0)*RAD?damage.Outside:inside;
 }
-export function catalogFlickSourceDamage(damage,unit,key,frames,point,start,sectorYaw){
+export function catalogFlickSourceDamage(damage,unit,key,frames,point,start,sectorYaw,depleted=false){
   if(!catalogFieldUnitCanDamage(unit))return 0;
   const table=catalogRollerDamageTable(damage,key,point,start,sectorYaw);
   if(!table)return null; // non-flick families keep existing damage law
@@ -45,5 +45,10 @@ export function catalogFlickSourceDamage(damage,unit,key,frames,point,start,sect
     const fraction=nextD>prevD?clamp((distance-prevD)/(nextD-prevD)):1;
     base=prevV+(nextV-prevV)*fraction;break;
   }
-  return Math.max(0,base/10)*catalogFlickDamageTimeRate(damage,frames)*catalogFlickDamageUnitRate(unit);
+  // Source per-sector depleted damage is independent of the common
+  // distance and late-airtime tables; do not halve unrelated Slosher shots.
+  const depletedRate=depleted&&Number.isFinite(table.DepletionDamageRate)
+    ?Math.max(0,table.DepletionDamageRate):1;
+  return Math.max(0,base/10)*catalogFlickDamageTimeRate(damage,frames)*
+    catalogFlickDamageUnitRate(unit)*depletedRate;
 }
