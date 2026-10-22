@@ -123,3 +123,25 @@ test('isolated runner retains all 14 cases, stderr, acceptance failures and succ
     }
   }
 });
+
+for (const label of ['results', 'boss-results', 'results-change-gear', 'loadout-continue']) {
+  test('preserves existing completed result phase: ' + label, () => {
+    const value = receipt();
+    value.diagnostics.lastCompletedStage = label;
+    value.diagnostics.events = [{ type: 'stage-complete', ms: 1234, detail: label }];
+    const summary = responsiveProgressSummary(fixture(value).identity);
+    assert.equal(summary.lastCompletedStage, label);
+    assert.deepEqual(summary.events, [{ type: 'stage-complete', ms: 1234, phase: label }]);
+  });
+}
+test('result-like freeform labels stay redacted', () => {
+  for (const label of ['results-PRIVATE', 'boss-results:PRIVATE', 'results-change-gear/PRIVATE', 'loadout-continue PRIVATE']) {
+    const value = receipt();
+    value.diagnostics.lastCompletedStage = label;
+    value.diagnostics.events = [{ type: 'stage-complete', ms: 1234, detail: label }];
+    const summary = responsiveProgressSummary(fixture(value).identity);
+    assert.equal(summary.lastCompletedStage, null);
+    assert.equal(summary.events[0].phase, null);
+    assert(!JSON.stringify(summary).includes('PRIVATE'));
+  }
+});

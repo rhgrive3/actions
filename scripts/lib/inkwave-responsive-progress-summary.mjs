@@ -6,7 +6,7 @@ const engines = new Set(['chromium', 'webkit']);
 const cases = new Set(['phone-portrait', 'phone-landscape', 'small-phone', 'tablet-portrait',
   'tablet-landscape', 'tablet-split', 'desktop']);
 const phases = new Set(['loading', 'title', 'main', 'settings', 'setup', 'loadout', 'locker',
-  'howto', 'credits', 'pause', 'online', 'lobby', 'drawer', 'boss-lobby', 'mode', 'news']);
+  'howto', 'credits', 'pause', 'results', 'boss-results', 'results-change-gear', 'loadout-continue', 'online', 'lobby', 'drawer', 'boss-lobby', 'mode', 'news']);
 const types = new Set(['case-start', 'stage-complete', 'first-error', 'page-crash', 'page-close',
   'context-close', 'browser-disconnected', 'console-error', 'console-warning',
   'diagnostic-skipped', 'diagnostic-error', 'context-close-start', 'context-close-complete',
