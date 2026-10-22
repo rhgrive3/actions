@@ -110,8 +110,18 @@ jobs:
           done < sources.tsv
           echo "Files:" >>fetch.log
           ls -lah *.png *.csv 2>/dev/null >>fetch.log || :
+          # A completed downloader run is NOT evidence of captured game audio.
+          # Fail closed when all providers blocked the request. The always()
+          # artifact upload still publishes diagnosis; no false green run.
+          valid_waves=$(find . -maxdepth 1 -type f -name '*-wave.png' | wc -l)
+          valid_comparisons=$(find . -maxdepth 2 -type f -name 'comparison.json' | wc -l)
+          printf 'valid_waveforms=%s valid_comparisons=%s\n' "$valid_waves" "$valid_comparisons" >>fetch.log
           rm -rf raw
           tail -100 fetch.log
+          if [ "$valid_waves" -eq 0 ] || [ "$valid_comparisons" -eq 0 ]; then
+            echo "::error::No genuine Charger gameplay audio extracted or source comparisons generated. This run is NOT a waveform success."
+            exit 2
+          fi
       - name: Upload derived waveforms, metadata and diagnostic logs (no video or audio)
         if: always()
         uses: actions/upload-artifact@v4
