@@ -1,0 +1,37 @@
+# ZEVANT web: the game (static assets built into ../dist by `npm run build:prod`) + the account API (/api/*).
+# Setup and deploy steps: account/README.md
+name = "zevant-web"
+main = "worker/index.js"
+compatibility_date = "2026-09-01"
+
+[assets]
+directory = "../dist"
+binding = "ASSETS"
+# Only API requests run the Worker; every other path is served straight from the asset store (with dist/_headers).
+run_worker_first = ["/api/*"]
+not_found_handling = "none"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "zevant-accounts"
+# Replace with the id printed by `npx wrangler d1 create zevant-accounts`.
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[vars]
+# "false" stops new sign-ups (existing players can still sign in).
+REGISTRATION_OPEN = "true"
+# Extra page origins allowed to call the API with cookies (comma separated). Same-origin needs nothing.
+ALLOWED_ORIGINS = ""
+# Lax for same-origin hosting. Use "None" only when the game is served from another site (needs HTTPS).
+COOKIE_SAMESITE = "Lax"
+# Optional Cloudflare Turnstile on sign-up: set the public key here and the secret with
+#   npx wrangler secret put TURNSTILE_SECRET_KEY
+TURNSTILE_SITE_KEY = ""
+
+[triggers]
+# Daily cleanup of expired sessions and idle sign-in throttles.
+crons = ["17 3 * * *"]
+
+[observability]
+enabled = true

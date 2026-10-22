@@ -1,0 +1,17 @@
+{
+  "name": "zevant-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker for ZEVANT: built game assets and the game account API (D1)",
+  "scripts": {
+    "dev": "wrangler dev",
+    "db:migrate:local": "wrangler d1 migrations apply zevant-accounts --local",
+    "db:migrate:remote": "wrangler d1 migrations apply zevant-accounts --remote",
+    "deploy": "wrangler deploy",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "4.148.0"
+  }
+}

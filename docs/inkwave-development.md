@@ -89,6 +89,18 @@ node scripts/check-inkwave-browser.mjs \
 
 証跡とプロファイルは作業ごとに別の永続ディレクトリを用意します。`/tmp`、`/var/tmp`、`/dev/shm` は拒否されます。再実行時も保存先を分けると比較できます。タッチ・練習場・原典ステージなどは各領域の専用チェッカーも必要です。Chromium の成功を WebKit、実 iPad、Switch での確認に読み替えないでください。
 
+## Cloudflare Workers 向けの本番ビルド（アカウント機能つき）
+
+`npm run build:prod`（`vite build`）は、ログイン UI を Vite でバンドルしてから同じ `scripts/build-inkwave.mjs` を実行し、`dist/` に Workers 用の配信物を作ります。Vite 8 のため Node.js 22.12 以上が必要です。
+
+```sh
+npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 vite@8.3.3
+npm run build:prod
+node scripts/check-inkwave-startup-budget.mjs dist
+```
+
+`INKWAVE_ACCOUNT_BUILD` を付けない通常の `_site/` ビルドは変わりません。UI の開発（`npm run dev`）、D1 の準備、デプロイ手順は [アカウントと Workers 配信](../account/README.md) を参照してください。
+
 ## リレーと公開配信
 
 リレー実装は [`server/src/`](../server/src/)、設定は [`server/wrangler.toml`](../server/wrangler.toml) です。ローカル開発は次の手順です。
