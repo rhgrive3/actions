@@ -213,9 +213,9 @@ driver=once(driver,"  fs.writeFileSync(path.join(out, 'manifest.json'), JSON.str
   if(responseErrors.length)throw Error('Response body verification failed: '+responseErrors.join(' | '));
   if(!servedDummy.length||servedDummy.some(r=>r.sha256!==${JSON.stringify(dummySha)}))throw Error('Served dummy identity mismatch');
   fs.writeFileSync(path.join(out,'served-dummy.json'),JSON.stringify(servedDummy,null,2));
-  const accepted=${JSON.stringify(emitted.map(e=>e.sha256))};
-  if(!servedShapes.length||servedShapes.some(r=>!accepted.includes(r.sha256)))throw Error('Served shape identity mismatch');
+  const accepted=${JSON.stringify(shapeOverlay?[shapeOverlay.transformedEmittedSha256]:emitted.map(e=>e.sha256))};
   fs.writeFileSync(path.join(out,'served-shapes.json'),JSON.stringify(servedShapes,null,2));
+  if(!servedShapes.length||servedShapes.some(r=>!accepted.includes(r.sha256)))throw Error('Served shape identity mismatch');
   fs.writeFileSync(path.join(out, 'manifest.json'), JSON.stringify(manifest, null, 1));`);
 if(preflight){
   driver=once(driver,'for(let j=0;j<30;j++)G.projectiles._draw();','for(let j=0;j<0;j++)G.projectiles._draw();');
