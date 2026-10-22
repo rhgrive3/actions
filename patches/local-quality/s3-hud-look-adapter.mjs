@@ -139,12 +139,17 @@ function once(code, before, after, label) {
 }
 
 const S3_DRAW_TANK = `  _drawTank(dt, sub, low, nosub) {
+    return this._s3PaintTank(sub, low, nosub);
+  }
+
+  _s3PaintTank(sub, low, nosub) {
     // Splatoon 3 ink tank (flat ink surface, as in the footage): a near-black bottle (stepped cap: shoulders, neck, nub; straight sides,
     // rounded foot) with a thick frame; the ink is flat team colour inside the frame with one bright
     // meniscus line, and a thin white line marks the sub-weapon cost. No gloss, no bubbles.
     const T = this._tank, c = this.tankCtx, cv = this.tankCanvas;
     const dpr = Math.min(2, devicePixelRatio || 1);
-    const cw = cv.clientWidth || 18, chh = cv.clientHeight || 74;
+    const box = this._s3TankBox(cv, sub, low, nosub);
+    const cw = box.w || 18, chh = box.h || 74;
     const W = Math.round(cw * dpr), H = Math.round(chh * dpr);
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
     const L = this._L;
@@ -189,6 +194,26 @@ const S3_DRAW_TANK = `  _drawTank(dt, sub, low, nosub) {
     c.lineWidth = 1 * dpr; c.strokeStyle = low ? (Math.sin(T.t * 14) > 0 ? '#ff3d5e' : 'rgba(255,255,255,.5)') : 'rgba(255,255,255,.12)';
     c.stroke(T2.outline);
     T.bubbles.length = 0;
+  }
+
+  // Reading clientWidth/clientHeight after the frame's HUD DOM writes forced a synchronous layout on every repaint.
+  // Read the size once, then only when a ResizeObserver reports a change. Its callback runs after layout and before
+  // paint, so the tank is repainted at the new size in the same frame (entering squid form resizes it).
+  _s3TankBox(cv, sub, low, nosub) {
+    let B = this._tankBox;
+    if (!B || B.cv !== cv) {
+      // A box belongs to one canvas (and may be inherited from a prototype HUD); never disconnect another's observer.
+      B = this._tankBox = { cv, w: cv.clientWidth, h: cv.clientHeight, args: null, ro: null };
+      if (typeof ResizeObserver === 'function') {
+        B.ro = new ResizeObserver(() => {
+          B.w = cv.clientWidth; B.h = cv.clientHeight;
+          if (B.args && B.w && B.h && this.tankCanvas === cv) this._s3PaintTank(...B.args);
+        });
+        B.ro.observe(cv);
+      }
+    } else if (!B.ro) { B.w = cv.clientWidth; B.h = cv.clientHeight; }
+    B.args = [sub, low, nosub];
+    return B;
   }
 
 `;
