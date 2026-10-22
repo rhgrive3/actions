@@ -1,6 +1,6 @@
 import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX, mainAudioSourceId } from './bank.mjs';
 import { RealS3SampleLoader } from './real-s3-loader.mjs';
-import { playChargerRise } from './charger-charge-rise.mjs';
+import { chargerRiseBuffer, playChargerRise } from './charger-charge-rise.mjs';
 import { blasterHitCuePitch } from './blaster-hit.mjs';
 import { borrowedRecordedMainId, isBorrowedRecordedMain } from './borrowed-recorded-mains.mjs';
 import { sourceEventRoute } from './extra-source-routes.mjs';
@@ -232,6 +232,11 @@ export function installWeaponAudioEngine(Engine){
     const result=init.apply(this,args);
     if(this.ctx)for(const id of this._warmWeapons||[])this.prepareWeapon(id,{urgent:true});
     return result;
+  };
+  p.prewarmChargerChargeRise=function(duration){
+    if(!this.ctx)return false;
+    chargerRiseBuffer(this.ctx,duration);
+    return true;
   };
   p.playChargerChargeRise=function(options){return playChargerRise(this,options);};
   p.disposeWeaponAudio=function(){this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmWeapons?.clear();};
