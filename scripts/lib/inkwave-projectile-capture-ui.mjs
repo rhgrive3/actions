@@ -44,7 +44,7 @@ export function installProjectileCaptureUiGate() {
     return out;
   };
   window.__iwProjectileCaptureUiGate = ({ phase = 'capture', allowIntro = false,
-    settled = true, requireReady = false } = {}) => {
+    settled = true, requireReady = false, cinematicAdmission = false, requireHudSettled = false } = {}) => {
     const g = window.__inkwave, G = window.__G, m = g?.match;
     const inspect = el => {
       if (!el) return { connected: false, visible: false };
@@ -89,25 +89,53 @@ export function installProjectileCaptureUiGate() {
         drawingBuffer: [gl?.drawingBufferWidth ?? null, gl?.drawingBufferHeight ?? null] },
     };
     const n = receipt.native, h = receipt.hud, u = receipt.ui, r = receipt.renderer;
+    // The native intro deliberately owns a hidden HUD and a lineup. This is
+    // only permission to prepare the cinematic, never permission to capture.
+    const structuralIntro = cinematicAdmission === true && phase === 'admission' && allowIntro === true && n.state === 'intro';
+    receipt.admissionKind = structuralIntro ? 'native-intro-structure' : 'visible-ui';
+    receipt.hud.observation = observeHud(hud?.el);
+    const hudSettled = () => {
+      // Do not accept an opacity threshold while its real transition is still
+      // pending/running. Inspect all animations, not the diagnostic JSON cap.
+      try {
+        for (let node = hud?.el; node; node = node.parentElement) {
+          if (typeof node.getAnimations !== 'function') return false;
+          for (const a of node.getAnimations({ subtree: false })) {
+            if (a.pending || a.playState !== 'finished' && a.playState !== 'idle') return false;
+          }
+        }
+        return !!hud?.el;
+      } catch { return false; }
+    };
     const checks = {
       native: n.mode === 'match' && n.matchIdentity && (n.state === 'playing' || allowIntro && n.state === 'intro') &&
         n.local && n.attract === false && !n.paused && n.controller && !n.orientationBlocked && n.projectiles &&
         n.documentVisibility === 'visible',
-      hud: h.flag && h.owner && h.count === 1 && !h.hiddenClass && h.dom.visible,
-      lineup: u.lineupCount === 0,
+      hud: h.owner && h.count === 1 && h.dom.connected &&
+        (structuralIntro || h.flag && !h.hiddenClass && h.dom.visible),
+      hudSettled: structuralIntro || !(settled || requireHudSettled) || hudSettled(),
+      lineup: structuralIntro ? u.lineupCount <= 1 : u.lineupCount === 0,
       startupBanners: !settled || u.startupBannerCount === 0,
       menu: u.menuPresent && u.menuCurrent === null && u.menuScreen === null && u.menuChildren === 0,
       wipe: u.wipePresent && u.wipeBusy === false && u.wipeRunning === false && !u.wipeActiveClass,
       renderer: r.gameOwner && r.rendererOwner && r.canvasOwner && r.canvasCount === 1 &&
         r.dom.tag === 'CANVAS' && r.dom.visible && r.canvasSize.every((size, i) => size > 0 && size === r.drawingBuffer[i]),
     };
-    receipt.hud.observation = observeHud(hud?.el);
     receipt.failed = Object.keys(checks).filter(key => !checks[key]);
     receipt.ready = receipt.failed.length === 0;
+    // Structural admission never erases the corresponding strict capture
+    // failures. Preserve both interpretations of this same observed state.
+    const captureChecks = { ...checks, native: checks.native && n.state === 'playing',
+      hud: h.flag && h.owner && h.count === 1 && !h.hiddenClass && h.dom.visible,
+      hudSettled: hudSettled(), lineup: u.lineupCount === 0,
+      startupBanners: u.startupBannerCount === 0 };
+    receipt.captureFailed = Object.keys(captureChecks).filter(key => !captureChecks[key]);
+    receipt.captureReady = receipt.captureFailed.length === 0;
     if (phase === 'admission') {
       history.admissionCount++;
       const sample = JSON.parse(JSON.stringify({ attempt: history.admissionCount, observedAtMs: receipt.observedAtMs,
-        state: receipt.native.state, stateT: scalar(m?.stateT), ready: receipt.ready, failed: receipt.failed,
+        state: receipt.native.state, stateT: scalar(m?.stateT), admissionKind: receipt.admissionKind,
+        ready: receipt.ready, failed: receipt.failed, captureFailed: receipt.captureFailed,
         hud: receipt.hud }));
       if (history.first.length < 4) history.first.push(sample);
       else { history.recent.push(sample); if (history.recent.length > 8) history.recent.shift(); }
@@ -122,8 +150,8 @@ export function installProjectileCaptureUiGate() {
 }
 
 // Preserve the supplied native predicate and its primitive-boolean contract.
-// The admission observer runs in the same atomic browser task, before any
-// synchronous intro frames can outrun the production wall-clock HUD timer.
+// Structural admission is explicit and valid only in the native intro phase.
+// The cinematic helper must let native HUD timers run before completing intro.
 export function withProjectileCaptureUi(predicate, options) {
   return new Function(`return function(){
     const nativeReady=(${predicate.toString()})();

@@ -16,9 +16,11 @@ test('offline and network match exits do not build 8 unseen bots under static ar
   assert.match(main, /_startAttract\(\) \{\n    this\._staticMenuAttract = !!arguments\[0\]\?\.staticMenu;/);
   assert.match(main, /noBots: this\._staticMenuAttract \|\| mapNoBots\(/);
   assert.match(main, /mannequins: !this\._staticMenuAttract && DEV_STAGE/);
-  assert.equal((main.match(/this\._startAttract\(\{ staticMenu: true \}\)/g) || []).length, 2,
-    'both offline quit and online end should return without invisible actor rigs');
-  assert.match(main, /s === 'main' && this\.match\?\.attract && !this\._staticMenuAttract\) this\._startAttract\(\{ staticMenu: true \}\)/,\n    'first title-to-main transition also retires the 8 idle GPU character rigs');\n  assert.match(main, /s === 'title' && this\._staticMenuAttract\) this\._startAttract\(\)/,
+  assert.equal((main.match(/this\._startAttract\(\{ staticMenu: true \}\)/g) || []).length, 3,
+    'offline quit, online end and title-to-main should avoid invisible actor rigs');
+  assert.match(main, /s === 'main' && this\.match\?\.attract && !this\._staticMenuAttract\) this\._startAttract\(\{ staticMenu: true \}\)/,
+    'first title-to-main transition also retires the 8 idle GPU character rigs');
+  assert.match(main, /s === 'title' && this\._staticMenuAttract\) this\._startAttract\(\)/,
     'opening the real animated title restores the demo characters');
   assert.match(main, /this\.R\?\.releasePausedFrame\?\.\(\)/);
   assert.match(main, /this\.R\?\.composer\?\.releaseInactiveTargets\?\.\(\)/);

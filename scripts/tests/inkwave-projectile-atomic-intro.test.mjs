@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {atomicIntroFunction,requireAtomicIntro} from '../lib/inkwave-projectile-atomic-intro.mjs';
+import {nativeTurfIntroWithUiFunction} from '../lib/inkwave-projectile-intro-ui.mjs';
 import {completeNativeTurfIntro} from '../lib/inkwave-projectile-ci-intro.mjs';
 import {withProjectileCaptureUi} from '../lib/inkwave-projectile-capture-ui.mjs';
 const source=fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
@@ -11,7 +12,7 @@ const playing=vm.runInNewContext('('+source.slice(lo,hi+7).replace('const playin
 function world(after=()=>{}){
   const m={state:'intro',stateT:0,time:180,attract:false,paused:false,controller:{},local:{isLocal:true}};
   const G={mode:'match',match:m,projectiles:{},renderer:{}},calls=[];
-  const g={match:m,frozen:false,_skipRender:false,debug:{freeze(){g.frozen=true;calls.push('freeze');},unfreeze(){g.frozen=false;calls.push('unfreeze');after({m,g,G});}},_frame(dt){calls.push('frame');assert.equal(dt,1/60);assert.equal(g._skipRender,true);m.stateT+=dt;if(m.stateT>4.2){m.state='playing';m.stateT=0;}}};
+  const g={match:m,frozen:false,_skipRender:false,debug:{freeze(){g.frozen=true;calls.push('freeze');},unfreeze(){g.frozen=false;calls.push('unfreeze');if(m.state==='playing')after({m,g,G});}},_frame(dt){calls.push('frame');assert.equal(dt,1/60);assert.equal(g._skipRender,true);m.stateT+=dt;if(m.stateT>4.2){m.state='playing';m.stateT=0;}}};
   return {m,g,G,calls,window:{__inkwave:g,__G:G}};
 }
 test('same browser task completes unchanged intro then validates full playing state',async()=>{
@@ -49,12 +50,12 @@ async function actualHarnessCallback() {
   const end=source.indexOf("\n    phaseMark('admission','end');",start);
   assert(start>=0&&end>start,'actual atomic call is present');
   let captured;
-  const page={},phaseReceipt={},deadline=123;
+  const page={},phaseReceipt={},deadline=Date.now()+10000;
   const a=source.indexOf('const admissionReady = () => {'),b=source.indexOf('\n    };',a);
   assert(a>=0&&b>a,'native admission predicate is present');
   const admission=vm.runInNewContext('('+source.slice(a,b+7).replace('const admissionReady = ','').replace(/;$/,'')+')');
   await vm.runInNewContext('(async()=>{'+source.slice(start,end)+'})()',{
-    page,phaseReceipt,deadline,atomicIntroFunction,completeNativeTurfIntro,withProjectileCaptureUi,
+    page,phaseReceipt,deadline,atomicIntroFunction,completeNativeTurfIntro,withProjectileCaptureUi,nativeTurfIntroWithUiFunction,
     playingReady:playing,admissionReady:admission,
     requireAtomicIntro:async(...args)=>{captured=args;return {};},
   });
@@ -65,10 +66,10 @@ async function actualHarnessCallback() {
 test('harness uses actual UI-wrapped atomic receipt with unchanged deadline and no second playing probe',async()=>{
   const callback=await actualHarnessCallback(),w=world(),phases=[];
   w.window.__iwProjectileCaptureUiGate=options=>{phases.push(JSON.parse(JSON.stringify(options)));return {ready:true};};
-  const result=vm.runInNewContext('('+callback.toString()+')()',{window:w.window});
+  const result=await vm.runInNewContext('('+callback.toString()+')()',{window:w.window});
   assert.equal(result.playingReady,true);
-  assert.deepEqual(phases,[{phase:'admission',allowIntro:true,settled:false},{phase:'playing',settled:false}]);
-  assert.equal(w.calls.filter(c=>c==='freeze').length,1);
+  assert.deepEqual(phases,[{phase:'admission',allowIntro:true,settled:false,cinematicAdmission:true},{phase:'intro-ui-wait',allowIntro:true,settled:false,requireHudSettled:true},{phase:'playing',settled:false}]);
+  assert.equal(w.calls.filter(c=>c==='freeze').length,2);
   assert.ok(!source.includes("requireNativePhase(playingReady"));
   assert.ok(source.includes('const NATIVE_BOOT_TIMEOUT_MS = 180000;'));
   assert.ok(source.includes("window.__iwProjectileCaptureUiGate({phase:'settled'}).ready === true"),'native UI must complete inside the original deadline');
@@ -177,7 +178,7 @@ test('admission exception is preserved and does not run intro or retry',async()=
 test('admitted ready result after deadline still fails and is never retroactively accepted',async()=>{
   const w=world();let now=0;const receipt={};
   const fn=atomicIntroFunction(completeNativeTurfIntro,playing,()=>true);
-  await assert.rejects(requireAtomicIntro({evaluate:async callback=>{const result=vm.runInNewContext('('+callback.toString()+')()',{window:w.window});now=101;return result;}},fn,100,{now:()=>now,receipt}),/after deadline/);
+  await assert.rejects(requireAtomicIntro({evaluate:async callback=>{const result=await vm.runInNewContext('('+callback.toString()+')()',{window:w.window});now=101;return result;}},fn,100,{now:()=>now,receipt}),/after deadline/);
   assert.equal(w.m.state,'playing');assert.equal(receipt.outcome,'failed');
 });
 test('actual UI-wrapped admission cannot advance intro when UI is pending or object-truthy',async()=>{
@@ -185,7 +186,7 @@ test('actual UI-wrapped admission cannot advance intro when UI is pending or obj
   const callback=await actualHarnessCallback();
   for(const ready of [false,{},undefined]){
     const w=world();w.window.__iwProjectileCaptureUiGate=()=>({ready});
-    const result=vm.runInNewContext('('+callback.toString()+')()',{window:w.window});
+    const result=await vm.runInNewContext('('+callback.toString()+')()',{window:w.window});
     assert.equal(result.admissionReady,false);assert.equal(w.calls.length,0);
   }
 });
@@ -194,11 +195,11 @@ test('actual harness preserves native admission and post-intro predicate even wh
   const mutations=[w=>{w.G.mode='menu';},w=>{w.G.match={};},w=>{w.m.attract=true;},w=>{delete w.m.local;},w=>{delete w.m.controller;},w=>{delete w.G.projectiles;},w=>{delete w.G.renderer;}];
   for(const mutate of mutations){
     const w=world();mutate(w);w.window.__iwProjectileCaptureUiGate=()=>({ready:true});
-    const before=vm.runInNewContext('('+callback.toString()+')()',{window:w.window});
+    const before=await vm.runInNewContext('('+callback.toString()+')()',{window:w.window});
     assert.equal(before.admissionReady,false);assert.equal(w.calls.length,0);
     const after=world(mutate);after.window.__iwProjectileCaptureUiGate=()=>({ready:true});
-    const result=vm.runInNewContext('('+callback.toString()+')()',{window:after.window});
-    assert.equal(result.playingReady,false);assert.equal(after.calls.filter(c=>c==='freeze').length,1);
+    const result=await vm.runInNewContext('('+callback.toString()+')()',{window:after.window});
+    assert.equal(result.playingReady,false);assert.equal(after.calls.filter(c=>c==='freeze').length,2);
   }
 });
 test('actual native admission predicate blocks incomplete state without intro frames',()=>{

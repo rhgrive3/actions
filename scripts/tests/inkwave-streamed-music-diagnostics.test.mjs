@@ -59,6 +59,13 @@ test('runner keeps historical workload and failure gates after reviewed capture 
  assert.ok(runner.includes(gate));assert.ok(runner.includes("report.status = report.errors.length ? 'failed' : 'passed';"));
  let restored=runner;
  const revert=(current,prior)=>{assert.equal(restored.split(current).length,2);restored=restored.replace(current,prior);};
+ // Reviewed phase-correct cinematic preparation: structural admission does
+ // not grant capture permission; the native timers run under a cinematic-only hold.
+ revert("import { nativeTurfIntroWithUiFunction } from './lib/inkwave-projectile-intro-ui.mjs';\n", "");
+ revert("atomicIntroFunction(nativeTurfIntroWithUiFunction(completeNativeTurfIntro,deadline),", "atomicIntroFunction(completeNativeTurfIntro,");
+ revert("withProjectileCaptureUi(admissionReady,{phase:'admission',allowIntro:true,settled:false,cinematicAdmission:true}),\n        {asyncIntro:true})", "withProjectileCaptureUi(admissionReady,{phase:'admission',allowIntro:true,settled:false}))");
+ revert("      cinematicUi:window.__iwProjectileIntroUiReceipt,\n", "");
+ revert("        cinematicUi:window.__iwProjectileIntroUiReceipt??null,\n", "");
  // Reviewed native UI admission/capture and bounded history additions only.
  revert("import { installProjectileCaptureRoster } from './lib/inkwave-projectile-ci-roster.mjs';\nimport { installProjectileCaptureUiGate, withProjectileCaptureUi } from './lib/inkwave-projectile-capture-ui.mjs';\n\n","import { installProjectileCaptureRoster } from './lib/inkwave-projectile-ci-roster.mjs';\n\n");
  revert("    harnessSha256: hash(fs.readFileSync(fileURLToPath(import.meta.url))),\n    captureUiGateSha256: hash(fs.readFileSync(new URL('./lib/inkwave-projectile-capture-ui.mjs', import.meta.url))),\n    capture: 'Normal INKWAVE bootstrap then real PLAY/TURF/Tidewater/START menu gestures into full match; production Projectiles fire methods; live stage Physics, Paint and FX update; native Three/WebGL renderer screenshots.',\n","    harnessSha256: hash(fs.readFileSync(fileURLToPath(import.meta.url))),\n    capture: 'Normal INKWAVE bootstrap then real PLAY/TURF/Tidewater/START menu gestures into full match; production Projectiles fire methods; live stage Physics, Paint and FX update; native Three/WebGL renderer screenshots.',\n");
@@ -199,7 +206,7 @@ async function lifecycleFixture({failAt=null,closeFailure=false}={}) {
  const realm={browser:{newContext:async()=>context},report,observeStreamedMusic,sourceIdentity:{checkoutSha:'a'.repeat(40),eventSha:null,checkoutIdentityStatus:'verified-git-head'},manifest:{build:{revision:'rev'}},address:'http://127.0.0.1:9999/',
   URL,Date,setTimeout,clearTimeout,process:{env:{}},quality:'low',BOOT_SEED:1,NATIVE_BOOT_TIMEOUT_MS:50,MIN_PERFORMANCE_FRAMES:3,PERFORMANCE_TIMEOUT_MS:200,durationMs:50,
   installProjectileCaptureUiGate,withProjectileCaptureUi,installAudioTimingObserver(){},audioBuildManifestReceipt:()=>({}),audioDiagnosticURL:x=>x,audioReceiptSha256:()=>'',site:'/site',mimeErrors:[],
-  startProjectileThroughMenu:async()=>{if(failAt==='open-menu')throw primary;},completeNativeTurfIntro(){},atomicIntroFunction(){},
+  nativeTurfIntroWithUiFunction:()=>()=>{},startProjectileThroughMenu:async()=>{if(failAt==='open-menu')throw primary;},completeNativeTurfIntro(){},atomicIntroFunction(){},
   requireAtomicIntro:async()=>({intro:{},readiness:{},playingReady:true}),installProjectileCaptureRoster(){}};
  vm.createContext(realm);vm.runInContext(summaryText+'\n'+openText+'\n'+performanceText,realm);
  return {realm,report,calls,primary,cleanup,context,page,state};

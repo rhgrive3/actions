@@ -1,3 +1,4 @@
+import {paintEpochSource} from './fixtures/inkwave-paint-source-epochs.mjs';
 import {verifyDeclaredPaintSources} from '../lib/inkwave-declared-paint-source-pair.mjs';
 import os from 'node:os';
 import path from 'node:path';
@@ -55,7 +56,7 @@ for(const [name,paths,plan]of [['pose',CHARACTER_POSE_PATHS,planCharacterPoseBas
 for(const [name,paths,plan]of [['pose',CHARACTER_POSE_PATHS,planCharacterPoseBaseline],['paint',MAIN_INK_BASELINE_PATHS,planMainInkBaseline]]){
  const base=new Map(paths.map(p=>[p,historicalSource('oct21IntegrationBase',p)]));
  if(name==='paint')base.set(swimMain.path,swimMain.content);
- const candidate=new Map(paths.map(p=>[p,fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
+ const candidate=new Map(paths.map(p=>[p,MAIN_INK_BASELINE_PATHS.includes(p) ? paintEpochSource('pr1746', p) : fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
  test(name+' PR1746 complete pair preserves source identity and rejects every unknown leaf',()=>{
   const b=[...base],a=[...candidate],result=plan(base,candidate),receipt=result.pairEvidence??result.evidence;
   assert.deepEqual(result.changes,[]);assert.deepEqual([...result.sources],b);
@@ -86,7 +87,7 @@ for(const [name,paths,plan]of [['pose',CHARACTER_POSE_PATHS,planCharacterPoseBas
 }
 
 test('only the complete PR1746 paint epoch admits equal sources and rejects every unknown equal leaf',()=>{
- const current=new Map(MAIN_INK_BASELINE_PATHS.map(p=>[p,fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
+ const current=new Map(MAIN_INK_BASELINE_PATHS.map(p=>[p,MAIN_INK_BASELINE_PATHS.includes(p) ? paintEpochSource('pr1746', p) : fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
  const original=[...current],result=planMainInkBaseline(current,new Map(current));
  assert.equal(result.evidence.mode,'pr1746-byte-identical-current-paint');
  assert.equal(result.evidence.sourceBase,'f31238a48b9d1a4af2d4f5f5f9182af777a79c83');
@@ -109,7 +110,7 @@ test('only the complete PR1746 paint epoch admits equal sources and rejects ever
 
 test('explicit requested paint contract rejects whole-tree substitution into otherwise approved identity',()=>{
  const base=new Map(MAIN_INK_BASELINE_PATHS.map(p=>[p,historicalSource('oct21IntegrationBase',p)]));base.set(swimMain.path,swimMain.content);
- const current=new Map(MAIN_INK_BASELINE_PATHS.map(p=>[p,fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
+ const current=new Map(MAIN_INK_BASELINE_PATHS.map(p=>[p,MAIN_INK_BASELINE_PATHS.includes(p) ? paintEpochSource('pr1746', p) : fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
  const differing={mode:'current-pair-with-gameplay-differences',sourceBase:'95c25af145418691991a1452d4d10589754a0f1c',sourceHead:'f31238a48b9d1a4af2d4f5f5f9182af777a79c83'};
  const identical={mode:'pr1746-byte-identical-current-paint',sourceBase:differing.sourceHead,sourceHead:differing.sourceHead};
  assert.equal(planMainInkBaseline(base,current,differing).evidence.mode,differing.mode);
@@ -123,7 +124,7 @@ test('explicit requested paint contract rejects whole-tree substitution into oth
 test('CLI expected differing epochs rejects copied identity before overwriting source or receipt',t=>{
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-explicit-pair-'));t.after(()=>fs.rmSync(temp,{recursive:true,force:true}));
  const left=path.join(temp,'before'),right=path.join(temp,'after'),receipt=path.join(temp,'receipt.json');
- const sources=new Map(MAIN_INK_BASELINE_PATHS.map(p=>[p,fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
+ const sources=new Map(MAIN_INK_BASELINE_PATHS.map(p=>[p,MAIN_INK_BASELINE_PATHS.includes(p) ? paintEpochSource('pr1746', p) : fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
  sources.set('patches/splatoon3/profile.json',fs.readFileSync(new URL('../../patches/splatoon3/profile.json',import.meta.url),'utf8'));
  for(const dir of [left,right])for(const [p,source]of sources){const file=path.join(dir,p);fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,source);}
  const run=args=>spawnSync(process.execPath,[fileURLToPath(new URL('../prepare-inkwave-projectile-baseline.mjs',import.meta.url)),'--baseline',left,'--candidate',right,'--receipt',receipt,...args],{encoding:'utf8'});
@@ -144,7 +145,7 @@ test('CLI expected differing epochs rejects copied identity before overwriting s
 test('declared Git leaves reject dirty whole-tree copy with unchanged HEAD and permit intended immutable identity',t=>{
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-git-pair-'));t.after(()=>fs.rmSync(temp,{recursive:true,force:true}));
  const base=new Map(MAIN_INK_BASELINE_PATHS.map(p=>[p,historicalSource('oct21IntegrationBase',p)]));base.set(swimMain.path,swimMain.content);
- const current=new Map(MAIN_INK_BASELINE_PATHS.map(p=>[p,fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
+ const current=new Map(MAIN_INK_BASELINE_PATHS.map(p=>[p,MAIN_INK_BASELINE_PATHS.includes(p) ? paintEpochSource('pr1746', p) : fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
  const git=(root,args)=>execFileSync('git',['-C',root,...args],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
  const write=(root,rows)=>{for(const [p,s]of rows){const file=path.join(root,p);fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,s);}};
  const make=(name,rows)=>{const root=path.join(temp,name);fs.mkdirSync(root);write(root,rows);git(root,['init']);git(root,['add','.']);git(root,['-c','user.name=QA','-c','user.email=qa@example.invalid','-c','commit.gpgsign=false','commit','-m','fixture']);return {root,sha:git(root,['rev-parse','HEAD'])};};

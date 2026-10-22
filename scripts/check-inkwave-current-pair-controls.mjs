@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Current reviewed main/candidate source admission controls. No production writes.
 import assert from 'node:assert/strict';
+import {parseSourceAdmissionArgs, assertReceiptSeparate} from './lib/inkwave-source-admission-cli.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -8,24 +9,16 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { verifyDeclaredPaintSources } from './lib/inkwave-declared-paint-source-pair.mjs';
-import { MAIN_INK_BASELINE_PATHS, planMainInkBaseline } from './lib/inkwave-main-ink-baseline.mjs';
+import { MAINE1F_PAINT_SOURCE_PAIR, MAIN9FE_PAINT_SOURCE_PAIR, MAIN_INK_BASELINE_PATHS, planMainInkBaseline } from './lib/inkwave-main-ink-baseline.mjs';
 
-const arg = name => {
-  const at = process.argv.indexOf(name);
-  assert.ok(at >= 0 && process.argv[at + 1], 'required ' + name);
-  return path.resolve(process.argv[at + 1]);
-};
+const options = parseSourceAdmissionArgs(process.argv.slice(2), ['--baseline', '--candidate', '--receipt', '--base-sha', '--candidate-sha', '--expected-mode', '--expected-source-base', '--expected-source-head'], ['--baseline', '--candidate']);
+const value = name => options.get(name) ?? null;
+const arg = name => path.resolve(value(name));
 const baseline = arg('--baseline'), candidate = arg('--candidate');
 assert.notEqual(fs.realpathSync(baseline), fs.realpathSync(candidate), 'separate source roots required');
-const receiptAt = process.argv.indexOf('--receipt');
-if (receiptAt >= 0) assert.ok(process.argv[receiptAt + 1], 'required --receipt value');
-const output = receiptAt < 0 ? null : path.resolve(process.argv[receiptAt + 1]);
+const output = value('--receipt') === null ? null : path.resolve(value('--receipt'));
 const paths = [...MAIN_INK_BASELINE_PATHS, 'patches/splatoon3/profile.json'];
-if (output) {
-  const destination = fs.existsSync(output) ? fs.realpathSync(output) : output;
-  for (const root of [baseline, candidate]) for (const rel of paths)
-    assert.notEqual(destination, fs.realpathSync(path.join(root, rel)), 'receipt must not replace an input file');
-}
+if (output) assertReceiptSeparate(output, [baseline, candidate], paths);
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const snapshot = root => new Map(paths.map(rel => [rel, fs.readFileSync(path.join(root, rel))]));
 const before = snapshot(baseline), after = snapshot(candidate);
@@ -35,12 +28,27 @@ const verify = (root, rows) => {
   for (const [rel, bytes] of rows) assert.deepEqual(fs.readFileSync(path.join(root, rel)), bytes, rel + ': input bytes preserved');
 };
 // Fail before making a scratch copy if these are not the exact reviewed inputs.
-const value=name=>{const at=process.argv.indexOf(name);return at<0?null:process.argv[at+1];};
-const hasDeclared=process.argv.includes('--base-sha')||process.argv.includes('--candidate-sha');
+const expectationFlags = ['--expected-mode','--expected-source-base','--expected-source-head'];
+const hasExpectation = expectationFlags.some(flag => options.has(flag));
+let requestedPair = null;
+if (hasExpectation) {
+  const values = expectationFlags.map(flag => {
+    assert.ok(options.has(flag), 'complete ' + flag);
+    return value(flag);
+  });
+  requestedPair={mode:values[0],sourceBase:values[1],sourceHead:values[2]};
+}
+const hasDeclared=options.has('--base-sha')||options.has('--candidate-sha');
+if(requestedPair?.mode === MAIN9FE_PAINT_SOURCE_PAIR.mode)
+ assert.ok(hasDeclared,'main9fe source epoch requires declared immutable Git source commits');
+if(requestedPair?.mode === MAINE1F_PAINT_SOURCE_PAIR.mode)
+ assert.ok(hasDeclared,'maine1f source epoch requires declared immutable Git source commits');
 const declared=hasDeclared?verifyDeclaredPaintSources({baseline:sourceMap(before),candidate:sourceMap(after),
  baseGitRoot:baseline,candidateGitRoot:candidate,baseSha:value('--base-sha'),candidateSha:value('--candidate-sha')}):null;
-const admitted = planMainInkBaseline(declared?.baseline??sourceMap(before), declared?.candidate??sourceMap(after));
-const identity = admitted.evidence.mode === 'pr1746-byte-identical-current-paint';
+const admitted = planMainInkBaseline(declared?.baseline??sourceMap(before), declared?.candidate??sourceMap(after),requestedPair);
+const main9fe = admitted.evidence.mode === MAIN9FE_PAINT_SOURCE_PAIR.mode;
+const maine1f = admitted.evidence.mode === MAINE1F_PAINT_SOURCE_PAIR.mode;
+const identity = maine1f || main9fe || admitted.evidence.mode === 'pr1746-byte-identical-current-paint';
 assert.ok(identity || admitted.evidence.mode === 'current-pair-with-gameplay-differences', 'current controls cannot test a legacy replay');
 const expectedPair = Object.freeze(Object.fromEntries(['mode','sourceBase','sourceHead'].map(key=>[key,admitted.evidence[key]])));
 assert.deepEqual(admitted.changes, []);
@@ -86,11 +94,11 @@ function positive() {
     evidence.paint.sourceHead === 'f31238a48b9d1a4af2d4f5f5f9182af777a79c83' ? 2 : 4;
   assert.equal(evidence.paint.paths.filter(row => row.originalSha256 !== row.candidateSha256).length, expectedChanged);
   for (const row of evidence.paint.paths) {
-    assert.equal(row.mode, identity ? 'pr1746-exact-current-paint' : 'reviewed-current-pair');
+    assert.equal(row.mode, maine1f ? 'maine1f-exact-paint-source' : main9fe ? 'main9fe-exact-paint-source' : identity ? 'pr1746-exact-current-paint' : 'reviewed-current-pair');
     assert.deepEqual(row.replayed, []);
     assert.equal(row.referenceSha256, row.originalSha256);
   }
-  assert.match(evidence.scope, identity ? /complete byte-identical PR1746 source epoch/ : /Gameplay differences remain/);
+  assert.match(evidence.scope, maine1f ? /explicitly selected maine1f thirteen-leaf paint source epoch/ : main9fe ? /explicitly selected main9fe thirteen-leaf paint source epoch/ : identity ? /complete byte-identical PR1746 source epoch/ : /Gameplay differences remain/);
   assert.doesNotMatch(evidence.scope, /identical.*physics/);
   verify(left, before); verify(right, after);
   counts.positiveCli++;
@@ -151,5 +159,5 @@ const evidence = {
   declaredSources:declared?.evidence??null,
   beforeSha256: originalHashes(before), afterSha256: originalHashes(after),
 };
-if (output) { fs.mkdirSync(path.dirname(output), { recursive: true }); fs.writeFileSync(output, JSON.stringify(evidence, null, 2) + '\n'); }
+if (output) { assertReceiptSeparate(output, [baseline, candidate], paths); fs.mkdirSync(path.dirname(output), { recursive: true }); fs.writeFileSync(output, JSON.stringify(evidence, null, 2) + '\n'); }
 console.log(JSON.stringify(evidence));

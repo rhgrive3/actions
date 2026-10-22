@@ -18,6 +18,7 @@ import { projectileDrawRadius, projectileVisualWidth } from '../patches/splatoon
 import { startProjectileThroughMenu } from './lib/inkwave-projectile-menu-start.mjs';
 import { atomicIntroFunction, requireAtomicIntro } from './lib/inkwave-projectile-atomic-intro.mjs';
 import { completeNativeTurfIntro } from './lib/inkwave-projectile-ci-intro.mjs';
+import { nativeTurfIntroWithUiFunction } from './lib/inkwave-projectile-intro-ui.mjs';
 import { installProjectileCaptureRoster } from './lib/inkwave-projectile-ci-roster.mjs';
 import { installProjectileCaptureUiGate, withProjectileCaptureUi } from './lib/inkwave-projectile-capture-ui.mjs';
 
@@ -282,9 +283,10 @@ async function openGameContext({ mobile = false } = {}) {
     phaseMark('intro','begin');
     phaseMark('playing','begin');
     const atomicReceipt = await requireAtomicIntro(page,
-      atomicIntroFunction(completeNativeTurfIntro,
+      atomicIntroFunction(nativeTurfIntroWithUiFunction(completeNativeTurfIntro,deadline),
         withProjectileCaptureUi(playingReady,{phase:'playing',settled:false}),
-        withProjectileCaptureUi(admissionReady,{phase:'admission',allowIntro:true,settled:false})),
+        withProjectileCaptureUi(admissionReady,{phase:'admission',allowIntro:true,settled:false,cinematicAdmission:true}),
+        {asyncIntro:true}),
       deadline,{receipt:phaseReceipt.atomicIntro={}});
     phaseMark('admission','end');
     phaseMark('intro','end');
@@ -298,6 +300,7 @@ async function openGameContext({ mobile = false } = {}) {
     phaseMark('ui','end');
     (report.provenance.nativeUiReceipts ||= []).push({mobile,...await page.evaluate(() => ({
       admission:window.__iwProjectileCaptureUiAdmission, playing:window.__iwProjectileCaptureUiPlaying,
+      cinematicUi:window.__iwProjectileIntroUiReceipt,
       settled:window.__iwProjectileCaptureUiReceipt,
     }))});
   } catch (error) {
@@ -307,6 +310,7 @@ async function openGameContext({ mobile = false } = {}) {
     const observed = await page.evaluate(() => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
       return { observedAtMs:Date.now(),atomicIntro:window.__iwProjectileAtomicIntroReceipt??null,
+        cinematicUi:window.__iwProjectileIntroUiReceipt??null,
         captureUi:window.__iwProjectileCaptureUiReceipt??null,
         captureUiHistory:window.__iwProjectileCaptureUiHistory??null,
         mode: G?.mode, state: m?.state, stateT: m?.stateT, attract: m?.attract,
