@@ -5,7 +5,7 @@ permissions:
   contents: read
 concurrency:
   group: inkwave-combined-qa-${{ github.event.pull_request.number }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   immutable-source-pairs-and-focused-qa:
     if: github.head_ref == 'test/inkwave-combined-qa-20261021'
