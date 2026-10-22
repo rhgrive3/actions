@@ -21,6 +21,7 @@ on:
       - 'patches/local-quality/tenacity.mjs'
       - 'patches/local-quality/tests/tenacity.test.mjs'
       - 'patches/splatoon3/tests/special-*.test.mjs'
+      - 'patches/splatoon3/tests/kraken-*.test.mjs'
       - 'patches/splatoon3/tests/triple-splashdown-presentation.test.mjs'
       - 'patches/splatoon3/tests/sub-community-behavior.test.mjs'
       - 'patches/splatoon3/tests/curling-community-fidelity.test.mjs'
@@ -57,6 +58,8 @@ jobs:
       - name: Source-backed 19-special runtime and gameplay boundaries
         run: |
           node --experimental-vm-modules --test \
+            patches/splatoon3/tests/kraken-movement-paint-1130.test.mjs \
+            patches/splatoon3/tests/kraken-arm-motion.test.mjs \
             patches/splatoon3/tests/special-activation-scan-1130.test.mjs \
             patches/splatoon3/tests/special-wavebreaker-expiry-1130.test.mjs \
             patches/splatoon3/tests/special-crab-body-radius-1130.test.mjs \
@@ -138,6 +141,9 @@ jobs:
       - name: Verify new boundaries in emitted modules
         run: |
           INKWAVE_TENACITY_BUILT_SITE=_site INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test --test-concurrency=2 \
+            patches/splatoon3/tests/kraken-movement-paint-1130.test.mjs \
+            patches/splatoon3/tests/kraken-arm-motion.test.mjs \
+            patches/splatoon3/tests/kraken-dash-occlusion.test.mjs \
             patches/splatoon3/tests/special-zipcaster-ink-screen-contact.test.mjs \
             patches/splatoon3/tests/special-missile-tracking-hook-range.test.mjs \
             patches/splatoon3/tests/sub-community-behavior.test.mjs \
