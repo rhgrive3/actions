@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import { enterRangeFromMenu } from './lib/inkwave-range-menu-entry.mjs';
+import { loadUuidComparison, recordLoadedModuleResponse, verifyLoadedModules } from './lib/inkwave-roller-uuid-comparison.mjs';
 const site=path.resolve(process.argv[2]||'_site'), out=path.resolve(process.argv[3]||'.browser-evidence/roller-scale/range');
 // Fixed inspection views are authored once from the baseline and reused verbatim.
 // BEGIN GRIP CAMERA CONTRACT
@@ -29,6 +30,11 @@ function makeGripCameras(anchor){
 }
 // END GRIP CAMERA CONTRACT
 const traceRng=process.env.GRIP_RNG_TRACE==='1';
+const isolationIndex=process.argv.indexOf('--historical-uuid-isolation');
+if(isolationIndex>=0&&!process.argv[isolationIndex+1])throw Error('Missing declared historical UUID isolation');
+const isolation=isolationIndex<0?null:loadUuidComparison(path.resolve(process.argv[isolationIndex+1]),site);
+const buildManifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
+const loadedModules={},loadedTasks=[];
 const seedIndex=process.argv.indexOf('--grip-seed');
 const gripSeed=seedIndex<0?null:Number(process.argv[seedIndex+1]);
 if(seedIndex>=0&&(!/^\d+$/.test(process.argv[seedIndex+1]||'')||!Number.isInteger(gripSeed)||gripSeed<0||gripSeed>0xffffffff))throw Error('Invalid grip seed: expected uint32');
@@ -46,11 +52,14 @@ const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript'
 const server=http.createServer((q,r)=>{
   const u=new URL(q.url,'http://localhost'), file=path.resolve(site,'.'+(u.pathname==='/'?'/index.html':decodeURIComponent(u.pathname)));
   if(!file.startsWith(site+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){r.writeHead(404);r.end();return;}
-  r.setHeader('content-type',mime[path.extname(file)]||'application/octet-stream');fs.createReadStream(file).pipe(r);
+  r.setHeader('content-type',mime[path.extname(file)]||'application/octet-stream');
+  const rel=path.relative(site,file).split(path.sep).join('/');
+  if(isolation?.declaration.paths.includes(rel)){r.end(isolation.bytes);return;}
+  fs.createReadStream(file).pipe(r);
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 let browser,page,diagnosticTimer;
-const receipt={expectedDrumWidth,diagnosticOnly:process.env.GRIP_DIAGNOSTIC_ONLY==='1',acceptanceNote:process.env.GRIP_DIAGNOSTIC_ONLY==='1'?'Unchanged-baseline control failed; candidate images are nonaccepting diagnostics.':null,build:JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'))).contentHash,errors:[],requests:[],console:[]};
+const receipt={expectedDrumWidth,diagnosticOnly:process.env.GRIP_DIAGNOSTIC_ONLY==='1',acceptanceNote:process.env.GRIP_DIAGNOSTIC_ONLY==='1'?'Unchanged-baseline control failed; candidate images are nonaccepting diagnostics.':isolation?'Explicit historical UUID-only controlled comparison; build identifies the unmodified source artifact, runtimeIdentity binds the actual loaded bytes.':null,build:buildManifest.contentHash,comparisonIsolation:isolation?.declaration||null,errors:[],requests:[],console:[]};
 const snapshot=async()=>page?.evaluate(()=>({mode:window.__G?.mode,match:window.__G?.match?.state,
   menu:window.__inkwave?.menus?.current,layout:window.__G?.level?.layout?.id,
   range:!!window.__G?.match?.range,entryFreeze:window.__gripEntryFreeze,initialState:window.__gripInitialState,text:document.body.innerText.slice(-1800)})).catch(()=>null);
@@ -60,6 +69,10 @@ try{
     args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   page=await browser.newPage({viewport:{width:1280,height:840}});
   page.on('pageerror',e=>receipt.errors.push(e.message));
+  page.on('response',response=>{
+    loadedTasks.push(recordLoadedModuleResponse(response,'http://127.0.0.1:'+server.address().port,loadedModules)
+      .catch(error=>{receipt.errors.push(String(error));}));
+  });
   page.on('requestfailed',r=>{if(receipt.requests.length<30)receipt.requests.push({url:r.url(),failure:r.failure()});});
   page.on('response',r=>{if(r.status()>=400&&receipt.requests.length<30)receipt.requests.push({url:r.url(),status:r.status()});});
   page.on('console',m=>{if(['error','warning'].includes(m.type())&&receipt.console.length<30)receipt.console.push(m.text().slice(0,1500));});
@@ -345,6 +358,9 @@ try{
   assert.deepEqual(receipt.release.renderSize,m.renderSize);
   for(const frame of receipt.release.frames)assert.ok(Math.abs(frame.time-receipt.release.start.time-frame.tick/60)<1e-8);
   assert.equal(receipt.errors.length,0);
-  receipt.passed=true;console.log(JSON.stringify({measurement:m,release:receipt.release}));
+  await Promise.all(loadedTasks);
+  receipt.runtimeIdentity=verifyLoadedModules(loadedModules,buildManifest,isolation?.declaration);
+  assert.equal(receipt.errors.length,0);
+  receipt.passed=true;console.log(JSON.stringify({measurement:m,release:receipt.release,runtimeIdentity:receipt.runtimeIdentity}));
 }catch(error){receipt.passed=false;receipt.failure=String(error.stack||error);receipt.state=await snapshot();await page?.screenshot({path:path.join(out,'failure.png'),timeout:30000}).catch(()=>{});throw error;}
 finally{clearInterval(diagnosticTimer);fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(receipt,null,2)+'\n');await browser?.close();await new Promise(r=>server.close(r));}

@@ -11,6 +11,8 @@ import { chromium } from 'playwright';
 
 const opt = (name, fallback) => { const i = process.argv.indexOf(name); return i < 0 ? fallback : process.argv[i + 1]; };
 const site = fs.realpathSync(opt('--site', '_site'));
+const inkjet = process.argv.includes('--inkjet') ? { hz:Number(opt('--hz','60')), actorCount:Number(opt('--actors','1')), layout:opt('--layout','near') } : null;
+if(inkjet){assert.ok([30,60,120].includes(inkjet.hz));assert.ok([1,2,4].includes(inkjet.actorCount));assert.ok(['near','mixed'].includes(inkjet.layout));}
 const out = path.resolve(opt('--evidence-dir', '.ci-scratch/splashdown-browser'));
 fs.mkdirSync(out, { recursive: true });
 const manifest = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json')));
@@ -38,8 +40,14 @@ try {
   const page = await browser.newPage({ viewport: { width: 960, height: 720 } });
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+  if(inkjet)await page.addInitScript(()=>{let seed=0x12345678;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};});
   await page.goto(`http://127.0.0.1:${server.address().port}/check`);
-  const result = await page.evaluate(async prefix => {
+  const servedHashes = {};
+  if(inkjet) for(const file of ['patches/splatoon3/runtime/special-vfx.mjs','patches/splatoon3/runtime/inkjet-vfx-budget.mjs','patches/splatoon3/runtime/inkjet-vfx-clock.mjs']) {
+    const response=await page.request.get(`http://127.0.0.1:${server.address().port}${prefix}${file}`);
+    assert.equal(response.status(),200);servedHashes[file]=hash(await response.body());assert.equal(servedHashes[file],hash(fs.readFileSync(path.join(site,prefix,file))),file+' served bytes');
+  }
+  const result = await page.evaluate(async ({prefix,inkjet}) => {
     const THREE = await import('three');
     const { install } = await import(prefix + 'patches/splatoon3/runtime/install.mjs');
     const profile = await fetch(prefix + 'patches/splatoon3/profile.json').then(r => r.json());
@@ -92,7 +100,61 @@ try {
       for (let i = 0; i < a.length; i += 4) if (Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]) >= 9) n++;
       return n;
     };
-    for (const fxMode of ['none', 'disabled', 'enabled']) for (const hz of [30, 60, 120]) {
+
+    if (inkjet) {
+      const { hz, actorCount, layout } = inkjet;
+      G.time = 0;
+      G.projectiles = new api.Projectiles(scene);
+      G.fx = new api.FX(scene, { quality: .35 }); G.fx.setCollider(() => null);
+      const d = G.fx.s3SpecialVfx, actors = [];
+      expect(!!d, 'emitted Inkjet director installed');
+      for (let i=0;i<actorCount;i++) {
+        const a = new api.Actor({ team:0, name:'Inkjet probe '+i, weapon:'shooter', CharacterClass:api.Character, style:{hair:0,skin:2,outfit:0,eyes:0} });
+        scene.add(a.character.root); actors.push(a); G.actors=actors;
+        if (a.character._sourceMotionLoader) await a.character._sourceMotionLoader;
+        if (a.character.sourceMotion?.ready) await a.character.sourceMotion.ready;
+        a.pos.set((i-(actorCount-1)/2)*2,2,0); a.vel.set(0,0,0); a.character.root.position.copy(a.pos);
+        expect(applyCatalogueChoice(a,{sub:'bomb',special:'inkjet'},api),'Inkjet catalogue choice');
+        a.special=a.specialCost(); a._startSpecial(); const track=d.track(a);
+        expect(a.specialActive?.id==='inkjet' && track?.id==='inkjet','actual Inkjet activation and exhaust track');
+      }
+      // Controlled continuous-presentation probe: gameplay is deliberately
+      // frozen, matching the source/emitted integration test, not full play.
+      // Stationary flight records isolate the admission/culling boundary.
+      const projectile=(owner,x)=>({wid:'inkjet',owner,team:0,seed:1234+x,dead:false,pos:new THREE.Vector3(x,2,4),vel:new THREE.Vector3(0,0,5)});
+      G.projectiles.list=actors.map(a=>projectile(a,a.pos.x));
+      const farOwner={team:0,alive:false};
+      if(layout==='mixed')G.projectiles.list.push(projectile(farOwner,180));
+      const cpu=[], submit=[], rows=[];
+      let accepted=0, evictions=0; const exhaustGlows=actors.map(()=>0);
+      const originalPuff=d.puff, originalEvict=d.kit.puffs._evict, originalSpark=d.spark;
+      d.spark=function(...args){const x=args[1]?.x;const index=actors.findIndex(a=>Math.abs(a.pos.x-x)<.6);if(index>=0)exhaustGlows[index]++;return originalSpark.apply(this,args);};
+      d.puff=function(...args){accepted++;return originalPuff.apply(this,args);};
+      d.kit.puffs._evict=function(...args){evictions++;return originalEvict.apply(this,args);};
+      // Drain activation bursts before the sampled continuous-emission window.
+      for(let frame=0;frame<hz;frame++){G.time+=1/hz;G.fx.update(1/hz,camera);}
+      draw(); accepted=0;evictions=0;exhaustGlows.fill(0);
+      const before=pixels();
+      for(let frame=0;frame<hz;frame++){
+        const dt=1/hz;G.time+=dt;
+        const start=performance.now();G.fx.update(dt,camera);cpu.push(performance.now()-start);
+        const drawStart=performance.now();draw();submit.push(performance.now()-drawStart);
+        rows.push({frame:frame+1,time:G.time,puffs:d.kit.puffs.n,sparks:d.kit.sparks.n,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles});
+        if((hz===60 && frame<12) || (hz!==60 && frame===0))images.push({name:'inkjet-'+layout+'-'+actorCount+'p-f'+String(frame+1).padStart(3,'0')+'.png',data:renderer.domElement.toDataURL('image/png')});
+      }
+      const after=pixels(), changedPixels=changed(before,after);
+      expect(exhaustGlows.length===actorCount && exhaustGlows.every(n=>n===2*Math.min(hz,60)),'each expected actor emits both exhaust glows; flight-only cannot pass');
+      expect(changedPixels>10,'Inkjet presentation changes rendered pixels');
+      expect(d.errors===0,'no swallowed special VFX errors');
+      expect(rows.every(r=>r.puffs<=d.kit.puffs.cap),'continuous puff occupancy bounded');
+      expect(evictions===0,'continuous Inkjet probe causes no eviction');
+      const sorted=a=>[...a].sort((a,b)=>a-b);
+      const stats=a=>{const q=sorted(a);return{mean:a.reduce((n,x)=>n+x,0)/a.length,p50:q[Math.floor(q.length*.5)],p95:q[Math.floor(q.length*.95)],max:q.at(-1)};};
+      const gl=renderer.getContext(), debug=gl.getExtension('WEBGL_debug_renderer_info');
+      cases.push({hz,actorCount,layout,clock:'one-second warmup then one-second sample; fixed dt=1/hz, not real display refresh',seed:'VFX module initial 0x9e3779b9 in a fresh page per case; fixed setup order; Math.random LCG seed 0x12345678',camera:camera.position.toArray(),viewport:{width:960,height:720},quality:.35,puffCap:d.kit.puffs.cap,accepted,evictions,exhaustGlows,changedPixels,cpuFxUpdateMs:stats(cpu),cpuRenderSubmissionMs:stats(submit),gpuTiming:null,allocations:null,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),farOwnerQuota:d.inkjetAdmissionBudget?.records.get(farOwner)?.puffs??null,frames:rows});
+      for(const a of actors)a.character.dispose();
+      G.projectiles.list=[];G.projectiles.clear();G.fx.dispose();G.actors=[];G.fx=null;
+    } else for (const fxMode of ['none', 'disabled', 'enabled']) for (const hz of [30, 60, 120]) {
       G.projectiles = new api.Projectiles(scene);
       G.fx = fxMode === 'none' ? null : new api.FX(scene, { quality: .35 });
       if (G.fx) { G.fx.setCollider(() => null); G.fx.s3SpecialVfxEnabled = fxMode !== 'disabled'; }
@@ -170,10 +232,13 @@ try {
       a.character.dispose(); G.projectiles.clear(); G.fx?.dispose(); G.actors = []; G.fx = null;
     }
     renderer.dispose();
-    return { scope: 'production-composed emitted runtime, real Actor/Physics/Projectiles/Character on a controlled flat floor; no Switch recording comparison', cases, failures, images };
-  }, prefix);
+    return { scope: inkjet ? 'Candidate-only SwiftShader continuous-presentation probe with frozen gameplay and stationary live flight records; no baseline performance acceptance or Switch comparison' : 'production-composed emitted runtime, real Actor/Physics/Projectiles/Character on a controlled flat floor; no Switch recording comparison', cases, failures, images };
+  }, {prefix,inkjet});
   for (const { name, data } of result.images) fs.writeFileSync(path.join(out, name), Buffer.from(data.split(',')[1], 'base64'));
+  if(inkjet)assert.equal(result.images.length,inkjet.hz===60?12:1,'nonempty per-case capture sequence');
+  if(inkjet) for(const {name,data} of result.images)assert.ok(Buffer.from(data.split(',')[1],'base64').length>1000,name+' nonempty PNG');
   delete result.images;
+  result.servedHashes=servedHashes;
   result.errors = errors; result.buildRevision = manifest.build.revision; result.contentHash = manifest.contentHash;
   fs.writeFileSync(path.join(out, 'result.json'), JSON.stringify(result, null, 2) + '\n');
   console.log(JSON.stringify({ evidence: out, cases: result.cases.length, failures: result.failures, errors }));

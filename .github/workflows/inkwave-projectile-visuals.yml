@@ -23,6 +23,10 @@ on:
       - 'scripts/tests/inkwave-projectile-boolean-gate.test.mjs'
       - 'scripts/lib/inkwave-projectile-atomic-intro.mjs'
       - 'scripts/tests/inkwave-projectile-atomic-intro.test.mjs'
+      - 'scripts/lib/inkwave-projectile-intro-ui.mjs'
+      - 'scripts/tests/inkwave-projectile-intro-ui.test.mjs'
+      - 'scripts/tests/inkwave-projectile-intro-ui-browser.test.mjs'
+      - 'scripts/tests/fixtures/inkwave-projectile-native-intro.mjs'
       - 'scripts/lib/inkwave-audio-timing-observer.mjs'
       - 'scripts/tests/inkwave-audio-timing-observer.test.mjs'
       - 'scripts/lib/inkwave-audio-readiness-diagnostics.mjs'
@@ -98,6 +102,14 @@ jobs:
         run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
+      - name: Verify native intro timers and strict UI admission
+        if: ${{ matrix.side == 'after' }}
+        run: |
+          node --test scripts/tests/inkwave-projectile-capture-ui.test.mjs scripts/tests/inkwave-projectile-atomic-intro.test.mjs scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-intro-ui.test.mjs
+          CHROMIUM_PATH="$(node -e "process.stdout.write(require('playwright').chromium.executablePath())")"
+          test -n "$CHROMIUM_PATH" && test -x "$CHROMIUM_PATH"
+          export CHROMIUM_PATH
+          node --test scripts/tests/inkwave-projectile-intro-ui-browser.test.mjs
       - name: Native visual, source-value and gameplay regressions
         if: ${{ matrix.side == 'after' }}
         run: |
@@ -115,7 +127,7 @@ jobs:
           node .ci-baseline/scripts/build-inkwave.mjs .ci-baseline/inkwave-public .built-site/pristine-main
           cp .built-site/pristine-main/inkwave-build.json .ci-scratch/projectile-visuals/before/pristine-main-build.json
       - name: Bind reviewed source controls to declared immutable Git source leaves
-        if: ${{ matrix.side == 'before' && (github.event.pull_request.number == 1758 || github.head_ref == 'test/inkwave-combined-qa-20261021') }}
+        if: ${{ matrix.side == 'before' && (github.event.pull_request.number == 1758 || github.head_ref == 'test/inkwave-combined-qa-20261021' || github.head_ref == 'inkwave/runtime-acceptance-0f3-prep-20261022') }}
         env:
           DECLARED_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DECLARED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -131,7 +143,7 @@ jobs:
           DECLARED_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DECLARED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          if [ "$PAIR_PR_NUMBER" = "1758" ] || [ "$PAIR_HEAD_REF" = "test/inkwave-combined-qa-20261021" ]; then
+          if [ "$PAIR_PR_NUMBER" = "1758" ] || [ "$PAIR_HEAD_REF" = "test/inkwave-combined-qa-20261021" ] || [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-0f3-prep-20261022" ]; then
             node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
           else
             node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json

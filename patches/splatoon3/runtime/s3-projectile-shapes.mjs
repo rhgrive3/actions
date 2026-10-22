@@ -78,6 +78,17 @@ export function s3ShapeKind(p) {
   }
 }
 
+// "saber-vertical" is the charged attack selector, not a rendering plane.
+// Dental/Decavitator's charged wave remains horizontal (S3 11.3.0
+// WeaponSaberHeavy: BulletSaberVerticalParam.CollisionParam offsets are X-only).
+// Keep the existing calibrated mesh and lifetime; do not turn hit radii into
+// new mesh dimensions or change the projectile/collision owners.
+export function splatanaHorizontalSweep(p, kind) {
+  if (kind !== 'slash-v') return kind === 'slash-h';
+  const r = p?.catalog?.r || RECORDS.get(p?.wid);
+  return r?.sourceActor === 'WeaponSaberHeavy';
+}
+
 // Unit body: rings of (cos t, sin t, s); s in [0,1] is the head (tip at 1),
 // s in [-1,0) the body (tail tip at -1). The vertex shader shapes it.
 function bodyGeometry(THREE, around = 14, headRings = 7, bodyRings = 18) {
@@ -434,7 +445,10 @@ function fireInk(R, p, kind, f, G, system) {
     if (R.v.distanceToSquared(p.start) < 4) { at = R.v; follow = p.owner; }
   }
   const burst = R.sheets.add(kind, at, f, p.owner.color, p.seed || 0, t0, follow);
-  if (burst) R.sheets.specks(G?.fx, burst);
+  if (burst) {
+    burst.horizontalSweep = splatanaHorizontalSweep(p, kind);
+    R.sheets.specks(G?.fx, burst);
+  }
 }
 
 export function drawS3Shapes(system, THREE, G) {
@@ -470,7 +484,7 @@ export function drawS3Shapes(system, THREE, G) {
       // forward = travel; span horizontal (H) or vertical (V)
       x.crossVectors(UP, f); if (x.lengthSq() < 1e-6) x.set(1, 0, 0); x.normalize();
       y.crossVectors(f, x).normalize();
-      if (kind === 'slash-h') basis.makeBasis(x, y, f); else basis.makeBasis(y, x.negate(), f);
+      if (splatanaHorizontalSweep(p, kind)) basis.makeBasis(x, y, f); else basis.makeBasis(y, x.negate(), f);
       q.setFromRotationMatrix(basis);
       const frames = p.age * 60, lifeFrames = Math.max(1, (p.life || 0.1) * 60);
       const born = 0.55 + 0.45 * smooth(0, 3, frames), late = smooth(lifeFrames * 0.7, lifeFrames, frames);

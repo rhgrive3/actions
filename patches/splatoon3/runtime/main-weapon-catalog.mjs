@@ -28,7 +28,7 @@ import { CATALOG_WALL_DROP } from './catalog-wall-drop-data.mjs';
 import { selectRollerFlickVertical, installActorFreefallHooks } from './roller-freefall.mjs';
 import { dashTurnBreakActive } from './movement-physics.mjs';
 import { reverseShotRelease } from './shooter-movement.mjs';
-import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale } from './projectile-presentation.mjs';
+import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale, catalogBubbleSurfaceNormalY } from './projectile-presentation.mjs';
 import { installS3ProjectileShapes } from './s3-projectile-shapes.mjs';
 import { installCatalogPoseBirth } from './catalog-pose-birth.mjs';
 import { addedFamilySplash, brellaSplashPlan, collectBrellaSplashes } from './added-family-paint.mjs';
@@ -1050,8 +1050,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
     }
     if(r.parameters.BlastParam?.BlastParam){p.pos.copy(at);explosion(system,p,r.parameters.BlastParam.BlastParam);return true;}
-    if(r.sourceActor==='WeaponSlosherBathtub'&&h.normal&&catalogBubbleCanBounce(s.groundBounces,h.normal.y)) {
-      const ground=h.normal.y>.35;
+    // The rounded collision normal can point upward at a wall's edge.
+    // Use the underlying stage face for the *floor count* while preserving
+    // the original geometric normal for the bounce direction.
+    const bubbleFaceY=r.sourceActor==='WeaponSlosherBathtub'
+      ?catalogBubbleSurfaceNormalY(h,G.physics?.level):null;
+    if(bubbleFaceY!==null&&h.normal&&catalogBubbleCanBounce(s.groundBounces,bubbleFaceY)) {
+      const ground=bubbleFaceY>.35;
       const bp=r.parameters.BounceGroupParam.BounceParam.find(b=>(b.UnitOrderNum??0)===d.unit)||{};
       // Keep the established paint owner and footprint untouched (lane ③).
       // The source's first-bounce footprint decays by 15% on each later contact.
@@ -1125,7 +1130,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         q.stop=Infinity;
         const f0=collisionRadius(q.param,'Field',(p.age-DT)*HZ,s.index,bounceScale),f1=collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale);
         let candidate=sweptWorldHit(G.physics,q.from,q.to,f0,f1,q.hit,true);
-        if(candidate.hit && (graze || bubble && candidate.normal.y>.35)){
+        if(candidate.hit && (graze || bubble && catalogBubbleSurfaceNormalY(candidate,G.physics?.level)>.35)){
           const core=collisionRadius(q.param,'Field',0,s.index,bounceScale);
           // The first step grows from the core radius itself (f0 === core), so
           // compare with the largest swept radius: a level swing born near the

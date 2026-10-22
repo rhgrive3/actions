@@ -1,5 +1,5 @@
 import {nativeStageBuild} from './build-config.mjs';
-export function loadBrowserSource(id,signal){
+export function loadBrowserSource(id,signal,{constrained=false}={}){
  return new Promise((resolve,reject)=>{
   const worker=new Worker(new URL('./source-worker.mjs',import.meta.url),{type:'module'});
   let ended=false;
@@ -12,6 +12,6 @@ export function loadBrowserSource(id,signal){
    if(data.error)finish(new Error(data.error));else if(data.result)finish(null,data.result);
    else globalThis.dispatchEvent?.(new CustomEvent('inkwave:native-source-progress',{detail:{id,phase:data.progress,bytes:data.bytes,total:data.total}}));
   };
-  worker.postMessage({id,runtimeSha256:nativeStageBuild.runtimeSha256});
+  worker.postMessage({id,runtimeSha256:nativeStageBuild.runtimeSha256,constrainedClient:constrained===true});
  });
 }

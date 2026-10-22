@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 import { catalogVisualSpec, catalogVisualRadius, updateCatalogVisual,
-  catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale } from '../runtime/projectile-presentation.mjs';
+  catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale, catalogBubbleSurfaceNormalY } from '../runtime/projectile-presentation.mjs';
 import { INK_LOOK, fidelityInkLook, fidelityInkTail } from '../runtime/weapons-fidelity.mjs';
 import { fixture } from './source-fixture.mjs';
 
@@ -44,6 +44,16 @@ test('Bloblobber bubbles grow over five frames and shrink 25% each rebound',()=>
   assert.equal(catalogBubbleCanBounce(1,1),true);
   assert.equal(catalogBubbleCanBounce(2,1),false,'third floor hit ends the bubble');
   assert.equal(catalogBubbleCanBounce(28,0),true,'no arbitrary wall rebound cap');
+  assert.equal(catalogBubbleSurfaceNormalY({face:0,normal:{y:.6}}, {faces:[{n:{y:0}}]}),0,
+    'wall edge with upward collision normal retains the original wall face');
+  assert.equal(catalogBubbleSurfaceNormalY({face:-1,triangle:0,normal:{x:.8,y:.6,z:0}},
+    {triangleWorld:{normals:new Float32Array([1,0,0])}}),0,
+    'unmapped native wall triangles stay walls when the rounded contact normal points upward');
+  assert.equal(catalogBubbleSurfaceNormalY({face:-1,triangle:0,normal:{x:0,y:1,z:0}},
+    {triangleWorld:{normals:new Float32Array([0,-1,0])}}),1,
+    'a reversed-winding native floor still counts as floor from above');
+  assert.equal(catalogBubbleSurfaceNormalY({face:-1,normal:{y:1}}, null),1,
+    'unmapped contacts keep the collision normal fallback');
   assert.ok(catalogReboundSeparation(unit.CollisionParam.EndRadiusForField*.75)>.56);
 });
 
@@ -57,12 +67,13 @@ test('actual Bloblobber projectile rebounding preserves swept travel, sourced pa
   assert.ok(p,'actual main-weapon firing creates the first Bloblobber bubble');
   p.pos.set(0,5,0);p.prev.copy(p.pos);p.start.copy(p.pos);
   p.vel.set(0,-12,0);p.age=0;p.catalog.travel=0;p.catalog.carry=0;p.catalog.phase=0;
-  let normalY=1;
-  f.G.physics.level=null;
+  const impactNormal=new f.THREE.Vector3(0,1,0);
+  let contactFace=-1;
+  f.G.physics.level={faces:[{n:new f.THREE.Vector3(1,0,0)}]};
   f.G.physics.segment=(from,to,hit)=>{
     hit.hit=true;hit.dist=from.distanceTo(to)*.5;
-    hit.point.copy(from).lerp(to,.5);hit.normal.set(normalY?0:1,normalY,0);
-    hit.face=-1;return hit;
+    hit.point.copy(from).lerp(to,.5);hit.normal.copy(impactNormal);
+    hit.face=contactFace;return hit;
   };
   const paints=[];f.G.paint.splat=(_point,radius)=>{paints.push(radius);return 0;};
   const speed=p.vel.length();
@@ -73,14 +84,14 @@ test('actual Bloblobber projectile rebounding preserves swept travel, sourced pa
   assert.equal(p.catalog.groundBounces,2);
   assert.deepEqual(paints.map(x=>Math.round(x*1000000)/1000000),[1.65,1.4025],
     'existing paint owner applies the sourced 0.85 subsequent-bounce footprint');
-  normalY=0;p.ghost=true;
+  impactNormal.set(.8,.6,0);contactFace=0;p.ghost=true;
   const wallSpeed=p.vel.length();
   assert.equal(f.G.projectiles._step(p,1/60),false,'wall bounce remains valid after two floors');
   assert.equal(p.catalog.groundBounces,2,'walls do not consume floor bounce allowance');
   assert.equal(p.catalog.bounces,3);
   assert.ok(Math.abs(p.vel.length()-wallSpeed*.8)<1e-7,'wall contact multiplies flight speed by 0.8');
   assert.equal(paints.length,2,'ghost rebound never owns a turf splat');
-  normalY=1;
+  impactNormal.set(0,1,0);contactFace=-1;
   assert.equal(f.G.projectiles._step(p,1/60),true,'third floor hit terminates');
   assert.equal(paints.length,2,'ghost terminal contact never adds paint');
 });
@@ -227,7 +238,7 @@ test('Bloblobber physical launch remains level against a short ground reticle an
   // Include down-aim angles: bouncing physics cannot be validated only
   // against level/upward shots. Preserve the bounce timeline for root cause
   // analysis and comparison with published S3 range/angle captures.
-  const downward=[-10,-20,-30,-40,-60].map(deg=>({deg,...simulate(fire(deg*Math.PI/180,false))}));
+  const downward=[-10,-20,-30,-40,-45,-60].map(deg=>({deg,...simulate(fire(deg*Math.PI/180,false))}));
   console.log('BLOBLOBBER_ACTUAL_PITCH_TRACES '+JSON.stringify({
     level:flatShot,upward:traces,downward
   }));
@@ -236,6 +247,9 @@ test('Bloblobber physical launch remains level against a short ground reticle an
     'downward launch should not count the grown outer field shell as an instant floor rebound');
   assert.ok(descendingShallow.reach>15,
     'a modest downward aim must continue after two floor rebounds instead of expiring beside the shooter');
+  const steepDown=downward.find(x=>x.deg===-45);
+  assert.ok(steepDown.reach>12,
+    'downward 45 degree aim must not consume three floor contacts beside the muzzle');
   assert.ok(downward.every(x=>x.contacts.length===2),
     'downward pitch preserves the two ground rebounds before final impact');
   assert.ok(traces.find(x=>x.deg===90).reach<1e-4,

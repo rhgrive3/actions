@@ -302,6 +302,34 @@ function cellIsSolidlyVisible(mask, face, x, y, piece) {
     const d2 = ex * ex + ey * ey;
     if (d2 > reach * reach && d2 < Infinity) return false;
   }
+
+  // Conservative stretched dot enclosure: the forward and backward affine
+  // images of the original disc cover the entire visible circle/ellipse.
+  // Reject only when BOTH discs miss the closed cell. Non-finite, non-unit
+  // and degenerate shapes always run the unchanged sample/witness test.
+  if ((piece.type === 1 || piece.type === 2) && mask.sa > 0 &&
+      Number.isFinite(mask.sa) && Number.isFinite(mask.sdu) && Number.isFinite(mask.sdv) &&
+      Number.isFinite(piece.x) && Number.isFinite(piece.y) && Number.isFinite(piece.radius) && piece.radius >= 0 &&
+      Number.isFinite(x) && Number.isFinite(y) && face.cu > 0 && face.cv > 0 &&
+      Number.isFinite(face.cu) && Number.isFinite(face.cv) &&
+      Math.abs(mask.sdu * mask.sdu + mask.sdv * mask.sdv - 1) < 1e-12 &&
+      (piece.type !== 2 || (piece.el > 0 && Number.isFinite(piece.el) &&
+        Math.abs(piece.ux * piece.ux + piece.uy * piece.uy - 1) < 1e-12))) {
+    const u = mask.sdu, v = mask.sdv, along = piece.x * u + piece.y * v;
+    const radius = piece.radius * (piece.type === 2 ? Math.max(1, piece.el) : 1);
+    const hx = face.cu * 0.5, hy = face.cv * 0.5;
+    const frontX = piece.x + u * along * mask.sa, frontY = piece.y + v * along * mask.sa;
+    const ex = Math.max(x - hx - frontX, frontX - (x + hx), 0);
+    const ey = Math.max(y - hy - frontY, frontY - (y + hy), 0);
+    const frontReach = radius * (1 + mask.sa) * (1 + 1e-5) + 1e-8;
+    if (ex * ex + ey * ey > frontReach * frontReach) {
+      const backX = piece.x + u * along * mask.sa * 0.25, backY = piece.y + v * along * mask.sa * 0.25;
+      const bx = Math.max(x - hx - backX, backX - (x + hx), 0);
+      const by = Math.max(y - hy - backY, backY - (y + hy), 0);
+      const backReach = radius * (1 + mask.sa * 0.25) * (1 + 1e-5) + 1e-8;
+      if (bx * bx + by * by > backReach * backReach) return false;
+    }
+  }
   const dx = face.cu * 0.32, dy = face.cv * 0.32;
   // A paint cell owns its area when its center or one of four interior samples
   // lies well inside the shader mask. This catches most sub-cell satellites

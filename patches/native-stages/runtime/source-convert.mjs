@@ -81,22 +81,29 @@ export function parseSourceOBJ(text,semantics){
  if(!objects.length||!vertices.every(Number.isFinite))throw Error('Invalid source OBJ');
  return {vertices,indices,objects};
 }
-function collision(geo){
+export function collision(geo){
  const max=geo.objects.reduce((n,o)=>n+(o.collidable?o.ic/3:0),0);
  const triangles=new Float32Array(max*9),normals=new Float32Array(max*3),flags=new Uint32Array(max),objectIds=new Uint32Array(max),areas=new Float32Array(max);
  let count=0;
  for(let oi=0;oi<geo.objects.length;oi++){
   const o=geo.objects[oi];if(!o.collidable)continue;
+  const g=geo.vertices,indices=geo.indices;
   for(let i=o.io;i<o.io+o.ic;i+=3){
-   const ids=[geo.indices[i]+o.vo,geo.indices[i+1]+o.vo,geo.indices[i+2]+o.vo],p=ids.map(id=>id*8),g=geo.vertices;
-   const ab=[F(g[p[1]]-g[p[0]]),F(g[p[1]+1]-g[p[0]+1]),F(g[p[1]+2]-g[p[0]+2])],ac=[F(g[p[2]]-g[p[0]]),F(g[p[2]+1]-g[p[0]+1]),F(g[p[2]+2]-g[p[0]+2])];
-   let x=F(F(ab[1]*ac[2])-F(ab[2]*ac[1])),y=F(F(ab[2]*ac[0])-F(ab[0]*ac[2])),z=F(F(ab[0]*ac[1])-F(ab[1]*ac[0]));
+   // Preserve all Float32 rounding steps, while removing five short-lived arrays per accepted triangle.
+   const p0=(indices[i]+o.vo)*8,p1=(indices[i+1]+o.vo)*8,p2=(indices[i+2]+o.vo)*8;
+   const abx=F(g[p1]-g[p0]),aby=F(g[p1+1]-g[p0+1]),abz=F(g[p1+2]-g[p0+2]);
+   const acx=F(g[p2]-g[p0]),acy=F(g[p2+1]-g[p0+1]),acz=F(g[p2+2]-g[p0+2]);
+   let x=F(F(aby*acz)-F(abz*acy)),y=F(F(abz*acx)-F(abx*acz)),z=F(F(abx*acy)-F(aby*acx));
    const len=F(Math.sqrt(F(F(F(x*x)+F(y*y))+F(z*z))));if(len<=1e-9)continue;
    areas[count]=F(len*.5);x=F(x/len);y=F(y/len);z=F(z/len);
-   const mx=F(F(F(g[p[0]+3]+g[p[1]+3])+g[p[2]+3])/3),my=F(F(F(g[p[0]+4]+g[p[1]+4])+g[p[2]+4])/3),mz=F(F(F(g[p[0]+5]+g[p[1]+5])+g[p[2]+5])/3);
+   const mx=F(F(F(g[p0+3]+g[p1+3])+g[p2+3])/3),my=F(F(F(g[p0+4]+g[p1+4])+g[p2+4])/3),mz=F(F(F(g[p0+5]+g[p1+5])+g[p2+5])/3);
    if(F(F(F(x*mx)+F(y*my))+F(z*mz))<0){x=-x;y=-y;z=-z;}
-   for(let j=0;j<3;j++)for(let k=0;k<3;k++)triangles[count*9+j*3+k]=g[p[j]+k];
-   normals.set([x,y,z],count*3);objectIds[count]=oi;flags[count]=1|(o.paintable?2:0)|(o.grate?4:0)|(o.glass?8:0);count++;
+   const dst=count*9;
+   triangles[dst]=g[p0];triangles[dst+1]=g[p0+1];triangles[dst+2]=g[p0+2];
+   triangles[dst+3]=g[p1];triangles[dst+4]=g[p1+1];triangles[dst+5]=g[p1+2];
+   triangles[dst+6]=g[p2];triangles[dst+7]=g[p2+1];triangles[dst+8]=g[p2+2];
+   const nn=count*3;normals[nn]=x;normals[nn+1]=y;normals[nn+2]=z;
+   objectIds[count]=oi;flags[count]=1|(o.paintable?2:0)|(o.grate?4:0)|(o.glass?8:0);count++;
   }
  }
  return {triangles:triangles.slice(0,count*9),normals:normals.slice(0,count*3),flags:flags.slice(0,count),objectIds:objectIds.slice(0,count),areas:areas.slice(0,count)};

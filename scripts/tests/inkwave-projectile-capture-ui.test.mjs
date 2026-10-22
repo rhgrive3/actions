@@ -13,6 +13,7 @@ function fixture(state = 'playing') {
   const node = (tag = 'DIV', id = '') => ({ tagName: tag, id, className: '', isConnected: true,
     parentElement: null, width: 1280, height: 720, childElementCount: 0,
     style: { display: 'block', visibility: 'visible', opacity: '1' },
+    getAnimations: () => [],
     classList: { values: new Set(), contains(v) { return this.values.has(v); } },
     getBoundingClientRect() { return { x: 0, y: 0, width: 1280, height: 720, right: 1280, bottom: 720 }; } });
   const canvas = node('CANVAS', 'game-canvas'), hud = node(), layer = node(), wipeEl = node();
@@ -153,7 +154,7 @@ test('playing may emit GO, but settled capture must await native banner removal'
 test('harness integrates gate before atomic intro, before freeze, and both screenshot paths without removing original predicates', () => {
   const s = fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs', import.meta.url), 'utf8');
   assert.ok(s.includes('await page.addInitScript(installProjectileCaptureUiGate)'));
-  assert.ok(s.includes("withProjectileCaptureUi(admissionReady,{phase:'admission',allowIntro:true,settled:false})"));
+  assert.ok(s.includes("withProjectileCaptureUi(admissionReady,{phase:'admission',allowIntro:true,settled:false,cinematicAdmission:true})"));
   assert.ok(s.includes("withProjectileCaptureUi(playingReady,{phase:'playing',settled:false})"));
   assert.ok(s.includes("await requireNativePhase(() => window.__iwProjectileCaptureUiGate({phase:'settled'}).ready === true"));
   assert.ok(s.indexOf("phase:'before-freeze'") < s.indexOf('g.debug.freeze(); g.debug.freezeBots();'));
@@ -208,9 +209,9 @@ test('ancestor and animation observation caps preserve complete original visibil
   assert.doesNotThrow(()=>JSON.parse(JSON.stringify(r)));
 });
 
-test('absent or failing animation APIs remain explicitly unobserved without changing readiness', () => {
-  const f=fixture();let r=f.read();assert.equal(r.ready,true);assert.equal(r.hud.observation.animationsAvailable,false);
-  f.hud.getAnimations=()=>{throw Error('unavailable');};r=f.read();assert.equal(r.ready,true);
+test('absent or failing animation APIs fail settled capture closed', () => {
+  const f=fixture();delete f.hud.getAnimations;let r=f.read();assert.equal(r.ready,false);assert.equal(r.hud.observation.animationsAvailable,false);
+  f.hud.getAnimations=()=>{throw Error('unavailable');};r=f.read();assert.equal(r.ready,false);
   assert.match(r.hud.observation.errors[0],/animations: unavailable/);
   f.hud.style.opacity='0';assert.throws(()=>f.read({phase:'admission',requireReady:true}),/Native capture UI/);
   assert.equal(f.window.__iwProjectileCaptureUiHistory.first[0].ready,false);
