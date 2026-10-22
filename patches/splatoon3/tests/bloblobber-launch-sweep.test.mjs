@@ -97,7 +97,7 @@ test('pinned 11.3.0 Bloblobber NearestParam paints once per grounded swing, neve
   close(mark.options.stretchAmt,.2,'source forward paint depth multiplier');
   close(mark.y,.1,'nearest paint is offset from the real floor');
   assert.equal(mark.options.claimOwner,grounded.a,'only the local firing player claims turf');
-  assert.equal(mark.options.footprint,'ink-contact','nearest paint uses the native ink footprint');
+  assert.equal(mark.options.footprint,'ink-shot','Bloblobber uses its sourced rounded shot footprint rather than Bucket sheet');
   const airborne=fire(false);
   assert.equal(airborne.projectiles.length,4,'airborne shot still launches its four bubbles');
   assert.equal(marks.length,0,'airborne projectile launch cannot stamp the ground below the player');
