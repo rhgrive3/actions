@@ -144,7 +144,7 @@ export function installWeaponAudioRuntime(api){
     if(!isCharger)keepLoop(this,'charge',charging,.66+q*.78);
     keepLoop(this,'spin',!!this.streaming,.94+clamp(Number(this.burstFrac)||0,0,1)*.25);
     keepLoop(this,'roll',!!this.rolling,.8+Math.min(1,Math.hypot(a.vel?.x||0,a.vel?.z||0)/8)*.25);
-    if(charging&&q>=1&&!s.wasReady)play(a,'ready',a.pos,.7);
+    if(charging&&q>=1&&!s.wasReady&&!s.keepEmergePlayed)play(a,'ready',a.pos,.7);
     if(s.wasCharge&&!charging&&!s.firedThisUpdate)play(a,'release',a.pos,.27);
     if(r.scope&&charging&&!s.wasCharge)play(a,'scope',a.pos,.26);
     if(c.pending&&!s.pending&&r.events.includes('windup'))play(a,'windup',a.pos,.55);
