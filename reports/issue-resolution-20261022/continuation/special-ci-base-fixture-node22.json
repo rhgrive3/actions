@@ -1,0 +1,17 @@
+{
+  "sourceEquivalentCommit": "2be0a49b4fb58bf5cf1a820b5dfbfcbd42962fcb",
+  "runtimeSource": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+  "node": "v22.23.4",
+  "testConcurrency": 1,
+  "changedRuntimePaths": [],
+  "testFileSha256": "0560aa93efdda45c09fc04087557b031e49eadb1fbe126f497695c2a193ea1cd",
+  "tests": 18,
+  "pass": 18,
+  "fail": 0,
+  "skip": 0,
+  "duration_ms": 14808.246387,
+  "rawLog": "special-ci-base-fixture-node22.tap.gz",
+  "rawLogSha256": "c798b426e83324372055dd423bdef4af803a75972204d7d565e30ca58e34511f",
+  "compressedSha256": "2493323bfd8f8354e848a024c4cb122c19a5ca074d18d0fadfff09702c25907b",
+  "scope": "Same strict receiver-bind fixture repair on the base f9 runtime; separate from the weapon candidate full special selection150pass/1existing skip. Does not fix or conceal the separately reproduced rejected-tick catalogue sidecar runtime gap."
+}

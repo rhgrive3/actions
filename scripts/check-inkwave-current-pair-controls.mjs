@@ -107,7 +107,7 @@ function positive() {
   assert.equal(evidence.paint.paths.length, selectedPaths.length);
   // PR1746's exact 95c -> f312 tuple has two differing leaves. The older
   // four-leaf contract remains unchanged for its separately pinned pairs.
-  const integrated23 = evidence.paint.sourceBase === '26a4db4123d23162a3dbf8a12150b1b5bc6ccf64' && evidence.paint.sourceHead === '992b670084d11560a5621041a5e456bd10a7b75c';
+  const integrated23 = evidence.paint.sourceBase === '26a4db4123d23162a3dbf8a12150b1b5bc6ccf64' && evidence.paint.sourceHead === 'c8564cb617e1708759a502a662ef1b538eaad14c';
   const expectedChanged = integrated23 ? 9 : queue1801 ? 2 : identity ? 0 : evidence.paint.sourceBase === '95c25af145418691991a1452d4d10589754a0f1c' &&
     evidence.paint.sourceHead === 'f31238a48b9d1a4af2d4f5f5f9182af777a79c83' ? 2 : 4;
   assert.equal(evidence.paint.paths.filter(row => row.originalSha256 !== row.candidateSha256).length, expectedChanged);

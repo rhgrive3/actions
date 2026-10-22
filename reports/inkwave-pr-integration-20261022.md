@@ -147,3 +147,32 @@ repairs passed 64/64, script/lobby/Worker guards 15/15, HUD guards 13/13, intro
 and source routes 67/67, and Explosher admission guards 103/103. No local native
 browser pass or complete hosted acceptance is claimed. The latest published
 head must rerun every applicable hosted check before merge.
+
+Reviewed selected-source anchor: c8564cb617e1708759a502a662ef1b538eaad14c,
+tree 2788a96c15c398ca71644202e678b1b048751655. The final QA pin commit
+retains exactly those selected production leaves. Publication guards: 73/73
+passed, no skip. An attempted local browser guard run failed because Chromium
+is absent; it is not counted as a pass or silently skipped.
+
+### Source-head refresh before publication
+
+GitHub comparison found 20 original PR heads already ancestors of 992b6700.
+Three original PRs had additional commits: #1833 f84c3d559a8fca17c5fe712ec6158e9828c02cc1,
+#1834 86c2f666b627af8e000dd2f002be1a087cbbb878, and
+#1842 e09e97cc93b65e35d98d45a36a0a35335ca69ecb. Preserve all three
+as parents of the repaired public integration commit. Their reviewed changes
+cover fixture binding, immutable historical test inputs, accepted combat
+receipts, native QA motion origins/readiness and bounded startup diagnostics,
+plus separate source-bound evidence archives. Most equivalent QA repairs were
+already present via other integrated heads; retain the stronger existing native
+contact-snapshot fixture and all rejection assertions. Catalogue binding also
+asserts the accepted owner timestamp. Merge report scopes additively, retaining
+the clock-only acceptance and the later parent-base evidence links. #1845 is
+referenced only as separate historical report context; its runtime is not added.
+
+The pre-refresh QA-only pin tree aa91b07a passed standard npm test and production
+build/startup budget in a new clean Git worktree, without untracked asset files.
+Selected production leaves are unchanged by these source-head fixture/report
+updates. Exact thirteen-leaf CLI controls passed 2 positives, 56 CLI negatives
+and 29 helper negatives, preserving both source roots. These do not replace the
+required complete latest-head hosted CI or native comparisons.

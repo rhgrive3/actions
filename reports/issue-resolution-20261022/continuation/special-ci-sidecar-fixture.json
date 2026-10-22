@@ -1,0 +1,120 @@
+{
+  "status": "passed_test_only_fixture_repair",
+  "baseCommit": "513614996a7d5f9bb2dc609d6068319d91f02f90",
+  "candidateCommit": "f8bbfe456abe1700ef2b5be8db01508789137036",
+  "candidateWorktree": "/workspace/scratch/actions-special-ci-51361499",
+  "changedFiles": [
+    "patches/splatoon3/tests/catalogue-integration.test.mjs"
+  ],
+  "testFileSha256": "0560aa93efdda45c09fc04087557b031e49eadb1fbe126f497695c2a193ea1cd",
+  "oldTestFileSha256": "6da8151b53f7acf42a7191ed9a973a1b1e6cd6c5e83bfaa128e4f7673aa402b5",
+  "github": {
+    "runId": 39808286743,
+    "jobId": 119927307168,
+    "url": "https://github.com/rhgrive3/actions/actions/runs/39808286743/job/119927307168",
+    "originalTests": 151,
+    "originalPass": 149,
+    "originalFail": 1,
+    "originalSkip": 1,
+    "nodeVersion": "22.23.3"
+  },
+  "localNode": {
+    "version": "22.23.4",
+    "binary": "/workspace/scratch/actions-node22/node-v22.23.4-linux-x64/bin/node",
+    "sha256": "94efd062ed066c1a0b332e18249859c905e920eeada5df55d24c99b919629a90"
+  },
+  "verification": {
+    "originalSidecar": {
+      "tests": 1,
+      "pass": 0,
+      "fail": 1
+    },
+    "repairedSidecar": {
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "skip": 0
+    },
+    "catalogueFullPlusStartup": {
+      "catalogueTests": 15,
+      "startupTests": 3,
+      "pass": 18,
+      "fail": 0,
+      "skip": 0,
+      "durationMs": 14182.979936
+    },
+    "exactFailedCiStep": {
+      "fileCount": 14,
+      "testConcurrency": 2,
+      "tests": 151,
+      "pass": 150,
+      "fail": 0,
+      "skip": 1,
+      "durationMs": 82720.26669,
+      "exitCode": 0,
+      "existingSkip": "emitted complete Match module contains the production passive path"
+    }
+  },
+  "unchanged": [
+    "runtime",
+    "source gates",
+    "workflow selection",
+    "original kit/stale/foreign assertions",
+    "skip policy"
+  ],
+  "independentRuntimeGap": "Bound native-rejected future tick still applies its catalogue sidecar; separately demonstrated and documented in Markdown, deliberately unchanged by this fixture-only candidate. Normal pre-bind actor map remains empty.",
+  "archive": "special-ci-sidecar-fixture.raw.tar.gz",
+  "archiveBytes": 14818,
+  "archiveSha256": "4cac4c1b5526e6d4d1cbb4c3fc2c40ff3562b22378785e8a8bcf4ce6f21a789c",
+  "membersReadback": {
+    "github-failure-excerpt.log": {
+      "bytes": 3131,
+      "sha256": "1e073e553492978a523efcde6705bdcb2888646453a00dbfe47359da492c6b72"
+    },
+    "github-job-steps.json": {
+      "bytes": 1447,
+      "sha256": "8f8f31f20a17c530499ff4bbd181ff9f8ddf209f317e4844dd44762f58515132"
+    },
+    "original-sidecar.log": {
+      "bytes": 1208,
+      "sha256": "e4f5f1513f6e49f81c006d7acfaf834492e62dfb3b4ff904820ba076f0316c99"
+    },
+    "repaired-sidecar.log": {
+      "bytes": 549,
+      "sha256": "8b592c31756b0eaa08c876e8828524df40cc7af441074b1af9a8535f32a95864"
+    },
+    "repaired-catalogue-startup.log": {
+      "bytes": 4922,
+      "sha256": "c42ac1e7937a956fbac749a273496d3b0bf1fea7b26dd695c3325cd49bbf81e1"
+    },
+    "failed-step-command.sh": {
+      "bytes": 986,
+      "sha256": "1d636f11286f3cff25766a2c7c94fd2e9bcf95f0d1d712bb00cb9925719c0e85"
+    },
+    "repaired-full-ci-step.log": {
+      "bytes": 93695,
+      "sha256": "46f1663d856c1ea473117e3a490ff3e8b3f60cc01efce0af9042d3317030f852"
+    },
+    "repaired-full-ci-step.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "sidecar-admission-diagnostic.mjs": {
+      "bytes": 1575,
+      "sha256": "f5a98c59a71a80595bfa3fb7b6e7505ca43eabdda9774355a24a9e9604a96eb2"
+    },
+    "sidecar-admission-diagnostic.log": {
+      "bytes": 455,
+      "sha256": "9608fb2c030a1cbd5a22e098d0f118c7e76b70390d5971daad6b79d9ce49b301"
+    },
+    "candidate.patch": {
+      "bytes": 2180,
+      "sha256": "8ccbe20e245667a9668b08fff98dceadd9509f4ca7aacf713766f77ffe22a9fa"
+    },
+    "diagnosis.md": {
+      "bytes": 3703,
+      "sha256": "e1b1d6151c8f5ee17eec09290a8e1a2633324f8007c31b0b318bf5a5f5301ec6"
+    }
+  },
+  "note": "Archive contains text logs, exact failed-step command, diagnostic, diff and diagnosis. No private assets, screenshot/audio payloads, credentials or browser profiles."
+}

@@ -2,7 +2,7 @@
 // native physical, paint and image comparison remains mandatory. No replay.
 export const ALL_PRS_SOURCE_PAIR = Object.freeze({
   "baseCommit": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
-  "candidateCommit": "992b670084d11560a5621041a5e456bd10a7b75c",
+  "candidateCommit": "c8564cb617e1708759a502a662ef1b538eaad14c",
   "blobs": {
     "patches/network-replication/adapter.mjs": {
       "base": "09bee320e01f20291c6261add1560ed3dc5eb22c",
@@ -64,7 +64,7 @@ export const ALL_PRS_FIXTURE_SHA256="4d4d2c7be476b11219dc05f02ea53101df2f4a415cd
 // pose code into the baseline or assert native pose equivalence here.
 export const ALL_PRS_POSE_PAIR=Object.freeze({
   "sourceBase": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
-  "sourceHead": "992b670084d11560a5621041a5e456bd10a7b75c",
+  "sourceHead": "c8564cb617e1708759a502a662ef1b538eaad14c",
   "paths": {
     "patches/splatoon3/adapter.mjs": {
       "baseline": "d0fa9907e1f3b343f21ca560fdeeddd29795b988",

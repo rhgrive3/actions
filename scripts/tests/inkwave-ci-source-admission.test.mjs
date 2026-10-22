@@ -96,7 +96,7 @@ for (const [workflow, names] of Object.entries(jobs)) for (const job of names) {
 }
 
 const allPrBranch = 'integrate/inkwave-all-prs-20261022';
-const allPrEpoch={mode:'current-pair-with-gameplay-differences',sha:'26a4db4123d23162a3dbf8a12150b1b5bc6ccf64',head:'992b670084d11560a5621041a5e456bd10a7b75c'};
+const allPrEpoch={mode:'current-pair-with-gameplay-differences',sha:'26a4db4123d23162a3dbf8a12150b1b5bc6ccf64',head:'c8564cb617e1708759a502a662ef1b538eaad14c'};
 const queueBranch = 'fix/queue-30-recovery-20261022';
 const queueEpoch = {mode:'queue1801-reviewed-paint-source-pair',sha:'28d2c888704d32304d1c938c51d7d2d230eddbbd',head:'df83a5c4265a9c8738d930dabaffb43cd31ae902'};
 const integrationBranch = 'integrate/all-open-prs-20261022';
