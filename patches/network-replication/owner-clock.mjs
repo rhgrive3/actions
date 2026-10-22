@@ -9,7 +9,8 @@ export const OWNER_CLOCK_CHALLENGE_TTL = 2;
 export const OWNER_CLOCK_PENDING_PACKETS = 64;
 export const OWNER_CLOCK_PENDING_BYTES = 256 * 1024;
 const states = new WeakMap();
-const encoder = new TextEncoder();
+// Offline imports do not need network encoders; initialize only on an online packet.
+let encoder;
 const finite = n => typeof n === 'number' && Number.isFinite(n);
 const nonceValid = n => typeof n === 'string' && /^[a-f0-9]{32}$/.test(n);
 const enabled = nm => nm.s?.ownerClockVersion === OWNER_CLOCK_VERSION
@@ -107,7 +108,7 @@ export function handleOwnerClockMessage(nm, from, d, at) {
   if (p.origin) return false;
   if (!validOwnerTickAdvance(d.ts, undefined)) return true;
   try {
-    const wire = JSON.stringify(d), bytes = encoder.encode(wire).byteLength;
+    const wire = JSON.stringify(d), bytes = (encoder ||= new TextEncoder()).encode(wire).byteLength;
     if (p.queue.length < OWNER_CLOCK_PENDING_PACKETS && p.bytes + bytes <= OWNER_CLOCK_PENDING_BYTES) {
       p.queue.push(wire); p.bytes += bytes;
     } else p.dropped++;

@@ -73,7 +73,7 @@ test('parallel browser families retain every final integration acceptance surfac
   assert.ok(workflow.includes('browsers: chromium webkit'));
   assert.ok(workflow.includes('npx playwright install --with-deps ${{ matrix.browsers }}'));
   assert.ok(!workflow.includes('needs: validate'));
-  assert.ok(workflow.includes('cancel-in-progress: true'));
+  assert.ok(workflow.includes("cancel-in-progress: ${{ !(inputs.diagnostic_only == true && (inputs.network_opening_diagnostic == true || inputs.wall_render_diagnostic == true)) }}"));
   for (const gate of ['browser', 'motion', 'motion-detail', 'flow-render', 'wall-render', 'motion-catalog', 'touch-layout', 'reliability', 'touch-layout-identity', 'network-browser', 'paint-mask', 'range', 'startup-browser', 'rematch-lifecycle'])
     assert.ok(workflow.includes(`node scripts/check-inkwave-${gate}.mjs`), gate);
   // The isolated wrapper keeps every original responsive case but avoids
@@ -138,7 +138,7 @@ test('ancillary paint WebGL source and emitted masks are mandatory exact-head ne
   assert.ok(workflow.includes('node scripts/check-inkwave-paint-mask.mjs --site .built-site/_site'));
   assert.match(workflow, /check-inkwave-paint-mask\.mjs[^\n]+--exact-source/);
   const receipts = ['paint-mask/paint-mask-result.json', 'network/network-browser-result.json',
-    'network-delay/network-browser-result.json', 'combat-ceiling/combat-ceiling-browser-result.json'];
+    'network-delay/network-browser-result.json', 'combat-ceiling/combat-ceiling-browser-result.json', 'startup-clock/startup-clock-result.json'];
   const requireReceipts = source => assert.ok(source.includes("'network':[" + receipts.map(value => "'" + value + "'").join(',') + "]"));
   requireReceipts(workflow);
   for (const receipt of receipts)
@@ -151,7 +151,7 @@ test('ancillary paint WebGL source and emitted masks are mandatory exact-head ne
 });
 
 test('compatibility failure preserves its primary error without a missing diagnostic upload', () => {
-  assert.ok(workflow.includes("if: failure() && hashFiles('.ci-scratch/inkwave-patches/patch-tests.log') != ''"));
+  assert.ok(workflow.includes("if: always() && hashFiles('.ci-scratch/inkwave-patches/shard-manifest.json') != ''"));
 });
 
 test('runtime verifier storage is prepared before runtime evidence tests and baseline checkout creation', () => {
@@ -258,7 +258,7 @@ test('all eight patch shards report into the existing required validate gate', (
   assert.ok(shards.includes("INKWAVE_TEST_CONCURRENCY: '2'"));
   assert.ok(shards.includes('INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}'));
   assert.ok(shards.includes('run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs'));
-  assert.ok(shards.includes('if: failure() && hashFiles('));
+  assert.ok(shards.includes("if: always() && hashFiles('.ci-scratch/inkwave-patches/shard-manifest.json') != ''"));
   assert.ok(gate.includes('needs: [validate_core, patch_tests]'));
   assert.ok(gate.includes('always()'));
   assert.ok(gate.includes('test "$CORE_RESULT" = success'));

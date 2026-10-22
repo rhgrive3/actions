@@ -75,14 +75,16 @@ test('scope, timeout, evidence, failure suppression and concurrency mutations ar
   }
 });
 
+// Reviewed integration: shared immutable build, additive acceptance guards,
+// exact-head startup clock evidence, and complete sparse diagnostic checkouts.
 const acceptedJobHashes = {
-  "validate_core": "9c1993fc16134df7fb3fed3e81d88375d73e26378e2159294fa6539d174233dc",
-  "patch_tests": "86a0215408bcbbd2889e6e6106b23023af8cab0417be7854a0b326a21e4f3a3b",
+  "validate_core": "a92b438f8957290b4b6f12e9eb1fc50dcc38ade830fab56ed56413d4f687bbce",
+  "patch_tests": "f4aed2dfb7766fc1497498fc2d6d7689ec90441f0747b854b07a4e631109c5b1",
   "validate": "54ac81f9c3cfa0e1eaed643dc62b644e9658abef0b53faced3a7d47888b790f9",
-  "browser": "985201451524bf978a4e023de2120148845f6c9a502b92b30c03b2fec98e010e",
-  "network-opening-diagnostic": "96db69814831fcb213c519c0c6fbc4a78d39e1dca827baac24727123cc0e34b9",
-  "seven_claims": "e0ff16966e0c1d25987665a455b20de2a86957cd8b98833bd19e27497374a0a9",
-  "resource_paint_continuation": "80043e61551de4f8eeac03c748173c6eb52597f03b2c7a074697398026057ebf"
+  "browser": "f8e004298f07252834e0b771b9798a936f45f15c2b5174ef19f28cdf8784a4d6",
+  "network-opening-diagnostic": "ce2091a6874569449c0f783df0d16ed166de838a4fde8d9467e0bb772148a1a1",
+  "seven_claims": "34ef0c57320a741be38b42f6e0e9eb62e8d7f0b9bbb55b6b9a091c26a828c3cd",
+  "resource_paint_continuation": "78e0d3ebf1290c9250339e8dcef35c9b60077c82fd5a99ff51da01b3c50a442b"
 };
 test('accepted Turf and network job bodies are preserved without gate weakening',()=> {
   for(const [name, expected] of Object.entries(acceptedJobHashes)) {

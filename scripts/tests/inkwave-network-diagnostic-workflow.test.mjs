@@ -56,7 +56,7 @@ test('actual scoped predicates admit only explicit manual network diagnostic',()
 });
 test('malformed routing and broad trigger mutations fail closed',()=>{
  for(const [before,after] of [["github.event_name == 'workflow_dispatch' && ",''],['type: boolean\n        default: false\n      wall_render_diagnostic:','type: string\n        default: true\n      wall_render_diagnostic:'],["&& inputs.network_opening_diagnostic == true\n    runs-on:","|| inputs.network_opening_diagnostic == true\n    runs-on:"],['inputs.diagnostic_only != true\n    runs-on:','inputs.network_opening_diagnostic != true\n    runs-on:']]){
-  const changed=workflow.replace(before,after);assert.notEqual(changed,workflow);assert.throws(()=>verify(changed));
+  const changed=workflow.replaceAll(before,after);assert.notEqual(changed,workflow);assert.throws(()=>verify(changed));
  }
 });
 test('missing immutable workflow, checkout or build head checks are rejected',()=>{
