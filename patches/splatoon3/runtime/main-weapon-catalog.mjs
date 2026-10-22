@@ -1295,7 +1295,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       let pr1=-Infinity;
       for(let i=0;i<shapes.length;i++){
         const q=shapes[i];
-        q.playerRadius0=collisionRadius(q.param,'Player',(p.age-DT)*HZ,s.index,bounceScale);
+        // Previous radius is needed only by an eligible, unblocked actor contact.
+        q.playerRadius0=undefined;
         q.playerRadius1=collisionRadius(q.param,'Player',p.age*HZ,s.index,bounceScale);
         pr1=Math.max(pr1,q.playerRadius1);
       }
@@ -1306,7 +1307,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         let entry=null;
         for(const q of shapes){
           if(q.stop<0)continue;
-          const pr0=q.playerRadius0,radius=q.playerRadius1;
+          const pr0=q.playerRadius0??=(collisionRadius(q.param,'Player',(p.age-DT)*HZ,s.index,bounceScale)),radius=q.playerRadius1;
           const contact=capsuleEntry(q.from,q.to,a.pos,hurtboxRadius(a,PLAYER),hurtboxHeight(a,PLAYER),pr0,radius);
           // A lobe that splashed on terrain this step cannot reach past it.
           if(contact!=null&&contact>q.stop+EPS)continue;
