@@ -103,7 +103,13 @@ test('real catalog Roller and Brush shots follow down-45 camera pitch despite ho
     const p=rounds[0],actualPitch=Math.atan2(p.vel.y,Math.hypot(p.vel.x,p.vel.z));
     const unit=r.parameters[vertical?'VerticalSwingUnitGroupParam':'SwingUnitGroupParam'].Unit[0];
     const basePitch=vertical?catalogRollerSourcePitch(unit,0,true):0;
-    near(actualPitch,-Math.PI/4+basePitch*DEG,name+' real camera-pitch launch');
+    const sourcePitch=-Math.PI/4+basePitch*DEG;
+    // Brushes have a sourced negative AddSpawnSpeedYRateBySpeed (-0.02):
+    // the physical projectile pitch is the camera pitch plus its launch Y
+    // velocity offset, not the unmodified aim vector's pitch.
+    const extraY=unit.AddSpawnSpeedYRateByXZ??unit.AddSpawnSpeedYRateBySpeed??0;
+    const expectedPitch=Math.atan2(Math.sin(sourcePitch)+extraY,Math.cos(sourcePitch));
+    near(actualPitch,expectedPitch,name+' real source-adjusted camera-pitch launch');
     assert.ok(actualPitch<-.35,name+' must not be flattened onto horizontal reticle');
   }
 });
