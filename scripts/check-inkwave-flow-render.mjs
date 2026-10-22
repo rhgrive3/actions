@@ -378,7 +378,22 @@ async function main() {
         render('beauty');
         if (['kid-entry', 'squid-entry', 'off'].includes(name)) images.push({ name, image: renderer.domElement.toDataURL('image/png') });
         const logs = [...observed.values()];
-        rows.push({ name, pixels, snapshot: flowMotionSnapshot(ch), visibleMeshes: activeMeshes.length,
+        // Preserve the actual source presentation and particle placement when
+        // real draw calls produce no pixels (for example submerged swim FX).
+        const glints = flowMeshes().find(mesh => mesh.name === 's3-flow-glints');
+        const particleMatrix = new THREE.Matrix4(), particlePoint = new THREE.Vector3(), liveGlints = [];
+        if (glints) for (let i = 0; i < glints.count; i++) {
+          const alpha = glints.geometry.getAttribute('aFlowAlpha').getX(i);
+          if (alpha <= 1e-10) continue;
+          glints.getMatrixAt(i, particleMatrix); particlePoint.setFromMatrixPosition(particleMatrix);
+          const local = particlePoint.toArray(); glints.localToWorld(particlePoint);
+          liveGlints.push({ index: i, alpha, local, world: particlePoint.toArray() });
+        }
+        const sourcePose = { status: ch.sourceMotion.status, form: ch.form, grounded: ch.grounded,
+          root: ch.root.position.toArray(), physicalPosition: actor.pos.toArray(), visualSmoothY: actor.smoothY, squidPivot: ch.squid.pivot.getWorldPosition(new THREE.Vector3()).toArray(),
+          squidBodyVisible: drawable(ch.squid.body), squidBodySkinned: !!ch.squid.body.isSkinnedMesh,
+          liveGlints };
+        rows.push({ name, pixels, sourcePose, snapshot: flowMotionSnapshot(ch), visibleMeshes: activeMeshes.length,
           flowBeautyCalls: [...observed.values()].reduce((n, log) => n + log.beauty, 0) - callsBefore,
           flowGpuBeautyDraws: [...observed.values()].reduce((n, log) => n + log.gpuBeauty, 0) - drawsBefore,
           flowGpuOverrideDraws: logs.reduce((n, log) => n + log.gpuOverride, 0),

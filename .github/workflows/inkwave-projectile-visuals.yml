@@ -137,7 +137,7 @@ jobs:
           node .ci-baseline/scripts/build-inkwave.mjs .ci-baseline/inkwave-public .built-site/pristine-main
           cp .built-site/pristine-main/inkwave-build.json .ci-scratch/projectile-visuals/before/pristine-main-build.json
       - name: Bind reviewed source controls to declared immutable Git source leaves
-        if: ${{ matrix.side == 'before' && (github.event.pull_request.number == 1758 || github.head_ref == 'test/inkwave-combined-qa-20261021' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.head_ref == 'inkwave/runtime-acceptance-0f3-prep-20261022')) }}
+        if: ${{ matrix.side == 'before' && (github.event.pull_request.number == 1758 || github.head_ref == 'test/inkwave-combined-qa-20261021' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && (github.head_ref == 'inkwave/runtime-acceptance-0f3-prep-20261022' || github.head_ref == 'inkwave/runtime-acceptance-followup-20261022'))) }}
         env:
           PAIR_EVENT_NAME: ${{ github.event_name }}
           PAIR_BASE_REF: ${{ github.event.pull_request.base.ref }}
@@ -145,7 +145,7 @@ jobs:
           DECLARED_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DECLARED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          if [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-0f3-prep-20261022" ]; then
+          if [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && { [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-0f3-prep-20261022" ] || [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-followup-20261022" ]; }; then
             node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode maine1f-byte-identical-paint-source-epoch --expected-source-base e1fa66ad8465bf87caaf232d51543def72c35875 --expected-source-head e1fa66ad8465bf87caaf232d51543def72c35875 --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
           else
             node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
@@ -163,7 +163,7 @@ jobs:
           DECLARED_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DECLARED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          if [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-0f3-prep-20261022" ]; then
+          if [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && { [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-0f3-prep-20261022" ] || [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-followup-20261022" ]; }; then
             node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode maine1f-byte-identical-paint-source-epoch --expected-source-base e1fa66ad8465bf87caaf232d51543def72c35875 --expected-source-head e1fa66ad8465bf87caaf232d51543def72c35875 --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
           elif [ "$PAIR_PR_NUMBER" = "1758" ] || [ "$PAIR_HEAD_REF" = "test/inkwave-combined-qa-20261021" ]; then
             node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
