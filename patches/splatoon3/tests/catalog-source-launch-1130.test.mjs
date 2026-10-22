@@ -98,12 +98,15 @@ test('real catalog Roller and Brush shots follow down-45 camera pitch despite ho
     a.weaponRunner.update(1/60,{fire:true,firePressed:true});
     for(let tick=0;tick<75;tick++)
       a.weaponRunner.update(1/60,{fire:false,firePressed:false,sub:false});
-    const rounds=f.G.projectiles.list.filter(p=>p.catalog?.r===r);
+    const rounds=f.G.projectiles.list.filter(p=>p.catalog?.r?.id===r.id);
     assert.ok(rounds.length>0,name+' emitted source round');
     const p=rounds[0],actualPitch=Math.atan2(p.vel.y,Math.hypot(p.vel.x,p.vel.z));
     const unit=r.parameters[vertical?'VerticalSwingUnitGroupParam':'SwingUnitGroupParam'].Unit[0];
     const basePitch=vertical?catalogRollerSourcePitch(unit,0,true):0;
-    near(actualPitch,-Math.PI/4+basePitch*DEG,name+' real camera-pitch launch');
+    const sourcePitch=-Math.PI/4+basePitch*DEG;
+    const lift=unit.AddSpawnSpeedYRateByXZ??unit.AddSpawnSpeedYRateBySpeed??0;
+    near(actualPitch,Math.atan2(Math.sin(sourcePitch)+lift,Math.cos(sourcePitch)),
+      name+' real camera-pitch launch with source lift');
     assert.ok(actualPitch<-.35,name+' must not be flattened onto horizontal reticle');
   }
 });
