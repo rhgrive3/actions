@@ -482,7 +482,7 @@ export const MAINA350_PAINT_SOURCE_PAIR = Object.freeze({
   sourceHead: 'a350b6b89e4cb86abe37273db6315c74085f8ac5',
 });
 export const MAINA350_PAINT_PATHS = Object.freeze([...MAIN_INK_BASELINE_PATHS, 'patches/splatoon3/runtime/bloblobber-launch-sweep.mjs']);
-export const paintSourcePaths = pair => [MAINA350_PAINT_SOURCE_PAIR.mode,MAINCEB58_PAINT_SOURCE_PAIR.mode].includes(pair?.mode) ? MAINA350_PAINT_PATHS : MAIN_INK_BASELINE_PATHS;
+export const paintSourcePaths = pair => [MAINA350_PAINT_SOURCE_PAIR.mode,MAINCEB58_PAINT_SOURCE_PAIR.mode,QUEUE1801_PAINT_SOURCE_PAIR.mode].includes(pair?.mode) ? MAINA350_PAINT_PATHS : MAIN_INK_BASELINE_PATHS;
 const MAINA350_PAINT_BLOBS = Object.freeze({
   "patches/splatoon3/runtime/bloblobber-launch-sweep.mjs": "31fa4405d1e4bca5f5f89e613d11f2a9283be2d0",
   "patches/network-replication/adapter.mjs": "bee670bcc764d506911d87c1d3281b10f3f7e099",
@@ -555,6 +555,60 @@ function explicitMainceb58Pair(baseline, candidate, expectedPair) {
       originalGitBlob: gitBlobSha1(baseline.get(path)), referenceGitBlob: gitBlobSha1(baseline.get(path)),
       candidateGitBlob: gitBlobSha1(candidate.get(path)), originalSha256: sha256(baseline.get(path)),
       referenceSha256: sha256(baseline.get(path)), candidateSha256: sha256(candidate.get(path)), replayed: []}))
+  }};
+}
+export const QUEUE1801_PAINT_SOURCE_PAIR = Object.freeze({
+  "mode": "queue1801-reviewed-paint-source-pair",
+  "sourceBase": "28d2c888704d32304d1c938c51d7d2d230eddbbd",
+  "sourceHead": "df83a5c4265a9c8738d930dabaffb43cd31ae902"
+});
+const QUEUE1801_PAINT_BLOBS = Object.freeze({
+  "baseline": {
+    "patches/network-replication/adapter.mjs": "bee670bcc764d506911d87c1d3281b10f3f7e099",
+    "patches/network-replication/slosher-paint-admission.mjs": "835ec49ce61f4d623a97f0cdb38fdcb8c592b916",
+    "patches/splatoon3/main-ink-footprint-adapter.mjs": "cdcc9e94cfe5b754a0b1f99fbd204b28ff24d91c",
+    "patches/splatoon3/runtime/blaster-flight-paint.mjs": "629e9a0eb0f7ea67bf27d756bf3f46273396791c",
+    "patches/splatoon3/runtime/main-ink-footprints.mjs": "546c48ae0c1b30d669de3756350f20c7e82dfe4e",
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs": "1e0de9275381caf563db3e7707a6b835f28b3392",
+    "patches/splatoon3/runtime/paint-packet-codec.mjs": "c5e6f71cddc6d9caba22f687a77869604fced80e",
+    "patches/splatoon3/runtime/slosher-intermediate-paint.mjs": "9914ddcef5472e6314dd9a02ba6f0996ccfd3f05",
+    "patches/splatoon3/runtime/slosher-nearest-paint.mjs": "948517797c8a2de11278e2f96bf324ab80a22aa6",
+    "patches/splatoon3/runtime/weapon-edgecases.mjs": "ebb85e51fab03258a35b84cb0f2aa9ec8bdd5110",
+    "patches/splatoon3/runtime/weapons-fidelity.mjs": "a37fa779835a2a17e24c5bed3c601a56269bfec3",
+    "scripts/inkwave-source-composition.mjs": "33a535481402bae5e846870bed2ee7e76ef9b298",
+    "scripts/lib/inkwave-build-only-modules.mjs": "89f3b41a400307f8c6f7156bb4850d6c67e67c85",
+    "patches/splatoon3/runtime/bloblobber-launch-sweep.mjs": "31fa4405d1e4bca5f5f89e613d11f2a9283be2d0"
+  },
+  "candidate": {
+    "patches/network-replication/adapter.mjs": "09bee320e01f20291c6261add1560ed3dc5eb22c",
+    "patches/network-replication/slosher-paint-admission.mjs": "835ec49ce61f4d623a97f0cdb38fdcb8c592b916",
+    "patches/splatoon3/main-ink-footprint-adapter.mjs": "cdcc9e94cfe5b754a0b1f99fbd204b28ff24d91c",
+    "patches/splatoon3/runtime/blaster-flight-paint.mjs": "629e9a0eb0f7ea67bf27d756bf3f46273396791c",
+    "patches/splatoon3/runtime/main-ink-footprints.mjs": "546c48ae0c1b30d669de3756350f20c7e82dfe4e",
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs": "8d06ed720a80f38fe3457eb71eb030b9041aac78",
+    "patches/splatoon3/runtime/paint-packet-codec.mjs": "c5e6f71cddc6d9caba22f687a77869604fced80e",
+    "patches/splatoon3/runtime/slosher-intermediate-paint.mjs": "9914ddcef5472e6314dd9a02ba6f0996ccfd3f05",
+    "patches/splatoon3/runtime/slosher-nearest-paint.mjs": "948517797c8a2de11278e2f96bf324ab80a22aa6",
+    "patches/splatoon3/runtime/weapon-edgecases.mjs": "ebb85e51fab03258a35b84cb0f2aa9ec8bdd5110",
+    "patches/splatoon3/runtime/weapons-fidelity.mjs": "a37fa779835a2a17e24c5bed3c601a56269bfec3",
+    "scripts/inkwave-source-composition.mjs": "33a535481402bae5e846870bed2ee7e76ef9b298",
+    "scripts/lib/inkwave-build-only-modules.mjs": "89f3b41a400307f8c6f7156bb4850d6c67e67c85",
+    "patches/splatoon3/runtime/bloblobber-launch-sweep.mjs": "31fa4405d1e4bca5f5f89e613d11f2a9283be2d0"
+  }
+});
+function explicitQueue1801Pair(baseline,candidate,expectedPair) {
+  if (expectedPair?.mode !== QUEUE1801_PAINT_SOURCE_PAIR.mode) return null;
+  if (Object.keys(QUEUE1801_PAINT_SOURCE_PAIR).some(k=>expectedPair[k]!==QUEUE1801_PAINT_SOURCE_PAIR[k]))
+    fail('source-pair differs from explicitly requested queue1801 comparison');
+  for(const path of MAINA350_PAINT_PATHS) for(const [side,sources] of [['baseline',baseline],['candidate',candidate]])
+    if(typeof sources.get(path)!=='string'||gitBlobSha1(sources.get(path))!==QUEUE1801_PAINT_BLOBS[side][path])
+      fail(path+': '+side+' differs from declared queue1801 source pair; mixed, missing or changed source cannot be replayed');
+  return {sources:new Map(baseline),changes:[],evidence:{schema:1,...QUEUE1801_PAINT_SOURCE_PAIR,
+    validationLimit:'Strict fourteen-leaf source identity only. Gameplay differences remain visible to independent compiled/state/RNG/image comparisons; no replay or equivalence claim.',
+    manifestGitBlob:MAIN_INK_BASELINE_MANIFEST_BLOB,
+    paths:MAINA350_PAINT_PATHS.map(path=>({path,mode:'queue1801-exact-paint-source-pair',
+      originalGitBlob:gitBlobSha1(baseline.get(path)),referenceGitBlob:gitBlobSha1(baseline.get(path)),candidateGitBlob:gitBlobSha1(candidate.get(path)),
+      originalSha256:sha256(baseline.get(path)),referenceSha256:sha256(baseline.get(path)),candidateSha256:sha256(candidate.get(path)),replayed:[]}))
   }};
 }
 function explicitMaine1fPair(baseline, candidate, expectedPair) {
@@ -638,9 +692,11 @@ export function planMainInkBaseline(baseline, candidate, expectedPair = null) {
         Object.values(expectedPair).some(value => typeof value !== 'string' || !value))
       fail('complete expected source-pair contract required');
   }
-  const explicit = explicitMainceb58Pair(baseline, candidate, expectedPair) || explicitMaina350Pair(baseline, candidate, expectedPair) || explicitMaine1fPair(baseline, candidate, expectedPair) || explicitMain9fePair(baseline, candidate, expectedPair);
+  const explicit = explicitQueue1801Pair(baseline,candidate,expectedPair) || explicitMainceb58Pair(baseline, candidate, expectedPair) || explicitMaina350Pair(baseline, candidate, expectedPair) || explicitMaine1fPair(baseline, candidate, expectedPair) || explicitMain9fePair(baseline, candidate, expectedPair);
   if (explicit) return explicit;
   const catalogue = 'patches/splatoon3/runtime/main-weapon-catalog.mjs';
+  if ([baseline,candidate].some(s=>typeof s.get(catalogue)==='string'&&gitBlobSha1(s.get(catalogue))===QUEUE1801_PAINT_BLOBS.candidate[catalogue]))
+    fail('queue1801 sources require an explicitly requested source pair; gameplay differences cannot be replayed');
   if ([baseline, candidate].some(sources => typeof sources.get(catalogue) === 'string' && gitBlobSha1(sources.get(catalogue)) === MAINCEB58_PAINT_BLOBS[catalogue]))
     fail('mainceb58 paint sources require an explicitly requested comparison epoch; old/new physics cannot be replayed or called unchanged');
   if ([baseline, candidate].some(sources => typeof sources.get(catalogue) === 'string' && gitBlobSha1(sources.get(catalogue)) === MAINA350_PAINT_BLOBS[catalogue]))

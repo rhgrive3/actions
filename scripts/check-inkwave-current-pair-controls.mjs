@@ -9,7 +9,7 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { verifyDeclaredPaintSources } from './lib/inkwave-declared-paint-source-pair.mjs';
-import { MAINCEB58_PAINT_SOURCE_PAIR, MAINA350_PAINT_SOURCE_PAIR, paintSourcePaths, MAINE1F_PAINT_SOURCE_PAIR, MAIN9FE_PAINT_SOURCE_PAIR, MAIN_INK_BASELINE_PATHS, planMainInkBaseline } from './lib/inkwave-main-ink-baseline.mjs';
+import { QUEUE1801_PAINT_SOURCE_PAIR, MAINCEB58_PAINT_SOURCE_PAIR, MAINA350_PAINT_SOURCE_PAIR, paintSourcePaths, MAINE1F_PAINT_SOURCE_PAIR, MAIN9FE_PAINT_SOURCE_PAIR, MAIN_INK_BASELINE_PATHS, planMainInkBaseline } from './lib/inkwave-main-ink-baseline.mjs';
 
 const options = parseSourceAdmissionArgs(process.argv.slice(2), ['--baseline', '--candidate', '--receipt', '--base-sha', '--candidate-sha', '--expected-mode', '--expected-source-base', '--expected-source-head'], ['--baseline', '--candidate']);
 const value = name => options.get(name) ?? null;
@@ -42,6 +42,8 @@ if (hasExpectation) {
 const hasDeclared=options.has('--base-sha')||options.has('--candidate-sha');
 if(requestedPair?.mode === MAIN9FE_PAINT_SOURCE_PAIR.mode)
  assert.ok(hasDeclared,'main9fe source epoch requires declared immutable Git source commits');
+if(requestedPair?.mode === QUEUE1801_PAINT_SOURCE_PAIR.mode)
+ assert.ok(hasDeclared,'queue1801 source epoch requires declared immutable Git source commits');
 if(requestedPair?.mode === MAINCEB58_PAINT_SOURCE_PAIR.mode)
  assert.ok(hasDeclared,'mainceb58 source epoch requires declared immutable Git source commits');
 if(requestedPair?.mode === MAINA350_PAINT_SOURCE_PAIR.mode)
@@ -55,8 +57,9 @@ const main9fe = admitted.evidence.mode === MAIN9FE_PAINT_SOURCE_PAIR.mode;
 const maine1f = admitted.evidence.mode === MAINE1F_PAINT_SOURCE_PAIR.mode;
 const maina350 = admitted.evidence.mode === MAINA350_PAINT_SOURCE_PAIR.mode;
 const mainceb58 = admitted.evidence.mode === MAINCEB58_PAINT_SOURCE_PAIR.mode;
+const queue1801 = admitted.evidence.mode === QUEUE1801_PAINT_SOURCE_PAIR.mode;
 const identity = mainceb58 || maina350 || maine1f || main9fe || admitted.evidence.mode === 'pr1746-byte-identical-current-paint';
-assert.ok(identity || admitted.evidence.mode === 'current-pair-with-gameplay-differences', 'current controls cannot test a legacy replay');
+assert.ok(identity || queue1801 || admitted.evidence.mode === 'current-pair-with-gameplay-differences', 'current controls cannot test a legacy replay');
 const expectedPair = Object.freeze(Object.fromEntries(['mode','sourceBase','sourceHead'].map(key=>[key,admitted.evidence[key]])));
 assert.deepEqual(admitted.changes, []);
 assert.deepEqual([...admitted.sources], [...sourceMap(before)]);
@@ -97,15 +100,15 @@ function positive() {
   assert.equal(evidence.paint.paths.length, selectedPaths.length);
   // PR1746's exact 95c -> f312 tuple has two differing leaves. The older
   // four-leaf contract remains unchanged for its separately pinned pairs.
-  const expectedChanged = identity ? 0 : evidence.paint.sourceBase === '95c25af145418691991a1452d4d10589754a0f1c' &&
+  const expectedChanged = queue1801 ? 2 : identity ? 0 : evidence.paint.sourceBase === '95c25af145418691991a1452d4d10589754a0f1c' &&
     evidence.paint.sourceHead === 'f31238a48b9d1a4af2d4f5f5f9182af777a79c83' ? 2 : 4;
   assert.equal(evidence.paint.paths.filter(row => row.originalSha256 !== row.candidateSha256).length, expectedChanged);
   for (const row of evidence.paint.paths) {
-    assert.equal(row.mode, mainceb58 ? 'mainceb58-exact-paint-source' : maina350 ? 'maina350-exact-paint-source' : maine1f ? 'maine1f-exact-paint-source' : main9fe ? 'main9fe-exact-paint-source' : identity ? 'pr1746-exact-current-paint' : 'reviewed-current-pair');
+    assert.equal(row.mode, queue1801 ? 'queue1801-exact-paint-source-pair' : mainceb58 ? 'mainceb58-exact-paint-source' : maina350 ? 'maina350-exact-paint-source' : maine1f ? 'maine1f-exact-paint-source' : main9fe ? 'main9fe-exact-paint-source' : identity ? 'pr1746-exact-current-paint' : 'reviewed-current-pair');
     assert.deepEqual(row.replayed, []);
     assert.equal(row.referenceSha256, row.originalSha256);
   }
-  assert.match(evidence.scope, mainceb58 ? /explicitly selected mainceb58 fourteen-leaf paint source epoch/ : maina350 ? /explicitly selected maina350 fourteen-leaf paint source epoch/ : maine1f ? /explicitly selected maine1f thirteen-leaf paint source epoch/ : main9fe ? /explicitly selected main9fe thirteen-leaf paint source epoch/ : identity ? /complete byte-identical PR1746 source epoch/ : /Gameplay differences remain/);
+  assert.match(evidence.scope, queue1801 ? /explicitly selected queue1801 fourteen-leaf paint source pair/ : mainceb58 ? /explicitly selected mainceb58 fourteen-leaf paint source epoch/ : maina350 ? /explicitly selected maina350 fourteen-leaf paint source epoch/ : maine1f ? /explicitly selected maine1f thirteen-leaf paint source epoch/ : main9fe ? /explicitly selected main9fe thirteen-leaf paint source epoch/ : identity ? /complete byte-identical PR1746 source epoch/ : /Gameplay differences remain/);
   assert.doesNotMatch(evidence.scope, /identical.*physics/);
   verify(left, before); verify(right, after);
   counts.positiveCli++;
@@ -151,7 +154,7 @@ try {
     assert.throws(() => planMainInkBaseline(b, a, expectedPair)); counts.helperRejected++;
   }
   positive();
-  assert.deepEqual(counts, identity ? { positiveCli: 2, cliRejected: selectedPaths.length * 4 + 1, helperRejected: selectedPaths.length * 2 } : { positiveCli: 2, cliRejected: 56, helperRejected: 29 });
+  assert.deepEqual(counts, identity ? { positiveCli: 2, cliRejected: selectedPaths.length * 4 + 1, helperRejected: selectedPaths.length * 2 } : { positiveCli: 2, cliRejected: selectedPaths.length * 4 + 4, helperRejected: selectedPaths.length * 2 + 3 });
 } finally {
   // Only the directory created by this invocation is removed; input roots are never cleaned.
   fs.rmSync(scratch, { recursive: true, force: true });

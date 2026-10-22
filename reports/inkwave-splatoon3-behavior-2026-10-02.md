@@ -5823,3 +5823,15 @@ Switch controls and all remaining calibration issues are unverified.
 統合時にBGM/非表示/ミュート/Worker失敗のビルド接続が衝突したため、実録streamはproceduralな25ms clockを止め、合成曲への切替はWorkerを優先し、故障時は1個のintervalへfallbackするよう整合した。mute/非表示/古いfailure callback/URLの退役は維持し、stream→合成→pause/resume→mute/unmuteを本番合成ソースで追加確認する。BOTの既知nodeキャッシュ後にもnativeの動的な目標補正を適用し、既存の到達不能fallbackと再試行予算を保持する。雲bakeはscissor/renderer/cube face/mipの復旧と、復旧失敗時の元例外・flags保持を確認する。
 
 CPU回帰の成功は物理GPU/実機性能の受け入れではない。Splatoon 3比較は既存11.3.0の参照・条件を継承し、新規の実機frame値は追加しない。追加変更の本番ビルド、音声・BOT・ルール/通信の関連回帰を検証し、最終生成物の描画検証を別に記録する。
+
+
+### #1801 最終QAと追加 #1802 / #1803
+
+30項目の統合版は標準 `npm test`、本番ビルド、音声等208件、音楽/BOT54件、ルール/通信122件を通過した。生成物の追加81件、Flow実WebGL11シナリオ、影/反射20回とInput10回、Inkjetの実native paid/ghost終端60Hzも通過した。固定したmain28d / 統合df83のpaint14-leaf（2ファイル差分）とpose16-leafを別のsource-pairとして追加し、差分を再生しない。84/96の編集・欠損・混合とGit CLIの否定対照を維持し、物理や描画の一致をソース同一性だけで確定しない。過去PR1746のpose試験は当時の固定16ファイルを圧縮fixtureから読み、その固定blob/assertを保持する。
+
+#1803は実際のAudioContextを初期化してsilent busからmenuを再生してから、本物のmusic Workerの作成元・body・manifestを検証するQA修復である。native browserで固定worker文字列が97 bytesであることを確認したため、誤った90という重複値は固定MUSIC_TIMER_SOURCEのbyte長へ整合し、全body・hash・creator拒否を保持した。
+
+#1802は固定364dd0のcommon buildからExplosherの既存glitterの逆変換before/afterを作るQA基盤で、runtimeを変更しない。入場・原点・trajectory・状態・画像・動画の否定対照152件を確認した。native初期pair、長時間動画、本家実機・視認性受け入れは未確認であり、既存の後続段階への独立した入場条件を維持する。
+
+
+最終確認: runtime `df83a5c4265a9c8738d930dabaffb43cd31ae902` / build contentHash `7b0b597f308f86d2d9607e2a5e0e5f122fa7e0a7435810512039de7014565533` の総合active browserが成功した。65 canonical kit、14 defaults、装備12select、実キーボード移動・接地・射撃/塗り、20Hz時の3秒進行、finite velocity、752 responseの同一性とpage errors 0を確認した。実music Workerの作成元・97-byte body/hash・cleanupを含むnative試験7件、過去の固定gate20件、追加source admission24件も通過した。これはChromium 153 / SwiftShaderでの公開版の回帰確認であり、物理端末FPSやSwitch実機・完了動画の受け入れではない。GitHub上のCI待機は別に残る。

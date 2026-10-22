@@ -2,6 +2,12 @@
 // Reuse the existing native range driver. Only the diagnostic copy receives
 // deterministic clocks and receipts; neither production checkout is rewritten.
 import fs from 'node:fs';
+import {requireApprovedCommonBuild} from './lib/inkwave-explosher-common-build.mjs';
+import {requireInverseShapePair} from './lib/inkwave-explosher-inverse-contract.mjs';
+import {requireControlledStartupPair}from'./lib/inkwave-explosher-volume-barrier.mjs';
+import {requireExplosherVideoTools,explosherCaptureIdentity}from'./lib/inkwave-explosher-video-gate.mjs';
+import {readExplosherStagePair}from'./lib/inkwave-explosher-stage-admission.mjs';
+import { installProjectileCaptureUiGate } from './lib/inkwave-projectile-capture-ui.mjs';
 import { readExplosherCaptureSurface, explosherSurfaceReady } from './lib/inkwave-explosher-capture-surface.mjs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -13,7 +19,13 @@ const [siteArg,outArg,sourceSha,sourceRootArg]=process.argv.slice(2);
 if(!siteArg||!outArg||!/^[a-f0-9]{40}$/.test(sourceSha||''))throw Error('Usage: <built-site> <evidence-dir> <source-sha>');
 const root=fileURLToPath(new URL('../',import.meta.url)),site=path.resolve(siteArg),out=path.resolve(outArg);
 const sourceRoot=sourceRootArg?path.resolve(sourceRootArg):root;
+// Fail before creating evidence, loading Playwright or launching a browser.
+const commonBuildAdmission=requireApprovedCommonBuild(sourceRoot,site);
+if(commonBuildAdmission.head!==sourceSha)throw Error('Admitted common source differs');
 const preflight=process.env.EXPLOSHER_PREFLIGHT==='1';
+const video=!preflight&&process.env.EXPLOSHER_VIDEO==='1';
+const captureTicks=preflight?[0]:video?Array.from({length:61},(_,i)=>i):[0,3,8,14,22,30];
+const captureViews=preflight||video?['behind']:['behind','tele-side','tele-oblique'];
 const expectedPath=process.env.EXPLOSHER_EXPECT_PREFLIGHT;
 const expectedText=expectedPath?fs.readFileSync(expectedPath,'utf8'):null;
 const expectedFrame=expectedText?JSON.parse(expectedText)[0]:null;
@@ -25,8 +37,26 @@ if(actualSourceSha!==sourceSha)throw Error('Requested SHA does not match checkou
 fs.mkdirSync(out,{recursive:true});
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 const once=(s,a,b)=>{if(s.split(a).length!==2)throw Error('capture anchor mismatch: '+a);return s.replace(a,b);};
+const controlledPath=process.env.EXPLOSHER_CONTROLLED_MAIN;
+const controlled=controlledPath?JSON.parse(fs.readFileSync(controlledPath,'utf8')):null;
+if(controlled&&(controlled.controlledInitialCondition!==true||controlled.naturalBootAccepted!==false||controlled.site!==site||controlled.sourceRoot!==sourceRoot||hash(fs.readFileSync(controlled.file))!==controlled.transformedEmittedSha256))throw Error('Invalid controlled main provenance');
+const shapeOverlayPath=process.env.EXPLOSHER_SHAPE_OVERLAY;
+const shapeOverlay=shapeOverlayPath?JSON.parse(fs.readFileSync(shapeOverlayPath,'utf8')):null;
+if(shapeOverlay&&(shapeOverlay.schema!==2||shapeOverlay.sameBuildComparison!==true||shapeOverlay.fullGameTwoBuildAcceptance!==false||shapeOverlay.expectedCommonSourceHead!==actualSourceSha||!['before','after'].includes(shapeOverlay.lane)||shapeOverlay.site!==site||shapeOverlay.sourceRoot!==sourceRoot||shapeOverlay.baselineSourceBlob!=='7afb76e80960dde61d51effb89057dd1f183d16f'||shapeOverlay.candidateSourceBlob!=='ff05f46db9eb5179440cd2c375663148ca05f48a'||hash(fs.readFileSync(shapeOverlay.file))!==shapeOverlay.transformedEmittedSha256||shapeOverlay.transformedEmittedSha256!==(shapeOverlay.lane==='before'?shapeOverlay.baselineEmittedSha256:shapeOverlay.candidateEmittedSha256)))throw Error('Invalid same-build shape overlay provenance');
+let stageAdmission=null;
+if(!shapeOverlay||!controlled)throw Error('This LOCAL stage candidate requires the reviewed common shape and controlled-main receipts');
+if(!preflight){
+ fs.writeFileSync(path.join(out,'encoder-capabilities.json'),JSON.stringify(requireExplosherVideoTools(),null,2));
+ const beforeEvidence=process.env.EXPLOSHER_ADMIT_BEFORE,afterEvidence=process.env.EXPLOSHER_ADMIT_AFTER;
+ if(!beforeEvidence||!afterEvidence||!expectedFrame)throw Error('Full stage requires strict prior pair and bound own preflight');
+ stageAdmission=readExplosherStagePair(video?'stills':'preflight',beforeEvidence,afterEvidence);
+ if(stageAdmission.commonHead!==actualSourceSha||stageAdmission.buildContentHash!==shapeOverlay.buildContentHash)throw Error('Prior stage uses a different source/build');
+ const admittedPreflightHash=video?stageAdmission.preflightManifestSha256[shapeOverlay.lane]:stageAdmission[shapeOverlay.lane].manifestSha256;
+ if(hash(expectedText)!==admittedPreflightHash)throw Error('Own frame0 binding is not the admitted preflight manifest');
+ fs.writeFileSync(path.join(out,'stage-admission.json'),JSON.stringify(stageAdmission,null,2));
+}
 const rangeEntryUrl=new URL('./lib/inkwave-range-menu-entry.mjs',import.meta.url).href;
-let driver=fs.readFileSync(path.join(root,'scripts/render-inkwave-projectile-shapes.mjs'),'utf8');
+let driver=fs.readFileSync(path.join(sourceRoot,'scripts/render-inkwave-projectile-shapes.mjs'),'utf8');
 const originalHash=hash(driver);
 driver=driver.replace(/^#!.*\n/,'');
 driver="import { enterRangeFromMenu } from "+JSON.stringify(rangeEntryUrl)+";\n"+driver;
@@ -35,6 +65,7 @@ driver=once(driver,"  await page.goto(base + '/?range&skipTitle');",`  await pag
     // Normal game accessibility palette selection in this isolated diagnostic browser.
     localStorage.setItem('inkwave.settings',JSON.stringify({colorblind:true}));
     localStorage.setItem('inkwave.profile',JSON.stringify({style:{hair:0,skin:7,outfit:5,eyes:1,hat:0,brows:3}}));
+    (${installProjectileCaptureUiGate.toString()})();
     window.readExplosherSceneClocks=${readExplosherSceneClocks.toString()};
     window.requireExplosherStyle=${requireExplosherStyle.toString()};
     (${installExplosherEarlyFreeze.toString()})();
@@ -44,12 +75,12 @@ driver=once(driver,"  await page.goto(base + '/?range&skipTitle');",`  await pag
     window.explosherSurfaceReady=${explosherSurfaceReady.toString()};
   });
   await enterRangeFromMenu(page,base);
-  const surfaceEntry=await page.evaluate(()=>({surface:window.readExplosherCaptureSurface(),clocks:window.readExplosherSceneClocks()}));
+  const surfaceEntry=await page.evaluate(()=>({surface:window.readExplosherCaptureSurface(),clocks:window.readExplosherSceneClocks(),captureUi:window.__iwProjectileCaptureUiGate({phase:'observe'}),captureUiHistory:window.__iwProjectileCaptureUiHistory}));
   await page.screenshot({path:path.join(out,'normal-ui-entry.png')});
   let uiError=null;
-  try {await page.waitForFunction(()=>window.explosherSurfaceReady(window.readExplosherCaptureSurface()),null,{timeout:60000});}
+  try {await page.waitForFunction(()=>{const ui=window.__iwProjectileCaptureUiGate({phase:'admission'});return window.explosherSurfaceReady(window.readExplosherCaptureSurface())&&ui.ready===true;},null,{timeout:60000});}
   catch(error){uiError=String(error);}
-  const surfaceReady=await page.evaluate(()=>({surface:window.readExplosherCaptureSurface(),clocks:window.readExplosherSceneClocks()}));
+  const surfaceReady=await page.evaluate(()=>({surface:window.readExplosherCaptureSurface(),clocks:window.readExplosherSceneClocks(),captureUi:window.__iwProjectileCaptureUiGate({phase:'observe'}),captureUiHistory:window.__iwProjectileCaptureUiHistory}));
   await page.screenshot({path:path.join(out,'normal-ui-after-wait.png')});
   fs.writeFileSync(path.join(out,'surface-admission.json'),JSON.stringify({uiError,entry:surfaceEntry,after:surfaceReady},null,2));
   if(uiError)throw Error(uiError);
@@ -66,7 +97,7 @@ driver=once(driver,"  await page.evaluate(() => {\n    const G = window.__G, g =
     window.explosherSceneSources=await (${awaitExplosherSceneSources.toString()})(G,180000,window.explosherTargetDummyClass);
     window.explosherSceneCensus=${explosherSceneCensus.toString()};
     g.debug.freeze();g.debug.freezeBots();`);
-const resetSource=fs.readFileSync(path.join(root,'scripts/check-inkwave-projectile-visuals.mjs'),'utf8');
+const resetSource=fs.readFileSync(path.join(sourceRoot,'scripts/check-inkwave-projectile-visuals.mjs'),'utf8');
 const resetMatches=resetSource.match(/async function resetCaptureCharacter\(actor\) \{[\s\S]*?\n\}/g);
 if(resetMatches?.length!==1)throw Error('Native reset helper is not unique');
 const nativeReset=resetMatches[0];
@@ -144,7 +175,7 @@ driver=once(driver,"        const file = `\${label}-t\${String(tick).padStart(2,
 driver=once(driver,"  page.on('pageerror', e => console.error('pageerror', String(e)));","  const pageErrors=[];page.on('pageerror',e=>pageErrors.push(String(e)));");
 driver=once(driver,"        await page.locator('canvas').first().screenshot({ path: path.join(out, file) });",`        if(pageErrors.length)throw Error('Native page errors: '+pageErrors.join(' | '));
         if(!(measurement.render.calls>0&&measurement.render.triangles>0))throw Error('Native scene did not draw');
-        measurement.captureSurface=await page.evaluate(()=>{const s=window.readExplosherCaptureSurface();if(!window.explosherSurfaceReady(s))throw Error('Native capture surface/UI no longer ready');return s;});
+        measurement.captureSurface=await page.evaluate(()=>{const s=window.readExplosherCaptureSurface();if(!window.explosherSurfaceReady(s))throw Error('Native capture surface/UI no longer ready');window.__iwProjectileCaptureUiGate({phase:'capture',requireReady:true});return s;});
         const png=await page.locator('#game-canvas').screenshot({path:path.join(out,file)});
         const imageStats=await page.evaluate(async data=>{
           const img=new Image();img.src='data:image/png;base64,'+data;await img.decode();
@@ -192,8 +223,11 @@ if(preflight){
   driver=once(driver,'const drawMs=(performance.now()-start)/200;','const drawMs=(performance.now()-start);');
 }
 
-driver="const expectedFrame="+JSON.stringify(expectedFrame)+";\n"+driver;
+driver="const requireControlledStartupPair="+requireControlledStartupPair.toString()+";\nconst expectedFrame="+JSON.stringify(expectedFrame)+";\n"+driver;
 driver=once(driver,"        if(pageErrors.length)throw Error('Native page errors: '+pageErrors.join(' | '));",`        if(tick===0&&expectedFrame){
+          requireControlledStartupPair(expectedFrame.measurement.controlledStartup,measurement.controlledStartup);
+          const effective=r=>({...r,blend:r.blend?.active?r.blend:null,superJumpLandTime:r.superJumpLandTime<.45?r.superJumpLandTime:null});
+          if(!measurement.preShot?.rig||!expectedFrame.measurement.preShot?.rig||JSON.stringify(effective(measurement.preShot.rig))!==JSON.stringify(effective(expectedFrame.measurement.preShot.rig)))throw Error('Full-capture effective rig differs from preflight');
           for(const k of ['rng','effects','style','sceneClocks','startup','aimTrace','nativeReset','physical','palette','inkHex','time','sparkles','lighting','viewport'])
             if(JSON.stringify(measurement[k])!==JSON.stringify(expectedFrame.measurement[k]))throw Error('Full-capture frame0 differs from preflight: '+k);
           if(view===expectedFrame.view&&JSON.stringify(measurement.camera)!==JSON.stringify(expectedFrame.measurement.camera))throw Error('Full-capture frame0 differs from preflight: camera');
@@ -202,19 +236,67 @@ driver=once(driver,"        if(pageErrors.length)throw Error('Native page errors
         }
         if(pageErrors.length)throw Error('Native page errors: '+pageErrors.join(' | '));`);
 
+if(shapeOverlay){
+  const rel='patches/splatoon3/runtime/s3-projectile-shapes.mjs';
+  if(shapeOverlay.buildContentHash!==build.contentHash||JSON.stringify(shapeOverlay.paths)!==JSON.stringify([rel,'_versions/'+build.build.revision+'/'+rel]))throw Error('Shape overlay build/path mismatch');
+  for(const p of shapeOverlay.paths)if(build.artifacts[p]!==shapeOverlay.nativeEmittedSha256||hash(fs.readFileSync(path.join(site,p)))!==shapeOverlay.nativeEmittedSha256)throw Error('Shape overlay original byte mismatch');
+  driver=once(driver,"  const file = path.resolve(site, u === '/' ? 'index.html' : '.' + decodeURIComponent(u));",`  if(${JSON.stringify(shapeOverlay.paths.map(p=>'/'+p))}.includes(u)){
+    res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-store'});fs.createReadStream(${JSON.stringify(shapeOverlay.file)}).pipe(res);return;
+  }
+  const file = path.resolve(site, u === '/' ? 'index.html' : '.' + decodeURIComponent(u));`);
+  driver=once(driver,'let browser;', 'const servedShapeOverlay=[],pendingShapeOverlay=new Set(),shapeOverlayErrors=[];\nlet browser;');
+  driver=once(driver,'  page.setDefaultTimeout(240000);',`  page.setDefaultTimeout(240000);
+  page.on('response',res=>{
+    if(!${JSON.stringify(shapeOverlay.paths.map(p=>'/'+p))}.includes(new URL(res.url()).pathname))return;
+    const p=res.body().then(body=>servedShapeOverlay.push({url:res.url(),sha256:crypto.createHash('sha256').update(body).digest('hex')})).catch(e=>shapeOverlayErrors.push(String(e)));
+    pendingShapeOverlay.add(p);p.finally(()=>pendingShapeOverlay.delete(p));
+  });`);
+  driver=once(driver,'  await enterRangeFromMenu(page,base);',`  await enterRangeFromMenu(page,base);
+  await Promise.all([...pendingShapeOverlay]);
+  fs.writeFileSync(path.join(out,'served-shape-overlay.json'),JSON.stringify({responses:servedShapeOverlay,errors:shapeOverlayErrors},null,2));
+  if(shapeOverlayErrors.length||!servedShapeOverlay.length||servedShapeOverlay.some(r=>r.sha256!==${JSON.stringify(shapeOverlay.transformedEmittedSha256)}))throw Error('Consumed shape overlay byte mismatch');`);
+}
+if(controlled){
+  if(controlled.buildContentHash!==build.contentHash||controlled.paths.length!==2||controlled.paths[0]!=='src/main.js'||controlled.paths[1]!=='_versions/'+build.build.revision+'/src/main.js')throw Error('Controlled module build/path mismatch');
+  for(const p of controlled.paths)if(build.artifacts[p]!==controlled.originalEmittedSha256||hash(fs.readFileSync(path.join(site,p)))!==controlled.originalEmittedSha256)throw Error('Controlled original main mismatch');
+  driver=once(driver,"  const file = path.resolve(site, u === '/' ? 'index.html' : '.' + decodeURIComponent(u));",`  if(${JSON.stringify(controlled.paths.map(p=>'/'+p))}.includes(u)){
+    res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-store'});fs.createReadStream(${JSON.stringify(controlled.file)}).pipe(res);return;
+  }
+  const file = path.resolve(site, u === '/' ? 'index.html' : '.' + decodeURIComponent(u));`);
+  driver=once(driver,'let browser;', 'const servedControlledMain=[],pendingControlledMain=new Set(),controlledMainErrors=[];\nlet browser;');
+  driver=once(driver,'  page.setDefaultTimeout(240000);',`  page.setDefaultTimeout(240000);
+  page.on('response',res=>{
+    if(!${JSON.stringify(controlled.paths.map(p=>'/'+p))}.includes(new URL(res.url()).pathname))return;
+    const p=res.body().then(body=>servedControlledMain.push({url:res.url(),sha256:crypto.createHash('sha256').update(body).digest('hex')})).catch(e=>controlledMainErrors.push(String(e)));
+    pendingControlledMain.add(p);p.finally(()=>pendingControlledMain.delete(p));
+  });`);
+  driver=once(driver,'  await enterRangeFromMenu(page,base);',`  await enterRangeFromMenu(page,base);
+  await Promise.all([...pendingControlledMain]);
+  fs.writeFileSync(path.join(out,'served-controlled-main.json'),JSON.stringify({responses:servedControlledMain,errors:controlledMainErrors},null,2));
+  if(controlledMainErrors.length||!servedControlledMain.length||servedControlledMain.some(r=>r.sha256!==${JSON.stringify(controlled.transformedEmittedSha256)}))throw Error('Consumed controlled main mismatch');
+  const startup=await page.evaluate(()=>globalThis.__inkwaveExplosherControlledStartup);
+  if(!startup?.controlledInitialCondition||startup.naturalBootAccepted!==false)throw Error('Controlled boot did not complete');
+  fs.writeFileSync(path.join(out,'controlled-startup.json'),JSON.stringify(startup,null,2));`);
+  driver=once(driver,'return {rngDiagnostic:', 'return {controlledStartup:globalThis.__inkwaveExplosherControlledStartup,rngDiagnostic:');
+}
 const copy=path.join(out,'native-capture-driver.mjs');fs.writeFileSync(copy,driver);
-const receipt={sourceSha,actualSourceSha,nativeDummy:{path:dummyPath,sha256:dummySha},preflightBindingSha256:expectedText?hash(expectedText):null,build,originalDriverSha256:originalHash,diagnosticDriverSha256:hash(driver),
+const captureProtocolSha256=hash(JSON.stringify([fs.readFileSync(fileURLToPath(import.meta.url),'utf8'),...['inkwave-explosher-startup.mjs','inkwave-explosher-scene-census.mjs','inkwave-explosher-capture-surface.mjs','inkwave-explosher-volume-barrier.mjs','inkwave-explosher-stage-admission.mjs','inkwave-explosher-video-gate.mjs','inkwave-projectile-capture-ui.mjs','inkwave-range-menu-entry.mjs'].map(p=>fs.readFileSync(path.join(root,'scripts/lib',p),'utf8'))]));
+const receipt={commonBuildAdmission,captureProtocolSha256,stageAdmission,captureMode:preflight?'preflight':video?'continuous-native-60Hz':'multi-view-stills',captureTicks,captureViews,simulationHz:60,captureUiGateSha256:hash(installProjectileCaptureUiGate.toString()),shapeOverlay,controlledMain:controlled,sourceSha,actualSourceSha,nativeDummy:{path:dummyPath,sha256:dummySha},preflightBindingSha256:expectedText?hash(expectedText):null,build,originalDriverSha256:originalHash,diagnosticDriverSha256:hash(driver),
   nativeResetHelperSha256:hash(nativeReset),
   sourceShapeSha256:hash(fs.readFileSync(path.join(sourceRoot,'patches/splatoon3/runtime/s3-projectile-shapes.mjs'))),
   emittedShapes:emitted,seed:0x515e7021,
-  boundaries:['Real emitted game and native renderer; fixed range input.','No historical source/character rewrite.','Only flight glitter changes; muzzle/impact, hit/paint/speed unchanged.','Render CPU and resource counts measured; GPU elapsed time and allocations not measured.']};
+  boundaries:['Real emitted game and native renderer; fixed range input.',controlled?'QA-only awaited native volume readiness in main; no Character rewrite.':'No historical source/character rewrite.','Only flight glitter changes; muzzle/impact, hit/paint/speed unchanged.','Render CPU and resource counts measured; GPU elapsed time and allocations not measured.']};
+// Validate the exact current lane using a role-complete counterpart; cross-lane equality remains in stage gates.
+const counterpart={...receipt,shapeOverlay:{...shapeOverlay,lane:shapeOverlay.lane==='before'?'after':'before',transformedEmittedSha256:shapeOverlay.lane==='before'?shapeOverlay.nativeEmittedSha256:shapeOverlay.baselineEmittedSha256}};
+requireInverseShapePair(...(shapeOverlay.lane==='before'?[receipt,counterpart]:[counterpart,receipt]));
+if(stageAdmission&&JSON.stringify(explosherCaptureIdentity(receipt))!==JSON.stringify(stageAdmission.laneProvenance[shapeOverlay.lane]))throw Error('Current capture provenance differs from admitted prior stage');
 fs.writeFileSync(path.join(out,'source-receipt.json'),JSON.stringify(receipt,null,2));
-const run=spawnSync(process.execPath,[copy,site,out,'s3-slosher-washtub'],{stdio:'inherit',env:{...process.env,TICKS:preflight?'0':'0,3,8,14,22,30',VIEWS:preflight?'behind':'behind,tele-side,tele-oblique'}});
+const run=spawnSync(process.execPath,[copy,site,out,'s3-slosher-washtub'],{stdio:'inherit',env:{...process.env,TICKS:captureTicks.join(','),VIEWS:captureViews.join(',')}});
 if(run.status!==0)process.exit(run.status||1);
 const captures=JSON.parse(fs.readFileSync(path.join(out,'manifest.json'),'utf8'));
 for(const c of captures)c.sha256=hash(fs.readFileSync(path.join(out,c.file)));
 fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify(captures,null,2));
-const expected=new Set((preflight?[0]:[0,3,8,14,22,30]).flatMap(t=>(preflight?['behind']:['behind','tele-side','tele-oblique']).map(v=>'s3-slosher-washtub:'+t+':'+v)));
+const expected=new Set(captureTicks.flatMap(t=>captureViews.map(v=>'s3-slosher-washtub:'+t+':'+v)));
 if(captures.length!==expected.size)throw Error('Wrong native capture count');
 for(const c of captures){
   if(!expected.delete(c.label+':'+c.tick+':'+c.view))throw Error('Duplicate or unexpected native capture');
