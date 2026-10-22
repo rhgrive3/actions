@@ -24,7 +24,9 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
-      - run: npx playwright install --with-deps chromium webkit
+      - run: |
+          sudo python3 scripts/prepare-inkwave-ci-apt.py
+          npx playwright install --with-deps chromium webkit
       - name: Verify native DOM lobby transform write equivalence
         run: |
           node --test scripts/tests/inkwave-lobby-slot-browser-fixture.test.mjs

@@ -736,6 +736,7 @@ jobs:
           mkdir -p "$CI_STORAGE/evidence" "$CI_STORAGE/cache"
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
           test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"
+          sudo python3 scripts/prepare-inkwave-ci-apt.py
           npx playwright install --with-deps ${{ matrix.browsers }}
       - name: Verify emitted renderer and Input resource lifetimes
         if: matrix.suite == 'active'
@@ -1038,6 +1039,7 @@ jobs:
       - name: Build and diagnose (not an acceptance benchmark)
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          sudo python3 scripts/prepare-inkwave-ci-apt.py
           npx playwright install --with-deps chromium
           ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" node scripts/build-inkwave.mjs inkwave-public "$DIAGNOSTIC_STORAGE/site"
           node scripts/check-inkwave-runtime-performance.mjs --site "$DIAGNOSTIC_STORAGE/site" --evidence-dir "$DIAGNOSTIC_STORAGE/probe" --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --source-sha "$SOURCE_SHA" --fixed-only --parity-only --quality high --verify-render
@@ -1109,6 +1111,7 @@ jobs:
       - name: Install pinned build and browser dependencies
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8
+          sudo python3 scripts/prepare-inkwave-ci-apt.py
           npx playwright install --with-deps chromium
       - name: Build the exact source without production overrides
         run: |
@@ -1186,6 +1189,7 @@ jobs:
       - name: Install pinned build and browser dependencies
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8
+          sudo python3 scripts/prepare-inkwave-ci-apt.py
           npx playwright install --with-deps chromium
       - name: Build the exact source without production overrides
         run: |
@@ -1243,6 +1247,7 @@ jobs:
       - name: Install build and browser dependencies
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          sudo python3 scripts/prepare-inkwave-ci-apt.py
           npx playwright install --with-deps chromium webkit
       - name: Verify seven claimed gameplay and handoff regressions
         shell: bash
@@ -1325,6 +1330,7 @@ jobs:
       - name: Install build and browser dependencies
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          sudo python3 scripts/prepare-inkwave-ci-apt.py
           npx playwright install --with-deps chromium webkit
       - name: Build and verify emitted runtime and two-peer continuation
         env:

@@ -79,7 +79,8 @@ try{
   await page.addInitScript(installBlobWorkerObserver,{bindingName:'__reportBlobWorker'});
   page.on('worker',worker=>{try{observeGeneratedWorker(blobWorkerEvidence,worker.url(),captureOrigin);}catch(error){receipt.errors.push(String(error));}});
   page.on('pageerror',e=>receipt.errors.push(e.message));
-  page.on('response',response=>{
+  // Context responses include dedicated module Workers as well as the page.
+  page.context().on('response',response=>{
     loadedTasks.push(recordLoadedModuleResponse(response,captureOrigin,loadedModules,blobWorkerEvidence)
       .catch(error=>{receipt.errors.push(String(error));}));
   });

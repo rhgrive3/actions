@@ -28,10 +28,12 @@ try {
   await page.evaluate(async()=>{globalThis.movementG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});
   await page.waitForFunction(()=>movementG?.game?.menus&&movementG.s3?.installed&&movementG.mode!=='boot',null,{timeout:180000});
   await page.evaluate(async()=>{const g=movementG.game;g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:'tidewater',difficulty:'easy',duration:180,mode:'turf'});});
+  // Match owns the frozen intro clock; advance it before waiting for its HUD.
+  await page.evaluate(()=>{const g=movementG.game;g.debug.freezeBots();g._skipRender=true;for(let i=0;i<270;i++)g._frame(1/60);});
   await page.waitForFunction(()=>movementG.game.hud?._visible&&!document.querySelector('.iw-lineup'),null,{timeout:20000});
   const result=await page.evaluate(async()=>{
     const G=movementG,g=G.game;g.debug.freezeBots();g._skipRender=true;
-    for(let i=0;i<270;i++)g._frame(1/60);
+    // The exact native 270-frame intro was advanced before HUD admission.
     const a=g.match.local,r=a.weaponRunner;
     // The real Squid Spawn waits for a ZR edge; walking cannot bypass its aim
     // phase. Complete the native launch before measuring ordinary movement.

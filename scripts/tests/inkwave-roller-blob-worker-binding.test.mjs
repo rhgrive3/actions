@@ -117,3 +117,18 @@ test('QA wrapper records provenance before page entry and binds all generated re
  assert(code.indexOf('bindBlobWorkerEvidence(blobWorkerEvidence,loadedModules,buildManifest)')<code.indexOf('receipt.runtimeIdentity=verifyLoadedModules'));
  assert(code.includes('await page.evaluate(()=>{\n    if(!globalThis.__inkwaveBlobWorkerAudit)'));
 });
+
+test('actual minified native audio module Workers bind beside the unchanged Blob timer',async()=>{
+ const fs=await import('node:fs'),{transform}=await import('esbuild'),f=await fixture();
+ for(const name of ['grain','reverb']){
+  const owner=`_versions/pinned-revision/patches/splatoon3/runtime/audio/${name}-prewarm.mjs`,path=`_versions/pinned-revision/patches/splatoon3/runtime/audio/${name}-worker.mjs`;
+  const code=(await transform(fs.readFileSync(new URL('../../patches/splatoon3/runtime/audio/'+name+'-prewarm.mjs',import.meta.url),'utf8'),{minify:true,format:'esm',target:'es2022'})).code;
+  const body=fs.readFileSync(new URL('../../patches/splatoon3/runtime/audio/'+name+'-worker.mjs',import.meta.url),'utf8');f.manifest.artifacts[owner]=hashBytes(code);f.manifest.artifacts[path]=hashBytes(body);
+  await recordLoadedModuleResponse(response(ORIGIN+'/'+owner,code),ORIGIN,f.loaded,f.evidence);
+  const lines=code.split('\n'),line=lines.findIndex(l=>l.includes('new Worker(')),column=lines[line].indexOf('new Worker(')+1,url=ORIGIN+'/'+path;
+  creation(f,url,{kind:'native-module',url,workerOptions:{type:'module',name:'inkwave-'+name},workerStack:`Error\n at construct (<anonymous>:1:1)\n at native (${ORIGIN}/${owner}:${line+1}:${column})`});observeGeneratedWorker(f.evidence,url,ORIGIN);
+  await recordLoadedModuleResponse(response(url,body,'other'),ORIGIN,f.loaded,f.evidence);
+ }
+ const identity=await native(f);assert.equal(identity.moduleCount,107);
+ for(const name of ['grain','reverb'])assert.equal(f.loaded[`_versions/pinned-revision/patches/splatoon3/runtime/audio/${name}-worker.mjs`].nativeWorkerProvenance.observed,true);
+});

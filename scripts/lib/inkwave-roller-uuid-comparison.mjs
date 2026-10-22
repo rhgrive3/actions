@@ -1,3 +1,4 @@
+import {isNativeModuleWorkerOwner,verifyNativeModuleWorkerRows} from './inkwave-native-module-worker.mjs';
 // A declared QA comparison, never a production overlay or a rebaseline.
 // Retain the raw historical build and A/A captures. The only controlled variable
 // is the already-shipped Three UUID isolation, composed from verified source.
@@ -179,7 +180,7 @@ export async function recordLoadedModuleResponse(response, origin, loadedModules
   }
   assert(['http:', 'https:'].includes(url.protocol), 'Unexpected script protocol: ' + url.protocol);
   const rel = decodeURIComponent(url.pathname).replace(/^\//, '');
-  if (blobEvidence && isMusicOwner(rel)) blobEvidence.owners.push({ url: response.url(), body: bytes.toString('utf8') });
+  if (blobEvidence && (isMusicOwner(rel)||isNativeModuleWorkerOwner(rel))) blobEvidence.owners.push({ url: response.url(), body: bytes.toString('utf8') });
   const actual = { sha256: hashBytes(bytes), bytes: bytes.length };
   if (loadedModules[rel]) assert.deepEqual(loadedModules[rel], actual, 'Loaded module changed within capture: ' + rel);
   loadedModules[rel] = actual;
@@ -190,6 +191,7 @@ export function verifyLoadedModules(loaded, manifest, isolation = null, blobEvid
   const entries = Object.entries(loaded).sort(([a], [b]) => a.localeCompare(b));
   assert(entries.length > 100, 'Complete loaded runtime module evidence is required');
   const generated=verifyGeneratedWorkerRows(loaded,manifest);
+  verifyNativeModuleWorkerRows(loaded,manifest);
   let isolatedLoads = 0;
   for (const [rel, actual] of entries) {
     if(generated&&rel==='@generated/native-music-timer-worker')continue;

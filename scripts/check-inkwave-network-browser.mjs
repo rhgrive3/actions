@@ -60,6 +60,8 @@ try{
   await page.evaluate(()=>{NG.game.profile.weapon='roller';NG.game.menus.launchLobby=async()=>{};});
  }
  console.log('network browser rooms');const code=await pages[0].evaluate(()=>NG.net.create('Network Host'));
+ // Establish the intended two-human roster before any join snapshot can include bots.
+ await pages[0].evaluate(()=>NG.net.setSettings({bots:false}));
  await pages[1].evaluate(c=>NG.net.join(c,'Network Guest'),code);
  await pages[0].waitForFunction(()=>NG.net.lobby.players.length===2);
  await pages[1].waitForFunction(()=>NG.net.lobby.players.length===2);

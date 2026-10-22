@@ -39,7 +39,9 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
-      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: |
+          sudo python3 scripts/prepare-inkwave-ci-apt.py
+          npx playwright install --with-deps ${{ matrix.browser }}
       - name: Negative control, normal geometry parity and resize regression
         run: node --test scripts/tests/inkwave-range-menu-entry.test.mjs patches/local-quality/tests/hud-tank-small-viewport.test.mjs patches/local-quality/tests/s3-hud-look.test.mjs
       - run: node scripts/build-inkwave.mjs inkwave-public .ci-scratch/small-tank-site

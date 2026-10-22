@@ -1,3 +1,4 @@
+import {recordNativeModuleWorkerCreation,observeNativeModuleWorker,bindNativeModuleWorkers} from './inkwave-native-module-worker.mjs';
 // QA-only binding of an observed Blob worker to its loaded, immutable creator.
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -16,6 +17,7 @@ function caller(stack,origin){
 }
 export function recordBlobWorkerCreation(e,p,origin,frame){
  assert(frame?.mainFrame&&new URL(frame.frameUrl).origin===origin,'Worker must originate in captured main frame');
+ if(p.kind==='native-module')return recordNativeModuleWorkerCreation(e,p,origin);
  assert(!p.error,p.error);const u=new URL(p.url);assert(u.protocol==='blob:'&&u.origin===origin,'Foreign Blob creation');
  assert.equal(p.mime,'text/javascript');assert.equal(p.workerOptions,'default');
  assert(Array.isArray(p.bytes)&&p.bytes.length<=4096&&p.bytes.every(n=>Number.isInteger(n)&&n>=0&&n<=255));
@@ -26,7 +28,7 @@ export function recordBlobWorkerCreation(e,p,origin,frame){
  return e.creations[p.url];
 }
 export function observeGeneratedWorker(e,url,origin){
- const u=new URL(url);assert.notEqual(u.protocol,'data:','Unexpected data Worker');
+ const u=new URL(url);if(['http:','https:'].includes(u.protocol))return observeNativeModuleWorker(e,url,origin);assert.notEqual(u.protocol,'data:','Unexpected data Worker');
  assert(u.protocol==='blob:'&&u.origin===origin,'Foreign Blob Worker');
  assert(!e.workers.includes(url),'Duplicate observed Worker');e.workers.push(url);
 }
@@ -99,6 +101,7 @@ export function bindBlobWorkerEvidence(e,loaded,manifest){
  assert(e.responses.length>0,'Worker response missing');
  assert.equal(e.responses.length,e.workers.length,'Worker response missing');
  assert.equal(Object.keys(e.creations).length,e.responses.length,'Worker response missing');
+ bindNativeModuleWorkers(e,loaded,manifest);
 }
 export function verifyGeneratedWorkerRows(loaded,manifest){
  const row=loaded[GENERATED];if(!row)return false;
@@ -120,7 +123,11 @@ export function installBlobWorkerObserver({bindingName}){
   const workerStack=new Error().stack,url=String(args[0]),c=creations.get(url);
   const worker=Reflect.construct(target,args,newTarget);
   const report=globalThis[bindingName];
-  if(!c)pending.push(Promise.resolve(report({error:'Unknown Blob worker creation',url})));
+  if(!c&&!url.startsWith('blob:')){
+    const resolved=new URL(url,location.href).href,opts=args[1];
+    pending.push(Promise.resolve(report({kind:'native-module',url:resolved,workerOptions:opts&&Object.fromEntries(Object.keys(opts).map(k=>[k,opts[k]])),workerStack})));
+  }
+  else if(!c)pending.push(Promise.resolve(report({error:'Unknown Blob worker creation',url})));
   else pending.push(c.blob.arrayBuffer().then(b=>report({url,mime:c.blob.type,size:c.blob.size,bytes:Array.from(new Uint8Array(b)),workerOptions:args.length===1?'default':'explicit',creationStack:c.stack,workerStack})));
   return worker;
  }});

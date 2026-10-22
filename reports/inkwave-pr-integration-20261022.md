@@ -280,3 +280,54 @@ Focused Worker/workflow/revision guards: 36/36. Audio graph guards: 17/17.
 Responsive diagnostic/fixture/animation guards: 26/26, all without skips. Local
 native browsers remain unavailable and are not counted as passed. Full latest-
 head hosted core, eight shards, fan-in and every applicable gate remain required.
+
+### Actual 192f1bf1 hosted follow-up, 2026-10-23 JST
+
+All eight patch shards succeeded again. Explosher (including decoder/preflight),
+19-special complete source/browser/emitted, audio, A+, Ranked, recovery, native
+stages, projectile visuals and most focused workflows succeeded. Validate core,
+network/active/catalog browser and Roller still failed at later checks. Three
+focused jobs were cancelled during Ubuntu dependency downloads, before tests;
+responsive was still installing dependencies. This is not complete green.
+
+- Core 120133995646 reached the motion-verifier tests: six stale assertions
+  parsed cancel-in-progress as a literal boolean, but two integrated workflows
+  correctly use PR-only supersession. Keep exact same-workflow/PR grouping and
+  reject missing/global/head-specific/always-cancel policies. Explicitly prove
+  the existing PR condition cancels obsolete PR work but retains push/manual
+  evidence. No workflow concurrency policy or acceptance gate changed here.
+- Catalog 120133995973 stopped in the coordinator's old inert mock, which knew
+  only five imports and one Worker. Model the two added canonical PCM exports
+  and module Workers; assert all seven imports, all three terminations, and a
+  corrupt-PCM negative. Native loaded-module and PCM acceptance remain strict.
+- Active 120133995889 passed native normal-map pixels, then movement QA waited
+  for HUD while the native Match intro was frozen. Move the same 270 native
+  frames ahead of the unchanged HUD/lineup wait, preserving native spawn edge,
+  all directions and real walk/fire/normal-roll/dash speed assertions.
+- Network 120133995808: immediate two-client replication and current/legacy
+  startup clock passed. The delayed fixture waited for a two-human lobby while
+  default bot snapshots could already have been published. Set bots=false on
+  the host before the guest joins. Retain confirmations/readiness, real ordered
+  six-frame delivery delay, owner/paint/physics/bomb comparisons and timeouts.
+- Roller 120130935186 passed geometric/contact thresholds but reported four
+  errors: the Blob-only observer rejected the two real new native audio module
+  Workers. Admit only grain/reverb at the current immutable build revision,
+  exact type/name options, actually loaded/hashed owner source and target bytes,
+  AST-derived native new Worker(new URL(...,import.meta.url)) callsite and actual
+  Worker observation. Collect context responses including Worker realms. Saved
+  receipts revalidate source/hash/callsite provenance. Unknown/foreign/data/
+  shadowed/substituted workers, missing observation/bytes and wrong revisions
+  still fail. The original exact Blob timer checks remain mandatory.
+- Cancelled lobby/volume/HUD jobs were downloading from azure.archive.ubuntu.com
+  for 30 minutes; no test failure was reached. Use Ubuntu's HTTPS archive for
+  that exact mirror URL in those jobs and the main browser setup. Keep packages,
+  suites, signing keys, browser versions, cases and deadlines unchanged. Local
+  fixture confirms only the mirror transport changes. Hosted completion remains
+  required; infrastructure cancellation is never accepted as a pass.
+
+Local related guards: 60 pass / 1 pre-existing opt-in historical-build fixture
+not run; the latter is required with its source/build env in hosted Roller CI.
+Additional workflow/input/motion contracts 43/43; native Worker provenance and
+integrated Blob/module binding 15/15, without skips. The 23 source PR heads were
+freshly read and remain unchanged. No public gameplay/runtime production file,
+source-pair pin, numeric gate or required case was removed or changed.
