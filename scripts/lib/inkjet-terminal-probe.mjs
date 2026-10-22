@@ -18,6 +18,17 @@ export function wireTerminalFxCollider(api, fx) {
     return h.hit ? { point: h.point, normal: h.normal } : null;
   });
 }
+// Inkjet reserves a paid activation, then depletes its active gauge over time.
+// A zero gauge at t=0 is not the current production payment contract.
+export function activatePaidTerminalInkjet(actor, assert) {
+  const paid=actor.specialCost(), before=actor.stats.specials;
+  actor.special=paid;
+  assert(actor.specialReady(), 'native Inkjet ready before paid activation');
+  actor._startSpecial();
+  assert(actor.specialActive?.id==='inkjet' && actor.stats.specials===before+1 &&
+    actor.special===paid && !actor.specialReady(), 'native paid Inkjet activation');
+  return paid;
+}
 export async function runInkjetTerminalProbe({api,THREE,G,scene,renderer,camera,Level,applyCatalogueChoice,hz,draw,pixels,changed,expect,cases,images}) {
   const dt=1/hz, assert=(ok,label)=>{expect(ok,label);if(!ok)throw new Error(label);};
   const equal=(a,b,label)=>assert(JSON.stringify(a)===JSON.stringify(b),label);
@@ -84,8 +95,7 @@ export async function runInkjetTerminalProbe({api,THREE,G,scene,renderer,camera,
       if(births.length===1)capture('local-before-step');
     }return result;};
     assert(applyCatalogueChoice(a,{sub:'bomb',special:'inkjet'},api),'actual catalogue Inkjet selection');
-    const paid=a.specialCost();a.special=paid;a._startSpecial();
-    assert(a.specialActive?.id==='inkjet' && a.special===0,'native paid Inkjet activation');
+    const paid=activatePaidTerminalInkjet(a,assert);
     assert(d.track(a)?.id==='inkjet','native activation presentation tracked before pool isolation');a.intent.fire=true;
     for(frame=0;frame<hz*6;frame++){
       G.time+=dt;a.update(dt);if(births.length===3)a.intent.fire=false;
