@@ -9,7 +9,7 @@ permissions:
   contents: read
 jobs:
   bounded-native-aa:
-    if: github.head_ref == 'diagnostic/ink-material-native-aa-20261022'
+    if: github.head_ref == 'diagnostic/ink-material-native-aa-20261022' || github.head_ref == 'diagnostic/ink-material-native-aa-phase-20261022'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
