@@ -79,7 +79,9 @@ export function installWeaponAudioRuntime(api){
     // The weapon's stored.resurfaced flag is not set until the later charge
     // state update, so relying on that flag would silently miss the cue.
     const stored=r.s3Stored,scoped=a.weapon?.scoped===true||a.weapon?.scopedCharge===true;
-    if(!scoped&&stored?.charge>=1&&!s.keepEmergePlayed){
+    // Goo Tuber can legally keep a partial charge; the real s3Stored owner,
+    // not a fabricated full-only audio threshold, determines eligibility.
+    if(!scoped&&Number.isFinite(stored?.charge)&&stored.charge>0&&!s.keepEmergePlayed){
       play(a,'charge',a.pos,a.isLocal?.55:.35);
       s.keepEmergePlayed=true;
     }
