@@ -66,3 +66,31 @@ Copyright: no third-party gameplay footage, audio files or new Nintendo assets a
 Independent [Nintendo/KADOKAWA soundtrack tracklists](https://store.kadokawa.co.jp/shop/g/g4541993024681/) establish that original **Splatune (2015) Disc 2 Track 25** includes the pre-rendered **`SE：スプラチャージャー` / `SFX: Splat Charger`**, 7 seconds according to [MusicBrainz's official release catalog](https://musicbrainz.org/release/a381a36f-a55d-46a0-9715-7b0283f433da). [Splatune 2 (2017)](https://splatoonwiki.org/wiki/Splatune_2_(Splatoon_2_Original_Soundtrack)) also contains an SFX: Splat Charger entry. They can supply **historical source-composed demonstration references** if legitimately obtained and actually decoded, not proof that S3 11.3.0 uses identical sound event graphs. The [Splatune 3 tracklist](https://splatoonwiki.org/wiki/Splatune_3_(Splatoon_3_Original_Soundtrack)) includes a Splattershot and other sound effect showcases but no named Splat Charger sound-effect track in that release.
 
 The video-vs-INKWAVE waveform parity assessment remains blocked by **no decoded actual gameplay recording**. The original MP3 vs generated INKWAVE analysis remains valid but is not first-party in-game audio.
+
+
+## 2026-10-22: downloaded Splatune 2 Charger soundtrack reference, quantified pitch-rise *spectral component*
+
+**This is NOT S3 gameplay footage.** A [publicly shared Splatune 2 release archive](https://www.vgmhaven.stream/soundtracks/splatune-2) contained `SFX Splat Charger.flac` (Drive file `1eFN8xxIyIBVJHDR8cTXguOFbxp1N0606`, 446,781 bytes, 44.1kHz stereo, 7.400s) and a second `2-31 SFX_ Splat Charger (SE_ スプラチャージャー).mp3` (Drive `1qHqMLZvJj4AGeNq242gs3ooyfTrt60yI`, 362,605 bytes, 44.1kHz stereo, 7.477s). [Retail release inventory](https://tower.jp/item/4607010) independently identifies this 2017 official S2 soundtrack disc/track title (Disc 2 Track 31, 0:07), though the publicly redistributed files' bit-level chain of custody to the CD is unverified. No copyrighted audio files were committed to GitHub.
+
+Both encoded files decoded successfully. Highpass 500 Hz / lowpass 8000 Hz normalized cross-correlation between FLAC and MP3 = **0.99713** after a **1,063-sample / 24.104ms** codec alignment. These are two encodings of materially the same audio.
+
+The original S2 soundtrack track shows a striking diagonal ascending tonal ridge between ~0.50 and 1.50 seconds that does **not** appear in #1740's source-sustained S3 HoldNoise preview. The selected strong spectral-ridge peaks from 60ms FFT windows:
+
+| Track position (s) | Frequency (Hz) |
+| --- | --- |
+| .54 | 1017 |
+| .64 | 1650 |
+| .75 | 2350 |
+| .85 | 2933 |
+| .95 | 3633 |
+| 1.05 | 4267 |
+| 1.15 | 5000 |
+| 1.25 | 5700 |
+| 1.35 | 6383 |
+| 1.45 | 6967 |
+
+Linear fit of these 10 selected points: **+6617.56 Hz/s**, R² **0.99939**, RMSE ~47.3 Hz; ~6.85x measured increase over 0.91 seconds. These measurements track one audible spectral **harmonic or strong tone**, NOT oscillator fundamental frequency, exact playback speed, SLink/SLINK curve or guaranteed S3 implementation. Other distinct source events are audible in the file at ~2.2–3.9s; file largely silent after 4.0s.
+
+Direct 500–8000Hz normalized template correlation of this S2 track with recorded S3 source MP3 clips is weak: `Wp_Charger_HoldNoise_00` **0.1285**, Heavy **0.0941**, `Wp_ChargeKeepReady_00` **0.0999**. This does not establish same or different event routing across generations; it simply shows they are not waveform identical at natural pitch in this matching test.
+
+**Implication:** The main visible/audible rising spectral component from the S2 soundtrack is absent from #1740's soft overlapped short-S3-sample sustain, even though that PR fixes repeated clicks. Do not claim the entire charge sound is faithfully reproduced; first-party S3 soundtrack/SLINK event or verified gameplay audio is still needed for the complete and version-accurate rule. Earlier video-capture jobs failed due to YouTube bot restriction and external CDN HTTP403, not a lack of interest or effort to source first-party comparisons. The new spectral analysis is a major S2 reference, not a false S3 video result.
