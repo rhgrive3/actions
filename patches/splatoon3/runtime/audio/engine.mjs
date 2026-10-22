@@ -45,6 +45,7 @@ export function installWeaponAudioEngine(Engine){
     this._warmWeapons||=new Set();this._warmWeapons.add(id);
     if(this._warmWeapons.size>8)this._warmWeapons.delete(this._warmWeapons.values().next().value);
     const bank=this.weaponBank();if(!bank)return;
+    this._warmPreparedContext=this.ctx;this._warmPreparedBank=bank;
     if(!id.includes(':')){
       const loader=this._realS3Loader;
       // Fetch the actual selected recording first. Generating synthetic PCM for
@@ -232,11 +233,17 @@ export function installWeaponAudioEngine(Engine){
     return handle;
   };
   const init=p.init;p.init=function(...args){const result=init.apply(this,args);
-    if(this.ctx){for(const id of this._warmWeapons||[])this.prepareWeapon(id,{urgent:true});}
+    if(this.ctx&&this._warmWeapons?.size){
+      const bank=this.weaponBank();
+      if(this._warmPreparedContext!==this.ctx||this._warmPreparedBank!==bank){
+        this._warmPreparedContext=this.ctx;this._warmPreparedBank=bank;
+        for(const id of this._warmWeapons)this.prepareWeapon(id,{urgent:true});
+      }
+    }
     return result;
   };
   const stats=p.stats;p.stats=function(){const result=stats.call(this);for(const [key,list] of this.byName){if(!list.some(v=>!v.v.dead&&!v.stolen))this.byName.delete(key);}return {...result,weaponBank:this._weaponBank?.stats()||null,
     realS3Loader:this._realS3Loader?.stats()||null,realAudioSuppressed:this._realAudioSuppressed||0,authoredFallbackShots:this._realAudioFallbackShots||0,baseLatencySeconds:this.ctx?.baseLatency??null,outputLatencySeconds:this.ctx?.outputLatency??null,
     latencyMeaning:'reported Web Audio components; not measured end-to-end input latency'};};
-  p.disposeWeaponAudio=function(){this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmWeapons?.clear();};
+  p.disposeWeaponAudio=function(){this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmPreparedContext=null;this._warmPreparedBank=null;this._warmWeapons?.clear();};
 }

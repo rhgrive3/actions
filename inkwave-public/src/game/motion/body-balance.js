@@ -9,7 +9,7 @@ export const HOST_BALANCE=Object.freeze({vertical:.38,lateral:.38,forward:.75,
 export class BodyBalance {
  constructor(bank){
   this.bank=bank;this.pose=new SourcePose(bank);this.center=new SourcePose(bank);
-  this.targets={wp:bank.bones.map(()=>new THREE.Vector3())};this.centerTargets={wp:bank.bones.map(()=>new THREE.Vector3())};
+  const balanceIndices=['leg1_L','leg1_R'].map(name=>bank.index[name]);if(balanceIndices.every(i=>Number.isInteger(i)&&i>=0&&i<bank.bones.length)){this.targets={wp:new Array(bank.bones.length)};this.centerTargets={wp:new Array(bank.bones.length)};for(const i of balanceIndices){this.targets.wp[i]=new THREE.Vector3();this.centerTargets.wp[i]=new THREE.Vector3();}}else{this.targets={wp:bank.bones.map(()=>new THREE.Vector3())};this.centerTargets={wp:bank.bones.map(()=>new THREE.Vector3())};}
   this.total=0;this.world=bank.bones.map(()=>new THREE.Quaternion());this.q=new THREE.Quaternion();this.v=new THREE.Vector3();this.p=new THREE.Vector3();this.parent=new THREE.Quaternion();
   this.rotationGain=new Map([['hip',HOST_BALANCE.pelvisRotation],['spine1',HOST_BALANCE.torsoRotation],['spine2',HOST_BALANCE.torsoRotation],['chest',HOST_BALANCE.torsoRotation],['neck',HOST_BALANCE.headRotation],['head',HOST_BALANCE.headRotation]]);
   this.rotationGainByIndex=bank.bones.map(b=>this.rotationGain.get(b.name));

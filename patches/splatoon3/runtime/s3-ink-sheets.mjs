@@ -42,9 +42,11 @@ export const FIRE_INK = Object.freeze({
 });
 
 // Splash cone at normalised life f, per SWEPs MuzzleSplash.lua Render().
-export function splashCone(cfg, f, layer) {
+export function splashCone(cfg, f, layer, out = null) {
   if (layer) f *= 2;
-  return { length: lerp(layer ? f * 0.7 : f, cfg.minLength, cfg.length), radius: lerp(4 * f * (1 - f), cfg.radius / 5, cfg.radius) };
+  const result = out || {};
+  result.length = lerp(layer ? f * 0.7 : f, cfg.minLength, cfg.length); result.radius = lerp(4 * f * (1 - f), cfg.radius / 5, cfg.radius);
+  return result;
 }
 
 function decodeAlpha(THREE, { width, height, alpha }, repeat) {
@@ -218,6 +220,7 @@ function inkMaterial(THREE, key, nearDither, rim, uniforms, { vertexHead, vertex
 const MAX_SHEET = 48, MAX_BURST = 24, MAX_DRILL = 16;
 
 export function createInkSheets(THREE, scene, { nearDither, rim }) {
+  const coneScratch = {};
   const splashTex = decodeAlpha(THREE, MUZZLE_SPLASH, false), ringTex = decodeAlpha(THREE, INK_RING, true);
   const uniforms = { s3Splash: { value: splashTex }, s3Ring: { value: ringTex } };
   const mesh = new THREE.InstancedMesh(sheetGeometry(THREE), inkMaterial(THREE, 's3-ink-sheet-2', nearDither, rim, uniforms, {
@@ -325,21 +328,24 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
           const ls = burst.seed + layer * 0.37, o = n * 4;
           if (cfg.style === 0) {
             // SWEPs: each cone at its own random roll
-            const cone = splashCone(cfg, age, layer);
+            const cone = splashCone(cfg, age, layer, coneScratch);
             q.setFromUnitVectors(Z, d); q2.setFromAxisAngle(Z, (ls * 7.31 % 1) * 6.2832); q.multiply(q2);
             m.compose(burst.at, q, s.setScalar(1));
             A[o] = 0; A[o + 3] = cone.length; B[o] = cone.radius;
           } else {
             // sweep plane: X = forward, Y = up (vertical) or right (horizontal)
-            z.copy(d).setY(0); if (z.lengthSq() < 1e-6) z.set(0, 0, 1); z.normalize();
-            x.crossVectors(UP, z).normalize();
-            if (burst.kind === 'slash-h' || burst.horizontalSweep) { basis.makeBasis(z, x, UP); }
-            else if (burst.kind === 'arrow') {
-              // ribbons wrap the bow around the shot axis, each rolled differently
+            if (burst.kind === 'arrow' && !burst.horizontalSweep) {
+              // Ribbons use the shot axis directly; the horizontal sweep basis
+              // is overwritten here and has no consumer on this branch.
               y.copy(UP).applyAxisAngle(d, ls * 6.2832 * 0.7);
               x.crossVectors(y, d).normalize();
-              basis.makeBasis(x, y, d.clone());
-            } else basis.makeBasis(z, UP, x);
+              basis.makeBasis(x, y, d);
+            } else {
+              z.copy(d).setY(0); if (z.lengthSq() < 1e-6) z.set(0, 0, 1); z.normalize();
+              x.crossVectors(UP, z).normalize();
+              if (burst.kind === 'slash-h' || burst.horizontalSweep) basis.makeBasis(z, x, UP);
+              else basis.makeBasis(z, UP, x);
+            }
             q.setFromRotationMatrix(basis);
             const off = (layer - (cfg.layers - 1) / 2) * 0.12 * cfg.radius;
             m.compose(drop.copy(burst.at).addScaledVector(x, burst.kind === 'arrow' ? 0 : off), q, s.setScalar(1 - 0.12 * layer));

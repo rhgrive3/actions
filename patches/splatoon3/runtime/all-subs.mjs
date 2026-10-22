@@ -1263,6 +1263,10 @@ function replayStatus(api,event) {
 function updateStatuses(api, dt) {
   for(const actor of api.G.actors||[]){
     const s=actor?.s3;if(!s)continue;
+    // Preserve deletion of present undefined/stale properties as well as the
+    // original expiry comparison; skip only genuinely absent status fields.
+    if((typeof s==='object'||typeof s==='function')&& !('toxicMistSlowUntil' in s)&&
+      !('toxicMistScale' in s)&&!('toxicMistJumpScale' in s))continue;
     if((s.toxicMistSlowUntil||0)<=(api.G.time||0)){delete s.toxicMistSlowUntil;delete s.toxicMistScale;delete s.toxicMistJumpScale;}
   }
 }

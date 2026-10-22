@@ -1,0 +1,1163 @@
+{
+  "generated_at": "2026-10-22T10:52:49.297301+00:00",
+  "summary": {
+    "expected": 67,
+    "resolved": 67,
+    "missing": [],
+    "statuses": {
+      "fixed": 57,
+      "rejected": 6,
+      "already_fixed": 3,
+      "duplicate": 1
+    },
+    "source_head": "94c22dd697ba8e3ee61073ba29361bd658e9b0db",
+    "verification": "分野別の実ソース比較・回帰を記録。最終合成ビルド・実ブラウザー・通信検査およびCI/マージ状態はPR #1815とdelivery-verification.jsonを参照。",
+    "merged": false,
+    "pr_url": "https://github.com/rhgrive3/actions/pull/1815"
+  },
+  "entries": [
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] booyah-bomb-reuse-paint-disk-centre-lattice.md",
+      "status": "fixed",
+      "reason": "Cache the exact radius-only centre plan on each Booyah object. Retain all six per-call terrain probes, tangent projection, quantized key deduplication and frame-6 completion pass. Changed radii replace the private plan.",
+      "files": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "tests": [
+        "node --test patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs patches/splatoon3/tests/slosher-nearest-sparse-cache.test.mjs: 12 passed, 0 failed, 0 skipped",
+        "Focused actual-source regression batch: 138 passed, 0 failed, 0 skipped",
+        "Selected composed Bubbler query/remote-authority/liveness/reset controls: 5 passed, 0 failed, 0 skipped"
+      ],
+      "evidence": "Actual-source ordered slope tiles, stamps, turf, key membership and six probe traces match the pinned baseline; one 13.5-radius growth reduces measured kernel sin/cos calls from 288 to 48.; Baseline: 8de71b09cd7a3bc05fa4ce06b00f99687beb44ad; test kernels retain original source hashes and verbatim code.",
+      "behavior_notes": [
+        "Preserve INKWAVE gameplay and source 11.3.0 values, event/RNG order and authority. Node fixture/kernel evidence is not browser/device or retail parity measurement."
+      ]
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] bubbler-skip-empty-projectile-contact-pool-array.md",
+      "status": "fixed",
+      "reason": "Return null when the current local and remote arrays are both empty. Keep nonempty pool order and all hit/onHit arbitration unchanged; do not cache replaceable array references.",
+      "files": [
+        "patches/splatoon3/runtime/kit-big-bubbler.mjs"
+      ],
+      "tests": [
+        "node --test patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs patches/splatoon3/tests/slosher-nearest-sparse-cache.test.mjs: 12 passed, 0 failed, 0 skipped",
+        "Focused actual-source regression batch: 138 passed, 0 failed, 0 skipped",
+        "Selected composed Bubbler query/remote-authority/liveness/reset controls: 5 passed, 0 failed, 0 skipped"
+      ],
+      "evidence": "Existing composed world-distance, remote proposal/liveness/reset tests plus unchanged nonempty loop.; Baseline: 8de71b09cd7a3bc05fa4ce06b00f99687beb44ad; test kernels retain original source hashes and verbatim code.; Five composed Bubbler query/remote-authority/liveness/reset cases pass after the live-array early return.",
+      "behavior_notes": [
+        "Preserve INKWAVE gameplay and source 11.3.0 values, event/RNG order and authority. Node fixture/kernel evidence is not browser/device or retail parity measurement."
+      ]
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] camera-rig-follow-share-yaw-trigonometry.md",
+      "status": "fixed",
+      "reason": "Shared canonical first-follow yaw sin/cos; retained late flight refresh and overridden-forward call/mutation path.",
+      "files": [
+        "patches/local-quality/added-ui-motion-adapter.mjs",
+        "inkwave-public/src/game/cameraRig.js"
+      ],
+      "tests": [
+        "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+        "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+        "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+        "source migration audit (109 files,0 failures)",
+        "check-inkwave-patches --quick (pass)"
+      ],
+      "evidence": "Full production camera pose/spring/collision follow parity at30/60/120Hz, late superjump yaw and forward override.",
+      "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] catalog-lobes-skip-zero-offset-yaw-trigonometry.md",
+      "status": "fixed",
+      "reason": "Skip yaw trig only for missing offsets with finite coordinates and no signed-zero coordinates. Retain the exact old expression path for explicit offset arrays, nonfinite inputs and signed zero.",
+      "files": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "tests": [
+        "node --test patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs patches/splatoon3/tests/slosher-nearest-sparse-cache.test.mjs: 12 passed, 0 failed, 0 skipped",
+        "Focused actual-source regression batch: 138 passed, 0 failed, 0 skipped",
+        "Selected composed Bubbler query/remote-authority/liveness/reset controls: 5 passed, 0 failed, 0 skipped"
+      ],
+      "evidence": "6,000 actual-source lobe comparisons use Object.is on each coordinate; explicit Splatana-style offsets and empty arrays remain covered; finite absent-offset probe makes zero trig calls.; Baseline: 8de71b09cd7a3bc05fa4ce06b00f99687beb44ad; test kernels retain original source hashes and verbatim code.",
+      "behavior_notes": [
+        "Preserve INKWAVE gameplay and source 11.3.0 values, event/RNG order and authority. Node fixture/kernel evidence is not browser/device or retail parity measurement."
+      ]
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] catalog-splash-defer-unused-flight-direction-clones.md",
+      "status": "fixed",
+      "reason": "Preserve the positive splash-count guard, skip consumed budgets, and create one local direction only immediately before the first admitted release. Keep shared direction within a substep and original boundary comparisons/order.",
+      "files": [
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs"
+      ],
+      "tests": [
+        "node --test patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs patches/splatoon3/tests/slosher-nearest-sparse-cache.test.mjs: 12 passed, 0 failed, 0 skipped",
+        "Focused actual-source regression batch: 138 passed, 0 failed, 0 skipped",
+        "Selected composed Bubbler query/remote-authority/liveness/reset controls: 5 passed, 0 failed, 0 skipped"
+      ],
+      "evidence": "Actual old/current kernels match payloads/state for exhausted, unreached, exclusive head-stop, multi-release, ghost, projected and falling branches; no admitted release creates zero direction clones, admitted releases one.; Baseline: 8de71b09cd7a3bc05fa4ce06b00f99687beb44ad; test kernels retain original source hashes and verbatim code.",
+      "behavior_notes": [
+        "Preserve INKWAVE gameplay and source 11.3.0 values, event/RNG order and authority. Node fixture/kernel evidence is not browser/device or retail parity measurement."
+      ]
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] coalesce-superseded-aplus-quality-gate-runs.md",
+      "status": "fixed",
+      "reason": "Coalesce obsolete pending A+ runs without canceling active evidence or skipping a required check.",
+      "files": [
+        ".github/workflows/ci-quality-gate.yml",
+        ".github/workflows/inkwave-main-weapons.yml",
+        ".github/workflows/validate-inkwave-update.yml",
+        "scripts/build-inkwave.mjs",
+        "scripts/tests/inkwave-added-ci-contracts.test.mjs"
+      ],
+      "tests": [
+        "new + queued workflow contracts:18 pass/0 fail/0 skip",
+        "final revised new contract:5 pass/0 fail/0 skip",
+        "integration/admission/Three batch:47 pass/0 fail/1 emitted-site skip",
+        "actual emitted packaging+Three:12 pass/0 fail/0 skip",
+        "normal/no-shake/unminified builds and current sparse build succeed; startup budget passes"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/ci/README.md; reports/library-queue-added-2026-10-22/ci/build-byte-parity.json; reports/library-queue-added-2026-10-22/ci/sparse-build-parity.json; reports/library-queue-added-2026-10-22/ci/checkout-projections.json",
+      "behavior_notes": "Local implementation; not a remote CI/merge completion claim. Gameplay/runtime output identical across all 2090 emitted artifacts. Mandatory validation and historical baseline integrity retained; no cold-network, FPS or device performance claim."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] decor-lamp-template-geometry-reuse-before-merge.md",
+      "status": "fixed",
+      "reason": "Reuse private, direction-specific local lamp primitive templates within one decor build, while preserving final part order and transform rounding.",
+      "files": [
+        "inkwave-public/src/world/decor.js",
+        "patches/local-quality/tests/added-assets-decor-parity.test.mjs",
+        "reports/library-queue-added-2026-10-22/assets.md"
+      ],
+      "tests": [
+        "node --experimental-vm-modules --test patches/local-quality/tests/added-assets-decor-parity.test.mjs (3 passed, 0 failed, 0 skipped; added-assets-decor-final.log)"
+      ],
+      "evidence": "Commit4353aa5f; all6 authored layouts match every composed geometry/index byte, bounds and shader. Primitive constructors204/170/204/136→34 for populated layouts; template disposal once before publication and constructor-failure cleanup verified.",
+      "behavior_notes": "Lamp copies retain final geometry and disposal ownership; templates never survive the build. CPU/source evidence only."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] decor-palm-fronds-preallocate-typed-vertex-and-index-buffers.md",
+      "status": "fixed",
+      "reason": "Write exact final palm attributes and indices into pre-sized typed buffers instead of intermediate number arrays.",
+      "files": [
+        "inkwave-public/src/world/decor.js",
+        "patches/local-quality/tests/added-assets-decor-parity.test.mjs",
+        "reports/library-queue-added-2026-10-22/assets.md"
+      ],
+      "tests": [
+        "node --experimental-vm-modules --test patches/local-quality/tests/added-assets-decor-parity.test.mjs (3 passed, 0 failed, 0 skipped; added-assets-decor-final.log)"
+      ],
+      "evidence": "Commit4353aa5f;1992 vertices and4752 indices per palm; all6 actual layouts preserve final attribute/index bytes, types, winding, bounds, shader and RNG outputs.",
+      "behavior_notes": "Palm triangle order, Float32 boundaries and sway attributes are unchanged; no device performance claim."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] decor-reuse-spawn-emblem-canvas-for-flags.md",
+      "status": "fixed",
+      "reason": "Use the existing immutable emblem canvas as the flag drawImage source.",
+      "files": [
+        "inkwave-public/src/world/decor.js",
+        "patches/local-quality/tests/added-assets-decor-parity.test.mjs",
+        "reports/library-queue-added-2026-10-22/assets.md"
+      ],
+      "tests": [
+        "node --experimental-vm-modules --test patches/local-quality/tests/added-assets-decor-parity.test.mjs (3 passed, 0 failed, 0 skipped; added-assets-decor-final.log)"
+      ],
+      "evidence": "Commit4353aa5f; mock Canvas2D operation streams and final geometry equal; canvases3→2; independent flag/emblem texture disposal each exactly once.",
+      "behavior_notes": "The flag still owns its independent canvas/texture. Canvas operations, not browser pixel output, were compared."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] dedupe-sha256-per-decoded-recording-batch.md",
+      "status": "fixed",
+      "reason": "Implemented exact preparation/allocation ownership change; see audio.md for bounded scope and lifecycle constraints.",
+      "files": [
+        "patches/splatoon3/runtime/audio/authorized-samples.mjs",
+        "patches/splatoon3/runtime/audio/engine.mjs",
+        "patches/splatoon3/audio-adapter.mjs"
+      ],
+      "tests": [
+        "added-audio-sharing:9pass0fail0skip",
+        "audio-refinement/lifetime/v11-real-only/loader-v7/provenance:77pass0fail0skip"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/audio.md",
+      "behavior_notes": "Audio PCM/gain/pitch/event timing unchanged; noise actual-source28cases2,217,392samples byteexact; digest verification and lifecycle controls retained. Device/Safari/retail parity unmeasured."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] defer-unselected-stage-prop-packs-from-cold-boot.md",
+      "status": "fixed",
+      "reason": "Selected-placement inventories now prepare only required optional builders before the world transaction; complete public synchronous facade and descriptor/mural API remain compatible. Cargo mural remains eager for the synchronous public hook.",
+      "files": [
+        "inkwave-public/src/world/props-core.js",
+        "inkwave-public/src/world/props.js",
+        "inkwave-public/src/world/prop-packs.js",
+        "inkwave-public/src/world/dressing.js",
+        "inkwave-public/src/world/murals.js",
+        "inkwave-public/src/world/props-marina-placements.js",
+        "inkwave-public/src/world/stages/cargo/placements.js",
+        "inkwave-public/src/world/stages/data.js",
+        "patches/reliability/start-adapter.mjs",
+        "scripts/build-inkwave.mjs",
+        "scripts/check-inkwave-selected-prop-packs.mjs",
+        "scripts/tests/inkwave-selected-prop-pack-contracts.test.mjs"
+      ],
+      "tests": [
+        "Actual Chromium source/Canvas probe:7 scenarios pass; five complete stage geometry/collider/animation parity comparisons; native5 readiness;100 registration transitions",
+        "World reliability/practice/quality API:164 pass/0 fail/0 skip",
+        "Atlas/retention/failure lifecycle:10 pass/0 fail/0 skip",
+        "Source ownership/cold-graph/CI policy batch:34 pass/0 fail/0 skip; loader3 pass",
+        "Source admission+packaging:25 pass/0 fail/5 emitted-only skips; final emitted-specific new contract awaits combined build"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/props/README.md; reports/library-queue-added-2026-10-22/props/actual-browser-receipt.json",
+      "behavior_notes": "Local implementation only; root owns combined emitted PWA/browser verification and publication. No movement/shooting/seeded geometry/collider/animation values change. Splatoon3 reference11.3.0; existing retail differences remain unverified. No device/FPS/network/memory benefit claim. Full shared atlas reuse is deliberately not shipped; same-font redraw suppression is the permitted safer alternative."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] environment-city-scenery-stream-geometry-without-merge-peak.md",
+      "status": "rejected",
+      "reason": "Strict actual-scene geometry parity and a 104→64 B/vertex owned-storage capacity reduction were proven, but warmed actual city-part merge CPU increased: vendor 4.048ms vs null-release 5.827ms (+1.779ms/+43.9%; delete 7.613ms). Final confirmation also regressed. Keep unchanged production Environment merge; rejected candidates are test-only. Actual process RAM/GC/device benefit is unmeasured.",
+      "files": [
+        "patches/local-quality/tests/fixtures/geometry-storage/scenery-owned-merge.mjs",
+        "patches/local-quality/tests/fixtures/geometry-storage/scenery-owned-adapter.mjs"
+      ],
+      "tests": [
+        "flock /workspace/scratch/1dcd5205fbb6/added-heavy-tests.lock node --experimental-vm-modules --test --test-concurrency=1 patches/local-quality/tests/geometry-build-storage.test.mjs patches/local-quality/tests/runtime-frame-scratch.test.mjs patches/local-quality/tests/collision-hotpath.test.mjs scripts/tests/inkwave-three-composition.test.mjs scripts/tests/inkwave-direct-source-ownership.test.mjs: 36 passed, 0 failed, 1 skipped (configured full-site build-only UUID control; parent owns built-site validation)",
+        "node scripts/check-inkwave-patches.mjs --quick: passed, immutable upstream compatible, reference 11.3.0",
+        "git diff --check: passed",
+        "Public subclass follow-up focused command: 5 passed, 0 failed, 0 skipped; exact bytes/bounds/index and Float32/Uint16/Uint32 constructor/instanceof/normalized/gpuType/buffer-identity checks"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/geometry.md; reports/library-queue-added-2026-10-22/geometry-measurements.json",
+      "behavior_notes": [
+        "Reference Splatoon 3 11.3.0 unchanged. No geometry precision tolerance, source integrity, filter/RNG order, actor logic, material/shader/culling behavior, network admission or tests weakened. Node CPU has shared-host noise; no device, FPS, process RAM or GC improvement asserted.",
+        "Environment composed production output exactly equals base SHA256 87afc8d716b274219a9d38fc93a01ecad0f2b69f7847204ac6264169768fd97f."
+      ]
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] fidelity-packet-parser-eliminate-flags-and-finite-slice-arrays.md",
+      "status": "rejected",
+      "reason": "Exact proposed early-return/direct-loop replacements change getter evaluation order in the actual full parser. Ordinary 32-marker and sparse admission parity does not preserve these observations; parser unchanged.",
+      "files": [
+        "patches/network-replication/tests/added-parser-semantics.test.mjs"
+      ],
+      "tests": [
+        "actual-parser-semantics:3 passed,0 failed,0 skipped"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/network.md",
+      "behavior_notes": "Parser ownership/evaluation order preserved; executable rejection, no device performance claim."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] flow-shell-skip-inactive-lod-tier-matrix-sync.md",
+      "status": "fixed",
+      "reason": "Maintain cached shell visibility while copying matrices only when that shell is visible.",
+      "files": [
+        "patches/splatoon3/runtime/flow-motion.mjs",
+        "patches/splatoon3/tests/flow-motion.test.mjs",
+        "reports/library-queue-added-2026-10-22/assets.md"
+      ],
+      "tests": [
+        "node --experimental-vm-modules --test patches/splatoon3/tests/flow-motion.test.mjs (13 passed, 0 failed, 0 skipped; Flow portion of added-assets-render.log)"
+      ],
+      "evidence": "Commit1b182c55;13 actual Character/Flow lifecycle tests pass, including hidden matrix-copy count zero and current matrix copied on first visible reentry.",
+      "behavior_notes": "Geometry/skeleton ownership and visible tier updates are retained; no hidden shell matrix uploads are requested."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] gyro-raw-rate-quaternion-temporary-arrays.md",
+      "status": "fixed",
+      "reason": "Scalar raw quaternion integration removes intermediate operands/map while allocating a fresh owned output and retaining arithmetic/filter order.",
+      "files": [
+        "patches/local-quality/gyro.mjs"
+      ],
+      "tests": [
+        "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+        "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+        "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+        "source migration audit (109 files,0 failures)",
+        "check-inkwave-patches --quick (pass)"
+      ],
+      "evidence": "20,000 component-exact A/B samples, timestamp/filter reference ownership; existing handoff and stationary tests.",
+      "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] host-handoff-starting-go-barrier-deadlock.md",
+      "status": "fixed",
+      "reason": "Authenticated starting-state host handoff rebuilds the existing READY/GO barrier after owner adoption, binds stale callbacks to room/host epoch and retains real setup readiness and 12-second fallback.",
+      "files": [
+        "patches/reliability/net-adapter.mjs",
+        "patches/reliability/tests/added-host-start-handoff.test.mjs"
+      ],
+      "tests": [
+        "serialized actual Session/NetMatch/Actor + existing host/roster + native paint authority:48 passed,0 failed,0 skipped"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/network.md",
+      "behavior_notes": "Loaded/loading successors, two host changes, actual departed Actor ownership, wrong sender/match, duplicate GO and reentrant replacement rooms covered. No packet schema or clock protocol change; no three-browser relay claim."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] hud-crosshair-unchanged-cone-fov-trig-cache.md",
+      "status": "fixed",
+      "reason": "Memoized unchanged cone/FOV/viewport trigonometry with Object.is scalar keys and original formula on miss.",
+      "files": [
+        "patches/local-quality/added-ui-motion-adapter.mjs",
+        "inkwave-public/src/main.js"
+      ],
+      "tests": [
+        "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+        "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+        "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+        "source migration audit (109 files,0 failures)",
+        "check-inkwave-patches --quick (pass)"
+      ],
+      "evidence": "2,000 actual-fragment numeric A/B frames, roller/NaN/FOV/cone/height changes and fewer tan calls.",
+      "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] hud-map-squad-unchanged-key-formatting.md",
+      "status": "fixed",
+      "reason": "Skip unchanged raw squad/map formatting only while existing display-key owner matches; preserve canvas/reset/DOM slot invalidation.",
+      "files": [
+        "patches/local-quality/added-ui-motion-adapter.mjs",
+        "inkwave-public/src/ui/hud.js"
+      ],
+      "tests": [
+        "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+        "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+        "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+        "source migration audit (109 files,0 failures)",
+        "check-inkwave-patches --quick (pass)"
+      ],
+      "evidence": "Actual method DOM/event equality across roster death/ready/respawn/empty, map expansion/canvas/resize/safe-area/reset; reduced formatting.",
+      "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] hud-marker-direct-metadata-skip-name-map-lookup.md",
+      "status": "fixed",
+      "reason": "Complete direct metadata avoids actor lookup; incomplete/Lab metadata lazily uses the same original lookup and match disposal.",
+      "files": [
+        "patches/local-quality/added-ui-motion-adapter.mjs",
+        "inkwave-public/src/ui/hud.js"
+      ],
+      "tests": [
+        "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+        "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+        "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+        "source migration audit (109 files,0 failures)",
+        "check-inkwave-patches --quick (pass)"
+      ],
+      "evidence": "Complete metadata:0 scans vs60 baseline; fallback/roster output equality and actual releaseMatchActors disposal.",
+      "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] hud-timer-and-turf-skip-unchanged-text-formatting.md",
+      "status": "fixed",
+      "reason": "Cache quantized timer/turf text formatting; leave every threshold, pulse, accumulator and interpolation step live.",
+      "files": [
+        "patches/local-quality/added-ui-motion-adapter.mjs",
+        "inkwave-public/src/ui/hud.js"
+      ],
+      "tests": [
+        "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+        "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+        "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+        "source migration audit (109 files,0 failures)",
+        "check-inkwave-patches --quick (pass)"
+      ],
+      "evidence": "30/60/120Hz actual-source DOM/event/numeric parity including thresholds/NaN/Infinity/reset; fewer formatting calls.",
+      "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] ink-storm-recovery-reuse-los-endpoint-vectors.md",
+      "status": "fixed",
+      "reason": "Use an actor-keyed weak scratch pair for synchronous native LOS. Reentrant calls allocate private fallback endpoints until the outer call returns; finally restores the busy lease after exceptions. No LOS result cache.",
+      "files": [
+        "patches/splatoon3/runtime/storm-effects.mjs"
+      ],
+      "tests": [
+        "node --test patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs patches/splatoon3/tests/slosher-nearest-sparse-cache.test.mjs: 12 passed, 0 failed, 0 skipped",
+        "Focused actual-source regression batch: 138 passed, 0 failed, 0 skipped",
+        "Selected composed Bubbler query/remote-authority/liveness/reset controls: 5 passed, 0 failed, 0 skipped"
+      ],
+      "evidence": "Endpoint values, nested LOS, exceptions and reuse are tested; existing actual recovery and 30/60/120 Hz cloud/gauge traces pass.; Baseline: 8de71b09cd7a3bc05fa4ce06b00f99687beb44ad; test kernels retain original source hashes and verbatim code.",
+      "behavior_notes": [
+        "Preserve INKWAVE gameplay and source 11.3.0 values, event/RNG order and authority. Node fixture/kernel evidence is not browser/device or retail parity measurement."
+      ]
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] killer-wail-splash-wall-long-ray-conservative-broadphase.md",
+      "status": "fixed",
+      "reason": "Reject a wall only when the finite segment misses its enclosing sphere with a scale-aware roundoff margin. Keep the complete original discrete sample loop for possible hits and unusual inputs.",
+      "files": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "tests": [
+        "node --test patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs patches/splatoon3/tests/slosher-nearest-sparse-cache.test.mjs: 12 passed, 0 failed, 0 skipped",
+        "Focused actual-source regression batch: 138 passed, 0 failed, 0 skipped",
+        "Selected composed Bubbler query/remote-authority/liveness/reset controls: 5 passed, 0 failed, 0 skipped"
+      ],
+      "evidence": "2,200 old/current actual-source comparisons cover long/short/zero segments, rotated walls and unusual dimensions; the distant 1000-unit case performs zero samples versus the original 2,859.; Baseline: 8de71b09cd7a3bc05fa4ce06b00f99687beb44ad; test kernels retain original source hashes and verbatim code.",
+      "behavior_notes": [
+        "Preserve INKWAVE gameplay and source 11.3.0 values, event/RNG order and authority. Node fixture/kernel evidence is not browser/device or retail parity measurement."
+      ]
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] legacy-level-geometry-direct-typedarray-build.md",
+      "status": "fixed",
+      "reason": "Adopt bounded hybrid: preserve original JS-double position array and exact native tri reads, stream the other eight attributes and indices into fixed-width typed chunks, drop consumed chunks and adopt final arrays without a second Float32 copy. Match vendor >=65535 Uint32 threshold. Range retained numeric slots fall 478311→52974 (88.9%); exact attribute/index/bounds parity across five legacy layouts×four filters×two atlas states. Native override unchanged.",
+      "files": [
+        "patches/local-quality/geometry-build-storage.mjs",
+        "patches/local-quality/geometry-build-storage-adapter.mjs",
+        "patches/local-quality/runtime-frame-scratch-adapter.mjs",
+        "patches/local-quality/adapter.mjs",
+        "scripts/lib/inkwave-build-only-modules.mjs"
+      ],
+      "tests": [
+        "flock /workspace/scratch/1dcd5205fbb6/added-heavy-tests.lock node --experimental-vm-modules --test --test-concurrency=1 patches/local-quality/tests/geometry-build-storage.test.mjs patches/local-quality/tests/runtime-frame-scratch.test.mjs patches/local-quality/tests/collision-hotpath.test.mjs scripts/tests/inkwave-three-composition.test.mjs scripts/tests/inkwave-direct-source-ownership.test.mjs: 36 passed, 0 failed, 1 skipped (configured full-site build-only UUID control; parent owns built-site validation)",
+        "node scripts/check-inkwave-patches.mjs --quick: passed, immutable upstream compatible, reference 11.3.0",
+        "git diff --check: passed",
+        "Public subclass follow-up focused command: 5 passed, 0 failed, 0 skipped; exact bytes/bounds/index and Float32/Uint16/Uint32 constructor/instanceof/normalized/gpuType/buffer-identity checks"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/geometry.md; reports/library-queue-added-2026-10-22/geometry-measurements.json",
+      "behavior_notes": [
+        "Reference Splatoon 3 11.3.0 unchanged. No geometry precision tolerance, source integrity, filter/RNG order, actor logic, material/shader/culling behavior, network admission or tests weakened. Node CPU has shared-host noise; no device, FPS, process RAM or GC improvement asserted.",
+        "Environment composed production output exactly equals base SHA256 87afc8d716b274219a9d38fc93a01ecad0f2b69f7847204ac6264169768fd97f."
+      ]
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] locomotion-profile-hoist-hair-child-topology-per-bank.md",
+      "status": "already_fixed",
+      "reason": "Already implemented by adapter.mjs in the composed production profile: bank._hairMeta caches child indices and terminal rest directions.",
+      "files": [
+        "patches/local-quality/adapter.mjs"
+      ],
+      "tests": [
+        "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+        "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+        "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+        "source migration audit (109 files,0 failures)",
+        "check-inkwave-patches --quick (pass)"
+      ],
+      "evidence": "New composed source assertion confirms bank-owned metadata and metadata sampling loop; real source-bank motion parity covers unchanged composed profiles.",
+      "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] main-weapon-jobs-sparse-checkout-and-blob-filter.md",
+      "status": "fixed",
+      "reason": "Three unconditional current checkout sites now use a verified conservative partial/sparse projection; pinned conditional historical baseline remains full for source integrity.",
+      "files": [
+        ".github/workflows/ci-quality-gate.yml",
+        ".github/workflows/inkwave-main-weapons.yml",
+        ".github/workflows/validate-inkwave-update.yml",
+        "scripts/build-inkwave.mjs",
+        "scripts/tests/inkwave-added-ci-contracts.test.mjs"
+      ],
+      "tests": [
+        "new + queued workflow contracts:18 pass/0 fail/0 skip",
+        "final revised new contract:5 pass/0 fail/0 skip",
+        "integration/admission/Three batch:47 pass/0 fail/1 emitted-site skip",
+        "actual emitted packaging+Three:12 pass/0 fail/0 skip",
+        "normal/no-shake/unminified builds and current sparse build succeed; startup budget passes"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/ci/README.md; reports/library-queue-added-2026-10-22/ci/build-byte-parity.json; reports/library-queue-added-2026-10-22/ci/sparse-build-parity.json; reports/library-queue-added-2026-10-22/ci/checkout-projections.json",
+      "behavior_notes": "Local implementation; not a remote CI/merge completion claim. Gameplay/runtime output identical across all 2090 emitted artifacts. Mandatory validation and historical baseline integrity retained; no cold-network, FPS or device performance claim."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] main-weapon-workflow-path-filters-miss-eleven-executed-tests.md",
+      "status": "fixed",
+      "reason": "Both event filters cover every executed test entrypoint, including all eleven omitted files.",
+      "files": [
+        ".github/workflows/ci-quality-gate.yml",
+        ".github/workflows/inkwave-main-weapons.yml",
+        ".github/workflows/validate-inkwave-update.yml",
+        "scripts/build-inkwave.mjs",
+        "scripts/tests/inkwave-added-ci-contracts.test.mjs"
+      ],
+      "tests": [
+        "new + queued workflow contracts:18 pass/0 fail/0 skip",
+        "final revised new contract:5 pass/0 fail/0 skip",
+        "integration/admission/Three batch:47 pass/0 fail/1 emitted-site skip",
+        "actual emitted packaging+Three:12 pass/0 fail/0 skip",
+        "normal/no-shake/unminified builds and current sparse build succeed; startup budget passes"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/ci/README.md; reports/library-queue-added-2026-10-22/ci/build-byte-parity.json; reports/library-queue-added-2026-10-22/ci/sparse-build-parity.json; reports/library-queue-added-2026-10-22/ci/checkout-projections.json",
+      "behavior_notes": "Local implementation; not a remote CI/merge completion claim. Gameplay/runtime output identical across all 2090 emitted artifacts. Mandatory validation and historical baseline integrity retained; no cold-network, FPS or device performance claim."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] mural-height-switch-skip-full-shared-imagedata.md",
+      "status": "duplicate",
+      "reason": "Duplicate of previously rejected mural-atlas-stage-resize-avoid-8mib-imagedata-copy.md; same shared-row redraw replacement after atlas height reset.",
+      "files": [
+        "scripts/tests/inkwave-mural-resize-browser.test.mjs",
+        "reports/library-queue-2026-10-22/queue-dispositions.json",
+        "reports/inkwave-splatoon3-behavior-2026-10-02.md",
+        "reports/library-queue-added-2026-10-22/assets.md"
+      ],
+      "tests": [
+        "Existing actual-source Chromium153 Canvas2D audit:47 states,46 pixel mismatch states,587202560 compared bytes; placements/dimensions/47 texture disposals equal. Existing evidence reused; not rerun for duplicate."
+      ],
+      "evidence": "Commit61ad45c8. Canonical earlier queue disposition and behavior report2026-10-22 mural redraw counterfactual rejected; first Halyard mismatch byte148022 baseline163 versus redraw159.",
+      "behavior_notes": "Existing exact pixel-copy policy remains. Duplicate is not reported as fixed; software Chromium timing is not generalized to a physical device."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] native-source-progress-chunks-double-buffer.md",
+      "status": "fixed",
+      "reason": "Allocate the progress target from authenticated expected bytes when bounded; retain chunk/join fallback for unknown or oversized metadata.",
+      "files": [
+        "patches/native-stages/runtime/source-cache.mjs",
+        "patches/local-quality/tests/added-assets-load-ownership.test.mjs",
+        "reports/library-queue-added-2026-10-22/assets.md",
+        "patches/native-stages/runtime/source-catalog.mjs",
+        "patches/native-stages/runtime/source-worker.mjs",
+        "patches/native-stages/tests/source-object-size.test.mjs",
+        "patches/native-stages/tests/native-source-device-budget.test.mjs",
+        "patches/native-stages/tests/source-tree-cache.test.mjs"
+      ],
+      "tests": [
+        "node --experimental-vm-modules --test patches/local-quality/tests/added-assets-load-ownership.test.mjs patches/native-stages/tests/source-cache-write.test.mjs patches/native-stages/tests/source-tree-cache.test.mjs (38 passed, 0 failed, 0 skipped; added-assets-load-final.log)",
+        "node --experimental-vm-modules --test patches/native-stages/tests/source-object-size.test.mjs patches/native-stages/tests/source-tree-cache.test.mjs patches/native-stages/tests/native-source-device-budget.test.mjs patches/local-quality/tests/added-assets-load-ownership.test.mjs patches/native-stages/tests/source-cache-write.test.mjs (47 passed,0 failed,0 skipped; added-source-size-wiring.log)"
+      ],
+      "evidence": "Commit57674f97;20 synthetic chunk/count cases plus stream/cache regression tests preserve bytes and progress cadence; hostile Content-Length never controls allocation; overflow/short/corrupt/read failures do not publish cache entries. Integration follow-up authenticates23 LFS payload sizes through canonical pointer Git SHA1 and stage SHA256, and verifies actual worker/catalog progress calls carry those sizes;18 bounded stages use direct buffers,5 larger stages keep fallback. Real-caller wiring and authentication commit507a434a.",
+      "behavior_notes": "At most64MiB is allocated upfront from authenticated metadata. Stream cancellation/release and integrity/cache admission remain enforced; constrained-device arrayBuffer path is unchanged. Production desktop caller is explicitly wired to the authenticated LFS payload size map; tree pointer sizes are excluded. No additional runtime fetch/sequencing cost; unknown hashes and constrained clients retain original fallback."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] native-sprinkler-bomb-replay-avoid-bomb-snapshot-set.md",
+      "status": "fixed",
+      "reason": "Validate the remote owner before snapshot allocation and delegate invalid/nonowner rows to the unchanged native playback. Retain Set identity membership for accepted senders because composed bomb-capacity wrappers can evict entries; append-index optimization is deliberately not applied.",
+      "files": [
+        "patches/splatoon3/runtime/native-sprinkler-damage.mjs"
+      ],
+      "tests": [
+        "node --test patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs patches/splatoon3/tests/slosher-nearest-sparse-cache.test.mjs: 12 passed, 0 failed, 0 skipped",
+        "Focused actual-source regression batch: 138 passed, 0 failed, 0 skipped",
+        "Selected composed Bubbler query/remote-authority/liveness/reset controls: 5 passed, 0 failed, 0 skipped"
+      ],
+      "evidence": "Actual native Sprinkler JSON birth/damage, malformed/foreign owner, life, epoch, replay, retirement and recorder exception controls pass. This is the safe first phase expressly allowed by the note; accepted-owner O(B) membership remains.; Baseline: 8de71b09cd7a3bc05fa4ce06b00f99687beb44ad; test kernels retain original source hashes and verbatim code.",
+      "behavior_notes": [
+        "Preserve INKWAVE gameplay and source 11.3.0 values, event/RNG order and authority. Node fixture/kernel evidence is not browser/device or retail parity measurement."
+      ]
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] network-combat-admission-duplicate-global-prune.md",
+      "status": "fixed",
+      "reason": "Removed only private take second global prune; sole caller combatAdmission retains identical-time cleanup even for rejected envelopes. Actual expiration/pending/contact parity reduces 14 calls to7 in the measured boundary set.",
+      "files": [
+        "patches/network-replication/combat-provenance.mjs",
+        "patches/network-replication/tests/added-combat-scans.test.mjs"
+      ],
+      "tests": [
+        "actual-combat-scans:4 passed,0 failed,0 skipped",
+        "existing combat/boss:56 passed,0 failed,0 skipped"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/network.md",
+      "behavior_notes": "Admission guards, pending deadlines and proof/contact expiration unchanged; no device timing claim."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] network-combat-proof-record-merge-duplicate-rate-scans.md",
+      "status": "fixed",
+      "reason": "Fuse duplicate-key detection and same-actor rate counting, preserving same-shot pairing position, rate limits, push order and retention caps. Actual source counterfactual parity covers900 deterministic batches and six cap boundaries.",
+      "files": [
+        "patches/network-replication/combat-provenance.mjs",
+        "patches/network-replication/tests/added-combat-scans.test.mjs"
+      ],
+      "tests": [
+        "actual-combat-scans:4 passed,0 failed,0 skipped",
+        "existing combat/boss:56 passed,0 failed,0 skipped"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/network.md",
+      "behavior_notes": "Proof keys/counts/order/uses remain exact in focused parity; no gameplay numeric or RNG changes."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] network-combat-proof-retention-avoid-unconditional-array-copy.md",
+      "status": "rejected",
+      "reason": "Conditional outer-array reuse changes retained aliases and exposes a newly appended proof to an active admission traversal under synchronous geometry reentry, changing false to true. Original unconditional outer-array replacement retained.",
+      "files": [
+        "patches/network-replication/tests/added-combat-scans.test.mjs"
+      ],
+      "tests": [
+        "actual-combat-scans:4 passed,0 failed,0 skipped"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/network.md",
+      "behavior_notes": "Actual module ownership/reentrancy counterexample; does not claim remote JSON can install an engine callback. Safe current outer-array ownership retained."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] network-death-paint-reuse-deterministic-burst-plan.md",
+      "status": "fixed",
+      "reason": "Reuse one exact native death burst plan per victim keyed by copied generation/life/attacker/position/seed/team values, bounded to8 victims per existing session/match state. Every authority, geometry and replay check remains per stamp.",
+      "files": [
+        "patches/network-replication/paint-authority.mjs",
+        "patches/network-replication/tests/added-death-plan-cache.test.mjs",
+        "patches/network-replication/tests/issue-522-paint-authority.test.mjs"
+      ],
+      "tests": [
+        "actual-death-plan-cache:3 passed,0 failed,0 skipped",
+        "serialized native authority/Session suites:48 passed,0 failed,0 skipped"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/network.md",
+      "behavior_notes": "Exact native deterministic burst/order/replay parity:11 native plan calls become1 per eleven-stamp burst. Owner/life/match changes and37-victim churn covered; no device FPS/retail parity claim."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] paint-footprint-hoist-family-lists-and-impact-band-validation.md",
+      "status": "fixed",
+      "reason": "Hoisted frozen family lists and replaced temporary impact-band array with scalar finite checks; exact source selection/resource/numeric parity.",
+      "files": [
+        "patches/splatoon3/runtime/main-ink-footprints.mjs",
+        "patches/splatoon3/runtime/shooter-impact-paint.mjs",
+        "reports/library-queue-added-2026-10-22/ranked-paint.md"
+      ],
+      "tests": [
+        "8/8 final exact-base tests; impact suite6/6; footprint resource/family parity. Full-main release has independent known sparse Sloshing Machine base failure fixed separately by888c9ee3."
+      ],
+      "evidence": "Exact base8de71b09 and SHA-pinned frozen source; reports/library-queue-added-2026-10-22/ranked-paint.md",
+      "behavior_notes": "Source-guided footprint bytes, radius arithmetic and selection precedence unchanged. Splatoon3 reference11.3.0; device/browser/retail and measured FPS parity unverified."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] point-sensor-flight-reuse-swept-capsule-scratch.md",
+      "status": "fixed",
+      "reason": "Own delta/base/contact/result scratch on each sensor and reset t/dist before every synchronous capsule query. Never alias actor or source hit vectors; original nearest and terrain ordering remain.",
+      "files": [
+        "patches/splatoon3/runtime/kit-support.mjs"
+      ],
+      "tests": [
+        "node --test patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs patches/splatoon3/tests/slosher-nearest-sparse-cache.test.mjs: 12 passed, 0 failed, 0 skipped",
+        "Focused actual-source regression batch: 138 passed, 0 failed, 0 skipped",
+        "Selected composed Bubbler query/remote-authority/liveness/reset controls: 5 passed, 0 failed, 0 skipped"
+      ],
+      "evidence": "90 old/current flight traces cover partial result writes, opposing capsule iteration, terrain precedence and landed state; composed support/recon/contact tests pass.; Baseline: 8de71b09cd7a3bc05fa4ce06b00f99687beb44ad; test kernels retain original source hashes and verbatim code.",
+      "behavior_notes": [
+        "Preserve INKWAVE gameplay and source 11.3.0 values, event/RNG order and authority. Node fixture/kernel evidence is not browser/device or retail parity measurement."
+      ]
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] propkit-reuse-stage-invariant-sign-atlas-across-layouts.md",
+      "status": "fixed",
+      "reason": "Adopt the queue-authorized minimal font-generation fix: resolved promises no longer redraw unchanged atlases. Retain independent writable Canvas/Texture ownership; cross-kit sharing has a concrete escaped-handle counterexample.",
+      "files": [
+        "inkwave-public/src/world/props-core.js",
+        "inkwave-public/src/world/props.js",
+        "inkwave-public/src/world/prop-packs.js",
+        "inkwave-public/src/world/dressing.js",
+        "inkwave-public/src/world/murals.js",
+        "inkwave-public/src/world/props-marina-placements.js",
+        "inkwave-public/src/world/stages/cargo/placements.js",
+        "inkwave-public/src/world/stages/data.js",
+        "patches/reliability/start-adapter.mjs",
+        "scripts/build-inkwave.mjs",
+        "scripts/check-inkwave-selected-prop-packs.mjs",
+        "scripts/tests/inkwave-selected-prop-pack-contracts.test.mjs"
+      ],
+      "tests": [
+        "Actual Chromium source/Canvas probe:7 scenarios pass; five complete stage geometry/collider/animation parity comparisons; native5 readiness;100 registration transitions",
+        "World reliability/practice/quality API:164 pass/0 fail/0 skip",
+        "Atlas/retention/failure lifecycle:10 pass/0 fail/0 skip",
+        "Source ownership/cold-graph/CI policy batch:34 pass/0 fail/0 skip; loader3 pass",
+        "Source admission+packaging:25 pass/0 fail/5 emitted-only skips; final emitted-specific new contract awaits combined build"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/props/README.md; reports/library-queue-added-2026-10-22/props/actual-browser-receipt.json",
+      "behavior_notes": "Local implementation only; root owns combined emitted PWA/browser verification and publication. No movement/shooting/seeded geometry/collider/animation values change. Splatoon3 reference11.3.0; existing retail differences remain unverified. No device/FPS/network/memory benefit claim. Full shared atlas reuse is deliberately not shipped; same-font redraw suppression is the permitted safer alternative."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] ranked-clams-ground-pickup-skip-per-pair-vec-allocations.md",
+      "status": "fixed",
+      "reason": "Dense finite pickup coordinates avoid vec slice/callback/copy; original malformed and sparse fallback retained.",
+      "files": [
+        "patches/splatoon3/runtime/ranked/clams.mjs",
+        "reports/library-queue-added-2026-10-22/ranked-paint.md"
+      ],
+      "tests": [
+        "Exact-base scalar/unusual-input differential plus existing complete Clams rules/events regression passed."
+      ],
+      "evidence": "Exact base8de71b09 and SHA-pinned frozen source; reports/library-queue-added-2026-10-22/ranked-paint.md",
+      "behavior_notes": "Clam pickup threshold/order, inventory, throws, scores and event order unchanged. Splatoon3 reference11.3.0; device/browser/retail and measured FPS parity unverified."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] ranked-event-wire-filter-skip-for-guests-and-empty-batches.md",
+      "status": "fixed",
+      "reason": "Guests and empty event batches skip wire filtering after the original local playback; host sequence and packet order retained.",
+      "files": [
+        "patches/splatoon3/runtime/ranked/install.mjs",
+        "reports/library-queue-added-2026-10-22/ranked-paint.md"
+      ],
+      "tests": [
+        "Actual extracted old/current advanceRanked host/guest/empty/playback-migration differential passed."
+      ],
+      "evidence": "Exact base8de71b09 and SHA-pinned frozen source; reports/library-queue-added-2026-10-22/ranked-paint.md",
+      "behavior_notes": "Local objective playback and host authority ordering retained; no packet format change. Splatoon3 reference11.3.0; device/browser/retail and measured FPS parity unverified."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] ranked-minimap-cache-static-tower-route-path.md",
+      "status": "fixed",
+      "reason": "Per-Minimap projected-coordinate route cache avoids repeat projection/output allocation and preserves exact current-path commands; guarded invalidation and unusual-input fallback.",
+      "files": [
+        "patches/splatoon3/runtime/ranked/minimap-cache.mjs",
+        "patches/splatoon3/runtime/ranked/ui.mjs",
+        "reports/library-queue-added-2026-10-22/ranked-paint.md"
+      ],
+      "tests": [
+        "Final composed minimap11/11; exact old/current route Canvas commands, invalidation, reduced projection calls."
+      ],
+      "evidence": "Exact base8de71b09 and SHA-pinned frozen source; reports/library-queue-added-2026-10-22/ranked-paint.md; Post-review sparse closure8470da3a, integrated by root5a081ae0: zones, Tower checkpoint teams/entries and Clams skip holes with in/present-index snapshots; inherited entries and explicitnull/undefined behavior verified against actual composed baseline. Final minimap11/11 pass.",
+      "behavior_notes": "Tower route projection and stroke/marker order retained; cache released when leaving Tower. Splatoon3 reference11.3.0; device/browser/retail and measured FPS parity unverified."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] ranked-minimap-objective-dirty-without-paint.md",
+      "status": "fixed",
+      "reason": "Visible objective primitive snapshots schedule a final composite independently from ink dirty state while native30Hz scheduling remains authoritative.",
+      "files": [
+        "patches/splatoon3/runtime/ranked/minimap-cache.mjs",
+        "patches/splatoon3/runtime/ranked/ui.mjs",
+        "reports/library-queue-added-2026-10-22/ranked-paint.md"
+      ],
+      "tests": [
+        "Four-mode composed recording-Canvas cadence/no-ink/hidden/reopen/removal tests passed within11/11 minimap suite."
+      ],
+      "evidence": "Exact base8de71b09 and SHA-pinned frozen source; reports/library-queue-added-2026-10-22/ranked-paint.md; Post-review sparse closure8470da3a, integrated by root5a081ae0: zones, Tower checkpoint teams/entries and Clams skip holes with in/present-index snapshots; inherited entries and explicitnull/undefined behavior verified against actual composed baseline. Final minimap11/11 pass.",
+      "behavior_notes": "Objective markers now refresh without paint; stationary overlays idle and removal erases once. Native INKWAVE30Hz retained, no retail cadence claim. Splatoon3 reference11.3.0; device/browser/retail and measured FPS parity unverified."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] ranked-nontower-dispose-preserve-unchanged-spatial-stamp-buffer.md",
+      "status": "fixed",
+      "reason": "Non-Tower disposal preserves unchanged owned stamp buffer only under identity, length and monotonic safe-stamp guards; fallback resets uncertain state.",
+      "files": [
+        "patches/splatoon3/runtime/ranked/world.mjs",
+        "reports/library-queue-added-2026-10-22/ranked-paint.md"
+      ],
+      "tests": [
+        "Final live World7/7 includes five-stage, three-mode query IDs/order after disposal and Uint32 wrap; malformed ownership guards pass."
+      ],
+      "evidence": "Exact base8de71b09 and SHA-pinned frozen source; reports/library-queue-added-2026-10-22/ranked-paint.md",
+      "behavior_notes": "Spatial queries/collision ordering unchanged; Tower removal still resets stamps. Splatoon3 reference11.3.0; device/browser/retail and measured FPS parity unverified."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] ranked-rainmaker-barrier-admission-avoid-double-prune.md",
+      "status": "fixed",
+      "reason": "Private post-prune matching removes second pruning pass without weakening original admission/lifecycle gates; public flush still prunes.",
+      "files": [
+        "patches/splatoon3/runtime/ranked/barrier-admission.mjs",
+        "reports/library-queue-added-2026-10-22/ranked-paint.md"
+      ],
+      "tests": [
+        "Final admission/equivalence14/14; actual-source counter2→1 and exact proof/pending/key/watermark/hit parity; spoof/replay/handoff tests."
+      ],
+      "evidence": "Exact base8de71b09 and SHA-pinned frozen source; reports/library-queue-added-2026-10-22/ranked-paint.md",
+      "behavior_notes": "Rainmaker trusted-source hit authority, TTLs, replay watermarks and hit order unchanged. Splatoon3 reference11.3.0; device/browser/retail and measured FPS parity unverified."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] ranked-stage-defer-tower-collision-sampling-outside-tower-mode.md",
+      "status": "fixed",
+      "reason": "Pass mode through setup and defer Tower collision sampling outside Tower; preserve lazy writable route view and eager legacy/Tower behavior.",
+      "files": [
+        "patches/splatoon3/runtime/ranked/stages.mjs",
+        "patches/splatoon3/runtime/ranked/world.mjs",
+        "patches/splatoon3/runtime/ranked/install.mjs",
+        "reports/library-queue-added-2026-10-22/ranked-paint.md"
+      ],
+      "tests": [
+        "Exact-base five-stage lazy/eager values/query-order tests; live World7/7; integration30/30."
+      ],
+      "evidence": "Exact base8de71b09 and SHA-pinned frozen source; reports/library-queue-added-2026-10-22/ranked-paint.md",
+      "behavior_notes": "Non-Tower objective coordinates and Tower sweep/path heights retained; caches stay per-stage/per-level. Splatoon3 reference11.3.0; device/browser/retail and measured FPS parity unverified."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] results-awards-advance-monotonic-badge-reveal-index.md",
+      "status": "fixed",
+      "reason": "Monotonic next-badge index visits each newly due item once; finish fills all badges then advances index to queue length.",
+      "files": [
+        "patches/local-quality/added-ui-motion-adapter.mjs",
+        "inkwave-public/src/ui/menus.js"
+      ],
+      "tests": [
+        "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+        "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+        "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+        "source migration audit (109 files,0 failures)",
+        "check-inkwave-patches --quick (pass)"
+      ],
+      "evidence": "Actual reveal block parity for0/1/8/24 badges at30/60/120Hz, strict boundary/hitch/frame-order; candidate showBadge calls<=badge count.",
+      "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] reuse-procedural-noise-generation-scratch-with-bit-exact-pcm.md",
+      "status": "fixed",
+      "reason": "Implemented exact preparation/allocation ownership change; see audio.md for bounded scope and lifecycle constraints.",
+      "files": [
+        "patches/splatoon3/runtime/audio/authorized-samples.mjs",
+        "patches/splatoon3/runtime/audio/engine.mjs",
+        "patches/splatoon3/audio-adapter.mjs"
+      ],
+      "tests": [
+        "added-audio-sharing:9pass0fail0skip",
+        "audio-refinement/lifetime/v11-real-only/loader-v7/provenance:77pass0fail0skip"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/audio.md",
+      "behavior_notes": "Audio PCM/gain/pitch/event timing unchanged; noise actual-source28cases2,217,392samples byteexact; digest verification and lifecycle controls retained. Device/Safari/retail parity unmeasured."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] reuse-verified-brush-windup-pcm-for-roll-loop.md",
+      "status": "fixed",
+      "reason": "Implemented exact preparation/allocation ownership change; see audio.md for bounded scope and lifecycle constraints.",
+      "files": [
+        "patches/splatoon3/runtime/audio/authorized-samples.mjs",
+        "patches/splatoon3/runtime/audio/engine.mjs",
+        "patches/splatoon3/audio-adapter.mjs"
+      ],
+      "tests": [
+        "added-audio-sharing:9pass0fail0skip",
+        "audio-refinement/lifetime/v11-real-only/loader-v7/provenance:77pass0fail0skip"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/audio.md",
+      "behavior_notes": "Audio PCM/gain/pitch/event timing unchanged; noise actual-source28cases2,217,392samples byteexact; digest verification and lifecycle controls retained. Device/Safari/retail parity unmeasured."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] reuse-verified-legacy-lightmap-across-stage-reentry.md",
+      "status": "fixed",
+      "reason": "Cache at most four verified metadata triples per Game, revalidate against the current layout and refetch on mismatch.",
+      "files": [
+        "patches/local-quality/runtime-frame-scratch-adapter.mjs",
+        "patches/local-quality/tests/added-assets-load-ownership.test.mjs",
+        "reports/library-queue-added-2026-10-22/assets.md",
+        "patches/loading-cache/tests/composed-lightmap.test.mjs"
+      ],
+      "tests": [
+        "node --experimental-vm-modules --test patches/local-quality/tests/added-assets-load-ownership.test.mjs patches/native-stages/tests/source-cache-write.test.mjs patches/native-stages/tests/source-tree-cache.test.mjs (38 passed, 0 failed, 0 skipped; added-assets-load-final.log)",
+        "node --experimental-vm-modules --test patches/loading-cache/tests/composed-lightmap.test.mjs patches/local-quality/tests/added-assets-load-ownership.test.mjs (8 passed,0 failed,0 skipped; added-lightmap-compile.log)"
+      ],
+      "evidence": "Commit57674f97;40 four-stage transitions reduce metadata fetches40→4, with40 independently created and disposed GPU textures; stale hash, invalid/failed metadata, eviction and independent Game covered. Combined-build follow-up retains exactly one metadata fetch site with a bounded two-pass stale-cache retry. Actual main composition, production esbuild and unchanged adaptCompiledMain pass; added/missing cache sites and changed PNG topology still fail closed.",
+      "behavior_notes": "No inactive GPU cache is introduced. Active world texture lifetime remains unchanged, and current layout hash verification still runs on every load. Stale cached metadata can trigger only one fresh fetch; stale freshly fetched metadata fails safely without repetition. Compiled loading-cache gate is preserved unchanged."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] s3-ink-sheets-arrow-unused-frame-basis-work.md",
+      "status": "fixed",
+      "reason": "Skip unused secondary axes and temporary direction clones only for true non-horizontal arrows.",
+      "files": [
+        "patches/splatoon3/runtime/s3-ink-sheets.mjs",
+        "patches/local-quality/tests/added-assets-render-parity.test.mjs",
+        "reports/library-queue-added-2026-10-22/assets.md"
+      ],
+      "tests": [
+        "node --experimental-vm-modules --test patches/local-quality/tests/added-assets-render-parity.test.mjs (4 passed, 0 failed, 0 skipped; added-assets-pure-render.log)"
+      ],
+      "evidence": "Commit1b182c55;1296 seeded30/60/120Hz actual draw frames match all matrices, attributes, ranges and output, including near-vertical directions and horizontal overrides; true arrow direction clones4→0.",
+      "behavior_notes": "Horizontal override precedence and all visible renderer outputs remain exact."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] s3-ink-sheets-splash-cone-render-object-churn.md",
+      "status": "fixed",
+      "reason": "Give each renderer a private reusable splash-cone result while preserving fresh public API results by default.",
+      "files": [
+        "patches/splatoon3/runtime/s3-ink-sheets.mjs",
+        "patches/local-quality/tests/added-assets-render-parity.test.mjs",
+        "reports/library-queue-added-2026-10-22/assets.md"
+      ],
+      "tests": [
+        "node --experimental-vm-modules --test patches/local-quality/tests/added-assets-render-parity.test.mjs (4 passed, 0 failed, 0 skipped; added-assets-pure-render.log)"
+      ],
+      "evidence": "Commit1b182c55;20000 scalar cases Object.is-equal; caller scratch identity and fresh default result identities retained;1296 actual draw frames byte-exact.",
+      "behavior_notes": "Scratch lifetime is per renderer; public result aliasing semantics are retained."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] settings-audio-preview-precompute-spectrum-and-idle-muted-bars.md",
+      "status": "fixed",
+      "reason": "Precomputed18 spectra, then skip bars only after mute envelope is provably under the existing clamp floor; time/smoothing always advance.",
+      "files": [
+        "patches/local-quality/added-ui-motion-adapter.mjs",
+        "inkwave-public/src/ui/menu-art.js"
+      ],
+      "tests": [
+        "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+        "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+        "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+        "source migration audit (109 files,0 failures)",
+        "check-inkwave-patches --quick (pass)"
+      ],
+      "evidence": "Every18 bar string plus caption/class parity at30/60/120Hz through mute/unmute/master changes/zero/hitch/Infinity/NaN dt; fewer sine calls and writes.",
+      "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] settings-scroll-edge-fades-invalidate-on-scroll-and-resize.md",
+      "status": "already_fixed",
+      "reason": "Already implemented in settings-ui-adapter.mjs: dirty layout, ResizeObserver, scroll/resize invalidation, no-observer fallback and cleanup.",
+      "files": [
+        "patches/local-quality/settings-ui-adapter.mjs"
+      ],
+      "tests": [
+        "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+        "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+        "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+        "source migration audit (109 files,0 failures)",
+        "check-inkwave-patches --quick (pass)"
+      ],
+      "evidence": "New actual composed scroll block test validates stationary read suppression, edge refresh/fallback and disposal wiring.",
+      "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] shooter-nearest-paint-merge-validation-and-membership-scan.md",
+      "status": "rejected",
+      "reason": "Single-scan proposal computes runner slot before full source validation. Invalid source plus Symbol slot changes RangeError without runner read to TypeError with read; numeric accessor also changes evaluation order.",
+      "files": [
+        "patches/splatoon3/runtime/shooter-nearest-paint.mjs",
+        "reports/library-queue-added-2026-10-22/ranked-paint.md"
+      ],
+      "tests": [
+        "Executable negative control in ranked-added-equivalence test; existing nearest cadence suite4/4."
+      ],
+      "evidence": "Exact base8de71b09 and SHA-pinned frozen source; reports/library-queue-added-2026-10-22/ranked-paint.md",
+      "behavior_notes": "Production source-first validation, error ordering and successful-shot nearest paint cadence left unchanged. Splatoon3 reference11.3.0; device/browser/retail and measured FPS parity unverified."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] showcase-results-static-bomb-plan-eliminate-per-frame-literals.md",
+      "status": "fixed",
+      "reason": "Hoisted frozen seven-row plan retaining original while comparison, counter increments, missing-slot handling and RNG/drop order.",
+      "files": [
+        "patches/local-quality/added-ui-motion-adapter.mjs",
+        "inkwave-public/src/game/showcase.js"
+      ],
+      "tests": [
+        "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+        "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+        "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+        "source migration audit (109 files,0 failures)",
+        "check-inkwave-patches --quick (pass)"
+      ],
+      "evidence": "Actual schedule block A/B for1–4 slots and30/60/120Hz, strict thresholds, hitches/rematch; exact RNG count/drop arguments.",
+      "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] skip-discarded-threejs-first-pass-minification.md",
+      "status": "fixed",
+      "reason": "Skip only two overwritten first-pass Three transforms; retain composition, mandatory bundle and diagnostic modes.",
+      "files": [
+        ".github/workflows/ci-quality-gate.yml",
+        ".github/workflows/inkwave-main-weapons.yml",
+        ".github/workflows/validate-inkwave-update.yml",
+        "scripts/build-inkwave.mjs",
+        "scripts/tests/inkwave-added-ci-contracts.test.mjs"
+      ],
+      "tests": [
+        "new + queued workflow contracts:18 pass/0 fail/0 skip",
+        "final revised new contract:5 pass/0 fail/0 skip",
+        "integration/admission/Three batch:47 pass/0 fail/1 emitted-site skip",
+        "actual emitted packaging+Three:12 pass/0 fail/0 skip",
+        "normal/no-shake/unminified builds and current sparse build succeed; startup budget passes"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/ci/README.md; reports/library-queue-added-2026-10-22/ci/build-byte-parity.json; reports/library-queue-added-2026-10-22/ci/sparse-build-parity.json; reports/library-queue-added-2026-10-22/ci/checkout-projections.json",
+      "behavior_notes": "Local implementation; not a remote CI/merge completion claim. Gameplay/runtime output identical across all 2090 emitted artifacts. Mandatory validation and historical baseline integrity retained; no cold-network, FPS or device performance claim."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] slosher-projectile-birth-reuse-aim-normalization-vector.md",
+      "status": "fixed",
+      "reason": "Normalize the current owner aim into Projectiles-owned scratch. Scalar yaw/pitch are consumed before any downstream call, so nested projectile births cannot corrupt a retained direction. Owner aim and RNG are untouched.",
+      "files": [
+        "patches/splatoon3/runtime/weapons-fidelity.mjs"
+      ],
+      "tests": [
+        "node --test patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs patches/splatoon3/tests/slosher-nearest-sparse-cache.test.mjs: 12 passed, 0 failed, 0 skipped",
+        "Focused actual-source regression batch: 138 passed, 0 failed, 0 skipped",
+        "Selected composed Bubbler query/remote-authority/liveness/reset controls: 5 passed, 0 failed, 0 skipped"
+      ],
+      "evidence": "Composed source Slosher projectile/contact regression passes; original volley timing and 4+5 birth order remain unchanged.; Baseline: 8de71b09cd7a3bc05fa4ce06b00f99687beb44ad; test kernels retain original source hashes and verbatim code.",
+      "behavior_notes": [
+        "Preserve INKWAVE gameplay and source 11.3.0 values, event/RNG order and authority. Node fixture/kernel evidence is not browser/device or retail parity measurement."
+      ]
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] source-bimanual-grip-stop-converged-projection-iterations.md",
+      "status": "already_fixed",
+      "reason": "Already implemented by adapter.mjs in the composed source controller: squared-distance constraint checks and changed=false iteration break.",
+      "files": [
+        "patches/local-quality/adapter.mjs"
+      ],
+      "tests": [
+        "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+        "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+        "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+        "source migration audit (109 files,0 failures)",
+        "check-inkwave-patches --quick (pass)"
+      ],
+      "evidence": "New composed source assertion confirms converged exit; real source-bank motion parity covers unchanged source controller behavior.",
+      "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] source-motion-sparse-foot-target-storage.md",
+      "status": "fixed",
+      "reason": "Sparse initialize six gait and two upper-leg balance targets with unchanged lengths/independent ownership; invalid indices retain dense fallback.",
+      "files": [
+        "patches/local-quality/added-ui-motion-adapter.mjs",
+        "inkwave-public/src/game/motion/gait-targets.js",
+        "inkwave-public/src/game/motion/source-controller.js",
+        "inkwave-public/src/game/motion/body-balance.js"
+      ],
+      "tests": [
+        "patches/local-quality/tests/added-ui-motion.test.mjs (13 pass)",
+        "patches/local-quality/tests/added-ui-motion-source.test.mjs (1 pass)",
+        "existing gyro-handoff, gyro-stationary-bias, settings-ui (21 pass)",
+        "source migration audit (109 files,0 failures)",
+        "check-inkwave-patches --quick (pass)"
+      ],
+      "evidence": "Actual real-bank full pose/contact/skeleton/muzzle parity at30/60/120Hz;6/2 initialized targets, distinct instances and invalid-index fallback.",
+      "behavior_notes": "Local implementation against composed published INKWAVE at8de71b09, Splatoon3 reference11.3.0; no device/FPS/retail parity claim. Camera/gyro numerical values, mutable bone ownership, DOM/event order and disposal remain covered. Publication/integration owned by root."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] spawn-coating-event-driven-material-hook-on-new-clones.md",
+      "status": "rejected",
+      "reason": "Reject the concrete creation-only candidate: both advertised factory hooks miss current public live material replacement mutations.",
+      "files": [
+        "patches/splatoon3/tests/spawn-coating-creation-only-counterexample.test.mjs",
+        "reports/library-queue-added-2026-10-22/assets.md"
+      ],
+      "tests": [
+        "flock /workspace/scratch/1dcd5205fbb6/added-heavy-tests.lock node --experimental-vm-modules --experimental-global-webcrypto --test patches/splatoon3/tests/spawn-coating-creation-only-counterexample.test.mjs (1 passed, 0 failed, 0 skipped; added-spawn-coating-counterexample.log)"
+      ],
+      "evidence": "Commit61ad45c8. Actual composed Actor/Character baseline installs spawn uniforms and program marker on new base/dither materials during the next update; counterfactual retaining _matFor and adding _ditherMat hooks does not. Selected meshes retain the replaced base material in both.",
+      "behavior_notes": "Production coating remains unchanged. This is a specific public mutation/shader-preparation counterexample, not a device/pixel claim or rejection of every future event-driven design."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] squid-ink-tank-tube-cache-static-wave-basis.md",
+      "status": "fixed",
+      "reason": "Cache static tube point, normal and wave bases under the existing HUD geometry lifetime, invalidating on direct geometry edits.",
+      "files": [
+        "patches/local-quality/s3-hud-look-adapter.mjs",
+        "patches/local-quality/tests/added-assets-render-parity.test.mjs",
+        "reports/library-queue-added-2026-10-22/assets.md"
+      ],
+      "tests": [
+        "node --experimental-vm-modules --test patches/local-quality/tests/added-assets-render-parity.test.mjs (4 passed, 0 failed, 0 skipped; added-assets-pure-render.log)"
+      ],
+      "evidence": "Commit1b182c55;50000 actual composed SVG outputs and phase values exactly match baseline across boundaries, refill threshold, irregular ticks, resizing and direct geometry mutation.",
+      "behavior_notes": "Dynamic phase/evaluation order is unchanged;19 cached bases are bounded by the existing HUD geometry lifetime."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] suppress-historical-weapon-audio-rewarm-on-idempotent-init.md",
+      "status": "fixed",
+      "reason": "Implemented exact preparation/allocation ownership change; see audio.md for bounded scope and lifecycle constraints.",
+      "files": [
+        "patches/splatoon3/runtime/audio/authorized-samples.mjs",
+        "patches/splatoon3/runtime/audio/engine.mjs",
+        "patches/splatoon3/audio-adapter.mjs"
+      ],
+      "tests": [
+        "added-audio-sharing:9pass0fail0skip",
+        "audio-refinement/lifetime/v11-real-only/loader-v7/provenance:77pass0fail0skip"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/audio.md",
+      "behavior_notes": "Audio PCM/gain/pitch/event timing unchanged; noise actual-source28cases2,217,392samples byteexact; digest verification and lifecycle controls retained. Device/Safari/retail parity unmeasured."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] tacticooler-actor-contact-reuse-flat-sweep-scratch.md",
+      "status": "fixed",
+      "reason": "Lease actor-specific frames by synchronous nesting depth, reusing flat block records, Hit and start/end vectors. Preserve levelFor and Tower refresh. Release stand/axes/faces references in finally and avoid allocating anything on the usual empty-cooler route. Escaping public coolerSegmentContact result clones remain independent.",
+      "files": [
+        "patches/splatoon3/runtime/support-cooler-collision.mjs"
+      ],
+      "tests": [
+        "node --test patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs patches/splatoon3/tests/slosher-nearest-sparse-cache.test.mjs: 12 passed, 0 failed, 0 skipped",
+        "Focused actual-source regression batch: 138 passed, 0 failed, 0 skipped",
+        "Selected composed Bubbler query/remote-authority/liveness/reset controls: 5 passed, 0 failed, 0 skipped"
+      ],
+      "evidence": "120 old/current actual module traces match contact/motion/Tower/reentry/throwing resolver behavior; 30 warmed contact calls construct 30 old Hits versus zero new Hits.; Baseline: 8de71b09cd7a3bc05fa4ce06b00f99687beb44ad; test kernels retain original source hashes and verbatim code.",
+      "behavior_notes": [
+        "Preserve INKWAVE gameplay and source 11.3.0 values, event/RNG order and authority. Node fixture/kernel evidence is not browser/device or retail parity measurement."
+      ]
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] torpedo-fizzy-detached-splash-gpu-resource-batching.md",
+      "status": "fixed",
+      "reason": "Share the identical sphere geometry across currently live visual drops with an explicit reference count; dispose at the last removal and reconstruct on later deployment. Retain independent birth-color materials and meshes. Instancing/material batching is deferred as the note allows.",
+      "files": [
+        "patches/splatoon3/runtime/torpedo-splashes.mjs"
+      ],
+      "tests": [
+        "node --test patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs patches/splatoon3/tests/slosher-nearest-sparse-cache.test.mjs: 12 passed, 0 failed, 0 skipped",
+        "Focused actual-source regression batch: 138 passed, 0 failed, 0 skipped",
+        "Selected composed Bubbler query/remote-authority/liveness/reset controls: 5 passed, 0 failed, 0 skipped"
+      ],
+      "evidence": "Cap 768 eviction, independent source-color snapshots, below-world removal, no spurious burst, last-user disposal/clear and redeployment are asserted; composed Fizzy/Torpedo JSON authority and physics tests pass.; Baseline: 8de71b09cd7a3bc05fa4ce06b00f99687beb44ad; test kernels retain original source hashes and verbatim code.",
+      "behavior_notes": [
+        "Preserve INKWAVE gameplay and source 11.3.0 values, event/RNG order and authority. Node fixture/kernel evidence is not browser/device or retail parity measurement."
+      ]
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] toxic-mist-no-status-avoid-repeated-property-deletes.md",
+      "status": "fixed",
+      "reason": "Skip deletes only when all three status properties are truly absent. Present undefined properties and sparse/stale scale state still execute the original expiry comparison and deletion. Continue scanning Actors after cloud retirement.",
+      "files": [
+        "patches/splatoon3/runtime/all-subs.mjs"
+      ],
+      "tests": [
+        "node --test patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs patches/splatoon3/tests/slosher-nearest-sparse-cache.test.mjs: 12 passed, 0 failed, 0 skipped",
+        "Focused actual-source regression batch: 138 passed, 0 failed, 0 skipped",
+        "Selected composed Bubbler query/remote-authority/liveness/reset controls: 5 passed, 0 failed, 0 skipped"
+      ],
+      "evidence": "Actual-source comparisons cover missing/present undefined fields, stale/future/NaN/Infinity/negative-time state; Proxy instrumentation confirms zero versus three empty delete operations. Actual Mist movement/replay/life regression passes.; Baseline: 8de71b09cd7a3bc05fa4ce06b00f99687beb44ad; test kernels retain original source hashes and verbatim code.",
+      "behavior_notes": [
+        "Preserve INKWAVE gameplay and source 11.3.0 values, event/RNG order and authority. Node fixture/kernel evidence is not browser/device or retail parity measurement."
+      ]
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] trizooka-frame-closure-and-presentation-context-churn.md",
+      "status": "fixed",
+      "reason": "Share no-op/false functions and cache moveSpeed/busy predicates per activation state via WeakMap. Keep current tick dt/rest forwarding, dynamically checked presentation predicate, independent nested context objects and all existing finally restoration.",
+      "files": [
+        "patches/splatoon3/runtime/kit-trizooka.mjs"
+      ],
+      "tests": [
+        "node --test patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs patches/splatoon3/tests/slosher-nearest-sparse-cache.test.mjs: 12 passed, 0 failed, 0 skipped",
+        "Focused actual-source regression batch: 138 passed, 0 failed, 0 skipped",
+        "Selected composed Bubbler query/remote-authority/liveness/reset controls: 5 passed, 0 failed, 0 skipped"
+      ],
+      "evidence": "Existing native Trizooka lifecycle/geometry and birth/swim tests pass, including native main/sub/dodge mask, shared swim restore, replay/owner/life controls. Context reuse was intentionally not attempted.; Baseline: 8de71b09cd7a3bc05fa4ce06b00f99687beb44ad; test kernels retain original source hashes and verbatim code.",
+      "behavior_notes": [
+        "Preserve INKWAVE gameplay and source 11.3.0 values, event/RNG order and authority. Node fixture/kernel evidence is not browser/device or retail parity measurement."
+      ]
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] trizooka-rounded-obb-candidate-allocations.md",
+      "status": "fixed",
+      "reason": "Replace d/s records with scalar components, remove unused ob and face arrays/filter, evaluate roots in the original entry/exit order, and pass numeric sweep radius without temporary probe records. Preserve half-extent array and returned candidates, arithmetic/ties and native fallback.",
+      "files": [
+        "patches/splatoon3/runtime/trizooka-collision.mjs"
+      ],
+      "tests": [
+        "node --test patches/splatoon3/tests/added-weapons-allocation-parity.test.mjs patches/splatoon3/tests/slosher-nearest-sparse-cache.test.mjs: 12 passed, 0 failed, 0 skipped",
+        "Focused actual-source regression batch: 138 passed, 0 failed, 0 skipped",
+        "Selected composed Bubbler query/remote-authority/liveness/reset controls: 5 passed, 0 failed, 0 skipped"
+      ],
+      "evidence": "12,000 pinned old/current actual OBB candidate comparisons match t/kind/axis/sign including overlap/zero steps; existing native geometry/contact tests pass.; Baseline: 8de71b09cd7a3bc05fa4ce06b00f99687beb44ad; test kernels retain original source hashes and verbatim code.",
+      "behavior_notes": [
+        "Preserve INKWAVE gameplay and source 11.3.0 values, event/RNG order and authority. Node fixture/kernel evidence is not browser/device or retail parity measurement."
+      ]
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] turf-finish-minimap-skip-intermediate-forced-band-composites.md",
+      "status": "rejected",
+      "reason": "Actual composed large dirty rectangles still start bands. Removing pending-band raster writes changes final flash RGBA/composite inputs despite equal ink/ownership; no lossless optimization established.",
+      "files": [
+        "patches/splatoon3/runtime/turf-finish.mjs",
+        "patches/splatoon3/runtime/minimap-dirty.mjs",
+        "reports/library-queue-added-2026-10-22/ranked-paint.md"
+      ],
+      "tests": [
+        "Actual composed Minimap negative control and band0/1/2 capture-count tests passed in11/11 minimap suite."
+      ],
+      "evidence": "Exact base8de71b09 and SHA-pinned frozen source; reports/library-queue-added-2026-10-22/ranked-paint.md",
+      "behavior_notes": "Existing bounded capture, ownership/flash history, forced compositions and snapshot failure handling retained. Splatoon3 reference11.3.0; device/browser/retail and measured FPS parity unverified."
+    },
+    {
+      "name": "[QUEUE][INKWAVE][Optimization] validate-matrix-sparse-checkout-reduce-unrelated-modeler-and-report-blobs.md",
+      "status": "fixed",
+      "reason": "All seven current Validate checkout definitions use the verified conservative projection; all required jobs, gates and fan-in remain intact.",
+      "files": [
+        ".github/workflows/ci-quality-gate.yml",
+        ".github/workflows/inkwave-main-weapons.yml",
+        ".github/workflows/validate-inkwave-update.yml",
+        "scripts/build-inkwave.mjs",
+        "scripts/tests/inkwave-added-ci-contracts.test.mjs"
+      ],
+      "tests": [
+        "new + queued workflow contracts:18 pass/0 fail/0 skip",
+        "final revised new contract:5 pass/0 fail/0 skip",
+        "integration/admission/Three batch:47 pass/0 fail/1 emitted-site skip",
+        "actual emitted packaging+Three:12 pass/0 fail/0 skip",
+        "normal/no-shake/unminified builds and current sparse build succeed; startup budget passes"
+      ],
+      "evidence": "reports/library-queue-added-2026-10-22/ci/README.md; reports/library-queue-added-2026-10-22/ci/build-byte-parity.json; reports/library-queue-added-2026-10-22/ci/sparse-build-parity.json; reports/library-queue-added-2026-10-22/ci/checkout-projections.json",
+      "behavior_notes": "Local implementation; not a remote CI/merge completion claim. Gameplay/runtime output identical across all 2090 emitted artifacts. Mandatory validation and historical baseline integrity retained; no cold-network, FPS or device performance claim."
+    }
+  ]
+}

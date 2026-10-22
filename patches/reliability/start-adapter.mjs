@@ -131,6 +131,10 @@ export function adaptStart(rel, code) {
     "    if (m.boss) jobs.push(Promise.resolve(m.boss.model.ready).then(() => Promise.all(m.boss.warm().map((o) => G.renderer.compileAsync(o, G.camera, G.scene)))).catch((e) => console.warn('[inkwave] boss warm', e)));",
     "    if (m.boss) jobs.push(Promise.resolve(m.boss.model.ready).then(() => {\n      if (this.match !== m || (flow && !flow.current())) return;\n      return Promise.all(m.boss.warm().map((o) => G.renderer.compileAsync(o, G.camera, G.scene)));\n    }).catch((e) => console.warn('[inkwave] boss warm', e)));",
     'late boss warm');
+  code = replaceOnce(code,
+    "try { this.PropKit = (await import('./world/props.js')).PropKit; }",
+    "try { const propRuntime = await import('./world/prop-packs.js'); this.PropKit = propRuntime.PropKit; this.preparePropPacks = propRuntime.preparePropPacks; }",
+    'selected prop pack runtime entry');
   code = method(code, '  async _buildWorld(map) {', '\n  _shadowRoots()', source => {
     source = replaceOnce(source, '  async _buildWorld(map) {', '  async _buildWorld(map, flow = null) {\n    if (flow && !flow.current()) return;', 'world flow argument');
     source = replaceOnce(source, '    const scene = G.scene;', [
@@ -138,6 +142,8 @@ export function adaptStart(rel, code) {
       '    const world = (this._worldBuild = {});',
       '    const worldCurrent = () => this._worldBuild === world && G.scene === scene &&',
       '      (flow ? flow.current() : this._matchFlow === ownerFlow);',
+      '    if (!worldCurrent()) return;',
+      '    if (this.preparePropPacks && !await this.preparePropPacks(map.layout || map.id, worldCurrent)) return;',
       '    if (!worldCurrent()) return;',
     ].join('\n'), 'world transaction ownership');
     const teardown = [

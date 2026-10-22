@@ -60,7 +60,7 @@ function parseState(engine) {
  * Splatoon collision data. Rule state remains owned by the pure rule modules.
  */
 export class RankedWorld {
-  constructor(api, match, stage = createRankedStage(api?.G)) {
+  constructor(api, match, stage = createRankedStage(api?.G, match?.mode)) {
     this.api = api || {};
     this.G = api?.G || {};
     this.THREE = api?.THREE;
@@ -74,6 +74,11 @@ export class RankedWorld {
       return finite(value) ? value : TEAM_INK_FALLBACK[team];
     });
     this.level = this.G.level || null;
+    this._spatialBlocks = this.level?.blocks;
+    this._spatialHash = this.level?.hash;
+    this._spatialBlockCount = this.level?.blocks?.length;
+    this._spatialStampBuffer = this.level?.blockStamp;
+    this._spatialStamp = this.level?._stamp;
     this.physics = this.G.physics || null;
     this.paint = this.G.paint || null;
     this.disposed = false;
@@ -85,8 +90,8 @@ export class RankedWorld {
     this._a = new this.THREE.Vector3();
     this._b = new this.THREE.Vector3();
     this._hit = api?.Hit ? new api.Hit() : undefined;
-    this._towerProgress = this._centerProgress();
-    this._towerPath = stage?.tower?.path || [];
+    this._towerProgress = this.mode === 'tower' ? this._centerProgress() : 0;
+    this._towerPath = this.mode === 'tower' ? stage?.tower?.path || [] : [];
     this._towerLengths = [0];
     this._towerSegmentLengths = [];
     for (let i = 1; i < this._towerPath.length; i++) {
@@ -100,7 +105,7 @@ export class RankedWorld {
       const a = this._towerPath[i - 1], b = this._towerPath[i], dx = b[0] - a[0], dz = b[2] - a[2], d = Math.hypot(dx, dz);
       this._towerBearings.push(d > EPSILON ? [dx / d, dz / d] : [0, 1]);
     }
-    this._towerHalfWidth = Math.max(0.8, Math.min(1.4, Number(stage?.tower?.halfSize) || 1.4));
+    this._towerHalfWidth = this.mode === 'tower' ? Math.max(0.8, Math.min(1.4, Number(stage?.tower?.halfSize) || 1.4)) : 1.4;
     this._towerHalfLength = this._towerHalfWidth;
     this._towerDeckTop = 0;
     this._zoneMaterials = [];
@@ -965,7 +970,13 @@ export class RankedWorld {
         }
       }
     }
-    if (level?.blocks) {
+    const preserveStamp = !this.towerBlock && !this.towerPoleBlock &&
+      level?.blocks === this._spatialBlocks && level?.hash === this._spatialHash &&
+      level?.blocks?.length === this._spatialBlockCount &&
+      level?.blockStamp === this._spatialStampBuffer && level.blockStamp instanceof Uint32Array && level.blockStamp.length === level.blocks.length &&
+      Number.isInteger(this._spatialStamp) && this._spatialStamp >= 1 &&
+      Number.isInteger(level._stamp) && level._stamp >= this._spatialStamp && level._stamp < 0xfffffffe;
+    if (level?.blocks && !preserveStamp) {
       level.blockStamp = new Uint32Array(level.blocks.length);
       level._stamp = 1;
     }

@@ -49,7 +49,7 @@ export function paintSlosherNearest(game, actor, source, scale = 1, sequence = 1
     if(lease.source!==source||lease.scale!==scale||lease.width!==p?.PaintWidthHalf||lease.depth!==p?.PaintDepthScale||
        lease.player0!==c?.InitRadiusForPlayer||lease.player1!==c?.EndRadiusForPlayer){
       lease.spec=slosherNearestPaintSpec(source,scale);lease.source=source;lease.scale=scale;
-      lease.width=p.PaintWidthHalf;lease.depth=p.PaintDepthScale;lease.player0=c.InitRadiusForPlayer;lease.player1=c.EndRadiusForPlayer;
+      lease.width=p.PaintWidthHalf;lease.depth=p.PaintDepthScale;lease.player0=c?.InitRadiusForPlayer;lease.player1=c?.EndRadiusForPlayer;
     }
     lease.from||=actor.pos.clone();lease.down||=actor.pos.clone();lease.point||=actor.pos.clone();lease.dir||=actor.pos.clone();
     lease.hit||={hit:false,point:actor.pos.clone(),normal:actor.pos.clone()};scratch=lease;

@@ -176,6 +176,13 @@ export function adaptWeaponAudio(rel,code){
         // Reuse already-loaded runtime audio for hit classification, preserving the core preload graph.
   }
   if(rel==='src/audio/music.js'){
+    const noiseStart=code.indexOf('export function noiseBuffer('),noiseEnd=code.indexOf('\n// Stereo reverb impulse:',noiseStart);
+    if(noiseStart<0||noiseEnd<noiseStart)throw new Error('audio adapter anchor: noise scratch ownership');
+    let noise=code.slice(noiseStart,noiseEnd);
+    noise=once(noise,'const w = new Float32Array(len);',"const w = kind === 'white' ? d : new Float32Array(len);",'white noise uses its final channel');
+    noise=once(noise,"if (kind === 'white') d.set(w);", "if (kind === 'white') { /* The channel already owns the exact Float32 samples. */ }",'white noise avoids the duplicate copy');
+    noise=once(noise,'const tmp = new Float32Array(len);','const tmp = w;','reuse colored noise input after its final IIR read');
+    code=code.slice(0,noiseStart)+noise+code.slice(noiseEnd);
     const impulseStart = code.indexOf('export function makeImpulse('), impulseEnd = code.indexOf('\n// tanh drive curve', impulseStart);
     if (impulseStart < 0 || impulseEnd < impulseStart) throw new Error('audio adapter anchor: shared impulse implementation');
     code = "import { buildImpulse } from '../../patches/splatoon3/runtime/audio/reverb-impulse.mjs';\n" + code.slice(0, impulseStart) +

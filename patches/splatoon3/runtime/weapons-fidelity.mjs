@@ -1927,7 +1927,7 @@ export function installWeaponsFidelity(context,profile) {
       p.fidelitySloshUnit=u;p.fidelitySloshIndex=index;
       p.delay=((u.UnitDelayFrame||0)+index*(u.AfterOffsetDelayFrame||0))/60;
       const speed=((p.owner.grounded?u.SpawnSpeedGround:u.SpawnSpeedAir)+index*(u.AfterOffsetSpawnSpeed||0))*60;
-      const aim=p.owner.aimDir.clone().normalize();
+      const aim=(this._s3SloshBirthAimScratch ||= new context.THREE.Vector3()).copy(p.owner.aimDir).normalize();
       // #258: the sweep coefficient accumulates each bullet's group firing
       // interval (AfterOffsetDelayFrame) across the volley, so the 4-bullet
       // group sweeps 0..3 and the 5-bullet group starts at 3+2=5, not at its

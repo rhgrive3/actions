@@ -123,13 +123,17 @@ function buildTowerPath(level, id, spec, local, halfSize) {
   return { path, centerIndex };
 }
 
-function normalizeStage(level, id, spec) {
+function normalizeStage(level, id, spec, mode) {
   const zones = spec.zones.map(([x, z, width, depth], i) => {
     const center = pointOnStage(level, id, [x, z], !!spec.local, null, `zone ${i} center`);
     return { center, size: [width, depth] };
   });
   const halfSize = spec.halfSize ?? 1.4;
-  const towerPath = buildTowerPath(level, id, spec, !!spec.local, halfSize);
+  // Legacy calls and Tower retain the exact eager sampling order. Other
+  // modes keep a lazy compatible tower view for diagnostics without sampling
+  // tens of thousands of unused collision points during match setup.
+  let towerPath = mode === undefined || mode === 'tower' ? buildTowerPath(level, id, spec, !!spec.local, halfSize) : null;
+  const getTowerPath = () => towerPath || (towerPath = buildTowerPath(level, id, spec, !!spec.local, halfSize));
   const goals = spec.goals.map((p, i) => pointOnStage(level, id, p, !!spec.local, null, `goal ${i}`));
   const checkpoints = spec.checkpoints.map((team, t) => team.map((p, i) =>
     pointOnStage(level, id, p, !!spec.local, null, `team ${t} checkpoint ${i}`)));
@@ -140,7 +144,8 @@ function normalizeStage(level, id, spec) {
     id,
     zones,
     tower: {
-      path: towerPath.path, centerIndex: towerPath.centerIndex,
+      get path() { return getTowerPath().path; }, set path(value) { getTowerPath().path = value; },
+      get centerIndex() { return getTowerPath().centerIndex; }, set centerIndex(value) { getTowerPath().centerIndex = value; },
       checkpoints: [[{ progress: 0.42, count: 5 }, { progress: 0.78, count: 5 }],
         [{ progress: 0.42, count: 5 }, { progress: 0.78, count: 5 }]],
       speed: 1.2, halfSize,
@@ -154,11 +159,11 @@ function normalizeStage(level, id, spec) {
   };
 }
 
-export function createRankedStage(G) {
+export function createRankedStage(G, mode) {
   const level = G?.level;
   const id = level?.layout?.id;
   const spec = SPECS[id];
   if (!level || !spec) throw new RangeError(`No ranked stage calibration for map ${String(id)}`);
-  return normalizeStage(level, id, spec);
+  return normalizeStage(level, id, spec, mode);
 }
 

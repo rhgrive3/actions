@@ -391,8 +391,20 @@ function paintStamp(rt, actor, point, radius, seed) {
   if (finite(area) && area > 0) actor.addTurfNoSpecial?.(area);
   return finite(area) ? area : 0;
 }
-function paintDiskLayout(rt, point, radius) {
-  const spacing = 2.82, rowZ = spacing * Math.sqrt(3) / 2;
+function paintDiskCentres(radius){
+  const spacing=2.82,rowZ=spacing*Math.sqrt(3)/2;
+  const maxCentre=Math.max(0,radius-MAX_STAMP_RADIUS),centres=[[0,0]];
+  for(let row=-Math.ceil(maxCentre/rowZ);row<=Math.ceil(maxCentre/rowZ);row++){
+    const z=row*rowZ,shift=row&1?spacing*.5:0;
+    for(let col=-Math.ceil(maxCentre/spacing);col<=Math.ceil(maxCentre/spacing);col++){
+      const x=col*spacing+shift;if((x||z)&&Math.hypot(x,z)<=maxCentre)centres.push([x,z]);
+    }
+  }
+  if(maxCentre>0){// Doubling retains every previous angle; n-to-n+1 rephasing can remove painted cells.
+    const count=6*2**Math.max(0,Math.ceil(Math.log2((2*Math.PI*maxCentre/spacing)/6)));for(let i=0;i<count;i++){const angle=2*Math.PI*i/count;centres.push([Math.cos(angle)*maxCentre,Math.sin(angle)*maxCentre]);}}
+  return centres;
+}
+function paintDiskLayout(rt, point, radius, plan = null) {
   // Tile in the nearby contact plane. Keeping every tile at the same world Y
   // leaves large holes on slopes; projecting each tile from above can instead
   // jump between disconnected floors. The short probe avoids both mistakes.
@@ -404,15 +416,7 @@ function paintDiskLayout(rt, point, radius) {
   // A constant-radius stamp must remain inside the nominal source disk.
   // An outer ring closes lattice scallops without placing stamp centres near R.
   // Reuse one mask seed so the R=3.74 transition cannot union unrelated shapes.
-  let area=0;const maxCentre=Math.max(0,radius-MAX_STAMP_RADIUS),centres=[[0,0]];
-  for(let row=-Math.ceil(maxCentre/rowZ);row<=Math.ceil(maxCentre/rowZ);row++){
-    const z=row*rowZ,shift=row&1?spacing*.5:0;
-    for(let col=-Math.ceil(maxCentre/spacing);col<=Math.ceil(maxCentre/spacing);col++){
-      const x=col*spacing+shift;if((x||z)&&Math.hypot(x,z)<=maxCentre)centres.push([x,z]);
-    }
-  }
-  if(maxCentre>0){// Doubling retains every previous angle; n-to-n+1 rephasing can remove painted cells.
-    const count=6*2**Math.max(0,Math.ceil(Math.log2((2*Math.PI*maxCentre/spacing)/6)));for(let i=0;i<count;i++){const angle=2*Math.PI*i/count;centres.push([Math.cos(angle)*maxCentre,Math.sin(angle)*maxCentre]);}}
+  const centres=plan || paintDiskCentres(radius);
   const seen=new Set(),tiles=[];
   for(const [x,z]of centres){
     const at=rt.v4.copy(point).addScaledVector(tangent,x).addScaledVector(bitangent,z);at.set(q2(at.x),q2(at.y),q2(at.z));
@@ -426,11 +430,11 @@ function paintDiskTile(rt,actor,point,layout,tile,maskSeed){
   const got=rt.api.G.paint.splat(at,MAX_STAMP_RADIUS,actor.team,{seed:maskSeed,claimOwner:actor,claimMode:'no-special'});
   return finite(got)?got:0;
 }
-function paintDisk(rt, actor, point, radius, seed, maskSeed = seedUnit(seed,0), alreadyPainted = null) {
+function paintDisk(rt, actor, point, radius, seed, maskSeed = seedUnit(seed,0), alreadyPainted = null, plan = null) {
   if (radius <= MAX_STAMP_RADIUS) return paintStamp(rt, actor, point, radius, seed);
   // Cluster ordinary network-admissible stamps; do not emit one over-limit paint
   // row, which the public replication owner correctly rejects.
-  const layout=paintDiskLayout(rt,point,radius);let area=0;
+  const layout=paintDiskLayout(rt,point,radius,plan);let area=0;
   for(const tile of layout.tiles){if(alreadyPainted?.has(tile.key))continue;area+=paintDiskTile(rt,actor,point,layout,tile,maskSeed);}
   if (area > 0) actor.addTurfNoSpecial?.(area);
   return area;
@@ -439,7 +443,10 @@ function paintBooyahGrowth(rt,object,paintFrame,paintRadius,seed){
   const growthRadius=paintRadius*paintFrame/6;
   if(paintFrame===1){const area=paintStamp(rt,object.owner,object.pos,growthRadius,seed);object.paintFrame=paintFrame;object.paintedRadius=growthRadius;return area;}
   object.paintDiskTiles||=new Set();
-  const layout=paintDiskLayout(rt,object.pos,paintRadius),maskSeed=seedUnit(seed,0),limit=growthRadius-MAX_STAMP_RADIUS;
+  if(!object.paintDiskPlan||object.paintDiskPlan.radius!==paintRadius)
+    object.paintDiskPlan={radius:paintRadius,centres:paintDiskCentres(paintRadius)};
+  const plan=object.paintDiskPlan.centres;
+  const layout=paintDiskLayout(rt,object.pos,paintRadius,plan),maskSeed=seedUnit(seed,0),limit=growthRadius-MAX_STAMP_RADIUS;
   let area=0;
   for(const tile of layout.tiles){
     if(object.paintDiskTiles.has(tile.key)||Math.hypot(tile.x,tile.z)>limit+1e-8)continue;
@@ -447,7 +454,7 @@ function paintBooyahGrowth(rt,object,paintFrame,paintRadius,seed){
   }
   if(area>0)object.owner.addTurfNoSpecial?.(area);
   object.paintFrame=paintFrame;object.paintedRadius=growthRadius;
-  if(paintFrame===6)paintDisk(rt,object.owner,object.pos,paintRadius,seed,maskSeed,object.paintDiskTiles);
+  if(paintFrame===6)paintDisk(rt,object.owner,object.pos,paintRadius,seed,maskSeed,object.paintDiskTiles,plan);
   return area;
 }
 function paintCross(rt,actor,point,radius,checkLength,seed) {
@@ -884,6 +891,16 @@ function hitBeam(rt, actor, state, origin, direction, length, damage) {
 function beamTouchesObject(rt,from,to,object) {
   const pos=object?.pos;if(!pos)return false;
   if(object.subId==='splashWall'){
+    const width=object.spec?.wallWidth||2,height=object.spec?.wallHeight||3;
+    const cy=pos.y+height/2,radius=Math.hypot(width/2+.2,height/2+.25,.45);
+    const dx=to.x-from.x,dy=to.y-from.y,dz=to.z-from.z,den=dx*dx+dy*dy+dz*dz;
+    const t=den>0?Math.max(0,Math.min(1,((pos.x-from.x)*dx+(cy-from.y)*dy+(pos.z-from.z)*dz)/den)):0;
+    const distance=Math.hypot(from.x+dx*t-pos.x,from.y+dy*t-cy,from.z+dz*t-pos.z);
+    // The sphere encloses every accepted sample. Unusual/nonfinite inputs
+    // retain the exact original loop; roundoff gets a scale-aware margin.
+    const margin=1e-8*(1+Math.abs(from.x)+Math.abs(from.y)+Math.abs(from.z)+
+      Math.abs(to.x)+Math.abs(to.y)+Math.abs(to.z)+Math.abs(pos.x)+Math.abs(cy)+Math.abs(pos.z)+radius);
+    if(width>0&&height>0&&Number.isFinite(distance)&&Number.isFinite(radius)&&distance>radius+margin)return false;
     const yaw=object.yaw||0,tx=Math.cos(yaw),tz=-Math.sin(yaw),nx=Math.sin(yaw),nz=Math.cos(yaw);
     const span=from.distanceTo(to),steps=Math.max(1,Math.ceil(span/.35));
     for(let i=0;i<=steps;i++){

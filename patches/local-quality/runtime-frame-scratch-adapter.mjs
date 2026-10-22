@@ -1,9 +1,13 @@
+import { adaptGeometryBuildStorage } from './geometry-build-storage-adapter.mjs';
 // Build-time-only allocation and loop-invariant elimination in unconditional frame work.
 // Keeps frame cadence, visual output, draw ordering and control flow unchanged.
 // Source anchors are protected; unknown upstream revisions fail the build.
 export function adaptRuntimeFrameScratch(rel, code, replaceOnce) {
   const patch=(from,to,why)=>{code=replaceOnce(code,from,to,'runtime frame scratch: '+why);};
   if (rel === 'src/main.js') {
+    patch("  async _loadLightmap(level, layoutId) {\n    try {\n      const meta = await (await fetch(`assets/lightmaps/${layoutId}.json`, { cache: 'no-cache' })).json();\n      level.layoutLightmap(meta.ppm, meta.size);\n      if (level.layoutHash !== meta.hash) { console.warn(`[inkwave] lightmap for ${layoutId} is stale — re-run tools/bake-ao.mjs`); level.lightSize = 0; for (const f of level.faces) f.light = null; return null; }\n      const tex = await new THREE.TextureLoader().loadAsync(`assets/lightmaps/${layoutId}.png?h=${meta.hash}`);\n      tex.colorSpace = THREE.NoColorSpace;\n      tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.magFilter = THREE.LinearFilter;\n      tex.anisotropy = 4;\n      return tex;\n    } catch (e) {\n      console.warn('[inkwave] no lightmap for', layoutId, e.message);\n      for (const f of level.faces) f.light = null;\n      return null;\n    }\n  }\n",
+      "  async _loadLightmap(level, layoutId) {\n    try {\n      // Retain only validated small metadata on this Game. Active worlds\n      // continue to own and dispose every GPU texture, including on touch.\n      const metadata = this._iwLightmapMetadata || (this._iwLightmapMetadata = new Map());\n      let meta = metadata.get(layoutId), cached = !!meta;\n      // One canonical fetch site also preserves the compiled cache adapter.\n      // Only a stale cached entry gets a second validation pass.\n      for (let attempt = 0; attempt < 2; attempt++) {\n        if (!meta) meta = await (await fetch(`assets/lightmaps/${layoutId}.json`, { cache: 'no-cache' })).json();\n        level.layoutLightmap(meta.ppm, meta.size);\n        if (!cached || level.layoutHash === meta.hash) break;\n        metadata.delete(layoutId); meta = null; cached = false;\n      }\n      if (level.layoutHash !== meta.hash) { console.warn(`[inkwave] lightmap for ${layoutId} is stale — re-run tools/bake-ao.mjs`); level.lightSize = 0; for (const f of level.faces) f.light = null; return null; }\n      metadata.delete(layoutId); metadata.set(layoutId, Object.freeze({ hash: meta.hash, ppm: meta.ppm, size: meta.size }));\n      while (metadata.size > 4) metadata.delete(metadata.keys().next().value);\n      const tex = await new THREE.TextureLoader().loadAsync(`assets/lightmaps/${layoutId}.png?h=${meta.hash}`);\n      tex.colorSpace = THREE.NoColorSpace;\n      tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.magFilter = THREE.LinearFilter;\n      tex.anisotropy = 4;\n      return tex;\n    } catch (e) {\n      console.warn('[inkwave] no lightmap for', layoutId, e.message);\n      for (const f of level.faces) f.light = null;\n      return null;\n    }\n  }\n", 'reuse verified bounded legacy lightmap metadata with active-world GPU ownership');
+
     // Previously, a new arrow closure was allocated on *every* rAF callback.
     // Reuse a per-Game callback while dynamically resolving this._loop() each
     // time, so hot swapping and the existing lifecycle still behave the same.
@@ -636,5 +640,5 @@ export class PlayerController {`, 'one shared map target picker with controller-
       '      // Position and capsule endpoints remain fixed throughout bodyFits.',
       'avoid recomputing the unchanged body-fit axis for each block');
   }
-  return code;
+  return adaptGeometryBuildStorage(rel,code,replaceOnce);
 }

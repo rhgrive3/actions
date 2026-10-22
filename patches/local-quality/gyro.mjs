@@ -36,7 +36,9 @@ function multiplyQuat(a, b) {
 }
 function commitRaw(s, x, y, z, dt, time) {
   const speed=Math.hypot(x,y,z),half=speed*dt/2,k=speed>0?Math.sin(half)/speed:0;
-  s.boundary.q=multiplyQuat(s.boundary.q,[x*k,y*k,z*k,Math.cos(half)]);
+  const [qx,qy,qz,qw]=s.boundary.q,X=x*k,Y=y*k,Z=z*k,W=Math.cos(half);
+  const a=qw*X+qx*W+qy*Z-qz*Y,b=qw*Y-qx*Z+qy*W+qz*X,c=qw*Z+qx*Y-qy*X+qz*W,d=qw*W-qx*X-qy*Y-qz*Z;
+  const n=Math.hypot(a,b,c,d);s.boundary.q=[a/n,b/n,c/n,d/n];
   s.boundary.time=time;
   s.attitudes=s.attitudes.filter(p=>p.time>time);
 }

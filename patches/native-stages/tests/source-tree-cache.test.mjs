@@ -6,7 +6,7 @@ async function run(nav,{offline=false,hit=true}={}){
  const calls={read:0,write:0,convert:0,fetch:0,source:[],messages:[]},data=Object.fromEntries(fields.map(k=>[k,new Uint8Array(4)]));
  const ctx=vm.createContext({TextDecoder,performance:{now:()=>1},self:{navigator:nav,postMessage:(m,t)=>calls.messages.push({m,t})},fetch:async()=>{calls.fetch++;if(offline)throw Error('offline tree');return{ok:true,json:async()=>({sha:'tree',truncated:false,tree:[{type:'blob',path:'stage.mtl',size:3,sha:'mtl'}]})};}});
  const imports={
- './source-catalog.mjs':{SOURCE_RECIPE:'recipe',SOURCE_STAGES:[{id:'stage',sourceSha256:'hash',internal:'stage',tree:'tree'}],sourceURL:(_,p)=>p},
+ './source-catalog.mjs':{sourceObjectBytes:()=>undefined,SOURCE_RECIPE:'recipe',SOURCE_STAGES:[{id:'stage',sourceSha256:'hash',internal:'stage',tree:'tree'}],sourceURL:(_,p)=>p},
  './source-convert.mjs':{convertSource:()=>{calls.convert++;return data;}},
  './source-cache.mjs':{sourceTree:async()=>{calls.fetch++;if(offline)throw Error('offline tree');return{sha:'tree',truncated:false,tree:[{type:'blob',path:'stage.mtl',size:3,sha:'mtl'}]};},readDerived:async()=>{calls.read++;return hit?data:null;},writeDerived:async()=>{calls.write++;},sourceBytes:async(id,url,pin,signal,progress)=>{calls.source.push({url,progress:typeof progress});return new Uint8Array([65,66,67]).buffer;}}
  };
@@ -31,7 +31,7 @@ async function fixture(){
  fetch:async url=>{events.fetch.push(url);if(offline)throw Error('offline');if(url.includes('/git/trees/'))return new Response(JSON.stringify(tree));if(url==='stage.obj')return new Response(obj);if(url==='stage.mtl')return new Response(mtl);throw Error('unknown request '+url);}});
  const cache=new vm.SourceTextModule(cacheCode,{context:ctx});await cache.link(()=>{throw Error('unexpected import');});await cache.evaluate();
  const data=Object.fromEntries(names.map(k=>[k,new Uint8Array([1,2,3])])),imports={
- './source-catalog.mjs':{SOURCE_RECIPE:'recipe',SOURCE_STAGES:[{id:'stage',sourceSha256:digest(obj),internal:'stage',tree:pin}],sourceURL:(_,p)=>p},
+ './source-catalog.mjs':{sourceObjectBytes:()=>undefined,SOURCE_RECIPE:'recipe',SOURCE_STAGES:[{id:'stage',sourceSha256:digest(obj),internal:'stage',tree:pin}],sourceURL:(_,p)=>p},
  './source-convert.mjs':{convertSource:()=>{events.convert++;return structuredClone(data);}}
  };
  const worker=new vm.SourceTextModule(workerCode,{context:ctx});await worker.link(spec=>{if(spec==='./source-cache.mjs')return cache;const v=imports[spec];assert(v);return new vm.SyntheticModule(Object.keys(v),function(){for(const[k,x]of Object.entries(v))this.setExport(k,x);},{context:ctx});});await worker.evaluate();

@@ -229,7 +229,7 @@ function syncShell(ch, s, r, THREE, shown) {
   }
   for (const [t, shells] of r.kidShells) for (const { source: mesh, shell } of shells) {
     shell.visible = shown && t === tier && ch.kid.visible && mesh.visible;
-    shell.matrix.copy(mesh.matrix); shell.matrixWorldNeedsUpdate = true;
+    if (shell.visible) { shell.matrix.copy(mesh.matrix); shell.matrixWorldNeedsUpdate = true; }
   }
   const sq = ch.squid.body;
   if (r.squidSource !== sq.geometry || !!r.squidShell.isSkinnedMesh !== !!sq.isSkinnedMesh

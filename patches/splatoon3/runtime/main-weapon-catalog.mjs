@@ -1095,6 +1095,16 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
       out.length=params.length;s.lobes=out;
     }
+    // Missing offsets are exact zero displacements. Keep the original path
+    // for signed-zero/nonfinite inputs, whose IEEE-754 additions can differ.
+    if(!c.OffsetArray && Number.isFinite(p.vel.x) && Number.isFinite(p.vel.z) &&
+      Number.isFinite(p.prev.x)&&Number.isFinite(p.prev.y)&&Number.isFinite(p.prev.z)&&
+      Number.isFinite(p.pos.x)&&Number.isFinite(p.pos.y)&&Number.isFinite(p.pos.z)&&
+      !Object.is(p.prev.x,-0)&&!Object.is(p.prev.y,-0)&&!Object.is(p.prev.z,-0)&&
+      !Object.is(p.pos.x,-0)&&!Object.is(p.pos.y,-0)&&!Object.is(p.pos.z,-0)){
+      for(let i=0;i<params.length;i++){const q=s.lobes[i];q.from.copy(p.prev);q.to.copy(p.pos);q.param=params[i];}
+      return s.lobes;
+    }
     const yaw=Math.atan2(p.vel.x,p.vel.z),cy=Math.cos(yaw),sy=Math.sin(yaw);
     for(let i=0;i<params.length;i++){
       const q=s.lobes[i],v=offsets[i]||EMPTY_LOBE_OFFSET,x=finite(v.X,0),y=finite(v.Y,0),z=finite(v.Z,0);
@@ -1347,12 +1357,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // keep their established projected paint rather than inventing gravity.
       // Every crossed source threshold is consumed exactly once, even when
       // multiple fit in a 60Hz frame. A head-contact boundary is exclusive.
-      if(!p.ghost&&d.splashCount>0&&len>EPS){
+      if(!p.ghost&&d.splashCount>0&&s.dropCount<d.splashCount&&len>EPS){
         const lifeTravel=travelBefore+p.vel.length()*clamp(p.life-(p.age-DT),0,DT);
         const endTravel=Math.min(s.travel,lifeTravel,travelBefore+len*clamp(Math.min(1,stop)));
-        const direction=p.vel.clone().setY(0).normalize();
+        let direction;
         while(s.dropCount<d.splashCount&&s.nextSplash<=endTravel+EPS){
           if(stop<=1&&s.nextSplash>=endTravel-EPS)break;
+          direction ||= p.vel.clone().setY(0).normalize();
           const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));
           const radius=catalogSplashRadius(d,s.dropCount);
           if(d.splashDropSpec||d.sloshFall){

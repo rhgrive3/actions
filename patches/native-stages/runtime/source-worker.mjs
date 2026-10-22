@@ -1,4 +1,4 @@
-import {SOURCE_RECIPE,SOURCE_STAGES,sourceURL} from './source-catalog.mjs';
+import {SOURCE_RECIPE,SOURCE_STAGES,sourceURL,sourceObjectBytes} from './source-catalog.mjs';
 import {convertSource} from './source-convert.mjs';
 import {sourceBytes,sourceTree,readDerived,writeDerived} from './source-cache.mjs';
 const buffers=['vertices','indices','triangles','normals','flags','objectIds','nodes','order','triangleFace','mask'];
@@ -33,8 +33,11 @@ self.onmessage=async({data:{id,runtimeSha256,constrainedClient=false}})=>{
   let data=constrained?null:await readDerived(key),cached=!!data;
   if(!data){
    self.postMessage({progress:'download',id});
+   const objectPin={sha256:stage.sourceSha256};
+   // Authenticated LFS payload length; inventory blob sizes describe pointers.
+   if(!constrained)objectPin.bytes=sourceObjectBytes(stage);
    const [obj,tree]=await Promise.all([
-    sourceBytes(id,sourceURL(stage,stage.internal+'.obj'),{sha256:stage.sourceSha256},undefined,constrained?undefined:p=>self.postMessage({progress:'download',id,...p})),
+    sourceBytes(id,sourceURL(stage,stage.internal+'.obj'),objectPin,undefined,constrained?undefined:p=>self.postMessage({progress:'download',id,...p})),
     sourceTree(id,stage.tree),
    ]);
    self.postMessage({progress:'download',id,bytes:obj.byteLength,total:obj.byteLength});

@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ main ]
 
+# Preserve running evidence while replacing only an older pending member.
+# Manual diagnostics use an independent run identity; PRs and main never collide.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.event_name == 'push' && format('push-{0}', github.ref) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
@@ -67,7 +73,7 @@ jobs:
 
       - if: steps.scope.outputs.relevant == 'true'
         name: Verify immutable CI source admission contracts
-        run: node --test scripts/tests/inkwave-ci-source-admission.test.mjs scripts/tests/inkwave-main9fe-paint-admission.test.mjs scripts/tests/inkwave-maine1f-paint-admission.test.mjs
+        run: node --test scripts/tests/inkwave-added-ci-contracts.test.mjs scripts/tests/inkwave-ci-source-admission.test.mjs scripts/tests/inkwave-main9fe-paint-admission.test.mjs scripts/tests/inkwave-maine1f-paint-admission.test.mjs scripts/tests/inkwave-selected-prop-pack-contracts.test.mjs
 
       - if: steps.scope.outputs.relevant == 'true'
         name: Verify Patch Composition & Upstream Locks

@@ -131,6 +131,15 @@ for (const file of walk(SRC)) {
   const ext = path.extname(file);
   if (ext === '.js' || ext === '.mjs' || ext === '.css') {
     const code = composeSource(rel, fs.readFileSync(file, 'utf8'));
+    // These exact production inputs are reread/composed by the mandatory
+    // Three bundle below, which replaces module and removes core. Copying
+    // composed source here keeps the intermediate paths/diagnostics intact
+    // without minifying two outputs that can never be published. Diagnostics
+    // and no-shake builds still take the original standalone transform path.
+    const replacedThree = !unminified && process.env.INKWAVE_NO_THREE_SHAKE !== '1' &&
+      /^(?:vendor\/three\/build\/three\.(?:core|module)\.js)$/.test(rel.split(path.sep).join('/')) &&
+      fs.existsSync(path.join(SRC, 'vendor/three/build/three.module.js'));
+    if (replacedThree) { fs.writeFileSync(dst, code); continue; }
     const esm = ext === '.mjs' || (ext === '.js' && (rel.startsWith('src/') || rel.startsWith('vendor/three/jsm/')));
     await stageTransform(code, {
       loader: ext === '.css' ? 'css' : 'js', format: esm ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: rel,
@@ -408,6 +417,12 @@ visit('patches/splatoon3/runtime/audio/grain-worker.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  // Optional builder packs remain revisioned/offline-precached, never HTML preload hints.
+  'src/world/props.js',
+  'src/world/stages/index.js',
+  'src/world/props-marina-vessels.js',
+  'src/world/props-marina-dock.js',
+  'src/world/stages/cargo/props.js',
   'patches/splatoon3/runtime/audio/grain-texture.mjs',
   'patches/splatoon3/runtime/audio/grain-prewarm.mjs',
   'patches/splatoon3/runtime/audio/grain-worker.mjs',
@@ -661,7 +676,7 @@ fs.rmSync(OUT, { recursive: true, force: true });
 fs.renameSync(BUILD, OUT);
 console.log(`patch: splatoon3+quality+range · build ${identity.contentHash.slice(0, 12)}`);
 
-console.log(`JS : ${kb(rawJs)} → ${kb(minJs)}  ${reportGzip ? `(gzip ${kb(gzRaw)} → ${kb(gzMin)})` : '(gzip diagnostics disabled; set INKWAVE_BUILD_REPORT_GZIP=1)'}`);
+console.log(`JS transforms (excludes replaced Three inputs): ${kb(rawJs)} → ${kb(minJs)}  ${reportGzip ? `(gzip ${kb(gzRaw)} → ${kb(gzMin)})` : '(gzip diagnostics disabled; set INKWAVE_BUILD_REPORT_GZIP=1)'}`);
 console.log(`CSS: ${kb(rawCss)} → ${kb(minCss)}`);
 const cachedLiteralBytesSaved = loadingPlan.precache.reduce((sum, file) => sum + (compactedLiteralBytesByFile.get(file) || 0), 0);
 console.log(`repeated module strings: saved ${compactedLiteralBytes} bytes total, ${cachedLiteralBytesSaved} in the offline precache`);

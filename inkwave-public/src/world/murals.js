@@ -9,7 +9,7 @@
 //                              -xLen face heights (the original rows), yLen <= 0 = full face height
 //   fx    [weather, chip]      how much the surface's paint mottling shows through / its chips + peeling cut the mural
 import * as THREE from 'three';
-import { STAGES } from './stages/index.js';
+import { STAGES } from './stages/data.js';
 
 const W = 2048, RH = 256, ROWS = 4, FULL_H = 2048;
 const NAVY = '#27304d', CORAL = '#ec7a6b', TEAL = '#3fa8a2', MUSTARD = '#eec35c', CREAM = '#fbf5e8', SKY = '#7cc6e6';

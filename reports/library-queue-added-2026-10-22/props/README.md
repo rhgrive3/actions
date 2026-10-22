@@ -1,0 +1,37 @@
+# Selected prop packs and resolved-font redraws
+
+Both assigned records are implemented locally. Production game inputs, geometry equations, seeded builders, collider transforms, animation updates, material bindings, and public synchronous PropKit API are preserved. This is desktop Chromium source/Canvas evidence, not measured iPad performance or Splatoon3 11.3.0 retail parity. Numeric/gameplay differences remain unverified where previously unverified.
+
+## Selected optional builder preparation
+
+The directly authored implementation moved to `world/props-core.js`. The existing `world/props.js` remains a complete synchronous compatibility facade exporting exactly `PropKit`, `PROP_TYPES`, and `PALETTE`, with the original catalogue ordering and object ownership. Lightweight Cargo and marina placement descriptors preserve all original expressions and order. `dressing.js` and `murals.js` use a descriptor graph that does not statically import the large Cargo/marina builders.
+
+The actual production start adapter imports `prop-packs.js` in the existing single boot await (startup phase topology is unchanged). Before replacing a world, it derives required packs from actual selected placements, awaits all selected module imports, checks the captured world operation, and synchronously registers the batch. Failures restore type, spinner-template, registration and catalogue state; old active world resources remain usable. Repeated or canceled requests do not duplicate registration. Five native IDs with empty prop inventory load no optional builders. All optional modules remain in the immutable artifact and offline module graph; explicit hint exclusions prevent them becoming eager HTML requests.
+
+The small Cargo mural implementation remains eager to preserve the existing synchronous public `setStage` API. The change removes the large optional builder dependency from cold execution, not all four source files named by the audit. No transferred-byte, p50/p95, heap, GPU memory or first-interactive improvement is claimed.
+
+## Minimal atlas alternative
+
+A successful font load advances a module font generation; each atlas remembers the generation actually drawn. Its completion callback redraws only if the generation changed and the kit is still live. New kits after font readiness draw once rather than twice. Initial fallback pixels, one real font-ready replacement, quality/mobile resizing, independent Texture/Canvas handles and disposal remain intact. Font rejection/unsupported FontFace also avoid a redundant same-font redraw.
+
+Full cross-kit Texture/Canvas reuse is not shipped. The public `kit.atlas` and `kit.atlas.image` handles remain writable after a kit is disposed: reusing either backing in another kit lets the escaped old handle modify or dispose that new kit's atlas. The actual Canvas probe retains an old handle, disposes its kit, clears it and verifies the independently owned next kit's pixels remain unchanged. The queue explicitly permits this smaller double-redraw suppression instead of unproven sharing.
+
+## Verification
+
+- Actual Chromium `node scripts/check-inkwave-selected-prop-packs.mjs`: all seven scenarios pass against a SHA256-pinned exact prechange source fixture. Default Tidewater requests none of the optional builders/full facade; its 61 base types remain unchanged after all five native-ID preparations.
+- Tidewater (144 placements), Kelpline (130), Halyard (219), Cargo (223), and practice range (27): exact final geometry attribute/index hashes, all colliders, draw/stats, and updated instance matrices match baseline. Original public exports, palette, complete ordered catalogue and 100 registration transitions match. Rejected import, canceled preparation, failed batch/type override, leaked definition and spinner negative controls pass.
+- Real Canvas2D RGBA hashes match for font success, failure, unsupported FontFace and LOW/HIGH resizing. Warm redraw counts go from 2 to 1; successful delayed font readiness remains 2. Three quality resizes emit three native texture-dispose events while retaining each kit's own texture/image handle; stale disposed continuations do not redraw. This does not measure GPU uploads or browser GPU memory.
+- `node --experimental-vm-modules --test patches/reliability/tests/start.test.mjs patches/practice-range/tests/isolation.test.mjs patches/local-quality/tests/issue-418.test.mjs`: 164 pass, zero failures/skips. Includes real composed world-operation rejection/reentry before any replacement allocation.
+- Atlas/retention/failed-constructor regressions: 10 pass, zero failures/skips. Existing frozen pre-migration/practice negative controls are retained; queried facade fixtures isolate their core registry.
+- Cold-graph/public-export, direct-owner, queued-policy and CI contract batch: 34 pass, zero failures/skips. Loader namespace contracts: 3 pass. Source-admission/packaging contracts: 25 pass, five emitted-site-only skips.
+- The final cold-graph suite has two source tests plus one emitted-site test. Run the latter with `INKWAVE_BUILT_SITE=<combined-final-site> node --test scripts/tests/inkwave-selected-prop-pack-contracts.test.mjs` after the root-owned combined build; it checks all optional/core/descriptor bytes against the sealed worker, offline precache inclusion and absent eager hints. Full emitted PWA/room/native integration remains the root's combined release check.
+
+The adjacent receipt binds exact candidate source hashes and records the actual Canvas/geometry outcomes. Complete local logs are under `/workspace/scratch/1dcd5205fbb6/added-props-*.log`. No iPad/Android Safari/device latency, 20 full rendered stage roundtrips, network outage, WebGL context-loss or retail parity claim is made. The 100 transitions above exercise registration and memoization; full geometry is compared once per complete legacy/practice stage.
+
+## Final emitted compatibility-cache follow-up
+
+The root's first integrated emitted check exposed a real offline API regression: all new runtime/core modules were sealed and cached, but the now-unused public `props.js` and `stages/index.js` facades were sealed assets outside the precache. The required emitted assertion was retained. The loading policy now explicitly installs exactly these two public entry points without adding HTML preload hints or promoting unrelated orphan assets.
+
+Read-only inspection of the existing r3 sealed output finds 21 modules in the two facades' complete static dependency closure; only the two facades are missing. Their combined emitted size is 1,019 bytes. All other dependencies are already precached. The adjacent `offline-compatibility-receipt.json` records that old-output observation; it is not a freshly rebuilt output claim.
+
+A new test calls real `prepareLoading` and worker finalization on the actual composed main plus actual facade source closure, installs the production worker in the Event/CacheStorage fixture, disables network and retrieves exact bytes for every facade dependency. It independently removes each facade from a negative-control precache and reproduces the failed offline request. An unrelated declared orphan remains uninstalled; the policy creates no eager hints. This fixture is not a native Service Worker or iPad performance measurement. Source suite: 3 pass, 1 emitted-output-only skip; existing loading-cache contracts: 10 pass, 4 baseline-input-only skips. The root will rebuild once and rerun the retained strict emitted gate against the fresh artifact.

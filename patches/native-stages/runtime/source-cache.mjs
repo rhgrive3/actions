@@ -65,9 +65,26 @@ export async function sourceBytes(id,url,expected,signal,onProgress){
  const r=await fetch(url,{signal,credentials:'omit',mode:'cors',referrerPolicy:'no-referrer'});
  if(!r.ok)throw Error('Source download failed ('+r.status+')');
  let bytes;
- if(onProgress&&r.body){const reader=r.body.getReader(),chunks=[];let count=0,last=0,total=Number(r.headers.get('content-length'))||expected.bytes||0;
-  while(true){const {done,value}=await reader.read();if(done)break;chunks.push(value);count+=value.byteLength;if(performance.now()-last>150){onProgress({bytes:count,total});last=performance.now();}}
-  const result=new Uint8Array(count);let at=0;for(const c of chunks){result.set(c,at);at+=c.length;}bytes=result.buffer;
+ if(onProgress&&r.body){
+  // Only authenticated per-asset metadata may size the allocation. An HTTP
+  // header controls the displayed total, never an unbounded upfront buffer.
+  const pinned=Number.isSafeInteger(expected.bytes)&&expected.bytes>=0&&expected.bytes<=64*1024*1024;
+  const result=pinned?new Uint8Array(expected.bytes):null,chunks=result?null:[];
+  const reader=r.body.getReader();let count=0,last=0,total=Number(r.headers.get('content-length'))||expected.bytes||0,complete=false;
+  try{
+   while(true){
+    const {done,value}=await reader.read();if(done)break;
+    if(result){if(value.byteLength>result.length-count)throw Error('Source asset byte count mismatch');result.set(value,count);}
+    else chunks.push(value);
+    count+=value.byteLength;if(performance.now()-last>150){onProgress({bytes:count,total});last=performance.now();}
+   }
+   if(result){if(count!==result.length)throw Error('Source asset byte count mismatch');bytes=result.buffer;}
+   else{const joined=new Uint8Array(count);let at=0;for(const c of chunks){joined.set(c,at);at+=c.length;}bytes=joined.buffer;}
+   complete=true;
+  }finally{
+   if(!complete)try{await reader.cancel();}catch{}
+   try{reader.releaseLock?.();}catch{}
+  }
  }else bytes=await r.arrayBuffer();
  await verifySourceBytes(bytes,expected);try{if(cache?._nativePut)await cache._nativePut(url,bytes);else await cache?.put(url,new Response(bytes));}catch{}
  return bytes;

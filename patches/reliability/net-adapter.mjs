@@ -188,10 +188,41 @@ export function adaptNet(rel, code) {
     if (this.isHost) this._markReady(this.myId);`, rel);
     code = replaceOnce(code, `    else if (!this._goT) this._goT = setTimeout(() => this._go(), 12000);   // don't hold everyone for one slow load`, `    else if (!this._goT) {
       const attempt = this._roomAttempt, cfg = this._startCfg, tr = this.tr;
+      const host = this.hostId, epoch = this._startHostEpoch || 0;
       this._goT = setTimeout(() => {
-        if (this.state === 'starting' && this._roomAttempt === attempt && this._startCfg === cfg && this.tr === tr) this._go();
+        if (this.isHost && this.hostId === host && (this._startHostEpoch || 0) === epoch &&
+            this.state === 'starting' && this._roomAttempt === attempt && this._startCfg === cfg && this.tr === tr) this._go();
       }, 12000);
     }`, rel);
+    code = replaceOnce(code, `      const hostChanged = o.host && o.host !== this.hostId;`,
+      `      const hostChanged = o.host && o.host !== this.hostId;
+      const handoff = hostChanged ? { attempt:this._roomAttempt, tr:this.tr, cfg:this._startCfg, match:this.match, host:o.host } : null;`, rel);
+    code = replaceOnce(code, `      if (hostChanged) this._emit('host', { hostId: this.hostId });`,
+      `      if (hostChanged) this._emit('host', { hostId: this.hostId });
+      if (handoff) this._restartStartingBarrier(handoff);`, rel);
+    code = replaceOnce(code, `  _markReady(id) {`, `  _restartStartingBarrier(handoff) {
+    if (this.state !== 'starting' || !handoff.cfg || this._roomAttempt !== handoff.attempt ||
+        this.tr !== handoff.tr || this._startCfg !== handoff.cfg || this.match !== handoff.match ||
+        this.hostId !== handoff.host || !this._members.has(this.hostId)) return;
+    clearTimeout(this._goT); this._goT = null;
+    this._goPending = null;
+    this._startHostEpoch = (this._startHostEpoch || 0) + 1;
+    if (this.isHost) this._ready = new Set();
+    // All survivors receive the authenticated relay leave in socket order.
+    // Reuse the existing READY schema; older peers still have the 12s fallback.
+    if (!this._setupReady || !this.match || this.match._disposed ||
+        this.match.cfg?.id !== this._startCfg.id || !this.match.match ||
+        this.match.match !== G.match || this.match.match !== G.game?.match) return;
+    if (this.isHost) this._markReady(this.myId);
+    else this.tr.sendTo(this.hostId, { k:'ready', id:this._startCfg.id });
+  }
+
+  _markReady(id) {`, rel);
+    code = replaceOnce(code, `  _go() {
+    clearTimeout(this._goT); this._goT = null;
+    if (this.state !== 'starting') return;`, `  _go() {
+    clearTimeout(this._goT); this._goT = null;
+    if (!this.isHost || this.state !== 'starting') return;`, rel);
     // Admission precedes world construction and any readiness/GO side effects.
     code = replaceOnce(code, '  async _begin(cfg) {', `  async _begin(cfg) {
     if (cfg?.proto !== PROTO || cfg?.compat !== COMPAT) {

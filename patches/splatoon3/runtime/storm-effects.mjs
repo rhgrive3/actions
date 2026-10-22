@@ -107,11 +107,17 @@ export function stormRainObjectContains(c, object, baseRadius, scale = stormRain
 }
 // Recovery follows the same live rain area as native contact until expiry. The
 // native damage loop keeps its separate dur-0.3 window (#563 scope).
+const recoveryScratch = new WeakMap();
 export function cloudCoversActor(c, a, G, SPECIALS) {
   if (!(c.t < c.dur) || !stormRainContains(c, a, SPECIALS.storm.radius)) return false;
-  const body = a.pos.clone(); body.y += 1.2;
-  const top = a.pos.clone(); top.y = c.group.position.y - .6;
-  return !!G.physics.los(body, top);
+  let scratch=recoveryScratch.get(a);
+  if(!scratch){scratch={body:a.pos.clone(),top:a.pos.clone(),busy:false};recoveryScratch.set(a,scratch);}
+  // LOS is synchronous. A nested query gets private values while its caller
+  // still owns the first pair, including when the inner LOS throws.
+  const body=scratch.busy?a.pos.clone():scratch.body.copy(a.pos);body.y+=1.2;
+  const top=scratch.busy?a.pos.clone():scratch.top.copy(a.pos);top.y=c.group.position.y-.6;
+  const previous=scratch.busy;scratch.busy=true;
+  try{return !!G.physics.los(body,top);}finally{scratch.busy=previous;}
 }
 export function stormRecoveryState(a, { G, SPECIALS }) {
   let ally = false, enemy = false;

@@ -31,7 +31,7 @@ export function installRanked(context) {
   Match.prototype.setup = function () {
     const r = setup.call(this);
     if (!isRankedMode(this.mode)) return r;
-    const stage = createRankedStage(G);
+    const stage = createRankedStage(G, this.mode);
     this.ranked = new RankedEngine(this.mode, stage);
     this.rankedWorld = new RankedWorld(api, this, stage);
     this.rankedEffects = createRankedEffects(api, this);
@@ -52,8 +52,8 @@ export function installRanked(context) {
       this.ranked.update(dt, frame); this.time = this.ranked.time;
       const events = this.ranked.events.splice(0);
       this.playRankedEvents(events);
-      const wire = events.filter(e => e.kind !== 'special-gain' && e.kind !== 'zone-capture');
-      if (wire.length && nm?.isHost) nm._sendNow({ k: 'rkevent', match: nm.cfg.id, seq: nm.rankedEventNext = (nm.rankedEventNext || 0) + 1, events: wire });
+      const wire = nm?.isHost && events.length ? events.filter(e => e.kind !== 'special-gain' && e.kind !== 'zone-capture') : null;
+      if (wire?.length) nm._sendNow({ k: 'rkevent', match: nm.cfg.id, seq: nm.rankedEventNext = (nm.rankedEventNext || 0) + 1, events: wire });
       if (this.ranked.winner !== null) {
         this.local?.weaponRunner?.cancelPendingInput?.();
         for (const a of this.actors) { a.intent.move.set(0, 0, 0); a.intent.fire = a.intent.sub = a.intent.special = a.intent.throw = false; }

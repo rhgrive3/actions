@@ -29,7 +29,7 @@ if (!vm.SourceTextModule) {
     const data=()=>Object.assign(Object.fromEntries(arrays.map(name=>[name,new Float32Array(2)])),{manifest:{id:'stage'}});
     const links={
       './source-catalog.mjs':moduleFrom(context,{
-        SOURCE_RECIPE:'v4',SOURCE_STAGES:[{id:'stage',internal:'Vss_Test',sourceSha256:'fixture'}],
+        sourceObjectBytes:()=>undefined,SOURCE_RECIPE:'v4',SOURCE_STAGES:[{id:'stage',internal:'Vss_Test',sourceSha256:'fixture'}],
         sourceURL(_stage,file){return file;}
       }),
       './source-convert.mjs':moduleFrom(context,{

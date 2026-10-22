@@ -34,3 +34,12 @@ test('PropKit source namespace bridge never accepts a missing module', () => {
     (specifier) => { delegated++; fs.accessSync(fileURLToPath(specifier)); }), { code: 'ENOENT' });
   assert.equal(delegated, 1);
 });
+
+
+test('queried public PropKit fixtures isolate the core registry while ordinary imports keep their URL', () => {
+  const parentURL = new URL('src/world/props.js?patched=true&practice=true', source).href;
+  const core = resolve('./props-core.js', { parentURL }, next);
+  assert.equal(core.specifier, new URL('src/world/props-core.js?patched=true&practice=true', source).href);
+  const other = resolve('./props-core.js', { parentURL: new URL('src/world/prop-packs.js', source).href }, next);
+  assert.equal(other.specifier, './props-core.js');
+});

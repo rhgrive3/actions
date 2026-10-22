@@ -1,0 +1,22 @@
+[
+  {
+    "label": "current",
+    "sha": "c9e746a95df17b3ca9fb46ab8318e017fd1ca857",
+    "files": 5877,
+    "materialized": 5364,
+    "total_blob_bytes": 363275103,
+    "materialized_blob_bytes": 159748342,
+    "excluded_blob_bytes": 203526761,
+    "local_checkout_seconds": 0.01400661399384262,
+    "network_measurement": false,
+    "unavailable_excluded_blob_sizes": 17,
+    "excluded_roots": [
+      "bootstrap",
+      "lanes",
+      "remaining",
+      "staged",
+      "tools",
+      "triggers"
+    ]
+  }
+]

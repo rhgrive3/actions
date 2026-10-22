@@ -144,8 +144,9 @@ test('#522 actual Boss hazard producer retains explicit host authority for forei
 test('#522 actual zone capture producer validates the exact host-owned cell stamp',async()=>{
  const host=await client('a'),observer=await client('c');
  for(const c of [host,observer]){
-   const face=c.paint.paintFaces[0];face.id=0;const entry={face,cell:face.grid,center:new c.f.THREE.Vector3(.125,0,.125)};
-   c.nm.match.ranked={mode:'zones'};c.nm.match.rankedWorld={paint:c.paint,_zoneCells:[[entry]]};
+   const face=c.paint.paintFaces[0];face.id=0;const entry={face,cell:face.grid,i:0,j:0,center:face.origin.clone()
+     .addScaledVector(face.u,face.cu*.5).addScaledVector(face.v,face.cv*.5).addScaledVector(face.n,.06)};
+   c.nm.match.ranked={mode:'zones'};c.nm.match.rankedWorld={THREE:c.f.THREE,paint:c.paint,_zoneCells:[[entry]]};
  }
  host.f.RankedWorld.prototype.captureZone.call(host.nm.match.rankedWorld,0,1);
  const row=host.nm.out.find(e=>e[1]==='s');assert.equal(row[14][4][1],'zone');

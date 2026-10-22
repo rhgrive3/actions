@@ -154,7 +154,7 @@ const IDENTITY_FILES = [
   'bot-navigation-adapter.mjs', 'bot-navigation.mjs', 'firefight-tier-budget.mjs',
   'root-hair-spring-adapter.mjs',
   'collision-hotpath-adapter.mjs',
-  'runtime-frame-scratch-adapter.mjs', 'motion-diagnostics.mjs', 'shoe-read-transform-adapter.mjs', 'scenery-bounds-adapter.mjs',
+  'geometry-build-storage.mjs', 'geometry-build-storage-adapter.mjs', 'runtime-frame-scratch-adapter.mjs', 'motion-diagnostics.mjs', 'shoe-read-transform-adapter.mjs', 'scenery-bounds-adapter.mjs',
   'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'range-frame-pacing-adapter.mjs',
 ];
 

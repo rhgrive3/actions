@@ -5918,3 +5918,21 @@ Splatoon3 reference remains 11.3.0; no runtime aim, projectile, damage or hurtbo
 The native two-client investigation reproduced a preexisting guard limitation: an ordered packet processed about twelve wall-clock seconds late can become the adjacent receive-time anchor, causing subsequent batched packets to be rejected indefinitely. A proposed fixed first-packet sender/receiver anchor recovered that trace and blocked repeated grace spending, but a second real-browser run proved it could permanently reject healthy traffic after a delayed very first snapshot. That candidate is rejected; the original production clock guard and terminal handling are retained. Accepting arbitrary bootstrap catch-up while rejecting an indistinguishable forged jump needs independent timing evidence and remains covered by canonical open issue #1767, outside the original369-record snapshot. A warm-session combat QA does not close that cold-start runtime issue. Reference remains Splatoon3 11.3.0; no new retail behavior or device performance parity is established.
 
 The two-browser QA opening uses paired, wall-paced60Hz full native `_frame` calls under the existing audit freeze, with only draw suppressed. Native input/controller, fixed clock, transport, actor capture and projectile orchestration remain active; the original read-only readiness and ten-game-second failure bound remain. Scenario wire receipts are copied before browser teardown; teardown no-contest traffic is retained separately. Actual loop tests cover asymmetric readiness, the fixed step cap, accelerated game-time deadline and draw-flag restoration. This QA scheduling does not resolve or validate the independent long-delay admission limitation; real two-browser confirmation remains required.
+
+## 2026-10-22 — 追加67件のキュー対応
+
+
+参照本家は Splatoon 3 11.3.0。原369件の後に凍結した追加67件を公開版へ照合し、採用/既存対応/見送り/重複を分けた。対応内容・反例・検証は [追加対応一覧](library-queue-added-2026-10-22/queue-dispositions.md) と分野別記録を参照。実装判断はPR #1815の最終CI・マージ・公開済みの宣言ではない。
+
+追加67件の判断: `{'fixed': 57, 'rejected': 6, 'already_fixed': 3, 'duplicate': 1}`。元369件と合わせた436件は `{'fixed': 387, 'already_fixed': 28, 'rejected': 16, 'duplicate': 5}`。採用見送りと既存対応を新規修正件数には含めない。
+
+| 関連挙動 | INKWAVE側の変更・維持条件 | 確認範囲と残る差分 |
+|---|---|---|
+| 歩行・旋回・ジャンプ・壁/接地・カメラ | source motion足ターゲットを使用骨だけへ限定し、yaw/gyroの同一フレーム計算を共有。移動/加速/最高速/旋回/ジャンプ係数は変更しない。 | 実Player00 bankの30/60/120Hz、骨TRS/world行列/接地/skeleton/muzzleとcameraの実合成前後比較。未公開の本家数値や実機一致を新たに確定しない。 |
+| 射撃・サブ・スペシャル・塗り | Booyah成長用配置、Trizooka/Cooler/Storm等の所有scratchと衝突計算、Torpedo形状資源、武器カタログを再利用。順序/乱数/符号付きゼロ/非有限fallback/再入/複製材質/射出・接触・塗りの既存ownerを維持。 | exact source対照・slope/30/60/120Hzの対象回帰。疎Sloshing Machineのcache項目をvalidatorと同じoptional fieldへ修正。受信認証やダメージ上限は緩和しない。本家実機parityは未測定。 |
+| ネットワーク・被弾・死亡塗り | STARTING中の認証済host交代で既存READYを新hostへ再送し、旧epoch timerを無効化。証拠prune/scanと決定的death planの準備のみ共有。 | 実composed Session/NetMatch/Actor、複数交代/読み込み中/旧host所有権/12秒fallback・replay/owner/life checks。parser getter順とproof retention aliasを変える提案は反例付きで見送り。独立cold-start時計問題#1767は継続。 |
+| ランク・ミニマップ・UI | objectiveのみの変化も既存30Hz枠内で合成し、静的route投影を再利用。疎配列/継承index/番号/色の既存forEach意味を維持。HUD文字・badge・audio previewの不要な再準備を抑制。 | 実composed Canvas/DOM/閾値/イベント比較。nearest検証とTurf強制band削除は数値/flash反例付きで見送り。採用前後同一性は本家のUIやルール完全一致の証明ではない。 |
+| 音声・描画・素材ロード | transaction内のSHA256計算、verified raw Brush PCM、noise作業領域、bank準備を共有。Flow可視LOD/ink sheet/tank shader入力とDecor最終属性を維持。native OBJ長さは既存inventoryとLFS pointerの認証済metadataに限定。 | noise実関数28条件2,217,392 samples一致、context/破棄/cancel/署名不一致control。OBJ18対象は64MiB以内の直接書込み、5大型とunknownは元fallback。公開base/dither material変更を逃すcreation-only coatingは見送り、mural案は既存pixel反例との重複。実機RAM/FPS/GC軽減幅は未測定。 |
+| 地形・未選択prop pack・ビルド | 最終判断と測定根拠はgeometryおよびprops個別記録を参照。CIは必要gate/fan-in/immutable sourceを維持し、検証済みsparse projectionと破棄されるThree一段目minifyのみ削減。 | 範囲外modeler取得の削減とcurrent全2090 artifact byte一致を確認したCI単独receiptは変更前runtimeに対応。追加runtime全体は別の最新build/browser receiptへ束縛する。速度悪化/未測定項目を解消扱いしない。 |
+
+実装前後のソース・数値・描画入力比較、実ブラウザーの受け入れ、Splatoon 3実機比較は区別する。物理iPad mini 6/Safari/WebKit、端末RAM/GC/FPS、エンドツーエンド音声遅延、本家retail挙動の未測定範囲はこの対応で閉じない。既存実機計測トラック#1757と時計問題#1767は独立して継続する。

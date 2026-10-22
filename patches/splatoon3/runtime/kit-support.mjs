@@ -181,14 +181,16 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
       sensor.vel.y-=24*dt;
       sensor.pos.addScaledVector(sensor.vel,dt);
       const hit = G.physics?.segment?.(sensor.prev,sensor.pos,sensor.hit);
-      const delta=sensor.pos.clone().sub(sensor.prev),length=delta.length();
+      const scratch=sensor.contactScratch ||= {delta:new THREE.Vector3(),base:new THREE.Vector3(),
+        point:new THREE.Vector3(),result:{t:0,dist:Infinity}};
+      const delta=scratch.delta.copy(sensor.pos).sub(sensor.prev),length=delta.length();
       let body=null,best=hit?.hit&&vec3(hit.point)?sensor.prev.distanceTo(hit.point):Infinity;
       for(const actor of G.actors||[]){
         if(!actor.alive||actor.team===sensor.team||!Physics?.segmentCapsuleDist)continue;
-        const base=actor.pos.clone();base.y+=actor.smoothY||0;
-        const result={t:0,dist:Infinity};
+        const base=scratch.base.copy(actor.pos);base.y+=actor.smoothY||0;
+        const result=scratch.result;result.t=0;result.dist=Infinity;
         Physics.segmentCapsuleDist(sensor.prev,sensor.pos,base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,result);
-        if(result.dist<=PLAYER.radius+.2&&length*result.t<best){body=sensor.prev.clone().addScaledVector(delta,result.t);best=length*result.t;}
+        if(result.dist<=PLAYER.radius+.2&&length*result.t<best){body=scratch.point.copy(sensor.prev).addScaledVector(delta,result.t);best=length*result.t;}
       }
       if(body || hit?.hit || sensor.age>=POINT_SENSOR.maxFlightSeconds) {
         if(body)sensor.pos.copy(body);

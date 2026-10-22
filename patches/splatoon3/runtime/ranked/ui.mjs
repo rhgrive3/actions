@@ -1,3 +1,4 @@
+import { strokeTowerRoute, objectiveOverlayChanged } from './minimap-cache.mjs';
 import { rankedText } from './strings.mjs';
 const RULE_LABELS = Object.freeze({ zones: 'SPLAT ZONES', tower: 'TOWER CONTROL', rainmaker: 'RAINMAKER', clams: 'CLAM BLITZ' });
 const clamp01 = n => Math.max(0, Math.min(1, Number.isFinite(n) ? n : 0));
@@ -236,8 +237,10 @@ function drawObjectives(minimap, engine, G) {
   } else if (engine.mode === 'tower') {
     const path = stage.tower?.path || [];
     if (path.length > 1) {
-      ctx.beginPath(); path.forEach((p, i) => { const v = pos3(p); if (!v) return; const xy = minimap.toCanvas(v[0], v[2], { x: 0, y: 0 }); if (!i) ctx.moveTo(xy.x, xy.y); else ctx.lineTo(xy.x, xy.y); });
-      ctx.strokeStyle = '#fff'; ctx.globalAlpha = .58; ctx.lineWidth = Math.max(2, minimap.s * .32); ctx.stroke();
+      if (!strokeTowerRoute(minimap, stage, path, ctx)) {
+        ctx.beginPath(); path.forEach((p, i) => { const v = pos3(p); if (!v) return; const xy = minimap.toCanvas(v[0], v[2], { x: 0, y: 0 }); if (!i) ctx.moveTo(xy.x, xy.y); else ctx.lineTo(xy.x, xy.y); });
+        ctx.strokeStyle = '#fff'; ctx.globalAlpha = .58; ctx.lineWidth = Math.max(2, minimap.s * .32); ctx.stroke();
+      }
     }
     const position = state.position || path[Math.round(finite(stage.tower?.centerIndex, Math.floor(path.length / 2)))];
     marker(ctx, minimap, position, state.controllingTeam === 0 || state.controllingTeam === 1 ? colors[state.controllingTeam] : '#ffe28a', 'T', 6);
@@ -300,6 +303,11 @@ export function installRankedUi(api = {}) {
   if (Minimap?.prototype?._compose && !Minimap.prototype._rankedUiWrapped) {
     const proto = Minimap.prototype, compose = proto._compose;
     Object.defineProperty(proto, '_rankedUiWrapped', { value: true });
+    const update = proto.update;
+    if (typeof update === 'function') proto.update = function (dt, force) {
+      if (objectiveOverlayChanged(this, rankedOf(G), G)) this._composeDirty = true;
+      return update.call(this, dt, force);
+    };
     proto._compose = function (dt) {
       const result = compose.call(this, dt);
       drawObjectives(this, rankedOf(G), G);

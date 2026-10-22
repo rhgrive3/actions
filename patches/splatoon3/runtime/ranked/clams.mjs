@@ -341,8 +341,18 @@ export class ClamsRule {
     return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2;
   }
 
+  _pickupDistanceSq(position, target) {
+    // Scalar distance only for ordinary dense finite coordinates. Keep the
+    // original vec fallback for short, sparse and otherwise invalid inputs.
+    const p = Array.isArray(position) && position.length >= 3 &&
+      0 in position && 1 in position && 2 in position &&
+      Number.isFinite(position[0]) && Number.isFinite(position[1]) && Number.isFinite(position[2])
+      ? position : vec(position);
+    return this._distanceSq(p, target);
+  }
+
   _pickup(clam, actor, frame) {
-    if (!actor.alive || !canCollectClam(actor) || !clam.grounded || this._distanceSq(vec(actor.pos), clam.pos) > 0.82 ** 2) return false;
+    if (!actor.alive || !canCollectClam(actor) || !clam.grounded || this._pickupDistanceSq(actor.pos, clam.pos) > 0.82 ** 2) return false;
     const inv = this._inventory(actor.id, actor.team);
     if (clam.kind === 'power') {
       if (clam.team !== actor.team || inv.power) return false;
