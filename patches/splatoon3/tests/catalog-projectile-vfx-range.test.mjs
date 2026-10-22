@@ -57,7 +57,7 @@ test('Bloblobber bubbles grow over five frames and shrink 25% each rebound',asyn
   assert.ok(catalogReboundSeparation(unit.CollisionParam.EndRadiusForField*.75)>.56);
   // On any floor normal, only the outgoing normal component is clamped.
   // The two tangential components must remain exactly unchanged.
-  const {Vector3}=await import('three');
+  const {Vector3}=await import('../../../inkwave-public/vendor/three/build/three.module.js');
   const n=new Vector3(0,1,0);
   const reboundVelocity=new Vector3(30,34,6);
   catalogBubbleLimitGroundNormalSpeed(reboundVelocity,n,.35);

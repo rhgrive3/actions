@@ -1,10 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { qualityIdentity, replaceOnce } from '../adapter.mjs';
+import { qualityIdentity, replaceOnce, adaptQualitySource } from '../adapter.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { adaptWeaponOpponentPreview } from '../../splatoon3/weapon-opponent-preview-adapter.mjs';
 import { adaptStaticMenuArt } from '../static-menu-adapter.mjs';
+import { adaptRange } from '../../practice-range/adapter.mjs';
+import { adaptSource } from '../../splatoon3/adapter.mjs';
+import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
+import { adaptReliability } from '../../reliability/adapter.mjs';
+import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 const STATIC_MENU_SCREENS = ['main', 'mode', 'setup', 'loadout', 'locker', 'settings', 'howto', 'credits', 'online'];
 
 const fromRepo = path => fs.readFileSync(new URL('../../../' + path, import.meta.url), 'utf8');
@@ -151,7 +156,11 @@ test('CSS ownership rejects a new static lobby background and loss of existing r
 });
 
 test('source transform is strict, idempotence fails closed, and unrelated source is unchanged', () => {
-  const preview = adaptWeaponOpponentPreview('src/main.js', rawGame);
+  // Range owns the attract noBots expression and depends on installGame from
+  // S3. Apply its real production predecessors before the final static pass.
+  let preview = rawGame;
+  for (const adapt of [adaptSource, adaptTouchLayout, adaptReliability, adaptQualitySource, adaptNetworkSource, adaptRange, adaptWeaponOpponentPreview])
+    preview = adapt('src/main.js', preview);
   const changed = adaptStaticMenuArt('src/main.js', preview, replaceOnce);
   assert.match(changed, /INKWAVE_ART_MENU_SCREENS/);
   assert.throws(() => adaptStaticMenuArt('src/main.js', changed, replaceOnce), /expected exactly one connection/);

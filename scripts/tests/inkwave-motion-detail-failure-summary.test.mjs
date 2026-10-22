@@ -60,3 +60,46 @@ test('catalog skips nonempty records and strips unknown/oversized data under eig
  assert.equal(out.rows.length,3);assert.ok(text.length<8192);assert.doesNotMatch(text,/secret|private/);
  assert.equal(summarizeCatalogEmptyGeometry({data:[{renders:[{geometry:{indexedVertices:100}}]}]}).rows.length,0);
 });
+
+test('catalog owner visibility and first hidden ancestors use known bounded role labels',()=>{
+ const input=catalog(),d=input.data[0].renders[0].geometry.collectorDiagnostic;
+ d.owners={modelVisible:true,kidVisible:false,squidVisible:false,modelScale:[1,1,1],formWeight:0,sourceActive:true,sourceStatus:'ready',form:'swim',sourceSquidClip:'Sqd_Walk',sourceSquidFrame:24,humanClips:[{name:'WaitHold_Nrml',frame:2,weight:1}]};
+ d.hiddenAncestorChains=[{firstHidden:'squid-root',roles:[{role:'mesh',visible:true},{role:'squid-root',visible:false}],truncated:false}];
+ const before=JSON.stringify(input),out=summarizeCatalogEmptyGeometry(input).rows[0].collector;
+ assert.equal(out.owners.squidVisible,false);assert.equal(out.hiddenAncestorChains[0].firstHidden,'squid-root');assert.equal(JSON.stringify(input),before);
+});
+test('catalog oversized owners and unknown ancestor names are stripped below eight KiB',()=>{
+ const input=catalog(),d=input.data[0].renders[0].geometry.collectorDiagnostic;
+ d.owners={modelScale:[NaN,0,0],sourceSquidClip:'bad'.repeat(10000),humanClips:Array.from({length:1000},()=>({name:'x'.repeat(96),frame:1,weight:1,secret:'secret'}))};
+ d.hiddenAncestorChains=Array.from({length:1000},()=>({firstHidden:'private-object-name',roles:Array.from({length:1000},()=>({role:'character-model',visible:false,name:'secret'})),truncated:true}));
+ input.data=Array.from({length:100},()=>input.data[0]);
+ const out=summarizeCatalogEmptyGeometry(input),text=JSON.stringify(out);assert.ok(text.length<8192);assert.doesNotMatch(text,/private-object-name|secret/);assert.equal(out.rows[0].collector.owners.modelScale,null);
+});
+
+test('maximum legal finite scalars and ASCII labels honor serialized stdout budget',()=>{
+ const input=catalog(),r=input.data[0].renders[0],d=r.geometry.collectorDiagnostic,n=-Number.MAX_VALUE;
+ for(const k of Object.keys(d))d[k]=k==='rootVisible'?true:n;
+ r.frame=n;r.tick=n;r.geometry.triangles=n;r.geometry.skinnedVertices=n;r.geometry.meshes=n;r.rig.changedPixels=n;r.rig.maxChannelDifference=n;
+ d.owners={modelVisible:true,kidVisible:true,squidVisible:true,modelScale:[n,n,n],kidScale:[n,n,n],squidScale:[n,n,n],kidWeight:n,squidWeight:n,formWeight:n,sourceActive:true,sourceStatus:'x'.repeat(64),form:'swim',sourceSquidClip:'x'.repeat(96),sourceSquidFrame:n,humanClips:Array.from({length:4},()=>({name:'x'.repeat(96),frame:n,weight:n}))};
+ d.hiddenAncestorChains=Array.from({length:2},()=>({firstHidden:'character-model',truncated:false,roles:Array.from({length:8},()=>({role:'character-model',visible:false}))}));
+ input.data=Array.from({length:3},()=>input.data[0]);const out=summarizeCatalogEmptyGeometry(input);
+ assert.ok(JSON.stringify(out).length<8192);assert.equal(out.scanTruncated,true);assert.ok(out.rows.length<3);
+});
+
+test('detail preserves source owner and CPU bounds alongside bounded ancestor reasons',()=>{
+ const input={data:[{name:'flow-squid',samples:[{form:'squid'}],renderMetrics:[{frame:0,rig:{changedPixels:0},rigDiagnostic:{sourceMotion:{status:'ready',active:true,sameOwner:true,variant:'Player00',squid:{name:'Sqd_Walk',frame:2}},cpuBounds:{indexedVertices:0,unsupportedMeshes:1,unsupportedReasons:{instanced:0,missingIndex:1,missingVertexApi:0},worldMin:null},ownerVisibility:{owners:{modelVisible:false,sourceSquidClip:'Sqd_Walk'},hiddenAncestorChains:[{firstHidden:'character-model',roles:[{role:'mesh',visible:true},{role:'character-model',visible:false}],truncated:false}]}}}]}]};
+ const before=JSON.stringify(input),out=summarizeDetailRigFailure(input).rows[0].rigDiagnostic;
+ assert.equal(out.sourceMotion.sameOwner,true);assert.equal(out.cpuBounds.unsupportedReasons.missingIndex,1);
+ assert.equal(out.ownerVisibility.hiddenAncestorChains[0].firstHidden,'character-model');
+ assert.equal(JSON.stringify(input),before);
+});
+test('detail maximal legal ancestor and CPU numeric records remain below eight KiB',()=>{
+ const n=-Number.MAX_VALUE,clip={name:'x'.repeat(96),frame:n,weight:n};
+ const owners={modelVisible:true,kidVisible:true,squidVisible:true,modelScale:[n,n,n],kidScale:[n,n,n],squidScale:[n,n,n],kidWeight:n,squidWeight:n,formWeight:n,sourceActive:true,sourceStatus:'x'.repeat(64),form:'swim',sourceSquidClip:clip.name,sourceSquidFrame:n,humanClips:Array.from({length:4},()=>clip)};
+ const d={ownerVisibility:{owners,hiddenAncestorChains:Array.from({length:2},()=>({firstHidden:'character-model',truncated:false,roles:Array.from({length:8},()=>({role:'character-model',visible:false}))}))},sourceMotion:{status:'x'.repeat(64),active:true,sameOwner:true,variant:'Player00',squid:clip},cpuBounds:{worldMin:[n,n,n],worldMax:[n,n,n],ndcMin:[n,n,n],ndcMax:[n,n,n],unsupportedReasons:{instanced:n,missingIndex:n,missingVertexApi:n}}};
+ for(const k of ['totalMeshes','visibleMeshes','colorWriteMeshes','withRigCalls','withoutRigCalls','projectileCount','inkBlobCount'])d[k]=n;
+ for(const k of ['indexedVertices','eligibleMeshes','nonFiniteVertices','unsupportedMeshes'])d.cpuBounds[k]=n;
+ const entry={name:'x'.repeat(64),renderMetrics:[{frame:n,rig:{changedPixels:n,maxChannelDifference:n},rigDiagnostic:d}]};
+ const out=summarizeDetailRigFailure({data:[entry,entry,entry]});
+ assert.ok(JSON.stringify(out).length<8192);assert.equal(out.scanTruncated,true);
+});

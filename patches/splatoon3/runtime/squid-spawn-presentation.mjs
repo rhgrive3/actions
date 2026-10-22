@@ -162,7 +162,7 @@ function buildMarkerGeometry(THREE) {
   return { fill, rim };
 }
 
-export function installSquidSpawnPresentation({ Actor, THREE, G, LANG, TXT }) {
+export function installSquidSpawnPresentation({ Actor, NetMatch, THREE, G, LANG, TXT }) {
   if (!Actor || !THREE || !G) throw new Error('Squid Spawn presentation requires the native Actor and THREE');
   const A = Actor.prototype;
   if (Object.hasOwn(A, INSTALLED)) return;
@@ -286,6 +286,14 @@ export function installSquidSpawnPresentation({ Actor, THREE, G, LANG, TXT }) {
   A.update = function (dt) {
     const result = update.call(this, dt);
     try { sync(this, dt); } catch (error) { console.warn('[INKWAVE squid spawn presentation]', error); }
+    return result;
+  };
+  // Remote actors bypass Actor.update: their owner snapshots are applied here.
+  // Draw their spawners too, without running local physics or launch clocks.
+  const applyRemote = NetMatch?.prototype.applyRemote;
+  if (applyRemote) NetMatch.prototype.applyRemote = function (actor, dt) {
+    const result = applyRemote.call(this, actor, dt);
+    try { sync(actor, dt); } catch (error) { console.warn('[INKWAVE squid spawn presentation]', error); }
     return result;
   };
 }

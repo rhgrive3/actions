@@ -1,3 +1,4 @@
+import { adaptInkMicroSurface } from './ink-micro-surface-adapter.mjs';
 import { adaptHeadgear } from './headgear-adapter.mjs';
 import { adaptLobbySlotTransform } from './lobby-slot-transform-adapter.mjs';
 import { adaptBotNavigation } from './bot-navigation-adapter.mjs';
@@ -91,6 +92,7 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'ink-micro-surface-adapter.mjs',
   'headgear-adapter.mjs', 'headgear/catalog.mjs', 'headgear/lifecycle.mjs', 'headgear/armor-helmet.js', 'headgear/two-line-mesh.js', 'headgear/camo-headphones.js', 'headgear/character-headgear-ink-black-flap-cap.js',
   'view-settings.mjs',
   'material-handoff-adapter.mjs', 'material-handoff.mjs',
@@ -624,6 +626,7 @@ function adaptQualityLayer(rel, code) {
   }
 
   if (rel === 'src/world/inkShading.js') {
+    code = adaptInkMicroSurface(rel, code, replaceOnce);
     return replaceOnce(code,
       '    vec3 team = mix(uTeamA, uTeamB, tm);',
       '    // Convert per-texel derivatives to the slope of a 4mm world-space film.\n' +

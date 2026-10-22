@@ -1,0 +1,58 @@
+name: INKWAVE ink micro surface QA
+on:
+  pull_request:
+    paths:
+      - "patches/local-quality/ink-micro-surface-adapter.mjs"
+      - "patches/local-quality/tests/ink-micro-surface.test.mjs"
+      - "scripts/check-inkwave-ink-micro-surface.mjs"
+      - "scripts/verify-ink-micro-surface-video.mjs"
+      - ".github/workflows/inkwave-ink-micro-surface.yml"
+concurrency:
+  group: ink-micro-surface-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  comparison:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.51.1
+      - run: npx playwright install --with-deps chromium
+      - name: Source regressions
+        run: node --experimental-vm-modules --test patches/local-quality/tests/ink-micro-surface.test.mjs patches/local-quality/tests/grate-normal.test.mjs patches/local-quality/tests/paint-hotpath.test.mjs
+      - name: Build final-head production composition
+        run: node scripts/build-inkwave.mjs inkwave-public _site
+      - name: Capture same-light original and candidate
+        run: node scripts/check-inkwave-ink-micro-surface.mjs --site _site --evidence-dir .browser-evidence/ink-micro-surface
+      - name: Verify source frame sequence before encoding
+        run: node scripts/verify-ink-micro-surface-video.mjs .browser-evidence/ink-micro-surface --frames-only
+      - name: Install and verify video tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          ffmpeg -version
+          ffprobe -version
+      - name: Encode actual successive frames
+        run: |
+          for view in floor wall; do
+            for viewmode in sheen oblique; do
+            for age in fresh settled; do
+              ffmpeg -y -framerate 30 -i ".browser-evidence/ink-micro-surface/texlib-$view-$viewmode-$age-%03d.png" -vf "drawtext=text='ORIGINAL (left) | CANDIDATE (right)':x=10:y=10:fontsize=18:fontcolor=white:box=1:boxcolor=black@0.7" -c:v libx264 -pix_fmt yuv420p ".browser-evidence/ink-micro-surface/$view-$viewmode-$age.mp4"
+            done
+            done
+          done
+      - name: Verify every actual frame and encoded clip
+        run: node scripts/verify-ink-micro-surface-video.mjs .browser-evidence/ink-micro-surface
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-ink-micro-surface
+          path: .browser-evidence/ink-micro-surface
+          include-hidden-files: true

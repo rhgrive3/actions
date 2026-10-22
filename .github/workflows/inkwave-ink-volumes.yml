@@ -25,7 +25,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      # Alpha acceptance validates the literal PR head, not GitHub's synthetic merge.
+      # Manual runs remain pinned to the immutable SHA selected by their dispatch ref.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Assert exact alpha source checkout
+        env:
+          EXPECTED_CHECKOUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          actual_sha="$(git rev-parse HEAD)"
+          printf 'Alpha source checkout: expected=%s actual=%s\n' "$EXPECTED_CHECKOUT_SHA" "$actual_sha"
+          test "$actual_sha" = "$EXPECTED_CHECKOUT_SHA"
       - uses: actions/setup-node@v4
         with:
           node-version: 22

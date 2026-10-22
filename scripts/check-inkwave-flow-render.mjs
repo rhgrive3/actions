@@ -27,6 +27,24 @@ export function flowPixelDifference(a, b) {
   }
   return { pixels: a.length / 4, changedPixels, changedBytes, totalDifference };
 }
+// Readiness is a fixture boundary, not an animation/visibility override. A single
+// synchronous evaluate turn otherwise keeps optional imports perpetually loading.
+export async function awaitFlowSourceReady(character, label, timeoutMs = 180000) {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw Error('Invalid Flow source readiness timeout');
+  const pending = character?.sourceMotion?.ready;
+  if (!pending || typeof pending.then !== 'function') throw Error('Missing Flow source readiness: ' + label);
+  let timer;
+  try {
+    await Promise.race([pending, new Promise((_, reject) => {
+      timer = setTimeout(() => reject(Error('Flow source readiness timed out: ' + label)), timeoutMs);
+    })]);
+  } finally { clearTimeout(timer); }
+  const owner = character.sourceMotion;
+  if (owner?.status !== 'ready' || owner.enabled !== true || owner.error || owner.disposed)
+    throw Error('Flow source owner unavailable: ' + label);
+  return owner;
+}
+
 export function validateFlowRenderResult(result) {
   const names = ['kid-entry', 'kid-active', 'extension', 'squid-entry', 'squid-active',
     'kid-return', 'expiry', 'off', 'reset', 'death', 'hidden'];
@@ -53,6 +71,13 @@ export function validateFlowRenderResult(result) {
     if (!(result.componentPixels?.[component]?.changedPixels > 0)) throw Error('Flow component not rendered: ' + component);
   for (const pass of ['normal', 'depth', 'ao'])
     if (!(result.unsafeOverridePixels?.[pass]?.changedPixels > 10)) throw Error('Flow AO regression sensitivity missing: ' + pass);
+  if (result.disposal?.ownerSourceStatus !== 'ready' || result.disposal?.survivorSourceStatus !== 'ready'
+      || !(result.disposal?.drySquidDraws > 0) || !(result.disposal?.drySquidPixels > 10)
+      || !(result.disposal?.drySquidShellPixels > 0) || result.disposal?.drySquidOverrideDraws !== 0)
+    throw Error('Flow native dry-squid ownership was not exercised');
+  for (const pass of ['normal', 'depth', 'ao'])
+    if (result.disposal?.drySquidOverridePixels?.[pass]?.changedBytes !== 0)
+      throw Error('Flow dry-squid override pixels changed: ' + pass);
   for (const key of ['uploadedNativeBuffers', 'disposedViews', 'deletedOwnedBuffers', 'releasedViewVAOs', 'survivorPixels'])
     if (!(result.disposal?.[key] > 0)) throw Error('Flow disposal evidence missing: ' + key);
   if (result.disposal.deletedNativeBuffers !== 0 || result.disposal.nativeBuffersAlive !== result.disposal.uploadedNativeBuffers
@@ -186,7 +211,8 @@ async function main() {
       }
     });
     await page.goto(address + '/flow-render');
-    await page.addScriptTag({ content: 'globalThis.flowPixelDifference = ' + flowPixelDifference.toString() + ';' });
+    await page.addScriptTag({ content: 'globalThis.flowPixelDifference = ' + flowPixelDifference.toString()
+      + ';globalThis.awaitFlowSourceReady = ' + awaitFlowSourceReady.toString() + ';' });
     result = await page.evaluate(async ({ prefix, width, height }) => {
       const THREE = await import('three');
       const { GTAOPass } = await import('three/addons/postprocessing/GTAOPass.js');
@@ -240,6 +266,8 @@ async function main() {
       const ch = actor.character; ch.actor = actor; victim.character.actor = victim;
       scene.add(ch.root); G.actors.push(actor, victim); actor.spawnAt(new THREE.Vector3(), 0);
       victim.pos.set(8, 0, 8); ch.setLod('game');
+      await Promise.all([globalThis.awaitFlowSourceReady(ch, 'owner'),
+        globalThis.awaitFlowSourceReady(victim.character, 'victim')]);
       const ao = new GTAOPass(scene, camera, width, height), target = new THREE.WebGLRenderTarget(width, height);
       const sources = new Map(), observed = new Map(), viewDisposals = [], images = [], rows = [];
       const flowMeshes = () => ch.root.getObjectsByProperty('isMesh', true).filter(mesh => mesh.name.startsWith('s3-flow-'));
@@ -283,10 +311,11 @@ async function main() {
             const g = source.geometry, view = mesh.geometry;
             assert(view !== g && view.drawRange !== g.drawRange && view.index === g.index, 'Shell geometry view identity');
             assert(view.attributes !== g.attributes && Object.keys(g.attributes).every(k => view.attributes[k] === g.attributes[k]), 'Shell borrowed attribute identity');
+            assert(!!mesh.isSkinnedMesh === !!source.isSkinnedMesh, 'Shell skinning owner type differs');
             if (mesh.isSkinnedMesh) {
               assert(mesh.skeleton === source.skeleton, 'Shell skeleton changed');
               const i = view.index.getX(0), native = new THREE.Vector3(), edge = new THREE.Vector3();
-              ch.skeleton.update(); source.getVertexPosition(i, native); mesh.getVertexPosition(i, edge);
+              source.skeleton.update(); source.getVertexPosition(i, native); mesh.getVertexPosition(i, edge);
               assert(native.distanceTo(edge) < 1e-8, 'Native indexed skin output differs');
             }
             if (!sources.has(source)) sources.set(source, { geometry: g, index: g.index, indexBytes: Array.from(g.index.array),
@@ -402,8 +431,9 @@ async function main() {
         const remaining = actor.s3.flow.remaining; victim.reset(); victim.splat(actor);
         assert(actor.s3.flow.remaining === Math.min(profile.flow.maxDuration, remaining + profile.flow.extension), 'Native extension failed');
         for (let i = 0; i < 6; i++) step(); capture('extension');
-        // The squid swims: one resting in its own ink is drawn under the surface
-        // (swim-motion.test.mjs), so Flow on the squid form is proven while it glides.
+        // Grounded swim intentionally hides the native body in the composed
+        // production owner. These rows exercise visible Flow particles, not a
+        // dry squid shell. Exercise that separate public state before disposal.
         actor.intent.squid = true; actor.intent.move.set(0, 0, 1); for (let i = 0; i < 8; i++) step(); capture('squid-entry');
         for (let i = 0; i < 40; i++) step(); capture('squid-active');
         actor.intent.squid = false; actor.intent.move.set(0, 0, 0); for (let i = 0; i < 30; i++) step(); capture('kid-return');
@@ -420,15 +450,50 @@ async function main() {
         lifecycle.deathImmediate = flowMotionSnapshot(ch).phase === 'off' && flowMeshes().every(mesh => !drawable(mesh)); capture('death');
         actor.reset(); ch.setVisible(true); prepare(); for (let i = 0; i < 6; i++) step(); ch.setVisible(false); capture('hidden');
         ch.setVisible(true); step(); render('beauty');
+        // Native paint/input, not mesh visibility or synthetic buffer uploads:
+        // leave the ink so the production owner can actually draw its body.
+        paint.clear(); actor.intent.squid = true;
+        for (let i = 0; i < 30; i++) step();
+        assert(actor.anim.form === 'squid' && ch.form === 'squid' && drawable(ch.squid.body),
+          'Native dry squid form not reached');
+        const dryShell = flowMeshes().find(mesh => mesh.name === 's3-flow-squid-edge');
+        assert(dryShell && drawable(dryShell), 'Native dry squid Flow shell not drawable');
+        const dryBeforeDraws = observed.get(dryShell).gpuBeauty;
+        const drySquidPixels = pair('beauty').changedPixels;
+        const drySquidDraws = observed.get(dryShell).gpuBeauty - dryBeforeDraws;
+        assert(drySquidDraws > 0 && drySquidPixels > 10, 'Native dry squid Flow not rendered');
+        const dryBeauty = render('beauty'); let drySquidShellPixels;
+        dryShell.visible = false;
+        try { drySquidShellPixels = globalThis.flowPixelDifference(dryBeauty, render('beauty')).changedPixels; }
+        finally { dryShell.visible = true; }
+        assert(drySquidShellPixels > 0, 'Native dry squid borrowed shell has no pixel contribution');
+        const drySquidOverridePixels = {};
+        for (const pass of ['normal', 'depth', 'ao']) drySquidOverridePixels[pass] = pair(pass);
+        const drySquidOverrideDraws = observed.get(dryShell).gpuOverride;
+        assert(drySquidOverrideDraws === 0 && Object.values(drySquidOverridePixels).every(p => p.changedBytes === 0),
+          'Native dry squid Flow contaminated override output');
+        actor.intent.squid = false; for (let i = 0; i < 30; i++) step();
         // A surviving native Character uses the same cached indexed geometry.
         // Measure exact pixels and GL buffer identity across Flow owner disposal.
         const survivor = new Character({ color: actor.color, weapon: 'dualies', style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
-        survivor.setLod('game'); survivor.update(1 / 60, { ...actor.anim, time: G.time, form: 'kid' });
+        survivor.setLod('game'); await globalThis.awaitFlowSourceReady(survivor, 'survivor');
+        survivor.update(1 / 60, { ...actor.anim, time: G.time, form: 'kid' });
         scene.add(survivor.root); ch.root.visible = false; const survivorBefore = render('beauty');
         const survivorNormalBefore = render('normal');
         const survivorNative = globalThis.flowPixelDifference(survivorBefore, (() => { survivor.root.visible = false; const p = render('beauty'); survivor.root.visible = true; return p; })());
         const borrowedArrays = new Set([...sources.values()].flatMap(r => [r.index.array, ...r.attributes.map(([, a]) => a.array)]));
         const buffers = new Set([...borrowedArrays].map(a => uploads.get(a)).filter(Boolean));
+        // Diagnostic only: preserve the original conjunctive acceptance below.
+        globalThis.flowBufferOwnership = {
+          stage: 'before-owner-disposal', owner: ch.sourceMotion?.status ?? null,
+          survivor: survivor.sourceMotion?.status ?? null,
+          sources: [...sources].map(([source, r]) => ({ name: source.name,
+            sharedIndex: survivor.root.getObjectsByProperty('isMesh', true).some(mesh => mesh.geometry?.index === source.geometry.index),
+            arrays: [['index', r.index], ...r.attributes.map(([name, attribute]) => [name, attribute])].map(([name, attribute]) => ({
+              name, uploaded: uploads.has(attribute.array), alive: uploads.has(attribute.array) && gl.isBuffer(uploads.get(attribute.array)),
+            })),
+          })),
+        };
         assert([...borrowedArrays].every(a => uploads.has(a) && gl.isBuffer(uploads.get(a)))
           && buffers.size > 0 && [...sources.keys()].some(source => survivor.root.getObjectsByProperty('isMesh', true)
           .some(mesh => mesh.geometry?.index === source.geometry.index)), 'No native shared geometry/GPU buffers');
@@ -436,9 +501,11 @@ async function main() {
           [mesh.geometry.index, ...Object.values(mesh.geometry.attributes), mesh.instanceMatrix].filter(Boolean).map(a => uploads.get(a.array))).filter(Boolean));
         const vaos = new Set([...observed].filter(([mesh]) => shellMesh(mesh)).flatMap(([, log]) => [...log.vaos]).filter(Boolean));
         const deletedBefore = new Set(deleted), vaoBefore = new Set(vaosDeleted);
+        const ownerSourceStatus = ch.sourceMotion.status;
         ch.dispose(); ch.dispose(); immutable();
         const survivorAfter = render('beauty'), survivorNormalAfter = render('normal');
-        const disposal = { uploadedNativeBuffers: buffers.size,
+        const disposal = { ownerSourceStatus, survivorSourceStatus: survivor.sourceMotion.status,
+          drySquidDraws, drySquidPixels, drySquidShellPixels, drySquidOverridePixels, drySquidOverrideDraws, uploadedNativeBuffers: buffers.size,
           nativeAttributes: borrowedArrays.size, uploadedNativeAttributes: [...borrowedArrays].filter(a => uploads.has(a)).length,
           deletedNativeBuffers: [...buffers].filter(b => deleted.has(b) && !deletedBefore.has(b)).length,
           nativeBuffersAlive: [...buffers].filter(b => gl.isBuffer(b)).length,
@@ -485,6 +552,7 @@ async function main() {
     failure = error;
     if (error.flowCurveParity) result = { ...(result || {}), curveParity: error.flowCurveParity };
     try { if (page) result = { ...(result || {}), progress: await page.evaluate(() => globalThis.flowProbeProgress || null) }; } catch {}
+    try { if (page) result = { ...(result || {}), bufferOwnership: await page.evaluate(() => globalThis.flowBufferOwnership || null) }; } catch {}
     try { await page?.screenshot({ path: path.join(output, 'flow-render-failed.png'), timeout: 10000 }); } catch {}
   } finally {
     try { routeDrain = await drainFlowRoutes(page); }

@@ -31,6 +31,7 @@ const runtimeHelpers = [
 // Never infer this from '*-adapter' names: the emitted graph audit below must
 // still reject every static/dynamic runtime reference to an excluded module.
 const auditedBuildExports = new Map([
+  ['patches/local-quality/static-menu-adapter.mjs', ['deferPrimaryWeaponIcon']],
   ['patches/local-quality/ink-volume/vtf.mjs', ['decodeVTF']],
   ['patches/local-quality/ink-volume/mesh.mjs', ['VOLUME_SHAPE', 'buildInkMesh']],
   ['patches/local-quality/audio-listener-adapter.mjs', ['AUDIO_LISTENER_SOURCE']],

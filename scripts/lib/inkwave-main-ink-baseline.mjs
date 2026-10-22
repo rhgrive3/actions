@@ -410,6 +410,91 @@ const PR1746_SOURCE_PAIR = Object.freeze({
     }
   }
 });
+// Explicit post-Bloblobber source epoch, pinned to main 9fe6f215. The floor
+// contact classification changed real projectile physics; neither old -> new
+// nor an arbitrary byte-identical pair is admitted as unchanged. These are
+// exactly thirteen source leaves, not a whole-tree or compiled equivalence claim.
+export const MAIN9FE_PAINT_SOURCE_PAIR = Object.freeze({
+  mode: 'main9fe-byte-identical-paint-source-epoch',
+  sourceBase: '9fe6f215c17523c2c59dc786a3a5ca90724b4e42',
+  sourceHead: '9fe6f215c17523c2c59dc786a3a5ca90724b4e42',
+});
+const MAIN9FE_PAINT_BLOBS = Object.freeze({
+  "patches/network-replication/adapter.mjs": "bee670bcc764d506911d87c1d3281b10f3f7e099",
+  "patches/network-replication/slosher-paint-admission.mjs": "835ec49ce61f4d623a97f0cdb38fdcb8c592b916",
+  "patches/splatoon3/main-ink-footprint-adapter.mjs": "cdcc9e94cfe5b754a0b1f99fbd204b28ff24d91c",
+  "patches/splatoon3/runtime/blaster-flight-paint.mjs": "629e9a0eb0f7ea67bf27d756bf3f46273396791c",
+  "patches/splatoon3/runtime/main-ink-footprints.mjs": "546c48ae0c1b30d669de3756350f20c7e82dfe4e",
+  "patches/splatoon3/runtime/main-weapon-catalog.mjs": "0c91c526896da0f2f8cb53f10eda0918d568949c",
+  "patches/splatoon3/runtime/paint-packet-codec.mjs": "c5e6f71cddc6d9caba22f687a77869604fced80e",
+  "patches/splatoon3/runtime/slosher-intermediate-paint.mjs": "9914ddcef5472e6314dd9a02ba6f0996ccfd3f05",
+  "patches/splatoon3/runtime/slosher-nearest-paint.mjs": "948517797c8a2de11278e2f96bf324ab80a22aa6",
+  "patches/splatoon3/runtime/weapon-edgecases.mjs": "ebb85e51fab03258a35b84cb0f2aa9ec8bdd5110",
+  "patches/splatoon3/runtime/weapons-fidelity.mjs": "a37fa779835a2a17e24c5bed3c601a56269bfec3",
+  "scripts/inkwave-source-composition.mjs": "33a535481402bae5e846870bed2ee7e76ef9b298",
+  "scripts/lib/inkwave-build-only-modules.mjs": "89f3b41a400307f8c6f7156bb4850d6c67e67c85"
+});
+function explicitMain9fePair(baseline, candidate, expectedPair) {
+  if (expectedPair?.mode !== MAIN9FE_PAINT_SOURCE_PAIR.mode) return null;
+  if (Object.keys(MAIN9FE_PAINT_SOURCE_PAIR).some(key => expectedPair[key] !== MAIN9FE_PAINT_SOURCE_PAIR[key]))
+    fail('source-pair differs from explicitly requested comparison; unknown current-main epoch');
+  for (const path of MAIN_INK_BASELINE_PATHS) for (const [side, sources] of [['baseline', baseline], ['candidate', candidate]]) {
+    if (typeof sources.get(path) !== 'string' || gitBlobSha1(sources.get(path)) !== MAIN9FE_PAINT_BLOBS[path])
+      fail(path + ': ' + side + ' differs from declared main9fe source epoch; mixed, missing or changed source cannot be replayed');
+  }
+  return {sources: new Map(baseline), changes: [], evidence: {
+    schema: 1, ...MAIN9FE_PAINT_SOURCE_PAIR,
+    validationLimit: 'Exact thirteen-leaf source identity only; compiled, physical-state, RNG and image comparisons remain mandatory. No cross-epoch equivalence or improvement claim.',
+    manifestGitBlob: MAIN_INK_BASELINE_MANIFEST_BLOB,
+    paths: MAIN_INK_BASELINE_PATHS.map(path => ({path, mode: 'main9fe-exact-paint-source',
+      originalGitBlob: gitBlobSha1(baseline.get(path)), referenceGitBlob: gitBlobSha1(baseline.get(path)),
+      candidateGitBlob: gitBlobSha1(candidate.get(path)), originalSha256: sha256(baseline.get(path)),
+      referenceSha256: sha256(baseline.get(path)), candidateSha256: sha256(candidate.get(path)), replayed: []}))
+  }};
+}
+
+// Separate e1f epoch: Bloblobber now caps only floor-normal rebound speed,
+// preserving tangential velocity. This changes physics relative to 9fe/f8;
+// the prior epoch and its evidence stay immutable and separately selectable.
+export const MAINE1F_PAINT_SOURCE_PAIR = Object.freeze({
+  mode: 'maine1f-byte-identical-paint-source-epoch',
+  sourceBase: 'e1fa66ad8465bf87caaf232d51543def72c35875',
+  sourceHead: 'e1fa66ad8465bf87caaf232d51543def72c35875',
+});
+const MAINE1F_PAINT_BLOBS = Object.freeze({
+  "patches/network-replication/adapter.mjs": "bee670bcc764d506911d87c1d3281b10f3f7e099",
+  "patches/network-replication/slosher-paint-admission.mjs": "835ec49ce61f4d623a97f0cdb38fdcb8c592b916",
+  "patches/splatoon3/main-ink-footprint-adapter.mjs": "cdcc9e94cfe5b754a0b1f99fbd204b28ff24d91c",
+  "patches/splatoon3/runtime/blaster-flight-paint.mjs": "629e9a0eb0f7ea67bf27d756bf3f46273396791c",
+  "patches/splatoon3/runtime/main-ink-footprints.mjs": "546c48ae0c1b30d669de3756350f20c7e82dfe4e",
+  "patches/splatoon3/runtime/main-weapon-catalog.mjs": "24191518c2d64f544c42bab60f1a2eac1b3eb26f",
+  "patches/splatoon3/runtime/paint-packet-codec.mjs": "c5e6f71cddc6d9caba22f687a77869604fced80e",
+  "patches/splatoon3/runtime/slosher-intermediate-paint.mjs": "9914ddcef5472e6314dd9a02ba6f0996ccfd3f05",
+  "patches/splatoon3/runtime/slosher-nearest-paint.mjs": "948517797c8a2de11278e2f96bf324ab80a22aa6",
+  "patches/splatoon3/runtime/weapon-edgecases.mjs": "ebb85e51fab03258a35b84cb0f2aa9ec8bdd5110",
+  "patches/splatoon3/runtime/weapons-fidelity.mjs": "a37fa779835a2a17e24c5bed3c601a56269bfec3",
+  "scripts/inkwave-source-composition.mjs": "33a535481402bae5e846870bed2ee7e76ef9b298",
+  "scripts/lib/inkwave-build-only-modules.mjs": "89f3b41a400307f8c6f7156bb4850d6c67e67c85"
+});
+function explicitMaine1fPair(baseline, candidate, expectedPair) {
+  if (expectedPair?.mode !== MAINE1F_PAINT_SOURCE_PAIR.mode) return null;
+  if (Object.keys(MAINE1F_PAINT_SOURCE_PAIR).some(key => expectedPair[key] !== MAINE1F_PAINT_SOURCE_PAIR[key]))
+    fail('source-pair differs from explicitly requested comparison; unknown current-main epoch');
+  for (const path of MAIN_INK_BASELINE_PATHS) for (const [side, sources] of [['baseline', baseline], ['candidate', candidate]]) {
+    if (typeof sources.get(path) !== 'string' || gitBlobSha1(sources.get(path)) !== MAINE1F_PAINT_BLOBS[path])
+      fail(path + ': ' + side + ' differs from declared maine1f source epoch; mixed, missing or changed source cannot be replayed');
+  }
+  return {sources: new Map(baseline), changes: [], evidence: {
+    schema: 1, ...MAINE1F_PAINT_SOURCE_PAIR,
+    validationLimit: 'Exact thirteen-leaf source identity only; compiled, physical-state, RNG and image comparisons remain mandatory. No cross-epoch equivalence or improvement claim.',
+    manifestGitBlob: MAIN_INK_BASELINE_MANIFEST_BLOB,
+    paths: MAIN_INK_BASELINE_PATHS.map(path => ({path, mode: 'maine1f-exact-paint-source',
+      originalGitBlob: gitBlobSha1(baseline.get(path)), referenceGitBlob: gitBlobSha1(baseline.get(path)),
+      candidateGitBlob: gitBlobSha1(candidate.get(path)), originalSha256: sha256(baseline.get(path)),
+      referenceSha256: sha256(baseline.get(path)), candidateSha256: sha256(candidate.get(path)), replayed: []}))
+  }};
+}
+
 function reviewedCurrentPair(baseline, candidate) {
   // Only the complete PR1746 epoch may use this identity mode. No per-leaf
   // mixture or arbitrary equal source is admitted, and no source is replayed.
@@ -466,12 +551,23 @@ function reviewedCurrentPair(baseline, candidate) {
 
 export function planMainInkBaseline(baseline, candidate, expectedPair = null) {
   if (!(baseline instanceof Map) || !(candidate instanceof Map)) fail('source maps are required');
-  const reviewedPair = reviewedCurrentPair(baseline, candidate);
   if (expectedPair !== null) {
     if (!expectedPair || typeof expectedPair !== 'object' ||
         Object.keys(expectedPair).sort().join(',') !== 'mode,sourceBase,sourceHead' ||
         Object.values(expectedPair).some(value => typeof value !== 'string' || !value))
       fail('complete expected source-pair contract required');
+  }
+  const explicit = explicitMaine1fPair(baseline, candidate, expectedPair) || explicitMain9fePair(baseline, candidate, expectedPair);
+  if (explicit) return explicit;
+  const catalogue = 'patches/splatoon3/runtime/main-weapon-catalog.mjs';
+  if ([baseline, candidate].some(sources => typeof sources.get(catalogue) === 'string' &&
+      gitBlobSha1(sources.get(catalogue)) === MAINE1F_PAINT_BLOBS[catalogue]))
+    fail('maine1f paint sources require an explicitly requested comparison epoch; old/new physics cannot be replayed or called unchanged');
+  if ([baseline, candidate].some(sources => typeof sources.get(catalogue) === 'string' &&
+      gitBlobSha1(sources.get(catalogue)) === MAIN9FE_PAINT_BLOBS[catalogue]))
+    fail('main9fe paint sources require an explicitly requested comparison epoch; old/new physics cannot be replayed or called unchanged');
+  const reviewedPair = reviewedCurrentPair(baseline, candidate);
+  if (expectedPair !== null) {
     if (!reviewedPair || ['mode','sourceBase','sourceHead'].some(key => reviewedPair.evidence[key] !== expectedPair[key]))
       fail('source-pair differs from explicitly requested comparison; identity cannot substitute for differing epochs');
   }

@@ -2,8 +2,8 @@
 // Admission, intro and playing validation share one browser task when ready.
 // Incomplete admission returns without advancing frames; the host polls within
 // the same original deadline rather than queuing a separate intro task.
-export function atomicIntroFunction(completeIntro,playingPredicate,admissionPredicate=null){
-  return new Function(`return function(){
+export function atomicIntroFunction(completeIntro,playingPredicate,admissionPredicate=null,{asyncIntro=false}={}){
+  return new Function(`return ${asyncIntro ? 'async ' : ''}function(){
     const timing={schema:1,clock:'browser-Date.now-unix-epoch-ms'};
     const mark=(phase)=>{try{timing[phase+'AtMs']=Date.now();timing.phase=phase;}catch{}};
     // Persist diagnostic evidence even when the host rejects a late receipt.
@@ -16,7 +16,7 @@ export function atomicIntroFunction(completeIntro,playingPredicate,admissionPred
         try{timing.outcome='admission-pending';}catch{}
         return {admissionReady:false,timing};
       }` : ''}
-      const intro=(${completeIntro.toString()})();
+      const intro=${asyncIntro ? 'await ' : ''}(${completeIntro.toString()})();
       mark('introReturned');
       const playingReady=(${playingPredicate.toString()})();
       mark('predicateReturned');

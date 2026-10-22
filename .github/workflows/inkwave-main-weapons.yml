@@ -26,6 +26,9 @@ on:
       - 'scripts/check-inkwave-added-family-paint-browser.mjs'
       - 'scripts/check-inkwave-new-families-browser.mjs'
       - 'scripts/check-inkwave-roller-scale-range.mjs'
+      - 'scripts/lib/inkwave-roller-uuid-comparison.mjs'
+      - 'scripts/tests/inkwave-roller-uuid-comparison.test.mjs'
+      - 'patches/splatoon3/uuid-random-adapter.mjs'
       - 'scripts/lib/inkwave-range-menu-entry.mjs'
       - 'patches/local-quality/roller-motion.mjs'
       - '.github/workflows/inkwave-main-weapons.yml'
@@ -54,6 +57,9 @@ on:
       - 'scripts/check-inkwave-added-family-paint-browser.mjs'
       - 'scripts/check-inkwave-new-families-browser.mjs'
       - 'scripts/check-inkwave-roller-scale-range.mjs'
+      - 'scripts/lib/inkwave-roller-uuid-comparison.mjs'
+      - 'scripts/tests/inkwave-roller-uuid-comparison.test.mjs'
+      - 'patches/splatoon3/uuid-random-adapter.mjs'
       - 'scripts/lib/inkwave-range-menu-entry.mjs'
       - 'patches/local-quality/roller-motion.mjs'
       - '.github/workflows/inkwave-main-weapons.yml'
@@ -153,7 +159,7 @@ jobs:
               run=false
               while IFS= read -r file; do
                 case "$file" in
-                  .github/workflows/inkwave-main-weapons.yml|scripts/check-inkwave-roller-scale-range.mjs|scripts/lib/inkwave-range-menu-entry.mjs|scripts/build-inkwave.mjs|scripts/inkwave-source-composition.mjs) run=true ;;
+                  .github/workflows/inkwave-main-weapons.yml|scripts/check-inkwave-roller-scale-range.mjs|scripts/lib/inkwave-roller-uuid-comparison.mjs|scripts/tests/inkwave-roller-uuid-comparison.test.mjs|patches/splatoon3/uuid-random-adapter.mjs|scripts/lib/inkwave-range-menu-entry.mjs|scripts/build-inkwave.mjs|scripts/inkwave-source-composition.mjs) run=true ;;
                   inkwave-public/src/core/*|inkwave-public/src/game/*|inkwave-public/src/world/paint.js|inkwave-public/src/config.js|inkwave-public/src/main.js) run=true ;;
                   patches/local-quality/roller-motion.mjs|patches/network-replication/roller-*|patches/splatoon3/weapon-catalog-adapter.mjs) run=true ;;
                   patches/splatoon3/runtime/roller*|patches/splatoon3/runtime/*motion*|patches/splatoon3/runtime/source-*|patches/splatoon3/runtime/weapon*|patches/splatoon3/runtime/main-*|patches/splatoon3/runtime/movement*|patches/splatoon3/runtime/body-*|patches/splatoon3/runtime/controller-*|patches/splatoon3/runtime/render.mjs|patches/splatoon3/runtime/install.mjs) run=true ;;
@@ -182,6 +188,7 @@ jobs:
             baseline: process.env.BASELINE_SHA, candidate: process.env.CANDIDATE_SHA,
             captureScript: sha256('scripts/check-inkwave-roller-scale-range.mjs'),
             entryHelper: sha256('scripts/lib/inkwave-range-menu-entry.mjs'),
+            comparisonHelper: sha256('scripts/lib/inkwave-roller-uuid-comparison.mjs'),
             workflow: sha256('.github/workflows/inkwave-main-weapons.yml'),
           }, null, 2) + '\n');
           NODE
@@ -211,6 +218,15 @@ jobs:
           set -o pipefail
           node scripts/build-inkwave.mjs inkwave-public work/roller-grip-site-candidate 2>&1 | tee work/roller-grip-evidence/after-build.log
           cp work/roller-grip-site-candidate/inkwave-build.json work/roller-grip-evidence/after-build.json
+      - name: Compile the explicitly declared historical UUID-only comparison
+        if: steps.changes.outputs.run == 'true'
+        shell: bash
+        run: |
+          set -o pipefail
+          # Raw83 source/build/manifests are never changed. This creates a separate
+          # QA-only response overlay using the existing production source adapter.
+          INKWAVE_ROLLER_BASELINE_SOURCE=work/roller-grip-baseline INKWAVE_ROLLER_BASELINE_SITE=work/roller-grip-site-baseline node --test scripts/tests/inkwave-roller-uuid-comparison.test.mjs
+          node scripts/lib/inkwave-roller-uuid-comparison.mjs work/roller-grip-baseline work/roller-grip-site-baseline work/roller-grip-evidence/uuid-isolation > work/roller-grip-evidence/uuid-isolation-build.json
       - name: Capture baseline at the shipped 180-tick rolling state
         id: baseline_capture
         if: steps.changes.outputs.run == 'true'
@@ -245,12 +261,30 @@ jobs:
             assert.deepEqual(first.measurement[key], repeat.measurement[key], `Unchanged baseline A/A differs: ${key}`);
           console.log('Synthetic RNG baseline A/A control passed; candidate comparison may proceed.');
           NODE
+      - name: Capture declared UUID-isolated baseline without changing raw evidence
+        id: isolated_control
+        if: steps.changes.outputs.run == 'true' && steps.aa_control.outcome == 'success'
+        shell: bash
+        run: |
+          set -o pipefail
+          for side in before-isolated before-isolated-control; do
+            node scripts/check-inkwave-roller-scale-range.mjs work/roller-grip-site-baseline work/roller-grip-evidence/$side --expected-drum-width 2.5712 --grip-seed "$GRIP_SEED" --grip-camera-reference work/roller-grip-evidence/before/grip-cameras.json --historical-uuid-isolation work/roller-grip-evidence/uuid-isolation 2>&1 | tee work/roller-grip-evidence/$side.log
+          done
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'; import assert from 'node:assert/strict';
+          const read = side => JSON.parse(fs.readFileSync(`work/roller-grip-evidence/${side}/result.json`));
+          const first = read('before-isolated'), repeat = read('before-isolated-control');
+          for (const r of [first, repeat]) { assert.equal(r.passed, true); assert.equal(r.comparisonIsolation.kind, 'historical-three-uuid-isolation-only'); }
+          for (const key of ['gpuFootprint', 'recipeRandom', 'recipeRandomTrace', 'contactStamps', 'cameraPlan', 'gripViews', 'start', 'end'])
+            assert.deepEqual(first.measurement[key], repeat.measurement[key], `Controlled baseline A/A differs: ${key}`);
+          assert.deepEqual(first.runtimeIdentity, repeat.runtimeIdentity);
+          NODE
       # Failed A/A still yields diagnostic candidate pixels, never a passing pair.
       # The failed control step remains failed; cancellation is never bypassed.
       - name: Capture candidate with the baseline cameras unchanged
         if: ${{ !cancelled() && steps.changes.outputs.run == 'true' && steps.baseline_capture.outcome == 'success' }}
         env:
-          GRIP_DIAGNOSTIC_ONLY: ${{ steps.aa_control.outcome == 'success' && '0' || '1' }}
+          GRIP_DIAGNOSTIC_ONLY: ${{ steps.aa_control.outcome == 'success' && steps.isolated_control.outcome == 'success' && '0' || '1' }}
         shell: bash
         run: |
           set -o pipefail
@@ -269,22 +303,25 @@ jobs:
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           import assert from 'node:assert/strict';
+          import { hashBytes, loadUuidComparison, verifyLoadedModules } from './scripts/lib/inkwave-roller-uuid-comparison.mjs';
           const root = 'work/roller-grip-evidence';
           const read = file => JSON.parse(fs.readFileSync(`${root}/${file}`, 'utf8'));
           const sha = value => assert.match(value, /^[0-9a-f]{64}$/);
           const ids = read('checkouts.json');
           assert.equal(ids.baseline, process.env.BASELINE_SHA);
           assert.equal(ids.candidate, process.env.CANDIDATE_SHA);
-          for (const key of ['captureScript', 'entryHelper', 'workflow']) sha(ids[key]);
+          for (const [key, file] of [['captureScript','scripts/check-inkwave-roller-scale-range.mjs'], ['entryHelper','scripts/lib/inkwave-range-menu-entry.mjs'], ['comparisonHelper','scripts/lib/inkwave-roller-uuid-comparison.mjs'], ['workflow','.github/workflows/inkwave-main-weapons.yml']]) { sha(ids[key]); assert.equal(ids[key], hashBytes(fs.readFileSync(file))); }
+          const isolation = loadUuidComparison(`${root}/uuid-isolation`, 'work/roller-grip-site-baseline').declaration;
+          assert.equal(isolation.sourceManifestSha256, hashBytes(fs.readFileSync(`${root}/before-build.json`)), 'Historical manifest receipt changed');
           const names = ['rear', 'side', 'front-oblique', 'right-side', 'right-rear'];
-          const sides = ['before', 'before-control', 'after', 'after-control'].map((side, index) => {
-            const result = read(`${side}/result.json`), build = read(`${index < 2 ? 'before' : 'after'}-build.json`);
+          const allSides = ['before', 'before-control', 'before-isolated', 'before-isolated-control', 'after', 'after-control'].map((side, index) => {
+            const result = read(`${side}/result.json`), build = read(`${index < 4 ? 'before' : 'after'}-build.json`);
             const cameras = read(`${side}/grip-cameras.json`), m = result.measurement;
             const steady = read(`${side}/steady-result.json`);
             assert.equal(steady.passed, true); assert.equal(steady.build, result.build);
             assert.deepEqual(steady.measurement, m, 'Release capture changed steady measurement');
             assert.equal(result.passed, true, `${side} capture failed`);
-            const expectedWidth = index < 2 ? 2.5712 : 2.5712 * (1.36 / 1.72259927);
+            const expectedWidth = index < 4 ? 2.5712 : 2.5712 * (1.36 / 1.72259927);
             assert.equal(result.expectedDrumWidth, expectedWidth);
             assert.ok(Math.abs(m.drumWidth - expectedWidth) < 1e-4, `${side} model width differs`);
             assert.equal(result.diagnosticOnly, false, 'Diagnostic capture cannot pass paired acceptance');
@@ -293,6 +330,11 @@ jobs:
             assert.equal(build.build.optimization, 'esbuild-minify');
             assert.equal(build.build.esbuild, '0.28.2');
             assert.equal(result.build, build.contentHash, `${side} receipt/build mismatch`);
+            const declared = index === 2 || index === 3 ? isolation : null;
+            assert.deepEqual(result.comparisonIsolation, declared);
+            assert.deepEqual(result.runtimeIdentity, verifyLoadedModules(result.runtimeIdentity.modules, build, declared));
+            assert.equal(build.contentHash, hashBytes(JSON.stringify(build.artifacts)));
+            assert.equal(build.inputHash, hashBytes(JSON.stringify(build.files)));
             assert.equal(m.layout, 'range');
             assert.equal(m.floorTag, 'floor:roller');
             assert.equal(m.debugFixedTicks, 180);
@@ -315,6 +357,9 @@ jobs:
             assert.equal(rng.algorithm, 'mulberry32-u32-v1');
             assert.equal(rng.seed, Number(process.env.GRIP_SEED));
             assert.equal(rng.restored, true);
+            const trace = m.recipeRandomTrace, { digest, ...traceBody } = trace;
+            assert.equal(trace.totalDraws, rng.draws); assert.equal(trace.overflowDraws, 0);
+            assert.equal(digest.sha256, hashBytes(JSON.stringify(traceBody)), 'RNG trace receipt changed');
             assert.ok(Number.isInteger(rng.draws) && rng.draws > 0);
             assert.ok(Array.isArray(rng.contactSeeds) && rng.contactSeeds.length > m.events);
             for (const [order, contact] of rng.contactSeeds.entries()) {
@@ -377,8 +422,23 @@ jobs:
                 assert.equal(png.readUInt32BE(20), m.renderSize.height);
               }
             }
-            return { build, cameras, measurement: m, release };
+            return { build, cameras, measurement: m, release, runtimeIdentity: result.runtimeIdentity };
+
           });
+          // Cross-build equality is applied to a separately declared controlled
+          // baseline, not relaxed, filtered, or retroactively applied to raw83.
+          const sides = allSides.slice(2);
+          const raw = allSides[0].measurement, controlled = sides[0].measurement;
+          assert.equal(raw.recipeRandom.draws - controlled.recipeRandom.draws, 8, 'Only the independently observed two UUID allocations may leave the gameplay stream');
+          assert.equal(raw.recipeRandomTrace.totalDraws, raw.recipeRandom.draws);
+          assert.equal(controlled.recipeRandomTrace.totalDraws, controlled.recipeRandom.draws);
+          for (let i = 0; i < 8; i++) {
+            const group = raw.recipeRandomTrace.groups[raw.recipeRandomTrace.sequence[i]];
+            assert.equal(group.firstDraw, i + 1); assert.equal(group.count, 1);
+            assert.match(group.stack, /vendor\/three\/build\/three\.module\.js/);
+          }
+          assert(!controlled.recipeRandomTrace.groups.some(group => /vendor\/three\/build\/three\.module\.js/.test(group.stack)), 'Controlled UUID path still consumes gameplay RNG');
+          assert.deepEqual(raw.initialState.character, controlled.initialState.character);
           assert.equal(sides[0].build.contentHash, sides[1].build.contentHash, 'A/A baseline build differs');
           for (const other of sides.slice(1)) {
             assert.deepEqual(sides[0].measurement.initialState.character, other.measurement.initialState.character, 'Initial Character state differs');
@@ -402,9 +462,14 @@ jobs:
             }
             assert.equal(sides[0].measurement.frozenState.yaw, other.measurement.frozenState.yaw, 'Actor yaw differs');
           }
-          for (const [first, repeat] of [[sides[0], sides[1]], [sides[2], sides[3]]]) {
+          for (const [first, repeat] of [[allSides[0], allSides[1]], [sides[0], sides[1]], [sides[2], sides[3]]]) {
             assert.equal(first.build.contentHash, repeat.build.contentHash);
-            for (const key of ['gpuFootprint', 'recipeRandom', 'contactStamps']) assert.deepEqual(first.measurement[key], repeat.measurement[key], `Same-build A/A differs: ${key}`);
+            assert.deepEqual(first.runtimeIdentity, repeat.runtimeIdentity, 'A/A loaded bytes differ');
+            assert.equal(first.measurement.frozenState.yaw, repeat.measurement.frozenState.yaw, 'Same-build A/A frozen yaw differs');
+            for (let i = 0; i < 3; i++)
+              for (const key of ['tick', 'pos', 'yaw', 'rolling'])
+                assert.deepEqual(first.release.frames[i][key], repeat.release.frames[i][key], `Same-build A/A release gameplay differs: ${key}`);
+            for (const key of ['gpuFootprint', 'recipeRandom', 'recipeRandomTrace', 'contactStamps']) assert.deepEqual(first.measurement[key], repeat.measurement[key], `Same-build A/A differs: ${key}`);
           }
           for (const other of sides.slice(1))
             for (let i = 0; i < 3; i++)
@@ -413,12 +478,14 @@ jobs:
           // Record phase/time/pose, do not force-reset them or assert cross-build pose equality.
           const stateSummary = ({ frozenState: { time, phase, yaw, rolling } }) => ({ time, phase, yaw, rolling });
           fs.writeFileSync(`${root}/comparison.json`, JSON.stringify({ passed: true, ...ids,
+            comparisonIsolation: isolation, rawBaseline: { build: allSides[0].build.contentHash, recipeRandom: raw.recipeRandom, trace: raw.recipeRandomTrace },
+            runtimeIdentities: allSides.map(side => side.runtimeIdentity),
             before: sides[0].build.contentHash, after: sides[2].build.contentHash, baselineControl: sides[1].build.contentHash, candidateControl: sides[3].build.contentHash,
             contactPlacement: sides.map(s => s.measurement.contactStamps.map(c => ({at:c.at, drumCentre:c.drumCentre, error:c.contactError}))), gpuFootprints: sides.map(s => s.measurement.gpuFootprint),
             views: names, ticks: 180, release: { controller: sides[0].release.controller, ticks: [1, 4, 12] }, gpuFootprint: sides[0].measurement.gpuFootprint, recipeRandom: sides[0].measurement.recipeRandom, states: sides.map(s => stateSummary(s.measurement)),
-            note: 'Synthetic trusted-input-frozen, seeded 180-tick QA with exact GPU/RNG A/A controls for BOTH builds. Resizing moves physical drum contact and its orientation; source width/depth/seeds and actual drum contact remain checked, with placement recorded. This is not default stochastic gameplay. Pose/time remain unmodified; visual/reference acceptance requires image review.'
+            note: 'Raw83 A/A evidence is retained unchanged. Cross-build comparison explicitly isolates only byte-verified non-gameplay Three UUID allocation, using the existing production source adapter. Synthetic trusted-input-frozen, seeded 180-tick QA retains exact GPU/RNG A/A controls for raw83, controlled83 and candidate. Resizing moves physical drum contact and its orientation; source width/depth/seeds and actual drum contact remain checked, with placement recorded. This is not default stochastic gameplay. Pose/time remain unmodified; visual/reference acceptance requires image review.'
           }, null, 2) + '\n');
-          console.log('All four seeded captures preserve cameras, actor motion and source contact recipes; each build repeats its own exact GPU mask and RNG receipt.');
+          console.log('All six captures preserve raw evidence and repeat exact loaded bytes, GPU masks and RNG; the explicitly UUID-isolated baseline and candidate also retain exact cross-build gameplay/contact gates.');
           NODE
       - uses: actions/upload-artifact@v4
         if: always() && steps.changes.outputs.run == 'true'

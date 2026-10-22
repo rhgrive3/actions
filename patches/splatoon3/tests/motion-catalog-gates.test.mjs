@@ -9,6 +9,17 @@ import crypto from 'node:crypto';
 import { CATALOG_MODULES, CATALOG_SCENARIOS, catalogRenderFrames, validateCatalogResult, catalogStoragePath, catalogInputPath, validateCatalogInputReceipts, catalogFootLayout } from '../../../scripts/check-inkwave-motion-catalog.mjs';
 
 const hash = 'a'.repeat(64), pixel = { pixels: 960 * 720, changedPixels: 30, totalRgbDifference: 1000, maxChannelDifference: 100 };
+// Every field below is invented for validator tests, not captured native evidence.
+function presentationFixture(form = 'kid', grounded = true, rootVisible = true) {
+  const submerged = form === 'climb' || form === 'swim' && grounded;
+  return { schema: 1, authority: 'native-post-update', form, grounded,
+    rootVisible, rootAncestorsVisible: true, squidRootVisible: true,
+    kidVisible: form === 'kid', kidScale: form === 'kid' ? 1 : 0, squidScale: form === 'kid' ? 0 : 1,
+    source: { status: 'ready', error: false, disposed: false, bound: true, banks: true, active: false, formWeight: 0 },
+    actor: { bound: true, form: form === 'kid' ? 'kid' : 'squid', grounded, submerged, climbing: form === 'climb' },
+    parts: Object.fromEntries(['body', 'eyes', 'dark', 'ghost'].map(role => [role,
+      { present: true, attached: true, visible: role !== 'ghost' && !submerged, meshes: 1 }])) };
+}
 function gateFixture() {
   const files = [...CATALOG_MODULES.map(([id]) => 'patches/splatoon3/runtime/' + id + '-motion.mjs'), 'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/render.mjs', 'patches/splatoon3/runtime/death-camera.mjs', 'patches/splatoon3/runtime/walk.mjs', 'src/game/actor.js', 'src/game/character.js', 'src/game/weapons.js', 'src/game/physics.js', 'src/game/match.js', 'patches/splatoon3/runtime/turf-finish.mjs'];
   const artifacts = Object.fromEntries(files.map(file => ['_versions/fixture/' + file, hash]));
@@ -49,12 +60,32 @@ function gateFixture() {
     if (scenario.nativeSpecial === 'slam') { renders = makeRenders(); for (const r of renders) r.tick = Math.max(0, r.tick); row.renders = renders; }
     // Hidden native frames must have exactly zero RGB contribution.
     for (const r of renders) if (!samples[r.tick].visible) { r.visible = false; r.rig.changedPixels = r.rig.totalRgbDifference = r.rig.maxChannelDifference = 0; }
+    // Explicit synthetic human, dry-squid and airborne-squid positive controls.
+    // Keep pause sensitivity visible; hidden sensitivity is exercised separately below.
+    for (const r of renders) {
+      const sample = samples[r.tick];
+      const form = scenario.name === 'swim-turn-brake' || scenario.name.startsWith('squidroll-') ? 'squid' : 'kid';
+      if (scenario.name.startsWith('squidroll-') && r.tick < 10) sample.grounded = false;
+      r.presentation = presentationFixture(form, sample.grounded, sample.visible);
+      sample.kidScale = r.presentation.kidScale;
+    }
+    row.pause.presentation = presentationFixture(scenario.name === 'swim-turn-brake' ? 'squid' : 'kid');
+    row.pause.nativeDrawCount = 1;
+    row.pause.sensitivityMeasured = true;
     return row;
   });
   return { schema: 1, source: 'built-production-native', installCalls: 1, turfFinish: { captured: [.51,.49], judged: [.51,.49], frozen: true, winner: 0, reads: 1, state: 'judge' }, contentHash: crypto.createHash('sha256').update(JSON.stringify(artifacts)).digest('hex'), artifacts, loaded: Object.entries(artifacts).map(([file, sha256]) => ({ file, sha256, bytes: 100 })), images: ['fixture.png', 'fixture-hidden.png', 'fixture-sheet.png'].map(file => ({ file, sha256: hash, bytes: 100 })), errors: [], gpu: { renderer: 'fabricated gate string, never GPU evidence', contextLost: false, pixelControls: {dither:false,samples:0,target:'explicit-srgb-rgba8'} }, duplicateRealm: { modules: CATALOG_MODULES.length, unchanged: true }, data, previewRates: [30, 60, 120].map(hz => ({ hz, frames: hz, finite: true })), cleanup: { rendererDisposed: true, domRemoved: true, geometries: 0, textures: 0, fixtureTextureDisposals:[{labels:['compiled-uniform.dfgLUT'],wasLive:true,remainsLive:false}] } };
 }
 test('synthetic gate schema can exercise every acceptance branch; this proves no motion or GPU output', () => assert.equal(validateCatalogResult(gateFixture()).length, CATALOG_SCENARIOS.length));
 for (const [name, mutate, pattern] of [
+  ['missing render presentation', r => delete r.data[0].renders[0].presentation, /Submerged presentation: identity/],
+  ['missing pause presentation', r => delete r.data[0].pause.presentation, /Submerged presentation: identity/],
+  ['missing pause draw count', r => delete r.data[0].pause.nativeDrawCount, /pause native draw denominator/],
+  ['unmeasured visible pause sensitivity', r => r.data[0].pause.sensitivityMeasured = false, /pause denominator/],
+  ['render presentation disagrees with visibility', r => r.data[0].renders[0].presentation.rootVisible = false, /shader compiled denominator/],
+  ['missing dry-squid render positive control', r => { for (const x of r.data.find(x => x.name === 'swim-turn-brake').renders) x.presentation = presentationFixture(); for (const row of r.data.filter(x => x.name.startsWith('squidroll-'))) for (const x of row.renders) if (x.presentation.grounded) x.presentation = presentationFixture(); }, /Missing presentation positive control: dry-squid/],
+  ['missing airborne render positive control', r => { for (const row of r.data.filter(x => x.name.startsWith('squidroll-'))) for (const x of row.renders) if (!x.presentation.grounded) x.presentation = presentationFixture('kid', false); }, /Missing presentation positive control: airborne-squid/],
+  ['missing dry-squid sensitivity positive control', r => r.data.find(x => x.name === 'swim-turn-brake').pause.presentation = presentationFixture(), /Missing presentation positive control: dry-squid/],
   ['missing Match dependency', r => r.loaded = r.loaded.filter(x => !x.file.endsWith('/src/game/match.js')), /missing-module loaded/],
   ['missing Match-only runtime helper', r => r.loaded = r.loaded.filter(x => !x.file.endsWith('/turf-finish.mjs')), /missing-module installed graph/],
   ['missing native Turf proof', r => delete r.turfFinish, /native Turf finish/],
@@ -105,6 +136,49 @@ for (const [name, mutate, pattern] of [
   ['gameplay touched by pose', r => r.data[0].samples[0].visualGameplayInvariant = false, /native frame identity/],
   ['duplicate realm adds wrapper', r => r.duplicateRealm.unchanged = false, /cross-realm/],
 ]) test('rejects ' + name + ' (acceptance logic only)', () => { const result = gateFixture(); mutate(result); assert.throws(() => validateCatalogResult(result), pattern); });
+
+// Invented empty submerged data exercise the exception without pretending to
+// measure native geometry, shaders, RGB, or motion. Visible controls stay required.
+function submergedGateFixture() {
+  const result = gateFixture(), row = result.data.find(x => x.name === 'nullable-preview');
+  for (const r of row.renders) {
+    r.presentation = presentationFixture('swim');
+    row.samples[r.tick].kidScale = 0;
+    r.geometry = { indexedVertices: 0, triangles: 0, skinnedVertices: 0, meshes: 0, min: null, max: null };
+    r.materials = [];
+    Object.assign(r.rig, { changedPixels: 0, totalRgbDifference: 0, maxChannelDifference: 0 });
+  }
+  Object.assign(row.pause, { presentation: presentationFixture('swim'), nativeDrawCount: 0,
+    nativeVertexShaders: null, vertexPrograms: 0, vertexSources: [], sensitivityMeasured: false });
+  Object.assign(row.pause.movedRigRgb, { changedPixels: 0, totalRgbDifference: 0, maxChannelDifference: 0 });
+  return result;
+}
+test('synthetic submerged empty rig is counted as unmeasured, never visible sensitivity', () => {
+  const result = submergedGateFixture();
+  const summary = validateCatalogResult(result).find(r => r.name === 'nullable-preview');
+  assert.equal(summary.expectedHiddenRigSamples, result.data.find(r => r.name === 'nullable-preview').renders.length);
+  assert.equal(summary.visiblePixelPasses, 0);
+  assert.equal(summary.unmeasuredHiddenSensitivity, 1);
+});
+for (const [name, mutate, pattern] of [
+  ['missing owner', row => delete row.renders[0].presentation.source, /Submerged presentation: unproven owner/],
+  ['wrong actor form', row => row.renders[0].presentation.actor.form = 'kid', /Submerged presentation: actor\/form mismatch/],
+  ['visible submerged body', row => row.renders[0].presentation.parts.body.visible = true, /Submerged presentation: wrong body visibility/],
+  ['visible submerged eyes', row => row.renders[0].presentation.parts.eyes.visible = true, /Submerged presentation: wrong submerged parts/],
+  ['detached body', row => row.renders[0].presentation.parts.body.attached = false, /Submerged presentation: missing\/bad body/],
+  ['transitioning human erased', row => row.renders[0].presentation.kidScale = .5, /Presentation geometry: unproven empty geometry/],
+  ['active source weight erased', row => Object.assign(row.renders[0].presentation.source, { active: true, formWeight: .5 }), /Presentation geometry: unproven empty geometry/],
+  ['hidden ancestor excuses empty rig', row => row.renders[0].presentation.rootAncestorsVisible = false, /Presentation geometry: unproven empty geometry/],
+  ['empty geometry retains bounds', row => row.renders[0].geometry.min = [0, 0, 0], /Presentation geometry: unproven empty geometry/],
+  ['hidden pause claims sensitivity', row => row.pause.sensitivityMeasured = true, /pause denominator/],
+  ['hidden pause claims shaders', row => row.pause.nativeVertexShaders = true, /pause denominator/],
+  ['hidden pause reports moved pixels', row => row.pause.movedRigRgb.changedPixels = 1, /not rendered \/ hidden pixels nullable-preview.pause-counterexample/],
+]) test('synthetic submerged gate rejects ' + name, () => {
+  const result = submergedGateFixture();
+  assert.equal(validateCatalogResult(result).length, CATALOG_SCENARIOS.length);
+  mutate(result.data.find(r => r.name === 'nullable-preview'));
+  assert.throws(() => validateCatalogResult(result), pattern);
+});
 
 test('synthetic canonical vertex source may differ only in an explicitly reported debug shader name', () => {
   const result = gateFixture();

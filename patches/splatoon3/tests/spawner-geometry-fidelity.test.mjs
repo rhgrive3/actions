@@ -80,3 +80,28 @@ for(const fps of [30,60,120])test(`model preserves wait, launch, vanish, re-entr
   a.s3.squidSpawn={phase:'aim',target:new THREE.Vector3(0,0,10)};a.update(1/fps);assert(pod.visible);assert.equal(pod.scale.x,1);assert.equal(pod.position.z,4);
   a.s3.squidSpawn=null;a.update(1/fps);r.G.time+=SPAWNER_LOOK.vanishAfter+SPAWNER_LOOK.vanishTime+.01;a.update(1/fps);assert.equal(r.pods().length,0);
 });
+
+for (const hz of [30,60,120]) test(`remote actors draw and retire their spawners without local simulation at ${hz} Hz`,()=>{
+  class Actor { update() { throw Error('remote presentation must not simulate Actor.update'); } }
+  class NetMatch { applyRemote() { return 'owner snapshot'; } }
+  const G={scene:new THREE.Scene(),actors:[],time:0,teamColors:[new THREE.Color('#c3d52b'),new THREE.Color('#7446de')],match:{state:'intro'}};
+  installSquidSpawnPresentation({Actor,NetMatch,THREE,G,LANG:'en',TXT:{mode:'kbm'}});
+  const net=new NetMatch();
+  for(let i=0;i<8;i++){
+    const a=new Actor();Object.assign(a,{team:i<4?0:1,alive:true,remote:true,pos:new THREE.Vector3(i*2,4.5,0),vel:new THREE.Vector3(),form:'kid',s3:{squidSpawn:{phase:'aim',initial:true,ownerReplicated:true,target:null}}});G.actors.push(a);
+  }
+  const states=JSON.stringify(G.actors.map(a=>a.s3)),positions=G.actors.map(a=>a.pos.toArray());
+  for(const a of G.actors)assert.equal(net.applyRemote(a,1/hz),'owner snapshot');
+  const root=G.scene.getObjectByName('s3SquidSpawn'),pods=root.children.filter(o=>o.name==='s3Spawner');
+  assert.equal(pods.length,8);
+  for(let i=0;i<8;i++)assert.deepEqual(pods[i].position.toArray(),positions[i]);
+  for(let i=0;i<hz*4;i++){G.time+=1/hz;for(const a of G.actors)net.applyRemote(a,1/hz);}
+  assert.equal(JSON.stringify(G.actors.map(a=>a.s3)),states,'drawing does not advance remote phases');
+  assert(pods.every(p=>p.visible));
+  for(const a of G.actors){a.s3.squidSpawn={phase:'flight',from:a.pos.clone(),to:new THREE.Vector3(0,0,7)};a.form='squid';a.pos.z+=2;net.applyRemote(a,1/hz);}
+  for(let i=0;i<8;i++)assert.deepEqual(pods[i].position.toArray(),positions[i],'pod remains at owner launch origin');
+  for(const a of G.actors)delete a.s3.squidSpawn;
+  G.time+=SPAWNER_LOOK.vanishAfter+SPAWNER_LOOK.vanishTime+.01;
+  for(const a of G.actors)net.applyRemote(a,1/hz);
+  assert.equal(root.children.filter(o=>o.name==='s3Spawner').length,0);
+});

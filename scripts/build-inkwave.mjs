@@ -265,6 +265,12 @@ if (!unminified && fs.existsSync(path.join(THREE_DIR, 'three.module.js')) && pro
   const res = await esbuild.build({
     stdin: { contents: `export { ${keep.join(', ')} } from './three.module.js';`, resolveDir: THREE_DIR, sourcefile: 'three-slim.js' },
     bundle: true, format: 'esm', minify: true, charset: 'utf8', legalComments: 'inline', write: false, logLevel: 'warning',
+    // Bundle the same fully composed sources as the ordinary copy pass.
+    // Reading raw upstream here would overwrite vendor adapters (including UUID RNG isolation).
+    plugins: [{ name: 'three-source-composition', setup(build) {
+      build.onLoad({ filter: /\.m?js$/ }, args => ({ loader: 'js',
+        contents: adaptBuildSource(path.relative(SRC, args.path).split(path.sep).join('/'), fs.readFileSync(args.path, 'utf8')) }));
+    } }],
   });
   const out = res.outputFiles[0].contents;
   const before = fs.statSync(path.join(BUILD, 'vendor/three/build/three.module.js')).size + fs.statSync(path.join(BUILD, 'vendor/three/build/three.core.js')).size;

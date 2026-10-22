@@ -152,6 +152,15 @@ function retireShell(r, shell) {
   const i = r.ownedGeometries.indexOf(shell.geometry);
   if (i >= 0) { r.ownedGeometries.splice(i, 1); disposeGeometry(shell.geometry); }
 }
+function squidShellView(source, material, THREE) {
+  // A loaded native owner may replace a Mesh with a SkinnedMesh. Borrow its
+  // actual skeleton as well as its buffers; never reproduce or modify its rig.
+  const view = geometryView(source.geometry, THREE);
+  const shell = source.isSkinnedMesh ? new THREE.SkinnedMesh(view, material) : new THREE.Mesh(view, material);
+  if (source.isSkinnedMesh) { shell.bindMode = source.bindMode; shell.bind(source.skeleton, source.bindMatrix); }
+  gate(shell); shell.name = 's3-flow-squid-edge'; shell.frustumCulled = false; shell.renderOrder = 4;
+  shell.visible = false; source.parent.add(shell); return shell;
+}
 function makeResources(ch, s, THREE) {
   const group = new THREE.Group(); group.name = 's3-flow-exterior';
   group.visible = false; ch.root.add(group);
@@ -185,10 +194,7 @@ function makeResources(ch, s, THREE) {
     mesh.frustumCulled = false; mesh.renderOrder = 5; group.add(mesh); return mesh;
   });
   const shellMat = shellMaterial(ch, ch.mats.squid, THREE);
-  const squidView = geometryView(ch.squid.body.geometry, THREE);
-  const squidShell = gate(new THREE.Mesh(squidView, shellMat));
-  squidShell.name = 's3-flow-squid-edge'; squidShell.frustumCulled = false; squidShell.renderOrder = 4;
-  squidShell.visible = false; ch.squid.body.parent.add(squidShell);
+  const squidShell = squidShellView(ch.squid.body, shellMat, THREE), squidView = squidShell.geometry;
   const r = { shown: false, group, glints, alpha, glintGeo, glintMat, ribbonGeo, ribbonMat,
     ribbons, shellMat, squidShell, kidShells: new Map(), kidSources: new Map(),
     shellMaterials: new Map([['squid', shellMat]]), ownedGeometries: [glintGeo, ribbonGeo, squidView], squidSource: ch.squid.body.geometry,
@@ -226,10 +232,10 @@ function syncShell(ch, s, r, THREE, shown) {
     shell.matrix.copy(mesh.matrix); shell.matrixWorldNeedsUpdate = true;
   }
   const sq = ch.squid.body;
-  if (r.squidSource !== sq.geometry) {
-    const previous = r.squidShell.geometry;
-    r.ownedGeometries.splice(r.ownedGeometries.indexOf(previous), 1); disposeGeometry(previous);
-    r.squidShell.geometry = geometryView(sq.geometry, THREE); gate(r.squidShell);
+  if (r.squidSource !== sq.geometry || !!r.squidShell.isSkinnedMesh !== !!sq.isSkinnedMesh
+      || (sq.isSkinnedMesh && r.squidShell.skeleton !== sq.skeleton) || r.squidShell.parent !== sq.parent) {
+    retireShell(r, r.squidShell);
+    r.squidShell = squidShellView(sq, r.shellMat, THREE);
     r.ownedGeometries.push(r.squidShell.geometry); r.squidSource = sq.geometry;
   }
   r.squidShell.position.copy(sq.position);
