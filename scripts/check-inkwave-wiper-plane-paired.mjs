@@ -1,6 +1,9 @@
 #!/usr/bin/env node
+import {assertWiperCurrentBinding,WIPER_SOURCE,WIPER_BASELINE} from './lib/inkwave-wiper-current-binding.mjs';
+import {verifyRuntimeBuild} from './lib/inkwave-runtime-evidence.mjs';
+import {assertWiperCoverageImage} from './lib/inkwave-wiper-flight-coverage.mjs';
 import {createHash} from 'node:crypto';import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import {execFileSync} from 'node:child_process';
-const [site,source,overlay,rootArg,compareArg]=process.argv.slice(2);assert.ok([4,5].includes(process.argv.slice(2).length));const compareDental=compareArg==='--compare-dental-only';assert.ok(compareArg===undefined||compareDental);if(!rootArg)throw Error('Usage: site source overlay out');
+const [site,source,overlay,rootArg,compareArg]=process.argv.slice(2);assert.ok([4,5].includes(process.argv.slice(2).length));const compareDental=compareArg==='--compare-dental-only',controlsOnly=compareArg==='--controls-only';assert.ok(compareArg===undefined||compareDental||controlsOnly);if(!rootArg)throw Error('Usage: site source overlay out');
 const root=path.resolve(rootArg);fs.mkdirSync(root,{recursive:true});
 const same=(a,b)=>assert.deepEqual(a,b,'native paired invariant');
 assert.throws(()=>same({seed:1},{seed:2}),assert.AssertionError);assert.throws(()=>same({camera:[1]},{camera:[2]}),assert.AssertionError);
@@ -8,8 +11,10 @@ const validAxis=axis=>Array.isArray(axis)&&axis.length===3&&axis.every(Number.is
 const plane=(axis,horizontal,tolerance)=>validAxis(axis)&&(horizontal?Math.abs(axis[1])<tolerance:Math.abs(axis[1])>1-tolerance);
 for(const bad of [[0,0,0],[NaN,0,0],[null,0,0],[1,0]])assert.equal(plane(bad,true,.02),false);
 assert.equal(plane([0,1,0],true,.02),false);assert.equal(plane([1,0,0],false,.02),false);
+const manifest=verifyRuntimeBuild(path.resolve(site),path.resolve(source),WIPER_SOURCE),binding=JSON.parse(fs.readFileSync(path.join(overlay,'receipt.json')));assertWiperCurrentBinding(manifest,binding);
 const reports=[];
-const cases=compareDental?[['s3-saber-heavy','charged']]:[['s3-saber-heavy','charged'],['s3-saber-heavy','tap'],['s3-saber-normal','charged'],['s3-saber-lite','charged']];
+const fixedCameras=new Map();
+const cases=controlsOnly?[['s3-saber-heavy','tap'],['s3-saber-normal','charged'],['s3-saber-lite','charged']]:compareDental?[['s3-saber-heavy','charged']]:[['s3-saber-heavy','charged'],['s3-saber-heavy','tap'],['s3-saber-normal','charged'],['s3-saber-lite','charged']];
 for(const [id,action]of cases){
  const rows=[];
  for(const variant of ['A','B']){
@@ -17,7 +22,7 @@ for(const [id,action]of cases){
   if(!compareDental)execFileSync(process.execPath,['scripts/check-inkwave-wiper-plane-native.mjs',site,source,overlay,out,variant,id,action],{stdio:'inherit',timeout:1200000});
   const r=JSON.parse(fs.readFileSync(path.join(out,'receipt.json'),'utf8'));assert.equal(r.status,'passed');assert.equal(r.variant,variant);assert.equal(r.id,id);assert.equal(r.action,action);assert.equal(r.result?.id,id);assert.equal(r.result?.action,action);rows.push(r);
  }
- const [a,b]=rows;if(compareDental){assert.equal(a.head,'0430673b09a5009628fc87baa414b3560090fc1d');assert.equal(a.baseline,'7581ca9be8cf87d253918b8abb3b8ebe728c2093');assert.equal(a.contentHash,'8e350111a0469095d2872093322809f70da7d31237e520226946cbb0740c4c16');}for(const k of ['head','baseline','inputHash','contentHash','binding'])same(a[k],b[k]);
+ const [a,b]=rows;for(const row of rows){assert.equal(row.head,WIPER_SOURCE);assert.equal(row.baseline,WIPER_BASELINE);assert.equal(row.contentHash,manifest.contentHash);assert.equal(row.inputHash,manifest.inputHash);same(row.binding,binding);}if(compareDental){assert.equal(a.head,WIPER_SOURCE);assert.equal(a.baseline,WIPER_BASELINE);assert.equal(a.contentHash,manifest.contentHash);}for(const k of ['head','baseline','inputHash','contentHash','binding'])same(a[k],b[k]);
  const A=a.result,B=b.result;assert.equal(A.setup.initial.ambientState?.schema,1);assert.equal(B.setup.initial.ambientState?.schema,1);same(A.setup.initial,B.setup.initial);same(A.setup.target,B.setup.target);same(A.setup.palette,B.setup.palette);same(A.completion,B.completion);
  assert.equal(A.frameCount,161);assert.equal(B.frameCount,161);assert.equal(A.dt,1/60);assert.equal(B.dt,1/60);
  if(compareDental){assert.equal(A.dentalPilot,true);assert.equal(B.dentalPilot,true);assert.equal(A.costProbe,false);assert.equal(B.costProbe,false);assert.equal(A.completion.gpuDrained,true);assert.equal(B.completion.gpuDrained,true);same(A.setup.capturePolicy,B.setup.capturePolicy);same(A.setup.capturePolicy.continuous,{view:'front',firstTick:75,lastTick:160});}
@@ -27,7 +32,7 @@ for(const [id,action]of cases){
   const x=A.frames[i],y=B.frames[i];same([x.tick,y.tick],[i,i]);
   for(const [variant,row]of [['A',x],['B',y]]){
    if(compareDental)same(row.images.map(im=>im.view),[...(i>=75?['front']:[]),...(topTicks.includes(i)?['top']:[])]);
-   for(const im of row.images){assert.ok(['front','top'].includes(im.view));const expected=action+'-'+im.view+'-'+String(i).padStart(4,'0')+'.png';assert.equal(im.file,expected);const bytes=fs.readFileSync(path.join(root,id+'-'+action+'-'+variant,expected));assert.ok(bytes.length>1000);assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a');assert.equal(bytes.subarray(12,16).toString(),'IHDR');assert.equal(bytes.readUInt32BE(16),960);assert.equal(bytes.readUInt32BE(20),720);assert.equal(createHash('sha256').update(bytes).digest('hex'),im.pngSha256,'PNG bytes must bind to the observed frame receipt');}
+   for(const im of row.images){assertWiperCoverageImage(im,row.axes.counts);const cameraKey=id+':'+action+':'+variant+':'+im.view;if(fixedCameras.has(cameraKey))same(im.camera,fixedCameras.get(cameraKey));else fixedCameras.set(cameraKey,im.camera);assert.ok(['front','top'].includes(im.view));const expected=action+'-'+im.view+'-'+String(i).padStart(4,'0')+'.png';assert.equal(im.file,expected);const bytes=fs.readFileSync(path.join(root,id+'-'+action+'-'+variant,expected));assert.ok(bytes.length>1000);assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a');assert.equal(bytes.subarray(12,16).toString(),'IHDR');assert.equal(bytes.readUInt32BE(16),960);assert.equal(bytes.readUInt32BE(20),720);assert.equal(createHash('sha256').update(bytes).digest('hex'),im.pngSha256,'PNG bytes must bind to the observed frame receipt');}
   }
   assert.equal(x.state.ambientState?.schema,1);assert.equal(y.state.ambientState?.schema,1);
   for(const k of ['state','paintHash','paintEvents','aimTrace','memory','census'])same(x[k],y[k]);
@@ -52,7 +57,7 @@ for(const [id,action]of cases){
   for(const [variant,row]of [['A',A],['B',B]])assert.ok(row.frames.slice(firstTick).every(f=>f.images.some(im=>im.view===view)),'missing continuous frame '+variant);
   const aa=path.join(root,id+'-'+action+'-A',action+'-'+view+'-%04d.png'),bb=path.join(root,id+'-'+action+'-B',action+'-'+view+'-%04d.png'),video=path.join(root,'dental-charged-'+view+'-candidate.mp4');
   execFileSync('ffmpeg',['-y','-framerate','60','-start_number',String(firstTick),'-i',aa,'-framerate','60','-start_number',String(firstTick),'-i',bb,'-filter_complex',
-   '[0:v]drawtext=text=Before 7581ca9 | simulation60Hz | seed515e7021:x=12:y=16:fontsize=20:fontcolor=white:box=1:boxcolor=black[left];[1:v]drawtext=text=Candidate0430673 | inspection view | NOT retail:x=12:y=16:fontsize=20:fontcolor=white:box=1:boxcolor=black[right];[left][right]hstack=inputs=2[v]',
+   '[0:v]drawtext=text=Before 7581ca9 | simulation60Hz | seed515e7021:x=12:y=16:fontsize=20:fontcolor=white:box=1:boxcolor=black[left];[1:v]drawtext=text=Candidatec0938a3 | inspection view | NOT retail:x=12:y=16:fontsize=20:fontcolor=white:box=1:boxcolor=black[right];[left][right]hstack=inputs=2[v]',
    '-map','[v]','-frames:v',String(frameCount),'-c:v','libx264','-preset','veryfast','-crf','18','-pix_fmt','yuv420p',video],{stdio:'inherit',timeout:300000});
   const info=JSON.parse(execFileSync('ffprobe',['-v','error','-count_frames','-show_entries','stream=width,height,avg_frame_rate,nb_read_frames,duration','-of','json',video],{encoding:'utf8'})).streams[0];
   assert.equal(info.width,1920);assert.equal(info.height,720);assert.equal(info.avg_frame_rate,'60/1');assert.equal(Number(info.nb_read_frames),frameCount);assert.ok(Math.abs(Number(info.duration)-frameCount/60)<.02);
@@ -61,4 +66,4 @@ for(const [id,action]of cases){
  }
  console.log(JSON.stringify({id,action,status:'paired-physics-resource-gates-passed',live,sheets,visualReview:'pending',performanceAccepted:false}));
 }
-fs.writeFileSync(path.join(root,'paired-result.json'),JSON.stringify({reports,pendingNativeControls:compareDental?['s3-saber-heavy tap','s3-saber-normal charged','s3-saber-lite charged']:[],capturedContinuousTicks:compareDental?[75,160]:[0,160],uncapturedTicksArePixelCompared:false,performanceAccepted:false,scope:compareDental?'Dental-only front continuous ticks75–160; top milestone stills; ticks0–74 numerical only; three native controls pending; no retail/full performance acceptance':'one continuous Dental charged pilot and three unchanged native controls; no retail matching or full performance acceptance'},null,2));
+fs.writeFileSync(path.join(root,'paired-result.json'),JSON.stringify({reports,pendingNativeControls:compareDental?['s3-saber-heavy tap','s3-saber-normal charged','s3-saber-lite charged']:[],capturedContinuousTicks:controlsOnly?null:compareDental?[75,160]:[0,160],uncapturedTicksArePixelCompared:false,performanceAccepted:false,scope:controlsOnly?'Three unchanged native controls only; Dental pilot separately required; no retail/full performance acceptance':compareDental?'Dental-only front continuous ticks75–160; top milestone stills; ticks0–74 numerical only; three native controls pending; no retail/full performance acceptance':'one continuous Dental charged pilot and three unchanged native controls; no retail matching or full performance acceptance'},null,2));

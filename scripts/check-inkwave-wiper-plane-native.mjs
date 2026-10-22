@@ -2,20 +2,23 @@
 // Native gameplay + separate inspection camera. No physical GPU/retail fidelity claim.
 import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
+import {configureWiperCoverageCamera,assertWiperFlightCoverage,assertWiperFullFrame} from './lib/inkwave-wiper-flight-coverage.mjs';
 import {createWiperAmbientObserver} from './lib/inkwave-wiper-ambient-observer.mjs';
 import {readWiperAmbientState} from './lib/inkwave-wiper-ambient-state.mjs';
+import {assertWiperCurrentBinding,WIPER_SOURCE,WIPER_BASELINE} from './lib/inkwave-wiper-current-binding.mjs';
 import {verifyRuntimeBuild,hash} from './lib/inkwave-runtime-evidence.mjs';
 import {enterRangeFromMenu} from './lib/inkwave-range-menu-entry.mjs';
 import {awaitWiperSceneSources,wiperSceneCensus,validWiperProfileStyle} from './lib/inkwave-wiper-scene-readiness.mjs';
 assert.ok([7,8].includes(process.argv.slice(2).length),'Unexpected CLI argument count');
 const [siteArg,sourceArg,overlayArg,outArg,variant,id,action,costArg]=process.argv.slice(2);
-const costProbe=costArg==='--cost-probe',dentalPilot=costArg==='--dental-pilot',rngDiagnostic=costArg==='--rng-diagnostic';assert.ok(costArg===undefined||costProbe||dentalPilot||rngDiagnostic);if(rngDiagnostic)assert.ok(id==='s3-saber-heavy'&&action==='charged');if(dentalPilot)assert.ok(id==='s3-saber-heavy'&&action==='charged');if(costProbe)assert.ok(variant==='A'&&id==='s3-saber-heavy'&&action==='charged');
+const visibilityProbe=costArg==='--visibility-probe';
+const costProbe=costArg==='--cost-probe',dentalPilot=costArg==='--dental-pilot',rngDiagnostic=costArg==='--rng-diagnostic';assert.ok(costArg===undefined||costProbe||dentalPilot||rngDiagnostic||visibilityProbe);if(visibilityProbe)assert.ok(id==='s3-saber-heavy'&&action==='charged');if(rngDiagnostic)assert.ok(id==='s3-saber-heavy'&&action==='charged');if(dentalPilot)assert.ok(id==='s3-saber-heavy'&&action==='charged');if(costProbe)assert.ok(variant==='A'&&id==='s3-saber-heavy'&&action==='charged');
 assert.ok(outArg&&['A','B'].includes(variant));assert.ok(['s3-saber-heavy','s3-saber-normal','s3-saber-lite'].includes(id));assert.ok(['tap','charged'].includes(action));
 const site=path.resolve(siteArg),source=path.resolve(sourceArg),overlay=path.resolve(overlayArg),out=path.resolve(outArg);
 const nodeTimings={started:performance.now()};
-const head='0430673b09a5009628fc87baa414b3560090fc1d',baseline='7581ca9be8cf87d253918b8abb3b8ebe728c2093';
+const head=WIPER_SOURCE,baseline=WIPER_BASELINE;
 const manifest=verifyRuntimeBuild(site,source,head),binding=JSON.parse(fs.readFileSync(path.join(overlay,'receipt.json'),'utf8'));
-if(costProbe||dentalPilot||rngDiagnostic)assert.equal(manifest.contentHash,'8e350111a0469095d2872093322809f70da7d31237e520226946cbb0740c4c16','Exact prior emitted workload for cost probe');
+assertWiperCurrentBinding(manifest,binding);
 assert.equal(binding.candidate,head);assert.equal(binding.baseline,baseline);assert.equal(binding.contentHash,manifest.contentHash);assert.equal(binding.inputHash,manifest.inputHash);assert.equal(binding.revision,manifest.build.revision);
 assert.deepEqual(binding.modules.map(x=>x.name).sort(),['s3-ink-sheets.mjs','s3-projectile-shapes.mjs']);
 const dummyPath='_versions/'+manifest.build.revision+'/patches/practice-range/runtime/dummy.mjs';
@@ -101,9 +104,9 @@ try{
   },true);
  },{id,rngDiagnostic});
  nodeTimings.beforeEntry=performance.now();const entry=await enterRangeFromMenu(page,'http://127.0.0.1:'+server.address().port,{timeout:300000});
- await page.evaluate('window.__awaitWiperSources='+awaitWiperSceneSources.toString()+';window.__wiperCensus='+wiperSceneCensus.toString()+';window.__validWiperProfileStyle='+validWiperProfileStyle.toString());
+ await page.evaluate('window.__awaitWiperSources='+awaitWiperSceneSources.toString()+';window.__wiperCensus='+wiperSceneCensus.toString()+';window.__validWiperProfileStyle='+validWiperProfileStyle.toString()+';window.__configureWiperCoverageCamera='+configureWiperCoverageCamera.toString()+';window.__assertWiperFlightCoverage='+assertWiperFlightCoverage.toString()+';window.__assertWiperFullFrame='+assertWiperFullFrame.toString());
  nodeTimings.afterEntry=performance.now();
- const setup=await page.evaluate(async({id,action,dummyPath,costProbe,dentalPilot,rngDiagnostic})=>{
+ const setup=await page.evaluate(async({id,action,dummyPath,costProbe,dentalPilot,rngDiagnostic,visibilityProbe})=>{
   const THREE=await import('three'),G=window.__G,g=window.__inkwave,a=G.local;
   if(!g.frozen||!window.__wiperEntry?.trusted||!G.match?.range||G.match.state!=='playing'||a.weaponId!==id)throw Error('Native range/weapon admission failed');
   const dummyUrl=new URL('/'+dummyPath,location.origin).href;
@@ -154,16 +157,17 @@ try{
    }
    if(shape.slashV.count||shape.slashH.count||shape.sheets.mesh.count)lastRelatedGeometryTick=tick;
    const phases={nativeSubmitMs:frameCpuMs,inspection:[]},hashStart=performance.now();const paintHash=await fingerprint(G.paint.grid),images=[];phases.paintHashMs=performance.now()-hashStart;
-   const views=rngDiagnostic?[]:dentalPilot?(tick>=75?['front']:[]):((capture||(owned.length&&!capturedLive))?['front','top']:[]);
+   const views=rngDiagnostic?[]:visibilityProbe?(owned.length&&!capturedLive?['front','top']:[]):dentalPilot?(tick>=75?['front']:[]):((capture||(owned.length&&!capturedLive))?['front','top']:[]);
    if(dentalPilot&&(tick===75||birthNow||expiryNow||tick===160))views.push('top');
    if(dentalPilot&&birthNow&&tick<75)throw Error('Dental birth precedes continuous capture window');
    for(const view of views){
     const before=JSON.stringify(physical()),prevTarget=r.getRenderTarget(),prevAuto=r.autoClear;
-    camera.position.copy(target).add(view==='front'?new THREE.Vector3(.2,2,12):new THREE.Vector3(0,15,-.01));camera.up.set(0,1,0);camera.lookAt(target);camera.updateMatrixWorld(true);camera.updateProjectionMatrix();
-    try{r.setRenderTarget(null);r.autoClear=true;const renderStart=performance.now();r.render(G.scene,camera);const submitEnd=performance.now();
+    window.__configureWiperCoverageCamera(THREE,camera,target,view);
+    const flightCoverage={slashH:window.__assertWiperFlightCoverage(THREE,shape.slashH,camera),slashV:window.__assertWiperFlightCoverage(THREE,shape.slashV,camera)};
+    try{r.setRenderTarget(null);r.autoClear=true;const fullFrame=window.__assertWiperFullFrame(THREE,r,camera);const renderStart=performance.now();r.render(G.scene,camera);const submitEnd=performance.now();
      const readStart=performance.now();const pixels=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,pixels);const readEnd=performance.now();
      let lo=255,hi=0;for(let j=0;j<pixels.length;j+=4){const v=(pixels[j]+pixels[j+1]+pixels[j+2])/3;lo=Math.min(lo,v);hi=Math.max(hi,v);}
-     if(hi-lo<8)throw Error('Flat inspection frame');const pixelHash=await fingerprint(pixels),encodeStart=performance.now(),png=r.domElement.toDataURL('image/png').split(',')[1],encodeEnd=performance.now();phases.inspection.push({view,submitMs:submitEnd-renderStart,readPixelsWithQueuedGpuMs:readEnd-readStart,pixelCheckHashMs:encodeStart-readEnd,pngEncodeMs:encodeEnd-encodeStart});images.push({view,pixelHash,png,camera:gameCamera(camera)});
+     if(hi-lo<8)throw Error('Flat inspection frame');const pixelHash=await fingerprint(pixels),encodeStart=performance.now(),png=r.domElement.toDataURL('image/png').split(',')[1],encodeEnd=performance.now();phases.inspection.push({view,submitMs:submitEnd-renderStart,readPixelsWithQueuedGpuMs:readEnd-readStart,pixelCheckHashMs:encodeStart-readEnd,pngEncodeMs:encodeEnd-encodeStart});images.push({view,pixelHash,png,camera:gameCamera(camera),flightCoverage,fullFrame});
     }finally{r.setRenderTarget(prevTarget);r.autoClear=prevAuto;}
     if(JSON.stringify(physical())!==before)throw Error('Inspection render changed gameplay camera/physics/aim/clock/RNG');
    }
@@ -176,7 +180,7 @@ try{
    let gpuDrained=false;if(dentalPilot||rngDiagnostic){if(dentalPilot){const shape=G.projectiles._s3Shapes;if(this.tick-lastRelatedGeometryTick<21)throw Error('Need 21 native frames after last related geometry for slash speck lifetime');if(shape.slashV.count!==0||shape.slashH.count!==0||shape.sheets.mesh.count!==0)throw Error('Related slash/sheet geometry still live at final native tick');}const drainStart=performance.now();gl.finish();window.__wiperFinalDrainMs=performance.now()-drainStart;if(gl.getError())throw Error('Final GPU drain error');gpuDrained=true;}
    return {firstBirth,firstRetirement,expired,aimTrace,paintEvents:paints,gpuDrained,relatedFx:{lastGeometryTick:lastRelatedGeometryTick,finalTick:this.tick,speckTailFrames:21},final:physical()};}};
   return {startupTiming,costProbe,dentalPilot,capturePolicy:dentalPilot?{continuous:{view:'front',firstTick:75,lastTick:160},top:'pre-release, actual birth, actual retirement, final frame',unchangedControls:'pending native acceptance'}:null,initial,dummyModuleUrl:dummyUrl,startupRngBeforeReset:beforeReset,target:target.toArray(),quality:g.settings.quality,atlasSize:G.paint.size,palette:{colorblind:g.settings.colorblind,teams:G.teamColors.map(c=>c.getHex()),local:a.color.getHex()},scope:'native simulation plus separate inspection-camera raw renderer; not native postprocessed view; CPU diagnostic not performance acceptance'};
- },{id,action,dummyPath,costProbe,dentalPilot,rngDiagnostic});
+ },{id,action,dummyPath,costProbe,dentalPilot,rngDiagnostic,visibilityProbe});
  nodeTimings.afterSetup=performance.now();
  const frames=[],pilot=id==='s3-saber-heavy'&&action==='charged';
  result={setup,frames,status:'partial',costProbe};
@@ -189,18 +193,20 @@ try{
   row.pngDecodeWriteHashMs=performance.now()-saveStart;frames.push(row);
   fs.writeFileSync(path.join(out,'partial-frames.json'),JSON.stringify({status:'partial',setup,frames,nodeTimings,costProbe}));
   console.log(JSON.stringify({phase:'completed-frame-cost',tick,images:row.images.length,nativeSubmitMs:row.frameCpuMs,phases:row.phases,nodeEvaluateWallMs:row.nodeEvaluateWallMs,pngDecodeWriteHashMs:row.pngDecodeWriteHashMs}));
+  if(visibilityProbe&&row.axes.main&&row.images.length===2)break;
  }
- const completion=await page.evaluate(()=>window.__wiperStep.finish());
+ if(visibilityProbe)assert.ok(frames.at(-1)?.axes.main&&frames.at(-1).images.length===2,'Visibility probe requires an actual live slash in both full-frame views');
+ const completion=visibilityProbe?{scope:'first live frame only; no retirement/tail acceptance'}:await page.evaluate(()=>window.__wiperStep.finish());
  const ambientObservation=rngDiagnostic?await page.evaluate(()=>{const o=window.__wiperObserver;o.mark('finished');const result=o.report();o.restore();return result;}):null;if(rngDiagnostic){assert.deepEqual(ambientObservation.errors,[]);assert.equal(ambientObservation.eventOverflow,0);assert.equal(ambientObservation.sampleOverflow,0);assert.ok(completion.gpuDrained);}
  await Promise.all(responsePending);assert.equal(consumed.get(dummyPath),manifest.artifacts[dummyPath],'consumed exact native dummy module');assert.deepEqual(errors,[]);assert.deepEqual(responseErrors,[]);
  for(const [key,{m}]of replacements){const expected=variant==='A'?m.baselineEmittedSha256:m.candidateEmittedSha256;
  assert.equal(loaded.get(key),expected,'actual served module '+key);assert.equal(consumed.get(key),expected,'browser consumed module body '+key);}
- result={setup,completion,frames,ambientObservation,dt:1/60,frameCount:rngDiagnostic?16:costProbe?10:161,rngDiagnostic,costProbe,dentalPilot,nodeTimings,finalGpuDrainMs:dentalPilot?await page.evaluate(()=>window.__wiperFinalDrainMs):null,variant,id,action,pilot,physicalGpuMeasured:false,performanceAccepted:false};
+ result={setup,completion,frames,ambientObservation,dt:1/60,frameCount:frames.length,visibilityProbe,rngDiagnostic,costProbe,dentalPilot,nodeTimings,finalGpuDrainMs:dentalPilot?await page.evaluate(()=>window.__wiperFinalDrainMs):null,variant,id,action,pilot,physicalGpuMeasured:false,performanceAccepted:false};
 }catch(e){failure=e;}
 finally{
  if(rngDiagnostic&&page){try{const partial=await page.evaluate(()=>window.__wiperObserver?.report());result??={};result.ambientObservation??=partial;}catch(e){errors.push('observer-recovery: '+e.message);}}
  await browser?.close();await new Promise(r=>server.close(r));
- const receipt={status:failure?'failed':rngDiagnostic?'rng-diagnostic-only':costProbe?'cost-diagnostic-only':'passed',head,baseline,variant,id,action,inputHash:manifest.inputHash,contentHash:manifest.contentHash,binding,loaded:[...loaded],consumed:[...consumed],responseErrors,result,errors,error:failure?.stack};
+ const receipt={status:failure?'failed':visibilityProbe?'visibility-diagnostic-only':rngDiagnostic?'rng-diagnostic-only':costProbe?'cost-diagnostic-only':'passed',head,baseline,variant,id,action,inputHash:manifest.inputHash,contentHash:manifest.contentHash,binding,loaded:[...loaded],consumed:[...consumed],responseErrors,result,errors,error:failure?.stack};
  fs.writeFileSync(path.join(out,'receipt.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify({status:receipt.status,variant,id,action,error:failure?.message}));
  if(failure)process.exitCode=1;
 }

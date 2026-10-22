@@ -1,42 +1,76 @@
-name: INKWAVE Wiper ambient RNG observation
+name: INKWAVE current-source Wiper native QA
 on:
   push:
     branches: [diagnostic/wiper-rng-observation-20261021]
+  workflow_dispatch:
+    inputs:
+      full_capture:
+        description: Run continuous capture and unchanged controls after visibility admission
+        type: boolean
+        default: false
 permissions:
   contents: read
-  actions: read
 jobs:
-  observe:
+  capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 0430673b09a5009628fc87baa414b3560090fc1d
-          path: work/wiper-source
+          ref: c0938a3f84768474df91713f7b372f9d7f8fe96a
+          path: work/source
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --test scripts/tests/inkwave-wiper-ambient-observer.test.mjs scripts/tests/inkwave-wiper-ambient-state.test.mjs scripts/tests/inkwave-wiper-scene-readiness.test.mjs
-      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.62.1
-      - run: npx playwright install --with-deps chromium
-      - uses: actions/download-artifact@v4
-        with:
-          artifact-ids: 12385900409
-          run-id: 39684160955
-          github-token: ${{ github.token }}
-          path: work
-          merge-multiple: true
-      - name: Observe 16 native ticks on each variant, no new build or video
+      - name: Verify immutable source and reference Git objects
+        run: |
+          test "$(git -C work/source rev-parse HEAD)" = c0938a3f84768474df91713f7b372f9d7f8fe96a
+          test "$(git -C work/source rev-parse HEAD^{tree})" = 97b9938391f156dc332f6a56ac6fe3d21d9f9dc7
+          git -C work/source cat-file -e 7581ca9be8cf87d253918b8abb3b8ebe728c2093^{commit}
+      - name: Install pinned build and capture tools
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+      - name: Validate QA helpers
+        run: node --test scripts/tests/inkwave-wiper-*.test.mjs
+      - name: Build complete immutable production source exactly once
+        working-directory: work/source
+        run: node scripts/build-inkwave.mjs inkwave-public ../site
+      - name: Derive and verify historical visual-only overlay from actual new build
+        run: node scripts/prepare-inkwave-wiper-current-overlay.mjs work/source work/site work/overlay
+      - name: Capture only the first live full-frame views before long capture
         run: |
           for variant in A B; do
-            timeout 12m node scripts/check-inkwave-wiper-plane-native.mjs work/wiper-site work/wiper-source work/wiper-overlay work/wiper-rng/$variant $variant s3-saber-heavy charged --rng-diagnostic
+            timeout 20m node scripts/check-inkwave-wiper-plane-native.mjs work/site work/source work/overlay work/visibility/$variant $variant s3-saber-heavy charged --visibility-probe
           done
-      - uses: actions/upload-artifact@v4
+          node scripts/check-inkwave-wiper-visibility-pair.mjs work/site work/source work/overlay work/visibility
+      - name: Capture continuous Dental pilot only after strict visibility admission
+        if: ${{ inputs.full_capture }}
+        run: |
+          for variant in A B; do
+            timeout 35m node scripts/check-inkwave-wiper-plane-native.mjs work/site work/source work/overlay work/full/s3-saber-heavy-charged-$variant $variant s3-saber-heavy charged --dental-pilot
+          done
+          node scripts/check-inkwave-wiper-plane-paired.mjs work/site work/source work/overlay work/full --compare-dental-only
+      - name: Verify unchanged native controls after Dental pair admission
+        if: ${{ inputs.full_capture }}
+        run: node scripts/check-inkwave-wiper-plane-paired.mjs work/site work/source work/overlay work/controls --controls-only
+      - name: Preserve fresh receipts and original full frames including failures
         if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: wiper-ambient-rng-observation
-          path: work/wiper-rng/
-          if-no-files-found: error
+          name: wiper-current-c0938a3-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            work/site/inkwave-build.json
+            work/overlay/
+            work/visibility/
+            work/full/
+            work/controls/
+          if-no-files-found: warn
+          retention-days: 14
