@@ -1,0 +1,78 @@
+name: Explosher exact common-build preflight
+on:
+  pull_request:
+    branches: [inkwave/runtime-main-a350-integration-20261022]
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+concurrency:
+  group: explosher-inverse-preflight
+  cancel-in-progress: false
+jobs:
+  exact-common-preflight:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.repository == 'rhgrive3/actions' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'inkwave/explosher-inverse-preflight-364dd0-20261022' &&
+      github.event.pull_request.base.ref == 'inkwave/runtime-main-a350-integration-20261022' &&
+      github.event.pull_request.base.sha == '364dd0a7fad9508652b4b4c6ec3d82eb124e9c5c'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out reviewed QA driver revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Check out complete immutable common source
+        uses: actions/checkout@v4
+        with:
+          ref: 364dd0a7fad9508652b4b4c6ec3d82eb124e9c5c
+          path: .common-source
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact owned PR event and QA checkout
+        run: node scripts/lib/inkwave-explosher-workflow-admission.mjs
+      - name: Test bounded event guards
+        run: node --test scripts/tests/inkwave-explosher-workflow-admission.test.mjs
+      - name: Refuse native work until independent admission release
+        run: |
+          node --input-type=module -e "import {ADMISSION_RELEASE_ENABLED} from './scripts/lib/inkwave-explosher-common-build.mjs'; if (!ADMISSION_RELEASE_ENABLED) throw Error('Independent admission review/release pending');"
+      - name: Install pinned tools outside common checkout
+        run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+      - name: Verify inverse source and acceptance gates
+        run: node --test patches/splatoon3/tests/explosher-stage-admission.test.mjs patches/splatoon3/tests/explosher-video-gate.test.mjs patches/splatoon3/tests/explosher-inverse-contract.test.mjs patches/splatoon3/tests/explosher-volume-barrier.test.mjs
+      - name: Verify immutable common checkout and build once
+        run: |
+          test "$(git -C .common-source rev-parse HEAD)" = 364dd0a7fad9508652b4b4c6ec3d82eb124e9c5c
+          test "$(git -C .common-source rev-parse 'HEAD^{tree}')" = c52b1342cd2d8262bde72bbbfe38f04b1219caa4
+          node .common-source/scripts/build-inkwave.mjs .common-source/inkwave-public .built-common
+          node --input-type=module -e "import {requireApprovedCommonBuild} from './scripts/lib/inkwave-explosher-common-build.mjs'; console.log(JSON.stringify(requireApprovedCommonBuild('.common-source','.built-common')));"
+      - name: Compile distinct inverse lanes from same verified build
+        run: |
+          node scripts/compile-inkwave-explosher-inverse-pair.mjs .common-source .built-common scripts/fixtures/explosher-inverse-baseline.mjs .qa-shape
+          node scripts/compile-inkwave-explosher-controlled-main.mjs .common-source .built-common .qa-main
+      - name: Install browser only after source/build admission
+        run: npx playwright install --with-deps chromium
+      - name: Capture only initial short pair
+        env:
+          EXPLOSHER_PREFLIGHT: '1'
+          EXPLOSHER_CONTROLLED_MAIN: .qa-main/controlled-main-receipt.json
+        run: |
+          for lane in before after; do
+            EXPLOSHER_SHAPE_OVERLAY=".qa-shape/${lane}-shape-receipt.json" node scripts/check-inkwave-explosher-flight-glitter.mjs .built-common ".qa-preflight/${lane}" 364dd0a7fad9508652b4b4c6ec3d82eb124e9c5c .common-source
+          done
+          node --input-type=module -e "import fs from 'node:fs'; import {readExplosherStagePair} from './scripts/lib/inkwave-explosher-stage-admission.mjs'; fs.writeFileSync('.qa-preflight/admission.json',JSON.stringify(readExplosherStagePair('preflight','.qa-preflight/before','.qa-preflight/after'),null,2));"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: explosher-364dd0-initial-pair
+          path: |
+            .qa-preflight
+            .qa-shape/*receipt.json
+            .qa-main/*receipt.json
+          if-no-files-found: ignore

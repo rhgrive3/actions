@@ -1,0 +1,14 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
+import {requireExplosherWorkflowEvent,OWNED_BRANCH,BASE_BRANCH,COMMON_HEAD} from '../lib/inkwave-explosher-workflow-admission.mjs';
+const fixture=()=>({eventName:'pull_request',repository:'rhgrive3/actions',checkoutHead:'a'.repeat(40),event:{action:'synchronize',pull_request:{head:{ref:OWNED_BRANCH,sha:'a'.repeat(40),repo:{full_name:'rhgrive3/actions'}},base:{ref:BASE_BRANCH,sha:COMMON_HEAD,repo:{full_name:'rhgrive3/actions'}}}}});
+for(const action of['opened','synchronize','reopened'])test('admits owned same-repo '+action+' only to initial pair',()=>{const f=fixture();f.event.action=action;assert.equal(requireExplosherWorkflowEvent(f).scope,'initial-preflight-pair-only');});
+for(const[name,mutate]of[
+ ['fork',f=>f.event.pull_request.head.repo.full_name='other/actions'],['foreign base',f=>f.event.pull_request.base.repo.full_name='other/actions'],['foreign repository',f=>f.repository='other/actions'],['different branch',f=>f.event.pull_request.head.ref='inkwave/other'],['branch prefix spoof',f=>f.event.pull_request.head.ref=OWNED_BRANCH+'-extra'],['main base',f=>f.event.pull_request.base.ref='main'],['moved frozen base',f=>f.event.pull_request.base.sha='b'.repeat(40)],['manual dispatch',f=>f.eventName='workflow_dispatch'],['push',f=>f.eventName='push'],['pull_request_target',f=>f.eventName='pull_request_target'],['closed event',f=>f.event.action='closed'],['edited event',f=>f.event.action='edited'],['merge checkout',f=>f.checkoutHead='b'.repeat(40)],['invalid head',f=>f.event.pull_request.head.sha='main'],['missing PR',f=>delete f.event.pull_request]
+])test('rejects '+name,()=>{const f=fixture();mutate(f);assert.throws(()=>requireExplosherWorkflowEvent(f));});
+test('workflow encodes bounded trigger and cannot launch later ladder stages',()=>{
+ const y=fs.readFileSync(new URL('../../.github/workflows/inkwave-explosher-inverse-preflight.yml',import.meta.url),'utf8');
+ for(const value of[OWNED_BRANCH,BASE_BRANCH,COMMON_HEAD])assert(y.includes(value));
+ assert.match(y,/types: \[opened, synchronize, reopened\]/);assert.match(y,/github\.event_name == 'pull_request'/);assert.match(y,/head\.repo\.full_name == github\.repository/);assert.match(y,/ref: \$\{\{ github\.event\.pull_request\.head\.sha \}\}/);
+ assert.match(y,/contents: read/);assert.match(y,/EXPLOSHER_PREFLIGHT: '1'/);assert.match(y,/ADMISSION_RELEASE_ENABLED/);assert.doesNotMatch(y,/pull_request_target:|workflow_dispatch:|EXPLOSHER_VIDEO:|encode-inkwave-explosher-comparison/);
+ const guard=y.indexOf('Verify exact owned PR event'),release=y.indexOf('Refuse native work'),build=y.indexOf('Verify immutable common checkout'),capture=y.indexOf('Capture only initial short pair');assert(guard<release&&release<build&&build<capture);
+});
