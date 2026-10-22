@@ -981,7 +981,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
 
   function impactDamage(p,a,impactT=1) {
     const {r,descriptor:d,volley}=p.catalog;
-    if(!catalogFieldUnitCanDamage(d.packet))return 0;
+    if((r.family==='roller'||r.family==='brush')&&!catalogFieldUnitCanDamage(d.packet))return 0;
     let amount=d.damage,damage=d.d,frames=Math.floor((p.age-DT+DT*clamp(impactT))*HZ+EPS);
     // Source-tagged Roller/Brush groups keep independent age falloff,
     // damage sectors and paint-only/depleted unit rates.
@@ -1158,6 +1158,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(!p.catalog)return step.call(this,p,dt);
     if(!releaseCatalogBirth(this,p,G))return true;
     const s=p.catalog,d=s.descriptor;
+    const unitCanDamage=(s.r.family!=='roller'&&s.r.family!=='brush')||catalogFieldUnitCanDamage(d.packet);
     s.carry+=dt;
     while(s.carry+EPS>=DT){
       s.carry=Math.max(0,s.carry-DT);
@@ -1209,14 +1210,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(!world.hit||candidate.dist<world.dist)world=candidate;
       }
       let stop=world.hit?world.dist/Math.max(EPS,len):Infinity,target=null,boss=null,defense=this.kitDefenseCandidate?.(p);
-      if(!catalogFieldUnitCanDamage(d.packet))defense=null;
+      if(!unitCanDamage)defense=null;
       if(defense&&defense.distance/Math.max(EPS,len)<stop)stop=defense.distance/Math.max(EPS,len);
       else defense=null;
       // Math.max's -Infinity for an empty list and NaN propagation are kept.
       let pr1=-Infinity;
       for(let i=0;i<shapes.length;i++)pr1=Math.max(pr1,collisionRadius(shapes[i].param,'Player',p.age*HZ,s.index,bounceScale));
       for(const a of G.actors||[]){
-        if(!catalogFieldUnitCanDamage(d.packet))break;
+        if(!unitCanDamage)break;
         const friendly=a.team===p.team;
         if(!a.alive||a===p.owner||s.seen.has(a)||friendly&&(a.submerged||d.c.FriendThroughFrameForPlayer==null))continue;
         let entry=null;
@@ -1232,7 +1233,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(friendly&&entry!=null&&((p.age-DT)+DT*entry)*HZ<d.c.FriendThroughFrameForPlayer)continue;
         if(entry!=null&&entry<stop-EPS){stop=entry;target=a;defense=null;}
       }
-      if(catalogFieldUnitCanDamage(d.packet)&&G.boss){const b=G.boss.segHit(p.prev,p.pos,pr1);const t=b?p.prev.distanceTo(b.point)/Math.max(EPS,len):Infinity;
+      if(unitCanDamage&&G.boss){const b=G.boss.segHit(p.prev,p.pos,pr1);const t=b?p.prev.distanceTo(b.point)/Math.max(EPS,len):Infinity;
         if(t<stop-EPS){stop=t;boss=b;target=null;defense=null;}}
       // Resolve the whole wave's first actor/core/boss/defense contact before
       // committing any peripheral splash. The per-lobe cutoff above still
