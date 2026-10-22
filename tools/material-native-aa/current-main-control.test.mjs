@@ -30,6 +30,8 @@ function requireCurrentWorkflow(s){
  assert.ok(s.includes('tools/material-native-aa/*.test.mjs'));
  assert.ok(s.includes('node tools/material-native-aa/run.mjs work/material-site work/material-source work/material-overlay/inkShading.js work/material-aa'));
 }
-test('current-main workflow targets main but keeps exact owned diagnostic branch and A/A execution',()=>requireCurrentWorkflow(workflow));
+test('current-main workflow targets main but keeps exact two owned diagnostic branches and A/A execution',()=>requireCurrentWorkflow(workflow));
 test('old merged PR preparation base is rejected',()=>assert.throws(()=>requireCurrentWorkflow(workflow.replace("branches: ['main']","branches: ['preparation/ink-material-normal-admission-20261022']"))));
 test('foreign head branch cannot trigger the reviewed native job',()=>assert.throws(()=>requireCurrentWorkflow(workflow.replace("github.head_ref == 'diagnostic/ink-material-native-aa-20261022'","github.head_ref != ''"))));
+test('foreign phase branch cannot trigger the reviewed native job',()=>assert.throws(()=>requireCurrentWorkflow(workflow.replace("diagnostic/ink-material-native-aa-phase-20261022","diagnostic/foreign-material-phase"))));
+test('an appended third branch cannot trigger the reviewed native job',()=>assert.throws(()=>requireCurrentWorkflow(workflow.replace("github.head_ref == 'diagnostic/ink-material-native-aa-phase-20261022'","github.head_ref == 'diagnostic/ink-material-native-aa-phase-20261022' || github.head_ref == 'diagnostic/foreign-material-third'"))));

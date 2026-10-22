@@ -9,12 +9,29 @@ import json
 import pathlib
 import subprocess
 import sys
+import time
 import urllib.request
 
 revision = '0611f51b35c9736ee986fb2218461e2585b7875e'
 
 
 def fetch(url, target, algorithm, expected, git_blob=False, receipt=None):
+    receipt = receipt if receipt is not None else {}
+    # Retry only a demonstrably incomplete successful HTTP transfer. Keep the
+    # same URL and digest; complete wrong bodies and access errors remain fatal.
+    for attempt in range(1, 4):
+        receipt['attemptCount'] = attempt
+        try:
+            return _fetch_once(url, target, algorithm, expected, git_blob, receipt)
+        except ValueError:
+            if not (attempt < 3 and receipt.get('status') == 2
+                    and receipt.get('httpStatus') == 200
+                    and 0 <= receipt.get('bytes', -1) < receipt.get('contentLength', -1)):
+                raise
+            time.sleep(attempt)
+
+
+def _fetch_once(url, target, algorithm, expected, git_blob=False, receipt=None):
     # Numeric diagnostics only: never copy response bodies, headers or URLs.
     # status: 0 pending, 1 verified, 2 digest mismatch, 3 transfer/file error.
     receipt = receipt if receipt is not None else {}

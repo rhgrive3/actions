@@ -18,11 +18,15 @@ export function wireTerminalFxCollider(api, fx) {
     return h.hit ? { point: h.point, normal: h.normal } : null;
   });
 }
-export function activateTerminalInkjet(a, applyCatalogueChoice, api, assert) {
-  assert(applyCatalogueChoice(a,{sub:'bomb',special:'inkjet'},api),'actual catalogue Inkjet selection');
-  const paid=a.specialCost(),beforeSpecials=a.stats.specials;
-  a.special=paid;a._startSpecial();
-  assert(a.specialActive?.id==='inkjet' && a.stats.specials===beforeSpecials+1 && a.special===paid,'native paid Inkjet activation');
+// Inkjet reserves a paid activation, then depletes its active gauge over time.
+// A zero gauge at t=0 is not the current production payment contract.
+export function activatePaidTerminalInkjet(actor, assert) {
+  const paid=actor.specialCost(), before=actor.stats.specials;
+  actor.special=paid;
+  assert(actor.specialReady(), 'native Inkjet ready before paid activation');
+  actor._startSpecial();
+  assert(actor.specialActive?.id==='inkjet' && actor.stats.specials===before+1 &&
+    actor.special===paid && !actor.specialReady(), 'native paid Inkjet activation');
   return paid;
 }
 export async function runInkjetTerminalProbe({api,THREE,G,scene,renderer,camera,Level,applyCatalogueChoice,hz,draw,pixels,changed,expect,cases,images}) {
@@ -76,7 +80,7 @@ export async function runInkjetTerminalProbe({api,THREE,G,scene,renderer,camera,
     const pools=terminalPools(d);
     const before=pixels(),shown=pools.map(p=>p.mesh.visible);
     let count;try{pools.forEach(p=>{p.mesh.visible=false;});count=changed(before,pixels());}finally{pools.forEach((p,i)=>{p.mesh.visible=shown[i];});draw();}
-    assert(count>10,label+' native terminal ink geometry draws pixels');return count;
+    assert(count>10,label+' native terminal ink geometry draws pixels '+JSON.stringify({count,pools:pools.map(p=>({name:p.mesh.name,records:p.recs.length,positions:p.recs.map(r=>Array.from(r.v.slice(0,4)))}))}));return count;
   }
   function step(system,fx){system.update(dt);fx.update(dt,camera);paint.flush(dt);draw();}
   function teardown(a,system,fx){a.character.dispose();system.clear();fx.dispose();G.actors=[];G.fx=null;G.netm=null;}
@@ -90,7 +94,8 @@ export async function runInkjetTerminalProbe({api,THREE,G,scene,renderer,camera,
       world(p.pos);clearTerminalGeometry(d); // Only QA world/presentation setup; no projectile or terminal mutation.
       if(births.length===1)capture('local-before-step');
     }return result;};
-    const paid=activateTerminalInkjet(a,applyCatalogueChoice,api,assert);
+    assert(applyCatalogueChoice(a,{sub:'bomb',special:'inkjet'},api),'actual catalogue Inkjet selection');
+    const paid=activatePaidTerminalInkjet(a,assert);
     assert(d.track(a)?.id==='inkjet','native activation presentation tracked before pool isolation');a.intent.fire=true;
     for(frame=0;frame<hz*6;frame++){
       G.time+=dt;a.update(dt);if(births.length===3)a.intent.fire=false;
@@ -127,7 +132,10 @@ export async function runInkjetTerminalProbe({api,THREE,G,scene,renderer,camera,
       system.ghostProjectile(a,JSON.parse(JSON.stringify(packets[0])));
       const p=system.list.at(-1);assert(p?.ghost && p.wid==='inkjet' && p.s3AllSpecial===undefined,'real ghost decoder without local special metadata');
       identities.add(p);births.push({frame,pos:p.pos.toArray(),vel:p.vel.toArray(),ownerAlive:a.alive,alreadyTracked:d.rounds.has(p)});
-      world(p.pos);clearTerminalGeometry(d);capture(`ghost-${lifetime+1}-before-step`);
+      // Independent native ghost lifetimes: retire prior presentation only, so
+      // previous smoke/flash cannot occlude the next terminal's ink geometry.
+      // Native projectile, physics, paint and terminal callbacks stay untouched.
+      world(p.pos);d.kit.clear();capture(`ghost-${lifetime+1}-before-step`);
       for(let tick=0;tick<4;tick++,frame++){
         G.time+=dt;const before=observations.visuals.length;step(system,fx);
         if(observations.visuals.length>before)drawn.push(impactPixels(d,'ghost lifetime '+(lifetime+1)));

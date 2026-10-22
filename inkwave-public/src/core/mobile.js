@@ -69,6 +69,12 @@ export class MobileInput {
     this._stick = { id: -1, ox: 0, oy: 0, x: 0, y: 0 };
     this._abort = new AbortController();
     this._relayoutRaf = null;
+    // Reliability's build adapter owns destroy(); register independent resource cleanup
+    // on the shared abort signal so patch contracts and pending rAF cancellation coexist.
+    this._abort.signal.addEventListener('abort', () => {
+      if (this._relayoutRaf !== null) cancelAnimationFrame(this._relayoutRaf);
+      this._relayoutRaf = null;
+    }, { once: true });
     if (!this.active) return;
     this._install();
   }
@@ -131,14 +137,7 @@ export class MobileInput {
     this.root?.querySelectorAll('.iwm-b.is-down').forEach((b) => b.classList.remove('is-down'));
   }
   reset() { this.resetPointers(); this.lookDX = this.lookDY = 0; this.setMap(false); this.gyro.discard(); }
-  destroy() {
-    this._abort.abort();
-    if (this._relayoutRaf !== null) cancelAnimationFrame(this._relayoutRaf);
-    this._relayoutRaf = null;
-    this.gyro.stop();
-    this.root?.remove();
-    document.documentElement.classList.remove('iw-mobile');
-  }
+  destroy() { this._abort.abort(); this.gyro.stop(); this.root?.remove(); document.documentElement.classList.remove('iw-mobile'); }
 
   // ------------------------------------------------------------------------------------------ build
   _install() {

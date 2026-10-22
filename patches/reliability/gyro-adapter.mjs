@@ -50,12 +50,12 @@ export function adaptGyro(rel, code) {
     if (canStart) return Promise.resolve(this.gyro.supported).then(finish);
     return Promise.resolve(finish(this.gyro.supported));
   }`, rel);
-    code = replaceOnce(code, `  destroy() {
-    this._abort.abort();`, `  destroy() {
+    code = replaceOnce(code, `  destroy() { this._abort.abort(); this.gyro.stop(); this.root?.remove(); document.documentElement.classList.remove('iw-mobile'); }`, `  destroy() {
     this._destroyed = true; ++this._gyroIntent;
     this._gyroWanted = false; this.s.gyro = false;
     clearTimeout(this._gyroNoticeT); clearTimeout(this._toastT);
-    this._abort.abort();`, rel);
+    this._abort.abort(); this.gyro.stop(); this.root?.remove(); document.documentElement.classList.remove('iw-mobile');
+  }`, rel);
     return replaceOnce(code, `  _toggleGyroFromTap() {
     const want = !this.gyro.enabled;
     const p = this.setGyro(want);

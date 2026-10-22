@@ -5783,3 +5783,23 @@ See [regression analysis and evidence](weapon-regressions-20261021/README.md). F
 - 統合時に発見したQA前提を修正した。Tidewaterの初期射出テストは実際のplaying状態を設定し、Inkjetの有料発動は現行の継続消費ゲージ（発動直後は満額）と発動回数を検証する。材質A/Aのworkflowテストはレビュー済みの診断用2ブランチだけを厳密に許可する。
 
 CPU/ソース回帰・公開版の生成物検証・ブラウザの描画検査は別々に記録する。ネイティブGPU性能・Switch実機・原本ステージ全体の受け入れは未確認のままとする。
+# 2026-10-22: resource/input lifetime issue batch
+
+Seven bounded fixes are composed from PRs #1779–#1782, #1784 and #1788 on
+main `a350b6b89`: zero-drag sprite arithmetic, stage RegExp reuse, shared BOT aim
+expression, shadow-only composer retention, LOW lobby reflection release,
+exception-safe reflection state, and instance-owned Input listener disposal.
+See [scope and verification](inkwave-issue-batch-20261022.md).
+Splatoon 3 Ver.11.3.0 remains the reference; movement, firing, paint, damage and
+input mapping values are not retuned. Controlled local regressions distinguish
+these lifecycle changes from retail/device comparison. Physical iPad memory/FPS,
+Switch controls and all remaining calibration issues are unverified.
+
+
+### 同日追加PR #1792–#1795と更新headの追従
+
+作業中に開かれた#1792–#1795、および#1783/#1786の追加修正も統合する。#1795のcube face/mip level復旧と既存LOWテスト更新を、#1791の元例外保持・falsy例外の扱いと併存させる。#1792は広告Content-Lengthを下回るHTTP 200かつdigest不一致に限り同じURL/固定digestで最大3回試行する取得修復で、ソース同一性の検査は維持する。
+
+#1794では11.3.0の固定済みSlosher UnitのAddSpawnSpeedYRateByXZを水平速度に適用し、Explosher等の上下照準は安全な銃口からカメラyaw/pitchを用いる。-85/-45/-20/0/40/85度と古い照準点・近い床の対照をソース回帰で確認する。Switch実機の軌道・命中率・射程測定を新たに確定するものではない。
+
+#1793の有料InkjetゲージQAを採用し、発動前のready、1回の発動、継続消費、二重発動・dead/remoteの拒否を保持する。実WebGLの第三ghost検証で前の発射の煙・flashが同位置の新しい終端形状を遮る失敗を検出したため、各独立ghost試行の前に以前のVFX poolのみを空にする。projectile/physics/paint/終端イベントや可視ピクセル閾値は変更しない。これは分離した描画回帰であり、連続戦闘全体の視認性受け入れではない。

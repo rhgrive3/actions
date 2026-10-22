@@ -683,6 +683,7 @@ export class LobbySet {
       cam.projectionMatrixInverse.copy(cam.projectionMatrix).invert();
       // size from the current target
       const cur = renderer.getRenderTarget();
+      const cubeFace = renderer.getActiveCubeFace(), mipLevel = renderer.getActiveMipmapLevel();
       if (cur) size.set(cur.width, cur.height); else renderer.getDrawingBufferSize(size);
       const w = Math.max(64, Math.round(size.x * this.Q.refl)), h = Math.max(64, Math.round(size.y * this.Q.refl));
       if (rt.width !== w || rt.height !== h) rt.setSize(w, h);
@@ -710,7 +711,7 @@ export class LobbySet {
         try {
           renderer.autoClear = ac; renderer.xr.enabled = xr;
           renderer.shadowMap.autoUpdate = sau; renderer.shadowMap.needsUpdate = snu;
-          renderer.setRenderTarget(cur);
+          renderer.setRenderTarget(cur, cubeFace, mipLevel);
         } catch (error) {
           // Keep the primary failure (including its identity/cause) if restoring the target also fails.
           // A restoration-only failure must still propagate.
