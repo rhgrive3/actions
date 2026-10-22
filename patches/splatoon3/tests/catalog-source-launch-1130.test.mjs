@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {MAIN_WEAPON_CATALOG} from '../runtime/main-weapon-catalog-data.mjs';
 import {fixture} from './source-fixture.mjs';
 import {catalogRollerSourcePitch,catalogBrushSourceYaw,catalogUnitYawBase,
-  catalogSlosherYawScatter,catalogSlosherHasSweptAim} from '../runtime/catalog-source-launch.mjs';
+  catalogSlosherYawScatter,catalogSlosherHasSweptAim,catalogBrushNearestDue} from '../runtime/catalog-source-launch.mjs';
+import {slosherNearestPaintSpec} from '../runtime/slosher-nearest-paint.mjs';
 const source=name=>{
   const r=MAIN_WEAPON_CATALOG.records.find(x=>x.names?.en===name);
   assert.ok(r,name+' 11.3.0 record');return r;
@@ -57,6 +58,28 @@ test('Tri-Slosher/Dread Wringer use bias, exemption and pitch-sweep source witho
     near(catalogSlosherYawScatter(u,1,random),amplitude*Math.pow(.5,1+bias),
       name+' native Slosher bias-equivalent scatter');
     assert.equal(draws,1);
+  }
+});
+
+test('source paint-only nearest for all five added Sloshers including sparse Machine',()=>{
+  for(const [name,width,depth] of [
+    ['Tri-Slosher',1.296,2],['Sloshing Machine',1,2],
+    ['Bloblobber',2.2,1.2],['Explosher',1.56,1.4],['Dread Wringer',2,1.2]]){
+    const result=slosherNearestPaintSpec(source(name).parameters);
+    near(result.width,width,name+' true near-ground paint radius');
+    near(result.depthScale,depth,name+' true near-ground paint elongation');
+  }
+});
+
+test('Brush source-specific 6/4 flick nearest slot and cycle reset',()=>{
+  for(const [name,loop,order] of [
+    ['Inkbrush',6,2],['Octobrush',6,2],['Painbrush',4,2]]){
+    const g=source(name).parameters.SwingUnitGroupParam;
+    assert.equal(g.SplashNearestParam.LoopNum,loop);
+    assert.equal(g.SplashNearestParam.OrderNum,order);
+    for(let serial=1;serial<=loop*2;serial++)
+      assert.equal(catalogBrushNearestDue(g,serial),(serial-1)%loop===order-1,
+        name+' source nearest cycle '+serial);
   }
 });
 
