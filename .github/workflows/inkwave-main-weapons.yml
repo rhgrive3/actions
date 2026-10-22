@@ -27,6 +27,8 @@ on:
       - 'scripts/check-inkwave-new-families-browser.mjs'
       - 'scripts/check-inkwave-roller-scale-range.mjs'
       - 'scripts/lib/inkwave-roller-uuid-comparison.mjs'
+      - 'scripts/lib/inkwave-roller-blob-provenance.mjs'
+      - 'scripts/tests/inkwave-roller-blob-provenance.test.mjs'
       - 'scripts/tests/inkwave-roller-uuid-comparison.test.mjs'
       - 'patches/splatoon3/uuid-random-adapter.mjs'
       - 'scripts/lib/inkwave-range-menu-entry.mjs'
@@ -58,6 +60,8 @@ on:
       - 'scripts/check-inkwave-new-families-browser.mjs'
       - 'scripts/check-inkwave-roller-scale-range.mjs'
       - 'scripts/lib/inkwave-roller-uuid-comparison.mjs'
+      - 'scripts/lib/inkwave-roller-blob-provenance.mjs'
+      - 'scripts/tests/inkwave-roller-blob-provenance.test.mjs'
       - 'scripts/tests/inkwave-roller-uuid-comparison.test.mjs'
       - 'patches/splatoon3/uuid-random-adapter.mjs'
       - 'scripts/lib/inkwave-range-menu-entry.mjs'
@@ -159,7 +163,7 @@ jobs:
               run=false
               while IFS= read -r file; do
                 case "$file" in
-                  .github/workflows/inkwave-main-weapons.yml|scripts/check-inkwave-roller-scale-range.mjs|scripts/lib/inkwave-roller-uuid-comparison.mjs|scripts/tests/inkwave-roller-uuid-comparison.test.mjs|patches/splatoon3/uuid-random-adapter.mjs|scripts/lib/inkwave-range-menu-entry.mjs|scripts/build-inkwave.mjs|scripts/inkwave-source-composition.mjs) run=true ;;
+                  .github/workflows/inkwave-main-weapons.yml|scripts/check-inkwave-roller-scale-range.mjs|scripts/lib/inkwave-roller-uuid-comparison.mjs|scripts/lib/inkwave-roller-blob-provenance.mjs|scripts/tests/inkwave-roller-blob-provenance.test.mjs|scripts/tests/inkwave-roller-uuid-comparison.test.mjs|patches/splatoon3/uuid-random-adapter.mjs|scripts/lib/inkwave-range-menu-entry.mjs|scripts/build-inkwave.mjs|scripts/inkwave-source-composition.mjs) run=true ;;
                   inkwave-public/src/core/*|inkwave-public/src/game/*|inkwave-public/src/world/paint.js|inkwave-public/src/config.js|inkwave-public/src/main.js) run=true ;;
                   patches/local-quality/roller-motion.mjs|patches/network-replication/roller-*|patches/splatoon3/weapon-catalog-adapter.mjs) run=true ;;
                   patches/splatoon3/runtime/roller*|patches/splatoon3/runtime/*motion*|patches/splatoon3/runtime/source-*|patches/splatoon3/runtime/weapon*|patches/splatoon3/runtime/main-*|patches/splatoon3/runtime/movement*|patches/splatoon3/runtime/body-*|patches/splatoon3/runtime/controller-*|patches/splatoon3/runtime/render.mjs|patches/splatoon3/runtime/install.mjs) run=true ;;
@@ -189,6 +193,7 @@ jobs:
             captureScript: sha256('scripts/check-inkwave-roller-scale-range.mjs'),
             entryHelper: sha256('scripts/lib/inkwave-range-menu-entry.mjs'),
             comparisonHelper: sha256('scripts/lib/inkwave-roller-uuid-comparison.mjs'),
+            blobProvenanceHelper: sha256('scripts/lib/inkwave-roller-blob-provenance.mjs'),
             workflow: sha256('.github/workflows/inkwave-main-weapons.yml'),
           }, null, 2) + '\n');
           NODE
@@ -225,7 +230,7 @@ jobs:
           set -o pipefail
           # Raw83 source/build/manifests are never changed. This creates a separate
           # QA-only response overlay using the existing production source adapter.
-          INKWAVE_ROLLER_BASELINE_SOURCE=work/roller-grip-baseline INKWAVE_ROLLER_BASELINE_SITE=work/roller-grip-site-baseline node --test scripts/tests/inkwave-roller-uuid-comparison.test.mjs
+          INKWAVE_ROLLER_BASELINE_SOURCE=work/roller-grip-baseline INKWAVE_ROLLER_BASELINE_SITE=work/roller-grip-site-baseline INKWAVE_ROLLER_WORKER_SITE=work/roller-grip-site-baseline node --test scripts/tests/inkwave-roller-uuid-comparison.test.mjs scripts/tests/inkwave-roller-blob-provenance.test.mjs
           node scripts/lib/inkwave-roller-uuid-comparison.mjs work/roller-grip-baseline work/roller-grip-site-baseline work/roller-grip-evidence/uuid-isolation > work/roller-grip-evidence/uuid-isolation-build.json
       - name: Capture baseline at the shipped 180-tick rolling state
         id: baseline_capture
@@ -310,7 +315,7 @@ jobs:
           const ids = read('checkouts.json');
           assert.equal(ids.baseline, process.env.BASELINE_SHA);
           assert.equal(ids.candidate, process.env.CANDIDATE_SHA);
-          for (const [key, file] of [['captureScript','scripts/check-inkwave-roller-scale-range.mjs'], ['entryHelper','scripts/lib/inkwave-range-menu-entry.mjs'], ['comparisonHelper','scripts/lib/inkwave-roller-uuid-comparison.mjs'], ['workflow','.github/workflows/inkwave-main-weapons.yml']]) { sha(ids[key]); assert.equal(ids[key], hashBytes(fs.readFileSync(file))); }
+          for (const [key, file] of [['captureScript','scripts/check-inkwave-roller-scale-range.mjs'], ['entryHelper','scripts/lib/inkwave-range-menu-entry.mjs'], ['comparisonHelper','scripts/lib/inkwave-roller-uuid-comparison.mjs'], ['blobProvenanceHelper','scripts/lib/inkwave-roller-blob-provenance.mjs'], ['workflow','.github/workflows/inkwave-main-weapons.yml']]) { sha(ids[key]); assert.equal(ids[key], hashBytes(fs.readFileSync(file))); }
           const isolation = loadUuidComparison(`${root}/uuid-isolation`, 'work/roller-grip-site-baseline').declaration;
           assert.equal(isolation.sourceManifestSha256, hashBytes(fs.readFileSync(`${root}/before-build.json`)), 'Historical manifest receipt changed');
           const names = ['rear', 'side', 'front-oblique', 'right-side', 'right-rear'];
@@ -332,7 +337,7 @@ jobs:
             assert.equal(result.build, build.contentHash, `${side} receipt/build mismatch`);
             const declared = index === 2 || index === 3 ? isolation : null;
             assert.deepEqual(result.comparisonIsolation, declared);
-            assert.deepEqual(result.runtimeIdentity, verifyLoadedModules(result.runtimeIdentity.modules, build, declared));
+            assert.deepEqual(result.runtimeIdentity, verifyLoadedModules(result.runtimeIdentity.modules, build, declared, result.blobWorkers));
             assert.equal(build.contentHash, hashBytes(JSON.stringify(build.artifacts)));
             assert.equal(build.inputHash, hashBytes(JSON.stringify(build.files)));
             assert.equal(m.layout, 'range');

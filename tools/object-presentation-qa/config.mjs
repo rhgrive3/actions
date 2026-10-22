@@ -20,6 +20,11 @@ export const SUITES = {
     before: ['patches/splatoon3/runtime/weapon-handoff-motion.mjs'],
     added: [],
   },
+  'rainmaker-origin': {
+    beforeBase: '8bc8d67452b75ba69f5d08412647648b575efd1d',
+    before: ['patches/splatoon3/runtime/ranked/combat.mjs', 'patches/splatoon3/runtime/ranked/engine.mjs', 'patches/splatoon3/runtime/ranked/install.mjs', 'patches/splatoon3/runtime/ranked/network.mjs', 'patches/splatoon3/runtime/ranked/rainmaker.mjs'],
+    added: ['patches/splatoon3/runtime/ranked/rainmaker-shot-origin.mjs'],
+  },
   clam: {
     before: ['patches/splatoon3/runtime/ranked/world.mjs', 'patches/splatoon3/runtime/ranked/clams.mjs', 'patches/splatoon3/runtime/ranked/install.mjs', 'patches/splatoon3/runtime/bomb-motion.mjs', 'patches/splatoon3/runtime/weapon-handoff-motion.mjs'],
     added: ['patches/splatoon3/runtime/ranked/clam-presentation.mjs'],

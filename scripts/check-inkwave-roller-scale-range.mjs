@@ -2,6 +2,7 @@
 // The inspection camera changes only the evidence view. No replacement floor,
 // shader, Character, Physics, paint or controller is installed.
 import fs from 'node:fs';
+import { observeBlobCreation } from './lib/inkwave-roller-blob-provenance.mjs';
 import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
@@ -68,9 +69,12 @@ try{
     ...(process.env.HTTPS_PROXY?{proxy:{server:process.env.HTTPS_PROXY,bypass:'127.0.0.1,localhost'}}:{}),
     args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   page=await browser.newPage({viewport:{width:1280,height:840}});
+  receipt.blobWorkers={origin:'http://127.0.0.1:'+server.address().port,responses:[],owners:[],creations:[],workers:[]};
+  await page.addInitScript(observeBlobCreation);
+  page.on('worker',worker=>receipt.blobWorkers.workers.push(worker.url()));
   page.on('pageerror',e=>receipt.errors.push(e.message));
   page.on('response',response=>{
-    loadedTasks.push(recordLoadedModuleResponse(response,'http://127.0.0.1:'+server.address().port,loadedModules)
+    loadedTasks.push(recordLoadedModuleResponse(response,'http://127.0.0.1:'+server.address().port,loadedModules,receipt.blobWorkers)
       .catch(error=>{receipt.errors.push(String(error));}));
   });
   page.on('requestfailed',r=>{if(receipt.requests.length<30)receipt.requests.push({url:r.url(),failure:r.failure()});});
@@ -358,8 +362,9 @@ try{
   assert.deepEqual(receipt.release.renderSize,m.renderSize);
   for(const frame of receipt.release.frames)assert.ok(Math.abs(frame.time-receipt.release.start.time-frame.tick/60)<1e-8);
   assert.equal(receipt.errors.length,0);
+  receipt.blobWorkers.creations=await page.evaluate(()=>window.__rollerBlobCreations());
   await Promise.all(loadedTasks);
-  receipt.runtimeIdentity=verifyLoadedModules(loadedModules,buildManifest,isolation?.declaration);
+  receipt.runtimeIdentity=verifyLoadedModules(loadedModules,buildManifest,isolation?.declaration,receipt.blobWorkers);
   assert.equal(receipt.errors.length,0);
   receipt.passed=true;console.log(JSON.stringify({measurement:m,release:receipt.release,runtimeIdentity:receipt.runtimeIdentity}));
 }catch(error){receipt.passed=false;receipt.failure=String(error.stack||error);receipt.state=await snapshot();await page?.screenshot({path:path.join(out,'failure.png'),timeout:30000}).catch(()=>{});throw error;}

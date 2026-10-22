@@ -1,0 +1,233 @@
+import { validRankedSnapshot } from './engine.mjs';
+import { admitRankedPose, bindRankedInput, rankedInputFor } from './pose-admission.mjs';
+import { noteRankedBarrierShots, queueRankedBarrierHit, resetRankedBarrierAdmission } from './barrier-admission.mjs';
+import { withObjectDamageCause } from '../sub-resistance.mjs';
+import { specialGaugeLocked } from '../tacticooler-gauge.mjs';
+import { recordTowerHostSnapshot, clearTowerPaintSupport } from '../../../network-replication/tower-paint-support.mjs';
+
+const damageCauses = new Set(['Gachihoko_Bullet', 'Gachihoko_BombCore', 'GachihokoTimeUpBurst']);
+
+export const actorId = a => String(a.nid ?? `${a.team}:${a.slot}`);
+const finiteVector = v => Array.isArray(v) && v.length === 3 && v.every(n => Number.isFinite(n) && Math.abs(n) <= 2000);
+function current(nm) { return !nm._disposed && !nm.match?._disposed && nm.match?.ranked && nm._rankedAPI.G.netm === nm; }
+function envelope(nm, data) { return { ...data, match: nm.cfg.id, host: nm.s.hostId }; }
+// Host-known facts for pose admission (#1648): the host's own receive clock
+// and the relocation targets this host can see for the owner's team.
+function rankedPoseContext(nm, m, api) {
+  const { G } = api, level = G.level, clock = globalThis.performance?.now?.();
+  return {
+    now: Number.isFinite(clock) ? clock / 1000 : null, level, fallDeathY: api.PLAYER?.fallDeathY,
+    landings: actor => [level?.homeSuperJumpPoints?.[actor.team], level?.spawnPads?.[actor.team],
+      ...(G.bigBubblerJumpTargets?.(actor.team) || []).map(t => t?.pos)],
+    allies: actor => m.actors.filter(a => a !== actor && a.team === actor.team && a.alive && !a.s3Disconnected).flatMap(a => {
+      const pose = a.remote ? nm.rankedPose?.get(actorId(a)) : null;
+      return [pose?.actor === a ? pose.last.pos : a.pos, a.superJumpGround, a.superJumpState?.to];
+    }),
+  };
+}
+
+export function installRankedNetwork(api) {
+  const { NetMatch, G } = api, P = NetMatch.prototype;
+  Object.defineProperty(P, '_rankedAPI', { get: () => api, configurable: true });
+  const send = P._sendNow;
+  P._sendNow = function (d) {
+    if (current(this) && this.isHost && ['st', 'res', 'end'].includes(d.k)) {
+      d = { ...d, rk: envelope(this, { state: this.match.ranked.snapshot(), gains: this.match.rankedGains || [0, 0] }) };
+      if (d.k === 'res') Object.assign(d, { rankedResult: this.match.ranked.result() });
+    }
+    if (current(this) && this.isHost && d.rk?.match === this.cfg.id && d.rk.host === this.s.hostId)
+      recordTowerHostSnapshot(this, d.rk.state);
+    return send.call(this, d);
+  };
+  // Extend the existing 20Hz actor packet, with 5Hz objective snapshots. The
+  // session already provides reliable ordered transport; revision checks also
+  // reject duplicate/reordered captures and late packets from a prior match.
+  const tick = P._sendTick;
+  P._sendTick = function () {
+    if (!current(this)) return tick.call(this);
+    const tr = this.s.tr, broadcast = tr?.broadcast;
+    if (!broadcast) return tick.call(this);
+    tr.broadcast = d => {
+      let throwActor = null;
+      if (d.k === 't') {
+        this.rankedTick = (this.rankedTick || 0) + 1;
+        if (this.isHost && this.rankedTick % 4 === 0) {
+          d.rk = envelope(this, { state: this.match.ranked.snapshot(), gains: this.match.rankedGains || [0, 0] });
+          recordTowerHostSnapshot(this, d.rk.state);
+        }
+        const a = this.match.local;
+        if (a && !this.isHost) {
+          const cmd = a._rankedInput || {};
+          d.rki = { match: this.cfg.id, id: actorId(a), seq: this.rankedInputSeq = (this.rankedInputSeq || 0) + 1,
+            fire: !!cmd.fire, throw: !!a._rankedThrowPending, aim: cmd.aim || [0, 0, 1], special: a.specialActive?.id ?? null,
+            specialDeployed: a.specialActive?.id === 'storm' && a.specialActive?.t > 0, clamDrop: a._rankedClamDrop || 0 };
+          throwActor = a;
+        }
+      }
+      const accepted = broadcast.call(tr, d);
+      // A bounded transport can refuse this tick. Retain the one-shot edge
+      // until a later ordinary tick is accepted, or input lifecycle cancels it.
+      if (accepted === true && throwActor) throwActor._rankedThrowPending = false;
+      return accepted;
+    };
+    try { return tick.call(this); } finally { tr.broadcast = broadcast; }
+  };
+  const incoming = P.onMessage;
+  P.onMessage = function (from, d) {
+    if (!current(this) || !d || typeof d !== 'object') return incoming.call(this, from, d);
+    const m = this.match, inputSession = this.s, inputMatchId = this.cfg.id;
+    let stagedInput = null;
+    if (d.rk && from === this.s.hostId && !this.isHost) {
+      const accepted = acceptState(this, d.rk);
+      if (!accepted && ['st', 'res', 'end'].includes(d.k)) return;
+    }
+    if (d.rki && this.isHost && m.state === 'playing' && m.ranked.winner == null) {
+      const cmd = d.rki, a = m.actors.find(a => actorId(a) === cmd.id);
+      if (cmd.match === this.cfg.id && a?.owner === from && a.alive && Number.isSafeInteger(cmd.seq) && cmd.seq > 0 && finiteVector(cmd.aim)) {
+        this.rankedInputs ||= new Map();
+        const inputLife = d.l && Object.hasOwn(d.l,a.nid) ? d.l[a.nid] : a.net?.lastLife;
+        const old = inputLife===a.net?.lastLife ? rankedInputFor(this.rankedInputs.get(cmd.id),a,m,this) : null;
+        const specialOk = cmd.special == null || cmd.special === a.weapon?.special;
+        const dropOk = cmd.clamDrop === undefined || Number.isSafeInteger(cmd.clamDrop) && cmd.clamDrop >= 0 && cmd.clamDrop <= 100000;
+        if ((!old || cmd.seq > old.seq) && specialOk && dropOk && Number.isSafeInteger(inputLife) && inputLife>=0)
+          stagedInput = {id:cmd.id,actor:a,life:inputLife,input:{ seq: cmd.seq, fire: !!cmd.fire, throw: !!cmd.throw || !!old?.throw, aim: cmd.aim, at: G.time,
+            special: cmd.special ?? null, specialDeployed: cmd.special === 'storm' && cmd.specialDeployed === true, clamDrop: Math.max(old?.clamDrop || 0, cmd.clamDrop || 0) }};
+      }
+    }
+    if (d.k === 'rkhit') {
+      if (!this.isHost || d.match !== this.cfg.id || m.state !== 'playing' || m.ranked.winner != null) return;
+      const a = m.actors.find(a => actorId(a) === d.id);
+      if (!a?.alive || a.owner !== from || !Number.isSafeInteger(d.seq) || d.seq <= 0 || !Number.isFinite(d.damage) || !(d.damage > 0) || d.damage > 2000 || !finiteVector(d.pos)) return;
+      if (d.seq <= (this.rankedHitSeq?.get(from) || 0)) return;
+      const s = m.ranked.rule.state;
+      if (m.mode !== 'rainmaker' || !s.barrier?.active || !finiteVector(s.pos) || Math.hypot(...s.pos.map((n, i) => n - d.pos[i])) > 6) return;
+      // A client's impact is a proposal only. Admission waits for matching
+      // owner-stamped, geometrically plausible shot evidence in the tick stream.
+      queueRankedBarrierHit(this, from, d, G.time);
+      return;
+    }
+    if (d.k === 'rkevent') {
+      if (!this.isHost && from === this.s.hostId && d.match === this.cfg.id && Number.isSafeInteger(d.seq) && d.seq > (this.rankedEventSeq || 0)) {
+        if (!Array.isArray(d.events) || d.events.length > 128 || !d.events.every(validEvent)) return;
+        this.rankedEventSeq = d.seq;
+        m.playRankedEvents?.(d.events, true);
+      }
+      return;
+    }
+    if (d.k === 'rkdamage') {
+      if (m.state !== 'playing' || m.ranked.winner != null) return;
+      if (!this.isHost && from === this.s.hostId && d.match === this.cfg.id && Number.isSafeInteger(d.seq) && d.seq > (this.rankedDamageSeq || 0)
+          && (d.cause === undefined || damageCauses.has(d.cause))
+          && (d.deathReason === undefined || (d.deathReason === 'rainmaker-timeout' && d.attacker === null && d.damage === 2000))) {
+        const victim = m.actors.find(a => actorId(a) === d.victim), attacker = m.actors.find(a => actorId(a) === d.attacker) || null;
+        if (victim?.owner === this.myId && victim.alive && (victim.netLife ?? 0) === d.life && Number.isFinite(d.damage) && d.damage > 0 && d.damage <= 2000) {
+          this.rankedDamageSeq = d.seq;
+          const killed = withObjectDamageCause(attacker, () => victim.damage(d.damage, attacker || null, d.deathReason === 'rainmaker-timeout' ? 'rainmaker-timeout' : 'rainmaker'), d.cause || 'Gachihoko_Bullet');
+          api.emit('hit', { attacker, victim, damage: d.damage, killed, weaponId: 'rainmaker' });
+        }
+      }
+      return;
+    }
+    // Stage plausibility without publishing authority before the native packet,
+    // owner-life and adoption-sequence checks have accepted the actual snapshot.
+    const stagedPoses = [], session = this.s;
+    if (d.k === 't' && this.isHost && Array.isArray(d.a)) {
+      this.rankedPose ||= new Map();
+      const accepted = [], poseContext = rankedPoseContext(this, m, api);
+      for (const row of d.a) {
+        const actor = this.byNid.get(row?.[0]);
+        if (!actor?.remote || actor.owner !== from) continue;
+        const id = actorId(actor), previous = this.rankedPose.get(id);
+        const state = previous?.actor === actor && previous.match === m && previous.session === session && previous.owner === from
+          ? { ...previous } : {};
+        if (!admitRankedPose(state, row, actor, d.ts, m.rankedWorld, poseContext)) continue;
+        stagedPoses.push({ id, actor, row, state, tail: actor.net?.buf?.at(-1) });
+        accepted.push(row);
+      }
+      if (accepted.length !== d.a.length) d = { ...d, a: accepted };
+    }
+    const result = incoming.call(this, from, d);
+    // Native processing may advance life or replace the actor/session. Publish
+    // only into that same epoch; a valid first new-life edge is not discarded.
+    if (stagedInput && current(this) && this.match===m && this.s===inputSession && this.cfg.id===inputMatchId && this.isHost) {
+      const {id,actor,life,input}=stagedInput;
+      if (this.byNid.get(actor.nid)===actor && actor.owner===from && actor.net?.lastLife===life) {
+        const bound=bindRankedInput(input,actor,m,this);
+        if(bound)this.rankedInputs.set(id,bound);
+      }
+    }
+    if (current(this) && this.match === m && this.s === session && this.isHost) {
+      for (const { id, actor, row, state, tail } of stagedPoses) {
+        const snap = actor.net?.buf?.at(-1);
+        if (this.byNid.get(actor.nid) !== actor || actor.owner !== from || !actor.remote ||
+            !snap || snap === tail || snap.t !== d.ts || snap.life !== d.l?.[actor.nid] ||
+            snap.x !== row[1] || snap.y !== row[2] || snap.z !== row[3]) continue;
+        state.owner = from; state.life = snap.life;
+        // Keep local object identities out of snapshots/debug JSON.
+        Object.defineProperties(state, { actor: { value: actor }, match: { value: m }, session: { value: session } });
+        this.rankedPose.set(id, state);
+      }
+    }
+    if (d.k === 't' && this.isHost && m.mode === 'rainmaker' && m.state === 'playing')
+      noteRankedBarrierShots(this, from, d, G.time);
+    if (d.k === 'res' && from === this.s.hostId && !this.isHost && m.ranked.winner !== null) m.result = { ...m.result, ...m.ranked.result() };
+    return result;
+  };
+  const clock = P._hostClock;
+  P._hostClock = function (d) { if (!this.match?.ranked) return clock.call(this, d); };
+  const leave = P.onLeave;
+  P.onLeave = function (id, changed) {
+    const m = this.match;
+    if (m?.ranked) for (const a of m.actors.filter(a => a.owner === id)) m.ranked.rule.removeActor(actorId(a));
+    const r = leave.call(this, id, changed);
+    if (m?.ranked && changed) {
+      clearTowerPaintSupport(this);
+      this.rankedInputs?.clear(); this.rankedHitSeq?.clear(); this.rankedPose?.clear();
+      resetRankedBarrierAdmission(this);
+      this.rankedEventSeq = this.rankedDamageSeq = 0;
+      if (this.isHost) {
+        m.follower = false;
+        this._sendNow({ k: 'rkstate', rk: envelope(this, { state: m.ranked.snapshot(), gains: m.rankedGains || [0, 0] }) });
+      }
+    }
+    return r;
+  };
+  const dispose = P.dispose;
+  P.dispose = function () {
+    clearTowerPaintSupport(this);
+    this.rankedInputs?.clear(); this.rankedHitSeq?.clear(); this.rankedPose?.clear();
+    resetRankedBarrierAdmission(this);
+    return dispose.call(this);
+  };
+}
+function validEvent(e) {
+  if (!e || typeof e.kind !== 'string' || e.kind.length > 40 || !Number.isFinite(e.at)) return false;
+  if (e.team !== undefined && e.team !== 0 && e.team !== 1) return false;
+  if (e.kind.startsWith('rainmaker-')) {
+    if (!finiteVector(e.pos)) return false;
+    if (e.kind === 'rainmaker-shot' && (!finiteVector(e.aim) || !Number.isFinite(e.speed) || e.speed < 0 || e.speed > 300)) return false;
+    for (const key of ['damage', 'blastDamage', 'outerDamage', 'radius', 'paintRadius', 'nearRadius', 'directRange', 'effectiveRange', 'launchY', 'recoil', 'trailRadius']) if (e[key] !== undefined && (!Number.isFinite(e[key]) || e[key] < 0 || e[key] > 2000)) return false;
+  }
+  if (e.kind === 'clam-paint' && (!finiteVector(e.pos) || !Number.isFinite(e.radius) || e.radius <= 0 || e.radius > 1)) return false;
+  return true;
+}
+export function acceptState(nm, packet) {
+  const m = nm.match, engine = m?.ranked;
+  if (!engine || packet.match !== nm.cfg.id || packet.host !== nm.s.hostId || !validRankedSnapshot(packet.state, engine.mode, engine.stage.id)) return false;
+  let ok = false;
+  try { ok = engine.restore(packet.state); } catch { return false; }
+  if (!ok) return false;
+  m.time = engine.time;
+  if (Array.isArray(packet.gains) && packet.gains.length === 2 && packet.gains.every(n => Number.isFinite(n) && n >= 0 && n < 10000)) {
+    const previous = m.rankedGains || [0, 0];
+    for (const a of m.actors) if (!a.remote && a.alive && !a.specialActive && !specialGaugeLocked(a)) {
+      const gain = Math.max(0, packet.gains[a.team] - previous[a.team]);
+      // Host totals use baseline points, independent of this actor's SCU.
+      a.special = Math.min(a.specialCost(), a.special + gain / (a.s3?.modifiers?.specialCharge || 1));
+    }
+    m.rankedGains = [...packet.gains];
+  }
+  m.rankedWorld?.update(engine, 0);
+  recordTowerHostSnapshot(nm, packet.state);
+  return true;
+}

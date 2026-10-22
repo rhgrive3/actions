@@ -1,3 +1,4 @@
+import { validRainmakerShotOrigin } from './rainmaker-shot-origin.mjs';
 import { ZonesRule } from './zones.mjs';
 import { TowerRule } from './tower.mjs';
 import { RainmakerRule } from './rainmaker.mjs';
@@ -172,6 +173,7 @@ function validRuleState(mode, r) {
     && number(r.charge.recovery) && r.charge.recovery >= 0 && r.charge.recovery <= 20 / 60
     && typeof r.charge.wasSwimming === 'boolean'
     && (r.charge.pending === null || r.charge.pending && vec(r.charge.pending.pos) && vec(r.charge.pending.aim)
+      && (r.charge.pending.shotOrigin === undefined || validRainmakerShotOrigin(r.charge.pending.shotOrigin, r.charge.pending))
       && typeof r.charge.pending.actorId === 'string' && [0, 1].includes(r.charge.pending.team)
       && ['charge','damage','blastDamage','outerDamage','radius','nearRadius','directRange','effectiveRange','paintRadius','speed','launchY','recoil','trailRadius'].every(k => number(r.charge.pending[k]) && r.charge.pending[k] >= 0 && r.charge.pending[k] <= 300))
     && r.checkpoint && list(r.checkpoint.passed, x => typeof x === 'boolean') && r.checkpoint.passed.length === 2
