@@ -8,8 +8,8 @@ const start=source.indexOf('    const relayout = () => {');
 const end=source.indexOf("    window.addEventListener('resize', relayout",start);
 assert.ok(start>0&&end>start,'test must exercise current production relayout body');
 const relayoutCode=source.slice(start,end);
-const endDestroy=source.indexOf('\n  _install()',source.indexOf('  destroy()'));
 const destStart=source.indexOf('  destroy()');
+const endDestroy=source.indexOf('\n  }',destStart)+4;
 assert.ok(destStart>0&&endDestroy>destStart,'destroy method must remain discoverable');
 const rawDestroy=source.slice(destStart,endDestroy).trim().replace(/^destroy\(\)/,'function destroy()');
 function rig(){
