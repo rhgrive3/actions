@@ -74,3 +74,76 @@ Nintendo retail parity, physical iPad/Safari performance, or acceptance of the
 frozen native diagnostic/video work. Preserve those PRs' original limitations.
 Merge main only after all applicable checks on the actual latest integration
 head succeed; a previous head, queued job or skipped scoped capture is not proof.
+
+## Hosted failure follow-up, 2026-10-23 JST
+
+Actual head 992b6700 ran on hosted Node 22: A+, audio, relay, rain recovery,
+native stage, touch pacing, allocation, paint hotpath and reopened-six passed.
+Other jobs failed; no merge or full-green claim was made.
+
+The follow-up fixes a real non-Tower teardown null dereference: equality of
+optional undefined spatial fields must not lead to dereferencing a null level.
+VM transport fixtures now bind real NetMatch lifetimes before sending ticks
+and dispose them, retaining stale/foreign rejection. Splatana collision tests
+retain the actual shot-state reference before the production recycler clears
+p.catalog; assertions of hit order, terrain cells, seeds and HP remain.
+Charger arithmetic tests require no legacy loop, matching the selected source
+recording. Lobby CSSOM extraction retains the new occupancy/localization body
+and excludes the outer scratch finally. HUD tube guards use the cached
+pinned envelope and verify its frame consumer. Recovery workflow tests retain
+manual-run independence and assert the PR-only cancellation policy.
+
+Generated Worker binding now excludes callback lexical scopes when resolving
+the native URL binding, while rejecting duplicate/ambiguous locals and URL
+reassignment. The complete real minified native music source is covered,
+including callback-name reuse, nested-worker and URL-reassignment negatives.
+These changes retain immutable manifest/source/callsite/bytes validation.
+
+Unresolved native intro/clock composition and comparison source-epoch failures
+remain under investigation; no historical source is presented as current-head
+evidence. Required hosted checks remain the final acceptance gate.
+
+### Second hosted failure repair batch
+
+The actual eight hosted shards finished on 992b6700 with fixture failures;
+those runs are not green. Further repairs preserve every shard/fan-in and gate:
+
+- Paint codec membership now brands cross-realm Maps with the native Map size
+  getter and reads native keys/has. This fixes a real composition bug that
+  prevented negotiated conditional/transient-gear transport; fake Maps remain
+  rejected and existing capability nonce/membership churn tests are retained.
+- Receiver fixtures bind actual match lifetimes. Timer cleanup expects the
+  additional owned startup timer. Charger ordering reads the existing reusable
+  hit-candidate scratch; the reviewed Roller source fingerprint reflects its
+  scratch-pool change, with the original support mutation guards unchanged.
+- Duplicate-row tests stay within the new actor-envelope budget and retain
+  first-row-only admission; a separate negative proves over-budget duplicates
+  cannot advance native or ranked authority. All 26 ranked-position cases pass.
+- Flow negative controls invert all composing surface fixes so the newer clamp
+  cannot mask the old buried-particle counterexample. Swim-only controls retain
+  root/ribbon anchors. Source/compiled swim and 30/60/120 Hz surface tests pass.
+- The intro UI helper advances only the current match/flow-owned fixed-clock
+  presentation, under the existing deadline and bounded frame guard. It never
+  steps live gameplay during UI settling. Foreign/stalled ownership and timeout
+  negatives remain required; no manual HUD mutation or timer firing is used.
+- The main/integration paint source epoch binds all 13 exact before/after Git
+  blobs, including the codec repair. Pose admission binds 16 leaves and retains
+  the reviewed Roller scratch difference. It preserves the baseline verbatim,
+  performs no replay, and does not claim physical equivalence. Mutation, missing
+  leaf, reversed pair and wrong epoch negatives remain fail-closed; actual native
+  physical/paint/image comparison remains mandatory in projectile CI.
+- The specialized Explosher experiment still admits only its independent 364dd0
+  common build. General CI now supplies that exact source and both required
+  overlay receipts to the strict stage gate, and additionally requires native
+  Explosher input/weapon/projectile/render execution from the exact latest PR
+  head with all committed build inputs and emitted artifacts checked. Historical
+  inverse evidence is not accepted as latest-head native or full-game parity.
+  Existing deferred long-capture limitations are unchanged.
+
+Local follow-up: the combined hosted-failure reproductions passed 174 cases
+with one duplicate-row fixture failure; after correction all 26 ranked-position
+cases passed. Flow swim source and compiled tests passed 2/2. Prior focused
+repairs passed 64/64, script/lobby/Worker guards 15/15, HUD guards 13/13, intro
+and source routes 67/67, and Explosher admission guards 103/103. No local native
+browser pass or complete hosted acceptance is claimed. The latest published
+head must rerun every applicable hosted check before merge.

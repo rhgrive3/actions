@@ -4,19 +4,7 @@ import {sourceLoadedActorFixture} from './source-loaded-actor-fixture.mjs';
 
 // Actual composed Actor, source banks, rig and Flow meshes on the fixture's
 // analytic own-ink plane. CPU geometry proof, not a GPU pixel acceptance claim.
-const oldAnchors = `    // A source swimmer's pivot is intentionally below the ink surface. Flow
-    // particles stay above its authoritative foot/surface origin; following
-    // the submerged pivot hides the entire active glint envelope in the floor.
-    if (ch.form === 'swim' && ch.grounded) ch.root.getWorldPosition(s.anchors[0]);
-    else ch.squid.pivot.getWorldPosition(s.anchors[0]);
-    ch.root.worldToLocal(s.anchors[0]);`;
-function baseline(rel, source) {
-  if (rel !== 'patches/splatoon3/runtime/flow-motion.mjs') return source;
-  assert.ok(source.includes(oldAnchors));
-  return source.replace(oldAnchors,'    ch.root.worldToLocal(ch.squid.pivot.getWorldPosition(s.anchors[0]));')
-    .replace("    const verticalPhase = ch.form === 'swim' && ch.grounded ? phase : phase - .5;\n    s.point.y += verticalPhase * leg * (ch.kidForm ? .75 : .35);",
-      '    s.point.y += (phase - .5) * leg * (ch.kidForm ? .75 : .35);');
-}
+import {withoutFlowSurfaceFixes as baseline} from './flow-surface-negative.mjs';
 async function setup(api) {
   const {G,THREE,Actor,Character}=api;G.actors=[];G.time=0;
   const actor=new Actor({team:0,name:'flow-render',weapon:'dualies',CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}});

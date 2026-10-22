@@ -66,19 +66,23 @@ export function decodePaintEvents(payload){
 // a successful WebSocket.send is never treated as a capability acknowledgement.
 const CONTROL='paint-codec';
 const validNonce=n=>typeof n==='string'&&/^[0-9a-f]{32}$/.test(n);
+const nativeMapSize=Object.getOwnPropertyDescriptor(Map.prototype,'size').get;
 function randomNonce(){try{const a=new Uint32Array(4);globalThis.crypto.getRandomValues(a);return [...a].map(x=>x.toString(16).padStart(8,'0')).join('');}catch{return null;}}
 export class PaintPacketNegotiation {
  constructor(nonceFactory=randomNonce){this.nonceFactory=nonceFactory;this.matchId=null;this.myId=null;this.members=new Map();this.nonce=null;}
  reset(){this.members.clear();const n=this.nonceFactory();this.nonce=validNonce(n)?n:null;}
  sync(matchId,myId,memberIds){
-  const map=memberIds instanceof Map,ids=map?memberIds.keys():memberIds;
-  const size=map?memberIds.size:memberIds?.length;
+  // Membership can originate in another realm (embedded sessions and VM
+  // fixtures). Use the native Map brand rather than this realm's prototype.
+  let map=false,size;
+  try{size=nativeMapSize.call(memberIds);map=true;}catch{size=Array.isArray(memberIds)?memberIds.length:undefined;}
+  const ids=map?Map.prototype.keys.call(memberIds):memberIds;
   if(typeof matchId!=='string'||!matchId||matchId.length>128||typeof myId!=='string'||(!map&&!Array.isArray(memberIds))||size>16){this.clear();return false;}
   for(const id of ids)if(typeof id!=='string'||!id||id.length>128){this.clear();return false;}
   if(this.matchId!==matchId||this.myId!==myId)this.reset();
-  for(const id of this.members.keys())if(id===myId||!(map?memberIds.has(id):memberIds.includes(id)))this.members.delete(id);
+  for(const id of this.members.keys())if(id===myId||!(map?Map.prototype.has.call(memberIds,id):memberIds.includes(id)))this.members.delete(id);
   this.matchId=matchId;this.myId=myId;
-  for(const id of map?memberIds.keys():memberIds)if(id!==myId&&!this.members.has(id))this.members.set(id,{sent:false,challenge:this.nonceFactory(),peerNonce:null,ackNonce:null,received:false,ackSentFor:null,blocked:false});
+  for(const id of map?Map.prototype.keys.call(memberIds):memberIds)if(id!==myId&&!this.members.has(id))this.members.set(id,{sent:false,challenge:this.nonceFactory(),peerNonce:null,ackNonce:null,received:false,ackSentFor:null,blocked:false});
   return !!this.nonce;
  }
  announce(send){

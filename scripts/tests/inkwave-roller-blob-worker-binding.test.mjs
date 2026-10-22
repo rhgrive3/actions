@@ -7,16 +7,16 @@ const ORIGIN='http://127.0.0.1:1234';
 const creatorPath='src/audio/music.js';
 const creatorCode=`class Music{_startTimer(){const src=${JSON.stringify(SOURCE)};const url=URL.createObjectURL(new Blob([src],{type:'text/javascript'}));return new Worker(url);}}`;
 const response=(url,body,type='script',mime='text/javascript')=>({url:()=>url,request:()=>({resourceType:()=>type}),headers:()=>({'content-type':mime}),ok:()=>true,body:async()=>Buffer.from(body)});
-function payload(url,origin=ORIGIN,path=creatorPath){return {url,mime:'text/javascript',size:Buffer.byteLength(SOURCE),bytes:Array.from(Buffer.from(SOURCE)),workerOptions:'default',creationStack:`Error\n    at URL.createObjectURL (<anonymous>:10:20)\n    at Music._startTimer (${origin}/${path}:1:${creatorCode.indexOf('URL.createObjectURL')+1})`,workerStack:`Error\n    at new ObservedWorker (<anonymous>:20:20)\n    at Music._startTimer (${origin}/${path}:1:${creatorCode.indexOf('new Worker')+1})`};}
+function payload(url,origin=ORIGIN,path=creatorPath,code=creatorCode){return {url,mime:'text/javascript',size:Buffer.byteLength(SOURCE),bytes:Array.from(Buffer.from(SOURCE)),workerOptions:'default',creationStack:`Error\n    at URL.createObjectURL (<anonymous>:10:20)\n    at Music._startTimer (${origin}/${path}:1:${code.indexOf('URL.createObjectURL')+1})`,workerStack:`Error\n    at new ObservedWorker (<anonymous>:20:20)\n    at Music._startTimer (${origin}/${path}:1:${code.indexOf('new Worker')+1})`};}
 async function fixture(origin=ORIGIN,code=creatorCode,path=creatorPath){
  const loaded={},manifest={artifacts:{},build:{revision:'pinned-revision'}},evidence=createBlobWorkerEvidence();
  for(let i=0;i<101;i++){const rel=`src/native-${i}.js`,body=`export const n=${i};`;manifest.artifacts[rel]=hashBytes(body);loaded[rel]={sha256:hashBytes(body),bytes:Buffer.byteLength(body)};}
  manifest.artifacts[path]=hashBytes(code);await recordLoadedModuleResponse(response(origin+'/'+path,code),origin,loaded,evidence);
- return {loaded,manifest,evidence,origin,path};
+ return {loaded,manifest,evidence,origin,path,code};
 }
 function creation(f,url,p=payload(url,f.origin)){return recordBlobWorkerCreation(f.evidence,p,f.origin,{mainFrame:true,frameUrl:f.origin+'/index.html'});}
 async function native(f,url='blob:'+f.origin+'/native-uuid'){
- creation(f,url,payload(url,f.origin,f.path));observeGeneratedWorker(f.evidence,url,f.origin);await recordLoadedModuleResponse(response(url,SOURCE,'other'),f.origin,f.loaded,f.evidence);
+ creation(f,url,payload(url,f.origin,f.path,f.code));observeGeneratedWorker(f.evidence,url,f.origin);await recordLoadedModuleResponse(response(url,SOURCE,'other'),f.origin,f.loaded,f.evidence);
  bindBlobWorkerEvidence(f.evidence,f.loaded,f.manifest);return verifyLoadedModules(f.loaded,f.manifest);
 }
 test('exact native worker response binds to actually loaded manifest-pinned creator and stable provenance',async()=>{
@@ -39,6 +39,19 @@ test('unobserved, foreign, data, mutated and missing worker executables fail clo
  assert.throws(()=>bindBlobWorkerEvidence(mutated.evidence,mutated.loaded,mutated.manifest),/response differs/);
  const missing=await fixture();creation(missing,url);observeGeneratedWorker(missing.evidence,url,ORIGIN);assert.throws(()=>bindBlobWorkerEvidence(missing.evidence,missing.loaded,missing.manifest),/response missing/);
  await assert.rejects(recordLoadedModuleResponse(response(url,SOURCE,'other'),ORIGIN,{}),/lacks creation provenance/);
+});
+test('minified native timer keeps lexical URL identity across callback name reuse',async()=>{
+ const {transform}=await import('esbuild');
+ const fs=await import('node:fs');
+ const source=fs.readFileSync(new URL('../../inkwave-public/src/audio/music.js',import.meta.url),'utf8');
+ const {code}=await transform(source,{minify:true,format:'esm',target:'es2022'});
+ const f=await fixture(ORIGIN,code);await native(f);
+ const nested=creatorCode.replace('return new Worker(url);','const onerror=()=>{const url=this.worker;return url;};return new Worker(url);');
+ await native(await fixture(ORIGIN,nested));
+ for(const code of [
+  creatorCode.replace('return new Worker(url);','url=this.other;return new Worker(url);'),
+  creatorCode.replace('return new Worker(url);','return (()=>new Worker(url))();'),
+ ])await assert.rejects(native(await fixture(ORIGIN,code)));
 });
 test('known byte literal alone never grants trust without loaded creator, native call sites and actual Worker observation',async()=>{
  const url='blob:'+ORIGIN+'/known';

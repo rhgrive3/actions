@@ -19,7 +19,7 @@ let loaded;
 
 async function production() {
   if (loaded) return loaded;
-  const context = vm.createContext({ console, performance, URL }), modules = new Map();
+  const context = vm.createContext({ console, performance, URL, crypto:globalThis.crypto, TextEncoder, TextDecoder }), modules = new Map();
   function load(requested) {
     let file = requested.startsWith(path.join(SRC, 'patches') + path.sep)
       ? path.join(ROOT, path.relative(SRC, requested)) : requested;
@@ -59,6 +59,7 @@ async function production() {
   let shots = 0;
   G.projectiles = Object.fromEntries(['fireFlick', 'fireShooter', 'fireDualies', 'fireCharger', 'fireSplatling', 'fireBlaster', 'fireSlosh', 'throwBomb']
     .map(name => [name, () => { shots++; }]));
+  Object.assign(G.projectiles,{list:[],bombs:[],clouds:[],beams:[],sights:new Map()}); // NetMatch teardown retires ghosts.
   api.testShotCount = () => shots;
   loaded = api;
   return api;
@@ -151,6 +152,7 @@ test('owner network tick carries horizontal and vertical fold mode through remot
   const api = await production();
   for (const vertical of [false, true]) {
     const local = rig(api), remote = rig(api, { remote: true }), wire = [];
+    let sender,receiver;
     try {
       const nid = 916;
       local.actor.nid = remote.actor.nid = nid;
@@ -162,12 +164,12 @@ test('owner network tick carries horizontal and vertical fold mode through remot
         local.ch.trigger('jump');
         assert.equal(local.actor.s3JumpAirborne, true, 'native Character jump hook records the launch');
       }
-      const sender = new api.NetMatch({ myId: 'owner', hostId: 'owner', isHost: true,
+      sender = new api.NetMatch({ myId: 'owner', hostId: 'owner', isHost: true,
         tr: { broadcast: message => wire.push(message) }, _members: new Set(['owner', 'guest']) }, {});
-      const receiver = new api.NetMatch({ myId: 'guest', hostId: 'owner', isHost: false,
+      receiver = new api.NetMatch({ myId: 'guest', hostId: 'owner', isHost: false,
         tr: { broadcast() {} }, _members: new Set(['owner', 'guest']) }, {});
-      sender.byNid.set(nid, local.actor); sender._setupActor(local.actor);
-      receiver.byNid.set(nid, remote.actor); receiver._setupActor(remote.actor);
+      sender.bind({actors:[local.actor],state:'playing',time:180});
+      receiver.bind({actors:[remote.actor],state:'playing',time:180});
 
       const dt = 1 / 60;
       local.step(dt, { fire: true, firePressed: true, grounded: !vertical });
@@ -188,7 +190,7 @@ test('owner network tick carries horizontal and vertical fold mode through remot
       animate(remote.ch, dt);
       assert.deepEqual(gameplay(remote, api), beforeRender, 'the received presentation mode does not change gameplay');
       assertAbsoluteHinge(api, local.ch); assertAbsoluteHinge(api, remote.ch);
-    } finally { local.close(); remote.close(); }
+    } finally { sender?.dispose();receiver?.dispose();local.close(); remote.close(); }
   }
   assert.equal(api.testShotCount(), 0, 'fold replication does not emit projectiles');
 });

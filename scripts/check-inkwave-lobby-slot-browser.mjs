@@ -10,8 +10,11 @@ import { adaptBuildSource } from './inkwave-source-composition.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const raw=fs.readFileSync(path.join(root,'inkwave-public/src/ui/menus.js'),'utf8');
 function updateBlock(source) {
-  const start=source.indexOf('          const bots = lob.bots !== false;\n          for (const O of open) {');
-  const end=source.indexOf('\n        }\n        S.age += dt;',start);
+  const start=source.indexOf('          const bots = lob.bots !== false');
+  // Keep the actual open-slot body, including occupancy and localization,
+  // without capturing the enclosing plate scratch try/finally terminator.
+  const scratchEnd=source.indexOf('\n          } finally { vis.length = placedRows.length = 0;',start);
+  const end=scratchEnd>=0?scratchEnd:source.indexOf('\n        }\n        S.age += dt;',start);
   assert(start>=0&&end>start,'production lobby update boundaries');
   return source.slice(start,end);
 }

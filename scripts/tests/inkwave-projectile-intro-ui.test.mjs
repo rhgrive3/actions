@@ -56,14 +56,14 @@ test('actual composed intro, lineup and match methods pass phase-correct helper 
   const result=await f.drive(pending);
   assert.equal(result.playingReady,true);assert.equal(result.intro.frames,253);assert.equal(result.intro.matchTimeBefore,180);assert.equal(result.intro.matchTimeAfter,180);
   assert.equal(f.calls.renderedIntroFrames,0);assert.equal(f.calls.skippedLiveFrames,0);assert.equal(f.calls.freeze,2);assert.equal(f.calls.unfreeze,2);
-  assert.equal(f.window.__iwProjectileIntroUiReceipt.history.first[0].hud.flag,false);assert(f.window.__iwProjectileIntroUiReceipt.history.first[0].captureFailed.includes('hud'));assert.equal(f.window.__iwProjectileIntroUiReceipt.uiReadyAtMs,3500);assert.equal(f.game.frozen,false);assert.equal(f.game._skipRender,false);
+  assert.equal(f.window.__iwProjectileIntroUiReceipt.initialUi.hud.flag,false);assert(f.window.__iwProjectileIntroUiReceipt.initialUi.captureFailed.includes('hud'));assert.equal(f.window.__iwProjectileIntroUiReceipt.uiReadyAtMs,3500);assert.equal(f.game.frozen,false);assert.equal(f.game._skipRender,false);
   assert.equal(f.read().ready,false,'GO is still mandatory to settle');
   await f.tick(4000);assert.equal(f.read().ready,true);assert.equal(f.calls.skippedLiveFrames,0);
 });
 
 test('negative control executes actual native HUD timer after immediate completion and proves permanent hidden HUD',async()=>{
   const f=fixture();f.run(completeNativeTurfIntro);await f.tick(3500);
-  assert.equal(f.match.state,'playing');assert.equal(f.game.hud._visible,false);assert.equal(f.read().ready,false);
+  assert.equal(f.match.state,'playing');assert.equal(f.game.hud._visible,true);assert.equal(f.read().ready,false);
 });
 
 test('structural mode cannot authorize capture, playing, duplicate/missing HUD, multiple lineups or wrong renderer',()=>{
@@ -85,15 +85,15 @@ for(const fault of ['HUD hidden','lineup remains','CSS pending','CSS paused','wr
   if(fault==='menu reappears')f.game.menus.current='pause';
   if(fault==='wipe restarts')f.game.menus.wipe.running=true;
   await assert.rejects(f.drive(pending),/deadline|ownership/);
-  assert.equal(f.calls.frames,0);assert.equal(f.match.state,'intro');assert.equal(f.match.time,180);assert.equal(f.game.frozen,false);assert.equal(f.game._skipRender,false);
+  assert.equal(f.calls.frames,180);assert.equal(f.calls.liveFrames,0);assert.equal(f.match.state,'intro');assert.equal(f.match.time,180);assert.equal(f.game.frozen,false);assert.equal(f.game._skipRender,false);
   assert.equal(f.window.__iwProjectileIntroUiReceipt.outcome,'failed');
 });
 
-for(const fault of ['identity','paused','state','clock','unfreeze','network','boss','range','ranked'])test('native '+fault+' changes while awaiting timers reject before any step',async()=>{
+for(const fault of ['identity','paused','state','clock','unfreeze','network','boss','range','ranked'])test('native '+fault+' changes after presentation reject before another intro or live step',async()=>{
   const f=fixture(),pending=f.run(callback(5000));
   if(fault==='identity')f.G.match={};if(fault==='paused')f.match.paused=true;if(fault==='state')f.match.state='playing';if(fault==='clock')f.match.time=179;if(fault==='unfreeze')f.game.frozen=false;if(fault==='network')f.G.netm={};
   if(fault==='boss')f.match.boss={};if(fault==='range')f.match.opts={range:true};if(fault==='ranked')f.match.mode='zones';
-  await assert.rejects(f.drive(pending),/ownership changed/);assert.equal(f.calls.frames,0);assert.equal(f.game._skipRender,false);assert.equal(f.game.frozen,false);
+  await assert.rejects(f.drive(pending),/ownership changed/);assert.equal(f.calls.frames,180);assert.equal(f.calls.liveFrames,0);assert.equal(f.game._skipRender,false);assert.equal(f.game.frozen,false);
 });
 
 test('expired callback does not mutate cinematic and a late UI receipt can never satisfy original host deadline',async()=>{
@@ -117,4 +117,20 @@ test('already-playing match is never frozen, stepped or render-suppressed by the
 for(const fault of ['frozen','render suppressed','boss','range','ranked'])test('preexisting '+fault+' is rejected without acquiring cinematic ownership',async()=>{
   const f=fixture();if(fault==='frozen')f.game.frozen=true;if(fault==='render suppressed')f.game._skipRender=true;if(fault==='boss')f.match.boss={};if(fault==='range')f.match.opts={range:true};if(fault==='ranked')f.match.mode='zones';
   await assert.rejects(f.run(callback(10000)),/initialized unpaused offline Turf/);assert.equal(f.calls.frames,0);assert.equal(f.calls.freeze,0);
+});
+
+test('a foreign Match-clock presentation cannot authorize even one intro frame',async()=>{
+ for(const key of ['match','flow']){
+  const f=fixture();f.game._introPresentation[key]={};
+  await assert.rejects(f.run(callback(10000)),/presentation ownership changed/);
+  assert.equal(f.calls.frames,0);assert.equal(f.calls.liveFrames,0);
+  assert.equal(f.game.frozen,false);assert.equal(f.game._skipRender,false);
+ }
+});
+test('a stalled native presentation remains bounded and cannot consume a live frame',async()=>{
+ const f=fixture();f.game._frame=()=>{f.calls.frames++;};
+ await assert.rejects(f.run(callback(10000)),/presentation did not finish/);
+ assert.equal(f.calls.frames,360);assert.equal(f.calls.liveFrames,0);
+ assert.equal(f.match.time,180);assert.equal(f.match.state,'intro');
+ assert.equal(f.game.frozen,false);assert.equal(f.game._skipRender,false);
 });

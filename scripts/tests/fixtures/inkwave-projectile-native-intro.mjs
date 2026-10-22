@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { adaptBuildSource } from '../../inkwave-source-composition.mjs';
+import {beginIntroPresentation,advanceIntroPresentation} from '../../../patches/splatoon3/runtime/intro-presentation.mjs';
 
 // Composed production methods; 3D rendering, actors, audio and side systems are fixtures.
 const composed = rel => adaptBuildSource(rel, fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8'));
@@ -11,6 +12,8 @@ function section(source, start, end) {
   return source.slice(a, b);
 }
 export const nativeIntroMethods = {
+  beginIntroPresentation:beginIntroPresentation.toString(),
+  advanceIntroPresentation:advanceIntroPresentation.toString(),
   intro: section(main, '  _intro() {', '\n  pause() {'),
   loop: section(main, '  _loop() {', '\n  // keep weaker GPUs'),
   update: section(match, '  update(dt) {', '\n  updateController(dt) {'),
@@ -20,6 +23,8 @@ export const nativeIntroMethods = {
   banner: section(hud, "  banner(kind = 'custom', text) {", '\n  countdown(n) {'),
 };
 export function installNativeIntroFixture(methods) {
+    const beginIntroPresentation=eval('('+methods.beginIntroPresentation+')');
+    const advanceIntroPresentation=eval('('+methods.advanceIntroPresentation+')');
     const G = window.__G = { mode:'match', level:{spawnPads:[{x:0,y:0,z:0}]}, projectiles:{}, teamHex:['#ff8a14','#2f5bff'] };
     const THREE = { Vector3:class {constructor(x,y,z){Object.assign(this,{x,y,z});} set(x,y,z){Object.assign(this,{x,y,z});}} };
     const nativeArenaBasis = () => null, nativeSpawnYaw = (_l,_t,yaw) => yaw;
@@ -55,6 +60,7 @@ export function installNativeIntroFixture(methods) {
       if(m.state==='intro'){if(!game._skipRender)calls.renderedIntroFrames++;}
       else {calls.liveFrames++;if(game._skipRender)calls.skippedLiveFrames++;}
       m.update(dt);
+      advanceIntroPresentation(game);
     };
     game._intro=eval('({'+methods.intro+'})')._intro;
     game._loop=eval('({'+methods.loop+'})')._loop;

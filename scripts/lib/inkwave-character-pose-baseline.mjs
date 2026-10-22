@@ -1,3 +1,4 @@
+import {ALL_PRS_POSE_PAIR} from './inkwave-23pr-paint-source-pair.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -547,7 +548,7 @@ function currentPosePair(baseline, candidate) {
     })),
   };
 
-  const pair = [QUEUE1801_IDENTICAL_POSE_PAIR, QUEUE1801_POSE_PAIR, OCT22_INTEGRATION_POSE_PAIR, CURRENT_POSE_PAIR, RESOLVED_POSE_PAIR, PR1746_POSE_PAIR].find(pair => CHARACTER_POSE_PATHS.every(path =>
+  const pair = [ALL_PRS_POSE_PAIR, QUEUE1801_IDENTICAL_POSE_PAIR, QUEUE1801_POSE_PAIR, OCT22_INTEGRATION_POSE_PAIR, CURRENT_POSE_PAIR, RESOLVED_POSE_PAIR, PR1746_POSE_PAIR].find(pair => CHARACTER_POSE_PATHS.every(path =>
     typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string' &&
     blob(baseline.get(path)) === pair.paths[path].baseline &&
     blob(candidate.get(path)) === pair.paths[path].candidate));

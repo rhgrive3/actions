@@ -12,3 +12,15 @@ test('workflow encodes bounded trigger and cannot launch later ladder stages',()
  assert.match(y,/contents: read/);assert.match(y,/EXPLOSHER_PREFLIGHT: '1'/);assert.match(y,/ADMISSION_RELEASE_ENABLED/);assert.doesNotMatch(y,/pull_request_target:|workflow_dispatch:|EXPLOSHER_VIDEO:|encode-inkwave-explosher-comparison/);
  const guard=y.indexOf('Verify exact owned PR event'),release=y.indexOf('Refuse native work'),build=y.indexOf('Verify immutable common checkout'),capture=y.indexOf('Capture only initial short pair');assert(guard<release&&release<build&&build<capture);
 });
+test('general PR regressions retain latest build while specialized native QA uses the admitted immutable source',()=>{
+ const y=fs.readFileSync(new URL('../../.github/workflows/inkwave-explosher-flight-glitter.yml',import.meta.url),'utf8');
+ assert.match(y,/ref: \$\{\{ github\.event\.pull_request\.head\.sha \}\}/);
+ assert.match(y,/ref: 364dd0a7fad9508652b4b4c6ec3d82eb124e9c5c/);
+ assert.match(y,/node scripts\/build-inkwave\.mjs inkwave-public \.built-site\/explosher-current/);
+ for(const gate of ['requireApprovedCommonBuild','compile-inkwave-explosher-inverse-pair.mjs','compile-inkwave-explosher-controlled-main.mjs','readExplosherStagePair'])assert(y.includes(gate));
+ assert(y.indexOf('requireApprovedCommonBuild')<y.indexOf('- name: Short admitted same-build native preflight'));
+ assert.match(y,/check-inkwave-current-explosher-native\.mjs \.built-site\/explosher-current/);
+ assert.match(y,/EXPECTED_HEAD: \$\{\{ github\.event\.pull_request\.head\.sha \}\}/);
+ assert.match(y,/same-build native preflight/);assert.match(y,/Historical common-build QA; no latest-gameplay parity claim/);
+ assert.doesNotMatch(y,/check-inkwave-explosher-flight-glitter\.mjs \.built-site\/explosher-current/);
+});

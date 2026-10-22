@@ -110,9 +110,9 @@ test('native tick sidecar carries an actor-local pair and rejects stale or forei
  const f=await setup(),owner=f.make(),proxy=f.make();Object.assign(owner,{nid:1,owner:'A'});Object.assign(proxy,{nid:1,owner:'A',remote:true});equip(f,owner,'torpedo','zipcaster');
  let message;const makeSession=id=>({myId:id,isHost:false,_members:new Map([['A',{}],['B',{}]]),tr:{broadcast:m=>{message=JSON.parse(JSON.stringify(m));}}});
  const sender=new f.NetMatch(makeSession('A'),{}),receiver=new f.NetMatch(makeSession('B'),{});sender.bind({actors:[owner]});sender._sendTick();assert.equal(message.ck[1][1],'torpedo');
- receiver._setupActor(proxy);receiver.byNid.set(1,proxy);f.G.netm=receiver;receiver._tick('A',message);assert.equal(proxy.weapon.sub,'torpedo');assert.equal(proxy.weapon.special,'zipcaster');
+ receiver.bind({actors:[proxy]});f.G.netm=receiver;receiver._tick('A',message);assert.equal(proxy.weapon.sub,'torpedo');assert.equal(proxy.weapon.special,'zipcaster');
  const stale=JSON.parse(JSON.stringify(message));stale.ck[1][1]='bomb';receiver._tick('A',stale);assert.equal(proxy.weapon.sub,'torpedo');
- const foreign=JSON.parse(JSON.stringify(message));foreign.ts++;foreign.ck[1][1]='bomb';receiver._tick('foreign',foreign);assert.equal(proxy.weapon.sub,'torpedo');sender.dispose();
+ const foreign=JSON.parse(JSON.stringify(message));foreign.ts++;foreign.ck[1][1]='bomb';receiver._tick('foreign',foreign);assert.equal(proxy.weapon.sub,'torpedo');sender.dispose();receiver.dispose();
 });
 
 test('Splat Bomb released through a custom kit retains the generic native paint branch',async()=>{

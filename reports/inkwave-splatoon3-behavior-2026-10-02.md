@@ -5998,3 +5998,27 @@ main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、翻訳辞書の�
 ### 2026-10-22 全PR統合: remote Chargerとidle音声最適化の接続
 
 Splatoon 3 Ver.11.3.0との実機音声一致は引き続き未確認。INKWAVEではremote Chargerの録音phrase再生中・開始edgeの後処理中をidle省略の対象外とし、release/ブキ変更で録音を止め、次のcharge edgeを再び受理する。旧charge loopが残っている場合も停止する。完全idleでは従来どおり距離probeもvoice呼出しも行わない。実際の合成済みNetMatch._voicesを使い、hold/解除/再押下/ブキ切替とidle復帰を検査する。充填量・射撃時刻・移動・塗り・通信payloadは変更しない。本家の未公開音声値やカーブを推測で補っていない。
+
+
+### 2026-10-23 JST: integration teardown and regression ownership
+
+Reference stays Splatoon 3 Ver.11.3.0. Hosted integration exposed a null-level
+read during non-Tower RankedWorld.dispose. Guard the absent world before
+checking cached spatial stamp identity; no gameplay numeric, collision, ink,
+mode-rule or retail-parity claim changes. Existing Clam throw/presentation and
+RankedWorld spatial-order tests exercise teardown. Reproduce by disposing a
+Clam presentation after G.level is cleared. The intended effect is safe scene
+cleanup; hosted final-head confirmation remains required.
+
+#### 2026-10-23 integration CI follow-up
+
+Reference remains Splatoon 3 Ver.11.3.0. The paint transport codec repair admits
+real cross-realm Map membership from embedded session composition, preserving
+nonce negotiation, sender admission, membership churn and lossless rows; it does
+not change weapon paint/damage values. Fixed-clock intro QA now follows the
+owned native presentation rather than waiting for a removed wall-clock timer.
+Flow negative controls account for composing surface clamps, retaining the same
+particle/collision/gameplay assertions. These are local VM/source checks; native
+hosted rendering and retail-device movement/paint parity remain separate and
+unconfirmed. Historical Explosher inverse QA remains scoped to its independently
+pinned common build, with a separate required current-head native smoke.

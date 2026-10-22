@@ -30,12 +30,22 @@ export function observeGeneratedWorker(e,url,origin){
  assert(u.protocol==='blob:'&&u.origin===origin,'Foreign Blob Worker');
  assert(!e.workers.includes(url),'Duplicate observed Worker');e.workers.push(url);
 }
-function visit(node,fn){if(!node||typeof node!=='object')return;fn(node);for(const [key,value]of Object.entries(node))if(key!=='loc'){if(Array.isArray(value))value.forEach(v=>visit(v,fn));else if(value&&typeof value==='object')visit(value,fn);}}
+function visit(node,fn){if(!node||typeof node!=='object')return;if(fn(node)===false)return;for(const [key,value]of Object.entries(node))if(key!=='loc'){if(Array.isArray(value))value.forEach(v=>visit(v,fn));else if(value&&typeof value==='object')visit(value,fn);}}
 function derive(source){
  const methods=[];visit(parse(source,{ecmaVersion:'latest',sourceType:'module',locations:true}),n=>{if(n.type==='MethodDefinition'&&(n.key.name||n.key.value)==='_startTimer')methods.push(n);});
  assert.equal(methods.length,1,'One pinned native timer method required');
- const declarations=new Map(),creates=[],workers=[];
- visit(methods[0].value.body,n=>{if(n.type==='VariableDeclarator'&&n.id.type==='Identifier')declarations.set(n.id.name,n.init);if(n.type==='CallExpression'&&n.callee.type==='MemberExpression'&&!n.callee.computed&&n.callee.object.name==='URL'&&n.callee.property.name==='createObjectURL')creates.push(n);if(n.type==='NewExpression'&&n.callee.name==='Worker')workers.push(n);});
+ const declarations=new Map(),creates=[],workers=[],assignments=[];
+ visit(methods[0].value.body,n=>{
+  // Minification reuses names inside callbacks; those bindings cannot shadow
+  // the synchronous _startTimer URL consumed by the actual native Worker.
+  if(/^(?:FunctionExpression|FunctionDeclaration|ArrowFunctionExpression|ClassExpression|ClassDeclaration)$/.test(n.type))return false;
+  if(n.type==='VariableDeclarator'&&n.id.type==='Identifier'){
+   assert(!declarations.has(n.id.name),'Ambiguous native timer binding');declarations.set(n.id.name,n.init);
+  }
+  if(n.type==='AssignmentExpression'||n.type==='UpdateExpression')assignments.push(n.left||n.argument);
+  if(n.type==='CallExpression'&&n.callee.type==='MemberExpression'&&!n.callee.computed&&n.callee.object.name==='URL'&&n.callee.property.name==='createObjectURL')creates.push(n);
+  if(n.type==='NewExpression'&&n.callee.name==='Worker')workers.push(n);
+ });
  assert.equal(creates.length,1,'One native Blob call required');assert.equal(workers.length,1,'One native Worker call required');
  const create=creates[0],worker=workers[0],blob=create.arguments[0];
  assert(blob?.type==='NewExpression'&&blob.callee.name==='Blob'&&blob.arguments.length===2);
@@ -46,6 +56,7 @@ function derive(source){
    (opts.properties[0].key.name||opts.properties[0].key.value)==='type'&&opts.properties[0].value.value==='text/javascript');
  assert.equal(worker.arguments.length,1);assert.equal(worker.arguments[0].type,'Identifier');
  assert.equal(declarations.get(worker.arguments[0].name),create,'Worker must consume the native created URL');
+ assert(!assignments.some(n=>n.type==='Identifier'&&n.name===worker.arguments[0].name),'Native Worker URL binding was reassigned');
  return {create:{start:{...create.loc.start},end:{...create.loc.end}},worker:{start:{...worker.loc.start},end:{...worker.loc.end}}};
 }
 function checkLocation(frame,call){assert(frame.line>=call.start.line&&frame.line<=call.end.line&&

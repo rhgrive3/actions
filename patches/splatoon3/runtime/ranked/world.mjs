@@ -970,7 +970,7 @@ export class RankedWorld {
         }
       }
     }
-    const preserveStamp = !this.towerBlock && !this.towerPoleBlock &&
+    const preserveStamp = !!level && !this.towerBlock && !this.towerPoleBlock &&
       level?.blocks === this._spatialBlocks && level?.hash === this._spatialHash &&
       level?.blocks?.length === this._spatialBlockCount &&
       level?.blockStamp === this._spatialStampBuffer && level.blockStamp instanceof Uint32Array && level.blockStamp.length === level.blocks.length &&
