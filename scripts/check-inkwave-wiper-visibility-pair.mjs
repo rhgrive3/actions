@@ -3,7 +3,16 @@ import fs from 'node:fs';import path from 'node:path';import assert from 'node:a
 import {verifyRuntimeBuild,hash} from './lib/inkwave-runtime-evidence.mjs';
 import {assertWiperCurrentBinding,WIPER_SOURCE,WIPER_BASELINE} from './lib/inkwave-wiper-current-binding.mjs';
 import {assertWiperCoverageImage} from './lib/inkwave-wiper-flight-coverage.mjs';
-export function verifyVisibilityPair(a,b,manifest,binding,readImage){
+// Diagnostics are best-effort only: never replace or suppress the original gate failure.
+export function assertVisibilityPairField(tick,field,a,b,check,emit=line=>console.error(line)){
+ try{check();}catch(error){
+  try{emit(JSON.stringify({schema:1,status:'visibility-first-divergence',tick,field,
+   A:{tick:a.tick,memory:a.memory,census:a.census,nativeRender:a.nativeRender},
+   B:{tick:b.tick,memory:b.memory,census:b.census,nativeRender:b.nativeRender}}));}catch{}
+  throw error;
+ }
+}
+export function verifyVisibilityPair(a,b,manifest,binding,readImage,emitDiagnostic){
  assertWiperCurrentBinding(manifest,binding);
  for(const [variant,r]of [['A',a],['B',b]]){assert.equal(r.status,'visibility-diagnostic-only');assert.equal(r.variant,variant);assert.equal(r.head,WIPER_SOURCE);assert.equal(r.baseline,WIPER_BASELINE);assert.equal(r.id,'s3-saber-heavy');assert.equal(r.action,'charged');assert.equal(r.contentHash,manifest.contentHash);assert.equal(r.inputHash,manifest.inputHash);assert.deepEqual(r.binding,binding);assert.deepEqual(r.errors,[]);assert.deepEqual(r.responseErrors,[]);assert.equal(r.result.visibilityProbe,true);assert.equal(r.result.dt,1/60);assert.equal(r.result.frameCount,r.result.frames.length);assert.ok(r.result.frames.length>1&&r.result.frames.length<=161);assert.equal(r.result.setup.initial.ambientState.schema,1);
   for(const m of binding.modules){const key='_versions/'+binding.revision+'/'+m.rel,expected=variant==='A'?m.baselineEmittedSha256:m.candidateEmittedSha256;assert.equal(new Map(r.loaded).get(key),expected);assert.equal(new Map(r.consumed).get(key),expected);}
@@ -12,8 +21,8 @@ export function verifyVisibilityPair(a,b,manifest,binding,readImage){
  for(let i=0;i<A.frames.length;i++){
   const x=A.frames[i],y=B.frames[i];assert.equal(x.tick,i);assert.equal(y.tick,i);
   for(const row of [x,y])assert.equal(row.state.ambientState.schema,1);
-  for(const k of ['state','paintHash','paintEvents','aimTrace','memory','census'])assert.deepEqual(x[k],y[k],k);
-  for(const k of ['calls','triangles','points','lines'])assert.equal(x.nativeRender[k],y.nativeRender[k],k);assert.deepEqual(x.axes.counts,y.axes.counts);
+  for(const k of ['state','paintHash','paintEvents','aimTrace','memory','census'])assertVisibilityPairField(i,k,x,y,()=>assert.deepEqual(x[k],y[k],k),emitDiagnostic);
+  for(const k of ['calls','triangles','points','lines'])assertVisibilityPairField(i,'nativeRender.'+k,x,y,()=>assert.equal(x.nativeRender[k],y.nativeRender[k],k),emitDiagnostic);assertVisibilityPairField(i,'axes.counts',x,y,()=>assert.deepEqual(x.axes.counts,y.axes.counts),emitDiagnostic);
   if(i<A.frames.length-1){assert.equal(x.axes.main,null);assert.equal(y.axes.main,null);assert.deepEqual(x.images,[]);assert.deepEqual(y.images,[]);continue;}
   for(const axis of [x.axes.main,y.axes.main,x.axes.trailing,y.axes.trailing]){assert.equal(axis.length,3);assert.ok(axis.every(Number.isFinite));assert.ok(Math.abs(Math.hypot(...axis)-1)<1e-5);}
   assert.ok(Math.abs(x.axes.main[1])>.98);assert.ok(Math.abs(y.axes.main[1])<.02);assert.ok(Math.abs(y.axes.trailing[1])<.18);
