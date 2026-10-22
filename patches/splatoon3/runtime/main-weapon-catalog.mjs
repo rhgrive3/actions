@@ -1678,13 +1678,18 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(input.firePressed&&runner.cooldown<=EPS&&!s.pending){
       const vertical=!brush&&selectRollerFlickVertical(a,runner),key=brush?'brush':vertical?'vertical':'horizontal';
       const t=brush?p.WeaponSwingParam:vertical?p.WeaponVerticalSwingParam:p.WeaponWideSwingParam;
-      if(pay(runner,finite(t.InkConsume,.085)*100*inkMod(a),finite(t.InkRecoverStop,43)/HZ)){
+      const fullInk=finite(t.InkConsume,.085)*100*inkMod(a);
+      const payment=catalogDepletionPayment(a.ink,fullInk,finite(t.InkConsumeRateDepletion,.5));
+      if(!payment){runner._empty();return;}
+      if(pay(runner,payment.cost,finite(t.InkRecoverStop,43)/HZ)){
         if (!brush) s.s3SwingMode = key; // immutable mode through post-release recovery
         // Individual Wiki tables v11.0/v11.1: sustained cadence is 7/11/14F,
         // with the first interval one frame shorter. These defaults are sparse.
         const communityRepeat=brush?({WeaponBrushMini:7,WeaponBrushNormal:11,WeaponBrushHeavy:14}[r.sourceActor]):null;
         const windup=brush&&s.swingCount>0?1:finite(t.SwingFrame,vertical?31:21);
-        beginPending(s,windup,()=>{emitUnits(runner,r,key);runner.firingT=.35;});
+        // Commit the depleted attack at admission. No later refill/weapon
+        // change can transform a reduced projectile fan into a normal one.
+        beginPending(s,windup,()=>{emitUnits(runner,r,key,0,payment.depleted);runner.firingT=.35;});
         // Account for the different first windup: a 23F first Vincent swing
         // must not unlock a 1F follow-up immediately when that first shot emits.
         runner.cooldown=(brush?windup+communityRepeat-(s.swingCount===0?1:0)-1:windup+finite(t.PostDelayFrame,21))/HZ;
