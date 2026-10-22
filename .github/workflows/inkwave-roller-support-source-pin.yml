@@ -1,0 +1,22 @@
+name: INKWAVE roller support counterfactual source identity
+on:
+  pull_request:
+    paths:
+      - "patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs"
+      - ".github/workflows/inkwave-roller-support-source-pin.yml"
+permissions:
+  contents: read
+jobs:
+  native-positive-and-fault-controls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2
+      - name: Verify unchanged native roller support and counterfactual faults
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs
