@@ -23,6 +23,57 @@ export function adaptWeaponAudio(rel,code){
     if(obstruction&&voice.lp){voice.lp.frequency.value=Math.min(voice.lp.frequency.value,22000*Math.pow(.055,obstruction));voice.vol*=1-obstruction*.38;voice.out.gain.value=voice.vol;}`,'spatial priority');
     code=once(code,'export const audio = new AudioEngine();','installWeaponAudioEngine(AudioEngine);\nexport const audio = new AudioEngine();','installation');
   }
+  if(rel==='src/main.js'){
+    code=once(code,
+      "playSound: (n) => { G.audio?.init?.(); G.audio?.play(n); },",
+      "playSound: (n) => { G.audio?.init?.(); G.audio?.play(n); },\n      importChargerIntro: (file) => { G.audio?.init?.(); return G.audio?.importLocalChargerIntro?.(file); },\n      removeChargerIntro: () => G.audio?.removeLocalChargerIntro?.(),\n      chargerIntroStatus: () => { G.audio?.init?.(); return G.audio?.localChargerIntroStatus?.(); },",
+      'local-only Charger soundtrack clip import API');
+  }
+  if(rel==='src/ui/menus.js'){
+    code=once(code,
+      "        rowsEl.appendChild(row);\n      });\n    };",
+      \`        rowsEl.appendChild(row);
+      });
+      if (tab.id === 'audio') {
+        // Personal, local selection: no fetched Nintendo audio, cloud upload,
+        // or copyrighted asset inclusion in the public game build.
+        const input = h('input', {type:'file', accept:'.mp3,.wav,audio/mpeg,audio/wav,audio/x-wav', style:{display:'none'}});
+        const choose = h('button', {type:'button', class:'iw-btn iw-btn--small'}, 'チャージ音を選ぶ');
+        const clear = h('button', {type:'button', class:'iw-btn iw-btn--small iw-btn--ghost'}, '元に戻す');
+        const status = h('span', {class:'iw-row__hint'}, '読み込み状態を確認中…');
+        const show = (info) => {
+          status.textContent = info?.ready
+            ? '端末内の音源: '+(info.filename || 'チャージ音')+' ('+info.duration.toFixed(2)+'秒)'
+            : '未設定（元の単発チャージ音を使用）';
+        };
+        choose.addEventListener('click', () => input.click());
+        input.addEventListener('change', async () => {
+          const file = input.files?.[0]; if (!file) return;
+          status.textContent = '音声を読み込み中…';
+          try {
+            const info = await this.api.importChargerIntro?.(file);
+            if (!info?.ready) throw new Error('AudioContextを初期化できませんでした');
+            show(info);
+            if (!info.persisted) status.textContent += '（このセッションのみ）';
+          } catch (error) {
+            status.textContent = String(error?.message || '音声を読み込めませんでした').slice(0,160);
+          } finally { input.value = ''; }
+        });
+        clear.addEventListener('click', async () => {
+          try { show(await this.api.removeChargerIntro?.()); }
+          catch { status.textContent = '削除できませんでした'; }
+        });
+        const row = h('div', {class:'iw-row iw-rowin', style:{'--i':tab.rows.length,'--dir':dirSign}},
+          h('div', {class:'iw-row__label'}, h('i', {class:'iw-row__pip'}), 'チャージ音（端末内）'),
+          h('div', {class:'iw-row__ctrl'}, choose, clear, input, status));
+        rowsEl.appendChild(row);
+        Promise.resolve(this.api.chargerIntroStatus?.()).then(info => {
+          if (row.isConnected) show(info);
+        }).catch(() => { if (row.isConnected) show(null); });
+      }
+    };\`,
+      'settings audio tab private Charger clip chooser');
+  }
   if(rel==='src/game/weapons.js'){
     code=code.replace("emit('bomb:explode', { actor: b.owner,","emit('bomb:explode', { subId:b.s3Sub?.id||'bomb',actor:b.owner,");
     code=code.replace("emit('bomb:arm', { actor: b.owner,","emit('bomb:arm', { subId:b.s3Sub?.id||'bomb',actor:b.owner,");
