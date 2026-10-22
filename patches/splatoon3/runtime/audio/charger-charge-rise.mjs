@@ -23,11 +23,13 @@ export function synthesizeChargerRise(ctx,requestedSeconds=RISE_REFERENCE.defaul
   if(!Number.isFinite(sr)||sr<16000)throw new RangeError('unsupported sound sample rate');
   const seconds=clamp(Number.isFinite(requestedSeconds)?requestedSeconds:RISE_REFERENCE.defaultSeconds,.4,2.4);
   const length=Math.ceil(seconds*sr),out=ctx.createBuffer(1,length,sr),data=out.getChannelData(0);
-  const start=.065*seconds,end=.91*seconds,span=end-start;
+  // The S2 soundtrack's strong ridge is approximately linear (R²~0.9994),
+  // from ~0.16 to ~1.07 seconds within the trimmed ~1.18-second event.
+  const start=.14*seconds,end=.91*seconds,span=end-start;
   let phase=0,undertone=0,filteredNoise=0,seed=0x94e61cd1;
   const next=()=>{seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;return ((seed>>>0)/2147483648)-1;};
   for(let i=0;i<length;i++){
-    const t=i/sr,p=smooth((t-start)/span);
+    const t=i/sr,p=clamp((t-start)/span,0,1);
     const f=RISE_REFERENCE.startHz+(RISE_REFERENCE.endHz-RISE_REFERENCE.startHz)*p;
     phase+=2*Math.PI*f/sr;
     undertone+=Math.PI*f/sr;
