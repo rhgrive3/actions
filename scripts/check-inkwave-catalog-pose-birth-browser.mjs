@@ -74,7 +74,7 @@ try{
     G.paint={sample:()=>0,splat:()=>0};G.netm=null;G.match={playing:()=>true,canRespawn:()=>false,state:'playing',opts:{range:true}};
     G.fx=new api.FX(scene,{quality:'low'});
     if(!await G.fx.inkVolumeReady||G.fx.inkVolumes?.isInkVolumes!==true)throw Error('shipped source volume packs must be ready, as on ordinary boot');
-    const volumeFrame={submissions:[],checked:0,maxBackError:0,maxRodError:0},engine=G.fx.inkVolumes;
+    const volumeFrame={submissions:[],checked:0,allPartsVisible:0,maxBackError:0,maxRodError:0},engine=G.fx.inkVolumes;
     const nativeBegin=engine.begin,nativeSubmit=engine.submitComposite;
     engine.begin=function(...args){volumeFrame.submissions.length=0;return nativeBegin.apply(this,args);};
     engine.submitComposite=function(p,parts){
@@ -92,18 +92,20 @@ try{
       const o=p._s3PoseBirthOffset,sourceFrames=p.catalog.r.parameters.spl__BulletShooterTailLengthParam?.MaxLengthFrame;
       const frames=Number.isFinite(sourceFrames)&&sourceFrames>0?sourceFrames:shotTailFrames(p);
       const attached=!!o&&o.seed===p.seed&&p.start.distanceTo(p.pos)<=p.vel.length()*frames/60;
-      let backError=null,rodError=null,connection=null;
-      if(attached&&matrices.every(Boolean)){
+      const visibility=matrices.map(Boolean);let backError=null,rodError=null,headError=null,connection=null;
+      if(visibility.every(Boolean))volumeFrame.allPartsVisible++;
+      if(attached&&matrices[1]&&matrices[2]){
         connection=[p.start.x+o.x,p.start.y+o.y,p.start.z+o.z];
         const distance=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));
         backError=distance(matrices[1].slice(12,15),connection);
         const rod=matrices[2],half=this.assets.get(parts[2].name).patterns[0].aspect/2;
         const endpoints=[-1,1].map(sign=>rod.slice(12,15).map((v,i)=>v+sign*rod[i]*half));
         rodError=Math.min(...endpoints.map(x=>distance(x,connection)));
+        if(matrices[0]){headError=distance(matrices[0].slice(12,15),p.pos.toArray());if(headError>2e-5)throw Error('native Quad visible head left its physical centre');}
         if(backError>2e-5||rodError>2e-5)throw Error('native Quad volume misses its posed birth '+JSON.stringify({backError,rodError,age:p.age}));
         volumeFrame.checked++;volumeFrame.maxBackError=Math.max(volumeFrame.maxBackError,backError);volumeFrame.maxRodError=Math.max(volumeFrame.maxRodError,rodError);
       }
-      volumeFrame.submissions.push({age:p.age,seed:p.seed,physical:p.pos.toArray(),physicalBirth:p.start.toArray(),attached,connection,backError,rodError,matrices});
+      volumeFrame.submissions.push({age:p.age,seed:p.seed,physical:p.pos.toArray(),physicalBirth:p.start.toArray(),attached,connection,visibility,headError,backError,rodError,matrices});
       return accepted;
     };
     const muzzle=[];const nativeMuzzle=G.fx.muzzle;G.fx.muzzle=function(pos,dir,...args){muzzle.push({pos:pos.toArray(),dir:dir.toArray(),time:G.time});return nativeMuzzle.call(this,pos,dir,...args);};
@@ -143,7 +145,7 @@ try{
       const wallMesh=wall&&stage==='synthetic'?new THREE.Mesh(new THREE.BoxGeometry(8,2,.16),new THREE.MeshStandardMaterial({color:0x737b89,roughness:1})):null;
       if(wallMesh){wallMesh.position.set(0,1,.8);scene.add(wallMesh);}
       G.physics=new Physics(G.level);G.projectiles.clear();G.fx.clear();G.time=0;muzzle.length=0;
-      volumeFrame.checked=0;volumeFrame.maxBackError=0;volumeFrame.maxRodError=0;
+      volumeFrame.checked=0;volumeFrame.allPartsVisible=0;volumeFrame.maxBackError=0;volumeFrame.maxRodError=0;
       const a=new Actor({team:0,weapon:id,isLocal:true,CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),ch=a.character;
       timing.characterConstructMs=performance.now()-caseStart;
       const family=a.weapon.catalogRecord?.family??a.weapon.kind,flick=family==='roller'||family==='brush';
@@ -217,7 +219,8 @@ try{
       timing.simulationCompleteMs=performance.now()-caseStart;
       const source={status:ch.sourceMotion.status,active:ch.sourceMotion.active};
       if(flick&&presses!==(family==='brush'?2:1))throw Error(id+' missing admitted swing');
-      const result={id,hz,pitch,wall,stage,actorOrigin,levelBlocks:G.level.blocks.length,levelFaces:G.level.faces.length,expectedMode,randomPolicy:'deterministic midpoint; no statistical spread claim',renderPolicy,cadenceFrames:hz*2,drawFrames,actualDraws:drawFrames.length,timing,ticks:clock.ticks,birthCount:births.length,connected,maxFxError:connected?maxFxError:null,historySamplesChecked,maxHistoryError:historySamplesChecked?maxHistoryError:null,nativeShapeInstancesChecked,maxNativeShapeError:nativeShapeInstancesChecked?maxNativeShapeError:null,nativeVolumeConnectionsChecked:volumeFrame.checked,maxNativeBackError:volumeFrame.checked?volumeFrame.maxBackError:null,maxNativeRodError:volumeFrame.checked?volumeFrame.maxRodError:null,source,renders,births,screenshots};
+      if(id==='s3-maneuver-stepper'&&!wall&&pitch===0&&volumeFrame.checked===0)throw Error('visible native Quad back/rod acceptance observed no connection samples');
+      const result={id,hz,pitch,wall,stage,actorOrigin,levelBlocks:G.level.blocks.length,levelFaces:G.level.faces.length,expectedMode,randomPolicy:'deterministic midpoint; no statistical spread claim',renderPolicy,cadenceFrames:hz*2,drawFrames,actualDraws:drawFrames.length,timing,ticks:clock.ticks,birthCount:births.length,connected,maxFxError:connected?maxFxError:null,historySamplesChecked,maxHistoryError:historySamplesChecked?maxHistoryError:null,nativeShapeInstancesChecked,maxNativeShapeError:nativeShapeInstancesChecked?maxNativeShapeError:null,nativeVolumeConnectionsChecked:volumeFrame.checked,nativeVolumeAllPartsVisible:volumeFrame.allPartsVisible,maxNativeBackError:volumeFrame.checked?volumeFrame.maxBackError:null,maxNativeRodError:volumeFrame.checked?volumeFrame.maxRodError:null,source,renders,births,screenshots};
       a.weaponRunner.reset();G.projectiles.clear();G.fx.clear();scene.remove(ch.root);
       // Keep one detached Character's compiled material programs referenced.
       // Each tested world still receives a fresh Actor and source controller;
