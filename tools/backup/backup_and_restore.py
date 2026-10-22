@@ -444,6 +444,15 @@ def apply_update_archives(
     return curr_manifest.get("main_commit") or curr_manifest.get("commit")
 
 
+def reusable_delta_blob(before: Optional[dict], after: Optional[dict]) -> bool:
+    """Permission-only changes can reuse bytes; file/symlink conversions cannot."""
+    return (
+        before is not None and after is not None
+        and before["sha"] == after["sha"]
+        and (before["mode"] == "120000") == (after["mode"] == "120000")
+    )
+
+
 def apply_auto_delta_step(root: Path, folder: Path, step_info: dict) -> None:
     manifest_path = find_archive_file(folder, step_info["manifest"])
     if not manifest_path.is_file():
@@ -473,7 +482,7 @@ def apply_auto_delta_step(root: Path, folder: Path, step_info: dict) -> None:
                     raise RuntimeError(f"Local file diverged before applying delta: {ch['path']}")
             after = ch.get("after")
             new_bytes = None
-            if after is not None and not (before and before["sha"] == after["sha"]):
+            if after is not None and not reusable_delta_blob(before, after):
                 chunks = sorted(ch.get("chunks") or [], key=lambda c: c["offset"])
                 buf = []
                 for c in chunks:
@@ -593,7 +602,7 @@ def create_or_resume_auto_delta(
             item = pending["changes"][idx_global]
             before = item["before"]
             after = item["after"]
-            if not after or (before and before["sha"] == after["sha"]):
+            if not after or reusable_delta_blob(before, after):
                 done.append({
                     "path": item["path"],
                     "before": before,
