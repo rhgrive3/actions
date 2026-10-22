@@ -26,8 +26,8 @@ export function generatedReceipt(variant='A',factor=1){
  // Counterfactual timing factors are explicit synthetic test data, never measurement claims.
  for(const s of result.samples)for(const k of ['frameCpuMs','renderCpuMs','webglSubmitMs'])s[k]*=factor;
  result.completedTransactionMsPerFrame*=factor;result.entry={route:['main','mode','range'],gestures:['play','mode-range'].map(id=>({type:'click',trusted:true,selector:'.iw-ui [data-id="'+id+'"]'}))};
- const sourceSha='cc0c90afe8031643e6a890974f8f44a40a30509e',manifest={inputHash:hash('input'),contentHash:hash('content')};
- const bound={sourceSha,sourceTree:'de64f6d82cdf518b9acbc4ce3ae7c897509b406c',...manifest,revision:hash('revision'),commonVariant:'A',overlayVariant:'B',modulePath:'src/world/inkShading.js',baselineEmittedSha256:hash('baseline'),candidateEmittedSha256:hash('candidate')};
+ const sourceSha='c0938a3f84768474df91713f7b372f9d7f8fe96a',manifest={inputHash:hash('input'),contentHash:hash('content')};
+ const bound={sourceSha,sourceTree:'97b9938391f156dc332f6a56ac6fe3d21d9f9dc7',...manifest,revision:hash('revision'),commonVariant:'B',overlayVariant:'A',modulePath:'src/world/inkShading.js',baselineEmittedSha256:hash('baseline'),candidateEmittedSha256:hash('candidate')};
  const loaded=new Map([['_versions/'+bound.revision+'/'+bound.modulePath,variant==='A'?bound.baselineEmittedSha256:bound.candidateEmittedSha256],['index.html',hash('html')]]);
  return JSON.parse(JSON.stringify(wrap(false,undefined,sourceSha,variant,manifest,bound,loaded,{cpus:()=>[{model:'synthetic CPU'}]},{version:process.version},result,[])));
 }

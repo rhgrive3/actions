@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';import fs from 'node:fs';import{createHash}from'node:crypto';import{fileURLToPath,pathToFileURL}from'node:url';import path from'node:path';
-export const CANONICAL_FRAME_SHA256='440a225f6f27ddf5fdf6880b5fc2448f9ea97707cb46b3bc8762a9e58fe6119e';
-export const SEQUENCED_FRAME_SHA256='196ab1f3ce16152630ad324578b1199fe8f4030ebc43cf2e40d1868ffb38df8a';
+export const CANONICAL_FRAME_SHA256='74abb8bbebbff8ef1641ee693d4819e4646fabf87af6b69dfd31b194b699d752';
+export const SEQUENCED_FRAME_SHA256='36638efde4a3498610e30c7a528ed2238c21e75d54d9ace89c3d0beac4be8dcd';
 export const sha256=body=>createHash('sha256').update(body).digest('hex');
 export function prepareSequencedDriver(canonical,bindings,helper=fs.readFileSync(new URL('./condition-entry.mjs',import.meta.url),'utf8'),qaRoot=fileURLToPath(new URL('../../',import.meta.url))){
  assert.equal(sha256(canonical),CANONICAL_FRAME_SHA256,'canonical frame body');

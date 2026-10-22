@@ -1,6 +1,6 @@
 {
-  "commit": "cc0c90afe8031643e6a890974f8f44a40a30509e",
-  "tree": "de64f6d82cdf518b9acbc4ce3ae7c897509b406c",
+  "commit": "c0938a3f84768474df91713f7b372f9d7f8fe96a",
+  "tree": "97b9938391f156dc332f6a56ac6fe3d21d9f9dc7",
   "blobs": [
     {
       "path": "inkwave-public/src/config.js",

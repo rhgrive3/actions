@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 export function registerPostprocessOwners(e,register){
  const p=e.postprocess,z=p?.identityOwners;if(!z)return[];
- assert.equal(z.schema,1);assert.equal(z.sourceContract,'cc0-native-six-pass');assert.equal(z.gpuContentMeasured,false);
+ assert.equal(z.schema,1);assert.equal(z.sourceContract,'c093-native-six-pass');assert.equal(z.gpuContentMeasured,false);
  assert.equal(p.passes.length,6);assert.equal(p.aoPassOrdinal,1);
  const roles=['composer1','composer2','lens','aoDepth','aoNormal','aoGtao'];
  assert.deepEqual(z.textures.map(t=>t.role),roles);const textures=new Map(z.textures.map(t=>[t.role,t]));
