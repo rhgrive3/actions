@@ -1,0 +1,20 @@
+import test from'node:test';import assert from'node:assert/strict';import fs from'node:fs';import{createHash}from'node:crypto';
+import{prepareAaRunner,CHANGES as changes}from'./run.mjs';
+const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8'),old=read('../../scripts/check-inkwave-material-native-paired.mjs'),helper=new URL('../../scripts/lib/inkwave-material-normal-admission.mjs',import.meta.url).href,s=prepareAaRunner(old,helper);
+test('only five explicit replay-mode additions; normal and original diagnostic code unchanged',()=>{let inverse=s.replace('from '+JSON.stringify(helper),"from './lib/inkwave-material-normal-admission.mjs'");for(const[a,b]of changes.toReversed()){assert.equal(inverse.split(b).length,2);inverse=inverse.replace(b,a);}assert.equal(inverse,old);assert.equal(createHash('sha256').update(old).digest('hex'),'ebb6ed23463fd1313692dd391dafe3522d663e209b65c794ab71c3aff6b81be8');});
+const laneLine=s.split('\n').find(x=>x.startsWith(' const replayLanes='));const lanes=Function('aaOnly',laneLine+'return replayLanes;');
+test('A/A mode starts exactly two independent A children, never B',()=>assert.deepEqual(lanes(true),[['A1','A'],['A2','A']]));
+test('original mode preserves all three lanes',()=>assert.deepEqual(lanes(false),[['A1','A'],['A2','A'],['B1','B']]));
+const body=s.slice(s.indexOf(' const aaChecks='),s.indexOf(" fs.writeFileSync(path.join(root,'replay-diagnostic.json')"));
+const report=Function('aaOnly','rows','checks','replayLanes','sourceSha','semanticReplay',body+'return report;');
+const row=lane=>({lane,variant:'A',integrity:true,receipt:{status:'passed'},evidence:{repeatSignal:{changed:0}}});
+const checks=()=>[{name:'A1/A2 observed history and provenance',passed:true},{name:'A1/A2 all four exact capture ordinals',passed:true},{name:'A1 native entry settled',passed:true}];
+const run=(rows=[row('A1'),row('A2')],cs=checks(),aa=true)=>report(aa,rows,cs,lanes(aa),'cc0c90afe8031643e6a890974f8f44a40a30509e',{});
+test('valid synthetic AA evidence reports AA scope only, not old three-lane acceptance',()=>{const r=run();assert.equal(r.status,'diagnostic-recorded');assert.equal(r.aaPreflightSequentialAccepted,true);assert.equal(r.sequentialZeroRepeatAccepted,false);assert.equal(r.performanceAccepted,false);assert.equal(r.candidateBBReplayMeasured,false);assert.deepEqual(r.expectedLanes,['A1','A2']);});
+for(const[name,mutate]of[['missing lane',r=>r.pop()],['failed native receipt',r=>r[1].receipt.status='failed'],['sequential pixel difference',r=>r[1].evidence.repeatSignal.changed=1],['missing integrity',r=>r[1].integrity=false]])test(name+' cannot pass AA',()=>{const r=[row('A1'),row('A2')];mutate(r);assert.equal(run(r).status,'failed');});
+for(const name of ['A1/A2 observed history and provenance','A1/A2 all four exact capture ordinals','A1 native entry settled'])test(name+' failure retained',()=>{const c=checks();c.find(x=>x.name===name).passed=false;assert.equal(run(undefined,c).status,'failed');});
+test('old three-lane report remains valid only with its unchanged full checks',()=>{const r=run([row('A1'),row('A2'),row('B1')],checks(),false);assert.equal(r.status,'diagnostic-recorded');assert.equal(r.sequentialZeroRepeatAccepted,true);assert.equal(r.aaPreflightSequentialAccepted,false);});
+test('native driver remains byte exact',()=>assert.equal(createHash('sha256').update(read('../../scripts/check-inkwave-material-native-frame.mjs')).digest('hex'),'440a225f6f27ddf5fdf6880b5fc2448f9ea97707cb46b3bc8762a9e58fe6119e'));
+
+test('modified canonical paired source is refused',()=>assert.throws(()=>prepareAaRunner(old+'\n',helper)));
+test('nonlocal helper import is refused',()=>assert.throws(()=>prepareAaRunner(old,'https://example.invalid/helper.mjs')));
