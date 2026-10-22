@@ -693,6 +693,7 @@ export class LobbySet {
       const vis = hide.map((o) => o && o.visible);
       const xr = renderer.xr.enabled, sau = renderer.shadowMap.autoUpdate, snu = renderer.shadowMap.needsUpdate, ac = renderer.autoClear;
       let rendered = false;
+      let renderFailed = false;
       try {
         hide.forEach((o) => o && (o.visible = false));
         renderer.xr.enabled = false; renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = false;   // reuse this frame's shadows
@@ -701,12 +702,19 @@ export class LobbySet {
         renderer.autoClear = false; renderer.clear(true, true, false);
         renderer.render(scene, cam);
         rendered = true;
+      } catch (error) {
+        renderFailed = true;
+        throw error;
       } finally {
-        // A nested render may throw on context loss: never leave the floor, shadows, XR or framebuffer altered.
+        // Restore local flags and visibility even if rendering or framebuffer restoration fails.
         try {
           renderer.autoClear = ac; renderer.xr.enabled = xr;
           renderer.shadowMap.autoUpdate = sau; renderer.shadowMap.needsUpdate = snu;
           renderer.setRenderTarget(cur);
+        } catch (error) {
+          // Keep the primary failure (including its identity/cause) if restoring the target also fails.
+          // A restoration-only failure must still propagate.
+          if (!renderFailed) throw error;
         } finally {
           hide.forEach((o, i) => o && (o.visible = vis[i]));
           this._inRefl = false;
