@@ -15,11 +15,11 @@ const condition=(text,name)=>job(text,name).match(/^    if: (.+)$/m)?.[1];
 function verify(text){
  assert.match(text,/      network_opening_diagnostic:\n        description: [^\n]+\n        type: boolean\n        default: false\n/);
  assert.equal(condition(text,'network-opening-diagnostic'),"github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true");
- assert.equal(condition(text,'render-diagnostic'),'inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true');
+ assert.equal(condition(text,'render-diagnostic'),'inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic != true');
  for(const name of ['validate_core','patch_tests','browser','seven_claims','resource_paint_continuation'])assert.equal(condition(text,name),'inputs.diagnostic_only != true',name);
  assert.equal(condition(text,'validate'),'${{ always() && inputs.diagnostic_only != true }}');
- assert.match(text,/^  group: validate-inkwave-\$\{\{ github.event.pull_request.number \|\| inputs.source_sha \|\| github.ref \}\}\$\{\{ inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true && '-network-opening-diagnostic' \|\| '' \}\}$/m);
- assert.match(text,/^  cancel-in-progress: \$\{\{ !\(inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true\) \}\}$/m);
+ assert.match(text,/^  group: validate-inkwave-\$\{\{ github.event.pull_request.number \|\| inputs.source_sha \|\| github.ref \}\}\$\{\{ inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true && '-network-opening-diagnostic' \|\| inputs.diagnostic_only == true && inputs.wall_render_diagnostic == true && '-wall-render-diagnostic' \|\| '' \}\}$/m);
+ assert.match(text,/^  cancel-in-progress: \$\{\{ !\(inputs.diagnostic_only == true && \(inputs.network_opening_diagnostic == true \|\| inputs.wall_render_diagnostic == true\)\) \}\}$/m);
  const native=job(text,'network-opening-diagnostic');
  assert.match(native,/WORKFLOW_SHA: \$\{\{ github.workflow_sha \}\}/);
  assert.match(native,/\[\[ "\$SOURCE_SHA" =~ \^\[0-9a-f\]\{40\}\$ \]\]/);
@@ -38,10 +38,10 @@ function verify(text){
 }
 // Evaluate only this deliberately restricted, validated boolean grammar, never arbitrary source.
 function evaluate(expression,context){
- assert.match(expression,/^(?:github\.event_name == 'workflow_dispatch' && )?inputs\.diagnostic_only (?:==|!=) true(?: && inputs\.network_opening_diagnostic (?:==|!=) true)?$/);
+ assert.match(expression,/^(?:github\.event_name == 'workflow_dispatch' && )?inputs\.diagnostic_only (?:==|!=) true(?: && inputs\.(?:network_opening_diagnostic|wall_render_diagnostic) (?:==|!=) true)*$/);
  return expression.split(' && ').every(term=>{
   if(term==="github.event_name == 'workflow_dispatch'")return context.event==='workflow_dispatch';
-  const [,key,op]=term.match(/^inputs\.(diagnostic_only|network_opening_diagnostic) (==|!=) true$/);
+  const [,key,op]=term.match(/^inputs\.(diagnostic_only|network_opening_diagnostic|wall_render_diagnostic) (==|!=) true$/);
   return op==='=='?context[key]===true:context[key]!==true;
  });
 }
@@ -55,7 +55,7 @@ test('actual scoped predicates admit only explicit manual network diagnostic',()
  }
 });
 test('malformed routing and broad trigger mutations fail closed',()=>{
- for(const [before,after] of [["github.event_name == 'workflow_dispatch' && ",''],['type: boolean\n        default: false\n      deep_lifecycle:','type: string\n        default: true\n      deep_lifecycle:'],["&& inputs.network_opening_diagnostic == true\n    runs-on:","|| inputs.network_opening_diagnostic == true\n    runs-on:"],['inputs.diagnostic_only != true\n    runs-on:','inputs.network_opening_diagnostic != true\n    runs-on:']]){
+ for(const [before,after] of [["github.event_name == 'workflow_dispatch' && ",''],['type: boolean\n        default: false\n      wall_render_diagnostic:','type: string\n        default: true\n      wall_render_diagnostic:'],["&& inputs.network_opening_diagnostic == true\n    runs-on:","|| inputs.network_opening_diagnostic == true\n    runs-on:"],['inputs.diagnostic_only != true\n    runs-on:','inputs.network_opening_diagnostic != true\n    runs-on:']]){
   const changed=workflow.replace(before,after);assert.notEqual(changed,workflow);assert.throws(()=>verify(changed));
  }
 });
@@ -65,7 +65,7 @@ test('missing immutable workflow, checkout or build head checks are rejected',()
  }
 });
 test('cross-lane concurrency and cancellation changes are rejected',()=>{
- for(const changed of [workflow.replace("'-network-opening-diagnostic'","'-full'"),workflow.replace('cancel-in-progress: ${{ !(inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true) }}','cancel-in-progress: true')])assert.throws(()=>verify(changed));
+ for(const changed of [workflow.replace("'-network-opening-diagnostic'","'-full'"),workflow.replace('cancel-in-progress: ${{ !(inputs.diagnostic_only == true && (inputs.network_opening_diagnostic == true || inputs.wall_render_diagnostic == true)) }}','cancel-in-progress: true')])assert.throws(()=>verify(changed));
 });
 test('failure suppression, upload loss and missing route guards are rejected',()=>{
  for(const changed of [workflow.replace('  network-opening-diagnostic:\n','  network-opening-diagnostic:\n    continue-on-error: true\n'),workflow.replaceAll('if: always()','if: success()'),workflow.replaceAll(guard,'true # guard removed')])assert.throws(()=>verify(changed));

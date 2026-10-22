@@ -73,13 +73,17 @@ on:
         description: With diagnostic_only, run native network opening diagnosis only; never full acceptance
         type: boolean
         default: false
+      wall_render_diagnostic:
+        description: With diagnostic_only and without network opening, run only native wall verification; never full acceptance
+        type: boolean
+        default: false
       deep_lifecycle:
         description: Run the full 10-cycle rematch lifecycle instead of the fast 3-cycle gate
         type: boolean
         default: false
 concurrency:
-  group: validate-inkwave-${{ github.event.pull_request.number || inputs.source_sha || github.ref }}${{ inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true && '-network-opening-diagnostic' || '' }}
-  cancel-in-progress: ${{ !(inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true) }}
+  group: validate-inkwave-${{ github.event.pull_request.number || inputs.source_sha || github.ref }}${{ inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true && '-network-opening-diagnostic' || inputs.diagnostic_only == true && inputs.wall_render_diagnostic == true && '-wall-render-diagnostic' || '' }}
+  cancel-in-progress: ${{ !(inputs.diagnostic_only == true && (inputs.network_opening_diagnostic == true || inputs.wall_render_diagnostic == true)) }}
 permissions:
   contents: read
 env:
@@ -106,7 +110,7 @@ jobs:
         with:
           node-version: 22
       - name: Verify scoped network diagnostic workflow contracts
-        run: node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-opening-peer-diagnostic.test.mjs
+        run: node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-opening-peer-diagnostic.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs
       - name: Install pinned source regression and build tool
         run: npm install --no-save --no-package-lock --silent esbuild@0.28.2
       - name: Prepare persistent worker regression fixtures
@@ -869,7 +873,7 @@ jobs:
           retention-days: 14
 
   render-diagnostic:
-    if: inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true
+    if: inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic != true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -971,6 +975,70 @@ jobs:
           include-hidden-files: true
           if-no-files-found: warn
           path: ${{ env.CI_STORAGE }}/evidence/combat-ceiling/
+          retention-days: 14
+
+  wall-render-diagnostic:
+    # A scoped diagnostic run is not the Validate acceptance gate.
+    if: github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      WORKFLOW_SHA: ${{ github.workflow_sha }}
+      CI_STORAGE: /mnt/workspace/inkwave-wall-render-${{ github.run_id }}-${{ github.run_attempt }}
+      TMPDIR: ${{ github.workspace }}/.ci-scratch
+      TMP: ${{ github.workspace }}/.ci-scratch
+      TEMP: ${{ github.workspace }}/.ci-scratch
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.browser-cache
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+      - name: Verify immutable workflow and source identity
+        run: |
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$WORKFLOW_SHA" = "$SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prepare bounded diagnostic storage
+        run: |
+          mkdir -p .ci-scratch .built-site
+          test "$(realpath -m "$CI_STORAGE")" = "$CI_STORAGE"
+          sudo mkdir -p "$CI_STORAGE"
+          sudo chown "$(id -u):$(id -g)" "$CI_STORAGE"
+          test "$(realpath "$CI_STORAGE")" = "$CI_STORAGE"
+          mkdir -p "$CI_STORAGE/evidence/wall"
+          printf 'source=%s\nworkflow=%s\n' "$SOURCE_SHA" "$WORKFLOW_SHA" > "$CI_STORAGE/evidence/wall/source-identity.txt"
+          browser_tmp=/mnt/workspace/.dev-state/agent-work/cache/iwrui
+          test "$(realpath -m "$browser_tmp")" = "$browser_tmp"
+          sudo mkdir -p "$browser_tmp"
+          sudo chown "$(id -u):$(id -g)" "$browser_tmp"
+      - name: Verify scoped wall workflow and source contracts
+        run: |
+          node --test scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs
+          node --experimental-vm-modules --test patches/splatoon3/tests/wall-render-gates.test.mjs patches/splatoon3/tests/wall-render-production-contract.test.mjs
+      - name: Install pinned build and browser dependencies
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps chromium
+      - name: Build the exact source without production overrides
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public .built-site/_site
+          git rev-parse HEAD > .built-site/_site-source-sha.txt
+          test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"
+      - name: Verify emitted wall production contract
+        run: INKWAVE_BUILT_SITE=.built-site/_site node --experimental-vm-modules --test patches/splatoon3/tests/wall-render-production-contract.test.mjs
+      - name: Verify full native wall rendering and GPU disposal
+        run: node scripts/check-inkwave-wall-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/wall" --profile-dir "$CI_STORAGE/cache/wall" --exact-source
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-wall-render-diagnostic-${{ env.SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: warn
+          path: ${{ env.CI_STORAGE }}/evidence/wall/
           retention-days: 14
 
   seven_claims:
