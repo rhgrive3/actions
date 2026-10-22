@@ -5,6 +5,7 @@ import { constrainMuzzle } from './camera-aim-controls.mjs';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst, catalogSplashNearestSlot, catalogSplashRadius } from './catalog-splash-paint.mjs';
 import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
+import { catalogFieldUnitCanDamage, catalogFlickSourceDamage } from './catalog-flick-damage.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
 import { mainInkFootprint, mainInkBurstFootprint } from './main-ink-footprints.mjs';
 import { installRollerContactPaint, rollerContactDepth, rollerPaintHalfWidth } from './roller-contact-paint.mjs';
@@ -680,7 +681,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // Splatlings without FreeGravity (projected-splash path) stagger by SplitNum too:
       // a Hydra's 23.5 SpawnBetweenLength otherwise left ~6-19 m dry under sustained fire.
       catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec||descriptor.splashStaggered?descriptor.splashFirst:1,dropCount:0,hit:new Hit(),seen:new Set(),volley:options.volley,
-        index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0}});
+        index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0,
+        sectorYaw:r.family==='roller'&&descriptor.key==='horizontal'?a.yaw:null}});
     // Keep the five-entry catalogue tuple readable by existing peers. Older
     // receivers ignore these named visual-only extensions on the same object.
     if(descriptor.key==='arrow')p.inkMeta.s3StringerTilt=options.bowTilt;
@@ -977,14 +979,21 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     emit('weapon:impact',{actor:p.owner,weapon:p.wid,pos:p.pos.clone(),normal:down.clone().negate(),team:p.team,kind:'burst',radius});
   }
 
-  function impactDamage(p,a) {
+  function impactDamage(p,a,impactT=1) {
     const {r,descriptor:d,volley}=p.catalog;
-    let amount=d.damage,damage=d.d,frames=Math.floor(p.age*HZ+EPS);
+    if((r.family==='roller'||r.family==='brush')&&!catalogFieldUnitCanDamage(d.packet))return 0;
+    let amount=d.damage,damage=d.d,frames=Math.floor((p.age-DT+DT*clamp(impactT))*HZ+EPS);
+    // Source-tagged Roller/Brush groups keep independent age falloff,
+    // damage sectors and paint-only/depleted unit rates.
+    if(r.family==='roller'||r.family==='brush'){
+      const sourced=catalogFlickSourceDamage(damage,d.packet,d.key,frames,p.pos,p.start,p.catalog.sectorYaw);
+      if(sourced!==null)amount=sourced;
+    }
     if(damage.ReduceStartFrame!=null)amount=lerp(amount*10,finite(damage.ValueMin,amount*10),
       clamp((frames-damage.ReduceStartFrame)/(finite(damage.ReduceEndFrame,40)-damage.ReduceStartFrame)))/10;
     if(damage.ReduceStartFallDistance!=null)amount=lerp(damage.ValueMax,damage.ValueMin,
       clamp((Math.max(0,p.start.y-p.pos.y)-damage.ReduceStartFallDistance)/(damage.ReduceEndFallDistance-damage.ReduceStartFallDistance)))/10;
-    if(damage.Inside){
+    if(damage.Inside&&r.family!=='roller'&&r.family!=='brush'){
       const b=damage.Inside,dist=p.start.distanceTo(p.pos);
       amount=damageBands([{Distance:b.DamageMaxDistance,Damage:b.DamageMaxValue},
         {Distance:b.DamageHighDistance,Damage:b.DamageHighValue},{Distance:b.DamageLowDistance,Damage:b.DamageLowValue},
@@ -1149,6 +1158,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(!p.catalog)return step.call(this,p,dt);
     if(!releaseCatalogBirth(this,p,G))return true;
     const s=p.catalog,d=s.descriptor;
+    const unitCanDamage=(s.r.family!=='roller'&&s.r.family!=='brush')||catalogFieldUnitCanDamage(d.packet);
     s.carry+=dt;
     while(s.carry+EPS>=DT){
       s.carry=Math.max(0,s.carry-DT);
@@ -1200,12 +1210,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(!world.hit||candidate.dist<world.dist)world=candidate;
       }
       let stop=world.hit?world.dist/Math.max(EPS,len):Infinity,target=null,boss=null,defense=this.kitDefenseCandidate?.(p);
+      if(!unitCanDamage)defense=null;
       if(defense&&defense.distance/Math.max(EPS,len)<stop)stop=defense.distance/Math.max(EPS,len);
       else defense=null;
       // Math.max's -Infinity for an empty list and NaN propagation are kept.
       let pr1=-Infinity;
       for(let i=0;i<shapes.length;i++)pr1=Math.max(pr1,collisionRadius(shapes[i].param,'Player',p.age*HZ,s.index,bounceScale));
       for(const a of G.actors||[]){
+        if(!unitCanDamage)break;
         const friendly=a.team===p.team;
         if(!a.alive||a===p.owner||s.seen.has(a)||friendly&&(a.submerged||d.c.FriendThroughFrameForPlayer==null))continue;
         let entry=null;
@@ -1221,7 +1233,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(friendly&&entry!=null&&((p.age-DT)+DT*entry)*HZ<d.c.FriendThroughFrameForPlayer)continue;
         if(entry!=null&&entry<stop-EPS){stop=entry;target=a;defense=null;}
       }
-      if(G.boss){const b=G.boss.segHit(p.prev,p.pos,pr1);const t=b?p.prev.distanceTo(b.point)/Math.max(EPS,len):Infinity;
+      if(unitCanDamage&&G.boss){const b=G.boss.segHit(p.prev,p.pos,pr1);const t=b?p.prev.distanceTo(b.point)/Math.max(EPS,len):Infinity;
         if(t<stop-EPS){stop=t;boss=b;target=null;defense=null;}}
       // Resolve the whole wave's first actor/core/boss/defense contact before
       // committing any peripheral splash. The per-lobe cutoff above still
@@ -1279,7 +1291,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         p.pos.lerpVectors(p.prev,p.pos,stop);
         if(defense){defense.onHit(p);return true;}
         if(target){
-          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target);if(amount>0){
+          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target,stop);if(amount>0){
             const owner=p.owner,previous=owner._sourceChargerAudioHit;
             if(s.r.family==='charger')owner._sourceChargerAudioHit={chargerDirect:true,charge:d.charge};
             try{withObjectDamageCause(p,()=>withProjectileHitGeometry(this,p.prev,p.pos,Math.max(0,finite(p.size,.1)),()=>this.applyHit(owner,target,amount,p.wid)));}
@@ -1290,7 +1302,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           if(s.r.parameters.BlastParam?.BlastParam&&!p.ghost)explosion(this,p,s.r.parameters.BlastParam.BlastParam);
           return true;
         }
-        if(boss){if(!p.ghost)G.boss.hit(p.owner,impactDamage(p,boss.target||G.boss),boss.target,p.wid,p.pos.clone());return true;}
+        if(boss){if(!p.ghost)G.boss.hit(p.owner,impactDamage(p,boss.target||G.boss,stop),boss.target,p.wid,p.pos.clone());return true;}
         // A rebound consumed only the travelled portion of this tick. Counting
         // its unused tail shortened the Bloblobber's remaining sourced reach.
         if(s.r.sourceActor==='WeaponSlosherBathtub'&&world.hit)
