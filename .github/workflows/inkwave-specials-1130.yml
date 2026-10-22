@@ -43,12 +43,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           filter: blob:none
           sparse-checkout: |
             inkwave-public
             patches
             scripts
             reports/ink-volume/source
+      - name: Verify immutable checkout identity
+        env:
+          EXPECTED_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          [[ "$EXPECTED_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          actual_source_sha="$(git rev-parse HEAD)"
+          printf 'Expected source: %s\nActual checkout: %s\n' "$EXPECTED_SOURCE_SHA" "$actual_source_sha"
+          test "$actual_source_sha" = "$EXPECTED_SOURCE_SHA"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -99,12 +108,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           filter: blob:none
           sparse-checkout: |
             inkwave-public
             patches
             scripts
             reports/ink-volume/source
+      - name: Verify immutable checkout identity
+        env:
+          EXPECTED_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          [[ "$EXPECTED_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          actual_source_sha="$(git rev-parse HEAD)"
+          printf 'Expected source: %s\nActual checkout: %s\n' "$EXPECTED_SOURCE_SHA" "$actual_source_sha"
+          test "$actual_source_sha" = "$EXPECTED_SOURCE_SHA"
       - uses: actions/setup-node@v4
         with:
           node-version: 22

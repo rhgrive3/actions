@@ -115,7 +115,7 @@ jobs:
           node .ci-baseline/scripts/build-inkwave.mjs .ci-baseline/inkwave-public .built-site/pristine-main
           cp .built-site/pristine-main/inkwave-build.json .ci-scratch/projectile-visuals/before/pristine-main-build.json
       - name: Bind reviewed source controls to declared immutable Git source leaves
-        if: ${{ matrix.side == 'before' && (github.event.pull_request.number == 1758 || github.head_ref == 'test/inkwave-combined-qa-20261021') }}
+        if: ${{ matrix.side == 'before' && (github.event.pull_request.number == 1758 || github.head_ref == 'test/inkwave-combined-qa-20261021' || github.head_ref == 'inkwave/runtime-acceptance-0f3-prep-20261022') }}
         env:
           DECLARED_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DECLARED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -131,7 +131,7 @@ jobs:
           DECLARED_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           DECLARED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          if [ "$PAIR_PR_NUMBER" = "1758" ] || [ "$PAIR_HEAD_REF" = "test/inkwave-combined-qa-20261021" ]; then
+          if [ "$PAIR_PR_NUMBER" = "1758" ] || [ "$PAIR_HEAD_REF" = "test/inkwave-combined-qa-20261021" ] || [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-0f3-prep-20261022" ]; then
             node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
           else
             node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
