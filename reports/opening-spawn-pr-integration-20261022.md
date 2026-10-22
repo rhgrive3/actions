@@ -12,8 +12,8 @@ The user explicitly requested the opening-spawn repair and integration of **all 
 | #1755 | `429cc1352d9b13ffe83c579ed714b84acf6139ed` | test(ink): compare bounded wet micro-surface candidate in actual WebGL |
 | #1765 | `ed1d739d44bd3dbbc7f11915a680880d05c55b4a` | test: combine QA dependency fixes for exact-head validation |
 | #1766 | `b9c46f57f8a5427eaa71dd740688622490b61bb8` | test(ink): diagnostic native material frame comparison |
-| #1770 | `cc0c90afe8031643e6a890974f8f44a40a30509e` | fix: preserve composed Three and native Charger reach with exact-head acceptance |
-| #1773 | `5625829733c77afa6ff26c89a4b067a1cf4643d4` | QA only: bounded common-source material A/A preflight (unaccepted) |
+| #1770 | `8bc8d67452b75ba69f5d08412647648b575efd1d` | fix: preserve composed Three and native Charger reach with exact-head acceptance |
+| #1773 | `ea92ea510b485a04e5a58558c422e2c21db7b2c2` | QA only: bounded common-source material A/A preflight (unaccepted) |
 | #1774 | `19f271d47e486af365ec3d76ae94c8947cfe9fa3` | test(vfx): フィスト寿命テストの module スタブに Inkjet 予算・クロックの実モジュールを渡す |
 | #1775 | `e0973f326dac4f96337728ce1eda48a7fd84decb` | fix(inkjet): 砲から照準点へ直進させて照準と着弾を一致させる＋マニューバー回避→タレット→通常照準の流れを固定 |
 
@@ -24,6 +24,10 @@ The user explicitly requested the opening-spawn repair and integration of **all 
 - The #1774 VFX fixture loads the actual Inkjet budget/clock modules. #1775's runtime aiming changes and Dualies tests are retained.
 - #1755's surface candidate and #1747's Explosher candidate are included in the production composition. #1752 research tools and historical evidence are included without adding research recordings to game assets.
 - Existing main test-fixture omissions discovered by integration are corrected: material-handoff alias discovery accounts for the static-menu expression, and the packaging audit explicitly recognizes `deferPrimaryWeaponIcon` as a source-transform helper. Runtime gates/assertions are retained.
+
+## Updates captured during integration
+
+Before publication, #1770 advanced to `8bc8d674` and #1773 to `ea92ea51`; both updated heads are included in the table and merge ancestry. #1770 adds borrowed native Flow skeleton ownership, native intro UI and source-admission controls plus terrain-fetch checks. #1773 adds bound postprocess-owner observations and tests while retaining its historical common-source identity. No source PR update was silently discarded.
 
 ## Spawn repair
 
@@ -36,8 +40,11 @@ All remote opening actors, including bots, mirror their owner's accepted aim/fli
 - `initial-spawn-timing.test.mjs`: actual composed Match setup, eight actors and both teams, 30/60/120 Hz rendered schedules over fixed 60 Hz gameplay; intro, shared launch tick, distinct retained targets and real collision touchdown. 3/3 pass. The same tests with the baseline main lifecycle fail 3/3 because bots have already landed during intro.
 - `issue-512-remote-initial-squidspawn.test.mjs`: production two-peer Actor/NetMatch snapshots, human and bot opening wait/launch/landing at 30/60/120 Hz. 6/6 pass. Position comparison observes native 0.01-unit network quantization.
 - `spawner-geometry-fidelity.test.mjs`: shared geometry plus remote presentation/retirement at 30/60/120 Hz; 10/10 pass.
-- Common material QA: 185/185 pass with a separate immutable `cc0c90afe8031643e6a890974f8f44a40a30509e` source worktree.
-- Full browser, changed-file tests, Pages checks and final emitted build results are recorded below after final verification.
+- Common material QA including the updated postprocess ownership tests: 287/287 pass with a separate immutable `8bc8d67452b75ba69f5d08412647648b575efd1d` source worktree.
+- Spawn/respawn/armor/remote/handoff regression selection: 169 passed, 1 native-asset-dependent case skipped, zero failures.
+- Full active browser on the initial integrated build: passed, 781 verified responses, canonical weapon/appearance selection and real gameplay movement/fire checks, zero JavaScript errors. Final emitted opening-spawn browser and build results are recorded below.
+- Initial changed-PR selection: 354 passed, 2 skipped; the one setup failure lacked `INKWAVE_MATERIAL_COMMON_SOURCE`. That source-dependent suite subsequently passed as part of the explicit immutable-common run above.
+- Build packaging, exact Pages sequencing and emitted Three composition: 18/18 passed on the spawn-repair build. The static-menu material fixture passed 25/25 after its alias-discovery correction.
 
 ## Comparison limits
 
