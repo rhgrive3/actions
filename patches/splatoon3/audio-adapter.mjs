@@ -73,8 +73,12 @@ export function adaptWeaponAudio(rel,code){
     // a repeating remote HoldNoise. Preserve Splatling/Roller loop handling.
     code=once(code,
       "let h = this._voiceLoop(a, near, 'charge', wr.charging && k === 'charger', 'charger_charge');\n      if (h) h.set({ pos: a.pos, volume: 0.35, pitch: 1 + wr.charge * 1.5 });",
-      "const chargerStarting = wr.charging && k === 'charger';\n      if (chargerStarting && !a.net._chargerOnsetActive && near) G.audio?.playWeapon?.(a.weapon.id,'charge',{actor:a,pos:a.pos,volume:.35});\n      a.net._chargerOnsetActive = chargerStarting;\n      let h;",
+      "const chargerStarting = wr.charging && k === 'charger';\n      if (chargerStarting && !a.net._chargerOnsetActive && near) { G.audio?.playWeapon?.(a.weapon.id,'charge',{actor:a,pos:a.pos,volume:.35}); a.net._chargerRise = G.audio?.playChargerChargeRise?.({volume:.28,duration:a.weapon?.chargeTime})||null; }\n      if ((!chargerStarting || !near) && a.net._chargerRise) { a.net._chargerRise.stop(.04); a.net._chargerRise=null; }\n      a.net._chargerOnsetActive = chargerStarting;\n      let h;",
       'network Charger onset is a one-shot, never a remote loop');
+    code=once(code,
+      "_stopLoops(a) { const L = a.net?.loops; if (L) for (const k in L) { L[k]?.stop?.(0.05); L[k] = null; } }",
+      "_stopLoops(a) { a.net?._chargerRise?.stop?.(.04); if(a.net){a.net._chargerRise=null;a.net._chargerOnsetActive=false;} const L = a.net?.loops; if (L) for (const k in L) { L[k]?.stop?.(0.05); L[k] = null; } }",
+      'remote Charger rise releases on replication disposal');
     code=code.replace("G.audio?.loop?.(snd, { pos: a.pos, volume: 0 })", "G.audio?.loopWeapon?.(a.weapon.id, key==='spin'?'spin':'roll', {actor:a, pos:a.pos,volume:0})");
     code=code.replace("G.audio?.play('roller_flick', { pos, volume: 0.8 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.8})");
     code=code.replace("G.audio?.play('slosh_throw', { pos, volume: 0.55 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.55})");
