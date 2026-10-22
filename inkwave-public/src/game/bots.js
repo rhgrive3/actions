@@ -338,9 +338,12 @@ export class BotBrain {
       const swimming = e.anim.form === 'swim';
       const hs = Math.hypot(e.vel.x, e.vel.z);
       if (swimming && d > 3 && !(hs > 7 && d < 9)) continue;
+      // A worse candidate cannot replace the best even if visible. Avoid its expensive raycast.
+      // Preserve the -4 existing-target bias and the original strict tie break.
+      const score = d - (e === this.target ? 4 : 0);
+      if (score >= bd) continue;
       _v2.copy(e.pos); _v2.y += e.form === 'squid' ? 0.3 : 1.0;
       if (!G.physics.los(eye, _v2)) continue;
-      const score = d - (e === this.target ? 4 : 0);
       if (score < bd) { bd = score; best = e; }
     }
     if (best) {
