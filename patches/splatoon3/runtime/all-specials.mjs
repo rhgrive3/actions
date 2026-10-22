@@ -570,6 +570,39 @@ export function crabTankAttackTargetVelocity(move,yaw=0){
   const lateral=mx*rx+mz*rz,forward=mx*fx+mz*fz;
   return {x:(rx*lateral*.075+fx*forward*.015)*FPS,z:(rz*lateral*.075+fz*forward*.015)*FPS};
 }
+// Pinned 11.3.0 WeaponSpCastle values, using this repository's existing
+// raw-distance/frame * 60 convention (reference/README.md). This aligns the
+// normal cap with profile.player.swimSpeed; retail world-scale remains unmeasured.
+export const KRAKEN_MOVEMENT = Object.freeze({
+  speed: .192 * FPS, dashSpeed: .3 * FPS, paintSpan: 4 / FPS,
+  paintWidth: 1.2, paintDepth: 1.2, paintOffset: .3, dashPaintOffset: .8,
+});
+export function krakenMoveSpeed(phase, chargeT=0) {
+  if(phase!=='charge')return KRAKEN_MOVEMENT.speed;
+  const k=clamp(chargeT/(35/FPS),0,1);
+  return KRAKEN_MOVEMENT.speed*(.2-.1*k);
+}
+// Paint only a locally contacted surface, never project an airborne Kraken
+// onto a distant floor. Four-frame cadence also bounds CPU/GPU paint work.
+function paintKrakenMove(rt,actor,state,dt,direction,dashing=false) {
+  if(actor.remote||!actor.grounded||actor.climbing){state.krakenPaintT=0;return;}
+  state.krakenPaintT=(state.krakenPaintT||0)+dt;
+  if(state.krakenPaintT+1e-8<KRAKEN_MOVEMENT.paintSpan)return;
+  state.krakenPaintT=Math.max(0,state.krakenPaintT-KRAKEN_MOVEMENT.paintSpan);
+  const heading=rt.v9.copy(direction).setY(0);
+  if(heading.lengthSq()<1e-8)heading.set(Math.sin(actor.yaw||0),0,Math.cos(actor.yaw||0));else heading.normalize();
+  const probe=rt.v7.copy(actor.pos).addScaledVector(heading,dashing?KRAKEN_MOVEMENT.dashPaintOffset:KRAKEN_MOVEMENT.paintOffset);
+  probe.y+=.4;
+  const hit=rt.api.G.physics?.raycast?.(probe,rt.down,.6,rt.hit,true);
+  if(!hit?.hit||!(hit.normal?.y>.4))return;
+  const at=rt.v8.copy(hit.point).addScaledVector(hit.normal,.005);
+  const opts={seed:seedUnit(nextSeed(state)),kind:'source-splash',stretch:heading,
+    stretchAmt:KRAKEN_MOVEMENT.paintDepth-1,claimOwner:actor,claimMode:'no-special'};
+  if(Number.isInteger(hit.face)&&hit.face>=0)opts.face=hit.face;
+  const area=rt.api.G.paint?.splat?.(at,KRAKEN_MOVEMENT.paintWidth,actor.team,opts);
+  if(finite(area)&&area>0)actor.addTurfNoSpecial?.(area);
+}
+
 function moveActor(rt, actor, dt, state, { speed = null, squid = true, jump = true, flight = false } = {}) {
   const P = rt.api.PLAYER, move = actor.intent?.move;
   const useSquid = squid && !!actor.intent?.squid;
@@ -2045,7 +2078,7 @@ function activeStep(rt,actor,dt) {
       // grates. Removing vertical velocity every tick let a Kraken dash over
       // gaps indefinitely and collide as a humanoid with elevated platforms.
       actor._updateClimb?.(dt,true);
-      if(!actor.climbing){actor.vel.x=state.direction.x*21;actor.vel.z=state.direction.z*21;}
+      if(!actor.climbing){actor.vel.x=state.direction.x*KRAKEN_MOVEMENT.dashSpeed;actor.vel.z=state.direction.z*KRAKEN_MOVEMENT.dashSpeed;}
       actor._integrate?.(dt,true,false);
       const onSurface=actor.grounded||actor.climbing;
       state.dashHits||=new Set();
@@ -2068,20 +2101,22 @@ function activeStep(rt,actor,dt) {
         rt.api.G.projectiles.applyHit(actor,victim,120,'krakenRoyale');
         state.dashHits.add(victim);
       }
-      stampLine(rt,actor,before,actor.pos,1.2,nextSeed(state));
+      paintKrakenMove(rt,actor,state,dt,state.direction,true);
       // Public gameplay reference: an airborne/grate dash becomes the
       // 60-damage spinning attack, rather than retaining its grounded 120.
       if(!onSurface){state.phase='active';state.jumpAttack=true;state.jumpHits=new Set();}
       else if(state.dashT+1e-8>=35/60){state.phase='active';state.dashT=0;}
     }else {
-      const jumped=moveCombatSquid(rt,actor,dt,state,{speed:state.phase==='charge'?1.9:5.5,ignoreEnemy:true});
+      const jumped=moveCombatSquid(rt,actor,dt,state,{speed:krakenMoveSpeed(state.phase,state.chargeT),ignoreEnemy:true});
+      paintKrakenMove(rt,actor,state,dt,dir);
       if(jumped){state.jumpAttack=true;state.jumpHits=new Set();
         emitAction(rt,actor,state.id,state.serial,'jump',actor.pos,null,nextSeed(state),{damage:60,index:state.strikes++});}
     }
     if(state.jumpAttack){
       const center=rt.v0.copy(actor.pos);center.y+=.65;
       damageBandRadius(rt,actor,center,[[2.65,60]],2.65,'krakenRoyale',state.jumpHits||(state.jumpHits=new Set()),3);
-      paintStamp(rt,actor,groundAt(rt,actor.pos,rt.v1),1.2,nextSeed(state));
+      // The movement branch above owns contact-gated paint for jumps too.
+      // Do not project an airborne spinning attack onto a distant lower floor.
       if(actor.grounded||actor.climbing)state.jumpAttack=false;
     }
     if(edges.fire&&state.phase!=='dash'){

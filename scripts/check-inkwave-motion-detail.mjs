@@ -7,6 +7,8 @@ import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { awaitDetailSourceOwner, detailSourceOwnerReceipt, detailCpuDrawBounds } from './lib/inkwave-detail-source-readiness.mjs';
+import { summarizeDetailRigFailure } from './lib/inkwave-motion-detail-failure-summary.mjs';
 
 // Exported checks run against the same WebGL records in focused failure tests.
 export function pixelDifference(a,b) {
@@ -226,7 +228,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
     } catch (error) { recordError(error.message); try { await route.abort(); } catch {} }
   });
   await page.goto('http://127.0.0.1:' + server.address().port + '/motion-detail');
-  await page.addScriptTag({content:'globalThis.motionPixelDifference = '+pixelDifference.toString()+';'});
+  await page.addScriptTag({content:'globalThis.motionPixelDifference = '+pixelDifference.toString()+';globalThis.awaitDetailSourceOwner = '+awaitDetailSourceOwner.toString()+';globalThis.detailSourceOwnerReceipt = '+detailSourceOwnerReceipt.toString()+';globalThis.detailCpuDrawBounds = '+detailCpuDrawBounds.toString()+';'});
   result = await page.evaluate(async ({ prefix, contentHash }) => {
     const THREE = await import('three');
     const profile = await fetch(prefix + 'patches/splatoon3/profile.json').then(r => r.json());
@@ -302,7 +304,8 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       if(!indexedVertices||!Number.isFinite(nearestLeft)||!Number.isFinite(nearestRight))throw Error('Empty/non-finite indexed contact draw');
       return {indexedVertices,nearestLeft,nearestRight};
     }
-    function capture(scenario,frame,ch,actor,events) {
+    function capture(scenario,frame,ch,actor,events,sourceOwner) {
+      const sourceMotion=globalThis.detailSourceOwnerReceipt(ch,sourceOwner);
       const nativeRenderState=()=>JSON.stringify({time:G.time,characterTime:ch.t,pose:Array.from(ch.P),timers:Array.from(ch.tr),root:ch.root.position.toArray(),position:actor.pos.toArray(),velocity:actor.vel.toArray(),hp:actor.hp,ink:actor.ink,invuln:actor.invuln,flow:actor.s3.flow,runner:Object.fromEntries(['cooldown','chargeT','charge','lockT','streaming','aimingSub','fuse','subFuse'].map(k=>[k,actor.weaponRunner[k]]))});
       const beforeRender=nativeRenderState();
       projectiles._draw();camera.position.copy(ch.root.position).add(new THREE.Vector3(2.6,1.3,3.4));
@@ -346,6 +349,11 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
             inkBlobCount:inkDraw?.count??null,actorPosition:actor.pos.toArray()};
         }
       }finally{ch.root.visible=visible;if(inkDraw)inkDraw.visible=inkWasVisible;}
+      if(rigDiagnostic){
+        rigDiagnostic.sourceMotion=sourceMotion;
+        rigDiagnostic.cpuBounds=globalThis.detailCpuDrawBounds(ch.root,()=>new THREE.Vector3(),camera);
+        rigDiagnostic.camera={position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),left:camera.left,right:camera.right,top:camera.top,bottom:camera.bottom,near:camera.near,far:camera.far};
+      }
       let flow=null,wholeSceneFlow=null,flowIsolation=null;
       if(scenario.type==='flow'){
         // Each visibility pair owns a fresh baseline. The preceding rig-hidden
@@ -386,7 +394,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
         if(!bomb||bomb.owner!==actor||bomb.mesh?.type!=='Group')throw Error('Missing actual released bomb mesh group: '+scenario.name+' frame '+frame);
         releasedBomb=drawnContact(bomb.mesh,left,right);
       }
-      return {frame,renderClocksStable:true,rig,rigDiagnostic,flow,wholeSceneFlow,flowIsolation,weapon:drawable(ch.weapon?.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb?.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb};
+      return {frame,sourceMotion,renderClocksStable:true,rig,rigDiagnostic,flow,wholeSceneFlow,flowIsolation,weapon:drawable(ch.weapon?.off)?drawnContact(ch.weapon.off,left,right):null,heldBomb:drawable(ch.bomb?.group)?drawnContact(ch.bomb.group,left,right):null,releasedBomb};
     }
     try {
     for (const scenario of cases) {
@@ -422,7 +430,10 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
         if (!Array.from(ch.P).every(Number.isFinite)) throw Error('Non-finite ' + scenario.name + ' pose');
       };
       try {
+        const sourceOwner=await globalThis.awaitDetailSourceOwner(ch);
+        const sourceReady=globalThis.detailSourceOwnerReceipt(ch,sourceOwner,false);
         for (let i = 0; i < 90; i++) tick({});
+        globalThis.detailSourceOwnerReceipt(ch,sourceOwner);
         actor.pos.set(0, scenario.air ? .8 : 0, 0); actor.grounded = !scenario.air;
         for (frame = 0; frame < frames; frame++) {
           let fire = ['bucket', 'blaster', 'shooter'].includes(scenario.type) && frame < 100;
@@ -459,7 +470,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
             // simulation step. Preserve the last completed frame on a crash.
             await new Promise(resolve=>setTimeout(resolve,0));
           }
-          if([21,29,30,45,75,95,110,111,145,160,165,200,239,310,360,419].includes(frame)||scenario.type==='bomb'&&events.some(event=>event.name==='throwBomb'&&event.frame===frame))renderMetrics.push(capture(scenario,frame,ch,actor,events));
+          if([21,29,30,45,75,95,110,111,145,160,165,200,239,310,360,419].includes(frame)||scenario.type==='bomb'&&events.some(event=>event.name==='throwBomb'&&event.frame===frame))renderMetrics.push(capture(scenario,frame,ch,actor,events,sourceOwner));
         }
         if(scenario.type==='bomb'){
           const throws=events.filter(event=>event.name==='throwBomb');
@@ -468,7 +479,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
           if(!Number.isInteger(configuredDelayFrames)||measuredDelayFrames!==configuredDelayFrames||releaseFrames[0].frame!==actualReleaseFrame)throw Error('Native bomb preparation/release timing mismatch: '+scenario.name);
           releaseTiming={...releaseTiming,actualReleaseFrame,measuredDelayFrames};
         }
-        data.push({name:scenario.name,scenario,frames,fireInterval:actor.weapon.fireInterval,firstShotDelay:actor.weapon.firstShotDelay||0,samples,releaseFrames,releaseTiming,events,renderMetrics});
+        data.push({name:scenario.name,scenario,frames,sourceReady,fireInterval:actor.weapon.fireInterval,firstShotDelay:actor.weapon.firstShotDelay||0,samples,releaseFrames,releaseTiming,events,renderMetrics});
       } finally {
         for(const [name,native] of methods)projectiles[name]=native; scene.remove(ch.root); ch.dispose();
         const disposed = flowMotionSnapshot(ch);
@@ -494,7 +505,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
   if(errors.length)throw Error('Detail animation/shader errors: '+errors.join('; '));
 }catch(error){failure=error;try{if(page)result={...(result||{}),progress:await page.evaluate(()=>globalThis.motionProbeProgress||null)};}catch{};try{await page?.screenshot({path:path.join(output,'motion-detail-failed.png'),timeout:10000});}catch{}}
 finally{for(const cleanup of [()=>browser?.close(),()=>server?.listening?new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve())):null])try{await cleanup();}catch(error){failure ||= error;}}
-if(failure){if(result?.data){const diagnostic={...result,status:'failed',message:String(failure.message||failure).slice(0,2500)};delete diagnostic.images;fs.writeFileSync(path.join(output,'motion-detail-failed-native.json.writing'),JSON.stringify(diagnostic,null,2)+'\n');fs.renameSync(path.join(output,'motion-detail-failed-native.json.writing'),path.join(output,'motion-detail-failed-native.json'));}publish({status:'failed',contentHash:manifest?.contentHash||null,build:manifest?.build||null,message:String(failure.message||failure).slice(0,2500),errors,loaded:[...new Set(loaded)].slice(0,200),progress:result?.progress||lastProgress||null,casesFinished:result?.data?.length||lastProgress?.casesFinished||0});console.error(JSON.stringify({status:'failed',message:String(failure.message||failure).slice(0,1200),evidence:path.join(output,'motion-detail-result.json')}));process.exitCode=1;return;}
+if(failure){console.error('[motion-detail-rig-diagnostic] '+JSON.stringify(summarizeDetailRigFailure(result)));if(result?.data){const diagnostic={...result,status:'failed',message:String(failure.message||failure).slice(0,2500)};delete diagnostic.images;fs.writeFileSync(path.join(output,'motion-detail-failed-native.json.writing'),JSON.stringify(diagnostic,null,2)+'\n');fs.renameSync(path.join(output,'motion-detail-failed-native.json.writing'),path.join(output,'motion-detail-failed-native.json'));}publish({status:'failed',contentHash:manifest?.contentHash||null,build:manifest?.build||null,message:String(failure.message||failure).slice(0,2500),errors,loaded:[...new Set(loaded)].slice(0,200),progress:result?.progress||lastProgress||null,casesFinished:result?.data?.length||lastProgress?.casesFinished||0});console.error(JSON.stringify({status:'failed',message:String(failure.message||failure).slice(0,1200),evidence:path.join(output,'motion-detail-result.json')}));process.exitCode=1;return;}
 Object.assign(result,{errors,loaded:[...new Set(loaded)],build:manifest.build,status:'passed'});publish(result);
 console.log(JSON.stringify({status:result.status,contentHash:result.contentHash,cases:result.cases,verifiedModules:result.loaded.length,summary:result.summary}));
 }
