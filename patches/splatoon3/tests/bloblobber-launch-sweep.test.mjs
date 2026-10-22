@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
+import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 import { BLOBLOBBER_MAX_SWEEP_STEP, resetBloblobberYawSweep,
   sampleBloblobberWindupYaw, bloblobberSweepOffset } from '../runtime/bloblobber-launch-sweep.mjs';
 
@@ -42,11 +43,14 @@ test('real Bloblobber runner fans four emitted bubbles from aim motion DURING wi
   const idle=run(0);
   for(const angle of idle.angles)close(angle,idle.angles[0],'static aim leaves identical headings');
   const rotating=run(.04);
+  const source=MAIN_WEAPON_CATALOG.records.find(r=>r.sourceActor==='WeaponSlosherBathtub');
+  assert.equal(source.parameters.WeaponParam.FrameOffsetDegreeRate,.3,
+    'pinned 11.3.0 Bloblobber uses a 0.3 angular sweep multiplier');
   const positions=[0,5,10,15];
   for(let i=0;i<4;i++){
-    const expected=.04*positions[i];
+    const expected=.04*positions[i]*source.parameters.WeaponParam.FrameOffsetDegreeRate;
     close(turn(rotating.angles[i],rotating.angles[0]),expected,
-      `source cumulative 5-frame fan offset for bubble ${i+1}`);
+      `source 0.3-adjusted cumulative 5-frame fan offset for bubble ${i+1}`);
   }
   // Post-release turns must not retarget the already admitted birth directions.
   const before=rotating.balls.map(b=>b.vel.clone());
