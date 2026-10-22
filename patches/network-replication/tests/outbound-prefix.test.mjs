@@ -2,6 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';import {web
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 async function setup(host=true){let time=100;
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,vmPerformance:{now:()=>time*1000},extraExports:`export { Transport } from './inkwave-public/src/net/transport.js';export { NetSession } from './inkwave-public/src/net/session.js';export {outboundQueueStatus} from './patches/network-replication/outbound-prefix.mjs';`});
+ f.context.crypto=webcrypto;
  const a=f.make();Object.assign(a,{nid:77,owner:'A',netLife:3});
  const s=new f.NetSession();Object.assign(s,{myId:'A',hostId:host?'A':'B',state:'match'});s._members.set('A',{});s._members.set('B',{});
  const n=new f.NetMatch(s,{id:'prefix-test',map:'reef'}),m={id:'prefix-test',state:'playing',time:180,actors:[a],playing:()=>true,canRespawn:()=>false};n.bind(m);s.match=n;f.G.netm=n;f.G.match=m;
@@ -22,7 +23,9 @@ test('persistent congestion bounded by explicit existing session abort once',asy
 test('single impossible event fails explicitly; temporary single-event pressure does not',async()=>{const w=await setup();try{w.rec(1);w.tr.ws.bufferedAmount=524289;for(let i=0;i<20;i++)w.tick();assert.equal(w.errors(),0);assert.equal(w.n.out.length,1);w.rec(1,'界'.repeat(23000));assert.equal(w.errors(),1);assert.equal(w.n.out.length,0);}finally{w.close();}});
 test('abort reentrancy cannot close replacement match/session owner',async()=>{const w=await setup();try{const replacement={newMatch:true};let closed=0;w.tr.close=()=>{closed++;w.s.match=replacement;w.s.tr={replacement:true}};w.rec(513);assert.equal(closed,1);assert.equal(w.s.match,replacement);assert.equal(w.errors(),0);assert.equal(w.aborts(),0);assert.equal(w.n.out.length,0);}finally{w.close();}});
 test('partial direct-peer acceptance retry preserves real receiver event deduplication',async()=>{const w=await setup();const receivers=[];try{
- for(const myId of ['B','C']){const a=w.f.make();Object.assign(a,{nid:77,owner:'A',netLife:3,remote:true});const s=new w.f.NetSession();Object.assign(s,{myId,hostId:'A',state:'match'});s._members.set('A',{});s._members.set(myId,{});s.tr={sendTo:()=>true,broadcast:()=>true};const n=new w.f.NetMatch(s,{id:'prefix-test',map:'reef'});n.bind({...w.n.match,actors:[a]});s.match=n;receivers.push({n,a});}
+ const nativeSendTo=w.tr.sendTo.bind(w.tr);w.s._members.set('C',{});
+ w.tr.sendTo=(id,d)=>{if(d.k==='ocq'||d.k==='oca'){const target=receivers.find(r=>r.n.myId===id);if(target)target.n.onMessage('A',d);return true;}return nativeSendTo(id,d);};
+ for(const myId of ['B','C']){const a=w.f.make();Object.assign(a,{nid:77,owner:'A',netLife:3,remote:true});const s=new w.f.NetSession();Object.assign(s,{myId,hostId:'A',state:'match'});s._members.set('A',{});s._members.set(myId,{});s.tr={sendTo(_id,d){if(d.k==='ocq'||d.k==='oca')w.n.onMessage(myId,d);return true;},broadcast:()=>true};const n=new w.f.NetMatch(s,{id:'prefix-test',map:'reef'});receivers.push({n,a});n.bind({...w.n.match,actors:[a]});s.match=n;}
  const deliver=(r,d)=>{w.f.G.netm=r.n;w.f.G.match=r.n.match;r.n.onMessage('A',JSON.parse(JSON.stringify(d)));const p=r.n.peers.get('A');if(p){p.tr=d.ts;r.n._playEvents();}w.f.G.netm=w.n;w.f.G.match=w.n.match;};
  w.tr.broadcast=d=>{if(d.k==='t')for(const r of receivers)deliver(r,d);return true};w.tick();
  for(const r of receivers)r.a.character.events.length=0;

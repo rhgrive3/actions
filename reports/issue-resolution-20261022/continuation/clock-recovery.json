@@ -1,0 +1,68 @@
+{
+  "date": "2026-10-22",
+  "issue": 1767,
+  "url": "https://github.com/rhgrive3/actions/issues/1767",
+  "sourceRevision": "76873fc4f36493f74fbee36a1154ccff01a5cda0",
+  "compat": "iw-gameplay-20261022-clock-contact-v1",
+  "sourceSha256": {
+    "patches/network-replication/owner-clock.mjs": "74ef8b9f945d2da91b702ecab296d25ec59e5184bdbf9602a92bab511f50eefa",
+    "patches/network-replication/tests/owner-clock-origin.test.mjs": "0d378f5b870667a83af4b82ebb7d6210b94d62f13fc5d9f01f2cca8433bcd434",
+    "patches/network-replication/tests/issue-1767-session-clock.test.mjs": "20d525eca45ab2d8aa871288bd6319983b8a93f93e02ab0374da21c9586f596e",
+    "patches/network-replication/tests/outbound-prefix.test.mjs": "ced9c303e2b732c21e2c247fafb68c1b5f043bfc9b7487c365b897309a6f142d"
+  },
+  "protocol": {
+    "version": 1,
+    "nonceBits": 128,
+    "challengeTTLSeconds": 2,
+    "futureGraceSeconds": 5,
+    "pendingPacketsPerPeer": 64,
+    "pendingUTF8BytesPerPeer": 262144,
+    "proofRequiredFromFirstCurrentSessionPacket": true,
+    "origin": "ACK sender timestamp and original receiver request send time; fixed until peer/match retirement",
+    "customSessionCompatibility": "Only embeddings without explicit ownerClockVersion use the previous gate"
+  },
+  "validation": [
+    {
+      "command": "timeout --kill-after=5s 120s node --max-old-space-size=384 --experimental-vm-modules --test --test-concurrency=1 patches/network-replication/tests/owner-clock-origin.test.mjs patches/network-replication/tests/issue-1767-session-clock.test.mjs patches/network-replication/tests/issue-1767-startup-clock.test.mjs patches/network-replication/tests/snapshot-clock-admission.test.mjs patches/network-replication/tests/queue-bugs-recovery.test.mjs",
+      "passed": 25,
+      "failed": 0,
+      "durationMs": 20400.894464,
+      "log": ".ci-scratch/issue-continuation/owner-clock-final2.log"
+    },
+    {
+      "command": "timeout --kill-after=5s 180s node --experimental-vm-modules --test --test-concurrency=1 patches/network-replication/tests/outbound-prefix.test.mjs",
+      "passed": 42,
+      "failed": 0,
+      "durationMs": 55872.372832,
+      "log": ".ci-scratch/issue-continuation/owner-clock-outbound-full.log"
+    }
+  ],
+  "acceptance": [
+    "two isolated production-composed real NetSession constructors/_begin/_message, NetMatch, actors, codec and replay owners",
+    "recorded delayed 124.04 initial tick and valid 175.665 catch-up at receiver 92.3055/129.6118",
+    "actual async startNetMatch await, pre-bind rejection and bound staging before proof",
+    "30/60/120 Hz ordinary simulation update and actual periodic outgoing ticks",
+    "endMatch then _begin on reused Sessions; previous epoch ticks rejected",
+    "14-second delayed ACK expiration/retry, stale nonce rejection, visibility wall time advancing while simulation d.u freezes",
+    "initial capability omission plus ignored ACK cannot create public peers/watermarks",
+    "future leap, replay, malformed/nonmember/cross-match responses, fixed-origin grace accumulation and legacy watermark laundering rejected",
+    "same-nonce rate limit/retry does not renew the original TTL or discard staged work",
+    "real receiver accepted-prefix event dedup and negotiated paint-codec order preserved"
+  ],
+  "limits": [
+    "No real relay/websocket/browser pair used; socket is a deterministic authenticated queued wire and stage/display allocation is stubbed.",
+    "No Nintendo Switch Splatoon 3 11.3.0 hardware comparison; no gameplay constants or weapon movement/flight values modified by clock repair.",
+    "RTT or scheduling delay consistently exceeding two seconds cannot establish proof; retry remains pending until a fresh bounded round-trip succeeds.",
+    "First never-accepted peer origin has arbitrary clock offset by design; established accepted watermarks cannot be rebased."
+  ],
+  "failedAttempts": [
+    {
+      "scope": "initial combined regression including full outbound file at 384MiB",
+      "result": "outbound VM-heavy suite exhausted heap; not an assertion failure and not counted as full-suite acceptance; successful full rerun uses normal Node heap"
+    },
+    {
+      "scope": "early real-session test fixture",
+      "result": "fixed protocol START setup, Actor display boundary and simulation replay cursor assumptions; same-time extra tick correctly rejected until test clock advanced 0.05 seconds"
+    }
+  ]
+}

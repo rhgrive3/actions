@@ -5856,3 +5856,12 @@ Node v24.19.0の本番合成VMで新規3件と隣接9件、計12/12成功。原�
 
 - #845: `patches/local-quality/offline-offscreen-budget.mjs` の静的OBB近道は、NativeLevelのchart rectangle境界を地面として扱い、source triangleのない穴でも支持を返していた。実NativeLevel/NativePhysicsの半三角形fixtureで原本は高さ0、元のCharacter._groundは支持なしの0.2を返す不一致を再現した。nativeでは近道からnullを返し、元のsource triangle/dynamic raycastへ戻す。legacy OBBの削減、弾/マズル/移動/時計の所有は維持する。実地形三角形内・穴・動的支持の対照を追加し、既存全11件と独立レビューの11件が成功。物理iPadの性能・本家11.3.0の足運び一致は未確認である。
 - #1671: 同じ操作条件の30秒計測を保存できるよう、既存opt-in hitch tracerに明示的なstartCapture/stopCapture/captureReportを追加した。30秒・4000frame・4MiB compact UTF-8の最初の上限で停止し、理由と観測数を記録する。通常HUDとゲーム挙動は変えず、pending GPU/遅延long-taskを後付けせず記録時snapshotとして扱う。15件と独立レビュー15件成功。これは計測手段の追加でありiPadのFPS改善やGPU実測の証明ではない。手順・限界は `reports/issue-resolution-20261022/performance.md`。
+
+
+## 2026-10-22 継続: #1767 owner-clock単独epoch
+
+`patches/network-replication/owner-clock.mjs` はbind後の受信側128bit nonce challengeで時計の初期起点を確定する。元request送信local時刻とACK sender timestampをpeer/matchごと固定し、既存5秒の未来許容を累積上限として扱う。同じnonceの再送で2秒TTLを延長せず、確定originを後続ACKやhost変更でrebaseしない。current実NetSessionは初回から必須で、`iw-gameplay-20261022-owner-clock-v1` は旧形式へのdowngradeを許さない。raw wireの待機上限はpeerごと64packet/256KiB、leave/disposeで証明と待機queueを退役する。既存event/life/paint/hitの入場所有を維持し、武器・移動・発射数値は変更しない。
+
+独立treeは`855b0e187f4e6a367c21ac12745520f3c356c29a`を起点に時計部分だけを移植する。Charger contact module/identity、full-fire anchor、combat authority/runtime変更は持ち込まない。clock moduleとorigin guard、新規2testは76873fcの受入sourceと同一bytesである。Splatoon 3 11.3.0は比較参照だが、小売版network protocolの非公開数値は推測せず、Switch実機比較を解消扱いにしない。
+
+別の固定source76873fcでは、実Tidewater/Match/Actor/Character、実NetSession `_begin`、2つの独立Chromium contextと実WebSocket/production Worker relayでcold-start・同室rematch・socket reconnectの3局面を確認した。6方向すべてで7秒超の遅延初回→最新tickを受理し、同じ実受信timestamp対は旧arrival-origin guardでは拒否される。時計/peerの書換えやguard無効化はなく、証明origin不変、Actor buffer、Match playing、通常snapshot進行を確認した。これは独立clock-only tree自体のブラウザ受入ではない。固定sourceと手順・raw hashは`reports/issue-resolution-20261022/continuation/clock-native-browser.json`、独立treeのsource/build/回帰は`clock-only-release.json`へ別記する。
