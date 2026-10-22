@@ -7,6 +7,7 @@ Updated 2026-10-22. Scope: `WeaponSlosherBathtub`, all four projectiles.
 - **Published S3 behavioral checks:** https://splatoonwiki.org/wiki/Bloblobber (use S3 section only);
   Japanese system spec https://wikiwiki.jp/splatoon3mix/システム詳細仕様 ;
   dedicated technique https://sites.google.com/view/spl3bloblobber/オバフロテクニック/オバフロちょこっとリファレンス .
+- **Parameter field interpretation:** https://wikiwiki.jp/splatoon3mix/%E6%A4%9C%E8%A8%BC/%E3%83%91%E3%83%A9%E3%83%A1%E3%83%BC%E3%82%BF%E6%83%85%E5%A0%B1/%E3%83%A1%E3%82%A4%E3%83%B3 explains that `FrameOffsetDegreeRate` is the multiplicative yaw-sweep correction specific to Bloblobber.
 - **Unverified native engine defaults:** https://splatoonwiki.org/wiki/User:XarrotD/paramtable .
   The source group is *sparse*: a field absent in the JSON is NOT proof that the Nintendo engine disables its default.
 
@@ -39,7 +40,7 @@ Actions `39708248288`, numerical-main job `119593237910` (actual production-comp
 
 ## Fix in this PR
 1. Sample signed yaw motion at a fixed 60Hz only while the accepted `SwingLiftFrame` is counting down.
-2. Match existing native INKWAVE Slosher's angle wrapping, last-tick sample and ±10°/F clamp, and its cumulative `AfterOffsetDelayFrame` yaw offsets for the three late bubbles. Four velocities are committed **at release**, not updated by later camera movement.
+2. Match existing native INKWAVE Slosher's angle wrapping, last-tick sample and ±10°/F clamp, and its cumulative `AfterOffsetDelayFrame` yaw offsets for the three late bubbles; multiply the offset by the pinned **Bloblobber-only `FrameOffsetDegreeRate = 0.3`**, as explained in the Japanese parameter documentation. Four velocities are committed **at release**, not updated by later camera movement.
 3. Reset the per-swing sample on cancel, switch or release, preventing stale prior actions.
 4. Reuse the source-guided native Slosher `NearestParam` paint-only release owner instead of omitting that ink stamp entirely. Preserve source width/depth, deterministic local paint seed, remote/airborne guard and zero player collision radius.
 5. No source JSON, shared shooter physics, hit protocol or game asset changes.
@@ -47,7 +48,7 @@ Actions `39708248288`, numerical-main job `119593237910` (actual production-comp
 ## Explicit remaining uncertainties (not disguised as parity)
 - `BounceAfterMaxSpeed` is explicit .35 in small group, absent in large group; generic default .4 exists, but exact native application/ordering is not decoded.
 - `UpHill*` and `DnHill*` parameter defaults include slope thresholds, normal/tangent factors and added speed. Precise original branch conditions and equations are not recovered. The existing elastic physical slope-reflection remains INKWAVE's current model.
-- `FrameOffsetDegreeRate=.3` exists in `WeaponParam`; its engine usage and pitch-sweep formula are unknown. The yaw model matches the *native INKWAVE family implementation*, not measured Nintendo internals.
+- `FrameOffsetDegreeRate=.3` is now applied as a yaw-sweep multiplier, backed by the Japanese parameter guide and the pinned 11.3.0 record. Exact Nintendo per-frame sampling, pitch-sweep formula and `FrameOffsetMaxMoveLength` limits are still unknown; the yaw model follows the *native INKWAVE family implementation* rather than recovered Nintendo source code.
 - Native timing of muzzle animation, camera convergence, field-shell graze, 480F cleanup, wall-edge normal selection, source foot paint SpawnOffset local-axis mapping, true Switch actor hurtboxes and simultaneous bubble hit distances all need original engine code or frame-accurate Switch captures to certify equality.
 - A passed Node or browser CI test is not proof of visual/behavioral 11.3.0 perfection.
 
