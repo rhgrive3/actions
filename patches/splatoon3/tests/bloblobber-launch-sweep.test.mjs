@@ -22,6 +22,7 @@ test('last 60Hz windup yaw sample handles wrap, idle and native 10-degree clamp'
 test('real Bloblobber runner fans four emitted bubbles from aim motion DURING windup',async()=>{
   const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
   const P=f.G.projectiles;
+  f.G.physics.segment=(_from,_to,hit)=>{hit.hit=false;return hit;};
   const run=(step)=>{
     P.clear();f.G.actors.length=0;
     const actor=f.make('s3-slosher-bathtub');
