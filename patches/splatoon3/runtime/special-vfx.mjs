@@ -292,7 +292,13 @@ class Director {
   updateWailLasers(dt) {
       for (const [key, L] of this.lasers) {
         if (this.time - L.seen > SPECIAL_VFX_CALIBRATION.killerWail.beamHold) { L.outer.dead = L.core.dead = L.halo.dead = true; this.lasers.delete(key); continue; }
-        const c = this.rgb(L.actor), from = L.from, to = L.to;
+        // The RGB triple is consumed synchronously by the particle methods;
+        // reuse a per-director scratch instead of allocating per live laser/frame.
+        const c = this._wailColor ||= [0, 0, 0];
+        const col = L.actor?.color ?? this.G.teamColors?.[L.actor?.team] ?? 0xffffff;
+        if (col?.isColor) { c[0] = col.r; c[1] = col.g; c[2] = col.b; }
+        else { this.c.set(col); c[0] = this.c.r; c[1] = this.c.g; c[2] = this.c.b; }
+        const from = L.from, to = L.to;
         L.drawTo.lerp(to, 1 - Math.exp(-dt * 30));
         this.setBeam(L.outer, from, L.drawTo); this.setBeam(L.core, from, L.drawTo); this.setBeam(L.halo, from, L.drawTo);
         if (vfxRandom() < 0.6) { // impact crackle
