@@ -193,18 +193,18 @@ roughnessFactor = mix(gBaseRough, mix(0.26, 0.14, gFresh), gInk);`;
 // Inside levelMaterial's normal block before the face frame is built: adds the gel micro-surface to \`slope\`.
 export const INK_GEL = /* glsl */`
   if (gInk > 0.01) {
-    // gel micro-surface: broad soft swells so the sun and sky break into long wet streaks, as on Splatoon 3 turf, not a
-    // grainy sparkle. Read three mips coarser than the pixel footprint (only the swells survive; fades to flat by itself
-    // at distance). Walls stretch it vertically. Fresh ink is smoother (surface tension) and sways very gently while it
+    // gel micro-surface: broad soft swells (≈ 1.5 m) so the sun and sky reflections break into long wet lines, as on
+    // Splatoon 3 turf, not a grainy sparkle. Read three mips coarser than the pixel footprint (only the swells survive;
+    // fades to flat by itself at distance). Walls stretch it vertically. Fresh ink is smoother (surface tension) and sways very gently while it
     // settles; settled ink shows a little more swell.
-    vec2 gp = vFaceUv * (abs(vWNorm.y) < 0.5 ? vec2(0.55, 0.26) : vec2(0.45));
+    vec2 gp = vFaceUv * (abs(vWNorm.y) < 0.5 ? vec2(0.19, 0.09) : vec2(0.16));
     float fr2 = gFresh * gFresh;
     gp += vec2(uTime * 0.011, -uTime * 0.007) + fr2 * 0.022 * vec2(sin(uTime * 2.3), cos(uTime * 1.9));
 #ifdef USE_TEXLIB
     if (uGel >= 0.0) {
       vec2 gx = dFdx(gp) * 8.0, gy = dFdy(gp) * 8.0;
       vec3 gn = textureGrad(tNormal, vec3(gp, uGel), gx, gy).xyz * 2.0 - 1.0;
-      slope += -gn.xy / max(gn.z, 0.3) * (0.95 - 0.5 * gFresh) * 2.4 * gInk * gInkS;
+      slope += -gn.xy / max(gn.z, 0.3) * (0.95 - 0.5 * gFresh) * 1.6 * gInk * gInkS;
     }
 #else
     {
@@ -276,7 +276,7 @@ export const INK_LIGHTS = /* glsl */`
   // flatter Fresnel on the coat: a little more reflection head-on, far less at grazing angles, so the team colour
   // survives a low gameplay camera instead of washing out to sky-white
   material.clearcoatF0 = vec3(mix(0.04, 0.055 + 0.015 * gFresh, gInk));
-  material.clearcoatF90 = mix(1.0, 0.3, gInk);
+  material.clearcoatF90 = mix(1.0, 0.45, gInk);
 }`;
 
 // after lights_fragment_maps: ambient / reflection treatment
@@ -291,12 +291,20 @@ if (gInk > 0.0) {
 }
 #if defined( USE_ENVMAP ) && defined( RE_IndirectSpecular ) && defined( USE_CLEARCOAT )
   // stylised wet reflections: pushed toward a neutral sheen so a blue sky never turns yellow ink olive, then tinted a
-  // little by the pigment underneath (a thick coloured gel) so a grazing view keeps the team hue
+  // little by the pigment underneath (a thick coloured gel) so a grazing view keeps the team hue. The white highlights
+  // on Splatoon 3 turf are reflections: thin wavy lines where the swells sweep the mirror image across something brighter
+  // than the sky. Keyed against the mean sky brightness, a narrow band just above it (the edges of the clouds) comes
+  // through white and strong; the plain blue and the broad cloud cores stay a faint sheen, so the team colour stays
+  // clean between the lines instead of under pale patches.
   {
-    float cl = dot(clearcoatRadiance, vec3(0.2126, 0.7152, 0.0722));
-    vec3 tint = gInkCol / max(dot(gInkCol, vec3(0.2126, 0.7152, 0.0722)), 1e-3);
-    clearcoatRadiance = mix(clearcoatRadiance, mix(vec3(cl), cl * min(tint, vec3(2.5)), 0.3), 0.6 * gInk);
-    clearcoatRadiance *= 1.0 + gInk * (0.25 + 0.3 * gFresh) + gWake * 0.7;
+    const vec3 LW = vec3(0.2126, 0.7152, 0.0722);
+    float cl = dot(clearcoatRadiance, LW);
+    vec3 tint = gInkCol / max(dot(gInkCol, LW), 1e-3);
+    float skyMean = dot(iblIrradiance, LW) * RECIPROCAL_PI;
+    float rel = cl / max(skyMean, 1e-4);
+    float key = smoothstep(1.55, 1.65, rel) * (1.0 - smoothstep(1.9, 2.5, rel));
+    clearcoatRadiance = mix(clearcoatRadiance, mix(vec3(cl), cl * min(tint, vec3(2.5)), 0.3 * (1.0 - key)), 0.6 * gInk);
+    clearcoatRadiance *= 1.0 + gInk * (5.0 * key + 0.3 * gFresh) + gWake * 0.7;
   }
 #endif`;
 

@@ -18,5 +18,5 @@ test('production composition retains 4mm film, color, coverage and wet coat',()=
  const got=adaptBuildSource(path,raw);
  assert.ok(got.includes('(0.7125 - 0.375 * gFresh)'));
  assert.ok(got.includes('gInkD *= uPpm * 0.004 / 1.9'));
- for(const anchor of ['roughnessFactor = mix(gBaseRough, mix(0.26, 0.14, gFresh), gInk);','material.clearcoatF90 = mix(1.0, 0.3, gInk);','base = mix(base, gInkCol, gInk);'])assert.ok(got.includes(anchor));
+ for(const anchor of ['roughnessFactor = mix(gBaseRough, mix(0.26, 0.14, gFresh), gInk);','material.clearcoatF90 = mix(1.0, 0.45, gInk);','base = mix(base, gInkCol, gInk);'])assert.ok(got.includes(anchor));
 });
