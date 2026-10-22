@@ -71,9 +71,19 @@ these local optimizations are not evidence that those acceptance criteria pass.
   then timed out waiting for the loadout appearance picker (15 seconds).
   Page errors, console errors and request failures were empty. The untouched
   main control at `a350b6b89` passed that picker and the fourteen-default probe.
+  The control was deliberately stopped after the relevant comparison (45
+  canonical loadout rows had also completed); it is not a full-browser pass.
+  [Comparison receipt](issue-batch-20261022/browser-comparison.json) retains
+  both failures and explicitly records that interruption.
   This comparison does not establish whether the candidate timeout was a
   regression or an intermittent readiness failure. Full-browser acceptance
   remains pending; the deadline and original assertions were not relaxed.
 
 GitHub Actions and physical-device acceptance remain separate from these local
 receipts. This PR remains a draft until the remaining acceptance is reviewed.
+
+The optional monolithic local-quality run was deliberately stopped before all
+unchanged animation/geometry fixtures finished. Its [partial receipt](issue-batch-20261022/local-quality-partial.json)
+retains the single obsolete LOW-reflection string assertion failure. The updated
+real-method LOW fallback and all final focused regressions passed separately.
+No green monolithic local-quality or full-CI result is claimed.
