@@ -1,6 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';
 import {nativeArenaBasis,nativeSpawnYaw,nativeInitialLanding,nativeRetreatCoordinate} from '../runtime/native-spawn.mjs';
 import {nativeFixture,readStage} from './fixture.mjs';
+import {SQUID_SPAWN_PRESENTATION,SQUID_SPAWN_FLIGHT_DURATION} from '../../splatoon3/runtime/respawn-lifecycle.mjs';
 import {fixture} from '../../splatoon3/tests/source-fixture.mjs';import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 const ROOT=process.env.INKWAVE_NATIVE_STAGE_ASSETS,hasUrchin=ROOT&&fs.existsSync(path.join(ROOT,'urchin','manifest.json'));
 
@@ -14,7 +15,7 @@ test('inferred opposing-pad basis rotates native spawn yaw and retreat projectio
 test('native opening and death respawn use actual Urchin support and opposing-pad aim at 30/60/120 Hz for both teams',{skip:!hasUrchin},async()=>{
  const f=await nativeFixture(),{G,THREE}=f,L=new f.NativeLevel(readStage(ROOT,'urchin')),P=new f.NativePhysics(L);G.level=L;G.physics=P;
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
- G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.nav=new f.NavGraph(L,P);G.match.mode='turf';G.match.opts={};
+ G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.nav=new f.NavGraph(L,P);G.match.mode='turf';G.match.opts={};G.match.state='playing';
  const basis=nativeArenaBasis(L),proof=[];
  for(const team of [0,1])for(const hz of [30,60,120])for(const opening of [true,false])for(const slot of [-1,0,1,2,3]){
   const a=f.make('shooter');a.team=team;a.slot=Math.max(0,slot);a.isBot=slot>=0;a._integrate=f.Actor.prototype._integrate;a.spawnAt(L.spawnPads[team],0);a.aimPoint.copy(L.spawnPads[team]);a.intent.move.set(0,0,0);a.intent.fire=false;
@@ -22,7 +23,10 @@ test('native opening and death respawn use actual Urchin support and opposing-pa
   const expected=nativeSpawnYaw(L,team,0);assert(Math.abs(a.yaw-expected)<1e-12);assert(Math.abs(a.aimYaw-expected)<1e-12);
   if(a.isBot){a.bot=new f.BotBrain(a,'normal');assert(Math.abs(a.bot.aimYaw-expected)<1e-12);}
   const target=a.s3.squidSpawn.target;assert(target);const pad=L.spawnPads[team],sign=team?-1:1;assert(((target.x-pad.x)*basis.forward.x+(target.z-pad.z)*basis.forward.z)*sign>0,'actual supported target lies toward opponent');
-  a.intent.fire=true;a.update(1/hz);a.intent.fire=false;for(let i=0;i<Math.ceil(hz*1.5);i++){G.time+=1/hz;a.update(1/hz);}
+  // Opening bots ignore early human ZR and wait for the configured auto launch.
+  // Keep the existing half-second touchdown margin after the full flight.
+  const settleSeconds=SQUID_SPAWN_FLIGHT_DURATION+.5+(opening&&a.isBot?SQUID_SPAWN_PRESENTATION.initialAutoLaunch:0);
+  a.intent.fire=true;a.update(1/hz);a.intent.fire=false;for(let i=0;i<Math.ceil(hz*settleSeconds);i++){G.time+=1/hz;a.update(1/hz);}
   assert.equal(a.s3.squidSpawn,undefined);assert(a.alive&&a.grounded&&a.ground.hit,'actual source launch lands '+team+' '+hz+' '+opening);proof.push({team,hz,opening,slot,yaw:expected,grounded:a.grounded});
  }
  // Fallback candidates also use longitudinal/cross-axis selection and real source resolution.

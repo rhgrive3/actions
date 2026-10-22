@@ -1324,7 +1324,16 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         paintDistanceFlight(G,p,s.rollerFlight,p.prev.clone().lerp(p.pos,clamp(Math.min(1,stop))));
       if(stop<=1){
         p.pos.lerpVectors(p.prev,p.pos,stop);
-        if(defense){defense.onHit(p);return true;}
+        if(defense){
+          // Roller/Brush damage lives in sourced distance/sector/age bands;
+          // the shared descriptor has no ValueMax and starts at zero. Resolve
+          // that same admitted hit value before a device/shield reads p.damage.
+          if(s.r.family==='roller'||s.r.family==='brush'){
+            p.damage=impactDamage(p,defense.object||defense.damageTarget||defense,stop);
+            defense.setDamageAtContact?.(p.damage);
+          }
+          defense.onHit(p);return true;
+        }
         if(target){
           if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target,stop);if(amount>0){
             const owner=p.owner,previous=owner._sourceChargerAudioHit;
@@ -1956,9 +1965,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(a.team===p.team||!c||!c.launched&&!a.alive||!c.open&&!c.launched||c.hp<=0)return;
       const t=canopyEntry(p.prev,p.pos,c,Math.max(0,finite(p.size,.1)));
       if(t==null||t*len>=(best?.distance??Infinity))return;
-      best={brella:true,distance:t*len,point:p.prev.clone().lerp(p.pos,t),onHit:(shot=p)=>{
+      best={brella:true,damageTarget:c,distance:t*len,point:p.prev.clone().lerp(p.pos,t),onHit:(shot=p)=>{
         if(shot.ghost)return;
-        hurtCanopy(a,s,c,finite(shot.catalog?.descriptor.damage,finite(shot.damage,0)));
+        hurtCanopy(a,s,c,finite(shot.damage,finite(shot.catalog?.descriptor.damage,0)));
       }};
     };
     for(const a of G.actors||[])consider(a,a.weaponRunner?.catalogState,a.weaponRunner?.catalogState?.canopy);

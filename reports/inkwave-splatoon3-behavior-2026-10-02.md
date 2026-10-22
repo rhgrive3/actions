@@ -5856,3 +5856,13 @@ Node v24.19.0の本番合成VMで新規3件と隣接9件、計12/12成功。原�
 
 - #845: `patches/local-quality/offline-offscreen-budget.mjs` の静的OBB近道は、NativeLevelのchart rectangle境界を地面として扱い、source triangleのない穴でも支持を返していた。実NativeLevel/NativePhysicsの半三角形fixtureで原本は高さ0、元のCharacter._groundは支持なしの0.2を返す不一致を再現した。nativeでは近道からnullを返し、元のsource triangle/dynamic raycastへ戻す。legacy OBBの削減、弾/マズル/移動/時計の所有は維持する。実地形三角形内・穴・動的支持の対照を追加し、既存全11件と独立レビューの11件が成功。物理iPadの性能・本家11.3.0の足運び一致は未確認である。
 - #1671: 同じ操作条件の30秒計測を保存できるよう、既存opt-in hitch tracerに明示的なstartCapture/stopCapture/captureReportを追加した。30秒・4000frame・4MiB compact UTF-8の最初の上限で停止し、理由と観測数を記録する。通常HUDとゲーム挙動は変えず、pending GPU/遅延long-taskを後付けせず記録時snapshotとして扱う。15件と独立レビュー15件成功。これは計測手段の追加でありiPadのFPS改善やGPU実測の証明ではない。手順・限界は `reports/issue-resolution-20261022/performance.md`。
+
+## 2026-10-22 weapon-only source correction checkpoint
+
+比較対象はSplatoon 3 11.3.0。今回の口先補正は既存INKWAVE meshのlandmarkから導出し、Nintendoの未公開firing originを復元したとは主張しない。Explosherのgeometry/手/animation channelを維持してmuzzleを既存burner lipへ合わせる。Quadはactual native InkVolume ownerで既存poseBirthOffsetを反映し、tipは物理位置、tailは既存保持期間後にdetachする。prediction/LOS fallback/ghostを接続へ強制しない。
+
+実Actor first/steady・30/60/120Hz・上下・Tidewater open/towerでsource/FX/muzzle/actual instanceを確認する。Explosher旧/newのvelocity/damage/ink/packet/tickが同一、candidate内のbirth/contact/paintは描画rate間で同一。口先を動かすため旧/newのphysical birth/contact座標は同一とは扱わずreceiptに分ける。Quadの修正は表示経路だけでphysical/contact/paint/network ownerを維持する。完成#1277とのgeometry lineageも確認する。
+
+Dynamo/他Roller/Brushの防御object・傘・BigBubblerへ、既存impactDamageで決済したUnit/距離/volley額を渡す。Bubbler queryは純粋に保ち、採用されたcontactだけ既存倍率を1回適用する。Unit1はdamage0のまま実CPU床paintとturf creditを維持。source UnitDamageRate0のNintendo engine解釈・実機unit分離は未確認で#1813を維持する。
+
+追加7 Roller/Brushの受入はactual Actor/Runner/Projectilesの330birth/22cover/780flight条件と、actual source pose/FX/WebGLのTidewater78条件。原作全parityとは区別する。Zipcaster失敗repeatは現45F境界を実Actorで確認し、原作ShotFailedIntervalFrm20とのphase意味は未確認。Urchin private physicsは正当なpinned source生成を用い60case完走したがassetsは公開せずhash/countのみ残す。詳細はcontinuation/weapons.mdおよび各receipt。
