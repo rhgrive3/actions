@@ -32,7 +32,7 @@ const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript'
 const errors=[],wire=[],loaded=new Set(),contexts=[],pages=[];
 const report={schema:1,status:'running',sourceSha,inputHash:build.inputHash,contentHash:build.contentHash,
  harnessHash:hash(fs.readFileSync(self)),scenario:'native-shooter-220-reject-36-accept',
- scope:'Full native Game/Actor/Projectiles/NetMatch; deterministic native component steps after online startup; no Actor damage or receiver admission replacement',
+ scope:'Full native Game/Actor/Projectiles/NetMatch; draw-suppressed native RAF startup then deterministic native component steps; separate warm-session combat QA, cold-start #1767 remains open; no Actor damage or receiver admission replacement',
  phase:'initialization'};
 let server,relay,browser;
 try {
@@ -52,6 +52,7 @@ try {
  const relayURL='ws://127.0.0.1:'+relay.address().port;
  const address=base+'/?map=tidewater&difficulty=normal&skipTitle&relay='+encodeURIComponent(relayURL);
  const actorURL=base+'/_versions/'+build.build.revision+'/src/game/actor.js';
+ const motionURL=base+'/_versions/'+build.build.revision+'/patches/splatoon3/runtime/actor-motion.mjs';
  browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--disable-background-timer-throttling','--disable-renderer-backgrounding','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  report.phase='native-menu';
  for(let i=0;i<2;i++){
@@ -81,11 +82,16 @@ try {
  assert.equal(await host.evaluate(()=>__G.net.confirmTeams()),true);
  await guest.waitForFunction(()=>__G.net.lobby.teamsConfirmed===true);
  await guest.evaluate(()=>__G.net.setMe({ready:true}));await host.evaluate(()=>__G.net.setMe({ready:true}));
- await host.waitForFunction(()=>__G.net.canStart());assert.equal(await host.evaluate(()=>__G.net.start()),true);
+ await host.waitForFunction(()=>__G.net.canStart());
+ // Suppress draw before the first owner snapshot. Keep the original RAF,
+ // full native frame and READY/GO loading lifecycle active through the intro.
+ report.introDraw=await Promise.all(pages.map(p=>p.evaluate(()=>{__ceilingPlacement.holdOpeningDraw();return {held:__inkwave._skipRender===true,frozen:__inkwave.frozen===true};})));
+ assert(report.introDraw.every(s=>s.held&&!s.frozen),'Native RAF must remain active while opening draw is held');
+ assert.equal(await host.evaluate(()=>__G.net.start()),true);
  await Promise.all(pages.map(p=>p.waitForFunction(()=>{const G=__G,g=__inkwave,m=g.match,n=G.net;return G.mode==='match'&&m===G.match&&m?.state==='playing'&&!m.attract&&m.local?.isLocal&&m.controller&&n.active&&n._setupReady&&G.netm===n.match&&G.netm.match===m&&m.actors.length===2;},null,{timeout:240000})));
  report.phase='native-opening-spawn';
- // Playing starts before the opening Squid Spawn finishes. Leave the real game
- // running until both owners land and their proxies adopt the completed phase.
+ // Keep original RAF, controllers and transport through native touchdown.
+ // This separate warm-session combat fixture does not close cold-start #1767.
  const spawnStarts=await Promise.all(pages.map(p=>p.evaluate(()=>__G.time)));
  await Promise.all(pages.map((p,i)=>p.waitForFunction(start=>{
   if(__ceilingPlacement.spawnReady())return true;
@@ -93,13 +99,15 @@ try {
   return false;
  },spawnStarts[i],{timeout:180000})));
  report.spawnReady=await Promise.all(pages.map(p=>p.evaluate(()=>({at:__G.time,ready:__ceilingPlacement.spawnReady()}))));
+ await Promise.all(pages.map(p=>p.evaluate(()=>__ceilingPlacement.releaseOpeningDraw())));
  report.phase='native-actor-placement';
- report.roles=await Promise.all(pages.map(p=>p.evaluate(async url=>{
-  const {Actor}=await import(url),G=__G,n=G.netm;__inkwave.debug.freeze();
+ report.roles=await Promise.all(pages.map(p=>p.evaluate(async ({actorURL,motionURL})=>{
+  const {Actor}=await import(actorURL),{beginActorMotionTick}=await import(motionURL),G=__G,n=G.netm;__inkwave.debug.freeze();
+  window.__ceilingBeginActorMotionTick=beginActorMotionTick;
   const actors=G.match.actors.map(a=>{if(!(a instanceof Actor)||a.damage!==Actor.prototype.damage||a.weapon.id!=='shooter'||a.weapon.damage!==36)throw Error('Native Actor/shooter identity failed');return {nid:a.nid,owner:a.owner,remote:a.remote,team:a.team,weapon:a.weapon.id,damage:a.weapon.damage};});
   window.__ceilingOriginalDamage=new Map(G.match.actors.map(a=>[a,a.damage]));
   return {myId:n.myId,isHost:n.isHost,local:G.match.local.nid,actors};
- },actorURL)));
+ },{actorURL,motionURL})));
  assert.equal(report.roles[0].isHost,true);assert.equal(report.roles[1].isHost,false);
  const attacker=report.roles[1].local,victim=report.roles[0].local,attackerOwner=owners[1];
  const placement=await host.evaluate(()=>__ceilingPlacement.select());
@@ -121,7 +129,11 @@ try {
   G.scene.updateMatrixWorld(true);
  },{attacker,placement})));
  const step=async()=>{await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement})=>{
-  const G=__G,dt=1/60;G.time+=dt;G.net.update(dt);
+  const G=__G,dt=1/60;G.net.update(dt);G.time+=dt;
+  // Match the native fixed clock: every sweep owns this tick's actor origins.
+  // Otherwise freeze retains the opening pose as a false motion interval after
+  // owner relocation, even though both peers have accepted the new positions.
+  window.__ceilingBeginActorMotionTick(G.actors);
   for(const a of G.match.actors){
    if(a.remote)G.netm.applyRemote(a,dt);
    else {
@@ -264,6 +276,20 @@ try {
 } catch(error) {
  report.status='failed';report.error=String(error.stack||error);process.exitCode=1;
  try{if(pages[1])report.shot=await pages[1].evaluate(()=>{const q=window.__ceilingShot;return q?{initial:q.initial,removal:q.removal,steps:q.steps}:null;});}catch{}
+ try{report.openingDiagnostics=await Promise.all(pages.map(page=>page.evaluate(()=>{
+  const G=window.__G,n=x=>Number.isFinite(x)?x:null;
+  const state=s=>s?{time:n(s.t),life:n(s.life),sequence:n(s.adoption?.sequence),tick:n(s.adoption?.tick),
+   spawnPhase:s.adoption?.squidSpawn?.phase||null,flags:n(s.f),pos:[n(s.x),n(s.y),n(s.z)]}:null;
+  return {time:n(G?.time),frozen:window.__inkwave?.frozen===true,drawSuppressed:window.__inkwave?._skipRender===true,state:G?.match?.state,
+   actors:(G?.match?.actors||[]).slice(0,2).map(a=>{
+    const p=G.netm?.peers?.get(a.owner);
+    return {nid:a.nid,local:a.isLocal===true,alive:a.alive===true,spawnPhase:a.s3?.squidSpawn?.phase||null,
+     acceptedSequence:n(a.net?._adoptionSeq),latest:state(a.net?.buf?.at(-1)),sample:state(a.net?.cur),
+     peer:p?{tr:n(p.tr),lastTs:n(p.lastTs),lastReceiveAt:n(p.lastReceiveAt),sim:n(p.sim),
+      delay:n(p.delay),want:n(p.want),off:n(p.off),clockAnchorTs:n(p.clockAnchorTs),
+      clockAnchorReceiveAt:n(p.clockAnchorReceiveAt),physicsTail:p.physicsPoints?.slice(-8)||[]}:null};
+   })};
+ })));}catch{}
  try{if(pages[1])report.placementDiagnostic=await pages[1].evaluate(()=>{
   const G=window.__G,n=x=>Number.isFinite(x)?x:null,xyz=p=>p?[n(p.x),n(p.y),n(p.z)]:null;
   return {bounds:G?.level?.bounds?Object.fromEntries(['minX','maxX','minZ','maxZ'].map(k=>[k,n(G.level.bounds[k])])):null,
@@ -273,9 +299,12 @@ try {
     spawnPhase:['aim','flight','landing'].includes(a.s3?.squidSpawn?.phase)?a.s3.squidSpawn.phase:null,form:['kid','squid'].includes(a.form)?a.form:'other',pos:xyz(a.pos)}))};
  });}catch{}
 } finally {
- report.errors=errors;report.loadedArtifacts=[...loaded];report.wire=wire;
+ report.errors=errors;report.loadedArtifacts=[...loaded];
+ // Socket teardown may author a legitimate no-contest message. Keep that
+ // traffic separate from the immutable scenario trace used for diagnosis.
+ report.preCleanupAt=Date.now();report.wire=wire.slice();
  for(const page of pages){
-  try{await page.evaluate(()=>{const g=window.__ceilingGuest,h=window.__ceilingHost,s=window.__ceilingShot;if(s){s.system._step=s.step;s.flight.impact=s.impact;}if(g){g.tr.sendTo=g.send;g.n.onMessage=g.originalMessage;}if(h)h.n.onMessage=h.original;});}
+  try{await page.evaluate(()=>{window.__ceilingPlacement?.releaseOpeningDraw();const g=window.__ceilingGuest,h=window.__ceilingHost,s=window.__ceilingShot;if(s){s.system._step=s.step;s.flight.impact=s.impact;}if(g){g.tr.sendTo=g.send;g.n.onMessage=g.originalMessage;}if(h)h.n.onMessage=h.original;});}
   catch(e){(report.cleanupErrors||=[]).push(String(e));}
  }
  // Persist before closing sockets/browser, so a cleanup failure cannot erase evidence.
@@ -284,6 +313,7 @@ try {
  try{await browser?.close();}catch(e){(report.cleanupErrors||=[]).push(String(e));}
  if(relay){for(const ws of relay.clients)ws.terminate();await new Promise(resolve=>relay.close(resolve));}
  if(server)await new Promise(resolve=>server.close(resolve));
+ report.cleanupWire=wire.slice(report.wire.length);
  if(report.cleanupErrors?.length||errors.length){report.status='failed';process.exitCode=1;}
  fs.writeFileSync(path.join(evidence,'combat-ceiling-browser-result.json'),JSON.stringify(report,null,2)+'\n');
 }

@@ -174,13 +174,48 @@ test('placement handshake waits for delayed actual peer readiness and is bounded
  for(const maxSteps of [0,-1,181,NaN,.5])await assert.rejects(advanceUntilNativePlacement({maxSteps,step:async()=>{},hasPlacement:()=>false}),/step budget/);
 });
 
-test('browser waits before freezing, relocates owners only and preserves remote native state',()=>{
+test('browser keeps native RAF through opening, relocates owners only and preserves remote native state',()=>{
  const source=fs.readFileSync(new URL('../check-inkwave-combat-ceiling-browser.mjs',import.meta.url),'utf8');
  assert(source.indexOf("report.phase='native-opening-spawn'")<source.indexOf('__inkwave.debug.freeze()'));
+ const drawHold=source.indexOf('__ceilingPlacement.holdOpeningDraw()'),start=source.indexOf('assert.equal(await host.evaluate(()=>__G.net.start())');
+ assert(drawHold>=0&&drawHold<start,'both original RAF loops suppress draw before START can publish the first snapshot');
+ assert(source.indexOf('__ceilingPlacement.releaseOpeningDraw()')>source.indexOf('report.spawnReady='));
+ const opening=source.slice(source.indexOf("report.phase='native-opening-spawn'"),source.indexOf("report.phase='native-actor-placement'"));
+ assert(opening.includes('__ceilingPlacement.spawnReady()')&&opening.includes('__G.time-start>10'));
+ assert(!/debug\.(step|freeze)|_frame\(|\.update\(|\.ready\s*=|delete .*squidSpawn|net\.cur\s*=|buf\./.test(opening));
  const placement=source.slice(source.indexOf('const placement=await host.evaluate'),source.indexOf('const step=async'));
  assert(placement.includes('if(a.remote)continue;'));
  assert(!placement.includes('buf.length=0'));
  assert(!/\.ready\s*=|delete .*squidSpawn|net\.cur\s*=/.test(placement));
  assert(source.indexOf('assert(report.placementAdvance.ready')<source.indexOf('report.settled='));
  assert(source.includes('setTimeout(resolve,1000/60)'));
+ const step=source.slice(source.indexOf('const step=async'),source.indexOf('report.placementAdvance='));
+ const order=['G.net.update(dt)','G.time+=dt','window.__ceilingBeginActorMotionTick(G.actors)',
+  'for(const a of G.match.actors)','G.projectiles.update(dt)'].map(anchor=>step.indexOf(anchor));
+ assert(order.every((index,i)=>index>=0&&(i===0||index>order[i-1])), 'all native tick owners must exist in order');
+});
+
+test('scenario wire evidence is copied before socket teardown and cleanup has its own trace',()=>{
+ const source=fs.readFileSync(new URL('../check-inkwave-combat-ceiling-browser.mjs',import.meta.url),'utf8');
+ const snapshot=source.indexOf('report.wire=wire.slice()'),close=source.indexOf('await c.close()');
+ assert(snapshot>=0&&snapshot<close);assert(source.indexOf('report.cleanupWire=wire.slice(report.wire.length)')>close);
+});
+
+test('intro draw hold preserves native RAF/frame and actor state and restores the original flag',()=>{
+ const previous=globalThis.__inkwave,previousQA=globalThis.__ceilingPlacement;
+ try{
+  const frame=()=>{},game={_frame:frame,frozen:false,actors:[{alive:true,spawnPhase:'aim'}]};
+  globalThis.__inkwave=game;installCombatPlacementQA();const q=globalThis.__ceilingPlacement;
+  const actors=JSON.stringify(game.actors);
+  q.holdOpeningDraw();assert.equal(game._skipRender,true);assert.equal(game._frame,frame);assert.equal(game.frozen,false);
+  assert.equal(JSON.stringify(game.actors),actors);assert.throws(()=>q.holdOpeningDraw(),/already held/);
+  q.releaseOpeningDraw();assert.equal(game._skipRender,undefined);q.releaseOpeningDraw();
+  game._skipRender=false;q.holdOpeningDraw();q.releaseOpeningDraw();assert.equal(game._skipRender,false);
+  const nativeMain=fs.readFileSync(new URL('../../inkwave-public/src/main.js',import.meta.url),'utf8');
+  const frameSource=nativeMain.slice(nativeMain.indexOf('  _frame(dt) {'),nativeMain.indexOf('  _updateAmbience(dt) {'));
+  assert(!/_skipRender\s*=/.test(frameSource),'the unchanged native frame does not reset the audit draw hold');
+ }finally{
+  if(previous===undefined)delete globalThis.__inkwave;else globalThis.__inkwave=previous;
+  if(previousQA===undefined)delete globalThis.__ceilingPlacement;else globalThis.__ceilingPlacement=previousQA;
+ }
 });

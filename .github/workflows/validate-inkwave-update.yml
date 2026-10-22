@@ -718,7 +718,7 @@ jobs:
         run: node scripts/check-inkwave-network-browser.mjs --delay-frames 6 --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/network-delay" --profile-dir "$CI_STORAGE/cache/network-delay" --exact-source
       - name: Verify neutral combat QA placement contracts
         if: matrix.suite == 'network'
-        run: node --test scripts/tests/inkwave-combat-ceiling-placement.test.mjs
+        run: node --experimental-vm-modules --test scripts/tests/inkwave-combat-ceiling-placement.test.mjs scripts/tests/inkwave-combat-ceiling-motion-epoch.test.mjs
       - name: Verify real Actor hit ceiling before proof and hit ID consumption
         if: matrix.suite == 'network'
         run: node scripts/check-inkwave-combat-ceiling-browser.mjs --site .built-site/_site --source-sha "$SOURCE_SHA" --evidence-dir "$CI_STORAGE/evidence/combat-ceiling"
