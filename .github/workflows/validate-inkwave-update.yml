@@ -16,6 +16,7 @@ on:
       - "patches/native-stages/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
+      - "scripts/tests/run-inkwave-turf-finish-*.test.mjs"
       - "scripts/lib/inkwave-*.mjs"
       - "scripts/tests/fixtures/inkwave-paint-source-epochs.mjs"
       - "scripts/fixtures/inkwave-paint-catalogue-epochs.json.gz"
@@ -38,6 +39,7 @@ on:
       - "patches/native-stages/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
+      - "scripts/tests/run-inkwave-turf-finish-*.test.mjs"
       - "scripts/lib/inkwave-*.mjs"
       - "scripts/tests/fixtures/inkwave-paint-source-epochs.mjs"
       - "scripts/fixtures/inkwave-paint-catalogue-epochs.json.gz"
@@ -320,6 +322,16 @@ jobs:
           node scripts/check-inkwave-startup-budget.mjs _site
           INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs scripts/tests/inkwave-three-composition.test.mjs
           git rev-parse HEAD > _site-source-sha.txt
+      - name: Verify all Turf finish cases on emitted site
+        run: node scripts/run-inkwave-turf-finish-isolated.mjs . emitted .ci-scratch/turf-finish _site
+      - name: Retain bounded Turf finish evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkwave-turf-finish-${{ env.SOURCE_SHA }}-${{ github.run_attempt }}
+          path: .ci-scratch/turf-finish/
+          if-no-files-found: error
+          retention-days: 14
       - name: Verify emitted Charger grip reach and protected trajectory
         run: INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/charger-native-grip-reach.test.mjs patches/splatoon3/tests/charger-protected-trajectory.test.mjs
       - name: Verify emitted Boss positive-proof admission and PvP zero knockback
@@ -516,9 +528,9 @@ jobs:
       - name: Verify gameplay patch contracts and regressions (shard ${{ matrix.shard }})
         run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs
       - uses: actions/upload-artifact@v4
-        if: failure() && hashFiles('.ci-scratch/inkwave-patches/patch-tests.log') != ''
+        if: always() && hashFiles('.ci-scratch/inkwave-patches/shard-manifest.json') != ''
         with:
-          name: inkwave-patch-failure-shard-${{ matrix.shard }}-${{ env.SOURCE_SHA }}
+          name: inkwave-patch-evidence-shard-${{ matrix.shard }}-${{ env.SOURCE_SHA }}
           if-no-files-found: error
           path: .ci-scratch/inkwave-patches/
           retention-days: 14
