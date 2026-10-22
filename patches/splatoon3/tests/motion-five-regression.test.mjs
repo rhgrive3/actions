@@ -11,6 +11,15 @@ const near = (a, b, tol, label) => assert.ok(Math.abs(a - b) <= tol,
 function derivative(f, t, eps = 1e-5) {
   return (f(t + eps) - f(t - eps)) / (2 * eps);
 }
+function checkC1(f, t, label) {
+  // First-order secants include opposite O(e) curvature errors. The release
+  // has a sharp acceleration change even though its shared Hermite tangent is
+  // continuous. Keep the same sample distance and tolerance; cancel that error.
+  const e = 2e-5, at = f(t);
+  const left = (3 * at - 4 * f(t - e) + f(t - 2 * e)) / (2 * e);
+  const right = (-3 * at + 4 * f(t + e) - f(t + 2 * e)) / (2 * e);
+  near(left, right, .06, label);
+}
 function checkSwing(fn, windup, interval, name) {
   const snap = t => fn(t, windup, interval);
   const duration = interval;
@@ -35,10 +44,7 @@ function checkSwing(fn, windup, interval, name) {
   const follow = windup + Math.min(.12, (interval - windup) * .55);
   for (const t of [windup * .65, windup, follow]) {
     for (const channel of ['anchor', 'rotation']) for (let i = 0; i < 3; i++) {
-      const f = x => snap(x)[channel][i], e = 2e-5;
-      const left = (f(t) - f(t - e)) / e;
-      const right = (f(t + e) - f(t)) / e;
-      near(left, right, .06, name + ': C1 at ' + t + '/' + channel + i);
+      checkC1(x => snap(x)[channel][i], t, name + ': C1 at ' + t + '/' + channel + i);
     }
   }
 }
@@ -51,6 +57,15 @@ test('roller uses a continuous grip spline through horizontal and vertical nativ
     checkSwing(horizontalRollerPose, windup, interval, label + '-horizontal');
     checkSwing(verticalRollerPose, windup, interval, label + '-vertical');
   }
+});
+test('Roller C1 gate rejects tangent and position jumps without rejecting continuous high curvature', () => {
+  const t = .35, pose = x => verticalRollerPose(x, 21 / 60, 35 / 60).rotation[0];
+  checkC1(pose, t, 'actual release');
+  checkC1(x => 2000 * (x - t) ** 2, t, 'continuous high curvature');
+  assert.throws(() => checkC1(x => pose(x) + (x > t ? .1 * (x - t) : 0), t, 'tangent jump'),
+    /tangent jump/, 'a real 0.1 rad/s tangent jump must fail the unchanged .06 budget');
+  assert.throws(() => checkC1(x => pose(x) + (x >= t ? .001 : 0), t, 'position jump'),
+    /position jump/, 'a real 0.001 rad position jump must fail');
 });
 test('dualies dodge roll has continuous, monotonic angular velocity and no spin jump at recovery', () => {
   const c = DUALIES_MOTION_CALIBRATION, f = dualiesTurnFraction;
