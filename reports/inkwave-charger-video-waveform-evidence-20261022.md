@@ -45,3 +45,24 @@ These values depend on the preview durations and clip processing; they are **not
 5. Compare this verified evidence to Draft #1740 and adjust only demonstrably wrong parts; tests + CI green + human listening validation required before main merge.
 
 Copyright: no third-party gameplay footage, audio files or new Nintendo assets are included or redistributed by this research branch.
+
+
+## 2026-10-22: captured GitHub artifact readback, not just job status
+
+[Latest inspected capture run #39658586775](https://github.com/rhgrive3/actions/actions/runs/39658586775) completed with `conclusion=success`, **but had zero extracted game audio**. I downloaded artifact `charger-reference-video-waveforms` (id 12377015002; 1,656 bytes) and read all files. Its ZIP contained **only** `setup.log`, `fetch.log` and `sources.tsv`, with **zero WAV, waveform PNG, spectrum PNG, correlation JSON or RMS CSV**. Python venv installations of yt-dlp 2026.08.19 and numpy 2.5.4 were successful. Source-by-source diagnostic log:
+
+| Source | Observed result | Evidence classification |
+| --- | --- | --- |
+| Inkipedia S3 Goo Tuber source `Special:Redirect/file/...` | `curl: (22) HTTP 403` | CDN access rejected; video audio track not checked |
+| S3 gameplay YouTube `Q0gbI1D4hEs` | `Sign in to confirm you’re not a bot` | Download blocked before decoding |
+| S3 no-commentary YouTube `FR10kogkwY8` | Same anti-bot rejection | Download blocked before decoding |
+| X SplatoonNA tweet `1523648989144489986` | `No video could be found in this tweet` | Incorrect/unusable video referent |
+| S1 YouTube `5i25MOeRny8` | Same anti-bot rejection | Download blocked before decoding |
+
+**Do not cite `success` as proof of actual source waveforms.** Corrected the research workflow to require BOTH at least one decoded waveform PNG and a source-comparison JSON before reporting success. When no video can be fetched, mark the run failure, preserve diagnostic artifacts via `if: always()`, and avoid guessing game-pitch parameters or trying to evade site protection.
+
+### Stronger official historical reference identified (not analyzed)
+
+Independent [Nintendo/KADOKAWA soundtrack tracklists](https://store.kadokawa.co.jp/shop/g/g4541993024681/) establish that original **Splatune (2015) Disc 2 Track 25** includes the pre-rendered **`SE：スプラチャージャー` / `SFX: Splat Charger`**, 7 seconds according to [MusicBrainz's official release catalog](https://musicbrainz.org/release/a381a36f-a55d-46a0-9715-7b0283f433da). [Splatune 2 (2017)](https://splatoonwiki.org/wiki/Splatune_2_(Splatoon_2_Original_Soundtrack)) also contains an SFX: Splat Charger entry. They can supply **historical source-composed demonstration references** if legitimately obtained and actually decoded, not proof that S3 11.3.0 uses identical sound event graphs. The [Splatune 3 tracklist](https://splatoonwiki.org/wiki/Splatune_3_(Splatoon_3_Original_Soundtrack)) includes a Splattershot and other sound effect showcases but no named Splat Charger sound-effect track in that release.
+
+The video-vs-INKWAVE waveform parity assessment remains blocked by **no decoded actual gameplay recording**. The original MP3 vs generated INKWAVE analysis remains valid but is not first-party in-game audio.
