@@ -2,6 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
 import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {publicBuildIdentity,verifyPublishedSource,verifyPublicResponse} from '../lib/inkwave-public-boot-evidence.mjs';
 import {criticalBootRequest,rankedBootState,observeRankedBoot} from '../lib/ranked-boot-diagnostics.mjs';
 const url='https://rhgrive3.github.io/actions/?relay=x';
 const moduleUrl='https://rhgrive3.github.io/actions/_versions/abc/patches/splatoon3/runtime/audio/weapon-recipes.mjs';
@@ -48,4 +52,46 @@ test('browser crashes and premature closes fail fast and release event observers
   assert.equal(p.listenerCount('close'),0);
   resume();
  }
+});
+
+test('public boot rejects source drift even when published artifact bytes are unchanged',()=>{
+ const parent=new URL('../../.ci-scratch/',import.meta.url);fs.mkdirSync(parent,{recursive:true});
+ const dir=fs.mkdtempSync(new URL('public-boot-source-',parent).pathname);
+ const git=(...args)=>execFileSync('git',args,{cwd:dir,encoding:'utf8'}).trim();
+ const hash=text=>crypto.createHash('sha256').update(text).digest('hex');
+ try{
+  fs.mkdirSync(path.join(dir,'inkwave-public/src'),{recursive:true});fs.mkdirSync(path.join(dir,'scripts'));
+  fs.writeFileSync(path.join(dir,'inkwave-public/src/entry.js'),'export const value=1;\n');
+  fs.writeFileSync(path.join(dir,'scripts/build-inkwave.mjs'),'// original builder\n');
+  git('init','-q');git('add','.');git('-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-qm','initial');
+  const original=git('rev-parse','HEAD'),files={'upstream/src/entry.js':hash('export const value=1;\n')},artifacts={'index.html':hash('<p>same emitted bytes</p>')};
+  const manifest={files,artifacts,inputHash:hash(JSON.stringify(files)),contentHash:hash(JSON.stringify(artifacts)),build:{revision:'a'.repeat(64),script:hash('// original builder\n')}};
+  assert.equal(verifyPublishedSource(manifest,dir,original).checkedInputs,2);
+  fs.writeFileSync(path.join(dir,'inkwave-public/src/entry.js'),'export const value=2;\n');git('add','.');git('-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-qm','changed source');
+  assert.throws(()=>verifyPublishedSource(manifest,dir,git('rev-parse','HEAD')),/differs from source SHA/);
+  assert.equal(verifyPublishedSource(manifest,dir,original).sourceSha,original,'working-tree changes cannot silently replace the pinned source epoch');
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+
+test('public deployment identity rejects changed inputs, artifact hashes and escaping paths',()=>{
+ const hash=text=>crypto.createHash('sha256').update(text).digest('hex');
+ const files={'upstream/src/entry.js':'a'.repeat(64)},artifacts={'index.html':'b'.repeat(64)};
+ const manifest={files,artifacts,inputHash:hash(JSON.stringify(files)),contentHash:hash(JSON.stringify(artifacts)),build:{revision:'c'.repeat(64)}};
+ assert.deepEqual(publicBuildIdentity(manifest),{inputHash:manifest.inputHash,contentHash:manifest.contentHash,revision:'c'.repeat(64)});
+ for(const key of ['files','artifacts']){
+  const m=structuredClone(manifest);m[key][Object.keys(m[key])[0]]='d'.repeat(64);
+  assert.throws(()=>publicBuildIdentity(m),/identity/);
+ }
+ const bad=structuredClone(manifest);bad.artifacts={'../outside.js':'b'.repeat(64)};bad.contentHash=hash(JSON.stringify(bad.artifacts));
+ assert.throws(()=>publicBuildIdentity(bad),/path/);
+});
+
+test('public boot verifies fetched module bytes and separates neighboring deployment paths',()=>{
+ const bytes=Buffer.from('export const installed=true;'),hash=crypto.createHash('sha256').update(bytes).digest('hex');
+ const manifest={artifacts:{'_versions/pinned/src/main.js':hash}};
+ const u='https://rhgrive3.github.io/actions/_versions/pinned/src/main.js';
+ assert.equal(verifyPublicResponse(u+'?cache=1',bytes,manifest,url).sha256,hash);
+ assert.throws(()=>verifyPublicResponse(u,Buffer.from('different'),manifest,url),/byte mismatch/);
+ assert.equal(verifyPublicResponse(u.replace('/actions/','/actions-else/'),bytes,manifest,url),null);
+ assert.equal(verifyPublicResponse(u.replace('rhgrive3.github.io','example.invalid'),bytes,manifest,url),null);
 });

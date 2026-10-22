@@ -1,0 +1,129 @@
+{
+  "status": "passed",
+  "issue": 1432,
+  "sourceSha": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+  "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+  "conditions": {
+    "strictRingDeadlineSeconds": 30,
+    "lifecycleRounds": 3,
+    "rangeSimulatedSeconds": 95,
+    "physicalDeviceVerified": false,
+    "scope": "same immutable final build full rematch acceptance in Chromium and WebKit; no latest-tree/CI/public-deployment claim"
+  },
+  "engines": [
+    {
+      "engine": "chromium",
+      "browserVersion": "143.0.7499.4",
+      "status": "passed",
+      "cycles": 3,
+      "rounds": [
+        1,
+        2,
+        3,
+        "range"
+      ],
+      "failures": [],
+      "errors": [],
+      "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+      "elapsedSeconds": 494.94164768799965,
+      "supervisor": {
+        "command": [
+          "node",
+          "--max-old-space-size=512",
+          "scripts/check-inkwave-rematch-lifecycle.mjs",
+          "--site",
+          "/workspace/actions/.built-site/issue-resolution-final",
+          "--evidence-dir",
+          "/workspace/actions/.browser-evidence/continuation-20261022/rematch-chromium-exclusive",
+          "--profile-dir",
+          "/workspace/actions/.browser-profile-continuation-rematch-exclusive",
+          "--cycles",
+          "3",
+          "--engine",
+          "chromium"
+        ],
+        "elapsedSeconds": 494.94164768799965,
+        "exitCode": 0,
+        "outerDeadlineSeconds": 600,
+        "timedOut": false,
+        "manifestUnchanged": true,
+        "manifestSha256": "fe333227a83c751921b683212f3acb8c01b2d39738fa73950533fddf79bcc78c",
+        "sourceCommit": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90"
+      },
+      "evidence": [
+        {
+          "path": ".browser-evidence/continuation-20261022/rematch-chromium-exclusive/console.log",
+          "bytes": 216,
+          "sha256": "ff38509129cacd8581cfe3804368b9c26b1090f2ba865cde832ad199eac90122"
+        },
+        {
+          "path": ".browser-evidence/continuation-20261022/rematch-chromium-exclusive/rematch-lifecycle-result.json",
+          "bytes": 401028,
+          "sha256": "e6ad905f2fe9570f48453316ae1529783fea09d786351f5d5e561e5d89a80865"
+        },
+        {
+          "path": ".browser-evidence/continuation-20261022/rematch-chromium-exclusive/supervisor.json",
+          "bytes": 747,
+          "sha256": "31461f2529f4f65ce5011597d37a9371290bd3e1b1b5012a46418ee4ff223c50"
+        }
+      ]
+    },
+    {
+      "engine": "webkit",
+      "browserVersion": "26.0",
+      "status": "passed",
+      "cycles": 3,
+      "rounds": [
+        1,
+        2,
+        3,
+        "range"
+      ],
+      "failures": [],
+      "errors": [],
+      "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+      "elapsedSeconds": 198.73507556799996,
+      "supervisor": {
+        "command": [
+          "node",
+          "--max-old-space-size=512",
+          "scripts/check-inkwave-rematch-lifecycle.mjs",
+          "--site",
+          "/workspace/actions/.built-site/issue-resolution-final",
+          "--evidence-dir",
+          "/workspace/actions/.browser-evidence/continuation-20261022/rematch-webkit-final",
+          "--profile-dir",
+          "/workspace/actions/.browser-profile-continuation-rematch-webkit",
+          "--cycles",
+          "3",
+          "--engine",
+          "webkit"
+        ],
+        "elapsedSeconds": 198.73507556799996,
+        "exitCode": 0,
+        "outerDeadlineSeconds": 600,
+        "timedOut": false,
+        "manifestUnchanged": true,
+        "manifestSha256": "fe333227a83c751921b683212f3acb8c01b2d39738fa73950533fddf79bcc78c",
+        "sourceCommit": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90"
+      },
+      "evidence": [
+        {
+          "path": ".browser-evidence/continuation-20261022/rematch-webkit-final/console.log",
+          "bytes": 216,
+          "sha256": "ff38509129cacd8581cfe3804368b9c26b1090f2ba865cde832ad199eac90122"
+        },
+        {
+          "path": ".browser-evidence/continuation-20261022/rematch-webkit-final/rematch-lifecycle-result.json",
+          "bytes": 396344,
+          "sha256": "df66bce9580a7467aaf4b51b252bac74e87f59adf87f238b825b6651d825f08a"
+        },
+        {
+          "path": ".browser-evidence/continuation-20261022/rematch-webkit-final/supervisor.json",
+          "bytes": 736,
+          "sha256": "82d4de565b4a0e6bc07978aefdcc57a05550ebdb3b236f06bceb482625fe27d7"
+        }
+      ]
+    }
+  ]
+}

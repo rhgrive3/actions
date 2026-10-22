@@ -1,0 +1,451 @@
+{
+  "issue": 642,
+  "status": "browser-residual-accepted-hardware-pending",
+  "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+  "revision": "e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5",
+  "baseline": "Same emitted Renderer; restores only the old post-depth flag before the first WebGL target binding. All other shaders/formats/passes are unchanged.",
+  "comparisonReference": "Splatoon 3 11.3.0; GPU attachment layout is an INKWAVE/browser implementation detail. No Nintendo memory/timing numbers are inferred.",
+  "engines": [
+    {
+      "engine": "chromium",
+      "browser": "143.0.7499.4",
+      "evidence": ".browser-evidence/continuation-performance/composer-context/chromium.json",
+      "evidenceSha256": "194498c3fdd2224bb46eff815f60dd3beea22d0769f55b328df6df16127bc95e",
+      "status": "passed",
+      "strictPixelCases": 78,
+      "changedChannels": 0,
+      "completedReadbacks": 207,
+      "depthRemovalNegativeControl": true,
+      "disposedLiveRenderbuffers": 0,
+      "contextRecovery": [
+        {
+          "quality": "low",
+          "baseline": true,
+          "lossObserved": true,
+          "restorationObserved": true,
+          "matchPaused": true,
+          "leaveCalls": 1,
+          "reloadRequired": true,
+          "drawsAfterLoss": 0,
+          "liveTargetsAfterLoss": 0,
+          "cleanReconstructionChangedChannels": 0,
+          "cleanDepth": [
+            36161,
+            36161
+          ],
+          "cleanFlags": {
+            "post": true,
+            "scene": true,
+            "packed": true,
+            "live": 2,
+            "size": [
+              480,
+              270
+            ],
+            "created": 2,
+            "deleted": 0,
+            "sceneDraws": 1
+          }
+        },
+        {
+          "quality": "low",
+          "baseline": false,
+          "lossObserved": true,
+          "restorationObserved": true,
+          "matchPaused": true,
+          "leaveCalls": 1,
+          "reloadRequired": true,
+          "drawsAfterLoss": 0,
+          "liveTargetsAfterLoss": 0,
+          "cleanReconstructionChangedChannels": 0,
+          "cleanDepth": [
+            0,
+            36161
+          ],
+          "cleanFlags": {
+            "post": false,
+            "scene": true,
+            "packed": true,
+            "live": 1,
+            "size": [
+              480,
+              270
+            ],
+            "created": 1,
+            "deleted": 0,
+            "sceneDraws": 1
+          }
+        },
+        {
+          "quality": "medium",
+          "baseline": true,
+          "lossObserved": true,
+          "restorationObserved": true,
+          "matchPaused": true,
+          "leaveCalls": 1,
+          "reloadRequired": true,
+          "drawsAfterLoss": 0,
+          "liveTargetsAfterLoss": 0,
+          "cleanReconstructionChangedChannels": 0,
+          "cleanDepth": [
+            36161,
+            36161
+          ],
+          "cleanFlags": {
+            "post": true,
+            "scene": true,
+            "packed": true,
+            "live": 2,
+            "size": [
+              640,
+              360
+            ],
+            "created": 2,
+            "deleted": 0,
+            "sceneDraws": 1
+          }
+        },
+        {
+          "quality": "medium",
+          "baseline": false,
+          "lossObserved": true,
+          "restorationObserved": true,
+          "matchPaused": true,
+          "leaveCalls": 1,
+          "reloadRequired": true,
+          "drawsAfterLoss": 0,
+          "liveTargetsAfterLoss": 0,
+          "cleanReconstructionChangedChannels": 0,
+          "cleanDepth": [
+            0,
+            36161
+          ],
+          "cleanFlags": {
+            "post": false,
+            "scene": true,
+            "packed": true,
+            "live": 1,
+            "size": [
+              640,
+              360
+            ],
+            "created": 1,
+            "deleted": 0,
+            "sceneDraws": 1
+          }
+        },
+        {
+          "quality": "high",
+          "baseline": true,
+          "lossObserved": true,
+          "restorationObserved": true,
+          "matchPaused": true,
+          "leaveCalls": 1,
+          "reloadRequired": true,
+          "drawsAfterLoss": 0,
+          "liveTargetsAfterLoss": 0,
+          "cleanReconstructionChangedChannels": 0,
+          "cleanDepth": [
+            36161,
+            36161
+          ],
+          "cleanFlags": {
+            "post": true,
+            "scene": true,
+            "packed": true,
+            "live": 2,
+            "size": [
+              768,
+              432
+            ],
+            "created": 2,
+            "deleted": 0,
+            "sceneDraws": 1
+          }
+        },
+        {
+          "quality": "high",
+          "baseline": false,
+          "lossObserved": true,
+          "restorationObserved": true,
+          "matchPaused": true,
+          "leaveCalls": 1,
+          "reloadRequired": true,
+          "drawsAfterLoss": 0,
+          "liveTargetsAfterLoss": 0,
+          "cleanReconstructionChangedChannels": 0,
+          "cleanDepth": [
+            0,
+            36161
+          ],
+          "cleanFlags": {
+            "post": false,
+            "scene": true,
+            "packed": true,
+            "live": 1,
+            "size": [
+              768,
+              432
+            ],
+            "created": 1,
+            "deleted": 0,
+            "sceneDraws": 1
+          }
+        }
+      ],
+      "servedArtifactReceipts": [
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/patches/local-quality/pause-frame-retention.mjs",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/patches/native-stages/runtime/build-config.mjs",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/patches/native-stages/runtime/registry.mjs",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/patches/splatoon3/runtime/battle-framing.mjs",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/src/config.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/src/core/ctx.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/src/core/device.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/src/core/renderer.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/src/fx/screenfx.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/src/game/inkFlight.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/math/SimplexNoise.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/postprocessing/EffectComposer.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/postprocessing/GTAOPass.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/postprocessing/MaskPass.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/postprocessing/OutputPass.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/postprocessing/Pass.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/postprocessing/RenderPass.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/postprocessing/ShaderPass.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/postprocessing/UnrealBloomPass.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/shaders/CopyShader.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/shaders/GTAOShader.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/shaders/LuminosityHighPassShader.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/shaders/OutputShader.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/shaders/PoissonDenoiseShader.js"
+      ]
+    },
+    {
+      "engine": "webkit",
+      "browser": "26.0",
+      "evidence": ".browser-evidence/continuation-performance/composer-context/webkit.json",
+      "evidenceSha256": "a6c47a511bcaed5c1a14d10236c201bd379a6734156590a69a6f089c9e089306",
+      "status": "passed",
+      "strictPixelCases": 78,
+      "changedChannels": 0,
+      "completedReadbacks": 207,
+      "depthRemovalNegativeControl": true,
+      "disposedLiveRenderbuffers": 0,
+      "contextRecovery": [
+        {
+          "quality": "low",
+          "baseline": true,
+          "lossObserved": true,
+          "restorationObserved": true,
+          "matchPaused": true,
+          "leaveCalls": 1,
+          "reloadRequired": true,
+          "drawsAfterLoss": 0,
+          "liveTargetsAfterLoss": 0,
+          "cleanReconstructionChangedChannels": 0,
+          "cleanDepth": [
+            36161,
+            36161
+          ],
+          "cleanFlags": {
+            "post": true,
+            "scene": true,
+            "packed": true,
+            "live": 2,
+            "size": [
+              480,
+              270
+            ],
+            "created": 2,
+            "deleted": 0,
+            "sceneDraws": 1
+          }
+        },
+        {
+          "quality": "low",
+          "baseline": false,
+          "lossObserved": true,
+          "restorationObserved": true,
+          "matchPaused": true,
+          "leaveCalls": 1,
+          "reloadRequired": true,
+          "drawsAfterLoss": 0,
+          "liveTargetsAfterLoss": 0,
+          "cleanReconstructionChangedChannels": 0,
+          "cleanDepth": [
+            0,
+            36161
+          ],
+          "cleanFlags": {
+            "post": false,
+            "scene": true,
+            "packed": true,
+            "live": 1,
+            "size": [
+              480,
+              270
+            ],
+            "created": 1,
+            "deleted": 0,
+            "sceneDraws": 1
+          }
+        },
+        {
+          "quality": "medium",
+          "baseline": true,
+          "lossObserved": true,
+          "restorationObserved": true,
+          "matchPaused": true,
+          "leaveCalls": 1,
+          "reloadRequired": true,
+          "drawsAfterLoss": 0,
+          "liveTargetsAfterLoss": 0,
+          "cleanReconstructionChangedChannels": 0,
+          "cleanDepth": [
+            36161,
+            36161
+          ],
+          "cleanFlags": {
+            "post": true,
+            "scene": true,
+            "packed": true,
+            "live": 2,
+            "size": [
+              640,
+              360
+            ],
+            "created": 2,
+            "deleted": 0,
+            "sceneDraws": 1
+          }
+        },
+        {
+          "quality": "medium",
+          "baseline": false,
+          "lossObserved": true,
+          "restorationObserved": true,
+          "matchPaused": true,
+          "leaveCalls": 1,
+          "reloadRequired": true,
+          "drawsAfterLoss": 0,
+          "liveTargetsAfterLoss": 0,
+          "cleanReconstructionChangedChannels": 0,
+          "cleanDepth": [
+            0,
+            36161
+          ],
+          "cleanFlags": {
+            "post": false,
+            "scene": true,
+            "packed": true,
+            "live": 1,
+            "size": [
+              640,
+              360
+            ],
+            "created": 1,
+            "deleted": 0,
+            "sceneDraws": 1
+          }
+        },
+        {
+          "quality": "high",
+          "baseline": true,
+          "lossObserved": true,
+          "restorationObserved": true,
+          "matchPaused": true,
+          "leaveCalls": 1,
+          "reloadRequired": true,
+          "drawsAfterLoss": 0,
+          "liveTargetsAfterLoss": 0,
+          "cleanReconstructionChangedChannels": 0,
+          "cleanDepth": [
+            36161,
+            36161
+          ],
+          "cleanFlags": {
+            "post": true,
+            "scene": true,
+            "packed": true,
+            "live": 2,
+            "size": [
+              768,
+              432
+            ],
+            "created": 2,
+            "deleted": 0,
+            "sceneDraws": 1
+          }
+        },
+        {
+          "quality": "high",
+          "baseline": false,
+          "lossObserved": true,
+          "restorationObserved": true,
+          "matchPaused": true,
+          "leaveCalls": 1,
+          "reloadRequired": true,
+          "drawsAfterLoss": 0,
+          "liveTargetsAfterLoss": 0,
+          "cleanReconstructionChangedChannels": 0,
+          "cleanDepth": [
+            0,
+            36161
+          ],
+          "cleanFlags": {
+            "post": false,
+            "scene": true,
+            "packed": true,
+            "live": 1,
+            "size": [
+              768,
+              432
+            ],
+            "created": 1,
+            "deleted": 0,
+            "sceneDraws": 1
+          }
+        }
+      ],
+      "servedArtifactReceipts": [
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/patches/local-quality/pause-frame-retention.mjs",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/patches/native-stages/runtime/build-config.mjs",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/patches/native-stages/runtime/registry.mjs",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/patches/splatoon3/runtime/battle-framing.mjs",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/src/config.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/src/core/ctx.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/src/core/device.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/src/core/renderer.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/src/fx/screenfx.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/src/game/inkFlight.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/build/three.module.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/math/SimplexNoise.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/postprocessing/EffectComposer.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/postprocessing/GTAOPass.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/postprocessing/MaskPass.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/postprocessing/OutputPass.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/postprocessing/Pass.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/postprocessing/RenderPass.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/postprocessing/ShaderPass.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/postprocessing/UnrealBloomPass.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/shaders/CopyShader.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/shaders/GTAOShader.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/shaders/LuminosityHighPassShader.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/shaders/OutputShader.js",
+        "_versions/e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5/vendor/three/jsm/shaders/PoissonDenoiseShader.js"
+      ]
+    }
+  ],
+  "limits": [
+    "Linux software/browser WebGL; user-agent touch/ios flags select actual mobile renderer policy, not physical Apple/Android hardware.",
+    "No GPU memory/RSS/FPS improvement is claimed by these checks.",
+    "Actual source intentionally halts permanently after context loss/restoration: pause match, leave active network once, show reload button. A newly constructed Renderer reproduces the pre-loss image exactly.",
+    "Physical iPad/Android GPU memory/compatibility and issue-owner tolerance agreement remain required for full issue acceptance."
+  ],
+  "attempts": [
+    "Earlier QA incorrectly expected automatic drawing after restoration; failed because actual runtime deliberately requires reload to preserve CPU-score/GPU-paint consistency. Corrected the expectation without changing production.",
+    "Restoring inside the lost-event microtask timed out in Chromium; final probe yields a full task and bounds both GL events to 10 seconds.",
+    "Chromium pixel-only run overlapped another agent GPU workload. No duration or performance comparison uses these runs."
+  ]
+}

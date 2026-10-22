@@ -1,6 +1,6 @@
 # actions未解決issueの並列修正・受入記録（2026-10-22）
 
-基点: `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64`。開始時と再検索時の未解決issue35件を6担当で確認した。全35件の結果は [index.json](index.json)。#1430は最終sourceの同一buildでChromium/WebKit各3反復・234check成功により受入完了。残る34件は各残条件を満たすまでOpenを維持する。未確認の実機値や本家データを補って解決済みとはしない。
+基点: `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64`。開始時と再検索時の未解決issue35件を6担当で確認した。全35件の結果は [index.json](index.json)。#1430は最終sourceの同一buildでChromium/WebKit各3反復・234check成功により受入完了。初回の残る34件は各残条件を満たすまでOpenを維持した。その後の継続受入で #1165 と #1432 の残条件が満了した。追加の証拠と継続中の作業は [continuation](continuation/README.md) を参照。未確認の実機値や本家データを補って解決済みとはしない。
 
 ## 実装した修正
 
