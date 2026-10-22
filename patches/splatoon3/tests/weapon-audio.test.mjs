@@ -184,3 +184,28 @@ test('composed fidelity impacts retain owner and weapon after contact-vector opt
  const emissions=[...source.matchAll(/emit\('weapon:impact',\s*\{([^}]+)\}/g)];assert.equal(emissions.length,2);
  for(const [,body] of emissions){assert.match(body,/actor:p\.owner/);assert.match(body,/weapon:p\.wid/);assert.match(body,/pos:\s*hit\.point/);}
 });
+
+test('native Charger re-arms emergence onset across two retained-charge dives',async()=>{
+ const f=await setup(),id='charger',a=f.make(id),r=a.weaponRunner;
+ assert.equal(a.weapon.catalogRecord,undefined,'exercise native, not catalog, stop routing');
+ // fixture normally suppresses _finishFrame; retain real event dispatch after weapon update.
+ a._finishFrame=()=>a._events(a.anim);
+ a.form='kid';a.isLocal=true;a.intent.fire=true;f.tick(a,160);
+ const onsets=()=>f.calls.filter(c=>c.id===id&&c.event==='charge');
+ assert.equal(onsets().length,1,'continuous initial hold has one onset');
+ assert.ok(r.charging&&r.charge>=1,'actual native gameplay reaches full charge');
+ for(let cycle=1;cycle<=2;cycle++){
+  a.intent.squid=true;f.tick(a);
+  assert.equal(a.form,'squid','actual Actor enters squid');
+  assert.ok(r.s3Stored?.charge>0,'actual native squid update retains charge');
+  a.intent.squid=false;f.tick(a);
+  assert.equal(a.form,'kid','actual Actor emits emergence after weapon update');
+  assert.equal(onsets().length,1+cycle,`emergence ${cycle} plays one cue`);
+  f.emit('actor:form',{actor:a,form:'kid'});
+  assert.equal(onsets().length,1+cycle,'same-kid duplicate form event stays silent');
+  assert.ok(r.s3Stored?.fireDelay>0,'redive before actual stored-shot readiness');
+ }
+ a.setWeapon('shooter');f.emit('actor:form',{actor:a,form:'kid'});
+ assert.equal(onsets().length,3,'weapon switch cannot replay the Charger cue');
+ assert.equal(r._mainAudioState,null,'weapon reset discards the old latch state');
+});

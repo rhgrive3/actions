@@ -75,9 +75,9 @@ export function installWeaponAudioRuntime(api){
     // stop() on every squid frame, which resets transient audio state before
     // this kid-form event is emitted. Rely on the gameplay s3Stored identity.
     if(e.form!=='kid'||a.alive===false)return;
-    // Actor emits form at the *beginning* of the kid emergence interval.
-    // The weapon's stored.resurfaced flag is not set until the later charge
-    // state update, so relying on that flag would silently miss the cue.
+    // Native Actor._events emits form after WeaponRunner.update. Use the
+    // surviving gameplay-owned store rather than assuming a particular
+    // resurfaced flag value or an earlier event-dispatch order.
     const stored=r.s3Stored,scoped=WEAPON_AUDIO[mainAudioSourceId(a.weapon?.id)]?.scope===true||a.weapon?.scoped===true||a.weapon?.scopedCharge===true;
     // Goo Tuber can legally keep a partial charge; the real s3Stored owner,
     // not a fabricated full-only audio threshold, determines eligibility.
@@ -127,7 +127,7 @@ export function installWeaponAudioRuntime(api){
     // Native weapon runners also tick while submerged. Their audio wrapper
     // does not enter the catalog stop() branch, so explicitly clear the
     // previous charge edge without clearing the gameplay-owned saved charge.
-    if(isCharger&&a?.form==='squid'){s.wasCharge=false;s.wasReady=false;}
+    if(isCharger&&a?.form==='squid'){s.wasCharge=false;s.wasReady=false;s.keepEmergePlayed=false;}
     // Fresh Charger charging has exactly one recorded onset; never start an
     // AudioBufferSource loop or a guessed per-frame pitch ramp.
     // Remote replicas own the onset in NetMatch._voices; do not also fire it
