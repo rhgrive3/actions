@@ -1,0 +1,55 @@
+name: INKWAVE native ink material frame pilot
+on:
+  pull_request:
+    paths:
+      - "scripts/prepare-inkwave-material-baseline.mjs"
+      - "scripts/check-inkwave-material-native-frame.mjs"
+      - "scripts/check-inkwave-material-native-paired.mjs"
+      - ".github/workflows/inkwave-material-native-frame.yml"
+permissions:
+  contents: read
+jobs:
+  practice-range-matched-history-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/checkout@v4
+        with:
+          ref: 429cc1352d9b13ffe83c579ed714b84acf6139ed
+          path: work/material-source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.51.1
+      - run: npx playwright install --with-deps chromium
+      - name: Verify QA and literal runtime identity
+        run: |
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          test "$(git -C work/material-source rev-parse HEAD)" = "429cc1352d9b13ffe83c579ed714b84acf6139ed"
+          diff -qr patches work/material-source/patches
+          diff -qr inkwave-public work/material-source/inkwave-public
+          for file in scripts/inkwave-source-composition.mjs scripts/lib/inkwave-source-compaction.mjs scripts/build-inkwave.mjs; do
+            cmp "$file" "work/material-source/$file"
+          done
+          node --check scripts/prepare-inkwave-material-baseline.mjs
+          node --check scripts/check-inkwave-material-native-frame.mjs
+          node --check scripts/check-inkwave-material-native-paired.mjs
+      - name: Build literal candidate once
+        run: |
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          (cd work/material-source && node scripts/build-inkwave.mjs inkwave-public ../material-site)
+      - name: Reproduce candidate compiler and create two-amplitude-only baseline overlay
+        run: node scripts/prepare-inkwave-material-baseline.mjs work/material-source work/material-site work/material-overlay
+      - name: Record fresh A1/A2/B1 at matched capture ordinals without accepting performance
+        run: node scripts/check-inkwave-material-native-paired.mjs work/material-site work/material-source work/material-overlay/inkShading.js work/material-native/replay --replay-diagnostic
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ink-material-native-frame-pilot
+          path: |
+            work/material-native/
+            work/material-overlay/receipt.json
+          if-no-files-found: error
