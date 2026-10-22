@@ -135,15 +135,15 @@ export function installWeaponAudioRuntime(api){
     if(isCharger&&a?.remote!==true&&a?.alive!==false&&a.form!=='squid'&&!a.specialActive&&!a.superJumpState){
       const nowCharging=!!this.charging;
       if(nowCharging&&!s.wasCharge&&!s.keepEmergePlayed){
-        // Two *different* sounds: the archived short source click at the
-        // start, and a separate procedural rising tone. The latter is modeled
-        // from measured Splatune 2 spectral motion, not the copyrighted audio.
-        play(a,'charge',a.pos,a.isLocal?.55:.35);
+        // The selected Splatune source excerpt ALREADY contains its own
+        // mechanical onset followed by the ascending Charger tone. Play that
+        // original at 1x with the exact measured source offset and length.
+        // Never layer the old recorded HoldNoise click on top.
         s.chargeRise=G.audio?.playChargerChargeRise?.({
           volume:a.isLocal?.55:.28,
-          duration:Number.isFinite(a.weapon?.chargeTime)?a.weapon.chargeTime:1.18,
         })||null;
         if(s.chargeRise)active.add(this);
+        else play(a,'charge',a.pos,a.isLocal?.55:.35); // if asset has not loaded
       }
       if(!nowCharging){
         s.chargeRise?.stop?.(.04);s.chargeRise=null;
