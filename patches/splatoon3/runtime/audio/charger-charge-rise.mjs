@@ -41,8 +41,10 @@ export function synthesizeChargerRise(ctx,requestedSeconds=RISE_REFERENCE.defaul
     const tail=1-smooth((t-.81*seconds)/(.17*seconds));
     const amp=edge*tail*(.34+.56*p);
     const shimmer=.89+.07*Math.sin(2*Math.PI*9*t)+.04*Math.sin(2*Math.PI*17*t);
-    const tone=Math.sin(phase)*.145+Math.sin(undertone+0.18)*.045+
-      Math.sin(phase*2.015+.8)*.021;
+    // Omit the upper partial above Nyquist: aliased whines would betray the
+    // timbre on 22.05k/24k mobile AudioContexts.
+    const upper=f*2.015<sr*.47?Math.sin(phase*2.015+.8)*.021:0;
+    const tone=Math.sin(phase)*.145+Math.sin(undertone+.18)*.045+upper;
     const spray=hiss*(.015+.018*p);
     data[i]=clamp(amp*shimmer*(tone+spray),-.48,.48);
   }
