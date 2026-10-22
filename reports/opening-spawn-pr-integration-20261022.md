@@ -49,3 +49,18 @@ All remote opening actors, including bots, mirror their owner's accepted aim/fli
 ## Comparison limits
 
 Splatoon 3 reference remains Ver.11.3.0, Turf War, each player's hovering spawner and opening launch. Existing cited sources: [Nintendo gameplay](https://splatoon.nintendo.com/en/gameplay/), [Inkipedia Spawner](https://splatoonwiki.org/wiki/Spawner). The one-second opening delay and one-second flight are existing INKWAVE calibration, not newly inferred Nintendo values. Logic, CPU peer fixtures and Chromium SwiftShader evidence do not establish Switch timing or physical GPU/iPad parity. Historical diagnostic failures remain preserved.
+
+## Final local verification before main integration
+
+The emitted identity below binds the runtime modules after the latest PR heads. Final follow-up changes affect only verification fixtures and this report.
+
+- Production build: passed. Content hash `e57bdcd82f9b82b0f1ede4491017c3683822ea98ae4e11684b646599822b93e5`; revision `6dccb72c5a675c4ab176f0ae0f21556112369c90baa930e7bbcc28b1b7302912`.
+- `node scripts/check-inkwave-startup-budget.mjs _site`: passed, 146 initial JS requests, 494 precache entries.
+- `CHROMIUM_PATH=/usr/bin/chromium node scripts/check-inkwave-opening-spawn.mjs _site .browser-evidence/opening-spawn-final`: passed all 30/60/120 Hz cases, eight actors each, no page errors. Every intro/playing-boundary sample stays on its original spawner, all eight enter flight, and each resolves actual collision support.
+- Emitted packaging, Three composition/UUID isolation, Pages source identity/sequencing: 18/18 passed against that final build.
+- Updated #1770 tests, including Flow borrowed-skeleton negative controls, source-pair admission, native intro browser/UI and fetch controls: 221 passed, 1 source-only case skipped, zero failures. Terrain-fetch Python tests are supplied by the integrated PR and not included in that Node count.
+- Updated #1773/common material tests: 287/287 passed with `INKWAVE_MATERIAL_COMMON_SOURCE=/workspace/material-common` and VM modules enabled.
+- Existing Pages fixture failures are reproducible in the prior main deployment log (run `39710944489`): four material-handoff alias-discovery failures and one static-menu composition-dependency failure. Fixed both test fixtures without changing their assertions or production guards; focused rerun passed 33/33.
+- Loading-cache Python harness: 3 passed, 1 separately supplied acquired-baseline case skipped.
+
+A full local Pages selection was also run; its initial material fixture failures precede the focused fixes above. Hosted CI/Pages outcomes remain separate from these local results. Browser evidence is workspace-local under `.browser-evidence/`; numerical tests and observed runtime receipts do not claim a retail or physical-device comparison.
