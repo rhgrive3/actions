@@ -215,3 +215,68 @@ A further #1834 update, d2935f34a0560e76ecd779268aedc69b25b157b7,
 was reviewed: it adds composed wall readiness negatives and retains all 23
 streamed-music registrations. Preserve its history and both guard updates.
 All other 22 original heads were rechecked as ancestors of ce21a150.
+
+### Actual 8b853381 hosted follow-up, 2026-10-23 JST
+
+All eight patch shards and the range/UI/startup browser lanes succeeded. Native
+recovery, Ranked, projectile visuals, audio, A+ and most focused workflows also
+succeeded. The complete head was NOT green: core, active/network/catalog browser,
+Roller comparison and Explosher failed; responsive and 19-special catalogue were
+cancelled. No queued/skipped/cancelled lane or old-head success permits merge.
+
+Repairs derived from actual job logs:
+
+- Roller 120029996286: the historic baseline's native idle adapter captures the
+  same created URL with `const url=workerUrl=URL.createObjectURL(...)`. Admit only
+  a simple assignment to a declared lexical capture and the exact native RHS.
+  Keep loaded immutable creator identity, both real observed callsites, exact
+  Blob bytes and actual Worker observation; all shadowing/reassignment negatives.
+- Explosher 120029997347: required current-head native smoke passed and the two
+  admitted historic preflight captures completed, then the PNG decoder returned
+  null process status. Install/verify ffmpeg explicitly and expose process launch
+  error/stderr. Keep its 15s deadline, 2MiB buffer, exact full RGBA length,
+  nonblank threshold and strict physical/RNG/image comparison. No image/stills/
+  video admission is claimed until the complete hosted gate actually passes.
+- 19-special 120030000435: Chromium setup took 6m31s; all catalogue/Inkjet grids,
+  three terminal rates and emitted Inkjet checks passed, but the 20m job cap
+  cancelled the final emitted suite. Allow 30m for the same complete job. Every
+  command, case, individual timeout and assertion remains required.
+- Core 120039802317: bomb fixtures counted prior codec negotiation sends as
+  blast sends. Require zero additional transport packets at the actual explosion
+  boundary, preserving native HP/shield/LOS/life/deferred-lethal assertions.
+  Session fixtures inherit the actual composed NetSession prototype and getter,
+  including host-handoff helpers. The poisoned #1178 negative control now removes
+  both the newer bounded-row sanitizer and early credit guard only in its
+  deliberately broken fixture, with unique-anchor assertions. Production guards
+  remain intact. Revision tests execute the actual build expression with cached
+  digests and uncached bytes; emitted one-byte changes alter revision, unrelated
+  identity metadata does not. The obsolete literal format assertion is removed.
+- Active 120039802520: normal-map browser QA still expected one full read, but
+  the integrated loader uses 64-row classification strips plus one full owned
+  reconstruction. Assert exact rectangles, unchanged total bytes, one canvas/
+  draw, exact decoded and GPU hashes and complete disposal. Loader is unchanged.
+- Network 120039802481: removing relayReceipt no longer defeats the current
+  nonce-origin protocol, so the supposed negative correctly accepted the latest
+  snapshot. Exercise BOTH current and legacy Sessions with/without the accessor:
+  current must recover both ways; legacy must reject only without relay proof.
+  No production clock or owner admission is disabled or altered.
+- Catalog 120039802523: lazy grain/reverb module workers were absent from the
+  loaded graph. Run their actual module-Worker protocols without AudioContext,
+  compare their PCM bytes to canonical exports, retain every immutable module
+  receipt and require saved worker protocol/termination proof. No graph exemption.
+- Responsive 120039802509: downloaded diagnostic progress shows phone cases
+  stall after results-change-gear until the 20m child watchdog. The old animation
+  helper waits forever on every finite animation, including dormant offscreen
+  content-visibility cards. Poll actual visible animation completion with a 30s
+  failure deadline. A scrolled action is waited again before the unchanged
+  visibility/label/geometry/pixel assertions. Visible paused animations still
+  fail; no forced finish, style mutation or case removal. Native rerun required.
+
+No production weapon, movement, paint, audio or camera runtime file changes in
+this follow-up. Existing fixed paint source-pair leaves/pins remain unchanged.
+The 23 original PR heads were freshly read and all verified by GitHub comparison
+as ancestors of 8b853381; no additional original head update was outstanding.
+Focused Worker/workflow/revision guards: 36/36. Audio graph guards: 17/17.
+Responsive diagnostic/fixture/animation guards: 26/26, all without skips. Local
+native browsers remain unavailable and are not counted as passed. Full latest-
+head hosted core, eight shards, fan-in and every applicable gate remain required.

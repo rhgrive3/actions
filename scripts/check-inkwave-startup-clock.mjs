@@ -53,14 +53,15 @@ try {
       executablePath: process.env.CHROMIUM_EXECUTABLE_PATH || undefined,
       args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-features=LocalNetworkAccessChecks'],
     } : {}) });
-    for (const counterfactual of [false, true]) {
+    for (const legacy of [false, true]) for (const counterfactual of [false, true]) {
+      const rejected = legacy && counterfactual;
       const pages = [], errors = [];
       for (let i = 0; i < 2; i++) {
         const page = await browser.newPage(); pages.push(page);
         page.on('pageerror', error => errors.push(error.message));
         page.on('console', message => { if (message.type() === 'error') console.error(engine, message.text()); });
         await page.goto(address);
-        await page.evaluate(async () => {
+        await page.evaluate(async legacy => {
           const THREE = await import('three');
           const { G } = await import('/src/core/ctx.js');
           const { Actor } = await import('/src/game/actor.js');
@@ -93,7 +94,9 @@ try {
             }, netMatchGo() { G.match.state = 'playing'; }, netMatchAborted() {},
           };
           G.net = new NetSession();
-        });
+          // Exercise the original relay guard separately from current nonce-origin proof.
+          if(legacy)G.net.ownerClockVersion=0;
+        }, legacy);
       }
       const [owner, viewer] = pages, code = await owner.evaluate(() => G.net.create('Owner'));
       await viewer.evaluate(code => G.net.join(code, 'Viewer'), code);
@@ -101,7 +104,7 @@ try {
       const owners = await Promise.all(pages.map(p => p.evaluate(() => G.net.myId)));
       const cfg = { ...await owner.evaluate(async () => {
         const { PROTO, COMPAT } = await import('/src/net/transport.js'); return { proto: PROTO, compat: COMPAT };
-      }), id: `${engine}-${counterfactual}`, map: '', mode: 'turf', roster: owners.map((owner, nid) => ({ owner, nid, team: nid, slot: 0, weapon: 'shooter', bot: false })) };
+      }), id: `${engine}-${legacy}-${counterfactual}`, map: '', mode: 'turf', roster: owners.map((owner, nid) => ({ owner, nid, team: nid, slot: 0, weapon: 'shooter', bot: false })) };
       await Promise.all(pages.map(p => p.evaluate(cfg => G.net._begin(cfg), cfg)));
       await owner.evaluate(() => G.net._go());
       await Promise.all(pages.map(p => p.waitForFunction(() => G.match?.state === 'playing')));
@@ -128,11 +131,11 @@ try {
       }, owners[0]);
       assert(result.receipts[1].ts - result.receipts[0].ts > 5, 'owner advances beyond the original grace');
       assert(result.receipts[1].received - result.receipts[0].received < 1, 'receiver drains the startup backlog');
-      assert.equal(result.lastTs, result.receipts[counterfactual ? 0 : 1].ts);
-      assert.equal(result.x, counterfactual ? 2 : 7);
+      assert.equal(result.lastTs, result.receipts[rejected ? 0 : 1].ts);
+      assert.equal(result.x, rejected ? 2 : 7);
       if (!counterfactual) assert(result.receipts[1].relay - result.receipts[0].relay > 5000);
       assert.deepEqual(errors, []);
-      results.push({ engine, browser: browser.version(), clients: 2, counterfactual, ...result });
+      results.push({ engine, browser: browser.version(), clients: 2, legacy, counterfactual, ...result });
       await Promise.all(pages.map(p => p.evaluate(() => G.net.leave())));
       await Promise.all(pages.map(p => p.close()));
     }

@@ -21,6 +21,8 @@ test('general PR regressions retain latest build while specialized native QA use
  assert(y.indexOf('requireApprovedCommonBuild')<y.indexOf('- name: Short admitted same-build native preflight'));
  assert.match(y,/check-inkwave-current-explosher-native\.mjs \.built-site\/explosher-current/);
  assert.match(y,/EXPECTED_HEAD: \$\{\{ github\.event\.pull_request\.head\.sha \}\}/);
+ assert.match(y,/sudo apt-get install --no-install-recommends -y ffmpeg/);
+ assert(y.indexOf('Install required PNG decoder')<y.indexOf('Native production-composition regressions'));
  assert.match(y,/same-build native preflight/);assert.match(y,/Historical common-build QA; no latest-gameplay parity claim/);
  assert.doesNotMatch(y,/check-inkwave-explosher-flight-glitter\.mjs \.built-site\/explosher-current/);
 });

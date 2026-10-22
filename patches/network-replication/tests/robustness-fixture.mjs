@@ -161,8 +161,8 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
   G.projectiles = projectiles;
 
   // ---- session / NetMatch helpers
-  const makeSession = (id = 'me', host = 'me', members = [['me', 'Me'], ['p2', 'P2'], ['p3', 'P3']]) => ({
-    myId: id, isHost: id === host, hostId: host,
+  const makeSession = (id = 'me', host = 'me', members = [['me', 'Me'], ['p2', 'P2'], ['p3', 'P3']]) => Object.assign(Object.create(includeSession ? api.NetSession.prototype : Object.prototype), {
+    myId: id, hostId: host, ...(includeSession ? {} : {isHost: id === host}),
     _members: new Map(members),
     tr: { broadcast: () => {}, sendTo: () => {} },
   });

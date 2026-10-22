@@ -63,7 +63,15 @@ function derive(source){
    (opts.properties[0].key.name||opts.properties[0].key.value)==='type'&&opts.properties[0].value.value==='text/javascript');
  assert.equal(worker.arguments.length,1);assert.equal(worker.arguments[0].type,'Identifier');
  const urlBinding=binding(scopes.get(worker),worker.arguments[0].name);
- assert.equal(urlBinding?.init,create,'Worker must consume the native created URL');
+ // A reviewed historic idle adapter captures the same URL for failed-worker cleanup.
+ let urlValue=urlBinding?.init;
+ if(urlValue?.type==='AssignmentExpression'){
+  assert.equal(urlValue.operator,'=','Native URL capture must be a simple assignment');
+  assert.equal(urlValue.left.type,'Identifier','Native URL capture must name a lexical slot');
+  assert(binding(scopes.get(urlValue),urlValue.left.name),'Native URL capture slot must be declared');
+  urlValue=urlValue.right;
+ }
+ assert.equal(urlValue,create,'Worker must consume the native created URL');
  assert(!assignments.some(({target,scope})=>target.type==='Identifier'&&binding(scope,target.name)===urlBinding),'Native Worker URL binding was reassigned');
  for(const [node,name]of [[create,'URL'],[worker,'Worker'],[blob,'Blob']])assert(!binding(scopes.get(node),name),'Native timer global was shadowed');
  return {create:{start:{...create.loc.start},end:{...create.loc.end}},worker:{start:{...worker.loc.start},end:{...worker.loc.end}}};

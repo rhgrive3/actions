@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {responsiveAnimationsSettled} from './lib/inkwave-responsive-animation-settle.mjs';
 // Focused menu regression. Runs the production menu DOM/CSS with the
 // existing offline session fixture; does not claim real-device or gameplay proof.
 import assert from 'node:assert/strict';
@@ -81,7 +82,7 @@ const sourceHashes = () => Object.fromEntries(['styles/mobile.css', 'styles/ui.c
   return [f, hash(fs.readFileSync(original ? path.join(path.resolve(baseline), 'inkwave-public', f) : path.join(source, f)))];
 }));
 result.sourceHashes = sourceHashes();
-const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs', 'check-inkwave-result-continuation.mjs', 'lib/inkwave-responsive-server.mjs', 'lib/inkwave-responsive-diagnostics.mjs', 'inkwave-responsive-fixture.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
+const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs', 'check-inkwave-result-continuation.mjs', 'lib/inkwave-responsive-server.mjs', 'lib/inkwave-responsive-diagnostics.mjs', 'lib/inkwave-responsive-animation-settle.mjs', 'inkwave-responsive-fixture.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
 result.runnerHashes = runnerHashes();
 const configurations = [
   ['phone-portrait', { ...devices['iPhone 13'], viewport: { width: 390, height: 844 } }],
@@ -96,9 +97,7 @@ const show = async (page, name) => {
   await page.evaluate((screen) => { menus.wipe.cancel(); menus.show(screen, { wipe: false, light: false, force: true }); }, name);
   await settle(page);
 };
-const settle = async (page) => page.evaluate(async () => {
-  await Promise.all(document.getAnimations().filter((a) => a.effect?.getTiming().iterations !== Infinity).map((a) => a.finished.catch(() => {})));
-});
+const settle = async (page) => page.waitForFunction(responsiveAnimationsSettled, null, {timeout:30000});
 const geometry = async (page, selector, label) => {
   await settle(page);
   const controls = page.locator(selector);

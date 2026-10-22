@@ -65,6 +65,17 @@ test('native timer bindings respect try-block scope and reject shadowed or reass
   creatorCode.replace('const src=', 'const Worker=this.other;const src='),
  ])await assert.rejects(native(await fixture(ORIGIN,code)));
 });
+test('historical native idle cleanup capture returns the exact created URL and cannot substitute another value',async()=>{
+ const legacy=creatorCode.replace('_startTimer(){','_startTimer(){let workerUrl=null;').replace('const url=URL.createObjectURL','const url=workerUrl=URL.createObjectURL');
+ await native(await fixture(ORIGIN,legacy));
+ const {transform}=await import('esbuild');await native(await fixture(ORIGIN,(await transform(legacy,{minify:true,format:'esm',target:'es2022'})).code));
+ for(const code of [
+  legacy.replace('workerUrl=URL.createObjectURL','workerUrl+=URL.createObjectURL'),
+  legacy.replace("const url=workerUrl=URL.createObjectURL(new Blob([src],{type:'text/javascript'}));","const url=(workerUrl=URL.createObjectURL(new Blob([src],{type:'text/javascript'})),this.other);"),
+  legacy.replace('let workerUrl=null;',''),
+  legacy.replace('return new Worker(url);','url=this.other;return new Worker(url);'),
+ ])await assert.rejects(native(await fixture(ORIGIN,code)));
+});
 test('known byte literal alone never grants trust without loaded creator, native call sites and actual Worker observation',async()=>{
  const url='blob:'+ORIGIN+'/known';
  for(const change of [p=>p.creationStack=p.creationStack.replace('_startTimer','otherMethod'),p=>p.workerStack=p.workerStack.replace('_startTimer','otherMethod'),p=>p.workerOptions='explicit',p=>p.mime='application/javascript',p=>p.bytes.push(32)]){
