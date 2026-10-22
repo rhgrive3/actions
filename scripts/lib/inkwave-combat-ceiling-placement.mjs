@@ -19,6 +19,16 @@ export function installCombatPlacementQA() {
       a.alive && a.grounded && a.form === 'kid' && !a.s3?.squidSpawn &&
       (!a.remote || a.net?.ready === true));
   };
+  let openingDraw=null;
+  const holdOpeningDraw = () => {
+    if(openingDraw)fail('opening draw already held');
+    const game=globalThis.__inkwave;
+    openingDraw={game,previous:game._skipRender};game._skipRender=true;
+  };
+  const releaseOpeningDraw = () => {
+    if(!openingDraw)return;
+    openingDraw.game._skipRender=openingDraw.previous;openingDraw=null;
+  };
   const placementReady = ({attacker,victim,requested}) => {
     if (!spawnReady()) return false;
     const G = globalThis.__G, actors = [attacker,victim].map(id => G.netm.byNid.get(id));
@@ -82,7 +92,7 @@ export function installCombatPlacementQA() {
     return {originOffset:offset,originDistance:Math.hypot(...offset),
       velocityAngle:Math.acos(Math.max(-1,Math.min(1,velocity.reduce((v,x,i)=>v+x*preShot.aim[i],0)/(speed*aimLength))))};
   };
-  globalThis.__ceilingPlacement = {select,inspect,aim,compareShot,spawnReady,placementReady};
+  globalThis.__ceilingPlacement = {select,inspect,aim,compareShot,spawnReady,placementReady,holdOpeningDraw,releaseOpeningDraw};
 }
 
 
