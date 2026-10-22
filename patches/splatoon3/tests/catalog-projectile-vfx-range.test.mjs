@@ -57,10 +57,11 @@ test('Bloblobber bubbles grow over five frames and shrink 25% each rebound',asyn
   assert.ok(catalogReboundSeparation(unit.CollisionParam.EndRadiusForField*.75)>.56);
   // On any floor normal, only the outgoing normal component is clamped.
   // The two tangential components must remain exactly unchanged.
-  const n=new (await import('three')).Vector3(0,1,0);
-  const v=new (await import('three')).Vector3(30,34,6);
-  catalogBubbleLimitGroundNormalSpeed(v,n,.35);
-  assert.deepEqual([v.x,v.y,v.z],[30,21,6]);
+  const {Vector3}=await import('three');
+  const n=new Vector3(0,1,0);
+  const reboundVelocity=new Vector3(30,34,6);
+  catalogBubbleLimitGroundNormalSpeed(reboundVelocity,n,.35);
+  assert.deepEqual([reboundVelocity.x,reboundVelocity.y,reboundVelocity.z],[30,21,6]);
 });
 
 test('actual Bloblobber projectile rebounding preserves swept travel, sourced paint taper and ghost safety',async()=>{
