@@ -37,3 +37,21 @@ test('actual showcase compile warning labels remain failures despite done state'
  assert(runner.includes("m.type()==='warning'&&isWiperResourceLifecycleWarning(m.text())"));
  assert(runner.includes('assert.deepEqual(errors,[])'));
 });
+test('late renderer allocation is visible without inventing scene attribution',()=>{
+ const {G,game}=fixture();G.renderer.info.render={frame:1559};const p=createWiperResourceLifecycle(G,game);p.snapshot('pre-tick-zero:settled');const owners=p.records[0].owners;
+ G.renderer.info.memory.geometries+=4;G.renderer.info.memory.textures+=5;G.renderer.info.render.frame+=2;
+ const row=p.observeBoundary('native:2:before');assert.deepEqual(row.memoryDeltaSincePrevious,{geometries:4,textures:5});assert.equal(row.rendererFrame,1561);assert.deepEqual(row.owners,owners);assert.match(row.attribution,/Unattributed/);
+});
+test('boundary observation is passive and keeps existing frames, memory and owners',()=>{
+ const {G,game}=fixture();G.renderer.info.render={frame:1561};G.renderer.render=()=>{throw Error('must not render');};G.renderer.dispose=()=>{throw Error('must not dispose');};const p=createWiperResourceLifecycle(G,game);const memory=G.renderer.info.memory,render=G.renderer.info.render,owner=game.showcase;
+ const before=JSON.stringify({memory,render});p.observeBoundary('inspection:2:front:before');p.observeBoundary('inspection:2:front:after');assert.equal(JSON.stringify({memory,render}),before);assert.equal(game.showcase,owner);assert.equal(G.renderer.info.memory,memory);assert.equal(G.renderer.info.render,render);assert.deepEqual(p.records[1].memoryDeltaSincePrevious,{geometries:0,textures:0});
+});
+test('native and inspection boundaries preserve capture order and original timestamps',()=>{
+ const s=fs.readFileSync(new URL('../check-inkwave-wiper-plane-native.mjs',import.meta.url),'utf8');
+ const before=s.indexOf("observeBoundary('native:2:before')"),step=s.indexOf('g._frame(1/60);const frameCpuMs'),after=s.indexOf("observeBoundary('native:2:after')");assert(before>=0&&step>=0&&after>=0,'All native observation/step anchors must exist');assert(before<step&&step<after);
+ assert(s.includes("if(tick===2)window.__wiperResources.observeBoundary('native:2:before');"));
+ assert(s.includes("if(tick===2)window.__wiperResources.observeBoundary('native:2:after');"));
+ assert(s.includes("observeBoundary('inspection:'+tick+':'+view+':before');const renderStart=performance.now();r.render(G.scene,camera);const submitEnd=performance.now();window.__wiperResources.observeBoundary('inspection:'+tick+':'+view+':after');"));
+ assert(s.indexOf("observeBoundary('inspection:'+tick+':'+view+':after')")<s.indexOf('gl.readPixels(0,0,'));
+ assert(s.includes('window.__wiperResources.records.slice(resourceRecordStart)'));assert(s.includes("throw Error('Inspection render changed gameplay camera/physics/aim/clock/RNG')"));
+});

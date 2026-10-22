@@ -148,9 +148,12 @@ try{
    if(tick!==this.tick+1)throw Error('Nonconsecutive native frame');this.tick=tick;
    window.__wiperObserver?.setPhase('native:'+tick);
    if(tick===0){await window.__wiperResources.settle('pre-tick-zero');}
+   const resourceRecordStart=window.__wiperResources.records.length;
+   if(tick===2)window.__wiperResources.observeBoundary('native:2:before');
    aim();g.debug.fire(tick<(action==='charged'?80:2));G.renderer.info.reset();
    const t=performance.now();g._frame(1/60);const frameCpuMs=performance.now()-t;window.__wiperObserver?.mark('native-end');window.__wiperObserver?.setPhase('post-native:'+tick);
    const nativeRender={...r.info.render},memory={...r.info.memory};
+   if(tick===2)window.__wiperResources.observeBoundary('native:2:after');
    const state=physical(),owned=G.projectiles.list.filter(p=>p.owner===a&&p.delay<=0),shape=G.projectiles._s3Shapes;
    const birthNow=owned.length>0&&!seen,expiryNow=owned.length===0&&seen&&!expired;
    if(expiryNow)firstRetirement=tick;
@@ -174,7 +177,7 @@ try{
     window.__configureWiperCoverageCamera(THREE,camera,target,view);
     const flightCoverage={slashH:window.__assertWiperFlightCoverage(THREE,shape.slashH,camera),slashV:window.__assertWiperFlightCoverage(THREE,shape.slashV,camera)};
     const occlusion=window.__inspectWiperSceneOcclusion(THREE,G.scene,[shape.slashH,shape.slashV,shape.sheets.mesh],camera);
-    try{r.setRenderTarget(null);r.autoClear=true;const fullFrame=window.__assertWiperFullFrame(THREE,r,camera);const renderStart=performance.now();r.render(G.scene,camera);const submitEnd=performance.now();
+    try{r.setRenderTarget(null);r.autoClear=true;const fullFrame=window.__assertWiperFullFrame(THREE,r,camera);window.__wiperResources.observeBoundary('inspection:'+tick+':'+view+':before');const renderStart=performance.now();r.render(G.scene,camera);const submitEnd=performance.now();window.__wiperResources.observeBoundary('inspection:'+tick+':'+view+':after');
      const readStart=performance.now();const pixels=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,pixels);const readEnd=performance.now();
      let lo=255,hi=0;for(let j=0;j<pixels.length;j+=4){const v=(pixels[j]+pixels[j+1]+pixels[j+2])/3;lo=Math.min(lo,v);hi=Math.max(hi,v);}
      if(hi-lo<8)throw Error('Flat inspection frame');const pixelHash=await fingerprint(pixels),encodeStart=performance.now(),png=r.domElement.toDataURL('image/png').split(',')[1],encodeEnd=performance.now();phases.inspection.push({view,submitMs:submitEnd-renderStart,readPixelsWithQueuedGpuMs:readEnd-readStart,pixelCheckHashMs:encodeStart-readEnd,pngEncodeMs:encodeEnd-encodeStart});images.push({view,pixelHash,png,camera:gameCamera(camera),flightCoverage,fullFrame,occlusion});
@@ -184,7 +187,7 @@ try{
    if(owned.length)capturedLive=true;
    if(gl.getError())throw Error('WebGL error');
    window.__wiperObserver?.setPhase('await-gap:'+tick);
-   return {resourceLifecycle:tick===0?window.__wiperResources.records:null,tick,state,axes,paintHash,paintEvents:paints.slice(),aimTrace:aimTrace.slice(),nativeRender,memory,frameCpuMs,phases,images,census:window.__wiperCensus(G,G.scene,TargetDummyCharacter)};
+   return {resourceLifecycle:tick===0?window.__wiperResources.records:(window.__wiperResources.records.length>resourceRecordStart?window.__wiperResources.records.slice(resourceRecordStart):null),tick,state,axes,paintHash,paintEvents:paints.slice(),aimTrace:aimTrace.slice(),nativeRender,memory,frameCpuMs,phases,images,census:window.__wiperCensus(G,G.scene,TargetDummyCharacter)};
   },finish(){g.debug.fire(false);G.paint.splat=originalSplat;G.projectiles._aimFrom=originalAim;
    if(!costProbe&&!rngDiagnostic&&(!seen||!firstBirth||!expired))throw Error('Native slash birth and termination required');
    let gpuDrained=false;if(dentalPilot||rngDiagnostic){if(dentalPilot){const shape=G.projectiles._s3Shapes;if(this.tick-lastRelatedGeometryTick<21)throw Error('Need 21 native frames after last related geometry for slash speck lifetime');if(shape.slashV.count!==0||shape.slashH.count!==0||shape.sheets.mesh.count!==0)throw Error('Related slash/sheet geometry still live at final native tick');}const drainStart=performance.now();gl.finish();window.__wiperFinalDrainMs=performance.now()-drainStart;if(gl.getError())throw Error('Final GPU drain error');gpuDrained=true;}

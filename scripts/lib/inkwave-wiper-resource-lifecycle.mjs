@@ -36,7 +36,17 @@ export function createWiperResourceLifecycle(G, game) {
   checkOwners();
   return snapshot(phase+':settled');
  };
- return {snapshot,settle,records};
+ const observeBoundary=phase=>{
+  const previous=records.at(-1),row=snapshot(phase);
+  row.rendererFrame=G.renderer.info.render?.frame??null;
+  row.memoryDeltaSincePrevious=previous?{
+   geometries:row.memory.geometries-previous.memory.geometries,
+   textures:row.memory.textures-previous.memory.textures
+  }:null;
+  row.attribution='Unattributed renderer-memory delta; scene inventory is CPU ownership only, not GPU allocation/disposal attribution.';
+  return row;
+ };
+ return {snapshot,settle,observeBoundary,records};
 }
 // These exact warning labels are emitted by c093 Showcase compile rejection paths.
 // State 'done' alone cannot distinguish successful compilation from caught rejection.
