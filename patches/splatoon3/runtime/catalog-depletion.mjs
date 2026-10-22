@@ -16,8 +16,9 @@ export function catalogDepletedUnitCount(unit,depleted=false){
   if(!depleted)return Math.max(0,Math.floor(unit?.BulletNum??1));
   return Math.max(0,Math.floor(unit?.DepletionBulletNum??unit?.BulletNum??1));
 }
-export function catalogDepletedUnitSpeed(unit,index,depleted=false){
-  const speed=(unit?.SpawnSpeedBase??0)+index*(unit?.AfterOffsetSpawnSpeed??0);
+export function catalogDepletedUnitSpeed(unit,index,depleted=false,sampledBaseSpeed=null){
+  const speed=(Number.isFinite(sampledBaseSpeed)?sampledBaseSpeed:(unit?.SpawnSpeedBase??0))+
+    index*(unit?.AfterOffsetSpawnSpeed??0);
   return speed*(depleted?(unit?.DepletionSpeedRate??1):1);
 }
 export function catalogDepletedDescriptor(source,unit,depleted=false){
