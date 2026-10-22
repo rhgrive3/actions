@@ -73,7 +73,7 @@ export function adaptWeaponAudio(rel,code){
     // a repeating remote HoldNoise. Preserve Splatling/Roller loop handling.
     code=once(code,
       "let h = this._voiceLoop(a, near, 'charge', wr.charging && k === 'charger', 'charger_charge');\n      if (h) h.set({ pos: a.pos, volume: 0.35, pitch: 1 + wr.charge * 1.5 });",
-      "const chargerStarting = wr.charging && k === 'charger';\n      if (chargerStarting && !a.net._chargerOnsetActive && near) { G.audio?.playWeapon?.(a.weapon.id,'charge',{actor:a,pos:a.pos,volume:.35}); a.net._chargerRise = G.audio?.playChargerChargeRise?.({volume:.28,duration:a.weapon?.chargeTime,pos:a.pos})||null; }\n      if ((!chargerStarting || !near) && a.net._chargerRise) { a.net._chargerRise.stop(.04); a.net._chargerRise=null; }\n      a.net._chargerOnsetActive = chargerStarting;\n      let h;",
+      "const chargerStarting = wr.charging && k === 'charger';\n      if (chargerStarting && !a.net._chargerOnsetActive && near) { a.net._chargerRise = G.audio?.playChargerChargeRise?.({volume:.28,pos:a.pos})||null; if(!a.net._chargerRise)G.audio?.playWeapon?.(a.weapon.id,'charge',{actor:a,pos:a.pos,volume:.35}); }\n      if ((!chargerStarting || !near) && a.net._chargerRise) { a.net._chargerRise.stop(.04); a.net._chargerRise=null; }\n      a.net._chargerOnsetActive = chargerStarting;\n      let h;",
       'network Charger onset is a one-shot, never a remote loop');
     code=once(code,
       "_stopLoops(a) { const L = a.net?.loops; if (L) for (const k in L) { L[k]?.stop?.(0.05); L[k] = null; } }",
