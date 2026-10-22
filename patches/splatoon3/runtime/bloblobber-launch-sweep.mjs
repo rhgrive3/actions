@@ -28,7 +28,14 @@ export function sampleBloblobberWindupYaw(state, direction){
   return state.bloblobberYawStep;
 }
 
-export function bloblobberSweepOffset(step, cumulativeFrames){
-  return Number.isFinite(step)&&Number.isFinite(cumulativeFrames)&&cumulativeFrames>=0
-    ?step*cumulativeFrames:0;
+// The Japanese S3 parameter reference specifies FrameOffsetMaxDegree as
+// the maximum total sweeping angle (default 10 degrees), distinct from the
+// Bloblobber-only FrameOffsetDegreeRate (.3 in the pinned 11.3.0 weapon row).
+// Clamp each emitted bubble's source-rate-adjusted cumulative offset to the
+// total sweep limit rather than allowing 15F * one-turn-frame to exceed it.
+export function bloblobberSweepOffset(step,cumulativeFrames,rate=1,maxDegrees=10){
+  if(!Number.isFinite(step)||!Number.isFinite(cumulativeFrames)||cumulativeFrames<0||
+      !Number.isFinite(rate)||!Number.isFinite(maxDegrees))return 0;
+  const max=Math.max(0,maxDegrees)*Math.PI/180,offset=step*cumulativeFrames*rate;
+  return Math.max(-max,Math.min(max,offset));
 }
