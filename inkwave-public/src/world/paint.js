@@ -312,7 +312,12 @@ export class PaintSystem {
     this.aStretch = new Float32Array(MAX_QUADS * 4 * 3);
     this.aGrow = new Float32Array(MAX_QUADS * 4 * 4);
     const idx = new Uint32Array(MAX_QUADS * 6);
-    for (let i = 0; i < MAX_QUADS; i++) idx.set([i * 4, i * 4 + 1, i * 4 + 2, i * 4, i * 4 + 2, i * 4 + 3], i * 6);
+    // Build the same fixed index buffer without allocating a six-element JS array for each quad.
+    for (let i = 0; i < MAX_QUADS; i++) {
+      const v = i * 4, o = i * 6;
+      idx[o] = v; idx[o + 1] = v + 1; idx[o + 2] = v + 2;
+      idx[o + 3] = v; idx[o + 4] = v + 2; idx[o + 5] = v + 3;
+    }
     const mk = (arr, n) => { const a = new THREE.BufferAttribute(arr, n); a.setUsage(THREE.DynamicDrawUsage); return a; };
     g.setAttribute('aPos', mk(this.aPos, 2));
     g.setAttribute('aLocal', mk(this.aLocal, 3));
