@@ -28,7 +28,7 @@ export function networkIdentity() {
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'roller-presentation.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'combat-provenance.mjs', 'sub-birth-commit.mjs', 'sprinkler-contact-commit.mjs', 'torpedo-contact-commit.mjs', 'torpedo-birth-envelope.mjs', 'torpedo-launch-set.mjs', 'combat-provenance-adapter.mjs', 'outbound-prefix.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs', 'combat-hit-ceilings-data.mjs', 'damage-leaves.mjs']
+    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'owner-clock.mjs', 'combat-provenance.mjs', 'sub-birth-commit.mjs', 'sprinkler-contact-commit.mjs', 'torpedo-contact-commit.mjs', 'torpedo-birth-envelope.mjs', 'torpedo-launch-set.mjs', 'combat-provenance-adapter.mjs', 'outbound-prefix.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs', 'combat-hit-ceilings-data.mjs', 'damage-leaves.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -2701,5 +2701,31 @@ function canAllocateNetworkGhost(projectiles, actor) {
   if (rel === 'src/net/netmatch.js') {code = adaptGearLoadout(code, once);code = adaptConditionalGear(code, once);code = adaptTransientGear(code, once);}
   code = adaptQueuedBugRecovery(rel, code, once);
   code = adaptPaintAuthority(rel, code, once);
+  if (rel === 'src/net/session.js') {
+    patch('    this.match = null;          // NetMatch while playing',
+      '    this.match = null;          // NetMatch while playing\n    this.ownerClockVersion = 1; // mandatory fresh-origin clock contract in this COMPAT epoch',
+      'advertise the current real-session clock protocol');
+  }
+  if (rel === 'src/net/netmatch.js') {
+    code = "import { beginOwnerClock, advanceOwnerClock, retireOwnerClock, closeOwnerClock, handleOwnerClockMessage, validOwnerClockTick } from '../../patches/network-replication/owner-clock.mjs';\n" + code;
+    patch('    for (const ev of FORWARD) this.unsubs.push(on(ev, (e) => this._onLocalEvent(ev, e)));',
+      '    for (const ev of FORWARD) this.unsubs.push(on(ev, (e) => this._onLocalEvent(ev, e)));\n    beginOwnerClock(this, now());',
+      'request fresh owner origins only after actors are bound');
+    patch('  update(dt) {\n    if (!this.match) return;',
+      '  update(dt) {\n    if (!this.match) return;\n    advanceOwnerClock(this, now());',
+      'bounded current-peer clock challenge retry');
+    patch('  dispose() {', '  dispose() {\n    closeOwnerClock(this);', 'retire clock proof and queued startup messages');
+    patch('  onLeave(id, hostChanged) {',
+      '  onLeave(id, hostChanged) {\n    retireOwnerClock(this, id);', 'discard departed clock origin and nonce');
+    patch('    msg.sjEpochs = Object.create(null);',
+      '    if (this.s.ownerClockVersion === 1) { msg.oc = 1; msg.ocm = this.cfg.id; }\n    msg.sjEpochs = Object.create(null);',
+      'current-session owner clock version without changing event tuples');
+    patch('  onMessage(from, d) {',
+      '  onMessage(from, d) {\n    if (handleOwnerClockMessage(this, from, d, now())) return;',
+      'freshness protocol precedes codec and birth normalization');
+    patch('    if (!validOwnerTickAdvance(d.ts, previous?.lastTs, receivedAt, previous?.lastReceiveAt)) return;',
+      '    if (!validOwnerClockTick(this, from, d, receivedAt, previous)) return;',
+      'fixed fresh origin cannot gain grace from repeated arrivals');
+  }
   return code;
 }

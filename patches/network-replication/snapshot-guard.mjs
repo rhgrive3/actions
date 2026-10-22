@@ -150,6 +150,18 @@ export function validOwnerTickAdvance(timestamp, previousTimestamp, receivedAt, 
   return senderDelta <= receiveDelta + OWNER_TICK_FORWARD_GRACE;
 }
 
+// #1767: the nonce response was generated AFTER originSentAt on this receiver.
+// Keep this fixed origin for the whole peer epoch: queued arrivals may catch up
+// to elapsed real time, but repeated packets/ACKs cannot manufacture new grace.
+// Initial queued snapshots may predate the response; replay remains monotonic.
+export function validOwnerClockOriginAdvance(timestamp, previousTimestamp, receivedAt, originTimestamp, originSentAt) {
+  if (!validOwnerTickAdvance(timestamp, undefined)
+    || !validOwnerTickAdvance(originTimestamp, undefined)
+    || !finite(originSentAt) || originSentAt < 0 || !finite(receivedAt) || receivedAt < originSentAt) return false;
+  if (previousTimestamp !== undefined && (!validSnapshotTimestamp(previousTimestamp) || timestamp <= previousTimestamp)) return false;
+  return timestamp - originTimestamp <= receivedAt - originSentAt + OWNER_TICK_FORWARD_GRACE;
+}
+
 // d.u is G.time * 60. It may stall while gameplay is paused, but within one
 // owner epoch it must not run backwards or jump hundreds of seconds ahead of
 // the corresponding owner timestamp.

@@ -5866,3 +5866,23 @@ Node v24.19.0の本番合成VMで新規3件と隣接9件、計12/12成功。原�
 Dynamo/他Roller/Brushの防御object・傘・BigBubblerへ、既存impactDamageで決済したUnit/距離/volley額を渡す。Bubbler queryは純粋に保ち、採用されたcontactだけ既存倍率を1回適用する。Unit1はdamage0のまま実CPU床paintとturf creditを維持。source UnitDamageRate0のNintendo engine解釈・実機unit分離は未確認で#1813を維持する。
 
 追加7 Roller/Brushの受入はactual Actor/Runner/Projectilesの330birth/22cover/780flight条件と、actual source pose/FX/WebGLのTidewater78条件。原作全parityとは区別する。Zipcaster失敗repeatは現45F境界を実Actorで確認し、原作ShotFailedIntervalFrm20とのphase意味は未確認。Urchin private physicsは正当なpinned source生成を用い60case完走したがassetsは公開せずhash/countのみ残す。詳細はcontinuation/weapons.mdおよび各receipt。
+
+## 2026-10-22 継続: #1767 owner-clock単独epoch
+
+`patches/network-replication/owner-clock.mjs` はbind後の受信側128bit nonce challengeで時計の初期起点を確定する。元request送信local時刻とACK sender timestampをpeer/matchごと固定し、既存5秒の未来許容を累積上限として扱う。同じnonceの再送で2秒TTLを延長せず、確定originを後続ACKやhost変更でrebaseしない。current実NetSessionは初回から必須で、`iw-gameplay-20261022-owner-clock-v1` は旧形式へのdowngradeを許さない。raw wireの待機上限はpeerごと64packet/256KiB、leave/disposeで証明と待機queueを退役する。既存event/life/paint/hitの入場所有を維持し、武器・移動・発射数値は変更しない。
+
+独立treeは`855b0e187f4e6a367c21ac12745520f3c356c29a`を起点に時計部分だけを移植する。Charger contact module/identity、full-fire anchor、combat authority/runtime変更は持ち込まない。clock moduleとorigin guard、新規2testは76873fcの受入sourceと同一bytesである。Splatoon 3 11.3.0は比較参照だが、小売版network protocolの非公開数値は推測せず、Switch実機比較を解消扱いにしない。
+
+別の固定source76873fcでは、実Tidewater/Match/Actor/Character、実NetSession `_begin`、2つの独立Chromium contextと実WebSocket/production Worker relayでcold-start・同室rematch・socket reconnectの3局面を確認した。6方向すべてで7秒超の遅延初回→最新tickを受理し、同じ実受信timestamp対は旧arrival-origin guardでは拒否される。時計/peerの書換えやguard無効化はなく、証明origin不変、Actor buffer、Match playing、通常snapshot進行を確認した。これは独立clock-only tree自体のブラウザ受入ではない。固定sourceと手順・raw hashは`reports/issue-resolution-20261022/continuation/clock-native-browser.json`、独立treeのsource/build/回帰は`clock-only-release.json`へ別記する。
+
+
+### #1767 独立clock-only source自身のnative追補
+
+独立source`2d2b8aa25795f351f6e206488c89af7255595be6`、input`c2722d71…`/content`34bb3936…`の固定buildで、実Tidewater/Match/Actor/Characterと実WebSocket/production relayを用いる3局面・6方向も成功した。実行evidence HEAD`50f8843e…`との差分はreport3fileだけで、1,364input全部の同一性を再照合した。8nonce query/6reply、origin固定、Actor buffer7〜10、Match playingと後続snapshot進行、page/console error0、実描画80/82call・context lossなしを確認。全6組の実受信対は旧arrival-origin guardではfalseとなる。PNGはlocal保持＋SHA一覧、公開rawはJSON/logのみ。source/evidence commit、local upgrade shim、単一Chromium内2context、手動native frame、Switch/物理端末未計測の範囲は`reports/issue-resolution-20261022/continuation/clock-only-native-browser.json`へ明記し、768の過去受入と分けた。
+
+
+## 2026-10-22 継続: catalogue sidecar と受入済みowner tickの同期
+
+比較参照はSplatoon 3 11.3.0。サブ・スペシャルの選択値、攻撃・移動・発射の数値や挙動は変更しない。Nintendoのnetwork実装・非公開の受信判定は未確認のままとし、本修正を本家protocolの再現とは扱わない。
+
+INKWAVEの `patches/splatoon3/runtime/catalogue.mjs` では、native `_tick` が時刻を拒否しても、到着した `ts` が過去の受入値より大きいだけで `ck` の装備を変更していた。実composed受信の1000/torpedo受入後、1014/bombがclockで拒否されても装備だけ変わる反例に対応し、native処理後のpeer.lastTsが当該message.tsへ実際に進んだ場合だけsidecarを適用する。既存membership・actor owner・life・選択値の判定は維持する。prebind/future/stale/foreign/malformedの拒否不変と正常更新、実NetSession v1 freshness proofを専用回帰で検証し、既存clock再接続群とcompiled production形式も別記する。
