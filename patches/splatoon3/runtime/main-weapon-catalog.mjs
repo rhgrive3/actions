@@ -773,11 +773,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       G.projectiles._aimFrom(a,muzzle,dir);
     }
     const at=muzzle.clone(), direction=dir.clone(), volleys=new Map(), birth=new THREE.Vector3();
-    // This particular main weapon lobs a ballistic row. The generic muzzle
-    // -> reticle-point convergence can angle it sharply toward a nearby floor
-    // crosshair hit, even when the player is looking horizontally. Fire along
-    // the admitted camera yaw/pitch instead; preserve the safe muzzle origin.
-    if(r.sourceActor==='WeaponSlosherBathtub'&&a.aimDir?.lengthSq()>EPS)
+    // The sourced Slosher launch follows the camera yaw/pitch, not muzzle
+    // convergence toward a separately computed reticle intersection.
+    // Otherwise a downward 45-degree view may still fire almost horizontally
+    // when the shared aimPoint is stale, occluded, or on nearby geometry.
+    // Native Sloshers already use aimDir for their launch/shot-guide owner.
+    // Retain the collision-safe muzzle and each unit's explicit rotation.
+    if(key==='slosh'&&a.aimDir?.lengthSq()>EPS)
       direction.copy(a.aimDir).normalize();
     // Mirrors the mature S3 Slosher cumulative firing-interval sweep:
     // the later Bloblobber bubbles are born 5F apart, but their four yaw
@@ -815,10 +817,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const aim=angle(direction,yaw,finite(u.SpawnRotateXDegree,finite(u.SpawnRotateXDegreeBase,0)));
         const d={...desc,index:i};
         const sourceLiftRate=finite(u.AddSpawnSpeedYRateByXZ,finite(u.AddSpawnSpeedYRateBySpeed,0));
-        // S3 names this as a boost by XZ speed, rather than total 3D speed.
-        // Inclined Bloblobber throws must not gain excessive Y launch speed.
-        // Store the resolved factor for delayed ground/air births as well.
-        const liftRate=r.sourceActor==='WeaponSlosherBathtub'
+        // S3 AddSpawnSpeedYRateByXZ scales the HORIZONTAL launch component.
+        // All sourced Sloshers, including Washtub/Explosher, share this law:
+        // boosting by full 3D speed shifts downward pitches up and makes
+        // near-vertical shots unnaturally flat. Retain the resolved lift for
+        // the true-birth ground/air speed choice of delayed projectiles.
+        const liftRate=key==='slosh'
           ?sourceLiftRate*Math.hypot(aim.x,aim.z):sourceLiftRate;
         birth.copy(at);
         if(swing){
