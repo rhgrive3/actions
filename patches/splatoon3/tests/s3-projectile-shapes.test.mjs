@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
-import { s3ShapeKind, bodyParams, crescentGeometry, S3_SHAPE, BODY_KIND } from '../runtime/s3-projectile-shapes.mjs';
+import { s3ShapeKind, bodyParams, crescentGeometry, S3_SHAPE, BODY_KIND, splatanaHorizontalSweep } from '../runtime/s3-projectile-shapes.mjs';
 
 const snapshot = p => JSON.stringify([p.wid, p.type, p.age, p.delay, p.damage, p.life, p.radius, p.size, p.grav, p.drag,
   p.pos.toArray(), p.vel.toArray(), p.seed, p.catalog?.travel ?? null, p.catalog?.bounces ?? null]);
@@ -234,4 +234,41 @@ test('Stringer actions allocate distinct descriptor identities and both draw eve
   assert.equal(system._s3Shapes.sheets.bursts.length, 2, 'two native arrow actions each retain a firing burst');
   system._draw();
   assert.equal(system._s3Shapes.sheets.bursts.length, 2, 'redraw never replays either action');
+});
+
+
+test('charged selector does not rotate Dental waves or swing sheets into the vertical plane', async () => {
+  const f = await api(), system = f.G.projectiles;
+  for (const id of ['s3-saber-normal', 's3-saber-lite', 's3-saber-heavy', 's3-saber-heavy-01']) {
+    for (const hold of [2, 80]) {
+      fire(f, id, hold);
+      const p = system.list.find(p => p.delay <= 0);
+      assert(p, id + ' emits');
+      const charged = p.catalog.descriptor.key === 'saber-vertical';
+      const horizontal = !charged || p.catalog.r.sourceActor === 'WeaponSaberHeavy';
+      assert.equal(splatanaHorizontalSweep(p, charged ? 'slash-v' : 'slash-h'), horizontal);
+      const before = system.list.map(snapshot);
+      system._draw();
+      assert.deepEqual(system.list.map(snapshot), before, id + ' drawing remains read-only');
+      const mesh = charged ? system._s3Shapes.slashV : system._s3Shapes.slashH;
+      const matrix = new f.THREE.Matrix4(), axis = new f.THREE.Vector3();
+      mesh.getMatrixAt(0, matrix);
+      axis.setFromMatrixColumn(matrix, 0).normalize();
+      assert(horizontal ? Math.abs(axis.y) < 1e-6 : Math.abs(axis.y) > 0.99,
+        id + (charged ? ' charged' : ' tap') + ' main span uses the correct plane');
+      // The thinner trailing slab shares the same corrected plane (its
+      // existing small seed roll is retained, not replaced by a new effect).
+      mesh.getMatrixAt(1, matrix);
+      axis.setFromMatrixColumn(matrix, 0).normalize();
+      assert(horizontal ? Math.abs(axis.y) < 0.18 : Math.abs(axis.y) > 0.98);
+      const burst = system._s3Shapes.sheets.bursts.at(-1);
+      assert(burst, id + ' firing sheet');
+      assert.equal(burst.horizontalSweep, horizontal);
+      const sheet = system._s3Shapes.sheets.mesh;
+      sheet.getMatrixAt(0, matrix);
+      axis.setFromMatrixColumn(matrix, 1).normalize();
+      assert(horizontal ? Math.abs(axis.y) < 1e-6 : Math.abs(axis.y) > 0.99,
+        id + ' swing sheet shares the projectile plane');
+    }
+  }
 });

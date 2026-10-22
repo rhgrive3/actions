@@ -333,7 +333,7 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
             // sweep plane: X = forward, Y = up (vertical) or right (horizontal)
             z.copy(d).setY(0); if (z.lengthSq() < 1e-6) z.set(0, 0, 1); z.normalize();
             x.crossVectors(UP, z).normalize();
-            if (burst.kind === 'slash-h') { basis.makeBasis(z, x, UP); }
+            if (burst.kind === 'slash-h' || burst.horizontalSweep) { basis.makeBasis(z, x, UP); }
             else if (burst.kind === 'arrow') {
               // ribbons wrap the bow around the shot axis, each rolled differently
               y.copy(UP).applyAxisAngle(d, ls * 6.2832 * 0.7);
