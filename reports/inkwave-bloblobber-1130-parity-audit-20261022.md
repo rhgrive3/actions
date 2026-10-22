@@ -40,7 +40,7 @@ Actions `39708248288`, numerical-main job `119593237910` (actual production-comp
 
 ## Fix in this PR
 1. Sample signed yaw motion at a fixed 60Hz only while the accepted `SwingLiftFrame` is counting down.
-2. Match existing native INKWAVE Slosher's angle wrapping, last-tick sample and ±10°/F clamp, and its cumulative `AfterOffsetDelayFrame` yaw offsets for the three late bubbles; multiply the offset by the pinned **Bloblobber-only `FrameOffsetDegreeRate = 0.3`**, as explained in the Japanese parameter documentation. Four velocities are committed **at release**, not updated by later camera movement.
+2. Match existing native INKWAVE Slosher's angle wrapping, last-tick sample and ±10°/F clamp, and its cumulative `AfterOffsetDelayFrame` yaw offsets for the three late bubbles; multiply the offset by the pinned **Bloblobber-only `FrameOffsetDegreeRate = 0.3`**, then clamp its total magnitude to **`FrameOffsetMaxDegree = 10°` (documented default)**, as explained in the Japanese parameter documentation. Four velocities are committed **at release**, not updated by later camera movement.
 3. Reset the per-swing sample on cancel, switch or release, preventing stale prior actions.
 4. Reuse the source-guided native Slosher `NearestParam` paint-only release owner instead of omitting that ink stamp entirely. Preserve source width/depth, deterministic local paint seed, remote/airborne guard and zero player collision radius.
 5. No source JSON, shared shooter physics, hit protocol or game asset changes.
