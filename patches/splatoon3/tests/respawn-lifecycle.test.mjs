@@ -349,9 +349,9 @@ test('#512 opening bots choose different deterministic and collision-supported S
       a.team=team;a.slot=team*4+slot;a.isLocal=false;a.isBot=true;
       a.aimPoint.set(0,0,0); // real default: previously every bot chose the same centre
       assert.equal(beginInitialSquidSpawn(a),true);
-      assert.equal(a.s3.squidSpawn?.phase,'flight');
+      assert.equal(a.s3.squidSpawn?.phase,'aim');
       assert.equal(a.s3.squidSpawn.initial,true);
-      const target=a.s3.squidSpawn.to;
+      const target=a.s3.squidSpawn.target;
       assert.ok(Number.isFinite(target.x)&&Number.isFinite(target.y)&&Number.isFinite(target.z));
       assert.ok(Math.hypot(target.x-f.G.level.spawnPads[team].x,target.z-f.G.level.spawnPads[team].z)<=12+1e-9);
       assert.ok(Number.isFinite(f.G.level.groundHeight(target.x,target.z)));
@@ -367,8 +367,8 @@ test('#512 opening bots choose different deterministic and collision-supported S
   const again=f.make();again.team=0;again.slot=2;again.isBot=true;again.isLocal=false;
   assert.equal(beginInitialSquidSpawn(again),true);
   const want=outcomes.find(v=>v.team===0&&v.slot===2);
-  assert.equal(again.s3.squidSpawn.to.x,want.x);
-  assert.equal(again.s3.squidSpawn.to.z,want.z);
+  assert.equal(again.s3.squidSpawn.target.x,want.x);
+  assert.equal(again.s3.squidSpawn.target.z,want.z);
 });
 
 test('#512 human opening choice is still aim-owned and invalid bot landings fail closed',async()=>{

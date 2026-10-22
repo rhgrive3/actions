@@ -5759,3 +5759,14 @@ See [regression analysis and evidence](weapon-regressions-20261021/README.md). F
   - 公開値（回転 4.0/12F で平均 20 WU/s、滑り 1.0 で平均 15 WU/s）を満たしつつ、速度が連続で単調に減る形にすると、滑りの時間を 4F より長くしない限り、回転全体がほぼ等速になる。
   - 滑りの時間と速度曲線は公開資料にないため、推測で確定させず変更していない。本家の映像または実機での 1 フレーム単位の計測が必要である。
 - その他の未確認: タレット開始時にレティクルが統合される見た目のタイミング（統合レティクルは 0.18 秒のフェード、左右のレティクルは即時に消える）、回転中のレティクルの表示、ブラウザ実動作、本家実機との比較。
+
+
+## 2026-10-22: 開始時に敵味方のスポナー待機・発射を統一
+
+- 比較対象: Splatoon 3 Ver.11.3.0、ナワバリ開始時の各プレイヤーのスポナー待機と出撃。[Nintendo gameplay](https://splatoon.nintendo.com/en/gameplay/)、既存の [Spawner 記録](https://splatoonwiki.org/wiki/Spawner) を参照。今回の対象は役割による開始状態の不一致であり、本家の未公開フレーム値を追加していない。
+- 原因: `respawn-lifecycle.mjs` の `begin()` が初期ボットだけ即発射し、4.2秒のintro中に着地していた。人間はスポナー上に残るため、開始時点で味方・敵だけ床にいる。
+- 修正: 全員をintro中はaimに保ち、既存のplaying開始後1秒の自動発射を共有する。人間はplaying中のFIREで早く発射できる。ボットの射撃入力では開始待機を飛ばさず、各slotの安全な着地点を保持する。死亡後のボットの即発射は継続。
+- オンライン: remoteボットも人間同様に所有端末のaim/flight/landingを追従する。`squid-spawn-presentation.mjs` は `NetMatch.applyRemote` の後にも表示を同期し、他端末のスポナーも描く。表示処理は物理・発射時刻を進めない。
+- 実装: `patches/splatoon3/runtime/respawn-lifecycle.mjs`、`runtime/squid-spawn-presentation.mjs`、`patches/native-stages/adapter.mjs`。再現はTurfの通常開始、FIREせず待機。初期8人、両チーム、30/60/120 Hzでintro中の位置・共有発射・実衝突による着地を確認。オンラインは2-peer CPU fixtureで人間・ボット双方の所有者追従を確認。
+- 検証: 開始タイミング3件、オンライン6件、スポナー描画10件が成功。旧main lifecycleに戻す負の対照では開始タイミング3件すべて失敗。ブラウザと統合PRの検証結果は [統合記録](opening-spawn-pr-integration-20261022.md) を参照。
+- 未確認: Switch実機の開始フレーム、発射までの正確な猶予、実ネットワーク遅延、物理GPU/iPad性能・本家の描画一致。既存1秒の開始待機・飛行はINKWAVE校正値として維持。

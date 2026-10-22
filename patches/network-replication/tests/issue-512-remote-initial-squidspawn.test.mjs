@@ -165,11 +165,35 @@ for (const hz of HZ) {
   });
 }
 
-test('#512 remote opening bots keep their deterministic host-side launch on the receiver', async () => {
-  const receiver = await receiverPeer(60);
-  receiver.remote.isBot = true;
-  receiver.remote.aimPoint.set(0, 0, 0);
-  assert.equal(receiver.f.beginInitialSquidSpawn(receiver.remote), true);
-  assert.equal(receiver.remote.s3.squidSpawn.phase, 'flight', 'bot replication still uses the shared deterministic launch');
-  assert.equal(receiver.remote.s3.squidSpawn.ownerReplicated, undefined);
-});
+for (const hz of HZ) {
+  test(`${hz} Hz: remote opening bot follows its owner's intro wait, launch and landing`, async () => {
+    const dt = 1 / hz, owner = await ownerPeer(hz), receiver = await receiverPeer(hz);
+    owner.actor.isBot = true; receiver.remote.isBot = true;
+    owner.f.G.match.state = receiver.f.G.match.state = 'intro';
+    const launches = [];
+    receiver.f.on('squidspawn:launch', ({ actor }) => { if (actor === receiver.remote) launches.push(actor); });
+    assert.equal(owner.f.beginInitialSquidSpawn(owner.actor), true);
+    assert.equal(receiver.f.beginInitialSquidSpawn(receiver.remote), true);
+    assert.equal(receiver.remote.s3.squidSpawn.ownerReplicated, true);
+    const start = owner.actor.pos.clone();
+    for (let i = 0; i < hz * 4; i++) {
+      step(owner, dt); receive(receiver, publish(owner), dt);
+      assert.equal(owner.actor.s3.squidSpawn.phase, 'aim');
+      assert.equal(receiver.remote.s3.squidSpawn.phase, 'aim');
+    }
+    assert.equal(launches.length, 0);
+    samePoint(owner.actor.pos, start, 'host bot stays on its spawner during intro');
+    samePoint(receiver.remote.pos, start, 'proxy bot stays on its spawner during intro', .02);
+    samePoint(receiver.remote.s3.squidSpawn.target, owner.actor.s3.squidSpawn.target, 'proxy mirrors deterministic bot landing');
+    owner.f.G.match.state = receiver.f.G.match.state = 'playing';
+    for (let i = 0; i < hz * 4; i++) {
+      if (owner.actor.s3.squidSpawn) step(owner, dt);
+      receive(receiver, publish(owner), dt);
+    }
+    assert.equal(launches.length, 1, 'proxy sees exactly one owner launch');
+    assert.equal(owner.actor.s3.squidSpawn, undefined);
+    assert.equal(receiver.remote.s3.squidSpawn, undefined);
+    // Native position snapshots round coordinates to 0.01 world units.
+    samePoint(receiver.remote.pos, owner.actor.pos, 'proxy settles on the owner landing', .011);
+  });
+}

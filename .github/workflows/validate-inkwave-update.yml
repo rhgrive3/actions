@@ -592,6 +592,9 @@ jobs:
       - name: Verify active browser behavior and loaded artifact bytes
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/game" --profile-dir "$CI_STORAGE/cache/game" --exact-source
+      - name: Verify both teams wait and launch together at match start
+        if: matrix.suite == 'active'
+        run: node scripts/check-inkwave-opening-spawn.mjs .built-site/_site "$CI_STORAGE/evidence/opening-spawn"
       - name: Verify queued native Showcase weapon selection across render rates
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-showcase-weapon-queue.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/showcase-weapon"

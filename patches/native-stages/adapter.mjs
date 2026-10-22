@@ -246,7 +246,7 @@ const game = new Game();`);
   once('  const initialBotTarget = actor => {', '  const initialBotTarget = actor => {\n    if (G.level?.native) return nativeBotInitialLanding(G,actor,(x,z,y)=>supportedTarget(actor,x,z,y));');
   once('    return slotTarget(actor);', '    return slotTarget(actor) ?? nativeInitialLanding(G, actor, (x,z,y) => supportedTarget(actor,x,z,y));');
   once('      target: ownerReplicated ? null : ((initial && actor.isBot ? initialBotTarget(actor) : null) ?? targetFor(actor) ?? slotTarget(actor)) };','      target: ownerReplicated ? null : (G.level?.native && actor.isBot ? initialBotTarget(actor) : ((initial && actor.isBot ? initialBotTarget(actor) : null) ?? targetFor(actor) ?? slotTarget(actor) ?? nativeInitialLanding(G,actor,(x,z,y)=>supportedTarget(actor,x,z,y)))) };');
-  once('          const target = targetFor(this);','          const target = G.level?.native && this.isBot ? initialBotTarget(this) : targetFor(this);');
+  once('          const target = spawn.initial && this.isBot ? initialBotTarget(this) : targetFor(this);','          const target = (G.level?.native || spawn.initial) && this.isBot ? initialBotTarget(this) : targetFor(this);');
  }
  if(rel==='patches/splatoon3/runtime/ranked/install.mjs'){
   code="import {nativeRankedBotGoalReachable} from '../../../native-stages/runtime/engine.mjs';\n"+code;

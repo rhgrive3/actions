@@ -1,4 +1,4 @@
-name: INKWAVE native ink material frame pilot
+name: INKWAVE historical native ink material frame pilot
 on:
   pull_request:
     paths:
@@ -15,7 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          # Keep the PR1766 pilot with its 429cc runtime/compiler. The current
+          # common-source runner from PR1773 has its own separate workflow.
+          ref: b9c46f57f8a5427eaa71dd740688622490b61bb8
       - uses: actions/checkout@v4
         with:
           ref: 429cc1352d9b13ffe83c579ed714b84acf6139ed
@@ -27,7 +29,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Verify QA and literal runtime identity
         run: |
-          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          test "$(git rev-parse HEAD)" = "b9c46f57f8a5427eaa71dd740688622490b61bb8"
           test "$(git -C work/material-source rev-parse HEAD)" = "429cc1352d9b13ffe83c579ed714b84acf6139ed"
           diff -qr patches work/material-source/patches
           diff -qr inkwave-public work/material-source/inkwave-public

@@ -187,10 +187,9 @@ export function installRespawnLifecycle(api, profile) {
     }
     setPos(actor, p); actor.yaw = actor.aimYaw = yaw; actor.invuln = Infinity; actor.grounded = false; actor.vel.set(0,0,0);
     actor.s3 ||= {}; actor.s3.spawnArmorManaged = true; actor.s3.spawnArmor = null;
-    // #512: a remote human's opening launch is decided by its own peer. Until that
-    // peer's replicated aim/flight arrives, this proxy waits at the spawner instead
-    // of launching to the local fallback aim (which differs from the owner's).
-    const ownerReplicated = !!initial && !!actor.remote && !actor.isBot;
+    // A remote opening launch belongs to its owner (including host-owned bots).
+    // The proxy waits for that peer's aim/flight instead of running a local clock.
+    const ownerReplicated = !!initial && !!actor.remote;
     actor.s3.squidSpawn = { phase:'aim', initial:!!initial, wait:0, fireArmed:!actor.intent.fire,
       target: ownerReplicated ? null : ((initial && actor.isBot ? initialBotTarget(actor) : null) ?? targetFor(actor) ?? slotTarget(actor)) };
     if (ownerReplicated) actor.s3.squidSpawn.ownerReplicated = true;
@@ -199,10 +198,12 @@ export function installRespawnLifecycle(api, profile) {
     actor.netTp = (actor.netTp || 0) + 1;
     if (wasDead && !actor.isBot && !actor.remote) actor.s3.respawnRearm = new Set(KEYS);
     emit?.('respawn', { actor }); emit?.('squidspawn:aim', { actor, initial:!!initial });
-    if ((actor.isBot || actor.remote) && !ownerReplicated) launch(actor);
+    // Opening actors share the player's wait through the intro. Post-death bots
+    // still launch immediately; their initial launch is gated by playing time.
+    if (!initial && (actor.isBot || actor.remote)) launch(actor);
     return true;
   }
-  // #512: mirror the owner's replicated aim target, launch target and flight clock.
+  // Mirror the owner's replicated aim target, launch target and flight clock.
   // Position still comes from the owner's sampled path (applyRemote), so both
   // peers share one trajectory; this proxy never advances the flight itself.
   const replicatedPoint = p => Array.isArray(p) && p.length === 3 && p.every(Number.isFinite) ? { x: p[0], y: p[1], z: p[2] } : null;
@@ -270,8 +271,8 @@ export function installRespawnLifecycle(api, profile) {
       if (spawn.phase === 'aim') {
         spawn.wait += Number.isFinite(dt) && dt > 0 ? dt : 0;
         if (spawn.transferTargetPending) delete spawn.transferTargetPending;
-        else {
-          const target = targetFor(this);
+        else if (!spawn.ownerReplicated && !(spawn.initial && this.isBot && spawn.target)) {
+          const target = spawn.initial && this.isBot ? initialBotTarget(this) : targetFor(this);
           if (target) spawn.target = target;
         }
         if (!this.intent.fire) spawn.fireArmed = true;
@@ -281,10 +282,13 @@ export function installRespawnLifecycle(api, profile) {
         // no aiming time, so the player gets initialAutoLaunch seconds of play
         // first (INKWAVE calibration). Respawns wait for ZR as in S3.
         if (spawn.initial && !spawn.ownerReplicated && G.match?.state === 'playing') spawn.playWait = (spawn.playWait || 0) + (dt > 0 ? dt : 0);
-        const auto = this.isBot || this.remote || (spawn.initial && !spawn.ownerReplicated &&
-          (spawn.playWait || 0) + EPS >= SQUID_SPAWN_PRESENTATION.initialAutoLaunch);
+        const initialReady = !spawn.ownerReplicated && G.match?.state === 'playing';
+        const auto = spawn.initial
+          ? initialReady && (spawn.playWait || 0) + EPS >= SQUID_SPAWN_PRESENTATION.initialAutoLaunch
+          : this.isBot || this.remote;
         this._prevIntent.fire = this.intent.fire;
-        if ((pressed || auto) && launch(this)) { this._finishFrame?.(dt); return; }
+        const fireLaunch = pressed && (!spawn.initial || initialReady && !this.isBot);
+        if ((fireLaunch || auto) && launch(this)) { this._finishFrame?.(dt); return; }
         // Waiting on the spawner: keep the rig alive (idle breathing, aim turn,
         // held family pose) instead of a frozen pose.
         this.vel.set(0, 0, 0); this.grounded = true; this.form = 'kid';
