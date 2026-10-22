@@ -8,13 +8,22 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
+import {gunzipSync} from 'node:zlib';
 const swimMain=JSON.parse(fs.readFileSync(new URL('../fixtures/inkwave-open-pr-main-95c-source.json',import.meta.url),'utf8'));
 assert.equal(swimMain.commit,'95c25af145418691991a1452d4d10589754a0f1c');
 assert.equal(swimMain.path,'scripts/lib/inkwave-build-only-modules.mjs');
 assert.equal(createHash('sha1').update('blob '+Buffer.byteLength(swimMain.content)+'\0').update(swimMain.content).digest('hex'),'89f3b41a400307f8c6f7156bb4850d6c67e67c85');
 import {historicalSource} from '../lib/inkwave-historical-baseline-sources.mjs';
-import {CHARACTER_POSE_PATHS,planCharacterPoseBaseline} from '../lib/inkwave-character-pose-baseline.mjs';
+import {CHARACTER_POSE_PATHS,planCharacterPoseBaseline,OCT21_PR1746_POSE_MAIN_BLOBS} from '../lib/inkwave-character-pose-baseline.mjs';
 import {MAIN_INK_BASELINE_PATHS,planMainInkBaseline} from '../lib/inkwave-main-ink-baseline.mjs';
+// PR1746 pose leaves are historical input, independent of today's checkout.
+const poseEpochBytes=fs.readFileSync(new URL('../fixtures/inkwave-pr1746-pose-sources.json.gz',import.meta.url));
+assert.equal(createHash('sha256').update(poseEpochBytes).digest('hex'),'46f36dda36be5871c1ecc077a5614b13d1a3e87c3cf7879e484c82e4b72ccddd');
+const poseSources=JSON.parse(gunzipSync(poseEpochBytes));
+// Each leaf was read back against commit f31238a48b9d1a4af2d4f5f5f9182af777a79c83;
+// reuse the existing frozen archive and its reviewed Git blob pins unchanged.
+assert.deepEqual(Object.keys(poseSources),CHARACTER_POSE_PATHS.filter(p=>!MAIN_INK_BASELINE_PATHS.includes(p)));
+for(const [p,content]of Object.entries(poseSources))assert.equal(createHash('sha1').update('blob '+Buffer.byteLength(content)+'\0').update(content).digest('hex'),OCT21_PR1746_POSE_MAIN_BLOBS[p],p);
 // Historical six-PR input is immutable, not whichever runtime main has today.
 const historicalRaw=fs.readFileSync(new URL('../fixtures/inkwave-open-pr-af66-sources.json',import.meta.url),'utf8');
 assert.equal(createHash('sha1').update('blob '+Buffer.byteLength(historicalRaw)+'\0').update(historicalRaw).digest('hex'),'13661ec34f512985267156c48ec1178ee2008655');
@@ -56,12 +65,18 @@ for(const [name,paths,plan]of [['pose',CHARACTER_POSE_PATHS,planCharacterPoseBas
 for(const [name,paths,plan]of [['pose',CHARACTER_POSE_PATHS,planCharacterPoseBaseline],['paint',MAIN_INK_BASELINE_PATHS,planMainInkBaseline]]){
  const base=new Map(paths.map(p=>[p,historicalSource('oct21IntegrationBase',p)]));
  if(name==='paint')base.set(swimMain.path,swimMain.content);
- const candidate=new Map(paths.map(p=>[p,MAIN_INK_BASELINE_PATHS.includes(p) ? paintEpochSource('pr1746', p) : fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
+ const candidate=new Map(paths.map(p=>[p,MAIN_INK_BASELINE_PATHS.includes(p) ? paintEpochSource('pr1746', p) : poseSources[p]]));
  test(name+' PR1746 complete pair preserves source identity and rejects every unknown leaf',()=>{
   const b=[...base],a=[...candidate],result=plan(base,candidate),receipt=result.pairEvidence??result.evidence;
   assert.deepEqual(result.changes,[]);assert.deepEqual([...result.sources],b);
   assert.equal(receipt.sourceBase,name==='pose'?'ecfb851ad7d9c78c2e7b1937dda0a723946dc215':'95c25af145418691991a1452d4d10589754a0f1c');
   assert.equal(receipt.sourceHead,'f31238a48b9d1a4af2d4f5f5f9182af777a79c83');
+  if(name==='pose'){
+   const currentAdapter=fs.readFileSync(new URL('../../patches/splatoon3/adapter.mjs',import.meta.url),'utf8');
+   assert.notEqual(currentAdapter,candidate.get('patches/splatoon3/adapter.mjs'),'current adapter is outside the immutable PR1746 epoch');
+   const drifted=new Map(candidate);drifted.set('patches/splatoon3/adapter.mjs',currentAdapter);
+   assert.throws(()=>plan(base,drifted),/unreviewed candidate/,'current checkout drift must not enter historical positive input');
+  }
   for(const p of paths)for(const sides of [[0],[1],[0,1]])for(const missing of [false,true]){
    const rows=[new Map(base),new Map(candidate)];
    for(const side of sides)if(missing)rows[side].delete(p);else rows[side].set(p,rows[side].get(p)+'\\n// unreviewed');

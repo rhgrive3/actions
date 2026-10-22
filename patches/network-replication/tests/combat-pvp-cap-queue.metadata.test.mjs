@@ -111,17 +111,16 @@ function capFixture(kind, route='event-proof') {
   nm.match.boss.pos={x:0,y:0,z:3};
   const proof={actor:1,kind:'special',cause:kind,at:100,
     origin:[0,0,0],unit:[0,0,1],reach:30,uses:0,maxUses:24,key:'cap-proof'};
-  nm._combatProvenance={
+  Object.assign(state(nm),{
     proofs:new Map(route==='event-proof'?[['peerA',[proof]]]:[]),
     pending:new Map([['peerA',[{type:'pvp',d:{...hit(2,8,kind),d:1},at:100}]]]),
     contacts:new Map([['sentinel',{at:100}]]),
-    contactSnapshots:new Map(), specialSnapshots:new Map(),
-  };
+  });
   if(route==='active-fallback') {
     a.specialActive={id:kind};
-    // Synthetic metadata, matching the hardened snapshot prerequisite. Native
-    // Actor/receipt creation is checked separately by the integration suites.
-    nm._combatProvenance.specialSnapshots.set(a,{owner:'peerA',slot:kind,active:true,life:0,at:100});
+    // This cap-only route starts with the accepted active-snapshot metadata
+    // required by production; it does not exercise native receipt creation.
+    state(nm).specialSnapshots.set(a,{owner:'peerA',life:0,slot:kind,active:true,at:100,ts:100});
   }
   return {nm,a,proof};
 }

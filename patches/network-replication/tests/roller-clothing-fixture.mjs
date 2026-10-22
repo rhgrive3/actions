@@ -33,7 +33,8 @@ function relFor(file) {
 // One module environment. `network` selects whether the newest adapter participates.
 export async function fixture({ network = true, rollerMotion = false } = {}) {
   let seconds = 1000;
-  const context = vm.createContext({ console, performance: { now: () => seconds * 1000 } });
+  const context = vm.createContext({ console, TextEncoder, crypto: globalThis.crypto,
+    performance: { now: () => seconds * 1000 } });
   const modules = new Map();
 
   const compose = network
