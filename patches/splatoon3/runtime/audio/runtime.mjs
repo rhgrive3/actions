@@ -78,7 +78,7 @@ export function installWeaponAudioRuntime(api){
     // Actor emits form at the *beginning* of the kid emergence interval.
     // The weapon's stored.resurfaced flag is not set until the later charge
     // state update, so relying on that flag would silently miss the cue.
-    const stored=r.s3Stored,scoped=a.weapon?.scoped===true||a.weapon?.scopedCharge===true;
+    const stored=r.s3Stored,scoped=WEAPON_AUDIO[mainAudioSourceId(a.weapon?.id)]?.scope===true||a.weapon?.scoped===true||a.weapon?.scopedCharge===true;
     // Goo Tuber can legally keep a partial charge; the real s3Stored owner,
     // not a fabricated full-only audio threshold, determines eligibility.
     if(!scoped&&Number.isFinite(stored?.charge)&&stored.charge>0&&!s.keepEmergePlayed){
