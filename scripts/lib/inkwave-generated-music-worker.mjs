@@ -34,29 +34,38 @@ function visit(node,fn){if(!node||typeof node!=='object')return;if(fn(node)===fa
 function derive(source){
  const methods=[];visit(parse(source,{ecmaVersion:'latest',sourceType:'module',locations:true}),n=>{if(n.type==='MethodDefinition'&&(n.key.name||n.key.value)==='_startTimer')methods.push(n);});
  assert.equal(methods.length,1,'One pinned native timer method required');
- const declarations=new Map(),creates=[],workers=[],assignments=[];
- visit(methods[0].value.body,n=>{
-  // Minification reuses names inside callbacks; those bindings cannot shadow
-  // the synchronous _startTimer URL consumed by the actual native Worker.
-  if(/^(?:FunctionExpression|FunctionDeclaration|ArrowFunctionExpression|ClassExpression|ClassDeclaration)$/.test(n.type))return false;
-  if(n.type==='VariableDeclarator'&&n.id.type==='Identifier'){
-   assert(!declarations.has(n.id.name),'Ambiguous native timer binding');declarations.set(n.id.name,n.init);
-  }
-  if(n.type==='AssignmentExpression'||n.type==='UpdateExpression')assignments.push(n.left||n.argument);
+ // Resolve bindings in their lexical block. A minifier may reuse an outer
+ // tick callback's name for the inner try-block source literal or URL.
+ const creates=[],workers=[],assignments=[],scopes=new WeakMap();
+ const root={parent:null,declarations:new Map()};
+ function declare(scope,name,init){assert(!scope.declarations.has(name),'Ambiguous native timer binding');scope.declarations.set(name,{init});}
+ function walk(n,scope){
+  if(!n||typeof n!=='object')return;
+  if(/^(?:FunctionExpression|FunctionDeclaration|ArrowFunctionExpression|ClassExpression|ClassDeclaration)$/.test(n.type))return;
+  if(n.type==='BlockStatement'||n.type==='CatchClause')scope={parent:scope,declarations:new Map()};
+  scopes.set(n,scope);
+  if(n.type==='CatchClause'&&n.param){assert.equal(n.param.type,'Identifier');declare(scope,n.param.name,null);}
+  if(n.type==='VariableDeclaration')for(const d of n.declarations){assert.equal(d.id.type,'Identifier','Native timer binding must be explicit');declare(n.kind==='var'?root:scope,d.id.name,d.init);}
+  if(n.type==='AssignmentExpression'||n.type==='UpdateExpression')assignments.push({target:n.left||n.argument,scope});
   if(n.type==='CallExpression'&&n.callee.type==='MemberExpression'&&!n.callee.computed&&n.callee.object.name==='URL'&&n.callee.property.name==='createObjectURL')creates.push(n);
   if(n.type==='NewExpression'&&n.callee.name==='Worker')workers.push(n);
- });
+  for(const [key,value]of Object.entries(n))if(key!=='loc'){if(Array.isArray(value))value.forEach(v=>walk(v,scope));else if(value&&typeof value==='object')walk(value,scope);}
+ }
+ walk(methods[0].value.body,root);
+ function binding(scope,name){for(;scope;scope=scope.parent)if(scope.declarations.has(name))return scope.declarations.get(name);return null;}
  assert.equal(creates.length,1,'One native Blob call required');assert.equal(workers.length,1,'One native Worker call required');
  const create=creates[0],worker=workers[0],blob=create.arguments[0];
  assert(blob?.type==='NewExpression'&&blob.callee.name==='Blob'&&blob.arguments.length===2);
  const parts=blob.arguments[0],opts=blob.arguments[1];assert(parts?.type==='ArrayExpression'&&parts.elements.length===1);
- const value=parts.elements[0].type==='Identifier'?declarations.get(parts.elements[0].name):parts.elements[0];
+ const value=parts.elements[0].type==='Identifier'?binding(scopes.get(create),parts.elements[0].name)?.init:parts.elements[0];
  assert(value?.type==='Literal'&&value.value===MUSIC_TIMER_SOURCE,'Pinned native timer bytes absent');
  assert(opts?.type==='ObjectExpression'&&opts.properties.length===1&&
    (opts.properties[0].key.name||opts.properties[0].key.value)==='type'&&opts.properties[0].value.value==='text/javascript');
  assert.equal(worker.arguments.length,1);assert.equal(worker.arguments[0].type,'Identifier');
- assert.equal(declarations.get(worker.arguments[0].name),create,'Worker must consume the native created URL');
- assert(!assignments.some(n=>n.type==='Identifier'&&n.name===worker.arguments[0].name),'Native Worker URL binding was reassigned');
+ const urlBinding=binding(scopes.get(worker),worker.arguments[0].name);
+ assert.equal(urlBinding?.init,create,'Worker must consume the native created URL');
+ assert(!assignments.some(({target,scope})=>target.type==='Identifier'&&binding(scope,target.name)===urlBinding),'Native Worker URL binding was reassigned');
+ for(const [node,name]of [[create,'URL'],[worker,'Worker'],[blob,'Blob']])assert(!binding(scopes.get(node),name),'Native timer global was shadowed');
  return {create:{start:{...create.loc.start},end:{...create.loc.end}},worker:{start:{...worker.loc.start},end:{...worker.loc.end}}};
 }
 function checkLocation(frame,call){assert(frame.line>=call.start.line&&frame.line<=call.end.line&&

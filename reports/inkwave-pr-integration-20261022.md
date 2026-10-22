@@ -176,3 +176,42 @@ Selected production leaves are unchanged by these source-head fixture/report
 updates. Exact thirteen-leaf CLI controls passed 2 positives, 56 CLI negatives
 and 29 helper negatives, preserving both source roots. These do not replace the
 required complete latest-head hosted CI or native comparisons.
+
+### Native/browser follow-up from actual ce21a150 CI, 2026-10-23 JST
+
+Hosted A+, audio, relay, native stages, object presentation, paint hotpath,
+allocation, touch, rain, lobby, reopened-six, defense, Crab/gyro and Roller
+counterfactual identity succeeded. Four workflows failed after reaching their
+native/emitted lanes; Validate core/eight shards/fan-in were still queued.
+No complete-green or merge claim was made.
+
+- Ranked job 120000064357 froze the native game and waited for HUD before
+  advancing Match time. The composed intro now needs that time to reveal HUD.
+  Advance the original 330 native frames before the same bounded DOM/lineup
+  wait; retain all four modes, online rooms and physical scoring/damage gates.
+- Explosher job 120000126458 hit Node's default 1MiB child-process output limit
+  while hashing the committed Jet_Arrow MP3. Bound the Git read buffer at 64MiB;
+  all 1,418 committed-input hashes and emitted artifact hashes remain required.
+- Browser-origins job 120000049715 read p.catalog after the production recycler
+  cleared it. Retain the actual Bloblobber state and immutable birth height at
+  emission, keeping both bounces, exact temporal paint and 30/60/120Hz checks.
+- Roller comparison job 120000050024 found minified block-scoped name reuse
+  in the historical baseline music. AST dataflow now resolves lexical blocks
+  and catch scopes. Same-scope ambiguity, shadowed native globals, reassigned
+  URLs, unbound/foreign creators and unknown Worker bytes remain rejected.
+- Recovery job 120000049978 used old external NavGraph preparation fixtures.
+  Match the existing async-capable createNative API in both explicit fixtures;
+  keep production engine/publication/disposal/UI code unchanged. The separate
+  emitted Environment dock test declares the added render-bounds dependency
+  as an unused fault boundary; an accidental call still throws.
+
+Local exact emitted recovery passed 17/17 without skips; focused intro/ranked
+source/Worker/workflow guards passed 22/22. Local native browser execution is
+still unavailable and is not counted as successful. Actual latest-head hosted
+native/browser checks remain mandatory. No acceptance threshold or required
+case/shard/fan-in was removed or skipped.
+
+A further #1834 update, d2935f34a0560e76ecd779268aedc69b25b157b7,
+was reviewed: it adds composed wall readiness negatives and retains all 23
+streamed-music registrations. Preserve its history and both guard updates.
+All other 22 original heads were rechecked as ancestors of ce21a150.

@@ -72,8 +72,10 @@ try{
  for(const mode of process.env.RANKED_ONLINE_ONLY ? [] : ['zones','tower','rainmaker','clams']){
   console.log('offline',mode);
   await p.evaluate(async mode=>{RG.game.debug.freeze();RG.game.menus.wipe.cancel();await RG.game.startMatch({mapId:'tidewater',difficulty:'easy',mode});},mode);
-  await p.waitForFunction(()=>RG.game.hud?._visible&&!document.querySelector('.iw-lineup'),null,{timeout:30000});
+  // Native intro presentation follows Match.stateT; the frozen game must
+  // advance its real clock before waiting for wall-clock DOM/CSS settlement.
   await advance(p,330);
+  await p.waitForFunction(()=>RG.game.hud?._visible&&!document.querySelector('.iw-lineup'),null,{timeout:30000});
   await p.waitForFunction(()=>!document.querySelector('.iw-bn--go'),null,{timeout:15000});
   await advance(p,120);
   const initial=await p.evaluate(()=>({mode:RG.match.mode,state:RG.match.state,time:RG.match.time,actors:RG.match.actors.length,ranked:!!RG.match.ranked,hud:document.querySelector('.iw-ranked-hud')?.textContent}));assert(initial.ranked&&initial.actors===8&&initial.time<=300&&initial.time>290);assert(initial.hud?.length>5);

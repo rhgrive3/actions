@@ -7,7 +7,7 @@ export class PaintSystem{
  _pushQuad(){} clear(){} dispose(){if(this.old)state.oldPaintDisposed++;else state.paintDisposed++;this.rt.dispose();this.dryMesh.geometry.dispose();this.dryMesh.material.dispose();}
 }
 export class NativeLevel{constructor(){this.bounds={minX:-4,maxX:4,minZ:-4,maxZ:4};this.faces=[];this.blocks=[];this.spawnPads=[];}}
-export class NavGraph{constructor(level,physics){this.level=level;this.physics=physics;}}
+export class NavGraph{static createNative(level,physics){return new this(level,physics);}constructor(level,physics){this.level=level;this.physics=physics;}}
 import {preparedStageAssets,PREPARED_STAGE_ID} from './prepared-assets.mjs';
 export const {config:nativeStageBuild}=await preparedStageAssets(globalThis.crypto);
 export function nativeStageURL(id,file){if(id!==PREPARED_STAGE_ID||!/^[a-zA-Z.-]+$/.test(file))throw Error('Unexpected prepared asset');return new URL('/__qa/assets/'+file,location.href).href;}

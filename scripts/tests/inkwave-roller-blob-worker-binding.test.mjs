@@ -53,6 +53,18 @@ test('minified native timer keeps lexical URL identity across callback name reus
   creatorCode.replace('return new Worker(url);','return (()=>new Worker(url))();'),
  ])await assert.rejects(native(await fixture(ORIGIN,code)));
 });
+test('native timer bindings respect try-block scope and reject shadowed or reassigned URL authority',async()=>{
+ const scoped=`class Music{_startTimer(){const t=()=>this._tick();try{const t=${JSON.stringify(SOURCE)};const url=URL.createObjectURL(new Blob([t],{type:'text/javascript'}));this.worker=new Worker(url);}catch(e){this.worker=null;}}}`;
+ await native(await fixture(ORIGIN,scoped));
+ const separate=scoped.replace('this.worker=new Worker(url);','{let url=this.other;url=this.third;}this.worker=new Worker(url);');
+ await native(await fixture(ORIGIN,separate));
+ for(const code of [
+  scoped.replace('this.worker=new Worker(url);','url=this.other;this.worker=new Worker(url);'),
+  scoped.replace('this.worker=new Worker(url);','{const url=this.other;this.worker=new Worker(url);}'),
+  creatorCode.replace('const src=', 'const URL=this.other;const src='),
+  creatorCode.replace('const src=', 'const Worker=this.other;const src='),
+ ])await assert.rejects(native(await fixture(ORIGIN,code)));
+});
 test('known byte literal alone never grants trust without loaded creator, native call sites and actual Worker observation',async()=>{
  const url='blob:'+ORIGIN+'/known';
  for(const change of [p=>p.creationStack=p.creationStack.replace('_startTimer','otherMethod'),p=>p.workerStack=p.workerStack.replace('_startTimer','otherMethod'),p=>p.workerOptions='explicit',p=>p.mime='application/javascript',p=>p.bytes.push(32)]){

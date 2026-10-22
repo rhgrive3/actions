@@ -6022,3 +6022,13 @@ particle/collision/gameplay assertions. These are local VM/source checks; native
 hosted rendering and retail-device movement/paint parity remain separate and
 unconfirmed. Historical Explosher inverse QA remains scoped to its independently
 pinned common build, with a separate required current-head native smoke.
+
+#### 2026-10-23 hosted native QA follow-up
+
+The additional repairs affect comparison/fault harnesses, not public weapon,
+movement, damage or paint constants. Bloblobber QA keeps the actual retired
+shot state rather than dereferencing a cleared pool slot. Ranked QA drives the
+existing Match intro clock before waiting for DOM presentation; existing scoring
+and 30/60/120Hz comparisons remain required. The reference remains Splatoon 3
+Ver.11.3.0. Local VM/emitted checks are separate from hosted native rendering
+and do not establish retail or physical-device parity.

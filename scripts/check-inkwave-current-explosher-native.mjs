@@ -11,7 +11,7 @@ import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const [siteArg,outArg,expectedHead]=process.argv.slice(2);
 assert.match(expectedHead||'',/^[a-f0-9]{40}$/);
-const git=(...args)=>execFileSync('git',['-C',root,...args]);
+const git=(...args)=>execFileSync('git',['-C',root,...args],{maxBuffer:64*1024*1024});
 assert.equal(git('rev-parse','HEAD').toString().trim(),expectedHead);
 const site=path.resolve(siteArg),out=path.resolve(outArg),hash=b=>createHash('sha256').update(b).digest('hex');
 const build=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
