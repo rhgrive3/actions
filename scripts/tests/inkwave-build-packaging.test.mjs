@@ -44,6 +44,7 @@ const auditedBuildExports = new Map([
   ['patches/local-quality/medal-adapter.mjs', ['replaceOnce', 'S3_AWARDS', 'S3_PRIORITY_RANKS', 'S3_AWARD_ORDER']],
   ['patches/local-quality/minimap-resource-adapter.mjs', ['replaceOnceMinimap']],
   ['patches/local-quality/showcase-alpha-adapter.mjs', ['selectShowcaseAlphaTarget']],
+  ['patches/local-quality/static-menu-adapter.mjs', ['deferPrimaryWeaponIcon']],
   ['patches/local-quality/team-special-signal-adapter.mjs', []],
   ['patches/local-quality/texlib-adapter.mjs', ['replaceOnceTexlib']],
   ['patches/reliability/map-look.mjs', []],
