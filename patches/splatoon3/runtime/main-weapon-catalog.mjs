@@ -802,9 +802,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           if(blobSweepOrder>0)blobSweepFrames+=finite(u.AfterOffsetDelayFrame,0);
           blobSweepOrder++;
         }
+        // Source WeaponParam.FrameOffsetDegreeRate is a *multiplier* for
+        // Slosher sweeping angles (Japanese S3 parameter verification Wiki).
+        // Bloblobber overrides it to 0.3; other sourced Sloshers keep the
+        // existing native policy. The 10-degree per-tick upper bound is
+        // applied to the raw camera step before this actor-specific rate.
         const yaw=finite(u.BaseRotateYDegree,0)+fan+
           (r.sourceActor==='WeaponSlosherBathtub'
-            ?bloblobberSweepOffset(s.bloblobberYawStep,blobSweepFrames)/RAD:0);
+            ?bloblobberSweepOffset(s.bloblobberYawStep,blobSweepFrames)*
+              finite(weaponParam(r).FrameOffsetDegreeRate,1)/RAD:0);
         const aim=angle(direction,yaw,finite(u.SpawnRotateXDegree,finite(u.SpawnRotateXDegreeBase,0)));
         const d={...desc,index:i};
         const sourceLiftRate=finite(u.AddSpawnSpeedYRateByXZ,finite(u.AddSpawnSpeedYRateBySpeed,0));
