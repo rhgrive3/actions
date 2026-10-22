@@ -218,7 +218,10 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     const age = t - observed.motionTime;
     const stationary = isAndroid() && observed.stationaryMotion && age >= 0 && age <= 75;
     const yaw = this.dYaw, pitch = this.dPitch;
-    const s=observed,hadQ=this._hasQ,previousTime=this._tQ;s.event={kind:'orientation',time:t};
+    const s=observed,hadQ=this._hasQ,previousTime=this._tQ,previousEvent=s.event,depth=s.eventDepth||0;
+    // Reuse internal metadata only. Never retain or replace the browser event.
+    const events=s.eventSlots||(s.eventSlots=[]),event=events[depth]||(events[depth]={kind:'',time:0});
+    event.kind='orientation';event.time=t;s.event=event;s.eventDepth=depth+1;
     try {
       const result=orientation.call(this,e);
       if(this._hasQ && this._tQ===t && (!hadQ || t>previousTime)){
@@ -234,7 +237,7 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
         this.dYaw = yaw; this.dPitch = pitch; this._sm.y = this._sm.p = 0;
       }
       return result;
-    } finally { s.event=null; }
+    } finally { s.event=previousEvent;s.eventDepth=depth; }
   };
   P._motion = function (e) {
     if (!this.enabled || !lifecycle.active || !lifecycle.focused || !finiteEvent(e.rotationRate, ['alpha', 'beta', 'gamma'])) return;
@@ -250,13 +253,14 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     // Any sample above this gate still takes the native orientation path.
     s.stationaryMotion = Math.hypot(e.rotationRate.alpha, e.rotationRate.beta, e.rotationRate.gamma) <= STILL_DEG;
     if (this._src !== 'ori' && (isAndroid() || !gyroRateTrusted(this, e.rotationRate, t))) fallback(this, 'untrusted-motion');
-    s.event={kind:'motion',time:t};
+    const previousEvent=s.event,depth=s.eventDepth||0,events=s.eventSlots||(s.eventSlots=[]),event=events[depth]||(events[depth]={kind:'',time:0});
+    event.kind='motion';event.time=t;s.event=event;s.eventDepth=depth+1;
     try {
       // As in #524, the initial sub-2ms burst keeps the adoption origin until
       // the first native accepted sample, rather than accumulating skipped gaps.
       if(this._src!=='ori' && s.rawPendingBoundary!=null && s.boundary?.time===s.rawPendingBoundary)this._tRR=s.rawPendingBoundary;
       return motion.call(this,e);
-    }finally{s.event=null;}
+    }finally{s.event=previousEvent;s.eventDepth=depth;}
   };
   // #615 stationary stability calibration. Only the raw rotationRate path can
   // hold a zero-rate offset; the attitude path integrates no bias. Learn the

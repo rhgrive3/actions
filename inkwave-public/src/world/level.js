@@ -124,6 +124,27 @@ export class Level {
   _hxi(x) { return Math.max(0, Math.min(this.hw - 1, Math.floor((x - this.hx0) / this.hashCell))); }
   _hzi(z) { return Math.max(0, Math.min(this.hd - 1, Math.floor((z - this.hz0) / this.hashCell))); }
 
+  // Borrow the exact single-cell candidate order for each vertical foot ray.
+  // One-cell footprints share a bucket without stamps or nine array copies.
+  // Recomputed every probe; dynamic hash rebuilds cannot leave stale buckets.
+  queryGroundColumns(x, z, foot, ring, out) {
+    if (this.constructor !== Level || this.queryBlocks !== Level.prototype.queryBlocks ||
+        this._hxi !== Level.prototype._hxi || this._hzi !== Level.prototype._hzi ||
+        !Number.isFinite(x) || !Number.isFinite(z) || !Number.isFinite(foot)) return null;
+    const extent = Math.abs(foot), x0 = this._hxi(x - extent), x1 = this._hxi(x + extent);
+    const z0 = this._hzi(z - extent), z1 = this._hzi(z + extent);
+    out.length = ring.length + 1;
+    if (x0 === x1 && z1 === z0) {
+      const cell = this.hash[z0 * this.hw + x0];
+      for (let i = 0; i < out.length; i++) out[i] = cell;
+    } else {
+      out[0] = this.hash[this._hzi(z) * this.hw + this._hxi(x)];
+      for (let i = 0; i < ring.length; i++) out[i + 1] = this.hash[
+        this._hzi(z + ring[i][1] * foot) * this.hw + this._hxi(x + ring[i][0] * foot)];
+    }
+    return out;
+  }
+
   // Unique block ids whose hash cells overlap the XZ rectangle.
   queryBlocks(minX, minZ, maxX, maxZ, out) {
     out.length = 0;
