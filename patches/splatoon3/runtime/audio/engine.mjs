@@ -235,9 +235,12 @@ export function installWeaponAudioEngine(Engine){
   };
   p.prewarmChargerChargeRise=function(duration){
     if(!this.ctx)return false;
-    chargerRiseBuffer(this.ctx,duration);
-    return true;
+    try{chargerRiseBuffer(this.ctx,duration);return true;}
+    catch{return false;} // Unsupported / memory-limited context cannot break weapon admission.
   };
-  p.playChargerChargeRise=function(options){return playChargerRise(this,options);};
+  p.playChargerChargeRise=function(options){
+    try{return playChargerRise(this,options);}
+    catch{return null;} // Silence the optional modeled rise if buffer creation fails.
+  };
   p.disposeWeaponAudio=function(){this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmWeapons?.clear();};
 }
