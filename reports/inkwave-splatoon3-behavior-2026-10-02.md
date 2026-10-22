@@ -5835,3 +5835,10 @@ CPU回帰の成功は物理GPU/実機性能の受け入れではない。Splatoo
 
 
 最終確認: runtime `df83a5c4265a9c8738d930dabaffb43cd31ae902` / build contentHash `7b0b597f308f86d2d9607e2a5e0e5f122fa7e0a7435810512039de7014565533` の総合active browserが成功した。65 canonical kit、14 defaults、装備12select、実キーボード移動・接地・射撃/塗り、20Hz時の3秒進行、finite velocity、752 responseの同一性とpage errors 0を確認した。実music Workerの作成元・97-byte body/hash・cleanupを含むnative試験7件、過去の固定gate20件、追加source admission24件も通過した。これはChromium 153 / SwiftShaderでの公開版の回帰確認であり、物理端末FPSやSwitch実機・完了動画の受け入れではない。GitHub上のCI待機は別に残る。
+
+
+## 2026-10-22: 表示名・振動・ロッカーの追加復旧
+
+main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、翻訳辞書の継承プロパティに一致するプレイヤー名が壊れる問題、機器切替後に古い強振動の優先状態が残る問題、ロッカー背景描画失敗後のrenderer状態漏れを修正する。表示名は修正前後のChromium実DOM比較、振動は合成Inputのactuatorコマンド記録、ロッカーは元例外・target/cube面/mipの失敗注入回帰と最適化生成物で確認した。
+
+既存の振動時間・振幅・入力所有権、正常な描画構成、ゲームの移動・射撃・塗りの数値は保持する。Splatoon 3 Ver.11.3.0の比較条件を継承するが、本家の振動仕様・実機の触感・Switchとの描画一致は未確認。ブラウザの本文転送期限修正も含む再現・コマンド・制約は [追加の検証記録](reliability-more-20261022/README.md) を参照。
