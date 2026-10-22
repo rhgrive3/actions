@@ -23,7 +23,7 @@ const magnitude = a => Math.hypot(...a);
 const now = () => performance.now() / 1000;
 const matchIdOk = (nm,d) => typeof nm.cfg?.id === 'string' && d?.m === nm.cfg.id;
 function state(nm) {
-  return nm._combatProvenance ||= { proofs:new Map(), pending:new Map(), contacts:new Map() };
+  return nm._combatProvenance ||= { proofs:new Map(), pending:new Map(), contacts:new Map(), contactSnapshots:new Map() };
 }
 function prune(s,t) {
   for(const [peer,arr] of s.proofs) {
@@ -337,6 +337,35 @@ export function claimCeiling(actor,d,type,table=COMBAT_HIT_CEILINGS) {
 function withinCeiling(nm,actor,d,type) {
   return finite(d?.d)&&d.d<=claimCeiling(actor,d,type,nm._combatHitCeilings)+CEILING_SLACK;
 }
+// Contact authority comes only from a row actually installed by native _tick,
+// not peer arrival timestamps (which advance before row validation).
+function recordContactSnapshots(nm,from,packet,t) {
+  const peer=nm.peers?.get(from),points=peer?.physicsPoints;
+  if(packet.u!==undefined && (!points || points.at(-2)!==packet.ts || points.at(-1)!==packet.u))return;
+  const receipts=state(nm).contactSnapshots;
+  if(!Array.isArray(packet.a))return;
+  for(const row of packet.a) {
+    const actor=ownerActor(nm,from,row?.[0]),snap=actor?.net?.buf?.at(-1);
+    if(!actor || actor.weapon?.kind!=='roller' || snap?.t!==packet.ts)continue;
+    let receipt=receipts.get(actor);
+    if(!receipt){receipt={origin:[0,0,0]};receipts.set(actor,receipt);}
+    receipt.owner=from;receipt.at=t;receipt.ts=packet.ts;receipt.life=snap.life;receipt.tp=snap.tp;
+    receipt.rolling=!!(snap.f&256)&&!!(snap.f&1);
+    receipt.origin[0]=snap.x;receipt.origin[1]=snap.y;receipt.origin[2]=snap.z;
+  }
+}
+function contactSnapshotFresh(nm,from,a,t) {
+  const receipt=state(nm).contactSnapshots.get(a);
+  return !!receipt && receipt.owner===from && receipt.life===Math.max(a?.netLife??0,a?.net?.lastLife??0) &&
+    finite(t-receipt.at) && t>=receipt.at && t-receipt.at<=PROOF_AGE;
+}
+function requiresEarnedProof(nm,from,d,type,t) {
+  const a=ownerActor(nm,from,d.a);
+  if(a?.weapon?.kind!=='roller' || !(d.w==='roller' || (type==='boss'&&d.c>=0&&d.w==='crab')))return false;
+  const receipt=state(nm).contactSnapshots.get(a),target=actualTarget(nm,type,d),here=point(a);
+  return !contactSnapshotFresh(nm,from,a,t) || !receipt.rolling || !v3(target) ||
+    !v3(receipt.origin) || dist(receipt.origin,target)>4.0 || !v3(here) || dist(here,target)>4.0;
+}
 function contactProof(nm,from,d,type,t,target) {
   const a=ownerActor(nm,from,d.a),w=a?.weapon;
   if(!a || !equippedCause(a,d,type))return false;
@@ -345,7 +374,9 @@ function contactProof(nm,from,d,type,t,target) {
   // Roller contact has no projectile or fire-event packet. Require the
   // owner snapshot's currently observed rolling flag and a realistic target.
   if(w.kind!=='roller' || (d.w!=='roller' && !(type==='boss' && d.c>=0 && d.w==='crab')))return false;
-  if(!((a.net?.cur?.f??0)&256) && !a.weaponRunner?.rolling)return false;
+  const receipt=state(nm).contactSnapshots.get(a);
+  if(!receipt || receipt.owner!==from || !receipt.rolling || receipt.life!==Math.max(a.netLife??0,a.net?.lastLife??0) || !v3(receipt.origin) || dist(receipt.origin,target)>4.0 ||
+    !finite(t-receipt.at) || t<receipt.at || t-receipt.at>PROOF_AGE)return false;
   const s=state(nm),key=[type,from,d.a,type==='pvp'?d.v:d.c].join(':');
   if(t-(s.contacts.get(key)?.at??-Infinity)<.45)return false;
   s.contacts.set(key,{at:t});
@@ -375,7 +406,7 @@ function oversizedPvpSpecial(d,type) {
   return type==='pvp' && ((d?.w==='storm' && d.d>160) ||
     (d?.w==='krakenRoyale' && d.d>120));
 }
-function take(nm,from,d,type,t,sprinklerScope=null) {
+function take(nm,from,d,type,t,sprinklerScope=null,allowPoseFallback=true) {
   if(oversizedPvpSpecial(d,type))return false;
   const actor=ownerActor(nm,from,d.a),target=actualTarget(nm,type,d);
   if(!actor || !v3(target) || !equippedCause(actor,d,type) || !withinCeiling(nm,actor,d,type))return false;
@@ -428,6 +459,7 @@ function take(nm,from,d,type,t,sprinklerScope=null) {
     p.uses++;
     return true;
   }
+  if(!allowPoseFallback)return false;
   if(contactProof(nm,from,d,type,t,target))return true;
   if(specialProof(nm,from,d,type,t,target))return true;
   return false;
@@ -451,15 +483,16 @@ function enqueue(nm,from,d,type,t) {
   const claim=type==='pvp' ? {k:'hit',m:d.m,a:d.a,v:d.v,l:d.l,h:d.h,seq:d.seq,
     d:d.d,w:d.w,g:d.g,kb:d.kb,bg:d.bg}
     : {k:'bhit',m:d.m,a:d.a,d:d.d,weak:d.weak,w:d.w,c:d.c,l:d.l,q:d.q};
-  arr.push({type,d:claim,at:t,sprinklerScope:d.w==='sprinkler'?receiverSprinklerScope(nm,from,d.a):null});
+  // Receiver-only queue metadata: packet fields cannot grant fallback authority.
+  arr.push({type,d:claim,at:t,proofOnly:requiresEarnedProof(nm,from,d,type,t),sprinklerScope:d.w==='sprinkler'?receiverSprinklerScope(nm,from,d.a):null});
   s.pending.set(from,arr);
 }
-export function combatAdmission(nm,from,d,type,t=now(),sprinklerScope=null) {
+export function combatAdmission(nm,from,d,type,t=now(),sprinklerScope=null,allowPoseFallback=true) {
   if(!nm || nm._disposed || !d || (type!=='boss'&&type!=='pvp'))return false;
   const s=state(nm);prune(s,t);
   const a=ownerActor(nm,from,d.a);
   if(!a || !matchIdOk(nm,d) || !safe(d[type==='pvp'?'h':'q']) || d[type==='pvp'?'h':'q']<1)return false;
-  return take(nm,from,d,type,t,sprinklerScope);
+  return take(nm,from,d,type,t,sprinklerScope,allowPoseFallback);
 }
 function flush(nm,from,t,oldHit,oldBoss,receiptAllowed) {
   const s=state(nm),items=s.pending.get(from);
@@ -467,8 +500,12 @@ function flush(nm,from,t,oldHit,oldBoss,receiptAllowed) {
   const still=[];
   for(const item of items) {
     if(t-item.at>PENDING_AGE)continue;
+    // A fresh direct retry may already have delivered this queued ID. Retire
+    // it before consuming another proof; native exact-ID history is authoritative.
+    if(item.type==='pvp' && nm.peers?.get(from)?.hitSequences?.has(item.d.h))continue;
+    if(item.type==='boss' && item.d.q<=(nm.peers?.get(from)?.lastBossHit??0))continue;
     if(item.type==='pvp'&&(item.d.w==='sprinkler'||item.d.w==='torpedo-splash')&&(typeof receiptAllowed!=='function'||!receiptAllowed.call(nm,item.d,from)))continue;
-    if(!combatAdmission(nm,from,item.d,item.type,t,item.sprinklerScope)) {still.push(item);continue;}
+    if(!combatAdmission(nm,from,item.d,item.type,t,item.sprinklerScope,!item.proofOnly)) {still.push(item);continue;}
     if(item.type==='pvp')oldHit.call(nm,item.d,from);
     else if(oldBoss?.call(nm,from,item.d))nm.match.boss.remoteHit(item.d);
   }
@@ -497,6 +534,7 @@ export function installCombatProvenance(NetMatch,context={}) {
     if(this.peers?.get(from)?.lastTs===d?.ts && finite(d.ts) && d.ts>before) {
       const t=now();
       sampleLocalHistory(this,t);
+      recordContactSnapshots(this,from,d,t);
       record(this,from,d,t);
       flush(this,from,t,oldHit,oldBoss,context.hitReceiptAllowed);
     }
@@ -533,13 +571,14 @@ export function installCombatProvenance(NetMatch,context={}) {
     if(changed)closeSubBirthCommit(this);
     const s=this._combatProvenance;
     s?.proofs.delete(id);s?.pending.delete(id);
-    if(changed){s?.proofs.clear();s?.pending.clear();s?.contacts.clear();s?.history?.clear();}
+    if(s?.contactSnapshots)for(const [actor,r] of s.contactSnapshots)if(r.owner===id)s.contactSnapshots.delete(actor);
+    if(changed){s?.proofs.clear();s?.pending.clear();s?.contacts.clear();s?.contactSnapshots.clear();s?.history?.clear();}
     return oldLeave.call(this,id,changed);
   };
   P.dispose=function(...args) {
     closeSubBirthCommit(this);
     const s=this._combatProvenance;
-    s?.proofs.clear();s?.pending.clear();s?.contacts.clear();s?.history?.clear();
+    s?.proofs.clear();s?.pending.clear();s?.contacts.clear();s?.contactSnapshots.clear();s?.history?.clear();
     this._combatProvenance=null;
     return oldDispose.apply(this,args);
   };
