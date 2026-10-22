@@ -1,5 +1,18 @@
 # INKWAVE：Ver.11.3.0 全65メインブキ・挙動差異監査（2026-10-22）
 
+## 実装追跡更新（2026-10-22、監査基準以後）
+
+監査時点のコードには以下の不一致が存在したが、その後のmainに修正コミットが取り込まれた。**下の表は監査時点のスナップショット**であり、現在のmainでの未修正リストではない。
+
+| 修正PR | main squash SHA | 対応したIssue | 修正コード |
+| --- | --- | --- | --- |
+| [#1818](https://github.com/rhgrive3/actions/pull/1818) | `51202ac3c439c20b4c45c8d9a47426c0867ec54f` | #1804, #1806, #1810, #1813 | 塗り専用の攻撃禁止、ダイナモ0倍、ローラー内外角の威力、滞空時間減衰 |
+| [#1819](https://github.com/rhgrive3/actions/pull/1819) | `eb1a83c4ff2f1bdbebad53933bb68385ce6992dc` | #1805, #1808, #1809, #1811, #1812 | 粒の射出角、上下照準、ヒッセン/モップリン散布角、フデ交互振り、足元塗り |
+| [#1822](https://github.com/rhgrive3/actions/pull/1822) | `6128816256796155684c0ff567ada71e2850fe38` | #1807 | ローラー/フデ低インク時の減弾、減速、当たり判定・塗り幅縮小、同期マーカー |
+
+3修正PRはいずれもGitHub上でマージ済み。**Actionsの本番構成実射テスト・Pages公開はまだ実行待ち**。ソース差異の実装上の解消と、本家Switch実機との完全一致は別の検証である。本家の確定しない係数（特に #1813 の値の意味、#1812 の照準収束、原始エンジンの弾道式）は実機比較で裏付ける必要がある。
+
+
 **監査基準HEAD:** `144923aefc282a588225ac44de3da95762653add`（`rhgrive3/actions` main）
 **リリース参照:** pinned [Leanny/splat3 11.3.0 source JSON](https://github.com/Leanny/splat3/tree/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon)
 **実装:** `inkwave-public/` ＋ `patches/splatoon3/runtime/` ＋ 既存のnativeブキ owner
