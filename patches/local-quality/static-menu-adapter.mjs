@@ -64,7 +64,7 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
     // never-drawn bot rigs just to idle behind it; restore the full demo only
     // if the player actually opens the animated title screen.
     code = replaceOnce(code, '  _startAttract() {',
-      '  _startAttract({ staticMenu = false } = {}) {\n    this._staticMenuAttract = !!staticMenu;',
+      '  _startAttract() {\n    this._staticMenuAttract = !!arguments[0]?.staticMenu;',
       'static return: attract signature');
     code = replaceOnce(code,
       '      noBots: mapNoBots(this.mapDef?.id) || isRangeMap(this.mapDef), mannequins: DEV_STAGE }));',

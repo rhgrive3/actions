@@ -13,7 +13,7 @@ const composed = (rel) => adaptBuildSource(rel,
 
 test('offline and network match exits do not build 8 unseen bots under static art', () => {
   const main = composed('src/main.js');
-  assert.match(main, /_startAttract\(\{ staticMenu = false \} = \{\}\)/);
+  assert.match(main, /_startAttract\(\) \{\n    this\._staticMenuAttract = !!arguments\[0\]\?\.staticMenu;/);
   assert.match(main, /noBots: this\._staticMenuAttract \|\| mapNoBots\(/);
   assert.match(main, /mannequins: !this\._staticMenuAttract && DEV_STAGE/);
   assert.equal((main.match(/this\._startAttract\(\{ staticMenu: true \}\)/g) || []).length, 2,
