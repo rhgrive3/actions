@@ -13,6 +13,7 @@ import {WebSocketServer} from 'ws';
 import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
 import {installCombatPlacementQA,advanceUntilNativeShotProof,advanceUntilNativePlacement} from './lib/inkwave-combat-ceiling-placement.mjs';
 import {verifyRuntimeBuild, persistentDirectory, hash} from './lib/inkwave-runtime-evidence.mjs';
+import {collectOpeningPeerDiagnostics} from './lib/inkwave-opening-peer-diagnostic.mjs';
 import {serveProjectileCaptureFile} from './lib/inkwave-projectile-http-file.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const option=(name,fallback)=>{const i=process.argv.indexOf(name);return i<0?fallback:process.argv[i+1];};
@@ -23,7 +24,7 @@ assert.equal(option('--source-sha',sourceSha),sourceSha,'checkout must equal req
 const build=verifyRuntimeBuild(site,ROOT,sourceSha);
 assert.equal(build.schema,1);assert.equal(hash(JSON.stringify(build.files)),build.inputHash);
 const self=fileURLToPath(import.meta.url),selfRelative=path.relative(ROOT,self);
-for(const file of [selfRelative,'scripts/lib/inkwave-combat-ceiling-placement.mjs','scripts/lib/inkwave-local-relay-fixture.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/lib/inkwave-projectile-http-file.mjs','server/src/index.js']){
+for(const file of [selfRelative,'scripts/lib/inkwave-opening-peer-diagnostic.mjs','scripts/lib/inkwave-combat-ceiling-placement.mjs','scripts/lib/inkwave-local-relay-fixture.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/lib/inkwave-projectile-http-file.mjs','server/src/index.js']){
  const actual=execFileSync('git',['hash-object','--',file],{cwd:ROOT,encoding:'utf8'}).trim();
  const expected=execFileSync('git',['rev-parse',sourceSha+':'+file],{cwd:ROOT,encoding:'utf8'}).trim();
  assert.equal(actual,expected,'QA/relay source must match head: '+file);
@@ -84,6 +85,7 @@ try {
  await host.waitForFunction(()=>__G.net.canStart());assert.equal(await host.evaluate(()=>__G.net.start()),true);
  await Promise.all(pages.map(p=>p.waitForFunction(()=>{const G=__G,g=__inkwave,m=g.match,n=G.net;return G.mode==='match'&&m===G.match&&m?.state==='playing'&&!m.attract&&m.local?.isLocal&&m.controller&&n.active&&n._setupReady&&G.netm===n.match&&G.netm.match===m&&m.actors.length===2;},null,{timeout:240000})));
  report.phase='native-opening-spawn';
+ report.openingPeers={start:await collectOpeningPeerDiagnostics(pages)};
  // Playing starts before the opening Squid Spawn finishes. Leave the real game
  // running until both owners land and their proxies adopt the completed phase.
  const spawnStarts=await Promise.all(pages.map(p=>p.evaluate(()=>__G.time)));
@@ -263,6 +265,7 @@ try {
  report.status='passed';report.phase='complete';
 } catch(error) {
  report.status='failed';report.error=String(error.stack||error);process.exitCode=1;
+ if(report.openingPeers)report.openingPeers.failure=await collectOpeningPeerDiagnostics(pages);
  try{if(pages[1])report.shot=await pages[1].evaluate(()=>{const q=window.__ceilingShot;return q?{initial:q.initial,removal:q.removal,steps:q.steps}:null;});}catch{}
  try{if(pages[1])report.placementDiagnostic=await pages[1].evaluate(()=>{
   const G=window.__G,n=x=>Number.isFinite(x)?x:null,xyz=p=>p?[n(p.x),n(p.y),n(p.z)]:null;
@@ -332,6 +335,7 @@ const failure = report.status === 'failed' ? {
   ready: report.placementAdvance.ready===true,
  } : null,
  placement: report.placementDiagnostic||null,
+ openingPeers: report.openingPeers||null,
  browserErrorCount: errors.length,
 } : undefined;
 console.log(JSON.stringify({status:report.status,sourceSha,phase:report.phase,evidence,failure}));
