@@ -1,3 +1,5 @@
+import{extendPreparedCapturePhases}from'./capture-phase-driver.mjs';
+import{prepare as prepareRawEquality}from'./raw-equality-driver.mjs';
 import{preparePostprocessDiagnostic,verifyPostprocessBodies}from'./postprocess-driver.mjs';
 import{createHash}from'node:crypto';
 import test from'node:test';import assert from'node:assert/strict';import fs from'node:fs';import path from'node:path';import{fileURLToPath,pathToFileURL}from'node:url';
@@ -28,11 +30,11 @@ test('generated paired launch uses actual executable and leaves normal launch un
 test('substituted or missing diagnostic launch boundary rejects',()=>{assert.throws(()=>bindDiagnosticDriver('changed launch',driver));});
 const runnerSource=fs.readFileSync(new URL('./run.mjs',import.meta.url),'utf8');
 const fnStart=runnerSource.indexOf('export function runAaPreflight('),fnEnd=runnerSource.indexOf('\nif(process.argv[1]',fnStart);
-const getActualRun=spawn=>Function('fs','path','assert','createHash','execFileSync','fileURLToPath','pathToFileURL','prepareAaRunner','prepareSequencedDriver','bindDiagnosticDriver','assertGeneratedEvidence','PAIR_SHA256','process','resolvePlaywright','preparePostprocessDiagnostic','verifyPostprocessBodies',
+const getActualRun=spawn=>Function('fs','path','assert','createHash','execFileSync','fileURLToPath','pathToFileURL','prepareAaRunner','prepareSequencedDriver','bindDiagnosticDriver','assertGeneratedEvidence','PAIR_SHA256','process','resolvePlaywright','preparePostprocessDiagnostic','verifyPostprocessBodies','extendPreparedCapturePhases','prepareRawEquality',
  'return '+runnerSource.slice(fnStart,fnEnd).replace('export function','function').replace('import.meta.url',JSON.stringify(new URL('./run.mjs',import.meta.url).href)).replace("import.meta.resolve('playwright')","resolvePlaywright()"))(
  fs,path,assert,createHash,spawn,fileURLToPath,pathToFileURL,prepareAaRunner,
  (body,actualBindings)=>{assert.equal(body,canonical);assert.equal(actualBindings['./lib/inkwave-runtime-evidence.mjs'],pathToFileURL(path.join(qa,'scripts/lib/inkwave-runtime-evidence.mjs')).href);assert.equal(actualBindings.playwright,bindings.playwright);return prepared;},
- bindDiagnosticDriver,assertGeneratedEvidence,'723b9df56eeb2ec0b37572d1466e7cca2754a36032d5b79a35330aeb9cc8c603',{cwd:()=>qa,execPath:process.execPath},()=>bindings.playwright,preparePostprocessDiagnostic,verifyPostprocessBodies);
+ bindDiagnosticDriver,assertGeneratedEvidence,'723b9df56eeb2ec0b37572d1466e7cca2754a36032d5b79a35330aeb9cc8c603',{cwd:()=>qa,execPath:process.execPath},()=>bindings.playwright,preparePostprocessDiagnostic,verifyPostprocessBodies,extendPreparedCapturePhases,prepareRawEquality);
 test('actual wrapper writes verified driver and launch provenance before exact AA child spawn',()=>{
  const out=path.join(root,'actual-wrapper-launch');let count=0;
  getActualRun((executable,args,options)=>{count++;assert.equal(executable,process.execPath);assert.deepEqual(args,[path.join(out,'aa-paired-runner.mjs'),path.resolve('site'),path.resolve('source'),path.resolve('overlay'),out,'--settled-aa-diagnostic']);assert.deepEqual(options,{stdio:'inherit',timeout:660000});const evidence=JSON.parse(fs.readFileSync(path.join(out,'runner-provenance.json')));assert.equal(evidence.generatedFrameSha256,sha256(fs.readFileSync(evidence.generatedFramePath)));assert.equal(evidence.generatedFramePath,path.join(out,'settled-native-frame.mjs'));assert.equal(evidence.diagnosticChildLaunches.length,2);for(const item of evidence.diagnosticChildLaunches){assert.deepEqual(item.argv,[evidence.generatedFramePath,path.resolve('site'),path.resolve('source'),path.resolve('overlay'),path.join(out,item.lane),'A','--settled-diagnostic']);assert.equal(item.timeoutMs,300000);}assert.ok(fs.readFileSync(args[0],'utf8').includes(JSON.stringify(evidence.generatedFramePath)));})('site','source','overlay',out);assert.equal(count,1);
