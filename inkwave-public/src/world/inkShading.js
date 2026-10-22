@@ -144,6 +144,20 @@ export const INK_COLOR = /* glsl */`
     gInkKeep = wallF ? 0.32 * (1.0 - 0.5 * fresh) : 0.0;
     vec2 gradA = vec2(gX.a, gY.a);
     gInkD = gradA * 2.0 * (1.0 - s) * 1.7 * 1.9 * gInk * thick;
+    // every splat is its own blob of gel: where one overlaps another (a step in the per-splat tone) the surface steps
+    // over a rounded rim, so reflections trace the splat outlines across a field as on Splatoon 3 turf. The outline is
+    // only a texel or so wide in the atlas, so its slope is read across a 3-texel span of mip 1 (no staircase), close up
+    // and only where a tone step is in reach; saturated in the step size so near-equal tones still show their rim.
+    vec2 gTn = vec2(0.0);
+    if (near > 0.0 && abs(l2.b / max(l2.a, 1e-3) - tone) > 0.0015) {
+      vec2 du = vec2(1.5 / uAtlasSize, 0.0), dv = vec2(0.0, 1.5 / uAtlasSize);
+      vec4 t0 = textureLod(uPaint, vPaintUv + du, 1.0), t1 = textureLod(uPaint, vPaintUv - du, 1.0);
+      vec4 t2 = textureLod(uPaint, vPaintUv + dv, 1.0), t3 = textureLod(uPaint, vPaintUv - dv, 1.0);
+      gTn = vec2(t0.b / max(t0.a, 1e-3) - t1.b / max(t1.a, 1e-3),
+                 t2.b / max(t2.a, 1e-3) - t3.b / max(t3.a, 1e-3)) * (near / 3.0);
+    }
+    float gTnl = length(gTn);
+    gInkD += gTn / (gTnl + 0.05) * 2.4 * smoothstep(0.003, 0.02, gTnl) * hs * gInk * thick;
     // where the two teams' inks meet: the newer (wetter) ink rides over the older one on a rounded lip; two inks of
     // the same age meet in a soft crease between their rounded edges
     vec2 gT = (vec2(gX.r, gY.r) - tRaw * gradA) * ia;       // d(team share) per texel
@@ -163,9 +177,10 @@ export const INK_COLOR = /* glsl */`
     }
     vec3 team = mix(uTeamA, uTeamB, tm);
     vec3 inkCol = team * (0.93 + 0.13 * tone);
-    // translucent thin lip reads lighter and a touch more saturated; the thick body a little deeper
+    // the thin lip only a shade lighter (Splatoon 3 ink keeps its colour right to the edge); the thick body a little
+    // deeper
     float lip = (1.0 - hs) * near;
-    inkCol = mix(inkCol, inkCol * 1.16 + team * 0.05, lip * 0.35);
+    inkCol = mix(inkCol, inkCol * 1.16 + team * 0.05, lip * 0.1);
     inkCol *= 1.0 - 0.05 * hs;
     inkCol *= 1.0 - 0.3 * seamShadow * gInk;
     // fresh ink: a touch brighter + richer for the first moments, settling to its dry colour
@@ -195,8 +210,8 @@ export const INK_GEL = /* glsl */`
   if (gInk > 0.01) {
     // gel micro-surface: broad soft swells (≈ 1.5 m) so the sun and sky reflections break into long wet lines, as on
     // Splatoon 3 turf, not a grainy sparkle. Read three mips coarser than the pixel footprint (only the swells survive;
-    // fades to flat by itself at distance). Walls stretch it vertically. Fresh ink is smoother (surface tension) and sways very gently while it
-    // settles; settled ink shows a little more swell.
+    // fades to flat by itself at distance). Walls stretch it vertically. Fresh ink is smoother (surface tension) and
+    // sways very gently while it settles; settled ink shows a little more swell.
     vec2 gp = vFaceUv * (abs(vWNorm.y) < 0.5 ? vec2(0.19, 0.09) : vec2(0.16));
     float fr2 = gFresh * gFresh;
     gp += vec2(uTime * 0.011, -uTime * 0.007) + fr2 * 0.022 * vec2(sin(uTime * 2.3), cos(uTime * 1.9));
@@ -292,17 +307,19 @@ if (gInk > 0.0) {
 #if defined( USE_ENVMAP ) && defined( RE_IndirectSpecular ) && defined( USE_CLEARCOAT )
   // stylised wet reflections: pushed toward a neutral sheen so a blue sky never turns yellow ink olive, then tinted a
   // little by the pigment underneath (a thick coloured gel) so a grazing view keeps the team hue. The white highlights
-  // on Splatoon 3 turf are reflections: thin wavy lines where the swells sweep the mirror image across something brighter
-  // than the sky. Keyed against the mean sky brightness, a narrow band just above it (the edges of the clouds) comes
-  // through white and strong; the plain blue and the broad cloud cores stay a faint sheen, so the team colour stays
-  // clean between the lines instead of under pale patches.
+  // on Splatoon 3 turf are reflections: thin wavy lines where the swells and splat rims sweep the mirror image across
+  // something brighter than the sky. Keyed against the mean sky brightness, a narrow band just above it (the edges of
+  // the clouds) comes through white and strong; the plain blue and the broad cloud cores stay a faint sheen, so the
+  // team colour stays clean between the lines instead of under pale patches.
   {
     const vec3 LW = vec3(0.2126, 0.7152, 0.0722);
     float cl = dot(clearcoatRadiance, LW);
     vec3 tint = gInkCol / max(dot(gInkCol, LW), 1e-3);
     float skyMean = dot(iblIrradiance, LW) * RECIPROCAL_PI;
-    float rel = cl / max(skyMean, 1e-4);
-    float key = smoothstep(1.55, 1.65, rel) * (1.0 - smoothstep(1.9, 2.5, rel));
+    float rel = cl / max(skyMean, 1e-4), fr = fwidth(rel);
+    // pixel-filtered band: where it is thinner than a pixel it widens and fades instead of breaking into dots
+    float key = smoothstep(1.55 - fr, 1.65 + fr, rel) * (1.0 - smoothstep(1.9 - fr, 2.5 + fr, rel))
+              * min(1.0, 0.5 / max(fr, 1e-4));
     clearcoatRadiance = mix(clearcoatRadiance, mix(vec3(cl), cl * min(tint, vec3(2.5)), 0.3 * (1.0 - key)), 0.6 * gInk);
     clearcoatRadiance *= 1.0 + gInk * (5.0 * key + 0.3 * gFresh) + gWake * 0.7;
   }

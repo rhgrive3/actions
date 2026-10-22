@@ -1,6 +1,6 @@
 // Capture a live INKWAVE match (Tidewater turf, bots frozen) with a deterministic two-team paint field for ink-material
 // review: fresh and settled ink toward / across / away from the sun, optional sequential frames of a camera pan
-// (FRAMES=n) and a render-time sample (90 frames, one-pixel readback; PERF_ONLY=1 skips the images, NOPERF=1 skips timing).
+// (FRAMES=n) and a render-time sample (40 frames, one-pixel readback; PERF_ONLY=1 skips the images, NOPERF=1 skips timing).
 // usage: node scripts/capture-inkwave-ink-material.mjs <siteDir> <outDir> [port]
 // Software (SwiftShader) rendering: images are for side-by-side review, timings are not device performance.
 import fs from 'node:fs';
@@ -81,7 +81,7 @@ const perf = process.env.NOPERF ? null : await page.evaluate(() => {
   const g = P.game, gl = g.R.renderer.getContext(), px = new Uint8Array(4), t = [];
   const sync = () => gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
   for (let i = 0; i < 10; i++) { g._frame(1 / 60); sync(); }
-  for (let i = 0; i < 90; i++) { const t0 = performance.now(); g._frame(1 / 60); sync(); t.push(performance.now() - t0); }
+  for (let i = 0; i < 40; i++) { const t0 = performance.now(); g._frame(1 / 60); sync(); t.push(performance.now() - t0); }
   t.sort((a, b) => a - b); const q = p => t[Math.floor(p * (t.length - 1))];
   return { n: t.length, median: q(.5), p10: q(.1), p90: q(.9), mean: t.reduce((a, b) => a + b, 0) / t.length };
 });
