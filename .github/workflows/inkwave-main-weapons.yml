@@ -89,7 +89,7 @@ jobs:
       - name: Verify actual main-weapon input, resources, cadence and Roller fan
         run: |
           git rev-parse HEAD
-          node --experimental-vm-modules --test patches/splatoon3/tests/main-weapon-catalog.test.mjs patches/splatoon3/tests/issue-771-roller-speed-swerve.test.mjs patches/splatoon3/tests/catalog-projectile-vfx-range.test.mjs patches/splatoon3/tests/bloblobber-flat-45-audit.test.mjs patches/splatoon3/tests/bloblobber-launch-sweep.test.mjs patches/splatoon3/tests/catalog-explosher-aim-pitch.test.mjs patches/splatoon3/tests/catalog-flick-damage-source.test.mjs patches/splatoon3/tests/catalog-source-launch-1130.test.mjs
+          node --experimental-vm-modules --test patches/splatoon3/tests/main-weapon-catalog.test.mjs patches/splatoon3/tests/issue-771-roller-speed-swerve.test.mjs patches/splatoon3/tests/catalog-projectile-vfx-range.test.mjs patches/splatoon3/tests/bloblobber-flat-45-audit.test.mjs patches/splatoon3/tests/bloblobber-launch-sweep.test.mjs patches/splatoon3/tests/catalog-explosher-aim-pitch.test.mjs patches/splatoon3/tests/catalog-flick-damage-source.test.mjs patches/splatoon3/tests/catalog-source-launch-1130.test.mjs patches/splatoon3/tests/catalog-depletion-1130.test.mjs
       - name: Verify backward shot-release facing and source Hold gait
         run: node --experimental-vm-modules --test patches/splatoon3/tests/reverse-shot-release.test.mjs patches/splatoon3/tests/source-posture.test.mjs
       - name: Verify Roller swing and Curling bomb production paths
