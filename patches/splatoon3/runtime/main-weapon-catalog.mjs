@@ -809,8 +809,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         // applied to the raw camera step before this actor-specific rate.
         const yaw=finite(u.BaseRotateYDegree,0)+fan+
           (r.sourceActor==='WeaponSlosherBathtub'
-            ?bloblobberSweepOffset(s.bloblobberYawStep,blobSweepFrames)*
-              finite(weaponParam(r).FrameOffsetDegreeRate,1)/RAD:0);
+            ?bloblobberSweepOffset(s.bloblobberYawStep,blobSweepFrames,
+              finite(weaponParam(r).FrameOffsetDegreeRate,1),
+              finite(weaponParam(r).FrameOffsetMaxDegree,10))/RAD:0);
         const aim=angle(direction,yaw,finite(u.SpawnRotateXDegree,finite(u.SpawnRotateXDegreeBase,0)));
         const d={...desc,index:i};
         const sourceLiftRate=finite(u.AddSpawnSpeedYRateByXZ,finite(u.AddSpawnSpeedYRateBySpeed,0));
