@@ -63,8 +63,8 @@ async function setup(){const f=await fixture({fullRuntime:true,productionComposi
  export {NetMatch} from './inkwave-public/src/net/netmatch.js';
  export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs';
  export {installWeaponAudioRuntime} from './patches/splatoon3/runtime/audio/runtime.mjs';`});
- f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);const calls=[];f.G.audio={ctx:{},prepareWeapon(){},play(name,o){calls.push({legacy:true,name,o});},playWeapon(id,event,o){calls.push({id,event,o});},loopWeapon(id,event,o){calls.push({loop:true,id,event,o});return{playing:true,set(){},stop(){this.playing=false;}};},loop(){return{playing:true,set(){},stop(){this.playing=false;}};},duck(){}};
- f.installWeaponAudioRuntime(f.installedRuntime);f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};return {...f,calls};}
+ f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);const calls=[],rises=[];f.G.audio={ctx:{},prepareWeapon(){},play(name,o){calls.push({legacy:true,name,o});},playWeapon(id,event,o){calls.push({id,event,o});},playChargerChargeRise(options){const h={playing:true,options,stops:0,stop(){this.playing=false;this.stops++;}};rises.push(h);return h;},loopWeapon(id,event,o){calls.push({loop:true,id,event,o});return{playing:true,set(){},stop(){this.playing=false;}};},loop(){return{playing:true,set(){},stop(){this.playing=false;}};},duck(){}};
+ f.installWeaponAudioRuntime(f.installedRuntime);f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};return {...f,calls,rises};}
 test('all 65 actual Actor admission paths emit one weapon sound for each fire event, with no legacy shot',async()=>{
  const f=await setup();let fireCount=0;f.on('weapon:fire',()=>fireCount++);
  for(const r of Object.values(WEAPON_AUDIO)){
@@ -89,6 +89,8 @@ test('Charger onset occurs once on initial hold and again only after real stored
  const onsets=()=>f.calls.filter(c=>c.id===id&&c.event==='charge');
  assert.equal(onsets().length,1,'a continuous held charge emits a single click, not 160 repeated loops');
  assert.ok(onsets().every(c=>!c.loop),'the Charger clip must use playWeapon instead of loopWeapon');
+ assert.equal(f.rises.length,1,'one new in-repo charge-up voice begins beside the single recorded click');
+ assert.equal(f.rises[0].options.duration,a.weapon.chargeTime,'timbre duration follows weapon charge speed');
  assert.equal(f.calls.filter(c=>c.id===id&&c.event==='ready').length,1);
  assert.equal(a.weaponRunner._mainAudioState.loops.charge,undefined);
  // The actual S3 charger owner stores this structure while diving after
@@ -130,6 +132,7 @@ test('Charger onset occurs once on initial hold and again only after real stored
    'stored partial charge on Goo Tuber triggers one emergence cue');
  a.setWeapon('shooter');f.emit('actor:form',{actor:a,form:'kid'});
  assert.equal(onsets().length,2,'weapon switching clears Charger onset routing');
+ assert.ok(f.rises[0].stops>=1,'changing weapon stops any active rising tone');
 });
 
 test('all 14 actual sub admissions produce the corresponding sub sound',async()=>{
