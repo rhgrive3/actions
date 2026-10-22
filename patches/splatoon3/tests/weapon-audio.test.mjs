@@ -104,14 +104,15 @@ test('Charger onset occurs once on initial hold and again only after real stored
  a.weaponRunner.s3Stored=null;
  f.emit('actor:form',{actor:a,form:'kid'});
  assert.equal(onsets().length,2,'expired/cancelled charge keep is silent on resurfacing');
- // Scopes cannot legally enter S3 charge keep even if a malformed local
- // state object happens to claim that a full charge was saved.
- a.weapon.scoped=true;
- a.weaponRunner.s3Stored={charge:1,resurfaced:false};
- f.emit('actor:form',{actor:a,form:'squid'});
- f.emit('actor:form',{actor:a,form:'kid'});
- assert.equal(onsets().length,2,'scope must not play a fabricated charge-keep emergence click');
- a.weapon.scoped=false;
+ // A scoped model is not eligible for S3 charge-keep audio even if an
+ // invalid saved charge is injected. Keep the catalog weapon immutable.
+ const scoped=f.make('s3-charger-normalscope');
+ scoped.form='kid';scoped.isLocal=true;
+ scoped.weaponRunner.s3Stored={charge:1,resurfaced:false};
+ f.emit('actor:form',{actor:scoped,form:'squid'});
+ f.emit('actor:form',{actor:scoped,form:'kid'});
+ assert.equal(f.calls.filter(c=>c.id==='s3-charger-normalscope'&&c.event==='charge').length,0,
+   'scoped model must never play a fabricated charge-keep emergence click');
 
  a.setWeapon('shooter');f.emit('actor:form',{actor:a,form:'kid'});
  assert.equal(onsets().length,2,'weapon switching clears Charger onset routing');
