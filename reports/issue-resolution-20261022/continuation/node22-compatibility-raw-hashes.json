@@ -1,0 +1,61 @@
+{
+  "archive": "node22-compatibility-raw.tar.gz",
+  "bytes": 14418,
+  "sha256": "7ef8d9eb8f025faabf6fe7edc5725732d6b7da87fded076f3582585adfd225dc",
+  "members": [
+    {
+      "name": "SHASUMS256-latest-v22.x.txt",
+      "bytes": 3981,
+      "sha256": "c90c3f1478fda8308b22cc1a1b0dc536169196444e67ee8b5c582fd351d02bce"
+    },
+    {
+      "name": "SHASUMS256-v22.23.4.txt",
+      "bytes": 3981,
+      "sha256": "c90c3f1478fda8308b22cc1a1b0dc536169196444e67ee8b5c582fd351d02bce"
+    },
+    {
+      "name": "base-f9-qa72.json",
+      "bytes": 624,
+      "sha256": "18571ef1e3b618e22aa888ded93ffc68c4a622072f40f79ed0549b23297ab787"
+    },
+    {
+      "name": "base-f9-qa72.tap",
+      "bytes": 15809,
+      "sha256": "c7ec6beae1f7777456d0a605279654d5f7911c4858e18ec73110d00b1f616b43"
+    },
+    {
+      "name": "download-receipt.json",
+      "bytes": 688,
+      "sha256": "cec079674084007b420e28a57068c8fe038f73223f3e01d0804626d51d695a58"
+    },
+    {
+      "name": "node-runtime.json",
+      "bytes": 1065,
+      "sha256": "a890c4758618fa8f74df20831a08d432487bfa68f6deaaf04e970431ef6fe532"
+    },
+    {
+      "name": "receipt.json",
+      "bytes": 7950,
+      "sha256": "f769de75b8cdeedec0a85dd08339c52fd19917020d7fd906824ca565f951aa97"
+    },
+    {
+      "name": "reconcile-base72.log",
+      "bytes": 15805,
+      "sha256": "f30d9aa31843a9a18329008ae377d1aa2d99c8ee8078050747e480f2bbf2177e"
+    },
+    {
+      "name": "reconcile-clock78.log",
+      "bytes": 18614,
+      "sha256": "458bb6a06a9387928650fac0d813c69902149816ac8521abec4b70d97d6d5e9a"
+    },
+    {
+      "name": "weapon-compiled5.log",
+      "bytes": 5602,
+      "sha256": "085287525bf2cf6dbb63d135da8ae771e07fc275f47217a5f7842c0a59d3f327"
+    }
+  ],
+  "readbackVerified": true,
+  "credentialMatches": [],
+  "upstreamArchiveSha256": "e1a877c59898b6fd7d7c77aefaa485562afa3da011858765e57220bea4bfb3fc",
+  "upstreamEightMemberBytesUnchanged": true
+}
