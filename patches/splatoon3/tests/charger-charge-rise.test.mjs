@@ -81,6 +81,22 @@ test('Charger rise is a single normal-sfx-bus voice, pitch natural and cancellab
  assert.ok(created[0].stopTime>2);
  handle.stop();assert.equal(created[0].stopTime,2.04,'idempotent cancellation');
 });
+test('nearby remote charge has a spatial source and cleans up its panner',()=>{
+ const {ctx,created,connections}=makeAudioContext();
+ const panner={kind:'HRTF',connect:dest=>connections.push(['panner',dest]),disconnect(){this.closed=true;}};
+ const bus={kind:'game SFX'};
+ const audio={ctx,sfxIn:bus,_panner:(position,distance)=>{
+   assert.deepEqual(position,{x:3,y:1,z:-8});assert.equal(distance,3);return panner;
+ }};
+ const h=playChargerRise(audio,{pos:{x:3,y:1,z:-8},duration:.7,volume:.28});
+ assert.equal(created.length,1);
+ assert.ok(connections.some(([k,v])=>k==='gain'&&v===panner));
+ assert.ok(connections.some(([k,v])=>k==='panner'&&v===bus));
+ created[0].onended();
+ assert.equal(panner.closed,true);
+ assert.equal(h.playing,false);
+});
+
 test('production adapter has no local imports or private settings UI and retains native Charger onset',()=>{
  const native=fs.readFileSync(new URL('../../../inkwave-public/src/game/weapons.js',import.meta.url),'utf8');
  const adapted=adaptWeaponAudio('src/game/weapons.js',native);
