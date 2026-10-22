@@ -33,7 +33,7 @@ import { reverseShotRelease } from './shooter-movement.mjs';
 import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale, catalogBubbleSurfaceNormalY, catalogBubbleLimitGroundNormalSpeed } from './projectile-presentation.mjs';
 import { resetBloblobberYawSweep, sampleBloblobberWindupYaw, bloblobberSweepOffset } from './bloblobber-launch-sweep.mjs';
 import { catalogRollerSourcePitch, catalogUnitYawBase, catalogSlosherYawScatter,
-  catalogSlosherHasSweptAim } from './catalog-source-launch.mjs';
+  catalogSlosherHasSweptAim, catalogBrushNearestDue } from './catalog-source-launch.mjs';
 import { installS3ProjectileShapes } from './s3-projectile-shapes.mjs';
 import { installCatalogPoseBirth } from './catalog-pose-birth.mjs';
 import { addedFamilySplash, brellaSplashPlan, collectBrellaSplashes } from './added-family-paint.mjs';
@@ -869,13 +869,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
     });
     if(r.family==='roller'&&(key==='vertical'||key==='horizontal'))paintCatalogRollerNearest(a,group);
-    // Bloblobber's pinned 11.3.0 NearestParam owns a separate foot-paint
-    // release stamp (width 2.2, depth 1.2), not a damage collider. Added
-    // catalog Sloshers previously skipped it entirely. Reuse the existing
-    // native Slosher paint owner: deterministic seed, no remote authority,
-    // grounded-only admission and zero projectile/RNG side effects.
-    if(r.sourceActor==='WeaponSlosherBathtub')
-      paintSlosherNearest(G,a,r.parameters,1,s.bloblobberNearestSerial=(s.bloblobberNearestSerial||0)+1);
+    if(key==='brush')paintCatalogBrushNearest(a,group,s.brushNearestOrdinal);
+    // Every added Slosher owns independent NearestParam ground paint in
+    // 11.3.0, not just Bloblobber. The native Slosher owner already validates
+    // paint-only radius, depth, authority and grounded state.
+    if(key==='slosh'&&r.parameters.NearestParam)
+      paintSlosherNearest(G,a,r.parameters,1,s.slosherNearestSerial=(s.slosherNearestSerial||0)+1);
     notify(a,r,at,direction,charge);
   }
   // Added Rollers (Dynamo, Carbon, Flingza, Big Swig) used to paint only where
@@ -888,6 +887,18 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     try{spec=rollerVerticalPaintSpec(group,1,1);}catch{return;}
     p.catalog.rollerFlight={spec,distance:0,index:0,last:p.pos.clone(),sample:p.pos.clone(),
       direction:p.pos.clone(),wallSplash:null};
+  }
+  function paintCatalogBrushNearest(a,group,serial) {
+    if(!catalogBrushNearestDue(group,serial)||a.remote||a.alive===false||a.grounded===false)return;
+    const n=group.SplashNearestParam.SpawnParam,o=n?.Offset;
+    if(!(n?.PaintWidthHalf>0)||!o||![o.X,o.Y,o.Z].every(Number.isFinite))return;
+    const yaw=a.yaw,fx=Math.sin(yaw),fz=Math.cos(yaw),rx=Math.cos(yaw),rz=-fx;
+    // The source's offset is yaw-local; begin a short query just above the
+    // player's grounded feet. No fabricated turf under airborne flicks.
+    base.set(a.pos.x+rx*o.X+fx*o.Z,a.pos.y+.25,a.pos.z+rz*o.X+fz*o.Z);
+    const h=G.physics.raycast(base,down,Math.abs(o.Y)+.5,floorHit,true);
+    if(h.hit&&h.normal.y>=.5)
+      paint(a,h.point,n.PaintWidthHalf,finite(n.PaintDepthScale,1),null,h.face,mainInkFootprint(a.weapon));
   }
   function paintCatalogRollerNearest(a,group) {
     const n=group?.SplashNearestParam?.SpawnParam,o=n?.Offset;
@@ -1661,6 +1672,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         // must not unlock a 1F follow-up immediately when that first shot emits.
         runner.cooldown=(brush?windup+communityRepeat-(s.swingCount===0?1:0)-1:windup+finite(t.PostDelayFrame,21))/HZ;
         runner.rolling=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;s.swingCount++;
+        if(brush)s.brushNearestOrdinal=(s.brushNearestOrdinal||0)+1;
       }
     }else if(input.fire&&a.grounded&&!s.pending&&runner.cooldown<=EPS){runner.rolling=true;rolling(runner,r,dt);}
     else {runner.rolling=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;}
@@ -1973,6 +1985,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // existing recovery. Its preparation starts once that same clock expires.
     if(input.sub&&!throwBlocked||a.specialActive||a.superJumpState||!a.alive||r.family==='dualies'&&a.form==='squid'||r.family==='brella'&&a.form!=='kid')cancel(this);
     if(r.family==='splatana'&&a.form!=='kid'&&(s.pending||s.melee||s.lunge))cancel(this);
+    if(r.family==='brush'){
+      // Wiki: the foot-paint phase restarts after about 40F without a flick.
+      if(input.fire||s.pending)s.brushNearestIdle=0;
+      else if((s.brushNearestIdle=(s.brushNearestIdle||0)+dt*HZ)>40)
+        s.brushNearestOrdinal=0;
+    }
     // Rebuild/cure belong to elapsed weapon life, including squid form and
     // sub/special use. Previously both clocks lived behind the kid/fire gate.
     if(r.family==='brella'&&Number.isFinite(dt)&&dt>0&&!a.remote&&a.alive){
