@@ -81,9 +81,8 @@
       "evidence": "performance.json",
       "status": "native-source-support-bug-fixed-device-acceptance-pending",
       "remaining": [
-        "Physical mobile 10-second camera-away/reentry CPU trace",
-        "Real rendered reentry appearance and authoritative muzzle checks under native source geometry",
-        "Broader real native-stage terrain/muzzle review beyond the source-triangle hole regression"
+        "Actual native PlayerController/Physics CPU audit still shows 120 leg solves and 368 ground queries over 60 camera-away ticks; dependent pelvis/muzzle work needs further safe optimization.",
+        "Physical mobile CPU, rendered reentry and authoritative muzzle acceptance."
       ]
     },
     {
@@ -187,13 +186,12 @@
       "number": 1431,
       "title": "[INKWAVE][Weapons] Quad and Explosher projectile birth/origin alignment gap",
       "url": "https://github.com/rhgrive3/actions/issues/1431",
-      "review": "weapons.md",
+      "review": "https://github.com/rhgrive3/actions/tree/fcbbbbe9f529afb4bef2ac565d6c49c8f75a308e/reports/issue-resolution-20261022/continuation/issue-1431-acceptance.md",
       "evidence": "weapons.json",
-      "status": "open-native-image-and-calibration-required",
+      "status": "partial-fix-published-in-PR1845",
       "remaining": [
-        "native image acceptance",
-        "aperture/socket calibration including completed #1277 geometry",
-        "left-hand predicted aim and first/steady physical origin investigation"
+        "First native predicted Quad birth remains separated (observed 0.02915 WU); steady actual volume connects.",
+        "Authentic Quad aperture calibration and independent Nintendo 11.3.0 origin comparison."
       ]
     },
     {
@@ -246,7 +244,7 @@
       "url": "https://github.com/rhgrive3/actions/issues/1608",
       "review": "continuation/browser-startup.md",
       "evidence": "continuation/c093-required-suite.json",
-      "status": "acceptance complete; ready to close",
+      "status": "closed; acceptance complete",
       "remaining": []
     },
     {
@@ -309,7 +307,7 @@
       "url": "https://github.com/rhgrive3/actions/issues/1711",
       "review": "continuation/startup-runtime-design.md",
       "evidence": "continuation/startup-diagnosis.json",
-      "status": "bounded investigation complete; ready to close",
+      "status": "closed; acceptance complete",
       "remaining": []
     },
     {
@@ -328,14 +326,11 @@
       "number": 1767,
       "title": "[INKWAVE][Bug] Delayed startup tick can leave valid owner snapshots permanently rejected",
       "url": "https://github.com/rhgrive3/actions/issues/1767",
-      "review": "network-security.md",
-      "evidence": "network-security.json",
-      "status": "partial_fix_keep_open",
+      "review": "https://github.com/rhgrive3/actions/tree/a91137d452169baba8c2e9b0e4c7ea4f59f16a65/reports/issue-resolution-20261022/continuation/clock-recovery.md",
+      "evidence": "https://github.com/rhgrive3/actions/tree/a91137d452169baba8c2e9b0e4c7ea4f59f16a65/reports/issue-resolution-20261022/continuation/clock-native-browser.json",
+      "status": "fix-published-in-PR1842-main-integration-pending",
       "remaining": [
-        "Establish a fresh initial clock origin at a confirmed ready boundary using bounded nonce-based challenge/response or trusted relay receive-time semantics.",
-        "Do not auto-rebase accepted clocks within an epoch merely after repeated future rejections.",
-        "Preserve monotonic event, actor-life, owner, paint and hit/proof protection; define explicit reconnect epoch ownership.",
-        "Exercise delayed initial receipt, catch-up, ordinary jitter, stale and malicious future packets, reconnect and actual two-peer cold startup."
+        "Required GitHub Actions and main integration. Source network 788/788 and related script 70/70 pass; optional emitted suite 64/67 retains three source-name AST checks incompatible with minification."
       ]
     },
     {
@@ -355,24 +350,21 @@
       "number": 1812,
       "title": "[INKWAVE][Aim] Added Rollers and Brushes still use reticle-muzzle convergence at steep pitch",
       "url": "https://github.com/rhgrive3/actions/issues/1812",
-      "review": "weapons.md",
-      "evidence": "weapons.json",
-      "status": "open-acceptance-expanded",
-      "remaining": [
-        "native/rendered camera-muzzle and aimReady comparison across stages",
-        "Nintendo 11.3.0 comparison"
-      ]
+      "review": "https://github.com/rhgrive3/actions/tree/fcbbbbe9f529afb4bef2ac565d6c49c8f75a308e/reports/issue-resolution-20261022/continuation/issue-1812-acceptance.md",
+      "evidence": "https://github.com/rhgrive3/actions/tree/fcbbbbe9f529afb4bef2ac565d6c49c8f75a308e/reports/issue-resolution-20261022/continuation/weapon-only-final-acceptance.json",
+      "status": "closed; acceptance complete",
+      "remaining": [],
+      "finalEvidence": "780 full-flight source conditions plus 114 unique native diagnostic conditions; 1,134 births, 13,680 fixed ticks and 396 sparse actual draws. This is aim-path acceptance, not measured Nintendo parity or all-frame performance."
     },
     {
       "number": 1813,
       "title": "[INKWAVE][Dynamo] Horizontal secondary unit has source UnitDamageRate=0 but catalog ignores it",
       "url": "https://github.com/rhgrive3/actions/issues/1813",
-      "review": "weapons.md",
+      "review": "https://github.com/rhgrive3/actions/tree/fcbbbbe9f529afb4bef2ac565d6c49c8f75a308e/reports/issue-resolution-20261022/continuation/weapons.md",
       "evidence": "weapons.json",
-      "status": "open-retail-semantics-required",
+      "status": "partial-fix-published-in-PR1845-retail-semantics-required",
       "remaining": [
-        "independent UnitDamageRate=0 engine interpretation",
-        "retail unit1 isolated-target comparison"
+        "Independent Nintendo 11.3.0 UnitDamageRate=0 interpretation and unit1 isolated-target capture. Source unit1 zero damage and floor paint, and unit0 defense damage are verified in INKWAVE."
       ]
     },
     {
@@ -383,8 +375,8 @@
       "evidence": "weapons.json",
       "status": "open-tracker",
       "remaining": [
-        "hardware/engine confirmation for #1812 and #1813",
-        "complete current-main CI acceptance"
+        "Independent engine/hardware semantics for #1813 and other tracker gaps.",
+        "Current-main required CI acceptance and integration of PRs #1833/#1842/#1845."
       ]
     },
     {
@@ -405,7 +397,8 @@
     1432,
     1165,
     1608,
-    1711
+    1711,
+    1812
   ],
   "sourceCommit": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
   "partialRuntimeFixes": [
@@ -432,23 +425,35 @@
     1434,
     1565,
     1607,
-    1608,
     1665,
     1666,
     1671,
     1708,
-    1711,
     1757,
     1767,
     1789,
-    1812,
     1813,
     1814,
     1823
   ],
-  "acceptanceCompletePendingClosure": [
-    1608,
-    1711
-  ],
-  "continuationScope": "Browser acceptance only. New clock/contact runtime remains under review and is excluded from this publication. Native navigation wait is localized; driver internals and physical device performance are unverified."
+  "acceptanceCompletePendingClosure": [],
+  "continuationScope": "Initial runtime remains source f9d744e. Six issue closures are accepted. Clock and weapon runtime changes are isolated in stacked PRs #1842 and #1845; neither required CI nor main integration is complete. Charger authority experiments remain unpublished and incomplete.",
+  "closedCount": 6,
+  "remainingCount": 29,
+  "stateVerifiedDate": "2026-10-22",
+  "clockRelease": {
+    "pullRequest": 1842,
+    "commit": "a91137d452169baba8c2e9b0e4c7ea4f59f16a65",
+    "sourceCommit": "dfc0bd6e92c75f505825ea9d176c89b869706797",
+    "remaining": [
+      "Required GitHub Actions and main integration"
+    ],
+    "evidence": "https://github.com/rhgrive3/actions/tree/a91137d452169baba8c2e9b0e4c7ea4f59f16a65/reports/issue-resolution-20261022/continuation"
+  },
+  "weaponsRelease": {
+    "pullRequest": 1845,
+    "commit": "fcbbbbe9f529afb4bef2ac565d6c49c8f75a308e",
+    "sourceCommit": "8783eb8d9110e78fb28325e9d970bd5ecea44a87",
+    "evidence": "https://github.com/rhgrive3/actions/tree/fcbbbbe9f529afb4bef2ac565d6c49c8f75a308e/reports/issue-resolution-20261022/continuation"
+  }
 }
