@@ -7,6 +7,8 @@ on:
       - 'patches/splatoon3/runtime/kit-*.mjs'
       - 'patches/splatoon3/runtime/catalogue.mjs'
       - 'patches/splatoon3/runtime/special-*.mjs'
+      - 'patches/splatoon3/runtime/inkjet-vfx-*.mjs'
+      - 'patches/splatoon3/tests/inkjet-vfx-*.test.mjs'
       - 'patches/splatoon3/runtime/support-cooler.mjs'
       - 'patches/splatoon3/runtime/sub-special-fidelity.mjs'
       - 'patches/splatoon3/runtime/triple-slam-fists.mjs'
@@ -76,6 +78,12 @@ jobs:
             patches/splatoon3/tests/special-projectile-paint-credit.test.mjs \
             patches/splatoon3/tests/special-presentation.test.mjs \
             patches/splatoon3/tests/special-projectile.test.mjs
+      - name: Inkjet cadence, fair pool admission and production composition
+        run: |
+          node --experimental-vm-modules --test --test-concurrency=2 \
+            patches/splatoon3/tests/inkjet-vfx-cadence.test.mjs \
+            patches/splatoon3/tests/inkjet-vfx-pool-budget.test.mjs \
+            patches/splatoon3/tests/inkjet-vfx-production.test.mjs
       - name: Public sub and current catalogue lifecycle regressions
         run: |
           node --experimental-vm-modules --test --test-concurrency=2 \
@@ -114,6 +122,19 @@ jobs:
         run: node scripts/build-inkwave.mjs inkwave-public _site
       - name: Check actual catalogue activation with and without optional VFX
         run: node scripts/check-inkwave-splashdown-browser.mjs --site _site --evidence-dir .ci-scratch/splashdown-browser
+      - name: Probe emitted Inkjet presentation on SwiftShader (candidate only)
+        run: |
+          for hz in 30 60 120; do
+            for actors in 1 2 4; do
+              for layout in near mixed; do
+                node scripts/check-inkwave-splashdown-browser.mjs --site _site --inkjet --hz "$hz" --actors "$actors" --layout "$layout" --evidence-dir ".ci-scratch/splashdown-browser/inkjet/${hz}hz-${actors}p-${layout}"
+              done
+            done
+          done
+      - name: Verify Inkjet production composition in emitted modules
+        run: |
+          INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test \
+            patches/splatoon3/tests/inkjet-vfx-production.test.mjs
       - name: Verify new boundaries in emitted modules
         run: |
           INKWAVE_TENACITY_BUILT_SITE=_site INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test --test-concurrency=2 \
