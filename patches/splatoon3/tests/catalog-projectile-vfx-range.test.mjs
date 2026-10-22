@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 import { catalogVisualSpec, catalogVisualRadius, updateCatalogVisual,
-  catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale, catalogBubbleSurfaceNormalY } from '../runtime/projectile-presentation.mjs';
+  catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale, catalogBubbleSurfaceNormalY, catalogBubbleLimitGroundNormalSpeed } from '../runtime/projectile-presentation.mjs';
 import { INK_LOOK, fidelityInkLook, fidelityInkTail } from '../runtime/weapons-fidelity.mjs';
 import { fixture } from './source-fixture.mjs';
 
@@ -55,6 +55,12 @@ test('Bloblobber bubbles grow over five frames and shrink 25% each rebound',()=>
   assert.equal(catalogBubbleSurfaceNormalY({face:-1,normal:{y:1}}, null),1,
     'unmapped contacts keep the collision normal fallback');
   assert.ok(catalogReboundSeparation(unit.CollisionParam.EndRadiusForField*.75)>.56);
+  // On any floor normal, only the outgoing normal component is clamped.
+  // The two tangential components must remain exactly unchanged.
+  const n=new (await import('three')).Vector3(0,1,0);
+  const v=new (await import('three')).Vector3(30,34,6);
+  catalogBubbleLimitGroundNormalSpeed(v,n,.35);
+  assert.deepEqual([v.x,v.y,v.z],[30,21,6]);
 });
 
 test('actual Bloblobber projectile rebounding preserves swept travel, sourced paint taper and ghost safety',async()=>{
@@ -291,7 +297,7 @@ test("Bloblobber actual 60Hz velocity integrator honors source 3F straight, brak
   assert.ok(p.vel.distanceTo(afterFree)<1e-8,'frame 5 uses free drag and gravity');
 });
 
-test('Bloblobber small-bubble floor speed cap and independent 0.8x wall speed',async()=>{
+test('Bloblobber small-bubble floor-normal cap preserves forward travel and wall speed',async()=>{
   const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
   const row=record('WeaponSlosherBathtub'),actor=f.make(row.id);
   actor.form='kid';actor.ink=100;actor.intent.fire=true;f.tick(actor,15);actor.intent.fire=false;
@@ -312,10 +318,11 @@ test('Bloblobber small-bubble floor speed cap and independent 0.8x wall speed',a
   }
   reset(30,-25,0);
   assert.equal(f.G.projectiles._step(p,1/60),false,'first floor touch rebounds');
-  assert.ok(Math.abs(p.vel.length()-.35*60)<1e-8,
-    'sourced 0.35 speed cap applies to the entire outgoing floor-bounce velocity');
-  assert.ok(p.vel.x>0 && p.vel.y>0,
-    'the floor rebound keeps forward travel and reflects upward without reversing its direction');
+  assert.ok(Math.abs(p.vel.y-.35*60)<1e-8,
+    'sourced 0.35 cap bounds the outgoing FLOOR NORMAL speed');
+  assert.ok(Math.abs(p.vel.x-30)<1e-8 && p.vel.length()>.35*60,
+    'floor rebound does not erase horizontal momentum to fit a 3D speed cap');
+  assert.ok(p.vel.y>0,'the floor rebound reflects upward');
   assert.equal(p.catalog.groundBounces,1);
   floor=false;reset(30,0,4);
   const before=p.vel.length();
