@@ -574,27 +574,27 @@ export class ClamsRule {
   }
 
   _advanceBasketTimers(dt, frame) {
-    const ready = [];
-    const newlyOpened = new Map();
+    let ready = null;
+    let newlyOpened = null;
     for (const basket of this.state.baskets) if (basket.pendingBreak) {
       basket.pendingBreak.remaining -= dt;
-      if (basket.pendingBreak.remaining <= EPS) ready.push(basket);
+      if (basket.pendingBreak.remaining <= EPS) (ready ??= []).push(basket);
     }
-    ready.sort((a, b) => a.pendingBreak.remaining - b.pendingBreak.remaining || a.pendingBreak.sequence - b.pendingBreak.sequence);
-    for (const basket of ready) {
+    ready?.sort((a, b) => a.pendingBreak.remaining - b.pendingBreak.remaining || a.pendingBreak.sequence - b.pendingBreak.sequence);
+    for (const basket of ready || []) {
       const drill = basket.pendingBreak; basket.pendingBreak = null;
       if (basket.tucked || basket.cooldown > 0) {
         const floor = this._floorAt(frame, drill.pos[0], drill.pos[2], drill.pos[1] + 0.25);
         this._newClam('power', basket.team, [drill.pos[0], floor ?? drill.pos[1], drill.pos[2]]);
       } else {
         this._openBasket(basket.team, drill.pos);
-        newlyOpened.set(basket.team, Math.max(0, -drill.remaining));
+        (newlyOpened ??= new Map()).set(basket.team, Math.max(0, -drill.remaining));
       }
       if (this.engine?.winner != null) return;
     }
     for (const basket of this.state.baskets) {
       if (basket.barrierOpen) {
-        basket.openTimer = Math.max(0, basket.openTimer - (newlyOpened.get(basket.team) ?? dt));
+        basket.openTimer = Math.max(0, basket.openTimer - (newlyOpened?.get(basket.team) ?? dt));
         if (basket.openTimer <= EPS) this._closeBasket(basket.team, frame);
       } else if (basket.cooldown > 0) {
         basket.cooldown = Math.max(0, basket.cooldown - dt);
