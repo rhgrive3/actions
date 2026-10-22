@@ -1,0 +1,1341 @@
+{
+  "issue": 1608,
+  "sourceSha": "c0938a3f84768474df91713f7b372f9d7f8fe96a",
+  "requiredSuiteStatus": "passed",
+  "scope": "isolated source c093 matches the public deployment; source and emitted/online gates are tracked independently",
+  "nodeVersion": "v24.19.0",
+  "source": {
+    "status": "passed",
+    "acceptedFiles": 49,
+    "requiredFiles": 49,
+    "requiredRankedFiles": 47,
+    "unchanged": true,
+    "acceptedAssertions": 495,
+    "skipped": 0,
+    "failed": 0,
+    "initialHeapLimitMiB": 384,
+    "retryHeapLimitMiB": 1024,
+    "initialOuterDeadlinesPreserved": true,
+    "acceptedTests": [
+      {
+        "file": "patches/splatoon3/tests/ranked-authoritative-position.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-authoritative-position.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 2.2054454059998534,
+        "counts": {
+          "tests": 25,
+          "pass": 25,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-authoritative-position.test.mjs.log",
+        "logSha256": "cb36b4e89933f1c25a76369ed0799dcf5fefe10c18fc840de02cbbb291c214f5"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-autonomy-integration.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-autonomy-integration.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 37.47333317700031,
+        "counts": {
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-autonomy-integration.test.mjs.log",
+        "logSha256": "fb0960b364dd8f4e5ad774637495a21fb47eb095d69616fda300434899a1740f"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-barrier-admission.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-barrier-admission.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.47774212100011937,
+        "counts": {
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-barrier-admission.test.mjs.log",
+        "logSha256": "2e0689bea6a6a17d9023612b79365f899ac4f1ee5cf392f2e71390854dfa465a"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-bots.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-bots.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.26843947199995455,
+        "counts": {
+          "tests": 14,
+          "pass": 14,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-bots.test.mjs.log",
+        "logSha256": "8a70c7c231edf5b57915bbf5a416adc27c465847c8b341feda6ab92d6dd554c4"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-browser-target-setup.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-browser-target-setup.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 11.436612360001163,
+        "counts": {
+          "tests": 7,
+          "pass": 7,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-browser-target-setup.test.mjs.log",
+        "logSha256": "6b9e67c0a51ee77682a86e8d06b83da62333e06edec7e05e5a4e255b3de7f846"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-carrier-boundaries.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-carrier-boundaries.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 8.519710839000254,
+        "counts": {
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-carrier-boundaries.test.mjs.log",
+        "logSha256": "17e463489fa3cc51ded9958b5cc63665dcf59832b407e549d2891b781bb887aa"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-clam-events.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-clam-events.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.5226788519994443,
+        "counts": {
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-clam-events.test.mjs.log",
+        "logSha256": "c2e5e6a29c97508a41f7e46a650130ed665a5318209ad4d064f214ff6797edd4"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-clam-model-lifecycle.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-clam-model-lifecycle.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.38553545900140307,
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-clam-model-lifecycle.test.mjs.log",
+        "logSha256": "4d2dd4073ccb20a989469c8f68642a0fef930cdd250c11b508882b046a5ca84f"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-clam-muzzle.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-clam-muzzle.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 333.3662606990001,
+        "counts": {
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-clam-muzzle.test.mjs.log",
+        "logSha256": "93723b5d9bcd1504138ad7144e61130a081262338d1edda14344e74dc893fc1c"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-clam-penalty-consumer.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-clam-penalty-consumer.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 3.496033991999866,
+        "counts": {
+          "tests": 26,
+          "pass": 26,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-clam-penalty-consumer.test.mjs.log",
+        "logSha256": "b0cbc37374ba8cebb8a23a2de19ca03929c0100002addcd9889e62aaf2d42dbf"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-clam-presentation.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-clam-presentation.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 32.49946046399964,
+        "counts": {
+          "tests": 14,
+          "pass": 14,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-clam-presentation.test.mjs.log",
+        "logSha256": "15c5ea6700648d488120d9611b06c1a8151d964ef0fcacd2d7fc75ab0db055ec"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-clam-swim-boundary.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-clam-swim-boundary.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 73.66211625399956,
+        "counts": {
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-clam-swim-boundary.test.mjs.log",
+        "logSha256": "fae89fc74d6c551a2ca0613c2c4051e8ba92536f470b0164039af1402ade7963"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-clam-transient-lifecycle.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-clam-transient-lifecycle.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 35.56049158299902,
+        "counts": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-clam-transient-lifecycle.test.mjs.log",
+        "logSha256": "d32952e2fd6a8fadb22ac29d781157c2fd62c2bd7befdc790e65b90f119e004a"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-clam-visible-dive.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-clam-visible-dive.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 32.90303010799835,
+        "counts": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-clam-visible-dive.test.mjs.log",
+        "logSha256": "96512df61bfb6f153adf74db88df5a45971267db2259d2414ff97173133c8410"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-clam-void-drop.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-clam-void-drop.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 129.8669843000007,
+        "counts": {
+          "tests": 17,
+          "pass": 17,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-clam-void-drop.test.mjs.log",
+        "logSha256": "244eac3d3d809f1a267a5a364c60973dc1b2deeab146e193fca15f0fd6128fa1"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-clams.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-clams.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.1645571019998897,
+        "counts": {
+          "tests": 17,
+          "pass": 17,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-clams.test.mjs.log",
+        "logSha256": "302826859ca99eb573f6716ab46ec922830a0e10486a80abed6e19def0b0b04b"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-combat.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-combat.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 5.0902138620003825,
+        "counts": {
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-combat.test.mjs.log",
+        "logSha256": "d6279c5fcaa3bf3ce32ecf3f7f3ad6fb4c81d11c0fed8589dd90f6a6f8a2c0a6"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-engine.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-engine.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.16436141899976064,
+        "counts": {
+          "tests": 36,
+          "pass": 36,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-engine.test.mjs.log",
+        "logSha256": "77ed71325cc7eaca6a9749de93a7279998cb0c45be2910144995abe213015680"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-gear-shipped-runtime.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-gear-shipped-runtime.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 8.995006070001182,
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-gear-shipped-runtime.test.mjs.log",
+        "logSha256": "c86ea95d9bcf0239580834d47ba98b748031e86d77d9bcf3b77be502fd9719bb"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-gear.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-gear.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 3.8634395909994055,
+        "counts": {
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-gear.test.mjs.log",
+        "logSha256": "c7e43ca82c5b3fb49cf34321c991e810c97322d77aed75a41bbcec37de580b22"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-ink-profile-collision.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-ink-profile-collision.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 9.056682435000766,
+        "counts": {
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-ink-profile-collision.test.mjs.log",
+        "logSha256": "4ddcbf53ebcae5d66e78d2e57737707fc1506e90b29948ee2fc231e26639c3bf"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-input-epoch.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-input-epoch.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 2.2932651419996546,
+        "counts": {
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-input-epoch.test.mjs.log",
+        "logSha256": "90bc24d7fead216e5e3fa8a88fa2fb6a7c6af5fd5d93ff4a7418fed360e598fd"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-input-network-lifecycle.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-input-network-lifecycle.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 17.346973391000574,
+        "counts": {
+          "tests": 10,
+          "pass": 10,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-input-network-lifecycle.test.mjs.log",
+        "logSha256": "adb6f4d41e6c6d2522ece533cbc73e66ec69d9e6ea4f8be6c3abc41db8276286"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-integration.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-integration.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 37.44207920200097,
+        "counts": {
+          "tests": 29,
+          "pass": 29,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-integration.test.mjs.log",
+        "logSha256": "200c6a1313bb490081fd9cd5f292d8c27a99a73885b7034ea7ac5ad2230edd65"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-localization.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-localization.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 1.1271269010012475,
+        "counts": {
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-localization.test.mjs.log",
+        "logSha256": "90805d1f337f5d9c17d1219d43fa995c7e91e73c778f8fa08a535bb82da20b1f"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-native-device-profile.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-native-device-profile.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 15.705476966000788,
+        "counts": {
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-native-device-profile.test.mjs.log",
+        "logSha256": "558f172a7dfe63d897e7caf2670f85b052d6ab90a36cbdbd7dc851ddfb0bf4e1"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-network.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-network.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.5681281199995283,
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-network.test.mjs.log",
+        "logSha256": "1205be6a2b82327562bb4f1cf852eb8bb2f5c43229c889744636cbb037054c1a"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-power-clam-model.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-power-clam-model.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 1.2240227809998032,
+        "counts": {
+          "tests": 7,
+          "pass": 7,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-power-clam-model.test.mjs.log",
+        "logSha256": "cfc1512c8adbf02c2a21b54e663884c71042407ff728190fdfc68bbcb0b5a33d"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-rainmaker-air-full-jump.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=384",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-rainmaker-air-full-jump.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 19.715625421998993,
+        "counts": {
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked/patches__splatoon3__tests__ranked-rainmaker-air-full-jump.test.mjs.log",
+        "logSha256": "7ba4516f300660652a7dce62794a9f345d75b546fdc7a202f5b114ef83d3d345"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-rainmaker-air-history.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-rainmaker-air-history.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 119.29303055699893,
+        "counts": {
+          "tests": 7,
+          "pass": 7,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-rainmaker-air-history.test.mjs.log",
+        "logSha256": "cd0dccb9f629ffdd6874b955765f309a80a835890b64f525a3fc98c22255da5e"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-rainmaker-air-support.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-rainmaker-air-support.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.9173373009998613,
+        "counts": {
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-rainmaker-air-support.test.mjs.log",
+        "logSha256": "ace1a97743b2071ef17628a1a16be7647dc87af865513e8593645768f3fbbc5d"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-rainmaker-form-owner.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-rainmaker-form-owner.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 217.39180912499978,
+        "counts": {
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-rainmaker-form-owner.test.mjs.log",
+        "logSha256": "13a53291ece7bae206b8da81337aac56551d6f41351472e14a0380bcbffc726b"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-rainmaker-motion-actor.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-rainmaker-motion-actor.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 136.0404269490009,
+        "counts": {
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-rainmaker-motion-actor.test.mjs.log",
+        "logSha256": "4346645f53ab97d533e853551b06094f40c53d29634852541b366104cad6fa3f"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-rainmaker-motion.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-rainmaker-motion.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.1659333860006882,
+        "counts": {
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-rainmaker-motion.test.mjs.log",
+        "logSha256": "7672e59a5f76f74b0adc5c73a2d7706ee7b4cc6167430cdaaee24fbf8ef77031"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-rainmaker.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-rainmaker.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.2367862970004353,
+        "counts": {
+          "tests": 19,
+          "pass": 19,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-rainmaker.test.mjs.log",
+        "logSha256": "c389cc2e9b3af9d2af84e191545e59f7f5513e09aa9877580adbbadf9d945b21"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-scoring-delivery.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-scoring-delivery.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 12.58984523000072,
+        "counts": {
+          "tests": 7,
+          "pass": 7,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-scoring-delivery.test.mjs.log",
+        "logSha256": "03de3a50e6f861e3dae601eca2c8471c9bdbb4cabf85466fe4e5468f30efdc34"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-send-acceptance.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-send-acceptance.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 14.144549680999262,
+        "counts": {
+          "tests": 14,
+          "pass": 14,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-send-acceptance.test.mjs.log",
+        "logSha256": "ab9c935a96e6beab574fd472cf3954494be9978b53b16dfdac869e583e494af6"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-small-clam-model.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-small-clam-model.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.26866919199892436,
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-small-clam-model.test.mjs.log",
+        "logSha256": "a05490e17ba592f9d6a7edc766497a8abee6fd8bf4f364b70be6bc238870bf20"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-special-authority-1669.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-special-authority-1669.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 1.7421512060009263,
+        "counts": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-special-authority-1669.test.mjs.log",
+        "logSha256": "ee44757408c06b61eaed07e3ba6004b985379550cf8c321bbc1243d6855cacb4"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-special-charge-consumer.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-special-charge-consumer.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 8.340518943999996,
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-special-charge-consumer.test.mjs.log",
+        "logSha256": "9b6b7ce38d9a2ad70891ecc6e8a27e093d2397fe38c255d7ea7081ab41290e48"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-tower-tie-consumer.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-tower-tie-consumer.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 2.834167543998774,
+        "counts": {
+          "tests": 19,
+          "pass": 19,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-tower-tie-consumer.test.mjs.log",
+        "logSha256": "5ad4ba2e16416a5476646d61d69ce2f84af63a528a11ee0ec6e6dfc75b31c617"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-tower.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-tower.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.17372840200005157,
+        "counts": {
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-tower.test.mjs.log",
+        "logSha256": "71fc9221067b2322db3fd6cd0d7ad88a8ae0cc967ba796c4c617f2bf3bf8bd97"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-ui.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-ui.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.4503259329994762,
+        "counts": {
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-ui.test.mjs.log",
+        "logSha256": "86870595b249518ceb72778fa57db0640fbcf90e1d400e9c0577bc4942c240cc"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-wiki-contact.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-wiki-contact.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.2160421190001216,
+        "counts": {
+          "tests": 18,
+          "pass": 18,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-wiki-contact.test.mjs.log",
+        "logSha256": "201ee53aece96bad337b0488c4bd73b2d1d2f949603c3f6f91084039fae8a71a"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-wiki-rules.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-wiki-rules.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.37099675399986154,
+        "counts": {
+          "tests": 36,
+          "pass": 36,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-wiki-rules.test.mjs.log",
+        "logSha256": "aa956f4115d5aeded9b1f886b48279040554a13d164a90b7a5d8ee8256dd2045"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-world.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-world.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 11.09475808299976,
+        "counts": {
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-world.test.mjs.log",
+        "logSha256": "218521638e1133479db34ab26e92f3c44c97cc6d7ebdf93acf6ab7f17c38e6d1"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-zones.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-zones.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.3374492459988687,
+        "counts": {
+          "tests": 7,
+          "pass": 7,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/patches__splatoon3__tests__ranked-zones.test.mjs.log",
+        "logSha256": "9bf80573785e1efc17af21128e817763d6d5abc08a9f19058d8b50e5c3cf0869"
+      },
+      {
+        "file": "scripts/tests/ranked-boot-diagnostics.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "scripts/tests/ranked-boot-diagnostics.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.319055785999808,
+        "counts": {
+          "tests": 14,
+          "pass": 14,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/scripts__tests__ranked-boot-diagnostics.test.mjs.log",
+        "logSha256": "3abf4491bf2e2ec2d2f5711b47e5bf2edc788331f1474cc21b9899954de38be3"
+      },
+      {
+        "file": "scripts/tests/inkwave-ranked-pages-sequencing.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "scripts/tests/inkwave-ranked-pages-sequencing.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 0.3452528739999252,
+        "counts": {
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-resume/scripts__tests__inkwave-ranked-pages-sequencing.test.mjs.log",
+        "logSha256": "4cdfcf397e88072f9e8f4dbd564a16518a4d55bd5a0e105875af21c9d1fb0756"
+      }
+    ],
+    "receipt": "c093-source-tests.json"
+  },
+  "build": {
+    "status": "passed",
+    "sourceSha": "c0938a3f84768474df91713f7b372f9d7f8fe96a",
+    "inputHash": "2908ffec19aadcce22ee17db290ca19f553addd8c4b07addd10c06f44c9ac97e",
+    "contentHash": "e57bdcd82f9b82b0f1ede4491017c3683822ea98ae4e11684b646599822b93e5",
+    "revision": "6dccb72c5a675c4ab176f0ae0f21556112369c90baa930e7bbcc28b1b7302912",
+    "checkedArtifacts": 2006,
+    "checkedDeclaredInputs": 1357,
+    "publishedArtifactsIdentical": true,
+    "publishedInputsIdentical": true,
+    "artifactMismatch": [],
+    "manifestSha256": "cf4fd3d33ec117493152c18e24850d7097f4dcf10f7fb280fc0e0f889eb52b9f",
+    "nodeVersion": "v24.19.0",
+    "logSha256": "453de8b036af8cca3f8bf6269eee605d83bac5ca2c9bccc59baaf55394e25eb8",
+    "command": [
+      "node",
+      "--max-old-space-size=1024",
+      "scripts/build-inkwave.mjs",
+      "inkwave-public",
+      "/workspace/actions/.built-site/c093-required-suite"
+    ]
+  },
+  "emittedThreeBoundaries": {
+    "status": "passed",
+    "files": 3,
+    "assertions": 54,
+    "fail": 0,
+    "skipped": 0,
+    "manifestUnchanged": true,
+    "contentHash": "e57bdcd82f9b82b0f1ede4491017c3683822ea98ae4e11684b646599822b93e5",
+    "tests": [
+      {
+        "file": "patches/splatoon3/tests/ranked-clam-void-drop.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-clam-void-drop.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 39.28823993300102,
+        "counts": {
+          "tests": 17,
+          "pass": 17,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-emitted/patches__splatoon3__tests__ranked-clam-void-drop.test.mjs.log",
+        "logSha256": "49ad5dba31a1fee2990a931c71ed7d0fa8211f348cf0a96a2ad247f6e9e15930"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-authoritative-position.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-authoritative-position.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 1.6520517760000075,
+        "counts": {
+          "tests": 25,
+          "pass": 25,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-emitted/patches__splatoon3__tests__ranked-authoritative-position.test.mjs.log",
+        "logSha256": "96b9459ebaee0ef9e495daef35e297cac1e01113ee878f96e6785e7d168317e8"
+      },
+      {
+        "file": "patches/splatoon3/tests/ranked-input-epoch.test.mjs",
+        "command": [
+          "node",
+          "--max-old-space-size=1024",
+          "--experimental-vm-modules",
+          "--test",
+          "--test-concurrency=1",
+          "patches/splatoon3/tests/ranked-input-epoch.test.mjs"
+        ],
+        "exitCode": 0,
+        "timedOut": false,
+        "elapsedSeconds": 1.1921065250007814,
+        "counts": {
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        },
+        "log": "/workspace/actions/.ci-scratch/continuation-browser/c093-ranked-emitted/patches__splatoon3__tests__ranked-input-epoch.test.mjs.log",
+        "logSha256": "ab25329206ca7b4824ac0eebb4819a9d28a41431ecd17366cdfc5d99ab8baf0a"
+      }
+    ]
+  },
+  "localFourModeTwoBrowserRooms": {
+    "status": "passed",
+    "sourceSha": "c0938a3f84768474df91713f7b372f9d7f8fe96a",
+    "contentHash": "e57bdcd82f9b82b0f1ede4491017c3683822ea98ae4e11684b646599822b93e5",
+    "inputHash": "2908ffec19aadcce22ee17db290ca19f553addd8c4b07addd10c06f44c9ac97e",
+    "revision": "6dccb72c5a675c4ab176f0ae0f21556112369c90baa930e7bbcc28b1b7302912",
+    "browser": {
+      "version": "151.0.7922.34",
+      "channel": "chromium"
+    },
+    "relayDelayMs": 200,
+    "scope": "offline-and-online",
+    "modes": [
+      "zones",
+      "tower",
+      "rainmaker",
+      "clams"
+    ],
+    "bootContexts": 2,
+    "errors": [],
+    "supervisor": {
+      "command": [
+        "node",
+        "--max-old-space-size=1024",
+        "scripts/check-inkwave-ranked-browser.mjs",
+        "/workspace/actions/.built-site/c093-required-suite",
+        "/workspace/actions/.browser-evidence/continuation-20261022/c093-ranked-browser"
+      ],
+      "elapsedSeconds": 318.25862989899906,
+      "exitCode": 0,
+      "outerDeadlineSeconds": 1200,
+      "timedOut": false,
+      "manifestUnchanged": true,
+      "manifestSha256": "cf4fd3d33ec117493152c18e24850d7097f4dcf10f7fb280fc0e0f889eb52b9f",
+      "sourceCommit": "c0938a3f84768474df91713f7b372f9d7f8fe96a",
+      "playwright": "1.62.1",
+      "relayDelayMs": 200
+    },
+    "receipt": "c093-full-browser.json"
+  },
+  "officialPublishedOfflineFourModes": {
+    "run": 39717130161,
+    "job": 119621814132,
+    "scope": "same c093 HEAD; public offline4 only"
+  },
+  "evidence": [
+    {
+      "path": ".ci-scratch/continuation-browser/c093-ranked/receipt.json",
+      "bytes": 29731,
+      "sha256": "ebc1ea1b79aa179baaf3204ec49156c1593ab4d89957a8aa2593b0e3e7d70350"
+    },
+    {
+      "path": ".ci-scratch/continuation-browser/c093-ranked-resume/receipt.json",
+      "bytes": 63180,
+      "sha256": "ceece63b8aac64d3d75ead9c2835b75300a4530b396f82392bd96088ace2b3f4"
+    },
+    {
+      "path": ".ci-scratch/continuation-browser/c093-production-build.json",
+      "bytes": 873,
+      "sha256": "5f416049ebe0fa3a4b8337682e855d1b562a6d34f516aa454f84d9522203c20f"
+    },
+    {
+      "path": ".ci-scratch/continuation-browser/c093-ranked-emitted/receipt.json",
+      "bytes": 3339,
+      "sha256": "d84dc6dc01f8988b9a8a55c3549d770164e92e1ec83306a8d9b7cd3c48b99ffb"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/c093-ranked-browser/result.json",
+      "bytes": 88421,
+      "sha256": "87bb9e2d26afac331061d7dd6f29c4fac71f96af36b0ba78db6e7943f5da55fa"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/c093-ranked-browser/supervisor.json",
+      "bytes": 597,
+      "sha256": "158309da1232db0a7aa7dfde5151fa35988b7e8e2cad2859e14da55c3f18cd45"
+    },
+    {
+      "path": ".browser-evidence/continuation-20261022/c093-ranked-browser/harness-source.json",
+      "bytes": 787,
+      "sha256": "6e95841e40aed352396d7f191667b26cc5bdf5ae68e32eab621489c2de05715b"
+    }
+  ],
+  "requiredSuiteDefinition": "Dedicated c093 Ranked Pages suite: 47 ranked source files, boot/sequencing regressions, production build, emitted three boundaries, four offline modes and two-browser online rooms in four modes. Other Validate and main-weapon jobs are separate and are not asserted green.",
+  "environmentDifferences": {
+    "originalWorkflow": "Node22, esbuild0.28.2, Playwright1.62.1/Chromium151",
+    "localDedicatedSuite": "Node24.19.0, esbuild0.28.2, Playwright1.62.1/Chromium151.0.7922.34",
+    "publicIndependentBootProbe": "Node24.19.0, Playwright1.57/Chromium143.0.7499.4; exact same c093 source and published build, helper bytes identical",
+    "acceptanceScope": "dedicated Ranked suite; no claim all c093 Validate/main-weapon workflow jobs are green"
+  }
+}

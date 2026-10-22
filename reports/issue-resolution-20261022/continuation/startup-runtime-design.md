@@ -1,0 +1,13 @@
+# #1711: runtime変更の判断
+
+元856/d360をChromium151/SwiftShaderで動かしたHTTP対照では、reloadのHTML→interactive遅延の76.4–98.0%にnative `GpuChannel::OnDestroyCommandBuffer` が重なる。代表eventは13.886秒wallに対してGPU main thread CPU 504msで、rendererのNavigationClientも14.772秒wall / 22ms CPUだった。これは旧GPU仕事の整理・完了待ちの局在を示す。どのSwiftShader worker・driver内部処理がこの待ちを作ったかは、これだけでは確定しない。
+
+元sourceの `patches/local-quality/platform-lifecycle.mjs` はpagehideでlifecycleをsuspendし、PlatformFrameDriverはrAF/timerをcancelする。新しいframeのsubmitを止める既存処理は存在する。既にGPUへ渡した仕事が、その時点で消えることを意味しない。今回の同fileのURL付きFunctionCallは代表reloadで30msであり、このJS処理を14秒かかった処理として扱わない。
+
+`renderer.dispose()`、`forceContextLoss()`、`gl.finish()`をnavigation前へ足すだけでは、旧仕事の待ちを計測境界外へ移す可能性がある。実際にcached-new-page対照はnavigationを224ms中央値へ短縮した一方、page作成に13.039秒中央値を使い、これを含むmenu総時間は48.756秒でreload51.049秒に近い。これをruntime高速化の実装として採用しない。
+
+追加の介入実験を行う場合も、介入開始からclose/new-page/navigation/menuまでの全時間、process CPU、描画が完了した状態を含めて比較する。`finish()`を使う診断と通常起動のreceiptは分ける。ページ破棄より前にGPU queueを自然に浅くするには描画仕事自体の削減が必要だが、titleのキャラクターidleやmenu背景の描画契約、実端末のframe pacingを変える。CIのnavigation値だけを下げる理由で導入せず、描画削減の既存性能課題で別途検証する。
+
+pagehideで強制context lossする変更は、bfcache・再表示・既存lifecycleの再開条件にも影響する。今回のnative待ち観測だけから、その変更が全周期の待ちやCPUを減らすとは判断できない。現時点の成果は原因箇所を分離できるharnessとraw traceであり、runtime変更・assert削除・元180秒gateの緩和は行っていない。SW warmもHTTPから転用せず、独立fresh persistent profileの自然install/control後に2回traceした。HTML→interactive13.827/15.014秒のうちGPU破棄12.689/12.802秒を観測し、同じnative待ちの局在を確認した。これもruntime介入による高速化の証明ではない。
+
+renderer→GPUのsync IPC返信を一意に結ぶflow/call stackは今回採録していない。native interval・低thread CPU・本文処理の時系列とnew-page対照は待ち箇所の局在を支えるが、GPU破棄単独が全待ちを生むという介入による因果証明とは区別する。

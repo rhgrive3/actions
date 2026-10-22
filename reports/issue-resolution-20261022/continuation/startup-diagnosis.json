@@ -1,0 +1,75 @@
+{
+  "issue": 1711,
+  "status": "diagnosed",
+  "sourceSha": "856a269afd61c5e3059418f4712d64ebec35b4c6",
+  "contentHash": "d3604606f2c693eb26e599a3001f404e2e78c211fd75e04dc9800ffd34ee71b9",
+  "revision": "817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f",
+  "browserVersion": "151.0.7922.34",
+  "readinessGateSeconds": 180,
+  "nativeTraceScope": "navigation request to document interactive; menu gate continues afterwards",
+  "acceptedSamples": {
+    "http": 10,
+    "serviceWorker": 3,
+    "total": 13
+  },
+  "http": {
+    "reloads": 4,
+    "cacheNewPages": 4,
+    "reloadMedianPhaseMs": 14152.799999999046,
+    "newPageMedianPhaseMs": 223.99999999904634,
+    "newPageCreationMedianMs": 13039.116749500012,
+    "reloadTotalMenuMedianMs": 51049.39999999944,
+    "newPageTotalMenuMedianMs": 48756.491305999836,
+    "gpuDestroyPhaseFractions": [
+      0.9371807383410947,
+      0.764111753817677,
+      0.8467836543452705,
+      0.9800981209896165
+    ]
+  },
+  "serviceWorker": {
+    "reloads": 2,
+    "naturalCache": {
+      "controller": "http://127.0.0.1:43181/sw.js",
+      "cache": "inkwave-startup-v2:/:817e070a7def8031c9f57d0b2cc4ea0b37268c1b6f1f28a8dfd6a39ea8ba3f1f",
+      "entries": 486,
+      "controlWaitMs": 95.278161000002
+    },
+    "reloadMedianPhaseMs": 14420.299999999046,
+    "gpuDestroyPhaseFractions": [
+      0.9176716569031605,
+      0.8527168700379407
+    ],
+    "allControlledMainDocument": true,
+    "allHttpBodyZero": true
+  },
+  "finding": "Observed HTTP and SW reload delay is dominated by native renderer navigation waiting overlapping old GPU command-buffer destruction. The wait is distinct from HTTP transfer and the short recorded script work. Native event wall duration is not treated as CPU utilization.",
+  "runtimeChange": false,
+  "speedupClaim": false,
+  "physicalDeviceClaim": false,
+  "limits": [
+    "SwiftShader/Chromium151 diagnosis on original 856/d360; no general physical-GPU or end-user-device claim.",
+    "Driver/worker internals behind the native GPU destruction wait are not fully attributed.",
+    "Cached-new-page moves substantial cleanup to page creation; total lifecycle cost is included and no runtime speedup is claimed.",
+    "HTTP first-order samples overlapped CPU regressions; later HTTP reloads and the SW experiment ran after those processes completed.",
+    "Persistent browser-restart has historical successful startup receipts but no new native trace here.",
+    "Native renderer/GPU intervals and temporal ordering localize the wait, but this trace does not contain a uniquely joined renderer-to-GPU synchronous IPC reply flow or native call stack. It is not an intervention proving that GPU destruction alone causes every part of the wait."
+  ],
+  "receipts": [
+    {
+      "path": "startup-reload.json",
+      "bytes": 55815,
+      "sha256": "50382f3c361b595bd4b5f05bad9094e0b57bed914d792bf1e922edad18ab4ca0"
+    },
+    {
+      "path": "startup-sw.json",
+      "bytes": 21735,
+      "sha256": "65f68928652b65a2a0dc89330defb2379f1a2a2c6aabfd91d7a1a880fc50dfc9"
+    },
+    {
+      "path": "startup-runtime-design.md",
+      "bytes": 2985,
+      "sha256": "cb777daa606b378f87596ee14ffdc6f6e33b0dd50a1eb9ae1ec1ff7f0e32ace3"
+    }
+  ]
+}
