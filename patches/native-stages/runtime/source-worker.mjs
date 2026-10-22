@@ -2,12 +2,16 @@ import {SOURCE_RECIPE,SOURCE_STAGES,sourceURL} from './source-catalog.mjs';
 import {convertSource} from './source-convert.mjs';
 import {sourceBytes,sourceTree,readDerived,writeDerived} from './source-cache.mjs';
 const buffers=['vertices','indices','triangles','normals','flags','objectIds','nodes','order','triangleFace','mask'];
-self.onmessage=async({data:{id,runtimeSha256}})=>{
+self.onmessage=async({data:{id,runtimeSha256,constrainedClient=false}})=>{
  try{
   const stage=SOURCE_STAGES.find(s=>s.id===id);if(!stage)throw Error('Unknown source stage');
   const key=SOURCE_RECIPE+'/'+runtimeSha256+'/'+stage.sourceSha256,start=performance.now();
-  const gb=Number(self.navigator?.deviceMemory)||0,handheld=/Android|iPhone|iPad|iPod/i.test(self.navigator?.userAgent||'');
-  const constrained=(gb>0&&gb<=4)||handheld;
+  const ua=self.navigator?.userAgent||'';
+  const gb=Number(self.navigator?.deviceMemory)||0,handheld=/Android|iPhone|iPad|iPod/i.test(ua);
+  // iPadOS may present itself as Macintosh. WorkerNavigator may not even expose maxTouchPoints,
+  // so trust the explicit device profile sent by the game before reading/writing derived blobs.
+  const ipadDesktopUA=/Macintosh/i.test(ua)&&Number(self.navigator?.maxTouchPoints)>1;
+  const constrained=constrainedClient===true||(gb>0&&gb<=4)||handheld||ipadDesktopUA;
   // Reading an older derived entry also structured-clones the entire stage.
   let data=constrained?null:await readDerived(key),cached=!!data;
   if(!data){
