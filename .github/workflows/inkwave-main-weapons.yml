@@ -18,6 +18,7 @@ on:
       - 'patches/splatoon3/weapon-catalog-adapter.mjs'
       - 'patches/splatoon3/tests/main-weapon-catalog*.test.mjs'
       - 'patches/splatoon3/tests/catalog-*.test.mjs'
+      - 'patches/splatoon3/tests/bloblobber-flat-45-audit.test.mjs'
       - 'patches/splatoon3/tests/splatana-lobe-hit-order.test.mjs'
       - 'patches/splatoon3/tests/source-fixture.mjs'
       - 'patches/splatoon3/tests/roller-holding-pivot.test.mjs'
@@ -45,6 +46,7 @@ on:
       - 'patches/splatoon3/weapon-catalog-adapter.mjs'
       - 'patches/splatoon3/tests/main-weapon-catalog*.test.mjs'
       - 'patches/splatoon3/tests/catalog-*.test.mjs'
+      - 'patches/splatoon3/tests/bloblobber-flat-45-audit.test.mjs'
       - 'patches/splatoon3/tests/splatana-lobe-hit-order.test.mjs'
       - 'patches/splatoon3/tests/source-fixture.mjs'
       - 'patches/splatoon3/tests/roller-holding-pivot.test.mjs'
@@ -75,7 +77,7 @@ jobs:
       - name: Verify actual main-weapon input, resources, cadence and Roller fan
         run: |
           git rev-parse HEAD
-          node --experimental-vm-modules --test patches/splatoon3/tests/main-weapon-catalog.test.mjs patches/splatoon3/tests/issue-771-roller-speed-swerve.test.mjs patches/splatoon3/tests/catalog-projectile-vfx-range.test.mjs
+          node --experimental-vm-modules --test patches/splatoon3/tests/main-weapon-catalog.test.mjs patches/splatoon3/tests/issue-771-roller-speed-swerve.test.mjs patches/splatoon3/tests/catalog-projectile-vfx-range.test.mjs patches/splatoon3/tests/bloblobber-flat-45-audit.test.mjs
       - name: Verify backward shot-release facing and source Hold gait
         run: node --experimental-vm-modules --test patches/splatoon3/tests/reverse-shot-release.test.mjs patches/splatoon3/tests/source-posture.test.mjs
       - name: Verify Roller swing and Curling bomb production paths

@@ -28,7 +28,7 @@ import { CATALOG_WALL_DROP } from './catalog-wall-drop-data.mjs';
 import { selectRollerFlickVertical, installActorFreefallHooks } from './roller-freefall.mjs';
 import { dashTurnBreakActive } from './movement-physics.mjs';
 import { reverseShotRelease } from './shooter-movement.mjs';
-import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale, catalogBubbleSurfaceNormalY } from './projectile-presentation.mjs';
+import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale, catalogBubbleSurfaceNormalY, catalogBubbleLimitGroundNormalSpeed } from './projectile-presentation.mjs';
 import { installS3ProjectileShapes } from './s3-projectile-shapes.mjs';
 import { installCatalogPoseBirth } from './catalog-pose-birth.mjs';
 import { addedFamilySplash, brellaSplashPlan, collectBrellaSplashes } from './added-family-paint.mjs';
@@ -1078,15 +1078,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(!ground)p.vel.multiplyScalar(.8); // sourced wall reflection, no wall-bounce cap
       if(!p.ghost&&(p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625))
         G.fx?.burst(at,h.normal,p.owner.color,{count:5,speed:1.8,size:.09,spread:.8,paint:false});
-      // BounceAfterMaxSpeed=.35 is an explicit total-speed cap for the small
-      // bubbles after a FLOOR bounce; never apply it to a wall reflection.
-      // S3 wall rebounds retain their independently sourced exact x0.8 speed.
-      // The initial field-shell floor false-contact was the actual downhill
-      // reach bug; dropping this cap would overextend the trailing bubbles.
-      if(ground&&bp.BounceAfterMaxSpeed!=null){
-        const cap=Math.max(0,bp.BounceAfterMaxSpeed)*HZ;
-        if(p.vel.lengthSq()>cap*cap)p.vel.setLength(cap);
-      }
+      // Source group 1 sets BounceAfterMaxSpeed=.35. Limit the rebound's
+      // NORMAL speed rather than shrinking its forward/tangential component.
+      // The old total-vector clamp discarded ~30% of horizontal velocity for
+      // downward 45-degree shots, making later bubbles die around 12 m while
+      // the first reached 20 m on the same flat floor. Keep the sourced .35
+      // ceiling and the wall's independently sourced exact x.8 response.
+      // S3 native conditional semantics remain to be checked with retail traces.
+      if(ground&&bp.BounceAfterMaxSpeed!=null)
+        catalogBubbleLimitGroundNormalSpeed(p.vel,h.normal,bp.BounceAfterMaxSpeed,HZ);
       s.bounces++;if(ground)s.groundBounces++;
       updateCatalogVisual(p);return false;
     }
