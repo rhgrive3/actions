@@ -119,10 +119,17 @@ export class ShadowCache {
         // 1) draw only the static casters (normal clear), keep their depth
         this.static = this._collect();
         const dyn = [], stat = new Set(this.static.map((s) => s.o));
-        scene.traverse((o) => { if (o.castShadow && (o.isMesh || o.isInstancedMesh) && !stat.has(o)) { dyn.push(o); o.castShadow = false; } });
-        sm.needsUpdate = true;
-        orig.call(sm, lights, scene, camera);
-        for (const o of dyn) o.castShadow = true;
+        try {
+          scene.traverse((o) => {
+            if (o.castShadow && (o.isMesh || o.isInstancedMesh) && !stat.has(o)) {
+              dyn.push([o, o.castShadow]); o.castShadow = false;
+            }
+          });
+          sm.needsUpdate = true;
+          orig.call(sm, lights, scene, camera);
+        } finally {
+          for (const [o, wasCasting] of dyn) o.castShadow = wasCasting;
+        }
         const w = sh.map.width, hh = sh.map.height;
         this._ensureCache(w, hh);
         const ok = this._blitDepth(sh.map, this.cache, w, hh);
