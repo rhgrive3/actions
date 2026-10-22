@@ -10,8 +10,8 @@ export function installMenuQuality(Menus, env=globalThis){
   const update=P.update,dispose=P.dispose,settings=P._scr_settings,swap=P._swap,loop=P._loop,show=P.show,nav=P._nav;
   const active=m=>!!(m.current||m._scr);
   const focus=P._setFocus, inputMode=P.setInputMode, cursor=P._updateCursor;
-  // A CSS opacity fade must not leave a retired ring over the old item.
-  // Keep native fade-in and pulse; hide only the logically off ring.
+  // A fading ring must not linger over the old item: hide the logically
+  // off ring at once. The fade-in is fadeRing() below; the CSS pulse stays.
   const syncRingVisibility=m=>{const style=m.cursorEl.style,want=m._cur.on?'':'hidden';if(style.visibility!==want)style.visibility=want;};
   // The ring IS the selection display: its geometry is the focused item's
   // geometry, never a spring travelling toward it. Native springs (k 560,
@@ -19,12 +19,44 @@ export function installMenuQuality(Menus, env=globalThis){
   // keyboard/pad/touch move and chase rapid input from behind while the
   // item's own focus state had already changed. Each owner tick re-reads the
   // geometry (scrolling lists, entrance layout); selection changes commit it
-  // in the same input task. Opacity fade-in and the CSS pulse stay.
+  // in the same input task. The opacity fade-in (fadeRing) and the CSS pulse stay.
   const place=(m,dt)=>{
     if(!m._focus?.isConnected)m._cur.targetEl=null;
     m._cur.snapNext=true;
-    const result=cursor.call(m,dt);syncRingVisibility(m);anchorRing(m);return result;
+    const result=cursor.call(m,dt);syncRingVisibility(m);fadeRing(m);anchorRing(m);return result;
   };
+  // The ring's 180 ms entrance fade is owned by the same tick that places it,
+  // not by a CSS opacity transition. A composited CSS transition only gets a
+  // start time once the browser presents a frame; until then it reports
+  // pending with its from-value (opacity 0). With multi-second frames
+  // (SwiftShader CI, a stalled low-end device) the focused item stayed
+  // without a visible selection for several frames: #1432 measured 13 s per
+  // frame and the ring still at opacity 0 / pending 14.7 s after is-on.
+  // Here the opacity is the CSS `ease` curve of wall time since the ring came
+  // on, evaluated for the frame it will be presented in (one measured owner
+  // frame later). At 60 fps that is the same 180 ms fade; when one frame is
+  // longer than the whole fade there is no in-between frame to show, so the
+  // first presented frame has the ring fully visible.
+  const RING_FADE_MS=180;
+  const ease=x=>{ // cubic-bezier(.25,.1,.25,1), the CSS `ease` timing function
+    if(x<=0)return 0;if(x>=1)return 1;
+    const bx=t=>((t-.75)*t+.75)*t,by=t=>((-1.7*t+2.4)*t+.3)*t;
+    let lo=0,hi=1,t=x;
+    for(let i=0;i<24;i++){if(bx(t)<x)lo=t;else hi=t;t=(lo+hi)/2;}
+    return by(t);
+  };
+  const now=()=>{const t=env.performance?.now?.();return Number.isFinite(t)?t:Date.now();};
+  function fadeRing(m){
+    const style=m.cursorEl?.style;if(!style)return;
+    if(style.transition!=='none')style.transition='none';
+    if(!m._cur.on){m._ringShownAt=null;if(style.opacity!=='0')style.opacity='0';return;}
+    const t=now();
+    if(m._ringShownAt==null)m._ringShownAt=t-Math.min(RING_FADE_MS,Math.max(0,m._ringFrameMs||0));
+    const k=(t-m._ringShownAt)/RING_FADE_MS,value=k>=1?'1':ease(k).toFixed(3);
+    if(style.opacity!==value)style.opacity=value;
+  }
+  // Owner frame cadence (wall clock) for the presentation estimate above.
+  const frameTick=m=>{const t=now();m._ringFrameMs=Number.isFinite(m._ringFrameAt)?t-m._ringFrameAt:0;m._ringFrameAt=t;};
   // A ring painted in viewport coordinates trails every scroll: the
   // browser scrolls the list on its compositor at display rate, while the
   // ring only moves on the next owner tick (one frame or more behind, worse
@@ -85,7 +117,7 @@ export function installMenuQuality(Menus, env=globalThis){
     st.width=w.toFixed(1)+'px';
     if(C.clip){C.clip='';st.clipPath='';}
   }
-  if(cursor)P._updateCursor=function(dt){return place(this,dt);};
+  if(cursor)P._updateCursor=function(dt){frameTick(this);return place(this,dt);};
   // Logical selection, geometric target and the painted ring all commit in
   // this task, including touch's own-row highlight and deselection.
   // toast() inserts its stack before the ring; the ring must be home first.
@@ -148,6 +180,8 @@ export function installMenuQuality(Menus, env=globalThis){
     return result;
   };
   function stop(m,r){
+    // A stopped owner is not a slow frame: the next tick starts a new cadence.
+    m._ringFrameAt=NaN;
     if(m._raf){env.cancelAnimationFrame(m._raf);m._raf=0;}
     if(r?.timer!==null&&r?.timer!==undefined){env.clearTimeout(r.timer);r.timer=null;}
   }
