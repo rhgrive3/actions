@@ -2,6 +2,8 @@ import { turfCombatAllowed } from './turf-combat.mjs';
 import { stormRecoveryState } from './storm-effects.mjs';
 import { isChargerFullCharge } from './weapons.mjs';
 import { slamProtected } from './tidal-slam-gauge.mjs';
+import { chargerLowInkRecovery, CHARGER_INTERRUPT_RECOVERY_SECONDS } from './charger-charge-clock.mjs';
+import { captureNativeChargerResources } from './native-charger-input.mjs';
 let api, tuning, profile;
 export function installResources(context, values) { api = context; tuning = values.resources; profile = values; }
 export const RESPAWN_CAUSES = Object.freeze({ normal: 8.5, water: 7.0, outOfBounds: 5.5 });
@@ -56,6 +58,7 @@ export function updateSpecialHealthRecovery(a, dt) {
 }
 export function updateResources(a, dt) {
   if (!api) throw new Error('INKWAVE resource patch not installed');
+  captureNativeChargerResources(a, dt);
   if (!turfCombatAllowed(api.G)) return;
   const P = api.PLAYER, r = tuning, mods = a.s3?.modifiers || {};
   const isSquid = resourceSurface(a), onEnemy = a.onEnemy;
@@ -119,13 +122,11 @@ export function updateResources(a, dt) {
   if (a.weapon.kind === 'charger' && (chargerCancelled ||
       runner?.charging && isSquid && !isChargerFullCharge(runner.charge))) {
     a.s3 ||= {};
-    a.s3.chargerInterruptRecover = 19 / 60;
+    a.s3.chargerInterruptRecover = CHARGER_INTERRUPT_RECOVERY_SECONDS;
   }
   const chargerInterruptRecover = a.weapon.kind === 'charger' ? (a.s3?.chargerInterruptRecover || 0) : 0;
   const chargerKeepRecover = a.weapon.kind === 'charger' ? (a.s3?.chargerKeepRecover || 0) : 0;
-  const chargerLowRecovery = a.weapon?.kind === 'charger' && runner?.charging &&
-    !isChargerFullCharge(runner.charge) &&
-    a.ink + 1e-10 < (a.weapon.inkMin ?? 0) && chargerInterruptRecover <= 1e-10 && chargerKeepRecover <= 1e-10;
+  const chargerLowRecovery = chargerLowInkRecovery(a,runner,chargerInterruptRecover,chargerKeepRecover);
   const canRefill = chargerLowRecovery ||
     ((rollingRecovery ? (!a.weaponRunner.rolling || stationaryRollRecovery) : a.lastFire + 1e-10 >= delay)
       && (a.s3?.recoverStopRemaining || 0) <= 1e-10

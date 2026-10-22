@@ -1,4 +1,5 @@
 // Local send acceptance only. No relay acknowledgement or timestamp invention.
+import { prepareNativeChargerInputs, commitNativeChargerInputs, forgetNativeChargerInputs } from '../splatoon3/runtime/native-charger-input.mjs';
 export const OUTBOUND_LIMITS=Object.freeze({rows:512,bytes:512*1024,packetRows:256,frameBytes:64*1024});
 export const OUTBOUND_RECEIPT=Symbol('inkwave outbound local acceptance');
 // Browser and hermetic VM fixtures do not expose the same globals. Preserve
@@ -26,7 +27,7 @@ const bytes=value=>{
 function state(n){let s=states.get(n);if(!s){s={window:256,failed:false,rows:0,bytes:0,backlogged:false};states.set(n,s);}return s;}
 function abort(n,s,reason,G){
  if(s.failed)return false;
- s.failed=true;s.reason=reason;s.discardedRows=n.out.length;n.out.length=0;s.rows=s.bytes=0;
+ s.failed=true;s.reason=reason;s.discardedRows=n.out.length;n.out.length=0;s.rows=s.bytes=0;forgetNativeChargerInputs(n);
  const session=n.s,transport=session?.tr,match=n.match,game=G?.game,gameMatch=game?.match,globalMatch=G?.match,globalNet=G?.netm;
  // Never let an obsolete owner's cleanup abort a replacement match.
  if(session?.match!==n)return false;
@@ -56,6 +57,9 @@ export function queueOutboundEvent(n,event,G){
 export function sendOutboundTick(n,msg,pack,G){
  const s=state(n);if(s.failed)return false;
  if(!sync(n,s,true))return abort(n,s,'Outbound event backlog exceeded',G);
+ const input=G?prepareNativeChargerInputs(n,G,s.inputWindow??256):null;
+ if(input?.error)return abort(n,s,input.error,G);
+ if(input?.payload)msg.ci=input.payload;
  const count=Math.min(n.out.length,s.window,OUTBOUND_LIMITS.packetRows),prefix=count?n.out.slice(0,count):null;
  if(count){msg.r=2;msg.e=prefix;}
  const session=n.s,transport=session?.tr,owner=session?.match,match=n.match;
@@ -69,13 +73,18 @@ export function sendOutboundTick(n,msg,pack,G){
  try{accepted=transport?.broadcast(wire)===true;}catch(error){s.lastError=String(error?.message||error).slice(0,256);}
  if(!accepted){
   s.backlogged=true;
-  if(receipt.reason==='frame-too-large'&&count<=1)return abort(n,s,count?'Outbound event envelope exceeds frame limit':'Outbound snapshot exceeds frame limit',G);
+  if(receipt.reason==='frame-too-large'&&count<=1){
+   if(input?.frames>1){s.inputWindow=Math.max(1,Math.floor(input.frames/2));return false;}
+   return abort(n,s,count?'Outbound event envelope exceeds frame limit':'Outbound snapshot exceeds frame limit',G);
+  }
   if(count)s.window=Math.max(1,Math.floor(count/2));return false;
  }
  if(n.s!==session||n.match!==match||session?.tr!==transport||session?.match!==owner)return false;
  // Synchronous sends can append new events. Remove only this exact prefix.
  if(count&&prefix.some((event,i)=>n.out[i]!==event))return abort(n,s,'Outbound queue changed during send',G);
+ if(input?.frames&&!commitNativeChargerInputs(n,input,G))return abort(n,s,'Outbound input queue changed during send',G);
  if(count){n.out.copyWithin(0,count);n.out.length-=count;}s.rows=n.out.length;s.bytes=n.out.length?bytes(n.out)-1:0;s.window=256;s.backlogged=n.out.length>0;
+ s.inputWindow=256;
  if(s.bytes>OUTBOUND_LIMITS.bytes)return abort(n,s,'Outbound event backlog exceeded',G);
  return true;
 }

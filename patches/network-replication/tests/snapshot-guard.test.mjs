@@ -7,10 +7,15 @@ test('#1178 full owner row accepts ordinary 20Hz packets and additional optional
   assert.equal(validActorSnapshotRow([...row(), { sequence: 1 }], 2.55), true);
   assert.equal(validActorSnapshotRow([...row(), null, null, ["owner", 1, 3, 2.5, 100, true]], 2.55), true,
     'authoritative hit state at column 25 must not invalidate the owner row');
-  assert.equal(validActorSnapshotRow([...row(), null, null, ["owner", 1, 3, 2.5, 100, true], null], 2.55), true,
-    '26/27 column producer extension is structurally valid');
+  assert.equal(validActorSnapshotRow([...row(), null, null, ["owner", 1, 3, 2.5, 100, true], ['iw-input-body-1',0,2]], 2.55), true,
+    'typed input/body column preserves the 27-column producer extension');
   assert.equal(validActorSnapshotRow([...row(), null, null, ["owner", 1, 3, 2.5, 100, true], null, null], 2.55), false,
     'oversized owner row remains rejected');
+});
+test('input/body tuple binds a bounded physical foot to the source display smoothing limit',()=>{
+ const complete=body=>[...row(),null,null,["owner",1,3,2.5,100,true],body];
+ for(const body of [['iw-input-body-1',0,2],['iw-input-body-1',15,1.3],['iw-input-body-1',1,2.7]])assert.equal(validActorSnapshotRow(complete(body),2.5),true);
+ for(const body of [null,1,[],['wrong',1,2],['iw-input-body-1',16,2],['iw-input-body-1',1,NaN],['iw-input-body-1',1,1.2],['iw-input-body-1',1,2,0]])assert.equal(validActorSnapshotRow(complete(body),2.5),false,JSON.stringify(body));
 });
 test('#1178 malformed owner scalars and truncated rows never reach Hermite', () => {
   for (const [index, bad] of [[1, null], [4, 'bad'], [4, NaN], [7, Infinity], [10, -1],

@@ -28,7 +28,7 @@ export function networkIdentity() {
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'roller-presentation.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'owner-clock.mjs', 'combat-provenance.mjs', 'sub-birth-commit.mjs', 'sprinkler-contact-commit.mjs', 'torpedo-contact-commit.mjs', 'torpedo-birth-envelope.mjs', 'torpedo-launch-set.mjs', 'combat-provenance-adapter.mjs', 'outbound-prefix.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs', 'combat-hit-ceilings-data.mjs', 'damage-leaves.mjs']
+    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'owner-clock.mjs', 'combat-provenance.mjs', 'charger-contact-authority.mjs', 'receiver-charger-input.mjs', 'sub-birth-commit.mjs', 'sprinkler-contact-commit.mjs', 'torpedo-contact-commit.mjs', 'torpedo-birth-envelope.mjs', 'torpedo-launch-set.mjs', 'combat-provenance-adapter.mjs', 'outbound-prefix.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs', 'combat-hit-ceilings-data.mjs', 'damage-leaves.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -193,16 +193,18 @@ export function copyEventVector(payload, key, target) {
   return true;
 }
 export function emit(name, payload) {
+  if (suppressNativeChargerReplayEvent()) return;
   const set = listeners.get(name);
   if (!set) return;
   snapshotWeaponEvent(name, payload);
   for (const fn of set) fn(payload);
 }`, 'snapshot event vectors before synchronous dispatch');
-    code = "import * as THREE from 'three';\n" + code;
+    code = "import { suppressNativeChargerReplayEvent } from '../../patches/splatoon3/runtime/native-charger-replay.mjs';\nimport * as THREE from 'three';\n" + code;
     return code;
   }
   if (rel === 'src/net/netmatch.js') {
     code = "import { validResultPacket } from '../../patches/network-replication/result-admission.mjs';\n" + code;
+    code = "import { validNativeChargerInputPacket } from '../../patches/splatoon3/runtime/native-charger-input.mjs';\n" + code;
     // #1178: reject malformed owner actor rows before unpack/Hermite interpolation.
     // Optional sidecar fields are validated by their feature-specific readers.
     patch('function unpackActor(s, ts) {', `function validActorSnapshot(s) {
@@ -216,6 +218,7 @@ export function emit(name, payload) {
   if (!bounded(s[13], 10000000) || !bounded(s[15], 1000000000000)
     || !Number.isSafeInteger(s[16]) || s[16] < 0) return false;
   if (s.length > 21 && !bounded(s[21], 10000)) return false;
+  if (s.length > 26 && !validActorInputBody(s[26],s[2])) return false;
   return true;
 }
 function finiteRemoteSample(s) {
@@ -2130,6 +2133,9 @@ function firstSplatStateFor(session,cfg) {
     return code;
   }
   if (rel === 'src/game/weapons.js') {
+    code = "import { mainSubOwns } from '../../patches/splatoon3/runtime/charger-charge-clock.mjs';\n" + code;
+    patch('const subOwns = !!inp.sub || this.aimingSub && !!inp.subReleased;',
+      'const subOwns = mainSubOwns(this,inp);', 'shared native sub input ownership');
     // Source-guided heads return before the generic fidelity branch below.
     // Trust no peer-controlled visual ribbon/head parameters, even through
     // direct ghost construction or recycled projectiles outside NetMatch.
@@ -2432,6 +2438,16 @@ ${bombHit}`;
 
   }
   if (rel === 'src/game/actor.js') {
+    code = "import { ACTOR_LANDING_CONTACT_DOWN, ACTOR_STEP_VISUAL_OFFSET_MAX, actorLandingContact } from '../../patches/splatoon3/runtime/player-ground-contact.mjs';\n" + code;
+    patch('if (Math.abs(this.smoothY) > 0.7) { this.smoothY = Math.sign(this.smoothY) * 0.7; }',
+      'if (Math.abs(this.smoothY) > ACTOR_STEP_VISUAL_OFFSET_MAX) { this.smoothY = Math.sign(this.smoothY) * ACTOR_STEP_VISUAL_OFFSET_MAX; }', 'shared native step visual bound');
+    patch('    ch.root.position.y += this.smoothY;',
+      '    ch.root.position.y += this.smoothY;\n    if (this.remote && Number.isFinite(this._netDisplayYOffset)) ch.root.position.y += this._netDisplayYOffset;', 'remote cosmetic height separated from physical body');
+    patch('G.physics.groundProbe(this.pos.x, this.pos.y, this.pos.z, (top - this.pos.y) + assist, 0.02, P.footRadius, gh, isSquid);',
+      'G.physics.groundProbe(this.pos.x, this.pos.y, this.pos.z, (top - this.pos.y) + assist, ACTOR_LANDING_CONTACT_DOWN, P.footRadius, gh, isSquid);',
+      'shared native landing contact interval');
+    patch('landingFits && gh.hit && gh.y >= this.pos.y - 0.02 && (this.vel.y <= 0 || gh.y - this.pos.y < 0.02)',
+      'landingFits && actorLandingContact(gh,this.pos.y,this.vel.y)', 'shared native landing contact predicate');
     patch("    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form, t: 0, target, from: new THREE.Vector3(), to: destination, marker: 0 };",
       "    this._s3SuperJumpEpoch = Number.isSafeInteger(this._s3SuperJumpEpoch) && this._s3SuperJumpEpoch >= 0 && this._s3SuperJumpEpoch < Number.MAX_SAFE_INTEGER ? this._s3SuperJumpEpoch + 1 : 1;\n    this.superJumpState = { wallSupport: this.climbing ? this.wallN.clone() : null, phase: 'charge', startForm: this.form, t: 0, target, from: new THREE.Vector3(), to: destination, marker: 0, sjEpoch: this._s3SuperJumpEpoch };",
       'owner Super Jump action epoch');
@@ -2454,8 +2470,10 @@ ${bombHit}`;
     patch('system.applyHit(job.owner,a.actor,amount,job.weapon.id);',
       'withProjectileHitGeometry(system,job.prev,job.moved.copy(job.prev).addScaledVector(job.dir,a.d),0,()=>system.applyHit(job.owner,a.actor,amount,job.weapon.id));',
       'charger contact carries actual beam segment');
-    patch("emit('weapon:fire',{actor,weapon:w.id,muzzle:origin.clone(),dir:direction.clone(),charge,len:distance});",
-      "emit('weapon:fire',{actor,weapon:w.id,muzzle:origin,dir:direction,charge,len:distance});",
+    const chargerFlightFireFields = code.includes('dir:direction.clone(),charge,full,len:distance')
+      ? 'charge,full,len:distance' : 'charge,len:distance';
+    patch(`emit('weapon:fire',{actor,weapon:w.id,muzzle:origin.clone(),dir:direction.clone(),${chargerFlightFireFields}});`,
+      `emit('weapon:fire',{actor,weapon:w.id,muzzle:origin,dir:direction,${chargerFlightFireFields}});`,
       'charger flight fire payload');
     // Keep the sourced radius in both raw and width-calibrated Charger flight.
     // The network optimization may change vector ownership, not paint sizing.
@@ -2543,7 +2561,7 @@ ${bombHit}`;
       }`, 'bounded guest crablet lifetime and visual admission');
   }
   if (rel === 'src/net/netmatch.js') {
-    code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow, validBossMove, validOwnerTickAdvance, validOwnerSimulationTick, validEventSequence, validNetworkProjectileTiming, validForwardedEventPayload, allowGhostBombBirth, validNetworkBombBirth, validNetworkProjectileCosmetics, NETWORK_PROJECTILE_LIFE_MAX, NETWORK_PROJECTILE_DELAY_MAX } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
+    code = "import { validActorSnapshotRow, validActorInputBody, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow, validBossMove, validOwnerTickAdvance, validOwnerSimulationTick, validEventSequence, validNetworkProjectileTiming, validForwardedEventPayload, allowGhostBombBirth, validNetworkBombBirth, validNetworkProjectileCosmetics, NETWORK_PROJECTILE_LIFE_MAX, NETWORK_PROJECTILE_DELAY_MAX } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
     // #1311: count only active ghost rounds; do not keep lifecycle counters.
     // The native 700-blob render budget reserves 60 for local effects.
     patch('const TICK = 1 / 20;', `const TICK = 1 / 20;
@@ -2613,11 +2631,17 @@ function canAllocateNetworkGhost(projectiles, actor) {
       'Blaster applies once after recipient hit admission');
     code = adaptIssue1088SurgePresentation(code);
     code = once(code, 'if (c1088Surge) c1088Row.push(c1088Surge);\n  return c1088Row;',
-      'c1088Row.push(c1088Surge || null, packHitAuthorityState(a));\n  return c1088Row;',
+      'c1088Row.push(c1088Surge || null, packHitAuthorityState(a), [\'iw-input-body-1\', (a.intent?.fire?1:0)|(a.intent?.squid?2:0)|(a.intent?.sub?4:0)|(a.intent?.jump?8:0), r3(a.pos.y)]);\n  return c1088Row;',
       rel + ': append life-bound accepted-hit state');
     code = once(code, 'surgePresentation: s[24] ?? null, surgeSampleTime: ts };',
-      'surgePresentation: s[24] ?? null, surgeSampleTime: ts, hitLife: s[25]?.[1], hitSeq: s[25]?.[2], hitParent: readHitAuthorityState(s[25], s[25]?.[1])?.[2] ?? null };',
+      'surgePresentation: s[24] ?? null, surgeSampleTime: ts, hitLife: s[25]?.[1], hitSeq: s[25]?.[2], hitParent: readHitAuthorityState(s[25], s[25]?.[1])?.[2] ?? null, rawInput: s[26]?.[1], physicalY: s[26]?.[2] };',
       rel + ': unpack accepted-hit revision');
+    patch('t: ts, x: s[1], y: s[2], z: s[3]',
+      't: ts, x: s[1], y: Number.isFinite(s[26]?.[2]) ? s[26][2] : s[2], visualOffset: Number.isFinite(s[26]?.[2]) ? s[2]-s[26][2] : 0, z: s[3]', 'canonical physical body independent of display step offset');
+    patch('    a.pos.set(S.x + n.err.x, S.y + n.err.y, S.z + n.err.z);',
+      '    a.pos.set(S.x + n.err.x, S.y, S.z + n.err.z);\n    a._netDisplayYOffset = (S.visualOffset || 0) + n.err.y;\n    a.smoothY = 0; a.smoothYV = 0;', 'remote physical height and cosmetic correction contract');
+    patch('  o.lock = a.lock + (b.lock - a.lock) * u;',
+      '  o.lock = a.lock + (b.lock - a.lock) * u;\n  o.visualOffset = (a.visualOffset || 0) + ((b.visualOffset || 0)-(a.visualOffset || 0))*u;', 'interpolate cosmetic height separately');
     code = adaptIssue1163RemoteDodgeClock(code);
     patch('    const S = n.cur;',
       '    const S = n.cur;\n    if (!validRemoteActorPose(S, n.err)) { a.character.root.visible = false; return; }\n    if (!a.alive || !(S.f & F.alive)) clearRemoteRollerPresentation(a);',
@@ -2640,6 +2664,8 @@ function canAllocateNetworkGhost(projectiles, actor) {
       'restore last accepted Super Jump epoch after adoption reconciliation');
   }
   if (rel === 'src/game/weapons.js') {
+    code="import { captureNativeChargerReplaySub } from '../../patches/splatoon3/runtime/native-charger-replay.mjs';\n"+code;
+    patch('  throwBomb(a) {','  throwBomb(a) {\n    if (captureNativeChargerReplaySub(this,a)) return;', 'private native replay bomb birth sink');
     code="import { slosherImpactMetadata } from '../../patches/network-replication/slosher-paint-admission.mjs';\n"+code;
     // The S3 source footprint introduces an explicit physical-ink kind before
     // network provenance attaches. Accept exactly the two approved, mutually
@@ -2658,7 +2684,7 @@ function canAllocateNetworkGhost(projectiles, actor) {
       '    if (!validForwardedEventPayload(name, d)) return;\n    const e = unpackEvent(d, this);',
       'defense in depth for direct forwarded event playback');
     patch('  _tick(from, d) {',
-      "  _tick(from, d) {\n    if (d.e != null && !Array.isArray(d.e)) return;\n    if (from === this.s.hostId && d.c != null && (!Array.isArray(d.c) || d.c.length !== 2 || typeof d.c[0] !== 'string' || !Number.isFinite(d.c[1]) || d.c[1] < 0)) return;",
+      "  _tick(from, d) {\n    if (d.ci != null && !validNativeChargerInputPacket(d.ci)) return;\n    if (d.e != null && !Array.isArray(d.e)) return;\n    if (from === this.s.hostId && d.c != null && (!Array.isArray(d.c) || d.c.length !== 2 || typeof d.c[0] !== 'string' || !Number.isFinite(d.c[1]) || d.c[1] < 0)) return;",
       'validate owner envelope before kit normalization or pending births');
     // Bound incoming work before reordering/provenance logic inspects the envelope.
     patch('    if (Array.isArray(d?.e)) d = { ...d, e: d.e.filter(Array.isArray) };',

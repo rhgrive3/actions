@@ -4,7 +4,9 @@ import { WORLD_UNITS_PER_SOURCE_UNIT } from './source-distance.mjs';
 import { coherentMotionStart } from './actor-motion.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
-import { chargerDamage, isChargerFullCharge } from './weapons.mjs';
+import { chargerDamage, chargerInkCost, isChargerFullCharge } from './weapons.mjs';
+import { attachReceiverChargerFlight, recordReceiverChargerActor, recordReceiverChargerBoss } from '../../network-replication/charger-contact-authority.mjs';
+import { nativeChargerReplayActor, captureNativeChargerReplayShot } from './native-charger-replay.mjs';
 // #961: linear authoritative charge reaches the legal minimum at 8/60.
 // Paint and launch endpoints must share this coordinate; retaining the old
 // 1/6 early-boost boundary would create a second plateau after frame 8.
@@ -109,27 +111,40 @@ export function installChargerFlight(api,completion) {
     const area=G.paint.splat(feetAt.copy(h.point).addScaledVector(h.normal,.1),radius,actor.team,{seed:0,footprint:CHARGER_FOOTPRINT,kind:SOURCE_SPLASH_PAINT_KIND,claimOwner:actor});
     actor.addTurf(area);
   }
-  function begin(system,actor,w,charge,origin,dir,ghost=false,maxDistance=null){
+  function begin(system,actor,w,charge,origin,dir,ghost=false,maxDistance=null,fullState=null){
     charge=Math.max(0,Math.min(1,Number.isFinite(charge)?charge:0));
-    const full=isChargerFullCharge(charge);
+    const full=ghost&&typeof fullState==='boolean'?fullState:isChargerFullCharge(charge);
     // The native runner resets chargeT immediately after this synchronous release
     // call. Snapshot it here and keep it with the in-flight shot; `charge` stays
     // the same linear value used for range and launch speed.
     const chargeT=!ghost&&Number.isFinite(actor.weaponRunner?.chargeT)?actor.weaponRunner.chargeT:null;
     const damage=ghost?0:full?w.damageMax:chargerDamage({weaponRunner:{chargeT}},w,charge);
     const speed=full?60*raw.SpawnSpeedFullCharge:chargerLaunchSpeed(raw,charge);
-    const distance=maxDistance??reachFor(charge);
+    const canonicalReach=full?raw.DistanceFullCharge:raw.DistanceMinCharge+(raw.DistanceMaxCharge-raw.DistanceMinCharge)*chargerRangeCharge(charge);
+    const distance=maxDistance??canonicalReach;
+    if(!ghost&&captureNativeChargerReplayShot(system,actor,{charge,chargeT,full,damage,speed,range:canonicalReach,cost:chargerInkCost(w,charge,chargeT)})){
+      // The same source birth phase owns this gate on normal launches below.
+      actor.weaponRunner.s3ChargerPostShot=16/60;return;
+    }
     const direction=dir.clone().normalize();
     if(!Number.isFinite(distance)||distance<=0||direction.lengthSq()<EPS)return;
     const job={owner:actor,team:actor.team,weapon:w,charge,chargeT,damage,full,speed,range:distance,travel:0,origin:origin.clone(),dir:direction,
       pos:origin.clone(),prev:origin.clone(),hit:new Hit(),base:new THREE.Vector3(),moved:new THREE.Vector3(),seen:new Set(),ghost,nextPaint:1.2,nearestPending:true,seed:Math.random(),paint:chargerPaintParameters(completion.weapons.charger,charge),beam:null};
+    if(ghost){
+      const legal=(w.minimumChargeTime??8/60)/(w.chargeTime||1);
+      const damageAt=q=>chargerDamage({weaponRunner:{chargeT:q}},w,q);
+      const low=Math.max(legal,charge-.0005),high=Math.min(1,charge+.0005);
+      if(!attachReceiverChargerFlight(system,job,full?w.damageMax:damageAt(Math.max(legal,charge)),
+        chargerInkCost(w,charge,Math.max(legal,charge)),canonicalReach,
+        full?w.damageMax:damageAt(low),full?w.damageMax:damageAt(high)))return;
+    }
     system._ghostBeam(actor,origin,direction,.0001,charge,false);
     job.beam=system.beams.at(-1);
     (system._fidelityChargerFlights||(system._fidelityChargerFlights=[])).push(job);
     if(!ghost){
       feetSplash(actor,w);
       if(actor.weaponRunner)actor.weaponRunner.s3ChargerPostShot=16/60;
-      emit('weapon:fire',{actor,weapon:w.id,muzzle:origin.clone(),dir:direction.clone(),charge,len:distance});
+      emit('weapon:fire',{actor,weapon:w.id,muzzle:origin.clone(),dir:direction.clone(),charge,full,len:distance});
       if(actor.isLocal)emit('recoil',{amount:.005+charge*.013});
       // #982: S3 Charger fires below 50% without shot vibration.
       // charge and chargeT now share the linear progression (formerly .5
@@ -157,6 +172,7 @@ export function installChargerFlight(api,completion) {
       out.distanceToSquared(keepBody) <= 2.5 && G.physics.los(keepBody, out);
   }
   P.fireCharger=function(actor,w,charge){
+    if(nativeChargerReplayActor(actor))return begin(this,actor,w,charge,null,null);
     const origin=this._muzzle(actor,new THREE.Vector3()).clone();
     if (actor.weaponRunner?.s3KeepMuzzleFiring) {
       const kept = new THREE.Vector3();
@@ -169,7 +185,7 @@ export function installChargerFlight(api,completion) {
     const w=WEAPONS[event.weapon]||actor.weapon;
     if(w.kind!=='charger')return nativeGhost.call(this,actor,event);
     const origin=new THREE.Vector3().copy(event.muzzle||actor.pos),dir=new THREE.Vector3().copy(event.dir||actor.aimDir);
-    begin(this,actor,w,event.charge??0,origin,dir,true,event.len??null);
+    begin(this,actor,w,event.charge??0,origin,dir,true,event.len??null,event.full??null);
   };
   // Reuse one downward query/Hit for each native paint point. This does not
   // increase the ray count compared with the previous 3.5-unit probe.
@@ -273,9 +289,11 @@ export function installChargerFlight(api,completion) {
         try{system.applyHit(job.owner,a.actor,amount,job.weapon.id);}
         finally{job.owner._sourceChargerAudioHit=previous;}
       }
+      if(job.ghost)recordReceiverChargerActor(system,job,a.actor,performance.now()/1000);
       if(!job.full){distance=a.d;ended=true;target=a.actor;normal=job.dir.clone().negate();break;}
     }
     if(target==='boss'&&!job.ghost)G.boss.hit(job.owner,amount,boss.target,job.weapon.id,boss.point.clone());
+    else if(target==='boss'&&job.ghost)recordReceiverChargerBoss(system,job,boss.target,performance.now()/1000);
     if(target==='defense')defense.onHit();
     job.pos.copy(job.prev).addScaledVector(job.dir,distance);job.travel+=distance;
     paintTravel(system,job,job.travel);

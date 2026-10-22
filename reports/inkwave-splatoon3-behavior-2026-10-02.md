@@ -5870,3 +5870,14 @@ Node v24.19.0の本番合成VMで新規3件と隣接9件、計12/12成功。原�
 ### #1767 独立clock-only source自身のnative追補
 
 独立source`2d2b8aa25795f351f6e206488c89af7255595be6`、input`c2722d71…`/content`34bb3936…`の固定buildで、実Tidewater/Match/Actor/Characterと実WebSocket/production relayを用いる3局面・6方向も成功した。実行evidence HEAD`50f8843e…`との差分はreport3fileだけで、1,364input全部の同一性を再照合した。8nonce query/6reply、origin固定、Actor buffer7〜10、Match playingと後続snapshot進行、page/console error0、実描画80/82call・context lossなしを確認。全6組の実受信対は旧arrival-origin guardではfalseとなる。PNGはlocal保持＋SHA一覧、公開rawはJSON/logのみ。source/evidence commit、local upgrade shim、単一Chromium内2context、手動native frame、Switch/物理端末未計測の範囲は`reports/issue-resolution-20261022/continuation/clock-only-native-browser.json`へ明記し、768の過去受入と分けた。
+
+
+## 2026-10-22 experimental native Charger receiver replay
+
+Comparison reference: Splatoon 3 11.3.0, native Splat Charger, normal/equipped ink saver and recovery gear. This experimental branch is not deployed and does not close #1665/#1666. It reuses INKWAVE's installed Actor/Physics/resource/WeaponRunner laws without inventing Nintendo values. Runtime is isolated from the completed owner-clock PR and the weapon-model PR.
+
+Raw source input is captured at 30/60/120Hz with exact dt, global source time, life serial and event FIFO. A private receiver Actor starts from the actual native Match spawn captured before owner snapshots. The received body/effective/form fields are witnesses; ink/charge/grounded scalars cannot fund resources. Cumulative replay dt is limited by receiver elapsed time from fixed enrollment. Real source launch receipts are branded and single-use, and normal8 Worker relay traces remain below the existing quota. The ci2 connection preserves same-owner paint-before-swim and birth-before-input FIFO, bounded missing-prefix TTL, and life/owner/world invalidation.
+
+Source/CPU validation: coherent113/113 plus outbound42/42; independent receiver/relay/producer/replay54/54. Source owner and clone both remain kid at the original9F postshot swim point; the old fixture expectation was wrong. At24F they both become squid and ink matches. The earlier stored-R preservation expectation was also wrong: the inner mainSubOwns owner cancels stored keep. Historical logs remain revision-specific.
+
+Mandatory damage admission remains disconnected. Cross-owner historical paint/world state, actual external pushes/knockback, earned Special credit, SuperJump, transient gear/support, loading/late-join/migration checkpoints and the remaining64 main owners are incomplete. Existing capture-ledger ink accounting is not exact owner ink equality. No receiver-stage browser, Switch or physical mobile measurements are claimed. See [the exact contract](../patches/network-replication/native-charger-replay-contract.md).

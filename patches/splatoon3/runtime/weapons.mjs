@@ -1,4 +1,5 @@
 import { installWeaponAccuracy, withShotBias, accuracyEnvelope, recoveringJumpBias } from './weapon-accuracy.mjs';
+import { chargerChargeSeconds, chargerKeepRecord, chargerKeepHidden, chargerKeepResurface, chargerKeepReady, chargerProgressiveInk, chargerFundedProgress, CHARGER_KEEP_CANCEL_RECOVERY_SECONDS } from './charger-charge-clock.mjs';
 import { applyMainDirectHit, withMainDirectDamage } from './private-tracking.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { DualiesAccuracy } from './dualies-accuracy.mjs';
@@ -657,16 +658,7 @@ export function installWeapons(context, profile) {
     return busyBeforeSplatlingInterrupt.call(this);
   };
   const charger = WeaponRunner.prototype._charger;
-  const chargerInkAt = (w, progress) => {
-    const p = Math.max(0, Math.min(1, progress)), minT = w.minimumChargeTime ?? (8 / 60);
-    if (p <= minT) return w.inkMin * p / Math.max(1e-10, minT);
-    return w.inkMin + (w.inkFull - w.inkMin) * (p - minT) / Math.max(1e-10, 1 - minT);
-  };
-  const chargerProgressForInk = (w, ink) => {
-    const value = Math.max(0, ink), minT = w.minimumChargeTime ?? (8 / 60);
-    if (value <= w.inkMin) return minT * value / Math.max(1e-10, w.inkMin);
-    return Math.min(1, minT + (1 - minT) * (value - w.inkMin) / Math.max(1e-10, w.inkFull - w.inkMin));
-  };
+  const chargerInkAt = chargerProgressiveInk, chargerProgressForInk = chargerFundedProgress;
   const accumulateChargerElapsed = (r, seconds) => {
     const elapsed = Number.isFinite(r.s3ChargerElapsed) ? r.s3ChargerElapsed : 0;
     if (!(seconds > 0)) return elapsed;
@@ -729,7 +721,7 @@ export function installWeapons(context, profile) {
     if (this.s3Stored && !held && !storedReleaseReady) {
       // #1070: cancelling a live charge keep owns S3's separate 3F ink-recovery delay.
       a.s3 ||= {};
-      a.s3.chargerKeepRecover = 3 / 60;
+      a.s3.chargerKeepRecover = CHARGER_KEEP_CANCEL_RECOVERY_SECONDS;
       cancelStored(this); this.s3WasSquid = a.form === 'squid';
       this.s3ChargerStartupT = 0; this.s3ChargerHeldGate = false;
       return;
@@ -743,20 +735,13 @@ export function installWeapons(context, profile) {
     if (a.form === 'squid') {
       this.s3WasSquid = true;
       if (this.charging) {
-        if (w.scopedCharge !== true && w.scoped !== true && isChargerFullCharge(this.charge) && held && a.submerged === true) this.s3Stored = {
-          charge: 1, remaining: w.keepChargeTime,
-          fireDelay: w.storedFireDelay || 0, laserDelay: w.storedLaserDelay || 0,
-          resurfaced: false,
-          paid: Math.max(this.s3ChargerSpent || 0, w.inkFull)
-        };
+        if (w.scopedCharge !== true && w.scoped !== true && isChargerFullCharge(this.charge) && held && a.submerged === true) this.s3Stored = chargerKeepRecord(w,this.s3ChargerSpent);
         this.charging = false; this.charge = 0; this.chargeT = 0; this.s3ChargerHeldTime = 0;
         if (!this.s3Stored) this.s3ChargerSpent = 0;
         this.chargeLoop?.stop(.05); this.chargeLoop = null;
       }
       if (this.s3Stored) {
-        this.s3Stored.remaining -= dt;
-        this.s3Stored.resurfaced = false;
-        if (this.s3Stored.remaining <= epsilon) { this.s3Stored = null; this.s3KeepMuzzlePending = false; this.s3ChargerSpent = 0; }
+        if (!chargerKeepHidden(this.s3Stored,dt)) { this.s3Stored = null; this.s3KeepMuzzlePending = false; this.s3ChargerSpent = 0; }
       }
       return;
     }
@@ -766,17 +751,12 @@ export function installWeapons(context, profile) {
 
     // #810: a held squid→humanoid edge refreshes only an existing keep record.
     if (this.s3Stored && this.s3WasSquid) {
-      this.s3Stored.remaining = w.keepChargeTime;
-      this.s3Stored.fireDelay = w.storedFireDelay || 0;
-      this.s3Stored.laserDelay = w.storedLaserDelay || 0;
-      this.s3Stored.resurfaced = true;
+      chargerKeepResurface(this.s3Stored,w);
     }
     this.s3WasSquid = false;
     if (this.s3Stored) {
       this.charge = this.s3Stored.charge;
-      this.s3Stored.fireDelay = Math.max(0, (this.s3Stored.fireDelay || 0) - dt);
-      this.s3Stored.laserDelay = Math.max(0, (this.s3Stored.laserDelay || 0) - dt);
-      if (this.s3Stored.fireDelay > epsilon || (held && !inp.fire)) return;
+      if (!chargerKeepReady(this.s3Stored,dt) || (held && !inp.fire)) return;
       if (!held) inp = { ...inp, fire: false };
       this.chargeT = 1; this.charging = true;
       this.s3ChargerElapsed = w.chargeTime; this.s3ChargerElapsedCompensation = 0;
@@ -831,16 +811,10 @@ export function installWeapons(context, profile) {
       }
       const beforeT = this.chargeT || 0, realInk = a.ink;
       const fundedInk = (this.s3ChargerSpent || 0) + realInk;
-      const fundingThreshold = this.s3ChargerFullInkBudget ? w.inkFull : w.inkMin;
-      const low = fundedInk + epsilon < fundingThreshold;
       const chargeDuration = Math.max(epsilon, w.chargeTime);
       // #971: air slowdown starts only beyond the minimum charge. Split a
       // crossing step; low-ink slowdown is independent and still applies first.
-      const fundedRate = low ? (w.emptyChargeRate ?? 1 / 3) : 1;
-      const airRate = a.grounded ? 1 : (w.airChargeRate ?? 1 / 3);
-      const minimum = w.minimumChargeTime ?? 8 / 60;
-      const earlyDt = Math.min(dt, Math.max(0, minimum - beforeT * chargeDuration) / fundedRate);
-      const progressDt = earlyDt * fundedRate + (dt - earlyDt) * Math.min(fundedRate, airRate);
+      const progressDt = chargerChargeSeconds(w,beforeT,dt,fundedInk,a.grounded,this.s3ChargerFullInkBudget);
       if (!Number.isFinite(this.s3ChargerElapsed)) {
         this.s3ChargerElapsed = beforeT * chargeDuration;
         this.s3ChargerElapsedCompensation = 0;

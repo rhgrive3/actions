@@ -1,0 +1,82 @@
+{
+  "base": "4a969a9ea23147519897e788b3e97562a22c3bd2",
+  "rootCheckpoint": "73abe7ae5",
+  "runtime": [
+    "inkwave-public/src/net/transport.js",
+    "patches/network-replication/adapter.mjs",
+    "patches/network-replication/charger-contact-authority.mjs",
+    "patches/network-replication/combat-provenance-adapter.mjs",
+    "patches/network-replication/combat-provenance.mjs",
+    "patches/network-replication/outbound-prefix.mjs",
+    "patches/network-replication/snapshot-guard.mjs",
+    "patches/network-replication/receiver-charger-input.mjs",
+    "patches/splatoon3/runtime/charger-charge-clock.mjs",
+    "patches/splatoon3/runtime/install.mjs",
+    "patches/splatoon3/runtime/native-charger-input.mjs",
+    "patches/splatoon3/runtime/native-charger-replay.mjs",
+    "patches/splatoon3/runtime/player-ground-contact.mjs",
+    "patches/splatoon3/runtime/resources.mjs",
+    "patches/splatoon3/runtime/sub-ready.mjs",
+    "patches/splatoon3/runtime/weapons-charger-flight.mjs",
+    "patches/splatoon3/runtime/weapons.mjs"
+  ],
+  "tests": [
+    "patches/network-replication/tests/issue-1665-charger-authority.test.mjs",
+    "patches/network-replication/tests/native-charger-input.test.mjs",
+    "patches/network-replication/tests/native-charger-replay.test.mjs",
+    "patches/network-replication/tests/receiver-charger-input.test.mjs",
+    "patches/network-replication/tests/native-charger-relay-quota.test.mjs",
+    "patches/network-replication/tests/snapshot-guard.test.mjs",
+    "patches/network-replication/tests/robustness-fixture.mjs"
+  ],
+  "docs": [
+    "patches/network-replication/native-charger-replay-contract.md"
+  ],
+  "dependenciesAlreadyInClockBase": [
+    "patches/splatoon3/tests/source-fixture.mjs",
+    "scripts/lib/inkwave-local-relay-fixture.mjs",
+    "patches/network-replication/tests/outbound-prefix.test.mjs",
+    "patches/splatoon3/tests/charger-cancel-sub.test.mjs",
+    "patches/splatoon3/tests/charger-air-funding.test.mjs",
+    "patches/splatoon3/tests/issue-675-charger-ink-consumption.test.mjs"
+  ],
+  "doNotCopyOlderRootOverClockFix": [
+    "patches/network-replication/tests/issue-1033-handoff-hit.test.mjs",
+    "patches/network-replication/tests/issue-1185-match-boundary-hit.test.mjs",
+    "patches/network-replication/tests/roller-clothing-fixture.mjs",
+    "patches/network-replication/tests/combat-pvp-cap-queue.metadata.test.mjs"
+  ],
+  "sha256": {
+    "inkwave-public/src/net/transport.js": "3e22d65c32a38b2c5676e7d90ec229feab08f494e7b4f2ef6fd23ec5b0ec9936",
+    "patches/network-replication/adapter.mjs": "339427eeb733b45cae71fed1725cad0ddeaf987db35f8e1583e7c66740f7e399",
+    "patches/network-replication/charger-contact-authority.mjs": "2ce26b3b187897c5e146fb9bf2f60e14f3468f077d51acb34500a51c4a477add",
+    "patches/network-replication/combat-provenance-adapter.mjs": "ed23ed0f3fcb9891314dacfb50302e0b9dc1e6cc9e2e22f0df5cc33735ea639a",
+    "patches/network-replication/combat-provenance.mjs": "e5ddf42da96d267c7f94e2ca6891261b88a43b4688010092d9ee8530a85c9b56",
+    "patches/network-replication/outbound-prefix.mjs": "52ef3824fa9b6ee83c2767f1e66a516da95d83f251be2f96bb6b42bec0a24a9a",
+    "patches/network-replication/snapshot-guard.mjs": "e1982015e5d332239521e4d70c8053ed72bae701fdfc934b2e3fbb404a91b82a",
+    "patches/network-replication/receiver-charger-input.mjs": "20b35704bff315e116039c8b9657e4250e7ecb1abe7d154778dcacfd04d30835",
+    "patches/splatoon3/runtime/charger-charge-clock.mjs": "8812aaa943602d9d5abb4225790e10ae614e5659099e2682f7ae5bcf3436abd7",
+    "patches/splatoon3/runtime/install.mjs": "1884ccafeaa298f6d16019a7705852e5d7304f3d35b8b26f9cff20c9f71bc8f1",
+    "patches/splatoon3/runtime/native-charger-input.mjs": "da1610b41a3231528a0787fc29a6317aa42429010bee37e3533fa2d1b24e2111",
+    "patches/splatoon3/runtime/native-charger-replay.mjs": "7f2439e75e98af87a2aec312c6d0e875fcf8fd6d02c553efa19a33e64a73b463",
+    "patches/splatoon3/runtime/player-ground-contact.mjs": "cf207ddf18c56ee919fa906e239e8170256d5c04ad1dd9af50a3ed94e722a548",
+    "patches/splatoon3/runtime/resources.mjs": "d4c648853e79ce390d6443d7a4b2bb3efacb033224493c7ee5dadc2c13e055e4",
+    "patches/splatoon3/runtime/sub-ready.mjs": "50980ed8b433c979bfbbb77d5efc7297efd9b3c7c6c9bab0d0d959c5924b96c8",
+    "patches/splatoon3/runtime/weapons-charger-flight.mjs": "bcd126c4e1ca86131a3438b9ddd64a55c98d13436292e2c5816dad6b7e02a297",
+    "patches/splatoon3/runtime/weapons.mjs": "d57384e392e9e8aacc00fc3d4122f208c9d3228b8782f61cc234999f989e11c1",
+    "patches/network-replication/tests/issue-1665-charger-authority.test.mjs": "c69b9e771e0badd2dc6abb59485766b614365c3fff06a5c605996c2f131de992",
+    "patches/network-replication/tests/native-charger-input.test.mjs": "ababc6b1b855d91107a79ffeb5be17bbf955e081d4e223522f5bcff2234f7f0e",
+    "patches/network-replication/tests/native-charger-replay.test.mjs": "282744f4799d7db09830f4ab85d9330e53e0f18f3c22ab4ae805a8311a489d44",
+    "patches/network-replication/tests/receiver-charger-input.test.mjs": "3dfd6db1ae32a26d1c8915ba8ee80b53d679413fd1e5aa578afd7eb179288a8e",
+    "patches/network-replication/tests/native-charger-relay-quota.test.mjs": "5e9836447a3af8ee2bfada621983180da48df56e06635705bd77757547a634d4",
+    "patches/network-replication/tests/snapshot-guard.test.mjs": "8b12aa3d8e5376dab505f1f7864ba9b0c955d07ece065830ddf4a008fa844260",
+    "patches/network-replication/tests/robustness-fixture.mjs": "21aea94ff764c138a632c34813c468346a01e36d529b819fdc0348bc67189033",
+    "patches/network-replication/native-charger-replay-contract.md": "797f4ed8b09d978b977ed2dcc30854892bcbdc41170427cdc9080b468b4b55b8",
+    "patches/splatoon3/tests/source-fixture.mjs": "4fa68ce9bc0f0fc00d861fb49d992df6fb98f0caf7f20b91cd31eadfdcff109c",
+    "scripts/lib/inkwave-local-relay-fixture.mjs": "52e8ebed76e2be36471bc0f05a28e9a911d8d25f80accdca9fb213c2e5ee359a",
+    "patches/network-replication/tests/outbound-prefix.test.mjs": "ced9c303e2b732c21e2c247fafb68c1b5f043bfc9b7487c365b897309a6f142d",
+    "patches/splatoon3/tests/charger-cancel-sub.test.mjs": "6b47b334a14d643528696fe42a1a3b5f1c306ebf8d8eace1a1bd661fb40c9edd",
+    "patches/splatoon3/tests/charger-air-funding.test.mjs": "9145f1dbfa12c536dd02457959f1d7821e58ac6ddf3dae339a8247f784311072",
+    "patches/splatoon3/tests/issue-675-charger-ink-consumption.test.mjs": "af64afff2a9a8ab94bb2cc0ba6b78e30a63cbba993b725441836816ad5a55223"
+  }
+}

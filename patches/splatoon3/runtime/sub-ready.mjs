@@ -1,4 +1,5 @@
 import { canStageSuperJumpSub, chargerPostShotBlocksSub } from './weapon-gates.mjs';
+import { chargerSubCancels, CHARGER_CANCEL_SUB_SECONDS } from './charger-charge-clock.mjs';
 export function subThrowSpec(a, base) { return { ...base, throwSpeed: base.throwSpeed * (a.s3?.modifiers?.subPower ?? 1) }; }
 export function subInkSpec(a, base) { return { ...base, inkCost: base.inkCost * (a.s3?.modifiers?.inkSaverSub ?? 1) }; }
 export function selectedSubReadyCost(a, SUB) {
@@ -9,7 +10,6 @@ export function selectedSubReadyCost(a, SUB) {
 const EPS=1e-10;
 // Captured cancellation→trajectory-start interval (v10.0.1 FC/NC table).
 // Separate from emitted-shot15F and from the bomb's own preparation time.
-const CHARGER_CANCEL_SUB = 5 / 60;
 export function installSubReady({Actor,WeaponRunner,SUB},profile){
  const tag=Symbol.for('inkwave.s3.sub-ready.v1'),wr=WeaponRunner.prototype;
  if(wr[tag])return;Object.defineProperty(wr,tag,{value:true});
@@ -54,10 +54,10 @@ export function installSubReady({Actor,WeaponRunner,SUB},profile){
    return update.call(this,dt,next);
   }
   if(splatlingSub==='cancelled')return update.call(this,dt,{...input,sub:false,subReleased:false});
-  if(a.weapon.kind==='charger'&&input.sub&&this.charging&&!this.s3Stored&&dt>0){
+  if(chargerSubCancels(a,this,input,dt)){
    // Use the existing main cancellation owner; paid ink is not refunded.
    this.cancelMainForSub();cancel(this);
-   this.s3ChargerCancelSubRemaining=CHARGER_CANCEL_SUB;
+   this.s3ChargerCancelSubRemaining=CHARGER_CANCEL_SUB_SECONDS;
   }
   if(this.s3ChargerCancelSubRemaining>EPS){
    cancel(this);

@@ -5,9 +5,9 @@
 // Major wire changes require a relay update. Bump COMPAT when gameplay,
 // authoritative rules or network schema changes; UI-only releases remain compatible.
 export const PROTO = 2;
-// Fresh receiver-origin owner-clock proofs are mandatory in this gameplay epoch.
-// Earlier peers cannot provide the nonce-bound initial clock origin.
-export const COMPAT = 'iw-gameplay-20261022-owner-clock-v1';
+// Fresh owner-clock proofs and receiver-authorized Charger contacts are mandatory.
+// Peers from earlier gameplay epochs cannot supply these admission records.
+export const COMPAT = 'iw-gameplay-20261022-clock-contact-v1';
 export const MAX_RELAY_FRAME_CHARS = 64 * 1024 + 64;
 
 // Where the relay lives: ?relay=… wins; a page served from this machine or the LAN talks to a local `wrangler dev`

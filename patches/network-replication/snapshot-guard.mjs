@@ -3,9 +3,11 @@
 // hit and action sidecars (26/27). Validate core scalars here and leave each
 // optional sidecar to its own explicit typed reader.
 // Rows are received over the network; ownership checks alone do not validate their scalars.
+import { ACTOR_STEP_VISUAL_OFFSET_MAX } from '../splatoon3/runtime/player-ground-contact.mjs';
 const finite = value => typeof value === 'number' && Number.isFinite(value);
 const bounded = (value, min, max) => finite(value) && value >= min && value <= max;
 const integer = (value, min, max) => Number.isSafeInteger(value) && value >= min && value <= max;
+export function validActorInputBody(row,displayY){return Array.isArray(row)&&row.length===3&&row[0]==='iw-input-body-1'&&integer(row[1],0,15)&&bounded(row[2],-100000,100000)&&finite(displayY)&&Math.abs(displayY-row[2])<=ACTOR_STEP_VISUAL_OFFSET_MAX+.005500001;}
 // The wire encodes performance.now() seconds with r3(), i.e. rounded milliseconds.
 // Keep that integer representable before it can poison the peer replay watermark.
 // #1283: owner-authenticated event rows must also have a safe, replayable
@@ -253,6 +255,7 @@ export function validActorSnapshotRow(row, timestamp) {
   if (!bounded(row[20], 0, 1e5)) return false;
   if (row.length > 21 && !bounded(row[21], 0, 1e5)) return false;
   if (row.length > 22 && !integer(row[22], 0, 1e9)) return false;
+  if (row.length > 26 && !validActorInputBody(row[26],row[2])) return false;
   return true; // adoption payload/sequence is validated by readAdoptionState
 }
 export function validRemoteActorPose(sample, correction) {

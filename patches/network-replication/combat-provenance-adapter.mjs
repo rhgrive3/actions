@@ -32,6 +32,16 @@ export function adaptCombatProvenance(rel,code){
   if(!receipt.includes('nextHighHit - HIT_SEQUENCE_WINDOW')||!receipt.includes('hitSafe(hitRevision)'))throw Error('combat provenance receipt policy shape mismatch');
   const receiptPredicate='\nfunction iwRemoteHitReceiptAllowed(d,from) {\n  if (!d) return false;\n'+receipt.replaceAll('return;','return false;')+'\n  return true;\n}\n';
   const predicate='\nfunction iwRemoteHitPayloadAllowed(d) {\n  if (!d) return false;\n'+guard.replaceAll('return;','return false;')+'\n  return true;\n}\n';
+  const bossStart='  _acceptBossHit(from, d) {',bossEnd='\n  sendBossHit(';
+  const bs=code.indexOf(bossStart),be=code.indexOf(bossEnd,bs);
+  if(bs<0||be<bs||code.indexOf(bossStart,bs+1)>=0)throw Error('combat provenance boss receipt guard identity mismatch');
+  let boss=code.slice(bs+bossStart.length,be).trimEnd();
+  if(!boss.endsWith('}'))throw Error('combat provenance boss receipt guard shape mismatch');
+  boss=boss.slice(0,-1);
+  const bossPeer='    const peer = this._peer(from);',bossMutation='    peer.lastBossHit = d.q;';
+  if(boss.split(bossPeer).length!==2||boss.split(bossMutation).length!==2)throw Error('combat provenance boss receipt mutation mismatch');
+  boss=boss.replace(bossPeer,'    const peer = this.peers?.get(from);\n    if (!peer) return false;').replace(bossMutation,'');
+  const bossPredicate='\nfunction iwRemoteBossReceiptAllowed(d,from) {\n  if (!d) return false;\n'+boss+'\n}\n';
   return "import { installCombatProvenance } from '../../patches/network-replication/combat-provenance.mjs';\n"
-    +code+predicate+receiptPredicate+"\ninstallCombatProvenance(NetMatch,{G,THREE,hitPayloadAllowed:iwRemoteHitPayloadAllowed,hitReceiptAllowed:iwRemoteHitReceiptAllowed});\n";
+    +code+predicate+receiptPredicate+bossPredicate+"\ninstallCombatProvenance(NetMatch,{G,THREE,PLAYER,hitPayloadAllowed:iwRemoteHitPayloadAllowed,hitReceiptAllowed:iwRemoteHitReceiptAllowed,bossReceiptAllowed:iwRemoteBossReceiptAllowed});\n";
 }

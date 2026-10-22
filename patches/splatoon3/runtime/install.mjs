@@ -1,5 +1,7 @@
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { installNativeSprinklerDamage } from './native-sprinkler-damage.mjs';
+import { installNativeChargerInput } from './native-charger-input.mjs';
+import { installNativeChargerReplay } from './native-charger-replay.mjs';
 import { installTurfCombatGate } from './turf-combat.mjs';
 import { installObjectDamageCause } from './sub-resistance.mjs';
 import { installSplatGhostReturn } from '../issue-284-adapter.mjs';
@@ -249,5 +251,8 @@ export function install(profile) {
   // fails even valid source kits because their registry entries do not exist.
   // Retain all previously installed legacy wrappers (this is deliberately last).
   installMainWeaponCatalogRuntime(api, profile);
+  // Observe the final installed source owner, including every input gate.
+  installNativeChargerInput(api);
+  installNativeChargerReplay(api);
   return api;
 }

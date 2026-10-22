@@ -1,3 +1,5 @@
+import { observeReceiverChargers, receiverChargerRequired, withReceiverChargerPlayback, consumeReceiverChargerContact, closeReceiverChargers, retireReceiverChargerPeer } from './charger-contact-authority.mjs';
+import { bindReceiverChargerInputs, observeReceiverChargerInputs, advanceReceiverChargerInputs, observeReceiverChargerBirth, retireReceiverChargerInputs, closeReceiverChargerInputs } from './receiver-charger-input.mjs';
 import {registerLimitedTorpedo,consumeLimitedContact} from './torpedo-contact-commit.mjs';
 import { SPRINKLER } from '../splatoon3/runtime/kit-sprinkler.mjs';
 import { registerReceiverSprinkler, consumeReceiverSprinklerContact, receiverSprinklerScope } from './sprinkler-contact-commit.mjs';
@@ -435,6 +437,12 @@ function take(nm,from,d,type,t,sprinklerScope=null,allowPoseFallback=true) {
     // single network claim can never supply the old arbitrary 2000 HP.
     if(d.d>800)return false;
   }
+  // Native Charger main claims require the receiver's real source flight
+  // contact. A forged fire/birth row, body flag or hit segment grants nothing.
+  if(receiverChargerRequired(actor)&&d.w!==actor.weapon.sub&&d.w!==actor.weapon.special&&
+    !(d.w==='bomb'&&EXPLOSIVE_SUBS.has(actor.weapon.sub))&&
+    !(d.w==='torpedo-splash'&&actor.weapon.sub==='torpedo'))
+    return consumeReceiverChargerContact(nm,from,d,type,t);
   if(type==='pvp'&&d.w==='torpedo-splash'&&consumeLimitedContact(nm,from,d,t))return true;
   if(type==='pvp'&&d.w==='sprinkler')return consumeReceiverSprinklerContact(nm,from,d,t,sprinklerScope);
   const s=state(nm);prune(s,t);
@@ -509,7 +517,7 @@ export function combatAdmission(nm,from,d,type,t=now(),sprinklerScope=null,allow
   if(!a || !matchIdOk(nm,d) || !safe(d[type==='pvp'?'h':'q']) || d[type==='pvp'?'h':'q']<1)return false;
   return take(nm,from,d,type,t,sprinklerScope,allowPoseFallback);
 }
-function flush(nm,from,t,oldHit,oldBoss,receiptAllowed) {
+function flush(nm,from,t,oldHit,oldBoss,receiptAllowed,bossReceiptAllowed) {
   const s=state(nm),items=s.pending.get(from);
   if(!items?.length)return;
   const still=[];
@@ -519,7 +527,8 @@ function flush(nm,from,t,oldHit,oldBoss,receiptAllowed) {
     // it before consuming another proof; native exact-ID history is authoritative.
     if(item.type==='pvp' && nm.peers?.get(from)?.hitSequences?.has(item.d.h))continue;
     if(item.type==='boss' && item.d.q<=(nm.peers?.get(from)?.lastBossHit??0))continue;
-    if(item.type==='pvp'&&(item.d.w==='sprinkler'||item.d.w==='torpedo-splash')&&(typeof receiptAllowed!=='function'||!receiptAllowed.call(nm,item.d,from)))continue;
+    if(item.type==='pvp'&&(receiverChargerRequired(nm.byNid?.get(item.d.a))||item.d.w==='sprinkler'||item.d.w==='torpedo-splash')&&(typeof receiptAllowed!=='function'||!receiptAllowed.call(nm,item.d,from)))continue;
+    if(item.type==='boss'&&receiverChargerRequired(nm.byNid?.get(item.d.a))&&(typeof bossReceiptAllowed!=='function'||!bossReceiptAllowed.call(nm,item.d,from)))continue;
     if(!combatAdmission(nm,from,item.d,item.type,t,item.sprinklerScope,!item.proofOnly)) {still.push(item);continue;}
     if(item.type==='pvp')oldHit.call(nm,item.d,from);
     else if(oldBoss?.call(nm,from,item.d))nm.match.boss.remoteHit(item.d);
@@ -530,17 +539,17 @@ export function installCombatProvenance(NetMatch,context={}) {
   const marker=Symbol.for('inkwave.combat-provenance.v1'),P=NetMatch.prototype;
   if(P[marker])return;
   Object.defineProperty(P,marker,{value:true});
-  const oldTick=P._tick,oldHit=P._hit,oldMessage=P.onMessage;
+  const oldTick=P._tick,oldHit=P._hit,oldMessage=P.onMessage,oldPlay=P._play,oldPlayEvents=P._playEvents;
   const oldBoss=P._acceptBossHit,oldLeave=P.onLeave,oldDispose=P.dispose;
   // One callback per installed prototype, not per owner packet.
-  const notifySprinkler=function(from){flush(this,from,now(),oldHit,oldBoss,context.hitReceiptAllowed);};
+  const notifySprinkler=function(from){flush(this,from,now(),oldHit,oldBoss,context.hitReceiptAllowed,context.bossReceiptAllowed);};
   const commitSubBirth=function(receipt,event,bomb) {
     const t=now();
     const accepted=record(this,receipt.from,{e:[event],ts:receipt.packetTime,a:[[receipt.nid,...receipt.pose]]},t,receipt);
     if(accepted&&receipt.subId==='torpedo'&&registerLimitedTorpedo(this,bomb,receipt,event,context.G,notifySprinkler))accepted.nativeTorpedoContact=true;
     if(accepted&&receipt.sourceKind==='native-sprinkler')registerReceiverSprinkler(this,bomb,receipt,context.G,notifySprinkler,PENDING_AGE,MAX_PENDING);
     // Hits may precede delayed FIFO playback; retry only when birth commits.
-    flush(this,receipt.from,t,oldHit,oldBoss,context.hitReceiptAllowed);
+    flush(this,receipt.from,t,oldHit,oldBoss,context.hitReceiptAllowed,context.bossReceiptAllowed);
   };
   P._tick=function(from,d) {
     bindSubBirthCommit(this,commitSubBirth);
@@ -550,11 +559,22 @@ export function installCombatProvenance(NetMatch,context={}) {
       const t=now();
       sampleLocalHistory(this,t);
       recordContactSnapshots(this,from,d,t);
+      observeReceiverChargers(this,from,d,context.G,t,notifySprinkler,context.PLAYER);
+      observeReceiverChargerInputs(this,from,d,context.G,t);
       record(this,from,d,t);
-      flush(this,from,t,oldHit,oldBoss,context.hitReceiptAllowed);
+      flush(this,from,t,oldHit,oldBoss,context.hitReceiptAllowed,context.bossReceiptAllowed);
     }
     return result;
   };
+  P._play=function(from,e){
+    advanceReceiverChargerInputs(this,context.G,now(),from,e);
+    observeReceiverChargerBirth(this,from,e,context.G,now());
+    try {
+      if(e?.[1]!=='ev'||e?.[2]!=='weapon:fire'||!receiverChargerRequired(this.byNid?.get(e?.[3]?.actor?.n)))return oldPlay.call(this,from,e);
+      return withReceiverChargerPlayback(this,from,e,context.G,now(),()=>oldPlay.call(this,from,e));
+    } finally { advanceReceiverChargerInputs(this,context.G,now(),from); }
+  };
+  P._playEvents=function(...args){advanceReceiverChargerInputs(this,context.G,now());const result=oldPlayEvents.apply(this,args);advanceReceiverChargerInputs(this,context.G,now());return result;};
   P._hit=function(d,from) {
     // Locally delivered pending receipts after host handoff are not remote
     // sender claims. Preserve their existing authenticated owner path.
@@ -563,6 +583,7 @@ export function installCombatProvenance(NetMatch,context={}) {
     // before proof consumption or pending hit-ID reservation. Missing context
     // is fail-closed, never permission to bypass that policy.
     if(typeof context.hitPayloadAllowed!=='function' || !context.hitPayloadAllowed(d))return;
+    if(receiverChargerRequired(this.byNid?.get(d.a))&&(typeof context.hitReceiptAllowed!=='function'||!context.hitReceiptAllowed.call(this,d,from)))return;
     if(d.w==='torpedo-splash'&&(typeof context.hitReceiptAllowed!=='function'||!context.hitReceiptAllowed.call(this,d,from)))return;
     if(d.w==='sprinkler'&&(d.d!==SPRINKLER.dropletDamage||typeof context.hitReceiptAllowed!=='function'||!context.hitReceiptAllowed.call(this,d,from)))return;
     const t=now();
@@ -574,6 +595,7 @@ export function installCombatProvenance(NetMatch,context={}) {
   };
   P.onMessage=function(from,d) {
     if(d?.k==='bhit' && this.isHost) {
+      if(receiverChargerRequired(this.byNid?.get(d.a))&&(typeof context.bossReceiptAllowed!=='function'||!context.bossReceiptAllowed.call(this,d,from)))return;
       const t=now();
       if(combatAdmission(this,from,d,'boss',t)) {
         if(oldBoss?.call(this,from,d))this.match.boss.remoteHit(d);
@@ -583,7 +605,9 @@ export function installCombatProvenance(NetMatch,context={}) {
     return oldMessage.call(this,from,d);
   };
   P.onLeave=function(id,changed) {
-    if(changed)closeSubBirthCommit(this);
+    retireReceiverChargerInputs(this,id);
+    retireReceiverChargerPeer(this,id);
+    if(changed){closeSubBirthCommit(this);closeReceiverChargers(this);closeReceiverChargerInputs(this);}
     const s=this._combatProvenance;
     s?.proofs.delete(id);s?.pending.delete(id);
     if(s?.contactSnapshots)for(const [actor,r] of s.contactSnapshots)if(r.owner===id)s.contactSnapshots.delete(actor);
@@ -592,19 +616,20 @@ export function installCombatProvenance(NetMatch,context={}) {
     return oldLeave.call(this,id,changed);
   };
   P.dispose=function(...args) {
-    closeSubBirthCommit(this);
+    closeSubBirthCommit(this);closeReceiverChargers(this);closeReceiverChargerInputs(this);
     const s=this._combatProvenance;
     s?.proofs.clear();s?.pending.clear();s?.contacts.clear();s?.contactSnapshots.clear();s?.specialSnapshots.clear();s?.history?.clear();
     this._combatProvenance=null;
     return oldDispose.apply(this,args);
   };
-  // No per-frame allocations: only ordered 20Hz owner ticks and sparse hits
-  // touch this gate; physics is optional for offline/unit-test contexts.
+  // The capture-ledger gate consumes ordered owner ticks and sparse hits.
+  // The experimental private source connection separately replays bounded
+  // per-frame inputs; physics remains optional for offline/test contexts.
   P._combatProvenancePhysics=null;
   P._combatProvenanceTHREE=context.THREE||null;
   P._combatHitCeilings=context.hitCeilings||COMBAT_HIT_CEILINGS;
   if(context.G) {
     const oldBind=P.bind;
-    P.bind=function(...args){this._combatProvenancePhysics=context.G.physics;return oldBind.apply(this,args);};
+    P.bind=function(...args){this._combatProvenancePhysics=context.G.physics;const result=oldBind.apply(this,args);bindReceiverChargerInputs(this,context.G,now());return result;};
   }
 }
