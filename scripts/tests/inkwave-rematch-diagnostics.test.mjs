@@ -2,7 +2,59 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { boundedDiagnostic, createFocusHistory, createOperationTrace } from '../lib/inkwave-rematch-diagnostics.mjs';
+import { rematchEngine, rematchLaunchOptions } from '../lib/inkwave-rematch-engine.mjs';
+
+test('engine selection preserves the Chromium default and accepts explicit WebKit', () => {
+  assert.equal(rematchEngine([]), 'chromium');
+  assert.equal(rematchEngine(['--site', '_site', '--engine', 'chromium']), 'chromium');
+  assert.equal(rematchEngine(['--engine', 'webkit', '--cycles', '3']), 'webkit');
+});
+
+test('missing, misspelled and duplicate engine arguments fail before site or browser access', () => {
+  for (const args of [['--engine'], ['--engine', '--site'], ['--engine', 'firefox'], ['--engine', 'WebKit'], ['--engine', 'webkit', '--engine', 'chromium']]) {
+    assert.throws(() => rematchEngine(args), /--engine/);
+    const result = spawnSync(process.execPath, [new URL('../check-inkwave-rematch-lifecycle.mjs', import.meta.url).pathname, ...args], { encoding: 'utf8', timeout: 5000 });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /--engine/);
+    assert.doesNotMatch(result.stderr, /Required --site|Cannot find package|ENOENT/);
+  }
+});
+
+test('WebKit receives the same tablet conditions without Chromium switches or executable', () => {
+  const chrome = rematchLaunchOptions('chromium', '/custom/chrome');
+  const webkit = rematchLaunchOptions('webkit', '/custom/chrome');
+  assert.equal(chrome.executablePath, '/custom/chrome');
+  assert(chrome.args.includes('--use-angle=swiftshader'));
+  assert.equal(webkit.executablePath, undefined);
+  assert.equal(webkit.args, undefined);
+  for (const key of ['headless', 'viewport', 'deviceScaleFactor', 'hasTouch', 'isMobile', 'userAgent']) assert.deepEqual(webkit[key], chrome[key]);
+});
+
+test('browser launch failure records the selected engine and closes the temporary HTTP server', () => {
+  const temp = fs.mkdtempSync(new URL('../../.rematch-engine-test-', import.meta.url));
+  try {
+    const contentHash = createHash('sha256').update('{}').digest('hex');
+    fs.writeFileSync(temp + '/inkwave-build.json', JSON.stringify({ artifacts: {}, contentHash }));
+    fs.writeFileSync(temp + '/browser-stub.mjs', 'const fail={async launchPersistentContext(){throw Error("intentional launch failure")}}; export const chromium=fail, webkit=fail;');
+    for (const engine of ['chromium', 'webkit']) {
+      const result = spawnSync(process.execPath, [new URL('../check-inkwave-rematch-lifecycle.mjs', import.meta.url).pathname,
+        '--engine', engine, '--site', temp, '--evidence-dir', temp + '/evidence-' + engine, '--profile-dir', temp + '/profile-' + engine], {
+        encoding: 'utf8', timeout: 5000, env: { ...process.env, PLAYWRIGHT_MODULE: temp + '/browser-stub.mjs' },
+      });
+      assert.equal(result.error, undefined, 'failed browser must not leave the HTTP server holding the process open');
+      assert.equal(result.status, 1);
+      const receipt = JSON.parse(fs.readFileSync(temp + '/evidence-' + engine + '/rematch-lifecycle-result.json', 'utf8'));
+      assert.equal(receipt.status, 'failed');
+      assert.equal(receipt.engine, engine);
+      assert.equal(receipt.contentHash, contentHash);
+      assert.equal(receipt.failures[0].round, 'launch');
+      assert.match(receipt.failures[0].message, /intentional launch failure/);
+    }
+  } finally { fs.rmSync(temp, { recursive: true, force: true }); }
+});
 
 test('operation trace preserves returned values and the exact original input error without retry', async () => {
   let now = 0, calls = 0;

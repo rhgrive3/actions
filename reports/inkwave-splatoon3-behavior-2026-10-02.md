@@ -5835,3 +5835,24 @@ CPU回帰の成功は物理GPU/実機性能の受け入れではない。Splatoo
 
 
 最終確認: runtime `df83a5c4265a9c8738d930dabaffb43cd31ae902` / build contentHash `7b0b597f308f86d2d9607e2a5e0e5f122fa7e0a7435810512039de7014565533` の総合active browserが成功した。65 canonical kit、14 defaults、装備12select、実キーボード移動・接地・射撃/塗り、20Hz時の3秒進行、finite velocity、752 responseの同一性とpage errors 0を確認した。実music Workerの作成元・97-byte body/hash・cleanupを含むnative試験7件、過去の固定gate20件、追加source admission24件も通過した。これはChromium 153 / SwiftShaderでの公開版の回帰確認であり、物理端末FPSやSwitch実機・完了動画の受け入れではない。GitHub上のCI待機は別に残る。
+
+
+## 2026-10-22: #1767 bind前のowner clock admission
+
+公開版のNetSessionはNetMatchを公開してから実Match構築をawaitする。実Matchへのbind前に届くtickが、actor timelineのないままowner clock基準を作る経路を修正した。network adapterは `this.match` が存在するまでtickを受理しない。既存peerを置換/消去せず、5秒未来許容・単調増加・replay・owner・life・paint/hit保護の判定は変更しない。本家の武器数値・移動/発射ロジックの変更はない。
+
+Node v24.19.0の本番合成VMで新規3件と隣接9件、計12/12成功。原本adapterで新規テスト2失敗/1成功を別作業木に保存した。既知pre-bind経路の修正であり、元native runの遅延起点は未確認。bind済みキューのcatch-up、実2ブラウザcold-start/reconnect、Switch 11.3.0との実機比較は未実行で、#1767全解消とはしない。詳細と実ログは `reports/issue-resolution-20261022/network-security.md` / `.json`。#1665/#1666はownerのactionとhit同時偽造が残り、trusted receiver/hostでweapon/input/ink/cooldown/contactを再構成するauthority設計が必要。
+
+
+## 2026-10-22: #1812 追加ローラー・フデの実Actor照準受入行列（試験追加のみ）
+
+- **本家の根拠・条件**: Splatoon 3 Ver.11.3.0、Leanny/splat3 `7280ff9cde8bb1c5dcef46c700c326471584d2e6` のソースレコード。ギアなし、静止、ローラーは地上横振りと受理されたジャンプの縦振り、フデは実際の押し直しによる左右2振り。既存 #1819 のカメラ aimDir 接続を評価し、任天堂エンジン式の完全復元とはしない。
+- **INKWAVE 実装箇所**: `patches/splatoon3/tests/catalog-source-launch-1130.test.mjs` に3試験追加。ゲーム実装の変更なし。Octobrushを含む7武器11攻撃mode、照準 -70/-45/0/+40/+70度、stale/close-ground reticle、30/60/120Hz描画スケジュールの330条件で FixedClock → Actor.update → WeaponRunner → Projectiles を駆動する。各source unitの出生速度・数・network tuple、reticle/描画周波数間の出生時刻・座標・速度一致を確認する。実PhysicsのOBB近壁22条件と、旧reticle収束経路を復元すると不一致を検出する対照2条件も追加した。
+- **再現・影響**: 各武器で上下照準し、照準点だけを遠方水平・近い地面に置き換える。フデを押し直して両振りを発生させる。既存修正を外すとCarbon横振りとOctobrushでカメラ出生速度の期待が失敗する。現行mainでは全条件を通過し、新しいruntime不具合は再現しなかった。
+- **確認状態**: Node24.19.0、384MiB、serial、90秒上限で9/9 pass、5.38秒。初回追加試験は斜めray方向の0.02余白をZ軸余白と誤認した期待が1件失敗し、実OBB表面の外に出生する期待へ訂正した。ソースfixtureでは移動積分とCharacter姿勢をstubにしており、ブラウザ描画、aimReady/socket較正、実ステージ、本家実機・音・動作の一致とは区別する。#1812は未確認項目を残してOpen維持。詳細 `reports/issue-resolution-20261022/weapons.md` と `.json`。
+
+
+## 2026-10-22: #845 ネイティブ地形の支持判定と #1671 有限計測
+
+- #845: `patches/local-quality/offline-offscreen-budget.mjs` の静的OBB近道は、NativeLevelのchart rectangle境界を地面として扱い、source triangleのない穴でも支持を返していた。実NativeLevel/NativePhysicsの半三角形fixtureで原本は高さ0、元のCharacter._groundは支持なしの0.2を返す不一致を再現した。nativeでは近道からnullを返し、元のsource triangle/dynamic raycastへ戻す。legacy OBBの削減、弾/マズル/移動/時計の所有は維持する。実地形三角形内・穴・動的支持の対照を追加し、既存全11件と独立レビューの11件が成功。物理iPadの性能・本家11.3.0の足運び一致は未確認である。
+- #1671: 同じ操作条件の30秒計測を保存できるよう、既存opt-in hitch tracerに明示的なstartCapture/stopCapture/captureReportを追加した。30秒・4000frame・4MiB compact UTF-8の最初の上限で停止し、理由と観測数を記録する。通常HUDとゲーム挙動は変えず、pending GPU/遅延long-taskを後付けせず記録時snapshotとして扱う。15件と独立レビュー15件成功。これは計測手段の追加でありiPadのFPS改善やGPU実測の証明ではない。手順・限界は `reports/issue-resolution-20261022/performance.md`。

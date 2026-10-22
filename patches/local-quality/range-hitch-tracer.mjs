@@ -87,6 +87,7 @@ export function createGpuRenderTimer(renderer, { every = 8, maxPending = 3 } = {
 }
 
 const round = n => Number.isFinite(n) ? Math.round(n * 1000) / 1000 : null;
+const utf8Bytes = text => new TextEncoder().encode(text).byteLength;
 
 export function installHitchTracer(game, {
   env = globalThis, now = () => performance.now(), maxFrames = 360, gpuEvery = 8,
@@ -94,6 +95,32 @@ export function installHitchTracer(game, {
   if (!game || typeof game._frame !== 'function') throw new TypeError('Game._frame required');
   if (!Number.isInteger(maxFrames) || maxFrames < 30 || maxFrames > 2000) throw new RangeError('invalid frame capacity');
   const current = [], hitches = [], saved = new Map(), recentTasks = [];
+  // Explicit, opt-in capture is separate from the small rolling HUD sample.
+  // Store immutable record-time snapshots so delayed GPU/long-task delivery
+  // cannot silently grow the byte budget after admission.
+  let capture = null;
+  const finishCapture = reason => {
+    if (capture?.status === 'recording') {
+      capture.status = 'stopped';
+      capture.reason = reason;
+      capture.elapsedMs = round(Math.max(0, now() - capture.startedAt));
+    }
+  };
+  const captureJSON = () => {
+    if (capture?.status === 'recording' && now() - capture.startedAt >= capture.durationMs)
+      finishCapture('duration-limit');
+    return capture ? JSON.stringify({
+      schema: 'inkwave-bounded-frame-capture-v1',
+      status: capture.status, reason: capture.reason,
+      durationLimitMs: capture.durationMs, elapsedMs: capture.elapsedMs,
+      frameLimit: capture.frameLimit, byteLimit: capture.byteLimit,
+      recordedFrames: capture.rows.length, observedFrames: capture.observedFrames,
+      sampling: 'every recorded Game._frame; capped rAF callbacks excluded; no resampling',
+      timing: 'record-time snapshots; pending GPU and late long-task results are not backfilled',
+      byteScope: 'UTF-8 bytes of this compact capture object; excludes outer rolling report',
+      frames: capture.rows.map(row => JSON.parse(row)),
+    }) : null;
+  };
   const originalFrame = game._frame;
   let active = null, last = null, previousStamp = 0, nextId = 0, disposed = false;
   let longTasks = 0, longTaskSupported = false, observer = null;
@@ -322,6 +349,27 @@ export function installHitchTracer(game, {
       if (hitches.length > 40) hitches.shift();
     }
     attachGpu();
+    if (capture?.status === 'recording') {
+      const elapsed = Math.max(0, now() - capture.startedAt);
+      capture.elapsedMs = round(elapsed);
+      // Half-open capture window: the frame completing at/after the deadline
+      // ends the capture and is not attributed to the preceding 30 seconds.
+      if (elapsed >= capture.durationMs) finishCapture('duration-limit');
+      else {
+        capture.observedFrames++;
+        const row = JSON.stringify({ elapsedMs: capture.elapsedMs,
+          stageId: getWorld().level?.manifest?.id ?? getWorld().level?.layout?.id ?? null,
+          ...serialize(rec) });
+        const size = utf8Bytes(row) + (capture.rows.length ? 1 : 0);
+        // Reserve 4 KiB for the bounded fixed metadata, keys and delimiters.
+        if (capture.rowBytes + size > capture.byteLimit - 4096) finishCapture('byte-limit');
+        else {
+          capture.rows.push(row);
+          capture.rowBytes += size;
+          if (capture.rows.length >= capture.frameLimit) finishCapture('frame-limit');
+        }
+      }
+    }
   };
   const serialize = (rec) => ({
     id:rec.id, mode:rec.mode, gapMs:round(rec.frameGapMs),
@@ -342,6 +390,20 @@ export function installHitchTracer(game, {
     events:rec.events, cause:rec.cause,
   });
   const result = {
+    startCapture({ durationMs = 30000, frameLimit = 4000, byteLimit = 4 * 1024 * 1024 } = {}) {
+      if (disposed) throw new Error('tracer has been disposed');
+      if (!Number.isFinite(durationMs) || durationMs <= 0 || durationMs > 30000)
+        throw new RangeError('capture duration must be within 30 seconds');
+      if (!Number.isInteger(frameLimit) || frameLimit < 1 || frameLimit > 4000)
+        throw new RangeError('capture frame limit must be within 4000');
+      if (!Number.isInteger(byteLimit) || byteLimit < 8192 || byteLimit > 4 * 1024 * 1024)
+        throw new RangeError('capture byte limit must be 8192..4194304');
+      capture = { startedAt: now(), durationMs, frameLimit, byteLimit,
+        elapsedMs: 0, status: 'recording', reason: null, observedFrames: 0,
+        rows: [], rowBytes: 0 };
+    },
+    stopCapture() { finishCapture('manual'); },
+    captureReport() { return captureJSON(); },
     snapshot() {
       const sample=current.slice(-240);
       const percent=(key,p)=>{
@@ -366,18 +428,22 @@ export function installHitchTracer(game, {
     },
     report() {
       const s=this.snapshot();
-      return JSON.stringify({ schema:'inkwave-frame-trace-v1',
+      const summary = JSON.stringify({ schema:'inkwave-frame-trace-v1',
         source:'local debug capture, no upload',
         gpuCaveat:'sampled GPU paint atlas and scene/compositor commands; not presentation or swap delay',
         ...s },null,2);
+      const full = captureJSON();
+      return full ? summary.slice(0, -2) + ',\n  "capture": ' + full + '\n}' : summary;
     },
     reset() {
       current.length=0; hitches.length=0; recentTasks.length=0; pendingEvents.length=0;
+      capture = null;
       previousStamp=0;longTasks=0;last=null;
     },
     record:frameReport,
     dispose() {
       if (disposed) return;
+      finishCapture('disposed');
       disposed=true;
       if (game._frame===wrappedFrame) game._frame=originalFrame;
       for(const item of stageState.values()) {

@@ -2581,7 +2581,11 @@ function canAllocateNetworkGhost(projectiles, actor) {
     if (previous?.lastTs !== undefined && d.ts <= previous.lastTs) return;
     this.stats.in++;
     const p = this._peer(from);`,
-      `    const receivedAt = now();
+      `    // #1767: NetSession exposes this NetMatch while startNetMatch is pending.
+    // No actor timeline exists until bind; a delayed startup tick must not
+    // establish an owner clock that strands later live snapshots.
+    if (!this.match) return;
+    const receivedAt = now();
     const previous = this.peers.get(from);
     if (!validOwnerTickAdvance(d.ts, previous?.lastTs, receivedAt, previous?.lastReceiveAt)) return;
     this.stats.in++;
