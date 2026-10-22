@@ -5,6 +5,7 @@
 // The captures are intentionally browser evidence, not the isolated geometry
 // fixtures used by the numeric weapon tests.
 import fs from 'node:fs';
+import { installProjectileCaptureProjection } from './lib/inkwave-projectile-capture-projection.mjs';
 import { captureSourceIdentity } from './lib/inkwave-capture-source-identity.mjs';
 import { observeStreamedMusic } from './lib/inkwave-streamed-music-diagnostics.mjs';
 import {installAudioTimingObserver} from './lib/inkwave-audio-timing-observer.mjs';
@@ -194,6 +195,7 @@ async function openGameContext({ mobile = false } = {}) {
   page.on('requestfailed', r => mimeErrors.push(`request failed ${r.url()}: ${r.failure()?.errorText || 'unknown'}`));
   await page.addInitScript(installAudioTimingObserver);
   await page.addInitScript(installProjectileCaptureUiGate);
+  await page.addInitScript(installProjectileCaptureProjection);
   await page.addInitScript(({ setting, bootSeed }) => {
     localStorage.setItem('inkwave.settings', JSON.stringify({ quality: setting, shadows: setting !== 'low', bloom: setting !== 'low', minimap: false, cameraShake: 0, colorblind: true, difficulty: 'normal', matchLength: 180, lastStage: 'tidewater', lastMode: 'turf', stageTimes: { tidewater: 'day' } }));
     window.__iwBootSeed = bootSeed >>> 0;
@@ -499,6 +501,7 @@ async function setCamera(page, perspective) {
       pos: name === 'shoulder' ? [p[0] + 0.95, p[1] + 2.0, p[2] - 3.3] : target.map((value, i) => value + offset[i]),
       target: name === 'shoulder' ? fixedTarget : target,
     };
+    window.__iwSetProjectileCaptureProjection();
     cam.aspect = innerWidth / innerHeight;
     cam.position.set(...pose.pos); cam.lookAt(...pose.target); cam.updateProjectionMatrix(); cam.updateMatrixWorld(true);
     G.scene.updateMatrixWorld(true);
@@ -541,7 +544,9 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
     const shadowRefreshRequested = !!shadowMap?.enabled;
     if (shadowRefreshRequested) shadowMap.needsUpdate = true;
     G.renderer.info.reset();
+    window.__iwAssertProjectileCaptureProjection('before-render');
     G.game.R.render();
+    window.__iwAssertProjectileCaptureProjection('after-render');
     const shadowRefresh = {
       enabled: !!shadowMap?.enabled,
       requested: shadowRefreshRequested,
@@ -611,14 +616,18 @@ async function renderAndCapture(page, scenario, phase, perspective, seed) {
   }
   const name = `${scenario}__${phase}__${perspective}.png`;
   const target = path.join(evidence, name);
+  await page.evaluate(() => window.__iwAssertProjectileCaptureProjection('before-screenshot'));
   runtime.captureUi = await page.evaluate(() => window.__iwProjectileCaptureUiGate({phase:'before-screenshot',requireReady:true}));
   await page.screenshot({ path: target, animations: 'disabled', timeout: 90000 });
+  await page.evaluate(() => window.__iwAssertProjectileCaptureProjection('after-screenshot'));
   let cropFile = null, cropSha256 = null;
   if (runtime.projectileCrop) {
     cropFile = name.replace(/\.png$/, '__projectile-crop.png');
     const cropTarget = path.join(evidence, cropFile);
+    await page.evaluate(() => window.__iwAssertProjectileCaptureProjection('before-crop'));
     runtime.cropCaptureUi = await page.evaluate(() => window.__iwProjectileCaptureUiGate({phase:'before-crop',requireReady:true}));
     await page.screenshot({ path: cropTarget, clip: runtime.projectileCrop, animations: 'disabled', timeout: 90000 });
+    await page.evaluate(() => window.__iwAssertProjectileCaptureProjection('after-crop'));
     cropSha256 = hash(fs.readFileSync(cropTarget));
   }
   const receipt = {

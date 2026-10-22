@@ -1,5 +1,9 @@
 import fs from 'node:fs';
 
+// Fixed harness IDs only; never persist selector, weapon ID, page text or errors here.
+const operationIds = new Set(['continuation-read-callback', 'continuation-tap-change', 'continuation-wait-loadout', 'continuation-settle-loadout', 'continuation-ready-loadout', 'continuation-read-weapon', 'continuation-list-weapons', 'continuation-select-weapon', 'continuation-verify-weapon', 'continuation-scroll-action', 'continuation-settle-action', 'continuation-visible-action', 'continuation-label-action', 'continuation-capture-action']);
+export const responsiveOperationId = value => operationIds.has(value) ? value : null;
+
 // Bounded evidence only. No browser retry, deadline, or acceptance changes.
 export const boundedText = (value, limit = 4096) => String(value ?? '').slice(0, limit);
 const errorRecord = error => ({ name: boundedText(error?.name || 'Error', 80),
@@ -8,6 +12,7 @@ const errorRecord = error => ({ name: boundedText(error?.name || 'Error', 80),
 export function createResponsiveDiagnostics({ now = () => Date.now(), maxEvents = 32, onChange = () => {} } = {}) {
   const started = now(), events = [];
   let firstError = null, lastCompletedStage = null, pageUnavailable = false, droppedEvents = 0;
+  let pendingOperation = null;
   const record = (type, detail = '') => {
     if (events.length === maxEvents) { events.shift(); droppedEvents++; }
     events.push({ ms: Math.max(0, now() - started), type: boundedText(type, 80), detail: boundedText(detail, 1024) });
@@ -15,10 +20,17 @@ export function createResponsiveDiagnostics({ now = () => Date.now(), maxEvents 
     catch (error) { console.error(JSON.stringify({ event: 'responsive-progress-write-error', error: boundedText(error?.message ?? error) })); }
   };
   const fail = error => { if (!firstError) { firstError = errorRecord(error); record('first-error', firstError.message); } };
-  const snapshot = () => ({ firstError, lastCompletedStage, pageUnavailable,
+  const snapshot = () => ({ firstError, lastCompletedStage, pendingOperation, pageUnavailable,
     droppedEvents, events: events.map(row => ({ ...row })) });
   return {
     record, fail, snapshot,
+    operation(id, boundary) {
+      id = responsiveOperationId(id);
+      if (!id || !['before', 'after'].includes(boundary)) return;
+      if (boundary === 'before') pendingOperation = id;
+      else if (pendingOperation === id) pendingOperation = null;
+      record('operation-' + boundary, id);
+    },
     stage(name) { lastCompletedStage = boundedText(name, 160); record('stage-complete', name); },
     unavailable(type) { pageUnavailable = true; record(type); },
     async optional(label, action, isClosed = () => false) {

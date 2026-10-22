@@ -1,3 +1,4 @@
+import { responsiveOperationId } from './inkwave-responsive-diagnostics.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -10,7 +11,7 @@ const phases = new Set(['loading', 'title', 'main', 'settings', 'setup', 'loadou
 const types = new Set(['case-start', 'stage-complete', 'first-error', 'page-crash', 'page-close',
   'context-close', 'browser-disconnected', 'console-error', 'console-warning',
   'diagnostic-skipped', 'diagnostic-error', 'context-close-start', 'context-close-complete',
-  'context-close-error', 'fatal-pageerror-context-closing']);
+  'context-close-error', 'fatal-pageerror-context-closing', 'operation-before', 'operation-after']);
 const errorNames = new Set(['Error', 'TypeError', 'ReferenceError', 'SyntaxError', 'RangeError',
   'AssertionError', 'TimeoutError']);
 const phase = value => phases.has(value) ? value
@@ -45,8 +46,10 @@ export function responsiveProgressSummary({ shardDir, engine, name, startedAt })
     }
     const events = d.events.slice(-32).filter(row => row && types.has(row.type))
       .map(row => ({ type: row.type, ms: count(row.ms),
-        ...(row.type === 'stage-complete' ? { phase: phase(row.detail) } : {}) }));
+        ...(row.type === 'stage-complete' ? { phase: phase(row.detail) } : {}),
+        ...(['operation-before', 'operation-after'].includes(row.type) ? { operation: responsiveOperationId(row.detail) } : {}) }));
     return { ...result, status: 'available', lastCompletedStage: phase(d.lastCompletedStage),
+      pendingOperation: responsiveOperationId(d.pendingOperation),
       pageUnavailable: d.pageUnavailable === true, droppedEvents: count(d.droppedEvents),
       errorSummary: d.firstError == null ? null : {
         present: true, name: errorNames.has(d.firstError?.name) ? d.firstError.name : 'OtherError',

@@ -24,7 +24,7 @@ for (const [name, value, status] of [ ['absent', undefined, 'missing'], ['malfor
 test('valid deterministic allowlisted summary', () => {
   const { identity } = fixture(receipt());
   assert.deepEqual(responsiveProgressSummary(identity), { event: 'responsive-child-progress', engine: 'webkit',
-    name: 'tablet-landscape', status: 'available', lastCompletedStage: 'setup', pageUnavailable: false,
+    name: 'tablet-landscape', status: 'available', lastCompletedStage: 'setup', pendingOperation: null, pageUnavailable: false,
     droppedEvents: 0, errorSummary: null, events: [{ type: 'case-start', ms: 0 }, { type: 'stage-complete', ms: 120, phase: 'setup' }] });
   assert.deepEqual(responsiveProgressSummary(identity), responsiveProgressSummary(identity));
 });
@@ -86,7 +86,7 @@ test('isolated runner retains all 14 cases, stderr, acceptance failures and succ
   const dir = path.join(root, 'integration'), scripts = path.join(dir, 'scripts');
   fs.mkdirSync(path.join(scripts, 'lib'), { recursive: true });
   fs.copyFileSync(new URL('../lib/inkwave-responsive-progress-summary.mjs', import.meta.url), path.join(scripts, 'lib/inkwave-responsive-progress-summary.mjs'));
-  fs.writeFileSync(path.join(scripts, 'lib/inkwave-responsive-diagnostics.mjs'), `export const boundedChildStderr = text => ({text,totalChars:text.length,retainedChars:text.length,truncated:false});`);
+  fs.copyFileSync(new URL('../lib/inkwave-responsive-diagnostics.mjs', import.meta.url), path.join(scripts, 'lib/inkwave-responsive-diagnostics.mjs'));
   fs.writeFileSync(path.join(scripts, 'fake-child.mjs'), `
     import fs from 'node:fs'; import path from 'node:path';
     export function spawnSync(command, args, options) {
@@ -144,4 +144,22 @@ test('result-like freeform labels stay redacted', () => {
     assert.equal(summary.events[0].phase, null);
     assert(!JSON.stringify(summary).includes('PRIVATE'));
   }
+});
+
+test('fixed pending operation and boundaries survive bounded summary; arbitrary text is redacted', () => {
+  const value = receipt();
+  value.diagnostics.pendingOperation = 'continuation-wait-loadout';
+  value.diagnostics.events = [
+    { type: 'operation-before', ms: 1, detail: 'continuation-wait-loadout', selector: 'PRIVATE' },
+    { type: 'operation-after', ms: 2, detail: 'PRIVATE-operation' }
+  ];
+  const summary = responsiveProgressSummary(fixture(value).identity);
+  assert.equal(summary.pendingOperation, 'continuation-wait-loadout');
+  assert.deepEqual(summary.events, [
+    { type: 'operation-before', ms: 1, operation: 'continuation-wait-loadout' },
+    { type: 'operation-after', ms: 2, operation: null }
+  ]);
+  assert(!JSON.stringify(summary).includes('PRIVATE'));
+  value.diagnostics.pendingOperation = 'PRIVATE-pending';
+  assert.equal(responsiveProgressSummary(fixture(value).identity).pendingOperation, null);
 });

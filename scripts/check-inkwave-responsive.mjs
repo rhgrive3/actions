@@ -143,6 +143,7 @@ try {
         if (['error', 'warning'].includes(message.type())) diagnostics.record('console-' + message.type(), message.text());
       });
       const onStageComplete = name => diagnostics.stage(name);
+      const onOperation = (id, boundary) => diagnostics.operation(id, boundary);
       const fatalPageError = createResponsiveFatalPageError({ diagnostics, closeContext: () => context.close(),
         recordError: e => result.errors.push(`${engineName}/${name}: ${e.message}`) });
       page.on('pageerror', e => fatalPageError.handle(e));
@@ -160,7 +161,7 @@ try {
         await show(page, 'online');
         if (name === 'desktop') {
           if (section !== 'expansion') {
-            await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, onStageComplete,
+            await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, onStageComplete, onOperation,
               geometry: async (page, selector) => { assert(await page.locator(selector).count()); return 'desktop-captured'; },
               tap: async (page, selector) => { const el=page.locator(selector).first();await el.scrollIntoViewIfNeeded();await el.click(); }, audit: true, testContinuation: !audit });
             for (const [screen, selector] of [['main', '.iw-main__menu'], ['setup', '.iw-ss__hero'], ['settings', '.iw-settings__panel']]) {
@@ -187,7 +188,7 @@ try {
         entry.touchMode = await page.locator('.iw-ui').evaluate((el) => el.classList.contains('is-touch'));
         assert(entry.touchMode, `${name}: touch mode not detected`);
         if (section !== 'expansion') {
-          await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, onStageComplete, geometry, tap, audit });
+          await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, onStageComplete, onOperation, geometry, tap, audit });
           if (section === 'core') { entry.status = audit ? 'audited' : 'passed'; continue; }
           await show(page, 'online');
         }

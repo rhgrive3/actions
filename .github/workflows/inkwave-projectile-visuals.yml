@@ -12,6 +12,8 @@ on:
       - 'scripts/fixtures/inkwave-reference-audio.json'
       - 'scripts/tests/inkwave-reference-audio.test.mjs'
       - 'scripts/check-inkwave-projectile-visuals.mjs'
+      - 'scripts/lib/inkwave-projectile-capture-projection.mjs'
+      - 'scripts/tests/inkwave-projectile-capture-projection.test.mjs'
       - 'scripts/lib/inkwave-streamed-music-diagnostics.mjs'
       - 'scripts/tests/inkwave-streamed-music-diagnostics.test.mjs'
       - 'scripts/lib/inkwave-capture-source-identity.mjs'
@@ -206,7 +208,7 @@ jobs:
       - name: Verify native intro timers and strict UI admission
         if: ${{ matrix.side == 'after' }}
         run: |
-          node --test scripts/tests/inkwave-projectile-capture-ui.test.mjs scripts/tests/inkwave-projectile-atomic-intro.test.mjs scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-intro-ui.test.mjs
+          node --test scripts/tests/inkwave-projectile-capture-ui.test.mjs scripts/tests/inkwave-projectile-atomic-intro.test.mjs scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-intro-ui.test.mjs scripts/tests/inkwave-projectile-capture-projection.test.mjs
           CHROMIUM_PATH="$(node -e "process.stdout.write(require('playwright').chromium.executablePath())")"
           test -n "$CHROMIUM_PATH" && test -x "$CHROMIUM_PATH"
           export CHROMIUM_PATH

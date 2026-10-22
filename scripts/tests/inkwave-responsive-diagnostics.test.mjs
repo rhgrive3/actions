@@ -322,3 +322,42 @@ for (const cleanupRejects of [false, true]) test(`actual setup interruption fina
   assert.equal(read().diagnostics.firstError.stack,original.stack);
   assert(entry.diagnostics.events.some(x=>x.type===(cleanupRejects?'context-close-error':'context-close-complete')));
 });
+
+test('actual continuation keeps pending operation through rejection and failure reporting', async () => {
+  const { checkResultContinuation } = await import('../check-inkwave-result-continuation.mjs');
+  const d = createResponsiveDiagnostics({ maxEvents: 3 });
+  let rejectAction, reached;
+  const entered = new Promise(resolve => { reached = resolve; });
+  const page = { evaluate: async () => undefined, waitForFunction: async () => {},
+    locator: () => ({ scrollIntoViewIfNeeded: async () => {}, evaluate: async () => true }) };
+  const original = Error('original action rejected');
+  const action = checkResultContinuation({ page, entry: {}, settle: async () => {}, capture: async () => {},
+    onOperation: (id, boundary) => d.operation(id, boundary),
+    tap: async (_page, selector) => {
+      if (selector === '[data-id="change-gear-continue"]') {
+        reached(); return new Promise((_resolve, reject) => { rejectAction = reject; });
+      }
+    } });
+  const rejected = assert.rejects(action, error => error === original);
+  await entered;
+  assert.equal(d.snapshot().pendingOperation, 'continuation-tap-change');
+  assert.equal(d.snapshot().events.at(-1).type, 'operation-before');
+  rejectAction(original); await rejected;
+  await collectResponsiveFailure({ entry: {}, error: original, diagnostics: d,
+    page: { isClosed: () => true }, readInteraction: () => assert.fail(), captureFailure: () => assert.fail() });
+  assert.equal(d.snapshot().pendingOperation, 'continuation-tap-change');
+  assert.equal(d.snapshot().firstError.message, original.message);
+  assert(!d.snapshot().events.some(x => x.type === 'operation-after' && x.detail === 'continuation-tap-change'));
+});
+
+test('operation boundary matching and unknown text never clear or leak pending ID', () => {
+  const d = createResponsiveDiagnostics();
+  d.operation('continuation-wait-loadout', 'before');
+  d.operation('PRIVATE-selector', 'before');
+  d.operation('continuation-wait-loadout', 'PRIVATE-boundary');
+  d.operation('continuation-read-weapon', 'after');
+  assert.equal(d.snapshot().pendingOperation, 'continuation-wait-loadout');
+  assert(!JSON.stringify(d.snapshot()).includes('PRIVATE'));
+  d.operation('continuation-wait-loadout', 'after');
+  assert.equal(d.snapshot().pendingOperation, null);
+});
