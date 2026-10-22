@@ -23,13 +23,15 @@ test('actual preparation rejects unrelated served bytes before writing any overl
 const workflow=fs.readFileSync(new URL('../../.github/workflows/inkwave-material-native-aa.yml',import.meta.url),'utf8');
 function requireCurrentWorkflow(s){
  assert.match(s,/^on:\n  pull_request:\n    branches: \['main'\]\n/m);
- assert.match(s,/^    if: github\.head_ref == 'diagnostic\/ink-material-native-aa-20261022'$/m);
+ assert.match(s,/^    if: github\.head_ref == 'diagnostic\/ink-material-native-aa-20261022' \|\| github\.head_ref == 'diagnostic\/ink-material-native-aa-phase-20261022'$/m);
  assert.ok(!s.includes('preparation/ink-material-normal-admission-20261022'));
  assert.ok(s.includes('ref: '+SOURCE_SHA));assert.ok(s.includes(SOURCE_TREE));
  assert.ok(s.includes('scripts/tests/inkwave-three-composition.test.mjs'));
  assert.ok(s.includes('tools/material-native-aa/*.test.mjs'));
  assert.ok(s.includes('node tools/material-native-aa/run.mjs work/material-site work/material-source work/material-overlay/inkShading.js work/material-aa'));
 }
-test('current-main workflow targets main but keeps exact owned diagnostic branch and A/A execution',()=>requireCurrentWorkflow(workflow));
+test('current-main workflow targets main but keeps exact two owned diagnostic branches and A/A execution',()=>requireCurrentWorkflow(workflow));
 test('old merged PR preparation base is rejected',()=>assert.throws(()=>requireCurrentWorkflow(workflow.replace("branches: ['main']","branches: ['preparation/ink-material-normal-admission-20261022']"))));
 test('foreign head branch cannot trigger the reviewed native job',()=>assert.throws(()=>requireCurrentWorkflow(workflow.replace("github.head_ref == 'diagnostic/ink-material-native-aa-20261022'","github.head_ref != ''"))));
+test('foreign phase branch cannot trigger the reviewed native job',()=>assert.throws(()=>requireCurrentWorkflow(workflow.replace("diagnostic/ink-material-native-aa-phase-20261022","diagnostic/foreign-material-phase"))));
+test('an appended third branch cannot trigger the reviewed native job',()=>assert.throws(()=>requireCurrentWorkflow(workflow.replace("github.head_ref == 'diagnostic/ink-material-native-aa-phase-20261022'","github.head_ref == 'diagnostic/ink-material-native-aa-phase-20261022' || github.head_ref == 'diagnostic/foreign-material-third'"))));
