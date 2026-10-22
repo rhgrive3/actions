@@ -70,7 +70,7 @@ test('real catalog low-ink Roller/Brush shot retains reduced source unit identit
     a.aimPoint.set(0,1.05,80);
     a.weaponRunner.update(1/60,{fire:true,firePressed:true,sub:false});
     for(let i=0;i<85;i++)a.weaponRunner.update(1/60,{fire:false,firePressed:false,sub:false});
-    return {r,a,rounds:G.projectiles.list.filter(p=>p.catalog?.r===r)};
+    return {r,a,rounds:G.projectiles.list.filter(p=>p.catalog?.r?.id===r.id)};
   }
   for(const [name,vertical] of [
     ['Carbon Roller',false],['Dynamo Roller',true],['Flingza Roller',true],
