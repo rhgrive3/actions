@@ -195,7 +195,12 @@ try{
           G.fx.update(dt,camera);tick++;
         });
         G.projectiles.syncVisuals?.(Math.min(1,clock.accumulator*60));
-        const capture=births.length>lastRenderedBirthCount&&renders.length<2;
+        // Native _muzzle/_muzzleHand predicts the aim pose below aimReady=.98
+        // (src/game/weapons.js:720; catalog-pose-birth). Quad's second shot may
+        // still be in that legitimate prediction phase. Its steady image is
+        // the first later birth at full aim; LOS fallback is never overridden.
+        const steadyReady=id!=='s3-maneuver-stepper'||births.at(-1)?.preAimReady>=.98;
+        const capture=births.length>lastRenderedBirthCount&&renders.length<2&&(renders.length===0||steadyReady);
         if(renderPolicy==='full'||capture||frame===hz*2-1){
           renderer.render(scene,camera);drawFrames.push({frame,tick,reason:capture?(renders.length?'steady':'first'):frame===hz*2-1?'final':'cadence'});
         }else{
@@ -213,7 +218,8 @@ try{
             nativeShapeInstancesChecked++;maxNativeShapeError=Math.max(maxNativeShapeError,best);
             nativeInstances.push({index:bestIndex,age:p.age,physical:p.pos.toArray(),actual,centreError:best,physicalBirth:p.start.toArray(),note:'Actual age>0 sphere is detached at the physical projectile; no age-zero history is owned.'});
           }
-          renders.push({phase,frame,tick,birthCount:births.length,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,inkPixels,glError:gl.getError(),nativeInstances,nativeVolumeSubmissions:volumeFrame.submissions.slice()});screenshots[phase]=renderer.domElement.toDataURL('image/png').split(',')[1];}
+          const latestBirth=births.at(-1);
+          renders.push({phase,frame,tick,birthCount:births.length,preAimReadyAtEmission:latestBirth.preAimReady,originEqualsPrePoseSocket:latestBirth.hand!==null,hasPoseConnection:!!latestBirth.poseOffset,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,inkPixels,glError:gl.getError(),nativeInstances,nativeVolumeSubmissions:volumeFrame.submissions.slice()});screenshots[phase]=renderer.domElement.toDataURL('image/png').split(',')[1];}
       }
       if(!births.length)throw Error(id+' did not fire');if((!flick||family==='brush')&&renders.length!==2)throw Error(id+' missing first/steady render phases');if(!renders.length||renders.some(r=>r.inkPixels<100||r.glError!==0))throw Error('Missing real WebGL character/weapon coverage');
       timing.simulationCompleteMs=performance.now()-caseStart;
