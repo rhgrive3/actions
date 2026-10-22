@@ -365,13 +365,17 @@ export class ClamsRule {
     const inv = this.state.inventories[id];
     if (!inv || !inv.small) return;
     const pos = vec(position);
+    let grounded = true;
     if (typeof frame?.floorAt === 'function') {
       const floor = this._floorAt(frame, pos[0], pos[2], pos[1] + 0.25);
-      if (floor !== null) pos[1] = floor;
+      // An airborne receiver can exchange small clams for a passed Power
+      // Clam. A lower storey or missing floor is not support at its feet.
+      grounded = floor !== null && Math.abs(floor - pos[1]) <= 0.25;
+      if (grounded) pos[1] = floor;
     }
     const count = inv.small;
     for (let i = 0; i < count; i++) {
-      this._newClam('small', null, [pos[0] + (i - (count - 1) / 2) * 0.16, pos[1], pos[2]], { grounded: true, expiresIn: CLAM_LIFETIME });
+      this._newClam('small', null, [pos[0] + (i - (count - 1) / 2) * 0.16, pos[1], pos[2]], { grounded, expiresIn: CLAM_LIFETIME });
     }
     inv.small = 0;
     this._event('clam-drop', { actor: id, team, kind: 'small', count, pos: [...pos] });
@@ -441,9 +445,12 @@ export class ClamsRule {
     clam.bounces++;
     if (clam.bounces > 2) {
       clam.velocity = [0, 0, 0];
-      clam.grounded = true;
       const floor = this._floorAt(frame, position[0], position[2], position[1] + 0.25);
-      if (floor !== null) clam.pos[1] = floor;
+      // The bounce cap stops rebound velocity, not gravity. Settle only on
+      // nearby support within the existing floor-probe tolerance; otherwise
+      // ordinary flight must still land on lower floors or fall into water.
+      clam.grounded = floor !== null && Math.abs(floor - position[1]) <= 0.25;
+      if (clam.grounded) clam.pos[1] = floor;
     }
   }
 
