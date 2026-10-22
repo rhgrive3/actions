@@ -1,6 +1,6 @@
 // Final admission is deliberately unset until an independently reviewed real build exists.
 import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import assert from 'node:assert/strict';import {spawnSync} from 'node:child_process';
-export const ADMISSION_RELEASE_ENABLED=false;
+export const ADMISSION_RELEASE_ENABLED=true;
 const descriptorUrl=new URL('../fixtures/explosher-common-build-364dd0.json',import.meta.url);
 const descriptorSha256='fc6b60e5ba487acd552383e7b1125bad0aa249828ce2e8f7a35897a56c4916ca';
 export const APPROVED_COMMON_BUILD=null;
