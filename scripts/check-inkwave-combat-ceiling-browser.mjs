@@ -108,7 +108,7 @@ try {
  const spawnStarts=await Promise.all(pages.map(p=>p.evaluate(()=>__G.time)));
  await Promise.all(pages.map((p,i)=>p.waitForFunction(start=>{
   if(__ceilingPlacement.spawnReady())return true;
-  if(__G.time-start>10)throw Error('Native opening spawn did not settle within 10 game seconds');
+  if(__G.time-start>10)throw Error('Native opening spawn did not settle within 10 game seconds: '+JSON.stringify({state:__G.match?.state,elapsed:__G.time-start,actors:(__G.match?.actors||[]).map(a=>({remote:!!a.remote,alive:a.alive,grounded:a.grounded,form:a.form,spawn:a.s3?.squidSpawn?.phase??null,netReady:a.net?.ready??null}))}));
   return false;
  },spawnStarts[i],{timeout:180000})));
  report.spawnReady=await Promise.all(pages.map(p=>p.evaluate(()=>({at:__G.time,ready:__ceilingPlacement.spawnReady()}))));
