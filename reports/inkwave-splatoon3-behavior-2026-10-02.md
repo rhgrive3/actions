@@ -6150,3 +6150,7 @@ Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテ�
 公式main7e `7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51` 比で元ヒッセンruntime blob `54f90896181bd28feefbd0bdff2c9347db03265f` だけを維持し、c68の閉じた参照QA修復とPR1853の追加9-edge拒否試験を両方保存した。special4runtimeと別担当のfiring adapterは取り込まない。source37成功/1emitted専用skip、生成物35/35、共通参照/メニュー18/18、両buildの13root/versioned参照とstartup budgetが成功。固定60Hz計測の9条件でcontrol/source/emittedの塗り・弾道・ink・damage・seed・着地が厳密一致した。
 
 旧native-before/afterの色/装備不一致を訂正し、旧画像は同条件の見た目A/Bに数えない。旧7bの訂正済みペアを保持し、新mainも同palette/Rookie/能力none/camera/seedで18Fだけ再撮影した。trusted menu入場後、freeze下の既存startMatch APIでfresh actorを作る制御replayによりcamera/87bone/物理traceが一致した。これは本家encoded frame比較ではなく、`.5` のUNSOURCED暫定校正も未承認のまま。[依存・build・測定・画像・初回失敗を含む記録](tri-slosher-floor-main7e-20261023/README.md)。PR1855 ref/mainはこの保存作業では動かさず、新候補のhosted CI成功も未主張。
+
+## 2026-10-23: 原典ステージの GPU 描画負荷上限
+
+原典ステージ表示中だけ GTAO を外し、MSAA・pixelRatio に上限をかけ、コンテキストロスト後は段階的に描画負荷を下げる（[記録](inkwave-native-gpu-budget-2026-10-23.md)）。描画表現のみの変更で、歩行・泳ぎ・射撃・塗り判定・インク回復・カメラ操作のロジックは変更していない。本家 Ver.11.3.0 との既存の差分・未確認項目はそのまま。計測は Chromium + SwiftShader の WebGL 確保量の集計で、実機の GPU 落ち解消は未確認。
