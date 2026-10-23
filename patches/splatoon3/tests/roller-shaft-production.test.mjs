@@ -14,26 +14,30 @@ const observed=(old)=>(rel,source)=>{
 const apis=new Map(),host=o=>JSON.parse(JSON.stringify(o));async function api(old=false){if(!apis.has(old))apis.set(old,fixture({fullRuntime:true,productionComposition:true,includeCharacter:true,realProjectiles:true,vmMathRandom:()=>.4,
  adaptRuntime:observed(old),adaptEmittedRuntime:observed(old),extraExports:"export { recordMovementLaunch } from './patches/splatoon3/runtime/roller-freefall.mjs';"}));return apis.get(old);}
 const renderer=()=>({capabilities:{getMaxAnisotropy:()=>1},target:null,getRenderTarget(){return this.target;},getClearColor(out){return out.setRGB(0,0,0);},getClearAlpha(){return 0;},setRenderTarget(t){this.target=t;},setClearColor(){},clear(){},render(){}});
-async function run({old=false,id='roller',hz=60,release=48,repress=false,repeated=false,horizontal=false,airborne=false,held=false,movingAim=false,interrupt=null}={}){
- const f=await api(old),{G,THREE:T}=f;G.time=10;G.scene=new T.Scene();G.level=new f.Level({bounds:{minX:-30,maxX:30,minZ:-30,maxZ:30},spawnPads:[[-20,0,0],[20,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-30,-.5,-30],max:[30,0,30]}]});G.physics=new f.Physics(G.level);G.projectiles=new f.Projectiles(G.scene);G.paint=new f.PaintSystem(renderer(),G.level,{atlasSize:512,maxDensity:2});
+async function run({old=false,id='roller',hz=60,release=48,repress=false,repeated=false,horizontal=false,airborne=false,held=false,movingAim=false,interrupt=null,repressHold=false}={}){
+ const f=await api(old),{G,THREE:T}=f;G.time=10;G.camera=new T.PerspectiveCamera();G.scene=new T.Scene();G.level=new f.Level({bounds:{minX:-30,maxX:30,minZ:-30,maxZ:30},spawnPads:[[-20,0,0],[20,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-30,-.5,-30],max:[30,0,30]}]});G.physics=new f.Physics(G.level);G.projectiles=new f.Projectiles(G.scene);G.paint=new f.PaintSystem(renderer(),G.level,{atlasSize:512,maxDensity:2});
  const a=new f.Actor({team:0,name:'Roller Recovery QA',isLocal:true,weapon:id,CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0,hat:0,brows:0}}),c=a.character;
  c.actor=a;c.onEvent=null;G.local=a;G.actors=[a];G.scene.add(c.root);a.reset();a.setWeapon(id);a.pos.set(0,0,0);a.yaw=0;a.aimPitch=0;a.aimDir.set(0,0,1);a.aimPoint.set(0,0,20);a.grounded=true;a.vel.set(0,0,0);
  for(let i=0;i<120;i++){G.time+=1/60;a.weaponRunner.update(1/60,{fire:false});a._finishFrame(1/60);}c.fidget=-1;c.idleT=0;c.shufT=99;if(!horizontal)f.recordMovementLaunch(a);
- f.context.__shaftFallbackTicks=[];let tick=0,previousFire=false;const clock=new f.FixedClock(),rows=[];
+ f.context.__shaftFallbackTicks=[];const paintTrace=[],splat=G.paint.splat;
+ const describe=(v,seen=new WeakSet())=>{if(v===a)return{owner:'local actor',weapon:id,team:a.team};if(v==null||typeof v==='number'||typeof v==='string'||typeof v==='boolean')return v;
+  if(typeof v==='function')return String(v);if(v.toArray)return Array.from(v.toArray());if(seen.has(v))return'[cycle]';seen.add(v);if(Array.isArray(v))return v.map(x=>describe(x,seen));return Object.fromEntries(Object.entries(v).map(([k,x])=>[k,describe(x,seen)]));};
+ G.paint.splat=function(center,radius,team,options){paintTrace.push({center:Array.from(center.toArray()),radius,team,options:describe(options)});return splat.apply(this,arguments);};
+ let tick=0,previousFire=false;const clock=new f.FixedClock(),rows=[];
  try{for(let display=0;display<hz*(repeated?3:1.5);display++)clock.advance(1/hz,dt=>{
   const again=repeated&&tick===95,local=repeated&&tick>=95?tick-95:tick;if(again){a.weaponRunner.reset();if(!horizontal)f.recordMovementLaunch(a);}
   if(local===50){if(interrupt==='reset')a.weaponRunner.reset();if(interrupt==='cancel')c._s3CancelRollerFlick();if(interrupt==='form')a.form='squid';}a._shaftQaTick=tick;if(movingAim){a.yaw=.4*Math.sin(Math.max(0,local-48)*.2);a.aimPitch=.25*Math.sin(Math.max(0,local-48)*.25);a.aimDir.set(Math.sin(a.yaw)*Math.cos(a.aimPitch),Math.sin(a.aimPitch),Math.cos(a.yaw)*Math.cos(a.aimPitch));}
   const landing=horizontal?0:airborne?200:40;a.pos.set(0,local<landing?1.2*Math.sin(Math.PI*local/landing):0,0);a.grounded=local>=landing;a.vel.set(0,local<landing?1.2*Math.PI/(landing/60)*Math.cos(Math.PI*local/landing):0,0);
-  a.intent.fire=held||local<release||repress&&local>=51&&local<53;const pressed=a.intent.fire&&!previousFire;previousFire=a.intent.fire;
-  a.weaponRunner.update(dt,{fire:a.intent.fire,firePressed:pressed});G.time+=dt;a._finishFrame(dt);G.projectiles.update(dt);c.root.updateMatrixWorld(true);
+  a.intent.fire=held||local<release||repress&&local>=51&&local<53||repressHold&&local>=51;const pressed=a.intent.fire&&!previousFire;previousFire=a.intent.fire;
+  a.intent.sub=interrupt==='sub'&&local>=50&&local<53;const subReleased=interrupt==='sub'&&local===53;a.weaponRunner.update(dt,{fire:a.intent.fire,firePressed:pressed,sub:a.intent.sub,subReleased});G.time+=dt;a._finishFrame(dt);G.projectiles.update(dt);c.root.updateMatrixWorld(true);
   const box=new T.Box3().setFromObject(c.weapon.drum),s=c.s3RollerFlick,cat=a.weaponRunner.catalogState;
   rows.push({tick,local,centre:box.getCenter(new T.Vector3()).toArray(),axis:new T.Vector3(1,0,0).transformDirection(c.weapon.drum.matrixWorld).toArray(),bottom:box.min.y,pose:Array.from(c.P),
    fold:c.weapon.fold?.quaternion.toArray()??null,gaps:[nativeRollerGripGap(c,T,'handR',f.CHARACTER_CHANNELS),nativeRollerGripGap(c,T,'handL',f.CHARACTER_CHANNELS)],
    presentation:s?{windup:s.windup,interval:s.interval,elapsed:s.elapsed,shape:s.swingShape??null}:null,
-   native:{input:a.intent.fire,pos:a.pos.toArray(),velocity:a.vel.toArray(),grounded:a.grounded,ink:a.ink,cooldown:a.weaponRunner.cooldown,flick:a.weaponRunner.flick,rolling:a.weaponRunner.rolling,paintVersion:G.paint.version,
+   native:{input:a.intent.fire,subInput:a.intent.sub,subAim:a.weaponRunner.aimingSub,pos:a.pos.toArray(),velocity:a.vel.toArray(),grounded:a.grounded,ink:a.ink,cooldown:a.weaponRunner.cooldown,flick:a.weaponRunner.flick,rolling:a.weaponRunner.rolling,paintVersion:G.paint.version,
     attack:a.weaponRunner.s3RollerAttack?{...a.weaponRunner.s3RollerAttack}:null,catalog:cat?{id:cat.id,frame:cat.frame,pending:cat.pending?.remaining??null,swingCount:cat.swingCount}:null,
-    projectiles:G.projectiles.list.map(p=>({pos:p.pos.toArray(),velocity:p.vel.toArray(),damage:p.damage,age:p.age,type:p.type}))}});tick++;
- });}finally{c.dispose();G.paint.dispose?.();G.actors=[];G.scene=null;}const out=host(rows);Object.defineProperty(out,'fallbacks',{value:[...f.context.__shaftFallbackTicks]});return out;
+    bombs:(G.projectiles.bombs||[]).map(p=>({pos:p.pos?.toArray(),velocity:p.vel?.toArray(),timer:p.timer,t:p.t,team:p.team})),projectiles:G.projectiles.list.map(p=>({pos:p.pos.toArray(),velocity:p.vel.toArray(),damage:p.damage,age:p.age,type:p.type}))}});tick++;
+ });}finally{c.dispose();G.paint.dispose?.();G.actors=[];G.scene=null;}const out=host(rows);Object.defineProperty(out,'paintTrace',{value:host(paintTrace)});Object.defineProperty(out,'fallbacks',{value:[...f.context.__shaftFallbackTicks]});return out;
 }
 const eq=(a,b,label)=>assert.deepEqual(a,b,label),dist=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));
 
@@ -66,4 +70,22 @@ test('30/60/120Hz plus repeated reset/reuse retain identical real poses, clocks,
 test('active return is discarded through existing reset, display cancellation and form interruption',async()=>{
  for(const interrupt of ['reset','cancel','form']){const b=await run({old:true,interrupt}),c=await run({interrupt});eq(c.map(r=>r.native),b.map(r=>r.native),interrupt+' native');
   for(let i=50;i<c.length;i++)eq(c[i],b[i],interrupt+' original display '+i);assert(c.every(r=>r.pose.every(Number.isFinite)));assert.deepEqual(c.fallbacks,[]);}
+});
+
+
+test('native CPU paint receives identical physical stamp inputs after release and repress',async()=>{
+ for(const options of [{release:48},{release:48,repress:true}]){const b=await run({...options,old:true}),c=await run(options);assert(b.paintTrace.length>0,'real projectile impacts painted');eq(c.paintTrace,b.paintTrace,'all native stamp inputs '+JSON.stringify(options));}
+});
+
+
+test('repressing into native ground contact abandons carry without worsening the switch',async()=>{
+ const b=await run({old:true,repressHold:true}),c=await run({repressHold:true});eq(c.map(r=>r.native),b.map(r=>r.native));
+ assert(c.some(r=>r.local>=53&&r.native.rolling),'native rolling/contact actually admitted');for(let i=51;i<c.length;i++)eq(c[i],b[i],'original held/contact pose '+i);
+ assert(dist(c[51].centre,c[50].centre)<=dist(b[51].centre,b[50].centre),'repress switch not worsened');eq(c.paintTrace,b.paintTrace);assert.deepEqual(c.fallbacks,[]);
+});
+
+
+test('sub aim and throw interrupt the active visual return while native sub admission stays original',async()=>{
+ const b=await run({old:true,interrupt:'sub'}),c=await run({interrupt:'sub'});assert(c.some(r=>r.native.subAim),'real sub aim admitted');assert(c.some(r=>r.native.bombs.length>0),'real bomb born');eq(c.map(r=>r.native),b.map(r=>r.native));
+ for(let i=50;i<c.length;i++)eq(c[i],b[i],'sub interrupt original display '+i);eq(c.paintTrace,b.paintTrace);
 });

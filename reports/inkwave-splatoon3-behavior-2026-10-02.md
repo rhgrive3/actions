@@ -6140,3 +6140,7 @@ Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテ�
 ### 2026-10-23 ローラー縦振りの接地解境界（保証未成立・runtime変更なし）
 
 元の実minifyビルドから腕/握り/cylinder/kid変換を取得し、1,472件のnative床評価を最大1.3e−15程度で再現した。前姿勢を保持すると、着地40tickの床誤差0.769353、復帰49tickの床誤差0.038359が既存許容0.003を超える。49tickでは合法なZ補正1.25/1.50radの間のscalar/slerp中点が床を破るため、両端だけでは連続な合法経路を保証できない。探索admissionを広げるだけの案も1.880radの段差を残し、既存costで前軸を追う案はnative56tickまで補正が残った。新しい表示係数や巨大なruntime探索を追加せず、受入候補のruntime実装は見送った。一般の3D合法経路の不存在を断定せず、未成立の条件として保存する。[制約・負例・4/4診断テスト・実測時間](roller-ground-boundary-20261023/README.md)。本家403は再取得せず、同条件比較は未確認のまま。
+
+### 2026-10-23 基本ローラーのunheld shaft経路候補（未受入）
+
+独立レビューのgeometry由来のupright shaftを経由する球面二次経路を基本weaponId=rollerの表示wrapperだけへ実装した。back以降の最初のunheld sampleを通常solverの結果で捕捉し、今回のfixtureはt0=48、heldの46から始めない。実browserでは40・48開始点・56以降が元と一致し、49tickのdrum移動は1.109129→0.253771、48–56最大加速度は4155.844→1959.650。実vertex最低点+0.024645、grip gap最大1.35e−15、fallback0。ただし50–56移動総量は2.661387→3.816900へ増え、53tickの軸向きも大きく違うため、見た目全体・本家一致は未承認。遅い解放の開始sampleの既存jumpも未解消。他roller・grip・共有native IK・入力/runner/physics/paint/network・別担当spawn/reset/landing gateは変更しない。[候補・全区間数値・同条件画像・検査](roller-shaft-return-20261023/README.md)。既存3不採用案・a8診断・main/PRを保護し、公式参照403は再取得しない。
