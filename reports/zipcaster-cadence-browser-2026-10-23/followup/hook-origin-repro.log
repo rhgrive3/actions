@@ -1,0 +1,31 @@
+moving-hook source origin deltas WU [2.298930340487151,0,1.5071537277513953,0,0.8820669282231698,0]
+✔ candidate source preserves all original 60 Hz moving-hook recipe rows (1.758298ms)
+✖ 30 Hz catchup origins follow the original native-60 hook path (known red on frozen candidate) (1.966412ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 119.33932
+
+✖ failing tests:
+
+test at zipcaster-cadence-evidence/browser-run/followup/hook-origin-repro.test.mjs:28:1
+✖ 30 Hz catchup origins follow the original native-60 hook path (known red on frozen candidate) (1.966412ms)
+  AssertionError [ERR_ASSERTION]: catchup uses the current head twice; fixed-phase count tests do not cover the moving origin
+      at TestContext.<anonymous> (file:///workspace/zipcaster-cadence-evidence/browser-run/followup/hook-origin-repro.test.mjs:34:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

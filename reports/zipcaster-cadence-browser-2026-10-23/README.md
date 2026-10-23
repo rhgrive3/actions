@@ -1,12 +1,14 @@
 # Zipcaster: minified build / controlled browser evidence (2026-10-23)
 
-**Buildは合格。制御ブラウザの確認は完了しましたが、動的なまとまり方と取消境界の完全一致は未解消です。実時間FPS・本家一致・main反映の合格ではありません。**
+**Buildは合格。追補で取消4粒差を入力適用順序の違いと確定し、30 Hzの移動中原点差を再現しました。通常カメラで大きな塊は見当たりませんが、位置サンプリング差の採否は親reviewに残ります。実時間FPS・本家一致・main反映の合格ではありません。**
+
+最新の因果確認・位置計測・意図的に失敗する焦点テスト・17 testsの範囲訂正は [followup/README.md](followup/README.md) にあります。元の報告commit `0adcf00dea878b5f1af352110236365475a087f5` とraw evidenceを保持しています。
 
 基準 `726e338ac256ba9609086ce65e25a68ddd99df85`、候補 `66a271f8fe5d91fc108f1f2a8a3d13860bff410e` を固定。候補runtime・基準source・親PR1854は変更していません。この差分は報告・再現補助・自作画面のみです。
 
 ## 先に結果
 
-両方を標準 `scripts/build-inkwave.mjs` / esbuild 0.28.2でminify。各1,420入力と2,110 artifactsを `verifyRuntimeBuild` で固定commitへ照合し、startup/dependency/容量検査も合格しました。build入力差分は `patch/runtime/special-vfx.mjs` だけ。minified runtimeは65,142→65,374 bytes、precache増分232 bytes。候補の実emittedモジュールを使う17 testsは全件合格です。
+両方を標準 `scripts/build-inkwave.mjs` / esbuild 0.28.2でminify。各1,420入力と2,110 artifactsを `verifyRuntimeBuild` で固定commitへ照合し、startup/dependency/容量検査も合格しました。build入力差分は `patch/runtime/special-vfx.mjs` だけ。minified runtimeは65,142→65,374 bytes、precache増分232 bytes。既存VMコマンドの17 testsは合格しました。正確には16件が実emitted graphと一部source helperを使うCPU component検査、1件はsource-only helper検査です。新設source-production suiteはこのコマンドに含みません。
 
 通常の試し撃ち場・既存カベ・通常追従カメラ・実Game/Actor/Physics/Character/FX/rendererを使いました。6試行の**264 native tickすべてで位置・phase・native timerが完全一致**、native stepは常に1/60秒。page error / console error / `gl.getError()` / context loss / Director errors は0です。
 
@@ -16,7 +18,7 @@
 | 60 Hz | 156→156 | 268→268 |
 | 120 Hz | 312→156 | 532→264 |
 
-全区間は4.4秒のsimulation timeです。coatは全6試行で20粒。短い取消zipが120 Hzでは各54粒、30/60 Hzでは各56粒で、候補の総数に4粒差が残ります。新規trackの半tick carryが次の発生機会より前の取消で消える境界差です。**取消を含めた粒数の完全一致とは報告しません。**
+全区間は4.4秒のsimulation timeです。coatは全6試行で20粒。短い取消zipが120 Hzでは各54粒、30/60 Hzでは各56粒で、候補の総数に4粒差が残ります。新規trackの半tick carryが次の発生機会より前の直接resetで消える境界差です。**追補ではnative境界へresetを揃えると元60 Hzと同じ56粒になることを確認しました。旧補助の入力適用順序による4粒差であり、候補の取消欠陥とは扱いません。**
 
 30 Hz候補ではhookの同一callback・同一原点ペアが5組、zipは1 callback最大4粒でした。60 Hz候補はhook最大1粒、zip最大2粒です。30 Hzの2発生機会が同じ現在poseを使う制約は数値上確認でき、密度だけから「団子状に見えない」とは判定できません。追加runtime変更は行っていません。
 

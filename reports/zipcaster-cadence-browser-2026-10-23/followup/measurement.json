@@ -1,0 +1,187 @@
+{
+  "schema": 1,
+  "reference": "original60 lifecycle, not original120 overemission",
+  "baseSha": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "candidateSha": "66a271f8fe5d91fc108f1f2a8a3d13860bff410e",
+  "originalReportSha": "0adcf00dea878b5f1af352110236365475a087f5",
+  "cancellationClassification": "input/reset ordering mismatch in capture helper; no candidate cancellation fix justified",
+  "nativeCancelTracesEqual": true,
+  "cancelCases": [
+    {
+      "lane": "base",
+      "hz": 60,
+      "mode": "native",
+      "zipBirths": 56,
+      "hookBirths": 5,
+      "nativeTicks": 54,
+      "resets": [
+        {
+          "event": "reset-request",
+          "callback": 48,
+          "nativeTick": 48,
+          "mode": "native"
+        },
+        {
+          "event": "reset-execute",
+          "callback": 48,
+          "nativeTick": 49,
+          "phase": "zip",
+          "record": 1,
+          "carry": null,
+          "mode": "native"
+        }
+      ],
+      "glError": 0,
+      "contextLost": false,
+      "directorErrors": 0
+    },
+    {
+      "lane": "candidate",
+      "hz": 120,
+      "mode": "direct",
+      "zipBirths": 54,
+      "hookBirths": 5,
+      "nativeTicks": 54,
+      "resets": [
+        {
+          "event": "reset-request",
+          "callback": 96,
+          "nativeTick": 48,
+          "mode": "direct"
+        },
+        {
+          "event": "reset-execute",
+          "callback": 96,
+          "nativeTick": 48,
+          "phase": "zip",
+          "record": 1,
+          "carry": 0.5,
+          "mode": "direct"
+        }
+      ],
+      "glError": 0,
+      "contextLost": false,
+      "directorErrors": 0
+    },
+    {
+      "lane": "candidate",
+      "hz": 120,
+      "mode": "native",
+      "zipBirths": 56,
+      "hookBirths": 7,
+      "nativeTicks": 54,
+      "resets": [
+        {
+          "event": "reset-request",
+          "callback": 96,
+          "nativeTick": 48,
+          "mode": "native"
+        },
+        {
+          "event": "reset-execute",
+          "callback": 97,
+          "nativeTick": 49,
+          "phase": "zip",
+          "record": 1,
+          "carry": 0,
+          "mode": "native"
+        }
+      ],
+      "glError": 0,
+      "contextLost": false,
+      "directorErrors": 0
+    }
+  ],
+  "hookNativeTracesEqual": true,
+  "commonCaptureCamerasEqual": true,
+  "matchedHandTape": true,
+  "hookInputScope": "candidate VFX bone(handR) boundary replays original60 native-tick samples; no Character/model mutation",
+  "hookBirths": [
+    {
+      "index": 1,
+      "original60NativeTick": 13,
+      "candidate30NativeTick": 14,
+      "originDifferenceWU": 8.717977137319066,
+      "nonOriginFloat32BirthFieldsEqual": true
+    },
+    {
+      "index": 2,
+      "original60NativeTick": 16,
+      "candidate30NativeTick": 16,
+      "originDifferenceWU": 0.0,
+      "nonOriginFloat32BirthFieldsEqual": true
+    },
+    {
+      "index": 3,
+      "original60NativeTick": 17,
+      "candidate30NativeTick": 18,
+      "originDifferenceWU": 1.596060058881241,
+      "nonOriginFloat32BirthFieldsEqual": true
+    },
+    {
+      "index": 4,
+      "original60NativeTick": 18,
+      "candidate30NativeTick": 18,
+      "originDifferenceWU": 0.0,
+      "nonOriginFloat32BirthFieldsEqual": true
+    },
+    {
+      "index": 5,
+      "original60NativeTick": 19,
+      "candidate30NativeTick": 20,
+      "originDifferenceWU": 0.18408234825822098,
+      "nonOriginFloat32BirthFieldsEqual": true
+    }
+  ],
+  "pair": [
+    {
+      "lane": "base60",
+      "pairBirthNativeTicks": [
+        17,
+        18
+      ],
+      "birthSeparationWU": 1.596060058881241,
+      "tick18LiveSeparationWU": 1.5930777755667036,
+      "tick18ProjectedCenterSeparationPx": 3.0799891371992216
+    },
+    {
+      "lane": "candidate30",
+      "pairBirthNativeTicks": [
+        18,
+        18
+      ],
+      "birthSeparationWU": 0.0,
+      "tick18LiveSeparationWU": 0.07481469652942659,
+      "tick18ProjectedCenterSeparationPx": 1.3355696683448315
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "visualAssessment": "No conspicuous large clump in this normal-camera pair; actual same-origin batching and moving-head alias reproduced. Projected centers are not visible-pixel or retail parity proof.",
+  "focusTest": {
+    "frozenCandidate": {
+      "pass": 1,
+      "fail": 1,
+      "status": "intentional red moving-origin requirement"
+    },
+    "privateUnappliedTimerProposal": {
+      "pass": 2,
+      "fail": 0,
+      "scope": "raw source CPU fixed-hand only; no build/browser/full-suite validation"
+    }
+  },
+  "existing17TestScope": {
+    "builtVmGraphWithSomeRawTestHelpers": 16,
+    "sourceOnlyRemoteKrakenHelper": 1,
+    "newSourceCompositionSuiteInCommand": false,
+    "browserOrGPUTests": false
+  },
+  "pending": [
+    "Parent visual significance decision for 30Hz spatial alias",
+    "If adopting separate proposal: moving-hand/phase tests and build/browser acceptance",
+    "Real-time display FPS/frame pacing",
+    "Retail footage fidelity"
+  ],
+  "candidateSourceMutation": false,
+  "mainOrPR1854Mutation": false
+}

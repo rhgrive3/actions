@@ -1,0 +1,94 @@
+{
+  "parentReportCommit": "0adcf00dea878b5f1af352110236365475a087f5",
+  "baseTree": "76fe27fde192c3ceefd4290fd70cfa69784bc69b",
+  "pathPrefix": "reports/zipcaster-cadence-browser-2026-10-23/",
+  "scope": "Report-only update; no source/build/runtime/PR/main changes. Original report remains immutable.",
+  "entries": [
+    {
+      "path": "README.md",
+      "beforeGitBlob": "7031ecaad5f927b2852ccaa6616154031f1cdded",
+      "afterGitBlob": "b264950730e232feef139af51f19e02468cd87aa",
+      "afterSha256": "663a945ec4d37de730b266ccb0d969418fce0e0fbb3934e9630833eae10ca05c",
+      "bytes": 7076
+    },
+    {
+      "path": "followup/README.md",
+      "beforeGitBlob": null,
+      "afterGitBlob": "55da27c5d187ffa6e88b0e3647b3e3b9b6390c69",
+      "afterSha256": "6ac10b61fb81ca94a857d6f4c10551a3de891543a01755e1265e50cbc9e97818",
+      "bytes": 9669
+    },
+    {
+      "path": "followup/base-hook-tick18.jpg",
+      "beforeGitBlob": null,
+      "afterGitBlob": "474034c2219433b5f87304b90973359427015bae",
+      "afterSha256": "c3c3cd7f5d8cbd401e0fbeaa6da878ba09970366fc511afdc8c7da41a1f5a54d",
+      "bytes": 74930
+    },
+    {
+      "path": "followup/cancellation-ledger.before-repeat.json",
+      "beforeGitBlob": null,
+      "afterGitBlob": "07b2a2b1e4630493fb1c42bb981caacf7c0800a4",
+      "afterSha256": "ecbec695989706df70cc60cbae7ac476d54ab6f3520a1f2a1a8acb2902078b14",
+      "bytes": 5842
+    },
+    {
+      "path": "followup/candidate-hook-tick18.jpg",
+      "beforeGitBlob": null,
+      "afterGitBlob": "b07fd7c2894a5cf70a2b1fbceb7d124024d44cbe",
+      "afterSha256": "892e3d28745526047109533eace2858ce1220babc84dd23f05b889c3199f1373",
+      "bytes": 74835
+    },
+    {
+      "path": "followup/hook-origin-proposal.log",
+      "beforeGitBlob": null,
+      "afterGitBlob": "0863138884cca3489dcd914324f05c1f30f99424",
+      "afterSha256": "ac777eada46611cb315732be29afb15f638185ee81c6542f0071809762d3177d",
+      "bytes": 383
+    },
+    {
+      "path": "followup/hook-origin-repro.log",
+      "beforeGitBlob": null,
+      "afterGitBlob": "15faf6f0dfe74bdb603aa3191f1c268839d26ec8",
+      "afterSha256": "faa6688d1467a1a510fdd1d81afc344c7e63dbbbf1d7b3bb1239f9005f46246e",
+      "bytes": 1430
+    },
+    {
+      "path": "followup/hook-origin-repro.test.mjs",
+      "beforeGitBlob": null,
+      "afterGitBlob": "016bc897e6c2e7d0929f77d2ae6c6cf42693c25b",
+      "afterSha256": "45c93267ea72a1c44e3436583ebee56e693b8f50efcfca7e6a95a50858b82c22",
+      "bytes": 2222
+    },
+    {
+      "path": "followup/measurement.json",
+      "beforeGitBlob": null,
+      "afterGitBlob": "e55f78e3fbfd596cbb743874df9745f5396ae2b6",
+      "afterSha256": "ab7132551e4905f8e228356ba08b4e8f6cc2c44424f70585cd245fe87e3e1800",
+      "bytes": 5049
+    },
+    {
+      "path": "followup/probe-result.json",
+      "beforeGitBlob": null,
+      "afterGitBlob": "d27c856f577defcd7a9537a21f874fb77b13a666",
+      "afterSha256": "bbd73913b8e105ec0894eef1da12a229affa80118ad6a38d13abbd09ce6a3d7a",
+      "bytes": 415750
+    },
+    {
+      "path": "followup/probe.log",
+      "beforeGitBlob": null,
+      "afterGitBlob": "ea0b6e2683190e95250175d61a80ae7ffa0a2b73",
+      "afterSha256": "02024c2df97828f0b5061371a46a1b754ad56607571cbbbd9bd313232f5b8715",
+      "bytes": 2914
+    },
+    {
+      "path": "followup/probe.mjs",
+      "beforeGitBlob": null,
+      "afterGitBlob": "9801d9d26c8fba51040c97c4b951df424a17f7a2",
+      "afterSha256": "730cd2301ccbd3af7dde0b3255a8c40ac55854285b29bb30fa4704413df8944f",
+      "bytes": 11263
+    }
+  ],
+  "privateUnpublishedProposalPatchSha256": "3b65f107623e9bb0959243f8fd602d3ce48bc7adfd1408a8bd29e612db77f942",
+  "manifestSelfHash": "recorded in publication receipt; omitted here to avoid self-reference"
+}

@@ -1,0 +1,11 @@
+moving-hook source origin deltas WU [0,0,0,0,3.552713678800501e-15,0]
+✔ candidate source preserves all original 60 Hz moving-hook recipe rows (1.878438ms)
+✔ 30 Hz catchup origins follow the original native-60 hook path (known red on frozen candidate) (1.633408ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 116.156394

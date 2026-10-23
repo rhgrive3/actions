@@ -1,0 +1,192 @@
+{
+  "scope": "Event-log analysis; 120Hz carry is reconstructed from unchanged actual frame clock, not directly recorded in the old logs",
+  "reference": "original frozen main726 60Hz, not old 120Hz counts",
+  "records": [
+    {
+      "record": "L1",
+      "original60": {
+        "firstSeenCallback": 132,
+        "firstSeenNativeTick": 133,
+        "cancelBeforeCallback": 180,
+        "lastZipNativeTick": 180,
+        "lastNativeState": {
+          "time": 2.9999999999999942,
+          "dt": 0.016666666666666666,
+          "pos": [
+            5.903094337406704,
+            1.056746140037222,
+            33.65229130297266
+          ],
+          "phase": "zip",
+          "hook": 0.12453734217241981,
+          "zip": 0.45879599116091346
+        },
+        "creditedPresentationTicks": 48,
+        "exactReferenceBirths": [
+          {
+            "rowIndex": 239,
+            "frame": 179,
+            "time": 2.9999999999999942,
+            "phase": "zip",
+            "kind": "zip",
+            "p": [
+              5.688698905837858,
+              2.3675877398890686,
+              33.775381969225776
+            ],
+            "v": [
+              0.06336519790512181,
+              -0.6909908720191422,
+              -5.6576069558145035
+            ],
+            "life": 0.35,
+            "size": 0.08
+          },
+          {
+            "rowIndex": 240,
+            "frame": 179,
+            "time": 2.9999999999999942,
+            "phase": "zip",
+            "kind": "zip",
+            "p": [
+              5.961161407959783,
+              2.3590320142065417,
+              34.04263899748511
+            ],
+            "v": [
+              0.06336519790512181,
+              -0.6909908720191422,
+              -5.6576069558145035
+            ],
+            "life": 0.35,
+            "size": 0.08
+          }
+        ]
+      },
+      "candidate120": {
+        "firstSeenCallback": 265,
+        "firstSeenNativeTick": 133,
+        "lastCallbacks": [
+          {
+            "callback": 358,
+            "nativeTickAfter": 179,
+            "phase": "zip",
+            "carryAfter": 0,
+            "opportunitiesThisCallback": 1,
+            "loggedZipBirths": 2
+          },
+          {
+            "callback": 359,
+            "nativeTickAfter": 180,
+            "phase": "zip",
+            "carryAfter": 0.5,
+            "opportunitiesThisCallback": 0,
+            "loggedZipBirths": 0
+          }
+        ],
+        "cancelBeforeCallback": 360,
+        "cancelInput": "Harness directly invokes Actor.spawnAt BEFORE Game._frame; this is not a queued native input action",
+        "cancelNativeTickBefore": 180,
+        "cancelNativeTickAfter": 180,
+        "phaseAfterReset": null,
+        "creditedPresentationTicks": 47.5,
+        "opportunitiesEmitted": 47,
+        "fractionAtReset": 0.5
+      }
+    },
+    {
+      "record": "L2",
+      "original60": {
+        "firstSeenCallback": 192,
+        "firstSeenNativeTick": 193,
+        "cancelBeforeCallback": 240,
+        "lastZipNativeTick": 240,
+        "lastNativeState": {
+          "time": 3.9999999999999907,
+          "dt": 0.016666666666666666,
+          "pos": [
+            5.903094337406704,
+            1.056746140037222,
+            33.65229130297266
+          ],
+          "phase": "zip",
+          "hook": 0.12453734217241981,
+          "zip": 0.45879599116091346
+        },
+        "creditedPresentationTicks": 48,
+        "exactReferenceBirths": [
+          {
+            "rowIndex": 305,
+            "frame": 239,
+            "time": 3.9999999999999907,
+            "phase": "zip",
+            "kind": "zip",
+            "p": [
+              6.309031264941344,
+              2.157212896373613,
+              34.14798906090036
+            ],
+            "v": [
+              0.06336519790512181,
+              -0.6909908720191422,
+              -5.6576069558145035
+            ],
+            "life": 0.35,
+            "size": 0.08
+          },
+          {
+            "rowIndex": 306,
+            "frame": 239,
+            "time": 3.9999999999999907,
+            "phase": "zip",
+            "kind": "zip",
+            "p": [
+              6.391369982241788,
+              1.7418588563879265,
+              34.10252975293733
+            ],
+            "v": [
+              0.06336519790512181,
+              -0.6909908720191422,
+              -5.6576069558145035
+            ],
+            "life": 0.35,
+            "size": 0.08
+          }
+        ]
+      },
+      "candidate120": {
+        "firstSeenCallback": 385,
+        "firstSeenNativeTick": 193,
+        "lastCallbacks": [
+          {
+            "callback": 478,
+            "nativeTickAfter": 239,
+            "phase": "zip",
+            "carryAfter": 0,
+            "opportunitiesThisCallback": 1,
+            "loggedZipBirths": 2
+          },
+          {
+            "callback": 479,
+            "nativeTickAfter": 240,
+            "phase": "zip",
+            "carryAfter": 0.5,
+            "opportunitiesThisCallback": 0,
+            "loggedZipBirths": 0
+          }
+        ],
+        "cancelBeforeCallback": 480,
+        "cancelInput": "Harness directly invokes Actor.spawnAt BEFORE Game._frame; this is not a queued native input action",
+        "cancelNativeTickBefore": 240,
+        "cancelNativeTickAfter": 240,
+        "phaseAfterReset": null,
+        "creditedPresentationTicks": 47.5,
+        "opportunitiesEmitted": 47,
+        "fractionAtReset": 0.5
+      }
+    }
+  ],
+  "finding": "The four reference births are the two zip drops at native tick180 and the two at tick240. Both 120Hz records are reset in a zero-native-tick callback before their next half-tick presentation opportunity. Native-step state equivalence alone did not establish equivalent reset/FX order.",
+  "classificationPending": "Causal native-boundary repeat/replay required before calling this a candidate defect."
+}
