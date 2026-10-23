@@ -1,0 +1,25 @@
+{
+  "scope": "bounded 80000-sample CPU sampler operation/churn check, not game FPS or GPU performance",
+  "rounds": [
+    {
+      "wrapped": false,
+      "milliseconds": 36.28393700000004,
+      "sum": 20104.051874982953
+    },
+    {
+      "wrapped": true,
+      "milliseconds": 44.79418899999996,
+      "sum": 20104.10047498285
+    },
+    {
+      "wrapped": true,
+      "milliseconds": 54.913613000000055,
+      "sum": 20104.10047498285
+    },
+    {
+      "wrapped": false,
+      "milliseconds": 31.21440800000005,
+      "sum": 20104.051874982953
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "before": {
+    "inputHash": "350b861c6d2ca16e5430ffc5b4f7e39cfbefc9df67290de1746b077ae256eb81",
+    "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+    "inputs": 1420,
+    "outputs": 2110
+  },
+  "candidate": {
+    "inputHash": "f0b931db340409eb82452aa8cc0996eee65abfe7e5e964ffa10e2fb5221e3e26",
+    "contentHash": "733b2f0c33836fb92b867d6b0b21d9c02d18804f1d1188bad84a6d0571b5010f",
+    "inputs": 1421,
+    "outputs": 2112
+  },
+  "changedInputs": [
+    "patch/runtime/roller-vertical-recovery.mjs",
+    "patch/runtime/roller.mjs"
+  ],
+  "cpuGameplayEquality": true,
+  "cpuCases": 12,
+  "cpuTicksPerCase": 120,
+  "canonicalRuntimeCandidate": "51dcd0e5ffd5c5488741900610d183eb874a6e17",
+  "referenceAccess": [
+    {
+      "action": "ordinary HTTPS GET",
+      "target": "https://www.nintendo.com/jp/ichikara/av5ja/index_en.html",
+      "outcome": "denied",
+      "reason": "HTTP 403; no retry or bypass"
+    },
+    {
+      "action": "ordinary HTTPS GET",
+      "target": "https://media-assets.apps-jp.nintendo.com/contents/embed/NablZy7jqxO",
+      "outcome": "denied",
+      "reason": "HTTP 403; no retry or bypass"
+    }
+  ]
+}

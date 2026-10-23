@@ -1,0 +1,254 @@
+TAP version 13
+# (node:1780) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: horizontal flick release holds sub for 14F and squid for 15F
+ok 1 - horizontal flick release holds sub for 14F and squid for 15F
+  ---
+  duration_ms: 1144.273027
+  type: 'test'
+  ...
+# Subtest: vertical flick release holds sub for 18F and squid for 19F
+ok 2 - vertical flick release holds sub for 18F and squid for 19F
+  ---
+  duration_ms: 964.548623
+  type: 'test'
+  ...
+# Subtest: the gates are per-release and do not leak into later state
+ok 3 - the gates are per-release and do not leak into later state
+  ---
+  duration_ms: 874.922539
+  type: 'test'
+  ...
+# Subtest: the gate does not delay a non-Roller weapon
+ok 4 - the gate does not delay a non-Roller weapon
+  ---
+  duration_ms: 909.257312
+  type: 'test'
+  ...
+# (node:1782) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: one production installer and duplicate module realms preserve hook identity; nullable previews use native IK
+ok 5 - one production installer and duplicate module realms preserve hook identity; nullable previews use native IK
+  ---
+  duration_ms: 16683.809301
+  type: 'test'
+  ...
+# Subtest: horizontal startup removes the double lift in actual posed geometry while preserving gameplay and native grips
+ok 6 - horizontal startup removes the double lift in actual posed geometry while preserving gameplay and native grips
+  ---
+  duration_ms: 592.523463
+  type: 'test'
+  ...
+# Subtest: vertical release, recovery, held ground pushing and lift on a fresh attack retain native geometry and timing
+ok 7 - vertical release, recovery, held ground pushing and lift on a fresh attack retain native geometry and timing
+  ---
+  duration_ms: 753.863151
+  type: 'test'
+  ...
+# Subtest: 35F/42F instance timing never replays the horizontal legacy tail; gameplay clocks are unchanged
+ok 8 - 35F/42F instance timing never replays the horizontal legacy tail; gameplay clocks are unchanged
+  ---
+  duration_ms: 417.159106
+  type: 'test'
+  ...
+# Subtest: 30/60/120Hz presentation and zero elapsed pause give identical 60Hz posed bones and indexed geometry
+ok 9 - 30/60/120Hz presentation and zero elapsed pause give identical 60Hz posed bones and indexed geometry
+  ---
+  duration_ms: 663.726767
+  type: 'test'
+  ...
+# Subtest: reset, death, sub aim, form, weapon and special interruption clear addon state without changing the runner
+ok 10 - reset, death, sub aim, form, weapon and special interruption clear addon state without changing the runner
+  ---
+  duration_ms: 273.873576
+  type: 'test'
+  ...
+# Subtest: hide interrupts the current roller startup without cancelling its native runner
+ok 11 - hide interrupts the current roller startup without cancelling its native runner
+  ---
+  duration_ms: 157.744852
+  type: 'test'
+  ...
+# (node:1787) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: \#373 horizontal/vertical actual windup holds 2.88 without changing 21/31F release or ink
+ok 12 - \#373 horizontal/vertical actual windup holds 2.88 without changing 21/31F release or ink
+  ---
+  duration_ms: 1740.834889
+  type: 'test'
+  ...
+# Subtest: \#373 independent target remains constant with gear/Flow and selected mode survives landing
+ok 13 - \#373 independent target remains constant with gear/Flow and selected mode survives landing
+  ---
+  duration_ms: 1474.762656
+  type: 'test'
+  ...
+# Subtest: \#373 native actor horizontal uses fixed target and keeps acceleration, not a velocity snap
+ok 14 - \#373 native actor horizontal uses fixed target and keeps acceleration, not a velocity snap
+  ---
+  duration_ms: 418.915408
+  type: 'test'
+  ...
+# Subtest: \#373 hold-to-roll transition, dash, lock, reset and dry admission retain native branches
+ok 15 - \#373 hold-to-roll transition, dash, lock, reset and dry admission retain native branches
+  ---
+  duration_ms: 511.334806
+  type: 'test'
+  ...
+# Subtest: \#373 fixed 60Hz traces are equal at 30/60/120 render schedules
+ok 16 - \#373 fixed 60Hz traces are equal at 30/60/120 render schedules
+  ---
+  duration_ms: 1567.514847
+  type: 'test'
+  ...
+# Subtest: vertical release retains source swing speed until 56F recovery, including airborne steering
+ok 17 - vertical release retains source swing speed until 56F recovery, including airborne steering
+  ---
+  duration_ms: 755.902196
+  type: 'test'
+  ...
+# Subtest: vertical ink-release key stays upright through follow-through, never replays the horizontal flick
+ok 18 - vertical ink-release key stays upright through follow-through, never replays the horizontal flick
+  ---
+  duration_ms: 0.735681
+  type: 'test'
+  ...
+# (node:1826) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: held Roller lowers its hands about the same live cylinder; off-center fault is rejected
+ok 19 - held Roller lowers its hands about the same live cylinder; off-center fault is rejected
+  ---
+  duration_ms: 81923.720797
+  type: 'test'
+  ...
+# Subtest: rolling right grip advances to one third without moving the actual drum or release pose
+ok 20 - rolling right grip advances to one third without moving the actual drum or release pose
+  ---
+  duration_ms: 37743.743983
+  type: 'test'
+  ...
+# Subtest: rolling shaft clears the torso while actual paint follows the shifted drum
+ok 21 - rolling shaft clears the torso while actual paint follows the shifted drum
+  ---
+  duration_ms: 25299.565121
+  type: 'test'
+  ...
+# Subtest: vertical lift keeps rising to the late crest instead of borrowing the horizontal overhead hold
+ok 22 - vertical lift keeps rising to the late crest instead of borrowing the horizontal overhead hold
+  ---
+  duration_ms: 28.417479
+  type: 'test'
+  ...
+# Subtest: vertical fitted grip has continuous position and velocity across crest, release, follow-through and return
+ok 23 - vertical fitted grip has continuous position and velocity across crest, release, follow-through and return
+  ---
+  duration_ms: 2.546747
+  type: 'test'
+  ...
+# (node:1840) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: simultaneous jump and fire go through actual Actor and retain vertical mode on landing
+ok 24 - simultaneous jump and fire go through actual Actor and retain vertical mode on landing
+  ---
+  duration_ms: 846.320341
+  type: 'test'
+  ...
+# Subtest: horizontal/vertical windups release on 21/31 elapsed ticks without an extra float tick
+ok 25 - horizontal/vertical windups release on 21/31 elapsed ticks without an extra float tick
+  ---
+  duration_ms: 3425.177705
+  type: 'test'
+  ...
+# Subtest: jump after starting a horizontal attack keeps its selected mode; the next attack reselects
+ok 26 - jump after starting a horizontal attack keeps its selected mode; the next attack reselects
+  ---
+  duration_ms: 513.514549
+  type: 'test'
+  ...
+# Subtest: a new flick lifts the rolling drum, a held trigger resumes rolling, release stops it
+ok 27 - a new flick lifts the rolling drum, a held trigger resumes rolling, release stops it
+  ---
+  duration_ms: 467.124485
+  type: 'test'
+  ...
+# Subtest: dry input does not create a phantom pose or spend ink
+ok 28 - dry input does not create a phantom pose or spend ink
+  ---
+  duration_ms: 438.178028
+  type: 'test'
+  ...
+# Subtest: actual projectile path retains narrow vertical paint flight and one-attack damage aggregation
+ok 29 - actual projectile path retains narrow vertical paint flight and one-attack damage aggregation
+  ---
+  duration_ms: 907.853882
+  type: 'test'
+  ...
+# Subtest: actual bones and weapon rotate vertically and the drum impulse waits for gameplay release
+ok 30 - actual bones and weapon rotate vertically and the drum impulse waits for gameplay release
+  ---
+  duration_ms: 15475.945817
+  type: 'test'
+  ...
+# Subtest: actual moving roller geometry and both grips stay synchronized through lift, landing, held roll and restart at 30/60/120Hz
+ok 31 - actual moving roller geometry and both grips stay synchronized through lift, landing, held roll and restart at 30/60/120Hz
+  ---
+  duration_ms: 5312.93722
+  type: 'test'
+  ...
+# Subtest: reset during a real Character windup cancels the legacy pose and drum impulse; form transitions do not invent an attack
+ok 32 - reset during a real Character windup cancels the legacy pose and drum impulse; form transitions do not invent an attack
+  ---
+  duration_ms: 567.355564
+  type: 'test'
+  ...
+# Subtest: Character channel/drum hooks are hash locked and fail closed
+ok 33 - Character channel/drum hooks are hash locked and fail closed
+  ---
+  duration_ms: 2.931649
+  type: 'test'
+  ...
+# Subtest: roller drum uses the measured source width; a pushed drum rests on the floor with both grips held
+ok 34 - roller drum uses the measured source width; a pushed drum rests on the floor with both grips held
+  ---
+  duration_ms: 811.320028
+  type: 'test'
+  ...
+# Subtest: post-release roll admission separates horizontal 7F vs vertical 22F at 60Hz (\#517)
+ok 35 - post-release roll admission separates horizontal 7F vs vertical 22F at 60Hz (\#517)
+  ---
+  duration_ms: 492.063349
+  type: 'test'
+  ...
+# Subtest: vertical flick does not deal roll contact damage or produce roll paint during the 22F admission delay (\#517)
+ok 36 - vertical flick does not deal roll contact damage or produce roll paint during the 22F admission delay (\#517)
+  ---
+  duration_ms: 444.246354
+  type: 'test'
+  ...
+# Subtest: release input before roll admission cancels transition, and runner reset cancels rolling (\#517)
+ok 37 - release input before roll admission cancels transition, and runner reset cancels rolling (\#517)
+  ---
+  duration_ms: 531.023569
+  type: 'test'
+  ...
+# Subtest: post-release roll admission timing maintains parity across 30Hz, 60Hz, and 120Hz (\#517)
+ok 38 - post-release roll admission timing maintains parity across 30Hz, 60Hz, and 120Hz (\#517)
+  ---
+  duration_ms: 1469.207655
+  type: 'test'
+  ...
+# Subtest: procedural vertical follow-through hands off to roll push pose on the exact admission tick (\#517)
+ok 39 - procedural vertical follow-through hands off to roll push pose on the exact admission tick (\#517)
+  ---
+  duration_ms: 640.127817
+  type: 'test'
+  ...
+1..39
+# tests 39
+# suites 0
+# pass 39
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 150787.494191

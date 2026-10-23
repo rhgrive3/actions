@@ -38,6 +38,8 @@ on:
       - 'patches/splatoon3/tests/issue-1813-dynamo-unit-authority-live.test.mjs'
       - 'patches/splatoon3/tests/kit-big-bubbler-contact-settlement.test.mjs'
       - 'patches/splatoon3/tests/roller-holding-pivot.test.mjs'
+      - 'patches/splatoon3/tests/roller-vertical-recovery.test.mjs'
+      - 'scripts/check-inkwave-roller-recovery-browser.mjs'
       - 'scripts/check-inkwave-saber-origins-browser.mjs'
       - 'scripts/check-inkwave-added-family-paint-browser.mjs'
       - 'scripts/check-inkwave-new-families-browser.mjs'
@@ -92,6 +94,8 @@ on:
       - 'patches/splatoon3/tests/issue-1813-dynamo-unit-authority-live.test.mjs'
       - 'patches/splatoon3/tests/kit-big-bubbler-contact-settlement.test.mjs'
       - 'patches/splatoon3/tests/roller-holding-pivot.test.mjs'
+      - 'patches/splatoon3/tests/roller-vertical-recovery.test.mjs'
+      - 'scripts/check-inkwave-roller-recovery-browser.mjs'
       - 'scripts/check-inkwave-saber-origins-browser.mjs'
       - 'scripts/check-inkwave-added-family-paint-browser.mjs'
       - 'scripts/check-inkwave-new-families-browser.mjs'
@@ -155,6 +159,8 @@ jobs:
         run: node --experimental-vm-modules --test patches/splatoon3/tests/roller-flick-movement.test.mjs patches/splatoon3/tests/roller.test.mjs patches/splatoon3/tests/roller-holding-pivot.test.mjs patches/splatoon3/tests/bomb-kit-fidelity.test.mjs patches/splatoon3/tests/air-attack-acceleration.test.mjs patches/splatoon3/tests/catalog-rolling-form-reset.test.mjs
       - name: Verify Dynamo native contact at 30/60/120 Hz
         run: node --experimental-vm-modules --test patches/splatoon3/tests/dynamo-handle-center.test.mjs
+      - name: Verify vertical Roller recovery continuity and per-weapon clocks
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/roller-vertical-recovery.test.mjs
       - name: Verify sourced Splatana origins and Slosher flight contact/cover
         run: node --experimental-vm-modules --test patches/splatoon3/tests/catalog-saber-origin.test.mjs patches/splatoon3/tests/catalog-slosher-flight-contact.test.mjs patches/splatoon3/tests/catalog-machine-occlusion.test.mjs patches/splatoon3/tests/catalog-splash-contact-distance.test.mjs patches/splatoon3/tests/splatana-lobe-hit-order.test.mjs
       - name: Verify Stringer, Splatana, Brella and added Dualies floor paint
@@ -192,6 +198,8 @@ jobs:
         run: node scripts/build-inkwave.mjs inkwave-public work/site
       - name: Verify emitted Roller holding and physical grip
         run: INKWAVE_BUILT_SITE=work/site node --experimental-vm-modules --test patches/splatoon3/tests/roller-holding-pivot.test.mjs
+      - name: Verify emitted vertical Roller recovery continuity
+        run: INKWAVE_BUILT_SITE=work/site node --experimental-vm-modules --test patches/splatoon3/tests/roller-vertical-recovery.test.mjs
       - name: Verify emitted source offsets, detached release clipping and lateral cover
         run: INKWAVE_BUILT_SITE=work/site node --experimental-vm-modules --test patches/splatoon3/tests/catalog-saber-origin.test.mjs patches/splatoon3/tests/catalog-slosher-flight-contact.test.mjs patches/splatoon3/tests/catalog-machine-occlusion.test.mjs patches/splatoon3/tests/splatana-lobe-hit-order.test.mjs
       - name: Verify emitted added-family floor paint and falling splashes

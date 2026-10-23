@@ -1,0 +1,70 @@
+TAP version 13
+# Subtest: excluded modules have audited build-only exports; mixed runtime adapters remain shipped
+ok 1 - excluded modules have audited build-only exports; mixed runtime adapters remain shipped
+  ---
+  duration_ms: 121.865784
+  type: 'test'
+  ...
+# Subtest: runtime helper URLs retain their exports without carrying build-time source transforms
+ok 2 - runtime helper URLs retain their exports without carrying build-time source transforms
+  ---
+  duration_ms: 33.429741
+  type: 'test'
+  ...
+# Subtest: minified static ESM imports are found without whitespace and with re-exports
+ok 3 - minified static ESM imports are found without whitespace and with re-exports
+  ---
+  duration_ms: 0.797374
+  type: 'test'
+  ...
+# Subtest: emitted lossless lightmaps preserve every pixel while reducing the offline snapshot
+ok 4 - emitted lossless lightmaps preserve every pixel while reducing the offline snapshot
+  ---
+  duration_ms: 225.242121
+  type: 'test'
+  ...
+# Subtest: ESM minification preserves the emitted module export interface
+ok 5 - ESM minification preserves the emitted module export interface
+  ---
+  duration_ms: 1214.974644
+  type: 'test'
+  ...
+# Subtest: network identity contains only exact paths owned by its namespace
+ok 6 - network identity contains only exact paths owned by its namespace
+  ---
+  duration_ms: 3.590175
+  type: 'test'
+  ...
+# Subtest: emitted identity binds every input to one canonical tracked path including S3 dodge dependencies
+ok 7 - emitted identity binds every input to one canonical tracked path including S3 dodge dependencies
+  ---
+  duration_ms: 453.87822
+  type: 'test'
+  ...
+# Subtest: emitted gameplay profile preserves all JSON values without shipping indentation
+ok 8 - emitted gameplay profile preserves all JSON values without shipping indentation
+  ---
+  duration_ms: 11.622161
+  type: 'test'
+  ...
+# Subtest: emitted worker keeps the complete runtime graph, installs, and replays verified offline bytes
+ok 9 - emitted worker keeps the complete runtime graph, installs, and replays verified offline bytes
+  ---
+  duration_ms: 4740.290751
+  type: 'test'
+  ...
+# Subtest: indexed worker precache decodes strictly before offline graph checks
+ok 10 - indexed worker precache decodes strictly before offline graph checks
+  ---
+  duration_ms: 6.395371
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7170.241007
