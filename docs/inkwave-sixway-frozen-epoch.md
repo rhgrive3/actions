@@ -104,3 +104,49 @@ The known all-eight-blocked spawn fallback limitation and UNSOURCED provisional
 Tri-Slosher `.5` calibration remain. No Nintendo media is obtained by this tool.
 Any future source or QA head must be explicitly reviewed and bound again; none
 is admitted merely by ancestry or by a new hash supplied by the caller.
+
+## Additional nonzero-barrier and pool regressions
+
+The later QA child retains the verifier's two exact input profiles. It adds
+tests without changing the nineteen production leaves or admitting itself.
+The original donor barrier=0 fixtures and original failure logs remain intact.
+
+```sh
+node --experimental-vm-modules --test --test-reporter=tap \
+  scripts/tests/inkwave-sixway-spawn-acceptance.test.mjs
+INKWAVE_BUILT_SITE=/workspace/inkwave-six-site node --experimental-vm-modules \
+  --test --test-reporter=tap scripts/tests/inkwave-sixway-spawn-acceptance.test.mjs
+
+# Retains the known failing same-seed legacy-sheet assertion. A nonzero exit
+# here is a real aggregate blocker, never an accepted baseline or an xfail.
+INKWAVE_BUILT_SITE=/workspace/inkwave-six-site node --experimental-vm-modules \
+  --test --test-reporter=tap scripts/tests/inkwave-sixway-pool-acceptance.test.mjs
+PLAYWRIGHT_MODULE=/workspace/actions/node_modules/playwright/index.js \
+  node scripts/check-inkwave-sixway-pool-browser.mjs /workspace/inkwave-six-site \
+  /workspace/inkwave-acceptance-evidence/new-pool-browser
+```
+
+The spawn group exercises both teams with barrier4.2 on every step: enemy
+ingress and friendly exit; native death/aim/launch/landing/first attack;
+held-through-death, release-in-flight and fresh-touchdown input; active idle
+display reset with an immediate fresh life; and missed support after pose
+retirement. Real Actor/Physics/Character/source-bank/Projectiles and CPU paint
+run together. Unfaded controls compare full canonical state, actual shots,
+paint grid/calls, source renderedPose and displayed attack. The deep -8 trench
+retains native below-water projectile expiry; pre-update emissions and their
+retirement are checked separately. Display readback refreshes world matrices
+after a direct reset, as the renderer does before drawing. These are fixed60
+VM/native geometry checks, distinct from real browser or retail results.
+
+Pool tests use actual native special/Shooter/Splatling/Slosher emitters and
+normal expiry, with no clear, pool reset or manual effect-field retirement.
+Pending native sibling births occupy other Slosher records so the final real
+Shooter emitter reaches the original object. The same-seed .37 case currently
+fails the legacy-sheet assertion; the .38 control and the added three drops
+are checked independently. Mixed 0/1/2 residual slots compare every prior
+matrix/color/shape/look/petal entry, retain native newest-first old-drop order,
+and allow new family additions only after that complete prefix.
+
+The firing owner separately owns the production repair. Do not replace a frozen
+source pin or relax an assertion/admission to make this aggregate pass. A
+reviewed successor still needs explicit new input binding and rerun gates.
