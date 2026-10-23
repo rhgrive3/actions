@@ -133,3 +133,16 @@ test('only owned same-repository main PR selects queue1801 identity route',()=>{
  }
  assert.match(step('Bind reviewed source controls to declared immutable Git source leaves'),/github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'inkwave\/exact-head-ci-main144-20261022'/);
 });
+
+
+test('the fixed 32-PR aggregate routes both source controls to the full main pair',()=>{
+ const valid={PAIR_EVENT_NAME:'pull_request',PAIR_BASE_REF:'main',PAIR_HEAD_REF:'integrate/inkwave-all-prs-20261022',PAIR_REPOSITORY:'rhgrive3/actions',PAIR_HEAD_REPO:'rhgrive3/actions'};
+ for(const name of ['Bind reviewed source controls to declared immutable Git source leaves','Replay reviewed Roller births, pool reset and pinned paint in the main reference']){
+  const result=shell(name,valid);assert.equal(result.status,0,result.stderr);
+  assert.ok(result.stdout.includes('--expected-source-base\n26a4db4123d23162a3dbf8a12150b1b5bc6ccf64\n'));
+  assert.ok(result.stdout.includes('--expected-source-head\nc9218d19b98a3bc63c9266738e1d67a64d9d1ff0\n'));
+  for(const override of [{PAIR_BASE_REF:'other'},{PAIR_HEAD_REPO:'outside/actions'},{PAIR_REPOSITORY:''},{PAIR_HEAD_REF:'other'}])
+   assert.ok(!shell(name,{...valid,...override}).stdout.includes('c9218d19b98a3bc63c9266738e1d67a64d9d1ff0'));
+  assert.notEqual(shell(name,{...valid,NODE_STATUS:'7'}).status,0);
+ }
+});

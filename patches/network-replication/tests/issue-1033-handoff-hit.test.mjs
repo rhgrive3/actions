@@ -15,7 +15,6 @@ import { C1088_SURGE_TAG, clearRemoteC1088Surge } from '../issue-1088-surge-pres
 import { clearRemoteRollerPresentation } from '../roller-presentation.mjs';
 import { clearRemoteDodgeClock } from '../../splatoon3/runtime/remote-dodge-clock.mjs';
 import { KIT_FORWARD } from '../../splatoon3/runtime/kit-network.mjs';
-import { beginOwnerClock, closeOwnerClock, handleOwnerClockMessage, retireOwnerClock } from '../owner-clock.mjs';
 import { dualiesNetworkAction, dualiesNetworkDirection, dualiesNetworkLock } from '../../splatoon3/runtime/catalog-dualies-motion.mjs';
 
 const raw = fs.readFileSync(new URL('../../../inkwave-public/src/net/netmatch.js', import.meta.url), 'utf8');

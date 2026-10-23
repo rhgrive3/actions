@@ -1,9 +1,9 @@
 # Complete INKWAVE PR integration, 2026-10-23
 
-Extends integration #1843 to all 29 PRs present when this request began,
-plus newly opened #1849, for 30 PRs total.
-The original 23 PRs and all five subsequent heads are ancestors, preserving
-original commits and historical evidence. No source branch is deleted.
+Integrates the fixed scope of 32 PRs through #1851 into #1843. All selected
+source tips are preserved as ancestors; no source branch is deleted. The earlier
+30-PR and subsequent-batch sections below record intermediate evidence, not
+separate merge requests. The final acceptance target is one aggregate head.
 
 ## Reconciliation
 
@@ -314,3 +314,46 @@ the 29-PR runtime; it is not relabelled as acceptance of these new lifecycle
 changes. The new 30-PR production inputs still have exactly the same selected
 thirteen paint and sixteen pose leaves, so their existing source-epoch pins
 remain unchanged. Full final-head hosted verification remains required.
+
+
+## Final fixed 32-PR acceptance
+
+The previous 30-PR hosted run exposed duplicate imports in the two network
+handoff/match-boundary test modules. Remove only the duplicate declarations;
+all 819 source network regressions then pass without skips. The active browser
+job also lost its hosted runner to a shutdown signal, rather than an assertion
+failure. Both require fresh hosted acceptance on the final aggregate head.
+
+The final aggregate comparison route now explicitly selects the immutable
+26a4db41-to-c9218d19 full source pair for both admission and preparation. Keep
+the separate 83403aaa-to-c9218d19 post-30 pair for its separately declared route.
+No historical fixture, native threshold, shard count or comparison gate changes.
+
+Local final-runtime checks: standard 117 Node and 13 Python tests; 819 source
+network tests; 233 emitted codec/ranked/session/catalogue/modal tests; production
+build and budget; 612 changed JavaScript modules parsed without syntax errors.
+Native wall acceptance passes on production content
+caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100.
+
+The frozen e0b266ed benchmark driver completed A/A/B, 120 frames at 60 Hz,
+high quality, on Range, Tidewater and Scorch. All three return
+`exact-recorded-state-parity`, including finite gameplay digests, measured draw
+and allocation deltas and live scene counters. Both reference runs use the
+pre-CPU runtime efeae82f; B uses the final composed runtime from 8e8d1647.
+The five harness hashes are identical across the three trials. This does not
+exercise the later additive thread-CPU observer and does not establish speed
+or FPS improvement: B is slower on Range/Tidewater and the shared host has
+large outliers, including 11–19 second reference frames on Scorch. Preserve
+these adverse timings and the A/A noise rather than claim a performance win.
+Raw results: `.cpu-window-a/result.json`, fixed-driver `.cpu-window-a2/result.json`
+and `.cpu-window-b/result.json`; comparison receipt:
+`/workspace/scratch/actions-final-cpu-comparison.json`.
+
+Final published-head hosted checks remain mandatory before merge. Native game
+acceptance and the current-driver 30-frame smoke are recorded separately once
+complete; the historical native comparisons above are not relabelled as final.
+
+Last pre-publication refresh includes #1848 c97ac7bd as a merge parent. Keep
+independent sender/receiver clock origins and exact packet spacing; also keep
+its added absolute timestamp, admission and monotonic-playback assertions.
+Only the test fixture and additive behavior record change.
