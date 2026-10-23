@@ -15,6 +15,18 @@ const OBJECTIVE_FORM_BONES = ['spine', 'chest', 'neck', 'head', 'clavL', 'clavR'
 const BONES = ['spine', 'chest', 'neck', 'clavL', 'clavR', 'uArmL', 'uArmR', 'fArmL', 'fArmR', 'handL', 'handR'];
 const smooth = x => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 
+// The other great-circle route to the same quaternion. Only a spawn-return
+// wrist uses it, when its midpoint raises the drum instead of sweeping it
+// through the floor. Ordinary handoffs and native attack/grip targets keep
+// their existing shortest-path interpolation.
+function spawnReturnArc(out, from, weight) {
+  const dot = out.dot(from), sign = dot > 0 ? -1 : 1;
+  const angle = Math.acos(-Math.min(1, Math.abs(dot))), sine = Math.sin(angle);
+  if (Math.abs(sine) < 1e-6) return out.slerp(from, weight);
+  const a = Math.sin((1-weight)*angle)/sine, b = sign*Math.sin(weight*angle)/sine;
+  return out.set(out.x*a+from.x*b, out.y*a+from.y*b, out.z*a+from.z*b, out.w*a+from.w*b).normalize();
+}
+
 function record(ch) { return ch?.constructor?.prototype?.[INSTALLED]; }
 /** Read-only view for regressions: null before the first sourced frame. */
 export function weaponHandoffSnapshot(ch) {
@@ -159,6 +171,19 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
       for (let i = 0; i < BONES.length; i++) st.from[i].copy(st.prev[i]);
       st.t = 0; st.d = landed ? HANDOFF_FADE : owner === 'native' ? HANDOFF_RAISE : HANDOFF_FADE;
       st.spawnLanding = landed;
+      st.spawnLongHand = false;
+      if (landed && ch.weapon.drum) {
+        // Choose once, with the already solved hand and existing scratch.
+        // This changes a display arc, never a native IK/grip endpoint.
+        const hand = ch.bones.handR, from = st.from[BONES.length-1];
+        ch._kidXform(hand, v3, q3); ch._kidXform(ch.weapon.drum, v4, q4);
+        v5.subVectors(v4, v3).applyQuaternion(q3.invert());
+        ch._kidXform(hand.parent, v3, q3);
+        q4.copy(hand.quaternion).slerp(from, .5);
+        spawnReturnArc(q5.copy(hand.quaternion), from, .5);
+        const low = v4.copy(v5).applyQuaternion(q4).applyQuaternion(q3).y;
+        st.spawnLongHand = v4.copy(v5).applyQuaternion(q5).applyQuaternion(q3).y > low;
+      }
     }
     // The native ready/attack pose is already evaluated. Only its idle display
     // handoff fades; a fresh/held attack, jump or other action owns this frame.
@@ -172,7 +197,8 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
           st.raw[i].copy(st.bones[i].quaternion);
           // Spawn landing keeps native torso/neck motion; reuse only the
           // existing arm display fade and support refit, with no new solver.
-          if (!st.spawnLanding || i >= 3) st.bones[i].quaternion.slerp(st.from[i], st.w);
+          if (st.spawnLanding && st.spawnLongHand && i === BONES.length-1) spawnReturnArc(st.bones[i].quaternion, st.from[i], st.w);
+          else if (!st.spawnLanding || i >= 3) st.bones[i].quaternion.slerp(st.from[i], st.w);
         }
         st.faded = true;
         const err = ch.ikErr[0];

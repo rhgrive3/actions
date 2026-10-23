@@ -1,0 +1,55 @@
+{
+  "status": "pass",
+  "sourceTests": {
+    "pass": 17,
+    "fail": 0
+  },
+  "normalEmittedTests": {
+    "pass": 17,
+    "fail": 0
+  },
+  "existingWeaponHoldTests": {
+    "pass": 13,
+    "fail": 0
+  },
+  "matchedNormalBrowserPoints": 15,
+  "returnFrameRange": [
+    61,
+    74
+  ],
+  "firstReturnDegrees": 6.04058601189892,
+  "minVisibleFloorClearance": 0.1388399166803918,
+  "peaks": {
+    "angleDegrees": {
+      "before": 174.881224764038,
+      "after": 21.53003080266302
+    },
+    "pivotDistance": {
+      "before": 0.2531888387615761,
+      "after": 0.09348405996288281
+    },
+    "projectedWidthDelta": {
+      "before": 53.14461815771125,
+      "after": 15.06100010957212
+    },
+    "projectedHeightDelta": {
+      "before": 217.5321613456934,
+      "after": 66.00364342278293
+    }
+  },
+  "airborneReady": 0,
+  "noInput": {
+    "shots": 0,
+    "paintCalls": 0,
+    "turf": 0,
+    "ink": 100
+  },
+  "staticMenuMain7eBytesPreserved": true,
+  "prior708RuntimePreserved": true,
+  "realTransportClaim": false,
+  "displayFPSClaim": false,
+  "retailOrFullVisualAcceptanceClaim": false,
+  "PRMainUpdated": false,
+  "PNGRemoteBytesRead": "not retried: previous direct GitHub API proxy 403; official tree identities/text readback separate",
+  "CI": "not run on hosted branch yet; final exact ref check follows save"
+}

@@ -36,12 +36,19 @@ test('native respawn ready handoff starts immediately without a one-tick half-tu
     const first = rotation(f, c), degrees = before.angleTo(first)*180/Math.PI;
     assert(degrees > .01, 'display starts moving immediately, rather than holding the old carry');
     assert(degrees < 45*60/hz, `${hz}Hz first ready step ${degrees} degrees`);
+    // Measure actual visible vertices, as in the browser. A transformed box
+    // corner can lie below the floor even when a round drum clears it.
+    const vertex=new f.THREE.Vector3();let minY;
+    const sample=mesh=>{const p=mesh.geometry?.attributes?.position;if(p)for(let i=0;i<p.count;i++){mesh.getVertexPosition(i,vertex).applyMatrix4(mesh.matrixWorld);minY=Math.min(minY,vertex.y);}};
+    const clearFloor=()=>{minY=Infinity;c.weapon.drum.traverseVisible(sample);assert(minY>=a.pos.y-1e-6,`${hz}Hz actual displayed drum vertices must clear supported floor: ${minY}`);};
+    clearFloor();
     assert(f.weaponHandoffSnapshot(c).weight > .1, 'existing bounded display fade is active');
     assertReady(f, c); // canonical ready/action is immediate, display only is faded
     assert.equal(f.spawnMotionAllowsAction(c, false), true);
     assert(c.tr[f.CHARACTER_TIMERS.T_SPAWN] < 1.4);
     for (let i=0; i<Math.ceil(f.HANDOFF_FADE/dt)+2; i++) {
       f.tick(a, dt);assertReady(f, c);
+      clearFloor();
       assert.equal(a.ink,100);assert.equal(a.stats.turf,0);assert.equal(f.G.projectiles.list.length,0);
       assert.equal(a.weaponRunner.rolling,false);assert.equal(a.weaponRunner.flick,-1);
     }
