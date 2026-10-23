@@ -1,0 +1,60 @@
+(node:1660) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native no-attack respawn landing releases spawn weapon pose while its timer remains young (19858.118965ms)
+✖ held attack before death, release during spawn, and launch tap never paints after landing (3254.403963ms)
+✖ a fresh attack after native landing has its real flick pose and weapon-specific release delay (3048.163492ms)
+✔ release and fresh launch press intentionally held through landing is admitted; stale holds stay blocked (3027.815321ms)
+✔ other weapon families leave runner/animation idle, fresh input still shoots or charges (17357.067016ms)
+✔ ordinary jump, superjump, weapon change, repeated death/reset and dispose do not invent spawn action (3419.197488ms)
+✖ remote spawn event and sampled landing use the same ordinary ready pose without proxy paint (3378.619604ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 4
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 53900.305312
+
+✖ failing tests:
+
+test at ../scratch/respawn-weapon-20261023/regression-candidate.test.mjs:41:1
+✖ held attack before death, release during spawn, and launch tap never paints after landing (3254.403963ms)
+  AssertionError [ERR_ASSERTION]: ANC[0]: -0.07999253273010254 expected -0.08
+      at ready (file:///workspace/scratch/respawn-weapon-20261023/regression-candidate.test.mjs:30:30)
+      at TestContext.<anonymous> (file:///workspace/scratch/respawn-weapon-20261023/regression-candidate.test.mjs:46:107)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at ../scratch/respawn-weapon-20261023/regression-candidate.test.mjs:48:1
+✖ a fresh attack after native landing has its real flick pose and weapon-specific release delay (3048.163492ms)
+  AssertionError [ERR_ASSERTION]: native attack pose interrupts ready stance
+      at TestContext.<anonymous> (file:///workspace/scratch/respawn-weapon-20261023/regression-candidate.test.mjs:54:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at ../scratch/respawn-weapon-20261023/regression-candidate.test.mjs:94:1
+✖ remote spawn event and sampled landing use the same ordinary ready pose without proxy paint (3378.619604ms)
+  TypeError: Cannot read properties of undefined (reading 'get')
+      at NetMatch._play (/workspace/actions/inkwave-public/src/net/netmatch.js:1273:52)
+      at NetMatch._play (/workspace/actions/patches/splatoon3/runtime/weapon-detail-motion.mjs:229:84)
+      at NetMatch._play (/workspace/actions/patches/splatoon3/runtime/kit-support.mjs:355:34)
+      at NetMatch._play (/workspace/actions/patches/splatoon3/runtime/catalogue.mjs:126:38)
+      at NetMatch._play (/workspace/actions/patches/splatoon3/runtime/native-sprinkler-damage.mjs:86:35)
+      at TestContext.<anonymous> (file:///workspace/scratch/respawn-weapon-20261023/regression-candidate.test.mjs:98:29)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)

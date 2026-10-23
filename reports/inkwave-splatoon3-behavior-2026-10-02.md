@@ -6136,3 +6136,11 @@ main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、Splatoon 3 Ver.11
 参照対象は公開版の全パッチ合成後。S3 Ver.11.3.0に関する既存の未確認値は変更せず、ソースモーション（既存のWii U由来パックを含む）の中間計算だけを削減した。BodyBalanceのgain対象と祖先以外の中間world回転を省き、最終全ボーンFK・足接地・IK・銃口・移動・射撃・塗り・当たり判定・描画設定は維持する。2種の実ソースキャラクター、シューター/チャージャー/ローラーの30/60/120Hz、1260フレームで最終local/world姿勢・skin行列・接地・銃口が一致し、通常minify配信物でも同じ比較が成功。これはロジック/配信物検証であり、Nintendo実機やiPad SafariのFPS比較ではない。
 
 Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテゴリ。修正対象のBodyBalanceはその一部にすぎず、iPad上での支配要因の確定や重いフレームの完全解消とは扱わない。#1671/#1757の実機受入はOpenのまま。条件・既存PRとの重複確認・再現コマンド・証跡は[調査記録](inkwave-composed-cpu-20261023/README.md)。
+
+### 2026-10-23: 復活着地直後のローラー構えと入力再受付
+
+- 対象: pinned Splatoon 3 parameter epoch 11.3.0、標準ローラー、既存avatar/gear、死亡→通常カウントダウン→Squid Spawn→発射入力を離す→着地。復活直後の押し直し・意図した長押し、他武器、native jump/superjump、remote表示も分けて検査する。
+- 再現差分: 無入力のnative runnerはrolling=false、flick=-1、発射0・塗り0だが、`roller.mjs::_poseWeapon`と`roller-detail-motion.mjs::interrupted`が終了済みspawn表示の`T_SPAWN < 1.4`だけで通常構え／有効な振り表示を遮断していた。死亡前のwRoll表示ブレンドもlife resetを越え、spawn中の実入力解除はrespawnRearmへ届かなかった。
+- 変更: `spawn-pose-motion.mjs::spawnMotionAllowsAction`が既存表示ownerの終了を読む。無効／未対応の表示は旧native timer判定を保持する。Actor.resetではwRollだけを初期化し、respawn-lifecycleは照準／飛行中の実物理入力解除を既存rearmへ反映する。native武器のwindup／cooldown／emerge gate、弾／塗り、移動、無敵、network、ローラー回復曲線／grip／接地IKは変更しない。
+- 本家の根拠・限界: [任天堂公式紹介](https://www.nintendo.com/jp/switch/av5ja/index.html)および既存の[spawn較正記録](../patches/splatoon3/reference/spawn-pose-calibration.md)を参照。本変更は既存INKWAVEの通常構えへの復帰修正で、新たな本家joint曲線や着地フレーム値を作らない。同条件の本家実機映像／精密な軌道一致は未確認のまま。
+- 検証・実際の本番build identity・通常native前後11地点・原本と中間失敗は[候補レポート](respawn-weapon-state-20261023/integration/README.md)を参照。fixed simulation／実Chromium／retail実機／公開exact HEAD CIの結果を分けて記録する。

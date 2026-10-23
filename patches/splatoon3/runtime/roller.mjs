@@ -1,3 +1,4 @@
+import { spawnMotionAllowsAction } from './spawn-pose-motion.mjs';
 import { specialMotionAllowsAction } from './action-admission.mjs';
 import { ROLLER_DRUM } from './roller-model.mjs';
 import { HEAVY_ROLLER_SWING, STANDARD_ROLLER_SWING, heavyRollerSwingEnd } from './roller-heavy-swing.mjs';
@@ -1196,7 +1197,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   Character.prototype._poseWeapon = function (dt, s) {
     const available = this.weaponKind === 'roller' && this.kidForm && !this.dance && this.wSub <= .01 &&
       (!T || (specialMotionAllowsAction(this,this.tr[T.T_LEAP] >= 1.9 && this.tr[T.T_SLAM] >= 1.4) &&
-        this.tr[T.T_DODGE] >= this.dodgeDur && this.tr[T.T_SPAWN] >= 1.4));
+        this.tr[T.T_DODGE] >= this.dodgeDur && spawnMotionAllowsAction(this, this.tr[T.T_SPAWN] >= 1.4)));
     // #263: once native contact/stripe authority is admitted, use the existing
     // settled ground-contact target, not another raised-carry blend. Keep wRoll
     // itself unchanged: gameplay cleanup and drum-spin blending read that clock.

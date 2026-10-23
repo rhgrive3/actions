@@ -1,0 +1,18 @@
+(node:2554) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native no-attack respawn landing releases spawn weapon pose while its timer remains young (14404.200279ms)
+✔ held attack before death, release during spawn, and launch tap never paints after landing (1522.345271ms)
+✔ a fresh attack after native landing has its real flick pose and weapon-specific release delay (1231.293356ms)
+✔ release and fresh launch press intentionally held through landing is admitted; stale holds stay blocked (1194.789744ms)
+✔ other weapon families leave runner/animation idle, fresh input still shoots or charges (8137.186056ms)
+✔ ordinary jump, superjump, weapon change, repeated death/reset and dispose do not invent spawn action (1421.71741ms)
+✔ remote spawn event and sampled landing use the same ordinary ready pose without proxy paint (910.414449ms)
+✔ spawn rearm observes physical release through filtered intent; disabled presentation retains its legacy gate (2228.667192ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 31909.370433

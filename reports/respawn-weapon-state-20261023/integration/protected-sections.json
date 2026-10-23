@@ -1,0 +1,18 @@
+{
+  "base": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "file": "patches/splatoon3/runtime/roller.mjs",
+  "protectedSections": [
+    {
+      "name": "runner-and-curves",
+      "unchanged": true,
+      "sha256": "91de06b13de33ce6b35b9f1b95d6446f8353200e7eea97f79ba35f996d331d48",
+      "bytes": 69101
+    },
+    {
+      "name": "weapon-grip-and-flick",
+      "unchanged": true,
+      "sha256": "50cae42006314cbfcc11c5ddf4b088beb0f19e0d9ddbd08d1fc4e5ad3818793b",
+      "bytes": 2874
+    }
+  ]
+}

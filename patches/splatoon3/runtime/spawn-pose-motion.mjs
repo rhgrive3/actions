@@ -124,6 +124,17 @@ export function installSpawnPoseMotion({ Character, Actor, CHARACTER_CHANNELS: c
   if (Actor && !Object.hasOwn(Actor.prototype, INSTALLED)) {
     const reset = Actor.prototype.reset;
     Object.defineProperty(Actor.prototype, INSTALLED, { value: true });
-    Actor.prototype.reset = function (...args) { if (this.character) clear(this.character, 'reset'); return reset.apply(this, args); };
+    Actor.prototype.reset = function (...args) {
+      if (this.character) { clear(this.character, 'reset'); this.character.wRoll = 0; }
+      return reset.apply(this, args);
+    };
   }
+}
+
+// A retired spawn pose yields immediately; its native timer still measures
+// elapsed time. Disabled/unsupported presentations keep the native caller gate.
+export function spawnMotionAllowsAction(ch, nativeEligible) {
+  const s = hooks(ch)?.states.get(ch);
+  if (!s || ch.s3SpawnPoseMotionEnabled === false || ch.s3HitSpawnMotionEnabled === false) return nativeEligible;
+  return s.phase === 'off';
 }

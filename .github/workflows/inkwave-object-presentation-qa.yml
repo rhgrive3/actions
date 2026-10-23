@@ -19,6 +19,13 @@ on:
       - 'patches/splatoon3/tests/ranked-rainmaker-form-owner.test.mjs'
       - 'tools/clam-production-qa/**'
       - 'patches/splatoon3/runtime/squid-spawn-presentation.mjs'
+      - 'patches/splatoon3/runtime/respawn-lifecycle.mjs'
+      - 'patches/splatoon3/runtime/spawn-pose-motion.mjs'
+      - 'patches/splatoon3/runtime/roller.mjs'
+      - 'patches/splatoon3/runtime/roller-detail-motion.mjs'
+      - 'patches/splatoon3/tests/respawn-weapon-state.test.mjs'
+      - 'scripts/check-inkwave-respawn-weapon-browser.mjs'
+      - 'scripts/compare-inkwave-respawn-weapon-browser.mjs'
       - 'patches/splatoon3/runtime/weapon-handoff-motion.mjs'
       - 'patches/splatoon3/runtime/ranked/rainmaker-*.mjs'
       - 'patches/splatoon3/runtime/ranked/world.mjs'
@@ -68,6 +75,8 @@ jobs:
         run: node --experimental-vm-modules --test tools/rainmaker-origin-production-qa/contract.test.mjs patches/splatoon3/tests/ranked-rainmaker-shot-origin.test.mjs patches/splatoon3/tests/ranked-rainmaker-peer-compat.qa.mjs
       - name: Verify spawner geometry and unchanged lifecycle
         run: node --experimental-vm-modules --test patches/splatoon3/tests/spawner-geometry-fidelity.test.mjs patches/splatoon3/tests/owner-report-2026-10-18.test.mjs patches/splatoon3/tests/respawn-lifecycle.test.mjs patches/splatoon3/tests/remote-respawn.test.mjs patches/splatoon3/tests/issue-879-spawn-pose.test.mjs
+      - name: Verify respawn landing weapon state
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/respawn-weapon-state.test.mjs
       - name: Verify Clam Blitz presentation and rules
         run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-clam-presentation.test.mjs patches/splatoon3/tests/ranked-clam-events.test.mjs patches/splatoon3/tests/ranked-clam-muzzle.test.mjs patches/splatoon3/tests/ranked-clams.test.mjs patches/splatoon3/tests/ranked-power-clam-model.test.mjs patches/splatoon3/tests/bomb-motion.test.mjs patches/splatoon3/tests/ranked-clam-swim-boundary.test.mjs patches/splatoon3/tests/ranked-clam-transient-lifecycle.test.mjs patches/splatoon3/tests/ranked-clam-visible-dive.test.mjs
       - name: Build production candidate once for all object comparisons
@@ -79,6 +88,10 @@ jobs:
         env:
           INKWAVE_BUILT_SITE: _site
         run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-rainmaker-motion-actor.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-support.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-history.test.mjs patches/splatoon3/tests/ranked-rainmaker-air-full-jump.test.mjs patches/splatoon3/tests/ranked-rainmaker-form-owner.test.mjs patches/splatoon3/tests/ranked-clam-presentation.test.mjs patches/splatoon3/tests/ranked-clam-muzzle.test.mjs patches/splatoon3/tests/ranked-clam-swim-boundary.test.mjs patches/splatoon3/tests/ranked-clam-transient-lifecycle.test.mjs patches/splatoon3/tests/ranked-clam-visible-dive.test.mjs
+      - name: Verify respawn landing against the exact emitted site
+        env:
+          INKWAVE_BUILT_SITE: _site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/respawn-weapon-state.test.mjs
       - name: Verify exact emitted Rainmaker origin and native peer contract
         env:
           INKWAVE_BUILT_SITE: _site
