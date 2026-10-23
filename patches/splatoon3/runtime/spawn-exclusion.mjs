@@ -11,7 +11,7 @@ export function constrainSpawnPosition(actor, level, player, from = null, physic
   if (!pad || !(radius > 0) || !Number.isFinite(radius)) return false;
   const p = actor.pos, bottom = pad.y - 1, r = radius + player.radius + SKIN;
   if (![p.x,p.y,p.z,pad.x,pad.y,pad.z,r].every(Number.isFinite)) return false;
-  const endX = p.x, endZ = p.z;
+  const endX = p.x, endY = p.y, endZ = p.z;
   let nx, nz, x, z;
   // Intersect the movement segment with the horizontal circle only during
   // the part above its lower height. This catches an entire high-speed crossing
@@ -55,23 +55,55 @@ export function constrainSpawnPosition(actor, level, player, from = null, physic
     const n = Math.hypot(fx,fz); nx = fx/n; nz = fz/n;
     x = pad.x+nx*r; z = pad.z+nz*r;
   }
-  const fits = () => !physics?.bodyFits || physics.bodyFits(p, player.radius,
+  // Use precisely the terrain capsule already used by composed Actor._resolve
+  // (#525); PLAYER.radius remains the unchanged spawn-exclusion distance.
+  const terrainRadius=(actor.form==='squid' ? player.s3SwimTerrainRadiusRaw : player.s3HumanoidTerrainRadiusRaw) * (player.s3TerrainDistanceScale ?? 1);
+  const fits = () => !physics?.bodyFits || physics.bodyFits(p, Number.isFinite(terrainRadius) ? terrainRadius : player.radius,
     actor.form === 'squid' ? player.squidBodyLift : player.stepUp,
     actor.form === 'squid' ? player.squidHeight : player.height, actor.form === 'squid');
   p.x=x; p.z=z;
   if (!fits()) {
-    // A correction must not tunnel into ordinary map collision. A swept actor
-    // has a valid previous position; recovery tries at most eight ring points.
+    // A previous X/Z with the newly resolved Y is not necessarily clear (e.g.
+    // falling beside a raised box). Validate that complete candidate first.
+    let found=false;
     if (from && from.y > bottom && Math.hypot(from.x-pad.x,from.z-pad.z) >= r-EPS) {
-      p.x=from.x; p.z=from.z;
-    } else {
-      let found=false;
+      const recoverVertical = () => {
+        p.y=from.y;
+        if (fits()) {
+          // Retain the greatest tested vertical progress from the clear full
+          // origin. Eight canonical capsule tests bound this rare fallback;
+          // do not freeze at an earlier airborne Y or invent a floor height.
+          let clear=from.y,blocked=endY;
+          for (let i=0;i<8;i++) {
+            p.y=(clear+blocked)*.5;
+            if (fits()) clear=p.y; else blocked=p.y;
+          }
+          p.y=clear;
+          // Only the vertical component rejected by this world contact stops.
+          // Ordinary falling and launching never enter this fallback.
+          if (actor.vel.y*(endY-p.y)>0) actor.vel.y=0;
+          return true;
+        }
+        return false;
+      };
+      // Prefer legal tangent progress. Restoring X/Z before checking the new
+      // point at a safe height would pin an actor trying to leave along a ledge.
+      found=recoverVertical();
+      if (!found) {
+        p.x=from.x;p.y=endY;p.z=from.z;
+        found=fits() || recoverVertical();
+      }
+    }
+    if (!found) {
+      p.y=endY;
       for (let i=1;i<=8;i++) {
         const angle=i*Math.PI/4, cx=nx*Math.cos(angle)-nz*Math.sin(angle), cz=nx*Math.sin(angle)+nz*Math.cos(angle);
         p.x=pad.x+cx*r; p.z=pad.z+cz*r;
         if (fits()) { nx=cx; nz=cz; found=true; break; }
       }
-      if (!found) { p.x=endX; p.z=endZ; return false; }
+      // No tested outside point fits: keep the native collision owner's full
+      // endpoint, never replace it with an unvalidated mixed-height position.
+      if (!found) { p.x=endX; p.y=endY; p.z=endZ; return false; }
     }
   }
   const vn=actor.vel.x*nx+actor.vel.z*nz;

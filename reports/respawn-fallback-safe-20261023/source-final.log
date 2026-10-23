@@ -1,0 +1,49 @@
+(node:4958) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ team 0: natural zero-speed fall stays clear through real update and finish (471.901155ms)
+✔ team 1: natural zero-speed fall stays clear through real update and finish (159.573449ms)
+✔ ordinary run/terminal-fall shortened case is capsule-clear at dt=0.016666666666666666 (13.74463ms)
+✔ ordinary run/terminal-fall shortened case is capsule-clear at dt=0.03333333333333333 (10.677483ms)
+✔ ordinary run/terminal-fall shortened case is capsule-clear at dt=0.041666666666666664 (13.168286ms)
+✔ team 0: native squid terrain capsule also stays clear during the natural fall (69.411736ms)
+✔ team 1: native squid terrain capsule also stays clear during the natural fall (54.932034ms)
+✔ reported .1-second raised-box reproduction restores a complete clear position (27.816463ms)
+✔ no-exclusion negative control and its ordinary movement segment are clear (5.026406ms)
+✔ free vertical fall and upward launch outside the conflicting edge retain native Y/velocity (21.039534ms)
+✔ horizontal spawn contact above the ledge preserves ordinary vertical fall and launch (22.215042ms)
+✔ when no outside candidate fits, retain the clear native endpoint with bounded stable work (10.881368ms)
+(node:4959) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ team 0 normal walk/jump/bot cannot enter at dt=0.03333333333333333 (75.399987ms)
+✔ team 0 normal walk/jump/bot cannot enter at dt=0.016666666666666666 (54.649013ms)
+✔ team 0 normal walk/jump/bot cannot enter at dt=0.008333333333333333 (345.306165ms)
+✔ team 0 normal walk/jump/bot cannot enter at dt=0.1 (10.508433ms)
+✔ team 1 normal walk/jump/bot cannot enter at dt=0.03333333333333333 (24.267135ms)
+✔ team 1 normal walk/jump/bot cannot enter at dt=0.016666666666666666 (44.030505ms)
+✔ team 1 normal walk/jump/bot cannot enter at dt=0.008333333333333333 (76.486518ms)
+✔ team 1 normal walk/jump/bot cannot enter at dt=0.1 (10.493957ms)
+✔ team 0 allied centre/respawn/exit and reset stay free (49.158188ms)
+✔ team 1 allied centre/respawn/exit and reset stay free (35.295569ms)
+✔ team 0 high-speed complete crossing and diagonal tangency (23.915312ms)
+✔ team 1 high-speed complete crossing and diagonal tangency (20.510095ms)
+✔ centre recovery is finite; disabled/absent radii and below-pad routes are untouched (5.700724ms)
+✔ temporary protection/damage/resources and movement away from both pads are unchanged (2.960468ms)
+✔ high jump and rising through the lower height cannot bypass the volume (3.845146ms)
+✔ a correction never replaces ordinary wall collision with an overlapping capsule (4.013792ms)
+✔ real NetMatch remote application keeps interpolation outside without changing snapshot/correction (8.021375ms)
+✔ tidewater team 0: real stage collision and opposing pad volume agree (92.5851ms)
+✔ tidewater team 1: real stage collision and opposing pad volume agree (56.756057ms)
+✔ kelpline team 0: real stage collision and opposing pad volume agree (55.981195ms)
+✔ kelpline team 1: real stage collision and opposing pad volume agree (43.957025ms)
+✔ halyard team 0: real stage collision and opposing pad volume agree (48.982023ms)
+✔ halyard team 1: real stage collision and opposing pad volume agree (48.87866ms)
+✔ cargo team 0: real stage collision and opposing pad volume agree (66.364271ms)
+✔ cargo team 1: real stage collision and opposing pad volume agree (56.388016ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 37
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4330.759977
