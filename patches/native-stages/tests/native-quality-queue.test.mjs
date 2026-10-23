@@ -1,4 +1,5 @@
 import test from 'node:test';
+import * as nativeGpuBudget from '../runtime/native-gpu-budget.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -18,7 +19,7 @@ async function fixture({initial='high',load,roleCap=512}={}){
  const world={level:{data,layout:{id:'stage'}},metrics:{},textureProfile:{data,quality:initial,caps:caps(initial)},display:{updateTextures(textures,quality){counts.handoffs++;world.received=textures;world.receivedQuality=quality;}}};
  const game={nativeWorld:world,_nativeAbort:parent},deps={G,q:{paintAtlas:2048,shadowSize:2048,particles:.7},updatePaintQuality(){counts.paint++;},updateEnvironmentShadowQuality(){counts.shadows++;},updateFXQuality(){counts.fx++;}};
  const context=vm.createContext({console:{warn(){}},AbortController,Promise,navigator:{deviceMemory:4}});
- const values={three:{LinearFilter:1},'./native-texture-budget.mjs':{nativeStageTextureCaps:(_m,q)=>caps(q)},'./native-load.mjs':{loadNativeTextures:async(...args)=>{
+ const values={three:{LinearFilter:1},'./native-gpu-budget.mjs':{...nativeGpuBudget},'./native-texture-budget.mjs':{nativeStageTextureCaps:(_m,q)=>caps(q)},'./native-load.mjs':{loadNativeTextures:async(...args)=>{
   counts.loads++;if(load)return load(args,makeTextures);
   return new Promise((resolve,reject)=>pending.push({signal:args[4],resolve:()=>resolve(makeTextures()),reject}));
  }}};

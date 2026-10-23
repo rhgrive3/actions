@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import * as nativeGpuBudget from '../../patches/native-stages/runtime/native-gpu-budget.mjs';
 
 const source=fs.readFileSync(new URL('../../patches/native-stages/runtime/native-world.mjs',import.meta.url),'utf8')
   .replace(/^import .*$/gm,'').replace(/\bexport (?=(?:async )?function )/g,'') +
@@ -47,6 +48,7 @@ function fixture(fail) {
     loadNativeData:async()=>({manifest:{geometry:{vertices:3,triangles:1}}}),
     loadNativeTextures:async()=>new Map(),
     nativeStageTextureCaps:()=>({maxDimension:1024}),
+    ...nativeGpuBudget,
     nativeDisplay:()=>{const group={name:'new'};return{group,dispose(){counters.newDisplay++;scene.remove(group)}}},
     nativeInkGeometry:()=>({dispose(){}}),nativeInkMaterial:()=>({dispose(){}}),
     sourceLoadingStatus:()=>({update(){},close(){}}),
