@@ -99,8 +99,11 @@ test('the fully installed gameplay profile permits a legal near-band Slam into e
  assert.equal(sp.damageMax,f.profile.specials.slam.damageMax);
  assert.equal(sp.damageNearRadius,f.profile.specials.slam.damageNearRadius);
  assert.ok(edge-.2<sp.damageNearRadius,'legal pad-edge origin is inside the installed near band');
+ G.level=new f.Level({bounds:{minX:-60,maxX:60,minZ:-60,maxZ:60},
+  spawnPads:[[-20,0,0],[20,0,0]],spawnBarrier:4.2,half:[],
+  single:[{kind:'box',min:[-60,-.5,-60],max:[60,0,60]}]});
+ G.physics=new f.Physics(G.level);
  for(const team of [0,1]){
-  G.level={spawnPads:[new THREE.Vector3(-20,0,0),new THREE.Vector3(20,0,0)],spawnBarrier:4.2};
   const attacker=f.make(),defender=f.make(),ally=f.make(),pad=G.level.spawnPads[1-team];
   attacker.team=ally.team=team;defender.team=1-team;
   attacker.spawnAt(pad.clone().add(new THREE.Vector3(-edge,0,0)),0);
