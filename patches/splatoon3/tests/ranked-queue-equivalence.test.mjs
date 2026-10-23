@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
 import { RankedEngine } from '../runtime/ranked/engine.mjs';
+import { ClamsRule } from '../runtime/ranked/clams.mjs';
 import { sphereEntry, sphereEntryComponents } from '../runtime/ranked/combat.mjs';
 import { nativePaintGoalIds } from '../../native-stages/runtime/native-bots.mjs';
 const frozen = JSON.parse(fs.readFileSync(new URL('./fixtures/ranked-queue-baseline-c0938a3f.json', import.meta.url)));
@@ -10,20 +11,76 @@ assert.equal(frozen.sourceSha, 'c0938a3f84768474df91713f7b372f9d7f8fe96a');
 const old = path => frozen.files[path];
 const current = path => fs.readFileSync(new URL('../../../' + path, import.meta.url), 'utf8');
 const dataUrl = source => 'data:text/javascript;base64,' + Buffer.from(source).toString('base64');
+// Keep the frozen queue implementation as the reference. Apply only the two
+// intentional support fixes from #1849; comparing against its former airborne
+// grounding bug would reject the fix rather than detect queue regressions.
+const replaceReference = (source, before, after) => {
+ assert.equal(source.split(before).length, 2, 'unique frozen reference anchor');
+ return source.replace(before, after);
+};
+function supportCorrectedReference(source) {
+ source = replaceReference(source,
+  `      clam.grounded = true;
+      const floor = this._floorAt(frame, position[0], position[2], position[1] + 0.25);
+      if (floor !== null) clam.pos[1] = floor;`,
+  `      const floor = this._floorAt(frame, position[0], position[2], position[1] + 0.25);
+      clam.grounded = floor !== null && Math.abs(floor - position[1]) <= 0.25;
+      if (clam.grounded) clam.pos[1] = floor;`);
+ source = replaceReference(source,
+  `    const pos = vec(position);
+    if (typeof frame?.floorAt === 'function') {
+      const floor = this._floorAt(frame, pos[0], pos[2], pos[1] + 0.25);
+      if (floor !== null) pos[1] = floor;
+    }
+    const count = inv.small;`,
+  `    const pos = vec(position);
+    let grounded = true;
+    if (typeof frame?.floorAt === 'function') {
+      const floor = this._floorAt(frame, pos[0], pos[2], pos[1] + 0.25);
+      grounded = floor !== null && Math.abs(floor - pos[1]) <= 0.25;
+      if (grounded) pos[1] = floor;
+    }
+    const count = inv.small;`);
+ return replaceReference(source,
+  `{ grounded: true, expiresIn: CLAM_LIFETIME });\n    }\n    inv.small = 0;`,
+  `{ grounded, expiresIn: CLAM_LIFETIME });\n    }\n    inv.small = 0;`);
+}
 const urls = {};
 for (const name of ['clams', 'tower', 'zones', 'rainmaker', 'engine']) {
  let source = old(`patches/splatoon3/runtime/ranked/${name}.mjs`);
+ if (name === 'clams') source = supportCorrectedReference(source);
  source = source.replace(/from '\.\/(\w+)\.mjs'/g, (_all, dependency) => `from '${urls[dependency]}'`);
  urls[name] = dataUrl(source);
 }
 const { RankedEngine: BaselineEngine } = await import(urls.engine);
+const { ClamsRule: LegacyClamsRule } = await import(dataUrl(old('patches/splatoon3/runtime/ranked/clams.mjs')));
+const { ClamsRule: ReferenceClamsRule } = await import(urls.clams);
+test('the reference changes only the intentional unsupported reflection and inventory drop verdicts', () => {
+ for (const floor of [null, -3, 3]) {
+  const rules = [LegacyClamsRule, ReferenceClamsRule, ClamsRule].map(C => new C(null, { clams: { spawns: [] } }));
+  const frame = { floorAt: () => floor };
+  const clams = rules.map(r => r._newClam('small', null, [0, 3, 0], { grounded: false, bounces: 2, velocity: [2, -1, 0] }));
+  rules.forEach((r, i) => r._reflect(clams[i], [0, 3, 0], frame));
+  assert.equal(clams[0].grounded, true, 'frozen baseline formerly manufactured support');
+  assert.equal(clams[1].grounded, floor === 3);
+  assert.deepEqual(plain(clams[2]), plain(clams[1]));
+  for (const r of rules) {
+   r.state.clams = [];
+   r.state.inventories.holder = { team: 0, small: 3, power: false };
+   r._dropSmallInventory('holder', [0, 3, 0], 0, frame);
+  }
+  assert.ok(rules[0].state.clams.every(c => c.grounded));
+  assert.ok(rules[1].state.clams.every(c => c.grounded === (floor === 3) && c.pos[1] === 3));
+  assert.deepEqual(plain(rules[2].state), plain(rules[1].state));
+ }
+});
 const random = seed => () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
 const plain = value => JSON.parse(JSON.stringify(value));
 const stage = { id: 'queue-equivalence', zones: [{ center: [0,0,0], size: [6,6] }],
  tower: { path: [[0,0,-10],[0,0,0],[0,0,10]], centerIndex: 1, checkpoints: [[{ progress: .5, count: 1.3 }],[{ progress: .5, count: 1.3 }]], speed: 1.2, halfSize: 1.4 },
  rainmaker: { center: [0,0,0], goals: [[0,0,10],[0,0,-10]], checkpoints: [[[0,0,5],[1,0,5]],[[0,0,-5],[-1,0,-5]]], retreatZ: [-8,8] },
  clams: { spawns: [[0,0,0],[1,0,0],[-1,0,0]], goals: [[0,0,10],[0,0,-10]] } };
-for (const mode of ['zones','tower','rainmaker','clams']) test(`baseline complete ${mode} rules preserve each catch-up step, events and detached restore`, () => {
+for (const mode of ['zones','tower','rainmaker','clams']) test(`${mode === 'clams' ? 'support-corrected baseline' : 'baseline'} complete ${mode} rules preserve each catch-up step, events and detached restore`, () => {
  const pair = [new BaselineEngine(mode, stage), new RankedEngine(mode, stage)], r = random(771);
  for (let tick = 0; tick < 600; tick++) {
   const actors = Array.from({ length: 8 }, (_, i) => ({ id: String(i), team: i % 2, slot: i, pos: [Math.sin(tick / 31 + i) * 1.3, 0, Math.sin(tick / 71 + i) * 6], alive: tick % 113 !== i, grounded: tick % 5 !== 0, weight: 'middle', swimming: tick % 11 === 0, onTower: mode === 'tower' && i === Math.floor(tick / 120) % 2 }));

@@ -78,7 +78,7 @@ test('browser installs observation before room startup and never changes existin
   const source = fs.readFileSync(new URL('../check-inkwave-combat-ceiling-browser.mjs', import.meta.url), 'utf8');
   assert(source.indexOf('page.evaluate(installOwnerClockDiagnostic,netmatchURL)') < source.indexOf("report.phase='native-room-start'"));
   assert(source.includes('report.clockReceipts[i].length<96'));
-  assert(source.includes("if(__G.time-start>10)throw Error('Native opening spawn did not settle within 10 game seconds')"));
+  assert(source.includes("if(__G.time-start>10)throw Error('Native opening spawn did not settle within 10 game seconds: '+JSON.stringify("));
   assert(source.includes('if(__ceilingPlacement.spawnReady())return true;'));
 });
 

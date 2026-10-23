@@ -24,7 +24,7 @@ test('hung page has finite budget, while the other peer still provides evidence'
 });
 test('browser keeps original native readiness, timeouts, failure and no diagnostic mutation',()=>{
  const s=fs.readFileSync(new URL('../check-inkwave-combat-ceiling-browser.mjs',import.meta.url),'utf8');
- assert(s.includes("if(__ceilingPlacement.spawnReady())return true;"));assert(s.includes("if(__G.time-start>10)throw Error('Native opening spawn did not settle within 10 game seconds');"));assert(s.includes('},spawnStarts[i],{timeout:180000}'));
+ assert(s.includes("if(__ceilingPlacement.spawnReady())return true;"));assert(s.includes("if(__G.time-start>10)throw Error('Native opening spawn did not settle within 10 game seconds: '+JSON.stringify("));assert(s.includes('},spawnStarts[i],{timeout:180000}'));
  assert(s.indexOf("report.error=String(error.stack||error)")<s.indexOf('report.openingPeers.failure='));assert(s.includes('openingPeers: report.openingPeers||null'));
  assert(!/\.disconnect\(|\.bringToFront\(|Object\.defineProperty|spawn\.phase\s*=/.test(readOpeningPeerDiagnostic.toString()));
 });
