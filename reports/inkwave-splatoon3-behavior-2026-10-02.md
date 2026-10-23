@@ -1,5 +1,9 @@
 # INKWAVE とスプラトゥーン3の挙動比較
 
+## 2026-10-23：投擲の単一フレーム診断（元版1件完了）
+
+前回の8回一括page.evaluateを1frameずつに分け、同じGPU同期頻度・dt・入力・シーン・30秒上限で元版GP0水平60Hzの1件を診断した。Q/Sub3tickを含む91描画が復帰し、終端・撮影まで完了（撮影28.385秒）。遅い呼び出しはstage全体10.602秒に対しGame._frame本体8.7ms、ページCPU profileのサンプル重み付け93.94%がidleだった。待ちの大半は本体外側だが、Node記録/配送・CDP・browser/renderer待ちの内訳と根本原因は未確定。残り18条件を再実行せず、runtime・90trace・180replayは保持。[時刻・profile・画像・制限](inkwave-storm-render-step-2026-10-23.md)。
+
 ## 2026-10-23：投擲の描画timeout診断（元版の新contextで停止）
 
 既存Chromium・同じflags・新contextの元版GP0水平60Hzで、Q/Sub発動3tickを含め描画を有効にして診断した。発射・飛行描画は進んだが、最後の確認tick100/缶54.88m以後のbatchが30秒応答せず、読み取りも5秒応答しなかった。直前10描画のgeometry257/texture31/program140とcompile/link数は一定、監視範囲でcontext-lost・pageerrorは0。複数ケース再利用を必要とせず元版でも起こるため候補固有と扱わず、残り2版・連続描画補完は停止。90trace/180replay/既存画像を保持し、runtime未変更。[停止位置・準備/再利用の切り分け・最小不足](inkwave-storm-capture-diagnostic-2026-10-23.md)。

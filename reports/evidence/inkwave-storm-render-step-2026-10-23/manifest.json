@@ -1,0 +1,26 @@
+{
+  "sourceParent": "aca428f4679fa5b664ab8ca09716211cae6bc306",
+  "artifacts": {
+    "reports/evidence/inkwave-storm-render-step-2026-10-23/before-GP0.png": {
+      "sha256": "6bff2e6beead9030eeb13472ea35f42582df34f13306ef9b6e472f329e5fe9a7",
+      "bytes": 442188
+    },
+    "reports/evidence/inkwave-storm-render-step-2026-10-23/before.cpuprofile": {
+      "sha256": "5d199a9b69bbc67a140cf00ad3c068a9152266a8a866b8432141e4f03d614cb5",
+      "bytes": 249300
+    },
+    "reports/evidence/inkwave-storm-render-step-2026-10-23/browser-function-events.jsonl": {
+      "sha256": "7e1d60e08909b031753c193ac2de7680be3ad47582526e2a2e8d7cd1281af2b9",
+      "bytes": 345374
+    },
+    "reports/evidence/inkwave-storm-render-step-2026-10-23/probe.txt": {
+      "sha256": "275ff4b8593942178d8a679642e53fe18530de619ace78a0fa2ded7767926ad7",
+      "bytes": 12994
+    }
+  },
+  "privateRawHashes": {
+    "diagnostic.json": "f453bf13661c83583bdbf3bcc74f2173adbb67fe564d88105e07f370fea0e1eb",
+    "events.jsonl": "b7e837d345ce33bc508b2e626079537c2fa7fcaa8a68e07b2c5f74f2ff0b74e5",
+    "run.log": "2dd8ea264b742e5cc8bf89df7bd94c2566f60433ca21264e9b28a45f47da7057"
+  }
+}
