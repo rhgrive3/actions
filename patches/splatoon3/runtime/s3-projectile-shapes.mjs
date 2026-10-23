@@ -430,23 +430,29 @@ export function appendS3ShapeBlobs(system, B, shp, inkLook, petals, count, capac
 // One firing-ink burst per shot (one per Brella/Stringer volley), only for a
 // round seen within its first frames, so pooled reuse or a late first draw
 // never replays an old firing.
-function fireInk(R, p, kind, f, G, system) {
+function fireInk(R, p, kind, f, G, system, legacyFx) {
+  p._s3FireInkSeen = true;
   p.s3FireSeed = p.seed;
   if (!(p.age < 4 / 60) || !p.start) return;
-  const time = Number.isFinite(G?.time) ? G.time : 0, last = R.lastFire;
+  const time = Number.isFinite(G?.time) ? G.time : 0;
   // Sourced Brella offsets and Stringer nock margins give one action several
   // start positions. Use its existing native identity, never a time bucket:
   // two independent actions may legitimately share owner and birth timestamp.
-  const volley = kind === 'pellet' ? p.catalog?.volley :
-    kind === 'arrow' && !p.ghost ? p.catalog?.descriptor : null;
-  if (volley) {
-    if (R.fireVolleys.has(volley)) return;
-    R.fireVolleys.add(volley);
-  } else {
-    if (last.owner === p.owner && last.kind === kind && Math.abs(last.t - (time - p.age)) < 0.02 &&
-        Math.hypot(last.x - p.start.x, last.y - p.start.y, last.z - p.start.z) < 0.08) return;
-    last.owner = p.owner; last.kind = kind; last.t = time - p.age;
-    last.x = p.start.x; last.y = p.start.y; last.z = p.start.z;
+  // Same-seed Shooter recovery owns one sheet, never the legacy FX admission
+  // caches: changing those caches could suppress another action's specks/RNG.
+  if (legacyFx) {
+    const last = R.lastFire;
+    const volley = kind === 'pellet' ? p.catalog?.volley :
+      kind === 'arrow' && !p.ghost ? p.catalog?.descriptor : null;
+    if (volley) {
+      if (R.fireVolleys.has(volley)) return;
+      R.fireVolleys.add(volley);
+    } else {
+      if (last.owner === p.owner && last.kind === kind && Math.abs(last.t - (time - p.age)) < 0.02 &&
+          Math.hypot(last.x - p.start.x, last.y - p.start.y, last.z - p.start.z) < 0.08) return;
+      last.owner = p.owner; last.kind = kind; last.t = time - p.age;
+      last.x = p.start.x; last.y = p.start.y; last.z = p.start.z;
+    }
   }
   const cam = G?.camera?.position;
   if (cam && cam.distanceToSquared(p.start) > 1600) return;
@@ -463,7 +469,9 @@ function fireInk(R, p, kind, f, G, system) {
   const burst = R.sheets.add(kind, at, f, p.owner.color, p.seed || 0, t0, follow);
   if (burst) {
     burst.horizontalSweep = splatanaHorizontalSweep(p, kind);
-    R.sheets.specks(G?.fx, burst);
+    // The legacy speck allocator consumes shared RNG. Recover a missed sheet
+    // on same-seed reuse without adding specks or changing native RNG order.
+    if (legacyFx) R.sheets.specks(G?.fx, burst);
   }
 }
 
@@ -477,7 +485,10 @@ export function drawS3Shapes(system, THREE, G) {
     if (!kind || p.delay > 0 || !p.owner?.color) continue;
     const sp = direction(p, f);
     const color = p.owner.color;
-    if (FIRE_INK[kind] && p.s3FireSeed !== p.seed) fireInk(R, p, kind, f, G, system);
+    if (FIRE_INK[kind]) {
+      const legacyFx = p.s3FireSeed !== p.seed;
+      if (legacyFx || kind === 'shot' && !p._s3FireInkSeen) fireInk(R, p, kind, f, G, system, legacyFx);
+    }
     if (kind === 'machine' && p.vis > 0) {
       // the round itself: a spinning twisted membrane, never drawn behind the muzzle
       const travel = p.start ? p.start.distanceTo(p.pos) : MACHINE_DRILL.length;
@@ -589,6 +600,12 @@ export function installS3ProjectileShapes(api) {
   if (!P || Object.hasOwn(P, INSTALLED)) return;
   Object.defineProperty(P, INSTALLED, { value: true });
   const draw = P._draw, clear = P.clear;
+  const fresh = P._new;
+  if (typeof fresh === 'function') P._new = function (...args) {
+    const p = fresh.apply(this, args);
+    p._s3FireInkSeen = false;
+    return p;
+  };
   P._draw = function (...args) {
     for (const p of this.list) p.s3Shape = cachedS3ShapeKind(p);
     const result = draw.apply(this, args);
