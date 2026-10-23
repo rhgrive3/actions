@@ -1173,7 +1173,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       const scale = delta.length();
       if (scale > 1e-4) target.addScaledVector(axis, -.09 * rollBlend / scale);
     }
-    shaftReturn.capture(this, bestQ, d.handR.quat, this.kid);
+    shaftReturn.capture(this, bestQ, d.handR.quat, this.kid, chosenAxis, chosenA);
     orientation.copy(bestQ);
     return solve.call(this, limb, target, pole, orientation, weight, index);
   };

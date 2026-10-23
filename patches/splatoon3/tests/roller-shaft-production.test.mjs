@@ -31,7 +31,7 @@ async function run({old=false,id='roller',hz=60,release=48,repress=false,repeate
   a.intent.fire=held||local<release||repress&&local>=51&&local<53||repressHold&&local>=51;const pressed=a.intent.fire&&!previousFire;previousFire=a.intent.fire;
   a.intent.sub=interrupt==='sub'&&local>=50&&local<53;const subReleased=interrupt==='sub'&&local===53;a.weaponRunner.update(dt,{fire:a.intent.fire,firePressed:pressed,sub:a.intent.sub,subReleased});G.time+=dt;a._finishFrame(dt);G.projectiles.update(dt);c.root.updateMatrixWorld(true);
   const box=new T.Box3().setFromObject(c.weapon.drum),s=c.s3RollerFlick,cat=a.weaponRunner.catalogState;
-  rows.push({tick,local,centre:box.getCenter(new T.Vector3()).toArray(),axis:new T.Vector3(1,0,0).transformDirection(c.weapon.drum.matrixWorld).toArray(),bottom:box.min.y,pose:Array.from(c.P),
+  rows.push({tick,local,centre:box.getCenter(new T.Vector3()).toArray(),axis:new T.Vector3(1,0,0).transformDirection(c.weapon.drum.matrixWorld).toArray(),bottom:box.min.y,pose:Array.from(c.P),floorSearch:{...c._s3RollerFloorSearch},
    fold:c.weapon.fold?.quaternion.toArray()??null,gaps:[nativeRollerGripGap(c,T,'handR',f.CHARACTER_CHANNELS),nativeRollerGripGap(c,T,'handL',f.CHARACTER_CHANNELS)],
    presentation:s?{windup:s.windup,interval:s.interval,elapsed:s.elapsed,shape:s.swingShape??null}:null,
    native:{input:a.intent.fire,subInput:a.intent.sub,subAim:a.weaponRunner.aimingSub,pos:a.pos.toArray(),velocity:a.vel.toArray(),grounded:a.grounded,ink:a.ink,cooldown:a.weaponRunner.cooldown,flick:a.weaponRunner.flick,rolling:a.weaponRunner.rolling,paintVersion:G.paint.version,
@@ -88,4 +88,25 @@ test('repressing into native ground contact abandons carry without worsening the
 test('sub aim and throw interrupt the active visual return while native sub admission stays original',async()=>{
  const b=await run({old:true,interrupt:'sub'}),c=await run({interrupt:'sub'});assert(c.some(r=>r.native.subAim),'real sub aim admitted');assert(c.some(r=>r.native.bombs.length>0),'real bomb born');eq(c.map(r=>r.native),b.map(r=>r.native));
  for(let i=50;i<c.length;i++)eq(c[i],b[i],'sub interrupt original display '+i);eq(c.paintTrace,b.paintTrace);
+});
+
+function motionMetrics(rows,start=48,end=58){
+ const sub=(a,b)=>a.map((v,i)=>v-b[i]),norm=a=>Math.hypot(...a),v=rows.map((r,i)=>i?sub(r.centre,rows[i-1].centre):[0,0,0]),
+  a=v.map((r,i)=>i?sub(r,v[i-1]).map(x=>x*3600):[0,0,0]),j=a.map((r,i)=>i?sub(r,a[i-1]).map(x=>x*60):[0,0,0]);
+ return{step56:norm(v[56]),acceleration57:norm(a[57]),maxAcceleration:Math.max(...a.slice(start,end+1).map(norm)),maxJerk:Math.max(...j.slice(start,end+1).map(norm))};
+}
+test('same-attack repress never recaptures a late return; protect54/55 and deceleration through58',async()=>{
+ const options={release:48,repress:true},before=await run({...options,old:true}),candidate=await run(options);eq(candidate.map(r=>r.native),before.map(r=>r.native));
+ for(let i=51;i<=58;i++)eq(candidate[i],before[i],'same attack remains native after interruption '+i);
+ const b=motionMetrics(before),c=motionMetrics(candidate);assert(c.maxAcceleration<=b.maxAcceleration+1e-9,'48–58 acceleration');assert(c.maxJerk<=b.maxJerk+1e-9,'48–58 finite jerk');
+ assert.equal(c.step56,b.step56);assert.equal(c.acceleration57,b.acceleration57);
+ if(process.env.INKWAVE_SHAFT_REPRESS_TRACE)fs.writeFileSync(process.env.INKWAVE_SHAFT_REPRESS_TRACE,JSON.stringify({options,before,candidate,metrics:{before:b,candidate:c}}));
+});
+
+test('late release with no native floor correction keeps the entire clear native carry',async()=>{
+ const trace=[];for(const release of[49,52,55]){const b=await run({old:true,release}),c=await run({release});
+  assert.equal(b[release].floorSearch.axis,-1);assert.equal(b[release].floorSearch.a,0,'first eligible native sample needs no floor correction');
+  eq(c,b,'clear native carry is never bent '+release);eq(c.paintTrace,b.paintTrace);assert.deepEqual(c.fallbacks,[]);
+  trace.push({release,before:b,candidate:c,metrics:{before:motionMetrics(b),candidate:motionMetrics(c)}});
+ }if(process.env.INKWAVE_SHAFT_LATE_TRACE)fs.writeFileSync(process.env.INKWAVE_SHAFT_LATE_TRACE,JSON.stringify(trace));
 });

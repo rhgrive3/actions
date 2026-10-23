@@ -31,7 +31,7 @@ const denseSaved=read(path.join(root,'dense-constraints.json'));
 const entry=t=>observed.layerEvents.find(e=>e.tick===t&&e.stage==='rollerIKIn'&&e.side==='R'),
  lerp=(a,b,u)=>a.map((x,i)=>x+(b[i]-x)*u),sq=(a,b,u)=>new T.Quaternion().fromArray(a).slerp(new T.Quaternion().fromArray(b),u).toArray(),
  readPath=createVerticalShaftReturn(),owner={},first=entry(48),attack={...first.attack},kid={quaternion:new T.Quaternion().fromArray(first.constraints.kid.q),scale:new T.Vector3().fromArray(first.constraints.kid.scale)},socket=new T.Quaternion().fromArray(first.constraints.handR.q);
-readPath(owner,attack,new T.Quaternion().fromArray(first.quaternion),socket,kid,true);readPath.capture(owner,new T.Quaternion().fromArray(ev(48,'nativeIKIn').quaternion),socket,kid);
+readPath(owner,attack,new T.Quaternion().fromArray(first.quaternion),socket,kid,true);readPath.capture(owner,new T.Quaternion().fromArray(ev(48,'nativeIKIn').quaternion),socket,kid,originalObserved.frames.find(r=>r.frame===48).floorSearch.axis,originalObserved.frames.find(r=>r.frame===48).floorSearch.a);
 let minFloor=Infinity,maxLeft=0,maxRight=0,denseCount=0;
 for(let tick=48;tick<56;tick++)for(let n=0;n<64;n++){const a=entry(tick),b=entry(tick+1),u=n/64,A=a.constraints,B=b.constraints,c={...A,right:{...A.right,origin:lerp(A.right.origin,B.right.origin,u)},left:{...A.left,origin:lerp(A.left.origin,B.left.origin,u)},kid:{position:lerp(A.kid.position,B.kid.position,u),q:sq(A.kid.q,B.kid.q,u),scale:lerp(A.kid.scale,B.kid.scale,u)},shoulderShift:lerp(A.shoulderShift,B.shoulderShift,u)};
  if(A.fold&&B.fold)c.fold={pos:lerp(A.fold.pos,B.fold.pos,u),q:sq(A.fold.q,B.fold.q,u)};

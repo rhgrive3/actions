@@ -23,7 +23,7 @@ const adaptProductionSource = adaptBuildSource;
 // Shaft-return candidate affects unheld nonrolling presentation only; all
 // three fault anchors, historical b34 source and thresholds are unchanged.
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "8a9212454c695e6e1fb3e251b37a28b0f1c807a5bd8bdcc125fa0c75964bd121",
+  "patches/splatoon3/runtime/roller.mjs": "93c42848b8f2c678fd50da8a340f3dd51c9ed51a3811fa99e1ab1dfa56b02a84",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e6e06374bc3a0a2bd6dcceafbbe16b4882b8e8d8f9e6ff39f5aeda3dc12ec64d"
 });
 const headlessPaintRenderer = () => ({
