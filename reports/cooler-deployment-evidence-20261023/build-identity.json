@@ -1,0 +1,62 @@
+{
+  "baseCommit": "a4e81347906c0d60ceef76a69f476261bf8d3f86",
+  "baseTree": "34236683e6776aac9d8b1d4ae0b8a1b31d3f2df2",
+  "patchSha256": "6efd9d0b1cc834075b37dc01bad028d95d7218c58202daaf147f7f1179f9c442",
+  "zeroFuzz": true,
+  "sourceTreeComparison": "Only two requested inputs differ; runtime/main/PR/source branches not updated.",
+  "baseKitGitBlob": "8188e96febea90035abf8be824fec00dfe794bef",
+  "changedInputs": [
+    {
+      "input": "patch/runtime/cooler-deployment-motion.mjs",
+      "before": null,
+      "after": "5ff4d789ba274f09d7ce740ae8212a2e5dee155edd775fe4f81647f8ddf3447b"
+    },
+    {
+      "input": "patch/runtime/kit-support.mjs",
+      "before": "6a99abe41f6e6f0e050a082dee637a8e03a3587b9fa3670745b228c6413b7db7",
+      "after": "a3f5430c99a6e651d4493b0fdedce72e9cb60e33781277e89534637034796a2e"
+    }
+  ],
+  "before": {
+    "revision": "838cfb268cba2b6c4ae3f13918ed0a197bbc0fa453883dfea010c1e9fa02248d",
+    "contentHash": "e1c18a72dc8a4e358944f8a8dec59f0d4e178c2d2da9881c8af2d2946e380ab2",
+    "esbuild": "0.28.2",
+    "optimization": "esbuild-minify",
+    "buildScript": "62d929b83091c6775a865be02c06960a4cc4b2216eb26d5921aa4811787c6d7a",
+    "verifiedInputCount": 1364,
+    "verifiedArtifactCount": 2020,
+    "loadedRuntime": [
+      {
+        "file": "_versions/838cfb268cba2b6c4ae3f13918ed0a197bbc0fa453883dfea010c1e9fa02248d/patches/splatoon3/runtime/kit-support.mjs",
+        "sha256": "764d29e6ee0455ab22512d4f20fb107e8163c5a933f1c1f0b642ad2326d9723f"
+      },
+      {
+        "file": "_versions/838cfb268cba2b6c4ae3f13918ed0a197bbc0fa453883dfea010c1e9fa02248d/src/main.js",
+        "sha256": "c41c4eb22130cd9009ecf26ecafce6bdbf639960412ae6f2b1138c5eb96a85ed"
+      }
+    ]
+  },
+  "after": {
+    "revision": "311d61e11e58ce5840372ea2bc6aa24dc47a1806d6e2781ce29e45b368a6a3fc",
+    "contentHash": "7cebbbf9c91477ba21d6e454cd3eb78697e5b626a4929a40e15a96cbfb62cacf",
+    "esbuild": "0.28.2",
+    "optimization": "esbuild-minify",
+    "buildScript": "62d929b83091c6775a865be02c06960a4cc4b2216eb26d5921aa4811787c6d7a",
+    "verifiedInputCount": 1365,
+    "verifiedArtifactCount": 2022,
+    "loadedRuntime": [
+      {
+        "file": "_versions/311d61e11e58ce5840372ea2bc6aa24dc47a1806d6e2781ce29e45b368a6a3fc/patches/splatoon3/runtime/kit-support.mjs",
+        "sha256": "43ad8ddfa2d8c322f3d761abc9acfab54f304e532d51a1af3905cb376e29f35a"
+      },
+      {
+        "file": "_versions/311d61e11e58ce5840372ea2bc6aa24dc47a1806d6e2781ce29e45b368a6a3fc/patches/splatoon3/runtime/cooler-deployment-motion.mjs",
+        "sha256": "366a3efbde1933e9db8bad03a4833dee64cf32479825cdfc05c3e02f2e634358"
+      },
+      {
+        "file": "_versions/311d61e11e58ce5840372ea2bc6aa24dc47a1806d6e2781ce29e45b368a6a3fc/src/main.js",
+        "sha256": "c41c4eb22130cd9009ecf26ecafce6bdbf639960412ae6f2b1138c5eb96a85ed"
+      }
+    ]
+  }
+}

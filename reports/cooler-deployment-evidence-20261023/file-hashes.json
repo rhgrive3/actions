@@ -1,0 +1,64 @@
+{
+  "README.md": {
+    "bytes": 6827,
+    "sha256": "4e7e21fd9d46e9c96c69d9e7b12a7408497bf7187c66b7177eb16c3a12991b82"
+  },
+  "build-identity.json": {
+    "bytes": 2840,
+    "sha256": "5b927f2ac8bd18a49897f9bc25cf2816f4344c3b7756e19c71400a5afe9701fa"
+  },
+  "flight-6-ticks.webp": {
+    "bytes": 204040,
+    "sha256": "b5261c6732b0a51db821774c337759b0cc58ee90500c7c5caac5c4af0a210804"
+  },
+  "landing-13-ticks.webp": {
+    "bytes": 272244,
+    "sha256": "3857d16796a677cf5e46379061a3ec348455d105b33caeaaf1369e8020b936e4"
+  },
+  "measurements.json.gz": {
+    "bytes": 76226,
+    "sha256": "7bbdf7d384e5dfe3fcdd0d1d666352edce3607af1f09231b0e5829dcee0df460"
+  },
+  "normal-follow-context.jpg": {
+    "bytes": 227197,
+    "sha256": "0e6aefb0871a14223e86d67eae7054022f1fa964f64643caaf9915fc02768e5e"
+  },
+  "remote-6-ticks.webp": {
+    "bytes": 183932,
+    "sha256": "1d6bc97bdbea648149502a459cdc9fbce8dada50f23f2f20435c148a3b3dcc30"
+  },
+  "_originalEvidenceHashes": {
+    "measurements.json": {
+      "sha256": "585171c3b8940348bd123a15750cfe285c09949c6a336095701c3ae58ba2c538",
+      "bytes": 587848
+    },
+    "build-identity.json": {
+      "sha256": "5b927f2ac8bd18a49897f9bc25cf2816f4344c3b7756e19c71400a5afe9701fa",
+      "bytes": 2840
+    },
+    "normal-follow-context.jpg": {
+      "sha256": "1c2641a2779187c0cac873a15ec4f1fcdb4189448ebb0130a68aa2b61ecaf21c",
+      "bytes": 416528
+    },
+    "landing-13-ticks.png": {
+      "sha256": "3ed53ab35dc2e75e469dded3f0727cb251623f2de7e78533485bef7ab18b9b99",
+      "bytes": 309042
+    },
+    "flight-6-ticks.png": {
+      "sha256": "4ee85a9150fac2966142d713a7f9b010bcac5f42607383b125dd910c6a7a5655",
+      "bytes": 239326
+    },
+    "README.md": {
+      "sha256": "192bb968d9c74f4786efa13fe2b0498414395b1521e64f06823da9cda20deffe",
+      "bytes": 6455
+    },
+    "inkwave-cooler-browser-report.pdf": {
+      "sha256": "17a59713c3fed771b3db0a753a7d0abeda64e5bc709139c491dbb5cf47cd5d9c",
+      "bytes": 1601182
+    },
+    "remote-6-ticks.png": {
+      "sha256": "aae9b50e5214e0303359fdd021b1780c8a98f426114752801249e21b55886f02",
+      "bytes": 208420
+    }
+  }
+}
