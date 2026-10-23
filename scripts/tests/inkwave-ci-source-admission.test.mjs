@@ -96,7 +96,7 @@ for (const [workflow, names] of Object.entries(jobs)) for (const job of names) {
 }
 
 const allPrBranch = 'integrate/inkwave-all-prs-20261022';
-const allPrEpoch={mode:'current-pair-with-gameplay-differences',sha:'26a4db4123d23162a3dbf8a12150b1b5bc6ccf64',head:'c8564cb617e1708759a502a662ef1b538eaad14c'};
+const allPrEpoch={mode:'current-pair-with-gameplay-differences',sha:'26a4db4123d23162a3dbf8a12150b1b5bc6ccf64',head:'83403aaab0043633f1ad1c963068cd0566c5b6fc'};
 const queueBranch = 'fix/queue-30-recovery-20261022';
 const queueEpoch = {mode:'queue1801-reviewed-paint-source-pair',sha:'28d2c888704d32304d1c938c51d7d2d230eddbbd',head:'df83a5c4265a9c8738d930dabaffb43cd31ae902'};
 const integrationBranch = 'integrate/all-open-prs-20261022';
@@ -106,10 +106,10 @@ const a350Epoch = {mode:'maina350-byte-identical-paint-source-epoch',sha:'a350b6
 const epoch = {mode: 'maine1f-byte-identical-paint-source-epoch', sha: 'e1fa66ad8465bf87caaf232d51543def72c35875'};
 const runtimeUiBranch = 'inkwave/runtime-ui-acceptance-20261022';
 const runtimeUiEpoch = {mode:'main26a4-reviewed-runtime-ui-production-pair',sha:'26a4db4123d23162a3dbf8a12150b1b5bc6ccf64'};
-// Exact six reviewed PR families: a count alone would hide missing or weaker guards.
+// Exact seven reviewed PR families: a count alone would hide missing or weaker guards.
 const reviewedPrShells = [
-  "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$PAIR_HEAD_REF\" = \"integrate/inkwave-all-prs-20261022\" ] && [ \"$PAIR_HEAD_REPO\" = \"$PAIR_REPOSITORY\" ] && [ -n \"$PAIR_REPOSITORY\" ]; then",
   "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$DECLARED_BASE_SHA\" = \"26a4db4123d23162a3dbf8a12150b1b5bc6ccf64\" ] && [ \"$PAIR_REPOSITORY\" = \"rhgrive3/actions\" ] && [ \"$PAIR_HEAD_REPO\" = \"$PAIR_REPOSITORY\" ] && [ \"$PAIR_HEAD_REF\" = \"inkwave/runtime-ui-acceptance-20261022\" ]; then",
+  "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$PAIR_HEAD_REF\" = \"integrate/inkwave-all-prs-20261022\" ] && [ \"$PAIR_HEAD_REPO\" = \"$PAIR_REPOSITORY\" ] && [ -n \"$PAIR_REPOSITORY\" ]; then",
   "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$PAIR_HEAD_REF\" = \"inkwave/exact-head-ci-main144-20261022\" ] && [ -n \"$PAIR_REPOSITORY\" ] && [ \"$PAIR_HEAD_REPO\" = \"$PAIR_REPOSITORY\" ]; then",
   "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && { [ \"$PAIR_HEAD_REF\" = \"inkwave/runtime-acceptance-0f3-prep-20261022\" ] || [ \"$PAIR_HEAD_REF\" = \"inkwave/runtime-acceptance-followup-20261022\" ]; }; then",
   "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$PAIR_HEAD_REF\" = \"inkwave/runtime-main-a350-integration-20261022\" ]; then",

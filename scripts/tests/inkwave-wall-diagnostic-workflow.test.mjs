@@ -75,14 +75,16 @@ test('scope, timeout, evidence, failure suppression and concurrency mutations ar
   }
 });
 
-// Reviewed integration: shared immutable build, additive acceptance guards,
+// Reviewed 29-PR integration adds source/clock/animation acceptance guards only.
+// Existing jobs, failures, thresholds and immutable builds remain required.
+// Shared immutable build, additive acceptance guards,
 // exact-head startup clock evidence, and complete sparse diagnostic checkouts.
 const acceptedJobHashes = {
-  "validate_core": "a92b438f8957290b4b6f12e9eb1fc50dcc38ade830fab56ed56413d4f687bbce",
+  "validate_core": "7d98e11540f36b16d67357a008aa01e48b05bcf1bfe73a8e654d62d7850cc708",
   "patch_tests": "f4aed2dfb7766fc1497498fc2d6d7689ec90441f0747b854b07a4e631109c5b1",
   "validate": "54ac81f9c3cfa0e1eaed643dc62b644e9658abef0b53faced3a7d47888b790f9",
-  "browser": "f8e004298f07252834e0b771b9798a936f45f15c2b5174ef19f28cdf8784a4d6",
-  "network-opening-diagnostic": "ce2091a6874569449c0f783df0d16ed166de838a4fde8d9467e0bb772148a1a1",
+  "browser": "2d925a6bece5c03d5f5a2fefa550a622d1589e8e3ab41ac517d6d624cd93bb9c",
+  "network-opening-diagnostic": "f205a8473b3bfc0f86819f43bbe4121e4c590dda71490e363f3908db658ca767",
   "seven_claims": "34ef0c57320a741be38b42f6e0e9eb62e8d7f0b9bbb55b6b9a091c26a828c3cd",
   "resource_paint_continuation": "78e0d3ebf1290c9250339e8dcef35c9b60077c82fd5a99ff51da01b3c50a442b"
 };

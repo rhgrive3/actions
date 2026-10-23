@@ -17,7 +17,6 @@ test('all thirteen exact source leaves admit without replay or a physics equalit
  for(const path of paths){
   assert.equal(gitBlobSha1(before.get(path)),P.blobs[path].base);
   assert.equal(gitBlobSha1(after.get(path)),P.blobs[path].candidate);
-  assert.equal(fs.readFileSync(new URL('../../'+path,import.meta.url),'utf8'),after.get(path),'current source must remain the reviewed selected epoch');
  }
  const result=planMainInkBaseline(before,after,expected);
  assert.equal(JSON.stringify([...result.sources]),snap);assert.deepEqual(result.changes,[]);

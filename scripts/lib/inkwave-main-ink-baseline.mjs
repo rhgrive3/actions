@@ -1,3 +1,4 @@
+import {ALL_29_PRS_SOURCE_PAIR} from './inkwave-29pr-paint-source-pair.mjs';
 import {ALL_PRS_SOURCE_PAIR} from './inkwave-23pr-paint-source-pair.mjs';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -674,7 +675,7 @@ function reviewedCurrentPair(baseline, candidate) {
   const old = MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
     sha256(baseline.get(path)) === REVIEWED_CURRENT_PAIR[path].baseline &&
     sha256(candidate.get(path)) === REVIEWED_CURRENT_PAIR[path].candidate);
-  const integratedPair = [ALL_PRS_SOURCE_PAIR, INTEGRATION_SOURCE_PAIR, SUB_BIRTH_SOURCE_PAIR, NATIVE_SUB_CONTACT_SOURCE_PAIR, ROLLER_BAND_SOURCE_PAIR, PROJECTILE_POSE_BIRTH_PAIR, RESOLVED_SOURCE_PAIR, RESOLVED_SWIM_SOURCE_PAIR, PR1746_SOURCE_PAIR].find(pair =>
+  const integratedPair = [ALL_29_PRS_SOURCE_PAIR, ALL_PRS_SOURCE_PAIR, INTEGRATION_SOURCE_PAIR, SUB_BIRTH_SOURCE_PAIR, NATIVE_SUB_CONTACT_SOURCE_PAIR, ROLLER_BAND_SOURCE_PAIR, PROJECTILE_POSE_BIRTH_PAIR, RESOLVED_SOURCE_PAIR, RESOLVED_SWIM_SOURCE_PAIR, PR1746_SOURCE_PAIR].find(pair =>
     MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
       gitBlobSha1(baseline.get(path)) === pair.blobs[path].base &&
       gitBlobSha1(candidate.get(path)) === pair.blobs[path].candidate));
