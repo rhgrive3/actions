@@ -244,7 +244,7 @@ for (const sc of scenarios) {
   });
 }
 
-test('#648 NetMatch pack/apply keeps the owner gauge authoritative over the proxy', async () => {
+test('#648 NetMatch pack/apply keeps the owner gauge authoritative over the proxy', async t => {
   const api = await boot();
   const { G, THREE, NetMatch } = api;
   makeWorld(api, [FLOOR]);
@@ -265,11 +265,11 @@ test('#648 NetMatch pack/apply keeps the owner gauge authoritative over the prox
     tr: { broadcast, sendTo: () => {} },
   });
   const sender = new NetMatch(session('self', 'host', m => sent.push(m)), { map: 'map', difficulty: 'normal' });
-  sender.byNid.set(owner.nid, owner);
-  sender._setupActor(owner);
+  sender.bind({ actors: [owner], state: 'playing', time: 180 });
   const receiver = new NetMatch(session('viewer', 'self'), { map: 'map', difficulty: 'normal' });
   receiver.byNid.set(owner.nid, proxy);
   receiver._setupActor(proxy);
+  t.after(() => { sender.dispose(); receiver.dispose(); });
   assert.equal(owner.remote, false, 'the sender session owns the live actor');
   assert.equal(proxy.remote, true, 'the receiver session marks the packed actor as a proxy');
 
@@ -286,7 +286,14 @@ test('#648 NetMatch pack/apply keeps the owner gauge authoritative over the prox
   assert.equal(sent[0].a[0][13], Math.round(ownerGauge), 'the real packet carries the rounded owner gauge');
   assert.equal(receiver.byNid.get(sent[0].a[0][0]), proxy, 'the receiver resolves the native proxy by packet id');
   assert.equal(proxy.net.buf.length, 0, 'the native proxy starts without buffered samples');
-  receiver._tick('self', sent[0]);                      // the real apply path (buffered snapshot)
+  // Actor lookup alone is not a bound match. The production startup guard
+  // must reject this packet without establishing a replay watermark.
+  receiver._tick('self', sent[0]);
+  assert.equal(receiver.stats.in, 0, 'an unbound receiver cannot admit a native owner tick');
+  assert.equal(proxy.net.buf.length, 0, 'pre-bind rejection leaves the proxy buffer empty');
+  assert.equal(receiver.peers.size, 0, 'pre-bind rejection cannot establish an owner timeline');
+  receiver.bind({ actors: [proxy], state: 'playing', time: 180 });
+  receiver._tick('self', sent[0]);                      // the real bound apply path (buffered snapshot)
   assert.equal(receiver.stats.in, 1, `the receiver accepted one native tick (packet ${JSON.stringify({ ts: sent[0].ts, id: sent[0].a[0][0], remote: proxy.remote, owner: proxy.owner })})`);
   assert.equal(proxy.net.buf.length, 1, 'the real tick path buffered one owner snapshot');
   assert.equal(proxy.net.buf[0].sp, Math.round(ownerGauge), 'the buffered snapshot retains the owner gauge');

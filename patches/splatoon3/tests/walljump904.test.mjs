@@ -106,9 +106,11 @@ test('#904 actual existing snapshot fields preserve wall charge normal and retir
  const api=await production(),r=rig(api);t.after(()=>r.close());const {a}=r,V=api.THREE.Vector3;wall(r);r.step();a.nid=7;a.owner='A';a.remote=false;
  const ghost=new api.Actor({team:0,name:'proxy',weapon:'shooter',CharacterClass:api.Character});ghost.character.actor=ghost;observeRenderedForm(ghost.character);api.G.scene.add(ghost.character.root);t.after(()=>{api.G.scene.remove(ghost.character.root);ghost.character.dispose();});ghost.nid=7;ghost.owner='A';ghost.remote=true;
  const session=id=>({myId:id,hostId:'C',isHost:false,_members:new Map([['A','A'],['B','B'],['C','C']]),tr:{broadcast(){},sendTo(){}}});
- const sender=new api.NetMatch(session('A'),{}),receiver=new api.NetMatch(session('B'),{});t.after(()=>{sender.dispose();receiver.dispose();});sender.byNid.set(7,a);sender._setupActor(a);receiver.byNid.set(7,ghost);receiver._setupActor(ghost);
+ const sender=new api.NetMatch(session('A'),{}),receiver=new api.NetMatch(session('B'),{});t.after(()=>{sender.dispose();receiver.dispose();});
+ // Actor registration alone leaves the receiver unbound; use the native match lifecycle.
+ sender.bind({actors:[a],state:'playing',time:180});receiver.bind({actors:[ghost],state:'playing',time:180});
  let packet;sender.s.tr.broadcast=m=>{packet=JSON.parse(JSON.stringify(m));};
- function deliver(){api.clock.ms+=100;sender._sendTick();receiver.onMessage('A',packet);receiver.peers.get('A').tr=packet.ts;receiver._sample(ghost,packet.ts,0);receiver.applyRemote(ghost,1/60);}
+ function deliver(){api.clock.ms+=100;sender._sendTick();receiver.onMessage('A',packet);const peer=receiver.peers.get('A');assert.equal(peer?.lastTs,packet.ts,'bound receiver accepts the native owner snapshot before sampling');peer.tr=packet.ts;receiver._sample(ghost,packet.ts,0);receiver.applyRemote(ghost,1/60);}
  deliver();assert.deepEqual(Array.from(packet.a[0].slice(17,20)),[0,0,-1]);assert.equal(ghost.superJumpState.phase,'charge');assert.equal(ghost.climbing,false);assert.deepEqual(Array.from(ghost.superJumpState.wallSupport.toArray()),[0,0,-1]);assert.equal(ghost.anim.movementMotion.superJump,ghost.superJumpState);assert.equal(ghost.character._wall904RenderedForm,'climb');assert.equal(ghost.character.form,'squid');
  api.G.paint.sample=()=>2;r.step();deliver();assert.equal(ghost.superJumpState.wallSupport,null);assert.equal(ghost.climbing,false);assert.deepEqual(Array.from(packet.a[0].slice(17,20)),[0,0,0]);
  wall(r);for(let i=0;i<180&&a.superJumpState.phase==='charge';i++)r.step();assert.equal(a.superJumpState.phase,'flight');deliver();assert.equal(ghost.superJumpState.phase,'flight');assert.equal(ghost.superJumpState.wallSupport,null);assert.equal(ghost.climbing,false);

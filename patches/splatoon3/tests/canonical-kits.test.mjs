@@ -85,10 +85,12 @@ test('all 65 canonical pairs cross real JSON ticks and reject foreign or stale l
  for(const [id,k]of Object.entries(CANONICAL_KITS)){
   const owner=f.make(id),proxy=f.make(id);Object.assign(owner,{nid:1,owner:'A'});Object.assign(proxy,{nid:1,owner:'A',remote:true});
   const sender=new f.NetMatch(session('A'),{}),receiver=new f.NetMatch(session('B'),{});sender.bind({actors:[owner]});sender._sendTick();
-  receiver._setupActor(proxy);receiver.byNid.set(1,proxy);f.G.netm=receiver;receiver._tick('A',message);
+  receiver.bind({actors:[proxy]});receiver._tick('A',message);
+  assert.equal(receiver.peers.get('A')?.lastTs,message.ts,id+' native tick accepted');assert.equal(receiver.stats.in,1,id+' one native tick');assert.equal(proxy.net.buf.length,1,id+' one owner snapshot');
   assert.equal(proxy.weapon.sub,k.sub,id);assert.equal(proxy.weapon.special,k.special,id);assert.equal(proxy.specialCost(),owner.specialCost(),id);assert.equal(proxy.weapon.kitStatus,'verified-base-kit',id);
-  const foreign=JSON.parse(JSON.stringify(message));foreign.ts++;foreign.ck[1][1]='torpedo';receiver._tick('foreign',foreign);assert.equal(proxy.weapon.sub,k.sub,id);
-  const stale=JSON.parse(JSON.stringify(message));stale.ck[1][1]='torpedo';receiver._tick('A',stale);assert.equal(proxy.weapon.sub,k.sub,id);sender.dispose();
+  const rejectedSub=k.sub==='torpedo'?'bomb':'torpedo';
+  const foreign=JSON.parse(JSON.stringify(message));foreign.ts++;foreign.ck[1][1]=rejectedSub;receiver._tick('foreign',foreign);assert.equal(proxy.weapon.sub,k.sub,id);assert.equal(receiver.peers.get('A').lastTs,message.ts,id+' foreign tick cannot advance owner');assert.equal(proxy.net.buf.length,1,id+' foreign tick cannot append owner sample');
+  const stale=JSON.parse(JSON.stringify(message));stale.ck[1][1]=rejectedSub;receiver._tick('A',stale);assert.equal(proxy.weapon.sub,k.sub,id);assert.equal(receiver.peers.get('A').lastTs,message.ts,id+' stale tick cannot advance owner');assert.equal(proxy.net.buf.length,1,id+' stale tick cannot append owner sample');sender.dispose();receiver.dispose();
  }
 });
 
