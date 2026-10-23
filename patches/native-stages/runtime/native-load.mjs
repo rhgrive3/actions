@@ -101,7 +101,13 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
    const pixels=readPixels();
    for(let i=0;i<pixels.length;i+=4){let x=encoding==='signed-byte-rg'?Math.max(-1,(pixels[i]>127?pixels[i]-256:pixels[i])/127):pixels[i]/127.5-1,y=encoding==='signed-byte-rg'?Math.max(-1,(pixels[i+1]>127?pixels[i+1]-256:pixels[i+1])/127):pixels[i+1]/127.5-1;const len=Math.hypot(x,y);if(len>.95){x*=.95/len;y*=.95/len;}pixels[i]=Math.round((x*.5+.5)*255);pixels[i+1]=Math.round((y*.5+.5)*255);pixels[i+2]=Math.round((Math.sqrt(Math.max(0,1-x*x-y*y))*.5+.5)*255);pixels[i+3]=255;}
    texture=new THREE.DataTexture(pixels,bitmap.width,bitmap.height);texture.generateMipmaps=true;texture.minFilter=THREE.LinearMipmapLinearFilter;bitmap.close();bitmap=null;
-  }else texture=new THREE.Texture(bitmap);
+  }else{
+   texture=new THREE.Texture(bitmap);
+   // The GPU copy is all rendering needs. Retaining the decoded bitmap doubles
+   // texture memory on unified-memory devices (iPad Safari context loss).
+   // These textures are never re-uploaded: quality changes build new ones.
+   texture.onUpdate=t=>{t.onUpdate=null;t.image?.close?.();};
+  }
   texture.colorSpace=['albedo','emissive'].includes(role)?THREE.SRGBColorSpace:THREE.NoColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;textures.set(file,texture);transferred=true;
   }finally{if(!transferred){bitmap?.close();texture?.dispose();}}
  }}catch(error){if(!failure)failure=error;throw error;}};

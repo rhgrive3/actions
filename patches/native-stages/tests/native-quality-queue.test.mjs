@@ -25,7 +25,7 @@ async function fixture({initial='high',load,roleCap=512}={}){
  }}};
  const mod=new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/native-quality.mjs',import.meta.url),'utf8'),{context});
  await mod.link(spec=>{const v=values[spec];assert(v,spec);return new vm.SyntheticModule(Object.keys(v),function(){for(const k in v)this.setExport(k,v[k]);},{context});});await mod.evaluate();
- return {world,game,deps,parent,counts,pending,makeTextures,change:q=>mod.namespace.applyNativeQuality(game,{quality:q},{touch:true},deps),setRoleCap:n=>roleCap=n};
+ return {world,game,deps,parent,counts,pending,makeTextures,change:q=>mod.namespace.applyNativeQuality(game,{quality:q},{touch:false},deps),setRoleCap:n=>roleCap=n};
 }
 test('High/Ultra preserve initial textures but still apply all other quality settings',async()=>{
  const f=await fixture({load:async(_a,make)=>make()});await f.change('ultra');await f.change('high');

@@ -33,24 +33,31 @@ export function recordNativeContextLoss(store = storage(), now = Date.now()) {
 
 /** Upper bounds applied on top of the user's effective quality preset. */
 export function nativeRenderCaps({ mobile = false, tier = 0 } = {}) {
-  const caps = { ao: false, msaa: 2, pixelRatio: mobile ? Infinity : 1.25 };
+  const caps = { ao: false, msaa: 2 };
+  if (!mobile) caps.pixelRatio = 1.25;
   if (tier >= 1) Object.assign(caps, { msaa: 0, bloom: false, pixelRatio: 1, shadowSize: 2048, paintAtlas: 2048 });
   if (tier >= 2) Object.assign(caps, { pixelRatio: 0.75, shadowSize: 1024 });
   return caps;
 }
 
+// Touch devices start one texture step lower: High loads ~520 source maps
+// (~320 MB with mips) on a single stage, and iPad Safari lost the context at
+// match start. Their render targets are already small, so textures dominate.
+const textureTier = (tier, mobile) => tier + (mobile ? 1 : 0);
+
 /** Texture representation for the stage: the user's choice, lowered by tier. */
-export function nativeTextureQuality(settingsQuality, tier = 0) {
+export function nativeTextureQuality(settingsQuality, tier = 0, mobile = false) {
   const base = ['high', 'ultra'].includes(settingsQuality) ? 'high' : settingsQuality === 'low' ? 'low' : 'balanced';
-  const order = ['low', 'balanced', 'high'];
-  const ceiling = tier >= 2 ? 'low' : tier >= 1 ? 'balanced' : 'high';
+  const order = ['low', 'balanced', 'high'], t = textureTier(tier, mobile);
+  const ceiling = t >= 2 ? 'low' : t >= 1 ? 'balanced' : 'high';
   return order[Math.min(order.indexOf(base), order.indexOf(ceiling))];
 }
 
-/** Tier 2 also bounds individual maps; source maps are mostly <= 512px. */
-export function nativeTierTextureCaps(caps, tier = 0) {
-  if (tier < 2) return caps;
-  return { ...caps, maxDimension: Math.min(caps.maxDimension, 256) };
+/** Lower steps also bound individual maps; source maps are mostly <= 512px. */
+export function nativeTierTextureCaps(caps, tier = 0, mobile = false) {
+  const t = textureTier(tier, mobile);
+  if (t < 2) return caps;
+  return { ...caps, maxDimension: Math.min(caps.maxDimension, t >= 3 ? 128 : 256) };
 }
 
 const capKey = caps => Object.keys(caps).sort().map(k => k + '=' + caps[k]).join(',');

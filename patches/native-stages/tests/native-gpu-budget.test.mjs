@@ -56,6 +56,13 @@ test('texture quality is lowered only by the stepped tiers', () => {
   const caps = { maxDimension: 1024, perRole: { normal: 512 } };
   assert.equal(nativeTierTextureCaps(caps, 1), caps, 'same object: texture profile comparison is by identity');
   assert.deepEqual(nativeTierTextureCaps(caps, 2), { maxDimension: 256, perRole: { normal: 512 } });
+  // Touch starts one texture step lower: albedo/opacity only at tier 0.
+  assert.equal(nativeTextureQuality('high', 0, true), 'balanced');
+  assert.equal(nativeTextureQuality('high', 1, true), 'low');
+  assert.equal(nativeTextureQuality('low', 0, true), 'low');
+  assert.equal(nativeTierTextureCaps(caps, 0, true), caps);
+  assert.equal(nativeTierTextureCaps(caps, 1, true).maxDimension, 256);
+  assert.equal(nativeTierTextureCaps(caps, 2, true).maxDimension, 128);
 });
 
 function fakeRenderer(raw) {
