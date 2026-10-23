@@ -1,0 +1,12 @@
+{
+  "jobId": 120639734641,
+  "runId": 40011720962,
+  "sourceSha": "433299cb5e1518458e00f520d0a9845baa560db3",
+  "decodedOriginalBytes": 239983,
+  "decodedOriginalSha256": "1476e69a3c56f41abacfde00b9c9a29359615786230f1ebecf190b94b81b54fb",
+  "originalWorkspacePath": "/workspace/actions/.roller-recovery/watchdog-port-20261023/original-job120639734641.log",
+  "excerptLines": 5,
+  "originalLogWasRefetched": false,
+  "browserWasRerun": false,
+  "rootCause": "unknown external runner shutdown; not a roller motion assertion failure"
+}

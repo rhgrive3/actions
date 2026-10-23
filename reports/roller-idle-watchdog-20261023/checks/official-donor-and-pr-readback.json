@@ -1,0 +1,39 @@
+{
+  "checkedAt": "2026-10-23 21:19:42 UTC",
+  "donor": {
+    "commit": "2d164d063050c15266febcb6af88109938f26701",
+    "url": "https://api.github.com/repos/rhgrive3/actions/git/trees/2d164d063050c15266febcb6af88109938f26701?recursive=1",
+    "truncated": false,
+    "leaves": [
+      {
+        "path": "scripts/check-inkwave-idle-resources.mjs",
+        "sha": "bc5ad497b0b2d3e5f21e792d9c0ced0608b822d9",
+        "size": 27486
+      },
+      {
+        "path": "scripts/tests/inkwave-idle-evaluate-deadline.test.mjs",
+        "sha": "0dcb6fe498086c81a2c5218347ca7cd8f451274f",
+        "size": 14386
+      },
+      {
+        "path": "scripts/tests/inkwave-idle-resources-gates.test.mjs",
+        "sha": "d384824f3ac170167db9ff5e3dd0a62ee77e7518",
+        "size": 3407
+      }
+    ]
+  },
+  "pr": {
+    "number": 1856,
+    "draft": true,
+    "head": "433299cb5e1518458e00f520d0a9845baa560db3",
+    "merged": false,
+    "state": "open",
+    "autoMerge": null
+  },
+  "evidence30": {
+    "sha": "6a6535cdc29cbf757f3c8e38eb3a65ed79c54884",
+    "type": "commit",
+    "url": "https://api.github.com/repos/rhgrive3/actions/git/commits/6a6535cdc29cbf757f3c8e38eb3a65ed79c54884"
+  },
+  "limits": "Read-only official records. No PR/main update or browser retry."
+}

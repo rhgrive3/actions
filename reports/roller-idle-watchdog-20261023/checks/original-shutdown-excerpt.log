@@ -1,0 +1,5 @@
+2026-10-23T20:48:59.1525271Z {"status":"passed","sourceSha":"433299cb5e1518458e00f520d0a9845baa560db3","contentHash":"6184fb028078c618018d8b7b7cd4ec0d2dd5fc79d3319ec5080a9efb5af8d6f0","summary":{"shadowPixelEqualScenarios":9,"removedColorMiB":[16,64],"touchReflectionCalls":"3/6 frames","contextRestore":true},"evidence":"/mnt/workspace/inkwave-ci-40011720962-1-active/evidence/resources/resource-render-result.json"}
+2026-10-23T20:48:59.1717420Z ##[group]Run node scripts/check-inkwave-idle-resources.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/idle-resources" --profile-dir "$CI_STORAGE/cache/idle-resources" --exact-source
+2026-10-23T20:55:47.9975277Z ##[error]The runner has received a shutdown signal. This can happen when the runner service is stopped, or a manually started runner is canceled.
+2026-10-23T20:55:48.7538629Z page.evaluate: Target page, context or browser has been closed
+2026-10-23T20:55:48.8406308Z     at main (/home/runner/work/actions/actions/scripts/check-inkwave-idle-resources.mjs:168:25) {

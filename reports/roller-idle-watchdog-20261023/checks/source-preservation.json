@@ -1,0 +1,59 @@
+{
+  "base": "433299cb5e1518458e00f520d0a9845baa560db3",
+  "donor": "2d164d063050c15266febcb6af88109938f26701",
+  "donorFiles": {
+    "scripts/check-inkwave-idle-resources.mjs": "bc5ad497b0b2d3e5f21e792d9c0ced0608b822d9",
+    "scripts/tests/inkwave-idle-evaluate-deadline.test.mjs": "0dcb6fe498086c81a2c5218347ca7cd8f451274f",
+    "scripts/tests/inkwave-idle-resources-gates.test.mjs": "d384824f3ac170167db9ff5e3dd0a62ee77e7518"
+  },
+  "evaluateCallbacks": [
+    "48cec000fbb6ec5632c50a2b0ff52a47c43b1aad86c380f840a5d73e8b1d7617",
+    "6787dec1d602050f0c89c6be3e1fd30794ae2c435816794a2509fd5e652b6bdc",
+    "cfe167257b9f747451f1f6ad8644e9651b70f535ec326ebaac23251d2a75be6a",
+    "0f225c3bbd35102087663a518dacc475d72dba233f1b3c4f049c78782ebd6d97",
+    "703222dc5609c3a9fdebb7ceef0df1cbb093f865d4d5b692d99fae488d2f961f",
+    "90367ea4fbf8f2e614b4e60d4b3d2a09cc41bbd9b4b0afb01956cae37df35712",
+    "ff1c23527d45032277530fb6e684249b0d495752c6f6c8c7d1336af8ae37e323",
+    "27510a169f39a0937d4d65b8b3ef93c766c0f32cfba43eb586d7ec3dc323bfed",
+    "1440bbd7eee094fcffe08a3f04cedb9ecb3689c44de7a6dc5030bf11719b63bf",
+    "bf40087cf704f24bd9da705a8d76574a3118cd09e0944aaecb0f6fef37b25982",
+    "2ae2e4b8f18de0fde37561fc54833b1cb4daa475f4e76cb11e410a40bedbcdc6",
+    "b4755d51a2d7a8d196a74783e3a9d7ebde79f600e22b5c21d6412fe688b085b5"
+  ],
+  "existingFunctions": {
+    "validateIdleResult": "58af076b843553c2f453ecb011a220a77188d30a22472764217d9499771d25b7",
+    "observeColdEnvironment": "7e601a865875b7e058b8acc9951a845c5c79f3ac1e4a9a27b96ca6884c4ca15f",
+    "inspectColdBoot": "489412f10a44a561c6a36d526836899442eb999e1a31227d562e2963cfbb0551",
+    "retireDesktopForCold": "23623181fb2c2f5ba29b5b25b777b37b05bd1a95489338371ec9f53d9144d648",
+    "closeProbeOwner": "b19e9613c27484cc96b6dd059b933f26273528093cd085d0b412f9ed6a72de67",
+    "launchColdMobileBrowser": "a697be9339b42f880514db3e6a091d49db4205aa32bf07de9a8cd52f79ceb031"
+  },
+  "browserArgs": "const BROWSER_ARGS=['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader'];",
+  "existingExplicitTimeouts": [
+    180000,
+    200,
+    400,
+    180000,
+    10000,
+    15000
+  ],
+  "operationDeadline": 120000,
+  "actualDesktopSetup": {
+    "before": {
+      "settled": false,
+      "configuredTimeout": 120000,
+      "timersAtStart": 0,
+      "timersRemaining": 0
+    },
+    "candidate": {
+      "settled": true,
+      "code": "INKWAVE_IDLE_EVALUATION_TIMEOUT",
+      "phase": "boot",
+      "configuredTimeout": 120000,
+      "timersAtStart": 1,
+      "timersRemaining": 0
+    }
+  },
+  "productionAndWorkflowDiffBytes": 0,
+  "limits": "Doubles and source preservation only; no browser/GPU/hosted-CI pass, no root-cause claim for external runner shutdown."
+}
