@@ -31,7 +31,12 @@ function lines(text,visit){
  // Decode complete UTF-8 lines without retaining a second full-sized string.
  if(typeof text!=='string'){
   const bytes=text instanceof Uint8Array?text:new Uint8Array(text),decoder=new TextDecoder('utf-8',{ignoreBOM:true});let start=0;
-  for(let end=0;end<=bytes.length;end++)if(end===bytes.length||bytes[end]===10){if(start<bytes.length){let line=decoder.decode(bytes.subarray(start,end));if(start===0&&line.charCodeAt(0)===0xfeff)line=line.slice(1);visit(line.trimEnd());}start=end+1;}
+  while(start<bytes.length){
+   const newline=bytes.indexOf(10,start),end=newline<0?bytes.length:newline;
+   let line=decoder.decode(bytes.subarray(start,end));
+   if(start===0&&line.charCodeAt(0)===0xfeff)line=line.slice(1);
+   visit(line.trimEnd());start=end+1;
+  }
   return;
  }
  let start=0;while(start<text.length){let end=text.indexOf('\n',start);if(end<0)end=text.length;visit(text.slice(start,end).trimEnd());start=end+1;}
