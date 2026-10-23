@@ -5905,3 +5905,8 @@ Dynamo/他Roller/Brushの防御object・傘・BigBubblerへ、既存impactDamage
 - 比較基準はSplatoon 3 11.3.0。ゲームの足元判定・移動・射撃の数値は変更しない。`offline-offscreen-budget.mjs`で、長く未描画のoffline botが同じCharacter.update内で繰り返す完全同一のx/z/rootY/Physicsの問い合わせだけを再利用する。最大24件、update終了・例外時に失効し、参照Physicsも解放する。原典三角形の穴、dynamic足場、次tick、描画前catch-upは元のnative判定を保持する。
 - 実Player00モーションを待ったActor/CharacterとNativeLevel/NativePhysicsの対照で、30/60/120Hzの全210frameの姿勢・skin行列・接地・銃口が完全一致。各1秒のqueryは229→209、439→399、870→788。これは約9%の問い合わせ削減であり、実機FPSの改善測定ではない。#845全体の完了やS3のIK内部仕様の一致とは扱わない。
 - #1767のowner-clockは、オンラインpacketの保留時にだけTextEncoderを生成する。nonce・固定origin・UTF8 byte上限は維持し、offline import時に不要な依存を要求しない。既存統合PRの修正と照合した。65-kit/HUD fixtureは実bindを経由し、受理watermark/Actor bufferを確認する。音楽登録契約は追加済みの23件全件を要求し、Explosher診断fixtureは実common-build検査を通す。テストを間引かず、従来の拒否例を保持する。
+## 2026-10-23: #1671 / #1757 の合成ランタイムCPU調査（PR #1851）
+
+参照対象は公開版の全パッチ合成後。S3 Ver.11.3.0に関する既存の未確認値は変更せず、ソースモーション（既存のWii U由来パックを含む）の中間計算だけを削減した。BodyBalanceのgain対象と祖先以外の中間world回転を省き、最終全ボーンFK・足接地・IK・銃口・移動・射撃・塗り・当たり判定・描画設定は維持する。2種の実ソースキャラクター、シューター/チャージャー/ローラーの30/60/120Hz、1260フレームで最終local/world姿勢・skin行列・接地・銃口が一致し、通常minify配信物でも同じ比較が成功。これはロジック/配信物検証であり、Nintendo実機やiPad SafariのFPS比較ではない。
+
+Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテゴリ。修正対象のBodyBalanceはその一部にすぎず、iPad上での支配要因の確定や重いフレームの完全解消とは扱わない。#1671/#1757の実機受入はOpenのまま。条件・既存PRとの重複確認・再現コマンド・証跡は[調査記録](inkwave-composed-cpu-20261023/README.md)。

@@ -1,0 +1,5083 @@
+{
+  "schema": 1,
+  "limits": [
+    "CPU diagnostics only; no physical-device/FPS or whole-image acceptance.",
+    "Broad captures are 300 fixed ticks/stage, include shared-host contention and use the finite-state-hash repair; thread/quota metadata was added afterwards.",
+    "Isolated captures use the final recorder and no concurrent benchmark; ABBA order s1/sb1/sb2/s2.",
+    "Earlier aa1/aa2/ab capture state hashes included absent a.turf/NaN and were rejected; their CPU observations are diagnostic only."
+  ],
+  "broad": {
+    "captures": [
+      {
+        "id": "c1",
+        "sourceSha": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+        "contentHash": "c63d84b07deca488316b10a713a04e6c10fb28e0bc141145fa06e815e1083566",
+        "environment": {
+          "node": "v24.19.0",
+          "cpu": "AMD EPYC 9V74 80-Core Processor",
+          "logicalCpus": 5,
+          "quality": "low",
+          "viewport": [
+            960,
+            640
+          ],
+          "render": false,
+          "wrappers": true,
+          "browser": "151.0.7922.34"
+        },
+        "status": "passed",
+        "receiptSha256": "565a76f02d405fcbfd192500f610e4711124261e2dce45ea4a59b192f765cf64",
+        "scenarios": [
+          {
+            "stage": "tidewater",
+            "initial": {
+              "actors": 8,
+              "bots": 7,
+              "roster": [
+                "shooter",
+                "s3-saber-lite-02",
+                "s3-charger-keeper",
+                "s3-shooter-blaze-01",
+                "blaster",
+                "s3-shooter-triplemiddle-02",
+                "s3-blaster-lightlong",
+                "s3-stringer-normal-02"
+              ],
+              "native": false,
+              "sourceCharacters": 8,
+              "triangles": 0,
+              "paintFaces": 285,
+              "atlas": 2048,
+              "ppm": 12.895073280000002,
+              "settings": {
+                "sensitivity": 1,
+                "padSensitivity": 0,
+                "padInvertX": false,
+                "invertY": false,
+                "invertX": false,
+                "aimProfile": "tv",
+                "aimProfiles": {
+                  "tv": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  },
+                  "handheld": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  }
+                },
+                "fov": 82,
+                "quality": "low",
+                "frameRate": "auto",
+                "shadows": true,
+                "bloom": true,
+                "cameraShake": 1,
+                "showFps": false,
+                "master": 0.8,
+                "music": 0.6,
+                "sfx": 0.85,
+                "colorblind": false,
+                "minimap": false,
+                "matchLength": 180,
+                "difficulty": "normal",
+                "rumble": 1,
+                "aimAssist": 0,
+                "aimAssistMouse": false,
+                "lang": "ja",
+                "gyro": false,
+                "gyroSens": 0,
+                "gyroInvertX": false,
+                "gyroInvertY": false,
+                "touchSens": 0,
+                "fireAim": true,
+                "stickMode": "float",
+                "touchScale": 1,
+                "touchOpacity": 0.85,
+                "musicVolume": 0,
+                "audioVolume": 0,
+                "fovMode": "h",
+                "padSensitivityScale": "s3"
+              }
+            },
+            "frames": 300,
+            "hz": 60,
+            "ticks": 300,
+            "cpuFrameMs": {
+              "mean": 12.297999999998137,
+              "p50": 10.399999999906868,
+              "p95": 25.199999999720603,
+              "p99": 36,
+              "max": 38
+            },
+            "categories": {
+              "simulation.update": {
+                "msPerTick": 8.032999999984167,
+                "callsPerTick": 1
+              },
+              "actor.update": {
+                "msPerTick": 7.673333333328677,
+                "callsPerTick": 8
+              },
+              "character.update": {
+                "msPerTick": 5.858999999974233,
+                "callsPerTick": 8
+              },
+              "character._applyPose": {
+                "msPerTick": 2.271000000036632,
+                "callsPerTick": 7.59
+              },
+              "motion.advance": {
+                "msPerTick": 2.1963333332336816,
+                "callsPerTick": 8
+              },
+              "hud.update": {
+                "msPerTick": 1.7453333333336438,
+                "callsPerTick": 1
+              },
+              "motion.applyBody": {
+                "msPerTick": 1.5003333334050453,
+                "callsPerTick": 7.59
+              },
+              "projectiles.update": {
+                "msPerTick": 0.6256666666657353,
+                "callsPerTick": 1
+              },
+              "paint.advanceSimulation": {
+                "msPerTick": 0.5790000000130385,
+                "callsPerTick": 1
+              },
+              "fx.update": {
+                "msPerTick": 0.5346666666834304,
+                "callsPerTick": 1
+              },
+              "character._buildPose": {
+                "msPerTick": 0.4833333333193635,
+                "callsPerTick": 7.59
+              },
+              "motion.applyAccessories": {
+                "msPerTick": 0.3640000000083819,
+                "callsPerTick": 7.59
+              },
+              "physics.raycast": {
+                "msPerTick": 0.3486666666778425,
+                "callsPerTick": 283.1433333333333
+              },
+              "bot.update": {
+                "msPerTick": 0.32366666665455945,
+                "callsPerTick": 7
+              },
+              "paint._drawQuads": {
+                "msPerTick": 0.3180000000074506,
+                "callsPerTick": 2
+              },
+              "paint._advanceSplatOwnership": {
+                "msPerTick": 0.18666666666821888,
+                "callsPerTick": 30.35333333333333
+              },
+              "motion.updateSquid": {
+                "msPerTick": 0.13433333332960803,
+                "callsPerTick": 8
+              },
+              "paint.splat": {
+                "msPerTick": 0.13300000000589837,
+                "callsPerTick": 1.3866666666666667
+              },
+              "motion.bodyBalance": {
+                "msPerTick": 0.1036666666623205,
+                "callsPerTick": 4.036666666666667
+              },
+              "physics.groundProbe": {
+                "msPerTick": 0.07100000000403574,
+                "callsPerTick": 6.926666666666667
+              },
+              "paint.flush": {
+                "msPerTick": 0.06666666666511446,
+                "callsPerTick": 1
+              },
+              "nav.path": {
+                "msPerTick": 0.05266666666759799,
+                "callsPerTick": 0.04
+              },
+              "paint._emitGrowth": {
+                "msPerTick": 0.05200000000186265,
+                "callsPerTick": 33.086666666666666
+              },
+              "environment.update": {
+                "msPerTick": 0.043999999994412065,
+                "callsPerTick": 1
+              },
+              "character._updateMaterials": {
+                "msPerTick": 0.043666666666977105,
+                "callsPerTick": 8
+              },
+              "character._updateLod": {
+                "msPerTick": 0.02466666666790843,
+                "callsPerTick": 8
+              },
+              "physics.collideBody": {
+                "msPerTick": 0.022999999998137354,
+                "callsPerTick": 8
+              },
+              "paint.regionStats": {
+                "msPerTick": 0.012666666658284764,
+                "callsPerTick": 1.0233333333333334
+              },
+              "render.shadow": {
+                "msPerTick": 0.0033333333333333335,
+                "callsPerTick": 1
+              },
+              "nav.nearest": {
+                "msPerTick": 0.0003333333336437742,
+                "callsPerTick": 0.08
+              },
+              "physics.bodyFits": {
+                "msPerTick": 0.0003333333320915699,
+                "callsPerTick": 0.06
+              }
+            },
+            "bvh": {
+              "queries": 0,
+              "triangleTests": 0
+            },
+            "counts": [
+              6336,
+              4333
+            ],
+            "digest": 1050084920,
+            "stateSequenceSha256": "8c19db1c5cc3e7b7c793ed963d4f1dc884a555412f91f9a5f30284add3ed1ab3",
+            "draw": {
+              "frame": 439,
+              "calls": 2,
+              "triangles": 88,
+              "points": 0,
+              "lines": 0
+            },
+            "resources": {
+              "geometries": 323,
+              "textures": 44
+            },
+            "gc": {
+              "status": "observed",
+              "events": 12,
+              "pauses": 6,
+              "pauseMs": 10.311,
+              "maxPauseMs": 2.343,
+              "windowMs": 3697.298
+            },
+            "heap": {
+              "before": {
+                "Documents": 2,
+                "Nodes": 1864,
+                "JSHeapUsedSize": 83332780,
+                "JSHeapTotalSize": 137822208
+              },
+              "after": {
+                "Documents": 2,
+                "Nodes": 2119,
+                "JSHeapUsedSize": 96542124,
+                "JSHeapTotalSize": 145625088
+              }
+            },
+            "contextLost": false,
+            "errors": []
+          },
+          {
+            "stage": "kelpline",
+            "initial": {
+              "actors": 8,
+              "bots": 7,
+              "roster": [
+                "shooter",
+                "s3-saber-lite-02",
+                "s3-charger-keeper",
+                "s3-shooter-blaze-01",
+                "blaster",
+                "s3-shooter-triplemiddle-02",
+                "s3-blaster-lightlong",
+                "s3-stringer-normal-02"
+              ],
+              "native": false,
+              "sourceCharacters": 8,
+              "triangles": 0,
+              "paintFaces": 307,
+              "atlas": 2048,
+              "ppm": 15.235200000000003,
+              "settings": {
+                "sensitivity": 1,
+                "padSensitivity": 0,
+                "padInvertX": false,
+                "invertY": false,
+                "invertX": false,
+                "aimProfile": "tv",
+                "aimProfiles": {
+                  "tv": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  },
+                  "handheld": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  }
+                },
+                "fov": 82,
+                "quality": "low",
+                "frameRate": "auto",
+                "shadows": true,
+                "bloom": true,
+                "cameraShake": 1,
+                "showFps": false,
+                "master": 0.8,
+                "music": 0.6,
+                "sfx": 0.85,
+                "colorblind": false,
+                "minimap": false,
+                "matchLength": 180,
+                "difficulty": "normal",
+                "rumble": 1,
+                "aimAssist": 0,
+                "aimAssistMouse": false,
+                "lang": "ja",
+                "gyro": false,
+                "gyroSens": 0,
+                "gyroInvertX": false,
+                "gyroInvertY": false,
+                "touchSens": 0,
+                "fireAim": true,
+                "stickMode": "float",
+                "touchScale": 1,
+                "touchOpacity": 0.85,
+                "musicVolume": 0,
+                "audioVolume": 0,
+                "fovMode": "h",
+                "padSensitivityScale": "s3"
+              }
+            },
+            "frames": 300,
+            "hz": 60,
+            "ticks": 300,
+            "cpuFrameMs": {
+              "mean": 12.156333333329918,
+              "p50": 10.700000000186265,
+              "p95": 24.09999999962747,
+              "p99": 35.39999999990687,
+              "max": 39.8000000002794
+            },
+            "categories": {
+              "simulation.update": {
+                "msPerTick": 8.298666666660768,
+                "callsPerTick": 1
+              },
+              "actor.update": {
+                "msPerTick": 8.06166666666977,
+                "callsPerTick": 8
+              },
+              "character.update": {
+                "msPerTick": 6.1853333333693445,
+                "callsPerTick": 8
+              },
+              "character._applyPose": {
+                "msPerTick": 2.4279999999965853,
+                "callsPerTick": 7.72
+              },
+              "motion.advance": {
+                "msPerTick": 2.406000000028871,
+                "callsPerTick": 8
+              },
+              "motion.applyBody": {
+                "msPerTick": 1.6209999999807527,
+                "callsPerTick": 7.72
+              },
+              "hud.update": {
+                "msPerTick": 1.5953333333491657,
+                "callsPerTick": 1
+              },
+              "fx.update": {
+                "msPerTick": 0.5570000000049671,
+                "callsPerTick": 1
+              },
+              "projectiles.update": {
+                "msPerTick": 0.54666666666201,
+                "callsPerTick": 1
+              },
+              "paint.advanceSimulation": {
+                "msPerTick": 0.5056666666626309,
+                "callsPerTick": 1
+              },
+              "character._buildPose": {
+                "msPerTick": 0.48200000000496707,
+                "callsPerTick": 7.72
+              },
+              "motion.applyAccessories": {
+                "msPerTick": 0.3353333333383004,
+                "callsPerTick": 7.72
+              },
+              "paint._advanceSplatOwnership": {
+                "msPerTick": 0.23466666667566946,
+                "callsPerTick": 31.47
+              },
+              "physics.raycast": {
+                "msPerTick": 0.21400000001769512,
+                "callsPerTick": 272.52666666666664
+              },
+              "bot.update": {
+                "msPerTick": 0.20499999998758237,
+                "callsPerTick": 7
+              },
+              "paint._drawQuads": {
+                "msPerTick": 0.1929999999795109,
+                "callsPerTick": 2
+              },
+              "paint.splat": {
+                "msPerTick": 0.14100000001024454,
+                "callsPerTick": 1.46
+              },
+              "motion.bodyBalance": {
+                "msPerTick": 0.1296666666585952,
+                "callsPerTick": 4.44
+              },
+              "physics.groundProbe": {
+                "msPerTick": 0.06933333332495142,
+                "callsPerTick": 6.933333333333334
+              },
+              "motion.updateSquid": {
+                "msPerTick": 0.06600000000869234,
+                "callsPerTick": 8
+              },
+              "paint._emitGrowth": {
+                "msPerTick": 0.056000000013348955,
+                "callsPerTick": 34.36
+              },
+              "environment.update": {
+                "msPerTick": 0.05599999999472251,
+                "callsPerTick": 1
+              },
+              "character._updateMaterials": {
+                "msPerTick": 0.04666666666666667,
+                "callsPerTick": 8
+              },
+              "paint.regionStats": {
+                "msPerTick": 0.020333333338300386,
+                "callsPerTick": 0.9533333333333334
+              },
+              "physics.collideBody": {
+                "msPerTick": 0.019333333331160246,
+                "callsPerTick": 8
+              },
+              "character._updateLod": {
+                "msPerTick": 0.017666666661389174,
+                "callsPerTick": 8
+              },
+              "nav.path": {
+                "msPerTick": 0.010333333335195979,
+                "callsPerTick": 0.02666666666666667
+              },
+              "render.shadow": {
+                "msPerTick": 0.006666666666666667,
+                "callsPerTick": 1
+              },
+              "paint.flush": {
+                "msPerTick": 0.003999999999068677,
+                "callsPerTick": 1
+              },
+              "physics.bodyFits": {
+                "msPerTick": 0.0010000000009313225,
+                "callsPerTick": 0.19
+              },
+              "nav.nearest": {
+                "msPerTick": 0.0003333333336437742,
+                "callsPerTick": 0.05333333333333334
+              }
+            },
+            "bvh": {
+              "queries": 0,
+              "triangleTests": 0
+            },
+            "counts": [
+              6547,
+              4952
+            ],
+            "digest": 601268676,
+            "stateSequenceSha256": "1ed18c82f6f138945000117140dac5431ceacaff9822115365d3895e030ceb87",
+            "draw": {
+              "frame": 440,
+              "calls": 2,
+              "triangles": 134,
+              "points": 0,
+              "lines": 0
+            },
+            "resources": {
+              "geometries": 310,
+              "textures": 36
+            },
+            "gc": {
+              "status": "observed",
+              "events": 12,
+              "pauses": 6,
+              "pauseMs": 15.601,
+              "maxPauseMs": 5.997,
+              "windowMs": 3654.44
+            },
+            "heap": {
+              "before": {
+                "Documents": 2,
+                "Nodes": 2198,
+                "JSHeapUsedSize": 104328328,
+                "JSHeapTotalSize": 150786048
+              },
+              "after": {
+                "Documents": 2,
+                "Nodes": 2402,
+                "JSHeapUsedSize": 113493196,
+                "JSHeapTotalSize": 160055296
+              }
+            },
+            "contextLost": false,
+            "errors": []
+          },
+          {
+            "stage": "range",
+            "initial": {
+              "actors": 12,
+              "bots": 0,
+              "roster": [
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter"
+              ],
+              "native": false,
+              "sourceCharacters": 1,
+              "triangles": 0,
+              "paintFaces": 153,
+              "atlas": 2048,
+              "ppm": 18,
+              "settings": {
+                "sensitivity": 1,
+                "padSensitivity": 0,
+                "padInvertX": false,
+                "invertY": false,
+                "invertX": false,
+                "aimProfile": "tv",
+                "aimProfiles": {
+                  "tv": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  },
+                  "handheld": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  }
+                },
+                "fov": 82,
+                "quality": "low",
+                "frameRate": "auto",
+                "shadows": true,
+                "bloom": true,
+                "cameraShake": 1,
+                "showFps": false,
+                "master": 0.8,
+                "music": 0.6,
+                "sfx": 0.85,
+                "colorblind": false,
+                "minimap": false,
+                "matchLength": 180,
+                "difficulty": "normal",
+                "rumble": 1,
+                "aimAssist": 0,
+                "aimAssistMouse": false,
+                "lang": "ja",
+                "gyro": false,
+                "gyroSens": 0,
+                "gyroInvertX": false,
+                "gyroInvertY": false,
+                "touchSens": 0,
+                "fireAim": true,
+                "stickMode": "float",
+                "touchScale": 1,
+                "touchOpacity": 0.85,
+                "musicVolume": 0,
+                "audioVolume": 0,
+                "fovMode": "h",
+                "padSensitivityScale": "s3"
+              }
+            },
+            "frames": 300,
+            "hz": 60,
+            "ticks": 300,
+            "cpuFrameMs": {
+              "mean": 3.4963333333407838,
+              "p50": 3,
+              "p95": 8.299999999813735,
+              "p99": 16.90000000037253,
+              "max": 22.100000000093132
+            },
+            "categories": {
+              "simulation.update": {
+                "msPerTick": 1.3003333333367482,
+                "callsPerTick": 1
+              },
+              "actor.update": {
+                "msPerTick": 1.2556666666688399,
+                "callsPerTick": 12
+              },
+              "hud.update": {
+                "msPerTick": 1.1249999999875824,
+                "callsPerTick": 1
+              },
+              "character.update": {
+                "msPerTick": 0.7553333333274349,
+                "callsPerTick": 12
+              },
+              "paint.advanceSimulation": {
+                "msPerTick": 0.2923333333339542,
+                "callsPerTick": 1
+              },
+              "character._applyPose": {
+                "msPerTick": 0.29133333331750083,
+                "callsPerTick": 1
+              },
+              "motion.advance": {
+                "msPerTick": 0.2536666666654249,
+                "callsPerTick": 1
+              },
+              "projectiles.update": {
+                "msPerTick": 0.23466666667256506,
+                "callsPerTick": 1
+              },
+              "motion.applyBody": {
+                "msPerTick": 0.16833333332402012,
+                "callsPerTick": 1
+              },
+              "paint._advanceSplatOwnership": {
+                "msPerTick": 0.14566666667660078,
+                "callsPerTick": 12.193333333333333
+              },
+              "paint._drawQuads": {
+                "msPerTick": 0.11366666665611168,
+                "callsPerTick": 2
+              },
+              "character._buildPose": {
+                "msPerTick": 0.0873333333308498,
+                "callsPerTick": 1
+              },
+              "environment.update": {
+                "msPerTick": 0.0873333333261932,
+                "callsPerTick": 1
+              },
+              "physics.raycast": {
+                "msPerTick": 0.08599999998696148,
+                "callsPerTick": 82.01333333333334
+              },
+              "fx.update": {
+                "msPerTick": 0.08100000000248353,
+                "callsPerTick": 1
+              },
+              "paint.splat": {
+                "msPerTick": 0.04466666668032607,
+                "callsPerTick": 0.47333333333333333
+              },
+              "motion.applyAccessories": {
+                "msPerTick": 0.036333333337679505,
+                "callsPerTick": 1
+              },
+              "paint._emitGrowth": {
+                "msPerTick": 0.02166666666821887,
+                "callsPerTick": 13.02
+              },
+              "physics.groundProbe": {
+                "msPerTick": 0.015333333333643773,
+                "callsPerTick": 1.87
+              },
+              "motion.bodyBalance": {
+                "msPerTick": 0.009999999995343387,
+                "callsPerTick": 0.56
+              },
+              "physics.collideBody": {
+                "msPerTick": 0.006333333331470689,
+                "callsPerTick": 2
+              },
+              "character._updateMaterials": {
+                "msPerTick": 0.004333333334264656,
+                "callsPerTick": 1
+              },
+              "character._updateLod": {
+                "msPerTick": 0.0030000000012417633,
+                "callsPerTick": 1
+              },
+              "render.shadow": {
+                "msPerTick": 0.0026666666675979893,
+                "callsPerTick": 0.9733333333333334
+              },
+              "paint.flush": {
+                "msPerTick": 0.0026666666629413765,
+                "callsPerTick": 1
+              },
+              "motion.updateSquid": {
+                "msPerTick": 0.0013333333345750967,
+                "callsPerTick": 1
+              },
+              "physics.bodyFits": {
+                "msPerTick": 0.0006666666657353441,
+                "callsPerTick": 0.013333333333333334
+              }
+            },
+            "bvh": {
+              "queries": 0,
+              "triangleTests": 0
+            },
+            "counts": [
+              5151,
+              0
+            ],
+            "digest": 668749362,
+            "stateSequenceSha256": "95d175909b594fae2f5385c9e77ef82d09c23c188b09f74b4a475d13973b4497",
+            "draw": {
+              "frame": 469,
+              "calls": 1,
+              "triangles": 10,
+              "points": 0,
+              "lines": 0
+            },
+            "resources": {
+              "geometries": 259,
+              "textures": 22
+            },
+            "gc": {
+              "status": "observed",
+              "events": 6,
+              "pauses": 3,
+              "pauseMs": 11.414,
+              "maxPauseMs": 7.895,
+              "windowMs": 1054.989
+            },
+            "heap": {
+              "before": {
+                "Documents": 16,
+                "Nodes": 1805,
+                "JSHeapUsedSize": 81220560,
+                "JSHeapTotalSize": 129093632
+              },
+              "after": {
+                "Documents": 16,
+                "Nodes": 2181,
+                "JSHeapUsedSize": 65366136,
+                "JSHeapTotalSize": 134598656
+              }
+            },
+            "contextLost": false,
+            "errors": []
+          },
+          {
+            "stage": "scorch",
+            "initial": {
+              "actors": 8,
+              "bots": 7,
+              "roster": [
+                "shooter",
+                "s3-saber-lite-02",
+                "s3-charger-keeper",
+                "s3-shooter-blaze-01",
+                "blaster",
+                "s3-shooter-triplemiddle-02",
+                "s3-blaster-lightlong",
+                "s3-stringer-normal-02"
+              ],
+              "native": true,
+              "sourceCharacters": 8,
+              "triangles": 133737,
+              "paintFaces": 45171,
+              "atlas": 2048,
+              "ppm": 4,
+              "settings": {
+                "sensitivity": 1,
+                "padSensitivity": 0,
+                "padInvertX": false,
+                "invertY": false,
+                "invertX": false,
+                "aimProfile": "tv",
+                "aimProfiles": {
+                  "tv": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  },
+                  "handheld": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  }
+                },
+                "fov": 82,
+                "quality": "low",
+                "frameRate": "auto",
+                "shadows": true,
+                "bloom": true,
+                "cameraShake": 1,
+                "showFps": false,
+                "master": 0.8,
+                "music": 0.6,
+                "sfx": 0.85,
+                "colorblind": false,
+                "minimap": false,
+                "matchLength": 180,
+                "difficulty": "normal",
+                "rumble": 1,
+                "aimAssist": 0,
+                "aimAssistMouse": false,
+                "lang": "ja",
+                "gyro": false,
+                "gyroSens": 0,
+                "gyroInvertX": false,
+                "gyroInvertY": false,
+                "touchSens": 0,
+                "fireAim": true,
+                "stickMode": "float",
+                "touchScale": 1,
+                "touchOpacity": 0.85,
+                "musicVolume": 0,
+                "audioVolume": 0,
+                "fovMode": "h",
+                "padSensitivityScale": "s3"
+              }
+            },
+            "frames": 300,
+            "hz": 60,
+            "ticks": 300,
+            "cpuFrameMs": {
+              "mean": 15.886999999995654,
+              "p50": 12.800000000279397,
+              "p95": 37,
+              "p99": 53.10000000009313,
+              "max": 54.200000000186265
+            },
+            "categories": {
+              "simulation.update": {
+                "msPerTick": 9.271666666651145,
+                "callsPerTick": 1
+              },
+              "actor.update": {
+                "msPerTick": 8.7113333333532,
+                "callsPerTick": 8
+              },
+              "character.update": {
+                "msPerTick": 6.7706666667278235,
+                "callsPerTick": 8
+              },
+              "character._applyPose": {
+                "msPerTick": 2.819000000002173,
+                "callsPerTick": 7.92
+              },
+              "motion.advance": {
+                "msPerTick": 2.7396666667284446,
+                "callsPerTick": 8
+              },
+              "hud.update": {
+                "msPerTick": 1.9519999999925495,
+                "callsPerTick": 1
+              },
+              "motion.applyBody": {
+                "msPerTick": 1.884666666678774,
+                "callsPerTick": 7.92
+              },
+              "paint.advanceSimulation": {
+                "msPerTick": 1.6223333333463719,
+                "callsPerTick": 1
+              },
+              "projectiles.update": {
+                "msPerTick": 1.5029999999996895,
+                "callsPerTick": 1
+              },
+              "physics.raycast": {
+                "msPerTick": 1.1499999999813735,
+                "callsPerTick": 265.68666666666667
+              },
+              "paint.splat": {
+                "msPerTick": 0.9813333333345751,
+                "callsPerTick": 1.21
+              },
+              "bvh.ray": {
+                "msPerTick": 0.8926666666256885,
+                "callsPerTick": 270.84
+              },
+              "paint._advanceSplatOwnership": {
+                "msPerTick": 0.8566666666402792,
+                "callsPerTick": 29.69333333333333
+              },
+              "fx.update": {
+                "msPerTick": 0.6079999999826153,
+                "callsPerTick": 1
+              },
+              "paint._emitGrowth": {
+                "msPerTick": 0.5446666666756694,
+                "callsPerTick": 31.99
+              },
+              "bot.update": {
+                "msPerTick": 0.5093333333078772,
+                "callsPerTick": 7
+              },
+              "motion.applyAccessories": {
+                "msPerTick": 0.4459999999978269,
+                "callsPerTick": 7.92
+              },
+              "character._buildPose": {
+                "msPerTick": 0.4019999999785796,
+                "callsPerTick": 7.92
+              },
+              "physics.groundProbe": {
+                "msPerTick": 0.37333333331005025,
+                "callsPerTick": 10.796666666666667
+              },
+              "paint._drawQuads": {
+                "msPerTick": 0.22200000001272807,
+                "callsPerTick": 2
+              },
+              "bvh.queryBox": {
+                "msPerTick": 0.179666666657043,
+                "callsPerTick": 15.973333333333333
+              },
+              "motion.bodyBalance": {
+                "msPerTick": 0.15366666666542492,
+                "callsPerTick": 6.6433333333333335
+              },
+              "physics.collideBody": {
+                "msPerTick": 0.1386666666561117,
+                "callsPerTick": 8
+              },
+              "paint.regionStats": {
+                "msPerTick": 0.1333333333224679,
+                "callsPerTick": 1.0966666666666667
+              },
+              "physics._nativeContacts": {
+                "msPerTick": 0.12766666665052373,
+                "callsPerTick": 8
+              },
+              "bvh.sweepSphere": {
+                "msPerTick": 0.1243333333497867,
+                "callsPerTick": 3.53
+              },
+              "character._updateMaterials": {
+                "msPerTick": 0.10600000000714015,
+                "callsPerTick": 8
+              },
+              "environment.update": {
+                "msPerTick": 0.07866666667629034,
+                "callsPerTick": 1
+              },
+              "motion.updateSquid": {
+                "msPerTick": 0.04333333332402011,
+                "callsPerTick": 8
+              },
+              "character._updateLod": {
+                "msPerTick": 0.021333333329918484,
+                "callsPerTick": 8
+              },
+              "physics.bodyFits": {
+                "msPerTick": 0.01766666666449358,
+                "callsPerTick": 1.2766666666666666
+              },
+              "nav.path": {
+                "msPerTick": 0.00466666666790843,
+                "callsPerTick": 0.023333333333333334
+              },
+              "render.shadow": {
+                "msPerTick": 0.0033333333364377418,
+                "callsPerTick": 1
+              },
+              "paint.flush": {
+                "msPerTick": 0.0016666666666666668,
+                "callsPerTick": 1
+              },
+              "nav.nearest": {
+                "msPerTick": 0.0006666666672875484,
+                "callsPerTick": 0.07
+              }
+            },
+            "bvh": {
+              "queries": 82311,
+              "triangleTests": 2151715
+            },
+            "counts": [
+              3841,
+              3523
+            ],
+            "digest": 3696202895,
+            "stateSequenceSha256": "bc3d06e21a9197424b148333beb2d9671873d9aeaa1e81d6699224396b9bfec1",
+            "draw": {
+              "frame": 439,
+              "calls": 1,
+              "triangles": 348,
+              "points": 0,
+              "lines": 0
+            },
+            "resources": {
+              "geometries": 310,
+              "textures": 36
+            },
+            "gc": {
+              "status": "observed",
+              "events": 20,
+              "pauses": 10,
+              "pauseMs": 11.382000000000001,
+              "maxPauseMs": 1.729,
+              "windowMs": 4774.449
+            },
+            "heap": {
+              "before": {
+                "Documents": 2,
+                "Nodes": 2226,
+                "JSHeapUsedSize": 151311372,
+                "JSHeapTotalSize": 220520448
+              },
+              "after": {
+                "Documents": 2,
+                "Nodes": 2422,
+                "JSHeapUsedSize": 172681164,
+                "JSHeapTotalSize": 232120320
+              }
+            },
+            "contextLost": false,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "id": "c2",
+        "sourceSha": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+        "contentHash": "c63d84b07deca488316b10a713a04e6c10fb28e0bc141145fa06e815e1083566",
+        "environment": {
+          "node": "v24.19.0",
+          "cpu": "AMD EPYC 9V74 80-Core Processor",
+          "logicalCpus": 5,
+          "quality": "low",
+          "viewport": [
+            960,
+            640
+          ],
+          "render": false,
+          "wrappers": true,
+          "browser": "151.0.7922.34"
+        },
+        "status": "passed",
+        "receiptSha256": "9d74d16201c74c96becc53bdcd2d82a65f9baba586ecf964e7d2c02803efe38f",
+        "scenarios": [
+          {
+            "stage": "tidewater",
+            "initial": {
+              "actors": 8,
+              "bots": 7,
+              "roster": [
+                "shooter",
+                "s3-saber-lite-02",
+                "s3-charger-keeper",
+                "s3-shooter-blaze-01",
+                "blaster",
+                "s3-shooter-triplemiddle-02",
+                "s3-blaster-lightlong",
+                "s3-stringer-normal-02"
+              ],
+              "native": false,
+              "sourceCharacters": 8,
+              "triangles": 0,
+              "paintFaces": 285,
+              "atlas": 2048,
+              "ppm": 12.895073280000002,
+              "settings": {
+                "sensitivity": 1,
+                "padSensitivity": 0,
+                "padInvertX": false,
+                "invertY": false,
+                "invertX": false,
+                "aimProfile": "tv",
+                "aimProfiles": {
+                  "tv": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  },
+                  "handheld": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  }
+                },
+                "fov": 82,
+                "quality": "low",
+                "frameRate": "auto",
+                "shadows": true,
+                "bloom": true,
+                "cameraShake": 1,
+                "showFps": false,
+                "master": 0.8,
+                "music": 0.6,
+                "sfx": 0.85,
+                "colorblind": false,
+                "minimap": false,
+                "matchLength": 180,
+                "difficulty": "normal",
+                "rumble": 1,
+                "aimAssist": 0,
+                "aimAssistMouse": false,
+                "lang": "ja",
+                "gyro": false,
+                "gyroSens": 0,
+                "gyroInvertX": false,
+                "gyroInvertY": false,
+                "touchSens": 0,
+                "fireAim": true,
+                "stickMode": "float",
+                "touchScale": 1,
+                "touchOpacity": 0.85,
+                "musicVolume": 0,
+                "audioVolume": 0,
+                "fovMode": "h",
+                "padSensitivityScale": "s3"
+              }
+            },
+            "frames": 300,
+            "hz": 60,
+            "ticks": 300,
+            "cpuFrameMs": {
+              "mean": 14.373666666674739,
+              "p50": 12.600000000093132,
+              "p95": 28.100000000093132,
+              "p99": 43.3000000002794,
+              "max": 44.60000000009313
+            },
+            "categories": {
+              "simulation.update": {
+                "msPerTick": 9.762666666652075,
+                "callsPerTick": 1
+              },
+              "actor.update": {
+                "msPerTick": 9.447666666650523,
+                "callsPerTick": 8
+              },
+              "character.update": {
+                "msPerTick": 7.157666666647419,
+                "callsPerTick": 8
+              },
+              "character._applyPose": {
+                "msPerTick": 2.856666666679084,
+                "callsPerTick": 7.59
+              },
+              "motion.advance": {
+                "msPerTick": 2.648333333292976,
+                "callsPerTick": 8
+              },
+              "hud.update": {
+                "msPerTick": 2.046333333346993,
+                "callsPerTick": 1
+              },
+              "motion.applyBody": {
+                "msPerTick": 1.7553333333786576,
+                "callsPerTick": 7.59
+              },
+              "projectiles.update": {
+                "msPerTick": 0.6653333333367482,
+                "callsPerTick": 1
+              },
+              "character._buildPose": {
+                "msPerTick": 0.604333333314086,
+                "callsPerTick": 7.59
+              },
+              "paint.advanceSimulation": {
+                "msPerTick": 0.5486666666700816,
+                "callsPerTick": 1
+              },
+              "motion.applyAccessories": {
+                "msPerTick": 0.4916666666418314,
+                "callsPerTick": 7.59
+              },
+              "fx.update": {
+                "msPerTick": 0.4846666666585952,
+                "callsPerTick": 1
+              },
+              "physics.raycast": {
+                "msPerTick": 0.3189999999928599,
+                "callsPerTick": 283.1433333333333
+              },
+              "bot.update": {
+                "msPerTick": 0.27800000000124175,
+                "callsPerTick": 7
+              },
+              "paint._drawQuads": {
+                "msPerTick": 0.23299999999348076,
+                "callsPerTick": 2
+              },
+              "paint._advanceSplatOwnership": {
+                "msPerTick": 0.22133333335164934,
+                "callsPerTick": 30.35333333333333
+              },
+              "paint.splat": {
+                "msPerTick": 0.15866666667473814,
+                "callsPerTick": 1.3866666666666667
+              },
+              "physics.groundProbe": {
+                "msPerTick": 0.13566666666573535,
+                "callsPerTick": 6.926666666666667
+              },
+              "motion.updateSquid": {
+                "msPerTick": 0.11799999998882413,
+                "callsPerTick": 8
+              },
+              "motion.bodyBalance": {
+                "msPerTick": 0.11699999999875824,
+                "callsPerTick": 4.036666666666667
+              },
+              "environment.update": {
+                "msPerTick": 0.06099999999782691,
+                "callsPerTick": 1
+              },
+              "paint._emitGrowth": {
+                "msPerTick": 0.05999999998758237,
+                "callsPerTick": 33.086666666666666
+              },
+              "nav.path": {
+                "msPerTick": 0.055,
+                "callsPerTick": 0.04
+              },
+              "character._updateMaterials": {
+                "msPerTick": 0.05166666666356226,
+                "callsPerTick": 8
+              },
+              "character._updateLod": {
+                "msPerTick": 0.025333333336748184,
+                "callsPerTick": 8
+              },
+              "physics.collideBody": {
+                "msPerTick": 0.02366666667163372,
+                "callsPerTick": 8
+              },
+              "paint.regionStats": {
+                "msPerTick": 0.015333333328987162,
+                "callsPerTick": 1.0233333333333334
+              },
+              "paint.flush": {
+                "msPerTick": 0.005000000003104408,
+                "callsPerTick": 1
+              },
+              "render.shadow": {
+                "msPerTick": 0.00466666666790843,
+                "callsPerTick": 1
+              },
+              "physics.bodyFits": {
+                "msPerTick": 0.0006666666672875484,
+                "callsPerTick": 0.06
+              },
+              "nav.nearest": {
+                "msPerTick": 0,
+                "callsPerTick": 0.08
+              }
+            },
+            "bvh": {
+              "queries": 0,
+              "triangleTests": 0
+            },
+            "counts": [
+              6336,
+              4333
+            ],
+            "digest": 1050084920,
+            "stateSequenceSha256": "8c19db1c5cc3e7b7c793ed963d4f1dc884a555412f91f9a5f30284add3ed1ab3",
+            "draw": {
+              "frame": 439,
+              "calls": 2,
+              "triangles": 88,
+              "points": 0,
+              "lines": 0
+            },
+            "resources": {
+              "geometries": 338,
+              "textures": 43
+            },
+            "gc": {
+              "status": "observed",
+              "events": 12,
+              "pauses": 6,
+              "pauseMs": 11.608999999999998,
+              "maxPauseMs": 3.055,
+              "windowMs": 4323.652
+            },
+            "heap": {
+              "before": {
+                "Documents": 2,
+                "Nodes": 2167,
+                "JSHeapUsedSize": 85903368,
+                "JSHeapTotalSize": 143618048
+              },
+              "after": {
+                "Documents": 2,
+                "Nodes": 2434,
+                "JSHeapUsedSize": 105773048,
+                "JSHeapTotalSize": 154378240
+              }
+            },
+            "contextLost": false,
+            "errors": []
+          },
+          {
+            "stage": "kelpline",
+            "initial": {
+              "actors": 8,
+              "bots": 7,
+              "roster": [
+                "shooter",
+                "s3-saber-lite-02",
+                "s3-charger-keeper",
+                "s3-shooter-blaze-01",
+                "blaster",
+                "s3-shooter-triplemiddle-02",
+                "s3-blaster-lightlong",
+                "s3-stringer-normal-02"
+              ],
+              "native": false,
+              "sourceCharacters": 8,
+              "triangles": 0,
+              "paintFaces": 307,
+              "atlas": 2048,
+              "ppm": 15.235200000000003,
+              "settings": {
+                "sensitivity": 1,
+                "padSensitivity": 0,
+                "padInvertX": false,
+                "invertY": false,
+                "invertX": false,
+                "aimProfile": "tv",
+                "aimProfiles": {
+                  "tv": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  },
+                  "handheld": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  }
+                },
+                "fov": 82,
+                "quality": "low",
+                "frameRate": "auto",
+                "shadows": true,
+                "bloom": true,
+                "cameraShake": 1,
+                "showFps": false,
+                "master": 0.8,
+                "music": 0.6,
+                "sfx": 0.85,
+                "colorblind": false,
+                "minimap": false,
+                "matchLength": 180,
+                "difficulty": "normal",
+                "rumble": 1,
+                "aimAssist": 0,
+                "aimAssistMouse": false,
+                "lang": "ja",
+                "gyro": false,
+                "gyroSens": 0,
+                "gyroInvertX": false,
+                "gyroInvertY": false,
+                "touchSens": 0,
+                "fireAim": true,
+                "stickMode": "float",
+                "touchScale": 1,
+                "touchOpacity": 0.85,
+                "musicVolume": 0,
+                "audioVolume": 0,
+                "fovMode": "h",
+                "padSensitivityScale": "s3"
+              }
+            },
+            "frames": 300,
+            "hz": 60,
+            "ticks": 300,
+            "cpuFrameMs": {
+              "mean": 13.665333333341405,
+              "p50": 12.100000000093132,
+              "p95": 27.09999999962747,
+              "p99": 32.700000000186265,
+              "max": 40.89999999990687
+            },
+            "categories": {
+              "simulation.update": {
+                "msPerTick": 9.135666666653318,
+                "callsPerTick": 1
+              },
+              "actor.update": {
+                "msPerTick": 8.881999999998758,
+                "callsPerTick": 8
+              },
+              "character.update": {
+                "msPerTick": 6.615666666616065,
+                "callsPerTick": 8
+              },
+              "character._applyPose": {
+                "msPerTick": 2.5753333332917343,
+                "callsPerTick": 7.72
+              },
+              "motion.advance": {
+                "msPerTick": 2.5426666666582847,
+                "callsPerTick": 8
+              },
+              "hud.update": {
+                "msPerTick": 1.8493333333373692,
+                "callsPerTick": 1
+              },
+              "motion.applyBody": {
+                "msPerTick": 1.6949999999968957,
+                "callsPerTick": 7.72
+              },
+              "projectiles.update": {
+                "msPerTick": 0.6493333333311603,
+                "callsPerTick": 1
+              },
+              "character._buildPose": {
+                "msPerTick": 0.6243333333513389,
+                "callsPerTick": 7.72
+              },
+              "paint.advanceSimulation": {
+                "msPerTick": 0.6120000000158324,
+                "callsPerTick": 1
+              },
+              "fx.update": {
+                "msPerTick": 0.5473333333339542,
+                "callsPerTick": 1
+              },
+              "motion.applyAccessories": {
+                "msPerTick": 0.3759999999807527,
+                "callsPerTick": 7.72
+              },
+              "paint._drawQuads": {
+                "msPerTick": 0.33100000000558794,
+                "callsPerTick": 2
+              },
+              "physics.raycast": {
+                "msPerTick": 0.29100000000558796,
+                "callsPerTick": 272.52666666666664
+              },
+              "bot.update": {
+                "msPerTick": 0.22166666666201004,
+                "callsPerTick": 7
+              },
+              "paint._advanceSplatOwnership": {
+                "msPerTick": 0.1866666666821887,
+                "callsPerTick": 31.47
+              },
+              "paint.splat": {
+                "msPerTick": 0.16333333334109434,
+                "callsPerTick": 1.46
+              },
+              "motion.bodyBalance": {
+                "msPerTick": 0.15066666667349637,
+                "callsPerTick": 4.44
+              },
+              "physics.groundProbe": {
+                "msPerTick": 0.10766666666915019,
+                "callsPerTick": 6.933333333333334
+              },
+              "motion.updateSquid": {
+                "msPerTick": 0.07400000000062089,
+                "callsPerTick": 8
+              },
+              "paint._emitGrowth": {
+                "msPerTick": 0.06733333332153658,
+                "callsPerTick": 34.36
+              },
+              "environment.update": {
+                "msPerTick": 0.05633333333923171,
+                "callsPerTick": 1
+              },
+              "character._updateMaterials": {
+                "msPerTick": 0.05566666667660077,
+                "callsPerTick": 8
+              },
+              "character._updateLod": {
+                "msPerTick": 0.025000000003104407,
+                "callsPerTick": 8
+              },
+              "physics.collideBody": {
+                "msPerTick": 0.024333333338921268,
+                "callsPerTick": 8
+              },
+              "paint.regionStats": {
+                "msPerTick": 0.014000000002173087,
+                "callsPerTick": 0.9533333333333334
+              },
+              "nav.path": {
+                "msPerTick": 0.008333333331781129,
+                "callsPerTick": 0.02666666666666667
+              },
+              "render.shadow": {
+                "msPerTick": 0.005999999997826914,
+                "callsPerTick": 1
+              },
+              "paint.flush": {
+                "msPerTick": 0.00433333333581686,
+                "callsPerTick": 1
+              },
+              "physics.bodyFits": {
+                "msPerTick": 0.0006666666672875484,
+                "callsPerTick": 0.19
+              },
+              "nav.nearest": {
+                "msPerTick": 0.0003333333320915699,
+                "callsPerTick": 0.05333333333333334
+              }
+            },
+            "bvh": {
+              "queries": 0,
+              "triangleTests": 0
+            },
+            "counts": [
+              6547,
+              4952
+            ],
+            "digest": 601268676,
+            "stateSequenceSha256": "1ed18c82f6f138945000117140dac5431ceacaff9822115365d3895e030ceb87",
+            "draw": {
+              "frame": 440,
+              "calls": 2,
+              "triangles": 134,
+              "points": 0,
+              "lines": 0
+            },
+            "resources": {
+              "geometries": 310,
+              "textures": 36
+            },
+            "gc": {
+              "status": "observed",
+              "events": 12,
+              "pauses": 6,
+              "pauseMs": 8.928,
+              "maxPauseMs": 2.141,
+              "windowMs": 4110.922
+            },
+            "heap": {
+              "before": {
+                "Documents": 2,
+                "Nodes": 2204,
+                "JSHeapUsedSize": 93489116,
+                "JSHeapTotalSize": 150413312
+              },
+              "after": {
+                "Documents": 2,
+                "Nodes": 2410,
+                "JSHeapUsedSize": 102754236,
+                "JSHeapTotalSize": 160206848
+              }
+            },
+            "contextLost": false,
+            "errors": []
+          },
+          {
+            "stage": "range",
+            "initial": {
+              "actors": 12,
+              "bots": 0,
+              "roster": [
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter"
+              ],
+              "native": false,
+              "sourceCharacters": 1,
+              "triangles": 0,
+              "paintFaces": 153,
+              "atlas": 2048,
+              "ppm": 18,
+              "settings": {
+                "sensitivity": 1,
+                "padSensitivity": 0,
+                "padInvertX": false,
+                "invertY": false,
+                "invertX": false,
+                "aimProfile": "tv",
+                "aimProfiles": {
+                  "tv": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  },
+                  "handheld": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  }
+                },
+                "fov": 82,
+                "quality": "low",
+                "frameRate": "auto",
+                "shadows": true,
+                "bloom": true,
+                "cameraShake": 1,
+                "showFps": false,
+                "master": 0.8,
+                "music": 0.6,
+                "sfx": 0.85,
+                "colorblind": false,
+                "minimap": false,
+                "matchLength": 180,
+                "difficulty": "normal",
+                "rumble": 1,
+                "aimAssist": 0,
+                "aimAssistMouse": false,
+                "lang": "ja",
+                "gyro": false,
+                "gyroSens": 0,
+                "gyroInvertX": false,
+                "gyroInvertY": false,
+                "touchSens": 0,
+                "fireAim": true,
+                "stickMode": "float",
+                "touchScale": 1,
+                "touchOpacity": 0.85,
+                "musicVolume": 0,
+                "audioVolume": 0,
+                "fovMode": "h",
+                "padSensitivityScale": "s3"
+              }
+            },
+            "frames": 300,
+            "hz": 60,
+            "ticks": 300,
+            "cpuFrameMs": {
+              "mean": 4.075333333327435,
+              "p50": 3.5,
+              "p95": 7,
+              "p99": 18.899999999906868,
+              "max": 42.39999999990687
+            },
+            "categories": {
+              "simulation.update": {
+                "msPerTick": 1.5300000000108653,
+                "callsPerTick": 1
+              },
+              "actor.update": {
+                "msPerTick": 1.5030000000043462,
+                "callsPerTick": 12
+              },
+              "hud.update": {
+                "msPerTick": 1.399000000008382,
+                "callsPerTick": 1
+              },
+              "character.update": {
+                "msPerTick": 0.9050000000015522,
+                "callsPerTick": 12
+              },
+              "character._applyPose": {
+                "msPerTick": 0.3786666666654249,
+                "callsPerTick": 1
+              },
+              "paint.advanceSimulation": {
+                "msPerTick": 0.36433333334357787,
+                "callsPerTick": 1
+              },
+              "motion.advance": {
+                "msPerTick": 0.27799999999968955,
+                "callsPerTick": 1
+              },
+              "projectiles.update": {
+                "msPerTick": 0.24933333333892127,
+                "callsPerTick": 1
+              },
+              "motion.applyBody": {
+                "msPerTick": 0.22066666666883974,
+                "callsPerTick": 1
+              },
+              "paint._advanceSplatOwnership": {
+                "msPerTick": 0.188333333353512,
+                "callsPerTick": 12.193333333333333
+              },
+              "paint._drawQuads": {
+                "msPerTick": 0.1309999999947225,
+                "callsPerTick": 2
+              },
+              "fx.update": {
+                "msPerTick": 0.09266666666138917,
+                "callsPerTick": 1
+              },
+              "character._buildPose": {
+                "msPerTick": 0.08833333333488554,
+                "callsPerTick": 1
+              },
+              "physics.raycast": {
+                "msPerTick": 0.08266666668001563,
+                "callsPerTick": 82.01333333333334
+              },
+              "environment.update": {
+                "msPerTick": 0.05233333333240201,
+                "callsPerTick": 1
+              },
+              "paint.splat": {
+                "msPerTick": 0.04933333332805584,
+                "callsPerTick": 0.47333333333333333
+              },
+              "motion.applyAccessories": {
+                "msPerTick": 0.046000000008692345,
+                "callsPerTick": 1
+              },
+              "paint._emitGrowth": {
+                "msPerTick": 0.02566666665952653,
+                "callsPerTick": 13.02
+              },
+              "physics.groundProbe": {
+                "msPerTick": 0.025,
+                "callsPerTick": 1.87
+              },
+              "motion.bodyBalance": {
+                "msPerTick": 0.012333333337058624,
+                "callsPerTick": 0.56
+              },
+              "character._updateMaterials": {
+                "msPerTick": 0.008666666665424903,
+                "callsPerTick": 1
+              },
+              "physics.collideBody": {
+                "msPerTick": 0.006333333333022892,
+                "callsPerTick": 2
+              },
+              "character._updateLod": {
+                "msPerTick": 0.004666666664804022,
+                "callsPerTick": 1
+              },
+              "render.shadow": {
+                "msPerTick": 0.002333333332402011,
+                "callsPerTick": 0.9733333333333334
+              },
+              "paint.flush": {
+                "msPerTick": 0.0016666666666666668,
+                "callsPerTick": 1
+              },
+              "motion.updateSquid": {
+                "msPerTick": 0.0010000000009313225,
+                "callsPerTick": 1
+              },
+              "physics.bodyFits": {
+                "msPerTick": 0,
+                "callsPerTick": 0.013333333333333334
+              }
+            },
+            "bvh": {
+              "queries": 0,
+              "triangleTests": 0
+            },
+            "counts": [
+              5151,
+              0
+            ],
+            "digest": 668749362,
+            "stateSequenceSha256": "95d175909b594fae2f5385c9e77ef82d09c23c188b09f74b4a475d13973b4497",
+            "draw": {
+              "frame": 469,
+              "calls": 1,
+              "triangles": 10,
+              "points": 0,
+              "lines": 0
+            },
+            "resources": {
+              "geometries": 259,
+              "textures": 22
+            },
+            "gc": {
+              "status": "observed",
+              "events": 8,
+              "pauses": 4,
+              "pauseMs": 19.693,
+              "maxPauseMs": 13.426,
+              "windowMs": 1228.886
+            },
+            "heap": {
+              "before": {
+                "Documents": 16,
+                "Nodes": 1728,
+                "JSHeapUsedSize": 89642748,
+                "JSHeapTotalSize": 139120640
+              },
+              "after": {
+                "Documents": 9,
+                "Nodes": 1964,
+                "JSHeapUsedSize": 66876912,
+                "JSHeapTotalSize": 134414336
+              }
+            },
+            "contextLost": false,
+            "errors": []
+          },
+          {
+            "stage": "scorch",
+            "initial": {
+              "actors": 8,
+              "bots": 7,
+              "roster": [
+                "shooter",
+                "s3-saber-lite-02",
+                "s3-charger-keeper",
+                "s3-shooter-blaze-01",
+                "blaster",
+                "s3-shooter-triplemiddle-02",
+                "s3-blaster-lightlong",
+                "s3-stringer-normal-02"
+              ],
+              "native": true,
+              "sourceCharacters": 8,
+              "triangles": 133737,
+              "paintFaces": 45171,
+              "atlas": 2048,
+              "ppm": 4,
+              "settings": {
+                "sensitivity": 1,
+                "padSensitivity": 0,
+                "padInvertX": false,
+                "invertY": false,
+                "invertX": false,
+                "aimProfile": "tv",
+                "aimProfiles": {
+                  "tv": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  },
+                  "handheld": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  }
+                },
+                "fov": 82,
+                "quality": "low",
+                "frameRate": "auto",
+                "shadows": true,
+                "bloom": true,
+                "cameraShake": 1,
+                "showFps": false,
+                "master": 0.8,
+                "music": 0.6,
+                "sfx": 0.85,
+                "colorblind": false,
+                "minimap": false,
+                "matchLength": 180,
+                "difficulty": "normal",
+                "rumble": 1,
+                "aimAssist": 0,
+                "aimAssistMouse": false,
+                "lang": "ja",
+                "gyro": false,
+                "gyroSens": 0,
+                "gyroInvertX": false,
+                "gyroInvertY": false,
+                "touchSens": 0,
+                "fireAim": true,
+                "stickMode": "float",
+                "touchScale": 1,
+                "touchOpacity": 0.85,
+                "musicVolume": 0,
+                "audioVolume": 0,
+                "fovMode": "h",
+                "padSensitivityScale": "s3"
+              }
+            },
+            "frames": 300,
+            "hz": 60,
+            "ticks": 300,
+            "cpuFrameMs": {
+              "mean": 17.53700000000807,
+              "p50": 14.400000000372529,
+              "p95": 40,
+              "p99": 49.89999999990687,
+              "max": 65.39999999990687
+            },
+            "categories": {
+              "simulation.update": {
+                "msPerTick": 10.725333333341405,
+                "callsPerTick": 1
+              },
+              "actor.update": {
+                "msPerTick": 10.092333333349476,
+                "callsPerTick": 8
+              },
+              "character.update": {
+                "msPerTick": 7.517666666715717,
+                "callsPerTick": 8
+              },
+              "motion.advance": {
+                "msPerTick": 3.15000000002794,
+                "callsPerTick": 8
+              },
+              "character._applyPose": {
+                "msPerTick": 3.0276666666846723,
+                "callsPerTick": 7.92
+              },
+              "hud.update": {
+                "msPerTick": 2.2429999999903765,
+                "callsPerTick": 1
+              },
+              "motion.applyBody": {
+                "msPerTick": 2.078666666653007,
+                "callsPerTick": 7.92
+              },
+              "paint.advanceSimulation": {
+                "msPerTick": 1.6123333333370586,
+                "callsPerTick": 1
+              },
+              "projectiles.update": {
+                "msPerTick": 1.5396666666725651,
+                "callsPerTick": 1
+              },
+              "physics.raycast": {
+                "msPerTick": 1.3000000000015521,
+                "callsPerTick": 265.68666666666667
+              },
+              "bvh.ray": {
+                "msPerTick": 0.9716666666604579,
+                "callsPerTick": 270.84
+              },
+              "paint.splat": {
+                "msPerTick": 0.9446666666523864,
+                "callsPerTick": 1.21
+              },
+              "paint._advanceSplatOwnership": {
+                "msPerTick": 0.8033333333333333,
+                "callsPerTick": 29.69333333333333
+              },
+              "fx.update": {
+                "msPerTick": 0.5689999999944121,
+                "callsPerTick": 1
+              },
+              "bot.update": {
+                "msPerTick": 0.560666666662631,
+                "callsPerTick": 7
+              },
+              "paint._emitGrowth": {
+                "msPerTick": 0.544666666649282,
+                "callsPerTick": 31.99
+              },
+              "motion.applyAccessories": {
+                "msPerTick": 0.44600000001490114,
+                "callsPerTick": 7.92
+              },
+              "physics.groundProbe": {
+                "msPerTick": 0.4433333333473032,
+                "callsPerTick": 10.796666666666667
+              },
+              "character._buildPose": {
+                "msPerTick": 0.4093333333016684,
+                "callsPerTick": 7.92
+              },
+              "paint._drawQuads": {
+                "msPerTick": 0.2566666666806365,
+                "callsPerTick": 2
+              },
+              "motion.bodyBalance": {
+                "msPerTick": 0.2116666666759799,
+                "callsPerTick": 6.6433333333333335
+              },
+              "bvh.queryBox": {
+                "msPerTick": 0.16533333333364378,
+                "callsPerTick": 15.973333333333333
+              },
+              "physics.collideBody": {
+                "msPerTick": 0.12699999999875825,
+                "callsPerTick": 8
+              },
+              "bvh.sweepSphere": {
+                "msPerTick": 0.11833333333798994,
+                "callsPerTick": 3.53
+              },
+              "physics._nativeContacts": {
+                "msPerTick": 0.11666666666356226,
+                "callsPerTick": 8
+              },
+              "paint.regionStats": {
+                "msPerTick": 0.0976666666722546,
+                "callsPerTick": 1.0966666666666667
+              },
+              "motion.updateSquid": {
+                "msPerTick": 0.08233333333240202,
+                "callsPerTick": 8
+              },
+              "environment.update": {
+                "msPerTick": 0.0793333333171904,
+                "callsPerTick": 1
+              },
+              "character._updateMaterials": {
+                "msPerTick": 0.04366666667939474,
+                "callsPerTick": 8
+              },
+              "physics.bodyFits": {
+                "msPerTick": 0.02166666666511446,
+                "callsPerTick": 1.2766666666666666
+              },
+              "character._updateLod": {
+                "msPerTick": 0.01799999999658515,
+                "callsPerTick": 8
+              },
+              "paint.flush": {
+                "msPerTick": 0.009666666666356226,
+                "callsPerTick": 1
+              },
+              "render.shadow": {
+                "msPerTick": 0.005000000001552205,
+                "callsPerTick": 1
+              },
+              "nav.path": {
+                "msPerTick": 0.002999999998137355,
+                "callsPerTick": 0.023333333333333334
+              },
+              "nav.nearest": {
+                "msPerTick": 0,
+                "callsPerTick": 0.07
+              }
+            },
+            "bvh": {
+              "queries": 82311,
+              "triangleTests": 2151715
+            },
+            "counts": [
+              3841,
+              3523
+            ],
+            "digest": 3696202895,
+            "stateSequenceSha256": "bc3d06e21a9197424b148333beb2d9671873d9aeaa1e81d6699224396b9bfec1",
+            "draw": {
+              "frame": 439,
+              "calls": 1,
+              "triangles": 348,
+              "points": 0,
+              "lines": 0
+            },
+            "resources": {
+              "geometries": 310,
+              "textures": 36
+            },
+            "gc": {
+              "status": "observed",
+              "events": 22,
+              "pauses": 11,
+              "pauseMs": 27.19,
+              "maxPauseMs": 7.444,
+              "windowMs": 5270.882
+            },
+            "heap": {
+              "before": {
+                "Documents": 2,
+                "Nodes": 2182,
+                "JSHeapUsedSize": 174128848,
+                "JSHeapTotalSize": 222269440
+              },
+              "after": {
+                "Documents": 2,
+                "Nodes": 2358,
+                "JSHeapUsedSize": 163836664,
+                "JSHeapTotalSize": 233193472
+              }
+            },
+            "contextLost": false,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "id": "cb",
+        "sourceSha": "1ebfb8e79b9b3271ec6a733ee1d68a07a5828d43",
+        "contentHash": "3daa2db28693e61b777d30f54ccac73b5fd0567a5db18894916a7f426e6da18b",
+        "environment": {
+          "node": "v24.19.0",
+          "cpu": "AMD EPYC 9V74 80-Core Processor",
+          "logicalCpus": 5,
+          "quality": "low",
+          "viewport": [
+            960,
+            640
+          ],
+          "render": false,
+          "wrappers": true,
+          "browser": "151.0.7922.34"
+        },
+        "status": "passed",
+        "receiptSha256": "69c82fea28e74cc021bb6c6d9aed359e18d647539bbe24efd57b62fa8948e52e",
+        "scenarios": [
+          {
+            "stage": "tidewater",
+            "initial": {
+              "actors": 8,
+              "bots": 7,
+              "roster": [
+                "shooter",
+                "s3-saber-lite-02",
+                "s3-charger-keeper",
+                "s3-shooter-blaze-01",
+                "blaster",
+                "s3-shooter-triplemiddle-02",
+                "s3-blaster-lightlong",
+                "s3-stringer-normal-02"
+              ],
+              "native": false,
+              "sourceCharacters": 8,
+              "triangles": 0,
+              "paintFaces": 285,
+              "atlas": 2048,
+              "ppm": 12.895073280000002,
+              "settings": {
+                "sensitivity": 1,
+                "padSensitivity": 0,
+                "padInvertX": false,
+                "invertY": false,
+                "invertX": false,
+                "aimProfile": "tv",
+                "aimProfiles": {
+                  "tv": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  },
+                  "handheld": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  }
+                },
+                "fov": 82,
+                "quality": "low",
+                "frameRate": "auto",
+                "shadows": true,
+                "bloom": true,
+                "cameraShake": 1,
+                "showFps": false,
+                "master": 0.8,
+                "music": 0.6,
+                "sfx": 0.85,
+                "colorblind": false,
+                "minimap": false,
+                "matchLength": 180,
+                "difficulty": "normal",
+                "rumble": 1,
+                "aimAssist": 0,
+                "aimAssistMouse": false,
+                "lang": "ja",
+                "gyro": false,
+                "gyroSens": 0,
+                "gyroInvertX": false,
+                "gyroInvertY": false,
+                "touchSens": 0,
+                "fireAim": true,
+                "stickMode": "float",
+                "touchScale": 1,
+                "touchOpacity": 0.85,
+                "musicVolume": 0,
+                "audioVolume": 0,
+                "fovMode": "h",
+                "padSensitivityScale": "s3"
+              }
+            },
+            "frames": 300,
+            "hz": 60,
+            "ticks": 300,
+            "cpuFrameMs": {
+              "mean": 11.621666666663563,
+              "p50": 10.300000000279397,
+              "p95": 24.100000000093132,
+              "p99": 29.200000000186265,
+              "max": 46.3000000002794
+            },
+            "categories": {
+              "simulation.update": {
+                "msPerTick": 7.815333333347613,
+                "callsPerTick": 1
+              },
+              "actor.update": {
+                "msPerTick": 7.511999999994102,
+                "callsPerTick": 8
+              },
+              "character.update": {
+                "msPerTick": 5.644666666686535,
+                "callsPerTick": 8
+              },
+              "motion.advance": {
+                "msPerTick": 2.2550000000108654,
+                "callsPerTick": 8
+              },
+              "character._applyPose": {
+                "msPerTick": 2.055666666713854,
+                "callsPerTick": 7.59
+              },
+              "hud.update": {
+                "msPerTick": 1.6773333333370586,
+                "callsPerTick": 1
+              },
+              "motion.applyBody": {
+                "msPerTick": 1.3463333333438883,
+                "callsPerTick": 7.59
+              },
+              "projectiles.update": {
+                "msPerTick": 0.596333333326814,
+                "callsPerTick": 1
+              },
+              "character._buildPose": {
+                "msPerTick": 0.4826666666458671,
+                "callsPerTick": 7.59
+              },
+              "fx.update": {
+                "msPerTick": 0.44933333332650366,
+                "callsPerTick": 1
+              },
+              "paint.advanceSimulation": {
+                "msPerTick": 0.4440000000052775,
+                "callsPerTick": 1
+              },
+              "motion.applyAccessories": {
+                "msPerTick": 0.3173333333541329,
+                "callsPerTick": 7.59
+              },
+              "bot.update": {
+                "msPerTick": 0.27100000000869234,
+                "callsPerTick": 7
+              },
+              "physics.raycast": {
+                "msPerTick": 0.24133333334388832,
+                "callsPerTick": 283.1433333333333
+              },
+              "paint._drawQuads": {
+                "msPerTick": 0.23599999999937912,
+                "callsPerTick": 2
+              },
+              "paint._advanceSplatOwnership": {
+                "msPerTick": 0.1436666666685293,
+                "callsPerTick": 30.35333333333333
+              },
+              "motion.updateSquid": {
+                "msPerTick": 0.1259999999947225,
+                "callsPerTick": 8
+              },
+              "paint.splat": {
+                "msPerTick": 0.12166666666666667,
+                "callsPerTick": 1.3866666666666667
+              },
+              "character._updateMaterials": {
+                "msPerTick": 0.07266666664741933,
+                "callsPerTick": 8
+              },
+              "physics.groundProbe": {
+                "msPerTick": 0.06999999999379118,
+                "callsPerTick": 6.926666666666667
+              },
+              "motion.bodyBalance": {
+                "msPerTick": 0.06600000000403573,
+                "callsPerTick": 4.036666666666667
+              },
+              "environment.update": {
+                "msPerTick": 0.04599999999627471,
+                "callsPerTick": 1
+              },
+              "paint._emitGrowth": {
+                "msPerTick": 0.04433333333116025,
+                "callsPerTick": 33.086666666666666
+              },
+              "nav.path": {
+                "msPerTick": 0.03433333333271245,
+                "callsPerTick": 0.04
+              },
+              "physics.collideBody": {
+                "msPerTick": 0.02266666666759799,
+                "callsPerTick": 8
+              },
+              "character._updateLod": {
+                "msPerTick": 0.019333333332712452,
+                "callsPerTick": 8
+              },
+              "paint.regionStats": {
+                "msPerTick": 0.011666666666666667,
+                "callsPerTick": 1.0233333333333334
+              },
+              "render.shadow": {
+                "msPerTick": 0.005,
+                "callsPerTick": 1
+              },
+              "paint.flush": {
+                "msPerTick": 0.003999999999068677,
+                "callsPerTick": 1
+              },
+              "physics.bodyFits": {
+                "msPerTick": 0.0003333333336437742,
+                "callsPerTick": 0.06
+              },
+              "nav.nearest": {
+                "msPerTick": 0,
+                "callsPerTick": 0.08
+              }
+            },
+            "bvh": {
+              "queries": 0,
+              "triangleTests": 0
+            },
+            "counts": [
+              6336,
+              4333
+            ],
+            "digest": 1050084920,
+            "stateSequenceSha256": "8c19db1c5cc3e7b7c793ed963d4f1dc884a555412f91f9a5f30284add3ed1ab3",
+            "draw": {
+              "frame": 439,
+              "calls": 2,
+              "triangles": 88,
+              "points": 0,
+              "lines": 0
+            },
+            "resources": {
+              "geometries": 323,
+              "textures": 44
+            },
+            "gc": {
+              "status": "observed",
+              "events": 12,
+              "pauses": 6,
+              "pauseMs": 11.276,
+              "maxPauseMs": 3.451,
+              "windowMs": 3493.221
+            },
+            "heap": {
+              "before": {
+                "Documents": 2,
+                "Nodes": 1864,
+                "JSHeapUsedSize": 91398596,
+                "JSHeapTotalSize": 147783680
+              },
+              "after": {
+                "Documents": 2,
+                "Nodes": 2121,
+                "JSHeapUsedSize": 77452240,
+                "JSHeapTotalSize": 155062272
+              }
+            },
+            "contextLost": false,
+            "errors": []
+          },
+          {
+            "stage": "kelpline",
+            "initial": {
+              "actors": 8,
+              "bots": 7,
+              "roster": [
+                "shooter",
+                "s3-saber-lite-02",
+                "s3-charger-keeper",
+                "s3-shooter-blaze-01",
+                "blaster",
+                "s3-shooter-triplemiddle-02",
+                "s3-blaster-lightlong",
+                "s3-stringer-normal-02"
+              ],
+              "native": false,
+              "sourceCharacters": 8,
+              "triangles": 0,
+              "paintFaces": 307,
+              "atlas": 2048,
+              "ppm": 15.235200000000003,
+              "settings": {
+                "sensitivity": 1,
+                "padSensitivity": 0,
+                "padInvertX": false,
+                "invertY": false,
+                "invertX": false,
+                "aimProfile": "tv",
+                "aimProfiles": {
+                  "tv": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  },
+                  "handheld": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  }
+                },
+                "fov": 82,
+                "quality": "low",
+                "frameRate": "auto",
+                "shadows": true,
+                "bloom": true,
+                "cameraShake": 1,
+                "showFps": false,
+                "master": 0.8,
+                "music": 0.6,
+                "sfx": 0.85,
+                "colorblind": false,
+                "minimap": false,
+                "matchLength": 180,
+                "difficulty": "normal",
+                "rumble": 1,
+                "aimAssist": 0,
+                "aimAssistMouse": false,
+                "lang": "ja",
+                "gyro": false,
+                "gyroSens": 0,
+                "gyroInvertX": false,
+                "gyroInvertY": false,
+                "touchSens": 0,
+                "fireAim": true,
+                "stickMode": "float",
+                "touchScale": 1,
+                "touchOpacity": 0.85,
+                "musicVolume": 0,
+                "audioVolume": 0,
+                "fovMode": "h",
+                "padSensitivityScale": "s3"
+              }
+            },
+            "frames": 300,
+            "hz": 60,
+            "ticks": 300,
+            "cpuFrameMs": {
+              "mean": 11.984333333329609,
+              "p50": 10.299999999813735,
+              "p95": 25.699999999720603,
+              "p99": 34.5,
+              "max": 42.1999999997206
+            },
+            "categories": {
+              "simulation.update": {
+                "msPerTick": 7.98399999999286,
+                "callsPerTick": 1
+              },
+              "actor.update": {
+                "msPerTick": 7.693666666671634,
+                "callsPerTick": 8
+              },
+              "character.update": {
+                "msPerTick": 6.03533333328863,
+                "callsPerTick": 8
+              },
+              "character._applyPose": {
+                "msPerTick": 2.5673333333261934,
+                "callsPerTick": 7.72
+              },
+              "motion.advance": {
+                "msPerTick": 2.2236666666762903,
+                "callsPerTick": 8
+              },
+              "motion.applyBody": {
+                "msPerTick": 1.7173333333743115,
+                "callsPerTick": 7.72
+              },
+              "hud.update": {
+                "msPerTick": 1.5606666666766007,
+                "callsPerTick": 1
+              },
+              "fx.update": {
+                "msPerTick": 0.6209999999807526,
+                "callsPerTick": 1
+              },
+              "projectiles.update": {
+                "msPerTick": 0.6003333333553746,
+                "callsPerTick": 1
+              },
+              "paint.advanceSimulation": {
+                "msPerTick": 0.5033333333240201,
+                "callsPerTick": 1
+              },
+              "character._buildPose": {
+                "msPerTick": 0.42199999997702736,
+                "callsPerTick": 7.72
+              },
+              "motion.applyAccessories": {
+                "msPerTick": 0.3099999999891346,
+                "callsPerTick": 7.72
+              },
+              "physics.raycast": {
+                "msPerTick": 0.2933333333286767,
+                "callsPerTick": 272.52666666666664
+              },
+              "paint._drawQuads": {
+                "msPerTick": 0.27100000001955776,
+                "callsPerTick": 2
+              },
+              "bot.update": {
+                "msPerTick": 0.19499999998447795,
+                "callsPerTick": 7
+              },
+              "paint._advanceSplatOwnership": {
+                "msPerTick": 0.14266666664897154,
+                "callsPerTick": 31.47
+              },
+              "paint.splat": {
+                "msPerTick": 0.13466666667566946,
+                "callsPerTick": 1.46
+              },
+              "motion.updateSquid": {
+                "msPerTick": 0.08166666666045785,
+                "callsPerTick": 8
+              },
+              "motion.bodyBalance": {
+                "msPerTick": 0.08033333334606141,
+                "callsPerTick": 4.44
+              },
+              "physics.groundProbe": {
+                "msPerTick": 0.06133333332060526,
+                "callsPerTick": 6.933333333333334
+              },
+              "paint._emitGrowth": {
+                "msPerTick": 0.059333333323399226,
+                "callsPerTick": 34.36
+              },
+              "environment.update": {
+                "msPerTick": 0.05533333333209157,
+                "callsPerTick": 1
+              },
+              "character._updateMaterials": {
+                "msPerTick": 0.039666666660147405,
+                "callsPerTick": 8
+              },
+              "character._updateLod": {
+                "msPerTick": 0.02166666667132328,
+                "callsPerTick": 8
+              },
+              "physics.collideBody": {
+                "msPerTick": 0.020333333330539365,
+                "callsPerTick": 8
+              },
+              "nav.path": {
+                "msPerTick": 0.01,
+                "callsPerTick": 0.02666666666666667
+              },
+              "paint.regionStats": {
+                "msPerTick": 0.00866666667163372,
+                "callsPerTick": 0.9533333333333334
+              },
+              "render.shadow": {
+                "msPerTick": 0.004000000002173086,
+                "callsPerTick": 1
+              },
+              "paint.flush": {
+                "msPerTick": 0.0036666666654249034,
+                "callsPerTick": 1
+              },
+              "physics.bodyFits": {
+                "msPerTick": 0,
+                "callsPerTick": 0.19
+              },
+              "nav.nearest": {
+                "msPerTick": 0,
+                "callsPerTick": 0.05333333333333334
+              }
+            },
+            "bvh": {
+              "queries": 0,
+              "triangleTests": 0
+            },
+            "counts": [
+              6547,
+              4952
+            ],
+            "digest": 601268676,
+            "stateSequenceSha256": "1ed18c82f6f138945000117140dac5431ceacaff9822115365d3895e030ceb87",
+            "draw": {
+              "frame": 440,
+              "calls": 2,
+              "triangles": 134,
+              "points": 0,
+              "lines": 0
+            },
+            "resources": {
+              "geometries": 295,
+              "textures": 37
+            },
+            "gc": {
+              "status": "observed",
+              "events": 12,
+              "pauses": 6,
+              "pauseMs": 13.953999999999999,
+              "maxPauseMs": 5.162,
+              "windowMs": 3610.957
+            },
+            "heap": {
+              "before": {
+                "Documents": 2,
+                "Nodes": 2056,
+                "JSHeapUsedSize": 88466072,
+                "JSHeapTotalSize": 147386368
+              },
+              "after": {
+                "Documents": 2,
+                "Nodes": 2259,
+                "JSHeapUsedSize": 102824240,
+                "JSHeapTotalSize": 155992064
+              }
+            },
+            "contextLost": false,
+            "errors": []
+          },
+          {
+            "stage": "range",
+            "initial": {
+              "actors": 12,
+              "bots": 0,
+              "roster": [
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter",
+                "shooter"
+              ],
+              "native": false,
+              "sourceCharacters": 1,
+              "triangles": 0,
+              "paintFaces": 153,
+              "atlas": 2048,
+              "ppm": 18,
+              "settings": {
+                "sensitivity": 1,
+                "padSensitivity": 0,
+                "padInvertX": false,
+                "invertY": false,
+                "invertX": false,
+                "aimProfile": "tv",
+                "aimProfiles": {
+                  "tv": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  },
+                  "handheld": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  }
+                },
+                "fov": 82,
+                "quality": "low",
+                "frameRate": "auto",
+                "shadows": true,
+                "bloom": true,
+                "cameraShake": 1,
+                "showFps": false,
+                "master": 0.8,
+                "music": 0.6,
+                "sfx": 0.85,
+                "colorblind": false,
+                "minimap": false,
+                "matchLength": 180,
+                "difficulty": "normal",
+                "rumble": 1,
+                "aimAssist": 0,
+                "aimAssistMouse": false,
+                "lang": "ja",
+                "gyro": false,
+                "gyroSens": 0,
+                "gyroInvertX": false,
+                "gyroInvertY": false,
+                "touchSens": 0,
+                "fireAim": true,
+                "stickMode": "float",
+                "touchScale": 1,
+                "touchOpacity": 0.85,
+                "musicVolume": 0,
+                "audioVolume": 0,
+                "fovMode": "h",
+                "padSensitivityScale": "s3"
+              }
+            },
+            "frames": 300,
+            "hz": 60,
+            "ticks": 300,
+            "cpuFrameMs": {
+              "mean": 5.523333333327124,
+              "p50": 4.600000000093132,
+              "p95": 12.600000000093132,
+              "p99": 26.299999999813735,
+              "max": 32.89999999990687
+            },
+            "categories": {
+              "simulation.update": {
+                "msPerTick": 2.2756666666533176,
+                "callsPerTick": 1
+              },
+              "actor.update": {
+                "msPerTick": 2.2369999999925496,
+                "callsPerTick": 12
+              },
+              "hud.update": {
+                "msPerTick": 1.6379999999919286,
+                "callsPerTick": 1
+              },
+              "character.update": {
+                "msPerTick": 1.428666666657664,
+                "callsPerTick": 12
+              },
+              "character._applyPose": {
+                "msPerTick": 0.6660000000102445,
+                "callsPerTick": 1
+              },
+              "paint.advanceSimulation": {
+                "msPerTick": 0.4890000000176951,
+                "callsPerTick": 1
+              },
+              "motion.advance": {
+                "msPerTick": 0.444999999984478,
+                "callsPerTick": 1
+              },
+              "projectiles.update": {
+                "msPerTick": 0.3726666666707024,
+                "callsPerTick": 1
+              },
+              "motion.applyBody": {
+                "msPerTick": 0.3456666666843618,
+                "callsPerTick": 1
+              },
+              "paint._advanceSplatOwnership": {
+                "msPerTick": 0.2540000000068297,
+                "callsPerTick": 12.193333333333333
+              },
+              "paint._drawQuads": {
+                "msPerTick": 0.17166666666977107,
+                "callsPerTick": 2
+              },
+              "fx.update": {
+                "msPerTick": 0.16999999998758236,
+                "callsPerTick": 1
+              },
+              "character._buildPose": {
+                "msPerTick": 0.13033333333053937,
+                "callsPerTick": 1
+              },
+              "motion.applyAccessories": {
+                "msPerTick": 0.11933333333116025,
+                "callsPerTick": 1
+              },
+              "physics.raycast": {
+                "msPerTick": 0.10933333334513008,
+                "callsPerTick": 82.01333333333334
+              },
+              "paint.splat": {
+                "msPerTick": 0.06866666665921609,
+                "callsPerTick": 0.47333333333333333
+              },
+              "environment.update": {
+                "msPerTick": 0.058666666659216084,
+                "callsPerTick": 1
+              },
+              "paint._emitGrowth": {
+                "msPerTick": 0.03633333333147069,
+                "callsPerTick": 13.02
+              },
+              "physics.groundProbe": {
+                "msPerTick": 0.025333333335195978,
+                "callsPerTick": 1.87
+              },
+              "motion.bodyBalance": {
+                "msPerTick": 0.022999999993480742,
+                "callsPerTick": 0.56
+              },
+              "physics.collideBody": {
+                "msPerTick": 0.013999999997516473,
+                "callsPerTick": 2
+              },
+              "character._updateMaterials": {
+                "msPerTick": 0.009666666666356226,
+                "callsPerTick": 1
+              },
+              "character._updateLod": {
+                "msPerTick": 0.007666666667597989,
+                "callsPerTick": 1
+              },
+              "render.shadow": {
+                "msPerTick": 0.005000000004656613,
+                "callsPerTick": 0.9733333333333334
+              },
+              "paint.flush": {
+                "msPerTick": 0.004333333334264656,
+                "callsPerTick": 1
+              },
+              "motion.updateSquid": {
+                "msPerTick": 0.0006666666672875484,
+                "callsPerTick": 1
+              },
+              "physics.bodyFits": {
+                "msPerTick": 0,
+                "callsPerTick": 0.013333333333333334
+              }
+            },
+            "bvh": {
+              "queries": 0,
+              "triangleTests": 0
+            },
+            "counts": [
+              5151,
+              0
+            ],
+            "digest": 668749362,
+            "stateSequenceSha256": "95d175909b594fae2f5385c9e77ef82d09c23c188b09f74b4a475d13973b4497",
+            "draw": {
+              "frame": 469,
+              "calls": 1,
+              "triangles": 10,
+              "points": 0,
+              "lines": 0
+            },
+            "resources": {
+              "geometries": 274,
+              "textures": 21
+            },
+            "gc": {
+              "status": "observed",
+              "events": 6,
+              "pauses": 3,
+              "pauseMs": 5.161,
+              "maxPauseMs": 2.669,
+              "windowMs": 1673.159
+            },
+            "heap": {
+              "before": {
+                "Documents": 16,
+                "Nodes": 1720,
+                "JSHeapUsedSize": 77195060,
+                "JSHeapTotalSize": 129355776
+              },
+              "after": {
+                "Documents": 16,
+                "Nodes": 2096,
+                "JSHeapUsedSize": 61364144,
+                "JSHeapTotalSize": 132501504
+              }
+            },
+            "contextLost": false,
+            "errors": []
+          },
+          {
+            "stage": "scorch",
+            "initial": {
+              "actors": 8,
+              "bots": 7,
+              "roster": [
+                "shooter",
+                "s3-saber-lite-02",
+                "s3-charger-keeper",
+                "s3-shooter-blaze-01",
+                "blaster",
+                "s3-shooter-triplemiddle-02",
+                "s3-blaster-lightlong",
+                "s3-stringer-normal-02"
+              ],
+              "native": true,
+              "sourceCharacters": 8,
+              "triangles": 133737,
+              "paintFaces": 45171,
+              "atlas": 2048,
+              "ppm": 4,
+              "settings": {
+                "sensitivity": 1,
+                "padSensitivity": 0,
+                "padInvertX": false,
+                "invertY": false,
+                "invertX": false,
+                "aimProfile": "tv",
+                "aimProfiles": {
+                  "tv": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  },
+                  "handheld": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  }
+                },
+                "fov": 82,
+                "quality": "low",
+                "frameRate": "auto",
+                "shadows": true,
+                "bloom": true,
+                "cameraShake": 1,
+                "showFps": false,
+                "master": 0.8,
+                "music": 0.6,
+                "sfx": 0.85,
+                "colorblind": false,
+                "minimap": false,
+                "matchLength": 180,
+                "difficulty": "normal",
+                "rumble": 1,
+                "aimAssist": 0,
+                "aimAssistMouse": false,
+                "lang": "ja",
+                "gyro": false,
+                "gyroSens": 0,
+                "gyroInvertX": false,
+                "gyroInvertY": false,
+                "touchSens": 0,
+                "fireAim": true,
+                "stickMode": "float",
+                "touchScale": 1,
+                "touchOpacity": 0.85,
+                "musicVolume": 0,
+                "audioVolume": 0,
+                "fovMode": "h",
+                "padSensitivityScale": "s3"
+              }
+            },
+            "frames": 300,
+            "hz": 60,
+            "ticks": 300,
+            "cpuFrameMs": {
+              "mean": 32.265333333332094,
+              "p50": 27.600000000093132,
+              "p95": 63.10000000009313,
+              "p99": 86.20000000018626,
+              "max": 113.10000000009313
+            },
+            "categories": {
+              "simulation.update": {
+                "msPerTick": 18.8736666666825,
+                "callsPerTick": 1
+              },
+              "actor.update": {
+                "msPerTick": 17.750000000004658,
+                "callsPerTick": 8
+              },
+              "character.update": {
+                "msPerTick": 13.491000000010244,
+                "callsPerTick": 8
+              },
+              "character._applyPose": {
+                "msPerTick": 5.656333333342336,
+                "callsPerTick": 7.92
+              },
+              "motion.advance": {
+                "msPerTick": 4.956666666658905,
+                "callsPerTick": 8
+              },
+              "hud.update": {
+                "msPerTick": 4.465999999994723,
+                "callsPerTick": 1
+              },
+              "motion.applyBody": {
+                "msPerTick": 3.651999999987893,
+                "callsPerTick": 7.92
+              },
+              "projectiles.update": {
+                "msPerTick": 3.3969999999847884,
+                "callsPerTick": 1
+              },
+              "paint.advanceSimulation": {
+                "msPerTick": 2.913333333322468,
+                "callsPerTick": 1
+              },
+              "paint.splat": {
+                "msPerTick": 2.347666666675359,
+                "callsPerTick": 1.21
+              },
+              "physics.raycast": {
+                "msPerTick": 2.2563333332818,
+                "callsPerTick": 265.68666666666667
+              },
+              "bvh.ray": {
+                "msPerTick": 1.6333333333317812,
+                "callsPerTick": 270.84
+              },
+              "paint._advanceSplatOwnership": {
+                "msPerTick": 1.3756666666595265,
+                "callsPerTick": 29.69333333333333
+              },
+              "bot.update": {
+                "msPerTick": 1.0400000000015521,
+                "callsPerTick": 7
+              },
+              "character._buildPose": {
+                "msPerTick": 1.029666666649282,
+                "callsPerTick": 7.92
+              },
+              "fx.update": {
+                "msPerTick": 1.0206666666703919,
+                "callsPerTick": 1
+              },
+              "paint._emitGrowth": {
+                "msPerTick": 0.8703333333243305,
+                "callsPerTick": 31.99
+              },
+              "physics.groundProbe": {
+                "msPerTick": 0.8113333333268141,
+                "callsPerTick": 10.796666666666667
+              },
+              "motion.applyAccessories": {
+                "msPerTick": 0.6953333333724488,
+                "callsPerTick": 7.92
+              },
+              "paint._drawQuads": {
+                "msPerTick": 0.64399999997889,
+                "callsPerTick": 2
+              },
+              "motion.bodyBalance": {
+                "msPerTick": 0.39500000001396984,
+                "callsPerTick": 6.6433333333333335
+              },
+              "bvh.queryBox": {
+                "msPerTick": 0.34200000000651926,
+                "callsPerTick": 15.973333333333333
+              },
+              "paint.regionStats": {
+                "msPerTick": 0.3009999999962747,
+                "callsPerTick": 1.0966666666666667
+              },
+              "bvh.sweepSphere": {
+                "msPerTick": 0.2863333333314707,
+                "callsPerTick": 3.53
+              },
+              "physics.collideBody": {
+                "msPerTick": 0.26066666667039196,
+                "callsPerTick": 8
+              },
+              "physics._nativeContacts": {
+                "msPerTick": 0.24433333333892127,
+                "callsPerTick": 8
+              },
+              "environment.update": {
+                "msPerTick": 0.2100000000046566,
+                "callsPerTick": 1
+              },
+              "motion.updateSquid": {
+                "msPerTick": 0.08199999999565383,
+                "callsPerTick": 8
+              },
+              "character._updateMaterials": {
+                "msPerTick": 0.07100000000714014,
+                "callsPerTick": 8
+              },
+              "character._updateLod": {
+                "msPerTick": 0.03633333332836628,
+                "callsPerTick": 8
+              },
+              "physics.bodyFits": {
+                "msPerTick": 0.022333333337058624,
+                "callsPerTick": 1.2766666666666666
+              },
+              "render.shadow": {
+                "msPerTick": 0.00799999999658515,
+                "callsPerTick": 1
+              },
+              "paint.flush": {
+                "msPerTick": 0.006666666668218871,
+                "callsPerTick": 1
+              },
+              "nav.path": {
+                "msPerTick": 0.003000000002793968,
+                "callsPerTick": 0.023333333333333334
+              },
+              "nav.nearest": {
+                "msPerTick": 0.0003333333336437742,
+                "callsPerTick": 0.07
+              }
+            },
+            "bvh": {
+              "queries": 82311,
+              "triangleTests": 2151715
+            },
+            "counts": [
+              3841,
+              3523
+            ],
+            "digest": 3696202895,
+            "stateSequenceSha256": "bc3d06e21a9197424b148333beb2d9671873d9aeaa1e81d6699224396b9bfec1",
+            "draw": {
+              "frame": 439,
+              "calls": 1,
+              "triangles": 348,
+              "points": 0,
+              "lines": 0
+            },
+            "resources": {
+              "geometries": 295,
+              "textures": 37
+            },
+            "gc": {
+              "status": "observed",
+              "events": 22,
+              "pauses": 11,
+              "pauseMs": 28.166,
+              "maxPauseMs": 5.655,
+              "windowMs": 9716.641
+            },
+            "heap": {
+              "before": {
+                "Documents": 2,
+                "Nodes": 2260,
+                "JSHeapUsedSize": 169937152,
+                "JSHeapTotalSize": 219611136
+              },
+              "after": {
+                "Documents": 2,
+                "Nodes": 2468,
+                "JSHeapUsedSize": 185954224,
+                "JSHeapTotalSize": 230535168
+              }
+            },
+            "contextLost": false,
+            "errors": []
+          }
+        ]
+      }
+    ],
+    "comparison": [
+      {
+        "stage": "tidewater",
+        "status": "exact-recorded-state-parity",
+        "beforeMs": {
+          "mean": 12.297999999998137,
+          "p50": 10.399999999906868,
+          "p95": 25.199999999720603,
+          "p99": 36,
+          "max": 38
+        },
+        "repeatMs": {
+          "mean": 14.373666666674739,
+          "p50": 12.600000000093132,
+          "p95": 28.100000000093132,
+          "p99": 43.3000000002794,
+          "max": 44.60000000009313
+        },
+        "afterMs": {
+          "mean": 11.621666666663563,
+          "p50": 10.300000000279397,
+          "p95": 24.100000000093132,
+          "p99": 29.200000000186265,
+          "max": 46.3000000002794
+        },
+        "resources": [
+          {
+            "geometries": 323,
+            "textures": 44
+          },
+          {
+            "geometries": 338,
+            "textures": 43
+          },
+          {
+            "geometries": 323,
+            "textures": 44
+          }
+        ],
+        "gc": [
+          {
+            "status": "observed",
+            "events": 12,
+            "pauses": 6,
+            "pauseMs": 10.311,
+            "maxPauseMs": 2.343,
+            "windowMs": 3697.298
+          },
+          {
+            "status": "observed",
+            "events": 12,
+            "pauses": 6,
+            "pauseMs": 11.608999999999998,
+            "maxPauseMs": 3.055,
+            "windowMs": 4323.652
+          },
+          {
+            "status": "observed",
+            "events": 12,
+            "pauses": 6,
+            "pauseMs": 11.276,
+            "maxPauseMs": 3.451,
+            "windowMs": 3493.221
+          }
+        ],
+        "limits": "Host CPU workload only. No physical-device, presented FPS, whole-image or resource-budget acceptance; A/A noise must accompany A/B timings."
+      },
+      {
+        "stage": "kelpline",
+        "status": "exact-recorded-state-parity",
+        "beforeMs": {
+          "mean": 12.156333333329918,
+          "p50": 10.700000000186265,
+          "p95": 24.09999999962747,
+          "p99": 35.39999999990687,
+          "max": 39.8000000002794
+        },
+        "repeatMs": {
+          "mean": 13.665333333341405,
+          "p50": 12.100000000093132,
+          "p95": 27.09999999962747,
+          "p99": 32.700000000186265,
+          "max": 40.89999999990687
+        },
+        "afterMs": {
+          "mean": 11.984333333329609,
+          "p50": 10.299999999813735,
+          "p95": 25.699999999720603,
+          "p99": 34.5,
+          "max": 42.1999999997206
+        },
+        "resources": [
+          {
+            "geometries": 310,
+            "textures": 36
+          },
+          {
+            "geometries": 310,
+            "textures": 36
+          },
+          {
+            "geometries": 295,
+            "textures": 37
+          }
+        ],
+        "gc": [
+          {
+            "status": "observed",
+            "events": 12,
+            "pauses": 6,
+            "pauseMs": 15.601,
+            "maxPauseMs": 5.997,
+            "windowMs": 3654.44
+          },
+          {
+            "status": "observed",
+            "events": 12,
+            "pauses": 6,
+            "pauseMs": 8.928,
+            "maxPauseMs": 2.141,
+            "windowMs": 4110.922
+          },
+          {
+            "status": "observed",
+            "events": 12,
+            "pauses": 6,
+            "pauseMs": 13.953999999999999,
+            "maxPauseMs": 5.162,
+            "windowMs": 3610.957
+          }
+        ],
+        "limits": "Host CPU workload only. No physical-device, presented FPS, whole-image or resource-budget acceptance; A/A noise must accompany A/B timings."
+      },
+      {
+        "stage": "range",
+        "status": "exact-recorded-state-parity",
+        "beforeMs": {
+          "mean": 3.4963333333407838,
+          "p50": 3,
+          "p95": 8.299999999813735,
+          "p99": 16.90000000037253,
+          "max": 22.100000000093132
+        },
+        "repeatMs": {
+          "mean": 4.075333333327435,
+          "p50": 3.5,
+          "p95": 7,
+          "p99": 18.899999999906868,
+          "max": 42.39999999990687
+        },
+        "afterMs": {
+          "mean": 5.523333333327124,
+          "p50": 4.600000000093132,
+          "p95": 12.600000000093132,
+          "p99": 26.299999999813735,
+          "max": 32.89999999990687
+        },
+        "resources": [
+          {
+            "geometries": 259,
+            "textures": 22
+          },
+          {
+            "geometries": 259,
+            "textures": 22
+          },
+          {
+            "geometries": 274,
+            "textures": 21
+          }
+        ],
+        "gc": [
+          {
+            "status": "observed",
+            "events": 6,
+            "pauses": 3,
+            "pauseMs": 11.414,
+            "maxPauseMs": 7.895,
+            "windowMs": 1054.989
+          },
+          {
+            "status": "observed",
+            "events": 8,
+            "pauses": 4,
+            "pauseMs": 19.693,
+            "maxPauseMs": 13.426,
+            "windowMs": 1228.886
+          },
+          {
+            "status": "observed",
+            "events": 6,
+            "pauses": 3,
+            "pauseMs": 5.161,
+            "maxPauseMs": 2.669,
+            "windowMs": 1673.159
+          }
+        ],
+        "limits": "Host CPU workload only. No physical-device, presented FPS, whole-image or resource-budget acceptance; A/A noise must accompany A/B timings."
+      },
+      {
+        "stage": "scorch",
+        "status": "exact-recorded-state-parity",
+        "beforeMs": {
+          "mean": 15.886999999995654,
+          "p50": 12.800000000279397,
+          "p95": 37,
+          "p99": 53.10000000009313,
+          "max": 54.200000000186265
+        },
+        "repeatMs": {
+          "mean": 17.53700000000807,
+          "p50": 14.400000000372529,
+          "p95": 40,
+          "p99": 49.89999999990687,
+          "max": 65.39999999990687
+        },
+        "afterMs": {
+          "mean": 32.265333333332094,
+          "p50": 27.600000000093132,
+          "p95": 63.10000000009313,
+          "p99": 86.20000000018626,
+          "max": 113.10000000009313
+        },
+        "resources": [
+          {
+            "geometries": 310,
+            "textures": 36
+          },
+          {
+            "geometries": 310,
+            "textures": 36
+          },
+          {
+            "geometries": 295,
+            "textures": 37
+          }
+        ],
+        "gc": [
+          {
+            "status": "observed",
+            "events": 20,
+            "pauses": 10,
+            "pauseMs": 11.382000000000001,
+            "maxPauseMs": 1.729,
+            "windowMs": 4774.449
+          },
+          {
+            "status": "observed",
+            "events": 22,
+            "pauses": 11,
+            "pauseMs": 27.19,
+            "maxPauseMs": 7.444,
+            "windowMs": 5270.882
+          },
+          {
+            "status": "observed",
+            "events": 22,
+            "pauses": 11,
+            "pauseMs": 28.166,
+            "maxPauseMs": 5.655,
+            "windowMs": 9716.641
+          }
+        ],
+        "limits": "Host CPU workload only. No physical-device, presented FPS, whole-image or resource-budget acceptance; A/A noise must accompany A/B timings."
+      }
+    ]
+  },
+  "isolated": {
+    "captures": [
+      {
+        "id": "s1",
+        "sourceSha": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+        "contentHash": "c63d84b07deca488316b10a713a04e6c10fb28e0bc141145fa06e815e1083566",
+        "environment": {
+          "node": "v24.19.0",
+          "cpu": "AMD EPYC 9V74 80-Core Processor",
+          "logicalCpus": 5,
+          "cpuQuota": "400000 100000",
+          "quality": "low",
+          "viewport": [
+            960,
+            640
+          ],
+          "render": false,
+          "wrappers": true,
+          "browser": "151.0.7922.34"
+        },
+        "status": "passed",
+        "receiptSha256": "df959bf134bf692a3467f84d9ce8663620385a0da4388c0175183ad10f47647a",
+        "scenarios": [
+          {
+            "stage": "scorch",
+            "initial": {
+              "actors": 8,
+              "bots": 7,
+              "roster": [
+                "shooter",
+                "s3-saber-lite-02",
+                "s3-charger-keeper",
+                "s3-shooter-blaze-01",
+                "blaster",
+                "s3-shooter-triplemiddle-02",
+                "s3-blaster-lightlong",
+                "s3-stringer-normal-02"
+              ],
+              "native": true,
+              "sourceCharacters": 8,
+              "triangles": 133737,
+              "paintFaces": 45171,
+              "atlas": 2048,
+              "ppm": 4,
+              "settings": {
+                "sensitivity": 1,
+                "padSensitivity": 0,
+                "padInvertX": false,
+                "invertY": false,
+                "invertX": false,
+                "aimProfile": "tv",
+                "aimProfiles": {
+                  "tv": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  },
+                  "handheld": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  }
+                },
+                "fov": 82,
+                "quality": "low",
+                "frameRate": "auto",
+                "shadows": true,
+                "bloom": true,
+                "cameraShake": 1,
+                "showFps": false,
+                "master": 0.8,
+                "music": 0.6,
+                "sfx": 0.85,
+                "colorblind": false,
+                "minimap": false,
+                "matchLength": 180,
+                "difficulty": "normal",
+                "rumble": 1,
+                "aimAssist": 0,
+                "aimAssistMouse": false,
+                "lang": "ja",
+                "gyro": false,
+                "gyroSens": 0,
+                "gyroInvertX": false,
+                "gyroInvertY": false,
+                "touchSens": 0,
+                "fireAim": true,
+                "stickMode": "float",
+                "touchScale": 1,
+                "touchOpacity": 0.85,
+                "musicVolume": 0,
+                "audioVolume": 0,
+                "fovMode": "h",
+                "padSensitivityScale": "s3"
+              }
+            },
+            "frames": 300,
+            "hz": 60,
+            "ticks": 300,
+            "cpuFrameMs": {
+              "mean": 14.575333333333644,
+              "p50": 12.200000000186265,
+              "p95": 31,
+              "p99": 57.59999999962747,
+              "max": 70.5
+            },
+            "threadCpuMs": {
+              "TaskDuration": 3920.7830000000004,
+              "ScriptDuration": 2.885,
+              "ThreadTime": 3925.538
+            },
+            "categories": {
+              "simulation.update": {
+                "msPerTick": 8.638000000009002,
+                "callsPerTick": 1
+              },
+              "actor.update": {
+                "msPerTick": 7.947333333313775,
+                "callsPerTick": 8
+              },
+              "character.update": {
+                "msPerTick": 5.98066666669678,
+                "callsPerTick": 8
+              },
+              "character._applyPose": {
+                "msPerTick": 2.559333333390144,
+                "callsPerTick": 7.92
+              },
+              "motion.advance": {
+                "msPerTick": 2.273333333300737,
+                "callsPerTick": 8
+              },
+              "hud.update": {
+                "msPerTick": 1.7540000000037252,
+                "callsPerTick": 1
+              },
+              "motion.applyBody": {
+                "msPerTick": 1.7406666666983317,
+                "callsPerTick": 7.92
+              },
+              "paint.advanceSimulation": {
+                "msPerTick": 1.5179999999950329,
+                "callsPerTick": 1
+              },
+              "projectiles.update": {
+                "msPerTick": 1.339666666657043,
+                "callsPerTick": 1
+              },
+              "physics.raycast": {
+                "msPerTick": 1.2399999999953435,
+                "callsPerTick": 265.68666666666667
+              },
+              "bvh.ray": {
+                "msPerTick": 0.9396666666632518,
+                "callsPerTick": 270.84
+              },
+              "paint.splat": {
+                "msPerTick": 0.8803333333398526,
+                "callsPerTick": 1.21
+              },
+              "paint._advanceSplatOwnership": {
+                "msPerTick": 0.7686666666902602,
+                "callsPerTick": 29.69333333333333
+              },
+              "bot.update": {
+                "msPerTick": 0.6460000000195578,
+                "callsPerTick": 7
+              },
+              "physics.groundProbe": {
+                "msPerTick": 0.4713333333206053,
+                "callsPerTick": 10.796666666666667
+              },
+              "fx.update": {
+                "msPerTick": 0.44366666668249916,
+                "callsPerTick": 1
+              },
+              "paint._emitGrowth": {
+                "msPerTick": 0.429666666649282,
+                "callsPerTick": 31.99
+              },
+              "character._buildPose": {
+                "msPerTick": 0.4276666666334495,
+                "callsPerTick": 7.92
+              },
+              "paint._drawQuads": {
+                "msPerTick": 0.314666666657043,
+                "callsPerTick": 2
+              },
+              "motion.applyAccessories": {
+                "msPerTick": 0.29733333334171524,
+                "callsPerTick": 7.92
+              },
+              "bvh.queryBox": {
+                "msPerTick": 0.22466666666635624,
+                "callsPerTick": 15.973333333333333
+              },
+              "physics.collideBody": {
+                "msPerTick": 0.19166666666356225,
+                "callsPerTick": 8
+              },
+              "physics._nativeContacts": {
+                "msPerTick": 0.1799999999984478,
+                "callsPerTick": 8
+              },
+              "paint.regionStats": {
+                "msPerTick": 0.17866666665611167,
+                "callsPerTick": 1.0966666666666667
+              },
+              "bvh.sweepSphere": {
+                "msPerTick": 0.1769999999863406,
+                "callsPerTick": 3.53
+              },
+              "environment.update": {
+                "msPerTick": 0.16066666667194415,
+                "callsPerTick": 1
+              },
+              "motion.bodyBalance": {
+                "msPerTick": 0.12899999997578562,
+                "callsPerTick": 6.6433333333333335
+              },
+              "character._updateMaterials": {
+                "msPerTick": 0.04700000000651926,
+                "callsPerTick": 8
+              },
+              "motion.updateSquid": {
+                "msPerTick": 0.04166666666511446,
+                "callsPerTick": 8
+              },
+              "character._updateLod": {
+                "msPerTick": 0.021333333328366278,
+                "callsPerTick": 8
+              },
+              "physics.bodyFits": {
+                "msPerTick": 0.016000000005587937,
+                "callsPerTick": 1.2766666666666666
+              },
+              "nav.path": {
+                "msPerTick": 0.006666666668218871,
+                "callsPerTick": 0.023333333333333334
+              },
+              "render.shadow": {
+                "msPerTick": 0.004000000000620882,
+                "callsPerTick": 1
+              },
+              "paint.flush": {
+                "msPerTick": 0.0026666666660457848,
+                "callsPerTick": 1
+              },
+              "nav.nearest": {
+                "msPerTick": 0.0006666666657353441,
+                "callsPerTick": 0.07
+              }
+            },
+            "bvh": {
+              "queries": 82311,
+              "triangleTests": 2151715
+            },
+            "counts": [
+              3841,
+              3523
+            ],
+            "digest": 3696202895,
+            "stateSequenceSha256": "bc3d06e21a9197424b148333beb2d9671873d9aeaa1e81d6699224396b9bfec1",
+            "draw": {
+              "frame": 439,
+              "calls": 1,
+              "triangles": 348,
+              "points": 0,
+              "lines": 0
+            },
+            "resources": {
+              "geometries": 295,
+              "textures": 37
+            },
+            "gc": {
+              "status": "observed",
+              "events": 22,
+              "pauses": 11,
+              "pauseMs": 76.419,
+              "maxPauseMs": 24.65,
+              "windowMs": 4381.912
+            },
+            "heap": {
+              "before": {
+                "Documents": 2,
+                "Nodes": 2156,
+                "JSHeapUsedSize": 170460764,
+                "JSHeapTotalSize": 221220864
+              },
+              "after": {
+                "Documents": 2,
+                "Nodes": 2338,
+                "JSHeapUsedSize": 162912068,
+                "JSHeapTotalSize": 232148992
+              }
+            },
+            "contextLost": false,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "id": "sb1",
+        "sourceSha": "1ebfb8e79b9b3271ec6a733ee1d68a07a5828d43",
+        "contentHash": "3daa2db28693e61b777d30f54ccac73b5fd0567a5db18894916a7f426e6da18b",
+        "environment": {
+          "node": "v24.19.0",
+          "cpu": "AMD EPYC 9V74 80-Core Processor",
+          "logicalCpus": 5,
+          "cpuQuota": "400000 100000",
+          "quality": "low",
+          "viewport": [
+            960,
+            640
+          ],
+          "render": false,
+          "wrappers": true,
+          "browser": "151.0.7922.34"
+        },
+        "status": "passed",
+        "receiptSha256": "a15dae72b842adcd91bc92af79217f6616941cede5bf8a3365337665c967e19c",
+        "scenarios": [
+          {
+            "stage": "scorch",
+            "initial": {
+              "actors": 8,
+              "bots": 7,
+              "roster": [
+                "shooter",
+                "s3-saber-lite-02",
+                "s3-charger-keeper",
+                "s3-shooter-blaze-01",
+                "blaster",
+                "s3-shooter-triplemiddle-02",
+                "s3-blaster-lightlong",
+                "s3-stringer-normal-02"
+              ],
+              "native": true,
+              "sourceCharacters": 8,
+              "triangles": 133737,
+              "paintFaces": 45171,
+              "atlas": 2048,
+              "ppm": 4,
+              "settings": {
+                "sensitivity": 1,
+                "padSensitivity": 0,
+                "padInvertX": false,
+                "invertY": false,
+                "invertX": false,
+                "aimProfile": "tv",
+                "aimProfiles": {
+                  "tv": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  },
+                  "handheld": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  }
+                },
+                "fov": 82,
+                "quality": "low",
+                "frameRate": "auto",
+                "shadows": true,
+                "bloom": true,
+                "cameraShake": 1,
+                "showFps": false,
+                "master": 0.8,
+                "music": 0.6,
+                "sfx": 0.85,
+                "colorblind": false,
+                "minimap": false,
+                "matchLength": 180,
+                "difficulty": "normal",
+                "rumble": 1,
+                "aimAssist": 0,
+                "aimAssistMouse": false,
+                "lang": "ja",
+                "gyro": false,
+                "gyroSens": 0,
+                "gyroInvertX": false,
+                "gyroInvertY": false,
+                "touchSens": 0,
+                "fireAim": true,
+                "stickMode": "float",
+                "touchScale": 1,
+                "touchOpacity": 0.85,
+                "musicVolume": 0,
+                "audioVolume": 0,
+                "fovMode": "h",
+                "padSensitivityScale": "s3"
+              }
+            },
+            "frames": 300,
+            "hz": 60,
+            "ticks": 300,
+            "cpuFrameMs": {
+              "mean": 14.822333333323089,
+              "p50": 12,
+              "p95": 33,
+              "p99": 41.5,
+              "max": 66.20000000018626
+            },
+            "threadCpuMs": {
+              "TaskDuration": 3882.782,
+              "ScriptDuration": 2.7239999999999998,
+              "ThreadTime": 3886.413
+            },
+            "categories": {
+              "simulation.update": {
+                "msPerTick": 8.743666666673185,
+                "callsPerTick": 1
+              },
+              "actor.update": {
+                "msPerTick": 8.193333333341094,
+                "callsPerTick": 8
+              },
+              "character.update": {
+                "msPerTick": 6.309000000008382,
+                "callsPerTick": 8
+              },
+              "character._applyPose": {
+                "msPerTick": 2.5976666667095074,
+                "callsPerTick": 7.92
+              },
+              "motion.advance": {
+                "msPerTick": 2.392333333347924,
+                "callsPerTick": 8
+              },
+              "hud.update": {
+                "msPerTick": 1.8876666666660458,
+                "callsPerTick": 1
+              },
+              "motion.applyBody": {
+                "msPerTick": 1.8250000000248352,
+                "callsPerTick": 7.92
+              },
+              "projectiles.update": {
+                "msPerTick": 1.5493333333156383,
+                "callsPerTick": 1
+              },
+              "paint.advanceSimulation": {
+                "msPerTick": 1.3523333333463718,
+                "callsPerTick": 1
+              },
+              "physics.raycast": {
+                "msPerTick": 0.9890000000006208,
+                "callsPerTick": 265.68666666666667
+              },
+              "paint.splat": {
+                "msPerTick": 0.9003333333336437,
+                "callsPerTick": 1.21
+              },
+              "bvh.ray": {
+                "msPerTick": 0.7653333333367481,
+                "callsPerTick": 270.84
+              },
+              "character._buildPose": {
+                "msPerTick": 0.636999999973923,
+                "callsPerTick": 7.92
+              },
+              "paint._advanceSplatOwnership": {
+                "msPerTick": 0.6106666666812574,
+                "callsPerTick": 29.69333333333333
+              },
+              "bot.update": {
+                "msPerTick": 0.49033333332588275,
+                "callsPerTick": 7
+              },
+              "fx.update": {
+                "msPerTick": 0.46766666665207596,
+                "callsPerTick": 1
+              },
+              "paint._emitGrowth": {
+                "msPerTick": 0.4583333333255723,
+                "callsPerTick": 31.99
+              },
+              "physics.groundProbe": {
+                "msPerTick": 0.35533333334916584,
+                "callsPerTick": 10.796666666666667
+              },
+              "motion.applyAccessories": {
+                "msPerTick": 0.2973333333758637,
+                "callsPerTick": 7.92
+              },
+              "paint._drawQuads": {
+                "msPerTick": 0.2826666666707024,
+                "callsPerTick": 2
+              },
+              "physics.collideBody": {
+                "msPerTick": 0.1593333333202948,
+                "callsPerTick": 8
+              },
+              "bvh.queryBox": {
+                "msPerTick": 0.1513333333314707,
+                "callsPerTick": 15.973333333333333
+              },
+              "physics._nativeContacts": {
+                "msPerTick": 0.14433333331874262,
+                "callsPerTick": 8
+              },
+              "motion.bodyBalance": {
+                "msPerTick": 0.12233333333550642,
+                "callsPerTick": 6.6433333333333335
+              },
+              "bvh.sweepSphere": {
+                "msPerTick": 0.10966666667411724,
+                "callsPerTick": 3.53
+              },
+              "paint.regionStats": {
+                "msPerTick": 0.09700000000341485,
+                "callsPerTick": 1.0966666666666667
+              },
+              "environment.update": {
+                "msPerTick": 0.07800000001365939,
+                "callsPerTick": 1
+              },
+              "motion.updateSquid": {
+                "msPerTick": 0.041666666652696825,
+                "callsPerTick": 8
+              },
+              "character._updateMaterials": {
+                "msPerTick": 0.028333333324020108,
+                "callsPerTick": 8
+              },
+              "character._updateLod": {
+                "msPerTick": 0.0190000000068297,
+                "callsPerTick": 8
+              },
+              "physics.bodyFits": {
+                "msPerTick": 0.017333333330849805,
+                "callsPerTick": 1.2766666666666666
+              },
+              "render.shadow": {
+                "msPerTick": 0.0053333333320915695,
+                "callsPerTick": 1
+              },
+              "nav.path": {
+                "msPerTick": 0.003000000002793968,
+                "callsPerTick": 0.023333333333333334
+              },
+              "paint.flush": {
+                "msPerTick": 0.0026666666675979893,
+                "callsPerTick": 1
+              },
+              "nav.nearest": {
+                "msPerTick": 0,
+                "callsPerTick": 0.07
+              }
+            },
+            "bvh": {
+              "queries": 82311,
+              "triangleTests": 2151715
+            },
+            "counts": [
+              3841,
+              3523
+            ],
+            "digest": 3696202895,
+            "stateSequenceSha256": "bc3d06e21a9197424b148333beb2d9671873d9aeaa1e81d6699224396b9bfec1",
+            "draw": {
+              "frame": 439,
+              "calls": 1,
+              "triangles": 348,
+              "points": 0,
+              "lines": 0
+            },
+            "resources": {
+              "geometries": 310,
+              "textures": 36
+            },
+            "gc": {
+              "status": "observed",
+              "events": 20,
+              "pauses": 10,
+              "pauseMs": 13.745000000000001,
+              "maxPauseMs": 2.376,
+              "windowMs": 4455.247
+            },
+            "heap": {
+              "before": {
+                "Documents": 2,
+                "Nodes": 2188,
+                "JSHeapUsedSize": 160778192,
+                "JSHeapTotalSize": 219983872
+              },
+              "after": {
+                "Documents": 2,
+                "Nodes": 2378,
+                "JSHeapUsedSize": 175036348,
+                "JSHeapTotalSize": 230785024
+              }
+            },
+            "contextLost": false,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "id": "sb2",
+        "sourceSha": "1ebfb8e79b9b3271ec6a733ee1d68a07a5828d43",
+        "contentHash": "3daa2db28693e61b777d30f54ccac73b5fd0567a5db18894916a7f426e6da18b",
+        "environment": {
+          "node": "v24.19.0",
+          "cpu": "AMD EPYC 9V74 80-Core Processor",
+          "logicalCpus": 5,
+          "cpuQuota": "400000 100000",
+          "quality": "low",
+          "viewport": [
+            960,
+            640
+          ],
+          "render": false,
+          "wrappers": true,
+          "browser": "151.0.7922.34"
+        },
+        "status": "passed",
+        "receiptSha256": "c920ca9edc840fd5f917340358a477370919d3571a15aada24e5a129d4c0d4e8",
+        "scenarios": [
+          {
+            "stage": "scorch",
+            "initial": {
+              "actors": 8,
+              "bots": 7,
+              "roster": [
+                "shooter",
+                "s3-saber-lite-02",
+                "s3-charger-keeper",
+                "s3-shooter-blaze-01",
+                "blaster",
+                "s3-shooter-triplemiddle-02",
+                "s3-blaster-lightlong",
+                "s3-stringer-normal-02"
+              ],
+              "native": true,
+              "sourceCharacters": 8,
+              "triangles": 133737,
+              "paintFaces": 45171,
+              "atlas": 2048,
+              "ppm": 4,
+              "settings": {
+                "sensitivity": 1,
+                "padSensitivity": 0,
+                "padInvertX": false,
+                "invertY": false,
+                "invertX": false,
+                "aimProfile": "tv",
+                "aimProfiles": {
+                  "tv": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  },
+                  "handheld": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  }
+                },
+                "fov": 82,
+                "quality": "low",
+                "frameRate": "auto",
+                "shadows": true,
+                "bloom": true,
+                "cameraShake": 1,
+                "showFps": false,
+                "master": 0.8,
+                "music": 0.6,
+                "sfx": 0.85,
+                "colorblind": false,
+                "minimap": false,
+                "matchLength": 180,
+                "difficulty": "normal",
+                "rumble": 1,
+                "aimAssist": 0,
+                "aimAssistMouse": false,
+                "lang": "ja",
+                "gyro": false,
+                "gyroSens": 0,
+                "gyroInvertX": false,
+                "gyroInvertY": false,
+                "touchSens": 0,
+                "fireAim": true,
+                "stickMode": "float",
+                "touchScale": 1,
+                "touchOpacity": 0.85,
+                "musicVolume": 0,
+                "audioVolume": 0,
+                "fovMode": "h",
+                "padSensitivityScale": "s3"
+              }
+            },
+            "frames": 300,
+            "hz": 60,
+            "ticks": 300,
+            "cpuFrameMs": {
+              "mean": 15.927999999988824,
+              "p50": 12.700000000186265,
+              "p95": 35.60000000009313,
+              "p99": 58.39999999990687,
+              "max": 62
+            },
+            "threadCpuMs": {
+              "TaskDuration": 4097.7,
+              "ScriptDuration": 2.13,
+              "ThreadTime": 4100.126
+            },
+            "categories": {
+              "simulation.update": {
+                "msPerTick": 9.467666666662941,
+                "callsPerTick": 1
+              },
+              "actor.update": {
+                "msPerTick": 8.890000000020178,
+                "callsPerTick": 8
+              },
+              "character.update": {
+                "msPerTick": 6.726666666700815,
+                "callsPerTick": 8
+              },
+              "motion.advance": {
+                "msPerTick": 2.8646666666710128,
+                "callsPerTick": 8
+              },
+              "character._applyPose": {
+                "msPerTick": 2.5483333333581686,
+                "callsPerTick": 7.92
+              },
+              "hud.update": {
+                "msPerTick": 2.2559999999729916,
+                "callsPerTick": 1
+              },
+              "motion.applyBody": {
+                "msPerTick": 1.7340000000502913,
+                "callsPerTick": 7.92
+              },
+              "paint.advanceSimulation": {
+                "msPerTick": 1.4956666666734963,
+                "callsPerTick": 1
+              },
+              "projectiles.update": {
+                "msPerTick": 1.3373333333199844,
+                "callsPerTick": 1
+              },
+              "physics.raycast": {
+                "msPerTick": 1.1973333332998057,
+                "callsPerTick": 265.68666666666667
+              },
+              "bvh.ray": {
+                "msPerTick": 0.9046666666042681,
+                "callsPerTick": 270.84
+              },
+              "paint.splat": {
+                "msPerTick": 0.8026666666644936,
+                "callsPerTick": 1.21
+              },
+              "paint._advanceSplatOwnership": {
+                "msPerTick": 0.6713333333469927,
+                "callsPerTick": 29.69333333333333
+              },
+              "character._buildPose": {
+                "msPerTick": 0.5320000000127281,
+                "callsPerTick": 7.92
+              },
+              "bot.update": {
+                "msPerTick": 0.5069999999785796,
+                "callsPerTick": 7
+              },
+              "fx.update": {
+                "msPerTick": 0.48233333333861084,
+                "callsPerTick": 1
+              },
+              "physics.groundProbe": {
+                "msPerTick": 0.47733333331377553,
+                "callsPerTick": 10.796666666666667
+              },
+              "paint._emitGrowth": {
+                "msPerTick": 0.4643333333233992,
+                "callsPerTick": 31.99
+              },
+              "paint._drawQuads": {
+                "msPerTick": 0.351666666654249,
+                "callsPerTick": 2
+              },
+              "motion.applyAccessories": {
+                "msPerTick": 0.31966666664152094,
+                "callsPerTick": 7.92
+              },
+              "bvh.queryBox": {
+                "msPerTick": 0.15466666667566945,
+                "callsPerTick": 15.973333333333333
+              },
+              "physics.collideBody": {
+                "msPerTick": 0.13366666667629035,
+                "callsPerTick": 8
+              },
+              "motion.bodyBalance": {
+                "msPerTick": 0.1299999999968956,
+                "callsPerTick": 6.6433333333333335
+              },
+              "physics._nativeContacts": {
+                "msPerTick": 0.1240000000068297,
+                "callsPerTick": 8
+              },
+              "bvh.sweepSphere": {
+                "msPerTick": 0.1163333333345751,
+                "callsPerTick": 3.53
+              },
+              "paint.regionStats": {
+                "msPerTick": 0.09699999999720603,
+                "callsPerTick": 1.0966666666666667
+              },
+              "environment.update": {
+                "msPerTick": 0.07966666666169961,
+                "callsPerTick": 1
+              },
+              "motion.updateSquid": {
+                "msPerTick": 0.048333333334885535,
+                "callsPerTick": 8
+              },
+              "character._updateMaterials": {
+                "msPerTick": 0.044333333329608045,
+                "callsPerTick": 8
+              },
+              "character._updateLod": {
+                "msPerTick": 0.023999999999068676,
+                "callsPerTick": 8
+              },
+              "physics.bodyFits": {
+                "msPerTick": 0.01366666666076829,
+                "callsPerTick": 1.2766666666666666
+              },
+              "render.shadow": {
+                "msPerTick": 0.004333333329608043,
+                "callsPerTick": 1
+              },
+              "nav.path": {
+                "msPerTick": 0.003666666663872699,
+                "callsPerTick": 0.023333333333333334
+              },
+              "paint.flush": {
+                "msPerTick": 0.0016666666682188709,
+                "callsPerTick": 1
+              },
+              "nav.nearest": {
+                "msPerTick": 0.0003333333336437742,
+                "callsPerTick": 0.07
+              }
+            },
+            "bvh": {
+              "queries": 82311,
+              "triangleTests": 2151715
+            },
+            "counts": [
+              3841,
+              3523
+            ],
+            "digest": 3696202895,
+            "stateSequenceSha256": "bc3d06e21a9197424b148333beb2d9671873d9aeaa1e81d6699224396b9bfec1",
+            "draw": {
+              "frame": 439,
+              "calls": 1,
+              "triangles": 348,
+              "points": 0,
+              "lines": 0
+            },
+            "resources": {
+              "geometries": 295,
+              "textures": 37
+            },
+            "gc": {
+              "status": "observed",
+              "events": 22,
+              "pauses": 11,
+              "pauseMs": 15.568,
+              "maxPauseMs": 2.125,
+              "windowMs": 4786.911
+            },
+            "heap": {
+              "before": {
+                "Documents": 2,
+                "Nodes": 2158,
+                "JSHeapUsedSize": 173874900,
+                "JSHeapTotalSize": 219725824
+              },
+              "after": {
+                "Documents": 2,
+                "Nodes": 2338,
+                "JSHeapUsedSize": 160886012,
+                "JSHeapTotalSize": 230387712
+              }
+            },
+            "contextLost": false,
+            "errors": []
+          }
+        ]
+      },
+      {
+        "id": "s2",
+        "sourceSha": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+        "contentHash": "c63d84b07deca488316b10a713a04e6c10fb28e0bc141145fa06e815e1083566",
+        "environment": {
+          "node": "v24.19.0",
+          "cpu": "AMD EPYC 9V74 80-Core Processor",
+          "logicalCpus": 5,
+          "cpuQuota": "400000 100000",
+          "quality": "low",
+          "viewport": [
+            960,
+            640
+          ],
+          "render": false,
+          "wrappers": true,
+          "browser": "151.0.7922.34"
+        },
+        "status": "passed",
+        "receiptSha256": "4eaca6ed788ef859d230eb136fff7b7e846682eec7103823a31112484d2d25a0",
+        "scenarios": [
+          {
+            "stage": "scorch",
+            "initial": {
+              "actors": 8,
+              "bots": 7,
+              "roster": [
+                "shooter",
+                "s3-saber-lite-02",
+                "s3-charger-keeper",
+                "s3-shooter-blaze-01",
+                "blaster",
+                "s3-shooter-triplemiddle-02",
+                "s3-blaster-lightlong",
+                "s3-stringer-normal-02"
+              ],
+              "native": true,
+              "sourceCharacters": 8,
+              "triangles": 133737,
+              "paintFaces": 45171,
+              "atlas": 2048,
+              "ppm": 4,
+              "settings": {
+                "sensitivity": 1,
+                "padSensitivity": 0,
+                "padInvertX": false,
+                "invertY": false,
+                "invertX": false,
+                "aimProfile": "tv",
+                "aimProfiles": {
+                  "tv": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  },
+                  "handheld": {
+                    "gyro": false,
+                    "gyroSens": 0,
+                    "padSensitivity": 0,
+                    "invertY": false,
+                    "invertX": false
+                  }
+                },
+                "fov": 82,
+                "quality": "low",
+                "frameRate": "auto",
+                "shadows": true,
+                "bloom": true,
+                "cameraShake": 1,
+                "showFps": false,
+                "master": 0.8,
+                "music": 0.6,
+                "sfx": 0.85,
+                "colorblind": false,
+                "minimap": false,
+                "matchLength": 180,
+                "difficulty": "normal",
+                "rumble": 1,
+                "aimAssist": 0,
+                "aimAssistMouse": false,
+                "lang": "ja",
+                "gyro": false,
+                "gyroSens": 0,
+                "gyroInvertX": false,
+                "gyroInvertY": false,
+                "touchSens": 0,
+                "fireAim": true,
+                "stickMode": "float",
+                "touchScale": 1,
+                "touchOpacity": 0.85,
+                "musicVolume": 0,
+                "audioVolume": 0,
+                "fovMode": "h",
+                "padSensitivityScale": "s3"
+              }
+            },
+            "frames": 300,
+            "hz": 60,
+            "ticks": 300,
+            "cpuFrameMs": {
+              "mean": 17.403000000009,
+              "p50": 14,
+              "p95": 38.200000000186265,
+              "p99": 54.5,
+              "max": 68.5
+            },
+            "threadCpuMs": {
+              "TaskDuration": 4262.455,
+              "ScriptDuration": 2.9299999999999997,
+              "ThreadTime": 4266.429999999999
+            },
+            "categories": {
+              "simulation.update": {
+                "msPerTick": 10.162333333323089,
+                "callsPerTick": 1
+              },
+              "actor.update": {
+                "msPerTick": 9.588666666676291,
+                "callsPerTick": 8
+              },
+              "character.update": {
+                "msPerTick": 7.184666666677222,
+                "callsPerTick": 8
+              },
+              "character._applyPose": {
+                "msPerTick": 2.908999999941637,
+                "callsPerTick": 7.92
+              },
+              "motion.advance": {
+                "msPerTick": 2.8916666666946065,
+                "callsPerTick": 8
+              },
+              "hud.update": {
+                "msPerTick": 2.521333333340784,
+                "callsPerTick": 1
+              },
+              "motion.applyBody": {
+                "msPerTick": 1.9413333333438882,
+                "callsPerTick": 7.92
+              },
+              "paint.advanceSimulation": {
+                "msPerTick": 1.7340000000037252,
+                "callsPerTick": 1
+              },
+              "physics.raycast": {
+                "msPerTick": 1.463666666621963,
+                "callsPerTick": 265.68666666666667
+              },
+              "projectiles.update": {
+                "msPerTick": 1.4386666666778425,
+                "callsPerTick": 1
+              },
+              "bvh.ray": {
+                "msPerTick": 1.2073333333324021,
+                "callsPerTick": 270.84
+              },
+              "paint.splat": {
+                "msPerTick": 0.9453333333336438,
+                "callsPerTick": 1.21
+              },
+              "paint._advanceSplatOwnership": {
+                "msPerTick": 0.8069999999878928,
+                "callsPerTick": 29.69333333333333
+              },
+              "fx.update": {
+                "msPerTick": 0.6506666666579743,
+                "callsPerTick": 1
+              },
+              "character._buildPose": {
+                "msPerTick": 0.5726666666613892,
+                "callsPerTick": 7.92
+              },
+              "physics.groundProbe": {
+                "msPerTick": 0.5603333333165695,
+                "callsPerTick": 10.796666666666667
+              },
+              "paint._emitGrowth": {
+                "msPerTick": 0.5466666666495924,
+                "callsPerTick": 31.99
+              },
+              "bot.update": {
+                "msPerTick": 0.5019999999925494,
+                "callsPerTick": 7
+              },
+              "motion.applyAccessories": {
+                "msPerTick": 0.3983333333147069,
+                "callsPerTick": 7.92
+              },
+              "paint._drawQuads": {
+                "msPerTick": 0.3646666666927437,
+                "callsPerTick": 2
+              },
+              "physics.collideBody": {
+                "msPerTick": 0.2836666666638727,
+                "callsPerTick": 8
+              },
+              "physics._nativeContacts": {
+                "msPerTick": 0.27299999999658514,
+                "callsPerTick": 8
+              },
+              "motion.bodyBalance": {
+                "msPerTick": 0.20933333333116025,
+                "callsPerTick": 6.6433333333333335
+              },
+              "bvh.queryBox": {
+                "msPerTick": 0.1556666666812574,
+                "callsPerTick": 15.973333333333333
+              },
+              "paint.regionStats": {
+                "msPerTick": 0.13300000001055498,
+                "callsPerTick": 1.0966666666666667
+              },
+              "bvh.sweepSphere": {
+                "msPerTick": 0.11300000001986822,
+                "callsPerTick": 3.53
+              },
+              "environment.update": {
+                "msPerTick": 0.0873333333261932,
+                "callsPerTick": 1
+              },
+              "motion.updateSquid": {
+                "msPerTick": 0.0436666666654249,
+                "callsPerTick": 8
+              },
+              "character._updateMaterials": {
+                "msPerTick": 0.042666666670702395,
+                "callsPerTick": 8
+              },
+              "character._updateLod": {
+                "msPerTick": 0.02633333333302289,
+                "callsPerTick": 8
+              },
+              "physics.bodyFits": {
+                "msPerTick": 0.01733333333240201,
+                "callsPerTick": 1.2766666666666666
+              },
+              "render.shadow": {
+                "msPerTick": 0.007666666664493581,
+                "callsPerTick": 1
+              },
+              "paint.flush": {
+                "msPerTick": 0.004000000000620882,
+                "callsPerTick": 1
+              },
+              "nav.path": {
+                "msPerTick": 0.003000000002793968,
+                "callsPerTick": 0.023333333333333334
+              },
+              "nav.nearest": {
+                "msPerTick": 0.0003333333336437742,
+                "callsPerTick": 0.07
+              }
+            },
+            "bvh": {
+              "queries": 82311,
+              "triangleTests": 2151715
+            },
+            "counts": [
+              3841,
+              3523
+            ],
+            "digest": 3696202895,
+            "stateSequenceSha256": "bc3d06e21a9197424b148333beb2d9671873d9aeaa1e81d6699224396b9bfec1",
+            "draw": {
+              "frame": 439,
+              "calls": 1,
+              "triangles": 348,
+              "points": 0,
+              "lines": 0
+            },
+            "resources": {
+              "geometries": 310,
+              "textures": 36
+            },
+            "gc": {
+              "status": "observed",
+              "events": 20,
+              "pauses": 10,
+              "pauseMs": 33.441,
+              "maxPauseMs": 16.098,
+              "windowMs": 5231.291
+            },
+            "heap": {
+              "before": {
+                "Documents": 2,
+                "Nodes": 2156,
+                "JSHeapUsedSize": 149454404,
+                "JSHeapTotalSize": 219648000
+              },
+              "after": {
+                "Documents": 2,
+                "Nodes": 2346,
+                "JSHeapUsedSize": 175562416,
+                "JSHeapTotalSize": 229937152
+              }
+            },
+            "contextLost": false,
+            "errors": []
+          }
+        ]
+      }
+    ],
+    "comparison": [
+      [
+        {
+          "stage": "scorch",
+          "status": "exact-recorded-state-parity",
+          "beforeMs": {
+            "mean": 14.575333333333644,
+            "p50": 12.200000000186265,
+            "p95": 31,
+            "p99": 57.59999999962747,
+            "max": 70.5
+          },
+          "repeatMs": {
+            "mean": 17.403000000009,
+            "p50": 14,
+            "p95": 38.200000000186265,
+            "p99": 54.5,
+            "max": 68.5
+          },
+          "afterMs": {
+            "mean": 14.822333333323089,
+            "p50": 12,
+            "p95": 33,
+            "p99": 41.5,
+            "max": 66.20000000018626
+          },
+          "resources": [
+            {
+              "geometries": 295,
+              "textures": 37
+            },
+            {
+              "geometries": 310,
+              "textures": 36
+            },
+            {
+              "geometries": 310,
+              "textures": 36
+            }
+          ],
+          "gc": [
+            {
+              "status": "observed",
+              "events": 22,
+              "pauses": 11,
+              "pauseMs": 76.419,
+              "maxPauseMs": 24.65,
+              "windowMs": 4381.912
+            },
+            {
+              "status": "observed",
+              "events": 20,
+              "pauses": 10,
+              "pauseMs": 33.441,
+              "maxPauseMs": 16.098,
+              "windowMs": 5231.291
+            },
+            {
+              "status": "observed",
+              "events": 20,
+              "pauses": 10,
+              "pauseMs": 13.745000000000001,
+              "maxPauseMs": 2.376,
+              "windowMs": 4455.247
+            }
+          ],
+          "limits": "Host CPU workload only. No physical-device, presented FPS, whole-image or resource-budget acceptance; A/A noise must accompany A/B timings."
+        }
+      ],
+      [
+        {
+          "stage": "scorch",
+          "status": "exact-recorded-state-parity",
+          "beforeMs": {
+            "mean": 14.575333333333644,
+            "p50": 12.200000000186265,
+            "p95": 31,
+            "p99": 57.59999999962747,
+            "max": 70.5
+          },
+          "repeatMs": {
+            "mean": 17.403000000009,
+            "p50": 14,
+            "p95": 38.200000000186265,
+            "p99": 54.5,
+            "max": 68.5
+          },
+          "afterMs": {
+            "mean": 15.927999999988824,
+            "p50": 12.700000000186265,
+            "p95": 35.60000000009313,
+            "p99": 58.39999999990687,
+            "max": 62
+          },
+          "resources": [
+            {
+              "geometries": 295,
+              "textures": 37
+            },
+            {
+              "geometries": 310,
+              "textures": 36
+            },
+            {
+              "geometries": 295,
+              "textures": 37
+            }
+          ],
+          "gc": [
+            {
+              "status": "observed",
+              "events": 22,
+              "pauses": 11,
+              "pauseMs": 76.419,
+              "maxPauseMs": 24.65,
+              "windowMs": 4381.912
+            },
+            {
+              "status": "observed",
+              "events": 20,
+              "pauses": 10,
+              "pauseMs": 33.441,
+              "maxPauseMs": 16.098,
+              "windowMs": 5231.291
+            },
+            {
+              "status": "observed",
+              "events": 22,
+              "pauses": 11,
+              "pauseMs": 15.568,
+              "maxPauseMs": 2.125,
+              "windowMs": 4786.911
+            }
+          ],
+          "limits": "Host CPU workload only. No physical-device, presented FPS, whole-image or resource-budget acceptance; A/A noise must accompany A/B timings."
+        }
+      ]
+    ],
+    "recorderSha256": "21b1b5e3e92d8fef90c59adb1a09dfd3b7bb439b935c25130d712ccec65e885d",
+    "stateHasherSha256": "f6bd79072595c0cf77827836573f8c64b696d7e537da0da7a9019300e1333dda"
+  },
+  "noWrapperControl": {
+    "stage": "range",
+    "frames": 30,
+    "stateMatchesRecordedPrefix": true,
+    "receipt": {
+      "id": "nw",
+      "sourceSha": "1ebfb8e79b9b3271ec6a733ee1d68a07a5828d43",
+      "contentHash": "3daa2db28693e61b777d30f54ccac73b5fd0567a5db18894916a7f426e6da18b",
+      "environment": {
+        "node": "v24.19.0",
+        "cpu": "AMD EPYC 9V74 80-Core Processor",
+        "logicalCpus": 5,
+        "quality": "low",
+        "viewport": [
+          960,
+          640
+        ],
+        "render": false,
+        "wrappers": false,
+        "browser": "151.0.7922.34"
+      },
+      "status": "passed",
+      "receiptSha256": "d5f1369de6e927fac8e8bfba6a60317446199916a47ff094cb20bc02de023e78",
+      "scenarios": [
+        {
+          "stage": "range",
+          "initial": {
+            "actors": 12,
+            "bots": 0,
+            "roster": [
+              "shooter",
+              "shooter",
+              "shooter",
+              "shooter",
+              "shooter",
+              "shooter",
+              "shooter",
+              "shooter",
+              "shooter",
+              "shooter",
+              "shooter",
+              "shooter"
+            ],
+            "native": false,
+            "sourceCharacters": 1,
+            "triangles": 0,
+            "paintFaces": 153,
+            "atlas": 2048,
+            "ppm": 18,
+            "settings": {
+              "sensitivity": 1,
+              "padSensitivity": 0,
+              "padInvertX": false,
+              "invertY": false,
+              "invertX": false,
+              "aimProfile": "tv",
+              "aimProfiles": {
+                "tv": {
+                  "gyro": false,
+                  "gyroSens": 0,
+                  "padSensitivity": 0,
+                  "invertY": false,
+                  "invertX": false
+                },
+                "handheld": {
+                  "gyro": false,
+                  "gyroSens": 0,
+                  "padSensitivity": 0,
+                  "invertY": false,
+                  "invertX": false
+                }
+              },
+              "fov": 82,
+              "quality": "low",
+              "frameRate": "auto",
+              "shadows": true,
+              "bloom": true,
+              "cameraShake": 1,
+              "showFps": false,
+              "master": 0.8,
+              "music": 0.6,
+              "sfx": 0.85,
+              "colorblind": false,
+              "minimap": false,
+              "matchLength": 180,
+              "difficulty": "normal",
+              "rumble": 1,
+              "aimAssist": 0,
+              "aimAssistMouse": false,
+              "lang": "ja",
+              "gyro": false,
+              "gyroSens": 0,
+              "gyroInvertX": false,
+              "gyroInvertY": false,
+              "touchSens": 0,
+              "fireAim": true,
+              "stickMode": "float",
+              "touchScale": 1,
+              "touchOpacity": 0.85,
+              "musicVolume": 0,
+              "audioVolume": 0,
+              "fovMode": "h",
+              "padSensitivityScale": "s3"
+            }
+          },
+          "frames": 30,
+          "hz": 60,
+          "ticks": 30,
+          "cpuFrameMs": {
+            "mean": 7.1033333333519595,
+            "p50": 5.7000000001862645,
+            "p95": 19.100000000093132,
+            "p99": 21,
+            "max": 21
+          },
+          "categories": {},
+          "bvh": {
+            "queries": 0,
+            "triangleTests": 0
+          },
+          "counts": [
+            1257,
+            0
+          ],
+          "digest": 3934658347,
+          "stateSequenceSha256": "312801cb3c63f3884f1e867b0c7810bc522d136667b190dcb69d8d4d4a1628ec",
+          "draw": {
+            "frame": 199,
+            "calls": 1,
+            "triangles": 22,
+            "points": 0,
+            "lines": 0
+          },
+          "resources": {
+            "geometries": 259,
+            "textures": 22
+          },
+          "gc": {
+            "status": "observed",
+            "events": 2,
+            "pauses": 1,
+            "pauseMs": 1.339,
+            "maxPauseMs": 1.339,
+            "windowMs": 214.829
+          },
+          "heap": {
+            "before": {
+              "Documents": 16,
+              "Nodes": 1887,
+              "JSHeapUsedSize": 95004180,
+              "JSHeapTotalSize": 143077376
+            },
+            "after": {
+              "Documents": 16,
+              "Nodes": 1920,
+              "JSHeapUsedSize": 83855032,
+              "JSHeapTotalSize": 144125952
+            }
+          },
+          "contextLost": false,
+          "errors": []
+        }
+      ]
+    }
+  },
+  "renderDiagnostic": {
+    "sourceSha": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+    "environment": {
+      "node": "v24.19.0",
+      "cpu": "AMD EPYC 9V74 80-Core Processor",
+      "logicalCpus": 5,
+      "quality": "high",
+      "viewport": [
+        960,
+        640
+      ],
+      "render": true,
+      "wrappers": true,
+      "browser": "151.0.7922.34"
+    },
+    "limits": "Baseline only, 30 high-quality scene submissions; old state hash was invalid, no A/B or FPS acceptance.",
+    "scenarios": [
+      {
+        "stage": "range",
+        "cpuFrameMs": {
+          "mean": 35.42333333332402,
+          "p50": 20.300000000279397,
+          "p95": 83,
+          "p99": 278.39999999990687,
+          "max": 278.39999999990687
+        },
+        "render": {
+          "msPerTick": 18.29999999998448,
+          "callsPerTick": 1
+        },
+        "shadow": {
+          "msPerTick": 1.359999999947225,
+          "callsPerTick": 21.766666666666666
+        },
+        "sceneMatrices": {
+          "msPerTick": 0.6133333333147069,
+          "callsPerTick": 2
+        },
+        "draw": {
+          "frame": 966,
+          "calls": 208,
+          "triangles": 808518,
+          "points": 0,
+          "lines": 0
+        },
+        "gc": {
+          "status": "observed",
+          "events": 2,
+          "pauses": 1,
+          "pauseMs": 5.109,
+          "maxPauseMs": 5.109,
+          "windowMs": 1064.07
+        },
+        "contextLost": false,
+        "errors": []
+      },
+      {
+        "stage": "tidewater",
+        "cpuFrameMs": {
+          "mean": 46.64333333335817,
+          "p50": 31.699999999720603,
+          "p95": 79,
+          "p99": 371.40000000037253,
+          "max": 371.40000000037253
+        },
+        "render": {
+          "msPerTick": 24.66333333334575,
+          "callsPerTick": 1
+        },
+        "shadow": {
+          "msPerTick": 2.600000000015522,
+          "callsPerTick": 22.1
+        },
+        "sceneMatrices": {
+          "msPerTick": 2.0433333333116024,
+          "callsPerTick": 2
+        },
+        "draw": {
+          "frame": 945,
+          "calls": 243,
+          "triangles": 911124,
+          "points": 0,
+          "lines": 0
+        },
+        "gc": {
+          "status": "observed",
+          "events": 2,
+          "pauses": 1,
+          "pauseMs": 5.033,
+          "maxPauseMs": 5.033,
+          "windowMs": 1405.121
+        },
+        "contextLost": false,
+        "errors": []
+      }
+    ]
+  }
+}
