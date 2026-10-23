@@ -1,0 +1,71 @@
+[
+  {
+    "name": "before",
+    "nativeRowsExactlyEqual": true,
+    "window48to56": {
+      "maxSpeed": {
+        "tick": 49,
+        "value": 66.54771743434607
+      },
+      "maxAcceleration": {
+        "tick": 49,
+        "value": 4155.844201258958
+      },
+      "maxScreenSpeed": {
+        "tick": 49,
+        "value": 7784.999599687061
+      },
+      "maxScreenAcceleration": {
+        "tick": 49,
+        "value": 485149.54017255
+      },
+      "totalDistance": 4.063007994850028
+    }
+  },
+  {
+    "name": "cf9",
+    "nativeRowsExactlyEqual": true,
+    "window48to56": {
+      "maxSpeed": {
+        "tick": 51,
+        "value": 54.495258991205446
+      },
+      "maxAcceleration": {
+        "tick": 51,
+        "value": 3061.8831772788353
+      },
+      "maxScreenSpeed": {
+        "tick": 50,
+        "value": 5435.461784824722
+      },
+      "maxScreenAcceleration": {
+        "tick": 51,
+        "value": 353717.9013761424
+      },
+      "totalDistance": 3.943366912793889
+    }
+  },
+  {
+    "name": "weighted",
+    "nativeRowsExactlyEqual": true,
+    "window48to56": {
+      "maxSpeed": {
+        "tick": 53,
+        "value": 45.226608489065086
+      },
+      "maxAcceleration": {
+        "tick": 50,
+        "value": 1951.9998634909875
+      },
+      "maxScreenSpeed": {
+        "tick": 50,
+        "value": 4504.521626838485
+      },
+      "maxScreenAcceleration": {
+        "tick": 50,
+        "value": 225370.31908267195
+      },
+      "totalDistance": 3.9369258614401774
+    }
+  }
+]

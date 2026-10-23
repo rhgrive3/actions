@@ -1,0 +1,12 @@
+{
+  "observerSha256": "484bb87e7c9b764803f2ed9b49d5fdf932c0a7a46dcdae7faa0b78dda97b285a",
+  "checkerSha256": "237fced7e3c63ed943ae2ba66177f685f092439e764a1630fc67eb140a8a884c",
+  "productionRuntimeChanged": false,
+  "baseline": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "cf9": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2",
+  "weighted": "37a33b4f8e8c1609aa4bf0cc2c69f8589da276e7",
+  "equivalenceExcludes": [
+    "cumulative render.info counters from unfrozen boot"
+  ],
+  "allNativePoseGeometryAndProjectileRowsExactlyMatchUninstrumentedControls": true
+}
