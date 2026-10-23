@@ -1,0 +1,1045 @@
+{
+  "status": "passed",
+  "units": "WU",
+  "buildContentHash": "adc14699526a24f35e9489d67118fb68c82718392f88fe8ae29b1a6dd7b8b298",
+  "boundaryFixCommit": "67cbdbafd2b22752b1c7fb3a22d92a14dc71e5ed",
+  "fixture": "Normally booted Game with native Q/Sub input and actual Actor/Projectiles/Physics; controlled long flat collision floor (and optional 1 WU wall), matching Level render geometry; not an unmodified range screenshot. Gravity, launch parameters and lock times unchanged.",
+  "rendering": "Each delivered Game._frame renders the inspection world; 30/60/120 delivery Hz and fixed 60Hz simulation.",
+  "worldGeometryDisplayed": true,
+  "activationAndReleaseFramesRendered": true,
+  "conditions": "Standing, effective Storm throwScale 1 and duration 8 (GP0 equivalent); native Q, Sub press, Sub release. No projectile parameter or lock-time changes.",
+  "rows": [
+    {
+      "case": "flat-forward",
+      "deliveryHz": 30,
+      "simulationStep": 0.016666666666666666,
+      "feet": [
+        0,
+        5.551115123125783e-17,
+        0
+      ],
+      "launchOrigin": [
+        0,
+        1.45,
+        0
+      ],
+      "launchVelocity": [
+        0,
+        14.399999999999999,
+        67.2
+      ],
+      "aimPitch": 0,
+      "aimYaw": 0,
+      "stormPowerSnapshot": {
+        "duration": 8,
+        "throwScale": 1
+      },
+      "deviceAge": 1.2833333333333337,
+      "integratedTicks": 77,
+      "eventTimeDifference": 1.2666666666666622,
+      "tickIndexDifference": 76,
+      "segmentContact": {
+        "tick": 216,
+        "point": [
+          0,
+          0,
+          85.8712195121951
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "block": 0,
+        "face": 2
+      },
+      "spawnInput": [
+        0,
+        -0.09000000000001424,
+        86.24000000000004
+      ],
+      "firstCloudBeforeDrift": [
+        0,
+        4.6,
+        86.24000000000004
+      ],
+      "horizontalWU": 86.24000000000004,
+      "trajectorySamples": 76,
+      "trajectoryHash": "7cd24686b6b9a2070e8ddd985aba646c33a225e8066c88e63a7401a9b7f513ac",
+      "apexSample": {
+        "age": 0.5833333333333335,
+        "position": [
+          0,
+          5.649999999999995,
+          39.2
+        ],
+        "velocity": [
+          0,
+          0.39999999999999036,
+          67.2
+        ]
+      }
+    },
+    {
+      "case": "flat-up-30",
+      "deliveryHz": 30,
+      "simulationStep": 0.016666666666666666,
+      "feet": [
+        0,
+        5.551115123125783e-17,
+        0
+      ],
+      "launchOrigin": [
+        0,
+        1.45,
+        0
+      ],
+      "launchVelocity": [
+        0,
+        46.070765814495914,
+        50.996907134314284
+      ],
+      "aimPitch": 0.5235987755982988,
+      "aimYaw": 0,
+      "stormPowerSnapshot": {
+        "duration": 8,
+        "throwScale": 1
+      },
+      "deviceAge": 3.866666666666658,
+      "integratedTicks": 232,
+      "eventTimeDifference": 3.8500000000000405,
+      "tickIndexDifference": 231,
+      "segmentContact": {
+        "tick": 540,
+        "point": [
+          0,
+          0,
+          196.53720344228788
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "block": 0,
+        "face": 2
+      },
+      "spawnInput": [
+        0,
+        -0.5963721839487609,
+        197.18804091934967
+      ],
+      "firstCloudBeforeDrift": [
+        0,
+        4.003627816051239,
+        197.18804091934967
+      ],
+      "horizontalWU": 197.18804091934967,
+      "trajectorySamples": 231,
+      "trajectoryHash": "bdda7964b5a4e23e2296c21c0e9fe060324cf06c30b1612cc8ea3536049d22c9",
+      "apexSample": {
+        "age": 1.9166666666666647,
+        "position": [
+          0,
+          45.285634477783965,
+          97.74407200743599
+        ],
+        "velocity": [
+          0,
+          0.07076581449601049,
+          50.996907134314284
+        ]
+      }
+    },
+    {
+      "case": "flat-down-30",
+      "deliveryHz": 30,
+      "simulationStep": 0.016666666666666666,
+      "feet": [
+        0,
+        5.551115123125783e-17,
+        0
+      ],
+      "launchOrigin": [
+        0,
+        1.45,
+        0
+      ],
+      "launchVelocity": [
+        0,
+        -21.129234185504078,
+        65.39690713431428
+      ],
+      "aimPitch": -0.5235987755982988,
+      "aimYaw": 0,
+      "stormPowerSnapshot": {
+        "duration": 8,
+        "throwScale": 1
+      },
+      "deviceAge": 0.06666666666666667,
+      "integratedTicks": 4,
+      "eventTimeDifference": 0.05000000000000249,
+      "tickIndexDifference": 3,
+      "segmentContact": {
+        "tick": 637,
+        "point": [
+          0,
+          0,
+          4.287051241360038
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "block": 0,
+        "face": 2
+      },
+      "spawnInput": [
+        0,
+        -0.02528227903360497,
+        4.359793808954285
+      ],
+      "firstCloudBeforeDrift": [
+        0,
+        4.6,
+        4.359793808954285
+      ],
+      "horizontalWU": 4.359793808954285,
+      "trajectorySamples": 3,
+      "trajectoryHash": "0e23e749e2ca120d1badf8e852b2d3277ac67bec5f070e4e596300a07e86c601",
+      "apexSample": {
+        "age": 0.016666666666666666,
+        "position": [
+          0,
+          1.0911794302415987,
+          1.0899484522385712
+        ],
+        "velocity": [
+          0,
+          -21.529234185504077,
+          65.39690713431428
+        ]
+      }
+    },
+    {
+      "case": "wall-1-WU",
+      "deliveryHz": 30,
+      "simulationStep": 0.016666666666666666,
+      "feet": [
+        0,
+        5.551115123125783e-17,
+        0
+      ],
+      "launchOrigin": [
+        0,
+        1.45,
+        0
+      ],
+      "launchVelocity": [
+        0,
+        14.399999999999999,
+        67.2
+      ],
+      "aimPitch": 0,
+      "aimYaw": 0,
+      "stormPowerSnapshot": {
+        "duration": 8,
+        "throwScale": 1
+      },
+      "deviceAge": 0.016666666666666666,
+      "integratedTicks": 1,
+      "eventTimeDifference": 0,
+      "tickIndexDifference": 0,
+      "segmentContact": {
+        "tick": 731,
+        "point": [
+          0,
+          1.6583333333333334,
+          1
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "block": 1,
+        "face": 9
+      },
+      "spawnInput": [
+        0,
+        1.6833333333333333,
+        1.12
+      ],
+      "firstCloudBeforeDrift": [
+        0,
+        4.6,
+        1.12
+      ],
+      "horizontalWU": 1.12,
+      "trajectorySamples": 0,
+      "trajectoryHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "apexSample": null
+    },
+    {
+      "case": "height-3-WU",
+      "deliveryHz": 30,
+      "simulationStep": 0.016666666666666666,
+      "feet": [
+        0,
+        3,
+        0
+      ],
+      "launchOrigin": [
+        0,
+        4.45,
+        0
+      ],
+      "launchVelocity": [
+        0,
+        14.399999999999999,
+        67.2
+      ],
+      "aimPitch": 0,
+      "aimYaw": 0,
+      "stormPowerSnapshot": {
+        "duration": 8,
+        "throwScale": 1
+      },
+      "deviceAge": 1.4499999999999997,
+      "integratedTicks": 87,
+      "eventTimeDifference": 1.4333333333334046,
+      "tickIndexDifference": 86,
+      "segmentContact": {
+        "tick": 910,
+        "point": [
+          0,
+          0,
+          96.81411764705885
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "block": 0,
+        "face": 2
+      },
+      "spawnInput": [
+        0,
+        -0.19000000000001566,
+        97.44000000000008
+      ],
+      "firstCloudBeforeDrift": [
+        0,
+        4.6,
+        97.44000000000008
+      ],
+      "horizontalWU": 97.44000000000008,
+      "trajectorySamples": 86,
+      "trajectoryHash": "cf99e8a1501a012694ae2c94926b61bbace7eb31ff5fbbf2e31a68b22e8152b4",
+      "apexSample": {
+        "age": 0.5833333333333335,
+        "position": [
+          0,
+          8.649999999999995,
+          39.2
+        ],
+        "velocity": [
+          0,
+          0.39999999999999036,
+          67.2
+        ]
+      }
+    },
+    {
+      "case": "flat-forward",
+      "deliveryHz": 60,
+      "simulationStep": 0.016666666666666666,
+      "feet": [
+        0,
+        5.551115123125783e-17,
+        0
+      ],
+      "launchOrigin": [
+        0,
+        1.45,
+        0
+      ],
+      "launchVelocity": [
+        0,
+        14.399999999999999,
+        67.2
+      ],
+      "aimPitch": 0,
+      "aimYaw": 0,
+      "stormPowerSnapshot": {
+        "duration": 8,
+        "throwScale": 1
+      },
+      "deviceAge": 1.2833333333333337,
+      "integratedTicks": 77,
+      "eventTimeDifference": 1.2666666666665947,
+      "tickIndexDifference": 76,
+      "segmentContact": {
+        "tick": 1079,
+        "point": [
+          0,
+          0,
+          85.8712195121951
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "block": 0,
+        "face": 2
+      },
+      "spawnInput": [
+        0,
+        -0.09000000000001424,
+        86.24000000000004
+      ],
+      "firstCloudBeforeDrift": [
+        0,
+        4.6,
+        86.24000000000004
+      ],
+      "horizontalWU": 86.24000000000004,
+      "trajectorySamples": 76,
+      "trajectoryHash": "7cd24686b6b9a2070e8ddd985aba646c33a225e8066c88e63a7401a9b7f513ac",
+      "apexSample": {
+        "age": 0.5833333333333335,
+        "position": [
+          0,
+          5.649999999999995,
+          39.2
+        ],
+        "velocity": [
+          0,
+          0.39999999999999036,
+          67.2
+        ]
+      }
+    },
+    {
+      "case": "flat-up-30",
+      "deliveryHz": 60,
+      "simulationStep": 0.016666666666666666,
+      "feet": [
+        0,
+        5.551115123125783e-17,
+        0
+      ],
+      "launchOrigin": [
+        0,
+        1.45,
+        0
+      ],
+      "launchVelocity": [
+        0,
+        46.070765814495914,
+        50.996907134314284
+      ],
+      "aimPitch": 0.5235987755982988,
+      "aimYaw": 0,
+      "stormPowerSnapshot": {
+        "duration": 8,
+        "throwScale": 1
+      },
+      "deviceAge": 3.866666666666658,
+      "integratedTicks": 232,
+      "eventTimeDifference": 3.849999999999781,
+      "tickIndexDifference": 231,
+      "segmentContact": {
+        "tick": 1403,
+        "point": [
+          0,
+          0,
+          196.53720344228788
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "block": 0,
+        "face": 2
+      },
+      "spawnInput": [
+        0,
+        -0.5963721839487609,
+        197.18804091934967
+      ],
+      "firstCloudBeforeDrift": [
+        0,
+        4.003627816051239,
+        197.18804091934967
+      ],
+      "horizontalWU": 197.18804091934967,
+      "trajectorySamples": 231,
+      "trajectoryHash": "bdda7964b5a4e23e2296c21c0e9fe060324cf06c30b1612cc8ea3536049d22c9",
+      "apexSample": {
+        "age": 1.9166666666666647,
+        "position": [
+          0,
+          45.285634477783965,
+          97.74407200743599
+        ],
+        "velocity": [
+          0,
+          0.07076581449601049,
+          50.996907134314284
+        ]
+      }
+    },
+    {
+      "case": "flat-down-30",
+      "deliveryHz": 60,
+      "simulationStep": 0.016666666666666666,
+      "feet": [
+        0,
+        5.551115123125783e-17,
+        0
+      ],
+      "launchOrigin": [
+        0,
+        1.45,
+        0
+      ],
+      "launchVelocity": [
+        0,
+        -21.129234185504078,
+        65.39690713431428
+      ],
+      "aimPitch": -0.5235987755982988,
+      "aimYaw": 0,
+      "stormPowerSnapshot": {
+        "duration": 8,
+        "throwScale": 1
+      },
+      "deviceAge": 0.06666666666666667,
+      "integratedTicks": 4,
+      "eventTimeDifference": 0.04999999999999716,
+      "tickIndexDifference": 3,
+      "segmentContact": {
+        "tick": 1499,
+        "point": [
+          0,
+          0,
+          4.287051241360038
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "block": 0,
+        "face": 2
+      },
+      "spawnInput": [
+        0,
+        -0.02528227903360497,
+        4.359793808954285
+      ],
+      "firstCloudBeforeDrift": [
+        0,
+        4.6,
+        4.359793808954285
+      ],
+      "horizontalWU": 4.359793808954285,
+      "trajectorySamples": 3,
+      "trajectoryHash": "0e23e749e2ca120d1badf8e852b2d3277ac67bec5f070e4e596300a07e86c601",
+      "apexSample": {
+        "age": 0.016666666666666666,
+        "position": [
+          0,
+          1.0911794302415987,
+          1.0899484522385712
+        ],
+        "velocity": [
+          0,
+          -21.529234185504077,
+          65.39690713431428
+        ]
+      }
+    },
+    {
+      "case": "wall-1-WU",
+      "deliveryHz": 60,
+      "simulationStep": 0.016666666666666666,
+      "feet": [
+        0,
+        5.551115123125783e-17,
+        0
+      ],
+      "launchOrigin": [
+        0,
+        1.45,
+        0
+      ],
+      "launchVelocity": [
+        0,
+        14.399999999999999,
+        67.2
+      ],
+      "aimPitch": 0,
+      "aimYaw": 0,
+      "stormPowerSnapshot": {
+        "duration": 8,
+        "throwScale": 1
+      },
+      "deviceAge": 0.016666666666666666,
+      "integratedTicks": 1,
+      "eventTimeDifference": 0,
+      "tickIndexDifference": 0,
+      "segmentContact": {
+        "tick": 1592,
+        "point": [
+          0,
+          1.6583333333333334,
+          1
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "block": 1,
+        "face": 9
+      },
+      "spawnInput": [
+        0,
+        1.6833333333333333,
+        1.12
+      ],
+      "firstCloudBeforeDrift": [
+        0,
+        4.6,
+        1.12
+      ],
+      "horizontalWU": 1.12,
+      "trajectorySamples": 0,
+      "trajectoryHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "apexSample": null
+    },
+    {
+      "case": "height-3-WU",
+      "deliveryHz": 60,
+      "simulationStep": 0.016666666666666666,
+      "feet": [
+        0,
+        3,
+        0
+      ],
+      "launchOrigin": [
+        0,
+        4.45,
+        0
+      ],
+      "launchVelocity": [
+        0,
+        14.399999999999999,
+        67.2
+      ],
+      "aimPitch": 0,
+      "aimYaw": 0,
+      "stormPowerSnapshot": {
+        "duration": 8,
+        "throwScale": 1
+      },
+      "deviceAge": 1.4499999999999997,
+      "integratedTicks": 87,
+      "eventTimeDifference": 1.4333333333332519,
+      "tickIndexDifference": 86,
+      "segmentContact": {
+        "tick": 1771,
+        "point": [
+          0,
+          0,
+          96.81411764705885
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "block": 0,
+        "face": 2
+      },
+      "spawnInput": [
+        0,
+        -0.19000000000001566,
+        97.44000000000008
+      ],
+      "firstCloudBeforeDrift": [
+        0,
+        4.6,
+        97.44000000000008
+      ],
+      "horizontalWU": 97.44000000000008,
+      "trajectorySamples": 86,
+      "trajectoryHash": "cf99e8a1501a012694ae2c94926b61bbace7eb31ff5fbbf2e31a68b22e8152b4",
+      "apexSample": {
+        "age": 0.5833333333333335,
+        "position": [
+          0,
+          8.649999999999995,
+          39.2
+        ],
+        "velocity": [
+          0,
+          0.39999999999999036,
+          67.2
+        ]
+      }
+    },
+    {
+      "case": "flat-forward",
+      "deliveryHz": 120,
+      "simulationStep": 0.016666666666666666,
+      "feet": [
+        0,
+        5.551115123125783e-17,
+        0
+      ],
+      "launchOrigin": [
+        0,
+        1.45,
+        0
+      ],
+      "launchVelocity": [
+        0,
+        14.399999999999999,
+        67.2
+      ],
+      "aimPitch": 0,
+      "aimYaw": 0,
+      "stormPowerSnapshot": {
+        "duration": 8,
+        "throwScale": 1
+      },
+      "deviceAge": 1.2833333333333337,
+      "integratedTicks": 77,
+      "eventTimeDifference": 1.2666666666665982,
+      "tickIndexDifference": 76,
+      "segmentContact": {
+        "tick": 1940,
+        "point": [
+          0,
+          0,
+          85.8712195121951
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "block": 0,
+        "face": 2
+      },
+      "spawnInput": [
+        0,
+        -0.09000000000001424,
+        86.24000000000004
+      ],
+      "firstCloudBeforeDrift": [
+        0,
+        4.6,
+        86.24000000000004
+      ],
+      "horizontalWU": 86.24000000000004,
+      "trajectorySamples": 76,
+      "trajectoryHash": "7cd24686b6b9a2070e8ddd985aba646c33a225e8066c88e63a7401a9b7f513ac",
+      "apexSample": {
+        "age": 0.5833333333333335,
+        "position": [
+          0,
+          5.649999999999995,
+          39.2
+        ],
+        "velocity": [
+          0,
+          0.39999999999999036,
+          67.2
+        ]
+      }
+    },
+    {
+      "case": "flat-up-30",
+      "deliveryHz": 120,
+      "simulationStep": 0.016666666666666666,
+      "feet": [
+        0,
+        5.551115123125783e-17,
+        0
+      ],
+      "launchOrigin": [
+        0,
+        1.45,
+        0
+      ],
+      "launchVelocity": [
+        0,
+        46.070765814495914,
+        50.996907134314284
+      ],
+      "aimPitch": 0.5235987755982988,
+      "aimYaw": 0,
+      "stormPowerSnapshot": {
+        "duration": 8,
+        "throwScale": 1
+      },
+      "deviceAge": 3.866666666666658,
+      "integratedTicks": 232,
+      "eventTimeDifference": 3.849999999999781,
+      "tickIndexDifference": 231,
+      "segmentContact": {
+        "tick": 2264,
+        "point": [
+          0,
+          0,
+          196.53720344228788
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "block": 0,
+        "face": 2
+      },
+      "spawnInput": [
+        0,
+        -0.5963721839487609,
+        197.18804091934967
+      ],
+      "firstCloudBeforeDrift": [
+        0,
+        4.003627816051239,
+        197.18804091934967
+      ],
+      "horizontalWU": 197.18804091934967,
+      "trajectorySamples": 231,
+      "trajectoryHash": "bdda7964b5a4e23e2296c21c0e9fe060324cf06c30b1612cc8ea3536049d22c9",
+      "apexSample": {
+        "age": 1.9166666666666647,
+        "position": [
+          0,
+          45.285634477783965,
+          97.74407200743599
+        ],
+        "velocity": [
+          0,
+          0.07076581449601049,
+          50.996907134314284
+        ]
+      }
+    },
+    {
+      "case": "flat-down-30",
+      "deliveryHz": 120,
+      "simulationStep": 0.016666666666666666,
+      "feet": [
+        0,
+        5.551115123125783e-17,
+        0
+      ],
+      "launchOrigin": [
+        0,
+        1.45,
+        0
+      ],
+      "launchVelocity": [
+        0,
+        -21.129234185504078,
+        65.39690713431428
+      ],
+      "aimPitch": -0.5235987755982988,
+      "aimYaw": 0,
+      "stormPowerSnapshot": {
+        "duration": 8,
+        "throwScale": 1
+      },
+      "deviceAge": 0.06666666666666667,
+      "integratedTicks": 4,
+      "eventTimeDifference": 0.04999999999999716,
+      "tickIndexDifference": 3,
+      "segmentContact": {
+        "tick": 2360,
+        "point": [
+          0,
+          0,
+          4.287051241360038
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "block": 0,
+        "face": 2
+      },
+      "spawnInput": [
+        0,
+        -0.02528227903360497,
+        4.359793808954285
+      ],
+      "firstCloudBeforeDrift": [
+        0,
+        4.6,
+        4.359793808954285
+      ],
+      "horizontalWU": 4.359793808954285,
+      "trajectorySamples": 3,
+      "trajectoryHash": "0e23e749e2ca120d1badf8e852b2d3277ac67bec5f070e4e596300a07e86c601",
+      "apexSample": {
+        "age": 0.016666666666666666,
+        "position": [
+          0,
+          1.0911794302415987,
+          1.0899484522385712
+        ],
+        "velocity": [
+          0,
+          -21.529234185504077,
+          65.39690713431428
+        ]
+      }
+    },
+    {
+      "case": "wall-1-WU",
+      "deliveryHz": 120,
+      "simulationStep": 0.016666666666666666,
+      "feet": [
+        0,
+        5.551115123125783e-17,
+        0
+      ],
+      "launchOrigin": [
+        0,
+        1.45,
+        0
+      ],
+      "launchVelocity": [
+        0,
+        14.399999999999999,
+        67.2
+      ],
+      "aimPitch": 0,
+      "aimYaw": 0,
+      "stormPowerSnapshot": {
+        "duration": 8,
+        "throwScale": 1
+      },
+      "deviceAge": 0.016666666666666666,
+      "integratedTicks": 1,
+      "eventTimeDifference": 0,
+      "tickIndexDifference": 0,
+      "segmentContact": {
+        "tick": 2453,
+        "point": [
+          0,
+          1.6583333333333334,
+          1
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ],
+        "block": 1,
+        "face": 9
+      },
+      "spawnInput": [
+        0,
+        1.6833333333333333,
+        1.12
+      ],
+      "firstCloudBeforeDrift": [
+        0,
+        4.6,
+        1.12
+      ],
+      "horizontalWU": 1.12,
+      "trajectorySamples": 0,
+      "trajectoryHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "apexSample": null
+    },
+    {
+      "case": "height-3-WU",
+      "deliveryHz": 120,
+      "simulationStep": 0.016666666666666666,
+      "feet": [
+        0,
+        3,
+        0
+      ],
+      "launchOrigin": [
+        0,
+        4.45,
+        0
+      ],
+      "launchVelocity": [
+        0,
+        14.399999999999999,
+        67.2
+      ],
+      "aimPitch": 0,
+      "aimYaw": 0,
+      "stormPowerSnapshot": {
+        "duration": 8,
+        "throwScale": 1
+      },
+      "deviceAge": 1.4499999999999997,
+      "integratedTicks": 87,
+      "eventTimeDifference": 1.4333333333332519,
+      "tickIndexDifference": 86,
+      "segmentContact": {
+        "tick": 2632,
+        "point": [
+          0,
+          0,
+          96.81411764705885
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "block": 0,
+        "face": 2
+      },
+      "spawnInput": [
+        0,
+        -0.19000000000001566,
+        97.44000000000008
+      ],
+      "firstCloudBeforeDrift": [
+        0,
+        4.6,
+        97.44000000000008
+      ],
+      "horizontalWU": 97.44000000000008,
+      "trajectorySamples": 86,
+      "trajectoryHash": "cf99e8a1501a012694ae2c94926b61bbace7eb31ff5fbbf2e31a68b22e8152b4",
+      "apexSample": {
+        "age": 0.5833333333333335,
+        "position": [
+          0,
+          8.649999999999995,
+          39.2
+        ],
+        "velocity": [
+          0,
+          0.39999999999999036,
+          67.2
+        ]
+      }
+    }
+  ],
+  "retailCalibration": "Not verified. WU is not asserted to equal Nintendo metres. Gravity/drag defaults of the retail jar are not inferred from RainParam.",
+  "timingNote": "The jar integrates once in its launch tick. deviceAge includes that tick; event tick-index/time differences exclude it. The cloud is recorded inside _spawnCloud before the same tick drifts it.",
+  "remainingIssue": "Production _spawnCloud receives the integrated end position rather than segment hit.point; upward 30 degrees starts the ground probe below the floor and creates cloud Y=4.003627816. No throw fix made here."
+}
