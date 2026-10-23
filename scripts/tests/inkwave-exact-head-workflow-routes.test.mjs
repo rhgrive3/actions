@@ -25,6 +25,17 @@ function shell(name, overrides={}) {
       PAIR_EVENT_NAME:'workflow_dispatch',DISPATCH_BASE_SHA:B,DISPATCH_HEAD_SHA:H,DISPATCH_MODE:'maina350-byte-identical-paint-source-epoch',
       DISPATCH_SOURCE_BASE:E,DISPATCH_SOURCE_HEAD:E,DECLARED_BASE_SHA:B,DECLARED_HEAD_SHA:H,INKWAVE_REFERENCE_ROOT:'.ci-baseline',...overrides}});
 }
+test('the subsequent weapon batch binds actual Git commits to its exact integrated-main source pair',()=>{
+ const names=['Bind reviewed source controls to declared immutable Git source leaves','Replay reviewed Roller births, pool reset and pinned paint in the main reference'];
+ const valid={PAIR_EVENT_NAME:'pull_request',PAIR_BASE_REF:'main',PAIR_HEAD_REF:'fix/stringer-splatana-review-20261023',PAIR_REPOSITORY:'rhgrive3/actions',PAIR_HEAD_REPO:'rhgrive3/actions'};
+ for(const name of names){
+  const result=shell(name,valid);assert.equal(result.status,0,result.stderr);
+  for(const [flag,value] of [['--base-sha',B],['--candidate-sha',H],['--expected-mode','current-pair-with-gameplay-differences'],['--expected-source-base','83403aaab0043633f1ad1c963068cd0566c5b6fc'],['--expected-source-head','c9218d19b98a3bc63c9266738e1d67a64d9d1ff0']])assert.ok(result.stdout.includes(`${flag}\n${value}\n`));
+  for(const override of [{PAIR_BASE_REF:'other'},{PAIR_HEAD_REPO:'outside/actions'},{PAIR_REPOSITORY:''},{PAIR_HEAD_REF:valid.PAIR_HEAD_REF+'-other'}])
+   assert.ok(!shell(name,{...valid,...override}).stdout.includes('c9218d19b98a3bc63c9266738e1d67a64d9d1ff0'));
+  assert.notEqual(shell(name,{...valid,NODE_STATUS:'7'}).status,0);
+ }
+});
 test('relay dispatch retains checkout and both regression suites',()=>{
  assert.match(relay,/on:\n  workflow_dispatch:\n/);
  assert.match(relay,/test "\$actual_source_sha" = "\$EXPECTED_SOURCE_SHA"/);

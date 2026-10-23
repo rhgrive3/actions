@@ -108,6 +108,30 @@ request scope to 31 PRs. It is not acceptance of the still-running first batch.
   pass 5/5. Production build and startup budget pass. Full browser and final hosted
   acceptance remain required on the eventual published commit.
 
+The subsequent batch also needs a reference after the first merge, rather than
+the original 26a4 main. Its thirteen selected baseline leaves equal the fixed
+83403aaa epoch, and only the catalogue leaf differs in c9218d19. Add this separate
+one-difference pair alongside the original nine-difference pair. All sixteen
+selected pose-source leaves are identical to the first batch; register only those
+exact blobs as an identity epoch, retaining the intentional Stringer clock change
+outside those leaves. The actual declared Git roots 87106154 and 40afc06a pass two
+positive CLI controls, 56 CLI rejections, 29 helper rejections, and unchanged-input
+checks. The subsequent same-repository branch passes explicit immutable source
+arguments to both workflow controls and preparation. Wrong repository, base and
+branch controls cannot obtain that route. No reference bytes are replayed.
+
+The final source/routing/pose guards pass 45/45. The original historical pose
+controls pass 5/5 against independently extracted b77b51df/cb7b7575 source leaves.
+The complete first-batch ranked rules pass 567/567, no skips. Subsequent-batch
+standard tests pass 117 Node and 13 Python cases. Minified Stringer/Splatana
+regressions pass 17/17. Native Chromium catalogue acceptance passes all 65 records
+and 34 additional Stringer/Splatana conditions. Actual game acceptance at source
+40afc06ac9daceadd6a9f221091e41b6b26504db verifies fourteen defaults, 65 kits, real
+keyboard movement/fire/paint, 758 responses and zero errors, content hash
+b96cd1f97850ef889060cfd91cdfcde5f3eceb7aa3f69e74fba88964d1c0dc59.
+These controlled Chromium results are distinct from final hosted CI and hardware
+or Switch measurements.
+
 ## Queue cleanup review
 
 Addresses the outstanding #1840 review: immediately before cancellation,

@@ -1,3 +1,5 @@
+import {ALL_29_PRS_SOURCE_PAIR} from "./inkwave-29pr-paint-source-pair.mjs";
+import {ALL_PRS_POSE_PAIR} from "./inkwave-23pr-paint-source-pair.mjs";
 // Additional fixed source epoch including the reviewed Stringer/Splatana fixes.
 // Preserve all earlier immutable epochs and both native comparison inputs.
 export const ALL_31_PRS_SOURCE_PAIR = Object.freeze({
@@ -58,4 +60,22 @@ export const ALL_31_PRS_SOURCE_PAIR = Object.freeze({
     }
   }
 });
-export const ALL_31_PRS_FIXTURE_SHA256="f7b0ce9a53884fc7aaa66b4ac5a5eea0d07fcf59178701120786e700da58f19a";
+export const ALL_31_PRS_FIXTURE_SHA256="f2cc95b94ca77450c52985f754c1b24cb3e5ad42b48c94ca05d1af9ac93ea36d";
+
+// The following batch compares against the already-integrated 30-PR main.
+// Its selected source leaves are the exact earlier 29-PR candidate epoch.
+export const POST_30_PRS_SOURCE_PAIR = Object.freeze({
+  baseCommit: ALL_29_PRS_SOURCE_PAIR.candidateCommit,
+  candidateCommit: ALL_31_PRS_SOURCE_PAIR.candidateCommit,
+  blobs: Object.freeze(Object.fromEntries(Object.entries(ALL_31_PRS_SOURCE_PAIR.blobs).map(([path,row]) =>
+    [path,Object.freeze({base:ALL_29_PRS_SOURCE_PAIR.blobs[path].candidate,candidate:row.candidate})]))),
+});
+// Only the sixteen selected pose-source leaves are identical across this batch.
+// Stringer clocks outside these leaves intentionally change; browser comparison remains mandatory.
+export const POST_30_PRS_POSE_PAIR = Object.freeze({
+  mode: 'post30-byte-identical-pose-source-epoch',
+  sourceBase: ALL_29_PRS_SOURCE_PAIR.candidateCommit,
+  sourceHead: ALL_29_PRS_SOURCE_PAIR.candidateCommit,
+  paths: Object.freeze(Object.fromEntries(Object.entries(ALL_PRS_POSE_PAIR.paths).map(([path,row]) =>
+    [path,Object.freeze({baseline:row.candidate,candidate:row.candidate})]))),
+});
