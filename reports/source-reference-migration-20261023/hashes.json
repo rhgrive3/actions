@@ -1,0 +1,7 @@
+{
+  "reference-emitted.json": "ad5f553fa9f3c2f2edac254e5f873518f4391ce1bde3fde7045041a01e4c23f3",
+  "migration.json": "96ad9f818c0fb48ad08db03420e2cc185a3aeb8c4acac9e3d651ca9a6374fef7",
+  "reference-migration-final.tap": "63f59015cfa2580a2076bef774b0246873d6865c58bcc2066742e3748c14e3bb",
+  "reference-migration.tap": "3d4a762cd16e67980804894f1bb330123a519320a7e244d8d3942c325424064a",
+  "README.md": "485072782cba08f3117ea67ae67820f00b4dee6f7e421001f518de24b1d0a214"
+}
