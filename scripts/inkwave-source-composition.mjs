@@ -1,3 +1,4 @@
+import { adaptFiringCosmetics } from '../patches/splatoon3/firing-cosmetics-adapter.mjs';
 import { adaptAddedUiMotion } from '../patches/local-quality/added-ui-motion-adapter.mjs';
 import { adaptCharacterShadowBatch } from '../patches/local-quality/character-shadow-batch-adapter.mjs';
 import { adaptQueueNetworkUi } from '../patches/reliability/queue-network-ui-adapter.mjs';
@@ -72,7 +73,8 @@ export function adaptBuildSource(rel, code) {
   code = adaptWeaponOpponentPalette(rel, code);
   code = adaptWeaponOpponentPreview(rel, code);
   code = adaptSpawnExclusion(rel, code);
-  return adaptAddedUiMotion(rel, adaptCharacterShadowBatch(rel, adaptQueueNetworkUi(rel, adaptCombatProvenance(rel, applyZevantDisplayName(rel, adaptLoadingScreen(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce)))))), replaceOnce));
+  const composed = adaptAddedUiMotion(rel, adaptCharacterShadowBatch(rel, adaptQueueNetworkUi(rel, adaptCombatProvenance(rel, applyZevantDisplayName(rel, adaptLoadingScreen(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce)))))), replaceOnce));
+  return adaptFiringCosmetics(rel, composed);
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream

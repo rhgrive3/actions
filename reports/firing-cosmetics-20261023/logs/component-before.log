@@ -1,0 +1,23 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.evaluate: TypeError: Converting circular structure to JSON
+    --> starting at object with constructor 'Ft'
+    |     property 'character' -> object with constructor 'hi'
+    --- property 'actor' closes the circle
+    at JSON.stringify (<anonymous>)
+    at eval (eval at evaluate (:311:30), <anonymous>:8:141)
+    at Array.map (<anonymous>)
+    at G.paint.splat (eval at evaluate (:311:30), <anonymous>:8:78)
+    at pt.paint (http://127.0.0.1:45475/src/game/inkFlightRuntime.js:2:6533)
+    at pt.impact (http://127.0.0.1:45475/src/game/inkFlightRuntime.js:2:7087)
+    at pt.stepHead (http://127.0.0.1:45475/src/game/inkFlightRuntime.js:2:3944)
+    at de._step (http://127.0.0.1:45475/src/game/weapons.js:113:27668)
+    at r._step (http://127.0.0.1:45475/patches/splatoon3/runtime/kit-trizooka.mjs:1:14316)
+    at n._step (http://127.0.0.1:45475/patches/splatoon3/runtime/weapons-fidelity.mjs:2:54230)
+    at /workspace/actions/scripts/probe-inkwave-firing-cosmetics.mjs:39:22 {
+  log: []
+}
+
+Node.js v24.19.0

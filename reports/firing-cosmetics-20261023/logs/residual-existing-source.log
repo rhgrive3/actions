@@ -1,0 +1,54 @@
+(node:5966) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ early natural freefall remains horizontal; the renderer never infers vertical from airborne position (1301.913602ms)
+✔ composite reservation is atomic, reuses batches, keeps nonuniform transforms finite and culls conservatively (1000.344913ms)
+✔ all 23 supported main definitions emit classified native rounds and render without changing gameplay (1421.754155ms)
+✔ actual Dualies/Splatling births draw connected rods, preserve authority, and fall back as one effect (1190.098757ms)
+✔ native tip translations retain exact Float32 endpoints at decimal-rounding boundaries (1193.494357ms)
+✔ Slosher uses a continuous sheet and sourced tail without detached beads or camera rotation (1180.595642ms)
+✔ catalogue local and JSON-wire births keep immutable family/mode through weapon switches and pooled reuse (1314.982321ms)
+✔ Bucket, Tri-Slosher, Dread Wringer and their alternate kits share the Bucket sheet; other Sloshers keep their art (4.576693ms)
+(node:5967) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ current S3 shape renderer and history renderer never submit the same native Shooter body twice (1374.790616ms)
+✔ pinned source data keeps unknown shooter defaults distinct from explicit Splatling tails (0.305341ms)
+✔ pinned Roller DrawSizeParam stays split between horizontal and vertical sheet modes (0.302297ms)
+✔ pinned Slosher front-four and rear-five records preserve exact DrawSize, offsets, and tail bounds (0.253774ms)
+✔ fixed-size projectile history retains curved samples and has identical 30/60/120 Hz timelines (4.236067ms)
+✔ source-aware renderer assigns distinct geometry to shooter, Roller, and Slosher modes in one bounded batch (792.509783ms)
+✔ source-sized Slosher caps stay at recorded endpoints across short and long retained histories (583.835263ms)
+✔ hot render methods reuse storage and contain no per-frame allocation or gameplay RNG path (0.505755ms)
+✔ color uploads reuse stable body colors and merge pending ranges across changed and reordered slots (528.559361ms)
+✔ history backend unit: native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence (1265.957715ms)
+✔ history backend unit: native coarse 30 Hz projectile update records both actual 60 Hz physics points (2123.669795ms)
+✔ final build composition renders the native nine-glob Slosher volley without changing gameplay state (1317.890988ms)
+✔ final adapter preserves native Shooter, horizontal/vertical Roller, and Slosher fingerprints (7008.696566ms)
+✔ native local and remote Slosher globs resolve to the same source unit, geometry mode, and draw radii (1013.708286ms)
+✔ deferred Slosher history begins at its refreshed aerial muzzle and launch tangent (854.997118ms)
+✔ history backend unit: a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window (906.205522ms)
+✔ native horizontal Roller links stay inside each of two real 13-glob volleys (975.537825ms)
+✔ horizontal liquid membranes cover actual close history after sibling heads separate, without false volley or birth joins (708.797963ms)
+✔ native horizontal Roller shared-history membranes preserve birth geometry and fixed display-cadence parity (1053.558919ms)
+✔ stalled remote Roller heads and liquid links share the same endpoint at every render alpha (987.341733ms)
+✔ source VTF Roller owns its GPU draw when installed, with geometry fallback when absent (668.303428ms)
+✔ native VTF recipe matches the compositor for horizontal and vertical Roller, Shooter and Slosher (0.379644ms)
+(node:5968) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ real births of the seven owned families draw S3 silhouettes, skip the generic teardrop and stay read-only (1421.688201ms)
+✔ unowned families keep their existing renderer and pooled reuse never inherits a shape (1141.116729ms)
+✔ Shooter rod: blunt head, sourced tail length, torn tail only while joined to the muzzle (0.465464ms)
+✔ Splatana crescents use the sourced collider span and lead with the convex edge (985.367631ms)
+✔ charged Splatana slash is born at ShotBulletOffset_Vertical and clears a flat floor (1082.360563ms)
+✔ SWEPs muzzle splash cones and shipped SWEPs assets (1.251993ms)
+✔ the Sloshing Machine round is one spinning membrane that never reaches behind the muzzle (1192.505918ms)
+✔ offset Brella volleys keep independent native firing identities even at equal owner and birth time (1176.668654ms)
+✔ Stringer actions allocate distinct descriptor identities and both draw even at equal owner and birth time (1242.189313ms)
+✔ charged selector does not rotate Dental waves or swing sheets into the vertical plane (998.830959ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22844.322748

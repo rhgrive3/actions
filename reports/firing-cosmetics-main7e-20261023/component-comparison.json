@@ -1,0 +1,104 @@
+{
+  "status": "pass",
+  "beforeBuild": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+  "candidateBuild": "f740110d0f27536f46725d2299710bf4e01a08c0e7ddc6efba75dbe27a61c965",
+  "steps": 960,
+  "rows": [
+    {
+      "weapon": "shooter",
+      "state": "standing",
+      "hz": 60,
+      "steps": 240,
+      "shots": 18,
+      "paintWrites": 44,
+      "traceSHA256": "79a5fb360b00a9a92864dc1af0a3d1ae972f3a0a2198a1ef8e544fc9d944f10d",
+      "paintSHA256": "4d3ca0abc5ce74fc7fd411501dd7aa5529cb26f943e5de5cb48a3537a70ab39b",
+      "gridSHA256": "6f5d2c10378dbac288e2e1d83cbbddab8077bad5b76e4a8739696861e324b3ee",
+      "beforeResources": {
+        "geometries": 167,
+        "textures": 9
+      },
+      "afterResources": {
+        "geometries": 167,
+        "textures": 9
+      },
+      "afterDrain": {
+        "rounds": 0,
+        "drops": 0,
+        "cosmetic": 0
+      }
+    },
+    {
+      "weapon": "shooter",
+      "state": "moving-jump",
+      "hz": 60,
+      "steps": 240,
+      "shots": 18,
+      "paintWrites": 45,
+      "traceSHA256": "08d00adb4e938bd10eef1575b28ec7b843242017d2f4d927b29be966c280c596",
+      "paintSHA256": "0bb6b6c06134e69c1ad061562e4e7d24c17e7d6aab4a4c9a1ba24ce6d2c5a9a1",
+      "gridSHA256": "70fb7dff7917913cc86902f4269d4005afdd0a0aa9c97720771499349d61f392",
+      "beforeResources": {
+        "geometries": 167,
+        "textures": 9
+      },
+      "afterResources": {
+        "geometries": 167,
+        "textures": 9
+      },
+      "afterDrain": {
+        "rounds": 0,
+        "drops": 0,
+        "cosmetic": 0
+      }
+    },
+    {
+      "weapon": "splatling",
+      "state": "standing",
+      "hz": 60,
+      "steps": 240,
+      "shots": 25,
+      "paintWrites": 50,
+      "traceSHA256": "0afd950526fabb863d8af0f1dc0d193b8440b49ebfb31446d6983737c4c0fa29",
+      "paintSHA256": "57d7d476be5fd924d4e010d422ae4b31537caf4dacdb866774909d6e92338bd5",
+      "gridSHA256": "6e5e3d4120161024747988350b286236cd5d95a14042b4d58d6663aec0973fc9",
+      "beforeResources": {
+        "geometries": 173,
+        "textures": 9
+      },
+      "afterResources": {
+        "geometries": 173,
+        "textures": 9
+      },
+      "afterDrain": {
+        "rounds": 0,
+        "drops": 0,
+        "cosmetic": 0
+      }
+    },
+    {
+      "weapon": "splatling",
+      "state": "moving-jump",
+      "hz": 60,
+      "steps": 240,
+      "shots": 25,
+      "paintWrites": 50,
+      "traceSHA256": "9d2588b644d9617ce10ecd26cdbe60e0f6ae46dd48a1757a0241b7a4e1fc52bf",
+      "paintSHA256": "97c46ab30998ec7dcff1e26e35dbdf10fe4499551ef0d45ef3edc9c6aa189993",
+      "gridSHA256": "5f0b7a5fe3d6830dd25872f5d72a0e34ef1f149032d448682f14e1b0717a5c74",
+      "beforeResources": {
+        "geometries": 173,
+        "textures": 9
+      },
+      "afterResources": {
+        "geometries": 173,
+        "textures": 9
+      },
+      "afterDrain": {
+        "rounds": 0,
+        "drops": 0,
+        "cosmetic": 0
+      }
+    }
+  ]
+}
