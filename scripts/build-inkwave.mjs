@@ -29,6 +29,7 @@ import { compactModuleStrings } from './lib/inkwave-source-compaction.mjs';
 import { adaptRange, rangeIdentity, RANGE_ROOT } from '../patches/practice-range/adapter.mjs';
 import { overlayScorchStageAssets } from './lib/inkwave-stage-assets.mjs';
 import { optimizeLightmapPng } from './lib/inkwave-lossless-lightmap.mjs';
+import { stageAccountBundle, injectAccountEntry } from './lib/inkwave-account-bundle.mjs';
 
 const physicalLocation = name => fs.existsSync(name) ? fs.realpathSync(name) : path.join(physicalLocation(path.dirname(name)),path.basename(name));
 const SRC = physicalLocation(path.resolve(process.argv[2] || 'inkwave-public'));
@@ -604,6 +605,9 @@ const deferredIntegrationPreloads = new Set([
   'patches/local-quality/depth-cache.mjs',
   'patches/local-quality/resource-budget.mjs',
 ]);
+// Optional Vite-built account UI (vite build / npm run build:prod). It enters the revisioned tree and the
+// Service Worker's integrity-checked asset list, but not the precache or the module preload hints.
+const accountBundle = process.env.INKWAVE_ACCOUNT_BUILD ? stageAccountBundle(BUILD, path.resolve(process.env.INKWAVE_ACCOUNT_BUILD)) : null;
 // Apply loading instrumentation first, so hint selection measures final bytes.
 // All modules in order still enter the complete offline dependency graph.
 const loadingPlan = prepareLoading(BUILD, order, {
@@ -634,7 +638,7 @@ const preloadOrder = order.filter((file) => {
   return true;
 });
 const preload = preloadOrder.map((file) => `<link rel="modulepreload" href="./${file}">`).join('\n');
-const loadingHTML = loadingHTML0.replace('</head>', `<!-- build: module graph preloaded (${preloadOrder.length} modules) -->\n${preload}\n</head>`);
+const loadingHTML = injectAccountEntry(loadingHTML0.replace('</head>', `<!-- build: module graph preloaded (${preloadOrder.length} modules) -->\n${preload}\n</head>`), accountBundle);
 fs.writeFileSync(path.join(BUILD, 'index.html'), loadingHTML);
 fs.writeFileSync(path.join(BUILD, '.nojekyll'), '');
 // Give the entire module/asset tree an immutable URL. A cached old module must
@@ -662,13 +666,14 @@ for (const [file, hash] of Object.entries(identity.build.range)) identity.files[
 for (const [file, hash] of Object.entries(identity.build.loadingCache.source)) identity.files['loading-cache/' + file] = hash;
 // Direct script helpers also control composition, packaging and worker output.
 // Include them in the same input hash and committed-source checks as overlays.
-for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-module-imports.mjs', 'lib/inkwave-reviewed-audio-orphan.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-source-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-lightmap.mjs', 'lib/inkwave-audio-manifest.mjs', 'lib/inkwave-volume-packaging.mjs']) {
+for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-module-imports.mjs', 'lib/inkwave-reviewed-audio-orphan.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-source-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-lightmap.mjs', 'lib/inkwave-audio-manifest.mjs', 'lib/inkwave-volume-packaging.mjs', 'lib/inkwave-account-bundle.mjs']) {
   identity.files['build-script/' + file] = sha256(fs.readFileSync(new URL(file, import.meta.url)));
 }
 for (const [file, hash] of Object.entries(nativeSourceIdentity)) identity.files['native-stages/' + file] = hash;
 identity.build.nativeStages = nativePrepared?.config || null;
 identity.build.volumePackaging=volumePackaging;
 identity.files['build-script/lib/inkwave-native-stages.mjs'] = sha256(fs.readFileSync(new URL('lib/inkwave-native-stages.mjs', import.meta.url)));
+if (accountBundle) identity.build.account = accountBundle;
 identity.inputHash = sha256(JSON.stringify(identity.files));
 fs.writeFileSync(path.join(BUILD, 'inkwave-build.json'), JSON.stringify(identity, null, 2) + '\n');
 copyLocalNativeAssets(BUILD, nativePrepared);
