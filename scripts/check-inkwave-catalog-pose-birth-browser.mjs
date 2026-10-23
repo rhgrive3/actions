@@ -13,6 +13,8 @@ const option=(name,fallback)=>{const i=process.argv.indexOf(name);return i<0?fal
 const site=path.resolve(option('--site','.built-site/issue-resolution-final'));
 const out=path.resolve(option('--evidence-dir','.browser-evidence/catalog-pose-birth'));
 const plan={ids:option('--ids','s3-maneuver-stepper,s3-slosher-washtub').split(','),rates:option('--rates','30,60,120').split(',').map(Number),pitches:option('--pitches','-45,0,40').split(',').map(Number),walls:option('--walls','open,wall').split(','),swing:option('--swing','horizontal'),reticle:option('--reticle','aligned'),renderPolicy:option('--render-policy','full'),stage:option('--stage','synthetic')};
+plan.cameraView=option('--camera','lab');plan.capturePrediction=process.argv.includes('--capture-prediction');
+assert(['lab','wide'].includes(plan.cameraView),'unsupported camera');
 const allowedIds=['s3-maneuver-stepper','s3-slosher-washtub','roller','s3-roller-compact','s3-roller-heavy','s3-roller-hunter','s3-roller-wide','s3-brush-mini','s3-brush-normal','s3-brush-heavy'];
 for(const [key,allowed]of Object.entries({ids:allowedIds,rates:[30,60,120],pitches:[-45,0,40],walls:['open','wall']}))assert(plan[key].length&&plan[key].every(v=>allowed.includes(v)),'unsupported '+key);
 assert(['horizontal','vertical'].includes(plan.swing),'unsupported swing');
@@ -118,7 +120,7 @@ try{
   result.volumeAssets=await page.evaluate(()=>window.probe.volumeAssets);
   for(const id of plan.ids)for(const hz of plan.rates)for(const pitch of plan.pitches)for(const wallMode of plan.walls){
     const wall=wallMode==='wall';
-    const row=await page.evaluate(async({id,hz,pitch,wall,swing,reticle,renderPolicy,stage})=>{
+    const row=await page.evaluate(async({id,hz,pitch,wall,swing,reticle,renderPolicy,stage,cameraView,capturePrediction})=>{
       const {THREE,api,FixedClock,Level,G,renderer,scene,camera,muzzle,acquired,volumeFrame}=window.probe;
       const {Actor,Character,Physics}=api,caseStart=performance.now(),nativeRandom=Math.random;
       // Separate pose/camera ownership from stochastic fan-speed/spread noise.
@@ -142,6 +144,7 @@ try{
       const stageMesh=window.probe.tidewater?.mesh;if(stageMesh)stageMesh.visible=stage==='tidewater';
       const floor=scene.children.find(x=>x.geometry?.type==='PlaneGeometry');if(floor)floor.visible=stage!=='tidewater';
       camera.position.set(actorOrigin[0]-2.7,actorOrigin[1]+1.5,actorOrigin[2]-.7);camera.lookAt(actorOrigin[0],actorOrigin[1]+.8,actorOrigin[2]+.2);
+      if(cameraView==='wide'){camera.position.set(actorOrigin[0]-5.2,actorOrigin[1]+2.3,actorOrigin[2]-3);camera.lookAt(actorOrigin[0],actorOrigin[1]+1,actorOrigin[2]+1.3);}
       const wallMesh=wall&&stage==='synthetic'?new THREE.Mesh(new THREE.BoxGeometry(8,2,.16),new THREE.MeshStandardMaterial({color:0x737b89,roughness:1})):null;
       if(wallMesh){wallMesh.position.set(0,1,.8);scene.add(wallMesh);}
       G.physics=new Physics(G.level);G.projectiles.clear();G.fx.clear();G.time=0;muzzle.length=0;
@@ -194,6 +197,21 @@ try{
           G.projectiles.update(dt);
           for(const row of rows){const h=row.p._iwVisualHistory;if(h&&h.count&&h.oldestAge===0){const sample=new Float64Array(6);h.sample(0,sample);row.historyBirth=Array.from(sample.slice(0,3));row.historyError=distance(row.historyBirth,row.poseConnectionPoint);historySamplesChecked++;maxHistoryError=Math.max(maxHistoryError,row.historyError);if(row.historyError>1e-7)throw Error(JSON.stringify({id,hz,pitch,wall,tick,historyError:row.historyError}));}delete row.p;births.push(row);}
           G.fx.update(dt,camera);tick++;
+          const predicted=rows.find(row=>row.hand===null&&row.poseOffset&&row.preAimReady<.98);
+          if(capturePrediction&&!predictionRender&&id==='s3-maneuver-stepper'&&!wall&&predicted){
+            // The native tail can detach before the next 30Hz cadence frame.
+            // Sample its first fixed tick with an EXTRA diagnostic draw, without
+            // advancing physics, FX, source animation or the gameplay clock.
+            const latest=predicted,socketError=distance(latest.poseConnectionPoint,latest.postSocket[0]);
+            if(socketError>1e-7)throw Error('first predicted right-hand birth misses its drawn socket');
+            G.projectiles.syncVisuals?.(1);renderer.render(scene,camera);
+            drawFrames.push({frame,tick,reason:'prediction-fixed-tick'});
+            const actual=volumeFrame.submissions.find(row=>row.seed===latest.seed&&row.attached&&row.backError!==null&&row.rodError!==null);
+            if(!actual)throw Error('predicted first fixed tick has no visible native back/rod submission '+JSON.stringify({frame,tick,latest,submissions:volumeFrame.submissions}));
+            predictionRender={frame,tick,seed:latest.seed,preAimReady:latest.preAimReady,socketError,physicalSocketGap:latest.physicalSocketGap,actual,glError:renderer.getContext().getError(),scope:'extra diagnostic draw after the first fixed tick; not an additional gameplay or cadence frame'};
+            if(predictionRender.glError!==0)throw Error('predicted shot WebGL error');
+            screenshots.prediction=renderer.domElement.toDataURL('image/png').split(',')[1];
+          }
         });
         G.projectiles.syncVisuals?.(Math.min(1,clock.accumulator*60));
         // Native _muzzle/_muzzleHand predicts the aim pose below aimReady=.98
@@ -202,23 +220,13 @@ try{
         // the first later birth at full aim; LOS fallback is never overridden.
         const steadyReady=id!=='s3-maneuver-stepper'||births.at(-1)?.preAimReady>=.98;
         const capture=births.length>lastRenderedBirthCount&&renders.length<2&&(renders.length===0||steadyReady);
-        const latest=births.at(-1),predictionCapture=!predictionRender&&id==='s3-maneuver-stepper'&&!wall&&latest?.hand===null&&latest?.poseOffset&&latest.preAimReady<.98;
-        if(renderPolicy==='full'||capture||predictionCapture||frame===hz*2-1){
-          renderer.render(scene,camera);drawFrames.push({frame,tick,reason:predictionCapture?'prediction':capture?(renders.length?'steady':'first'):frame===hz*2-1?'final':'cadence'});
+        if(renderPolicy==='full'||capture||frame===hz*2-1){
+          renderer.render(scene,camera);drawFrames.push({frame,tick,reason:capture?(renders.length?'steady':'first'):frame===hz*2-1?'final':'cadence'});
         }else{
           // The actual draw hook caches this fixed lab camera for viewer/LOD.
           // Preserve that camera-state update at every simulated cadence.
           // Material uniforms and draw-range hooks still run on each real draw.
           ch._camHook?.(renderer,scene,camera);
-        }
-        if(predictionCapture){
-          const socketError=distance(latest.poseConnectionPoint,latest.postSocket[0]);
-          if(socketError>1e-7)throw Error('first predicted right-hand birth misses its drawn socket');
-          const actual=volumeFrame.submissions.find(row=>row.seed===latest.seed&&row.attached&&row.backError!==null&&row.rodError!==null);
-          if(!actual)throw Error('predicted first shot has no visible native back/rod submission');
-          predictionRender={frame,tick,seed:latest.seed,preAimReady:latest.preAimReady,socketError,physicalSocketGap:latest.physicalSocketGap,actual,glError:renderer.getContext().getError()};
-          if(predictionRender.glError!==0)throw Error('predicted shot WebGL error');
-          screenshots.prediction=renderer.domElement.toDataURL('image/png').split(',')[1];
         }
         if(capture){const phase=renders.length===0?'first':'steady';lastRenderedBirthCount=births.length;const gl=renderer.getContext();gl.finish();const pixels=new Uint8Array(512*512*4);gl.readPixels(0,0,512,512,gl.RGBA,gl.UNSIGNED_BYTE,pixels);let inkPixels=0;for(let i=0;i<pixels.length;i+=4)if(Math.max(pixels[i],pixels[i+1],pixels[i+2])-Math.min(pixels[i],pixels[i+1],pixels[i+2])>40)inkPixels++;
           const nativeInstances=[];
@@ -237,7 +245,7 @@ try{
       const source={status:ch.sourceMotion.status,active:ch.sourceMotion.active};
       if(flick&&presses!==(family==='brush'?2:1))throw Error(id+' missing admitted swing');
       if(id==='s3-maneuver-stepper'&&!wall&&pitch===0&&volumeFrame.checked===0)throw Error('visible native Quad back/rod acceptance observed no connection samples');
-      if(id==='s3-maneuver-stepper'&&!wall&&pitch===0&&!predictionRender)throw Error('missing first predicted right-hand render');
+      if(capturePrediction&&id==='s3-maneuver-stepper'&&!wall&&pitch===0&&!predictionRender)throw Error('missing first predicted right-hand render');
       const result={id,hz,pitch,wall,stage,actorOrigin,levelBlocks:G.level.blocks.length,levelFaces:G.level.faces.length,expectedMode,randomPolicy:'deterministic midpoint; no statistical spread claim',renderPolicy,cadenceFrames:hz*2,drawFrames,actualDraws:drawFrames.length,timing,ticks:clock.ticks,birthCount:births.length,connected,maxFxError:connected?maxFxError:null,historySamplesChecked,maxHistoryError:historySamplesChecked?maxHistoryError:null,nativeShapeInstancesChecked,maxNativeShapeError:nativeShapeInstancesChecked?maxNativeShapeError:null,nativeVolumeConnectionsChecked:volumeFrame.checked,nativeVolumeAllPartsVisible:volumeFrame.allPartsVisible,maxNativeBackError:volumeFrame.checked?volumeFrame.maxBackError:null,maxNativeRodError:volumeFrame.checked?volumeFrame.maxRodError:null,source,renders,births,screenshots};
       result.predictionRender=predictionRender;
       a.weaponRunner.reset();G.projectiles.clear();G.fx.clear();scene.remove(ch.root);
@@ -247,14 +255,14 @@ try{
       if(!window.probe.shaderKeeper)window.probe.shaderKeeper=ch;else ch.dispose();
       G.actors=[];
       if(wallMesh){scene.remove(wallMesh);wallMesh.geometry.dispose();wallMesh.material.dispose();}Math.random=nativeRandom;timing.cleanupCompleteMs=performance.now()-caseStart;return result;
-    },{id,hz,pitch,wall,swing:plan.swing,reticle:plan.reticle,renderPolicy:plan.renderPolicy,stage:plan.stage});
+    },{id,hz,pitch,wall,swing:plan.swing,reticle:plan.reticle,renderPolicy:plan.renderPolicy,stage:plan.stage,cameraView:plan.cameraView,capturePrediction:plan.capturePrediction});
     for(const [phase,base64]of Object.entries(row.screenshots)){const name=`${id}-${plan.swing}-${hz}-${pitch}-${wall?'wall':'open'}-${phase}.png`;fs.writeFileSync(path.join(out,name),Buffer.from(base64,'base64'));row.screenshots[phase]=name;}
     result.cases.push(row);fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({id,hz,pitch,wall,births:row.birthCount,connected:row.connected,maxFxError:row.maxFxError,maxHistoryError:row.maxHistoryError,renderPolicy:row.renderPolicy,actualDraws:row.actualDraws,timing:row.timing}));
   }
   assert.equal(errors.length,0,errors.join('\n'));assert.equal(requestsFailed.length,0,JSON.stringify(requestsFailed));
   assert.equal(hash(fs.readFileSync(path.join(site,'inkwave-build.json'))),result.manifestSha256,'build changed during browser proof');
   result.status='passed';
-}catch(error){result.failure=String(error.stack||error);throw error;}
+}catch(error){result.status='failed';result.failure=String(error.stack||error);throw error;}
 finally{
   fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(result,null,2)+'\n');
   await browser?.close();await new Promise(resolve=>server.close(resolve));
