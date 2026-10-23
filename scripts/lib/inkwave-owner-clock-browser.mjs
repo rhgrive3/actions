@@ -8,11 +8,18 @@ import {publicBuildIdentity,verifyPublishedSource} from './inkwave-public-boot-e
 import {validOwnerTickAdvance} from '../../patches/network-replication/snapshot-guard.mjs';
 
 const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
-const payload=text=>{
+export function ownerClockRelayPayload(text){
   if(typeof text!=='string'||!text.startsWith('m|'))return null;
   const end=text.indexOf('|',2);if(end<0)return null;
-  try{return {from:text.slice(2,end),data:JSON.parse(text.slice(end+1))};}catch{return null;}
-};
+  let start=end+1,forwardedAt=null;
+  if(text[start]==='@'){
+    const stop=text.indexOf('|',start),stamp=text.slice(start+1,stop);
+    if(stop<0||!/^\d{1,16}$/.test(stamp))return null;
+    forwardedAt=Number(stamp);if(!Number.isSafeInteger(forwardedAt))return null;
+    start=stop+1;
+  }
+  try{return {from:text.slice(2,end),data:JSON.parse(text.slice(start)),forwardedAt};}catch{return null;}
+}
 
 // Delay/drop are exclusively at the real WebSocket delivery boundary. Keep the
 // first and newest tick while holding a startup backlog, explicitly discarding
@@ -26,10 +33,10 @@ export function ownerClockRelayProbe(relay){
     ws.on('close',()=>connections.push({destination,at:Date.now(),event:'close'}));
     const native=ws.send.bind(ws);
     ws.send=(text,...args)=>{
-      const row=payload(text);
+      const row=ownerClockRelayPayload(text);
       if(row){
         const d=row.data;
-        wire.push({at:Date.now(),destination,from:row.from,kind:d.k,ts:d.ts,simulationTick:d.u,oc:d.oc,match:d.ocm??d.m??d.id,nonce:d.n,bytes:Buffer.byteLength(text),sha256:hash(text)});
+        wire.push({at:Date.now(),destination,from:row.from,forwardedAt:row.forwardedAt,kind:d.k,ts:d.ts,simulationTick:d.u,oc:d.oc,match:d.ocm??d.m??d.id,nonce:d.n,bytes:Buffer.byteLength(text),sha256:hash(text)});
         if(wire.length>20000)throw new Error('Clock browser wire receipt overflow');
         if(gate?.active&&d.k==='t'){
           let held=gate.peers.get(destination);
