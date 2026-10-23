@@ -132,6 +132,31 @@ b96cd1f97850ef889060cfd91cdfcde5f3eceb7aa3f69e74fba88964d1c0dc59.
 These controlled Chromium results are distinct from final hosted CI and hardware
 or Switch measurements.
 
+## Newly opened draft #1851: composed BodyBalance work
+
+The observed scope grows to 32 PRs with draft #1851 at
+1ebfb8e79b9b3271ec6a733ee1d68a07a5828d43. Preserve #1815's sparse foot-target
+storage and reach-chain cache while reducing only intermediate rotations to the
+gain joints and their ancestors. The final full-bone FK remains unchanged.
+Source regression and trace/comparison controls pass 4/4; both source and emitted
+character comparisons cover 1,260 exact final-transform/contact/muzzle frames at
+30/60/120Hz. Emitted regressions pass 2/2. The component ABBA experiment has eight
+equal checksums, intermediate work 66 to 8, and final output 66 bones. Timing is
+diagnostic; no device FPS claim is made. Quick compatibility, the new production
+build/startup budget, and standard 117 Node/13 Python tests pass.
+
+The original browser benchmark's A/A is rejected by its unmodified comparator:
+`range digest parity`, first different measured frame 115. The benchmark read
+nonexistent `Actor.turf`, admitting NaN into its supposedly numeric state digest.
+Read actual `Actor.stats.turf` and fail on every nonfinite measured scalar instead
+of canonicalizing NaN, filtering frames, or relaxing the digest comparison. The
+same self-contained renderer installer is exercised by positive/negative controls,
+including missing scores and finite IEEE-754 distinctions. Bind all comparisons
+to the hashes of the benchmark, digest, GC parser and runtime verifier; mixed or
+missing harness identities fail. The four digest/trace/comparison guards pass.
+Retain both original raw measurements and the original comparator's rejection.
+Fresh authenticated A/A, subsequent A/B and final native-game checks are pending.
+
 ## Queue cleanup review
 
 Addresses the outstanding #1840 review: immediately before cancellation,

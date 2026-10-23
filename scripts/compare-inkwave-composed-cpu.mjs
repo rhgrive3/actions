@@ -2,9 +2,15 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 export function compareComposedCpu(before,repeat,after){
- for(const report of [before,repeat,after]){assert.equal(report.status,'passed');assert.match(report.sourceSha,/^[a-f0-9]{40}$/);}
+ const harnessFiles=['benchmark-inkwave-composed-cpu.mjs','lib/inkwave-cpu-gameplay-digest.mjs','lib/inkwave-cpu-trace.mjs','lib/inkwave-runtime-evidence.mjs'];
+ for(const report of [before,repeat,after]){
+  assert.equal(report.status,'passed');assert.match(report.sourceSha,/^[a-f0-9]{40}$/);
+  assert.deepEqual(Object.keys(report.harness||{}).sort(),[...harnessFiles].sort(),'complete benchmark implementation receipt');
+  for(const file of harnessFiles)assert.match(report.harness[file],/^[a-f0-9]{64}$/);
+ }
  assert.equal(before.contentHash,repeat.contentHash,'A/A uses identical build');
  for(const other of [repeat,after]){
+  assert.deepEqual(other.harness,before.harness,'same benchmark, digest, trace and source verifier');
   assert.deepEqual(other.environment,before.environment,'same quality/viewport/browser/CPU/instrumentation');
   assert.deepEqual(other.scenarios.map(x=>x.stage),before.scenarios.map(x=>x.stage),'same requested stages');
  }

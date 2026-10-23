@@ -9,6 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 import {verifyRuntimeBuild, hash, persistentDirectory, persistentBrowserTemp} from './lib/inkwave-runtime-evidence.mjs';
 import {summarizeGcTrace} from './lib/inkwave-cpu-trace.mjs';
+import {installCpuGameplayDigest} from './lib/inkwave-cpu-gameplay-digest.mjs';
 
 const get=(name,fallback)=>{const i=process.argv.indexOf(name);return i<0?fallback:process.argv[i+1];};
 const site=fs.realpathSync(get('--site','_site'));
@@ -48,6 +49,7 @@ const server=http.createServer((req,res)=>{try{
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 let browser;
 const report={schema:1,sourceSha,contentHash:manifest.contentHash,revision:manifest.build.revision,
+ harness:Object.fromEntries(['benchmark-inkwave-composed-cpu.mjs','lib/inkwave-cpu-gameplay-digest.mjs','lib/inkwave-cpu-trace.mjs','lib/inkwave-runtime-evidence.mjs'].map(file=>[file,hash(fs.readFileSync(new URL(file,import.meta.url)))])),
  environment:{node:process.version,cpu:os.cpus()[0].model,logicalCpus:os.cpus().length,quality,viewport:[960,640],render,wrappers},
  limits:['Linux Chromium/SwiftShader; no physical iPad or FPS evidence.',
  'Fixed-step CPU transaction; loading, async cold startup and presentation pacing are excluded.',
@@ -59,6 +61,7 @@ try{
  for(const stage of stages){
   const context=await browser.newContext({viewport:{width:960,height:640}}),page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
+  await page.addInitScript(installCpuGameplayDigest);
   await page.addInitScript(quality=>{
    localStorage.setItem('inkwave.settings',JSON.stringify({quality,musicVolume:0,audioVolume:0}));
    let s=987654321;Math.random=()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};
@@ -121,22 +124,16 @@ try{
     for(const key of ['advanceSimulation','splat','regionStats','_advanceSplatOwnership','_emitGrowth','flush','_drawQuads'])wrap(G.paint,key,'paint.'+key);
     wrap(G.projectiles,'update','projectiles.update');wrap(G.fx,'update','fx.update');wrap(G.env,'update','environment.update');wrap(g.R,'render','render.submit');wrap(G.renderer.shadowMap,'render','render.shadow');wrap(G.scene,'updateMatrixWorld','render.sceneMatrices');wrap(g,'_updateHud','hud.update');
    }
-   const w=G.level.triangleWorld,q0=w?.queryCount??0,t0=w?.triangleTests??0,ticks0=g.s3Clock.ticks,times=[],digests=[];
-   const f64=new Float64Array(1),u32=new Uint32Array(f64.buffer);let digest=2166136261;
-   const mix=x=>{digest=Math.imul(digest^x,16777619)>>>0;};
-   const number=v=>{f64[0]=+v;mix(u32[0]);mix(u32[1]);};
+   const w=G.level.triangleWorld,q0=w?.queryCount??0,t0=w?.triangleTests??0,ticks0=g.s3Clock.ticks,times=[],gameplay=globalThis.__iwCreateCpuGameplayDigest();
    g.debug.key('KeyW',true);g.debug.fire(true);
    performance.mark('inkwave-cpu-start');
    try{for(let i=0;i<frames;i++){
     window.cpuBenchResetStep(i);g.rig.yaw+=.6/hz;g.debug.key('Space',i%Math.round(hz*2)===0);
     const t=performance.now();g._frame(1/hz);times.push(performance.now()-t);
-    for(const a of G.actors){for(const v of [a.pos.x,a.pos.y,a.pos.z,a.vel.x,a.vel.y,a.vel.z,a.hp,a.ink,a.alive,a.grounded,a.yaw,a.turf])number(v);mix(a.form==='kid'?1:2);}
-    for(const v of [...G.paint.counts,G.paint.version,G.paint.growing.length])number(v);
-    digests.push(digest);
+    gameplay.step(G.actors,G.paint);
    }}finally{performance.mark('inkwave-cpu-end');for(const undo of restore.reverse())undo();g.debug.key('KeyW',false);g.debug.fire(false);}
    const ticks=g.s3Clock.ticks-ticks0;
-   for(const v of G.paint.grid)mix(v);for(const v of G.paint._paintOwnershipOrder||[])mix(v);
-   return {frames,hz,ticks,times,digests,digest,counts:[...G.paint.counts],state:G.match.state,
+   return {frames,hz,ticks,times,digests:gameplay.digests,digest:gameplay.finish(G.paint),counts:[...G.paint.counts],state:G.match.state,
     bvh:{queries:(w?.queryCount??0)-q0,triangleTests:(w?.triangleTests??0)-t0},
     categories:Object.fromEntries(Object.entries(acc).sort((a,b)=>b[1].ms-a[1].ms).map(([k,v])=>[k,{msPerTick:v.ms/ticks,callsPerTick:v.calls/ticks}])),
     draw:{...G.renderer.info.render},resources:{...G.renderer.info.memory},contextLost:G.renderer.getContext().isContextLost()};
