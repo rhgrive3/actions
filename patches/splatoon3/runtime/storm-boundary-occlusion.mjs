@@ -33,19 +33,26 @@ function shadow(a,b,c,top) {
     minZ:Math.min(a[2],b[2],c[2]),maxZ:Math.max(a[2],b[2],c[2]),maxY:Math.max(a[1],b[1],c[1])};
 }
 export function stormBoundarySceneState(level, center, reach, state) {
-  const query=level.native?level.queryDynamicBlocks:level.queryBlocks;
-  const ids=query.call(level,center.x-reach,center.z-reach,center.x+reach,center.z+reach,state.ids||(state.ids=[]));
-  state.sceneOverflow=ids.length>LIMITS.blocks;
-  if(state.sceneOverflow)return 0;
-  let key=2166136261;
-  for(const id of ids) {
-    const b=level.blocks[id]; key=Math.imul(key^id,16777619);
-    // Includes moving colliders: cached cutouts may not outlive their transform.
-    for(const v of [b.center,b.half,...b.axes]) for(const x of [v.x,v.y,v.z]) key=Math.imul(key^Math.round(x*1e6),16777619);
-    key=Math.imul(key^(b.solid?1:0),16777619);
+  const query=level.native?level.queryDynamicBlocks:level.queryBlocks,signature=state.signature||(state.signature=[]);
+  const ids=state.ids||(state.ids=[]);
+  if(typeof query!=='function'){ids.length=0;signature.length=0;state.sceneOverflow=true;return 0;}
+  query.call(level,center.x-reach,center.z-reach,center.x+reach,center.z+reach,ids);
+  let count=0;const top=center.y-.8;
+  for(const id of ids){const b=level.blocks[id];if(b.aabbMin.x>center.x+reach||b.aabbMax.x<center.x-reach||b.aabbMin.z>center.z+reach||b.aabbMax.z<center.z-reach||b.aabbMin.y>top||b.aabbMax.y<top-STORM_RAIN_REACH)continue;ids[count++]=id;}
+  ids.length=count;state.sceneOverflow=ids.length>LIMITS.blocks;
+  if(state.sceneOverflow){ids.length=LIMITS.blocks+1;signature.length=0;return 0;}
+  let key=2166136261,n=0;
+  const add=x=>{signature[n++]=x;key=Math.imul(key^Math.round(x*1e6),16777619);};
+  for(const id of ids){
+    const b=level.blocks[id];add(id);
+    for(let i=0;i<5;i++){const v=i===0?b.center:i===1?b.half:b.axes[i-2];add(v.x);add(v.y);add(v.z);}
+    add(b.solid?1:0);add(b.paint?1:0);add(b.hidden?1:0);
+    for(const faceId of b.faces){add(faceId);const f=level.faces[faceId];add(f?.paintable?1:0);add(f?.ceiling?1:0);}
   }
-  return key;
+  for(const faceId of state.nativeFaces||[]){const f=level.faces[faceId];add(faceId);add(f?.paintable?1:0);add(f?.ceiling?1:0);add(level.blocks[f?.block]?.hidden?1:0);}
+  signature.length=n;return key;
 }
+
 export function clipStormBoundary(positions, cloud, G, state, THREE) {
   const level=G.level, top=cloud.group.position.y-.8, shadows=[], stats={rays:0,cuts:0,occluders:0,fallback:null};
   const fail=reason=>{stats.fallback=reason;state.occlusion=stats;return [];};

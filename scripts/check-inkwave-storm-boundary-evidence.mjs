@@ -17,8 +17,8 @@ const manifests=[baseSite,candidateSite].map(site=>{
 const [before,after]=manifests;
 assert.equal(before.files['patch/runtime/special-motion.mjs'],hash(execFileSync('git',['show',baseSha+':patches/splatoon3/runtime/special-motion.mjs'])),'original implementation restored in the negative control');
 const changed=[...new Set([...Object.keys(before.files),...Object.keys(after.files)])].filter(k=>before.files[k]!==after.files[k]).sort();
-assert.deepEqual(changed,['patch/runtime/special-motion.mjs','patch/runtime/storm-boundary-occlusion.mjs','patch/runtime/storm-boundary.mjs']);
-for(const file of ['special-motion.mjs','storm-boundary.mjs','storm-boundary-occlusion.mjs'])assert.equal(after.files['patch/runtime/'+file],hash(fs.readFileSync('patches/splatoon3/runtime/'+file)));
+assert.deepEqual(changed,['patch/runtime/special-motion.mjs','patch/runtime/storm-boundary-cache.mjs','patch/runtime/storm-boundary-occlusion.mjs','patch/runtime/storm-boundary.mjs']);
+for(const file of ['special-motion.mjs','storm-boundary.mjs','storm-boundary-occlusion.mjs','storm-boundary-cache.mjs'])assert.equal(after.files['patch/runtime/'+file],hash(fs.readFileSync('patches/splatoon3/runtime/'+file)));
 const [b,c]=[baseRun,candidateRun].map(p=>read(path.join(p,'probe.json')));
 for(const r of [b,c]){assert.deepEqual(r.errors,[]);assert.equal(r.error,undefined);}
 assert.equal(b.identity,before.contentHash);assert.equal(c.identity,after.contentHash);

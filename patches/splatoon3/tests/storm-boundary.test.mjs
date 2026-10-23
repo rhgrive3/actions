@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 let cached;
 const boot = () => cached ||= fixture({fullRuntime:true,includeCharacter:true,productionComposition:true,
-  extraExports:"export {updateStormBoundary,disposeStormBoundary} from './patches/splatoon3/runtime/storm-boundary.mjs'; export {Level} from './src/world/level.js'; export {Physics} from './src/game/physics.js'; export {stormRainScale} from './patches/splatoon3/runtime/storm-effects.mjs'; export {NativePhysics} from './patches/native-stages/runtime/native-physics.mjs'; export {TriangleWorld} from './patches/native-stages/runtime/triangle-world.mjs';"});
+  extraExports:"export {updateStormBoundary,disposeStormBoundary,beginStormBoundaryFrame,clearStormBoundaryCache,stormBoundaryCacheSnapshot} from './patches/splatoon3/runtime/storm-boundary.mjs'; export {Level} from './src/world/level.js'; export {Physics} from './src/game/physics.js'; export {stormRainScale} from './patches/splatoon3/runtime/storm-effects.mjs'; export {NativePhysics} from './patches/native-stages/runtime/native-physics.mjs'; export {TriangleWorld} from './patches/native-stages/runtime/triangle-world.mjs';"});
 function setup(f) {
   const {THREE,G}=f;
   G.scene=new THREE.Scene();
@@ -91,6 +91,14 @@ for(const count of [1,5000])test(`native BVH selects bounded exact source triang
   G.physics=new f.NativePhysics(G.level);step();const mesh=c.rainBoundary;
   if(count===1){assert.equal(mesh.geometry.attributes.position.count,3);for(let i=0;i<3;i++)assert.ok(mesh.geometry.attributes.position.getX(i)+mesh.geometry.attributes.position.getZ(i)<=3);}
   else {assert.equal(mesh.geometry.attributes.position.count,0);assert.equal(mesh.visible,false);assert.equal(mesh.userData.occlusion.fallback,'occluder-budget');assert.ok(mesh.userData.sourceVisits<=513);}
+  if(count===1){
+    const scope={},cachedStep=key=>f.updateStormBoundary(c,G,G.scene,3.4,f.THREE,f.beginStormBoundaryFrame(G,G.scene,f.THREE,scope,key));
+    cachedStep(1);const original=c.rainBoundary.geometry;face.paintable=false;cachedStep(2);
+    assert.notEqual(c.rainBoundary.geometry,original);assert.equal(c.rainBoundary.geometry.attributes.position.count,0);
+    face.paintable=true;cachedStep(3);assert.equal(c.rainBoundary.geometry.attributes.position.count,3);
+    G.level.blocks[0].hidden=true;cachedStep(4);assert.equal(c.rainBoundary.geometry.attributes.position.count,0);
+    f.clearStormBoundaryCache(scope);
+  }
   f.disposeStormBoundary(c);
 });
 for(const t of [1/60,7.6])test(`composed paint, actor hit and boundary share the scaled radius at t=${t}`,async()=>{
@@ -110,4 +118,75 @@ test('ray budget hides the complete contour instead of exposing a partially chec
   assert.equal(c.rainBoundary.userData.occlusion.rays,64);
   assert.equal(c.rainBoundary.geometry.attributes.position.count,0);assert.equal(c.rainBoundary.visible,false);
   f.disposeStormBoundary(c);
+});
+
+function cachedSetup(f,count=8){
+  const {G,c}=setup(f),scope={},clouds=Array.from({length:count},(_,i)=>{const v={team:i%2,t:1,dur:8,group:new f.THREE.Group()};v.group.position.copy(c.group.position);return v;});
+  const step=(key)=>{const frame=f.beginStormBoundaryFrame(G,G.scene,f.THREE,scope,key);for(const v of clouds)f.updateStormBoundary(v,G,G.scene,3.4,f.THREE,frame);};
+  return {G,scope,clouds,step,cleanup(){for(const v of clouds)f.disposeStormBoundary(v);f.clearStormBoundaryCache(scope);}};
+}
+test('eight clouds share immutable geometry, keep independent uniforms and release it once',async()=>{
+  const f=await boot(),s=cachedSetup(f);try{
+    s.clouds[1].group.position.x=.3;s.step(1);const meshes=s.clouds.map(c=>c.rainBoundary),geometry=meshes[0].geometry;
+    assert.ok(meshes.every(m=>m.geometry===geometry&&m.visible));assert.equal(new Set(meshes.map(m=>m.material)).size,8);
+    assert.equal(meshes[0].material.uniforms.center.value.x,0);assert.equal(meshes[1].material.uniforms.center.value.x,.3);
+    assert.equal(f.stormBoundaryCacheSnapshot(s.scope).builds,1);assert.equal(f.stormBoundaryCacheSnapshot(s.scope).users,8);
+    let disposed=0;geometry.addEventListener('dispose',()=>disposed++);for(const c of s.clouds)f.disposeStormBoundary(c);
+    assert.equal(disposed,0,'bounded idle retention');s.clouds.length=0;
+    for(let k=2;k<122;k++)s.step(k);
+    assert.equal(disposed,1);assert.equal(f.stormBoundaryCacheSnapshot(s.scope).entries,0);
+    f.clearStormBoundaryCache(s.scope);assert.equal(disposed,1);
+  }finally{s.cleanup();}
+});
+test('one build per delivered frame, FIFO completion and no partial pending geometry',async()=>{
+  const f=await boot(),s=cachedSetup(f);try{
+    s.clouds.forEach((c,i)=>c.group.position.x=i*2);s.step(1);
+    assert.equal(s.clouds.filter(c=>c.rainBoundary.visible).length,1);
+    s.step(1);assert.equal(f.stormBoundaryCacheSnapshot(s.scope).builds,1,'second simulation tick has the same delivery key');
+    for(const c of s.clouds.slice(1)){assert.equal(c.rainBoundary.visible,false);assert.equal(c.rainBoundary.geometry.attributes.position,undefined);}
+    for(let k=2;k<=8;k++)s.step(k);
+    assert.equal(f.stormBoundaryCacheSnapshot(s.scope).builds,8);assert.equal(f.stormBoundaryCacheSnapshot(s.scope).pending,0);
+    assert.equal(f.stormBoundaryCacheSnapshot(s.scope).maxBuildsPerRender,1);
+  }finally{s.cleanup();}
+});
+test('roof transform/flags and stage replacement invalidate all users before displaying stale masks',async()=>{
+  const f=await boot(),s=cachedSetup(f);try{
+    s.G.level=new f.Level({...s.G.level.layout,single:[...s.G.level.layout.single,{kind:'box',min:[1,2.5,-5],max:[5,2.8,5],paint:false}]});s.G.physics=new f.Physics(s.G.level);
+    s.step(1);const original=s.clouds[0].rainBoundary.geometry;assert.equal(covered(s.clouds[0].rainBoundary,[3.4,.006,0]),false);
+    const b=s.G.level.blocks.at(-1);b.center.x+=30;b.aabbMin.x+=30;b.aabbMax.x+=30;s.G.level._buildHash();s.step(2);
+    assert.notEqual(s.clouds[0].rainBoundary.geometry,original);assert.ok(s.clouds.every(c=>covered(c.rainBoundary,[3.4,.006,0])));
+    const next=s.clouds[0].rainBoundary.geometry;s.G.level.faces.forEach(f=>f.paintable=false);s.step(3);
+    assert.notEqual(s.clouds[0].rainBoundary.geometry,next);assert.equal(s.clouds[0].rainBoundary.geometry.attributes.position.count,0);
+    const level=s.G.level;s.G.level=new f.Level(level.layout);s.G.physics=new f.Physics(s.G.level);s.step(4);
+    assert.equal(f.stormBoundaryCacheSnapshot(s.scope).entries,1);assert.equal(covered(s.clouds[0].rainBoundary,[3.4,.006,0]),false);
+  }finally{s.cleanup();}
+});
+test('LRU and active entry cap bound retained geometry; capacity deferral hides the entire contour',async()=>{
+  const f=await boot(),s=cachedSetup(f,13);try{
+    s.clouds.forEach((c,i)=>c.group.position.x=i*2);
+    for(let i=1;i<=14;i++)s.step(i);
+    assert.equal(f.stormBoundaryCacheSnapshot(s.scope).entries,12);assert.equal(f.stormBoundaryCacheSnapshot(s.scope).pending,1);
+    const last=s.clouds.at(-1);assert.equal(last.rainBoundary.visible,false);assert.equal(last.rainBoundary.userData.cacheStatus,'cache-capacity');
+    f.disposeStormBoundary(s.clouds[0]);s.clouds.shift();s.step(15);
+    assert.equal(f.stormBoundaryCacheSnapshot(s.scope).entries,12);assert.equal(f.stormBoundaryCacheSnapshot(s.scope).pending,0);
+    assert.ok(last.rainBoundary.geometry.attributes.position);assert.equal(f.stormBoundaryCacheSnapshot(s.scope).evictions,1);
+  }finally{s.cleanup();}
+});
+test('height/base-radius changes require independent geometry while scale changes only uniforms',async()=>{
+  const f=await boot(),s=cachedSetup(f,2);try{
+    s.step(1);const shared=s.clouds[0].rainBoundary.geometry;s.clouds[1].group.scale.setScalar(.5);s.step(2);
+    assert.equal(s.clouds[1].rainBoundary.geometry,shared);assert.equal(s.clouds[1].rainBoundary.material.uniforms.radius.value,1.7);
+    s.clouds[1].group.position.y+=.01;s.step(3);assert.notEqual(s.clouds[1].rainBoundary.geometry,shared);
+    const frame=f.beginStormBoundaryFrame(s.G,s.G.scene,f.THREE,s.scope,4);f.updateStormBoundary(s.clouds[1],s.G,s.G.scene,4,f.THREE,frame);
+    assert.equal(s.clouds[1].rainBoundary.material.uniforms.radius.value,2);assert.equal(f.stormBoundaryCacheSnapshot(s.scope).entries,3);
+  }finally{s.cleanup();}
+});
+test('cache release cancels queued jobs and small transform changes do not hide behind hash quantization',async()=>{
+  const f=await boot(),s=cachedSetup(f);try{
+    s.clouds.forEach((c,i)=>c.group.position.x=i*2);s.step(1);assert.equal(f.stormBoundaryCacheSnapshot(s.scope).pending,7);
+    for(const c of s.clouds.slice(1))f.disposeStormBoundary(c);s.clouds.splice(1);assert.equal(f.stormBoundaryCacheSnapshot(s.scope).pending,0);
+    const previous=s.clouds[0].rainBoundary.geometry;s.G.level.blocks[0].center.x+=1e-8;s.step(2);
+    assert.notEqual(s.clouds[0].rainBoundary.geometry,previous,'exact signature is checked in addition to a compact hash');
+    f.clearStormBoundaryCache(s.scope);assert.equal(s.clouds[0].rainBoundary.visible,false);s.step(3);assert.ok(s.clouds[0].rainBoundary.visible);
+  }finally{s.cleanup();}
 });

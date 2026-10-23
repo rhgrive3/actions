@@ -1,0 +1,63 @@
+// Cache/queue verification with actual local Level/Physics in WebGL2. Local
+// procedural layouts are identified separately from unavailable native data.
+import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import assert from 'node:assert/strict';import {chromium} from 'playwright';
+const [site,control,out]=process.argv.slice(2,5).map(p=>path.resolve(p));fs.mkdirSync(out,{recursive:true});
+const manifests=[site,control].map(p=>JSON.parse(fs.readFileSync(path.join(p,'inkwave-build.json')))),prefixes=manifests.map((m,i)=>(i?'/control':'')+'/_versions/'+m.build.revision+'/');
+const server=http.createServer((q,r)=>{const url=new URL(q.url,'http://local').pathname;if(url==='/favicon.ico'){r.writeHead(204);r.end();return;}if(url==='/'){r.setHeader('content-type','text/html');r.end(`<script type="importmap">{"imports":{"three":"${prefixes[0]}vendor/three/build/three.module.js"}}</script><body style="margin:0">`);return;}const base=url.startsWith('/control/')?control:site,rel=base===control?url.slice(8):url,file=path.resolve(base,'.'+rel);if(!file.startsWith(base+'/')||!fs.existsSync(file)){r.writeHead(404);r.end();return;}r.setHeader('content-type',/\.m?js$/.test(file)?'text/javascript':'application/octet-stream');fs.createReadStream(file).pipe(r);});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
+const report={scope:'Chromium SwiftShader WebGL2. Three local procedural layouts, actual Level/Physics; not a retail/native-source stage measurement.',candidateContentHash:manifests[0].contentHash,controlContentHash:manifests[1].contentHash,errors:[]};
+try{browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});const page=await browser.newPage({viewport:{width:960,height:640}});page.on('pageerror',e=>report.errors.push(String(e)));await page.goto('http://127.0.0.1:'+server.address().port+'/');
+Object.assign(report,await page.evaluate(async prefixes=>{
+ const THREE=await import('three'),prefix=prefixes[0],{Level}=await import(prefix+'src/world/level.js'),{Physics}=await import(prefix+'src/game/physics.js'),maps=await import(prefix+'src/world/maps.js'),candidate=await import(prefix+'patches/splatoon3/runtime/storm-boundary.mjs'),control=await import(prefixes[1]+'patches/splatoon3/runtime/storm-boundary.mjs');
+ const layouts=[maps.MAP_LAYOUTS.range,maps.MAP_LAYOUTS.tidewater,maps.MAP_LAYOUTS.cargo];if(layouts.some(v=>!v))throw Error('Missing local layouts');
+ const renderer=new THREE.WebGLRenderer({antialias:false,preserveDrawingBuffer:true});renderer.setSize(960,640);document.body.appendChild(renderer.domElement);const gl=renderer.getContext(),camera=new THREE.PerspectiveCamera(55,1.5,.1,500),rows=[];
+ const quantile=(samples,q)=>[...samples].sort((a,b)=>a-b)[Math.ceil(samples.length*q)-1],summary=a=>({samples:a.length,medianMs:quantile(a,.5),p95Ms:quantile(a,.95),maxMs:Math.max(...a)});
+ const observe=(clouds,seen)=>{for(const c of clouds){const g=c.rainBoundary?.geometry;if(g&&g.attributes.position&&!seen.has(g)){seen.set(g,{disposed:0,bytes:g.attributes.position.array.byteLength});g.addEventListener('dispose',()=>seen.get(g).disposed++);}}};
+ for(const layout of layouts){
+  const level=new Level(layout),scene=new THREE.Scene(),physics=new Physics(level),G={level,physics,teamColors:[new THREE.Color('#00bdcf'),new THREE.Color('#ee7812')]},scope={},center=layout.id==='range'?new THREE.Vector3(-28,4.6,48):new THREE.Vector3(0,4.6,0);let rays=0,key=0;const ray=physics.raycast;physics.raycast=function(...args){rays++;return ray.apply(this,args);};
+  camera.position.copy(center).add(new THREE.Vector3(20,16,-25));camera.lookAt(center.x,center.y-3,center.z);camera.updateMatrixWorld(true);
+  const make=(spread=false)=>Array.from({length:8},(_,i)=>{const c={team:i%2,t:1,dur:8,group:new THREE.Group()};c.group.position.copy(center);if(spread)c.group.position.x+=(i-3.5)*2;return c;});
+  const step=(b,clouds)=>{const frame=b.beginStormBoundaryFrame?.(G,scene,THREE,scope,++key);for(const c of clouds)b.updateStormBoundary(c,G,scene,10,THREE,frame);};
+  const clear=(b,clouds)=>{for(const c of clouds)b.disposeStormBoundary(c);b.clearStormBoundaryCache?.(scope);};
+  const pair={layout:layout.id,blocks:level.blocks.length,faces:level.faces.length,point:center.toArray()};
+  for(const [name,b] of [['uncached',control],['cached',candidate]]){
+   const cold=[],rayCounts=[],memory=[],all=new Map();let lastSnapshot=null;const baselineGpu={...renderer.info.memory};
+   for(let n=0;n<30;n++){
+    const clouds=make(),r=rays,t=performance.now();step(b,clouds);cold.push(performance.now()-t);rayCounts.push(rays-r);observe(clouds,all);renderer.render(scene,camera);gl.finish();
+    lastSnapshot=b.stormBoundaryCacheSnapshot?.(scope);memory.push({geometries:renderer.info.memory.geometries,programs:renderer.info.programs.length,positionBytes:[...new Set(clouds.map(c=>c.rainBoundary.geometry))].reduce((s,g)=>s+(g.attributes.position?.array.byteLength||0),0)});clear(b,clouds);renderer.render(scene,camera);
+   }
+   const clouds=make();step(b,clouds);const r=rays,t=performance.now();for(let n=0;n<120;n++)step(b,clouds);const stableMs=(performance.now()-t)/120,stableRays=rays-r;observe(clouds,all);renderer.render(scene,camera);const drawn={calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fallbacks:clouds.map(c=>c.rainBoundary.userData.occlusion.fallback),cuts:clouds[0].rainBoundary.userData.occlusion.cuts};clear(b,clouds);renderer.render(scene,camera);
+   pair[name]={cold8:summary(cold),maxColdRays:Math.max(...rayCounts),stable8Ms:stableMs,stableRays,drawn,lastSnapshot,maxPositionBytes:Math.max(...memory.map(m=>m.positionBytes)),maxGpuGeometries:Math.max(...memory.map(m=>m.geometries)),maxPrograms:Math.max(...memory.map(m=>m.programs)),baselineGpu,afterClear:{...renderer.info.memory,programs:renderer.info.programs.length},uniqueGeometryCreated:all.size,undisposed:[...all.values()].filter(v=>v.disposed!==1).length,remainingMeshes:scene.children.filter(o=>o.name==='storm-rain-boundary').length};
+  }
+  // Eight independent patches: completion is atomic per cloud, bounded to one
+  // build in each delivered frame. Repeated generate/release reuses idle masks.
+  const separated=make(true),times=[],visible=[],snaps=[],seen=new Map();for(let n=0;n<8;n++){const t=performance.now();step(candidate,separated);times.push(performance.now()-t);observe(separated,seen);renderer.render(scene,camera);gl.finish();visible.push(separated.filter(c=>c.rainBoundary.userData.cacheStatus==='ready').length);snaps.push(candidate.stormBoundaryCacheSnapshot(scope));}
+  const beforeReuse=candidate.stormBoundaryCacheSnapshot(scope);for(const c of separated)candidate.disposeStormBoundary(c);const reused=make(true),r0=rays,t0=performance.now();step(candidate,reused);const reuse={ms:performance.now()-t0,rays:rays-r0,snapshot:candidate.stormBoundaryCacheSnapshot(scope)};observe(reused,seen);
+  clear(candidate,reused);pair.separated={perFrame:summary(times),readyCounts:visible,maxBuildsPerRender:Math.max(...snaps.map(s=>s.maxBuildsPerRender)),beforeReuse,reuse,undisposed:[...seen.values()].filter(v=>v.disposed!==1).length};
+  rows.push(pair);
+ }
+ // Pixel equality on roof/wall fixtures at nearby, shared centers. Comparison
+ // restores the protected pre-cache implementation in the same GL context.
+ const fixtureRows=[],fixtures=[{id:'open'},{id:'partial',roof:true},{id:'complete',roof:true,full:true},{id:'narrow',roof:true,narrow:true},{id:'wall',wall:true},{id:'nonpaint',paint:false},{id:'below',y:-10},{id:'above',y:5}];
+ for(const baseSpec of fixtures)for(const offset of [0,.05]){const spec={...baseSpec,id:baseSpec.id+(offset?'-nearby':'-same')};
+  const y=spec.y||0,single=[{kind:'box',min:[-15,y-1,-15],max:[15,y,15],paint:spec.paint!==false}];if(spec.roof)single.push({kind:'box',min:spec.full?[-15,2.5,-15]:spec.narrow?[9.99,2.5,-.01]:[1,2.5,-12],max:spec.full?[15,2.8,15]:spec.narrow?[10.01,2.8,.01]:[12,2.8,12],paint:false});if(spec.wall)single.push({kind:'box',min:[-12,0,2],max:[12,3,2.5]});
+  const level=new Level({bounds:{minX:-20,maxX:20,minZ:-20,maxZ:20},spawnPads:[[0,0,0],[10,0,10]],single,half:[]}),scene=new THREE.Scene(),G={level,physics:new Physics(level),teamColors:[new THREE.Color('#00bdcf')]},scope={},clouds=Array.from({length:8},(_,i)=>{const c={team:0,t:1,dur:8,group:new THREE.Group()};c.group.position.set(i*offset,4.6,0);return c;});scene.background=new THREE.Color('#444444');
+  camera.position.set(18,12,-22);camera.lookAt(0,0,0);camera.updateMatrixWorld(true);
+  const read=()=>{renderer.render(scene,camera);const a=new Uint8Array(960*640*4);gl.readPixels(0,0,960,640,gl.RGBA,gl.UNSIGNED_BYTE,a);return a;};
+  for(const c of clouds)control.updateStormBoundary(c,G,scene,10,THREE);const before=read(),controlImage=renderer.domElement.toDataURL();for(const c of clouds)control.disposeStormBoundary(c);
+  const frame=candidate.beginStormBoundaryFrame(G,scene,THREE,scope,1);for(const c of clouds)candidate.updateStormBoundary(c,G,scene,10,THREE,frame);const after=read();let pixels=0,maxDelta=0;for(let i=0;i<after.length;i+=4){let d=0;for(let k=0;k<3;k++)d+=Math.abs(after[i+k]-before[i+k]);if(d>8)pixels++;maxDelta=Math.max(maxDelta,d);}
+  const row={fixture:spec.id,changedPixels:pixels,maxChannelSumDelta:maxDelta,snapshot:candidate.stormBoundaryCacheSnapshot(scope),offset, fallbacks:clouds.map(c=>c.rainBoundary.userData.occlusion.fallback),controlImage,image:renderer.domElement.toDataURL()};fixtureRows.push(row);for(const c of clouds)candidate.disposeStormBoundary(c);candidate.clearStormBoundaryCache(scope);
+ }
+ // Level object replacement using one live cache scope must release the old GPU
+ // buffers and never display them for the new stage.
+ const scene=new THREE.Scene(),scope={},G={teamColors:[new THREE.Color('#00bdcf')]},stageSwaps=[];let old=null,disposals=0;
+ const clouds=Array.from({length:8},()=>({team:0,t:1,dur:8,group:new THREE.Group()}));
+ for(let n=0;n<9;n++){const layout=layouts[n%3];G.level=new Level(layout);G.physics=new Physics(G.level);for(const c of clouds)c.group.position.set(0,4.6,0);const frame=candidate.beginStormBoundaryFrame(G,scene,THREE,scope,n);for(const c of clouds)candidate.updateStormBoundary(c,G,scene,10,THREE,frame);const geometry=clouds[0].rainBoundary.geometry;if(geometry===old)throw Error('Stale geometry on stage switch');old=geometry;geometry.addEventListener('dispose',()=>disposals++);stageSwaps.push(candidate.stormBoundaryCacheSnapshot(scope));renderer.render(scene,camera);}
+ for(const c of clouds)candidate.disposeStormBoundary(c);candidate.clearStormBoundaryCache(scope);renderer.render(scene,camera);const stageClear={disposals,swaps:stageSwaps.length,remaining:candidate.stormBoundaryCacheSnapshot(scope),gpu:{...renderer.info.memory},programs:renderer.info.programs.length};
+ const webgl=gl.getParameter(gl.VERSION),glError=gl.getError();renderer.dispose();return {rows,fixtureRows,stageSwaps,stageClear,webgl,glError};
+},prefixes));
+for(const row of report.fixtureRows){fs.writeFileSync(path.join(out,'inspection-'+row.fixture+'.png'),Buffer.from(row.image.split(',')[1],'base64'));fs.writeFileSync(path.join(out,'control-'+row.fixture+'.png'),Buffer.from(row.controlImage.split(',')[1],'base64'));delete row.image;delete row.controlImage;if(!row.offset)assert.equal(row.changedPixels,0,row.fixture+' exact-center pixel parity');else assert.ok(row.changedPixels<1000,row.fixture+' nearby raster difference');assert.equal(row.snapshot.entries,1);}
+for(const row of report.rows){assert.equal(row.cached.maxColdRays,row.uncached.maxColdRays/8);assert.equal(row.cached.undisposed,0);assert.equal(row.cached.remainingMeshes,0);assert.equal(row.cached.afterClear.geometries,0);assert.equal(row.cached.lastSnapshot.entries,1);assert.equal(row.separated.maxBuildsPerRender,1);assert.deepEqual(row.separated.readyCounts,[1,2,3,4,5,6,7,8]);assert.equal(row.separated.reuse.rays,0);assert.equal(row.separated.undisposed,0);}
+assert.equal(report.stageClear.disposals,9);assert.equal(report.stageClear.gpu.geometries,0);assert.equal(report.stageClear.programs,0);assert.equal(report.glError,0);assert.deepEqual(report.errors,[]);report.status='passed';
+}catch(e){report.error=String(e.stack||e);throw e;}finally{fs.writeFileSync(path.join(out,'cache-browser.json'),JSON.stringify(report,null,2));if(browser)await browser.close();await new Promise(r=>server.close(r));}
+console.log(JSON.stringify({status:report.status,rows:report.rows,stageClear:report.stageClear,fixtures:report.fixtureRows.map(r=>({id:r.fixture,pixels:r.changedPixels})),errors:report.errors},null,2));

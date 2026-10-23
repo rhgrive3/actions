@@ -1,6 +1,7 @@
 // Normal range bootstrap/native Q and sub-release; controlled position/gauge.
 // Screenshots marked inspection use a temporary visibility diagnostic.
 import fs from 'node:fs';
+import assert from 'node:assert/strict';
 import path from 'node:path';
 import http from 'node:http';
 import {chromium} from 'playwright';
@@ -39,7 +40,10 @@ try{
    const c=G.projectiles.clouds[0];return {frame:target,active:G.local.specialActive?.phase??null,cloud:c?{t:c.t,dur:c.dur,pos:c.group.position.toArray(),radius:c.group.scale.x,boundary:!!c.rainBoundary,boundaryRadius:c.rainBoundary?.material.uniforms.radius.value,boundaryVisible:c.rainBoundary?.visible,occlusion:c.rainBoundary?.userData.occlusion,vertices:c.rainBoundary?.geometry.attributes.position.count}:null,calls:G.renderer.info.render.calls,triangles:G.renderer.info.render.triangles,hp:G.local.hp,ink:G.local.ink,gauge:G.local.special,lock:G.local.stormGaugeLock,paint: Array.from(G.paint.grid||[]).length,webglError:G.renderer.getContext().getError()};
   },{target,previous});report.frames.push(data);
   if(target===90&&data.cloud?.boundary){
-   report.boundaryCpu=await page.evaluate(async()=>{const G=window.__G,c=G.projectiles.clouds[0],THREE=await import(new URL('vendor/three/build/three.module.js',document.baseURI)),b=await import(new URL('patches/splatoon3/runtime/storm-boundary.mjs',document.baseURI));let rays=0;const ray=G.physics.raycast;G.physics.raycast=function(...args){rays++;return ray.apply(this,args);};try{const samples=[],counts=[];for(let i=0;i<20;i++){c.rainBoundary.userData.anchor.setScalar(Infinity);const r0=rays,t=performance.now();b.updateStormBoundary(c,G,G.scene,10,THREE);samples.push(performance.now()-t);counts.push(rays-r0);}const r0=rays,t=performance.now();for(let i=0;i<120;i++)b.updateStormBoundary(c,G,G.scene,10,THREE);const stableMs=(performance.now()-t)/120,stableRays=rays-r0;samples.sort((a,b)=>a-b);const probes=Array.from({length:8},()=>{const cloud={team:c.team,t:c.t,dur:c.dur,group:new THREE.Group()};cloud.group.position.copy(c.group.position);cloud.group.scale.copy(c.group.scale);b.updateStormBoundary(cloud,G,G.scene,10,THREE);return cloud;});const burstTimes=[],burstCounts=[];const visibility=c.rainBoundary.visible;c.rainBoundary.visible=false;for(let i=0;i<12;i++){const r=rays,t=performance.now();for(const cloud of probes){cloud.rainBoundary.userData.anchor.setScalar(Infinity);b.updateStormBoundary(cloud,G,G.scene,10,THREE);}burstTimes.push(performance.now()-t);burstCounts.push(rays-r);window.__inkwave.R.render();G.renderer.getContext().finish();}burstTimes.sort((a,b)=>a-b);const burst8={rebuildMedianMs:burstTimes[6],rebuildP95Ms:burstTimes[11],maxRebuildRays:Math.max(...burstCounts),bytes:probes.reduce((n,p)=>n+p.rainBoundary.geometry.attributes.position.array.byteLength,0),fallbacks:probes.map(p=>p.rainBoundary.userData.occlusion?.fallback??null)};for(const cloud of probes)b.disposeStormBoundary(cloud);c.rainBoundary.visible=visibility;window.__inkwave.R.render();return {burst8,rebuildMedianMs:samples[10],rebuildP95Ms:samples[19],maxRebuildRays:Math.max(...counts),stableMs,stableRays,bytes:c.rainBoundary.geometry.attributes.position.array.byteLength,occlusion:c.rainBoundary.userData.occlusion};}finally{G.physics.raycast=ray;}});
+   // The cache-specific runner measures cold/repeated construction. Keep this
+   // normal-game probe to the live production cache so it cannot switch
+   // production meshes into an unframed diagnostic cache.
+   report.boundaryCpu=await page.evaluate(async()=>{const G=window.__G,THREE=await import(new URL('vendor/three/build/three.module.js',document.baseURI)),b=await import(new URL('patches/splatoon3/runtime/storm-boundary.mjs',document.baseURI));return {scope:'live production cache after native input',snapshot:b.stormBoundaryCacheSnapshot?.(G.projectiles)??null};});
    report.visibilityControl=await page.evaluate(()=>{const G=window.__G,g=window.__inkwave,c=G.projectiles.clouds[0],mesh=c.rainBoundary,gl=G.renderer.getContext();const read=()=>{const a=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,a);return a;};g.R.render();const before=read(),times={on:[],off:[]};for(let i=0;i<12;i++)for(const state of ['off','on']){mesh.visible=state==='on';const t=performance.now();g.R.render();gl.finish();times[state].push(performance.now()-t);}mesh.visible=false;g.R.render();const hidden=read();let pixels=0;for(let i=0;i<before.length;i+=4)if(Math.abs(before[i]-hidden[i])+Math.abs(before[i+1]-hidden[i+1])+Math.abs(before[i+2]-hidden[i+2])>8)pixels++;for(const state of ['on','off'])times[state].sort((a,b)=>a-b);return {pixels,onMedianMs:times.on[6],offMedianMs:times.off[6],onP90Ms:times.on[10],offP90Ms:times.off[10],vertices:mesh.geometry.attributes.position.count};});
    await page.screenshot({path:path.join(out,'inspection-boundary-hidden-simf90.png')});
    await page.evaluate(()=>{window.__G.projectiles.clouds[0].rainBoundary.visible=true;window.__inkwave.R.render();});
@@ -64,6 +68,23 @@ try{
   }}finally{a.update=original;G.physics.raycast=physics;g._skipRender=false;}
   return rows;
  });
+ if(process.argv.includes('--cache-production')){
+  report.cacheProduction=await page.evaluate(async()=>{
+   const G=window.__G,g=window.__inkwave,p=G.projectiles,THREE=await import(new URL('vendor/three/build/three.module.js',document.baseURI)),b=await import(new URL('patches/splatoon3/runtime/storm-boundary.mjs',document.baseURI)),rows=[];
+   if(!b.beginStormBoundaryFrame)throw Error('Cache hooks missing');
+   for(const hz of [30,60,120])for(const separated of [false,true]){
+    p.clear();for(let i=0;i<8;i++)p._spawnCloud({owner:G.local,team:0,pos:new THREE.Vector3(-28+(separated?(i-3.5)*2:0),0,49.6),dir:new THREE.Vector3(0,0,1)});
+    const frames=[],times=[];g._skipRender=true;
+    for(let f=0;f<hz*2;f++){const t=performance.now();g._frame(1/hz);times.push(performance.now()-t);if(f<16)frames.push({delivery:f+1,frameN:g._frameN,ticks:g.s3Clock.ticks,ready:p.clouds.filter(c=>c.rainBoundary?.userData.cacheStatus==='ready').length,snapshot:b.stormBoundaryCacheSnapshot(p)});}
+    g._skipRender=false;g.R.render();G.renderer.getContext().finish();times.sort((a,b)=>a-b);
+    const live={geometryCount:new Set(p.clouds.map(c=>c.rainBoundary.geometry)).size,visible:p.clouds.filter(c=>c.rainBoundary.visible).length,snapshot:b.stormBoundaryCacheSnapshot(p),uniformsCurrent:p.clouds.every(c=>c.rainBoundary.material.uniforms.center.value.equals(c.group.position)),calls:G.renderer.info.render.calls,triangles:G.renderer.info.render.triangles};
+    rows.push({hz,separated,frames,live,wholeGameCpuMedianMs:times[Math.floor(times.length/2)],wholeGameCpuP95Ms:times[Math.ceil(times.length*.95)-1]});p.clear();rows.at(-1).clear={snapshot:b.stormBoundaryCacheSnapshot(p),remainingBoundaryMeshes:G.scene.children.filter(o=>o.name==='storm-rain-boundary').length};
+   }
+   return rows;
+  });
+  for(const row of report.cacheProduction){assert.equal(row.live.visible,8);assert.equal(row.live.uniformsCurrent,true);assert.equal(row.live.snapshot.maxBuildsPerRender,1);assert.ok(row.live.snapshot.entries<=12);assert.equal(row.clear.snapshot.entries,0);assert.equal(row.clear.snapshot.pending,0);assert.equal(row.clear.remainingBoundaryMeshes,0);if(!row.separated)assert.equal(row.live.geometryCount,1);}
+  await page.screenshot({path:path.join(out,'inspection-after-eight-cloud-clear.png')});
+ }
  console.log(JSON.stringify(report));
 
 } catch(e){report.error=String(e.stack||e);throw e;}finally{fs.writeFileSync(path.join(out,'probe.json'),JSON.stringify(report,null,2));if(browser)await browser.close();await new Promise(r=>server.close(r));}

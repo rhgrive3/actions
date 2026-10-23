@@ -1,0 +1,3974 @@
+{
+  "status": "passed",
+  "candidateContentHash": "37cdb283fc69c08f34a562f9b30c6b1b29fedcfaba36242b2516e536f332f96b",
+  "uncachedControlSha": "8b350a5a91c6b090955dfecbaa41fd736c762801",
+  "uncachedContentHash": "adc14699526a24f35e9489d67118fb68c82718392f88fe8ae29b1a6dd7b8b298",
+  "artifactsVerified": true,
+  "normalGameplayNegativeControl": {
+    "status": "passed",
+    "baseSha": "a4e81347906c0d60ceef76a69f476261bf8d3f86",
+    "baseTree": "34236683e6776aac9d8b1d4ae0b8a1b31d3f2df2",
+    "changedInputs": [
+      "patch/runtime/special-motion.mjs",
+      "patch/runtime/storm-boundary-cache.mjs",
+      "patch/runtime/storm-boundary-occlusion.mjs",
+      "patch/runtime/storm-boundary.mjs"
+    ],
+    "baselineContentHash": "e1c18a72dc8a4e358944f8a8dec59f0d4e178c2d2da9881c8af2d2946e380ab2",
+    "candidateContentHash": "37cdb283fc69c08f34a562f9b30c6b1b29fedcfaba36242b2516e536f332f96b",
+    "candidateSources": {
+      "patch/runtime/special-motion.mjs": "02f0738a15920ae8a5706179baff378d19b1364cde19213993ac7ebe1b69ce1f",
+      "patch/runtime/storm-boundary-cache.mjs": "c5e707c7e717b2be6322dafad3671f8d0235dc5d8cdb61d5208c17a3a95e4d97",
+      "patch/runtime/storm-boundary-occlusion.mjs": "280d9f2e31468c4445876f999108a9948d3c696c8e9bb93c0a876d382d4076f7",
+      "patch/runtime/storm-boundary.mjs": "218fb51895cc46b54eeb9ba81a26f09ca26f4f548659312bae31b4839c67295d"
+    },
+    "artifactHashesVerified": true,
+    "negativeControlRejected": true,
+    "normalFrameGameplayEqual": true,
+    "rateRows": [
+      {
+        "hz": 30,
+        "ticks": 123,
+        "traceHash": "83982ab730cbd425e590131089966bac34f3ec5dc9fdcebb2e56bfbec1b48837",
+        "paintHash": "d22dcd399adb3b9504a666f4109bd99bd09dd9b9a944c3531ada3e07d2d8a147",
+        "deathAndClear": true
+      },
+      {
+        "hz": 60,
+        "ticks": 123,
+        "traceHash": "881a9372fcc529fc29d6ce7eda419d53f6902cfc964acc41556e63455904bd5b",
+        "paintHash": "d22dcd399adb3b9504a666f4109bd99bd09dd9b9a944c3531ada3e07d2d8a147",
+        "deathAndClear": true
+      },
+      {
+        "hz": 120,
+        "ticks": 123,
+        "traceHash": "6a6261d389692007a2f546cf0a83fff116e0e09c6e07b71a61f7f8f8b7f97847",
+        "paintHash": "d22dcd399adb3b9504a666f4109bd99bd09dd9b9a944c3531ada3e07d2d8a147",
+        "deathAndClear": true
+      }
+    ],
+    "visibilityControl": {
+      "pixels": 3818,
+      "onMedianMs": 1.2000000001862645,
+      "offMedianMs": 1.2999999998137355,
+      "onP90Ms": 3.099999999627471,
+      "offP90Ms": 2.400000000372529,
+      "vertices": 456
+    },
+    "boundaryCpu": {
+      "scope": "live production cache after native input",
+      "snapshot": {
+        "builds": 3,
+        "hits": 0,
+        "deferrals": 0,
+        "evictions": 0,
+        "invalidations": 0,
+        "disposals": 0,
+        "maxBuildsPerRender": 1,
+        "entries": 3,
+        "pending": 0,
+        "users": 1,
+        "geometryBytes": 16416,
+        "signatureNumbers": 3552,
+        "remainingBuilds": 1
+      }
+    },
+    "drawDelta": [
+      {
+        "simulationFrame": 15,
+        "calls": 1,
+        "triangles": 152
+      },
+      {
+        "simulationFrame": 45,
+        "calls": 1,
+        "triangles": 152
+      },
+      {
+        "simulationFrame": 90,
+        "calls": 1,
+        "triangles": 152
+      },
+      {
+        "simulationFrame": 120,
+        "calls": 1,
+        "triangles": 152
+      },
+      {
+        "simulationFrame": 180,
+        "calls": 1,
+        "triangles": 139
+      },
+      {
+        "simulationFrame": 300,
+        "calls": 1,
+        "triangles": 113
+      },
+      {
+        "simulationFrame": 462,
+        "calls": 1,
+        "triangles": 89
+      },
+      {
+        "simulationFrame": 479,
+        "calls": 1,
+        "triangles": 89
+      }
+    ],
+    "limitations": [
+      "No direct Nintendo clip access; parent observation of encoded 30fps f173–183 is the comparison target.",
+      "Normal-game captures use the procedural practice range, not a retail or native-source stage.",
+      "Rates are render delivery schedules with the same fixed 60Hz simulation. Ray counts include presentation queries and are not equal-work timings.",
+      "Warm renderer timings use Chromium SwiftShader in one context; mobile/hardware and large native stages are unmeasured."
+    ]
+  },
+  "local": {
+    "scope": "Chromium SwiftShader WebGL2. Three local procedural layouts, actual Level/Physics; not a retail/native-source stage measurement.",
+    "candidateContentHash": "37cdb283fc69c08f34a562f9b30c6b1b29fedcfaba36242b2516e536f332f96b",
+    "controlContentHash": "adc14699526a24f35e9489d67118fb68c82718392f88fe8ae29b1a6dd7b8b298",
+    "errors": [],
+    "rows": [
+      {
+        "layout": "range",
+        "blocks": 165,
+        "faces": 673,
+        "point": [
+          -28,
+          4.6,
+          48
+        ],
+        "uncached": {
+          "cold8": {
+            "samples": 30,
+            "medianMs": 3.400000000372529,
+            "p95Ms": 8.099999999627471,
+            "maxMs": 13.5
+          },
+          "maxColdRays": 112,
+          "stable8Ms": 0.07249999999379118,
+          "stableRays": 0,
+          "drawn": {
+            "calls": 8,
+            "triangles": 1216,
+            "fallbacks": [
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ],
+            "cuts": 590
+          },
+          "maxPositionBytes": 43776,
+          "maxGpuGeometries": 8,
+          "maxPrograms": 1,
+          "baselineGpu": {
+            "geometries": 0,
+            "textures": 0
+          },
+          "afterClear": {
+            "geometries": 0,
+            "textures": 0,
+            "programs": 0
+          },
+          "uniqueGeometryCreated": 248,
+          "undisposed": 0,
+          "remainingMeshes": 0
+        },
+        "cached": {
+          "cold8": {
+            "samples": 30,
+            "medianMs": 0.6000000014901161,
+            "p95Ms": 3.299999998882413,
+            "maxMs": 5.400000000372529
+          },
+          "maxColdRays": 14,
+          "stable8Ms": 0.01583333333643774,
+          "stableRays": 0,
+          "drawn": {
+            "calls": 8,
+            "triangles": 1216,
+            "fallbacks": [
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ],
+            "cuts": 590
+          },
+          "lastSnapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1036,
+            "remainingBuilds": 0
+          },
+          "maxPositionBytes": 5472,
+          "maxGpuGeometries": 1,
+          "maxPrograms": 1,
+          "baselineGpu": {
+            "geometries": 0,
+            "textures": 0
+          },
+          "afterClear": {
+            "geometries": 0,
+            "textures": 0,
+            "programs": 0
+          },
+          "uniqueGeometryCreated": 31,
+          "undisposed": 0,
+          "remainingMeshes": 0
+        },
+        "separated": {
+          "perFrame": {
+            "samples": 8,
+            "medianMs": 0.5,
+            "p95Ms": 0.7999999988824129,
+            "maxMs": 0.7999999988824129
+          },
+          "readyCounts": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "maxBuildsPerRender": 1,
+          "beforeReuse": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 28,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 46548,
+            "signatureNumbers": 8880,
+            "remainingBuilds": 0
+          },
+          "reuse": {
+            "ms": 0.599999999627471,
+            "rays": 0,
+            "snapshot": {
+              "builds": 8,
+              "hits": 8,
+              "deferrals": 28,
+              "evictions": 0,
+              "invalidations": 0,
+              "disposals": 0,
+              "maxBuildsPerRender": 1,
+              "entries": 8,
+              "pending": 0,
+              "users": 8,
+              "geometryBytes": 46548,
+              "signatureNumbers": 8880,
+              "remainingBuilds": 1
+            }
+          },
+          "undisposed": 0
+        }
+      },
+      {
+        "layout": "tidewater",
+        "blocks": 63,
+        "faces": 289,
+        "point": [
+          0,
+          4.6,
+          0
+        ],
+        "uncached": {
+          "cold8": {
+            "samples": 30,
+            "medianMs": 8.099999999627471,
+            "p95Ms": 14.799999998882413,
+            "maxMs": 14.900000000372529
+          },
+          "maxColdRays": 384,
+          "stable8Ms": 0.02166666666356226,
+          "stableRays": 0,
+          "drawn": {
+            "calls": 8,
+            "triangles": 3264,
+            "fallbacks": [
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ],
+            "cuts": 2525
+          },
+          "maxPositionBytes": 117504,
+          "maxGpuGeometries": 8,
+          "maxPrograms": 1,
+          "baselineGpu": {
+            "geometries": 0,
+            "textures": 0
+          },
+          "afterClear": {
+            "geometries": 0,
+            "textures": 0,
+            "programs": 0
+          },
+          "uniqueGeometryCreated": 248,
+          "undisposed": 0,
+          "remainingMeshes": 0
+        },
+        "cached": {
+          "cold8": {
+            "samples": 30,
+            "medianMs": 1.299999998882413,
+            "p95Ms": 4,
+            "maxMs": 4.199999999254942
+          },
+          "maxColdRays": 48,
+          "stable8Ms": 0.011666666654249033,
+          "stableRays": 0,
+          "drawn": {
+            "calls": 8,
+            "triangles": 3264,
+            "fallbacks": [
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null,
+              null
+            ],
+            "cuts": 2525
+          },
+          "lastSnapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 14688,
+            "signatureNumbers": 962,
+            "remainingBuilds": 0
+          },
+          "maxPositionBytes": 14688,
+          "maxGpuGeometries": 1,
+          "maxPrograms": 1,
+          "baselineGpu": {
+            "geometries": 0,
+            "textures": 0
+          },
+          "afterClear": {
+            "geometries": 0,
+            "textures": 0,
+            "programs": 0
+          },
+          "uniqueGeometryCreated": 31,
+          "undisposed": 0,
+          "remainingMeshes": 0
+        },
+        "separated": {
+          "perFrame": {
+            "samples": 8,
+            "medianMs": 0.900000000372529,
+            "p95Ms": 2.200000001117587,
+            "maxMs": 2.200000001117587
+          },
+          "readyCounts": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "maxBuildsPerRender": 1,
+          "beforeReuse": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 28,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 106632,
+            "signatureNumbers": 6808,
+            "remainingBuilds": 0
+          },
+          "reuse": {
+            "ms": 0.30000000074505806,
+            "rays": 0,
+            "snapshot": {
+              "builds": 8,
+              "hits": 8,
+              "deferrals": 28,
+              "evictions": 0,
+              "invalidations": 0,
+              "disposals": 0,
+              "maxBuildsPerRender": 1,
+              "entries": 8,
+              "pending": 0,
+              "users": 8,
+              "geometryBytes": 106632,
+              "signatureNumbers": 6808,
+              "remainingBuilds": 1
+            }
+          },
+          "undisposed": 0
+        }
+      },
+      {
+        "layout": "cargo",
+        "blocks": 185,
+        "faces": 529,
+        "point": [
+          0,
+          4.6,
+          0
+        ],
+        "uncached": {
+          "cold8": {
+            "samples": 30,
+            "medianMs": 11.5,
+            "p95Ms": 24,
+            "maxMs": 24.300000000745058
+          },
+          "maxColdRays": 368,
+          "stable8Ms": 0.0841666666790843,
+          "stableRays": 0,
+          "drawn": {
+            "calls": 0,
+            "triangles": 0,
+            "fallbacks": [
+              "clip-budget",
+              "clip-budget",
+              "clip-budget",
+              "clip-budget",
+              "clip-budget",
+              "clip-budget",
+              "clip-budget",
+              "clip-budget"
+            ],
+            "cuts": 4097
+          },
+          "maxPositionBytes": 0,
+          "maxGpuGeometries": 0,
+          "maxPrograms": 0,
+          "baselineGpu": {
+            "geometries": 0,
+            "textures": 0
+          },
+          "afterClear": {
+            "geometries": 0,
+            "textures": 0,
+            "programs": 0
+          },
+          "uniqueGeometryCreated": 248,
+          "undisposed": 0,
+          "remainingMeshes": 0
+        },
+        "cached": {
+          "cold8": {
+            "samples": 30,
+            "medianMs": 1.599999999627471,
+            "p95Ms": 3.599999999627471,
+            "maxMs": 8.099999999627471
+          },
+          "maxColdRays": 46,
+          "stable8Ms": 0.020833333333333332,
+          "stableRays": 0,
+          "drawn": {
+            "calls": 0,
+            "triangles": 0,
+            "fallbacks": [
+              "clip-budget",
+              "clip-budget",
+              "clip-budget",
+              "clip-budget",
+              "clip-budget",
+              "clip-budget",
+              "clip-budget",
+              "clip-budget"
+            ],
+            "cuts": 4097
+          },
+          "lastSnapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 0,
+            "signatureNumbers": 1850,
+            "remainingBuilds": 0
+          },
+          "maxPositionBytes": 0,
+          "maxGpuGeometries": 0,
+          "maxPrograms": 0,
+          "baselineGpu": {
+            "geometries": 0,
+            "textures": 0
+          },
+          "afterClear": {
+            "geometries": 0,
+            "textures": 0,
+            "programs": 0
+          },
+          "uniqueGeometryCreated": 31,
+          "undisposed": 0,
+          "remainingMeshes": 0
+        },
+        "separated": {
+          "perFrame": {
+            "samples": 8,
+            "medianMs": 1.199999999254942,
+            "p95Ms": 1.5,
+            "maxMs": 1.5
+          },
+          "readyCounts": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "maxBuildsPerRender": 1,
+          "beforeReuse": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 28,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 37332,
+            "signatureNumbers": 17316,
+            "remainingBuilds": 0
+          },
+          "reuse": {
+            "ms": 0.40000000037252903,
+            "rays": 0,
+            "snapshot": {
+              "builds": 8,
+              "hits": 8,
+              "deferrals": 28,
+              "evictions": 0,
+              "invalidations": 0,
+              "disposals": 0,
+              "maxBuildsPerRender": 1,
+              "entries": 8,
+              "pending": 0,
+              "users": 8,
+              "geometryBytes": 37332,
+              "signatureNumbers": 17316,
+              "remainingBuilds": 1
+            }
+          },
+          "undisposed": 0
+        }
+      }
+    ],
+    "fixtureRows": [
+      {
+        "fixture": "open-same",
+        "changedPixels": 0,
+        "maxChannelSumDelta": 0,
+        "snapshot": {
+          "builds": 1,
+          "hits": 7,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 1,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 72,
+          "signatureNumbers": 74,
+          "remainingBuilds": 0
+        },
+        "offset": 0,
+        "fallbacks": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "fixture": "open-nearby",
+        "changedPixels": 276,
+        "maxChannelSumDelta": 127,
+        "snapshot": {
+          "builds": 1,
+          "hits": 7,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 1,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 72,
+          "signatureNumbers": 74,
+          "remainingBuilds": 0
+        },
+        "offset": 0.05,
+        "fallbacks": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "fixture": "partial-same",
+        "changedPixels": 0,
+        "maxChannelSumDelta": 0,
+        "snapshot": {
+          "builds": 1,
+          "hits": 7,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 1,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 72,
+          "signatureNumbers": 148,
+          "remainingBuilds": 0
+        },
+        "offset": 0,
+        "fallbacks": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "fixture": "partial-nearby",
+        "changedPixels": 10,
+        "maxChannelSumDelta": 12,
+        "snapshot": {
+          "builds": 1,
+          "hits": 7,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 1,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 72,
+          "signatureNumbers": 148,
+          "remainingBuilds": 0
+        },
+        "offset": 0.05,
+        "fallbacks": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "fixture": "complete-same",
+        "changedPixels": 0,
+        "maxChannelSumDelta": 0,
+        "snapshot": {
+          "builds": 1,
+          "hits": 7,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 1,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 0,
+          "signatureNumbers": 148,
+          "remainingBuilds": 0
+        },
+        "offset": 0,
+        "fallbacks": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "fixture": "complete-nearby",
+        "changedPixels": 0,
+        "maxChannelSumDelta": 0,
+        "snapshot": {
+          "builds": 1,
+          "hits": 7,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 1,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 0,
+          "signatureNumbers": 148,
+          "remainingBuilds": 0
+        },
+        "offset": 0.05,
+        "fallbacks": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "fixture": "narrow-same",
+        "changedPixels": 0,
+        "maxChannelSumDelta": 0,
+        "snapshot": {
+          "builds": 1,
+          "hits": 7,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 1,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 576,
+          "signatureNumbers": 148,
+          "remainingBuilds": 0
+        },
+        "offset": 0,
+        "fallbacks": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "fixture": "narrow-nearby",
+        "changedPixels": 47,
+        "maxChannelSumDelta": 59,
+        "snapshot": {
+          "builds": 1,
+          "hits": 7,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 1,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 576,
+          "signatureNumbers": 148,
+          "remainingBuilds": 0
+        },
+        "offset": 0.05,
+        "fallbacks": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "fixture": "wall-same",
+        "changedPixels": 0,
+        "maxChannelSumDelta": 0,
+        "snapshot": {
+          "builds": 1,
+          "hits": 7,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 1,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 360,
+          "signatureNumbers": 148,
+          "remainingBuilds": 0
+        },
+        "offset": 0,
+        "fallbacks": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "fixture": "wall-nearby",
+        "changedPixels": 383,
+        "maxChannelSumDelta": 154,
+        "snapshot": {
+          "builds": 1,
+          "hits": 7,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 1,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 360,
+          "signatureNumbers": 148,
+          "remainingBuilds": 0
+        },
+        "offset": 0.05,
+        "fallbacks": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "fixture": "nonpaint-same",
+        "changedPixels": 0,
+        "maxChannelSumDelta": 0,
+        "snapshot": {
+          "builds": 1,
+          "hits": 7,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 1,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 0,
+          "signatureNumbers": 74,
+          "remainingBuilds": 0
+        },
+        "offset": 0,
+        "fallbacks": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "fixture": "nonpaint-nearby",
+        "changedPixels": 0,
+        "maxChannelSumDelta": 0,
+        "snapshot": {
+          "builds": 1,
+          "hits": 7,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 1,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 0,
+          "signatureNumbers": 74,
+          "remainingBuilds": 0
+        },
+        "offset": 0.05,
+        "fallbacks": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "fixture": "below-same",
+        "changedPixels": 0,
+        "maxChannelSumDelta": 0,
+        "snapshot": {
+          "builds": 1,
+          "hits": 7,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 1,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 0,
+          "signatureNumbers": 0,
+          "remainingBuilds": 0
+        },
+        "offset": 0,
+        "fallbacks": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "fixture": "below-nearby",
+        "changedPixels": 0,
+        "maxChannelSumDelta": 0,
+        "snapshot": {
+          "builds": 1,
+          "hits": 7,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 1,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 0,
+          "signatureNumbers": 0,
+          "remainingBuilds": 0
+        },
+        "offset": 0.05,
+        "fallbacks": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "fixture": "above-same",
+        "changedPixels": 0,
+        "maxChannelSumDelta": 0,
+        "snapshot": {
+          "builds": 1,
+          "hits": 7,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 1,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 0,
+          "signatureNumbers": 0,
+          "remainingBuilds": 0
+        },
+        "offset": 0,
+        "fallbacks": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "fixture": "above-nearby",
+        "changedPixels": 0,
+        "maxChannelSumDelta": 0,
+        "snapshot": {
+          "builds": 1,
+          "hits": 7,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 1,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 0,
+          "signatureNumbers": 0,
+          "remainingBuilds": 0
+        },
+        "offset": 0.05,
+        "fallbacks": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    "stageSwaps": [
+      {
+        "builds": 1,
+        "hits": 7,
+        "deferrals": 0,
+        "evictions": 0,
+        "invalidations": 0,
+        "disposals": 0,
+        "maxBuildsPerRender": 1,
+        "entries": 1,
+        "pending": 0,
+        "users": 8,
+        "geometryBytes": 5760,
+        "signatureNumbers": 962,
+        "remainingBuilds": 0
+      },
+      {
+        "builds": 2,
+        "hits": 14,
+        "deferrals": 0,
+        "evictions": 0,
+        "invalidations": 1,
+        "disposals": 1,
+        "maxBuildsPerRender": 1,
+        "entries": 1,
+        "pending": 0,
+        "users": 8,
+        "geometryBytes": 14688,
+        "signatureNumbers": 962,
+        "remainingBuilds": 0
+      },
+      {
+        "builds": 3,
+        "hits": 21,
+        "deferrals": 0,
+        "evictions": 0,
+        "invalidations": 2,
+        "disposals": 2,
+        "maxBuildsPerRender": 1,
+        "entries": 1,
+        "pending": 0,
+        "users": 8,
+        "geometryBytes": 0,
+        "signatureNumbers": 1850,
+        "remainingBuilds": 0
+      },
+      {
+        "builds": 4,
+        "hits": 28,
+        "deferrals": 0,
+        "evictions": 0,
+        "invalidations": 3,
+        "disposals": 3,
+        "maxBuildsPerRender": 1,
+        "entries": 1,
+        "pending": 0,
+        "users": 8,
+        "geometryBytes": 5760,
+        "signatureNumbers": 962,
+        "remainingBuilds": 0
+      },
+      {
+        "builds": 5,
+        "hits": 35,
+        "deferrals": 0,
+        "evictions": 0,
+        "invalidations": 4,
+        "disposals": 4,
+        "maxBuildsPerRender": 1,
+        "entries": 1,
+        "pending": 0,
+        "users": 8,
+        "geometryBytes": 14688,
+        "signatureNumbers": 962,
+        "remainingBuilds": 0
+      },
+      {
+        "builds": 6,
+        "hits": 42,
+        "deferrals": 0,
+        "evictions": 0,
+        "invalidations": 5,
+        "disposals": 5,
+        "maxBuildsPerRender": 1,
+        "entries": 1,
+        "pending": 0,
+        "users": 8,
+        "geometryBytes": 0,
+        "signatureNumbers": 1850,
+        "remainingBuilds": 0
+      },
+      {
+        "builds": 7,
+        "hits": 49,
+        "deferrals": 0,
+        "evictions": 0,
+        "invalidations": 6,
+        "disposals": 6,
+        "maxBuildsPerRender": 1,
+        "entries": 1,
+        "pending": 0,
+        "users": 8,
+        "geometryBytes": 5760,
+        "signatureNumbers": 962,
+        "remainingBuilds": 0
+      },
+      {
+        "builds": 8,
+        "hits": 56,
+        "deferrals": 0,
+        "evictions": 0,
+        "invalidations": 7,
+        "disposals": 7,
+        "maxBuildsPerRender": 1,
+        "entries": 1,
+        "pending": 0,
+        "users": 8,
+        "geometryBytes": 14688,
+        "signatureNumbers": 962,
+        "remainingBuilds": 0
+      },
+      {
+        "builds": 9,
+        "hits": 63,
+        "deferrals": 0,
+        "evictions": 0,
+        "invalidations": 8,
+        "disposals": 8,
+        "maxBuildsPerRender": 1,
+        "entries": 1,
+        "pending": 0,
+        "users": 8,
+        "geometryBytes": 0,
+        "signatureNumbers": 1850,
+        "remainingBuilds": 0
+      }
+    ],
+    "stageClear": {
+      "disposals": 9,
+      "swaps": 9,
+      "remaining": {
+        "entries": 0,
+        "pending": 0,
+        "users": 0,
+        "geometryBytes": 0,
+        "signatureNumbers": 0
+      },
+      "gpu": {
+        "geometries": 0,
+        "textures": 0
+      },
+      "programs": 0
+    },
+    "webgl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "glError": 0,
+    "status": "passed"
+  },
+  "syntheticNative": {
+    "scope": "Synthetic regular collision grids using the production BVH builder, TriangleWorld and NativePhysics in Chromium. This is not a measured retail/native stage.",
+    "contentHash": "37cdb283fc69c08f34a562f9b30c6b1b29fedcfaba36242b2516e536f332f96b",
+    "stages": [
+      {
+        "id": "grid-2048",
+        "collisionTriangles": 2048,
+        "paintFaces": 1,
+        "measurements": [
+          {
+            "name": "spawn",
+            "point": [
+              0.3,
+              0,
+              0.7
+            ],
+            "coldMedianMs": 1.7999999998137355,
+            "coldP95Ms": 9,
+            "maxColdRays": 1,
+            "stableMs": 0.005000000004656613,
+            "stableRays": 0,
+            "bytes": 8496,
+            "vertices": 708,
+            "initial": {
+              "rays": 1,
+              "cuts": 0,
+              "occluders": 0,
+              "fallback": null,
+              "visits": 288,
+              "sourceTriangles": 200
+            },
+            "chartReads": 0,
+            "drawCalls": 1,
+            "triangles": 236,
+            "snapshot": {
+              "builds": 1,
+              "hits": 0,
+              "deferrals": 0,
+              "evictions": 0,
+              "invalidations": 0,
+              "disposals": 0,
+              "maxBuildsPerRender": 1,
+              "entries": 1,
+              "pending": 0,
+              "users": 1,
+              "geometryBytes": 8496,
+              "signatureNumbers": 8,
+              "remainingBuilds": 1
+            },
+            "glError": 0
+          },
+          {
+            "name": "center",
+            "point": [
+              0,
+              0,
+              0
+            ],
+            "coldMedianMs": 1.2000000001862645,
+            "coldP95Ms": 1.7000000001862645,
+            "maxColdRays": 1,
+            "stableMs": 0.004166666666666667,
+            "stableRays": 0,
+            "bytes": 8424,
+            "vertices": 702,
+            "initial": {
+              "rays": 1,
+              "cuts": 0,
+              "occluders": 0,
+              "fallback": null,
+              "visits": 288,
+              "sourceTriangles": 200
+            },
+            "chartReads": 0,
+            "drawCalls": 1,
+            "triangles": 234,
+            "snapshot": {
+              "builds": 1,
+              "hits": 0,
+              "deferrals": 0,
+              "evictions": 0,
+              "invalidations": 0,
+              "disposals": 0,
+              "maxBuildsPerRender": 1,
+              "entries": 1,
+              "pending": 0,
+              "users": 1,
+              "geometryBytes": 8424,
+              "signatureNumbers": 8,
+              "remainingBuilds": 1
+            },
+            "glError": 0
+          }
+        ],
+        "burst": {
+          "count": 8,
+          "bytes": 8424,
+          "fallbacks": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 8424,
+            "signatureNumbers": 8,
+            "remainingBuilds": 0
+          },
+          "drawCalls": 8,
+          "triangles": 1872,
+          "coldMedianMs": 1.2000000001862645,
+          "coldP95Ms": 4.900000000372529,
+          "coldMaxMs": 8.899999999441206,
+          "samples": 30,
+          "maxColdRays": 1,
+          "afterClear": {
+            "geometries": 0,
+            "textures": 0
+          },
+          "remainingMeshes": 0
+        }
+      },
+      {
+        "id": "grid-131072",
+        "collisionTriangles": 131072,
+        "paintFaces": 1,
+        "measurements": [
+          {
+            "name": "spawn",
+            "point": [
+              0.3,
+              0,
+              0.7
+            ],
+            "coldMedianMs": 1.099999999627471,
+            "coldP95Ms": 5.2000000001862645,
+            "maxColdRays": 1,
+            "stableMs": 0.0008333333379899462,
+            "stableRays": 0,
+            "bytes": 8496,
+            "vertices": 708,
+            "initial": {
+              "rays": 1,
+              "cuts": 0,
+              "occluders": 0,
+              "fallback": null,
+              "visits": 288,
+              "sourceTriangles": 200
+            },
+            "chartReads": 0,
+            "drawCalls": 1,
+            "triangles": 236,
+            "snapshot": {
+              "builds": 1,
+              "hits": 0,
+              "deferrals": 0,
+              "evictions": 0,
+              "invalidations": 0,
+              "disposals": 0,
+              "maxBuildsPerRender": 1,
+              "entries": 1,
+              "pending": 0,
+              "users": 1,
+              "geometryBytes": 8496,
+              "signatureNumbers": 8,
+              "remainingBuilds": 1
+            },
+            "glError": 0
+          },
+          {
+            "name": "center",
+            "point": [
+              0,
+              0,
+              0
+            ],
+            "coldMedianMs": 0.6000000005587935,
+            "coldP95Ms": 7,
+            "maxColdRays": 1,
+            "stableMs": 0.0008333333379899462,
+            "stableRays": 0,
+            "bytes": 8424,
+            "vertices": 702,
+            "initial": {
+              "rays": 1,
+              "cuts": 0,
+              "occluders": 0,
+              "fallback": null,
+              "visits": 288,
+              "sourceTriangles": 200
+            },
+            "chartReads": 0,
+            "drawCalls": 1,
+            "triangles": 234,
+            "snapshot": {
+              "builds": 1,
+              "hits": 0,
+              "deferrals": 0,
+              "evictions": 0,
+              "invalidations": 0,
+              "disposals": 0,
+              "maxBuildsPerRender": 1,
+              "entries": 1,
+              "pending": 0,
+              "users": 1,
+              "geometryBytes": 8424,
+              "signatureNumbers": 8,
+              "remainingBuilds": 1
+            },
+            "glError": 0
+          }
+        ],
+        "burst": {
+          "count": 8,
+          "bytes": 8424,
+          "fallbacks": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 8424,
+            "signatureNumbers": 8,
+            "remainingBuilds": 0
+          },
+          "drawCalls": 8,
+          "triangles": 1872,
+          "coldMedianMs": 0.7000000001862645,
+          "coldP95Ms": 1.800000000745058,
+          "coldMaxMs": 2.5,
+          "samples": 30,
+          "maxColdRays": 1,
+          "afterClear": {
+            "geometries": 0,
+            "textures": 0
+          },
+          "remainingMeshes": 0
+        }
+      },
+      {
+        "id": "dense-32768",
+        "collisionTriangles": 32768,
+        "paintFaces": 1,
+        "measurements": [
+          {
+            "name": "spawn",
+            "point": [
+              0.3,
+              0,
+              0.7
+            ],
+            "coldMedianMs": 0.20000000018626451,
+            "coldP95Ms": 5,
+            "maxColdRays": 0,
+            "stableMs": 0.0024999999984477955,
+            "stableRays": 0,
+            "bytes": 0,
+            "vertices": 0,
+            "initial": {
+              "rays": 0,
+              "cuts": 0,
+              "occluders": 0,
+              "fallback": "occluder-budget",
+              "visits": 513,
+              "sourceTriangles": 512
+            },
+            "chartReads": 0,
+            "drawCalls": 0,
+            "triangles": 0,
+            "snapshot": {
+              "builds": 1,
+              "hits": 0,
+              "deferrals": 0,
+              "evictions": 0,
+              "invalidations": 0,
+              "disposals": 0,
+              "maxBuildsPerRender": 1,
+              "entries": 1,
+              "pending": 0,
+              "users": 1,
+              "geometryBytes": 0,
+              "signatureNumbers": 8,
+              "remainingBuilds": 1
+            },
+            "glError": 0
+          },
+          {
+            "name": "center",
+            "point": [
+              0,
+              0,
+              0
+            ],
+            "coldMedianMs": 0.10000000055879354,
+            "coldP95Ms": 2.6000000005587935,
+            "maxColdRays": 0,
+            "stableMs": 0.0016666666682188709,
+            "stableRays": 0,
+            "bytes": 0,
+            "vertices": 0,
+            "initial": {
+              "rays": 0,
+              "cuts": 0,
+              "occluders": 0,
+              "fallback": "occluder-budget",
+              "visits": 513,
+              "sourceTriangles": 512
+            },
+            "chartReads": 0,
+            "drawCalls": 0,
+            "triangles": 0,
+            "snapshot": {
+              "builds": 1,
+              "hits": 0,
+              "deferrals": 0,
+              "evictions": 0,
+              "invalidations": 0,
+              "disposals": 0,
+              "maxBuildsPerRender": 1,
+              "entries": 1,
+              "pending": 0,
+              "users": 1,
+              "geometryBytes": 0,
+              "signatureNumbers": 8,
+              "remainingBuilds": 1
+            },
+            "glError": 0
+          }
+        ],
+        "burst": {
+          "count": 8,
+          "bytes": 0,
+          "fallbacks": [
+            "occluder-budget",
+            "occluder-budget",
+            "occluder-budget",
+            "occluder-budget",
+            "occluder-budget",
+            "occluder-budget",
+            "occluder-budget",
+            "occluder-budget"
+          ],
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 0,
+            "signatureNumbers": 8,
+            "remainingBuilds": 0
+          },
+          "drawCalls": 0,
+          "triangles": 0,
+          "coldMedianMs": 0.20000000018626451,
+          "coldP95Ms": 0.6999999992549419,
+          "coldMaxMs": 2.5,
+          "samples": 30,
+          "maxColdRays": 0,
+          "afterClear": {
+            "geometries": 0,
+            "textures": 0
+          },
+          "remainingMeshes": 0
+        }
+      }
+    ],
+    "errors": []
+  },
+  "productionEightClouds": [
+    {
+      "hz": 30,
+      "separated": false,
+      "frames": [
+        {
+          "delivery": 1,
+          "frameN": 193,
+          "ticks": 234,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 2,
+          "frameN": 194,
+          "ticks": 236,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 3,
+          "frameN": 195,
+          "ticks": 238,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 4,
+          "frameN": 196,
+          "ticks": 240,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 5,
+          "frameN": 197,
+          "ticks": 242,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 6,
+          "frameN": 198,
+          "ticks": 244,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 7,
+          "frameN": 199,
+          "ticks": 246,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 8,
+          "frameN": 200,
+          "ticks": 248,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 9,
+          "frameN": 201,
+          "ticks": 250,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 10,
+          "frameN": 202,
+          "ticks": 252,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 11,
+          "frameN": 203,
+          "ticks": 254,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 12,
+          "frameN": 204,
+          "ticks": 256,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 13,
+          "frameN": 205,
+          "ticks": 258,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 14,
+          "frameN": 206,
+          "ticks": 260,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 15,
+          "frameN": 207,
+          "ticks": 262,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 16,
+          "frameN": 208,
+          "ticks": 264,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        }
+      ],
+      "live": {
+        "geometryCount": 1,
+        "visible": 8,
+        "snapshot": {
+          "builds": 3,
+          "hits": 21,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 3,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 15948,
+          "signatureNumbers": 3478,
+          "remainingBuilds": 1
+        },
+        "uniformsCurrent": true,
+        "calls": 66,
+        "triangles": 255002
+      },
+      "wholeGameCpuMedianMs": 4.800000000745058,
+      "wholeGameCpuP95Ms": 9,
+      "clear": {
+        "snapshot": {
+          "entries": 0,
+          "pending": 0,
+          "users": 0,
+          "geometryBytes": 0,
+          "signatureNumbers": 0
+        },
+        "remainingBoundaryMeshes": 0
+      }
+    },
+    {
+      "hz": 30,
+      "separated": true,
+      "frames": [
+        {
+          "delivery": 1,
+          "frameN": 253,
+          "ticks": 354,
+          "ready": 1,
+          "snapshot": {
+            "builds": 1,
+            "hits": 0,
+            "deferrals": 14,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 7,
+            "users": 1,
+            "geometryBytes": 2988,
+            "signatureNumbers": 962,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 2,
+          "frameN": 254,
+          "ticks": 356,
+          "ready": 2,
+          "snapshot": {
+            "builds": 2,
+            "hits": 0,
+            "deferrals": 26,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 2,
+            "pending": 6,
+            "users": 2,
+            "geometryBytes": 7056,
+            "signatureNumbers": 1998,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 3,
+          "frameN": 255,
+          "ticks": 358,
+          "ready": 3,
+          "snapshot": {
+            "builds": 3,
+            "hits": 0,
+            "deferrals": 36,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 3,
+            "pending": 5,
+            "users": 3,
+            "geometryBytes": 12060,
+            "signatureNumbers": 3108,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 4,
+          "frameN": 256,
+          "ticks": 360,
+          "ready": 4,
+          "snapshot": {
+            "builds": 4,
+            "hits": 0,
+            "deferrals": 44,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 4,
+            "pending": 4,
+            "users": 4,
+            "geometryBytes": 17280,
+            "signatureNumbers": 4218,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 5,
+          "frameN": 257,
+          "ticks": 362,
+          "ready": 5,
+          "snapshot": {
+            "builds": 5,
+            "hits": 0,
+            "deferrals": 50,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 5,
+            "pending": 3,
+            "users": 5,
+            "geometryBytes": 23904,
+            "signatureNumbers": 5772,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 6,
+          "frameN": 258,
+          "ticks": 364,
+          "ready": 6,
+          "snapshot": {
+            "builds": 6,
+            "hits": 0,
+            "deferrals": 54,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 6,
+            "pending": 2,
+            "users": 6,
+            "geometryBytes": 30852,
+            "signatureNumbers": 7104,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 7,
+          "frameN": 259,
+          "ticks": 366,
+          "ready": 7,
+          "snapshot": {
+            "builds": 7,
+            "hits": 0,
+            "deferrals": 56,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 7,
+            "pending": 1,
+            "users": 7,
+            "geometryBytes": 37620,
+            "signatureNumbers": 8288,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 8,
+          "frameN": 260,
+          "ticks": 368,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 56,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 44316,
+            "signatureNumbers": 9472,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 9,
+          "frameN": 261,
+          "ticks": 370,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 56,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 44316,
+            "signatureNumbers": 9472,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 10,
+          "frameN": 262,
+          "ticks": 372,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 56,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 44316,
+            "signatureNumbers": 9472,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 11,
+          "frameN": 263,
+          "ticks": 374,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 56,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 44316,
+            "signatureNumbers": 9472,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 12,
+          "frameN": 264,
+          "ticks": 376,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 56,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 44316,
+            "signatureNumbers": 9472,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 13,
+          "frameN": 265,
+          "ticks": 378,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 56,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 44316,
+            "signatureNumbers": 9472,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 14,
+          "frameN": 266,
+          "ticks": 380,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 56,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 44316,
+            "signatureNumbers": 9472,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 15,
+          "frameN": 267,
+          "ticks": 382,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 56,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 44316,
+            "signatureNumbers": 9472,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 16,
+          "frameN": 268,
+          "ticks": 384,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 56,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 44316,
+            "signatureNumbers": 9472,
+            "remainingBuilds": 1
+          }
+        }
+      ],
+      "live": {
+        "geometryCount": 8,
+        "visible": 8,
+        "snapshot": {
+          "builds": 24,
+          "hits": 0,
+          "deferrals": 56,
+          "evictions": 12,
+          "invalidations": 0,
+          "disposals": 12,
+          "maxBuildsPerRender": 1,
+          "entries": 12,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 63324,
+          "signatureNumbers": 13542,
+          "remainingBuilds": 1
+        },
+        "uniformsCurrent": true,
+        "calls": 65,
+        "triangles": 254987
+      },
+      "wholeGameCpuMedianMs": 4.799999998882413,
+      "wholeGameCpuP95Ms": 11.299999998882413,
+      "clear": {
+        "snapshot": {
+          "entries": 0,
+          "pending": 0,
+          "users": 0,
+          "geometryBytes": 0,
+          "signatureNumbers": 0
+        },
+        "remainingBoundaryMeshes": 0
+      }
+    },
+    {
+      "hz": 60,
+      "separated": false,
+      "frames": [
+        {
+          "delivery": 1,
+          "frameN": 313,
+          "ticks": 473,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 2,
+          "frameN": 314,
+          "ticks": 474,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 3,
+          "frameN": 315,
+          "ticks": 475,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 4,
+          "frameN": 316,
+          "ticks": 476,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 5,
+          "frameN": 317,
+          "ticks": 477,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 6,
+          "frameN": 318,
+          "ticks": 478,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 7,
+          "frameN": 319,
+          "ticks": 479,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 8,
+          "frameN": 320,
+          "ticks": 480,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 9,
+          "frameN": 321,
+          "ticks": 481,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 10,
+          "frameN": 322,
+          "ticks": 482,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 11,
+          "frameN": 323,
+          "ticks": 483,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 12,
+          "frameN": 324,
+          "ticks": 484,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 13,
+          "frameN": 325,
+          "ticks": 485,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 14,
+          "frameN": 326,
+          "ticks": 486,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 15,
+          "frameN": 327,
+          "ticks": 487,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 16,
+          "frameN": 328,
+          "ticks": 488,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        }
+      ],
+      "live": {
+        "geometryCount": 1,
+        "visible": 8,
+        "snapshot": {
+          "builds": 3,
+          "hits": 21,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 3,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 15948,
+          "signatureNumbers": 3478,
+          "remainingBuilds": 1
+        },
+        "uniformsCurrent": true,
+        "calls": 64,
+        "triangles": 254982
+      },
+      "wholeGameCpuMedianMs": 2.099999999627471,
+      "wholeGameCpuP95Ms": 3.300000000745058,
+      "clear": {
+        "snapshot": {
+          "entries": 0,
+          "pending": 0,
+          "users": 0,
+          "geometryBytes": 0,
+          "signatureNumbers": 0
+        },
+        "remainingBoundaryMeshes": 0
+      }
+    },
+    {
+      "hz": 60,
+      "separated": true,
+      "frames": [
+        {
+          "delivery": 1,
+          "frameN": 433,
+          "ticks": 593,
+          "ready": 1,
+          "snapshot": {
+            "builds": 1,
+            "hits": 0,
+            "deferrals": 7,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 7,
+            "users": 1,
+            "geometryBytes": 2988,
+            "signatureNumbers": 962,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 2,
+          "frameN": 434,
+          "ticks": 594,
+          "ready": 2,
+          "snapshot": {
+            "builds": 2,
+            "hits": 0,
+            "deferrals": 13,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 2,
+            "pending": 6,
+            "users": 2,
+            "geometryBytes": 7056,
+            "signatureNumbers": 1998,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 3,
+          "frameN": 435,
+          "ticks": 595,
+          "ready": 3,
+          "snapshot": {
+            "builds": 3,
+            "hits": 0,
+            "deferrals": 18,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 3,
+            "pending": 5,
+            "users": 3,
+            "geometryBytes": 12060,
+            "signatureNumbers": 3108,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 4,
+          "frameN": 436,
+          "ticks": 596,
+          "ready": 4,
+          "snapshot": {
+            "builds": 4,
+            "hits": 0,
+            "deferrals": 22,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 4,
+            "pending": 4,
+            "users": 4,
+            "geometryBytes": 17280,
+            "signatureNumbers": 4218,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 5,
+          "frameN": 437,
+          "ticks": 597,
+          "ready": 5,
+          "snapshot": {
+            "builds": 5,
+            "hits": 0,
+            "deferrals": 25,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 5,
+            "pending": 3,
+            "users": 5,
+            "geometryBytes": 23904,
+            "signatureNumbers": 5772,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 6,
+          "frameN": 438,
+          "ticks": 598,
+          "ready": 6,
+          "snapshot": {
+            "builds": 6,
+            "hits": 0,
+            "deferrals": 27,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 6,
+            "pending": 2,
+            "users": 6,
+            "geometryBytes": 30888,
+            "signatureNumbers": 7104,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 7,
+          "frameN": 439,
+          "ticks": 599,
+          "ready": 7,
+          "snapshot": {
+            "builds": 7,
+            "hits": 0,
+            "deferrals": 28,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 7,
+            "pending": 1,
+            "users": 7,
+            "geometryBytes": 37980,
+            "signatureNumbers": 8362,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 8,
+          "frameN": 440,
+          "ticks": 600,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 28,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 45036,
+            "signatureNumbers": 9620,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 9,
+          "frameN": 441,
+          "ticks": 601,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 28,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 45036,
+            "signatureNumbers": 9620,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 10,
+          "frameN": 442,
+          "ticks": 602,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 28,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 45036,
+            "signatureNumbers": 9620,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 11,
+          "frameN": 443,
+          "ticks": 603,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 28,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 45036,
+            "signatureNumbers": 9620,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 12,
+          "frameN": 444,
+          "ticks": 604,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 28,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 45036,
+            "signatureNumbers": 9620,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 13,
+          "frameN": 445,
+          "ticks": 605,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 28,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 45036,
+            "signatureNumbers": 9620,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 14,
+          "frameN": 446,
+          "ticks": 606,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 28,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 45036,
+            "signatureNumbers": 9620,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 15,
+          "frameN": 447,
+          "ticks": 607,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 28,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 45036,
+            "signatureNumbers": 9620,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 16,
+          "frameN": 448,
+          "ticks": 608,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 28,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 45036,
+            "signatureNumbers": 9620,
+            "remainingBuilds": 1
+          }
+        }
+      ],
+      "live": {
+        "geometryCount": 8,
+        "visible": 8,
+        "snapshot": {
+          "builds": 24,
+          "hits": 0,
+          "deferrals": 28,
+          "evictions": 12,
+          "invalidations": 0,
+          "disposals": 12,
+          "maxBuildsPerRender": 1,
+          "entries": 12,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 64584,
+          "signatureNumbers": 13764,
+          "remainingBuilds": 1
+        },
+        "uniformsCurrent": true,
+        "calls": 65,
+        "triangles": 255000
+      },
+      "wholeGameCpuMedianMs": 2.300000000745058,
+      "wholeGameCpuP95Ms": 6.099999999627471,
+      "clear": {
+        "snapshot": {
+          "entries": 0,
+          "pending": 0,
+          "users": 0,
+          "geometryBytes": 0,
+          "signatureNumbers": 0
+        },
+        "remainingBoundaryMeshes": 0
+      }
+    },
+    {
+      "hz": 120,
+      "separated": false,
+      "frames": [
+        {
+          "delivery": 1,
+          "frameN": 553,
+          "ticks": 712,
+          "ready": 0,
+          "snapshot": {
+            "entries": 0,
+            "pending": 0,
+            "users": 0,
+            "geometryBytes": 0,
+            "signatureNumbers": 0
+          }
+        },
+        {
+          "delivery": 2,
+          "frameN": 554,
+          "ticks": 713,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 3,
+          "frameN": 555,
+          "ticks": 713,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 4,
+          "frameN": 556,
+          "ticks": 714,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 5,
+          "frameN": 557,
+          "ticks": 714,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 6,
+          "frameN": 558,
+          "ticks": 715,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 7,
+          "frameN": 559,
+          "ticks": 715,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 8,
+          "frameN": 560,
+          "ticks": 716,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 9,
+          "frameN": 561,
+          "ticks": 716,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 10,
+          "frameN": 562,
+          "ticks": 717,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 11,
+          "frameN": 563,
+          "ticks": 717,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 12,
+          "frameN": 564,
+          "ticks": 718,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 13,
+          "frameN": 565,
+          "ticks": 718,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 14,
+          "frameN": 566,
+          "ticks": 719,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 15,
+          "frameN": 567,
+          "ticks": 719,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        },
+        {
+          "delivery": 16,
+          "frameN": 568,
+          "ticks": 720,
+          "ready": 8,
+          "snapshot": {
+            "builds": 1,
+            "hits": 7,
+            "deferrals": 0,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 5472,
+            "signatureNumbers": 1184,
+            "remainingBuilds": 1
+          }
+        }
+      ],
+      "live": {
+        "geometryCount": 1,
+        "visible": 8,
+        "snapshot": {
+          "builds": 3,
+          "hits": 21,
+          "deferrals": 0,
+          "evictions": 0,
+          "invalidations": 0,
+          "disposals": 0,
+          "maxBuildsPerRender": 1,
+          "entries": 3,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 15948,
+          "signatureNumbers": 3478,
+          "remainingBuilds": 1
+        },
+        "uniformsCurrent": true,
+        "calls": 64,
+        "triangles": 254980
+      },
+      "wholeGameCpuMedianMs": 1.199999999254942,
+      "wholeGameCpuP95Ms": 2.900000000372529,
+      "clear": {
+        "snapshot": {
+          "entries": 0,
+          "pending": 0,
+          "users": 0,
+          "geometryBytes": 0,
+          "signatureNumbers": 0
+        },
+        "remainingBoundaryMeshes": 0
+      }
+    },
+    {
+      "hz": 120,
+      "separated": true,
+      "frames": [
+        {
+          "delivery": 1,
+          "frameN": 793,
+          "ticks": 832,
+          "ready": 0,
+          "snapshot": {
+            "entries": 0,
+            "pending": 0,
+            "users": 0,
+            "geometryBytes": 0,
+            "signatureNumbers": 0
+          }
+        },
+        {
+          "delivery": 2,
+          "frameN": 794,
+          "ticks": 833,
+          "ready": 1,
+          "snapshot": {
+            "builds": 1,
+            "hits": 0,
+            "deferrals": 7,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 7,
+            "users": 1,
+            "geometryBytes": 2988,
+            "signatureNumbers": 962,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 3,
+          "frameN": 795,
+          "ticks": 833,
+          "ready": 1,
+          "snapshot": {
+            "builds": 1,
+            "hits": 0,
+            "deferrals": 7,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 1,
+            "pending": 7,
+            "users": 1,
+            "geometryBytes": 2988,
+            "signatureNumbers": 962,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 4,
+          "frameN": 796,
+          "ticks": 834,
+          "ready": 2,
+          "snapshot": {
+            "builds": 2,
+            "hits": 0,
+            "deferrals": 13,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 2,
+            "pending": 6,
+            "users": 2,
+            "geometryBytes": 7056,
+            "signatureNumbers": 1998,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 5,
+          "frameN": 797,
+          "ticks": 834,
+          "ready": 2,
+          "snapshot": {
+            "builds": 2,
+            "hits": 0,
+            "deferrals": 13,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 2,
+            "pending": 6,
+            "users": 2,
+            "geometryBytes": 7056,
+            "signatureNumbers": 1998,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 6,
+          "frameN": 798,
+          "ticks": 835,
+          "ready": 3,
+          "snapshot": {
+            "builds": 3,
+            "hits": 0,
+            "deferrals": 18,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 3,
+            "pending": 5,
+            "users": 3,
+            "geometryBytes": 12060,
+            "signatureNumbers": 3108,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 7,
+          "frameN": 799,
+          "ticks": 835,
+          "ready": 3,
+          "snapshot": {
+            "builds": 3,
+            "hits": 0,
+            "deferrals": 18,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 3,
+            "pending": 5,
+            "users": 3,
+            "geometryBytes": 12060,
+            "signatureNumbers": 3108,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 8,
+          "frameN": 800,
+          "ticks": 836,
+          "ready": 4,
+          "snapshot": {
+            "builds": 4,
+            "hits": 0,
+            "deferrals": 22,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 4,
+            "pending": 4,
+            "users": 4,
+            "geometryBytes": 17280,
+            "signatureNumbers": 4218,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 9,
+          "frameN": 801,
+          "ticks": 836,
+          "ready": 4,
+          "snapshot": {
+            "builds": 4,
+            "hits": 0,
+            "deferrals": 22,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 4,
+            "pending": 4,
+            "users": 4,
+            "geometryBytes": 17280,
+            "signatureNumbers": 4218,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 10,
+          "frameN": 802,
+          "ticks": 837,
+          "ready": 5,
+          "snapshot": {
+            "builds": 5,
+            "hits": 0,
+            "deferrals": 25,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 5,
+            "pending": 3,
+            "users": 5,
+            "geometryBytes": 23904,
+            "signatureNumbers": 5772,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 11,
+          "frameN": 803,
+          "ticks": 837,
+          "ready": 5,
+          "snapshot": {
+            "builds": 5,
+            "hits": 0,
+            "deferrals": 25,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 5,
+            "pending": 3,
+            "users": 5,
+            "geometryBytes": 23904,
+            "signatureNumbers": 5772,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 12,
+          "frameN": 804,
+          "ticks": 838,
+          "ready": 6,
+          "snapshot": {
+            "builds": 6,
+            "hits": 0,
+            "deferrals": 27,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 6,
+            "pending": 2,
+            "users": 6,
+            "geometryBytes": 30888,
+            "signatureNumbers": 7104,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 13,
+          "frameN": 805,
+          "ticks": 838,
+          "ready": 6,
+          "snapshot": {
+            "builds": 6,
+            "hits": 0,
+            "deferrals": 27,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 6,
+            "pending": 2,
+            "users": 6,
+            "geometryBytes": 30888,
+            "signatureNumbers": 7104,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 14,
+          "frameN": 806,
+          "ticks": 839,
+          "ready": 7,
+          "snapshot": {
+            "builds": 7,
+            "hits": 0,
+            "deferrals": 28,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 7,
+            "pending": 1,
+            "users": 7,
+            "geometryBytes": 37980,
+            "signatureNumbers": 8362,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 15,
+          "frameN": 807,
+          "ticks": 839,
+          "ready": 7,
+          "snapshot": {
+            "builds": 7,
+            "hits": 0,
+            "deferrals": 28,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 7,
+            "pending": 1,
+            "users": 7,
+            "geometryBytes": 37980,
+            "signatureNumbers": 8362,
+            "remainingBuilds": 0
+          }
+        },
+        {
+          "delivery": 16,
+          "frameN": 808,
+          "ticks": 840,
+          "ready": 8,
+          "snapshot": {
+            "builds": 8,
+            "hits": 0,
+            "deferrals": 28,
+            "evictions": 0,
+            "invalidations": 0,
+            "disposals": 0,
+            "maxBuildsPerRender": 1,
+            "entries": 8,
+            "pending": 0,
+            "users": 8,
+            "geometryBytes": 45036,
+            "signatureNumbers": 9620,
+            "remainingBuilds": 0
+          }
+        }
+      ],
+      "live": {
+        "geometryCount": 8,
+        "visible": 8,
+        "snapshot": {
+          "builds": 24,
+          "hits": 0,
+          "deferrals": 28,
+          "evictions": 12,
+          "invalidations": 0,
+          "disposals": 12,
+          "maxBuildsPerRender": 1,
+          "entries": 12,
+          "pending": 0,
+          "users": 8,
+          "geometryBytes": 64584,
+          "signatureNumbers": 13764,
+          "remainingBuilds": 1
+        },
+        "uniformsCurrent": true,
+        "calls": 64,
+        "triangles": 255018
+      },
+      "wholeGameCpuMedianMs": 1.300000000745058,
+      "wholeGameCpuP95Ms": 2.899999998509884,
+      "clear": {
+        "snapshot": {
+          "entries": 0,
+          "pending": 0,
+          "users": 0,
+          "geometryBytes": 0,
+          "signatureNumbers": 0
+        },
+        "remainingBoundaryMeshes": 0
+      }
+    }
+  ],
+  "imagesSha256": {
+    "cache-normal/inspection-boundary-hidden-simf90.png": "b2170d14fddfc6a6be8cad1bdb58af0c88711dd31667ae64904b57243956aef8",
+    "cache-normal/normal-boot.png": "8333ab3bd9b6afa3ab097fd2bf4d542e7a3491af2024036f76e91c200dd1ff1e",
+    "cache-normal/normal-hold.png": "7d65b8c73acc4d2104ae52dd5729823016a2ac70171d2685c64aeff0e933d946",
+    "cache-normal/normal-throw-simf1.png": "ca30c56530279463e21d85d5ddf07e54a966966d16be6fb1fd4456236bc266a7",
+    "cache-normal/normal-throw-simf120.png": "7eb434938f254b38d61a6316eaf2a8f6d5360530711ba38d562a42fb2c25db03",
+    "cache-normal/normal-throw-simf15.png": "1febd30ec9d0e116a5660c8b35dc4d35142eab0455a9ac6a190aea9dd6b45e2c",
+    "cache-normal/normal-throw-simf180.png": "bffc49a6212f49aedd8cf6a7136ee031a7d3169ed41c29d3d714b44a120e216a",
+    "cache-normal/normal-throw-simf300.png": "5b19e32c11751fbf563409290fece2fcdcd9c384f95509e5aa7a0cd89ae25081",
+    "cache-normal/normal-throw-simf45.png": "934331b406857e72b5da3bc4a8a7a6e2207dad57a6949367d9784354e8358b50",
+    "cache-normal/normal-throw-simf462.png": "c81eb4a66625508a1e85e2d66be0dc7e3eda5426f92781c038295f3bb7bbff6a",
+    "cache-normal/normal-throw-simf479.png": "5fd0c69e10135f657da046942bcde7c69d2da4ee1b97371cbd6a48b519c6fe8a",
+    "cache-normal/normal-throw-simf600.png": "cfe7a2719682c48d5b47ca5ebb402d5c6727e8da057e1b883e75c5b99d19813f",
+    "cache-normal/normal-throw-simf90.png": "9af4fa40136b8ff46f91b949b6b164f92a062ca775e1e59d960aa6af1a4f9968",
+    "cache-final/control-above-nearby.png": "77cfe06dab08da8189bdbe46d188dc44c9092b10b102396fb7a5cdb66407d8d0",
+    "cache-final/control-above-same.png": "77cfe06dab08da8189bdbe46d188dc44c9092b10b102396fb7a5cdb66407d8d0",
+    "cache-final/control-below-nearby.png": "77cfe06dab08da8189bdbe46d188dc44c9092b10b102396fb7a5cdb66407d8d0",
+    "cache-final/control-below-same.png": "77cfe06dab08da8189bdbe46d188dc44c9092b10b102396fb7a5cdb66407d8d0",
+    "cache-final/control-complete-nearby.png": "77cfe06dab08da8189bdbe46d188dc44c9092b10b102396fb7a5cdb66407d8d0",
+    "cache-final/control-complete-same.png": "77cfe06dab08da8189bdbe46d188dc44c9092b10b102396fb7a5cdb66407d8d0",
+    "cache-final/control-narrow-nearby.png": "ce09a0b6e92c88b4dff0de8df0fa13ff7fa14aa37695cb15480102263eee4c2a",
+    "cache-final/control-narrow-same.png": "02cebf8d57c177ecb33186831e8326c16fdd7fe9370d0dbb45ef7499613ffa36",
+    "cache-final/control-nonpaint-nearby.png": "77cfe06dab08da8189bdbe46d188dc44c9092b10b102396fb7a5cdb66407d8d0",
+    "cache-final/control-nonpaint-same.png": "77cfe06dab08da8189bdbe46d188dc44c9092b10b102396fb7a5cdb66407d8d0",
+    "cache-final/control-open-nearby.png": "0a38c009d554e316ef9eb168e4fce5245b7bdac738c6edb5711dcc7c8c6c68c2",
+    "cache-final/control-open-same.png": "5a3c8e99b1a118f7040f5f71902710b42cf8e742693965ae3be4de17609e0247",
+    "cache-final/control-partial-nearby.png": "ba4842cf1d83d5d506bb4817b650366634b916e0a2b6f7c2bc01575308f9eea0",
+    "cache-final/control-partial-same.png": "9804292d7ec46cdbf6e6f8d7992c57e8fb3ea4d4e14a94e6ee3498cccd5add5c",
+    "cache-final/control-wall-nearby.png": "a4c95f9ee51807cd2a02f050062af071b177af5593fd8c3ad2d30540dc9b9e00",
+    "cache-final/control-wall-same.png": "5482501c2ab834e366aff24348a6f7e3a9542c4719611b9da0b7806ba67ae7fe",
+    "cache-final/inspection-above-nearby.png": "77cfe06dab08da8189bdbe46d188dc44c9092b10b102396fb7a5cdb66407d8d0",
+    "cache-final/inspection-above-same.png": "77cfe06dab08da8189bdbe46d188dc44c9092b10b102396fb7a5cdb66407d8d0",
+    "cache-final/inspection-below-nearby.png": "77cfe06dab08da8189bdbe46d188dc44c9092b10b102396fb7a5cdb66407d8d0",
+    "cache-final/inspection-below-same.png": "77cfe06dab08da8189bdbe46d188dc44c9092b10b102396fb7a5cdb66407d8d0",
+    "cache-final/inspection-complete-nearby.png": "77cfe06dab08da8189bdbe46d188dc44c9092b10b102396fb7a5cdb66407d8d0",
+    "cache-final/inspection-complete-same.png": "77cfe06dab08da8189bdbe46d188dc44c9092b10b102396fb7a5cdb66407d8d0",
+    "cache-final/inspection-narrow-nearby.png": "80484ba2e5266801817e53bdbf488f3e197266f78224292dc68818aa282c7364",
+    "cache-final/inspection-narrow-same.png": "02cebf8d57c177ecb33186831e8326c16fdd7fe9370d0dbb45ef7499613ffa36",
+    "cache-final/inspection-nonpaint-nearby.png": "77cfe06dab08da8189bdbe46d188dc44c9092b10b102396fb7a5cdb66407d8d0",
+    "cache-final/inspection-nonpaint-same.png": "77cfe06dab08da8189bdbe46d188dc44c9092b10b102396fb7a5cdb66407d8d0",
+    "cache-final/inspection-open-nearby.png": "77a3420df133b029727f434503f12970632042b0882a32df312a0e37e26c8dab",
+    "cache-final/inspection-open-same.png": "5a3c8e99b1a118f7040f5f71902710b42cf8e742693965ae3be4de17609e0247",
+    "cache-final/inspection-partial-nearby.png": "3f813f1b044528b0cc63317a2b23a0d9db20e0ca9ca4fea3857aedd1fa7ebcd5",
+    "cache-final/inspection-partial-same.png": "9804292d7ec46cdbf6e6f8d7992c57e8fb3ea4d4e14a94e6ee3498cccd5add5c",
+    "cache-final/inspection-wall-nearby.png": "d515694f31ed9948b83496b3e76b84e9050b45197c982ab3e77aa67dedd22e2a",
+    "cache-final/inspection-wall-same.png": "5482501c2ab834e366aff24348a6f7e3a9542c4719611b9da0b7806ba67ae7fe",
+    "cache-production/inspection-after-eight-cloud-clear.png": "dba31791c4a27399a7b21f2ff4f73139bbc4c360ff8e286aeb5fd7068c71970f",
+    "cache-production/inspection-boundary-hidden-simf90.png": "edbf60d3ff7ec27a6ee8492048f56792f3913b4cfcf769ec697f1bff18f3d94b",
+    "cache-production/normal-boot.png": "89cc55d047162a5ac8643eacd34fd21d3a505cd87dc36ed13af68c411dcaf12d",
+    "cache-production/normal-hold.png": "22ce82d605f20d2e73b63491b33f4bc30e2d141a5e80e72ded976eaf31f8660f",
+    "cache-production/normal-throw-simf90.png": "6a1a97ac2c920bdd255d20c8d5a56f6e7e42c52d9ee949d66462480778343e09"
+  },
+  "limitations": [
+    "No new Library upload or native data download attempted; their earlier network failures remain unresolved.",
+    "Local procedural layouts and synthetic native collision grids do not validate the unavailable actual native stage.",
+    "Geometry bytes, signature counts and GPU resource counters are measured; total JS heap/GC and hardware GPU/mobile timings are not.",
+    "Nearby geometry sharing preserves geometry coverage but can change antialiasing: exact-center pixel parity is strict, nearby is reported with its measured differences."
+  ]
+}
