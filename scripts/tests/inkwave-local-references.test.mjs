@@ -45,6 +45,24 @@ test('source and target byte changes or absent target reject instead of waiving 
  for(const p of [r.source,r.target]){assert.equal(verifyMappedReference(root,r.source,r.ref).target,r.target);const b=fs.readFileSync(path.join(root,p));put(root,p,Buffer.concat([b,Buffer.from('// mutation')]));assert.throws(()=>verifyMappedReference(root,r.source,r.ref),error=>{assert.equal(error.message,'Pinned reference source mismatch: '+p);return true;});put(root,p,b);}
  fs.renameSync(path.join(root,r.target),path.join(root,r.target+'.kept'));assert.throws(()=>verifyMappedReference(root,r.source,r.ref),/ENOENT/);
 }));
+// PR1853's nine-edge mutation controls need all pinned pairs; keep c68's
+// closed, isolated negative-import fixtures above/below unchanged.
+test('every migrated navigation, facade and descriptor edge stays owner-bound and byte-pinned',()=>fixture(root=>{
+ for(const row of SOURCE_SITE_REFERENCES)for(const p of [row.source,row.target])put(root,p,fs.readFileSync(path.join(repo,p)));
+ const migrated=SOURCE_SITE_REFERENCES.filter(r=>/src\/game\/nav\.js$|src\/world\/stages\/(?:index|data)\.js$/.test(r.source));
+ assert.equal(migrated.length,9);
+ for(const r of migrated){
+  assert.equal(verifyMappedReference(root,r.source,r.ref).target,r.target);
+  assert.throws(()=>verifyMappedReference(root,r.source,r.ref.replace('.mjs','-unknown.mjs')),/Unknown source\/site reference/);
+  assert.throws(()=>verifyMappedReference(root,r.source.replace(/[^/]+$/,'unreviewed.js'),r.ref),/Unknown source\/site reference/);
+  for(const p of [r.source,r.target]){
+   const bytes=fs.readFileSync(path.join(root,p));
+   put(root,p,Buffer.concat([bytes,Buffer.from('\n// unreviewed mutation')]));
+   assert.throws(()=>verifyMappedReference(root,r.source,r.ref),/Pinned reference source mismatch/);
+   put(root,p,bytes);
+  }
+ }
+}));
 test('ordinary missing, escaping local refs and runtime build-only imports remain rejected',()=>{
  for(const [ref,reason]of [["./absent.js",/Unknown source\/site reference/],["../../../../external/target.js",/escapes repository/],["../../../patches/local-quality/prop-atlas-adapter.mjs",/build-only/],["./alias.mjs",/build-only/],["./directory",/not a file/]])fixture(outer=>{
   const root=path.join(outer,'repo');put(outer,'external/target.js','export {};');
