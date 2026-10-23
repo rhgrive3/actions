@@ -143,3 +143,20 @@ test('actual cold route retains the original evaluation timeout instead of a lat
   const selection=source.match(/coldError=coldEvaluationError\?\?error;/)?.[0];assert(selection);
   vm.runInNewContext(selection,context);assert.equal(context.coldError,original);
 });
+
+test('actual desktop setup bounds its first evaluate, rather than only setting Playwright default timeout',async()=>{
+  const source=fs.readFileSync(new URL('../check-inkwave-idle-resources.mjs',import.meta.url),'utf8');
+  const start=source.indexOf('\n  page=',source.indexOf('browser=await chromium.launchPersistentContext'));
+  const first=source.indexOf('await page.evaluate(',start),end=source.indexOf('\n',first);
+  assert(start>=0&&first>start&&end>first);
+  const timers=clock();let configuredTimeout,closes=0;
+  const page={evaluate:()=>new Promise(()=>{}),setDefaultTimeout(ms){configuredTimeout=ms;},on(){},async route(){},async addInitScript(){},async goto(){},async waitForFunction(_fn,_arg,options){assert.equal(options.timeout,180000);}};
+  const context={browser:{newPage:async()=>page},boundIdleEvaluations:(p,phase)=>boundIdleEvaluations(p,phase,timers),IDLE_OPERATION_TIMEOUT_MS,phase:'setup',errors:[],loaded:new Set(),address:'http://localhost/'};
+  const work=observe(vm.runInNewContext('(async()=>{'+source.slice(start,end)+'})()',context));
+  for(let i=0;i<40;i++)await Promise.resolve();
+  assert.equal(configuredTimeout,120000);assert.equal(timers.pending.size,1,'real checker setup must install the host deadline');
+  timers.tick(119999);await flush();assert.equal(work.settled,false);
+  timers.tick(1);await work.done;assert.equal(work.error.code,'INKWAVE_IDLE_EVALUATION_TIMEOUT');
+  await closeIdleResources({close:async()=>{closes++;}},null,work.error);
+  assert.equal(closes,1);assert.equal(timers.pending.size,0);
+});
