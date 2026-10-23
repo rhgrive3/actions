@@ -1,0 +1,242 @@
+{
+  "scope": "Focused observations, not universal exclusion or PR1860 acceptance",
+  "head": "9cee2c425bf7d31ac5312c1e108fab10afc36c8a",
+  "worktreeClean": true,
+  "runtimePrMainChanged": false,
+  "game": {
+    "stage": "tidewater",
+    "team": 0,
+    "initialization": "existing Game.startMatch API; real KeyP/pause-menu RESUME click for pointer lock",
+    "simulation": "native RAF/FixedClock/Match/PlayerController; no manual Game frames",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "pointerLock": {
+      "initial": false,
+      "via": "real KeyP and pause-menu RESUME click",
+      "final": true
+    },
+    "identity": {
+      "sourceSha": "9cee2c425bf7d31ac5312c1e108fab10afc36c8a",
+      "checkedInputs": 1423,
+      "inputHash": "f65b5c1b8569c5b6364a31c32b45e3107d23247a2c030fb764c565c064e0d517",
+      "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+      "revision": "150caf88b35d2d6f915309f35373269cf7487ecc74e672ecd40eff0803df4996"
+    },
+    "conditions": [
+      {
+        "kind": "enemy-side-entry",
+        "rows": 49,
+        "nativeFixedStep": true,
+        "allTerrainClear": true,
+        "minimum": 4.6,
+        "distance": null,
+        "land": null,
+        "stage": "tidewater",
+        "frozen": false,
+        "skipRender": false,
+        "drawCalls": 99,
+        "inputFireSamples": 0,
+        "phases": [
+          null
+        ]
+      },
+      {
+        "kind": "enemy-pad-backwall-corner",
+        "rows": 39,
+        "nativeFixedStep": true,
+        "allTerrainClear": true,
+        "minimum": 4.600000000000001,
+        "distance": null,
+        "land": null,
+        "stage": "tidewater",
+        "frozen": false,
+        "skipRender": false,
+        "drawCalls": 128,
+        "inputFireSamples": 0,
+        "phases": [
+          null
+        ]
+      },
+      {
+        "kind": "allied-exit",
+        "rows": 72,
+        "nativeFixedStep": true,
+        "allTerrainClear": true,
+        "minimum": null,
+        "distance": 6.786000000000005,
+        "land": null,
+        "stage": "tidewater",
+        "frozen": false,
+        "skipRender": false,
+        "drawCalls": 63,
+        "inputFireSamples": 0,
+        "phases": [
+          null
+        ]
+      },
+      {
+        "kind": "allied-reentry",
+        "rows": 72,
+        "nativeFixedStep": true,
+        "allTerrainClear": true,
+        "minimum": null,
+        "distance": 0.6719999999999997,
+        "land": null,
+        "stage": "tidewater",
+        "frozen": false,
+        "skipRender": false,
+        "drawCalls": 82,
+        "inputFireSamples": 0,
+        "phases": [
+          null
+        ]
+      },
+      {
+        "kind": "respawn-launch",
+        "rows": 406,
+        "nativeFixedStep": true,
+        "allTerrainClear": true,
+        "minimum": null,
+        "distance": null,
+        "land": {
+          "pos": [
+            0.6278691764006465,
+            -1.1102230246251565e-16,
+            -30.086723898460093
+          ],
+          "time": 22.16666666666669,
+          "alive": true,
+          "grounded": true
+        },
+        "stage": "tidewater",
+        "frozen": false,
+        "skipRender": false,
+        "drawCalls": 61,
+        "inputFireSamples": 6,
+        "phases": [
+          null,
+          "aim",
+          "flight"
+        ]
+      }
+    ],
+    "runtimePageErrors": [],
+    "observedGameHttpFailures": [],
+    "cosmeticBodyUnavailable": [
+      {
+        "file": "_versions/150caf88b35d2d6f915309f35373269cf7487ecc74e672ecd40eff0803df4996/patches/local-quality/ink-volume/assets/roller/volumes.bin.gz",
+        "error": "response.body: Protocol error (Network.getResponseBody): Request content was evicted from inspector cache\nResponse body is not available for a response that was navigated away from. Read response.body() before triggering any navigation."
+      }
+    ]
+  },
+  "component": {
+    "scope": "No Game or renderer; actual installed browser Actor/Character/Physics; paint/audio/FX stubs",
+    "input": {
+      "start": [
+        15.39,
+        20,
+        0
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ],
+      "move": [
+        1,
+        0,
+        0
+      ],
+      "dt": 0.016666666666666666,
+      "steps": 180
+    },
+    "fixtureHtmlSha256": "d13f3bac00bafea3973e3d21e7c18b6895a1d38c2282f583b2ec79bfd8a19df4",
+    "beforeHead": "07a9792142564756189342a2e86d0bc3afe275ed",
+    "beforeInvalid": 114,
+    "beforeFirstInvalid": {
+      "index": 66,
+      "pos": [
+        15.4,
+        1.5891632460844727,
+        0
+      ],
+      "vel": [
+        0,
+        -32.98166666666667,
+        0
+      ],
+      "grounded": false,
+      "fits": false,
+      "legacyFits": false
+    },
+    "candidateInvalid": 0,
+    "candidateLast": {
+      "index": 179,
+      "pos": [
+        15.4,
+        1.6600056205371203,
+        0
+      ],
+      "vel": [
+        0,
+        0,
+        0
+      ],
+      "grounded": false,
+      "fits": true,
+      "legacyFits": false
+    },
+    "character": {
+      "name": "hi",
+      "children": 1,
+      "sourceMotion": "ready"
+    },
+    "beforeResponseBodies": 402,
+    "candidateResponseBodies": 402,
+    "pageHttpErrors": {
+      "before": [
+        [],
+        []
+      ],
+      "candidate": [
+        [],
+        []
+      ]
+    }
+  },
+  "verification": {
+    "sourceInputs": 1423,
+    "artifactsRehashed": 2112,
+    "actualGameResponseHashes": 576,
+    "rootManifest": {
+      "url": "/inkwave-build.json",
+      "status": 200,
+      "bytes": 579240,
+      "sha256": "412c248ccd27d684961397842f5d38714b7ed69adcacf22456b8d1ca7d247024"
+    }
+  },
+  "checkerFailuresPreserved": [
+    {
+      "attempt": "candidate",
+      "reason": "observer threw after 1200 records while launch input was not established; aborted; launch not accepted from this attempt"
+    },
+    {
+      "attempt": "candidate-r2",
+      "reason": "UI start wait timed out at 180000ms; state stayed menu/attract; no Game-case result counted"
+    },
+    {
+      "attempt": "candidate-game-r3",
+      "reason": "all five Game conditions asserted successfully, then postflight fetched manifest relative to versioned base and got 404/JSON error; original combined checker exit remains failure"
+    }
+  ],
+  "postflightSupplement": {
+    "status": "passed",
+    "method": "read-only postflight using Playwright APIRequestContext and stored actual Game response hashes; no Game rerun or renderer",
+    "originalReceiptRewritten": false
+  },
+  "remaining": [
+    "All eight blocked outside candidates: existing clear-native-endpoint retention is unchanged; ordinary-path reachability in actual maps remains unverified.",
+    "Actual-map observation covers this one Tidewater backwall corner, not all stages/corners.",
+    "No deployed relay, new candidate remote-authority browser run, CI, physical-device or retail comparison in this follow-up.",
+    "Landing weapon-pose/animation visual acceptance is outside this task."
+  ]
+}

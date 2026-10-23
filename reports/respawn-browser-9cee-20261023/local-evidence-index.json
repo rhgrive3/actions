@@ -1,0 +1,130 @@
+{
+  "candidate-component.log": {
+    "bytes": 246,
+    "sha256": "c35e129b57992b1a49e7aa0ad150797bb9724df2822da1a1b85fa34d847d2a80"
+  },
+  "README.md": {
+    "bytes": 4324,
+    "sha256": "f18b1872725d47569bf756a6f68d837dcf8094bd93e51e7fa3dcd85fa24273a6"
+  },
+  "before-component.log": {
+    "bytes": 246,
+    "sha256": "721b73a67c009f33b59474182a5dbfe59a1bd51a7ad41e96fccf2102a1a5b66c"
+  },
+  "candidate-r2.log": {
+    "bytes": 323,
+    "sha256": "f0b3c8af9825cc27c040645611a2844e6a040e1d0eb65e14085ec40f4224ce9e"
+  },
+  "source-24-before.log": {
+    "bytes": 8690,
+    "sha256": "a8b9a2022e2cd73dbff8d50c6e5202327cf6344002cb3df037ca4dd4db841b70"
+  },
+  "candidate-component-r2.log": {
+    "bytes": 153,
+    "sha256": "76b74731e18d75f45251793fe56dca5472b2d6aa16ad6f16773c6722fd79b4ef"
+  },
+  "browser-focus.mjs": {
+    "bytes": 19021,
+    "sha256": "8ec47a939fcbe3d632dcc7deba2dd6a07d845822d4125ab868c1f2d9b7f0c9a6"
+  },
+  "postflight.mjs": {
+    "bytes": 3331,
+    "sha256": "af4ce0d68b12b62dea3387f98b9ab89fd40dbb45ffebbfca4d929020c5dbe2b4"
+  },
+  "candidate.log": {
+    "bytes": 202553,
+    "sha256": "5e0dac89fde84b9cde7e4d726276edc0a47e2843341e104f250781b78e7205fb"
+  },
+  "before-component-r2.log": {
+    "bytes": 153,
+    "sha256": "f55ff1172fcc451628e41b42e8aa7fe9ea53476905c72ca587ef3b09a985f88a"
+  },
+  "postflight.log": {
+    "bytes": 260,
+    "sha256": "af838a5693f046f8c8ed09d7a6961af51666bacea223720bf8fbf8026187261c"
+  },
+  "postflight.json": {
+    "bytes": 3908,
+    "sha256": "466da7a380493e3aff0e0e55592b64d4bc0dac141b62585f29c3f0c7fd29db36"
+  },
+  "summary.json": {
+    "bytes": 6989,
+    "sha256": "2deee9a151471bfae624a6da03415d620bc9a9d3c848f50080574e763ad4d476"
+  },
+  "candidate-game-r3.log": {
+    "bytes": 703,
+    "sha256": "016315d9fd50053c29a534ebd88f1e55ad25d8275f0d4fa41b9e2faabbe99dbf"
+  },
+  "candidate-r2/harness.mjs": {
+    "bytes": 17637,
+    "sha256": "8ab7867d6b19de447b5dda4f0499404d0040a28ab19bd560a4955fe7db04b9d3"
+  },
+  "candidate-r2/receipt.json": {
+    "bytes": 140120,
+    "sha256": "a6ead8c71c1e6d8c31abbda77798871f4e56c4243538dca492a32a15a61a0785"
+  },
+  "before-component/harness.mjs": {
+    "bytes": 18824,
+    "sha256": "0a369f16cf1ec14c0619feb6d0a9a4747396ef6f7ea4f4874e9260d78826c742"
+  },
+  "before-component/receipt.json": {
+    "bytes": 127513,
+    "sha256": "21fcba5264df624a76b3cc54b93d77e6d8850634e36643673061284418b6c17f"
+  },
+  "candidate-game-r3/game-pad-corner.png": {
+    "bytes": 526887,
+    "sha256": "d3eb5738e5b0cb348d36d54e0389ddc2dda0614062e01e1f36f9cbe90239fd6d"
+  },
+  "candidate-game-r3/harness.mjs": {
+    "bytes": 19046,
+    "sha256": "5597eade20c301bebc16b901ba1fca54d19bd490dd18100eae7bd452d8a98b5f"
+  },
+  "candidate-game-r3/game-respawn-land.png": {
+    "bytes": 374693,
+    "sha256": "00c4b2087513de90bdf2147496a258e3f0c8fa30b0d9fb0463bdf396c760d8d8"
+  },
+  "candidate-game-r3/receipt.json": {
+    "bytes": 775047,
+    "sha256": "6cff2e3a07e604563361372ae2729b3dc17a11dbd36982b7a5390b5169e6fd01"
+  },
+  "before-component-r2/harness.mjs": {
+    "bytes": 19046,
+    "sha256": "5597eade20c301bebc16b901ba1fca54d19bd490dd18100eae7bd452d8a98b5f"
+  },
+  "before-component-r2/receipt.json": {
+    "bytes": 127422,
+    "sha256": "19e252b0e1f14ccc5e4e4efb5accf0017d9c849de77bfb0a80eff4f5233391f7"
+  },
+  "candidate-component/harness.mjs": {
+    "bytes": 18824,
+    "sha256": "0a369f16cf1ec14c0619feb6d0a9a4747396ef6f7ea4f4874e9260d78826c742"
+  },
+  "candidate-component/receipt.json": {
+    "bytes": 129051,
+    "sha256": "b37d23a30b18be1d58e437b3b0e406794acc4240494e1bf4ee9a50ba052ed770"
+  },
+  "candidate/game-pad-corner.png": {
+    "bytes": 533509,
+    "sha256": "1c09bb2358c2c901f329cfdaa67bf737ca4fd8eb95d2e5549c344be970d00526"
+  },
+  "candidate/harness.mjs": {
+    "bytes": 15644,
+    "sha256": "92631f9947997a52be7682a04fbbcde8ab48cabd667bf59672673ed31dd2fb9d"
+  },
+  "candidate/receipt.json": {
+    "bytes": 483820,
+    "sha256": "8f729a551c204e58ab05983fe84a60c2dfcb56aad3b948a074cbe743e2bfc78b"
+  },
+  "candidate/attempt-note.json": {
+    "bytes": 827,
+    "sha256": "791b99674b3f363db4c517364ae362a470acee344685355f7a402d8f20a41793"
+  },
+  "candidate-component-r2/harness.mjs": {
+    "bytes": 19046,
+    "sha256": "5597eade20c301bebc16b901ba1fca54d19bd490dd18100eae7bd452d8a98b5f"
+  },
+  "candidate-component-r2/receipt.json": {
+    "bytes": 128960,
+    "sha256": "f4ec83048897f2bd52d513fc9b7c96a51a8d976b23c58a336ab2e9c2bdc21232"
+  }
+}

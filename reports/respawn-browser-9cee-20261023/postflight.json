@@ -1,0 +1,126 @@
+{
+  "status": "passed",
+  "identity": {
+    "sourceSha": "9cee2c425bf7d31ac5312c1e108fab10afc36c8a",
+    "checkedInputs": 1423,
+    "inputHash": "f65b5c1b8569c5b6364a31c32b45e3107d23247a2c030fb764c565c064e0d517",
+    "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+    "revision": "150caf88b35d2d6f915309f35373269cf7487ecc74e672ecd40eff0803df4996"
+  },
+  "verifiedArtifacts": 2112,
+  "actualGameResponseHashesRechecked": 576,
+  "rootManifest": {
+    "url": "/inkwave-build.json",
+    "status": 200,
+    "bytes": 579240,
+    "sha256": "412c248ccd27d684961397842f5d38714b7ed69adcacf22456b8d1ca7d247024"
+  },
+  "method": "read-only postflight using Playwright APIRequestContext and stored actual Game response hashes; no Game rerun or renderer",
+  "originalGameHarnessStatus": "failed",
+  "originalPostflightError": "page.evaluate: SyntaxError: Failed to execute 'json' on 'Response': Unexpected end of JSON input\n    at eval (eval at evaluate (:311:30), <anonymous>:1:86)\n    at async <anonymous>:337:30\n    at /workspace/actions/.ci-scratch/respawn-browser-focus/browser-focus.mjs:201:36",
+  "originalResponseBodyUnavailable": [
+    {
+      "file": "_versions/150caf88b35d2d6f915309f35373269cf7487ecc74e672ecd40eff0803df4996/patches/local-quality/ink-volume/assets/roller/volumes.bin.gz",
+      "error": "response.body: Protocol error (Network.getResponseBody): Request content was evicted from inspector cache\nResponse body is not available for a response that was navigated away from. Read response.body() before triggering any navigation."
+    }
+  ],
+  "gameAcceptanceConditions": [
+    {
+      "kind": "enemy-side-entry",
+      "rows": 49,
+      "nativeFixedStep": true,
+      "allTerrainClear": true,
+      "minimum": 4.6,
+      "distance": null,
+      "land": null,
+      "stage": "tidewater",
+      "frozen": false,
+      "skipRender": false,
+      "drawCalls": 99,
+      "inputFireSamples": 0,
+      "phases": [
+        null
+      ]
+    },
+    {
+      "kind": "enemy-pad-backwall-corner",
+      "rows": 39,
+      "nativeFixedStep": true,
+      "allTerrainClear": true,
+      "minimum": 4.600000000000001,
+      "distance": null,
+      "land": null,
+      "stage": "tidewater",
+      "frozen": false,
+      "skipRender": false,
+      "drawCalls": 128,
+      "inputFireSamples": 0,
+      "phases": [
+        null
+      ]
+    },
+    {
+      "kind": "allied-exit",
+      "rows": 72,
+      "nativeFixedStep": true,
+      "allTerrainClear": true,
+      "minimum": null,
+      "distance": 6.786000000000005,
+      "land": null,
+      "stage": "tidewater",
+      "frozen": false,
+      "skipRender": false,
+      "drawCalls": 63,
+      "inputFireSamples": 0,
+      "phases": [
+        null
+      ]
+    },
+    {
+      "kind": "allied-reentry",
+      "rows": 72,
+      "nativeFixedStep": true,
+      "allTerrainClear": true,
+      "minimum": null,
+      "distance": 0.6719999999999997,
+      "land": null,
+      "stage": "tidewater",
+      "frozen": false,
+      "skipRender": false,
+      "drawCalls": 82,
+      "inputFireSamples": 0,
+      "phases": [
+        null
+      ]
+    },
+    {
+      "kind": "respawn-launch",
+      "rows": 406,
+      "nativeFixedStep": true,
+      "allTerrainClear": true,
+      "minimum": null,
+      "distance": null,
+      "land": {
+        "pos": [
+          0.6278691764006465,
+          -1.1102230246251565e-16,
+          -30.086723898460093
+        ],
+        "time": 22.16666666666669,
+        "alive": true,
+        "grounded": true
+      },
+      "stage": "tidewater",
+      "frozen": false,
+      "skipRender": false,
+      "drawCalls": 61,
+      "inputFireSamples": 6,
+      "phases": [
+        null,
+        "aim",
+        "flight"
+      ]
+    }
+  ],
+  "limitation": "Does not replace or rewrite the failed original postflight receipt. One large cosmetic asset response body remains unavailable in the actual Game DevTools log."
+}
