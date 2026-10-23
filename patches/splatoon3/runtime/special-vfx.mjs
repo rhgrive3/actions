@@ -941,9 +941,13 @@ const DIRECTORS = {
       // hidden once the salvo launches.
       const pv = a.isLocal && a.alive && t.phase !== 'launching' ? tentaMissilesLockPreview(this.api, a) : null;
       const show = !!pv, cam = this.G.camera, limit = pv?.limit || 0, inside = [];
-      if (pv && cam?.isPerspectiveCamera) for (const e of pv.targets) {
-        const q = this.v[0].copy(e.pos); q.y += 0.7; q.project(cam);
-        inside.push([e, q.x, q.y]);
+      if (pv && cam?.isPerspectiveCamera) for (const row of pv.targets) {
+        const e = row.actor;
+        if (row.x !== null && row.y !== null) inside.push([e, row.x, row.y]);
+        else {
+          const q = this.v[0].copy(e.pos); q.y += 0.7; q.project(cam);
+          inside.push([e, q.x, q.y]);
+        }
       }
       if (this.tentaHud(t, show, limit, inside)) return;
       // no HUD layer (headless/tests): fall back to world-space reticles over the same opponents
