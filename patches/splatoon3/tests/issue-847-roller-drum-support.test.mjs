@@ -20,8 +20,10 @@ const adaptProductionSource = adaptBuildSource;
 // Reviewed integration changes only reentrant flick pose scratch storage;
 // all three stick/support counterfactual anchors remain exact.
 // Prior #1726 input: 449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb.
+// Shaft-return candidate affects unheld nonrolling presentation only; all
+// three fault anchors, historical b34 source and thresholds are unchanged.
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973",
+  "patches/splatoon3/runtime/roller.mjs": "8a9212454c695e6e1fb3e251b37a28b0f1c807a5bd8bdcc125fa0c75964bd121",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e6e06374bc3a0a2bd6dcceafbbe16b4882b8e8d8f9e6ff39f5aeda3dc12ec64d"
 });
 const headlessPaintRenderer = () => ({

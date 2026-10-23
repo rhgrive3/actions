@@ -95,6 +95,13 @@ export function instrumentRollerLayerModule(relative, source) {
       rename('createVerticalRecoverySampler', (alias, saved) => `const ${alias}=(...a)=>{
         const original=${saved}(...a);const read=(ch,state)=>{const p=original(ch,state);
           __rlTap('helper',ch,{pose:p});return p;};read.clear=original.clear;return read;};`);
+    if (ast.body.some(n => n.type === 'ImportDeclaration' && n.specifiers.some(s => s.imported?.name === 'createVerticalShaftReturn')))
+      rename('createVerticalShaftReturn',(alias,saved)=>`const ${alias}=(...a)=>{
+        const original=${saved}(...a);const read=(ch,...args)=>{const q=original(ch,...args);
+          __rlTap('shaftSample',ch,{shaft:original.snapshot(ch),candidate:q?.toArray()});return q;};
+        read.capture=(ch,...args)=>{const r=original.capture(ch,...args);__rlTap('shaftCapture',ch,{shaft:original.snapshot(ch)});return r;};
+        read.reject=(ch)=>{original.reject(ch);__rlTap('shaftFallback',ch,{shaft:original.snapshot(ch)});};
+        read.clear=original.clear;read.snapshot=original.snapshot;return read;};`);
   }
   for (const edit of edits.sort((a,b) => b.start-a.start)) source = source.slice(0,edit.start)+edit.text+source.slice(edit.end);
   return source+'\n'+bootstrap+'\n'+wrappers.join('\n')+'\n';
@@ -167,6 +174,8 @@ export function installRollerBrowserLayerObserver() {
     if(data.P)entry.pose=channels(data.P);
     if(data.pose)entry.rawPose={anchor:[...data.pose.anchor],rotation:[...data.pose.rotation],weight:data.pose.weight,coil:data.pose.coil,whip:data.pose.whip};
     if(data.args)entry.args=[...data.args];
+    if(data.shaft)entry.shaft=data.shaft;
+    if(data.candidate)entry.candidateQuaternion=data.candidate;
     if(data.kind||stage==='searchSelected'){
       entry.quaternion=data.q.toArray();entry.target=data.target.toArray();entry.kind=data.kind;
       if(data.inputQ)entry.inputQuaternion=data.inputQ.toArray();
@@ -175,7 +184,7 @@ export function installRollerBrowserLayerObserver() {
     if(data.side){entry.side=data.side;entry.target=data.target.toArray();entry.targetWorld=data.target.clone().applyMatrix4(world(ch.kid)).toArray();
       entry.pole=data.pole.toArray();entry.quaternion=data.q?.toArray()??null;entry.weight=data.weight;entry.slot=data.slot;entry.result=data.result;}
     if(stage==='rollerIKIn'&&data.side==='R')entry.constraints=constraints(ch);
-    if(!['raw','helper','blendIn','blendOut','detailIn','detailOut','alignIn','alignOut','floorIn','floorOut','searchSelected'].includes(stage))entry.transforms=snapshot(ch);
+    if(!['raw','helper','blendIn','blendOut','detailIn','detailOut','alignIn','alignOut','floorIn','floorOut','searchSelected','shaftSample','shaftCapture','shaftFallback'].includes(stage))entry.transforms=snapshot(ch);
     g.__rollerLayerEvents.push(entry);
   };
   const attach=ch=>{
