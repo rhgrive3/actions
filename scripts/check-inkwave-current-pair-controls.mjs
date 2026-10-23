@@ -13,7 +13,15 @@ import { fileURLToPath } from 'node:url';
 import { verifyDeclaredPaintSources } from './lib/inkwave-declared-paint-source-pair.mjs';
 import { QUEUE1801_IDENTICAL_PAINT_SOURCE_PAIR, QUEUE1801_PAINT_SOURCE_PAIR, MAINCEB58_PAINT_SOURCE_PAIR, MAINA350_PAINT_SOURCE_PAIR, paintSourcePaths, MAINE1F_PAINT_SOURCE_PAIR, MAIN9FE_PAINT_SOURCE_PAIR, MAIN_INK_BASELINE_PATHS, planMainInkBaseline } from './lib/inkwave-main-ink-baseline.mjs';
 
-const options = parseSourceAdmissionArgs(process.argv.slice(2), ['--baseline', '--candidate', '--receipt', '--base-sha', '--candidate-sha', '--expected-mode', '--expected-source-base', '--expected-source-head'], ['--baseline', '--candidate']);
+const options = parseSourceAdmissionArgs(process.argv.slice(2), ['--baseline', '--candidate', '--receipt', '--base-sha', '--candidate-sha', '--expected-mode', '--expected-source-base', '--expected-source-head', '--base-tree', '--candidate-tree'], ['--baseline', '--candidate']);
+// A separate four-delta contract binds actual official-event source epochs.
+if (options.get('--expected-mode') === 'main-reviewed-special-four-delta-pair') {
+  const {runReviewedSpecialDeltaCLI} = await import('./lib/inkwave-reviewed-special-delta-admission.mjs');
+  await runReviewedSpecialDeltaCLI(options, 'controls');
+  process.exit(0);
+}
+for (const flag of ['--base-tree','--candidate-tree'])
+  assert.ok(!options.has(flag), 'reviewed-delta-only argument ' + flag);
 // Separate reviewed eight-delta epoch; never treat changed production as byte-identical.
 if (options.get('--expected-mode') === 'main26a4-reviewed-runtime-ui-production-pair') {
   const {runRuntimeUIAdmissionCLI} = await import('./lib/inkwave-runtime-ui-production-epoch.mjs');
