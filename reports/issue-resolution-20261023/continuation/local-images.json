@@ -1,0 +1,117 @@
+[
+  {
+    "path": "clock-browser/clock-reconnect-peer-0.png",
+    "bytes": 533251,
+    "sha256": "df82fd5f38032f9dc25b522ea6b17b1de208446689f29de796855cac360ef0a3"
+  },
+  {
+    "path": "clock-browser/clock-reconnect-peer-1.png",
+    "bytes": 493372,
+    "sha256": "6e937a617ec01678919b8cb79a4ce97273ed14385ff7c966d21983a5adbe6c0d"
+  },
+  {
+    "path": "quad-browser/s3-maneuver-stepper-horizontal-120-0-open-first.png",
+    "bytes": 47751,
+    "sha256": "876a85f5ada35041e0c50ad8724f4bea29c5df83922a2bbbf2ff60bc7632abd8"
+  },
+  {
+    "path": "quad-browser/s3-maneuver-stepper-horizontal-120-0-open-prediction.png",
+    "bytes": 50513,
+    "sha256": "3a7ea46d2ad9d3cc5c6ef272c51c9122bbb679be0b0664693a3e40bb0a0d0c5e"
+  },
+  {
+    "path": "quad-browser/s3-maneuver-stepper-horizontal-120-0-open-steady.png",
+    "bytes": 51740,
+    "sha256": "aec6afa1b526aabb86a35e6697f990dc3c960d8181e3513ec3859a846b1b5d4d"
+  },
+  {
+    "path": "quad-browser/s3-maneuver-stepper-horizontal-120-0-wall-first.png",
+    "bytes": 44321,
+    "sha256": "0d2eb663c1a706e245ffecc0e6d7c064d713087eb7ecbdd1cfac31b65ffab4ae"
+  },
+  {
+    "path": "quad-browser/s3-maneuver-stepper-horizontal-120-0-wall-steady.png",
+    "bytes": 46169,
+    "sha256": "75c87248ad652cc33cf92a245d7c79eb7861a74413e005ccf08be31d6299aa70"
+  },
+  {
+    "path": "quad-browser/s3-maneuver-stepper-horizontal-30-0-open-first.png",
+    "bytes": 53825,
+    "sha256": "4ad4cfefa3ba0d1f4875a80e62060872e2538d64848e7021a298739f71156d22"
+  },
+  {
+    "path": "quad-browser/s3-maneuver-stepper-horizontal-30-0-open-prediction.png",
+    "bytes": 50728,
+    "sha256": "40c5405674c55a5614946b8dafd0e88b27e6b994fa356d64c46d2a6d398518df"
+  },
+  {
+    "path": "quad-browser/s3-maneuver-stepper-horizontal-30-0-open-steady.png",
+    "bytes": 57619,
+    "sha256": "0fcaf990ccf5a9ecfa3c75c8dc2bb6502a27e0f4d76c839f2a4d5804b2b8d6cc"
+  },
+  {
+    "path": "quad-browser/s3-maneuver-stepper-horizontal-30-0-wall-first.png",
+    "bytes": 44986,
+    "sha256": "2e07f878d053d8e1f525f7cd2ff725411957a753ad53df9e3cdd59971b31f949"
+  },
+  {
+    "path": "quad-browser/s3-maneuver-stepper-horizontal-30-0-wall-steady.png",
+    "bytes": 46548,
+    "sha256": "acb45ad28fb89058c1bb29daf92d523196dc7e172ad4a86a8222d907696990eb"
+  },
+  {
+    "path": "quad-browser/s3-maneuver-stepper-horizontal-60-0-open-first.png",
+    "bytes": 47773,
+    "sha256": "24aeaee7164b7a662f6352494e35cdfde2a2e4bc351cb033f0f469aea222f7a6"
+  },
+  {
+    "path": "quad-browser/s3-maneuver-stepper-horizontal-60-0-open-prediction.png",
+    "bytes": 50592,
+    "sha256": "476d11d2c9834b73e5d76ea6abde0cea40d78b713f0dd5f64c5dd1651c8a741a"
+  },
+  {
+    "path": "quad-browser/s3-maneuver-stepper-horizontal-60-0-open-steady.png",
+    "bytes": 52139,
+    "sha256": "515b0b1aa0edb789028c97f52e9e12d3c4f911448588f0d1c7d580641cc16889"
+  },
+  {
+    "path": "quad-browser/s3-maneuver-stepper-horizontal-60-0-wall-first.png",
+    "bytes": 44405,
+    "sha256": "45e5267ee1934c2caad591027bac677fa9a43c0ac389c70d090df4862adc1fdf"
+  },
+  {
+    "path": "quad-browser/s3-maneuver-stepper-horizontal-60-0-wall-steady.png",
+    "bytes": 46122,
+    "sha256": "bb30d3f2b3d70bbf69270eae65ed257583e90fb69a59f635c08835ef17239a4e"
+  },
+  {
+    "path": "dither-diagnostic/evidence/trial-0-C.png",
+    "bytes": 299174,
+    "sha256": "250b09dfc24dde1d2b97b7484488c1c772f8ea87f44b12ab332f4cf38bd6fe6f"
+  },
+  {
+    "path": "dither-diagnostic/evidence/trial-0-C.rgba",
+    "bytes": 576000,
+    "sha256": "15900b8d6f5c1c6f9fbf3ff38490ebd2ebc4168b6d7e8dc2133da36c0e589161"
+  },
+  {
+    "path": "dither-diagnostic/evidence/trial-1-B.png",
+    "bytes": 299186,
+    "sha256": "431725ca2927d94a3f3a6cf8c8c4c302e87bc786cf0b28fd8a0d820be075d045"
+  },
+  {
+    "path": "dither-diagnostic/evidence/trial-1-B.rgba",
+    "bytes": 576000,
+    "sha256": "71c1d0370478eb9713305923c0c66c6fa12664e3c996cab19a585cfa0e9bf14b"
+  },
+  {
+    "path": "dither-diagnostic/evidence/trial-2-B.png",
+    "bytes": 299186,
+    "sha256": "431725ca2927d94a3f3a6cf8c8c4c302e87bc786cf0b28fd8a0d820be075d045"
+  },
+  {
+    "path": "dither-diagnostic/evidence/trial-2-B.rgba",
+    "bytes": 576000,
+    "sha256": "71c1d0370478eb9713305923c0c66c6fa12664e3c996cab19a585cfa0e9bf14b"
+  }
+]
