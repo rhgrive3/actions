@@ -28,9 +28,19 @@ function stage(f) {
 
 const CONFIG = { id: 'fixture-match', map: 'normal', difficulty: 'normal' };
 
+// These loops simulate frames without waiting for wall time. The native sender
+// stamps performance.now(), and its receiver advances playback by dt against
+// that same clock. Keep both peers on the simulated cadence, including idle
+// snapshots after touchdown, rather than making their history depend on CPU load.
+function frameClock() {
+  let milliseconds = 100_000;
+  return { now: () => milliseconds, advance(dt) { milliseconds += dt * 1000; } };
+}
+
 // Owner peer: the human is local, so its aim is driven by its own input.
 async function ownerPeer(hz) {
-  const f = await fixture({ fullRuntime: true, productionComposition: true, extraExports: NETMATCH_EXPORT });
+  const clock = frameClock();
+  const f = await fixture({ fullRuntime: true, productionComposition: true, extraExports: NETMATCH_EXPORT, vmPerformance: clock });
   stage(f);
   const actor = f.make('shooter');
   actor.nid = 7; actor.owner = 'p2'; actor.team = 0; actor.slot = 0; actor.isLocal = true;
@@ -43,12 +53,13 @@ async function ownerPeer(hz) {
     canRespawn: () => false, removeActor() {} };
   netm.bind(match);
   f.G.match = match;
-  return { f, actor, netm, outgoing, hz };
+  return { f, actor, netm, outgoing, hz, clock };
 }
 
 // Receiver peer: the same human is a remote proxy that only sees owner snapshots.
 async function receiverPeer(hz) {
-  const f = await fixture({ fullRuntime: true, productionComposition: true, extraExports: NETMATCH_EXPORT });
+  const clock = frameClock();
+  const f = await fixture({ fullRuntime: true, productionComposition: true, extraExports: NETMATCH_EXPORT, vmPerformance: clock });
   stage(f);
   const remote = f.make('shooter');
   remote.nid = 7; remote.owner = 'p2'; remote.team = 0; remote.slot = 0; remote.isLocal = false;
@@ -60,12 +71,13 @@ async function receiverPeer(hz) {
     playing: () => true, canRespawn: () => false, removeActor() {} };
   netm.bind(match);
   f.G.match = match;
-  return { f, remote, netm, hz };
+  return { f, remote, netm, hz, clock };
 }
 
-function step(peer, dt) {
+function step(peer, dt, updateActor = true) {
+  peer.clock.advance(dt);
   peer.f.G.time += dt;
-  peer.actor.update(dt);
+  if (updateActor) peer.actor.update(dt);
 }
 
 function publish(owner) {
@@ -73,12 +85,21 @@ function publish(owner) {
   owner.netm._sendTick();
   const packet = owner.outgoing.pop();
   assert.ok(packet?.a?.length === 1, 'the actual NetMatch owner published its local human snapshot');
+  close(packet.ts, owner.clock.now() / 1000, 'native timestamp follows the simulated frame clock', .000501);
+  assert.ok(owner.lastPublishedTs === undefined || packet.ts > owner.lastPublishedTs, 'every frame publishes a newer native timestamp');
+  owner.lastPublishedTs = packet.ts;
   return packet;
 }
 
 function receive(receiver, packet, dt) {
+  receiver.clock.advance(dt);
+  receiver.f.G.time += dt;
   receiver.netm.onMessage('p2', structuredClone(packet));
   receiver.netm.update(dt);
+  const peer = receiver.netm.peers.get('p2');
+  assert.equal(peer?.lastTs, packet.ts, 'native admission accepts the current owner frame');
+  assert.ok(receiver.lastPlaybackTime === undefined || peer.tr >= receiver.lastPlaybackTime, 'coherent frame clocks never rewind native playback');
+  receiver.lastPlaybackTime = peer.tr;
   receiver.netm.applyRemote(receiver.remote, dt);
 }
 
@@ -148,7 +169,7 @@ for (const hz of HZ) {
 
     // Let the owner finish touchdown and let the receiver's sampled path catch up.
     for (let i = 0; i < hz * 4; i++) {
-      if (owner.actor.s3.squidSpawn) step(owner, dt);
+      step(owner, dt, !!owner.actor.s3.squidSpawn);
       receive(receiver, publish(owner), dt);
       if (!owner.actor.s3.squidSpawn && !receiver.remote.s3.squidSpawn) break;
     }
@@ -158,6 +179,7 @@ for (const hz of HZ) {
     // The proxy's existing presentation correction decays after the state clears; idle
     // owner snapshots let it settle on the owner's landed position.
     for (let i = 0; i < hz * 2; i++) {
+      step(owner, dt, false);
       receive(receiver, publish(owner), dt);
     }
     samePoint(receiver.remote.pos, owner.actor.pos, 'final receiver position matches owner landing', 1e-3);
@@ -187,7 +209,7 @@ for (const hz of HZ) {
     samePoint(receiver.remote.s3.squidSpawn.target, owner.actor.s3.squidSpawn.target, 'proxy mirrors deterministic bot landing');
     owner.f.G.match.state = receiver.f.G.match.state = 'playing';
     for (let i = 0; i < hz * 4; i++) {
-      if (owner.actor.s3.squidSpawn) step(owner, dt);
+      step(owner, dt, !!owner.actor.s3.squidSpawn);
       receive(receiver, publish(owner), dt);
     }
     assert.equal(launches.length, 1, 'proxy sees exactly one owner launch');
