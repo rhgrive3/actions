@@ -80,5 +80,5 @@ test('actual Python route skips only exact-case same-repository aggregate, never
   for(const changes of [{eventName:'workflow_dispatch',event:{}},{headRepo:'fork/actions'},{head:'other'},{head:'INKWAVE/QA-MAIN26A4-INTEGRATION-20261022'},{headRepo:'RHGRIVE3/actions'},{repository:'RHGRIVE3/actions',headRepo:'rhgrive3/actions'},{head:'inkwave/qa-main26a4-integration-20261022-extra'},{repository:'',headRepo:''},{event:{}}])assert.equal(evaluate(changes),'capture_required=true');
  }finally{fs.rmSync(root,{recursive:true,force:true});}
  assert.match(workflow,/needs: automatic_capture_route\n    if: \$\{\{ needs.automatic_capture_route.outputs.capture_required == 'true' \}\}/);
- assert.match(workflow,/run: node --test scripts\/tests\/inkwave-exact-head-workflow-routes.test.mjs scripts\/tests\/inkwave-main26a4-production-epoch.test.mjs/);
+ assert.match(workflow,/run: node --test --test-concurrency=1 scripts\/tests\/inkwave-exact-head-workflow-routes.test.mjs scripts\/tests\/inkwave-main26a4-production-epoch.test.mjs/);
 });

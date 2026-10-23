@@ -1,0 +1,6 @@
+{
+  "original": "scripts/check-inkwave-splashdown-browser.mjs",
+  "originalSHA256": "24660f3083a0d986281ee22f24925e0d0b0ad06eaa19d05c119c6f09bc7c9ac5",
+  "adaptedSHA256": "f91392b5ec39d6ec579be9870acb67ee8f0ca171ada115ab0b6780b3569bacaf",
+  "change": "Only chromium.launch uses installed executablePath /usr/bin/chromium and removes explicit flags. No denied launch preceded this."
+}
