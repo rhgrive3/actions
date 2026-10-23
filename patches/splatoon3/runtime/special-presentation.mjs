@@ -14,7 +14,7 @@ import { buildSubModel, poseSubModel, isSharedGeometry } from './sub-models.mjs'
 import { buildScreenSheet, INKSTRIKE_LID_OPEN, CRAB_TANK_GRIPS } from './special-models.mjs';
 import { specialPresentationToken } from './special-presentation-owner.mjs';
 import { WAIL_SPEAKER_POSITIONS } from './wail-speakers.mjs';
-import { localWailPair, localWailPairs } from './wail-pair-presentation.mjs';
+import { WAIL_PAIR_RETIRED, localWailPair, localWailPairs } from './wail-pair-presentation.mjs';
 import { CRAB_TANK_RIG, crabTankShotGeometry } from './crab-tank-aim.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.special-models.install.v1');
@@ -448,6 +448,17 @@ export function installSpecialModels(api) {
   // ---- devices on the kid ----------------------------------------------------
   if (!Character?.prototype?.update) return api;
   const states = new WeakMap();
+  api.on?.(WAIL_PAIR_RETIRED, record => {
+    const actor = record.actor, s = states.get(actor?.character);
+    if (record.status !== 'retired' || actor?.remote || s?.id !== 'killerWail'
+      || actor._s3AllSpecialState !== record.state || localWailPair(record.pair) !== record) return;
+    // Character poses before Projectiles retires the pair. Hide its attached
+    // holders now, before FX receives the same notification and before render.
+    for (let i = record.index * 2; i < record.index * 2 + 2; i++) {
+      const device = s.devices[i];
+      if (device?.spec.speakers) device.holder.visible = false;
+    }
+  });
   function releaseWeapon(s) {
     if (!s.weapon) return;
     s.weapon.pivot.visible = s.weaponVisible;
