@@ -94,12 +94,19 @@ jobs:
             version="${pair%%-*}"
             node scripts/render-inkwave-weapon-lod-boundaries.mjs --site ".lod-${version}-site" --out ".lod-evidence/crowd/${pair}" --size 600 --crowd
           done
-          python3 scripts/compare-inkwave-weapon-lod-boundaries.py .lod-evidence
+          status=0
+          python3 scripts/compare-inkwave-weapon-lod-boundaries.py .lod-evidence || status=$?
+          # Preserve the final crowd-era comparison without uploading the
+          # same 65 x 8 x 2 visual PNG collection a second time.
+          if test -f .lod-evidence/comparison.json; then cp .lod-evidence/comparison.json .lod-evidence/crowd-comparison.json; fi
+          exit "$status"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: weapon-lod-review-${{ matrix.model-source }}-${{ github.event.pull_request.head.sha }}
-          path: .lod-evidence
+          path: |
+            .lod-evidence/crowd/
+            .lod-evidence/crowd-comparison.json
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 14
