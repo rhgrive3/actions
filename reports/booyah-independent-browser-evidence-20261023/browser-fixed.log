@@ -1,0 +1,16 @@
+fixed: launch
+fixed: goto normal built index ?range
+fixed: wait for native boot/debug
+fixed: native boot ready; wait for native range playing
+fixed: first normal native range frame 1/30
+fixed: capture first normal native range frame
+fixed: first browser case established
+fixed: Booyah native range fixture
+fixed: Booyah settle same native camera
+fixed: Booyah activate via KeyF
+fixed: Booyah native charge hover
+240-second browser watchdog (same bound as repository Crab browser check)
+fixed: page.evaluate: Target page, context or browser has been closed
+    at step (/workspace/booyah-evidence/lifecycle.mjs:7:80)
+    at runBooyah (/workspace/booyah-evidence/lifecycle.mjs:38:8)
+    at async file:///workspace/booyah-evidence/browser-check.mjs:65:60

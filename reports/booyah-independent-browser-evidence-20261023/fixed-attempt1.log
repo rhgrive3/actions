@@ -1,0 +1,5 @@
+fixed: launch
+fixed: goto normal built index ?range
+fixed: wait for native boot/debug and range playing
+fixed: page.waitForFunction: Timeout 180000ms exceeded.
+    at /workspace/booyah-evidence/browser-check.mjs:53:13

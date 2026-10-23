@@ -1,0 +1,7 @@
+before: launch
+before: goto normal built index ?range
+before: wait for native boot/debug
+before: native boot ready; wait for native range playing
+before: first normal native range frame 1/30
+before: capture first normal native range frame
+before: first browser case established

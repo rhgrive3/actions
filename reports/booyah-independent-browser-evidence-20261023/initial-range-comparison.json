@@ -1,0 +1,21 @@
+{
+  "scope": "native initial range frame only, no Booyah active",
+  "dimensions": [
+    800,
+    600
+  ],
+  "identicalDecodedPixels": true,
+  "changedPixels": 0,
+  "meanAbsoluteDifferenceByChannel": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "rmsDifferenceByChannel": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "beforePngSha256": "eebb73cfc40bcf2a289c5654ce32c75c11af6fae5e6336123acb118d19cccaa2",
+  "fixedPngSha256": "eebb73cfc40bcf2a289c5654ce32c75c11af6fae5e6336123acb118d19cccaa2"
+}

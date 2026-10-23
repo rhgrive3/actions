@@ -1,0 +1,42 @@
+[
+  {
+    "label": "fixed",
+    "commit": "97882010d8c3fa0c48e5a7cd2c852fc82d05374d",
+    "parent": "42e8ca5689c472d014b51bc0a02a3ba8acf8c361",
+    "tree": "8fea1e62474ed4baeb84972ab2aef73226a1da4f",
+    "sourceStatus": "?? node_modules",
+    "runtimeSha256": "95aa1927bc81ec46cae73c5eee63adc3741b1cc760e94bbd9123c65968b9f3dd",
+    "runtimeGitBlob": "1789b3e905d64c7e6c0c6afc745973cfdf366085",
+    "buildManifestSha256": "a4193347606d5a67faaf8b3b9037f2831eaa7b211d36afb620ae8059da18ed04",
+    "contentHash": "5fee0f381775a10c34f261395ebe042a96ac94010db9b7610be207c0153f6c66",
+    "inputHash": "695083dae421c8a6b1b951002f406689837ae1d24a370b303c3818d639bcbbfc",
+    "buildRevision": "30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21",
+    "buildEsbuild": "0.28.2",
+    "buildOptimization": "esbuild-minify",
+    "emittedRuntimeSha256": "ffd253d0911b20dc495c3f138f236e304de6d07e5a673b1e08fe56dc527288a3",
+    "artifactsVerified": 2110,
+    "everyArtifactMatches": true,
+    "trackedSourceUnmodified": true,
+    "untrackedDependencyLink": "node_modules -> /workspace/actions/node_modules (read only use)"
+  },
+  {
+    "label": "before",
+    "commit": "42e8ca5689c472d014b51bc0a02a3ba8acf8c361",
+    "parent": "726e338ac256ba9609086ce65e25a68ddd99df85",
+    "tree": "f4794d6bb3a137ce1b5ac12c4c65d417ca105536",
+    "sourceStatus": "?? node_modules",
+    "runtimeSha256": "73b1a5712706f149f5071c196e1d897661e254e2f8877b290988057dc0697cf4",
+    "runtimeGitBlob": "ec05ebc0bc6ed0bdfc1a84348ed2409d43a7a1fe",
+    "buildManifestSha256": "259b7d7246c017d643572f341e8f72c553eee48d9a1360effc0ecce9c8a4a227",
+    "contentHash": "517945cd1f4de828d6a416e5e4b57f35846315f59e99b5e475be566b4f3116c0",
+    "inputHash": "4629484eb04fee65b3057b336ea9c0a699a3842bde7e776cb1fef5b510f41a43",
+    "buildRevision": "71c66385fc500d99a06e2e1a318d25dc07b88d76bae6b75907ef8e23a9993921",
+    "buildEsbuild": "0.28.2",
+    "buildOptimization": "esbuild-minify",
+    "emittedRuntimeSha256": "0f82b47e5b44d6de6693fa7e0977d57aaad90c6cb1a89fc009f0143a7b4afd82",
+    "artifactsVerified": 2110,
+    "everyArtifactMatches": true,
+    "trackedSourceUnmodified": true,
+    "untrackedDependencyLink": "node_modules -> /workspace/actions/node_modules (read only use)"
+  }
+]

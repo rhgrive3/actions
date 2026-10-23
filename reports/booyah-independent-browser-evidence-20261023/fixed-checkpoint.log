@@ -1,0 +1,7 @@
+fixed: launch
+fixed: goto normal built index ?range
+fixed: wait for native boot/debug
+fixed: native boot ready; wait for native range playing
+fixed: first normal native range frame 1/30
+fixed: capture first normal native range frame
+fixed: first browser case established

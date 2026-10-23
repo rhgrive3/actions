@@ -1,0 +1,21 @@
+{
+  "status": "blocked",
+  "action": "page.evaluate batch of 18 fully rendered native _frame(1/30) calls",
+  "target": "97882010d8c3fa0c48e5a7cd2c852fc82d05374d normal minified built game, Booyah native charge hover",
+  "reason": "240000 ms per-attempt watchdog closed Chromium",
+  "outcome": "Batch completion unconfirmed; subsequent closed-target error; no retry",
+  "denied": false,
+  "completed": [
+    "both immutable production builds and complete manifest readbacks",
+    "selected real browser response hashes",
+    "paired identical native initial range captures",
+    "fixed native Booyah KeyF activation"
+  ],
+  "notReached": [
+    "throw",
+    "40F burst",
+    "80F retirement and endpoint particles",
+    "early cancel"
+  ],
+  "control": "before-checkpoint-browser.json"
+}

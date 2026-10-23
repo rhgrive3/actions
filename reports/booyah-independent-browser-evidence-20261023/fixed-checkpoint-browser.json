@@ -1,0 +1,285 @@
+{
+  "label": "fixed",
+  "startedAt": "2026-10-23T14:08:28.151Z",
+  "status": "checkpoint",
+  "operation": "first browser case established",
+  "manifest": {
+    "contentHash": "5fee0f381775a10c34f261395ebe042a96ac94010db9b7610be207c0153f6c66",
+    "inputHash": "695083dae421c8a6b1b951002f406689837ae1d24a370b303c3818d639bcbbfc",
+    "buildRevision": "30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21",
+    "optimization": "esbuild-minify",
+    "esbuild": "0.28.2"
+  },
+  "launch": {
+    "executablePath": "/usr/bin/chromium",
+    "headless": true,
+    "args": [
+      "--no-sandbox",
+      "--disable-dev-shm-usage",
+      "--use-angle=swiftshader",
+      "--enable-unsafe-swiftshader"
+    ]
+  },
+  "console": [
+    {
+      "type": "warning",
+      "text": "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+    }
+  ],
+  "pageErrors": [],
+  "delivery": [
+    {
+      "url": "http://127.0.0.1:41543/_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/clock.mjs",
+      "status": 200,
+      "sha256": "65e550d65a0905207c6c09882093bc8182edde95f170d42db8a5924851ee3bcf",
+      "bytes": 4019,
+      "manifestSha256": "65e550d65a0905207c6c09882093bc8182edde95f170d42db8a5924851ee3bcf"
+    },
+    {
+      "url": "http://127.0.0.1:41543/_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/special-vfx-kit.mjs",
+      "status": 200,
+      "sha256": "614374a0c9835f1fd0107bc5e377e62587a884f8d2b73b61d8fd01d79686cf26",
+      "bytes": 42625,
+      "manifestSha256": "614374a0c9835f1fd0107bc5e377e62587a884f8d2b73b61d8fd01d79686cf26"
+    },
+    {
+      "url": "http://127.0.0.1:41543/_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/weapons.js",
+      "status": 200,
+      "sha256": "89a7872da2b1701287bab43cf86513a7f94e1958becede9bd4042ad0b387daee",
+      "bytes": 75473,
+      "manifestSha256": "89a7872da2b1701287bab43cf86513a7f94e1958becede9bd4042ad0b387daee"
+    },
+    {
+      "url": "http://127.0.0.1:41543/_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/practice-range/install.mjs",
+      "status": 200,
+      "sha256": "a928ad80b2e351d9e8cf91a9142fc642dcb2f514fd62a1585c35dcbfe71a23f8",
+      "bytes": 2223,
+      "manifestSha256": "a928ad80b2e351d9e8cf91a9142fc642dcb2f514fd62a1585c35dcbfe71a23f8"
+    },
+    {
+      "url": "http://127.0.0.1:41543/_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/ranked/install.mjs",
+      "status": 200,
+      "sha256": "49458752d9d98e5d5c4de9c10f31ba89376d0ba146674a96a9f31bb9fcfbb1ec",
+      "bytes": 8171,
+      "manifestSha256": "49458752d9d98e5d5c4de9c10f31ba89376d0ba146674a96a9f31bb9fcfbb1ec"
+    },
+    {
+      "url": "http://127.0.0.1:41543/_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/install.mjs",
+      "status": 200,
+      "sha256": "6d121123b3d04bd8ac343fa5202c05bbcce5fd91820570d6eb48365b41f238c2",
+      "bytes": 1162,
+      "manifestSha256": "6d121123b3d04bd8ac343fa5202c05bbcce5fd91820570d6eb48365b41f238c2"
+    },
+    {
+      "url": "http://127.0.0.1:41543/_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/install.mjs",
+      "status": 200,
+      "sha256": "e2be088d7dede309c27d921fbb46042021244bf1ffe8e196ae7d844154cd2985",
+      "bytes": 8992,
+      "manifestSha256": "e2be088d7dede309c27d921fbb46042021244bf1ffe8e196ae7d844154cd2985"
+    },
+    {
+      "url": "http://127.0.0.1:41543/_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/character.js",
+      "status": 200,
+      "sha256": "52616d88d3071ca0b182cfa06be00fb47f2e719295cbe9620bcde7ad42de5d22",
+      "bytes": 123033,
+      "manifestSha256": "52616d88d3071ca0b182cfa06be00fb47f2e719295cbe9620bcde7ad42de5d22"
+    },
+    {
+      "url": "http://127.0.0.1:41543/_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/fx/fx.js",
+      "status": 200,
+      "sha256": "b5aea5ddfbbe41de6fd46340d44575a024dc3413408241a232489c2e947e787f",
+      "bytes": 74453,
+      "manifestSha256": "b5aea5ddfbbe41de6fd46340d44575a024dc3413408241a232489c2e947e787f"
+    },
+    {
+      "url": "http://127.0.0.1:41543/_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/special-vfx.mjs",
+      "status": 200,
+      "sha256": "ffd253d0911b20dc495c3f138f236e304de6d07e5a673b1e08fe56dc527288a3",
+      "bytes": 65959,
+      "manifestSha256": "ffd253d0911b20dc495c3f138f236e304de6d07e5a673b1e08fe56dc527288a3"
+    },
+    {
+      "url": "http://127.0.0.1:41543/_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/main.js",
+      "status": 200,
+      "sha256": "69590a1b0336da4019ce35f03ea3eca6b2b22376b48dfdf22f08b0506ee379c0",
+      "bytes": 64358,
+      "manifestSha256": "69590a1b0336da4019ce35f03ea3eca6b2b22376b48dfdf22f08b0506ee379c0"
+    }
+  ],
+  "steps": [
+    {
+      "at": "2026-10-23T14:08:28.374Z",
+      "op": "launch"
+    },
+    {
+      "at": "2026-10-23T14:08:32.413Z",
+      "op": "goto normal built index ?range"
+    },
+    {
+      "at": "2026-10-23T14:08:33.081Z",
+      "op": "wait for native boot/debug"
+    },
+    {
+      "at": "2026-10-23T14:10:27.139Z",
+      "op": "native boot ready; wait for native range playing",
+      "detail": {
+        "baseURI": "http://127.0.0.1:41543/_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/",
+        "bootError": "",
+        "mode": "menu",
+        "state": "playing",
+        "frozen": true,
+        "bootMarks": [
+          [
+            "インクをまぜています…",
+            86
+          ],
+          [
+            "ステージをつくっています…",
+            512
+          ],
+          [
+            "港に海水を入れています…",
+            18431
+          ],
+          [
+            "Teaching squids to swim…",
+            72667
+          ],
+          [
+            "Tuning the tentacles…",
+            72945
+          ],
+          [
+            "ウォーミングアップ中…",
+            79888
+          ],
+          [
+            "Warming up…",
+            83131
+          ],
+          [
+            "準備OK！",
+            111061
+          ]
+        ],
+        "quality": "high",
+        "avatar": {
+          "name": "プレイヤー",
+          "level": 1,
+          "xp": 0,
+          "wins": 0,
+          "matches": 0,
+          "totalTurf": 0,
+          "weapon": "shooter"
+        },
+        "teamColors": [
+          [
+            1,
+            0.04970656597728775,
+            0.34191442489801843
+          ],
+          [
+            0.009134058699157796,
+            0.6583748172725346,
+            0.26225065751888765
+          ]
+        ],
+        "camera": [
+          -3.2252405415734273,
+          37.906923537102806,
+          -54.548040861989854
+        ]
+      }
+    },
+    {
+      "at": "2026-10-23T14:11:20.046Z",
+      "op": "first normal native range frame 1/30"
+    },
+    {
+      "at": "2026-10-23T14:11:29.053Z",
+      "op": "capture first normal native range frame"
+    },
+    {
+      "at": "2026-10-23T14:11:33.121Z",
+      "op": "first browser case established"
+    }
+  ],
+  "artifactsVerified": 2110,
+  "browser": "154.0.8037.57",
+  "boot": {
+    "baseURI": "http://127.0.0.1:41543/_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/",
+    "bootError": "",
+    "mode": "menu",
+    "state": "playing",
+    "frozen": true,
+    "bootMarks": [
+      [
+        "インクをまぜています…",
+        86
+      ],
+      [
+        "ステージをつくっています…",
+        512
+      ],
+      [
+        "港に海水を入れています…",
+        18431
+      ],
+      [
+        "Teaching squids to swim…",
+        72667
+      ],
+      [
+        "Tuning the tentacles…",
+        72945
+      ],
+      [
+        "ウォーミングアップ中…",
+        79888
+      ],
+      [
+        "Warming up…",
+        83131
+      ],
+      [
+        "準備OK！",
+        111061
+      ]
+    ],
+    "quality": "high",
+    "avatar": {
+      "name": "プレイヤー",
+      "level": 1,
+      "xp": 0,
+      "wins": 0,
+      "matches": 0,
+      "totalTurf": 0,
+      "weapon": "shooter"
+    },
+    "teamColors": [
+      [
+        1,
+        0.04970656597728775,
+        0.34191442489801843
+      ],
+      [
+        0.009134058699157796,
+        0.6583748172725346,
+        0.26225065751888765
+      ]
+    ],
+    "camera": [
+      -3.2252405415734273,
+      37.906923537102806,
+      -54.548040861989854
+    ]
+  },
+  "firstFrame": {
+    "time": 0.08333333333333333,
+    "frameN": 4,
+    "renderCalls": 196,
+    "state": "playing",
+    "paused": false
+  },
+  "endedAt": "2026-10-23T14:11:33.359Z"
+}

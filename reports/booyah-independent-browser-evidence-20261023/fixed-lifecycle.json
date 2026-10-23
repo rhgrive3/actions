@@ -1,0 +1,168 @@
+{
+  "cadenceHz": 30,
+  "kind": "full normal built game; actual keyboard inputs; native projectile timing; full rendering each frame",
+  "captures": [],
+  "samples": [
+    {
+      "stage": "settle same native camera",
+      "time": 0.15,
+      "counts": {
+        "suction": 0,
+        "scatter": 0,
+        "bursts": 0,
+        "flightStars": 0,
+        "chargedStars": 0
+      },
+      "nativeFrame": null,
+      "nativeDead": null,
+      "nativeObjects": 0,
+      "projectiles": 0,
+      "objectRecords": 0,
+      "actorTrack": false,
+      "roundRecords": 0,
+      "warnDead": null,
+      "orbDead": null,
+      "pools": {
+        "sparks": 0,
+        "puffs": 0,
+        "ribbons": 0,
+        "shapes": 0,
+        "draws": 12
+      },
+      "directorErrors": 0,
+      "actorSpecial": null,
+      "actorAlive": true,
+      "renderCalls": 189,
+      "seed": 2032758199,
+      "camera": [
+        -2.0808321947582193,
+        36.45986594854874,
+        -51.11950858131124
+      ]
+    },
+    {
+      "stage": "activate via KeyF",
+      "time": 0.18333333333333332,
+      "counts": {
+        "suction": 0,
+        "scatter": 0,
+        "bursts": 0,
+        "flightStars": 0,
+        "chargedStars": 0
+      },
+      "nativeFrame": null,
+      "nativeDead": null,
+      "nativeObjects": 0,
+      "projectiles": 0,
+      "objectRecords": 0,
+      "actorTrack": true,
+      "roundRecords": 0,
+      "warnDead": null,
+      "orbDead": null,
+      "pools": {
+        "sparks": 17,
+        "puffs": 48,
+        "ribbons": 0,
+        "shapes": 4,
+        "draws": 12
+      },
+      "directorErrors": 0,
+      "actorSpecial": "booyahBomb",
+      "actorAlive": true,
+      "renderCalls": 192,
+      "seed": 743622085,
+      "camera": [
+        -0.5156330541134384,
+        34.47938157120238,
+        -46.42114953001092
+      ]
+    }
+  ],
+  "conditions": {
+    "weapon": "s3-shooter-blaze-01",
+    "weaponName": "プロモデラーRG",
+    "avatar": {
+      "name": "プレイヤー",
+      "level": 1,
+      "xp": 0,
+      "wins": 0,
+      "matches": 0,
+      "totalTurf": 0,
+      "weapon": "shooter"
+    },
+    "gear": null,
+    "color": [
+      [
+        0.8879231178794776,
+        0.7681511472425809,
+        0.006048833020386069
+      ],
+      [
+        0.2541520943200296,
+        0.04518620437910499,
+        1
+      ]
+    ],
+    "cameraPitch": -0.7,
+    "cameraYaw": 0,
+    "lighting": {
+      "zenith": {
+        "isColor": true,
+        "r": 0.012286488353353374,
+        "g": 0.158960835050774,
+        "b": 0.7156935005005721
+      },
+      "sky": {
+        "isColor": true,
+        "r": 0.10224173307914941,
+        "g": 0.3915724777393922,
+        "b": 0.8879231178794776
+      },
+      "horizon": {
+        "isColor": true,
+        "r": 0.6583748172725346,
+        "g": 0.8387990117372213,
+        "b": 0.9559733532482866
+      },
+      "ground": {
+        "isColor": true,
+        "r": 1.5745257011012588,
+        "g": 1.200593814995387,
+        "b": 0.7733717188776619
+      },
+      "sun": {
+        "isColor": true,
+        "r": 1,
+        "g": 0.8713671191959567,
+        "b": 0.7156935005005721
+      },
+      "sunColor": {
+        "isColor": true,
+        "r": 1,
+        "g": 0.8713671191959567,
+        "b": 0.7156935005005721
+      },
+      "sunIntensity": 3.3,
+      "sunDir": {
+        "x": -0.5775319998974024,
+        "y": 0.6293203910498374,
+        "z": -0.5200121484190409
+      },
+      "fog": {
+        "isColor": true,
+        "r": 0.5749548546435268,
+        "g": 0.771715031637547,
+        "b": 0.9457658179429652
+      },
+      "cloud": {
+        "isColor": true,
+        "r": 0.94,
+        "g": 0.94,
+        "b": 0.94
+      },
+      "night": 0
+    },
+    "vfxRng": "unchanged module-local seed and algorithm",
+    "chargeSetup": "After native activation and 18 full 30 Hz frames, set native charge field to 1; activation, sub release, throw windup, projectile collision, 40F burst and 80F retirement remain native."
+  }
+}
