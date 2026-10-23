@@ -331,3 +331,14 @@ Additional workflow/input/motion contracts 43/43; native Worker provenance and
 integrated Blob/module binding 15/15, without skips. The 23 source PR heads were
 freshly read and remain unchanged. No public gameplay/runtime production file,
 source-pair pin, numeric gate or required case was removed or changed.
+
+### Executed-test trigger closure, 2026-10-23 JST
+
+At 1d11424a, A+ job 120158860555 correctly rejected the newly executed native
+Worker guard because its test file had not yet been added to both main-weapon
+push/PR path filters. Add both Worker test entrypoints and their implementation
+modules to both event filters AND the Roller job's file-change selector. Keep
+all missing-route negatives. Added-CI/integration contracts now pass 31/31.
+No gate is removed or bypassed. Main and all 23 source heads were unchanged
+when the preceding repair was published. All applicable CI must run on the
+new actual head; the older head remains nonaccepting.

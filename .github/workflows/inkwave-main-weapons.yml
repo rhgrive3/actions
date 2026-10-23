@@ -42,6 +42,10 @@ on:
       - 'scripts/lib/inkwave-roller-blob-provenance.mjs'
       - 'scripts/tests/inkwave-roller-blob-provenance.test.mjs'
       - 'scripts/tests/inkwave-roller-uuid-comparison.test.mjs'
+      - 'scripts/lib/inkwave-generated-music-worker.mjs'
+      - 'scripts/lib/inkwave-native-module-worker.mjs'
+      - 'scripts/tests/inkwave-native-module-worker.test.mjs'
+      - 'scripts/tests/inkwave-roller-blob-worker-binding.test.mjs'
       - 'patches/splatoon3/uuid-random-adapter.mjs'
       - 'scripts/lib/inkwave-range-menu-entry.mjs'
       - 'patches/local-quality/roller-motion.mjs'
@@ -88,6 +92,10 @@ on:
       - 'scripts/lib/inkwave-roller-blob-provenance.mjs'
       - 'scripts/tests/inkwave-roller-blob-provenance.test.mjs'
       - 'scripts/tests/inkwave-roller-uuid-comparison.test.mjs'
+      - 'scripts/lib/inkwave-generated-music-worker.mjs'
+      - 'scripts/lib/inkwave-native-module-worker.mjs'
+      - 'scripts/tests/inkwave-native-module-worker.test.mjs'
+      - 'scripts/tests/inkwave-roller-blob-worker-binding.test.mjs'
       - 'patches/splatoon3/uuid-random-adapter.mjs'
       - 'scripts/lib/inkwave-range-menu-entry.mjs'
       - 'patches/local-quality/roller-motion.mjs'
@@ -236,7 +244,7 @@ jobs:
               run=false
               while IFS= read -r file; do
                 case "$file" in
-                  .github/workflows/inkwave-main-weapons.yml|scripts/check-inkwave-roller-scale-range.mjs|scripts/lib/inkwave-roller-uuid-comparison.mjs|scripts/lib/inkwave-roller-blob-provenance.mjs|scripts/tests/inkwave-roller-blob-provenance.test.mjs|scripts/tests/inkwave-roller-uuid-comparison.test.mjs|patches/splatoon3/uuid-random-adapter.mjs|scripts/lib/inkwave-range-menu-entry.mjs|scripts/build-inkwave.mjs|scripts/inkwave-source-composition.mjs) run=true ;;
+                  .github/workflows/inkwave-main-weapons.yml|scripts/check-inkwave-roller-scale-range.mjs|scripts/lib/inkwave-roller-uuid-comparison.mjs|scripts/lib/inkwave-roller-blob-provenance.mjs|scripts/tests/inkwave-roller-blob-provenance.test.mjs|scripts/tests/inkwave-roller-uuid-comparison.test.mjs|scripts/lib/inkwave-generated-music-worker.mjs|scripts/lib/inkwave-native-module-worker.mjs|scripts/tests/inkwave-native-module-worker.test.mjs|scripts/tests/inkwave-roller-blob-worker-binding.test.mjs|patches/splatoon3/uuid-random-adapter.mjs|scripts/lib/inkwave-range-menu-entry.mjs|scripts/build-inkwave.mjs|scripts/inkwave-source-composition.mjs) run=true ;;
                   inkwave-public/src/core/*|inkwave-public/src/game/*|inkwave-public/src/world/paint.js|inkwave-public/src/config.js|inkwave-public/src/main.js) run=true ;;
                   patches/local-quality/roller-motion.mjs|patches/network-replication/roller-*|patches/splatoon3/weapon-catalog-adapter.mjs) run=true ;;
                   patches/splatoon3/runtime/roller*|patches/splatoon3/runtime/*motion*|patches/splatoon3/runtime/source-*|patches/splatoon3/runtime/weapon*|patches/splatoon3/runtime/main-*|patches/splatoon3/runtime/movement*|patches/splatoon3/runtime/body-*|patches/splatoon3/runtime/controller-*|patches/splatoon3/runtime/render.mjs|patches/splatoon3/runtime/install.mjs) run=true ;;
