@@ -28,9 +28,20 @@ function stage(f) {
 
 const CONFIG = { id: 'fixture-match', map: 'normal', difficulty: 'normal' };
 
+// NetMatch timestamps and interpolation read performance.now(), independently
+// from Actor's dt. Advance each peer's own clock by the simulated frame, so a
+// fast loop or a paused CI process cannot rewind the sampled owner timeline.
+async function timedPeer(originMillis) {
+  let millis = originMillis;
+  const f = await fixture({ fullRuntime: true, productionComposition: true, extraExports: NETMATCH_EXPORT,
+    vmPerformance: { now: () => millis } });
+  const advance = dt => { millis += dt * 1000; f.G.time += dt; };
+  return { f, advance };
+}
+
 // Owner peer: the human is local, so its aim is driven by its own input.
 async function ownerPeer(hz) {
-  const f = await fixture({ fullRuntime: true, productionComposition: true, extraExports: NETMATCH_EXPORT });
+  const { f, advance } = await timedPeer(1000);
   stage(f);
   const actor = f.make('shooter');
   actor.nid = 7; actor.owner = 'p2'; actor.team = 0; actor.slot = 0; actor.isLocal = true;
@@ -43,12 +54,12 @@ async function ownerPeer(hz) {
     canRespawn: () => false, removeActor() {} };
   netm.bind(match);
   f.G.match = match;
-  return { f, actor, netm, outgoing, hz };
+  return { f, actor, netm, outgoing, hz, advance };
 }
 
 // Receiver peer: the same human is a remote proxy that only sees owner snapshots.
 async function receiverPeer(hz) {
-  const f = await fixture({ fullRuntime: true, productionComposition: true, extraExports: NETMATCH_EXPORT });
+  const { f, advance } = await timedPeer(25000);
   stage(f);
   const remote = f.make('shooter');
   remote.nid = 7; remote.owner = 'p2'; remote.team = 0; remote.slot = 0; remote.isLocal = false;
@@ -60,12 +71,12 @@ async function receiverPeer(hz) {
     playing: () => true, canRespawn: () => false, removeActor() {} };
   netm.bind(match);
   f.G.match = match;
-  return { f, remote, netm, hz };
+  return { f, remote, netm, hz, advance };
 }
 
-function step(peer, dt) {
-  peer.f.G.time += dt;
-  peer.actor.update(dt);
+function step(peer, dt, updateActor = true) {
+  peer.advance(dt);
+  if (updateActor) peer.actor.update(dt);
 }
 
 function publish(owner) {
@@ -73,10 +84,15 @@ function publish(owner) {
   owner.netm._sendTick();
   const packet = owner.outgoing.pop();
   assert.ok(packet?.a?.length === 1, 'the actual NetMatch owner published its local human snapshot');
+  if (owner.lastPublishedTime !== undefined) {
+    close(packet.ts - owner.lastPublishedTime, 1 / owner.hz, 'native packet clock follows frame spacing', .00101);
+  }
+  owner.lastPublishedTime = packet.ts;
   return packet;
 }
 
 function receive(receiver, packet, dt) {
+  receiver.advance(dt);
   receiver.netm.onMessage('p2', structuredClone(packet));
   receiver.netm.update(dt);
   receiver.netm.applyRemote(receiver.remote, dt);
@@ -148,7 +164,7 @@ for (const hz of HZ) {
 
     // Let the owner finish touchdown and let the receiver's sampled path catch up.
     for (let i = 0; i < hz * 4; i++) {
-      if (owner.actor.s3.squidSpawn) step(owner, dt);
+      step(owner, dt, !!owner.actor.s3.squidSpawn);
       receive(receiver, publish(owner), dt);
       if (!owner.actor.s3.squidSpawn && !receiver.remote.s3.squidSpawn) break;
     }
@@ -158,6 +174,7 @@ for (const hz of HZ) {
     // The proxy's existing presentation correction decays after the state clears; idle
     // owner snapshots let it settle on the owner's landed position.
     for (let i = 0; i < hz * 2; i++) {
+      step(owner, dt, false);
       receive(receiver, publish(owner), dt);
     }
     samePoint(receiver.remote.pos, owner.actor.pos, 'final receiver position matches owner landing', 1e-3);
@@ -187,7 +204,7 @@ for (const hz of HZ) {
     samePoint(receiver.remote.s3.squidSpawn.target, owner.actor.s3.squidSpawn.target, 'proxy mirrors deterministic bot landing');
     owner.f.G.match.state = receiver.f.G.match.state = 'playing';
     for (let i = 0; i < hz * 4; i++) {
-      if (owner.actor.s3.squidSpawn) step(owner, dt);
+      step(owner, dt, !!owner.actor.s3.squidSpawn);
       receive(receiver, publish(owner), dt);
     }
     assert.equal(launches.length, 1, 'proxy sees exactly one owner launch');

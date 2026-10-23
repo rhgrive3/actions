@@ -411,3 +411,41 @@ network and Roller did not pass, and other browser lanes were unfinished.
 Those results do not establish green CI for this repair's new head. Require
 all applicable exact-head hosted checks before merge; pending, cancelled,
 scope-specific skips and prior-head passes are not acceptance evidence.
+
+### Native peer frame clocks in opening replication QA, 2026-10-23 UTC
+
+Hosted core job 120236589802 on actual head 12f9b5f7 completed 814/815
+network cases, with one failure: the 30 Hz opening bot proxy emitted two
+launch events instead of one. That fixture advanced Actor dt/G.time but used
+process performance.now() for both NetMatch timelines. Simulated frames ran
+independently of the process wall clock, including CI pauses and sub-millisecond
+packet timestamp collisions. Use the existing VM performance injection with
+independent peer origins (1 s and 25 s), advancing both clocks exactly once per
+simulated frame, including idle owner snapshots after touchdown. Check each
+actual native packet's timestamp spacing at its existing millisecond precision.
+Retain all six 30/60/120 Hz human/bot cases, native production composition,
+exactly-one-launch assertions, intro wait, owner aim, flight, landing and final
+position assertions. Production clock, network, actor and gameplay bytes are
+unchanged; no required test or gate is skipped or relaxed.
+
+Local validation: all six cases passed; native Worker/provenance guards 19/19
+and projectile capture admission guards 7/7 passed without skips. The complete
+network suite is also running locally with two file workers; it is not yet
+reported as green. The procfs-sensitive supervision guards and native browser
+lanes remain hosted obligations. All 23 source PR heads were freshly read and
+GitHub compare confirmed each is an ancestor of a8770d2d, with no new source
+head updates. Main remains 26a4db41.
+
+Preserved the intervening five public commits through a8770d2d, including the
+anonymous direct Worker callsite binding, immutable optional geometry/service
+worker response accounting after frozen Roller captures, strictly proven
+55-to-60-degree camera projection epoch, and exact workflow setup guards.
+Roller job 120235507380 had rejected only the inconsistent sw.js presence in
+its isolated A/A runtime module identity; a8770d2d adds its exact manifest-pinned
+response on both sides without changing images/physics or discarding modules.
+That latest hosted rerun is still in progress, not accepted as success.
+
+Latest-head hosted Validate core, all eight patch shards, fan-in and every
+applicable native/browser/audio/numerical/A+ lane must still succeed before
+merge. Earlier-head successes, partial local runs and pending jobs are not
+merge evidence. No temporary Blender assets are included in this repair.
