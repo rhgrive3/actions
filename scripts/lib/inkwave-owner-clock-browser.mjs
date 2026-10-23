@@ -18,7 +18,11 @@ export function ownerClockRelayPayload(text){
     forwardedAt=Number(stamp);if(!Number.isSafeInteger(forwardedAt))return null;
     start=stop+1;
   }
-  try{return {from:text.slice(2,end),data:JSON.parse(text.slice(start)),forwardedAt};}catch{return null;}
+  try{
+    const data=JSON.parse(text.slice(start));
+    if(!data||typeof data!=='object'||Array.isArray(data))return null;
+    return {from:text.slice(2,end),data,forwardedAt};
+  }catch{return null;}
 }
 
 // Delay/drop are exclusively at the real WebSocket delivery boundary. Keep the

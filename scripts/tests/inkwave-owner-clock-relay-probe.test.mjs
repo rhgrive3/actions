@@ -9,7 +9,7 @@ test('clock probe reads legacy and relay-stamped frames without trusting payload
   const data={k:'t',ts:2,forwardedAt:900000};
   assert.deepEqual(ownerClockRelayPayload('m|peer|'+JSON.stringify(data)),{from:'peer',data,forwardedAt:null});
   assert.deepEqual(ownerClockRelayPayload('m|peer|@12345|'+JSON.stringify(data)),{from:'peer',data,forwardedAt:12345});
-  for(const text of ['m|peer|@-1|{}','m|peer|@1.1|{}','m|peer|@9007199254740992|{}','m|peer|@12','m|peer|@12|bad','x|peer|{}'])assert.equal(ownerClockRelayPayload(text),null);
+  for(const text of ['m|peer|@-1|{}','m|peer|@1.1|{}','m|peer|@9007199254740992|{}','m|peer|@12','m|peer|@12|bad','m|peer|null','m|peer|[]','m|peer|1','x|peer|{}'])assert.equal(ownerClockRelayPayload(text),null);
 });
 
 class Socket extends EventEmitter{
