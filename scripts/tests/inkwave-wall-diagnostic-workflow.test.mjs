@@ -94,7 +94,7 @@ const acceptedJobHashes = {
 // job pins; every pre-existing test command, failure gate and hash stays fixed.
 const legacyCoreEvidenceTail = '            _site-launch-packets.json\n          retention-days: 14\n';
 const repairedCoreEvidenceTail = `      - name: Retain exact emitted launch packet evidence
-        if: always() && hashFiles('_site-launch-packets.json') != ''
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: inkwave-launch-packets-\${{ env.SOURCE_SHA }}-\${{ github.run_attempt }}
@@ -126,7 +126,7 @@ test('artifact repair cannot waive tests, paths, identity, upload errors or unre
   for(const [before,after] of [
     ['patches/splatoon3/tests/active-special-gauge.test.mjs',''],
     ['patches/network-replication/tests/tower-mine-paint-admission.test.mjs','patches/network-replication/tests/not-a-real-test.mjs'],
-    ["if: always() && hashFiles('_site-launch-packets.json') != ''",'if: false'],
+    ['      - name: Retain exact emitted launch packet evidence\n        if: always()', '      - name: Retain exact emitted launch packet evidence\n        if: false'],
     ['path: _site-launch-packets.json','path: another-report.json'],
     ['if-no-files-found: error\n          retention-days: 14\n  # The test-file set','if-no-files-found: warn\n          retention-days: 14\n  # The test-file set'],
     ['name: inkwave-launch-packets-${{ env.SOURCE_SHA }}-${{ github.run_attempt }}','name: inkwave-launch-packets-unbound'],
