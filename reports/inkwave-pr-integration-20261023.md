@@ -49,6 +49,11 @@ Node 22 (npm-distributed Node 22 executable), source checkout:
   Later changes are QA/report/CI only; this does not replace hosted checks on
   the latest published head.
 - Final queue/workflow/source-route batch: 63/63 pass, zero skips.
+- Additional lifecycle batch: 44 pass, one fixture failure, one existing private
+  Urchin-assets skip. The gauge fixture had been bound before its pre-bind
+  rejection assertion during the merge. Restore staging without binding, then
+  exercise the actual bind later; the unchanged assertions pass 11/11 in the
+  complete gauge file. No production logic or rejection assertion changed.
 
 Hosted checks must run on the final published head. Historical successes,
 queued/running jobs and scoped diagnostic skips do not establish acceptance.

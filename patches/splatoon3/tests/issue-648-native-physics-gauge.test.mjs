@@ -267,7 +267,8 @@ test('#648 NetMatch pack/apply keeps the owner gauge authoritative over the prox
   const sender = new NetMatch(session('self', 'host', m => sent.push(m)), { map: 'map', difficulty: 'normal' });
   sender.bind({actors:[owner],state:'playing',time:180});
   const receiver = new NetMatch(session('viewer', 'self'), { map: 'map', difficulty: 'normal' });
-  receiver.bind({actors:[proxy],state:'playing',time:180});
+  receiver.byNid.set(owner.nid, proxy);
+  receiver._setupActor(proxy);
   t.after(() => { sender.dispose(); receiver.dispose(); });
   assert.equal(owner.remote, false, 'the sender session owns the live actor');
   assert.equal(proxy.remote, true, 'the receiver session marks the packed actor as a proxy');
