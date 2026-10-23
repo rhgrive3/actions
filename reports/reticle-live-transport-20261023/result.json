@@ -1,0 +1,1630 @@
+{
+  "status": "passed",
+  "head": "f72ccdb4b11cb76b01dd0567975924cbd6d83c60",
+  "tree": "2b1fe89dcf4ffa078ee7d91cdd95292cdcf20756",
+  "contentHash": "fb5f0fab676d92749db0e02f332770530eb930b6c6d7590ec0e926dd3715c5d7",
+  "revision": "1b6e89b3322e2a53d5b1223f8567b6737a0f4b7aae399c81cca362ae35e2b61c",
+  "scope": "two isolated Chromium contexts, native browser WebSocket and real minified Actor/Projectiles/NetSession/Transport/HUD; production Worker fetch and RoomDurableObject under existing Node platform adapter",
+  "start": "native create/join/setMe/start/ready/go; no manual membership or authority metadata",
+  "mainListener": "exact composed main hit registration extracted without booting full Game",
+  "nativeClock": [
+    "function now() { [native code] }",
+    "function now() { [native code] }"
+  ],
+  "cases": [
+    {
+      "name": "miss",
+      "before": [
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "hp": 100,
+              "alive": true,
+              "remote": false,
+              "owner": "p_ised5it",
+              "position": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "nid": 1,
+              "hp": 100,
+              "alive": true,
+              "remote": true,
+              "owner": "p_oqkwnh3",
+              "position": [
+                0,
+                0,
+                3
+              ]
+            }
+          ],
+          "hud": {
+            "visible": true,
+            "hitChildren": 4,
+            "animationCount": 0,
+            "killOn": false
+          }
+        },
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "hp": 100,
+              "alive": true,
+              "remote": true,
+              "owner": "p_ised5it",
+              "position": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "nid": 1,
+              "hp": 100,
+              "alive": true,
+              "remote": false,
+              "owner": "p_oqkwnh3",
+              "position": [
+                0,
+                0,
+                3
+              ]
+            }
+          ],
+          "hud": {
+            "visible": true,
+            "hitChildren": 4,
+            "animationCount": 0,
+            "killOn": false
+          }
+        }
+      ],
+      "after": [
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "hp": 100,
+              "alive": true,
+              "remote": false,
+              "owner": "p_ised5it",
+              "position": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "nid": 1,
+              "hp": 100,
+              "alive": true,
+              "remote": true,
+              "owner": "p_oqkwnh3",
+              "position": [
+                0,
+                0,
+                3
+              ]
+            }
+          ],
+          "hud": {
+            "visible": true,
+            "hitChildren": 4,
+            "animationCount": 0,
+            "killOn": false
+          }
+        },
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "hp": 100,
+              "alive": true,
+              "remote": true,
+              "owner": "p_ised5it",
+              "position": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "nid": 1,
+              "hp": 100,
+              "alive": true,
+              "remote": false,
+              "owner": "p_oqkwnh3",
+              "position": [
+                0,
+                0,
+                3
+              ]
+            }
+          ],
+          "hud": {
+            "visible": true,
+            "hitChildren": 4,
+            "animationCount": 0,
+            "killOn": false
+          }
+        }
+      ],
+      "events": [
+        [
+          {
+            "kind": "fire",
+            "phase": "miss",
+            "at": 6500.799999998882,
+            "miss": true,
+            "ink": 100
+          },
+          {
+            "kind": "owner-record",
+            "phase": "miss",
+            "at": 6512.299999998882,
+            "name": 0,
+            "row": [
+              "p",
+              0,
+              "shot",
+              "shooter",
+              0,
+              1.05,
+              0.3,
+              135.9407014795368,
+              0.25695825731800226,
+              -2.2762367419612755,
+              0,
+              3,
+              0.06666666666666667,
+              1.93,
+              0.28,
+              57.6,
+              1.2,
+              0,
+              0,
+              0.111,
+              0.8,
+              1.3,
+              0.035,
+              26,
+              0.3,
+              0,
+              [
+                "iw-ink-flight-1",
+                "shooter",
+                0,
+                0.478547794366622,
+                false
+              ],
+              0,
+              0,
+              0,
+              0.478547794366622,
+              1,
+              -1
+            ],
+            "hp": 100
+          },
+          {
+            "kind": "owner-record",
+            "phase": "miss",
+            "at": 6515.5,
+            "name": "weapon:fire",
+            "row": [
+              "ev",
+              "weapon:fire",
+              {
+                "actor": {
+                  "n": 0
+                },
+                "weapon": "shooter",
+                "muzzle": [
+                  0,
+                  1.05,
+                  0.3
+                ],
+                "dir": [
+                  1,
+                  0,
+                  -0.02
+                ]
+              }
+            ],
+            "hp": 100
+          },
+          {
+            "kind": "owner-record",
+            "phase": "miss",
+            "at": 6515.9000000003725,
+            "name": 0,
+            "row": [
+              "tr",
+              0,
+              "shoot",
+              0
+            ],
+            "hp": 100
+          },
+          {
+            "kind": "owner-record",
+            "phase": "miss",
+            "at": 6875.0999999996275,
+            "name": 0,
+            "row": [
+              "pe",
+              0,
+              1,
+              0
+            ],
+            "hp": 100
+          }
+        ],
+        []
+      ],
+      "markerCalls": [
+        [],
+        []
+      ],
+      "killCueStarts": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "nonlethal",
+      "before": [
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "hp": 100,
+              "alive": true,
+              "remote": false,
+              "owner": "p_ised5it",
+              "position": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "nid": 1,
+              "hp": 100,
+              "alive": true,
+              "remote": true,
+              "owner": "p_oqkwnh3",
+              "position": [
+                0,
+                0,
+                3
+              ]
+            }
+          ],
+          "hud": {
+            "visible": true,
+            "hitChildren": 4,
+            "animationCount": 0,
+            "killOn": false
+          }
+        },
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "hp": 100,
+              "alive": true,
+              "remote": true,
+              "owner": "p_ised5it",
+              "position": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "nid": 1,
+              "hp": 100,
+              "alive": true,
+              "remote": false,
+              "owner": "p_oqkwnh3",
+              "position": [
+                0,
+                0,
+                3
+              ]
+            }
+          ],
+          "hud": {
+            "visible": true,
+            "hitChildren": 4,
+            "animationCount": 0,
+            "killOn": false
+          }
+        }
+      ],
+      "after": [
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "hp": 100,
+              "alive": true,
+              "remote": false,
+              "owner": "p_ised5it",
+              "position": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "nid": 1,
+              "hp": 64,
+              "alive": true,
+              "remote": true,
+              "owner": "p_oqkwnh3",
+              "position": [
+                0,
+                0,
+                3
+              ]
+            }
+          ],
+          "hud": {
+            "visible": true,
+            "hitChildren": 4,
+            "animationCount": 4,
+            "killOn": false
+          }
+        },
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "hp": 100,
+              "alive": true,
+              "remote": true,
+              "owner": "p_ised5it",
+              "position": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "nid": 1,
+              "hp": 64,
+              "alive": true,
+              "remote": false,
+              "owner": "p_oqkwnh3",
+              "position": [
+                0,
+                0,
+                3
+              ]
+            }
+          ],
+          "hud": {
+            "visible": true,
+            "hitChildren": 4,
+            "animationCount": 0,
+            "killOn": false
+          }
+        }
+      ],
+      "events": [
+        [
+          {
+            "kind": "fire",
+            "phase": "nonlethal",
+            "at": 7160.5,
+            "miss": false,
+            "ink": 100
+          },
+          {
+            "kind": "owner-record",
+            "phase": "nonlethal",
+            "at": 7163.199999999255,
+            "name": 0,
+            "row": [
+              "p",
+              0,
+              "shot",
+              "shooter",
+              0,
+              1.05,
+              0.3,
+              -0.39347795183850387,
+              -2.5173461710586107,
+              135.93612376170094,
+              0,
+              3,
+              0.06666666666666667,
+              1.93,
+              0.28,
+              57.6,
+              1.2,
+              0,
+              0,
+              0.106,
+              0.8,
+              1.3,
+              0.035,
+              26,
+              0.3,
+              0,
+              [
+                "iw-ink-flight-1",
+                "shooter",
+                1,
+                0.41791974477824134,
+                false
+              ],
+              0,
+              0,
+              0,
+              0.41791974477824134,
+              2,
+              -1
+            ],
+            "hp": 100
+          },
+          {
+            "kind": "owner-record",
+            "phase": "nonlethal",
+            "at": 7163.4000000003725,
+            "name": "weapon:fire",
+            "row": [
+              "ev",
+              "weapon:fire",
+              {
+                "actor": {
+                  "n": 0
+                },
+                "weapon": "shooter",
+                "muzzle": [
+                  0,
+                  1.05,
+                  0.3
+                ],
+                "dir": [
+                  0,
+                  -0.02,
+                  1
+                ]
+              }
+            ],
+            "hp": 100
+          },
+          {
+            "kind": "owner-record",
+            "phase": "nonlethal",
+            "at": 7163.4000000003725,
+            "name": 0,
+            "row": [
+              "tr",
+              0,
+              "shoot",
+              0
+            ],
+            "hp": 100
+          },
+          {
+            "kind": "owner-record",
+            "phase": "nonlethal",
+            "at": 7165.699999999255,
+            "name": 0,
+            "row": [
+              "pe",
+              0,
+              2,
+              1,
+              -0.005977388630070244,
+              1.0117585780587461,
+              2.3650281338317702
+            ],
+            "hp": 100
+          },
+          {
+            "kind": "combat:confirmed",
+            "phase": "nonlethal",
+            "at": 7175.5,
+            "attacker": 0,
+            "victim": 1,
+            "attackerLocal": true,
+            "damage": 36,
+            "killed": false,
+            "hp": 64
+          },
+          {
+            "kind": "marker-call",
+            "phase": "nonlethal",
+            "at": 7277.799999998882,
+            "markerKind": "hit",
+            "damage": 36,
+            "localAlive": true,
+            "visible": true,
+            "animations": [
+              {
+                "state": "running",
+                "time": 0
+              },
+              {
+                "state": "running",
+                "time": 0
+              },
+              {
+                "state": "running",
+                "time": 0
+              },
+              {
+                "state": "running",
+                "time": 0
+              }
+            ],
+            "killOn": false,
+            "translate": "35px -20px"
+          },
+          {
+            "kind": "hit",
+            "phase": "nonlethal",
+            "at": 7278.0999999996275,
+            "attacker": 0,
+            "victim": 1,
+            "attackerLocal": true,
+            "damage": 36,
+            "killed": false,
+            "hp": 64
+          },
+          {
+            "kind": "marker-style",
+            "phase": "nonlethal",
+            "at": 7293,
+            "markerKind": "hit",
+            "damage": 36,
+            "rootOpacity": "1",
+            "xhOpacity": "1",
+            "hitOpacity": "1",
+            "killOpacity": "0",
+            "killAnimations": 0,
+            "reticleChildren": 6
+          }
+        ],
+        [
+          {
+            "kind": "owner-record",
+            "phase": "nonlethal",
+            "at": 4938.4000000003725,
+            "name": 1,
+            "row": [
+              "tr",
+              1,
+              "hit",
+              {
+                "x": 0,
+                "z": -1,
+                "amp": 0.6
+              }
+            ],
+            "hp": 64
+          },
+          {
+            "kind": "damage",
+            "phase": "nonlethal",
+            "at": 4940.299999998882,
+            "attacker": 0,
+            "victim": 1,
+            "attackerLocal": false,
+            "damage": 36,
+            "hp": 64
+          },
+          {
+            "kind": "hit",
+            "phase": "nonlethal",
+            "at": 4940.699999999255,
+            "attacker": 0,
+            "victim": 1,
+            "attackerLocal": false,
+            "damage": 36,
+            "killed": false,
+            "hp": 64
+          },
+          {
+            "kind": "owner-record",
+            "phase": "nonlethal",
+            "at": 4940.799999998882,
+            "name": "hit",
+            "row": [
+              "ev",
+              "hit",
+              {
+                "attacker": {
+                  "n": 0
+                },
+                "victim": {
+                  "n": 1
+                },
+                "damage": 36,
+                "killed": false,
+                "weaponId": "shooter"
+              }
+            ],
+            "hp": 64
+          }
+        ]
+      ],
+      "markerCalls": [
+        [
+          {
+            "kind": "marker-call",
+            "phase": "nonlethal",
+            "at": 7277.799999998882,
+            "markerKind": "hit",
+            "damage": 36,
+            "localAlive": true,
+            "visible": true,
+            "animations": [
+              {
+                "state": "running",
+                "time": 0
+              },
+              {
+                "state": "running",
+                "time": 0
+              },
+              {
+                "state": "running",
+                "time": 0
+              },
+              {
+                "state": "running",
+                "time": 0
+              }
+            ],
+            "killOn": false,
+            "translate": "35px -20px"
+          }
+        ],
+        []
+      ],
+      "killCueStarts": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "repeated-nonlethal-duplicate-delivery",
+      "before": [
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "hp": 100,
+              "alive": true,
+              "remote": false,
+              "owner": "p_ised5it",
+              "position": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "nid": 1,
+              "hp": 64,
+              "alive": true,
+              "remote": true,
+              "owner": "p_oqkwnh3",
+              "position": [
+                0,
+                0,
+                3
+              ]
+            }
+          ],
+          "hud": {
+            "visible": true,
+            "hitChildren": 4,
+            "animationCount": 4,
+            "killOn": false
+          }
+        },
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "hp": 100,
+              "alive": true,
+              "remote": true,
+              "owner": "p_ised5it",
+              "position": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "nid": 1,
+              "hp": 64,
+              "alive": true,
+              "remote": false,
+              "owner": "p_oqkwnh3",
+              "position": [
+                0,
+                0,
+                3
+              ]
+            }
+          ],
+          "hud": {
+            "visible": true,
+            "hitChildren": 4,
+            "animationCount": 0,
+            "killOn": false
+          }
+        }
+      ],
+      "after": [
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "hp": 100,
+              "alive": true,
+              "remote": false,
+              "owner": "p_ised5it",
+              "position": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "nid": 1,
+              "hp": 28,
+              "alive": true,
+              "remote": true,
+              "owner": "p_oqkwnh3",
+              "position": [
+                0,
+                0,
+                3
+              ]
+            }
+          ],
+          "hud": {
+            "visible": true,
+            "hitChildren": 4,
+            "animationCount": 4,
+            "killOn": false
+          }
+        },
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "hp": 100,
+              "alive": true,
+              "remote": true,
+              "owner": "p_ised5it",
+              "position": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "nid": 1,
+              "hp": 28,
+              "alive": true,
+              "remote": false,
+              "owner": "p_oqkwnh3",
+              "position": [
+                0,
+                0,
+                3
+              ]
+            }
+          ],
+          "hud": {
+            "visible": true,
+            "hitChildren": 4,
+            "animationCount": 0,
+            "killOn": false
+          }
+        }
+      ],
+      "events": [
+        [
+          {
+            "kind": "fire",
+            "phase": "repeated-nonlethal-duplicate-delivery",
+            "at": 7685.199999999255,
+            "miss": false,
+            "ink": 100
+          },
+          {
+            "kind": "owner-record",
+            "phase": "repeated-nonlethal-duplicate-delivery",
+            "at": 7691.0999999996275,
+            "name": 0,
+            "row": [
+              "p",
+              0,
+              "shot",
+              "shooter",
+              0,
+              1.05,
+              0.3,
+              5.415157162218264e-05,
+              -2.5173461710586107,
+              135.93669323715406,
+              0,
+              3,
+              0.06666666666666667,
+              1.93,
+              0.28,
+              57.6,
+              1.2,
+              0,
+              0,
+              0.107,
+              0.8,
+              1.3,
+              0.035,
+              26,
+              0.3,
+              0,
+              [
+                "iw-ink-flight-1",
+                "shooter",
+                2,
+                0.6934610287211415,
+                false
+              ],
+              0,
+              0,
+              0,
+              0.6934610287211415,
+              3,
+              -1
+            ],
+            "hp": 100
+          },
+          {
+            "kind": "owner-record",
+            "phase": "repeated-nonlethal-duplicate-delivery",
+            "at": 7691.4000000003725,
+            "name": "weapon:fire",
+            "row": [
+              "ev",
+              "weapon:fire",
+              {
+                "actor": {
+                  "n": 0
+                },
+                "weapon": "shooter",
+                "muzzle": [
+                  0,
+                  1.05,
+                  0.3
+                ],
+                "dir": [
+                  0,
+                  -0.02,
+                  1
+                ]
+              }
+            ],
+            "hp": 100
+          },
+          {
+            "kind": "owner-record",
+            "phase": "repeated-nonlethal-duplicate-delivery",
+            "at": 7691.4000000003725,
+            "name": 0,
+            "row": [
+              "tr",
+              0,
+              "shoot",
+              0
+            ],
+            "hp": 100
+          },
+          {
+            "kind": "owner-record",
+            "phase": "repeated-nonlethal-duplicate-delivery",
+            "at": 7691.5999999996275,
+            "name": 0,
+            "row": [
+              "pe",
+              0,
+              3,
+              1,
+              8.226108252078086e-07,
+              1.0117592592592464,
+              2.365000000000533
+            ],
+            "hp": 100
+          },
+          {
+            "kind": "combat:confirmed",
+            "phase": "repeated-nonlethal-duplicate-delivery",
+            "at": 7698,
+            "attacker": 0,
+            "victim": 1,
+            "attackerLocal": true,
+            "damage": 36,
+            "killed": false,
+            "hp": 28
+          },
+          {
+            "kind": "marker-call",
+            "phase": "repeated-nonlethal-duplicate-delivery",
+            "at": 7786.799999998882,
+            "markerKind": "hit",
+            "damage": 36,
+            "localAlive": true,
+            "visible": true,
+            "animations": [
+              {
+                "state": "running",
+                "time": 0
+              },
+              {
+                "state": "running",
+                "time": 0
+              },
+              {
+                "state": "running",
+                "time": 0
+              },
+              {
+                "state": "running",
+                "time": 0
+              }
+            ],
+            "killOn": false,
+            "translate": "35px -20px"
+          },
+          {
+            "kind": "hit",
+            "phase": "repeated-nonlethal-duplicate-delivery",
+            "at": 7786.799999998882,
+            "attacker": 0,
+            "victim": 1,
+            "attackerLocal": true,
+            "damage": 36,
+            "killed": false,
+            "hp": 28
+          },
+          {
+            "kind": "marker-style",
+            "phase": "repeated-nonlethal-duplicate-delivery",
+            "at": 7809.5,
+            "markerKind": "hit",
+            "damage": 36,
+            "rootOpacity": "1",
+            "xhOpacity": "1",
+            "hitOpacity": "0.780203",
+            "killOpacity": "0",
+            "killAnimations": 0,
+            "reticleChildren": 6
+          }
+        ],
+        [
+          {
+            "kind": "owner-record",
+            "phase": "repeated-nonlethal-duplicate-delivery",
+            "at": 5462.699999999255,
+            "name": 1,
+            "row": [
+              "tr",
+              1,
+              "hit",
+              {
+                "x": 0,
+                "z": -1,
+                "amp": 0.6
+              }
+            ],
+            "hp": 28
+          },
+          {
+            "kind": "damage",
+            "phase": "repeated-nonlethal-duplicate-delivery",
+            "at": 5463.0999999996275,
+            "attacker": 0,
+            "victim": 1,
+            "attackerLocal": false,
+            "damage": 36,
+            "hp": 28
+          },
+          {
+            "kind": "hit",
+            "phase": "repeated-nonlethal-duplicate-delivery",
+            "at": 5463.0999999996275,
+            "attacker": 0,
+            "victim": 1,
+            "attackerLocal": false,
+            "damage": 36,
+            "killed": false,
+            "hp": 28
+          },
+          {
+            "kind": "owner-record",
+            "phase": "repeated-nonlethal-duplicate-delivery",
+            "at": 5463.5,
+            "name": "hit",
+            "row": [
+              "ev",
+              "hit",
+              {
+                "attacker": {
+                  "n": 0
+                },
+                "victim": {
+                  "n": 1
+                },
+                "damage": 36,
+                "killed": false,
+                "weaponId": "shooter"
+              }
+            ],
+            "hp": 28
+          }
+        ]
+      ],
+      "markerCalls": [
+        [
+          {
+            "kind": "marker-call",
+            "phase": "repeated-nonlethal-duplicate-delivery",
+            "at": 7786.799999998882,
+            "markerKind": "hit",
+            "damage": 36,
+            "localAlive": true,
+            "visible": true,
+            "animations": [
+              {
+                "state": "running",
+                "time": 0
+              },
+              {
+                "state": "running",
+                "time": 0
+              },
+              {
+                "state": "running",
+                "time": 0
+              },
+              {
+                "state": "running",
+                "time": 0
+              }
+            ],
+            "killOn": false,
+            "translate": "35px -20px"
+          }
+        ],
+        []
+      ],
+      "killCueStarts": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "lethal",
+      "before": [
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "hp": 100,
+              "alive": true,
+              "remote": false,
+              "owner": "p_ised5it",
+              "position": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "nid": 1,
+              "hp": 28,
+              "alive": true,
+              "remote": true,
+              "owner": "p_oqkwnh3",
+              "position": [
+                0,
+                0,
+                3
+              ]
+            }
+          ],
+          "hud": {
+            "visible": true,
+            "hitChildren": 4,
+            "animationCount": 4,
+            "killOn": false
+          }
+        },
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "hp": 100,
+              "alive": true,
+              "remote": true,
+              "owner": "p_ised5it",
+              "position": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "nid": 1,
+              "hp": 28,
+              "alive": true,
+              "remote": false,
+              "owner": "p_oqkwnh3",
+              "position": [
+                0,
+                0,
+                3
+              ]
+            }
+          ],
+          "hud": {
+            "visible": true,
+            "hitChildren": 4,
+            "animationCount": 0,
+            "killOn": false
+          }
+        }
+      ],
+      "after": [
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "hp": 100,
+              "alive": true,
+              "remote": false,
+              "owner": "p_ised5it",
+              "position": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "nid": 1,
+              "hp": 0,
+              "alive": false,
+              "remote": true,
+              "owner": "p_oqkwnh3",
+              "position": [
+                0,
+                0,
+                3
+              ]
+            }
+          ],
+          "hud": {
+            "visible": true,
+            "hitChildren": 4,
+            "animationCount": 4,
+            "killOn": true
+          }
+        },
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "hp": 100,
+              "alive": true,
+              "remote": true,
+              "owner": "p_ised5it",
+              "position": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "nid": 1,
+              "hp": 0,
+              "alive": false,
+              "remote": false,
+              "owner": "p_oqkwnh3",
+              "position": [
+                0,
+                0,
+                3
+              ]
+            }
+          ],
+          "hud": {
+            "visible": true,
+            "hitChildren": 4,
+            "animationCount": 0,
+            "killOn": false
+          }
+        }
+      ],
+      "events": [
+        [
+          {
+            "kind": "fire",
+            "phase": "lethal",
+            "at": 8117.699999999255,
+            "miss": false,
+            "ink": 100
+          },
+          {
+            "kind": "owner-record",
+            "phase": "lethal",
+            "at": 8123.0999999996275,
+            "name": 0,
+            "row": [
+              "p",
+              0,
+              "shot",
+              "shooter",
+              0,
+              1.05,
+              0.3,
+              0.9048815945431357,
+              -2.5173461710586107,
+              135.93368146840913,
+              0,
+              3,
+              0.06666666666666667,
+              1.93,
+              0.28,
+              57.6,
+              1.2,
+              0,
+              0,
+              0.112,
+              0.8,
+              1.3,
+              0.035,
+              26,
+              0.3,
+              0,
+              [
+                "iw-ink-flight-1",
+                "shooter",
+                3,
+                0.1359677855596122,
+                false
+              ],
+              0,
+              0,
+              0,
+              0.1359677855596122,
+              4,
+              -1
+            ],
+            "hp": 100
+          },
+          {
+            "kind": "owner-record",
+            "phase": "lethal",
+            "at": 8123.299999998882,
+            "name": "weapon:fire",
+            "row": [
+              "ev",
+              "weapon:fire",
+              {
+                "actor": {
+                  "n": 0
+                },
+                "weapon": "shooter",
+                "muzzle": [
+                  0,
+                  1.05,
+                  0.3
+                ],
+                "dir": [
+                  0.01,
+                  -0.02,
+                  1
+                ]
+              }
+            ],
+            "hp": 100
+          },
+          {
+            "kind": "owner-record",
+            "phase": "lethal",
+            "at": 8123.299999998882,
+            "name": 0,
+            "row": [
+              "tr",
+              0,
+              "shoot",
+              0
+            ],
+            "hp": 100
+          },
+          {
+            "kind": "owner-record",
+            "phase": "lethal",
+            "at": 8124,
+            "name": 0,
+            "row": [
+              "pe",
+              0,
+              4,
+              1,
+              0.013747256328126563,
+              1.0117556558903784,
+              2.3651488261462768
+            ],
+            "hp": 100
+          },
+          {
+            "kind": "kill-cue-start",
+            "phase": "lethal",
+            "at": 8222.199999999255
+          },
+          {
+            "kind": "marker-call",
+            "phase": "lethal",
+            "at": 8223.099999999627,
+            "markerKind": "kill",
+            "damage": 0,
+            "localAlive": true,
+            "visible": true,
+            "animations": [
+              {
+                "state": "finished",
+                "time": 240
+              },
+              {
+                "state": "finished",
+                "time": 240
+              },
+              {
+                "state": "finished",
+                "time": 240
+              },
+              {
+                "state": "finished",
+                "time": 240
+              }
+            ],
+            "killOn": true,
+            "translate": "35px -20px"
+          },
+          {
+            "kind": "hit",
+            "phase": "lethal",
+            "at": 8223.099999999627,
+            "attacker": 0,
+            "victim": 1,
+            "attackerLocal": true,
+            "damage": 0,
+            "killed": true,
+            "hp": 0
+          },
+          {
+            "kind": "splatted",
+            "phase": "lethal",
+            "at": 8225.099999999627,
+            "attacker": 0,
+            "victim": 1,
+            "attackerLocal": true,
+            "hp": 0
+          },
+          {
+            "kind": "marker-style",
+            "phase": "lethal",
+            "at": 8243.599999999627,
+            "markerKind": "kill",
+            "damage": 0,
+            "rootOpacity": "1",
+            "xhOpacity": "1",
+            "hitOpacity": "0",
+            "killOpacity": "1",
+            "killAnimations": 6,
+            "reticleChildren": 6
+          }
+        ],
+        [
+          {
+            "kind": "owner-record",
+            "phase": "lethal",
+            "at": 5892.299999998882,
+            "name": 1,
+            "row": [
+              "tr",
+              1,
+              "hit",
+              {
+                "x": 0,
+                "z": -1,
+                "amp": 0.6
+              }
+            ],
+            "hp": -8
+          },
+          {
+            "kind": "damage",
+            "phase": "lethal",
+            "at": 5892.699999999255,
+            "attacker": 0,
+            "victim": 1,
+            "attackerLocal": false,
+            "damage": 36,
+            "hp": -8
+          },
+          {
+            "kind": "hit",
+            "phase": "lethal",
+            "at": 5893.0999999996275,
+            "attacker": 0,
+            "victim": 1,
+            "attackerLocal": false,
+            "damage": 36,
+            "killed": true,
+            "hp": -8
+          },
+          {
+            "kind": "splatted",
+            "phase": "lethal",
+            "at": 5900.699999999255,
+            "attacker": 0,
+            "victim": 1,
+            "attackerLocal": false,
+            "hp": 0
+          },
+          {
+            "kind": "owner-record",
+            "phase": "lethal",
+            "at": 5900.799999998882,
+            "name": "splatted",
+            "row": [
+              "ev",
+              "splatted",
+              {
+                "victim": {
+                  "n": 1
+                },
+                "attacker": {
+                  "n": 0
+                },
+                "cause": "shooter",
+                "burstArea": "0",
+                "victimLife": 1,
+                "victimOwner": "p_oqkwnh3",
+                "assists": [],
+                "assistLives": {}
+              }
+            ],
+            "hp": 0
+          }
+        ]
+      ],
+      "markerCalls": [
+        [
+          {
+            "kind": "marker-call",
+            "phase": "lethal",
+            "at": 8223.099999999627,
+            "markerKind": "kill",
+            "damage": 0,
+            "localAlive": true,
+            "visible": true,
+            "animations": [
+              {
+                "state": "finished",
+                "time": 240
+              },
+              {
+                "state": "finished",
+                "time": 240
+              },
+              {
+                "state": "finished",
+                "time": 240
+              },
+              {
+                "state": "finished",
+                "time": 240
+              }
+            ],
+            "killOn": true,
+            "translate": "35px -20px"
+          }
+        ],
+        []
+      ],
+      "killCueStarts": [
+        1,
+        0
+      ]
+    }
+  ],
+  "duplicateDeliveries": [
+    {
+      "phase": "repeated-nonlethal-duplicate-delivery",
+      "name": "Host",
+      "sha256": "718074bdd8b6f1057c58f6d4d39e99327c87e4f0bc7f0b0c2a53fe0c88043f3c",
+      "kind": "hit_ack"
+    },
+    {
+      "phase": "repeated-nonlethal-duplicate-delivery",
+      "name": "Host",
+      "sha256": "ffeee5d883ff0a5ff03445f6c00dd6880411f9aec0a9806ffd55f5deb9a2e048",
+      "kind": "t"
+    }
+  ],
+  "browser": "154.0.8037.57",
+  "errors": [],
+  "limits": [
+    "Controlled stationary arena uses minimal Character display and flat/no-wall collision doubles; no full Game/stage render.",
+    "Main hit registration is exact composed source; real HUD is the actual minified build, not a count-only substitute.",
+    "Local Node adapts Cloudflare platform; deployed relay, hibernation and internet/device latency untested.",
+    "No retail motion, physical GPU, Safari or Switch acceptance.",
+    "Prior outbound-prefix 42 source tests are separate evidence, not counted as this browser transport result."
+  ],
+  "actualLoadedArtifactCount": 394,
+  "publicationNote": "Recorded run-5 only; no new measurement. The loadedArtifacts array is omitted here; full original and its SHA256 are preserved. Wire excerpts below retain exact original frame strings.",
+  "acceptedWireFrameExcerpts": [
+    {
+      "direction": "worker-to-client",
+      "name": "Host",
+      "phase": "nonlethal",
+      "at": 1792770347935,
+      "text": "m|p_oqkwnh3|@1792770347935|{\"k\":\"hit_ack\",\"m\":\"vegvch\",\"h\":1,\"v\":1,\"a\":0,\"d\":36,\"kld\":0,\"vl\":1,\"hp\":64,\"hr\":1,\"ht\":4.940900000000372,\"la\":1,\"he\":null}"
+    },
+    {
+      "direction": "worker-to-client",
+      "name": "Host",
+      "phase": "nonlethal",
+      "at": 1792770347961,
+      "text": "m|p_oqkwnh3|@1792770347961|{\"k\":\"t\",\"ts\":4.967,\"a\":[[1,0,0,3,0,0,0,0,0,0,4194321,64,100,0,0,0,0,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,53,171,[\"inkwave-protection-v1\",0.016666666666666666,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",1,1]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"vegvch\",1,1,53,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"u\":171,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"r\":2,\"rl\":{},\"oc\":1,\"ocm\":\"vegvch\",\"sjEpochs\":{\"1\":0},\"e\":[[4.939,\"tr\",1,\"hit\",{\"x\":0,\"z\":-1,\"amp\":0.6},169,1],[4.941,\"ev\",\"hit\",{\"attacker\":{\"n\":0},\"victim\":{\"n\":1},\"damage\":36,\"killed\":false,\"weaponId\":\"shooter\"},169,2]],\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "direction": "worker-to-client",
+      "name": "Host",
+      "phase": "repeated-nonlethal-duplicate-delivery",
+      "at": 1792770348458,
+      "text": "m|p_oqkwnh3|@1792770348458|{\"k\":\"hit_ack\",\"m\":\"vegvch\",\"h\":2,\"v\":1,\"a\":0,\"d\":36,\"kld\":0,\"vl\":1,\"hp\":28,\"hr\":2,\"ht\":5.463599999999627,\"la\":1,\"he\":null}"
+    },
+    {
+      "direction": "worker-to-client",
+      "name": "Host",
+      "phase": "repeated-nonlethal-duplicate-delivery",
+      "at": 1792770348459,
+      "text": "m|p_oqkwnh3|@1792770348459|{\"k\":\"t\",\"ts\":5.465,\"a\":[[1,0,0,3,0,0,0,0,0,0,4194321,28,100,0,0,0,0,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,63,201,[\"inkwave-protection-v1\",0,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",1,2]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"vegvch\",1,1,63,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"u\":201,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"r\":2,\"rl\":{},\"oc\":1,\"ocm\":\"vegvch\",\"sjEpochs\":{\"1\":0},\"e\":[[5.463,\"tr\",1,\"hit\",{\"x\":0,\"z\":-1,\"amp\":0.6},200,3],[5.464,\"ev\",\"hit\",{\"attacker\":{\"n\":0},\"victim\":{\"n\":1},\"damage\":36,\"killed\":false,\"weaponId\":\"shooter\"},200,4]],\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "direction": "worker-to-client",
+      "name": "Host",
+      "phase": "lethal",
+      "at": 1792770348887,
+      "text": "m|p_oqkwnh3|@1792770348887|{\"k\":\"hit_ack\",\"m\":\"vegvch\",\"h\":3,\"v\":1,\"a\":0,\"d\":36,\"kld\":0,\"vl\":1,\"hp\":-8,\"hr\":3,\"ht\":5.893099999999627,\"la\":1,\"he\":null}"
+    },
+    {
+      "direction": "worker-to-client",
+      "name": "Host",
+      "phase": "lethal",
+      "at": 1792770348936,
+      "text": "m|p_oqkwnh3|@1792770348936|{\"k\":\"t\",\"ts\":5.942,\"a\":[[1,0,0,3,0,0,0,0,0,0,4194320,0,100,0,0,0,0,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,73,231,[\"inkwave-protection-v1\",0,0,false,null],null,null,null,0,null],{\"tag\":\"inkwave.s3.surge.v1\",\"life\":1,\"epoch\":0,\"phase\":\"end\",\"charge\":0,\"time\":0,\"sampleAge\":0},[\"inkwave-hit-authority-v1\",1,3]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"vegvch\",1,1,73,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"u\":231,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"r\":2,\"rl\":{},\"oc\":1,\"ocm\":\"vegvch\",\"sjEpochs\":{\"1\":0},\"e\":[[5.901,\"ev\",\"splatted\",{\"victim\":{\"n\":1},\"attacker\":{\"n\":0},\"cause\":\"shooter\",\"burstArea\":\"0\",\"victimLife\":1,\"victimOwner\":\"p_oqkwnh3\",\"assists\":[],\"assistLives\":{}},228,6]],\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    }
+  ]
+}

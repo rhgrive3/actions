@@ -1,0 +1,25 @@
+{
+  "measurement": "existing run-5 only; no new browser/build execution while publishing",
+  "measuredHead": "f72ccdb4b11cb76b01dd0567975924cbd6d83c60",
+  "measuredTree": "2b1fe89dcf4ffa078ee7d91cdd95292cdcf20756",
+  "rawRoot": "/workspace/scratch/reticle-live-transport-20261023",
+  "rawPreservedSha256": {
+    "run-5/result.json": "efda783aee41c52ee5545e5e32196cf81d6854fa30a46c26c0666a90c1c9ac51",
+    "run-5/probe-snapshot.mjs": "f2fb302cdd4c3d8033cb9ea295d06262dd0390b79517e18d41f6fac4e37166ac",
+    "run-5/fixture.mjs": "ac5bd2950e533db3fc06300914b4216c3858ea080ef93e06871aa2abad35d394",
+    "run-5/main-hit-registration.js.txt": "8f36f079e829343f722abfd6d3a00dd6b3fefa7c00592ae347bc1e41db3f99e4",
+    "run-5/wire.json": "d51e15485bafbd55f6683a214cada6cc4f98fbbda8ef0cf3f85cdb7fafdb633c",
+    "run-5/duplicates.json": "4eda853f90519fc083792ce29c0dcb0efb715c00f001d1b863cfcb580d078d58",
+    "acceptance-summary.json": "e3798dcfd55032e2988aa57446de2ea533b4ff734e2abddc7bd9191162d29b62",
+    "README.md": "799443209e000f4cfeeff064606b71b0432cf0aa56f2e0182dd677312b3f5712",
+    "evidence-sha256.json": "ecca0a281b9f075082c2f83a55960c3004bfb783c179737bbc128c598d53789a",
+    "reticle-live-transport-evidence.zip": "3a747fbaa016fcd73aef293fe9e44508952023ff0462cc1aabc1a45b7f83050b"
+  },
+  "publicationTransform": "Result omits only loadedArtifacts list and adds exact original wire excerpts. Probe changes only the output-directory guard; original probe snapshot retained. No measurement or assertion changes.",
+  "publishedSha256": {
+    "README.md": "4f3b07e5154f0cdbd96065941586318e64185b5b28afbe588f2f90a501ce70bc",
+    "main-hit-registration.js.txt": "8f36f079e829343f722abfd6d3a00dd6b3fefa7c00592ae347bc1e41db3f99e4",
+    "probe.mjs": "573bd141e77752e526484a86a12041136450b61f583d218821a03cbb3f1651e7",
+    "result.json": "d60ca7ed24cc5d1e41347312e7850e36a436ddaf2260445a963656a26f7997bd"
+  }
+}

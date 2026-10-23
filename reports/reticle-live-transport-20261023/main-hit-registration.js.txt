@@ -1,0 +1,7 @@
+on('hit', ({ attacker, victim, damage, killed, weaponId, hitMeta }) => {
+      if (!this.match || this.match.attract) return;
+      if (attacker?.isLocal) {
+        this.hud?.hitMarker(killed ? 'kill' : 'hit', { damage });
+        if (G.time - lastHitSnd > 0.06) { lastHitSnd = G.time; const chargerCue=sourceChargerHitCue(weaponId,hitMeta?.chargerDirect===true?hitMeta.charge:null); const directBlaster=blasterHitCueKind(attacker,weaponId,damage)==='direct'; const recordedCue=(chargerCue==='combat:critical'||directBlaster)?'combat:critical':'combat:damage'; G.audio?.playWeapon?.(recordedCue,'fire',{volume:.76,priority:95}); }
+      }
+    });
