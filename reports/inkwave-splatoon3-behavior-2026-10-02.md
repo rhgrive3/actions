@@ -6105,3 +6105,11 @@ Splatoon 3 Ver.11.3.0のガチアサリを比較対象に、所持者の除去�
 比較対象はSplatoon 3 Ver.11.3.0、既定ギア、投擲・標的復活・センサー検知・キューインキ終了。固定source表と既存出典を継承し、威力・射程・追尾速度・ヒューズ・範囲を変更しない。通信順・replicaの所有権・bootstrap cleanupはINKWAVE内部の整合性修正で、本家の非公開通信仕様や実機フレーム値とはしない。
 
 独立した旧runtimeに最終テスト116件を置き、85条件のassertion failureと31対照成功を確認した。修正後は新規116＋前回95のsource211件、同じminify生成物211件、Chromium154の265条件（runtime190＋実DOM入力54＋完全bootstrap21）、既存145/39/123件、標準npm test、本番build/startup budgetが成功。input1,363件/artifact2,018件の全hashが一致した。今回追った経路の再レビューでは追加の再現可能な不具合が見つからなくなった。簡易Character・制御fixtureのため、通常Game描画・実relay・physical touch・Switch実機の一致は未確認。[修正・比較根拠・独立baseline・raw記録](inkwave-review-closure-2026-10-23.md)。
+## 2026-10-23: 弓・ワイパーの個別再レビュー
+
+main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、Splatoon 3 Ver.11.3.0の固定抽出データ、任天堂の更新履歴、攻略＆検証Wikiを照合した。対象は各3ベース＋5派生、通常バトル、ギアなしを基本に既存の低インク・キープ・ギア条件も含む。実装・再現・影響・未確認範囲は別々の個別記録に残した。
+
+- **弓**: ActorがRunnerを呼ばないスペシャル/スーパージャンプ中も、原典の接地/空中速度で扇面の傾斜時計を進める。従来は直前の角度で停止していた。通常Runnerとの二重更新を防ぎ、実際のジャンプ受付から着地まで30/60/120Hzで検査。[弓の個別記録](inkwave-stringer-splatana-review-20261023/stringer.md)。
+- **ワイパー**: 内側の波判定が地形に触れると、同じ翼の外側もその接触時刻で消滅するよう修正。従来は外側が残り柱の脇の敵へダメージを与えた。接触順、中心/反対翼の存続、外側の架空塗り禁止、ghost非権威を検査。[ワイパーの個別記録](inkwave-stringer-splatana-review-20261023/splatana.md)。
+
+根拠は各記録の固定原典とWikiの観察。ソース構成・minify生成物・Chromiumの制御シーンは別の検証種別として [検証receipt](inkwave-stringer-splatana-review-20261023/validation.json) に記録する。Switch実機、原典の省略既定値、入力先行受付、骨軌道・実音波形の一致を解消済みにしない。

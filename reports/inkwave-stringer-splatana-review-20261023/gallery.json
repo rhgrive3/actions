@@ -1,0 +1,150 @@
+{
+  "revision": "36004efdc15b72d6440b687a326d7a09f7aeff956e94aa49154ec24ebd06811d",
+  "rows": [
+    {
+      "id": "s3-stringer-normal",
+      "family": "stringer",
+      "modelKind": "charger",
+      "own": true,
+      "size": [
+        0.1122,
+        0.8123,
+        0.425
+      ],
+      "muzzle": [
+        0,
+        0.085,
+        0.178
+      ],
+      "tris": 7500,
+      "buildMs": 631.4,
+      "geometryKB": 351,
+      "maxGrip": 0.17,
+      "nonFinite": false,
+      "firingFrames": 130,
+      "weaponKind": "charger",
+      "weaponModel": "s3-stringer-normal"
+    },
+    {
+      "id": "s3-stringer-short",
+      "family": "stringer",
+      "modelKind": "charger",
+      "own": true,
+      "size": [
+        0.1388,
+        0.666,
+        0.354
+      ],
+      "muzzle": [
+        0,
+        0.085,
+        0.15
+      ],
+      "tris": 11376,
+      "buildMs": 193.4,
+      "geometryKB": 568,
+      "maxGrip": 0.17,
+      "nonFinite": false,
+      "firingFrames": 130,
+      "weaponKind": "charger",
+      "weaponModel": "s3-stringer-short"
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "family": "stringer",
+      "modelKind": "charger",
+      "own": true,
+      "size": [
+        0.142,
+        0.698,
+        0.419
+      ],
+      "muzzle": [
+        0,
+        0.085,
+        0.205
+      ],
+      "tris": 9012,
+      "buildMs": 169.5,
+      "geometryKB": 448,
+      "maxGrip": 0.17,
+      "nonFinite": false,
+      "firingFrames": 130,
+      "weaponKind": "charger",
+      "weaponModel": "s3-stringer-explosion"
+    },
+    {
+      "id": "s3-saber-normal",
+      "family": "splatana",
+      "modelKind": "shooter",
+      "own": true,
+      "size": [
+        0.063,
+        0.0966,
+        0.4592
+      ],
+      "muzzle": [
+        0,
+        0,
+        0.36
+      ],
+      "tris": 5096,
+      "buildMs": 228.1,
+      "geometryKB": 250,
+      "maxGrip": 0,
+      "nonFinite": false,
+      "firingFrames": 158,
+      "weaponKind": "shooter",
+      "weaponModel": "s3-saber-normal"
+    },
+    {
+      "id": "s3-saber-lite",
+      "family": "splatana",
+      "modelKind": "shooter",
+      "own": true,
+      "size": [
+        0.04,
+        0.1101,
+        0.4864
+      ],
+      "muzzle": [
+        0,
+        0,
+        0.4
+      ],
+      "tris": 3990,
+      "buildMs": 169.4,
+      "geometryKB": 197,
+      "maxGrip": 0,
+      "nonFinite": false,
+      "firingFrames": 158,
+      "weaponKind": "shooter",
+      "weaponModel": "s3-saber-lite"
+    },
+    {
+      "id": "s3-saber-heavy",
+      "family": "splatana",
+      "modelKind": "shooter",
+      "own": true,
+      "size": [
+        0.0884,
+        0.1197,
+        0.4623
+      ],
+      "muzzle": [
+        0,
+        0,
+        0.375
+      ],
+      "tris": 6120,
+      "buildMs": 214.5,
+      "geometryKB": 299,
+      "maxGrip": 0,
+      "nonFinite": false,
+      "firingFrames": 170,
+      "weaponKind": "shooter",
+      "weaponModel": "s3-saber-heavy"
+    }
+  ],
+  "errors": []
+}

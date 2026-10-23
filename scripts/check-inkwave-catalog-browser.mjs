@@ -181,6 +181,51 @@ try {
       }
       // END_LEGACY_SCOPE_ADMISSION_PROBE
       const {Level}=await import('/src/world/level.js');
+      // BEGIN_STRINGER_SPLATANA_REVIEW_PROBE
+      const stringerSplatanaReviewChecks=[];
+      {
+        const saved={level:G.level,physics:G.physics,paint:G.paint,actors:G.actors,time:G.time};
+        const stage=single=>new Level({bounds:{minX:-50,maxX:50,minZ:-50,maxZ:50},spawnPads:[[-40,0,0],[40,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-50,-.5,-50],max:[50,0,50]},...single]});
+        try {
+          G.paint={sample:()=>1,splat:()=>0};
+          for(const id of Object.keys(WEAPONS).filter(id=>WEAPONS[id].behaviorKind==='stringer')){
+            G.projectiles.clear();G.level=stage([]);G.physics=new api.Physics(G.level);
+            const actor=makeActor(id);G.actors=[actor];actor.kidT=10;
+            actor.superJump(new THREE.Vector3(0,0,10));
+            check(actor.superJumpState?.phase==='charge',id+' native jump admitted');
+            const shot=actor.weapon.catalogRecord.parameters.spl__WeaponStringerParam.ShotParam;
+            let expected=0,air=0,landed=false;
+            for(let i=0;i<480&&!landed;i++){
+              G.time+=1/60;actor.update(1/60);
+              expected=Math.max(0,Math.min(90,expected+(actor.grounded?shot.BowJumpTiltSpeedReverse:shot.BowJumpTiltSpeedForward)));
+              check(actor.weaponRunner.catalogState?.bowTilt===expected,id+' native jump fan clock');
+              if(!actor.grounded)air++;landed=!actor.superJumpState;
+            }
+            check(air>10&&landed&&G.projectiles.list.length===0,id+' bounded unarmed jump');
+            stringerSplatanaReviewChecks.push({id,action:'native-superjump',air,landed,tilt:expected});
+          }
+          for(const id of Object.keys(WEAPONS).filter(id=>WEAPONS[id].behaviorKind==='splatana'))
+          for(const key of ['saber-horizontal','saber-vertical'])for(const side of [-1,1]){
+            G.projectiles.clear();G.level=stage([]);G.physics=new api.Physics(G.level);
+            const actor=makeActor(id);G.actors=[actor];actor.pos.y=5;actor.aimPoint.set(0,6,100);
+            const full=actor.weapon.catalogRecord.parameters.spl__WeaponSaberParam.ChargeParam.ChargeFrameFullCharge;
+            for(let i=0;i<(key==='saber-vertical'?full:1);i++)actor.weaponRunner.update(1/60,{fire:true});
+            for(let i=0;i<50&&!G.projectiles.list.length;i++)actor.weaponRunner.update(1/60,{fire:false});
+            const p=G.projectiles.list.find(p=>p.catalog),c=p?.catalog.descriptor.c;
+            check(c&&c.ParamArray.length>1,id+' admitted multi-lobe wave');
+            const outer=side<0?0:c.ParamArray.length-1,inner=outer-side;
+            if(inner===c.CoreIndex)continue; // A 3-lobe weak Wiper has no intermediate lobe.
+            const v=c.OffsetArray[inner],centre=p.pos.clone().add(new THREE.Vector3(v.X,v.Y,v.Z+.55));
+            G.level=stage([{kind:'box',min:[centre.x-.02,centre.y-.02,centre.z-.08],max:[centre.x+.02,centre.y+.02,centre.z+.08]}]);
+            G.physics=new api.Physics(G.level);
+            for(let i=0;i<3;i++)G.projectiles.update(1/60);
+            check(p.catalog.lobeGone?.[inner]&&p.catalog.lobeGone?.[outer],id+' outward lobe retirement');
+            check(!p.catalog.lobeGone?.[c.CoreIndex],id+' centre survives side post');
+            stringerSplatanaReviewChecks.push({id,action:key,side,inner,outer,retired:true});
+          }
+        } finally {G.projectiles.clear();Object.assign(G,saved);}
+      }
+      // END_STRINGER_SPLATANA_REVIEW_PROBE
       // BEGIN_CHARGE_KEEP_INPUT_PROBE
       const chargeKeepChecks = [];
       {
@@ -826,6 +871,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
+        stringerSplatanaReviewChecks,
         splatanaThrowChecks, chargeKeepChecks, scopeAdmissionChecks, wallFacingChecks, catalogueSubChecks, torpedoGearContactChecks, directSubChecks, accelerationChecks, mistChecks, mistQueryChecks, kitChecks, weightChecks, uniqueGearChecks, sprinklerPowerChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
         records: records.length,
         legacy: legacyCount,
