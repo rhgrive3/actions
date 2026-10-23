@@ -83,9 +83,9 @@ test('inactive-missing source yields original geometry with no extra manifest fi
 });
 
 test('byte input CRLF, BOM, and source order preserve compact geometry',()=>{
-  const prefixed='\ufeff'+OBJ.replace(/\n/g,'\r\n');
-  const a=parseSourceOBJ(prefixed,{}, {compactInactiveDisplay:true});
-  const b=parseSourceOBJ(new TextEncoder().encode(prefixed),{}, {compactInactiveDisplay:true});
+  const crlf=OBJ.replace(/\n/g,'\r\n');
+  const a=parseSourceOBJ(crlf,{}, {compactInactiveDisplay:true});
+  const b=parseSourceOBJ(new TextEncoder().encode('\ufeff'+crlf),{}, {compactInactiveDisplay:true});
   assert.deepEqual(a.vertices,b.vertices);
   assert.deepEqual(a.indices,b.indices);
   assert.deepEqual(a.objects,b.objects);
