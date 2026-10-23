@@ -1,5 +1,7 @@
 # INKWAVE pinned special candidate: real-browser evidence
 
+Latest PR head: **`2e8d90b8afb6aac057edfbb988fae789ef36cfd3`**. [Explicit unchanged-input binding, new-head CI checkpoint and bounded common-stall diagnosis](head-2e8-binding/README.md). The4c9 capture identities below are preserved as actual capture provenance.
+
 **Verdict: partial Chromium visual acceptance only. Final visual acceptance is not justified yet.** The observed special changes render and their normal native paths pass. The initially failed Reef repeated-lifecycle assertions are now explained and corrected: a bounded fresh-context native probe passes reset/reuse/death on both candidate and parent. Normal real-time performance is not established in this software-rendered cloud environment. See the [Reef diagnosis and QA-only correction](reef-lifecycle-diagnosis/README.md). WebKit is absent. This is browser evidence, independent of the parent's native tests and mandatory exact-head CI.
 
 ## Source and fresh normal build

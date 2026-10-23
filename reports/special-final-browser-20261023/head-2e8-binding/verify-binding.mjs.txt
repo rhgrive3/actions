@@ -1,0 +1,37 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+const root='/workspace/inkwave-special-candidate',out=root+'/.ci-scratch/special-final-browser/newhead-2e8-proof';
+const old='4c9b7861038189e709db5e80e64d2a2712f7b877',head='2e8d90b8afb6aac057edfbb988fae789ef36cfd3',fixture='scripts/tests/inkwave-reviewed-special-delta-admission.test.mjs';
+const git=args=>execFileSync('git',args,{cwd:root,maxBuffer:32*1024*1024});
+const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+const scan=sha=>new Map(git(['ls-tree','-r','-z',sha]).toString().split('\0').filter(Boolean).map(s=>{const [meta,file]=s.split('\t'),[mode,type,blob]=meta.split(' ');return[file,{mode,type,blob}];}));
+const before=scan(old),after=scan(head);assert.equal(before.size,6327);assert.equal(after.size,6327);
+const different=[...new Set([...before.keys(),...after.keys()])].filter(f=>JSON.stringify(before.get(f))!==JSON.stringify(after.get(f)));
+assert.deepEqual(different,[fixture]);assert.equal(after.get(fixture).blob,'ee7325945233057573b807babec13cd5536b523f');
+const official=JSON.parse(fs.readFileSync(out+'/official-initial-readback.json'));
+assert.equal(official.pr.head_sha,head);assert.equal(official.pr.base_sha,'726e338ac256ba9609086ce65e25a68ddd99df85');
+assert.equal(official.commit.tree.sha,'54d7fabb65d8148bcdbdfbaf52425bd6645353bb');assert.deepEqual(official.commit.parents.map(x=>x.sha),[old]);
+const body=git(['show',head+':'+fixture]);assert.equal(hash(body),'8e26e73560f2ee0dce55f30e422cbd70b52bfb8fbc4489d124f836bca5d84ada');
+assert.equal(official.fixture.sha,after.get(fixture).blob);assert.equal(hash(Buffer.from(official.fixture.content)),hash(body));
+const manifest=JSON.parse(fs.readFileSync(root+'/.ci-scratch/special-final-browser/site-after/inkwave-build.json'));
+assert.equal(hash(JSON.stringify(manifest.files)),manifest.inputHash);assert.equal(Object.keys(manifest.files).length,1421);
+const ns={'upstream/':'inkwave-public/','patch/':'patches/splatoon3/','touch-layout/':'patches/touch-layout/','reliability/':'patches/reliability/','local-quality/':'patches/local-quality/','network-replication/':'patches/network-replication/','loading-cache/':'patches/loading-cache/','practice-range/':'patches/practice-range/','native-stages/':'patches/native-stages/','build-script/':'scripts/'};
+const inputs=[];for(const[k,expected]of Object.entries(manifest.files)){
+ const prefix=Object.keys(ns).find(n=>k.startsWith(n));assert(prefix,k);const file=ns[prefix]+k.slice(prefix.length),bytes=fs.readFileSync(path.join(root,file));assert.equal(hash(bytes),expected,file);
+ const blob=crypto.createHash('sha1').update(Buffer.from('blob '+bytes.length+'\0')).update(bytes).digest('hex');
+ assert.equal(blob,before.get(file)?.blob,file+' old Git');assert.equal(blob,after.get(file)?.blob,file+' new Git');assert.deepEqual(before.get(file),after.get(file));
+ inputs.push({manifestKey:k,path:file,sha256:expected,gitBlob:blob,mode:after.get(file).mode});
+}
+assert(!inputs.some(x=>x.path===fixture));assert.equal(hash(fs.readFileSync(root+'/scripts/build-inkwave.mjs')),manifest.build.script);
+assert.deepEqual(before.get('scripts/build-inkwave.mjs'),after.get('scripts/build-inkwave.mjs'));
+for(const f of ['patches/splatoon3/runtime/special-vfx.mjs','patches/splatoon3/runtime/special-presentation.mjs','patches/splatoon3/runtime/special-motion.mjs','patches/splatoon3/runtime/area-special-vfx-clock.mjs'])assert.deepEqual(before.get(f),after.get(f));
+assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash);for(const[f,h]of Object.entries(manifest.artifacts))assert.equal(hash(fs.readFileSync(root+'/.ci-scratch/special-final-browser/site-after/'+f)),h,f);
+const unchanged=[...after].filter(([f])=>f!==fixture).map(([file,meta])=>({path:file,...meta}));
+fs.writeFileSync(out+'/unchanged-leaves.json',JSON.stringify(unchanged,null,2)+'\n');fs.writeFileSync(out+'/build-input-proof.json',JSON.stringify(inputs,null,2)+'\n');
+const evidenceBase=root+'/.ci-scratch/special-final-browser';
+const evidence=['gameplay-accepted-after/result.json','gameplay-release-lobes-after/result.json','gameplay-shapes-after/result.json','inkjet/result.json','continuation-clean/result.json','bubbler-after/result.json','reef-diagnosis/result.json','reef-diagnosis-parent/result.json'];
+const proof={status:'passed',capturedAt:new Date().toISOString(),officialPr:1854,newHead:head,newTree:official.commit.tree.sha,soleParent:old,leaves:after.size,unchangedLeaves:unchanged.length,changed:[{path:fixture,before:before.get(fixture),after:after.get(fixture),sha256:hash(body),officialBlobReadbackMatches:true}],buildInputsVerified:inputs.length,inputHash:manifest.inputHash,contentHash:manifest.contentHash,buildRevision:manifest.build.revision,builderSHA256:manifest.build.script,outputArtifactsVerified:Object.keys(manifest.artifacts).length,physicalOutputFilesIncludingManifest:Object.keys(manifest.artifacts).length+1,buildInputsProofSHA256:hash(fs.readFileSync(out+'/build-input-proof.json')),unchangedLeavesProofSHA256:hash(fs.readFileSync(out+'/unchanged-leaves.json')),evidence:evidence.map(f=>({path:f,sha256:hash(fs.readFileSync(evidenceBase+'/'+f))})),scope:'Existing actual browser captures remain captures of the fresh 4c9 normal build, now applicable to 2e8 through exact unchanged production leaves, complete tree and all1421 build-input proof. No fresh 2e8 build/browser rerun is claimed. New-head CI is independently checked by head_sha; old-head CI success is not transferred.'};
+fs.writeFileSync(out+'/binding-summary.json',JSON.stringify(proof,null,2)+'\n');console.log(JSON.stringify(proof,null,2));

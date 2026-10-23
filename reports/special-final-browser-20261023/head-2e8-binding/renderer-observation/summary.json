@@ -1,0 +1,721 @@
+{
+  "appliesToHead": "2e8d90b8afb6aac057edfbb988fae789ef36cfd3",
+  "boundBrowserSource": "4c9b7861038189e709db5e80e64d2a2712f7b877",
+  "scope": "Shared stall diagnosis; not normal-performance acceptance or hardware FPS. No assertion/timeouts/flags or runtime changes. New timed probe initialized with every frame rendered and stopped on unchanged30s deadline on both sides.",
+  "observations": {
+    "candidate-bound-to-2e8": {
+      "sourceCommit": "4c9b7861038189e709db5e80e64d2a2712f7b877",
+      "contentHash": "bd3d8d2715b53a842901be6457bdb777621c4290f60a2c37a1404e4f9e5d3707",
+      "status": "failed",
+      "failure": "Error: normal-render-initialization-10: unchanged 30000ms deadline\n    at Timeout.<anonymous> (file:///workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/renderer-stall-cpu/observe.mjs:17:238)\n    at listOnTimeout (node:internal/timers:635:17)\n    at process.processTimers (node:internal/timers:571:7)",
+      "completedFrameSamples": 100,
+      "lastRecordedCompletedTick": 103,
+      "postFailureReadback": {
+        "label": "initialization",
+        "tick": 113,
+        "current": null
+      },
+      "specialWasActivated": false,
+      "worstCompletedFrames": [
+        {
+          "stage": "initialization",
+          "tickBefore": 59,
+          "relativeBefore": null,
+          "frameRenderer": {
+            "render": {
+              "calls": 1,
+              "cpuWallMs": 486.79999999981374,
+              "maxCpuWallMs": 486.79999999981374
+            }
+          },
+          "threeRenderer": {
+            "render": {
+              "calls": 4,
+              "cpuWallMs": 486.59999999962747,
+              "maxCpuWallMs": 486.39999999990687
+            }
+          },
+          "existingGLCalls": {
+            "bufferSubData": {
+              "calls": 15,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawElements": {
+              "calls": 30,
+              "cpuWallMs": 0.10000000009313226,
+              "maxCpuWallMs": 0.10000000009313226
+            },
+            "drawElementsInstanced": {
+              "calls": 19,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawArraysInstanced": {
+              "calls": 5,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawArrays": {
+              "calls": 9,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            }
+          },
+          "longCalls": [
+            {
+              "bucket": "threeRenderer",
+              "name": "render",
+              "cpuWallMs": 486.39999999990687
+            },
+            {
+              "bucket": "frameRenderer",
+              "name": "render",
+              "cpuWallMs": 486.79999999981374
+            }
+          ],
+          "frameCpuWallMs": 491.29999999981374,
+          "tick": 60,
+          "phase": null,
+          "active": null,
+          "pos": [
+            0.9078691764006462,
+            6.7,
+            -38.578893279265465
+          ],
+          "skipRender": false,
+          "outsideFrameRendererCpuWallMs": 4.5
+        },
+        {
+          "stage": "initialization",
+          "tickBefore": 98,
+          "relativeBefore": null,
+          "frameRenderer": {
+            "render": {
+              "calls": 1,
+              "cpuWallMs": 3.3999999999068677,
+              "maxCpuWallMs": 3.3999999999068677
+            }
+          },
+          "threeRenderer": {
+            "render": {
+              "calls": 4,
+              "cpuWallMs": 3.2000000001862645,
+              "maxCpuWallMs": 3.1000000000931323
+            }
+          },
+          "existingGLCalls": {
+            "bufferSubData": {
+              "calls": 15,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawElements": {
+              "calls": 28,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawElementsInstanced": {
+              "calls": 19,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawArraysInstanced": {
+              "calls": 5,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawArrays": {
+              "calls": 9,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            }
+          },
+          "frameCpuWallMs": 46.1999999997206,
+          "tick": 99,
+          "phase": null,
+          "active": null,
+          "pos": [
+            0.9078691764006462,
+            6.7,
+            -38.578893279265465
+          ],
+          "skipRender": false,
+          "outsideFrameRendererCpuWallMs": 42.799999999813735
+        },
+        {
+          "stage": "initialization",
+          "tickBefore": 60,
+          "relativeBefore": null,
+          "frameRenderer": {
+            "render": {
+              "calls": 1,
+              "cpuWallMs": 37.5,
+              "maxCpuWallMs": 37.5
+            }
+          },
+          "threeRenderer": {
+            "render": {
+              "calls": 4,
+              "cpuWallMs": 37.5,
+              "maxCpuWallMs": 37.39999999990687
+            }
+          },
+          "existingGLCalls": {
+            "bufferSubData": {
+              "calls": 15,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawElements": {
+              "calls": 30,
+              "cpuWallMs": 0.10000000009313226,
+              "maxCpuWallMs": 0.10000000009313226
+            },
+            "drawElementsInstanced": {
+              "calls": 19,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawArraysInstanced": {
+              "calls": 5,
+              "cpuWallMs": 0.10000000009313226,
+              "maxCpuWallMs": 0.10000000009313226
+            },
+            "drawArrays": {
+              "calls": 9,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            }
+          },
+          "longCalls": [
+            {
+              "bucket": "threeRenderer",
+              "name": "render",
+              "cpuWallMs": 37.39999999990687
+            },
+            {
+              "bucket": "frameRenderer",
+              "name": "render",
+              "cpuWallMs": 37.5
+            }
+          ],
+          "frameCpuWallMs": 45.60000000009313,
+          "tick": 61,
+          "phase": null,
+          "active": null,
+          "pos": [
+            0.9078691764006462,
+            6.7,
+            -38.578893279265465
+          ],
+          "skipRender": false,
+          "outsideFrameRendererCpuWallMs": 8.100000000093132
+        },
+        {
+          "stage": "initialization",
+          "tickBefore": 3,
+          "relativeBefore": null,
+          "frameRenderer": {
+            "render": {
+              "calls": 1,
+              "cpuWallMs": 8.899999999906868,
+              "maxCpuWallMs": 8.899999999906868
+            }
+          },
+          "threeRenderer": {
+            "render": {
+              "calls": 5,
+              "cpuWallMs": 8.299999999813735,
+              "maxCpuWallMs": 8.100000000093132
+            }
+          },
+          "existingGLCalls": {
+            "bufferSubData": {
+              "calls": 58,
+              "cpuWallMs": 0.19999999972060323,
+              "maxCpuWallMs": 0.10000000009313226
+            },
+            "bufferData": {
+              "calls": 4,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawElements": {
+              "calls": 31,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawArrays": {
+              "calls": 13,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawElementsInstanced": {
+              "calls": 16,
+              "cpuWallMs": 0.10000000009313226,
+              "maxCpuWallMs": 0.10000000009313226
+            },
+            "drawArraysInstanced": {
+              "calls": 5,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            }
+          },
+          "frameCpuWallMs": 45,
+          "tick": 4,
+          "phase": null,
+          "active": null,
+          "pos": [
+            0.9078691764006462,
+            6.7,
+            -38.578893279265465
+          ],
+          "skipRender": false,
+          "outsideFrameRendererCpuWallMs": 36.10000000009313
+        },
+        {
+          "stage": "initialization",
+          "tickBefore": 102,
+          "relativeBefore": null,
+          "frameRenderer": {
+            "render": {
+              "calls": 1,
+              "cpuWallMs": 27.09999999962747,
+              "maxCpuWallMs": 27.09999999962747
+            }
+          },
+          "threeRenderer": {
+            "render": {
+              "calls": 4,
+              "cpuWallMs": 26.700000000186265,
+              "maxCpuWallMs": 26.600000000093132
+            }
+          },
+          "existingGLCalls": {
+            "bufferSubData": {
+              "calls": 15,
+              "cpuWallMs": 0.10000000009313226,
+              "maxCpuWallMs": 0.10000000009313226
+            },
+            "drawElements": {
+              "calls": 27,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawElementsInstanced": {
+              "calls": 19,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawArraysInstanced": {
+              "calls": 5,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawArrays": {
+              "calls": 9,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            }
+          },
+          "longCalls": [
+            {
+              "bucket": "threeRenderer",
+              "name": "render",
+              "cpuWallMs": 26.600000000093132
+            },
+            {
+              "bucket": "frameRenderer",
+              "name": "render",
+              "cpuWallMs": 27.09999999962747
+            }
+          ],
+          "frameCpuWallMs": 41.10000000009313,
+          "tick": 103,
+          "phase": null,
+          "active": null,
+          "pos": [
+            0.9078691764006462,
+            6.7,
+            -38.578893279265465
+          ],
+          "skipRender": false,
+          "outsideFrameRendererCpuWallMs": 14.000000000465661
+        }
+      ],
+      "rawSHA256": "0eeba8e5ead05513664a23a2fe28b1025a083913d5267146095c59ce3e3f473f"
+    },
+    "parent726": {
+      "sourceCommit": "726e338ac256ba9609086ce65e25a68ddd99df85",
+      "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+      "status": "failed",
+      "failure": "Error: normal-render-initialization-13: unchanged 30000ms deadline\n    at Timeout.<anonymous> (file:///workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/renderer-stall-cpu/observe.mjs:17:238)\n    at listOnTimeout (node:internal/timers:635:17)\n    at process.processTimers (node:internal/timers:571:7)",
+      "completedFrameSamples": 130,
+      "lastRecordedCompletedTick": 133,
+      "postFailureReadback": {
+        "label": "initialization",
+        "tick": 143,
+        "current": null
+      },
+      "specialWasActivated": false,
+      "worstCompletedFrames": [
+        {
+          "stage": "initialization",
+          "tickBefore": 80,
+          "relativeBefore": null,
+          "frameRenderer": {
+            "render": {
+              "calls": 1,
+              "cpuWallMs": 8155.199999999721,
+              "maxCpuWallMs": 8155.199999999721
+            }
+          },
+          "threeRenderer": {
+            "render": {
+              "calls": 4,
+              "cpuWallMs": 8150.999999999534,
+              "maxCpuWallMs": 8150.799999999814
+            }
+          },
+          "existingGLCalls": {
+            "bufferSubData": {
+              "calls": 15,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawElements": {
+              "calls": 30,
+              "cpuWallMs": 8125.299999999814,
+              "maxCpuWallMs": 8125.299999999814
+            },
+            "drawElementsInstanced": {
+              "calls": 19,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawArraysInstanced": {
+              "calls": 5,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawArrays": {
+              "calls": 9,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            }
+          },
+          "longCalls": [
+            {
+              "bucket": "existingGLCalls",
+              "name": "drawElements",
+              "cpuWallMs": 8125.299999999814
+            },
+            {
+              "bucket": "threeRenderer",
+              "name": "render",
+              "cpuWallMs": 8150.799999999814
+            },
+            {
+              "bucket": "frameRenderer",
+              "name": "render",
+              "cpuWallMs": 8155.199999999721
+            }
+          ],
+          "frameCpuWallMs": 8162.899999999907,
+          "tick": 81,
+          "phase": null,
+          "active": null,
+          "pos": [
+            0.9078691764006462,
+            6.7,
+            -38.578893279265465
+          ],
+          "skipRender": false,
+          "outsideFrameRendererCpuWallMs": 7.7000000001862645
+        },
+        {
+          "stage": "initialization",
+          "tickBefore": 69,
+          "relativeBefore": null,
+          "frameRenderer": {
+            "render": {
+              "calls": 1,
+              "cpuWallMs": 6562.199999999721,
+              "maxCpuWallMs": 6562.199999999721
+            }
+          },
+          "threeRenderer": {
+            "render": {
+              "calls": 4,
+              "cpuWallMs": 6561.899999999907,
+              "maxCpuWallMs": 6561.700000000186
+            }
+          },
+          "existingGLCalls": {
+            "bufferSubData": {
+              "calls": 15,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawElements": {
+              "calls": 30,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawElementsInstanced": {
+              "calls": 19,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawArraysInstanced": {
+              "calls": 5,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawArrays": {
+              "calls": 9,
+              "cpuWallMs": 0.10000000009313226,
+              "maxCpuWallMs": 0.10000000009313226
+            }
+          },
+          "longCalls": [
+            {
+              "bucket": "threeRenderer",
+              "name": "render",
+              "cpuWallMs": 6561.700000000186
+            },
+            {
+              "bucket": "frameRenderer",
+              "name": "render",
+              "cpuWallMs": 6562.199999999721
+            }
+          ],
+          "frameCpuWallMs": 6585.100000000093,
+          "tick": 70,
+          "phase": null,
+          "active": null,
+          "pos": [
+            0.9078691764006462,
+            6.7,
+            -38.578893279265465
+          ],
+          "skipRender": false,
+          "outsideFrameRendererCpuWallMs": 22.90000000037253
+        },
+        {
+          "stage": "initialization",
+          "tickBefore": 81,
+          "relativeBefore": null,
+          "frameRenderer": {
+            "render": {
+              "calls": 1,
+              "cpuWallMs": 613.6000000000931,
+              "maxCpuWallMs": 613.6000000000931
+            }
+          },
+          "threeRenderer": {
+            "render": {
+              "calls": 4,
+              "cpuWallMs": 613.2999999998137,
+              "maxCpuWallMs": 613.2999999998137
+            }
+          },
+          "existingGLCalls": {
+            "bufferSubData": {
+              "calls": 15,
+              "cpuWallMs": 5.600000000093132,
+              "maxCpuWallMs": 5.600000000093132
+            },
+            "drawElements": {
+              "calls": 29,
+              "cpuWallMs": 0.10000000009313226,
+              "maxCpuWallMs": 0.10000000009313226
+            },
+            "drawElementsInstanced": {
+              "calls": 19,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawArraysInstanced": {
+              "calls": 5,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawArrays": {
+              "calls": 9,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            }
+          },
+          "longCalls": [
+            {
+              "bucket": "threeRenderer",
+              "name": "render",
+              "cpuWallMs": 613.2999999998137
+            },
+            {
+              "bucket": "frameRenderer",
+              "name": "render",
+              "cpuWallMs": 613.6000000000931
+            }
+          ],
+          "frameCpuWallMs": 621.8000000002794,
+          "tick": 82,
+          "phase": null,
+          "active": null,
+          "pos": [
+            0.9078691764006462,
+            6.7,
+            -38.578893279265465
+          ],
+          "skipRender": false,
+          "outsideFrameRendererCpuWallMs": 8.200000000186265
+        },
+        {
+          "stage": "initialization",
+          "tickBefore": 98,
+          "relativeBefore": null,
+          "frameRenderer": {
+            "render": {
+              "calls": 1,
+              "cpuWallMs": 14.5,
+              "maxCpuWallMs": 14.5
+            }
+          },
+          "threeRenderer": {
+            "render": {
+              "calls": 4,
+              "cpuWallMs": 14.300000000279397,
+              "maxCpuWallMs": 14
+            }
+          },
+          "existingGLCalls": {
+            "bufferSubData": {
+              "calls": 15,
+              "cpuWallMs": 0.2999999998137355,
+              "maxCpuWallMs": 0.10000000009313226
+            },
+            "drawElements": {
+              "calls": 28,
+              "cpuWallMs": 0.10000000009313226,
+              "maxCpuWallMs": 0.10000000009313226
+            },
+            "drawElementsInstanced": {
+              "calls": 19,
+              "cpuWallMs": 0.10000000009313226,
+              "maxCpuWallMs": 0.10000000009313226
+            },
+            "drawArraysInstanced": {
+              "calls": 5,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawArrays": {
+              "calls": 9,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            }
+          },
+          "frameCpuWallMs": 85.29999999981374,
+          "tick": 99,
+          "phase": null,
+          "active": null,
+          "pos": [
+            0.9078691764006462,
+            6.7,
+            -38.578893279265465
+          ],
+          "skipRender": false,
+          "outsideFrameRendererCpuWallMs": 70.79999999981374
+        },
+        {
+          "stage": "initialization",
+          "tickBefore": 3,
+          "relativeBefore": null,
+          "frameRenderer": {
+            "render": {
+              "calls": 1,
+              "cpuWallMs": 12.199999999720603,
+              "maxCpuWallMs": 12.199999999720603
+            }
+          },
+          "threeRenderer": {
+            "render": {
+              "calls": 5,
+              "cpuWallMs": 12.099999999627471,
+              "maxCpuWallMs": 11.699999999720603
+            }
+          },
+          "existingGLCalls": {
+            "bufferSubData": {
+              "calls": 58,
+              "cpuWallMs": 0.20000000018626451,
+              "maxCpuWallMs": 0.10000000009313226
+            },
+            "bufferData": {
+              "calls": 4,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawElements": {
+              "calls": 31,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawArrays": {
+              "calls": 13,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawElementsInstanced": {
+              "calls": 16,
+              "cpuWallMs": 0,
+              "maxCpuWallMs": 0
+            },
+            "drawArraysInstanced": {
+              "calls": 5,
+              "cpuWallMs": 0.09999999962747097,
+              "maxCpuWallMs": 0.09999999962747097
+            }
+          },
+          "frameCpuWallMs": 81.40000000037253,
+          "tick": 4,
+          "phase": null,
+          "active": null,
+          "pos": [
+            0.9078691764006462,
+            6.7,
+            -38.578893279265465
+          ],
+          "skipRender": false,
+          "outsideFrameRendererCpuWallMs": 69.20000000065193
+        }
+      ],
+      "rawSHA256": "86fb0cfb551aac56c7f48223c16535756d1a3dec45c1ca489e8c870ab94332e3"
+    }
+  },
+  "previousPairedNativeCase": {
+    "candidate": {
+      "tick": 437,
+      "relative": 44,
+      "phase": "dash",
+      "frameCpuWallMs": 15584.80000000028,
+      "renderCallsThisFrame": 1
+    },
+    "parent": {
+      "tick": 437,
+      "relative": 44,
+      "phase": "dash",
+      "frameCpuWallMs": 15593.5,
+      "renderCallsThisFrame": 1
+    }
+  },
+  "conclusion": "The observed stall is shared with pinned parent726 and occurs before any special activation in the new all-render probe; it is not established as a candidate-specific regression. The local diagnostic is failed/incomplete, not passed: candidate and parent both exceeded30s during initialization. A completed parent frame spent8125.3ms in an existing WebGL drawElements call; exact location of each failed batch is unobserved. Broader relative-performance equivalence and hardware/display FPS are not established.",
+  "limitations": [
+    "Both contexts in the timed all-render probe used one browser process sequentially; this is not a matched cold-cache benchmark.",
+    "The failing10-frame page evaluation unwound after its30s deadline; late ticks are preserved in postFailureReadback and are never counted as passing samples.",
+    "Timing is synchronous JS wall time, which can contain native driver waits; no GPU fence/timer query or compositor/display measurement was added.",
+    "No new exact parent copy of the earlier49s/89s sustained cadence was run."
+  ]
+}

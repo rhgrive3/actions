@@ -1,0 +1,13 @@
+candidate-bound-to-2e8 boot
+candidate-bound-to-2e8 native warmup 10
+candidate-bound-to-2e8 Error: normal-render-initialization-10: unchanged 30000ms deadline
+    at Timeout.<anonymous> (file:///workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/renderer-stall-cpu/observe.mjs:17:238)
+    at listOnTimeout (node:internal/timers:635:17)
+    at process.processTimers (node:internal/timers:571:7)
+parent726 boot
+parent726 native warmup 10
+parent726 native warmup 110
+parent726 Error: normal-render-initialization-13: unchanged 30000ms deadline
+    at Timeout.<anonymous> (file:///workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/renderer-stall-cpu/observe.mjs:17:238)
+    at listOnTimeout (node:internal/timers:635:17)
+    at process.processTimers (node:internal/timers:571:7)

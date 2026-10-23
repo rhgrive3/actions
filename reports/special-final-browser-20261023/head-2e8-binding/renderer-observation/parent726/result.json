@@ -1,0 +1,7687 @@
+{
+  "side": "parent726",
+  "sourceCommit": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "appliesToHead": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "bindingProof": null,
+  "inputHash": "350b861c6d2ca16e5430ffc5b4f7e39cfbefc9df67290de1746b077ae256eb81",
+  "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+  "browser": "154.0.8037.57",
+  "scope": "One normal fully rendered native Reef first-dash case. Synchronous JS wall brackets only; existing GL calls are observed, no GPU fence/timer query, flags/timeout/renderer-policy changes, or suppressed rendering.",
+  "frames": [
+    {
+      "stage": "initialization",
+      "tickBefore": 3,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 12.199999999720603,
+          "maxCpuWallMs": 12.199999999720603
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 5,
+          "cpuWallMs": 12.099999999627471,
+          "maxCpuWallMs": 11.699999999720603
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 58,
+          "cpuWallMs": 0.20000000018626451,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "bufferData": {
+          "calls": 4,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 31,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 13,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        }
+      },
+      "frameCpuWallMs": 81.40000000037253,
+      "tick": 4,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 69.20000000065193
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 4,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 4.099999999627471,
+          "maxCpuWallMs": 4.099999999627471
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 5,
+          "cpuWallMs": 3.900000000372529,
+          "maxCpuWallMs": 3.8000000002793968
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 31,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArrays": {
+          "calls": 13,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 14.199999999720603,
+      "tick": 5,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 10.100000000093132
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 5,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.8999999999068677,
+          "maxCpuWallMs": 3.8999999999068677
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 5,
+          "cpuWallMs": 3.6000000000931323,
+          "maxCpuWallMs": 3.5
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 31,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 13,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 11.200000000186265,
+      "tick": 6,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 7.300000000279397
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 6,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 6.2999999998137355,
+          "maxCpuWallMs": 6.2999999998137355
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 5,
+          "cpuWallMs": 5.899999999906868,
+          "maxCpuWallMs": 5.600000000093132
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 31,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 13,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 14.800000000279397,
+      "tick": 7,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 8.500000000465661
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 7,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.2999999998137355,
+          "maxCpuWallMs": 3.2999999998137355
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 3.1999999997206032,
+          "maxCpuWallMs": 2.8999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 31,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 11.199999999720603,
+      "tick": 8,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 7.899999999906868
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 8,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.8000000002793968,
+          "maxCpuWallMs": 3.8000000002793968
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 3.6000000000931323,
+          "maxCpuWallMs": 3.3999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 31,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 10.700000000186265,
+      "tick": 9,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.899999999906868
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 9,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.5,
+          "maxCpuWallMs": 3.5
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 3.2999999998137355,
+          "maxCpuWallMs": 3.2000000001862645
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        },
+        "drawElements": {
+          "calls": 31,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 12.799999999813735,
+      "tick": 10,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 9.299999999813735
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 10,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 10.300000000279397,
+          "maxCpuWallMs": 10.300000000279397
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 10.200000000186265,
+          "maxCpuWallMs": 9.899999999906868
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        },
+        "drawElements": {
+          "calls": 31,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        }
+      },
+      "frameCpuWallMs": 20.399999999906868,
+      "tick": 11,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 10.099999999627471
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 11,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.1999999997206032,
+          "maxCpuWallMs": 3.1999999997206032
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 3,
+          "maxCpuWallMs": 3
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 31,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        }
+      },
+      "frameCpuWallMs": 12.100000000093132,
+      "tick": 12,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 8.900000000372529
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 12,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.3999999999068677,
+          "maxCpuWallMs": 3.3999999999068677
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 3.1000000000931323,
+          "maxCpuWallMs": 3
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 31,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 10.299999999813735,
+      "tick": 13,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.899999999906868
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 13,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.7000000001862645,
+          "maxCpuWallMs": 3.7000000001862645
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 3.5,
+          "maxCpuWallMs": 3.3000000002793968
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 31,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 10.799999999813735,
+      "tick": 14,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 7.099999999627471
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 14,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 4.100000000093132,
+          "maxCpuWallMs": 4.100000000093132
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 4,
+          "maxCpuWallMs": 3.8999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 31,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 10.700000000186265,
+      "tick": 15,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.600000000093132
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 15,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.7999999998137355,
+          "maxCpuWallMs": 2.7999999998137355
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.7999999998137355,
+          "maxCpuWallMs": 2.6999999997206032
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 31,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 7.899999999906868,
+      "tick": 16,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.100000000093132
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 16,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 1.8999999999068677,
+          "maxCpuWallMs": 1.8999999999068677
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.7999999998137355,
+          "maxCpuWallMs": 1.7000000001862645
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 31,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 6.199999999720603,
+      "tick": 17,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 4.2999999998137355
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 17,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.7000000001862645,
+          "maxCpuWallMs": 2.7000000001862645
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.7000000001862645,
+          "maxCpuWallMs": 2.5
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 31,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 9.800000000279397,
+      "tick": 18,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 7.100000000093132
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 18,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 7,
+          "maxCpuWallMs": 7
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 6.7999999998137355,
+          "maxCpuWallMs": 6.699999999720603
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 31,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 24.399999999906868,
+      "tick": 19,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 17.399999999906868
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 19,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3,
+          "maxCpuWallMs": 3
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.7999999998137355,
+          "maxCpuWallMs": 2.7999999998137355
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 17.5,
+      "tick": 20,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 14.5
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 20,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.6000000000931323,
+          "maxCpuWallMs": 2.6000000000931323
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.6000000000931323,
+          "maxCpuWallMs": 2.3999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 10.899999999906868,
+      "tick": 21,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 8.299999999813735
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 21,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.3999999999068677,
+          "maxCpuWallMs": 2.3999999999068677
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.3999999999068677,
+          "maxCpuWallMs": 2.2999999998137355
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 16,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 8.399999999906868,
+      "tick": 22,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 22,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.1000000000931323,
+          "maxCpuWallMs": 2.1000000000931323
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.1000000000931323,
+          "maxCpuWallMs": 2
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 7.5,
+      "tick": 23,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.399999999906868
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 23,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 24.800000000279397,
+          "maxCpuWallMs": 24.800000000279397
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 24.50000000046566,
+          "maxCpuWallMs": 24.300000000279397
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        }
+      },
+      "longCalls": [
+        {
+          "bucket": "threeRenderer",
+          "name": "render",
+          "cpuWallMs": 24.300000000279397
+        },
+        {
+          "bucket": "frameRenderer",
+          "name": "render",
+          "cpuWallMs": 24.800000000279397
+        }
+      ],
+      "frameCpuWallMs": 31.600000000093132,
+      "tick": 24,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.7999999998137355
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 24,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.900000000372529,
+          "maxCpuWallMs": 2.900000000372529
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.7000000001862645,
+          "maxCpuWallMs": 2.6000000000931323
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 9.600000000093132,
+      "tick": 25,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.699999999720603
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 25,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.1000000000931323,
+          "maxCpuWallMs": 3.1000000000931323
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 3,
+          "maxCpuWallMs": 2.8999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 9.700000000186265,
+      "tick": 26,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.600000000093132
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 26,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.1000000000931323,
+          "maxCpuWallMs": 3.1000000000931323
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 3,
+          "maxCpuWallMs": 2.8999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 9.100000000093132,
+      "tick": 27,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 27,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.3000000002793968,
+          "maxCpuWallMs": 3.3000000002793968
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 3.2000000001862645,
+          "maxCpuWallMs": 3.1000000000931323
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 12,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 12.099999999627471,
+      "tick": 28,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 8.799999999348074
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 28,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.1999999997206032,
+          "maxCpuWallMs": 3.1999999997206032
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 3.1999999997206032,
+          "maxCpuWallMs": 3.1000000000931323
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 11,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 9.100000000093132,
+      "tick": 29,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.900000000372529
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 29,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.6000000000931323,
+          "maxCpuWallMs": 2.6000000000931323
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.6000000000931323,
+          "maxCpuWallMs": 2.5
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArrays": {
+          "calls": 11,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 8.899999999906868,
+      "tick": 30,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.2999999998137355
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 30,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.5,
+          "maxCpuWallMs": 2.5
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.5,
+          "maxCpuWallMs": 2.2999999998137355
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 11,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 8.300000000279397,
+      "tick": 31,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.800000000279397
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 31,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 25.100000000093132,
+          "maxCpuWallMs": 25.100000000093132
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 25,
+          "maxCpuWallMs": 24.899999999906868
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 21.899999999906868,
+          "maxCpuWallMs": 21.899999999906868
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 10,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "longCalls": [
+        {
+          "bucket": "existingGLCalls",
+          "name": "bufferSubData",
+          "cpuWallMs": 21.899999999906868
+        },
+        {
+          "bucket": "threeRenderer",
+          "name": "render",
+          "cpuWallMs": 24.899999999906868
+        },
+        {
+          "bucket": "frameRenderer",
+          "name": "render",
+          "cpuWallMs": 25.100000000093132
+        }
+      ],
+      "frameCpuWallMs": 32,
+      "tick": 32,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.899999999906868
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 32,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.8000000002793968,
+          "maxCpuWallMs": 2.8000000002793968
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.7000000001862645,
+          "maxCpuWallMs": 2.5
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 10,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 9.5,
+      "tick": 33,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.699999999720603
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 33,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.1999999997206032,
+          "maxCpuWallMs": 3.1999999997206032
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 3.1999999997206032,
+          "maxCpuWallMs": 3
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 10,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 14.299999999813735,
+      "tick": 34,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 11.100000000093132
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 34,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.8999999999068677,
+          "maxCpuWallMs": 2.8999999999068677
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.8999999999068677,
+          "maxCpuWallMs": 2.7999999998137355
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 10,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 10.200000000186265,
+      "tick": 35,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 7.300000000279397
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 35,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.900000000372529,
+          "maxCpuWallMs": 2.900000000372529
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.8000000002793968,
+          "maxCpuWallMs": 2.7000000001862645
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 10,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 13.700000000186265,
+      "tick": 36,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 10.799999999813735
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 36,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.6000000000931323,
+          "maxCpuWallMs": 2.6000000000931323
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.6000000000931323,
+          "maxCpuWallMs": 2.5
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 10,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 8.900000000372529,
+      "tick": 37,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.300000000279397
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 37,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.5,
+          "maxCpuWallMs": 2.5
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.5,
+          "maxCpuWallMs": 2.400000000372529
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 10,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 8.599999999627471,
+      "tick": 38,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.099999999627471
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 38,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 6.399999999906868,
+          "maxCpuWallMs": 6.399999999906868
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 6.2000000001862645,
+          "maxCpuWallMs": 6.100000000093132
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArrays": {
+          "calls": 10,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 35.200000000186265,
+      "tick": 39,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 28.800000000279397
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 39,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3,
+          "maxCpuWallMs": 3
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.7999999998137355,
+          "maxCpuWallMs": 2.6999999997206032
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 10,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 13.200000000186265,
+      "tick": 40,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 10.200000000186265
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 40,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.599999999627471,
+          "maxCpuWallMs": 2.599999999627471
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.5,
+          "maxCpuWallMs": 2.400000000372529
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        }
+      },
+      "frameCpuWallMs": 8.599999999627471,
+      "tick": 41,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 41,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.7000000001862645,
+          "maxCpuWallMs": 2.7000000001862645
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.5,
+          "maxCpuWallMs": 2.5
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 10.800000000279397,
+      "tick": 42,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 8.100000000093132
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 42,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.3999999999068677,
+          "maxCpuWallMs": 2.3999999999068677
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.3999999999068677,
+          "maxCpuWallMs": 2.2999999998137355
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 8.299999999813735,
+      "tick": 43,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.899999999906868
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 43,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.8999999999068677,
+          "maxCpuWallMs": 2.8999999999068677
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.7999999998137355,
+          "maxCpuWallMs": 2.6999999997206032
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 10.899999999906868,
+      "tick": 44,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 8
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 44,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.7999999998137355,
+          "maxCpuWallMs": 3.7999999998137355
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 3.6000000000931323,
+          "maxCpuWallMs": 3.5
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 34,
+      "tick": 45,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 30.200000000186265
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 45,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.3999999999068677,
+          "maxCpuWallMs": 2.3999999999068677
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.3999999999068677,
+          "maxCpuWallMs": 2.3999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 8.399999999906868,
+      "tick": 46,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 46,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.7999999998137355,
+          "maxCpuWallMs": 2.7999999998137355
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.7000000001862645,
+          "maxCpuWallMs": 2.6000000000931323
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 8.100000000093132,
+      "tick": 47,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.300000000279397
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 47,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 1.8999999999068677,
+          "maxCpuWallMs": 1.8999999999068677
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.8999999999068677,
+          "maxCpuWallMs": 1.6999999997206032
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 7.100000000093132,
+      "tick": 48,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.2000000001862645
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 48,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.1999999997206032,
+          "maxCpuWallMs": 2.1999999997206032
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.099999999627471,
+          "maxCpuWallMs": 1.8999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        }
+      },
+      "frameCpuWallMs": 7.699999999720603,
+      "tick": 49,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.5
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 49,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.1999999997206032,
+          "maxCpuWallMs": 2.1999999997206032
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.1999999997206032,
+          "maxCpuWallMs": 2
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 7.5,
+      "tick": 50,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.300000000279397
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 50,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2,
+          "maxCpuWallMs": 2
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.7999999998137355,
+          "maxCpuWallMs": 1.6999999997206032
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 6.800000000279397,
+      "tick": 51,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 4.800000000279397
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 51,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.1000000000931323,
+          "maxCpuWallMs": 2.1000000000931323
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.1000000000931323,
+          "maxCpuWallMs": 2.1000000000931323
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 8.5,
+      "tick": 52,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.399999999906868
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 52,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.5,
+          "maxCpuWallMs": 2.5
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.3999999999068677,
+          "maxCpuWallMs": 2.2000000001862645
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 7.7999999998137355,
+      "tick": 53,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.2999999998137355
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 53,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3,
+          "maxCpuWallMs": 3
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.900000000372529,
+          "maxCpuWallMs": 2.7000000001862645
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 10.5,
+      "tick": 54,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 7.5
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 54,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.7000000001862645,
+          "maxCpuWallMs": 2.7000000001862645
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.7000000001862645,
+          "maxCpuWallMs": 2.6000000000931323
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 8.5,
+      "tick": 55,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.7999999998137355
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 55,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 5.699999999720603,
+          "maxCpuWallMs": 5.699999999720603
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 5.5,
+          "maxCpuWallMs": 5.5
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 11.799999999813735,
+      "tick": 56,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.100000000093132
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 56,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 6.100000000093132,
+          "maxCpuWallMs": 6.100000000093132
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 5.7999999998137355,
+          "maxCpuWallMs": 5.7999999998137355
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        }
+      },
+      "frameCpuWallMs": 19.200000000186265,
+      "tick": 57,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 13.100000000093132
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 57,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.5,
+          "maxCpuWallMs": 2.5
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.5,
+          "maxCpuWallMs": 2.3999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 8.799999999813735,
+      "tick": 58,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.2999999998137355
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 58,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.6000000000931323,
+          "maxCpuWallMs": 2.6000000000931323
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.3999999999068677,
+          "maxCpuWallMs": 2.3999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 8.5,
+      "tick": 59,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.899999999906868
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 59,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 25.299999999813735,
+          "maxCpuWallMs": 25.299999999813735
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 25.299999999813735,
+          "maxCpuWallMs": 25
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "longCalls": [
+        {
+          "bucket": "threeRenderer",
+          "name": "render",
+          "cpuWallMs": 25
+        },
+        {
+          "bucket": "frameRenderer",
+          "name": "render",
+          "cpuWallMs": 25.299999999813735
+        }
+      ],
+      "frameCpuWallMs": 30.700000000186265,
+      "tick": 60,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.400000000372529
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 60,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.1000000000931323,
+          "maxCpuWallMs": 2.1000000000931323
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.1000000000931323,
+          "maxCpuWallMs": 2
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        }
+      },
+      "frameCpuWallMs": 8.199999999720603,
+      "tick": 61,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.099999999627471
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 61,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 1.8999999999068677,
+          "maxCpuWallMs": 1.8999999999068677
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.8000000002793968,
+          "maxCpuWallMs": 1.6000000000931323
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 6.7000000001862645,
+      "tick": 62,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 4.800000000279397
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 62,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 1.8000000002793968,
+          "maxCpuWallMs": 1.8000000002793968
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.6000000000931323,
+          "maxCpuWallMs": 1.6000000000931323
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 5.600000000093132,
+      "tick": 63,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 3.7999999998137355
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 63,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 4.100000000093132,
+          "maxCpuWallMs": 4.100000000093132
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 4,
+          "maxCpuWallMs": 3.7999999998137355
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 13.800000000279397,
+      "tick": 64,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 9.700000000186265
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 64,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.6999999997206032,
+          "maxCpuWallMs": 2.6999999997206032
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.5,
+          "maxCpuWallMs": 2.5
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 9.799999999813735,
+      "tick": 65,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 7.100000000093132
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 65,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 6.399999999906868,
+          "maxCpuWallMs": 6.399999999906868
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 4.099999999627471,
+          "maxCpuWallMs": 4
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 1.2999999998137355,
+          "maxCpuWallMs": 1.2999999998137355
+        }
+      },
+      "frameCpuWallMs": 12.899999999906868,
+      "tick": 66,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.5
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 66,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.7999999998137355,
+          "maxCpuWallMs": 2.7999999998137355
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.6000000000931323,
+          "maxCpuWallMs": 2.6000000000931323
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 11.5,
+      "tick": 67,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 8.700000000186265
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 67,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 4.7000000001862645,
+          "maxCpuWallMs": 4.7000000001862645
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 4.600000000093132,
+          "maxCpuWallMs": 4.399999999906868
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 21.899999999906868,
+      "tick": 68,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 17.199999999720603
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 68,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.6000000000931323,
+          "maxCpuWallMs": 2.6000000000931323
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.6000000000931323,
+          "maxCpuWallMs": 2.3999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 8.300000000279397,
+      "tick": 69,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.7000000001862645
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 69,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 6562.199999999721,
+          "maxCpuWallMs": 6562.199999999721
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 6561.899999999907,
+          "maxCpuWallMs": 6561.700000000186
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        }
+      },
+      "longCalls": [
+        {
+          "bucket": "threeRenderer",
+          "name": "render",
+          "cpuWallMs": 6561.700000000186
+        },
+        {
+          "bucket": "frameRenderer",
+          "name": "render",
+          "cpuWallMs": 6562.199999999721
+        }
+      ],
+      "frameCpuWallMs": 6585.100000000093,
+      "tick": 70,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 22.90000000037253
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 70,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.7000000001862645,
+          "maxCpuWallMs": 2.7000000001862645
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.6000000000931323,
+          "maxCpuWallMs": 2.3999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 9.899999999906868,
+      "tick": 71,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 7.199999999720603
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 71,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.7000000001862645,
+          "maxCpuWallMs": 2.7000000001862645
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.5,
+          "maxCpuWallMs": 2.3999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        }
+      },
+      "frameCpuWallMs": 10.100000000093132,
+      "tick": 72,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 7.399999999906868
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 72,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.2000000001862645,
+          "maxCpuWallMs": 2.2000000001862645
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.2000000001862645,
+          "maxCpuWallMs": 2
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 9.5,
+      "tick": 73,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 7.2999999998137355
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 73,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 7,
+          "maxCpuWallMs": 7
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 7,
+          "maxCpuWallMs": 6.899999999906868
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 16.600000000093132,
+      "tick": 74,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 9.600000000093132
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 74,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 10.800000000279397,
+          "maxCpuWallMs": 10.800000000279397
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 10.600000000093132,
+          "maxCpuWallMs": 10.399999999906868
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 35.6999999997206,
+      "tick": 75,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 24.899999999441206
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 75,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 6.399999999906868,
+          "maxCpuWallMs": 6.399999999906868
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 6.2000000001862645,
+          "maxCpuWallMs": 6.2000000001862645
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 14.5,
+      "tick": 76,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 8.100000000093132
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 76,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.1999999997206032,
+          "maxCpuWallMs": 2.1999999997206032
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.9999999995343387,
+          "maxCpuWallMs": 1.8999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 10.600000000093132,
+      "tick": 77,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 8.400000000372529
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 77,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 5.100000000093132,
+          "maxCpuWallMs": 5.100000000093132
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 4.899999999906868,
+          "maxCpuWallMs": 4.7999999998137355
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 13.600000000093132,
+      "tick": 78,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 8.5
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 78,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2,
+          "maxCpuWallMs": 2
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2,
+          "maxCpuWallMs": 1.8999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 6.7000000001862645,
+      "tick": 79,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 4.7000000001862645
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 79,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.6000000000931323,
+          "maxCpuWallMs": 2.6000000000931323
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.6000000000931323,
+          "maxCpuWallMs": 2.5
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 7.7999999998137355,
+      "tick": 80,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.199999999720603
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 80,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 8155.199999999721,
+          "maxCpuWallMs": 8155.199999999721
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 8150.999999999534,
+          "maxCpuWallMs": 8150.799999999814
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 30,
+          "cpuWallMs": 8125.299999999814,
+          "maxCpuWallMs": 8125.299999999814
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "longCalls": [
+        {
+          "bucket": "existingGLCalls",
+          "name": "drawElements",
+          "cpuWallMs": 8125.299999999814
+        },
+        {
+          "bucket": "threeRenderer",
+          "name": "render",
+          "cpuWallMs": 8150.799999999814
+        },
+        {
+          "bucket": "frameRenderer",
+          "name": "render",
+          "cpuWallMs": 8155.199999999721
+        }
+      ],
+      "frameCpuWallMs": 8162.899999999907,
+      "tick": 81,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 7.7000000001862645
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 81,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 613.6000000000931,
+          "maxCpuWallMs": 613.6000000000931
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 613.2999999998137,
+          "maxCpuWallMs": 613.2999999998137
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 5.600000000093132,
+          "maxCpuWallMs": 5.600000000093132
+        },
+        "drawElements": {
+          "calls": 29,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "longCalls": [
+        {
+          "bucket": "threeRenderer",
+          "name": "render",
+          "cpuWallMs": 613.2999999998137
+        },
+        {
+          "bucket": "frameRenderer",
+          "name": "render",
+          "cpuWallMs": 613.6000000000931
+        }
+      ],
+      "frameCpuWallMs": 621.8000000002794,
+      "tick": 82,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 8.200000000186265
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 82,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 4.899999999906868,
+          "maxCpuWallMs": 4.899999999906868
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 4.7999999998137355,
+          "maxCpuWallMs": 4.5
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 14,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0.3000000002793968,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 14.399999999906868,
+      "tick": 83,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 9.5
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 83,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.7999999998137355,
+          "maxCpuWallMs": 3.7999999998137355
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 3.599999999627471,
+          "maxCpuWallMs": 3.099999999627471
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 14,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 10.200000000186265,
+      "tick": 84,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.400000000372529
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 84,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.7999999998137355,
+          "maxCpuWallMs": 2.7999999998137355
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.6999999997206032,
+          "maxCpuWallMs": 2.599999999627471
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 14,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 7.899999999906868,
+      "tick": 85,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.100000000093132
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 85,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.7000000001862645,
+          "maxCpuWallMs": 3.7000000001862645
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 3.5,
+          "maxCpuWallMs": 3.3999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 14,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        }
+      },
+      "frameCpuWallMs": 8.100000000093132,
+      "tick": 86,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 4.399999999906868
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 86,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 1.8999999999068677,
+          "maxCpuWallMs": 1.8999999999068677
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.8999999999068677,
+          "maxCpuWallMs": 1.7999999998137355
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 6.7000000001862645,
+      "tick": 87,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 4.800000000279397
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 87,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 1.7999999998137355,
+          "maxCpuWallMs": 1.7999999998137355
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.7999999998137355,
+          "maxCpuWallMs": 1.599999999627471
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 5.2999999998137355,
+      "tick": 88,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 3.5
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 88,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 1.8999999999068677,
+          "maxCpuWallMs": 1.8999999999068677
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.7999999998137355,
+          "maxCpuWallMs": 1.6999999997206032
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 5.5,
+      "tick": 89,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 3.6000000000931323
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 89,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 1.8999999999068677,
+          "maxCpuWallMs": 1.8999999999068677
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.7999999998137355,
+          "maxCpuWallMs": 1.7999999998137355
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 5.899999999906868,
+      "tick": 90,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 4
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 90,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 7.399999999906868,
+          "maxCpuWallMs": 7.399999999906868
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 7.2000000001862645,
+          "maxCpuWallMs": 7.100000000093132
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 11.799999999813735,
+      "tick": 91,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 4.399999999906868
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 91,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.1000000000931323,
+          "maxCpuWallMs": 3.1000000000931323
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 3,
+          "maxCpuWallMs": 2.8999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 9.700000000186265,
+      "tick": 92,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.600000000093132
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 92,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 11.699999999720603,
+          "maxCpuWallMs": 11.699999999720603
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 11.599999999627471,
+          "maxCpuWallMs": 11.5
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 16.799999999813735,
+      "tick": 93,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.100000000093132
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 93,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.7999999998137355,
+          "maxCpuWallMs": 2.7999999998137355
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.6999999997206032,
+          "maxCpuWallMs": 2.6999999997206032
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 7.2000000001862645,
+      "tick": 94,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 4.400000000372529
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 94,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2,
+          "maxCpuWallMs": 2
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2,
+          "maxCpuWallMs": 1.8999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 6.899999999906868,
+      "tick": 95,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 4.899999999906868
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 95,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 4.399999999906868,
+          "maxCpuWallMs": 4.399999999906868
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 4.300000000279397,
+          "maxCpuWallMs": 4.300000000279397
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 8.399999999906868,
+      "tick": 96,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 4
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 96,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.5,
+          "maxCpuWallMs": 3.5
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 3.3999999999068677,
+          "maxCpuWallMs": 3.2000000001862645
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 11,
+      "tick": 97,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 7.5
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 97,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 11.199999999720603,
+          "maxCpuWallMs": 11.199999999720603
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 11.099999999627471,
+          "maxCpuWallMs": 11
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 18.5,
+      "tick": 98,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 7.300000000279397
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 98,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 14.5,
+          "maxCpuWallMs": 14.5
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 14.300000000279397,
+          "maxCpuWallMs": 14
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.2999999998137355,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 85.29999999981374,
+      "tick": 99,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 70.79999999981374
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 99,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.2999999998137355,
+          "maxCpuWallMs": 2.2999999998137355
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.2000000001862645,
+          "maxCpuWallMs": 2.2000000001862645
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 9.200000000186265,
+      "tick": 100,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.900000000372529
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 100,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.3999999999068677,
+          "maxCpuWallMs": 2.3999999999068677
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.099999999627471,
+          "maxCpuWallMs": 2.099999999627471
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 26.399999999906868,
+      "tick": 101,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 24
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 101,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3,
+          "maxCpuWallMs": 3
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.900000000372529,
+          "maxCpuWallMs": 2.8000000002793968
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 28,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 7.7999999998137355,
+      "tick": 102,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 4.7999999998137355
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 102,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.900000000372529,
+          "maxCpuWallMs": 2.900000000372529
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.900000000372529,
+          "maxCpuWallMs": 2.8000000002793968
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 27,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 7,
+      "tick": 103,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 4.099999999627471
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 103,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.1000000000931323,
+          "maxCpuWallMs": 3.1000000000931323
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.8999999999068677,
+          "maxCpuWallMs": 2.7999999998137355
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 26,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 10.400000000372529,
+      "tick": 104,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 7.300000000279397
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 104,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.900000000372529,
+          "maxCpuWallMs": 2.900000000372529
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.8000000002793968,
+          "maxCpuWallMs": 2.7000000001862645
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 24,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 7.5,
+      "tick": 105,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 4.599999999627471
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 105,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 1.1999999997206032,
+          "maxCpuWallMs": 1.1999999997206032
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.099999999627471,
+          "maxCpuWallMs": 1.099999999627471
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 24,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 4.099999999627471,
+      "tick": 106,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 2.8999999999068677
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 106,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 1.5,
+          "maxCpuWallMs": 1.5
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.5,
+          "maxCpuWallMs": 1.3999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 24,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 5.800000000279397,
+      "tick": 107,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 4.300000000279397
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 107,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.3999999999068677,
+          "maxCpuWallMs": 2.3999999999068677
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.3999999999068677,
+          "maxCpuWallMs": 2.3999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.7999999998137355,
+          "maxCpuWallMs": 0.7999999998137355
+        },
+        "drawElements": {
+          "calls": 23,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 9.199999999720603,
+      "tick": 108,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 6.7999999998137355
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 108,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 1.400000000372529,
+          "maxCpuWallMs": 1.400000000372529
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.400000000372529,
+          "maxCpuWallMs": 1.400000000372529
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 23,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 4.900000000372529,
+      "tick": 109,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 3.5
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 109,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2,
+          "maxCpuWallMs": 2
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2,
+          "maxCpuWallMs": 2
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 23,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 4.5,
+      "tick": 110,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 2.5
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 110,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 1.6000000000931323,
+          "maxCpuWallMs": 1.6000000000931323
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.5,
+          "maxCpuWallMs": 1.5
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 23,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 4.399999999906868,
+      "tick": 111,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 2.7999999998137355
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 111,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 1.3999999999068677,
+          "maxCpuWallMs": 1.3999999999068677
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.3999999999068677,
+          "maxCpuWallMs": 1.2999999998137355
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 23,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 4.2999999998137355,
+      "tick": 112,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 2.8999999999068677
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 112,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 1.900000000372529,
+          "maxCpuWallMs": 1.900000000372529
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.8000000002793968,
+          "maxCpuWallMs": 1.8000000002793968
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 23,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 15.300000000279397,
+      "tick": 113,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 13.399999999906868
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 113,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 7,
+          "maxCpuWallMs": 7
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.2000000001862645,
+          "maxCpuWallMs": 2.1000000000931323
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.20000000018626451,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 23,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 16.300000000279397,
+      "tick": 114,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 9.300000000279397
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 114,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 6.800000000279397,
+          "maxCpuWallMs": 6.800000000279397
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 6.7000000001862645,
+          "maxCpuWallMs": 4.7000000001862645
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 23,
+          "cpuWallMs": 0.19999999972060323,
+          "maxCpuWallMs": 0.19999999972060323
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 17.100000000093132,
+      "tick": 115,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 10.299999999813735
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 115,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 5.7999999998137355,
+          "maxCpuWallMs": 5.7999999998137355
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 5.699999999720603,
+          "maxCpuWallMs": 5.599999999627471
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 8.699999999720603,
+      "tick": 116,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 2.8999999999068677
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 116,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2,
+          "maxCpuWallMs": 2
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.8999999999068677,
+          "maxCpuWallMs": 1.7999999998137355
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 9.600000000093132,
+      "tick": 117,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 7.600000000093132
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 117,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.1000000000931323,
+          "maxCpuWallMs": 2.1000000000931323
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.1000000000931323,
+          "maxCpuWallMs": 2
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 24.100000000093132,
+      "tick": 118,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 22
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 118,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 5.099999999627471,
+          "maxCpuWallMs": 5.099999999627471
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 4.999999999534339,
+          "maxCpuWallMs": 4.899999999906868
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 2.6000000000931323,
+          "maxCpuWallMs": 2.6000000000931323
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        }
+      },
+      "frameCpuWallMs": 15.199999999720603,
+      "tick": 119,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 10.100000000093132
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 119,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 7.599999999627471,
+          "maxCpuWallMs": 7.599999999627471
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 7.5,
+          "maxCpuWallMs": 7.400000000372529
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 18.399999999906868,
+      "tick": 120,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 10.800000000279397
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 120,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 6.7999999998137355,
+          "maxCpuWallMs": 6.7999999998137355
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 6.5,
+          "maxCpuWallMs": 4.400000000372529
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 15.100000000093132,
+      "tick": 121,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 8.300000000279397
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 121,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 7,
+          "maxCpuWallMs": 7
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 7,
+          "maxCpuWallMs": 7
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 16.299999999813735,
+      "tick": 122,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 9.299999999813735
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 122,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.1000000000931323,
+          "maxCpuWallMs": 2.1000000000931323
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2,
+          "maxCpuWallMs": 1.7999999998137355
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 10.300000000279397,
+      "tick": 123,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 8.200000000186265
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 123,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 7.300000000279397,
+          "maxCpuWallMs": 7.300000000279397
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 7.2000000001862645,
+          "maxCpuWallMs": 5.100000000093132
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        }
+      },
+      "frameCpuWallMs": 23,
+      "tick": 124,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 15.699999999720603
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 124,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 2.900000000372529,
+          "maxCpuWallMs": 2.900000000372529
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 2.8000000002793968,
+          "maxCpuWallMs": 2.6000000000931323
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 17.09999999962747,
+      "tick": 125,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 14.199999999254942
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 125,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 1.5,
+          "maxCpuWallMs": 1.5
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 1.5,
+          "maxCpuWallMs": 1.3999999999068677
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 10.400000000372529,
+      "tick": 126,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 8.900000000372529
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 126,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 6.300000000279397,
+          "maxCpuWallMs": 6.300000000279397
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 6.300000000279397,
+          "maxCpuWallMs": 6.100000000093132
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 43.5,
+      "tick": 127,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 37.1999999997206
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 127,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 6.800000000279397,
+          "maxCpuWallMs": 6.800000000279397
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 6.6000000005587935,
+          "maxCpuWallMs": 6.400000000372529
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 20.399999999906868,
+      "tick": 128,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 13.599999999627471
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 128,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 8.299999999813735,
+          "maxCpuWallMs": 8.299999999813735
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 8.199999999720603,
+          "maxCpuWallMs": 8.100000000093132
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 14.199999999720603,
+      "tick": 129,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 5.899999999906868
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 129,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 3.3000000002793968,
+          "maxCpuWallMs": 3.3000000002793968
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 3.2000000001862645,
+          "maxCpuWallMs": 3.1000000000931323
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0.09999999962747097,
+          "maxCpuWallMs": 0.09999999962747097
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 44.3000000002794,
+      "tick": 130,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 41
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 130,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 6.900000000372529,
+          "maxCpuWallMs": 6.900000000372529
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 6.900000000372529,
+          "maxCpuWallMs": 6.900000000372529
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0.20000000018626451,
+          "maxCpuWallMs": 0.20000000018626451
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 8,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 23.199999999720603,
+      "tick": 131,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 16.299999999348074
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 131,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 8.600000000093132,
+          "maxCpuWallMs": 8.600000000093132
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 8.399999999906868,
+          "maxCpuWallMs": 8.299999999813735
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0.10000000009313226,
+          "maxCpuWallMs": 0.10000000009313226
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 22.90000000037253,
+      "tick": 132,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 14.300000000279397
+    },
+    {
+      "stage": "initialization",
+      "tickBefore": 132,
+      "relativeBefore": null,
+      "frameRenderer": {
+        "render": {
+          "calls": 1,
+          "cpuWallMs": 12.900000000372529,
+          "maxCpuWallMs": 12.900000000372529
+        }
+      },
+      "threeRenderer": {
+        "render": {
+          "calls": 4,
+          "cpuWallMs": 8.600000000093132,
+          "maxCpuWallMs": 8.5
+        }
+      },
+      "existingGLCalls": {
+        "bufferSubData": {
+          "calls": 15,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElements": {
+          "calls": 21,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawElementsInstanced": {
+          "calls": 19,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArraysInstanced": {
+          "calls": 5,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        },
+        "drawArrays": {
+          "calls": 9,
+          "cpuWallMs": 0,
+          "maxCpuWallMs": 0
+        }
+      },
+      "frameCpuWallMs": 28.59999999962747,
+      "tick": 133,
+      "phase": null,
+      "active": null,
+      "pos": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "skipRender": false,
+      "outsideFrameRendererCpuWallMs": 15.699999999254942
+    }
+  ],
+  "operations": [
+    {
+      "label": "navigate",
+      "status": "started",
+      "wall": 1792759473237
+    },
+    {
+      "label": "navigate",
+      "status": "completed",
+      "wallMs": 315
+    },
+    {
+      "label": "boot",
+      "status": "started",
+      "wall": 1792759473552
+    },
+    {
+      "label": "boot",
+      "status": "completed",
+      "wallMs": 29739
+    },
+    {
+      "label": "start-normal-match-and-observers",
+      "status": "started",
+      "wall": 1792759503291
+    },
+    {
+      "label": "start-normal-match-and-observers",
+      "status": "completed",
+      "wallMs": 1526
+    },
+    {
+      "label": "normal-render-initialization-0",
+      "status": "started",
+      "wall": 1792759504817
+    },
+    {
+      "label": "normal-render-initialization-0",
+      "status": "completed",
+      "wallMs": 228
+    },
+    {
+      "label": "normal-render-initialization-1",
+      "status": "started",
+      "wall": 1792759505046
+    },
+    {
+      "label": "normal-render-initialization-1",
+      "status": "completed",
+      "wallMs": 130
+    },
+    {
+      "label": "normal-render-initialization-2",
+      "status": "started",
+      "wall": 1792759505177
+    },
+    {
+      "label": "normal-render-initialization-2",
+      "status": "completed",
+      "wallMs": 152
+    },
+    {
+      "label": "normal-render-initialization-3",
+      "status": "started",
+      "wall": 1792759505330
+    },
+    {
+      "label": "normal-render-initialization-3",
+      "status": "completed",
+      "wallMs": 142
+    },
+    {
+      "label": "normal-render-initialization-4",
+      "status": "started",
+      "wall": 1792759505473
+    },
+    {
+      "label": "normal-render-initialization-4",
+      "status": "completed",
+      "wallMs": 116
+    },
+    {
+      "label": "normal-render-initialization-5",
+      "status": "started",
+      "wall": 1792759505609
+    },
+    {
+      "label": "normal-render-initialization-5",
+      "status": "completed",
+      "wallMs": 132
+    },
+    {
+      "label": "normal-render-initialization-6",
+      "status": "started",
+      "wall": 1792759505743
+    },
+    {
+      "label": "normal-render-initialization-6",
+      "status": "completed",
+      "wallMs": 6705
+    },
+    {
+      "label": "normal-render-initialization-7",
+      "status": "started",
+      "wall": 1792759512450
+    },
+    {
+      "label": "normal-render-initialization-7",
+      "status": "completed",
+      "wallMs": 8940
+    },
+    {
+      "label": "normal-render-initialization-8",
+      "status": "started",
+      "wall": 1792759521411
+    },
+    {
+      "label": "normal-render-initialization-8",
+      "status": "completed",
+      "wallMs": 120
+    },
+    {
+      "label": "normal-render-initialization-9",
+      "status": "started",
+      "wall": 1792759521537
+    },
+    {
+      "label": "normal-render-initialization-9",
+      "status": "completed",
+      "wallMs": 201
+    },
+    {
+      "label": "normal-render-initialization-10",
+      "status": "started",
+      "wall": 1792759521741
+    },
+    {
+      "label": "normal-render-initialization-10",
+      "status": "completed",
+      "wallMs": 84
+    },
+    {
+      "label": "normal-render-initialization-11",
+      "status": "started",
+      "wall": 1792759521829
+    },
+    {
+      "label": "normal-render-initialization-11",
+      "status": "completed",
+      "wallMs": 192
+    },
+    {
+      "label": "normal-render-initialization-12",
+      "status": "started",
+      "wall": 1792759522031
+    },
+    {
+      "label": "normal-render-initialization-12",
+      "status": "completed",
+      "wallMs": 288
+    },
+    {
+      "label": "normal-render-initialization-13",
+      "status": "started",
+      "wall": 1792759522324
+    }
+  ],
+  "errors": [],
+  "consoleErrors": [],
+  "requestFailures": [],
+  "httpFailures": [],
+  "status": "failed",
+  "failure": "Error: normal-render-initialization-13: unchanged 30000ms deadline\n    at Timeout.<anonymous> (file:///workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/renderer-stall-cpu/observe.mjs:17:238)\n    at listOnTimeout (node:internal/timers:635:17)\n    at process.processTimers (node:internal/timers:571:7)",
+  "partial": {
+    "label": "initialization",
+    "tick": 143,
+    "current": null
+  }
+}

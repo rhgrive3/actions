@@ -1,0 +1,71 @@
+{
+  "status": "passed",
+  "capturedAt": "2026-10-23T12:39:57.237Z",
+  "officialPr": 1854,
+  "newHead": "2e8d90b8afb6aac057edfbb988fae789ef36cfd3",
+  "newTree": "54d7fabb65d8148bcdbdfbaf52425bd6645353bb",
+  "soleParent": "4c9b7861038189e709db5e80e64d2a2712f7b877",
+  "leaves": 6327,
+  "unchangedLeaves": 6326,
+  "changed": [
+    {
+      "path": "scripts/tests/inkwave-reviewed-special-delta-admission.test.mjs",
+      "before": {
+        "mode": "100644",
+        "type": "blob",
+        "blob": "4dc4d62ed215a3e5c452b4277fcdfd2b695de45b"
+      },
+      "after": {
+        "mode": "100644",
+        "type": "blob",
+        "blob": "ee7325945233057573b807babec13cd5536b523f"
+      },
+      "sha256": "8e26e73560f2ee0dce55f30e422cbd70b52bfb8fbc4489d124f836bca5d84ada",
+      "officialBlobReadbackMatches": true
+    }
+  ],
+  "buildInputsVerified": 1421,
+  "inputHash": "3fbcdb527d87ae0318e1e1df3037088e8d82ae8f979d6d7cae00b9a353ce4f91",
+  "contentHash": "bd3d8d2715b53a842901be6457bdb777621c4290f60a2c37a1404e4f9e5d3707",
+  "buildRevision": "a73fa9410e41bf635a38b36165e333965ae4d0f606b0b28f6fd9965e37fdd4f9",
+  "builderSHA256": "a2814e623a81811aca5a6b5079d566ab88fabaa9b9a8d9351fadd45c25a98242",
+  "outputArtifactsVerified": 2112,
+  "physicalOutputFilesIncludingManifest": 2113,
+  "buildInputsProofSHA256": "72b052197a29ad9d98da0b39fa71975dd999fe2776f2331861ea070119338ec6",
+  "unchangedLeavesProofSHA256": "60ab475bb5b17ed85d369c33a1e21d1ff9e542aa429ebb722f16ef07a483d0b1",
+  "evidence": [
+    {
+      "path": "gameplay-accepted-after/result.json",
+      "sha256": "be2434b5e5a3b15da50eb1a3e2666af6134d1b5231f348fa4bc80cf1151497e0"
+    },
+    {
+      "path": "gameplay-release-lobes-after/result.json",
+      "sha256": "b884e382e74624b67c95f6b9c1a5b06cbbdba9fa3ede4e8b2645987fd0cd8267"
+    },
+    {
+      "path": "gameplay-shapes-after/result.json",
+      "sha256": "bed346d86aa63c6b4cf9bfc1caa5a193dde9064719d8282a70d2dca21dd25327"
+    },
+    {
+      "path": "inkjet/result.json",
+      "sha256": "cb1d06f8ec56dccfd74b5cb98dcd66b03f8cb14aa3bd829abfb1388325e15891"
+    },
+    {
+      "path": "continuation-clean/result.json",
+      "sha256": "a29275b24e291db3ceaab3c56fd6a5b4475688fc41645bd882fdf71f5b014545"
+    },
+    {
+      "path": "bubbler-after/result.json",
+      "sha256": "9ba06123287123d3f611aa436332a9a9e2b81413c410aa5d6c4f40fbd7705099"
+    },
+    {
+      "path": "reef-diagnosis/result.json",
+      "sha256": "16bc41ae5e6b67ee32ff67b577e463d8c0900a03c1c1d47498a9c67b314f489d"
+    },
+    {
+      "path": "reef-diagnosis-parent/result.json",
+      "sha256": "3fb8414ec9637a353067db1ccabd27616736b81c72171fab89ab3b9a96b3dca4"
+    }
+  ],
+  "scope": "Existing actual browser captures remain captures of the fresh 4c9 normal build, now applicable to 2e8 through exact unchanged production leaves, complete tree and all1421 build-input proof. No fresh 2e8 build/browser rerun is claimed. New-head CI is independently checked by head_sha; old-head CI success is not transferred."
+}

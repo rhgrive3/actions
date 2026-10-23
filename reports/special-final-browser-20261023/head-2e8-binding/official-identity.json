@@ -1,0 +1,67 @@
+{
+  "pr": {
+    "url": "https://github.com/rhgrive3/actions/pull/1854",
+    "number": 1854,
+    "head": "inkwave/special-reviewed-main726-20261023",
+    "head_sha": "2e8d90b8afb6aac057edfbb988fae789ef36cfd3",
+    "base": "main",
+    "base_sha": "726e338ac256ba9609086ce65e25a68ddd99df85",
+    "draft": true,
+    "state": "open",
+    "merged": false
+  },
+  "commit": {
+    "sha": "2e8d90b8afb6aac057edfbb988fae789ef36cfd3",
+    "tree": {
+      "sha": "54d7fabb65d8148bcdbdfbaf52425bd6645353bb",
+      "url": "https://api.github.com/repos/rhgrive3/actions/git/trees/54d7fabb65d8148bcdbdfbaf52425bd6645353bb"
+    },
+    "parents": [
+      {
+        "sha": "4c9b7861038189e709db5e80e64d2a2712f7b877",
+        "url": "https://api.github.com/repos/rhgrive3/actions/git/commits/4c9b7861038189e709db5e80e64d2a2712f7b877",
+        "html_url": "https://github.com/rhgrive3/actions/commit/4c9b7861038189e709db5e80e64d2a2712f7b877"
+      }
+    ],
+    "message": "fix(test): make reviewed special admission fixtures portable across Git packing\n\nOnly scripts/tests/inkwave-reviewed-special-delta-admission.test.mjs changes. Disable detached automatic packing only in disposable fixture repositories, and test complete packed stores plus a separate explicitly missing-object packed fixture without assuming loose-object placement.\n\nExact tree of private fixture repair a68c39a06ae6e83adf5308b1bb841e558ae8786f; parent is official 4c9b7861038189e709db5e80e64d2a2712f7b877. Production helper, pins, workflow, runtime and build inputs are unchanged. This narrow fixture repair does not complete the outstanding broad final admission or real-browser acceptance.",
+    "html_url": "https://github.com/rhgrive3/actions/commit/2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+  },
+  "compare": {
+    "repository_full_name": "rhgrive3/actions",
+    "base": "4c9b7861038189e709db5e80e64d2a2712f7b877",
+    "head": "2e8d90b8afb6aac057edfbb988fae789ef36cfd3",
+    "status": "ahead",
+    "ahead_by": 1,
+    "behind_by": 0,
+    "total_commits": 1,
+    "too_large": null,
+    "base_commit": {
+      "sha": "4c9b7861038189e709db5e80e64d2a2712f7b877",
+      "url": "https://api.github.com/repos/rhgrive3/actions/commits/4c9b7861038189e709db5e80e64d2a2712f7b877",
+      "html_url": "https://github.com/rhgrive3/actions/commit/4c9b7861038189e709db5e80e64d2a2712f7b877"
+    },
+    "merge_base_commit": {
+      "sha": "4c9b7861038189e709db5e80e64d2a2712f7b877",
+      "url": "https://api.github.com/repos/rhgrive3/actions/commits/4c9b7861038189e709db5e80e64d2a2712f7b877",
+      "html_url": "https://github.com/rhgrive3/actions/commit/4c9b7861038189e709db5e80e64d2a2712f7b877"
+    },
+    "files": [
+      {
+        "filename": "scripts/tests/inkwave-reviewed-special-delta-admission.test.mjs",
+        "status": "modified",
+        "additions": 39,
+        "deletions": 2,
+        "changes": 41,
+        "previous_filename": null
+      }
+    ]
+  },
+  "fixtureOfficialBlob": "ee7325945233057573b807babec13cd5536b523f",
+  "fixtureSHA256": "8e26e73560f2ee0dce55f30e422cbd70b52bfb8fbc4489d124f836bca5d84ada",
+  "rulesets": [],
+  "unsupportedRuleRead": {
+    "error": "HTTPError: 400: GitHub Fetch URL is not an allowed public GitHub repository or search endpoint. (Response: None)",
+    "error_code": "INVALID_ARGUMENT"
+  },
+  "note": "Unsupported /rules/branches/main URL was rejected once by the connector allowlist; no auth/access change or retry of that route. Supported ruleset and branch reads succeeded. Main policy is recorded separately; it is not used as a moving build baseline."
+}

@@ -1,0 +1,46 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import http from 'node:http';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import {chromium} from '/workspace/actions/node_modules/playwright/index.mjs';
+const base='/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser',out=base+'/renderer-stall-cpu';
+const sources=[['candidate-bound-to-2e8',base+'/site-after','4c9b7861038189e709db5e80e64d2a2712f7b877'],['parent726','/workspace/actions/.ci-scratch/special-final-browser/site-before','726e338ac256ba9609086ce65e25a68ddd99df85']];
+const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.woff2':'font/woff2','.webp':'image/webp','.mp3':'audio/mpeg'};
+const browser=await chromium.launch({headless:true,executablePath:'/usr/bin/chromium',args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+try{for(const [side,site,sourceCommit]of sources){
+ const dir=out+'/'+side;fs.mkdirSync(dir,{recursive:true});const manifest=JSON.parse(fs.readFileSync(site+'/inkwave-build.json'));
+ assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash);for(const[f,h]of Object.entries(manifest.artifacts))assert.equal(hash(fs.readFileSync(site+'/'+f)),h,f);
+ const report={side,sourceCommit,appliesToHead:side.startsWith('candidate')?'2e8d90b8afb6aac057edfbb988fae789ef36cfd3':sourceCommit,bindingProof:side.startsWith('candidate')?'../newhead-2e8-proof/binding-summary.json':null,inputHash:manifest.inputHash,contentHash:manifest.contentHash,browser:browser.version(),scope:'One normal fully rendered native Reef first-dash case. Synchronous JS wall brackets only; existing GL calls are observed, no GPU fence/timer query, flags/timeout/renderer-policy changes, or suppressed rendering.',frames:[],operations:[],errors:[],consoleErrors:[],requestFailures:[],httpFailures:[]};
+ const save=()=>fs.writeFileSync(dir+'/result.json',JSON.stringify(report,null,2)+'\n');
+ const op=async(label,run,ms=30000)=>{let timer;const started=Date.now();report.operations.push({label,status:'started',wall:started});save();try{const value=await Promise.race([run(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label+': unchanged '+ms+'ms deadline')),ms);})]);report.operations.push({label,status:'completed',wallMs:Date.now()-started});save();return value;}finally{clearTimeout(timer);}};
+ const server=http.createServer((req,res)=>{try{const u=new URL(req.url,'http://localhost'),f=path.resolve(site,'.'+(u.pathname==='/'?'/index.html':decodeURIComponent(u.pathname)));if(!f.startsWith(site+'/')||!fs.statSync(f).isFile())throw Error();res.writeHead(200,{'content-type':mime[path.extname(f)]||'application/octet-stream','cache-control':'no-store'});fs.createReadStream(f).pipe(res);}catch{report.httpFailures.push(req.url);res.writeHead(404);res.end();}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const context=await browser.newContext({viewport:{width:960,height:640}}),page=await context.newPage();page.setDefaultTimeout(30000);
+ page.on('pageerror',e=>{report.errors.push(e.stack);save();});page.on('console',m=>{if(m.type()==='error'){report.consoleErrors.push(m.text());save();}});page.on('requestfailed',r=>{report.requestFailures.push({url:r.url(),error:r.failure()});save();});
+ await page.addInitScript(()=>{let seed=0x1a2b3c4;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,timeOfDay:'day'}));let game;Object.defineProperty(window,'__inkwave',{configurable:true,get:()=>game,set:g=>{game=g;g.frozen=true;}});});
+ try{
+  await op('navigate',()=>page.goto(`http://127.0.0.1:${server.address().port}/?news=0&time=day`,{waitUntil:'domcontentloaded',timeout:30000}));
+  await op('boot',()=>page.waitForFunction(()=>!!window.__inkwave?.debug&&window.__G?.s3?.installed&&window.__G.mode!=='boot',null,{timeout:180000}),180000);
+  console.log(side+' boot');
+  await op('start-normal-match-and-observers',()=>page.evaluate(async()=>{
+   const g=__inkwave,G=__G;let seed=0x1a2b3c4;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+   await g.startMatch({mapId:'tidewater',time:'day',difficulty:'easy',duration:180,mode:'turf'});g.debug.freezeBots();g.input.keys.clear();g.debug.fire(false);
+   const q=window.rendererQA={label:'initialization',frames:[],current:null,base:null};
+   const timed=(target,name,bucket)=>{const native=target[name];if(typeof native!=='function')return;target[name]=function(...args){const r=q.current,start=performance.now();try{return native.apply(this,args);}finally{if(r){const ms=performance.now()-start;const b=r[bucket]||(r[bucket]={});const entry=b[name]||(b[name]={calls:0,cpuWallMs:0,maxCpuWallMs:0});entry.calls++;entry.cpuWallMs+=ms;entry.maxCpuWallMs=Math.max(entry.maxCpuWallMs,ms);if(ms>=20)(r.longCalls||=[]).push({bucket,name,cpuWallMs:ms});}}};};
+   timed(g.R,'render','frameRenderer');timed(G.renderer,'render','threeRenderer');
+   const gl=G.renderer.getContext();for(const name of ['compileShader','linkProgram','getProgramParameter','getShaderParameter','bufferData','bufferSubData','texImage2D','texSubImage2D','drawElements','drawArrays','drawElementsInstanced','drawArraysInstanced','readPixels','finish','flush'])timed(gl,name,'existingGLCalls');
+   q.step=n=>{const rows=[];for(let i=0;i<n;i++){if(g._skipRender)throw Error('Rendering suppression forbidden');const r={stage:q.label,tickBefore:g.s3Clock.ticks,relativeBefore:q.base===null?null:g.s3Clock.ticks-q.base,frameRenderer:{},threeRenderer:{},existingGLCalls:{}};q.current=r;const start=performance.now();g._frame(1/60);r.frameCpuWallMs=performance.now()-start;q.current=null;r.tick=g.s3Clock.ticks;r.phase=G.match.local._s3AllSpecialState?.phase||G.match.local.specialActive?.phase||null;r.active=G.match.local.specialActive?.id||null;r.pos=G.match.local.pos.toArray();r.skipRender=!!g._skipRender;r.outsideFrameRendererCpuWallMs=r.frameCpuWallMs-(r.frameRenderer.render?.cpuWallMs||0);if(r.frameRenderer.render?.calls!==1)throw Error('Each native frame must render once');q.frames.push(r);rows.push(r);}return rows;};
+  }));
+  for(let batch=0;batch<39;batch++){const rows=await op('normal-render-initialization-'+batch,()=>page.evaluate(()=>rendererQA.step(10)));report.frames.push(...rows);save();if(batch%10===0)console.log(side+' native warmup '+(batch+1)*10);}
+  report.setup=await op('ready-and-native-catalogue',()=>page.evaluate(async()=>{const g=__inkwave,G=__G,a=G.match.local;await a.character._sourceMotionLoader;await a.character.sourceMotion?.ready;const config=await import(new URL('src/config.js',document.baseURI)),catalogue=await import(new URL('patches/splatoon3/runtime/catalogue.mjs',document.baseURI));localStorage.setItem(catalogue.CATALOGUE_STORAGE,JSON.stringify({[a.weaponId]:{sub:'bomb',special:'reefslider'}}));if(!catalogue.applyCatalogueChoice(a,{sub:'bomb',special:'reefslider'},config))throw Error('Catalogue refused');g.rig.follow(a,true);g.rig.yaw=0;g.rig.pitch=.1;a.invuln=0;a.special=a.specialCost();rendererQA.base=g.s3Clock.ticks;rendererQA.label='observed-Reef';if(!G.match.playing()||!a.specialReady()||!a.alive)throw Error('Native match readiness');return{tick:g.s3Clock.ticks,position:a.pos.toArray(),alive:a.alive,ready:a.specialReady(),palette:G.teamHex,matchPlaying:G.match.playing()};}));
+  await op('special-key-down',()=>page.evaluate(()=>__inkwave.debug.key('KeyF',true)));
+  report.frames.push(...await op('native-special-activation',()=>page.evaluate(()=>rendererQA.step(1))));
+  await op('special-key-up',()=>page.evaluate(()=>__inkwave.debug.key('KeyF',false)));
+  for(let batch=0;batch<10;batch++){report.frames.push(...await op('normal-render-Reef-'+batch,()=>page.evaluate(()=>rendererQA.step(5))));save();}
+  report.final=await op('final-read-only-observation',()=>page.evaluate(()=>{const gl=__G.renderer.getContext();return{tick:__inkwave.s3Clock.ticks,state:__G.match.state,active:__G.match.local.specialActive?.id,phase:__G.match.local._s3AllSpecialState?.phase,glError:gl.getError(),glLost:gl.isContextLost(),directorErrors:__G.fx.s3SpecialVfx.errors};}));
+  assert(report.frames.length===441&&report.frames.every(r=>r.frameRenderer.render.calls===1&&!r.skipRender));assert.equal(report.final.active,'reefslider');assert.equal(report.final.glError,0);assert.equal(report.final.glLost,false);assert.equal(report.final.directorErrors,0);assert.deepEqual(report.errors,[]);assert.deepEqual(report.consoleErrors,[]);assert.deepEqual(report.requestFailures,[]);assert.deepEqual(report.httpFailures,[]);
+  report.status='completed';save();console.log(side+' complete');
+ }catch(e){report.status='failed';report.failure=e.stack;report.partial=await page.evaluate(()=>({label:window.rendererQA?.label,tick:window.__inkwave?.s3Clock?.ticks,current:window.rendererQA?.current})).catch(()=>null);save();console.error(side+' '+e.stack);process.exitCode=1;}
+ finally{await context.close();await new Promise(r=>server.close(r));}
+}}finally{await browser.close();}

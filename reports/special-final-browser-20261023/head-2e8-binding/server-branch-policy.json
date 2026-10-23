@@ -1,0 +1,12 @@
+{
+  "sha": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "protected": false,
+  "protection": {
+    "enabled": false,
+    "required_status_checks": {
+      "enforcement_level": "off",
+      "contexts": [],
+      "checks": []
+    }
+  }
+}

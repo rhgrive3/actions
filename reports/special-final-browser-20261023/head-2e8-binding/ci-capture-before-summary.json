@@ -1,0 +1,88 @@
+{
+  "status": "passed",
+  "comparisonStatus": "not-run",
+  "mode": "baseline",
+  "build": {
+    "revision": "d0aad52ff86d0915c282be5ff1cc481fa63f7511ed765743c9d9e62f73e59f9d",
+    "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+    "inputHash": "350b861c6d2ca16e5430ffc5b4f7e39cfbefc9df67290de1746b077ae256eb81"
+  },
+  "screenshots": 48,
+  "visualScenarios": [
+    {
+      "name": "wall-shooter",
+      "births": 1,
+      "impactFrame": 2
+    },
+    {
+      "name": "floor-slosher9",
+      "births": 9,
+      "impactFrame": 26
+    },
+    {
+      "name": "shooter",
+      "births": 1,
+      "impactFrame": null
+    },
+    {
+      "name": "roller-horizontal",
+      "births": 13,
+      "impactFrame": null
+    },
+    {
+      "name": "roller-vertical",
+      "births": 5,
+      "impactFrame": null
+    },
+    {
+      "name": "slosher9",
+      "births": 9,
+      "impactFrame": null
+    }
+  ],
+  "performance": [
+    {
+      "scenario": "desktop-long-fire",
+      "fps": 0.1672324698563486,
+      "frameCpuMs": {
+        "n": 13,
+        "min": 31.099999999976717,
+        "p50": 34,
+        "p95": 39.40000000002328,
+        "max": 48,
+        "mean": 35.261538461540255
+      },
+      "gpuRenderMs": null,
+      "calls": 335,
+      "geometries": 395,
+      "textures": 67
+    },
+    {
+      "scenario": "mobile-emulated-long-fire",
+      "fps": 0.5136898340781959,
+      "frameCpuMs": {
+        "n": 12,
+        "min": 26,
+        "p50": 29,
+        "p95": 43.300000000046566,
+        "max": 46,
+        "mean": 32.8749999999903
+      },
+      "gpuRenderMs": null,
+      "calls": 200,
+      "geometries": 364,
+      "textures": 50
+    }
+  ],
+  "errors": [],
+  "browserDiagnostics": [
+    {
+      "event": "browser-disconnected",
+      "at": "2026-10-23T12:43:41.385Z"
+    }
+  ],
+  "pageErrors": [],
+  "bootTimeoutMs": 180000,
+  "output": "/home/runner/work/actions/actions/.ci-scratch/projectile-visuals/before/projectile-visuals-result.json",
+  "browserTrace": "/home/runner/work/actions/actions/.ci-scratch/projectile-visuals/before/chromium-browser-stderr.log"
+}
