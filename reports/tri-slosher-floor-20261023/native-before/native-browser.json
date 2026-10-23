@@ -1,0 +1,309 @@
+{
+  "status": "passed",
+  "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+  "errors": [],
+  "frames": [
+    {
+      "tick": 1,
+      "weapon": "s3-slosher-diffusion",
+      "actor": [
+        -26.5,
+        0,
+        4
+      ],
+      "pitch": 0,
+      "main": 0,
+      "drops": 0,
+      "matrices": [],
+      "paintCells": 0,
+      "sourceMotion": "ready"
+    },
+    {
+      "tick": 12,
+      "weapon": "s3-slosher-diffusion",
+      "actor": [
+        -26.5,
+        0,
+        4
+      ],
+      "pitch": 0,
+      "main": 0,
+      "drops": 0,
+      "matrices": [],
+      "paintCells": 0,
+      "sourceMotion": "ready"
+    },
+    {
+      "tick": 14,
+      "weapon": "s3-slosher-diffusion",
+      "actor": [
+        -26.5,
+        0,
+        4
+      ],
+      "pitch": 0,
+      "main": 9,
+      "drops": 0,
+      "matrices": [],
+      "paintCells": 133,
+      "sourceMotion": "ready"
+    },
+    {
+      "tick": 16,
+      "weapon": "s3-slosher-diffusion",
+      "actor": [
+        -26.5,
+        0,
+        4
+      ],
+      "pitch": 0,
+      "main": 9,
+      "drops": 1,
+      "matrices": [
+        {
+          "radius": 0.2,
+          "scale": [
+            0.20000000298023224,
+            0.20000000298023224,
+            0.20000000298023224
+          ],
+          "direction": [
+            0,
+            0,
+            1
+          ],
+          "frames": 0
+        }
+      ],
+      "paintCells": 133,
+      "sourceMotion": "ready"
+    },
+    {
+      "tick": 18,
+      "weapon": "s3-slosher-diffusion",
+      "actor": [
+        -26.5,
+        0,
+        4
+      ],
+      "pitch": 0,
+      "main": 9,
+      "drops": 4,
+      "matrices": [
+        {
+          "radius": 0.2,
+          "scale": [
+            0.20000000298023224,
+            0.20000000298023224,
+            0.20000000298023224
+          ],
+          "direction": [
+            0,
+            -1,
+            2.220446049250313e-16
+          ],
+          "frames": 2
+        },
+        {
+          "radius": 0.3,
+          "scale": [
+            0.30000001192092896,
+            0.30000001192092896,
+            0.30000001192092896
+          ],
+          "direction": [
+            0,
+            -1,
+            2.220446049250313e-16
+          ],
+          "frames": 1
+        },
+        {
+          "radius": 0.3,
+          "scale": [
+            0.30000001192092896,
+            0.30000001192092896,
+            0.30000001192092896
+          ],
+          "direction": [
+            0,
+            -1,
+            2.220446049250313e-16
+          ],
+          "frames": 1
+        },
+        {
+          "radius": 0.2,
+          "scale": [
+            0.20000000298023224,
+            0.20000000298023224,
+            0.20000000298023224
+          ],
+          "direction": [
+            0,
+            0,
+            1
+          ],
+          "frames": 0
+        }
+      ],
+      "paintCells": 133,
+      "sourceMotion": "ready"
+    },
+    {
+      "tick": 22,
+      "weapon": "s3-slosher-diffusion",
+      "actor": [
+        -26.5,
+        0,
+        4
+      ],
+      "pitch": 0,
+      "main": 9,
+      "drops": 5,
+      "matrices": [
+        {
+          "radius": 0.2,
+          "scale": [
+            0.20000000298023224,
+            0.20000000298023224,
+            0.20000000298023224
+          ],
+          "direction": [
+            0,
+            -1,
+            2.220446049250313e-16
+          ],
+          "frames": 6
+        },
+        {
+          "radius": 0.3,
+          "scale": [
+            0.30000001192092896,
+            0.30000001192092896,
+            0.30000001192092896
+          ],
+          "direction": [
+            0,
+            -1,
+            2.220446049250313e-16
+          ],
+          "frames": 5
+        },
+        {
+          "radius": 0.3,
+          "scale": [
+            0.30000001192092896,
+            0.30000001192092896,
+            0.30000001192092896
+          ],
+          "direction": [
+            0,
+            -1,
+            2.220446049250313e-16
+          ],
+          "frames": 5
+        },
+        {
+          "radius": 0.2,
+          "scale": [
+            0.20000000298023224,
+            0.20000000298023224,
+            0.20000000298023224
+          ],
+          "direction": [
+            0,
+            -1,
+            2.220446049250313e-16
+          ],
+          "frames": 4
+        },
+        {
+          "radius": 0.2,
+          "scale": [
+            0.20000000298023224,
+            0.20000000298023224,
+            0.20000000298023224
+          ],
+          "direction": [
+            0,
+            -1,
+            2.220446049250313e-16
+          ],
+          "frames": 1
+        }
+      ],
+      "paintCells": 198,
+      "sourceMotion": "ready"
+    },
+    {
+      "tick": 28,
+      "weapon": "s3-slosher-diffusion",
+      "actor": [
+        -26.5,
+        0,
+        4
+      ],
+      "pitch": 0,
+      "main": 0,
+      "drops": 1,
+      "matrices": [
+        {
+          "radius": 0.2,
+          "scale": [
+            0.20000000298023224,
+            0.20000000298023224,
+            0.20000000298023224
+          ],
+          "direction": [
+            0,
+            -1,
+            2.220446049250313e-16
+          ],
+          "frames": 7
+        }
+      ],
+      "paintCells": 1315,
+      "sourceMotion": "ready"
+    },
+    {
+      "tick": 36,
+      "weapon": "s3-slosher-diffusion",
+      "actor": [
+        -26.5,
+        0,
+        4
+      ],
+      "pitch": 0,
+      "main": 0,
+      "drops": 0,
+      "matrices": [],
+      "paintCells": 1315,
+      "sourceMotion": "ready"
+    }
+  ],
+  "limits": [
+    "Native _frame is stepped at 60Hz under debug freeze; software Chromium is not a hardware performance or Nintendo retail acceptance.",
+    "Frames are INKWAVE simulation ticks after the controlled fire press, not retail encoded frames."
+  ],
+  "browser": "154.0.8037.57",
+  "entry": {
+    "route": [
+      "main",
+      "mode",
+      "range"
+    ],
+    "gestures": [
+      {
+        "type": "click",
+        "trusted": true,
+        "selector": ".iw-ui [data-id=\"play\"]"
+      },
+      {
+        "type": "click",
+        "trusted": true,
+        "selector": ".iw-ui [data-id=\"mode-range\"]"
+      }
+    ]
+  }
+}

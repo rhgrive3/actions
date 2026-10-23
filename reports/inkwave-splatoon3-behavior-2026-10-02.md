@@ -6136,3 +6136,10 @@ main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、Splatoon 3 Ver.11
 参照対象は公開版の全パッチ合成後。S3 Ver.11.3.0に関する既存の未確認値は変更せず、ソースモーション（既存のWii U由来パックを含む）の中間計算だけを削減した。BodyBalanceのgain対象と祖先以外の中間world回転を省き、最終全ボーンFK・足接地・IK・銃口・移動・射撃・塗り・当たり判定・描画設定は維持する。2種の実ソースキャラクター、シューター/チャージャー/ローラーの30/60/120Hz、1260フレームで最終local/world姿勢・skin行列・接地・銃口が一致し、通常minify配信物でも同じ比較が成功。これはロジック/配信物検証であり、Nintendo実機やiPad SafariのFPS比較ではない。
 
 Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテゴリ。修正対象のBodyBalanceはその一部にすぎず、iPad上での支配要因の確定や重いフレームの完全解消とは扱わない。#1671/#1757の実機受入はOpenのまま。条件・既存PRとの重複確認・再現コマンド・証跡は[調査記録](inkwave-composed-cpu-20261023/README.md)。
+
+
+## 2026-10-23 ヒッセン床塗り用飛沫の表示補正候補
+
+ヒッセンの床滴だけ、既存Bucketの幅補正 `.5` と保存済み水平headingを表示に使う。旧表示はDrawRadius `.2/.3` を無補正で描き、最初の重力stepで表示軸を真下90度へ変えていた。本番合成 `Projectiles._drawLegacy` → `appendSourcedSplashVisuals` の当該actor分岐だけを変更。物理drop位置・速度・着地塗り・主弾・damage・ink・networkは変更しない。滴が落下する運動自体も維持する。
+
+本家の原典パラメータはSplatoon 3 11.3.0。任天堂ページの映像取得はHTTP403で停止し、同条件の本家encoded frame比較は未完。幅補正は既存INKWAVEの見た目較正であり、本家の物理発射角・メッシュ・メートル換算を確定したものではない。source29/29、本番生成物26/26、emitted塗りgolden3/3、制御Chromium10条件80instanceでbefore/afterの全物理trace・塗りが一致。通常メニューから練習場へ入ったnativeブラウザも両版成功、8点のsimulation frame比較で最終1315cellsを保持。粒子数は主弾9・床滴最大5で不変。本家見た目の最終承認と公開候補exact-head CIは別段階で、マージしない。[比較・阻害・画像・再実行記録](tri-slosher-floor-20261023/README.md)。
