@@ -1705,7 +1705,8 @@ function updateWorld(rt,dt) {
       }
     }else if(o.kind==='screen'){
       const runStart=1,runEnd=1+560/FPS;
-      const oldScreenPos=o.lastObjectScreenPos?.clone()||o.pos.clone();
+      // Preserve the pre-move sample without allocating two vectors each fixed tick.
+      const oldScreenPos=(o._screenOldPosScratch ||= o.pos.clone()).copy(o.lastObjectScreenPos??o.pos);
       const movingSeconds=Math.max(0,Math.min(deviceAge,runEnd)-Math.max(deviceAge-dt,runStart));
       if(movingSeconds>0)o.pos.addScaledVector(o.direction,o.moveSpeed*movingSeconds);
       o.mesh?.position.copy(o.pos).setY(o.pos.y+o.height/2);
@@ -1733,7 +1734,7 @@ function updateWorld(rt,dt) {
         if(previous){previous.pos.copy(victim.pos);previous.screen.copy(o.pos);}
         else o.previous.set(victim,{pos:victim.pos.clone(),screen:o.pos.clone()});
       }
-      screenDamageObjects(rt,o,oldScreenPos,o.pos);o.lastObjectScreenPos=o.pos.clone();
+      screenDamageObjects(rt,o,oldScreenPos,o.pos);(o.lastObjectScreenPos ||= o.pos.clone()).copy(o.pos);
       paintScreenDrops(rt,o,deviceAge);
       if(!o.owner.remote&&o.age-o.lastMoveEvent>=.25){o.lastMoveEvent=o.age;o.moveCount=(o.moveCount||0)+1;emitObject(rt,o,'move');}
       if(deviceAge>=o.dur)removeWorld(rt,o,'expire');
