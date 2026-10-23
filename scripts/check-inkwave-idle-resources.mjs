@@ -230,8 +230,8 @@ async function main(){
   // before measuring an isolated cold mobile allocation in a fresh context.
   page=await retireDesktopForCold(page,browser);browser=null;
   const {context:coldContext,page:coldPage}=await launchColdMobileBrowser(chromium,profile);const coldBrowserVersion=coldContext.browser()?.version();let hooked=false,mainReleased=false,coldError=null,coldEvaluationError=null;const coldLoaded=new Set(),coldPending=new Map();let pendingDropped=0,pendingSerial=0;
-  boundIdleEvaluations(coldPage,()=>phase);
   try {
+   boundIdleEvaluations(coldPage,()=>phase);
    coldPage.on('pageerror',e=>errors.push('cold boot: '+e.message));
    coldPage.on('console',m=>{if(m.type()==='error')errors.push('cold boot console: '+m.text().slice(0,1500));});
    await coldPage.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:false,bloom:false,music:0,sfx:0})));
