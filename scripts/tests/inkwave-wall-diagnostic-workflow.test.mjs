@@ -108,11 +108,22 @@ function canonicalCoreEvidence(body) {
   assert.ok(!body.includes(legacyCoreEvidenceTail), 'artifact names cannot execute as shell commands');
   return body.replace(repairedCoreEvidenceTail, legacyCoreEvidenceTail);
 }
+// This additive acceptance step is owned by the enemy-exclusion change. Require
+// its exact emitted roots and four suites before removing only that literal for
+// comparison with the unchanged historical job pin. No generic step stripping.
+const spawnExclusionStep = `      - name: Verify emitted opposing-spawn body exclusion and allied exits
+        run: INKWAVE_BUILT_SITE=_site INKWAVE_CONTROLS_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/spawn-exclusion.test.mjs patches/splatoon3/tests/spawn-exclusion-fallback.test.mjs patches/reliability/tests/special-spawn-barrier.test.mjs patches/splatoon3/tests/respawn-lifecycle.test.mjs
+`;
+function canonicalSpawnAcceptance(body) {
+  assert.equal(body.split(spawnExclusionStep).length,2,'exact required emitted spawn acceptance step');
+  assert.ok(body.includes('patches/splatoon3/tests/charger-protected-trajectory.test.mjs\n'+spawnExclusionStep+'      - name: Verify emitted Boss positive-proof admission'), 'spawn step stays between existing required checks');
+  return body.replace(spawnExclusionStep,'');
+}
 function verifyAcceptedJobs(text) {
   for(const [name, expected] of Object.entries(acceptedJobHashes)) {
     let body = job(text,name).replace(' scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs','')
       .replaceAll('          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx playwright install --with-deps', '          npx playwright install --with-deps');
-    if (name === 'validate_core') body = canonicalCoreEvidence(body);
+    if (name === 'validate_core') body = canonicalSpawnAcceptance(canonicalCoreEvidence(body));
     assert.equal(createHash('sha256').update(body).digest('hex'),expected,name);
   }
 }
@@ -121,6 +132,20 @@ test('the previously pinned broken artifact command is rejected despite its orig
   const broken=workflow.replace(repairedCoreEvidenceTail,legacyCoreEvidenceTail);
   assert.notEqual(broken,workflow);
   assert.throws(()=>verifyAcceptedJobs(broken),/exact reviewed upload repair required/);
+});
+test('spawn acceptance cannot disappear, change roots, omit a suite or suppress failure',()=>{
+  for(const [before,after]of [
+    [spawnExclusionStep,''],
+    ['INKWAVE_BUILT_SITE=_site INKWAVE_CONTROLS_SITE=_site','INKWAVE_BUILT_SITE=another-site INKWAVE_CONTROLS_SITE=_site'],
+    ['INKWAVE_BUILT_SITE=_site INKWAVE_CONTROLS_SITE=_site','INKWAVE_BUILT_SITE=_site'],
+    ...['spawn-exclusion.test.mjs','spawn-exclusion-fallback.test.mjs'].map(name=>[' patches/splatoon3/tests/'+name,'']),
+    [' patches/reliability/tests/special-spawn-barrier.test.mjs',''],
+    [' patches/splatoon3/tests/respawn-lifecycle.test.mjs\n',' patches/splatoon3/tests/respawn-lifecycle.test.mjs || true\n'],
+    ['      - name: Verify emitted opposing-spawn body exclusion and allied exits\n','      - name: Verify emitted opposing-spawn body exclusion and allied exits\n        if: false\n'],
+  ]){
+    const changed=workflow.replace(before,after);assert.notEqual(changed,workflow,before);
+    assert.throws(()=>verifyAcceptedJobs(changed),before);
+  }
 });
 test('artifact repair cannot waive tests, paths, identity, upload errors or unrelated job edits',()=> {
   for(const [before,after] of [
