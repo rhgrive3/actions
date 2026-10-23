@@ -271,6 +271,23 @@
 .zva-device.is-skeleton i, .zva-device.is-skeleton span { height: 42px; border-radius: 12px; background: linear-gradient(90deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .14), rgba(255, 255, 255, .06)) 0 0 / 200% 100%; animation: zva-shimmer 1.2s linear infinite; }
 .zva-device.is-skeleton span { height: 18px; grid-column: span 2; width: 70%; }
 
+/* icon picker */
+.zva-iconpick__preview { justify-self: center; width: 132px; height: 132px; margin: 2px 0 4px; }
+.zva-iconpick__preview svg, .zva-iconpick__art svg { width: 100%; height: 100%; filter: drop-shadow(0 4px 0 rgba(0, 0, 0, .3)); }
+.zva-iconpick__preview path:first-child { stroke: #fff; stroke-width: 3px; }
+.zva-iconpick__shapes { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.zva-iconpick__shape { display: grid; justify-items: center; gap: 2px; padding: 6px 2px 8px; border: 0; border-radius: 14px; cursor: pointer; background: rgba(255, 255, 255, .05); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .08); transition: background-color .15s, box-shadow .15s, translate .2s var(--spring); }
+.zva-iconpick__shape:hover { background: rgba(255, 255, 255, .1); translate: 0 -2px; }
+.zva-iconpick__shape[aria-checked="true"] { background: rgba(var(--a-rgb), .18); box-shadow: inset 0 0 0 3px var(--a); }
+.zva-iconpick__art { width: 100%; max-width: 60px; aspect-ratio: 1; }
+.zva-iconpick__shape small { font-size: 11.5px; font-weight: 800; color: var(--muted); }
+.zva-iconpick__shape[aria-checked="true"] small { color: #fff; }
+.zva-iconpick__colors { display: flex; flex-wrap: wrap; gap: 10px; }
+.zva-iconpick__color { width: 40px; height: 40px; border: 0; border-radius: 50%; cursor: pointer; background: var(--c); box-shadow: inset 0 0 0 3px rgba(0, 0, 0, .25); transition: scale .2s var(--spring); }
+.zva-iconpick__color:hover { scale: 1.1; }
+.zva-iconpick__color[aria-checked="true"] { box-shadow: 0 0 0 3px #1b1629, 0 0 0 6px #fff; scale: 1.06; }
+@media (max-width: 699px) { .zva-iconpick__shapes { grid-template-columns: repeat(3, minmax(0, 1fr)); } .zva-iconpick__preview { width: 104px; height: 104px; } }
+
 /* ------------------------------------------------------------------ toast + welcome */
 .zva-toast { position: absolute; left: 50%; bottom: 18px; z-index: 5; translate: -50% 0; pointer-events: none; }
 .zva-toast__item { display: flex; align-items: center; gap: 8px; padding: 10px 16px 10px 12px; border-radius: 999px; white-space: nowrap; background: #fff; color: var(--k); font-weight: 800; font-size: 14px; box-shadow: 0 4px 0 rgba(0, 0, 0, .35), 0 12px 30px rgba(0, 0, 0, .35); }

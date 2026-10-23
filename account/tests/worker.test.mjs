@@ -7,7 +7,7 @@ import worker from '../worker/index.js';
 import { PERSISTENT_TTL } from '../worker/account.js';
 import { hashIterations } from '../worker/crypto.js';
 
-const MIGRATION = fileURLToPath(new URL('../migrations/0001_accounts.sql', import.meta.url));
+const MIGRATION = fileURLToPath(new URL('../migrations', import.meta.url));
 const ORIGIN = 'https://zevant.example';
 
 function setup(envExtra = {}) {
@@ -298,4 +298,21 @@ test('non-API paths are static assets; unknown API paths are JSON errors', async
   assert.equal((await call('DELETE', '/api/account/login')).status, 405);
   assert.equal((await call('GET', '/api/health')).data.status, 'ok');
   assert.deepEqual(assets, []);
+});
+
+test('player icon and background are validated and saved', async () => {
+  const { call, session } = await registered();
+  const fresh = await call('GET', '/api/account/session', { cookie: session });
+  assert.equal(fresh.data.user.avatarIcon, null);
+  const ok = await call('PATCH', '/api/account/profile', { cookie: session, body: { avatarIcon: 'octo', avatarColor: '#12C8E0' } });
+  assert.equal(ok.status, 200);
+  assert.equal(ok.data.user.avatarIcon, 'octo');
+  assert.equal(ok.data.user.avatarColor, '#12c8e0');
+  assert.equal(ok.data.user.displayName, NEW.displayName, 'name untouched');
+  const bad = await call('PATCH', '/api/account/profile', { cookie: session, body: { avatarIcon: '<script>' } });
+  assert.deepEqual(bad.data.error, { code: 'avatar_invalid', field: 'avatarIcon' });
+  const badColor = await call('PATCH', '/api/account/profile', { cookie: session, body: { avatarColor: 'red' } });
+  assert.deepEqual(badColor.data.error, { code: 'avatar_invalid', field: 'avatarColor' });
+  const rename = await call('PATCH', '/api/account/profile', { cookie: session, body: { displayName: 'Next' } });
+  assert.equal(rename.data.user.avatarIcon, 'octo', 'icon kept on rename');
 });

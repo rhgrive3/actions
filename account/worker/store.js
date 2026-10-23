@@ -6,6 +6,8 @@ export const publicUser = (u) => ({
   id: u.id,
   loginId: u.login_id,
   displayName: u.display_name,
+  avatarIcon: u.avatar_icon || null,
+  avatarColor: u.avatar_color || null,
   createdAt: u.created_at,
   passwordChangedAt: u.password_changed_at,
 });
@@ -29,8 +31,10 @@ export async function insertUser(db, u) {
   }
 }
 
-export const setDisplayName = (db, id, name, now) =>
-  db.prepare('UPDATE users SET display_name = ?2, updated_at = ?3 WHERE id = ?1').bind(id, name, now).run();
+/** Updates the given profile fields; `undefined` keeps the stored value. */
+export const setProfile = (db, id, { displayName, avatarIcon, avatarColor }, now) => db.prepare(`UPDATE users SET
+    display_name = COALESCE(?2, display_name), avatar_icon = COALESCE(?3, avatar_icon), avatar_color = COALESCE(?4, avatar_color), updated_at = ?5
+    WHERE id = ?1`).bind(id, displayName ?? null, avatarIcon ?? null, avatarColor ?? null, now).run();
 
 export const setPasswordHash = (db, id, hash, now, changed = true) => changed
   ? db.prepare('UPDATE users SET password_hash = ?2, updated_at = ?3, password_changed_at = ?3 WHERE id = ?1').bind(id, hash, now).run()

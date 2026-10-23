@@ -4,13 +4,13 @@
 import panelCss from './styles/panel.css?inline';
 import {
   checkLoginId, checkDisplayName, checkPassword, cleanDisplayName, passwordScore,
-  LOGIN_ID_MAX, DISPLAY_NAME_MAX, PASSWORD_MAX,
+  LOGIN_ID_MAX, DISPLAY_NAME_MAX, PASSWORD_MAX, AVATAR_ICONS, AVATAR_COLORS,
 } from '../../shared/rules.js';
 import { api, AccountError } from './api.js';
 import { account } from './store.js';
 import { game } from './game.js';
 import { t, errorText, formatDate, relativeTime, LANG } from './i18n.js';
-import { avatarSVG, splatPath } from './art.js';
+import { avatarSVG, splatPath, inkFor } from './art.js';
 import { ICONS } from './icons.js';
 import './strings.js';
 
@@ -27,7 +27,7 @@ function h(tag, attrs, ...kids) {
     else if (k === 'html') el.innerHTML = v;
     else if (k === 'text') el.textContent = v;
     else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
-    else if (k === 'style') Object.assign(el.style, v);
+    else if (k === 'style') for (const [prop, val] of Object.entries(v)) { if (prop.startsWith('--')) el.style.setProperty(prop, val); else el.style[prop] = val; }
     else el.setAttribute(k, v === true ? '' : v);
   }
   for (const kid of kids.flat(Infinity)) if (kid != null && kid !== false) el.append(kid);
@@ -498,6 +498,7 @@ export function mountPanel({ view: startView, onClose } = {}) {
         h('div', { class: 'zva-card' }, sync.el),
         h('div', { class: 'zva-list' },
           row('pen', t('acc.rename'), u.displayName, () => show('rename', { dir: 1 })),
+          row('sparkle', t('acc.icon'), t('icon.' + (u.avatarIcon || 'squid')), () => show('icon', { dir: 1 })),
           row('lock', t('acc.password'), t('acc.password.sub', { date: formatDate(u.passwordChangedAt || u.createdAt) }), () => show('password', { dir: 1 })),
           row('devices', t('acc.devices'), t('acc.devices.sub'), () => show('devices', { dir: 1 })),
           logoutRow),
@@ -520,6 +521,41 @@ export function mountPanel({ view: startView, onClose } = {}) {
         if (res?.user) { account.signedIn(res.user); game.sfx('ui_confirm'); show('account', { dir: -1, focus: false }); toast(t('rename.done')); focusFirst(); }
       });
       return { el: form, banner: bn, bar: { title: t('acc.rename'), back: true }, initial: () => name.input, destroy: () => bn.dispose() };
+    },
+
+    icon() {
+      const u = account.user;
+      const pick = { icon: u.avatarIcon || 'squid', color: u.avatarColor || inkFor(u.loginId) };
+      const bn = banner();
+      const preview = h('div', { class: 'zva-iconpick__preview', 'aria-hidden': 'true' });
+      const paint = () => {
+        const art = avatarSVG({ ...u, avatarIcon: pick.icon, avatarColor: pick.color });
+        preview.innerHTML = art;
+        const heroAv = hero.querySelector('.zva-hero__avatar');
+        if (heroAv) heroAv.innerHTML = art;
+        for (const b of shapes) b.setAttribute('aria-checked', String(b.dataset.v === pick.icon));
+        for (const b of colors) b.setAttribute('aria-checked', String(b.dataset.v === pick.color));
+        for (const b of shapes) b.querySelector('.zva-iconpick__art').innerHTML = avatarSVG({ ...u, avatarIcon: b.dataset.v, avatarColor: pick.color });
+      };
+      const choose = (key, v) => { pick[key] = v; game.sfx('ui_toggle'); paint(); };
+      const shapes = AVATAR_ICONS.map((id) => h('button', { type: 'button', role: 'radio', class: 'zva-iconpick__shape', 'data-v': id, 'aria-label': t('icon.' + id), onclick: () => choose('icon', id) },
+        h('span', { class: 'zva-iconpick__art' }), h('small', null, t('icon.' + id))));
+      const colors = AVATAR_COLORS.map((c) => h('button', { type: 'button', role: 'radio', class: 'zva-iconpick__color', 'data-v': c, 'aria-label': c, style: { '--c': c }, onclick: () => choose('color', c) }));
+      const go = button(t('btn.save'), { type: 'submit', cls: 'zva-btn--wide' });
+      const form = h('form', { class: 'zva-form zva-iconpick', novalidate: true },
+        preview, bn.el,
+        h('p', { class: 'zva-label' }, t('icon.shape')),
+        h('div', { class: 'zva-iconpick__shapes', role: 'radiogroup', 'aria-label': t('icon.shape') }, shapes),
+        h('p', { class: 'zva-label' }, t('icon.color')),
+        h('div', { class: 'zva-iconpick__colors', role: 'radiogroup', 'aria-label': t('icon.color') }, colors),
+        go);
+      paint();
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const res = await submit({ btn: go, busyLabel: t('btn.saving'), banner: bn, run: () => api.profile({ avatarIcon: pick.icon, avatarColor: pick.color }) });
+        if (res?.user) { account.signedIn(res.user); game.sfx('ui_confirm'); show('account', { dir: -1, focus: false }); toast(t('icon.done')); focusFirst(); }
+      });
+      return { el: form, banner: bn, bar: { title: t('acc.icon'), back: true }, initial: () => shapes.find((b) => b.dataset.v === pick.icon), destroy: () => bn.dispose() };
     },
 
     password() {
@@ -628,7 +664,7 @@ export function mountPanel({ view: startView, onClose } = {}) {
 
   // ---------------------------------------------------------------- navigation: back / close
   function back() {
-    if (['rename', 'password', 'devices', 'delete'].includes(viewName)) { game.sfx('ui_back'); show('account', { dir: -1 }); return; }
+    if (['rename', 'icon', 'password', 'devices', 'delete'].includes(viewName)) { game.sfx('ui_back'); show('account', { dir: -1 }); return; }
     close();
   }
 

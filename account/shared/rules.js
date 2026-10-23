@@ -81,3 +81,9 @@ export function passwordScore(v, loginId = '') {
   if (unique < 5) score = Math.min(score, 1);
   return Math.max(1, Math.min(4, score));
 }
+
+// Player icons and their background inks (account/client/src/art.js draws them).
+export const AVATAR_ICONS = ['squid', 'octo', 'jelly', 'fish', 'crab', 'star'];
+export const AVATAR_COLORS = ['#ff8a14', '#2f5bff', '#ff3d9a', '#3fd16f', '#12c8e0', '#f5d50b', '#9b5cff', '#ff5a3c'];
+export const checkAvatarIcon = (v) => (AVATAR_ICONS.includes(v) ? null : 'avatar_invalid');
+export const checkAvatarColor = (v) => (AVATAR_COLORS.includes(v) ? null : 'avatar_invalid');

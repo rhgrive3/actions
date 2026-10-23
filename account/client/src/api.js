@@ -52,6 +52,7 @@ export const api = {
   sessions: () => request('GET', '/sessions'),
   revoke: (b) => request('POST', '/sessions/revoke', b),
   rename: (displayName) => request('PATCH', '/profile', { displayName }),
+  profile: (patch) => request('PATCH', '/profile', patch),
   password: (b) => request('POST', '/password', b),
   remove: (b) => request('POST', '/delete', b),
 };

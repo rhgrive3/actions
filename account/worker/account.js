@@ -1,6 +1,7 @@
 // ZEVANT account API: sign-up, sign-in, sessions and account settings on Cloudflare Workers + D1.
 import {
   checkLoginId, checkDisplayName, checkPassword, cleanDisplayName, normalizeLoginId, PASSWORD_MAX,
+  checkAvatarIcon, checkAvatarColor,
 } from '../shared/rules.js';
 import { hashPassword, verifyPassword, hashIterations, randomToken, sha256Hex, PBKDF2_MAX_ITERATIONS } from './crypto.js';
 import {
@@ -191,10 +192,22 @@ async function revokeSessions({ env, request, url, now }) {
 async function updateProfile({ env, request, url, now }) {
   const body = await readJson(request);
   const { row, cookie } = await requireSession(env, request, url, now);
-  const name = cleanDisplayName(str(body.displayName, 128));
-  const code = checkDisplayName(name);
-  if (code) throw fieldError('displayName', code);
-  await db.setDisplayName(env.DB, row.id, name, now);
+  const patch = {};
+  if (body.displayName !== undefined) {
+    patch.displayName = cleanDisplayName(str(body.displayName, 128));
+    const code = checkDisplayName(patch.displayName);
+    if (code) throw fieldError('displayName', code);
+  }
+  if (body.avatarIcon !== undefined) {
+    patch.avatarIcon = str(body.avatarIcon, 32);
+    if (checkAvatarIcon(patch.avatarIcon)) throw fieldError('avatarIcon', 'avatar_invalid');
+  }
+  if (body.avatarColor !== undefined) {
+    patch.avatarColor = str(body.avatarColor, 16).toLowerCase();
+    if (checkAvatarColor(patch.avatarColor)) throw fieldError('avatarColor', 'avatar_invalid');
+  }
+  if (!Object.keys(patch).length) throw fieldError('displayName', 'display_name_required');
+  await db.setProfile(env.DB, row.id, patch, now);
   return json(200, { user: db.publicUser(await db.userById(env.DB, row.id)) }, cookie ? { 'Set-Cookie': cookie } : {});
 }
 

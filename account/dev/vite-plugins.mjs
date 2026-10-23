@@ -55,7 +55,7 @@ export function accountDevServer() {
     async configureServer(server) {
       const { createD1 } = await import(pathToFileURL(path.join(ROOT, 'account/tests/d1-fake.mjs')).href);
       worker = (await import(pathToFileURL(path.join(ROOT, 'account/worker/index.js')).href)).default;
-      env = { DB: createD1(path.join(ROOT, 'account/migrations/0001_accounts.sql')), PBKDF2_ITERATIONS: '20000', REGISTRATION_OPEN: 'true' };
+      env = { DB: createD1(path.join(ROOT, 'account/migrations')), PBKDF2_ITERATIONS: '20000', REGISTRATION_OPEN: 'true' };
       server.config.logger.info('  ➜  Account API: in-memory D1 at /api/account (resets when the dev server stops)');
       if (!fs.existsSync(path.join(site, 'index.html'))) server.config.logger.warn('  ➜  _site/ not built: run `npm run build` to play the real game at /. The UI harness is at /dev.html');
 

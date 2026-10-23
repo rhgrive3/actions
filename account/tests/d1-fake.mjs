@@ -1,6 +1,7 @@
 // Minimal Cloudflare D1 stand-in on node:sqlite for the account Worker tests (prepare/bind/first/all/run/batch).
 import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
+import path from 'node:path';
 
 class Statement {
   constructor(db, sql, args = []) { this.db = db; this.sql = sql; this.args = args; }
@@ -19,10 +20,14 @@ class Statement {
   async run() { return this._exec('run'); }
 }
 
-export function createD1(migrationFile) {
+/** `migrations`: a .sql file or a directory whose .sql files run in name order (like wrangler). */
+export function createD1(migrations) {
   const db = new DatabaseSync(':memory:');
   db.exec('PRAGMA foreign_keys = ON');
-  db.exec(fs.readFileSync(migrationFile, 'utf8'));
+  const files = fs.statSync(migrations).isDirectory()
+    ? fs.readdirSync(migrations).filter((f) => f.endsWith('.sql')).sort().map((f) => path.join(migrations, f))
+    : [migrations];
+  for (const f of files) db.exec(fs.readFileSync(f, 'utf8'));
   return {
     raw: db,
     prepare: (sql) => new Statement(db, sql),
