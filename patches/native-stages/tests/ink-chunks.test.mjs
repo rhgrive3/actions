@@ -7,7 +7,7 @@ test('native ink clips unpainted colour after evaluating shading derivatives',as
  const base=THREE.ShaderLib.physical,shader={uniforms:{},vertexShader:base.vertexShader,fragmentShader:base.fragmentShader};material.onBeforeCompile(shader);
  const clip=shader.fragmentShader.indexOf('if (texture2D(uPaint, vPaintUv).a < 0.015) discard;');
  assert(clip>shader.fragmentShader.lastIndexOf('dFdx(normal)'),'early discard makes ink edge derivatives undefined');
- assert(clip<shader.fragmentShader.indexOf('#include <opaque_fragment>'));assert.equal(shader.uniforms.uPaint.value,paint.texture);material.dispose();
+ assert(clip<shader.fragmentShader.indexOf('#include <opaque_fragment>'));assert.equal(shader.uniforms.uPaint.value,paint.texture);assert.deepEqual(Array.from(material.defaultAttributeValues.color),[1,1,1]);assert.deepEqual(Array.from(material.defaultAttributeValues.lightUv),[-1,-1]);material.dispose();
 });
 
 test('native ink attributes retain source order, UVs and exact typed allocation',async()=>{
@@ -26,8 +26,8 @@ test('native ink attributes retain source order, UVs and exact typed allocation'
  const g=f.nativeInkGeometry({data:{triangles}},paint);
  const expectedPositions=[4,1,5,6,1,5,4,1,6,0,0,0,2,0,0,0,0,1];
  assert.deepEqual(Array.from(g.getAttribute('position').array),expectedPositions);
- const sizes={position:3,normal:3,color:3,paintUv:2,faceUv:2,
-  faceData:4,faceFlags:3,faceTan:3,lightUv:2};
+ const sizes={position:3,normal:3,paintUv:2,faceUv:2,
+  faceData:4,faceFlags:3,faceTan:3};
  for(const [name,size] of Object.entries(sizes)){
   const attr=g.getAttribute(name);
   assert.equal(attr.count,6,name);
@@ -39,6 +39,7 @@ test('native ink attributes retain source order, UVs and exact typed allocation'
   assert.equal(Object.prototype.toString.call(attr.array),'[object Float32Array]',name);
   assert.equal(attr.array.BYTES_PER_ELEMENT,4,name+' element width');
  }
+ assert.equal(g.getAttribute('color'),undefined);assert.equal(g.getAttribute('lightUv'),undefined);
  assert.deepEqual(Array.from(g.getAttribute('faceUv').array),[4,5,6,5,4,6,0,0,2,0,0,1]);
  assert.deepEqual(Array.from(g.getAttribute('paintUv').array),[
   20/128,26/128,28/128,26/128,20/128,30/128,

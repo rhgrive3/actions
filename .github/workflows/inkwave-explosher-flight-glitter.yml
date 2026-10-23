@@ -5,6 +5,9 @@ on:
       - 'patches/splatoon3/runtime/s3-projectile-shapes.mjs'
       - 'patches/splatoon3/tests/explosher-flight-glitter.test.mjs'
       - 'scripts/check-inkwave-explosher-flight-glitter.mjs'
+      - 'scripts/check-inkwave-current-explosher-native.mjs'
+      - 'scripts/lib/inkwave-explosher-runtime-ui-preflight.mjs'
+      - 'scripts/tests/inkwave-explosher-runtime-ui-preflight.test.mjs'
       - 'scripts/lib/inkwave-explosher-scene-census.mjs'
       - 'scripts/lib/inkwave-explosher-startup.mjs'
       - 'scripts/lib/inkwave-explosher-capture-surface.mjs'
@@ -28,40 +31,50 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          # Specialized QA admits only this independently pinned common build.
+          ref: 364dd0a7fad9508652b4b4c6ec3d82eb124e9c5c
           path: .ci-explosher-base
+          fetch-depth: 1
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Strict runtime/UI preflight protocol contracts
+        run: node --test scripts/tests/inkwave-explosher-runtime-ui-preflight.test.mjs
       - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
       - run: npx playwright install --with-deps chromium
+      - name: Install required PNG decoder
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y ffmpeg
+          ffmpeg -hide_banner -version
       - name: Native production-composition regressions
-        run: node --experimental-vm-modules --test patches/splatoon3/tests/s3-projectile-shapes.test.mjs patches/splatoon3/tests/explosher-flight-glitter.test.mjs patches/splatoon3/tests/explosher-capture-guards.test.mjs patches/splatoon3/tests/explosher-rng-trace.test.mjs patches/splatoon3/tests/explosher-capture-surface.test.mjs scripts/tests/inkwave-projectile-character-reset.test.mjs patches/splatoon3/tests/projectile-visuals.test.mjs
-      - name: Build untouched base and candidate
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/s3-projectile-shapes.test.mjs patches/splatoon3/tests/explosher-flight-glitter.test.mjs patches/splatoon3/tests/explosher-capture-guards.test.mjs patches/splatoon3/tests/explosher-rng-trace.test.mjs patches/splatoon3/tests/explosher-capture-surface.test.mjs scripts/tests/inkwave-explosher-workflow-admission.test.mjs scripts/tests/inkwave-projectile-character-reset.test.mjs patches/splatoon3/tests/projectile-visuals.test.mjs
+      - name: Build exact candidate and admitted immutable common source
         run: |
-          node .ci-explosher-base/scripts/build-inkwave.mjs .ci-explosher-base/inkwave-public .built-site/explosher-before
-          node scripts/build-inkwave.mjs inkwave-public .built-site/explosher-after
-      - name: Short native preflight before long capture
+          node scripts/build-inkwave.mjs inkwave-public .built-site/explosher-current
+          node scripts/check-inkwave-startup-budget.mjs .built-site/explosher-current
+          node .ci-explosher-base/scripts/build-inkwave.mjs .ci-explosher-base/inkwave-public .built-site/explosher-common
+          node --input-type=module -e "import {requireApprovedCommonBuild} from './scripts/lib/inkwave-explosher-common-build.mjs'; console.log(JSON.stringify(requireApprovedCommonBuild('.ci-explosher-base','.built-site/explosher-common')));"
+      - name: Require latest-head native Explosher input and rendering
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/check-inkwave-current-explosher-native.mjs .built-site/explosher-current .ci-scratch/explosher/current-native "$EXPECTED_HEAD"
+      - name: Compile reviewed inverse pair without changing production artifacts
         run: |
-          EXPLOSHER_PREFLIGHT=1 node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-before .ci-scratch/explosher/preflight-before "${{ github.event.pull_request.base.sha }}" .ci-explosher-base
-          EXPLOSHER_PREFLIGHT=1 node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-after .ci-scratch/explosher/preflight-after "${{ github.event.pull_request.head.sha }}" .
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs';import assert from 'node:assert/strict';
-          const read=s=>JSON.parse(fs.readFileSync('.ci-scratch/explosher/preflight-'+s+'/manifest.json'));
-          const a=read('before'),b=read('after');assert.equal(a.length,1);assert.equal(b.length,1);
-          const mismatches=[],check=(key,b,a)=>{try{assert.deepEqual(b,a,key);}catch{mismatches.push(key);}};
-          for(const k of ['rng','effects','style','sceneClocks','startup','aimTrace','nativeReset','physical','camera','palette','inkHex','time','sparkles','lighting','viewport'])check(k,b[0].measurement[k],a[0].measurement[k]);
-          for(const k of ['aimPoint','aimDir','aimYaw','aimPitch','characterTime'])check('preShot '+k,b[0].measurement.preShot[k],a[0].measurement.preShot[k]);
-          const effectiveRig=r=>({...r,blend:r.blend?.active?r.blend:null,superJumpLandTime:r.superJumpLandTime<.45?r.superJumpLandTime:null});
-          check('effective preShot rig',effectiveRig(b[0].measurement.preShot.rig),effectiveRig(a[0].measurement.preShot.rig));
-          const diagnostic={diagnosticOnly:true,fullPairAccepted:false,mismatches,before:a[0].measurement.rngDiagnostic,after:b[0].measurement.rngDiagnostic};
-          fs.writeFileSync('.ci-scratch/explosher/preflight-diagnostic.json',JSON.stringify(diagnostic,null,2));
-          console.log('EXPLOSHER_PREFLIGHT_DIAGNOSTIC '+JSON.stringify(diagnostic));
-          assert.equal(mismatches.length,0,'Every preflight state must agree');
-          // Raw values stay in receipts; only branches the native rig does not consume are normalized.
-          console.log('EXPLOSHER_PREFLIGHT_STRICT_PARITY passed');
-          NODE
+          node scripts/compile-inkwave-explosher-inverse-pair.mjs .ci-explosher-base .built-site/explosher-common scripts/fixtures/explosher-inverse-baseline.mjs .ci-scratch/explosher/shape
+          node scripts/compile-inkwave-explosher-controlled-main.mjs .ci-explosher-base .built-site/explosher-common .ci-scratch/explosher/main
+      - name: Short admitted same-build native preflight before long capture
+        env:
+          EXPLOSHER_PREFLIGHT: '1'
+          EXPLOSHER_CONTROLLED_MAIN: .ci-scratch/explosher/main/controlled-main-receipt.json
+        run: |
+          # Historical common-build QA; no latest-gameplay parity claim.
+          # Latest-head production composition is tested and built above.
+          for lane in before after; do
+            EXPLOSHER_SHAPE_OVERLAY=".ci-scratch/explosher/shape/${lane}-shape-receipt.json" node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-common ".ci-scratch/explosher/preflight-${lane}" 364dd0a7fad9508652b4b4c6ec3d82eb124e9c5c .ci-explosher-base
+          done
+          node --input-type=module -e "import fs from 'node:fs'; import {readExplosherStagePair} from './scripts/lib/inkwave-explosher-stage-admission.mjs'; fs.writeFileSync('.ci-scratch/explosher/preflight-diagnostic.json',JSON.stringify(readExplosherStagePair('preflight','.ci-scratch/explosher/preflight-before','.ci-scratch/explosher/preflight-after'),null,2));"
       - name: Capture untouched base with the same Explosher driver
         if: false # Current head is short preflight diagnostics only, not full acceptance.
         run: EXPLOSHER_EXPECT_PREFLIGHT=.ci-scratch/explosher/preflight-before/manifest.json node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-before .ci-scratch/explosher/before "${{ github.event.pull_request.base.sha }}" .ci-explosher-base
@@ -90,4 +103,5 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
           compression-level: 0
+          include-hidden-files: true
 

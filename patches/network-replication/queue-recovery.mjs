@@ -18,6 +18,10 @@ export function normalizeQueueProfile(profile, weapons) {
   if (weapons) profile.weapon = safeWeaponId(profile.weapon, weapons);
   if (!Number.isSafeInteger(profile.level) || profile.level < 1 || profile.level > PROFILE_LEVEL_LIMIT) profile.level = 1;
   if (!Number.isSafeInteger(profile.xp) || profile.xp < 0 || profile.xp > PROFILE_XP_LIMIT) profile.xp = 0;
+  // Boot merges the saved record with defaults; result owners call us again
+  // before numeric increments. Preserve XP-only callers' existing key set.
+  for (const key of ['wins', 'matches', 'totalTurf']) if (Object.hasOwn(profile, key)
+    && (!Number.isSafeInteger(profile[key]) || profile[key] < 0)) profile[key] = 0;
   return profile;
 }
 

@@ -46,7 +46,7 @@ export class InkVolumes {
     if (!Number.isInteger(capacity) || capacity < 1 || capacity > 1024) throw Error('Invalid volume capacity');
     if (!Number.isFinite(maxDistance) || maxDistance <= 0 || !Number.isFinite(lodDistance) || lodDistance <= 0 || lodDistance > maxDistance || !Number.isFinite(triangleBudget) || triangleBudget < 0) throw Error('Invalid volume budget or distance');
     this.isInkVolumes = true; this.root = root; this.light = lighting; this.capacity = capacity; this.maxDistance = maxDistance; this.lodDistance = lodDistance; this.triangleBudget = triangleBudget;
-    this.assets = new Map(); this.camera = null; this.disposed = false;
+    this.assets = new Map(); this.camera = null; this.disposed = false;this.activeBatches=[];this.warmAssets=new Set();this.frame=0;
     this.bindings = new WeakMap(); this.matrix = new THREE.Matrix4(); this.scale = new THREE.Vector3();
     this.singlePart = { name: '', size: 1, pattern: 0 }; this.singleParts = [this.singlePart];
     this.plans = Array.from({ length: 8 }, () => ({ matrix: new THREE.Matrix4(), batch: null, culled: false }));
@@ -58,7 +58,7 @@ export class InkVolumes {
   register(name, pack) {
     if (this.disposed || this.assets.has(name)) throw Error('Ink volume name already registered or engine disposed');
     if (!pack || pack.schema !== 'inkwave-volume-v1' || !Array.isArray(pack.patterns) || !pack.patterns.length || pack.patterns.length > 8) throw Error('Invalid volume pack');
-    const asset = { patterns: [], resources: [], bytes: 0, warmFrames: WARM_FRAMES, showAll: true };
+    const asset = { patterns: [], resources: [], batches:[], bytes: 0, warmFrames: WARM_FRAMES, showAll: true };
     try {
       for (const p of pack.patterns) {
         if (!Number.isInteger(p.width) || !Number.isInteger(p.height) || p.width < 1 || p.height < 1 || p.width > 512 || p.height > 512 || !Array.isArray(p.frames) || p.frames.length < 1 || p.frames.length > 32 || !(p.fps > 0 && p.fps <= 120)) throw Error('Invalid volume pattern');
@@ -103,7 +103,7 @@ export class InkVolumes {
             // Empty batches stay out of the render list (see WARM_FRAMES): an instanced mesh with count 0 draws nothing,
             // but a visible one still costs three.js its program/state/VAO setup and this onBeforeRender's full uniform
             // upload every frame.
-            const batch = { mesh, fringe, triangles:drawIndices.length/3, n: 0, matrixRange: { start: 0, count: 0 }, colorRange: { start: 0, count: 0 } }; levels.push(batch);
+            const batch = { asset, pattern, mesh, fringe, triangles:drawIndices.length/3, n: 0, matrixRange: { start: 0, count: 0 }, colorRange: { start: 0, count: 0 } }; levels.push(batch);asset.batches.push(batch);
             asset.bytes += data.positions.byteLength + data.normals.byteLength + uv.byteLength + drawIndices.byteLength + this.capacity * 19 * 4;
           }
           pattern.frames.push(levels);
@@ -111,23 +111,27 @@ export class InkVolumes {
         asset.patterns.push(pattern);
       }
       for (const p of asset.patterns) for (const levels of p.frames) for (const b of levels) this.root.add(b.mesh,b.fringe);
-      this.assets.set(name, asset); this.metrics.bytes += asset.bytes;
+      this.assets.set(name, asset);this.warmAssets.add(asset); this.metrics.bytes += asset.bytes;
       return asset;
     } catch (error) { for (const r of asset.resources) r.dispose(); throw error; }
   }
   begin(camera = this.camera) {
     this.camera = camera; this.metrics.active = this.metrics.culled = this.metrics.overflow = this.metrics.triangles = this.metrics.batches = 0;
     if (camera) { camera.updateMatrixWorld(); this.clip.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); this.frustum.setFromProjectionMatrix(this.clip); }
-    for (const a of this.assets.values()) {
-      // a newly registered pack keeps every batch in the render list for its first frames, as before: they upload its
-      // atlas textures and compile its programs then, not at the pack's first mid-match use
-      a.showAll = a.warmFrames > 0; if (a.showAll) a.warmFrames--;
-    }
-    for (const a of this.assets.values()) for (const p of a.patterns) {
-      if (camera) { p.uniforms.uSunDirV.value.copy(this.light.sunDir).transformDirection(camera.matrixWorldInverse); p.uniforms.uUpV.value.set(0, 1, 0).transformDirection(camera.matrixWorldInverse); }
-      for (const ls of p.frames) for (const b of ls) { b.n = 0; b.mesh.count = b.fringe.count = 0; b.mesh.visible = b.fringe.visible = a.showAll; }
+    this.frame++;
+    for(const b of this.activeBatches){b.n=0;b.mesh.count=b.fringe.count=0;b.mesh.visible=b.fringe.visible=false;}
+    this.activeBatches.length=0;
+    for(const a of this.warmAssets){
+      a.showAll=a.warmFrames>0;if(a.showAll)a.warmFrames--;
+      for(const b of a.batches){b.n=0;b.mesh.count=b.fringe.count=0;b.mesh.visible=b.fringe.visible=a.showAll;}
+      if(a.showAll)for(const p of a.patterns)this._lighting(p);else this.warmAssets.delete(a);
     }
   }
+  _lighting(pattern){
+    if(pattern.lightingFrame===this.frame)return;pattern.lightingFrame=this.frame;
+    if(this.camera){pattern.uniforms.uSunDirV.value.copy(this.light.sunDir).transformDirection(this.camera.matrixWorldInverse);pattern.uniforms.uUpV.value.set(0,1,0).transformDirection(this.camera.matrixWorldInverse);}
+  }
+
   submit(name, source, size, patternIndex = 0) {
     this.singlePart.name=name; this.singlePart.size=size; this.singlePart.pattern=patternIndex;
     return this.submitComposite(source, this.singleParts);
@@ -162,12 +166,14 @@ export class InkVolumes {
     if(this.metrics.active+active>this.capacity||this.metrics.triangles+triangles>this.triangleBudget){this.metrics.overflow++;return false;}
     for(let i=0;i<parts.length;i++) {
       const plan=this.plans[i];if(plan.culled)continue;const b=plan.batch;
+      if(b.n===0){this.activeBatches.push(b);this._lighting(b.pattern);}
       b.mesh.setMatrixAt(b.n,plan.matrix);b.mesh.setColorAt(b.n,source.owner.color);b.n++;
     }
     this.metrics.active+=active;this.metrics.triangles+=triangles;this.metrics.culled+=culled;return true;
   }
   end() {
-    for (const a of this.assets.values()) for (const p of a.patterns) for (const ls of p.frames) for (const b of ls) {
+    for (const b of this.activeBatches) {
+      const a=b.asset;
       b.mesh.count = b.mesh.geometry.drawRange.count ? b.n : 0; b.fringe.count = b.fringe.geometry.drawRange.count ? b.n : 0;
       b.mesh.visible = a.showAll || b.mesh.count > 0; b.fringe.visible = a.showAll || b.fringe.count > 0; if (!b.n) continue; this.metrics.batches+=Number(b.mesh.count>0)+Number(b.fringe.count>0);
       upload(b.mesh.instanceMatrix, b.matrixRange, b.n);
@@ -177,6 +183,7 @@ export class InkVolumes {
   clear() { this.bindings = new WeakMap(); this.begin(); }
   unregister(name) {
     const a = this.assets.get(name); if (!a) return;
+    this.warmAssets.delete(a);for(let i=this.activeBatches.length-1;i>=0;i--)if(this.activeBatches[i].asset===a)this.activeBatches.splice(i,1);
     for (const p of a.patterns) for (const ls of p.frames) for (const b of ls) { this.root.remove(b.mesh,b.fringe); b.mesh.dispose(); b.fringe.dispose(); }
     for (const r of a.resources) r.dispose(); this.metrics.bytes -= a.bytes; this.assets.delete(name);
     // Preflight scratch must not retain the disposed batch/buffer graph.

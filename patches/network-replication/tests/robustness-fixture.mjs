@@ -92,7 +92,7 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
     ${includeMatch ? "export { BossHazards } from './inkwave-public/src/boss/bossHazards.js'; export { RankedWorld } from './patches/splatoon3/runtime/ranked/world.mjs';" : ''}
     export * from './inkwave-public/src/game/weapons.js';
     export * from './inkwave-public/src/net/netmatch.js';
-    ${includeSession ? "export { NetSession } from './inkwave-public/src/net/session.js'; export { Transport } from './inkwave-public/src/net/transport.js';" : ''}
+    ${includeSession ? "export { NetSession } from './inkwave-public/src/net/session.js'; export { Transport, PROTO, COMPAT } from './inkwave-public/src/net/transport.js';" : ''}
     ${rankedNetwork ? "export { buildFrame } from './patches/splatoon3/runtime/ranked/install.mjs'; export { RankedEngine } from './patches/splatoon3/runtime/ranked/engine.mjs'; export { installRankedNetwork } from './patches/splatoon3/runtime/ranked/network.mjs';" : ''}
     export * from './patches/splatoon3/runtime/weapons.mjs';
     export * from './patches/splatoon3/runtime/weapons-fidelity.mjs';
@@ -161,8 +161,8 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
   G.projectiles = projectiles;
 
   // ---- session / NetMatch helpers
-  const makeSession = (id = 'me', host = 'me', members = [['me', 'Me'], ['p2', 'P2'], ['p3', 'P3']]) => ({
-    myId: id, isHost: id === host, hostId: host,
+  const makeSession = (id = 'me', host = 'me', members = [['me', 'Me'], ['p2', 'P2'], ['p3', 'P3']]) => Object.assign(Object.create(includeSession ? api.NetSession.prototype : Object.prototype), {
+    myId: id, hostId: host, ...(includeSession ? {} : {isHost: id === host}),
     _members: new Map(members),
     tr: { broadcast: () => {}, sendTo: () => {} },
   });

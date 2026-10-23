@@ -1,0 +1,1473 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "sourceSha": "749c76211017b40d8cf8a30ea76c475b8ae88964",
+  "inputHash": "1066bef663912ef2621572f6fa4658416a00c8329159e6a920a4d403d8d7a26e",
+  "contentHash": "cd43b0ed0243a4ad15404fe912d541e577074dba094ebb4b70364492e268c86a",
+  "harnessHash": "62d2f311050938a5f18af861bfbcbbe1a2917f53a1177bb2056025af710665eb",
+  "scenario": "native-shooter-220-reject-36-accept",
+  "scope": "Full native Game/Actor/Projectiles/NetMatch; deterministic native component steps after online startup; no Actor damage or receiver admission replacement",
+  "phase": "complete",
+  "relayAdmissions": [
+    {
+      "status": 101,
+      "accepted": true
+    },
+    {
+      "status": 101,
+      "accepted": true
+    }
+  ],
+  "roles": [
+    {
+      "myId": "p_z2b8pr2",
+      "isHost": true,
+      "local": 0,
+      "actors": [
+        {
+          "nid": 0,
+          "owner": "p_z2b8pr2",
+          "remote": false,
+          "team": 0,
+          "weapon": "shooter",
+          "damage": 36
+        },
+        {
+          "nid": 1,
+          "owner": "p_gy1u630",
+          "remote": true,
+          "team": 1,
+          "weapon": "shooter",
+          "damage": 36
+        }
+      ]
+    },
+    {
+      "myId": "p_gy1u630",
+      "isHost": false,
+      "local": 1,
+      "actors": [
+        {
+          "nid": 0,
+          "owner": "p_z2b8pr2",
+          "remote": true,
+          "team": 0,
+          "weapon": "shooter",
+          "damage": 36
+        },
+        {
+          "nid": 1,
+          "owner": "p_gy1u630",
+          "remote": false,
+          "team": 1,
+          "weapon": "shooter",
+          "damage": 36
+        }
+      ]
+    }
+  ],
+  "placement": [
+    [
+      12.5,
+      7.105427357601002e-15,
+      0
+    ],
+    [
+      12.5,
+      7.105427357601002e-15,
+      2
+    ]
+  ],
+  "placementAdvance": {
+    "steps": 27
+  },
+  "settled": [
+    {
+      "points": [
+        [
+          12.499999999999998,
+          0,
+          0
+        ],
+        [
+          12.5,
+          5.551115123125783e-17,
+          2
+        ]
+      ],
+      "separation": 2,
+      "barrierClearance": [
+        36.94474450036116,
+        35.04398043012456
+      ]
+    },
+    {
+      "points": [
+        [
+          12.5,
+          5.551115123125783e-17,
+          0
+        ],
+        [
+          12.499999999999998,
+          0,
+          2
+        ]
+      ],
+      "separation": 2,
+      "barrierClearance": [
+        36.94474450036116,
+        35.04398043012456
+      ]
+    }
+  ],
+  "aim": {
+    "points": [
+      [
+        12.5,
+        5.551115123125783e-17,
+        0
+      ],
+      [
+        12.499999999999998,
+        0,
+        2
+      ]
+    ],
+    "separation": 2,
+    "barrierClearance": [
+      36.94474450036116,
+      35.04398043012456
+    ],
+    "muzzle": [
+      12.291357514176081,
+      1.071525,
+      0.5543678898763736
+    ],
+    "target": [
+      12.499999999999998,
+      1.05,
+      2
+    ],
+    "aim": [
+      0.1428305434608541,
+      -0.014735385441053139,
+      0.9896374610283204
+    ]
+  },
+  "emission": {
+    "emission": {
+      "beforeInk": 100,
+      "afterInk": 99.08,
+      "at": 5.266633333333323
+    },
+    "pending": false,
+    "ink": 99.08,
+    "firstRemaining": 0,
+    "projectiles": 0
+  },
+  "shot": {
+    "initial": {
+      "beforeInk": 100,
+      "afterInk": 99.08,
+      "at": 5.266633333333323,
+      "pos": [
+        12.339060064284057,
+        0.9193973455927236,
+        0.5453120017370802
+      ],
+      "velocity": [
+        14.89158846777101,
+        12.084514466507713,
+        134.60061925197564
+      ],
+      "age": 0,
+      "life": 3,
+      "attacker": [
+        12.5,
+        5.551115123125783e-17,
+        0
+      ],
+      "victim": [
+        12.5,
+        0,
+        2
+      ],
+      "victimSmoothY": 0,
+      "aimPoint": [
+        12.5,
+        1.05,
+        2
+      ],
+      "aimDir": [
+        0.10975490365938342,
+        0.10665009964812885,
+        0.9882204295438158
+      ],
+      "playerRadius": 0.285,
+      "preShotAim": {
+        "points": [
+          [
+            12.5,
+            5.551115123125783e-17,
+            0
+          ],
+          [
+            12.5,
+            0,
+            2
+          ]
+        ],
+        "separation": 2,
+        "barrierClearance": [
+          36.94474450036116,
+          35.04398043012456
+        ],
+        "muzzle": [
+          12.339395541877712,
+          0.8939388046311556,
+          0.5539360766530086
+        ],
+        "target": [
+          12.5,
+          1.05,
+          2
+        ],
+        "aim": [
+          0.10975490365938344,
+          0.10665009964812885,
+          0.9882204295438158
+        ]
+      },
+      "launchComparisonScope": "Origin difference is measured; velocityAngle includes native aim correction, ballistic correction and spread, not just muzzle shift",
+      "launchVsAim": {
+        "originOffset": [
+          -0.0003354775936550425,
+          0.025458540961567966,
+          -0.008624074915928426
+        ],
+        "originDistance": 0.026881676310513535,
+        "velocityAngle": 0.01785795692911495
+      },
+      "actualOriginLOS": true
+    },
+    "removal": {
+      "reason": "actor-contact",
+      "at": 5.266633333333323,
+      "pos": [
+        12.430172594474918,
+        0.9933351052584919,
+        1.3688509419815034
+      ],
+      "age": 0.016666666666666666,
+      "life": 3
+    },
+    "steps": 1
+  },
+  "heldPacket": {
+    "k": "hit",
+    "m": "33vnlo",
+    "v": 0,
+    "a": 1,
+    "l": 2,
+    "h": 1,
+    "d": 36,
+    "w": "shooter",
+    "rp": false,
+    "os": false,
+    "seq": 1,
+    "bg": [
+      12.339060064284057,
+      0.9193973455927236,
+      0.5453120017370802,
+      12.430172594474918,
+      0.9933351052584919,
+      1.3688509419815034,
+      0.285
+    ]
+  },
+  "proofAdvance": {
+    "steps": 1,
+    "ready": true
+  },
+  "proofCount": 1,
+  "rejected": {
+    "from": "p_gy1u630",
+    "at": 117.01930000000074,
+    "packet": {
+      "k": "hit",
+      "m": "33vnlo",
+      "v": 0,
+      "a": 1,
+      "l": 2,
+      "h": 1,
+      "d": 220,
+      "w": "shooter",
+      "rp": false,
+      "os": false,
+      "seq": 1,
+      "bg": [
+        12.339060064284057,
+        0.9193973455927236,
+        0.5453120017370802,
+        12.430172594474918,
+        0.9933351052584919,
+        1.3688509419815034,
+        0.285
+      ]
+    },
+    "before": {
+      "hp": 100,
+      "life": 2,
+      "alive": true,
+      "local": true,
+      "attackerOwner": "p_gy1u630",
+      "proofs": [
+        {
+          "key": "1:78.681:p:main:shooter:123:9:6",
+          "actor": 1,
+          "at": 116.99639999999852,
+          "kind": "main",
+          "uses": 0,
+          "maxUses": 2
+        }
+      ],
+      "pending": 0,
+      "dedupe": {}
+    },
+    "after": {
+      "hp": 100,
+      "life": 2,
+      "alive": true,
+      "local": true,
+      "attackerOwner": "p_gy1u630",
+      "proofs": [
+        {
+          "key": "1:78.681:p:main:shooter:123:9:6",
+          "actor": 1,
+          "at": 116.99639999999852,
+          "kind": "main",
+          "uses": 0,
+          "maxUses": 2
+        }
+      ],
+      "pending": 0,
+      "dedupe": {}
+    }
+  },
+  "accepted": {
+    "from": "p_gy1u630",
+    "at": 117.02919999999925,
+    "packet": {
+      "k": "hit",
+      "m": "33vnlo",
+      "v": 0,
+      "a": 1,
+      "l": 2,
+      "h": 1,
+      "d": 36,
+      "w": "shooter",
+      "rp": false,
+      "os": false,
+      "seq": 1,
+      "bg": [
+        12.339060064284057,
+        0.9193973455927236,
+        0.5453120017370802,
+        12.430172594474918,
+        0.9933351052584919,
+        1.3688509419815034,
+        0.285
+      ]
+    },
+    "before": {
+      "hp": 100,
+      "life": 2,
+      "alive": true,
+      "local": true,
+      "attackerOwner": "p_gy1u630",
+      "proofs": [
+        {
+          "key": "1:78.681:p:main:shooter:123:9:6",
+          "actor": 1,
+          "at": 116.99639999999852,
+          "kind": "main",
+          "uses": 0,
+          "maxUses": 2
+        }
+      ],
+      "pending": 0,
+      "dedupe": {}
+    },
+    "after": {
+      "hp": 64,
+      "life": 2,
+      "alive": true,
+      "local": true,
+      "attackerOwner": "p_gy1u630",
+      "proofs": [
+        {
+          "key": "1:78.681:p:main:shooter:123:9:6",
+          "actor": 1,
+          "at": 116.99639999999852,
+          "kind": "main",
+          "uses": 1,
+          "maxUses": 2
+        }
+      ],
+      "pending": 0,
+      "dedupe": {
+        "lastHit": 1,
+        "hitSequences": [
+          1
+        ],
+        "hitSequenceSlots": [
+          [
+            1,
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "acks": [
+    {
+      "from": "p_z2b8pr2",
+      "packet": {
+        "k": "hit_ack",
+        "m": "33vnlo",
+        "h": 1,
+        "v": 0,
+        "a": 1,
+        "d": 36,
+        "kld": 0,
+        "vl": 2,
+        "hp": 64,
+        "hr": 1,
+        "ht": 117.04660000000149,
+        "la": 1,
+        "he": null
+      }
+    }
+  ],
+  "damageUnchanged": [
+    true,
+    true
+  ],
+  "errors": [],
+  "loadedArtifacts": [
+    "index.html",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/fonts/TitanOne-latin.woff2",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/fonts/Rubik-latin.woff2",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/styles/mobile.css",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/styles/ui.css",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/ui.css",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/practice-range/styles/range.css",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/intro-presentation.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/core/save-validation.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/locker-stage.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/combat-hit-classifier.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/main-weapon-catalog-data.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/weapon-recipes.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/kit-recipes.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/combat-recipes.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/source-cue-registry.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/vendor/three/build/three.module.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/reference-profiles.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/source-guided-render.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/styles/hud.css",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/priority-signatures.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/s3-articulation.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/no-bleep-foley.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/render.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/load-deadline.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/authorized-samples.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/charger-hold-sustain.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/bank.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/blaster-hit.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/native-stages/runtime/build-config.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/native-stages/runtime/registry.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/mapkit.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/stages/cargo/surfaces.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/stages/cargo/layout.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/practice-range/stage/surfaces.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/practice-range/stage/zones.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/practice-range/stage/layout.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/stage/scorch-layout.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/maps.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/level.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/stages/surfaces.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/texlib.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/core/ctx.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/inkShading.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/levelMaterial.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/physics.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/config.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/main-ink-footprints.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/camera-aim-controls.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/chargerTuning.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/cameraRig.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/render.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/native-stages/runtime/native-paint.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/scoring.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/paint-ownership.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/paint.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/nav.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/minimap.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/fx/swimWake.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/recovery-gate.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/support-cooler.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/active-special-gauge.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/tacticooler-gauge.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/clock.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/zipcaster-armor.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/movement.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/zones.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/native-stages/runtime/engine.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/tower.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/clams.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/rainmaker.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/engine.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ui-strings.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/character-style.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/core/device.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/i18n.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/practice-range/range-map.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/queue-recovery.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapon-weight-data.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapon-weight.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/catalog-dualies-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/special-vfx-kit.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/sub-surface-attachment.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/sprinkler-contact-commit.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/toxic-mist.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/shooter-movement.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked-gear.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/tenacity.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/conditional-gear-network.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/object-gear.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/sub-mark-resistance.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/gear.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/kit-sprinkler.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/kit-autobomb.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/special-presentation-owner.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/brella-physics.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/source-shot-footprint.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/roller-paint-calibration.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/roller-contact-paint.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/shooter-impact-paint.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapon-accuracy.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/shooter-accuracy.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/dualies-accuracy.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/shooter-nearest-paint.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapons.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/source-distance.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/special-device-flight.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/wail-speakers.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/crab-tank-projectile.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/crab-tank-aim.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/crab-tank-splash-visual.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/all-specials.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/triple-slam-fists.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/special-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/action-admission.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/roller-heavy-swing.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/roller.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/superjump-destination.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/resources.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/brella-guard-facing.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/s3-sweps-assets.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/s3-ink-sheets.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/s3-projectile-shapes.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/projectile-visual-source-data.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/catalog-pose-birth.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/projectile-visuals.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/slosher-paint-admission.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/snapshot-guard.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/ink-volume/roller.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/ink-volume/recipes.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/bomb-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/projectile-presentation.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/weapons.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/actor.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/bot-navigation.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/canonical-kits-data.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/canonical-kits.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/bots.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/pad-sensitivity.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/player.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/match.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/layout-sample.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/vendor/three/jsm/utils/BufferGeometryUtils.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/practice-range/runtime/dummy.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/practice-range/runtime/strings.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/practice-range/runtime/pads.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/practice-range/runtime/hud.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/practice-range/runtime/session.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/practice-range/runtime/menu.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/practice-range/runtime/signage.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/practice-range/install.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/practice-range/stage/props.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/practice-range/stage/murals.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/loading-cache/runtime/startup.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/assets/loading/arena.webp",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/bootstrap.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/content-language.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/install.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/runtime.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/install.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapons-fidelity.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/issue-five-hotfix-a.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/install.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/issue-five-hotfix-b.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/issue-five-hotfix-c.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/disconnect-fidelity.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/slosher-intermediate-paint.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/issue-eight-followup.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/main-weapon-catalog.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/kit-runtime.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/extra-source-routes.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/native-sprinkler-damage.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/turf-combat.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/sub-resistance.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/issue-284-adapter.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/issue-196-adapter.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/character.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/fx/fx.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/net/netmatch.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/core/input.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/ui/hud.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/ui/ui-icons.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/core/shadowcache.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/normal-jump-hold.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/movement-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/minimap-dirty.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/alternate-weapon-kits.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/muzzle-feedback.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/roller-body-knockback.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/charger-surface.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/menu-layout.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/sub-special-fidelity.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/kit-defense.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/kit-subs.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/bomb-models.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/kit-big-bubbler.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/kit-network.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/kit-ink-vac.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/bot-paint-device-profile.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/kit-support.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/kit-composition.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/kit-trizooka.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/health-bars.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/flow.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ui.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/walk.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapon-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/flow-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapon-detail-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapon-family-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapon-handoff-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/jump-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/landing-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/swim-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/wall-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/form-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/dualies-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/dualies-network.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/brella-network.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/roller-detail-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/roller-fold.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/superjump-target-notification.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/squidroll-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/superjump-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/hit-spawn-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapon-hit-reaction.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/idle-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/body-proportion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/emotes-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/face-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/respawn-lifecycle.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/squid-spawn-presentation.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/carry-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/controller-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/death-blast.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/all-subs.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/special-presentation.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/special-vfx.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/net/session.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/catalogue.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/world.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/ui.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/bots.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/network.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/pose-admission.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/combat.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/alternate-weapon-kits-data.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/inkFlight.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/tidal-slam-gauge.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/final-damage.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/swim-stealth.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/superjump.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/damage-timing.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/movement-physics.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/ui/menus.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/actor-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/storm-effects.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/issue-460-marker.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/issue-460-gauge.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/battle-framing.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/charger-sight.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/blast-occlusion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/roller-impact-paint.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/agent3-weapon-physics.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/trizooka-collision.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapon-paint-inertia.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/charger-sight-cache.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapon-edgecases.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/contact-recovery.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/sub-ready.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/storm-power.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/inkFlightRuntime.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/reliability/menu-takeover.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/player-hurtbox.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/private-tracking.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/issue-465-blaster-startup.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/splatling-radius-charge.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/splatling.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/splatling-startup-compat.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapon-gates.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/splatling-jump-spread.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/haunt.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/dry-ink.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/clothing-gear.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/flow-effects.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/conditional-gear.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/issue-415-adapter.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/turf-finish.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/idle-resources.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/roller-freefall.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/roller-model.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/team-wipeout.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/special-models.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/tenacity.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/hud-snapshots.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/blaster-flight-paint.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/roller-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/roller-visual.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/offscreen-visual-budget.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/menu.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/offline-offscreen-budget.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/intermediate-tick-budget.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/kid-shadow-proxy.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/roller-vertical-paint.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/roller-max-paint.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/main-knockback.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/dualies-guide-cache.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/dualies-slide-paint.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/slosher-nearest-paint.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/projectile-collision.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapons-collision.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapons-charger-flight.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/brella-canopy-visual.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/catalog-splash-paint.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/catalog-wall-drop-data.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/added-family-paint.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/saber-melee.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/saber-step.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/saber-presentation.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapon-opponent-palette.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/headgear/lifecycle.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/hair-cache.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/character-geo.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/character-hair.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/portrait-work.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapon-models/kit.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapon-appearance.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/character-mats.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/character-weapons.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/character-lod.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/ink-volume/runtime.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/ink-volume/pack.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/swim-surface.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/platform-input.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/first-touch-adapter.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/core/mobile.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/depth-cache.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/ui/ui-util.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/splatling-reticle.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/ui/menu-art.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/ui/hud-boss.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/audio/bossAudio.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/ui/boss-art.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/rolling-quantile.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/paint-authority.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/transient-gear-network.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/combat-provenance.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/gear-loadout-network.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/outbound-prefix.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/paint-packet-codec.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/kit-paint-admission.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/superjump-epoch.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/remote-dodge-clock.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/issue-1088-surge-presentation.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/sub-birth-commit.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/roller-presentation.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/splashdown-network.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/result-admission.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/support-recon.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/sub-models.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/support-cooler-collision.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/combat-info.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/legacy-walk-curves.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/walk-foot-clearance.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/blaster-mechanism.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/rainmaker-motion.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/character-face.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/torpedo-contact-commit.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/torpedo-receiver-trajectory.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/tower-paint-support.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/torpedo-splashes.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/reliability/session-admission.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/net/transport.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/stages.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/small-clam-model.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/power-clam-model.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/clam-presentation.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/rainmaker-model.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/barrier-admission.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/strings.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/inkjet-vfx-budget.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapon-models/registry.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/inkjet-vfx-clock.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/catalogue-payload.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/ranked/rainmaker-defense.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/inkCollision.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/private-tracking-render.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/result-continuation.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/results-scoring.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/ui/news.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/menu-preview.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/platform-lifecycle.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/native-stages/runtime/native-projectile-sweep.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/brella-aperture.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/headgear/catalog.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/resource-budget.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/character-outfit.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapon-reference-models.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/blaster-mechanism-model.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/mobile-platform.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/touch-relayout.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/portrait-guard.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/core/gyro.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/combat-hit-ceilings-data.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/damage-leaves.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/utf8-length.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/catalog-paint-admission.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/map-reveal.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/torpedo-birth-envelope.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/platform-transport.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/weapon-models/family-holds.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/roller-source-scale.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/headgear/goldfish-mask.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/headgear/samurai-helmet.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/headgear/face-goggles.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/headgear/thief-hook.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/headgear/armor-helmet.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/headgear/two-line-mesh.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/headgear/camo-headphones.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/headgear/character-headgear-ink-black-flap-cap.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/gyro.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/screen-angle.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/network-replication/torpedo-launch-set.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/gyro-permission.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/profile.json",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/main.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/range-frame-pacing.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/view-settings.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/gyro-startup.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/platform-game.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/world-quality.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/texlib.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/aim-profile.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/material-handoff.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/death-card.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/core/renderer.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/decor.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/murals.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/mapThumb.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/dressing.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/showcase.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/platform-match-watch.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/stages/index.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/props-marina-vessels.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/pause-frame-retention.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/vendor/three/jsm/postprocessing/EffectComposer.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/vendor/three/jsm/postprocessing/RenderPass.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/vendor/three/jsm/postprocessing/UnrealBloomPass.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/vendor/three/jsm/postprocessing/OutputPass.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/vendor/three/jsm/postprocessing/ShaderPass.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/vendor/three/jsm/postprocessing/GTAOPass.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/showcase-shadow.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/issue-472-adapter.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/stages/cargo/props.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/stages/cargo/murals.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/vendor/three/jsm/postprocessing/Pass.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/vendor/three/jsm/shaders/CopyShader.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/vendor/three/jsm/shaders/LuminosityHighPassShader.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/vendor/three/jsm/shaders/OutputShader.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/vendor/three/jsm/postprocessing/MaskPass.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/vendor/three/jsm/shaders/GTAOShader.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/vendor/three/jsm/shaders/PoissonDenoiseShader.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/vendor/three/jsm/math/SimplexNoise.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/ui/diorama.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/hud/s3-squid-badge.svg",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/fonts/iw-s3-digits.woff2",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/environment.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/audio/audio.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/audio/music.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/output-safety.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/engine.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/platform-audio.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/runtime/audio-listener.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/music-score.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/music-idle.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/audio/streamedTrack.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/real-s3-loader.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/borrowed-recorded-mains.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/props.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/world/props-marina-dock.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/lightmaps/tidewater.json",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/lightmaps/tidewater.png",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/ink-volume/assets/roller/manifest.json",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/ink-volume/assets/shooter/manifest.json",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/fx/fxHooks.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/fx/screenfx.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/ink-volume/assets/shooter/volumes.bin.gz",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/ink-volume/assets/roller/volumes.bin.gz",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/motion/source-controller.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/source-weapon-owner.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/source-posture.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/source-form-transition.mjs",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/motion/source-bank.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/motion/locomotion-profile.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/motion/gait-targets.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/motion/retarget.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/motion/squid-rig.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/motion/root-hair.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/motion/body-balance.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/motion/hair-targets.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/motion/cadence-control.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/motion/run-foot-path.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/src/game/motion/contact-transition.js",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/source-motion/manifest.json",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/source-motion/catalog.json.gz",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/source-motion/Player_Squid.f32.gz",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/source-motion/Player00.f32.gz.part00",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/source-motion/Player00.f32.gz.part10",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/source-motion/Player00.f32.gz.part01",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/source-motion/Player00.f32.gz.part02",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/source-motion/Player00.f32.gz.part03",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/source-motion/Player00.f32.gz.part04",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/source-motion/Player00.f32.gz.part05",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/source-motion/Player00.f32.gz.part06",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/source-motion/Player00.f32.gz.part07",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/source-motion/Player00.f32.gz.part08",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/source-motion/Player00.f32.gz.part09",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/local-quality/assets/menu/lobby.webp",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/real-s3-installed.json",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/assets/audio/Jet_Arrow.mp3",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/s3-real/Wp_ShooterNormal_Shot_00.mp3",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/s3-real/HitEf_CriticalHit_00.mp3",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/s3-real/HitEf_Damage_00.mp3",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/s3-real/HitEf_InkHit_Focused_Normal_00.mp3",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/s3-real/HitEf_InkHit_Focused_Strong_00.mp3",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/s3-real/Pl_DeadSplash_00.mp3",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/s3-real/Wp_BombSuction_Explosion_00.mp3",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/s3-real/Sp_UltraShot_Shot_00.mp3",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/s3-real/Sp_UltraShot_Explosion_00.mp3",
+    "_versions/b35ecd20d28c8c49c8f94e5672eb12a0f6f043af23ee3f46d6330f40ba9574eb/patches/splatoon3/runtime/audio/s3-real/Sp_UltraShot_BulletLoop_00.mp3"
+  ],
+  "wire": [
+    {
+      "at": 1792649889968,
+      "text": "ping"
+    },
+    {
+      "at": 1792649889997,
+      "text": "b|{\"k\":\"lobby\",\"l\":{\"map\":\"tidewater\",\"time\":\"day\",\"duration\":180,\"bots\":true,\"difficulty\":\"normal\",\"palette\":3,\"mode\":\"turf\",\"teamsConfirmed\":false,\"players\":[{\"id\":\"p_z2b8pr2\",\"name\":\"Ceiling QA Host\",\"team\":0,\"weapon\":\"shooter\",\"style\":{\"hair\":0,\"skin\":8,\"outfit\":0,\"eyes\":3,\"hat\":0,\"brows\":1},\"ready\":false,\"ping\":3}]}}"
+    },
+    {
+      "at": 1792649890058,
+      "text": "b|{\"k\":\"lobby\",\"l\":{\"map\":\"tidewater\",\"time\":\"day\",\"duration\":180,\"bots\":true,\"difficulty\":\"normal\",\"palette\":3,\"mode\":\"turf\",\"teamsConfirmed\":false,\"players\":[{\"id\":\"p_z2b8pr2\",\"name\":\"Ceiling QA Host\",\"team\":0,\"weapon\":\"shooter\",\"style\":{\"hair\":0,\"skin\":8,\"outfit\":0,\"eyes\":3,\"hat\":0,\"brows\":1},\"ready\":false,\"ping\":3},{\"id\":\"p_gy1u630\",\"name\":\"Ceiling QA Guest\",\"team\":1,\"weapon\":\"shooter\",\"style\":{\"hair\":5,\"skin\":0,\"outfit\":2,\"eyes\":1,\"hat\":2,\"brows\":1},\"ready\":false,\"ping\":0}]}}"
+    },
+    {
+      "at": 1792649890059,
+      "text": "ping"
+    },
+    {
+      "at": 1792649890059,
+      "text": "s|p_z2b8pr2|{\"k\":\"me\",\"name\":\"Ceiling QA Guest\",\"weapon\":\"shooter\",\"style\":null}"
+    },
+    {
+      "at": 1792649890060,
+      "text": "b|{\"k\":\"lobby\",\"l\":{\"map\":\"tidewater\",\"time\":\"day\",\"duration\":180,\"bots\":true,\"difficulty\":\"normal\",\"palette\":3,\"mode\":\"turf\",\"teamsConfirmed\":false,\"players\":[{\"id\":\"p_z2b8pr2\",\"name\":\"Ceiling QA Host\",\"team\":0,\"weapon\":\"shooter\",\"style\":{\"hair\":0,\"skin\":8,\"outfit\":0,\"eyes\":3,\"hat\":0,\"brows\":1},\"ready\":false,\"ping\":3},{\"id\":\"p_gy1u630\",\"name\":\"Ceiling QA Guest\",\"team\":1,\"weapon\":\"shooter\",\"style\":{\"hair\":5,\"skin\":0,\"outfit\":2,\"eyes\":1,\"hat\":2,\"brows\":1},\"ready\":false,\"ping\":0}]}}"
+    },
+    {
+      "at": 1792649890075,
+      "text": "s|p_z2b8pr2|{\"k\":\"me\",\"weapon\":\"shooter\"}"
+    },
+    {
+      "at": 1792649890076,
+      "text": "b|{\"k\":\"lobby\",\"l\":{\"map\":\"tidewater\",\"time\":\"day\",\"duration\":180,\"bots\":true,\"difficulty\":\"normal\",\"palette\":3,\"mode\":\"turf\",\"teamsConfirmed\":false,\"players\":[{\"id\":\"p_z2b8pr2\",\"name\":\"Ceiling QA Host\",\"team\":0,\"weapon\":\"shooter\",\"style\":{\"hair\":0,\"skin\":8,\"outfit\":0,\"eyes\":3,\"hat\":0,\"brows\":1},\"ready\":false,\"ping\":3},{\"id\":\"p_gy1u630\",\"name\":\"Ceiling QA Guest\",\"team\":1,\"weapon\":\"shooter\",\"style\":{\"hair\":5,\"skin\":0,\"outfit\":2,\"eyes\":1,\"hat\":2,\"brows\":1},\"ready\":false,\"ping\":0}]}}"
+    },
+    {
+      "at": 1792649890077,
+      "text": "b|{\"k\":\"lobby\",\"l\":{\"map\":\"tidewater\",\"time\":\"day\",\"duration\":180,\"bots\":true,\"difficulty\":\"normal\",\"palette\":3,\"mode\":\"turf\",\"teamsConfirmed\":false,\"players\":[{\"id\":\"p_z2b8pr2\",\"name\":\"Ceiling QA Host\",\"team\":0,\"weapon\":\"shooter\",\"style\":{\"hair\":0,\"skin\":8,\"outfit\":0,\"eyes\":3,\"hat\":0,\"brows\":1},\"ready\":false,\"ping\":3},{\"id\":\"p_gy1u630\",\"name\":\"Ceiling QA Guest\",\"team\":1,\"weapon\":\"shooter\",\"style\":{\"hair\":5,\"skin\":0,\"outfit\":2,\"eyes\":1,\"hat\":2,\"brows\":1},\"ready\":false,\"ping\":0}]}}"
+    },
+    {
+      "at": 1792649890077,
+      "text": "b|{\"k\":\"lobby\",\"l\":{\"map\":\"tidewater\",\"time\":\"day\",\"duration\":180,\"bots\":false,\"difficulty\":\"normal\",\"palette\":3,\"mode\":\"turf\",\"teamsConfirmed\":false,\"players\":[{\"id\":\"p_z2b8pr2\",\"name\":\"Ceiling QA Host\",\"team\":0,\"weapon\":\"shooter\",\"style\":{\"hair\":0,\"skin\":8,\"outfit\":0,\"eyes\":3,\"hat\":0,\"brows\":1},\"ready\":false,\"ping\":3},{\"id\":\"p_gy1u630\",\"name\":\"Ceiling QA Guest\",\"team\":1,\"weapon\":\"shooter\",\"style\":{\"hair\":5,\"skin\":0,\"outfit\":2,\"eyes\":1,\"hat\":2,\"brows\":1},\"ready\":false,\"ping\":0}]}}"
+    },
+    {
+      "at": 1792649890077,
+      "text": "b|{\"k\":\"lobby\",\"l\":{\"map\":\"tidewater\",\"time\":\"day\",\"duration\":180,\"bots\":false,\"difficulty\":\"normal\",\"palette\":3,\"mode\":\"turf\",\"teamsConfirmed\":false,\"players\":[{\"id\":\"p_z2b8pr2\",\"name\":\"Ceiling QA Host\",\"team\":0,\"weapon\":\"shooter\",\"style\":{\"hair\":0,\"skin\":8,\"outfit\":0,\"eyes\":3,\"hat\":0,\"brows\":1},\"ready\":false,\"ping\":3},{\"id\":\"p_gy1u630\",\"name\":\"Ceiling QA Guest\",\"team\":1,\"weapon\":\"shooter\",\"style\":{\"hair\":5,\"skin\":0,\"outfit\":2,\"eyes\":1,\"hat\":2,\"brows\":1},\"ready\":false,\"ping\":0}]}}"
+    },
+    {
+      "at": 1792649890077,
+      "text": "b|{\"k\":\"lobby\",\"l\":{\"map\":\"tidewater\",\"time\":\"day\",\"duration\":180,\"bots\":false,\"difficulty\":\"normal\",\"palette\":3,\"mode\":\"turf\",\"teamsConfirmed\":false,\"players\":[{\"id\":\"p_z2b8pr2\",\"name\":\"Ceiling QA Host\",\"team\":0,\"weapon\":\"shooter\",\"style\":{\"hair\":0,\"skin\":8,\"outfit\":0,\"eyes\":3,\"hat\":0,\"brows\":1},\"ready\":false,\"ping\":3},{\"id\":\"p_gy1u630\",\"name\":\"Ceiling QA Guest\",\"team\":1,\"weapon\":\"shooter\",\"style\":{\"hair\":5,\"skin\":0,\"outfit\":2,\"eyes\":1,\"hat\":2,\"brows\":1},\"ready\":false,\"ping\":0}]}}"
+    },
+    {
+      "at": 1792649890080,
+      "text": "b|{\"k\":\"lobby\",\"l\":{\"map\":\"tidewater\",\"time\":\"day\",\"duration\":180,\"bots\":false,\"difficulty\":\"normal\",\"palette\":3,\"mode\":\"turf\",\"teamsConfirmed\":true,\"players\":[{\"id\":\"p_z2b8pr2\",\"name\":\"Ceiling QA Host\",\"team\":0,\"weapon\":\"shooter\",\"style\":{\"hair\":0,\"skin\":8,\"outfit\":0,\"eyes\":3,\"hat\":0,\"brows\":1},\"ready\":false,\"ping\":3},{\"id\":\"p_gy1u630\",\"name\":\"Ceiling QA Guest\",\"team\":1,\"weapon\":\"shooter\",\"style\":{\"hair\":5,\"skin\":0,\"outfit\":2,\"eyes\":1,\"hat\":2,\"brows\":1},\"ready\":false,\"ping\":0}]}}"
+    },
+    {
+      "at": 1792649890083,
+      "text": "s|p_z2b8pr2|{\"k\":\"me\",\"ready\":true}"
+    },
+    {
+      "at": 1792649890084,
+      "text": "b|{\"k\":\"lobby\",\"l\":{\"map\":\"tidewater\",\"time\":\"day\",\"duration\":180,\"bots\":false,\"difficulty\":\"normal\",\"palette\":3,\"mode\":\"turf\",\"teamsConfirmed\":true,\"players\":[{\"id\":\"p_z2b8pr2\",\"name\":\"Ceiling QA Host\",\"team\":0,\"weapon\":\"shooter\",\"style\":{\"hair\":0,\"skin\":8,\"outfit\":0,\"eyes\":3,\"hat\":0,\"brows\":1},\"ready\":false,\"ping\":3},{\"id\":\"p_gy1u630\",\"name\":\"Ceiling QA Guest\",\"team\":1,\"weapon\":\"shooter\",\"style\":{\"hair\":5,\"skin\":0,\"outfit\":2,\"eyes\":1,\"hat\":2,\"brows\":1},\"ready\":true,\"ping\":0}]}}"
+    },
+    {
+      "at": 1792649890084,
+      "text": "b|{\"k\":\"lobby\",\"l\":{\"map\":\"tidewater\",\"time\":\"day\",\"duration\":180,\"bots\":false,\"difficulty\":\"normal\",\"palette\":3,\"mode\":\"turf\",\"teamsConfirmed\":true,\"players\":[{\"id\":\"p_z2b8pr2\",\"name\":\"Ceiling QA Host\",\"team\":0,\"weapon\":\"shooter\",\"style\":{\"hair\":0,\"skin\":8,\"outfit\":0,\"eyes\":3,\"hat\":0,\"brows\":1},\"ready\":true,\"ping\":3},{\"id\":\"p_gy1u630\",\"name\":\"Ceiling QA Guest\",\"team\":1,\"weapon\":\"shooter\",\"style\":{\"hair\":5,\"skin\":0,\"outfit\":2,\"eyes\":1,\"hat\":2,\"brows\":1},\"ready\":true,\"ping\":0}]}}"
+    },
+    {
+      "at": 1792649890089,
+      "text": "{\"t\":\"lock\",\"v\":true}"
+    },
+    {
+      "at": 1792649890089,
+      "text": "b|{\"k\":\"start\",\"proto\":2,\"compat\":\"iw-gameplay-20261020-r3\",\"roster\":[{\"nid\":0,\"owner\":\"p_z2b8pr2\",\"bot\":false,\"team\":0,\"slot\":0,\"name\":\"Ceiling QA Host\",\"weapon\":\"shooter\",\"style\":{\"hair\":0,\"skin\":8,\"outfit\":0,\"eyes\":3,\"hat\":0,\"brows\":1}},{\"nid\":1,\"owner\":\"p_gy1u630\",\"bot\":false,\"team\":1,\"slot\":0,\"name\":\"Ceiling QA Guest\",\"weapon\":\"shooter\",\"style\":{\"hair\":5,\"skin\":0,\"outfit\":2,\"eyes\":1,\"hat\":2,\"brows\":1}}],\"map\":\"tidewater\",\"time\":\"day\",\"duration\":180,\"difficulty\":\"normal\",\"palette\":3,\"mode\":\"turf\",\"host\":\"p_z2b8pr2\",\"id\":\"33vnlo\"}"
+    },
+    {
+      "at": 1792649894581,
+      "text": "ping"
+    },
+    {
+      "at": 1792649894707,
+      "text": "s|p_gy1u630|{\"k\":\"paint-codec\",\"v\":\"inkwave-paint-dictionary-v3\",\"m\":\"33vnlo\",\"h\":\"c7afcd8cf25ca8621a301f0e89d1155d\",\"q\":\"94c886d7447b277fb7bd9848cdcfa858\"}"
+    },
+    {
+      "at": 1792649894707,
+      "text": "b|{\"k\":\"t\",\"ts\":87.568,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,1,1137,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[-0.0361584593793232,0,-27.20005447654802],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,1,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1137,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"c\":[\"init\",180],\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649894784,
+      "text": "ping"
+    },
+    {
+      "at": 1792649894785,
+      "text": "s|p_z2b8pr2|{\"k\":\"paint-codec\",\"v\":\"inkwave-paint-dictionary-v3\",\"m\":\"33vnlo\",\"h\":\"e1a6c1bc29eea1977ecff8393012edb1\",\"q\":\"bbeb22a26f0d52474bb6e58162a7b36b\"}"
+    },
+    {
+      "at": 1792649894785,
+      "text": "s|p_z2b8pr2|{\"k\":\"paint-codec\",\"v\":\"inkwave-paint-dictionary-v3\",\"m\":\"33vnlo\",\"a\":\"94c886d7447b277fb7bd9848cdcfa858\",\"n\":\"e1a6c1bc29eea1977ecff8393012edb1\"}"
+    },
+    {
+      "at": 1792649894793,
+      "text": "s|p_z2b8pr2|{\"k\":\"fsq\",\"m\":\"33vnlo\"}"
+    },
+    {
+      "at": 1792649894793,
+      "text": "s|p_z2b8pr2|{\"k\":\"ready\",\"id\":\"33vnlo\"}"
+    },
+    {
+      "at": 1792649894794,
+      "text": "b|{\"k\":\"t\",\"ts\":49.39,\"a\":[[1,0.91,6.7,39.82,0,0,0,3.142,3.142,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,1,79,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[0,0,27.200000000000003],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,1,1,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":79,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649898268,
+      "text": "b|{\"k\":\"t\",\"ts\":52.864,\"a\":[[1,0.91,6.7,39.82,0,0,0,3.142,3.142,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,2,83,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[1.2770907441679522,0,27.26815021754127],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,1,2,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":83,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649898520,
+      "text": "s|p_gy1u630|{\"k\":\"paint-codec\",\"v\":\"inkwave-paint-dictionary-v3\",\"m\":\"33vnlo\",\"a\":\"bbeb22a26f0d52474bb6e58162a7b36b\",\"n\":\"c7afcd8cf25ca8621a301f0e89d1155d\"}"
+    },
+    {
+      "at": 1792649898524,
+      "text": "b|{\"k\":\"t\",\"ts\":91.385,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,2,1147,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[0.40746050548929796,0,-27.206919664387037],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,2,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1147,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649898550,
+      "text": "ping"
+    },
+    {
+      "at": 1792649898551,
+      "text": "b|{\"k\":\"go\",\"id\":\"33vnlo\"}"
+    },
+    {
+      "at": 1792649898579,
+      "text": "b|{\"k\":\"st\",\"s\":\"intro\",\"t\":180}"
+    },
+    {
+      "at": 1792649898683,
+      "text": "b|{\"k\":\"t\",\"ts\":91.545,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,3,1162,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[0.40503208453307743,0,-27.206837405817485],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,3,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1162,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649898686,
+      "text": "ping"
+    },
+    {
+      "at": 1792649898686,
+      "text": "b|{\"k\":\"t\",\"ts\":53.282,\"a\":[[1,0.91,6.7,39.82,0,0,0,3.142,3.142,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,3,98,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[0.8132327595953993,0,27.227587858801353],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,1,3,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":98,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649898756,
+      "text": "b|{\"k\":\"t\",\"ts\":53.352,\"a\":[[1,0.91,6.7,39.82,0,0,0,3.142,3.142,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,4,113,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[0.8171992876657754,0,27.22785794754178],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,1,4,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":113,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649898775,
+      "text": "b|{\"k\":\"t\",\"ts\":91.638,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,4,1173,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[0.40428072895594064,0,-27.206812054662247],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,4,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1173,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649898802,
+      "text": "b|{\"k\":\"t\",\"ts\":53.398,\"a\":[[1,0.91,6.7,39.82,0,0,0,3.142,3.142,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,5,116,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[0.8177360782210848,0,27.22789460009746],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,1,5,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":116,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649898815,
+      "text": "b|{\"k\":\"t\",\"ts\":91.679,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,5,1178,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[-11.996064391248941,1.2583797627503328,-38.89269051266],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,5,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1178,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649899161,
+      "text": "b|{\"k\":\"t\",\"ts\":53.757,\"a\":[[1,0.91,6.7,39.82,0,0,0,3.142,3.142,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,6,120,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[11.999745328862742,1.257222896643138,39.121820447450716],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,1,6,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":120,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649899164,
+      "text": "b|{\"k\":\"t\",\"ts\":92.028,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,6,1181,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[-11.996061752878422,1.2583805919524962,-38.89258753908233],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,6,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1181,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649899970,
+      "text": "ping"
+    },
+    {
+      "at": 1792649900797,
+      "text": "b|{\"k\":\"t\",\"ts\":93.661,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,7,1196,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[-11.99605875128103,1.2583815353116763,-38.89247043099268],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,7,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1196,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649901968,
+      "text": "ping"
+    },
+    {
+      "at": 1792649902034,
+      "text": "b|{\"k\":\"t\",\"ts\":94.898,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,8,1211,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[-11.995995676972251,1.2584013586658638,-38.89001981020872],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,8,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1211,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649903684,
+      "text": "b|{\"k\":\"t\",\"ts\":96.548,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,9,1226,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[-11.995613855315145,1.258521359758097,-38.87558015755613],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,9,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1226,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649903968,
+      "text": "ping"
+    },
+    {
+      "at": 1792649905451,
+      "text": "b|{\"k\":\"t\",\"ts\":98.311,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,10,1241,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[-11.993788664527262,1.259094991148575,-38.81395146593029],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,10,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1241,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649905968,
+      "text": "ping"
+    },
+    {
+      "at": 1792649907159,
+      "text": "b|{\"k\":\"t\",\"ts\":100.023,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,11,1256,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[-11.984980023683766,1.2618634211279591,-38.59978851068885],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,11,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1256,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649907968,
+      "text": "ping"
+    },
+    {
+      "at": 1792649908872,
+      "text": "b|{\"k\":\"t\",\"ts\":101.736,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,12,1271,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[-11.930623274372362,1.2789469709115435,-37.91150153860997],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,12,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1271,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"c\":[\"intro\",180],\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649909968,
+      "text": "ping"
+    },
+    {
+      "at": 1792649910047,
+      "text": "b|{\"k\":\"t\",\"ts\":102.909,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,13,1286,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[-0.5279950267719646,0,-27.211621408559704],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,13,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1286,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649910191,
+      "text": "b|{\"k\":\"t\",\"ts\":103.052,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,14,1301,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[-0.8876676334690438,0,-27.23287644534028],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,14,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1301,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649911312,
+      "text": "b|{\"k\":\"t\",\"ts\":104.176,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,15,1309,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[-1.155461722239554,0,-27.255758366123064],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,15,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1309,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649911798,
+      "text": "b|{\"k\":\"t\",\"ts\":66.393,\"a\":[[1,0.91,6.7,39.82,0,0,0,3.142,3.142,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,7,135,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[11.999745127142715,1.257222960040861,39.12178949166101],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,1,7,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":135,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649911843,
+      "text": "ping"
+    },
+    {
+      "at": 1792649911847,
+      "text": "b|{\"k\":\"t\",\"ts\":66.44,\"a\":[[1,0.91,6.7,39.82,0,0,0,3.142,3.142,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,8,150,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[11.999739375305062,1.2572247677612665,39.12091191775438],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,1,8,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":150,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649911968,
+      "text": "ping"
+    },
+    {
+      "at": 1792649912009,
+      "text": "b|{\"k\":\"t\",\"ts\":104.873,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,16,1324,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[-1.156887298949935,0,-27.255896359394388],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,16,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1324,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649912059,
+      "text": "ping"
+    },
+    {
+      "at": 1792649912163,
+      "text": "b|{\"k\":\"t\",\"ts\":66.753,\"a\":[[1,0.91,6.7,39.82,0,0,0,3.142,3.142,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,9,165,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[11.99970224340681,1.257236437786431,39.11546557164373],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,1,9,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":165,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649912702,
+      "text": "b|{\"k\":\"t\",\"ts\":105.566,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,17,1339,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[-0.8299944377995973,0,-27.22873819377332],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,17,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1339,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649913195,
+      "text": "b|{\"k\":\"t\",\"ts\":67.79,\"a\":[[1,0.91,6.7,39.82,0,0,0,3.142,3.142,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,10,180,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[11.999499659228514,1.25730010709961,39.09041930747257],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,1,10,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":180,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649913971,
+      "text": "ping"
+    },
+    {
+      "at": 1792649914061,
+      "text": "ping"
+    },
+    {
+      "at": 1792649914615,
+      "text": "b|{\"k\":\"t\",\"ts\":107.479,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,18,1354,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[-0.37144051152460894,0,-27.205750046526532],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,18,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1354,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649914688,
+      "text": "b|{\"k\":\"t\",\"ts\":69.284,\"a\":[[1,0.91,6.7,39.82,0,0,0,3.142,3.142,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,11,195,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[11.998280771139047,1.257683186213442,38.9968780245395],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,1,11,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":195,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649915719,
+      "text": "b|{\"k\":\"t\",\"ts\":108.58,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,19,1369,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[-0.08779607388670656,0,-27.200321177239367],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,19,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1369,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649915842,
+      "text": "b|{\"k\":\"t\",\"ts\":70.438,\"a\":[[1,0.91,6.7,39.82,0,0,0,3.142,3.142,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,12,211,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[11.908695591779567,1.2858385282978504,37.72251250349456],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,1,12,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":211,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649915968,
+      "text": "ping"
+    },
+    {
+      "at": 1792649916061,
+      "text": "ping"
+    },
+    {
+      "at": 1792649916346,
+      "text": "b|{\"k\":\"t\",\"ts\":109.21,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,20,1384,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[-0.0045938142120691885,0,-27.20000087929708],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,20,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1384,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649916599,
+      "text": "b|{\"k\":\"t\",\"ts\":71.195,\"a\":[[1,0.91,6.7,39.82,0,0,0,3.142,3.142,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,13,226,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[11.876480328040724,1.2959633254729153,37.48267212866569],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,1,13,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":226,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649917968,
+      "text": "ping"
+    },
+    {
+      "at": 1792649918063,
+      "text": "ping"
+    },
+    {
+      "at": 1792649919383,
+      "text": "b|{\"k\":\"t\",\"ts\":112.247,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,21,1399,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[0,0,-27.200000000000003],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,21,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1399,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649919948,
+      "text": "b|{\"k\":\"t\",\"ts\":74.544,\"a\":[[1,0.91,6.7,39.82,0,0,0,3.142,3.142,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,14,241,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[0.6687148214080769,0,27.218646967573775],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,1,14,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":241,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649919968,
+      "text": "ping"
+    },
+    {
+      "at": 1792649920062,
+      "text": "ping"
+    },
+    {
+      "at": 1792649921748,
+      "text": "b|{\"k\":\"t\",\"ts\":114.612,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,22,1414,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[0,0,-27.200000000000003],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,22,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1414,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649921752,
+      "text": "b|{\"k\":\"st\",\"s\":\"playing\",\"t\":180}"
+    },
+    {
+      "at": 1792649921968,
+      "text": "ping"
+    },
+    {
+      "at": 1792649922384,
+      "text": "b|{\"k\":\"t\",\"ts\":76.98,\"a\":[[1,0.91,6.7,39.82,0,0,0,3.142,3.142,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,15,256,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[1.0212396648248705,0,27.243534404056174],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,1,15,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":256,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649922411,
+      "text": "ping"
+    },
+    {
+      "at": 1792649923073,
+      "text": "b|{\"k\":\"t\",\"ts\":77.665,\"a\":[[1,0.91,6.7,39.82,0,0,0,3.142,3.142,0,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,16,271,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[1.1690902089409925,0,27.25708460704179],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,1,16,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":271,\"sc\":{\"1\":200},\"l\":{\"1\":1},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923073,
+      "text": "b|{\"k\":\"t\",\"ts\":115.933,\"a\":[[0,0.91,6.7,-38.58,0,0,0,0,0,-0.12,4456465,100,100,0,0,0,1,0,0,0,0,0,0,[\"inkwave-adoption-v1\",1,23,1429,[\"inkwave-protection-v1\",60,0,true,null],null,null,null,0,null,[\"inkwave-squidspawn-v1\",0,0,[0,0,-27.200000000000003],0,\"infinity\"]],null,[\"inkwave-hit-authority-v1\",1,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,1,23,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1429,\"sc\":{\"0\":200},\"l\":{\"0\":1},\"c\":[\"playing\",179.77],\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[1,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923280,
+      "text": "b|{\"k\":\"t\",\"ts\":77.876,\"a\":[[1,12.5,0,0,0,0,0,0,0,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,17,290,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,2,17,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":290,\"sc\":{\"1\":200},\"l\":{\"1\":2},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923286,
+      "text": "b|{\"k\":\"t\",\"ts\":116.147,\"a\":[[0,12.5,0,2,0,0,0,3.142,3.142,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,24,1448,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,2,24,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1448,\"sc\":{\"0\":200},\"l\":{\"0\":2},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923454,
+      "text": "b|{\"k\":\"t\",\"ts\":116.318,\"a\":[[0,12.5,0,2,0,0,0,3.142,3.142,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,25,1451,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,2,25,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1451,\"sc\":{\"0\":200},\"l\":{\"0\":2},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923455,
+      "text": "b|{\"k\":\"t\",\"ts\":78.05,\"a\":[[1,12.5,0,0,0,0,0,0,0,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,18,293,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,2,18,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":293,\"sc\":{\"1\":200},\"l\":{\"1\":2},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923552,
+      "text": "b|{\"k\":\"t\",\"ts\":78.145,\"a\":[[1,12.5,0,0,0,0,0,0,0,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,19,296,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,2,19,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":296,\"sc\":{\"1\":200},\"l\":{\"1\":2},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923559,
+      "text": "b|{\"k\":\"t\",\"ts\":116.423,\"a\":[[0,12.5,0,2,0,0,0,3.142,3.142,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,26,1454,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,2,26,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1454,\"sc\":{\"0\":200},\"l\":{\"0\":2},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923630,
+      "text": "b|{\"k\":\"t\",\"ts\":116.494,\"a\":[[0,12.5,0,2,0,0,0,3.142,3.142,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,27,1457,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,2,27,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1457,\"sc\":{\"0\":200},\"l\":{\"0\":2},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923630,
+      "text": "b|{\"k\":\"t\",\"ts\":78.226,\"a\":[[1,12.5,0,0,0,0,0,0,0,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,20,299,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,2,20,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":299,\"sc\":{\"1\":200},\"l\":{\"1\":2},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923695,
+      "text": "b|{\"k\":\"t\",\"ts\":116.559,\"a\":[[0,12.5,0,2,0,0,0,3.142,3.142,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,28,1460,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,2,28,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1460,\"sc\":{\"0\":200},\"l\":{\"0\":2},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923695,
+      "text": "b|{\"k\":\"t\",\"ts\":78.291,\"a\":[[1,12.5,0,0,0,0,0,0,0,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,21,302,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,2,21,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":302,\"sc\":{\"1\":200},\"l\":{\"1\":2},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923763,
+      "text": "b|{\"k\":\"t\",\"ts\":116.627,\"a\":[[0,12.5,0,2,0,0,0,3.142,3.142,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,29,1463,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,2,29,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1463,\"sc\":{\"0\":200},\"l\":{\"0\":2},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923763,
+      "text": "b|{\"k\":\"t\",\"ts\":78.359,\"a\":[[1,12.5,0,0,0,0,0,0,0,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,22,305,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,2,22,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":305,\"sc\":{\"1\":200},\"l\":{\"1\":2},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923839,
+      "text": "b|{\"k\":\"t\",\"ts\":78.435,\"a\":[[1,12.5,0,0,0,0,0,0,0,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,23,308,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,2,23,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":308,\"sc\":{\"1\":200},\"l\":{\"1\":2},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923840,
+      "text": "b|{\"k\":\"t\",\"ts\":116.703,\"a\":[[0,12.5,0,2,0,0,0,3.142,3.142,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,30,1466,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,2,30,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1466,\"sc\":{\"0\":200},\"l\":{\"0\":2},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923927,
+      "text": "b|{\"k\":\"t\",\"ts\":78.518,\"a\":[[1,12.5,0,0,0,0,0,0,0,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,24,311,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,2,24,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":311,\"sc\":{\"1\":200},\"l\":{\"1\":2},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923927,
+      "text": "b|{\"k\":\"t\",\"ts\":116.787,\"a\":[[0,12.5,0,2,0,0,0,3.142,3.142,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,31,1469,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,2,31,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1469,\"sc\":{\"0\":200},\"l\":{\"0\":2},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649923969,
+      "text": "ping"
+    },
+    {
+      "at": 1792649924012,
+      "text": "b|{\"k\":\"t\",\"ts\":116.872,\"a\":[[0,12.5,0,2,0,0,0,3.142,3.142,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,32,1472,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,2,32,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1472,\"sc\":{\"0\":200},\"l\":{\"0\":2},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649924019,
+      "text": "b|{\"k\":\"t\",\"ts\":78.609,\"a\":[[1,12.5,0,0,0,0,0,0,0.143,-0.015,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,25,314,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,2,25,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":314,\"sc\":{\"1\":200},\"l\":{\"1\":2},\"rl\":{},\"sjEpochs\":{\"1\":0},\"ck\":{\"1\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649924070,
+      "text": "ping"
+    },
+    {
+      "at": 1792649924124,
+      "text": "b|{\"k\":\"t\",\"ts\":116.988,\"a\":[[0,12.5,0,2,0,0,0,3.142,3.142,0,4194321,100,100,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,33,1475,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"0\":[\"inkwave-gear-v1\",\"33vnlo\",0,2,33,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":1475,\"sc\":{\"0\":200},\"l\":{\"0\":2},\"rl\":{},\"sjEpochs\":{\"0\":0},\"ck\":{\"0\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649924124,
+      "text": "b|{\"k\":\"t\",\"ts\":78.72,\"a\":[[1,12.5,0,0,0,0,0,0.063,0.111,0.107,4198417,100,99,0,0,0,2,0,0,0,0,0,0,[\"inkwave-adoption-v1\",2,26,317,[\"inkwave-protection-v1\",60,0,false,null],null,null,null,0.1,null],null,[\"inkwave-hit-authority-v1\",2,0]]],\"gg\":{\"1\":[\"inkwave-gear-v1\",\"33vnlo\",1,2,26,[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]]},\"gc\":{},\"u\":317,\"sc\":{\"1\":200},\"l\":{\"1\":2},\"r\":2,\"rl\":{},\"sjEpochs\":{\"1\":0},\"e\":[[78.681,\"p\",1,\"shot\",\"shooter\",12.34,0.92,0.55,14.89158846777101,12.084514466507713,134.60061925197564,0,3,0.06666666666666667,1.93,0.28,57.6,1.2,0,0,0.11,0.8,1.3,0.035,26,0.3,0,[\"iw-ink-flight-1\",\"shooter\",0,0.3411301099058791,false],0,0,0,0.3411301099058791,1,-1,316,1],[78.683,\"ev\",\"weapon:fire\",{\"actor\":{\"n\":1},\"weapon\":\"shooter\",\"muzzle\":[12.34,0.92,0.55],\"dir\":[0.11,0.09,0.99]},316,2],[78.687,\"tr\",1,\"shoot\",0,316,3],[78.708,\"pe\",1,1,1,12.430172594474918,0.9933351052584919,1.3688509419815034,316,4]],\"ck\":{\"1\":[2,\"suction\",\"trizooka\"]}}"
+    },
+    {
+      "at": 1792649924152,
+      "text": "s|p_z2b8pr2|{\"k\":\"hit\",\"m\":\"33vnlo\",\"v\":0,\"a\":1,\"l\":2,\"h\":1,\"d\":220,\"w\":\"shooter\",\"rp\":false,\"os\":false,\"seq\":1,\"bg\":[12.339060064284057,0.9193973455927236,0.5453120017370802,12.430172594474918,0.9933351052584919,1.3688509419815034,0.285]}"
+    },
+    {
+      "at": 1792649924164,
+      "text": "s|p_z2b8pr2|{\"k\":\"hit\",\"m\":\"33vnlo\",\"v\":0,\"a\":1,\"l\":2,\"h\":1,\"d\":36,\"w\":\"shooter\",\"rp\":false,\"os\":false,\"seq\":1,\"bg\":[12.339060064284057,0.9193973455927236,0.5453120017370802,12.430172594474918,0.9933351052584919,1.3688509419815034,0.285]}"
+    },
+    {
+      "at": 1792649924184,
+      "text": "b|{\"k\":\"hit_ack\",\"m\":\"33vnlo\",\"h\":1,\"v\":0,\"a\":1,\"d\":36,\"kld\":0,\"vl\":2,\"hp\":64,\"hr\":1,\"ht\":117.04660000000149,\"la\":1,\"he\":null}"
+    },
+    {
+      "at": 1792649924269,
+      "text": "b|{\"k\":\"nc\",\"r\":6}"
+    },
+    {
+      "at": 1792649924269,
+      "text": "b|{\"k\":\"lobby\",\"l\":{\"map\":\"tidewater\",\"time\":\"day\",\"duration\":180,\"bots\":false,\"difficulty\":\"normal\",\"palette\":3,\"mode\":\"turf\",\"teamsConfirmed\":false,\"players\":[{\"id\":\"p_gy1u630\",\"name\":\"Ceiling QA Guest\",\"team\":1,\"weapon\":\"shooter\",\"style\":{\"hair\":5,\"skin\":0,\"outfit\":2,\"eyes\":1,\"hat\":2,\"brows\":1},\"ready\":false,\"ping\":0}]}}"
+    },
+    {
+      "at": 1792649926059,
+      "text": "ping"
+    },
+    {
+      "at": 1792649928062,
+      "text": "ping"
+    },
+    {
+      "at": 1792649930059,
+      "text": "ping"
+    },
+    {
+      "at": 1792649932059,
+      "text": "ping"
+    }
+  ]
+}

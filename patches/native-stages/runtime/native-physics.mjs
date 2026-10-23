@@ -24,11 +24,16 @@ export class NativePhysics extends Physics {
    out.block=this.level.blockForTriangle(h.triangle);out.face=this.level.data.triangleFace[h.triangle];out.triangle=h.triangle;
    if(out.face>=0){const f=this.level.faces[out.face],p=this.world._p.copy(h.point).sub(f.origin);out.u=p.dot(f.u);out.v=p.dot(f.v);}else out.u=out.v=0;
   }
-  const d=this.dynamic.raycast(origin,dir,maxDist,this.dynamicHit,skipGrates);
-  if(d.hit&&(!out.hit||d.dist<out.dist)){
+  const movingLimit=out.hit&&out.dist>0&&Number.isFinite(out.dist)?Math.min(maxDist,out.dist):maxDist;
+  const d=this.level.blocks.length>this.level.staticBlockCount||this.dynamic.raycast!==Physics.prototype.raycast?this.dynamic.raycast(origin,dir,movingLimit,this.dynamicHit,skipGrates):null;
+  if(d?.hit&&(!out.hit||d.dist<out.dist)){
    out.hit=true;out.dist=d.dist;out.point.copy(d.point);out.normal.copy(d.normal);out.block=d.block;out.face=d.face;out.u=d.u;out.v=d.v;out.triangle=-1;
   }
   return out;
+ }
+ _emptyDynamicContacts(c){
+  c.ground=false;c.wall=false;c.ceiling=false;
+  c.groundNormal.set(0,1,0);c.wallNormal.set(0,0,0);c.groundBlock=c.wallBlock=c.ceilingBlock=-1;
  }
  _nativeContacts(pos,radius,lift,height,c,horizontal,skipGrates,iterations){
   const w=this.world,s0=w._s0,s1=w._s1,dir=w._d;
@@ -43,6 +48,9 @@ export class NativePhysics extends Physics {
    w.queryBox(min,max,id=>candidates.push(id));candidates.sort((a,b)=>a-b);
    for(const id of candidates){
     if(skipGrates&&(w.flags[id]&4))continue;
+    // Earlier contacts move s0/s1: compute this candidate's bounds now.
+    const pad=radius+.002;
+    if(w.triangleOverlapsBounds?.(id,Math.min(s0.x,s1.x)-pad,Math.min(s0.y,s1.y)-pad,Math.min(s0.z,s1.z)-pad,Math.max(s0.x,s1.x)+pad,Math.max(s0.y,s1.y)+pad,Math.max(s0.z,s1.z)+pad)===false)continue;
     const t=w.triangle(id),dist=w._capsuleDistance(s0,s1,t);if(dist>=radius-SOURCE_CONTACT_EPSILON)continue;
     dir.subVectors(w._bests,w._bestp);
     if(dist<1e-8){dir.fromArray(w.normals,id*3);w._center.copy(s0).add(s1).multiplyScalar(.5).sub(t.a);if(dir.dot(w._center)<0)dir.negate();}else dir.multiplyScalar(1/dist);
@@ -64,21 +72,23 @@ export class NativePhysics extends Physics {
   return c;
  }
  collideBody(pos,radius,lift,height,c,horizontal=false,skipGrates=false,iterations=3){
-  this.dynamic.collideBody(pos,radius,lift,height,c,horizontal,skipGrates,iterations);
+  if(this.level.blocks.length>this.level.staticBlockCount||this.dynamic.collideBody!==Physics.prototype.collideBody)this.dynamic.collideBody(pos,radius,lift,height,c,horizontal,skipGrates,iterations);
+  else this._emptyDynamicContacts(c);
   return this._nativeContacts(pos,radius,lift,height,c,horizontal,skipGrates,iterations);
  }
  collideCapsule(pos,radius,height,c,iterations=3,squid=false){
-  this.dynamic.collideCapsule(pos,radius,height,c,iterations,squid);
+  if(this.level.blocks.length>this.level.staticBlockCount||this.dynamic.collideCapsule!==Physics.prototype.collideCapsule)this.dynamic.collideCapsule(pos,radius,height,c,iterations,squid);
+  else this._emptyDynamicContacts(c);
   return this._nativeContacts(pos,radius,0,height,c,false,squid,iterations);
  }
  bodyFits(pos,radius,lift,height,skipGrates=false,margin=.01){
-  if(!this.dynamic.bodyFits(pos,radius,lift,height,skipGrates,margin))return false;
+  if((this.level.blocks.length>this.level.staticBlockCount||this.dynamic.bodyFits!==Physics.prototype.bodyFits)&&!this.dynamic.bodyFits(pos,radius,lift,height,skipGrates,margin))return false;
   return this._sourceBodyFits(pos,radius,lift,height,skipGrates,margin);
  }
  _sourceBodyFits(pos,radius,lift,height,skipGrates,margin){
   const w=this.world,s0=w._s0.set(pos.x,pos.y+lift+radius,pos.z),s1=w._s1.set(pos.x,pos.y+Math.max(lift+radius,height-radius),pos.z);
   min.copy(s0).min(s1).addScalar(-radius);max.copy(s0).max(s1).addScalar(radius);let fits=true;
-  w.queryBox(min,max,id=>{if(!fits||(skipGrates&&(w.flags[id]&4)))return;if(w._capsuleDistance(s0,s1,w.triangle(id))<radius-margin){fits=false;return false;}},true);
+  w.queryBox(min,max,id=>{if(!fits||(skipGrates&&(w.flags[id]&4)))return;const pad=Math.max(radius,radius-margin);if(w.triangleOverlapsBounds?.(id,Math.min(s0.x,s1.x)-pad,Math.min(s0.y,s1.y)-pad,Math.min(s0.z,s1.z)-pad,Math.max(s0.x,s1.x)+pad,Math.max(s0.y,s1.y)+pad,Math.max(s0.z,s1.z)+pad)===false)return;if(w._capsuleDistance(s0,s1,w.triangle(id))<radius-margin){fits=false;return false;}},true);
   return fits;
  }
  /** A raised source foot snap follows the body solve. Reconcile only a new

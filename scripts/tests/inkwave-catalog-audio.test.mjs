@@ -64,3 +64,16 @@ test('saved graph rejects duplicate/foreign worker artifacts and missing or corr
   r=>r.loaded.find(x=>x.file.endsWith('render-worker.js')).bytes=0,
  ]){const r=audioResult();mutation(r);assert.throws(()=>validateCatalogAudioGraphResult(r),/audio graph/);}
 });
+
+test('saved graph requires each actual lazy module worker and its PCM protocol proof',()=>{
+ const result=audioResult();result.audioGraph.prewarmWorkers=[];
+ for(const name of ['grain','reverb']){
+  const file='_versions/test/patches/splatoon3/runtime/audio/'+name+'-worker.mjs';
+  result.artifacts[file]='c'.repeat(64);result.loaded.push({file,sha256:'c'.repeat(64),bytes:1024});
+  assert.throws(()=>validateCatalogAudioGraphResult(result),/prewarm protocol/);
+  result.audioGraph.prewarmWorkers.push({path:'/'+file,protocol:'canonical-pcm-byte-exact',bytes:96000,terminated:true});
+  validateCatalogAudioGraphResult(result);
+  const missing=structuredClone(result);missing.loaded=missing.loaded.filter(r=>r.file!==file);assert.throws(()=>validateCatalogAudioGraphResult(missing),/prewarm receipt/);
+  const wrong=structuredClone(result);wrong.audioGraph.prewarmWorkers.at(-1).terminated=false;assert.throws(()=>validateCatalogAudioGraphResult(wrong),/prewarm protocol/);
+ }
+});

@@ -6,8 +6,8 @@ import {adaptLobbySlotTransform} from '../lobby-slot-transform-adapter.mjs';
 const raw=fs.readFileSync(new URL('../../../inkwave-public/src/ui/menus.js',import.meta.url),'utf8');
 const source=adaptBuildSource('src/ui/menus.js',raw);
 
-const start=source.indexOf('          const bots = lob.bots !== false;\n          for (const O of open) {');
-const end=source.indexOf('\n        }\n        S.age += dt;',start);
+const start=source.indexOf('          const bots = lob.bots !== false, occupancy = sc.lobbySlotOccupancy?.();\n          for (const O of open) {');
+const end=source.indexOf('\n          } finally { vis.length = placedRows.length = 0;',start);
 assert(start>0&&end>start); const original=source.slice(start,end);
 const anchor='if (a) O.el.style.transform = `translate3d(${Math.round(a.x)}px,${Math.round(a.y)}px,0) scale(${clamp(a.s || 1, 0.6, 1.25).toFixed(3)})`;';
 

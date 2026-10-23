@@ -1,3 +1,4 @@
+import { audioLoadDeadline } from './load-deadline.mjs';
 /**
  * Optional 2022 Splatoon 3 MP3 source bank. No game-owned MP3 is bundled here.
  * The user installs an authorized `s3-real` directory alongside this module.
@@ -22,32 +23,26 @@ export class RealS3SampleLoader {
     this.bank=bank;this.fetcher=fetcher;this.assetFetcher=assetFetcher||((url)=>sameModuleFetch(url,fetcher));
     this.manifestURL=manifestURL;this.manifestPromise=null;this.queue=Promise.resolve();this.inFlight=new Map();
     this.loaded=new Set();this.notMapped=new Set();this.retryAfter=new Map();this.status='uninitialized';this.errors=[];this.totalErrorCount=0;this.declaredEvents=null;this.clipsById=null;this.clipsByEvent=null;
-    this.manifestRetryAt=0;
+    this.manifestRetryAt=0;this.pendingJobs=[];this.draining=false;
     this.bank.authorized.fetcher=this.assetFetcher;
     this.bank.authorized.maxBytes=Math.max(this.bank.authorized.maxBytes,AUDIO_CACHE_BYTES);
   }
   _current(){return !this.bank.disposed && this.bank.ctx?.state!=='closed';}
-  _error(message){
-    this.errors.push(String(message));this.totalErrorCount++;
-    if(this.errors.length>64)this.errors.splice(0,this.errors.length-64);
-  }
-  _select(id,event){return event ? this.clipsByEvent?.get(`${id}:${event}`) || [] : this.clipsById?.get(id) || []; }
   getManifest(){
     if(!this._current())return Promise.resolve(null);
     if(!this.manifestPromise)this.manifestPromise=(async()=>{
       try{
-        const r=await this.fetcher(this.manifestURL);
+        const r=await audioLoadDeadline(this.fetcher(this.manifestURL));
         if(!this._current())return null;
         if(!r?.ok)throw new Error('Real-S3 pack manifest unavailable ('+(r?.status||'fetch failed')+')');
-        const data=await r.json();
+        const data=await audioLoadDeadline(r.json());
         if(!this._current())return null;
         const clips=validateAuthorizedManifest(data);
         // Never fetch arbitrary sourceDrive URLs: only same-origin local assets.
         for(const c of clips)if(!/^s3-real\/[A-Za-z0-9_.+()\-]+\.mp3$/i.test(c.file))throw new Error('Unsafe real-S3 asset path');
         this.declaredEvents=new Set();this.clipsById=new Map();this.clipsByEvent=new Map();
         for(const c of clips){
-          const key=`${c.id}:${c.event}`;
-          this.declaredEvents.add(key);
+          const key=`${c.id}:${c.event}`;this.declaredEvents.add(key);
           if(!this.clipsById.has(c.id))this.clipsById.set(c.id,[]);
           if(!this.clipsByEvent.has(key))this.clipsByEvent.set(key,[]);
           this.clipsById.get(c.id).push(c);this.clipsByEvent.get(key).push(c);
@@ -64,7 +59,7 @@ export class RealS3SampleLoader {
   // Event-aware demand paging. A previous v10 `loaded` bit stayed true even
   // after a 40 MiB LRU eviction, permanently skipping future real-file loads.
   // Re-check the actual decoded resident events instead of that stale bit.
-  ensure(id,event=null){
+  ensure(id,event=null,{priority=false}={}){
     if(!this._current())return Promise.resolve({loaded:0,cancelled:true});
     if(!id)return Promise.resolve({loaded:0,unavailable:false});
     // A 503 at startup must not permanently disable audio for the entire
@@ -75,16 +70,16 @@ export class RealS3SampleLoader {
     }
     const key=id+':'+(event||'*');
     if(this.notMapped.has(key))return Promise.resolve({loaded:0,missing:true});
-    if(this.inFlight.has(key))return this.inFlight.get(key);
-    // Resident decoded events do not depend on unrelated cold load jobs.
-    if(this.status==='ready'&&this.clipsById){
-      const selected=this._select(id,event);
-      if(!selected.length){this.notMapped.add(key);return Promise.resolve({loaded:0,missing:true});}
-      if(selected.every(c=>this.bank.authorized.loaded.has(this.bank.authorized.key(c.id,c.event,c.variant)))){
-        this.loaded.add(id);return Promise.resolve({loaded:0,cached:true});
-      }
+    if(this.inFlight.has(key)){
+      if(priority){const at=this.pendingJobs.findIndex(row=>row.key===key);if(at>0)this.pendingJobs.unshift(this.pendingJobs.splice(at,1)[0]);}
+      return this.inFlight.get(key);
     }
-    const job=this.queue.catch(()=>{}).then(async()=>{
+    const resident=this._select(id,event);
+    if(this.status==='ready'&&this.clipsById){
+      if(!resident.length){this.notMapped.add(key);return Promise.resolve({loaded:0,missing:true});}
+      if(resident.every(c=>this.bank.authorized.loaded.has(this.bank.authorized.key(c.id,c.event,c.variant)))){this.loaded.add(id);return Promise.resolve({loaded:0,cached:true});}
+    }
+    const work=async()=>{
       if(!this._current())return {loaded:0,cancelled:true};
       const data=await this.getManifest();
       if(!this._current())return {loaded:0,cancelled:true};
@@ -99,11 +94,12 @@ export class RealS3SampleLoader {
       const result=await this.bank.authorized.load({...data,clips:missing},
         {baseURL:'./',replace:false,concurrency:2});
       if(!this._current())return {...result,loaded:0,cancelled:true};
-      if(result?.errors?.length){for(const e of result.errors)this._error(id+': '+e.error);
+      if(result?.errors?.length){for(const error of result.errors)this._error(id+': '+error.error);
         this.retryAfter.set(key,Date.now()+4000);}
       if(result?.loaded>0)this.loaded.add(id);
       return result;
-    });
+    };
+    const job=this._schedule(work,key,priority);
     // Cleanup belongs to the same promise returned to callers. Otherwise
     // an immediate second START can observe the previous failed, already-
     // fulfilled job and never actually retry the 2022 MP3.
@@ -112,6 +108,20 @@ export class RealS3SampleLoader {
     this.queue=tracked.catch(()=>{});
     return tracked;
   }
+  _schedule(work,key,priority){
+    const job=new Promise((resolve,reject)=>{
+      const row={work,key,resolve,reject};
+      if(priority)this.pendingJobs.unshift(row);else this.pendingJobs.push(row);
+    });
+    if(!this.draining){this.draining=true;Promise.resolve().then(()=>this._drain());}
+    return job;
+  }
+  async _drain(){
+    try{while(this.pendingJobs.length){const row=this.pendingJobs.shift();try{row.resolve(await row.work());}catch(error){row.reject(error);}}}
+    finally{this.draining=false;}
+  }
+  _select(id,event){return event ? this.clipsByEvent?.get(`${id}:${event}`) || [] : this.clipsById?.get(id) || []; }
+  _error(message){this.errors.push(String(message));this.totalErrorCount++;if(this.errors.length>64)this.errors.splice(0,this.errors.length-64);}
   stats(){return {status:this.status,loadedKinds:this.loaded.size,pendingKinds:this.inFlight.size,
     errors:this.errors.slice(-6),unmappedEvents:this.notMapped.size,manifestURL:String(this.manifestURL),cacheBytes:this.bank.authorized.bytes};}
 }

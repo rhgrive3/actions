@@ -98,3 +98,16 @@ test('retired Input cannot issue a fallback from its already pending pointer-loc
   dispose(input);reject(new Error('unadjusted movement unsupported'));await Promise.resolve();await Promise.resolve();
   assert.equal(calls,1);assert.equal(ticket.cancelled,true);assert.equal(input._pointerLockPending,null);
 });
+
+test('explicit Input and Game platform disposal share one listener/mobile lifetime in either order',()=>{
+  for(const platformFirst of [false,true]){
+    const f=fixture(),input=new f.Input({});
+    assert.equal(f.count()-f.shared,10);
+    if(platformFirst)input.disposePlatform();
+    input.dispose();input.disposePlatform();input.dispose();
+    assert.equal(f.count(),f.shared);
+    assert.equal(input.mobile.destroyCalls,1);
+    assert.equal(input._inputUnsubs.length,0);
+    assert.equal(input.enabled,false);
+  }
+});

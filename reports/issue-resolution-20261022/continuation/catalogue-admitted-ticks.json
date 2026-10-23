@@ -1,0 +1,462 @@
+{
+  "issue": 1767,
+  "scope": "Catalogue sidecars follow actual native accepted owner ticks; kit values and all other runtime files unchanged",
+  "status": "source_all_selected_files_completed_and_production_runtime_passed",
+  "initialSourceBase": "304ad2d979d3515af72e3f3436183858252a2c5c",
+  "commonFixtureAndReportBase": "e09e97cc93b65e35d98d45a36a0a35335ca69ecb",
+  "runtimeSourceCommit": "3f633033a24c7b95a3d992f8a6a452caeb722317",
+  "runtimeSourceTree": "46bbd538f36f86177fb039315390595a83745016",
+  "publicRuntimeEquivalentCommit": "492305e4c7e7669d589d1d79c2781b00e23c41f9",
+  "comparisonCheckpoint": "b9a4f14ae87e69327a2fc2219e0140eaa14384d6",
+  "testFreezeCommit": "144573ed7aa72f0a3a46254dd50f263ba2bf5223",
+  "testFreezeTree": "655884f17f6592e5f76a23338cd2fd4f6878a5bd",
+  "frozenFiles": [
+    {
+      "path": "patches/splatoon3/runtime/catalogue.mjs",
+      "sha256": "25dc604015b5e88bc5e015a299fbb2430ba14ffa2f0c253e3bbc68773e51ec50"
+    },
+    {
+      "path": "patches/splatoon3/tests/catalogue-tick-admission.test.mjs",
+      "sha256": "6d06458a9e0616598632379af24e963aa242ed5e80f143362c2b82406281e34d"
+    },
+    {
+      "path": "patches/splatoon3/tests/catalogue-session-tick-admission.test.mjs",
+      "sha256": "27f26ed2000ffd4da2b0f2f6a45c14e42823e3e47dea5bdfbcc094e57c95fdeb"
+    }
+  ],
+  "runtimeChangedPaths": [
+    "patches/splatoon3/runtime/catalogue.mjs"
+  ],
+  "node": "v22.23.4",
+  "cpuTestConcurrency": 1,
+  "sourceInitialHeapMiB": 1024,
+  "sourceInitialCoherent": {
+    "tests": 79,
+    "pass": 78,
+    "fail": 1,
+    "cancelled": 0,
+    "skipped": 0,
+    "duration_ms": 118665.460143,
+    "failures": [
+      "patches/splatoon3/tests/catalogue-sub-paint-authority.test.mjs"
+    ]
+  },
+  "sourceResourceRetry": {
+    "tests": 14,
+    "pass": 14,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "duration_ms": 63760.538709,
+    "failures": []
+  },
+  "sourceUniquePassedCases": 92,
+  "sourceSelectedFiles": 13,
+  "clockFocusedIncluded": 25,
+  "sourceAssertionFailuresAfterFixtureScopeCorrection": 0,
+  "resourceFailureExplanation": "Initial catalogue-sub-paint-authority file process hit artificial 1024 MiB V8 heap cap (SIGABRT); same frozen file completes all14 cases at normal Node22 heap. Both logs retained; not claimed as one uninterrupted all-green run.",
+  "developmentFirstDedicated": {
+    "result": {
+      "tests": 5,
+      "pass": 4,
+      "fail": 1,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 6033.3488,
+      "failures": [
+        "legacy stale foreign and malformed whole-envelope rejection retain the accepted catalogue state"
+      ]
+    },
+    "explanation": "An added global stats counter assertion was broader than the native legacy embedding contract for a foreign sender. Kit/body and target owner clock assertions remain; current v1 foreign rejection also asserts stats unchanged. No runtime change followed this fixture-scope correction."
+  },
+  "sourceDedicatedFinal": {
+    "tests": 5,
+    "pass": 5,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "duration_ms": 6181.011466,
+    "failures": []
+  },
+  "realSessionProof": {
+    "actualNetSessionBegin": true,
+    "actualNetSessionMessage": true,
+    "actualPeerNonceQueriesAndReplies": true,
+    "crypto": "real WebCrypto in existing fixture platform",
+    "clocks": "Independent deterministic fixture clocks; no browser claim",
+    "unknownProofTickStagedWithoutKitClockBodyMutation": true,
+    "acceptedStagedTickAppliedOnce": true,
+    "futureStaleForeignMalformedRejectStateUnchanged": true,
+    "normalNewKitAndBodyAccepted": true,
+    "wrongActorLifeSidecarStillRejected": true
+  },
+  "productionCompiled": {
+    "result": {
+      "tests": 20,
+      "pass": 20,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 10005.325391,
+      "failures": []
+    },
+    "site": "/workspace/scratch/actions-catalogue-admitted-ticks/.built-site/catalogue-admitted-3f633033",
+    "contentHash": "ba74855c6b2fe1c33228b5bf076485861529ed92eeb5b0018be06944f72d8fd9",
+    "inputHash": "fdcb48669f0bb00eb8aa1f3335dfdedb3e6e035c6eb59e4accd9a123ecd1e8ec",
+    "manifestSha256": "18a68a313c97a3290dc030b7deeb12d9d01a22d59e7952c43aaa259fae14ac39",
+    "moduleSha256": "755abfd587722b135c19079d4e02ac7e892fe4d581f8e5a99001d188d003c021",
+    "actualModuleReads": 20,
+    "testWorkers": 3,
+    "allObservedModuleBytesMatchManifest": true,
+    "sourceOrModuleTextOverrides": false,
+    "selection": "Dedicated5 + existing catalogue integration15; source-only AST/name tests excluded"
+  },
+  "oldProductionNegative": {
+    "result": {
+      "tests": 1,
+      "pass": 0,
+      "fail": 1,
+      "cancelled": 0,
+      "skipped": 0,
+      "duration_ms": 1403.979644,
+      "failures": [
+        "catalogue sidecars use actual admitted v1 session ticks after nonce proof and preserve rejected state"
+      ]
+    },
+    "contentHash": "34bb39363ccdf22e70ad5a798bd246fde9cb13763587ebe94f250ec64233f1f1",
+    "inputHash": "c2722d71bdd095d0467ff7f9fd2085fb4b8f3716e2fddb091b07ce34e6251d8e",
+    "moduleSha256": "4bdc29cc3af79d92302613c2a977c879e5d5272cb9d6bd589ac9fa0e1e315834",
+    "expectedFailure": "future tick ts514 leaves accepted clock500/stats.in1/body unchanged but incorrectly changes torpedo/zipcaster to bomb/inkjet",
+    "actualArtifactReadObserved": true
+  },
+  "legacyIndependent": {
+    "node": "v22.23.4",
+    "binary": "/workspace/scratch/actions-node22/node-v22.23.4-linux-x64/bin/node",
+    "baselineCommit": "e09e97cc93b65e35d98d45a36a0a35335ca69ecb",
+    "before": {
+      "pass": 1,
+      "fail": 3,
+      "expectedCounterexamples": [
+        "prebind rejected but kit changed",
+        "future14s rejected but kit changed",
+        "invalid e envelope rejected but kit changed"
+      ]
+    },
+    "after": {
+      "pass": 4,
+      "fail": 0,
+      "durationMs": 3748.186967
+    },
+    "productionComposition": true,
+    "onlyCounterfactualModule": "patches/splatoon3/runtime/catalogue.mjs",
+    "runtimeHashMatchesOwnerFreeze": true,
+    "sha256": {
+      "/workspace/scratch/actions-catalogue-admitted-ticks/patches/splatoon3/runtime/catalogue.mjs": "25dc604015b5e88bc5e015a299fbb2430ba14ffa2f0c253e3bbc68773e51ec50",
+      "/workspace/scratch/actions-catalogue-admitted-ticks/patches/splatoon3/tests/catalogue-integration.test.mjs": "0560aa93efdda45c09fc04087557b031e49eadb1fbe126f497695c2a193ea1cd",
+      "/tmp/actions-catalogue-sidecar-independent/catalogue.before.mjs": "b4044b47149814d60b71f6e7239a35073f0d05080621e989d38eed0991a2198e",
+      "/tmp/actions-catalogue-sidecar-independent/admitted-sidecar.test.mjs": "1ea7382c0a4c05eaab722d9baa30a6bdfef7e73a51183ef2d306be4b39082aba",
+      "/tmp/actions-catalogue-sidecar-independent/integration-candidate.test.mjs": "ca646d9ab90183d86d29f242ae397b13c8fdb8662b9a42004e8249a272463fb2",
+      "/tmp/actions-catalogue-sidecar-independent/before.log": "f67df96bd7583ac26c10e8a5b1ce9b569a31aa31891a84583a3298e62f49716e",
+      "/tmp/actions-catalogue-sidecar-independent/after.log": "b6340a53901d0664b94fe420459758d73463231499cd1f13a8491008996beb86",
+      "/tmp/actions-catalogue-sidecar-independent/runtime-only.diff": "bdf538017971fff92cb6ffb942cbaa908af69f5b3ba80f7221601b73861d67e2",
+      "/tmp/actions-catalogue-sidecar-independent/emitted-observer.test.mjs": "abe10b8c4b49abcf76737318b24f4c9bde134f79f4ba0a6945894c5686bd6baf",
+      "/tmp/actions-catalogue-sidecar-independent/emitted-after.log": "e5be44577e8be753e84f0f464a7c9b26f602538bc767c5cfedc92aedd58b79b3",
+      "/tmp/actions-catalogue-sidecar-independent/emitted-loaded-module.json": "0b8d0e0d31a7f2d6977f294561f97e0680ef100fc12e3e6a585f374443505fb4",
+      "/tmp/actions-catalogue-sidecar-independent/emitted-observer-development.log": "0d8b243522cf5af2427c0189b62c366f46c0b094e57d20fe009bd4c3949d4fba"
+    },
+    "emittedAfter": {
+      "pass": 4,
+      "fail": 0,
+      "durationMs": 2543.455112,
+      "builtSite": "/workspace/scratch/actions-catalogue-admitted-ticks/.built-site/catalogue-admitted-3f633033",
+      "manifestContentHash": "ba74855c6b2fe1c33228b5bf076485861529ed92eeb5b0018be06944f72d8fd9",
+      "artifactSha256": "755abfd587722b135c19079d4e02ac7e892fe4d581f8e5a99001d188d003c021",
+      "realVmLoads": 4,
+      "allVmLoadedBytesEqualArtifactManifest": true,
+      "moduleTextTransform": false,
+      "hostToolingSourceReadsSeparate": 1
+    }
+  },
+  "independentBuildAndSourceReview": {
+    "at": "2026-10-22T16:32:25.163477+00:00",
+    "status": "independent-source-review-and-production-build-passed",
+    "runtimeSnapshot": {
+      "at": "2026-10-22T16:28:58.708614+00:00",
+      "head": "3f633033a24c7b95a3d992f8a6a452caeb722317",
+      "tree": "46bbd538f36f86177fb039315390595a83745016",
+      "runtimeSha256": "25dc604015b5e88bc5e015a299fbb2430ba14ffa2f0c253e3bbc68773e51ec50",
+      "diff": "diff --git a/patches/splatoon3/runtime/catalogue.mjs b/patches/splatoon3/runtime/catalogue.mjs\nindex 423ed0b7c..7fae1d713 100644\n--- a/patches/splatoon3/runtime/catalogue.mjs\n+++ b/patches/splatoon3/runtime/catalogue.mjs\n@@ -167,7 +167,8 @@ export function installCatalogueNetwork(api,{replaySub,replaySpecial,replaySplas\n   NetMatch.prototype._tick=function(from,message){\n     const last=this.peers?.get(from)?.lastTs??-Infinity;\n     const result=tick.call(this,from,message);\n-    if(!Number.isFinite(message?.ts)||message.ts<=last||!message.ck||typeof message.ck!=='object'||Array.isArray(message.ck))return result;\n+    // Sidecars follow the native accepted watermark, including clock rejection.\n+    if(!Number.isFinite(message?.ts)||message.ts<=last||this.peers?.get(from)?.lastTs!==message.ts||!message.ck||typeof message.ck!=='object'||Array.isArray(message.ck))return result;\n     for(const [nid,pair]of Object.entries(message.ck)){\n       const actor=this.byNid?.get(Number(nid));\n       if(!actor?.remote||actor.owner!==from||!Array.isArray(pair)||pair.length!==3||pair[0]!==packetLife(actor))continue;\n"
+    },
+    "reviewFindings": [],
+    "reviewConclusions": [
+      "The native tick result and old watermark are obtained before catalogue mutation; finite and strictly greater timestamp plus post-native exact lastTs equality are all required.",
+      "Source composed through unchanged adaptBuildSource shows no-match and validOwnerClockTick rejection precede native lastTs assignment. Rejected future/prebind/session-clock packets therefore cannot update catalogue sidecar state.",
+      "Duplicate and stale packets remain rejected even if post watermark equals their ts, because message.ts must be strictly above pre-call watermark.",
+      "Remote actor identity, owner and life equality, packet shape and registered catalogue validation remain unchanged. Native return value is preserved.",
+      "Scope is receiver-admission consistency; not a claim about Splatoon retail network internals or physical-device quality."
+    ],
+    "productionBuild": {
+      "sourceSha": "3f633033a24c7b95a3d992f8a6a452caeb722317",
+      "sourceTree": "46bbd538f36f86177fb039315390595a83745016",
+      "node": "v22.23.4",
+      "site": "/workspace/scratch/actions-catalogue-admitted-ticks/.built-site/catalogue-admitted-3f633033",
+      "contentHash": "ba74855c6b2fe1c33228b5bf076485861529ed92eeb5b0018be06944f72d8fd9",
+      "inputHash": "fdcb48669f0bb00eb8aa1f3335dfdedb3e6e035c6eb59e4accd9a123ecd1e8ec",
+      "manifestSha256": "18a68a313c97a3290dc030b7deeb12d9d01a22d59e7952c43aaa259fae14ac39",
+      "artifactsVerified": 2018,
+      "sourceGitInputsVerified": 1364,
+      "runtimeSourceSha256": "25dc604015b5e88bc5e015a299fbb2430ba14ffa2f0c253e3bbc68773e51ec50",
+      "command": "env -u INKWAVE_BUILD_UNMINIFIED -u INKWAVE_NO_THREE_SHAKE /workspace/scratch/actions-node22/node-v22.23.4-linux-x64/bin/node scripts/build-inkwave.mjs inkwave-public .built-site/catalogue-admitted-3f633033"
+    },
+    "productionBuildOptions": {
+      "optimization": "esbuild-minify",
+      "esbuild": "0.28.2",
+      "revision": "272d7f8d0952906388dbd22d6c6d6ca900a94730645771c3bca428266889e3b1",
+      "builderSha256": "62d929b83091c6775a865be02c06960a4cc4b2216eb26d5921aa4811787c6d7a"
+    },
+    "laterReportOnlyHead": {
+      "status": "passed",
+      "verifiedSourceSha": "b9a4f14ae87e69327a2fc2219e0140eaa14384d6",
+      "buildOriginalSourceSha": "3f633033a24c7b95a3d992f8a6a452caeb722317",
+      "buildNotRerun": true,
+      "allDeclaredGitInputsIdentical": true,
+      "inputCount": 1364,
+      "artifactCount": 2018,
+      "contentHash": "ba74855c6b2fe1c33228b5bf076485861529ed92eeb5b0018be06944f72d8fd9",
+      "inputHash": "fdcb48669f0bb00eb8aa1f3335dfdedb3e6e035c6eb59e4accd9a123ecd1e8ec",
+      "manifestSha256": "18a68a313c97a3290dc030b7deeb12d9d01a22d59e7952c43aaa259fae14ac39"
+    },
+    "runtimeStillFrozen": true,
+    "evidenceFiles": [
+      {
+        "path": "/workspace/scratch/actions-catalogue-admitted-ticks/.ci-scratch/catalogue-admitted-review/production-build.log",
+        "sha256": "cc47351a6d84422f7d4b6fa9a3e25323628a4636eacaeaf95d2480e109c4c2ab",
+        "bytes": 812
+      },
+      {
+        "path": "/workspace/scratch/actions-catalogue-admitted-ticks/.ci-scratch/catalogue-admitted-review/verify-production.mjs",
+        "sha256": "8c36bd9d0fe89680443a7f8a0ad53b6e18f80e86d610db518b6091b934866b6a",
+        "bytes": 1828
+      },
+      {
+        "path": "/workspace/scratch/actions-catalogue-admitted-ticks/.ci-scratch/catalogue-admitted-review/production-build-verify.log",
+        "sha256": "7b1b834d67673674325e252efbc36e93fe7c840c621802fb6759f59b8c1e6ab9",
+        "bytes": 60726
+      },
+      {
+        "path": "/workspace/scratch/actions-catalogue-admitted-ticks/.ci-scratch/catalogue-admitted-review/production-build-receipt.json",
+        "sha256": "7b1b834d67673674325e252efbc36e93fe7c840c621802fb6759f59b8c1e6ab9",
+        "bytes": 60726
+      },
+      {
+        "path": "/workspace/scratch/actions-catalogue-admitted-ticks/.ci-scratch/catalogue-admitted-review/verify-second-head.mjs",
+        "sha256": "7c1a23cca9b33c9f4bf1a8cbdc003bd35ef9004e5c2656fdcfc3ddda62383939",
+        "bytes": 844
+      },
+      {
+        "path": "/workspace/scratch/actions-catalogue-admitted-ticks/.ci-scratch/catalogue-admitted-review/second-head-identity.log",
+        "sha256": "4b6224525ff9c3c832a91bf1c4ceea931fe000d8881f4eb8fa8feecda9bd0fc9",
+        "bytes": 492
+      },
+      {
+        "path": "/workspace/scratch/actions-catalogue-admitted-ticks/.ci-scratch/catalogue-admitted-review/second-head-identity.json",
+        "sha256": "13d6175c6a3426708c5b351e3362647875ec331f6b4f6681c7b01bb247b7a252",
+        "bytes": 533
+      },
+      {
+        "path": "/workspace/scratch/actions-catalogue-admitted-ticks/.ci-scratch/catalogue-admitted-review/compose-native-review.mjs",
+        "sha256": "e0a39611787b26a2488402fa882a5de8f36b653d007f341f9e53843875b05f9c",
+        "bytes": 471
+      },
+      {
+        "path": "/workspace/scratch/actions-catalogue-admitted-ticks/.ci-scratch/catalogue-admitted-review/netmatch-composed.mjs.txt",
+        "sha256": "1aff6ef37eb13b4ebc83254d8cb1d77d7fd6257ddf4238ec183b66334d8d2ecc",
+        "bytes": 169791
+      },
+      {
+        "path": "/workspace/scratch/actions-catalogue-admitted-ticks/.ci-scratch/catalogue-admitted-review/native-tick-composed.log",
+        "sha256": "0bf5c585012eac0e04aa027775b13f4cb108f293d2b3ec3d0aec94300f6479bb",
+        "bytes": 8005
+      }
+    ],
+    "limits": [
+      "No browser/GPU or remote operations.",
+      "New real NetSession nonce and legacy counterexample tests are owned by the clock/motion agents and are not claimed as independently rerun here.",
+      "Single production build; both source SHA claims verified by Git input identity, not a second rebuild."
+    ],
+    "sharedRuntimeEdits": false
+  },
+  "independentTestReview": {
+    "at": "2026-10-22T16:36:20.155630+00:00",
+    "status": "independent-test-source-review-passed-no-blocking-findings",
+    "testSnapshot": {
+      "at": "2026-10-22T16:34:34.952832+00:00",
+      "head": "144573ed7aa72f0a3a46254dd50f263ba2bf5223",
+      "files": [
+        {
+          "path": "patches/splatoon3/tests/catalogue-tick-admission.test.mjs",
+          "sha256": "6d06458a9e0616598632379af24e963aa242ed5e80f143362c2b82406281e34d",
+          "bytes": 5014
+        },
+        {
+          "path": "patches/splatoon3/tests/catalogue-session-tick-admission.test.mjs",
+          "sha256": "27f26ed2000ffd4da2b0f2f6a45c14e42823e3e47dea5bdfbcc094e57c95fdeb",
+          "bytes": 5775
+        }
+      ]
+    },
+    "postReviewHashes": [
+      {
+        "path": "patches/splatoon3/tests/catalogue-tick-admission.test.mjs",
+        "sha256": "6d06458a9e0616598632379af24e963aa242ed5e80f143362c2b82406281e34d",
+        "sameAsSnapshot": true
+      },
+      {
+        "path": "patches/splatoon3/tests/catalogue-session-tick-admission.test.mjs",
+        "sha256": "27f26ed2000ffd4da2b0f2f6a45c14e42823e3e47dea5bdfbcc094e57c95fdeb",
+        "sameAsSnapshot": true
+      }
+    ],
+    "fixtureDependencyHashes": [
+      {
+        "path": "patches/network-replication/tests/robustness-fixture.mjs",
+        "sha256": "3870fba0bf6b06a3fbee7e461d606b206aa3219deb6f1dd7d6f0635a39350ced"
+      },
+      {
+        "path": "patches/splatoon3/tests/source-fixture.mjs",
+        "sha256": "4fa68ce9bc0f0fc00d861fb49d992df6fb98f0caf7f20b91cd31eadfdcff109c"
+      },
+      {
+        "path": "scripts/inkwave-source-composition.mjs",
+        "sha256": "be5fa907d653efc27fc13e7a828509b03f3e7b0633bc45daca6dbf1169b49eec"
+      }
+    ],
+    "findings": [],
+    "sourceReview": [
+      "Legacy fixture uses fullRuntime/productionComposition/realProjectiles and native onMessage; vmPerformance overrides receiver clock only.",
+      "Four legacy tests cover prebind rejection, future14s rejection with genuine sender kit update recovery, stale/foreign/malformed envelope rejection, invalid optional ck preserving native body+clock admission.",
+      "Real v1 test exports actual production-composed NetSession and calls both actual _begin plus _message; no validOwnerClockTick/nonce admission bypass is installed.",
+      "Staged tick is proven to change nothing before actual query/ACK; after flush it is accepted exactly once with stats.in1 and lastTs500, then kit matches sender.",
+      "Future/replay/foreign/malformed snapshots compare kit, choice, clock, stats.in, body, actor position/life unchanged; subsequent genuine tick updates kit/body/clock; wrong sidecar life cannot change kit on otherwise valid tick.",
+      "Test boundary remains mocked transport/Display/stage allocation; it is CPU network-admission evidence, not rendering or public relay-browser evidence."
+    ],
+    "testsRerun": false,
+    "testsReason": "Clock agent owns coherent source suite running worker1; independent review is source-only as requested.",
+    "buildFinalIdentities": {
+      "status": "passed",
+      "buildOriginalSourceSha": "3f633033a24c7b95a3d992f8a6a452caeb722317",
+      "buildNotRerun": true,
+      "rows": [
+        {
+          "sha": "492305e4c7e7669d589d1d79c2781b00e23c41f9",
+          "tree": "46bbd538f36f86177fb039315390595a83745016",
+          "allDeclaredGitInputsIdentical": true,
+          "inputCount": 1364,
+          "artifactsVerified": 2018,
+          "contentHash": "ba74855c6b2fe1c33228b5bf076485861529ed92eeb5b0018be06944f72d8fd9",
+          "inputHash": "fdcb48669f0bb00eb8aa1f3335dfdedb3e6e035c6eb59e4accd9a123ecd1e8ec",
+          "manifestSha256": "18a68a313c97a3290dc030b7deeb12d9d01a22d59e7952c43aaa259fae14ac39"
+        },
+        {
+          "sha": "144573ed7aa72f0a3a46254dd50f263ba2bf5223",
+          "tree": "655884f17f6592e5f76a23338cd2fd4f6878a5bd",
+          "allDeclaredGitInputsIdentical": true,
+          "inputCount": 1364,
+          "artifactsVerified": 2018,
+          "contentHash": "ba74855c6b2fe1c33228b5bf076485861529ed92eeb5b0018be06944f72d8fd9",
+          "inputHash": "fdcb48669f0bb00eb8aa1f3335dfdedb3e6e035c6eb59e4accd9a123ecd1e8ec",
+          "manifestSha256": "18a68a313c97a3290dc030b7deeb12d9d01a22d59e7952c43aaa259fae14ac39"
+        }
+      ]
+    },
+    "gpuExecuted": false,
+    "remoteActions": false,
+    "sharedSourceEdits": false
+  },
+  "finalBuildIdentity": {
+    "status": "passed",
+    "buildOriginalSourceSha": "3f633033a24c7b95a3d992f8a6a452caeb722317",
+    "buildNotRerun": true,
+    "rows": [
+      {
+        "sha": "492305e4c7e7669d589d1d79c2781b00e23c41f9",
+        "tree": "46bbd538f36f86177fb039315390595a83745016",
+        "allDeclaredGitInputsIdentical": true,
+        "inputCount": 1364,
+        "artifactsVerified": 2018,
+        "contentHash": "ba74855c6b2fe1c33228b5bf076485861529ed92eeb5b0018be06944f72d8fd9",
+        "inputHash": "fdcb48669f0bb00eb8aa1f3335dfdedb3e6e035c6eb59e4accd9a123ecd1e8ec",
+        "manifestSha256": "18a68a313c97a3290dc030b7deeb12d9d01a22d59e7952c43aaa259fae14ac39"
+      },
+      {
+        "sha": "144573ed7aa72f0a3a46254dd50f263ba2bf5223",
+        "tree": "655884f17f6592e5f76a23338cd2fd4f6878a5bd",
+        "allDeclaredGitInputsIdentical": true,
+        "inputCount": 1364,
+        "artifactsVerified": 2018,
+        "contentHash": "ba74855c6b2fe1c33228b5bf076485861529ed92eeb5b0018be06944f72d8fd9",
+        "inputHash": "fdcb48669f0bb00eb8aa1f3335dfdedb3e6e035c6eb59e4accd9a123ecd1e8ec",
+        "manifestSha256": "18a68a313c97a3290dc030b7deeb12d9d01a22d59e7952c43aaa259fae14ac39"
+      }
+    ]
+  },
+  "buildDifference": {
+    "oldInputHash": "c2722d71bdd095d0467ff7f9fd2085fb4b8f3716e2fddb091b07ce34e6251d8e",
+    "newInputHash": "fdcb48669f0bb00eb8aa1f3335dfdedb3e6e035c6eb59e4accd9a123ecd1e8ec",
+    "inputChanges": [
+      "patch/runtime/catalogue.mjs"
+    ],
+    "builderScriptChanged": false,
+    "logicalArtifactChangesIgnoringRevisionDirectory": [
+      "index.html",
+      "patches/splatoon3/runtime/catalogue.mjs",
+      "sw.js",
+      "versioned/patches/splatoon3/runtime/catalogue.mjs"
+    ],
+    "rawVersionedArtifactChangeCount": 2019
+  },
+  "rawArchive": {
+    "path": "catalogue-admitted-ticks-raw-json-log.tar.gz",
+    "bytes": 68538,
+    "sha256": "cf2e17725090ae32064b8f54a12474692ccc1ea6a78ddb1cb1f70d63557706f6",
+    "members": 34,
+    "readbackHashesVerified": true,
+    "pngIncluded": false,
+    "credentialMatches": []
+  },
+  "limits": [
+    "CPU VM fixtures retain documented stage/display, physics/paint/audio and transport boundaries; this is no new browser, physical-device or Nintendo network acceptance.",
+    "Only catalogue runtime changes. Existing owner-clock and weapon browser/build evidence is not relabeled as this new source acceptance.",
+    "The earlier optional emitted clock suite source-text/AST extraction limitations remain separate; this compiled20 selection executes runtime public interfaces only."
+  ],
+  "remoteMutations": false,
+  "workflowRegistration": {
+    "workflow": ".github/workflows/inkwave-specials-1130.yml",
+    "newPaths": [
+      "patches/splatoon3/tests/catalogue-session-tick-admission.test.mjs",
+      "patches/splatoon3/tests/catalogue-tick-admission.test.mjs"
+    ],
+    "occurrencesPerPath": 3,
+    "registeredIn": [
+      "pull_request paths",
+      "source Public sub/current catalogue run list",
+      "existing emitted lifecycle run list"
+    ],
+    "allOtherBytesEqualToPriorWorkflow": true,
+    "yamlParsed": true,
+    "sha256": "3158faac8745fb285e79097f0f1254efa8d3b3d377aa224a61fd8c2dc24c583c"
+  },
+  "workflowCommit": "c4043ed54ba82ac6158bbe526be2f8c2bfacb10a",
+  "workflowTree": "d16bb9d59ad532d5f01272b5a0b19d2c29a7d354",
+  "finalInputIdentity": {
+    "head": "c4043ed54ba82ac6158bbe526be2f8c2bfacb10a",
+    "changedPathsSinceTestFreeze": [
+      ".github/workflows/inkwave-specials-1130.yml"
+    ],
+    "allTrackedRuntimePathsClean": true,
+    "checkedInputs": 1364,
+    "inputMismatches": [],
+    "checkedArtifacts": 2018,
+    "artifactMismatches": []
+  }
+}

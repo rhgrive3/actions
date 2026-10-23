@@ -131,7 +131,7 @@ function installTouchLayout(MobileInput, controls) {
     }
   };
   proto._editScale = function (id, scale) {
-    originalScale.call(this, id, scale); this._layoutCoordinates();
+    originalScale.call(this, id, scale);
   };
   proto.openEditor = function (onClose) {
     if (!this.root || this.editing) return;
@@ -191,7 +191,6 @@ function installTouchLayout(MobileInput, controls) {
     this.layout[id] = { ax, ay, dx: (ax === 'l' ? cx - safe.l : innerWidth - safe.r - cx) / unit,
       dy: (ay === 't' ? cy - safe.t : innerHeight - safe.b - cy) / unit, s: this._cfg(id).s };
     this._layoutAll();
-    this._layoutCoordinates();
   };
   proto._editDown = function (e) {
     const state = this._edit || (this._edit = { pts: new Map() });

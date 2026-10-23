@@ -90,6 +90,8 @@ test('real catalog Roller and Brush shots follow down-45 camera pitch despite ho
   for(const [name,vertical] of [['Carbon Roller',true],['Dynamo Roller',true],
     ['Flingza Roller',true],['Big Swig Roller',true],['Inkbrush',false],['Painbrush',false]]){
     const r=source(name),a=f.make(r.id);
+    const vmRecord=a.weapon.catalogRecord;
+    assert.equal(vmRecord.id,r.id,name+' native VM owns the selected source row');
     f.G.projectiles.clear();f.G.actors.length=0;
     a.form='kid';a.ink=100;a.grounded=!vertical;a.s3JumpAirborne=vertical;
     a.aimPitch=-Math.PI/4;a.aimYaw=0;
@@ -98,15 +100,237 @@ test('real catalog Roller and Brush shots follow down-45 camera pitch despite ho
     a.weaponRunner.update(1/60,{fire:true,firePressed:true});
     for(let tick=0;tick<75;tick++)
       a.weaponRunner.update(1/60,{fire:false,firePressed:false,sub:false});
-    const rounds=f.G.projectiles.list.filter(p=>p.catalog?.r?.id===r.id);
+    const rounds=f.G.projectiles.list.filter(p=>p.catalog?.r===vmRecord);
     assert.ok(rounds.length>0,name+' emitted source round');
     const p=rounds[0],actualPitch=Math.atan2(p.vel.y,Math.hypot(p.vel.x,p.vel.z));
     const unit=r.parameters[vertical?'VerticalSwingUnitGroupParam':'SwingUnitGroupParam'].Unit[0];
     const basePitch=vertical?catalogRollerSourcePitch(unit,0,true):0;
-    const sourcePitch=-Math.PI/4+basePitch*DEG;
-    const lift=unit.AddSpawnSpeedYRateByXZ??unit.AddSpawnSpeedYRateBySpeed??0;
-    near(actualPitch,Math.atan2(Math.sin(sourcePitch)+lift,Math.cos(sourcePitch)),
-      name+' real camera-pitch launch with source lift');
+    const admittedPitch=-Math.PI/4+basePitch*DEG;
+    // Brush's pinned -0.02 vertical speed term applies after aiming. Its
+    // source tilt is retained; the test must not silently require zero lift.
+    const sourceLift=unit.AddSpawnSpeedYRateByXZ??unit.AddSpawnSpeedYRateBySpeed??0;
+    const expectedPitch=Math.atan2(Math.sin(admittedPitch)+sourceLift,Math.cos(admittedPitch));
+    near(actualPitch,expectedPitch,name+' real camera-pitch launch with source vertical speed');
     assert.ok(actualPitch<-.35,name+' must not be flattened onto horizontal reticle');
+  }
+});
+
+// #1812: retain Actor input admission and the production fixed clock. As in
+// source-fixture, movement integration and Character pose are stubbed: these
+// are launcher/OBB regression checks, not rendered-muzzle or Switch acceptance.
+const rollerBrushModes=[
+  ...['Carbon Roller','Dynamo Roller','Flingza Roller','Big Swig Roller']
+    .flatMap(name=>['horizontal','vertical'].map(key=>({name,key}))),
+  ...['Inkbrush','Octobrush','Painbrush'].map(name=>({name,key:'brush'}))
+];
+function sourceGroup(r,key){
+  return r.parameters[key==='vertical'?'VerticalSwingUnitGroupParam':
+    key==='horizontal'?'WideSwingUnitGroupParam':'SwingUnitGroupParam'];
+}
+function admittedFlickTrace(f,{name,key,pitch,reticle='stale',hz=60,wall=false}){
+  const {G,THREE}=f,r=source(name),system=G.projectiles;
+  system.clear();G.actors.length=0;G.time=0;
+  G.level={blocks:[],faces:[],groundHeight:()=>0,
+    queryBlocks(_a,_b,_c,_d,out){out.length=0;this.blocks.forEach((_v,i)=>out.push(i));return out;}};
+  if(wall)G.level.blocks.push({id:0,solid:true,grate:false,
+    center:new THREE.Vector3(0,1,.25),half:new THREE.Vector3(5,5,.01),
+    axes:[new THREE.Vector3(1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1)],
+    faces:[-1,-1,-1,-1,-1,-1]});
+  G.physics=new f.Physics(G.level);
+  const a=f.make(r.id),clock=new f.FixedClock();
+  a.form='kid';a.kidT=1;a.ink=100;a.grounded=key!=='vertical';
+  if(key==='vertical')a.character.trigger('jump'); // accepted jump owner selects vertical
+  a.ground.hit=a.grounded;a.aimYaw=wall?0:.37;a.yaw=a.aimYaw;a.aimPitch=pitch*DEG;
+  const aim=new THREE.Vector3(Math.sin(a.aimYaw)*Math.cos(a.aimPitch),Math.sin(a.aimPitch),
+    Math.cos(a.aimYaw)*Math.cos(a.aimPitch));
+  a.aimPoint.set(0,reticle==='stale'?1.05:-.4,reticle==='stale'?80:4);
+  f.setRandom(()=>.5); // midpoint source speed; no speed-swerve or cube jitter
+  const rows=[];let ticks=0,presses=0,observed=0;
+  try{
+    for(let frame=0;frame<hz*2;frame++)clock.advance(1/hz,step=>{
+      const fire=presses===0||(key==='brush'&&presses===1&&observed>0&&a.weaponRunner.cooldown<=1e-9);
+      if(fire)presses++;
+      a.intent.fire=fire;G.time+=step;a.update(step);ticks++;
+      const born=system.list.slice(observed);observed=system.list.length;
+      for(const p of born){
+        assert.equal(p.owner,a,'real Actor/WeaponRunner owns emitted projectile');
+        assert.equal(p.catalog.descriptor.key,key,'admitted ground/jump attack mode');
+        assert.equal(p.delay,0,'this matrix measures true birth, not delayed launch plans');
+        rows.push({tick:ticks,swing:presses,unit:p.catalog.descriptor.unit,index:p.catalog.index,
+          start:Array.from(p.start.toArray()),velocity:Array.from(p.vel.toArray()),
+          packet:Array.from(p.inkMeta.s3Catalog)});
+      }
+    });
+    assert.equal(ticks,120,'30/60/120 render schedules each execute 120 fixed ticks');
+    assert.equal(presses,key==='brush'?2:1,'both Brush swing hands use real repress admission');
+    const count=sourceGroup(r,key).Unit.reduce((n,u)=>n+(u.BulletNum??1),0);
+    assert.equal(rows.length,count*presses,name+' complete sourced volleys');
+    return {rows,aim};
+  }finally{a.weaponRunner.reset();system.clear();G.actors.length=0;f.restoreRandom();}
+}
+function assertSourceFlickVelocity(r,key,pitch,rows,yaw){
+  for(const row of rows){
+    const u=sourceGroup(r,key).Unit[row.unit],count=u.BulletNum??1;
+    const fan=count===1?0:(row.index/(count-1)-.5)*(u.SpawnWideDegree??0)*(key==='horizontal'?2:1);
+    const hand=key==='brush'?(row.swing===1?u.SpawnRotateYDegreeLeftToRight:u.SpawnRotateYDegreeRightToLeft)??0:0;
+    const heading=yaw+((u.BaseRotateYDegree??0)+(key==='vertical'?(u.SpawnRotateYDegree??0):0)+fan+hand)*DEG;
+    const elevation=(pitch+(u.SpawnRotateXDegree??u.SpawnRotateXDegreeBase??0)+
+      (key==='vertical'?(u.AfterOffsetSpawnRotateXDegree??0)*row.index:0))*DEG;
+    const speed=((u.SpawnSpeedBase??1)+(u.AfterOffsetSpawnSpeed??0)*row.index)*60;
+    const lift=u.AddSpawnSpeedYRateByXZ??u.AddSpawnSpeedYRateBySpeed??0;
+    const expected=[Math.sin(heading)*Math.cos(elevation)*speed,
+      (Math.sin(elevation)+lift)*speed,Math.cos(heading)*Math.cos(elevation)*speed];
+    expected.forEach((v,i)=>near(row.velocity[i],v,
+      `${r.names.en} ${key} ${pitch}deg swing${row.swing} unit${row.unit}/${row.index} camera velocity[${i}]`));
+    assert.deepEqual(row.packet,[1,key,row.unit,0,row.index],'network tuple retains exact source identity');
+  }
+}
+
+test('#1812 all seven added Roller/Brush Actors preserve source pitch/yaw and both Brush hands at 30/60/120 render Hz',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  let conditions=0;
+  for(const mode of rollerBrushModes)for(const pitch of [-70,-45,0,40,70]){
+    let baseline=null;
+    for(const reticle of ['stale','close-ground'])for(const hz of [30,60,120]){
+      const {rows}=admittedFlickTrace(f,{...mode,pitch,reticle,hz});
+      assertSourceFlickVelocity(source(mode.name),mode.key,pitch,rows,.37);
+      if(baseline)assert.deepEqual(rows,baseline,mode.name+' reticle/render cadence cannot change admitted births');
+      else baseline=rows;
+      conditions++;
+    }
+  }
+  assert.equal(conditions,330,'11 admitted attack modes, five pitches, two reticles, three render schedules');
+});
+
+test('#1812 real near-wall OBB clamps every Roller/Brush birth without flattening camera velocity',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  for(const mode of rollerBrushModes)for(const pitch of [-45,40]){
+    const {rows}=admittedFlickTrace(f,{...mode,pitch,wall:true});
+    assertSourceFlickVelocity(source(mode.name),mode.key,pitch,rows,0);
+    for(const row of rows){
+      assert.ok(row.start.every(Number.isFinite),'cover fallback stays finite');
+      // constrainMuzzle's margin is along the oblique anchor ray, so its Z
+      // projection is smaller than 0.02 for side/height-offset source units.
+      assert.ok(row.start[2]<.24-1e-9,mode.name+' remains outside the actor-facing OBB surface: '+row.start);
+    }
+  }
+});
+
+test('#1812 Actor matrix detects the original Roller/Brush reticle-convergence regression',async()=>{
+  const anchor="if((key==='slosh'||key==='horizontal'||key==='vertical'||key==='brush')&&";
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,
+    adaptRuntime:(rel,code)=>{
+      if(rel!=='patches/splatoon3/runtime/main-weapon-catalog.mjs')return code;
+      assert.equal(code.split(anchor).length,2,'one production camera-direction guard');
+      return code.replace(anchor,"if(key==='slosh'&&");
+    }});
+  for(const mode of [{name:'Carbon Roller',key:'horizontal'},{name:'Octobrush',key:'brush'}]){
+    const {rows}=admittedFlickTrace(f,{...mode,pitch:-45});
+    assert.throws(()=>assertSourceFlickVelocity(source(mode.name),mode.key,-45,rows,.37),
+      /camera velocity/,'unmodified matrix must reject the previous convergence owner');
+  }
+});
+
+// Keep the launcher matrix above separate from actual flight/contact. These
+// cases retain real Physics/Level and step each emitted round to contact or its
+// own sourced lifetime/range expiry. Character's stub does not claim a rendered
+// muzzle; that has an independent source-loaded browser receipt.
+function impactFlickTrace(f,{id,key,pitch,reticle='stale',hz=60,wall=false}){
+  const {G,THREE}=f,ps=G.projectiles;
+  ps.clear();G.actors.length=0;G.time=0;
+  G.level=new f.Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},
+    spawnPads:[[-90,0,-90],[90,0,90]],spawnBarrier:0,half:[],
+    single:[{kind:'box',min:[-100,-1,-100],max:[100,0,100]},
+      ...(wall?[{kind:'box',min:[-20,0,2],max:[20,12,2.2]}]:[])]});
+  G.physics=new f.Physics(G.level);G.camera=new THREE.PerspectiveCamera();
+  const a=f.make(id),clock=new f.FixedClock(),births=[],contacts=[],ended=[];
+  a.form='kid';a.kidT=1;a.isLocal=true;a.ink=100;a.grounded=key!=='vertical';
+  a.ground.hit=a.grounded;a.ground.face=0;a.aimYaw=a.yaw=0;a.aimPitch=pitch*DEG;
+  a.aimPoint.set(0,reticle==='stale'?1.05:-.4,reticle==='stale'?80:4);
+  if(key==='vertical')a.character.trigger('jump');
+  const acquire=ps._new,step=ps._step,created=[],nativeContacts=new WeakSet(),tickets=new WeakMap();
+  let tick=0,presses=0,currentMode=key;
+  const describe=p=>({swing:tickets.get(p)?.swing??presses,unit:p.catalog?.descriptor.unit??p.fidelityRollerUnitIndex??null,
+    index:p.catalog?.index??p._iwVisualOrdinal??null});
+  ps._new=function(...args){const p=acquire.apply(this,args);tickets.delete(p);nativeContacts.delete(p);created.push(p);return p;};
+  ps._step=function(p,dt){
+    const primary=tickets.get(p);
+    const wasWallDrop=!!p.fidelityWallDrop;
+    const dead=step.call(this,p,dt);
+    // Native Roller walls can become persistent wall drops rather than call
+    // _impact/terminate immediately. Observe the actual native sweep cache on
+    // that first contact, not a generic fallback impact that may never run.
+    const nativeHit=!p.catalog&&!wasWallDrop&&p.fidelityRollerUnit&&this._fidelityCollision?.worldReady
+      ?this._fidelityCollision.world:null;
+    if(primary&&p.owner===a&&nativeHit?.hit&&!nativeContacts.has(p)){
+      nativeContacts.add(p);
+      contacts.push({tick,...describe(p),point:Array.from(nativeHit.point.toArray()),normal:Array.from(nativeHit.normal.toArray()),face:nativeHit.face});
+    }
+    if(primary&&dead&&p.owner===a){
+      const h=p.catalog?.lobes?.[0]?.hit;
+      if(h?.hit)contacts.push({tick,...describe(p),point:Array.from(h.point.toArray()),normal:Array.from(h.normal.toArray()),face:h.face});
+      ended.push({tick,...describe(p),point:Array.from(p.pos.toArray()),age:p.age,world:!!h?.hit||nativeContacts.has(p)});
+    }
+    return dead;
+  };
+  f.setRandom(()=>.5);
+  try{
+    for(let frame=0;frame<hz*5;frame++)clock.advance(1/hz,dt=>{
+      const fire=presses===0||(key==='brush'&&presses===1&&births.length>0&&a.weaponRunner.cooldown<=1e-9);
+      if(fire)presses++;
+      a.intent.fire=fire;G.time+=dt;created.length=0;a.update(dt);
+      for(const p of created)if(p.owner===a&&(p.catalog||p.wid==='roller')){
+        tickets.set(p,{swing:presses});
+        currentMode=p.catalog?.descriptor.key??p.fidelityMode;
+        births.push({tick,...describe(p),mode:currentMode,start:Array.from(p.start.toArray()),velocity:Array.from(p.vel.toArray())});
+      }
+      ps.update(dt);tick++;
+    });
+    assert.ok(births.length>0,id+' emits a real volley');
+    assert.equal(currentMode,key,id+' actual ground/jump mode');
+    assert.equal(presses,key==='brush'?2:1,'admitted input including both Brush hands');
+    assert.equal(ps.list.filter(p=>p.owner===a&&(p.catalog||p.wid==='roller')).length,0,'every emitted main round reaches contact or its own expiry');
+    assert.equal(ended.length,births.length,'all original main rounds have a contact/expiry receipt; detached splashes are separate');
+    if(pitch<0)assert.ok(contacts.length>0,id+' downward shot reaches actual OBB terrain');
+    for(const c of contacts){
+      assert.ok(c.point.every(Number.isFinite)&&c.normal.every(Number.isFinite),'finite actual contact');
+      const face=G.level.faces[c.face];assert.ok(face,'real Level surface identity');
+      assert.ok(Math.abs(new THREE.Vector3(...c.point).sub(face.origin).dot(face.n))<1e-6,'contact belongs to its actual collision polygon');
+      if(wall&&face.block===1)assert.ok(c.point[2]>=2-1e-6&&c.point[2]<=2.2+1e-6,'cover contact is on the actual wall; high flights may clear its top');
+    }
+    return{births,contacts,ended};
+  }finally{ps._new=acquire;ps._step=step;a.weaponRunner.reset();ps.clear();G.actors.length=0;f.restoreRandom();}
+}
+
+test('#1812 native Splat Roller and seven added owners preserve camera pitch through actual flight/contact at 30/60/120 render Hz',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  const modes=[{id:'roller',key:'horizontal'},{id:'roller',key:'vertical'},
+    ...rollerBrushModes.map(m=>({id:source(m.name).id,key:m.key}))];
+  let conditions=0;
+  for(const mode of modes)for(const pitch of [-70,-45,0,40,70])for(const wall of [false,true]){
+    let baseline=null;
+    for(const reticle of ['stale','close-ground'])for(const hz of [30,60,120]){
+      const trace=impactFlickTrace(f,{...mode,pitch,wall,reticle,hz});
+      if(baseline)assert.deepEqual(trace,baseline,mode.id+' actual impacts/expiry are independent of reticle and render cadence');
+      else baseline=trace;
+      conditions++;
+    }
+    const first=baseline.births[0].velocity;
+    if(pitch!==0)assert.equal(Math.sign(first[1]),Math.sign(pitch),'native/catalog launch both retain the camera elevation sign');
+  }
+  assert.equal(conditions,780,'13 native/added modes, five elevations, open/cover, two reticles and three render rates');
+});
+
+test('#1812 actual terrain impact detects the previous horizontal-reticle launch owner',async()=>{
+  const anchor="if((key==='slosh'||key==='horizontal'||key==='vertical'||key==='brush')&&";
+  const fixed=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  const before=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,adaptRuntime:(rel,code)=>
+    rel==='patches/splatoon3/runtime/main-weapon-catalog.mjs'?code.replace(anchor,"if(key==='slosh'&&"):code});
+  for(const name of ['Carbon Roller','Octobrush']){
+    const mode={id:source(name).id,key:name==='Carbon Roller'?'horizontal':'brush',pitch:-45};
+    const actual=impactFlickTrace(fixed,mode),previous=impactFlickTrace(before,mode);
+    assert.notDeepEqual(previous.contacts,actual.contacts,name+' old reticle owner changes real collision contacts');
+    assert.ok(actual.births[0].velocity[1]<0,name+' downward first round');
+    assert.ok(previous.births[0].velocity[1]>actual.births[0].velocity[1]+1,name+' negative control is not a tiny numeric perturbation');
   }
 });

@@ -18,11 +18,11 @@ export function specialDeviceFlight(api,actor,id,ap=0){
 // Called at the world-device fixed 60 Hz boundary. Sweep solid terrain,
 // including grates for guide devices; opponents and their barriers are not
 // terrain and cannot stick a Triple Inkstrike marker.
-export function stepSpecialDeviceFlight(api,object,dt,hit){
-  const from=object.pos.clone();
+export function stepSpecialDeviceFlight(api,object,dt,hit,previous=null){
+  const from=previous||(object._flightFrom ||= object.pos.clone()).copy(object.pos);
   object.vel.y-=object.gravity*dt;
   if(object.airResist>0)object.vel.multiplyScalar(Math.pow(1-object.airResist,dt*60));
-  const to=from.clone().addScaledVector(object.vel,dt);
+  const to=(object._flightTo ||= from.clone()).copy(from).addScaledVector(object.vel,dt);
   let contact=api.G.physics?.segment?.(from,to,hit,false);
   if(!contact?.hit){
     const floor=api.G.level?.groundHeight?.(to.x,to.z,Math.max(from.y,to.y)+.001);

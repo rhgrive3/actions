@@ -66,21 +66,23 @@ export function decodePaintEvents(payload){
 // a successful WebSocket.send is never treated as a capability acknowledgement.
 const CONTROL='paint-codec';
 const validNonce=n=>typeof n==='string'&&/^[0-9a-f]{32}$/.test(n);
+const nativeMapSize=Object.getOwnPropertyDescriptor(Map.prototype,'size').get;
 function randomNonce(){try{const a=new Uint32Array(4);globalThis.crypto.getRandomValues(a);return [...a].map(x=>x.toString(16).padStart(8,'0')).join('');}catch{return null;}}
 export class PaintPacketNegotiation {
  constructor(nonceFactory=randomNonce){this.nonceFactory=nonceFactory;this.matchId=null;this.myId=null;this.members=new Map();this.nonce=null;}
  reset(){this.members.clear();const n=this.nonceFactory();this.nonce=validNonce(n)?n:null;}
  sync(matchId,myId,memberIds){
-  if(typeof matchId!=='string'||!matchId||matchId.length>128||typeof myId!=='string'||!Array.isArray(memberIds)||memberIds.length>16||memberIds.some(id=>typeof id!=='string'||!id||id.length>128)){
-   this.clear();return false;
-  }
-  const ids=new Set(memberIds.filter(id=>id!==myId));
+  // Membership can originate in another realm (embedded sessions and VM
+  // fixtures). Use the native Map brand rather than this realm's prototype.
+  let map=false,size;
+  try{size=nativeMapSize.call(memberIds);map=true;}catch{size=Array.isArray(memberIds)?memberIds.length:undefined;}
+  const ids=map?Map.prototype.keys.call(memberIds):memberIds;
+  if(typeof matchId!=='string'||!matchId||matchId.length>128||typeof myId!=='string'||(!map&&!Array.isArray(memberIds))||size>16){this.clear();return false;}
+  for(const id of ids)if(typeof id!=='string'||!id||id.length>128){this.clear();return false;}
   if(this.matchId!==matchId||this.myId!==myId)this.reset();
-  // Third-party membership changes must not erase an existing sender's
-  // receive generation while its correctly sent paint is still in flight.
-  for(const id of this.members.keys())if(!ids.has(id))this.members.delete(id);
+  for(const id of this.members.keys())if(id===myId||!(map?Map.prototype.has.call(memberIds,id):memberIds.includes(id)))this.members.delete(id);
   this.matchId=matchId;this.myId=myId;
-  for(const id of ids)if(!this.members.has(id))this.members.set(id,{sent:false,challenge:this.nonceFactory(),peerNonce:null,ackNonce:null,received:false,ackSentFor:null,blocked:false});
+  for(const id of map?Map.prototype.keys.call(memberIds):memberIds)if(id!==myId&&!this.members.has(id))this.members.set(id,{sent:false,challenge:this.nonceFactory(),peerNonce:null,ackNonce:null,received:false,ackSentFor:null,blocked:false});
   return !!this.nonce;
  }
  announce(send){
@@ -109,7 +111,7 @@ export class PaintPacketNegotiation {
   }
   return true;
  }
- canEncode(){return !!this.nonce&&this.members.size>0&&[...this.members.values()].every(p=>p.received&&p.peerNonce===p.ackNonce);}
+ canEncode(){if(!this.nonce||!this.members.size)return false;for(const p of this.members.values())if(!p.received||p.peerNonce!==p.ackNonce)return false;return true;}
  packTick(tick){
   if(!this.canEncode()||tick?.k!=='t')return tick;
   // For ordinary native ticks, replacing e with pe and adding pn can only
@@ -117,6 +119,7 @@ export class PaintPacketNegotiation {
   // therefore subsumes the standalone events-only profitability comparison.
   // Reserved fields retain the original conservative standalone contract.
   const specialJson=typeof tick.toJSON==='function'||typeof tick.e?.toJSON==='function';
+  if(!specialJson&&Array.isArray(tick.e)&&!tick.e.some(row=>Array.isArray(row)&&row[1]==='s'))return tick;
   const conservative=tick.e?.length<2||Object.hasOwn(tick,'pe')||Object.hasOwn(tick,'pn')||specialJson;
   const payload=conservative?encodePaintEvents(tick.e):encodePaintPayload(tick.e)?.payload;if(!payload)return tick;
   const {e,...rest}=tick,out={...rest,pe:payload,pn:this.nonce};
@@ -133,13 +136,13 @@ export class PaintPacketNegotiation {
  forget(id){this.members.delete(id);}
  clear(){this.matchId=null;this.myId=null;this.nonce=null;this.members.clear();}
 }
-const negotiations=new WeakMap();
+const negotiations=new WeakMap(),senders=new WeakMap();
 function sessionNegotiation(nm){
  let n=negotiations.get(nm);if(!n){n=new PaintPacketNegotiation();negotiations.set(nm,n);}
- let ids=null;try{ids=[...Map.prototype.keys.call(nm?.s?._members)];}catch{}
+ let ids=null;try{const value=nm?.s?._members;Map.prototype.has.call(value,'');ids=value;}catch{}
  n.sync(nm?.cfg?.id,nm?.s?.myId,ids);return n;
 }
-function sender(nm){return (id,d)=>nm?.s?.tr?.sendTo?.(id,d)===true;}
+function sender(nm){let send=senders.get(nm);if(!send){send=(id,d)=>nm?.s?.tr?.sendTo?.(id,d)===true;senders.set(nm,send);}return send;}
 export function packPaintTick(nm,tick){const n=sessionNegotiation(nm);n.announce(sender(nm));return n.packTick(tick);}
 export function acceptPaintTick(nm,from,tick){
  if(tick?.k!=='t'&&tick?.k!==CONTROL)return tick;

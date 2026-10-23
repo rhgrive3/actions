@@ -1,3 +1,10 @@
+const SNAPSHOT_FIELDS_0 = Object.freeze([1, 2, 3]);
+const SNAPSHOT_FIELDS_1 = Object.freeze([4, 5, 6]);
+const SNAPSHOT_FIELDS_2 = Object.freeze([7, 8, 9]);
+const SNAPSHOT_FIELDS_3 = Object.freeze([12, 13, 14]);
+const SNAPSHOT_FIELDS_4 = Object.freeze([17, 18, 19]);
+const SNAPSHOT_FIELDS_5 = Object.freeze(['x', 'y', 'z', 'vx', 'vy', 'vz', 'yaw', 'aimYaw', 'aimPitch', 'hp', 'ink', 'sp', 'ch', 'turf', 'lock']);
+const SNAPSHOT_FIELDS_6 = Object.freeze(['x', 'y', 'z']);
 // #1178: reject malformed owner-owned actor rows before Hermite sampling.
 // Current producer extends the legacy 21–25 column range with authoritative
 // hit and action sidecars (26/27). Validate core scalars here and leave each
@@ -150,6 +157,18 @@ export function validOwnerTickAdvance(timestamp, previousTimestamp, receivedAt, 
   return senderDelta <= receiveDelta + OWNER_TICK_FORWARD_GRACE;
 }
 
+// #1767: the nonce response was generated AFTER originSentAt on this receiver.
+// Keep this fixed origin for the whole peer epoch: queued arrivals may catch up
+// to elapsed real time, but repeated packets/ACKs cannot manufacture new grace.
+// Initial queued snapshots may predate the response; replay remains monotonic.
+export function validOwnerClockOriginAdvance(timestamp, previousTimestamp, receivedAt, originTimestamp, originSentAt) {
+  if (!validOwnerTickAdvance(timestamp, undefined)
+    || !validOwnerTickAdvance(originTimestamp, undefined)
+    || !finite(originSentAt) || originSentAt < 0 || !finite(receivedAt) || receivedAt < originSentAt) return false;
+  if (previousTimestamp !== undefined && (!validSnapshotTimestamp(previousTimestamp) || timestamp <= previousTimestamp)) return false;
+  return timestamp - originTimestamp <= receivedAt - originSentAt + OWNER_TICK_FORWARD_GRACE;
+}
+
 // d.u is G.time * 60. It may stall while gameplay is paused, but within one
 // owner epoch it must not run backwards or jump hundreds of seconds ahead of
 // the corresponding owner timestamp.
@@ -186,7 +205,7 @@ export const NETWORK_BOSS_CRABLET_SPAWNS_PER_SECOND = 16;
 export function validBossSnapshotRow(row, timestamp) {
   if (!Array.isArray(row) || (row.length !== 18 && row.length !== 19) || !validSnapshotTimestamp(timestamp)) return false;
   if (!validSnapshotTimestamp(row[0])) return false;
-  for (const i of [1, 2, 3]) if (!bounded(row[i], -1e6, 1e6)) return false;
+  for (const i of SNAPSHOT_FIELDS_0) if (!bounded(row[i], -1e6, 1e6)) return false;
   for (const i of [5, 6]) if (!bounded(row[i], -1e4, 1e4)) return false;
   if (!bounded(row[4], -1e5, 1e5) || !bounded(row[12], -1e5, 1e5)) return false;
   if (!finite(row[7]) || !finite(row[17]) || row[17] <= 0) return false;
@@ -198,7 +217,7 @@ export function validBossSnapshotRow(row, timestamp) {
   for (const crab of row[16]) {
     if (!Array.isArray(crab) || crab.length !== 6 || !integer(crab[0], 0, Number.MAX_SAFE_INTEGER) || crabIds.has(crab[0])) return false;
     crabIds.add(crab[0]);
-    for (const i of [1, 2, 3]) if (!bounded(crab[i], -1e6, 1e6)) return false;
+    for (const i of SNAPSHOT_FIELDS_0) if (!bounded(crab[i], -1e6, 1e6)) return false;
     if (!bounded(crab[4], -1e5, 1e5) || !finite(crab[5])) return false;
   }
   return row[18] == null || validBossMove(row[18]);
@@ -228,16 +247,16 @@ export function validActorSnapshotRow(row, timestamp) {
   if (!integer(row[0], 0, 0x7fffffff)) return false; // nid
   // position, velocity, heading, aim and wall normal are never allowed to poison
   // interpolation, animation, collision, particles or the GPU.
-  for (const i of [1, 2, 3]) if (!bounded(row[i], -1e6, 1e6)) return false;
-  for (const i of [4, 5, 6]) if (!bounded(row[i], -1e4, 1e4)) return false;
-  for (const i of [7, 8, 9]) if (!bounded(row[i], -1e5, 1e5)) return false;
+  for (const i of SNAPSHOT_FIELDS_0) if (!bounded(row[i], -1e6, 1e6)) return false;
+  for (const i of SNAPSHOT_FIELDS_1) if (!bounded(row[i], -1e4, 1e4)) return false;
+  for (const i of SNAPSHOT_FIELDS_2) if (!bounded(row[i], -1e5, 1e5)) return false;
   if (!integer(row[10], 0, 0x7fffffff)) return false; // flag bitmask
   // A legitimate lethal hit leaves finite negative HP until the next fixed
   // tick commits the splat. Preserve that snapshot for pending-hit adoption.
   if (!bounded(row[11], -1e5, 1e5)) return false;
-  for (const i of [12, 13, 14]) if (!bounded(row[i], 0, 1e5)) return false;
+  for (const i of SNAPSHOT_FIELDS_3) if (!bounded(row[i], 0, 1e5)) return false;
   if (!bounded(row[15], 0, 1e9) || !integer(row[16], 0, 0x7fffffff)) return false;
-  for (const i of [17, 18, 19]) if (!bounded(row[i], -1.01, 1.01)) return false;
+  for (const i of SNAPSHOT_FIELDS_4) if (!bounded(row[i], -1.01, 1.01)) return false;
   if (!bounded(row[20], 0, 1e5)) return false;
   if (row.length > 21 && !bounded(row[21], 0, 1e5)) return false;
   if (row.length > 22 && !integer(row[22], 0, 1e9)) return false;
@@ -245,12 +264,12 @@ export function validActorSnapshotRow(row, timestamp) {
 }
 export function validRemoteActorPose(sample, correction) {
   if (!sample || !correction) return false;
-  for (const key of ['x', 'y', 'z', 'vx', 'vy', 'vz', 'yaw', 'aimYaw', 'aimPitch', 'hp', 'ink', 'sp', 'ch', 'turf', 'lock'])
+  for (const key of SNAPSHOT_FIELDS_5)
     if (!finite(sample[key])) return false;
   if (!integer(sample.f, 0, 0x7fffffff)) return false;
   if (!bounded(sample.x + correction.x, -1e6, 1e6)
       || !bounded(sample.y + correction.y, -1e6, 1e6)
       || !bounded(sample.z + correction.z, -1e6, 1e6)) return false;
-  for (const key of ['x', 'y', 'z']) if (!finite(correction[key])) return false;
+  for (const key of SNAPSHOT_FIELDS_6) if (!finite(correction[key])) return false;
   return true;
 }

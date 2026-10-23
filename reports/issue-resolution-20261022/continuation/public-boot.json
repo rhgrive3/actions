@@ -1,0 +1,554 @@
+{
+  "status": "passed",
+  "sourceSha": "c0938a3f84768474df91713f7b372f9d7f8fe96a",
+  "checkedInputs": 1358,
+  "inputHash": "2908ffec19aadcce22ee17db290ca19f553addd8c4b07addd10c06f44c9ac97e",
+  "contentHash": "e57bdcd82f9b82b0f1ede4491017c3683822ea98ae4e11684b646599822b93e5",
+  "revision": "6dccb72c5a675c4ab176f0ae0f21556112369c90baa930e7bbcc28b1b7302912",
+  "url": "https://rhgrive3.github.io/actions/",
+  "browserVersion": "143.0.7499.4",
+  "physicalDeviceVerified": false,
+  "scope": "independent public deployment boot only; no full Ranked gameplay, device performance or latest-main acceptance",
+  "responseByteScope": "HTML and JavaScript critical boot responses; optional media/source-bank bodies are not inspector-attested",
+  "manifestChecks": [
+    {
+      "label": "before",
+      "at": "2026-10-22T12:30:15.900Z",
+      "inputHash": "2908ffec19aadcce22ee17db290ca19f553addd8c4b07addd10c06f44c9ac97e",
+      "contentHash": "e57bdcd82f9b82b0f1ede4491017c3683822ea98ae4e11684b646599822b93e5",
+      "revision": "6dccb72c5a675c4ab176f0ae0f21556112369c90baa930e7bbcc28b1b7302912"
+    },
+    {
+      "label": "before-1",
+      "at": "2026-10-22T12:30:16.296Z",
+      "inputHash": "2908ffec19aadcce22ee17db290ca19f553addd8c4b07addd10c06f44c9ac97e",
+      "contentHash": "e57bdcd82f9b82b0f1ede4491017c3683822ea98ae4e11684b646599822b93e5",
+      "revision": "6dccb72c5a675c4ab176f0ae0f21556112369c90baa930e7bbcc28b1b7302912"
+    },
+    {
+      "label": "after-1",
+      "at": "2026-10-22T12:31:26.206Z",
+      "inputHash": "2908ffec19aadcce22ee17db290ca19f553addd8c4b07addd10c06f44c9ac97e",
+      "contentHash": "e57bdcd82f9b82b0f1ede4491017c3683822ea98ae4e11684b646599822b93e5",
+      "revision": "6dccb72c5a675c4ab176f0ae0f21556112369c90baa930e7bbcc28b1b7302912"
+    },
+    {
+      "label": "before-2",
+      "at": "2026-10-22T12:31:26.616Z",
+      "inputHash": "2908ffec19aadcce22ee17db290ca19f553addd8c4b07addd10c06f44c9ac97e",
+      "contentHash": "e57bdcd82f9b82b0f1ede4491017c3683822ea98ae4e11684b646599822b93e5",
+      "revision": "6dccb72c5a675c4ab176f0ae0f21556112369c90baa930e7bbcc28b1b7302912"
+    },
+    {
+      "label": "after-2",
+      "at": "2026-10-22T12:32:23.111Z",
+      "inputHash": "2908ffec19aadcce22ee17db290ca19f553addd8c4b07addd10c06f44c9ac97e",
+      "contentHash": "e57bdcd82f9b82b0f1ede4491017c3683822ea98ae4e11684b646599822b93e5",
+      "revision": "6dccb72c5a675c4ab176f0ae0f21556112369c90baa930e7bbcc28b1b7302912"
+    },
+    {
+      "label": "before-3",
+      "at": "2026-10-22T12:32:23.284Z",
+      "inputHash": "2908ffec19aadcce22ee17db290ca19f553addd8c4b07addd10c06f44c9ac97e",
+      "contentHash": "e57bdcd82f9b82b0f1ede4491017c3683822ea98ae4e11684b646599822b93e5",
+      "revision": "6dccb72c5a675c4ab176f0ae0f21556112369c90baa930e7bbcc28b1b7302912"
+    },
+    {
+      "label": "after-3",
+      "at": "2026-10-22T12:33:00.520Z",
+      "inputHash": "2908ffec19aadcce22ee17db290ca19f553addd8c4b07addd10c06f44c9ac97e",
+      "contentHash": "e57bdcd82f9b82b0f1ede4491017c3683822ea98ae4e11684b646599822b93e5",
+      "revision": "6dccb72c5a675c4ab176f0ae0f21556112369c90baa930e7bbcc28b1b7302912"
+    },
+    {
+      "label": "after",
+      "at": "2026-10-22T12:33:00.682Z",
+      "inputHash": "2908ffec19aadcce22ee17db290ca19f553addd8c4b07addd10c06f44c9ac97e",
+      "contentHash": "e57bdcd82f9b82b0f1ede4491017c3683822ea98ae4e11684b646599822b93e5",
+      "revision": "6dccb72c5a675c4ab176f0ae0f21556112369c90baa930e7bbcc28b1b7302912"
+    }
+  ],
+  "attempts": [
+    {
+      "repeat": 1,
+      "status": "ready",
+      "freshContext": true,
+      "errors": [],
+      "failures": [],
+      "startedAt": "2026-10-22T12:30:16.617Z",
+      "finishedAt": "2026-10-22T12:31:25.969Z",
+      "ready": {
+        "mode": "menu",
+        "installed": true,
+        "menus": true,
+        "menu": "title",
+        "baseURI": "https://rhgrive3.github.io/actions/_versions/6dccb72c5a675c4ab176f0ae0f21556112369c90baa930e7bbcc28b1b7302912/",
+        "startup": {
+          "schema": 1,
+          "marks": {
+            "shell-script": 1523.0999999996275,
+            "shell-frame-proxy": 1655.0999999996275,
+            "bootstrap-import-start": 1676.3999999985099,
+            "engine-boot-start": 6062.39999999851,
+            "bootstrap-import-end": 6070.5999999996275,
+            "loading-ui-mounted": 6348,
+            "engine-ready": 69286.69999999925
+          },
+          "phases": [],
+          "longTasks": [],
+          "resources": [],
+          "errors": [],
+          "dropped": 0,
+          "bootMs": 63224,
+          "bootMarks": [
+            [
+              "インクをまぜています…",
+              285
+            ],
+            [
+              "ステージをつくっています…",
+              2708
+            ],
+            [
+              "港に海水を入れています…",
+              21998
+            ],
+            [
+              "Teaching squids to swim…",
+              32040
+            ],
+            [
+              "Tuning the tentacles…",
+              32940
+            ],
+            [
+              "ウォーミングアップ中…",
+              39107
+            ],
+            [
+              "Warming up…",
+              39733
+            ],
+            [
+              "準備OK！",
+              63116
+            ]
+          ],
+          "textureLibrary": {
+            "ms": 17098.4,
+            "compileMs": 1187.9,
+            "size": 256
+          },
+          "navigation": {
+            "name": "https://rhgrive3.github.io/actions/",
+            "entryType": "navigation",
+            "startTime": 0,
+            "duration": 1585.699999999255,
+            "initiatorType": "navigation",
+            "deliveryType": "",
+            "nextHopProtocol": "h2",
+            "renderBlockingStatus": "non-blocking",
+            "contentEncoding": "gzip",
+            "workerStart": 0,
+            "workerRouterEvaluationStart": 0,
+            "workerCacheLookupStart": 0,
+            "workerMatchedSourceType": "",
+            "workerFinalSourceType": "",
+            "redirectStart": 0,
+            "redirectEnd": 0,
+            "fetchStart": 3,
+            "domainLookupStart": 3,
+            "domainLookupEnd": 3,
+            "connectStart": 8.599999999627471,
+            "secureConnectionStart": 11,
+            "connectEnd": 16.09999999962747,
+            "requestStart": 16.299999998882413,
+            "responseStart": 145.2999999988824,
+            "firstInterimResponseStart": 0,
+            "finalResponseHeadersStart": 145.2999999988824,
+            "responseEnd": 149.59999999962747,
+            "transferSize": 6852,
+            "encodedBodySize": 6552,
+            "decodedBodySize": 23904,
+            "responseStatus": 200,
+            "serverTiming": [],
+            "unloadEventStart": 0,
+            "unloadEventEnd": 0,
+            "domInteractive": 1524.2999999988824,
+            "domContentLoadedEventStart": 1524.5,
+            "domContentLoadedEventEnd": 1524.699999999255,
+            "domComplete": 1585.699999999255,
+            "loadEventStart": 1585.699999999255,
+            "loadEventEnd": 1585.699999999255,
+            "type": "navigate",
+            "redirectCount": 0,
+            "activationStart": 0,
+            "criticalCHRestart": 0,
+            "notRestoredReasons": null
+          },
+          "paints": [
+            {
+              "name": "first-paint",
+              "entryType": "paint",
+              "startTime": 4160,
+              "duration": 0
+            },
+            {
+              "name": "first-contentful-paint",
+              "entryType": "paint",
+              "startTime": 4160,
+              "duration": 0
+            }
+          ],
+          "memory": {
+            "usedJSHeapSize": 157162459,
+            "totalJSHeapSize": 231841963
+          }
+        }
+      },
+      "artifactCount": 482
+    },
+    {
+      "repeat": 2,
+      "status": "ready",
+      "freshContext": true,
+      "errors": [],
+      "failures": [],
+      "startedAt": "2026-10-22T12:31:28.383Z",
+      "finishedAt": "2026-10-22T12:32:22.972Z",
+      "ready": {
+        "mode": "menu",
+        "installed": true,
+        "menus": true,
+        "menu": "title",
+        "baseURI": "https://rhgrive3.github.io/actions/_versions/6dccb72c5a675c4ab176f0ae0f21556112369c90baa930e7bbcc28b1b7302912/",
+        "startup": {
+          "schema": 1,
+          "marks": {
+            "shell-script": 1578,
+            "shell-frame-proxy": 1621.5,
+            "bootstrap-import-start": 1706,
+            "engine-boot-start": 5905.4000000003725,
+            "bootstrap-import-end": 5916.9000000003725,
+            "loading-ui-mounted": 6248.200000001118,
+            "engine-ready": 54345.300000000745
+          },
+          "phases": [],
+          "longTasks": [],
+          "resources": [],
+          "errors": [],
+          "dropped": 0,
+          "bootMs": 48436,
+          "bootMarks": [
+            [
+              "インクをまぜています…",
+              343
+            ],
+            [
+              "ステージをつくっています…",
+              2235
+            ],
+            [
+              "港に海水を入れています…",
+              17018
+            ],
+            [
+              "Teaching squids to swim…",
+              28474
+            ],
+            [
+              "Tuning the tentacles…",
+              28901
+            ],
+            [
+              "ウォーミングアップ中…",
+              34893
+            ],
+            [
+              "Warming up…",
+              35594
+            ],
+            [
+              "準備OK！",
+              47032
+            ]
+          ],
+          "textureLibrary": {
+            "ms": 13495.7,
+            "compileMs": 451,
+            "size": 256
+          },
+          "navigation": {
+            "name": "https://rhgrive3.github.io/actions/",
+            "entryType": "navigation",
+            "startTime": 0,
+            "duration": 1601.7000000011176,
+            "initiatorType": "navigation",
+            "deliveryType": "",
+            "nextHopProtocol": "h2",
+            "renderBlockingStatus": "non-blocking",
+            "contentEncoding": "gzip",
+            "workerStart": 0,
+            "workerRouterEvaluationStart": 0,
+            "workerCacheLookupStart": 0,
+            "workerMatchedSourceType": "",
+            "workerFinalSourceType": "",
+            "redirectStart": 0,
+            "redirectEnd": 0,
+            "fetchStart": 0.900000000372529,
+            "domainLookupStart": 0.900000000372529,
+            "domainLookupEnd": 0.900000000372529,
+            "connectStart": 2.800000000745058,
+            "secureConnectionStart": 14,
+            "connectEnd": 19.300000000745058,
+            "requestStart": 19.40000000037253,
+            "responseStart": 90.90000000037253,
+            "firstInterimResponseStart": 0,
+            "finalResponseHeadersStart": 90.90000000037253,
+            "responseEnd": 91.70000000111759,
+            "transferSize": 6852,
+            "encodedBodySize": 6552,
+            "decodedBodySize": 23904,
+            "responseStatus": 200,
+            "serverTiming": [],
+            "unloadEventStart": 0,
+            "unloadEventEnd": 0,
+            "domInteractive": 1601.2000000011176,
+            "domContentLoadedEventStart": 1601.5,
+            "domContentLoadedEventEnd": 1601.5,
+            "domComplete": 1601.5,
+            "loadEventStart": 1601.7000000011176,
+            "loadEventEnd": 1601.7000000011176,
+            "type": "navigate",
+            "redirectCount": 0,
+            "activationStart": 0,
+            "criticalCHRestart": 0,
+            "notRestoredReasons": null
+          },
+          "paints": [
+            {
+              "name": "first-paint",
+              "entryType": "paint",
+              "startTime": 1788,
+              "duration": 0
+            },
+            {
+              "name": "first-contentful-paint",
+              "entryType": "paint",
+              "startTime": 1788,
+              "duration": 0
+            }
+          ],
+          "memory": {
+            "usedJSHeapSize": 185641021,
+            "totalJSHeapSize": 258905353
+          }
+        }
+      },
+      "artifactCount": 482
+    },
+    {
+      "repeat": 3,
+      "status": "ready",
+      "freshContext": true,
+      "errors": [],
+      "failures": [],
+      "startedAt": "2026-10-22T12:32:24.789Z",
+      "finishedAt": "2026-10-22T12:33:00.412Z",
+      "ready": {
+        "mode": "menu",
+        "installed": true,
+        "menus": true,
+        "menu": "title",
+        "baseURI": "https://rhgrive3.github.io/actions/_versions/6dccb72c5a675c4ab176f0ae0f21556112369c90baa930e7bbcc28b1b7302912/",
+        "startup": {
+          "schema": 1,
+          "marks": {
+            "shell-script": 1623.7000000011176,
+            "shell-frame-proxy": 1626,
+            "bootstrap-import-start": 1654.1000000014901,
+            "engine-boot-start": 5141.5,
+            "bootstrap-import-end": 5150,
+            "loading-ui-mounted": 5245.5,
+            "engine-ready": 35599.90000000037
+          },
+          "phases": [],
+          "longTasks": [],
+          "resources": [],
+          "errors": [],
+          "dropped": 0,
+          "bootMs": 30454,
+          "bootMarks": [
+            [
+              "インクをまぜています…",
+              101
+            ],
+            [
+              "ステージをつくっています…",
+              992
+            ],
+            [
+              "港に海水を入れています…",
+              8087
+            ],
+            [
+              "Teaching squids to swim…",
+              13802
+            ],
+            [
+              "Tuning the tentacles…",
+              14117
+            ],
+            [
+              "ウォーミングアップ中…",
+              18573
+            ],
+            [
+              "Warming up…",
+              19040
+            ],
+            [
+              "準備OK！",
+              30215
+            ]
+          ],
+          "textureLibrary": {
+            "ms": 6266.3,
+            "compileMs": 178.8,
+            "size": 256
+          },
+          "navigation": {
+            "name": "https://rhgrive3.github.io/actions/",
+            "entryType": "navigation",
+            "startTime": 0,
+            "duration": 1625.800000000745,
+            "initiatorType": "navigation",
+            "deliveryType": "",
+            "nextHopProtocol": "h2",
+            "renderBlockingStatus": "non-blocking",
+            "contentEncoding": "gzip",
+            "workerStart": 0,
+            "workerRouterEvaluationStart": 0,
+            "workerCacheLookupStart": 0,
+            "workerMatchedSourceType": "",
+            "workerFinalSourceType": "",
+            "redirectStart": 0,
+            "redirectEnd": 0,
+            "fetchStart": 0.40000000037252903,
+            "domainLookupStart": 0.40000000037252903,
+            "domainLookupEnd": 0.40000000037252903,
+            "connectStart": 1.1000000014901161,
+            "secureConnectionStart": 11.800000000745058,
+            "connectEnd": 16,
+            "requestStart": 16.200000001117587,
+            "responseStart": 81.90000000037253,
+            "firstInterimResponseStart": 0,
+            "finalResponseHeadersStart": 81.90000000037253,
+            "responseEnd": 83.10000000149012,
+            "transferSize": 6852,
+            "encodedBodySize": 6552,
+            "decodedBodySize": 23904,
+            "responseStatus": 200,
+            "serverTiming": [],
+            "unloadEventStart": 0,
+            "unloadEventEnd": 0,
+            "domInteractive": 1625.4000000003725,
+            "domContentLoadedEventStart": 1625.6000000014901,
+            "domContentLoadedEventEnd": 1625.800000000745,
+            "domComplete": 1625.800000000745,
+            "loadEventStart": 1625.800000000745,
+            "loadEventEnd": 1625.800000000745,
+            "type": "navigate",
+            "redirectCount": 0,
+            "activationStart": 0,
+            "criticalCHRestart": 0,
+            "notRestoredReasons": null
+          },
+          "paints": [
+            {
+              "name": "first-paint",
+              "entryType": "paint",
+              "startTime": 1792,
+              "duration": 0
+            },
+            {
+              "name": "first-contentful-paint",
+              "entryType": "paint",
+              "startTime": 1792,
+              "duration": 0
+            }
+          ],
+          "memory": {
+            "usedJSHeapSize": 204299590,
+            "totalJSHeapSize": 279075378
+          }
+        }
+      },
+      "artifactCount": 482
+    }
+  ],
+  "rawEvidence": [
+    {
+      "path": "/workspace/actions/.browser-evidence/continuation-20261022/public-boot/console.log",
+      "bytes": 483,
+      "sha256": "074dc3b95b4ec449ac2e091fd0e603ddfcb183c98aacb4cb2dc55e49d331cc8b"
+    },
+    {
+      "path": "/workspace/actions/.browser-evidence/continuation-20261022/public-boot/manifest.json",
+      "bytes": 550826,
+      "sha256": "1f1ba48ba65296bfb98bdc46642bd7f411ae88f52357d7993955b08060f8a7c6"
+    },
+    {
+      "path": "/workspace/actions/.browser-evidence/continuation-20261022/public-boot/public-boot-1.zip",
+      "bytes": 16641,
+      "sha256": "21dd95c1ccb51b9cdfb1b65dcc42368a305f0284255e295f92bbae65c728ddf2"
+    },
+    {
+      "path": "/workspace/actions/.browser-evidence/continuation-20261022/public-boot/public-boot-2.zip",
+      "bytes": 16848,
+      "sha256": "27a0f9b15ea83a17bcbbef9791ba41db9b96261150213ddce4308d12541075b1"
+    },
+    {
+      "path": "/workspace/actions/.browser-evidence/continuation-20261022/public-boot/public-boot-3.zip",
+      "bytes": 16998,
+      "sha256": "cdec50531110f3c236e2ef3419b77302fc9aa34ee6b346175b4fde6f502f7fd9"
+    },
+    {
+      "path": "/workspace/actions/.browser-evidence/continuation-20261022/public-boot/public-boot-result.json",
+      "bytes": 409641,
+      "sha256": "48b459de5e201ca1d0743459f1f47198a41b4223f24ae6edabdb185a332c8336"
+    },
+    {
+      "path": "/workspace/actions/.browser-evidence/continuation-20261022/public-boot/public-main-input-diff.json",
+      "bytes": 11579,
+      "sha256": "c65338d9f1ed5e195540a8485c503a16d50658f385898da43e3ef78457f9d8b5"
+    },
+    {
+      "path": "/workspace/actions/.browser-evidence/continuation-20261022/public-boot/supervisor.json",
+      "bytes": 531,
+      "sha256": "fb29ed3d72c124a0011e30fd6d4b0f5f6caceb932476b6969cbe793309bea3e5"
+    }
+  ],
+  "helperEqualsPublishedSource": true,
+  "tests": {
+    "rankedBootDiagnostics": {
+      "pass": 17,
+      "fail": 0
+    },
+    "traceSummary": {
+      "pass": 4,
+      "fail": 0
+    }
+  },
+  "previousAttempt": {
+    "scope": "body attestation of all optional media/source-bank artifacts",
+    "result": "harness failed after boot-ready due Chromium inspector body eviction; retained separately",
+    "path": "/workspace/actions/.browser-evidence/continuation-20261022/public-boot-first-attestation"
+  },
+  "closure": {
+    "publicIndependentBootAcceptance": "completed",
+    "sameHeadRequiredRankedSuite": "completed",
+    "officialScope": "c093 public offline four-mode official success only; historical dedicated b324 success is not combined as same-head. New local c093 dedicated source49/495, emitted3/54, reproduced production build and full offline/online4 succeeded at the same published c093 source.",
+    "sameHeadRequiredRankedSuiteReceipt": "c093-required-suite.json"
+  }
+}

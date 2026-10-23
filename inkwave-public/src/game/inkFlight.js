@@ -83,6 +83,18 @@ export function splashPlan(profile, sequence) {
   return { ordinal, count, feet, first: first * INK_LENGTH_SCALE, spacing: s.spacing * INK_LENGTH_SCALE };
 }
 
+const runtimeSplashPlans=new WeakMap();
+export function runtimeSplashPlan(profile,sequence) {
+  if(profile!==INK_PROFILES.shooter&&profile!==INK_PROFILES.dualies&&profile!==INK_PROFILES.splatling)return splashPlan(profile,sequence);
+  if(!Number.isSafeInteger(sequence)||sequence<0)return splashPlan(profile,sequence);
+  const s=profile.splash,ordinal=sequence%s.splits+1;
+  // Keep the original full-sequence arithmetic at large safe-integer boundaries.
+  const count=Math.floor((sequence+1)*s.count+EPS)-Math.floor(sequence*s.count+EPS);
+  let plans=runtimeSplashPlans.get(profile);if(!plans){plans=[];runtimeSplashPlans.set(profile,plans);}
+  let plan=plans.find(p=>p.ordinal===ordinal&&p.count===count);
+  if(!plan){plan=Object.freeze(splashPlan(profile,sequence));plans.push(plan);}
+  return plan;
+}
 export function launchSpeed(profile, chargeSeconds = 0) {
   const m = profile.motion;
   const speed = m.chargedSpeed === undefined ? m.speed : mix(m.speed, m.chargedSpeed, clamp(chargeSeconds * INK_HZ / m.firstChargeFrames, 0, 1));
@@ -114,9 +126,15 @@ export function damageAt(profile, age) {
   const d = profile.damage, t = clamp((age * INK_HZ - d.startFrame) / (d.endFrame - d.startFrame), 0, 1);
   return mix(d.max, d.min, t);
 }
+const referenceReaches=new WeakMap();
 export function referenceReach(profile, chargeSeconds = 10) {
+  // Only the two recursively frozen constant-speed built-in profiles qualify.
+  // Charged Splatling and caller-supplied mutable profiles stay uncached.
+  const stable=profile===INK_PROFILES.shooter||profile===INK_PROFILES.dualies;
+  if(stable&&referenceReaches.has(profile))return referenceReaches.get(profile);
   const p = { pos: { x: 0, y: 0, z: 0 }, vel: { x: 0, y: 0, z: launchSpeed(profile, chargeSeconds) }, inkFrame: 0, inkPhase: 0 };
   for (let f = 0; f < profile.guideFrame; f++) advanceInkFrame(p, profile);
+  if(stable)referenceReaches.set(profile,p.pos.z);
   return p.pos.z;
 }
 

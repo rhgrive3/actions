@@ -9,7 +9,8 @@ export function deferPrimaryWeaponIcon(grid, replaceOnce) {
   if (!/^[A-Za-z_$][\w$.]*\(/.test(expr)) throw new Error('INKWAVE quality patch conflict (weapon icon expression)');
   return {
     grid: replaceOnce(grid, row, prefix + "deferArt ? '' : " + expr + " }),", 'defer offscreen weapon SVG in primary grid'),
-    hydration: expr.replace(/\bid\b/g, 'card._wid'),
+    // Preserve property names such as w.id; hydration binds the original id locally.
+    hydration: expr,
   };
 }
 
@@ -121,7 +122,7 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
       'deferred card ownership');
     code = replaceOnce(code,
       "    // ---- detail panel\n    const kind =",
-      "    const materializeArt = (card) => {\n      if (!card?._artDeferred) return;\n      const i = card._weaponArtIndex, w = Ws[card._wid];\n      card.querySelector('.iw-wcard__blob').innerHTML = splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 });\n      card.querySelector('.iw-wcard__icon').innerHTML = " + icon.hydration + ";\n      card._artDeferred = false; delete card.dataset.artDeferred;\n    };\n    let weaponArtObserver = null;\n\n    // ---- detail panel\n    const kind =",
+      "    const materializeArt = (card) => {\n      if (!card?._artDeferred) return;\n      const id = card._wid, i = card._weaponArtIndex, w = Ws[id];\n      card.querySelector('.iw-wcard__blob').innerHTML = splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 });\n      card.querySelector('.iw-wcard__icon').innerHTML = " + icon.hydration + ";\n      card._artDeferred = false; delete card.dataset.artDeferred;\n    };\n    let weaponArtObserver = null;\n\n    // ---- detail panel\n    const kind =",
       'hydrate approaching weapon card');
     code = replaceOnce(code,
       "      onFocus: (f) => {\n        if (f._wid && f._wid !== shown) render(f._wid);",

@@ -1,0 +1,17 @@
+// Actual CacheStorage/Web Locks/sourceBytes integrity control in Chromium.
+import fs from 'node:fs';import crypto from 'node:crypto';import {pathToFileURL} from 'node:url';import assert from 'node:assert/strict';
+const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE||process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES+'/playwright/index.mjs'));
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH,headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+try{
+ const page=await browser.newPage(),root='https://native-retention.invalid/';let fetches=0,offline=false;
+ const fixtures=Object.fromEntries([['largeA',1000000],['largeB',800000],...['a','b','c','d','e'].map(id=>[id,100000])].map(([id,size])=>{const bytes=Buffer.alloc(size,id.charCodeAt(0));return[id,{bytes,pin:{bytes:size,sha256:crypto.createHash('sha256').update(bytes).digest('hex')}}];}));
+ await page.route(root+'**',async route=>{const path=new URL(route.request().url()).pathname;if(path.startsWith('/assets/')){fetches++;if(offline)return route.abort();const id=path.split('/').at(-1);return route.fulfill({body:fixtures[id].bytes});}
+ if(path.endsWith('.mjs'))return route.fulfill({body:fs.readFileSync(new URL('../runtime/'+path.slice(1),import.meta.url)),contentType:'text/javascript'});return route.fulfill({body:'<!doctype html><title>CacheStorage controls</title>',contentType:'text/html'});});
+ await page.goto(root);const pins=Object.fromEntries(Object.entries(fixtures).map(([id,v])=>[id,v.pin]));
+ const initial=await page.evaluate(async pins=>{const {sourceBytes}=await import('/source-cache.mjs'),times=[];for(const [id,pin]of Object.entries(pins)){const start=performance.now();await sourceBytes(id,new URL('/assets/'+id,location.href).href,pin);times.push({id,ms:performance.now()-start});}
+ const names=(await caches.keys()).filter(n=>n.startsWith('inkwave-native-source-v2-')),rows=[];for(const name of names){const cache=await caches.open(name);let bodyBytes=0;for(const req of await cache.keys())if(req.url.includes('/assets/'))bodyBytes+=(await (await cache.match(req)).arrayBuffer()).byteLength;rows.push({name,bodyBytes});}return{locks:!!navigator.locks,estimate:await navigator.storage.estimate(),rows,times};},pins);
+ assert.equal(initial.rows.length,6);assert.equal(initial.rows.reduce((n,r)=>n+r.bodyBytes,0),1300000);assert(!initial.rows.some(r=>r.name.endsWith('-largeA')));assert.equal(fetches,7);offline=true;
+ const hit=await page.evaluate(async pin=>{const {sourceBytes}=await import('/source-cache.mjs'),url=new URL('/assets/a',location.href).href;const data=await sourceBytes('a',url,pin);const cache=await caches.open('inkwave-native-source-v2-a');await cache.put(url,new Response('corrupt'));let rejected=false;try{await sourceBytes('a',url,pin);}catch{rejected=true;}return {bytes:data.byteLength,rejected};},pins.a);
+ assert.equal(hit.bytes,100000);assert.equal(hit.rejected,true);assert.equal(fetches,8);
+ const result={browser:await page.evaluate(()=>navigator.userAgent),initial,offlineRevisit:{bytes:hit.bytes,additionalFetches:0},corruptOfflineRejected:hit.rejected,fetches};fs.writeFileSync(new URL('../../../reports/queue-native-20261022/source-retention-chromium.json',import.meta.url),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));
+}finally{await browser.close();}

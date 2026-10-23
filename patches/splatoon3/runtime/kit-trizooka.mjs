@@ -733,6 +733,14 @@ export function trizookaReplayEnd(state, payload = {}) {
 
 let wrapped = null;
 
+const trizookaFrameNoop=()=>{},trizookaFrameFalse=()=>false;
+const trizookaRunnerCallbacks=new WeakMap();
+function runnerCallbacks(state){
+  let callbacks=trizookaRunnerCallbacks.get(state);
+  if(!callbacks){callbacks={moveSpeed:()=>state.pendingShotAt!==null||state.shots===0?TRIZOOKA.moveSpeedInCharge:TRIZOOKA.moveSpeed,
+    busy:()=>state.pendingShotAt!==null};trizookaRunnerCallbacks.set(state,callbacks);}
+  return callbacks;
+}
 export function installTrizookaLifecycle(api) {
   const { Actor, G, PLAYER } = api || {};
   if (!Actor?.prototype) throw new Error('INKWAVE trizooka patch needs Actor');
@@ -790,11 +798,12 @@ export function installTrizookaLifecycle(api) {
     const finish = this._finishFrame;
     const sub = it.sub, special = it.special;
     const swim = PLAYER.swimSpeed;
-    runner.update = () => {}; // no main or sub action while the special owns ZR
-    runner.moveSpeed = () => state.pendingShotAt !== null || state.shots === 0 ? TRIZOOKA.moveSpeedInCharge : TRIZOOKA.moveSpeed;
-    runner.busy = () => state.pendingShotAt !== null;
-    runner.tryDodge = () => false;
-    this._finishFrame = () => {};
+    const callbacks=runnerCallbacks(state);
+    runner.update = trizookaFrameNoop; // no main or sub action while the special owns ZR
+    runner.moveSpeed = callbacks.moveSpeed;
+    runner.busy = callbacks.busy;
+    runner.tryDodge = trizookaFrameFalse;
+    this._finishFrame = trizookaFrameNoop;
     PLAYER.swimSpeed = swim * TRIZOOKA_SWIM_CALIBRATION.multiplier;
     it.sub = false; it.special = false; this.specialActive = null;
     let result;

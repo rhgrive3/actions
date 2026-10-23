@@ -1,0 +1,511 @@
+{
+  "schema": 1,
+  "date": "2026-10-22",
+  "repository": "rhgrive3/actions",
+  "observedLocalHead": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+  "remoteMutationPerformed": false,
+  "issues": [
+    {
+      "number": 1432,
+      "status": "implemented and WebKit acceptance complete; retain open for complete same-build Chromium acceptance",
+      "implementation": {
+        "pr": 1771,
+        "merged": true,
+        "mergeCommit": "969ff955a9f30da8581bc0d1923bce84617fd1eb",
+        "paths": [
+          "patches/local-quality/menu.mjs",
+          "patches/local-quality/tests/menu-ring-fade.test.mjs"
+        ]
+      },
+      "evidence": [
+        "PR fixed head Chromium 3-round rematch success",
+        "Integrated main c0938a3 Chromium 3-round rematch success",
+        "Both heads Chromium and WebKit touch-layout/reliability success",
+        "Local fixed-build WebKit full three-round rematch, Range and next Turf isolation passed in208.6s"
+      ],
+      "limits": [
+        "Current frozen snapshot Chromium full rematch did not finish within120s or300s owned-process-group limit; 300s attempt completed rounds1/2 with ring success, interrupted during round3 battle start before fullRange acceptance",
+        "Prior official committed heads have Chromium3round success and local frozen snapshot has WebKit3round success; this does not establish final source whole3round both-engine pass",
+        "Physical iPad acceptance absent"
+      ]
+    },
+    {
+      "number": 1430,
+      "status": "acceptance complete on final committed source tree; propose closure",
+      "implementation": {
+        "prs": [
+          1293,
+          1771
+        ],
+        "merged": true,
+        "paths": [
+          "patches/touch-layout/adapter.mjs",
+          "scripts/check-inkwave-reliability.mjs",
+          "patches/reliability/tests/pressed-button-center.test.mjs"
+        ]
+      },
+      "evidence": [
+        "Both fixed PR and integrated main UI jobs pass reliability 2 engines, 78 checks per head",
+        "Existing PR reports Chromium 3/3 at fixed head and negative control reproducing held-touch 0/2",
+        "Same fixed local build standard reliability repeated three times: Chromium39 + WebKit39 checks each, total234; held-repress and pressed-visible-center included",
+        "Parent final build46e01879 matches published f9d744e/local0fc2fa5 tree and passes standard reliability3/3, both engines39checks each, total234, manifest unchanged"
+      ],
+      "limits": [
+        "No physical iPad acceptance, deployed build acceptance, whole-game renderer or all-CI claim"
+      ]
+    },
+    {
+      "number": 1608,
+      "status": "implemented contributor fix; retain open for same-deployment repeated public boot proof",
+      "implementation": {
+        "prs": [
+          1638,
+          1729
+        ],
+        "merged": true,
+        "pollingMs": 250,
+        "timeoutMs": 180000,
+        "paths": [
+          "scripts/lib/ranked-boot-diagnostics.mjs"
+        ]
+      },
+      "evidence": [
+        "1729 fixed-head dedicated Ranked workflow success",
+        "Integrated main c0938a3 Pages deployment and subsequent strict identity public four-mode acceptance success",
+        "Main 42cb1dd and 144923a dedicated Ranked runs success"
+      ],
+      "limits": [
+        "Four offline modes reuse one booted page and do not constitute four independent boot attempts",
+        "One inspected successful public Pages run does not prove 3+ same-deployment boot attempts",
+        "Historical attempt-1 root cause still not proved universal"
+      ]
+    },
+    {
+      "number": 1711,
+      "status": "investigation incomplete; retain open",
+      "evidence": [
+        "Issue comments contain three same-content heads, 36 startup samples, all passed",
+        "Warm delay localized after HTML responseEnd and before DOM interactive; bootMs itself does not increase"
+      ],
+      "limits": [
+        "No renderer/GPU/process trace in existing evidence",
+        "Fixed order/reload conditions do not establish cache, GPU or CPU cause",
+        "Optional future bounded CDP navigation tracing and process CPU receipts should compare reload/cached-new-page/browser-restart with counterbalanced order; no speculative runtime optimization"
+      ]
+    }
+  ],
+  "officialUiRuns": [
+    {
+      "runId": 39703943400,
+      "jobId": 119579431053,
+      "sourceSha": "907d04471f245ec94f0194d75069ed137e8255a5",
+      "contentHash": "76965408e33bdb0054cf7f20886bbc17daed4842e4a4d51f9f44fc906ae0b2f2",
+      "uiConclusion": "success",
+      "overallConclusion": "failure",
+      "reliability": {
+        "engines": [
+          "chromium",
+          "webkit"
+        ],
+        "cases": 2,
+        "checks": 78
+      },
+      "rematch": {
+        "engine": "chromium",
+        "cycles": 3,
+        "status": "passed"
+      },
+      "artifactId": 12395163277
+    },
+    {
+      "runId": 39717130145,
+      "jobId": 119622230494,
+      "sourceSha": "c0938a3f84768474df91713f7b372f9d7f8fe96a",
+      "contentHash": "e57bdcd82f9b82b0f1ede4491017c3683822ea98ae4e11684b646599822b93e5",
+      "uiConclusion": "success",
+      "overallConclusion": "failure",
+      "reliability": {
+        "engines": [
+          "chromium",
+          "webkit"
+        ],
+        "cases": 2,
+        "checks": 78
+      },
+      "rematch": {
+        "engine": "chromium",
+        "cycles": 3,
+        "status": "passed"
+      },
+      "artifactId": 12400311365
+    }
+  ],
+  "rankedRuns": [
+    {
+      "runId": 39551864507,
+      "jobId": 119068303001,
+      "sourceSha": "b324e989ae6dee78ddd4b6c97f437bd7408deb67",
+      "scope": "PR dedicated Ranked",
+      "conclusion": "success"
+    },
+    {
+      "runId": 39717130161,
+      "jobId": 119621814132,
+      "sourceSha": "c0938a3f84768474df91713f7b372f9d7f8fe96a",
+      "scope": "post-deployment public offline four-mode check; one browser boot",
+      "conclusion": "success",
+      "artifactId": 12400711001,
+      "artifactSha256": "98fc6cdead01589e6095eccd8d449a5607e3eec11d31c95e505c2aed4760c4f3"
+    }
+  ],
+  "localVerification": {
+    "node": "24.19.0",
+    "passed": 51,
+    "failed": 0,
+    "skipped": 0,
+    "elapsedMs": 747.745632,
+    "command": "node --experimental-vm-modules --test --test-concurrency=1 patches/local-quality/tests/menu-ring-fade.test.mjs patches/local-quality/tests/menu-ring-anchor.test.mjs patches/local-quality/tests/menu-input-ownership.test.mjs patches/local-quality/tests/runtime-ui.test.mjs patches/local-quality/tests/runtime-menu.test.mjs patches/reliability/tests/pressed-button-center.test.mjs scripts/tests/ranked-boot-diagnostics.test.mjs scripts/tests/inkwave-ranked-pages-sequencing.test.mjs",
+    "scope": "source/fixture regressions, not browser/hardware acceptance"
+  },
+  "logExcerpts": {
+    "prUi": [
+      "2026-10-22T01:21:32.2501208Z   ref: 907d04471f245ec94f0194d75069ed137e8255a5",
+      "2026-10-22T01:21:32.2516317Z   REMATCH_CYCLES: 3",
+      "2026-10-22T01:21:47.8045820Z   REMATCH_CYCLES: 3",
+      "2026-10-22T01:21:49.5301642Z   REMATCH_CYCLES: 3",
+      "2026-10-22T01:22:05.0300117Z   REMATCH_CYCLES: 3",
+      "2026-10-22T01:22:49.7894132Z Downloading WebKit 26.5 (playwright webkit v2336) from https://cdn.playwright.dev/dbazure/download/playwright/builds/webkit/2336/webkit-ubuntu-24.04.zip",
+      "2026-10-22T01:22:53.0013986Z WebKit 26.5 (playwright webkit v2336) downloaded to /home/runner/work/actions/actions/.browser-cache/webkit-2336",
+      "2026-10-22T01:22:53.2935452Z   REMATCH_CYCLES: 3",
+      "2026-10-22T01:22:58.5508579Z {\"status\":\"passed\",\"baseCommit\":\"e8b89e5588bb95aab5be54b9f8346ceca50cf177\",\"sourceSha\":\"907d04471f245ec94f0194d75069ed137e8255a5\",\"contentHash\":\"76965408e33bdb0054cf7f20886bbc17daed4842e4a4d51f9f44fc906ae0b2f2\",\"source\":\"/home/runner/work/actions/actions/.built-site/_site\",\"manifestSha256\":\"7e4132d57714789c6b56e3325d78734a0bfbf2e62110e8b918738ac1d03468eb\",\"inputHash\":\"d39b6bc8690b52572e3cdfda616616d835a4138ea412f5fe2edefc0acaec0d4c\",\"revision\":\"b025e9f4ee15ac4d7c942172c81a43cea367575682076de33f758091bda4f1e6\",\"emitted\":{\"src/ui/menus.js\":\"051b8691c69f9f06084b7a097355e752e58657c00c426965b4a9e2ff9c532203\",\"patches/splatoon3/runtime/menu-layout.mjs\":\"391e7e73580e29cb1cf32ac05bc88b7a6ddce791a1f752cf799a8b6f3525230b\",\"patches/splatoon3/runtime/install.mjs\":\"e2be088d7dede309c27d921fbb46042021244bf1ffe8e196ae7d844154cd2985\",\"patches/splatoon3/profile.json\":\"eec88696a898922841c27fde7c999fd5eb0090814bb92f1581089487ccda63b6\"},\"errors\":[],\"checks\":[\"loadout: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"production installer adds real catalogue filters\",\"setup: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"loadout: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"new loadout starts on all filter\",\"keyboard advances exactly one class and is handled\",\"keyboard filter visibility matches exact class membership\",\"keyboard class change keeps visible matching card focus\",\"different weapon class exists\",\"click class change repairs hidden card focus\",\"visible focus retained on repeated filter\",\"null focus repaired by later user filter\",\"setup: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"loadout: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"return 0: remembered visible focus\",\"setup: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"loadout: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"return 1: remembered visible focus\",\"setup: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"loadout: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"return 2: remembered visible focus\",\"setup: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"loadout: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"return 3: remembered visible focus\",\"setup: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"loadout: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"return 4: remembered visible focus\",\"setup: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"loadout: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"return 5: remembered visible focus\",\"setup: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"loadout: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"return 6: remembered visible focus\",\"setup: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"loadout: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"return 7: remembered visible focus\",\"setup: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"loadout: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"return 8: remembered visible focus\",\"setup: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"loadout: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"return 9: remembered visible focus\",\"setup: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"loadout: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"return 10: remembered visible focus\",\"setup: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"loadout: exactly one owned, mounted initial onFocus\",\"factories never take focus during construction\",\"no onFocus after destroy\",\"return 11: remembered visible focus\",\"all outgoing screens destroyed without late focus callbacks\",\"every observed focus callback belongs to its mounted screen\"],\"consumed\":[\"patches/splatoon3/profile.json\",\"patches/splatoon3/runtime/install.mjs\",\"patches/splatoon3/runtime/menu-layout.mjs\",\"src/ui/menus.js\"]}",
+      "2026-10-22T01:22:58.5742932Z   REMATCH_CYCLES: 3",
+      "2026-10-22T01:23:01.4126505Z   REMATCH_CYCLES: 3",
+      "2026-10-22T01:23:14.7356171Z   REMATCH_CYCLES: 3",
+      "2026-10-22T01:23:21.5085510Z   REMATCH_CYCLES: 3",
+      "2026-10-22T01:23:26.8618394Z   REMATCH_CYCLES: 3",
+      "2026-10-22T01:24:19.2207822Z   REMATCH_CYCLES: 3",
+      "2026-10-22T01:24:47.0976914Z {\"status\":\"passed\",\"cases\":2,\"checks\":78,\"contentHash\":\"76965408e33bdb0054cf7f20886bbc17daed4842e4a4d51f9f44fc906ae0b2f2\",\"physicalIPadVerified\":false}",
+      "2026-10-22T01:24:47.1254079Z   REMATCH_CYCLES: 3",
+      "2026-10-22T01:24:48.5762932Z   REMATCH_CYCLES: 3",
+      "2026-10-22T01:28:40.2135373Z round 1/3: ok",
+      "2026-10-22T01:31:46.8948564Z round 2/3: ok",
+      "2026-10-22T01:35:02.2943127Z round 3/3: ok",
+      "2026-10-22T01:37:59.5693418Z   REMATCH_CYCLES: 3",
+      "2026-10-22T01:38:10.3134317Z   REMATCH_CYCLES: 3",
+      "2026-10-22T01:38:10.3552578Z {\"status\": \"passed\", \"sourceSha\": \"907d04471f245ec94f0194d75069ed137e8255a5\", \"contentHash\": \"76965408e33bdb0054cf7f20886bbc17daed4842e4a4d51f9f44fc906ae0b2f2\", \"suite\": \"ui\", \"runtimePerformance\": false, \"runId\": \"39703943400\", \"runAttempt\": \"1\", \"event\": \"pull_request\", \"checks\": [\"menu-focus/menu-focus-result.json\", \"identity-network/network-identity-result.json\", \"layout/touch-layout-result.json\", \"reliability/reliability-browser-result.json\", \"rematch/rematch-lifecycle-result.json\", \"identity-touch/touch-layout-identity-result.json\", \"identity-reliability/reliability-identity-result.json\"]}",
+      "2026-10-22T01:38:10.3742745Z   REMATCH_CYCLES: 3",
+      "2026-10-22T01:38:11.8197608Z Artifact inkwave-browser-ui-907d04471f245ec94f0194d75069ed137e8255a5.zip successfully finalized. Artifact ID 12395163277",
+      "2026-10-22T01:38:11.8199935Z Artifact inkwave-browser-ui-907d04471f245ec94f0194d75069ed137e8255a5 has been successfully uploaded! Final size is 7511499 bytes. Artifact ID is 12395163277",
+      "2026-10-22T01:38:11.8204786Z Artifact download URL: https://github.com/rhgrive3/actions/actions/runs/39703943400/artifacts/12395163277"
+    ],
+    "mainUi": [
+      "2026-10-22T03:35:51.4765976Z   ref: c0938a3f84768474df91713f7b372f9d7f8fe96a",
+      "2026-10-22T03:38:58.9482828Z {\"status\":\"passed\",\"cases\":2,\"checks\":78,\"contentHash\":\"e57bdcd82f9b82b0f1ede4491017c3683822ea98ae4e11684b646599822b93e5\",\"physicalIPadVerified\":false}",
+      "2026-10-22T03:42:28.2916221Z round 1/3: ok",
+      "2026-10-22T03:45:30.3921753Z round 2/3: ok",
+      "2026-10-22T03:48:31.4135606Z round 3/3: ok",
+      "2026-10-22T03:51:19.2958895Z {\"status\": \"passed\", \"sourceSha\": \"c0938a3f84768474df91713f7b372f9d7f8fe96a\", \"contentHash\": \"e57bdcd82f9b82b0f1ede4491017c3683822ea98ae4e11684b646599822b93e5\", \"suite\": \"ui\", \"runtimePerformance\": false, \"runId\": \"39717130145\", \"runAttempt\": \"1\", \"event\": \"push\", \"checks\": [\"menu-focus/menu-focus-result.json\", \"identity-network/network-identity-result.json\", \"layout/touch-layout-result.json\", \"reliability/reliability-browser-result.json\", \"rematch/rematch-lifecycle-result.json\", \"identity-touch/touch-layout-identity-result.json\", \"identity-reliability/reliability-identity-result.json\"]}",
+      "2026-10-22T03:51:21.0753324Z Artifact inkwave-browser-ui-c0938a3f84768474df91713f7b372f9d7f8fe96a.zip successfully finalized. Artifact ID 12400311365",
+      "2026-10-22T03:51:21.0755627Z Artifact inkwave-browser-ui-c0938a3f84768474df91713f7b372f9d7f8fe96a has been successfully uploaded! Final size is 7512809 bytes. Artifact ID is 12400311365",
+      "2026-10-22T03:51:21.0766386Z Artifact download URL: https://github.com/rhgrive3/actions/actions/runs/39717130145/artifacts/12400311365"
+    ],
+    "publicPages": [
+      "2026-10-22T03:34:26.2477728Z   ref: c0938a3f84768474df91713f7b372f9d7f8fe96a",
+      "2026-10-22T03:47:53.6404522Z \t\"pages_build_version\": \"c0938a3f84768474df91713f7b372f9d7f8fe96a\",",
+      "2026-10-22T03:47:54.3619314Z Created deployment for c0938a3f84768474df91713f7b372f9d7f8fe96a, ID: c0938a3f84768474df91713f7b372f9d7f8fe96a",
+      "2026-10-22T03:48:26.4934950Z Chromium 151.0.7922.34 (chromium)",
+      "2026-10-22T03:49:12.8198093Z offline zones",
+      "2026-10-22T03:49:59.6301051Z offline tower",
+      "2026-10-22T03:50:19.0767952Z offline rainmaker",
+      "2026-10-22T03:50:55.4479119Z offline clams",
+      "2026-10-22T03:51:32.1025130Z SHA256 digest of uploaded artifact zip is 98fc6cdead01589e6095eccd8d449a5607e3eec11d31c95e505c2aed4760c4f3",
+      "2026-10-22T03:51:32.5328002Z Artifact inkwave-ranked-public-browser.zip successfully finalized. Artifact ID 12400711001",
+      "2026-10-22T03:51:32.5329859Z Artifact inkwave-ranked-public-browser has been successfully uploaded! Final size is 53382691 bytes. Artifact ID is 12400711001",
+      "2026-10-22T03:51:32.5337382Z Artifact download URL: https://github.com/rhgrive3/actions/actions/runs/39717130161/artifacts/12400711001"
+    ]
+  },
+  "localImplementation": {
+    "paths": [
+      "scripts/check-inkwave-rematch-lifecycle.mjs",
+      "scripts/lib/inkwave-rematch-engine.mjs",
+      "scripts/tests/inkwave-rematch-diagnostics.test.mjs"
+    ],
+    "behavior": "--engine chromium|webkit; Chromium default preserved; selected engine receipt; early argument rejection and failed-launch cleanup; unchanged strict cursor and round assertions",
+    "verification": {
+      "command": "node --experimental-vm-modules --test --test-concurrency=1 scripts/tests/inkwave-rematch-diagnostics.test.mjs scripts/tests/inkwave-rematch-start-boundary.test.mjs",
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0
+    },
+    "initialVerificationNote": "First boundary invocation omitted --experimental-vm-modules and failed three fixture cases; corrected final command passes all23. Not a production regression.",
+    "commit": "0fc2fa5b8b65537ca24a080eee272b82cff1082d"
+  },
+  "localBrowserAcceptance": {
+    "contentHash": "dd84f9593a20aefedd0f497ece4d57b8aa59a20a25f4e63c331fd80f10a054ce",
+    "inputComparison": "ci-startup-build-vs-head.json",
+    "imageManifest": "ci-startup-browser-artifacts.json",
+    "reliability": {
+      "status": "passed",
+      "deadlineSeconds": 300,
+      "elapsedSeconds": 122.28631175200007,
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "exitCode": 0,
+          "timedOut": false,
+          "elapsedSeconds": 42.836239234000004,
+          "command": [
+            "node",
+            "scripts/check-inkwave-reliability.mjs",
+            "--site",
+            "_site",
+            "--evidence-dir",
+            "/workspace/actions/reports/issue-resolution-20261022/reliability-repeated/1",
+            "--profile-dir",
+            "/workspace/actions/.browser-cache/issue-resolution-20261022/reliability-1"
+          ]
+        },
+        {
+          "attempt": 2,
+          "status": "passed",
+          "exitCode": 0,
+          "timedOut": false,
+          "elapsedSeconds": 41.196669535999945,
+          "command": [
+            "node",
+            "scripts/check-inkwave-reliability.mjs",
+            "--site",
+            "_site",
+            "--evidence-dir",
+            "/workspace/actions/reports/issue-resolution-20261022/reliability-repeated/2",
+            "--profile-dir",
+            "/workspace/actions/.browser-cache/issue-resolution-20261022/reliability-2"
+          ]
+        },
+        {
+          "attempt": 3,
+          "status": "passed",
+          "exitCode": 0,
+          "timedOut": false,
+          "elapsedSeconds": 38.25276988099995,
+          "command": [
+            "node",
+            "scripts/check-inkwave-reliability.mjs",
+            "--site",
+            "_site",
+            "--evidence-dir",
+            "/workspace/actions/reports/issue-resolution-20261022/reliability-repeated/3",
+            "--profile-dir",
+            "/workspace/actions/.browser-cache/issue-resolution-20261022/reliability-3"
+          ]
+        }
+      ],
+      "contentHash": "dd84f9593a20aefedd0f497ece4d57b8aa59a20a25f4e63c331fd80f10a054ce",
+      "manifestSha256": "a95ee24f5a9eb5e6c303dd9d6ed04123cdb49de31854e1a5b2c334c90ec4bbec",
+      "manifestUnchanged": true,
+      "scope": "same local build artifact, both real engines; not exact committed HEAD, live relay or physical iPad acceptance",
+      "environment": {
+        "playwright": "1.57.0",
+        "localLibraryRoot": "/workspace/actions/.browser-cache/apt/libroot/usr/lib/x86_64-linux-gnu",
+        "hostRequirementCheckSkipped": true
+      }
+    },
+    "webkitRematch": {
+      "status": "passed",
+      "engine": "webkit",
+      "deadlineSeconds": 300,
+      "timedOut": false,
+      "exitCode": 0,
+      "elapsedSeconds": 208.599784687,
+      "contentHash": "dd84f9593a20aefedd0f497ece4d57b8aa59a20a25f4e63c331fd80f10a054ce",
+      "manifestSha256": "a95ee24f5a9eb5e6c303dd9d6ed04123cdb49de31854e1a5b2c334c90ec4bbec",
+      "manifestUnchanged": true,
+      "command": [
+        "node",
+        "scripts/check-inkwave-rematch-lifecycle.mjs",
+        "--engine",
+        "webkit",
+        "--site",
+        "_site",
+        "--evidence-dir",
+        "/workspace/actions/reports/issue-resolution-20261022/rematch-bounded/webkit-ready",
+        "--profile-dir",
+        "/workspace/actions/.browser-cache/issue-resolution-20261022/webkit-rematch-profile",
+        "--cycles",
+        "3"
+      ],
+      "scope": "local built artifact; edited working tree; not exact committed HEAD or physical iPad acceptance",
+      "environment": {
+        "playwright": "1.57.0",
+        "localLibraryRoot": "/workspace/actions/.browser-cache/apt/libroot/usr/lib/x86_64-linux-gnu",
+        "hostRequirementCheckSkipped": true,
+        "reason": "Dependencies locally extracted; actual WebKit engine and test assertions still execute"
+      }
+    },
+    "preservedInitialAttempts": [
+      "rematch-bounded/webkit/supervisor-result.json",
+      "rematch-bounded/chromium/supervisor-result.json"
+    ],
+    "chromiumRematch300": {
+      "status": "failed",
+      "engine": "chromium",
+      "deadlineSeconds": 300,
+      "timedOut": true,
+      "exitCode": 1,
+      "elapsedSeconds": 300.1858893870001,
+      "contentHash": "dd84f9593a20aefedd0f497ece4d57b8aa59a20a25f4e63c331fd80f10a054ce",
+      "manifestSha256": "a95ee24f5a9eb5e6c303dd9d6ed04123cdb49de31854e1a5b2c334c90ec4bbec",
+      "manifestUnchanged": true,
+      "command": [
+        "node",
+        "scripts/check-inkwave-rematch-lifecycle.mjs",
+        "--engine",
+        "chromium",
+        "--site",
+        "_site",
+        "--evidence-dir",
+        "/workspace/actions/reports/issue-resolution-20261022/rematch-bounded/chromium-ready",
+        "--profile-dir",
+        "/workspace/actions/.browser-cache/issue-resolution-20261022/chromium-rematch-profile",
+        "--cycles",
+        "3"
+      ],
+      "scope": "local built artifact; edited working tree; not exact committed HEAD or physical iPad acceptance",
+      "environment": {
+        "playwright": "1.57.0",
+        "executable": "/usr/bin/chromium"
+      }
+    },
+    "chromiumPartial": {
+      "completedRounds": 2,
+      "activeRound": 3,
+      "lastOperations": [
+        {
+          "name": "wait: tappable start",
+          "startedAt": "2026-10-22T10:02:51.690Z",
+          "status": "passed",
+          "elapsedMs": 1036
+        },
+        {
+          "name": "touch: start",
+          "startedAt": "2026-10-22T10:02:52.726Z",
+          "status": "passed",
+          "elapsedMs": 2053
+        },
+        {
+          "name": "wait: Menu button start visible and hit-testable after native scroll",
+          "startedAt": "2026-10-22T10:02:52.894Z",
+          "status": "passed",
+          "elapsedMs": 7
+        },
+        {
+          "name": "wait: battle playing with a completed fixed tick",
+          "startedAt": "2026-10-22T10:02:54.779Z",
+          "status": "failed",
+          "error": "page.evaluate: Target page, context or browser has been closed",
+          "elapsedMs": 9732
+        }
+      ],
+      "failures": [
+        {
+          "round": "fatal",
+          "message": "page.evaluate: Target page, context or browser has been closed\n    at /workspace/actions/scripts/check-inkwave-rematch-lifecycle.mjs:132:20\n    at async Object.run (/workspace/actions/scripts/lib/inkwave-rematch-diagnostics.mjs:12:23)\n    at async file:///workspace/actions/scripts/check-inkwave-rematch-lifecycle.mjs:313:5"
+        }
+      ]
+    }
+  },
+  "finalAcceptance": {
+    "source": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+    "tree": "9aa183e43a45516344c81a064470c5913cd8a06b",
+    "buildReceipt": "final-build.json",
+    "reliabilityReceipt": "final-reliability.json",
+    "build": {
+      "sourceSha": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+      "sourceTree": "9aa183e43a45516344c81a064470c5913cd8a06b",
+      "status": "passed",
+      "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+      "inputHash": "d10d948ff89e8d3a03e547c95fb46fbbf4d4892b3322f9c00c20de7f4fb457eb",
+      "revision": "e9d80158ae680dff15590c7e7dadf5a857890b6d9fd9f6ee6ef659ed7fec1ed5",
+      "verifiedDeclaredInputs": 1362,
+      "verifiedArtifacts": 2016,
+      "scope": "Complete final production build checked against committed source bytes; not a browser or device performance measurement.",
+      "localSourceSha": "0fc2fa5b8b65537ca24a080eee272b82cff1082d",
+      "remoteSourceUrl": "https://github.com/rhgrive3/actions/commit/f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+      "remoteTreeMatchesLocal": true
+    },
+    "reliability": {
+      "sourceSha": "0fc2fa5b8b65537ca24a080eee272b82cff1082d",
+      "manifestSha256": "fe333227a83c751921b683212f3acb8c01b2d39738fa73950533fddf79bcc78c",
+      "manifestUnchanged": true,
+      "physicalIPadVerified": false,
+      "sourceReadback": "final-build.json",
+      "repeats": [
+        {
+          "repeat": 1,
+          "exitCode": 0,
+          "timedOut": false,
+          "status": "passed",
+          "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+          "engines": [
+            {
+              "engine": "chromium",
+              "checks": 39
+            },
+            {
+              "engine": "webkit",
+              "checks": 39
+            }
+          ],
+          "errors": [],
+          "resultSha256": "bbcc41b2fd8b4f93fd5f302ff6cf42d1bbea84b91be83fbcf7b9337e898a2f09",
+          "evidenceDirectory": "/workspace/actions/.browser-evidence/issue-resolution-20261022/final-reliability/1"
+        },
+        {
+          "repeat": 2,
+          "exitCode": 0,
+          "timedOut": false,
+          "status": "passed",
+          "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+          "engines": [
+            {
+              "engine": "chromium",
+              "checks": 39
+            },
+            {
+              "engine": "webkit",
+              "checks": 39
+            }
+          ],
+          "errors": [],
+          "resultSha256": "cbd9aa6b57a81d05986c7afb9ba273cdbe6b9da0fe3bc3172193c2a6e328b645",
+          "evidenceDirectory": "/workspace/actions/.browser-evidence/issue-resolution-20261022/final-reliability/2"
+        },
+        {
+          "repeat": 3,
+          "exitCode": 0,
+          "timedOut": false,
+          "status": "passed",
+          "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+          "engines": [
+            {
+              "engine": "chromium",
+              "checks": 39
+            },
+            {
+              "engine": "webkit",
+              "checks": 39
+            }
+          ],
+          "errors": [],
+          "resultSha256": "4a0f503b57d4d5d57be9b5865989c643233556340ccdeff42e81cb18b98d4550",
+          "evidenceDirectory": "/workspace/actions/.browser-evidence/issue-resolution-20261022/final-reliability/3"
+        }
+      ],
+      "status": "passed",
+      "verifiedRemoteSourceCommit": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+      "identicalSourceTree": "9aa183e43a45516344c81a064470c5913cd8a06b",
+      "checks": 234
+    }
+  }
+}

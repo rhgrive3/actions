@@ -1,0 +1,390 @@
+{
+  "pr": 1277,
+  "merged": true,
+  "head": "bb5772f19916120906fe29a90b8b2632f28be022",
+  "merge": "5510ee364c589dbc9b418204777b3fc24e4c0d9d",
+  "comparisons": [
+    {
+      "name": "dualies",
+      "function": "darkTetra",
+      "pr1277Sha256": "115e4bee53f8501179bf81ebaffafb2f75ef4e1db55a3a604ddac273981d3ac8",
+      "currentSha256": "392bd39f434d64a76a3f50f7603daccc0dcd58036881897171b071e0739a74c5",
+      "equal": false
+    },
+    {
+      "name": "sloshers",
+      "function": "explosher",
+      "pr1277Sha256": "2665a98311ddf2c46e1995f7225288906f03ad69c01a2f1b90d73cfeed78033d",
+      "currentSha256": "2665a98311ddf2c46e1995f7225288906f03ad69c01a2f1b90d73cfeed78033d",
+      "equal": true
+    }
+  ],
+  "sameRuntimeContracts": [
+    {
+      "id": "s3-maneuver-stepper",
+      "equalAllContractFields": true,
+      "pr1277": {
+        "muzzle": [
+          0,
+          0.0845,
+          0.1911
+        ],
+        "handR": {
+          "pos": [
+            -0.0255,
+            0.01273312031440748,
+            -0.050932481257629926
+          ],
+          "quat": [
+            -0.6154122094026356,
+            0,
+            0,
+            0.7882054380161092
+          ]
+        },
+        "handL": {
+          "pos": [
+            0.0255,
+            0.01273312031440748,
+            -0.050932481257629926
+          ],
+          "quat": [
+            -0.6154122094026356,
+            0,
+            0,
+            0.7882054380161092
+          ]
+        },
+        "inHand": {
+          "pos": [
+            0.0255,
+            -0.052500000000000005,
+            6.938893903907228e-18
+          ],
+          "quat": [
+            0.6154122094026356,
+            0,
+            0,
+            0.7882054380161092
+          ]
+        },
+        "dual": true,
+        "channels": {
+          "trigger": {
+            "pivot": [
+              0,
+              0.04095,
+              0.03666
+            ],
+            "mat": "body"
+          },
+          "slide": {
+            "pivot": [
+              0,
+              0.08385000000000001,
+              0.039
+            ],
+            "mat": "body"
+          },
+          "slideInk": {
+            "pivot": [
+              0,
+              0.08385000000000001,
+              0.039
+            ],
+            "mat": "ink"
+          },
+          "led": {
+            "pivot": [
+              0.0117,
+              0.0962,
+              -0.0637
+            ],
+            "mat": "lamp"
+          }
+        },
+        "geometryHash": "f8fc4ba496afb7b205f18e91ccf0d4650ca8cb6eeb8e63ea1eec98817fd7feb7",
+        "triangles": 11499,
+        "bytes": 311594,
+        "bounds": {
+          "min": [
+            -0.0797918513417244,
+            -0.14300000667572021,
+            -0.13058845698833466
+          ],
+          "max": [
+            0.0797918513417244,
+            0.23776276409626007,
+            0.2361733317375183
+          ]
+        }
+      },
+      "current": {
+        "muzzle": [
+          0,
+          0.0845,
+          0.1911
+        ],
+        "handR": {
+          "pos": [
+            -0.0255,
+            0.01273312031440748,
+            -0.050932481257629926
+          ],
+          "quat": [
+            -0.6154122094026356,
+            0,
+            0,
+            0.7882054380161092
+          ]
+        },
+        "handL": {
+          "pos": [
+            0.0255,
+            0.01273312031440748,
+            -0.050932481257629926
+          ],
+          "quat": [
+            -0.6154122094026356,
+            0,
+            0,
+            0.7882054380161092
+          ]
+        },
+        "inHand": {
+          "pos": [
+            0.0255,
+            -0.052500000000000005,
+            6.938893903907228e-18
+          ],
+          "quat": [
+            0.6154122094026356,
+            0,
+            0,
+            0.7882054380161092
+          ]
+        },
+        "dual": true,
+        "channels": {
+          "trigger": {
+            "pivot": [
+              0,
+              0.04095,
+              0.03666
+            ],
+            "mat": "body"
+          },
+          "slide": {
+            "pivot": [
+              0,
+              0.08385000000000001,
+              0.039
+            ],
+            "mat": "body"
+          },
+          "slideInk": {
+            "pivot": [
+              0,
+              0.08385000000000001,
+              0.039
+            ],
+            "mat": "ink"
+          },
+          "led": {
+            "pivot": [
+              0.0117,
+              0.0962,
+              -0.0637
+            ],
+            "mat": "lamp"
+          }
+        },
+        "geometryHash": "f8fc4ba496afb7b205f18e91ccf0d4650ca8cb6eeb8e63ea1eec98817fd7feb7",
+        "triangles": 11499,
+        "bytes": 311594,
+        "bounds": {
+          "min": [
+            -0.0797918513417244,
+            -0.14300000667572021,
+            -0.13058845698833466
+          ],
+          "max": [
+            0.0797918513417244,
+            0.23776276409626007,
+            0.2361733317375183
+          ]
+        }
+      }
+    },
+    {
+      "id": "s3-slosher-washtub",
+      "equalAllContractFields": true,
+      "pr1277": {
+        "muzzle": [
+          0,
+          0.17920000000000003,
+          0.2848
+        ],
+        "handR": {
+          "pos": [
+            -0.0255,
+            0.006255124082467589,
+            -0.052126034020563414
+          ],
+          "quat": [
+            -0.6636470369788332,
+            0,
+            0,
+            0.7480458611002505
+          ]
+        },
+        "handL": {
+          "pos": [
+            0.01320780839244897,
+            -0.19763768540501186,
+            0.3212374632395581
+          ],
+          "quat": [
+            -0.6591003145480903,
+            0.08204760828176491,
+            0.7023305418214717,
+            -0.2560991514289116
+          ]
+        },
+        "inHand": {
+          "pos": [
+            0.0255,
+            -0.052500000000000005,
+            5.204170427930421e-18
+          ],
+          "quat": [
+            0.6636470369788333,
+            0,
+            0,
+            0.7480458611002504
+          ]
+        },
+        "dual": false,
+        "channels": {
+          "surface": {
+            "pivot": [
+              0,
+              0.10880000000000001,
+              0.2688
+            ],
+            "mat": "ink"
+          },
+          "lever": {
+            "pivot": [
+              0,
+              0.0888,
+              0.019200000000000002
+            ],
+            "mat": "body"
+          }
+        },
+        "geometryHash": "b87a3aa8df5f71945a002c28b10f5e61415d957ef384bf492d134d5167cb5784",
+        "triangles": 10989,
+        "bytes": 281014,
+        "bounds": {
+          "min": [
+            -0.1616000086069107,
+            -0.15440000593662262,
+            -0.03237054497003555
+          ],
+          "max": [
+            0.1616000086069107,
+            0.2572389543056488,
+            0.5358888506889343
+          ]
+        }
+      },
+      "current": {
+        "muzzle": [
+          0,
+          0.17920000000000003,
+          0.2848
+        ],
+        "handR": {
+          "pos": [
+            -0.0255,
+            0.006255124082467589,
+            -0.052126034020563414
+          ],
+          "quat": [
+            -0.6636470369788332,
+            0,
+            0,
+            0.7480458611002505
+          ]
+        },
+        "handL": {
+          "pos": [
+            0.01320780839244897,
+            -0.19763768540501186,
+            0.3212374632395581
+          ],
+          "quat": [
+            -0.6591003145480903,
+            0.08204760828176491,
+            0.7023305418214717,
+            -0.2560991514289116
+          ]
+        },
+        "inHand": {
+          "pos": [
+            0.0255,
+            -0.052500000000000005,
+            5.204170427930421e-18
+          ],
+          "quat": [
+            0.6636470369788333,
+            0,
+            0,
+            0.7480458611002504
+          ]
+        },
+        "dual": false,
+        "channels": {
+          "surface": {
+            "pivot": [
+              0,
+              0.10880000000000001,
+              0.2688
+            ],
+            "mat": "ink"
+          },
+          "lever": {
+            "pivot": [
+              0,
+              0.0888,
+              0.019200000000000002
+            ],
+            "mat": "body"
+          }
+        },
+        "geometryHash": "b87a3aa8df5f71945a002c28b10f5e61415d957ef384bf492d134d5167cb5784",
+        "triangles": 10989,
+        "bytes": 281014,
+        "bounds": {
+          "min": [
+            -0.1616000086069107,
+            -0.15440000593662262,
+            -0.03237054497003555
+          ],
+          "max": [
+            0.1616000086069107,
+            0.2572389543056488,
+            0.5358888506889343
+          ]
+        }
+      }
+    }
+  ],
+  "baselineCompatibilityShim": "The frozen old dualies module lacks the current Light-variant named export. A diagnostic-only buildTetraWithRearShell = d => darkTetra(d) shim permits module linking; neither standard Quad nor Explosher builder or geometry is modified.",
+  "measurementStage": "Before the continuation authored-lip muzzle correction; the following full contracts are the preserved pre-correction lineage measurement.",
+  "afterCorrection": {
+    "geometryGripsChannels": "unchanged from this measured geometry lineage",
+    "explosherMuzzle": "Only the authored muzzle tag is deliberately moved onto the existing burner lip; see explosher-authored-muzzle.json. This later candidate no longer claims the old native muzzle contract is unchanged."
+  }
+}

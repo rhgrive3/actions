@@ -20,6 +20,9 @@ export function adaptPadHandoff(rel, code) {
     if (changed) {
       if (previous && this.lastDevice === 'pad') this._s3PadCanceled = true;
       ++this._padEpoch;
+      // Feedback priority belongs to this controller lifetime. An old pad's
+      // stronger pulse must not mute the replacement or reconnected device.
+      this._rumbleUntil = this._rumbleMag = 0;
       this.padPrev = []; this.padPressed.clear(); this.padMenuPressed?.clear(); this.padMenuBlocked?.clear();
       this._padTakeoverBlocked.clear(); this._padTakeoverAxes = true;
       pad.buttons.forEach((button, i) => {

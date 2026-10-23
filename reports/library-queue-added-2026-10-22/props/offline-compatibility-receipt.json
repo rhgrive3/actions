@@ -1,0 +1,16 @@
+{
+  "artifact_revision": "541f0b6730d70cf030fd93a261b9b4494923b93caf2396289a617e4da6d86665",
+  "facade_closure_modules": 21,
+  "missing_before": [
+    "src/world/props.js",
+    "src/world/stages/index.js"
+  ],
+  "added_explicit_roots": [
+    "src/world/props.js",
+    "src/world/stages/index.js"
+  ],
+  "added_precache_bytes": 1019,
+  "other_dependencies_already_cached": true,
+  "unrelated_orphans_promoted": 0,
+  "html_modulepreload_changes": 0
+}

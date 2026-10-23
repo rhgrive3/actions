@@ -17,3 +17,6 @@ _site-native*/
 
 # Python import/build caches.
 **/__pycache__/
+
+.account-build/
+dist/

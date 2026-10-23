@@ -23,7 +23,7 @@ async function fixture(){
   three:make({LinearFilter:1}),
   '../../../src/core/ctx.js':make({G}),
   '../../../src/world/paint.js':make({PaintSystem:Paint}),
-  '../../../src/game/nav.js':make({NavGraph:class{}}),
+  '../../../src/game/nav.js':make({NavGraph:class{static async createNative(){return new this()}}}),
   '../../../src/game/minimap.js':make({Minimap:class{activate(){}}}),
   '../../../src/fx/swimWake.js':make({SwimWake:class{reset(){}}}),
   './native-load.mjs':make({loadNativeData:(...a)=>loader.loadNativeData(...a),loadNativeTextures:(...a)=>loader.loadNativeTextures(...a)}),

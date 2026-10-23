@@ -1,0 +1,85 @@
+{
+  "date": "2026-10-22",
+  "baseline": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+  "scope": "network/security read-only audit plus pre-bind clock admission repair",
+  "issues": [
+    {
+      "number": 1767,
+      "url": "https://github.com/rhgrive3/actions/issues/1767",
+      "status": "partial_fix_keep_open",
+      "implemented": "Ignore owner ticks until NetMatch.bind establishes this.match; preserve existing peers and all accepted clock/replay state.",
+      "evidence": [
+        "NetSession._begin creates this.match = new NetMatch before awaiting G.game.startNetMatch.",
+        "Unbound old-main tick establishes lastTs/lastReceiveAt even without actors.",
+        "Recorded 175.665/124.04 sender and 129.6118/92.3055 receiver pair fails unchanged validOwnerTickAdvance."
+      ],
+      "limitations": [
+        "The recorded native failure did not establish which startup interval caused its stale initial anchor.",
+        "Already-bound delayed queues can still cause permanent rejection.",
+        "No native two-browser cold-start acceptance performed."
+      ],
+      "required": [
+        "Establish a fresh initial clock origin at a confirmed ready boundary using bounded nonce-based challenge/response or trusted relay receive-time semantics.",
+        "Do not auto-rebase accepted clocks within an epoch merely after repeated future rejections.",
+        "Preserve monotonic event, actor-life, owner, paint and hit/proof protection; define explicit reconnect epoch ownership.",
+        "Exercise delayed initial receipt, catch-up, ordinary jitter, stale and malicious future packets, reconnect and actual two-peer cold startup."
+      ]
+    },
+    {
+      "number": 1665,
+      "url": "https://github.com/rhgrive3/actions/issues/1665",
+      "status": "open_authority_redesign_required",
+      "implemented": null,
+      "evidence": [
+        "Current combat-provenance installs owner/match/life-bounded shot proof, equipped cause/ceiling, plausible range, visibility and per-victim use constraints.",
+        "Merged PRs #1732 and #1736 explicitly retain the owner-authored attack+hit forgery gap.",
+        "Latest issue comment requires trusted receiver/host reconstruction rather than another self-attested field."
+      ],
+      "required": [
+        "Move attack admission to receiver/host-confirmed input/weapon timeline with authoritative cooldown, charge and ink state.",
+        "Reconstruct projectile/hitscan/area contact against bounded target histories and terrain; support family-specific ballistic, blast, multi-glob and persistent effects.",
+        "Bind each admitted hit and zero-damage knockback to a unique trusted action/contact with life, session and ownership-transfer identity.",
+        "Prove legitimate lagged hits, owner migration and retransmission in actual multi-client HP/stat/result flows before rejecting unsupported legacy routes."
+      ]
+    },
+    {
+      "number": 1666,
+      "url": "https://github.com/rhgrive3/actions/issues/1666",
+      "status": "open_authority_redesign_required",
+      "implemented": null,
+      "evidence": [
+        "Current Boss hit proof and weak-point/equipped-weapon/ceiling checks are present.",
+        "Current combatAdmission rejects Boss non-finite/non-positive values before state/proof consumption; enqueue rejects zero, so the older comment's minimal candidate is already installed.",
+        "Authenticated owners may still fabricate their action stream together with bhit; trusted native Boss contact/cooldown/ink reconstruction remains absent."
+      ],
+      "required": [
+        "Validate attack creation from host-confirmed actor input/weapon/ink/cooldown state.",
+        "Use host Boss/crablet geometry, animation, weakness, invulnerability and movement history to compute legitimate contact and damage.",
+        "Preserve replay identities and do not consume proof/contact cooldown for semantically rejected claims.",
+        "Verify valid shots and persistent specials, body/crablet no-fire forgery, fake weakness, impossible range, rapid repeats, host migration and reliable delivery in live multi-client fixtures."
+      ]
+    }
+  ],
+  "validation": {
+    "node": "v24.19.0",
+    "before": {
+      "file": "network-security-before.log",
+      "baselineAdapter": "HEAD:patches/network-replication/adapter.mjs",
+      "tests": 3,
+      "passed": 1,
+      "failed": 2
+    },
+    "after": {
+      "file": "network-security-after.log",
+      "tests": 12,
+      "passed": 12,
+      "failed": 0
+    },
+    "nativeBrowser": false,
+    "remoteMutations": false
+  },
+  "files": [
+    "patches/network-replication/adapter.mjs",
+    "patches/network-replication/tests/issue-1767-startup-clock.test.mjs"
+  ]
+}

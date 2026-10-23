@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {types} from 'node:util';
 import {fixture} from './source-fixture.mjs';
 import {makePaintWorld} from './paint-authority-fixture.mjs';
 
@@ -18,7 +19,9 @@ function dropsSnapshot(system){return Array.from(system._s3SplashDrops||[],d=>[r
 function snapshot(x){
  const queue=dropsSnapshot(x.f.G.projectiles);
  assert.deepEqual(x.drawnDrops,queue,'the visible stream observes the caught-up positions before draw');
- return {queue,landed:x.stamps.length,grid:Array.from(x.paint.grid),turf:x.a.stats.turf};
+ // Keep every ownership cell without retaining boxed-number arrays.
+ assert.ok(types.isUint8Array(x.paint.grid),'ownership snapshots require a Uint8Array');
+ return {queue,landed:x.stamps.length,grid:Uint8Array.from(x.paint.grid),turf:x.a.stats.turf};
 }
 for(const id of ['s3-stringer-short','s3-saber-lite','s3-shelter-normal','s3-shelter-wide','s3-shelter-compact','s3-shelter-focus'])test(id+' matches airborne position, landing time and intermediate ownership at equal 30/60/120Hz times',async()=>{
  const traces=[];

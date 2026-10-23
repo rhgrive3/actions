@@ -1,0 +1,457 @@
+{
+  "schema": 1,
+  "repository": "rhgrive3/actions",
+  "baseline": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+  "date": "2026-10-22",
+  "reviewedIssues": 35,
+  "scope": "All open issues observed at start; repeated search returned the same 35 issues. Runtime fixes are partial acceptance; source-fixture tests are not retail or device measurements.",
+  "issues": [
+    {
+      "number": 79,
+      "title": "[INKWAVE][Shooter] Splattershot impact paint still ignores floor-wall size and impact-angle rules",
+      "url": "https://github.com/rhgrive3/actions/issues/79",
+      "review": "controls-physics.md",
+      "evidence": "controls-physics.json",
+      "status": "blocked_retail_evidence",
+      "remaining": "break/free\u9ad8\u5ea6\u30bb\u30ec\u30af\u30bf\u3068\u539f\u4f5c\u306e\u9762\u7a4d\u30fb\u5f62\u72b6/\u906e\u853d\u30fb\u58c1drop\u5168\u4f53\u306e\u5bfe\u5fdc\u3002"
+    },
+    {
+      "number": 226,
+      "title": "[INKWAVE][Paint][\u8981\u691c\u8a3c] \u30a2\u30e1\u30d5\u30e9\u30b7RainNum=72\u3068\u516c\u958b\u7248172\u56de\u306e\u5857\u308a\u547c\u51fa\u306e\u5bfe\u5fdc\u3092\u6821\u6b63\u3059\u308b",
+      "url": "https://github.com/rhgrive3/actions/issues/226",
+      "review": "controls-physics.md",
+      "evidence": "controls-physics.json",
+      "status": "blocked_retail_evidence",
+      "remaining": "RainNum72\u304c\u751f\u6210\u7dcf\u6570/\u540c\u6642\u7ba1\u7406/\u518d\u5229\u7528/\u5730\u9762\u5230\u9054\u306e\u3069\u308c\u304b\u306e\u610f\u5473\u5bfe\u5fdc\u3002"
+    },
+    {
+      "number": 287,
+      "title": "[INKWAVE][Aim] Controller sensitivity uses 0.2\u00d7\u20133.0\u00d7 instead of Splatoon 3's \u22125\u2026+5 right-stick scale",
+      "url": "https://github.com/rhgrive3/actions/issues/287",
+      "review": "controls-physics.md",
+      "evidence": "controls-physics.json",
+      "status": "blocked_retail_evidence",
+      "remaining": "\u66ab\u5b9a2^(s/5)\u306e\u672c\u5bb6\u6bb5\u968e\u5225yaw/pitch\u5fdc\u7b54\u3002+4.5/+5\u306f\u65e2\u5b58yaw cap\u306b\u9054\u3057\u533a\u5225\u4e0d\u80fd\u3060\u304c\u672c\u5bb6\u306e\u5024\u672a\u53d6\u5f97\u3067\u518d\u8abf\u6574\u4e0d\u53ef\u3002"
+    },
+    {
+      "number": 532,
+      "title": "[INKWAVE][Motion] Verify Splat Dualies 4+1 WU dodge scale, easing and glide calibration",
+      "url": "https://github.com/rhgrive3/actions/issues/532",
+      "review": "controls-physics.md",
+      "evidence": "controls-physics.json",
+      "status": "blocked_retail_evidence",
+      "remaining": "DU\u2192WU\u63db\u7b97\u3001core/glide\u306eeasing\u30fb4F glide\u30fb\u7a7a\u4e2d8WU/s\u3002core\u7d42\u7aef0.0405WU/tick\u2192glide\u958b\u59cb0.367WU/tick\u518d\u52a0\u901f\u306f\u65e2\u77e5\u3067\u3001\u672c\u5bb6curve\u306a\u3057\u306b\u6539\u5909\u4e0d\u53ef\u3002"
+    },
+    {
+      "number": 642,
+      "title": "[INKWAVE][Perf] Mobile post stack permanently pins two full-resolution RGBA16F composer buffers",
+      "url": "https://github.com/rhgrive3/actions/issues/642",
+      "review": "performance.md",
+      "evidence": "performance.json",
+      "status": "partial-implementation-shipped-device-acceptance-pending",
+      "remaining": [
+        "Physical iOS/Android GPU-memory before/after LOW/MEDIUM/HIGH",
+        "Actual-device FBO compatibility, color/ScreenFX/FXAA visual acceptance",
+        "Orientation/resize/context stability"
+      ]
+    },
+    {
+      "number": 725,
+      "title": "[INKWAVE][Aim] DeviceMotion gyro sensitivity spans ~1.30x-3.27x instead of Splatoon 3 measured ~1x-3x range",
+      "url": "https://github.com/rhgrive3/actions/issues/725",
+      "review": "controls-physics.md",
+      "evidence": "controls-physics.json",
+      "status": "blocked_retail_evidence",
+      "remaining": "11.3.0\u5b9f\u6a5f\u3067\u306e\u7aef\u70b9/\u4e2d\u9593\u8a2d\u5b9a\u3001Joy-Con/Pro Controller\u3068\u5b9fmobile sensor\u306eresponse\u3002\u7b2c\u4e09\u8005bridge\u306e\u6e2c\u5b9a\u7248\u30fb\u624b\u9806\u306f\u672a\u8a18\u8f09\u3002"
+    },
+    {
+      "number": 735,
+      "title": "[INKWAVE][Systems] Ink Storm can damage enemies arbitrarily far below the cloud because no vertical cutoff is enforced",
+      "url": "https://github.com/rhgrive3/actions/issues/735",
+      "review": "controls-physics.md",
+      "evidence": "controls-physics.json",
+      "status": "blocked_retail_evidence",
+      "remaining": "\u672c\u5bb6\u6570\u5024\u306e\u4e0b\u9650\u30fb\u906e\u853d/\u63a5\u89e6\u5f62\u72b6\u3002\u5185\u90e812WU/14WU\u3092\u672c\u5bb6\u5024\u3078\u6607\u683c\u3055\u305b\u306a\u3044\u3002"
+    },
+    {
+      "number": 845,
+      "title": "[INKWAVE][Perf] Frustum-culled actors keep Character pose, foot-IK raycasts and hair simulation running every tick",
+      "url": "https://github.com/rhgrive3/actions/issues/845",
+      "review": "performance.md",
+      "evidence": "performance.json",
+      "status": "native-source-support-bug-fixed-device-acceptance-pending",
+      "remaining": [
+        "Actual native PlayerController/Physics CPU audit still shows 120 leg solves and 368 ground queries over 60 camera-away ticks; dependent pelvis/muzzle work needs further safe optimization.",
+        "Physical mobile CPU, rendered reentry and authoritative muzzle acceptance."
+      ]
+    },
+    {
+      "number": 890,
+      "title": "[INKWAVE][Movement] Normal jumps ignore B hold duration so small and high jumps collapse to one arc",
+      "url": "https://github.com/rhgrive3/actions/issues/890",
+      "review": "controls-physics.md",
+      "evidence": "controls-physics.json",
+      "status": "blocked_retail_evidence",
+      "remaining": "S3 11.3.0\u306e\u4fdd\u6301\u95be\u5024\u30fb\u9802\u70b9\u30fb\u4e0a\u6607\u66f2\u7dda\u3002S1 clip5F/21F/15F\u306fB\u4fdd\u6301\u7269\u7406\u306e\u8a3c\u660e\u3067\u306f\u306a\u3044\u3002"
+    },
+    {
+      "number": 952,
+      "title": "[INKWAVE][Motion] Heavy Splatling charge entry ignores S3 dedicated ground-deceleration curve-delay",
+      "url": "https://github.com/rhgrive3/actions/issues/952",
+      "review": "motion-paint.md",
+      "evidence": "motion-paint.json",
+      "status": "blocked-retail-formula-and-trace",
+      "remaining": [
+        "11.3.0 meaning, units, integration law and start frame for VelGnd_Bias_Charge=.9 and VelGnd_DownRt_Charge=.05",
+        "Fixed-60Hz original Heavy Splatling run-to-charge speed/distance trace"
+      ]
+    },
+    {
+      "number": 956,
+      "title": "[INKWAVE][Physics] Splat Charger muzzle height ignores footwear, removing S3 shoe-dependent shot origin",
+      "url": "https://github.com/rhgrive3/actions/issues/956",
+      "review": "controls-physics.md",
+      "evidence": "controls-physics.json",
+      "status": "blocked_missing_source_geometry",
+      "remaining": "\u9774\u3054\u3068\u306e\u7269\u7406\u9ad8\u3092source-verified\u306b\u5b9a\u7fa9\u3057\u3001\u30ec\u30fc\u30b6\u30fc/\u5b9f\u5f3e\u5171\u901aorigin\u3078\u63a5\u7d9a\u3059\u308b\u524d\u63d0\u8cc7\u6599\u3002"
+    },
+    {
+      "number": 992,
+      "title": "[INKWAVE][Dualies] Verify native paint phases, droplet dynamics and height/default rules (S3 11.3.0)",
+      "url": "https://github.com/rhgrive3/actions/issues/992",
+      "review": "controls-physics.md",
+      "evidence": "controls-physics.json",
+      "status": "blocked_retail_evidence",
+      "remaining": "7-pattern permutation/nearest\u9078\u629e\u3001particle\u901f\u5ea6/\u91cd\u529b/drag/\u5bff\u547d\u3001break/free\u9ad8\u3055\u5408\u6210\u3001sparse/default anchor\u3068scale\u3002"
+    },
+    {
+      "number": 997,
+      "title": "[INKWAVE][Motion] Ordinary weak diagonal walking gait does not match Splatoon 3",
+      "url": "https://github.com/rhgrive3/actions/issues/997",
+      "review": "motion-paint.md",
+      "evidence": "motion-paint.json",
+      "status": "blocked-s3-motion-reference",
+      "remaining": [
+        "Actual 11.3.0 ordinary locomotion clip/state selection and playback law",
+        "Synchronized weak-input magnitude/direction captures with root-yaw held fixed",
+        "Base motion vs IK, local/remote and render-rate comparisons"
+      ]
+    },
+    {
+      "number": 1097,
+      "title": "[INKWAVE][Motion] Hit reactions use one weapon-agnostic flinch instead of Splatoon 3's weapon-class damage poses",
+      "url": "https://github.com/rhgrive3/actions/issues/1097",
+      "review": "motion-paint.md",
+      "evidence": "motion-paint.json",
+      "status": "blocked-s3-hit-curves-and-selection",
+      "remaining": [
+        "Current 11.3.0 damage chooser, family curves and onset/peak/recovery timing",
+        "Source-owned family hit poses with original-game evidence",
+        "Full rendered/network/death-lifecycle and physical-device acceptance"
+      ]
+    },
+    {
+      "number": 1116,
+      "title": "[INKWAVE][Motion] Non-shooter jumps reuse generic airborne pose despite Splatoon 3 weapon-class jump animations",
+      "url": "https://github.com/rhgrive3/actions/issues/1116",
+      "review": "motion-paint.md",
+      "evidence": "motion-paint.json",
+      "status": "blocked-s3-jump-curves-and-selection",
+      "remaining": [
+        "Current 11.3.0 actual Jump/JumpShoot clip selection rather than candidate names",
+        "Family-specific source curves/timing and action/gear mapping",
+        "Rendered browser/local/remote and synchronized original-game comparisons"
+      ]
+    },
+    {
+      "number": 1165,
+      "title": "[INKWAVE][Bug] Roller band edge differs between GPU ink and CPU turf grid",
+      "url": "https://github.com/rhgrive3/actions/issues/1165",
+      "review": "continuation/motion-paint-audio.md",
+      "evidence": "continuation/roller-band-summary.json",
+      "status": "closed; acceptance complete",
+      "remaining": []
+    },
+    {
+      "number": 1430,
+      "title": "[INKWAVE][CI] Intermittent held-touch release/repress returns zero actions",
+      "url": "https://github.com/rhgrive3/actions/issues/1430",
+      "review": "ci-startup.md",
+      "evidence": "ci-startup.json",
+      "status": "closed; acceptance complete",
+      "remaining": [],
+      "finalEvidence": "final-reliability.json: three identical-build repetitions, Chromium 39 + WebKit 39 each, 234 total checks; committed remote source readback in final-build.json."
+    },
+    {
+      "number": 1431,
+      "title": "[INKWAVE][Weapons] Quad and Explosher projectile birth/origin alignment gap",
+      "url": "https://github.com/rhgrive3/actions/issues/1431",
+      "review": "https://github.com/rhgrive3/actions/tree/fcbbbbe9f529afb4bef2ac565d6c49c8f75a308e/reports/issue-resolution-20261022/continuation/issue-1431-acceptance.md",
+      "evidence": "weapons.json",
+      "status": "partial-fix-published-in-PR1845",
+      "remaining": [
+        "First native predicted Quad birth remains separated (observed 0.02915 WU); steady actual volume connects.",
+        "Authentic Quad aperture calibration and independent Nintendo 11.3.0 origin comparison."
+      ]
+    },
+    {
+      "number": 1432,
+      "title": "[INKWAVE][UI] Intermittent rematch selection-ring CSS animation stays pending",
+      "url": "https://github.com/rhgrive3/actions/issues/1432",
+      "review": "continuation/browser-startup.md",
+      "evidence": "continuation/rematch-final.json",
+      "status": "closed; acceptance complete",
+      "remaining": []
+    },
+    {
+      "number": 1434,
+      "title": "[INKWAVE][Perf] Complete calibrated whole-game crowd A/B benchmark",
+      "url": "https://github.com/rhgrive3/actions/issues/1434",
+      "review": "performance.md",
+      "evidence": "performance.json",
+      "status": "measurement-blocked-by-strict-calibration",
+      "remaining": [
+        "Reestablish strict repeated-image/workload equivalence on pinned current refs",
+        "Only after calibration passes, run bounded independent ABBA/BAAB trials",
+        "Keep DO NOT MERGE diagnostic benchmark out of production"
+      ]
+    },
+    {
+      "number": 1565,
+      "title": "[INKWAVE][Plan] \u8efd\u91cfPose Search\u30fb\u6b69\u884c\u54c1\u8cea\u30fb\u30a4\u30f3\u30af\u8996\u8a8d\u6027\u306e\u6027\u80fd\u975e\u52a3\u5316\u5b9f\u88c5\u8a08\u753b",
+      "url": "https://github.com/rhgrive3/actions/issues/1565",
+      "review": "motion-paint.md",
+      "evidence": "motion-paint.json",
+      "status": "blocked-baseline-and-device-measurements",
+      "remaining": [
+        "G0 fixed production build/source workload baseline",
+        "Calibrated whole-game A/B (#1434), physical iPad/Android performance/resource checks",
+        "Reference-supported gait/readability improvements before any conditional pose-search prototype"
+      ]
+    },
+    {
+      "number": 1607,
+      "title": "[INKWAVE][Specials/Investigate] Zipcaster failed-hook retry uses 45F versus 11.3.0 ShotFailedIntervalFrm=20",
+      "url": "https://github.com/rhgrive3/actions/issues/1607",
+      "review": "controls-physics.md",
+      "evidence": "controls-physics.json",
+      "status": "blocked_retail_evidence",
+      "remaining": "ShotFailedIntervalFrm20\u3068\u516c\u958b\u5931\u6557repeat45F\u306e\u5185\u90e8phase/observable clock\u5bfe\u5fdc\u3002"
+    },
+    {
+      "number": 1608,
+      "title": "[INKWAVE][CI/Flaky] Ranked public URL boot check intermittently times out after 180 seconds",
+      "url": "https://github.com/rhgrive3/actions/issues/1608",
+      "review": "continuation/browser-startup.md",
+      "evidence": "continuation/c093-required-suite.json",
+      "status": "closed; acceptance complete",
+      "remaining": []
+    },
+    {
+      "number": 1665,
+      "title": "[INKWAVE][P1/Net] Authentic actor owner can forge lethal hit packets without firing or proving collision",
+      "url": "https://github.com/rhgrive3/actions/issues/1665",
+      "review": "network-security.md",
+      "evidence": "network-security.json",
+      "status": "open_authority_redesign_required",
+      "remaining": [
+        "Move attack admission to receiver/host-confirmed input/weapon timeline with authoritative cooldown, charge and ink state.",
+        "Reconstruct projectile/hitscan/area contact against bounded target histories and terrain; support family-specific ballistic, blast, multi-glob and persistent effects.",
+        "Bind each admitted hit and zero-damage knockback to a unique trusted action/contact with life, session and ownership-transfer identity.",
+        "Prove legitimate lagged hits, owner migration and retransmission in actual multi-client HP/stat/result flows before rejecting unsupported legacy routes."
+      ]
+    },
+    {
+      "number": 1666,
+      "title": "[INKWAVE][P1/Boss] Authenticated guests can invent valid Boss-hit claims without weapon fire or collision",
+      "url": "https://github.com/rhgrive3/actions/issues/1666",
+      "review": "network-security.md",
+      "evidence": "network-security.json",
+      "status": "open_authority_redesign_required",
+      "remaining": [
+        "Validate attack creation from host-confirmed actor input/weapon/ink/cooldown state.",
+        "Use host Boss/crablet geometry, animation, weakness, invulnerability and movement history to compute legitimate contact and damage.",
+        "Preserve replay identities and do not consume proof/contact cooldown for semantically rejected claims.",
+        "Verify valid shots and persistent specials, body/crablet no-fire forgery, fake weakness, impossible range, rapid repeats, host migration and reliable delivery in live multi-client fixtures."
+      ]
+    },
+    {
+      "number": 1671,
+      "title": "[INKWAVE][P0/Perf] iPad Safari native Turf falls to 5 FPS / sim 174.9ms at 60% resolution",
+      "url": "https://github.com/rhgrive3/actions/issues/1671",
+      "review": "performance.md",
+      "evidence": "performance.json",
+      "status": "diagnostic-gap-repaired-device-fix-unverified",
+      "remaining": [
+        "Run original physical iPad native stage and legacy baseline with same roster, stage location and inputs",
+        "Identify dominant inclusive CPU scope and verify output-preserving optimization",
+        "Measure device p50/p95/p99 and context stability; no measured FPS claim here"
+      ]
+    },
+    {
+      "number": 1708,
+      "title": "[INKWAVE][Audio/Provenance] Obtain and verify native 11.3.0 sound cues for 11 post-2022 main weapons",
+      "url": "https://github.com/rhgrive3/actions/issues/1708",
+      "review": "motion-paint.md",
+      "evidence": "motion-paint.json",
+      "status": "blocked-source-evidence",
+      "remaining": [
+        "Legitimately obtained updated Sound/Resource/*.bars.zs or permitted equivalent for all eleven mains",
+        "Version/container/event provenance and SHA256",
+        "Native cue/event/listening comparisons; redistribution rights before public binary inclusion"
+      ]
+    },
+    {
+      "number": 1711,
+      "title": "[INKWAVE][Startup\u8abf\u67fb] CI\u306e\u30ad\u30e3\u30c3\u30b7\u30e5\u6e08\u307fwarm reload\u304ccold\u3088\u308a\u9045\u3044\uff08\u539f\u56e0\u672a\u78ba\u5b9a\uff09",
+      "url": "https://github.com/rhgrive3/actions/issues/1711",
+      "review": "continuation/startup-runtime-design.md",
+      "evidence": "continuation/startup-diagnosis.json",
+      "status": "closed; acceptance complete",
+      "remaining": []
+    },
+    {
+      "number": 1757,
+      "title": "[INKWAVE][P1/Perf] Turf stages still run poorly on iPad mini 6 after A+ integration",
+      "url": "https://github.com/rhgrive3/actions/issues/1757",
+      "review": "performance.md",
+      "evidence": "performance.json",
+      "status": "partial-implementation-shipped-device-acceptance-pending",
+      "remaining": [
+        "Matched physical iPad mini 6 legacy Turf stage/workload captures",
+        "Before/after CPU p50/p95, GPU/context stability and observable stutter"
+      ]
+    },
+    {
+      "number": 1767,
+      "title": "[INKWAVE][Bug] Delayed startup tick can leave valid owner snapshots permanently rejected",
+      "url": "https://github.com/rhgrive3/actions/issues/1767",
+      "review": "https://github.com/rhgrive3/actions/tree/a91137d452169baba8c2e9b0e4c7ea4f59f16a65/reports/issue-resolution-20261022/continuation/clock-recovery.md",
+      "evidence": "https://github.com/rhgrive3/actions/tree/a91137d452169baba8c2e9b0e4c7ea4f59f16a65/reports/issue-resolution-20261022/continuation/clock-native-browser.json",
+      "status": "fix-published-in-PR1842-main-integration-pending",
+      "remaining": [
+        "Required GitHub Actions and main integration. Source network 788/788 and related script 70/70 pass; optional emitted suite 64/67 retains three source-name AST checks incompatible with minification."
+      ]
+    },
+    {
+      "number": 1789,
+      "title": "[INKWAVE][Bloblobber][Parity] Recover S3 11.3.0 native floor/slope rebound and speed-limit semantics",
+      "url": "https://github.com/rhgrive3/actions/issues/1789",
+      "review": "weapons.md",
+      "evidence": "weapons.json",
+      "status": "open-original-engine-or-capture-required",
+      "remaining": [
+        "original 11.3.0 floor/slope rebound and cap dispatch",
+        "large-bubble sparse default inheritance",
+        "stage controlled 4-bubble contact traces"
+      ]
+    },
+    {
+      "number": 1812,
+      "title": "[INKWAVE][Aim] Added Rollers and Brushes still use reticle-muzzle convergence at steep pitch",
+      "url": "https://github.com/rhgrive3/actions/issues/1812",
+      "review": "https://github.com/rhgrive3/actions/tree/fcbbbbe9f529afb4bef2ac565d6c49c8f75a308e/reports/issue-resolution-20261022/continuation/issue-1812-acceptance.md",
+      "evidence": "https://github.com/rhgrive3/actions/tree/fcbbbbe9f529afb4bef2ac565d6c49c8f75a308e/reports/issue-resolution-20261022/continuation/weapon-only-final-acceptance.json",
+      "status": "closed; acceptance complete",
+      "remaining": [],
+      "finalEvidence": "780 full-flight source conditions plus 114 unique native diagnostic conditions; 1,134 births, 13,680 fixed ticks and 396 sparse actual draws. This is aim-path acceptance, not measured Nintendo parity or all-frame performance."
+    },
+    {
+      "number": 1813,
+      "title": "[INKWAVE][Dynamo] Horizontal secondary unit has source UnitDamageRate=0 but catalog ignores it",
+      "url": "https://github.com/rhgrive3/actions/issues/1813",
+      "review": "https://github.com/rhgrive3/actions/tree/fcbbbbe9f529afb4bef2ac565d6c49c8f75a308e/reports/issue-resolution-20261022/continuation/weapons.md",
+      "evidence": "weapons.json",
+      "status": "partial-fix-published-in-PR1845-retail-semantics-required",
+      "remaining": [
+        "Independent Nintendo 11.3.0 UnitDamageRate=0 interpretation and unit1 isolated-target capture. Source unit1 zero damage and floor paint, and unit0 defense damage are verified in INKWAVE."
+      ]
+    },
+    {
+      "number": 1814,
+      "title": "[INKWAVE] S3 11.3.0 65-main-weapon behavioral parity audit and 10-gap remediation tracker",
+      "url": "https://github.com/rhgrive3/actions/issues/1814",
+      "review": "weapons.md",
+      "evidence": "weapons.json",
+      "status": "open-tracker",
+      "remaining": [
+        "Independent engine/hardware semantics for #1813 and other tracker gaps.",
+        "Current-main required CI acceptance and integration of PRs #1833/#1842/#1845."
+      ]
+    },
+    {
+      "number": 1823,
+      "title": "[INKWAVE][Audio][Charger] \u672c\u5bb6\u306e\u6301\u7d9a\u30c1\u30e3\u30fc\u30b8\u4e0a\u6607\u97f3\u304c\u672a\u5b9f\u88c5\u3001HoldNoise\u8aa4\u30eb\u30fc\u30d7\u3068\u306f\u5225\u30a4\u30d9\u30f3\u30c8",
+      "url": "https://github.com/rhgrive3/actions/issues/1823",
+      "review": "weapons.md",
+      "evidence": "weapons.json",
+      "status": "open-original-audio-or-event-graph-required",
+      "remaining": [
+        "distinct persistent/rising S3 charging source and event/parameter graph",
+        "objective comparison and Safari/local/remote playback verification"
+      ]
+    }
+  ],
+  "acceptedForClosure": [
+    1430,
+    1432,
+    1165,
+    1608,
+    1711,
+    1812
+  ],
+  "sourceCommit": "f9d744eba5cbd86ef9a4a77e9a4dbd61c48d4d90",
+  "partialRuntimeFixes": [
+    1767,
+    845
+  ],
+  "retainedOpen": [
+    79,
+    226,
+    287,
+    532,
+    642,
+    725,
+    735,
+    845,
+    890,
+    952,
+    956,
+    992,
+    997,
+    1097,
+    1116,
+    1431,
+    1434,
+    1565,
+    1607,
+    1665,
+    1666,
+    1671,
+    1708,
+    1757,
+    1767,
+    1789,
+    1813,
+    1814,
+    1823
+  ],
+  "acceptanceCompletePendingClosure": [],
+  "continuationScope": "Accepted browser investigations plus independent owner-clock fix; Charger/contact/weapon runtime changes are excluded. Clock main integration and required CI remain pending. Historical #1845 weapon report links are preserved separately; that PR runtime is outside this integration.",
+  "clockRelease": {
+    "sourceTree": "63acdcbd3667c2042a2c476ca86c2119ded8cdb3",
+    "publishedSource": "dfc0bd6e92c75f505825ea9d176c89b869706797",
+    "publishedEvidence": "c02af4d0e7876f27637720c0ba61c43b2cf51e06",
+    "pr": 1842,
+    "mainMerged": false
+  },
+  "closedCount": 6,
+  "remainingCount": 29,
+  "stateVerifiedDate": "2026-10-22",
+  "weaponsRelease": {
+    "pullRequest": 1845,
+    "commit": "fcbbbbe9f529afb4bef2ac565d6c49c8f75a308e",
+    "sourceCommit": "8783eb8d9110e78fb28325e9d970bd5ecea44a87",
+    "evidence": "https://github.com/rhgrive3/actions/tree/fcbbbbe9f529afb4bef2ac565d6c49c8f75a308e/reports/issue-resolution-20261022/continuation"
+  }
+}

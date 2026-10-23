@@ -1,0 +1,138 @@
+{
+  "issue": 1431,
+  "scope": "Actual source-loaded Quad, shipped shooter volume binary and real InkVolumes CPU instance buffers; no WebGL claim for this receipt. Shared development graph.",
+  "sourceFiles": {
+    "patches/local-quality/ink-volume/recipes.mjs": "4a1ddb5ada5f093c9efc4a3660f1beb527308939a2068e1a1219ee51b2d0314a",
+    "patches/splatoon3/tests/issue-1431-volume-pose-connection.test.mjs": "d533bf2c5d206bdd9ec85c0bcf64c5ae18bcf54803a4395370bba24d90ab7ac2"
+  },
+  "change": "Native shooter-volume retained back sprite/rod endpoint joins seed-validated post-pose birth. Head remains physical. Existing cap detaches the tail; prediction/LOS fallback/detached transforms retain former matrices. Scratch vectors are reused, with no new per-round render allocation.",
+  "negativeControl": "Same artifact, projectile and submission function with only presentation pose offset temporarily null; authoritative state preserved and restored.",
+  "packUncompressedSha256": "77be60e10b59b3964e7c3dd64ff36aec9373ecce68eb797ca7bcce97cea878fa",
+  "receipts": {
+    "nativeVolumeSource": {
+      "path": ".ci-scratch/continuation-weapons/quad-native-volume-pose.log",
+      "sha256": "9c27954e19ecce307572735d01da1a2081f02a67b779d5d8454cf51ffad38d35",
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 46000.298682
+    },
+    "affectedRecipeControls": {
+      "path": ".ci-scratch/continuation-weapons/quad-volume-affected-regressions.log",
+      "sha256": "172cc1bfa085fe4863ab57abfb885320093d2e9a8d3ac16b8446d8e91e1968e3",
+      "tests": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "observations": [
+    {
+      "hz": 30,
+      "wall": false,
+      "connected": 20,
+      "unchanged": 33,
+      "detached": 26,
+      "maxBackError": 9.345507996927025e-07,
+      "minOldOwnerGap": 0.03825822733406415,
+      "wireBirths": 14,
+      "paintCalls": 37,
+      "source": {
+        "status": "ready",
+        "active": true
+      }
+    },
+    {
+      "hz": 60,
+      "wall": false,
+      "connected": 20,
+      "unchanged": 33,
+      "detached": 26,
+      "maxBackError": 9.345507996927025e-07,
+      "minOldOwnerGap": 0.03825822733406415,
+      "wireBirths": 14,
+      "paintCalls": 37,
+      "source": {
+        "status": "ready",
+        "active": true
+      }
+    },
+    {
+      "hz": 120,
+      "wall": false,
+      "connected": 20,
+      "unchanged": 33,
+      "detached": 26,
+      "maxBackError": 9.345507996927025e-07,
+      "minOldOwnerGap": 0.03825822733406415,
+      "wireBirths": 14,
+      "paintCalls": 37,
+      "source": {
+        "status": "ready",
+        "active": true
+      }
+    },
+    {
+      "hz": 30,
+      "wall": true,
+      "connected": 0,
+      "unchanged": 0,
+      "detached": 0,
+      "maxBackError": null,
+      "minOldOwnerGap": null,
+      "wireBirths": 14,
+      "paintCalls": 54,
+      "source": {
+        "status": "ready",
+        "active": true
+      }
+    },
+    {
+      "hz": 60,
+      "wall": true,
+      "connected": 0,
+      "unchanged": 0,
+      "detached": 0,
+      "maxBackError": null,
+      "minOldOwnerGap": null,
+      "wireBirths": 14,
+      "paintCalls": 54,
+      "source": {
+        "status": "ready",
+        "active": true
+      }
+    },
+    {
+      "hz": 120,
+      "wall": true,
+      "connected": 0,
+      "unchanged": 0,
+      "detached": 0,
+      "maxBackError": null,
+      "minOldOwnerGap": null,
+      "wireBirths": 14,
+      "paintCalls": 54,
+      "source": {
+        "status": "ready",
+        "active": true
+      }
+    }
+  ],
+  "limits": [
+    "Native matrix values are actual Float32 instance-buffer reads on CPU; GPU acceptance awaits the isolated final build.",
+    "Pure render observation retains actual serialized projectile events, contact paint requests, positions/velocity/damage/ink/owner state exactly.",
+    "Tower immediately retires the observed rounds; no connection matrix was submitted there and error is null.",
+    "No Nintendo hardware/source-pose/socket equivalence is claimed."
+  ],
+  "finalIsolatedBuildAcceptance": {
+    "receipt": "weapon-only-final-acceptance.json",
+    "contentHash": "d3d77b98076f1f1ca251c9c6968e1339bc648de1239720883e71204ec39bd718",
+    "inputHash": "84571b440d934b2d576c7699ae48c420d5aa9c83db5f8a6f217a03f1d45a452e",
+    "emittedPositiveTests": 5,
+    "pass": 5,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 42972.408676
+  }
+}

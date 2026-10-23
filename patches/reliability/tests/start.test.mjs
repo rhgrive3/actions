@@ -408,9 +408,27 @@ test('an already-cancelled flow cannot reserve or cancel a newer world build', a
   assert.equal(h.game.layoutId, 'b');
 });
 
+test('selected pack loading preserves the active world on rejection and does not allocate replacement props', async () => {
+  const h = boot(AFTER), gate = deferred(), before = h.snapshot(), paint = h.G.paint;
+  h.game.preparePropPacks = (id, current) => { assert.equal(id, 'a'); assert.equal(current(), true); return gate.promise; };
+  const pending = h.game._buildWorld(h.maps[1]);
+  assert.deepEqual(h.snapshot(), before); assert.equal(h.resources.some(r => r instanceof h.game.PropKit), false);
+  gate.reject(Error('optional pack failed')); await assert.rejects(pending, /optional pack failed/);
+  assert.deepEqual(h.snapshot(), before); assert.equal(paint.disposed, 0);
+});
+
+test('a superseded selected pack continuation cannot allocate or publish a stale replacement', async () => {
+  const h = boot(AFTER), gate = deferred(); let isCurrent;
+  h.game.preparePropPacks = (id, current) => { if (id === 'a') { isCurrent = current; return gate.promise; } return Promise.resolve(true); };
+  const old = h.game._buildWorld(h.maps[1]);
+  await h.game._buildWorld(h.maps[2]); const snapshot = h.snapshot(), allocations = h.resources.length;
+  assert.equal(isCurrent(), false); gate.resolve(true); await old;
+  assert.deepEqual(h.snapshot(), snapshot); assert.equal(h.resources.length, allocations); assert.equal(h.game.layoutId, 'b');
+});
+
 test('actual upstream PropKit supports null scene and disposes detached geometry/material/texture ownership', async () => {
   const THREE = await import('../../../inkwave-public/vendor/three/build/three.module.js');
-  const props = fs.readFileSync(new URL('../../../inkwave-public/src/world/props.js', import.meta.url), 'utf8');
+  const props = fs.readFileSync(new URL('../../../inkwave-public/src/world/props-core.js', import.meta.url), 'utf8');
   const builder = section(props, 'class Builder {', '\n// ------------------------------------------------------------------------------------------------ neon path helpers');
   const klass = section(props, 'export class PropKit {', '\nexport const PROP_TYPES').replace('export ', '');
   const PropKit = vm.runInNewContext(`${builder}\n${klass}\nPropKit`, { THREE, Math });

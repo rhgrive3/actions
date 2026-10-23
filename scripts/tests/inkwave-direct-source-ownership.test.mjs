@@ -6,7 +6,7 @@ import {createHash} from 'node:crypto';
 const fetchWorkflow = fs.readFileSync(new URL('../../.github/workflows/fetch-inkwave.yml', import.meta.url), 'utf8');
 const navigation = fs.readFileSync(new URL('../../inkwave-public/src/game/nav.js', import.meta.url), 'utf8');
 const murals = fs.readFileSync(new URL('../../inkwave-public/src/world/murals.js', import.meta.url), 'utf8');
-const worldProps = fs.readFileSync(new URL('../../inkwave-public/src/world/props.js', import.meta.url), 'utf8');
+const worldProps = fs.readFileSync(new URL('../../inkwave-public/src/world/props-core.js', import.meta.url), 'utf8');
 const marinaVessels = fs.readFileSync(new URL('../../inkwave-public/src/world/props-marina-vessels.js', import.meta.url), 'utf8');
 const lobbySetTexture = fs.readFileSync(new URL('../../inkwave-public/src/game/lobbySet-tex.js', import.meta.url), 'utf8');
 const uiIcons = fs.readFileSync(new URL('../../inkwave-public/src/ui/ui-icons.js', import.meta.url), 'utf8');
@@ -82,7 +82,7 @@ test('ZEVANT stage and lobby lettering is directly owned by authored game module
   assert.match(uiIcons, /logoMarkup\(title = 'ZEVANT'/);
   assert.match(runtimeUiStrings, /The ZEVANT servers didn’t answer/);
   assert(!mainComposition.includes("  'patches/splatoon3/runtime/ui-strings.mjs': ["));
-  for (const path of ['src/world/props.js', 'src/world/props-marina-vessels.js', 'src/game/lobbySet-tex.js', 'src/ui/ui-icons.js']) {
+  for (const path of ['src/world/props.js', 'src/world/props-core.js', 'src/world/props-marina-vessels.js', 'src/game/lobbySet-tex.js', 'src/ui/ui-icons.js']) {
     assert(!mainComposition.includes("  '" + path + "': ["), path + ' must not require late string replacement');
   }
 });
@@ -129,7 +129,7 @@ test('PropKit atlas, lifetime and rematch behavior are authored in the real modu
     assert(BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/'+file));
     assert.equal(createHash('sha256').update(fs.readFileSync(new URL('../../patches/local-quality/'+file,import.meta.url))).digest('hex'),digest);
   }
-  assert.equal(adaptBuildSource('src/world/props.js', worldProps), worldProps,
+  assert.equal(adaptBuildSource('src/world/props-core.js', worldProps), worldProps,
     'production must use the authored PropKit class, not a build-time transformed copy');
 });
 
@@ -270,7 +270,7 @@ test('Direct-Source migrated LOD, outfit AO, body-balance and transport compat m
 
   const summary = auditDirectSource();
   assert.deepEqual(summary.failures, [], 'auditDirectSource must report zero failures');
-  assert.equal(summary.directOwnerPathsVerified.length, 14, 'all 14 direct-owned modules (including source-bank.js) must be verified');
+  assert.equal(summary.directOwnerPathsVerified.length, 18, 'all 18 direct-owned modules (including selected-pack descriptor/core owners) must be verified');
 });
 
 // Regression for the 2026-10-21 A+ rebase: preserve the real terrain-source

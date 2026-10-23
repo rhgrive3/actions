@@ -1,0 +1,62 @@
+/* Account card on the main menu (inside .iw-ui: inherits the menu tokens --u, --a, fonts) and the title pill. */
+
+.iw-ui .zva-chip {
+  appearance: none; border: 0; margin: 0; font: inherit; color: #fff; text-align: left; cursor: pointer;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: calc(var(--u) * 1.1);
+  margin-top: calc(var(--u) * 1.1); margin-bottom: auto;
+  min-height: max(56px, calc(var(--u) * 5.4)); padding: calc(var(--u) * .8) calc(var(--u) * 1.2) calc(var(--u) * .8) calc(var(--u) * 1);
+  transition: background-color .2s, translate .25s var(--out), box-shadow .2s;
+}
+.iw-ui .zva-chip:hover, .iw-ui .zva-chip.is-hover, .iw-ui .zva-chip.is-focus { background-color: rgba(var(--a-rgb), .16); translate: calc(var(--u) * -.3) 0; }
+.iw-ui .zva-chip.is-busy { cursor: progress; }
+.iw-ui .zva-chip.is-busy .zva-chip__cta { animation: zva-pulse .8s ease-in-out infinite alternate; }
+
+.zva-chip__av { position: relative; width: max(40px, calc(var(--u) * 3.8)); height: max(40px, calc(var(--u) * 3.8)); flex: none; }
+.zva-chip__av svg { width: 118%; height: 118%; margin: -9%; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .35)); }
+.zva-chip__off { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; background: rgba(255, 255, 255, .1); color: var(--muted, #c3bdd6); }
+.zva-chip__off svg { width: 56%; height: 56%; margin: 0; filter: none; }
+
+.zva-chip__txt { display: grid; gap: 3px; min-width: 0; }
+.zva-chip__name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 800; font-size: var(--fs-m, 14px); letter-spacing: .02em; }
+.zva-chip__sub { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--muted, #c3bdd6); font-size: var(--fs-xs, 11px); font-weight: 600; letter-spacing: .04em; }
+.zva-chip__sub:empty { display: none; }
+
+.zva-chip__cta { display: grid; place-items: center; }
+.zva-chip__cta span {
+  padding: .5em .95em .55em; border-radius: 999px; background: var(--a); color: var(--a-ink, #15121c);
+  font: 900 var(--fs-xs, 11px)/1 'Rubik', 'IW JP Body', sans-serif; letter-spacing: .12em; white-space: nowrap;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, .35);
+}
+.zva-chip__cta svg { width: max(18px, calc(var(--u) * 1.6)); height: max(18px, calc(var(--u) * 1.6)); color: var(--muted, #c3bdd6); transition: translate .2s var(--out); }
+.zva-chip.is-focus .zva-chip__cta svg, .zva-chip:hover .zva-chip__cta svg { translate: 3px 0; color: #fff; }
+.zva-chip[data-state="loading"] .zva-chip__cta, .zva-chip[data-state="loading"] .zva-chip__av { opacity: .5; }
+.zva-chip[data-state="loading"] .zva-chip__name { color: var(--muted, #c3bdd6); font-weight: 600; }
+
+/* touch layout: the side column is a plain stack */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch) .zva-chip { margin: 0; min-height: 60px; }
+
+/* title screen pill (pointer / touch only — the keyboard starts the game there) */
+.iw-ui .zva-tchip {
+  position: absolute; z-index: 3; top: calc(var(--u) * 2.2 + var(--sat, 0px)); right: calc(var(--u) * 3 + var(--sar, 0px));
+  appearance: none; border: 0; cursor: pointer; font: inherit; color: #fff;
+  display: flex; align-items: center; gap: 10px; max-width: min(46vw, 320px);
+  padding: 6px 18px 6px 6px; border-radius: 999px;
+  background: rgba(16, 13, 28, .72); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .16), 0 4px 0 rgba(0, 0, 0, .35);
+  backdrop-filter: blur(10px); transition: background-color .2s, scale .2s var(--spring, ease);
+}
+.iw-ui .zva-tchip:hover { background: rgba(var(--a-rgb, 255, 138, 20), .3); scale: 1.04; }
+.iw-ui .zva-tchip:active { scale: .97; }
+.iw-ui .zva-tchip:focus-visible { outline: 3px solid var(--a); outline-offset: 3px; }
+.zva-tchip__av { width: 34px; height: 34px; flex: none; }
+.zva-tchip__av svg { width: 120%; height: 120%; margin: -10%; }
+.zva-tchip__label { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: 800 14px/1 'Rubik', 'IW JP Body', sans-serif; letter-spacing: .08em; }
+.zva-tchip.is-busy { opacity: .7; cursor: progress; }
+
+/* the menus' focus ring would float over the dialog backdrop */
+.iw-ui.zva-covered .iw-cursor { opacity: 0 !important; }
+
+@keyframes zva-pulse { to { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) {
+  .iw-ui .zva-chip, .iw-ui .zva-tchip { transition: none; }
+  .iw-ui .zva-chip.is-busy .zva-chip__cta { animation: none; }
+}

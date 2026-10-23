@@ -124,3 +124,9 @@ The same source adds exact sampling work reductions (per-pose key-segment hints,
 - Require source syntax, existing native graph parity, boot/build, and browser behavior, including 30/60/120 Hz cases where applicable.
 - Stop at the faulty migration slice and fix it rather than masking failures with optional fallbacks or weakening compatibility validation.
 - The fetch workflow stages external data under `RUNNER_TEMP`, emits a read-only compatibility report, and uploads a candidate archive. It never removes or commits over `inkwave-public/` automatically.
+
+## Selected stage prop pack boundary
+
+The directly authored PropKit implementation now lives in `src/world/props-core.js`. `src/world/props.js` is the compatibility facade retaining all three existing synchronous exports (`PropKit`, `PROP_TYPES`, `PALETTE`), complete pack registration and original catalogue ordering. Atlas and retention policies remain ordinary readable methods in the core, with zero build-time class rewriting. The retired adapter fixtures and their hashes remain unchanged.
+
+Production startup imports `prop-packs.js` through an exact reliability adapter anchor. It resolves the actual placement inventory before importing optional Cargo/marina builders, and checks the current world operation before synchronous transactional registration. No replacement resources are allocated before preparation completes. Lightweight Cargo/marina placement descriptors preserve the original expressions and order. Small synchronous mural hooks remain eager to preserve the public `setStage` API. New core and descriptor owners participate in the direct-source identity audit; the one patch-path relocation in `prop-packs.js` is explicit.

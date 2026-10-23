@@ -10,7 +10,7 @@ import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 import {WebSocketServer} from 'ws';
-import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
+import {createLocalRelay,isRelayTickFrame} from './lib/inkwave-local-relay-fixture.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const option=n=>{const i=process.argv.indexOf(n);assert(i>=0&&process.argv[i+1],n+' required');return path.resolve(process.argv[i+1]);};
 const baseline=process.argv.includes('--baseline');
@@ -45,7 +45,7 @@ const relay=new WebSocketServer({host:'127.0.0.1',port:0});await new Promise(r=>
 const rooms=new Map(),wire=[],pending=[];let wireFrame=0;
 const flushWire=()=>{wireFrame++;while(pending.length&&pending[0].due<=wireFrame){const p=pending.shift();if(p.ws.readyState===1)p.ws.send(p.text);}};
 const connectRelay=createLocalRelay({rooms});
-relay.on('connection',(ws,req)=>connectRelay(ws,req,{send:(s,deliver)=>{if(delayFrames&&s.startsWith('m|')&&JSON.parse(s.slice(s.indexOf('|',2)+1)).k==='t')pending.push({ws,text:s,due:wireFrame+delayFrames});else deliver(s);},receive:s=>wire.push({at:Date.now(),bytes:Buffer.byteLength(s),text:s})}));
+relay.on('connection',(ws,req)=>connectRelay(ws,req,{send:(s,deliver)=>{if(delayFrames&&isRelayTickFrame(s))pending.push({ws,text:s,due:wireFrame+delayFrames});else deliver(s);},receive:s=>wire.push({at:Date.now(),bytes:Buffer.byteLength(s),text:s})}));
 const address='http://127.0.0.1:'+server.address().port+'/network-fixture.html?relay='+encodeURIComponent('ws://127.0.0.1:'+relay.address().port);
 const contexts=[],pages=[],errors=[],receipts=new Set();let result;
 try{
@@ -60,6 +60,8 @@ try{
   await page.evaluate(()=>{NG.game.profile.weapon='roller';NG.game.menus.launchLobby=async()=>{};});
  }
  console.log('network browser rooms');const code=await pages[0].evaluate(()=>NG.net.create('Network Host'));
+ // Establish the intended two-human roster before any join snapshot can include bots.
+ await pages[0].evaluate(()=>NG.net.setSettings({bots:false}));
  await pages[1].evaluate(c=>NG.net.join(c,'Network Guest'),code);
  await pages[0].waitForFunction(()=>NG.net.lobby.players.length===2);
  await pages[1].waitForFunction(()=>NG.net.lobby.players.length===2);

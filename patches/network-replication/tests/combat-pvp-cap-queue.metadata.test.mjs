@@ -73,7 +73,7 @@ assert.throws(() => run(() => receiverSprinklerScope()), /cap-only boundary: rec
 
 test('PvP caps preserve exact boundaries, proof accounting, Boss and unrelated routes', () => {
   const rows = run(directCases, true);
-  assert.equal(rows.length, 14);
+  assert.equal(rows.length, 16);
   for (const row of rows) assert.equal(row.pass, true, row.name + ': ' + (row.message || ''));
 });
 
@@ -111,12 +111,17 @@ function capFixture(kind, route='event-proof') {
   nm.match.boss.pos={x:0,y:0,z:3};
   const proof={actor:1,kind:'special',cause:kind,at:100,
     origin:[0,0,0],unit:[0,0,1],reach:30,uses:0,maxUses:24,key:'cap-proof'};
-  nm._combatProvenance={
+  Object.assign(state(nm),{
     proofs:new Map(route==='event-proof'?[['peerA',[proof]]]:[]),
     pending:new Map([['peerA',[{type:'pvp',d:{...hit(2,8,kind),d:1},at:100}]]]),
     contacts:new Map([['sentinel',{at:100}]]),
-  };
-  if(route==='active-fallback')a.specialActive={id:kind};
+  });
+  if(route==='active-fallback') {
+    a.specialActive={id:kind};
+    // This cap-only route starts with the accepted active-snapshot metadata
+    // required by production; it does not exercise native receipt creation.
+    state(nm).specialSnapshots.set(a,{owner:'peerA',life:0,slot:kind,active:true,at:100,ts:100});
+  }
   return {nm,a,proof};
 }
 for(const route of ['event-proof','active-fallback']) for(const kind of ['krakenRoyale','storm']) {
@@ -137,6 +142,13 @@ for(const route of ['event-proof','active-fallback']) for(const kind of ['kraken
     if(route==='event-proof')assert.equal(proof.uses,1);
   });
 }
+for(const kind of ['krakenRoyale','storm'])test(`active flag without a fresh owner snapshot is insufficient ${kind}`,()=>{
+  const {nm,a}=capFixture(kind,'active-fallback'),s=nm._combatProvenance;
+  s.specialSnapshots.delete(a);
+  assert.equal(combatAdmission(nm,'peerA',{...hit(2,1,kind),d:120},'pvp',100),false);
+  s.specialSnapshots.set(a,{owner:'peerA',slot:kind,active:true,life:0,at:89});
+  assert.equal(combatAdmission(nm,'peerA',{...hit(2,1,kind),d:120},'pvp',100),false);
+});
 test('PvP cap adds no current-position or attacker-life rejection to committed proof',()=>{
   const {nm,a,proof}=capFixture('krakenRoyale');
   a.pos={x:100,y:0,z:100};a.netLife=9;

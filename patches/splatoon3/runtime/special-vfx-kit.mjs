@@ -216,7 +216,7 @@ void main(){
 
 class SpritePool {
   constructor(THREE, cap, additive, uTime, light = {}) {
-    this.cap = cap; this.n = 0; this.additive = additive; this._idleUploaded = false;
+    this.cap = cap; this.n = 0; this.additive = additive; this._emptyUploaded = false;
     const g = new THREE.InstancedBufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0]), 3));
     g.setIndex([0, 1, 2, 0, 2, 3]);
@@ -235,23 +235,58 @@ class SpritePool {
     this.S = 23; this.p = new Float32Array(cap * this.S);
   }
   spawn(x, y, z, vx, vy, vz, life, size0, size1, r, g, b, a, kind = 0, o = null) {
+    return this.spawnRaw(x,y,z,vx,vy,vz,life,size0,size1,r,g,b,a,kind,o?.drag,o?.grav,o?.rot,o?.spin,o?.seed,o?.stretch,o?.fadeIn,o?.buoy);
+  }
+  spawnRaw(x,y,z,vx,vy,vz,life,size0,size1,r,g,b,a,kind=0,drag,grav,rot,spin,seed,stretch,fadeIn,buoy){
     if (this.n >= this.cap) { this._evict(); }
     const i = this.n++ * this.S, p = this.p;
     p[i] = x; p[i + 1] = y; p[i + 2] = z; p[i + 3] = vx; p[i + 4] = vy; p[i + 5] = vz; p[i + 6] = 0; p[i + 7] = Math.max(1e-3, life);
-    p[i + 8] = size0; p[i + 9] = size1; p[i + 10] = o?.drag ?? 1.5; p[i + 11] = o?.grav ?? 0;
-    p[i + 12] = r; p[i + 13] = g; p[i + 14] = b; p[i + 15] = a; p[i + 16] = kind; p[i + 17] = o?.rot ?? vfxRandom() * TAU;
-    p[i + 18] = o?.spin ?? 0; p[i + 19] = o?.seed ?? vfxRandom(); p[i + 20] = o?.stretch ?? 0; p[i + 21] = o?.fadeIn ?? 0.06; p[i + 22] = o?.buoy ?? 0;
+    p[i + 8] = size0; p[i + 9] = size1; p[i + 10] = drag ?? 1.5; p[i + 11] = grav ?? 0;
+    p[i + 12] = r; p[i + 13] = g; p[i + 14] = b; p[i + 15] = a; p[i + 16] = kind; p[i + 17] = rot ?? vfxRandom() * TAU;
+    p[i + 18] = spin ?? 0; p[i + 19] = seed ?? vfxRandom(); p[i + 20] = stretch ?? 0; p[i + 21] = fadeIn ?? 0.06; p[i + 22] = buoy ?? 0;
+    if(this._heapValid){
+      const key=p[i+6]/p[i+7];
+      if(!(key>=0&&Number.isFinite(key))){this._heapValid=false;this._heapBlocked=true;}
+      else {const slot=this._evictionHeap.length;this._evictionHeap.push(this.n-1);this._evictionPositions[this.n-1]=slot;this._repairEviction(slot);}
+    }
     return true;
   }
+  _higherEviction(a,b){
+    const A=this.p[a*this.S+6]/this.p[a*this.S+7],B=this.p[b*this.S+6]/this.p[b*this.S+7];
+    return A>B||A===B&&a<b;
+  }
+  _repairEviction(slot,up=true){
+    const heap=this._evictionHeap,positions=this._evictionPositions,value=heap[slot];
+    while(up&&slot>0){const parent=(slot-1)>>>1;if(!this._higherEviction(value,heap[parent]))break;heap[slot]=heap[parent];positions[heap[slot]]=slot;slot=parent;}
+    while(slot*2+1<heap.length){let child=slot*2+1;if(child+1<heap.length&&this._higherEviction(heap[child+1],heap[child]))child++;
+      if(!this._higherEviction(heap[child],value))break;heap[slot]=heap[child];positions[heap[slot]]=slot;slot=child;}
+    heap[slot]=value;positions[value]=slot;
+  }
+  _buildEviction(){
+    const heap=this._evictionHeap ||= [],positions=this._evictionPositions ||= new Int32Array(this.cap);heap.length=0;
+    for(let i=0;i<this.n;i++){const key=this.p[i*this.S+6]/this.p[i*this.S+7];if(!(key>=0&&Number.isFinite(key))){this._heapBlocked=true;return false;}heap.push(i);positions[i]=i;}
+    for(let i=(heap.length>>>1)-1;i>=0;i--)this._repairEviction(i,false);
+    return this._heapValid=true;
+  }
   _evict() { // drop the oldest (by age fraction) to keep new, louder effects
+    if(!this._heapBlocked&&(this._heapValid||this._buildEviction())){this._kill(this._evictionHeap[0]);return;}
     let best = 0, bk = -1;
     for (let j = 0; j < this.n; j++) { const k = this.p[j * this.S + 6] / this.p[j * this.S + 7]; if (k > bk) { bk = k; best = j; } }
     this._kill(best);
   }
-  _kill(j) { const S = this.S, last = --this.n; if (j !== last) this.p.copyWithin(j * S, last * S, last * S + S); }
+  _kill(j) {
+    const S=this.S,last=--this.n;
+    if(this._heapValid){
+      const heap=this._evictionHeap,positions=this._evictionPositions,slot=positions[j],tail=heap.pop();
+      if(slot<heap.length){heap[slot]=tail;positions[tail]=slot;this._repairEviction(slot);}
+      if(j!==last){const moved=positions[last];heap[moved]=j;positions[j]=moved;
+        this.p.copyWithin(j*S,last*S,last*S+S);this._repairEviction(moved);}
+    }else if(j!==last)this.p.copyWithin(j*S,last*S,last*S+S);
+  }
   update(dt) {
-    if (this.n === 0 && this._idleUploaded) return;
+    this._heapValid=false;this._heapBlocked=false;
     const p = this.p, S = this.S;
+    if(this.n===0&&this._emptyUploaded)return;
     for (let j = this.n - 1; j >= 0; j--) {
       const i = j * S; p[i + 6] += dt;
       if (p[i + 6] >= p[i + 7]) { this._kill(j); continue; }
@@ -275,10 +310,9 @@ class SpritePool {
     }
     const count = this.n + 1;
     for (const a of [this.aPos, this.aDir, this.aCol, this.aPar]) { a.clearUpdateRanges(); a.addUpdateRange(0, count * 4); a.needsUpdate = true; }
-    this.mesh.geometry.instanceCount = count;
-    this._idleUploaded = this.n === 0;
+    this.mesh.geometry.instanceCount = count;this._emptyUploaded=this.n===0;
   }
-  clear() { this.n = 0; this._idleUploaded = false; }
+  clear() { this.n = 0;this._emptyUploaded=false;this._heapValid=false;this._heapBlocked=false;if(this._evictionHeap)this._evictionHeap.length=0; }
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -330,7 +364,7 @@ void main(){
 }`;
 class RibbonPool {
   constructor(THREE, trails, points, additive, uTime, light = {}) {
-    this.T = trails; this.M = points; this.additive = additive; this.list = []; this._idleUploaded = false;
+    this.T = trails; this.M = points; this.additive = additive; this.list = []; this._emptyUploaded = false;
     const V = trails * points * 2;
     const g = new THREE.BufferGeometry();
     this.pos = new THREE.BufferAttribute(new Float32Array(V * 3), 3).setUsage(THREE.DynamicDrawUsage);
@@ -354,13 +388,7 @@ class RibbonPool {
   }
   // opts: { width, widthTail, color [r,g,b], alpha, style, life (point lifetime s), spacing (m), flat (ground-aligned) }
   start(opts) {
-    if (this.list.length >= this.T) {
-      const old = this.list.findIndex(r => r.ended);
-      const removed = this.list.splice(old >= 0 ? old : 0, 1)[0];
-      // A director may retain a record after pool eviction. Its future pushes
-      // must not allocate forever against a record that can no longer render.
-      if (removed) { removed.ended = true; removed.pts.length = 0; }
-    }
+    if (this.list.length >= this.T) { const old = this.list.findIndex(r => r.ended), victim=this.list[old >= 0 ? old : 0]; victim.ended=true;victim.pts.length=0;this.list.splice(old >= 0 ? old : 0, 1); }
     const r = { pts: [], ended: false, o: { width: .2, widthTail: .6, color: [1, 1, 1], alpha: 1, style: 0, life: .6, spacing: .12, seed: vfxRandom(), ...opts } };
     this.list.push(r); return r;
   }
@@ -372,7 +400,7 @@ class RibbonPool {
   }
   end(r) { if (r) r.ended = true; }
   update(now, camPos) {
-    if (!this.list.length && this._idleUploaded) return;
+    if(this.list.length===0&&this._emptyUploaded)return;
     let v = 0; const P = this.pos.array, C = this.col.array, R = this.rib.array, SD = this.side.array, FC = this.face.array;
     const t = this._t, s = this._s, c = this._c;
     for (let i = this.list.length - 1; i >= 0; i--) {
@@ -385,20 +413,13 @@ class RibbonPool {
       const p = r.pts, n = p.length; if (n < 2) continue;
       const base = slot * this.M * 2; slot++;
       for (let k = 0; k < this.M; k++) {
-        if (k >= n) {
-          // All padded points match the last visible tangent and position;
-          // copy its completed vertex attributes and zero only opacity.
-          const tail = base + (n - 1) * 2;
-          for (let side = 0; side < 2; side++) {
-            const vi = base + k * 2 + side, src = tail + side;
-            for (let d = 0; d < 3; d++) {
-              P[vi * 3 + d] = P[src * 3 + d];
-              SD[vi * 3 + d] = SD[src * 3 + d]; FC[vi * 3 + d] = FC[src * 3 + d];
-            }
-            for (let d = 0; d < 4; d++) { C[vi * 4 + d] = C[src * 4 + d]; R[vi * 4 + d] = R[src * 4 + d]; }
-            C[vi * 4 + 3] = 0;
-          }
-          continue;
+        if(k>=n){
+          const src=base+(n-1)*2;
+          for(let side=0;side<2;side++){
+            const vi=base+k*2+side,from=src+side;
+            for(let c=0;c<3;c++){P[vi*3+c]=P[from*3+c];SD[vi*3+c]=SD[from*3+c];FC[vi*3+c]=FC[from*3+c];}
+            for(let c=0;c<4;c++){C[vi*4+c]=C[from*4+c];R[vi*4+c]=R[from*4+c];}C[vi*4+3]=0;
+          }continue;
         }
         const j = Math.min(n - 1, k), q = p[n - 1 - j];                 // head first
         const qa = p[Math.max(0, n - 2 - j)], qb = p[Math.min(n - 1, n - j)];
@@ -420,11 +441,10 @@ class RibbonPool {
     }
     // keep one degenerate segment drawn (warm program); zero alpha
     if (!v) { for (let k = 0; k < 4; k++) { C[k * 4 + 3] = 0; P[k * 3] = P[k * 3 + 1] = P[k * 3 + 2] = 0; } v = 0; }
-    this.mesh.geometry.setDrawRange(0, Math.max(6, slot * (this.M - 1) * 6));
+    this.mesh.geometry.setDrawRange(0, Math.max(6, slot * (this.M - 1) * 6));this._emptyUploaded=this.list.length===0;
     for (const a of [this.pos, this.col, this.rib, this.side, this.face]) { a.clearUpdateRanges(); a.addUpdateRange(0, Math.max(1, slot) * this.M * 2 * a.itemSize); a.needsUpdate = true; }
-    this._idleUploaded = this.list.length === 0;
   }
-  clear() { for (const r of this.list) { r.ended = true; r.pts.length = 0; } this.list.length = 0; this._idleUploaded = false; }
+  clear() { for (const r of this.list) { r.ended = true; r.pts.length = 0; } this.list.length = 0; this._emptyUploaded = false; }
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -731,7 +751,7 @@ void main(){
 // A retained instanced pool. Records: { a: Float32Array(16) attribute values, t, life, follow?(rec,dt)->bool }.
 class ShapePool {
   constructor(THREE, name, geometry, cap, attrs, vert, frag, additive, uTime, extra = {}, light = {}) {
-    this.cap = cap; this.recs = []; this.attrs = attrs; this._idleUploaded = false;
+    this.cap = cap; this.recs = []; this.attrs = attrs; this._emptyUploaded = false;
     const g = new THREE.InstancedBufferGeometry();
     for (const key of Object.keys(geometry.attributes)) g.setAttribute(key, geometry.attributes[key]);
     if (geometry.index) g.setIndex(geometry.index);
@@ -751,7 +771,7 @@ class ShapePool {
     return rec;
   }
   update(dt) {
-    if (!this.recs.length && this._idleUploaded) return;
+    if(this.recs.length===0&&this._emptyUploaded)return;
     for (let i = this.recs.length - 1; i >= 0; i--) {
       const r = this.recs[i]; r.t += dt;
       if (r.dead || (r.life > 0 && r.t >= r.life) || (r.follow && r.follow(r, dt) === false)) this.recs.splice(i, 1);
@@ -765,10 +785,9 @@ class ShapePool {
     }
     // degenerate warm instance: alpha 0
     const col = this.buf[2].array; col[3] = 0;
-    this.mesh.geometry.instanceCount = n + 1;
-    this._idleUploaded = n === 0;
+    this.mesh.geometry.instanceCount = n + 1;this._emptyUploaded=n===0;
   }
-  clear() { this.recs.length = 0; this._idleUploaded = false; }
+  clear() { this.recs.length = 0; this._emptyUploaded = false; }
 }
 
 // ---------------------------------------------------------------------------------------------------------------

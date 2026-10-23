@@ -4,6 +4,32 @@ import crypto from 'node:crypto';
 import {adaptMinimapDirty as baseline} from '../../patches/splatoon3/tests/fixtures/minimap-dirty-before-noop.mjs';
 import {adaptMinimapDirty as candidate} from '../../patches/splatoon3/minimap-dirty-adapter.mjs';
 import {adaptMinimapResources} from '../../patches/local-quality/minimap-resource-adapter.mjs';
+// Each reviewed epoch is an indivisible four-file source set. In particular,
+// selecting old runtime and new adapter hashes independently is not admitted.
+const COMMON_MINIMAP_PINS = Object.freeze({
+ 'inkwave-public/src/game/minimap.js':'ead39a1ac28c0095672394b19a2ae8d141adf1144e51f8c1b0e4f18078a21df6',
+ 'patches/local-quality/minimap-resource-adapter.mjs':'89ee10db310f4e541219edb0ee16b09d77a3a0e35cabe764a550bd3d665a5538'
+});
+export const REVIEWED_MINIMAP_SOURCE_EPOCHS = Object.freeze([
+ Object.freeze({name:'before-library-queue-c0938a3f',pins:Object.freeze({...COMMON_MINIMAP_PINS,
+  'patches/splatoon3/runtime/minimap-dirty.mjs':'88ba5df106df11aad4f3eb53b045b1419f972e5b35775a43f52a6c74f8d1a75e',
+  'patches/splatoon3/minimap-dirty-adapter.mjs':'ad1304e79293b4337bd2b375fc449351fb9e4ad9218992b3c0069340331fa92f'
+ })}),
+ // 749c7621 adds affine accepted-row extrema with the exact per-cell dirty
+ // generation count, and immutable [4,4]/[] Canvas line-dash inputs. It does
+ // not alter the minimap renderer or resource adapter. The Canvas comparison
+ // below remains mandatory for both source epochs and for emitted modules.
+ Object.freeze({name:'library-queue-row-bounds-and-dashes-749c7621',pins:Object.freeze({...COMMON_MINIMAP_PINS,
+  'patches/splatoon3/runtime/minimap-dirty.mjs':'198a17be2e83a8604283f13c0bf0092727e60fded4b7666d3b0211cd31c47015',
+  'patches/splatoon3/minimap-dirty-adapter.mjs':'3045d2d49c2d7b050e46bf268f60f795d96846df8574db1eff59ee2423c9386b'
+ })})
+]);
+export function assertReviewedMinimapSources(sourceHashes) {
+ const epoch=REVIEWED_MINIMAP_SOURCE_EPOCHS.find(({pins})=>
+  Object.entries(pins).every(([file,digest])=>sourceHashes?.[file]===digest));
+ if(!epoch)throw Error('Minimap source pin mismatch: unreviewed, missing, edited or mixed source epoch');
+ return epoch.name;
+}
 export async function runMinimapCanvasProbe(page,{root,evidence,sourceSha,contentHash,manifest}){
  const read=p=>fs.readFileSync(path.join(root,p),'utf8');
  const raw=read('inkwave-public/src/game/minimap.js'),runtime=read('patches/splatoon3/runtime/minimap-dirty.mjs').replace(/export /g,'');
@@ -15,7 +41,7 @@ export async function runMinimapCanvasProbe(page,{root,evidence,sourceSha,conten
  const sourceHashes=Object.fromEntries(['inkwave-public/src/game/minimap.js','patches/splatoon3/runtime/minimap-dirty.mjs','patches/splatoon3/minimap-dirty-adapter.mjs','patches/local-quality/minimap-resource-adapter.mjs','patches/splatoon3/tests/fixtures/minimap-dirty-before-noop.mjs'].map(p=>[p,hash(fs.readFileSync(path.join(root,p)))]));
  // Compare exact bytes with the build manifest's file digests; decoded UTF-8 text is only for execution.
  // Retain reviewed source pins as well as the external build-input binding.
- for(const [p,expected] of Object.entries({"inkwave-public/src/game/minimap.js": "ead39a1ac28c0095672394b19a2ae8d141adf1144e51f8c1b0e4f18078a21df6", "patches/splatoon3/runtime/minimap-dirty.mjs": "88ba5df106df11aad4f3eb53b045b1419f972e5b35775a43f52a6c74f8d1a75e", "patches/splatoon3/minimap-dirty-adapter.mjs": "ad1304e79293b4337bd2b375fc449351fb9e4ad9218992b3c0069340331fa92f", "patches/local-quality/minimap-resource-adapter.mjs": "89ee10db310f4e541219edb0ee16b09d77a3a0e35cabe764a550bd3d665a5538"}))if(sourceHashes[p]!==expected)throw Error('Minimap source pin mismatch: '+p);
+ const sourceEpoch=assertReviewedMinimapSources(sourceHashes);
  // Match the pinned *current build inputs*, not stale pre-migration hashes.
  const sourceKeys={
    'inkwave-public/src/game/minimap.js':'upstream/src/game/minimap.js',
@@ -112,6 +138,6 @@ return {cases,negativeControls:{blankRejected,corruptionRejected,clockRejected},
  for(const item of result.images)fs.writeFileSync(path.join(evidence,'minimap-'+item.name+'.png'),Buffer.from(item.png.split(',')[1],'base64'));
  if(result.failed){fs.writeFileSync(path.join(evidence,'minimap-canvas-failure.json'),JSON.stringify({...result,sourceSha,contentHash,sourceHashes,images:result.images.map(x=>x.name)},null,2));throw Error(result.error);}
  const images=result.images.map(x=>'minimap-'+x.name+'.png');delete result.images;
- return {...result,images,sourceSha,contentHash,sourceHashes,composedHashes:{baseline:hash(sources.baseline),candidate:hash(sources.candidate)},scope:'Synthetic real Canvas2D fixture comparing source baseline/candidate against actual versioned Minimap and dependency imports in an isolated iframe. Exact per-tick RGBA/state comparison; no whole-Game or device performance claim.'};
+ return {...result,images,sourceSha,contentHash,sourceHashes,sourceEpoch,composedHashes:{baseline:hash(sources.baseline),candidate:hash(sources.candidate)},scope:'Synthetic real Canvas2D fixture comparing source baseline/candidate against actual versioned Minimap and dependency imports in an isolated iframe. Exact per-tick RGBA/state comparison; no whole-Game or device performance claim.'};
 }
 

@@ -5,6 +5,8 @@ import { G } from '../../src/core/ctx.js';
 import { swimSplashVisible } from '../splatoon3/runtime/swim-stealth.mjs';
 
 const LIMIT=4, TAU=Math.PI*2;
+const PRE_RENDER=Symbol.for('inkwave.swim-film.pre-render.v1');
+const _frustum=new THREE.Frustum(),_view=new THREE.Matrix4(),_sphere=new THREE.Sphere();
 const fract=x=>x-Math.floor(x);
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 
@@ -152,10 +154,37 @@ function material(light,filmHoles) {
   return m;
 }
 
+// The film's bounding sphere (r 1.6) holds every shape the generator can make (vertices stay within ~0.91 of its
+// centre) and the vertex shader does not move them, so a camera whose frustum misses the sphere cannot see the film.
+function seenBy(camera,mesh){
+  if(!camera?.projectionMatrix||!camera.matrixWorldInverse||camera.isArrayCamera)return true;
+  _view.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);
+  _frustum.setFromProjectionMatrix(_view,THREE.WebGLCoordinateSystem,camera.reversedDepth);
+  return _frustum.intersectsSphere(_sphere.copy(mesh.geometry.boundingSphere).applyMatrix4(mesh.matrixWorld));
+}
+
+// three.js calls Scene.onBeforeRender before it culls the scene and uploads geometry. A film whose shape was held
+// back (its camera at FX update time could not see it) is generated there for any camera that can, so every drawn
+// frame shows the same shape as when it was regenerated each tick.
+function preRenderSet(scene){
+  let set=scene[PRE_RENDER];
+  if(!set){
+    set=new Set();Object.defineProperty(scene,PRE_RENDER,{value:set});
+    const before=scene.onBeforeRender;
+    scene.onBeforeRender=function(renderer,sc,camera,target){
+      const result=before.call(this,renderer,sc,camera,target);
+      for(const surface of set)surface.flush(camera);
+      return result;
+    };
+  }
+  return set;
+}
+
 class SwimSurface {
   constructor(fx){
     this.root=new THREE.Group();this.root.name='SwimConnectedFilm';fx.root.add(this.root);
     this.slots=[];this.time=0;this.disposed=false;
+    this.scene=fx.scene?.isScene?fx.scene:null;this.scene&&preRenderSet(this.scene).add(this);
   }
   touch(actor,fx){
     if(!actor||!actor.pos||!actor.vel||this.disposed)return;
@@ -170,13 +199,13 @@ class SwimSurface {
     if(!s&&actor.isLocal)s=this.slots.find(s=>!s.actor?.isLocal);
     if(s){if(s.actor!==actor)s.yaw=Math.atan2(actor.vel.x,actor.vel.z);s.actor=actor;s.last=fx._time;}
   }
-  update(fx){
+  update(fx,camera){
     this.time=fx._time;
     for(const s of this.slots){
       const a=s.actor,sp=a?Math.hypot(a.vel.x,a.vel.z):0;
       const alive=a&&a.alive!==false&&a.form==='squid'&&a.submerged&&a.grounded&&!a.climbing&&sp>2&&swimSplashVisible(a)&&this.time-s.last<.08&&(!G.actors||G.actors.includes(a));
       s.mesh.visible=!!alive;
-      if(!alive){s.actor=null;continue;}
+      if(!alive){s.actor=null;s.pending=false;continue;}
       const yaw=Math.atan2(a.vel.x,a.vel.z),delta=Math.atan2(Math.sin(yaw-s.yaw),Math.cos(yaw-s.yaw));s.yaw=yaw;
       s.up.copy(a.groundN||THREE.Object3D.DEFAULT_UP).normalize();
       s.forward.set(a.vel.x,0,a.vel.z).addScaledVector(s.up,-s.up.dot(a.vel)).normalize();
@@ -185,11 +214,15 @@ class SwimSurface {
       s.mesh.position.copy(a.pos);s.mesh.quaternion.setFromRotationMatrix(s.basis);s.mesh.material.color.copy(a.color);s.mesh.material.emissive.copy(a.color).multiplyScalar(.06);
       const t=this.time+s.phase;s.mesh.material.userData.filmTime.value=t;
 
-      updateSwimFilmGeometry(s.mesh.geometry,this.time+s.phase,sp/11.8,clamp(delta/Math.max(1e-4,fx._dt)*.04,-1,1));
+      // Rebuilding ~1,700 vertices and their normals is the film's whole CPU cost; skip it while no camera sees it.
+      s.shapeTime=this.time+s.phase;s.shapeSpeed=sp/11.8;s.shapeTurn=clamp(delta/Math.max(1e-4,fx._dt)*.04,-1,1);s.pending=true;
+      if(camera===undefined||(s.mesh.updateMatrixWorld(),seenBy(camera,s.mesh)))this.shape(s);
     }
   }
-  clear(){for(const s of this.slots){s.actor=null;s.mesh.visible=false;}}
-  dispose(){if(this.disposed)return;this.disposed=true;this.root.removeFromParent();for(const s of this.slots){s.mesh.geometry.dispose();s.mesh.material.dispose();s.actor=null;}this.slots.length=0;}
+  shape(s){s.pending=false;updateSwimFilmGeometry(s.mesh.geometry,s.shapeTime,s.shapeSpeed,s.shapeTurn);}
+  flush(camera){for(const s of this.slots)if(s.pending&&s.mesh.visible&&seenBy(camera,s.mesh))this.shape(s);}
+  clear(){for(const s of this.slots){s.actor=null;s.mesh.visible=false;s.pending=false;}}
+  dispose(){if(this.disposed)return;this.disposed=true;this.scene?.[PRE_RENDER]?.delete(this);this.root.removeFromParent();for(const s of this.slots){s.mesh.geometry.dispose();s.mesh.material.dispose();s.actor=null;}this.slots.length=0;}
 }
 
 export function touchSwimSurface(fx,actor){
@@ -197,6 +230,6 @@ export function touchSwimSurface(fx,actor){
   if(!actor||fx._inkVolumeDisposed)return;
   (fx.swimSurface||=(new SwimSurface(fx))).touch(actor,fx);
 }
-export function updateSwimSurface(fx){fx.swimSurface?.update(fx);}
+export function updateSwimSurface(fx,camera){fx.swimSurface?.update(fx,camera);}
 export function clearSwimSurface(fx){fx.swimSurface?.clear();}
 export function disposeSwimSurface(fx){fx.swimSurface?.dispose();fx.swimSurface=null;}

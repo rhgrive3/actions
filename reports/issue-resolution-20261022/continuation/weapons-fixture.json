@@ -1,0 +1,73 @@
+{
+  "issue": 1812,
+  "reference": {
+    "title": "Splatoon 3",
+    "version": "11.3.0",
+    "source": "Leanny/splat3@7280ff9cde8bb1c5dcef46c700c326471584d2e6"
+  },
+  "baseline": "cdcf4ef54495d90f53eb1e2d18859981755d42c6",
+  "fixtureFile": "patches/splatoon3/tests/catalog-source-launch-1130.test.mjs",
+  "fixtureSha256": "9585d3bcfaf49daf833318805efe2a707dc60ec5bb703fcc1f1aee4736eb605b",
+  "existingConditions": {
+    "sourceBirth": 330,
+    "nearWallBirth": 22
+  },
+  "newConditions": {
+    "total": 780,
+    "weapons": 8,
+    "nativeModes": 2,
+    "addedModes": 11,
+    "pitches": [
+      -70,
+      -45,
+      0,
+      40,
+      70
+    ],
+    "cover": [
+      "open",
+      "real OBB"
+    ],
+    "reticles": [
+      "stale-horizontal",
+      "close-ground"
+    ],
+    "renderHz": [
+      30,
+      60,
+      120
+    ],
+    "fixedHz": 60,
+    "secondsPerCondition": 5
+  },
+  "nativeOwner": {
+    "id": "roller",
+    "name": "Splat Roller",
+    "worldContact": "actual native sweep; persistent wall-drop contact is observed separately from termination"
+  },
+  "newAssertions": [
+    "native and added launch camera elevation signs",
+    "every primary real projectile reaches actual terrain contact or its own lifetime/range expiry",
+    "finite contact on actual Level polygon",
+    "real wall contacts lie on real cover, high trajectories may clear cover",
+    "identical complete true-birth/contact/expiry traces across reticle and render cadence",
+    "two admitted Brush swing directions",
+    "counterfactual old convergence changes real Carbon and Octobrush impacts"
+  ],
+  "verification": {
+    "command": "timeout --kill-after=5s 120s node --max-old-space-size=768 --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/catalog-source-launch-1130.test.mjs",
+    "log": ".ci-scratch/continuation-weapons/source-launch-full.log",
+    "tests": 11,
+    "pass": 11,
+    "fail": 0,
+    "skipped": 0,
+    "durationMs": 30017.541936
+  },
+  "limits": [
+    "Character pose and movement stub remain in VM fixture; source-loaded native browser evidence is independent.",
+    "No Nintendo Switch physical capture, statistical spread distribution, native stage or retail image equivalence.",
+    "Own source lifetime/range expiration is not relabeled as a terrain collision.",
+    "Deterministic midpoint RNG; true per-unit source heading checks are in the existing birth matrix."
+  ],
+  "runtimeChanged": false
+}

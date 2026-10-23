@@ -35,10 +35,10 @@ for(const mode of ['unshielded','far','friendly','remote-victim','future-life','
   nm.onMessage('p5',JSON.parse(JSON.stringify({k:'t',ts:1000,r:2,u:60000,l:{37:0},e:[birth]})));
   Object.assign(peer,{tr:1000,lastTs:1000,sim:60000,off:0});nm._playEvents();
   const bomb=f.G.projectiles.bombs.find(b=>b.owner===attacker);assert.ok(bomb,mode+' authenticated NetMatch bomb birth');assert.equal(bomb.ghost,true);assert.equal(bomb._netBornLocal,1000);bomb.age=1;
-  const objectSnapshot=()=>JSON.stringify([...f.bigBubblerDomes(),...f.bigBubblerRemoteDomes()].map(d=>({id:d.id,hp:d.hp,fieldHp:d.fieldHp,remote:d.remote})));const objectBefore=objectSnapshot();const originalDamage=victim.damage;
+  const objectSnapshot=()=>JSON.stringify([...f.bigBubblerDomes(),...f.bigBubblerRemoteDomes()].map(d=>({id:d.id,hp:d.hp,fieldHp:d.fieldHp,remote:d.remote})));const objectBefore=objectSnapshot();const originalDamage=victim.damage;const sentBefore=sent.length;
   f.G.projectiles._explodeBomb(bomb);
   assert.equal(victim.damage,originalDamage,'actual Actor receiver stays installed');
-  assert.equal(objectSnapshot(),objectBefore,mode+' object snapshots unchanged');assert.equal(proposals.length,0,mode+' no replica object damage proposal');assert.equal(sent.length,0,mode+' no shooter-owned damage packet');assert.equal(f.G.projectiles.s3ExplosionDefense,undefined);
+  assert.equal(objectSnapshot(),objectBefore,mode+' object snapshots unchanged');assert.equal(proposals.length,0,mode+' no replica object damage proposal');assert.equal(sent.length,sentBefore,mode+' no shooter-owned damage packet beyond prior codec negotiation');assert.equal(f.G.projectiles.s3ExplosionDefense,undefined);
   const shouldDamage=['unshielded','owned-inside','replica-inside'].includes(mode);
   assert.equal(victim.hp<100,shouldDamage,mode+' native HP outcome');
   if(shouldDamage){assert.ok(damageEvents.length>0);assert.ok(victim.lastDamage===0);}

@@ -1,0 +1,135 @@
+{
+  "base": "abd316f3e39700cd14ff7a9a305df899f0ce9c7b",
+  "repairCommit": "0caeade82041ebfd2cf80e2cee984b401d921034",
+  "repairTree": "d826507ae5ff9041bb38dd2222134cdc978f4df8",
+  "copiedFrom": "91db92398b44ee646d3d9f7571736e3e68fec133",
+  "changedPaths": [
+    "patches/network-replication/tests/combat-pvp-cap-queue.metadata.test.mjs",
+    "scripts/tests/inkwave-combat-provenance.test.mjs",
+    "scripts/tests/inkwave-open-pr-source-pairs.test.mjs"
+  ],
+  "runtimeChangedPaths": [],
+  "ownerClockModulePresent": false,
+  "clockDependentFixturesUnchangedFromBase": [
+    "patches/network-replication/tests/issue-1033-handoff-hit.test.mjs",
+    "patches/network-replication/tests/issue-1185-match-boundary-hit.test.mjs",
+    "patches/network-replication/tests/roller-clothing-fixture.mjs"
+  ],
+  "baseRuntimeMatchesF9": true,
+  "node": "v24.19.0",
+  "workflowNodeMajor": 22,
+  "nodeVersionLimitation": "Local Node24 result is not a Node22 CI execution",
+  "testConcurrency": 1,
+  "heapMiB": 1024,
+  "command": "node --max-old-space-size=1024 --test --test-concurrency=1 --test-reporter=tap patches/network-replication/tests/combat-pvp-cap-queue.metadata.test.mjs scripts/tests/inkwave-combat-provenance.test.mjs scripts/tests/inkwave-open-pr-source-pairs.test.mjs scripts/tests/inkwave-boss-positive-proof.test.mjs",
+  "result": {
+    "tests": 72,
+    "pass": 72,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "duration_ms": 8435.309043
+  },
+  "metadataCases": 2,
+  "relatedThreeScriptCases": 70,
+  "thirdScript": "scripts/tests/inkwave-boss-positive-proof.test.mjs",
+  "assertionsRemoved": false,
+  "gateAllowlistOrExpectedHashesChanged": false,
+  "negativesRetained": [
+    "missing/changed/mixed historical tuples",
+    "current checkout pose adapter drift",
+    "Roller retained presentation without accepted contact",
+    "range/cooldown and cap/proof/pending boundaries"
+  ],
+  "historicalFixture": {
+    "commit": "f31238a48b9d1a4af2d4f5f5f9182af777a79c83",
+    "fixture": "scripts/fixtures/inkwave-pr1746-pose-sources.json.gz",
+    "sha256": "46f36dda36be5871c1ecc077a5614b13d1a3e87c3cf7879e484c82e4b72ccddd",
+    "unchangedFromBase": true,
+    "files": [
+      {
+        "path": "patches/splatoon3/adapter.mjs",
+        "gitBlob": "31346b2c8ed07fa0f96721ae40d5f88b39294c1f",
+        "sha256": "0e21f8da2324d3d3264986c79c3e875ce26cc8d854d4850048783b62248d977f"
+      },
+      {
+        "path": "patches/splatoon3/body-proportion-adapter.mjs",
+        "gitBlob": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf",
+        "sha256": "e02da6606eee59fc9d554f116ae66aca51c3a5aca7df9fed4f3f8d2fd4bd5ecc"
+      },
+      {
+        "path": "patches/splatoon3/runtime/body-proportion.mjs",
+        "gitBlob": "5d7dfb8103b4375379ccb9c8fda53e615d00adff",
+        "sha256": "e5058d0603b374b926adcc50bd641591a7ab416829fc4031a94d79f7611b0de5"
+      },
+      {
+        "path": "patches/splatoon3/runtime/idle-motion.mjs",
+        "gitBlob": "06d276d899aa764df7e75d41612f7ca1ec22953b",
+        "sha256": "426e2ebd7a4d420651ca03b93fd3b8ac9c8db1ec1a80e3d13d401bca7a1a5c33"
+      },
+      {
+        "path": "patches/splatoon3/runtime/install.mjs",
+        "gitBlob": "56b9b99fbb79d8650e7e132fd187f1514f27c62d",
+        "sha256": "c5991f05eaa7b8b81ca43f36d9278237e00dfc44c714b7a60fe635203c98cb0f"
+      },
+      {
+        "path": "patches/splatoon3/runtime/roller.mjs",
+        "gitBlob": "d8bec5a2220ebf970c489969fa41d9e6f74affed",
+        "sha256": "1c0e1582b34f744a1d30a1a5fcc021c8745c1cf736dbce4fc9de5ac5582493bb"
+      },
+      {
+        "path": "patches/splatoon3/runtime/source-posture.mjs",
+        "gitBlob": "a31d8224d129665917632ee7083c4081de5803a4",
+        "sha256": "863a00703d14d7e20d505d51874d59457b6575d562cdb092242927213a3702f5"
+      },
+      {
+        "path": "patches/splatoon3/upstream-lock.json",
+        "gitBlob": "db19eaaee31820263cfd9871b0ebe90db9133f3d",
+        "sha256": "c084b9d6e1765aaf252dfaf621803c75f98891ec850ca398faac41df38733d01"
+      },
+      {
+        "path": "patches/splatoon3/runtime/weapon-handoff-motion.mjs",
+        "gitBlob": "32e456e3a80302621b6d7ca73f3ce8c5bf1f6e7f",
+        "sha256": "86fed70ff108374962866bd09c460e32d31073c66d7b67b083f8b7fa537fe3a7"
+      },
+      {
+        "path": "patches/splatoon3/runtime/weapon-models/brushes.mjs",
+        "gitBlob": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2",
+        "sha256": "f648d7ec28e39760069660119246d5826376df70065816d0ca6cb008263f93da"
+      },
+      {
+        "path": "patches/splatoon3/runtime/weapon-models/family-holds.mjs",
+        "gitBlob": "91a672123486114f9849de61509c6ee6ec96363f",
+        "sha256": "1c607ea9e205bc0c5a41e99080aa5d3ed8ccf28ad08a0fa5bb065ccfe66a1ca4"
+      },
+      {
+        "path": "patches/splatoon3/runtime/weapon-models/kit.mjs",
+        "gitBlob": "3ab94f55c299b56485880ede17b92d5150101f7d",
+        "sha256": "34b8ef1a0850b419b9eadc299281c321831a41466cf2c1dbe95bc0cbbc7f0317"
+      },
+      {
+        "path": "patches/splatoon3/runtime/weapon-models/registry.mjs",
+        "gitBlob": "7f651d20395cb8b2622ca0dcd9180019b7533ce1",
+        "sha256": "ab10320acfb1abcbf0a1a24485c46d45e2b52a53503909c5abc04e485b0bc456"
+      },
+      {
+        "path": "patches/splatoon3/runtime/weapon-models/stringers.mjs",
+        "gitBlob": "ba2e3856064aed3a3bcb0d74c97bad0921d5c94e",
+        "sha256": "2874189b88a3e7e749c3b7c5c9e2f81eddcaf512579bcf983b22b5d5747308e9"
+      },
+      {
+        "path": "patches/splatoon3/runtime/weapon-models/variants-milk-followup.mjs",
+        "gitBlob": "9f68724343748037145c552937025d74ac5df8b9",
+        "sha256": "37ac0f9ddc36949b9ad8e243c917e7fdffc27ffa85365e02a307b5953967c3bb"
+      },
+      {
+        "path": "patches/splatoon3/weapon-catalog-adapter.mjs",
+        "gitBlob": "55582fd6109ff814ed107577db74b990d755a926",
+        "sha256": "2957ddee99cdc8dbe189b1162cee8d5deb35728e970e73fd76c4660cae5f799c"
+      }
+    ]
+  },
+  "trackedReportsEdited": false,
+  "remoteMutation": false,
+  "testsRunBeforeCommitWithIdenticalCommittedFileBytes": true
+}

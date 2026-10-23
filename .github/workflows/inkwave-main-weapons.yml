@@ -22,6 +22,21 @@ on:
       - 'patches/splatoon3/tests/bloblobber-launch-sweep.test.mjs'
       - 'patches/splatoon3/tests/splatana-lobe-hit-order.test.mjs'
       - 'patches/splatoon3/tests/source-fixture.mjs'
+      - 'patches/splatoon3/tests/issue-771-roller-speed-swerve.test.mjs'
+      - 'patches/splatoon3/tests/reverse-shot-release.test.mjs'
+      - 'patches/splatoon3/tests/source-posture.test.mjs'
+      - 'patches/splatoon3/tests/roller-flick-movement.test.mjs'
+      - 'patches/splatoon3/tests/roller.test.mjs'
+      - 'patches/splatoon3/tests/bomb-kit-fidelity.test.mjs'
+      - 'patches/splatoon3/tests/air-attack-acceleration.test.mjs'
+      - 'patches/splatoon3/tests/dynamo-handle-center.test.mjs'
+      - 'patches/splatoon3/tests/brella-physics.test.mjs'
+      - 'patches/splatoon3/tests/stringer-source-1130.test.mjs'
+      - 'patches/splatoon3/tests/stringer-tilt-motion.test.mjs'
+      - 'patches/splatoon3/tests/issue-1431-explosher-authored-muzzle.test.mjs'
+      - 'patches/splatoon3/tests/issue-1431-volume-pose-connection.test.mjs'
+      - 'patches/splatoon3/tests/issue-1813-dynamo-unit-authority-live.test.mjs'
+      - 'patches/splatoon3/tests/kit-big-bubbler-contact-settlement.test.mjs'
       - 'patches/splatoon3/tests/roller-holding-pivot.test.mjs'
       - 'scripts/check-inkwave-saber-origins-browser.mjs'
       - 'scripts/check-inkwave-added-family-paint-browser.mjs'
@@ -31,9 +46,14 @@ on:
       - 'scripts/lib/inkwave-roller-blob-provenance.mjs'
       - 'scripts/tests/inkwave-roller-blob-provenance.test.mjs'
       - 'scripts/tests/inkwave-roller-uuid-comparison.test.mjs'
+      - 'scripts/lib/inkwave-generated-music-worker.mjs'
+      - 'scripts/lib/inkwave-native-module-worker.mjs'
+      - 'scripts/tests/inkwave-native-module-worker.test.mjs'
+      - 'scripts/tests/inkwave-roller-blob-worker-binding.test.mjs'
       - 'patches/splatoon3/uuid-random-adapter.mjs'
       - 'scripts/lib/inkwave-range-menu-entry.mjs'
       - 'patches/local-quality/roller-motion.mjs'
+      - 'scripts/tests/inkwave-added-ci-contracts.test.mjs'
       - '.github/workflows/inkwave-main-weapons.yml'
   pull_request:
     paths:
@@ -56,6 +76,21 @@ on:
       - 'patches/splatoon3/tests/bloblobber-launch-sweep.test.mjs'
       - 'patches/splatoon3/tests/splatana-lobe-hit-order.test.mjs'
       - 'patches/splatoon3/tests/source-fixture.mjs'
+      - 'patches/splatoon3/tests/issue-771-roller-speed-swerve.test.mjs'
+      - 'patches/splatoon3/tests/reverse-shot-release.test.mjs'
+      - 'patches/splatoon3/tests/source-posture.test.mjs'
+      - 'patches/splatoon3/tests/roller-flick-movement.test.mjs'
+      - 'patches/splatoon3/tests/roller.test.mjs'
+      - 'patches/splatoon3/tests/bomb-kit-fidelity.test.mjs'
+      - 'patches/splatoon3/tests/air-attack-acceleration.test.mjs'
+      - 'patches/splatoon3/tests/dynamo-handle-center.test.mjs'
+      - 'patches/splatoon3/tests/brella-physics.test.mjs'
+      - 'patches/splatoon3/tests/stringer-source-1130.test.mjs'
+      - 'patches/splatoon3/tests/stringer-tilt-motion.test.mjs'
+      - 'patches/splatoon3/tests/issue-1431-explosher-authored-muzzle.test.mjs'
+      - 'patches/splatoon3/tests/issue-1431-volume-pose-connection.test.mjs'
+      - 'patches/splatoon3/tests/issue-1813-dynamo-unit-authority-live.test.mjs'
+      - 'patches/splatoon3/tests/kit-big-bubbler-contact-settlement.test.mjs'
       - 'patches/splatoon3/tests/roller-holding-pivot.test.mjs'
       - 'scripts/check-inkwave-saber-origins-browser.mjs'
       - 'scripts/check-inkwave-added-family-paint-browser.mjs'
@@ -65,9 +100,14 @@ on:
       - 'scripts/lib/inkwave-roller-blob-provenance.mjs'
       - 'scripts/tests/inkwave-roller-blob-provenance.test.mjs'
       - 'scripts/tests/inkwave-roller-uuid-comparison.test.mjs'
+      - 'scripts/lib/inkwave-generated-music-worker.mjs'
+      - 'scripts/lib/inkwave-native-module-worker.mjs'
+      - 'scripts/tests/inkwave-native-module-worker.test.mjs'
+      - 'scripts/tests/inkwave-roller-blob-worker-binding.test.mjs'
       - 'patches/splatoon3/uuid-random-adapter.mjs'
       - 'scripts/lib/inkwave-range-menu-entry.mjs'
       - 'patches/local-quality/roller-motion.mjs'
+      - 'scripts/tests/inkwave-added-ci-contracts.test.mjs'
       - '.github/workflows/inkwave-main-weapons.yml'
   workflow_dispatch:
 permissions:
@@ -83,13 +123,32 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/*/
+            /.github/
+            /inkwave-public/
+            /patches/
+            /scripts/
+            /server/
+            /tests/
+            /tools/
+            !/tools/inkwave-modeler/
+            /reports/
+            /docs/
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Verify checkout, concurrency and complete test routing contracts
+        run: node --test scripts/tests/inkwave-added-ci-contracts.test.mjs
       - name: Verify actual main-weapon input, resources, cadence and Roller fan
         run: |
           git rev-parse HEAD
           node --experimental-vm-modules --test patches/splatoon3/tests/main-weapon-catalog.test.mjs patches/splatoon3/tests/issue-771-roller-speed-swerve.test.mjs patches/splatoon3/tests/catalog-projectile-vfx-range.test.mjs patches/splatoon3/tests/bloblobber-flat-45-audit.test.mjs patches/splatoon3/tests/bloblobber-launch-sweep.test.mjs patches/splatoon3/tests/catalog-explosher-aim-pitch.test.mjs patches/splatoon3/tests/catalog-flick-damage-source.test.mjs patches/splatoon3/tests/catalog-source-launch-1130.test.mjs patches/splatoon3/tests/catalog-depletion-1130.test.mjs
+      - name: Verify actual source-pose Explosher mouth, stage guard and emitted authority
+        run: node --max-old-space-size=1536 --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/issue-1431-explosher-authored-muzzle.test.mjs patches/splatoon3/tests/issue-1431-volume-pose-connection.test.mjs patches/splatoon3/tests/issue-1813-dynamo-unit-authority-live.test.mjs patches/splatoon3/tests/kit-big-bubbler-contact-settlement.test.mjs
       - name: Verify backward shot-release facing and source Hold gait
         run: node --experimental-vm-modules --test patches/splatoon3/tests/reverse-shot-release.test.mjs patches/splatoon3/tests/source-posture.test.mjs
       - name: Verify Roller swing and Curling bomb production paths
@@ -109,6 +168,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/*/
+            /.github/
+            /inkwave-public/
+            /patches/
+            /scripts/
+            /server/
+            /tests/
+            /tools/
+            !/tools/inkwave-modeler/
+            /reports/
+            /docs/
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -152,6 +226,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/*/
+            /.github/
+            /inkwave-public/
+            /patches/
+            /scripts/
+            /server/
+            /tests/
+            /tools/
+            !/tools/inkwave-modeler/
+            /reports/
+            /docs/
       - name: Select Roller and shared pose changes
         id: changes
         shell: bash
@@ -165,7 +254,7 @@ jobs:
               run=false
               while IFS= read -r file; do
                 case "$file" in
-                  .github/workflows/inkwave-main-weapons.yml|scripts/check-inkwave-roller-scale-range.mjs|scripts/lib/inkwave-roller-uuid-comparison.mjs|scripts/lib/inkwave-roller-blob-provenance.mjs|scripts/tests/inkwave-roller-blob-provenance.test.mjs|scripts/tests/inkwave-roller-uuid-comparison.test.mjs|patches/splatoon3/uuid-random-adapter.mjs|scripts/lib/inkwave-range-menu-entry.mjs|scripts/build-inkwave.mjs|scripts/inkwave-source-composition.mjs) run=true ;;
+                  .github/workflows/inkwave-main-weapons.yml|scripts/check-inkwave-roller-scale-range.mjs|scripts/lib/inkwave-roller-uuid-comparison.mjs|scripts/lib/inkwave-roller-blob-provenance.mjs|scripts/tests/inkwave-roller-blob-provenance.test.mjs|scripts/tests/inkwave-roller-uuid-comparison.test.mjs|scripts/lib/inkwave-generated-music-worker.mjs|scripts/lib/inkwave-native-module-worker.mjs|scripts/tests/inkwave-native-module-worker.test.mjs|scripts/tests/inkwave-roller-blob-worker-binding.test.mjs|patches/splatoon3/uuid-random-adapter.mjs|scripts/lib/inkwave-range-menu-entry.mjs|scripts/build-inkwave.mjs|scripts/inkwave-source-composition.mjs) run=true ;;
                   inkwave-public/src/core/*|inkwave-public/src/game/*|inkwave-public/src/world/paint.js|inkwave-public/src/config.js|inkwave-public/src/main.js) run=true ;;
                   patches/local-quality/roller-motion.mjs|patches/network-replication/roller-*|patches/splatoon3/weapon-catalog-adapter.mjs) run=true ;;
                   patches/splatoon3/runtime/roller*|patches/splatoon3/runtime/*motion*|patches/splatoon3/runtime/source-*|patches/splatoon3/runtime/weapon*|patches/splatoon3/runtime/main-*|patches/splatoon3/runtime/movement*|patches/splatoon3/runtime/body-*|patches/splatoon3/runtime/controller-*|patches/splatoon3/runtime/render.mjs|patches/splatoon3/runtime/install.mjs) run=true ;;
@@ -233,7 +322,7 @@ jobs:
           # Raw83 source/build/manifests are never changed. This creates a separate
           # QA-only response overlay using the existing production source adapter.
           INKWAVE_ROLLER_BASELINE_SOURCE=work/roller-grip-baseline INKWAVE_ROLLER_BASELINE_SITE=work/roller-grip-site-baseline INKWAVE_ROLLER_WORKER_SITE=work/roller-grip-site-baseline node --test scripts/tests/inkwave-roller-uuid-comparison.test.mjs scripts/tests/inkwave-roller-blob-provenance.test.mjs
-          INKWAVE_ROLLER_WORKER_SITE=work/roller-grip-site-candidate node --test scripts/tests/inkwave-roller-blob-provenance.test.mjs
+          INKWAVE_ROLLER_WORKER_SITE=work/roller-grip-site-candidate node --test scripts/tests/inkwave-roller-blob-provenance.test.mjs scripts/tests/inkwave-native-module-worker.test.mjs scripts/tests/inkwave-roller-blob-worker-binding.test.mjs
           node scripts/lib/inkwave-roller-uuid-comparison.mjs work/roller-grip-baseline work/roller-grip-site-baseline work/roller-grip-evidence/uuid-isolation > work/roller-grip-evidence/uuid-isolation-build.json
       - name: Capture baseline at the shipped 180-tick rolling state
         id: baseline_capture

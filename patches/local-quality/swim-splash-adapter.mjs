@@ -31,7 +31,7 @@ export function adaptSwimSplash(rel, code, replaceOnce) {
     if (carveStart < 0 || carveEnd < 0) throw new Error('INKWAVE swim film conflict: missing carve recipe');
     code = replaceOnce(code, code.slice(carveStart,carveEnd),
       '  swimCarve() { /* Continuous film follows the actual swimming heading. */ }\n', 'no independent turn beads');
-    code = replaceOnce(code, '    this._updateDrops(dt);', '    updateSwimSurface(this);\n    this._updateDrops(dt);', 'continuous film frame owner');
+    code = replaceOnce(code, '    this._updateDrops(dt);', '    updateSwimSurface(this, camera);\n    this._updateDrops(dt);', 'continuous film frame owner');
     code = replaceOnce(code, '    this.dN = 0; this.dGeo.instanceCount = 0;', '    clearSwimSurface(this);\n    this.dN = 0; this.dGeo.instanceCount = 0;', 'film match reset');
     code = replaceOnce(code, '    this.scene.remove(this.root);', '    this.scene.remove(this.root);\n    disposeSwimSurface(this);', 'film resource lifetime');
     return "import { touchSwimSurface, updateSwimSurface, clearSwimSurface, disposeSwimSurface } from '../../patches/local-quality/swim-surface.mjs';\n" + code;

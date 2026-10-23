@@ -68,22 +68,34 @@ async function verify(response, expected) {
   }
   return response;
 }
-async function timedFetch(request, timeout) {
+async function timedFetch(request, timeout, inspect) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
-  try { return await fetch(request, { signal: controller.signal }); }
+  try {
+    const response = await fetch(request, { signal: controller.signal });
+    // fetch resolves at headers. Keep its signal live through integrity reads
+    // so a stalled body cannot outlive the existing download deadline.
+    if (inspect) await inspect(response);
+    return response;
+  }
   finally { clearTimeout(timer); }
 }
 async function verifiedAsset(request, expected) {
-  const response = await timedFetch(request, 30000);
-  try { await verify(response, expected); return response; }
+  let response;
+  try {
+    return await timedFetch(request, 30000, async value => {
+      response = value;
+      await verify(value, expected);
+    });
+  }
   catch (error) {
     // An interrupted deployment can leave a cached 404 or mismatching 200 in
     // the HTTP cache. Retry the EXACT revision URL once, bypassing that cache.
+    if (!response) throw error;
     if (response.status !== 200 && response.status !== 404 && response.status !== 410) return response;
-    const fresh = await timedFetch(new Request(request, { cache: 'reload' }), 30000);
-    if (fresh.ok) await verify(fresh, expected);
-    return fresh;
+    return timedFetch(new Request(request, { cache: 'reload' }), 30000, async fresh => {
+      if (fresh.ok) await verify(fresh, expected);
+    });
   }
 }
 async function populate(cache, rel, reusable, reusableRevision) {
@@ -121,8 +133,8 @@ async function installSnapshot() {
   const cache = await caches.open(CURRENT);
   const reusable = active && active !== BUILD.revision ? await complete(active) : null;
   try {
-    const html = await timedFetch(new Request(INDEX_URL, { cache: 'no-cache', credentials: 'same-origin' }), 30000);
-    await verify(html, BUILD.index);
+    const html = await timedFetch(new Request(INDEX_URL, { cache: 'no-cache', credentials: 'same-origin' }), 30000,
+      response => verify(response, BUILD.index));
     // Store the verified body now; retaining an unread response across a long
     // precache queue is unnecessary. Without COMPLETE_URL this is not a usable
     // offline snapshot, and failure still deletes the candidate transaction.

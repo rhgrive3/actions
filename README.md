@@ -10,6 +10,7 @@
 | 修正先とパッチの役割を調べる | [パッチ構成](patches/README.md) |
 | 並行作業で変更を持ち込む | [コントリビューション手順](CONTRIBUTING.md) |
 | テスト結果・比較資料を探す | [ドキュメント案内](docs/README.md) |
+| ゲームアカウント（ログイン）と Cloudflare Workers 配信 | [アカウントと Workers 配信](account/README.md) |
 | 他リポジトリでコマンド・テストを実行する | [PR Worker の運用](docs/pr-worker.md) |
 | Hex の性能・実ゲーム・品質を並行計測する | [Hex worker lanes](lanes/README.md) |
 
@@ -21,6 +22,7 @@
 | [`patches/`](patches/) | ビルド時の変換、実行時の追加機能、参照値、回帰テスト |
 | [`scripts/`](scripts/) | ビルド、検証、計測、画像生成。共通処理は `scripts/lib/`、回帰テストは `scripts/tests/` |
 | [`server/`](server/) | Cloudflare Workers / Durable Objects によるオンライン対戦リレー |
+| [`account/`](account/) | ゲームアカウントのログイン UI（Vite でバンドル）と、ゲーム本体の配信・アカウント API を担う Cloudflare Worker（D1） |
 | [`tools/`](tools/) | キャラクター制作・アセット QA・音声関連の補助ツール |
 | [`docs/`](docs/)、[`reports/`](reports/) | 開発・運用手順と、変更ごとの調査結果・証跡 |
 | [`remaining/`](remaining/) | 各作業が残した未完了範囲の記録。現在の完了状況は関連 PR・後続レポートと照合する |
@@ -29,7 +31,7 @@
 
 ## INKWAVE の最初の確認
 
-Node.js 22 以上を使用し、リポジトリのルートで実行します。ルートに `package.json` はなく、ビルド用ツールは CI と同じバージョンで個別に導入します。
+Node.js 22 以上を使用し、リポジトリのルートで実行します。ルートの `package.json` がビルド・検証コマンドとビルド用ツールのバージョンを管理します。以下は CI と同じバージョンを使う手順です。
 
 ```sh
 npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2

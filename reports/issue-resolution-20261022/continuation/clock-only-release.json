@@ -1,0 +1,146 @@
+{
+  "date": "2026-10-22",
+  "issue": 1767,
+  "status": "source_build_and_native_startup_acceptance_passed",
+  "base": "855b0e187f4e6a367c21ac12745520f3c356c29a",
+  "sourceCommit": "2d2b8aa25795f351f6e206488c89af7255595be6",
+  "sourceTree": "63acdcbd3667c2042a2c476ca86c2119ded8cdb3",
+  "branch": "fix/owner-clock-only-20261022",
+  "worktree": "/workspace/scratch/actions-owner-clock-only",
+  "site": "/workspace/scratch/actions-owner-clock-only/.built-site/owner-clock-2d2b8aa",
+  "compat": "iw-gameplay-20261022-owner-clock-v1",
+  "build": {
+    "sourceSha": "2d2b8aa25795f351f6e206488c89af7255595be6",
+    "checkedInputs": 1364,
+    "inputHash": "c2722d71bdd095d0467ff7f9fd2085fb4b8f3716e2fddb091b07ce34e6251d8e",
+    "contentHash": "34bb39363ccdf22e70ad5a798bd246fde9cb13763587ebe94f250ec64233f1f1",
+    "revision": "a3bc9a7248c8340667783453abb1dee1e1fea807f05b62a348c69d25dbbee7c7",
+    "relaySha256": "54cd3a92c3f56f94b6106fb2d543a3d40a0cc9dd613d2e37bc22fdb7a5be0ec0",
+    "harnessSha256": {
+      "scripts/check-inkwave-native-online.mjs": "46882cda2600f91030e997e791c33b097fa69aeca127da1f75b83d98aca2126f",
+      "scripts/lib/inkwave-owner-clock-browser.mjs": "0642c58a83c0175552e8de02f146ee841c7d5f68f42c77f48a3fbbb9148d97ce",
+      "scripts/lib/inkwave-local-relay-fixture.mjs": "52e8ebed76e2be36471bc0f05a28e9a911d8d25f80accdca9fb213c2e5ee359a"
+    },
+    "clockOnlyEpoch": "iw-gameplay-20261022-owner-clock-v1",
+    "chargerContactArtifact": false
+  },
+  "clockBytesEqualAcceptedFoundation": {
+    "patches/network-replication/owner-clock.mjs": "74ef8b9f945d2da91b702ecab296d25ec59e5184bdbf9602a92bab511f50eefa",
+    "patches/network-replication/snapshot-guard.mjs": "e3724ac1014550bebeda6287e4c74087610ccbcf93f5803db40950409d7a96e5",
+    "patches/network-replication/tests/owner-clock-origin.test.mjs": "0d378f5b870667a83af4b82ebb7d6210b94d62f13fc5d9f01f2cca8433bcd434",
+    "patches/network-replication/tests/issue-1767-session-clock.test.mjs": "20d525eca45ab2d8aa871288bd6319983b8a93f93e02ab0374da21c9586f596e"
+  },
+  "combatBaselineUnchanged": {
+    "patches/network-replication/combat-provenance.mjs": "2ba63ec04d7bdaa6cc87e5263b9122958266a799d5677d0952edf4c36d97adfe",
+    "patches/network-replication/combat-provenance-adapter.mjs": "1cf384d1846dfac7f07100688fb9860f524632eee84a1a3a3c72569205f6eaf4",
+    "patches/splatoon3/runtime/weapons-charger-flight.mjs": "979955973b33ada9657ff8a65e388c6104e61b9b73c6064eac5eb48055651475"
+  },
+  "chargerContactModulePresent": false,
+  "weaponRuntimeChangedPaths": [],
+  "validation": [
+    {
+      "scope": "source clock/startup/snapshot/queue",
+      "passed": 25,
+      "failed": 0,
+      "heapMiB": 384,
+      "durationMs": 11205.314279,
+      "log": ".ci-scratch/owner-clock-only/clock25.log"
+    },
+    {
+      "scope": "whole source outbound-prefix",
+      "passed": 42,
+      "failed": 0,
+      "heap": "normal Node default",
+      "durationMs": 46431.91495,
+      "log": ".ci-scratch/owner-clock-only/outbound42.log"
+    },
+    {
+      "scope": "relay harness and wire preservation",
+      "passed": 11,
+      "failed": 0,
+      "heapMiB": 384,
+      "durationMs": 219.629791,
+      "log": ".ci-scratch/owner-clock-only/relay11.log"
+    }
+  ],
+  "optionalEmittedRun": {
+    "passed": 64,
+    "failed": 3,
+    "durationMs": 33314.498811,
+    "log": ".ci-scratch/owner-clock-only/emitted67.log",
+    "clockAndOutboundCasesPassed": 60,
+    "failureScope": "Three existing queue-bugs-recovery source-text/AST extraction checks assume preserved identifier names and spacing, incompatible with the normal minified artifact; no runtime clock/startup/snapshot/outbound case failed.",
+    "failingNames": [
+      "production composition exposes all queued fixes and retains both Turf and Boss result gates",
+      "composed Game attract callback skips stale live-start and keeps normal menu-only recycling",
+      "composed NetSession rejects a missing-local START before allocating match or sending READY"
+    ]
+  },
+  "historicalNativeAcceptance": {
+    "source": "76873fc4f36493f74fbee36a1154ccff01a5cda0",
+    "receipt": "clock-native-browser.json",
+    "phaseCount": 3,
+    "directionCount": 6,
+    "countsAsThisTreeNativeAcceptance": false
+  },
+  "rawArchive": {
+    "path": "clock-only-cpu-raw-json-log.tar.gz",
+    "bytes": 5748,
+    "sha256": "e4bd72fda839623538d69029469218285f09e1d45bcbe6bbb80b3e32d6126b67",
+    "files": [
+      {
+        "path": ".ci-scratch/owner-clock-only/clock25.log",
+        "bytes": 3288,
+        "sha256": "617b35c4b7c9e3a51c770b17a10873855f65c7a29536dbb9ef0ece056de6ae81"
+      },
+      {
+        "path": ".ci-scratch/owner-clock-only/outbound42.log",
+        "bytes": 4055,
+        "sha256": "8ca3dc806bb924b0bf471216f1b2fb7667abc613d460d21ea75fdd3e72563c39"
+      },
+      {
+        "path": ".ci-scratch/owner-clock-only/relay11.log",
+        "bytes": 1483,
+        "sha256": "ac627309c6e739ce4dccdf313640ad7f4b4d09a3ad515859391a9b86c5fafc07"
+      },
+      {
+        "path": ".ci-scratch/owner-clock-only/build.log",
+        "bytes": 812,
+        "sha256": "24353c4542545e75054a22ad9cb2d09a1eda471c5766af0867fd5d1223cd9942"
+      },
+      {
+        "path": ".ci-scratch/owner-clock-only/build-preflight-final.json",
+        "bytes": 894,
+        "sha256": "e9919039fcdc58f1c2af04faffcb306b66efc4ce86b20f827fc71387a2b54865"
+      },
+      {
+        "path": ".ci-scratch/owner-clock-only/emitted67.log",
+        "bytes": 18799,
+        "sha256": "4ce19062eb1f9949651718c8c5322ed4a0c27406fff53b748dbd55ca0b0b402f"
+      }
+    ],
+    "readbackVerified": true,
+    "contents": "JSON/log only; no PNG, audio, bearer/auth credentials or signed URLs"
+  },
+  "nativeAcceptance": {
+    "source": "2d2b8aa25795f351f6e206488c89af7255595be6",
+    "executionEvidenceHead": "50f8843ec4633de2a28523db37d317349baca2b0",
+    "runtimeInputsEqualAtExecutionHead": true,
+    "receipt": "clock-only-native-browser.json",
+    "rawArchive": "clock-only-native-raw-json-log.tar.gz",
+    "phaseCount": 3,
+    "directionCount": 6,
+    "pageOrConsoleErrors": 0,
+    "requestCount": 8,
+    "replyCount": 6,
+    "allPriorGatePairsRejected": true,
+    "allProofOriginsFixed": true,
+    "cleanup": {
+      "nativeProcessExit": 0,
+      "ownedNodePID": 32773,
+      "ownedChromiumPID": 32797,
+      "bothAbsentAfterCompletion": true,
+      "checkedAt": "2026-10-22T13:56:21.250318+00:00"
+    }
+  }
+}

@@ -35,8 +35,21 @@ for(const pads of [[[0,.08,-28],[0,.08,28]],[[-28,.08,0],[28,.08,0]],[[-20,.08,-
  const original=G.nav.path;let calls=0;
  G.nav.path=function(...args){calls++;return original.apply(this,args);};
  assert.equal(f.nativeRankedStage(G),stage);assert.equal(calls,0,'complete swept proof cached on the prepared source/nav/body');
- G.nav=Object.assign(Object.create(Object.getPrototypeOf(G.nav)),G.nav,{path:function(...args){if(++calls<=2)return null;return original.apply(this,args);}});
+ const planningMemo=[Object.freeze({sourcePlanningMemo:true})],candidateGraphs=new Set();
+ G.nav=Object.assign(Object.create(Object.getPrototypeOf(G.nav)),G.nav,{_pathMemo:planningMemo,path:function(...args){
+  if(++calls<=2)return null;
+  if(this!==G.nav){
+   candidateGraphs.add(this);assert.equal(Object.getPrototypeOf(this),Object.getPrototypeOf(G.nav));
+   assert.equal(typeof this._pathUncached,'function','candidate retains the canonical path implementation owner');
+   assert.equal(this._pathMemo,null,'candidate topology cannot borrow the published planning memo');
+  }
+  return original.apply(this,args);
+ }});
+ const sourceHeap=G.nav._heap;
  calls=0;const fallback=f.nativeRankedStage(G);assert.ok(project(fallback.tower.path[0])< -10);assert.ok(project(fallback.tower.path.at(-1))>10);
+ assert.ok(candidateGraphs.size>0,'the route exercises the constrained candidate graph');
+ for(const graph of candidateGraphs)assert.notEqual(graph._heap,sourceHeap,'candidate planning cannot reuse the source graph heap');
+ assert.equal(G.nav._pathMemo,planningMemo);assert.equal(planningMemo.length,1);assert.equal(G.nav._heap,sourceHeap);
 });
 
 test('human climb links cannot become inferred vehicle tower segments',async()=>{

@@ -1,0 +1,12 @@
+{
+  "artifact_count": 2090,
+  "content_hash": "5f16766fb6147b8a34498fdb1481417edf1fa35ea4cac54163a3fcbc9d6ce9aa",
+  "input_hash": "55696ac8c460564f9abb9f7d105732577366bc160c65ff7adb878c44413499ed",
+  "changed_recipe_fields": [
+    "script"
+  ],
+  "all_artifact_bytes_equal": true,
+  "all_input_digests_equal": true,
+  "baseline_recipe_script": "6eb11e0a3b2ae2deb197d0975e943511cf7933b44a5d143404c8732411733430",
+  "candidate_recipe_script": "dceaa741ff5d0ee062c119e3d849b8791f9716cda6a9b216cd3e96e3db797e1a"
+}

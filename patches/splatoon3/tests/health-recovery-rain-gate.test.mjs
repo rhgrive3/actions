@@ -27,6 +27,14 @@ function clouds(f,kind){return Array.from({length:kind===0?0:8},(_,i)=>({team:ki
 test('ineligible HP recovery avoids real LOS and clones without changing any Actor field',{skip:process.env.INKWAVE_BUILT_SITE?'source-only baseline transformation; emitted functional case runs below':false},async t=>{
  assert.equal(fs.readFileSync(new URL('../runtime/resources.mjs',import.meta.url),'utf8').split(NEW).length,2);
  const old=await setup(true),next=await setup(false);t.after(()=>{old.restore();next.restore();});
+ // Both real fixtures allocate their actor-owned LOS scratch once on the
+ // first eligible recovery. Compare steady-state work after proving cold cost.
+ for(const s of [old,next]){
+  s.a.hp=50;s.a.lastDamage=2;s.a.alive=true;s.a.pos.set(0,0,0);
+  s.f.G.projectiles.clouds=clouds(s.f,1);s.reset();
+  s.f.updateHealthRecovery(s.a,1/60,false,false);
+  assert.equal(s.counts.clones,2,'cold recovery owns exactly one vector pair');
+ }
  const hps=[100,101,99,0,NaN,Infinity,-Infinity],delays=[0,1-1e-10,1-2e-10,1,NaN,Infinity,-Infinity];
  let cases=0,removed=0;
  for(const hp of hps)for(const lastDamage of delays)for(const onEnemy of [false,true])for(const submerged of [false,true])for(const kind of [0,1,2,3])for(const hz of [30,60,120]){

@@ -164,57 +164,66 @@ def resolve_update_archives(archives_dir: Path, update_name: str, explicit_parts
     )
 
 
+def walk_tree_files(root: Path):
+    """Yield file entries and symlink blobs without following directory links."""
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in sorted(dirnames) if d not in (".git", "__INKWAVE_SPLIT__", ".aplus-backup")]
+        # os.walk classifies links to existing directories as directories even
+        # with followlinks=False. Backups must retain the link itself as a blob.
+        links = [d for d in dirnames if (Path(dirpath) / d).is_symlink()]
+        dirnames[:] = [d for d in dirnames if d not in links]
+        for name in sorted(filenames + links):
+            yield Path(dirpath) / name
+
+
 def scan_tree(root: Path, slim_assets: bool = False) -> Tuple[List[dict], Dict[str, dict]]:
     manifest_files = []
     full_map = {}
-    for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = [d for d in sorted(dirnames) if d not in (".git", "__INKWAVE_SPLIT__", ".aplus-backup")]
-        for fn in sorted(filenames):
-            p = Path(dirpath) / fn
-            rel = p.relative_to(root).as_posix()
-            if slim_assets and is_slim_excluded(rel):
-                continue
-            if p.is_symlink():
-                raw = os.readlink(p).encode("utf-8", "surrogateescape")
-                h = sha256_bytes(raw)
-                g = git_blob_sha(raw)
-                entry = {
-                    "path": rel,
-                    "kind": "symlink",
-                    "mode": "120000",
-                    "bytes": len(raw),
-                    "sha256": h,
-                    "git_blob_sha": g,
-                }
-                full_map[rel] = entry
-                manifest_files.append({
-                    "path": rel,
-                    "kind": "symlink",
-                    "mode": "120000",
-                    "bytes": len(raw),
-                    "sha256": h,
-                })
-            else:
-                raw = p.read_bytes()
-                h = sha256_bytes(raw)
-                g = git_blob_sha(raw)
-                mode = "100755" if (p.lstat().st_mode & 0o111) else "100644"
-                entry = {
-                    "path": rel,
-                    "kind": "file",
-                    "mode": mode,
-                    "bytes": len(raw),
-                    "sha256": h,
-                    "git_blob_sha": g,
-                }
-                full_map[rel] = entry
-                manifest_files.append({
-                    "path": rel,
-                    "kind": "file",
-                    "mode": mode,
-                    "bytes": len(raw),
-                    "sha256": h,
-                })
+    for p in walk_tree_files(root):
+        rel = p.relative_to(root).as_posix()
+        if slim_assets and is_slim_excluded(rel):
+            continue
+        if p.is_symlink():
+            raw = os.readlink(p).encode("utf-8", "surrogateescape")
+            h = sha256_bytes(raw)
+            g = git_blob_sha(raw)
+            entry = {
+                "path": rel,
+                "kind": "symlink",
+                "mode": "120000",
+                "bytes": len(raw),
+                "sha256": h,
+                "git_blob_sha": g,
+            }
+            full_map[rel] = entry
+            manifest_files.append({
+                "path": rel,
+                "kind": "symlink",
+                "mode": "120000",
+                "bytes": len(raw),
+                "sha256": h,
+            })
+        else:
+            raw = p.read_bytes()
+            h = sha256_bytes(raw)
+            g = git_blob_sha(raw)
+            mode = "100755" if (p.lstat().st_mode & 0o111) else "100644"
+            entry = {
+                "path": rel,
+                "kind": "file",
+                "mode": mode,
+                "bytes": len(raw),
+                "sha256": h,
+                "git_blob_sha": g,
+            }
+            full_map[rel] = entry
+            manifest_files.append({
+                "path": rel,
+                "kind": "file",
+                "mode": mode,
+                "bytes": len(raw),
+                "sha256": h,
+            })
     return manifest_files, full_map
 
 
@@ -281,13 +290,10 @@ def verify_tree_against_manifest(output_dir: Path, manifest: dict, check_unexpec
                     bad.append(f"{rel}: mode mismatch ({actual_mode} != {expected_mode})")
 
     if check_unexpected:
-        for dirpath, dirnames, filenames in os.walk(output_dir):
-            dirnames[:] = [d for d in dirnames if d not in (".git", "__INKWAVE_SPLIT__", ".aplus-backup")]
-            for fn in filenames:
-                p = Path(dirpath) / fn
-                rel = p.relative_to(output_dir).as_posix()
-                if rel not in expected_paths:
-                    bad.append(f"{rel}: unexpected extra file in restored tree")
+        for p in walk_tree_files(output_dir):
+            rel = p.relative_to(output_dir).as_posix()
+            if rel not in expected_paths:
+                bad.append(f"{rel}: unexpected extra file in restored tree")
 
     if bad:
         raise RuntimeError(f"Tree verification failed ({len(bad)} errors): {bad[:10]}")
@@ -422,13 +428,10 @@ def apply_update_archives(
                         os.chmod(dst, 0o755 if f.get("mode") == "100755" else 0o644)
 
             expected_set = {f["path"] for f in curr_manifest.get("files", [])}
-            for dirpath, dirnames, filenames in os.walk(output_dir):
-                dirnames[:] = [d for d in dirnames if d not in (".git", "__INKWAVE_SPLIT__", ".aplus-backup")]
-                for fn in filenames:
-                    p = Path(dirpath) / fn
-                    rel = p.relative_to(output_dir).as_posix()
-                    if rel not in expected_set:
-                        p.unlink()
+            for p in walk_tree_files(output_dir):
+                rel = p.relative_to(output_dir).as_posix()
+                if rel not in expected_set:
+                    p.unlink()
 
     # Ensure modes from curr_manifest are applied
     for f in curr_manifest.get("files", []):
@@ -439,6 +442,15 @@ def apply_update_archives(
 
     verify_tree_against_manifest(output_dir, curr_manifest, check_unexpected=True)
     return curr_manifest.get("main_commit") or curr_manifest.get("commit")
+
+
+def reusable_delta_blob(before: Optional[dict], after: Optional[dict]) -> bool:
+    """Permission-only changes can reuse bytes; file/symlink conversions cannot."""
+    return (
+        before is not None and after is not None
+        and before["sha"] == after["sha"]
+        and (before["mode"] == "120000") == (after["mode"] == "120000")
+    )
 
 
 def apply_auto_delta_step(root: Path, folder: Path, step_info: dict) -> None:
@@ -470,7 +482,7 @@ def apply_auto_delta_step(root: Path, folder: Path, step_info: dict) -> None:
                     raise RuntimeError(f"Local file diverged before applying delta: {ch['path']}")
             after = ch.get("after")
             new_bytes = None
-            if after is not None and not (before and before["sha"] == after["sha"]):
+            if after is not None and not reusable_delta_blob(before, after):
                 chunks = sorted(ch.get("chunks") or [], key=lambda c: c["offset"])
                 buf = []
                 for c in chunks:
@@ -590,7 +602,7 @@ def create_or_resume_auto_delta(
             item = pending["changes"][idx_global]
             before = item["before"]
             after = item["after"]
-            if not after or (before and before["sha"] == after["sha"]):
+            if not after or reusable_delta_blob(before, after):
                 done.append({
                     "path": item["path"],
                     "before": before,

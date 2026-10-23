@@ -1,0 +1,201 @@
+{
+  "status": "passed",
+  "date": "2026-10-22",
+  "sourceHead": "8285792d004c9d6bd9238db794e8b7ec498c7555",
+  "publicSourceEquivalent": "8783eb8",
+  "publicQaEquivalent": "d92656c",
+  "archive": "weapon-only-raw-evidence.tar.gz",
+  "archiveSha256": "f6cc29002cc4a7041eb4409405c077e8c1054e5414661bd8bbd7aa1c02624cee",
+  "archiveBytes": 711304,
+  "members": 37,
+  "pngMembers": 0,
+  "audioMembers": 0,
+  "privateAssetMembers": 0,
+  "archiveAllowedSuffixes": [
+    ".json",
+    ".log",
+    ".tap",
+    ".mjs"
+  ],
+  "credentialAndObjPatternsChecked": [
+    "private_key",
+    "github_token",
+    "aws_access_key",
+    "google_oauth",
+    "credential_url",
+    "http_bearer",
+    "obj_geometry"
+  ],
+  "findings": [],
+  "allMembersByteHashReadback": {
+    "browser/flick-horizontal/result.json": {
+      "sha256": "cbeb400fbca200443a0ef89dcb00f1dd5b0540ac4ee987671364b278d7ef430b",
+      "bytes": 1467947
+    },
+    "browser/flick-vertical/result.json": {
+      "sha256": "50beb45a4c06fa58a0ce97a2eeda1477192761150f379f3f093a612f839ace79",
+      "bytes": 593914
+    },
+    "browser/observer-debug/result.json": {
+      "sha256": "bf5089564c8b998b8d816aae1671aa0098a116763c767942ef5db2ca8542b151",
+      "bytes": 87412
+    },
+    "browser/pose-observed/result.json": {
+      "sha256": "fce7030e8ea11e3da493cfd7d372fc1612afb29c66f3b2d206ed5b3f5531c346",
+      "bytes": 827703
+    },
+    "browser/pose/result.json": {
+      "sha256": "338c22e227f71e99a3466ac0074bc1f4a6c973a1edb95a43742e2daee247e6ff",
+      "bytes": 822899
+    },
+    "browser/quad-all-parts-ready/result.json": {
+      "sha256": "7e546822f4bde619d93e8deac1a8beb45cf25915e4ecf5fbe8a921adef598453",
+      "bytes": 87568
+    },
+    "browser/quad-all-parts/result.json": {
+      "sha256": "8f8f1a57eb14256c2035bab0364d4e55bf2a8395359557ce4c9b5c005d570382",
+      "bytes": 87149
+    },
+    "browser/quad-steady-ready/result.json": {
+      "sha256": "f2f0ce13ef46c4c3a190c3bcbc165423c7da02b218960caf186554302cbe2281",
+      "bytes": 685952
+    },
+    "harness-camera-controls/wide-camera-ready.mjs": {
+      "sha256": "9ac040a70bf9828d35369577c80f99bdc48e86f7ae88ceec80093907e74ee306",
+      "bytes": 25924
+    },
+    "harness-camera-controls/wide-camera.mjs": {
+      "sha256": "4a8a66ba02554e0204310a65df5e82ee180982bc453e460a73b1f9495290d85f",
+      "bytes": 25303
+    },
+    "logs/development/dynamo-authority-settlement-final.log": {
+      "sha256": "900f43190af8d3d958670635cb6d05a6d9aa2aa7053d5e863f73d18e67a71086",
+      "bytes": 2179
+    },
+    "logs/development/dynamo-bubbler-emitted-negative.log": {
+      "sha256": "1164821789fa06d6bdc306b22a52cd8875b9373c131b97eeeea51cdcff50c22f",
+      "bytes": 1308
+    },
+    "logs/development/dynamo-old-emitted-negative-final.log": {
+      "sha256": "a83ca5a66c2bccc9e333995a7bda9842332d655e68a8d301ff5c9a85ffd2614f",
+      "bytes": 1811
+    },
+    "logs/development/explosher-authored-lip-regressions.log": {
+      "sha256": "cd8a10760885b31350496d4fae835ea2d974c6e0fb7e32f466e7e1cb46dbf656",
+      "bytes": 4732
+    },
+    "logs/development/explosher-authored-muzzle-models-final.log": {
+      "sha256": "64e8277be3bdd00ea18c0f392b8809a711333880c609eac1928dd127a3f47370",
+      "bytes": 1167
+    },
+    "logs/development/explosher-authored-muzzle-source-final.log": {
+      "sha256": "1116aba3d503e083b01073f821ce1339814b7bcf109101378e3ac65d5164f722",
+      "bytes": 53551
+    },
+    "logs/development/flick-new-emitted.log": {
+      "sha256": "4ad2b9e9c85c428fee5014c0997a7fed56fe3cf1f0bff5c0f174cdea3117cdd7",
+      "bytes": 6938
+    },
+    "logs/development/flick-object-regressions.log": {
+      "sha256": "cf6f6910fba1a9848be8201619cdfbb40258fe7e0ba9b5a9761740f3305ea883",
+      "bytes": 4910
+    },
+    "logs/development/quad-native-volume-pose.log": {
+      "sha256": "9c27954e19ecce307572735d01da1a2081f02a67b779d5d8454cf51ffad38d35",
+      "bytes": 1638
+    },
+    "logs/development/quad-volume-affected-regressions.log": {
+      "sha256": "172cc1bfa085fe4863ab57abfb885320093d2e9a8d3ac16b8446d8e91e1968e3",
+      "bytes": 640
+    },
+    "logs/development/source-launch-full.log": {
+      "sha256": "b1d414259f7080d565a6b58cf48830b4e465159a3f7d6db1331f498e087bbd93",
+      "bytes": 1488
+    },
+    "logs/development/urchin-native-arena-final.tap": {
+      "sha256": "bcbcfa56a20925b2bfb6318f8a9aff1d0e2f39c20dbc825a2245e853424007f8",
+      "bytes": 6268
+    },
+    "logs/development/urchin-native-arena.tap": {
+      "sha256": "75be00aac06290b0f26fa9f261a3d61452ce8215aba2cc9aa1f6c6ac0377d923",
+      "bytes": 2080
+    },
+    "logs/development/zipcaster-retry-boundary-built.log": {
+      "sha256": "3ceb5844715bebdb6700f3286f7d5ca56a2c15aa3433f7a7e18b6e7292f64dd3",
+      "bytes": 572
+    },
+    "logs/development/zipcaster-retry-boundary-reused.log": {
+      "sha256": "1068c416a46a1e7f547b6ae39e1cc2b16c4e0fcfd954a028c7e595efe983cb16",
+      "bytes": 420
+    },
+    "logs/final/dynamo-emitted.log": {
+      "sha256": "0cf1b82d3fcbe23b6cf1184ae28dd7fb00d40054e568e422c7c122bb0d231434",
+      "bytes": 2716
+    },
+    "logs/final/emitted-positive.log": {
+      "sha256": "2db014ba9355fe29e16824e7421385ab5b33363810866864114435fb3ff091a6",
+      "bytes": 4738
+    },
+    "logs/final/flick-horizontal.log": {
+      "sha256": "38eb8bc867ae3c2a8d7d93bd87a6c42d0743d853b75cbe8b3091ff65a46e2830",
+      "bytes": 17082
+    },
+    "logs/final/flick-vertical.log": {
+      "sha256": "180ad81f538bee6cb3799c4fd9ae598fe3814d65b2019c51c3429c2a38cf09b8",
+      "bytes": 10744
+    },
+    "logs/final/observer-debug.log": {
+      "sha256": "3ff1f589824504bd31e0b36db9b0532292f7bef32c3bc2549990bea21af79616",
+      "bytes": 474
+    },
+    "logs/final/pose-observed.log": {
+      "sha256": "16cec717e7aab76156eb33bf6a078664c1964550c0e10e4696be0cb0bb056d24",
+      "bytes": 12795
+    },
+    "logs/final/pose.log": {
+      "sha256": "8528ec15991322e4fc42c9789326a363ad8df5da0281e87489cc36ec9af4226c",
+      "bytes": 12882
+    },
+    "logs/final/quad-all-parts-ready.log": {
+      "sha256": "fddb0c9d51cf3597d6fee1058fa40eab66236dbd1095e830647f42588d905561",
+      "bytes": 475
+    },
+    "logs/final/quad-all-parts.log": {
+      "sha256": "cf1f0c82bca9e4d4eb021ce04c19147b863ed2cb203f7a48579ace176d882e07",
+      "bytes": 485
+    },
+    "logs/final/quad-steady-ready.log": {
+      "sha256": "8463f2f8bd2c163ce3f807f7f3c58ed53427b1b38ea4c70413f36b83ef0a63a9",
+      "bytes": 6530
+    },
+    "source-owned-sha256.json": {
+      "sha256": "0e702dc08036015ff99aa466beaa4adc0837d2d357eaaa802d3ce9d2f355e7e4",
+      "bytes": 3179
+    },
+    "aggregate/weapon-only-final-acceptance.full.json": {
+      "sha256": "6bbf1812db4782c1e2e2c7e10df300e66c944ce42931fd464ce696d0c6984d64",
+      "bytes": 3312124
+    }
+  },
+  "sourceInputsChecked": 1362,
+  "emittedArtifactsChecked": 2016,
+  "frozenOwnedPathsChecked": 15,
+  "buildMismatches": [],
+  "fullOriginalArchiveVerified": {
+    "workspacePath": ".ci-scratch/weapons-final/weapon-only-full-raw-evidence.tar.gz",
+    "sha256": "438e21664aaaf9e7ece786b2d1e79d51683dea49d970f329245b5501ecdb24e7",
+    "bytes": 28302452,
+    "entries": 244,
+    "note": "All original screenshots and text evidence remain in this ignored archive. Public archive contains text only; all244 original member hashes are recorded in allRetainedFiles."
+  },
+  "allOriginalFileHashesVerified": 244,
+  "scope": "Text-only public evidence. Private Urchin OBJ/MTL/numeric buffers/serialized manifest, image/audio payloads and browser storage are excluded. Screenshots remain local and hash-indexed; Quad first/ready-steady and Explosher first images were visually inspected. Pattern scanning is reported explicitly, without claiming an exhaustive semantic security audit.",
+  "existing36MembersByteIdentical": true,
+  "fullOriginalAggregate": {
+    "archiveMember": "aggregate/weapon-only-final-acceptance.full.json",
+    "sha256": "6bbf1812db4782c1e2e2c7e10df300e66c944ce42931fd464ce696d0c6984d64",
+    "bytes": 3312124,
+    "note": "Exact original 3,312,124-byte aggregate, preserved without parse/reserialize or any byte change."
+  },
+  "compactSummaryBytes": 15572
+}

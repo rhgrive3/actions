@@ -15,25 +15,30 @@ const helpers = [
 
 // Execute only the serialized graph coordinator with inert mock namespaces.
 // No production modules, browser, audio device or gameplay code is executed.
-async function probe({ missing, reject, initialized = false, badProtocol = false } = {}) {
+async function probe({ missing, reject, initialized = false, badProtocol = false, badPrewarm = false } = {}) {
   const loaded = [], workers = [];
   const namespaces = new Map([
     ['src/audio/audio.js', {audio: {ctx: initialized ? {} : null, playWeapon() {}, loopWeapon() {}}}],
     ['src/audio/music.js', {music: {play() {}}}],
     ['patches/splatoon3/runtime/audio/runtime.mjs', {installWeaponAudioRuntime() {}}],
     ...helpers.map(([file, name]) => ['patches/splatoon3/runtime/audio/' + file, {[name]() {}}]),
+    ['patches/splatoon3/runtime/audio/grain-texture.mjs',{renderTexturePCM:()=>new Float32Array([1,2,3])}],
+    ['patches/splatoon3/runtime/audio/reverb-impulse.mjs',{renderReverbPair:()=>[[new Float32Array([4,5]),new Float32Array([6,7])]]}],
   ]);
   if (missing) namespaces.set('patches/splatoon3/runtime/audio/' + missing, {});
   class Worker {
     constructor(url, options) { this.url = url; this.options = options; workers.push(this); }
-    postMessage(message) { this.message = message; queueMicrotask(() => this.onmessage({data: {key: message.key, error: badProtocol ? 'wrong' : 'Unknown audio ID'}})); }
+    postMessage(message) { this.message = message; queueMicrotask(() => {
+      const data=this.url.endsWith('grain-worker.mjs')?{sampleRate:8000,generation:message.generation,kind:'bubbles',pcm:new Float32Array([badPrewarm?9:1,2,3])}:this.url.endsWith('reverb-worker.mjs')?{sampleRate:8000,generation:message.generation,pair:[[new Float32Array([4,5]),new Float32Array([6,7])]]}:{key:message.key,error:badProtocol?'wrong':'Unknown audio ID'};
+      this.onmessage({data});
+    }); }
     terminate() { this.terminated = true; }
   }
   const start = helper.indexOf('export async function catalogAudioGraph(');
   assert.ok(start >= 0);
   const source = helper.slice(start).replace(/^export /, '').replace(/\bimport\(/g, 'load(');
   const run = vm.runInNewContext('(' + source + ')', {
-    Worker, setTimeout, clearTimeout,
+    Worker, setTimeout, clearTimeout, Float32Array, Uint8Array,
     load: async url => {
       loaded.push(url);
       assert.ok(url.startsWith(prefix), 'every graph entry keeps immutable prefix');
@@ -50,11 +55,13 @@ test('isolated audio graph loads both main-owned helpers without initializing au
   const {loaded, workers, result} = await probe();
   const receipt = await result;
   for (const [file] of helpers) assert.equal(loaded.filter(url => url === prefix + 'patches/splatoon3/runtime/audio/' + file).length, 1);
-  assert.equal(loaded.length, 5);
+  assert.equal(loaded.length, 7);
   assert.equal(receipt.deviceInitialized, false);
   assert.equal(receipt.workerProtocol, 'invalid-id-rejected');
   assert.equal(receipt.workerTerminated, true);
-  assert.equal(workers.length, 1);
+  assert.equal(workers.length, 3);
+  assert(workers.every(w=>w.terminated));
+  assert.equal(receipt.prewarmWorkers.length,2);
   assert.equal(workers[0].terminated, true);
 });
 for (const [file] of helpers) {
@@ -90,4 +97,8 @@ test('graph helpers have canonical composed-main owners and are not the reviewed
     assert.ok(!orphan.includes("REVIEWED_AUDIO_ORPHAN = 'patches/splatoon3/runtime/audio/" + file));
   }
   assert.ok(orphan.includes("REVIEWED_AUDIO_ORPHAN = 'patches/splatoon3/runtime/audio/charge-hit-cue.mjs'"));
+});
+
+test('lazy module worker PCM corruption rejects and still terminates the worker',async()=>{
+ const {result,workers}=await probe({badPrewarm:true});await assert.rejects(result,/PCM bytes differ/);assert(workers.every(w=>w.terminated));
 });

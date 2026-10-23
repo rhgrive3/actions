@@ -132,5 +132,44 @@ class AdmissionTests(unittest.TestCase):
         self.assertLess(len(json.dumps(rows)), 7000)
 
 
+class ReviewedCameraEpochTests(unittest.TestCase):
+    """Real projection mathematics remains strict; no global FOV tolerance."""
+
+    def fixture(self):
+        import math
+        a = {"camera": {"fov": 55.0}, "captureConditions": {"fov": 55.0},
+             "runtime": {"drawingBuffer": [1280, 720],
+                         "projectileScreen": [{"x": 780.0, "y": 395.0, "z": .9}]}}
+        r = math.tan(math.radians(55 / 2)) / math.tan(math.radians(60 / 2))
+        b = copy.deepcopy(a)
+        b["camera"]["fov"] = b["captureConditions"]["fov"] = 60.0
+        b["runtime"]["projectileScreen"][0]["x"] = 640 + (780 - 640) * r
+        b["runtime"]["projectileScreen"][0]["y"] = 360 + (395 - 360) * r
+        for row in (a, b):
+            row["runtime"]["projectileCrop"] = comparator.projected_crop(
+                row["runtime"]["projectileScreen"], 1280, 720)
+        return a, b
+
+    def test_epoch_proves_each_projected_point_and_both_independent_crops(self):
+        a, b = self.fixture()
+        proof = comparator.verify_camera_epoch_pair(a, b)
+        self.assertEqual(proof["status"], "verified")
+        self.assertEqual(proof["headCount"], 1)
+        self.assertLess(proof["maxReprojectionErrorPx"], 1e-8)
+
+    def test_other_fov_pixel_shift_crop_corruption_and_depth_change_reject(self):
+        for kind in ("fov", "point", "crop", "depth", "condition", "missing"):
+            with self.subTest(kind=kind):
+                a, b = self.fixture()
+                if kind == "fov": b["camera"]["fov"] = 62.0
+                if kind == "point": b["runtime"]["projectileScreen"][0]["x"] += 1.0
+                if kind == "crop": b["runtime"]["projectileCrop"]["width"] += 1
+                if kind == "depth": b["runtime"]["projectileScreen"][0]["z"] += .01
+                if kind == "condition": b["captureConditions"]["fov"] = 55.0
+                if kind == "missing": del b["runtime"]["projectileScreen"]
+                with self.assertRaises(ValueError):
+                    comparator.verify_camera_epoch_pair(a, b)
+
+
 if __name__ == '__main__':
     unittest.main()

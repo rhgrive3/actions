@@ -13,7 +13,12 @@ function remove(projectiles,drop){
   retireLimitedDrop(drop);
   const list=projectiles._s3TorpedoSplashes||[],i=list.indexOf(drop);
   if(i>=0)list.splice(i,1);
-  if(drop.mesh){drop.mesh.parent?.remove(drop.mesh);drop.mesh.geometry.dispose();drop.mesh.material.dispose();drop.mesh=null;}
+  if(drop.mesh){drop.mesh.parent?.remove(drop.mesh);
+    const shared=projectiles._s3TorpedoSplashGeometry;
+    if(shared&&drop.mesh.geometry===shared.geometry){
+      if(--shared.users===0){shared.geometry.dispose();projectiles._s3TorpedoSplashGeometry=null;}
+    }else drop.mesh.geometry.dispose();
+    drop.mesh.material.dispose();drop.mesh=null;}
 }
 export function spawnTorpedoSplashes(api,projectiles,source,position,kind='chase'){
   const spec=kind==='find'?source.spec.findSplashAround:source.spec.splashAround;
@@ -38,9 +43,10 @@ function spawnSplashes(api,projectiles,source,position,spec,kind,stage=0){
       index:i,kind,stage,paintRadius:spec.paintRadius,pos,prev:pos.clone(),vel,seed:(source.seed^Math.imul(i+1+stage*spec.count,0x9e3779b1))>>>0,
       subId:kind==='fizzy'?'fizzy-splash':'torpedo-splash',type:'sub',damage:kind==='find'||kind==='fizzy'?0:source.spec.splashDamage,size:.1,age:0};
     if(api.G.scene?.add){
-      drop.mesh=new api.THREE.Mesh(new api.THREE.SphereGeometry(.1,6,4),
+      const shared=projectiles._s3TorpedoSplashGeometry ||= {geometry:new api.THREE.SphereGeometry(.1,6,4),users:0};
+      drop.mesh=new api.THREE.Mesh(shared.geometry,
         new api.THREE.MeshBasicMaterial({color:source.owner.color||api.G.teamColors?.[source.team]||0xffffff}));
-      drop.mesh.position.copy(pos);api.G.scene.add(drop.mesh);
+      shared.users++;drop.mesh.position.copy(pos);api.G.scene.add(drop.mesh);
     }
     drops.push(drop);registerLimitedDrop(projectiles,drop);
   }

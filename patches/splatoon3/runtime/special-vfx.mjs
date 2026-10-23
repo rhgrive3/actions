@@ -19,6 +19,7 @@
 // are presentation timestamps only.
 
 import { SpecialVfxKit, SPARK, PUFF, RIBBON, BEAM, SHELL, BAND, DISC, vfxRandom, excludeFromOverridePasses, inkLightUniforms } from './special-vfx-kit.mjs';
+import { LayoutSample } from '../../local-quality/layout-sample.mjs';
 import { inkjetVfxAdmission, inkjetVfxRoom } from './inkjet-vfx-budget.mjs';
 import { inkjetVfxTicks } from './inkjet-vfx-clock.mjs';
 import { inkVacState } from './kit-ink-vac.mjs';
@@ -73,10 +74,10 @@ class Director {
     this.time = 0; this.errors = 0;
   }
   // ------------------------------------------------------------------ colour helpers (linear)
-  rgb(owner, team) {
+  rgb(owner, team, out = [0,0,0]) {
     const col = owner?.color ?? this.G.teamColors?.[owner?.team ?? team] ?? 0xffffff;
-    if (col?.isColor) return [col.r, col.g, col.b];
-    this.c.set(col); return [this.c.r, this.c.g, this.c.b];
+    if (col?.isColor) {out[0]=col.r;out[1]=col.g;out[2]=col.b;}
+    else {this.c.set(col);out[0]=this.c.r;out[1]=this.c.g;out[2]=this.c.b;}return out;
   }
   // Linear HDR colour: team colour scaled by k with a small white lift, so cores bloom but stay team-coloured.
   hdr(c, k, white = 0) { const w = white * 0.32; return [c[0] * k + w, c[1] * k + w, c[2] * k + w]; }
@@ -86,63 +87,70 @@ class Director {
     this.kit.sparks.spawn(p.x, p.y, p.z, vx, vy, vz, life, s0, s1, col[0], col[1], col[2], a, kind, o);
   }
   puff(kind, p, vx, vy, vz, life, s0, s1, col, a = 1, o = null) {
-    if (kind === PUFF.CHUNK) { col = this.inkCol(col); if (o?.stretch === undefined) o = { ...o, stretch: 0.03 }; }   // liquid drops
-    this.kit.puffs.spawn(p.x, p.y, p.z, vx, vy, vz, life, s0, s1, col[0], col[1], col[2], a, kind, o);
+    if (kind === PUFF.CHUNK) col = this.inkCol(col);
+    this.kit.puffs.spawnRaw(p.x,p.y,p.z,vx,vy,vz,life,s0,s1,col[0],col[1],col[2],a,kind,
+      o?.drag,o?.grav,o?.rot,o?.spin,o?.seed,kind===PUFF.CHUNK&&o?.stretch===undefined?.03:o?.stretch,o?.fadeIn,o?.buoy);
   }
   // radial burst of thrown ink: glossy teardrops stretched along their flight, falling under gravity
   // (S3 sprays liquid ink, not light; o.glow keeps the old additive light streaks for genuinely luminous sources)
   streaks(p, n, speed, col, o = {}) {
     n = Math.max(1, Math.round(n * this.kit.q));
     const up = o.up ?? 0.4, life = o.life ?? 0.45, size = o.size ?? 0.06, drag = o.drag ?? 3.2;
+    const glowOptions={drag,grav:o.grav??4,stretch:o.stretch??.09},petalOptions={drag:drag*.5,grav:(o.grav??14)*.6,rot:0,spin:0,fadeIn:.01},dropOptions={drag:drag*.35,grav:o.grav??14,stretch:.05};
     for (let i = 0; i < n; i++) {
       const th = rnd(TAU), y = clamp(up + rnd(o.spread ?? 1, -(o.spread ?? 1)) * 0.6, -1, 1), h = Math.sqrt(1 - y * y), s = speed * rnd(1.2, 0.55);
-      if (o.glow) this.spark(SPARK.STREAK, p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.2, 0.7), size, size * 0.4, col, o.alpha ?? 1, { drag, grav: o.grav ?? 4, stretch: o.stretch ?? 0.09 });
+      if (o.glow) this.spark(SPARK.STREAK, p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.2, 0.7), size, size * 0.4, col, o.alpha ?? 1, glowOptions);
       else if (i % 3 === 2) {   // glossy shards with white cores among the drops (S3 splatter)
         const c = this.inkCol(col), sz = size * rnd(3.6, 2);
-        this.kit.puffs.spawn(p.x, p.y, p.z, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.4, 0.9), sz, sz * 0.5, c[0], c[1], c[2], 1, PUFF.PETAL, { drag: drag * 0.5, grav: (o.grav ?? 14) * 0.6, rot: rnd(TAU), spin: rnd(12, -12), fadeIn: 0.01 });
-      } else this.drop(p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.6, 1.0), size * rnd(2.6, 0.8), col, { drag: drag * 0.35, grav: o.grav ?? 14, stretch: 0.05 });
+        this.kit.puffs.spawn(p.x, p.y, p.z, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.4, 0.9), sz, sz * 0.5, c[0], c[1], c[2], 1, PUFF.PETAL, (petalOptions.rot=rnd(TAU),petalOptions.spin=rnd(12,-12),petalOptions));
+      } else this.drop(p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.6, 1.0), size * rnd(2.6, 0.8), col, dropOptions);
     }
   }
   // one liquid ink drop (a lit teardrop impostor in the puff pool); col is the plain team colour
   drop(p, vx, vy, vz, life, size, col, o = {}) {
-    const c = this.inkCol(col);
-    this.puff(PUFF.CHUNK, p, vx, vy, vz, life, size, size * (o.shrink ?? 0.45), c, 1, { drag: o.drag ?? 0.9, grav: o.grav ?? 14, stretch: o.stretch ?? 0.035, fadeIn: 0.01 });
+    const c = this.inkCol(this.inkCol(col));
+    this.kit.puffs.spawnRaw(p.x,p.y,p.z,vx,vy,vz,life,size,size*(o.shrink??.45),c[0],c[1],c[2],1,PUFF.CHUNK,
+      o.drag??.9,o.grav??14,undefined,undefined,undefined,o.stretch??.035,.01,undefined);
   }
   // ink is the team colour itself: strip any HDR lift a caller meant for glow (bloom threshold 2.4)
   inkCol(c) { const m = Math.max(c[0], c[1], c[2]); if (m <= 1) return c; const lo = Math.min(c[0], c[1], c[2]), w = Math.min(lo, m - 1) * 0.8;
     return [(c[0] - w) / (m - w), (c[1] - w) / (m - w), (c[2] - w) / (m - w)]; }
   stars(p, n, radius, col, o = {}) {
+    const options={drag:1.5,spin:0};
     n = Math.max(1, Math.round(n * this.kit.q));
     for (let i = 0; i < n; i++) {
       const th = rnd(TAU), r = radius * Math.sqrt(vfxRandom()), y = rnd(o.h ?? 1.2, o.h0 ?? 0);
       this.v[7].set(p.x + Math.cos(th) * r, p.y + y, p.z + Math.sin(th) * r);
-      this.spark(SPARK.STAR, this.v[7], rnd(0.6, -0.6), rnd(o.rise ?? 1.4, 0.2), rnd(0.6, -0.6), rnd(o.life ?? 0.7, 0.35), o.size ?? 0.22, 0.02, col, 1, { drag: 1.5, spin: rnd(4, -4) });
+      this.spark(SPARK.STAR, this.v[7], rnd(0.6, -0.6), rnd(o.rise ?? 1.4, 0.2), rnd(0.6, -0.6), rnd(o.life ?? 0.7, 0.35), o.size ?? 0.22, 0.02, col, 1, (options.spin=rnd(4,-4),options));
     }
   }
   chunks(p, n, speed, col, o = {}) {
+    const options={drag:.8,grav:15,rot:0,spin:0,stretch:.03,fadeIn:.01};
     n = Math.max(1, Math.round(n * this.kit.q));
     const c = this.inkCol(col);
     for (let i = 0; i < n; i++) {
       const th = rnd(TAU), y = rnd(o.upMax ?? 1, o.upMin ?? 0.25), h = Math.sqrt(Math.max(0, 1 - y * y)), s = speed * rnd(1.15, 0.45);
-      this.puff(PUFF.CHUNK, p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, rnd(o.life ?? 0.9, 0.5), (o.size ?? 0.18) * rnd(1.4, 0.6), (o.size ?? 0.18) * 0.4, c, 1, { drag: 0.8, grav: 15, rot: rnd(TAU), spin: rnd(6, -6), stretch: 0.03, fadeIn: 0.01 });
+      this.puff(PUFF.CHUNK, p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, rnd(o.life ?? 0.9, 0.5), (o.size ?? 0.18) * rnd(1.4, 0.6), (o.size ?? 0.18) * 0.4, c, 1, (options.rot=rnd(TAU),options.spin=rnd(6,-6),options));
     }
   }
   // S3 ink petals: pointed glossy leaves with a white core, thrown out and tumbling (83.0s, 96.8s)
   petals(p, n, speed, col, o = {}) {
+    const options={drag:o.drag??2.2,grav:o.grav??7,rot:0,spin:0,fadeIn:.01};
     n = Math.max(1, Math.round(n * this.kit.q));
     const c = this.inkCol(col);
     for (let i = 0; i < n; i++) {
       const th = rnd(TAU), y = rnd(o.upMax ?? 0.9, o.upMin ?? -0.1), h = Math.sqrt(Math.max(0, 1 - y * y)), sp = speed * rnd(1.2, 0.5);
       const sz = (o.size ?? 0.22) * rnd(1.5, 0.7);
       this.kit.puffs.spawn(p.x, p.y, p.z, Math.cos(th) * h * sp, y * sp, Math.sin(th) * h * sp, rnd(o.life ?? 0.8, 0.45), sz, sz * 0.5, c[0], c[1], c[2], 1, PUFF.PETAL,
-        { drag: o.drag ?? 2.2, grav: o.grav ?? 7, rot: rnd(TAU), spin: rnd(10, -10), fadeIn: 0.01 });
+        (options.rot=rnd(TAU),options.spin=rnd(10,-10),options));
     }
   }
   smoke(p, n, col, o = {}) {
+    const options={drag:o.drag??2.2,buoy:o.buoy??.6,spin:0,fadeIn:.05};
     n = Math.max(1, Math.round(n * this.kit.q));
     for (let i = 0; i < n; i++) {
       const th = rnd(TAU), s = (o.speed ?? 2) * rnd(1, 0.3);
-      this.puff(o.kind ?? PUFF.SMOKE, p, Math.cos(th) * s, rnd(o.rise ?? 1.2, 0.2), Math.sin(th) * s, rnd(o.life ?? 1.2, 0.6), (o.size ?? 0.5) * rnd(1.2, 0.7), (o.size ?? 0.5) * (o.grow ?? 2.4), col, o.alpha ?? 0.6, { drag: o.drag ?? 2.2, buoy: o.buoy ?? 0.6, spin: rnd(1, -1), fadeIn: 0.05 });
+      this.puff(o.kind ?? PUFF.SMOKE, p, Math.cos(th) * s, rnd(o.rise ?? 1.2, 0.2), Math.sin(th) * s, rnd(o.life ?? 1.2, 0.6), (o.size ?? 0.5) * rnd(1.2, 0.7), (o.size ?? 0.5) * (o.grow ?? 2.4), col, o.alpha ?? 0.6, (options.spin=rnd(1,-1),options));
     }
   }
   // retained shapes ----------------------------------------------------------------------------
@@ -264,7 +272,7 @@ class Director {
   update(dt, camera) {
     if (!(dt > 0)) return;
     dt = Math.min(dt, 0.1);
-    this.time += dt;
+    this.time += dt;this._speakerEpoch=(this._speakerEpoch||0)+1;this._speakerCacheActive=true;
     if (camera?.position) this.camPos.copy(camera.position);
     const G = this.G;
     for (const a of G.actors || []) {
@@ -273,7 +281,8 @@ class Director {
       if (t) {
         const phase = a._s3AllSpecialState?.phase ?? a.specialActive?.phase ?? remoteKrakenPhase(a);
         if (phase !== t.phase) { t.prev = t.phase; t.phase = phase; t.phaseAt = this.time; this.call(DIRECTORS[t.id]?.phase, a, t, phase); }
-        t.color = this.rgb(a);
+        const color=this.rgb(a,undefined,this._trackColorScratch ||= [0,0,0]);
+        if(!Object.is(color[0],t.color[0])||!Object.is(color[1],t.color[1])||!Object.is(color[2],t.color[2]))t.color=color.slice();
         this.call(DIRECTORS[t.id]?.frame, a, t, dt);
       }
     }
@@ -282,25 +291,19 @@ class Director {
     this.call(this.updateRounds, dt);
     this.call(this.updateObjects, dt);
     this.call(this.updateKits, dt);
-    this.kit.update(dt, camera);
+    try{this.kit.update(dt, camera);}finally{this._speakerCacheActive=false;}
   }
   clear() {
     for (const record of this.fists.values()) releaseFistModel(record);
     for (const [a, t] of this.tracks) this.endTrack(a, t);
     for (const m of [this.tracks, this.rounds, this.objects, this.lasers, this.domes, this.coolers, this.fists, this.storms]) m.clear();
     this.inkjetImpacts = new WeakSet();
-    this.kit.clear();
+    this.kit.clear();this._speakerCache=new WeakMap();
   }
   updateWailLasers(dt) {
       for (const [key, L] of this.lasers) {
         if (this.time - L.seen > SPECIAL_VFX_CALIBRATION.killerWail.beamHold) { L.outer.dead = L.core.dead = L.halo.dead = true; this.lasers.delete(key); continue; }
-        // The RGB triple is consumed synchronously by the particle methods;
-        // reuse a per-director scratch instead of allocating per live laser/frame.
-        const c = this._wailColor ||= [0, 0, 0];
-        const col = L.actor?.color ?? this.G.teamColors?.[L.actor?.team] ?? 0xffffff;
-        if (col?.isColor) { c[0] = col.r; c[1] = col.g; c[2] = col.b; }
-        else { this.c.set(col); c[0] = this.c.r; c[1] = this.c.g; c[2] = this.c.b; }
-        const from = L.from, to = L.to;
+        const c = this.rgb(L.actor,undefined,L.colorScratch ||= [0,0,0]), from = L.from, to = L.to;
         L.drawTo.lerp(to, 1 - Math.exp(-dt * 30));
         this.setBeam(L.outer, from, L.drawTo); this.setBeam(L.core, from, L.drawTo); this.setBeam(L.halo, from, L.drawTo);
         if (vfxRandom() < 0.6) { // impact crackle
@@ -330,14 +333,16 @@ class Director {
       const spec = ROUND_FX[p?.wid];
       if (!spec || !p.pos || p.dead) continue;
       if (spec.when && !spec.when(p)) continue;
-      const tag = `${p.wid}:${p.seed}:${p.s3AllSpecialSeed ?? ''}`;
       let r = this.rounds.get(p);
+      const changed=!r||r.identityWid!==p.wid||r.identitySeed!==p.seed||r.identitySpecialSeed!==p.s3AllSpecialSeed;
+      const tag=changed?`${p.wid}:${p.seed}:${p.s3AllSpecialSeed ?? ''}`:r.tag;
       if (r && r.tag !== tag) { this.finishRound(r, false); this.rounds.delete(p); r = null; }
       if (!r) {
         r = { tag, p, spec, wid: p.wid, color: this.rgb(p.owner, p.team), age: 0, last: p.pos.clone(), vel: new this.THREE.Vector3(), d: {} };
         this.rounds.set(p, r);
         this.call(spec.start, r, p);
       }
+      r.identityWid=p.wid;r.identitySeed=p.seed;r.identitySpecialSeed=p.s3AllSpecialSeed;
       seen.add(p); r.age += dt; r.last.copy(p.pos); if (p.vel) r.vel.copy(p.vel);
       if (this.near(p.pos, 90)) this.call(spec.frame, r, p, dt);
     }
@@ -435,18 +440,29 @@ class Director {
       layer.appendChild(svg);
     }
     if (!h) return true;
-    h.svg.style.display = show ? '' : 'none';
+    if (h.svg.parentNode !== layer) layer.appendChild(h.svg);
+    if (!h.layout || h.layer !== layer || h.canvas !== canvas) {
+      h.layout?.dispose(); h.layer = layer; h.canvas = canvas;
+      h.layout = new LayoutSample(layer, h.svg);
+    }
+    const display = show ? '' : 'none';
+    if (h.svg.style.display !== display) h.svg.style.display = display;
     if (!show) return true;
-    const lr = layer.getBoundingClientRect(), cr = canvas.getBoundingClientRect();
+    h.layout.begin();
+    const lr = h.layout.rect(layer), cr = h.layout.rect(canvas);
     const cx = cr.left - lr.left + cr.width / 2, cy = cr.top - lr.top + cr.height / 2, R = limit * cr.height / 2, k = this.time;
     const RO = R * 2.3;
-    for (const c of [h.glow, h.ring]) { c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', RO); }
-    h.inner.setAttribute('cx', cx); h.inner.setAttribute('cy', cy); h.inner.setAttribute('r', R);
+    if (h.cx !== cx || h.cy !== cy || h.radius !== R) {
+      h.cx = cx; h.cy = cy; h.radius = R;
+      h.glow.setAttribute('cx', cx); h.glow.setAttribute('cy', cy); h.glow.setAttribute('r', RO);
+      h.ring.setAttribute('cx', cx); h.ring.setAttribute('cy', cy); h.ring.setAttribute('r', RO);
+      h.inner.setAttribute('cx', cx); h.inner.setAttribute('cy', cy); h.inner.setAttribute('r', R);
+      let d = '';
+      for (let i = 0; i < 4; i++) { const th = i * Math.PI / 2, c0 = Math.cos(th), s0 = Math.sin(th);
+        d += `M${cx + c0 * RO * 0.94} ${cy + s0 * RO * 0.94}L${cx + c0 * RO * 1.05} ${cy + s0 * RO * 1.05}`; }
+      h.ticks.setAttribute('d', d);
+    }
     h.inner.setAttribute('transform', `rotate(${(k * 40) % 360} ${cx} ${cy})`);
-    let d = '';
-    for (let i = 0; i < 4; i++) { const th = i * Math.PI / 2, c0 = Math.cos(th), s0 = Math.sin(th);
-      d += `M${cx + c0 * RO * 0.94} ${cy + s0 * RO * 0.94}L${cx + c0 * RO * 1.05} ${cy + s0 * RO * 1.05}`; }
-    h.ticks.setAttribute('d', d);
     // a rotating four-corner bracket on each opponent inside the circle
     for (let i = 0; i < Math.max(inside.length, h.brackets.length); i++) {
       let b = h.brackets[i];
@@ -469,7 +485,7 @@ class Director {
   // (S3 footage: thin lines run from the player to every marked target while the mark lasts).
   markingLines(r, o) {
     const G = this.G, viewer = (G.actors || []).find(x => x?.isLocal && x.alive);
-    const lines = r.d.lines ||= new Map(), live = new Set();
+    const lines = r.d.lines ||= new Map(), live = r.d.lineSeen ||= new Set();live.clear();
     if (viewer && viewer.team === o.team) for (const e of G.actors || []) {
       if (!e?.alive || e.team === o.team || !((e.s3?.revealedUntil?.[o.team] || 0) > (G.time || 0))) continue;
       live.add(e);
@@ -477,6 +493,7 @@ class Director {
         follow: (rec) => { this.chest(viewer, this.v[0], 0.9); this.chest(e, this.v[1], 0.8); this.setBeam(rec, this.v[0], this.v[1]); } }));
     }
     for (const [e, rec] of lines) if (!live.has(e)) { rec.dead = true; lines.delete(e); }
+    live.clear();
   }
   clearLines(r) { for (const rec of r.d.lines?.values() || []) rec.dead = true; r.d.lines?.clear(); }
   // helpers for actor anchors
@@ -942,7 +959,7 @@ const DIRECTORS = {
         this.smoke(pos, 8, [0.92, 0.92, 0.95], { size: 0.5, speed: 2.5, life: 1.2, alpha: 0.55, rise: 2 });
       }
     },
-    end(a, t) { for (const r of t.d.locks?.values() || []) r.dead = true; this.tentaHud(t, false); t.d.hud?.svg?.remove?.(); t.d.hud = null; },
+    end(a, t) { for (const r of t.d.locks?.values() || []) r.dead = true; this.tentaHud(t, false); t.d.hud?.layout?.dispose(); t.d.hud?.svg?.remove?.(); t.d.hud = null; },
   },
   // ---------------------------------------------------------------- Inkjet
   inkjet: {
@@ -1409,7 +1426,7 @@ function stepFilaments(self, a, fil, R, cy, speed, f, dt) {
   // Sub-steps through the frame, sweeping both the strand's angle (accumulated, so a changing speed never jumps it)
   // and the body's movement (the dash covers 0.35 m a frame), so a strand draws a smooth arc instead of chords.
   const cx = a.pos.x, cyy = a.pos.y + cy, cz = a.pos.z;
-  const lc = fil.lc || [cx, cyy, cz], move = Math.hypot(cx - lc[0], cyy - lc[1], cz - lc[2]);
+  const lc = fil.lc ||= [cx, cyy, cz], move = Math.hypot(cx - lc[0], cyy - lc[1], cz - lc[2]);
   const n = Math.max(1, Math.min(16, Math.ceil(Math.max(speed * R * 1.3 * dt, move) / 0.05))), now = self.kit.time;
   for (const q of fil) {
     const pool = q.white ? self.kit.glowRibbons : self.kit.ribbons, th0 = q.ang ?? q.ph, dth = speed * q.sp * dt;
@@ -1421,13 +1438,16 @@ function stepFilaments(self, a, fil, R, cy, speed, f, dt) {
         now - dt * (1 - u));
     }
   }
-  fil.lc = [cx, cyy, cz];
+  lc[0]=cx;lc[1]=cyy;lc[2]=cz;
 }
 function endFilaments(self, fil) { for (const q of fil || []) (q.white ? self.kit.glowRibbons : self.kit.ribbons).end(q.r); }
 // Killer Wail speaker mouths, from the drawn devices when present, otherwise from the shared ring layout.
 const SPEAKER_RING = WAIL_SPEAKER_POSITIONS;
 function speakerAnchors(self, a) {
-  const out = self._spk ||= SPEAKER_RING.map(() => new self.THREE.Vector3());
+  const cache=self._speakerCache ||= new WeakMap();let record=cache.get(a);
+  if(record&&self._speakerCacheActive&&record.epoch===self._speakerEpoch)return record.out;
+  if(!record){record={out:SPEAKER_RING.map(()=>new self.THREE.Vector3()),epoch:-1};cache.set(a,record);}
+  const out=record.out;record.epoch=self._speakerCacheActive?self._speakerEpoch:-1;
   const ch = a.character, list = ch?.s3SpecialDevices?.() || null;
   const holders = list ? list.filter(d => d.spec?.speakers).map(d => d.holder) : [];
   if (holders.length === SPEAKER_RING.length) {

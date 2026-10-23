@@ -75,12 +75,12 @@ try{
         const trace=[];let streamChecks=0;const matrix=new THREE.Matrix4(),centre=new THREE.Vector3();
         const blobHead=blob?G.projectiles.list.find(p=>p.catalog?.r?.sourceActor==='WeaponSlosherBathtub'&&p.catalog.descriptor.unit===0):null;
         if(blob&&!blobHead)throw Error('Bloblobber actual Character did not emit its 4 bubbles');
-        const blobBirth=blobHead?.start.z??0,blobContacts=[];let blobLastBounce=0,blobEndpoint=0;
+        const blobState=blobHead?.catalog,blobBirth=blobHead?.start.z??0,blobBirthHeight=blobHead?.start.y,blobContacts=[];let blobLastBounce=0,blobEndpoint=0;
         for(let i=0;i<hz*3;i++){
           G.time+=1/hz;G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);
           if(blobHead){
-            if(blobHead.catalog.groundBounces>blobLastBounce){
-              blobLastBounce=blobHead.catalog.groundBounces;
+            if(blobState.groundBounces>blobLastBounce){
+              blobLastBounce=blobState.groundBounces;
               blobContacts.push({frame:Math.round((i+1)*60/hz),z:+(blobHead.pos.z-blobBirth).toFixed(4)});
             }
             blobEndpoint=+(blobHead.pos.z-blobBirth).toFixed(4);
@@ -100,13 +100,13 @@ try{
         if(previousTrace&&JSON.stringify(previousTrace)!==JSON.stringify(trace)){const frame=trace.findIndex((t,i)=>JSON.stringify(t)!==JSON.stringify(previousTrace[i]));throw Error(JSON.stringify({id,hz,frame,before:previousTrace[frame],after:trace[frame]}));}previousTrace=trace;
         if(blob){
           if(blobLastBounce!==2||!(blobEndpoint>0)||blobContacts.length!==2)
-            throw Error('Bloblobber downhill real Character must bounce twice and move forward: '+JSON.stringify({hz,blobContacts,blobEndpoint,birthHeight:blobHead.start.y}));
-          console.log('BLOBLOBBER_BROWSER_DOWNHILL '+JSON.stringify({hz,firstBounce:blobContacts[0],secondBounce:blobContacts[1],endpoint:blobEndpoint,birthHeight:blobHead.start.y}));
+            throw Error('Bloblobber downhill real Character must bounce twice and move forward: '+JSON.stringify({hz,blobContacts,blobEndpoint,birthHeight:blobBirthHeight}));
+          console.log('BLOBLOBBER_BROWSER_DOWNHILL '+JSON.stringify({hz,firstBounce:blobContacts[0],secondBounce:blobContacts[1],endpoint:blobEndpoint,birthHeight:blobBirthHeight}));
         }
         const grid=Array.from(G.paint.grid),cells=G.paint.counts[0];
         if(!cells||(!slide&&!splashes)||(slide&&!rolls)||ownerless||a.stats.turf!==cells*.0625)throw Error(JSON.stringify({id,hz,cells,splashes,rolls,ownerless,turf:a.stats.turf}));
         if(previous&&JSON.stringify(previous)!==JSON.stringify(grid))throw Error(id+' different final ownership at '+hz+'Hz');previous=grid;
-        checks.push({id,hz,cells,turf:a.stats.turf,splashes,rolls,ownerless,temporalSamples:trace.length,streamChecks,landings:G.projectiles._s3SplashLandings?.length||0,...(blob?{downhill:{contacts:blobContacts,reach:blobEndpoint,birthHeight:blobHead.start.y}}:{})});
+        checks.push({id,hz,cells,turf:a.stats.turf,splashes,rolls,ownerless,temporalSamples:trace.length,streamChecks,landings:G.projectiles._s3SplashLandings?.length||0,...(blob?{downhill:{contacts:blobContacts,reach:blobEndpoint,birthHeight:blobBirthHeight}}:{})});
         G.scene.remove(a.character.root);a.character.dispose();
       }
     }}finally{Math.random=random;}

@@ -49,6 +49,7 @@ import { encodeSaberSwingVisual, decodeSaberSwingVisual } from './saber-presenta
 // retain their mature owners. Canonical kit identities use the pinned table.
 // Models remain separate work. Extracted numbers do not certify Nintendo engine equivalence.
 const EPS = 1e-9, HZ = 60, DT = 1 / HZ, RAD = Math.PI / 180;
+const EMPTY_LOBE_OFFSETS=Object.freeze([]),EMPTY_LOBE_OFFSET=Object.freeze({});
 const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 const finite = (v, fallback) => Number.isFinite(v) ? v : fallback;
@@ -56,6 +57,13 @@ function interpolateFields(a,b,q){
   const out={...a,...b};
   for(const key of Object.keys(out))if(Number.isFinite(a?.[key])&&Number.isFinite(b?.[key]))out[key]=lerp(a[key],b[key],q);
   return out;
+}
+export function insideDamageAt(b,distance) {
+  if(distance<=b.DamageMaxDistance)return b.DamageMaxValue/10;
+  if(distance<=b.DamageHighDistance)return lerp(b.DamageMaxValue,b.DamageHighValue,clamp((distance-b.DamageMaxDistance)/(b.DamageHighDistance-b.DamageMaxDistance)))/10;
+  if(distance<=b.DamageLowDistance)return lerp(b.DamageHighValue,b.DamageLowValue,clamp((distance-b.DamageHighDistance)/(b.DamageLowDistance-b.DamageHighDistance)))/10;
+  if(distance<=b.DamageMinDistance)return lerp(b.DamageLowValue,b.DamageMinValue,clamp((distance-b.DamageLowDistance)/(b.DamageMinDistance-b.DamageLowDistance)))/10;
+  return 0;
 }
 const INSTALLED = Symbol.for('inkwave.main-weapon-catalog.v1');
 const RECORDS = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
@@ -297,11 +305,33 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   const muzzle = new THREE.Vector3(), dir = new THREE.Vector3(), base = new THREE.Vector3();
   const rollerContactAt = new THREE.Vector3(), rollerContactEye = new THREE.Vector3(), rollerTargetCentre = new THREE.Vector3();
 
+  const heldCanopyActors=new Set();
   function state(runner) {
     const r = runner.a.weapon.catalogRecord;
     if (!runner.catalogState || runner.catalogState.id !== r.id) runner.catalogState = initialState(r,runner.a);
     return runner.catalogState;
   }
+  function advanceBowTilt(runner,r,dt) {
+    const s=state(runner),shot=r.parameters.spl__WeaponStringerParam.ShotParam;
+    s.bowTilt=clamp(s.bowTilt+finite(runner.a.grounded?shot.BowJumpTiltSpeedReverse:shot.BowJumpTiltSpeedForward,
+      runner.a.grounded?-12:9)*dt*HZ,0,finite(shot.BowTiltDegreeMax,90));
+    s.bowTiltStep=(s.bowTiltStep||0)+1;
+  }
+  // Body-owned actions can bypass WeaponRunner entirely. The fan still turns
+  // while unarmed (S3 verification Wiki, Stringer ground/air action notes).
+  // Observe the runner's update serial so a late Super Jump main update cannot
+  // advance it twice. The ordinary path retains its post-movement sample.
+  const actorUpdate=Actor.prototype.update;
+  Actor.prototype.update=function(dt){
+    const r=this.weapon?.catalogRecord;
+    if(r?.family!=='stringer'||this.remote||!this.alive||!Number.isFinite(dt)||dt<=0)
+      return actorUpdate.call(this,dt);
+    const runner=this.weaponRunner,s=state(runner),serial=s.bowTiltStep;
+    const result=actorUpdate.call(this,dt);
+    if(this.alive&&!this.remote&&this.weapon?.catalogRecord===r&&runner.catalogState===s&&s.bowTiltStep===serial)
+      advanceBowTilt(runner,r,dt);
+    return result;
+  };
   function slidePaint(r,s,ending=false){
     const width=r.parameters.SideStepParam?.SplashSlideParam?.PaintWidthHalf;
     if(s.slideRunner&&width>0)paintDualiesSlide(G,s.slideRunner,
@@ -317,6 +347,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function cancel(runner, keep = false) {
     const s = runner.catalogState;
+    heldCanopyActors.delete(runner.a);
     if (!s) return;
     resetBloblobberYawSweep(s);
     s.birthEpoch = (s.birthEpoch || 0) + 1;
@@ -352,7 +383,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     return result;
   };
-  R.reset = function(...args) { this.catalogState = null; return legacyReset.apply(this,args); };
+  R.reset = function(...args) { heldCanopyActors.delete(this.a);this.catalogState = null; return legacyReset.apply(this,args); };
   R.busy = function() {
     if (!this.a.weapon.catalogRecord) return legacyBusy.call(this);
     const s = this.catalogState;
@@ -445,7 +476,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(offset){
       const yaw=Math.atan2(a.aimDir.x,a.aimDir.z),cy=Math.cos(yaw),sy=Math.sin(yaw);
       const x=finite(offset.X,0),z=finite(offset.Z,0);
-      muzzle.copy(a.pos).add(new THREE.Vector3(x*cy+z*sy,finite(offset.Y,0),-x*sy+z*cy));
+      muzzle.set(a.pos.x+(x*cy+z*sy),a.pos.y+finite(offset.Y,0),a.pos.z+(-x*sy+z*cy));
       base.copy(a.pos);base.y+=a.form==='squid'?.4:1.05;
       constrainMuzzle(G.physics,base,muzzle);
     }else if(hand===null)G.projectiles._muzzle(a,muzzle);
@@ -549,7 +580,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       for(const faceId of block.faces){
         const face=level.faces[faceId];if(!face || !(face.n.y>0))continue;
         const o=face.origin,u=face.u,v=face.v;
-        polygon([o,o.clone().addScaledVector(u,face.su),o.clone().addScaledVector(u,face.su).addScaledVector(v,face.sv),o.clone().addScaledVector(v,face.sv)],face.n,faceId);
+        const corners=contact.blockCorners||=( [null,new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3()] );
+        corners[0]=o;corners[1].copy(o).addScaledVector(u,face.su);
+        corners[2].copy(o).addScaledVector(u,face.su).addScaledVector(v,face.sv);
+        corners[3].copy(o).addScaledVector(v,face.sv);
+        polygon(corners,face.n,faceId);
       }
     }
     if(!surfaces.length)return;
@@ -668,14 +703,25 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   // Slosher in-flight splashes fall through the shared fixed-60Hz drop queue
   // (as PR1188 does for the native Sloshers) instead of stamping the floor
   // instantly under the glob. Same schedule/footprint; the drop is visible.
+  const sloshFallSpecs=new WeakMap();
   function sloshFallSpec(splash) {
     const draw=splash?.DrawSizeCollisionPaintParam,depth=finite(draw?.PaintDepthScale,0);
     if(!(depth>0))return null;
-    return Object.freeze({drawRadius:finite(draw.DrawRadius,.1),spec:Object.freeze({gravity:.016*3600,drag:SPLASH_DROP_AIR_RESIST,
+    const cached=sloshFallSpecs.get(splash);
+    if(cached&&cached.draw===draw&&cached.depth===depth&&cached.radius===draw.DrawRadius)return cached.result;
+    const result=Object.freeze({drawRadius:finite(draw.DrawRadius,.1),spec:Object.freeze({gravity:.016*3600,drag:SPLASH_DROP_AIR_RESIST,
       depthScaleMax:depth,depthScaleMin:depth,dropHeightMax:0,dropHeightMin:0,surfaceOnly:true,randomVelocity:null})});
+    sloshFallSpecs.set(splash,{draw,depth,radius:draw.DrawRadius,result});return result;
+  }
+  function collisionScratch(p) {
+    const scratch=p._catalogCollisionScratch||=( {hit:new Hit(),seen:new Set(),capacity:[],active:[]} );
+    scratch.seen.clear();scratch.active.length=0;
+    const h=scratch.hit;h.hit=false;h.block=h.face=-1;h.dist=0;
+    h.point.set(0,0,0);h.normal.set(0,0,0);
+    return scratch;
   }
   function spawn(a,r,descriptor,direction,at,options={}) {
-    const system=G.projectiles, p=system._new();
+    const system=G.projectiles, p=system._new(),scratch=collisionScratch(p);
     p.catalogVisual=catalogVisualSpec(r,descriptor,options.index||0);
     Object.assign(p,{type:'shot',wid:r.id,owner:a,team:a.team,age:0,life:descriptor.life,straight:finite(descriptor.m.GoStraightToBrakeStateFrame,4)/HZ,
       radius:descriptor.radius,damage:descriptor.damage,size:finite(descriptor.c.InitRadiusForPlayer,.2),
@@ -684,9 +730,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       inkMeta:{s3Catalog:[1,descriptor.key,descriptor.unit,descriptor.charge,options.index||0]},
       // Splatlings without FreeGravity (projected-splash path) stagger by SplitNum too:
       // a Hydra's 23.5 SpawnBetweenLength otherwise left ~6-19 m dry under sustained fire.
-      catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec||descriptor.splashStaggered?descriptor.splashFirst:1,dropCount:0,hit:new Hit(),seen:new Set(),volley:options.volley,
-        index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0,
-        sectorYaw:r.family==='roller'&&descriptor.key==='horizontal'?a.yaw:null}});
+      catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec||descriptor.splashStaggered?descriptor.splashFirst:1,dropCount:0,hit:scratch.hit,seen:scratch.seen,collisionScratch:scratch,volley:options.volley,
+        index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0,sectorYaw:r.family==='roller'&&descriptor.key==='horizontal'?a.yaw:null}});
     // Keep the five-entry catalogue tuple readable by existing peers. Older
     // receivers ignore these named visual-only extensions on the same object.
     if(descriptor.key==='arrow')p.inkMeta.s3StringerTilt=options.bowTilt;
@@ -737,10 +782,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const ground=finite(t.Stand_DegSwerve,0),jump=finite(t.Jump_DegSwerve,ground);
     const jumpAge=r.family==='splatling' && Number.isFinite(a.s3SplatlingJumpAgeFrames)
       ? a.s3SplatlingJumpAgeFrames/HZ : s.jumpAge;
+    const angularParam=t===weaponParam(r)?t:{...weaponParam(r),...t};
     const spread=key==='turret'&&r.family==='dualies'
       ? finite(t.LapOver_DegSwerve,0)
       : catalogAngularEnvelope(r.family,!!a.grounded,ground,jump,jumpAge,
-        a.s3?.modifiers?.actionAirSpread??0,{...weaponParam(r),...t});
+        a.s3?.modifiers?.actionAirSpread??0,angularParam);
     const aim=dir.clone();
     if (key==='turret'&&r.family==='dualies') {
       // Post-roll turret has its own sourced cone and must not advance normal
@@ -748,7 +794,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       G.projectiles._spread(aim,spread);
     } else {
       // Variable-charge modes may omit fields present in the base WeaponParam.
-      catalogAngularLaunch(G.projectiles,aim,a,r.family,{...weaponParam(r),...t},s.accuracy,spread,jumpAge);
+      catalogAngularLaunch(G.projectiles,aim,a,r.family,angularParam,s.accuracy,spread,jumpAge);
     }
     runner.spread=spread;
     spawn(a,r,desc,aim,muzzle,{volley,saberSwing:saber?encodeSaberSwingVisual(r,key,s.saberSwing):null,
@@ -950,13 +996,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function emitPellets(runner,r) {
     const a=runner.a,s=state(runner),p=r.parameters.spl__BulletShelterShotgunParam;
     origin(a);const at=muzzle.clone(),direction=dir.clone(),volley={hits:new Map(),id:++s.shotSerial,cap:p.DamageEffectiveTotalMax/10};
+    const right=new THREE.Vector3(direction.z,0,-direction.x).normalize();
+    const up=new THREE.Vector3().crossVectors(direction,right).normalize();
     const plan=brellaSplashPlan(p),flight=plan?{plan,nodes:[],next:0,direction:direction.clone(),seed:Math.random()}:null;
     p.GroupParams.forEach((g,j)=> {
       const count=finite(g.TotalNum,1),d=mode(r,'pellet',j);
       for(let i=0;i<count;i++) {
         const az=2*Math.PI*i/count+finite(g.AddDegree,0)*RAD;
-        const right=new THREE.Vector3(direction.z,0,-direction.x).normalize();
-        const up=new THREE.Vector3().crossVectors(direction,right).normalize();
         const birth=at.clone().addScaledVector(right,Math.cos(az)*finite(g.HorizontalOffset,0))
           .addScaledVector(up,Math.sin(az)*finite(g.VerticalOffset,0));
         constrainMuzzle(G.physics,at,birth);
@@ -975,7 +1021,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }return 0;
   }
   function explosion(system,p,descriptor,skip=null) {
-    const bands=descriptor?.DistanceDamage||[],radius=Math.max(...bands.map(b=>b.Distance),0);
+    const bands=descriptor?.DistanceDamage||[];
+    let radius=0;for(const band of bands)radius=Math.max(radius,band.Distance);
     if(p.ghost){
       // Replicated frozen arrows retain their visible fuse and burst, while
       // damage and paint remain exclusively owned by the originating client.
@@ -999,15 +1046,16 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // would also move the lodged bolt and its impact/presentation position.
     const damageCentre=p.catalog.r.family==='stringer'?p.pos.clone():p.pos;
     if(p.catalog.r.family==='stringer')damageCentre.y+=finite(descriptor?.DamageOffsetY,0);
+    const area={...p,type:'area'},cause=catalogueAttackRow(area);
+    const damageAt=d=>damageBands(bands,d);
     for(const a of G.actors||[])if(a.alive&&a.team!==p.team){
       if(a===skip)continue;
       base.copy(a.pos);base.y+=.7;const distance=base.distanceTo(damageCentre);
       if(distance>radius||!G.physics.los(damageCentre,base))continue;
-      const damage=damageBands(bands,distance);if(damage>0)withObjectDamageCause({...p,type:'area'},()=>withBlasterSplashHit(p.owner,()=>system.applyHit(p.owner,a,damage,p.wid)));
+      const damage=damageBands(bands,distance);if(damage>0)withObjectDamageCause(area,()=>withBlasterSplashHit(p.owner,()=>system.applyHit(p.owner,a,damage,p.wid)));
     }
-    const area={...p,type:'area'},cause=catalogueAttackRow(area);
-    system.s3DamageSubObjects?.(area,damageCentre,radius,d=>damageBands(bands,d),cause);
-    system.s3DamageSpecialObjects?.(area,damageCentre,radius,d=>damageBands(bands,d),cause);
+    system.s3DamageSubObjects?.(area,damageCentre,radius,damageAt,cause);
+    system.s3DamageSpecialObjects?.(area,damageCentre,radius,damageAt,cause);
     G.boss?.splash(p.owner,damageCentre,radius,bands[0]?.Damage/10||0,0,p.wid);
     G.fx?.explosion(p.pos,p.owner.color,radius);
     emit('weapon:impact',{actor:p.owner,weapon:p.wid,pos:p.pos.clone(),normal:down.clone().negate(),team:p.team,kind:'burst',radius});
@@ -1030,9 +1078,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       clamp((Math.max(0,p.start.y-p.pos.y)-damage.ReduceStartFallDistance)/(damage.ReduceEndFallDistance-damage.ReduceStartFallDistance)))/10;
     if(damage.Inside&&r.family!=='roller'&&r.family!=='brush'){
       const b=damage.Inside,dist=p.start.distanceTo(p.pos);
-      amount=damageBands([{Distance:b.DamageMaxDistance,Damage:b.DamageMaxValue},
-        {Distance:b.DamageHighDistance,Damage:b.DamageHighValue},{Distance:b.DamageLowDistance,Damage:b.DamageLowValue},
-        {Distance:b.DamageMinDistance,Damage:b.DamageMinValue}],dist);
+      amount=insideDamageAt(b,dist);
     }
     if (volley) {
       const used=volley.hits.get(a)||0;
@@ -1060,11 +1106,29 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     return Math.max(0,lerp(init,end,clamp(frames/Math.max(1,finite(c['ChangeFrameFor'+what],0))))) * catalogBubbleRadiusScale(bounces);
   }
   function lobes(p){
-    const s=p.catalog,c=s.descriptor.c,params=c.ParamArray||[c],offsets=c.OffsetArray||[];
-    s.lobes ||= params.map(()=>({from:new THREE.Vector3(),to:new THREE.Vector3(),hit:new Hit(),paintSeed:null}));
+    const s=p.catalog,c=s.descriptor.c,params=c.ParamArray||(s.singleLobeParams||=[c]),offsets=c.OffsetArray||EMPTY_LOBE_OFFSETS;
+    if(!s.lobes){
+      const scratch=s.collisionScratch||=collisionScratch(p),out=scratch.active;
+      for(let i=0;i<params.length;i++){
+        const q=scratch.capacity[i]||=( {from:new THREE.Vector3(),to:new THREE.Vector3(),hit:new Hit(),paintSeed:null} );
+        q.paintSeed=null;q.stop=Infinity;q.hit.hit=false;q.hit.block=q.hit.face=-1;
+        out[i]=q;
+      }
+      out.length=params.length;s.lobes=out;
+    }
+    // Missing offsets are exact zero displacements. Keep the original path
+    // for signed-zero/nonfinite inputs, whose IEEE-754 additions can differ.
+    if(!c.OffsetArray && Number.isFinite(p.vel.x) && Number.isFinite(p.vel.z) &&
+      Number.isFinite(p.prev.x)&&Number.isFinite(p.prev.y)&&Number.isFinite(p.prev.z)&&
+      Number.isFinite(p.pos.x)&&Number.isFinite(p.pos.y)&&Number.isFinite(p.pos.z)&&
+      !Object.is(p.prev.x,-0)&&!Object.is(p.prev.y,-0)&&!Object.is(p.prev.z,-0)&&
+      !Object.is(p.pos.x,-0)&&!Object.is(p.pos.y,-0)&&!Object.is(p.pos.z,-0)){
+      for(let i=0;i<params.length;i++){const q=s.lobes[i];q.from.copy(p.prev);q.to.copy(p.pos);q.param=params[i];}
+      return s.lobes;
+    }
     const yaw=Math.atan2(p.vel.x,p.vel.z),cy=Math.cos(yaw),sy=Math.sin(yaw);
     for(let i=0;i<params.length;i++){
-      const q=s.lobes[i],v=offsets[i]||{},x=finite(v.X,0),y=finite(v.Y,0),z=finite(v.Z,0);
+      const q=s.lobes[i],v=offsets[i]||EMPTY_LOBE_OFFSET,x=finite(v.X,0),y=finite(v.Y,0),z=finite(v.Z,0);
       const ox=x*cy+z*sy,oz=-x*sy+z*cy;
       q.from.set(p.prev.x+ox,p.prev.y+y,p.prev.z+oz);
       q.to.set(p.pos.x+ox,p.pos.y+y,p.pos.z+oz);q.param=params[i];
@@ -1108,8 +1172,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const before=s.travel;
     p.pos.addScaledVector(p.vel,DT);
     updateCatalogVisual(p);
-    s.travel+=p.prev.distanceTo(p.pos);
-    if(s.travel>s.range) { const f=clamp((s.range-before)/(s.travel-before));p.pos.lerpVectors(p.prev,p.pos,f);s.travel=s.range; }
+    let distance=p.prev.distanceTo(p.pos);
+    s.travel+=distance;
+    if(s.travel>s.range) { const f=clamp((s.range-before)/(s.travel-before));p.pos.lerpVectors(p.prev,p.pos,f);s.travel=s.range;distance=p.prev.distanceTo(p.pos); }
+    return distance;
   }
   function finishContact(system,p,h) {
     const s=p.catalog,d=s.descriptor,r=s.r;
@@ -1188,6 +1254,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         size:r.family==='roller'?.14:.11,spread:1.2,paint:false});
     return true;
   }
+  const recycle=P._recycle;
+  P._recycle=function(p,...args){
+    const scratch=p._catalogCollisionScratch;
+    if(scratch){scratch.seen.clear();scratch.active.length=0;for(const q of scratch.capacity){q.param=null;q.paintSeed=null;}}
+    p.catalog=null;p.catalogVisual=null;
+    return recycle.call(this,p,...args);
+  };
   P._new=function(...args){const p=fresh.apply(this,args);p.catalog=null;p.catalogVisual=null;return p;};
   P._step=function(p,dt){
     if(!p.catalog)return step.call(this,p,dt);
@@ -1200,9 +1273,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(s.stuck){s.fuse-=DT;if(s.fuse<=EPS){explosion(this,p,d.b.DetonationParam.BlastParam);return true;}continue;}
       const travelBefore=s.travel;
       this.projectileVisuals?.beginPhysicsStep(p);
-      advance(p);
+      const len=advance(p);
       this.projectileVisuals?.recordPhysicsPoint(p,p.age-DT);
-      const shapes=lobes(p),len=p.prev.distanceTo(p.pos);
+      const shapes=lobes(p);
       const bounceScale=s.r.sourceActor==='WeaponSlosherBathtub'?s.bounces:0;
       let world=s.hit;world.hit=false;
       // Added Rollers/Sloshers share the native glob graze rule (weapons-fidelity GLOB_GRAZE):
@@ -1211,13 +1284,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const graze=(s.r.family==='roller'||s.r.family==='slosher')&&!bubble;
       // A multi-lobe round (Splatana waves) ends only when its sourced CoreIndex
       // lobe reaches terrain. An outer lobe that meets a wall, pillar or the floor
-      // splashes there and leaves the wave; the untouched lobes fly on. q.stop is
+      // splashes there and removes its outward wing; inner/opposite lobes fly on. q.stop is
       // the fraction of this step a lobe still exists for (-1: already gone).
       const coreLobe=shapes.length>1?Math.max(0,Math.min(shapes.length-1,Math.round(finite(d.c.CoreIndex,0)))):0;
       for(let i=0;i<shapes.length;i++){
         const q=shapes[i];
-        if(s.lobeGone?.[i]){q.stop=-1;continue;}
-        q.stop=Infinity;
+        if(s.lobeGone?.[i]){q.stop=q.terrainStop=-1;continue;}
+        q.stop=q.terrainStop=Infinity;
         const f0=collisionRadius(q.param,'Field',(p.age-DT)*HZ,s.index,bounceScale),f1=collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale);
         let candidate=sweptWorldHit(G.physics,q.from,q.to,f0,f1,q.hit,true);
         if(candidate.hit && (graze || bubble && catalogBubbleSurfaceNormalY(candidate,G.physics?.level)>.35)){
@@ -1235,7 +1308,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         }
         if(!candidate.hit)continue;
         if(i!==coreLobe){
-          q.stop=candidate.dist/Math.max(EPS,len);
+          q.stop=q.terrainStop=candidate.dist/Math.max(EPS,len);
           // Keep the existing candidate-order seed budget, including a later
           // rejected contact. Reserving here avoids shifting subsequent shots;
           // only the reached contact may commit paint or retire the lobe.
@@ -1244,13 +1317,29 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         }
         if(!world.hit||candidate.dist<world.dist)world=candidate;
       }
+      // Splatana lobes form two ordered wings around CoreIndex. Losing an
+      // inner lobe also removes every outward lobe on that side, at the same
+      // swept time, even when its own path misses terrain. Do this before
+      // Actor admission; only the lobe that actually touches terrain paints.
+      // https://wikiwiki.jp/splatoon3mix/ブキ/ワイパー属
+      if(s.r.family==='splatana'&&shapes.length>1)for(let side=-1;side<=1;side+=2){
+        let cutoff=Infinity;
+        for(let i=coreLobe+side;i>=0&&i<shapes.length;i+=side){
+          const q=shapes[i];cutoff=Math.min(cutoff,q.stop);q.stop=cutoff;
+        }
+      }
       let stop=world.hit?world.dist/Math.max(EPS,len):Infinity,target=null,boss=null,defense=this.kitDefenseCandidate?.(p);
       if(!unitCanDamage)defense=null;
       if(defense&&defense.distance/Math.max(EPS,len)<stop)stop=defense.distance/Math.max(EPS,len);
       else defense=null;
       // Math.max's -Infinity for an empty list and NaN propagation are kept.
       let pr1=-Infinity;
-      for(let i=0;i<shapes.length;i++)pr1=Math.max(pr1,collisionRadius(shapes[i].param,'Player',p.age*HZ,s.index,bounceScale));
+      for(let i=0;i<shapes.length;i++){
+        const q=shapes[i];
+        q.playerRadius0=collisionRadius(q.param,'Player',(p.age-DT)*HZ,s.index,bounceScale);
+        q.playerRadius1=collisionRadius(q.param,'Player',p.age*HZ,s.index,bounceScale);
+        pr1=Math.max(pr1,q.playerRadius1);
+      }
       for(const a of G.actors||[]){
         if(!unitCanDamage)break;
         const friendly=a.team===p.team;
@@ -1258,7 +1347,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         let entry=null;
         for(const q of shapes){
           if(q.stop<0)continue;
-          const pr0=collisionRadius(q.param,'Player',(p.age-DT)*HZ,s.index,bounceScale),radius=collisionRadius(q.param,'Player',p.age*HZ,s.index,bounceScale);
+          const pr0=q.playerRadius0,radius=q.playerRadius1;
           const contact=capsuleEntry(q.from,q.to,a.pos,hurtboxRadius(a,PLAYER),hurtboxHeight(a,PLAYER),pr0,radius);
           // A lobe that splashed on terrain this step cannot reach past it.
           if(contact!=null&&contact>q.stop+EPS)continue;
@@ -1277,13 +1366,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const q=shapes[i];
         if(i===coreLobe||!Number.isFinite(q.stop)||q.stop<0||q.stop>Math.min(1,stop)+EPS)continue;
         (s.lobeGone||=[])[i]=true;
-        if(!p.ghost)paint(p.owner,q.hit.point,collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale),
+        if(!p.ghost&&q.terrainStop<=q.stop+EPS)paint(p.owner,q.hit.point,collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale),
           1,null,q.hit.face,mainInkFootprint(s.r),q.paintSeed);
       }
       if(!p.ghost&&s.r.family==='charger') {
-        const end=p.prev.clone().lerp(p.pos,Math.min(1,stop)),spacing=Math.max(.2,d.radius*.5);
+        const end=(s.linePaintEnd||=new THREE.Vector3()).copy(p.prev).lerp(p.pos,Math.min(1,stop)),spacing=Math.max(.2,d.radius*.5);
+        const sample=s.linePaintSample||=new THREE.Vector3();
         const count=Math.ceil(p.prev.distanceTo(end)/spacing);
-        for(let i=0;i<count;i++)floorPaint(p.owner,p.prev.clone().lerp(end,(i+1)/count),d.radius,1,null,mainInkFootprint(s.r));
+        for(let i=0;i<count;i++)floorPaint(p.owner,sample.copy(p.prev).lerp(end,(i+1)/count),d.radius,1,null,mainInkFootprint(s.r));
       }
       if(!p.ghost&&s.brellaFlight&&s.brellaFlight.volley.next<s.brellaFlight.volley.plan.count){
         const fraction=Math.min(1,clamp(stop),clamp((p.life-(p.age-DT))/DT));
@@ -1299,12 +1389,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // keep their established projected paint rather than inventing gravity.
       // Every crossed source threshold is consumed exactly once, even when
       // multiple fit in a 60Hz frame. A head-contact boundary is exclusive.
-      if(!p.ghost&&d.splashCount>0&&len>EPS){
+      if(!p.ghost&&d.splashCount>0&&s.dropCount<d.splashCount&&len>EPS){
         const lifeTravel=travelBefore+p.vel.length()*clamp(p.life-(p.age-DT),0,DT);
         const endTravel=Math.min(s.travel,lifeTravel,travelBefore+len*clamp(Math.min(1,stop)));
-        const direction=p.vel.clone().setY(0).normalize();
+        let direction;
         while(s.dropCount<d.splashCount&&s.nextSplash<=endTravel+EPS){
           if(stop<=1&&s.nextSplash>=endTravel-EPS)break;
+          direction ||= p.vel.clone().setY(0).normalize();
           const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));
           const radius=catalogSplashRadius(d,s.dropCount);
           if(d.splashDropSpec||d.sloshFall){
@@ -1324,7 +1415,16 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         paintDistanceFlight(G,p,s.rollerFlight,p.prev.clone().lerp(p.pos,clamp(Math.min(1,stop))));
       if(stop<=1){
         p.pos.lerpVectors(p.prev,p.pos,stop);
-        if(defense){defense.onHit(p);return true;}
+        if(defense){
+          // Roller/Brush damage lives in sourced distance/sector/age bands;
+          // the shared descriptor has no ValueMax and starts at zero. Resolve
+          // that same admitted hit value before a device/shield reads p.damage.
+          if(s.r.family==='roller'||s.r.family==='brush'){
+            p.damage=impactDamage(p,defense.object||defense.damageTarget||defense,stop);
+            defense.setDamageAtContact?.(p.damage);
+          }
+          defense.onHit(p);return true;
+        }
         if(target){
           if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target,stop);if(amount>0){
             const owner=p.owner,previous=owner._sourceChargerAudioHit;
@@ -1374,9 +1474,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const source=mode(r,meta[1],meta[2],meta[3]);
         const marker=e[27]?.s3CatalogDepleted===true&&
           (r.family==='roller'||r.family==='brush');
-        const d=catalogDepletedDescriptor(source,source.packet,marker);
+        const d=catalogDepletedDescriptor(source,source.packet,marker),scratch=collisionScratch(p);
         p.catalog={r,descriptor:d,travel:0,nextSplash:d.splashDropSpec?d.splashFirst:1,dropCount:0,
-        hit:new Hit(),seen:new Set(),index:Math.max(0,finite(meta[4],0)),phase:0,stuck:false,fuse:0,carry:0,range:d.range,bounces:0,groundBounces:0};
+        hit:scratch.hit,seen:scratch.seen,collisionScratch:scratch,index:Math.max(0,finite(meta[4],0)),phase:0,stuck:false,fuse:0,carry:0,range:d.range,bounces:0,groundBounces:0};
         p.catalogVisual=catalogVisualSpec(r,d,p.catalog.index);updateCatalogVisual(p);
         // A remote Splatana consumes generic Shooter recoil in FAMILY_TRIGGER.
         // Feed only validated shot metadata into its presentation clock, never
@@ -1812,7 +1912,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const distance=c.paintLast.distanceTo(c.pos);
     if(distance>EPS){
       for(let d=spacing-c.paintCarry;d<=distance+EPS;d+=spacing)
-        stamp(c.paintLast.clone().lerp(c.pos,Math.min(1,d/distance)));
+        stamp((c.paintPoint||=c.pos.clone()).copy(c.paintLast).lerp(c.pos,Math.min(1,d/distance)));
       c.paintCarry=(c.paintCarry+distance)%spacing;
       if(c.paintCarry<EPS||spacing-c.paintCarry<EPS)c.paintCarry=0;
     }
@@ -1904,6 +2004,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           const total=p.spl__WeaponShelterCanopyParam.InkConsumeUmbrella||0;
           if(!pay(runner,Number.isFinite(measure.launch)?total*100/measure.launch*HZ*dt*inkMod(a):0,finite(t.InkRecoverStopCharge,20)/HZ))canopy.open=false;
         }
+        if(canopy.open)heldCanopyActors.add(a);else heldCanopyActors.delete(a);
         heldCanopyFoot(a,canopy,c,measure,wasOpen,dt);
         if(canopy.open&&canopy.age*HZ+EPS>=measure.open+measure.launch&&p.spl__WeaponShelterCanopyParam.IsCanopyShot!==false){
           canopy.launched=true;canopy.remaining=finite(c.CanopyFrame,300)/HZ;
@@ -1922,6 +2023,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           canopy.edgeFrom=canopy.pos.clone();canopy.edgeTo=canopy.pos.clone();canopy.wallNormal=canopy.pos.clone();
           canopy.side=new THREE.Vector3(canopy.dir.z,0,-canopy.dir.x).normalize();
           canopy.visualSerial=++canopyVisualSerial;canopy.visualWeaponId=a.weapon.id;
+          heldCanopyActors.delete(a);
           canopy.record=r;canopy.visualSource=a.character?.weapon?.def;launchedCanopies.add(canopy);showDetachedCanopy(api,a,canopy,r.id);s.canopy=null;
           canopyTrail(canopy);
         }}
@@ -1947,18 +2049,21 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function hurtCanopy(a,s,c,damage){
     const raw=(c.record||a.weapon.catalogRecord).parameters.spl__BulletShelterCanopyParam;
     c.hp=Math.max(0,c.hp-damage*(c.launched?finite(raw.CanopyAttackedDamageRate,.5):1));
-    if(c.hp<=0){if(c.launched){retireDetachedCanopy(c);launchedCanopies.delete(c);}else{s.canopy=null;s.naked=finite(raw.CanopyNakedFrame,330)/HZ;}}
+    if(c.hp<=0){heldCanopyActors.delete(a);if(c.launched){retireDetachedCanopy(c);launchedCanopies.delete(c);}else{s.canopy=null;s.naked=finite(raw.CanopyNakedFrame,330)/HZ;}}
   }
   P.kitDefenseCandidate=function(p){
     let best=nativeDefense?.call(this,p)||null;
+    // Keep native defense and active-shield ordering, but avoid all actor scans
+    // and segment setup when no held/purged catalogue shield is active.
+    if(!heldCanopyActors.size&&!launchedCanopies.size)return best;
     const len=p.prev.distanceTo(p.pos);
     const consider=(a,s,c)=>{
       if(a.team===p.team||!c||!c.launched&&!a.alive||!c.open&&!c.launched||c.hp<=0)return;
       const t=canopyEntry(p.prev,p.pos,c,Math.max(0,finite(p.size,.1)));
       if(t==null||t*len>=(best?.distance??Infinity))return;
-      best={brella:true,distance:t*len,point:p.prev.clone().lerp(p.pos,t),onHit:(shot=p)=>{
+      best={brella:true,damageTarget:c,distance:t*len,point:p.prev.clone().lerp(p.pos,t),onHit:(shot=p)=>{
         if(shot.ghost)return;
-        hurtCanopy(a,s,c,finite(shot.catalog?.descriptor.damage,finite(shot.damage,0)));
+        hurtCanopy(a,s,c,finite(shot.damage,finite(shot.catalog?.descriptor.damage,0)));
       }};
     };
     for(const a of G.actors||[])consider(a,a.weaponRunner?.catalogState,a.weaponRunner?.catalogState?.canopy);
@@ -1982,7 +2087,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     return nativeApplyHit.call(this,attacker,victim,damage,wid,...args);
   };
-  P.clear=function(...args){for(const c of launchedCanopies)retireDetachedCanopy(c);launchedCanopies.clear();for(const a of G.actors||[])if(a.weaponRunner?.catalogState)cancel(a.weaponRunner);return clear.apply(this,args);};
+  P.clear=function(...args){for(const c of launchedCanopies)retireDetachedCanopy(c);launchedCanopies.clear();heldCanopyActors.clear();for(const a of G.actors||[])if(a.weaponRunner?.catalogState)cancel(a.weaponRunner);return clear.apply(this,args);};
   const startSpecial=Actor.prototype._startSpecial;
   Actor.prototype._startSpecial=function(...args){const before=this.stats?.specials;const result=startSpecial.apply(this,args);
     if(this.stats?.specials>before&&this.weapon.catalogRecord)cancel(this.weaponRunner);return result;};
@@ -2036,9 +2141,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // Use explicit per-weapon forward/reverse rates; omitted tilt keep/reset
     // semantics remain unverified, rather than inventing a 45F freeze.
     if(r.family==='stringer'){
-      const shot=r.parameters.spl__WeaponStringerParam.ShotParam;
-      s.bowTilt=clamp(s.bowTilt+finite(a.grounded?shot.BowJumpTiltSpeedReverse:shot.BowJumpTiltSpeedForward,a.grounded?-12:9)*dt*HZ,
-        0,finite(shot.BowTiltDegreeMax,90));
+      advanceBowTilt(this,r,dt);
     }
     if(r.family==='splatana'){
       if(a.form==='kid')recordSaberStick(s,a,dt*HZ,r.parameters.spl__WeaponSaberParam.SwingParam.StepStartStickHistoryFrame);

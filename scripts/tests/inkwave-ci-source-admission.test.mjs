@@ -13,6 +13,9 @@ import {MAIN_INK_BASELINE_PATHS, planMainInkBaseline} from '../lib/inkwave-main-
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const readWorkflow = name => fs.readFileSync(path.join(root, '.github/workflows', name), 'utf8');
 const sourceExpression = '${{ github.event.pull_request.head.sha || github.sha }}';
+// H51 immutable dispatch contract; do not auto-detect or accept legacy moving-main routes.
+const exactBranch = 'inkwave/exact-head-ci-main144-20261022';
+const exactEpoch = {mode:'queue1801-byte-identical-paint-source-epoch',sha:'df83a5c4265a9c8738d930dabaffb43cd31ae902'};
 const runtimeBranch = 'inkwave/runtime-acceptance-0f3-prep-20261022';
 const jobs = {
   'ci-quality-gate.yml': ['verify-aplus-suite'],
@@ -92,6 +95,10 @@ for (const [workflow, names] of Object.entries(jobs)) for (const job of names) {
   });
 }
 
+const allPrBranch = 'integrate/inkwave-all-prs-20261022';
+const allPrEpoch={mode:'current-pair-with-gameplay-differences',sha:'26a4db4123d23162a3dbf8a12150b1b5bc6ccf64',head:'c9218d19b98a3bc63c9266738e1d67a64d9d1ff0'};
+const stringerBranch = 'fix/stringer-splatana-review-20261023';
+const stringerEpoch = {mode:'current-pair-with-gameplay-differences',sha:'83403aaab0043633f1ad1c963068cd0566c5b6fc',head:'c9218d19b98a3bc63c9266738e1d67a64d9d1ff0'};
 const queueBranch = 'fix/queue-30-recovery-20261022';
 const queueEpoch = {mode:'queue1801-reviewed-paint-source-pair',sha:'28d2c888704d32304d1c938c51d7d2d230eddbbd',head:'df83a5c4265a9c8738d930dabaffb43cd31ae902'};
 const integrationBranch = 'integrate/all-open-prs-20261022';
@@ -99,6 +106,20 @@ const integrationEpoch = {mode:'mainceb58-byte-identical-paint-source-epoch',sha
 const a350Branch = 'inkwave/runtime-main-a350-integration-20261022';
 const a350Epoch = {mode:'maina350-byte-identical-paint-source-epoch',sha:'a350b6b89e4cb86abe37273db6315c74085f8ac5'};
 const epoch = {mode: 'maine1f-byte-identical-paint-source-epoch', sha: 'e1fa66ad8465bf87caaf232d51543def72c35875'};
+const runtimeUiBranch = 'inkwave/runtime-ui-acceptance-20261022';
+const runtimeUiEpoch = {mode:'main26a4-reviewed-runtime-ui-production-pair',sha:'26a4db4123d23162a3dbf8a12150b1b5bc6ccf64'};
+// Exact eight reviewed PR families: a count alone would hide missing or weaker guards.
+const reviewedPrShells = [
+  "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$DECLARED_BASE_SHA\" = \"26a4db4123d23162a3dbf8a12150b1b5bc6ccf64\" ] && [ \"$PAIR_REPOSITORY\" = \"rhgrive3/actions\" ] && [ \"$PAIR_HEAD_REPO\" = \"$PAIR_REPOSITORY\" ] && [ \"$PAIR_HEAD_REF\" = \"inkwave/runtime-ui-acceptance-20261022\" ]; then",
+  "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$PAIR_HEAD_REF\" = \"fix/stringer-splatana-review-20261023\" ] && [ \"$PAIR_HEAD_REPO\" = \"$PAIR_REPOSITORY\" ] && [ -n \"$PAIR_REPOSITORY\" ]; then",
+  "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$PAIR_HEAD_REF\" = \"integrate/inkwave-all-prs-20261022\" ] && [ \"$PAIR_HEAD_REPO\" = \"$PAIR_REPOSITORY\" ] && [ -n \"$PAIR_REPOSITORY\" ]; then",
+  "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$PAIR_HEAD_REF\" = \"inkwave/exact-head-ci-main144-20261022\" ] && [ -n \"$PAIR_REPOSITORY\" ] && [ \"$PAIR_HEAD_REPO\" = \"$PAIR_REPOSITORY\" ]; then",
+  "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && { [ \"$PAIR_HEAD_REF\" = \"inkwave/runtime-acceptance-0f3-prep-20261022\" ] || [ \"$PAIR_HEAD_REF\" = \"inkwave/runtime-acceptance-followup-20261022\" ]; }; then",
+  "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$PAIR_HEAD_REF\" = \"inkwave/runtime-main-a350-integration-20261022\" ]; then",
+  "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$PAIR_HEAD_REF\" = \"integrate/all-open-prs-20261022\" ]; then",
+  "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$PAIR_HEAD_REF\" = \"fix/queue-30-recovery-20261022\" ]; then"
+];
+const historicalPrepareGuard = 'elif [ "$PAIR_PR_NUMBER" = "1758" ] || [ "$PAIR_HEAD_REF" = "test/inkwave-combined-qa-20261021" ]; then';
 const controlName = 'Bind reviewed source controls to declared immutable Git source leaves';
 const prepareName = 'Replay reviewed Roller births, pool reset and pinned paint in the main reference';
 const step = (source, name) => {
@@ -115,13 +136,15 @@ function enabled(body, context) {
   assert.match(expression, /^[a-zA-Z0-9_.'/= !&|()\-]+$/);
   return Function('github', 'matrix', `return Boolean(${expression});`)(context.github, context.matrix);
 }
-function context(branch, number, {event = 'pull_request', baseRef = 'main', side = 'before'} = {}) {
-  return {github: {event_name: event, head_ref: branch, event: {pull_request: {number, base: {ref: baseRef}}}}, matrix: {side}};
+function context(branch, number, {event = 'pull_request', baseRef = 'main', side = 'before', headRepo = 'rhgrive3/actions', repository = 'rhgrive3/actions', baseSha = '1'.repeat(40), headSha = '2'.repeat(40)} = {}) {
+  return {github: {event_name: event, repository, head_ref: branch, event: {pull_request: {number, base: {ref: baseRef, sha: baseSha}, head: {sha: headSha, repo: {full_name: headRepo}}}}}, matrix: {side}};
 }
 function policyEnv(c) {
   return {...process.env, PAIR_EVENT_NAME: c.github.event_name, PAIR_BASE_REF: c.github.event.pull_request.base.ref,
+    PAIR_HEAD_REPO: c.github.event.pull_request.head.repo.full_name, PAIR_REPOSITORY: c.github.repository,
+    DISPATCH_MODE: epoch.mode, DISPATCH_SOURCE_BASE: epoch.sha, DISPATCH_SOURCE_HEAD: epoch.sha,
     PAIR_HEAD_REF: c.github.head_ref, PAIR_PR_NUMBER: c.github.event.pull_request.number,
-    INKWAVE_REFERENCE_ROOT: '.ci-baseline', DECLARED_BASE_SHA: '1'.repeat(40), DECLARED_HEAD_SHA: '2'.repeat(40)};
+    INKWAVE_REFERENCE_ROOT: '.ci-baseline', DECLARED_BASE_SHA: c.github.event.pull_request.base.sha, DECLARED_HEAD_SHA: c.github.event.pull_request.head.sha};
 }
 function probe(body, c, failure = 0) {
   const commands = shell(body); assert.ok(commands, 'real selector shell required');
@@ -135,37 +158,70 @@ function sourceRouteContract(source) {
   const bodies = [step(source, controlName), step(source, prepareName)];
   for (const body of bodies) {
     assert.doesNotMatch(body, /^        continue-on-error:/m);
+    const guards=(body.match(/^          elif .*; then$/gm)||[]).map(line=>line.trim());
+    assert.deepEqual(guards, body===bodies[1] ? [...reviewedPrShells,historicalPrepareGuard] : reviewedPrShells, 'exact reviewed route inventory retains every guard and rejects unexpected routes');
     for (const [name, value] of [['PAIR_EVENT_NAME', 'github.event_name'], ['PAIR_BASE_REF', 'github.event.pull_request.base.ref'],
-      ['PAIR_HEAD_REF', 'github.head_ref'], ['DECLARED_BASE_SHA', 'github.event.pull_request.base.sha'], ['DECLARED_HEAD_SHA', 'github.event.pull_request.head.sha']])
+      ['PAIR_HEAD_REF', 'github.head_ref'], ['DECLARED_BASE_SHA', 'github.event.pull_request.base.sha || inputs.base_sha'], ['DECLARED_HEAD_SHA', 'github.event.pull_request.head.sha || inputs.candidate_sha'],
+      ['PAIR_HEAD_REPO','github.event.pull_request.head.repo.full_name'], ['PAIR_REPOSITORY','github.repository'],
+      ['DISPATCH_MODE','inputs.expected_mode'], ['DISPATCH_SOURCE_BASE','inputs.expected_source_base'], ['DISPATCH_SOURCE_HEAD','inputs.expected_source_head']])
       assert.ok(body.includes('          ' + name + ': ${{ ' + value + ' }}\n'), name + ': dynamic immutable event declaration');
   }
   const cases = [
+    [context(allPrBranch,'1843'),true,true,'allpr'],
+    [context(stringerBranch,'1850'),true,true,'stringer'],
+    [context(stringerBranch+'-foreign','1850'),false,true,'legacy'],
+    [context(stringerBranch,'1850',{headRepo:'foreign/repo'}),false,true,'legacy'],
+    [context(stringerBranch,'1850',{baseRef:'not-main'}),false,true,'legacy'],
+    [context(stringerBranch,'1850',{event:'push'}),false,true,'legacy'],
+    [context(stringerBranch,'1850',{side:'after'}),false,false,'none'],
+    [context(allPrBranch+'-foreign','1843'),false,true,'legacy'],
+    [context(allPrBranch,'1843',{headRepo:'foreign/repo'}),false,true,'legacy'],
+    [context(allPrBranch,'1843',{baseRef:'not-main'}),false,true,'legacy'],
+    [context(allPrBranch,'1843',{side:'after'}),false,false,'none'],
+    [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha}),true,true,'runtime-ui'],
+    [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha,headSha:'3'.repeat(40)}),true,true,'runtime-ui'],
+    [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha,headRepo:'foreign/repo'}),false,true,'legacy'],
+    [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha,repository:'foreign/repo'}),false,true,'legacy'],
+    [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha,baseRef:'not-main'}),false,true,'legacy'],
+    [context(runtimeUiBranch,'1844',{}),false,true,'legacy'],
+    [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha,event:'push'}),false,true,'legacy'],
+    [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha,side:'after'}),false,false,'none'],
+    [context(runtimeUiBranch+'-foreign','1844',{baseSha:runtimeUiEpoch.sha}),false,true,'legacy'],
+    [context(exactBranch,'1817'),true,true,'exact'],
+    [context(exactBranch+'-foreign','1817'),false,true,'legacy'],
+    [context(exactBranch,'1817',{headRepo:'foreign/repo'}),false,true,'legacy'],
+    [context(exactBranch,'1817',{headRepo:''}),false,true,'legacy'],
+    [context(exactBranch,'1817',{baseRef:'not-main'}),false,true,'legacy'],
+    [context(exactBranch,'1817',{event:'push'}),false,true,'legacy'],
+    [context(exactBranch,'1817',{side:'after'}),false,false,'none'],
+    [context(exactBranch,'1817',{event:'workflow_dispatch'}),true,true,'dispatch'],
+    [context(exactBranch,'1817',{event:'workflow_dispatch',side:'after'}),false,false,'none'],
     [context(queueBranch,'1801'),true,true,'queue'],
     [context(queueBranch+'-foreign','1801'),false,true,'legacy'],
     [context(queueBranch,'1801',{baseRef:'not-main'}),false,true,'legacy'],
-    [context(queueBranch,'1801',{event:'workflow_dispatch'}),false,true,'legacy'],
+    [context(queueBranch,'1801',{event:'workflow_dispatch'}),true,true,'dispatch'],
     [context(queueBranch,'1801',{side:'after'}),false,false,'none'],
     [context(integrationBranch, '1796'), true, true, 'integration'],
     [context(integrationBranch+'-foreign', '1796'), false, true, 'legacy'],
     [context(integrationBranch, '1796', {baseRef:'not-main'}), false, true, 'legacy'],
-    [context(integrationBranch, '1796', {event:'workflow_dispatch'}), false, true, 'legacy'],
+    [context(integrationBranch, '1796', {event:'workflow_dispatch'}), true, true, 'dispatch'],
     [context(integrationBranch, '1796', {side:'after'}), false, false, 'none'],
     [context(a350Branch, '1788'), true, true, 'a350'],
     [context(a350Branch + '-unreviewed', '1788'), false, true, 'legacy'],
     [context(a350Branch, '1788', {baseRef: 'not-main'}), false, true, 'legacy'],
-    [context(a350Branch, '1788', {event: 'workflow_dispatch'}), false, true, 'legacy'],
+    [context(a350Branch, '1788', {event: 'workflow_dispatch'}), true, true, 'dispatch'],
     [context(a350Branch, '1788', {side: 'after'}), false, false, 'none'],
     [context(runtimeBranch, '1770'), true, true, 'current'],
     [context(runtimeBranch, '1758'), true, true, 'current'],
     [context(runtimeBranch, '1758', {baseRef: 'not-main'}), true, true, 'declared-legacy'],
-    [context(runtimeBranch, '1758', {event: 'workflow_dispatch'}), true, true, 'declared-legacy'],
+    [context(runtimeBranch, '1758', {event: 'workflow_dispatch'}), true, true, 'dispatch'],
     [context('test/inkwave-combined-qa-20261021', '0'), true, true, 'declared-legacy'],
     [context('historical', '1758'), true, true, 'declared-legacy'],
     [context(runtimeBranch + '-unreviewed', '0'), false, true, 'legacy'],
     [context('other', '0'), false, true, 'legacy'],
     [context(runtimeBranch, '1770', {baseRef: 'not-main'}), false, true, 'legacy'],
-    [context(runtimeBranch, '1770', {event: 'workflow_dispatch'}), false, true, 'legacy'],
-    [context('', '', {event: 'workflow_dispatch', baseRef: ''}), false, true, 'legacy'],
+    [context(runtimeBranch, '1770', {event: 'workflow_dispatch'}), true, true, 'dispatch'],
+    [context('', '', {event: 'workflow_dispatch', baseRef: ''}), true, true, 'dispatch'],
     [context('', '', {event: 'push', baseRef: ''}), false, true, 'legacy'],
     [context(runtimeBranch, '1770', {side: 'after'}), false, false, 'none'],
     [context('historical', '1651'), false, false, 'none'],
@@ -176,23 +232,52 @@ function sourceRouteContract(source) {
     const {result, calls} = probe(body, c); assert.equal(result.status, 0, result.stderr); assert.equal(calls.length, 1);
     const script = index === 0 ? 'check-inkwave-current-pair-controls' : 'prepare-inkwave-projectile-baseline';
     const receipt = index === 0 ? 'current-pair-controls' : 'baseline-birth-adjustment';
-    const chosenEpoch = route === 'queue' ? queueEpoch : route === 'integration' ? integrationEpoch : route === 'a350' ? a350Epoch : epoch;
+    const chosenEpoch = route === 'allpr' ? allPrEpoch : route === 'stringer' ? stringerEpoch : route === 'runtime-ui' ? runtimeUiEpoch : route === 'exact' ? exactEpoch : route === 'queue' ? queueEpoch : route === 'integration' ? integrationEpoch : route === 'a350' ? a350Epoch : epoch;
     const wanted = [`scripts/${script}.mjs`, '--baseline', '.ci-baseline', '--candidate', '.',
-      ...(route === 'legacy' ? [] : ['--base-sha', '1'.repeat(40), '--candidate-sha', '2'.repeat(40)]),
-      ...(['current','a350','integration','queue'].includes(route) ? ['--expected-mode', chosenEpoch.mode, '--expected-source-base', chosenEpoch.sha, '--expected-source-head', chosenEpoch.head || chosenEpoch.sha] : []),
+      ...(route === 'legacy' ? [] : ['--base-sha', c.github.event.pull_request.base.sha, '--candidate-sha', c.github.event.pull_request.head.sha]),
+      ...(['allpr','stringer','runtime-ui','current','a350','integration','queue','exact','dispatch'].includes(route) ? ['--expected-mode', chosenEpoch.mode, '--expected-source-base', chosenEpoch.sha, '--expected-source-head', route === 'runtime-ui' ? c.github.event.pull_request.head.sha : chosenEpoch.head || chosenEpoch.sha] : []),
       '--receipt', `.ci-scratch/projectile-visuals/before/${receipt}.json`];
     assert.deepEqual(calls[0], wanted, route + ': exact original/new consumer arguments');
   }
-  for (const body of bodies) for (const selectedBranch of [runtimeBranch,a350Branch,integrationBranch,queueBranch]) {
+  for (const body of bodies) for (const selectedBranch of [allPrBranch,stringerBranch,runtimeBranch,a350Branch,integrationBranch,queueBranch,exactBranch]) {
     const {result, calls} = probe(body, context(selectedBranch, '1770'), 42);
     assert.equal(result.status, 42, 'current-epoch rejection must stop the step');
     assert.equal(calls.length, 1, 'no retry or legacy fallback after current-epoch rejection');
   }
+  for (const body of bodies) {
+    const rejection=probe(body,context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha}),42);
+    assert.equal(rejection.result.status,42,'runtime UI rejection stops without fallback');
+    assert.equal(rejection.calls.length,1,'runtime UI rejection cannot fall back to legacy');
+    const {result,calls}=probe(body,context('', '', {event:'workflow_dispatch',baseRef:''}),42);
+    assert.equal(result.status,42,'dispatch rejection stops without fallback');
+    assert.equal(calls.length,1,'dispatch cannot retry or infer an epoch');
+  }
   return bodies;
 }
 
-test('only the reviewed runtime PR route selects the explicit epoch in both actual YAML shells', () => {
+test('reviewed PR and explicit immutable dispatch routes select their exact epoch in both actual YAML shells', () => {
   sourceRouteContract(readWorkflow('inkwave-projectile-visuals.yml'));
+});
+
+test('reviewed runtime UI inventory rejects missing, unexpected and weakened routes in each shell', () => {
+  const source=readWorkflow('inkwave-projectile-visuals.yml');
+  const guard=reviewedPrShells[0];
+  for(const name of [controlName,prepareName]) {
+    const original=step(source,name);
+    const mutations=[
+      original.replace('          '+guard+'\n',''),
+      original.replace('          '+guard,'          elif [ "$PAIR_HEAD_REF" = "unreviewed" ]; then\n            false\n          '+guard),
+      ...['[ "$PAIR_EVENT_NAME" = "pull_request" ] && ','[ "$PAIR_BASE_REF" = "main" ] && ',
+        '[ "$DECLARED_BASE_SHA" = "'+runtimeUiEpoch.sha+'" ] && ','[ "$PAIR_REPOSITORY" = "rhgrive3/actions" ] && ',
+        '[ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ] && '].map(part=>original.replace(guard,guard.replace(part,''))),
+      original.replace(runtimeUiBranch,runtimeUiBranch+'-unreviewed'),
+      original.replace(runtimeUiEpoch.mode,'unreviewed-runtime-ui-mode'),
+      original.replace('--expected-source-base '+runtimeUiEpoch.sha,'--expected-source-base '+'f'.repeat(40)),
+      original.replace('--expected-source-head "$DECLARED_HEAD_SHA" --receipt','--expected-source-head '+runtimeUiEpoch.sha+' --receipt'),
+      original.replace('--expected-source-head "$DECLARED_HEAD_SHA" --receipt','--expected-source-head '+'2'.repeat(40)+' --receipt'),
+    ];
+    for(const changed of mutations){assert.notEqual(changed,original);assert.throws(()=>sourceRouteContract(source.replace(original,changed)));}
+  }
 });
 
 test('workflow policy rejects missing/changed epoch flags, unsafe selection, fallback and stale SHA declarations', () => {
@@ -202,14 +287,22 @@ test('workflow policy rejects missing/changed epoch flags, unsafe selection, fal
     source.replace(currentCall, ''), source.replace(epoch.mode, 'unknown-source-epoch'),
     source.replace('--expected-source-base ' + epoch.sha, '--expected-source-base ' + 'f'.repeat(40)),
     source.replace('--expected-source-head ' + epoch.sha, '--expected-source-head ' + 'f'.repeat(40)),
-    source.replace('PAIR_EVENT_NAME: ${{ github.event_name }}', 'PAIR_EVENT_NAME: pull_request'),
-    source.replace('DECLARED_BASE_SHA: ${{ github.event.pull_request.base.sha }}', 'DECLARED_BASE_SHA: ' + epoch.sha),
-    source.replace('DECLARED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}', 'DECLARED_HEAD_SHA: ${{ github.sha }}'),
-    source.replace('if [ "$PAIR_EVENT_NAME" = "pull_request" ] && ', 'if '),
+    source.replaceAll('PAIR_EVENT_NAME: ${{ github.event_name }}', 'PAIR_EVENT_NAME: pull_request'),
+    source.replace('DECLARED_BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.base_sha }}', 'DECLARED_BASE_SHA: ' + epoch.sha),
+    source.replace('DECLARED_HEAD_SHA: ${{ github.event.pull_request.head.sha || inputs.candidate_sha }}', 'DECLARED_HEAD_SHA: ${{ github.sha }}'),
+    source.replaceAll('if [ "$PAIR_EVENT_NAME" = "pull_request" ] && ', 'if '),
     source.replace(' && [ "$PAIR_BASE_REF" = "main" ]', ''),
     source.replace('current-pair-controls.json\n', 'current-pair-controls.json || true\n'),
     source.replace('          else\n            node scripts/check-inkwave-current-pair-controls.mjs',
       '          else\n            node scripts/check-inkwave-current-pair-controls.mjs' + currentCall),
+    source.replaceAll('DISPATCH_MODE: ${{ inputs.expected_mode }}','DISPATCH_MODE: legacy'),
+    source.replaceAll('DISPATCH_SOURCE_BASE: ${{ inputs.expected_source_base }}','DISPATCH_SOURCE_BASE: '+epoch.sha),
+    source.replaceAll('DISPATCH_SOURCE_HEAD: ${{ inputs.expected_source_head }}','DISPATCH_SOURCE_HEAD: '+epoch.sha),
+    source.replace('--expected-mode "$DISPATCH_MODE"', ''),
+    source.replace('--expected-source-base "$DISPATCH_SOURCE_BASE"', ''),
+    source.replace('--expected-source-head "$DISPATCH_SOURCE_HEAD"', ''),
+    source.replaceAll(' && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ]',''),
+    source.replace(exactEpoch.mode,'unknown-exact-epoch'),
     source.replace(a350Epoch.mode, 'unknown-a350-epoch'),
     source.replace('--expected-source-base '+a350Epoch.sha, '--expected-source-base '+'f'.repeat(40)),
     source.replace('--expected-source-head '+a350Epoch.sha, '--expected-source-head '+'f'.repeat(40)),
@@ -241,20 +334,21 @@ test('current-epoch tests and fixture-only changes retain mandatory source and n
   assert.ok(!combined.includes(epoch.mode)); assert.ok(!combined.includes(runtimeBranch));
 });
 
-test('manual projectile dispatch remains legacy and fails on current bytes rather than silently rebaselining', () => {
+test('manual projectile dispatch is immutable and rejects omitted explicit epoch without rebaselining', () => {
   const source = readWorkflow('inkwave-projectile-visuals.yml');
   assert.doesNotMatch(source.split('permissions:')[0], /^  push:/m, 'this workflow has no main-push trigger');
   assert.match(source, /^  workflow_dispatch:/m);
-  assert.ok(source.includes("github.event.pull_request.base.sha || 'main'"), 'existing manual baseline remains moving main, not a newly selected epoch');
+  assert.ok(source.includes('github.event.pull_request.base.sha || inputs.base_sha'), 'manual baseline is explicitly declared');
+  assert.ok(!source.includes("github.event.pull_request.base.sha || 'main'"), 'moving main cannot return');
   const sources = new Map(MAIN_INK_BASELINE_PATHS.map(p => [p, e1fPaintEpochSource(p)]));
   sources.set('patches/splatoon3/profile.json', fs.readFileSync(path.join(root, 'patches/splatoon3/profile.json'), 'utf8'));
   const baseline = createRepository('manual-current-baseline', sources), candidate = createRepository('manual-current-candidate', sources);
   const c = context('', '', {event: 'workflow_dispatch', baseRef: ''});
   const result = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c',
     'node() { command "$NODE_BINARY" "$SCRIPT_ROOT/$1" "${@:2}"; }\n' + shell(step(source, prepareName))],
-    {cwd: candidate.cwd, encoding: 'utf8', env: {...policyEnv(c), INKWAVE_REFERENCE_ROOT: baseline.cwd, NODE_BINARY: process.execPath, SCRIPT_ROOT: root}});
+    {cwd: candidate.cwd, encoding: 'utf8', env: {...policyEnv(c), INKWAVE_REFERENCE_ROOT: baseline.cwd, NODE_BINARY: process.execPath, SCRIPT_ROOT: root, DECLARED_BASE_SHA:baseline.sha, DECLARED_HEAD_SHA:candidate.sha, DISPATCH_MODE:''}});
   assert.equal(result.error, undefined); assert.equal(result.signal, null); assert.equal(result.status, 1, result.stderr);
-  assert.match(result.stderr, /explicitly requested comparison epoch/);
+  assert.match(result.stderr, /complete --expected-mode/);
   assert.equal(fs.existsSync(path.join(candidate.cwd, '.ci-scratch')), false, 'rejected manual route creates no receipt');
   for (const repository of [baseline, candidate]) for (const [p, bytes] of sources)
     assert.equal(fs.readFileSync(path.join(repository.cwd, p), 'utf8'), bytes);

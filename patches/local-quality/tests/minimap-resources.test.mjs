@@ -281,7 +281,7 @@ test('call sites + paint/gameplay state unchanged by this adapter', () => {
   const out = compose('src/game/minimap.js');
   assert.match(out, /tickHidden\(dt\) \{/); // logical effect aging kept
   assert.match(main, /map: showMinimap \? \{ canvas: this\.minimap\.canvas, expanded: false, players \} : null,/);
-  assert.match(out, /this\.owner = new Uint8Array\(N\);/);         // native raster tail intact
+  assert.match(out, /this\.owner = .*new Uint8Array\(N\);/);         // native raster tail intact
   assert.match(out, /this\._built = true;/);
 });
 

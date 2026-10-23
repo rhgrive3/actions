@@ -1,4 +1,4 @@
-import { buildNativeNav } from '../../patches/native-stages/runtime/engine.mjs';
+import { buildNativeNav, buildNativeNavAsync } from '../../patches/native-stages/runtime/engine.mjs';
 // Navigation graph auto-generated from the level: 1 m grid of walkable samples on every floor/platform/ramp,
 // connected by walk / jump-up / drop-down edges. A* with a binary heap.
 import * as THREE from 'three';
@@ -11,11 +11,17 @@ const RING = Array.from({ length: 8 }, (_, k) => {
 const _p = new THREE.Vector3(), _d = new THREE.Vector3();
 
 export class NavGraph {
-  constructor(level, physics) {
+  constructor(level, physics, { deferBuild = false } = {}) {
     this.level = level; this.physics = physics;
     this.step = 1.0;
     this.nodes = [];
-    this._build();
+    if (!deferBuild) this._build();
+  }
+
+  static async createNative(level, physics, options) {
+    const graph = new this(level, physics, { deferBuild: true });
+    await buildNativeNavAsync(graph, options);
+    return graph;
   }
 
   _build() {
@@ -121,6 +127,15 @@ export class NavGraph {
 
   nearest(pos, maxUp = 0.8) {
     const ix = Math.round((pos.x - this.x0) / this.step), iz = Math.round((pos.z - this.z0) / this.step);
+    // An owned node is already an exact zero-distance goal. Preserve nearest's
+    // first-in-cell tie winner, including duplicated supports and maxUp gates.
+    if (this.nodes[pos.id] === pos && this.valid[pos.id] && maxUp >= 0 && Number.isFinite(pos.x + pos.y + pos.z)
+      && ix >= 0 && iz >= 0 && ix < this.nx && iz < this.nz) {
+      for (const id of this.cells[iz * this.nx + ix]) {
+        const n = this.nodes[id];
+        if (this.valid[id] && n.y <= pos.y + maxUp && n.x === pos.x && n.y === pos.y && n.z === pos.z) return id;
+      }
+    }
     let best = -1, bd = Infinity;
     for (let r = 0; r <= 3; r++) {
       for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) {
@@ -141,7 +156,28 @@ export class NavGraph {
   }
 
   // A* from node a to node b; `team` blocks the enemy spawn zone. Returns array of node ids (incl. a and b) or null.
+  // One synchronous planning pass owns this memo. Graph topology is immutable
+  // after publication; callback-qualified native routes always run uncached.
+  withPathMemo(run, owner, value) {
+    if (this.path !== CANONICAL_NAV_PATH || this._pathUncached !== CANONICAL_NAV_PATH_UNCACHED) return run.call(owner, value);
+    const previous = this._pathMemo;
+    const pool = this._pathMemoPool || (this._pathMemoPool = []);
+    const memo = pool.pop() || [];
+    this._pathMemo = memo;
+    try { return run.call(owner, value); }
+    finally { this._pathMemo = previous; memo.length = 0; if (pool.length < 4) pool.push(memo); }
+  }
+
   path(a, b, team, maxIter = 6000, acceptEdge = null) {
+    const memo = this._pathMemo;
+    if (!memo || acceptEdge) return this._pathUncached(a, b, team, maxIter, acceptEdge);
+    for (const row of memo) if (row.a === a && row.b === b && row.team === team && row.maxIter === maxIter) return row.path ? row.path.slice() : null;
+    const path = this._pathUncached(a, b, team, maxIter, acceptEdge);
+    if (memo.length < 32) memo.push({ a, b, team, maxIter, path: path ? path.slice() : null });
+    return path;
+  }
+
+  _pathUncached(a, b, team, maxIter = 6000, acceptEdge = null) {
     if (a < 0 || b < 0) return null;
     const N = this.nodes.length;
     if (!this._g || this._g.length !== N) { this._h = new Float64Array(N); this._g = new Float32Array(N); this._from = new Int32Array(N); this._seen = new Uint32Array(N); this._closed = new Uint32Array(N); this._stamp = 0; }
@@ -213,3 +249,6 @@ class Heap {
     return top;
   }
 }
+
+const CANONICAL_NAV_PATH = NavGraph.prototype.path;
+const CANONICAL_NAV_PATH_UNCACHED = NavGraph.prototype._pathUncached;

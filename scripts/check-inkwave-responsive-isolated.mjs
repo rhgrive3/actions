@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { emitFailedResponsiveProgress } from './lib/inkwave-responsive-progress-summary.mjs';
 import { boundedChildStderr } from './lib/inkwave-responsive-diagnostics.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -87,6 +88,7 @@ for (const engine of ['chromium','webkit']) for (const name of matrix) {
   }
   row.ok=processResult.status===0 && !processResult.error && !row.error;
   if(!row.ok && !row.error)report.errors.push(key+': exit '+String(row.exitCode)+' / '+String(row.signal));
+  emitFailedResponsiveProgress(row.ok, { shardDir, engine, name, startedAt });
   report.shards.push(row);
   write();
 }

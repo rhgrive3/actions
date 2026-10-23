@@ -1,0 +1,18 @@
+function addShoes(B, lv) {
+  const parts = shoeParts(lv);
+  for (const [s, sx] of [['L', 1], ['R', -1]]) {
+    const F = K.REST['foot' + s];
+    for (const pt of parts) {
+      const g = pt.geo.clone();
+      if (sx < 0) K.mirrorX(g);
+      g.translate(F.x, 0, F.z);
+      const uvA = g.attributes.uv;
+      B.add(g, {
+        ex: typeof pt.ex === 'function' ? (p, i) => pt.ex(p, i, uvA) : pt.ex,
+        uv: pt.uvFn ? (i) => pt.uvFn(i) : !!pt.uv,
+        v3: pt.v3,
+        weights: (p) => { const zl = p.z - F.z; const w = sstep(0.056, 0.092, zl) * sstep(0.1, 0.06, p.y); return [['toe' + s, w], ['foot' + s, 1 - w]]; },
+      });
+    }
+  }
+}

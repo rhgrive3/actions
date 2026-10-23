@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import vm from 'node:vm';
+import {emittedRevision} from './revision-recipe-fixture.mjs';
 const adapter = new URL('../adapter.mjs',import.meta.url);
 const helper = new URL('../sprinkler-contact-commit.mjs',import.meta.url);
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
@@ -23,9 +24,11 @@ test('sprinkler helper is strict identity input; one-byte source mutation change
  assert.throws(()=>identity(url=>{if(url.href===helper.href)throw new Error('missing helper');return fs.readFileSync(url);}),/missing helper/);
 });
 test('existing revision recipe changes for one-byte emitted helper change, not identity-only changes',()=>{
- const build=fs.readFileSync(new URL('../../../scripts/build-inkwave.mjs',import.meta.url),'utf8');
- assert.ok(build.includes('const revision = sha256(JSON.stringify(walk(BUILD).sort().map(file => [path.relative(BUILD,file),sha256(fs.readFileSync(file))])));'));
  const bytes=fs.readFileSync(helper),changed=Buffer.from(bytes);changed[changed.length-1]^=1;
- const revision=b=>hash(JSON.stringify([['patches/network-replication/sprinkler-contact-commit.mjs',hash(b)]]));
- assert.notEqual(revision(bytes),revision(changed));assert.equal(revision(bytes),revision(bytes));
+ const rel='patches/network-replication/sprinkler-contact-commit.mjs';
+ const original=emittedRevision(rel,bytes);
+ assert.notEqual(original,emittedRevision(rel,changed));
+ assert.equal(original,emittedRevision(rel,bytes,{inputHash:'different identity metadata'}));
+ assert.equal(original,emittedRevision(rel,bytes,{cached:true}));
+ assert.notEqual(original,emittedRevision(rel,changed,{cached:true}));
 });

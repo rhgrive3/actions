@@ -65,12 +65,14 @@ test('real catalog low-ink Roller/Brush shot retains reduced source unit identit
   function fire(name,vertical,ink){
     G.projectiles.clear();G.actors.length=0;
     const r=record(name),a=f.make(r.id);
+    const vmRecord=a.weapon.catalogRecord;
+    assert.equal(vmRecord.id,r.id,name+' native VM owns the selected source row');
     a.ink=ink;a.form='kid';a.grounded=!vertical;a.s3JumpAirborne=vertical;
     a.vel.set(0,0,0);a.aimYaw=0;a.aimPitch=0;a.aimDir.set(0,0,1);
     a.aimPoint.set(0,1.05,80);
     a.weaponRunner.update(1/60,{fire:true,firePressed:true,sub:false});
     for(let i=0;i<85;i++)a.weaponRunner.update(1/60,{fire:false,firePressed:false,sub:false});
-    return {r,a,rounds:G.projectiles.list.filter(p=>p.catalog?.r?.id===r.id)};
+    return {r,a,rounds:G.projectiles.list.filter(p=>p.catalog?.r===vmRecord)};
   }
   for(const [name,vertical] of [
     ['Carbon Roller',false],['Dynamo Roller',true],['Flingza Roller',true],

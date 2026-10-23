@@ -1,0 +1,28 @@
+Command: node --max-old-space-size=384 --experimental-vm-modules --experimental-global-webcrypto --test --test-concurrency=1 patches/network-replication/tests/issue-1767-startup-clock.test.mjs patches/network-replication/tests/snapshot-clock-admission.test.mjs patches/network-replication/tests/queue-network-hardening.test.mjs
+Exit: 0
+(node:2299) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #1767 delayed pre-bind snapshot cannot establish a stale owner clock (874.348059ms)
+✔ #1767 unbound snapshots leave existing peer state untouched (760.164757ms)
+✔ #1767 bound peers retain future, stale, replay and owner protections (707.886328ms)
+(node:2306) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ future owner timestamp is rejected without poisoning the peer watermark (393.120492ms)
+✔ implausible owner simulation tick is ignored while later valid ticks recover (347.336657ms)
+✔ oversized event sequence cannot consume the replay watermark (357.120155ms)
+✔ ghost projectile birth rejects oversized life and catch-up work is bounded (344.913165ms)
+(node:2318) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #1178 extreme sender clock cannot poison a later valid owner snapshot (706.130296ms)
+✔ #1178 unsafe clock cannot mutate owner state or stop normal recovery at 30 Hz (679.326935ms)
+✔ #1178 unsafe clock cannot mutate owner state or stop normal recovery at 60 Hz (692.051992ms)
+✔ #1178 unsafe clock cannot mutate owner state or stop normal recovery at 120 Hz (677.04855ms)
+✔ #1178 invalid first clock cannot create a peer or consume its first normal snapshot (729.523008ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8207.985453

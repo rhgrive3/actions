@@ -1,0 +1,110 @@
+{
+  "issue": 1165,
+  "recommendation": "close internal CPU/GPU Roller consistency defect",
+  "scope": "Native subsystem browser integration on constructed stage; no Switch/iPad/full-menu or whole new working tree attestation",
+  "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+  "inputHash": "d10d948ff89e8d3a03e547c95fb46fbbf4d4892b3322f9c00c20de7f4fb457eb",
+  "independentParentReview": {
+    "status": "passed",
+    "elapsedMs": 44030,
+    "gpuComparisons": 17313,
+    "cpuOracleComparisons": 18432,
+    "botPaintDecisions": [
+      {
+        "backgroundTeam": 0,
+        "fireTicks": 0,
+        "claimedTurf": 0,
+        "team0Cells": 1024
+      },
+      {
+        "backgroundTeam": 1,
+        "fireTicks": 45,
+        "claimedTurf": 18.25,
+        "team0Cells": 292
+      }
+    ],
+    "judgements": [
+      {
+        "hz": 30,
+        "frames": 79,
+        "ticks": 158,
+        "winner": 0,
+        "coverage": [
+          0.5009765625,
+          0.4990234375
+        ],
+        "gpuCounts": [
+          513,
+          511
+        ],
+        "cpuCounts": [
+          513,
+          511
+        ]
+      },
+      {
+        "hz": 60,
+        "frames": 158,
+        "ticks": 158,
+        "winner": 0,
+        "coverage": [
+          0.5009765625,
+          0.4990234375
+        ],
+        "gpuCounts": [
+          513,
+          511
+        ],
+        "cpuCounts": [
+          513,
+          511
+        ]
+      },
+      {
+        "hz": 120,
+        "frames": 316,
+        "ticks": 158,
+        "winner": 0,
+        "coverage": [
+          0.5009765625,
+          0.4990234375
+        ],
+        "gpuCounts": [
+          513,
+          511
+        ],
+        "cpuCounts": [
+          513,
+          511
+        ]
+      },
+      {
+        "hz": 144,
+        "frames": 380,
+        "ticks": 158,
+        "winner": 0,
+        "coverage": [
+          0.5009765625,
+          0.4990234375
+        ],
+        "gpuCounts": [
+          513,
+          511
+        ],
+        "cpuCounts": [
+          513,
+          511
+        ]
+      }
+    ]
+  },
+  "counterfactuals": "Two explicit CPU-method mutations fail the identical oracle gate, recorded separately from normal build manifest",
+  "filesSha256": {
+    "reports/issue-resolution-20261022/continuation/roller-band-live.json": "f4613fca0f4e09e7f3f9def8da004ca9b0f5e52655d380cebc31403ee8dae51a",
+    "reports/issue-resolution-20261022/continuation/roller-band-negative-old-scan.json": "bf927ac8263fdc0f68be2c0378f1ce4f1befe34043e65ff5871fa42ca333d035",
+    "reports/issue-resolution-20261022/continuation/roller-band-negative-original-core.json": "192ad2f32a4e652c047635b2f45824feb54478926bc78fed650d175a58ca515e",
+    "reports/issue-resolution-20261022/continuation/roller-band-parent-review.json": "aa7e2791b3a81de9e52c495c65112efe6180513eb67e970c2153347a7fdbface",
+    "scripts/check-inkwave-roller-band-live.mjs": "d52776476f437a5d73a292bb986c5fb0a9d1327bfc6b2593dabc5296a08e99ad",
+    "scripts/lib/inkwave-roller-band-control.mjs": "f9ccf5f4f2f5c288cd59fb4153300a117811b2161357b09221a6f42484e296da"
+  }
+}

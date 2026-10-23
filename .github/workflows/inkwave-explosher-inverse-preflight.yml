@@ -75,4 +75,5 @@ jobs:
             .qa-preflight
             .qa-shape/*receipt.json
             .qa-main/*receipt.json
+          include-hidden-files: true
           if-no-files-found: ignore

@@ -1,3 +1,6 @@
+import {ALL_31_PRS_SOURCE_PAIR,POST_30_PRS_SOURCE_PAIR} from './inkwave-31pr-paint-source-pair.mjs';
+import {ALL_29_PRS_SOURCE_PAIR} from './inkwave-29pr-paint-source-pair.mjs';
+import {ALL_PRS_SOURCE_PAIR} from './inkwave-23pr-paint-source-pair.mjs';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
@@ -482,7 +485,7 @@ export const MAINA350_PAINT_SOURCE_PAIR = Object.freeze({
   sourceHead: 'a350b6b89e4cb86abe37273db6315c74085f8ac5',
 });
 export const MAINA350_PAINT_PATHS = Object.freeze([...MAIN_INK_BASELINE_PATHS, 'patches/splatoon3/runtime/bloblobber-launch-sweep.mjs']);
-export const paintSourcePaths = pair => [MAINA350_PAINT_SOURCE_PAIR.mode,MAINCEB58_PAINT_SOURCE_PAIR.mode,QUEUE1801_PAINT_SOURCE_PAIR.mode].includes(pair?.mode) ? MAINA350_PAINT_PATHS : MAIN_INK_BASELINE_PATHS;
+export const paintSourcePaths = pair => [MAINA350_PAINT_SOURCE_PAIR.mode,MAINCEB58_PAINT_SOURCE_PAIR.mode,QUEUE1801_PAINT_SOURCE_PAIR.mode,QUEUE1801_IDENTICAL_PAINT_SOURCE_PAIR.mode].includes(pair?.mode) ? MAINA350_PAINT_PATHS : MAIN_INK_BASELINE_PATHS;
 const MAINA350_PAINT_BLOBS = Object.freeze({
   "patches/splatoon3/runtime/bloblobber-launch-sweep.mjs": "31fa4405d1e4bca5f5f89e613d11f2a9283be2d0",
   "patches/network-replication/adapter.mjs": "bee670bcc764d506911d87c1d3281b10f3f7e099",
@@ -596,6 +599,26 @@ const QUEUE1801_PAINT_BLOBS = Object.freeze({
     "patches/splatoon3/runtime/bloblobber-launch-sweep.mjs": "31fa4405d1e4bca5f5f89e613d11f2a9283be2d0"
   }
 });
+export const QUEUE1801_IDENTICAL_PAINT_SOURCE_PAIR = Object.freeze({
+  mode: 'queue1801-byte-identical-paint-source-epoch',
+  sourceBase: QUEUE1801_PAINT_SOURCE_PAIR.sourceHead,
+  sourceHead: QUEUE1801_PAINT_SOURCE_PAIR.sourceHead,
+});
+function explicitQueue1801Identity(baseline,candidate,expectedPair) {
+  if (expectedPair?.mode !== QUEUE1801_IDENTICAL_PAINT_SOURCE_PAIR.mode) return null;
+  if (Object.keys(QUEUE1801_IDENTICAL_PAINT_SOURCE_PAIR).some(k=>expectedPair[k]!==QUEUE1801_IDENTICAL_PAINT_SOURCE_PAIR[k]))
+    fail('source-pair differs from explicitly requested queue1801 identity epoch');
+  for(const path of MAINA350_PAINT_PATHS) for(const [side,sources] of [['baseline',baseline],['candidate',candidate]])
+    if(typeof sources.get(path)!=='string'||gitBlobSha1(sources.get(path))!==QUEUE1801_PAINT_BLOBS.candidate[path])
+      fail(path+': '+side+' differs from declared queue1801 identity epoch; mixed, missing or changed source cannot be replayed');
+  return {sources:new Map(baseline),changes:[],evidence:{schema:1,...QUEUE1801_IDENTICAL_PAINT_SOURCE_PAIR,
+    validationLimit:'Exact fourteen-leaf source identity only; compiled, physical-state, RNG and image comparisons remain mandatory. No gameplay equivalence or improvement claim.',
+    manifestGitBlob:MAIN_INK_BASELINE_MANIFEST_BLOB,
+    paths:MAINA350_PAINT_PATHS.map(path=>({path,mode:'queue1801-exact-paint-source-epoch',
+      originalGitBlob:gitBlobSha1(baseline.get(path)),referenceGitBlob:gitBlobSha1(baseline.get(path)),candidateGitBlob:gitBlobSha1(candidate.get(path)),
+      originalSha256:sha256(baseline.get(path)),referenceSha256:sha256(baseline.get(path)),candidateSha256:sha256(candidate.get(path)),replayed:[]}))
+  }};
+}
 function explicitQueue1801Pair(baseline,candidate,expectedPair) {
   if (expectedPair?.mode !== QUEUE1801_PAINT_SOURCE_PAIR.mode) return null;
   if (Object.keys(QUEUE1801_PAINT_SOURCE_PAIR).some(k=>expectedPair[k]!==QUEUE1801_PAINT_SOURCE_PAIR[k]))
@@ -653,7 +676,7 @@ function reviewedCurrentPair(baseline, candidate) {
   const old = MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
     sha256(baseline.get(path)) === REVIEWED_CURRENT_PAIR[path].baseline &&
     sha256(candidate.get(path)) === REVIEWED_CURRENT_PAIR[path].candidate);
-  const integratedPair = [INTEGRATION_SOURCE_PAIR, SUB_BIRTH_SOURCE_PAIR, NATIVE_SUB_CONTACT_SOURCE_PAIR, ROLLER_BAND_SOURCE_PAIR, PROJECTILE_POSE_BIRTH_PAIR, RESOLVED_SOURCE_PAIR, RESOLVED_SWIM_SOURCE_PAIR, PR1746_SOURCE_PAIR].find(pair =>
+  const integratedPair = [POST_30_PRS_SOURCE_PAIR, ALL_31_PRS_SOURCE_PAIR, ALL_29_PRS_SOURCE_PAIR, ALL_PRS_SOURCE_PAIR, INTEGRATION_SOURCE_PAIR, SUB_BIRTH_SOURCE_PAIR, NATIVE_SUB_CONTACT_SOURCE_PAIR, ROLLER_BAND_SOURCE_PAIR, PROJECTILE_POSE_BIRTH_PAIR, RESOLVED_SOURCE_PAIR, RESOLVED_SWIM_SOURCE_PAIR, PR1746_SOURCE_PAIR].find(pair =>
     MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
       gitBlobSha1(baseline.get(path)) === pair.blobs[path].base &&
       gitBlobSha1(candidate.get(path)) === pair.blobs[path].candidate));
@@ -692,7 +715,7 @@ export function planMainInkBaseline(baseline, candidate, expectedPair = null) {
         Object.values(expectedPair).some(value => typeof value !== 'string' || !value))
       fail('complete expected source-pair contract required');
   }
-  const explicit = explicitQueue1801Pair(baseline,candidate,expectedPair) || explicitMainceb58Pair(baseline, candidate, expectedPair) || explicitMaina350Pair(baseline, candidate, expectedPair) || explicitMaine1fPair(baseline, candidate, expectedPair) || explicitMain9fePair(baseline, candidate, expectedPair);
+  const explicit = explicitQueue1801Identity(baseline,candidate,expectedPair) || explicitQueue1801Pair(baseline,candidate,expectedPair) || explicitMainceb58Pair(baseline, candidate, expectedPair) || explicitMaina350Pair(baseline, candidate, expectedPair) || explicitMaine1fPair(baseline, candidate, expectedPair) || explicitMain9fePair(baseline, candidate, expectedPair);
   if (explicit) return explicit;
   const catalogue = 'patches/splatoon3/runtime/main-weapon-catalog.mjs';
   if ([baseline,candidate].some(s=>typeof s.get(catalogue)==='string'&&gitBlobSha1(s.get(catalogue))===QUEUE1801_PAINT_BLOBS.candidate[catalogue]))

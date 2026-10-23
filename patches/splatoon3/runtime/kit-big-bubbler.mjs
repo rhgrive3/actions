@@ -730,6 +730,7 @@ function domeEntry(dome, start, end, radius, out) {
  */
 export function kitBarrierCandidate(p, start, end, excludedDomeIds = null) {
   if (!p || !start || !end) return null;
+  if (!domes.length && !remoteDomes.length) return null;
   const radius = p.size || 0;
   // A neutral round (no team, or a non-integer one) may only ever be intercepted
   // visually; it must never be able to spend a dome budget.
@@ -781,6 +782,20 @@ export function kitBarrierCandidate(p, start, end, excludedDomeIds = null) {
   // #1051 DamgeRatio belongs to the outer barrier only. Proposals carry the
   // post-ratio amount so the remote authority must not apply it a second time.
   candidate.damage = sourceDamage * (candidate.target === 'canopy' ? raw.damageRatio : 1);
+  // Catalogue volleys resolve their source-band damage only AFTER nearest-hit
+  // arbitration: doing that in this pure query would spend their hit ledger on
+  // discarded contacts. Keep the stable target identity and let the chosen
+  // contact replace the cached source amount without applying any rate twice.
+  candidate.damageTarget = candidate.dome;
+  const settlementScale = bigBubblerSourceRate(p, candidate.target) * tuning.rawPerDamageUnit
+    * (candidate.target === 'canopy' ? raw.damageRatio : 1);
+  candidate.setDamageAtContact = amount => {
+    if (candidate.settled || candidate.visualOnly || !Number.isFinite(amount) || amount < 0) return false;
+    const scaled = amount * settlementScale;
+    if (!Number.isFinite(scaled)) return false;
+    candidate.damage = scaled;
+    return true;
+  };
   candidate.damageSource = typeof p.damageSource === 'string' ? p.damageSource : 'shot';
   candidate.settled = false;
   candidate.proposal = null;

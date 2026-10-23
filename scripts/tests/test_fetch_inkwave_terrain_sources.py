@@ -251,6 +251,113 @@ class FetchTests(unittest.TestCase):
         self.assertEqual(receipt['verifiedStages'], 0)
         self.assert_numeric(receipt)
 
+    def test_transient_open_retries_same_url_and_pin(self):
+        errors = [ConnectionResetError(104, 'reset'), TimeoutError('timeout'),
+                  urllib.error.URLError(ConnectionResetError(104, 'reset')),
+                  urllib.error.URLError(TimeoutError('timeout'))]
+        for error in errors:
+            with self.subTest(error=type(error).__name__):
+                self.target.unlink(missing_ok=True)
+                with mock.patch.object(FETCH.urllib.request, 'urlopen', side_effect=[error, Response(b'abc')]) as request, \
+                     mock.patch.object(FETCH.time, 'sleep') as sleep:
+                    FETCH.fetch('https://example.invalid/pinned', self.target, 'sha256', ABC_SHA256, receipt=self.receipt)
+                self.assertEqual(request.call_count, 2)
+                self.assertEqual(request.call_args_list, [mock.call('https://example.invalid/pinned', timeout=180)] * 2)
+                sleep.assert_called_once_with(1)
+                self.assertEqual(self.receipt['attemptCount'], 2)
+                self.assertEqual(self.receipt['status'], 1)
+                self.assertEqual(self.target.read_bytes(), b'abc')
+                self.assert_numeric(self.receipt)
+
+    def test_reset_midstream_restarts_clean_and_preserves_git_blob_pin(self):
+        first = Response(b'ab', length=3)
+        first.read = mock.Mock(side_effect=[b'ab', ConnectionResetError(104, 'reset')])
+        responses = iter([first, Response(b'abc')])
+        def open_next(*args, **kwargs):
+            self.assertFalse(self.target.with_suffix('.obj.download').exists())
+            return next(responses)
+        with mock.patch.object(FETCH.urllib.request, 'urlopen', side_effect=open_next) as request, \
+             mock.patch.object(FETCH.time, 'sleep'):
+            FETCH.fetch('unused', self.target, 'sha1', ABC_GIT_SHA1, git_blob=True, receipt=self.receipt)
+        self.assertEqual(request.call_count, 2)
+        self.assertEqual(self.target.read_bytes(), b'abc')
+        self.assertEqual(self.receipt['bytes'], 3)
+        self.assertEqual(bytes(self.receipt['actualDigest']).hex(), ABC_GIT_SHA1)
+
+    def test_reset_exhaustion_preserves_original_error_and_existing_file(self):
+        original = b'keep old bytes'
+        self.target.write_bytes(original)
+        error = urllib.error.URLError(ConnectionResetError(104, 'private reset detail'))
+        with mock.patch.object(FETCH.urllib.request, 'urlopen', side_effect=error) as request, \
+             mock.patch.object(FETCH.time, 'sleep') as sleep, self.assertRaises(urllib.error.URLError) as caught:
+            FETCH.fetch('unused', self.target, 'sha256', ABC_SHA256, receipt=self.receipt)
+        self.assertIs(caught.exception, error)
+        self.assertEqual(request.call_count, 3)
+        self.assertEqual(sleep.call_args_list, [mock.call(1), mock.call(2)])
+        self.assertEqual(self.receipt['attemptCount'], 3)
+        self.assertEqual(self.receipt['status'], 3)
+        self.assertEqual(self.target.read_bytes(), original)
+        self.assertFalse(self.target.with_suffix('.obj.download').exists())
+        self.assert_numeric(self.receipt)
+        self.assertNotIn('private reset detail', json.dumps(self.receipt))
+
+    def test_retry_budget_is_shared_with_short_transfer(self):
+        with mock.patch.object(FETCH.urllib.request, 'urlopen', side_effect=[
+                ConnectionResetError(104, 'reset'), Response(b'ab', length=3), TimeoutError('timeout')]) as request, \
+             mock.patch.object(FETCH.time, 'sleep') as sleep, self.assertRaises(TimeoutError):
+            FETCH.fetch('unused', self.target, 'sha256', ABC_SHA256, receipt=self.receipt)
+        self.assertEqual(request.call_count, 3)
+        self.assertEqual(sleep.call_count, 2)
+        self.assertFalse(self.target.exists())
+
+    def test_access_tls_unknown_and_filesystem_errors_are_not_retried(self):
+        import ssl
+        errors = [urllib.error.HTTPError('unused', code, 'private', {}, None) for code in [401, 403, 404, 429, 500, 503]]
+        errors += [ssl.SSLCertVerificationError(1, 'certificate failure'), ssl.SSLError(1, 'TLS failure'),
+                   urllib.error.URLError(ssl.SSLCertVerificationError(1, 'certificate failure')),
+                   urllib.error.URLError('unknown'), OSError('unknown I/O')]
+        for error in errors:
+            with self.subTest(error=repr(error)), \
+                 mock.patch.object(FETCH.urllib.request, 'urlopen', side_effect=error) as request, \
+                 mock.patch.object(FETCH.time, 'sleep') as sleep, self.assertRaises(type(error)) as caught:
+                FETCH.fetch('unused', self.target, 'sha256', ABC_SHA256, receipt=self.receipt)
+            self.assertIs(caught.exception, error)
+            request.assert_called_once()
+            sleep.assert_not_called()
+            self.assert_numeric(self.receipt)
+        # Even a reset-like filesystem exception is not a network retry request.
+        error = ConnectionResetError(104, 'local filesystem failure')
+        with mock.patch.object(FETCH.urllib.request, 'urlopen', return_value=Response(b'abc')) as request, \
+             mock.patch.object(pathlib.Path, 'open', side_effect=error), \
+             mock.patch.object(FETCH.time, 'sleep') as sleep, self.assertRaises(ConnectionResetError):
+            FETCH.fetch('unused', self.target, 'sha256', ABC_SHA256, receipt=self.receipt)
+        request.assert_called_once()
+        sleep.assert_not_called()
+
+    def test_transport_retry_still_rejects_complete_wrong_body(self):
+        with mock.patch.object(FETCH.urllib.request, 'urlopen', side_effect=[ConnectionResetError(104, 'reset'), Response(b'abd')]) as request, \
+             mock.patch.object(FETCH.time, 'sleep'), self.assertRaises(ValueError):
+            FETCH.fetch('unused', self.target, 'sha256', ABC_SHA256, receipt=self.receipt)
+        self.assertEqual(request.call_count, 2)
+        self.assertEqual(self.receipt['status'], 2)
+        self.assertFalse(self.target.exists())
+
+    def test_transport_exhaustion_writes_failure_receipt(self):
+        stages = [self.synthetic_stage()]
+        report = self.root / 'evidence/fetch.json'
+        error = urllib.error.URLError(ConnectionResetError(104, 'reset'))
+        with mock.patch.object(FETCH.subprocess, 'check_output', return_value=json.dumps({'stages': stages})), \
+             mock.patch.object(FETCH.urllib.request, 'urlopen', side_effect=error), \
+             mock.patch.object(FETCH.time, 'sleep'), self.assertRaises(urllib.error.URLError):
+            FETCH.main([str(self.root), str(report)])
+        receipt = json.loads(report.read_text())
+        self.assertEqual(receipt['exitCode'], 1)
+        self.assertEqual(receipt['verifiedStages'], 0)
+        self.assertEqual(receipt['stages'][0]['status'], 2)
+        self.assertEqual(receipt['stages'][0]['files'][0]['attemptCount'], 3)
+        self.assertEqual(receipt['stages'][0]['files'][0]['status'], 3)
+        self.assert_numeric(receipt)
+
     def test_workflow_uploads_receipt_and_runs_contracts(self):
         workflow = (ROOT / '.github/workflows/validate-inkwave-native-stage5.yml').read_text()
         self.assertIn("python3 -m unittest discover -s scripts/tests -p 'test_fetch_inkwave_terrain_sources.py' -v", workflow)

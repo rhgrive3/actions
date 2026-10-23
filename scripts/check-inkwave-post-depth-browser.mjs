@@ -28,7 +28,7 @@ try{
  const result=await page.evaluate(async base=>{
   const THREE=await import('three'),{Renderer}=await import(base+'src/core/renderer.js'),{ScreenFX}=await import(base+'src/fx/screenfx.js'),{G}=await import(base+'src/core/ctx.js');
   let width=320,height=180;Object.defineProperty(window,'innerWidth',{configurable:true,get:()=>width});Object.defineProperty(window,'innerHeight',{configurable:true,get:()=>height});
-  const rows=[],lifecycle=[];let negativeControl=false,frameCount=0;
+  const rows=[],lifecycle=[],contextRecovery=[];let negativeControl=false,frameCount=0;
   const make=(quality,baseline,touch=true)=>{
    G.mobile={touch,ios:touch};G.settings={quality,shadows:false,bloom:false};G.env={grade:{uLift:0}};
    const R=new Renderer(document.querySelector('#host'),G.settings),r=R.renderer,gl=r.getContext(),live=new Set();let created=0,deleted=0,sceneDraws=0;
@@ -39,7 +39,7 @@ try{
    front.position.z=1;back.renderOrder=1;scene.add(front,back);R.setScene(scene,camera);const fx=new ScreenFX(R,G);
    const render=r.render;r.render=function(s,...a){if(s===scene){sceneDraws++;if(R._composerUsesPackedTarget&&r.getRenderTarget()!==R.composer.renderTarget2)throw Error('Scene drew into the color-only target');}return render.call(this,s,...a);};
    const flags=()=>({post:R.composer.renderTarget1.depthBuffer,scene:R.composer.renderTarget2.depthBuffer,packed:R._composerUsesPackedTarget,live:live.size,size:[R.composer.renderTarget1.width,R.composer.renderTarget1.height],created,deleted,sceneDraws});
-   return {R,r,gl,fx,scene,camera,front,live,flags,dispose(){fx.dispose();R._disposeComposer();frontGeo.dispose();backGeo.dispose();frontMat.dispose();backMat.dispose();if(live.size)throw Error('Retained renderbuffers after disposal: '+live.size);r.dispose();r.domElement.remove();}};
+   return {R,r,gl,fx,scene,camera,front,live,flags,dispose(){fx.dispose();R._disposeComposer();frontGeo.dispose();backGeo.dispose();frontMat.dispose();backMat.dispose();if(live.size)throw Error('Retained renderbuffers after disposal: '+live.size);r.dispose();/* Retire owned test contexts instead of depending on GC to stay below the browser context limit. */R._contextLost=true;r.forceContextLoss();r.domElement.remove();}};
   };
   const effects=[null,'damage','heart','swim','aura','flood','reveal','splat'];
   const prepare=(p,effect)=>{
@@ -88,9 +88,45 @@ try{
    }finally{pair.forEach(p=>p.dispose());}
   }
   const desktop=make('low',false,false);try{G.env.grade={uLift:0};prepare(desktop,null);const r=capture(desktop);if(r.flags.packed||r.flags.live!==2||!r.flags.post||!r.flags.scene)throw Error('Desktop depth roles changed');lifecycle.push({desktop:true,after:r.flags});}finally{desktop.dispose();}
-  return {rows,lifecycle,negativeControl,frameCount,disposedLiveRenderbuffers:0};
+  // Actual Renderer intentionally blocks all draws after a lost context: the
+  // paint atlas contents cannot be reconstructed from surviving CPU score state.
+  // Verify the real GL generation boundary and controlled-reload policy, then
+  // compare a newly constructed renderer to the exact pre-loss output.
+  const waitContextEvent=(canvas,type)=>new Promise((resolve,reject)=>{
+   const timer=setTimeout(()=>reject(Error(type+' event timed out')),10000);
+   canvas.addEventListener(type,event=>{clearTimeout(timer);if(type==='webglcontextlost')event.preventDefault();resolve();},{once:true});
+  });
+  for(const quality of ['low','medium','high'])for(const baseline of [true,false]){
+   G.env.grade={uLift:0};const p=make(quality,baseline);let before;
+   const savedMatch=G.match,savedNet=G.net;let leaves=0;
+   try{
+    prepare(p,null);before=capture(p);const draws=p.flags().sceneDraws;
+    G.match={paused:false};G.net={active:true,leave(){leaves++;this.active=false;}};
+    const lose=p.gl.getExtension('WEBGL_lose_context');if(!lose)throw Error('Context-loss extension unavailable');
+    p.r.domElement.addEventListener('webglcontextlost',()=>p.live.clear(),{once:true});
+    const lost=waitContextEvent(p.r.domElement,'webglcontextlost');
+    lose.loseContext();await lost;
+    if(!p.gl.isContextLost()||!p.R._contextLost||!G.match.paused||leaves!==1)throw Error('Context loss did not halt the owned match/network');
+    const overlay=p.R._contextRecoveryOverlay;
+    if(!overlay?.isConnected||overlay.getAttribute('role')!=='alertdialog'||!overlay.querySelector('button'))throw Error('Missing actionable graphics recovery overlay');
+    p.R.render();if(p.flags().sceneDraws!==draws||p.live.size)throw Error('Lost context rendered or rebuilt invalid targets');
+    const restored=waitContextEvent(p.r.domElement,'webglcontextrestored');
+    // A microtask is still inside the lost-event task. Chromium only permits
+    // WEBGL_lose_context restoration after that entire task has completed.
+    await new Promise(resolve=>setTimeout(resolve,0));lose.restoreContext();await restored;
+    p.R.render();
+    if(p.gl.isContextLost()||!p.R._contextLost||!G.match.paused||leaves!==1||p.flags().sceneDraws!==draws||p.live.size)throw Error('Restored GL silently resumed stale game/paint output');
+    contextRecovery.push({quality,baseline,lossObserved:true,restorationObserved:true,matchPaused:true,leaveCalls:leaves,reloadRequired:true,drawsAfterLoss:0,liveTargetsAfterLoss:0});
+   }finally{G.match=savedMatch;G.net=savedNet;p.R._contextRecoveryOverlay?.remove();p.dispose();}
+   const fresh=make(quality,baseline);
+   try{prepare(fresh,null);const after=capture(fresh);compare(before,after,quality+' clean reconstruction after context loss');
+    if(after.flags.live!==(baseline?2:1)||after.flags.post!==baseline||!after.flags.scene)throw Error('Clean renderer lost scene/post depth policy');
+    Object.assign(contextRecovery.at(-1),{cleanReconstructionChangedChannels:0,cleanDepth:after.depth,cleanFlags:after.flags});
+   }finally{fresh.dispose();}
+  }
+  return {rows,lifecycle,contextRecovery,negativeControl,frameCount,disposedLiveRenderbuffers:0};
  },base);
- assert.deepEqual(errors,[]);assert.equal(result.rows.length,78);assert.equal(result.negativeControl,true);
+ assert.deepEqual(errors,[]);assert.equal(result.rows.length,78);assert.equal(result.negativeControl,true);assert.equal(result.contextRecovery.length,6);
  const report={status:'passed',engine,browser:browser.version(),contentHash:manifest.contentHash,revision:manifest.build.revision,scope:'Actual emitted Renderer and ScreenFX; baseline restores only the old post-depth flag before first WebGL binding. Exact completed RGBA pixel comparison and live renderbuffer/attachment counts. No physical-iPad GPU memory, RSS or FPS claim.',...result,artifacts:[...receipts].sort()};
  fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({status:report.status,browser:report.browser,cases:report.rows.length,negativeControl:report.negativeControl,contentHash:report.contentHash}));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

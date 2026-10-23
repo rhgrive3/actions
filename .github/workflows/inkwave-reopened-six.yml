@@ -4,11 +4,13 @@ on:
     paths:
       - 'patches/splatoon3/**'
       - 'patches/local-quality/**'
+      - 'scripts/run-inkwave-turf-finish-isolated.mjs'
+      - 'scripts/tests/run-inkwave-turf-finish-*.test.mjs'
       - '.github/workflows/inkwave-reopened-six.yml'
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   reopened-six:
     runs-on: ubuntu-latest
@@ -38,7 +40,16 @@ jobs:
             patches/splatoon3/tests/issue-514-sourced-partial-range.test.mjs \
             patches/splatoon3/tests/issue-1108-roller-wall-idle.test.mjs \
             patches/splatoon3/tests/map-reveal.test.mjs \
-            patches/splatoon3/tests/turf-finish.test.mjs \
             patches/local-quality/tests/bot-paint-device-profile.test.mjs \
             patches/local-quality/tests/bot-paint-observation.test.mjs \
             patches/loading-cache/tests/cargo-offline-precache.test.mjs
+      - name: Verify all Turf finish cases on source
+        run: node scripts/run-inkwave-turf-finish-isolated.mjs . source .ci-scratch/turf-finish-source
+      - name: Retain bounded Turf source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkwave-turf-finish-source-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_attempt }}
+          path: .ci-scratch/turf-finish-source/
+          if-no-files-found: error
+          retention-days: 14

@@ -9,6 +9,18 @@ const teamId = value => value === 0 || value === 1;
 const finite = (value, fallback = 0) => Number.isFinite(value) ? value : fallback;
 const clone = value => structuredClone(value);
 
+function sameCheckpointProgress(previous, current) {
+  if (!previous || previous.length !== current.length) return false;
+  for (let team = 0; team < current.length; team++) {
+    if (previous[team].length !== current[team].length) return false;
+    for (let i = 0; i < current[team].length; i++) {
+      const value = current[team][i];
+      if (!Number.isFinite(value) || value !== previous[team][i]) return false;
+    }
+  }
+  return true;
+}
+
 function distance(a, b) {
   const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
   return Math.hypot(dx, dy, dz);
@@ -101,6 +113,7 @@ export class TowerRule {
   }
 
   reset() {
+    this._countInputsDirty = true; this._countMemo = null;
     const metrics = this.metrics;
     const checkpointCounts = this.checkpointData.map(list => list.length);
     const centerProgress = metrics.center / metrics.total;
@@ -241,7 +254,8 @@ export class TowerRule {
       if (distanceAhead < -EPSILON) {
         // A restored or stage-edited path may already lie beyond this marker.
         // Skip it to avoid trapping the objective behind its current position.
-        this.state.checkpointCleared[team][index] = true;
+        this._countInputsDirty = true;
+    this.state.checkpointCleared[team][index] = true;
         this.state.checkpointProgress[team][index] = checkpoint.count;
         this.state.checkpointIndex[team] = index + 1;
         continue;
@@ -272,6 +286,7 @@ export class TowerRule {
       const multiplier = Math.max(1, riderCount);
       const neededSeconds = (required - progress) / multiplier;
       const activeSeconds = Math.min(remaining, neededSeconds);
+      if (activeSeconds > 0) this._countInputsDirty = true;
       this.state.checkpointProgress[team][index] = Math.min(required, progress + activeSeconds * multiplier);
       this.state.checkpointLossSeconds[team][index] = 0;
       remaining -= activeSeconds;
@@ -312,14 +327,29 @@ export class TowerRule {
         this.state.checkpointLossSeconds[team][index] += dt;
         // S3mix describes recovery only after leaving the marker, taking
         // roughly three seconds. The linear curve is a local approximation.
+        const previousProgress = this.state.checkpointProgress[team][index];
         this.state.checkpointProgress[team][index] = Math.max(0,
-          this.state.checkpointProgress[team][index] - list[index].count * dt / CHECKPOINT_RECOVERY_SECONDS);
+          previousProgress - list[index].count * dt / CHECKPOINT_RECOVERY_SECONDS);
+        if (this.state.checkpointProgress[team][index] !== previousProgress) this._countInputsDirty = true;
         if (this.state.checkpointProgress[team][index] < EPSILON) this.state.checkpointProgress[team][index] = 0;
       }
     }
   }
 
   _updateCounts(metrics) {
+    const state = this.state, engine = this.engine, memo = this._countMemo;
+    // Only the actual unchanged engine methods are known to have no repeat-call
+    // side effects. Custom rule harnesses/overrides keep the original cadence.
+    const canonical = engine._rankedCountSetter && engine.setCount === engine._rankedCountSetter
+      && engine.finish === engine._rankedFinish;
+    if (canonical && !this._countInputsDirty && memo?.state === state && memo.metrics === metrics
+      && memo.pathDistance === state.pathDistance && memo.controller === state.controllingTeam
+      && memo.center === metrics.center && memo.start === metrics.start && memo.end === metrics.end && memo.total === metrics.total
+      && sameCheckpointProgress(memo.values, state.checkpointProgress)
+      && memo.progress === state.checkpointProgress && memo.progress0 === state.checkpointProgress[0] && memo.progress1 === state.checkpointProgress[1]
+      && memo.budget === this.checkpointCountBudgets && memo.budget0 === this.checkpointCountBudgets[0] && memo.budget1 === this.checkpointCountBudgets[1]
+      && memo.count0 === engine.counts[0] && memo.count1 === engine.counts[1] && memo.leader === engine.leader
+      && memo.winner === engine.winner && memo.overtime === engine.overtime && memo.overtimeTeam === engine.overtimeTeam && memo.mode === engine.mode) return;
     for (let team = 0; team < 2; team++) {
       const progress = routeProgress(team, this.state.pathDistance, metrics);
       let checkpointSeconds = 0;
@@ -338,6 +368,20 @@ export class TowerRule {
       // neutral/retaken tower still inside the same count bin immediately
       // erases resolveTie's +1 correction for the team that just lost control.
       if (team === this.state.controllingTeam) this.engine.setCount?.(team, count);
+    }
+    this._countInputsDirty = false;
+    if (canonical) {
+      const next = this._countMemo || (this._countMemo = { values: [[], []] });
+      next.state = state; next.metrics = metrics; next.pathDistance = state.pathDistance; next.controller = state.controllingTeam;
+      next.center = metrics.center; next.start = metrics.start; next.end = metrics.end; next.total = metrics.total;
+      next.progress = state.checkpointProgress; next.progress0 = state.checkpointProgress[0]; next.progress1 = state.checkpointProgress[1];
+      for (let team = 0; team < 2; team++) {
+        next.values[team].length = state.checkpointProgress[team].length;
+        for (let i = 0; i < next.values[team].length; i++) next.values[team][i] = state.checkpointProgress[team][i];
+      }
+      next.budget = this.checkpointCountBudgets; next.budget0 = this.checkpointCountBudgets[0]; next.budget1 = this.checkpointCountBudgets[1];
+      next.count0 = engine.counts[0]; next.count1 = engine.counts[1]; next.leader = engine.leader; next.winner = engine.winner;
+      next.overtime = engine.overtime; next.overtimeTeam = engine.overtimeTeam; next.mode = engine.mode;
     }
   }
 
@@ -375,6 +419,7 @@ export class TowerRule {
   snapshot() { return clone(this.state); }
 
   restore(state) {
+    this._countInputsDirty = true; this._countMemo = null;
     this.state = clone(state);
     return this.state;
   }

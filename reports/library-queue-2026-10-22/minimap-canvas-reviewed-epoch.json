@@ -1,0 +1,165 @@
+{
+  "cases": [
+    {
+      "name": "wall-only",
+      "frames": 120,
+      "observedOwner": false,
+      "observedFlash": false,
+      "overlayChanged": false,
+      "hiddenStable": true,
+      "baseline": {
+        "composes": 13,
+        "rasters": 1
+      },
+      "candidate": {
+        "composes": 1,
+        "rasters": 1
+      },
+      "emitted": {
+        "composes": 1,
+        "rasters": 1
+      }
+    },
+    {
+      "name": "overlay-bomb",
+      "frames": 103,
+      "observedOwner": false,
+      "observedFlash": false,
+      "overlayChanged": true,
+      "hiddenStable": true,
+      "baseline": {
+        "composes": 33,
+        "rasters": 1
+      },
+      "candidate": {
+        "composes": 33,
+        "rasters": 1
+      },
+      "emitted": {
+        "composes": 33,
+        "rasters": 1
+      }
+    },
+    {
+      "name": "overlay-FX",
+      "frames": 102,
+      "observedOwner": false,
+      "observedFlash": false,
+      "overlayChanged": true,
+      "hiddenStable": true,
+      "baseline": {
+        "composes": 23,
+        "rasters": 1
+      },
+      "candidate": {
+        "composes": 23,
+        "rasters": 1
+      },
+      "emitted": {
+        "composes": 23,
+        "rasters": 1
+      }
+    },
+    {
+      "name": "turf-flash",
+      "frames": 102,
+      "observedOwner": true,
+      "observedFlash": true,
+      "overlayChanged": false,
+      "hiddenStable": true,
+      "baseline": {
+        "composes": 18,
+        "rasters": 4
+      },
+      "candidate": {
+        "composes": 17,
+        "rasters": 4
+      },
+      "emitted": {
+        "composes": 17,
+        "rasters": 4
+      }
+    },
+    {
+      "name": "hidden-reopen",
+      "frames": 81,
+      "observedOwner": true,
+      "observedFlash": true,
+      "overlayChanged": false,
+      "hiddenStable": true,
+      "baseline": {
+        "composes": 15,
+        "rasters": 2
+      },
+      "candidate": {
+        "composes": 15,
+        "rasters": 2
+      },
+      "emitted": {
+        "composes": 15,
+        "rasters": 2
+      }
+    }
+  ],
+  "negativeControls": {
+    "blankRejected": true,
+    "corruptionRejected": true,
+    "clockRejected": true
+  },
+  "emitted": {
+    "minimap": {
+      "path": "_versions/49e42e313dcea04c292eeb6718360fed0b73952fe65291c62a5c119f38355199/src/game/minimap.js",
+      "sha256": "3c09f63b4fe85b09385c943459fb47c3f1743559228ff81d2fa945ade9c0ce00"
+    },
+    "ctx": {
+      "path": "_versions/49e42e313dcea04c292eeb6718360fed0b73952fe65291c62a5c119f38355199/src/core/ctx.js",
+      "sha256": "1c56245ee5659b8a7149b2a5e8983509d9c4fab9029aca9b690fa7558779c855"
+    },
+    "config": {
+      "path": "_versions/49e42e313dcea04c292eeb6718360fed0b73952fe65291c62a5c119f38355199/src/config.js",
+      "sha256": "cf20044a165212cd874266099eccb279fe3dcb15c94aa594cae37084b83ba30a"
+    },
+    "dirty": {
+      "path": "_versions/49e42e313dcea04c292eeb6718360fed0b73952fe65291c62a5c119f38355199/patches/splatoon3/runtime/minimap-dirty.mjs",
+      "sha256": "d6133df98d8fbad73ccd3922c9486cabf6198f22802f1f0803b87c789cfeeb4f"
+    },
+    "three": {
+      "path": "_versions/49e42e313dcea04c292eeb6718360fed0b73952fe65291c62a5c119f38355199/vendor/three/build/three.module.js",
+      "sha256": "fd6aba4bb49e5544f860931c8379242980552c3bc6e453a850d356bf4db99760"
+    }
+  },
+  "images": [
+    "minimap-wall-only-0.png",
+    "minimap-wall-only-119.png",
+    "minimap-overlay-bomb-0.png",
+    "minimap-overlay-bomb-1.png",
+    "minimap-overlay-bomb-102.png",
+    "minimap-overlay-FX-0.png",
+    "minimap-overlay-FX-1.png",
+    "minimap-overlay-FX-101.png",
+    "minimap-turf-flash-0.png",
+    "minimap-turf-flash-flash-active.png",
+    "minimap-turf-flash-flash-cleared.png",
+    "minimap-turf-flash-101.png",
+    "minimap-hidden-reopen-0.png",
+    "minimap-hidden-reopen-flash-active.png",
+    "minimap-hidden-reopen-reopen.png",
+    "minimap-hidden-reopen-flash-cleared.png",
+    "minimap-hidden-reopen-80.png"
+  ],
+  "sourceSha": "33477f26",
+  "contentHash": "e048f054ef9f21ecca16b3a6e820ea4028aa282c7a685379101dbed018af3624",
+  "sourceHashes": {
+    "inkwave-public/src/game/minimap.js": "ead39a1ac28c0095672394b19a2ae8d141adf1144e51f8c1b0e4f18078a21df6",
+    "patches/splatoon3/runtime/minimap-dirty.mjs": "198a17be2e83a8604283f13c0bf0092727e60fded4b7666d3b0211cd31c47015",
+    "patches/splatoon3/minimap-dirty-adapter.mjs": "3045d2d49c2d7b050e46bf268f60f795d96846df8574db1eff59ee2423c9386b",
+    "patches/local-quality/minimap-resource-adapter.mjs": "89ee10db310f4e541219edb0ee16b09d77a3a0e35cabe764a550bd3d665a5538",
+    "patches/splatoon3/tests/fixtures/minimap-dirty-before-noop.mjs": "6310a58e1ad59bfab2bf8af4b5dcd2327ee4b94ce0f76d913538569c5387bda1"
+  },
+  "sourceEpoch": "library-queue-row-bounds-and-dashes-749c7621",
+  "composedHashes": {
+    "baseline": "1dc925f7bc040dcd39dce42d2a48fa41024914e1c41074c30f67fdd096b8ad51",
+    "candidate": "fdd0c0bcd1f94218f9c897bdc9f46d8b36f4cf295d7f557f51c681ed6ab7f51e"
+  },
+  "scope": "Synthetic real Canvas2D fixture comparing source baseline/candidate against actual versioned Minimap and dependency imports in an isolated iframe. Exact per-tick RGBA/state comparison; no whole-Game or device performance claim."
+}

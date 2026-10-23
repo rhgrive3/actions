@@ -86,10 +86,22 @@ for(const velocity of [0,150]) check(`accepted position bounds objective pickup 
 });
 
 check('duplicate actor rows commit only the first native-accepted row',r=>{
- const d=r.send();r.tick(3);d.ts=f.clock.now();d.u=Math.round(d.ts*60);
- const first=[...d.a[0]],second=[...d.a[0]];first[3]=1;second[3]=2;d.a=[first,second];
+ // Stay inside the production per-envelope actor budget while exercising a
+ // repeated row. Over-budget envelopes are independently rejected below.
+ const other=f.makeActor({nid:1,owner:'p3',remote:true,roller:false});
+ r.m.actors.push(other);r.nm.byNid.set(1,other);r.nm._setupActor(other);
+ const d=r.send();r.tick(3);d.ts=f.clock.now();d.u=Math.round(d.ts*60);d.rki.seq++;
+ const first=structuredClone(d.a[0]),second=structuredClone(d.a[0]);first[3]=1;second[3]=2;d.a=[first,second];
  r.nm.onMessage('p2',f.parseWire(JSON.stringify(d)));
- assert.equal(r.a.net.buf.at(-1).z,1);assert.equal(frame(r).pos[2],1);
+ assert.equal(r.a.net.buf.at(-1).z,1,'native first row');assert.equal(frame(r).pos[2],1,'ranked first row');
+ assert.equal(other.net.buf.length,0,'unrelated actor gains no snapshot');
+});
+check('duplicate rows exceeding the actor budget cannot advance authority',r=>{
+ const d=r.send();r.tick(3);const before=r.nm.rankedPose.get('0'),tail=r.a.net.buf.at(-1);
+ d.ts=f.clock.now();d.u=Math.round(d.ts*60);d.rki.seq++;
+ const row=structuredClone(d.a[0]);row[3]=1;d.a=[row,structuredClone(row)];
+ r.nm.onMessage('p2',f.parseWire(JSON.stringify(d)));
+ assert.equal(r.a.net.buf.at(-1),tail);assert.equal(r.nm.rankedPose.get('0'),before);assert.equal(frame(r).pos[2],0);
 });
 for(const delta of [0,-.01])check(`stale jump flags ${delta} cannot mutate published state`,r=>{
  const d=r.send();r.tick(3);const before=r.nm.rankedPose.get('0'), snapshot=JSON.stringify(before);

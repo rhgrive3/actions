@@ -61,10 +61,10 @@ try{
    const canvas=new NativeCanvas(size,size),ctx=canvas.getContext('2d'),pixels=new Uint8ClampedArray(size*size*4);
    for(let i=0;i<pixels.length;i++)pixels[i]=pixel[i%4];ctx.putImageData(new ImageData(pixels,size,size),0,0);
    const png=await canvas.convertToBlob({type:'image/png'}),bytes=await png.arrayBuffer(),sha256=await digest(bytes),file='normal-check-'+serial+++'.png';
-   const controller=new AbortController(),counts={canvas:0,draw:0,reads:0,pixelBytes:0,bitmaps:0,closed:0,disposed:0};
+   const controller=new AbortController(),counts={canvas:0,draw:0,reads:0,pixelBytes:0,readRects:[],bitmaps:0,closed:0,disposed:0};
    if(abort==='before')controller.abort();
    globalThis.fetch=(url,options)=>String(url).endsWith('/'+file)?Promise.resolve(new Response(bytes,{headers:{'content-type':'image/png'}})):nativeFetch(url,options);
-   globalThis.OffscreenCanvas=class extends NativeCanvas{constructor(...a){super(...a);counts.canvas++;}getContext(...a){const c=super.getContext(...a),draw=c.drawImage,read=c.getImageData;c.drawImage=function(...args){counts.draw++;return draw.apply(this,args);};c.getImageData=function(...args){counts.reads++;const p=read.apply(this,args);counts.pixelBytes+=p.data.byteLength;return p;};return c;}};
+   globalThis.OffscreenCanvas=class extends NativeCanvas{constructor(...a){super(...a);counts.canvas++;}getContext(...a){const c=super.getContext(...a),draw=c.drawImage,read=c.getImageData;c.drawImage=function(...args){counts.draw++;return draw.apply(this,args);};c.getImageData=function(...args){counts.reads++;counts.readRects.push(args);const p=read.apply(this,args);counts.pixelBytes+=p.data.byteLength;return p;};return c;}};
    globalThis.createImageBitmap=async(...args)=>{const bitmap=await nativeBitmap(...args),close=bitmap.close.bind(bitmap);counts.bitmaps++;bitmap.close=()=>{counts.closed++;close();};if(abort==='decode')controller.abort();return bitmap;};
    const data={manifest:{sourceMode:'browser-direct',materials:{probe:{maps:{normal:file},normalEncoding:'unorm-rg',channels:{}}}},integrity:{[file]:{bytes:bytes.byteLength,sha256}}};
    let textures,error;
@@ -94,9 +94,15 @@ try{
  for(const row of result.rows){const {before,after}=row;
   if(row.name.startsWith('abort')){assert.equal(before.error,'AbortError');assert.equal(after.error,'AbortError');assert.deepEqual(before.counts,after.counts);assert.equal(after.counts.bitmaps,after.counts.closed);continue;}
   assert.equal(before.error,undefined);assert.equal(after.error,undefined);assert.deepEqual(before.output,after.output,row.name+' exact decoded/GPU output');
-  const reconstruct=row.name!=='rgb';assert.equal(before.counts.reads,reconstruct?2:1);assert.equal(after.counts.reads,1);
+  const reconstruct=row.name!=='rgb', {width,height}=after.output;
+  // Bounded classification strips plus exactly one full reconstruction buffer.
+  const strips=Array.from({length:Math.ceil(height/64)},(_,i)=>[0,i*64,width,Math.min(64,height-i*64)]);
+  const full=[0,0,width,height];
+  assert.deepEqual(before.counts.readRects,Array.from({length:reconstruct?2:1},()=>full));
+  assert.deepEqual(after.counts.readRects,reconstruct?[...strips,full]:strips);
+  assert.equal(before.counts.reads,reconstruct?2:1);assert.equal(after.counts.reads,strips.length+(reconstruct?1:0));
   assert.equal(before.counts.canvas,before.counts.reads);assert.equal(after.counts.canvas,1);assert.equal(before.counts.draw,before.counts.reads);assert.equal(after.counts.draw,1);
-  assert.equal(after.counts.pixelBytes* (reconstruct?2:1),before.counts.pixelBytes);
+  assert.equal(after.counts.pixelBytes,before.counts.pixelBytes);
   for(const side of [before,after]){assert.equal(side.counts.bitmaps,side.counts.closed);assert.equal(side.counts.disposed,1);}
  }
  const report={status:'passed',engine,browser:browser.version(),contentHash:manifest.contentHash,revision:manifest.build.revision,baselineHash,candidateHash:hash(candidate),nativeInputCount:Object.keys(nativeInputs).length,nativeInputsHash:hash(JSON.stringify(nativeInputs)),emissionHashes:{before:hash(beforeModule),after:hash(afterModule)},scope:'Controlled PNG data through a separately emitted loader entry bound to production inputs, with real ImageBitmap, OffscreenCanvas and WebGL normal-map rendering; exact decoded and rendered pixel hashes. Not a full-site stage-loading run, browser RSS, whole-game FPS or physical-device evidence.',...result,artifacts:[...receipts].sort()};

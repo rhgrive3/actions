@@ -1,0 +1,70 @@
+name: INKWAVE composed CPU regression
+on:
+  pull_request:
+    paths:
+      - 'inkwave-public/src/game/motion/body-balance.js'
+      - 'patches/local-quality/tests/body-balance-work*'
+      - 'patches/local-quality/tests/fixtures/motion-balance/**'
+      - 'scripts/*inkwave*cpu*.mjs'
+      - 'scripts/benchmark-inkwave-body-balance.mjs'
+      - 'scripts/benchmark-aplus-verification.mjs'
+      - 'scripts/lib/inkwave-cpu-trace.mjs'
+      - 'scripts/lib/inkwave-cpu-state-hash.mjs'
+      - 'scripts/lib/inkwave-cpu-gameplay-digest.mjs'
+      - 'scripts/lib/inkwave-cpu-counters.mjs'
+      - 'scripts/tests/inkwave-*cpu*.test.mjs'
+      - '.github/workflows/inkwave-composed-cpu.yml'
+permissions:
+  contents: read
+concurrency:
+  group: composed-cpu-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  source-and-emitted:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact PR head
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+      - name: Install build dependency
+        run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.62.1
+      - name: Source composition, strict output and GC/comparison controls
+        run: |
+          node scripts/check-inkwave-patches.mjs --quick
+          node --experimental-vm-modules --test patches/local-quality/tests/body-balance-work.test.mjs scripts/tests/inkwave-cpu-trace.test.mjs scripts/tests/inkwave-cpu-history.test.mjs scripts/tests/inkwave-cpu-gameplay-digest.test.mjs scripts/tests/inkwave-cpu-counters.test.mjs scripts/tests/inkwave-composed-cpu-comparison.test.mjs
+      - name: Existing source motion regression
+        run: node --experimental-vm-modules --test patches/local-quality/tests/motion-fk-hotpath.test.mjs
+      - name: Build production output
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/check-inkwave-startup-budget.mjs _site
+      - name: Actual emitted motion parity
+        env:
+          INKWAVE_BUILT_SITE: _site
+        run: node --experimental-vm-modules --test patches/local-quality/tests/body-balance-work.test.mjs
+      - name: CPU component benchmark (timing is diagnostic, parity is required)
+        run: node --experimental-vm-modules scripts/benchmark-inkwave-body-balance.mjs balance-benchmark.json
+      - name: Install Chromium for emitted CPU trace smoke
+        run: npx playwright install --with-deps chromium
+      - name: Actual browser CPU recorder, finite gameplay state and GC trace
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/benchmark-inkwave-composed-cpu.mjs --site _site --source-sha "$SOURCE_SHA" --frames 30 --stages range --quality low --evidence-dir .cpu-ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: composed-cpu-${{ github.event.pull_request.head.sha }}
+          include-hidden-files: true
+          path: |
+            balance-benchmark.json
+            .cpu-ci/result.json
+            .cpu-ci/range-trace.json
+          if-no-files-found: ignore

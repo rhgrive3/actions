@@ -53,6 +53,7 @@ export const RANKED_POSE_LIMITS = Object.freeze({
   boundsMargin: 16, ceiling: 40, floorBelow: 10,
 });
 const L = RANKED_POSE_LIMITS;
+const FLOOR_PROBE_OFFSETS = [[0,0],[1,0],[-1,0],[0,1],[0,-1]];
 
 export function objectiveSpecialFor(actor, command) {
   return actor?.specialActive?.id ?? command?.special ?? null;
@@ -92,7 +93,7 @@ function insideStage(p, ctx) {
 function nearestFloor(world, p) {
   if (typeof world?.floorAt !== 'function') return undefined;
   let best = null;
-  for (const [ox,oz] of [[0,0],[1,0],[-1,0],[0,1],[0,-1]]) {
+  for (const [ox,oz] of FLOOR_PROBE_OFFSETS) {
     const y = world.floorAt(p[0] + ox*L.floorProbe, p[2] + oz*L.floorProbe, p[1] + 1.8);
     if (finite(y) && (best === null || Math.abs(p[1]-y) < Math.abs(p[1]-best))) best = y;
   }

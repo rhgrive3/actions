@@ -10,7 +10,6 @@ export const MAIN_AUDIO_PREFIX='main:';
 // an explicitly authored INKWAVE fallback when the real sample is not resident.
 export const mainAttackFallbackEligible=(id,event)=>typeof id==='string'&&!id.includes(':')&&/^fire(?:_[a-z0-9]+)?$/.test(event)&&!!WEAPON_AUDIO[mainAudioSourceId(id)]?.events.includes(event);
 import { AuthorizedSamplePack } from './authorized-samples.mjs';
-import { chargerHoldSustain } from './charger-hold-sustain.mjs';
 const MAX_BYTES=12*1024*1024;
 export class WeaponSoundBank {
   constructor(ctx,{maxBytes=MAX_BYTES,workerFactory,realOnly=false,audibleShotFallback=false}={}){this.realOnly=realOnly;this.audibleShotFallback=!!audibleShotFallback;this.ctx=ctx;this.maxBytes=Math.max(1024*1024,maxBytes);this.cache=new Map();this.defs=new Map();this.roundRobin=new Map();this.bytes=0;this.hits=0;this.misses=0;this.evicted=0;this.jobs=[];this.pending=new Set();this.timer=null;this.disposed=false;this.workerFactory=workerFactory;this.worker=null;this.workerFailed=false;this.workerError=null;this.inFlight=null;this.generatedOffThread=0;this.authorized=new AuthorizedSamplePack(ctx);}
@@ -72,61 +71,31 @@ export class WeaponSoundBank {
     // Strict deployment must never substitute a synthesized waveform, even if
     // an authorized file is still decoding, missing, or evicted from the LRU.
     if(this.realOnly&&!this.authorized.byEvent.has(`${id}:${event}`)&&!(this.audibleShotFallback&&mainAttackFallbackEligible(id,event)))return null;
-    const bank=this,loop=LOOP_EVENTS.has(event);
+    // HoldNoise is treated as a single onset/keep-reemerge cue, NOT the
+    // continuous ascending Charger sound. A repeated transient cannot stand
+    // in for an unverified retail charge-up soundscape.
+    const chargerOnset=AUDIO_RECIPES[id]?.family==='charger'&&event==='charge';
+    const bank=this,loop=LOOP_EVENTS.has(event)&&!chargerOnset;
     const build=(v,p,o={})=>{
       const serial=o.variant??(loop?0:bank.roundRobin.get(name)??0);bank.roundRobin.set(name,(serial+1)%3);
       const authorized=bank.authorized.pick(id,event,serial);
       if(!authorized&&bank.realOnly&&!(bank.audibleShotFallback&&mainAttackFallbackEligible(id,event)))throw new Error('Verified sample not resident: '+id+'/'+event);
-      const original=authorized?.buffer||bank.get(id,event,Math.abs(Math.trunc(serial))%3);
-      // The 2022 S3 HoldNoise is a one-shot transient, NOT an entire charge
-      // rise; its onset clicks if the original short file repeats. Use the
-      // single-source overlap-added sustain from its quiet interior instead.
-      // The independent S1 SplatoonSWEPs code uses a very different 10.9s
-      // aim.wav. Its literal 0.01x..1x curve is incompatible with HoldNoise.
-      // Modest audible rate motion here is an explicit unverified sound-design
-      // approximation, NOT a Nintendo SLINK parameter or retail parity claim.
-      const sourceChargerHold=!!authorized&&AUDIO_RECIPES[id]?.family==='charger'&&event==='charge';
+      const buffer=authorized?.buffer||bank.get(id,event,Math.abs(Math.trunc(serial))%3),s=v.ctx.createBufferSource();
+      const recordedChargerOnset=!!authorized&&chargerOnset;
       const recordedSpinnerMotor=!!authorized&&AUDIO_RECIPES[id]?.family==='splatling'&&['charge','spin'].includes(event);
-      const readCharge=()=>{
-        const progress=o.actor?.weaponRunner?.charge;
-        return typeof progress==='number'&&Number.isFinite(progress)
-          ?Math.max(0,Math.min(1,progress)):null;
-      };
-      const buffer=sourceChargerHold?chargerHoldSustain(v.ctx,original):original;
-      const s=v.ctx.createBufferSource();s.buffer=buffer;s.loop=loop;
-      const firstCharge=sourceChargerHold?readCharge():null;
-      // Do not infer a charge for actors without a valid gameplay owner.
-      // A small 0.86..1.12x rise preserves the source timbre; unlike the old
-      // fan transcription, it cannot drag a short MP3 to a multi-second click.
-      const rateFor=charge=>.86+.26*charge;
-      let chargerRate=firstCharge===null?1:rateFor(firstCharge);
-      if(loop&&!sourceChargerHold&&authorized?.loopStart!=null){s.loopStart=authorized.loopStart;s.loopEnd=authorized.loopEnd;}
+      s.buffer=buffer;s.loop=loop;
+      if(loop&&authorized?.loopStart!=null){s.loopStart=authorized.loopStart;s.loopEnd=authorized.loopEnd;}
       if(authorized&&authorized.gain!==1){const g=v.ctx.createGain();g.gain.value=authorized.gain;s.connect(g);g.connect(v.out);v.nodes.push(g);}else s.connect(v.out);
-      // One decoded, crossfaded recorded source per asset, one playback voice;
-      // no oscillators, extra downloads or runtime-created voice layers.
-      s.playbackRate.value=sourceChargerHold?chargerRate:recordedSpinnerMotor?1:Math.max(.3,Math.min(3,p));s.start(v.t,0);
+      // A recorded click stays at the recorded speed and retains its full
+      // attack/decay. Do not pitch-sweep, stretch, stitch or endlessly loop it.
+      s.playbackRate.value=(recordedChargerOnset||recordedSpinnerMotor)?1:Math.max(.3,Math.min(3,p));s.start(v.t,0);
       s._end=loop?Infinity:v.t+buffer.duration/s.playbackRate.value;
       v.nodes.push(s);v.srcs.push(s);v.end=Math.max(v.end,s._end);v.endless=loop;
       return {pitch(q,t){
-        if(sourceChargerHold){
-          const charge=readCharge();
-          if(charge===null)return;
-          const next=rateFor(charge);
-          // Monotone throughout one hold to avoid backwards zippering; a
-          // fresh hold starts a fresh progression after its prior loop stops.
-          if(next>chargerRate+1e-5){
-            chargerRate=next;
-            s.playbackRate.setTargetAtTime(next,t,.035);
-          }
-        }else if(!recordedSpinnerMotor)s.playbackRate.setTargetAtTime(Math.max(.3,Math.min(3,q)),t,.035);
+        if(!recordedChargerOnset&&!recordedSpinnerMotor)s.playbackRate.setTargetAtTime(Math.max(.3,Math.min(3,q)),t,.035);
       }};
     };
-    // The original mix gave the soft HoldNoise bed a 0.23 loop gain while
-    // the short ready cue used 0.68. Raise ONLY this reworked Charger bed to
-    // keep the end-click/ready sound from dominating the audible charge.
-    // This is a perceptual balance, not a claimed Nintendo gain setting.
-    const chargerHoldEvent=loop&&AUDIO_RECIPES[id]?.family==='charger'&&event==='charge';
-    const d={gain:chargerHoldEvent?.54:(loop?.23:(event==='explosion'?.7:.68)),max:16,jitter:loop?0:.008,minGap:['impact','shield_hit'].includes(event)?.024:event==='explosion'?.008:0,
+    const d={gain:loop?.23:(event==='explosion'?.7:.68),max:16,jitter:loop?0:.008,minGap:['impact','shield_hit'].includes(event)?.024:event==='explosion'?.008:0,
       reverb:loop?.025:.055,ref:event==='explosion'?5:3,priority:event==='ready'?90:65,weaponId:id,event,
       ...(loop?{loop:build,oneShot:.65}:{build})};
     this.defs.set(name,d);return d;

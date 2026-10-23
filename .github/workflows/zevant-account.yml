@@ -1,0 +1,52 @@
+name: ZEVANT account and Workers build
+on:
+  pull_request:
+    paths:
+      - "account/**"
+      - "vite.config.mjs"
+      - "package.json"
+      - "scripts/build-inkwave.mjs"
+      - "scripts/lib/inkwave-account-bundle.mjs"
+      - ".github/workflows/zevant-account.yml"
+  push:
+    branches: [main]
+    paths:
+      - "account/**"
+      - "vite.config.mjs"
+      - "package.json"
+      - "scripts/build-inkwave.mjs"
+      - "scripts/lib/inkwave-account-bundle.mjs"
+      - ".github/workflows/zevant-account.yml"
+permissions:
+  contents: read
+jobs:
+  account:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Account API and bundle tests
+        run: node --test account/tests/*.test.mjs
+      - name: Install build tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 vite@8.3.3
+      - name: Production build (vite build → dist/)
+        run: npx vite build
+      - name: Startup budget gate on the Workers output
+        run: node scripts/check-inkwave-startup-budget.mjs dist
+      - name: Account entry is wired into the revisioned site
+        run: |
+          entry="$(node -e "const b=require('./dist/inkwave-build.json').build.account; if(!b) process.exit(1); console.log(b.entry)")"
+          grep -q "src=\"./${entry}\"" dist/index.html
+          revision="$(ls dist/_versions)"
+          test -f "dist/_versions/${revision}/${entry}"
+          test -f dist/_headers
+      - name: Validate the Worker configuration (no deploy)
+        working-directory: account
+        run: |
+          npm install --no-audit --no-fund --no-package-lock
+          npx wrangler deploy --dry-run --outdir ../.wrangler-dry-run

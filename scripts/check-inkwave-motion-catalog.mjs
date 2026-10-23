@@ -189,6 +189,14 @@ export function validateCatalogAudioGraphResult(result) {
   const graph=result.audioGraph,worker=outputs[0];
   if(graph?.source!=='production-entry-imports-and-generated-worker'||graph.deviceInitialized!==false||graph.workerProtocol!=='invalid-id-rejected'||graph.workerTerminated!==true||graph.workerPath!=='/'+worker)fail('audio graph protocol proof');
   if(!result.loaded?.some(r=>r.file===worker&&r.sha256===artifacts[worker]&&Number.isInteger(r.bytes)&&r.bytes>0))fail('audio graph worker receipt');
+  for(const name of ['grain','reverb']){
+    const entries=keys.filter(k=>k.endsWith('/patches/splatoon3/runtime/audio/'+name+'-worker.mjs'));
+    if(!entries.length)continue;
+    if(entries.length!==1)fail('audio graph prewarm worker denominator');
+    const file=entries[0],proof=graph.prewarmWorkers?.filter(r=>r.path==='/'+file);
+    if(proof?.length!==1||proof[0].protocol!=='canonical-pcm-byte-exact'||proof[0].terminated!==true||!Number.isSafeInteger(proof[0].bytes)||proof[0].bytes<=0)fail('audio graph prewarm protocol proof');
+    if(!result.loaded?.some(r=>r.file===file&&r.sha256===artifacts[file]&&Number.isInteger(r.bytes)&&r.bytes>0))fail('audio graph prewarm receipt');
+  }
 }
 export function validateCatalogResult(result) {
   if (result?.schema !== 1 || result.installCalls !== 1 || result.source !== 'built-production-native' || result.gpu?.contextLost !== false || !result.gpu?.renderer || result.errors?.length !== 0) fail('runtime identity / shader errors');

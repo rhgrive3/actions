@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Repeated battle lifecycle browser check (built site, Chromium, touch tablet with an iPad user agent).
+// Repeated battle lifecycle browser check (built site, Chromium or WebKit, touch tablet with an iPad user agent).
 // Drives the real menus with taps — PLAY → TURF WAR → START → (time up) → judge → results → MAIN MENU — for
 // --cycles rounds (default 10) and asserts after every round that nothing accumulates or survives from an earlier
 // one: one HUD / menu layer / touch-control root, no duplicated DOM ids, no extra window/document/screen listeners
@@ -8,10 +8,10 @@
 // Then it opens the Practice Range, runs its real Match.update past 90 s of simulated time in the page, and checks
 // that it is still playing (no time-up / judge / results) and that the next Turf War keeps its own clock.
 //
-//   node scripts/check-inkwave-rematch-lifecycle.mjs --site <built site> --evidence-dir <dir> --profile-dir <dir> [--cycles 10]
+//   node scripts/check-inkwave-rematch-lifecycle.mjs --site <built site> --evidence-dir <dir> --profile-dir <dir> [--cycles 10] [--engine chromium|webkit]
 //   (INKWAVE_CHROMIUM=/path/to/chrome overrides the Playwright browser for a local run)
 //
-// Logic + browser evidence on Chromium/SwiftShader. Not a physical iPad / iOS Safari / Home Screen PWA measurement.
+// Logic + headless browser evidence; Chromium uses SwiftShader. Not a physical iPad / iOS Safari / Home Screen PWA measurement.
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
@@ -19,7 +19,9 @@ import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { boundedDiagnostic, createFocusHistory, createOperationTrace } from './lib/inkwave-rematch-diagnostics.mjs';
 import { installCursorTimelineDiagnostics } from './lib/inkwave-cursor-timeline-diagnostics.mjs';
+import { rematchEngine, rematchLaunchOptions } from './lib/inkwave-rematch-engine.mjs';
 
+const engine = rematchEngine(process.argv.slice(2));
 const option = (name, fallback) => { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) { if (fallback !== undefined) return fallback; throw new Error('Required ' + name); } return process.argv[i + 1]; };
 const site = path.resolve(option('--site')), evidence = path.resolve(option('--evidence-dir')), profile = path.resolve(option('--profile-dir'));
 const cycles = Math.max(1, Math.floor(+option('--cycles', '10')));
@@ -44,12 +46,17 @@ const server = http.createServer((q, r) => {
 });
 await new Promise((res) => server.listen(0, '127.0.0.1', res));
 const base = `http://127.0.0.1:${server.address().port}/`;
-const IPAD = 'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
-const exe = process.env.INKWAVE_CHROMIUM ? { executablePath: process.env.INKWAVE_CHROMIUM } : {};
-const ctx = await pw.chromium.launchPersistentContext(path.join(profile, 'rematch'), {
-  headless: true, viewport: { width: 1024, height: 768 }, deviceScaleFactor: 1, hasTouch: true, isMobile: true, userAgent: IPAD, ...exe,
-  args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
-});
+let ctx;
+try {
+  ctx = await pw[engine].launchPersistentContext(path.join(profile, engine === 'chromium' ? 'rematch' : 'rematch-webkit'), rematchLaunchOptions(engine, process.env.INKWAVE_CHROMIUM));
+} catch (error) {
+  fs.writeFileSync(path.join(evidence, 'rematch-lifecycle-result.json'), JSON.stringify({
+    status: 'failed', engine, contentHash: manifest.contentHash, browserVersion: null, cycles,
+    failures: [{ round: 'launch', message: String(error?.stack || error).slice(0, 2000) }], errors: [], missing: [], rounds: [],
+  }, null, 2) + '\n');
+  await new Promise(resolve => server.close(resolve));
+  throw error;
+}
 const page = await ctx.newPage();
 const browserVersion=ctx.browser()?.version?.() ?? null;
 const errors = [], missing = [], failures = [], rounds = [];
@@ -287,7 +294,7 @@ const check = (round, phase, cond, message, detail) => { if (!cond) failures.pus
 
 let status = 'failed';
 const writeResult = () => {
-  const result = { status, contentHash: manifest.contentHash, browserVersion, cycles, failures, errors, missing, rounds,
+  const result = { status, engine, contentHash: manifest.contentHash, browserVersion, cycles, failures, errors, missing, rounds,
     activeRound: status === 'failed' ? activeRound : null, operations: operationTrace.entries, failureDiagnostics };
   fs.writeFileSync(path.join(evidence, 'rematch-lifecycle-result.json'), JSON.stringify(result, null, 2) + '\n');
 };

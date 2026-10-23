@@ -53,14 +53,16 @@ async function wave({coreZ,shieldZ,bossZ,targetZ,sideX=0,secondSideZ,ghost=false
     return area;
   };
   const count=face=>{let n=0;if(face)for(let i=face.grid;i<face.grid+face.nu*face.nv;i++)if(paint.grid[i])n++;return n;};
-  return {f,a,p,birth,stamps,otherStamps,cells:()=>count(side),otherCells:()=>count(other),defender,canopy,bossHits,target,randomValues,get draws(){return draws;}};
+  // Retirement clears p.catalog to release references. Retain the actual shot
+  // state before recycling for the contact-order assertions below.
+  return {f,a,p,catalog:p.catalog,birth,stamps,otherStamps,cells:()=>count(side),otherCells:()=>count(other),defender,canopy,bossHits,target,randomValues,get draws(){return draws;}};
 }
 function step(x){x.f.G.time+=DT;x.f.G.projectiles.update(DT);}
 function sidePaint(x,expected){
   assert.equal(x.stamps.length,expected?1:0,'outer lobe commits one reached contact only');
   assert.equal(x.cells(),expected?2:0,'real side-wall scoring cells follow contact order');
   if(expected){assert.equal(x.stamps[0].owner,x.a);assert.equal(x.stamps[0].seed,.37);}
-  assert.equal(!!x.p.catalog.lobeGone?.[2],expected,'only reached terrain retires this lobe');
+  assert.equal(!!x.catalog.lobeGone?.[2],expected,'only reached terrain retires this lobe');
 }
 
 test('near Actor blocks later outer-lobe paint; a farther Actor preserves the earlier splash and identical shot RNG',async()=>{
@@ -106,7 +108,7 @@ test('reached lobe retires once; ghosts follow geometry without paint, damage or
   assert.equal(remote.cells(),0);assert.equal(remote.stamps.length,0);assert.equal(remote.target.hp,10000);
   const clear=await wave({ghost:true,targetZ:3.8,sideX:10});step(clear);
   assert.deepEqual(remote.randomValues,clear.randomValues,'outer ghost terrain adds no paint RNG to existing cosmetic contact work');
-  assert.equal(remote.p.catalog.lobeGone[2],true,'ghost motion still retires the reached lobe');
+  assert.equal(remote.catalog.lobeGone[2],true,'ghost motion still retires the reached lobe');
 });
 
 test('sequenced paint seed reservation preserves the next real shot seed and velocity across an earlier hit',async()=>{
@@ -114,9 +116,9 @@ test('sequenced paint seed reservation preserves the next real shot seed and vel
   for(const targetZ of [3.1,4.5]){
     const x=await wave({targetZ,secondSideZ:3.4,random:i=>(i*.173)%1});step(x);
     assert.equal(x.stamps[0].seed,x.randomValues[x.birth.draws+1],'right lobe retains the second candidate seed even when the first is rejected');
-    assert.equal(x.p.catalog.lobeGone[2],true);assert.equal(x.otherStamps.length,targetZ===3.1?0:1);
+    assert.equal(x.catalog.lobeGone[2],true);assert.equal(x.otherStamps.length,targetZ===3.1?0:1);
     assert.equal(x.otherCells(),targetZ===3.1?0:2,'each outer contact is compared separately to the global stop');
-    assert.equal(!!x.p.catalog.lobeGone[0],targetZ===4.5);
+    assert.equal(!!x.catalog.lobeGone[0],targetZ===4.5);
     if(targetZ===4.5)assert.equal(x.otherStamps[0].seed,x.randomValues[x.birth.draws],'left lobe retains the first candidate seed');
     const firstDraws=x.draws;x.a.weaponRunner.reset();x.target.pos.x=20;
     for(let i=0;i<40&&!x.f.G.projectiles.list.length;i++)x.a.weaponRunner.update(DT,{fire:i<2,firePressed:i===0});
@@ -136,5 +138,5 @@ test('a reserved zero seed is not rerolled when the reached outer lobe paints',a
 test('multi-contact ghost retires only the lobe reached before the Actor and never acquires either wall',async()=>{
   const x=await wave({ghost:true,targetZ:3.1,secondSideZ:3.4});step(x);
   assert.equal(x.cells(),0);assert.equal(x.otherCells(),0);assert.equal(x.stamps.length+x.otherStamps.length,0);
-  assert.equal(x.target.hp,10000);assert.equal(x.p.catalog.lobeGone[2],true);assert.notEqual(x.p.catalog.lobeGone[0],true);
+  assert.equal(x.target.hp,10000);assert.equal(x.catalog.lobeGone[2],true);assert.notEqual(x.catalog.lobeGone[0],true);
 });

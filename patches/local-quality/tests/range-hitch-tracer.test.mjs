@@ -8,6 +8,79 @@ import { profileRangeAcceptanceSnapshot } from '../../../scripts/inkwave-range-p
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { FixedClock } from '../../splatoon3/runtime/clock.mjs';
 
+test('explicit 30-second capture retains every delivered frame beyond the rolling HUD window', () => {
+ let clock=0, calls=0;
+ const game={_frame(dt){ calls++; return dt; }};
+ const env={__G:{level:{manifest:{id:'native-test'}}}};
+ const original=game._frame;
+ const trace=installHitchTracer(game,{env,now:()=>clock,maxFrames:30});
+ try {
+  assert.equal(trace.captureReport(),null,'normal profiling does not retain a full capture');
+  trace.startCapture();
+  for(let i=1;i<=1800;i++){
+   clock=i*1000/60;
+   assert.equal(game._frame(1/60),1/60);
+   trace.record(clock,3,{phase:'battle',frameRateHz:60});
+  }
+  const capture=JSON.parse(trace.captureReport());
+  assert.equal(capture.status,'stopped');
+  assert.equal(capture.reason,'duration-limit');
+  assert.equal(capture.recordedFrames,1799,'deadline frame is outside the half-open window');
+  assert.equal(capture.frames[0].id,1);
+  assert.equal(capture.frames.at(-1).id,1799);
+  assert.ok(capture.frames.every(f=>f.stageId==='native-test'&&f.mode==='battle'));
+  assert.equal(trace.snapshot().capturedFrames,30,'rolling HUD capacity is unchanged');
+  assert.equal(JSON.parse(trace.report()).capture.recordedFrames,1799,'existing Copy trace includes the full capture');
+  assert.equal(calls,1800,'capture never skips authoritative frame calls');
+  const saved=trace.captureReport();
+  clock+=10;game._frame(1/60);trace.record(clock,1);
+  assert.equal(trace.captureReport(),saved,'completed capture is immutable');
+ } finally { trace.dispose(); }
+ assert.strictEqual(game._frame,original);
+});
+
+test('capture stops at frame and UTF-8 byte bounds without silently replacing early frames', () => {
+ let clock=0;
+ const game={_frame(){return 7;}};
+ const env={__G:{level:{manifest:{id:'ステージ'.repeat(80)}}}};
+ const trace=installHitchTracer(game,{env,now:()=>clock});
+ try {
+  trace.startCapture({frameLimit:2});
+  for(let i=0;i<5;i++){clock++;game._frame();trace.record(clock,2);}
+  let capture=JSON.parse(trace.captureReport());
+  assert.equal(capture.reason,'frame-limit');
+  assert.deepEqual(capture.frames.map(f=>f.id),[1,2]);
+  trace.startCapture({byteLimit:8192});
+  for(let i=0;i<30;i++){clock++;game._frame();trace.record(clock,2);}
+  const bytes=new TextEncoder().encode(trace.captureReport()).byteLength;
+  capture=JSON.parse(trace.captureReport());
+  assert.equal(capture.reason,'byte-limit');
+  assert.ok(bytes<=8192,'entire compact capture respects the advertised UTF-8 byte bound');
+  assert.ok(capture.recordedFrames>0&&capture.recordedFrames<30);
+  assert.equal(capture.observedFrames,capture.recordedFrames+1,'capacity rejection is explicit');
+  assert.equal(capture.frames[0].id,6,'new capture starts fresh rather than reusing the rolling buffer');
+ } finally {trace.dispose();}
+});
+
+test('capture validation, paused deadline, manual stop, reset and disposal are bounded', () => {
+ let clock=0;
+ const game={_frame(){}};
+ const trace=installHitchTracer(game,{now:()=>clock});
+ for(const opts of [{durationMs:0},{durationMs:30001},{durationMs:NaN},
+   {frameLimit:4001},{frameLimit:1.1},{byteLimit:8191},{byteLimit:4194305}])
+  assert.throws(()=>trace.startCapture(opts),RangeError);
+ trace.startCapture();
+ clock=31000;
+ assert.equal(JSON.parse(trace.captureReport()).reason,'duration-limit','paused rendering can finish on export');
+ trace.startCapture();trace.stopCapture();
+ assert.equal(JSON.parse(trace.captureReport()).reason,'manual');
+ trace.reset();
+ assert.equal(trace.captureReport(),null,'reset releases full capture rows');
+ trace.startCapture();trace.dispose();
+ assert.equal(JSON.parse(trace.captureReport()).reason,'disposed');
+ assert.throws(()=>trace.startCapture(),/disposed/);
+});
+
 test('native method counters expose zero-ray contact work and distinguish zero, one and twelve fixed ticks',()=>{
  let now=0,stamp=0,calls=0;
  const source={queryCount:0,triangleTests:0,queryBox(){calls++;return 11;},_capsuleDistance(){calls++;return 17;}};

@@ -1,5 +1,5 @@
 import {PLAYER} from '../../../src/config.js';
-import {GroundHit} from '../../../src/game/physics.js';
+import {GroundHit,Hit} from '../../../src/game/physics.js';
 
 function cautiousSourceTurn(brain,G){
  const N=G.nav,from=N?.nodes[brain.path?.[Math.max(0,brain.pi-1)]],to=N?.nodes[brain.path?.[brain.pi]],next=N?.nodes[brain.path?.[brain.pi+1]];
@@ -22,7 +22,8 @@ export function nativeSourceWaypointReached(G,actor,node){
  * Other opted traversals can reuse the installed foot probe at touchdown. */
 export function nativeSourceFootSupported(G,actor,node){
  if(!G.level?.native||!actor.grounded)return false;
- const down=actor.pos.clone().set(0,-1,0),origin=actor.pos.clone().set(node.x,node.y+.1,node.z),hit=G.physics.raycast(origin,down,.3);
+ const scratch=actor._nativeFootQuery||(actor._nativeFootQuery={down:actor.pos.clone().set(0,-1,0),origin:actor.pos.clone(),hit:new Hit()});
+ const hit=G.physics.raycast(scratch.origin.set(node.x,node.y+.1,node.z),scratch.down,.3,scratch.hit);
  if(!hit.hit||hit.triangle<0||hit.normal.y<=.68||Math.abs(hit.point.y-node.y)>=.16)return false;
  // Graph heights describe the centre triangle. The installed controller can
  // stand higher when its real foot ring reaches a curb or a sloping triangle.
