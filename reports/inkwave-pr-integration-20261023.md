@@ -1,6 +1,7 @@
 # Complete INKWAVE PR integration, 2026-10-23
 
-Extends integration #1843 to all 29 PRs present when this request began.
+Extends integration #1843 to all 29 PRs present when this request began,
+plus newly opened #1849, for 30 PRs total.
 The original 23 PRs and all five subsequent heads are ancestors, preserving
 original commits and historical evidence. No source branch is deleted.
 
@@ -103,11 +104,12 @@ See reports/inkwave-splatoon3-behavior-2026-10-02.md and original evidence.
 | #1841 | `4c7f1fda4814c5296949afab5fea12ab0f98ef9c` |
 | #1842 | `e09e97cc93b65e35d98d45a36a0a35335ca69ecb` |
 | #1843 | `f081188ff1bfb110077f4377900eeaeb0ba4488e` |
-| #1844 | `136a8bec9e05f2d11ae4d10f62d71b31d44436ef` |
+| #1844 | `354536b365ae54bac71c9ce2970a5c5f322c1304` |
 | #1845 | `ca4566657466baab005d2b79707a6cf92aaf440e` |
 | #1846 | `69bab40d6a1a4cd38aaa85afb5b9d31af8610a9c` |
 | #1847 | `1de4e29a42bcc10feb1bbb601126ff1a4d3c6a06` |
-| #1848 | `b711c0c1b5ba73f94b244b6fe1f95742586d9027` |
+| #1848 | `a44a4fc9da74112f881e208aa6dbd117295117ec` |
+| #1849 | `360ca2be8e0685a1452856bada0c6edc56ae562c` |
 
 ## Refreshed source heads and first hosted failure
 
@@ -176,3 +178,22 @@ Projection/source-route/workflow contracts: 46/46 Node tests; unchanged strict
 Python comparator suite: 7/7. The new cross-module guard requires both canonical
 capture projections and an unconditional complete comparison without historical
 FOV normalization. No production/runtime source changed in this follow-up.
+
+## Newly opened PR1849 and latest PR1848 follow-up
+
+PR1849 (360ca2be) was opened during acceptance. Preserve it as a merge parent
+and include its input cancellation, Clam support/water retirement, multistorey
+special support, accepted-life/sampled-position binding, target-life latching,
+and disconnect/owner-era replica retirement. Merge the behavior record
+additively. Latest PR1848 a44a4fc9 adds bounded opening-spawn diagnostics; keep
+the existing loaded revision-scoped motion owner, which already implements its
+manual-tick fix without importing a second unversioned ESM instance.
+
+Combined runtime and combat-harness regressions: 280/280 pass, zero skips.
+The new production build and startup budget pass; content hash begins
+d41e4ed33d95. Standard npm test passes all 117 Node and 13 Python cases, zero skips.
+Current-head native browser acceptance is running separately. The earlier local 48-pair comparison remains evidence for
+the 29-PR runtime; it is not relabelled as acceptance of these new lifecycle
+changes. The new 30-PR production inputs still have exactly the same selected
+thirteen paint and sixteen pose leaves, so their existing source-epoch pins
+remain unchanged. Full final-head hosted verification remains required.
