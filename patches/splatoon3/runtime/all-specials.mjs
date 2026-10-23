@@ -1071,24 +1071,26 @@ function doAreaImpact(rt, actor, id, state, center, seed=nextSeed(state), radius
   fxBurst(rt,actor,c,r,'impact');
   emitAction(rt,actor,id,state.serial,'impact',c,null,seed,{radius:r,damage:damage??d.damageMax});
 }
-function selectTargets(rt, actor, max=4, range=32) {
+function selectTargets(rt, actor, max=4, range=32, preview=false) {
   const dir=aimDirection(rt,actor,rt.v0), out=[];
   for(const target of rt.api.G.actors||[]) {
     if(!target.alive||target.team===actor.team||target===actor)continue;
     const offset=rt.v1.copy(target.pos).sub(actor.pos);const d=offset.length();
     if(d>range||d<.1)continue;
     const dot=offset.normalize().dot(dir);if(dot<=0)continue;
+    let x=null,y=null;
     if(actor.specialActive?.id==='tentaMissiles'){
       const ap=actorStates.get(actor)?.specialPowerAP||0,camera=rt.api.G.camera;
       if(camera?.isPerspectiveCamera){const projected=(rt._missilePreview ||= target.pos.clone()).copy(target.pos);projected.y+=.7;projected.project(camera);
         const aspect=camera.aspect||1,limit=gearCurve(ap,140,190,240)/360;
         if(projected.z< -1||Math.hypot(projected.x*aspect,projected.y)>limit)continue;
+        if(preview){x=projected.x;y=projected.y;}
       }else if(dot<.94)continue;
     }else if(dot<.94)continue;
-    out.push({actor:target,d,dot});
+    out.push({actor:target,d,dot,x,y});
   }
   out.sort((a,b)=>b.dot-a.dot||a.d-b.d);
-  return out.slice(0,max).map(x=>x.actor);
+  return out.slice(0,max).map(row=>preview?{actor:row.actor,x:row.x,y:row.y}:row.actor);
 }
 function prepareMissiles(rt, actor, state) {
   const targets=selectTargets(rt,actor,5,Infinity),origin=rt.v0.set(actor.pos.x,actor.pos.y+2.4,actor.pos.z).clone();
@@ -1271,7 +1273,7 @@ function throwChumps(rt,actor,state) {
 export function tentaMissilesLockPreview(api,actor) {
   const rt=runtimes.get(api?.Projectiles),state=actorStates.get(actor);
   if(!rt||!state||state.id!=='tentaMissiles'||!actor?.alive||actor.remote)return null;
-  return {limit:gearCurve(state.specialPowerAP||0,140,190,240)/360,targets:selectTargets(rt,actor,5,Infinity)};
+  return {limit:gearCurve(state.specialPowerAP||0,140,190,240)/360,targets:selectTargets(rt,actor,5,Infinity,true)};
 }
 export function superChumpLandingPreview(api,actor) {
   const rt=runtimes.get(api?.Projectiles),state=actorStates.get(actor);
