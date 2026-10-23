@@ -164,6 +164,7 @@ try{
       const mouth=()=>id==='s3-slosher-washtub'?new THREE.Vector3(0,.069+Math.sin(.48)*.05472,.249+Math.cos(.48)*.05472).multiplyScalar(ch.weapon.def.modelScale||1).applyMatrix4(ch.weapon.off.matrixWorld).toArray():null;
       const socket=hand=>ch.getMuzzleHand(new THREE.Vector3(),hand),distance=(x,y)=>Math.hypot(...x.map((v,i)=>v-y[i]));
       const births=[],renders=[];const screenshots={};let tick=0,connected=0,maxFxError=0,maxHistoryError=0,historySamplesChecked=0,nativeShapeInstancesChecked=0,maxNativeShapeError=0,presses=0,lastRenderedBirthCount=0;
+      let predictionRender=null;
       const drawFrames=[{frame:-1,tick:0,reason:'initial'}];
       renderer.render(scene,camera);timing.firstRenderMs=performance.now()-caseStart;
       for(let frame=0;frame<hz*2;frame++){
@@ -201,13 +202,23 @@ try{
         // the first later birth at full aim; LOS fallback is never overridden.
         const steadyReady=id!=='s3-maneuver-stepper'||births.at(-1)?.preAimReady>=.98;
         const capture=births.length>lastRenderedBirthCount&&renders.length<2&&(renders.length===0||steadyReady);
-        if(renderPolicy==='full'||capture||frame===hz*2-1){
-          renderer.render(scene,camera);drawFrames.push({frame,tick,reason:capture?(renders.length?'steady':'first'):frame===hz*2-1?'final':'cadence'});
+        const latest=births.at(-1),predictionCapture=!predictionRender&&id==='s3-maneuver-stepper'&&!wall&&latest?.hand===null&&latest?.poseOffset&&latest.preAimReady<.98;
+        if(renderPolicy==='full'||capture||predictionCapture||frame===hz*2-1){
+          renderer.render(scene,camera);drawFrames.push({frame,tick,reason:predictionCapture?'prediction':capture?(renders.length?'steady':'first'):frame===hz*2-1?'final':'cadence'});
         }else{
           // The actual draw hook caches this fixed lab camera for viewer/LOD.
           // Preserve that camera-state update at every simulated cadence.
           // Material uniforms and draw-range hooks still run on each real draw.
           ch._camHook?.(renderer,scene,camera);
+        }
+        if(predictionCapture){
+          const socketError=distance(latest.poseConnectionPoint,latest.postSocket[0]);
+          if(socketError>1e-7)throw Error('first predicted right-hand birth misses its drawn socket');
+          const actual=volumeFrame.submissions.find(row=>row.seed===latest.seed&&row.attached&&row.backError!==null&&row.rodError!==null);
+          if(!actual)throw Error('predicted first shot has no visible native back/rod submission');
+          predictionRender={frame,tick,seed:latest.seed,preAimReady:latest.preAimReady,socketError,physicalSocketGap:latest.physicalSocketGap,actual,glError:renderer.getContext().getError()};
+          if(predictionRender.glError!==0)throw Error('predicted shot WebGL error');
+          screenshots.prediction=renderer.domElement.toDataURL('image/png').split(',')[1];
         }
         if(capture){const phase=renders.length===0?'first':'steady';lastRenderedBirthCount=births.length;const gl=renderer.getContext();gl.finish();const pixels=new Uint8Array(512*512*4);gl.readPixels(0,0,512,512,gl.RGBA,gl.UNSIGNED_BYTE,pixels);let inkPixels=0;for(let i=0;i<pixels.length;i+=4)if(Math.max(pixels[i],pixels[i+1],pixels[i+2])-Math.min(pixels[i],pixels[i+1],pixels[i+2])>40)inkPixels++;
           const nativeInstances=[];
@@ -226,7 +237,9 @@ try{
       const source={status:ch.sourceMotion.status,active:ch.sourceMotion.active};
       if(flick&&presses!==(family==='brush'?2:1))throw Error(id+' missing admitted swing');
       if(id==='s3-maneuver-stepper'&&!wall&&pitch===0&&volumeFrame.checked===0)throw Error('visible native Quad back/rod acceptance observed no connection samples');
+      if(id==='s3-maneuver-stepper'&&!wall&&pitch===0&&!predictionRender)throw Error('missing first predicted right-hand render');
       const result={id,hz,pitch,wall,stage,actorOrigin,levelBlocks:G.level.blocks.length,levelFaces:G.level.faces.length,expectedMode,randomPolicy:'deterministic midpoint; no statistical spread claim',renderPolicy,cadenceFrames:hz*2,drawFrames,actualDraws:drawFrames.length,timing,ticks:clock.ticks,birthCount:births.length,connected,maxFxError:connected?maxFxError:null,historySamplesChecked,maxHistoryError:historySamplesChecked?maxHistoryError:null,nativeShapeInstancesChecked,maxNativeShapeError:nativeShapeInstancesChecked?maxNativeShapeError:null,nativeVolumeConnectionsChecked:volumeFrame.checked,nativeVolumeAllPartsVisible:volumeFrame.allPartsVisible,maxNativeBackError:volumeFrame.checked?volumeFrame.maxBackError:null,maxNativeRodError:volumeFrame.checked?volumeFrame.maxRodError:null,source,renders,births,screenshots};
+      result.predictionRender=predictionRender;
       a.weaponRunner.reset();G.projectiles.clear();G.fx.clear();scene.remove(ch.root);
       // Keep one detached Character's compiled material programs referenced.
       // Each tested world still receives a fresh Actor and source controller;

@@ -13,11 +13,24 @@ import { POSE_BIRTH_MAX_CONNECT, poseBirthOffset } from '../runtime/catalog-pose
 const IDS = ['s3-maneuver-stepper', 's3-slosher-washtub'];
 const EXTRA = "export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';";
 const CONTROL = 'const poseBirth = installCatalogPoseBirth(api);';
+const NO_CONNECTION = '{begin(){},attach(){},commit(){return false;},close(){},resolve(){}}';
+function emittedControl(rel, code) {
+  if (rel !== 'patches/splatoon3/runtime/main-weapon-catalog.mjs') return code;
+  // Change only this fixture's connection installer call. The original emitted
+  // files stay immutable, and all physics/RNG/ink/network code stays live.
+  const imported = code.match(/\binstallCatalogPoseBirth\s+as\s+([\w$]+)/);
+  assert.ok(imported, 'emitted connection import must be identifiable');
+  const alias = imported[1].replace(/[$]/g, '\\$&');
+  const call = new RegExp('\\b' + alias + '\\([\\w$]+\\)', 'g');
+  assert.equal([...code.matchAll(call)].length, 1, 'exactly one emitted connection installer');
+  return code.replace(call, NO_CONNECTION);
+}
 async function world({ control = false } = {}) {
   const f = await fixture({ fullRuntime: true, includeCharacter: true, productionComposition: true, realProjectiles: true, extraExports: EXTRA,
     // Test-only control: the same production composition without the connection.
     adaptRuntime: (rel, code) => control && rel === 'patches/splatoon3/runtime/main-weapon-catalog.mjs'
-      ? (assert.ok(code.includes(CONTROL)), code.replace(CONTROL, 'const poseBirth = {begin(){},attach(){},commit(){return false;},close(){},resolve(){}};')) : code });
+      ? (assert.ok(code.includes(CONTROL)), code.replace(CONTROL, 'const poseBirth = ' + NO_CONNECTION + ';')) : code,
+    adaptEmittedRuntime: control ? emittedControl : (_rel, code) => code });
   f.installMainWeaponCatalogRuntime(f.installedRuntime, f.profile);
   const { G, THREE } = f;
   G.scene = new THREE.Scene(); G.physics = new f.Physics(G.level);
