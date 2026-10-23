@@ -1,0 +1,10 @@
+{
+  "composed-emitted.tap.gz": {
+    "rawSHA256": "2b3d1f915bf3515c10df71625a49c2ea290cc8b2231c0aac192155b0b99c28b9",
+    "rawBytes": 1318
+  },
+  "composed-source.tap.gz": {
+    "rawSHA256": "9d9c814eb6a1cb13fed3f1d460b3cf9e00c0c5ed5cc4a381e7654c6d95138dee",
+    "rawBytes": 3100
+  }
+}

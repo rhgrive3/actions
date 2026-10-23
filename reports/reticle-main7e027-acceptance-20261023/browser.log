@@ -1,0 +1,23 @@
+desktop main
+desktop main
+desktop main/mode
+desktop main/mode
+desktop main/mode/range
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert(normal.hudVisible&&normal.hits.length>=3&&normal.hits.at(-1).killed)
+
+    at file:///workspace/reticle-main7e027-check/scripts/check-reticle-main7e027-browser.mjs:32:79 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.19.0

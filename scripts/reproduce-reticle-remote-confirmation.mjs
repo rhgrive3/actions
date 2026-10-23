@@ -1,0 +1,38 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {fixture,emitMainShot} from '../patches/splatoon3/tests/source-fixture.mjs';
+import {adaptBuildSource} from './inkwave-source-composition.mjs';
+import {parse} from '../patches/loading-cache/vendor/acorn.mjs';
+const out=process.argv[2];
+const clock={ms:1000};
+const main=adaptBuildSource('src/main.js',fs.readFileSync(new URL('../inkwave-public/src/main.js',import.meta.url),'utf8'));
+const ast=parse(main,{ecmaVersion:'latest',sourceType:'module'});let hitRegistration;
+function walk(n){if(!n||typeof n!=='object')return;if(n.type==='MethodDefinition'&&n.key.name==='_bindEvents'){function find(x){if(!x||typeof x!=='object')return;if(x.type==='CallExpression'&&x.callee.name==='on'&&x.arguments[0]?.value==='hit')hitRegistration=main.slice(x.start,x.end)+';';for(const v of Object.values(x))if(Array.isArray(v))v.forEach(find);else if(v&&typeof v==='object')find(v);}find(n);}for(const v of Object.values(n))if(Array.isArray(v))v.forEach(walk);else if(v&&typeof v==='object')walk(v);}walk(ast);assert(hitRegistration);
+async function endpoint(id,packets){
+ const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,vmPerformance:{now:()=>clock.ms},extraExports:"export {withMainDirectDamage} from './patches/splatoon3/runtime/private-tracking.mjs';"});
+ const a=f.make('shooter'),v=f.make('shooter');Object.assign(a,{nid:1,owner:'S',team:0,netLife:2,alive:true,isLocal:id==='S'});Object.assign(v,{nid:2,owner:'R',team:1,netLife:5,alive:true,hp:100,invuln:0,isLocal:id==='R'});a.pos.set(0,0,0);v.pos.set(0,0,3);a.aimDir.set(0,0,1);
+ const match={mode:'turf',state:'playing',time:180,playing:()=>true,actors:[a,v],local:id==='S'?a:v};
+ const session={myId:id,hostId:'S',isHost:id==='S',_members:new Map([['S',{}],['R',{}]]),tr:{sendTo(to,data){packets.push({to,data:JSON.parse(JSON.stringify(data))});return true;},broadcast(data){packets.push({to:'*',data:JSON.parse(JSON.stringify(data))});return true;}}};
+ const nm=new f.NetMatch(session,{id:'match-1',map:'normal'});nm.bind(match);session.match=nm;f.G.netm=nm;f.G.match=match;f.G.actors=match.actors;f.G.local=match.local;f.G.mode='match';return{f,a,v,nm,match,session};
+}
+const sent=[],received=[],tx=await endpoint('S',sent),rx=await endpoint('R',received),events=[],markers=[];
+const h=Object.assign(Object.create(tx.f.installedRuntime.HUD.prototype),{_L:{},_tank:{wobble:0},_kills:{dealt:new Map()},_local:()=>tx.a,_live:()=>true,hitMarker:(kind,feedback)=>markers.push({kind,feedback}),_now:()=>0});h._bindBus();
+const game={match:tx.match,hud:h};
+Function('on','G','sourceChargerHitCue','blasterHitCueKind','let lastHitSnd=0;'+hitRegistration).call(game,tx.f.on,tx.f.G,()=>null,()=>null);
+for(const name of ['hit','combat:confirmed'])tx.f.on(name,e=>events.push({name,damage:e.damage,killed:e.killed,attacker:e.attacker.nid,victim:e.victim.nid}));
+emitMainShot(tx.f,tx.a);assert(tx.nm._sendTick());rx.nm.onMessage('S',sent.find(x=>x.data.k==='t').data);
+tx.f.withMainDirectDamage(tx.a,tx.v,()=>tx.f.G.projectiles.applyHit(tx.a,tx.v,10,'shooter'));
+const packet=sent.find(x=>x.data.k==='hit')?.data;assert(packet,'native pending hit packet');
+const stages=[];stages.push({name:'pending',events:events.slice(),markers:markers.slice()});
+rx.nm.onMessage('S',packet);assert.equal(rx.v.hp,90);const ack=received.find(x=>x.data.k==='hit_ack')?.data;assert(ack);
+const rejected=[];
+for(const [label,sender,data]of [['unaccepted owner','INTRUDER',ack],['wrong match','R',{...ack,m:'another-match'}],['wrong victim life','R',{...ack,vl:6}],['wrong attacker','R',{...ack,a:99}]]){tx.nm.onMessage(sender,data);assert.equal(events.length,0);assert.equal(markers.length,0);rejected.push(label);}
+stages.push({name:'unaccepted ACKs',events:events.slice(),markers:markers.slice()});
+tx.nm.onMessage('R',ack);stages.push({name:'accepted ACK',events:events.slice(),markers:markers.slice()});
+tx.nm.onMessage('R',ack);stages.push({name:'replayed ACK',events:events.slice(),markers:markers.slice()});
+assert.equal(events.filter(e=>e.name==='combat:confirmed').length,1);
+assert(rx.nm._sendTick());const forwarded=received.filter(x=>x.data.k==='t').at(-1)?.data;assert(forwarded);
+tx.nm.onMessage('R',forwarded);clock.ms+=1000;for(const p of tx.nm.peers.values())tx.nm._advance(p,1);tx.nm._playEvents();
+stages.push({name:'normal owner event replay after ACK',events:events.slice(),markers:markers.slice()});
+assert.equal(stages[0].markers.length,0);assert.equal(stages[2].markers.length,0,'candidate has no ACK-to-HUD subscription');assert.equal(markers.length,1,'the normal owner event route does eventually produce one hit marker');
+const result={candidate:'c74a2d6011777eae7e001297c018ffcecaa263e7 + official #1858 menu leaves',receiverHP:rx.v.hp,stages,rejected,ack,forwardedNames:forwarded.e?.filter(e=>e[1]==='ev').map(e=>e[2]),forwardedHitPayload:forwarded.e?.find(e=>e[1]==='ev'&&e[2]==='hit')?.[3],naiveAdditionalAckSubscriptionWouldShow:markers.length+events.filter(e=>e.name==='combat:confirmed').length,noProductionChanges:true,measurement:'actual composed two-endpoint NetMatch/Actor/Projectiles in source VM with bounded transport; real accepted ACK and normal owner clock/event replay; HUD dispatch spy, not live relay or remote browser render'};fs.writeFileSync(out,JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));

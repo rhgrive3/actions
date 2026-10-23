@@ -1,0 +1,15 @@
+{
+  "candidate": "c74a2d6011777eae7e001297c018ffcecaa263e7",
+  "overlay": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51: static-menu-adapter.mjs + static-menu-art.test.mjs only",
+  "build": "fb5f0fab676d92749db0e02f332770530eb930b6c6d7590ec0e926dd3715c5d7",
+  "probeSHA256": "577cbe407d0b49d091b947568f27cf78957ec9fa07484ddbd3d165ce7179ea7b",
+  "errors": [],
+  "scenes": [],
+  "acceptance": "pending; Chromium/SwiftShader, not physical GPU or retail comparison",
+  "status": "failed",
+  "failure": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert(normal.hudVisible&&normal.hits.length>=3&&normal.hits.at(-1).killed)\n",
+  "diagnostic": {
+    "menu": null,
+    "text": "READY!\nF\n0\np\nLOW INK\n70%\n36.0\n36.0\n36.0\nSplattershot\nSPEED\n0.0m/s\nZONE\nB · Target Gallery\nDOWNRANGE\n0.0m\nTARGET\nTarget 5 m\nLAST HIT\n36.0\nFROM 5.0 m\nCOMBO\n108.0\nHITS\n3\nWELCOME TO THE RANGE\nR\nReset paint\nT\nReset targets\nG\nBack to start"
+  }
+}

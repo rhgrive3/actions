@@ -1,0 +1,76 @@
+{
+  "candidate": "c74a2d6011777eae7e001297c018ffcecaa263e7 + official #1858 menu leaves",
+  "receiverHP": 90,
+  "stages": [
+    {
+      "name": "pending",
+      "events": [],
+      "markers": []
+    },
+    {
+      "name": "unaccepted ACK",
+      "events": [],
+      "markers": []
+    },
+    {
+      "name": "accepted ACK",
+      "events": [
+        {
+          "name": "combat:confirmed",
+          "damage": 10,
+          "killed": false,
+          "attacker": 1,
+          "victim": 2
+        }
+      ],
+      "markers": []
+    },
+    {
+      "name": "replayed ACK",
+      "events": [
+        {
+          "name": "combat:confirmed",
+          "damage": 10,
+          "killed": false,
+          "attacker": 1,
+          "victim": 2
+        }
+      ],
+      "markers": []
+    },
+    {
+      "name": "normal owner event replay after ACK",
+      "events": [
+        {
+          "name": "combat:confirmed",
+          "damage": 10,
+          "killed": false,
+          "attacker": 1,
+          "victim": 2
+        }
+      ],
+      "markers": []
+    }
+  ],
+  "ack": {
+    "k": "hit_ack",
+    "m": "match-1",
+    "h": 1,
+    "v": 2,
+    "a": 1,
+    "d": 10,
+    "kld": 0,
+    "vl": 5,
+    "hp": 90,
+    "hr": 1,
+    "ht": 1,
+    "la": 1,
+    "he": null
+  },
+  "forwardedNames": [
+    "hit"
+  ],
+  "noProductionChanges": true
+}
+(node:5068) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

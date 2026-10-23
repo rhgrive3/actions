@@ -1,0 +1,8 @@
+file:///workspace/reticle-main7e027-check/scripts/reproduce-reticle-remote-confirmation.mjs:24
+tx.f.withMainDirectDamage(tx.a,tx.v,()=>tx.f.G.projectiles.applyHit(tx.a,tx.v,10,'shooter'));
+     ^
+
+TypeError: tx.f.withMainDirectDamage is not a function
+    at file:///workspace/reticle-main7e027-check/scripts/reproduce-reticle-remote-confirmation.mjs:24:6
+
+Node.js v24.19.0

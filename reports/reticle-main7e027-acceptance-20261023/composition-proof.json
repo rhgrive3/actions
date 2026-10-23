@@ -1,0 +1,29 @@
+{
+  "candidate": "c74a2d6011777eae7e001297c018ffcecaa263e7",
+  "newMain": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "composition": "candidate tree + two official #1858 leaves, detached copy; no source registration changes",
+  "inputDeltaFromCandidate": [
+    "local-quality/static-menu-adapter.mjs"
+  ],
+  "inputs": 1420,
+  "outputs": 2110,
+  "contentHash": "fb5f0fab676d92749db0e02f332770530eb930b6c6d7590ec0e926dd3715c5d7",
+  "allArtifactsVerified": true,
+  "sameHUD": [
+    {
+      "file": "src/ui/hud.js",
+      "equal": true,
+      "sha256": "39bf68d1bf06baade4113b76cddba7d280adf87f840a842348a30de459adc505"
+    },
+    {
+      "file": "styles/hud.css",
+      "equal": true,
+      "sha256": "d464f46ec532097edb9cb9f4800c0236490b2efd337df0bccf10f3402e068696"
+    },
+    {
+      "file": "patches/local-quality/s3-hud-look-adapter.mjs",
+      "equal": true,
+      "sha256": "631a82caeafab4b1eb9341164269b52d9be9005d3b41a157b6614c025575804a"
+    }
+  ]
+}

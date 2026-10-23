@@ -1,0 +1,778 @@
+{
+  "candidate": "c74a2d6011777eae7e001297c018ffcecaa263e7",
+  "overlay": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51: static-menu-adapter.mjs + static-menu-art.test.mjs only",
+  "build": "fb5f0fab676d92749db0e02f332770530eb930b6c6d7590ec0e926dd3715c5d7",
+  "probeSHA256": "3fa14272f526ff3fb050779a8dc3309a18cce7c3ae7e50c1129f72c6a1cccf99",
+  "errors": [],
+  "scenes": [
+    {
+      "name": "desktop",
+      "viewport": [
+        1280,
+        720
+      ],
+      "touch": false,
+      "menus": [
+        {
+          "menu": "main",
+          "canvasVisibility": "hidden",
+          "canvasHiddenFlag": true,
+          "uiVisible": true,
+          "background": "linear-gradient(90deg, rgba(12, 11, 27, 0.73), rgba(12, 11, 27, 0.36) 53%, rgba(12, 11, 27, 0.22)), url(\"http://127.0.0.1:45621/_versions/1b6e89b3322e2a53d5b1223f8567b6737a0f4b7aae399c81cca362ae35e2b61c/patches/local-quality/assets/menu/lobby.webp\")",
+          "showcase": null,
+          "visibleCharacters": 0,
+          "drawCalls": 124,
+          "paintedSamplePixels": 0,
+          "contextLost": false,
+          "nonNoneBackdropFilters": 0
+        },
+        {
+          "menu": "locker",
+          "canvasVisibility": "visible",
+          "canvasHiddenFlag": false,
+          "uiVisible": true,
+          "background": "linear-gradient(90deg, rgba(13, 12, 28, 0.8), rgba(13, 12, 28, 0.46) 54%, rgba(13, 12, 28, 0.1))",
+          "showcase": "locker",
+          "visibleCharacters": 1,
+          "drawCalls": 142,
+          "paintedSamplePixels": 192,
+          "contextLost": false,
+          "nonNoneBackdropFilters": 0
+        },
+        {
+          "menu": "main",
+          "canvasVisibility": "hidden",
+          "canvasHiddenFlag": true,
+          "uiVisible": true,
+          "background": "linear-gradient(90deg, rgba(12, 11, 27, 0.73), rgba(12, 11, 27, 0.36) 53%, rgba(12, 11, 27, 0.22)), url(\"http://127.0.0.1:45621/_versions/1b6e89b3322e2a53d5b1223f8567b6737a0f4b7aae399c81cca362ae35e2b61c/patches/local-quality/assets/menu/lobby.webp\")",
+          "showcase": null,
+          "visibleCharacters": 1,
+          "drawCalls": 280,
+          "paintedSamplePixels": 0,
+          "contextLost": false,
+          "nonNoneBackdropFilters": 0
+        },
+        {
+          "menu": "settings",
+          "canvasVisibility": "hidden",
+          "canvasHiddenFlag": true,
+          "uiVisible": true,
+          "background": "linear-gradient(90deg, rgba(12, 11, 27, 0.73), rgba(12, 11, 27, 0.36) 53%, rgba(12, 11, 27, 0.22)), url(\"http://127.0.0.1:45621/_versions/1b6e89b3322e2a53d5b1223f8567b6737a0f4b7aae399c81cca362ae35e2b61c/patches/local-quality/assets/menu/lobby.webp\")",
+          "showcase": null,
+          "visibleCharacters": 1,
+          "drawCalls": 280,
+          "paintedSamplePixels": 0,
+          "contextLost": false,
+          "nonNoneBackdropFilters": 0
+        },
+        {
+          "menu": "main",
+          "canvasVisibility": "hidden",
+          "canvasHiddenFlag": true,
+          "uiVisible": true,
+          "background": "linear-gradient(90deg, rgba(12, 11, 27, 0.73), rgba(12, 11, 27, 0.36) 53%, rgba(12, 11, 27, 0.22)), url(\"http://127.0.0.1:45621/_versions/1b6e89b3322e2a53d5b1223f8567b6737a0f4b7aae399c81cca362ae35e2b61c/patches/local-quality/assets/menu/lobby.webp\")",
+          "showcase": null,
+          "visibleCharacters": 1,
+          "drawCalls": 280,
+          "paintedSamplePixels": 0,
+          "contextLost": false,
+          "nonNoneBackdropFilters": 0
+        }
+      ],
+      "entry": {
+        "route": [
+          "main",
+          "mode",
+          "range"
+        ],
+        "gestures": [
+          {
+            "type": "click",
+            "trusted": true,
+            "selector": ".iw-ui [data-id=\"play\"]"
+          },
+          {
+            "type": "click",
+            "trusted": true,
+            "selector": ".iw-ui [data-id=\"mode-range\"]"
+          }
+        ]
+      },
+      "normal": {
+        "hits": [
+          {
+            "damage": 36,
+            "killed": false
+          },
+          {
+            "damage": 36,
+            "killed": false
+          },
+          {
+            "damage": 36,
+            "killed": true
+          }
+        ],
+        "canvas": "visible",
+        "hiddenFlag": false,
+        "hudVisible": true,
+        "retTranslate": "-1.1px 36.9px",
+        "hitTranslate": "-1.1px 37px",
+        "killTranslate": "-1.1px 37px",
+        "kill": "iw-kill is-on"
+      },
+      "positions": [
+        {
+          "rows": [
+            {
+              "viewport": [
+                1280,
+                720
+              ],
+              "expected": [
+                40,
+                40
+              ],
+              "ret": [
+                40,
+                40
+              ],
+              "marker": [
+                40,
+                40
+              ],
+              "afterTargetSwitch": [
+                40,
+                40
+              ]
+            },
+            {
+              "viewport": [
+                1280,
+                720
+              ],
+              "expected": [
+                1240,
+                40
+              ],
+              "ret": [
+                1240,
+                40
+              ],
+              "marker": [
+                1240,
+                40
+              ],
+              "afterTargetSwitch": [
+                1240,
+                40
+              ]
+            },
+            {
+              "viewport": [
+                1280,
+                720
+              ],
+              "expected": [
+                40,
+                680
+              ],
+              "ret": [
+                40,
+                680
+              ],
+              "marker": [
+                40,
+                680
+              ],
+              "afterTargetSwitch": [
+                40,
+                680
+              ]
+            },
+            {
+              "viewport": [
+                1280,
+                720
+              ],
+              "expected": [
+                1240,
+                680
+              ],
+              "ret": [
+                1240,
+                680
+              ],
+              "marker": [
+                1240,
+                680
+              ],
+              "afterTargetSwitch": [
+                1240,
+                680
+              ]
+            },
+            {
+              "viewport": [
+                1280,
+                720
+              ],
+              "expected": [
+                737,
+                297
+              ],
+              "ret": [
+                737,
+                297
+              ],
+              "marker": [
+                737,
+                297
+              ],
+              "afterTargetSwitch": [
+                737,
+                297
+              ]
+            }
+          ],
+          "blocked": {
+            "indication": true,
+            "hitAnimations": 0,
+            "retTranslate": "45px 32px"
+          },
+          "zeroKill": {
+            "kill": true,
+            "hitAnimations": 0
+          }
+        },
+        {
+          "rows": [
+            {
+              "viewport": [
+                1920,
+                1080
+              ],
+              "expected": [
+                40,
+                40
+              ],
+              "ret": [
+                40,
+                40
+              ],
+              "marker": [
+                40,
+                40
+              ],
+              "afterTargetSwitch": [
+                40,
+                40
+              ]
+            },
+            {
+              "viewport": [
+                1920,
+                1080
+              ],
+              "expected": [
+                1880,
+                40
+              ],
+              "ret": [
+                1880,
+                40
+              ],
+              "marker": [
+                1880,
+                40
+              ],
+              "afterTargetSwitch": [
+                1880,
+                40
+              ]
+            },
+            {
+              "viewport": [
+                1920,
+                1080
+              ],
+              "expected": [
+                40,
+                1040
+              ],
+              "ret": [
+                40,
+                1040
+              ],
+              "marker": [
+                40,
+                1040
+              ],
+              "afterTargetSwitch": [
+                40,
+                1040
+              ]
+            },
+            {
+              "viewport": [
+                1920,
+                1080
+              ],
+              "expected": [
+                1880,
+                1040
+              ],
+              "ret": [
+                1880,
+                1040
+              ],
+              "marker": [
+                1880,
+                1040
+              ],
+              "afterTargetSwitch": [
+                1880,
+                1040
+              ]
+            },
+            {
+              "viewport": [
+                1920,
+                1080
+              ],
+              "expected": [
+                1057,
+                477
+              ],
+              "ret": [
+                1057,
+                477
+              ],
+              "marker": [
+                1057,
+                477
+              ],
+              "afterTargetSwitch": [
+                1057,
+                477
+              ]
+            }
+          ],
+          "blocked": {
+            "indication": true,
+            "hitAnimations": 0,
+            "retTranslate": "45px 32px"
+          },
+          "zeroKill": {
+            "kill": true,
+            "hitAnimations": 0
+          }
+        }
+      ],
+      "occlusion": {
+        "los": false,
+        "hitDelta": 0,
+        "hpBefore": 100,
+        "hpAfter": 100,
+        "markerAnimations": 0,
+        "targetAlive": true,
+        "aimPoint": [
+          -14.68,
+          1.2000000000000002,
+          46.13305389171674
+        ],
+        "player": [
+          -14.4,
+          -5.551115123125783e-17,
+          43
+        ],
+        "target": [
+          -14.4,
+          0.3,
+          49
+        ],
+        "fixture": "real range BOMB_BLOCK at x[-15.4,-13.4], z[45,47], h1.2; real Actor target relocated behind it within range; real fire/update/collision"
+      }
+    },
+    {
+      "name": "phone",
+      "viewport": [
+        844,
+        390
+      ],
+      "touch": true,
+      "menus": [
+        {
+          "menu": "main",
+          "canvasVisibility": "hidden",
+          "canvasHiddenFlag": true,
+          "uiVisible": true,
+          "background": "linear-gradient(90deg, rgba(12, 11, 27, 0.73), rgba(12, 11, 27, 0.36) 53%, rgba(12, 11, 27, 0.22)), url(\"http://127.0.0.1:45621/_versions/1b6e89b3322e2a53d5b1223f8567b6737a0f4b7aae399c81cca362ae35e2b61c/patches/local-quality/assets/menu/lobby.webp\")",
+          "showcase": null,
+          "visibleCharacters": 0,
+          "drawCalls": 126,
+          "paintedSamplePixels": 0,
+          "contextLost": false,
+          "nonNoneBackdropFilters": 0
+        },
+        {
+          "menu": "locker",
+          "canvasVisibility": "visible",
+          "canvasHiddenFlag": false,
+          "uiVisible": true,
+          "background": "linear-gradient(90deg, rgba(13, 12, 28, 0.8), rgba(13, 12, 28, 0.46) 54%, rgba(13, 12, 28, 0.1))",
+          "showcase": "locker",
+          "visibleCharacters": 1,
+          "drawCalls": 191,
+          "paintedSamplePixels": 192,
+          "contextLost": false,
+          "nonNoneBackdropFilters": 0
+        },
+        {
+          "menu": "main",
+          "canvasVisibility": "hidden",
+          "canvasHiddenFlag": true,
+          "uiVisible": true,
+          "background": "linear-gradient(90deg, rgba(12, 11, 27, 0.73), rgba(12, 11, 27, 0.36) 53%, rgba(12, 11, 27, 0.22)), url(\"http://127.0.0.1:45621/_versions/1b6e89b3322e2a53d5b1223f8567b6737a0f4b7aae399c81cca362ae35e2b61c/patches/local-quality/assets/menu/lobby.webp\")",
+          "showcase": null,
+          "visibleCharacters": 1,
+          "drawCalls": 342,
+          "paintedSamplePixels": 0,
+          "contextLost": false,
+          "nonNoneBackdropFilters": 0
+        },
+        {
+          "menu": "settings",
+          "canvasVisibility": "hidden",
+          "canvasHiddenFlag": true,
+          "uiVisible": true,
+          "background": "linear-gradient(90deg, rgba(12, 11, 27, 0.73), rgba(12, 11, 27, 0.36) 53%, rgba(12, 11, 27, 0.22)), url(\"http://127.0.0.1:45621/_versions/1b6e89b3322e2a53d5b1223f8567b6737a0f4b7aae399c81cca362ae35e2b61c/patches/local-quality/assets/menu/lobby.webp\")",
+          "showcase": null,
+          "visibleCharacters": 1,
+          "drawCalls": 351,
+          "paintedSamplePixels": 0,
+          "contextLost": false,
+          "nonNoneBackdropFilters": 0
+        },
+        {
+          "menu": "main",
+          "canvasVisibility": "hidden",
+          "canvasHiddenFlag": true,
+          "uiVisible": true,
+          "background": "linear-gradient(90deg, rgba(12, 11, 27, 0.73), rgba(12, 11, 27, 0.36) 53%, rgba(12, 11, 27, 0.22)), url(\"http://127.0.0.1:45621/_versions/1b6e89b3322e2a53d5b1223f8567b6737a0f4b7aae399c81cca362ae35e2b61c/patches/local-quality/assets/menu/lobby.webp\")",
+          "showcase": null,
+          "visibleCharacters": 1,
+          "drawCalls": 351,
+          "paintedSamplePixels": 0,
+          "contextLost": false,
+          "nonNoneBackdropFilters": 0
+        }
+      ],
+      "entry": {
+        "route": [
+          "main",
+          "mode",
+          "range"
+        ],
+        "gestures": [
+          {
+            "type": "click",
+            "trusted": true,
+            "selector": ".iw-ui [data-id=\"play\"]"
+          },
+          {
+            "type": "click",
+            "trusted": true,
+            "selector": ".iw-ui [data-id=\"mode-range\"]"
+          }
+        ]
+      },
+      "normal": {
+        "hits": [
+          {
+            "damage": 36,
+            "killed": false
+          },
+          {
+            "damage": 36,
+            "killed": false
+          },
+          {
+            "damage": 36,
+            "killed": true
+          }
+        ],
+        "canvas": "visible",
+        "hiddenFlag": false,
+        "hudVisible": true,
+        "retTranslate": "-0.6px 20.1px",
+        "hitTranslate": "-0.6px 20px",
+        "killTranslate": "-0.6px 20px",
+        "kill": "iw-kill is-on"
+      },
+      "positions": [
+        {
+          "rows": [
+            {
+              "viewport": [
+                844,
+                390
+              ],
+              "expected": [
+                40,
+                40
+              ],
+              "ret": [
+                40,
+                40
+              ],
+              "marker": [
+                40,
+                40
+              ],
+              "afterTargetSwitch": [
+                40,
+                40
+              ]
+            },
+            {
+              "viewport": [
+                844,
+                390
+              ],
+              "expected": [
+                804,
+                40
+              ],
+              "ret": [
+                804,
+                40
+              ],
+              "marker": [
+                804,
+                40
+              ],
+              "afterTargetSwitch": [
+                804,
+                40
+              ]
+            },
+            {
+              "viewport": [
+                844,
+                390
+              ],
+              "expected": [
+                40,
+                350
+              ],
+              "ret": [
+                40,
+                350
+              ],
+              "marker": [
+                40,
+                350
+              ],
+              "afterTargetSwitch": [
+                40,
+                350
+              ]
+            },
+            {
+              "viewport": [
+                844,
+                390
+              ],
+              "expected": [
+                804,
+                350
+              ],
+              "ret": [
+                804,
+                350
+              ],
+              "marker": [
+                804,
+                350
+              ],
+              "afterTargetSwitch": [
+                804,
+                350
+              ]
+            },
+            {
+              "viewport": [
+                844,
+                390
+              ],
+              "expected": [
+                519,
+                132
+              ],
+              "ret": [
+                519,
+                132
+              ],
+              "marker": [
+                519,
+                132
+              ],
+              "afterTargetSwitch": [
+                519,
+                132
+              ]
+            }
+          ],
+          "blocked": {
+            "indication": true,
+            "hitAnimations": 0,
+            "retTranslate": "45px 32px"
+          },
+          "zeroKill": {
+            "kill": true,
+            "hitAnimations": 0
+          }
+        }
+      ],
+      "occlusion": {
+        "los": false,
+        "hitDelta": 0,
+        "hpBefore": 100,
+        "hpAfter": 100,
+        "markerAnimations": 0,
+        "targetAlive": true,
+        "aimPoint": [
+          -14.68,
+          1.1999999999999997,
+          46.133053891716756
+        ],
+        "player": [
+          -14.4,
+          -5.551115123125783e-17,
+          43
+        ],
+        "target": [
+          -14.4,
+          0.3,
+          49
+        ],
+        "fixture": "real range BOMB_BLOCK at x[-15.4,-13.4], z[45,47], h1.2; real Actor target relocated behind it within range; real fire/update/collision"
+      }
+    }
+  ],
+  "acceptance": "passed: composed emitted browser visibility, accepted hit/kill, position fixtures and real block occlusion; SwiftShader only",
+  "partial": {
+    "name": "phone",
+    "menus": [
+      {
+        "menu": "main",
+        "canvasVisibility": "hidden",
+        "canvasHiddenFlag": true,
+        "uiVisible": true,
+        "background": "linear-gradient(90deg, rgba(12, 11, 27, 0.73), rgba(12, 11, 27, 0.36) 53%, rgba(12, 11, 27, 0.22)), url(\"http://127.0.0.1:45621/_versions/1b6e89b3322e2a53d5b1223f8567b6737a0f4b7aae399c81cca362ae35e2b61c/patches/local-quality/assets/menu/lobby.webp\")",
+        "showcase": null,
+        "visibleCharacters": 0,
+        "drawCalls": 126,
+        "paintedSamplePixels": 0,
+        "contextLost": false,
+        "nonNoneBackdropFilters": 0
+      },
+      {
+        "menu": "locker",
+        "canvasVisibility": "visible",
+        "canvasHiddenFlag": false,
+        "uiVisible": true,
+        "background": "linear-gradient(90deg, rgba(13, 12, 28, 0.8), rgba(13, 12, 28, 0.46) 54%, rgba(13, 12, 28, 0.1))",
+        "showcase": "locker",
+        "visibleCharacters": 1,
+        "drawCalls": 191,
+        "paintedSamplePixels": 192,
+        "contextLost": false,
+        "nonNoneBackdropFilters": 0
+      },
+      {
+        "menu": "main",
+        "canvasVisibility": "hidden",
+        "canvasHiddenFlag": true,
+        "uiVisible": true,
+        "background": "linear-gradient(90deg, rgba(12, 11, 27, 0.73), rgba(12, 11, 27, 0.36) 53%, rgba(12, 11, 27, 0.22)), url(\"http://127.0.0.1:45621/_versions/1b6e89b3322e2a53d5b1223f8567b6737a0f4b7aae399c81cca362ae35e2b61c/patches/local-quality/assets/menu/lobby.webp\")",
+        "showcase": null,
+        "visibleCharacters": 1,
+        "drawCalls": 342,
+        "paintedSamplePixels": 0,
+        "contextLost": false,
+        "nonNoneBackdropFilters": 0
+      },
+      {
+        "menu": "settings",
+        "canvasVisibility": "hidden",
+        "canvasHiddenFlag": true,
+        "uiVisible": true,
+        "background": "linear-gradient(90deg, rgba(12, 11, 27, 0.73), rgba(12, 11, 27, 0.36) 53%, rgba(12, 11, 27, 0.22)), url(\"http://127.0.0.1:45621/_versions/1b6e89b3322e2a53d5b1223f8567b6737a0f4b7aae399c81cca362ae35e2b61c/patches/local-quality/assets/menu/lobby.webp\")",
+        "showcase": null,
+        "visibleCharacters": 1,
+        "drawCalls": 351,
+        "paintedSamplePixels": 0,
+        "contextLost": false,
+        "nonNoneBackdropFilters": 0
+      },
+      {
+        "menu": "main",
+        "canvasVisibility": "hidden",
+        "canvasHiddenFlag": true,
+        "uiVisible": true,
+        "background": "linear-gradient(90deg, rgba(12, 11, 27, 0.73), rgba(12, 11, 27, 0.36) 53%, rgba(12, 11, 27, 0.22)), url(\"http://127.0.0.1:45621/_versions/1b6e89b3322e2a53d5b1223f8567b6737a0f4b7aae399c81cca362ae35e2b61c/patches/local-quality/assets/menu/lobby.webp\")",
+        "showcase": null,
+        "visibleCharacters": 1,
+        "drawCalls": 351,
+        "paintedSamplePixels": 0,
+        "contextLost": false,
+        "nonNoneBackdropFilters": 0
+      }
+    ],
+    "entry": {
+      "route": [
+        "main",
+        "mode",
+        "range"
+      ],
+      "gestures": [
+        {
+          "type": "click",
+          "trusted": true,
+          "selector": ".iw-ui [data-id=\"play\"]"
+        },
+        {
+          "type": "click",
+          "trusted": true,
+          "selector": ".iw-ui [data-id=\"mode-range\"]"
+        }
+      ]
+    },
+    "normal": {
+      "hits": [
+        {
+          "damage": 36,
+          "killed": false
+        },
+        {
+          "damage": 36,
+          "killed": false
+        },
+        {
+          "damage": 36,
+          "killed": true
+        }
+      ],
+      "canvas": "visible",
+      "hiddenFlag": false,
+      "hudVisible": true,
+      "retTranslate": "-0.6px 20.1px",
+      "hitTranslate": "-0.6px 20px",
+      "killTranslate": "-0.6px 20px",
+      "kill": "iw-kill is-on"
+    }
+  },
+  "status": "passed"
+}
