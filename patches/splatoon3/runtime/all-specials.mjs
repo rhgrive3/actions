@@ -1087,7 +1087,7 @@ function selectTargets(rt, actor, max=4, range=32, preview=false) {
         if(preview){x=projected.x;y=projected.y;}
       }else if(dot<.94)continue;
     }else if(dot<.94)continue;
-    out.push({actor:target,d,dot,x,y});
+    out.push(preview?{actor:target,d,dot,x,y}:{actor:target,d,dot});
   }
   out.sort((a,b)=>b.dot-a.dot||a.d-b.d);
   return out.slice(0,max).map(row=>preview?{actor:row.actor,x:row.x,y:row.y}:row.actor);
@@ -1273,7 +1273,11 @@ function throwChumps(rt,actor,state) {
 export function tentaMissilesLockPreview(api,actor) {
   const rt=runtimes.get(api?.Projectiles),state=actorStates.get(actor);
   if(!rt||!state||state.id!=='tentaMissiles'||!actor?.alive||actor.remote)return null;
-  return {limit:gearCurve(state.specialPowerAP||0,140,190,240)/360,targets:selectTargets(rt,actor,5,Infinity,true)};
+  const selected=selectTargets(rt,actor,5,Infinity,true);
+  // Preserve the public preview's Actor[] contract; VFX may reuse these
+  // coordinates, while other readers continue to receive Actor references.
+  return {limit:gearCurve(state.specialPowerAP||0,140,190,240)/360,
+    targets:selected.map(x=>x.actor),screen:selected.map(x=>[x.x,x.y])};
 }
 export function superChumpLandingPreview(api,actor) {
   const rt=runtimes.get(api?.Projectiles),state=actorStates.get(actor);
