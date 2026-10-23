@@ -5910,3 +5910,7 @@ Dynamo/他Roller/Brushの防御object・傘・BigBubblerへ、既存impactDamage
 参照対象は公開版の全パッチ合成後。S3 Ver.11.3.0に関する既存の未確認値は変更せず、ソースモーション（既存のWii U由来パックを含む）の中間計算だけを削減した。BodyBalanceのgain対象と祖先以外の中間world回転を省き、最終全ボーンFK・足接地・IK・銃口・移動・射撃・塗り・当たり判定・描画設定は維持する。2種の実ソースキャラクター、シューター/チャージャー/ローラーの30/60/120Hz、1260フレームで最終local/world姿勢・skin行列・接地・銃口が一致し、通常minify配信物でも同じ比較が成功。これはロジック/配信物検証であり、Nintendo実機やiPad SafariのFPS比較ではない。
 
 Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテゴリ。修正対象のBodyBalanceはその一部にすぎず、iPad上での支配要因の確定や重いフレームの完全解消とは扱わない。#1671/#1757の実機受入はOpenのまま。条件・既存PRとの重複確認・再現コマンド・証跡は[調査記録](inkwave-composed-cpu-20261023/README.md)。
+
+継続QAでは、同じ60Hzの実sole query列（各1,317,000回）をNativePhysicsで再実行するABBA×2のCPU時間が、対照平均5156ms、memo平均4796msだった。単一三角形の穴＋dynamic boxの合成地形で、問い合わせcomponentだけの約7%短縮。ゲーム全体・実機FPSへは換算しない。最初のemittedテストはbundleに存在しないnative-level leafを参照して失敗したため、配信されるengine.mjsの公開exportを使うfixtureへ直し、同一buildで成功した。時計の最新buildはcold/rematch/reconnectの3局面6方向も成功した。
+
+Explosher CIの過去common-build診断へ任意のPR base/headを渡すと、固定364dd0の承認guardが必ず拒否する。current PR headのsource・emitted銃口回帰と、固定承認subjectでの過去A/A診断を別jobにし、承認descriptor・全input/output検査・厳密なpreflight比較は維持する。過去A/Aを現在PRの描画や性能の合格には使わない。

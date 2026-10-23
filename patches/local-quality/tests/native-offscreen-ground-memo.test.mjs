@@ -2,13 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {sourceLoadedActorFixture} from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
+import {buildSourceBVH} from '../../native-stages/runtime/source-convert.mjs';
 
 test('native source-motion bots reuse only identical ground queries within one update at 30/60/120Hz', async () => {
   const f = await sourceLoadedActorFixture({random:()=>.4, extraExports:`
     export {installQuality} from './patches/local-quality/install.mjs';
-    export {NativeLevel} from './patches/native-stages/runtime/native-level.mjs';
-    export {NativePhysics} from './patches/native-stages/runtime/native-physics.mjs';
-    export {buildSourceBVH} from './patches/native-stages/runtime/source-convert.mjs';
+    export {NativeLevel,NativePhysics} from './patches/native-stages/runtime/engine.mjs';
   `});
   f.installQuality(JSON.parse(fs.readFileSync(new URL('../../splatoon3/profile.json', import.meta.url))));
   const {G,THREE}=f;
@@ -16,7 +15,7 @@ test('native source-motion bots reuse only identical ground queries within one u
   for (const hz of [30,60,120]) {
     const triangles=new Float32Array([-20,0,-20,-20,0,20,20,0,-20]);
     // One half of the chart is empty. Keep a real dynamic box over its hole.
-    G.level=new f.NativeLevel({triangles,...f.buildSourceBVH(triangles),
+    G.level=new f.NativeLevel({triangles,...buildSourceBVH(triangles),
       normals:new Float32Array([0,1,0]), flags:new Uint32Array([3]),
       objectIds:new Uint32Array([0]),triangleFace:new Int32Array([0]),mask:new Uint8Array(),
       manifest:{id:'memo-hole',bounds:{minX:-20,maxX:20,minZ:-20,maxZ:20},
