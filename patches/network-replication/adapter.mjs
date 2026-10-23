@@ -2583,10 +2583,19 @@ function canAllocateNetworkGhost(projectiles, actor) {
     const p = this._peer(from);`,
       `    const receivedAt = now();
     const previous = this.peers.get(from);
-    if (!validOwnerTickAdvance(d.ts, previous?.lastTs, receivedAt, previous?.lastReceiveAt)) return;
+    // #1767: browser startup can process old ticks late, then drain newer
+    // ticks immediately. Use the relay's forwarding interval when negotiated;
+    // peer JSON cannot manufacture it. Preserve the original five-second guard.
+    const relayMillis = this.s.tr?.relayReceipt?.(from);
+    const relayAt = Number.isSafeInteger(relayMillis) && relayMillis >= 0 ? relayMillis / 1000 : undefined;
+    const useRelay = relayAt !== undefined && (previous?.lastTs === undefined || previous?.lastRelayAt !== undefined)
+      && (previous?.lastRelayAt === undefined || relayAt >= previous.lastRelayAt);
+    if (!validOwnerTickAdvance(d.ts, previous?.lastTs, useRelay ? relayAt : receivedAt,
+      useRelay ? previous?.lastRelayAt : previous?.lastReceiveAt)) return;
     this.stats.in++;
     const p = this._peer(from);
-    p.lastReceiveAt = receivedAt;`,
+    p.lastReceiveAt = receivedAt;
+    p.lastRelayAt = relayAt;`,
       'bound owner tick forward progression');
     // #574: use the established authenticated, life-scoped, deduplicated hit
     // transaction. A zero-damage Blaster contact is admitted only with bounded

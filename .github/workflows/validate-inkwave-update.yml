@@ -596,6 +596,9 @@ jobs:
       - name: Verify emitted menu focus lifecycle
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-menu-focus.mjs --source .built-site/_site --evidence-dir "$CI_STORAGE/evidence/menu-focus"
+      - name: Verify startup snapshot clock recovery in Chromium and WebKit
+        if: matrix.suite == 'network'
+        run: node scripts/check-inkwave-startup-clock.mjs .built-site/_site "$CI_STORAGE/evidence/startup-clock"
       - name: Verify native touch gesture continuity in Chromium
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-tap-gestures-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/tap-gestures"
@@ -780,7 +783,7 @@ jobs:
           checks={
             'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','ballpoint/ballpoint-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json','native-normal/native-normal-browser.json','showcase-weapon/showcase-weapon-queue.json'],
             'catalog':['catalog/motion-catalog-result.json','brellas/brella-controls-result.json'],
-            'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json','combat-ceiling/combat-ceiling-browser-result.json'],
+            'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json','combat-ceiling/combat-ceiling-browser-result.json','startup-clock/startup-clock-result.json'],
             'ui':['menu-focus/menu-focus-result.json','identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','rematch/rematch-lifecycle-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json'],
             'responsive':['responsive/responsive-result.json'],
             'range':['range/range-result.json'],

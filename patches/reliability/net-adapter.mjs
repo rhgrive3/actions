@@ -407,6 +407,42 @@ NetMatch.prototype.dispose = function(...args) {
   }
   if (rel === 'src/net/transport.js') {
     // Apply after the legacy full-method replacement, without drifting its anchor.
+    // #1767: relay-authenticated forwarding time is scoped to synchronous
+    // dispatch, independent of peer JSON and of payload-copying adapters.
+    code = 'const relayReceipts = new WeakMap();\n' + code;
+    code = replaceOnce(code, "&compat=${encodeURIComponent(COMPAT)}${create ? '&create=1' : ''}",
+      "&compat=${encodeURIComponent(COMPAT)}&relayClock=1${create ? '&create=1' : ''}", rel);
+    code = replaceOnce(code, `          this.id = null; this._pingSent = 0;`,
+      `          this.id = null; this._pingSent = 0;
+          this._relayClock = false; relayReceipts.delete(this);`, rel);
+    code = replaceOnce(code, `          const k = s.indexOf('|', 2);
+          let obj; try { obj = JSON.parse(s.slice(k + 1)); } catch { return; }
+          this.onMessage?.(s.slice(2, k), obj);`, String.raw`          const k = s.indexOf('|', 2);
+          if (k < 0) return;
+          let payload = k + 1, at = null;
+          if (s[payload] === '@') {
+            const end = s.indexOf('|', payload), token = s.slice(payload + 1, end);
+            if (!this._relayClock || end < 0 || !/^\d{1,16}$/.test(token)) return;
+            at = Number(token);
+            if (!Number.isSafeInteger(at)) return;
+            payload = end + 1;
+          }
+          let obj; try { obj = JSON.parse(s.slice(payload)); } catch { return; }
+          const from = s.slice(2, k), previous = relayReceipts.get(this);
+          relayReceipts.set(this, { from, at });
+          try { this.onMessage?.(from, obj); }
+          finally { if (previous) relayReceipts.set(this, previous); else relayReceipts.delete(this); }`, rel);
+    code = replaceOnce(code, `          this.id = o.id; this._startPing(); done(resolve, o);`,
+      `          this._relayClock = o.relayClock === 1;
+          this.id = o.id; this._startPing(); done(resolve, o);`, rel);
+    code = replaceOnce(code, `  close() {
+    const disconnect = this._disconnect;`, `  relayReceipt(from) {
+    const receipt = relayReceipts.get(this);
+    return receipt?.from === from ? receipt.at : null;
+  }
+  close() {
+    this._relayClock = false; relayReceipts.delete(this);
+    const disconnect = this._disconnect;`, rel);
     code = replaceOnce(code, `        if (o.t === 'welcome') {
           if (settled) return;`, `        if (o.t === 'welcome') {
           if (settled) return;

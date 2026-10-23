@@ -119,6 +119,7 @@ export class RoomDurableObject {
         budgetAt: Number.isFinite(att.budgetAt) ? att.budgetAt : Date.now(),
         framesLeft: Number.isFinite(att.framesLeft) ? att.framesLeft : FRAME_BURST,
         bytesLeft: Number.isFinite(att.bytesLeft) ? att.bytesLeft : BYTE_BURST,
+        relayClock: att.relayClock === true,
       });
     }
     if (!this.hostId && this.members.size > 0) {
@@ -146,6 +147,7 @@ export class RoomDurableObject {
         isHost: m.id === this.hostId,
         locked: this.locked,
         compat: this.compat,
+        relayClock: m.relayClock === true,
       });
     } catch {}
   }
@@ -207,12 +209,12 @@ export class RoomDurableObject {
     }
 
     if (this.members.size === 0) this.compat = compat;
-    this.handleSession(server, name, this.hibernationEnabled);
+    this.handleSession(server, name, this.hibernationEnabled, url.searchParams.get('relayClock') === '1');
 
     return new Response(null, { status: 101, webSocket: client });
   }
 
-  handleSession(ws, name, useHibernation = false) {
+  handleSession(ws, name, useHibernation = false, relayClock = false) {
     const id = 'p_' + Math.random().toString(36).substring(2, 9);
     const joinedAt = Date.now();
 
@@ -236,6 +238,7 @@ export class RoomDurableObject {
       t: 'welcome',
       proto: Number(WIRE_MAJOR),
       compat: this.compat,
+      ...(relayClock ? { relayClock: 1 } : {}),
       id: id,
       host: this.hostId,
       members: memberList
@@ -249,7 +252,7 @@ export class RoomDurableObject {
 
     // Admission budgets are per authenticated socket and reset on reconnect.
     const memberEntry = {
-      id, name, ws, joinedAt,
+      id, name, ws, joinedAt, relayClock,
       budgetAt: Date.now(), framesLeft: FRAME_BURST, bytesLeft: BYTE_BURST
     };
     this.members.set(id, memberEntry);
@@ -328,9 +331,10 @@ export class RoomDurableObject {
       const payload = s.slice(2);
       if (!validRelayPayload(payload)) return;
       const forward = `m|${id}|${payload}`;
+      const stamped = `m|${id}|@${Date.now()}|${payload}`;
       for (const [targetId, member] of this.members) {
         if (targetId !== id) {
-          if (!relaySend(member.ws, forward) && member.ws.closed) {
+          if (!relaySend(member.ws, member.relayClock ? stamped : forward) && member.ws.closed) {
             this._cleanupMember(targetId, member.ws);
           }
         }
@@ -347,7 +351,8 @@ export class RoomDurableObject {
         if (!validRelayPayload(payload) || targetId.length > 40) return;
         const target = this.members.get(targetId);
         if (target) {
-          if (!relaySend(target.ws, `m|${id}|${payload}`) && target.ws.closed) {
+          const frame = target.relayClock ? `m|${id}|@${Date.now()}|${payload}` : `m|${id}|${payload}`;
+          if (!relaySend(target.ws, frame) && target.ws.closed) {
             this._cleanupMember(targetId, target.ws);
           }
         } else {

@@ -135,7 +135,8 @@ test('ancillary paint WebGL source and emitted masks are mandatory exact-head ne
   assert.ok(workflow.includes('node scripts/check-inkwave-paint-mask.mjs --site .built-site/_site'));
   assert.match(workflow, /check-inkwave-paint-mask\.mjs[^\n]+--exact-source/);
   const receipts = ['paint-mask/paint-mask-result.json', 'network/network-browser-result.json',
-    'network-delay/network-browser-result.json', 'combat-ceiling/combat-ceiling-browser-result.json'];
+    'network-delay/network-browser-result.json', 'combat-ceiling/combat-ceiling-browser-result.json',
+    'startup-clock/startup-clock-result.json'];
   const requireReceipts = source => assert.ok(source.includes("'network':[" + receipts.map(value => "'" + value + "'").join(',') + "]"));
   requireReceipts(workflow);
   for (const receipt of receipts)
