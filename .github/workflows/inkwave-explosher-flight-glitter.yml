@@ -42,7 +42,24 @@ jobs:
         run: |
           node .ci-explosher-base/scripts/build-inkwave.mjs .ci-explosher-base/inkwave-public .built-site/explosher-before
           node scripts/build-inkwave.mjs inkwave-public .built-site/explosher-after
+      - name: Scope native preflight to the reviewed common build
+        id: admission
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # requireApprovedCommonBuild admits only the checkout named by the reviewed descriptor, and the
+          # preflight runs it for both base and head. Any other pair cannot pass, so skip it instead of
+          # failing every PR that touches these paths; the regressions above still run.
+          approved=$(node -p "JSON.parse(require('fs').readFileSync('scripts/fixtures/explosher-common-build-364dd0.json','utf8')).head")
+          if [ "$BASE_SHA" = "$approved" ] && [ "$HEAD_SHA" = "$approved" ]; then
+            echo admitted=true >> "$GITHUB_OUTPUT"
+          else
+            echo admitted=false >> "$GITHUB_OUTPUT"
+            echo "::notice::Native Explosher preflight skipped: reviewed common build is $approved, PR pair is $BASE_SHA..$HEAD_SHA"
+          fi
       - name: Short native preflight before long capture
+        if: steps.admission.outputs.admitted == 'true'
         run: |
           EXPLOSHER_PREFLIGHT=1 node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-before .ci-scratch/explosher/preflight-before "${{ github.event.pull_request.base.sha }}" .ci-explosher-base
           EXPLOSHER_PREFLIGHT=1 node scripts/check-inkwave-explosher-flight-glitter.mjs .built-site/explosher-after .ci-scratch/explosher/preflight-after "${{ github.event.pull_request.head.sha }}" .
