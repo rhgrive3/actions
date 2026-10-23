@@ -1,0 +1,114 @@
+{
+  "scope": "Steady-read helper-only 7x50000; excludes the once-at-capture support projection; identity-copy and frozen-027 comparisons exclude IK/render/physics. GC retained heap and sub-microsecond timing are noisy; not total allocation or GPU performance.",
+  "frozen027": {
+    "samples": [
+      {
+        "candidateNs": 261.16296,
+        "baselineNs": 43.83266
+      },
+      {
+        "candidateNs": 177.69358,
+        "baselineNs": 29.49558
+      },
+      {
+        "candidateNs": 181.2768,
+        "baselineNs": 20.55868
+      },
+      {
+        "candidateNs": 157.7172,
+        "baselineNs": 12.98504
+      },
+      {
+        "candidateNs": 156.5352,
+        "baselineNs": 12.31982
+      },
+      {
+        "candidateNs": 162.76344,
+        "baselineNs": 12.68398
+      },
+      {
+        "candidateNs": 168.32712,
+        "baselineNs": 12.35628
+      }
+    ],
+    "candidateMedianNs": 168.32712,
+    "copyMedianNs": 12.98504,
+    "retainedHeapDeltaBytes": 2072,
+    "checksum": 265793.21265396435
+  },
+  "source": {
+    "samples": [
+      {
+        "candidateNs": 239.10342,
+        "baselineNs": 25.27862
+      },
+      {
+        "candidateNs": 168.67996,
+        "baselineNs": 13.41066
+      },
+      {
+        "candidateNs": 154.57164,
+        "baselineNs": 17.0035
+      },
+      {
+        "candidateNs": 167.13202,
+        "baselineNs": 14.08388
+      },
+      {
+        "candidateNs": 156.58406,
+        "baselineNs": 13.73096
+      },
+      {
+        "candidateNs": 153.5623,
+        "baselineNs": 12.93554
+      },
+      {
+        "candidateNs": 164.04736,
+        "baselineNs": 13.17512
+      }
+    ],
+    "candidateMedianNs": 164.04736,
+    "copyMedianNs": 13.73096,
+    "retainedHeapDeltaBytes": -512,
+    "checksum": 265793.21265396435
+  },
+  "emitted": {
+    "samples": [
+      {
+        "candidateNs": 268.5295,
+        "baselineNs": 22.91544
+      },
+      {
+        "candidateNs": 228.1142,
+        "baselineNs": 17.1293
+      },
+      {
+        "candidateNs": 211.40254,
+        "baselineNs": 13.02408
+      },
+      {
+        "candidateNs": 176.19714,
+        "baselineNs": 13.76522
+      },
+      {
+        "candidateNs": 171.61962,
+        "baselineNs": 18.63476
+      },
+      {
+        "candidateNs": 171.9996,
+        "baselineNs": 13.11522
+      },
+      {
+        "candidateNs": 178.02828,
+        "baselineNs": 15.09622
+      }
+    ],
+    "candidateMedianNs": 178.02828,
+    "copyMedianNs": 15.09622,
+    "retainedHeapDeltaBytes": -1184,
+    "checksum": 265793.21265396435
+  },
+  "flags": {
+    "explicitGc": true
+  }
+}
