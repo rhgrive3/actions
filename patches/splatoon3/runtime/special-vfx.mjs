@@ -21,6 +21,7 @@
 import { SpecialVfxKit, SPARK, PUFF, RIBBON, BEAM, SHELL, BAND, DISC, vfxRandom, excludeFromOverridePasses, inkLightUniforms } from './special-vfx-kit.mjs';
 import { inkjetVfxAdmission, inkjetVfxRoom } from './inkjet-vfx-budget.mjs';
 import { inkjetVfxTicks } from './inkjet-vfx-clock.mjs';
+import { areaSpecialVfxTicks } from './area-special-vfx-clock.mjs';
 import { inkVacState } from './kit-ink-vac.mjs';
 import { bigBubblerDomes, bigBubblerRemoteDomes } from './kit-big-bubbler.mjs';
 import { createInkFist, disposeSpecialModel } from './special-motion.mjs';
@@ -67,6 +68,7 @@ class Director {
     this.kit = new SpecialVfxKit(T, fx.root, fx.q ?? 1, inkLightUniforms(T, fx));
     this.tracks = new Map(); this.rounds = new Map(); this.objects = new Map(); this.lasers = new Map();
     this.inkjetImpacts = new WeakSet();
+    this.inkVacShots = new WeakSet();
     this.domes = new Map(); this.coolers = new Map(); this.fists = new Map(); this.storms = new Map();
     this.v = [0, 1, 2, 3, 4, 5, 6, 7].map(() => new T.Vector3());
     this.up = new T.Vector3(0, 1, 0); this.c = new T.Color(); this.camPos = new T.Vector3(0, 10, 0);
@@ -343,6 +345,17 @@ class Director {
     }
     for (const [p, r] of this.rounds) if (!seen.has(p)) { this.finishRound(r, r.wid !== 'inkjet'); this.rounds.delete(p); }
   }
+  // Exhale is a ready-to-fire HOLD, not a shot. Observe accepted native
+  // projectile births instead, including ghosts that bypass _push.
+  inkVacShot(p) {
+    if (p?.wid !== 'inkVac' || p.dead || p._netEnded || !p.owner ||
+        !finite(p.pos?.x) || !finite(p.pos?.y) || !finite(p.pos?.z) || this.inkVacShots.has(p)) return;
+    this.inkVacShots.add(p);
+    const c = this.rgb(p.owner, p.team), f = this.aim(p.owner, this.v[1]);
+    const m = this.v[0].copy(p.start || p.pos);
+    this.muzzle(m, f, c, 2.2);
+    this.shell(true, 0.3, SHELL.SHOCK, m, 0.3, 2.0, this.hdr(c, 1.3, 1), 0.6);
+  }
   // Inkjet's native burst owns its terminal point. A missing list entry is
   // not an impact: it may be cleared, recycled or removed without a burst.
   inkjetImpact(p, x, y, z) {
@@ -508,7 +521,7 @@ const ROUND_FX = {
       this.pushRibbon(r.d.smoke, p.pos, false); this.pushRibbon(r.d.glow, p.pos, true);
       // exhaust: a bright flame tongue behind the missile
       const v = this.v[0].copy(r.vel); const s = v.length(); if (s > 0.1) v.multiplyScalar(-1 / s);
-      if (vfxRandom() < 0.8) this.spark(SPARK.STREAK, p.pos, v.x * 6, v.y * 6, v.z * 6, 0.12, 0.11, 0.03, this.hdr(r.color, 2.4, 1.6), 1, { drag: 6, stretch: 0.05 });
+      for (let tick = 0, ticks = areaSpecialVfxTicks(r.d, dt); tick < ticks; tick++) if (vfxRandom() < 0.8) this.spark(SPARK.STREAK, p.pos, v.x * 6, v.y * 6, v.z * 6, 0.12, 0.11, 0.03, this.hdr(r.color, 2.4, 1.6), 1, { drag: 6, stretch: 0.05 });
     },
     impact(r) { this.inkBlast(r.last, r.color, 3.2, { streaks: 12, chunks: 8, mist: 4, native: false }); },
   },
@@ -577,7 +590,7 @@ const OBJECT_FX = {
         { fade: false, follow: (rec) => {
           const age = Math.max(0, o.age - (o.landedAt || 0)), k = clamp01(age / ((o.flight || 82 / 60) * 0.6));
           rec.v[0] = o.pos.x; rec.v[1] = o.pos.y + .05; rec.v[2] = o.pos.z;
-          rec.v[11] = o.phase === 'flight' ? 0 : .9; rec.v[3] = 1.2 + 6.5 * easeOut(k); rec.v[7] += 0.03;
+          rec.v[11] = o.phase === 'flight' ? 0 : .9; rec.v[3] = 1.2 + 6.5 * easeOut(k); rec.v[7] = (rec._markerAngle ??= rec.v[7]) + rec.t * 1.8;
         } });
     },
     frame(r, o) {
@@ -607,12 +620,12 @@ const OBJECT_FX = {
       const life = (o.dur || 51 / 60) + 0.5;
       const radius = () => Math.max(0.5, (o.currentRadius || 0.5));
       r.d.twA = this.band(false, life, BAND.TWISTER, p, 1, 1, C.twisterHeight, C.twisterHeight, this.hdr(c, 1.0), 0.95,
-        { taper: 2.4, twist: 4, speed: 1.6, hold: 0.8, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[2] = o.pos.z; rec.v[4] = radius() * 0.42; rec.v[3] += 0.22; } });
+        { taper: 2.4, twist: 4, speed: 1.6, hold: 0.8, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[2] = o.pos.z; rec.v[4] = radius() * 0.42; rec.v[3] = (rec._strikeAngle ??= rec.v[3]) + rec.t * 13.2; } });
       // wind streaks wrapped round the ink column (pale air, not light)
       r.d.twB = this.band(false, life, BAND.SWIRL, p, 1, 1, C.twisterHeight * 0.8, C.twisterHeight * 0.8, [0.92, 0.95, 0.97], 0.3,
-        { taper: 2.8, twist: -3, speed: 3, hold: 0.8, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[2] = o.pos.z; rec.v[4] = radius() * 0.55; rec.v[3] -= 0.15; } });
+        { taper: 2.8, twist: -3, speed: 3, hold: 0.8, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[2] = o.pos.z; rec.v[4] = radius() * 0.55; rec.v[3] = (rec._strikeAngle ??= rec.v[3]) - rec.t * 9; } });
       r.d.twC = this.band(false, life, BAND.TWISTER, p, 1, 1, 3, 3, this.hdr(c, 0.9), 0.9,
-        { taper: 0.7, twist: 2, speed: 2.4, hold: 0.8, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[2] = o.pos.z; rec.v[4] = radius() * 0.95; rec.v[3] += 0.3; } });
+        { taper: 0.7, twist: 2, speed: 2.4, hold: 0.8, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[2] = o.pos.z; rec.v[4] = radius() * 0.95; rec.v[3] = (rec._strikeAngle ??= rec.v[3]) + rec.t * 18; } });
     },
     frame(r, o, dt) {
       const R = Math.max(0.5, o.currentRadius || 0.5), p = o.pos, c = r.color;
@@ -670,12 +683,13 @@ const OBJECT_FX = {
   },
   wave: { // Wave Breaker device: hologram cone while armed, pulse flashes
     start(r, o) {
-      const c = r.color, p = o.pos;
+      const c = r.color, p = o.pos, startedAt = this.time;
+      let dotsPhase; // Keep the randomized initial orientation; advance in presentation seconds.
       this.flash(this.v[0].copy(p).setY(p.y + 0.6), c, 1.2, 0.25);
       r.d.holo = this.shell(true, 0, SHELL.HOLO, this.v[0].copy(p), 1.1, 1.1, this.hdr(c, 1.3, 0.5), 0.75,
         { hemi: true, sy: 1.5, fade: false, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[1] = o.pos.y; rec.v[2] = o.pos.z; const hp = o.maxHp ? clamp01(o.hp / o.maxHp) : 1; rec.v[11] = o.phase === 'flight' ? 0 : 0.45 + 0.35 * hp; } });
       r.d.dots = this.disc(true, 0, DISC.TARGET, this.v[0].copy(p).setY(p.y + 0.04), this.up, 2.2, 2.2, this.hdr(c, 1.2, 0.5), 0.55,
-        { fade: false, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[1] = o.pos.y + .04; rec.v[2] = o.pos.z; rec.v[11] = o.phase === 'flight' ? 0 : .55; rec.v[7] += 0.01; } });
+        { fade: false, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[1] = o.pos.y + .04; rec.v[2] = o.pos.z; rec.v[11] = o.phase === 'flight' ? 0 : .55; dotsPhase ??= rec.v[7]; rec.v[7] = dotsPhase + (this.time - startedAt) * 0.6; } });
     },
     frame(r, o) {
       if (o.phase === 'flight') return;
@@ -747,12 +761,13 @@ const KIT_FX = {
     start(r, d) {
       const c = r.color, p = d.pos;
       // S3 footage (2.0-5.9s): a thin bright beam stands up from the launcher for as long as the field lasts,
-      // and the field ripples out once
-      r.d.pillar = this.beam(true, 0, BEAM.LINE, p, this.v[0].copy(p).setY(p.y + 30), 0.07, 0.05, this.hdr(c, 1.6, 2.2), 1, { speed: 0, seed: 0.1,
+      // and the field ripples out once. The tall beam begins at existing ignition,
+      // not while the launcher/emitter is still deploying (GameWith f34–38).
+      r.d.pillar = this.beam(true, 0, BEAM.LINE, p, this.v[0].copy(p).setY(p.y + 30), 0.07, 0.05, this.hdr(c, 1.6, 2.2), d.ignited ? 1 : 0, { speed: 0, seed: 0.1,
         follow: (rec) => { if (r.gone) return false; const q = d.pos; rec.v[0] = q.x; rec.v[1] = q.y + 0.5; rec.v[2] = q.z; rec.v[4] = q.x; rec.v[5] = q.y + 30; rec.v[6] = q.z;
-          rec.v[11] = 0.75 + 0.25 * Math.sin(this.time * 9); } });
-      r.d.halo = this.beam(true, 0, BEAM.LINE, p, this.v[0].copy(p).setY(p.y + 30), 0.25, 0.2, this.hdr(c, 1.0, 0.6), 0.25, { speed: 0, seed: 0.1,
-        follow: (rec) => { if (r.gone) return false; const q = d.pos; rec.v[0] = q.x; rec.v[1] = q.y + 0.5; rec.v[2] = q.z; rec.v[4] = q.x; rec.v[5] = q.y + 30; rec.v[6] = q.z; } });
+          rec.v[11] = d.ignited ? 0.75 + 0.25 * Math.sin(this.time * 9) : 0; } });
+      r.d.halo = this.beam(true, 0, BEAM.LINE, p, this.v[0].copy(p).setY(p.y + 30), 0.25, 0.2, this.hdr(c, 1.0, 0.6), d.ignited ? 0.25 : 0, { speed: 0, seed: 0.1,
+        follow: (rec) => { if (r.gone) return false; const q = d.pos; rec.v[0] = q.x; rec.v[1] = q.y + 0.5; rec.v[2] = q.z; rec.v[4] = q.x; rec.v[5] = q.y + 30; rec.v[6] = q.z; rec.v[11] = d.ignited ? 0.25 : 0; } });
       this.flash(this.v[0].copy(p).setY(p.y + 0.6), c, 1.0, 0.25);
       this.shell(true, 0.8, SHELL.SHOCK, p, 0.5, 6, this.hdr(c, 1.3, 0.6), 0.5, { hemi: true });
       this.disc(false, 0.9, DISC.SPLAT, this.v[0].copy(p).setY(p.y + 0.03), this.up, 0.3, 1.8, c, 1);
@@ -765,7 +780,8 @@ const KIT_FX = {
       }
       r.hp = hp;
       r.acc = (r.acc || 0) + dt;
-      if (this.near(d.pos, 60) && r.acc > 0.12) { r.acc = 0; const th = rnd(TAU), el = rnd(1.4, 0.1), R = d.radius || 4;
+      // Preserve fractional emission time without bursting after culling or a hitch.
+      if (this.near(d.pos, 60) && r.acc + 1e-9 >= 0.12) { r.acc = Math.max(0, r.acc - Math.floor((r.acc + 1e-9) / 0.12) * 0.12); const th = rnd(TAU), el = rnd(1.4, 0.1), R = d.radius || 4;
         this.v[0].set(d.pos.x + Math.cos(th) * Math.cos(el) * R, d.pos.y + Math.sin(el) * R, d.pos.z + Math.sin(th) * Math.cos(el) * R);
         this.spark(SPARK.STAR, this.v[0], 0, 0.3, 0, 0.5, 0.2, 0.02, this.hdr(r.color, 1.6, 1.2), 0.8); }
     },
@@ -784,7 +800,8 @@ const KIT_FX = {
     frame(r, c, dt) {
       const p = c.pos || c.mesh?.position; if (!p || !this.near(p, 40)) return;
       r.acc = (r.acc || 0) + dt;
-      if (r.acc > 0.18) { r.acc = 0; this.v[0].set(p.x + rnd(0.3, -0.3), p.y + rnd(1, 0.2), p.z + rnd(0.3, -0.3));
+      // One bounded emission per update, retaining the remainder at every render cadence.
+      if (r.acc + 1e-9 >= 0.18) { r.acc = Math.max(0, r.acc - Math.floor((r.acc + 1e-9) / 0.18) * 0.18); this.v[0].set(p.x + rnd(0.3, -0.3), p.y + rnd(1, 0.2), p.z + rnd(0.3, -0.3));
         this.puff(PUFF.MIST, this.v[0], 0, -0.25, 0, 1.4, 0.25, 0.7, [0.85, 0.95, 1.0], 0.25, { buoy: -0.2 });        // cold mist
         this.spark(SPARK.STAR, this.v[0], 0, 0.5, 0, 0.6, 0.14, 0.02, this.hdr(r.color, 1.5, 1.2), 0.9); }
     },
@@ -865,7 +882,7 @@ const DIRECTORS = {
       const anchors = speakerAnchors(this, a);
       if (charging && anchors.length) {
         const k = (this.time - t.start) / 0.6;
-        for (const p of anchors) if (vfxRandom() < 0.5) {
+        for (let tick = 0, ticks = areaSpecialVfxTicks(t.d, dt); tick < ticks; tick++) for (const p of anchors) if (vfxRandom() < 0.5) {
           this.spark(SPARK.STREAK, this.v[0].copy(p).add(this.v[1].set(rnd(1.4, -1.4), rnd(1.4, -1.4), rnd(1.4, -1.4))), (p.x - this.v[0].x) * 5, (p.y - this.v[0].y) * 5, (p.z - this.v[0].z) * 5, 0.18, 0.05, 0.02, this.hdr(c, 2, 1.4), 1, { drag: 0, stretch: 0.05 });
         }
         if (!t.d.mouths) {
@@ -1004,7 +1021,7 @@ const DIRECTORS = {
         t.d.orb = this.shell(true, 0, SHELL.ORB, ball, R, R, this.hdr(c, 0.6, 6), 1,   // S3 (13.8/15.8s): a white-hot ball in a team-coloured halo
           { fade: false, follow: (rec) => { const st2 = a._s3AllSpecialState; const k = st2 ? clamp01(st2.charge || 0) : charge;
           rec.v[0] = a.pos.x; rec.v[1] = a.pos.y + 1.95 + 0.3 * k; rec.v[2] = a.pos.z; const s = (0.42 + 0.8 * k) * (1 + 0.05 * Math.sin(this.time * (10 + 20 * k)));
-          rec.v[4] = rec.v[5] = rec.v[6] = s; rec.v[7] += 0.05; } });
+          rec.v[4] = rec.v[5] = rec.v[6] = s; rec.v[7] = rec.t * 3; /* Preserve the 60Hz calibration without render-cadence drift. */ } });
         t.d.halo = this.disc(true, 0, DISC.RUNE, ball, this.up, 1, 1, this.hdr(c, 1.5, 1.2), 0.8, { fade: false, spin: 2, follow: (rec) => { const st2 = a._s3AllSpecialState; const k = st2 ? clamp01(st2.charge || 0) : charge;
           rec.v[0] = a.pos.x; rec.v[1] = a.pos.y + 1.95 + 0.3 * k; rec.v[2] = a.pos.z; rec.v[3] = 0.9 + 1.3 * k; rec.v[11] = 0.4 + 0.5 * k; } });
         t.d.recs = [t.d.orb, t.d.halo];
@@ -1111,6 +1128,11 @@ const DIRECTORS = {
         this.inkBlast(pos, c, 3.5, { streaks: 14, chunks: 10, native: false, dome: 0.35 });
       }
     },
+    // An interrupted pull never visits frame's idle branch. End the owned
+    // trail on death, recall, special replacement and actor removal as well.
+    end(a, t) {
+      if (t.d.trail) { this.kit.ribbons.end(t.d.trail); t.d.trail = null; }
+    },
   },
   // ---------------------------------------------------------------- Crab Tank
   crabTank: {
@@ -1147,6 +1169,9 @@ const DIRECTORS = {
         this.smoke(m, 8, [0.92, 0.92, 0.95], { size: 0.45, speed: 2.5, life: 1.1, alpha: 0.55, rise: 1.5 });
       }
     },
+    // A special may finish or be interrupted while still in ball mode.
+    // End the retained wake so expired points release their pool slot.
+    end(a, t) { this.kit.ribbons.end(t.d.rollRib); },
   },
   // ---------------------------------------------------------------- Reefslider
   reefslider: {
@@ -1282,6 +1307,18 @@ const DIRECTORS = {
     },
     frame(a, t, dt) {
       const c = t.color;
+      // Retail jump-spin strands: GameWith 387851, decoded f107–135.
+      // Existing attack state owns lifetime; count/shape remain INKWAVE calibration.
+      // Remote flags do not carry this window, and charge/dash already own a cage.
+      const st = a._s3AllSpecialState;
+      const spin = !a.remote && st?.id === 'krakenRoyale' && st.jumpAttack === true
+        && st.phase === 'active' && a.grounded === false && !a.climbing;
+      if (spin && dt > 0) {
+        if (!t.d.jumpRibs) t.d.jumpRibs = krakenFilaments(this, c, 8, 0.12, 0.3, 4);
+        stepFilaments(this, a, t.d.jumpRibs, 1.15, 0.5, 20, null, dt);
+      } else if (!spin && t.d.jumpRibs) {
+        endFilaments(this, t.d.jumpRibs); t.d.jumpRibs = null;
+      }
       if (t.phase === 'charge') {   // ink drawn in to the body
         if (t.d.fil) { const k = clamp01((this.time - t.phaseAt) / (35 / 60)); stepFilaments(this, a, t.d.fil, 1.35 - 0.35 * k, 0.5, 8 + 12 * k, a._s3AllSpecialState?.direction || null, dt); }
         if (vfxRandom() < 0.8) { const th = rnd(TAU), d = rnd(3, 2); this.v[0].set(a.pos.x + Math.cos(th) * d, a.pos.y + rnd(1.4, 0.1), a.pos.z + Math.sin(th) * d);
@@ -1303,7 +1340,7 @@ const DIRECTORS = {
         this.band(false, 0.45, BAND.SHOCK, g, 0.6, 2.6, 0.3, 1.4, c, 1);
         this.chunks(this.v[1].copy(g).setY(g.y + 0.2), 14, 8, c, { size: 0.22 }); }
     },
-    end(a, t) { endFilaments(this, t.d.dashRibs); endFilaments(this, t.d.fil); },
+    end(a, t) { endFilaments(this, t.d.dashRibs); endFilaments(this, t.d.fil); endFilaments(this, t.d.jumpRibs); t.d.jumpRibs = null; },
   },
   // ---------------------------------------------------------------- Splattercolor Screen / Wave Breaker (device in hand)
   splattercolorScreen: { start(a, t) { this.activation(a, t.color, 0.9); } },
@@ -1320,7 +1357,7 @@ const DIRECTORS = {
     start(a, t) { this.activation(a, t.color, 1); },
     frame(a, t, dt) {
       const st = inkVacState?.(a), c = t.color, phase = st?.phase || a.specialActive?.phase;
-      if (phase !== 'inhale') { if (phase === 'exhale' && !t.d.shot) { t.d.shot = true; const f = this.aim(a, this.v[1]); const m = this.v[0].copy(a.pos).setY(a.pos.y + 1).addScaledVector(f, 1.1); this.muzzle(m, f, c, 2.2); this.shell(true, 0.3, SHELL.SHOCK, m, 0.3, 2.0, this.hdr(c, 1.3, 1), 0.6); } return; }
+      if (phase !== 'inhale') return;
       const sucking = a._s3InkVacSucking || a.intent?.fire, f = this.aim(a, this.v[1]);
       const mouth = this.v[0].copy(a.pos).setY(a.pos.y + 1).addScaledVector(f, 0.9);
       t.d.suck = !!sucking;
@@ -1330,8 +1367,12 @@ const DIRECTORS = {
           follow: (rec) => { const tr = this.tracks.get(a), s2 = inkVacState?.(a);
             if (!tr || tr !== t || (s2?.phase || a.specialActive?.phase) !== 'inhale') return false;
             this.aim(a, fv); rec.v[0] = a.pos.x + fv.x * 1.6; rec.v[1] = a.pos.y + 1 + fv.y * 1.6; rec.v[2] = a.pos.z + fv.z * 1.6;
-            rec.v[4] = fv.x; rec.v[5] = fv.y; rec.v[6] = fv.z; rec.v[7] += 0.05;
-            const target = t.d.suck ? 1 : 0; rec.v[11] += (target * 0.85 - rec.v[11]) * 0.2;
+            rec.v[4] = fv.x; rec.v[5] = fv.y; rec.v[6] = fv.z;
+            // Preserve the authored 60 Hz motion at every render cadence.
+            // These rates are presentation calibration, not measured retail timings.
+            rec.v[7] = (rec._vacAngle ??= rec.v[7]) + rec.t * 3;
+            const elapsed = Math.max(0, rec.t - (rec._vacTime || 0)); rec._vacTime = rec.t;
+            const target = t.d.suck ? 1 : 0; rec.v[11] += (target * 0.85 - rec.v[11]) * (1 - Math.pow(0.8, elapsed * 60));
             rec.v[3] = 0.9 + 0.5 * (s2?.charge || 0) + 0.15 * Math.sin(this.time * 9); } });
         (t.d.recs ||= []).push(t.d.vortex);
       }
@@ -1481,6 +1522,25 @@ export function installSpecialVfx(api) {
   if (dispose) FX.prototype.dispose = function (...args) { const d = directors.get(this); if (d) { d.clear(); d.kit.dispose(); directors.delete(this); delete this.s3SpecialVfx; } return dispose.apply(this, args); };
   const route = (e) => { const d = G.fx && G.fx.s3SpecialVfxEnabled !== false && directors.get(G.fx); if (d) d.event(e); };
   const P = Projectiles?.prototype, blast = P?._blastBurst, fresh = P?._new;
+  const push = P?._push, ghost = P?.ghostProjectile;
+  const vacShot = (system, p) => {
+    const d = system === G.projectiles && G.fx?.s3SpecialVfxEnabled !== false && directors.get(G.fx);
+    if (d) d.call(d.inkVacShot, p);
+  };
+  if (typeof push === 'function') P._push = function (p, ...args) {
+    const out = push.call(this, p, ...args);
+    if (p?.wid === 'inkVac' && this.list?.includes(p)) vacShot(this, p);
+    return out;
+  };
+  if (typeof ghost === 'function') P.ghostProjectile = function (...args) {
+    const before = this.list?.length || 0, out = ghost.apply(this, args);
+    // Rejected/repeated network births append nothing. Some compositions route
+    // accepted ghosts through _push; the director deduplicates that same object.
+    for (let i = before; i < (this.list?.length || 0); i++) {
+      if (this.list[i]?.wid === 'inkVac') vacShot(this, this.list[i]);
+    }
+    return out;
+  };
   // Terrain bursts re-enter through a deferred snapshot with no live position.
   // Observe the actual projectile terminal once, not its later gameplay flush.
   if (typeof blast === 'function') P._blastBurst = function (p, at, ...args) {
@@ -1495,7 +1555,7 @@ export function installSpecialVfx(api) {
   };
   if (typeof fresh === 'function') P._new = function (...args) {
     const p = fresh.apply(this, args), d = this === G.projectiles && directors.get(G.fx);
-    if (d) d.call(d.resetInkjetRound, p);
+    if (d) { d.call(d.resetInkjetRound, p); d.inkVacShots.delete(p); }
     return p;
   };
   on?.('all:special', (e) => { if (!e?.actor?.remote) route(e); });

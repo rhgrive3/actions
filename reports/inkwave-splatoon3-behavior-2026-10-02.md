@@ -5850,3 +5850,32 @@ CPU回帰の成功は物理GPU/実機性能の受け入れではない。Splatoo
 - 再現条件は INKWAVE の実 production composition 上の legacy／v1 NetSession。未 bind、nonce 未証明、14 秒未来、古い時刻、foreign owner、不正 envelope の tick が torpedo／zipcaster の受信 kit を bomb 等へ置き換えないことを確認する。正しく受け入れた次の tick は body・時計・kit を更新し、wrong-life／不正な任意 sidecar は合法な body・時計の進行を妨げず kit だけを保持する。元実装では native が body・時計を拒否しても kit だけが変わり、表示・装備状態が食い違う。
 - Node 22.23.3 で同じ production composition の独立採用候補を実行し、専用 source／実 Session 回帰 5 件成功、skip 0。catalogue だけ元実装へ戻した同じ試験は 4 件が期待通り失敗し、合法 tick 内の不正 optional sidecar 試験 1 件は成功した。workflow の source／emitted 登録と各登録削除・失敗伝播の限定 routing 契約 9 件成功。これは CPU ロジックと shell routing の確認で、emitted build／browser の実行結果ではない。
 - 本家の比較対象は既存記録のスプラトゥーン3 11.3.0 を継承するが、今回は本家の非公開通信方式・frame 値・Switch 実機を新規測定していない。上記は INKWAVE 内の受け入れ整合性修正であり、本家との通信挙動一致を立証しない。catalogue を第 9 の production 差分として固定し、1,392 production leaves／1,363 build inputs の受け入れ条件を維持する。build seal は既存の全 input／output を検証した上で、変更 catalogue module と deterministic loading packaging だけを再生成して独立導出したもので、full cold build の成功ではない。exact-head CI、browser／実オンライン peer の検証は未実施・未完了として残す。
+
+
+## 2026-10-23：キューインキ／トリプルトルネードの表示更新間隔（本家映像比較は未完了）
+
+対象は公開版の `special-vfx.mjs` の Ink Vac 吸引渦、Triple Inkstrike 着地点マーカーと3層の渦。従来は描画1回につき一定角度を足し、吸引の不透明度も1回につき20%ずつ目標へ近づけていたため、同じ経過時間でも30/60/120Hzで回転速度とフェードが変わった。既存60Hzでの見え方を基準に、保持レコードの経過時間から角度を算出し、不透明度を時間換算する。既存アセット・粒子数・描画数・ゲームプレイの発動／攻撃／塗り／当たり判定／物理／ネットワークは変更しない。Trizookaは調査のみで変更なし。
+
+再現：吸引を0.5秒続けて0.5秒解除、または着地マーカー／トルネードを0.5秒表示し、30/60/120Hzで同じ時刻の角度・不透明度を比較する。`patches/splatoon3/tests/projectile-special-vfx-clock.test.mjs` は本番 `adaptBuildSource` を通した実レシピと保持コールバックを実行するCPUテストで、4件成功。変更前の同じモジュールでは4件失敗。吸引終了時の破棄、同時刻再評価で角度が増えないことも確認。これは本番合成ソースの表示計算検証であり、ブラウザGPU映像やSwitch実機との比較の代わりではない。
+
+本家根拠と未確認：Nintendo公式 https://splatoon.nintendo.com/en/weapons/ は2026-10-23取得時に502（証明書検証失敗）で映像を取得できず、回避はしていない。既存ソースの Zephiel810 `https://youtu.be/PLxqXn_E898` の疎な時刻注記は今回のフレーム証拠として使っていない。本家バージョン、FPS、連続フレーム、入力・ギア条件は未確認。今回の角速度は既存実装の60Hz換算であってNintendoのフレーム値ではない。形状、演出の長さ、武器の動作やゲームプレイの調整は映像確認まで保留。本家フレーム一致・視覚的受入は未達。
+
+
+## 2026-10-23：スペシャル6系統の暫定ソース候補統合
+
+上記キューインキ／トリプルトルネードの表示更新間隔修正に、個別レポートの独立した表示処理修正を統合した。Crab TankとZipcasterは中断時のリボン終了、Booyah Bombは経過時間によるチャージ球回転、Wave Breakerは時間換算回転、Big Bubbler／Tacticoolerは粒子時間の端数保持、Tenta Missiles／Killer Wail 5.1は60Hz基準の粒子生成機会を保持する。ゲームプレイ時計・物理・ダメージ・塗り・入力・共有マテリアル・キャラクターは変更しない。本家フレーム比較は未完了であり、映像一致・視覚的受入は主張しない。
+
+根拠・再現・影響・未確認事項の詳細は crab-ribbon-lifecycle-20261023.md、zipcaster-trail-lifecycle-20261023.md、explosion-special-frame-evidence-2026-10-23.md、support-special-frame-cadence-2026-10-23.md、area-special-frame-review.md を参照。統合検証と制約は special-six-integration-20261023.md に集約し、既存記録・アサーションは保持した。
+
+### 2026-10-23 Ink Vac: HOLD と実弾発射のマズルを分離
+
+- 実フレーム参照: GameWith のスペシャル一覧 https://gamewith.jp/splatoon3/362075 が「キューインキ」として埋め込む https://img.gamewith.jp/common_movies/b4ead3915189fad267d90ce47225f8fb.mp4 。1280×720、符号化30fps、279フレーム、9.3秒。動画SHA-256: `9a8f0c5f5875f97276fd892bf3b57e52a0110ef0ec47b85ff8df26ba961bed57`。ゲームのバージョンは映像内で確認できず不明。符号化fpsをゲーム内部fpsとは扱わない。
+- 連続フレーム180–209（0始まり、6.000–6.967秒）を実際に画像で確認。186–188付近で吸引リングが消え、202まで構えが続く。203で広い発射ファン、205–206で白い閃光、207–209で電気状の軌跡が見える。入力時刻は不明なので、これを固定HOLD時間の根拠にはしない。
+- ソースの `beginExhale` は発射待ちのHOLDに入るだけで、実弾は別の `fireInkVacExhale` が生成する。従来のVFXはHOLD開始を発射と誤認していた。`DIRECTORS.inkVac.frame` の先行マズルを除き、実際に受理された `_push` と、そこを通らない native `ghostProjectile` の追加を観測して発射時だけ既存マズルを描く。ゲームのフェーズ、入力受付、タイマー、弾道、ダメージには変更なし。
+- 同一弾の二重観測はWeakSetで抑制。`_new` のプール再利用だけで識別をリセット。VFX clearによる既存弾の再フラッシュはしない。レンダーフレームの弾リスト初観測を発射とはみなさず、遅い描画開始で飛行中の弾にマズルを出さない。
+- CPU検証: 実際の合成VFX、native `_new` / `_push` / `ghostProjectile` のメソッド本体、kitの実際の発射メソッド本体を実行する9件の回帰テストが通過。HOLD/取消/無発射、実弾/ゴースト、重複、プール再利用、clear、無効化、別system、受理拒否を検証。既存cadence4件込み13/13。変更前VFXを渡す負例は9件中7件失敗（安全側の無発射2件のみ通過）。
+- 比較は参照映像の観察とソース/CPU検証まで。候補の実レンダー連続フレームは未取得であり、見た目の同等性・最終承認は主張しない。Nintendo/GameWithの映像・画像はゲームやPRに同梱しない。
+
+### 2026-10-23：参照動画確認後の表示処理4件
+
+キューインキ発射に加え、グレートバリアの起動中表示、テイオウイカの既存ジャンプ攻撃状態に限定した回転軌跡、スミナガシートの直立フェードを個別レビュー済み差分として統合した。詳細と正確な検証範囲は special-retail-integration-20261023.md と同文書から参照するレーン別記録に集約。候補のGPU映像との対比較は未確認であり、ゲームプレイ時間・判定・入力・モデル・共有マテリアルを変更したものではない。
