@@ -6142,3 +6142,7 @@ Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテ�
 main `726e338ac256ba9609086ce65e25a68ddd99df85` の production composition を基準に、スピナーの旧 Shooter-volume の長い管を武器専用の短い滴表示へ、シューターは既存発射 FX と独立した銃口小粒へ接続する候補を追加した。両者は新規 family module と末尾 build adapter で分離し、ヒッセン・汎用粒子・native 弾・塗り・packet の実装を変更しない。source 50/50、実 minify 生成物 28/28、direct-source 20/20 が成功。seeded 24 条件の native gameplay / paint 記録比較と、ブラウザ画像・資源数・限界は [専用レポート](firing-cosmetics-20261023/README.md) に保存する。
 
 本家の対象は Splatoon 3 11.3.0 の Splattershot / Heavy Splatling。今回の .052/.72 の表示寸法や 3 粒/.14 秒は INKWAVE の仮校正であり、本家の公開・実測値ではない。参照 media の環境内取得は CONNECT 403 で拒否され、迂回していない。小粒の retail 見た目一致、最終 native pair、実機性能、公開 exact HEAD CI は専用レポートの記録を確認し、未確認を合格扱いしない。
+
+### 2026-10-23 current-main firing cosmetic candidate
+
+最新公式main `7e027ac2` と承認済み96efの発射cosmeticを別候補へ合成。production4パスは96efと同一、ヒッセン共有描画leaf・4special runtime・最新mainの静的メニュー修正を保持する。22fから参照QA2ファイルだけを採用し、9-edge負例を維持。正規minify前後build、source66/生成物34/参照等28、960stepの物理/塗り一致、実Game通常/ジャンプ4条件の発射/更新順/RNG一致、残余0/1/2枠と既存40滴保持を確認。[正確な入力・生成物・制約](firing-cosmetics-main7e-20261023/README.md)。PR1857 refは確認待ちで未更新。本家参照403・retail寸法・実機性能・公開CIを確認済みへ変更しない。

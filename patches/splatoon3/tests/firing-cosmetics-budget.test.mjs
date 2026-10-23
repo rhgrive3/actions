@@ -26,6 +26,10 @@ test('partial residual capacity submits only available Splatling and Shooter bea
  const {ps,fill,scan}=await setup();fill(650,0,48);ps._draw();const baseline=scan();assert.equal(baseline.count,698);
  fill(650,1,48,true);ps._draw();const r=scan();assert.equal(r.count,700);assert.equal(r.retained,48);assert.equal(r.spinners,1);assert.equal(r.shooter,1);assert.deepEqual(r.rows.slice(0,698),baseline.rows);for(const key of ['shape','look','petals','color'])assert.deepEqual(r[key].slice(0,baseline[key].length),baseline[key],key+' native prefix');
 });
+test('one residual slot preserves every native prefix for either optional family',async()=>{
+ const {ps,fill,scan}=await setup();fill(651,0,48);ps._draw();const baseline=scan();assert.equal(baseline.count,699);
+ for(const splats of [0,1]){fill(651,splats,48,true);ps._draw();const r=scan();assert.equal(r.count,700);assert.equal(r.retained,48);assert.equal(r.spinners,splats);assert.equal(r.shooter,splats?0:1);assert.deepEqual(r.rows.slice(0,699),baseline.rows);for(const key of ['shape','look','petals','color'])assert.deepEqual(r[key].slice(0,baseline[key].length),baseline[key]);}
+});
 test('ordinary mixed firing keeps smaller Splatling and muzzle Shooter cosmetics in free slots',async()=>{
  const {ps,fill,scan}=await setup();fill(12,2,4,true);ps._draw();const r=scan();assert.equal(r.retained,4);assert.equal(r.spinners,2);assert.equal(r.shooter,3);assert.equal(r.count,21);
  const m=new (ps.blobs.matrix.constructor)();ps.blobs.getMatrixAt(16,m);assert(Math.abs(Math.hypot(...m.elements.slice(0,3))-.052)<1e-7);assert(ps.blobShape.array[16*4]<=1+.72/.052+1e-5);
