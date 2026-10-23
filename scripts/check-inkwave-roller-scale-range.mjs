@@ -379,6 +379,17 @@ try{
     const module=await import('three/addons/geometries/RoundedBoxGeometry.js');
     if(typeof module.RoundedBoxGeometry!=='function')throw Error('Native RoundedBoxGeometry export missing');
   });
+  // The PWA may fetch sw.js during either identical A/A run. Complete this
+  // immutable executable response on every side after all rendered images are
+  // frozen, without executing or replacing the service worker.
+  const optionalServiceWorker='sw.js';
+  assert(Object.hasOwn(buildManifest.artifacts,optionalServiceWorker),
+    'Pinned emitted service worker missing');
+  await page.evaluate(async()=>{
+    const response=await fetch('/sw.js',{cache:'no-store'});
+    if(!response.ok)throw Error('Native service-worker source response failed');
+    await response.arrayBuffer();
+  });
   await page.evaluate(()=>{
     if(!globalThis.__inkwaveBlobWorkerAudit)throw Error('Missing Blob worker observer');
     return globalThis.__inkwaveBlobWorkerAudit.flush();
@@ -386,6 +397,8 @@ try{
   await Promise.all(loadedTasks);
   assert.equal(loadedModules[optionalGeometry]?.sha256,buildManifest.artifacts[optionalGeometry],
     'Lazy geometry addon must be loaded from the immutable emitted manifest');
+  assert.equal(loadedModules[optionalServiceWorker]?.sha256,buildManifest.artifacts[optionalServiceWorker],
+    'Lazy service-worker source must be bound to the immutable emitted manifest');
   bindBlobWorkerEvidence(blobWorkerEvidence,loadedModules,buildManifest);
   receipt.runtimeIdentity=verifyLoadedModules(loadedModules,buildManifest,isolation?.declaration,blobWorkerEvidence);
   assert.equal(receipt.errors.length,0);

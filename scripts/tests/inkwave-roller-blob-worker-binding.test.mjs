@@ -162,3 +162,19 @@ test('A/A roller capture accounts for the exact optional Three addon only after 
  assert(code.includes("'_versions/'+buildManifest.build.revision+'/vendor/three/jsm/geometries/RoundedBoxGeometry.js'"));
  assert(code.includes("'Lazy geometry addon must be loaded from the immutable emitted manifest'"));
 });
+
+test('A/A generated service-worker provenance is pinned only after frozen native captures',async()=>{
+ const fs=await import('node:fs');
+ const code=fs.readFileSync(new URL('../check-inkwave-roller-scale-range.mjs',import.meta.url),'utf8');
+ const frozen=code.indexOf('assert.deepEqual(receipt.release.frames.map(f=>f.tick),[1,4,12])');
+ const geometry=code.indexOf("await import('three/addons/geometries/RoundedBoxGeometry.js')");
+ const swGuard=code.indexOf("Object.hasOwn(buildManifest.artifacts,optionalServiceWorker)");
+ const swFetch=code.indexOf("fetch('/sw.js',{cache:'no-store'})");
+ const swManifest=code.indexOf("loadedModules[optionalServiceWorker]?.sha256");
+ const bind=code.indexOf('bindBlobWorkerEvidence(blobWorkerEvidence,loadedModules,buildManifest)');
+ assert(frozen>=0&&frozen<geometry&&geometry<swGuard&&swGuard<swFetch&&swFetch<swManifest&&swManifest<bind,
+   'Immutable optional native module identity must be completed only after the real captures');
+ assert(code.includes("const optionalServiceWorker='sw.js'"));
+ assert(code.includes("if(!response.ok)throw Error('Native service-worker source response failed')"));
+ assert(code.includes("'Lazy service-worker source must be bound to the immutable emitted manifest'"));
+});
