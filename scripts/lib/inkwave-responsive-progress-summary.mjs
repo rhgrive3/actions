@@ -1,5 +1,6 @@
 import { responsiveOperationId } from './inkwave-responsive-diagnostics.mjs';
 import fs from 'node:fs';
+import { sanitizeResponsiveAnimations } from './inkwave-responsive-animation-diagnostics.mjs';
 import path from 'node:path';
 
 export const MAX_PROGRESS_BYTES = 65536;
@@ -11,7 +12,7 @@ const phases = new Set(['loading', 'title', 'main', 'settings', 'setup', 'loadou
 const types = new Set(['case-start', 'stage-complete', 'first-error', 'page-crash', 'page-close',
   'context-close', 'browser-disconnected', 'console-error', 'console-warning',
   'diagnostic-skipped', 'diagnostic-error', 'context-close-start', 'context-close-complete',
-  'context-close-error', 'fatal-pageerror-context-closing', 'operation-before', 'operation-after']);
+  'context-close-error', 'fatal-pageerror-context-closing', 'operation-before', 'operation-after', 'animation-snapshot']);
 const errorNames = new Set(['Error', 'TypeError', 'ReferenceError', 'SyntaxError', 'RangeError',
   'AssertionError', 'TimeoutError']);
 const phase = value => phases.has(value) ? value
@@ -48,8 +49,11 @@ export function responsiveProgressSummary({ shardDir, engine, name, startedAt })
       .map(row => ({ type: row.type, ms: count(row.ms),
         ...(row.type === 'stage-complete' ? { phase: phase(row.detail) } : {}),
         ...(['operation-before', 'operation-after'].includes(row.type) ? { operation: responsiveOperationId(row.detail) } : {}) }));
+    const animationSnapshots = Array.isArray(d.animationSnapshots)
+      ? d.animationSnapshots.slice(-2).map(sanitizeResponsiveAnimations).filter(Boolean) : [];
     return { ...result, status: 'available', lastCompletedStage: phase(d.lastCompletedStage),
       pendingOperation: responsiveOperationId(d.pendingOperation),
+      ...(animationSnapshots.length ? { animationSnapshots } : {}),
       pageUnavailable: d.pageUnavailable === true, droppedEvents: count(d.droppedEvents),
       errorSummary: d.firstError == null ? null : {
         present: true, name: errorNames.has(d.firstError?.name) ? d.firstError.name : 'OtherError',

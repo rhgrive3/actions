@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { parseResponsiveAnimations } from './inkwave-responsive-animation-diagnostics.mjs';
 
 // Fixed harness IDs only; never persist selector, weapon ID, page text or errors here.
 const operationIds = new Set(['continuation-read-callback', 'continuation-tap-change', 'continuation-wait-loadout', 'continuation-settle-loadout', 'continuation-ready-loadout', 'continuation-read-weapon', 'continuation-list-weapons', 'continuation-select-weapon', 'continuation-verify-weapon', 'continuation-scroll-action', 'continuation-settle-action', 'continuation-visible-action', 'continuation-label-action', 'continuation-capture-action']);
@@ -12,7 +13,7 @@ const errorRecord = error => ({ name: boundedText(error?.name || 'Error', 80),
 export function createResponsiveDiagnostics({ now = () => Date.now(), maxEvents = 32, onChange = () => {} } = {}) {
   const started = now(), events = [];
   let firstError = null, lastCompletedStage = null, pageUnavailable = false, droppedEvents = 0;
-  let pendingOperation = null;
+  let pendingOperation = null, animationSnapshots = [];
   const record = (type, detail = '') => {
     if (events.length === maxEvents) { events.shift(); droppedEvents++; }
     events.push({ ms: Math.max(0, now() - started), type: boundedText(type, 80), detail: boundedText(detail, 1024) });
@@ -21,9 +22,16 @@ export function createResponsiveDiagnostics({ now = () => Date.now(), maxEvents 
   };
   const fail = error => { if (!firstError) { firstError = errorRecord(error); record('first-error', firstError.message); } };
   const snapshot = () => ({ firstError, lastCompletedStage, pendingOperation, pageUnavailable,
-    droppedEvents, events: events.map(row => ({ ...row })) });
+    ...(animationSnapshots.length ? { animationSnapshots } : {}), droppedEvents, events: events.map(row => ({ ...row })) });
   return {
     record, fail, snapshot,
+    animations(text) {
+      if (pendingOperation !== 'continuation-settle-action') return;
+      const value = parseResponsiveAnimations(text);
+      if (!value) return;
+      animationSnapshots = [...animationSnapshots.filter(row => row.phase !== value.phase), value].slice(-2);
+      record('animation-snapshot', value.phase);
+    },
     operation(id, boundary) {
       id = responsiveOperationId(id);
       if (!id || !['before', 'after'].includes(boundary)) return;

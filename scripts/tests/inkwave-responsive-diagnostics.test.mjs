@@ -361,3 +361,166 @@ test('operation boundary matching and unknown text never clear or leak pending I
   d.operation('continuation-wait-loadout', 'after');
   assert.equal(d.snapshot().pendingOperation, null);
 });
+
+import vm from 'node:vm';
+import { settleResponsiveAnimationsInPage, parseResponsiveAnimations, sanitizeResponsiveAnimations,
+  RESPONSIVE_ANIMATION_PREFIX, MAX_ANIMATION_MESSAGE } from '../lib/inkwave-responsive-animation-diagnostics.mjs';
+
+function deferredAnimation(extra = {}) {
+  let resolve, reject, reads = 0;
+  const finished = new Promise((yes, no) => { resolve = yes; reject = no; });
+  const animation = { effect: { getTiming: () => ({ iterations: 1, duration: 400, delay: 0, endDelay: 0 }) },
+    playState: 'running', pending: false, currentTime: 10, startTime: 20, playbackRate: 1,
+    timeline: { currentTime: 30 } };
+  Object.defineProperties(animation, Object.getOwnPropertyDescriptors(extra));
+  Object.defineProperty(animation, 'finished', { get() { reads++; return finished; } });
+  return { animation, resolve, reject, reads: () => reads };
+}
+function animationHarness(animations, { emitFails = false, listFails = null, timerFails = false, clearFails = false, onStyleProbe = () => assert.fail('style probe') } = {}) {
+  const messages = [], timers = new Map(); let serial = 0, clears = 0;
+  const context = { getComputedStyle: onStyleProbe, document: { getAnimations: () => { if (listFails) throw listFails; return animations; } },
+    console: { info: text => { if (emitFails) throw Error('PRIVATE console failure'); messages.push(text); } },
+    setTimeout: (action, ms) => { if (timerFails) throw Error('timer unavailable'); assert.equal(ms, 1000); timers.set(++serial, action); return serial; },
+    clearTimeout: id => { clears++; timers.delete(id); if (clearFails) throw Error('cleanup observer failure'); } };
+  const run = vm.runInNewContext('(' + settleResponsiveAnimationsInPage.toString() + ')', context);
+  return { run, messages, timers, clears: () => clears,
+    watchdog() { for (const [id, action] of [...timers]) { timers.delete(id); action(); } } };
+}
+
+test('actual serialized settle watches same original promises and cannot pass a pending finite animation', async () => {
+  const first = deferredAnimation(), second = deferredAnimation();
+  const h = animationHarness([first.animation, second.animation]); let passed = false;
+  const waiting = h.run(true).then(() => { passed = true; });
+  assert.equal(first.reads(), 1); assert.equal(second.reads(), 1);
+  assert.equal(parseResponsiveAnimations(h.messages[0]).phase, 'before-await');
+  first.resolve(); await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+  h.watchdog(); h.watchdog();
+  const after = parseResponsiveAnimations(h.messages[1]);
+  assert.equal(h.messages.length, 2); assert.equal(after.phase, 'watchdog');
+  assert.equal(after.pendingCount, 1); assert.deepEqual(after.rows.map(row => row.index), [1]);
+  assert.equal(passed, false, 'watchdog is not acceptance or timeout fallback');
+  second.resolve(); await waiting;
+  assert.equal(passed, true); assert.equal(h.timers.size, 0); assert.equal(h.clears(), 1);
+});
+
+for (const reject of [false, true]) test('resolution/cancellation keeps old behavior and removes watchdog: ' + reject, async () => {
+  const item = deferredAnimation(), h = animationHarness([item.animation]);
+  const waiting = h.run(true);
+  reject ? item.reject(Error('original cancellation')) : item.resolve();
+  await waiting; h.watchdog();
+  assert.equal(h.messages.length, 1); assert.equal(h.timers.size, 0); assert.equal(h.clears(), 1);
+});
+
+test('infinite animations never have finished read and unobserved settles add no diagnostics', async () => {
+  const infinite = { effect: { getTiming: () => ({ iterations: Infinity }) },
+    get finished() { assert.fail('original infinity filter must remain'); } };
+  const h = animationHarness([infinite]); await h.run(false);
+  assert.equal(h.messages.length, 0); assert.equal(h.timers.size, 0);
+});
+
+test('original enumeration, timing and finished getter failures are not hidden', async () => {
+  const original = Error('original source error');
+  for (const [animations, options] of [[[], { listFails: original }],
+    [[{ effect: { getTiming() { throw original; } } }], {}],
+    [[{ effect: { getTiming: () => ({ iterations: 1 }) }, get finished() { throw original; } }], {}]]) {
+    const h = animationHarness(animations, options);
+    await assert.rejects(h.run(true), error => error === original);
+    assert.equal(h.messages.length, 0); assert.equal(h.timers.size, 0);
+  }
+});
+
+for (const options of [{ emitFails: true }, { timerFails: true }, { clearFails: true }]) test('observer setup/transport failure never changes settlement: ' + JSON.stringify(options), async () => {
+  const item = deferredAnimation(), h = animationHarness([item.animation], options);
+  const waiting = h.run(true); h.watchdog(); item.resolve(); await waiting;
+  assert.equal(h.timers.size, 0);
+});
+
+test('snapshot metadata errors stay unavailable without changing original settle', async () => {
+  let forbiddenCalls = 0;
+  const forbidden = () => { forbiddenCalls++; throw Error('not passive'); };
+  const target = { isConnected: true, closest: () => null, matches: () => false,
+    getBoundingClientRect: forbidden, checkVisibility: forbidden,
+    get textContent() { return forbidden(); }, get className() { return forbidden(); } };
+  const item = deferredAnimation({ effect: { getTiming: () => ({ iterations: 1 }), target },
+    get currentTime() { throw Error('PRIVATE snapshot'); } });
+  const h = animationHarness([item.animation]); const waiting = h.run(true);
+  const row = parseResponsiveAnimations(h.messages[0]).rows[0];
+  assert.deepEqual(row, { index: 0, unavailable: true });
+  assert(!h.messages.join('').includes('PRIVATE')); item.resolve(); await waiting;
+  assert.equal(forbiddenCalls, 0);
+});
+
+test('successful initial and watchdog snapshots never probe geometry, styles, visibility or DOM text', async () => {
+  let forbiddenCalls = 0;
+  const forbidden = () => { forbiddenCalls++; throw Error('not passive'); };
+  const target = { isConnected: true, closest: () => null, matches: () => false,
+    getBoundingClientRect: forbidden, getClientRects: forbidden, checkVisibility: forbidden,
+    get textContent() { return forbidden(); }, get className() { return forbidden(); } };
+  const item = deferredAnimation({ effect: { getTiming: () => ({ iterations: 1, duration: 400 }), target } });
+  const h = animationHarness([item.animation], { onStyleProbe: forbidden });
+  const waiting = h.run(true); h.watchdog();
+  assert.equal(h.messages.length, 2);
+  for (const message of h.messages) assert.equal(parseResponsiveAnimations(message).rows[0].unavailable, undefined);
+  assert.equal(forbiddenCalls, 0);
+  item.resolve(); await waiting;
+});
+
+test('page snapshots cap rows and redact arbitrary animation and target payload', async () => {
+  const secret = 'TOKEN_COOKIE_PASSWORD_SECRET';
+  const items = Array.from({ length: 100 }, () => deferredAnimation({ animationName: secret, transitionProperty: secret,
+    currentTime: Number.MAX_VALUE, playbackRate: Infinity, playState: secret,
+    effect: { getTiming: () => ({ iterations: 1, duration: secret, delay: Infinity }),
+      target: { isConnected: true, closest: () => null, matches: () => false, textContent: secret, id: secret } } }));
+  const h = animationHarness(items.map(item => item.animation)); const waiting = h.run(true);
+  const value = parseResponsiveAnimations(h.messages[0]);
+  assert.equal(value.rows.length, 8); assert.equal(value.pendingCount, 100); assert.equal(value.omittedCount, 92);
+  assert.equal(value.rows[0].currentTime, 2147483647); assert.equal(value.rows[0].playbackRate, null);
+  assert.equal(value.rows[0].delay, 'infinite'); assert.equal(value.rows[0].duration, null);
+  assert(h.messages[0].length < MAX_ANIMATION_MESSAGE); assert(!h.messages[0].includes(secret));
+  for (const item of items) item.resolve(); await waiting;
+});
+
+test('receipt sanitizer rejects malformed, oversized and freeform values and bounds stored phases', () => {
+  const secret = 'TOKEN_COOKIE_PASSWORD_SECRET';
+  assert.equal(parseResponsiveAnimations(secret), null);
+  assert.equal(parseResponsiveAnimations(RESPONSIVE_ANIMATION_PREFIX + '{bad'), null);
+  assert.equal(parseResponsiveAnimations(RESPONSIVE_ANIMATION_PREFIX + ' '.repeat(MAX_ANIMATION_MESSAGE)), null);
+  assert.equal(sanitizeResponsiveAnimations({ phase: secret, rows: [] }), null);
+  const value = { phase: 'watchdog', finiteCount: Number.MAX_SAFE_INTEGER, pendingCount: secret,
+    omittedCount: 0, payload: secret, rows: Array.from({ length: 100 }, () => ({ index: 1,
+      kind: secret, name: secret, property: secret, playState: secret, targetKind: secret, currentTime: secret, payload: secret })) };
+  const safe = sanitizeResponsiveAnimations(value); assert.equal(safe.rows.length, 8);
+  assert.equal(safe.finiteCount, 2147483647); assert.equal(safe.pendingCount, null);
+  assert(!JSON.stringify(safe).includes(secret));
+  const d = createResponsiveDiagnostics(); d.animations(RESPONSIVE_ANIMATION_PREFIX + JSON.stringify(safe));
+  assert.equal(d.snapshot().animationSnapshots, undefined, 'ignore outside exact operation');
+  d.operation('continuation-settle-action', 'before');
+  for (let i = 0; i < 10; i++) d.animations(RESPONSIVE_ANIMATION_PREFIX + JSON.stringify(safe));
+  assert.equal(d.snapshot().animationSnapshots.length, 1); assert(!JSON.stringify(d.snapshot()).includes(secret));
+});
+
+test('runner wires diagnostics only to exact settle while retaining original await and runner identity', () => {
+  assert.match(source, /page\.evaluate\(settleResponsiveAnimationsInPage, observe\)/);
+  assert.match(source, /lib\/inkwave-responsive-animation-diagnostics\.mjs/);
+  assert.match(source, /message\.type\(\) === 'info'\) diagnostics\.animations\(message\.text\(\)\)/);
+  const continuation = fs.readFileSync(new URL('../check-inkwave-result-continuation.mjs', import.meta.url), 'utf8');
+  assert.match(continuation, /continuation-settle-action',\(\)=>settle\(page,name==='loadout-continue'\)/);
+});
+
+test('two full diagnostic snapshots fit with max-length ASCII event and error receipts', () => {
+  const d = createResponsiveDiagnostics(); d.operation('continuation-settle-action', 'before');
+  const row = { index: 2147483647, kind: 'css-animation', name: 'iw-ticket-pick', property: 'background-color',
+    playState: 'finished', pending: true, currentTime: 2147483647, startTime: 2147483647,
+    playbackRate: 2147483647, timelineTime: 2147483647, duration: '-infinite', delay: '-infinite',
+    endDelay: '-infinite', iterations: '-infinite', targetKind: 'weapon-card-descendant', connected: true, artDeferred: true };
+  for (const phase of ['before-await', 'watchdog']) d.animations(RESPONSIVE_ANIMATION_PREFIX + JSON.stringify({
+    phase, finiteCount: 2147483647, pendingCount: 2147483647, omittedCount: 2147483647, rows: Array(16).fill(row) }));
+  d.fail({ name: 'x'.repeat(80), message: 'x'.repeat(4096), stack: 'x'.repeat(8192) });
+  for (let i = 0; i < 32; i++) d.record('x'.repeat(80), 'x'.repeat(1024));
+  const receipt = { kind: 'responsive-diagnostic-progress', engine: 'chromium', name: 'phone-portrait', diagnostics: d.snapshot() };
+  assert.equal(receipt.diagnostics.animationSnapshots.length, 2);
+  assert(receipt.diagnostics.animationSnapshots.every(value => value.rows.length === 8));
+  // Existing free-form event/error limits count characters, not UTF-8 bytes.
+  // Non-ASCII or escaped text may still exceed the unchanged fail-closed reader.
+  assert(Buffer.byteLength(JSON.stringify(receipt, null, 2) + '\n') < 65536, 'keep ASCII worst-case below unchanged progress read bound');
+});

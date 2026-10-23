@@ -7,6 +7,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { settleResponsiveAnimationsInPage } from './lib/inkwave-responsive-animation-diagnostics.mjs';
 import { checkCoreMenus } from './check-inkwave-responsive-core.mjs';
 import { createResponsiveAssetServer } from './lib/inkwave-responsive-server.mjs';
 import { confirmResponsiveMockHostTeams } from './inkwave-responsive-fixture.mjs';
@@ -81,7 +82,7 @@ const sourceHashes = () => Object.fromEntries(['styles/mobile.css', 'styles/ui.c
   return [f, hash(fs.readFileSync(original ? path.join(path.resolve(baseline), 'inkwave-public', f) : path.join(source, f)))];
 }));
 result.sourceHashes = sourceHashes();
-const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs', 'check-inkwave-result-continuation.mjs', 'lib/inkwave-responsive-server.mjs', 'lib/inkwave-responsive-diagnostics.mjs', 'inkwave-responsive-fixture.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
+const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs', 'check-inkwave-result-continuation.mjs', 'lib/inkwave-responsive-server.mjs', 'lib/inkwave-responsive-diagnostics.mjs', 'lib/inkwave-responsive-animation-diagnostics.mjs', 'inkwave-responsive-fixture.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
 result.runnerHashes = runnerHashes();
 const configurations = [
   ['phone-portrait', { ...devices['iPhone 13'], viewport: { width: 390, height: 844 } }],
@@ -96,9 +97,7 @@ const show = async (page, name) => {
   await page.evaluate((screen) => { menus.wipe.cancel(); menus.show(screen, { wipe: false, light: false, force: true }); }, name);
   await settle(page);
 };
-const settle = async (page) => page.evaluate(async () => {
-  await Promise.all(document.getAnimations().filter((a) => a.effect?.getTiming().iterations !== Infinity).map((a) => a.finished.catch(() => {})));
-});
+const settle = async (page, observe = false) => page.evaluate(settleResponsiveAnimationsInPage, observe);
 const geometry = async (page, selector, label) => {
   await settle(page);
   const controls = page.locator(selector);
@@ -140,6 +139,7 @@ try {
       context.on('close', () => diagnostics.unavailable('context-close'));
       context.browser()?.on('disconnected', () => diagnostics.unavailable('browser-disconnected'));
       page.on('console', message => {
+        if (message.type() === 'info') diagnostics.animations(message.text());
         if (['error', 'warning'].includes(message.type())) diagnostics.record('console-' + message.type(), message.text());
       });
       const onStageComplete = name => diagnostics.stage(name);

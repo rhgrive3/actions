@@ -86,6 +86,7 @@ test('isolated runner retains all 14 cases, stderr, acceptance failures and succ
   const dir = path.join(root, 'integration'), scripts = path.join(dir, 'scripts');
   fs.mkdirSync(path.join(scripts, 'lib'), { recursive: true });
   fs.copyFileSync(new URL('../lib/inkwave-responsive-progress-summary.mjs', import.meta.url), path.join(scripts, 'lib/inkwave-responsive-progress-summary.mjs'));
+  fs.copyFileSync(new URL('../lib/inkwave-responsive-animation-diagnostics.mjs', import.meta.url), path.join(scripts, 'lib/inkwave-responsive-animation-diagnostics.mjs'));
   fs.copyFileSync(new URL('../lib/inkwave-responsive-diagnostics.mjs', import.meta.url), path.join(scripts, 'lib/inkwave-responsive-diagnostics.mjs'));
   fs.writeFileSync(path.join(scripts, 'fake-child.mjs'), `
     import fs from 'node:fs'; import path from 'node:path';
@@ -162,4 +163,21 @@ test('fixed pending operation and boundaries survive bounded summary; arbitrary 
   assert(!JSON.stringify(summary).includes('PRIVATE'));
   value.diagnostics.pendingOperation = 'PRIVATE-pending';
   assert.equal(responsiveProgressSummary(fixture(value).identity).pendingOperation, null);
+});
+
+test('official log summary revalidates at most two bounded animation observations', () => {
+  const secret = 'TOKEN_COOKIE_PASSWORD_SECRET';
+  const value = receipt(); value.diagnostics.pendingOperation = 'continuation-settle-action';
+  const observation = phase => ({ phase, finiteCount: 1, pendingCount: 1, omittedCount: 0,
+    rows: [{ index: 0, kind: 'css-transition', playState: 'running', currentTime: 1,
+      targetKind: 'weapon-card-descendant', property: 'opacity', name: secret, payload: secret }] });
+  value.diagnostics.animationSnapshots = Array.from({ length: 100 }, (_, i) => observation(i % 2 ? 'watchdog' : 'before-await'));
+  const summary = responsiveProgressSummary(fixture(value).identity);
+  assert.equal(summary.animationSnapshots.length, 2);
+  assert.deepEqual(summary.animationSnapshots.map(row => row.phase), ['before-await', 'watchdog']);
+  assert.equal(summary.animationSnapshots[1].rows[0].targetKind, 'weapon-card-descendant');
+  assert.equal(summary.animationSnapshots[1].rows[0].property, 'opacity');
+  assert(!JSON.stringify(summary).includes(secret));
+  value.diagnostics.animationSnapshots = [observation(secret)];
+  assert.equal(responsiveProgressSummary(fixture(value).identity).animationSnapshots, undefined);
 });

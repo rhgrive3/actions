@@ -9,11 +9,16 @@ export const PREFLIGHT_MODE='main26a4-runtime-ui-native-preflight-only';
 const builder='62d929b83091c6775a865be02c06960a4cc4b2216eb26d5921aa4811787c6d7a';
 // Reproducible output identities, not claims that reference builds used a different source HEAD.
 // Before identity independently agrees across actual a62 and c364 production-equal builds.
-// After identity is from the independently verified published bbc59 build.
+// After identity is independently re-emitted from the exact reviewed owner-clock
+// production inputs; its complete manifest also matches official 4f5826 native-pair CI.
 const identities=Object.freeze({
- before:{manifest:'8212ef17727097bb0b779a260e896f2c006b937ec5e05da8eb4df63e281ebaf9',input:'eaeedda634324a8e72320e67546a4d3beeb8ae0544b5d32af8cadaa7ac7f10a6',content:'c37e66cd3c6de7b3a1dc2aa73ca6b00d4e0d72d1b16719f62c6cb96d096dd759'},
- after:{manifest:'dfce04a80e98445918fe93c85fe4076ffa49c9a95e78837179d5c72622dd11d8',input:'c846ba6b398a6a9ba740bd1bb95229617bd72d1491ff095439e945b89c3f4087',content:'bddd6573750acf960a7e94b67fc8eedab493833928a743a9f45ee5b336f107e2'}
+ before:{manifest:'8212ef17727097bb0b779a260e896f2c006b937ec5e05da8eb4df63e281ebaf9',input:'eaeedda634324a8e72320e67546a4d3beeb8ae0544b5d32af8cadaa7ac7f10a6',content:'c37e66cd3c6de7b3a1dc2aa73ca6b00d4e0d72d1b16719f62c6cb96d096dd759',inputs:1362,artifacts:2016},
+ after:{manifest:'8a6349970578f81c3b43b6b1d86f35d1123ad1cd1b786e2ef944e90e045eb4d0',input:'45132b3e3dc16d4148ebddd35790210e3dc5111669a8cec990b706b72921d52c',content:'701e017607254182727e293eb0119c711daebf63163ed88b2a1f66e63fa8f61d',inputs:1363,artifacts:2018}
 });
+export function runtimePreflightIdentity(lane){
+ assert(['before','after'].includes(lane),'Explicit lane required');
+ return {...identities[lane]};
+}
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const safe=p=>{assert(typeof p==='string'&&p&&!path.isAbsolute(p)&&!p.includes('\\')&&!p.split('/').some(x=>!x||x==='.'||x==='..'),'Unsafe path');return p;};
 function read(root,p){let f=root;for(const part of safe(p).split('/')){f=path.join(f,part);assert(!fs.lstatSync(f).isSymbolicLink(),'No symlink input/output');}return fs.readFileSync(f);}
@@ -34,16 +39,16 @@ export function assertRuntimePreflightEvent(event,env){
  return {baseSha:MAIN26A4_SHA,candidateSha:pr.head.sha};
 }
 export function inspectRuntimePreflightBuild({root,site,lane}){
- assert(['before','after'].includes(lane),'Explicit lane required');root=fs.realpathSync(root);site=fs.realpathSync(site);
- const identity=identities[lane],bytes=read(site,'inkwave-build.json');assert.equal(hash(bytes),identity.manifest,'Pinned complete build manifest');const build=JSON.parse(bytes);
+ const identity=runtimePreflightIdentity(lane);root=fs.realpathSync(root);site=fs.realpathSync(site);
+ const bytes=read(site,'inkwave-build.json');assert.equal(hash(bytes),identity.manifest,'Pinned complete build manifest');const build=JSON.parse(bytes);
  assert.equal(build.schema,1);assert.equal(build.build.esbuild,'0.28.2');assert.equal(build.build.optimization,'esbuild-minify');
  assert.equal(build.build.script,builder);assert.equal(hash(read(root,'scripts/build-inkwave.mjs')),builder,'Pinned actual builder');
- assert.equal(build.inputHash,identity.input);assert.equal(hash(JSON.stringify(build.files)),identity.input);assert.equal(Object.keys(build.files).length,1362);
- assert.equal(build.contentHash,identity.content);assert.equal(hash(JSON.stringify(build.artifacts)),identity.content);assert.equal(Object.keys(build.artifacts).length,2016);
+ assert.equal(build.inputHash,identity.input);assert.equal(hash(JSON.stringify(build.files)),identity.input);assert.equal(Object.keys(build.files).length,identity.inputs);
+ assert.equal(build.contentHash,identity.content);assert.equal(hash(JSON.stringify(build.artifacts)),identity.content);assert.equal(Object.keys(build.artifacts).length,identity.artifacts);
  for(const[p,h]of Object.entries(build.files))assert.equal(hash(read(root,inputPath(p))),h,'Actual build input: '+p);
- const expected=['inkwave-build.json',...Object.keys(build.artifacts)];assert.equal(new Set(expected).size,2017);assert.deepEqual(walk(site).sort(),expected.sort(),'Complete sealed output inventory');
+ const expected=['inkwave-build.json',...Object.keys(build.artifacts)];assert.equal(new Set(expected).size,identity.artifacts+1);assert.deepEqual(walk(site).sort(),expected.sort(),'Complete sealed output inventory');
  for(const[p,h]of Object.entries(build.artifacts))assert.equal(hash(read(site,p)),h,'Sealed output: '+p);
- return {buildIdentitySha256:hash(bytes),inputHash:identity.input,contentHash:identity.content,verifiedInputs:1362,verifiedOutputs:2017};
+ return {buildIdentitySha256:hash(bytes),inputHash:identity.input,contentHash:identity.content,verifiedInputs:identity.inputs,verifiedOutputs:identity.artifacts+1};
 }
 export function requireRuntimeUIPreflight({root,site,sourceSha,baseline,candidate,env=process.env}){
  assert(env.GITHUB_EVENT_PATH,'Official event path required');const event=JSON.parse(fs.readFileSync(env.GITHUB_EVENT_PATH,'utf8'));

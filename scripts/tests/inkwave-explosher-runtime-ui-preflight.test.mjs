@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {assertRuntimePreflightEvent,inspectRuntimePreflightBuild,PREFLIGHT_MODE} from '../lib/inkwave-explosher-runtime-ui-preflight.mjs';
+import {assertRuntimePreflightEvent,inspectRuntimePreflightBuild,runtimePreflightIdentity,PREFLIGHT_MODE} from '../lib/inkwave-explosher-runtime-ui-preflight.mjs';
 const base='26a4db4123d23162a3dbf8a12150b1b5bc6ccf64',head='bbc59c80917dbb01738e543c05866238381f797d';
 const repo={full_name:'rhgrive3/actions'};
 const event=()=>({action:'synchronize',number:1844,repository:repo,pull_request:{number:1844,base:{ref:'main',sha:base,repo},head:{ref:'inkwave/runtime-ui-acceptance-20261022',sha:head,repo}}});
@@ -14,3 +14,14 @@ for(const[k,v]of Object.entries({GITHUB_EVENT_NAME:'pull_request_target',GITHUB_
 test('unsealed output manifest cannot self-authorize',()=>{const root=fs.mkdtempSync(path.join(os.tmpdir(),'explosher-preflight-contract-'));try{fs.writeFileSync(path.join(root,'inkwave-build.json'),JSON.stringify({schema:1,files:{},artifacts:{}}));assert.throws(()=>inspectRuntimePreflightBuild({root,site:root,lane:'after'}),/Pinned complete build manifest/);assert.throws(()=>inspectRuntimePreflightBuild({root,site:root,lane:'unknown'}),/Explicit lane/);}finally{fs.rmSync(root,{recursive:true,force:true});}});
 test('driver preserves default historical admission and explicitly scopes inverse exception',()=>{const s=fs.readFileSync(new URL('../check-inkwave-explosher-flight-glitter.mjs',import.meta.url),'utf8');assert.match(s,/:requireApprovedCommonBuild\(sourceRoot,site\)/);assert.match(s,/if\(!runtimeUIRoute&&\(!shapeOverlay\|\|!controlled\)\)/);assert.match(s,/if\(!runtimeUIRoute\)\{\nconst counterpart=/);assert.match(s,/receipt\.diagnosticOnly=true;receipt\.fullPairAccepted=false/);});
 test('workflow retains all three disabled long stages and exact event checkout refs',()=>{const s=fs.readFileSync(new URL('../../.github/workflows/inkwave-explosher-flight-glitter.yml',import.meta.url),'utf8');assert.equal((s.match(/if: false/g)||[]).length,3);assert.match(s,/ref: \$\{\{ github.event.pull_request.head.sha \}\}/);assert.match(s,/ref: \$\{\{ github.event.pull_request.base.sha \}\}/);assert.match(s,/fullPairAccepted:false/);assert.match(s,/Every preflight state must agree/);});
+
+test('separate exact owner-clock seal retains the historical before lane',()=>{
+ const before=runtimePreflightIdentity('before'),after=runtimePreflightIdentity('after');
+ assert.deepEqual(before,{manifest:'8212ef17727097bb0b779a260e896f2c006b937ec5e05da8eb4df63e281ebaf9',input:'eaeedda634324a8e72320e67546a4d3beeb8ae0544b5d32af8cadaa7ac7f10a6',content:'c37e66cd3c6de7b3a1dc2aa73ca6b00d4e0d72d1b16719f62c6cb96d096dd759',inputs:1362,artifacts:2016});
+ assert.deepEqual(after,{manifest:'8a6349970578f81c3b43b6b1d86f35d1123ad1cd1b786e2ef944e90e045eb4d0',input:'45132b3e3dc16d4148ebddd35790210e3dc5111669a8cec990b706b72921d52c',content:'701e017607254182727e293eb0119c711daebf63163ed88b2a1f66e63fa8f61d',inputs:1363,artifacts:2018});
+ assert.notEqual(after.manifest,'dfce04a80e98445918fe93c85fe4076ffa49c9a95e78837179d5c72622dd11d8','old runtime/UI output cannot authorize current owner-clock input');
+ after.manifest=before.manifest;after.inputs=before.inputs;
+ assert.equal(runtimePreflightIdentity('after').inputs,1363,'callers cannot rewrite the private seal');
+ assert.notEqual(runtimePreflightIdentity('after').manifest,before.manifest);
+ for(const lane of ['unknown','__proto__','constructor',undefined])assert.throws(()=>runtimePreflightIdentity(lane),/Explicit lane/);
+});

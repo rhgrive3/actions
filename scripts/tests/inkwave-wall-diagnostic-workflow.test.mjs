@@ -75,12 +75,15 @@ test('scope, timeout, evidence, failure suppression and concurrency mutations ar
   }
 });
 
+// Reviewed against 4f5826c95126dcd5e3f239b1fd28ca3c44845575: only additive
+// owner-clock diagnostic/regression coverage changes these three job bodies.
+// Keep exact-body pins so existing Turf, native readiness and evidence gates stay locked.
 const acceptedJobHashes = {
-  "validate_core": "fc75f0b04d2c59d75ee65cbc8f85f62a01b4ab98c4162a92fd6b55786dbbfd1c",
+  "validate_core": "321e5839d23c935315b34bfc2e45f5d3580d55fac555f584859b378711714cc6",
   "patch_tests": "86a0215408bcbbd2889e6e6106b23023af8cab0417be7854a0b326a21e4f3a3b",
   "validate": "54ac81f9c3cfa0e1eaed643dc62b644e9658abef0b53faced3a7d47888b790f9",
-  "browser": "985201451524bf978a4e023de2120148845f6c9a502b92b30c03b2fec98e010e",
-  "network-opening-diagnostic": "96db69814831fcb213c519c0c6fbc4a78d39e1dca827baac24727123cc0e34b9",
+  "browser": "4b43a4dbb8e7c08dc9638b0603dbd02593450e4161a85981c91f4cee2abf8273",
+  "network-opening-diagnostic": "82bf965b3cda974c6e6fff3c5b6576f00f2a905f4362d3ce59927ec194ac30f8",
   "seven_claims": "e0ff16966e0c1d25987665a455b20de2a86957cd8b98833bd19e27497374a0a9",
   "resource_paint_continuation": "80043e61551de4f8eeac03c748173c6eb52597f03b2c7a074697398026057ebf"
 };
