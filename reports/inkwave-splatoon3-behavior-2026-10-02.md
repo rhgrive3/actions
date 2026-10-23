@@ -6075,3 +6075,33 @@ Node22でsource全対象92case（既存clock25含む）と通常production compi
 - 再現条件は INKWAVE の実 production composition 上の legacy／v1 NetSession。未 bind、nonce 未証明、14 秒未来、古い時刻、foreign owner、不正 envelope の tick が torpedo／zipcaster の受信 kit を bomb 等へ置き換えないことを確認する。正しく受け入れた次の tick は body・時計・kit を更新し、wrong-life／不正な任意 sidecar は合法な body・時計の進行を妨げず kit だけを保持する。元実装では native が body・時計を拒否しても kit だけが変わり、表示・装備状態が食い違う。
 - Node 22.23.3 で同じ production composition の独立採用候補を実行し、専用 source／実 Session 回帰 5 件成功、skip 0。catalogue だけ元実装へ戻した同じ試験は 4 件が期待通り失敗し、合法 tick 内の不正 optional sidecar 試験 1 件は成功した。workflow の source／emitted 登録と各登録削除・失敗伝播の限定 routing 契約 9 件成功。これは CPU ロジックと shell routing の確認で、emitted build／browser の実行結果ではない。
 - 本家の比較対象は既存記録のスプラトゥーン3 11.3.0 を継承するが、今回は本家の非公開通信方式・frame 値・Switch 実機を新規測定していない。上記は INKWAVE 内の受け入れ整合性修正であり、本家との通信挙動一致を立証しない。catalogue を第 9 の production 差分として固定し、1,392 production leaves／1,363 build inputs の受け入れ条件を維持する。build seal は既存の全 input／output を検証した上で、変更 catalogue module と deterministic loading packaging だけを再生成して独立導出したもので、full cold build の成功ではない。exact-head CI、browser／実オンライン peer の検証は未実施・未完了として残す。
+### 2026-10-22 ガチアサリの切断・Actor除去時の水中残留
+
+Splatoon 3 Ver.11.3.0のガチアサリを比較対象に、所持者の除去が床問い合わせを欠いたまま所持品を接地扱いにする不具合を修正した。水没位置で最後のガチアサリが残り、延長戦を約10秒継続させる制御再現を確認。最後のauthoritative frameの床問い合わせを通常の落下所有者へ渡し、30/60/120Hz・両チームで次のルール更新の消滅・終了を確認した。陸上・低い足場・空中・重複除去・snapshot引き継ぎと実NetMatch.onLeaveを含む新規10件、既存57件、本番ビルド、実minify出力のChromiumルールfixture24条件が成功。通常起動ゲームの描画・実relay通信・Switchでの切断規則一致は未確認。根拠・再現・制約は [専用記録](inkwave-clam-removal-support-2026-10-22.md)。
+
+
+### 2026-10-23 ガチルールの入力復帰・アサリ空中接地
+
+プラットフォームresetが消していなかったオンライン派生射撃指示と送信拒否後の投げ予約を、次のActor更新前にも中立化する。実Controller→Actor→NetMatch→Transport JSON→host受理で30/60/120Hzを確認し、新しい操作は一度だけ成立する。別途、アサリの3回反射後と空中パス交換時の小アサリ排出が、足場のない位置や遠い下階を接地と誤認する問題を修正。既存0.25 WUの床問い合わせ幅の近傍だけで接地し、それ以外は既存重力・水没へ戻す。実Level/Physicsの壁衝突を30/60/120Hzで確認。Splatoon 3 Ver.11.3.0のガチアサリ水没・未回収寿命を比較対象とし、反射係数・許容幅をNintendoの確定値にはしていない。最終source115件・新規本番ビルド・実minify出力のChromium14条件が成功。実通信/通常起動画面/physical端末/SwitchのE2E一致は未確認。[根拠・再現・検証記録](inkwave-ranked-boundary-fixes-2026-10-23.md)。
+
+
+### 2026-10-23 多層床・スペシャルのキャンセル・支援装置の通信境界
+
+公開版本番合成に対し、ジェットパックの浮遊とミサイルの地面投影が屋根を拾う問題、エナジースタンドの投擲が上階へ移る問題を実Level/Physicsの二層床で再現し、探索の高さ上限を対象位置へ合わせた。既存の浮遊高・boost・投擲重力・空気抵抗は維持する。
+
+独立した特殊入力ownerへWeaponRunnerのキャンセル通知が届かず、focus resetやpointercancelだけでR投擲、キューインキの反撃弾、充填済みテイオウイカの突進が出る問題を修正。9種類のスペシャルで30/60/120Hzを検査し、通常の押し直し・解除、受付済みstartup、キューインキの20F移行/150F待機期限を保つ。
+
+ポイントセンサーの検知済みをActorだけでなくlifeごとに管理し、有効なfield内の新lifeを検知する。期限ちょうどの新規侵入/遅延markは拒否する。センサー/スタンドの通信ではnative受理済みlife、切断後のowner交代、sample→event→描画反映というnative更新順を扱う。ready・finite・同lifeのsampleだけで位置を判定し、従来10 WUの範囲、旧life/旧owner/不正sample/重複serialの拒否を保持する。
+
+比較対象はSplatoon 3 Ver.11.3.0、既定ギア、通常保持・解除と多層床/テレポート/復活の条件。固定source表と既存のcommunity根拠を継承し、browser固有のキャンセルや0.25 WUの探索幅をNintendoの確定仕様にはしていない。最終source116件、新規minify生成物95件、Chromium154の同生成物95件＋実DOM入力handler/Controller54条件、既存分割123件と別selection110件、標準npm test、新規本番ビルドが成功。input1,362件/artifact2,016件の全hashを照合した。簡易Character・制御fixtureであり、通常ゲーム描画・physical touch・実relay・Switch実機の一致は未確認。[修正内容・否定対照・再実行・raw記録](inkwave-extended-runtime-fixes-2026-10-23.md)。
+
+
+### 2026-10-23 追加再レビュー: 所有者・復活・最終bootstrapの切断境界
+
+同じActorとserialを再利用する所有者交代で、ポイントセンサーの古いfieldが新しい検知を遮る問題を修正した。キューインキでは終了packet欠落時の表示token/liveStates残留、旧owner/life/matchの吸引、引き継ぎ後の受信台帳を退役させる。サブ8種の復活直後のbirthは、native sample→event→表示反映の順で受理済みlifeを使い、トーピードのprivateな限定軌道観測にも同じ条件を適用する。物理標的lifeやprivate proofの拒否条件は維持する。ロボットボムは取得した標的lifeを固定し、同じActorの復活先を追尾しない。
+
+サブ・スペシャルの遠隔複製はleave/adopt/removeで既存の除去経路へ渡し、生成時のremote属性で送信を拒否する。通常の所有者復活と無関係なlocal装置は保持する。個別wrapperを追加するだけでは、後から入る本番DisconnectFidelityのonLeave置換に遮られることも発見した。game単位の退役callbackを最終policyから呼び、完全bootstrapの7種類×intro/playing/finishで確認した。本番の切断時は人間を非活動化する方針を保ち、native単体のBOT引き継ぎとは区別する。
+
+比較対象はSplatoon 3 Ver.11.3.0、既定ギア、投擲・標的復活・センサー検知・キューインキ終了。固定source表と既存出典を継承し、威力・射程・追尾速度・ヒューズ・範囲を変更しない。通信順・replicaの所有権・bootstrap cleanupはINKWAVE内部の整合性修正で、本家の非公開通信仕様や実機フレーム値とはしない。
+
+独立した旧runtimeに最終テスト116件を置き、85条件のassertion failureと31対照成功を確認した。修正後は新規116＋前回95のsource211件、同じminify生成物211件、Chromium154の265条件（runtime190＋実DOM入力54＋完全bootstrap21）、既存145/39/123件、標準npm test、本番build/startup budgetが成功。input1,363件/artifact2,018件の全hashが一致した。今回追った経路の再レビューでは追加の再現可能な不具合が見つからなくなった。簡易Character・制御fixtureのため、通常Game描画・実relay・physical touch・Switch実機の一致は未確認。[修正・比較根拠・独立baseline・raw記録](inkwave-review-closure-2026-10-23.md)。

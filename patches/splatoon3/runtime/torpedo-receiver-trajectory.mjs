@@ -6,7 +6,7 @@ function contextValid(api,world,object,r){
  return G===r.G&&world===r.world&&G.projectiles===world&&G.level===r.level&&G.physics===r.physics&&
    nm===r.nm&&G.match===r.match&&nm?.match===r.netMatch&&nm?.peers?.get(r.peerId)===r.peer&&
    nm?.byNid?.get(r.nid)===r.owner&&object.owner===r.owner&&r.owner.remote&&
-   r.owner.netLife===r.life&&object.sourceLife===r.life&&object.seq===r.seq&&
+   Math.max(r.owner.netLife||0,r.owner.net?.lastLife||0)===r.life&&object.sourceLife===r.life&&object.seq===r.seq&&
    !object.dead&&world._s3SubObjects?.includes(object);
 }
 export function beginReceiverTorpedoObservation(api,world,object){

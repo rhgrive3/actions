@@ -1,0 +1,314 @@
+{
+  "schema": 1,
+  "sourceBase": "5e484fa17",
+  "publishedBase": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+  "referenceVersion": "Splatoon 3 11.3.0",
+  "runtime": {
+    "status": "passed",
+    "inputHash": "5cdc7c98f04060f9b409b922cdbc3df0eb472bcfa505be31c390536b3a75a2a2",
+    "contentHash": "ff777e3af6ef94fbcafc44766c0d7519bfca5396129ac3c0694f623482946282",
+    "artifactsVerified": 2016,
+    "declaredInputPins": 1362,
+    "touchedRuntimePins": [
+      {
+        "path": "patches/splatoon3/runtime/all-specials.mjs",
+        "sha256": "eaac24f4edb03c457ffa06493ed79502ba9fa60947a6199fc5430e1a19441da6"
+      },
+      {
+        "path": "patches/splatoon3/runtime/kit-ink-vac.mjs",
+        "sha256": "d0ac3c0385c9a6ff16461c5aea544400995d24bacecd98a96c973c6d8f885e82"
+      },
+      {
+        "path": "patches/splatoon3/runtime/kit-support.mjs",
+        "sha256": "e9b0406485b7c75e287d1bf35b75d33fdb2e8a49704d0e164ded3c9bcab9a78a"
+      }
+    ],
+    "inputPinsVerified": 1362
+  },
+  "checks": {
+    "sourceNewAndRetainedSupport": {
+      "tests": 116,
+      "pass": 116,
+      "fail": 0,
+      "skip": 0,
+      "exit": 0
+    },
+    "retainedShards": {
+      "processes": 22,
+      "tests": 123,
+      "pass": 123,
+      "fail": 0
+    },
+    "otherRetained": {
+      "tests": 110,
+      "pass": 110,
+      "fail": 0,
+      "skip": 0,
+      "exit": 0
+    },
+    "emittedNew": {
+      "tests": 95,
+      "pass": 95,
+      "fail": 0,
+      "skip": 0,
+      "exit": 0
+    },
+    "browser": {
+      "browser": "154.0.8037.57",
+      "fixtureCases": 95,
+      "nativeInputControllerCases": 54,
+      "pass": 149,
+      "errors": 0,
+      "exit": 0
+    },
+    "npmTest": {
+      "beforeExit": 0,
+      "afterExit": 0
+    },
+    "productionBuild": {
+      "exit": 0
+    }
+  },
+  "limits": [
+    "Controlled primitive stages, dummy Character, frozen ordinary Actor integration/frame finishing.",
+    "Browser Input uses native DOM listeners with synthetic pointer events and direct button admission.",
+    "Native NetMatch pack/admission/sample/replay with controlled JSON delivery, no real relay.",
+    "No ordinary rendered game, physical device, Nintendo hardware equivalence, CI or deployment acceptance."
+  ],
+  "archive": {
+    "file": "evidence.tar.gz",
+    "bytes": 42684,
+    "sha256": "1815a1489a7585cd850844e5b28a899b02ef3732af3c52049b1943d10109f6be",
+    "files": [
+      {
+        "file": "all-specials-1.log",
+        "bytes": 925,
+        "sha256": "06156682841c19dcba4a7d20dd23a28b801131fabe287a38f35b267ef439c535"
+      },
+      {
+        "file": "all-specials-2.log",
+        "bytes": 945,
+        "sha256": "5327e9a0ba6a26bd1960195ea124fc3a95cff45a9715d0fb90c2ab1bbecaf915"
+      },
+      {
+        "file": "all-specials-3.log",
+        "bytes": 938,
+        "sha256": "3eb7252474be941b6c6ac8bb1a70d4bab35a99794191fd796617e8b1bfc607a9"
+      },
+      {
+        "file": "all-specials-4.log",
+        "bytes": 892,
+        "sha256": "d6d62ee9ee2e19d140932fabe0842dde3fc6cf7f01e367393bc5b88e9c30489c"
+      },
+      {
+        "file": "all-specials-5.log",
+        "bytes": 894,
+        "sha256": "d952f4003f79462223fce652077b704b32593f7348ee21607ccd48bf341787e3"
+      },
+      {
+        "file": "all-specials-6.log",
+        "bytes": 900,
+        "sha256": "9250940b0669d5f8762ee9ababf7a55e3f72cc8c1d2e928977e18754eda551c2"
+      },
+      {
+        "file": "all-specials-7.log",
+        "bytes": 908,
+        "sha256": "4e768adb08fdfe8702888e8e5d9fd64f53a1a6aaddd1cd8fcc9d767593bd68cd"
+      },
+      {
+        "file": "all-specials-8.log",
+        "bytes": 955,
+        "sha256": "264c45a1a6e34f6d7c2b0c20ee5b215d1cbab1362844dd7d2994c026ece8d297"
+      },
+      {
+        "file": "browser-final.log",
+        "bytes": 139,
+        "sha256": "f6f83b80fc1efe723df122ef30c4659b0313a3fa1cc136aae55074e023741429"
+      },
+      {
+        "file": "browser.json",
+        "bytes": 22964,
+        "sha256": "fbb1f0854121a56633a4a14753451ec2e1c24acf75a18a4590f05c2f76e2f956"
+      },
+      {
+        "file": "build-identity.json",
+        "bytes": 776,
+        "sha256": "074c1ecc135604daba54ef9b7436307e3f0272b93778e2e5484d23360b422a32"
+      },
+      {
+        "file": "build.log",
+        "bytes": 812,
+        "sha256": "313fb697a5e30ea624db5a8af4259917358818df57c346060237bd21cbebd915"
+      },
+      {
+        "file": "emitted.log",
+        "bytes": 10753,
+        "sha256": "d0cc858ab342214c6a84911f8d463c315550899d58386520bd3e84860b2f68f5"
+      },
+      {
+        "file": "final-source.log",
+        "bytes": 12602,
+        "sha256": "cfd9d69353a0c8a328f11d3a0d95edd28b4d2ec76b2606a5d40690242460bf5a"
+      },
+      {
+        "file": "held-after.log",
+        "bytes": 6268,
+        "sha256": "a971ca57f17d1161847ba0af594a63d0b805b906efed24080300df749dba12e1"
+      },
+      {
+        "file": "held-before.log",
+        "bytes": 44110,
+        "sha256": "cdb897b954ae0cb5740d6ed97c1d6817e6e64c9c8760431958e60180b056d5c0"
+      },
+      {
+        "file": "held-vac-before.log",
+        "bytes": 12811,
+        "sha256": "349470154846f671362fa3beaa657ad76453d4e23918c1922d37cbc29dccfe18"
+      },
+      {
+        "file": "kit-ink-vac-1.log",
+        "bytes": 819,
+        "sha256": "f91792b6c6f67c35d97a773387dc8c1ae7a3cae49202d1e8e5f2d3b7043e6327"
+      },
+      {
+        "file": "kit-ink-vac-10.log",
+        "bytes": 371,
+        "sha256": "a15a8457a0f06c303658d9f204e05fbe1cf8b11b77464ca639744bdbf1c96bff"
+      },
+      {
+        "file": "kit-ink-vac-2.log",
+        "bytes": 877,
+        "sha256": "6e79c20f7676ef433957d62785bc2100c0f18ce40f6f405d5de6d482a1906943"
+      },
+      {
+        "file": "kit-ink-vac-3.log",
+        "bytes": 812,
+        "sha256": "89743a4f83100a65fb16d2d9887287968b9b36685a85a8ddc7aa2e0f1ffaa32f"
+      },
+      {
+        "file": "kit-ink-vac-4.log",
+        "bytes": 835,
+        "sha256": "7e83a870435b3d8daffe748bb474cab8ca2659ec81244c615773165a08557c46"
+      },
+      {
+        "file": "kit-ink-vac-5.log",
+        "bytes": 780,
+        "sha256": "9a6520fd7d7c1e4e25a57d8981958358a96024076f85053a6b0c5bd728c838c1"
+      },
+      {
+        "file": "kit-ink-vac-6.log",
+        "bytes": 816,
+        "sha256": "ab2c27d6dfc0b4f47622462a47a341c92efe597958a400034683a10bb43adb68"
+      },
+      {
+        "file": "kit-ink-vac-7.log",
+        "bytes": 857,
+        "sha256": "f0295116fe188d9ac8af498d07b8a9d66f7a798df45cadd10de9ab4c4daa3d9c"
+      },
+      {
+        "file": "kit-ink-vac-8.log",
+        "bytes": 815,
+        "sha256": "23eccd918431f938121544d263cd564dab1a9f92410736de1f5a48b61de6801a"
+      },
+      {
+        "file": "kit-ink-vac-9.log",
+        "bytes": 886,
+        "sha256": "96ca40531a7696c3ec0e82dc24a6c45761326649f1ac1cc94c1c2f2159dbf3e8"
+      },
+      {
+        "file": "new-and-boundaries.log",
+        "bytes": 11210,
+        "sha256": "aa7b90e0943993428f9f89c0474399c7daac00228e319808edda21edbe82db16"
+      },
+      {
+        "file": "npm-test-after.log",
+        "bytes": 33690,
+        "sha256": "285caad5d2f4380e6e34f525de3a0e665f1d68178c32e3497c5c89df776842b2"
+      },
+      {
+        "file": "npm-test.log",
+        "bytes": 33900,
+        "sha256": "65a484739c195104d1f61d4fc44452a6cb7de2650fe2f482d47c84e96ea16603"
+      },
+      {
+        "file": "retained-core.log",
+        "bytes": 6635,
+        "sha256": "66fe1c0b75abb0f3a1517efac9a33ffa609dff7b9a5e2e6979c1d74c22f9f986"
+      },
+      {
+        "file": "retained-more.log",
+        "bytes": 11535,
+        "sha256": "4e4b6d644333da01be4a67833816bcc1b6472396ecfeb9e2d7763c8c4fb3a4ff"
+      },
+      {
+        "file": "retained-shards.json",
+        "bytes": 6673,
+        "sha256": "9a985f8c6d53f3e0aa8d91b1c27ce8b11342d29c33081e0cf2bc24f02eec4ed0"
+      },
+      {
+        "file": "run-retained.py",
+        "bytes": 1335,
+        "sha256": "9595a14b4834c6379289ca25fbeda09e3a172fcee185921f5e33abf34a57bdb8"
+      },
+      {
+        "file": "sampled-after.log",
+        "bytes": 1569,
+        "sha256": "a42f41e58c84a528c308a4fd7d8e699099978e2a261e63b0bba0b99fbe41f564"
+      },
+      {
+        "file": "sampled-and-epochs-after.log",
+        "bytes": 2692,
+        "sha256": "876a6704c1ea576fc8b4ebcba871a45c28e4b2f7eb216a321025903a1fcbf4a3"
+      },
+      {
+        "file": "sampled-before.log",
+        "bytes": 12718,
+        "sha256": "d6d4ab28ec46b2fce6a8f762f7320dd6c0585c5179e406da8b04c853eebb35f9"
+      },
+      {
+        "file": "sensor-after.log",
+        "bytes": 1127,
+        "sha256": "c8b939b091bb555150cdc29f8992933e8a3f99e77d966b76457d5b39d2e48c2b"
+      },
+      {
+        "file": "sensor-before.log",
+        "bytes": 9575,
+        "sha256": "b0ecca6f13ce9d0ac8b1ab7b615863d784fdc630a7367569f2c4758396dee32a"
+      },
+      {
+        "file": "storey-after.log",
+        "bytes": 1450,
+        "sha256": "f8804e802022fc59ba49e3189e7af5013f5982322bfaf06d8726922ae7b2d47d"
+      },
+      {
+        "file": "storey-before.log",
+        "bytes": 9725,
+        "sha256": "c36fa7361826e61d7515075626e29087c8088ab4d0adfeae8a3f07ca5e4e5e9d"
+      },
+      {
+        "file": "support-kit-recon-cooler-1.log",
+        "bytes": 863,
+        "sha256": "41327e82815c3fc6a25852fef3bb53515a3937e2266ad0197b311dc17dc3c1e6"
+      },
+      {
+        "file": "support-kit-recon-cooler-2.log",
+        "bytes": 861,
+        "sha256": "7cde00b7d5d1bc5941ef18436ccb18ba3095b6ee35ed061a2832b1939cf56dac"
+      },
+      {
+        "file": "support-kit-recon-cooler-3.log",
+        "bytes": 897,
+        "sha256": "3015dfdf151886a5bfaa0efcf55f352fb03d8923a5594474ea87d1c45bd2486f"
+      },
+      {
+        "file": "support-kit-recon-cooler-4.log",
+        "bytes": 514,
+        "sha256": "9f38ec1690b6e99005d204e2e57bfd56a911d9e64b899dd7727bbf47b3b1f42c"
+      }
+    ]
+  },
+  "reproduction": {
+    "reports/inkwave-extended-runtime-2026-10-23/verify-browser.mjs": "a52ecdb42fd4cef2d9de23b495ffb4dd015c3800b96ce7cce783d0914c053d2d",
+    "reports/inkwave-extended-runtime-2026-10-23/browser-harness.mjs": "3f6d45099269850a34f743f2b38ba9ea061dd0cccf39da0f11eac2eae69c17f0"
+  }
+}

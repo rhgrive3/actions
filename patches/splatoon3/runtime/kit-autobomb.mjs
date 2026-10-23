@@ -69,7 +69,7 @@ export function stepAutobomb(b,G){
  if(!st.target){
   if(f+1e-8>=spec.findRotateFrames){
    st.target=autobombTarget(b.owner,b,G,spec);
-   if(st.target)st.phase='targeted';
+   if(st.target){st.targetLife=Number.isSafeInteger(st.target.netLife)?st.target.netLife:0;st.phase='targeted';}
    else if(st.phase!=='waiting'){
     st.phase='waiting';b.fuse=spec.noTargetBurstDelayFrames*FRAME;
     b.vel.set(0,0,0);
@@ -78,7 +78,8 @@ export function stepAutobomb(b,G){
   return st.phase;
  }
  if(f+1e-8<spec.rotateFrames){b.vel.x=b.vel.z=0;return st.phase;}
- if(f+1e-8>=spec.rotateFrames+spec.chaseFrames||!st.target.alive){
+ if(f+1e-8>=spec.rotateFrames+spec.chaseFrames||!st.target.alive||
+   st.targetLife!==undefined&&st.targetLife!==(Number.isSafeInteger(st.target.netLife)?st.target.netLife:0)){
   st.phase='countdown';b.fuse=spec.lostTargetBurstDelayFrames*FRAME;
   b.vel.set(0,0,0);return st.phase;
  }
