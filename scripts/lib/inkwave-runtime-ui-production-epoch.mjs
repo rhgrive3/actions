@@ -5,7 +5,8 @@ import {createHash} from 'node:crypto';
 import {MAIN26A4_SHA, main26a4Inventory, assertMain26a4Rows, readMain26a4GitTree, scanMain26a4Production} from './inkwave-main26a4-production-epoch.mjs';
 import {assertReceiptSeparate} from './inkwave-source-admission-cli.mjs';
 export const RUNTIME_UI_MODE = 'main26a4-reviewed-runtime-ui-production-pair';
-// Exact published PR1838 and PR1839 production blobs. All other 1387 leaves stay pinned.
+// Exact reviewed runtime/UI and owner-clock production blobs.
+// Seven existing leaves change and only owner-clock.mjs is added; 1384 stay pinned.
 const delta = {
   "patches/local-quality/gyro.mjs": {
     "sha": "2d12ba23ae122e6f813d03ac8e62094ea95583f8",
@@ -22,12 +23,34 @@ const delta = {
   "patches/local-quality/static-menu-adapter.mjs": {
     "sha": "209e1b21d25d790e8b3725a8f2f0bed363547d53",
     "sha256": "c8bec2d3404d9574243388bb036ddbefa176dd1a5ccd5aa52936046a4ba3683e"
+  },
+  "inkwave-public/src/net/transport.js": {
+    "sha": "1fbd79cfe58681901b7d5581d4db984c7c581761",
+    "sha256": "8e90e02226f617e70cd0eee96295b2d7c02aa37cb4768064bd00a863f4bf666e"
+  },
+  "patches/network-replication/adapter.mjs": {
+    "sha": "e2acb3f6f9a466414cb77dbe93187303717fbfda",
+    "sha256": "03798102743610bb1643caa327fdb4dee9b4bf7a587674fe44b5ada1b6f36645"
+  },
+  "patches/network-replication/snapshot-guard.mjs": {
+    "sha": "39f05e1aecb0b76d9e41ae5a077f2042c6c46b06",
+    "sha256": "e3724ac1014550bebeda6287e4c74087610ccbcf93f5803db40950409d7a96e5"
+  },
+  "patches/network-replication/owner-clock.mjs": {
+    "sha": "8ab2f9b395d80c59120d064f7e2c1093ccf04879",
+    "sha256": "2225aad527fec32d60b92044d2abc1218c92ca3d608364beaf40be0f6d453e97"
   }
 };
 const baselineLeaves = main26a4Inventory();
-const leaves = baselineLeaves.map(row => ({...row,...delta[row.path]}));
-assert.equal(Object.keys(delta).length,4);
-assert.equal(leaves.filter((row,i)=>row.sha!==baselineLeaves[i].sha).length,4);
+const ownerClockPath = 'patches/network-replication/owner-clock.mjs';
+assert.ok(!baselineLeaves.some(row => row.path === ownerClockPath),'owner clock is the sole new production leaf');
+assert.equal(Object.keys(delta).length,8);
+assert.equal(Object.keys(delta).filter(relative => relative !== ownerClockPath && baselineLeaves.some(row => row.path === relative)).length,7);
+const leaves = [...baselineLeaves.map(row => ({...row,...delta[row.path]})),
+  {path:ownerClockPath,mode:'100644',...delta[ownerClockPath]}]
+  .sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
+assert.equal(leaves.length,1392);
+assert.equal(baselineLeaves.filter(row => delta[row.path] && row.sha !== delta[row.path].sha).length,7);
 export function runtimeUIInventory() { return structuredClone(leaves); }
 export function assertRuntimeUIRows(rows, hashes = true) {
   assert.ok(Array.isArray(rows),'inventory array required');
@@ -43,7 +66,7 @@ export function assertRuntimeUIContract({mode,sourceBase,sourceHead,baseSha,cand
   assert.equal(sourceBase,MAIN26A4_SHA,'exact source baseline epoch');
   assert.equal(baseSha,MAIN26A4_SHA,'actual baseline must be reviewed main26a4');
   assert.match(candidateSha??'',/^[0-9a-f]{40}$/,'actual candidate immutable SHA required');
-  assert.notEqual(candidateSha,MAIN26A4_SHA,'four production changes require a new actual commit');
+  assert.notEqual(candidateSha,MAIN26A4_SHA,'eight production changes require a new actual commit');
   assert.equal(sourceHead,candidateSha,'candidate source epoch must be its actual declared Git HEAD');
 }
 export function verifyRuntimeUIProductionPair(options) {
@@ -63,9 +86,9 @@ export function verifyRuntimeUIProductionPair(options) {
   }
   return {schema:1,mode:RUNTIME_UI_MODE,sourceBase:MAIN26A4_SHA,sourceHead:options.candidateSha,
     declaredBaseCommit:options.baseSha,declaredCandidateCommit:options.candidateSha,
-    checkouts:result,canonicalInputs:1362,baselineInventoryHash:createHash('sha256').update(JSON.stringify(baselineLeaves)).digest('hex'),candidateInventoryHash:createHash('sha256').update(JSON.stringify(leaves)).digest('hex'),
-    productionSupersetLeaves:1391,builderPinnedSeparately:true,changes:Object.keys(delta),writtenPaths:[],
-    scope:'Read-only exact four-delta production source admission at declared actual Git HEADs. No replay or source writes.',
+    checkouts:result,baselineCanonicalInputs:1362,canonicalInputs:1363,baselineInventoryHash:createHash('sha256').update(JSON.stringify(baselineLeaves)).digest('hex'),candidateInventoryHash:createHash('sha256').update(JSON.stringify(leaves)).digest('hex'),
+    productionSupersetLeaves:1392,builderPinnedSeparately:true,changes:Object.keys(delta),writtenPaths:[],
+    scope:'Read-only exact eight-delta production source admission at declared actual Git HEADs. No replay or source writes.',
     limitation:'Not a build, runtime, RNG, visual, retail-equivalence or gameplay-improvement result. Final-head emitted and browser comparisons remain required.'};
 }
 export async function runRuntimeUIAdmissionCLI(values,role) {
@@ -85,6 +108,13 @@ export async function runRuntimeUIAdmissionCLI(values,role) {
       assert.throws(() => assertRuntimeUIRows(changed));rejected++;
     }
     for (const changed of [leaves.slice(1),[...leaves,{...leaves[0],path:'inkwave-public/unreviewed-extra.js'}],[...leaves,leaves[0]]]) {assert.throws(() => assertRuntimeUIRows(changed));rejected++;}
+    // Each partially reverted reviewed delta, including a missing owner clock,
+    // must reject rather than admitting a mixed old/new production epoch.
+    for (const relative of Object.keys(delta)) {
+      const original = baselineLeaves.find(row => row.path === relative);
+      const changed = original ? leaves.map(row => row.path === relative ? original : row) : leaves.filter(row => row.path !== relative);
+      assert.throws(() => assertRuntimeUIRows(changed));rejected++;
+    }
     for (const changes of [{mode:'unknown-mode'},{sourceBase:'0'.repeat(40)},{sourceHead:'0'.repeat(40)},{baseSha:'0'.repeat(40)},{candidateSha:'main'}]) {assert.throws(() => assertRuntimeUIContract({...options,...changes}));rejected++;}
     evidence.controls={kind:'inventory-and-contract-negative-controls',rejected};
   }

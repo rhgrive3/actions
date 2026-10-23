@@ -13,6 +13,7 @@ import {WebSocketServer} from 'ws';
 import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
 import {installCombatPlacementQA,advanceUntilNativeShotProof,advanceUntilNativePlacement} from './lib/inkwave-combat-ceiling-placement.mjs';
 import {verifyRuntimeBuild, persistentDirectory, hash} from './lib/inkwave-runtime-evidence.mjs';
+import {installOwnerClockDiagnostic,readOwnerClockDiagnostic} from './lib/inkwave-owner-clock-diagnostic.mjs';
 import {collectOpeningPeerDiagnostics} from './lib/inkwave-opening-peer-diagnostic.mjs';
 import {serveProjectileCaptureFile} from './lib/inkwave-projectile-http-file.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
@@ -24,7 +25,7 @@ assert.equal(option('--source-sha',sourceSha),sourceSha,'checkout must equal req
 const build=verifyRuntimeBuild(site,ROOT,sourceSha);
 assert.equal(build.schema,1);assert.equal(hash(JSON.stringify(build.files)),build.inputHash);
 const self=fileURLToPath(import.meta.url),selfRelative=path.relative(ROOT,self);
-for(const file of [selfRelative,'scripts/lib/inkwave-opening-peer-diagnostic.mjs','scripts/lib/inkwave-combat-ceiling-placement.mjs','scripts/lib/inkwave-local-relay-fixture.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/lib/inkwave-projectile-http-file.mjs','server/src/index.js']){
+for(const file of [selfRelative,'scripts/lib/inkwave-owner-clock-diagnostic.mjs','scripts/lib/inkwave-opening-peer-diagnostic.mjs','scripts/lib/inkwave-combat-ceiling-placement.mjs','scripts/lib/inkwave-local-relay-fixture.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/lib/inkwave-projectile-http-file.mjs','server/src/index.js']){
  const actual=execFileSync('git',['hash-object','--',file],{cwd:ROOT,encoding:'utf8'}).trim();
  const expected=execFileSync('git',['rev-parse',sourceSha+':'+file],{cwd:ROOT,encoding:'utf8'}).trim();
  assert.equal(actual,expected,'QA/relay source must match head: '+file);
@@ -52,12 +53,15 @@ try {
  const base='http://127.0.0.1:'+server.address().port;
  const relayURL='ws://127.0.0.1:'+relay.address().port;
  const address=base+'/?map=tidewater&difficulty=normal&skipTitle&relay='+encodeURIComponent(relayURL);
+ const netmatchURL=base+'/_versions/'+build.build.revision+'/src/net/netmatch.js';
  const actorURL=base+'/_versions/'+build.build.revision+'/src/game/actor.js';
  browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--disable-background-timer-throttling','--disable-renderer-backgrounding','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  report.phase='native-menu';
  for(let i=0;i<2;i++){
   const context=await browser.newContext({viewport:{width:1280,height:720},serviceWorkers:'block'});contexts.push(context);
   const page=await context.newPage();pages.push(page);page.setDefaultTimeout(30000);
+  report.clockReceipts ||= [[],[]];
+  page.on('console',message=>{const receipt=readOwnerClockDiagnostic(message.text());if(receipt&&report.clockReceipts[i].length<96)report.clockReceipts[i].push(receipt);});
   page.on('pageerror',e=>errors.push('player'+i+': '+e.message));
   page.on('requestfailed',r=>errors.push('player'+i+': '+r.url()+': '+r.failure()?.errorText));
   await page.addInitScript(installCombatPlacementQA);
@@ -70,6 +74,8 @@ try {
   await page.goto(address,{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>{if(document.querySelector('#boot-error')?.textContent)throw Error('Native boot error');const G=window.__G,g=window.__inkwave;return !!G&&!!g&&G.game===g&&G.mode==='menu'&&g.menus&&g.debug&&G.net&&!g._nativeStageSwitchPending&&!g.frozen;},null,{timeout:180000});
  }
+ // Install before the room starts, including the unbound asynchronous startup window.
+ await Promise.all(pages.map(page=>page.evaluate(installOwnerClockDiagnostic,netmatchURL)));
  const [host,guest]=pages;
  report.phase='native-room-start';
  const code=await host.evaluate(()=>__G.net.create('Ceiling QA Host'));

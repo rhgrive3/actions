@@ -110,7 +110,7 @@ jobs:
         with:
           node-version: 22
       - name: Verify scoped network diagnostic workflow contracts
-        run: node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-opening-peer-diagnostic.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs
+        run: node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-opening-peer-diagnostic.test.mjs scripts/tests/inkwave-owner-clock-diagnostic.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs
       - name: Install pinned source regression and build tool
         run: npm install --no-save --no-package-lock --silent esbuild@0.28.2
       - name: Prepare persistent worker regression fixtures
@@ -680,7 +680,10 @@ jobs:
         run: node scripts/check-inkwave-network-browser.mjs --delay-frames 6 --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/network-delay" --profile-dir "$CI_STORAGE/cache/network-delay" --exact-source
       - name: Verify neutral combat QA placement contracts
         if: matrix.suite == 'network'
-        run: node --test scripts/tests/inkwave-combat-ceiling-placement.test.mjs
+        run: node --test scripts/tests/inkwave-combat-ceiling-placement.test.mjs scripts/tests/inkwave-owner-clock-diagnostic.test.mjs
+      - name: Verify fixed-origin owner clock regressions
+        if: matrix.suite == 'network'
+        run: node --experimental-vm-modules --test patches/network-replication/tests/owner-clock-origin.test.mjs patches/network-replication/tests/owner-clock-platform.test.mjs patches/network-replication/tests/owner-clock-opening-adoption.test.mjs patches/network-replication/tests/issue-1767-startup-clock.test.mjs patches/network-replication/tests/issue-1767-session-clock.test.mjs
       - name: Verify real Actor hit ceiling before proof and hit ID consumption
         if: matrix.suite == 'network'
         run: node scripts/check-inkwave-combat-ceiling-browser.mjs --site .built-site/_site --source-sha "$SOURCE_SHA" --evidence-dir "$CI_STORAGE/evidence/combat-ceiling"
@@ -955,8 +958,10 @@ jobs:
           sudo chown "$(id -u):$(id -g)" "$browser_tmp"
       - name: Verify scoped network diagnostic workflow contracts
         run: node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs
+      - name: Verify fixed-origin owner clock regressions
+        run: node --experimental-vm-modules --test patches/network-replication/tests/owner-clock-origin.test.mjs patches/network-replication/tests/owner-clock-platform.test.mjs patches/network-replication/tests/owner-clock-opening-adoption.test.mjs patches/network-replication/tests/issue-1767-startup-clock.test.mjs patches/network-replication/tests/issue-1767-session-clock.test.mjs
       - name: Verify native placement and bounded diagnostic contracts
-        run: node --test scripts/tests/inkwave-combat-ceiling-placement.test.mjs scripts/tests/inkwave-opening-peer-diagnostic.test.mjs
+        run: node --test scripts/tests/inkwave-combat-ceiling-placement.test.mjs scripts/tests/inkwave-opening-peer-diagnostic.test.mjs scripts/tests/inkwave-owner-clock-diagnostic.test.mjs
       - name: Install pinned build and browser dependencies
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8

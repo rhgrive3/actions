@@ -3,17 +3,89 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {execFileSync,spawnSync} from 'node:child_process';
-import {MAIN26A4_SHA,main26a4Inventory,assertMain26a4Rows} from '../lib/inkwave-main26a4-production-epoch.mjs';
+import {MAIN26A4_SHA,main26a4Inventory,assertMain26a4Rows,readMain26a4GitTree,scanMain26a4Production} from '../lib/inkwave-main26a4-production-epoch.mjs';
 import {RUNTIME_UI_MODE,runtimeUIInventory,assertRuntimeUIRows,assertRuntimeUIContract} from '../lib/inkwave-runtime-ui-production-epoch.mjs';
 const repo=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const rows=runtimeUIInventory(),base=main26a4Inventory();
 const contract={mode:RUNTIME_UI_MODE,sourceBase:MAIN26A4_SHA,sourceHead:'a'.repeat(40),baseSha:MAIN26A4_SHA,candidateSha:'a'.repeat(40)};
-test('exact four published production deltas, all other1387 pinned; old mode remains rejecting',()=>{
- assert.equal(rows.length,1391);assertRuntimeUIRows(rows);assertMain26a4Rows(base);
- assert.deepEqual(rows.filter((x,i)=>x.sha!==base[i].sha).map(x=>x.path).sort(),['inkwave-public/src/world/level.js','patches/local-quality/collision-hotpath-adapter.mjs','patches/local-quality/gyro.mjs','patches/local-quality/static-menu-adapter.mjs']);
+const ownerClockPath='patches/network-replication/owner-clock.mjs';
+const oldDeltaPaths=['inkwave-public/src/world/level.js','patches/local-quality/collision-hotpath-adapter.mjs','patches/local-quality/gyro.mjs','patches/local-quality/static-menu-adapter.mjs'];
+const clockPins={
+ "inkwave-public/src/net/transport.js": {
+  "sha": "1fbd79cfe58681901b7d5581d4db984c7c581761",
+  "sha256": "8e90e02226f617e70cd0eee96295b2d7c02aa37cb4768064bd00a863f4bf666e"
+ },
+ "patches/network-replication/adapter.mjs": {
+  "sha": "e2acb3f6f9a466414cb77dbe93187303717fbfda",
+  "sha256": "03798102743610bb1643caa327fdb4dee9b4bf7a587674fe44b5ada1b6f36645"
+ },
+ "patches/network-replication/snapshot-guard.mjs": {
+  "sha": "39f05e1aecb0b76d9e41ae5a077f2042c6c46b06",
+  "sha256": "e3724ac1014550bebeda6287e4c74087610ccbcf93f5803db40950409d7a96e5"
+ },
+ "patches/network-replication/owner-clock.mjs": {
+  "sha": "8ab2f9b395d80c59120d064f7e2c1093ccf04879",
+  "sha256": "2225aad527fec32d60b92044d2abc1218c92ca3d608364beaf40be0f6d453e97"
+ }
+};
+const changedPaths=[...oldDeltaPaths,...Object.keys(clockPins)].sort();
+const baseByPath=new Map(base.map(row=>[row.path,row]));
+test('exact eight reviewed deltas: seven replacements and only owner clock added; other1384 pinned',()=>{
+ assert.equal(base.length,1391);assert.equal(rows.length,1392);assertRuntimeUIRows(rows);assertMain26a4Rows(base);
+ assert.deepEqual(rows.filter(row=>row.sha!==baseByPath.get(row.path)?.sha).map(row=>row.path),changedPaths);
+ assert.deepEqual(rows.filter(row=>!baseByPath.has(row.path)).map(row=>row.path),[ownerClockPath]);
+ assert.equal(rows.filter(row=>row.sha===baseByPath.get(row.path)?.sha).length,1384);
+ for(const [relative,pins] of Object.entries(clockPins))assert.deepEqual(rows.find(row=>row.path===relative),{path:relative,mode:'100644',...pins});
  assert.throws(()=>assertMain26a4Rows(rows));assert.throws(()=>assertRuntimeUIRows(base));
+ assert.equal(base.find(row=>row.path==='scripts/build-inkwave.mjs').sha,'17d59758049518a6e5c93f50e1f3a0614e7c6ee4');
+ assert.equal(createHash('sha256').update(fs.readFileSync(path.join(repo,'scripts/fixtures/inkwave-main26a4-production-epoch.json.gz'))).digest('hex'),'a24db4a8ea3ee3da710df533b26cefe3f981f19238f57aa5139972b7ccc220d4');
+});
+test('previous four-delta and every partially reverted or altered reviewed delta reject',()=>{
+ const oldRows=base.map(row=>oldDeltaPaths.includes(row.path)?rows.find(x=>x.path===row.path):row);
+ assert.throws(()=>assertRuntimeUIRows(oldRows));
+ for(const relative of changedPaths){
+  const original=baseByPath.get(relative);
+  const mixed=original?rows.map(row=>row.path===relative?original:row):rows.filter(row=>row.path!==relative);
+  assert.throws(()=>assertRuntimeUIRows(mixed),relative+' must not admit old/new mixture');
+  for(const key of ['mode','sha','sha256']){
+   const changed=rows.map(row=>row.path===relative?{...row,[key]:'unreviewed'}:row);
+   assert.throws(()=>assertRuntimeUIRows(changed),relative+': '+key);
+   if(key!=='sha256')assert.throws(()=>assertRuntimeUIRows(changed,false),relative+': Git '+key);
+  }
+ }
+});
+test('owner clock missing, renamed, duplicated, unknown-added and executable variants reject',()=>{
+ const clock=rows.find(row=>row.path===ownerClockPath);
+ for(const changed of [rows.filter(row=>row.path!==ownerClockPath),rows.map(row=>row.path===ownerClockPath?{...row,path:'patches/network-replication/owner-clock-other.mjs'}:row),[...rows,clock],[...rows,{...clock,path:'patches/network-replication/unreviewed-clock.mjs'}],rows.map(row=>row.path===ownerClockPath?{...row,mode:'100755'}:row)])assert.throws(()=>assertRuntimeUIRows(changed));
+ const copy=runtimeUIInventory();copy.find(row=>row.path===ownerClockPath).sha='0'.repeat(40);
+ assertRuntimeUIRows(runtimeUIInventory());assertMain26a4Rows(main26a4Inventory());
+});
+test('actual clock file drift cannot hide behind unchanged real Git HEAD (focused scanner fixture)',()=>{
+ // Other inventory rows below are validator metadata, not a claimed full
+ // production checkout; this fixture exercises actual clock bytes and Git.
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'runtime-ui-clock-source-'));
+ const git=(...args)=>execFileSync('git',['-C',root,...args],{encoding:'utf8',env:{...process.env,GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null'}}).trim();
+ const relative=ownerClockPath,file=path.join(root,relative),clock=rows.find(row=>row.path===relative);
+ const project=()=>scanMain26a4Production(root).find(row=>row.path===relative);
+ try{
+  for(const dir of ['inkwave-public','patches/splatoon3','patches/touch-layout','patches/reliability','patches/local-quality','patches/network-replication','patches/practice-range','patches/native-stages','patches/loading-cache'])fs.mkdirSync(path.join(root,dir),{recursive:true});
+  for(const row of base.filter(row=>row.path.startsWith('scripts/'))){const f=path.join(root,row.path);fs.mkdirSync(path.dirname(f),{recursive:true});fs.writeFileSync(f,'focused scanner fixture, not production');}
+  fs.writeFileSync(file,fs.readFileSync(path.join(repo,relative)));
+  git('init','--quiet');git('add','.');git('-c','user.name=QA test','-c','user.email=qa@example.invalid','commit','--quiet','-m','focused clock source fixture');
+  const head=git('rev-parse','HEAD');
+  assert.equal(readMain26a4GitTree(root,head).entries.find(row=>row.path===relative).sha,clock.sha);
+  assert.deepEqual(project(),clock);
+  fs.appendFileSync(file,'\n// unreviewed clock drift\n');
+  assert.equal(readMain26a4GitTree(root,head).head,head);
+  const changed=project();assert.notEqual(changed.sha,clock.sha);assert.throws(()=>assertRuntimeUIRows(rows.map(row=>row.path===relative?changed:row)));
+  fs.unlinkSync(file);assert.equal(project(),undefined);assert.throws(()=>assertRuntimeUIRows(rows.filter(row=>row.path!==relative)));
+  const unknown='patches/network-replication/unreviewed-clock.mjs';fs.writeFileSync(path.join(root,unknown),'unreviewed');
+  const extra=scanMain26a4Production(root).find(row=>row.path===unknown);assert.ok(extra);assert.throws(()=>assertRuntimeUIRows([...rows,extra]));
+  assert.throws(()=>readMain26a4GitTree(root,MAIN26A4_SHA),/actual HEAD/);
+ }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
 test('every leaf rejects independent drift; missing extra duplicate mode and blob fail closed',()=>{
  for(let i=0;i<rows.length;i++){const x=[...rows];x[i]={...x[i],sha256:'0'.repeat(64)};assert.throws(()=>assertRuntimeUIRows(x));}

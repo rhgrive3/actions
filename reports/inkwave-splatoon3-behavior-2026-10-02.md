@@ -5835,3 +5835,11 @@ CPU回帰の成功は物理GPU/実機性能の受け入れではない。Splatoo
 
 
 最終確認: runtime `df83a5c4265a9c8738d930dabaffb43cd31ae902` / build contentHash `7b0b597f308f86d2d9607e2a5e0e5f122fa7e0a7435810512039de7014565533` の総合active browserが成功した。65 canonical kit、14 defaults、装備12select、実キーボード移動・接地・射撃/塗り、20Hz時の3秒進行、finite velocity、752 responseの同一性とpage errors 0を確認した。実music Workerの作成元・97-byte body/hash・cleanupを含むnative試験7件、過去の固定gate20件、追加source admission24件も通過した。これはChromium 153 / SwiftShaderでの公開版の回帰確認であり、物理端末FPSやSwitch実機・完了動画の受け入れではない。GitHub上のCI待機は別に残る。
+
+## 2026-10-23：開始時の owner clock 固定原点と通信受け入れの限定回帰（#1767）
+
+- 対象は `5f2dcb9a69d642f9e3f450d2c96ab725f5bcd696`／QA 継続先 `90e9530bd155a0f10596819e0e4987f32aa2a04f` に対する候補。#1842 の clock-only 修正を限定採用し、受信側が生成する nonce の応答から固定原点を確定する。bind 前の snapshot は時計を確立せず、証明待ちの packet は個数・UTF-8 byte 数を制限して保留する。再応答・後続 packet で原点を更新しない。実装は `patches/network-replication/{adapter,owner-clock,snapshot-guard}.mjs`。offline import 時の不要な依存を避ける lazy TextEncoder 初期化だけを #1843 から別途採用した。
+- `inkwave-public/src/net/transport.js` の互換 epoch は `iw-gameplay-20261022-owner-clock-v1`。実オンライン peer は同じ版への更新・再接続が必要で、旧 rainmaker-origin epoch や現行 peer の protocol 省略への downgrade は許可しない。既存の未来時刻 5 秒上限、nonce 2 秒 TTL、monotonic/replay、owner・match・life・adoption 検証を維持する。spawn の消去、時計の書き換え、readiness 条件緩和、待機期限の延長は行わない。
+- Node 22.23.3 の限定確認は clock 22 件、placement／診断／workflow routing 49 件、outbound 42 件の計 113 件成功。実 Session の 30／60／120 Hz、遅延開始、期限切れ応答、再接続、pause/resume、旧 COMPAT 拒否を含む。outbound の一括実行は Node 22 で SIGKILL、Node 24 でも assertion のない process failure があったため、失敗記録を保存し、同じ 42 件を重複のない 6 群で再実行した。資源不足は仮説であり、kill 原因は未確定。全 repository suite の成功ではない。
+- 実 browser CI の job `120130984852`／run `39866823279` では両 owner が完了 spawn row を送った後も guest 側 proxy が aim のままだった。受信時計の組は保存されておらず、この実行の原因を #1767 と確定しない。追加回帰は同 job の terminal row を実 decoder／sample に通すが、受信遅延は明示的なモデル値であり実測値ではない。次の CI 用観測は packet 内容・owner ID・nonce を含めず、各 page 最大 96 件の有限数値・固定ラベルに制限する。
+- この変更は INKWAVE の通信実装上の不整合への対処であり、スプラトゥーン3の非公開通信方式や Switch 実機との一致を立証するものではない。実 browser での復旧、exact new-head CI、main 統合は未確認。ローカル browser は実行しておらず、元の native opening／placement／hit 受け入れ条件をそのまま残す。
