@@ -1,0 +1,27 @@
+(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+TAP version 13
+# (node:13) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:13) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# Subtest: source: terminal Crab wake cleanup and negative control
+ok 1 - source: terminal Crab wake cleanup and negative control
+  ---
+  duration_ms: 9.838859
+  type: 'test'
+  ...
+# Subtest: transformed: terminal Crab wake cleanup and negative control
+ok 2 - transformed: terminal Crab wake cleanup and negative control
+  ---
+  duration_ms: 310.286608
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 396.047398

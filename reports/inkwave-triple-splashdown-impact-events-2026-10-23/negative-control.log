@@ -1,0 +1,48 @@
+(node:3498) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ cancellation/clear has no landing blast and a new activation still lands normally (15114.848584ms)
+✖ remote visual expiry waits for accepted impact; remote fistGone shatters without a landing blast (13180.303419ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 29190.656123
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/triple-splashdown-impact-vfx.test.mjs:57:1
+✖ cancellation/clear has no landing blast and a new activation still lands normally (15114.848584ms)
+  AssertionError [ERR_ASSERTION]: clearing live fists is not an impact
+
+  2 !== 0
+
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/triple-splashdown-impact-vfx.test.mjs:61:12)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at patches/splatoon3/tests/triple-splashdown-impact-vfx.test.mjs:78:1
+✖ remote visual expiry waits for accepted impact; remote fistGone shatters without a landing blast (13180.303419ms)
+  AssertionError [ERR_ASSERTION]: remote destroyed fist must not announce a ground impact
+
+  1 !== 0
+
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/triple-splashdown-impact-vfx.test.mjs:84:12)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -100,8 +100,11 @@ function stampArc(a, s, state, t) {
   if (since >= 0 && since < M.hold) arc = M.strike;
   else if (since >= M.hold && since < M.hold + M.recover) arc = M.strike + (holding ? M.raised - M.strike : M.rest - M.strike) * smooth((since - M.hold) / M.recover);
   else arc = holding ? M.raised : M.rest;
-  if (state && holding && Number.isFinite(state.nextSwing) && Number.isFinite(state.t)) {
-    const toNext = state.nextSwing - state.t;                              // anticipate the authoritative swing frame
+  // An admitted airborne swing owns jumpStampAt; nextSwing is the later
+  // grounded-repeat lockout, not the impending jump contact. Observe only.
+  const nextStamp = Number.isFinite(state?.jumpStampAt) ? state.jumpStampAt : state?.nextSwing;
+  if (state && holding && Number.isFinite(nextStamp) && Number.isFinite(state.t)) {
+    const toNext = nextStamp - state.t;                                   // anticipate the authoritative swing frame
     if (toNext >= 0 && toNext < M.windup) arc = M.strike + (M.raised - M.strike) * (1 - easeIn(1 - toNext / M.windup));
   }
   s.stampArc = arc;
@@ -344,18 +347,22 @@ export function installSpecialModels(api) {
     const flight = o.phase === 'flight', age = Math.max(0, o.age - (o.landedAt || 0));
     if (o.mesh) o.mesh.visible = false;
     if (o.kind === 'screen') {
-      // Unfurl over the 60F startup and fold back down over the 60F close (presentation of the
-      // source StartFrame/EndFrame; the moving plane and its hits are unchanged).
+      // Unfurl over the existing startup; fade upright during the existing close.
+      // Guide capture frames330-365 (30000/1001 recording fps) retain the
+      // silhouette as it disappears. This does not calibrate gameplay timing.
       const H = o.height || 9, dur = o.dur || 680 / 60;
       const rise = flight ? 0 : clamp01(age / 1), fold = clamp01((age - (dur - 1)) / 1);
-      const k = (1 - Math.pow(1 - rise, 3)) * (1 - fold * fold), wob = 1 + 0.04 * Math.sin(o.age * 9) * (1 - rise);
+      const k = 1 - Math.pow(1 - rise, 3), fade = 1 - fold * fold, wob = 1 + 0.04 * Math.sin(o.age * 9) * (1 - rise);
       g.position.copy(o.pos);
       g.rotation.set(0, Math.atan2(o.normal.x, o.normal.z), 0);
       pres.sheet.scale.set(0.35 + 0.65 * k * wob, Math.max(0.001, k), 1);
       pres.sheet.position.y = H / 2 * Math.max(0.001, k);
-      pres.sheet.visible = !flight && k > 0.002;
+      pres.sheet.visible = !flight && k > 0.002 && fade > 0;
       const mat = pres.sheet.userData.s3ScreenSheet;
-      mat.mat.opacity = 0.8 + 0.06 * Math.sin(o.age * 7);
+      mat.mat.opacity = (0.8 + 0.06 * Math.sin(o.age * 7)) * fade;
+      // The separate white silhouette rim must disappear with the marbling.
+      for (const child of pres.sheet.children || []) if (child.material && child.material !== mat.mat)
+        child.material.opacity = 0.18 * fade;
       if (mat.mat.uniforms?.uTime) mat.mat.uniforms.uTime.value = o.age;
       mat.tex.offset.x += dt * 0.02; mat.tex.offset.y += dt * 0.01;
       if (m.jar) { m.jar.root.rotation.y = o.age * 2.4; m.jar.root.position.y = 0.05 + 0.1 * Math.abs(Math.sin(o.age * 6)) * (1 - rise); poseSubModel(m.jar, { dt }); }

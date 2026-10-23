@@ -1,0 +1,710 @@
+{
+  "base": {
+    "commit": "a4e81347906c0d60ceef76a69f476261bf8d3f86",
+    "tree": "34236683e6776aac9d8b1d4ae0b8a1b31d3f2df2",
+    "runtimeSha256": "81b50f2b3ee54e324d6f1f626e6d7966fe4567e5ecc947eb5a3b11c7dc808256"
+  },
+  "candidate": {
+    "runtimeSha256": "7f209c9939122503ce9715fc12232f64ca4c939aea96e3179d0cf0443eac5cb0",
+    "ownedFunctions": [
+      "DIRECTORS.reefslider.phase",
+      "DIRECTORS.reefslider.frame"
+    ],
+    "otherFunctionsByteIdentical": true
+  },
+  "retailComparison": "pending parent phase-specific frames; known GameWith 403 not retried or bypassed; encoded recording30fps is not native FPS",
+  "tests": {
+    "sourcePassed": 34,
+    "emittedPassed": 21,
+    "negativeControl": {
+      "baseCommit": "a4e81347906c0d60ceef76a69f476261bf8d3f86",
+      "passed": 1,
+      "expectedFailures": 2
+    },
+    "fixedRandomHalfSecondCadence": {
+      "hz": [
+        30,
+        60,
+        120
+      ],
+      "startupDrops": [
+        30,
+        30,
+        30
+      ],
+      "brakeGlows": [
+        30,
+        30,
+        30
+      ],
+      "brakeDrops": [
+        30,
+        30,
+        30
+      ],
+      "warningRadians": [
+        2.0842106342315674,
+        2.0842106342315674,
+        2.0842106342315674
+      ]
+    }
+  },
+  "comparison60": {
+    "baselineStatus": "passed",
+    "candidateStatus": "passed",
+    "seededGameplaySnapshotsIdentical": true,
+    "frames": 9,
+    "builds": {
+      "base": {
+        "build": {
+          "revision": "838cfb268cba2b6c4ae3f13918ed0a197bbc0fa453883dfea010c1e9fa02248d",
+          "esbuild": "0.28.2",
+          "optimization": "esbuild-minify"
+        },
+        "contentHash": "e1c18a72dc8a4e358944f8a8dec59f0d4e178c2d2da9881c8af2d2946e380ab2",
+        "verifiedArtifacts": 2020,
+        "reefsliderModuleSha256": "32736b5e4130f60533cd9cae40eb894151e88ec5f503e9a9eac15873cb119fc1"
+      },
+      "candidate": {
+        "build": {
+          "revision": "6e78707f2251d3febbbd7797151b7fa020bb37b712efc221d457c202bf59a73d",
+          "esbuild": "0.28.2",
+          "optimization": "esbuild-minify"
+        },
+        "contentHash": "30b1878dfedecefb7885c16282b59a53736ffe95d65bda2948d24988834d05c2",
+        "verifiedArtifacts": 2020,
+        "reefsliderModuleSha256": "9638780fec3d943c204abe6219dc91b141be69bc00f92759692449a8377b82f2"
+      }
+    },
+    "baselineLifecycle": {
+      "firstRetired": true,
+      "initialResources": {
+        "sparks": 0,
+        "puffs": 103,
+        "ribbons": 0,
+        "shapes": 5,
+        "draws": 12
+      },
+      "reused": true,
+      "beforeDeath": "brake",
+      "deathRetired": true,
+      "devicesRetired": true,
+      "retainedRibbonsAfterOneSecond": 0,
+      "finalResources": {
+        "sparks": 0,
+        "puffs": 0,
+        "ribbons": 0,
+        "shapes": 0,
+        "draws": 12
+      }
+    },
+    "candidateLifecycle": {
+      "firstRetired": true,
+      "initialResources": {
+        "sparks": 0,
+        "puffs": 103,
+        "ribbons": 0,
+        "shapes": 5,
+        "draws": 12
+      },
+      "reused": true,
+      "beforeDeath": "brake",
+      "deathRetired": true,
+      "devicesRetired": true,
+      "retainedRibbonsAfterOneSecond": 0,
+      "finalResources": {
+        "sparks": 0,
+        "puffs": 0,
+        "ribbons": 0,
+        "shapes": 0,
+        "draws": 12
+      }
+    }
+  },
+  "scenarios": {
+    "baseline60": {
+      "status": "passed",
+      "webgl2": true,
+      "errors": [],
+      "frames": [
+        {
+          "label": "ordinary-before",
+          "simulationFrame": 0,
+          "phase": null,
+          "warningRetained": null,
+          "stats": {
+            "sparks": 0,
+            "puffs": 0,
+            "ribbons": 0,
+            "shapes": 0,
+            "draws": 12
+          }
+        },
+        {
+          "label": "startup-12",
+          "simulationFrame": 12,
+          "phase": "startup",
+          "warningRetained": null,
+          "stats": {
+            "sparks": 17,
+            "puffs": 81,
+            "ribbons": 0,
+            "shapes": 2,
+            "draws": 12
+          }
+        },
+        {
+          "label": "dash-45",
+          "simulationFrame": 45,
+          "phase": "dash",
+          "warningRetained": null,
+          "stats": {
+            "sparks": 3,
+            "puffs": 44,
+            "ribbons": 3,
+            "shapes": 1,
+            "draws": 12
+          }
+        },
+        {
+          "label": "brake-92",
+          "simulationFrame": 92,
+          "phase": "dash",
+          "warningRetained": null,
+          "stats": {
+            "sparks": 4,
+            "puffs": 85,
+            "ribbons": 3,
+            "shapes": 0,
+            "draws": 12
+          }
+        },
+        {
+          "label": "brake-112",
+          "simulationFrame": 112,
+          "phase": "brake",
+          "warningRetained": true,
+          "stats": {
+            "sparks": 8,
+            "puffs": 98,
+            "ribbons": 3,
+            "shapes": 1,
+            "draws": 12
+          }
+        },
+        {
+          "label": "brake-129",
+          "simulationFrame": 129,
+          "phase": "brake",
+          "warningRetained": true,
+          "stats": {
+            "sparks": 10,
+            "puffs": 97,
+            "ribbons": 3,
+            "shapes": 1,
+            "draws": 12
+          }
+        },
+        {
+          "label": "impact-132",
+          "simulationFrame": 132,
+          "phase": "recovery",
+          "warningRetained": true,
+          "stats": {
+            "sparks": 8,
+            "puffs": 189,
+            "ribbons": 3,
+            "shapes": 7,
+            "draws": 12
+          }
+        },
+        {
+          "label": "recovery-145",
+          "simulationFrame": 145,
+          "phase": "recovery",
+          "warningRetained": true,
+          "stats": {
+            "sparks": 0,
+            "puffs": 148,
+            "ribbons": 3,
+            "shapes": 6,
+            "draws": 12
+          }
+        },
+        {
+          "label": "ordinary-return-160",
+          "simulationFrame": 160,
+          "phase": null,
+          "warningRetained": null,
+          "stats": {
+            "sparks": 0,
+            "puffs": 103,
+            "ribbons": 0,
+            "shapes": 5,
+            "draws": 12
+          }
+        }
+      ],
+      "lifecycle": {
+        "firstRetired": true,
+        "initialResources": {
+          "sparks": 0,
+          "puffs": 103,
+          "ribbons": 0,
+          "shapes": 5,
+          "draws": 12
+        },
+        "reused": true,
+        "beforeDeath": "brake",
+        "deathRetired": true,
+        "devicesRetired": true,
+        "retainedRibbonsAfterOneSecond": 0,
+        "finalResources": {
+          "sparks": 0,
+          "puffs": 0,
+          "ribbons": 0,
+          "shapes": 0,
+          "draws": 12
+        }
+      }
+    },
+    "candidate60": {
+      "status": "passed",
+      "webgl2": true,
+      "errors": [],
+      "frames": [
+        {
+          "label": "ordinary-before",
+          "simulationFrame": 0,
+          "phase": null,
+          "warningRetained": null,
+          "stats": {
+            "sparks": 0,
+            "puffs": 0,
+            "ribbons": 0,
+            "shapes": 0,
+            "draws": 12
+          }
+        },
+        {
+          "label": "startup-12",
+          "simulationFrame": 12,
+          "phase": "startup",
+          "warningRetained": null,
+          "stats": {
+            "sparks": 17,
+            "puffs": 81,
+            "ribbons": 0,
+            "shapes": 2,
+            "draws": 12
+          }
+        },
+        {
+          "label": "dash-45",
+          "simulationFrame": 45,
+          "phase": "dash",
+          "warningRetained": null,
+          "stats": {
+            "sparks": 3,
+            "puffs": 44,
+            "ribbons": 3,
+            "shapes": 1,
+            "draws": 12
+          }
+        },
+        {
+          "label": "brake-92",
+          "simulationFrame": 92,
+          "phase": "dash",
+          "warningRetained": null,
+          "stats": {
+            "sparks": 4,
+            "puffs": 85,
+            "ribbons": 3,
+            "shapes": 0,
+            "draws": 12
+          }
+        },
+        {
+          "label": "brake-112",
+          "simulationFrame": 112,
+          "phase": "brake",
+          "warningRetained": true,
+          "stats": {
+            "sparks": 8,
+            "puffs": 98,
+            "ribbons": 3,
+            "shapes": 1,
+            "draws": 12
+          }
+        },
+        {
+          "label": "brake-129",
+          "simulationFrame": 129,
+          "phase": "brake",
+          "warningRetained": true,
+          "stats": {
+            "sparks": 10,
+            "puffs": 97,
+            "ribbons": 3,
+            "shapes": 1,
+            "draws": 12
+          }
+        },
+        {
+          "label": "impact-132",
+          "simulationFrame": 132,
+          "phase": "recovery",
+          "warningRetained": false,
+          "stats": {
+            "sparks": 8,
+            "puffs": 189,
+            "ribbons": 2,
+            "shapes": 6,
+            "draws": 12
+          }
+        },
+        {
+          "label": "recovery-145",
+          "simulationFrame": 145,
+          "phase": "recovery",
+          "warningRetained": false,
+          "stats": {
+            "sparks": 0,
+            "puffs": 148,
+            "ribbons": 0,
+            "shapes": 5,
+            "draws": 12
+          }
+        },
+        {
+          "label": "ordinary-return-160",
+          "simulationFrame": 160,
+          "phase": null,
+          "warningRetained": null,
+          "stats": {
+            "sparks": 0,
+            "puffs": 103,
+            "ribbons": 0,
+            "shapes": 5,
+            "draws": 12
+          }
+        }
+      ],
+      "lifecycle": {
+        "firstRetired": true,
+        "initialResources": {
+          "sparks": 0,
+          "puffs": 103,
+          "ribbons": 0,
+          "shapes": 5,
+          "draws": 12
+        },
+        "reused": true,
+        "beforeDeath": "brake",
+        "deathRetired": true,
+        "devicesRetired": true,
+        "retainedRibbonsAfterOneSecond": 0,
+        "finalResources": {
+          "sparks": 0,
+          "puffs": 0,
+          "ribbons": 0,
+          "shapes": 0,
+          "draws": 12
+        }
+      }
+    },
+    "candidate30-early": {
+      "status": "passed",
+      "webgl2": true,
+      "errors": [],
+      "frames": [
+        {
+          "label": "ordinary-before",
+          "simulationFrame": 0,
+          "phase": null,
+          "warningRetained": null,
+          "stats": {
+            "sparks": 0,
+            "puffs": 0,
+            "ribbons": 0,
+            "shapes": 0,
+            "draws": 12
+          }
+        },
+        {
+          "label": "startup-12",
+          "simulationFrame": 12,
+          "phase": "startup",
+          "warningRetained": null,
+          "stats": {
+            "sparks": 17,
+            "puffs": 81,
+            "ribbons": 0,
+            "shapes": 2,
+            "draws": 12
+          }
+        },
+        {
+          "label": "dash-45",
+          "simulationFrame": 46,
+          "phase": "dash",
+          "warningRetained": null,
+          "stats": {
+            "sparks": 3,
+            "puffs": 41,
+            "ribbons": 3,
+            "shapes": 1,
+            "draws": 12
+          }
+        },
+        {
+          "label": "dash-64",
+          "simulationFrame": 64,
+          "phase": "dash",
+          "warningRetained": null,
+          "stats": {
+            "sparks": 3,
+            "puffs": 62,
+            "ribbons": 3,
+            "shapes": 0,
+            "draws": 12
+          }
+        },
+        {
+          "label": "brake-84",
+          "simulationFrame": 84,
+          "phase": "brake",
+          "warningRetained": true,
+          "stats": {
+            "sparks": 5,
+            "puffs": 92,
+            "ribbons": 3,
+            "shapes": 1,
+            "draws": 12
+          }
+        },
+        {
+          "label": "brake-101",
+          "simulationFrame": 102,
+          "phase": "brake",
+          "warningRetained": true,
+          "stats": {
+            "sparks": 7,
+            "puffs": 97,
+            "ribbons": 3,
+            "shapes": 1,
+            "draws": 12
+          }
+        },
+        {
+          "label": "impact-104",
+          "simulationFrame": 104,
+          "phase": "recovery",
+          "warningRetained": false,
+          "stats": {
+            "sparks": 6,
+            "puffs": 186,
+            "ribbons": 2,
+            "shapes": 6,
+            "draws": 12
+          }
+        },
+        {
+          "label": "recovery-117",
+          "simulationFrame": 118,
+          "phase": "recovery",
+          "warningRetained": false,
+          "stats": {
+            "sparks": 0,
+            "puffs": 141,
+            "ribbons": 0,
+            "shapes": 5,
+            "draws": 12
+          }
+        },
+        {
+          "label": "ordinary-return-132",
+          "simulationFrame": 132,
+          "phase": null,
+          "warningRetained": null,
+          "stats": {
+            "sparks": 0,
+            "puffs": 97,
+            "ribbons": 0,
+            "shapes": 5,
+            "draws": 12
+          }
+        }
+      ],
+      "lifecycle": {
+        "firstRetired": true,
+        "initialResources": {
+          "sparks": 0,
+          "puffs": 97,
+          "ribbons": 0,
+          "shapes": 5,
+          "draws": 12
+        },
+        "reused": true,
+        "beforeDeath": "dash",
+        "deathRetired": true,
+        "devicesRetired": true,
+        "retainedRibbonsAfterOneSecond": 0,
+        "finalResources": {
+          "sparks": 0,
+          "puffs": 0,
+          "ribbons": 0,
+          "shapes": 0,
+          "draws": 12
+        }
+      }
+    },
+    "candidate120-early": {
+      "status": "passed",
+      "webgl2": true,
+      "errors": [],
+      "frames": [
+        {
+          "label": "ordinary-before",
+          "simulationFrame": 0,
+          "phase": null,
+          "warningRetained": null,
+          "stats": {
+            "sparks": 0,
+            "puffs": 0,
+            "ribbons": 0,
+            "shapes": 0,
+            "draws": 12
+          }
+        },
+        {
+          "label": "startup-12",
+          "simulationFrame": 12,
+          "phase": "startup",
+          "warningRetained": null,
+          "stats": {
+            "sparks": 17,
+            "puffs": 81,
+            "ribbons": 0,
+            "shapes": 2,
+            "draws": 12
+          }
+        },
+        {
+          "label": "dash-45",
+          "simulationFrame": 45,
+          "phase": "dash",
+          "warningRetained": null,
+          "stats": {
+            "sparks": 3,
+            "puffs": 49,
+            "ribbons": 3,
+            "shapes": 1,
+            "draws": 12
+          }
+        },
+        {
+          "label": "dash-64",
+          "simulationFrame": 64,
+          "phase": "dash",
+          "warningRetained": null,
+          "stats": {
+            "sparks": 3,
+            "puffs": 64,
+            "ribbons": 3,
+            "shapes": 0,
+            "draws": 12
+          }
+        },
+        {
+          "label": "brake-84",
+          "simulationFrame": 84,
+          "phase": "brake",
+          "warningRetained": true,
+          "stats": {
+            "sparks": 8,
+            "puffs": 92,
+            "ribbons": 3,
+            "shapes": 1,
+            "draws": 12
+          }
+        },
+        {
+          "label": "brake-101",
+          "simulationFrame": 101,
+          "phase": "brake",
+          "warningRetained": true,
+          "stats": {
+            "sparks": 8,
+            "puffs": 97,
+            "ribbons": 3,
+            "shapes": 1,
+            "draws": 12
+          }
+        },
+        {
+          "label": "impact-104",
+          "simulationFrame": 104,
+          "phase": "recovery",
+          "warningRetained": false,
+          "stats": {
+            "sparks": 7,
+            "puffs": 184,
+            "ribbons": 2,
+            "shapes": 6,
+            "draws": 12
+          }
+        },
+        {
+          "label": "recovery-117",
+          "simulationFrame": 117,
+          "phase": "recovery",
+          "warningRetained": false,
+          "stats": {
+            "sparks": 0,
+            "puffs": 147,
+            "ribbons": 0,
+            "shapes": 5,
+            "draws": 12
+          }
+        },
+        {
+          "label": "ordinary-return-132",
+          "simulationFrame": 132,
+          "phase": null,
+          "warningRetained": null,
+          "stats": {
+            "sparks": 0,
+            "puffs": 100,
+            "ribbons": 0,
+            "shapes": 5,
+            "draws": 12
+          }
+        }
+      ],
+      "lifecycle": {
+        "firstRetired": true,
+        "initialResources": {
+          "sparks": 0,
+          "puffs": 100,
+          "ribbons": 0,
+          "shapes": 5,
+          "draws": 12
+        },
+        "reused": true,
+        "beforeDeath": "dash",
+        "deathRetired": true,
+        "devicesRetired": true,
+        "retainedRibbonsAfterOneSecond": 0,
+        "finalResources": {
+          "sparks": 0,
+          "puffs": 0,
+          "ribbons": 0,
+          "shapes": 0,
+          "draws": 12
+        }
+      }
+    }
+  }
+}

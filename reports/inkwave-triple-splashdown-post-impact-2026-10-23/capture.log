@@ -1,0 +1,12 @@
+Normal game ready; preserving existing game camera. Capturing native impact offsets.
+{"capture":"normal-central-plus-00-sim-f070.png","time":12.800000000000216,"impactTime":12.800000000000216,"cameraPosition":[-0.1780566299115967,4.390509311754778,-31.635249639858387]}
+{"capture":"normal-central-plus-02-sim-f072.png","time":12.83333333333355,"impactTime":12.800000000000216,"cameraPosition":[-0.17771983426983728,3.366093862460995,-31.638192425196102]}
+{"capture":"normal-central-plus-04-sim-f074.png","time":12.866666666666886,"impactTime":12.800000000000216,"cameraPosition":[-0.177407849169269,2.749932095035221,-31.640888647910398]}
+{"capture":"normal-central-plus-06-sim-f076.png","time":12.90000000000022,"impactTime":12.800000000000216,"cameraPosition":[-0.17711910176097484,2.434221929106517,-31.643356657108967]}
+{"capture":"normal-central-plus-10-sim-f080.png","time":12.96666666666689,"impactTime":12.800000000000216,"cameraPosition":[-0.1766053531967726,2.273174042579434,-31.64767625723666]}
+{"capture":"normal-paired-plus-00-sim-f087.png","time":13.083333333333563,"impactTime":13.083333333333563,"cameraPosition":[-0.175882387757748,2.390867640994576,-31.65357403264953]}
+{"capture":"normal-paired-plus-02-sim-f089.png","time":13.116666666666898,"impactTime":13.083333333333563,"cameraPosition":[-0.17571098214800623,2.42597985974643,-31.654935784634084]}
+{"capture":"normal-paired-plus-04-sim-f091.png","time":13.150000000000233,"impactTime":13.083333333333563,"cameraPosition":[-0.17555317675146373,2.4545851080320555,-31.656175199605855]}
+{"capture":"normal-paired-plus-06-sim-f093.png","time":13.183333333333568,"impactTime":13.083333333333563,"cameraPosition":[-0.17540797413630999,2.4769237953828376,-31.657302571965243]}
+{"capture":"normal-paired-plus-10-sim-f097.png","time":13.250000000000238,"impactTime":13.083333333333563,"cameraPosition":[-0.17515169813086634,2.506456659292799,-31.65925855545028]}
+{"out":"/workspace/actions/.ci-scratch/triple-splashdown/post-impact/raw","origins":{"central":{"frame":70,"time":12.800000000000216,"indices":[-1]},"paired":{"frame":87,"time":13.083333333333563,"indices":[1,0]}},"captures":10,"errors":[]}
