@@ -85,6 +85,15 @@ export async function buildNativeWorld(game,map,current){
   level.nativePaint=paint;
   inkGeometry=nativeInkGeometry(level,paint);inkMat=nativeInkMaterial(paint,game.murals,game.texlib);
   inkMesh=new NativeInkMesh(inkGeometry,inkMat).bindPaint(paint);
+  // Link the stage's display/ink programs now (parallel compile where
+  // available) instead of synchronously on the first battle frames. Any
+  // render target selects the composer's key: linear output, no tone map.
+  const stageWarmStart=performance.now();let stageWarmed;
+  try { r.setRenderTarget(paint.rt);stageWarmed=Promise.all([r.compileAsync(display.group,G.camera,G.scene),r.compileAsync(inkMesh,G.camera,G.scene)]); }
+  finally { r.setRenderTarget(previousTarget); }
+  await stageWarmed;
+  if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
+  const stageShaderWarmMilliseconds=performance.now()-stageWarmStart;
   status.update('navigation');await new Promise(resolve=>requestAnimationFrame(resolve));
   if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
   const navStart=performance.now(),nav=await NavGraph.createNative(level,physics,{signal,current});
@@ -96,7 +105,7 @@ export async function buildNativeWorld(game,map,current){
   const minimap=new Minimap(level,paint,Math.min(3,512/Math.max(level.bounds.maxX-level.bounds.minX,level.bounds.maxZ-level.bounds.minZ)),{deferActivation:true});
   const wake=new SwimWake();
   const gpuBudget=nativeRenderCaps({mobile:!!game.mobile?.touch,tier:gpuTier});
-  const nextWorld={display,level,gpuTier,textureProfile:{data,quality,caps:textureCaps},disposed:false,metrics:{gpuTier,gpuBudget,loadMilliseconds:performance.now()-start,navMilliseconds:performance.now()-navStart,navBuild:nav.nativeBuildMetrics,shaderWarmMilliseconds,vertices:data.manifest.geometry.vertices,triangles:data.manifest.geometry.triangles,faces:level.faces.length,gridBytes:paint.grid.byteLength,atlas:paint.size,ppm:paint.ppm,textureCount:textures.size,textureLimit,quality,version1130Verified:false},
+  const nextWorld={display,level,gpuTier,textureProfile:{data,quality,caps:textureCaps},disposed:false,metrics:{gpuTier,gpuBudget,loadMilliseconds:performance.now()-start,navMilliseconds:performance.now()-navStart,navBuild:nav.nativeBuildMetrics,shaderWarmMilliseconds,stageShaderWarmMilliseconds,vertices:data.manifest.geometry.vertices,triangles:data.manifest.geometry.triangles,faces:level.faces.length,gridBytes:paint.grid.byteLength,atlas:paint.size,ppm:paint.ppm,textureCount:textures.size,textureLimit,quality,version1130Verified:false},
    dispose(){
     if(this.disposed)return;
     this.disposed=true;this.textureProfile=null;

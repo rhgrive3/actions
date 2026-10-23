@@ -4,9 +4,9 @@ if(!vm.SourceTextModule){test('native world cancellation VM subprocess',()=>{con
 const source=fs.readFileSync(new URL('../runtime/native-world.mjs',import.meta.url),'utf8');
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{promise,resolve,reject};};
 async function fixture(){
- const counts={},bump=k=>counts[k]=(counts[k]||0)+1,warms=[],frames=[];let valid=true;
+ const counts={},bump=k=>counts[k]=(counts[k]||0)+1,warms=[],frames=[],stageWarms=[];let stageWarm=()=>Promise.resolve();let valid=true;
  const obj=kind=>({dispose(){bump(kind+'Dispose');}});
- const renderer={capabilities:{maxTextureSize:4096},target:'previous',getRenderTarget(){return this.target},setRenderTarget(x){this.target=x},compileAsync(){const d=deferred();warms.push(d);return d.promise;}};
+ const renderer={capabilities:{maxTextureSize:4096},target:'previous',getRenderTarget(){return this.target},setRenderTarget(x){this.target=x},compileAsync(_scene,_camera,target){if(target){stageWarms.push(_scene);return stageWarm();}const d=deferred();warms.push(d);return d.promise;}};
  const G={renderer,scene:{add(){bump('publish')},remove(){}},paint:obj('oldPaint'),teamColors:[]};
  const game={settings:{quality:'high'},nativeWorld:obj('oldWorld'),_shadowRoots(){bump('shadows')}};
  const data={manifest:{geometry:{vertices:3,triangles:1}}};
@@ -14,7 +14,7 @@ async function fixture(){
  const context=vm.createContext({AbortController,DOMException,performance,requestAnimationFrame:fn=>frames.push(fn)}),m=new vm.SourceTextModule(source,{context});
  await m.link(spec=>{const key=spec==='three'?'three':spec.split('/').pop().replace(/\.(mjs|js)$/,'');const values=modules[key];assert.ok(values,spec);return new vm.SyntheticModule(Object.keys(values),function(){for(const[k,v]of Object.entries(values))this.setExport(k,v)},{context});});await m.evaluate();
  const start=()=>m.namespace.buildNativeWorld(game,{id:'tiny',name:'tiny'},()=>valid),tick=()=>new Promise(r=>setImmediate(r));
- return{counts,G,game,warms,frames,start,tick,stale:()=>{valid=false},cancel:()=>game._nativeAbort.abort(),release:()=>m.namespace.releaseNativeWorld(game)};
+ return{counts,G,game,warms,frames,stageWarms,setStageWarm:fn=>{stageWarm=fn},start,tick,stale:()=>{valid=false},cancel:()=>game._nativeAbort.abort(),release:()=>m.namespace.releaseNativeWorld(game)};
 }
 for(const phase of ['warm','frame'])for(const mode of ['stale','abort'])test(phase+' '+mode+' stops detached work and cleans once',async()=>{
  const f=await fixture(),p=f.start();await f.tick();assert.equal(f.warms.length,1);assert.equal(f.G.renderer.target,'previous');
@@ -30,4 +30,10 @@ test('successful publish and explicit release retain existing ownership',async()
 test('new build aborts warm old build without releasing new world',async()=>{const f=await fixture(),first=f.start();await f.tick();const second=f.start();await f.tick();assert.equal(f.warms.length,2);f.warms[1].resolve();await f.tick();f.frames.shift()();await second;f.warms[0].resolve();await f.tick();while(f.frames.length)f.frames.shift()();await first;assert.equal(f.counts.nav,1);assert.equal(f.counts.ink,1);assert.equal(f.counts.publish,1);assert.equal(f.counts.displayDispose,1);assert.equal(f.counts.oldWorldDispose,1);assert.equal(f.counts.statusClose,2);});
 test('compile rejection preserves primary error and detached cleanup',async()=>{const f=await fixture(),error=Error('compile failure'),p=f.start(),rejection=assert.rejects(p,e=>e===error);await f.tick();f.warms[0].reject(error);await rejection;assert.equal(f.counts.ink||0,0);assert.equal(f.counts.nav||0,0);assert.equal(f.counts.displayDispose,1);assert.equal(f.counts.paintDispose,1);assert.equal(f.counts.statusClose,1);assert.equal(f.G.renderer.target,'previous');});
 
+test('stage shader warm-up precedes publication and an abort during it cleans the candidate',async()=>{
+ const f=await fixture();const releases=[],release=()=>releases.forEach(r=>r());f.setStageWarm(()=>new Promise(r=>releases.push(r)));const p=f.start();await f.tick();f.warms[0].resolve();await f.tick();
+ assert.equal(f.stageWarms.length,2,'display group and ink mesh');assert.equal(f.G.renderer.target,'previous');assert.equal(f.frames.length,0);
+ f.cancel();release();await p;
+ assert.equal(f.counts.publish||0,0);assert.equal(f.counts.nav||0,0);assert.equal(f.counts.displayDispose,1);assert.equal(f.counts.paintDispose,1);assert.equal(f.counts.meshDispose,1);assert.equal(f.counts.materialDispose,1);
+});
 }
