@@ -12,6 +12,8 @@ const repo=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const rows=runtimeUIInventory(),base=main26a4Inventory();
 const contract={mode:RUNTIME_UI_MODE,sourceBase:MAIN26A4_SHA,sourceHead:'a'.repeat(40),baseSha:MAIN26A4_SHA,candidateSha:'a'.repeat(40)};
 const ownerClockPath='patches/network-replication/owner-clock.mjs';
+const cataloguePath='patches/splatoon3/runtime/catalogue.mjs';
+const cataloguePin={sha:'7fae1d7138ad68b45e0c2f88a3af93367d1575a8',sha256:'25dc604015b5e88bc5e015a299fbb2430ba14ffa2f0c253e3bbc68773e51ec50'};
 const oldDeltaPaths=['inkwave-public/src/world/level.js','patches/local-quality/collision-hotpath-adapter.mjs','patches/local-quality/gyro.mjs','patches/local-quality/static-menu-adapter.mjs'];
 const clockPins={
  "inkwave-public/src/net/transport.js": {
@@ -31,21 +33,24 @@ const clockPins={
   "sha256": "2225aad527fec32d60b92044d2abc1218c92ca3d608364beaf40be0f6d453e97"
  }
 };
-const changedPaths=[...oldDeltaPaths,...Object.keys(clockPins)].sort();
+const changedPaths=[...oldDeltaPaths,...Object.keys(clockPins),cataloguePath].sort();
 const baseByPath=new Map(base.map(row=>[row.path,row]));
-test('exact eight reviewed deltas: seven replacements and only owner clock added; other1384 pinned',()=>{
+test('exact nine reviewed deltas: eight replacements and only owner clock added; other1383 pinned',()=>{
  assert.equal(base.length,1391);assert.equal(rows.length,1392);assertRuntimeUIRows(rows);assertMain26a4Rows(base);
  assert.deepEqual(rows.filter(row=>row.sha!==baseByPath.get(row.path)?.sha).map(row=>row.path),changedPaths);
  assert.deepEqual(rows.filter(row=>!baseByPath.has(row.path)).map(row=>row.path),[ownerClockPath]);
- assert.equal(rows.filter(row=>row.sha===baseByPath.get(row.path)?.sha).length,1384);
+ assert.equal(rows.filter(row=>row.sha===baseByPath.get(row.path)?.sha).length,1383);
  for(const [relative,pins] of Object.entries(clockPins))assert.deepEqual(rows.find(row=>row.path===relative),{path:relative,mode:'100644',...pins});
+ assert.deepEqual(rows.find(row=>row.path===cataloguePath),{path:cataloguePath,mode:'100644',...cataloguePin});
  assert.throws(()=>assertMain26a4Rows(rows));assert.throws(()=>assertRuntimeUIRows(base));
  assert.equal(base.find(row=>row.path==='scripts/build-inkwave.mjs').sha,'17d59758049518a6e5c93f50e1f3a0614e7c6ee4');
  assert.equal(createHash('sha256').update(fs.readFileSync(path.join(repo,'scripts/fixtures/inkwave-main26a4-production-epoch.json.gz'))).digest('hex'),'a24db4a8ea3ee3da710df533b26cefe3f981f19238f57aa5139972b7ccc220d4');
 });
-test('previous four-delta and every partially reverted or altered reviewed delta reject',()=>{
+test('previous four/eight-delta and every partially reverted or altered reviewed delta reject',()=>{
  const oldRows=base.map(row=>oldDeltaPaths.includes(row.path)?rows.find(x=>x.path===row.path):row);
  assert.throws(()=>assertRuntimeUIRows(oldRows));
+ const previousEight=rows.map(row=>row.path===cataloguePath?baseByPath.get(cataloguePath):row);
+ assert.throws(()=>assertRuntimeUIRows(previousEight),'previous eight-delta epoch must not self-authorize catalogue adoption');
  for(const relative of changedPaths){
   const original=baseByPath.get(relative);
   const mixed=original?rows.map(row=>row.path===relative?original:row):rows.filter(row=>row.path!==relative);
@@ -63,24 +68,25 @@ test('owner clock missing, renamed, duplicated, unknown-added and executable var
  const copy=runtimeUIInventory();copy.find(row=>row.path===ownerClockPath).sha='0'.repeat(40);
  assertRuntimeUIRows(runtimeUIInventory());assertMain26a4Rows(main26a4Inventory());
 });
-test('actual clock file drift cannot hide behind unchanged real Git HEAD (focused scanner fixture)',()=>{
+for(const relative of [ownerClockPath,cataloguePath]) test('actual '+relative+' drift cannot hide behind unchanged real Git HEAD (focused scanner fixture)',()=>{
  // Other inventory rows below are validator metadata, not a claimed full
- // production checkout; this fixture exercises actual clock bytes and Git.
- const root=fs.mkdtempSync(path.join(os.tmpdir(),'runtime-ui-clock-source-'));
+ // production checkout; these fixtures exercise actual clock/catalogue bytes and Git.
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'runtime-ui-pinned-source-'));
  const git=(...args)=>execFileSync('git',['-C',root,...args],{encoding:'utf8',env:{...process.env,GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null'}}).trim();
- const relative=ownerClockPath,file=path.join(root,relative),clock=rows.find(row=>row.path===relative);
+ const file=path.join(root,relative),pinned=rows.find(row=>row.path===relative);
  const project=()=>scanMain26a4Production(root).find(row=>row.path===relative);
  try{
   for(const dir of ['inkwave-public','patches/splatoon3','patches/touch-layout','patches/reliability','patches/local-quality','patches/network-replication','patches/practice-range','patches/native-stages','patches/loading-cache'])fs.mkdirSync(path.join(root,dir),{recursive:true});
   for(const row of base.filter(row=>row.path.startsWith('scripts/'))){const f=path.join(root,row.path);fs.mkdirSync(path.dirname(f),{recursive:true});fs.writeFileSync(f,'focused scanner fixture, not production');}
+  fs.mkdirSync(path.dirname(file),{recursive:true});
   fs.writeFileSync(file,fs.readFileSync(path.join(repo,relative)));
   git('init','--quiet');git('add','.');git('-c','user.name=QA test','-c','user.email=qa@example.invalid','commit','--quiet','-m','focused clock source fixture');
   const head=git('rev-parse','HEAD');
-  assert.equal(readMain26a4GitTree(root,head).entries.find(row=>row.path===relative).sha,clock.sha);
-  assert.deepEqual(project(),clock);
-  fs.appendFileSync(file,'\n// unreviewed clock drift\n');
+  assert.equal(readMain26a4GitTree(root,head).entries.find(row=>row.path===relative).sha,pinned.sha);
+  assert.deepEqual(project(),pinned);
+  fs.appendFileSync(file,'\n// unreviewed source drift\n');
   assert.equal(readMain26a4GitTree(root,head).head,head);
-  const changed=project();assert.notEqual(changed.sha,clock.sha);assert.throws(()=>assertRuntimeUIRows(rows.map(row=>row.path===relative?changed:row)));
+  const changed=project();assert.notEqual(changed.sha,pinned.sha);assert.throws(()=>assertRuntimeUIRows(rows.map(row=>row.path===relative?changed:row)));
   fs.unlinkSync(file);assert.equal(project(),undefined);assert.throws(()=>assertRuntimeUIRows(rows.filter(row=>row.path!==relative)));
   const unknown='patches/network-replication/unreviewed-clock.mjs';fs.writeFileSync(path.join(root,unknown),'unreviewed');
   const extra=scanMain26a4Production(root).find(row=>row.path===unknown);assert.ok(extra);assert.throws(()=>assertRuntimeUIRows([...rows,extra]));

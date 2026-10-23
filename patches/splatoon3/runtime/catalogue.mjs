@@ -167,7 +167,8 @@ export function installCatalogueNetwork(api,{replaySub,replaySpecial,replaySplas
   NetMatch.prototype._tick=function(from,message){
     const last=this.peers?.get(from)?.lastTs??-Infinity;
     const result=tick.call(this,from,message);
-    if(!Number.isFinite(message?.ts)||message.ts<=last||!message.ck||typeof message.ck!=='object'||Array.isArray(message.ck))return result;
+    // Sidecars follow the native accepted watermark, including clock rejection.
+    if(!Number.isFinite(message?.ts)||message.ts<=last||this.peers?.get(from)?.lastTs!==message.ts||!message.ck||typeof message.ck!=='object'||Array.isArray(message.ck))return result;
     for(const [nid,pair]of Object.entries(message.ck)){
       const actor=this.byNid?.get(Number(nid));
       if(!actor?.remote||actor.owner!==from||!Array.isArray(pair)||pair.length!==3||pair[0]!==packetLife(actor))continue;

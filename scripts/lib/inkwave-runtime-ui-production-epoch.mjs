@@ -5,9 +5,13 @@ import {createHash} from 'node:crypto';
 import {MAIN26A4_SHA, main26a4Inventory, assertMain26a4Rows, readMain26a4GitTree, scanMain26a4Production} from './inkwave-main26a4-production-epoch.mjs';
 import {assertReceiptSeparate} from './inkwave-source-admission-cli.mjs';
 export const RUNTIME_UI_MODE = 'main26a4-reviewed-runtime-ui-production-pair';
-// Exact reviewed runtime/UI and owner-clock production blobs.
-// Seven existing leaves change and only owner-clock.mjs is added; 1384 stay pinned.
+// Exact reviewed runtime/UI, owner-clock and catalogue-admission production blobs.
+// Eight existing leaves change and only owner-clock.mjs is added; 1383 stay pinned.
 const delta = {
+  "patches/splatoon3/runtime/catalogue.mjs": {
+    "sha": "7fae1d7138ad68b45e0c2f88a3af93367d1575a8",
+    "sha256": "25dc604015b5e88bc5e015a299fbb2430ba14ffa2f0c253e3bbc68773e51ec50"
+  },
   "patches/local-quality/gyro.mjs": {
     "sha": "2d12ba23ae122e6f813d03ac8e62094ea95583f8",
     "sha256": "c488be1536f5c2b4d336311a8c0c58bef26c55568aef26622d08aa041e8ecfc4"
@@ -44,13 +48,13 @@ const delta = {
 const baselineLeaves = main26a4Inventory();
 const ownerClockPath = 'patches/network-replication/owner-clock.mjs';
 assert.ok(!baselineLeaves.some(row => row.path === ownerClockPath),'owner clock is the sole new production leaf');
-assert.equal(Object.keys(delta).length,8);
-assert.equal(Object.keys(delta).filter(relative => relative !== ownerClockPath && baselineLeaves.some(row => row.path === relative)).length,7);
+assert.equal(Object.keys(delta).length,9);
+assert.equal(Object.keys(delta).filter(relative => relative !== ownerClockPath && baselineLeaves.some(row => row.path === relative)).length,8);
 const leaves = [...baselineLeaves.map(row => ({...row,...delta[row.path]})),
   {path:ownerClockPath,mode:'100644',...delta[ownerClockPath]}]
   .sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
 assert.equal(leaves.length,1392);
-assert.equal(baselineLeaves.filter(row => delta[row.path] && row.sha !== delta[row.path].sha).length,7);
+assert.equal(baselineLeaves.filter(row => delta[row.path] && row.sha !== delta[row.path].sha).length,8);
 export function runtimeUIInventory() { return structuredClone(leaves); }
 export function assertRuntimeUIRows(rows, hashes = true) {
   assert.ok(Array.isArray(rows),'inventory array required');
@@ -66,7 +70,7 @@ export function assertRuntimeUIContract({mode,sourceBase,sourceHead,baseSha,cand
   assert.equal(sourceBase,MAIN26A4_SHA,'exact source baseline epoch');
   assert.equal(baseSha,MAIN26A4_SHA,'actual baseline must be reviewed main26a4');
   assert.match(candidateSha??'',/^[0-9a-f]{40}$/,'actual candidate immutable SHA required');
-  assert.notEqual(candidateSha,MAIN26A4_SHA,'eight production changes require a new actual commit');
+  assert.notEqual(candidateSha,MAIN26A4_SHA,'nine production deltas require a new actual commit');
   assert.equal(sourceHead,candidateSha,'candidate source epoch must be its actual declared Git HEAD');
 }
 export function verifyRuntimeUIProductionPair(options) {
@@ -88,7 +92,7 @@ export function verifyRuntimeUIProductionPair(options) {
     declaredBaseCommit:options.baseSha,declaredCandidateCommit:options.candidateSha,
     checkouts:result,baselineCanonicalInputs:1362,canonicalInputs:1363,baselineInventoryHash:createHash('sha256').update(JSON.stringify(baselineLeaves)).digest('hex'),candidateInventoryHash:createHash('sha256').update(JSON.stringify(leaves)).digest('hex'),
     productionSupersetLeaves:1392,builderPinnedSeparately:true,changes:Object.keys(delta),writtenPaths:[],
-    scope:'Read-only exact eight-delta production source admission at declared actual Git HEADs. No replay or source writes.',
+    scope:'Read-only exact nine-delta production source admission at declared actual Git HEADs. No replay or source writes.',
     limitation:'Not a build, runtime, RNG, visual, retail-equivalence or gameplay-improvement result. Final-head emitted and browser comparisons remain required.'};
 }
 export async function runRuntimeUIAdmissionCLI(values,role) {

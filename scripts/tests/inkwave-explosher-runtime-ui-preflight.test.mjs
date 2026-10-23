@@ -15,11 +15,11 @@ test('unsealed output manifest cannot self-authorize',()=>{const root=fs.mkdtemp
 test('driver preserves default historical admission and explicitly scopes inverse exception',()=>{const s=fs.readFileSync(new URL('../check-inkwave-explosher-flight-glitter.mjs',import.meta.url),'utf8');assert.match(s,/:requireApprovedCommonBuild\(sourceRoot,site\)/);assert.match(s,/if\(!runtimeUIRoute&&\(!shapeOverlay\|\|!controlled\)\)/);assert.match(s,/if\(!runtimeUIRoute\)\{\nconst counterpart=/);assert.match(s,/receipt\.diagnosticOnly=true;receipt\.fullPairAccepted=false/);});
 test('workflow retains all three disabled long stages and exact event checkout refs',()=>{const s=fs.readFileSync(new URL('../../.github/workflows/inkwave-explosher-flight-glitter.yml',import.meta.url),'utf8');assert.equal((s.match(/if: false/g)||[]).length,3);assert.match(s,/ref: \$\{\{ github.event.pull_request.head.sha \}\}/);assert.match(s,/ref: \$\{\{ github.event.pull_request.base.sha \}\}/);assert.match(s,/fullPairAccepted:false/);assert.match(s,/Every preflight state must agree/);});
 
-test('separate exact owner-clock seal retains the historical before lane',()=>{
+test('separate exact catalogue-admission seal retains the historical before lane',()=>{
  const before=runtimePreflightIdentity('before'),after=runtimePreflightIdentity('after');
  assert.deepEqual(before,{manifest:'8212ef17727097bb0b779a260e896f2c006b937ec5e05da8eb4df63e281ebaf9',input:'eaeedda634324a8e72320e67546a4d3beeb8ae0544b5d32af8cadaa7ac7f10a6',content:'c37e66cd3c6de7b3a1dc2aa73ca6b00d4e0d72d1b16719f62c6cb96d096dd759',inputs:1362,artifacts:2016});
- assert.deepEqual(after,{manifest:'8a6349970578f81c3b43b6b1d86f35d1123ad1cd1b786e2ef944e90e045eb4d0',input:'45132b3e3dc16d4148ebddd35790210e3dc5111669a8cec990b706b72921d52c',content:'701e017607254182727e293eb0119c711daebf63163ed88b2a1f66e63fa8f61d',inputs:1363,artifacts:2018});
- assert.notEqual(after.manifest,'dfce04a80e98445918fe93c85fe4076ffa49c9a95e78837179d5c72622dd11d8','old runtime/UI output cannot authorize current owner-clock input');
+ assert.deepEqual(after,{manifest:'6707a985a10b7c02a5c2034bfd343adf8af345d120f6eee58334316d5b22b7c1',input:'fd991853769d8ccb6740fb0283ea7c363d9b336d072485333e3c551e2faf5f23',content:'7e93e0edeb92e2bbd45853185b9f01fa97fde16291b2254d635dea09a577fe5e',inputs:1363,artifacts:2018});
+ assert.notEqual(after.manifest,'8a6349970578f81c3b43b6b1d86f35d1123ad1cd1b786e2ef944e90e045eb4d0','old owner-clock output cannot authorize current catalogue-admission input');
  after.manifest=before.manifest;after.inputs=before.inputs;
  assert.equal(runtimePreflightIdentity('after').inputs,1363,'callers cannot rewrite the private seal');
  assert.notEqual(runtimePreflightIdentity('after').manifest,before.manifest);

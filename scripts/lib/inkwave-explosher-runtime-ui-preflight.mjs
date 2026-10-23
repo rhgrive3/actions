@@ -10,10 +10,10 @@ const builder='62d929b83091c6775a865be02c06960a4cc4b2216eb26d5921aa4811787c6d7a'
 // Reproducible output identities, not claims that reference builds used a different source HEAD.
 // Before identity independently agrees across actual a62 and c364 production-equal builds.
 // After identity is independently re-emitted from the exact reviewed owner-clock
-// production inputs; its complete manifest also matches official 4f5826 native-pair CI.
+// and catalogue-admission inputs, retaining the pinned builder and complete output seal.
 const identities=Object.freeze({
  before:{manifest:'8212ef17727097bb0b779a260e896f2c006b937ec5e05da8eb4df63e281ebaf9',input:'eaeedda634324a8e72320e67546a4d3beeb8ae0544b5d32af8cadaa7ac7f10a6',content:'c37e66cd3c6de7b3a1dc2aa73ca6b00d4e0d72d1b16719f62c6cb96d096dd759',inputs:1362,artifacts:2016},
- after:{manifest:'8a6349970578f81c3b43b6b1d86f35d1123ad1cd1b786e2ef944e90e045eb4d0',input:'45132b3e3dc16d4148ebddd35790210e3dc5111669a8cec990b706b72921d52c',content:'701e017607254182727e293eb0119c711daebf63163ed88b2a1f66e63fa8f61d',inputs:1363,artifacts:2018}
+ after:{manifest:'6707a985a10b7c02a5c2034bfd343adf8af345d120f6eee58334316d5b22b7c1',input:'fd991853769d8ccb6740fb0283ea7c363d9b336d072485333e3c551e2faf5f23',content:'7e93e0edeb92e2bbd45853185b9f01fa97fde16291b2254d635dea09a577fe5e',inputs:1363,artifacts:2018}
 });
 export function runtimePreflightIdentity(lane){
  assert(['before','after'].includes(lane),'Explicit lane required');
