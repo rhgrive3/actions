@@ -50,21 +50,20 @@ const INKS = ['#ff8a14', '#2f5bff', '#ff3d9a', '#3fd16f', '#12c8e0', '#f5d50b', 
 
 export const inkFor = (key) => INKS[hashString(String(key || '').toLowerCase()) % INKS.length];
 
-function firstGrapheme(s) {
-  const str = String(s || '').trim();
-  if (!str) return '?';
-  try {
-    const seg = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
-    for (const { segment } of seg.segment(str)) return segment.toUpperCase();
-  } catch { /* older engines */ }
-  return Array.from(str)[0].toUpperCase();
+// The game's squid mascot (src/ui/ui-icons.js SQUID), drawn in a 64 box.
+const SQUID_BODY = '<path d="M22 44 Q19 53 13 58 Q20 61 26 50 Z"/><path d="M29 46 Q28.5 55 25 61 Q32.5 61 33 48 Z"/>'
+  + '<path d="M35 46 Q35.5 55 39 61 Q31.5 61 31 48 Z"/><path d="M42 44 Q45 53 51 58 Q44 61 38 50 Z"/>'
+  + '<path d="M32 3 C36.5 3 50.5 17.5 55.5 24.5 C57.5 27.8 55.5 31 51.5 30.2 L46 29.4 L46 39.5 C46 46.5 41.5 49 32 49 C22.5 49 18 46.5 18 39.5 L18 29.4 L12.5 30.2 C8.5 31 6.5 27.8 8.5 24.5 C13.5 17.5 27.5 3 32 3 Z"/>';
+const SQUID_EYES = '<ellipse cx="26" cy="36" rx="4.6" ry="5.6" fill="#fff" stroke="#15121c" stroke-width="2.4"/><ellipse cx="38" cy="36" rx="4.6" ry="5.6" fill="#fff" stroke="#15121c" stroke-width="2.4"/>'
+  + '<ellipse cx="27" cy="37" rx="2.2" ry="3" fill="#15121c"/><ellipse cx="37" cy="37" rx="2.2" ry="3" fill="#15121c"/>';
+
+function squid(fill) {
+  return `<g transform="translate(23 21) scale(.84)"><g fill="${fill}" stroke="#15121c" stroke-width="3.4" stroke-linejoin="round">${SQUID_BODY}</g>`
+    + `<path d="M25 13 Q29 8.5 32 8" stroke="#fff" stroke-opacity=".55" stroke-width="3" fill="none" stroke-linecap="round"/>${SQUID_EYES}</g>`;
 }
 
-/** Player avatar: a splat in the player's ink with the first letter of their name. */
+/** Player avatar: a splat in the player's ink with the game's squid on it (guests: a grey squid). */
 export function avatarSVG(user) {
-  if (!user) return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="${splatPath(7)}" fill="rgba(255,255,255,.14)"/><g transform="translate(26 24) scale(2)" color="#fff">${CORE_ICONS.user.replace(/<\/?svg[^>]*>/g, '')}</g></svg>`;
-  const ink = inkFor(user.loginId);
-  const ch = firstGrapheme(user.displayName).replace(/[<&>"]/g, (c) => `&#${c.charCodeAt(0)};`);
-  return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="${splatPath(hashString(user.loginId))}" fill="${ink}"/>`
-    + `<text x="50" y="52" text-anchor="middle" dominant-baseline="central" class="zva-av__ch">${ch}</text></svg>`;
+  if (!user) return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="${splatPath(7)}" fill="rgba(255,255,255,.14)"/>${squid('#8d86a6')}</svg>`;
+  return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="${splatPath(hashString(user.loginId))}" fill="${inkFor(user.loginId)}"/>${squid('#fff')}</svg>`;
 }

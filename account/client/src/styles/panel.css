@@ -72,7 +72,7 @@
   background: var(--k); color: #fff; font: 900 12px/1 var(--body); letter-spacing: .16em; box-shadow: 0 3px 0 rgba(0, 0, 0, .3);
 }
 .zva-kicker .zva-ico { color: var(--a-light); }
-.zva-hero__title { margin: 0; font-size: clamp(26px, 3.3vw, 38px); line-height: 1.12; color: #fff; text-wrap: balance; }
+.zva-hero__title { margin: 0; font-family: 'Bungee', var(--display); letter-spacing: .04em; font-size: clamp(26px, 3.3vw, 38px); line-height: 1.12; color: #fff; text-wrap: balance; }
 .zva-benefits { margin: auto 0 0; padding: 14px; list-style: none; display: grid; gap: 10px; border-radius: 18px; background: rgba(13, 10, 24, .62); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .1); backdrop-filter: blur(6px); }
 .zva-benefits li { display: grid; grid-template-columns: 34px 1fr; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; line-height: 1.35; }
 .zva-benefits__ico { width: 34px; height: 34px; padding: 7px; border-radius: 50%; background: var(--a); color: var(--a-ink); box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
@@ -87,12 +87,11 @@
 .zva-hero__name { font-size: clamp(24px, 2.8vw, 34px); line-height: 1.1; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 .1em; }
 .zva-hero__id { font-weight: 800; font-size: 15px; letter-spacing: .04em; color: rgba(255, 255, 255, .92); }
 .zva-hero__since { font-size: 12.5px; font-weight: 600; color: rgba(255, 255, 255, .78); }
-.zva-av__ch { fill: #fff; font: 400 50px/1 var(--display); paint-order: stroke fill; stroke: var(--k); stroke-width: 7px; stroke-linejoin: round; }
 
 /* ------------------------------------------------------------------ main (right) */
 .zva-main { position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; min-height: 0; overflow: hidden; border-radius: 0 23px 23px 0; }
 .zva-bar { display: flex; align-items: center; gap: 10px; padding: 18px 18px 6px var(--pad-x); min-height: 70px; }
-.zva-bar__title { flex: 1; margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 900 17px/1.2 var(--body); letter-spacing: .04em; }
+.zva-bar__title { font-family: 'Bungee', var(--body) !important; font-weight: 400 !important; letter-spacing: .06em !important; flex: 1; margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 900 17px/1.2 var(--body); letter-spacing: .04em; }
 .zva-iconbtn {
   flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; min-width: 42px; padding: 0 10px; border: 0; border-radius: 999px; cursor: pointer;
   background: rgba(255, 255, 255, .08); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .1); transition: background-color .15s, scale .2s var(--spring);

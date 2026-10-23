@@ -36,8 +36,12 @@ function h(tag, attrs, ...kids) {
 const icon = (name, cls = 'zva-ico') => h('span', { class: cls, html: ICONS[name] });
 const restart = (el, cls) => { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); };
 
+// Latin display face for the dialog's English headings (Google Fonts, fetched only when the dialog opens).
+const DISPLAY_FONT_CSS = 'https://fonts.googleapis.com/css2?family=Bungee&display=swap';
+
 function ensureStyle() {
   if (document.getElementById('zva-panel-style')) return;
+  document.head.append(h('link', { rel: 'stylesheet', href: DISPLAY_FONT_CSS, id: 'zva-display-font' }));
   document.head.append(h('style', { id: 'zva-panel-style', text: panelCss }));
 }
 

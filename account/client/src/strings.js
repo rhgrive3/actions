@@ -3,11 +3,11 @@ import { addStrings } from './i18n.js';
 
 addStrings({
 
-  'dlg.label': 'ZEVANT アカウント',
+  'dlg.label': 'ZEVANT ACCOUNT',
   'dlg.close': '閉じる',
   'dlg.back': 'もどる',
   'hero.kicker': 'ZEVANT ID',
-  'hero.title': 'アカウント',
+  'hero.title': 'ACCOUNT',
   'hero.b1': 'プレイヤー名をアカウントに保存',
   'hero.b2': 'ほかの端末でも同じIDでログイン',
   'hero.b3': 'ログイン中の端末を確認・ログアウト',
@@ -133,11 +133,11 @@ addStrings({
   'time.sec': '{n}秒', 'time.min': '{n}分', 'time.minsec': '{m}分{s}秒',
 }, {
 
-  'dlg.label': 'ZEVANT account',
+  'dlg.label': 'ZEVANT ACCOUNT',
   'dlg.close': 'Close',
   'dlg.back': 'Back',
   'hero.kicker': 'ZEVANT ID',
-  'hero.title': 'Account',
+  'hero.title': 'ACCOUNT',
   'hero.b1': 'Your in-game name follows your player name',
   'hero.b2': 'Sign in with the same ID on any device',
   'hero.b3': 'See every signed-in device, any time',

@@ -15,7 +15,6 @@
 .zva-chip__av svg { width: 118%; height: 118%; margin: -9%; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .35)); }
 .zva-chip__off { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; background: rgba(255, 255, 255, .1); color: var(--muted, #c3bdd6); }
 .zva-chip__off svg { width: 56%; height: 56%; margin: 0; filter: none; }
-.zva-av__ch { fill: #fff; font: 400 50px/1 'Titan One', 'IW JP Display', 'Rubik', sans-serif; paint-order: stroke fill; stroke: #15121c; stroke-width: 7px; stroke-linejoin: round; }
 
 .zva-chip__txt { display: grid; gap: 3px; min-width: 0; }
 .zva-chip__name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 800; font-size: var(--fs-m, 14px); letter-spacing: .02em; }
