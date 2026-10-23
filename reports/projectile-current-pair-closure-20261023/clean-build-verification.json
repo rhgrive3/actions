@@ -1,0 +1,32 @@
+{
+  "records": [
+    {
+      "name": "fresh-closure-clean",
+      "inputHash": "8710f36362bd7e4c59b52cf6dd8d95a2ac720ee8b8b64541e1f0aecc8c4925f5",
+      "contentHash": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+      "canonicalInputs": 1420,
+      "artifacts": 2110,
+      "allArtifactBodiesRehashed": true
+    },
+    {
+      "name": "preserved-main7e",
+      "inputHash": "8710f36362bd7e4c59b52cf6dd8d95a2ac720ee8b8b64541e1f0aecc8c4925f5",
+      "contentHash": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+      "canonicalInputs": 1420,
+      "artifacts": 2110,
+      "allArtifactBodiesRehashed": true
+    },
+    {
+      "name": "invalid-admitted-additions",
+      "inputHash": "9e8b33fb99224088ee00aa2fba80aef88f619b1e8e94f8cb1462b252d2154150",
+      "contentHash": "4139cc843b89cf446bc758a063192503bbf3bd82d02ea6d862be18b753a6d86a",
+      "canonicalInputs": 1423,
+      "artifacts": 2130,
+      "allArtifactBodiesRehashed": true
+    }
+  ],
+  "cleanProductionRows": 1458,
+  "cleanProductionMatchesMain7e": true,
+  "cleanOutputByteHashesMatchMain7e": true,
+  "canonicalInputMapIsNotClosureProof": true
+}

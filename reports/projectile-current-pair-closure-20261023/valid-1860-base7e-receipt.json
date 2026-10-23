@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "mode": "oct23-reviewed-projectile-pairs",
+  "pr": 1860,
+  "repository": "rhgrive3/actions",
+  "branch": "fix/respawn-enemy-exclusion-20261023",
+  "declaredBaseCommit": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "declaredCandidateCommit": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+  "sourceBase": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "sourceHead": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+  "fixtureSha256": "adf375e9e5a53d3f7ea0724d296a4b201c68edbfc6aea44291617a7d9de20ad9",
+  "checkouts": [
+    {
+      "commit": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+      "tree": "965c98442df0c42cd092f7a6eb9b0535f51b8b38",
+      "sourceEpoch": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+      "productionLeaves": 1458,
+      "inventorySha256": "46e64fbea2073e1333cbdbfd7af9fffb3e144193675446d507826ddffe57036c"
+    },
+    {
+      "commit": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+      "tree": "bd6be2e907878a9ea6ffa47fd66b4c8f51dd299c",
+      "sourceEpoch": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+      "productionLeaves": 1460,
+      "inventorySha256": "6ff054c8ec48117788ca80196a5ccc6fd5dc6a2268ef5cfa56cc2086292b1a2d"
+    }
+  ],
+  "productionDeltas": [
+    {
+      "path": "inkwave-public/src/net/transport.js",
+      "before": {
+        "path": "inkwave-public/src/net/transport.js",
+        "mode": "100644",
+        "sha": "1fbd79cfe58681901b7d5581d4db984c7c581761",
+        "sha256": "8e90e02226f617e70cd0eee96295b2d7c02aa37cb4768064bd00a863f4bf666e"
+      },
+      "after": {
+        "path": "inkwave-public/src/net/transport.js",
+        "mode": "100644",
+        "sha": "331b19f8eca109027138498a8beab2a8eb24c1d3",
+        "sha256": "8869f2c1db3328ab98e28ce1903207da5d304049932b3a45154d2a16860a402e"
+      }
+    },
+    {
+      "path": "patches/splatoon3/runtime/spawn-exclusion.mjs",
+      "before": null,
+      "after": {
+        "path": "patches/splatoon3/runtime/spawn-exclusion.mjs",
+        "mode": "100644",
+        "sha": "4b68c6d7a3f4223521ca316792e1e76e6f7b71aa",
+        "sha256": "15ce9f42f70ceaa4dc4c2ba10c125227a0eca8ca422a2dd277f853fb7fb26f38"
+      }
+    },
+    {
+      "path": "patches/splatoon3/spawn-exclusion-adapter.mjs",
+      "before": null,
+      "after": {
+        "path": "patches/splatoon3/spawn-exclusion-adapter.mjs",
+        "mode": "100644",
+        "sha": "98b2eae7fa2c98cd2dca0c397cd8d86331ff6f10",
+        "sha256": "3acf3e0b1bd759aeca4ab15a9f530502e74cf91a60cfa1bdfde4a0da9fb0b94c"
+      }
+    },
+    {
+      "path": "scripts/inkwave-source-composition.mjs",
+      "before": {
+        "path": "scripts/inkwave-source-composition.mjs",
+        "mode": "100644",
+        "sha": "a61100acdd90db510fafb99d6636c8fffff1295c",
+        "sha256": "0992c6800164f0682611322aa0b2ad548cc82bf67e3af75077a0e86cddb2fc03"
+      },
+      "after": {
+        "path": "scripts/inkwave-source-composition.mjs",
+        "mode": "100644",
+        "sha": "e870e95e1d3ab82ab5412888fd3ca0ba0d48fcd5",
+        "sha256": "039a6e1884a50e02dd3945b030f069c833131e886bd45bbc1e70d634d68e7b40"
+      }
+    },
+    {
+      "path": "scripts/lib/inkwave-build-only-modules.mjs",
+      "before": {
+        "path": "scripts/lib/inkwave-build-only-modules.mjs",
+        "mode": "100644",
+        "sha": "5408d3598bd60d661f003f5ea0e7c02ef55e4d62",
+        "sha256": "28718d1528f16db6e06b9821695da4f84625e13893361cd54349c4530a5c3f20"
+      },
+      "after": {
+        "path": "scripts/lib/inkwave-build-only-modules.mjs",
+        "mode": "100644",
+        "sha": "64012e646a889ef090b8b0e21cd82d30e0670130",
+        "sha256": "a46aa5dfd05f66a57aafc064315ca2d273c7df442e6dfd509c8f23c3d6b81727"
+      }
+    }
+  ],
+  "changes": [],
+  "writtenPaths": [],
+  "scope": "Preserve the actual event base and complete pinned candidate production epoch, including paint, births, RNG, pose and network. No historical Roller, pool, paint or pose replay.",
+  "limitation": "Pinned source admission only. Listed production differences remain visible. Does not establish compiled, physical-state, RNG, visual, retail or hardware equivalence; full capture and comparison remain mandatory.",
+  "controls": {
+    "kind": "all-production-leaf-and-inventory-negative-controls",
+    "rejected": 2924
+  }
+}

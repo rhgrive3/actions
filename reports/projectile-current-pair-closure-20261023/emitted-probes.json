@@ -1,0 +1,9 @@
+{
+  "tests/unreviewed.js": "globalThis.__closurePublicTests=\"not an admitted input\";\n",
+  "unreviewed.md": "Unreviewed public markdown fixture.\n",
+  "nested/tests/deep/unreviewed.mjs": "const e=\"nested tests\";export{e as closureNestedPublic};\n",
+  "nested/unreviewed.md": "Unreviewed nested public markdown fixture.\n",
+  "patches/splatoon3/runtime/tests/unreviewed.mjs": "const e=\"nested tests\";export{e as closureNestedPatch};\n",
+  "patches/loading-cache/runtime/tests/unreviewed.md": "Unreviewed nested startup markdown fixture.\n",
+  "patches/loading-cache/runtime/unreviewed.md": "Unreviewed startup markdown fixture.\n"
+}

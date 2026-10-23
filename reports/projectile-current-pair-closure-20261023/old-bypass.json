@@ -1,0 +1,25 @@
+{
+  "oldCode": "4fa8848e3c1437522b1d85c882115b70133abeb8",
+  "beforeHead": "5bb94b6fd94d23261705dcc5dfe92d09c4d53536",
+  "sources": {
+    "inkwave-public/tests/unreviewed.js": "globalThis.__closurePublicTests = \"not an admitted input\";\n",
+    "inkwave-public/unreviewed.md": "Unreviewed public markdown fixture.\n",
+    "inkwave-public/nested/tests/deep/unreviewed.mjs": "export const closureNestedPublic = \"nested tests\";\n",
+    "inkwave-public/nested/unreviewed.md": "Unreviewed nested public markdown fixture.\n",
+    "patches/splatoon3/runtime/tests/unreviewed.mjs": "export const closureNestedPatch = \"nested tests\";\n",
+    "patches/loading-cache/runtime/tests/unreviewed.md": "Unreviewed nested startup markdown fixture.\n",
+    "patches/loading-cache/runtime/unreviewed.md": "Unreviewed startup markdown fixture.\n"
+  },
+  "oldInventoryUnchanged": true,
+  "oldRows": 1461,
+  "untracked": {
+    "head": "5bb94b6fd94d23261705dcc5dfe92d09c4d53536",
+    "status": 0,
+    "receipt": "/workspace/projectile-closure-repair/reports/projectile-current-pair-closure-20261023/untracked-public-closure-old-receipt.json"
+  },
+  "tracked": {
+    "head": "37c140984de11e2dda80a9e7d48fdbd05d68911c",
+    "status": 0,
+    "receipt": "/workspace/projectile-closure-repair/reports/projectile-current-pair-closure-20261023/tracked-public-closure-old-receipt.json"
+  }
+}

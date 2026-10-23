@@ -1,0 +1,39 @@
+import subprocess,json,hashlib,gzip,pathlib
+repo='/workspace/actions'
+roots=['inkwave-public','patches/splatoon3','patches/touch-layout','patches/reliability','patches/local-quality','patches/network-replication','patches/practice-range','patches/native-stages','patches/loading-cache']
+scripts=['scripts/build-inkwave.mjs','scripts/inkwave-source-composition.mjs']+['scripts/lib/'+p+'.mjs' for p in ['inkwave-build-only-modules','inkwave-module-imports','inkwave-reviewed-audio-orphan','inkwave-worker-compaction','inkwave-source-compaction','inkwave-stage-assets','inkwave-lossless-lightmap','inkwave-audio-manifest','inkwave-volume-packaging','inkwave-account-bundle','inkwave-native-stages']]
+def included(p):
+ root=next((r for r in roots if p.startswith(r+'/')),None)
+ if p in scripts:return True
+ if not root:return False
+ local=p[len(root)+1:]
+ if root=='inkwave-public' or (root=='patches/loading-cache' and local.startswith('runtime/')):return True
+ return not local.startswith('tests/') and not local.endswith('.md')
+def git(*args):return subprocess.check_output(['git','-C',repo,*args])
+commits=['726e338ac256ba9609086ce65e25a68ddd99df85','7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51','d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c','d278a495a90ff0b6067d3dd26aa4d9ce40af53d4']
+epochs={}
+for commit in commits:
+ rows=[]
+ for line in git('ls-tree','-r','-z','--full-tree',commit).split(b'\0'):
+  if not line:continue
+  meta,p=line.split(b'\t',1);p=p.decode();mode,kind,sha=meta.decode().split(' ')
+  if not included(p):continue
+  assert kind=='blob'
+  rows.append({'path':p,'mode':mode,'sha':sha})
+ proc=subprocess.Popen(['git','-C',repo,'cat-file','--batch'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+ for row in rows:
+  proc.stdin.write((row['sha']+'\n').encode());proc.stdin.flush()
+  header=proc.stdout.readline().decode().split();body=proc.stdout.read(int(header[2]));assert proc.stdout.read(1)==b'\n'
+  row['sha256']=hashlib.sha256(body).hexdigest()
+ proc.stdin.close();assert proc.wait()==0
+ epochs[commit]={'tree':git('rev-parse',commit+'^{tree}').decode().strip(),'leaves':rows}
+def changes(base,head):
+ a={r['path']:r for r in epochs[base]['leaves']};b={r['path']:r for r in epochs[head]['leaves']}
+ return [{'path':p,'before':a.get(p),'after':b.get(p)} for p in sorted(a.keys()|b.keys()) if a.get(p)!=b.get(p)]
+routes=[{'pr':1857,'branch':'fix/shooter-splatling-cosmetics-20261023','sourceHead':commits[2],'bases':commits[:2]}, {'pr':1860,'branch':'fix/respawn-enemy-exclusion-20261023','sourceHead':commits[3],'bases':[commits[1]]}]
+for row in routes:row['deltas']={b:changes(b,row['sourceHead']) for b in row['bases']}
+data={'schema':1,'repository':'rhgrive3/actions','scope':'Closed production source admission for PR1857 and PR1860 only. Preserve actual event base and candidate; no Roller, paint or pose replay. Source pins are not a gameplay or visual acceptance result.','roots':roots,'scripts':scripts,'epochs':epochs,'routes':routes}
+out=pathlib.Path('/tmp/projectile-current-pair-closure-fixture.json.gz')
+out.write_bytes(gzip.compress((json.dumps(data,separators=(',',':'))+'\n').encode(),mtime=0))
+assert hashlib.sha256(out.read_bytes()).hexdigest()=='adf375e9e5a53d3f7ea0724d296a4b201c68edbfc6aea44291617a7d9de20ad9'
+print(json.dumps({'sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'bytes':out.stat().st_size,'epochs':{k:len(v['leaves']) for k,v in epochs.items()},'deltas':[{ 'pr':r['pr'],'bases':{b:[x['path'] for x in rows] for b,rows in r['deltas'].items()}} for r in routes]},indent=2))

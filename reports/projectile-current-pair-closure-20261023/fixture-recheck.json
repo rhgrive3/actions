@@ -1,0 +1,42 @@
+{
+  "sha256": "adf375e9e5a53d3f7ea0724d296a4b201c68edbfc6aea44291617a7d9de20ad9",
+  "bytes": 440570,
+  "epochs": {
+    "726e338ac256ba9609086ce65e25a68ddd99df85": 1458,
+    "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51": 1458,
+    "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c": 1461,
+    "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4": 1460
+  },
+  "deltas": [
+    {
+      "pr": 1857,
+      "bases": {
+        "726e338ac256ba9609086ce65e25a68ddd99df85": [
+          "patches/local-quality/static-menu-adapter.mjs",
+          "patches/splatoon3/firing-cosmetics-adapter.mjs",
+          "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+          "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+          "scripts/inkwave-source-composition.mjs"
+        ],
+        "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51": [
+          "patches/splatoon3/firing-cosmetics-adapter.mjs",
+          "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+          "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+          "scripts/inkwave-source-composition.mjs"
+        ]
+      }
+    },
+    {
+      "pr": 1860,
+      "bases": {
+        "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51": [
+          "inkwave-public/src/net/transport.js",
+          "patches/splatoon3/runtime/spawn-exclusion.mjs",
+          "patches/splatoon3/spawn-exclusion-adapter.mjs",
+          "scripts/inkwave-source-composition.mjs",
+          "scripts/lib/inkwave-build-only-modules.mjs"
+        ]
+      }
+    }
+  ]
+}

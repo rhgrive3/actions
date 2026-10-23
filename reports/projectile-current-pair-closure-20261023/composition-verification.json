@@ -1,0 +1,78 @@
+[
+  {
+    "pr": 1857,
+    "originalHead": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+    "localComposedHead": "458b26676596a66acaf85737fd12e3cbc4bff504",
+    "published": false,
+    "codeCommit": "3b85b8aaa656e53db3863e18d469bfbc12193f7d",
+    "cleanCherryPick": true,
+    "changedPaths": [
+      ".github/workflows/inkwave-projectile-visuals.yml",
+      "scripts/fixtures/inkwave-projectile-current-pair-20261023.json.gz",
+      "scripts/lib/inkwave-projectile-current-pair.mjs",
+      "scripts/tests/inkwave-ci-source-admission.test.mjs",
+      "scripts/tests/inkwave-projectile-current-pair.test.mjs",
+      "scripts/verify-inkwave-projectile-current-pair.mjs"
+    ],
+    "productionChanges": [],
+    "checkouts": [
+      {
+        "commit": "726e338ac256ba9609086ce65e25a68ddd99df85",
+        "tree": "cfd4402fa796d11daffe2db0d34cdfcac8a4c71c",
+        "sourceEpoch": "726e338ac256ba9609086ce65e25a68ddd99df85",
+        "productionLeaves": 1458,
+        "inventorySha256": "0fd0762216e121b78e94d7c6023783967056c24f7cd1fbe445276765e1e7956a"
+      },
+      {
+        "commit": "458b26676596a66acaf85737fd12e3cbc4bff504",
+        "tree": "c4d3da8d4d57921cacae0e0b614d04ac9c739b07",
+        "sourceEpoch": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+        "productionLeaves": 1461,
+        "inventorySha256": "0638c5087ab87639b94cb20bd9e9136f4305149da37624307f887dd760a4843c"
+      }
+    ],
+    "controls": {
+      "kind": "all-production-leaf-and-inventory-negative-controls",
+      "rejected": 2925
+    },
+    "writtenPaths": []
+  },
+  {
+    "pr": 1860,
+    "originalHead": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+    "localComposedHead": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+    "published": false,
+    "codeCommit": "3b85b8aaa656e53db3863e18d469bfbc12193f7d",
+    "cleanCherryPick": true,
+    "changedPaths": [
+      ".github/workflows/inkwave-projectile-visuals.yml",
+      "scripts/fixtures/inkwave-projectile-current-pair-20261023.json.gz",
+      "scripts/lib/inkwave-projectile-current-pair.mjs",
+      "scripts/tests/inkwave-ci-source-admission.test.mjs",
+      "scripts/tests/inkwave-projectile-current-pair.test.mjs",
+      "scripts/verify-inkwave-projectile-current-pair.mjs"
+    ],
+    "productionChanges": [],
+    "checkouts": [
+      {
+        "commit": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+        "tree": "965c98442df0c42cd092f7a6eb9b0535f51b8b38",
+        "sourceEpoch": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+        "productionLeaves": 1458,
+        "inventorySha256": "46e64fbea2073e1333cbdbfd7af9fffb3e144193675446d507826ddffe57036c"
+      },
+      {
+        "commit": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+        "tree": "4f6255d37e39390d78eb57455f6552b8932121e8",
+        "sourceEpoch": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+        "productionLeaves": 1460,
+        "inventorySha256": "6ff054c8ec48117788ca80196a5ccc6fd5dc6a2268ef5cfa56cc2086292b1a2d"
+      }
+    ],
+    "controls": {
+      "kind": "all-production-leaf-and-inventory-negative-controls",
+      "rejected": 2924
+    },
+    "writtenPaths": []
+  }
+]

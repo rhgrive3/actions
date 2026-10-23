@@ -1,0 +1,48 @@
+{
+  "oldCode": "4fa8848e3c1437522b1d85c882115b70133abeb8",
+  "oldInventoryMissed": 7,
+  "canonicalInputMapUnchanged": true,
+  "inputHash": "9e8b33fb99224088ee00aa2fba80aef88f619b1e8e94f8cb1462b252d2154150",
+  "before": {
+    "contentHash": "f740110d0f27536f46725d2299710bf4e01a08c0e7ddc6efba75dbe27a61c965",
+    "artifacts": 2116
+  },
+  "after": {
+    "contentHash": "4139cc843b89cf446bc758a063192503bbf3bd82d02ea6d862be18b753a6d86a",
+    "artifacts": 2130
+  },
+  "newRootArtifacts": [
+    "tests/unreviewed.js",
+    "unreviewed.md",
+    "nested/tests/deep/unreviewed.mjs",
+    "nested/unreviewed.md",
+    "patches/splatoon3/runtime/tests/unreviewed.mjs",
+    "patches/loading-cache/runtime/tests/unreviewed.md",
+    "patches/loading-cache/runtime/unreviewed.md"
+  ],
+  "allNewBodiesMatchArtifacts": true,
+  "newPolicyValidEpochs": [
+    {
+      "epoch": "726e338ac256ba9609086ce65e25a68ddd99df85",
+      "rows": 1458,
+      "pinStillValid": true
+    },
+    {
+      "epoch": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+      "rows": 1458,
+      "pinStillValid": true
+    },
+    {
+      "epoch": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "rows": 1461,
+      "pinStillValid": true
+    },
+    {
+      "epoch": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+      "rows": 1460,
+      "pinStillValid": true
+    }
+  ],
+  "fixturePinUnchanged": true,
+  "limitation": "The original canonical source input map itself excludes these names; equality of that map does not establish complete input closure. The new dynamic Git/filesystem inventory must reject additions before build."
+}

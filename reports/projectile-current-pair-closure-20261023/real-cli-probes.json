@@ -1,0 +1,173 @@
+[
+  {
+    "label": "probe-0-untracked",
+    "relative": "inkwave-public/tests/unreviewed.js",
+    "tracked": false,
+    "head": "f92d65107f0e1533e1b5a29d6197ff45c218dd30",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+  },
+  {
+    "label": "probe-0-tracked",
+    "relative": "inkwave-public/tests/unreviewed.js",
+    "tracked": true,
+    "head": "8412d836b9f0b3fd2577aa669a820ddde60a3d01",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+  },
+  {
+    "label": "probe-1-untracked",
+    "relative": "inkwave-public/unreviewed.md",
+    "tracked": false,
+    "head": "9be84d992fe1107caff55582ef20a91d67102d3b",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+  },
+  {
+    "label": "probe-1-tracked",
+    "relative": "inkwave-public/unreviewed.md",
+    "tracked": true,
+    "head": "4523f1e66a2c88327b22ecd84d65e8646619a61e",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+  },
+  {
+    "label": "probe-2-untracked",
+    "relative": "inkwave-public/nested/tests/deep/unreviewed.mjs",
+    "tracked": false,
+    "head": "8d1bf81e0aecd1bee65a118acce752eb40dc1b46",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+  },
+  {
+    "label": "probe-2-tracked",
+    "relative": "inkwave-public/nested/tests/deep/unreviewed.mjs",
+    "tracked": true,
+    "head": "e4993d9c94eb1b6e5c8d001055b267cc54386b12",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+  },
+  {
+    "label": "probe-3-untracked",
+    "relative": "inkwave-public/nested/unreviewed.md",
+    "tracked": false,
+    "head": "bb96c8959c148c3fae3e034e6a816409c6edd0a9",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+  },
+  {
+    "label": "probe-3-tracked",
+    "relative": "inkwave-public/nested/unreviewed.md",
+    "tracked": true,
+    "head": "cf3cdf133178da7c09291abf1b8345370a6900d2",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+  },
+  {
+    "label": "probe-4-untracked",
+    "relative": "patches/splatoon3/runtime/tests/unreviewed.mjs",
+    "tracked": false,
+    "head": "af19af31f09c61e805ed2c0910ad0dd84dcd5461",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+  },
+  {
+    "label": "probe-4-tracked",
+    "relative": "patches/splatoon3/runtime/tests/unreviewed.mjs",
+    "tracked": true,
+    "head": "45762406893f5c6efe6924ca49a4e161ee740db1",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+  },
+  {
+    "label": "probe-5-untracked",
+    "relative": "patches/loading-cache/runtime/tests/unreviewed.md",
+    "tracked": false,
+    "head": "16a8befada696be425f12b0212e433586c121b7d",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+  },
+  {
+    "label": "probe-5-tracked",
+    "relative": "patches/loading-cache/runtime/tests/unreviewed.md",
+    "tracked": true,
+    "head": "9bb37778d0a7c533fb00e741000a6bb5df3e5e83",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+  },
+  {
+    "label": "probe-6-untracked",
+    "relative": "patches/loading-cache/runtime/unreviewed.md",
+    "tracked": false,
+    "head": "c83fe7089aefdd753e1dd79981d77b9c85ea0f34",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+  },
+  {
+    "label": "probe-6-tracked",
+    "relative": "patches/loading-cache/runtime/unreviewed.md",
+    "tracked": true,
+    "head": "7d52da5520f89fa40f5754c79e18f86112e7bc9b",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+  },
+  {
+    "label": "probe-7-untracked-link",
+    "relative": "inkwave-public/tests/escape.md",
+    "tracked": false,
+    "head": "e35409cc7aa9d4919e0f70aa1fa440dd5546c4db",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: inkwave-public/tests/escape.md: source symlinks rejected"
+  },
+  {
+    "label": "probe-7-tracked-link",
+    "relative": "inkwave-public/tests/escape.md",
+    "tracked": true,
+    "head": "fcf41aac705aefca13034cfca9c43809e9ac66c4",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: inkwave-public/tests/escape.md: source symlinks rejected"
+  },
+  {
+    "label": "probe-8-untracked-link",
+    "relative": "inkwave-public/nested/tests",
+    "tracked": false,
+    "head": "3a90d20af373f3d26324824adc85d6debe1d1c0a",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: inkwave-public/nested/tests: source symlinks rejected"
+  },
+  {
+    "label": "probe-8-tracked-link",
+    "relative": "inkwave-public/nested/tests",
+    "tracked": true,
+    "head": "a267cfb2a5263d575348e6a5a8e72bc9a812a7a7",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: inkwave-public/nested/tests: source symlinks rejected"
+  },
+  {
+    "label": "restored-valid-pair",
+    "relative": null,
+    "tracked": false,
+    "head": "7f13bd279be5fc7896947f810ede982682592afa",
+    "status": 0,
+    "priorReceiptPreserved": false,
+    "reason": "valid restored pair accepted"
+  }
+]

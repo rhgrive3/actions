@@ -1,0 +1,13 @@
+{
+  negativeCases: 18,
+  validRestoredPair: {
+    label: 'restored-valid-pair',
+    relative: null,
+    tracked: false,
+    head: '7f13bd279be5fc7896947f810ede982682592afa',
+    status: 0,
+    priorReceiptPreserved: false,
+    reason: 'valid restored pair accepted'
+  },
+  allNegativeReceiptsPreserved: true
+}

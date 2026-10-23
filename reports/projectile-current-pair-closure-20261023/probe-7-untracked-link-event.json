@@ -1,0 +1,20 @@
+{
+  "number": 1857,
+  "pull_request": {
+    "number": 1857,
+    "base": {
+      "ref": "main",
+      "sha": "726e338ac256ba9609086ce65e25a68ddd99df85",
+      "repo": {
+        "full_name": "rhgrive3/actions"
+      }
+    },
+    "head": {
+      "ref": "fix/shooter-splatling-cosmetics-20261023",
+      "sha": "e35409cc7aa9d4919e0f70aa1fa440dd5546c4db",
+      "repo": {
+        "full_name": "rhgrive3/actions"
+      }
+    }
+  }
+}

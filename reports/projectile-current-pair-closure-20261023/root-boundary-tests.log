@@ -1,0 +1,21 @@
+✔ new public tests/Markdown and copied nested overlay paths are visible in filesystem and tracked Git inventories (41.759545ms)
+✔ a top-level overlay tests directory stays excluded while a copied file named tests is admitted to inventory (32.699528ms)
+✔ public and nested copied symlinks reject before body reads or directory escape, both untracked and tracked (128.429881ms)
+✔ closed inventories name all four real source epochs and exact reviewed deltas (3.483656ms)
+✔ every paint/native/pose leaf keeps current pins; historical replay pin remains unchanged (2.466179ms)
+✔ only the two owned PRs and their actual admitted event bases select this route (1.646589ms)
+✔ QA-only new head is declared separately from the completely pinned production epoch (1.796557ms)
+✔ every production leaf rejects drift, including added/missing/duplicate paths and modes (1234.17607ms)
+✔ real filesystem and Git readers detect dirty source, unknown files, symlinks and wrong HEAD (42.880221ms)
+✔ CLI rejects ambiguous flags and invalid events without replacing an existing receipt (167.340118ms)
+✔ receipt cannot overwrite production, verifier, fixture or event inputs (261.199696ms)
+✔ CLI success runs controls with the selected route and writes only the receipt (orchestration stubs) (55.665823ms)
+✔ workflow admits only after successful controls and retains both captures and strict comparisons (7.678389ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2089.214479

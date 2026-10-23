@@ -6136,3 +6136,8 @@ main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、Splatoon 3 Ver.11
 参照対象は公開版の全パッチ合成後。S3 Ver.11.3.0に関する既存の未確認値は変更せず、ソースモーション（既存のWii U由来パックを含む）の中間計算だけを削減した。BodyBalanceのgain対象と祖先以外の中間world回転を省き、最終全ボーンFK・足接地・IK・銃口・移動・射撃・塗り・当たり判定・描画設定は維持する。2種の実ソースキャラクター、シューター/チャージャー/ローラーの30/60/120Hz、1260フレームで最終local/world姿勢・skin行列・接地・銃口が一致し、通常minify配信物でも同じ比較が成功。これはロジック/配信物検証であり、Nintendo実機やiPad SafariのFPS比較ではない。
 
 Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテゴリ。修正対象のBodyBalanceはその一部にすぎず、iPad上での支配要因の確定や重いフレームの完全解消とは扱わない。#1671/#1757の実機受入はOpenのまま。条件・既存PRとの重複確認・再現コマンド・証跡は[調査記録](inkwave-composed-cpu-20261023/README.md)。
+
+
+### 2026-10-23 — projectile QA input closure correction
+
+旧4fa/eebの94成功は新規入力への閉包を示さなかった。実CLIでpublic tests/Markdown、nested overlay tests、loading runtime Markdownの追加が通り、通常buildはcanonical input hash不変のまま生成物2116→2130となることを保存した。新候補3b85b8aaa656e53db3863e18d469bfbc12193f7dはroot別のGit/FS選別を修復するQAのみで、18件の実CLI追加・symlink負例、97件のsource回帰、既存pair正例とmain7e同一出力を確認。詳細はreports/projectile-current-pair-closure-20261023/README.md。runtime・塗り・物理は変更せず、修復後hosted比較、本家参照拒否、実機性能未確認は未通過のまま。

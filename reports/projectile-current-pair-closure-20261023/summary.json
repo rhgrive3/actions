@@ -1,0 +1,652 @@
+{
+  "codeCommit": "3b85b8aaa656e53db3863e18d469bfbc12193f7d",
+  "scannerDelta": "5e37938b863fcc84a1faf4dc682e260e151b19a2",
+  "sourcePaths": [
+    ".github/workflows/inkwave-projectile-visuals.yml",
+    "scripts/fixtures/inkwave-projectile-current-pair-20261023.json.gz",
+    "scripts/lib/inkwave-projectile-current-pair.mjs",
+    "scripts/tests/inkwave-ci-source-admission.test.mjs",
+    "scripts/tests/inkwave-projectile-current-pair.test.mjs",
+    "scripts/verify-inkwave-projectile-current-pair.mjs"
+  ],
+  "productionChanges": [],
+  "protectedRefs": {
+    "main": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+    "PR1857": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+    "PR1860": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+    "oldCode": "4fa8848e3c1437522b1d85c882115b70133abeb8",
+    "oldEvidence": "eebcd246e507c6565f8c2d18c0b1c02743f47223"
+  },
+  "sourceTests": {
+    "cases": 97,
+    "pass": 97,
+    "fail": 0,
+    "skip": 0,
+    "currentPairCases": 13
+  },
+  "oldBypass": {
+    "oldCode": "4fa8848e3c1437522b1d85c882115b70133abeb8",
+    "oldInventoryMissed": 7,
+    "canonicalInputMapUnchanged": true,
+    "inputHash": "9e8b33fb99224088ee00aa2fba80aef88f619b1e8e94f8cb1462b252d2154150",
+    "before": {
+      "contentHash": "f740110d0f27536f46725d2299710bf4e01a08c0e7ddc6efba75dbe27a61c965",
+      "artifacts": 2116
+    },
+    "after": {
+      "contentHash": "4139cc843b89cf446bc758a063192503bbf3bd82d02ea6d862be18b753a6d86a",
+      "artifacts": 2130
+    },
+    "newRootArtifacts": [
+      "tests/unreviewed.js",
+      "unreviewed.md",
+      "nested/tests/deep/unreviewed.mjs",
+      "nested/unreviewed.md",
+      "patches/splatoon3/runtime/tests/unreviewed.mjs",
+      "patches/loading-cache/runtime/tests/unreviewed.md",
+      "patches/loading-cache/runtime/unreviewed.md"
+    ],
+    "allNewBodiesMatchArtifacts": true,
+    "newPolicyValidEpochs": [
+      {
+        "epoch": "726e338ac256ba9609086ce65e25a68ddd99df85",
+        "rows": 1458,
+        "pinStillValid": true
+      },
+      {
+        "epoch": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+        "rows": 1458,
+        "pinStillValid": true
+      },
+      {
+        "epoch": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+        "rows": 1461,
+        "pinStillValid": true
+      },
+      {
+        "epoch": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+        "rows": 1460,
+        "pinStillValid": true
+      }
+    ],
+    "fixturePinUnchanged": true,
+    "limitation": "The original canonical source input map itself excludes these names; equality of that map does not establish complete input closure. The new dynamic Git/filesystem inventory must reject additions before build."
+  },
+  "realCliNegatives": [
+    {
+      "label": "probe-0-untracked",
+      "relative": "inkwave-public/tests/unreviewed.js",
+      "tracked": false,
+      "head": "f92d65107f0e1533e1b5a29d6197ff45c218dd30",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+    },
+    {
+      "label": "probe-0-tracked",
+      "relative": "inkwave-public/tests/unreviewed.js",
+      "tracked": true,
+      "head": "8412d836b9f0b3fd2577aa669a820ddde60a3d01",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+    },
+    {
+      "label": "probe-1-untracked",
+      "relative": "inkwave-public/unreviewed.md",
+      "tracked": false,
+      "head": "9be84d992fe1107caff55582ef20a91d67102d3b",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+    },
+    {
+      "label": "probe-1-tracked",
+      "relative": "inkwave-public/unreviewed.md",
+      "tracked": true,
+      "head": "4523f1e66a2c88327b22ecd84d65e8646619a61e",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+    },
+    {
+      "label": "probe-2-untracked",
+      "relative": "inkwave-public/nested/tests/deep/unreviewed.mjs",
+      "tracked": false,
+      "head": "8d1bf81e0aecd1bee65a118acce752eb40dc1b46",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+    },
+    {
+      "label": "probe-2-tracked",
+      "relative": "inkwave-public/nested/tests/deep/unreviewed.mjs",
+      "tracked": true,
+      "head": "e4993d9c94eb1b6e5c8d001055b267cc54386b12",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+    },
+    {
+      "label": "probe-3-untracked",
+      "relative": "inkwave-public/nested/unreviewed.md",
+      "tracked": false,
+      "head": "bb96c8959c148c3fae3e034e6a816409c6edd0a9",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+    },
+    {
+      "label": "probe-3-tracked",
+      "relative": "inkwave-public/nested/unreviewed.md",
+      "tracked": true,
+      "head": "cf3cdf133178da7c09291abf1b8345370a6900d2",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+    },
+    {
+      "label": "probe-4-untracked",
+      "relative": "patches/splatoon3/runtime/tests/unreviewed.mjs",
+      "tracked": false,
+      "head": "af19af31f09c61e805ed2c0910ad0dd84dcd5461",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+    },
+    {
+      "label": "probe-4-tracked",
+      "relative": "patches/splatoon3/runtime/tests/unreviewed.mjs",
+      "tracked": true,
+      "head": "45762406893f5c6efe6924ca49a4e161ee740db1",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+    },
+    {
+      "label": "probe-5-untracked",
+      "relative": "patches/loading-cache/runtime/tests/unreviewed.md",
+      "tracked": false,
+      "head": "16a8befada696be425f12b0212e433586c121b7d",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+    },
+    {
+      "label": "probe-5-tracked",
+      "relative": "patches/loading-cache/runtime/tests/unreviewed.md",
+      "tracked": true,
+      "head": "9bb37778d0a7c533fb00e741000a6bb5df3e5e83",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+    },
+    {
+      "label": "probe-6-untracked",
+      "relative": "patches/loading-cache/runtime/unreviewed.md",
+      "tracked": false,
+      "head": "c83fe7089aefdd753e1dd79981d77b9c85ea0f34",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+    },
+    {
+      "label": "probe-6-tracked",
+      "relative": "patches/loading-cache/runtime/unreviewed.md",
+      "tracked": true,
+      "head": "7d52da5520f89fa40f5754c79e18f86112e7bc9b",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+    },
+    {
+      "label": "probe-7-untracked-link",
+      "relative": "inkwave-public/tests/escape.md",
+      "tracked": false,
+      "head": "e35409cc7aa9d4919e0f70aa1fa440dd5546c4db",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: inkwave-public/tests/escape.md: source symlinks rejected"
+    },
+    {
+      "label": "probe-7-tracked-link",
+      "relative": "inkwave-public/tests/escape.md",
+      "tracked": true,
+      "head": "fcf41aac705aefca13034cfca9c43809e9ac66c4",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: inkwave-public/tests/escape.md: source symlinks rejected"
+    },
+    {
+      "label": "probe-8-untracked-link",
+      "relative": "inkwave-public/nested/tests",
+      "tracked": false,
+      "head": "3a90d20af373f3d26324824adc85d6debe1d1c0a",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: inkwave-public/nested/tests: source symlinks rejected"
+    },
+    {
+      "label": "probe-8-tracked-link",
+      "relative": "inkwave-public/nested/tests",
+      "tracked": true,
+      "head": "a267cfb2a5263d575348e6a5a8e72bc9a812a7a7",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: inkwave-public/nested/tests: source symlinks rejected"
+    }
+  ],
+  "restoredValidPair": {
+    "label": "restored-valid-pair",
+    "relative": null,
+    "tracked": false,
+    "head": "7f13bd279be5fc7896947f810ede982682592afa",
+    "status": 0,
+    "priorReceiptPreserved": false,
+    "reason": "valid restored pair accepted"
+  },
+  "validPairs": [
+    {
+      "file": "valid-1857-base726-receipt.json",
+      "schema": 1,
+      "mode": "oct23-reviewed-projectile-pairs",
+      "pr": 1857,
+      "repository": "rhgrive3/actions",
+      "branch": "fix/shooter-splatling-cosmetics-20261023",
+      "declaredBaseCommit": "726e338ac256ba9609086ce65e25a68ddd99df85",
+      "declaredCandidateCommit": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "sourceBase": "726e338ac256ba9609086ce65e25a68ddd99df85",
+      "sourceHead": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "fixtureSha256": "adf375e9e5a53d3f7ea0724d296a4b201c68edbfc6aea44291617a7d9de20ad9",
+      "checkouts": [
+        {
+          "commit": "726e338ac256ba9609086ce65e25a68ddd99df85",
+          "tree": "cfd4402fa796d11daffe2db0d34cdfcac8a4c71c",
+          "sourceEpoch": "726e338ac256ba9609086ce65e25a68ddd99df85",
+          "productionLeaves": 1458,
+          "inventorySha256": "0fd0762216e121b78e94d7c6023783967056c24f7cd1fbe445276765e1e7956a"
+        },
+        {
+          "commit": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+          "tree": "72c4cf18d9654925954472a3716541a9c76b8298",
+          "sourceEpoch": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+          "productionLeaves": 1461,
+          "inventorySha256": "0638c5087ab87639b94cb20bd9e9136f4305149da37624307f887dd760a4843c"
+        }
+      ],
+      "productionDeltas": [
+        {
+          "path": "patches/local-quality/static-menu-adapter.mjs",
+          "before": {
+            "path": "patches/local-quality/static-menu-adapter.mjs",
+            "mode": "100644",
+            "sha": "209e1b21d25d790e8b3725a8f2f0bed363547d53",
+            "sha256": "c8bec2d3404d9574243388bb036ddbefa176dd1a5ccd5aa52936046a4ba3683e"
+          },
+          "after": {
+            "path": "patches/local-quality/static-menu-adapter.mjs",
+            "mode": "100644",
+            "sha": "e9ec35da5e1f96d9e312ba18f89585c0222e26cc",
+            "sha256": "991dd8f97df2508e6ef090d9a80457d741492ab2de9537ebde328afdc62ba62f"
+          }
+        },
+        {
+          "path": "patches/splatoon3/firing-cosmetics-adapter.mjs",
+          "before": null,
+          "after": {
+            "path": "patches/splatoon3/firing-cosmetics-adapter.mjs",
+            "mode": "100644",
+            "sha": "19f4236fabcdcc99fd38253a3a87f3436b026a7b",
+            "sha256": "264ab6f40fd2970de39a4ffd0c54f142683544b072169ef74dcace219ceaef6f"
+          }
+        },
+        {
+          "path": "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+          "before": null,
+          "after": {
+            "path": "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+            "mode": "100644",
+            "sha": "523afbd9e550f2b65d2848eec89d445bac270f12",
+            "sha256": "3b4a10c2e9a956c68005116425f9c14b8025e6cd471afc5d82b2350d0ceed50d"
+          }
+        },
+        {
+          "path": "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+          "before": null,
+          "after": {
+            "path": "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+            "mode": "100644",
+            "sha": "1a0909ac79aeed0e059b7730d31de3a463f6dca4",
+            "sha256": "f230328b269e8c3d5f2c8daf00adafb080da7c0ad617f8149683593a24aebba7"
+          }
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "before": {
+            "path": "scripts/inkwave-source-composition.mjs",
+            "mode": "100644",
+            "sha": "a61100acdd90db510fafb99d6636c8fffff1295c",
+            "sha256": "0992c6800164f0682611322aa0b2ad548cc82bf67e3af75077a0e86cddb2fc03"
+          },
+          "after": {
+            "path": "scripts/inkwave-source-composition.mjs",
+            "mode": "100644",
+            "sha": "a6dfbe6fa07a4ba54bfe316c67fb8cc8d9d4a9e9",
+            "sha256": "b7973c61b34fae2da69b0d1af22fc4239d28e8db0dc492d17a41b6838631e8ad"
+          }
+        }
+      ],
+      "changes": [],
+      "writtenPaths": [],
+      "scope": "Preserve the actual event base and complete pinned candidate production epoch, including paint, births, RNG, pose and network. No historical Roller, pool, paint or pose replay.",
+      "limitation": "Pinned source admission only. Listed production differences remain visible. Does not establish compiled, physical-state, RNG, visual, retail or hardware equivalence; full capture and comparison remain mandatory.",
+      "controls": {
+        "kind": "all-production-leaf-and-inventory-negative-controls",
+        "rejected": 2925
+      }
+    },
+    {
+      "file": "valid-1860-base7e-receipt.json",
+      "schema": 1,
+      "mode": "oct23-reviewed-projectile-pairs",
+      "pr": 1860,
+      "repository": "rhgrive3/actions",
+      "branch": "fix/respawn-enemy-exclusion-20261023",
+      "declaredBaseCommit": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+      "declaredCandidateCommit": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+      "sourceBase": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+      "sourceHead": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+      "fixtureSha256": "adf375e9e5a53d3f7ea0724d296a4b201c68edbfc6aea44291617a7d9de20ad9",
+      "checkouts": [
+        {
+          "commit": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+          "tree": "965c98442df0c42cd092f7a6eb9b0535f51b8b38",
+          "sourceEpoch": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+          "productionLeaves": 1458,
+          "inventorySha256": "46e64fbea2073e1333cbdbfd7af9fffb3e144193675446d507826ddffe57036c"
+        },
+        {
+          "commit": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+          "tree": "bd6be2e907878a9ea6ffa47fd66b4c8f51dd299c",
+          "sourceEpoch": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+          "productionLeaves": 1460,
+          "inventorySha256": "6ff054c8ec48117788ca80196a5ccc6fd5dc6a2268ef5cfa56cc2086292b1a2d"
+        }
+      ],
+      "productionDeltas": [
+        {
+          "path": "inkwave-public/src/net/transport.js",
+          "before": {
+            "path": "inkwave-public/src/net/transport.js",
+            "mode": "100644",
+            "sha": "1fbd79cfe58681901b7d5581d4db984c7c581761",
+            "sha256": "8e90e02226f617e70cd0eee96295b2d7c02aa37cb4768064bd00a863f4bf666e"
+          },
+          "after": {
+            "path": "inkwave-public/src/net/transport.js",
+            "mode": "100644",
+            "sha": "331b19f8eca109027138498a8beab2a8eb24c1d3",
+            "sha256": "8869f2c1db3328ab98e28ce1903207da5d304049932b3a45154d2a16860a402e"
+          }
+        },
+        {
+          "path": "patches/splatoon3/runtime/spawn-exclusion.mjs",
+          "before": null,
+          "after": {
+            "path": "patches/splatoon3/runtime/spawn-exclusion.mjs",
+            "mode": "100644",
+            "sha": "4b68c6d7a3f4223521ca316792e1e76e6f7b71aa",
+            "sha256": "15ce9f42f70ceaa4dc4c2ba10c125227a0eca8ca422a2dd277f853fb7fb26f38"
+          }
+        },
+        {
+          "path": "patches/splatoon3/spawn-exclusion-adapter.mjs",
+          "before": null,
+          "after": {
+            "path": "patches/splatoon3/spawn-exclusion-adapter.mjs",
+            "mode": "100644",
+            "sha": "98b2eae7fa2c98cd2dca0c397cd8d86331ff6f10",
+            "sha256": "3acf3e0b1bd759aeca4ab15a9f530502e74cf91a60cfa1bdfde4a0da9fb0b94c"
+          }
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "before": {
+            "path": "scripts/inkwave-source-composition.mjs",
+            "mode": "100644",
+            "sha": "a61100acdd90db510fafb99d6636c8fffff1295c",
+            "sha256": "0992c6800164f0682611322aa0b2ad548cc82bf67e3af75077a0e86cddb2fc03"
+          },
+          "after": {
+            "path": "scripts/inkwave-source-composition.mjs",
+            "mode": "100644",
+            "sha": "e870e95e1d3ab82ab5412888fd3ca0ba0d48fcd5",
+            "sha256": "039a6e1884a50e02dd3945b030f069c833131e886bd45bbc1e70d634d68e7b40"
+          }
+        },
+        {
+          "path": "scripts/lib/inkwave-build-only-modules.mjs",
+          "before": {
+            "path": "scripts/lib/inkwave-build-only-modules.mjs",
+            "mode": "100644",
+            "sha": "5408d3598bd60d661f003f5ea0e7c02ef55e4d62",
+            "sha256": "28718d1528f16db6e06b9821695da4f84625e13893361cd54349c4530a5c3f20"
+          },
+          "after": {
+            "path": "scripts/lib/inkwave-build-only-modules.mjs",
+            "mode": "100644",
+            "sha": "64012e646a889ef090b8b0e21cd82d30e0670130",
+            "sha256": "a46aa5dfd05f66a57aafc064315ca2d273c7df442e6dfd509c8f23c3d6b81727"
+          }
+        }
+      ],
+      "changes": [],
+      "writtenPaths": [],
+      "scope": "Preserve the actual event base and complete pinned candidate production epoch, including paint, births, RNG, pose and network. No historical Roller, pool, paint or pose replay.",
+      "limitation": "Pinned source admission only. Listed production differences remain visible. Does not establish compiled, physical-state, RNG, visual, retail or hardware equivalence; full capture and comparison remain mandatory.",
+      "controls": {
+        "kind": "all-production-leaf-and-inventory-negative-controls",
+        "rejected": 2924
+      }
+    },
+    {
+      "file": "valid-1857-base7e-prospective-receipt.json",
+      "schema": 1,
+      "mode": "oct23-reviewed-projectile-pairs",
+      "pr": 1857,
+      "repository": "rhgrive3/actions",
+      "branch": "fix/shooter-splatling-cosmetics-20261023",
+      "declaredBaseCommit": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+      "declaredCandidateCommit": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "sourceBase": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+      "sourceHead": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "fixtureSha256": "adf375e9e5a53d3f7ea0724d296a4b201c68edbfc6aea44291617a7d9de20ad9",
+      "checkouts": [
+        {
+          "commit": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+          "tree": "965c98442df0c42cd092f7a6eb9b0535f51b8b38",
+          "sourceEpoch": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+          "productionLeaves": 1458,
+          "inventorySha256": "46e64fbea2073e1333cbdbfd7af9fffb3e144193675446d507826ddffe57036c"
+        },
+        {
+          "commit": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+          "tree": "72c4cf18d9654925954472a3716541a9c76b8298",
+          "sourceEpoch": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+          "productionLeaves": 1461,
+          "inventorySha256": "0638c5087ab87639b94cb20bd9e9136f4305149da37624307f887dd760a4843c"
+        }
+      ],
+      "productionDeltas": [
+        {
+          "path": "patches/splatoon3/firing-cosmetics-adapter.mjs",
+          "before": null,
+          "after": {
+            "path": "patches/splatoon3/firing-cosmetics-adapter.mjs",
+            "mode": "100644",
+            "sha": "19f4236fabcdcc99fd38253a3a87f3436b026a7b",
+            "sha256": "264ab6f40fd2970de39a4ffd0c54f142683544b072169ef74dcace219ceaef6f"
+          }
+        },
+        {
+          "path": "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+          "before": null,
+          "after": {
+            "path": "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+            "mode": "100644",
+            "sha": "523afbd9e550f2b65d2848eec89d445bac270f12",
+            "sha256": "3b4a10c2e9a956c68005116425f9c14b8025e6cd471afc5d82b2350d0ceed50d"
+          }
+        },
+        {
+          "path": "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+          "before": null,
+          "after": {
+            "path": "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+            "mode": "100644",
+            "sha": "1a0909ac79aeed0e059b7730d31de3a463f6dca4",
+            "sha256": "f230328b269e8c3d5f2c8daf00adafb080da7c0ad617f8149683593a24aebba7"
+          }
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "before": {
+            "path": "scripts/inkwave-source-composition.mjs",
+            "mode": "100644",
+            "sha": "a61100acdd90db510fafb99d6636c8fffff1295c",
+            "sha256": "0992c6800164f0682611322aa0b2ad548cc82bf67e3af75077a0e86cddb2fc03"
+          },
+          "after": {
+            "path": "scripts/inkwave-source-composition.mjs",
+            "mode": "100644",
+            "sha": "a6dfbe6fa07a4ba54bfe316c67fb8cc8d9d4a9e9",
+            "sha256": "b7973c61b34fae2da69b0d1af22fc4239d28e8db0dc492d17a41b6838631e8ad"
+          }
+        }
+      ],
+      "changes": [],
+      "writtenPaths": [],
+      "scope": "Preserve the actual event base and complete pinned candidate production epoch, including paint, births, RNG, pose and network. No historical Roller, pool, paint or pose replay.",
+      "limitation": "Pinned source admission only. Listed production differences remain visible. Does not establish compiled, physical-state, RNG, visual, retail or hardware equivalence; full capture and comparison remain mandatory.",
+      "controls": {
+        "kind": "all-production-leaf-and-inventory-negative-controls",
+        "rejected": 2925
+      }
+    }
+  ],
+  "compositions": [
+    {
+      "pr": 1857,
+      "originalHead": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "localComposedHead": "458b26676596a66acaf85737fd12e3cbc4bff504",
+      "published": false,
+      "codeCommit": "3b85b8aaa656e53db3863e18d469bfbc12193f7d",
+      "cleanCherryPick": true,
+      "changedPaths": [
+        ".github/workflows/inkwave-projectile-visuals.yml",
+        "scripts/fixtures/inkwave-projectile-current-pair-20261023.json.gz",
+        "scripts/lib/inkwave-projectile-current-pair.mjs",
+        "scripts/tests/inkwave-ci-source-admission.test.mjs",
+        "scripts/tests/inkwave-projectile-current-pair.test.mjs",
+        "scripts/verify-inkwave-projectile-current-pair.mjs"
+      ],
+      "productionChanges": [],
+      "checkouts": [
+        {
+          "commit": "726e338ac256ba9609086ce65e25a68ddd99df85",
+          "tree": "cfd4402fa796d11daffe2db0d34cdfcac8a4c71c",
+          "sourceEpoch": "726e338ac256ba9609086ce65e25a68ddd99df85",
+          "productionLeaves": 1458,
+          "inventorySha256": "0fd0762216e121b78e94d7c6023783967056c24f7cd1fbe445276765e1e7956a"
+        },
+        {
+          "commit": "458b26676596a66acaf85737fd12e3cbc4bff504",
+          "tree": "c4d3da8d4d57921cacae0e0b614d04ac9c739b07",
+          "sourceEpoch": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+          "productionLeaves": 1461,
+          "inventorySha256": "0638c5087ab87639b94cb20bd9e9136f4305149da37624307f887dd760a4843c"
+        }
+      ],
+      "controls": {
+        "kind": "all-production-leaf-and-inventory-negative-controls",
+        "rejected": 2925
+      },
+      "writtenPaths": []
+    },
+    {
+      "pr": 1860,
+      "originalHead": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+      "localComposedHead": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+      "published": false,
+      "codeCommit": "3b85b8aaa656e53db3863e18d469bfbc12193f7d",
+      "cleanCherryPick": true,
+      "changedPaths": [
+        ".github/workflows/inkwave-projectile-visuals.yml",
+        "scripts/fixtures/inkwave-projectile-current-pair-20261023.json.gz",
+        "scripts/lib/inkwave-projectile-current-pair.mjs",
+        "scripts/tests/inkwave-ci-source-admission.test.mjs",
+        "scripts/tests/inkwave-projectile-current-pair.test.mjs",
+        "scripts/verify-inkwave-projectile-current-pair.mjs"
+      ],
+      "productionChanges": [],
+      "checkouts": [
+        {
+          "commit": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+          "tree": "965c98442df0c42cd092f7a6eb9b0535f51b8b38",
+          "sourceEpoch": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+          "productionLeaves": 1458,
+          "inventorySha256": "46e64fbea2073e1333cbdbfd7af9fffb3e144193675446d507826ddffe57036c"
+        },
+        {
+          "commit": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+          "tree": "4f6255d37e39390d78eb57455f6552b8932121e8",
+          "sourceEpoch": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+          "productionLeaves": 1460,
+          "inventorySha256": "6ff054c8ec48117788ca80196a5ccc6fd5dc6a2268ef5cfa56cc2086292b1a2d"
+        }
+      ],
+      "controls": {
+        "kind": "all-production-leaf-and-inventory-negative-controls",
+        "rejected": 2924
+      },
+      "writtenPaths": []
+    }
+  ],
+  "cleanBuild": {
+    "records": [
+      {
+        "name": "fresh-closure-clean",
+        "inputHash": "8710f36362bd7e4c59b52cf6dd8d95a2ac720ee8b8b64541e1f0aecc8c4925f5",
+        "contentHash": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+        "canonicalInputs": 1420,
+        "artifacts": 2110,
+        "allArtifactBodiesRehashed": true
+      },
+      {
+        "name": "preserved-main7e",
+        "inputHash": "8710f36362bd7e4c59b52cf6dd8d95a2ac720ee8b8b64541e1f0aecc8c4925f5",
+        "contentHash": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+        "canonicalInputs": 1420,
+        "artifacts": 2110,
+        "allArtifactBodiesRehashed": true
+      },
+      {
+        "name": "invalid-admitted-additions",
+        "inputHash": "9e8b33fb99224088ee00aa2fba80aef88f619b1e8e94f8cb1462b252d2154150",
+        "contentHash": "4139cc843b89cf446bc758a063192503bbf3bd82d02ea6d862be18b753a6d86a",
+        "canonicalInputs": 1423,
+        "artifacts": 2130,
+        "allArtifactBodiesRehashed": true
+      }
+    ],
+    "cleanProductionRows": 1458,
+    "cleanProductionMatchesMain7e": true,
+    "cleanOutputByteHashesMatchMain7e": true,
+    "canonicalInputMapIsNotClosureProof": true
+  },
+  "remaining": [
+    "Updated-head hosted complete capture and comparison not run; parent independent review pending",
+    "Retail reference CONNECT403 denied; no retry",
+    "Physical mobile hardware acceptance unverified"
+  ]
+}

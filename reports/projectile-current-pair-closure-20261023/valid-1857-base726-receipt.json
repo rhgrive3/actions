@@ -1,0 +1,98 @@
+{
+  "schema": 1,
+  "mode": "oct23-reviewed-projectile-pairs",
+  "pr": 1857,
+  "repository": "rhgrive3/actions",
+  "branch": "fix/shooter-splatling-cosmetics-20261023",
+  "declaredBaseCommit": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "declaredCandidateCommit": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+  "sourceBase": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "sourceHead": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+  "fixtureSha256": "adf375e9e5a53d3f7ea0724d296a4b201c68edbfc6aea44291617a7d9de20ad9",
+  "checkouts": [
+    {
+      "commit": "726e338ac256ba9609086ce65e25a68ddd99df85",
+      "tree": "cfd4402fa796d11daffe2db0d34cdfcac8a4c71c",
+      "sourceEpoch": "726e338ac256ba9609086ce65e25a68ddd99df85",
+      "productionLeaves": 1458,
+      "inventorySha256": "0fd0762216e121b78e94d7c6023783967056c24f7cd1fbe445276765e1e7956a"
+    },
+    {
+      "commit": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "tree": "72c4cf18d9654925954472a3716541a9c76b8298",
+      "sourceEpoch": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "productionLeaves": 1461,
+      "inventorySha256": "0638c5087ab87639b94cb20bd9e9136f4305149da37624307f887dd760a4843c"
+    }
+  ],
+  "productionDeltas": [
+    {
+      "path": "patches/local-quality/static-menu-adapter.mjs",
+      "before": {
+        "path": "patches/local-quality/static-menu-adapter.mjs",
+        "mode": "100644",
+        "sha": "209e1b21d25d790e8b3725a8f2f0bed363547d53",
+        "sha256": "c8bec2d3404d9574243388bb036ddbefa176dd1a5ccd5aa52936046a4ba3683e"
+      },
+      "after": {
+        "path": "patches/local-quality/static-menu-adapter.mjs",
+        "mode": "100644",
+        "sha": "e9ec35da5e1f96d9e312ba18f89585c0222e26cc",
+        "sha256": "991dd8f97df2508e6ef090d9a80457d741492ab2de9537ebde328afdc62ba62f"
+      }
+    },
+    {
+      "path": "patches/splatoon3/firing-cosmetics-adapter.mjs",
+      "before": null,
+      "after": {
+        "path": "patches/splatoon3/firing-cosmetics-adapter.mjs",
+        "mode": "100644",
+        "sha": "19f4236fabcdcc99fd38253a3a87f3436b026a7b",
+        "sha256": "264ab6f40fd2970de39a4ffd0c54f142683544b072169ef74dcace219ceaef6f"
+      }
+    },
+    {
+      "path": "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+      "before": null,
+      "after": {
+        "path": "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+        "mode": "100644",
+        "sha": "523afbd9e550f2b65d2848eec89d445bac270f12",
+        "sha256": "3b4a10c2e9a956c68005116425f9c14b8025e6cd471afc5d82b2350d0ceed50d"
+      }
+    },
+    {
+      "path": "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+      "before": null,
+      "after": {
+        "path": "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+        "mode": "100644",
+        "sha": "1a0909ac79aeed0e059b7730d31de3a463f6dca4",
+        "sha256": "f230328b269e8c3d5f2c8daf00adafb080da7c0ad617f8149683593a24aebba7"
+      }
+    },
+    {
+      "path": "scripts/inkwave-source-composition.mjs",
+      "before": {
+        "path": "scripts/inkwave-source-composition.mjs",
+        "mode": "100644",
+        "sha": "a61100acdd90db510fafb99d6636c8fffff1295c",
+        "sha256": "0992c6800164f0682611322aa0b2ad548cc82bf67e3af75077a0e86cddb2fc03"
+      },
+      "after": {
+        "path": "scripts/inkwave-source-composition.mjs",
+        "mode": "100644",
+        "sha": "a6dfbe6fa07a4ba54bfe316c67fb8cc8d9d4a9e9",
+        "sha256": "b7973c61b34fae2da69b0d1af22fc4239d28e8db0dc492d17a41b6838631e8ad"
+      }
+    }
+  ],
+  "changes": [],
+  "writtenPaths": [],
+  "scope": "Preserve the actual event base and complete pinned candidate production epoch, including paint, births, RNG, pose and network. No historical Roller, pool, paint or pose replay.",
+  "limitation": "Pinned source admission only. Listed production differences remain visible. Does not establish compiled, physical-state, RNG, visual, retail or hardware equivalence; full capture and comparison remain mandatory.",
+  "controls": {
+    "kind": "all-production-leaf-and-inventory-negative-controls",
+    "rejected": 2925
+  }
+}
