@@ -535,22 +535,36 @@ export function specialProgramKeepers(THREE){
   for(const kind of WORLD_MESH_KINDS){const {geometry,material}=worldMeshParts(THREE,kind,0xffffff);const m=new THREE.Mesh(geometry,material);m.name='keeper:'+kind;g.add(m);}
   // the animated Splattercolor marble sheet (special-models.mjs) is built per deployment
   {const sheet=buildScreenSheet(THREE,0xffffff,2,2);sheet.name='keeper:screen-sheet';g.add(sheet);}
+  // the per-flight Super Jump arrival gauge (issue-460-gauge.mjs) has the same lifetime problem
+  g.add(arrivalGaugeProgramKeeper(THREE));
   g.traverse(o=>{o.visible=true;});
   return programKeepers=g;
+}
+function compileKeeper(THREE,G,renderer,camera,target,keeper){
+  const rt0=renderer.getRenderTarget();
+  let p=null;
+  try{
+    // the match draws into the composer's HDR target: compile against one (same as Character.warmAll)
+    renderer.setRenderTarget(G.post?.composer?.readBuffer||(keeperRT||(keeperRT=new THREE.WebGLRenderTarget(4,4,{type:THREE.HalfFloatType}))));
+    p=renderer.compileAsync(keeper,camera,target);
+  }catch(e){console.warn('[inkwave] special program warm',e);}
+  finally{renderer.setRenderTarget(rt0);}
+  return p;
+}
+// A launched brella canopy (brella-canopy-visual.mjs) is built from this kid's own weapon model.
+export function warmCanopyPrograms(THREE,G,renderer,camera,target,ch){
+  if(!renderer?.compileAsync||!camera||!target)return null;
+  const actor=ch?.actor?.character===ch?ch.actor:G.actors?.find?.(a=>a?.character===ch);
+  const keeper=detachedCanopyProgramKeeper(THREE,ch?.weapon?.def,actor?.weapon?.catalogRecord?.id);
+  if(!keeper)return null;
+  return compileKeeper(THREE,G,renderer,camera,target,keeper)?.catch?.(e=>console.warn('[inkwave] canopy program warm',e))??null;
 }
 export function warmSpecialPrograms(THREE,G,renderer,camera,target){
   if(!renderer?.compileAsync||!camera||!target)return null;
   const frame=renderer.info?.render?.frame;
   if(keeperWarmFrame.get(target)===frame)return null;   // once per load batch (every kid's warmAll shares the frame)
   keeperWarmFrame.set(target,frame);
-  const rt0=renderer.getRenderTarget();
-  let p=null;
-  try{
-    // the match draws into the composer's HDR target: compile against one (same as Character.warmAll)
-    renderer.setRenderTarget(G.post?.composer?.readBuffer||(keeperRT||(keeperRT=new THREE.WebGLRenderTarget(4,4,{type:THREE.HalfFloatType}))));
-    p=renderer.compileAsync(specialProgramKeepers(THREE),camera,target);
-  }catch(e){console.warn('[inkwave] special program warm',e);}
-  finally{renderer.setRenderTarget(rt0);}
+  const p=compileKeeper(THREE,G,renderer,camera,target,specialProgramKeepers(THREE));
   // shadow-depth variants (e.g. the instanced storm cloud): one shadow pass of the keepers, as Character.warmAll does
   const sm=renderer.shadowMap,lights=[];
   if(sm?.enabled&&typeof sm.render==='function'&&target.traverseVisible)target.traverseVisible(o=>{if(o.isLight&&o.castShadow&&o.shadow)lights.push(o);});
@@ -570,6 +584,8 @@ import { worldMeshParts, WORLD_MESH_KINDS } from './all-specials.mjs';
 import { buildScreenSheet } from './special-models.mjs';
 import { TRIZOOKA_CARTRIDGE } from './kit-trizooka.mjs';
 import { FIST_TRAVEL, tripleSlamFistCenters } from './triple-slam-fists.mjs';
+import { arrivalGaugeProgramKeeper } from '../issue-460-gauge.mjs';
+import { detachedCanopyProgramKeeper } from './brella-canopy-visual.mjs';
 const PRESENTATION_INSTALL=Symbol.for('inkwave.s3.special-presentation.v1');
 const presentationStates=new WeakMap(),presentationBlocked=new WeakMap(),clamp=(x)=>Math.max(0,Math.min(1,x));
 export const SPECIAL_ART_STATUS='procedural S3 reference interpretation; retail meshes, shaders and skeletal curves unavailable';
@@ -593,9 +609,9 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
   const warmAll=cp.warmAll;
   if(typeof warmAll==='function')cp.warmAll=function(renderer=G.renderer,camera=G.camera,target=G.scene,...rest){
     const done=warmAll.call(this,renderer,camera,target,...rest);
-    const keep=warmSpecialPrograms(THREE,G,renderer,camera,target);
+    const keeps=[warmSpecialPrograms(THREE,G,renderer,camera,target),warmCanopyPrograms(THREE,G,renderer,camera,target,this)].filter(Boolean);
     // the match-load fade (main.js _warmCharacters, 8 s cap) also waits for the keeper programs to link
-    return keep&&typeof done?.then==='function'?done.then(v=>keep.then(()=>v)):done;
+    return keeps.length&&typeof done?.then==='function'?done.then(v=>Promise.all(keeps).then(()=>v)):done;
   };
   if(typeof warmAll==='function')Object.defineProperty(cp.warmAll,Symbol.for('inkwave.characterWarmParent'),{value:warmAll});
   function presentationState(ch){let m=presentationMap(ch).get(ch);if(m)return m;

@@ -12,6 +12,7 @@ on:
       - 'patches/local-quality/adapter.mjs'
       - 'patches/local-quality/s3-hud-look-adapter.mjs'
       - 'patches/local-quality/tests/hud-tank-small-viewport.test.mjs'
+      - 'patches/local-quality/tests/hud-tank-resize-observer.test.mjs'
       - 'scripts/check-inkwave-small-tank.mjs'
       - 'scripts/lib/inkwave-range-menu-entry.mjs'
       - 'scripts/tests/inkwave-range-menu-entry.test.mjs'
@@ -44,7 +45,7 @@ jobs:
           sudo python3 scripts/prepare-inkwave-ci-apt.py
           npx playwright install --with-deps ${{ matrix.browser }}
       - name: Negative control, normal geometry parity and resize regression
-        run: node --test scripts/tests/inkwave-range-menu-entry.test.mjs patches/local-quality/tests/hud-tank-small-viewport.test.mjs patches/local-quality/tests/s3-hud-look.test.mjs
+        run: node --test scripts/tests/inkwave-range-menu-entry.test.mjs patches/local-quality/tests/hud-tank-small-viewport.test.mjs patches/local-quality/tests/hud-tank-resize-observer.test.mjs patches/local-quality/tests/s3-hud-look.test.mjs
       - run: node scripts/build-inkwave.mjs inkwave-public .ci-scratch/small-tank-site
       - name: Real ${{ matrix.browser }} small startup and resize at DPR ${{ matrix.dpr }}
         run: |

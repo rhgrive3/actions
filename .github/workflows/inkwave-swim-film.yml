@@ -1,0 +1,30 @@
+name: INKWAVE swim film regression
+on:
+  pull_request:
+    paths:
+      - 'inkwave-public/src/fx/fx.js'
+      - 'patches/local-quality/swim-surface.mjs'
+      - 'patches/local-quality/swim-splash-adapter.mjs'
+      - 'patches/local-quality/tests/swim-presentation.test.mjs'
+      - 'patches/local-quality/tests/swim-surface-fps.test.mjs'
+      - 'patches/local-quality/tests/swim-film-offscreen.test.mjs'
+      - '.github/workflows/inkwave-swim-film.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ink-swim-film-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  logic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Film presentation, frame-rate parity and off-screen shape parity
+        run: node --experimental-vm-modules --test patches/local-quality/tests/swim-presentation.test.mjs patches/local-quality/tests/swim-surface-fps.test.mjs patches/local-quality/tests/swim-film-offscreen.test.mjs
