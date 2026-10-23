@@ -2,11 +2,18 @@
 // the installed Actor, Physics, resource and weapon owners decide the result.
 // No public actor flag enrolls a replay or grants a launch receipt.
 import { validNativeChargerInputPacket } from './native-charger-input.mjs';
+import { beginInitialSquidSpawn } from './respawn-lifecycle.mjs';
 const actors=new WeakMap(),handles=new WeakMap(),generations=new WeakMap(),launches=new WeakMap();let api=null,executing=null;
 const life=a=>Math.max(a?.netLife??0,a?.net?.lastLife??0),MAX_SHOTS=32;
 const effective=i=>(i?.fire?1:0)|(i?.firePressed?2:0)|(i?.sub?4:0)|(i?.subReleased?8:0);
 export function nativeChargerReplayActor(a){return actors.has(a);}
 export function suppressNativeChargerReplayEvent(){return executing!==null;}
+export function captureNativeChargerReplayResources(a,dt){
+ const r=actors.get(a);if(!r)return;
+ if(r!==executing||r.resource||dt!==r.dt)throw Error('Ambiguous native replay resource phase');
+ r.resource=true;
+ r.body=[a.pos.x,a.pos.y,a.pos.z,a.vel.y,a.form==='squid'?1:0];
+}
 export function captureNativeChargerReplayShot(system,a,shot){
  const r=actors.get(a);if(!r)return false;
  r.pending=r.pending.filter(s=>api.G.time-s.time<=1.4);
@@ -37,7 +44,7 @@ function scope(r,time,fn){
 }
 // The caller must supply the receiver's trusted spawn state before accepting
 // owner snapshots. This function never bootstraps ink or clocks from a row.
-export function createNativeChargerReplay(owner,{position,yaw=0,velocity=null,time=0,loadout=owner?.s3?.loadout}={}){
+export function createNativeChargerReplay(owner,{position,yaw=0,velocity=null,time=0,loadout=owner?.s3?.loadout,initialSpawn=false}={}){
  if(!api||owner?.weapon?.id!=='charger'||owner.weapon.kind!=='charger'||owner.weapon.catalogRecord||owner.weapon.sub!=='bomb'||!position?.isVector3||!Number.isFinite(time))return null;
  const {Actor,Projectiles,THREE,G}=api;
  class Character {
@@ -45,7 +52,8 @@ export function createNativeChargerReplay(owner,{position,yaw=0,velocity=null,ti
   _owner(){return null;}_runner(){return null;}
   trigger(){}setWeapon(){}setVisible(){}setHurt(){}update(){}
  }
- const a=new Actor({team:owner.team,name:'native receiver replay',weapon:'charger',slot:owner.slot,isLocal:false,CharacterClass:Character});
+ if(initialSpawn&&(G.match?.mode!=='turf'||G.match?.opts?.range))return null;
+ const a=new Actor({team:owner.team,name:'native receiver replay',weapon:'charger',slot:owner.slot,isBot:owner.isBot===true,isLocal:false,CharacterClass:Character});
  const token=Object.freeze({}),system=Object.create(Projectiles.prototype),r={owner,weapon:owner.weapon,net:owner.net,life:life(owner),ownerId:owner.owner,match:G.match,generation:generations.get(G.projectiles)||0,actor:a,system,world:G.projectiles,physics:G.physics,level:G.level,next:1,time,shots:[],pending:[],subs:0,effective:null,error:null};
  // Every output method still traverses the final source wrappers; only the
  // actual birth sinks recognize this private actor and suppress world output.
@@ -53,7 +61,8 @@ export function createNativeChargerReplay(owner,{position,yaw=0,velocity=null,ti
  actors.set(a,r);handles.set(token,r);a.weapon=owner.weapon;a.weaponId=owner.weaponId;
  a.s3||={};a.s3.loadout=loadout?.map(part=>({...part,subs:[...(part.subs||[])]}));
  a._nearCamera=()=>false;a._finishFrame=()=>{};
- scope(r,time,()=>a.spawnAt(position,yaw));if(velocity)a.vel.copy(velocity);
+ scope(r,time,()=>{a.spawnAt(position,yaw);if(initialSpawn&&!beginInitialSquidSpawn(a))throw Error('Native initial spawn unavailable');});if(velocity&&!initialSpawn)a.vel.copy(velocity);
+ r.initialSpawn=initialSpawn;
  return token;
 }
 export function advanceNativeChargerReplay(token,rows){
@@ -64,11 +73,13 @@ export function advanceNativeChargerReplay(token,rows){
   if(row[0]!==r.next||Math.abs(row[2]-(r.time+row[1]))>clockEpsilon){r.error='Native input frame gap or clock mismatch';return false;}
   // Special earning/activation and externally owned displacement need their
   // own trusted source inputs before this driver can own those transitions.
-  if(row[14]!==1||row[4]===null){r.error='Native input requires another action owner';return false;}
-  const a=r.actor,i=a.intent,bits=row[3];i.fire=!!(bits&1);i.squid=!!(bits&2);i.sub=!!(bits&4);i.jump=!!(bits&8);i.special=!!(bits&16);i.move.set(row[12],0,row[13]);a.aimYaw=row[10];a.aimPitch=row[11];r.effective=null;
+  const initial=r.initialSpawn&&r.actor.s3?.squidSpawn?.initial===true;
+  if(!initial&&(row[14]!==1||row[4]===null)||initial&&row.length!==20){r.error='Native input requires another action owner';return false;}
+  const a=r.actor,i=a.intent,bits=row[3];i.fire=!!(bits&1);i.squid=!!(bits&2);i.sub=!!(bits&4);i.jump=!!(bits&8);i.special=!!(bits&16);i.move.set(row[12],0,row[13]);a.aimYaw=row[10];a.aimPitch=row[11];if(row.length===20)a.aimPoint.set(row[17],row[18],row[19]);r.effective=null;r.resource=false;r.body=null;r.dt=row[1];
   const shotCount=r.shots.length,subCount=r.subs;
   try{scope(r,row[2],()=>a.update(row[1]));}catch(error){r.shots.length=shotCount;r.pending.length=0;r.subs=subCount;r.error=String(error?.message||error);return false;}
-  if(r.effective!==row[4]||(a.form==='squid'?1:0)!==row[9]||Math.hypot(a.pos.x-row[5],a.pos.y-row[6],a.pos.z-row[7])>1e-7||Math.abs(a.vel.y-row[8])>1e-7){r.shots.length=shotCount;r.pending.length=0;r.subs=subCount;r.error='Native source input/body witness mismatch';return false;}
+  const body=r.body||[a.pos.x,a.pos.y,a.pos.z,a.vel.y,a.form==='squid'?1:0];
+  if(Number(r.resource)!==row[14]||r.effective!==row[4]||body[4]!==row[9]||Math.hypot(body[0]-row[5],body[1]-row[6],body[2]-row[7])>1e-7||Math.abs(body[3]-row[8])>1e-7){r.shots.length=shotCount;r.pending.length=0;r.subs=subCount;r.error='Native source input/body witness mismatch';return false;}
   r.next++;r.time=row[2];
  }
  return true;

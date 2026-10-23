@@ -5881,3 +5881,9 @@ Raw source input is captured at 30/60/120Hz with exact dt, global source time, l
 Source/CPU validation: coherent113/113 plus outbound42/42; independent receiver/relay/producer/replay54/54. Source owner and clone both remain kid at the original9F postshot swim point; the old fixture expectation was wrong. At24F they both become squid and ink matches. The earlier stored-R preservation expectation was also wrong: the inner mainSubOwns owner cancels stored keep. Historical logs remain revision-specific.
 
 Mandatory damage admission remains disconnected. Cross-owner historical paint/world state, actual external pushes/knockback, earned Special credit, SuperJump, transient gear/support, loading/late-join/migration checkpoints and the remaining64 main owners are incomplete. Existing capture-ledger ink accounting is not exact owner ink equality. No receiver-stage browser, Switch or physical mobile measurements are claimed. See [the exact contract](../patches/network-replication/native-charger-replay-contract.md).
+
+## 2026-10-23 実験継続: #1665/#1666 native Charger初回Squid Spawn
+
+本番と別の実験ブランチで、受信側bind時の信頼済み初回spawnを`beginInitialSquidSpawn`から再構築する。待機・合法target/steering・飛行・着地・最初の発射まで、実Actor/Physics/資源/WeaponRunnerで再実行する。原典比較基準はS3 11.3.0で、Nintendo未公開値は追加していない。入力には3D aimPointリクエストを追加し、位置・ink・groundedの自己申告を初期化に使わない。resource-phaseとeffective inputの0/nullも実実行結果とのwitness照合に使い、phaseを省略する権限にはしない。
+
+CPU/Node22でreceiver24件、input/replay/Worker quota39件成功。初回spawnは30/60/120Hzの待機から最初のfull shotまで再現し、実inkが一致する。偽のresource/effective/bodyとaim request欠落は拒否する。intro→playingの現在phase一致は成功し、過去intro入力がphase変更後に届く場合はbody不一致でproofを失効させ、通常snapshot受理を継続する。これは過去Match/world順序やloadingを解決したものではない。必須damage gate・残64main・後続life・移管は未完で、実機/ブラウザ/完全S3一致を認定しない。

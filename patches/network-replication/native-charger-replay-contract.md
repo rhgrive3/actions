@@ -23,7 +23,7 @@ and identity checks. Existing actor slots23/24/25 and the maximum27-column body
 schema remain intact. The separate, compatibility-hashed `ci` version2 envelope
 is validated before owner timeline watermarks advance.
 
-Each frame has17 fields: serial, exact dt, exact source G.time, raw button bits,
+The current producer appends aim-point x/y/z requests to the original17 fields (20 total). The bounded v2 schema retains17-field landed-source frames for compatibility; initial-spawn replay requires all20. The original fields are: serial, exact dt, exact source G.time, raw button bits,
 effective weapon input witness, physical x/y/z, vertical velocity, form witness,
 aim yaw/pitch, move x/z, resource-phase witness, source event sequence before the
 frame, and global local-owner capture order. Raw bits are fire1, squid2, sub4,
@@ -93,7 +93,7 @@ No relay limits or accepted server envelope were expanded.
 | Complete world order | Replay must see correct multi-owner historical paint/world state and source-earned turf credit at each frame. Current same-owner native FIFO order does not prove shared-world rollback, late paint precommit or Special credit. |
 | External displacement | Match applies soft pushes after Actor.update; hits/actions apply knockback between frames. Receiver remote proxies and source owners have different weights/interpolation, so receiver-local Match pushes alone cannot reproduce source pushes. Supply trusted actual contact/impulse history or authoritative multi-actor replay. Assigning body witnesses would reopen the floating-ground bypass. |
 | Other actions | Supply trusted SuperJump destination/admission/lifecycle, earned Special activation/body/refill, conditional/transient gear and deployed support. Owner active/ink/charge/grounded/modifier flags are insufficient. |
-| Actual Turf opening/respawn | Normal Turf Match construction calls `beginInitialSquidSpawn` through `respawn-lifecycle-adapter.mjs`. Its aim/wait/flight Actor owner returns before resource/WeaponRunner phases; captured resource0/effective-null inputs currently retire the private replay. Bind saves body/life but does not recreate the initial Squid Spawn state/target/clock. Thus the normal first Turf life is currently unsupported by the new proof, including the opening wait and launch, not merely unverified. The normal positive fixture begins at an already-landed `spawnAt` body. Post-death Turf Squid Spawn and later lives also require trusted lifecycle enrollment and source state. Never skip these frames or bootstrap from a later owner landing snapshot. |
+| Actual Turf opening/respawn | The current continuation recreates initial aim through `beginInitialSquidSpawn` only from the receiver bind-time initial lifecycle. It runs wait, legal target/steering, flight, landing and native resource/weapon phases; requests never set position, ink or grounded. Matched trusted Match phases pass, including an intro followed by playing. A retained intro prefix arriving after the receiver has changed phase still retires proof on the first native body mismatch. Trusted historical Match/world ordering, post-death enrollment and later lives remain unsupported. Never skip these frames or bootstrap ink from an owner landing snapshot. |
 | Late join/loading/migration | Inputs currently drain on local transport acceptance. A delayed first owner-clock packet may omit earlier input. Missing serials retire proof; they never start a fresh resource budget. Mandatory admission requires trusted replay checkpoints or per-peer retained original-life history/acknowledgment, including bounded loading and paused clocks. |
 | Damage handoff | Replace capture-ledger admission only when every legal native action above can mint a matching source proof. Successful actual receiver source-flight admission must atomically commit that launch and preserve later actual collision capabilities. No owner-flag or sampled-scalar fallback may bypass a missing proof. |
 | Other64 main owners | Source-native input/resource/action replay and actual collision capabilities are still required for their respective main owners; global #1665/#1666 remain open. |
@@ -172,3 +172,12 @@ bind, retains the same enrolled life, accepts all3 source frames with resource0/
 effective-null, and rejects the new proof as another action owner. Normal actor
 snapshots continue; a later owner snapshot does not recreate the private budget.
 This confirms the unsupported ordinary first Turf life described above.
+
+
+## 2026-10-23 initial-spawn continuation
+
+The former first-life rejection above describes the retained historical run. Current source no longer treats all resource0/effective-null rows as unsupported: only a private initial Squid Spawn created from trusted bind state can execute them. Both the actual resource-phase presence and the phase body witness are checked against the private Actor; zeroes are not permission to skip native work. Aim-point coordinates are bounded input requests. Native target clamping and Physics resolve them. The private resource hook captures body at the same resource phase as the producer, including a later landing handoff.
+
+Final focused receiver24/24 and native-input/replay/actual-Worker quota39/39 pass under Node22.23.4. The receiver selection includes normal initial wait/flight/steering/landing/first full shot at30/60/120Hz, native ink equality, one-use launch receipts, four co-forged initial witnesses, current intro→playing, and fail-closed delayed historical intro. These are separate suites, not a full125-file rerun or browser/device acceptance. Normal8 relay runs keep4,800 source frames and200 packets per10seconds, maximum145,715 wire bytes/second, below the unchanged256KiB limit;32-actor defensive stress still explicitly closes1008.
+
+No mandatory damage-gate connection, other64 mains, trusted historical paint/Match phases, later-life enrollment or migration is completed by this continuation. #1665/#1666 remain open.

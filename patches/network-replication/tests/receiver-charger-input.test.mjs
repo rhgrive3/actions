@@ -16,7 +16,7 @@ function actor(f,myId){
  const s=new f.NetSession();Object.assign(s,{myId,hostId:'A',state:'match'});s._members.set('A',{});s._members.set('B',{});
  const n=new f.NetMatch(s,{id:'causal-input-test',map:'reef'}),m={id:'causal-input-test',state:'playing',time:180,actors:[a],playing:()=>true,canRespawn:()=>false};f.G.match=m;s.match=n;return {f,a,s,n,m};
 }
-function setup({initialTurf=false}={}){
+function setup({initialTurf=false,hz=60}={}){
  wall=1000;sender.G.time=173.25;receiver.G.time=21.75;
  const source=actor(sender,'A'),target=actor(receiver,'B'),wire=[],births=[];
  let filter=p=>p;
@@ -30,7 +30,7 @@ function setup({initialTurf=false}={}){
  const playback=()=>{const p=target.n.peers.get('A');if(p){for(const e of p.events)if(e[1]==='ev'&&e[2]==='weapon:fire'&&!births.includes(e))births.push(e);p.tr=p.lastTs;p.sim=p.physicsPoints?.at(-1);target.n._playEvents();}};
  let tick=0;
  const step=(input={},send=true)=>{
-  wall+=1/60;sender.G.time+=1/60;receiver.G.time+=1/60;Object.assign(source.a.intent,{fire:false,sub:false,squid:false,jump:false,special:false},input);source.a.intent.move.set(input.mx||0,0,input.mz||0);source.a.update(1/60);tick++;
+  wall+=1/hz;sender.G.time+=1/hz;receiver.G.time+=1/hz;Object.assign(source.a.intent,{fire:false,sub:false,squid:false,jump:false,special:false},input);source.a.intent.move.set(input.mx||0,0,input.mz||0);source.a.update(1/hz);tick++;
   if(send&&tick%3===0){source.n._sendTick();playback();}
  };
  return {source,target,wire,births,step,playback,setFilter(fn){filter=fn},status:()=>receiver.receiverChargerInputStatus(target.n),close(){source.n.dispose();target.n.dispose();sender.G.projectiles.clear();receiver.G.projectiles.clear();}};
@@ -40,6 +40,39 @@ test('actual dual-peer source input binds trusted spawn, arbitrary sim origin an
   for(let i=0;i<64;i++)w.step({fire:true});for(let i=0;i<5;i++)w.step();
   const s=w.status(),c=s.actors[0];assert.equal(c.reason,null);assert.equal(c.nextReceived,70);assert.equal(c.nextExecuted,70);assert.ok(c.verified>=69);assert.equal(c.replay.shots.length,1);assert.equal(c.matched,1);assert.equal(s.frames,0);assert.equal(w.births.length,1);
   const receipt=receiver.peekReceiverChargerBirth(w.target.n,w.births[0]);assert.ok(receipt);assert.equal(receipt.damage,160);assert.equal(receiver.commitReceiverChargerBirth(w.target.n,w.births[0]),true);assert.equal(receiver.commitReceiverChargerBirth(w.target.n,w.births[0]),false);
+ }finally{w.close();}
+});
+
+for(const hz of [30,120])test(`initial Turf source wait/steering/landing and one native shot at ${hz}Hz`,()=>{
+ const w=setup({initialTurf:true,hz});try{
+  for(let i=0;i<hz*3.5;i++)w.step({fire:i>=hz*2.2&&i<hz*3.3,mx:i>=hz*1.1&&i<hz*1.5?.15:0});
+  const c=w.status().actors[0];assert.equal(c.reason,null);assert.equal(c.replay.shots.length,1);assert.equal(c.matched,1);
+  assert.ok(Math.abs(c.replay.ink-w.source.a.ink)<1e-9);assert.equal(w.source.a.s3.squidSpawn,undefined);
+ }finally{w.close();}
+});
+for(const forged of ['resource','effective','body','missing-aim-request'])test(`initial Turf ${forged} witness cannot grant a launch`,()=>{
+ const w=setup({initialTurf:true});try{
+  w.setFilter(p=>{const r=p.ci?.[1]?.[3]?.[0];if(r){if(forged==='resource')r[14]=1;if(forged==='effective')r[4]=1;if(forged==='body')r[5]+=.1;if(forged==='missing-aim-request')r.splice(17);}return p;});
+  for(let i=0;i<3;i++)w.step();const c=w.status().actors[0];assert.match(c.reason,/witness|another action owner/);assert.equal(c.matched,0);assert.equal(c.replay,null);
+ }finally{w.close();}
+});
+test('opening intro and playing phases replay when the trusted Match phase is current',()=>{
+ const w=setup({initialTurf:true});try{
+  w.source.m.state=w.target.m.state='intro';
+  for(let i=0;i<90;i++)w.step();
+  assert.equal(w.status().actors[0].reason,null);assert.equal(w.status().actors[0].replay.shots.length,0);
+  w.source.m.state=w.target.m.state='playing';
+  for(let i=0;i<210;i++)w.step({fire:i>=135&&i<200});
+  const c=w.status().actors[0];assert.equal(c.reason,null);assert.equal(c.matched,1);assert.equal(c.replay.shots.length,1);
+ }finally{w.close();}
+});
+test('an intro prefix received after the Match phase changed retires proof instead of inventing a checkpoint',()=>{
+ const w=setup({initialTurf:true});try{
+  w.source.m.state=w.target.m.state='intro';
+  for(let i=0;i<90;i++)w.step({},false);
+  w.target.m.state='playing';w.source.n._sendTick();w.playback();
+  const c=w.status().actors[0];assert.match(c.reason,/witness/);assert.equal(c.matched,0);assert.equal(c.replay,null);
+  assert.ok(w.target.a.net.buf.length>0,'ordinary snapshot admission continues');
  }finally{w.close();}
 });
 test('an accepted packet cannot replay future resources faster than fixed receiver elapsed budget',()=>{
@@ -116,14 +149,21 @@ for(const change of ['life','owner','clear','leave','host-change'])test(`an actu
  }finally{w.close();}
 });
 
-test('actual Turf opening Squid Spawn is unsupported by the new proof while normal snapshots continue',()=>{
+test('actual Turf opening wait, flight, landing and first paid charge replay from the trusted initial spawn',()=>{
  const w=setup({initialTurf:true});try{
   assert.equal(w.source.a.s3.squidSpawn.initial,true);
   for(let i=0;i<3;i++)w.step();
   const rows=w.wire.at(-1).ci[1][3];assert.equal(rows.length,3);
   for(const row of rows){assert.equal(row[14],0);assert.equal(row[4],null);}
-  const c=w.status().actors[0];assert.equal(c.life,w.wire.at(-1).ci[1][1],'real initial state and input share the bind-time life');assert.equal(c.nextReceived,4,'all three source frames were accepted');assert.equal(c.reason,'Native input requires another action owner');assert.equal(c.replay,null);assert.equal(c.matched,0);
+  const c=w.status().actors[0];assert.equal(c.life,w.wire.at(-1).ci[1][1],'real initial state and input share the bind-time life');assert.equal(c.nextReceived,4,'all three source frames were accepted');assert.equal(c.reason,null);assert.equal(c.nextExecuted,4);assert.equal(c.replay.ink,100);assert.equal(c.matched,0);
   assert.equal(w.source.a.s3.squidSpawn.phase,'aim');assert.ok(w.target.a.net.buf.length>0,'legacy normal snapshots remain accepted');
-  for(let i=0;i<3;i++)w.step();assert.equal(w.status().actors[0].reason,c.reason);assert.ok(w.target.a.net.buf.length>=2,'later snapshots never recreate a private budget');
+  for(let i=0;i<210;i++)w.step({fire:i>=135&&i<200,mx:i>=65&&i<90?.2:0});
+  const end=w.status().actors[0];assert.equal(end.reason,null);assert.equal(end.nextExecuted,214);
+  assert.equal(end.replay.shots.length,1);assert.equal(end.replay.shots[0].full,true);
+  assert.ok(Math.abs(end.replay.ink-w.source.a.ink)<1e-9,'native paid ink after landing');
+  assert.equal(w.source.a.s3.squidSpawn,undefined);assert.equal(end.matched,1);
+  const receipt=receiver.peekReceiverChargerBirth(w.target.n,w.births[0]);assert.ok(receipt);
+  assert.equal(receiver.commitReceiverChargerBirth(w.target.n,w.births[0]),true);
+  assert.equal(receiver.commitReceiverChargerBirth(w.target.n,w.births[0]),false);
  }finally{w.close();}
 });

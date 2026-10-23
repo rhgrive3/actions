@@ -4,6 +4,7 @@ import { isChargerFullCharge } from './weapons.mjs';
 import { slamProtected } from './tidal-slam-gauge.mjs';
 import { chargerLowInkRecovery, CHARGER_INTERRUPT_RECOVERY_SECONDS } from './charger-charge-clock.mjs';
 import { captureNativeChargerResources } from './native-charger-input.mjs';
+import { captureNativeChargerReplayResources } from './native-charger-replay.mjs';
 let api, tuning, profile;
 export function installResources(context, values) { api = context; tuning = values.resources; profile = values; }
 export const RESPAWN_CAUSES = Object.freeze({ normal: 8.5, water: 7.0, outOfBounds: 5.5 });
@@ -59,6 +60,7 @@ export function updateSpecialHealthRecovery(a, dt) {
 export function updateResources(a, dt) {
   if (!api) throw new Error('INKWAVE resource patch not installed');
   captureNativeChargerResources(a, dt);
+  captureNativeChargerReplayResources(a, dt);
   if (!turfCombatAllowed(api.G)) return;
   const P = api.PLAYER, r = tuning, mods = a.s3?.modifiers || {};
   const isSquid = resourceSurface(a), onEnemy = a.onEnemy;

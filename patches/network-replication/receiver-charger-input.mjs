@@ -28,7 +28,7 @@ export function bindReceiverChargerInputs(nm,G,at){
   if(!native(a)||!safe(a.nid)||!a.pos?.clone||!a.vel?.clone||!finite(a.yaw))continue;if(s.channels.size>=RECEIVER_CHARGER_INPUT_LIMITS.actors)break;
   // Only bind-time source spawn state is eligible. No later packet can enroll
   // a new life or reset private ink by replacing its actor/body witness.
-  s.channels.set(a.nid,{actor:a,net:a.net,weapon:a.weapon,life:life(a),from:a.owner,peer:null,position:a.pos.clone(),velocity:a.vel.clone(),yaw:a.yaw,loadout:a.s3?.loadout,gearKey:null,queue:[],bytes:0,history:new Map(),nextReceived:1,nextExecuted:1,origin:null,lastTime:null,lastBefore:0,lastOrder:0,elapsed:0,driver:null,reason:null,pending:new Map(),checkpoints:new Map(),verified:0,matched:0,committed:0,wait:null});
+  s.channels.set(a.nid,{actor:a,net:a.net,weapon:a.weapon,life:life(a),from:a.owner,peer:null,position:a.pos.clone(),velocity:a.vel.clone(),yaw:a.yaw,initialSpawn:a.s3?.squidSpawn?.initial===true&&a.s3.squidSpawn.phase==='aim',loadout:a.s3?.loadout,gearKey:null,queue:[],bytes:0,history:new Map(),nextReceived:1,nextExecuted:1,origin:null,lastTime:null,lastBefore:0,lastOrder:0,elapsed:0,driver:null,reason:null,pending:new Map(),checkpoints:new Map(),verified:0,matched:0,committed:0,wait:null});
  }
 }
 export function observeReceiverChargerInputs(nm,from,packet,G,at){
@@ -93,7 +93,7 @@ export function advanceReceiverChargerInputs(nm,G,at,from=null,event=null){
    if(row[2]*60>peer.sim+.500000001||event&&tick>event._netTick){c.wait='playback-clock';break;}
    if(!safe(barrier)||(event?!(row[15]<barrier):!(row[15]<=barrier))){c.wait='event-barrier';break;}
    if(c.elapsed+row[1]>Math.max(0,at-s.boundAt)+1e-9){c.wait='receiver-elapsed';break;}
-   if(!c.driver){c.driver=createNativeChargerReplay(c.actor,{position:c.position,velocity:c.velocity,yaw:c.yaw,time:c.origin,loadout:c.loadout});if(!c.driver){discard(s,c,'source-driver-unavailable');continue;}}
+   if(!c.driver){c.driver=createNativeChargerReplay(c.actor,{position:c.position,velocity:c.velocity,yaw:c.yaw,time:c.origin,loadout:c.loadout,initialSpawn:c.initialSpawn});if(!c.driver){discard(s,c,'source-driver-unavailable');continue;}}
    if(!advanceNativeChargerReplay(c.driver,[row])){discard(s,c,nativeChargerReplayState(c.driver)?.error||'source-replay');continue;}
    const size=JSON.stringify(row).length+1;c.queue.shift();c.bytes-=size;s.bytes-=size;s.frames--;c.elapsed+=row[1];c.nextExecuted++;count++;
    const checkpoint=c.checkpoints.get(row[0]);

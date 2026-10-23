@@ -22,7 +22,7 @@ function begin(a,dt,G){
  if(!Number.isFinite(dt)||dt<0||dt>1/24+1e-10||!Number.isFinite(G.time)){s.error='Invalid native input frame';return null;}
  let c=s.actors.get(a.nid);
  if(!c){if(s.actors.size>=NATIVE_CHARGER_INPUT_LIMITS.actors){s.error='Native input actor backlog exceeded';return null;}c={actor:a,net:a.net,life:life(a),weapon:a.weapon,next:1,rows:[],bytes:0};s.actors.set(a.nid,c);}
- const f={n,s,c,dt,t:G.time,raw:bits(a.intent),moveX:a.intent.move?.x||0,moveZ:a.intent.move?.z||0,aimYaw:a.aimYaw,aimPitch:a.aimPitch,body:null,resource:false,weapon:null,beforeSeq:n._eventSeq||0};
+ const f={n,s,c,dt,t:G.time,raw:bits(a.intent),moveX:a.intent.move?.x||0,moveZ:a.intent.move?.z||0,aimYaw:a.aimYaw,aimPitch:a.aimPitch,aimPoint:[a.aimPoint.x,a.aimPoint.y,a.aimPoint.z],body:null,resource:false,weapon:null,beforeSeq:n._eventSeq||0};
  if(active.has(a)){s.error='Reentrant native input frame';return null;}
  active.set(a,f);return f;
 }
@@ -39,7 +39,7 @@ function finish(a,f,G){
  // Zero-duration updates do not advance resource/action clocks, but can carry
  // press/release edges and therefore remain real frames in this input log.
  const b=f.body||[a.pos.x,a.pos.y,a.pos.z,a.vel.y,a.form==='squid'?1:0];
- const row=[f.c.next,f.dt,f.t,f.raw,f.weapon,...b,f.aimYaw,f.aimPitch,f.moveX,f.moveZ,f.resource?1:0,f.beforeSeq,f.s.nextOrder];
+ const row=[f.c.next,f.dt,f.t,f.raw,f.weapon,...b,f.aimYaw,f.aimPitch,f.moveX,f.moveZ,f.resource?1:0,f.beforeSeq,f.s.nextOrder,...f.aimPoint];
  if(!row.every((v,i)=>i===4?v===null||Number.isSafeInteger(v):Number.isFinite(v))){f.s.error='Invalid native input value';return;}
  const size=JSON.stringify(row).length+1;
  if(f.c.rows.length>=NATIVE_CHARGER_INPUT_LIMITS.actorFrames||f.s.frames>=NATIVE_CHARGER_INPUT_LIMITS.frames||f.s.bytes+size>NATIVE_CHARGER_INPUT_LIMITS.bytes){f.s.error='Native input backlog exceeded';return;}
@@ -84,10 +84,11 @@ export function validNativeChargerInputPacket(payload){
   const batch=payload[i];if(!Array.isArray(batch)||![4,5].includes(batch.length)||!integer(batch[0],Number.MAX_SAFE_INTEGER)||ids.has(batch[0])||!integer(batch[1],Number.MAX_SAFE_INTEGER)||batch[2]!=='charger'||!Array.isArray(batch[3])||!batch[3].length)return false;
   ids.add(batch[0]);let previous=0;
   for(const r of batch[3]){
-   if(++count>NATIVE_CHARGER_INPUT_LIMITS.packetFrames||!Array.isArray(r)||r.length!==17||!integer(r[0],Number.MAX_SAFE_INTEGER)||r[0]<1||previous&&r[0]!==previous+1
+   if(++count>NATIVE_CHARGER_INPUT_LIMITS.packetFrames||!Array.isArray(r)||![17,20].includes(r.length)||!integer(r[0],Number.MAX_SAFE_INTEGER)||r[0]<1||previous&&r[0]!==previous+1
     ||!bounded(r[1],1/24+1e-10)||r[1]<0||!bounded(r[2],1e12)||r[2]<0||!integer(r[3],31)||r[4]!==null&&!integer(r[4],15)
     ||![5,6,7].every(j=>bounded(r[j],100000))||!bounded(r[8],10000)||!integer(r[9],1)||![10,11].every(j=>bounded(r[j],10000))
-    ||![12,13].every(j=>bounded(r[j],1+1e-10))||!integer(r[14],1)||!integer(r[15],10_000_000)||!integer(r[16],Number.MAX_SAFE_INTEGER)||r[16]<1)return false;
+    ||![12,13].every(j=>bounded(r[j],1+1e-10))||!integer(r[14],1)||!integer(r[15],10_000_000)||!integer(r[16],Number.MAX_SAFE_INTEGER)||r[16]<1
+    ||r.length===20&&![17,18,19].every(j=>bounded(r[j],100000)))return false;
    previous=r[0];
   }
   if(batch.length===5&&(!Array.isArray(batch[4])||batch[4].length!==2||!integer(batch[4][0],Number.MAX_SAFE_INTEGER)||batch[4][0]<previous||!bounded(batch[4][1],1e12)||batch[4][1]<batch[3].at(-1)[2]))return false;
