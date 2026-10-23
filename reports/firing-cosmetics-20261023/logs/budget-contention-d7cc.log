@@ -1,0 +1,32 @@
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+mixed-pool {"sharedCount":700,"retainedFallingDrops":8,"oldSplatlingParts":0,"additionalShooter":0}
+(node:5645) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ Splatling cosmetics do not evict pre-existing late falling-drop effects from the shared 700-slot mesh (578.519653ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 943.770235
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/firing-cosmetics-budget.test.mjs:4:1
+✖ Splatling cosmetics do not evict pre-existing late falling-drop effects from the shared 700-slot mesh (578.519653ms)
+  AssertionError [ERR_ASSERTION]: 660 existing ordinary effects leave exactly 40 slots for the existing late falling drops; additional Splatling cosmetics must use leftovers
+  
+  8 !== 40
+  
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/firing-cosmetics-budget.test.mjs:18:9)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 8,
+    expected: 40,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
