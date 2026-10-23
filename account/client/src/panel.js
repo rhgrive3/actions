@@ -36,8 +36,9 @@ function h(tag, attrs, ...kids) {
 const icon = (name, cls = 'zva-ico') => h('span', { class: cls, html: ICONS[name] });
 const restart = (el, cls) => { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); };
 
-// Latin display face for the dialog's English headings (Google Fonts, fetched only when the dialog opens).
-const DISPLAY_FONT_CSS = 'https://fonts.googleapis.com/css2?family=Bungee&display=swap';
+// Dialog faces from Google Fonts (fetched only when the dialog opens; Japanese arrives as unicode-range subsets):
+// Bungee for English headings, Dela Gothic One for Japanese headings, M PLUS Rounded 1c for text.
+const DISPLAY_FONT_CSS = 'https://fonts.googleapis.com/css2?family=Bungee&family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap';
 
 function ensureStyle() {
   if (document.getElementById('zva-panel-style')) return;
