@@ -28,6 +28,7 @@ import { createInkFist, disposeSpecialModel } from './special-motion.mjs';
 import { superChumpLandingPreview, tentaMissilesLockPreview } from './all-specials.mjs';
 import { remoteKrakenPhase } from './special-presentation.mjs';
 import { WAIL_SPEAKER_POSITIONS } from './wail-speakers.mjs';
+import { WAIL_PAIR_RETIRED, localWailPair, findLocalWailPair } from './wail-pair-presentation.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.special-vfx.install.v1');
 const TAU = Math.PI * 2;
@@ -317,6 +318,25 @@ class Director {
       }
   }
   // ------------------------------------------------------------------ events (local emits and replayed remote copies)
+  retireWailPair(record) {
+    const seen = this.retiredWailPairs ||= new WeakSet();
+    if (record.status !== 'retired' || seen.has(record)) return;
+    seen.add(record);
+    for (const [key, laser] of this.lasers) if (laser.pairRecord === record) {
+      laser.outer.dead = laser.core.dead = laser.halo.dead = true; this.lasers.delete(key);
+    }
+    // Reuse existing pooled shapes: one small sphere and four round flecks per
+    // speaker. Appearance/onset remain calibration pending rendered acceptance.
+    const c = this.hdr(this.rgb(record.actor), 1.1, .7);
+    for (const origin of record.origins) {
+      const p = this.v[0].set(...origin);
+      this.shell(true, .22, SHELL.SHOCK, p, .12, .65, c, .65, { hold: .1 });
+      for (let i = 0; i < 4; i++) {
+        const angle = i * TAU / 4, y = i % 2 ? .6 : -.6;
+        this.spark(SPARK.GLOW, p, Math.cos(angle) * 1.8, y, Math.sin(angle) * 1.8, .28, .07, .025, c, .7, { drag: 1, grav: 0 });
+      }
+    }
+  }
   event(e) {
     const a = e?.actor; if (!a || !e.id) return;
     const pos = Array.isArray(e.pos) && e.pos.length === 3 && e.pos.every(finite) ? new this.THREE.Vector3(...e.pos) : null;
@@ -874,7 +894,7 @@ const KIT_FX = {
 const DIRECTORS = {
   // ---------------------------------------------------------------- Killer Wail 5.1
   killerWail: {
-    start(a, t) { this.activation(a, t.color, 1); t.d.speakers = []; },
+    start(a, t) { this.activation(a, t.color, 1); t.d.speakers = []; t.d.wailState = a.remote ? null : a._s3AllSpecialState; },
     frame(a, t, dt) {
       const st = a._s3AllSpecialState, c = t.color;
       // charging mouths: white rings in front of each speaker while the first lock charges (36F)
@@ -887,7 +907,12 @@ const DIRECTORS = {
         }
         if (!t.d.mouths) {
           t.d.mouths = anchors.map((p, i) => this.disc(true, 0, DISC.SPEAKER, p, this.v[2].set(0, 0, 1), 0.1, 0.1, this.hdr(c, 1.4, 2.4), 1, { fade: false,
-            follow: (rec) => { const q = speakerAnchors(this, a)[i]; if (!q || !this.tracks.has(a)) return false; const f = this.aim(a, this.v[3]);
+            follow: (rec) => {
+              const pair = t.d.wailState?.beamPairs?.find(p => p.index === Math.floor(i / 2)), fired = pair && localWailPair(pair);
+              if (fired && fired.status !== 'fired') return false;
+              const q = fired ? this.v[5].set(...fired.origins[i % 2]) : speakerAnchors(this, a)[i];
+              if (!q || !fired && !this.tracks.has(a)) return false;
+              const f = fired ? this.v[3].copy(pair.direction) : this.aim(a, this.v[3]);
               rec.v[0] = q.x + f.x * 0.25; rec.v[1] = q.y + f.y * 0.25; rec.v[2] = q.z + f.z * 0.25; rec.v[4] = f.x; rec.v[5] = f.y; rec.v[6] = f.z;
               const age = this.time - t.start, firing = (this.G.time || 0) - (a._s3SpecialMarks?.laser ?? -9) < 0.12;
               rec.v[3] = age < 0.6 ? 0.2 + 0.75 * easeOut(age / 0.6) : firing ? 0.62 + 0.08 * Math.sin(this.time * 60) : 0.45;
@@ -905,7 +930,8 @@ const DIRECTORS = {
       } else if (e.action === 'laser' && pos && target) {
         const ids = this.wailActorIds ||= new WeakMap();
         if (!ids.has(a)) ids.set(a, this.wailActorSerial = (this.wailActorSerial || 0) + 1);
-        const key = `${ids.get(a)}:${e.activation}:${e.index ?? 0}`;
+        const pairRecord = !a.remote && findLocalWailPair(this.G.projectiles, a, e.activation, Math.floor((e.index ?? 0) / 2));
+        const key = `${ids.get(a)}:${e.activation}:${e.index ?? 0}${pairRecord ? ':' + pairRecord.life : ''}`;
         let L = this.lasers.get(key);
         const end = target.clone(), len = end.distanceTo(pos);
         if (len > C.maxLength) end.sub(pos).multiplyScalar(C.maxLength / len).add(pos);
@@ -913,7 +939,7 @@ const DIRECTORS = {
         // this event, or its owner may already be dead/swimming.
         const from = pos.clone();
         if (!L) {
-          L = { actor: a, from, to: end, drawTo: from.clone().lerp(end, 0.2), seen: this.time };
+          L = { actor: a, pairRecord, from, to: end, drawTo: from.clone().lerp(end, 0.2), seen: this.time };
           // S3: a thick team-colour tube wound with brighter spiral bands, a hot core and a soft halo
           L.outer = this.beam(false, 0, BEAM.LASER, from, end, C.beamRadius * 0.85, C.beamRadius * 1.2, c, 1, { speed: 9 });
           L.halo = this.beam(true, 0, BEAM.LINE, from, end, C.beamRadius * 1.4, C.beamRadius * 1.9, this.hdr(c, 0.8, 0.1), 0.18, { speed: 0, seed: 0.1 });
@@ -924,7 +950,12 @@ const DIRECTORS = {
         L.from.copy(from); L.to.copy(end); L.seen = this.time;
       }
     },
-    end(a, t) { for (const r of t.d.mouths || []) r.dead = true; },
+    end(a, t) {
+      for (const [i, r] of (t.d.mouths || []).entries()) {
+        const pair = t.d.wailState?.beamPairs?.find(p => p.index === Math.floor(i / 2));
+        if (!pair || localWailPair(pair)?.status !== 'fired') r.dead = true;
+      }
+    },
   },
   // ---------------------------------------------------------------- Tenta Missiles
   tentaMissiles: {
@@ -1519,6 +1550,10 @@ export function installSpecialVfx(api) {
     return p;
   };
   on?.('all:special', (e) => { if (!e?.actor?.remote) route(e); });
+  on?.(WAIL_PAIR_RETIRED, record => {
+    const d = G.fx?.s3SpecialVfxEnabled !== false && directors.get(G.fx);
+    if (d) d.call(d.retireWailPair, record);
+  });
   api.specialVfxReplay = route;
   return api;
 }

@@ -14,6 +14,7 @@ import { buildSubModel, poseSubModel, isSharedGeometry } from './sub-models.mjs'
 import { buildScreenSheet, INKSTRIKE_LID_OPEN, CRAB_TANK_GRIPS } from './special-models.mjs';
 import { specialPresentationToken } from './special-presentation-owner.mjs';
 import { WAIL_SPEAKER_POSITIONS } from './wail-speakers.mjs';
+import { localWailPair, localWailPairs } from './wail-pair-presentation.mjs';
 import { CRAB_TANK_RIG, crabTankShotGeometry } from './crab-tank-aim.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.special-models.install.v1');
@@ -287,25 +288,28 @@ export function installSpecialModels(api) {
   api.specialModelsReplay = observeSpeaker;
   function syncTailSpeakers(system) {
     const seen = speakerSeen;seen.clear();
-    const draw = (actor, activation, index, origin, target) => {
+    const draw = (actor, activation, index, origin, target, key = index) => {
       let slots = tailSpeakers.get(actor);
       if (!slots) { slots = new Map(); tailSpeakers.set(actor, slots); }
-      let record = slots.get(index);
-      if (record && record.activation !== activation) { disposeModel(record.holder); slots.delete(index); record = null; }
+      let record = slots.get(key);
+      if (record && record.activation !== activation) { disposeModel(record.holder); slots.delete(key); record = null; }
       if (!record) {
         const model = buildSubModel(THREE, 'spKillerSpeaker', inkMat(colorOf(actor))), holder = new THREE.Group();
         holder.name = 'killer-wail-surviving-speaker'; holder.add(model.root); G.scene?.add?.(holder);
-        record = { activation, holder }; slots.set(index, record);
+        record = { activation, holder }; slots.set(key, record);
       }
       record.holder.position.copy(origin); v.copy(target).sub(origin);
       if (v.lengthSq() > 1e-8) record.holder.quaternion.setFromUnitVectors(fwd, v.normalize());
       seen.add(record);
     };
-    for (const tail of system._s3WailTails || []) for (const pair of tail.state.beamPairs || []) {
-      if (tail.state.t >= pair.until) continue;
-      for (let i = 0; i < pair.origins.length; i++) {
-        const mark = speakerMarks.get(tail.actor)?.entries[pair.index * 2 + i];
-        draw(tail.actor, tail.state.serial, pair.index * 2 + i, pair.origins[i], mark?.target || v.copy(pair.origins[i]).add(pair.direction));
+    // Presentation survives the earlier removal of the final damage tick's tail.
+    for (const record of localWailPairs(system)) {
+      if (!record.detached) continue;
+      const { actor, activation, pair } = record, marks = speakerMarks.get(actor);
+      for (let i = 0; i < record.origins.length; i++) {
+        const origin = grip.set(...record.origins[i]);
+        const mark = marks?.activation === activation ? marks.entries[pair.index * 2 + i] : null;
+        draw(actor, activation, pair.index * 2 + i, origin, mark?.target || v.copy(origin).add(pair.direction), `${record.life}:${activation}:${pair.index * 2 + i}`);
       }
     }
     for (const actor of G.actors || []) {
@@ -566,7 +570,7 @@ export function installSpecialModels(api) {
           v.copy(end || origin).sub(origin);
           if (v.lengthSq() < 1e-8) v.copy(pair?.direction || a.aimDir);
           d.holder.quaternion.setFromUnitVectors(fwd, v.normalize());
-          d.holder.visible = pair ? (state.t <= pair.until + 1e-8) : t - mark.at <= 5 / 60 + .1;
+          d.holder.visible = pair ? localWailPair(pair)?.status === 'fired' : t - mark.at <= 5 / 60 + .1;
         } else {
           v.set(d.base[0] * k, 1.1 + (d.base[1] - 1.1) * k + Math.sin(t * 3 + d.base[0] * 2) * .05 * k, d.base[2] - .25 * (1 - k) - recoil);
           v.applyAxisAngle(up, a.aimYaw ?? a.yaw ?? 0);

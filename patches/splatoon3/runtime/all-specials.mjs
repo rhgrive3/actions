@@ -25,6 +25,7 @@ import { beginZipcasterArmor, arriveZipcasterArmor, updateZipcasterArmor, clearZ
 import { objectDamageScale, objectDamageRow, withObjectDamageCause } from './sub-resistance.mjs';
 import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
 import { specialGaugeLocked, startSpecialGauge, endSpecialGauge, startHeldSpecialGauge, SPECIAL_GAUGE_FRAMES } from './tacticooler-gauge.mjs';
+import { fireLocalWailPair, detachLocalWailPairs, clearLocalWailPairs, stepLocalWailPairs } from './wail-pair-presentation.mjs';
 import { specialDeviceFlight, stepSpecialDeviceFlight, deviceBelowWorld } from './special-device-flight.mjs';
 import { wailSpeakerOrigin } from './wail-speakers.mjs';
 import { activeSpecialGaugeState, syncActiveSpecialGauge, startActiveSpecialGauge, endActiveSpecialGauge, clearActiveSpecialGauges } from './active-special-gauge.mjs';
@@ -962,6 +963,7 @@ function lockWailPair(rt,actor,state,index) {
   emitAction(rt,actor,'killerWail',state.serial,'target',actor.pos,target?.pos||actor.pos.clone().add(direction),nextSeed(state),{index});
 }
 function fireWailTick(rt, actor, state, pair) {
+  if(pair.tick===0)fireLocalWailPair(rt.api,actor,state,pair);
   for(let i=0;i<2;i++){
     const origin=pair.origins[i],target=pair.target;
     const at=pair.nextTick-WAIL_TRACK_DELAY,trace=pair.trace;
@@ -1398,6 +1400,7 @@ function updateWaveFront(rt,o) {
 function endSpecial(rt,actor,reason='duration') {
   const state=actorStates.get(actor);
   if(!state)return;
+  if(state.id==='killerWail')detachLocalWailPairs(rt.api,actor,state,reason);
   endActiveSpecialGauge(actor,{preserve:reason==='splat',jumping:state.id==='killerWail'&&reason==='superjump'});
   if(state.id==='zipcaster')clearZipcasterArmor(actor);
   // Fired Wail pairs are independent attacks. Death stops only pairs which
@@ -2328,6 +2331,7 @@ function installRuntime(api) {
     return undefined;
   };
   proto.reset=function(...args){
+    clearLocalWailPairs(api.G.projectiles,this);
     const state=actorStates.get(this);if(state)endSpecial(rt,this,'reset');
     endActiveSpecialGauge(this);
     booyahAfterArmor.delete(this);this._s3AllSpecialState=null;return reset.apply(this,args);
@@ -2431,6 +2435,7 @@ function installRuntime(api) {
       p.damage=profile.max+(profile.min-profile.max)*k;
     }
     if(Number.isFinite(dt)&&dt>0)stepWailTails(rt,dt);
+    if(Number.isFinite(dt)&&dt>0)stepLocalWailPairs(api,this);
     const result=update.call(this,dt);
     updateCrabSplashVisuals(this,api.G,THREE);
     return result;
@@ -2484,6 +2489,7 @@ function installRuntime(api) {
     return result;
   };
   P.clear=function(...args){
+    clearLocalWailPairs(this);
     // Practice-range resetPaint clears Projectiles without resetting Actors.
     // Retire body actions now, before a later actor tick can detach old Wail
     // pairs into the otherwise freshly cleared world.
