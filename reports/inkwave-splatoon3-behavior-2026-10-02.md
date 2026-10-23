@@ -1,5 +1,9 @@
 # INKWAVE とスプラトゥーン3の挙動比較
 
+## 2026-10-23：距離＋contact候補のGP0/57連続描画2条件が完了（runtime未採用）
+
+保存済み私有候補を1frameずつ通常描画し、新contextでGP0/GP57水平60Hzを直列に検証した。Q/Sub3tickを含む各38描画が終端・代表撮影まで完了（368/304ms）。35tickのhit.point・缶release・雲入力Zは15.709586/23.564379mで、雲初期Yは4.6m、同じ描画frame内の既存drift後はZ15.727919/23.582712m。保存済み90trace/180replayの再計算ではなく新規描画検証であり、正式ver11.3.0対戦値・実通信admission・全角度/Hzの受入ではない。runtimeを編集/採用せず、依頼の2条件のみ終了。[数値・画像・全step・制限](inkwave-storm-candidate-render-2026-10-23.md)。
+
 ## 2026-10-23：投擲の単一フレーム診断（元版1件完了）
 
 前回の8回一括page.evaluateを1frameずつに分け、同じGPU同期頻度・dt・入力・シーン・30秒上限で元版GP0水平60Hzの1件を診断した。Q/Sub3tickを含む91描画が復帰し、終端・撮影まで完了（撮影28.385秒）。遅い呼び出しはstage全体10.602秒に対しGame._frame本体8.7ms、ページCPU profileのサンプル重み付け93.94%がidleだった。待ちの大半は本体外側だが、Node記録/配送・CDP・browser/renderer待ちの内訳と根本原因は未確定。残り18条件を再実行せず、runtime・90trace・180replayは保持。[時刻・profile・画像・制限](inkwave-storm-render-step-2026-10-23.md)。

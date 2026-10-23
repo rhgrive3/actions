@@ -1,0 +1,4329 @@
+{
+  "status": "two-private-candidate-render-cases-passed",
+  "sourceParent": "d47e0ac9e257a37f290f68fbf67362854139734a",
+  "candidate": "distance+contact only; private inferred Mission/Rival gravity/drag calibration, not verified versus11.3.0 defaults",
+  "sourceHashes": {
+    "patches/splatoon3/runtime/kit-subs.mjs": "d96dcaa7b458119d16db54fb42d11dad5610fa913836b18e0569c0b6d19dbea3",
+    "patches/splatoon3/storm-effects-adapter.mjs": "4c8ab7df9306cbcdb3ac40057256cf559d465a50c7981a1014d029768be9adbc"
+  },
+  "buildContentHash": "dc206bf16f11ed63a56d11d9053f4048e640d534e7ec048cd0312c687dd1f2d0",
+  "browserVersion": "154.0.8037.57",
+  "flags": [
+    "--no-sandbox",
+    "--disable-dev-shm-usage",
+    "--use-angle=swiftshader",
+    "--enable-unsafe-swiftshader"
+  ],
+  "started": "2026-10-23T11:09:42.692Z",
+  "finished": "2026-10-23T11:12:57.780Z",
+  "unit": "actual practice range displayed m =1WU; marks every5m",
+  "conditions": {
+    "GP": [
+      0,
+      57
+    ],
+    "stand": [
+      6,
+      0,
+      0
+    ],
+    "pitchAtLaunch": 0,
+    "yaw": 0,
+    "simulationDt": 0.016666666666666666,
+    "deliveryDt": 0.016666666666666666,
+    "lighting": "unchanged default practice-range scene, no added/changed lights",
+    "camera": "native follow, pitch0 for release then -0.35; same as accepted baseline diagnostic",
+    "renderSuppressed": false,
+    "GPUFinish": "each Q/Sub frame; every8 post-release frames and at terminal",
+    "perStepAndScreenshotDeadlineMs": 30000,
+    "initialPlayingWaitMsUnchanged": 240000,
+    "casesSequential": true,
+    "freshContextForEachCase": true,
+    "runtimeEdited": false
+  },
+  "cases": [
+    {
+      "GP": 0,
+      "status": "passed",
+      "renderedGameFrames": 38,
+      "postReleaseDeliveryFrames": 34,
+      "sameAsStoredNumericReference": true,
+      "observation": {
+        "GP": 0,
+        "unit": "practice-range displayed m = WU",
+        "launch": {
+          "tick": 52,
+          "time": 0.8833333333333344,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "origin": [
+            6,
+            1.45,
+            0
+          ],
+          "velocity": [
+            0,
+            14.399999999999999,
+            67.2
+          ],
+          "power": {
+            "duration": 8,
+            "throwScale": 1
+          },
+          "pitch": 0,
+          "yaw": 0,
+          "aimingSub": false
+        },
+        "contacts": [
+          {
+            "age": 0.5833333333333335,
+            "tick": 86,
+            "from": [
+              6,
+              0.09000000000000308,
+              15.67161610130825
+            ],
+            "integratedEndpoint": [
+              6,
+              -0.2299999999999967,
+              15.806619900805506
+            ],
+            "velocity": [
+              0,
+              -19.19999999999999,
+              8.100227969835457
+            ],
+            "point": [
+              6,
+              0,
+              15.709585919916854
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "block": 1,
+            "face": 2
+          }
+        ],
+        "cloud": {
+          "age": 0.5833333333333335,
+          "tick": 86,
+          "position": [
+            6,
+            0,
+            15.709585919916854
+          ],
+          "velocity": [
+            0,
+            -19.19999999999999,
+            8.100227969835457
+          ],
+          "spawnInput": [
+            6,
+            0,
+            15.709585919916854
+          ],
+          "initialPosition": [
+            6,
+            4.6,
+            15.709585919916854
+          ],
+          "duration": 8,
+          "groundY": -1.1102230246251565e-16
+        },
+        "release": {
+          "age": 0.5833333333333335,
+          "tick": 86,
+          "position": [
+            6,
+            0,
+            15.709585919916854
+          ],
+          "velocity": [
+            0,
+            -19.19999999999999,
+            8.100227969835457
+          ],
+          "withCloud": true
+        }
+      },
+      "preQ": {
+        "tick": 50,
+        "time": 0.8333333333333343,
+        "GP": 0,
+        "feet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "active": null,
+        "bomb": null,
+        "bombAge": null,
+        "bombVelocity": null,
+        "cloud": null,
+        "resources": {
+          "geometries": 241,
+          "textures": 27
+        },
+        "programs": 131,
+        "calls": 67,
+        "triangles": 224621,
+        "fonts": "loaded",
+        "glStats": {
+          "createShader": 386,
+          "compileShader": 386,
+          "linkProgram": 193,
+          "drawCalls": 815,
+          "contextLost": 0,
+          "contextRestored": 0
+        },
+        "contextLost": false
+      },
+      "launchRenderedFrame": {
+        "tick": 53,
+        "time": 0.8833333333333344,
+        "GP": 0,
+        "feet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "active": "throw",
+        "bomb": [
+          6,
+          1.674,
+          1.0543008
+        ],
+        "bombAge": 0.016666666666666666,
+        "bombVelocity": [
+          0,
+          13.44,
+          63.258048
+        ],
+        "cloud": null,
+        "resources": {
+          "geometries": 257,
+          "textures": 30
+        },
+        "programs": 140,
+        "calls": 73,
+        "triangles": 230021,
+        "fonts": "loaded",
+        "glStats": {
+          "createShader": 404,
+          "compileShader": 404,
+          "linkProgram": 202,
+          "drawCalls": 1030,
+          "contextLost": 0,
+          "contextRestored": 0
+        },
+        "contextLost": false
+      },
+      "renderedCloudFrame": {
+        "tick": 87,
+        "time": 1.4499999999999997,
+        "GP": 0,
+        "feet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "active": null,
+        "bomb": null,
+        "bombAge": null,
+        "bombVelocity": null,
+        "cloud": [
+          6,
+          4.6,
+          15.727919253250187
+        ],
+        "resources": {
+          "geometries": 260,
+          "textures": 31
+        },
+        "programs": 142,
+        "calls": 71,
+        "triangles": 229968,
+        "fonts": "loaded",
+        "glStats": {
+          "createShader": 408,
+          "compileShader": 408,
+          "linkProgram": 204,
+          "drawCalls": 3347,
+          "contextLost": 0,
+          "contextRestored": 0
+        },
+        "contextLost": false
+      },
+      "beforeCapture": {
+        "state": {
+          "tick": 87,
+          "time": 1.4499999999999997,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": null,
+          "bombAge": null,
+          "bombVelocity": null,
+          "cloud": [
+            6,
+            4.6,
+            15.727919253250187
+          ],
+          "resources": {
+            "geometries": 260,
+            "textures": 31
+          },
+          "programs": 142,
+          "calls": 71,
+          "triangles": 229968,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 408,
+            "compileShader": 408,
+            "linkProgram": 204,
+            "drawCalls": 3347,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        "glError": 0,
+        "canvas": [
+          {
+            "width": 720,
+            "height": 480,
+            "clientWidth": 960,
+            "clientHeight": 640
+          },
+          {
+            "width": 300,
+            "height": 150,
+            "clientWidth": 960,
+            "clientHeight": 640
+          },
+          {
+            "width": 576,
+            "height": 384,
+            "clientWidth": 0,
+            "clientHeight": 0
+          },
+          {
+            "width": 16,
+            "height": 50,
+            "clientWidth": 16,
+            "clientHeight": 50
+          }
+        ],
+        "animations": [
+          {
+            "playState": "running",
+            "currentTime": 32648.738000000292
+          },
+          {
+            "playState": "running",
+            "currentTime": 0
+          },
+          {
+            "playState": "running",
+            "currentTime": 84280.00599999947
+          },
+          {
+            "playState": "running",
+            "currentTime": 0
+          }
+        ]
+      },
+      "afterCapture": {
+        "tick": 87,
+        "time": 1.4499999999999997,
+        "GP": 0,
+        "feet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "active": null,
+        "bomb": null,
+        "bombAge": null,
+        "bombVelocity": null,
+        "cloud": [
+          6,
+          4.6,
+          15.727919253250187
+        ],
+        "resources": {
+          "geometries": 260,
+          "textures": 31
+        },
+        "programs": 142,
+        "calls": 71,
+        "triangles": 229968,
+        "fonts": "loaded",
+        "glStats": {
+          "createShader": 408,
+          "compileShader": 408,
+          "linkProgram": 204,
+          "drawCalls": 3347,
+          "contextLost": 0,
+          "contextRestored": 0
+        },
+        "contextLost": false
+      },
+      "screenshotMs": 368,
+      "console": [
+        {
+          "type": "warning",
+          "text": "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+        }
+      ],
+      "errors": [],
+      "contextEvents": [],
+      "requestFailures": [],
+      "frames": [
+        {
+          "tick": 54,
+          "time": 0.9000000000000011,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            1.882,
+            2.046756315072
+          ],
+          "bombAge": 0.03333333333333333,
+          "bombVelocity": [
+            0,
+            12.48,
+            59.54733090432
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 226083,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1099,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 55,
+          "time": 0.9166666666666679,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.074,
+            2.9809943896298763
+          ],
+          "bombAge": 0.05,
+          "bombVelocity": [
+            0,
+            11.520000000000001,
+            56.054284473472585
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 226083,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1168,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 56,
+          "time": 0.9333333333333346,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.25,
+            3.8604300587341873
+          ],
+          "bombAge": 0.06666666666666667,
+          "bombVelocity": [
+            0,
+            10.560000000000002,
+            52.76614014625868
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 226037,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1236,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 57,
+          "time": 0.9500000000000013,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.41,
+            4.6882780314888395
+          ],
+          "bombAge": 0.08333333333333333,
+          "bombVelocity": [
+            0,
+            9.600000000000003,
+            49.670878365279144
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 224527,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1304,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 58,
+          "time": 0.966666666666668,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.5540000000000003,
+            5.467564442161704
+          ],
+          "bombAge": 0.09999999999999999,
+          "bombVelocity": [
+            0,
+            8.640000000000004,
+            46.75718464037187
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 224527,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1372,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 59,
+          "time": 0.9833333333333347,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.6820000000000004,
+            6.201137911984498
+          ],
+          "bombAge": 0.11666666666666665,
+          "bombVelocity": [
+            0,
+            7.680000000000004,
+            44.01440818936765
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223157,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1440,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 60,
+          "time": 1.0000000000000013,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.7940000000000005,
+            6.891679962067487
+          ],
+          "bombAge": 0.13333333333333333,
+          "bombVelocity": [
+            0,
+            6.720000000000004,
+            41.432523004979345
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223159,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1508,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 61,
+          "time": 1.016666666666668,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.8900000000000006,
+            7.5417148154926075
+          ],
+          "bombAge": 0.15,
+          "bombVelocity": [
+            0,
+            5.760000000000004,
+            39.002091205507256
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223159,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1576,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 62,
+          "time": 1.0333333333333345,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.9700000000000006,
+            8.153618624415811
+          ],
+          "bombAge": 0.16666666666666666,
+          "bombVelocity": [
+            0,
+            4.800000000000004,
+            36.714228535392195
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223159,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1644,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 63,
+          "time": 1.0500000000000012,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            3.0340000000000007,
+            8.72962815590758
+          ],
+          "bombAge": 0.18333333333333332,
+          "bombVelocity": [
+            0,
+            3.8400000000000043,
+            34.560571889506086
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223161,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1712,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 64,
+          "time": 1.0666666666666678,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            3.0820000000000007,
+            9.271848968282042
+          ],
+          "bombAge": 0.19999999999999998,
+          "bombVelocity": [
+            0,
+            2.8800000000000043,
+            32.533248742467656
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223153,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1780,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 65,
+          "time": 1.0833333333333344,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            3.1140000000000008,
+            9.782263107802617
+          ],
+          "bombAge": 0.21666666666666665,
+          "bombVelocity": [
+            0,
+            1.9200000000000044,
+            30.624848371234503
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223155,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1848,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 66,
+          "time": 1.100000000000001,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            3.130000000000001,
+            10.262736353898916
+          ],
+          "bombAge": 0.2333333333333333,
+          "bombVelocity": [
+            0,
+            0.9600000000000045,
+            28.828394765777887
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223157,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1916,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 67,
+          "time": 1.1166666666666676,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            3.130000000000001,
+            10.715025039379205
+          ],
+          "bombAge": 0.24999999999999997,
+          "bombVelocity": [
+            0,
+            4.6629367034256575e-15,
+            27.137321128817355
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223161,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1984,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 68,
+          "time": 1.1333333333333342,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            3.1140000000000008,
+            11.14078247056922
+          ],
+          "bombAge": 0.26666666666666666,
+          "bombVelocity": [
+            0,
+            -0.9599999999999952,
+            25.54544587140093
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223161,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2052,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 69,
+          "time": 1.1500000000000008,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            3.0820000000000007,
+            11.54156497084563
+          ],
+          "bombAge": 0.2833333333333333,
+          "bombVelocity": [
+            0,
+            -1.919999999999995,
+            24.04695001658455
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223161,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2120,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 70,
+          "time": 1.1666666666666674,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            3.0340000000000007,
+            11.918837569655826
+          ],
+          "bombAge": 0.3,
+          "bombVelocity": [
+            0,
+            -2.879999999999995,
+            22.6363559286117
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223163,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2188,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 71,
+          "time": 1.183333333333334,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.9700000000000006,
+            12.273979357819815
+          ],
+          "bombAge": 0.31666666666666665,
+          "bombVelocity": [
+            0,
+            -3.839999999999995,
+            21.308507289839337
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223167,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2256,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 72,
+          "time": 1.2000000000000006,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.8900000000000006,
+            12.608288528690105
+          ],
+          "bombAge": 0.3333333333333333,
+          "bombVelocity": [
+            0,
+            -4.7999999999999945,
+            20.058550252217362
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223169,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2324,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 73,
+          "time": 1.2166666666666672,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.7940000000000005,
+            12.922987123597142
+          ],
+          "bombAge": 0.35,
+          "bombVelocity": [
+            0,
+            -5.7599999999999945,
+            18.88191569442229
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223171,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2392,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 74,
+          "time": 1.2333333333333338,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            2.6820000000000004,
+            13.219225498926933
+          ],
+          "bombAge": 0.36666666666666664,
+          "bombVelocity": [
+            0,
+            -6.719999999999994,
+            17.774302519787476
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223173,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2460,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 75,
+          "time": 1.2500000000000004,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            2.5540000000000003,
+            13.49808653115988
+          ],
+          "bombAge": 0.3833333333333333,
+          "bombVelocity": [
+            0,
+            -7.679999999999994,
+            16.731661933976742
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223173,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2528,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 76,
+          "time": 1.266666666666667,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            2.4100000000000006,
+            13.76058957524204
+          ],
+          "bombAge": 0.39999999999999997,
+          "bombVelocity": [
+            0,
+            -8.639999999999993,
+            15.750182644929666
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223175,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2596,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 77,
+          "time": 1.2833333333333337,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            2.250000000000001,
+            14.007694190758341
+          ],
+          "bombAge": 0.41666666666666663,
+          "bombVelocity": [
+            0,
+            -9.599999999999993,
+            14.826276930978091
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223175,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2664,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 78,
+          "time": 1.3000000000000003,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            2.074000000000001,
+            14.240303649528457
+          ],
+          "bombAge": 0.4333333333333333,
+          "bombVelocity": [
+            0,
+            -10.559999999999992,
+            13.956567526206916
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223175,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2732,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 79,
+          "time": 1.3166666666666669,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            1.8820000000000014,
+            14.459268237447118
+          ],
+          "bombAge": 0.44999999999999996,
+          "bombVelocity": [
+            0,
+            -11.51999999999999,
+            13.137875275119617
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223175,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2800,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 80,
+          "time": 1.3333333333333335,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            1.6740000000000017,
+            14.665388362638469
+          ],
+          "bombAge": 0.4666666666666666,
+          "bombVelocity": [
+            0,
+            -12.47999999999999,
+            12.3672075114811
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223177,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2868,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 81,
+          "time": 1.35,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            1.450000000000002,
+            14.859417481286096
+          ],
+          "bombAge": 0.4833333333333333,
+          "bombVelocity": [
+            0,
+            -13.439999999999989,
+            11.641747118857618
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223175,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2936,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 82,
+          "time": 1.3666666666666667,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            1.2100000000000022,
+            15.042064851833853
+          ],
+          "bombAge": 0.49999999999999994,
+          "bombVelocity": [
+            0,
+            -14.399999999999988,
+            10.958842232865429
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223177,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 3004,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 83,
+          "time": 1.3833333333333333,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            0.9540000000000024,
+            15.21399812762528
+          ],
+          "bombAge": 0.5166666666666666,
+          "bombVelocity": [
+            0,
+            -15.359999999999987,
+            10.315996547485542
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223179,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 3072,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 84,
+          "time": 1.4,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            0.6820000000000026,
+            15.37584579745878
+          ],
+          "bombAge": 0.5333333333333333,
+          "bombVelocity": [
+            0,
+            -16.319999999999986,
+            9.71086019001004
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223177,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 3140,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 85,
+          "time": 1.4166666666666665,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            0.39400000000000285,
+            15.528199482979847
+          ],
+          "bombAge": 0.55,
+          "bombVelocity": [
+            0,
+            -17.279999999999987,
+            9.14122113126405
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223175,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 3208,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 86,
+          "time": 1.4333333333333331,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            0.09000000000000308,
+            15.67161610130825
+          ],
+          "bombAge": 0.5666666666666668,
+          "bombVelocity": [
+            0,
+            -18.239999999999988,
+            8.6049970997041
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 68,
+          "triangles": 223175,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 3276,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 87,
+          "time": 1.4499999999999997,
+          "GP": 0,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": null,
+          "bombAge": null,
+          "bombVelocity": null,
+          "cloud": [
+            6,
+            4.6,
+            15.727919253250187
+          ],
+          "resources": {
+            "geometries": 260,
+            "textures": 31
+          },
+          "programs": 142,
+          "calls": 71,
+          "triangles": 229968,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 408,
+            "compileShader": 408,
+            "linkProgram": 204,
+            "drawCalls": 3347,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        }
+      ],
+      "stageTimings": [
+        {
+          "stage": "both:new-context",
+          "elapsedMs": 11
+        },
+        {
+          "stage": "both:navigate",
+          "elapsedMs": 48
+        },
+        {
+          "stage": "both:playing",
+          "elapsedMs": 46297
+        },
+        {
+          "stage": "both:freeze",
+          "elapsedMs": 97
+        },
+        {
+          "stage": "both:source-motion-ready",
+          "elapsedMs": 5
+        },
+        {
+          "stage": "both:setup",
+          "elapsedMs": 86
+        },
+        {
+          "stage": "both:pre-Q-gpu-complete",
+          "elapsedMs": 7
+        },
+        {
+          "stage": "both-GP0:Q-down",
+          "elapsedMs": 40
+        },
+        {
+          "stage": "both-GP0:Q-up-Sub-down",
+          "elapsedMs": 7035
+        },
+        {
+          "stage": "both-GP0:Sub-up",
+          "elapsedMs": 670
+        },
+        {
+          "stage": "both:launch-state",
+          "elapsedMs": 2164
+        },
+        {
+          "stage": "both:flight-frame-0",
+          "elapsedMs": 21
+        },
+        {
+          "stage": "both:flight-frame-1",
+          "elapsedMs": 26
+        },
+        {
+          "stage": "both:flight-frame-2",
+          "elapsedMs": 79
+        },
+        {
+          "stage": "both:flight-frame-3",
+          "elapsedMs": 41
+        },
+        {
+          "stage": "both:flight-frame-4",
+          "elapsedMs": 27
+        },
+        {
+          "stage": "both:flight-frame-5",
+          "elapsedMs": 35
+        },
+        {
+          "stage": "both:flight-frame-6",
+          "elapsedMs": 22
+        },
+        {
+          "stage": "both:flight-frame-7",
+          "elapsedMs": 26
+        },
+        {
+          "stage": "both:flight-GPU-finish-7",
+          "elapsedMs": 4
+        },
+        {
+          "stage": "both:flight-frame-8",
+          "elapsedMs": 16
+        },
+        {
+          "stage": "both:flight-frame-9",
+          "elapsedMs": 16
+        },
+        {
+          "stage": "both:flight-frame-10",
+          "elapsedMs": 18
+        },
+        {
+          "stage": "both:flight-frame-11",
+          "elapsedMs": 17
+        },
+        {
+          "stage": "both:flight-frame-12",
+          "elapsedMs": 15725
+        },
+        {
+          "stage": "both:flight-frame-13",
+          "elapsedMs": 85
+        },
+        {
+          "stage": "both:flight-frame-14",
+          "elapsedMs": 48
+        },
+        {
+          "stage": "both:flight-frame-15",
+          "elapsedMs": 34
+        },
+        {
+          "stage": "both:flight-GPU-finish-15",
+          "elapsedMs": 13
+        },
+        {
+          "stage": "both:flight-frame-16",
+          "elapsedMs": 53
+        },
+        {
+          "stage": "both:flight-frame-17",
+          "elapsedMs": 33
+        },
+        {
+          "stage": "both:flight-frame-18",
+          "elapsedMs": 49
+        },
+        {
+          "stage": "both:flight-frame-19",
+          "elapsedMs": 20
+        },
+        {
+          "stage": "both:flight-frame-20",
+          "elapsedMs": 18
+        },
+        {
+          "stage": "both:flight-frame-21",
+          "elapsedMs": 60
+        },
+        {
+          "stage": "both:flight-frame-22",
+          "elapsedMs": 11466
+        },
+        {
+          "stage": "both:flight-frame-23",
+          "elapsedMs": 28
+        },
+        {
+          "stage": "both:flight-GPU-finish-23",
+          "elapsedMs": 16
+        },
+        {
+          "stage": "both:flight-frame-24",
+          "elapsedMs": 38
+        },
+        {
+          "stage": "both:flight-frame-25",
+          "elapsedMs": 46
+        },
+        {
+          "stage": "both:flight-frame-26",
+          "elapsedMs": 34
+        },
+        {
+          "stage": "both:flight-frame-27",
+          "elapsedMs": 47
+        },
+        {
+          "stage": "both:flight-frame-28",
+          "elapsedMs": 44
+        },
+        {
+          "stage": "both:flight-frame-29",
+          "elapsedMs": 50
+        },
+        {
+          "stage": "both:flight-frame-30",
+          "elapsedMs": 68
+        },
+        {
+          "stage": "both:flight-frame-31",
+          "elapsedMs": 27
+        },
+        {
+          "stage": "both:flight-GPU-finish-31",
+          "elapsedMs": 17
+        },
+        {
+          "stage": "both:flight-frame-32",
+          "elapsedMs": 51
+        },
+        {
+          "stage": "both:flight-frame-33",
+          "elapsedMs": 13108
+        },
+        {
+          "stage": "both:flight-GPU-finish-33",
+          "elapsedMs": 26
+        },
+        {
+          "stage": "both-GP0:canister-observation",
+          "elapsedMs": 6
+        },
+        {
+          "stage": "both:before-capture-state",
+          "elapsedMs": 1086
+        },
+        {
+          "stage": "both:screenshot",
+          "elapsedMs": 368
+        },
+        {
+          "stage": "both:after-capture-state",
+          "elapsedMs": 46
+        },
+        {
+          "stage": "both:close-context",
+          "elapsedMs": 63
+        }
+      ]
+    },
+    {
+      "GP": 57,
+      "status": "passed",
+      "renderedGameFrames": 38,
+      "postReleaseDeliveryFrames": 34,
+      "sameAsStoredNumericReference": true,
+      "observation": {
+        "GP": 57,
+        "unit": "practice-range displayed m = WU",
+        "launch": {
+          "tick": 73,
+          "time": 1.5832333333333342,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "origin": [
+            6,
+            1.45,
+            0
+          ],
+          "velocity": [
+            0,
+            14.399999999999999,
+            100.80000000000001
+          ],
+          "power": {
+            "duration": 10,
+            "throwScale": 1.5
+          },
+          "pitch": 0,
+          "yaw": 0,
+          "aimingSub": false
+        },
+        "contacts": [
+          {
+            "age": 0.5833333333333335,
+            "tick": 107,
+            "from": [
+              6,
+              0.09000000000000308,
+              23.507424151962365
+            ],
+            "integratedEndpoint": [
+              6,
+              -0.2299999999999967,
+              23.70992985120825
+            ],
+            "velocity": [
+              0,
+              -19.19999999999999,
+              12.150341954753182
+            ],
+            "point": [
+              6,
+              0,
+              23.56437887987527
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "block": 1,
+            "face": 2
+          }
+        ],
+        "cloud": {
+          "age": 0.5833333333333335,
+          "tick": 107,
+          "position": [
+            6,
+            0,
+            23.56437887987527
+          ],
+          "velocity": [
+            0,
+            -19.19999999999999,
+            12.150341954753182
+          ],
+          "spawnInput": [
+            6,
+            0,
+            23.56437887987527
+          ],
+          "initialPosition": [
+            6,
+            4.6,
+            23.56437887987527
+          ],
+          "duration": 10,
+          "groundY": -1.1102230246251565e-16
+        },
+        "release": {
+          "age": 0.5833333333333335,
+          "tick": 107,
+          "position": [
+            6,
+            0,
+            23.56437887987527
+          ],
+          "velocity": [
+            0,
+            -19.19999999999999,
+            12.150341954753182
+          ],
+          "withCloud": true
+        }
+      },
+      "preQ": {
+        "tick": 71,
+        "time": 1.5332333333333343,
+        "GP": 57,
+        "feet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "active": null,
+        "bomb": null,
+        "bombAge": null,
+        "bombVelocity": null,
+        "cloud": null,
+        "resources": {
+          "geometries": 250,
+          "textures": 30
+        },
+        "programs": 140,
+        "calls": 67,
+        "triangles": 221321,
+        "fonts": "loaded",
+        "glStats": {
+          "createShader": 404,
+          "compileShader": 404,
+          "linkProgram": 202,
+          "drawCalls": 973,
+          "contextLost": 0,
+          "contextRestored": 0
+        },
+        "contextLost": false
+      },
+      "launchRenderedFrame": {
+        "tick": 74,
+        "time": 1.5832333333333342,
+        "GP": 57,
+        "feet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "active": "throw",
+        "bomb": [
+          6,
+          1.674,
+          1.5814512
+        ],
+        "bombAge": 0.016666666666666666,
+        "bombVelocity": [
+          0,
+          13.44,
+          94.887072
+        ],
+        "cloud": null,
+        "resources": {
+          "geometries": 257,
+          "textures": 30
+        },
+        "programs": 140,
+        "calls": 74,
+        "triangles": 228497,
+        "fonts": "loaded",
+        "glStats": {
+          "createShader": 404,
+          "compileShader": 404,
+          "linkProgram": 202,
+          "drawCalls": 1181,
+          "contextLost": 0,
+          "contextRestored": 0
+        },
+        "contextLost": false
+      },
+      "renderedCloudFrame": {
+        "tick": 108,
+        "time": 2.149899999999999,
+        "GP": 57,
+        "feet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "active": null,
+        "bomb": null,
+        "bombAge": null,
+        "bombVelocity": null,
+        "cloud": [
+          6,
+          4.6,
+          23.582712213208605
+        ],
+        "resources": {
+          "geometries": 260,
+          "textures": 31
+        },
+        "programs": 142,
+        "calls": 71,
+        "triangles": 230050,
+        "fonts": "loaded",
+        "glStats": {
+          "createShader": 408,
+          "compileShader": 408,
+          "linkProgram": 204,
+          "drawCalls": 3529,
+          "contextLost": 0,
+          "contextRestored": 0
+        },
+        "contextLost": false
+      },
+      "beforeCapture": {
+        "state": {
+          "tick": 108,
+          "time": 2.149899999999999,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": null,
+          "bombAge": null,
+          "bombVelocity": null,
+          "cloud": [
+            6,
+            4.6,
+            23.582712213208605
+          ],
+          "resources": {
+            "geometries": 260,
+            "textures": 31
+          },
+          "programs": 142,
+          "calls": 71,
+          "triangles": 230050,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 408,
+            "compileShader": 408,
+            "linkProgram": 204,
+            "drawCalls": 3529,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        "glError": 0,
+        "canvas": [
+          {
+            "width": 720,
+            "height": 480,
+            "clientWidth": 960,
+            "clientHeight": 640
+          },
+          {
+            "width": 300,
+            "height": 150,
+            "clientWidth": 960,
+            "clientHeight": 640
+          },
+          {
+            "width": 576,
+            "height": 384,
+            "clientWidth": 0,
+            "clientHeight": 0
+          },
+          {
+            "width": 16,
+            "height": 50,
+            "clientWidth": 16,
+            "clientHeight": 50
+          }
+        ],
+        "animations": [
+          {
+            "playState": "running",
+            "currentTime": 38215.14000000019
+          },
+          {
+            "playState": "running",
+            "currentTime": 0
+          },
+          {
+            "playState": "running",
+            "currentTime": 88313.20000000001
+          },
+          {
+            "playState": "running",
+            "currentTime": 0
+          }
+        ]
+      },
+      "afterCapture": {
+        "tick": 108,
+        "time": 2.149899999999999,
+        "GP": 57,
+        "feet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "velocity": [
+          0,
+          0,
+          0
+        ],
+        "active": null,
+        "bomb": null,
+        "bombAge": null,
+        "bombVelocity": null,
+        "cloud": [
+          6,
+          4.6,
+          23.582712213208605
+        ],
+        "resources": {
+          "geometries": 260,
+          "textures": 31
+        },
+        "programs": 142,
+        "calls": 71,
+        "triangles": 230050,
+        "fonts": "loaded",
+        "glStats": {
+          "createShader": 408,
+          "compileShader": 408,
+          "linkProgram": 204,
+          "drawCalls": 3529,
+          "contextLost": 0,
+          "contextRestored": 0
+        },
+        "contextLost": false
+      },
+      "screenshotMs": 304,
+      "console": [
+        {
+          "type": "warning",
+          "text": "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+        }
+      ],
+      "errors": [],
+      "contextEvents": [],
+      "requestFailures": [],
+      "frames": [
+        {
+          "tick": 75,
+          "time": 1.5999000000000008,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            1.882,
+            3.070134472608
+          ],
+          "bombAge": 0.03333333333333333,
+          "bombVelocity": [
+            0,
+            12.48,
+            89.32099635648
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 224557,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1250,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 76,
+          "time": 1.6165666666666674,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.074,
+            4.471491584444815
+          ],
+          "bombAge": 0.05,
+          "bombVelocity": [
+            0,
+            11.520000000000001,
+            84.08142671020887
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 224559,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1319,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 77,
+          "time": 1.633233333333334,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.25,
+            5.790645088101281
+          ],
+          "bombAge": 0.06666666666666667,
+          "bombVelocity": [
+            0,
+            10.560000000000002,
+            79.14921021938801
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 224563,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1388,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 78,
+          "time": 1.6499000000000006,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.41,
+            7.03241704723326
+          ],
+          "bombAge": 0.08333333333333333,
+          "bombVelocity": [
+            0,
+            9.600000000000003,
+            74.50631754791871
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 224565,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1457,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 79,
+          "time": 1.6665666666666672,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.5540000000000003,
+            8.201346663242557
+          ],
+          "bombAge": 0.09999999999999999,
+          "bombVelocity": [
+            0,
+            8.640000000000004,
+            70.13577696055779
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 224567,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1526,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 80,
+          "time": 1.6832333333333338,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.6820000000000004,
+            9.301706867976748
+          ],
+          "bombAge": 0.11666666666666665,
+          "bombVelocity": [
+            0,
+            7.680000000000004,
+            66.02161228405147
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223197,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1595,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 81,
+          "time": 1.6999000000000004,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.7940000000000005,
+            10.337519943101231
+          ],
+          "bombAge": 0.13333333333333333,
+          "bombVelocity": [
+            0,
+            6.720000000000004,
+            62.14878450746901
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223201,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1664,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 82,
+          "time": 1.716566666666667,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.8900000000000006,
+            11.312572223238913
+          ],
+          "bombAge": 0.15,
+          "bombVelocity": [
+            0,
+            5.760000000000004,
+            58.50313680826088
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223205,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1733,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 83,
+          "time": 1.7332333333333336,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.9700000000000006,
+            12.230427936623718
+          ],
+          "bombAge": 0.16666666666666666,
+          "bombVelocity": [
+            0,
+            4.800000000000004,
+            55.07134280308829
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223209,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1802,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 84,
+          "time": 1.7499000000000002,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            3.0340000000000007,
+            13.09444223386137
+          ],
+          "bombAge": 0.18333333333333332,
+          "bombVelocity": [
+            0,
+            3.8400000000000043,
+            51.84085783425913
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223209,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1871,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 85,
+          "time": 1.7665666666666668,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            3.0820000000000007,
+            13.907773452423061
+          ],
+          "bombAge": 0.19999999999999998,
+          "bombVelocity": [
+            0,
+            2.8800000000000043,
+            48.79987311370149
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223201,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 1940,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 86,
+          "time": 1.7832333333333334,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            3.1140000000000008,
+            14.673394661703924
+          ],
+          "bombAge": 0.21666666666666665,
+          "bombVelocity": [
+            0,
+            1.9200000000000044,
+            45.93727255685175
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223201,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2009,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 87,
+          "time": 1.7999,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            3.130000000000001,
+            15.39410453084837
+          ],
+          "bombAge": 0.2333333333333333,
+          "bombVelocity": [
+            0,
+            0.9600000000000045,
+            43.24259214866682
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223201,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2078,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 88,
+          "time": 1.8165666666666667,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            3.130000000000001,
+            16.072537559068802
+          ],
+          "bombAge": 0.24999999999999997,
+          "bombVelocity": [
+            0,
+            4.6629367034256575e-15,
+            40.70598169322602
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223201,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2147,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 89,
+          "time": 1.8332333333333333,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            3.1140000000000008,
+            16.711173705853824
+          ],
+          "bombAge": 0.26666666666666666,
+          "bombVelocity": [
+            0,
+            -0.9599999999999952,
+            38.31816880710138
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223201,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2216,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 90,
+          "time": 1.8498999999999999,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            3.0820000000000007,
+            17.312347456268437
+          ],
+          "bombAge": 0.2833333333333333,
+          "bombVelocity": [
+            0,
+            -1.919999999999995,
+            36.07042502487681
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223201,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2285,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 91,
+          "time": 1.8665666666666665,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            3.0340000000000007,
+            17.878256354483728
+          ],
+          "bombAge": 0.3,
+          "bombVelocity": [
+            0,
+            -2.879999999999995,
+            33.95453389291754
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223199,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2354,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 92,
+          "time": 1.883233333333333,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.9700000000000006,
+            18.41096903672971
+          ],
+          "bombAge": 0.31666666666666665,
+          "bombVelocity": [
+            0,
+            -3.839999999999995,
+            31.962760934758993
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223199,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2423,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 93,
+          "time": 1.8998999999999997,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.8900000000000006,
+            18.912432793035144
+          ],
+          "bombAge": 0.3333333333333333,
+          "bombVelocity": [
+            0,
+            -4.7999999999999945,
+            30.08782537832603
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223201,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2492,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 94,
+          "time": 1.9165666666666663,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": "throw",
+          "bomb": [
+            6,
+            2.7940000000000005,
+            19.3844806853957
+          ],
+          "bombAge": 0.35,
+          "bombVelocity": [
+            0,
+            -5.7599999999999945,
+            28.322873541633424
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223205,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2561,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 95,
+          "time": 1.933233333333333,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            2.6820000000000004,
+            19.828838248390387
+          ],
+          "bombAge": 0.36666666666666664,
+          "bombVelocity": [
+            0,
+            -6.719999999999994,
+            26.661453779681207
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223205,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2630,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 96,
+          "time": 1.9498999999999995,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            2.5540000000000003,
+            20.247129796739806
+          ],
+          "bombAge": 0.3833333333333333,
+          "bombVelocity": [
+            0,
+            -7.679999999999994,
+            25.097492900965104
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223203,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2699,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 97,
+          "time": 1.9665666666666661,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            2.4100000000000006,
+            20.640884362863048
+          ],
+          "bombAge": 0.39999999999999997,
+          "bombVelocity": [
+            0,
+            -8.639999999999993,
+            23.62527396739449
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223203,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2768,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 98,
+          "time": 1.9832333333333327,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            2.250000000000001,
+            21.0115412861375
+          ],
+          "bombAge": 0.41666666666666663,
+          "bombVelocity": [
+            0,
+            -9.599999999999993,
+            22.23941539646713
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223205,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2837,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 99,
+          "time": 1.9998999999999993,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            2.074000000000001,
+            21.360455474292674
+          ],
+          "bombAge": 0.4333333333333333,
+          "bombVelocity": [
+            0,
+            -10.559999999999992,
+            20.934851289310366
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223205,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2906,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 100,
+          "time": 2.016566666666666,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            1.8820000000000014,
+            21.688902356170665
+          ],
+          "bombAge": 0.44999999999999996,
+          "bombVelocity": [
+            0,
+            -11.51999999999999,
+            19.706812912679418
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223247,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 2975,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 101,
+          "time": 2.0332333333333326,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            1.6740000000000017,
+            21.998082543957693
+          ],
+          "bombAge": 0.4666666666666666,
+          "bombVelocity": [
+            0,
+            -12.47999999999999,
+            18.550811267221643
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223247,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 3044,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 102,
+          "time": 2.049899999999999,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            1.450000000000002,
+            22.289126221929134
+          ],
+          "bombAge": 0.4833333333333333,
+          "bombVelocity": [
+            0,
+            -13.439999999999989,
+            17.46262067828642
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223247,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 3113,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 103,
+          "time": 2.0665666666666658,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            1.2100000000000022,
+            22.56309727775077
+          ],
+          "bombAge": 0.49999999999999994,
+          "bombVelocity": [
+            0,
+            -14.399999999999988,
+            16.438263349298136
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223245,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 3182,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 104,
+          "time": 2.0832333333333324,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            0.9540000000000024,
+            22.820997191437908
+          ],
+          "bombAge": 0.5166666666666666,
+          "bombVelocity": [
+            0,
+            -15.359999999999987,
+            15.473994821228306
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223245,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 3251,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 105,
+          "time": 2.099899999999999,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            0.6820000000000026,
+            23.06376869618816
+          ],
+          "bombAge": 0.5333333333333333,
+          "bombVelocity": [
+            0,
+            -16.319999999999986,
+            14.566290285015054
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223243,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 3320,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 106,
+          "time": 2.1165666666666656,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            0.39400000000000285,
+            23.29229922446976
+          ],
+          "bombAge": 0.55,
+          "bombVelocity": [
+            0,
+            -17.279999999999987,
+            13.71183169689607
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223241,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 3389,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 107,
+          "time": 2.133233333333332,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": [
+            6,
+            0.09000000000000308,
+            23.507424151962365
+          ],
+          "bombAge": 0.5666666666666668,
+          "bombVelocity": [
+            0,
+            -18.239999999999988,
+            12.907495649556147
+          ],
+          "cloud": null,
+          "resources": {
+            "geometries": 257,
+            "textures": 30
+          },
+          "programs": 140,
+          "calls": 69,
+          "triangles": 223241,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 404,
+            "compileShader": 404,
+            "linkProgram": 202,
+            "drawCalls": 3458,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        },
+        {
+          "tick": 108,
+          "time": 2.149899999999999,
+          "GP": 57,
+          "feet": [
+            6,
+            5.551115123125783e-17,
+            0
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "active": null,
+          "bomb": null,
+          "bombAge": null,
+          "bombVelocity": null,
+          "cloud": [
+            6,
+            4.6,
+            23.582712213208605
+          ],
+          "resources": {
+            "geometries": 260,
+            "textures": 31
+          },
+          "programs": 142,
+          "calls": 71,
+          "triangles": 230050,
+          "fonts": "loaded",
+          "glStats": {
+            "createShader": 408,
+            "compileShader": 408,
+            "linkProgram": 204,
+            "drawCalls": 3529,
+            "contextLost": 0,
+            "contextRestored": 0
+          },
+          "contextLost": false
+        }
+      ],
+      "stageTimings": [
+        {
+          "stage": "both:new-context",
+          "elapsedMs": 403
+        },
+        {
+          "stage": "both:navigate",
+          "elapsedMs": 64
+        },
+        {
+          "stage": "both:playing",
+          "elapsedMs": 44271
+        },
+        {
+          "stage": "both:freeze",
+          "elapsedMs": 87
+        },
+        {
+          "stage": "both:source-motion-ready",
+          "elapsedMs": 24
+        },
+        {
+          "stage": "both:setup",
+          "elapsedMs": 81
+        },
+        {
+          "stage": "both:pre-Q-gpu-complete",
+          "elapsedMs": 30
+        },
+        {
+          "stage": "both-GP57:Q-down",
+          "elapsedMs": 63
+        },
+        {
+          "stage": "both-GP57:Q-up-Sub-down",
+          "elapsedMs": 41
+        },
+        {
+          "stage": "both-GP57:Sub-up",
+          "elapsedMs": 1328
+        },
+        {
+          "stage": "both:launch-state",
+          "elapsedMs": 4888
+        },
+        {
+          "stage": "both:flight-frame-0",
+          "elapsedMs": 54
+        },
+        {
+          "stage": "both:flight-frame-1",
+          "elapsedMs": 80
+        },
+        {
+          "stage": "both:flight-frame-2",
+          "elapsedMs": 44
+        },
+        {
+          "stage": "both:flight-frame-3",
+          "elapsedMs": 47
+        },
+        {
+          "stage": "both:flight-frame-4",
+          "elapsedMs": 58
+        },
+        {
+          "stage": "both:flight-frame-5",
+          "elapsedMs": 92
+        },
+        {
+          "stage": "both:flight-frame-6",
+          "elapsedMs": 117
+        },
+        {
+          "stage": "both:flight-frame-7",
+          "elapsedMs": 98
+        },
+        {
+          "stage": "both:flight-GPU-finish-7",
+          "elapsedMs": 95
+        },
+        {
+          "stage": "both:flight-frame-8",
+          "elapsedMs": 102
+        },
+        {
+          "stage": "both:flight-frame-9",
+          "elapsedMs": 50
+        },
+        {
+          "stage": "both:flight-frame-10",
+          "elapsedMs": 10939
+        },
+        {
+          "stage": "both:flight-frame-11",
+          "elapsedMs": 126
+        },
+        {
+          "stage": "both:flight-frame-12",
+          "elapsedMs": 55
+        },
+        {
+          "stage": "both:flight-frame-13",
+          "elapsedMs": 47
+        },
+        {
+          "stage": "both:flight-frame-14",
+          "elapsedMs": 71
+        },
+        {
+          "stage": "both:flight-frame-15",
+          "elapsedMs": 64
+        },
+        {
+          "stage": "both:flight-GPU-finish-15",
+          "elapsedMs": 6272
+        },
+        {
+          "stage": "both:flight-frame-16",
+          "elapsedMs": 50
+        },
+        {
+          "stage": "both:flight-frame-17",
+          "elapsedMs": 54
+        },
+        {
+          "stage": "both:flight-frame-18",
+          "elapsedMs": 63
+        },
+        {
+          "stage": "both:flight-frame-19",
+          "elapsedMs": 61
+        },
+        {
+          "stage": "both:flight-frame-20",
+          "elapsedMs": 38
+        },
+        {
+          "stage": "both:flight-frame-21",
+          "elapsedMs": 59
+        },
+        {
+          "stage": "both:flight-frame-22",
+          "elapsedMs": 6573
+        },
+        {
+          "stage": "both:flight-frame-23",
+          "elapsedMs": 60
+        },
+        {
+          "stage": "both:flight-GPU-finish-23",
+          "elapsedMs": 52
+        },
+        {
+          "stage": "both:flight-frame-24",
+          "elapsedMs": 65
+        },
+        {
+          "stage": "both:flight-frame-25",
+          "elapsedMs": 87
+        },
+        {
+          "stage": "both:flight-frame-26",
+          "elapsedMs": 80
+        },
+        {
+          "stage": "both:flight-frame-27",
+          "elapsedMs": 124
+        },
+        {
+          "stage": "both:flight-frame-28",
+          "elapsedMs": 92
+        },
+        {
+          "stage": "both:flight-frame-29",
+          "elapsedMs": 91
+        },
+        {
+          "stage": "both:flight-frame-30",
+          "elapsedMs": 9102
+        },
+        {
+          "stage": "both:flight-frame-31",
+          "elapsedMs": 116
+        },
+        {
+          "stage": "both:flight-GPU-finish-31",
+          "elapsedMs": 78
+        },
+        {
+          "stage": "both:flight-frame-32",
+          "elapsedMs": 138
+        },
+        {
+          "stage": "both:flight-frame-33",
+          "elapsedMs": 3419
+        },
+        {
+          "stage": "both:flight-GPU-finish-33",
+          "elapsedMs": 51
+        },
+        {
+          "stage": "both-GP57:canister-observation",
+          "elapsedMs": 46
+        },
+        {
+          "stage": "both:before-capture-state",
+          "elapsedMs": 964
+        },
+        {
+          "stage": "both:screenshot",
+          "elapsedMs": 304
+        },
+        {
+          "stage": "both:after-capture-state",
+          "elapsedMs": 76
+        },
+        {
+          "stage": "both:close-context",
+          "elapsedMs": 76
+        }
+      ]
+    }
+  ],
+  "separation": "This is a new continuous rendering acceptance of two local native-input cases. Stored90 traces and180 direct replay/catch-up conditions were only read for comparison, not recomputed and not relabeled as network admission success.",
+  "scopeLimits": [
+    "Private inferred calibration, not retail-ver11.3.0 parity or official versus parameters.",
+    "Only GP0/57 horizontal60Hz driving dt tested here; no18-case matrix or actual wall-clock60FPS claim.",
+    "No live two-client admission or join test; that repair is owned by another agent.",
+    "No runtime adoption, GPU/backend/flag changes, blocked URL/Library retry or new permissions."
+  ],
+  "sourceRuntimeUnchanged": true,
+  "privateRawHashes": {
+    "diagnostic.json": "8ca5f525746f9a64752f9bc334b8d1129eb7aa16c3e513e98530296b7ecf1fbc",
+    "events.jsonl": "572513c242314dafeb107998a57c2960d06781ffa7cccd8c25106cd852bf9b0f",
+    "run.log": "34c030b460aef81e86d1d0c91eaa8c38f1afbfbba184e96271b6f66ff9f7d256"
+  },
+  "artifacts": {
+    "reports/evidence/inkwave-storm-candidate-render-2026-10-23/GP0-function-events.jsonl": {
+      "sha256": "ffd7c826db0ab3e0fd66ad7a465ba05477b96079512dd2019c416e779d0c502e",
+      "bytes": 149264
+    },
+    "reports/evidence/inkwave-storm-candidate-render-2026-10-23/GP0-horizontal-60Hz.png": {
+      "sha256": "ea31e003d3d00b5ee0c626164b48443a8c6b945f43517ccc67ed5bf9e80233d2",
+      "bytes": 469621
+    },
+    "reports/evidence/inkwave-storm-candidate-render-2026-10-23/GP57-function-events.jsonl": {
+      "sha256": "ad66b0640bb74d31938fd0db185dd8979b5023ee801aea0c4a0e6e0b5b8c2662",
+      "bytes": 149474
+    },
+    "reports/evidence/inkwave-storm-candidate-render-2026-10-23/GP57-horizontal-60Hz.png": {
+      "sha256": "909f8d853dc150bec284b82192f533f097f77fc97f77d2fa7bde72e796d66320",
+      "bytes": 470609
+    },
+    "reports/evidence/inkwave-storm-candidate-render-2026-10-23/probe.txt": {
+      "sha256": "5c97fe24043b20f5917619c8e7ce9174d98825da0d3815b3b352f539108b7709",
+      "bytes": 15680
+    }
+  }
+}

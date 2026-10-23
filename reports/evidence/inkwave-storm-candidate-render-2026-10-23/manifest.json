@@ -1,0 +1,31 @@
+{
+  "sourceParent": "d47e0ac9e257a37f290f68fbf67362854139734a",
+  "buildContentHash": "dc206bf16f11ed63a56d11d9053f4048e640d534e7ec048cd0312c687dd1f2d0",
+  "artifacts": {
+    "reports/evidence/inkwave-storm-candidate-render-2026-10-23/GP0-function-events.jsonl": {
+      "sha256": "ffd7c826db0ab3e0fd66ad7a465ba05477b96079512dd2019c416e779d0c502e",
+      "bytes": 149264
+    },
+    "reports/evidence/inkwave-storm-candidate-render-2026-10-23/GP0-horizontal-60Hz.png": {
+      "sha256": "ea31e003d3d00b5ee0c626164b48443a8c6b945f43517ccc67ed5bf9e80233d2",
+      "bytes": 469621
+    },
+    "reports/evidence/inkwave-storm-candidate-render-2026-10-23/GP57-function-events.jsonl": {
+      "sha256": "ad66b0640bb74d31938fd0db185dd8979b5023ee801aea0c4a0e6e0b5b8c2662",
+      "bytes": 149474
+    },
+    "reports/evidence/inkwave-storm-candidate-render-2026-10-23/GP57-horizontal-60Hz.png": {
+      "sha256": "909f8d853dc150bec284b82192f533f097f77fc97f77d2fa7bde72e796d66320",
+      "bytes": 470609
+    },
+    "reports/evidence/inkwave-storm-candidate-render-2026-10-23/probe.txt": {
+      "sha256": "5c97fe24043b20f5917619c8e7ce9174d98825da0d3815b3b352f539108b7709",
+      "bytes": 15680
+    }
+  },
+  "privateRawHashes": {
+    "diagnostic.json": "8ca5f525746f9a64752f9bc334b8d1129eb7aa16c3e513e98530296b7ecf1fbc",
+    "events.jsonl": "572513c242314dafeb107998a57c2960d06781ffa7cccd8c25106cd852bf9b0f",
+    "run.log": "34c030b460aef81e86d1d0c91eaa8c38f1afbfbba184e96271b6f66ff9f7d256"
+  }
+}
