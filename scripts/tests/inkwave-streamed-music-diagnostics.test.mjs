@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import crypto from 'node:crypto';
 import { observeStreamedMusic } from '../lib/inkwave-streamed-music-diagnostics.mjs';
 import { installProjectileCaptureUiGate, withProjectileCaptureUi } from '../lib/inkwave-projectile-capture-ui.mjs';
+import { installProjectileCaptureProjection } from '../lib/inkwave-projectile-capture-projection.mjs';
 const assetURL='http://127.0.0.1:9999/_versions/rev/assets/audio/Jet_Arrow.mp3';
 async function fixture({ fail=false, ownerGlobal='__G' }={}) {
  const events=new Map(), calls=[], receipt={};
@@ -59,6 +60,17 @@ test('runner keeps historical workload and failure gates after reviewed capture 
  assert.ok(runner.includes(gate));assert.ok(runner.includes("report.status = report.errors.length ? 'failed' : 'passed';"));
  let restored=runner;
  const revert=(current,prior)=>{assert.equal(restored.split(current).length,2);restored=restored.replace(current,prior);};
+ // Reviewed capture-only projection setup/checks are additive. Remove each
+ // exact hunk once; retain the unchanged historical workload/failure-gate hash.
+ revert("import { installProjectileCaptureProjection } from './lib/inkwave-projectile-capture-projection.mjs';\n", "");
+ revert("  await page.addInitScript(installProjectileCaptureProjection);\n", "");
+ revert("    window.__iwSetProjectileCaptureProjection();\n", "");
+ revert("    window.__iwAssertProjectileCaptureProjection('before-render');\n", "");
+ revert("    window.__iwAssertProjectileCaptureProjection('after-render');\n", "");
+ revert("  await page.evaluate(() => window.__iwAssertProjectileCaptureProjection('before-screenshot'));\n", "");
+ revert("  await page.evaluate(() => window.__iwAssertProjectileCaptureProjection('after-screenshot'));\n", "");
+ revert("    await page.evaluate(() => window.__iwAssertProjectileCaptureProjection('before-crop'));\n", "");
+ revert("    await page.evaluate(() => window.__iwAssertProjectileCaptureProjection('after-crop'));\n", "");
  // Reviewed phase-correct cinematic preparation: structural admission does
  // not grant capture permission; the native timers run under a cinematic-only hold.
  revert("import { nativeTurfIntroWithUiFunction } from './lib/inkwave-projectile-intro-ui.mjs';\n", "");
@@ -189,7 +201,7 @@ async function lifecycleFixture({failAt=null,closeFailure=false}={}) {
   if(name==='Tracing.end')events.get('Tracing.tracingComplete')?.({});return {metrics:[]};
  }};
  const page={on:()=>{},setDefaultTimeout:()=>{},isClosed:()=>false,bringToFront:async()=>{},
-  addInitScript:async(fn)=>{calls.push('init:'+fn.name);if(failAt==='open-init'||failAt==='open-ui-init'&&fn===installProjectileCaptureUiGate)throw primary;if(fn===installProjectileCaptureUiGate)vm.runInNewContext('('+fn.toString()+')()',{window:state});},goto:async()=>{if(failAt==='open-goto')throw primary;},
+  addInitScript:async(fn)=>{calls.push('init:'+fn.name);if(failAt==='open-init'||failAt==='open-ui-init'&&fn===installProjectileCaptureUiGate||failAt==='open-projection-init'&&fn===installProjectileCaptureProjection)throw primary;if(fn===installProjectileCaptureUiGate||fn===installProjectileCaptureProjection)vm.runInNewContext('('+fn.toString()+')()',{window:state});},goto:async()=>{calls.push('goto');if(failAt==='open-goto')throw primary;},
   waitForFunction:async()=>{if(failAt==='performance-warmup')throw primary;},evaluate:async(fn,arg)=>{
    if(arg?.ownerGlobal){calls.push('snapshot');return vm.runInNewContext('('+fn.toString()+')(arg)',{window:state,arg});}
    const text=fn.toString();
@@ -205,7 +217,7 @@ async function lifecycleFixture({failAt=null,closeFailure=false}={}) {
  }};
  const realm={browser:{newContext:async()=>context},report,observeStreamedMusic,sourceIdentity:{checkoutSha:'a'.repeat(40),eventSha:null,checkoutIdentityStatus:'verified-git-head'},manifest:{build:{revision:'rev'}},address:'http://127.0.0.1:9999/',
   URL,Date,setTimeout,clearTimeout,process:{env:{}},quality:'low',BOOT_SEED:1,NATIVE_BOOT_TIMEOUT_MS:50,MIN_PERFORMANCE_FRAMES:3,PERFORMANCE_TIMEOUT_MS:200,durationMs:50,
-  installProjectileCaptureUiGate,withProjectileCaptureUi,installAudioTimingObserver(){},audioBuildManifestReceipt:()=>({}),audioDiagnosticURL:x=>x,audioReceiptSha256:()=>'',site:'/site',mimeErrors:[],
+  installProjectileCaptureUiGate,withProjectileCaptureUi,installProjectileCaptureProjection,installAudioTimingObserver(){},audioBuildManifestReceipt:()=>({}),audioDiagnosticURL:x=>x,audioReceiptSha256:()=>'',site:'/site',mimeErrors:[],
   nativeTurfIntroWithUiFunction:()=>()=>{},startProjectileThroughMenu:async()=>{if(failAt==='open-menu')throw primary;},completeNativeTurfIntro(){},atomicIntroFunction(){},
   requireAtomicIntro:async()=>({intro:{},readiness:{},playingReady:true}),installProjectileCaptureRoster(){}};
  vm.createContext(realm);vm.runInContext(summaryText+'\n'+openText+'\n'+performanceText,realm);
@@ -218,7 +230,7 @@ const assertClosed=(f)=>{
  assert.equal(receipt.network.at(-1).phase,'context-close');assert.equal(receipt.network.at(-1).autoAccepted,false);
  assert.ok(f.calls.lastIndexOf('snapshot')<f.calls.indexOf('context-close'),'snapshot precedes context close');
 };
-for(const failAt of ['open-init','open-ui-init','open-goto','open-menu','open-placement'])test('open route closes observed context after '+failAt+' and preserves the error',async()=>{
+for(const failAt of ['open-init','open-ui-init','open-projection-init','open-goto','open-menu','open-placement'])test('open route closes observed context after '+failAt+' and preserves the error',async()=>{
  const f=await lifecycleFixture({failAt});await assert.rejects(f.realm.openGameContext(),e=>e===f.primary);assertClosed(f);
 });
 for(const failAt of ['performance-enable','performance-warmup','performance-window'])test('performance route closes observed context after '+failAt,async()=>{
@@ -303,14 +315,24 @@ test('browser close rejection persists result before a delayed server close call
 
 
 // These run the real installer in the extracted-open fixture; no browser readiness is claimed.
-test('real UI installer dependency is installed before native navigation and preserves observed cleanup',async()=>{
+test('real UI and projection installers precede native navigation and preserve observed cleanup',async()=>{
  const f=await lifecycleFixture();const opened=await f.realm.openGameContext();
  assert.equal(typeof f.state.__iwProjectileCaptureUiGate,'function');
  assert.equal(f.state.__iwProjectileCaptureUiHistory.admissionCount,0);
+ assert.equal(typeof f.state.__iwSetProjectileCaptureProjection,'function');
+ assert.equal(typeof f.state.__iwAssertProjectileCaptureProjection,'function');
+ assert.ok(f.calls.indexOf('init:installProjectileCaptureUiGate')<f.calls.indexOf('init:installProjectileCaptureProjection'));
+ assert.ok(f.calls.indexOf('init:installProjectileCaptureProjection')<f.calls.indexOf('goto'));
  assert.ok(f.calls.indexOf('init:installAudioTimingObserver')<f.calls.indexOf('init:installProjectileCaptureUiGate'));
  await opened.close();assertClosed(f);
 });
 test('missing UI installer fails initialization and still closes the observed context',async()=>{
  const f=await lifecycleFixture();delete f.realm.installProjectileCaptureUiGate;
  await assert.rejects(f.realm.openGameContext(),/installProjectileCaptureUiGate is not defined/);assertClosed(f);
+});
+
+test('missing projection installer fails initialization and still closes the observed context',async()=>{
+ const f=await lifecycleFixture();delete f.realm.installProjectileCaptureProjection;
+ await assert.rejects(f.realm.openGameContext(),/installProjectileCaptureProjection is not defined/);assertClosed(f);
+ assert.equal(f.calls.includes('goto'),false);
 });
