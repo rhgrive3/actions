@@ -1,0 +1,155 @@
+{
+  "candidate": "c74a2d6011777eae7e001297c018ffcecaa263e7 + official #1858 menu leaves",
+  "receiverHP": 90,
+  "stages": [
+    {
+      "name": "pending",
+      "events": [],
+      "markers": []
+    },
+    {
+      "name": "unaccepted ACKs",
+      "events": [],
+      "markers": []
+    },
+    {
+      "name": "accepted ACK",
+      "events": [
+        {
+          "name": "combat:confirmed",
+          "damage": 10,
+          "killed": false,
+          "attacker": 1,
+          "victim": 2
+        }
+      ],
+      "markers": []
+    },
+    {
+      "name": "replayed ACK",
+      "events": [
+        {
+          "name": "combat:confirmed",
+          "damage": 10,
+          "killed": false,
+          "attacker": 1,
+          "victim": 2
+        }
+      ],
+      "markers": []
+    },
+    {
+      "name": "normal owner event replay after ACK",
+      "events": [
+        {
+          "name": "combat:confirmed",
+          "damage": 10,
+          "killed": false,
+          "attacker": 1,
+          "victim": 2
+        },
+        {
+          "name": "hit",
+          "damage": 10,
+          "killed": false,
+          "attacker": 1,
+          "victim": 2
+        }
+      ],
+      "markers": [
+        {
+          "kind": "hit",
+          "feedback": {
+            "damage": 10
+          }
+        }
+      ]
+    },
+    {
+      "name": "duplicate owner tick after playback",
+      "events": [
+        {
+          "name": "combat:confirmed",
+          "damage": 10,
+          "killed": false,
+          "attacker": 1,
+          "victim": 2
+        },
+        {
+          "name": "hit",
+          "damage": 10,
+          "killed": false,
+          "attacker": 1,
+          "victim": 2
+        }
+      ],
+      "markers": [
+        {
+          "kind": "hit",
+          "feedback": {
+            "damage": 10
+          }
+        }
+      ]
+    }
+  ],
+  "rejected": [
+    "unaccepted owner",
+    "wrong match",
+    "wrong victim life",
+    "wrong attacker"
+  ],
+  "ack": {
+    "k": "hit_ack",
+    "m": "match-1",
+    "h": 1,
+    "v": 2,
+    "a": 1,
+    "d": 10,
+    "kld": 0,
+    "vl": 5,
+    "hp": 90,
+    "hr": 1,
+    "ht": 1,
+    "la": 1,
+    "he": null
+  },
+  "forwardedNames": [
+    "hit"
+  ],
+  "forwardedHitPayload": {
+    "attacker": {
+      "n": 1
+    },
+    "victim": {
+      "n": 2
+    },
+    "damage": 10,
+    "killed": false,
+    "weaponId": "shooter"
+  },
+  "forwardedEvent": {
+    "time": 1,
+    "simulationTick": 0,
+    "sequence": 2,
+    "packetOwnerTick": 0,
+    "packetProtocol": 2
+  },
+  "ownerOutboundRowsAfterAcceptedSend": 0,
+  "queuedBeforeReplay": [
+    1,
+    1
+  ],
+  "firstPlayedSequence": 2,
+  "playedSequenceAfterDuplicate": 2,
+  "confirmed": 1,
+  "hit": 1,
+  "markers": 1,
+  "naiveAdditionalAckSubscriptionWouldShow": 2,
+  "arbitraryPacketsDropped": 0,
+  "noProductionChanges": true,
+  "measurement": "actual composed two-endpoint NetMatch/Actor/Projectiles in source VM with bounded transport; real accepted ACK and owner clock/event replay, duplicate ticks before and after replay; HUD dispatch spy, not live relay or remote browser render",
+  "conclusion": "normal accepted remote nonlethal hit reaches the existing hit presentation route exactly once; ACK-only missing feedback or abnormal delay in normal/native-equivalent play was not reproduced; retain candidate c74 and do not implement an ACK subscriber"
+}
+(node:5592) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
