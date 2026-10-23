@@ -1071,7 +1071,7 @@ def main() -> int:
     parser.add_argument("--require-complete", action="store_true",
                         help="also require both full capture runs, live workloads and exact image hashes")
     parser.add_argument("--admit-camera-epoch", action="store_true",
-                        help="strictly verify the reviewed main26a4 55° to 23-PR 60° projection epoch")
+                        help="strictly verify the reviewed main26a4 to integrated 55°→60° camera epoch")
     parser.add_argument("--expected-head", help="exact immutable PR head required for the epoch proof")
     args = parser.parse_args()
 
@@ -1090,12 +1090,12 @@ def main() -> int:
                     any(ch not in "0123456789abcdef" for ch in args.expected_head) or
                     proof.get("mode") != "current-pair-with-gameplay-differences" or
                     proof.get("reviewedBaseSourceEpoch") != "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64" or
-                    proof.get("reviewedCandidateSourceEpoch") != "c8564cb617e1708759a502a662ef1b538eaad14c" or
+                    proof.get("reviewedCandidateSourceEpoch") != "c9218d19b98a3bc63c9266738e1d67a64d9d1ff0" or
                     proof.get("originalInputsUnchanged") is not True or
                     not isinstance(admitted, dict) or
                     admitted.get("declaredBaseCommit") != "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64" or
                     admitted.get("declaredCandidateCommit") != args.expected_head):
-                raise ValueError("Camera epoch requested without immutable reviewed 23-PR source admission")
+                raise ValueError("Camera epoch requested without immutable reviewed integrated source admission")
         result = compare(before_path, after_path, output_path, args.admit_camera_epoch)
         if args.require_complete:
             before, _ = read_json(before_path)
