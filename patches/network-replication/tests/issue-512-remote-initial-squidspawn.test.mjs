@@ -36,12 +36,12 @@ async function timedPeer(originMillis) {
   const f = await fixture({ fullRuntime: true, productionComposition: true, extraExports: NETMATCH_EXPORT,
     vmPerformance: { now: () => millis } });
   const advance = dt => { millis += dt * 1000; f.G.time += dt; };
-  return { f, advance };
+  return { f, advance, clock: { now: () => millis } };
 }
 
 // Owner peer: the human is local, so its aim is driven by its own input.
 async function ownerPeer(hz) {
-  const { f, advance } = await timedPeer(1000);
+  const { f, advance, clock } = await timedPeer(1000);
   stage(f);
   const actor = f.make('shooter');
   actor.nid = 7; actor.owner = 'p2'; actor.team = 0; actor.slot = 0; actor.isLocal = true;
@@ -54,12 +54,12 @@ async function ownerPeer(hz) {
     canRespawn: () => false, removeActor() {} };
   netm.bind(match);
   f.G.match = match;
-  return { f, actor, netm, outgoing, hz, advance };
+  return { f, actor, netm, outgoing, hz, advance, clock };
 }
 
 // Receiver peer: the same human is a remote proxy that only sees owner snapshots.
 async function receiverPeer(hz) {
-  const { f, advance } = await timedPeer(25000);
+  const { f, advance, clock } = await timedPeer(25000);
   stage(f);
   const remote = f.make('shooter');
   remote.nid = 7; remote.owner = 'p2'; remote.team = 0; remote.slot = 0; remote.isLocal = false;
@@ -71,7 +71,7 @@ async function receiverPeer(hz) {
     playing: () => true, canRespawn: () => false, removeActor() {} };
   netm.bind(match);
   f.G.match = match;
-  return { f, remote, netm, hz, advance };
+  return { f, remote, netm, hz, advance, clock };
 }
 
 function step(peer, dt, updateActor = true) {
@@ -88,6 +88,9 @@ function publish(owner) {
     close(packet.ts - owner.lastPublishedTime, 1 / owner.hz, 'native packet clock follows frame spacing', .00101);
   }
   owner.lastPublishedTime = packet.ts;
+  close(packet.ts, owner.clock.now() / 1000, 'native timestamp follows the simulated frame clock', .000501);
+  assert.ok(owner.lastPublishedTs === undefined || packet.ts > owner.lastPublishedTs, 'every frame publishes a newer native timestamp');
+  owner.lastPublishedTs = packet.ts;
   return packet;
 }
 
@@ -95,6 +98,10 @@ function receive(receiver, packet, dt) {
   receiver.advance(dt);
   receiver.netm.onMessage('p2', structuredClone(packet));
   receiver.netm.update(dt);
+  const peer = receiver.netm.peers.get('p2');
+  assert.equal(peer?.lastTs, packet.ts, 'native admission accepts the current owner frame');
+  assert.ok(receiver.lastPlaybackTime === undefined || peer.tr >= receiver.lastPlaybackTime, 'coherent frame clocks never rewind native playback');
+  receiver.lastPlaybackTime = peer.tr;
   receiver.netm.applyRemote(receiver.remote, dt);
 }
 
