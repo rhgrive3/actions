@@ -1,0 +1,47 @@
+(node:14049) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ suction spec keeps 11.3.0 omissions explicitly unknown (5.823213ms)
+✔ curling charge uses SpawnSpeedZMaxCharge, never the gear tiers (1.149132ms)
+✔ the real adapted runtime installs kit subs and keeps one native list (1493.754629ms)
+✔ per-weapon selection picks the equipped kit, and the generic bomb stays reachable (0.481037ms)
+✔ registry registration is additive and never overwrites the native bomb (0.434127ms)
+✔ a real suction bomb is thrown with the selected spec and flies under native gravity (205.686899ms)
+✔ a real suction bomb sticks to a wall, then detonates on its own counted fuse (11.357908ms)
+✔ a real suction bomb adheres to a ceiling as well (6.564888ms)
+✔ a real curling bomb rolls, reflects on a wall after landing, and bursts (48.585849ms)
+✔ the real native PaintSystem accepts the rolling trail centre (12.177679ms)
+✔ Curling trail projects to a surface only within the source PaintCheckHeight (8.538468ms)
+✔ a ghost bomb gets no kit authority (6.145103ms)
+✔ native release charges suction ink 70 and rejects a 69 tank (19.267018ms)
+✔ a stuck bomb stays fixed on later frames with no physics hit (6.782132ms)
+✔ curling rolling is clamped to the floor surface, not sunk into it (7.082189ms)
+✔ the per-bomb spec is attached before recBomb records identity (7.003001ms)
+✔ rolling Curling contact deals the pinned 20 HP once per calibrated contact interval (9.971463ms)
+✔ the native recBomb packet carries the sub id and the held charge (56.958458ms)
+✔ untagged 15-field kit birth retains charge, footer and ghost playback (9.723303ms)
+✔ a native old-format packet with no appended fields replays as a generic ghost (0.902414ms)
+✔ the real _play hands a curling ghost its identity, charge and rolling behaviour (25.271422ms)
+✔ a remote Suction Bomb sticks where the owner stuck it (43.301116ms)
+✔ a ghost carries no paint, damage, turf or record authority (15.116086ms)
+✔ replaying a ghost never records a bomb back onto the wire (9.105272ms)
+✔ the spawn guard refuses an authoritative attach inside the ghost window (7.713889ms)
+✔ packets are validated at the boundary and never reach the registry (0.982914ms)
+✔ two owners never see each other cost, charge or throw speed (17.195703ms)
+✔ the gear-scoped sub cost and throw speed survive the release and the throw (7.208657ms)
+✔ parent: a native ghost bomb remains visual after transport disposal and peer adoption (30.704885ms)
+✔ S3 Sprinkler extracted parameters and 30F/480F/(480+900)F emission phases (0.839821ms)
+✔ native Sprinkler sticks to wall, creates falling owner ink, retires on death without generic explosion (57.585082ms)
+✔ one Sprinkler per owner; bounded packet identity and ghost has no paint or hit authority (7.484368ms)
+✔ Autobomb 11.3 source pins ink, chase frames, damage bands and select-nearest semantics (0.824398ms)
+✔ real native Autobomb targets, walks and explodes only after a 60F warning (164.107026ms)
+✔ Autobomb no target arms the community-observed 60F warning, and network ghosts have no kit combat authority (9.334033ms)
+✔ Autobomb fuse admission follows a real landed chase, not a new terrain hit every frame (0.286828ms)
+✔ full installer Curling trail uses the emitted floor projection and skips a missing floor (1978.299974ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 37
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5751.539183

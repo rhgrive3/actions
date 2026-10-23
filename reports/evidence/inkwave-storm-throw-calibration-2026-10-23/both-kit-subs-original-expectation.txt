@@ -1,0 +1,69 @@
+(node:13089) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ suction spec keeps 11.3.0 omissions explicitly unknown (1.3961ms)
+✔ curling charge uses SpawnSpeedZMaxCharge, never the gear tiers (1.101681ms)
+✔ the real adapted runtime installs kit subs and keeps one native list (855.40427ms)
+✔ per-weapon selection picks the equipped kit, and the generic bomb stays reachable (0.493435ms)
+✔ registry registration is additive and never overwrites the native bomb (0.423161ms)
+✔ a real suction bomb is thrown with the selected spec and flies under native gravity (148.402845ms)
+✔ a real suction bomb sticks to a wall, then detonates on its own counted fuse (8.177853ms)
+✔ a real suction bomb adheres to a ceiling as well (4.489017ms)
+✔ a real curling bomb rolls, reflects on a wall after landing, and bursts (12.582194ms)
+✔ the real native PaintSystem accepts the rolling trail centre (6.773129ms)
+✔ Curling trail projects to a surface only within the source PaintCheckHeight (4.199285ms)
+✔ a ghost bomb gets no kit authority (4.00051ms)
+✔ native release charges suction ink 70 and rejects a 69 tank (12.262797ms)
+✖ gravity keeps storm at the native 24 and uses spec flight/ground values (1.393817ms)
+✔ a stuck bomb stays fixed on later frames with no physics hit (10.20682ms)
+✔ curling rolling is clamped to the floor surface, not sunk into it (9.586931ms)
+✔ the per-bomb spec is attached before recBomb records identity (12.100385ms)
+✔ rolling Curling contact deals the pinned 20 HP once per calibrated contact interval (13.314369ms)
+✔ the native recBomb packet carries the sub id and the held charge (44.350208ms)
+✔ untagged 15-field kit birth retains charge, footer and ghost playback (10.974408ms)
+✔ a native old-format packet with no appended fields replays as a generic ghost (2.662616ms)
+✔ the real _play hands a curling ghost its identity, charge and rolling behaviour (9.582465ms)
+✔ a remote Suction Bomb sticks where the owner stuck it (7.344211ms)
+✔ a ghost carries no paint, damage, turf or record authority (12.201796ms)
+✔ replaying a ghost never records a bomb back onto the wire (7.536498ms)
+✔ the spawn guard refuses an authoritative attach inside the ghost window (6.771597ms)
+✔ packets are validated at the boundary and never reach the registry (0.980741ms)
+✔ two owners never see each other cost, charge or throw speed (14.76135ms)
+✔ the gear-scoped sub cost and throw speed survive the release and the throw (5.94737ms)
+✔ parent: a native ghost bomb remains visual after transport disposal and peer adoption (7.838316ms)
+✔ S3 Sprinkler extracted parameters and 30F/480F/(480+900)F emission phases (0.984336ms)
+✔ native Sprinkler sticks to wall, creates falling owner ink, retires on death without generic explosion (49.268825ms)
+✔ one Sprinkler per owner; bounded packet identity and ghost has no paint or hit authority (6.744809ms)
+✔ Autobomb 11.3 source pins ink, chase frames, damage bands and select-nearest semantics (0.776297ms)
+✔ real native Autobomb targets, walks and explodes only after a 60F warning (70.209861ms)
+✔ Autobomb no target arms the community-observed 60F warning, and network ghosts have no kit combat authority (5.923624ms)
+✔ Autobomb fuse admission follows a real landed chase, not a new terrain hit every frame (0.242001ms)
+✔ full installer Curling trail uses the emitted floor projection and skips a missing floor (1271.953744ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 37
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3127.996393
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/kit-subs.test.mjs:416:1
+✖ gravity keeps storm at the native 24 and uses spec flight/ground values (1.393817ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + 57.599999999999994
+  - 24
+
+      at TestContext.<anonymous> (file:///workspace/actions/.ci-scratch/storm-throw-calibration-20261023/both/patches/splatoon3/tests/kit-subs.test.mjs:419:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 57.599999999999994,
+    expected: 24,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

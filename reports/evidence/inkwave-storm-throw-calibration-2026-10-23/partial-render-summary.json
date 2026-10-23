@@ -1,0 +1,74 @@
+[
+  {
+    "version": "before",
+    "completedWholeFlightCases": [
+      {
+        "Hz": 30,
+        "GP": 0,
+        "age": 1.4666666666666663,
+        "outcome": "released-without-cloud",
+        "contactM": null,
+        "cloudM": 98.56000000000009,
+        "pathSameAsSparse": true
+      }
+    ],
+    "captures": [],
+    "status": "failed-capture",
+    "error": "page.screenshot: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\n    at /workspace/actions/.ci-scratch/storm-throw-calibration-20261023/browser-whole-flight.mjs:35:285"
+  },
+  {
+    "version": "distance",
+    "completedWholeFlightCases": [
+      {
+        "Hz": 30,
+        "GP": 0,
+        "age": 0.5833333333333335,
+        "outcome": "cloud",
+        "contactM": 15.709585919916854,
+        "cloudM": 15.806619900805506,
+        "pathSameAsSparse": true
+      }
+    ],
+    "captures": [],
+    "status": "failed-capture",
+    "error": "page.screenshot: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\n    at /workspace/actions/.ci-scratch/storm-throw-calibration-20261023/browser-whole-flight.mjs:35:285"
+  },
+  {
+    "version": "both",
+    "completedWholeFlightCases": [
+      {
+        "Hz": 30,
+        "GP": 0,
+        "age": 0.5833333333333335,
+        "outcome": "cloud",
+        "contactM": 15.709585919916854,
+        "cloudM": 15.709585919916854,
+        "pathSameAsSparse": true
+      },
+      {
+        "Hz": 30,
+        "GP": 57,
+        "age": 0.5833333333333335,
+        "outcome": "cloud",
+        "contactM": 23.56437887987527,
+        "cloudM": 23.56437887987527,
+        "pathSameAsSparse": true
+      },
+      {
+        "Hz": 60,
+        "GP": 0,
+        "age": 0.5833333333333335,
+        "outcome": "cloud",
+        "contactM": 15.709585919916854,
+        "cloudM": 15.709585919916854,
+        "pathSameAsSparse": true
+      }
+    ],
+    "captures": [
+      "normal-lane-GP0-30Hz.png",
+      "normal-lane-GP57-30Hz.png"
+    ],
+    "status": "failed-capture",
+    "error": "page.screenshot: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\n    at /workspace/actions/.ci-scratch/storm-throw-calibration-20261023/browser-whole-flight.mjs:35:285"
+  }
+]

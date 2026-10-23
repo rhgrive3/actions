@@ -1,0 +1,5287 @@
+{
+  "scope": "Same-version browser replay integration from actual native Q/Sub owner launch records. Calls public ghostBomb and production fixed-tick catch-up. Joining is simulated by delayed owner clocks; this is not a two-client transport/admission or real matchmaking join test.",
+  "rows": [
+    {
+      "version": "before",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 43,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 1.4666666666666663,
+        "position": [
+          6,
+          -3.536666666666682,
+          98.56000000000009
+        ],
+        "velocity": [
+          0,
+          -20.8,
+          67.2
+        ],
+        "steps": 88
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 39,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 1.4666666666666663,
+        "position": [
+          6,
+          -3.536666666666682,
+          98.56000000000009
+        ],
+        "velocity": [
+          0,
+          -20.8,
+          67.2
+        ],
+        "steps": 88
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 87,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 1.4666666666666663,
+        "position": [
+          6,
+          -3.536666666666682,
+          98.56000000000009
+        ],
+        "velocity": [
+          0,
+          -20.8,
+          67.2
+        ],
+        "steps": 88
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 78,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 1.4666666666666663,
+        "position": [
+          6,
+          -3.536666666666682,
+          98.56000000000009
+        ],
+        "velocity": [
+          0,
+          -20.8,
+          67.2
+        ],
+        "steps": 88
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 174,
+      "zeroStepDeliveries": 88,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 1.4666666666666663,
+        "position": [
+          6,
+          -3.536666666666682,
+          98.56000000000009
+        ],
+        "velocity": [
+          0,
+          -20.8,
+          67.2
+        ],
+        "steps": 88
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 156,
+      "zeroStepDeliveries": 78,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 1.4666666666666663,
+        "position": [
+          6,
+          -3.536666666666682,
+          98.56000000000009
+        ],
+        "velocity": [
+          0,
+          -20.8,
+          67.2
+        ],
+        "steps": 88
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 117,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 3.9333333333333242,
+        "position": [
+          6,
+          -3.7783211296490196,
+          200.587834728304
+        ],
+        "velocity": [
+          0,
+          -48.329234185503886,
+          50.996907134314284
+        ],
+        "steps": 236
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 113,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 3.9333333333333242,
+        "position": [
+          6,
+          -3.7783211296490196,
+          200.587834728304
+        ],
+        "velocity": [
+          0,
+          -48.329234185503886,
+          50.996907134314284
+        ],
+        "steps": 236
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 235,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 3.9333333333333242,
+        "position": [
+          6,
+          -3.7783211296490196,
+          200.587834728304
+        ],
+        "velocity": [
+          0,
+          -48.329234185503886,
+          50.996907134314284
+        ],
+        "steps": 236
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 226,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 3.9333333333333242,
+        "position": [
+          6,
+          -3.7783211296490196,
+          200.587834728304
+        ],
+        "velocity": [
+          0,
+          -48.329234185503886,
+          50.996907134314284
+        ],
+        "steps": 236
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 470,
+      "zeroStepDeliveries": 236,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 3.9333333333333242,
+        "position": [
+          6,
+          -3.7783211296490196,
+          200.587834728304
+        ],
+        "velocity": [
+          0,
+          -48.329234185503886,
+          50.996907134314284
+        ],
+        "steps": 236
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 452,
+      "zeroStepDeliveries": 226,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 3.9333333333333242,
+        "position": [
+          6,
+          -3.7783211296490196,
+          200.587834728304
+        ],
+        "velocity": [
+          0,
+          -48.329234185503886,
+          50.996907134314284
+        ],
+        "steps": 236
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.12
+        ],
+        "spawnInput": [
+          6,
+          1.6833333333333333,
+          1.12
+        ],
+        "velocity": [
+          0,
+          13.999999999999998,
+          67.2
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.12
+        ],
+        "spawnInput": [
+          6,
+          1.6833333333333333,
+          1.12
+        ],
+        "velocity": [
+          0,
+          13.999999999999998,
+          67.2
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.12
+        ],
+        "spawnInput": [
+          6,
+          1.6833333333333333,
+          1.12
+        ],
+        "velocity": [
+          0,
+          13.999999999999998,
+          67.2
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.12
+        ],
+        "spawnInput": [
+          6,
+          1.6833333333333333,
+          1.12
+        ],
+        "velocity": [
+          0,
+          13.999999999999998,
+          67.2
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.12
+        ],
+        "spawnInput": [
+          6,
+          1.6833333333333333,
+          1.12
+        ],
+        "velocity": [
+          0,
+          13.999999999999998,
+          67.2
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.12
+        ],
+        "spawnInput": [
+          6,
+          1.6833333333333333,
+          1.12
+        ],
+        "velocity": [
+          0,
+          13.999999999999998,
+          67.2
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 4,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.15,
+        "position": [
+          6,
+          4.6,
+          10.080000000000002
+        ],
+        "spawnInput": [
+          6,
+          3.309999999999999,
+          10.080000000000002
+        ],
+        "velocity": [
+          0,
+          10.799999999999995,
+          67.2
+        ],
+        "steps": 9
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 4,
+      "checkedTickSamples": 3,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.15,
+        "position": [
+          6,
+          4.6,
+          10.080000000000002
+        ],
+        "spawnInput": [
+          6,
+          3.309999999999999,
+          10.080000000000002
+        ],
+        "velocity": [
+          0,
+          10.799999999999995,
+          67.2
+        ],
+        "steps": 9
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 8,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.15,
+        "position": [
+          6,
+          4.6,
+          10.080000000000002
+        ],
+        "spawnInput": [
+          6,
+          3.309999999999999,
+          10.080000000000002
+        ],
+        "velocity": [
+          0,
+          10.799999999999995,
+          67.2
+        ],
+        "steps": 9
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 4,
+      "checkedTickSamples": 5,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.15,
+        "position": [
+          6,
+          4.6,
+          10.080000000000002
+        ],
+        "spawnInput": [
+          6,
+          3.309999999999999,
+          10.080000000000002
+        ],
+        "velocity": [
+          0,
+          10.799999999999995,
+          67.2
+        ],
+        "steps": 9
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 16,
+      "zeroStepDeliveries": 9,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.15,
+        "position": [
+          6,
+          4.6,
+          10.080000000000002
+        ],
+        "spawnInput": [
+          6,
+          3.309999999999999,
+          10.080000000000002
+        ],
+        "velocity": [
+          0,
+          10.799999999999995,
+          67.2
+        ],
+        "steps": 9
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 4,
+      "checkedTickSamples": 10,
+      "zeroStepDeliveries": 5,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.15,
+        "position": [
+          6,
+          4.6,
+          10.080000000000002
+        ],
+        "spawnInput": [
+          6,
+          3.309999999999999,
+          10.080000000000002
+        ],
+        "velocity": [
+          0,
+          10.799999999999995,
+          67.2
+        ],
+        "steps": 9
+      }
+    },
+    {
+      "version": "before",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.6998969044771428
+        ],
+        "spawnInput": [
+          6,
+          2.96569219381653,
+          1.6998969044771428
+        ],
+        "velocity": [
+          0,
+          45.27076581449592,
+          50.996907134314284
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "before",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.6998969044771428
+        ],
+        "spawnInput": [
+          6,
+          2.96569219381653,
+          1.6998969044771428
+        ],
+        "velocity": [
+          0,
+          45.27076581449592,
+          50.996907134314284
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "before",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.6998969044771428
+        ],
+        "spawnInput": [
+          6,
+          2.96569219381653,
+          1.6998969044771428
+        ],
+        "velocity": [
+          0,
+          45.27076581449592,
+          50.996907134314284
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "before",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.6998969044771428
+        ],
+        "spawnInput": [
+          6,
+          2.96569219381653,
+          1.6998969044771428
+        ],
+        "velocity": [
+          0,
+          45.27076581449592,
+          50.996907134314284
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "before",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 2,
+      "zeroStepDeliveries": 2,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.6998969044771428
+        ],
+        "spawnInput": [
+          6,
+          2.96569219381653,
+          1.6998969044771428
+        ],
+        "velocity": [
+          0,
+          45.27076581449592,
+          50.996907134314284
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "before",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 2,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.6998969044771428
+        ],
+        "spawnInput": [
+          6,
+          2.96569219381653,
+          1.6998969044771428
+        ],
+        "velocity": [
+          0,
+          45.27076581449592,
+          50.996907134314284
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 43,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 1.4666666666666663,
+        "position": [
+          6,
+          -3.536666666666682,
+          147.84000000000032
+        ],
+        "velocity": [
+          0,
+          -20.8,
+          100.80000000000001
+        ],
+        "steps": 88
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 39,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 1.4666666666666663,
+        "position": [
+          6,
+          -3.536666666666682,
+          147.84000000000032
+        ],
+        "velocity": [
+          0,
+          -20.8,
+          100.80000000000001
+        ],
+        "steps": 88
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 87,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 1.4666666666666663,
+        "position": [
+          6,
+          -3.536666666666682,
+          147.84000000000032
+        ],
+        "velocity": [
+          0,
+          -20.8,
+          100.80000000000001
+        ],
+        "steps": 88
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 78,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 1.4666666666666663,
+        "position": [
+          6,
+          -3.536666666666682,
+          147.84000000000032
+        ],
+        "velocity": [
+          0,
+          -20.8,
+          100.80000000000001
+        ],
+        "steps": 88
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 174,
+      "zeroStepDeliveries": 88,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 1.4666666666666663,
+        "position": [
+          6,
+          -3.536666666666682,
+          147.84000000000032
+        ],
+        "velocity": [
+          0,
+          -20.8,
+          100.80000000000001
+        ],
+        "steps": 88
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 156,
+      "zeroStepDeliveries": 78,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 1.4666666666666663,
+        "position": [
+          6,
+          -3.536666666666682,
+          147.84000000000032
+        ],
+        "velocity": [
+          0,
+          -20.8,
+          100.80000000000001
+        ],
+        "steps": 88
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 158,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 5.2999999999999865,
+        "position": [
+          6,
+          -3.4749411831708024,
+          424.5054117178018
+        ],
+        "velocity": [
+          0,
+          -64.32923418550378,
+          80.09536070147144
+        ],
+        "steps": 318
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 154,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 5.2999999999999865,
+        "position": [
+          6,
+          -3.4749411831708024,
+          424.5054117178018
+        ],
+        "velocity": [
+          0,
+          -64.32923418550378,
+          80.09536070147144
+        ],
+        "steps": 318
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 317,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 5.2999999999999865,
+        "position": [
+          6,
+          -3.4749411831708024,
+          424.5054117178018
+        ],
+        "velocity": [
+          0,
+          -64.32923418550378,
+          80.09536070147144
+        ],
+        "steps": 318
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 308,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 5.2999999999999865,
+        "position": [
+          6,
+          -3.4749411831708024,
+          424.5054117178018
+        ],
+        "velocity": [
+          0,
+          -64.32923418550378,
+          80.09536070147144
+        ],
+        "steps": 318
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 634,
+      "zeroStepDeliveries": 318,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 5.2999999999999865,
+        "position": [
+          6,
+          -3.4749411831708024,
+          424.5054117178018
+        ],
+        "velocity": [
+          0,
+          -64.32923418550378,
+          80.09536070147144
+        ],
+        "steps": 318
+      }
+    },
+    {
+      "version": "before",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 616,
+      "zeroStepDeliveries": 308,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "released-without-cloud",
+        "age": 5.2999999999999865,
+        "position": [
+          6,
+          -3.4749411831708024,
+          424.5054117178018
+        ],
+        "velocity": [
+          0,
+          -64.32923418550378,
+          80.09536070147144
+        ],
+        "steps": 318
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.6800000000000002
+        ],
+        "spawnInput": [
+          6,
+          1.6833333333333333,
+          1.6800000000000002
+        ],
+        "velocity": [
+          0,
+          13.999999999999998,
+          100.80000000000001
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.6800000000000002
+        ],
+        "spawnInput": [
+          6,
+          1.6833333333333333,
+          1.6800000000000002
+        ],
+        "velocity": [
+          0,
+          13.999999999999998,
+          100.80000000000001
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.6800000000000002
+        ],
+        "spawnInput": [
+          6,
+          1.6833333333333333,
+          1.6800000000000002
+        ],
+        "velocity": [
+          0,
+          13.999999999999998,
+          100.80000000000001
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.6800000000000002
+        ],
+        "spawnInput": [
+          6,
+          1.6833333333333333,
+          1.6800000000000002
+        ],
+        "velocity": [
+          0,
+          13.999999999999998,
+          100.80000000000001
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.6800000000000002
+        ],
+        "spawnInput": [
+          6,
+          1.6833333333333333,
+          1.6800000000000002
+        ],
+        "velocity": [
+          0,
+          13.999999999999998,
+          100.80000000000001
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.6800000000000002
+        ],
+        "spawnInput": [
+          6,
+          1.6833333333333333,
+          1.6800000000000002
+        ],
+        "velocity": [
+          0,
+          13.999999999999998,
+          100.80000000000001
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 2,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.09999999999999999,
+        "position": [
+          6,
+          4.6,
+          10.08
+        ],
+        "spawnInput": [
+          6,
+          2.7499999999999996,
+          10.08
+        ],
+        "velocity": [
+          0,
+          11.999999999999996,
+          100.80000000000001
+        ],
+        "steps": 6
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 3,
+      "checkedTickSamples": 2,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.09999999999999999,
+        "position": [
+          6,
+          4.6,
+          10.08
+        ],
+        "spawnInput": [
+          6,
+          2.7499999999999996,
+          10.08
+        ],
+        "velocity": [
+          0,
+          11.999999999999996,
+          100.80000000000001
+        ],
+        "steps": 6
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 5,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.09999999999999999,
+        "position": [
+          6,
+          4.6,
+          10.08
+        ],
+        "spawnInput": [
+          6,
+          2.7499999999999996,
+          10.08
+        ],
+        "velocity": [
+          0,
+          11.999999999999996,
+          100.80000000000001
+        ],
+        "steps": 6
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 3,
+      "checkedTickSamples": 3,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.09999999999999999,
+        "position": [
+          6,
+          4.6,
+          10.08
+        ],
+        "spawnInput": [
+          6,
+          2.7499999999999996,
+          10.08
+        ],
+        "velocity": [
+          0,
+          11.999999999999996,
+          100.80000000000001
+        ],
+        "steps": 6
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 10,
+      "zeroStepDeliveries": 6,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.09999999999999999,
+        "position": [
+          6,
+          4.6,
+          10.08
+        ],
+        "spawnInput": [
+          6,
+          2.7499999999999996,
+          10.08
+        ],
+        "velocity": [
+          0,
+          11.999999999999996,
+          100.80000000000001
+        ],
+        "steps": 6
+      }
+    },
+    {
+      "version": "before",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 3,
+      "checkedTickSamples": 6,
+      "zeroStepDeliveries": 3,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.09999999999999999,
+        "position": [
+          6,
+          4.6,
+          10.08
+        ],
+        "spawnInput": [
+          6,
+          2.7499999999999996,
+          10.08
+        ],
+        "velocity": [
+          0,
+          11.999999999999996,
+          100.80000000000001
+        ],
+        "steps": 6
+      }
+    },
+    {
+      "version": "before",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          2.6698453567157143
+        ],
+        "spawnInput": [
+          6,
+          3.52569219381653,
+          2.6698453567157143
+        ],
+        "velocity": [
+          0,
+          62.070765814495914,
+          80.09536070147144
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "before",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          2.6698453567157143
+        ],
+        "spawnInput": [
+          6,
+          3.52569219381653,
+          2.6698453567157143
+        ],
+        "velocity": [
+          0,
+          62.070765814495914,
+          80.09536070147144
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "before",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          2.6698453567157143
+        ],
+        "spawnInput": [
+          6,
+          3.52569219381653,
+          2.6698453567157143
+        ],
+        "velocity": [
+          0,
+          62.070765814495914,
+          80.09536070147144
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "before",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          2.6698453567157143
+        ],
+        "spawnInput": [
+          6,
+          3.52569219381653,
+          2.6698453567157143
+        ],
+        "velocity": [
+          0,
+          62.070765814495914,
+          80.09536070147144
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "before",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 2,
+      "zeroStepDeliveries": 2,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          2.6698453567157143
+        ],
+        "spawnInput": [
+          6,
+          3.52569219381653,
+          2.6698453567157143
+        ],
+        "velocity": [
+          0,
+          62.070765814495914,
+          80.09536070147144
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "before",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 2,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          2.6698453567157143
+        ],
+        "spawnInput": [
+          6,
+          3.52569219381653,
+          2.6698453567157143
+        ],
+        "velocity": [
+          0,
+          62.070765814495914,
+          80.09536070147144
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 17,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          15.806619900805506
+        ],
+        "spawnInput": [
+          6,
+          -0.2299999999999967,
+          15.806619900805506
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          8.100227969835457
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 13,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          15.806619900805506
+        ],
+        "spawnInput": [
+          6,
+          -0.2299999999999967,
+          15.806619900805506
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          8.100227969835457
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 34,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          15.806619900805506
+        ],
+        "spawnInput": [
+          6,
+          -0.2299999999999967,
+          15.806619900805506
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          8.100227969835457
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 25,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          15.806619900805506
+        ],
+        "spawnInput": [
+          6,
+          -0.2299999999999967,
+          15.806619900805506
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          8.100227969835457
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 68,
+      "zeroStepDeliveries": 35,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          15.806619900805506
+        ],
+        "spawnInput": [
+          6,
+          -0.2299999999999967,
+          15.806619900805506
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          8.100227969835457
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 50,
+      "zeroStepDeliveries": 25,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          15.806619900805506
+        ],
+        "spawnInput": [
+          6,
+          -0.2299999999999967,
+          15.806619900805506
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          8.100227969835457
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 48,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 1.6166666666666658,
+        "position": [
+          6,
+          4.6,
+          13.600711388402813
+        ],
+        "spawnInput": [
+          6,
+          -0.11692859989828297,
+          13.600711388402813
+        ],
+        "velocity": [
+          0,
+          -47.04923418550412,
+          0.14486238680269878
+        ],
+        "steps": 97
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 44,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 1.6166666666666658,
+        "position": [
+          6,
+          4.6,
+          13.600711388402813
+        ],
+        "spawnInput": [
+          6,
+          -0.11692859989828297,
+          13.600711388402813
+        ],
+        "velocity": [
+          0,
+          -47.04923418550412,
+          0.14486238680269878
+        ],
+        "steps": 97
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 96,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 1.6166666666666658,
+        "position": [
+          6,
+          4.6,
+          13.600711388402813
+        ],
+        "spawnInput": [
+          6,
+          -0.11692859989828297,
+          13.600711388402813
+        ],
+        "velocity": [
+          0,
+          -47.04923418550412,
+          0.14486238680269878
+        ],
+        "steps": 97
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 87,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 1.6166666666666658,
+        "position": [
+          6,
+          4.6,
+          13.600711388402813
+        ],
+        "spawnInput": [
+          6,
+          -0.11692859989828297,
+          13.600711388402813
+        ],
+        "velocity": [
+          0,
+          -47.04923418550412,
+          0.14486238680269878
+        ],
+        "steps": 97
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 192,
+      "zeroStepDeliveries": 97,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 1.6166666666666658,
+        "position": [
+          6,
+          4.6,
+          13.600711388402813
+        ],
+        "spawnInput": [
+          6,
+          -0.11692859989828297,
+          13.600711388402813
+        ],
+        "velocity": [
+          0,
+          -47.04923418550412,
+          0.14486238680269878
+        ],
+        "steps": 97
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 174,
+      "zeroStepDeliveries": 87,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 1.6166666666666658,
+        "position": [
+          6,
+          4.6,
+          13.600711388402813
+        ],
+        "spawnInput": [
+          6,
+          -0.11692859989828297,
+          13.600711388402813
+        ],
+        "velocity": [
+          0,
+          -47.04923418550412,
+          0.14486238680269878
+        ],
+        "steps": 97
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.0543008
+        ],
+        "spawnInput": [
+          6,
+          1.674,
+          1.0543008
+        ],
+        "velocity": [
+          0,
+          13.44,
+          63.258048
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.0543008
+        ],
+        "spawnInput": [
+          6,
+          1.674,
+          1.0543008
+        ],
+        "velocity": [
+          0,
+          13.44,
+          63.258048
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.0543008
+        ],
+        "spawnInput": [
+          6,
+          1.674,
+          1.0543008
+        ],
+        "velocity": [
+          0,
+          13.44,
+          63.258048
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.0543008
+        ],
+        "spawnInput": [
+          6,
+          1.674,
+          1.0543008
+        ],
+        "velocity": [
+          0,
+          13.44,
+          63.258048
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.0543008
+        ],
+        "spawnInput": [
+          6,
+          1.674,
+          1.0543008
+        ],
+        "velocity": [
+          0,
+          13.44,
+          63.258048
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.0543008
+        ],
+        "spawnInput": [
+          6,
+          1.674,
+          1.0543008
+        ],
+        "velocity": [
+          0,
+          13.44,
+          63.258048
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 6,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.2333333333333333,
+        "position": [
+          6,
+          4.6,
+          10.262736353898916
+        ],
+        "spawnInput": [
+          6,
+          3.130000000000001,
+          10.262736353898916
+        ],
+        "velocity": [
+          0,
+          0.9600000000000045,
+          28.828394765777887
+        ],
+        "steps": 14
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 7,
+      "checkedTickSamples": 4,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.2333333333333333,
+        "position": [
+          6,
+          4.6,
+          10.262736353898916
+        ],
+        "spawnInput": [
+          6,
+          3.130000000000001,
+          10.262736353898916
+        ],
+        "velocity": [
+          0,
+          0.9600000000000045,
+          28.828394765777887
+        ],
+        "steps": 14
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 13,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.2333333333333333,
+        "position": [
+          6,
+          4.6,
+          10.262736353898916
+        ],
+        "spawnInput": [
+          6,
+          3.130000000000001,
+          10.262736353898916
+        ],
+        "velocity": [
+          0,
+          0.9600000000000045,
+          28.828394765777887
+        ],
+        "steps": 14
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 7,
+      "checkedTickSamples": 7,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.2333333333333333,
+        "position": [
+          6,
+          4.6,
+          10.262736353898916
+        ],
+        "spawnInput": [
+          6,
+          3.130000000000001,
+          10.262736353898916
+        ],
+        "velocity": [
+          0,
+          0.9600000000000045,
+          28.828394765777887
+        ],
+        "steps": 14
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 26,
+      "zeroStepDeliveries": 14,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.2333333333333333,
+        "position": [
+          6,
+          4.6,
+          10.262736353898916
+        ],
+        "spawnInput": [
+          6,
+          3.130000000000001,
+          10.262736353898916
+        ],
+        "velocity": [
+          0,
+          0.9600000000000045,
+          28.828394765777887
+        ],
+        "steps": 14
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 7,
+      "checkedTickSamples": 14,
+      "zeroStepDeliveries": 7,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.2333333333333333,
+        "position": [
+          6,
+          4.6,
+          10.262736353898916
+        ],
+        "spawnInput": [
+          6,
+          3.130000000000001,
+          10.262736353898916
+        ],
+        "velocity": [
+          0,
+          0.9600000000000045,
+          28.828394765777887
+        ],
+        "steps": 14
+      }
+    },
+    {
+      "version": "distance",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.5532476447365786
+        ],
+        "spawnInput": [
+          6,
+          2.93769219381653,
+          1.5532476447365786
+        ],
+        "velocity": [
+          0,
+          44.15076581449591,
+          45.189430122379314
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "distance",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.5532476447365786
+        ],
+        "spawnInput": [
+          6,
+          2.93769219381653,
+          1.5532476447365786
+        ],
+        "velocity": [
+          0,
+          44.15076581449591,
+          45.189430122379314
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "distance",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.5532476447365786
+        ],
+        "spawnInput": [
+          6,
+          2.93769219381653,
+          1.5532476447365786
+        ],
+        "velocity": [
+          0,
+          44.15076581449591,
+          45.189430122379314
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "distance",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.5532476447365786
+        ],
+        "spawnInput": [
+          6,
+          2.93769219381653,
+          1.5532476447365786
+        ],
+        "velocity": [
+          0,
+          44.15076581449591,
+          45.189430122379314
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "distance",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 2,
+      "zeroStepDeliveries": 2,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.5532476447365786
+        ],
+        "spawnInput": [
+          6,
+          2.93769219381653,
+          1.5532476447365786
+        ],
+        "velocity": [
+          0,
+          44.15076581449591,
+          45.189430122379314
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "distance",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 2,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.5532476447365786
+        ],
+        "spawnInput": [
+          6,
+          2.93769219381653,
+          1.5532476447365786
+        ],
+        "velocity": [
+          0,
+          44.15076581449591,
+          45.189430122379314
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 17,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          23.70992985120825
+        ],
+        "spawnInput": [
+          6,
+          -0.2299999999999967,
+          23.70992985120825
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          12.150341954753182
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 13,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          23.70992985120825
+        ],
+        "spawnInput": [
+          6,
+          -0.2299999999999967,
+          23.70992985120825
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          12.150341954753182
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 34,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          23.70992985120825
+        ],
+        "spawnInput": [
+          6,
+          -0.2299999999999967,
+          23.70992985120825
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          12.150341954753182
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 25,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          23.70992985120825
+        ],
+        "spawnInput": [
+          6,
+          -0.2299999999999967,
+          23.70992985120825
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          12.150341954753182
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 68,
+      "zeroStepDeliveries": 35,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          23.70992985120825
+        ],
+        "spawnInput": [
+          6,
+          -0.2299999999999967,
+          23.70992985120825
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          12.150341954753182
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 50,
+      "zeroStepDeliveries": 25,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          23.70992985120825
+        ],
+        "spawnInput": [
+          6,
+          -0.2299999999999967,
+          23.70992985120825
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          12.150341954753182
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 65,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 2.199999999999997,
+        "position": [
+          6,
+          3.9176847918908955,
+          21.414692170683598
+        ],
+        "spawnInput": [
+          6,
+          -0.6823152081091042,
+          21.414692170683598
+        ],
+        "velocity": [
+          0,
+          -63.84923418550415,
+          0.02742503111005911
+        ],
+        "steps": 132
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 61,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 2.199999999999997,
+        "position": [
+          6,
+          3.9176847918908955,
+          21.414692170683598
+        ],
+        "spawnInput": [
+          6,
+          -0.6823152081091042,
+          21.414692170683598
+        ],
+        "velocity": [
+          0,
+          -63.84923418550415,
+          0.02742503111005911
+        ],
+        "steps": 132
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 131,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 2.199999999999997,
+        "position": [
+          6,
+          3.9176847918908955,
+          21.414692170683598
+        ],
+        "spawnInput": [
+          6,
+          -0.6823152081091042,
+          21.414692170683598
+        ],
+        "velocity": [
+          0,
+          -63.84923418550415,
+          0.02742503111005911
+        ],
+        "steps": 132
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 122,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 2.199999999999997,
+        "position": [
+          6,
+          3.9176847918908955,
+          21.414692170683598
+        ],
+        "spawnInput": [
+          6,
+          -0.6823152081091042,
+          21.414692170683598
+        ],
+        "velocity": [
+          0,
+          -63.84923418550415,
+          0.02742503111005911
+        ],
+        "steps": 132
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 262,
+      "zeroStepDeliveries": 132,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 2.199999999999997,
+        "position": [
+          6,
+          3.9176847918908955,
+          21.414692170683598
+        ],
+        "spawnInput": [
+          6,
+          -0.6823152081091042,
+          21.414692170683598
+        ],
+        "velocity": [
+          0,
+          -63.84923418550415,
+          0.02742503111005911
+        ],
+        "steps": 132
+      }
+    },
+    {
+      "version": "distance",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 244,
+      "zeroStepDeliveries": 122,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 2.199999999999997,
+        "position": [
+          6,
+          3.9176847918908955,
+          21.414692170683598
+        ],
+        "spawnInput": [
+          6,
+          -0.6823152081091042,
+          21.414692170683598
+        ],
+        "velocity": [
+          0,
+          -63.84923418550415,
+          0.02742503111005911
+        ],
+        "steps": 132
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.5814512
+        ],
+        "spawnInput": [
+          6,
+          1.674,
+          1.5814512
+        ],
+        "velocity": [
+          0,
+          13.44,
+          94.887072
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.5814512
+        ],
+        "spawnInput": [
+          6,
+          1.674,
+          1.5814512
+        ],
+        "velocity": [
+          0,
+          13.44,
+          94.887072
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.5814512
+        ],
+        "spawnInput": [
+          6,
+          1.674,
+          1.5814512
+        ],
+        "velocity": [
+          0,
+          13.44,
+          94.887072
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.5814512
+        ],
+        "spawnInput": [
+          6,
+          1.674,
+          1.5814512
+        ],
+        "velocity": [
+          0,
+          13.44,
+          94.887072
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.5814512
+        ],
+        "spawnInput": [
+          6,
+          1.674,
+          1.5814512
+        ],
+        "velocity": [
+          0,
+          13.44,
+          94.887072
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.5814512
+        ],
+        "spawnInput": [
+          6,
+          1.674,
+          1.5814512
+        ],
+        "velocity": [
+          0,
+          13.44,
+          94.887072
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 3,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.13333333333333333,
+        "position": [
+          6,
+          4.6,
+          10.337519943101231
+        ],
+        "spawnInput": [
+          6,
+          2.7940000000000005,
+          10.337519943101231
+        ],
+        "velocity": [
+          0,
+          6.720000000000004,
+          62.14878450746901
+        ],
+        "steps": 8
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 4,
+      "checkedTickSamples": 2,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.13333333333333333,
+        "position": [
+          6,
+          4.6,
+          10.337519943101231
+        ],
+        "spawnInput": [
+          6,
+          2.7940000000000005,
+          10.337519943101231
+        ],
+        "velocity": [
+          0,
+          6.720000000000004,
+          62.14878450746901
+        ],
+        "steps": 8
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 7,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.13333333333333333,
+        "position": [
+          6,
+          4.6,
+          10.337519943101231
+        ],
+        "spawnInput": [
+          6,
+          2.7940000000000005,
+          10.337519943101231
+        ],
+        "velocity": [
+          0,
+          6.720000000000004,
+          62.14878450746901
+        ],
+        "steps": 8
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 4,
+      "checkedTickSamples": 4,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.13333333333333333,
+        "position": [
+          6,
+          4.6,
+          10.337519943101231
+        ],
+        "spawnInput": [
+          6,
+          2.7940000000000005,
+          10.337519943101231
+        ],
+        "velocity": [
+          0,
+          6.720000000000004,
+          62.14878450746901
+        ],
+        "steps": 8
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 14,
+      "zeroStepDeliveries": 8,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.13333333333333333,
+        "position": [
+          6,
+          4.6,
+          10.337519943101231
+        ],
+        "spawnInput": [
+          6,
+          2.7940000000000005,
+          10.337519943101231
+        ],
+        "velocity": [
+          0,
+          6.720000000000004,
+          62.14878450746901
+        ],
+        "steps": 8
+      }
+    },
+    {
+      "version": "distance",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 4,
+      "checkedTickSamples": 8,
+      "zeroStepDeliveries": 4,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.13333333333333333,
+        "position": [
+          6,
+          4.6,
+          10.337519943101231
+        ],
+        "spawnInput": [
+          6,
+          2.7940000000000005,
+          10.337519943101231
+        ],
+        "velocity": [
+          0,
+          6.720000000000004,
+          62.14878450746901
+        ],
+        "steps": 8
+      }
+    },
+    {
+      "version": "distance",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          2.4395191268408682
+        ],
+        "spawnInput": [
+          6,
+          3.4976921938165306,
+          2.4395191268408682
+        ],
+        "velocity": [
+          0,
+          60.95076581449591,
+          70.97418076772898
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "distance",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          2.4395191268408682
+        ],
+        "spawnInput": [
+          6,
+          3.4976921938165306,
+          2.4395191268408682
+        ],
+        "velocity": [
+          0,
+          60.95076581449591,
+          70.97418076772898
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "distance",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          2.4395191268408682
+        ],
+        "spawnInput": [
+          6,
+          3.4976921938165306,
+          2.4395191268408682
+        ],
+        "velocity": [
+          0,
+          60.95076581449591,
+          70.97418076772898
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "distance",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          2.4395191268408682
+        ],
+        "spawnInput": [
+          6,
+          3.4976921938165306,
+          2.4395191268408682
+        ],
+        "velocity": [
+          0,
+          60.95076581449591,
+          70.97418076772898
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "distance",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 2,
+      "zeroStepDeliveries": 2,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          2.4395191268408682
+        ],
+        "spawnInput": [
+          6,
+          3.4976921938165306,
+          2.4395191268408682
+        ],
+        "velocity": [
+          0,
+          60.95076581449591,
+          70.97418076772898
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "distance",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 2,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          2.4395191268408682
+        ],
+        "spawnInput": [
+          6,
+          3.4976921938165306,
+          2.4395191268408682
+        ],
+        "velocity": [
+          0,
+          60.95076581449591,
+          70.97418076772898
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 17,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          15.709585919916854
+        ],
+        "spawnInput": [
+          6,
+          0,
+          15.709585919916854
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          8.100227969835457
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 13,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          15.709585919916854
+        ],
+        "spawnInput": [
+          6,
+          0,
+          15.709585919916854
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          8.100227969835457
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 34,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          15.709585919916854
+        ],
+        "spawnInput": [
+          6,
+          0,
+          15.709585919916854
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          8.100227969835457
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 25,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          15.709585919916854
+        ],
+        "spawnInput": [
+          6,
+          0,
+          15.709585919916854
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          8.100227969835457
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 68,
+      "zeroStepDeliveries": 35,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          15.709585919916854
+        ],
+        "spawnInput": [
+          6,
+          0,
+          15.709585919916854
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          8.100227969835457
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-horizontal",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 50,
+      "zeroStepDeliveries": 25,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          15.709585919916854
+        ],
+        "spawnInput": [
+          6,
+          0,
+          15.709585919916854
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          8.100227969835457
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 48,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 1.6166666666666658,
+        "position": [
+          6,
+          4.6,
+          13.60035137072431
+        ],
+        "spawnInput": [
+          6,
+          -1.1102230246251565e-16,
+          13.60035137072431
+        ],
+        "velocity": [
+          0,
+          -47.04923418550412,
+          0.14486238680269878
+        ],
+        "steps": 97
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 44,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 1.6166666666666658,
+        "position": [
+          6,
+          4.6,
+          13.60035137072431
+        ],
+        "spawnInput": [
+          6,
+          -1.1102230246251565e-16,
+          13.60035137072431
+        ],
+        "velocity": [
+          0,
+          -47.04923418550412,
+          0.14486238680269878
+        ],
+        "steps": 97
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 96,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 1.6166666666666658,
+        "position": [
+          6,
+          4.6,
+          13.60035137072431
+        ],
+        "spawnInput": [
+          6,
+          -1.1102230246251565e-16,
+          13.60035137072431
+        ],
+        "velocity": [
+          0,
+          -47.04923418550412,
+          0.14486238680269878
+        ],
+        "steps": 97
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 87,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 1.6166666666666658,
+        "position": [
+          6,
+          4.6,
+          13.60035137072431
+        ],
+        "spawnInput": [
+          6,
+          -1.1102230246251565e-16,
+          13.60035137072431
+        ],
+        "velocity": [
+          0,
+          -47.04923418550412,
+          0.14486238680269878
+        ],
+        "steps": 97
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 192,
+      "zeroStepDeliveries": 97,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 1.6166666666666658,
+        "position": [
+          6,
+          4.6,
+          13.60035137072431
+        ],
+        "spawnInput": [
+          6,
+          -1.1102230246251565e-16,
+          13.60035137072431
+        ],
+        "velocity": [
+          0,
+          -47.04923418550412,
+          0.14486238680269878
+        ],
+        "steps": 97
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-up30",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 174,
+      "zeroStepDeliveries": 87,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 1.6166666666666658,
+        "position": [
+          6,
+          4.6,
+          13.60035137072431
+        ],
+        "spawnInput": [
+          6,
+          -1.1102230246251565e-16,
+          13.60035137072431
+        ],
+        "velocity": [
+          0,
+          -47.04923418550412,
+          0.14486238680269878
+        ],
+        "steps": 97
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1
+        ],
+        "spawnInput": [
+          6,
+          1.6624630845390613,
+          1
+        ],
+        "velocity": [
+          0,
+          13.44,
+          63.258048
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1
+        ],
+        "spawnInput": [
+          6,
+          1.6624630845390613,
+          1
+        ],
+        "velocity": [
+          0,
+          13.44,
+          63.258048
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1
+        ],
+        "spawnInput": [
+          6,
+          1.6624630845390613,
+          1
+        ],
+        "velocity": [
+          0,
+          13.44,
+          63.258048
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1
+        ],
+        "spawnInput": [
+          6,
+          1.6624630845390613,
+          1
+        ],
+        "velocity": [
+          0,
+          13.44,
+          63.258048
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1
+        ],
+        "spawnInput": [
+          6,
+          1.6624630845390613,
+          1
+        ],
+        "velocity": [
+          0,
+          13.44,
+          63.258048
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-1m",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1
+        ],
+        "spawnInput": [
+          6,
+          1.6624630845390613,
+          1
+        ],
+        "velocity": [
+          0,
+          13.44,
+          63.258048
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 6,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.2333333333333333,
+        "position": [
+          6,
+          4.6,
+          10
+        ],
+        "spawnInput": [
+          6,
+          3.1212507476815063,
+          10
+        ],
+        "velocity": [
+          0,
+          0.9600000000000045,
+          28.828394765777887
+        ],
+        "steps": 14
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 7,
+      "checkedTickSamples": 4,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.2333333333333333,
+        "position": [
+          6,
+          4.6,
+          10
+        ],
+        "spawnInput": [
+          6,
+          3.1212507476815063,
+          10
+        ],
+        "velocity": [
+          0,
+          0.9600000000000045,
+          28.828394765777887
+        ],
+        "steps": 14
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 13,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.2333333333333333,
+        "position": [
+          6,
+          4.6,
+          10
+        ],
+        "spawnInput": [
+          6,
+          3.1212507476815063,
+          10
+        ],
+        "velocity": [
+          0,
+          0.9600000000000045,
+          28.828394765777887
+        ],
+        "steps": 14
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 7,
+      "checkedTickSamples": 7,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.2333333333333333,
+        "position": [
+          6,
+          4.6,
+          10
+        ],
+        "spawnInput": [
+          6,
+          3.1212507476815063,
+          10
+        ],
+        "velocity": [
+          0,
+          0.9600000000000045,
+          28.828394765777887
+        ],
+        "steps": 14
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 26,
+      "zeroStepDeliveries": 14,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.2333333333333333,
+        "position": [
+          6,
+          4.6,
+          10
+        ],
+        "spawnInput": [
+          6,
+          3.1212507476815063,
+          10
+        ],
+        "velocity": [
+          0,
+          0.9600000000000045,
+          28.828394765777887
+        ],
+        "steps": 14
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-10m",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 7,
+      "checkedTickSamples": 14,
+      "zeroStepDeliveries": 7,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.2333333333333333,
+        "position": [
+          6,
+          4.6,
+          10
+        ],
+        "spawnInput": [
+          6,
+          3.1212507476815063,
+          10
+        ],
+        "velocity": [
+          0,
+          0.9600000000000045,
+          28.828394765777887
+        ],
+        "steps": 14
+      }
+    },
+    {
+      "version": "both",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.1052585681555107
+        ],
+        "spawnInput": [
+          6,
+          2.5,
+          1.1052585681555107
+        ],
+        "velocity": [
+          0,
+          44.15076581449591,
+          45.189430122379314
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "both",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 30,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.1052585681555107
+        ],
+        "spawnInput": [
+          6,
+          2.5,
+          1.1052585681555107
+        ],
+        "velocity": [
+          0,
+          44.15076581449591,
+          45.189430122379314
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "both",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.1052585681555107
+        ],
+        "spawnInput": [
+          6,
+          2.5,
+          1.1052585681555107
+        ],
+        "velocity": [
+          0,
+          44.15076581449591,
+          45.189430122379314
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "both",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 60,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.1052585681555107
+        ],
+        "spawnInput": [
+          6,
+          2.5,
+          1.1052585681555107
+        ],
+        "velocity": [
+          0,
+          44.15076581449591,
+          45.189430122379314
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "both",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 2,
+      "zeroStepDeliveries": 2,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.1052585681555107
+        ],
+        "spawnInput": [
+          6,
+          2.5,
+          1.1052585681555107
+        ],
+        "velocity": [
+          0,
+          44.15076581449591,
+          45.189430122379314
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "both",
+      "name": "ceiling-up30",
+      "gp": 0,
+      "hz": 120,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 2,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.1052585681555107
+        ],
+        "spawnInput": [
+          6,
+          2.5,
+          1.1052585681555107
+        ],
+        "velocity": [
+          0,
+          44.15076581449591,
+          45.189430122379314
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 17,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          23.56437887987527
+        ],
+        "spawnInput": [
+          6,
+          0,
+          23.56437887987527
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          12.150341954753182
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 13,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          23.56437887987527
+        ],
+        "spawnInput": [
+          6,
+          0,
+          23.56437887987527
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          12.150341954753182
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 34,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          23.56437887987527
+        ],
+        "spawnInput": [
+          6,
+          0,
+          23.56437887987527
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          12.150341954753182
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 25,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          23.56437887987527
+        ],
+        "spawnInput": [
+          6,
+          0,
+          23.56437887987527
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          12.150341954753182
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 68,
+      "zeroStepDeliveries": 35,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          23.56437887987527
+        ],
+        "spawnInput": [
+          6,
+          0,
+          23.56437887987527
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          12.150341954753182
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-horizontal",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 50,
+      "zeroStepDeliveries": 25,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          23.56437887987527
+        ],
+        "spawnInput": [
+          6,
+          0,
+          23.56437887987527
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          12.150341954753182
+        ],
+        "steps": 35
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 65,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 2.199999999999997,
+        "position": [
+          6,
+          4.6,
+          21.414399097226287
+        ],
+        "spawnInput": [
+          6,
+          0,
+          21.414399097226287
+        ],
+        "velocity": [
+          0,
+          -63.84923418550415,
+          0.02742503111005911
+        ],
+        "steps": 132
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 61,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 2.199999999999997,
+        "position": [
+          6,
+          4.6,
+          21.414399097226287
+        ],
+        "spawnInput": [
+          6,
+          0,
+          21.414399097226287
+        ],
+        "velocity": [
+          0,
+          -63.84923418550415,
+          0.02742503111005911
+        ],
+        "steps": 132
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 131,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 2.199999999999997,
+        "position": [
+          6,
+          4.6,
+          21.414399097226287
+        ],
+        "spawnInput": [
+          6,
+          0,
+          21.414399097226287
+        ],
+        "velocity": [
+          0,
+          -63.84923418550415,
+          0.02742503111005911
+        ],
+        "steps": 132
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 122,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 2.199999999999997,
+        "position": [
+          6,
+          4.6,
+          21.414399097226287
+        ],
+        "spawnInput": [
+          6,
+          0,
+          21.414399097226287
+        ],
+        "velocity": [
+          0,
+          -63.84923418550415,
+          0.02742503111005911
+        ],
+        "steps": 132
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 262,
+      "zeroStepDeliveries": 132,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 2.199999999999997,
+        "position": [
+          6,
+          4.6,
+          21.414399097226287
+        ],
+        "spawnInput": [
+          6,
+          0,
+          21.414399097226287
+        ],
+        "velocity": [
+          0,
+          -63.84923418550415,
+          0.02742503111005911
+        ],
+        "steps": 132
+      }
+    },
+    {
+      "version": "both",
+      "name": "lane-up30",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 10,
+      "checkedTickSamples": 244,
+      "zeroStepDeliveries": 122,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 2.199999999999997,
+        "position": [
+          6,
+          4.6,
+          21.414399097226287
+        ],
+        "spawnInput": [
+          6,
+          0,
+          21.414399097226287
+        ],
+        "velocity": [
+          0,
+          -63.84923418550415,
+          0.02742503111005911
+        ],
+        "steps": 132
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1
+        ],
+        "spawnInput": [
+          6,
+          1.5916420563593743,
+          1
+        ],
+        "velocity": [
+          0,
+          13.44,
+          94.887072
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1
+        ],
+        "spawnInput": [
+          6,
+          1.5916420563593743,
+          1
+        ],
+        "velocity": [
+          0,
+          13.44,
+          94.887072
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1
+        ],
+        "spawnInput": [
+          6,
+          1.5916420563593743,
+          1
+        ],
+        "velocity": [
+          0,
+          13.44,
+          94.887072
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1
+        ],
+        "spawnInput": [
+          6,
+          1.5916420563593743,
+          1
+        ],
+        "velocity": [
+          0,
+          13.44,
+          94.887072
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1
+        ],
+        "spawnInput": [
+          6,
+          1.5916420563593743,
+          1
+        ],
+        "velocity": [
+          0,
+          13.44,
+          94.887072
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-1m",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1
+        ],
+        "spawnInput": [
+          6,
+          1.5916420563593743,
+          1
+        ],
+        "velocity": [
+          0,
+          13.44,
+          94.887072
+        ],
+        "steps": 1
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 3,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.13333333333333333,
+        "position": [
+          6,
+          4.6,
+          10
+        ],
+        "spawnInput": [
+          6,
+          2.757504772690001,
+          10
+        ],
+        "velocity": [
+          0,
+          6.720000000000004,
+          62.14878450746901
+        ],
+        "steps": 8
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 4,
+      "checkedTickSamples": 2,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.13333333333333333,
+        "position": [
+          6,
+          4.6,
+          10
+        ],
+        "spawnInput": [
+          6,
+          2.757504772690001,
+          10
+        ],
+        "velocity": [
+          0,
+          6.720000000000004,
+          62.14878450746901
+        ],
+        "steps": 8
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 7,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.13333333333333333,
+        "position": [
+          6,
+          4.6,
+          10
+        ],
+        "spawnInput": [
+          6,
+          2.757504772690001,
+          10
+        ],
+        "velocity": [
+          0,
+          6.720000000000004,
+          62.14878450746901
+        ],
+        "steps": 8
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 4,
+      "checkedTickSamples": 4,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.13333333333333333,
+        "position": [
+          6,
+          4.6,
+          10
+        ],
+        "spawnInput": [
+          6,
+          2.757504772690001,
+          10
+        ],
+        "velocity": [
+          0,
+          6.720000000000004,
+          62.14878450746901
+        ],
+        "steps": 8
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 14,
+      "zeroStepDeliveries": 8,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.13333333333333333,
+        "position": [
+          6,
+          4.6,
+          10
+        ],
+        "spawnInput": [
+          6,
+          2.757504772690001,
+          10
+        ],
+        "velocity": [
+          0,
+          6.720000000000004,
+          62.14878450746901
+        ],
+        "steps": 8
+      }
+    },
+    {
+      "version": "both",
+      "name": "wall-10m",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 4,
+      "checkedTickSamples": 8,
+      "zeroStepDeliveries": 4,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.13333333333333333,
+        "position": [
+          6,
+          4.6,
+          10
+        ],
+        "spawnInput": [
+          6,
+          2.757504772690001,
+          10
+        ],
+        "velocity": [
+          0,
+          6.720000000000004,
+          62.14878450746901
+        ],
+        "steps": 8
+      }
+    },
+    {
+      "version": "both",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 0,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.277755444822525
+        ],
+        "spawnInput": [
+          6,
+          2.5,
+          1.277755444822525
+        ],
+        "velocity": [
+          0,
+          60.95076581449591,
+          70.97418076772898
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "both",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 30,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.277755444822525
+        ],
+        "spawnInput": [
+          6,
+          2.5,
+          1.277755444822525
+        ],
+        "velocity": [
+          0,
+          60.95076581449591,
+          70.97418076772898
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "both",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.277755444822525
+        ],
+        "spawnInput": [
+          6,
+          2.5,
+          1.277755444822525
+        ],
+        "velocity": [
+          0,
+          60.95076581449591,
+          70.97418076772898
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "both",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 60,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 1,
+      "zeroStepDeliveries": 0,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.277755444822525
+        ],
+        "spawnInput": [
+          6,
+          2.5,
+          1.277755444822525
+        ],
+        "velocity": [
+          0,
+          60.95076581449591,
+          70.97418076772898
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "both",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 0,
+      "checkedTickSamples": 2,
+      "zeroStepDeliveries": 2,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.277755444822525
+        ],
+        "spawnInput": [
+          6,
+          2.5,
+          1.277755444822525
+        ],
+        "velocity": [
+          0,
+          60.95076581449591,
+          70.97418076772898
+        ],
+        "steps": 2
+      }
+    },
+    {
+      "version": "both",
+      "name": "ceiling-up30",
+      "gp": 57,
+      "hz": 120,
+      "joinAfterOwnerTicks": 1,
+      "checkedTickSamples": 2,
+      "zeroStepDeliveries": 1,
+      "maxComponentError": 0,
+      "terminal": {
+        "outcome": "cloud",
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.277755444822525
+        ],
+        "spawnInput": [
+          6,
+          2.5,
+          1.277755444822525
+        ],
+        "velocity": [
+          0,
+          60.95076581449591,
+          70.97418076772898
+        ],
+        "steps": 2
+      }
+    }
+  ],
+  "errors": [],
+  "status": "passed"
+}

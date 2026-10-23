@@ -1,0 +1,4095 @@
+{
+  "status": "private-inferred-calibration-browser-verified-not-adopted",
+  "baseCommit": "2cc81dead0f0d5b93eb3d7e49508432286187115",
+  "baseTree": "f54f53a6f049e270694e299057eef1eab3a1614a",
+  "unit": "actual INKWAVE practice-range displayed m (1m=1WU; grid major=5m); not established retail internal-unit conversion",
+  "sourceChecks": {
+    "base": "2cc81dead0f0d5b93eb3d7e49508432286187115",
+    "a4BothFilesEqual": true,
+    "patchHashes": {
+      "distance.patch": "c969d2581be06fbb954f1653090f130a34288d4b745868af5f1b2e8dba35535f",
+      "contact.patch": "7a3e5ab187b457bbf53f71411eafc4eab68dfe2fcb111c97e4bb896a1d6fe119"
+    },
+    "versions": {
+      "before": {
+        "patches/splatoon3/runtime/kit-subs.mjs": "f9960ade7a9d335bf6897a8ff1763955bfdde8314827153afa73acd1cc7d96a8",
+        "patches/splatoon3/storm-effects-adapter.mjs": "011a471b5f95b0952d7c2bfb9629af9d783d083c7f996c408e1d82c841ec30c7"
+      },
+      "distance": {
+        "patches/splatoon3/runtime/kit-subs.mjs": "d96dcaa7b458119d16db54fb42d11dad5610fa913836b18e0569c0b6d19dbea3",
+        "patches/splatoon3/storm-effects-adapter.mjs": "011a471b5f95b0952d7c2bfb9629af9d783d083c7f996c408e1d82c841ec30c7"
+      },
+      "both": {
+        "patches/splatoon3/runtime/kit-subs.mjs": "d96dcaa7b458119d16db54fb42d11dad5610fa913836b18e0569c0b6d19dbea3",
+        "patches/splatoon3/storm-effects-adapter.mjs": "4c8ab7df9306cbcdb3ac40057256cf559d465a50c7981a1014d029768be9adbc"
+      }
+    }
+  },
+  "cases": [
+    {
+      "version": "before",
+      "GP": 0,
+      "case": "lane-horizontal",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "5fc82d6b74173eefbf1c2243e684e9a68017df828a41cb70dd0efbbeeb76121b",
+      "pathTicks": 87,
+      "outcome": "released-without-cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          67.2
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 155,
+        "time": 2.5999999999999956,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 8,
+          "throwScale": 1
+        },
+        "GP": 0,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 1.4666666666666663,
+      "contactM": null,
+      "integratedM": null,
+      "cloud": null,
+      "terminal": {
+        "age": 1.4666666666666663,
+        "position": [
+          6,
+          -3.536666666666682,
+          98.56000000000009
+        ],
+        "velocity": [
+          0,
+          -20.8,
+          67.2
+        ],
+        "ghost": false,
+        "tick": 242,
+        "time": 4.049999999999991
+      },
+      "firstBeyond50": {
+        "age": 0.7500000000000007,
+        "position": [
+          6,
+          5.349999999999993,
+          50.39999999999998
+        ],
+        "velocity": [
+          0,
+          -3.6000000000000094,
+          67.2
+        ],
+        "ghost": false
+      },
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 153,
+          "time": 2.549999999999996
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 154,
+          "time": 2.5666666666666624
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 154,
+          "time": 2.5666666666666624
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 155,
+          "time": 2.583333333333329
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 153,
+          "time": 2.5666666666666624,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 155,
+          "time": 2.5999999999999956,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "throw",
+          "to": null,
+          "tick": 176,
+          "time": 2.9499999999999944,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "before",
+      "GP": 0,
+      "case": "lane-up30",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "79a8a46680f6720134b565429e0be944d149c8424518974e41a3e9201fea95c6",
+      "pathTicks": 235,
+      "outcome": "released-without-cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          46.070765814495914,
+          50.996907134314284
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 335,
+        "time": 5.599999999999985,
+        "pitch": 0.5235987755982988,
+        "yaw": 0,
+        "power": {
+          "duration": 8,
+          "throwScale": 1
+        },
+        "GP": 0,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 3.9333333333333242,
+      "contactM": null,
+      "integratedM": null,
+      "cloud": null,
+      "terminal": {
+        "age": 3.9333333333333242,
+        "position": [
+          6,
+          -3.7783211296490196,
+          200.587834728304
+        ],
+        "velocity": [
+          0,
+          -48.329234185503886,
+          50.996907134314284
+        ],
+        "ghost": false,
+        "tick": 570,
+        "time": 9.516666666666719
+      },
+      "firstBeyond50": {
+        "age": 0.9833333333333347,
+        "position": [
+          6,
+          34.95291971758769,
+          50.14695868207571
+        ],
+        "velocity": [
+          0,
+          22.470765814495998,
+          50.996907134314284
+        ],
+        "ghost": false
+      },
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 333,
+          "time": 5.549999999999986
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 334,
+          "time": 5.566666666666652
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 334,
+          "time": 5.566666666666652
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 335,
+          "time": 5.583333333333319
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 333,
+          "time": 5.566666666666652,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 335,
+          "time": 5.599999999999985,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "throw",
+          "to": null,
+          "tick": 356,
+          "time": 5.949999999999984,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "before",
+      "GP": 0,
+      "case": "wall-1m",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "10502ea36a04687498633bf7f03c6a1410516d96113c45121c189aa3c17bbafd",
+      "pathTicks": 0,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          67.2
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 663,
+        "time": 11.066666666666796,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 8,
+          "throwScale": 1
+        },
+        "GP": 0,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.016666666666666666,
+      "contactM": 1,
+      "integratedM": 1.12,
+      "cloud": {
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.12
+        ],
+        "velocity": [
+          0,
+          13.999999999999998,
+          67.2
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          1.6833333333333333,
+          1.12
+        ],
+        "tick": 663,
+        "time": 11.066666666666796,
+        "groundY": 0
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 661,
+          "time": 11.016666666666794
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 662,
+          "time": 11.033333333333461
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 662,
+          "time": 11.033333333333461
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 663,
+          "time": 11.050000000000129
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 661,
+          "time": 11.033333333333461,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 663,
+          "time": 11.066666666666796,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "before",
+      "GP": 0,
+      "case": "wall-10m",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "e568bee7754b76f3b834f3b506b8be0de0427270344594a4f1e43ea6c5febf1b",
+      "pathTicks": 8,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          67.2
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 756,
+        "time": 12.616666666666873,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 8,
+          "throwScale": 1
+        },
+        "GP": 0,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.15,
+      "contactM": 10,
+      "integratedM": 10.080000000000002,
+      "cloud": {
+        "age": 0.15,
+        "position": [
+          6,
+          4.6,
+          10.080000000000002
+        ],
+        "velocity": [
+          0,
+          10.799999999999995,
+          67.2
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          3.309999999999999,
+          10.080000000000002
+        ],
+        "tick": 764,
+        "time": 12.750000000000213,
+        "groundY": 0
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 754,
+          "time": 12.56666666666687
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 755,
+          "time": 12.583333333333538
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 755,
+          "time": 12.583333333333538
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 756,
+          "time": 12.600000000000206
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 754,
+          "time": 12.583333333333538,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 756,
+          "time": 12.616666666666873,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "before",
+      "GP": 0,
+      "case": "ceiling-up30",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "fc5dfadb891d777750ddda9610efecfabda874cc69fadbcb7853b5b2cfe5dad9",
+      "pathTicks": 1,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          46.070765814495914,
+          50.996907134314284
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 857,
+        "time": 14.30000000000029,
+        "pitch": 0.5235987755982988,
+        "yaw": 0,
+        "power": {
+          "duration": 8,
+          "throwScale": 1
+        },
+        "GP": 0,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.03333333333333333,
+      "contactM": 1.175300928819223,
+      "integratedM": 1.6998969044771428,
+      "cloud": {
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.6998969044771428
+        ],
+        "velocity": [
+          0,
+          45.27076581449592,
+          50.996907134314284
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          2.96569219381653,
+          1.6998969044771428
+        ],
+        "tick": 858,
+        "time": 14.316666666666958,
+        "groundY": 2.7
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 855,
+          "time": 14.250000000000288
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 856,
+          "time": 14.266666666666955
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 856,
+          "time": 14.266666666666955
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 857,
+          "time": 14.283333333333623
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 855,
+          "time": 14.266666666666955,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 857,
+          "time": 14.30000000000029,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "before",
+      "GP": 57,
+      "case": "lane-horizontal",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "a353c3e99f6e7821c2f393857429c2d368e9eada4c2962419f3a765b865e153d",
+      "pathTicks": 87,
+      "outcome": "released-without-cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          100.80000000000001
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 951,
+        "time": 15.866666666667035,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 10,
+          "throwScale": 1.5
+        },
+        "GP": 57,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 1.4666666666666663,
+      "contactM": null,
+      "integratedM": null,
+      "cloud": null,
+      "terminal": {
+        "age": 1.4666666666666663,
+        "position": [
+          6,
+          -3.536666666666682,
+          147.84000000000032
+        ],
+        "velocity": [
+          0,
+          -20.8,
+          100.80000000000001
+        ],
+        "ghost": false,
+        "tick": 1038,
+        "time": 17.316666666666965
+      },
+      "firstBeyond50": {
+        "age": 0.49999999999999994,
+        "position": [
+          6,
+          5.549999999999996,
+          50.4
+        ],
+        "velocity": [
+          0,
+          2.39999999999999,
+          100.80000000000001
+        ],
+        "ghost": false
+      },
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 949,
+          "time": 15.816666666667032
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 950,
+          "time": 15.8333333333337
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 950,
+          "time": 15.8333333333337
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 951,
+          "time": 15.850000000000367
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 949,
+          "time": 15.8333333333337,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 951,
+          "time": 15.866666666667035,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "throw",
+          "to": null,
+          "tick": 972,
+          "time": 16.216666666667027,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "before",
+      "GP": 57,
+      "case": "lane-up30",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "9b55e057fc7a30409e0b610635de198e5347da6cd4e5f636885e7e9140ad2261",
+      "pathTicks": 317,
+      "outcome": "released-without-cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          62.87076581449591,
+          80.09536070147144
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 1131,
+        "time": 18.866666666666877,
+        "pitch": 0.5235987755982988,
+        "yaw": 0,
+        "power": {
+          "duration": 10,
+          "throwScale": 1.5
+        },
+        "GP": 57,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 5.2999999999999865,
+      "contactM": null,
+      "integratedM": null,
+      "cloud": null,
+      "terminal": {
+        "age": 5.2999999999999865,
+        "position": [
+          6,
+          -3.4749411831708024,
+          424.5054117178018
+        ],
+        "velocity": [
+          0,
+          -64.32923418550378,
+          80.09536070147144
+        ],
+        "ghost": false,
+        "tick": 1448,
+        "time": 24.14999999999991
+      },
+      "firstBeyond50": {
+        "age": 0.6333333333333336,
+        "position": [
+          6,
+          36.32815168251409,
+          50.72706177759854
+        ],
+        "velocity": [
+          0,
+          47.670765814495965,
+          80.09536070147144
+        ],
+        "ghost": false
+      },
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 1129,
+          "time": 18.81666666666688
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 1130,
+          "time": 18.833333333333545
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 1130,
+          "time": 18.833333333333545
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 1131,
+          "time": 18.85000000000021
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 1129,
+          "time": 18.833333333333545,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 1131,
+          "time": 18.866666666666877,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "throw",
+          "to": null,
+          "tick": 1152,
+          "time": 19.216666666666857,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "before",
+      "GP": 57,
+      "case": "wall-1m",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "68809e942e66c2f0e13adc80a0893c48d56c5cdf2865c561048a1fb1549e36b2",
+      "pathTicks": 0,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          100.80000000000001
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 1541,
+        "time": 25.69999999999982,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 10,
+          "throwScale": 1.5
+        },
+        "GP": 57,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.016666666666666666,
+      "contactM": 1,
+      "integratedM": 1.6800000000000002,
+      "cloud": {
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.6800000000000002
+        ],
+        "velocity": [
+          0,
+          13.999999999999998,
+          100.80000000000001
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          1.6833333333333333,
+          1.6800000000000002
+        ],
+        "tick": 1541,
+        "time": 25.69999999999982,
+        "groundY": 0
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 1539,
+          "time": 25.649999999999824
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 1540,
+          "time": 25.66666666666649
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 1540,
+          "time": 25.66666666666649
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 1541,
+          "time": 25.683333333333156
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 1539,
+          "time": 25.66666666666649,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 1541,
+          "time": 25.69999999999982,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "before",
+      "GP": 57,
+      "case": "wall-10m",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "54f04ecb00e64b24daa5bba34fb0a1b6096b8296448d5a73187108de9018baf1",
+      "pathTicks": 5,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          100.80000000000001
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 1634,
+        "time": 27.249999999999734,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 10,
+          "throwScale": 1.5
+        },
+        "GP": 57,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.09999999999999999,
+      "contactM": 10,
+      "integratedM": 10.08,
+      "cloud": {
+        "age": 0.09999999999999999,
+        "position": [
+          6,
+          4.6,
+          10.08
+        ],
+        "velocity": [
+          0,
+          11.999999999999996,
+          100.80000000000001
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          2.7499999999999996,
+          10.08
+        ],
+        "tick": 1639,
+        "time": 27.333333333333062,
+        "groundY": 0
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 1632,
+          "time": 27.199999999999736
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 1633,
+          "time": 27.216666666666402
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 1633,
+          "time": 27.216666666666402
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 1634,
+          "time": 27.233333333333068
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 1632,
+          "time": 27.216666666666402,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 1634,
+          "time": 27.249999999999734,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "before",
+      "GP": 57,
+      "case": "ceiling-up30",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "4eccbd86796b7596c6276487432fae95248c00fca8ea81657307b12d49e4f7fe",
+      "pathTicks": 1,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          62.87076581449591,
+          80.09536070147144
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 1732,
+        "time": 28.883333333332974,
+        "pitch": 0.5235987755982988,
+        "yaw": 0,
+        "power": {
+          "duration": 10,
+          "throwScale": 1.5
+        },
+        "GP": 57,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.03333333333333333,
+      "contactM": 1.346304634212938,
+      "integratedM": 2.6698453567157143,
+      "cloud": {
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          2.6698453567157143
+        ],
+        "velocity": [
+          0,
+          62.070765814495914,
+          80.09536070147144
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          3.52569219381653,
+          2.6698453567157143
+        ],
+        "tick": 1733,
+        "time": 28.89999999999964,
+        "groundY": 2.7
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 1730,
+          "time": 28.833333333332977
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 1731,
+          "time": 28.849999999999643
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 1731,
+          "time": 28.849999999999643
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 1732,
+          "time": 28.86666666666631
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 1730,
+          "time": 28.849999999999643,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 1732,
+          "time": 28.883333333332974,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "distance",
+      "GP": 0,
+      "case": "lane-horizontal",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "f92fbdd0ff59d92778824e2c7be5f5cfac3252c6aee9e3879ed8bc7bf7e58099",
+      "pathTicks": 34,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          67.2
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 140,
+        "time": 2.3499999999999965,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 8,
+          "throwScale": 1
+        },
+        "GP": 0,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.5833333333333335,
+      "contactM": 15.709585919916854,
+      "integratedM": 15.806619900805506,
+      "cloud": {
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          15.806619900805506
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          8.100227969835457
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          -0.2299999999999967,
+          15.806619900805506
+        ],
+        "tick": 174,
+        "time": 2.916666666666661,
+        "groundY": 5.551115123125783e-17
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 138,
+          "time": 2.2999999999999967
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 139,
+          "time": 2.3166666666666633
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 139,
+          "time": 2.3166666666666633
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 140,
+          "time": 2.33333333333333
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 138,
+          "time": 2.3166666666666633,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 140,
+          "time": 2.3499999999999965,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "throw",
+          "to": null,
+          "tick": 161,
+          "time": 2.6999999999999953,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "distance",
+      "GP": 0,
+      "case": "lane-up30",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "707a9adff30abd09a986e52a7c7566b6b7b8b6029cad562ce2f6d5e0f3d379bd",
+      "pathTicks": 96,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          46.070765814495914,
+          50.996907134314284
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 267,
+        "time": 4.466666666666656,
+        "pitch": 0.5235987755982988,
+        "yaw": 0,
+        "power": {
+          "duration": 8,
+          "throwScale": 1
+        },
+        "GP": 0,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 1.6166666666666658,
+      "contactM": 13.60035137072431,
+      "integratedM": 13.600711388402813,
+      "cloud": {
+        "age": 1.6166666666666658,
+        "position": [
+          6,
+          4.6,
+          13.600711388402813
+        ],
+        "velocity": [
+          0,
+          -47.04923418550412,
+          0.14486238680269878
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          -0.11692859989828297,
+          13.600711388402813
+        ],
+        "tick": 363,
+        "time": 6.06666666666665,
+        "groundY": 0
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 265,
+          "time": 4.416666666666656
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 266,
+          "time": 4.433333333333323
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 266,
+          "time": 4.433333333333323
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 267,
+          "time": 4.4499999999999895
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 265,
+          "time": 4.433333333333323,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 267,
+          "time": 4.466666666666656,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "throw",
+          "to": null,
+          "tick": 288,
+          "time": 4.816666666666655,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "distance",
+      "GP": 0,
+      "case": "wall-1m",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "62da58eca89287434f3967190ad9796039d54e3339567ddfb016e2d7e4a43b7f",
+      "pathTicks": 0,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          67.2
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 456,
+        "time": 7.616666666666645,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 8,
+          "throwScale": 1
+        },
+        "GP": 0,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.016666666666666666,
+      "contactM": 1,
+      "integratedM": 1.0543008,
+      "cloud": {
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.0543008
+        ],
+        "velocity": [
+          0,
+          13.44,
+          63.258048
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          1.674,
+          1.0543008
+        ],
+        "tick": 456,
+        "time": 7.616666666666645,
+        "groundY": 0
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 454,
+          "time": 7.566666666666645
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 455,
+          "time": 7.583333333333312
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 455,
+          "time": 7.583333333333312
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 456,
+          "time": 7.599999999999978
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 454,
+          "time": 7.583333333333312,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 456,
+          "time": 7.616666666666645,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "distance",
+      "GP": 0,
+      "case": "wall-10m",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "7d27e9ae4ae48202b0a40c02ca3a6167b8d27b53d1363ff7e358aa37f51e519c",
+      "pathTicks": 13,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          67.2
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 549,
+        "time": 9.166666666666702,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 8,
+          "throwScale": 1
+        },
+        "GP": 0,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.2333333333333333,
+      "contactM": 10,
+      "integratedM": 10.262736353898916,
+      "cloud": {
+        "age": 0.2333333333333333,
+        "position": [
+          6,
+          4.6,
+          10.262736353898916
+        ],
+        "velocity": [
+          0,
+          0.9600000000000045,
+          28.828394765777887
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          3.130000000000001,
+          10.262736353898916
+        ],
+        "tick": 562,
+        "time": 9.383333333333379,
+        "groundY": 4.440892098500626e-16
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 547,
+          "time": 9.1166666666667
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 548,
+          "time": 9.133333333333367
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 548,
+          "time": 9.133333333333367
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 549,
+          "time": 9.150000000000034
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 547,
+          "time": 9.133333333333367,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 549,
+          "time": 9.166666666666702,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "distance",
+      "GP": 0,
+      "case": "ceiling-up30",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "2ec4e156d99ae91276f72cb212d54551f2f5bd4d78e5b1359c80c1339d8b8f4e",
+      "pathTicks": 1,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          46.070765814495914,
+          50.996907134314284
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 655,
+        "time": 10.933333333333456,
+        "pitch": 0.5235987755982988,
+        "yaw": 0,
+        "power": {
+          "duration": 8,
+          "throwScale": 1
+        },
+        "GP": 0,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.03333333333333333,
+      "contactM": 1.1052585681555107,
+      "integratedM": 1.5532476447365786,
+      "cloud": {
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.5532476447365786
+        ],
+        "velocity": [
+          0,
+          44.15076581449591,
+          45.189430122379314
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          2.93769219381653,
+          1.5532476447365786
+        ],
+        "tick": 656,
+        "time": 10.950000000000124,
+        "groundY": 2.7
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 653,
+          "time": 10.883333333333454
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 654,
+          "time": 10.900000000000121
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 654,
+          "time": 10.900000000000121
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 655,
+          "time": 10.916666666666789
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 653,
+          "time": 10.900000000000121,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 655,
+          "time": 10.933333333333456,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "distance",
+      "GP": 57,
+      "case": "lane-horizontal",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "e84893d28b9c6a7ebf841c47fac43eac35f8dc224e29d9c80c68e0e62f72abbf",
+      "pathTicks": 34,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          100.80000000000001
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 749,
+        "time": 12.5000000000002,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 10,
+          "throwScale": 1.5
+        },
+        "GP": 57,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.5833333333333335,
+      "contactM": 23.56437887987527,
+      "integratedM": 23.70992985120825,
+      "cloud": {
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          23.70992985120825
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          12.150341954753182
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          -0.2299999999999967,
+          23.70992985120825
+        ],
+        "tick": 783,
+        "time": 13.066666666666896,
+        "groundY": 5.551115123125783e-17
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 747,
+          "time": 12.450000000000198
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 748,
+          "time": 12.466666666666866
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 748,
+          "time": 12.466666666666866
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 749,
+          "time": 12.483333333333533
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 747,
+          "time": 12.466666666666866,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 749,
+          "time": 12.5000000000002,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "throw",
+          "to": null,
+          "tick": 770,
+          "time": 12.850000000000218,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "distance",
+      "GP": 57,
+      "case": "lane-up30",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "961207ae31012f8fcb491c60b70025748a4a436fd7de1e3bdda78f6771179401",
+      "pathTicks": 131,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          62.87076581449591,
+          80.09536070147144
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 876,
+        "time": 14.616666666666973,
+        "pitch": 0.5235987755982988,
+        "yaw": 0,
+        "power": {
+          "duration": 10,
+          "throwScale": 1.5
+        },
+        "GP": 57,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 2.199999999999997,
+      "contactM": 21.414399097226287,
+      "integratedM": 21.414692170683598,
+      "cloud": {
+        "age": 2.199999999999997,
+        "position": [
+          6,
+          3.9176847918908955,
+          21.414692170683598
+        ],
+        "velocity": [
+          0,
+          -63.84923418550415,
+          0.02742503111005911
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          -0.6823152081091042,
+          21.414692170683598
+        ],
+        "tick": 1007,
+        "time": 16.800000000000328,
+        "groundY": -0.6823152081091042
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 874,
+          "time": 14.56666666666697
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 875,
+          "time": 14.583333333333638
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 875,
+          "time": 14.583333333333638
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 876,
+          "time": 14.600000000000305
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 874,
+          "time": 14.583333333333638,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 876,
+          "time": 14.616666666666973,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "throw",
+          "to": null,
+          "tick": 897,
+          "time": 14.96666666666699,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "distance",
+      "GP": 57,
+      "case": "wall-1m",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "2e9e36fcaf1cf7a17bb0452d6695974173c740daaf01af23031bb674f7b1187d",
+      "pathTicks": 0,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          100.80000000000001
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 1100,
+        "time": 18.35000000000024,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 10,
+          "throwScale": 1.5
+        },
+        "GP": 57,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.016666666666666666,
+      "contactM": 1,
+      "integratedM": 1.5814512,
+      "cloud": {
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1.5814512
+        ],
+        "velocity": [
+          0,
+          13.44,
+          94.887072
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          1.674,
+          1.5814512
+        ],
+        "tick": 1100,
+        "time": 18.35000000000024,
+        "groundY": 0
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 1098,
+          "time": 18.300000000000242
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 1099,
+          "time": 18.316666666666908
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 1099,
+          "time": 18.316666666666908
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 1100,
+          "time": 18.333333333333574
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 1098,
+          "time": 18.316666666666908,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 1100,
+          "time": 18.35000000000024,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "distance",
+      "GP": 57,
+      "case": "wall-10m",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "7cb07ac28b7ab8abd97449af544f251d09fbc60bedb3efb41748181ef757c5d8",
+      "pathTicks": 7,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          100.80000000000001
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 1193,
+        "time": 19.90000000000015,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 10,
+          "throwScale": 1.5
+        },
+        "GP": 57,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.13333333333333333,
+      "contactM": 10,
+      "integratedM": 10.337519943101231,
+      "cloud": {
+        "age": 0.13333333333333333,
+        "position": [
+          6,
+          4.6,
+          10.337519943101231
+        ],
+        "velocity": [
+          0,
+          6.720000000000004,
+          62.14878450746901
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          2.7940000000000005,
+          10.337519943101231
+        ],
+        "tick": 1200,
+        "time": 20.01666666666681,
+        "groundY": 0
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 1191,
+          "time": 19.850000000000154
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 1192,
+          "time": 19.86666666666682
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 1192,
+          "time": 19.86666666666682
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 1193,
+          "time": 19.883333333333486
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 1191,
+          "time": 19.86666666666682,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 1193,
+          "time": 19.90000000000015,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "distance",
+      "GP": 57,
+      "case": "ceiling-up30",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "043151a67e5ee671f70f1838a580deece4c88a0118d1944a510647ece330a6c8",
+      "pathTicks": 1,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          62.87076581449591,
+          80.09536070147144
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 1293,
+        "time": 21.566666666666723,
+        "pitch": 0.5235987755982988,
+        "yaw": 0,
+        "power": {
+          "duration": 10,
+          "throwScale": 1.5
+        },
+        "GP": 57,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.03333333333333333,
+      "contactM": 1.277755444822525,
+      "integratedM": 2.4395191268408682,
+      "cloud": {
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          2.4395191268408682
+        ],
+        "velocity": [
+          0,
+          60.95076581449591,
+          70.97418076772898
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          3.4976921938165306,
+          2.4395191268408682
+        ],
+        "tick": 1294,
+        "time": 21.58333333333339,
+        "groundY": 2.7
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 1291,
+          "time": 21.516666666666726
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 1292,
+          "time": 21.533333333333392
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 1292,
+          "time": 21.533333333333392
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 1293,
+          "time": 21.550000000000058
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 1291,
+          "time": 21.533333333333392,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 1293,
+          "time": 21.566666666666723,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "both",
+      "GP": 0,
+      "case": "lane-horizontal",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "53e298cdb651c79b90dbea76d0d43568d270f9e0b435814b732dc6c481292647",
+      "pathTicks": 34,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          67.2
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 140,
+        "time": 2.3499999999999965,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 8,
+          "throwScale": 1
+        },
+        "GP": 0,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.5833333333333335,
+      "contactM": 15.709585919916854,
+      "integratedM": 15.806619900805506,
+      "cloud": {
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          15.709585919916854
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          8.100227969835457
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          0,
+          15.709585919916854
+        ],
+        "tick": 174,
+        "time": 2.916666666666661,
+        "groundY": -1.1102230246251565e-16
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 138,
+          "time": 2.2999999999999967
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 139,
+          "time": 2.3166666666666633
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 139,
+          "time": 2.3166666666666633
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 140,
+          "time": 2.33333333333333
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 138,
+          "time": 2.3166666666666633,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 140,
+          "time": 2.3499999999999965,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "throw",
+          "to": null,
+          "tick": 161,
+          "time": 2.6999999999999953,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "both",
+      "GP": 0,
+      "case": "lane-up30",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "b25555927e050d1224c42fd2ba4c1ca7ebb54ada4ae0068555bff19342eb0bc0",
+      "pathTicks": 96,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          46.070765814495914,
+          50.996907134314284
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 267,
+        "time": 4.466666666666656,
+        "pitch": 0.5235987755982988,
+        "yaw": 0,
+        "power": {
+          "duration": 8,
+          "throwScale": 1
+        },
+        "GP": 0,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 1.6166666666666658,
+      "contactM": 13.60035137072431,
+      "integratedM": 13.600711388402813,
+      "cloud": {
+        "age": 1.6166666666666658,
+        "position": [
+          6,
+          4.6,
+          13.60035137072431
+        ],
+        "velocity": [
+          0,
+          -47.04923418550412,
+          0.14486238680269878
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          -1.1102230246251565e-16,
+          13.60035137072431
+        ],
+        "tick": 363,
+        "time": 6.06666666666665,
+        "groundY": 0
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 265,
+          "time": 4.416666666666656
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 266,
+          "time": 4.433333333333323
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 266,
+          "time": 4.433333333333323
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 267,
+          "time": 4.4499999999999895
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 265,
+          "time": 4.433333333333323,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 267,
+          "time": 4.466666666666656,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "throw",
+          "to": null,
+          "tick": 288,
+          "time": 4.816666666666655,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "both",
+      "GP": 0,
+      "case": "wall-1m",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "f615e37b2f2bc86fafc33fd2825abad15bf2de569b36039b7c1c3abadc3c38b4",
+      "pathTicks": 0,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          67.2
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 456,
+        "time": 7.616666666666645,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 8,
+          "throwScale": 1
+        },
+        "GP": 0,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.016666666666666666,
+      "contactM": 1,
+      "integratedM": 1.0543008,
+      "cloud": {
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1
+        ],
+        "velocity": [
+          0,
+          13.44,
+          63.258048
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          1.6624630845390613,
+          1
+        ],
+        "tick": 456,
+        "time": 7.616666666666645,
+        "groundY": 0
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 454,
+          "time": 7.566666666666645
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 455,
+          "time": 7.583333333333312
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 455,
+          "time": 7.583333333333312
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 456,
+          "time": 7.599999999999978
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 454,
+          "time": 7.583333333333312,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 456,
+          "time": 7.616666666666645,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "both",
+      "GP": 0,
+      "case": "wall-10m",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "380f2fcc76b8d1d7ac0e39f334eff347806fae6be62fe428550e7f285d58562b",
+      "pathTicks": 13,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          67.2
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 549,
+        "time": 9.166666666666702,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 8,
+          "throwScale": 1
+        },
+        "GP": 0,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.2333333333333333,
+      "contactM": 10,
+      "integratedM": 10.262736353898916,
+      "cloud": {
+        "age": 0.2333333333333333,
+        "position": [
+          6,
+          4.6,
+          10
+        ],
+        "velocity": [
+          0,
+          0.9600000000000045,
+          28.828394765777887
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          3.1212507476815063,
+          10
+        ],
+        "tick": 562,
+        "time": 9.383333333333379,
+        "groundY": 0
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 547,
+          "time": 9.1166666666667
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 548,
+          "time": 9.133333333333367
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 548,
+          "time": 9.133333333333367
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 549,
+          "time": 9.150000000000034
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 547,
+          "time": 9.133333333333367,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 549,
+          "time": 9.166666666666702,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "both",
+      "GP": 0,
+      "case": "ceiling-up30",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "c76974d53261c8aa842f8d9f826313f525354d4a59fe8c988f56babc06784fe0",
+      "pathTicks": 1,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          46.070765814495914,
+          50.996907134314284
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 655,
+        "time": 10.933333333333456,
+        "pitch": 0.5235987755982988,
+        "yaw": 0,
+        "power": {
+          "duration": 8,
+          "throwScale": 1
+        },
+        "GP": 0,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.03333333333333333,
+      "contactM": 1.1052585681555107,
+      "integratedM": 1.5532476447365786,
+      "cloud": {
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.1052585681555107
+        ],
+        "velocity": [
+          0,
+          44.15076581449591,
+          45.189430122379314
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          2.5,
+          1.1052585681555107
+        ],
+        "tick": 656,
+        "time": 10.950000000000124,
+        "groundY": 2.7
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 653,
+          "time": 10.883333333333454
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 654,
+          "time": 10.900000000000121
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 654,
+          "time": 10.900000000000121
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 655,
+          "time": 10.916666666666789
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 653,
+          "time": 10.900000000000121,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 655,
+          "time": 10.933333333333456,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "both",
+      "GP": 57,
+      "case": "lane-horizontal",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "0f521027b4cf2d7e4d7ddbb3e90c75b98bbad34c6439b1626ca4a55847facc01",
+      "pathTicks": 34,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          100.80000000000001
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 749,
+        "time": 12.5000000000002,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 10,
+          "throwScale": 1.5
+        },
+        "GP": 57,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.5833333333333335,
+      "contactM": 23.56437887987527,
+      "integratedM": 23.70992985120825,
+      "cloud": {
+        "age": 0.5833333333333335,
+        "position": [
+          6,
+          4.6,
+          23.56437887987527
+        ],
+        "velocity": [
+          0,
+          -19.19999999999999,
+          12.150341954753182
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          0,
+          23.56437887987527
+        ],
+        "tick": 783,
+        "time": 13.066666666666896,
+        "groundY": -1.1102230246251565e-16
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 747,
+          "time": 12.450000000000198
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 748,
+          "time": 12.466666666666866
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 748,
+          "time": 12.466666666666866
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 749,
+          "time": 12.483333333333533
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 747,
+          "time": 12.466666666666866,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 749,
+          "time": 12.5000000000002,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "throw",
+          "to": null,
+          "tick": 770,
+          "time": 12.850000000000218,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "both",
+      "GP": 57,
+      "case": "lane-up30",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "79bf1dd0f1997cd0560a42383ecddef698ce195f063d2ea79923b913858fc4c3",
+      "pathTicks": 131,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          62.87076581449591,
+          80.09536070147144
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 876,
+        "time": 14.616666666666973,
+        "pitch": 0.5235987755982988,
+        "yaw": 0,
+        "power": {
+          "duration": 10,
+          "throwScale": 1.5
+        },
+        "GP": 57,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 2.199999999999997,
+      "contactM": 21.414399097226287,
+      "integratedM": 21.414692170683598,
+      "cloud": {
+        "age": 2.199999999999997,
+        "position": [
+          6,
+          4.6,
+          21.414399097226287
+        ],
+        "velocity": [
+          0,
+          -63.84923418550415,
+          0.02742503111005911
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          0,
+          21.414399097226287
+        ],
+        "tick": 1007,
+        "time": 16.800000000000328,
+        "groundY": -1.1102230246251565e-16
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 874,
+          "time": 14.56666666666697
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 875,
+          "time": 14.583333333333638
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 875,
+          "time": 14.583333333333638
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 876,
+          "time": 14.600000000000305
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 874,
+          "time": 14.583333333333638,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 876,
+          "time": 14.616666666666973,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "throw",
+          "to": null,
+          "tick": 897,
+          "time": 14.96666666666699,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "both",
+      "GP": 57,
+      "case": "wall-1m",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "6e7c7053558b728bfac9fec8d4049fec9710f28a47dd956570632979d8917b2a",
+      "pathTicks": 0,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          100.80000000000001
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 1100,
+        "time": 18.35000000000024,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 10,
+          "throwScale": 1.5
+        },
+        "GP": 57,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.016666666666666666,
+      "contactM": 1,
+      "integratedM": 1.5814512,
+      "cloud": {
+        "age": 0.016666666666666666,
+        "position": [
+          6,
+          4.6,
+          1
+        ],
+        "velocity": [
+          0,
+          13.44,
+          94.887072
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          1.5916420563593743,
+          1
+        ],
+        "tick": 1100,
+        "time": 18.35000000000024,
+        "groundY": 0
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 1098,
+          "time": 18.300000000000242
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 1099,
+          "time": 18.316666666666908
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 1099,
+          "time": 18.316666666666908
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 1100,
+          "time": 18.333333333333574
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 1098,
+          "time": 18.316666666666908,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 1100,
+          "time": 18.35000000000024,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "both",
+      "GP": 57,
+      "case": "wall-10m",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "ed1746d2fc12b336b39bad9d5b53cbcb4fe8ace4fb5e421bed202fe2841df2f4",
+      "pathTicks": 7,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          14.399999999999999,
+          100.80000000000001
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 1193,
+        "time": 19.90000000000015,
+        "pitch": 0,
+        "yaw": 0,
+        "power": {
+          "duration": 10,
+          "throwScale": 1.5
+        },
+        "GP": 57,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.13333333333333333,
+      "contactM": 10,
+      "integratedM": 10.337519943101231,
+      "cloud": {
+        "age": 0.13333333333333333,
+        "position": [
+          6,
+          4.6,
+          10
+        ],
+        "velocity": [
+          0,
+          6.720000000000004,
+          62.14878450746901
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          2.757504772690001,
+          10
+        ],
+        "tick": 1200,
+        "time": 20.01666666666681,
+        "groundY": 0
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 1191,
+          "time": 19.850000000000154
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 1192,
+          "time": 19.86666666666682
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 1192,
+          "time": 19.86666666666682
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 1193,
+          "time": 19.883333333333486
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 1191,
+          "time": 19.86666666666682,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 1193,
+          "time": 19.90000000000015,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    },
+    {
+      "version": "both",
+      "GP": 57,
+      "case": "ceiling-up30",
+      "Hz": [
+        60,
+        30,
+        120
+      ],
+      "tickHash": "743d4274bf30e949c0ab476fb670c689b894a007c8accf55a902690e922fb7f1",
+      "pathTicks": 1,
+      "outcome": "cloud",
+      "launch": {
+        "age": 0,
+        "position": [
+          6,
+          1.45,
+          0
+        ],
+        "velocity": [
+          0,
+          62.87076581449591,
+          80.09536070147144
+        ],
+        "ghost": false,
+        "actorFeet": [
+          6,
+          5.551115123125783e-17,
+          0
+        ],
+        "actorVelocity": [
+          0,
+          0,
+          0
+        ],
+        "origin": [
+          6,
+          1.45,
+          0
+        ],
+        "tick": 1293,
+        "time": 21.566666666666723,
+        "pitch": 0.5235987755982988,
+        "yaw": 0,
+        "power": {
+          "duration": 10,
+          "throwScale": 1.5
+        },
+        "GP": 57,
+        "aimingSub": false,
+        "nativeQSub": true
+      },
+      "age": 0.03333333333333333,
+      "contactM": 1.277755444822525,
+      "integratedM": 2.4395191268408682,
+      "cloud": {
+        "age": 0.03333333333333333,
+        "position": [
+          6,
+          7.3,
+          1.277755444822525
+        ],
+        "velocity": [
+          0,
+          60.95076581449591,
+          70.97418076772898
+        ],
+        "ghost": false,
+        "spawnInput": [
+          6,
+          2.5,
+          1.277755444822525
+        ],
+        "tick": 1294,
+        "time": 21.58333333333339,
+        "groundY": 2.7
+      },
+      "terminal": null,
+      "firstBeyond50": null,
+      "inputEvents": [
+        {
+          "key": "KeyQ",
+          "down": true,
+          "tick": 1291,
+          "time": 21.516666666666726
+        },
+        {
+          "key": "KeyQ",
+          "down": false,
+          "tick": 1292,
+          "time": 21.533333333333392
+        },
+        {
+          "key": "KeyE",
+          "down": true,
+          "tick": 1292,
+          "time": 21.533333333333392
+        },
+        {
+          "key": "KeyE",
+          "down": false,
+          "tick": 1293,
+          "time": 21.550000000000058
+        }
+      ],
+      "phases": [
+        {
+          "from": null,
+          "to": "hold",
+          "tick": 1291,
+          "time": 21.533333333333392,
+          "lock": 0,
+          "special": 180
+        },
+        {
+          "from": "hold",
+          "to": "throw",
+          "tick": 1293,
+          "time": 21.566666666666723,
+          "lock": 0,
+          "special": 180
+        }
+      ]
+    }
+  ],
+  "browserTraceCount": 90,
+  "equalThreeHzGroups": 30,
+  "source": {
+    "before": "37cdb283fc69c08f34a562f9b30c6b1b29fedcfaba36242b2516e536f332f96b",
+    "distance": "12bccfb3a2afe1d7cb2f0ae512e426e1c5ef2c6c68fef3b9b90f023ef1b82d40",
+    "both": "dc206bf16f11ed63a56d11d9053f4048e640d534e7ec048cd0312c687dd1f2d0"
+  },
+  "artifacts": {
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/before-GP0.png": {
+      "sha256": "ae09bf9b92791b611e209786728aca0061167cb01c5e01ac841d886e3d795419",
+      "bytes": 444819
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/before-GP57.png": {
+      "sha256": "4f726ef3c954a21624381a1397ac6c2e4e09ffc91eec34ab3d31bcb070e36484",
+      "bytes": 444335
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/before-browser.json": {
+      "sha256": "eabf52de36ab33ba2fea44fec0f715b0f1a50a727683a3d77ca8952e05151564",
+      "bytes": 798739
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/before-kit-subs.txt": {
+      "sha256": "bc258c0b13e3ebca9283927aa962783392e8c6137d75a0a4188acc980c192c07",
+      "bytes": 3696
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/both-GP0-30Hz-rendered.png": {
+      "sha256": "f5212292c1f6b4a602cda5c285c008d2f7470b2d8d371acc4d65475b39876b3f",
+      "bytes": 465846
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/both-GP0.png": {
+      "sha256": "dbc9bed76c0fef6d567fbea143ba5cabe6bcc8b59faa9f6044485f81c68a48d4",
+      "bytes": 468177
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/both-GP57-30Hz-rendered.png": {
+      "sha256": "c46416519b3d233995ae6fcd2929d8eeb27f80d48874142dbbe7303defea9c90",
+      "bytes": 468604
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/both-GP57.png": {
+      "sha256": "12f44d1f4bead2555b367363e9a2bcfacc25c894cbe859daf98351f3aeb43655",
+      "bytes": 467854
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/both-browser.json": {
+      "sha256": "aae553f26f09e2d16c70b277ea6b5e3c47e035c3536b3b6843b81b8d8394c7a8",
+      "bytes": 416187
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/both-kit-subs-ordinary.txt": {
+      "sha256": "e4401448cd2765d2b9eec8863187fbfb69413d4d081705998d9523cc00e7922b",
+      "bytes": 3603
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/both-kit-subs-original-expectation.txt": {
+      "sha256": "5dfed1e6da4a4990fdabc3c368f9e737b11ae1cd0e6088cab29e363b18d70bd8",
+      "bytes": 4439
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/distance-GP0.png": {
+      "sha256": "d0073b5ac5008f01bfac69ebfe463941d5954bf4f9ee2d7a96f9f14a4f55a371",
+      "bytes": 468479
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/distance-GP57.png": {
+      "sha256": "c0e185825228b51911da19b5624f2f1094491d325179cd83c1e3860a5544601f",
+      "bytes": 467776
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/distance-browser.json": {
+      "sha256": "932474c13d59d1ba90a4ac47a20bfa47b52f547a67d8f24cf31519a8a786898e",
+      "bytes": 416881
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/ghost-replay.json": {
+      "sha256": "6259a221a78e54436e05ad8897c0a210620cedbb7a097a9a3a1df7e4867e6287",
+      "bytes": 110409
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/native-browser-probe.txt": {
+      "sha256": "82696c8e272d8dfae2e2c0a18e6a0dba9b2b9679deb888a5b52b01381821d7de",
+      "bytes": 11011
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/partial-render-probe.txt": {
+      "sha256": "17486a381049de14eb6c2efb52cbb878d45240c5af3bcb5fc3685f35c266a5ef",
+      "bytes": 10437
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/partial-render-summary.json": {
+      "sha256": "c336a02819afd2ba536d0fd19691b17c9a46edbb603fa5d42c2815bff5f5a8e4",
+      "bytes": 2524
+    },
+    "reports/evidence/inkwave-storm-throw-calibration-2026-10-23/replay-browser-probe.txt": {
+      "sha256": "c6c92792d05f522c98d557630d4e8eb8f9e8f3c8b5ed81d8256d06d076439ee3",
+      "bytes": 6817
+    }
+  },
+  "regression": {
+    "beforeKitSubs": {
+      "tests": 38,
+      "pass": 38
+    },
+    "bothKitSubsOriginal": {
+      "tests": 38,
+      "pass": 37,
+      "fail": 1,
+      "failure": "Intentional private calibration changes NATIVE_STORM_GRAVITY from24 to57.6; original 24 assertion fails."
+    },
+    "bothKitSubsExcludeStorm24Assertion": {
+      "tests": 37,
+      "pass": 37
+    },
+    "parentProvidedOrdinaryEvidence": "306 owner traces / 102 equal-Hz groups and 16884 mechanics ticks / ordinary bombs unchanged are parent observations, not independently rerun here."
+  },
+  "graphics": {
+    "actualNormalImages": 6,
+    "imageCamera": "native follow camera at fixed feet(6,0,0), release pitch0 then post-throw camera pitch-0.35 for all three variants",
+    "HzMeaning": "Native Game._frame delivery schedules30/60/120Hz with fixed60Hz simulation. Final 90-trace matrix suppresses flight render submissions, then submits a completed representative frame. Actual wall-clock full-flight 30/60/120GPU FPS is unverified.",
+    "failedFirstCapture": "All three first full-flight capture attempts timed out at page.screenshot after30000ms, no PNG written. GPU-finish retries stayed pending at first flight and were deliberately stopped; details retained privately.",
+    "additionalCompletedRenderCases": 5,
+    "additionalRenderImages": 2,
+    "additionalRenderScope": "Q/Sub startup through release suppresses rendering for3 ticks. Every subsequent delivery frame rendered and gl.finish completed: before30HzGP0, distance30HzGP0, both30HzGP0/57 and60HzGP0. Later page.screenshot timed out, so the whole18-case render matrix was not completed."
+  },
+  "limits": [
+    "Versus defaults and retail gravity/drag/integration order unverified; only the parent-provided Mission/Rival inferred patch is under test.",
+    "Before normal lane flies above the actual5m wall; its water release is not an unobstructed-floor endpoint or wall contact.",
+    "Ghost method and delayed-owner-clock reconstruction checked in a browser; actual two-client transport/admission/matchmaking joins and mixed-version compatibility are not checked.",
+    "Library and previously rejected URLs were not retried or bypassed.",
+    "The bare short ref843 was not resolvable locally. Both files exactly match full a4 SHA and patch contexts/hashes match the supplied payload."
+  ],
+  "a4SourceCommit": "a4e81347906c0d60ceef76a69f476261bf8d3f86",
+  "replaySummary": {
+    "conditions": 180,
+    "ownerTickSteps": 8430,
+    "comparedTickSamples": 9166,
+    "maxPositionVelocityComponentError": 0,
+    "scope": "Same-version browser replay integration from actual native Q/Sub owner launch records. Calls public ghostBomb and production fixed-tick catch-up. Joining is simulated by delayed owner clocks; this is not a two-client transport/admission or real matchmaking join test."
+  },
+  "verification": {
+    "allBuildArtifactHashesVerified": true,
+    "allRawSourceHashesVerified": true,
+    "allReportArtifactHashesVerified": true,
+    "runtimeWorkingTreeUnchanged": true
+  },
+  "negativeControls": {
+    "before": {
+      "hasNormalLaneFloorCloudBothGP": false,
+      "allTestContactsDeployAtSweptPoint": false
+    },
+    "distance": {
+      "hasNormalLaneFloorCloudBothGP": true,
+      "allTestContactsDeployAtSweptPoint": false
+    },
+    "both": {
+      "hasNormalLaneFloorCloudBothGP": true,
+      "allTestContactsDeployAtSweptPoint": true
+    }
+  },
+  "additionalWholeFlightAttempts": [
+    {
+      "version": "before",
+      "completedWholeFlightCases": [
+        {
+          "Hz": 30,
+          "GP": 0,
+          "age": 1.4666666666666663,
+          "outcome": "released-without-cloud",
+          "contactM": null,
+          "cloudM": 98.56000000000009,
+          "pathSameAsSparse": true
+        }
+      ],
+      "captures": [],
+      "status": "failed-capture",
+      "error": "page.screenshot: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\n    at /workspace/actions/.ci-scratch/storm-throw-calibration-20261023/browser-whole-flight.mjs:35:285"
+    },
+    {
+      "version": "distance",
+      "completedWholeFlightCases": [
+        {
+          "Hz": 30,
+          "GP": 0,
+          "age": 0.5833333333333335,
+          "outcome": "cloud",
+          "contactM": 15.709585919916854,
+          "cloudM": 15.806619900805506,
+          "pathSameAsSparse": true
+        }
+      ],
+      "captures": [],
+      "status": "failed-capture",
+      "error": "page.screenshot: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\n    at /workspace/actions/.ci-scratch/storm-throw-calibration-20261023/browser-whole-flight.mjs:35:285"
+    },
+    {
+      "version": "both",
+      "completedWholeFlightCases": [
+        {
+          "Hz": 30,
+          "GP": 0,
+          "age": 0.5833333333333335,
+          "outcome": "cloud",
+          "contactM": 15.709585919916854,
+          "cloudM": 15.709585919916854,
+          "pathSameAsSparse": true
+        },
+        {
+          "Hz": 30,
+          "GP": 57,
+          "age": 0.5833333333333335,
+          "outcome": "cloud",
+          "contactM": 23.56437887987527,
+          "cloudM": 23.56437887987527,
+          "pathSameAsSparse": true
+        },
+        {
+          "Hz": 60,
+          "GP": 0,
+          "age": 0.5833333333333335,
+          "outcome": "cloud",
+          "contactM": 15.709585919916854,
+          "cloudM": 15.709585919916854,
+          "pathSameAsSparse": true
+        }
+      ],
+      "captures": [
+        "normal-lane-GP0-30Hz.png",
+        "normal-lane-GP57-30Hz.png"
+      ],
+      "status": "failed-capture",
+      "error": "page.screenshot: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - taking page screenshot\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\n    at /workspace/actions/.ci-scratch/storm-throw-calibration-20261023/browser-whole-flight.mjs:35:285"
+    }
+  ],
+  "artifactTextNormalization": "Trailing spaces in the published expected-failure TAP log were removed; private original log is retained."
+}
