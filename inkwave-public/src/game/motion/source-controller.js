@@ -301,7 +301,8 @@ this.constrainLeft=true;
   c.phase=this.phase;c.cad=cadenceHz;c.runW=run; // Consumers receive the same cycle rate used to sample sourced feet.
   this.debug={status:this.status,variant:this.variant,state,family,speed:this.speed,pivoting:this.pivoting,pivotTurnRate:this.turnRate,phase:this.phase,stride,stepAmplitude,cadenceHz,authoredCadenceHz:nominalCadence,run,shootBlend:this.shootBlend,sourceUpper:this.sourceUpper,clips:this.currentClips,contact:[...this.contact],fallbacks:[...this.fallbacks]};
  }
- mixUpper(pose,weight){for(let i=0;i<this.upperMask.length;i++)if(this.upperMask[i]){this.pose.p[i].lerp(pose.p[i],weight);this.pose.q[i].slerp(pose.q[i],weight);this.pose.s[i].lerp(pose.s[i],weight);}this.pose.fk();}
+ mixUpper(pose,weight){for(let i=0;i<this.upperMask.length;i++)if(this.upperMask[i]){this.pose.p[i].lerp(pose.p[i],weight);this.pose.q[i].slerp(pose.q[i],weight);this.pose.s[i].lerp(pose.s[i],weight);}}
+
  actionClip(family,event){
   const names=event==='slosh'||event==='shoot'&&family==='BBll'?['Attack_BBll']:event==='flick'||event==='shoot'&&family==='Rllr'?['Attack_Rllr']:event==='charge_release'?[`Shoot_${family}`]:event==='throw'?[`ThrowBomb_${family}`,'ThrowBomb_Nrml']:event==='hit'?['Damage']:event==='spawn'?['ToHumanRespawn']:[];
   return names.find(n=>this.bank.clips.has(n))||null;
