@@ -56,7 +56,13 @@ export class WeaponSoundBank {
     if(worker){this.inFlight=job;try{worker.postMessage({id:job[0],event:job[1],variant:job[2],key:job[3],sampleRate:this.ctx.sampleRate});}
       catch{this.inFlight=null;this.workerFailed=true;worker.terminate();this.worker=null;this.jobs.unshift(job);this._pump();}return;}
     // Offline tests / unsupported worker environments retain a bounded fallback, never a frame loop.
-    this.timer=setTimeout(()=>{this.timer=null;if(this.disposed)return;this.pending.delete(job[3]);this.get(...job.slice(0,3));this._pump();},8);
+    this.timer=setTimeout(()=>{
+      this.timer=null;if(this.disposed)return;
+      this.pending.delete(job[3]);
+      try{this.get(...job.slice(0,3));}
+      catch(error){this.workerError=String(error?.message||error);}
+      finally{this._pump();}
+    },8);
   }
 
   resolve(name){
