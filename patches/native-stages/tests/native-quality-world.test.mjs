@@ -1,4 +1,5 @@
 import test from 'node:test';
+import * as nativeGpuBudget from '../runtime/native-gpu-budget.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -30,6 +31,7 @@ async function fixture(){
   './native-level.mjs':make({NativeLevel:Level}), './native-physics.mjs':make({NativePhysics:class{}}),
   './native-ink-chunks.mjs':make({NativeInkMesh:Mesh}),
   './native-texture-budget.mjs':make({nativeStageTextureCaps:()=>caps}),
+  './native-gpu-budget.mjs':make({...nativeGpuBudget}),
   './source-menu.mjs':make({sourceLoadingStatus:()=>({update(){},close(){}}),showNativeWorldRecovery(){}}),
   './native-render.mjs':make({nativeDisplay(){return {group:{},dispose(){metrics.displayDisposes++},updateTextures(){}}},nativeInkGeometry(){return{}},nativeInkMaterial(){return{dispose(){metrics.materialDisposes++}}}})
  };

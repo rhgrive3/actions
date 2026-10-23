@@ -6137,6 +6137,10 @@ main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、Splatoon 3 Ver.11
 
 Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテゴリ。修正対象のBodyBalanceはその一部にすぎず、iPad上での支配要因の確定や重いフレームの完全解消とは扱わない。#1671/#1757の実機受入はOpenのまま。条件・既存PRとの重複確認・再現コマンド・証跡は[調査記録](inkwave-composed-cpu-20261023/README.md)。
 
+## 2026-10-23: 原典ステージの GPU 描画負荷上限
+
+原典ステージ表示中だけ GTAO を外し、MSAA・pixelRatio に上限をかけ、コンテキストロスト後は段階的に描画負荷を下げる（[記録](inkwave-native-gpu-budget-2026-10-23.md)）。描画表現のみの変更で、歩行・泳ぎ・射撃・塗り判定・インク回復・カメラ操作のロジックは変更していない。本家 Ver.11.3.0 との既存の差分・未確認項目はそのまま。計測は Chromium + SwiftShader の WebGL 確保量の集計で、実機の GPU 落ち解消は未確認。
+
 ### 2026-10-23: 復活着地直後のローラー構えと入力再受付
 
 - 対象: pinned Splatoon 3 parameter epoch 11.3.0、標準ローラー、既存avatar/gear、死亡→通常カウントダウン→Squid Spawn→発射入力を離す→着地。復活直後の押し直し・意図した長押し、他武器、native jump/superjump、remote表示も分けて検査する。
