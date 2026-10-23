@@ -193,6 +193,22 @@ function disposeGauge(gauge) {
   if (gauge.label) { gauge.label.geometry.dispose(); gauge.label.material.dispose(); }
 }
 
+// Program keeper. Each flight disposes its gauge, and three.js deletes a program
+// (and forgets the shader stage ids that key the arc's ShaderMaterial program)
+// with its last material, so every Super Jump linked the track, arc and label
+// programs again mid-flight (measured in Chromium: new arc stage ids per jump).
+// One never-disposed, never-drawn gauge, compiled with the match-load warm-up,
+// keeps them; flights still own and dispose their own gauges.
+let gaugeKeeper = null;
+export function arrivalGaugeProgramKeeper(THREE) {
+  if (!gaugeKeeper) {
+    gaugeKeeper = createArrivalGauge({ THREE });
+    gaugeKeeper.group.name = 'keeper:' + ARRIVAL_GAUGE_NAME;
+    gaugeKeeper.group.visible = true;
+  }
+  return gaugeKeeper.group;
+}
+
 // One live gauge per jumper; flight end and native Character disposal release GPU resources.
 const GAUGES = new WeakMap();
 const DISPOSE_BOUND = new WeakSet();
