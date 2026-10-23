@@ -1,0 +1,45 @@
+import fs from 'node:fs';
+import {createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
+import {fixture} from '/workspace/actions/patches/splatoon3/tests/source-fixture.mjs';
+import {makePaintWorld} from '/workspace/actions/patches/splatoon3/tests/paint-authority-fixture.mjs';
+const out=process.argv[2],cases=[];
+const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
+for(const pitch of [-20,0,20])for(const hz of [30,60,120]){
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,vmMathRandom:()=>.5});
+  const {paint}=makePaintWorld(f),{G}=f,a=f.make('s3-slosher-diffusion'),stamps=[];
+  const native=paint.splat;
+  paint.splat=function(point,radius,team,options={}){
+    const area=native.call(this,point,radius,team,options);
+    stamps.push({at:point.toArray(),radius,team,seed:options.seed,kind:options.kind,face:options.face,
+      stretch:options.stretch?.toArray(),stretchAmt:options.stretchAmt,footprint:options.footprint,area});return area;
+  };
+  a.form='kid';a.ink=100;a.pos.set(0,0,0);a.aimPitch=pitch*Math.PI/180;a.aimYaw=0;
+  a.aimDir.set(0,Math.sin(a.aimPitch),Math.cos(a.aimPitch));
+  a.aimPoint.set(0,1.05+60*Math.sin(a.aimPitch),60*Math.cos(a.aimPitch));a.intent.fire=true;
+  for(let frame=0;frame<30&&!G.projectiles.list.length;frame++)f.tick(a);
+  a.intent.fire=false;assert.equal(G.projectiles.list.length,9);
+  const ink=a.ink,trace=[],clock=new f.FixedClock();G.game={s3Clock:clock};let peakDrops=0,peakMain=0,peakBlobs=0;
+  for(let i=0;i<hz*2;i++){
+    // Match Game._frame ownership: renderer intervals feed FixedClock, and
+    // authoritative Projectiles/Paint receive only its fixed simulation dt.
+    clock.advance(1/hz,dt=>{
+      G.time+=dt;G.projectiles.update(dt);G.paint.advanceSimulation(dt);
+      peakDrops=Math.max(peakDrops,G.projectiles._s3SplashDrops?.length||0);peakMain=Math.max(peakMain,G.projectiles.list.length);peakBlobs=Math.max(peakBlobs,G.projectiles.blobs.count);
+    });
+    if((i+1)%(hz/30)===0)trace.push({
+      main:Array.from(G.projectiles.list,p=>({unit:p.catalog?.descriptor.unit,index:p.catalog?.index,age:p.age,pos:p.pos.toArray(),vel:p.vel.toArray(),start:p.start.toArray(),life:p.life,delay:p.delay,
+        damage:p.damage,radius:p.radius,size:p.size,seed:p.seed,ghost:p.ghost,inkMeta:p.inkMeta,dropCount:p.catalog?.dropCount})),
+      drops:Array.from(G.projectiles._s3SplashDrops||[],d=>({frames:d.frames,pos:d.pos.toArray(),vel:d.vel.toArray(),radius:d.radius,seed:d.seed,release:[d.releaseX,d.spawnY,d.releaseZ],heading:[d.dirX,d.dirZ]})),
+      cells:paint.counts[0],turf:a.stats.turf});
+  }
+  assert(peakDrops>0&&paint.counts[0]>0);assert.equal(G.projectiles.list.length,0);assert.equal(G.projectiles._s3SplashDrops.length,0);
+  const grid=Array.from(paint.grid),landings=JSON.parse(JSON.stringify(G.projectiles._s3SplashLandings));
+  const row={pitch,hz,ink,peakMain,peakDrops,peakBlobs,cells:paint.counts[0],turf:a.stats.turf,trace,stamps,gridHash:hash(grid),landings};
+  cases.push(row);console.log(JSON.stringify({pitch,hz,ink,peakMain,peakDrops,peakBlobs,cells:row.cells,traceHash:hash(trace),stampsHash:hash(stamps),gridHash:row.gridHash}));
+}
+for(const pitch of [-20,0,20]){
+  const set=cases.filter(c=>c.pitch===pitch);
+  for(const row of set.slice(1))for(const key of ['ink','cells','turf','trace','stamps','gridHash','landings'])assert.deepEqual(row[key],set[0][key],'cadence '+pitch+': '+key);
+}
+fs.writeFileSync(out,JSON.stringify({site:process.env.INKWAVE_BUILT_SITE||null,cases},null,2)+'\n');

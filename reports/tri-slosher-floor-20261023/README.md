@@ -2,6 +2,8 @@
 
 状態: **INKWAVE の回帰・本番生成物・制御ブラウザA/Bは成功。本家の同条件映像による最終見た目承認は未完了。マージしない。**
 
+追記: このフォルダの `native-before/after` は色と外観が異なり、完全同条件の見た目A/Bではない。物理記録と区別する。訂正済み18Fペアとmain7eの新しい制御replayは [main7e候補記録](../tri-slosher-floor-main7e-20261023/README.md) に原画像を残して保存した。以下の旧結果は当時の履歴であり、新候補のexact-head CIや本家一致の承認ではない。
+
 ## 対象・本番経路
 
 基点は公式 main `726e338ac256ba9609086ce65e25a68ddd99df85`、新枝は `codex/tri-slosher-floor-droplets-20261023`。開始時に公式 open PR #1852 / #1853 / #1854 を読み、同件の修正がないことを確認した。#1854 の head `2e8d90b8afb6aac057edfbb988fae789ef36cfd3`、ローラー担当、シューター／スピナー担当は変更していない。

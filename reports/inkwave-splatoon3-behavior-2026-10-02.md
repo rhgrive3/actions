@@ -6143,3 +6143,10 @@ Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテ�
 ヒッセンの床滴だけ、既存Bucketの幅補正 `.5` と保存済み水平headingを表示に使う。旧表示はDrawRadius `.2/.3` を無補正で描き、最初の重力stepで表示軸を真下90度へ変えていた。本番合成 `Projectiles._drawLegacy` → `appendSourcedSplashVisuals` の当該actor分岐だけを変更。物理drop位置・速度・着地塗り・主弾・damage・ink・networkは変更しない。滴が落下する運動自体も維持する。
 
 本家の原典パラメータはSplatoon 3 11.3.0。任天堂ページの映像取得はHTTP403で停止し、同条件の本家encoded frame比較は未完。幅補正は既存INKWAVEの見た目較正であり、本家の物理発射角・メッシュ・メートル換算を確定したものではない。source29/29、本番生成物26/26、emitted塗りgolden3/3、制御Chromium10条件80instanceでbefore/afterの全物理trace・塗りが一致。通常メニューから練習場へ入ったnativeブラウザも両版成功、8点のsimulation frame比較で最終1315cellsを保持。粒子数は主弾9・床滴最大5で不変。本家見た目の最終承認と公開候補exact-head CIは別段階で、マージしない。[比較・阻害・画像・再実行記録](tri-slosher-floor-20261023/README.md)。
+
+
+## 2026-10-23 ヒッセン候補のmain7e依存照合・native画像訂正
+
+公式main7e `7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51` 比で元ヒッセンruntime blob `54f90896181bd28feefbd0bdff2c9347db03265f` だけを維持し、c68の閉じた参照QA修復とPR1853の追加9-edge拒否試験を両方保存した。special4runtimeと別担当のfiring adapterは取り込まない。source37成功/1emitted専用skip、生成物35/35、共通参照/メニュー18/18、両buildの13root/versioned参照とstartup budgetが成功。固定60Hz計測の9条件でcontrol/source/emittedの塗り・弾道・ink・damage・seed・着地が厳密一致した。
+
+旧native-before/afterの色/装備不一致を訂正し、旧画像は同条件の見た目A/Bに数えない。旧7bの訂正済みペアを保持し、新mainも同palette/Rookie/能力none/camera/seedで18Fだけ再撮影した。trusted menu入場後、freeze下の既存startMatch APIでfresh actorを作る制御replayによりcamera/87bone/物理traceが一致した。これは本家encoded frame比較ではなく、`.5` のUNSOURCED暫定校正も未承認のまま。[依存・build・測定・画像・初回失敗を含む記録](tri-slosher-floor-main7e-20261023/README.md)。PR1855 ref/mainはこの保存作業では動かさず、新候補のhosted CI成功も未主張。
