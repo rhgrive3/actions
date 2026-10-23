@@ -41,6 +41,15 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace(/G\.audio\?\.play\('blaster_pump'\s*,\s*\{[^{}]*\}\);/g,'void 0;');
     code=code.replace(/G\.audio\?\.play\(snd\s*,\s*\{[^{}]*\}\);/g,'void 0;');
     code=code.replace(/G\.audio\?\.play\('dualies_roll'\s*,\s*\{[^{}]*\}\);/g,'void 0;');
+    if(rel==='src/game/weapons.js'){
+      // Charger onset is an authored-by-source one-shot owned by the shared
+      // audio runtime state transition, NOT a looping legacy charger motor.
+      // Keep its native charge state/timing untouched and leave no loop handle.
+      code=once(code,
+        "if (a.isLocal || a._nearCamera()) this.chargeLoop = G.audio?.loop('charger_charge', { pos: a.isLocal ? undefined : a.pos, volume: a.isLocal ? 0.55 : 0.35, pitch: 1 });",
+        "this.chargeLoop = null;",
+        'native Charger starts with no fake repeating onset');
+    }
     for(const [old,event] of Object.entries({charger_charge:'charge',charger_full:'ready',roller_flick:'windup',roll:'roll',slosh_throw:'windup',splatling_wind:'windup',splatling_spin:'charge',splatling_ready:'ready'})){
       code=code.replace(new RegExp("G\\.audio\\?\\.(play|loop)\\('"+old+"',\\s*\\{",'g'),(_,method)=>`G.audio?.${method}Weapon?.(a.weapon.id, '${event}', { actor:a, `);
     }
@@ -60,7 +69,13 @@ export function adaptWeaponAudio(rel,code){
   }
   if(rel==='src/net/netmatch.js'){
     code=code.replace(/G\.audio\?\.play\('dualies_roll'\s*,\s*\{[^{}]*\}\);/g,'void 0;');
-    code=code.replace("G.audio?.loop?.(snd, { pos: a.pos, volume: 0 })", "G.audio?.loopWeapon?.(a.weapon.id, key==='charge'?'charge':key==='spin'?'spin':'roll', {actor:a, pos:a.pos,volume:0})");
+    // Network-owned Charger begins at the observed charge edge. Do not create
+    // a repeating remote HoldNoise. Preserve Splatling/Roller loop handling.
+    code=once(code,
+      "let h = this._voiceLoop(a, near, 'charge', wr.charging && k === 'charger', 'charger_charge');\n      if (h) h.set({ pos: a.pos, volume: 0.35, pitch: 1 + wr.charge * 1.5 });",
+      "const chargerStarting = wr.charging && k === 'charger';\n      if (chargerStarting && !a.net._chargerOnsetActive && near) G.audio?.playWeapon?.(a.weapon.id,'charge',{actor:a,pos:a.pos,volume:.35});\n      a.net._chargerOnsetActive = chargerStarting;\n      let h;",
+      'network Charger onset is a one-shot, never a remote loop');
+    code=code.replace("G.audio?.loop?.(snd, { pos: a.pos, volume: 0 })", "G.audio?.loopWeapon?.(a.weapon.id, key==='spin'?'spin':'roll', {actor:a, pos:a.pos,volume:0})");
     code=code.replace("G.audio?.play('roller_flick', { pos, volume: 0.8 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.8})");
     code=code.replace("G.audio?.play('slosh_throw', { pos, volume: 0.55 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.55})");
   }

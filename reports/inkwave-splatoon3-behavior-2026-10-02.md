@@ -5889,3 +5889,13 @@ Node22でsource全対象92case（既存clock25含む）と通常production compi
 Dynamo/他Roller/Brushの防御object・傘・BigBubblerへ、既存impactDamageで決済したUnit/距離/volley額を渡す。Bubbler queryは純粋に保ち、採用されたcontactだけ既存倍率を1回適用する。Unit1はdamage0のまま実CPU床paintとturf creditを維持。source UnitDamageRate0のNintendo engine解釈・実機unit分離は未確認で#1813を維持する。
 
 追加7 Roller/Brushの受入はactual Actor/Runner/Projectilesの330birth/22cover/780flight条件と、actual source pose/FX/WebGLのTidewater78条件。原作全parityとは区別する。Zipcaster失敗repeatは現45F境界を実Actorで確認し、原作ShotFailedIntervalFrm20とのphase意味は未確認。Urchin private physicsは正当なpinned source生成を用い60case完走したがassetsは公開せずhash/countのみ残す。詳細はcontinuation/weapons.mdおよび各receipt。
+
+## 2026-10-23: 全29未解決 issue の継続修正
+
+比較参照は Splatoon 3 Ver.11.3.0。基準は main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64`。既存 #1833/#1842/#1845/#1846 の履歴を専用ブランチで統合し、起動時計・native地形支持・Dynamo防御物ダメージ・Explosher/Quad表示の既存修正を保持する。他の統合PRやmainは書き換えない。
+
+- **Quad初回予測銃口 (#1431):** 最初の右手射撃は `aimReady < .98` のnative補間から生まれ、従来のraw socket限定表示接続を外れていた。元の `_muzzle` と同じ補間結果に一致するQuad右手出生だけ、同tickの描画銃口へFXと弾尾を接続する。物理出生・軌道・当たり・塗り・ダメージ・乱数・インク・通信は変更しない。既存の最大接続距離・LOSを保持し、遮蔽fallback・足元offset・ghost・遅延出生は接続しない。実Actor/Runner fixtureで修正前失敗を確認し、修正後は予測の物理不変と遮蔽対照を検査する。本家の開口部位置や発射順序を復元したという意味ではない。
+- **Brella表示の受信判定 (#1814関連):** nativeが129行のpacketを受理すると、128行上限の任意表示readerは付加情報を省く。その後の1行への縮小replayはnativeが拒否しても、既存physics点と一致するため以前のsnapshotにカサ表示を追加できた。今回のnative呼出が `lastTs` を実際に進めた場合だけ任意表示を処理する。実送受信fixtureの失敗対照と正常開閉・被弾・purge・再生・life/owner境界を検査する。HP/paintの偽造を観測したという意味ではなく、#1665/#1666 の全攻撃をtrusted authorityで再現する残件を解消したとは扱わない。
+- **Chargerクリック (#1823関連):** 既存 #1821 の音源追加前commit `7c96d754` と #1827 `32eebaf9` の6音声pathのみを抽出する。HoldNoiseを繰返し加工していたループとpitch上昇を除き、実charge開始と合法charge-keep復帰で1回ずつ既存録音を再生する。nativeで2回目の復帰も再武装し、remoteの二重発音・scope・Goo Tuber partial keepの所有を保持する。追加音声バイナリはない。本家S3の持続上昇レイヤー／SLINKが未取得であることは維持する。
+
+感度、B保持ジャンプ、Splatling減速、雨、靴高、歩行・被弾・ジャンプ曲線、Bloblobber反射の未校正値は推測で確定しない。Google Driveの現資料と公開原典も再検索し、2022音源・Scratch候補・S1資料をS3 11.3.0の確定根拠に昇格させない。物理iPad性能・Switch実機・原音権利の受入は未確認。個別29件と実行結果は `reports/issue-resolution-20261023/README.md` へ記録する。

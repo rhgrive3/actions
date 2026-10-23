@@ -90,3 +90,26 @@ test('actual local canopy snapshot opens remote cloth without creating a gamepla
 
  }finally{x.close();}
 });
+
+test('rejected replay cannot fill a Brella sidecar omitted by an accepted oversized presentation batch',async()=>{
+ const x=await world();try{
+  x.advance(30);const packet=x.send();
+  // Native tick admission permits this size, while the optional presentation
+  // reader intentionally caps its own work at 128 rows. Keep all native
+  // fields and the real emitted canopy pose; only repeat the actor row.
+  packet.a=Array.from({length:129},()=>JSON.parse(JSON.stringify(packet.a[0])));
+  x.receive(packet);
+  const peer=x.receiver.peers.get('owner'),snap=x.remote.net.buf.at(-1);
+  assert.equal(peer.lastTs,packet.ts,'the real native receiver admitted the envelope');
+  assert.equal(snap.t,packet.ts);assert.equal(Object.hasOwn(snap,'s3Brella'),false);
+  const before=JSON.stringify(snap),inbound=x.receiver.stats.in;
+  const replay=JSON.parse(JSON.stringify(packet));replay.a.length=1;
+  x.receiver.onMessage('owner',replay);x.receiver.applyRemote(x.remote,1/60);
+  assert.equal(x.receiver.stats.in,inbound,'native monotonic guard rejects the replay');
+  assert.equal(JSON.stringify(snap),before,'rejected replay cannot decorate an older accepted snapshot');
+  assert.equal(x.remote.character.s3BrellaPresentation?.canopy??null,null,'replay cannot open the remote cloth');
+  const next=x.send();x.receive(next);
+  assert.equal(x.receiver.peers.get('owner').lastTs,next.ts);
+  assert.equal(x.remote.character.s3BrellaPresentation?.canopy?.open,true,'next legal packet still opens the real cloth');
+ }finally{x.close();}
+});
