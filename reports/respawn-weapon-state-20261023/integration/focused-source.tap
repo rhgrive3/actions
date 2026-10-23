@@ -1,0 +1,636 @@
+TAP version 13
+# (node:3315) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: horizontal flick release holds sub for 14F and squid for 15F
+ok 1 - horizontal flick release holds sub for 14F and squid for 15F
+  ---
+  duration_ms: 807.154357
+  type: 'test'
+  ...
+# Subtest: vertical flick release holds sub for 18F and squid for 19F
+ok 2 - vertical flick release holds sub for 18F and squid for 19F
+  ---
+  duration_ms: 552.344962
+  type: 'test'
+  ...
+# Subtest: the gates are per-release and do not leak into later state
+ok 3 - the gates are per-release and do not leak into later state
+  ---
+  duration_ms: 752.995248
+  type: 'test'
+  ...
+# Subtest: the gate does not delay a non-Roller weapon
+ok 4 - the gate does not delay a non-Roller weapon
+  ---
+  duration_ms: 1292.028286
+  type: 'test'
+  ...
+# (node:3355) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: \#879 shooter: native respawn has class pose, attached grips and no gameplay edits
+ok 5 - \#879 shooter: native respawn has class pose, attached grips and no gameplay edits
+  ---
+  duration_ms: 21719.202257
+  type: 'test'
+  ...
+# Subtest: \#879 roller: native respawn has class pose, attached grips and no gameplay edits
+ok 6 - \#879 roller: native respawn has class pose, attached grips and no gameplay edits
+  ---
+  duration_ms: 604.141278
+  type: 'test'
+  ...
+# Subtest: \#879 charger: native respawn has class pose, attached grips and no gameplay edits
+ok 7 - \#879 charger: native respawn has class pose, attached grips and no gameplay edits
+  ---
+  duration_ms: 441.589826
+  type: 'test'
+  ...
+# Subtest: \#879 slosher: native respawn has class pose, attached grips and no gameplay edits
+ok 8 - \#879 slosher: native respawn has class pose, attached grips and no gameplay edits
+  ---
+  duration_ms: 337.380653
+  type: 'test'
+  ...
+# Subtest: \#879 splatling: native respawn has class pose, attached grips and no gameplay edits
+ok 9 - \#879 splatling: native respawn has class pose, attached grips and no gameplay edits
+  ---
+  duration_ms: 411.417952
+  type: 'test'
+  ...
+# Subtest: \#879 dualies: native respawn has class pose, attached grips and no gameplay edits
+ok 10 - \#879 dualies: native respawn has class pose, attached grips and no gameplay edits
+  ---
+  duration_ms: 473.13017
+  type: 'test'
+  ...
+# Subtest: \#879 blaster: native respawn has class pose, attached grips and no gameplay edits
+ok 11 - \#879 blaster: native respawn has class pose, attached grips and no gameplay edits
+  ---
+  duration_ms: 1023.922932
+  type: 'test'
+  ...
+# Subtest: \#879 all families have unique calibrated target curves and documented complete timelines
+ok 12 - \#879 all families have unique calibrated target curves and documented complete timelines
+  ---
+  duration_ms: 0.949448
+  type: 'test'
+  ...
+# Subtest: \#879 local: 30/60/120 Hz renders yield identical fixed phase boundaries
+ok 13 - \#879 local: 30/60/120 Hz renders yield identical fixed phase boundaries
+  ---
+  duration_ms: 649.820098
+  type: 'test'
+  ...
+# Subtest: \#879 remote: 30/60/120 Hz renders yield identical fixed phase boundaries
+ok 14 - \#879 remote: 30/60/120 Hz renders yield identical fixed phase boundaries
+  ---
+  duration_ms: 550.262188
+  type: 'test'
+  ...
+# Subtest: \#879 remote timestamped spawn trigger selects the same class as local and needs no new packet
+ok 15 - \#879 remote timestamped spawn trigger selects the same class as local and needs no new packet
+  ---
+  duration_ms: 410.025708
+  type: 'test'
+  ...
+# Subtest: \#879 land cancels ownership and cannot revive until another spawn
+ok 16 - \#879 land cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 131.26326
+  type: 'test'
+  ...
+# Subtest: \#879 death cancels ownership and cannot revive until another spawn
+ok 17 - \#879 death cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 110.646242
+  type: 'test'
+  ...
+# Subtest: \#879 special cancels ownership and cannot revive until another spawn
+ok 18 - \#879 special cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 369.354618
+  type: 'test'
+  ...
+# Subtest: \#879 superjump cancels ownership and cannot revive until another spawn
+ok 19 - \#879 superjump cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 107.586643
+  type: 'test'
+  ...
+# Subtest: \#879 weapon cancels ownership and cannot revive until another spawn
+ok 20 - \#879 weapon cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 81.007972
+  type: 'test'
+  ...
+# Subtest: \#879 hidden cancels ownership and cannot revive until another spawn
+ok 21 - \#879 hidden cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 151.210246
+  type: 'test'
+  ...
+# Subtest: \#879 reset cancels ownership and cannot revive until another spawn
+ok 22 - \#879 reset cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 83.664267
+  type: 'test'
+  ...
+# Subtest: \#879 sub cancels ownership and cannot revive until another spawn
+ok 23 - \#879 sub cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 89.409477
+  type: 'test'
+  ...
+# Subtest: \#879 shoot cancels ownership and cannot revive until another spawn
+ok 24 - \#879 shoot cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 70.000381
+  type: 'test'
+  ...
+# Subtest: \#879 squid cancels ownership and cannot revive until another spawn
+ok 25 - \#879 squid cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 107.430368
+  type: 'test'
+  ...
+# Subtest: \#879 spawn pose is independent from armor loss and installer is idempotent across realms
+ok 26 - \#879 spawn pose is independent from armor loss and installer is idempotent across realms
+  ---
+  duration_ms: 84.162582
+  type: 'test'
+  ...
+# Subtest: \#879 shooter: full class timeline keeps both grips and releases at its calibrated end
+ok 27 - \#879 shooter: full class timeline keeps both grips and releases at its calibrated end
+  ---
+  duration_ms: 132.072886
+  type: 'test'
+  ...
+# Subtest: \#879 roller: full class timeline keeps both grips and releases at its calibrated end
+ok 28 - \#879 roller: full class timeline keeps both grips and releases at its calibrated end
+  ---
+  duration_ms: 149.855617
+  type: 'test'
+  ...
+# Subtest: \#879 charger: full class timeline keeps both grips and releases at its calibrated end
+ok 29 - \#879 charger: full class timeline keeps both grips and releases at its calibrated end
+  ---
+  duration_ms: 156.185315
+  type: 'test'
+  ...
+# Subtest: \#879 slosher: full class timeline keeps both grips and releases at its calibrated end
+ok 30 - \#879 slosher: full class timeline keeps both grips and releases at its calibrated end
+  ---
+  duration_ms: 195.40889
+  type: 'test'
+  ...
+# Subtest: \#879 splatling: full class timeline keeps both grips and releases at its calibrated end
+ok 31 - \#879 splatling: full class timeline keeps both grips and releases at its calibrated end
+  ---
+  duration_ms: 169.207334
+  type: 'test'
+  ...
+# Subtest: \#879 dualies: full class timeline keeps both grips and releases at its calibrated end
+ok 32 - \#879 dualies: full class timeline keeps both grips and releases at its calibrated end
+  ---
+  duration_ms: 118.701728
+  type: 'test'
+  ...
+# Subtest: \#879 blaster: full class timeline keeps both grips and releases at its calibrated end
+ok 33 - \#879 blaster: full class timeline keeps both grips and releases at its calibrated end
+  ---
+  duration_ms: 132.862171
+  type: 'test'
+  ...
+# Subtest: \#879 ordinary air/jump never starts spawn and a new authoritative spawn can restart after landing
+ok 34 - \#879 ordinary air/jump never starts spawn and a new authoritative spawn can restart after landing
+  ---
+  duration_ms: 137.334615
+  type: 'test'
+  ...
+# (node:3504) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: remote shooter splat uses the same cause timing as its owner
+ok 35 - remote shooter splat uses the same cause timing as its owner
+  ---
+  duration_ms: 731.167663
+  type: 'test'
+  ...
+# Subtest: remote water splat uses the same cause timing as its owner
+ok 36 - remote water splat uses the same cause timing as its owner
+  ---
+  duration_ms: 554.039181
+  type: 'test'
+  ...
+# Subtest: remote fall splat uses the same cause timing as its owner
+ok 37 - remote fall splat uses the same cause timing as its owner
+  ---
+  duration_ms: 798.183441
+  type: 'test'
+  ...
+# Subtest: proxy respawn clears real wall Surge charge and roll armor like owner reset
+ok 38 - proxy respawn clears real wall Surge charge and roll armor like owner reset
+  ---
+  duration_ms: 1007.995741
+  type: 'test'
+  ...
+# Subtest: old missing remote movement cleanup retains the prior-life Surge after native respawn
+ok 39 - old missing remote movement cleanup retains the prior-life Surge after native respawn
+  ---
+  duration_ms: 1197.896134
+  type: 'test'
+  ...
+# (node:3511) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: post-splat gauge including equipped Special Saver survives Squid Spawn; initial spawn/reset still clears
+ok 40 - post-splat gauge including equipped Special Saver survives Squid Spawn; initial spawn/reset still clears
+  ---
+  duration_ms: 896.270916
+  type: 'test'
+  ...
+# Subtest: armor durability, delayed break and uncapped per-hit overflow replace binary immunity
+ok 41 - armor durability, delayed break and uncapped per-hit overflow replace binary immunity
+  ---
+  duration_ms: 822.467412
+  type: 'test'
+  ...
+# Subtest: armor clock expires at 235F, ink bypasses it, reset/death clear and generic invulnerability remains separate
+ok 42 - armor clock expires at 235F, ink bypasses it, reset/death clear and generic invulnerability remains separate
+  ---
+  duration_ms: 942.429433
+  type: 'test'
+  ...
+# Subtest: rearm blocks held Roller across actual death/respawn until release, without synthetic airborne flick
+ok 43 - rearm blocks held Roller across actual death/respawn until release, without synthetic airborne flick
+  ---
+  duration_ms: 1108.854044
+  type: 'test'
+  ...
+# Subtest: all held action keys rearm independently, stale press ordering disappears, and bots are not trapped
+ok 44 - all held action keys rearm independently, stale press ordering disappears, and bots are not trapped
+  ---
+  duration_ms: 1747.188823
+  type: 'test'
+  ...
+# Subtest: HUD samples final actor timer after gear wrapper, ignores independent FX time and isolates players
+ok 45 - HUD samples final actor timer after gear wrapper, ignores independent FX time and isolates players
+  ---
+  duration_ms: 830.543819
+  type: 'test'
+  ...
+# Subtest: \#93 Turf Squid Spawn preserves Quick Respawn history through launch and feeds the gear-adjusted HUD timer
+ok 46 - \#93 Turf Squid Spawn preserves Quick Respawn history through launch and feeds the gear-adjusted HUD timer
+  ---
+  duration_ms: 894.094952
+  type: 'test'
+  ...
+# Subtest: 30/60/120 render schedules preserve armor and retained gauge boundaries
+ok 47 - 30/60/120 render schedules preserve armor and retained gauge boundaries
+  ---
+  duration_ms: 2844.180142
+  type: 'test'
+  ...
+# Subtest: real composed controller keeps held mouse blocked through map filtering and release re-arms it
+ok 48 - real composed controller keeps held mouse blocked through map filtering and release re-arms it
+  ---
+  duration_ms: 1455.567588
+  type: 'test'
+  ...
+# Subtest: source-connected HUD owns actual actor count/ring rather than the early splatted-event base value
+ok 49 - source-connected HUD owns actual actor count/ring rather than the early splatted-event base value
+  ---
+  duration_ms: 14.296115
+  type: 'test'
+  ...
+# Subtest: native NetMatch mirrors launch-owned armor; proxy stays presentation-only throughout landing
+ok 50 - native NetMatch mirrors launch-owned armor; proxy stays presentation-only throughout landing
+  ---
+  duration_ms: 1561.988866
+  type: 'test'
+  ...
+# Subtest: a spawn hit has one armor owner even when roll/surge protection overlaps
+ok 51 - a spawn hit has one armor owner even when roll/surge protection overlaps
+  ---
+  duration_ms: 1938.125475
+  type: 'test'
+  ...
+# Subtest: \#93 normal Turf battle human post-death Squid Spawn selects supported targets from camera aim and confirms via FIRE
+ok 52 - \#93 normal Turf battle human post-death Squid Spawn selects supported targets from camera aim and confirms via FIRE
+  ---
+  duration_ms: 1930.050081
+  type: 'test'
+  ...
+# Subtest: \#93 height-only endpoints rejected by native Actor._resolve stay out of aim and launch
+ok 53 - \#93 height-only endpoints rejected by native Actor._resolve stay out of aim and launch
+  ---
+  duration_ms: 1892.661777
+  type: 'test'
+  ...
+# Subtest: \#1005 launch-owned armor clock is consumed through Squid Spawn touchdown
+ok 54 - \#1005 launch-owned armor clock is consumed through Squid Spawn touchdown
+  ---
+  duration_ms: 2154.634879
+  type: 'test'
+  ...
+# Subtest: \#93 supported touchdown uses native collision, preserves launch armor time, and adds no paint
+ok 55 - \#93 supported touchdown uses native collision, preserves launch armor time, and adds no paint
+  ---
+  duration_ms: 1434.805499
+  type: 'test'
+  ...
+# Subtest: \#93 a real native Actor._resolve miss cannot award touchdown, reset armor, or paint
+ok 56 - \#93 a real native Actor._resolve miss cannot award touchdown, reset armor, or paint
+  ---
+  duration_ms: 1168.390528
+  type: 'test'
+  ...
+# Subtest: Practice Range keeps immediate control and legacy respawn without Turf Squid Spawn
+ok 57 - Practice Range keeps immediate control and legacy respawn without Turf Squid Spawn
+  ---
+  duration_ms: 1435.650014
+  type: 'test'
+  ...
+# Subtest: \#512 opening bots choose different deterministic and collision-supported Squid Spawn landings
+ok 58 - \#512 opening bots choose different deterministic and collision-supported Squid Spawn landings
+  ---
+  duration_ms: 2291.014225
+  type: 'test'
+  ...
+# Subtest: \#512 human opening choice is still aim-owned and invalid bot landings fail closed
+ok 59 - \#512 human opening choice is still aim-owned and invalid bot landings fail closed
+  ---
+  duration_ms: 1210.902023
+  type: 'test'
+  ...
+# (node:3543) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: one production installer and duplicate module realms preserve hook identity; nullable previews use native IK
+ok 60 - one production installer and duplicate module realms preserve hook identity; nullable previews use native IK
+  ---
+  duration_ms: 29352.895033
+  type: 'test'
+  ...
+# Subtest: horizontal startup removes the double lift in actual posed geometry while preserving gameplay and native grips
+ok 61 - horizontal startup removes the double lift in actual posed geometry while preserving gameplay and native grips
+  ---
+  duration_ms: 1184.4263
+  type: 'test'
+  ...
+# Subtest: vertical release, recovery, held ground pushing and lift on a fresh attack retain native geometry and timing
+ok 62 - vertical release, recovery, held ground pushing and lift on a fresh attack retain native geometry and timing
+  ---
+  duration_ms: 1448.382252
+  type: 'test'
+  ...
+# Subtest: 35F/42F instance timing never replays the horizontal legacy tail; gameplay clocks are unchanged
+ok 63 - 35F/42F instance timing never replays the horizontal legacy tail; gameplay clocks are unchanged
+  ---
+  duration_ms: 663.379573
+  type: 'test'
+  ...
+# Subtest: 30/60/120Hz presentation and zero elapsed pause give identical 60Hz posed bones and indexed geometry
+ok 64 - 30/60/120Hz presentation and zero elapsed pause give identical 60Hz posed bones and indexed geometry
+  ---
+  duration_ms: 1144.330515
+  type: 'test'
+  ...
+# Subtest: reset, death, sub aim, form, weapon and special interruption clear addon state without changing the runner
+ok 65 - reset, death, sub aim, form, weapon and special interruption clear addon state without changing the runner
+  ---
+  duration_ms: 355.280711
+  type: 'test'
+  ...
+# Subtest: hide interrupts the current roller startup without cancelling its native runner
+ok 66 - hide interrupts the current roller startup without cancelling its native runner
+  ---
+  duration_ms: 203.227931
+  type: 'test'
+  ...
+# (node:3551) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: \#373 horizontal/vertical actual windup holds 2.88 without changing 21/31F release or ink
+ok 67 - \#373 horizontal/vertical actual windup holds 2.88 without changing 21/31F release or ink
+  ---
+  duration_ms: 1856.018386
+  type: 'test'
+  ...
+# Subtest: \#373 independent target remains constant with gear/Flow and selected mode survives landing
+ok 68 - \#373 independent target remains constant with gear/Flow and selected mode survives landing
+  ---
+  duration_ms: 2194.027169
+  type: 'test'
+  ...
+# Subtest: \#373 native actor horizontal uses fixed target and keeps acceleration, not a velocity snap
+ok 69 - \#373 native actor horizontal uses fixed target and keeps acceleration, not a velocity snap
+  ---
+  duration_ms: 1093.35205
+  type: 'test'
+  ...
+# Subtest: \#373 hold-to-roll transition, dash, lock, reset and dry admission retain native branches
+ok 70 - \#373 hold-to-roll transition, dash, lock, reset and dry admission retain native branches
+  ---
+  duration_ms: 918.951866
+  type: 'test'
+  ...
+# Subtest: \#373 fixed 60Hz traces are equal at 30/60/120 render schedules
+ok 71 - \#373 fixed 60Hz traces are equal at 30/60/120 render schedules
+  ---
+  duration_ms: 2421.209778
+  type: 'test'
+  ...
+# Subtest: vertical release retains source swing speed until 56F recovery, including airborne steering
+ok 72 - vertical release retains source swing speed until 56F recovery, including airborne steering
+  ---
+  duration_ms: 898.428177
+  type: 'test'
+  ...
+# Subtest: vertical ink-release key stays upright through follow-through, never replays the horizontal flick
+ok 73 - vertical ink-release key stays upright through follow-through, never replays the horizontal flick
+  ---
+  duration_ms: 0.801952
+  type: 'test'
+  ...
+# (node:3559) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: installed native Character builds articulated body, ink and drum under one real hinge
+ok 74 - installed native Character builds articulated body, ink and drum under one real hinge
+  ---
+  duration_ms: 17708.790844
+  type: 'test'
+  ...
+# Subtest: owner and remote Character use the same attack state; the fold hook leaves gameplay unchanged
+ok 75 - owner and remote Character use the same attack state; the fold hook leaves gameplay unchanged
+  ---
+  duration_ms: 1241.991843
+  type: 'test'
+  ...
+# Subtest: owner network tick carries horizontal and vertical fold mode through remote apply into the native Character
+ok 76 - owner network tick carries horizontal and vertical fold mode through remote apply into the native Character
+  ---
+  duration_ms: 2822.35768
+  type: 'test'
+  ...
+# Subtest: an adopted local Roller ignores its retained proxy fold snapshot
+ok 77 - an adopted local Roller ignores its retained proxy fold snapshot
+  ---
+  duration_ms: 867.07475
+  type: 'test'
+  ...
+# Subtest: vertical, horizontal, rolling and carry hinge curves stay stable at 30/60/120Hz, including zero elapsed updates
+ok 78 - vertical, horizontal, rolling and carry hinge curves stay stable at 30/60/120Hz, including zero elapsed updates
+  ---
+  duration_ms: 3193.596547
+  type: 'test'
+  ...
+# Subtest: reset, death, weapon swap and disposal do not retain or accumulate a hinge transform
+ok 79 - reset, death, weapon swap and disposal do not retain or accumulate a hinge transform
+  ---
+  duration_ms: 1864.088018
+  type: 'test'
+  ...
+# (node:3609) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: held Roller lowers its hands about the same live cylinder; off-center fault is rejected
+ok 80 - held Roller lowers its hands about the same live cylinder; off-center fault is rejected
+  ---
+  duration_ms: 88007.357661
+  type: 'test'
+  ...
+# Subtest: rolling right grip advances to one third without moving the actual drum or release pose
+ok 81 - rolling right grip advances to one third without moving the actual drum or release pose
+  ---
+  duration_ms: 35718.447058
+  type: 'test'
+  ...
+# Subtest: rolling shaft clears the torso while actual paint follows the shifted drum
+ok 82 - rolling shaft clears the torso while actual paint follows the shifted drum
+  ---
+  duration_ms: 25224.483139
+  type: 'test'
+  ...
+# (node:3717) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: \#527 current freefall owner preserves natural-fall horizontal and accepted-jump vertical squid startup
+ok 83 - \#527 current freefall owner preserves natural-fall horizontal and accepted-jump vertical squid startup
+  ---
+  duration_ms: 1114.863309
+  type: 'test'
+  ...
+# Subtest: vertical lift keeps rising to the late crest instead of borrowing the horizontal overhead hold
+ok 84 - vertical lift keeps rising to the late crest instead of borrowing the horizontal overhead hold
+  ---
+  duration_ms: 5.503674
+  type: 'test'
+  ...
+# Subtest: vertical fitted grip has continuous position and velocity across crest, release, follow-through and return
+ok 85 - vertical fitted grip has continuous position and velocity across crest, release, follow-through and return
+  ---
+  duration_ms: 0.528418
+  type: 'test'
+  ...
+# (node:3744) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: simultaneous jump and fire go through actual Actor and retain vertical mode on landing
+ok 86 - simultaneous jump and fire go through actual Actor and retain vertical mode on landing
+  ---
+  duration_ms: 574.704361
+  type: 'test'
+  ...
+# Subtest: horizontal/vertical windups release on 21/31 elapsed ticks without an extra float tick
+ok 87 - horizontal/vertical windups release on 21/31 elapsed ticks without an extra float tick
+  ---
+  duration_ms: 3416.985078
+  type: 'test'
+  ...
+# Subtest: jump after starting a horizontal attack keeps its selected mode; the next attack reselects
+ok 88 - jump after starting a horizontal attack keeps its selected mode; the next attack reselects
+  ---
+  duration_ms: 501.431417
+  type: 'test'
+  ...
+# Subtest: a new flick lifts the rolling drum, a held trigger resumes rolling, release stops it
+ok 89 - a new flick lifts the rolling drum, a held trigger resumes rolling, release stops it
+  ---
+  duration_ms: 558.148208
+  type: 'test'
+  ...
+# Subtest: dry input does not create a phantom pose or spend ink
+ok 90 - dry input does not create a phantom pose or spend ink
+  ---
+  duration_ms: 534.623466
+  type: 'test'
+  ...
+# Subtest: actual projectile path retains narrow vertical paint flight and one-attack damage aggregation
+ok 91 - actual projectile path retains narrow vertical paint flight and one-attack damage aggregation
+  ---
+  duration_ms: 495.640522
+  type: 'test'
+  ...
+# Subtest: actual bones and weapon rotate vertically and the drum impulse waits for gameplay release
+ok 92 - actual bones and weapon rotate vertically and the drum impulse waits for gameplay release
+  ---
+  duration_ms: 13253.261262
+  type: 'test'
+  ...
+# Subtest: actual moving roller geometry and both grips stay synchronized through lift, landing, held roll and restart at 30/60/120Hz
+ok 93 - actual moving roller geometry and both grips stay synchronized through lift, landing, held roll and restart at 30/60/120Hz
+  ---
+  duration_ms: 4135.698925
+  type: 'test'
+  ...
+# Subtest: reset during a real Character windup cancels the legacy pose and drum impulse; form transitions do not invent an attack
+ok 94 - reset during a real Character windup cancels the legacy pose and drum impulse; form transitions do not invent an attack
+  ---
+  duration_ms: 990.171838
+  type: 'test'
+  ...
+# Subtest: Character channel/drum hooks are hash locked and fail closed
+ok 95 - Character channel/drum hooks are hash locked and fail closed
+  ---
+  duration_ms: 33.171285
+  type: 'test'
+  ...
+# Subtest: roller drum uses the measured source width; a pushed drum rests on the floor with both grips held
+ok 96 - roller drum uses the measured source width; a pushed drum rests on the floor with both grips held
+  ---
+  duration_ms: 1516.088614
+  type: 'test'
+  ...
+# Subtest: post-release roll admission separates horizontal 7F vs vertical 22F at 60Hz (\#517)
+ok 97 - post-release roll admission separates horizontal 7F vs vertical 22F at 60Hz (\#517)
+  ---
+  duration_ms: 638.983649
+  type: 'test'
+  ...
+# Subtest: vertical flick does not deal roll contact damage or produce roll paint during the 22F admission delay (\#517)
+ok 98 - vertical flick does not deal roll contact damage or produce roll paint during the 22F admission delay (\#517)
+  ---
+  duration_ms: 761.272851
+  type: 'test'
+  ...
+# Subtest: release input before roll admission cancels transition, and runner reset cancels rolling (\#517)
+ok 99 - release input before roll admission cancels transition, and runner reset cancels rolling (\#517)
+  ---
+  duration_ms: 640.275812
+  type: 'test'
+  ...
+# Subtest: post-release roll admission timing maintains parity across 30Hz, 60Hz, and 120Hz (\#517)
+ok 100 - post-release roll admission timing maintains parity across 30Hz, 60Hz, and 120Hz (\#517)
+  ---
+  duration_ms: 2772.925468
+  type: 'test'
+  ...
+# Subtest: procedural vertical follow-through hands off to roll push pose on the exact admission tick (\#517)
+ok 101 - procedural vertical follow-through hands off to roll push pose on the exact admission tick (\#517)
+  ---
+  duration_ms: 1239.423631
+  type: 'test'
+  ...
+1..101
+# tests 101
+# suites 0
+# pass 101
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 334217.990675

@@ -1,0 +1,15 @@
+{
+  "base": "702ce3d146043928fd4b783241105871515f9d92",
+  "runtimePath": "patches/splatoon3/runtime/spawn-pose-motion.mjs",
+  "changedFunction": "spawnMotionAllowsAction",
+  "runtimeSha256": "1756151408ac7e6a27ae97b4ce62044bea04d9782924928b96b7a30112663dde",
+  "patchSha256": "06e4b42d43c8e3b5dbaf4af9fc586c51572049b8a90fa9738bced34fa128d157",
+  "newPerFrameAllocations": 0,
+  "lookupCacheWrites": 0,
+  "oldPR1862Updated": false,
+  "newPRCreated": false,
+  "imageAppearanceAcceptance": "deferred; no geometry/curve/IK/grip changes",
+  "productionExecutableLinesAdded": 2,
+  "patchArchive": "runtime.patch.gz",
+  "patchHashAppliesTo": "uncompressed exact unified diff"
+}

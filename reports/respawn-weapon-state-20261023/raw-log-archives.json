@@ -1,0 +1,23 @@
+[
+  {
+    "originalPath": "reports/respawn-weapon-state-20261023/integration/old-emitted-failure-control.tap",
+    "originalSha256": "21c8e3077a0b606681b7400e2f0fdfcbe8f3f59442ad638382386e46d5459980",
+    "archivePath": "reports/respawn-weapon-state-20261023/integration/old-emitted-failure-control.tap.gz",
+    "uncompressedBytes": 6808,
+    "originalHistoryCommit": "85de2c0051d6428b20284d377e43c637066615d2"
+  },
+  {
+    "originalPath": "reports/respawn-weapon-state-20261023/regression-before.tap",
+    "originalSha256": "75a965d61efccfd55ccd3bd3c8cf24cbf94e2546107a82e475f2d6d039c4f0d3",
+    "archivePath": "reports/respawn-weapon-state-20261023/regression-before.tap.gz",
+    "uncompressedBytes": 4688,
+    "originalHistoryCommit": "85de2c0051d6428b20284d377e43c637066615d2"
+  },
+  {
+    "originalPath": "reports/respawn-weapon-state-20261023/regression-emitted-before.tap",
+    "originalSha256": "313c024d26fd2953074a477329f605134ab02aff1d31cc03702a97f073260842",
+    "archivePath": "reports/respawn-weapon-state-20261023/regression-emitted-before.tap.gz",
+    "uncompressedBytes": 6487,
+    "originalHistoryCommit": "85de2c0051d6428b20284d377e43c637066615d2"
+  }
+]

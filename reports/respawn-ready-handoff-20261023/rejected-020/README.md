@@ -1,0 +1,5 @@
+# Rejected 0.2s joint-shortest-path prototype
+
+Not accepted despite numerical continuity checks passing. First return step7.761 degrees; maximum25.002 degrees / .091236WU /74.848px projected height delta. Canonical/native outputs at15 common normal records match708 and settled145 is exact. Actual normal emitted17/17 passes. However actual intermediate drum vertices penetrate the floor: y=-1.176467 at66, with visible clipping. The shorter0.1 prototype shares this downward return route. Source/new browser floor-clearance regressions must reject this before adopting a different display path.
+
+The read-only arc probe uses frozen local/world transforms and conservative drum-box corners. It finds the hand's local shortest path is132.506 degrees and the alternate hemisphere is227.494 degrees at first return; the alternative raises the drum center and clears the floor in the stored intermediate points. This is a mathematical counterfactual, not an actual rendered or accepted fix. Runtime/native grip/IK/attack curves have not been changed here.

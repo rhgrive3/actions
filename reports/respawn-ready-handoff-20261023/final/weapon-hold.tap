@@ -1,0 +1,23 @@
+(node:12739) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ the attack/carry handoff no longer jumps the weapon; the gameplay muzzle is unchanged (33251.795305ms)
+✔ the handoff fade lasts the same time at 30, 60 and 120 Hz (1856.208433ms)
+✔ shooters and blasters fire from beside the right cheek, not the chest (1518.945161ms)
+✔ a stringer draws with the left hand on the string; at rest it hangs in the right hand (693.049059ms)
+✔ a brush rests in the ready stance, both fists at the butt, head up past the right shoulder (1373.166718ms)
+✔ family grip scales and independently calibrated Roller width remain distinct (1154.307446ms)
+✔ standing still, the front (left) foot points straight ahead: shooter, brush and roller (557.016915ms)
+✔ a brush stands with the right foot out to the side and the body twisted under a forward head (367.388978ms)
+✔ the torso is shorter: the shoulders and everything above drop, the crotch does not (47.92873ms)
+✔ rollers stand on the brush legs; sloshers share its source body with the right foot back (716.584403ms)
+✔ the bucket rests at the right side, right fist on its rear grip, left hand across on the top handle (476.877296ms)
+✔ every slosher rests two-handed at the right side: right fist on the rear grip, left hand on the top handle (6684.546496ms)
+✔ the carried slosher clears the legs and torso standing, walking and at full tilt (30/60/120 Hz) (48999.870173ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 98065.073891

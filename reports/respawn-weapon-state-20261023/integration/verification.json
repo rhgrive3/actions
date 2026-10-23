@@ -1,0 +1,70 @@
+{
+  "status": "applied candidate; local gates passed; official publication/readback and hosted CI are separate",
+  "base": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "branch": "fix/respawn-weapon-state-20261023",
+  "normalBuild": {
+    "inputHash": "18f8d3566ffd8285705333d621392687402ce51b378add1eae7722ad087d60c5",
+    "contentHash": "f4e8d88d57e6d32b1de97d204628680d39b36ec23a2e586d0b73e9482cf67ac2",
+    "inputs": 1420,
+    "artifactsVerified": 2110
+  },
+  "tests": {
+    "source": {
+      "tests": 8,
+      "pass": 8,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "emitted": {
+      "tests": 8,
+      "pass": 8,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "focused-source": {
+      "tests": 101,
+      "pass": 101,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "contracts": {
+      "tests": 72,
+      "pass": 72,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "old-emitted-failure-control": {
+      "tests": 8,
+      "pass": 1,
+      "fail": 7,
+      "skipped": 0,
+      "cancelled": 0
+    }
+  },
+  "nativeBrowser": {
+    "matchedCheckpoints": 11,
+    "images": 16,
+    "overlays": false,
+    "runtimeResponseBodiesVerified": 14,
+    "noInputShots": 0,
+    "noInputPaint": 0,
+    "displayFPSMeasured": false,
+    "realTransportClaimed": false
+  },
+  "runtimeChangeManifest": "runtime-change-manifest.json",
+  "runtimePatchSha256": "63e3edf7ba951b6e469f899838af309f7e86b5b4aad46bda30640f1cb3b46dd8",
+  "remaining": [
+    "exact published HEAD hosted CI",
+    "same-condition retail footage/frame/trajectory comparison"
+  ],
+  "hashes": {
+    "patches/splatoon3/tests/respawn-weapon-state.test.mjs": "993cf99ef36d26e2530edf6f862b8ce6b5a0f93adf1864166aeb2638ddfaebaa",
+    "scripts/check-inkwave-respawn-weapon-browser.mjs": "df955359a5b87945e0021554e62c85063f3f36b840a65995bbfdbe389ea8c03a",
+    "scripts/compare-inkwave-respawn-weapon-browser.mjs": "90be987351547ad719104197a4c7d965e029011282db2441a8dbb34b7a97d902",
+    ".github/workflows/inkwave-object-presentation-qa.yml": "42bdcaa86130a0a8518d1bae67f5aab19d97d209b84048f23ab51eed09ceb318"
+  }
+}

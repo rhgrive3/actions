@@ -1,0 +1,38 @@
+{
+  "productionBase": "bd5a517bc202021b0387393adf269f1612736e7a",
+  "qaOnlyCandidate": "a042911bf1df6cdd4f1e431fa205aa4e4f2c7f97",
+  "productionChangedPaths": [
+    "patches/splatoon3/runtime/weapon-handoff-motion.mjs"
+  ],
+  "changedFunctions": [
+    "installWeaponHandoffMotion: accept optional Actor and install display-state-only reset pass-through"
+  ],
+  "runtimeSHA256": "dc507aa54dcec2aee09fcaea6dc5209b44ba0e635aa3a9d6d959f379005fb916",
+  "exactRuntimePatchSHA256": "db5447444e71926ba605b146bff630b2287ba557913bdfb8623dc02cc75a50f0",
+  "nativeResetBodyChanged": false,
+  "nativeResetCallsPerWrapperCall": 1,
+  "nativeResetArgumentsReturnForwarded": true,
+  "perFramePathChanged": false,
+  "normalHandoffAndArcBodiesChanged": false,
+  "sourceTests": {
+    "pass": 18,
+    "fail": 0
+  },
+  "normalEmittedTests": {
+    "pass": 18,
+    "fail": 0
+  },
+  "referenceTests": {
+    "pass": 8,
+    "fail": 0
+  },
+  "pinnedReferences": {
+    "source": 13,
+    "normalEmitted": 13
+  },
+  "oldWeightAfterReset": 0.9259259259259259,
+  "oldWeightFirstNewFrame": 0.84375,
+  "newRecordAfterReset": null,
+  "newWeightFirstNewFrame": 0,
+  "PRMainUpdated": false
+}

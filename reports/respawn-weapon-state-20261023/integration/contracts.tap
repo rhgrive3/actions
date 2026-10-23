@@ -1,0 +1,446 @@
+TAP version 13
+# Subtest: ci-quality-gate.yml/verify-aplus-suite: pins the same immutable PR, push or dispatch source and asserts actual checkout
+ok 1 - ci-quality-gate.yml/verify-aplus-suite: pins the same immutable PR, push or dispatch source and asserts actual checkout
+  ---
+  duration_ms: 42.150639
+  type: 'test'
+  ...
+# Subtest: ci-quality-gate.yml/verify-aplus-suite: rejects regressions to unpinned or optional identity
+ok 2 - ci-quality-gate.yml/verify-aplus-suite: rejects regressions to unpinned or optional identity
+  ---
+  duration_ms: 6.191502
+  type: 'test'
+  ...
+# Subtest: inkwave-specials-1130.yml/special-fidelity: pins the same immutable PR, push or dispatch source and asserts actual checkout
+ok 3 - inkwave-specials-1130.yml/special-fidelity: pins the same immutable PR, push or dispatch source and asserts actual checkout
+  ---
+  duration_ms: 42.237874
+  type: 'test'
+  ...
+# Subtest: inkwave-specials-1130.yml/special-fidelity: rejects regressions to unpinned or optional identity
+ok 4 - inkwave-specials-1130.yml/special-fidelity: rejects regressions to unpinned or optional identity
+  ---
+  duration_ms: 1.086894
+  type: 'test'
+  ...
+# Subtest: inkwave-specials-1130.yml/catalogue-browser: pins the same immutable PR, push or dispatch source and asserts actual checkout
+ok 5 - inkwave-specials-1130.yml/catalogue-browser: pins the same immutable PR, push or dispatch source and asserts actual checkout
+  ---
+  duration_ms: 38.744335
+  type: 'test'
+  ...
+# Subtest: inkwave-specials-1130.yml/catalogue-browser: rejects regressions to unpinned or optional identity
+ok 6 - inkwave-specials-1130.yml/catalogue-browser: rejects regressions to unpinned or optional identity
+  ---
+  duration_ms: 0.938916
+  type: 'test'
+  ...
+# Subtest: inkwave-reopened-six.yml/reopened-six: pins the same immutable PR, push or dispatch source and asserts actual checkout
+ok 7 - inkwave-reopened-six.yml/reopened-six: pins the same immutable PR, push or dispatch source and asserts actual checkout
+  ---
+  duration_ms: 47.945503
+  type: 'test'
+  ...
+# Subtest: inkwave-reopened-six.yml/reopened-six: rejects regressions to unpinned or optional identity
+ok 8 - inkwave-reopened-six.yml/reopened-six: rejects regressions to unpinned or optional identity
+  ---
+  duration_ms: 1.758763
+  type: 'test'
+  ...
+# Subtest: validate-inkwave-native-stage5.yml/contracts: pins the same immutable PR, push or dispatch source and asserts actual checkout
+ok 9 - validate-inkwave-native-stage5.yml/contracts: pins the same immutable PR, push or dispatch source and asserts actual checkout
+  ---
+  duration_ms: 46.662866
+  type: 'test'
+  ...
+# Subtest: validate-inkwave-native-stage5.yml/contracts: rejects regressions to unpinned or optional identity
+ok 10 - validate-inkwave-native-stage5.yml/contracts: rejects regressions to unpinned or optional identity
+  ---
+  duration_ms: 1.914938
+  type: 'test'
+  ...
+# Subtest: validate-inkwave-native-stage5.yml/placement-worker: pins the same immutable PR, push or dispatch source and asserts actual checkout
+ok 11 - validate-inkwave-native-stage5.yml/placement-worker: pins the same immutable PR, push or dispatch source and asserts actual checkout
+  ---
+  duration_ms: 47.983594
+  type: 'test'
+  ...
+# Subtest: validate-inkwave-native-stage5.yml/placement-worker: rejects regressions to unpinned or optional identity
+ok 12 - validate-inkwave-native-stage5.yml/placement-worker: rejects regressions to unpinned or optional identity
+  ---
+  duration_ms: 1.464156
+  type: 'test'
+  ...
+# Subtest: validate-inkwave-native-stage5.yml/source-geometry: pins the same immutable PR, push or dispatch source and asserts actual checkout
+ok 13 - validate-inkwave-native-stage5.yml/source-geometry: pins the same immutable PR, push or dispatch source and asserts actual checkout
+  ---
+  duration_ms: 50.478858
+  type: 'test'
+  ...
+# Subtest: validate-inkwave-native-stage5.yml/source-geometry: rejects regressions to unpinned or optional identity
+ok 14 - validate-inkwave-native-stage5.yml/source-geometry: rejects regressions to unpinned or optional identity
+  ---
+  duration_ms: 0.883783
+  type: 'test'
+  ...
+# Subtest: reviewed PR and explicit immutable dispatch routes select their exact epoch in both actual YAML shells
+ok 15 - reviewed PR and explicit immutable dispatch routes select their exact epoch in both actual YAML shells
+  ---
+  duration_ms: 438.641026
+  type: 'test'
+  ...
+# Subtest: reviewed runtime UI inventory rejects missing, unexpected and weakened routes in each shell
+ok 16 - reviewed runtime UI inventory rejects missing, unexpected and weakened routes in each shell
+  ---
+  duration_ms: 620.184499
+  type: 'test'
+  ...
+# Subtest: workflow policy rejects missing/changed epoch flags, unsafe selection, fallback and stale SHA declarations
+ok 17 - workflow policy rejects missing/changed epoch flags, unsafe selection, fallback and stale SHA declarations
+  ---
+  duration_ms: 2673.987056
+  type: 'test'
+  ...
+# Subtest: current-epoch tests and fixture-only changes retain mandatory source and native comparison gates
+ok 18 - current-epoch tests and fixture-only changes retain mandatory source and native comparison gates
+  ---
+  duration_ms: 3.123486
+  type: 'test'
+  ...
+# Subtest: manual projectile dispatch is immutable and rejects omitted explicit epoch without rebaselining
+ok 19 - manual projectile dispatch is immutable and rejects omitted explicit epoch without rebaselining
+  ---
+  duration_ms: 203.083132
+  type: 'test'
+  ...
+# Subtest: declared source verification binds all existing admitted leaves to real Git HEAD and rejects drift
+ok 20 - declared source verification binds all existing admitted leaves to real Git HEAD and rejects drift
+  ---
+  duration_ms: 3246.598791
+  type: 'test'
+  ...
+# Subtest: source contracts supplement A+ and the General source gate, without expanding the combined QA branch
+ok 21 - source contracts supplement A+ and the General source gate, without expanding the combined QA branch
+  ---
+  duration_ms: 1.251325
+  type: 'test'
+  ...
+# Subtest: public-source fetch is a read-only candidate workflow, never a direct-source overwrite
+ok 22 - public-source fetch is a read-only candidate workflow, never a direct-source overwrite
+  ---
+  duration_ms: 1.346023
+  type: 'test'
+  ...
+# Subtest: native catalogue sweep helper ships as a non-eager immutable runtime dependency
+ok 23 - native catalogue sweep helper ships as a non-eager immutable runtime dependency
+  ---
+  duration_ms: 1.049773
+  type: 'test'
+  ...
+# Subtest: migrated A-star heuristic owner is the readable game source
+ok 24 - migrated A-star heuristic owner is the readable game source
+  ---
+  duration_ms: 0.35793
+  type: 'test'
+  ...
+# Subtest: mural atlas and world branding use directly editable source without rebuild-time rewriting
+ok 25 - mural atlas and world branding use directly editable source without rebuild-time rewriting
+  ---
+  duration_ms: 467.77167
+  type: 'test'
+  ...
+# Subtest: ZEVANT stage and lobby lettering is directly owned by authored game modules
+ok 26 - ZEVANT stage and lobby lettering is directly owned by authored game modules
+  ---
+  duration_ms: 2.861999
+  type: 'test'
+  ...
+# Subtest: level, stage map and Cargo spawn/return geometry live in game source, not Splatoon3 string patches
+ok 27 - level, stage map and Cargo spawn/return geometry live in game source, not Splatoon3 string patches
+  ---
+  duration_ms: 2.546314
+  type: 'test'
+  ...
+# Subtest: PropKit atlas, lifetime and rematch behavior are authored in the real module, without prototype rewriting
+ok 28 - PropKit atlas, lifetime and rematch behavior are authored in the real module, without prototype rewriting
+  ---
+  duration_ms: 5.886683
+  type: 'test'
+  ...
+# Subtest: registered Scorch and native layouts live directly in the stage map module
+ok 29 - registered Scorch and native layouts live directly in the stage map module
+  ---
+  duration_ms: 0.68922
+  type: 'test'
+  ...
+# Subtest: native ink and catalogue sweep entry points and AABB early-outs live in real collision source
+ok 30 - native ink and catalogue sweep entry points and AABB early-outs live in real collision source
+  ---
+  duration_ms: 1.548423
+  type: 'test'
+  ...
+# Subtest: standalone native sweep keeps Node collision regression free of the full stage engine and three dependency
+ok 31 - standalone native sweep keeps Node collision regression free of the full stage engine and three dependency
+  ---
+  duration_ms: 3.073374
+  type: 'test'
+  ...
+# Subtest: practice-stage registry and surface slots are authored without string adapters
+ok 32 - practice-stage registry and surface slots are authored without string adapters
+  ---
+  duration_ms: 0.708113
+  type: 'test'
+  ...
+# Subtest: source motion bank sampling and FK are directly owned by the authored module
+ok 33 - source motion bank sampling and FK are directly owned by the authored module
+  ---
+  duration_ms: 2.089918
+  type: 'test'
+  ...
+# Subtest: Direct-Source migrated LOD, outfit AO, body-balance and transport compat modules require zero hotpath/compat rewrite and pass auditDirectSource
+ok 34 - Direct-Source migrated LOD, outfit AO, body-balance and transport compat modules require zero hotpath/compat rewrite and pass auditDirectSource
+  ---
+  duration_ms: 949.349589
+  type: 'test'
+  ...
+# Subtest: native stage Node18 fallback preserves source terrain validation before stage publication
+ok 35 - native stage Node18 fallback preserves source terrain validation before stage publication
+  ---
+  duration_ms: 0.359734
+  type: 'test'
+  ...
+# Subtest: production grayscale lightmaps keep independently Pillow-verified exact pixels while saving space
+ok 36 - production grayscale lightmaps keep independently Pillow-verified exact pixels while saving space
+  ---
+  duration_ms: 3834.790203
+  type: 'test'
+  ...
+# Subtest: lossless PNG optimization is fail-closed for unexpected bytes or bit-depth
+ok 37 - lossless PNG optimization is fail-closed for unexpected bytes or bit-depth
+  ---
+  duration_ms: 4.594552
+  type: 'test'
+  ...
+# Subtest: lossless PNG optimization preserves pixels from all five input row filters
+ok 38 - lossless PNG optimization preserves pixels from all five input row filters
+  ---
+  duration_ms: 13.052546
+  type: 'test'
+  ...
+# Subtest: exported crc32 helper matches IEEE 802.3 checksum across Node 18..22 runtimes
+ok 39 - exported crc32 helper matches IEEE 802.3 checksum across Node 18..22 runtimes
+  ---
+  duration_ms: 0.48179
+  type: 'test'
+  ...
+# Subtest: Pages publishes the exact workflow revision, never a moving main branch
+ok 40 - Pages publishes the exact workflow revision, never a moving main branch
+  ---
+  duration_ms: 1.039555
+  type: 'test'
+  ...
+# Subtest: every published gameplay patch group can trigger Pages
+ok 41 - every published gameplay patch group can trigger Pages
+  ---
+  duration_ms: 0.210523
+  type: 'test'
+  ...
+# Subtest: all PNG, hidden receipt and nested failure diagnostic bytes count with ZIP headroom
+ok 42 - all PNG, hidden receipt and nested failure diagnostic bytes count with ZIP headroom
+  ---
+  duration_ms: 6.008954
+  type: 'test'
+  ...
+# Subtest: receipt replacement counts actual replacement size and rejects escaped paths
+ok 43 - receipt replacement counts actual replacement size and rejects escaped paths
+  ---
+  duration_ms: 1.554324
+  type: 'test'
+  ...
+# Subtest: pre-upload inventory rejects unbounded failure logs and all workflow uploads require eligibility
+ok 44 - pre-upload inventory rejects unbounded failure logs and all workflow uploads require eligibility
+  ---
+  duration_ms: 1.727119
+  type: 'test'
+  ...
+# Subtest: actual final-upload script isolates small, oversized and absent suite directories
+ok 45 - actual final-upload script isolates small, oversized and absent suite directories
+  ---
+  duration_ms: 100.9201
+  type: 'test'
+  ...
+# Subtest: nested air comparison cannot evade the shared Rainmaker artifact cap
+ok 46 - nested air comparison cannot evade the shared Rainmaker artifact cap
+  ---
+  duration_ms: 3.32504
+  type: 'test'
+  ...
+# Subtest: same-condition before/after frames are paired and complete
+ok 47 - same-condition before/after frames are paired and complete
+  ---
+  duration_ms: 2.549628
+  type: 'test'
+  ...
+# Subtest: camera, lighting, omitted output or duplicate frame mismatch fails closed
+ok 48 - camera, lighting, omitted output or duplicate frame mismatch fails closed
+  ---
+  duration_ms: 8.492615
+  type: 'test'
+  ...
+# Subtest: source-loaded owner and foot pose match exactly while model bounds may differ
+ok 49 - source-loaded owner and foot pose match exactly while model bounds may differ
+  ---
+  duration_ms: 3.889921
+  type: 'test'
+  ...
+# Subtest: source-loaded frame names require both complete finite owner receipts
+ok 50 - source-loaded frame names require both complete finite owner receipts
+  ---
+  duration_ms: 2.899953
+  type: 'test'
+  ...
+# Subtest: ordered contact sheets retain original hashes and exact simulation times
+ok 51 - ordered contact sheets retain original hashes and exact simulation times
+  ---
+  duration_ms: 2.831253
+  type: 'test'
+  ...
+# (node:5172) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: spawner browser harness statically links against the shared production helper
+ok 52 - spawner browser harness statically links against the shared production helper
+  ---
+  duration_ms: 262.427595
+  type: 'test'
+  ...
+# Subtest: rainmaker browser harness statically links against the shared production helper
+ok 53 - rainmaker browser harness statically links against the shared production helper
+  ---
+  duration_ms: 2.871504
+  type: 'test'
+  ...
+# Subtest: rainmaker-air browser harness statically links against the shared production helper
+ok 54 - rainmaker-air browser harness statically links against the shared production helper
+  ---
+  duration_ms: 4.59632
+  type: 'test'
+  ...
+# Subtest: rainmaker-form browser harness statically links against the shared production helper
+ok 55 - rainmaker-form browser harness statically links against the shared production helper
+  ---
+  duration_ms: 4.965999
+  type: 'test'
+  ...
+# Subtest: rainmaker-origin browser harness statically links against the shared production helper
+ok 56 - rainmaker-origin browser harness statically links against the shared production helper
+  ---
+  duration_ms: 2.342163
+  type: 'test'
+  ...
+# Subtest: clam browser harness statically links against the shared production helper
+ok 57 - clam browser harness statically links against the shared production helper
+  ---
+  duration_ms: 2.937805
+  type: 'test'
+  ...
+# Subtest: landing comparison isolates8a903662 handoff while the original three baselines stay3839
+ok 58 - landing comparison isolates8a903662 handoff while the original three baselines stay3839
+  ---
+  duration_ms: 2.064792
+  type: 'test'
+  ...
+# Subtest: form comparison adds only009 handoff baseline and one bounded same-build capture
+ok 59 - form comparison adds only009 handoff baseline and one bounded same-build capture
+  ---
+  duration_ms: 1.105327
+  type: 'test'
+  ...
+# Subtest: spawner actual runtime sources affect official build identity, including added modules
+ok 60 - spawner actual runtime sources affect official build identity, including added modules
+  ---
+  duration_ms: 6.515538
+  type: 'test'
+  ...
+# Subtest: rainmaker actual runtime sources affect official build identity, including added modules
+ok 61 - rainmaker actual runtime sources affect official build identity, including added modules
+  ---
+  duration_ms: 3.765924
+  type: 'test'
+  ...
+# Subtest: rainmaker-air actual runtime sources affect official build identity, including added modules
+ok 62 - rainmaker-air actual runtime sources affect official build identity, including added modules
+  ---
+  duration_ms: 1.724414
+  type: 'test'
+  ...
+# Subtest: rainmaker-form actual runtime sources affect official build identity, including added modules
+ok 63 - rainmaker-form actual runtime sources affect official build identity, including added modules
+  ---
+  duration_ms: 1.382994
+  type: 'test'
+  ...
+# Subtest: rainmaker-origin actual runtime sources affect official build identity, including added modules
+ok 64 - rainmaker-origin actual runtime sources affect official build identity, including added modules
+  ---
+  duration_ms: 9.087618
+  type: 'test'
+  ...
+# Subtest: clam actual runtime sources affect official build identity, including added modules
+ok 65 - clam actual runtime sources affect official build identity, including added modules
+  ---
+  duration_ms: 8.432456
+  type: 'test'
+  ...
+# (node:5186) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: spawner exact historical runtime overlay links in the actual production module graph
+ok 66 - spawner exact historical runtime overlay links in the actual production module graph
+  ---
+  duration_ms: 2033.313234
+  type: 'test'
+  ...
+# Subtest: rainmaker exact historical runtime overlay links in the actual production module graph
+ok 67 - rainmaker exact historical runtime overlay links in the actual production module graph
+  ---
+  duration_ms: 1717.412518
+  type: 'test'
+  ...
+# Subtest: rainmaker-air exact historical runtime overlay links in the actual production module graph
+ok 68 - rainmaker-air exact historical runtime overlay links in the actual production module graph
+  ---
+  duration_ms: 1539.772572
+  type: 'test'
+  ...
+# Subtest: rainmaker-form exact historical runtime overlay links in the actual production module graph
+ok 69 - rainmaker-form exact historical runtime overlay links in the actual production module graph
+  ---
+  duration_ms: 1510.785643
+  type: 'test'
+  ...
+# Subtest: rainmaker-origin exact historical runtime overlay links in the actual production module graph
+ok 70 - rainmaker-origin exact historical runtime overlay links in the actual production module graph
+  ---
+  duration_ms: 1697.753076
+  type: 'test'
+  ...
+# Subtest: clam exact historical runtime overlay links in the actual production module graph
+ok 71 - clam exact historical runtime overlay links in the actual production module graph
+  ---
+  duration_ms: 1684.461073
+  type: 'test'
+  ...
+# Subtest: Clam comparison fixes clams mode, leaves Rainmaker inactive, and preserves the ordinary pose with old/new shared handoff
+ok 72 - Clam comparison fixes clams mode, leaves Rainmaker inactive, and preserves the ordinary pose with old/new shared handoff
+  ---
+  duration_ms: 44659.54286
+  type: 'test'
+  ...
+1..72
+# tests 72
+# suites 0
+# pass 72
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 69975.221339
