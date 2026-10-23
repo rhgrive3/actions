@@ -1,0 +1,493 @@
+{
+  "schema": 1,
+  "sourceBase": "21b7959a11f59dc5649ee73be72aa99cba11d1be",
+  "publishedComparisonBase": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+  "referenceVersion": "Splatoon 3 11.3.0",
+  "scope": "Local review fixes; existing PR work excluded; no push, merge or deployment.",
+  "baseline": {
+    "tests": 116,
+    "pass": 31,
+    "fail": 85,
+    "skipped": 0,
+    "cancelled": 0,
+    "runtimeUntouched": true,
+    "testFilesShaMatch": true
+  },
+  "checks": {
+    "source": {
+      "tests": 211,
+      "pass": 211,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "emitted": {
+      "tests": 211,
+      "pass": 211,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "browser": {
+      "browser": "154.0.8037.57",
+      "cases": 265,
+      "runtimeCases": 190,
+      "nativeInputCases": 54,
+      "completeBootstrapCases": 21,
+      "errors": 0,
+      "exit": 0
+    },
+    "final-retained": {
+      "tests": 145,
+      "pass": 145,
+      "processes": 26,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "final-controls": {
+      "tests": 39,
+      "pass": 39,
+      "processes": 9,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "networkAndNativeSub": {
+      "tests": 123,
+      "pass": 123,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "npm": {
+      "status": "passed",
+      "command": "timeout 600s npm test",
+      "phaseOrder": [
+        "check:patches",
+        "audit:migration",
+        "test:direct-source",
+        "test:quality",
+        "test:relay",
+        "test:backup",
+        "test:queue-recovery"
+      ],
+      "tapSuites": [
+        20,
+        18,
+        23,
+        28
+      ],
+      "backupTests": 4,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "completionEvidence": "The package.json && chain reached its final test:queue-recovery command, whose complete final TAP reports 28/28 and duration; the process ended. No separate exit-status file was captured.",
+      "packageSha256": "71b045e8b39546d75e74fc0fd2a72f6d208254f9f7c46f1e786856f6ca13ea84",
+      "logSha256": "64210f41b021fb73351542df5f65fc8ce21153cd9996a425f682a8b5a1a0e88c",
+      "initialRun": {
+        "command": "timeout 180s npm test",
+        "exit": 124,
+        "status": "timed out during parallel heavy verification",
+        "log": "npm-test-first-timeout.log"
+      }
+    },
+    "build": "passed",
+    "startupBudget": "passed"
+  },
+  "build": {
+    "status": "passed",
+    "inputsVerified": 1363,
+    "artifactsVerified": 2018,
+    "inputHash": "f00153f1726e6b4577f56b0d33e926ae132e96234dfbb51c5b10e36e58b1f045",
+    "contentHash": "8e70fff054ce84027f7ab684db7e239af6c059f87c85a95767bff78b7fbe368f",
+    "leaves": [
+      {
+        "path": "patches/splatoon3/runtime/all-specials.mjs",
+        "sha256": "dae72b7b5873a0674c82bd946aa4113fe3566e11f455e061c50ff58ed3be6553"
+      },
+      {
+        "path": "patches/splatoon3/runtime/all-subs.mjs",
+        "sha256": "c3908ae3ae5adcfae7c389395a9a3ff39fefd4ec9d4d37aee2d3c071a6c5b398"
+      },
+      {
+        "path": "patches/splatoon3/runtime/kit-autobomb.mjs",
+        "sha256": "528d1454157b41cc2ed5bcbf6e654d0709c87d72b781e97c488637cf57997cf9"
+      },
+      {
+        "path": "patches/splatoon3/runtime/kit-ink-vac.mjs",
+        "sha256": "6ede938dcde2449cd34b32e5d53b28f4281c1af92ac9563fa389fbbe1edfced0"
+      },
+      {
+        "path": "patches/splatoon3/runtime/kit-support.mjs",
+        "sha256": "34af4a5fc54c7f7180d8cac1233c73bf017693c00bdc2b3e78846616840beaf0"
+      },
+      {
+        "path": "patches/splatoon3/runtime/torpedo-receiver-trajectory.mjs",
+        "sha256": "47416d7b202140d755992623121b2ff8f6d7a528b5e1797c861927844b75b20b"
+      },
+      {
+        "path": "patches/splatoon3/runtime/disconnect-fidelity.mjs",
+        "sha256": "73b80271c8f228116e61ac688533321066967ca2981706c7de53f2bfc8309915"
+      },
+      {
+        "path": "patches/splatoon3/runtime/replica-retirement.mjs",
+        "sha256": "8e6ba288b4c5f23d93b776de19599afffe62dd80b6c3083ef7fc81783667de9c"
+      }
+    ]
+  },
+  "sourceFiles": [
+    {
+      "path": "patches/splatoon3/tests/autobomb-target-life-review.test.mjs",
+      "sha256": "fa584f2c01ba678b80a6d54f64a36b06c7d4cd726bfb06d5475ad3f8614799e4"
+    },
+    {
+      "path": "patches/splatoon3/tests/bootstrap-replica-retirement-review.test.mjs",
+      "sha256": "dfd2918fb2906e2bcc56447b0c5fb10ecff95b59d2b7cfc8ef354dfed685e483"
+    },
+    {
+      "path": "patches/splatoon3/tests/catalogue-replica-handoff-review.test.mjs",
+      "sha256": "44003d01699ddf447aedcfefc4c0335878a6b153fcb38f3e059afaadde2b5b9f"
+    },
+    {
+      "path": "patches/splatoon3/tests/catalogue-sub-life-order-review.test.mjs",
+      "sha256": "296042f2e1ef6a5b5d6ab78819ebf768761c9089d56f4011d130afd9f352c4db"
+    },
+    {
+      "path": "patches/splatoon3/tests/ink-vac-replica-lifecycle-review.test.mjs",
+      "sha256": "600c72691b9b5313ecc79a8b49c5e706a67a382f35f1ff9909468b9d45bb9d62"
+    },
+    {
+      "path": "patches/splatoon3/tests/support-owner-era-review.test.mjs",
+      "sha256": "371c1986ae77e0cd91f6c545b6835a39e0f44462ba482679cf239cd841d36fec"
+    },
+    {
+      "path": "patches/splatoon3/tests/source-fixture.mjs",
+      "sha256": "4fa68ce9bc0f0fc00d861fb49d992df6fb98f0caf7f20b91cd31eadfdcff109c"
+    },
+    {
+      "path": "patches/splatoon3/tests/special-evidence-fixture.mjs",
+      "sha256": "4d8f70fb1b9b946586b2255126d5bd919990238a8a47c311d3a2edc3190e0f8c"
+    },
+    {
+      "path": "patches/splatoon3/bootstrap.mjs",
+      "sha256": "1841ff9ee488dc2e0d6fa488e24ba12fc6d77cdf5f55088e0d10344fe820bbda"
+    },
+    {
+      "path": "reports/inkwave-review-closure-2026-10-23/browser-harness.mjs",
+      "sha256": "d07964d8c72b6ccc93cb837687d6439257e5c0141feda9b49ad0c317b58f326a"
+    },
+    {
+      "path": "reports/inkwave-review-closure-2026-10-23/verify-browser.mjs",
+      "sha256": "3c1434512ede9abd622d16568e476515a739f2a8c750d08d6c390833ea9e47a0"
+    },
+    {
+      "path": "reports/inkwave-review-closure-2026-10-23.md",
+      "sha256": "60c8f9aa93502efcb7e77cff4232f977f22518b37f83312df73c30f94d683fdc"
+    }
+  ],
+  "reviewStop": "No additional reproducible issue in the reviewed paths after fixes; not a claim of a bug-free entire game.",
+  "limits": "Controlled native fixtures with dummy Character/frozen ordinary integration and JSON transport. Actual minified browser modules and synthetic DOM input; every bootstrap installer, but no rendered main Game, real relay, physical touch or Switch comparison.",
+  "archive": {
+    "path": "evidence.tar.gz",
+    "bytes": 45764,
+    "sha256": "9fbc0657f1882c29115e90ca59b95215d3e600a0cab6512ad8566c956ce37d88",
+    "files": [
+      {
+        "path": "baseline-identity.json",
+        "bytes": 1447,
+        "sha256": "9bd1617f0df0ebabb8d65140d8c28fb2cd6268dc9e6b747aab3ee418f59f5914"
+      },
+      {
+        "path": "browser.exit",
+        "bytes": 2,
+        "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+      },
+      {
+        "path": "browser.json",
+        "bytes": 39588,
+        "sha256": "3d3c297381f3dce3f6d1940af0d52d37442afd5eaa4f9e79955f8bb79fa86371"
+      },
+      {
+        "path": "browser.log",
+        "bytes": 139,
+        "sha256": "120766f6cdaefec4e997e99db1bb8b619e7b41c52a0802c7c75da62bb12f2871"
+      },
+      {
+        "path": "build-identity.json",
+        "bytes": 1536,
+        "sha256": "7f3578658c4457901307e75800a858f6c35b1b02f666ecbca3df6ac3c06832f7"
+      },
+      {
+        "path": "build.log",
+        "bytes": 812,
+        "sha256": "9e70457291d13a9f0d9f4e2732d147c050e1ce9d2baa25ace75405f171dba35a"
+      },
+      {
+        "path": "emitted.log",
+        "bytes": 23673,
+        "sha256": "6535116be66763e29b75392d3ecf4a164eb78e0b29a592eac5342f3c57c07f4d"
+      },
+      {
+        "path": "final-controls/disconnected-main-projectiles-1.log",
+        "bytes": 239,
+        "sha256": "348e09297e9952f18aa25b849c63f70b3891c7d95c01a026f57cced280f8114a"
+      },
+      {
+        "path": "final-controls/issue-six-followup-network-paint-1.log",
+        "bytes": 701,
+        "sha256": "a555bbac5c7c6552ade4815bb617b3d7acbb49df36e23aabb0f3d14f851dfce1"
+      },
+      {
+        "path": "final-controls/issue-six-followup-network-paint-2.log",
+        "bytes": 689,
+        "sha256": "0479a5ff05f736f8f6d510c8d099af06c76eb7935c0ec9436145a0d072b58922"
+      },
+      {
+        "path": "final-controls/issue-six-followup-network-paint-3.log",
+        "bytes": 221,
+        "sha256": "38b04f1fe202db81121500743d4504f62c47194ce328929c0c13980274093d41"
+      },
+      {
+        "path": "final-controls/progress.log",
+        "bytes": 2405,
+        "sha256": "63f750863a5293c5078321a2789cb1734dd3ac141a6d3644abdc17695066098f"
+      },
+      {
+        "path": "final-controls/retained-shards.json",
+        "bytes": 3010,
+        "sha256": "90ef2d0c86cefa06141bd7bfcc0acf0722f2d0ee903bb645350201f150617ed1"
+      },
+      {
+        "path": "final-controls/turf-combat-1.log",
+        "bytes": 774,
+        "sha256": "846b8f2359b6fd38402819ce8bd847b727a5d28840bd58942c9b40c76801b7fa"
+      },
+      {
+        "path": "final-controls/turf-finish-1.log",
+        "bytes": 961,
+        "sha256": "7ca8f3d65cc62ec13a15b90a7e8fe22348e1c520f4a30c8f005afb5bc68d96d4"
+      },
+      {
+        "path": "final-controls/turf-finish-2.log",
+        "bytes": 950,
+        "sha256": "469ad786ec19ca9ee1cf954a3d7160f7a1d116790d8bbb566db6ab2e44661df7"
+      },
+      {
+        "path": "final-controls/turf-finish-3.log",
+        "bytes": 505,
+        "sha256": "86bb661c20aaa989425ba5e7a9a77962f072a076e27ef14aa38a96626af20d4a"
+      },
+      {
+        "path": "final-controls/weapon-class-state-continuity-1.log",
+        "bytes": 902,
+        "sha256": "1d27488f74bb8b0d4303b3152c70afd774139c0371521e3e4882d12add52ead1"
+      },
+      {
+        "path": "final-identity-audit.log",
+        "bytes": 211,
+        "sha256": "7cd3356ac1eafd7b1091c17791691e09725253cb72f6899bab8b6124de82d953"
+      },
+      {
+        "path": "final-network-and-sub.log",
+        "bytes": 13469,
+        "sha256": "2942c1f9171fb3db4a8e110569a62a736165de49584adaaf6e82ffb8d59fc4e4"
+      },
+      {
+        "path": "final-retained/all-specials-1.log",
+        "bytes": 927,
+        "sha256": "a7ca4134055c57319140e22e088bb7b314e4ab6b0d2f1f4e55c84f763a4dd421"
+      },
+      {
+        "path": "final-retained/all-specials-2.log",
+        "bytes": 946,
+        "sha256": "0725997c10643da8da9f138a2cc282b6826955cbc2138dae6b9eec8769a2a075"
+      },
+      {
+        "path": "final-retained/all-specials-3.log",
+        "bytes": 941,
+        "sha256": "157040b14ff4eb80ab82cd02bba8cc72e7ce34961de28c80850ec2b5659b8897"
+      },
+      {
+        "path": "final-retained/all-specials-4.log",
+        "bytes": 896,
+        "sha256": "c8d1cdfdb3f4c7b7f16e4e943b1c9475514aa9955ec1b63eb94771c8182a5011"
+      },
+      {
+        "path": "final-retained/all-specials-5.log",
+        "bytes": 898,
+        "sha256": "9d3faefba3b2ed0e0b0ed1c311fe4a1d70f1602659459a3d7a8fa82ba2b393a0"
+      },
+      {
+        "path": "final-retained/all-specials-6.log",
+        "bytes": 905,
+        "sha256": "a755ea79e016116ab08ed62cfa1b74c64e051e0968fe21295dc0f98bc973dbfd"
+      },
+      {
+        "path": "final-retained/all-specials-7.log",
+        "bytes": 913,
+        "sha256": "913aede3a7c870531b6a3359e3661040d2814c188f75b124b9ea05e87c997207"
+      },
+      {
+        "path": "final-retained/all-specials-8.log",
+        "bytes": 958,
+        "sha256": "157a3ab5d09c6b596d82bed0120bdfd03f70fd34072e951ba65fb128217d571a"
+      },
+      {
+        "path": "final-retained/all-subs-1.log",
+        "bytes": 922,
+        "sha256": "c5e1f2373313abf073f21b5f62eea5f55d713b11ea2465479ffbda44c15d5ca0"
+      },
+      {
+        "path": "final-retained/all-subs-2.log",
+        "bytes": 934,
+        "sha256": "43197cf3c6d542fe1016bdf832ce59deaa2046c2adf773851408390d13d1ceea"
+      },
+      {
+        "path": "final-retained/all-subs-3.log",
+        "bytes": 940,
+        "sha256": "dcc4b4dc972ece6f3681436331f11c097b7eb544918171303d26076eda84e26a"
+      },
+      {
+        "path": "final-retained/all-subs-4.log",
+        "bytes": 721,
+        "sha256": "9f766420c9fb9867950761a8ec0c1eec583e59e7b4d7bfb1d098456d3821e407"
+      },
+      {
+        "path": "final-retained/kit-ink-vac-1.log",
+        "bytes": 824,
+        "sha256": "5240df6c30efc9f63a9610c751c7a7803e47033494cd2b781e159d16c5284349"
+      },
+      {
+        "path": "final-retained/kit-ink-vac-10.log",
+        "bytes": 371,
+        "sha256": "2561bf67f682995bf2c5fc95365ff0d7a554259931f9a0e512e2054c25f69743"
+      },
+      {
+        "path": "final-retained/kit-ink-vac-2.log",
+        "bytes": 877,
+        "sha256": "7ba21c47b18b2d0a26a18d86a3be685e877f4507340658a6e8a7e00372c6eabd"
+      },
+      {
+        "path": "final-retained/kit-ink-vac-3.log",
+        "bytes": 810,
+        "sha256": "c63461aeed45560d6523381468262e4aa7aa641d386028c5b846c96b7fc4e58f"
+      },
+      {
+        "path": "final-retained/kit-ink-vac-4.log",
+        "bytes": 835,
+        "sha256": "a1468bd0ae7aed977fee4d3f3c1256f0b288dbd307024b34b935e88688c4249e"
+      },
+      {
+        "path": "final-retained/kit-ink-vac-5.log",
+        "bytes": 780,
+        "sha256": "9996136ad778e2eecb15d5364900bb09b9095bca5ab257c663daceca7b8e9614"
+      },
+      {
+        "path": "final-retained/kit-ink-vac-6.log",
+        "bytes": 815,
+        "sha256": "9c271fd6c858f50a318483a3304ce08f96b9692829e4f7e946e6565825d873e9"
+      },
+      {
+        "path": "final-retained/kit-ink-vac-7.log",
+        "bytes": 856,
+        "sha256": "df5a271eaca0f86f87cf5a47be57271925b8a370ef05a29a3f8be55908203e39"
+      },
+      {
+        "path": "final-retained/kit-ink-vac-8.log",
+        "bytes": 815,
+        "sha256": "d587953ab3b19a784d132591f09fe1d28c33275553d4f36d5dbebb811a13236d"
+      },
+      {
+        "path": "final-retained/kit-ink-vac-9.log",
+        "bytes": 886,
+        "sha256": "0b89ee0b62b3498c3cba989abfd53dbde5eb08cd59603c8e726f9142d1f59179"
+      },
+      {
+        "path": "final-retained/progress.log",
+        "bytes": 6485,
+        "sha256": "31d1909e3d9a31eed0766ec3652f15731f08935e5d01eb0b288f70f9f55332c0"
+      },
+      {
+        "path": "final-retained/retained-shards.json",
+        "bytes": 8229,
+        "sha256": "cceec723ab78baeafc13c53d187c0d7510a9cf4495dd81a11b6943494ccfd2fb"
+      },
+      {
+        "path": "final-retained/support-kit-recon-cooler-1.log",
+        "bytes": 865,
+        "sha256": "467c34f852186064f53ffa50a4630b36c83c31c461640538ffaea3001e3511ea"
+      },
+      {
+        "path": "final-retained/support-kit-recon-cooler-2.log",
+        "bytes": 861,
+        "sha256": "991be5450a459f13687061e6a787809f22bcddcc339db001c57969768a322513"
+      },
+      {
+        "path": "final-retained/support-kit-recon-cooler-3.log",
+        "bytes": 901,
+        "sha256": "7ed76a640dbc4099e0394d41ed99e9309f1882aac3048a4335bb3751600c9deb"
+      },
+      {
+        "path": "final-retained/support-kit-recon-cooler-4.log",
+        "bytes": 515,
+        "sha256": "b896ea3453ea7ea307aa0fd07b444e5727d6ac91c0e81ef0f2921beb9aa43682"
+      },
+      {
+        "path": "final-source.log",
+        "bytes": 22214,
+        "sha256": "8ae4cb02cddd53bd0a1214dc62ee4d200d1ed34ba0c522b9c6bd0d2ea545576a"
+      },
+      {
+        "path": "isolated-baseline.log",
+        "bytes": 72964,
+        "sha256": "f5ef67147d687f609fdb201f18000956e05025fa714c70499ca9faf664d5ff92"
+      },
+      {
+        "path": "isolated-bootstrap-final-before.log",
+        "bytes": 24054,
+        "sha256": "91c82fd95ad5354e051babb31240605bc4239c99c7cf7e3d27f6608571caa77b"
+      },
+      {
+        "path": "npm-completion.json",
+        "bytes": 926,
+        "sha256": "294ead4a5a78654bfd4f7270ce468ed1d966fc34b6a361c6cef710b2430b96c0"
+      },
+      {
+        "path": "npm-test-final.log",
+        "bytes": 33688,
+        "sha256": "64210f41b021fb73351542df5f65fc8ce21153cd9996a425f682a8b5a1a0e88c"
+      },
+      {
+        "path": "npm-test-first-timeout.log",
+        "bytes": 10548,
+        "sha256": "074bd023930b84b77ae24671a0e1290d2059ceb47c38108b7f67accc9b2036f5"
+      },
+      {
+        "path": "package-evidence.py",
+        "bytes": 7392,
+        "sha256": "eccb430861cb829d02c447805064bbd3787a86d83530376421267917644f70be"
+      },
+      {
+        "path": "run-final-controls.py",
+        "bytes": 1423,
+        "sha256": "042f0326a1fafb2db97a47384b3e315eb32fe77b2a9dec7788e4688102691f4c"
+      },
+      {
+        "path": "run-final-retained.py",
+        "bytes": 1362,
+        "sha256": "e1ce8b49adae16a6c106060bdf78f50879fbc70fb0340633ddf9f8bf89173094"
+      },
+      {
+        "path": "startup-budget.log",
+        "bytes": 520,
+        "sha256": "aba124c8a6a38497c208263ad7bcc780af6bccb36074c1845ab192f25beda641"
+      },
+      {
+        "path": "verify-identity.mjs",
+        "bytes": 1501,
+        "sha256": "d5ad5871bd8fd0a9caea7dc7754d602b71290d64e97bc4214ea2a120bf42b394"
+      }
+    ]
+  }
+}

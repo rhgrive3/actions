@@ -18,6 +18,7 @@ import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
 import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidelity.mjs';
 import { bombReleasePosition, bombPreviewPosition } from './bomb-motion.mjs';
 import { gearCurve } from './gear.mjs';
+import { registerReplicaRetirement } from './replica-retirement.mjs';
 import { objectDamageScale, objectDamageRow, subEffectScale } from './sub-resistance.mjs';
 import { subMarkSeconds } from './sub-mark-resistance.mjs';
 import { buildSubModel, poseSubModel, isSharedGeometry, SPLASH_WALL_FOLDED_SCALE, SPLASH_WALL_UNFOLD_SECONDS } from './sub-models.mjs';
@@ -260,6 +261,11 @@ function syncObjectAttachment(api,object){
   if(syncSubAttachment(api.G,object,object.s3SurfaceAttachment))object.mesh?.position.copy(object.pos);
 }
 function ownerLife(owner) { return Number.isSafeInteger(owner?.netLife) && owner.netLife >= 0 ? owner.netLife : 0; }
+// Ingress runs after native sampling and before Actor.applyRemote publishes
+// that life to gameplay. Keep collision/target life queries on ownerLife; only
+// sender admission and newly created replicas use the accepted packet epoch.
+function replayOwnerLife(owner) { return Math.max(ownerLife(owner),
+  Number.isSafeInteger(owner?.net?.lastLife) && owner.net.lastLife >= 0 ? owner.net.lastLife : 0); }
 function localOwner(owner) { return !!owner && owner.remote !== true; }
 function hasActiveTorpedo(projectiles, owner) {
   return !!projectiles&&!!owner&&entityList(projectiles).some(o=>!o.dead&&o.owner===owner&&o.subId==='torpedo'&&o.phase!=='ghostWait');
@@ -395,7 +401,7 @@ function createObject(api, projectiles, owner, id, record = {}) {
   else vel = launchVelocity(api, projectiles, owner, spec, record.charge || 0);
   if (!finite3(pos) || !finite3(vel)) return null;
   const object = {
-    subId: id, spec, owner, team: owner.team, seq, sourceLife: ownerLife(owner),
+    subId: id, spec, owner, team: owner.team, seq, sourceLife: record.ghost ? replayOwnerLife(owner) : ownerLife(owner),
     subPowerAP: ap,
     pos, prev: pos.clone(), vel, phase: 'flight', age: 0,
     seed: Number.isSafeInteger(record.seed) ? record.seed >>> 0 : makeSeed(owner,seq,api.G.time || 0),
@@ -1137,7 +1143,7 @@ function applyBeaconProposal(api,event) {
   return true;
 }
 function replayBeaconUses(api,event,owner) {
-  if(!owner?.remote||ownerLife(owner)!==event.life||!Number.isInteger(event.usesLeft)||event.usesLeft<0||event.usesLeft>2)return false;
+  if(!owner?.remote||replayOwnerLife(owner)!==event.life||!Number.isInteger(event.usesLeft)||event.usesLeft<0||event.usesLeft>2)return false;
   const object=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life)&&o.subId==='beakon');
   if(!object||!object.ghost)return false;
   object.usesLeft=event.usesLeft;
@@ -1251,7 +1257,7 @@ function armToxicStatus(api, cloud, target, emit = true) {
 function replayStatus(api,event) {
   const owner=event.actor||api.G.netm?.byNid?.get(event.actorId);
   const target=api.G.netm?.byNid?.get(event.targetId);
-  if(!owner?.remote||ownerLife(owner)!==event.life||owner.team!==event.sourceTeam||!target||target.remote||target.team===event.sourceTeam||ownerLife(target)!==event.targetLife||
+  if(!owner?.remote||replayOwnerLife(owner)!==event.life||owner.team!==event.sourceTeam||!target||target.remote||target.team===event.sourceTeam||ownerLife(target)!==event.targetLife||
      event.subId!=='toxicMist'||event.status!=='toxicMist'||!Number.isFinite(event.until)||event.until<(api.G.time||0)||event.until>(api.G.time||0)+1)return false;
   const cloud=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===event.sourceLife&&o.subId==='toxicMist');
   if(!toxicMistContains(target,cloud))return false;
@@ -1604,7 +1610,7 @@ function replaySpawn(api,event,owner,report){
   // Sprinkler uses native bomb birth/ghost packets. Do not revive the retired
   // catalogue authority alongside that device, including for old peers.
   if(event.subId==='sprinkler')return false;
-  if(!owner?.remote||!api.G.projectiles||event.life!==ownerLife(owner)||event.sourceLife!==event.life||!ALL_SUB_SPECS[event.subId])return false;
+  if(!owner?.remote||!api.G.projectiles||event.life!==replayOwnerLife(owner)||event.sourceLife!==event.life||!ALL_SUB_SPECS[event.subId])return false;
   const list=entityList(api.G.projectiles);
   const old=list.find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===event.sourceLife);
   if(old){report?.('reused',old);return true;}
@@ -1661,7 +1667,7 @@ export function replaySub(api,event,report){
   if(event.phase==='status')return replayStatus(api,event);
   if(event.phase==='beakonUseProposal')return applyBeaconProposal(api,event);
   const owner=event.actor||api.G.netm?.byNid?.get(event.actorId);
-  if(!owner?.remote||!Number.isSafeInteger(event.seq)||event.seq<=0||!Number.isSafeInteger(event.life)||ownerLife(owner)!==event.life)return false;
+  if(!owner?.remote||!Number.isSafeInteger(event.seq)||event.seq<=0||!Number.isSafeInteger(event.life)||replayOwnerLife(owner)!==event.life)return false;
   if(event.phase==='spawn')return replaySpawn(api,event,owner,report);
   // Observation-driven ghosts follow only the existing native integrator.
   if(entityList(api.G.projectiles).some(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life)&&hasReceiverTorpedoObservation(o)))return false;
@@ -1752,6 +1758,27 @@ export function installAllSubs(api,profile={}){
   if(Projectiles.prototype[INSTALL])return api;
   configureToxicMist(api);
   registerSpecs(api,profile);
+  // Native departure/adoption retires ordinary network ghosts. Catalogue
+  // replicas use a separate list and need the same boundary, particularly
+  // permanent Beakons/Walls and Torpedoes which gate the next local throw.
+  const retireReplicas=actor=>{
+    const system=G.projectiles;if(!system)return;
+    for(const object of [...entityList(system)])if(object.owner===actor&&object.ghost)removeObject(api,system,object,true);
+    markBirths.get(system)?.owners.delete(actor);
+  };
+  registerReplicaRetirement(G,retireReplicas);
+  const net=api.NetMatch?.prototype;
+  if(net){
+    const leave=net.onLeave;
+    net.onLeave=function(id,...args){
+      for(const actor of this.byNid?.values?.()||[])if(actor.owner===id)retireReplicas(actor);
+      return leave?.call(this,id,...args);
+    };
+    for(const name of ['_adopt','_remove']){
+      const original=net[name];if(typeof original!=='function')continue;
+      net[name]=function(actor,...args){retireReplicas(actor);return original.call(this,actor,...args);};
+    }
+  }
   // Specials and native attack AoEs use this boundary to hit deployed custom
   // sub devices. Keep this entry point sub-only: the all-subs blast path below
   // explicitly adds special devices once, while all-specials owns its own list.

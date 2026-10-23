@@ -17,6 +17,7 @@
 // may change local-owned device HP after the catalogue owner/life gate.
 
 import { gearCurve } from './gear.mjs';
+import { registerReplicaRetirement } from './replica-retirement.mjs';
 import { validDamageGroup } from './final-damage.mjs';
 import { disposeInkVac, inkVacAbsorbCandidate } from './kit-ink-vac.mjs';
 import { endTrizooka } from './kit-trizooka.mjs';
@@ -723,7 +724,7 @@ function worldMesh(rt, owner, kind, center, scale = [1,1,1]) {
   return mesh;
 }
 function emitObject(rt, object, action) {
-  if (object.owner?.remote) return null;
+  if (object.remote || object.owner?.remote) return null;
   object.eventSerial=(object.eventSerial||0)+1;
   const target = object.kind === 'screen' ? object.pos.clone().add(object.normal) : object.target || null;
   return emitAction(rt, object.owner, object.id, object.activation, action,
@@ -2205,6 +2206,26 @@ function installRuntime(api) {
       creditBooyahGauge(rt,event.actor,event.ownerNid,event.ownerLife,event.activation,event.seed,event.call);
   });
   const proto=Actor.prototype,start=proto._startSpecial,step=proto._updateSpecial,reset=proto.reset,splat=proto.splat,damage=proto.damage;
+  // These presentation copies must not acquire combat authority when native
+  // host adoption flips their Actor.remote flag to false. Match the ordinary
+  // ghost retirement boundary and release their meshes/colliders first.
+  const retireReplicas=actor=>{
+    rt.system=api.G.projectiles||rt.system;if(!rt.system)return;
+    for(const object of [...rt.system._s3AllSpecialObjects||[]])if(object.owner===actor&&object.remote)removeWorld(rt,object,'expire');
+  };
+  registerReplicaRetirement(api.G,retireReplicas);
+  const net=api.NetMatch?.prototype;
+  if(net){
+    const leave=net.onLeave;
+    net.onLeave=function(id,...args){
+      for(const actor of this.byNid?.values?.()||[])if(actor.owner===id)retireReplicas(actor);
+      return leave?.call(this,id,...args);
+    };
+    for(const name of ['_adopt','_remove']){
+      const original=net[name];if(typeof original!=='function')continue;
+      net[name]=function(actor,...args){retireReplicas(actor);return original.call(this,actor,...args);};
+    }
+  }
   // A cancelled physical hold is not the release edge owned by this runtime.
   // Preserve already-admitted throwAt/marker startup and all action clocks.
   const cancelInput=(actor,fire,sub)=>{

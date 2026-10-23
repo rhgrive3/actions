@@ -11,6 +11,7 @@ import { TACTICOOLER, TACTICOOLER_SOURCE, tacticoolerStandFrames, tacticoolerDri
 import { installTacticoolerGauge, startTacticoolerGauge, endTacticoolerGauge, clearSpecialGaugeLocks, startHeldSpecialGauge, startPendingSpecialGauge } from './tacticooler-gauge.mjs';
 import { installCoolerCollision } from './support-cooler-collision.mjs';
 import { cancelStormPendingInput } from './storm-effects.mjs';
+import { registerReplicaRetirement } from './replica-retirement.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.support-kit.v1');
 const TINY = 1e-9;
@@ -340,6 +341,7 @@ export function installSupportGameplay({ Actor, WeaponRunner, Projectiles, NetMa
   // finite coordinates must all match before we accept a claim.
   const play=NetMatch.prototype._play;
   const last=new WeakMap();
+  registerReplicaRetirement(G,actor=>last.delete(actor));
   // Native adoption keeps the Actor object while changing its sender. A new
   // owner must not inherit the departed sender's local support serial ceiling.
   const leave=NetMatch.prototype.onLeave;
@@ -372,14 +374,17 @@ export function installSupportGameplay({ Actor, WeaponRunner, Projectiles, NetMa
          !finiteTriplet(e,8) || e[11]!==life(owner) || e[4]<=record.p ||
          Math.hypot(e[5]-position.x,e[6]-position.y,e[7]-position.z)>10)return;
       record.p=e[4];last.set(owner,record);
-      spawnPointSensor(owner,G.projectiles,G,THREE,Hit,true,[...e.slice(5,11),e[4]]);
+      const sensor=spawnPointSensor(owner,G.projectiles,G,THREE,Hit,true,[...e.slice(5,11),e[4]]);
+      if(sensor)sensor.admission=record;
     } else if(kind==='m') {
       const frames = baseLength>=8 ? e[7] : POINT_SENSOR_SOURCE.markingFrames[0];
       if(owner.weapon?.sub!=='pointSensor' || !Number.isSafeInteger(e[5]) ||
          !Number.isSafeInteger(frames) || frames < POINT_SENSOR_SOURCE.markingFrames[0] ||
          frames > POINT_SENSOR_SOURCE.markingFrames[2])return;
       const target=this.byNid?.get(e[5]);
-      const sensor=G.projectiles?._s3SupportSensors?.find(s=>s.owner===owner&&s.seq===e[4]);
+      // Serials restart after native ownership transfer. Earlier fields may
+      // still be visible, but cannot shadow a new sender's same-numbered field.
+      const sensor=G.projectiles?._s3SupportSensors?.find(s=>s.owner===owner&&s.seq===e[4]&&s.admission===record);
       if(!sensor || G.time+TINY>=sensor.expires || baseLength===10&&e[8]!==sensor.sourceLife || sensor.seen.get(target)===life(target) || !target || target.team===owner.team ||
          e[6]!==life(target) || target.alive===false ||
          !pointSensorContact(target,sensor.pos,POINT_SENSOR.radiusWorld+3))return;

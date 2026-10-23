@@ -5856,3 +5856,14 @@ Splatoon 3 Ver.11.3.0のガチアサリを比較対象に、所持者の除去�
 ポイントセンサーの検知済みをActorだけでなくlifeごとに管理し、有効なfield内の新lifeを検知する。期限ちょうどの新規侵入/遅延markは拒否する。センサー/スタンドの通信ではnative受理済みlife、切断後のowner交代、sample→event→描画反映というnative更新順を扱う。ready・finite・同lifeのsampleだけで位置を判定し、従来10 WUの範囲、旧life/旧owner/不正sample/重複serialの拒否を保持する。
 
 比較対象はSplatoon 3 Ver.11.3.0、既定ギア、通常保持・解除と多層床/テレポート/復活の条件。固定source表と既存のcommunity根拠を継承し、browser固有のキャンセルや0.25 WUの探索幅をNintendoの確定仕様にはしていない。最終source116件、新規minify生成物95件、Chromium154の同生成物95件＋実DOM入力handler/Controller54条件、既存分割123件と別selection110件、標準npm test、新規本番ビルドが成功。input1,362件/artifact2,016件の全hashを照合した。簡易Character・制御fixtureであり、通常ゲーム描画・physical touch・実relay・Switch実機の一致は未確認。[修正内容・否定対照・再実行・raw記録](inkwave-extended-runtime-fixes-2026-10-23.md)。
+
+
+### 2026-10-23 追加再レビュー: 所有者・復活・最終bootstrapの切断境界
+
+同じActorとserialを再利用する所有者交代で、ポイントセンサーの古いfieldが新しい検知を遮る問題を修正した。キューインキでは終了packet欠落時の表示token/liveStates残留、旧owner/life/matchの吸引、引き継ぎ後の受信台帳を退役させる。サブ8種の復活直後のbirthは、native sample→event→表示反映の順で受理済みlifeを使い、トーピードのprivateな限定軌道観測にも同じ条件を適用する。物理標的lifeやprivate proofの拒否条件は維持する。ロボットボムは取得した標的lifeを固定し、同じActorの復活先を追尾しない。
+
+サブ・スペシャルの遠隔複製はleave/adopt/removeで既存の除去経路へ渡し、生成時のremote属性で送信を拒否する。通常の所有者復活と無関係なlocal装置は保持する。個別wrapperを追加するだけでは、後から入る本番DisconnectFidelityのonLeave置換に遮られることも発見した。game単位の退役callbackを最終policyから呼び、完全bootstrapの7種類×intro/playing/finishで確認した。本番の切断時は人間を非活動化する方針を保ち、native単体のBOT引き継ぎとは区別する。
+
+比較対象はSplatoon 3 Ver.11.3.0、既定ギア、投擲・標的復活・センサー検知・キューインキ終了。固定source表と既存出典を継承し、威力・射程・追尾速度・ヒューズ・範囲を変更しない。通信順・replicaの所有権・bootstrap cleanupはINKWAVE内部の整合性修正で、本家の非公開通信仕様や実機フレーム値とはしない。
+
+独立した旧runtimeに最終テスト116件を置き、85条件のassertion failureと31対照成功を確認した。修正後は新規116＋前回95のsource211件、同じminify生成物211件、Chromium154の265条件（runtime190＋実DOM入力54＋完全bootstrap21）、既存145/39/123件、標準npm test、本番build/startup budgetが成功。input1,363件/artifact2,018件の全hashが一致した。今回追った経路の再レビューでは追加の再現可能な不具合が見つからなくなった。簡易Character・制御fixtureのため、通常Game描画・実relay・physical touch・Switch実機の一致は未確認。[修正・比較根拠・独立baseline・raw記録](inkwave-review-closure-2026-10-23.md)。
