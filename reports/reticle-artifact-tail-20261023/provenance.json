@@ -1,0 +1,51 @@
+{
+  "base": "2e2bc38661dd49655ee3b4abc491dcc8ee65e8e1",
+  "implementation": "2f48821a917b1a3bd8c981b6d774520add17c11e",
+  "reviewedDonor": "4d6166936eaa8058a8b936053992960b510eec88",
+  "workflowTests": {
+    "pass": 70,
+    "fail": 0,
+    "skip": 0
+  },
+  "oldWorkflowNegative": {
+    "pass": 4,
+    "fail": 3,
+    "skip": 0,
+    "expectedFailure": true
+  },
+  "actualEmittedShell": {
+    "pass": 201,
+    "fail": 0,
+    "skip": 0,
+    "exit": 0,
+    "durationMs": 172762.382852,
+    "freshBuild": false,
+    "browserGPU": false
+  },
+  "officialSource": {
+    "job": 120574652780,
+    "run": 39986361808,
+    "receivedDecodedTextCharacters": 2413334,
+    "published": "excerpts only; not full official log"
+  },
+  "rawRoot": "/workspace/scratch/reticle-artifact-tail-20261023",
+  "rawSha256": {
+    "workflow-regressions.tap": "beec18d199ad7047b5e150520e979ba3b43eb1bf6aed8d3a994e8939f8786ce7",
+    "old-workflow-negative.tap": "14b675b8f81116a93769457153b633aaffcd7d32313b299feed9fdae5677fc6e",
+    "real-emitted-201.log": "30be1463e04a9de7130c590099061314a521ab3007b9d5a16d7902a68a0ca2a1",
+    "scope-proof-final.json": "85d3bc0960d8def54e3c545b1f18bf63e8d28a2628150c595180e3f772e81251"
+  },
+  "publishedSha256": {
+    "README.md": "ba70794476d7d61a7d2e48a5e3680afc5303845259d7d2f546cd5cd265145272",
+    "after.sh": "09179baf4f3840162ab74e50b2dce3156b9fb3d18d88880950146a86e177d4f7",
+    "audit-scope.mjs": "6c7373524a39f3e495b4ce8fcf7c21a42bfb84e0b11163caced3af66b7d25f5f",
+    "before.sh": "0fef92ea49a83353955432a4b142f1cff882a92c087822244982afb992b7e7f0",
+    "check-shell.py": "14ef21ee22d04f11a73f344835cb37bc9f9ba919026a339809408c8e5180cdea",
+    "comparison.json": "f29c3a0ee674f76376660f481f0062d0e7a0073b9b55007896a1773015173cf4",
+    "official-core-excerpts.txt": "de12a3b14342446169e567b282ee61639bc3f918f0e45276866a40b71f0a5ed0",
+    "old-workflow-negative.tap.gz": "16d266ee521da769aa9213bb56eb30e99bf82dafec064e6098d4f97b10d1e8b6",
+    "real-emitted-201.log.gz": "4d9cee53a6c0adf85ce3aa66f3d3f6e810c16918c21f20673015fcf570150bad",
+    "scope-proof.json": "85d3bc0960d8def54e3c545b1f18bf63e8d28a2628150c595180e3f772e81251",
+    "workflow-regressions.tap.gz": "64bceb427b08ec4e4445c78af769bb4d2e561cd34ec4632b69ad5d4d60f97200"
+  }
+}
