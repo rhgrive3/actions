@@ -1,0 +1,87 @@
+{
+  "status": "passed",
+  "baseSha": "a4e81347906c0d60ceef76a69f476261bf8d3f86",
+  "baseTree": "34236683e6776aac9d8b1d4ae0b8a1b31d3f2df2",
+  "changedInputs": [
+    "patch/runtime/special-motion.mjs",
+    "patch/runtime/storm-boundary.mjs"
+  ],
+  "baselineContentHash": "e1c18a72dc8a4e358944f8a8dec59f0d4e178c2d2da9881c8af2d2946e380ab2",
+  "candidateContentHash": "5c877be70b6b373c9a1dfe93ffc6d73ae9ce9bb6e922645ce7d9746656e4aaf2",
+  "candidateSources": {
+    "patch/runtime/special-motion.mjs": "e66fd37f9a566ba7f10ac83dd8be3c6227976f3a4081fbaadaebf0e9cee24fbd",
+    "patch/runtime/storm-boundary.mjs": "f224e365310c0332d5828198b8eafa24d00ad1d5529e6e7db2d61e1727dba393"
+  },
+  "artifactHashesVerified": true,
+  "negativeControlRejected": true,
+  "normalFrameGameplayEqual": true,
+  "rateRows": [
+    {
+      "hz": 30,
+      "ticks": 123,
+      "traceHash": "83982ab730cbd425e590131089966bac34f3ec5dc9fdcebb2e56bfbec1b48837",
+      "paintHash": "d22dcd399adb3b9504a666f4109bd99bd09dd9b9a944c3531ada3e07d2d8a147",
+      "deathAndClear": true
+    },
+    {
+      "hz": 60,
+      "ticks": 123,
+      "traceHash": "881a9372fcc529fc29d6ce7eda419d53f6902cfc964acc41556e63455904bd5b",
+      "paintHash": "d22dcd399adb3b9504a666f4109bd99bd09dd9b9a944c3531ada3e07d2d8a147",
+      "deathAndClear": true
+    },
+    {
+      "hz": 120,
+      "ticks": 123,
+      "traceHash": "6a6261d389692007a2f546cf0a83fff116e0e09c6e07b71a61f7f8f8b7f97847",
+      "paintHash": "d22dcd399adb3b9504a666f4109bd99bd09dd9b9a944c3531ada3e07d2d8a147",
+      "deathAndClear": true
+    }
+  ],
+  "visibilityControl": {
+    "pixels": 4246,
+    "onMedianMs": 0.8000000000465661,
+    "offMedianMs": 1,
+    "onP90Ms": 1,
+    "offP90Ms": 2.199999999953434,
+    "vertices": 156
+  },
+  "drawDelta": [
+    {
+      "simulationFrame": 15,
+      "calls": 1,
+      "triangles": 52
+    },
+    {
+      "simulationFrame": 45,
+      "calls": 1,
+      "triangles": 52
+    },
+    {
+      "simulationFrame": 90,
+      "calls": 1,
+      "triangles": 52
+    },
+    {
+      "simulationFrame": 120,
+      "calls": 1,
+      "triangles": 52
+    },
+    {
+      "simulationFrame": 180,
+      "calls": 1,
+      "triangles": 52
+    },
+    {
+      "simulationFrame": 300,
+      "calls": 1,
+      "triangles": 52
+    }
+  ],
+  "limitations": [
+    "No direct Nintendo clip access; parent observation of encoded 30fps f173–183 is the comparison target.",
+    "Normal-game captures use the procedural practice range, not a retail or native-source stage.",
+    "Rates are render delivery schedules with the same fixed 60Hz simulation. Ray counts include presentation queries and are not equal-work timings.",
+    "Warm renderer timings use Chromium SwiftShader in one context; mobile/hardware and large native stages are unmeasured."
+  ]
+}

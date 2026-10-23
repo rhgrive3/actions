@@ -1,3 +1,4 @@
+import { updateStormBoundary, disposeStormBoundary } from './storm-boundary.mjs';
 // Special presentation for the actual public Character. The legacy motion
 // layer owns phase/foot lifecycle; the final S3 layer below draws unarmed Slam.
 // Nintendo establishes the action families; all joint/reach values below are
@@ -585,7 +586,7 @@ function restore(ch,m){if(m.weapon){m.weapon.pivot.visible=m.weaponVisible;if(m.
   if(m.model)m.model.visible=false;if(m.pack)m.pack.visible=false;m.kind=null;m.error=0;}
 function retire(ch){const m=presentationMap(ch).get(ch);if(!m)return;restore(ch,m);
   for(const g of m.models.values())disposeSpecialModel(g);disposeSpecialModel(m.pack);disposeSpecialModel(m.fists);disposeSpecialModel(m.ejects);presentationMap(ch).delete(ch);}
-export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,CHARACTER_CHANNELS:C,CHARACTER_TIMERS:T},profile){
+export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,SPECIALS,CHARACTER_CHANNELS:C,CHARACTER_TIMERS:T},profile){
   if(!Character?.prototype||Character.prototype[PRESENTATION_INSTALL])return;
   Object.defineProperty(Character.prototype,PRESENTATION_INSTALL,{value:{states:presentationStates,blocked:presentationBlocked}});
   const cp=Character.prototype,update=cp.update,build=cp._buildPose,apply=cp._applyPose,dispose=cp.dispose;
@@ -733,7 +734,7 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
       m.model.updateWorldMatrix(true,false);return m.model.localToWorld(out.copy(m.model.userData.muzzle));}return muzzle.call(this,out);};
   cp.getAimMuzzle=function(out,pitch){if(mapped(this)==='trizooka'&&presentationMap(this).get(this)?.kind==='trizooka'){this.getMuzzle(out);return true;}return aimMuzzle.call(this,out,pitch);};
   cp.setWeapon=function(...args){const token=specialPresentationToken(this.actor);if(token)presentationBlocked.set(this,token);retire(this);return setWeapon.apply(this,args);};
-  if(Projectiles?.prototype){const pp=Projectiles.prototype,storm=pp.throwStorm,spawn=pp._spawnCloud,release=pp._releaseCloud;
+  if(Projectiles?.prototype){const pp=Projectiles.prototype,storm=pp.throwStorm,spawn=pp._spawnCloud,release=pp._releaseCloud,updateClouds=pp._updateClouds;
     pp.throwStorm=function(...args){const n=this.bombs.length,result=storm.apply(this,args);for(let i=n;i<this.bombs.length;i++){
         const b=this.bombs[i];if(b.kind!=='storm')continue;const old=b.body,g=createStormDevice(G.teamColors[b.team],THREE);
         old.removeFromParent();old.material.dispose();b.mesh.add(g);b.body=g;
@@ -743,10 +744,12 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
         old.traverse(o=>{if(o.material)mats.add(o.material);});for(const mat of mats)mat.dispose();
         const children=[...g.children];for(const child of children)old.add(child);for(const child of [...old.children])if(!children.includes(child))old.remove(child);
       }return result;};
+    pp._updateClouds=function(...args){const result=updateClouds.apply(this,args);
+      for(const c of this.clouds)updateStormBoundary(c,G,this.scene,SPECIALS.storm.radius,THREE);return result;};
     // InstancedMesh owns a GPU matrix buffer beyond its shared geometry. The
     // native cloud owner releases materials; retire the instance buffer once.
     pp._releaseCloud=function(c,...args){const live=c?.group&&!c._released,result=release.call(this,c,...args);
-      if(live)c.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();});return result;};
+      if(live){disposeStormBoundary(c);c.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();});}return result;};
   }
   cp.dispose=function(...args){retire(this);return dispose.apply(this,args);};
   if(Actor?.prototype)for(const name of ['reset','splat']){const original=Actor.prototype[name];Actor.prototype[name]=function(...args){
