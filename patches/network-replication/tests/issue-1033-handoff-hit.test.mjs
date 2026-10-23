@@ -1,3 +1,4 @@
+import { beginOwnerClock, retireOwnerClock, closeOwnerClock, handleOwnerClockMessage } from '../owner-clock.mjs';
 import { splashdownProtected } from '../../splatoon3/runtime/splashdown-network.mjs';
 import { transferPaintOwner } from '../paint-authority.mjs';
 import { acceptPaintTick, forgetPaintPeer } from '../../splatoon3/runtime/paint-packet-codec.mjs';

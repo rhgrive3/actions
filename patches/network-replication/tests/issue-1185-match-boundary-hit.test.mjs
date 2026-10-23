@@ -13,6 +13,7 @@ import { adaptNetworkSource } from '../adapter.mjs';
 import { validDamageGroup } from '../../splatoon3/runtime/final-damage.mjs';
 import { respawnPunisherEquipped, withHitPunisher } from '../../splatoon3/runtime/clothing-gear.mjs';
 import { clearRemoteC1088Surge } from '../issue-1088-surge-presentation.mjs';
+import { handleOwnerClockMessage } from '../owner-clock.mjs';
 import { clearRemoteRollerPresentation } from '../roller-presentation.mjs';
 import { clearRemoteDodgeClock } from '../../splatoon3/runtime/remote-dodge-clock.mjs';
 import { rearmTeamWipe } from '../../local-quality/team-wipeout.mjs';

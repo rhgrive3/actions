@@ -48,14 +48,21 @@ test('#112 pause snapshot and roster refresh cannot reveal opponents remaining s
  assert.equal(rosterRows[0].st.innerHTML,'<span class="iw-st iw-st--dead"><i>x</i></span>');assert.match(rosterRows[1].st.innerHTML,/>4s</);
 });
 
-test('#300 real activation counts survive owner snapshots and authoritative results without duplicate counting',async()=>{
+test('#300 real activation counts survive owner snapshots and authoritative results without duplicate counting',async t=>{
  const f=await fixture(),a=f.make();a.nid=7;a.owner='owner';a.isLocal=true;
  a.special=a.specialCost();a.intent.special=false;f.tick(a);assert.equal(a.stats.specials,0,'filled gauge is not use');
  for(let i=0;i<3;i++){a.intent.special=false;f.tick(a);a.special=a.specialCost();a.specialActive=null;a.intent.special=true;f.tick(a);a.specialActive=null;}
  assert.equal(a.stats.specials,3);a.special=0;a.intent.special=false;f.tick(a);a.intent.special=true;f.tick(a);assert.equal(a.stats.specials,3,'blocked input is not use');
- let packet;const sender=new f.NetMatch({myId:'owner',isHost:false,tr:{broadcast:d=>{packet=plain(d);}}},{});sender.byNid.set(7,a);sender._sendTick();assert.equal(packet.a[0][22],3);
- const remote=f.make();Object.assign(remote,{nid:7,owner:'owner',remote:true,net:{buf:[]}});const host=new f.NetMatch({myId:'host',hostId:'host',isHost:true},{});host.bind({actors:[remote]});
- packet.ts=1;host._tick('intruder',packet);assert.equal(remote.stats.specials,0);host._tick('owner',packet);assert.equal(remote.stats.specials,3);
+ // The HUD fixture emits no projectile objects; expose its empty collections for native disposal.
+ Object.assign(f.G.projectiles,{list:[],bombs:[],clouds:[],beams:[],sights:new Map()});
+ let packet;const sender=new f.NetMatch({myId:'owner',isHost:false,tr:{broadcast:d=>{packet=plain(d);}}},{});t.after(()=>sender.dispose());sender.bind({actors:[a],state:'playing',time:180});sender._sendTick();assert.equal(packet.a[0][22],3);
+ const remote=f.make();Object.assign(remote,{nid:7,owner:'owner',remote:true,net:{buf:[]}});const host=new f.NetMatch({myId:'host',hostId:'host',isHost:true},{});host.byNid.set(7,remote);
+ t.after(()=>host.dispose());
+ // A staged actor alone does not admit owner snapshots before the real bind lifecycle.
+ packet.ts=1;host._tick('owner',packet);assert.equal(remote.stats.specials,0);assert.equal(host.stats.in,0);assert.equal(host.peers.size,0);assert.equal(remote.net.buf.length,0);
+ host.bind({actors:[remote],state:'playing',time:180});
+ packet.ts=1;host._tick('intruder',packet);assert.equal(remote.stats.specials,0);assert.equal(remote.net.buf.length,0,'foreign owner cannot update this actor');const beforeOwner=host.stats.in;host._tick('owner',packet);assert.equal(remote.stats.specials,3);
+ assert.equal(host.stats.in,beforeOwner+1);assert.equal(host.peers.get('owner').lastTs,1);assert.equal(remote.net.buf.length,1,'real owner snapshot was admitted, not bypassed');
  host._tick('owner',packet);assert.equal(remote.stats.specials,3);packet.ts=.9;packet.a[0][22]=2;host._tick('owner',packet);assert.equal(remote.stats.specials,3);
  let result;host.match={actors:[remote]};host._sendNow=d=>{result=plain(d);};host.sendResult({coverage:[.6,.4],winner:0});assert.deepEqual(result.specialCounts,[[7,3]]);assert.equal(result.st[0].length,7,'legacy stat tuple left for assist owner');
  const guest=new f.NetMatch({myId:'guest',isHost:false},{}),actor=f.make();guest.byNid.set(7,actor);guest.match={time:1,setState(s){this.state=s;}};guest._result(result);assert.equal(actor.stats.specials,3);

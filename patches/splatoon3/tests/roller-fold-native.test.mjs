@@ -150,6 +150,7 @@ test('owner and remote Character use the same attack state; the fold hook leaves
 
 test('owner network tick carries horizontal and vertical fold mode through remote apply into the native Character', async () => {
   const api = await production();
+  Object.assign(api.G.projectiles, { list: [], bombs: [], clouds: [], beams: [], sights: new Map(), beamPool: [], scene: api.G.scene });
   for (const vertical of [false, true]) {
     const local = rig(api), remote = rig(api, { remote: true }), wire = [];
     let sender,receiver;
@@ -181,6 +182,8 @@ test('owner network tick carries horizontal and vertical fold mode through remot
       remote.ch.s3RollerFlick = { vertical: !vertical };
       receiver.onMessage('owner', packet);
       const net = remote.actor.net;
+      assert.equal(receiver.peers.get('owner')?.lastTs, packet.ts, 'bound receiver accepts the native owner tick before sampling');
+      assert.equal(net.buf.length, 1, 'the accepted native tick buffers one owner snapshot');
       net.cur = net.buf.at(-1); net.ready = true;
       receiver.applyRemote(remote.actor, dt);
 

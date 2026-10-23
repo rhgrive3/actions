@@ -6,6 +6,8 @@ on:
       - 'patches/splatoon3/tests/explosher-flight-glitter.test.mjs'
       - 'scripts/check-inkwave-explosher-flight-glitter.mjs'
       - 'scripts/check-inkwave-current-explosher-native.mjs'
+      - 'scripts/lib/inkwave-explosher-runtime-ui-preflight.mjs'
+      - 'scripts/tests/inkwave-explosher-runtime-ui-preflight.test.mjs'
       - 'scripts/lib/inkwave-explosher-scene-census.mjs'
       - 'scripts/lib/inkwave-explosher-startup.mjs'
       - 'scripts/lib/inkwave-explosher-capture-surface.mjs'
@@ -37,6 +39,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Strict runtime/UI preflight protocol contracts
+        run: node --test scripts/tests/inkwave-explosher-runtime-ui-preflight.test.mjs
       - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
       - run: npx playwright install --with-deps chromium
       - name: Install required PNG decoder

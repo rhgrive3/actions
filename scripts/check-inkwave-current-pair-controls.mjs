@@ -12,6 +12,12 @@ import { verifyDeclaredPaintSources } from './lib/inkwave-declared-paint-source-
 import { QUEUE1801_IDENTICAL_PAINT_SOURCE_PAIR, QUEUE1801_PAINT_SOURCE_PAIR, MAINCEB58_PAINT_SOURCE_PAIR, MAINA350_PAINT_SOURCE_PAIR, paintSourcePaths, MAINE1F_PAINT_SOURCE_PAIR, MAIN9FE_PAINT_SOURCE_PAIR, MAIN_INK_BASELINE_PATHS, planMainInkBaseline } from './lib/inkwave-main-ink-baseline.mjs';
 
 const options = parseSourceAdmissionArgs(process.argv.slice(2), ['--baseline', '--candidate', '--receipt', '--base-sha', '--candidate-sha', '--expected-mode', '--expected-source-base', '--expected-source-head'], ['--baseline', '--candidate']);
+// Separate reviewed eight-delta epoch; never treat changed production as byte-identical.
+if (options.get('--expected-mode') === 'main26a4-reviewed-runtime-ui-production-pair') {
+  const {runRuntimeUIAdmissionCLI} = await import('./lib/inkwave-runtime-ui-production-epoch.mjs');
+  await runRuntimeUIAdmissionCLI(options, 'controls');
+  process.exit(0);
+}
 // New immutable QA-only epoch; historical planners below remain unchanged.
 if (options.get('--expected-mode') === 'main26a4-byte-identical-production-epoch') {
   const {runMain26a4AdmissionCLI} = await import('./lib/inkwave-main26a4-production-epoch.mjs');

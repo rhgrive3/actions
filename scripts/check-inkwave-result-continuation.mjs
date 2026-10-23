@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
 // Actual production Menus DOM and storage callbacks. No real match/network is
 // started: the caller's fixture records the existing rematch API invocation.
-export async function checkResultContinuation({page,tap,settle,capture,entry}) {
+export async function checkResultContinuation({page,tap,settle,capture,entry,onOperation=()=>{}}) {
+  // Observation never catches/replaces an action error or changes its deadline.
+  const observe = async (id, action) => {
+    try { onOperation(id, 'before'); } catch {}
+    const value = await action();
+    try { onOperation(id, 'after'); } catch {}
+    return value;
+  };
   await page.evaluate(()=>{
     window.__continuationOriginal={rematch:menus.api.rematch,prepareMatch:menus.api.prepareMatch};
     window.__continuationCalls=[];
@@ -10,21 +17,26 @@ export async function checkResultContinuation({page,tap,settle,capture,entry}) {
     menus.showResults(menus._demoResults());window.__continuationResult=menus._results;window.__continuationResultJSON=JSON.stringify(menus._results);
     menus.wipe.cancel();menus.show('results',{force:true,wipe:false});
   });
-  const ready=async()=>{await settle(page);await page.waitForFunction(()=>performance.now()-menus._shownAt>=220&&!document.querySelector('.iw-screen.is-leaving'));};
+  const ready=async(observed=false)=>{
+    const run=(id, action)=>observed ? observe(id, action) : action();
+    await run('continuation-settle-loadout',()=>settle(page));
+    await run('continuation-ready-loadout',()=>page.waitForFunction(()=>performance.now()-menus._shownAt>=220&&!document.querySelector('.iw-screen.is-leaving')));
+  };
   const captureAction=async(name, selector, controls)=>{
-    const button=page.locator(selector);await button.scrollIntoViewIfNeeded();await settle(page);
-    assert(await button.evaluate(el=>{const r=el.getBoundingClientRect();let opacity=1;for(let p=el;p;p=p.parentElement){const s=getComputedStyle(p);if(s.display==='none'||s.visibility==='hidden')return false;opacity*=Number(s.opacity);}return opacity>.95&&r.top>=-1&&r.left>=-1&&r.bottom<=innerHeight+1&&r.right<=innerWidth+1;}),name+': action must actually be visible at capture');
-    assert(await button.evaluate(el=>{const b=el.getBoundingClientRect(),l=el.querySelector('.iw-btn__label').getBoundingClientRect();return l.top>=b.top-1&&l.bottom<=b.bottom+1&&l.left>=b.left-1&&l.right<=b.right+1;}),name+': label must fit inside the button without clipping');
-    await capture(name,controls);
+    const run=(id, action)=>name==='loadout-continue' ? observe(id, action) : action();
+    const button=page.locator(selector);await run('continuation-scroll-action',()=>button.scrollIntoViewIfNeeded());await run('continuation-settle-action',()=>settle(page,name==='loadout-continue'));
+    assert(await run('continuation-visible-action',()=>button.evaluate(el=>{const r=el.getBoundingClientRect();let opacity=1;for(let p=el;p;p=p.parentElement){const s=getComputedStyle(p);if(s.display==='none'||s.visibility==='hidden')return false;opacity*=Number(s.opacity);}return opacity>.95&&r.top>=-1&&r.left>=-1&&r.bottom<=innerHeight+1&&r.right<=innerWidth+1;})),name+': action must actually be visible at capture');
+    assert(await run('continuation-label-action',()=>button.evaluate(el=>{const b=el.getBoundingClientRect(),l=el.querySelector('.iw-btn__label').getBoundingClientRect();return l.top>=b.top-1&&l.bottom<=b.bottom+1&&l.left>=b.left-1&&l.right<=b.right+1;})),name+': label must fit inside the button without clipping');
+    await run('continuation-capture-action',()=>capture(name,controls));
   };
   try {
     await ready();await tap(page,'.iw-res__title');await ready();await captureAction('results-change-gear','[data-id="change-gear-continue"]','.iw-res__foot button');
-    await page.evaluate(()=>window.__oldChangeContinuation=menus._binds.get(document.querySelector('[data-id="change-gear-continue"]')).accept);
-    await tap(page,'[data-id="change-gear-continue"]');await page.waitForFunction(()=>menus.current==='loadout'&&menus._scr?.name==='loadout');await ready();
-    const before=await page.evaluate(()=>menus.api.getLoadout().weapon);
+    await observe('continuation-read-callback',()=>page.evaluate(()=>window.__oldChangeContinuation=menus._binds.get(document.querySelector('[data-id="change-gear-continue"]')).accept));
+    await observe('continuation-tap-change',()=>tap(page,'[data-id="change-gear-continue"]'));await observe('continuation-wait-loadout',()=>page.waitForFunction(()=>menus.current==='loadout'&&menus._scr?.name==='loadout'));await ready(true);
+    const before=await observe('continuation-read-weapon',()=>page.evaluate(()=>menus.api.getLoadout().weapon));
     const different=page.locator('.iw-loadout .iw-wcard');
-    const ids=await different.evaluateAll(xs=>xs.map(x=>x._wid));const next=ids.find(id=>id!==before);assert(next);
-    await tap(page,'[data-id="w-'+next+'"]');assert.equal(await page.evaluate(()=>menus.api.getLoadout().weapon),next);
+    const ids=await observe('continuation-list-weapons',()=>different.evaluateAll(xs=>xs.map(x=>x._wid)));const next=ids.find(id=>id!==before);assert(next);
+    await observe('continuation-select-weapon',()=>tap(page,'[data-id="w-'+next+'"]'));assert.equal(await observe('continuation-verify-weapon',()=>page.evaluate(()=>menus.api.getLoadout().weapon)),next);
     await captureAction('loadout-continue','[data-id="continue-with-gear"]','.iw-continuation-actions button');await ready();
     await tap(page,'.iw-loadout .iw-backbtn');await page.waitForFunction(()=>menus.current==='results'&&menus._scr?.name==='results');await ready();
     assert.deepEqual(await page.evaluate(()=>__continuationCalls),[],'Back cannot start');

@@ -12,6 +12,8 @@ on:
       - 'scripts/fixtures/inkwave-reference-audio.json'
       - 'scripts/tests/inkwave-reference-audio.test.mjs'
       - 'scripts/check-inkwave-projectile-visuals.mjs'
+      - 'scripts/lib/inkwave-projectile-capture-projection.mjs'
+      - 'scripts/tests/inkwave-projectile-capture-projection.test.mjs'
       - 'scripts/lib/inkwave-streamed-music-diagnostics.mjs'
       - 'scripts/tests/inkwave-streamed-music-diagnostics.test.mjs'
       - 'scripts/lib/inkwave-capture-source-identity.mjs'
@@ -39,6 +41,8 @@ on:
       - 'scripts/fixtures/inkwave-23pr-paint-source-pair.json.gz'
       - 'scripts/tests/inkwave-23pr-paint-source-pair.test.mjs'
       - 'scripts/lib/inkwave-source-admission-cli.mjs'
+      - 'scripts/lib/inkwave-runtime-ui-production-epoch.mjs'
+      - 'scripts/tests/inkwave-runtime-ui-production-epoch.test.mjs'
       - 'scripts/lib/inkwave-main26a4-production-epoch.mjs'
       - 'scripts/fixtures/inkwave-main26a4-production-epoch.json.gz'
       - 'scripts/tests/inkwave-main26a4-production-epoch.test.mjs'
@@ -199,7 +203,7 @@ jobs:
           node-version: 22
       - name: Verify fail-closed immutable workflow routes
         if: ${{ matrix.side == 'after' }}
-        run: node --test scripts/tests/inkwave-exact-head-workflow-routes.test.mjs scripts/tests/inkwave-main26a4-production-epoch.test.mjs
+        run: node --test scripts/tests/inkwave-exact-head-workflow-routes.test.mjs scripts/tests/inkwave-main26a4-production-epoch.test.mjs scripts/tests/inkwave-runtime-ui-production-epoch.test.mjs
       - name: Install pinned build and browser tools
         run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
       - name: Install Chromium
@@ -207,7 +211,7 @@ jobs:
       - name: Verify native intro timers and strict UI admission
         if: ${{ matrix.side == 'after' }}
         run: |
-          node --test scripts/tests/inkwave-projectile-capture-ui.test.mjs scripts/tests/inkwave-projectile-atomic-intro.test.mjs scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-intro-ui.test.mjs
+          node --test scripts/tests/inkwave-projectile-capture-ui.test.mjs scripts/tests/inkwave-projectile-atomic-intro.test.mjs scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-intro-ui.test.mjs scripts/tests/inkwave-projectile-capture-projection.test.mjs
           CHROMIUM_PATH="$(node -e "process.stdout.write(require('playwright').chromium.executablePath())")"
           test -n "$CHROMIUM_PATH" && test -x "$CHROMIUM_PATH"
           export CHROMIUM_PATH
@@ -232,7 +236,7 @@ jobs:
           node .ci-baseline/scripts/build-inkwave.mjs .ci-baseline/inkwave-public .built-site/pristine-main
           cp .built-site/pristine-main/inkwave-build.json .ci-scratch/projectile-visuals/before/pristine-main-build.json
       - name: Bind reviewed source controls to declared immutable Git source leaves
-        if: ${{ matrix.side == 'before' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'inkwave/exact-head-ci-main144-20261022') || github.event.pull_request.number == 1758 || github.head_ref == 'test/inkwave-combined-qa-20261021' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && (github.head_ref == 'inkwave/runtime-acceptance-0f3-prep-20261022' || github.head_ref == 'inkwave/runtime-acceptance-followup-20261022' || github.head_ref == 'inkwave/runtime-main-a350-integration-20261022' || github.head_ref == 'integrate/all-open-prs-20261022' || github.head_ref == 'fix/queue-30-recovery-20261022' || (github.head_ref == 'integrate/inkwave-all-prs-20261022' && github.event.pull_request.head.repo.full_name == github.repository)))) }}
+        if: ${{ matrix.side == 'before' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.base.sha == '26a4db4123d23162a3dbf8a12150b1b5bc6ccf64' && github.repository == 'rhgrive3/actions' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'inkwave/runtime-ui-acceptance-20261022') || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'inkwave/exact-head-ci-main144-20261022') || github.event.pull_request.number == 1758 || github.head_ref == 'test/inkwave-combined-qa-20261021' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && (github.head_ref == 'inkwave/runtime-acceptance-0f3-prep-20261022' || github.head_ref == 'inkwave/runtime-acceptance-followup-20261022' || github.head_ref == 'inkwave/runtime-main-a350-integration-20261022' || github.head_ref == 'integrate/all-open-prs-20261022' || github.head_ref == 'fix/queue-30-recovery-20261022' || (github.head_ref == 'integrate/inkwave-all-prs-20261022' && github.event.pull_request.head.repo.full_name == github.repository)))) }}
         env:
           PAIR_EVENT_NAME: ${{ github.event_name }}
           PAIR_BASE_REF: ${{ github.event.pull_request.base.ref }}
@@ -247,6 +251,8 @@ jobs:
         run: |
           if [ "$PAIR_EVENT_NAME" = "workflow_dispatch" ]; then
             node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode "$DISPATCH_MODE" --expected-source-base "$DISPATCH_SOURCE_BASE" --expected-source-head "$DISPATCH_SOURCE_HEAD" --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
+          elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$DECLARED_BASE_SHA" = "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64" ] && [ "$PAIR_REPOSITORY" = "rhgrive3/actions" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ] && [ "$PAIR_HEAD_REF" = "inkwave/runtime-ui-acceptance-20261022" ]; then
+            node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode main26a4-reviewed-runtime-ui-production-pair --expected-source-base 26a4db4123d23162a3dbf8a12150b1b5bc6ccf64 --expected-source-head "$DECLARED_HEAD_SHA" --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
           elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "integrate/inkwave-all-prs-20261022" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ] && [ -n "$PAIR_REPOSITORY" ]; then
             node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode current-pair-with-gameplay-differences --expected-source-base 26a4db4123d23162a3dbf8a12150b1b5bc6ccf64 --expected-source-head c8564cb617e1708759a502a662ef1b538eaad14c --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
           elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "inkwave/exact-head-ci-main144-20261022" ] && [ -n "$PAIR_REPOSITORY" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ]; then
@@ -282,6 +288,8 @@ jobs:
         run: |
           if [ "$PAIR_EVENT_NAME" = "workflow_dispatch" ]; then
             node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode "$DISPATCH_MODE" --expected-source-base "$DISPATCH_SOURCE_BASE" --expected-source-head "$DISPATCH_SOURCE_HEAD" --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
+          elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$DECLARED_BASE_SHA" = "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64" ] && [ "$PAIR_REPOSITORY" = "rhgrive3/actions" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ] && [ "$PAIR_HEAD_REF" = "inkwave/runtime-ui-acceptance-20261022" ]; then
+            node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode main26a4-reviewed-runtime-ui-production-pair --expected-source-base 26a4db4123d23162a3dbf8a12150b1b5bc6ccf64 --expected-source-head "$DECLARED_HEAD_SHA" --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
           elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "integrate/inkwave-all-prs-20261022" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ] && [ -n "$PAIR_REPOSITORY" ]; then
             node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode current-pair-with-gameplay-differences --expected-source-base 26a4db4123d23162a3dbf8a12150b1b5bc6ccf64 --expected-source-head c8564cb617e1708759a502a662ef1b538eaad14c --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
           elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "inkwave/exact-head-ci-main144-20261022" ] && [ -n "$PAIR_REPOSITORY" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ]; then
