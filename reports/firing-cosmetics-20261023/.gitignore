@@ -10,3 +10,6 @@
 /native-final/
 /intermediate-invariance.json
 /invariance.json
+/phase-*/[01]-records.json
+/residual-small-*/records.json
+/*budget*/budget.json

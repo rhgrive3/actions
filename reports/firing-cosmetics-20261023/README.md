@@ -49,3 +49,5 @@ CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium VIEWS=wide,muzzle-side TICKS=0,2 node
 No main merge, force push, other PR update, or release is authorized by this candidate. Hosted CI and final visual/reference acceptance must be assessed separately.
 
 Published candidate: Draft [PR #1857](https://github.com/rhgrive3/actions/pull/1857). Source commit `2e68206e57536157b954d0428a5b72867fc43297`; production bytes are unchanged by the following evidence commit. This task is not fully accepted: controlled native phase/retail reference/hardware/CI gates remain open.
+
+Follow-up: the protected d7cc candidate has a confirmed mixed-pool visual eviction (existing drops40→8). The separate residual-capacity candidate restores40 without raising caps; see [residual candidate evidence](residual-candidate.md). PR1857 is deliberately unchanged pending parent review.

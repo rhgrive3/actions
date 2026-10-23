@@ -34,8 +34,8 @@ try{
   G.fx=new FX(G.scene,{quality:'low'});await G.fx.inkVolumeReady;G.projectiles=new Projectiles(G.scene);
   window.firing={api,renderer,camera,CpuPaint,level,actor:null};
  });
- const all=[];
- for(const id of ['shooter','splatling','s3-shooter-heavy','s3-spinner-quick'])for(const mode of ['standing','moving-jump'])for(const hz of [30,60,120]){
+ const all=[],small=process.argv.includes('--small');
+ for(const id of (small?['shooter','splatling']:['shooter','splatling','s3-shooter-heavy','s3-spinner-quick']))for(const mode of ['standing','moving-jump'])for(const hz of (small?[60]:[30,60,120])){
   const r=await page.evaluate(async({id,mode,hz})=>{
    const {api,renderer,camera,CpuPaint,level}=window.firing,{G,THREE,Actor,Character,on}=api;
    const old=window.firing.actor;if(old){G.scene.remove(old.character.root);old.character.dispose();}G.projectiles.clear();G.fx.clear();

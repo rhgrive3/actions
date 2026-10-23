@@ -1,0 +1,16 @@
+mixed-pool {"sharedCount":700,"retainedFallingDrops":40,"oldSplatlingParts":0,"additionalShooter":0}
+(node:7036) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ 32 Splatlings cannot evict the 40 existing late drops at saturation (1464.781792ms)
+✔ zero residual capacity preserves all existing slots and suppresses both optional cosmetics (1056.518316ms)
+✔ partial residual capacity submits only available Splatling and Shooter beads (1074.980334ms)
+✔ ordinary mixed firing keeps smaller Splatling and muzzle Shooter cosmetics in free slots (977.875882ms)
+✔ repeated full/partial/clear/reuse draws retain the fixed buffers and resources (1161.151813ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6403.904789
