@@ -1,0 +1,618 @@
+{
+  "before": false,
+  "build": "00cee6122b0ec3ed2c6b68be42151204c3f9a6c9bd034b3095f1ed87d43afb8b",
+  "seed": 1380275273,
+  "errors": [],
+  "scenarios": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 720,
+      "touch": false,
+      "entry": {
+        "route": [
+          "main",
+          "mode",
+          "range"
+        ],
+        "gestures": [
+          {
+            "type": "click",
+            "trusted": true,
+            "selector": ".iw-ui [data-id=\"play\"]"
+          },
+          {
+            "type": "click",
+            "trusted": true,
+            "selector": ".iw-ui [data-id=\"mode-range\"]"
+          }
+        ]
+      },
+      "normal": {
+        "ticks": 3,
+        "hits": [
+          {
+            "damage": 36,
+            "killed": false,
+            "weapon": "shooter"
+          }
+        ],
+        "position": [
+          -14.6,
+          -5.551115123125783e-17,
+          0
+        ],
+        "camera": [
+          -14.879999863412325,
+          2.352266194704632,
+          -2.921447429150441
+        ],
+        "yaw": 0,
+        "pitch": -0.12,
+        "renderer": "WebKit WebGL",
+        "reticle": {
+          "x": 638.9000244140625,
+          "y": 396.79998779296875,
+          "width": 0,
+          "height": 0,
+          "top": 396.79998779296875,
+          "right": 638.9000244140625,
+          "bottom": 396.79998779296875,
+          "left": 638.9000244140625
+        },
+        "kind": "shooter"
+      },
+      "component": {
+        "rows": [
+          {
+            "hz": 30,
+            "target": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 0,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "first": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "repeated": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "switched": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "0.0",
+              "retTranslate": "-28px 9px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            }
+          },
+          {
+            "hz": 60,
+            "target": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 0,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "first": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "repeated": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "switched": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "0.0",
+              "retTranslate": "-28px 9px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            }
+          },
+          {
+            "hz": 120,
+            "target": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 0,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "first": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "repeated": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "switched": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "0.0",
+              "retTranslate": "-28px 9px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            }
+          },
+          {
+            "hz": 144,
+            "target": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 0,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "first": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "repeated": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "switched": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "0.0",
+              "retTranslate": "-28px 9px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            }
+          }
+        ],
+        "expired": [
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        "zeroKill": {
+          "scale": "1",
+          "rotate": "none",
+          "spread": "0.0",
+          "retTranslate": "-28px 9px",
+          "hitTranslate": "37px -19px",
+          "hitScale": "1.2",
+          "tickTransition": "0s",
+          "animations": 0,
+          "hit": "iw-hit",
+          "kill": "iw-kill is-on"
+        },
+        "hidden": {
+          "scale": "1",
+          "rotate": "none",
+          "spread": "0.0",
+          "retTranslate": "-28px 9px",
+          "hitTranslate": "",
+          "hitScale": "1.2",
+          "tickTransition": "0s",
+          "animations": 0,
+          "hit": "iw-hit",
+          "kill": "iw-kill"
+        },
+        "children": 4,
+        "life": true
+      },
+      "portrait": null
+    },
+    {
+      "name": "phone",
+      "width": 844,
+      "height": 390,
+      "touch": true,
+      "entry": {
+        "route": [
+          "main",
+          "mode",
+          "range"
+        ],
+        "gestures": [
+          {
+            "type": "click",
+            "trusted": true,
+            "selector": ".iw-ui [data-id=\"play\"]"
+          },
+          {
+            "type": "click",
+            "trusted": true,
+            "selector": ".iw-ui [data-id=\"mode-range\"]"
+          }
+        ]
+      },
+      "normal": {
+        "ticks": 3,
+        "hits": [
+          {
+            "damage": 36,
+            "killed": false,
+            "weapon": "shooter"
+          }
+        ],
+        "position": [
+          -14.6,
+          -5.551115123125783e-17,
+          0
+        ],
+        "camera": [
+          -14.879999863412325,
+          2.352266194704632,
+          -2.921447429150441
+        ],
+        "yaw": 0,
+        "pitch": -0.12,
+        "renderer": "WebKit WebGL",
+        "reticle": {
+          "x": 421.3999938964844,
+          "y": 214.89999389648438,
+          "width": 0,
+          "height": 0,
+          "top": 214.89999389648438,
+          "right": 421.3999938964844,
+          "bottom": 214.89999389648438,
+          "left": 421.3999938964844
+        },
+        "kind": "shooter"
+      },
+      "component": {
+        "rows": [
+          {
+            "hz": 30,
+            "target": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 0,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "first": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "repeated": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "switched": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "0.0",
+              "retTranslate": "-28px 9px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            }
+          },
+          {
+            "hz": 60,
+            "target": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 0,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "first": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "repeated": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "switched": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "0.0",
+              "retTranslate": "-28px 9px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            }
+          },
+          {
+            "hz": 120,
+            "target": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 0,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "first": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "repeated": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "switched": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "0.0",
+              "retTranslate": "-28px 9px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            }
+          },
+          {
+            "hz": 144,
+            "target": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 0,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "first": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "repeated": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "switched": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "0.0",
+              "retTranslate": "-28px 9px",
+              "hitTranslate": "37px -19px",
+              "hitScale": "1.2",
+              "tickTransition": "0s",
+              "animations": 4,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            }
+          }
+        ],
+        "expired": [
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        "zeroKill": {
+          "scale": "1",
+          "rotate": "none",
+          "spread": "0.0",
+          "retTranslate": "-28px 9px",
+          "hitTranslate": "37px -19px",
+          "hitScale": "1.2",
+          "tickTransition": "0s",
+          "animations": 0,
+          "hit": "iw-hit",
+          "kill": "iw-kill is-on"
+        },
+        "hidden": {
+          "scale": "1",
+          "rotate": "none",
+          "spread": "0.0",
+          "retTranslate": "-28px 9px",
+          "hitTranslate": "",
+          "hitScale": "1.2",
+          "tickTransition": "0s",
+          "animations": 0,
+          "hit": "iw-hit",
+          "kill": "iw-kill"
+        },
+        "children": 4,
+        "life": true
+      },
+      "portrait": {
+        "width": 390,
+        "height": 844,
+        "rotationGuard": true
+      }
+    }
+  ],
+  "acceptance": {
+    "component": "passed",
+    "browser": "normal app entered through trusted pointer/touch input; real projectile hit observed",
+    "gpu": "SwiftShader only; hardware GPU and Switch unverified"
+  },
+  "status": "passed"
+}
