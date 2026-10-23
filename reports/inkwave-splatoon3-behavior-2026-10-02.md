@@ -5899,3 +5899,9 @@ Dynamo/他Roller/Brushの防御object・傘・BigBubblerへ、既存impactDamage
 - **Chargerクリック (#1823関連):** 既存 #1821 の音源追加前commit `7c96d754` と #1827 `32eebaf9` の6音声pathのみを抽出する。HoldNoiseを繰返し加工していたループとpitch上昇を除き、実charge開始と合法charge-keep復帰で1回ずつ既存録音を再生する。nativeで2回目の復帰も再武装し、remoteの二重発音・scope・Goo Tuber partial keepの所有を保持する。追加音声バイナリはない。本家S3の持続上昇レイヤー／SLINKが未取得であることは維持する。
 
 感度、B保持ジャンプ、Splatling減速、雨、靴高、歩行・被弾・ジャンプ曲線、Bloblobber反射の未校正値は推測で確定しない。Google Driveの現資料と公開原典も再検索し、2022音源・Scratch候補・S1資料をS3 11.3.0の確定根拠に昇格させない。物理iPad性能・Switch実機・原音権利の受入は未確認。個別29件と実行結果は `reports/issue-resolution-20261023/README.md` へ記録する。
+
+## 2026-10-23 継続: #845 native足元queryの同一update内再利用、#1767統合QA
+
+- 比較基準はSplatoon 3 11.3.0。ゲームの足元判定・移動・射撃の数値は変更しない。`offline-offscreen-budget.mjs`で、長く未描画のoffline botが同じCharacter.update内で繰り返す完全同一のx/z/rootY/Physicsの問い合わせだけを再利用する。最大24件、update終了・例外時に失効し、参照Physicsも解放する。原典三角形の穴、dynamic足場、次tick、描画前catch-upは元のnative判定を保持する。
+- 実Player00モーションを待ったActor/CharacterとNativeLevel/NativePhysicsの対照で、30/60/120Hzの全210frameの姿勢・skin行列・接地・銃口が完全一致。各1秒のqueryは229→209、439→399、870→788。これは約9%の問い合わせ削減であり、実機FPSの改善測定ではない。#845全体の完了やS3のIK内部仕様の一致とは扱わない。
+- #1767のowner-clockは、オンラインpacketの保留時にだけTextEncoderを生成する。nonce・固定origin・UTF8 byte上限は維持し、offline import時に不要な依存を要求しない。既存統合PRの修正と照合した。65-kit/HUD fixtureは実bindを経由し、受理watermark/Actor bufferを確認する。音楽登録契約は追加済みの23件全件を要求し、Explosher診断fixtureは実common-build検査を通す。テストを間引かず、従来の拒否例を保持する。
