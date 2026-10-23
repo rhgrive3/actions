@@ -1,0 +1,21 @@
+INKWAVE built fixture /tmp/inkwave-firing-residual contentHash=84073826099b7166a711b58d5cb0d9f9df20057549d63dac60d845d70028c8b9
+mixed-pool {"sharedCount":700,"retainedFallingDrops":40,"oldSplatlingParts":0,"additionalShooter":0}
+INKWAVE built fixture /tmp/inkwave-firing-residual contentHash=84073826099b7166a711b58d5cb0d9f9df20057549d63dac60d845d70028c8b9
+INKWAVE built fixture /tmp/inkwave-firing-residual contentHash=84073826099b7166a711b58d5cb0d9f9df20057549d63dac60d845d70028c8b9
+INKWAVE built fixture /tmp/inkwave-firing-residual contentHash=84073826099b7166a711b58d5cb0d9f9df20057549d63dac60d845d70028c8b9
+INKWAVE built fixture /tmp/inkwave-firing-residual contentHash=84073826099b7166a711b58d5cb0d9f9df20057549d63dac60d845d70028c8b9
+(node:7055) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ 32 Splatlings cannot evict the 40 existing late drops at saturation (821.997292ms)
+✔ zero residual capacity preserves all existing slots and suppresses both optional cosmetics (501.786882ms)
+✔ partial residual capacity submits only available Splatling and Shooter beads (834.691195ms)
+✔ ordinary mixed firing keeps smaller Splatling and muzzle Shooter cosmetics in free slots (634.51486ms)
+✔ repeated full/partial/clear/reuse draws retain the fixed buffers and resources (605.114194ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3889.508728

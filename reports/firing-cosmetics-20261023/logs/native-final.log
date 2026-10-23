@@ -1,0 +1,5 @@
+console warning THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported.
+shooter {"grounded":true,"nativeTime":1.816666666666665,"id":"shooter","held":{"pending":false,"charge":0,"cooldown":0.08333333333333334},"n":1,"n0":0,"wait":1,"pos":[23,0,-18],"aim":[0,0.059964006479444595,0.9982005399352042],"yaw":0}
+splatling {"grounded":true,"nativeTime":3.7166666666666583,"id":"splatling","held":{"pending":false,"charge":0.9583333333333318,"cooldown":-1.8333333333333317},"n":1,"n0":0,"wait":3,"pos":[23,0,-18],"aim":[0,0.059964006479444595,0.9982005399352042],"yaw":0}
+splatling-jump {"grounded":false,"nativeTime":5.616666666666652,"id":"splatling","held":{"pending":false,"charge":0.9583333333333318,"cooldown":-1.8333333333333317},"n":1,"n0":0,"wait":3,"pos":[23,0.25916666666666666,-18],"aim":[0,0.059964006479444595,0.9982005399352042],"yaw":0}
+shooter-jump {"grounded":false,"nativeTime":6.383333333333316,"id":"shooter","held":{"pending":false,"charge":0,"cooldown":0.08333333333333334},"n":1,"n0":0,"wait":1,"pos":[23,0.4905555555555555,-18],"aim":[0,0.059964006479444595,0.9982005399352042],"yaw":0}

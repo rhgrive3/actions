@@ -6136,3 +6136,9 @@ main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、Splatoon 3 Ver.11
 参照対象は公開版の全パッチ合成後。S3 Ver.11.3.0に関する既存の未確認値は変更せず、ソースモーション（既存のWii U由来パックを含む）の中間計算だけを削減した。BodyBalanceのgain対象と祖先以外の中間world回転を省き、最終全ボーンFK・足接地・IK・銃口・移動・射撃・塗り・当たり判定・描画設定は維持する。2種の実ソースキャラクター、シューター/チャージャー/ローラーの30/60/120Hz、1260フレームで最終local/world姿勢・skin行列・接地・銃口が一致し、通常minify配信物でも同じ比較が成功。これはロジック/配信物検証であり、Nintendo実機やiPad SafariのFPS比較ではない。
 
 Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテゴリ。修正対象のBodyBalanceはその一部にすぎず、iPad上での支配要因の確定や重いフレームの完全解消とは扱わない。#1671/#1757の実機受入はOpenのまま。条件・既存PRとの重複確認・再現コマンド・証跡は[調査記録](inkwave-composed-cpu-20261023/README.md)。
+
+## 2026-10-23 Shooter muzzle / Splatling cosmetic candidate
+
+main `726e338ac256ba9609086ce65e25a68ddd99df85` の production composition を基準に、スピナーの旧 Shooter-volume の長い管を武器専用の短い滴表示へ、シューターは既存発射 FX と独立した銃口小粒へ接続する候補を追加した。両者は新規 family module と末尾 build adapter で分離し、ヒッセン・汎用粒子・native 弾・塗り・packet の実装を変更しない。source 50/50、実 minify 生成物 28/28、direct-source 20/20 が成功。seeded 24 条件の native gameplay / paint 記録比較と、ブラウザ画像・資源数・限界は [専用レポート](firing-cosmetics-20261023/README.md) に保存する。
+
+本家の対象は Splatoon 3 11.3.0 の Splattershot / Heavy Splatling。今回の .052/.72 の表示寸法や 3 粒/.14 秒は INKWAVE の仮校正であり、本家の公開・実測値ではない。参照 media の環境内取得は CONNECT 403 で拒否され、迂回していない。小粒の retail 見た目一致、最終 native pair、実機性能、公開 exact HEAD CI は専用レポートの記録を確認し、未確認を合格扱いしない。

@@ -1,0 +1,64 @@
+(node:3264) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ early natural freefall remains horizontal; the renderer never infers vertical from airborne position (3884.338413ms)
+✔ composite reservation is atomic, reuses batches, keeps nonuniform transforms finite and culls conservatively (2903.834327ms)
+✔ all 23 supported main definitions emit classified native rounds and render without changing gameplay (4116.315735ms)
+✔ actual Dualies/Splatling births draw connected rods, preserve authority, and fall back as one effect (2146.269701ms)
+✔ native tip translations retain exact Float32 endpoints at decimal-rounding boundaries (1840.238001ms)
+✔ Slosher uses a continuous sheet and sourced tail without detached beads or camera rotation (2593.167363ms)
+✔ catalogue local and JSON-wire births keep immutable family/mode through weapon switches and pooled reuse (2302.313335ms)
+✔ Bucket, Tri-Slosher, Dread Wringer and their alternate kits share the Bucket sheet; other Sloshers keep their art (5.887484ms)
+(node:3265) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ current S3 shape renderer and history renderer never submit the same native Shooter body twice (3387.239081ms)
+✔ pinned source data keeps unknown shooter defaults distinct from explicit Splatling tails (0.243357ms)
+✔ pinned Roller DrawSizeParam stays split between horizontal and vertical sheet modes (0.379774ms)
+✔ pinned Slosher front-four and rear-five records preserve exact DrawSize, offsets, and tail bounds (0.19179ms)
+✔ fixed-size projectile history retains curved samples and has identical 30/60/120 Hz timelines (5.909108ms)
+✔ source-aware renderer assigns distinct geometry to shooter, Roller, and Slosher modes in one bounded batch (2351.73566ms)
+✔ source-sized Slosher caps stay at recorded endpoints across short and long retained histories (1963.50807ms)
+✔ hot render methods reuse storage and contain no per-frame allocation or gameplay RNG path (0.613076ms)
+✔ color uploads reuse stable body colors and merge pending ranges across changed and reordered slots (2049.103096ms)
+✔ history backend unit: native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence (3515.204759ms)
+✔ history backend unit: native coarse 30 Hz projectile update records both actual 60 Hz physics points (4701.626008ms)
+✔ final build composition renders the native nine-glob Slosher volley without changing gameplay state (2338.252686ms)
+✔ final adapter preserves native Shooter, horizontal/vertical Roller, and Slosher fingerprints (14106.346617ms)
+✔ native local and remote Slosher globs resolve to the same source unit, geometry mode, and draw radii (3049.803931ms)
+✔ deferred Slosher history begins at its refreshed aerial muzzle and launch tangent (2847.354999ms)
+✔ history backend unit: a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window (2934.810551ms)
+✔ native horizontal Roller links stay inside each of two real 13-glob volleys (3358.958624ms)
+✔ horizontal liquid membranes cover actual close history after sibling heads separate, without false volley or birth joins (2386.004558ms)
+✔ native horizontal Roller shared-history membranes preserve birth geometry and fixed display-cadence parity (2810.581972ms)
+✔ stalled remote Roller heads and liquid links share the same endpoint at every render alpha (2410.809922ms)
+✔ source VTF Roller owns its GPU draw when installed, with geometry fallback when absent (1765.430687ms)
+✔ native VTF recipe matches the compositor for horizontal and vertical Roller, Shooter and Slosher (0.349899ms)
+(node:3266) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ real births of the seven owned families draw S3 silhouettes, skip the generic teardrop and stay read-only (4505.907254ms)
+✔ unowned families keep their existing renderer and pooled reuse never inherits a shape (3468.831739ms)
+✔ Shooter rod: blunt head, sourced tail length, torn tail only while joined to the muzzle (0.540607ms)
+✔ Splatana crescents use the sourced collider span and lead with the convex edge (3272.582544ms)
+✔ charged Splatana slash is born at ShotBulletOffset_Vertical and clears a flat floor (2900.721734ms)
+✔ SWEPs muzzle splash cones and shipped SWEPs assets (0.928012ms)
+✔ the Sloshing Machine round is one spinning membrane that never reaches behind the muzzle (2680.801438ms)
+✔ offset Brella volleys keep independent native firing identities even at equal owner and birth time (2215.992269ms)
+✔ Stringer actions allocate distinct descriptor identities and both draw even at equal owner and birth time (2408.213486ms)
+✔ charged selector does not rotate Dental waves or swing sheets into the vertical plane (2090.745734ms)
+(node:3326) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ only ordinary Shooter families and their catalogue kits receive muzzle beads (1.091729ms)
+✔ real composed Shooter appends one bounded burst per birth without RNG/gameplay/paint writes (2680.27615ms)
+✔ cessation expires, switching retires, clear/reuse resets a pooled birth (1804.229877ms)
+✔ stress stays within fixed 32 bursts/96 drops and writes no new GPU resources (2246.511594ms)
+(node:3333) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Splatling family ownership does not claim Shooter, Dualies, Slosher, special or delayed non-shot objects (0.945388ms)
+✔ native standing/jumping Splatling gets its own compact bead and no Shooter volume/history body (2805.626977ms)
+ℹ tests 46
+ℹ suites 0
+ℹ pass 46
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 57827.467343

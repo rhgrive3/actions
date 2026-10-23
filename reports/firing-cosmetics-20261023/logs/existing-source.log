@@ -1,0 +1,654 @@
+(node:1938) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ early natural freefall remains horizontal; the renderer never infers vertical from airborne position (187.62389ms)
+✖ composite reservation is atomic, reuses batches, keeps nonuniform transforms finite and culls conservatively (92.478575ms)
+✖ all 23 supported main definitions emit classified native rounds and render without changing gameplay (106.977178ms)
+✖ actual Dualies/Splatling births draw connected rods, preserve authority, and fall back as one effect (94.169672ms)
+✖ native tip translations retain exact Float32 endpoints at decimal-rounding boundaries (90.908562ms)
+✖ Slosher uses a continuous sheet and sourced tail without detached beads or camera rotation (99.877527ms)
+✖ catalogue local and JSON-wire births keep immutable family/mode through weapon switches and pooled reuse (102.605601ms)
+✔ Bucket, Tri-Slosher, Dread Wringer and their alternate kits share the Bucket sheet; other Sloshers keep their art (3.789538ms)
+ℹ Error: Test "early natural freefall remains horizontal; the renderer never infers vertical from airborne position" at patches/local-quality/tests/ink-volume-recipes.test.mjs:25:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "early natural freefall remains horizontal; the renderer never infers vertical from airborne position" at patches/local-quality/tests/ink-volume-recipes.test.mjs:25:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "early natural freefall remains horizontal; the renderer never infers vertical from airborne position" at patches/local-quality/tests/ink-volume-recipes.test.mjs:25:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "early natural freefall remains horizontal; the renderer never infers vertical from airborne position" at patches/local-quality/tests/ink-volume-recipes.test.mjs:25:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "early natural freefall remains horizontal; the renderer never infers vertical from airborne position" at patches/local-quality/tests/ink-volume-recipes.test.mjs:25:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "early natural freefall remains horizontal; the renderer never infers vertical from airborne position" at patches/local-quality/tests/ink-volume-recipes.test.mjs:25:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "early natural freefall remains horizontal; the renderer never infers vertical from airborne position" at patches/local-quality/tests/ink-volume-recipes.test.mjs:25:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "composite reservation is atomic, reuses batches, keeps nonuniform transforms finite and culls conservatively" at patches/local-quality/tests/ink-volume-recipes.test.mjs:29:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "composite reservation is atomic, reuses batches, keeps nonuniform transforms finite and culls conservatively" at patches/local-quality/tests/ink-volume-recipes.test.mjs:29:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "composite reservation is atomic, reuses batches, keeps nonuniform transforms finite and culls conservatively" at patches/local-quality/tests/ink-volume-recipes.test.mjs:29:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "composite reservation is atomic, reuses batches, keeps nonuniform transforms finite and culls conservatively" at patches/local-quality/tests/ink-volume-recipes.test.mjs:29:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "composite reservation is atomic, reuses batches, keeps nonuniform transforms finite and culls conservatively" at patches/local-quality/tests/ink-volume-recipes.test.mjs:29:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "composite reservation is atomic, reuses batches, keeps nonuniform transforms finite and culls conservatively" at patches/local-quality/tests/ink-volume-recipes.test.mjs:29:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "composite reservation is atomic, reuses batches, keeps nonuniform transforms finite and culls conservatively" at patches/local-quality/tests/ink-volume-recipes.test.mjs:29:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "all 23 supported main definitions emit classified native rounds and render without changing gameplay" at patches/local-quality/tests/ink-volume-recipes.test.mjs:40:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "all 23 supported main definitions emit classified native rounds and render without changing gameplay" at patches/local-quality/tests/ink-volume-recipes.test.mjs:40:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "all 23 supported main definitions emit classified native rounds and render without changing gameplay" at patches/local-quality/tests/ink-volume-recipes.test.mjs:40:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "all 23 supported main definitions emit classified native rounds and render without changing gameplay" at patches/local-quality/tests/ink-volume-recipes.test.mjs:40:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "all 23 supported main definitions emit classified native rounds and render without changing gameplay" at patches/local-quality/tests/ink-volume-recipes.test.mjs:40:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "all 23 supported main definitions emit classified native rounds and render without changing gameplay" at patches/local-quality/tests/ink-volume-recipes.test.mjs:40:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "all 23 supported main definitions emit classified native rounds and render without changing gameplay" at patches/local-quality/tests/ink-volume-recipes.test.mjs:40:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "actual Dualies/Splatling births draw connected rods, preserve authority, and fall back as one effect" at patches/local-quality/tests/ink-volume-recipes.test.mjs:58:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "actual Dualies/Splatling births draw connected rods, preserve authority, and fall back as one effect" at patches/local-quality/tests/ink-volume-recipes.test.mjs:58:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "actual Dualies/Splatling births draw connected rods, preserve authority, and fall back as one effect" at patches/local-quality/tests/ink-volume-recipes.test.mjs:58:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "actual Dualies/Splatling births draw connected rods, preserve authority, and fall back as one effect" at patches/local-quality/tests/ink-volume-recipes.test.mjs:58:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "actual Dualies/Splatling births draw connected rods, preserve authority, and fall back as one effect" at patches/local-quality/tests/ink-volume-recipes.test.mjs:58:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "actual Dualies/Splatling births draw connected rods, preserve authority, and fall back as one effect" at patches/local-quality/tests/ink-volume-recipes.test.mjs:58:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "actual Dualies/Splatling births draw connected rods, preserve authority, and fall back as one effect" at patches/local-quality/tests/ink-volume-recipes.test.mjs:58:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native tip translations retain exact Float32 endpoints at decimal-rounding boundaries" at patches/local-quality/tests/ink-volume-recipes.test.mjs:72:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native tip translations retain exact Float32 endpoints at decimal-rounding boundaries" at patches/local-quality/tests/ink-volume-recipes.test.mjs:72:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native tip translations retain exact Float32 endpoints at decimal-rounding boundaries" at patches/local-quality/tests/ink-volume-recipes.test.mjs:72:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native tip translations retain exact Float32 endpoints at decimal-rounding boundaries" at patches/local-quality/tests/ink-volume-recipes.test.mjs:72:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native tip translations retain exact Float32 endpoints at decimal-rounding boundaries" at patches/local-quality/tests/ink-volume-recipes.test.mjs:72:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native tip translations retain exact Float32 endpoints at decimal-rounding boundaries" at patches/local-quality/tests/ink-volume-recipes.test.mjs:72:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native tip translations retain exact Float32 endpoints at decimal-rounding boundaries" at patches/local-quality/tests/ink-volume-recipes.test.mjs:72:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Slosher uses a continuous sheet and sourced tail without detached beads or camera rotation" at patches/local-quality/tests/ink-volume-recipes.test.mjs:107:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Slosher uses a continuous sheet and sourced tail without detached beads or camera rotation" at patches/local-quality/tests/ink-volume-recipes.test.mjs:107:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Slosher uses a continuous sheet and sourced tail without detached beads or camera rotation" at patches/local-quality/tests/ink-volume-recipes.test.mjs:107:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Slosher uses a continuous sheet and sourced tail without detached beads or camera rotation" at patches/local-quality/tests/ink-volume-recipes.test.mjs:107:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Slosher uses a continuous sheet and sourced tail without detached beads or camera rotation" at patches/local-quality/tests/ink-volume-recipes.test.mjs:107:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Slosher uses a continuous sheet and sourced tail without detached beads or camera rotation" at patches/local-quality/tests/ink-volume-recipes.test.mjs:107:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Slosher uses a continuous sheet and sourced tail without detached beads or camera rotation" at patches/local-quality/tests/ink-volume-recipes.test.mjs:107:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "catalogue local and JSON-wire births keep immutable family/mode through weapon switches and pooled reuse" at patches/local-quality/tests/ink-volume-recipes.test.mjs:114:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "catalogue local and JSON-wire births keep immutable family/mode through weapon switches and pooled reuse" at patches/local-quality/tests/ink-volume-recipes.test.mjs:114:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "catalogue local and JSON-wire births keep immutable family/mode through weapon switches and pooled reuse" at patches/local-quality/tests/ink-volume-recipes.test.mjs:114:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "catalogue local and JSON-wire births keep immutable family/mode through weapon switches and pooled reuse" at patches/local-quality/tests/ink-volume-recipes.test.mjs:114:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "catalogue local and JSON-wire births keep immutable family/mode through weapon switches and pooled reuse" at patches/local-quality/tests/ink-volume-recipes.test.mjs:114:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "catalogue local and JSON-wire births keep immutable family/mode through weapon switches and pooled reuse" at patches/local-quality/tests/ink-volume-recipes.test.mjs:114:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "catalogue local and JSON-wire births keep immutable family/mode through weapon switches and pooled reuse" at patches/local-quality/tests/ink-volume-recipes.test.mjs:114:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+(node:1939) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ current S3 shape renderer and history renderer never submit the same native Shooter body twice (196.569171ms)
+✔ pinned source data keeps unknown shooter defaults distinct from explicit Splatling tails (0.434076ms)
+✔ pinned Roller DrawSizeParam stays split between horizontal and vertical sheet modes (1.114785ms)
+✔ pinned Slosher front-four and rear-five records preserve exact DrawSize, offsets, and tail bounds (0.223017ms)
+✔ fixed-size projectile history retains curved samples and has identical 30/60/120 Hz timelines (4.155791ms)
+✔ source-aware renderer assigns distinct geometry to shooter, Roller, and Slosher modes in one bounded batch (630.681552ms)
+✔ source-sized Slosher caps stay at recorded endpoints across short and long retained histories (451.910702ms)
+✔ hot render methods reuse storage and contain no per-frame allocation or gameplay RNG path (0.486775ms)
+✔ color uploads reuse stable body colors and merge pending ranges across changed and reordered slots (559.617027ms)
+✖ native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence (153.111763ms)
+✖ native coarse 30 Hz projectile update records both actual 60 Hz physics points (108.150421ms)
+✖ final build composition renders the native nine-glob Slosher volley without changing gameplay state (111.537417ms)
+✖ final adapter preserves native Shooter, horizontal/vertical Roller, and Slosher fingerprints (117.870388ms)
+✖ native local and remote Slosher globs resolve to the same source unit, geometry mode, and draw radii (122.560933ms)
+✖ deferred Slosher history begins at its refreshed aerial muzzle and launch tangent (129.105298ms)
+✖ a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window (118.389107ms)
+✖ native horizontal Roller links stay inside each of two real 13-glob volleys (127.027308ms)
+✔ horizontal liquid membranes cover actual close history after sibling heads separate, without false volley or birth joins (592.691512ms)
+✖ native horizontal Roller shared-history membranes preserve birth geometry and fixed display-cadence parity (155.74692ms)
+✖ stalled remote Roller heads and liquid links share the same endpoint at every render alpha (133.033781ms)
+✔ source VTF Roller owns its GPU draw when installed, with geometry fallback when absent (606.745499ms)
+✔ native VTF recipe matches the compositor for horizontal and vertical Roller, Shooter and Slosher (0.301876ms)
+ℹ Error: Test "current S3 shape renderer and history renderer never submit the same native Shooter body twice" at patches/splatoon3/tests/projectile-visuals.test.mjs:29:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "current S3 shape renderer and history renderer never submit the same native Shooter body twice" at patches/splatoon3/tests/projectile-visuals.test.mjs:29:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "current S3 shape renderer and history renderer never submit the same native Shooter body twice" at patches/splatoon3/tests/projectile-visuals.test.mjs:29:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "current S3 shape renderer and history renderer never submit the same native Shooter body twice" at patches/splatoon3/tests/projectile-visuals.test.mjs:29:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "current S3 shape renderer and history renderer never submit the same native Shooter body twice" at patches/splatoon3/tests/projectile-visuals.test.mjs:29:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "current S3 shape renderer and history renderer never submit the same native Shooter body twice" at patches/splatoon3/tests/projectile-visuals.test.mjs:29:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "current S3 shape renderer and history renderer never submit the same native Shooter body twice" at patches/splatoon3/tests/projectile-visuals.test.mjs:29:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence" at patches/splatoon3/tests/projectile-visuals.test.mjs:455:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence" at patches/splatoon3/tests/projectile-visuals.test.mjs:455:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence" at patches/splatoon3/tests/projectile-visuals.test.mjs:455:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence" at patches/splatoon3/tests/projectile-visuals.test.mjs:455:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence" at patches/splatoon3/tests/projectile-visuals.test.mjs:455:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence" at patches/splatoon3/tests/projectile-visuals.test.mjs:455:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence" at patches/splatoon3/tests/projectile-visuals.test.mjs:455:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native coarse 30 Hz projectile update records both actual 60 Hz physics points" at patches/splatoon3/tests/projectile-visuals.test.mjs:483:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native coarse 30 Hz projectile update records both actual 60 Hz physics points" at patches/splatoon3/tests/projectile-visuals.test.mjs:483:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native coarse 30 Hz projectile update records both actual 60 Hz physics points" at patches/splatoon3/tests/projectile-visuals.test.mjs:483:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native coarse 30 Hz projectile update records both actual 60 Hz physics points" at patches/splatoon3/tests/projectile-visuals.test.mjs:483:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native coarse 30 Hz projectile update records both actual 60 Hz physics points" at patches/splatoon3/tests/projectile-visuals.test.mjs:483:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native coarse 30 Hz projectile update records both actual 60 Hz physics points" at patches/splatoon3/tests/projectile-visuals.test.mjs:483:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native coarse 30 Hz projectile update records both actual 60 Hz physics points" at patches/splatoon3/tests/projectile-visuals.test.mjs:483:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "final build composition renders the native nine-glob Slosher volley without changing gameplay state" at patches/splatoon3/tests/projectile-visuals.test.mjs:515:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "final build composition renders the native nine-glob Slosher volley without changing gameplay state" at patches/splatoon3/tests/projectile-visuals.test.mjs:515:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "final build composition renders the native nine-glob Slosher volley without changing gameplay state" at patches/splatoon3/tests/projectile-visuals.test.mjs:515:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "final build composition renders the native nine-glob Slosher volley without changing gameplay state" at patches/splatoon3/tests/projectile-visuals.test.mjs:515:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "final build composition renders the native nine-glob Slosher volley without changing gameplay state" at patches/splatoon3/tests/projectile-visuals.test.mjs:515:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "final build composition renders the native nine-glob Slosher volley without changing gameplay state" at patches/splatoon3/tests/projectile-visuals.test.mjs:515:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "final build composition renders the native nine-glob Slosher volley without changing gameplay state" at patches/splatoon3/tests/projectile-visuals.test.mjs:515:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "final adapter preserves native Shooter, horizontal/vertical Roller, and Slosher fingerprints" at patches/splatoon3/tests/projectile-visuals.test.mjs:558:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "final adapter preserves native Shooter, horizontal/vertical Roller, and Slosher fingerprints" at patches/splatoon3/tests/projectile-visuals.test.mjs:558:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "final adapter preserves native Shooter, horizontal/vertical Roller, and Slosher fingerprints" at patches/splatoon3/tests/projectile-visuals.test.mjs:558:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "final adapter preserves native Shooter, horizontal/vertical Roller, and Slosher fingerprints" at patches/splatoon3/tests/projectile-visuals.test.mjs:558:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "final adapter preserves native Shooter, horizontal/vertical Roller, and Slosher fingerprints" at patches/splatoon3/tests/projectile-visuals.test.mjs:558:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "final adapter preserves native Shooter, horizontal/vertical Roller, and Slosher fingerprints" at patches/splatoon3/tests/projectile-visuals.test.mjs:558:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "final adapter preserves native Shooter, horizontal/vertical Roller, and Slosher fingerprints" at patches/splatoon3/tests/projectile-visuals.test.mjs:558:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native local and remote Slosher globs resolve to the same source unit, geometry mode, and draw radii" at patches/splatoon3/tests/projectile-visuals.test.mjs:609:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native local and remote Slosher globs resolve to the same source unit, geometry mode, and draw radii" at patches/splatoon3/tests/projectile-visuals.test.mjs:609:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native local and remote Slosher globs resolve to the same source unit, geometry mode, and draw radii" at patches/splatoon3/tests/projectile-visuals.test.mjs:609:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native local and remote Slosher globs resolve to the same source unit, geometry mode, and draw radii" at patches/splatoon3/tests/projectile-visuals.test.mjs:609:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native local and remote Slosher globs resolve to the same source unit, geometry mode, and draw radii" at patches/splatoon3/tests/projectile-visuals.test.mjs:609:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native local and remote Slosher globs resolve to the same source unit, geometry mode, and draw radii" at patches/splatoon3/tests/projectile-visuals.test.mjs:609:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native local and remote Slosher globs resolve to the same source unit, geometry mode, and draw radii" at patches/splatoon3/tests/projectile-visuals.test.mjs:609:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "deferred Slosher history begins at its refreshed aerial muzzle and launch tangent" at patches/splatoon3/tests/projectile-visuals.test.mjs:647:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "deferred Slosher history begins at its refreshed aerial muzzle and launch tangent" at patches/splatoon3/tests/projectile-visuals.test.mjs:647:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "deferred Slosher history begins at its refreshed aerial muzzle and launch tangent" at patches/splatoon3/tests/projectile-visuals.test.mjs:647:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "deferred Slosher history begins at its refreshed aerial muzzle and launch tangent" at patches/splatoon3/tests/projectile-visuals.test.mjs:647:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "deferred Slosher history begins at its refreshed aerial muzzle and launch tangent" at patches/splatoon3/tests/projectile-visuals.test.mjs:647:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "deferred Slosher history begins at its refreshed aerial muzzle and launch tangent" at patches/splatoon3/tests/projectile-visuals.test.mjs:647:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "deferred Slosher history begins at its refreshed aerial muzzle and launch tangent" at patches/splatoon3/tests/projectile-visuals.test.mjs:647:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window" at patches/splatoon3/tests/projectile-visuals.test.mjs:686:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window" at patches/splatoon3/tests/projectile-visuals.test.mjs:686:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window" at patches/splatoon3/tests/projectile-visuals.test.mjs:686:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window" at patches/splatoon3/tests/projectile-visuals.test.mjs:686:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window" at patches/splatoon3/tests/projectile-visuals.test.mjs:686:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window" at patches/splatoon3/tests/projectile-visuals.test.mjs:686:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window" at patches/splatoon3/tests/projectile-visuals.test.mjs:686:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native horizontal Roller links stay inside each of two real 13-glob volleys" at patches/splatoon3/tests/projectile-visuals.test.mjs:717:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native horizontal Roller links stay inside each of two real 13-glob volleys" at patches/splatoon3/tests/projectile-visuals.test.mjs:717:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native horizontal Roller links stay inside each of two real 13-glob volleys" at patches/splatoon3/tests/projectile-visuals.test.mjs:717:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native horizontal Roller links stay inside each of two real 13-glob volleys" at patches/splatoon3/tests/projectile-visuals.test.mjs:717:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native horizontal Roller links stay inside each of two real 13-glob volleys" at patches/splatoon3/tests/projectile-visuals.test.mjs:717:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native horizontal Roller links stay inside each of two real 13-glob volleys" at patches/splatoon3/tests/projectile-visuals.test.mjs:717:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native horizontal Roller links stay inside each of two real 13-glob volleys" at patches/splatoon3/tests/projectile-visuals.test.mjs:717:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native horizontal Roller shared-history membranes preserve birth geometry and fixed display-cadence parity" at patches/splatoon3/tests/projectile-visuals.test.mjs:828:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native horizontal Roller shared-history membranes preserve birth geometry and fixed display-cadence parity" at patches/splatoon3/tests/projectile-visuals.test.mjs:828:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native horizontal Roller shared-history membranes preserve birth geometry and fixed display-cadence parity" at patches/splatoon3/tests/projectile-visuals.test.mjs:828:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native horizontal Roller shared-history membranes preserve birth geometry and fixed display-cadence parity" at patches/splatoon3/tests/projectile-visuals.test.mjs:828:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native horizontal Roller shared-history membranes preserve birth geometry and fixed display-cadence parity" at patches/splatoon3/tests/projectile-visuals.test.mjs:828:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native horizontal Roller shared-history membranes preserve birth geometry and fixed display-cadence parity" at patches/splatoon3/tests/projectile-visuals.test.mjs:828:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "native horizontal Roller shared-history membranes preserve birth geometry and fixed display-cadence parity" at patches/splatoon3/tests/projectile-visuals.test.mjs:828:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "stalled remote Roller heads and liquid links share the same endpoint at every render alpha" at patches/splatoon3/tests/projectile-visuals.test.mjs:858:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "stalled remote Roller heads and liquid links share the same endpoint at every render alpha" at patches/splatoon3/tests/projectile-visuals.test.mjs:858:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "stalled remote Roller heads and liquid links share the same endpoint at every render alpha" at patches/splatoon3/tests/projectile-visuals.test.mjs:858:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "stalled remote Roller heads and liquid links share the same endpoint at every render alpha" at patches/splatoon3/tests/projectile-visuals.test.mjs:858:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "stalled remote Roller heads and liquid links share the same endpoint at every render alpha" at patches/splatoon3/tests/projectile-visuals.test.mjs:858:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "stalled remote Roller heads and liquid links share the same endpoint at every render alpha" at patches/splatoon3/tests/projectile-visuals.test.mjs:858:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "stalled remote Roller heads and liquid links share the same endpoint at every render alpha" at patches/splatoon3/tests/projectile-visuals.test.mjs:858:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+(node:1940) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ real births of the seven owned families draw S3 silhouettes, skip the generic teardrop and stay read-only (196.146086ms)
+✖ unowned families keep their existing renderer and pooled reuse never inherits a shape (105.217223ms)
+✔ Shooter rod: blunt head, sourced tail length, torn tail only while joined to the muzzle (0.847371ms)
+✖ Splatana crescents use the sourced collider span and lead with the convex edge (97.02703ms)
+✖ charged Splatana slash is born at ShotBulletOffset_Vertical and clears a flat floor (100.698759ms)
+✔ SWEPs muzzle splash cones and shipped SWEPs assets (0.84017ms)
+✖ the Sloshing Machine round is one spinning membrane that never reaches behind the muzzle (104.001812ms)
+✖ offset Brella volleys keep independent native firing identities even at equal owner and birth time (106.060213ms)
+✖ Stringer actions allocate distinct descriptor identities and both draw even at equal owner and birth time (100.449532ms)
+✖ charged selector does not rotate Dental waves or swing sheets into the vertical plane (106.929131ms)
+ℹ Error: Test "real births of the seven owned families draw S3 silhouettes, skip the generic teardrop and stay read-only" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:40:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "real births of the seven owned families draw S3 silhouettes, skip the generic teardrop and stay read-only" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:40:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "real births of the seven owned families draw S3 silhouettes, skip the generic teardrop and stay read-only" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:40:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "real births of the seven owned families draw S3 silhouettes, skip the generic teardrop and stay read-only" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:40:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "real births of the seven owned families draw S3 silhouettes, skip the generic teardrop and stay read-only" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:40:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "real births of the seven owned families draw S3 silhouettes, skip the generic teardrop and stay read-only" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:40:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "real births of the seven owned families draw S3 silhouettes, skip the generic teardrop and stay read-only" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:40:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "unowned families keep their existing renderer and pooled reuse never inherits a shape" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:78:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "unowned families keep their existing renderer and pooled reuse never inherits a shape" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:78:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "unowned families keep their existing renderer and pooled reuse never inherits a shape" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:78:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "unowned families keep their existing renderer and pooled reuse never inherits a shape" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:78:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "unowned families keep their existing renderer and pooled reuse never inherits a shape" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:78:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "unowned families keep their existing renderer and pooled reuse never inherits a shape" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:78:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "unowned families keep their existing renderer and pooled reuse never inherits a shape" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:78:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Splatana crescents use the sourced collider span and lead with the convex edge" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:108:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Splatana crescents use the sourced collider span and lead with the convex edge" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:108:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Splatana crescents use the sourced collider span and lead with the convex edge" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:108:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Splatana crescents use the sourced collider span and lead with the convex edge" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:108:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Splatana crescents use the sourced collider span and lead with the convex edge" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:108:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Splatana crescents use the sourced collider span and lead with the convex edge" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:108:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Splatana crescents use the sourced collider span and lead with the convex edge" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:108:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "charged Splatana slash is born at ShotBulletOffset_Vertical and clears a flat floor" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:122:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "charged Splatana slash is born at ShotBulletOffset_Vertical and clears a flat floor" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:122:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "charged Splatana slash is born at ShotBulletOffset_Vertical and clears a flat floor" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:122:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "charged Splatana slash is born at ShotBulletOffset_Vertical and clears a flat floor" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:122:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "charged Splatana slash is born at ShotBulletOffset_Vertical and clears a flat floor" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:122:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "charged Splatana slash is born at ShotBulletOffset_Vertical and clears a flat floor" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:122:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "charged Splatana slash is born at ShotBulletOffset_Vertical and clears a flat floor" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:122:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "the Sloshing Machine round is one spinning membrane that never reaches behind the muzzle" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:161:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "the Sloshing Machine round is one spinning membrane that never reaches behind the muzzle" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:161:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "the Sloshing Machine round is one spinning membrane that never reaches behind the muzzle" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:161:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "the Sloshing Machine round is one spinning membrane that never reaches behind the muzzle" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:161:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "the Sloshing Machine round is one spinning membrane that never reaches behind the muzzle" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:161:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "the Sloshing Machine round is one spinning membrane that never reaches behind the muzzle" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:161:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "the Sloshing Machine round is one spinning membrane that never reaches behind the muzzle" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:161:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "offset Brella volleys keep independent native firing identities even at equal owner and birth time" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:181:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "offset Brella volleys keep independent native firing identities even at equal owner and birth time" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:181:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "offset Brella volleys keep independent native firing identities even at equal owner and birth time" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:181:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "offset Brella volleys keep independent native firing identities even at equal owner and birth time" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:181:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "offset Brella volleys keep independent native firing identities even at equal owner and birth time" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:181:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "offset Brella volleys keep independent native firing identities even at equal owner and birth time" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:181:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "offset Brella volleys keep independent native firing identities even at equal owner and birth time" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:181:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Stringer actions allocate distinct descriptor identities and both draw even at equal owner and birth time" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:211:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Stringer actions allocate distinct descriptor identities and both draw even at equal owner and birth time" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:211:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Stringer actions allocate distinct descriptor identities and both draw even at equal owner and birth time" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:211:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Stringer actions allocate distinct descriptor identities and both draw even at equal owner and birth time" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:211:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Stringer actions allocate distinct descriptor identities and both draw even at equal owner and birth time" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:211:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Stringer actions allocate distinct descriptor identities and both draw even at equal owner and birth time" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:211:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Stringer actions allocate distinct descriptor identities and both draw even at equal owner and birth time" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:211:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "charged selector does not rotate Dental waves or swing sheets into the vertical plane" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:240:1 generated asynchronous activity after the test ended. This activity created the error "Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "charged selector does not rotate Dental waves or swing sheets into the vertical plane" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:240:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "charged selector does not rotate Dental waves or swing sheets into the vertical plane" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:240:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "charged selector does not rotate Dental waves or swing sheets into the vertical plane" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:240:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "charged selector does not rotate Dental waves or swing sheets into the vertical plane" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:240:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "charged selector does not rotate Dental waves or swing sheets into the vertical plane" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:240:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "charged selector does not rotate Dental waves or swing sheets into the vertical plane" at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:240:1 generated asynchronous activity after the test ended. This activity created the error "Error: fixture compilation generation is closed" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ tests 40
+ℹ suites 0
+ℹ pass 14
+ℹ fail 26
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4880.482035
+
+✖ failing tests:
+
+test at patches/local-quality/tests/ink-volume-recipes.test.mjs:25:1
+✖ early natural freefall remains horizontal; the renderer never infers vertical from airborne position (187.62389ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at file:///workspace/actions/patches/splatoon3/tests/fixture-cache.mjs:38:20
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:75:66)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at api (file:///workspace/actions/patches/local-quality/tests/ink-volume-recipes.test.mjs:7:17)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/local-quality/tests/ink-volume-recipes.test.mjs:26:17)
+
+test at patches/local-quality/tests/ink-volume-recipes.test.mjs:29:1
+✖ composite reservation is atomic, reuses batches, keeps nonuniform transforms finite and culls conservatively (92.478575ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at file:///workspace/actions/patches/splatoon3/tests/fixture-cache.mjs:38:20
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:75:66)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at api (file:///workspace/actions/patches/local-quality/tests/ink-volume-recipes.test.mjs:7:17)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/local-quality/tests/ink-volume-recipes.test.mjs:30:17)
+
+test at patches/local-quality/tests/ink-volume-recipes.test.mjs:40:1
+✖ all 23 supported main definitions emit classified native rounds and render without changing gameplay (106.977178ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at file:///workspace/actions/patches/splatoon3/tests/fixture-cache.mjs:38:20
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:75:66)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at api (file:///workspace/actions/patches/local-quality/tests/ink-volume-recipes.test.mjs:7:17)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/local-quality/tests/ink-volume-recipes.test.mjs:41:17)
+
+test at patches/local-quality/tests/ink-volume-recipes.test.mjs:58:1
+✖ actual Dualies/Splatling births draw connected rods, preserve authority, and fall back as one effect (94.169672ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at file:///workspace/actions/patches/splatoon3/tests/fixture-cache.mjs:38:20
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:75:66)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at api (file:///workspace/actions/patches/local-quality/tests/ink-volume-recipes.test.mjs:7:17)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/local-quality/tests/ink-volume-recipes.test.mjs:59:17)
+
+test at patches/local-quality/tests/ink-volume-recipes.test.mjs:72:1
+✖ native tip translations retain exact Float32 endpoints at decimal-rounding boundaries (90.908562ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at file:///workspace/actions/patches/splatoon3/tests/fixture-cache.mjs:38:20
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:75:66)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at api (file:///workspace/actions/patches/local-quality/tests/ink-volume-recipes.test.mjs:7:17)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/local-quality/tests/ink-volume-recipes.test.mjs:73:17)
+
+test at patches/local-quality/tests/ink-volume-recipes.test.mjs:107:1
+✖ Slosher uses a continuous sheet and sourced tail without detached beads or camera rotation (99.877527ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at file:///workspace/actions/patches/splatoon3/tests/fixture-cache.mjs:38:20
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:75:66)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at api (file:///workspace/actions/patches/local-quality/tests/ink-volume-recipes.test.mjs:7:17)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/local-quality/tests/ink-volume-recipes.test.mjs:108:17)
+
+test at patches/local-quality/tests/ink-volume-recipes.test.mjs:114:1
+✖ catalogue local and JSON-wire births keep immutable family/mode through weapon switches and pooled reuse (102.605601ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at file:///workspace/actions/patches/splatoon3/tests/fixture-cache.mjs:38:20
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:75:66)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at api (file:///workspace/actions/patches/local-quality/tests/ink-volume-recipes.test.mjs:7:17)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/local-quality/tests/ink-volume-recipes.test.mjs:115:17)
+
+test at patches/splatoon3/tests/projectile-visuals.test.mjs:29:1
+✖ current S3 shape renderer and history renderer never submit the same native Shooter body twice (196.569171ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at file:///workspace/actions/patches/splatoon3/tests/fixture-cache.mjs:38:20
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:75:66)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:30:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+
+test at patches/splatoon3/tests/projectile-visuals.test.mjs:455:1
+✖ native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence (153.111763ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:74:9)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at nativeFixture (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:55:19)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:456:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+
+test at patches/splatoon3/tests/projectile-visuals.test.mjs:483:1
+✖ native coarse 30 Hz projectile update records both actual 60 Hz physics points (108.150421ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:74:9)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at nativeFixture (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:55:19)
+      at run (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:485:29)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:509:24)
+
+test at patches/splatoon3/tests/projectile-visuals.test.mjs:515:1
+✖ final build composition renders the native nine-glob Slosher volley without changing gameplay state (111.537417ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:74:9)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at nativeFixture (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:55:19)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:516:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+
+test at patches/splatoon3/tests/projectile-visuals.test.mjs:558:1
+✖ final adapter preserves native Shooter, horizontal/vertical Roller, and Slosher fingerprints (117.870388ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:74:9)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at nativeFixture (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:55:19)
+      at run (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:563:29)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:602:26)
+
+test at patches/splatoon3/tests/projectile-visuals.test.mjs:609:1
+✖ native local and remote Slosher globs resolve to the same source unit, geometry mode, and draw radii (122.560933ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:74:9)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at nativeFixture (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:55:19)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:610:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+
+test at patches/splatoon3/tests/projectile-visuals.test.mjs:647:1
+✖ deferred Slosher history begins at its refreshed aerial muzzle and launch tangent (129.105298ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:74:9)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at nativeFixture (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:55:19)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:648:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+
+test at patches/splatoon3/tests/projectile-visuals.test.mjs:686:1
+✖ a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window (118.389107ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:74:9)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at nativeFixture (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:55:19)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:687:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+
+test at patches/splatoon3/tests/projectile-visuals.test.mjs:717:1
+✖ native horizontal Roller links stay inside each of two real 13-glob volleys (127.027308ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:74:9)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at nativeFixture (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:55:19)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:718:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+
+test at patches/splatoon3/tests/projectile-visuals.test.mjs:828:1
+✖ native horizontal Roller shared-history membranes preserve birth geometry and fixed display-cadence parity (155.74692ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:74:9)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at nativeFixture (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:55:19)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:829:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+
+test at patches/splatoon3/tests/projectile-visuals.test.mjs:858:1
+✖ stalled remote Roller heads and liquid links share the same endpoint at every render alpha (133.033781ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:74:9)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at nativeFixture (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:55:19)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:859:27)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+
+test at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:40:1
+✖ real births of the seven owned families draw S3 silhouettes, skip the generic teardrop and stay read-only (196.146086ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at file:///workspace/actions/patches/splatoon3/tests/fixture-cache.mjs:38:20
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:75:66)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at api (file:///workspace/actions/patches/splatoon3/tests/s3-projectile-shapes.test.mjs:10:19)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/s3-projectile-shapes.test.mjs:41:19)
+
+test at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:78:1
+✖ unowned families keep their existing renderer and pooled reuse never inherits a shape (105.217223ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at file:///workspace/actions/patches/splatoon3/tests/fixture-cache.mjs:38:20
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:75:66)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at api (file:///workspace/actions/patches/splatoon3/tests/s3-projectile-shapes.test.mjs:10:19)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/s3-projectile-shapes.test.mjs:79:19)
+
+test at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:108:1
+✖ Splatana crescents use the sourced collider span and lead with the convex edge (97.02703ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at file:///workspace/actions/patches/splatoon3/tests/fixture-cache.mjs:38:20
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:75:66)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at api (file:///workspace/actions/patches/splatoon3/tests/s3-projectile-shapes.test.mjs:10:19)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/s3-projectile-shapes.test.mjs:109:19)
+
+test at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:122:1
+✖ charged Splatana slash is born at ShotBulletOffset_Vertical and clears a flat floor (100.698759ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at file:///workspace/actions/patches/splatoon3/tests/fixture-cache.mjs:38:20
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:75:66)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at api (file:///workspace/actions/patches/splatoon3/tests/s3-projectile-shapes.test.mjs:10:19)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/s3-projectile-shapes.test.mjs:123:19)
+
+test at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:161:1
+✖ the Sloshing Machine round is one spinning membrane that never reaches behind the muzzle (104.001812ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at file:///workspace/actions/patches/splatoon3/tests/fixture-cache.mjs:38:20
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:75:66)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at api (file:///workspace/actions/patches/splatoon3/tests/s3-projectile-shapes.test.mjs:10:19)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/s3-projectile-shapes.test.mjs:162:19)
+
+test at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:181:1
+✖ offset Brella volleys keep independent native firing identities even at equal owner and birth time (106.060213ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at file:///workspace/actions/patches/splatoon3/tests/fixture-cache.mjs:38:20
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:75:66)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at api (file:///workspace/actions/patches/splatoon3/tests/s3-projectile-shapes.test.mjs:10:19)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/s3-projectile-shapes.test.mjs:182:19)
+
+test at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:211:1
+✖ Stringer actions allocate distinct descriptor identities and both draw even at equal owner and birth time (100.449532ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at file:///workspace/actions/patches/splatoon3/tests/fixture-cache.mjs:38:20
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:75:66)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at api (file:///workspace/actions/patches/splatoon3/tests/s3-projectile-shapes.test.mjs:10:19)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/s3-projectile-shapes.test.mjs:212:19)
+
+test at patches/splatoon3/tests/s3-projectile-shapes.test.mjs:240:1
+✖ charged selector does not rotate Dental waves or swing sheets into the vertical plane (106.929131ms)
+  Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+      this.projectileVisuals.clear();
+      at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+      at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+      at file:///workspace/actions/patches/splatoon3/tests/fixture-cache.mjs:38:20
+      at load (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:75:66)
+      at file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:35
+      at [kLink] (node:internal/vm/module:345:28)
+      at SourceTextModule.link (node:internal/vm/module:208:22)
+      at fixture (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:113:14)
+      at api (file:///workspace/actions/patches/splatoon3/tests/s3-projectile-shapes.test.mjs:10:19)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/s3-projectile-shapes.test.mjs:241:19)
