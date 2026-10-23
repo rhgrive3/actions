@@ -380,7 +380,12 @@ class Director {
       seen.add(o); r.age += dt;
       this.call(spec.frame, r, o, dt);
     }
-    for (const [o, r] of this.objects) if (!seen.has(o)) { this.call(r.spec.end, r, o); for (const x of Object.values(r.d)) { if (x?.pts) { this.kit.ribbons.end(x); this.kit.glowRibbons.end(x); } else if (x && 'dead' in x && x.v) x.dead = true; } this.objects.delete(o); }
+    for (const [o, r] of this.objects) if (!seen.has(o)) {
+      // Native Booyah retirement removes frame 80 before presentation sees it.
+      // Consume only that terminal interval; early removal never backfills particles.
+      if (r.kind === 'booyahBlast' && o.kind === r.kind && o.dead && o.frameCount === 80 && r.particleFrame < 80) this.call(r.spec.frame, r, o, dt);
+      this.call(r.spec.end, r, o); for (const x of Object.values(r.d)) { if (x?.pts) { this.kit.ribbons.end(x); this.kit.glowRibbons.end(x); } else if (x && 'dead' in x && x.v) x.dead = true; } this.objects.delete(o);
+    }
   }
   // ------------------------------------------------------------------ kit specials with their own world records
   updateKits(dt) {
@@ -732,18 +737,23 @@ const OBJECT_FX = {
     frame(r, o, dt) {
       if (!(dt > 0) || !Number.isFinite(dt)) return;
       const f = o.frameCount || 0, p = o.pos, c = r.color, R = o.maxRadius || 12.6;
-      // A phase boundary discards fractional trials; it never replays the preceding phase.
-      const phase = f < 40 ? 'hold' : r.blasted ? 'scatter' : 'burst';
-      if (r.particlePhase !== phase) { r.particlePhase = phase; r.particleCarry = 0; }
+      if (f > 80 || (f === 80 && r.particleFrame >= 80)) return;
+      // The producer has already advanced f. Each trial belongs to a source
+      // frame in this interval: at 30 Hz, f=40 includes 39 and 40; f=80 includes 79 and 80.
       const frames = (r.particleCarry || 0) + Math.min(dt * 60, 2), ticks = Math.floor(frames + 1e-9);
       r.particleCarry = Math.max(0, frames - ticks);
-      if (f < 40) {
-        for (let i = 0; i < ticks; i++) if (vfxRandom() < 0.8) { // energy drawn into the ball
+      // Retirement can truncate a longer interval at 80; do not replay a 79
+      // that was already presented before that final producer update.
+      const first = Math.max(0, f - ticks + 1, f === 80 ? (r.particleFrame ?? f) + 1 : 0), hadBlast = r.blasted;
+      r.particleFrame = f;
+      for (let frame = first; frame <= f; frame++) {
+        if (frame < 40 && vfxRandom() < 0.8) { // energy drawn into the ball
           const th = rnd(TAU), el = rnd(1.2, -0.3), d = rnd(4, 2.5);
           this.v[0].set(p.x + Math.cos(th) * Math.cos(el) * d, p.y + 1 + Math.sin(el) * d, p.z + Math.sin(th) * Math.cos(el) * d);
           this.spark(SPARK.STREAK, this.v[0], (p.x - this.v[0].x) * 3.2, (p.y + 1 - this.v[0].y) * 3.2, (p.z - this.v[0].z) * 3.2, 0.3, 0.06, 0.02, this.hdr(c, 2.2, 1.4), 1, { drag: 0, stretch: 0.07 });
         }
-      } else if (!r.blasted) {
+      }
+      if (f >= 40 && f < 80 && !r.blasted) {
         r.blasted = true;
         const k0 = p.clone();
         this.flash(this.v[0].copy(k0).setY(k0.y + 1.2), c, 4, 0.35);
@@ -756,8 +766,10 @@ const OBJECT_FX = {
         this.streaks(this.v[0].copy(k0).setY(k0.y + 1), 46, 26, c, { up: 0.4, life: 0.9, size: 0.09, drag: 1.5 });
         this.chunks(this.v[0].copy(k0).setY(k0.y + 0.5), 30, 20, c, { size: 0.3 });
         this.petals(this.v[0].copy(k0).setY(k0.y + 1), 40, 18, c, { size: 0.34 });
-      } else if (this.near(p, 80)) for (let i = 0; i < ticks; i++) if (vfxRandom() < 0.9) {
-        const k = clamp01((f - 40) / 40), th = rnd(TAU), rr = R * smooth(k * 1.4);
+      }
+      if (r.blasted && (hadBlast || first <= 40) && this.near(p, 80)) for (let frame = first; frame <= f; frame++) {
+        if (!(frame > 40 && frame < 80) || vfxRandom() >= 0.9) continue;
+        const k = clamp01((frame - 40) / 40), th = rnd(TAU), rr = R * smooth(k * 1.4);
         this.v[0].set(p.x + Math.cos(th) * rr, p.y + rnd(1.5, 0.2), p.z + Math.sin(th) * rr);
         this.drop(this.v[0], Math.cos(th) * 5, rnd(6, 2), Math.sin(th) * 5, 0.7, 0.16, c);
       }

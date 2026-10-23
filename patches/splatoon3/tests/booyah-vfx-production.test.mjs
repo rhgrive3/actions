@@ -3,15 +3,43 @@ import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { specialVfxDirector } from '../runtime/special-vfx.mjs';
 import { SPARK } from '../runtime/special-vfx-kit.mjs';
+import { terminalFrozen, section } from './booyah-vfx-fixture.mjs';
+import { pathToFileURL } from 'node:url';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import { compactModuleStrings } from '../../../scripts/lib/inkwave-source-compaction.mjs';
+
+const minifier = process.env.BOOYAH_TEST_MINIFIED === '1'
+  ? await import(process.env.ESBUILD_MODULE ? pathToFileURL(process.env.ESBUILD_MODULE).href : 'esbuild') : null;
 
 const HZ = [30, 60, 120, 144, 240];
-async function boot() {
+async function boot({ candidate42 = process.env.BOOYAH_TEST_CANDIDATE42 === '1' } = {}) {
   let rngCalls = 0;
   const f = await fixture({ fullRuntime: true, productionComposition: true, realProjectiles: true,
     adaptRuntime(rel, text) {
+      if (candidate42 && rel === 'patches/splatoon3/runtime/special-vfx.mjs') {
+        const begin = text.indexOf('  updateObjects(dt) {'), end = text.indexOf('\n  // ------------------------------------------------------------------ kit specials', begin);
+        text = text.slice(0, begin) + terminalFrozen.updateObjects + text.slice(end);
+        text = text.replace(section(text, 'object'), terminalFrozen.object);
+      }
       if (rel === 'patches/splatoon3/runtime/special-vfx-kit.mjs') {
         const next = text.replace(/export function vfxRandom\(\) \{[\s\S]*?\n\}/, 'export function vfxRandom() { return globalThis.__booyahPresentationRandom(); }');
-        assert.notEqual(next, text); return next;
+        assert.notEqual(next, text); text = next;
+      }
+      if (minifier && /patches\/splatoon3\/runtime\/special-vfx(?:-kit)?\.mjs$/.test(rel)) {
+        const output = minifier.transformSync(adaptBuildSource(rel, text), { loader: 'js', format: 'esm', minify: true,
+          charset: 'utf8', legalComments: 'inline', sourcefile: rel }).code;
+        return compactModuleStrings(output).code;
+      }
+      return text;
+    },
+    adaptEmittedRuntime(rel, text) {
+      if (rel === 'patches/splatoon3/runtime/special-vfx-kit.mjs') {
+        // Read the emitted export binding; keep the actual built VFX module unchanged.
+        const name = text.match(/([\w$]+) as vfxRandom\b/)?.[1];
+        assert.ok(name, 'minified kit exports its presentation RNG');
+        const begin = text.indexOf('function ' + name + '(){'), end = text.indexOf('}', begin);
+        assert.ok(begin >= 0 && end > begin, 'locate the emitted RNG function body');
+        return text.slice(0, begin) + 'function ' + name + '(){return globalThis.__booyahPresentationRandom();}' + text.slice(end + 1);
       }
       return text;
     } });
@@ -86,9 +114,9 @@ test('installed phase boundaries, cancellation, projectile reuse and clear resta
     advance(1 / 240); assert.equal(counts.suction, 0); assert.equal(counts.chargedStars, 0);
     o.frameCount = 39; advance(1 / 240); assert.equal(counts.bursts, 0); assert.ok(warn.v[11] > 0);
     o.frameCount = 40; advance(1 / 240); assert.equal(counts.bursts, 1); assert.equal(warn.v[11], 0);
-    o.frameCount = 41;
-    for (let k = 0; k < 3; k++) advance(1 / 240);
-    assert.equal(counts.scatter, 0); advance(1 / 240); assert.equal(counts.scatter, 1); assert.equal(counts.bursts, 1);
+    // With the previous three quarter-ticks retained, the next tick belongs to frame 41.
+    o.frameCount = 41; advance(1 / 240);
+    assert.equal(counts.scatter, 1); advance(1 / 240); assert.equal(counts.scatter, 1); assert.equal(counts.bursts, 1);
     // Reuse the actual projectile object with a changed seed, forcing a fresh presentation record.
     advance(1 / 240); const previous = d.rounds.get(p); p.seed++; const starBefore = counts.flightStars;
     advance(1 / 120); assert.notEqual(d.rounds.get(p), previous); assert.equal(counts.flightStars, starBefore);
@@ -137,10 +165,32 @@ test('installed director ignores zero/invalid dt and bounds large updates, repea
   } finally { fx.dispose(); }
 });
 
+test('installed terminal drain is per record and immediate; another owner cancelled at 79 receives no drain', async () => {
+  const env = await boot(), { G, fx, d, counts, add, advance } = env;
+  try {
+    const a = add(true), b = add(true);
+    a.o.frameCount = 78; b.o.frameCount = 79;
+    advance(1 / 30);
+    const ra = d.objects.get(a.o), rb = d.objects.get(b.o), before = counts.scatter;
+    const authorityA = authority(a.a, a.p, a.o), authorityB = authority(b.a, b.p, b.o);
+    // Only test-owned source fields change; neither owner nor its gauge is authored by the drain.
+    a.o.frameCount = 80; a.o.dead = true; b.o.dead = true;
+    G.projectiles._s3AllSpecialObjects.length = 0;
+    const stateA = authority(a.a, a.p, a.o), stateB = authority(b.a, b.p, b.o);
+    d.updateObjects(1 / 30);
+    assert.equal(counts.scatter, before + 1); assert.equal(ra.particleFrame, 80); assert.equal(rb.particleFrame, 79);
+    assert.equal(d.objects.size, 0); assert.equal(ra.d.warn.dead, true); assert.equal(rb.d.warn.dead, true);
+    assert.equal(authority(a.a, a.p, a.o), stateA); assert.equal(authority(b.a, b.p, b.o), stateB);
+    assert.notEqual(authorityA, stateA); assert.equal(authorityB, stateB);
+    const calls = env.rngCalls(); d.updateObjects(1 / 30);
+    assert.equal(counts.scatter, before + 1); assert.equal(env.rngCalls(), calls); assert.equal(d.errors, 0);
+  } finally { fx.dispose(); }
+});
+
 test('native Booyah launch and 40F/80F world clocks keep identical damage, paint, events and gauge with presentation on/off at every rate', async () => {
   const env = await boot(), { f, G, fx, d, counts, reset } = env, measurements = [];
   try {
-    for (const hz of HZ) {
+    for (const hz of [...HZ, 'boundary-jitter']) {
       const results = [];
       for (const enabled of [false, true]) {
         reset(); G.time = 0; fx.s3SpecialVfxEnabled = enabled;
@@ -162,8 +212,11 @@ test('native Booyah launch and 40F/80F world clocks keep identical damage, paint
           G.projectiles._blastBurst(p, new f.THREE.Vector3(0, 0, 0), null); G.projectiles.list.splice(G.projectiles.list.indexOf(p), 1);
           const blast = G.projectiles._s3AllSpecialObjects.find(o => o.kind === 'booyahBlast'); assert.ok(blast);
           assert.equal(blast.startDelay, 40 / 60); assert.equal(blast.expand, 40 / 60); assert.equal(blast.maxRadius, 12.6);
-          const dt = 1 / hz; let firstBurstFrame = null, firstBurstSeconds = null, holdPeak = 0;
-          for (let k = 0; k < Math.ceil(80 * hz / 60); k++) {
+          const steps = hz === 'boundary-jitter'
+            ? [...Array(39).fill(1 / 60), 1 / 30, ...Array(38).fill(1 / 60), 1 / 30]
+            : Array(Math.ceil(80 * hz / 60)).fill(1 / hz);
+          let firstBurstFrame = null, firstBurstSeconds = null, holdPeak = 0;
+          for (const dt of steps) {
             G.time += dt; G.projectiles.update(dt); const before = counts.bursts; fx.update(dt, G.camera);
             if (counts.bursts !== before) { firstBurstFrame = blast.frameCount; firstBurstSeconds = G.time; }
             holdPeak = Math.max(holdPeak, d.kit.sparks.n);
@@ -172,8 +225,10 @@ test('native Booyah launch and 40F/80F world clocks keep identical damage, paint
           assert.equal(blast.paintedRadius, 13.5); assert.equal(G.projectiles._s3AllSpecialObjects.length, 0);
           assert.equal(hits.filter(x => x[0] === 'center' && x[1] === 3.3).length, 40); assert.equal(hits.filter(x => x[0] === 'far' && x[1] === 3.3).length, 21);
           if (enabled) {
-            assert.equal(firstBurstFrame, 40); assert.ok(Math.abs(firstBurstSeconds - 40 / 60) < 1e-9); assert.equal(counts.bursts, 1);
-            assert.equal(counts.suction, hz === 30 ? 38 : 39); assert.equal(counts.scatter, hz === 30 ? 38 : 39);
+            // The jitter case has no render callback at 40: its interval contains 40 and 41.
+            assert.equal(firstBurstFrame, hz === 'boundary-jitter' ? 41 : 40);
+            assert.ok(Math.abs(firstBurstSeconds - firstBurstFrame / 60) < 1e-9); assert.equal(counts.bursts, 1);
+            assert.equal(counts.suction, 39); assert.equal(counts.scatter, 39);
           }
           results.push({ center: center.hp, far: far.hp, gauge: owner.special, special: owner.specialActive?.id ?? null,
             paint: JSON.stringify(paint), hits: JSON.stringify(hits), events: JSON.stringify(events), gameplaySeed: seed });

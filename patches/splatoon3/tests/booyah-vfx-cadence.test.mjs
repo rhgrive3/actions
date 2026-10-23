@@ -15,7 +15,8 @@ test('frozen source reproduces callback dependence; elapsed-time recipes preserv
 test('seeded 60 Hz emissions retain exact arguments, probability trials and random call order', () => {
   for (const role of Object.keys(roles)) {
     const before = rawSession(role, { old: true, seeded: true }), after = rawSession(role, { seeded: true });
-    for (let k = 0; k < 180; k++) {
+    // An object is retired by the producer at frame 80, so only 0..79 are live recipe frames.
+    for (let k = 0; k < (role === 'object' ? 80 : 180); k++) {
       if (role === 'object') before.o.frameCount = after.o.frameCount = k;
       if (role === 'director') before.a._s3AllSpecialState.charge = after.a._s3AllSpecialState.charge = Math.min(1, k / 80);
       before.step(1 / 60); after.step(1 / 60);
@@ -25,19 +26,22 @@ test('seeded 60 Hz emissions retain exact arguments, probability trials and rand
   }
 });
 
-test('phase 39/40/41 uses native boundaries and discards fractional suction and burst carry', () => {
+test('30 Hz intervals retain frame 39 suction and frame 79 scatter without emitting at 40 or 80', () => {
   const s = rawSession('object');
-  s.o.frameCount = 39; s.step(1 / 240); assert.equal(s.r.particleCarry, .25);
+  s.o.frameCount = 38; s.step(1 / 30);
+  assert.equal(s.count(SPARK.STREAK), 2);
   assert.equal(s.r.d.warn.v[11], Math.fround(.8)); assert.equal(s.r.d.orb.v[11], 1);
   const before = s.rows.length;
-  s.o.frameCount = 40; s.step(1 / 240);
+  s.o.frameCount = 40; s.step(1 / 30);
+  assert.equal(s.count(SPARK.STREAK), 3, 'frame 39 trial is before the burst in this same interval');
   assert.equal(s.r.blasted, true); assert.equal(s.r.d.warn.v[11], 0); assert.equal(s.r.d.orb.v[11], 0);
   assert.equal(s.rows.slice(before).filter(x => x[0] === 'flash').length, 1);
   assert.equal(s.count('drop'), 0);
-  s.o.frameCount = 41;
-  for (let k = 0; k < 3; k++) s.step(1 / 240);
-  assert.equal(s.count('drop'), 0, 'neither previous phase contributes a fractional trial');
-  s.step(1 / 240); assert.equal(s.count('drop'), 1);
+  s.o.frameCount = 42; s.step(1 / 30); assert.equal(s.count('drop'), 2);
+  s.o.frameCount = 80; s.step(1 / 30); assert.equal(s.count('drop'), 3, 'only frame 79, never frame 80');
+  const rows = s.rows.length, calls = s.calls();
+  s.step(1 / 30); s.o.frameCount = 81; s.step(1 / 30);
+  assert.equal(s.rows.length, rows); assert.equal(s.calls(), calls, 'terminal interval is consumed once');
   assert.equal(s.rows.filter(x => x[0] === 'flash').length, 1, 'burst occurs once');
   assert.equal(s.r.d.warn.v[3], Math.fround(12.6));
 });
@@ -55,7 +59,7 @@ test('full-charge threshold resets carry without changing the existing full-char
 test('zero, invalid and negative dt do not consume fractional opportunities or RNG; huge dt has no particle backlog', () => {
   for (const role of Object.keys(roles)) {
     const s = rawSession(role); s.step(1 / 240);
-    const clockState = () => JSON.stringify({ d: s.r.d, carry: s.r.particleCarry, phase: s.r.particlePhase }, (k, v) => k === 'follow' ? undefined : v);
+    const clockState = () => JSON.stringify({ d: s.r.d, carry: s.r.particleCarry, frame: s.r.particleFrame }, (k, v) => k === 'follow' ? undefined : v);
     const rows = s.rows.length, calls = s.calls(), state = clockState();
     for (const dt of [0, -1, NaN, Infinity, -Infinity, undefined, '0.1']) s.step(dt);
     assert.equal(s.rows.length, rows); assert.equal(s.calls(), calls); assert.equal(clockState(), state);
