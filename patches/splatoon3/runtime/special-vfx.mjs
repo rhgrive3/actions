@@ -840,8 +840,9 @@ const KIT_FX = {
     end(r, f) {
       this.kit.ribbons.end(r.d.trail);
       releaseFistModel(r);
-      if (f.dead && f.hp <= 0) { this.streaks(f.pos, 18, 10, r.color); this.chunks(f.pos, 14, 7, r.color, { size: 0.22 }); return; }
-      this.inkBlast(f.target || f.pos, r.color, 6.4, { streaks: 24, chunks: 14, native: false });
+      if (f.dead) { this.streaks(f.pos, 18, 10, r.color); this.chunks(f.pos, 14, 7, r.color, { size: 0.22 }); return; }
+      // List retirement also happens on clear and remote visual expiry. Only
+      // the accepted native impact event may announce a landed fist.
     },
   },
   cloud: { // Ink Storm cloud: a forming puff burst, then visible rain streaks, ink drips off the belly, splash rings below
@@ -1409,7 +1410,9 @@ const DIRECTORS = {
         this.spark(SPARK.STAR, this.v[0].set(a.pos.x + Math.cos(th) * r, a.pos.y + rnd(1.8, 0.2), a.pos.z + Math.sin(th) * r), 0, 2, 0, 0.35, 0.28, 0.03, this.hdr(t.color, 2, 1.4), 1); }
     },
     event(a, e, pos) {
-      if (e.action === 'impact' && pos && (e.index ?? -1) < 0) this.inkBlast(pos, this.rgb(a), 6.4, { streaks: 30, chunks: 18, native: false, dome: 0.55 });
+      if (e.action !== 'impact' || !pos) return;
+      if ((e.index ?? -1) < 0) this.inkBlast(pos, this.rgb(a), 6.4, { streaks: 30, chunks: 18, native: false, dome: 0.55 });
+      else if (e.index === 0 || e.index === 1) this.inkBlast(pos, this.rgb(a), 6.4, { streaks: 24, chunks: 14, native: false });
     },
   },
   slam: {
