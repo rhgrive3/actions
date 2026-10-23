@@ -129,3 +129,12 @@ Negative controls reject missing native execution, admission or stage checks.
 Driver admission, runtime/UI output seals and stage mismatch assertions stay
 unchanged. The related three-file batch passes 63/63, zero skips. This is not a
 claim of complete hosted acceptance or of full Explosher comparison acceptance.
+
+The remaining newly imported clock/source guard file exposed another historical
+fixture dependency: its PR1844-only scanner input came from today's merged
+owner-clock source, which intentionally includes the already-tested legacy
+relay fallback. Freeze that original PR1844 owner-clock blob from 136a8bec in a
+hash-bound fixture instead. Its temporary real-Git scanner still verifies exact
+blob/SHA256 identity and rejects modified, missing, renamed and extra inputs.
+The nine-delta production seal and all expected hashes stay unchanged. Clock
+and source-admission guards pass 15/15, zero skips.

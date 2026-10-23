@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {execFileSync,spawnSync} from 'node:child_process';
@@ -12,6 +13,14 @@ const repo=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const rows=runtimeUIInventory(),base=main26a4Inventory();
 const contract={mode:RUNTIME_UI_MODE,sourceBase:MAIN26A4_SHA,sourceHead:'a'.repeat(40),baseSha:MAIN26A4_SHA,candidateSha:'a'.repeat(40)};
 const ownerClockPath='patches/network-replication/owner-clock.mjs';
+// Frozen PR1844 input: integration deliberately retains its separate legacy relay fallback.
+// Scanner drift controls exercise real bytes in their own Git checkout, independent of today's source.
+const clockFixtureBytes=fs.readFileSync(new URL('../fixtures/inkwave-runtime-ui-owner-clock.json.gz',import.meta.url));
+assert.equal(createHash('sha256').update(clockFixtureBytes).digest('hex'),'5019a3e32d24f218e44780e00e8cca2d49fa86c8c2f433c5b9682530135cd26f');
+const clockFixture=JSON.parse(gunzipSync(clockFixtureBytes));
+assert.equal(clockFixture.commit,'136a8bec9e05f2d11ae4d10f62d71b31d44436ef');
+assert.equal(clockFixture.path,ownerClockPath);
+
 const cataloguePath='patches/splatoon3/runtime/catalogue.mjs';
 const cataloguePin={sha:'7fae1d7138ad68b45e0c2f88a3af93367d1575a8',sha256:'25dc604015b5e88bc5e015a299fbb2430ba14ffa2f0c253e3bbc68773e51ec50'};
 const oldDeltaPaths=['inkwave-public/src/world/level.js','patches/local-quality/collision-hotpath-adapter.mjs','patches/local-quality/gyro.mjs','patches/local-quality/static-menu-adapter.mjs'];
@@ -79,7 +88,8 @@ for(const relative of [ownerClockPath,cataloguePath]) test('actual '+relative+' 
   for(const dir of ['inkwave-public','patches/splatoon3','patches/touch-layout','patches/reliability','patches/local-quality','patches/network-replication','patches/practice-range','patches/native-stages','patches/loading-cache'])fs.mkdirSync(path.join(root,dir),{recursive:true});
   for(const row of base.filter(row=>row.path.startsWith('scripts/'))){const f=path.join(root,row.path);fs.mkdirSync(path.dirname(f),{recursive:true});fs.writeFileSync(f,'focused scanner fixture, not production');}
   fs.mkdirSync(path.dirname(file),{recursive:true});
-  fs.writeFileSync(file,fs.readFileSync(path.join(repo,relative)));
+  fs.writeFileSync(file,relative===ownerClockPath?clockFixture.source:fs.readFileSync(path.join(repo,relative)));
+  assert.equal(createHash('sha256').update(fs.readFileSync(file)).digest('hex'),pinned.sha256,'independently pinned scanner input');
   git('init','--quiet');git('add','.');git('-c','user.name=QA test','-c','user.email=qa@example.invalid','commit','--quiet','-m','focused clock source fixture');
   const head=git('rev-parse','HEAD');
   assert.equal(readMain26a4GitTree(root,head).entries.find(row=>row.path===relative).sha,pinned.sha);
