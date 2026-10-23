@@ -1,0 +1,4479 @@
+{
+  "jobs": [
+    {
+      "id": 120586278641,
+      "name": "patch_tests (1)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install pinned patch test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify gameplay patch contracts and regressions (shard 1)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    },
+    {
+      "id": 120586278973,
+      "name": "patch_tests (5)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install pinned patch test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify gameplay patch contracts and regressions (shard 5)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    },
+    {
+      "id": 120586279031,
+      "name": "resource_paint_continuation",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify the seven claimed resource, paint and continuation fixes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Verify existing Surge tests at the native wall-launch boundary",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify native wall geometry and private armor scheduling",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Install build and browser dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Build and verify emitted runtime and two-peer continuation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    },
+    {
+      "id": 120586279221,
+      "name": "patch_tests (3)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install pinned patch test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify gameplay patch contracts and regressions (shard 3)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    },
+    {
+      "id": 120586279245,
+      "name": "patch_tests (0)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install pinned patch test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify gameplay patch contracts and regressions (shard 0)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    },
+    {
+      "id": 120586279252,
+      "name": "seven_claims",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install build and browser dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Verify seven claimed gameplay and handoff regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify emitted gameplay and mural resource lifetime in both browsers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Verify compiled main weapon catalog in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        }
+      ]
+    },
+    {
+      "id": 120586279254,
+      "name": "patch_tests (6)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install pinned patch test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify gameplay patch contracts and regressions (shard 6)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    },
+    {
+      "id": 120586279383,
+      "name": "patch_tests (2)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install pinned patch test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify gameplay patch contracts and regressions (shard 2)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    },
+    {
+      "id": 120586279397,
+      "name": "build_site",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Build immutable production site once",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Bind shared artifact identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ]
+    },
+    {
+      "id": 120586279425,
+      "name": "patch_tests (7)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install pinned patch test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify gameplay patch contracts and regressions (shard 7)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    },
+    {
+      "id": 120586279441,
+      "name": "patch_tests (4)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install pinned patch test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify gameplay patch contracts and regressions (shard 4)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    },
+    {
+      "id": 120586280812,
+      "name": "wall-render-diagnostic",
+      "status": "completed",
+      "conclusion": "skipped",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": null
+    },
+    {
+      "id": 120586281120,
+      "name": "network-opening-diagnostic",
+      "status": "completed",
+      "conclusion": "skipped",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": null
+    },
+    {
+      "id": 120586281328,
+      "name": "render-diagnostic",
+      "status": "completed",
+      "conclusion": "skipped",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": null
+    },
+    {
+      "id": 120632446593,
+      "name": "browser (responsive, chromium webkit)",
+      "status": "in_progress",
+      "conclusion": null,
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify immutable site for this browser shard",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Cache pinned browser executables",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Prepare workspace storage and browser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Verify emitted renderer and Input resource lifetimes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9
+        },
+        {
+          "name": "Verify PR1171 rendered reticle and GPU paint parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10
+        },
+        {
+          "name": "Verify emitted menu focus lifecycle",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11
+        },
+        {
+          "name": "Verify startup snapshot clock recovery in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 12
+        },
+        {
+          "name": "Verify native touch gesture continuity in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 13
+        },
+        {
+          "name": "Verify minimap observation symmetry and strict failure controls",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 14
+        },
+        {
+          "name": "Verify active browser behavior and loaded artifact bytes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15
+        },
+        {
+          "name": "Verify both teams wait and launch together at match start",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 16
+        },
+        {
+          "name": "Verify queued native Showcase weapon selection across render rates",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 17
+        },
+        {
+          "name": "Verify emitted BVH query equivalence and work reduction in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 18
+        },
+        {
+          "name": "Verify native normal browser pixels bound to production sources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 19
+        },
+        {
+          "name": "Compare emitted motion caches with the frozen baseline in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 20
+        },
+        {
+          "name": "Verify mobile post depth allocation and exact pixels in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 21
+        },
+        {
+          "name": "Verify grate orientation and painted level normals in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 22
+        },
+        {
+          "name": "Verify browser movement speed across directions and native firing/rolling transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 23
+        },
+        {
+          "name": "Capture current native Charger paint events for source and emitted redraw",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 24
+        },
+        {
+          "name": "Verify exact ancillary paint hashes and canonical GPU masks",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 25
+        },
+        {
+          "name": "Verify exact paint masks, ordered scan and local order lifetime in WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 26
+        },
+        {
+          "name": "Verify two-player network trajectories and rendered FX",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 27
+        },
+        {
+          "name": "Verify two-player replication with 100 ms ordered delivery delay",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 28
+        },
+        {
+          "name": "Verify neutral combat QA placement contracts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 29
+        },
+        {
+          "name": "Verify fixed-origin owner clock regressions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 30
+        },
+        {
+          "name": "Verify real Actor hit ceiling before proof and hit ID consumption",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 31
+        },
+        {
+          "name": "Verify existing special models, grips, shaders and GPU retirement",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 32
+        },
+        {
+          "name": "Verify rendered walking contacts and transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 33
+        },
+        {
+          "name": "Verify rendered sub, Flow and weapon detail transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 34
+        },
+        {
+          "name": "Verify seven weapon models and source-loaded attack grip ownership",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 35
+        },
+        {
+          "name": "Verify existing Ballpoint gallery in the current exact-head build",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 36
+        },
+        {
+          "name": "Verify Flow response lifetime and late-error receipts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 37
+        },
+        {
+          "name": "Verify Flow geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 38
+        },
+        {
+          "name": "Verify wall geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 39
+        },
+        {
+          "name": "Verify depth-only shadows and effective reflection budgets on WebGL",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 40
+        },
+        {
+          "name": "Verify idle music and paused/render-target resources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 41
+        },
+        {
+          "name": "Profile runtime at immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 42
+        },
+        {
+          "name": "Preserve completed baseline runtime evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 43
+        },
+        {
+          "name": "Profile candidate runtime and compare repeated evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 44
+        },
+        {
+          "name": "Verify catalog audio graph coordinator contracts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 45
+        },
+        {
+          "name": "Verify built Brella aperture and visible detached flight",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 46
+        },
+        {
+          "name": "Verify the complete installed motion catalog",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 47
+        },
+        {
+          "name": "Verify PR1172 volley and vortex in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 48
+        },
+        {
+          "name": "Verify remote combat trust boundaries in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 49
+        },
+        {
+          "name": "Verify room startup and gyro health in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 50
+        },
+        {
+          "name": "Verify touch layout in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 51
+        },
+        {
+          "name": "Verify built input and lifecycle modules in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 52
+        },
+        {
+          "name": "Verify native lifecycle start, gesture and atomic snapshot guards",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 53
+        },
+        {
+          "name": "Verify repeated battle → results → menu lifecycle and the untimed Practice Range",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 54
+        },
+        {
+          "name": "Reject forged touch and reliability source identities",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 55
+        },
+        {
+          "name": "Verify the practice range in Chromium and WebKit (desktop + phone + tablet)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 56
+        },
+        {
+          "name": "Verify responsive menus in Chromium and WebKit",
+          "status": "in_progress",
+          "conclusion": null,
+          "number": 57
+        },
+        {
+          "name": "Measure cold, warm, PWA restart and offline startup in Chromium",
+          "status": "pending",
+          "conclusion": null,
+          "number": 58
+        },
+        {
+          "name": "Verify failed module recovery across deployments in Chromium and WebKit",
+          "status": "pending",
+          "conclusion": null,
+          "number": 59
+        },
+        {
+          "name": "Bind passing browser evidence to the tested commit",
+          "status": "pending",
+          "conclusion": null,
+          "number": 60
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "pending",
+          "conclusion": null,
+          "number": 61
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "pending",
+          "conclusion": null,
+          "number": 62
+        },
+        {
+          "name": "Post Cache pinned browser executables",
+          "status": "pending",
+          "conclusion": null,
+          "number": 121
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "pending",
+          "conclusion": null,
+          "number": 122
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "pending",
+          "conclusion": null,
+          "number": 123
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "pending",
+          "conclusion": null,
+          "number": 124
+        }
+      ]
+    },
+    {
+      "id": 120632446608,
+      "name": "browser (ui, chromium webkit)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify immutable site for this browser shard",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Cache pinned browser executables",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Prepare workspace storage and browser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Verify emitted renderer and Input resource lifetimes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9
+        },
+        {
+          "name": "Verify PR1171 rendered reticle and GPU paint parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10
+        },
+        {
+          "name": "Verify emitted menu focus lifecycle",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Verify startup snapshot clock recovery in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 12
+        },
+        {
+          "name": "Verify native touch gesture continuity in Chromium",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Verify minimap observation symmetry and strict failure controls",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 14
+        },
+        {
+          "name": "Verify active browser behavior and loaded artifact bytes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15
+        },
+        {
+          "name": "Verify both teams wait and launch together at match start",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 16
+        },
+        {
+          "name": "Verify queued native Showcase weapon selection across render rates",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 17
+        },
+        {
+          "name": "Verify emitted BVH query equivalence and work reduction in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 18
+        },
+        {
+          "name": "Verify native normal browser pixels bound to production sources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 19
+        },
+        {
+          "name": "Compare emitted motion caches with the frozen baseline in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 20
+        },
+        {
+          "name": "Verify mobile post depth allocation and exact pixels in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 21
+        },
+        {
+          "name": "Verify grate orientation and painted level normals in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 22
+        },
+        {
+          "name": "Verify browser movement speed across directions and native firing/rolling transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 23
+        },
+        {
+          "name": "Capture current native Charger paint events for source and emitted redraw",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 24
+        },
+        {
+          "name": "Verify exact ancillary paint hashes and canonical GPU masks",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 25
+        },
+        {
+          "name": "Verify exact paint masks, ordered scan and local order lifetime in WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 26
+        },
+        {
+          "name": "Verify two-player network trajectories and rendered FX",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 27
+        },
+        {
+          "name": "Verify two-player replication with 100 ms ordered delivery delay",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 28
+        },
+        {
+          "name": "Verify neutral combat QA placement contracts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 29
+        },
+        {
+          "name": "Verify fixed-origin owner clock regressions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 30
+        },
+        {
+          "name": "Verify real Actor hit ceiling before proof and hit ID consumption",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 31
+        },
+        {
+          "name": "Verify existing special models, grips, shaders and GPU retirement",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 32
+        },
+        {
+          "name": "Verify rendered walking contacts and transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 33
+        },
+        {
+          "name": "Verify rendered sub, Flow and weapon detail transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 34
+        },
+        {
+          "name": "Verify seven weapon models and source-loaded attack grip ownership",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 35
+        },
+        {
+          "name": "Verify existing Ballpoint gallery in the current exact-head build",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 36
+        },
+        {
+          "name": "Verify Flow response lifetime and late-error receipts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 37
+        },
+        {
+          "name": "Verify Flow geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 38
+        },
+        {
+          "name": "Verify wall geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 39
+        },
+        {
+          "name": "Verify depth-only shadows and effective reflection budgets on WebGL",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 40
+        },
+        {
+          "name": "Verify idle music and paused/render-target resources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 41
+        },
+        {
+          "name": "Profile runtime at immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 42
+        },
+        {
+          "name": "Preserve completed baseline runtime evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 43
+        },
+        {
+          "name": "Profile candidate runtime and compare repeated evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 44
+        },
+        {
+          "name": "Verify catalog audio graph coordinator contracts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 45
+        },
+        {
+          "name": "Verify built Brella aperture and visible detached flight",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 46
+        },
+        {
+          "name": "Verify the complete installed motion catalog",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 47
+        },
+        {
+          "name": "Verify PR1172 volley and vortex in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 48
+        },
+        {
+          "name": "Verify remote combat trust boundaries in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 49
+        },
+        {
+          "name": "Verify room startup and gyro health in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 50
+        },
+        {
+          "name": "Verify touch layout in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 51
+        },
+        {
+          "name": "Verify built input and lifecycle modules in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 52
+        },
+        {
+          "name": "Verify native lifecycle start, gesture and atomic snapshot guards",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 53
+        },
+        {
+          "name": "Verify repeated battle → results → menu lifecycle and the untimed Practice Range",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 54
+        },
+        {
+          "name": "Reject forged touch and reliability source identities",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 55
+        },
+        {
+          "name": "Verify the practice range in Chromium and WebKit (desktop + phone + tablet)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 56
+        },
+        {
+          "name": "Verify responsive menus in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 57
+        },
+        {
+          "name": "Measure cold, warm, PWA restart and offline startup in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 58
+        },
+        {
+          "name": "Verify failed module recovery across deployments in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 59
+        },
+        {
+          "name": "Bind passing browser evidence to the tested commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 60
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 61
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 62
+        },
+        {
+          "name": "Post Cache pinned browser executables",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 121
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 122
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 123
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 124
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 125
+        }
+      ]
+    },
+    {
+      "id": 120632446662,
+      "name": "validate_core",
+      "status": "completed",
+      "conclusion": "failure",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify scoped network diagnostic workflow contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Install pinned source regression and build tool",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Prepare persistent focused test evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9
+        },
+        {
+          "name": "Run requested focused source regressions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11
+        },
+        {
+          "name": "Verify queued InkFlight and catalogue bot liveness fixes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Verify paint ownership and frozen-host P0 regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Verify source session admission and finite view settings",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Verify claimed room startup and gyro health regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Verify modal controller and pending Pointer Lock lifetimes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Verify PR1172 Slosher and Ink Vac regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Verify source-loaded actual Actor Ink Vac presentation ownership",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Verify PR1172 updated wire contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        },
+        {
+          "name": "Verify PR1171 seven-issue and composition regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Verify six follow-up INKWAVE regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Verify eight additional INKWAVE regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Verify finish authority, adoption and portrait regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        },
+        {
+          "name": "Verify source-sampled direction-aware humanoid gait",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24
+        },
+        {
+          "name": "Verify source-bank torso, weapon carry and squid-to-human transitions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25
+        },
+        {
+          "name": "Verify PR1077 additional seven regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26
+        },
+        {
+          "name": "Diagnose nine-way walk contact regression",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27
+        },
+        {
+          "name": "Verify gameplay patch compatibility and numeric contract",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 28
+        },
+        {
+          "name": "Verify source-guided ink flight model",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 29
+        },
+        {
+          "name": "Verify nine queued critical INKWAVE fixes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 30
+        },
+        {
+          "name": "Verify immutable audio cancellation accounting",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 31
+        },
+        {
+          "name": "Verify cancelled native texture ownership",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 32
+        },
+        {
+          "name": "Verify cancelled native world preparation and async stage fencing",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 33
+        },
+        {
+          "name": "Verify native BVH query lifetime and collision parity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 34
+        },
+        {
+          "name": "Verify source OBJ pattern cache semantics",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 35
+        },
+        {
+          "name": "Verify deterministic network replication",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 36
+        },
+        {
+          "name": "Verify remote combat provenance and equipped hit ceilings",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 37
+        },
+        {
+          "name": "Compare authoritative and reconstructed attacks",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 38
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 39
+        },
+        {
+          "name": "Verify local quality regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 40
+        },
+        {
+          "name": "Verify migrated direct game source ownership",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 41
+        },
+        {
+          "name": "Verify platform lifecycle smoke regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 42
+        },
+        {
+          "name": "Verify movement physics smoke regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 43
+        },
+        {
+          "name": "Verify practice range measurement, rules and battle isolation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 44
+        },
+        {
+          "name": "Verify loading/cache regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 45
+        },
+        {
+          "name": "Prepare persistent runtime verifier fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 46
+        },
+        {
+          "name": "Verify motion verifier regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 47
+        },
+        {
+          "name": "Verify aggregate QA acceptance guards",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 48
+        },
+        {
+          "name": "Verify pinned primary numerical sources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 49
+        },
+        {
+          "name": "Verify completed weapon source mirror",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 50
+        },
+        {
+          "name": "Compare every catalog record with its pinned numerical source",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 51
+        },
+        {
+          "name": "Verify pinned Sub/Special numerical sources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 52
+        },
+        {
+          "name": "Check JavaScript syntax",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 53
+        },
+        {
+          "name": "Check local module and stylesheet references",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 54
+        },
+        {
+          "name": "Verify projectile UI admission and boolean gate contracts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 55
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 56
+        },
+        {
+          "name": "Verify patched site at the checkout commit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 57
+        },
+        {
+          "name": "Verify all Turf finish cases on emitted site",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 58
+        },
+        {
+          "name": "Retain bounded Turf finish evidence",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 59
+        },
+        {
+          "name": "Verify emitted Charger grip reach and protected trajectory",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 60
+        },
+        {
+          "name": "Verify emitted opposing-spawn body exclusion and allied exits",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 61
+        },
+        {
+          "name": "Verify emitted Boss positive-proof admission and PvP zero knockback",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 62
+        },
+        {
+          "name": "Verify exact emitted owner-bound launch packets and ghosts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 63
+        },
+        {
+          "name": "Verify emitted Bot navigation respawn and retry state",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 64
+        },
+        {
+          "name": "Verify emitted sourced weapon holds and gameplay muzzle ownership",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 65
+        },
+        {
+          "name": "Verify emitted hit-pose finite feet and gameplay muzzle parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 66
+        },
+        {
+          "name": "Verify emitted streamed music teardown and suspended recovery",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 67
+        },
+        {
+          "name": "Verify existing Ballpoint glass in the same emitted build",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 68
+        },
+        {
+          "name": "Verify real emitted material handoff ownership and cancellation",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 69
+        },
+        {
+          "name": "Verify emitted motion caches against frozen baselines",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 70
+        },
+        {
+          "name": "Verify actual built codec and authenticated JSON transport",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 71
+        },
+        {
+          "name": "Verify emitted Tenacity lock and passive ownership",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 72
+        },
+        {
+          "name": "Verify emitted health HUD stability and visibility composition",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 73
+        },
+        {
+          "name": "Verify emitted native BVH query lifetime and collision parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 74
+        },
+        {
+          "name": "Verify emitted tap gesture continuity and practice range feedback",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 75
+        },
+        {
+          "name": "Verify emitted ranked input and network lifetime",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 76
+        },
+        {
+          "name": "Verify emitted paint ownership and frozen-host P0 regressions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 77
+        },
+        {
+          "name": "Verify emitted session admission and finite view settings",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 78
+        },
+        {
+          "name": "Verify emitted active aim-profile sensor transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 79
+        },
+        {
+          "name": "Verify emitted special audio match disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 80
+        },
+        {
+          "name": "Verify emitted queue hardening and native catalogue wire compatibility",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 81
+        },
+        {
+          "name": "Verify emitted modal controller and Pointer Lock lifetimes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 82
+        },
+        {
+          "name": "Verify emitted explicit Turf Map and gyro transport",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 83
+        },
+        {
+          "name": "Verify emitted empty Bubbler beam lifecycle",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 84
+        },
+        {
+          "name": "Verify exact owned rectangle scans against production build",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 85
+        },
+        {
+          "name": "Verify built piece-local paint ownership against the immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 86
+        },
+        {
+          "name": "Verify local paint order deduplication lifetime against built site",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 87
+        },
+        {
+          "name": "Verify emitted source-backed inertia, launch, charge and hurtbox behavior",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 88
+        },
+        {
+          "name": "Verify built weapons fidelity measurements and packet parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 89
+        },
+        {
+          "name": "Verify emitted sub and special fidelity boundaries",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 90
+        },
+        {
+          "name": "Retain exact emitted launch packet evidence",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 91
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 180
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 181
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 182
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 183
+        }
+      ]
+    },
+    {
+      "id": 120632446670,
+      "name": "browser (network, chromium webkit)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify immutable site for this browser shard",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Cache pinned browser executables",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Prepare workspace storage and browser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Verify emitted renderer and Input resource lifetimes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9
+        },
+        {
+          "name": "Verify PR1171 rendered reticle and GPU paint parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10
+        },
+        {
+          "name": "Verify emitted menu focus lifecycle",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11
+        },
+        {
+          "name": "Verify startup snapshot clock recovery in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Verify native touch gesture continuity in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 13
+        },
+        {
+          "name": "Verify minimap observation symmetry and strict failure controls",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 14
+        },
+        {
+          "name": "Verify active browser behavior and loaded artifact bytes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15
+        },
+        {
+          "name": "Verify both teams wait and launch together at match start",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 16
+        },
+        {
+          "name": "Verify queued native Showcase weapon selection across render rates",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 17
+        },
+        {
+          "name": "Verify emitted BVH query equivalence and work reduction in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 18
+        },
+        {
+          "name": "Verify native normal browser pixels bound to production sources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 19
+        },
+        {
+          "name": "Compare emitted motion caches with the frozen baseline in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 20
+        },
+        {
+          "name": "Verify mobile post depth allocation and exact pixels in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 21
+        },
+        {
+          "name": "Verify grate orientation and painted level normals in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 22
+        },
+        {
+          "name": "Verify browser movement speed across directions and native firing/rolling transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 23
+        },
+        {
+          "name": "Capture current native Charger paint events for source and emitted redraw",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24
+        },
+        {
+          "name": "Verify exact ancillary paint hashes and canonical GPU masks",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25
+        },
+        {
+          "name": "Verify exact paint masks, ordered scan and local order lifetime in WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26
+        },
+        {
+          "name": "Verify two-player network trajectories and rendered FX",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27
+        },
+        {
+          "name": "Verify two-player replication with 100 ms ordered delivery delay",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 28
+        },
+        {
+          "name": "Verify neutral combat QA placement contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 29
+        },
+        {
+          "name": "Verify fixed-origin owner clock regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 30
+        },
+        {
+          "name": "Verify real Actor hit ceiling before proof and hit ID consumption",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 31
+        },
+        {
+          "name": "Verify existing special models, grips, shaders and GPU retirement",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 32
+        },
+        {
+          "name": "Verify rendered walking contacts and transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 33
+        },
+        {
+          "name": "Verify rendered sub, Flow and weapon detail transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 34
+        },
+        {
+          "name": "Verify seven weapon models and source-loaded attack grip ownership",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 35
+        },
+        {
+          "name": "Verify existing Ballpoint gallery in the current exact-head build",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 36
+        },
+        {
+          "name": "Verify Flow response lifetime and late-error receipts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 37
+        },
+        {
+          "name": "Verify Flow geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 38
+        },
+        {
+          "name": "Verify wall geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 39
+        },
+        {
+          "name": "Verify depth-only shadows and effective reflection budgets on WebGL",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 40
+        },
+        {
+          "name": "Verify idle music and paused/render-target resources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 41
+        },
+        {
+          "name": "Profile runtime at immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 42
+        },
+        {
+          "name": "Preserve completed baseline runtime evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 43
+        },
+        {
+          "name": "Profile candidate runtime and compare repeated evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 44
+        },
+        {
+          "name": "Verify catalog audio graph coordinator contracts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 45
+        },
+        {
+          "name": "Verify built Brella aperture and visible detached flight",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 46
+        },
+        {
+          "name": "Verify the complete installed motion catalog",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 47
+        },
+        {
+          "name": "Verify PR1172 volley and vortex in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 48
+        },
+        {
+          "name": "Verify remote combat trust boundaries in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 49
+        },
+        {
+          "name": "Verify room startup and gyro health in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 50
+        },
+        {
+          "name": "Verify touch layout in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 51
+        },
+        {
+          "name": "Verify built input and lifecycle modules in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 52
+        },
+        {
+          "name": "Verify native lifecycle start, gesture and atomic snapshot guards",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 53
+        },
+        {
+          "name": "Verify repeated battle → results → menu lifecycle and the untimed Practice Range",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 54
+        },
+        {
+          "name": "Reject forged touch and reliability source identities",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 55
+        },
+        {
+          "name": "Verify the practice range in Chromium and WebKit (desktop + phone + tablet)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 56
+        },
+        {
+          "name": "Verify responsive menus in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 57
+        },
+        {
+          "name": "Measure cold, warm, PWA restart and offline startup in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 58
+        },
+        {
+          "name": "Verify failed module recovery across deployments in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 59
+        },
+        {
+          "name": "Bind passing browser evidence to the tested commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 60
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 61
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 62
+        },
+        {
+          "name": "Post Cache pinned browser executables",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 121
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 122
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 123
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 124
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 125
+        }
+      ]
+    },
+    {
+      "id": 120632446674,
+      "name": "browser (active, chromium webkit)",
+      "status": "completed",
+      "conclusion": "failure",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify immutable site for this browser shard",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Cache pinned browser executables",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Prepare workspace storage and browser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Verify emitted renderer and Input resource lifetimes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Verify PR1171 rendered reticle and GPU paint parity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Verify emitted menu focus lifecycle",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11
+        },
+        {
+          "name": "Verify startup snapshot clock recovery in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 12
+        },
+        {
+          "name": "Verify native touch gesture continuity in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 13
+        },
+        {
+          "name": "Verify minimap observation symmetry and strict failure controls",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Verify active browser behavior and loaded artifact bytes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Verify both teams wait and launch together at match start",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Verify queued native Showcase weapon selection across render rates",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Verify emitted BVH query equivalence and work reduction in Chromium",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Verify native normal browser pixels bound to production sources",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        },
+        {
+          "name": "Compare emitted motion caches with the frozen baseline in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Verify mobile post depth allocation and exact pixels in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Verify grate orientation and painted level normals in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Verify browser movement speed across directions and native firing/rolling transitions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        },
+        {
+          "name": "Capture current native Charger paint events for source and emitted redraw",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 24
+        },
+        {
+          "name": "Verify exact ancillary paint hashes and canonical GPU masks",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 25
+        },
+        {
+          "name": "Verify exact paint masks, ordered scan and local order lifetime in WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 26
+        },
+        {
+          "name": "Verify two-player network trajectories and rendered FX",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 27
+        },
+        {
+          "name": "Verify two-player replication with 100 ms ordered delivery delay",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 28
+        },
+        {
+          "name": "Verify neutral combat QA placement contracts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 29
+        },
+        {
+          "name": "Verify fixed-origin owner clock regressions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 30
+        },
+        {
+          "name": "Verify real Actor hit ceiling before proof and hit ID consumption",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 31
+        },
+        {
+          "name": "Verify existing special models, grips, shaders and GPU retirement",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 32
+        },
+        {
+          "name": "Verify rendered walking contacts and transitions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 33
+        },
+        {
+          "name": "Verify rendered sub, Flow and weapon detail transitions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 34
+        },
+        {
+          "name": "Verify seven weapon models and source-loaded attack grip ownership",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 35
+        },
+        {
+          "name": "Verify existing Ballpoint gallery in the current exact-head build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 36
+        },
+        {
+          "name": "Verify Flow response lifetime and late-error receipts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 37
+        },
+        {
+          "name": "Verify Flow geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 38
+        },
+        {
+          "name": "Verify wall geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 39
+        },
+        {
+          "name": "Verify depth-only shadows and effective reflection budgets on WebGL",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 40
+        },
+        {
+          "name": "Verify idle music and paused/render-target resources",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "number": 41
+        },
+        {
+          "name": "Profile runtime at immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 42
+        },
+        {
+          "name": "Preserve completed baseline runtime evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 43
+        },
+        {
+          "name": "Profile candidate runtime and compare repeated evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 44
+        },
+        {
+          "name": "Verify catalog audio graph coordinator contracts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 45
+        },
+        {
+          "name": "Verify built Brella aperture and visible detached flight",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 46
+        },
+        {
+          "name": "Verify the complete installed motion catalog",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 47
+        },
+        {
+          "name": "Verify PR1172 volley and vortex in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 48
+        },
+        {
+          "name": "Verify remote combat trust boundaries in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 49
+        },
+        {
+          "name": "Verify room startup and gyro health in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 50
+        },
+        {
+          "name": "Verify touch layout in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 51
+        },
+        {
+          "name": "Verify built input and lifecycle modules in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 52
+        },
+        {
+          "name": "Verify native lifecycle start, gesture and atomic snapshot guards",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 53
+        },
+        {
+          "name": "Verify repeated battle → results → menu lifecycle and the untimed Practice Range",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 54
+        },
+        {
+          "name": "Reject forged touch and reliability source identities",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 55
+        },
+        {
+          "name": "Verify the practice range in Chromium and WebKit (desktop + phone + tablet)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 56
+        },
+        {
+          "name": "Verify responsive menus in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 57
+        },
+        {
+          "name": "Measure cold, warm, PWA restart and offline startup in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 58
+        },
+        {
+          "name": "Verify failed module recovery across deployments in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 59
+        },
+        {
+          "name": "Bind passing browser evidence to the tested commit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 60
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 61
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 62
+        },
+        {
+          "name": "Post Cache pinned browser executables",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 121
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 122
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 123
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 124
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 125
+        }
+      ]
+    },
+    {
+      "id": 120632446688,
+      "name": "browser (catalog, chromium)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify immutable site for this browser shard",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Cache pinned browser executables",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Prepare workspace storage and browser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Verify emitted renderer and Input resource lifetimes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9
+        },
+        {
+          "name": "Verify PR1171 rendered reticle and GPU paint parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10
+        },
+        {
+          "name": "Verify emitted menu focus lifecycle",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11
+        },
+        {
+          "name": "Verify startup snapshot clock recovery in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 12
+        },
+        {
+          "name": "Verify native touch gesture continuity in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 13
+        },
+        {
+          "name": "Verify minimap observation symmetry and strict failure controls",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 14
+        },
+        {
+          "name": "Verify active browser behavior and loaded artifact bytes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15
+        },
+        {
+          "name": "Verify both teams wait and launch together at match start",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 16
+        },
+        {
+          "name": "Verify queued native Showcase weapon selection across render rates",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 17
+        },
+        {
+          "name": "Verify emitted BVH query equivalence and work reduction in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 18
+        },
+        {
+          "name": "Verify native normal browser pixels bound to production sources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 19
+        },
+        {
+          "name": "Compare emitted motion caches with the frozen baseline in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 20
+        },
+        {
+          "name": "Verify mobile post depth allocation and exact pixels in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 21
+        },
+        {
+          "name": "Verify grate orientation and painted level normals in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 22
+        },
+        {
+          "name": "Verify browser movement speed across directions and native firing/rolling transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 23
+        },
+        {
+          "name": "Capture current native Charger paint events for source and emitted redraw",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 24
+        },
+        {
+          "name": "Verify exact ancillary paint hashes and canonical GPU masks",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 25
+        },
+        {
+          "name": "Verify exact paint masks, ordered scan and local order lifetime in WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 26
+        },
+        {
+          "name": "Verify two-player network trajectories and rendered FX",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 27
+        },
+        {
+          "name": "Verify two-player replication with 100 ms ordered delivery delay",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 28
+        },
+        {
+          "name": "Verify neutral combat QA placement contracts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 29
+        },
+        {
+          "name": "Verify fixed-origin owner clock regressions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 30
+        },
+        {
+          "name": "Verify real Actor hit ceiling before proof and hit ID consumption",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 31
+        },
+        {
+          "name": "Verify existing special models, grips, shaders and GPU retirement",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 32
+        },
+        {
+          "name": "Verify rendered walking contacts and transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 33
+        },
+        {
+          "name": "Verify rendered sub, Flow and weapon detail transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 34
+        },
+        {
+          "name": "Verify seven weapon models and source-loaded attack grip ownership",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 35
+        },
+        {
+          "name": "Verify existing Ballpoint gallery in the current exact-head build",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 36
+        },
+        {
+          "name": "Verify Flow response lifetime and late-error receipts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 37
+        },
+        {
+          "name": "Verify Flow geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 38
+        },
+        {
+          "name": "Verify wall geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 39
+        },
+        {
+          "name": "Verify depth-only shadows and effective reflection budgets on WebGL",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 40
+        },
+        {
+          "name": "Verify idle music and paused/render-target resources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 41
+        },
+        {
+          "name": "Profile runtime at immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 42
+        },
+        {
+          "name": "Preserve completed baseline runtime evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 43
+        },
+        {
+          "name": "Profile candidate runtime and compare repeated evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 44
+        },
+        {
+          "name": "Verify catalog audio graph coordinator contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 45
+        },
+        {
+          "name": "Verify built Brella aperture and visible detached flight",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 46
+        },
+        {
+          "name": "Verify the complete installed motion catalog",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 47
+        },
+        {
+          "name": "Verify PR1172 volley and vortex in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 48
+        },
+        {
+          "name": "Verify remote combat trust boundaries in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 49
+        },
+        {
+          "name": "Verify room startup and gyro health in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 50
+        },
+        {
+          "name": "Verify touch layout in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 51
+        },
+        {
+          "name": "Verify built input and lifecycle modules in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 52
+        },
+        {
+          "name": "Verify native lifecycle start, gesture and atomic snapshot guards",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 53
+        },
+        {
+          "name": "Verify repeated battle → results → menu lifecycle and the untimed Practice Range",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 54
+        },
+        {
+          "name": "Reject forged touch and reliability source identities",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 55
+        },
+        {
+          "name": "Verify the practice range in Chromium and WebKit (desktop + phone + tablet)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 56
+        },
+        {
+          "name": "Verify responsive menus in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 57
+        },
+        {
+          "name": "Measure cold, warm, PWA restart and offline startup in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 58
+        },
+        {
+          "name": "Verify failed module recovery across deployments in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 59
+        },
+        {
+          "name": "Bind passing browser evidence to the tested commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 60
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 61
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 62
+        },
+        {
+          "name": "Post Cache pinned browser executables",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 121
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 122
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 123
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 124
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 125
+        }
+      ]
+    },
+    {
+      "id": 120632446710,
+      "name": "browser (range, chromium webkit)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify immutable site for this browser shard",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Cache pinned browser executables",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Prepare workspace storage and browser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Verify emitted renderer and Input resource lifetimes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9
+        },
+        {
+          "name": "Verify PR1171 rendered reticle and GPU paint parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10
+        },
+        {
+          "name": "Verify emitted menu focus lifecycle",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11
+        },
+        {
+          "name": "Verify startup snapshot clock recovery in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 12
+        },
+        {
+          "name": "Verify native touch gesture continuity in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 13
+        },
+        {
+          "name": "Verify minimap observation symmetry and strict failure controls",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 14
+        },
+        {
+          "name": "Verify active browser behavior and loaded artifact bytes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15
+        },
+        {
+          "name": "Verify both teams wait and launch together at match start",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 16
+        },
+        {
+          "name": "Verify queued native Showcase weapon selection across render rates",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 17
+        },
+        {
+          "name": "Verify emitted BVH query equivalence and work reduction in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 18
+        },
+        {
+          "name": "Verify native normal browser pixels bound to production sources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 19
+        },
+        {
+          "name": "Compare emitted motion caches with the frozen baseline in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 20
+        },
+        {
+          "name": "Verify mobile post depth allocation and exact pixels in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 21
+        },
+        {
+          "name": "Verify grate orientation and painted level normals in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 22
+        },
+        {
+          "name": "Verify browser movement speed across directions and native firing/rolling transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 23
+        },
+        {
+          "name": "Capture current native Charger paint events for source and emitted redraw",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 24
+        },
+        {
+          "name": "Verify exact ancillary paint hashes and canonical GPU masks",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 25
+        },
+        {
+          "name": "Verify exact paint masks, ordered scan and local order lifetime in WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 26
+        },
+        {
+          "name": "Verify two-player network trajectories and rendered FX",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 27
+        },
+        {
+          "name": "Verify two-player replication with 100 ms ordered delivery delay",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 28
+        },
+        {
+          "name": "Verify neutral combat QA placement contracts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 29
+        },
+        {
+          "name": "Verify fixed-origin owner clock regressions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 30
+        },
+        {
+          "name": "Verify real Actor hit ceiling before proof and hit ID consumption",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 31
+        },
+        {
+          "name": "Verify existing special models, grips, shaders and GPU retirement",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 32
+        },
+        {
+          "name": "Verify rendered walking contacts and transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 33
+        },
+        {
+          "name": "Verify rendered sub, Flow and weapon detail transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 34
+        },
+        {
+          "name": "Verify seven weapon models and source-loaded attack grip ownership",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 35
+        },
+        {
+          "name": "Verify existing Ballpoint gallery in the current exact-head build",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 36
+        },
+        {
+          "name": "Verify Flow response lifetime and late-error receipts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 37
+        },
+        {
+          "name": "Verify Flow geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 38
+        },
+        {
+          "name": "Verify wall geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 39
+        },
+        {
+          "name": "Verify depth-only shadows and effective reflection budgets on WebGL",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 40
+        },
+        {
+          "name": "Verify idle music and paused/render-target resources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 41
+        },
+        {
+          "name": "Profile runtime at immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 42
+        },
+        {
+          "name": "Preserve completed baseline runtime evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 43
+        },
+        {
+          "name": "Profile candidate runtime and compare repeated evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 44
+        },
+        {
+          "name": "Verify catalog audio graph coordinator contracts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 45
+        },
+        {
+          "name": "Verify built Brella aperture and visible detached flight",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 46
+        },
+        {
+          "name": "Verify the complete installed motion catalog",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 47
+        },
+        {
+          "name": "Verify PR1172 volley and vortex in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 48
+        },
+        {
+          "name": "Verify remote combat trust boundaries in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 49
+        },
+        {
+          "name": "Verify room startup and gyro health in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 50
+        },
+        {
+          "name": "Verify touch layout in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 51
+        },
+        {
+          "name": "Verify built input and lifecycle modules in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 52
+        },
+        {
+          "name": "Verify native lifecycle start, gesture and atomic snapshot guards",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 53
+        },
+        {
+          "name": "Verify repeated battle → results → menu lifecycle and the untimed Practice Range",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 54
+        },
+        {
+          "name": "Reject forged touch and reliability source identities",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 55
+        },
+        {
+          "name": "Verify the practice range in Chromium and WebKit (desktop + phone + tablet)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 56
+        },
+        {
+          "name": "Verify responsive menus in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 57
+        },
+        {
+          "name": "Measure cold, warm, PWA restart and offline startup in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 58
+        },
+        {
+          "name": "Verify failed module recovery across deployments in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 59
+        },
+        {
+          "name": "Bind passing browser evidence to the tested commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 60
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 61
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 62
+        },
+        {
+          "name": "Post Cache pinned browser executables",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 121
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 122
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 123
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 124
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 125
+        }
+      ]
+    },
+    {
+      "id": 120632446798,
+      "name": "browser (startup, chromium webkit)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify immutable site for this browser shard",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Cache pinned browser executables",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Prepare workspace storage and browser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Verify emitted renderer and Input resource lifetimes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9
+        },
+        {
+          "name": "Verify PR1171 rendered reticle and GPU paint parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10
+        },
+        {
+          "name": "Verify emitted menu focus lifecycle",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11
+        },
+        {
+          "name": "Verify startup snapshot clock recovery in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 12
+        },
+        {
+          "name": "Verify native touch gesture continuity in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 13
+        },
+        {
+          "name": "Verify minimap observation symmetry and strict failure controls",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 14
+        },
+        {
+          "name": "Verify active browser behavior and loaded artifact bytes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15
+        },
+        {
+          "name": "Verify both teams wait and launch together at match start",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 16
+        },
+        {
+          "name": "Verify queued native Showcase weapon selection across render rates",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 17
+        },
+        {
+          "name": "Verify emitted BVH query equivalence and work reduction in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 18
+        },
+        {
+          "name": "Verify native normal browser pixels bound to production sources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 19
+        },
+        {
+          "name": "Compare emitted motion caches with the frozen baseline in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 20
+        },
+        {
+          "name": "Verify mobile post depth allocation and exact pixels in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 21
+        },
+        {
+          "name": "Verify grate orientation and painted level normals in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 22
+        },
+        {
+          "name": "Verify browser movement speed across directions and native firing/rolling transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 23
+        },
+        {
+          "name": "Capture current native Charger paint events for source and emitted redraw",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 24
+        },
+        {
+          "name": "Verify exact ancillary paint hashes and canonical GPU masks",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 25
+        },
+        {
+          "name": "Verify exact paint masks, ordered scan and local order lifetime in WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 26
+        },
+        {
+          "name": "Verify two-player network trajectories and rendered FX",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 27
+        },
+        {
+          "name": "Verify two-player replication with 100 ms ordered delivery delay",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 28
+        },
+        {
+          "name": "Verify neutral combat QA placement contracts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 29
+        },
+        {
+          "name": "Verify fixed-origin owner clock regressions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 30
+        },
+        {
+          "name": "Verify real Actor hit ceiling before proof and hit ID consumption",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 31
+        },
+        {
+          "name": "Verify existing special models, grips, shaders and GPU retirement",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 32
+        },
+        {
+          "name": "Verify rendered walking contacts and transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 33
+        },
+        {
+          "name": "Verify rendered sub, Flow and weapon detail transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 34
+        },
+        {
+          "name": "Verify seven weapon models and source-loaded attack grip ownership",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 35
+        },
+        {
+          "name": "Verify existing Ballpoint gallery in the current exact-head build",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 36
+        },
+        {
+          "name": "Verify Flow response lifetime and late-error receipts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 37
+        },
+        {
+          "name": "Verify Flow geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 38
+        },
+        {
+          "name": "Verify wall geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 39
+        },
+        {
+          "name": "Verify depth-only shadows and effective reflection budgets on WebGL",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 40
+        },
+        {
+          "name": "Verify idle music and paused/render-target resources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 41
+        },
+        {
+          "name": "Profile runtime at immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 42
+        },
+        {
+          "name": "Preserve completed baseline runtime evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 43
+        },
+        {
+          "name": "Profile candidate runtime and compare repeated evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 44
+        },
+        {
+          "name": "Verify catalog audio graph coordinator contracts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 45
+        },
+        {
+          "name": "Verify built Brella aperture and visible detached flight",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 46
+        },
+        {
+          "name": "Verify the complete installed motion catalog",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 47
+        },
+        {
+          "name": "Verify PR1172 volley and vortex in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 48
+        },
+        {
+          "name": "Verify remote combat trust boundaries in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 49
+        },
+        {
+          "name": "Verify room startup and gyro health in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 50
+        },
+        {
+          "name": "Verify touch layout in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 51
+        },
+        {
+          "name": "Verify built input and lifecycle modules in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 52
+        },
+        {
+          "name": "Verify native lifecycle start, gesture and atomic snapshot guards",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 53
+        },
+        {
+          "name": "Verify repeated battle → results → menu lifecycle and the untimed Practice Range",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 54
+        },
+        {
+          "name": "Reject forged touch and reliability source identities",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 55
+        },
+        {
+          "name": "Verify the practice range in Chromium and WebKit (desktop + phone + tablet)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 56
+        },
+        {
+          "name": "Verify responsive menus in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 57
+        },
+        {
+          "name": "Measure cold, warm, PWA restart and offline startup in Chromium",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 58
+        },
+        {
+          "name": "Verify failed module recovery across deployments in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 59
+        },
+        {
+          "name": "Bind passing browser evidence to the tested commit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 60
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 61
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 62
+        },
+        {
+          "name": "Post Cache pinned browser executables",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 121
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 122
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 123
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 124
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 125
+        }
+      ]
+    },
+    {
+      "id": 120656168444,
+      "name": "validate",
+      "status": "completed",
+      "conclusion": "failure",
+      "run_id": 40002056206,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Require every source and patch regression to pass",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 2
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        }
+      ]
+    }
+  ]
+}

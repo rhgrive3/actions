@@ -1,0 +1,66 @@
+{
+  "candidate-official-readback.json": {
+    "bytes": 219,
+    "sha256": "42c49a1f1b4714c1dbd71ab443c5dcf42040fee750806737eceeee8146d51133"
+  },
+  "README.md": {
+    "bytes": 4422,
+    "sha256": "93948b7739ab483857c4b9f0661ce0aed2a6c739ed5e3a5f0ca3ca4cb02cbd15"
+  },
+  "end-run.json": {
+    "bytes": 13824,
+    "sha256": "387569ecf716711a306927bac6c46cb8c4ed08bf91f4ef87bbcde71ae3ca9088"
+  },
+  "inherited-core-source-pair.json": {
+    "bytes": 987,
+    "sha256": "540bbd7eb10380ffe669fa8a1a235ed4e42f3e81f70fcf1adbc713c67d72bde1"
+  },
+  "inherited-core-source-pair.tap.gz": {
+    "bytes": 2887,
+    "sha256": "1af7cb08d55d072ae1695b3212918f7221ea9209f5aed40400e06dbbb68ccef2"
+  },
+  "preservation-proof.json": {
+    "bytes": 2324,
+    "sha256": "d2fdc8b399ae4f24367e3bb882cd636626c27cf699d47328267a404ad032329c"
+  },
+  "original-log-proof.json": {
+    "bytes": 20047,
+    "sha256": "6d87acd9780e218187ec007b2622fc468de2fceed28205bcf1c43d3737dbe2c3"
+  },
+  "original-active-job-120632446674.log.gz": {
+    "bytes": 46926,
+    "sha256": "e89c890526b4c28159aa4d47b2010ffb5ee5a13eb588ad3986ff3412f0913173"
+  },
+  "exact-focused-controls.tap": {
+    "bytes": 9250,
+    "sha256": "6c57306f39af96723262a49ac41cdaa95aa7c01f003cd5bf090f5f08844961cf"
+  },
+  "end-native-jobs.json": {
+    "bytes": 132976,
+    "sha256": "a3a55c9c5d02bcc637cdf41106569d8ad67af250403d9a6bd42ee51452cc6d9a"
+  },
+  "donor-official-readback.json": {
+    "bytes": 714,
+    "sha256": "250623521abff88984cafe3dfff1fd8020d5cd65a602d65630425f4da3085a94"
+  },
+  "donor-local.json": {
+    "bytes": 885,
+    "sha256": "ea0bbf564da70ef17bc59a5b7bffbd6e97938e875149be2a63ae53b13b2d8a72"
+  },
+  "summary.json": {
+    "bytes": 45107,
+    "sha256": "ffa5c1f3c7446fdcf81993a8999290840e64227c487bfcd7bc2fca034eea316d"
+  },
+  "core-log-proof.json": {
+    "bytes": 3044,
+    "sha256": "767c486496d50737d4a66b66a3ec90bac771a971a8988869456fac5c273948ab"
+  },
+  "inherited-core-source-pair-line-delta.json": {
+    "bytes": 414,
+    "sha256": "2c179792f9522d0a854aeab2a7dbfbce66ea3a12b8e145dacd1a4d08886f5784"
+  },
+  "original-core-job-120632446662.log.gz": {
+    "bytes": 332478,
+    "sha256": "c1c24608f33a526299bb9cb4983562e534069c96fbafd613d8d912d20776a08f"
+  }
+}

@@ -1,0 +1,304 @@
+TAP version 13
+# Subtest: ordinary success returns the exact value after cleanup, clears its timer and never diagnoses
+ok 1 - ordinary success returns the exact value after cleanup, clears its timer and never diagnoses
+  ---
+  duration_ms: 2.64449
+  type: 'test'
+  ...
+# Subtest: ordinary asynchronous evaluate failure keeps its identity and diagnostics precede cleanup
+ok 2 - ordinary asynchronous evaluate failure keeps its identity and diagnostics precede cleanup
+  ---
+  duration_ms: 5.45337
+  type: 'test'
+  ...
+# Subtest: ordinary synchronous evaluate failure keeps its identity and diagnostics precede cleanup
+ok 3 - ordinary synchronous evaluate failure keeps its identity and diagnostics precede cleanup
+  ---
+  duration_ms: 0.470566
+  type: 'test'
+  ...
+# Subtest: never-resolving evaluate rejects at the existing 120 seconds, writes available evidence, then cleans up
+ok 4 - never-resolving evaluate rejects at the existing 120 seconds, writes available evidence, then cleans up
+  ---
+  duration_ms: 2.414284
+  type: 'test'
+  ...
+# Subtest: late evaluate resolve after timeout cannot overwrite the failed receipt
+ok 5 - late evaluate resolve after timeout cannot overwrite the failed receipt
+  ---
+  duration_ms: 0.569213
+  type: 'test'
+  ...
+# Subtest: late evaluate reject after timeout cannot overwrite the failed receipt
+ok 6 - late evaluate reject after timeout cannot overwrite the failed receipt
+  ---
+  duration_ms: 0.299602
+  type: 'test'
+  ...
+# Subtest: timeout remains primary if cleanup also fails; the server is still closed and both errors are recorded
+ok 7 - timeout remains primary if cleanup also fails; the server is still closed and both errors are recorded
+  ---
+  duration_ms: 0.970852
+  type: 'test'
+  ...
+# Subtest: cleanup failure after an ordinary pass fails the probe instead of committing success
+ok 8 - cleanup failure after an ordinary pass fails the probe instead of committing success
+  ---
+  duration_ms: 0.639288
+  type: 'test'
+  ...
+# Subtest: diagnostic write failure cannot erase the original error or prevent cleanup
+ok 9 - diagnostic write failure cannot erase the original error or prevent cleanup
+  ---
+  duration_ms: 0.515211
+  type: 'test'
+  ...
+# Subtest: browser and server cleanup failures retain the operation error in order
+ok 10 - browser and server cleanup failures retain the operation error in order
+  ---
+  duration_ms: 1.003276
+  type: 'test'
+  ...
+# Subtest: guarding the same page twice does not nest deadlines or invoke evaluate twice
+ok 11 - guarding the same page twice does not nest deadlines or invoke evaluate twice
+  ---
+  duration_ms: 0.221177
+  type: 'test'
+  ...
+# Subtest: falsy thrown values remain failures and cyclic error causes cannot hang reporting
+ok 12 - falsy thrown values remain failures and cyclic error causes cannot hang reporting
+  ---
+  duration_ms: 0.184662
+  type: 'test'
+  ...
+# Subtest: actual cold route retains the original evaluation timeout instead of a later navigation error
+ok 13 - actual cold route retains the original evaluation timeout instead of a later navigation error
+  ---
+  duration_ms: 2.682752
+  type: 'test'
+  ...
+# Subtest: actual desktop setup bounds its first evaluate, rather than only setting Playwright default timeout
+ok 14 - actual desktop setup bounds its first evaluate, rather than only setting Playwright default timeout
+  ---
+  duration_ms: 1.772635
+  type: 'test'
+  ...
+# Subtest: actual cold timeout persists observations before ordinary browser cleanup
+ok 15 - actual cold timeout persists observations before ordinary browser cleanup
+  ---
+  duration_ms: 2.011178
+  type: 'test'
+  ...
+# Subtest: actual cold timeout persists observations before failing browser cleanup
+ok 16 - actual cold timeout persists observations before failing browser cleanup
+  ---
+  duration_ms: 1.174222
+  type: 'test'
+  ...
+# Subtest: acceptance schema can represent all required observations, not a GPU claim
+ok 17 - acceptance schema can represent all required observations, not a GPU claim
+  ---
+  duration_ms: 0.670735
+  type: 'test'
+  ...
+# Subtest: rejects missing RESULT evidence
+ok 18 - rejects missing RESULT evidence
+  ---
+  duration_ms: 0.29425
+  type: 'test'
+  ...
+# Subtest: rejects RESULT simulation continues
+ok 19 - rejects RESULT simulation continues
+  ---
+  duration_ms: 0.143722
+  type: 'test'
+  ...
+# Subtest: rejects RESULT paint keeps flushing
+ok 20 - rejects RESULT paint keeps flushing
+  ---
+  duration_ms: 0.217334
+  type: 'test'
+  ...
+# Subtest: rejects RESULT presentation freezes
+ok 21 - rejects RESULT presentation freezes
+  ---
+  duration_ms: 0.122812
+  type: 'test'
+  ...
+# Subtest: rejects missing GPU submission counts
+ok 22 - rejects missing GPU submission counts
+  ---
+  duration_ms: 0.086117
+  type: 'test'
+  ...
+# Subtest: rejects invalid CPU comparison
+ok 23 - rejects invalid CPU comparison
+  ---
+  duration_ms: 0.126814
+  type: 'test'
+  ...
+# Subtest: rejects late mobile budget
+ok 24 - rejects late mobile budget
+  ---
+  duration_ms: 0.08222
+  type: 'test'
+  ...
+# Subtest: rejects oversized cold cloud
+ok 25 - rejects oversized cold cloud
+  ---
+  duration_ms: 0.236821
+  type: 'test'
+  ...
+# Subtest: rejects oversized cold cube
+ok 26 - rejects oversized cold cube
+  ---
+  duration_ms: 0.106122
+  type: 'test'
+  ...
+# Subtest: rejects late replacement hides cold budget
+ok 27 - rejects late replacement hides cold budget
+  ---
+  duration_ms: 0.063309
+  type: 'test'
+  ...
+# Subtest: rejects missing cloud theme
+ok 28 - rejects missing cloud theme
+  ---
+  duration_ms: 0.053406
+  type: 'test'
+  ...
+# Subtest: rejects NaN appearance
+ok 29 - rejects NaN appearance
+  ---
+  duration_ms: 0.06383
+  type: 'test'
+  ...
+# Subtest: rejects banding outlier
+ok 30 - rejects banding outlier
+  ---
+  duration_ms: 0.157942
+  type: 'test'
+  ...
+# Subtest: rejects blank clouds
+ok 31 - rejects blank clouds
+  ---
+  duration_ms: 0.053305
+  type: 'test'
+  ...
+# Subtest: rejects unallocated cube
+ok 32 - rejects unallocated cube
+  ---
+  duration_ms: 0.089881
+  type: 'test'
+  ...
+# Subtest: rejects stale sampler
+ok 33 - rejects stale sampler
+  ---
+  duration_ms: 0.108909
+  type: 'test'
+  ...
+# Subtest: rejects duplicate dispose
+ok 34 - rejects duplicate dispose
+  ---
+  duration_ms: 0.055745
+  type: 'test'
+  ...
+# Subtest: rejects paused CPU work
+ok 35 - rejects paused CPU work
+  ---
+  duration_ms: 0.072815
+  type: 'test'
+  ...
+# Subtest: rejects paused rendering
+ok 36 - rejects paused rendering
+  ---
+  duration_ms: 0.117232
+  type: 'test'
+  ...
+# Subtest: rejects frozen online
+ok 37 - rejects frozen online
+  ---
+  duration_ms: 0.084891
+  type: 'test'
+  ...
+# Subtest: rejects music wakeup
+ok 38 - rejects music wakeup
+  ---
+  duration_ms: 0.055521
+  type: 'test'
+  ...
+# Subtest: rejects muted voices
+ok 39 - rejects muted voices
+  ---
+  duration_ms: 0.050225
+  type: 'test'
+  ...
+# Subtest: rejects silent SFX
+ok 40 - rejects silent SFX
+  ---
+  duration_ms: 0.107832
+  type: 'test'
+  ...
+# Subtest: active suite invokes exact-source probe and binds its successful evidence, preserving other families
+ok 41 - active suite invokes exact-source probe and binds its successful evidence, preserving other families
+  ---
+  duration_ms: 1.035013
+  type: 'test'
+  ...
+# Subtest: wall-only route retains exact-head, real build, full verifier and always evidence
+ok 42 - wall-only route retains exact-head, real build, full verifier and always evidence
+  ---
+  duration_ms: 3.667947
+  type: 'test'
+  ...
+# Subtest: all event and flag combinations isolate wall from full, network and broad render jobs
+ok 43 - all event and flag combinations isolate wall from full, network and broad render jobs
+  ---
+  duration_ms: 2.307654
+  type: 'test'
+  ...
+# Subtest: missing identity, real build, source/emitted contracts or full verifier fail closed
+ok 44 - missing identity, real build, source/emitted contracts or full verifier fail closed
+  ---
+  duration_ms: 8.933316
+  type: 'test'
+  ...
+# Subtest: scope, timeout, evidence, failure suppression and concurrency mutations are rejected
+ok 45 - scope, timeout, evidence, failure suppression and concurrency mutations are rejected
+  ---
+  duration_ms: 12.786717
+  type: 'test'
+  ...
+# Subtest: accepted Turf and network job bodies retain their original pins after exact artifact repair
+ok 46 - accepted Turf and network job bodies retain their original pins after exact artifact repair
+  ---
+  duration_ms: 1.831915
+  type: 'test'
+  ...
+# Subtest: the previously pinned broken artifact command is rejected despite its original digest
+ok 47 - the previously pinned broken artifact command is rejected despite its original digest
+  ---
+  duration_ms: 2.941835
+  type: 'test'
+  ...
+# Subtest: spawn acceptance cannot disappear, change roots, omit a suite or suppress failure
+ok 48 - spawn acceptance cannot disappear, change roots, omit a suite or suppress failure
+  ---
+  duration_ms: 3.964597
+  type: 'test'
+  ...
+# Subtest: artifact repair cannot waive tests, paths, identity, upload errors or unrelated job edits
+ok 49 - artifact repair cannot waive tests, paths, identity, upload errors or unrelated job edits
+  ---
+  duration_ms: 6.108281
+  type: 'test'
+  ...
+1..49
+# tests 49
+# suites 0
+# pass 49
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 548.36504

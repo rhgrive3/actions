@@ -1,0 +1,15 @@
+{
+  "scripts/inkwave-source-composition.mjs": {
+    "addedLines": [
+      "import { adaptSpawnExclusion } from '../patches/splatoon3/spawn-exclusion-adapter.mjs';",
+      "  code = adaptSpawnExclusion(rel, code);"
+    ],
+    "removedLines": []
+  },
+  "scripts/lib/inkwave-build-only-modules.mjs": {
+    "addedLines": [
+      "  'patches/splatoon3/spawn-exclusion-adapter.mjs',"
+    ],
+    "removedLines": []
+  }
+}

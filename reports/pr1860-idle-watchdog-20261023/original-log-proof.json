@@ -1,0 +1,529 @@
+{
+  "run": 40002056206,
+  "job": 120632446674,
+  "head": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+  "originalChars": 239292,
+  "originalUtf8Bytes": 239296,
+  "sha256": "95aa0491294e585b3aabdcd18938f60469ab91fa585e93e3f940465913f7c8cd",
+  "idleEntered": "2026-10-23T20:33:06.3230724Z ##[group]Run node scripts/check-inkwave-idle-resources.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/idle-resources\" --profile-dir \"$CI_STORAGE/cache/idle-resources\" --exact-source",
+  "externalShutdown": "2026-10-23T20:39:50.5521730Z ##[error]The runner has received a shutdown signal. This can happen when the runner service is stopped, or a manually started runner is canceled.",
+  "line168": "2026-10-23T20:39:51.6410442Z     at main (/home/runner/work/actions/actions/scripts/check-inkwave-idle-resources.mjs:168:25) {",
+  "precedingPasses": [
+    {
+      "command": "2026-10-23T20:22:39.5041965Z ##[group]Run node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/game\" --profile-dir \"$CI_STORAGE/cache/game\" --exact-source",
+      "time": "2026-10-23T20:24:58.1231620Z",
+      "status": "passed",
+      "sourceSha": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+      "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+      "summary": null
+    },
+    {
+      "command": "2026-10-23T20:24:58.2614861Z ##[group]Run node scripts/check-inkwave-opening-spawn.mjs .built-site/_site \"$CI_STORAGE/evidence/opening-spawn\"",
+      "time": "2026-10-23T20:25:31.7800146Z",
+      "status": "passed",
+      "sourceSha": null,
+      "contentHash": null,
+      "summary": null
+    },
+    {
+      "command": "2026-10-23T20:25:32.4348960Z ##[group]Run node scripts/check-inkwave-showcase-weapon-queue.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/showcase-weapon\"",
+      "time": "2026-10-23T20:25:48.2185269Z",
+      "status": "passed",
+      "sourceSha": null,
+      "contentHash": null,
+      "summary": null
+    },
+    {
+      "command": "2026-10-23T20:26:06.9862299Z ##[group]Run node scripts/check-inkwave-bvh-browser.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/bvh-queries\"",
+      "time": "2026-10-23T20:26:07.9506637Z",
+      "status": "passed",
+      "sourceSha": null,
+      "contentHash": null,
+      "summary": null
+    },
+    {
+      "command": "2026-10-23T20:26:08.0018431Z ##[group]Run node scripts/check-inkwave-native-normal-browser.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/native-normal\"",
+      "time": "2026-10-23T20:26:09.4492025Z",
+      "status": "passed",
+      "sourceSha": null,
+      "contentHash": null,
+      "summary": null
+    },
+    {
+      "command": "2026-10-23T20:26:08.0018431Z ##[group]Run node scripts/check-inkwave-native-normal-browser.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/native-normal\"",
+      "time": "2026-10-23T20:26:11.4643701Z",
+      "status": "passed",
+      "sourceSha": null,
+      "contentHash": null,
+      "summary": null
+    },
+    {
+      "command": "2026-10-23T20:26:08.0018431Z ##[group]Run node scripts/check-inkwave-native-normal-browser.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/native-normal\"",
+      "time": "2026-10-23T20:26:18.9110948Z",
+      "status": "passed",
+      "sourceSha": null,
+      "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+      "summary": null
+    },
+    {
+      "command": "2026-10-23T20:26:08.0018431Z ##[group]Run node scripts/check-inkwave-native-normal-browser.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/native-normal\"",
+      "time": "2026-10-23T20:26:26.5259219Z",
+      "status": "passed",
+      "sourceSha": null,
+      "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+      "summary": null
+    },
+    {
+      "command": "2026-10-23T20:26:26.6021140Z ##[group]Run node scripts/check-inkwave-post-depth-browser.mjs --site .built-site/_site --browser chromium --out \"$CI_STORAGE/evidence/post-depth-chromium.json\"",
+      "time": "2026-10-23T20:26:35.7317685Z",
+      "status": "passed",
+      "sourceSha": null,
+      "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+      "summary": null
+    },
+    {
+      "command": "2026-10-23T20:26:26.6021140Z ##[group]Run node scripts/check-inkwave-post-depth-browser.mjs --site .built-site/_site --browser chromium --out \"$CI_STORAGE/evidence/post-depth-chromium.json\"",
+      "time": "2026-10-23T20:26:41.0156303Z",
+      "status": "passed",
+      "sourceSha": null,
+      "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+      "summary": null
+    },
+    {
+      "command": "2026-10-23T20:26:41.0864022Z ##[group]Run node scripts/check-inkwave-grate-normal.mjs --site .built-site/_site --source-root \"$GITHUB_WORKSPACE\" --source-sha \"$SOURCE_SHA\" --browser chromium --evidence-dir \"$CI_STORAGE/evidence/grate-normal\"",
+      "time": "2026-10-23T20:26:54.1663373Z",
+      "status": "passed",
+      "sourceSha": null,
+      "contentHash": null,
+      "summary": null
+    },
+    {
+      "command": "2026-10-23T20:26:41.0864022Z ##[group]Run node scripts/check-inkwave-grate-normal.mjs --site .built-site/_site --source-root \"$GITHUB_WORKSPACE\" --source-sha \"$SOURCE_SHA\" --browser chromium --evidence-dir \"$CI_STORAGE/evidence/grate-normal\"",
+      "time": "2026-10-23T20:27:03.9373306Z",
+      "status": "passed",
+      "sourceSha": null,
+      "contentHash": null,
+      "summary": null
+    },
+    {
+      "command": "2026-10-23T20:27:03.9902990Z ##[group]Run node scripts/check-inkwave-movement-speed.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/movement-speed\" --profile-dir \"$CI_STORAGE/cache/movement-speed\"",
+      "time": "2026-10-23T20:27:40.0189632Z",
+      "status": "passed",
+      "sourceSha": null,
+      "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+      "summary": null
+    },
+    {
+      "command": "2026-10-23T20:27:40.4082925Z ##[group]Run node scripts/check-inkwave-special-presentation.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/special-presentation\"",
+      "time": "2026-10-23T20:28:18.7981904Z",
+      "status": "passed",
+      "sourceSha": null,
+      "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+      "summary": null
+    },
+    {
+      "command": "2026-10-23T20:28:18.8814746Z ##[group]Run node scripts/check-inkwave-motion.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/motion\" --profile-dir \"$CI_STORAGE/cache/motion\"",
+      "time": "2026-10-23T20:29:28.5013116Z",
+      "status": "passed",
+      "sourceSha": null,
+      "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+      "summary": [
+        {
+          "name": "slow",
+          "movingFrames": 132,
+          "plantedMovingContacts": 170,
+          "contactsPerFoot": [
+            95,
+            75
+          ],
+          "maxAnkleError": 4.0053709487069576e-16,
+          "maxPlantedMovingError": 4.0053709487069576e-16,
+          "maxNativeLegReachError": 0,
+          "maxHipDrop": 0,
+          "hipTravel": 0.0015558339655399323,
+          "plantSlide": 0,
+          "catchFrames": 0
+        },
+        {
+          "name": "walk",
+          "movingFrames": 132,
+          "plantedMovingContacts": 172,
+          "contactsPerFoot": [
+            83,
+            89
+          ],
+          "maxAnkleError": 9.227424496649089e-16,
+          "maxPlantedMovingError": 9.227424496649089e-16,
+          "maxNativeLegReachError": 0,
+          "maxHipDrop": 1.0520945248567654e-08,
+          "hipTravel": 0.01363113397036042,
+          "plantSlide": 0,
+          "catchFrames": 0
+        },
+        {
+          "name": "run",
+          "movingFrames": 132,
+          "plantedMovingContacts": 79,
+          "contactsPerFoot": [
+            39,
+            40
+          ],
+          "maxAnkleError": 3.5596728618100484e-15,
+          "maxPlantedMovingError": 3.5596728618100484e-15,
+          "maxNativeLegReachError": 0,
+          "maxHipDrop": 0.0035929373096830384,
+          "hipTravel": 0.025550191025448754,
+          "plantSlide": 0,
+          "catchFrames": 0
+        },
+        {
+          "name": "back",
+          "movingFrames": 132,
+          "plantedMovingContacts": 113,
+          "contactsPerFoot": [
+            56,
+            57
+          ],
+          "maxAnkleError": 1.7885663637749645e-15,
+          "maxPlantedMovingError": 1.7885663637749645e-15,
+          "maxNativeLegReachError": 0,
+          "maxHipDrop": 0.005545146137407057,
+          "hipTravel": 0.012697119227773501,
+          "plantSlide": 0,
+          "catchFrames": 0
+        },
+        {
+          "name": "strafe",
+          "movingFrames": 132,
+          "plantedMovingContacts": 113,
+          "contactsPerFoot": [
+            57,
+            56
+          ],
+          "maxAnkleError": 1.800960471343706e-15,
+          "maxPlantedMovingError": 1.800960471343706e-15,
+          "maxNativeLegReachError": 0,
+          "maxHipDrop": 0.0021283922290014465,
+          "hipTravel": 0.01110831431152115,
+          "plantSlide": 0,
+          "catchFrames": 0
+        },
+        {
+          "name": "stop",
+          "movingFrames": 45,
+          "plantedMovingContacts": 29,
+          "contactsPerFoot": [
+            18,
+            11
+          ],
+          "maxAnkleError": 0.013790458732201923,
+          "maxPlantedMovingError": 9.04082224356802e-16,
+          "maxNativeLegReachError": 0,
+          "maxHipDrop": 0.0035824564273386835,
+          "hipTravel": 0.05854349798021341,
+          "plantSlide": 0,
+          "catchFrames": 0
+        },
+        {
+          "name": "turn",
+          "movingFrames": 132,
+          "plantedMovingContacts": 105,
+          "contactsPerFoot": [
+            57,
+            48
+          ],
+          "maxAnkleError": 1.2573000033218179e-15,
+          "maxPlantedMovingError": 1.2573000033218179e-15,
+          "maxNativeLegReachError": 0,
+          "maxHipDrop": 0.04660859013083886,
+          "hipTravel": 0.07101252603005159,
+          "plantSlide": 0,
+          "catchFrames": 0
+        },
+        {
+          "name": "fire-forward",
+          "movingFrames": 132,
+          "plantedMovingContacts": 105,
+          "contactsPerFoot": [
+            53,
+            52
+          ],
+          "maxAnkleError": 3.5596728618100484e-15,
+          "maxPlantedMovingError": 3.5596728618100484e-15,
+          "maxNativeLegReachError": 0,
+          "maxHipDrop": 0,
+          "hipTravel": 0.012495141476392746,
+          "plantSlide": 0,
+          "catchFrames": 0
+        },
+        {
+          "name": "fire-back",
+          "movingFrames": 132,
+          "plantedMovingContacts": 105,
+          "contactsPerFoot": [
+            52,
+            53
+          ],
+          "maxAnkleError": 1.79383492860469e-15,
+          "maxPlantedMovingError": 1.79383492860469e-15,
+          "maxNativeLegReachError": 0,
+          "maxHipDrop": 0,
+          "hipTravel": 0.012495141476392746,
+          "plantSlide": 0,
+          "catchFrames": 0
+        },
+        {
+          "name": "fire-strafe",
+          "movingFrames": 132,
+          "plantedMovingContacts": 105,
+          "contactsPerFoot": [
+            53,
+            52
+          ],
+          "maxAnkleError": 3.553797715587332e-15,
+          "maxPlantedMovingError": 3.553797715587332e-15,
+          "maxNativeLegReachError": 0,
+          "maxHipDrop": 1.1325829002157128e-06,
+          "hipTravel": 0.012495141479519578,
+          "plantSlide": 0,
+          "catchFrames": 0
+        }
+      ]
+    },
+    {
+      "command": "2026-10-23T20:29:28.5276164Z ##[group]Run node scripts/check-inkwave-motion-detail.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/motion-detail\" --profile-dir \"$CI_STORAGE/cache/motion-detail\"",
+      "time": "2026-10-23T20:31:18.0198677Z",
+      "status": "passed",
+      "sourceSha": null,
+      "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+      "summary": [
+        {
+          "expectedHiddenBodySamples": 0,
+          "expectedHiddenRigSamples": 0,
+          "visiblePixelPasses": 14,
+          "name": "bomb-standing",
+          "frames": 240,
+          "releases": 1,
+          "peakNativeRecoil": 0,
+          "renderPairs": 14,
+          "minimumRigPixels": 42236,
+          "maxNativeArmReach": 0
+        },
+        {
+          "expectedHiddenBodySamples": 0,
+          "expectedHiddenRigSamples": 0,
+          "visiblePixelPasses": 14,
+          "name": "bomb-running",
+          "frames": 240,
+          "releases": 1,
+          "peakNativeRecoil": 0,
+          "renderPairs": 14,
+          "minimumRigPixels": 42954,
+          "maxNativeArmReach": 0
+        },
+        {
+          "expectedHiddenBodySamples": 0,
+          "expectedHiddenRigSamples": 0,
+          "visiblePixelPasses": 14,
+          "name": "bomb-air",
+          "frames": 240,
+          "releases": 1,
+          "peakNativeRecoil": 0,
+          "renderPairs": 14,
+          "minimumRigPixels": 46868,
+          "maxNativeArmReach": 9.361417999365074e-05
+        },
+        {
+          "expectedHiddenBodySamples": 0,
+          "expectedHiddenRigSamples": 0,
+          "visiblePixelPasses": 14,
+          "name": "bomb-dualies",
+          "frames": 240,
+          "releases": 1,
+          "peakNativeRecoil": 0,
+          "renderPairs": 14,
+          "minimumRigPixels": 41816,
+          "maxNativeArmReach": 0
+        },
+        {
+          "expectedHiddenBodySamples": 0,
+          "expectedHiddenRigSamples": 0,
+          "visiblePixelPasses": 13,
+          "name": "flow-kid",
+          "frames": 240,
+          "releases": 0,
+          "peakNativeRecoil": 0,
+          "renderPairs": 13,
+          "minimumRigPixels": 45494,
+          "maxNativeArmReach": 0
+        },
+        {
+          "expectedHiddenBodySamples": 4,
+          "expectedHiddenRigSamples": 3,
+          "visiblePixelPasses": 10,
+          "name": "flow-squid",
+          "frames": 240,
+          "releases": 0,
+          "peakNativeRecoil": 0,
+          "renderPairs": 13,
+          "minimumRigPixels": 211,
+          "maxNativeArmReach": 0
+        },
+        {
+          "expectedHiddenBodySamples": 0,
+          "expectedHiddenRigSamples": 0,
+          "visiblePixelPasses": 13,
+          "name": "flow-air",
+          "frames": 240,
+          "releases": 0,
+          "peakNativeRecoil": 0,
+          "renderPairs": 13,
+          "minimumRigPixels": 49927,
+          "maxNativeArmReach": 0
+        },
+        {
+          "expectedHiddenBodySamples": 0,
+          "expectedHiddenRigSamples": 0,
+          "visiblePixelPasses": 13,
+          "name": "flow-reset",
+          "frames": 240,
+          "releases": 0,
+          "peakNativeRecoil": 0,
+          "renderPairs": 13,
+          "minimumRigPixels": 44673,
+          "maxNativeArmReach": 0
+        },
+        {
+          "expectedHiddenBodySamples": 0,
+          "expectedHiddenRigSamples": 0,
+          "visiblePixelPasses": 13,
+          "name": "bucket-repeat",
+          "frames": 240,
+          "releases": 4,
+          "peakNativeRecoil": 0,
+          "renderPairs": 13,
+          "minimumRigPixels": 55248,
+          "maxNativeArmReach": 0.23287910703457648
+        },
+        {
+          "expectedHiddenBodySamples": 0,
+          "expectedHiddenRigSamples": 0,
+          "visiblePixelPasses": 13,
+          "name": "blaster-repeat",
+          "frames": 240,
+          "releases": 2,
+          "peakNativeRecoil": 0.1322755217552185,
+          "renderPairs": 13,
+          "minimumRigPixels": 48414,
+          "maxNativeArmReach": 0
+        },
+        {
+          "expectedHiddenBodySamples": 0,
+          "expectedHiddenRigSamples": 0,
+          "visiblePixelPasses": 13,
+          "name": "charger-return",
+          "frames": 240,
+          "releases": 1,
+          "peakNativeRecoil": 0.23849228024482727,
+          "renderPairs": 13,
+          "minimumRigPixels": 45926,
+          "maxNativeArmReach": 0
+        },
+        {
+          "expectedHiddenBodySamples": 0,
+          "expectedHiddenRigSamples": 0,
+          "visiblePixelPasses": 16,
+          "name": "splatling-coast",
+          "frames": 420,
+          "releases": 41,
+          "peakNativeRecoil": 0.012081020511686802,
+          "renderPairs": 16,
+          "minimumRigPixels": 47902,
+          "maxNativeArmReach": 0
+        },
+        {
+          "expectedHiddenBodySamples": 0,
+          "expectedHiddenRigSamples": 0,
+          "visiblePixelPasses": 13,
+          "name": "shooter-recoil",
+          "frames": 240,
+          "releases": 17,
+          "peakNativeRecoil": 0.023278936743736267,
+          "renderPairs": 13,
+          "minimumRigPixels": 45291,
+          "maxNativeArmReach": 0.0004514649996582021
+        },
+        {
+          "expectedHiddenBodySamples": 0,
+          "expectedHiddenRigSamples": 0,
+          "visiblePixelPasses": 13,
+          "name": "shooter-detail-opt-out",
+          "frames": 240,
+          "releases": 17,
+          "peakNativeRecoil": 0.05052714794874191,
+          "renderPairs": 13,
+          "minimumRigPixels": 45291,
+          "maxNativeArmReach": 0.000362559441829724
+        }
+      ]
+    },
+    {
+      "command": "2026-10-23T20:31:18.0585683Z ##[group]Run node scripts/check-inkwave-weapon-models.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/weapon-models\"",
+      "time": "2026-10-23T20:32:27.4696465Z",
+      "status": "passed",
+      "sourceSha": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+      "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+      "summary": null
+    },
+    {
+      "command": "2026-10-23T20:32:27.9128100Z ##[group]Run node scripts/check-inkwave-flow-render.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/flow\" --profile-dir \"$CI_STORAGE/cache/flow\" --exact-source",
+      "time": "2026-10-23T20:32:48.5589363Z",
+      "status": "passed",
+      "sourceSha": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+      "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+      "summary": {
+        "scenarios": 11,
+        "overridePixelEquality": true,
+        "nativeBuffers": 38,
+        "disposedViews": 4,
+        "components": [
+          "shell",
+          "glint",
+          "ribbon"
+        ]
+      }
+    },
+    {
+      "command": "2026-10-23T20:32:48.5796153Z ##[group]Run node scripts/check-inkwave-wall-render.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/wall\" --profile-dir \"$CI_STORAGE/cache/wall\" --exact-source",
+      "time": "2026-10-23T20:33:04.1467295Z",
+      "status": "passed",
+      "sourceSha": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+      "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+      "summary": {
+        "scenarios": 10,
+        "overridePixelEquality": true,
+        "nativeBuffers": 64,
+        "indexedReadyViews": 4,
+        "unsafeOverridesDetected": true,
+        "affineCounterexampleDetected": true
+      }
+    },
+    {
+      "command": "2026-10-23T20:33:04.1688131Z ##[group]Run node scripts/check-inkwave-resource-render.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/resources\" --profile-dir \"$CI_STORAGE/cache/resources\" --exact-source",
+      "time": "2026-10-23T20:33:06.3032665Z",
+      "status": "passed",
+      "sourceSha": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+      "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+      "summary": {
+        "shadowPixelEqualScenarios": 9,
+        "removedColorMiB": [
+          16,
+          64
+        ],
+        "touchReflectionCalls": "3/6 frames",
+        "contextRestore": true
+      }
+    }
+  ],
+  "classification": "External runner shutdown; no runtime assertion or root cause established from this log."
+}

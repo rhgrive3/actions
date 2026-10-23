@@ -1,0 +1,1281 @@
+{
+  "candidate": "07520a193bc792d6fd71ae796e2c2e9170150563",
+  "tree": "066434da855dee3de5eb7853d10af6459f6f25a8",
+  "branch": "candidate/pr1860-idle-watchdog-20261023",
+  "base": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+  "donor": "2d164d063050c15266febcb6af88109938f26701",
+  "donorBlobProof": {
+    "donor": "2d164d063050c15266febcb6af88109938f26701",
+    "files": [
+      {
+        "path": "scripts/check-inkwave-idle-resources.mjs",
+        "blob": "bc5ad497b0b2d3e5f21e792d9c0ced0608b822d9",
+        "officialDecodedContentMatches": true,
+        "candidateMatches": true
+      },
+      {
+        "path": "scripts/tests/inkwave-idle-evaluate-deadline.test.mjs",
+        "blob": "0dcb6fe498086c81a2c5218347ca7cd8f451274f",
+        "officialDecodedContentMatches": true,
+        "candidateMatches": true
+      },
+      {
+        "path": "scripts/tests/inkwave-idle-resources-gates.test.mjs",
+        "blob": "d384824f3ac170167db9ff5e3dd0a62ee77e7518",
+        "officialDecodedContentMatches": true,
+        "candidateMatches": true
+      }
+    ]
+  },
+  "focusedControls": {
+    "tests": 49,
+    "pass": 49,
+    "fail": 0,
+    "skipped": 0
+  },
+  "preservation": {
+    "base": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+    "head": "07520a193bc792d6fd71ae796e2c2e9170150563",
+    "changedPaths": [
+      "scripts/check-inkwave-idle-resources.mjs",
+      "scripts/tests/inkwave-idle-evaluate-deadline.test.mjs",
+      "scripts/tests/inkwave-idle-resources-gates.test.mjs"
+    ],
+    "allOtherTrackedBlobsUnchanged": true,
+    "directChild": true,
+    "sourceBase": {
+      "sourceSha": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+      "checkedInputs": 1423
+    },
+    "sourceCandidate": {
+      "sourceSha": "07520a193bc792d6fd71ae796e2c2e9170150563",
+      "checkedInputs": 1423
+    },
+    "buildIdentity": {
+      "inputHash": "f65b5c1b8569c5b6364a31c32b45e3107d23247a2c030fb764c565c064e0d517",
+      "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+      "revision": "150caf88b35d2d6f915309f35373269cf7487ecc74e672ecd40eff0803df4996"
+    },
+    "preserved": [
+      {
+        "path": ".github/workflows/validate-inkwave-update.yml",
+        "base": "d6f93e489a19c68c858996a226e4f3347feee573",
+        "candidate": "d6f93e489a19c68c858996a226e4f3347feee573"
+      },
+      {
+        "path": "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs",
+        "base": "a9b71df1932e64fb34116a13ec403117f4edab4e",
+        "candidate": "a9b71df1932e64fb34116a13ec403117f4edab4e"
+      },
+      {
+        "path": "scripts/build-inkwave.mjs",
+        "base": "185da45a0acb17a906709b5a124a380111725c33",
+        "candidate": "185da45a0acb17a906709b5a124a380111725c33"
+      },
+      {
+        "path": "scripts/inkwave-source-composition.mjs",
+        "base": "e870e95e1d3ab82ab5412888fd3ca0ba0d48fcd5",
+        "candidate": "e870e95e1d3ab82ab5412888fd3ca0ba0d48fcd5"
+      },
+      {
+        "path": "patches/splatoon3/runtime/spawn-exclusion.mjs",
+        "base": "4b68c6d7a3f4223521ca316792e1e76e6f7b71aa",
+        "candidate": "4b68c6d7a3f4223521ca316792e1e76e6f7b71aa"
+      },
+      {
+        "path": "inkwave-public",
+        "base": "7f4f0b529ced80d57793071189026d98e02f90d6",
+        "candidate": "7f4f0b529ced80d57793071189026d98e02f90d6"
+      },
+      {
+        "path": "patches",
+        "base": "925619f2bbc8534faa0cc1a5ab973c7db598b55a",
+        "candidate": "925619f2bbc8534faa0cc1a5ab973c7db598b55a"
+      }
+    ],
+    "limits": [
+      "Existing immutable emitted build is verified against both refs; no new build or browser/GPU acceptance run is claimed."
+    ]
+  },
+  "officialCandidateReadback": {
+    "ref": "07520a193bc792d6fd71ae796e2c2e9170150563",
+    "tree": "066434da855dee3de5eb7853d10af6459f6f25a8",
+    "parents": [
+      "05eb9b8243bfba7e166600990df33ac19bbaa0c2"
+    ],
+    "rootEntries": 24,
+    "rootMatch": true
+  },
+  "activeJob": {
+    "run": 40002056206,
+    "job": 120632446674,
+    "head": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+    "originalChars": 239292,
+    "originalUtf8Bytes": 239296,
+    "sha256": "95aa0491294e585b3aabdcd18938f60469ab91fa585e93e3f940465913f7c8cd",
+    "idleEntered": "2026-10-23T20:33:06.3230724Z ##[group]Run node scripts/check-inkwave-idle-resources.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/idle-resources\" --profile-dir \"$CI_STORAGE/cache/idle-resources\" --exact-source",
+    "externalShutdown": "2026-10-23T20:39:50.5521730Z ##[error]The runner has received a shutdown signal. This can happen when the runner service is stopped, or a manually started runner is canceled.",
+    "line168": "2026-10-23T20:39:51.6410442Z     at main (/home/runner/work/actions/actions/scripts/check-inkwave-idle-resources.mjs:168:25) {",
+    "precedingPasses": [
+      {
+        "command": "2026-10-23T20:22:39.5041965Z ##[group]Run node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/game\" --profile-dir \"$CI_STORAGE/cache/game\" --exact-source",
+        "time": "2026-10-23T20:24:58.1231620Z",
+        "status": "passed",
+        "sourceSha": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+        "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+        "summary": null
+      },
+      {
+        "command": "2026-10-23T20:24:58.2614861Z ##[group]Run node scripts/check-inkwave-opening-spawn.mjs .built-site/_site \"$CI_STORAGE/evidence/opening-spawn\"",
+        "time": "2026-10-23T20:25:31.7800146Z",
+        "status": "passed",
+        "sourceSha": null,
+        "contentHash": null,
+        "summary": null
+      },
+      {
+        "command": "2026-10-23T20:25:32.4348960Z ##[group]Run node scripts/check-inkwave-showcase-weapon-queue.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/showcase-weapon\"",
+        "time": "2026-10-23T20:25:48.2185269Z",
+        "status": "passed",
+        "sourceSha": null,
+        "contentHash": null,
+        "summary": null
+      },
+      {
+        "command": "2026-10-23T20:26:06.9862299Z ##[group]Run node scripts/check-inkwave-bvh-browser.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/bvh-queries\"",
+        "time": "2026-10-23T20:26:07.9506637Z",
+        "status": "passed",
+        "sourceSha": null,
+        "contentHash": null,
+        "summary": null
+      },
+      {
+        "command": "2026-10-23T20:26:08.0018431Z ##[group]Run node scripts/check-inkwave-native-normal-browser.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/native-normal\"",
+        "time": "2026-10-23T20:26:09.4492025Z",
+        "status": "passed",
+        "sourceSha": null,
+        "contentHash": null,
+        "summary": null
+      },
+      {
+        "command": "2026-10-23T20:26:08.0018431Z ##[group]Run node scripts/check-inkwave-native-normal-browser.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/native-normal\"",
+        "time": "2026-10-23T20:26:11.4643701Z",
+        "status": "passed",
+        "sourceSha": null,
+        "contentHash": null,
+        "summary": null
+      },
+      {
+        "command": "2026-10-23T20:26:08.0018431Z ##[group]Run node scripts/check-inkwave-native-normal-browser.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/native-normal\"",
+        "time": "2026-10-23T20:26:18.9110948Z",
+        "status": "passed",
+        "sourceSha": null,
+        "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+        "summary": null
+      },
+      {
+        "command": "2026-10-23T20:26:08.0018431Z ##[group]Run node scripts/check-inkwave-native-normal-browser.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/native-normal\"",
+        "time": "2026-10-23T20:26:26.5259219Z",
+        "status": "passed",
+        "sourceSha": null,
+        "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+        "summary": null
+      },
+      {
+        "command": "2026-10-23T20:26:26.6021140Z ##[group]Run node scripts/check-inkwave-post-depth-browser.mjs --site .built-site/_site --browser chromium --out \"$CI_STORAGE/evidence/post-depth-chromium.json\"",
+        "time": "2026-10-23T20:26:35.7317685Z",
+        "status": "passed",
+        "sourceSha": null,
+        "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+        "summary": null
+      },
+      {
+        "command": "2026-10-23T20:26:26.6021140Z ##[group]Run node scripts/check-inkwave-post-depth-browser.mjs --site .built-site/_site --browser chromium --out \"$CI_STORAGE/evidence/post-depth-chromium.json\"",
+        "time": "2026-10-23T20:26:41.0156303Z",
+        "status": "passed",
+        "sourceSha": null,
+        "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+        "summary": null
+      },
+      {
+        "command": "2026-10-23T20:26:41.0864022Z ##[group]Run node scripts/check-inkwave-grate-normal.mjs --site .built-site/_site --source-root \"$GITHUB_WORKSPACE\" --source-sha \"$SOURCE_SHA\" --browser chromium --evidence-dir \"$CI_STORAGE/evidence/grate-normal\"",
+        "time": "2026-10-23T20:26:54.1663373Z",
+        "status": "passed",
+        "sourceSha": null,
+        "contentHash": null,
+        "summary": null
+      },
+      {
+        "command": "2026-10-23T20:26:41.0864022Z ##[group]Run node scripts/check-inkwave-grate-normal.mjs --site .built-site/_site --source-root \"$GITHUB_WORKSPACE\" --source-sha \"$SOURCE_SHA\" --browser chromium --evidence-dir \"$CI_STORAGE/evidence/grate-normal\"",
+        "time": "2026-10-23T20:27:03.9373306Z",
+        "status": "passed",
+        "sourceSha": null,
+        "contentHash": null,
+        "summary": null
+      },
+      {
+        "command": "2026-10-23T20:27:03.9902990Z ##[group]Run node scripts/check-inkwave-movement-speed.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/movement-speed\" --profile-dir \"$CI_STORAGE/cache/movement-speed\"",
+        "time": "2026-10-23T20:27:40.0189632Z",
+        "status": "passed",
+        "sourceSha": null,
+        "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+        "summary": null
+      },
+      {
+        "command": "2026-10-23T20:27:40.4082925Z ##[group]Run node scripts/check-inkwave-special-presentation.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/special-presentation\"",
+        "time": "2026-10-23T20:28:18.7981904Z",
+        "status": "passed",
+        "sourceSha": null,
+        "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+        "summary": null
+      },
+      {
+        "command": "2026-10-23T20:28:18.8814746Z ##[group]Run node scripts/check-inkwave-motion.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/motion\" --profile-dir \"$CI_STORAGE/cache/motion\"",
+        "time": "2026-10-23T20:29:28.5013116Z",
+        "status": "passed",
+        "sourceSha": null,
+        "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+        "summary": [
+          {
+            "name": "slow",
+            "movingFrames": 132,
+            "plantedMovingContacts": 170,
+            "contactsPerFoot": [
+              95,
+              75
+            ],
+            "maxAnkleError": 4.0053709487069576e-16,
+            "maxPlantedMovingError": 4.0053709487069576e-16,
+            "maxNativeLegReachError": 0,
+            "maxHipDrop": 0,
+            "hipTravel": 0.0015558339655399323,
+            "plantSlide": 0,
+            "catchFrames": 0
+          },
+          {
+            "name": "walk",
+            "movingFrames": 132,
+            "plantedMovingContacts": 172,
+            "contactsPerFoot": [
+              83,
+              89
+            ],
+            "maxAnkleError": 9.227424496649089e-16,
+            "maxPlantedMovingError": 9.227424496649089e-16,
+            "maxNativeLegReachError": 0,
+            "maxHipDrop": 1.0520945248567654e-08,
+            "hipTravel": 0.01363113397036042,
+            "plantSlide": 0,
+            "catchFrames": 0
+          },
+          {
+            "name": "run",
+            "movingFrames": 132,
+            "plantedMovingContacts": 79,
+            "contactsPerFoot": [
+              39,
+              40
+            ],
+            "maxAnkleError": 3.5596728618100484e-15,
+            "maxPlantedMovingError": 3.5596728618100484e-15,
+            "maxNativeLegReachError": 0,
+            "maxHipDrop": 0.0035929373096830384,
+            "hipTravel": 0.025550191025448754,
+            "plantSlide": 0,
+            "catchFrames": 0
+          },
+          {
+            "name": "back",
+            "movingFrames": 132,
+            "plantedMovingContacts": 113,
+            "contactsPerFoot": [
+              56,
+              57
+            ],
+            "maxAnkleError": 1.7885663637749645e-15,
+            "maxPlantedMovingError": 1.7885663637749645e-15,
+            "maxNativeLegReachError": 0,
+            "maxHipDrop": 0.005545146137407057,
+            "hipTravel": 0.012697119227773501,
+            "plantSlide": 0,
+            "catchFrames": 0
+          },
+          {
+            "name": "strafe",
+            "movingFrames": 132,
+            "plantedMovingContacts": 113,
+            "contactsPerFoot": [
+              57,
+              56
+            ],
+            "maxAnkleError": 1.800960471343706e-15,
+            "maxPlantedMovingError": 1.800960471343706e-15,
+            "maxNativeLegReachError": 0,
+            "maxHipDrop": 0.0021283922290014465,
+            "hipTravel": 0.01110831431152115,
+            "plantSlide": 0,
+            "catchFrames": 0
+          },
+          {
+            "name": "stop",
+            "movingFrames": 45,
+            "plantedMovingContacts": 29,
+            "contactsPerFoot": [
+              18,
+              11
+            ],
+            "maxAnkleError": 0.013790458732201923,
+            "maxPlantedMovingError": 9.04082224356802e-16,
+            "maxNativeLegReachError": 0,
+            "maxHipDrop": 0.0035824564273386835,
+            "hipTravel": 0.05854349798021341,
+            "plantSlide": 0,
+            "catchFrames": 0
+          },
+          {
+            "name": "turn",
+            "movingFrames": 132,
+            "plantedMovingContacts": 105,
+            "contactsPerFoot": [
+              57,
+              48
+            ],
+            "maxAnkleError": 1.2573000033218179e-15,
+            "maxPlantedMovingError": 1.2573000033218179e-15,
+            "maxNativeLegReachError": 0,
+            "maxHipDrop": 0.04660859013083886,
+            "hipTravel": 0.07101252603005159,
+            "plantSlide": 0,
+            "catchFrames": 0
+          },
+          {
+            "name": "fire-forward",
+            "movingFrames": 132,
+            "plantedMovingContacts": 105,
+            "contactsPerFoot": [
+              53,
+              52
+            ],
+            "maxAnkleError": 3.5596728618100484e-15,
+            "maxPlantedMovingError": 3.5596728618100484e-15,
+            "maxNativeLegReachError": 0,
+            "maxHipDrop": 0,
+            "hipTravel": 0.012495141476392746,
+            "plantSlide": 0,
+            "catchFrames": 0
+          },
+          {
+            "name": "fire-back",
+            "movingFrames": 132,
+            "plantedMovingContacts": 105,
+            "contactsPerFoot": [
+              52,
+              53
+            ],
+            "maxAnkleError": 1.79383492860469e-15,
+            "maxPlantedMovingError": 1.79383492860469e-15,
+            "maxNativeLegReachError": 0,
+            "maxHipDrop": 0,
+            "hipTravel": 0.012495141476392746,
+            "plantSlide": 0,
+            "catchFrames": 0
+          },
+          {
+            "name": "fire-strafe",
+            "movingFrames": 132,
+            "plantedMovingContacts": 105,
+            "contactsPerFoot": [
+              53,
+              52
+            ],
+            "maxAnkleError": 3.553797715587332e-15,
+            "maxPlantedMovingError": 3.553797715587332e-15,
+            "maxNativeLegReachError": 0,
+            "maxHipDrop": 1.1325829002157128e-06,
+            "hipTravel": 0.012495141479519578,
+            "plantSlide": 0,
+            "catchFrames": 0
+          }
+        ]
+      },
+      {
+        "command": "2026-10-23T20:29:28.5276164Z ##[group]Run node scripts/check-inkwave-motion-detail.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/motion-detail\" --profile-dir \"$CI_STORAGE/cache/motion-detail\"",
+        "time": "2026-10-23T20:31:18.0198677Z",
+        "status": "passed",
+        "sourceSha": null,
+        "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+        "summary": [
+          {
+            "expectedHiddenBodySamples": 0,
+            "expectedHiddenRigSamples": 0,
+            "visiblePixelPasses": 14,
+            "name": "bomb-standing",
+            "frames": 240,
+            "releases": 1,
+            "peakNativeRecoil": 0,
+            "renderPairs": 14,
+            "minimumRigPixels": 42236,
+            "maxNativeArmReach": 0
+          },
+          {
+            "expectedHiddenBodySamples": 0,
+            "expectedHiddenRigSamples": 0,
+            "visiblePixelPasses": 14,
+            "name": "bomb-running",
+            "frames": 240,
+            "releases": 1,
+            "peakNativeRecoil": 0,
+            "renderPairs": 14,
+            "minimumRigPixels": 42954,
+            "maxNativeArmReach": 0
+          },
+          {
+            "expectedHiddenBodySamples": 0,
+            "expectedHiddenRigSamples": 0,
+            "visiblePixelPasses": 14,
+            "name": "bomb-air",
+            "frames": 240,
+            "releases": 1,
+            "peakNativeRecoil": 0,
+            "renderPairs": 14,
+            "minimumRigPixels": 46868,
+            "maxNativeArmReach": 9.361417999365074e-05
+          },
+          {
+            "expectedHiddenBodySamples": 0,
+            "expectedHiddenRigSamples": 0,
+            "visiblePixelPasses": 14,
+            "name": "bomb-dualies",
+            "frames": 240,
+            "releases": 1,
+            "peakNativeRecoil": 0,
+            "renderPairs": 14,
+            "minimumRigPixels": 41816,
+            "maxNativeArmReach": 0
+          },
+          {
+            "expectedHiddenBodySamples": 0,
+            "expectedHiddenRigSamples": 0,
+            "visiblePixelPasses": 13,
+            "name": "flow-kid",
+            "frames": 240,
+            "releases": 0,
+            "peakNativeRecoil": 0,
+            "renderPairs": 13,
+            "minimumRigPixels": 45494,
+            "maxNativeArmReach": 0
+          },
+          {
+            "expectedHiddenBodySamples": 4,
+            "expectedHiddenRigSamples": 3,
+            "visiblePixelPasses": 10,
+            "name": "flow-squid",
+            "frames": 240,
+            "releases": 0,
+            "peakNativeRecoil": 0,
+            "renderPairs": 13,
+            "minimumRigPixels": 211,
+            "maxNativeArmReach": 0
+          },
+          {
+            "expectedHiddenBodySamples": 0,
+            "expectedHiddenRigSamples": 0,
+            "visiblePixelPasses": 13,
+            "name": "flow-air",
+            "frames": 240,
+            "releases": 0,
+            "peakNativeRecoil": 0,
+            "renderPairs": 13,
+            "minimumRigPixels": 49927,
+            "maxNativeArmReach": 0
+          },
+          {
+            "expectedHiddenBodySamples": 0,
+            "expectedHiddenRigSamples": 0,
+            "visiblePixelPasses": 13,
+            "name": "flow-reset",
+            "frames": 240,
+            "releases": 0,
+            "peakNativeRecoil": 0,
+            "renderPairs": 13,
+            "minimumRigPixels": 44673,
+            "maxNativeArmReach": 0
+          },
+          {
+            "expectedHiddenBodySamples": 0,
+            "expectedHiddenRigSamples": 0,
+            "visiblePixelPasses": 13,
+            "name": "bucket-repeat",
+            "frames": 240,
+            "releases": 4,
+            "peakNativeRecoil": 0,
+            "renderPairs": 13,
+            "minimumRigPixels": 55248,
+            "maxNativeArmReach": 0.23287910703457648
+          },
+          {
+            "expectedHiddenBodySamples": 0,
+            "expectedHiddenRigSamples": 0,
+            "visiblePixelPasses": 13,
+            "name": "blaster-repeat",
+            "frames": 240,
+            "releases": 2,
+            "peakNativeRecoil": 0.1322755217552185,
+            "renderPairs": 13,
+            "minimumRigPixels": 48414,
+            "maxNativeArmReach": 0
+          },
+          {
+            "expectedHiddenBodySamples": 0,
+            "expectedHiddenRigSamples": 0,
+            "visiblePixelPasses": 13,
+            "name": "charger-return",
+            "frames": 240,
+            "releases": 1,
+            "peakNativeRecoil": 0.23849228024482727,
+            "renderPairs": 13,
+            "minimumRigPixels": 45926,
+            "maxNativeArmReach": 0
+          },
+          {
+            "expectedHiddenBodySamples": 0,
+            "expectedHiddenRigSamples": 0,
+            "visiblePixelPasses": 16,
+            "name": "splatling-coast",
+            "frames": 420,
+            "releases": 41,
+            "peakNativeRecoil": 0.012081020511686802,
+            "renderPairs": 16,
+            "minimumRigPixels": 47902,
+            "maxNativeArmReach": 0
+          },
+          {
+            "expectedHiddenBodySamples": 0,
+            "expectedHiddenRigSamples": 0,
+            "visiblePixelPasses": 13,
+            "name": "shooter-recoil",
+            "frames": 240,
+            "releases": 17,
+            "peakNativeRecoil": 0.023278936743736267,
+            "renderPairs": 13,
+            "minimumRigPixels": 45291,
+            "maxNativeArmReach": 0.0004514649996582021
+          },
+          {
+            "expectedHiddenBodySamples": 0,
+            "expectedHiddenRigSamples": 0,
+            "visiblePixelPasses": 13,
+            "name": "shooter-detail-opt-out",
+            "frames": 240,
+            "releases": 17,
+            "peakNativeRecoil": 0.05052714794874191,
+            "renderPairs": 13,
+            "minimumRigPixels": 45291,
+            "maxNativeArmReach": 0.000362559441829724
+          }
+        ]
+      },
+      {
+        "command": "2026-10-23T20:31:18.0585683Z ##[group]Run node scripts/check-inkwave-weapon-models.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/weapon-models\"",
+        "time": "2026-10-23T20:32:27.4696465Z",
+        "status": "passed",
+        "sourceSha": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+        "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+        "summary": null
+      },
+      {
+        "command": "2026-10-23T20:32:27.9128100Z ##[group]Run node scripts/check-inkwave-flow-render.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/flow\" --profile-dir \"$CI_STORAGE/cache/flow\" --exact-source",
+        "time": "2026-10-23T20:32:48.5589363Z",
+        "status": "passed",
+        "sourceSha": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+        "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+        "summary": {
+          "scenarios": 11,
+          "overridePixelEquality": true,
+          "nativeBuffers": 38,
+          "disposedViews": 4,
+          "components": [
+            "shell",
+            "glint",
+            "ribbon"
+          ]
+        }
+      },
+      {
+        "command": "2026-10-23T20:32:48.5796153Z ##[group]Run node scripts/check-inkwave-wall-render.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/wall\" --profile-dir \"$CI_STORAGE/cache/wall\" --exact-source",
+        "time": "2026-10-23T20:33:04.1467295Z",
+        "status": "passed",
+        "sourceSha": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+        "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+        "summary": {
+          "scenarios": 10,
+          "overridePixelEquality": true,
+          "nativeBuffers": 64,
+          "indexedReadyViews": 4,
+          "unsafeOverridesDetected": true,
+          "affineCounterexampleDetected": true
+        }
+      },
+      {
+        "command": "2026-10-23T20:33:04.1688131Z ##[group]Run node scripts/check-inkwave-resource-render.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/resources\" --profile-dir \"$CI_STORAGE/cache/resources\" --exact-source",
+        "time": "2026-10-23T20:33:06.3032665Z",
+        "status": "passed",
+        "sourceSha": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+        "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+        "summary": {
+          "shadowPixelEqualScenarios": 9,
+          "removedColorMiB": [
+            16,
+            64
+          ],
+          "touchReflectionCalls": "3/6 frames",
+          "contextRestore": true
+        }
+      }
+    ],
+    "classification": "External runner shutdown; no runtime assertion or root cause established from this log."
+  },
+  "latestOriginalCI": {
+    "core": {
+      "id": 120632446662,
+      "status": "completed",
+      "conclusion": "failure",
+      "steps": [
+        {
+          "number": 1,
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 2,
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 3,
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 4,
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 5,
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 6,
+          "name": "Verify scoped network diagnostic workflow contracts",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 7,
+          "name": "Install pinned source regression and build tool",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 8,
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 9,
+          "name": "Prepare persistent focused test evidence",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 10,
+          "name": "Run requested focused source regressions",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 11,
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 12,
+          "name": "Verify queued InkFlight and catalogue bot liveness fixes",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 13,
+          "name": "Verify paint ownership and frozen-host P0 regressions",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 14,
+          "name": "Verify source session admission and finite view settings",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 15,
+          "name": "Verify claimed room startup and gyro health regressions",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 16,
+          "name": "Verify modal controller and pending Pointer Lock lifetimes",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 17,
+          "name": "Verify PR1172 Slosher and Ink Vac regressions",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 18,
+          "name": "Verify source-loaded actual Actor Ink Vac presentation ownership",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 19,
+          "name": "Verify PR1172 updated wire contracts",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 20,
+          "name": "Verify PR1171 seven-issue and composition regressions",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 21,
+          "name": "Verify six follow-up INKWAVE regressions",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 22,
+          "name": "Verify eight additional INKWAVE regressions",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 23,
+          "name": "Verify finish authority, adoption and portrait regressions",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 24,
+          "name": "Verify source-sampled direction-aware humanoid gait",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 25,
+          "name": "Verify source-bank torso, weapon carry and squid-to-human transitions",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 26,
+          "name": "Verify PR1077 additional seven regressions",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 27,
+          "name": "Diagnose nine-way walk contact regression",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 28,
+          "name": "Verify gameplay patch compatibility and numeric contract",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 29,
+          "name": "Verify source-guided ink flight model",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 30,
+          "name": "Verify nine queued critical INKWAVE fixes",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 31,
+          "name": "Verify immutable audio cancellation accounting",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 32,
+          "name": "Verify cancelled native texture ownership",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 33,
+          "name": "Verify cancelled native world preparation and async stage fencing",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 34,
+          "name": "Verify native BVH query lifetime and collision parity",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 35,
+          "name": "Verify source OBJ pattern cache semantics",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 36,
+          "name": "Verify deterministic network replication",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 37,
+          "name": "Verify remote combat provenance and equipped hit ceilings",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 38,
+          "name": "Compare authoritative and reconstructed attacks",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 39,
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 40,
+          "name": "Verify local quality regressions",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 41,
+          "name": "Verify migrated direct game source ownership",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 42,
+          "name": "Verify platform lifecycle smoke regressions",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 43,
+          "name": "Verify movement physics smoke regressions",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 44,
+          "name": "Verify practice range measurement, rules and battle isolation",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 45,
+          "name": "Verify loading/cache regressions",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 46,
+          "name": "Prepare persistent runtime verifier fixtures",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 47,
+          "name": "Verify motion verifier regressions",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 48,
+          "name": "Verify aggregate QA acceptance guards",
+          "status": "completed",
+          "conclusion": "failure"
+        },
+        {
+          "number": 49,
+          "name": "Verify pinned primary numerical sources",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 50,
+          "name": "Verify completed weapon source mirror",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 51,
+          "name": "Compare every catalog record with its pinned numerical source",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 52,
+          "name": "Verify pinned Sub/Special numerical sources",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 53,
+          "name": "Check JavaScript syntax",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 54,
+          "name": "Check local module and stylesheet references",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 55,
+          "name": "Verify projectile UI admission and boolean gate contracts",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 56,
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 57,
+          "name": "Verify patched site at the checkout commit",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 58,
+          "name": "Verify all Turf finish cases on emitted site",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 59,
+          "name": "Retain bounded Turf finish evidence",
+          "status": "completed",
+          "conclusion": "failure"
+        },
+        {
+          "number": 60,
+          "name": "Verify emitted Charger grip reach and protected trajectory",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 61,
+          "name": "Verify emitted opposing-spawn body exclusion and allied exits",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 62,
+          "name": "Verify emitted Boss positive-proof admission and PvP zero knockback",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 63,
+          "name": "Verify exact emitted owner-bound launch packets and ghosts",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 64,
+          "name": "Verify emitted Bot navigation respawn and retry state",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 65,
+          "name": "Verify emitted sourced weapon holds and gameplay muzzle ownership",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 66,
+          "name": "Verify emitted hit-pose finite feet and gameplay muzzle parity",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 67,
+          "name": "Verify emitted streamed music teardown and suspended recovery",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 68,
+          "name": "Verify existing Ballpoint glass in the same emitted build",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 69,
+          "name": "Verify real emitted material handoff ownership and cancellation",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 70,
+          "name": "Verify emitted motion caches against frozen baselines",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 71,
+          "name": "Verify actual built codec and authenticated JSON transport",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 72,
+          "name": "Verify emitted Tenacity lock and passive ownership",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 73,
+          "name": "Verify emitted health HUD stability and visibility composition",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 74,
+          "name": "Verify emitted native BVH query lifetime and collision parity",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 75,
+          "name": "Verify emitted tap gesture continuity and practice range feedback",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 76,
+          "name": "Verify emitted ranked input and network lifetime",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 77,
+          "name": "Verify emitted paint ownership and frozen-host P0 regressions",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 78,
+          "name": "Verify emitted session admission and finite view settings",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 79,
+          "name": "Verify emitted active aim-profile sensor transitions",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 80,
+          "name": "Verify emitted special audio match disposal",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 81,
+          "name": "Verify emitted queue hardening and native catalogue wire compatibility",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 82,
+          "name": "Verify emitted modal controller and Pointer Lock lifetimes",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 83,
+          "name": "Verify emitted explicit Turf Map and gyro transport",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 84,
+          "name": "Verify emitted empty Bubbler beam lifecycle",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 85,
+          "name": "Verify exact owned rectangle scans against production build",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 86,
+          "name": "Verify built piece-local paint ownership against the immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 87,
+          "name": "Verify local paint order deduplication lifetime against built site",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 88,
+          "name": "Verify emitted source-backed inertia, launch, charge and hurtbox behavior",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 89,
+          "name": "Verify built weapons fidelity measurements and packet parity",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 90,
+          "name": "Verify emitted sub and special fidelity boundaries",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 91,
+          "name": "Retain exact emitted launch packet evidence",
+          "status": "completed",
+          "conclusion": "failure"
+        },
+        {
+          "number": 180,
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 181,
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "number": 182,
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "number": 183,
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ],
+      "logChars": 1837334,
+      "knownFailure": {
+        "step": 48,
+        "test": "scripts/tests/inkwave-31pr-paint-source-pair.test.mjs:18",
+        "message": "current source must match the additional fixed epoch",
+        "classification": "Fixed source-epoch assertion; distinct from active-job external shutdown. Not repaired by the three-file idle-watchdog successor."
+      }
+    },
+    "run": {
+      "id": 40002056206,
+      "head": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+      "status": "in_progress",
+      "conclusion": null,
+      "attempt": 1
+    },
+    "pr": {
+      "head": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+      "draft": true
+    },
+    "failedGenericJobLookup": {
+      "error": "INVALID_ARGUMENT: generic fetch does not support this job URL; no job state was obtained",
+      "resolution": "Authorized native workflow-run job listing supplies the core status."
+    }
+  },
+  "coreAggregate": {
+    "tests": 128,
+    "pass": 127,
+    "fail": 1,
+    "skipped": 0,
+    "firstFailure": "scripts/tests/inkwave-31pr-paint-source-pair.test.mjs:18",
+    "localTargetedReproduction": {
+      "tests": 1,
+      "pass": 0,
+      "fail": 1,
+      "expectedOutcome": "inherited failure preserved, not an idle-watchdog regression"
+    },
+    "mismatchedFrozenEpochLeaves": [
+      {
+        "path": "scripts/inkwave-source-composition.mjs",
+        "expectedGitBlob": "a61100acdd90db510fafb99d6636c8fffff1295c",
+        "currentGitBlob": "e870e95e1d3ab82ab5412888fd3ca0ba0d48fcd5",
+        "presentInCurrent": true,
+        "presentInFixedEpoch": false,
+        "isSpawnExclusionAdapterAdmissionLeaf": true
+      },
+      {
+        "path": "scripts/lib/inkwave-build-only-modules.mjs",
+        "expectedGitBlob": "5408d3598bd60d661f003f5ea0e7c02ef55e4d62",
+        "currentGitBlob": "64012e646a889ef090b8b0e21cd82d30e0670130",
+        "presentInCurrent": false,
+        "presentInFixedEpoch": false,
+        "isSpawnExclusionAdapterAdmissionLeaf": true
+      }
+    ],
+    "subsequentArtifactErrors": [
+      ".ci-scratch/turf-finish/",
+      "_site-launch-packets.json"
+    ],
+    "producers": "emitted producer steps skipped after aggregate guard failure; strict missing-artifact guards remain intact"
+  },
+  "limits": [
+    "Host timer/page/cleanup doubles and schema/guard controls, not GPU or full idle acceptance.",
+    "Original active-job shutdown is external; runtime assertion/root cause is not established.",
+    "Existing core source-epoch failure is reproduced but is outside the approved three-file change and remains unfixed.",
+    "PR1860 remains at 05eb; original CI is neither canceled nor rerun; parent review is required before PR advancement."
+  ]
+}

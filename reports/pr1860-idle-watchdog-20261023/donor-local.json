@@ -1,0 +1,26 @@
+{
+  "base": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+  "donor": "2d164d063050c15266febcb6af88109938f26701",
+  "files": [
+    {
+      "path": "scripts/check-inkwave-idle-resources.mjs",
+      "donorBlob": "bc5ad497b0b2d3e5f21e792d9c0ced0608b822d9",
+      "candidateBlob": "bc5ad497b0b2d3e5f21e792d9c0ced0608b822d9",
+      "match": true
+    },
+    {
+      "path": "scripts/tests/inkwave-idle-evaluate-deadline.test.mjs",
+      "donorBlob": "0dcb6fe498086c81a2c5218347ca7cd8f451274f",
+      "candidateBlob": "0dcb6fe498086c81a2c5218347ca7cd8f451274f",
+      "match": true
+    },
+    {
+      "path": "scripts/tests/inkwave-idle-resources-gates.test.mjs",
+      "donorBlob": "d384824f3ac170167db9ff5e3dd0a62ee77e7518",
+      "candidateBlob": "d384824f3ac170167db9ff5e3dd0a62ee77e7518",
+      "match": true
+    }
+  ],
+  "validationBlockUnchanged": true,
+  "browserFlagsUnchanged": true
+}

@@ -1,0 +1,64 @@
+{
+  "base": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+  "head": "07520a193bc792d6fd71ae796e2c2e9170150563",
+  "changedPaths": [
+    "scripts/check-inkwave-idle-resources.mjs",
+    "scripts/tests/inkwave-idle-evaluate-deadline.test.mjs",
+    "scripts/tests/inkwave-idle-resources-gates.test.mjs"
+  ],
+  "allOtherTrackedBlobsUnchanged": true,
+  "directChild": true,
+  "sourceBase": {
+    "sourceSha": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+    "checkedInputs": 1423
+  },
+  "sourceCandidate": {
+    "sourceSha": "07520a193bc792d6fd71ae796e2c2e9170150563",
+    "checkedInputs": 1423
+  },
+  "buildIdentity": {
+    "inputHash": "f65b5c1b8569c5b6364a31c32b45e3107d23247a2c030fb764c565c064e0d517",
+    "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+    "revision": "150caf88b35d2d6f915309f35373269cf7487ecc74e672ecd40eff0803df4996"
+  },
+  "preserved": [
+    {
+      "path": ".github/workflows/validate-inkwave-update.yml",
+      "base": "d6f93e489a19c68c858996a226e4f3347feee573",
+      "candidate": "d6f93e489a19c68c858996a226e4f3347feee573"
+    },
+    {
+      "path": "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs",
+      "base": "a9b71df1932e64fb34116a13ec403117f4edab4e",
+      "candidate": "a9b71df1932e64fb34116a13ec403117f4edab4e"
+    },
+    {
+      "path": "scripts/build-inkwave.mjs",
+      "base": "185da45a0acb17a906709b5a124a380111725c33",
+      "candidate": "185da45a0acb17a906709b5a124a380111725c33"
+    },
+    {
+      "path": "scripts/inkwave-source-composition.mjs",
+      "base": "e870e95e1d3ab82ab5412888fd3ca0ba0d48fcd5",
+      "candidate": "e870e95e1d3ab82ab5412888fd3ca0ba0d48fcd5"
+    },
+    {
+      "path": "patches/splatoon3/runtime/spawn-exclusion.mjs",
+      "base": "4b68c6d7a3f4223521ca316792e1e76e6f7b71aa",
+      "candidate": "4b68c6d7a3f4223521ca316792e1e76e6f7b71aa"
+    },
+    {
+      "path": "inkwave-public",
+      "base": "7f4f0b529ced80d57793071189026d98e02f90d6",
+      "candidate": "7f4f0b529ced80d57793071189026d98e02f90d6"
+    },
+    {
+      "path": "patches",
+      "base": "925619f2bbc8534faa0cc1a5ab973c7db598b55a",
+      "candidate": "925619f2bbc8534faa0cc1a5ab973c7db598b55a"
+    }
+  ],
+  "limits": [
+    "Existing immutable emitted build is verified against both refs; no new build or browser/GPU acceptance run is claimed."
+  ]
+}

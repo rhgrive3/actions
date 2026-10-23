@@ -1,0 +1,25 @@
+{
+  "scope": "Inherited fixed source-epoch assertion only; not a browser/runtime diagnosis or a repair",
+  "head": "07520a193bc792d6fd71ae796e2c2e9170150563",
+  "sourceBase": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+  "sourceHead": "c9218d19b98a3bc63c9266738e1d67a64d9d1ff0",
+  "mismatches": [
+    {
+      "path": "scripts/inkwave-source-composition.mjs",
+      "expectedGitBlob": "a61100acdd90db510fafb99d6636c8fffff1295c",
+      "currentGitBlob": "e870e95e1d3ab82ab5412888fd3ca0ba0d48fcd5",
+      "presentInCurrent": true,
+      "presentInFixedEpoch": false,
+      "isSpawnExclusionAdapterAdmissionLeaf": true
+    },
+    {
+      "path": "scripts/lib/inkwave-build-only-modules.mjs",
+      "expectedGitBlob": "5408d3598bd60d661f003f5ea0e7c02ef55e4d62",
+      "currentGitBlob": "64012e646a889ef090b8b0e21cd82d30e0670130",
+      "presentInCurrent": false,
+      "presentInFixedEpoch": false,
+      "isSpawnExclusionAdapterAdmissionLeaf": true
+    }
+  ],
+  "baseFilesUnchanged": true
+}

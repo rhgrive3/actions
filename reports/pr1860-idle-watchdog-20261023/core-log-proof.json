@@ -1,0 +1,40 @@
+{
+  "job": 120632446662,
+  "head": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+  "utf8Bytes": 1837677,
+  "sha256": "f47eed45215a3e400f99f116c449b9f4f8a1320309fff22727dae0deecb9ac10",
+  "failureExcerpt": [
+    "2026-10-23T21:05:16.9058972Z not ok 7 - all thirteen exact source leaves admit without replay or a physics equality claim",
+    "2026-10-23T21:05:16.9060423Z   ---",
+    "2026-10-23T21:05:16.9061115Z   duration_ms: 12.572927",
+    "2026-10-23T21:05:16.9061590Z   type: 'test'",
+    "2026-10-23T21:05:16.9062609Z   location: '/home/runner/work/actions/actions/scripts/tests/inkwave-31pr-paint-source-pair.test.mjs:18:1'",
+    "2026-10-23T21:05:16.9063522Z   failureType: 'testCodeFailure'",
+    "2026-10-23T21:05:16.9063979Z   error: |-",
+    "2026-10-23T21:05:16.9064471Z     current source must match the additional fixed epoch",
+    "2026-10-23T21:05:16.9065042Z     + actual - expected",
+    "2026-10-23T21:05:16.9065437Z     ... Skipped lines",
+    "2026-10-23T21:05:16.9065818Z     ",
+    "2026-10-23T21:05:16.9066615Z       \"import { adaptAddedUiMotion } from '../patches/local-quality/added-ui-motion-adapter.mjs';\\n\" +",
+    "2026-10-23T21:05:16.9068335Z         \"import { adaptCharacterShadowBatch } from '../patches/local-quality/character-shadow-batch-adapter.mjs';\\n\" +",
+    "2026-10-23T21:05:16.9069672Z         \"import { adaptQueueNetworkUi } from '../patches/reliability/queue-network-ui-adapter.mjs';\\n\" +",
+    "2026-10-23T21:05:16.9071078Z         \"import { adaptInkRipplePresentation } from '../patches/local-quality/ink-ripple-presentation-adapter.mjs';\\n\" +",
+    "2026-10-23T21:05:16.9072511Z         \"import { adaptShowcaseIdlePools } from '../patches/local-quality/showcase-idle-pools-adapter.mjs';\\n\" +",
+    "2026-10-23T21:05:16.9073352Z     ...",
+    "2026-10-23T21:05:16.9074093Z         \"import { adaptLoadingScreen } from '../patches/local-quality/loading-screen-adapter.mjs';\\n\" +",
+    "2026-10-23T21:05:16.9075317Z     +   \"import { adaptSpawnExclusion } from '../patches/splatoon3/spawn-exclusion-adapter.mjs';\\n\" +",
+    "2026-10-23T21:05:16.9076118Z         '\\n' +",
+    "2026-10-23T21:05:16.9076768Z         '// #1165: the Roller ink band must claim its seeded GPU core in the CPU turf\\n' +",
+    "2026-10-23T21:05:16.9078006Z         '// grid. Apply at build time so the upstream game snapshot remains immutable.\\n' +"
+  ],
+  "lastStats": [
+    "2026-10-23T21:05:42.8279308Z # tests 128",
+    "2026-10-23T21:05:42.8280628Z # pass 127",
+    "2026-10-23T21:05:42.8281228Z # fail 1",
+    "2026-10-23T21:05:42.8282288Z # skipped 0",
+    "2026-10-23T21:05:42.8283411Z # duration_ms 44220.430951",
+    "2026-10-23T21:05:42.8365922Z ##[error]Process completed with exit code 1.",
+    "2026-10-23T21:05:43.0140181Z ##[error]No files were found with the provided path: .ci-scratch/turf-finish/. No artifacts will be uploaded.",
+    "2026-10-23T21:05:43.2197068Z ##[error]No files were found with the provided path: _site-launch-packets.json. No artifacts will be uploaded."
+  ]
+}
