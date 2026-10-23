@@ -1,0 +1,1896 @@
+{
+  "schema": 1,
+  "status": "minified-build-verified; controlled-browser-completed; motion/clustering acceptance remains partial",
+  "base": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "candidate": "66a271f8fe5d91fc108f1f2a8a3d13860bff410e",
+  "runtimeModifiedDuringVerification": false,
+  "parentPr1854Modified": false,
+  "builds": [
+    {
+      "lane": "base",
+      "sourceSha": "726e338ac256ba9609086ce65e25a68ddd99df85",
+      "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+      "inputHash": "350b861c6d2ca16e5430ffc5b4f7e39cfbefc9df67290de1746b077ae256eb81",
+      "revision": "d0aad52ff86d0915c282be5ff1cc481fa63f7511ed765743c9d9e62f73e59f9d",
+      "optimization": "esbuild-minify",
+      "esbuild": "0.28.2",
+      "specialVfxSource": "fd906e61947494f8b5395f548a0b1d174afd6580ba3664da454445ee0a31f55d",
+      "specialVfxArtifact": "b4a22bbf69687f76f541df5e0b145df33b05aced5a3b06ebd1b578d5b0e5ee49",
+      "inputs": 1420,
+      "artifacts": 2110,
+      "verified": true
+    },
+    {
+      "lane": "candidate",
+      "sourceSha": "66a271f8fe5d91fc108f1f2a8a3d13860bff410e",
+      "contentHash": "817bfb446da05fcc20e5176a85f31101cc1a2fd7d0da90b99838e07eb5c5d299",
+      "inputHash": "ad776f93c9827bf02016873de3b28ad23a445b7f0b80a6074f0253ced78ba2c9",
+      "revision": "a7966f94b5b09751136a01baa114d5e2de24bbf8dc47e0f2d3c266fd05351b85",
+      "optimization": "esbuild-minify",
+      "esbuild": "0.28.2",
+      "specialVfxSource": "65c351a9a202f31adddf17a9fb1a31cfa4d409e3cff2961387d645c7c7989a03",
+      "specialVfxArtifact": "66c2c7fdf468da2411087bc9ef2c3ed5bafd2486edf0980858f458acddfbe0ee",
+      "inputs": 1420,
+      "artifacts": 2110,
+      "verified": true
+    }
+  ],
+  "onlyChangedBuildInput": "patch/runtime/special-vfx.mjs",
+  "minifiedRuntimeBytes": [
+    65142,
+    65374
+  ],
+  "candidateEmittedTests": {
+    "passed": 17,
+    "failed": 0,
+    "warning": "Optional source-motion dynamic-import warning in VM fixture; actual browser sourceMotion status ready."
+  },
+  "startupBudget": "both passed; core initial JS unchanged 2148829 bytes; precache and revision payload +232 bytes",
+  "browser": "154.0.8037.57",
+  "launchArgs": [
+    "--no-sandbox",
+    "--disable-dev-shm-usage",
+    "--use-angle=swiftshader",
+    "--enable-unsafe-swiftshader"
+  ],
+  "launchProvenance": "Exact existing scripts/check-inkwave-browser.mjs Chromium args; no added GPU flags",
+  "fixture": {
+    "viewport": [
+      960,
+      540
+    ],
+    "quality": "low",
+    "canonicalKit": "s3-blaster-short",
+    "special": "zipcaster",
+    "normalCamera": "native follow, local actor, yaw=0 pitch=0",
+    "initialActorPosition": [
+      6,
+      0,
+      25
+    ],
+    "nativeSurface": "existing practice-range wall z=50, nominal 25 world units; actual PlayerController reticle chooses native contact",
+    "activationWarmupTicks": 91,
+    "nativeClockStep": 0.016666666666666666,
+    "manualClockOwner": "Existing PlatformFrameDriver.stop(); unchanged native Game._frame and FixedClock",
+    "renderWindowsSimulatedSeconds": [
+      [
+        0.2,
+        0.3666666667
+      ],
+      [
+        0.65,
+        0.95
+      ],
+      [
+        3.65,
+        3.8
+      ]
+    ],
+    "otherFrames": "FX/native updates still delivered; GPU draw skipped except matched still captures",
+    "input": "Existing debug.key controls plus native Actor.spawnAt reset at 2/3/4s; not a physical-controller test",
+    "rateOrder": [
+      30,
+      60,
+      120
+    ],
+    "rateOrderLimitation": "One page per source; world paint and private presentation RNG carry across rates. Fresh-page 60Hz control separately removes that order confound."
+  },
+  "allSixNativeTracesExactlyEqual": true,
+  "cases": [
+    {
+      "lane": "base",
+      "sourceSha": "726e338ac256ba9609086ce65e25a68ddd99df85",
+      "nominalFxHz": 30,
+      "simulatedSeconds": 4.4,
+      "nativeTicks": 264,
+      "nativeStep": 0.016666666666666666,
+      "nativeTraceSha256": "fb4197600d91d7cb4c82e73b57613d8b685a4070558667011842da6729d2d8db",
+      "counts": {
+        "hook": 5,
+        "zip": 134,
+        "coat": 20
+      },
+      "segments": [
+        {
+          "simulatedInterval": [
+            0,
+            2
+          ],
+          "counts": {
+            "hook": 2,
+            "zip": 78,
+            "coat": 12
+          }
+        },
+        {
+          "simulatedInterval": [
+            2,
+            3
+          ],
+          "counts": {
+            "hook": 0,
+            "zip": 28,
+            "coat": 4
+          }
+        },
+        {
+          "simulatedInterval": [
+            3,
+            4
+          ],
+          "counts": {
+            "hook": 3,
+            "zip": 28,
+            "coat": 4
+          }
+        }
+      ],
+      "packetSummary": {
+        "hook": {
+          "packets": 5,
+          "maxBirthsPerPacket": 1,
+          "sameOriginPairs": 0
+        },
+        "zip": {
+          "packets": 67,
+          "maxBirthsPerPacket": 2,
+          "sameOriginPairs": 0
+        }
+      },
+      "renderedFrames": 22,
+      "effectCallbacks": 132,
+      "elapsedWallMs": 25993.876411999998,
+      "effectCallbacksPerWallSecond": 5.078119088812109,
+      "actualRenderCallsPerWallSecond": 0.8463531814686848,
+      "renderCallCpuMedianMs": 14.199999999953434,
+      "peakPuffs": 86,
+      "puffCap": 208,
+      "glErrors": [],
+      "directorErrors": 0,
+      "contextLost": 0,
+      "finalRibbons": [
+        {
+          "ended": false,
+          "points": 0
+        },
+        {
+          "ended": false,
+          "points": 0
+        }
+      ],
+      "snapshots": {
+        "hook": {
+          "frame": 7,
+          "time": 0.26666666666666666,
+          "phase": "hookFlight",
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 4,
+            "ribbons": 0,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": null,
+          "oldTrails": [],
+          "liveRibbonCount": 0,
+          "contextLost": false,
+          "glError": 0
+        },
+        "zip": {
+          "frame": 23,
+          "time": 0.8000000000000008,
+          "phase": "zip",
+          "pos": [
+            5.903094337406704,
+            1.056746140037222,
+            33.65229130297266
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.619885413315253,
+              3.050567648987626,
+              29.112903488119677
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 23,
+            "ribbons": 1,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": false,
+          "oldTrails": [],
+          "liveRibbonCount": 1,
+          "contextLost": false,
+          "glError": 0
+        },
+        "phase-end": {
+          "frame": 56,
+          "time": 1.8999999999999981,
+          "phase": "ready",
+          "pos": [
+            5.720896,
+            3.006016666666667,
+            49.569900000000004
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.4333131742869245,
+              5.051397446608031,
+              45.211809970293324
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 24,
+            "ribbons": 0,
+            "shapes": 4,
+            "draws": 12
+          },
+          "lineAlpha": 0,
+          "trailEnded": null,
+          "oldTrails": [],
+          "liveRibbonCount": 0,
+          "contextLost": false,
+          "glError": 0
+        },
+        "cancel": {
+          "frame": 91,
+          "time": 3.0666666666666607,
+          "phase": null,
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 33,
+            "ribbons": 1,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": null,
+          "trailEnded": null,
+          "oldTrails": [
+            {
+              "ended": false,
+              "points": 5
+            }
+          ],
+          "liveRibbonCount": 1,
+          "contextLost": false,
+          "glError": 0
+        },
+        "reuse": {
+          "frame": 110,
+          "time": 3.6999999999999917,
+          "phase": "zip",
+          "pos": [
+            5.9664595353118255,
+            0.36575526801807884,
+            27.994684347158152
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.686461506853487,
+              2.3142281288685767,
+              23.44339565764533
+            ]
+          },
+          "particles": {
+            "sparks": 1,
+            "puffs": 85,
+            "ribbons": 2,
+            "shapes": 4,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": false,
+          "oldTrails": [
+            {
+              "ended": false,
+              "points": 0
+            }
+          ],
+          "liveRibbonCount": 2,
+          "contextLost": false,
+          "glError": 0
+        },
+        "clear": {
+          "frame": 130,
+          "time": 4.3666666666666565,
+          "phase": null,
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 3,
+            "ribbons": 2,
+            "shapes": 1,
+            "draws": 12
+          },
+          "lineAlpha": null,
+          "trailEnded": null,
+          "oldTrails": [
+            {
+              "ended": false,
+              "points": 0
+            },
+            {
+              "ended": false,
+              "points": 0
+            }
+          ],
+          "liveRibbonCount": 2,
+          "contextLost": false,
+          "glError": 0
+        }
+      }
+    },
+    {
+      "lane": "base",
+      "sourceSha": "726e338ac256ba9609086ce65e25a68ddd99df85",
+      "nominalFxHz": 60,
+      "simulatedSeconds": 4.4,
+      "nativeTicks": 264,
+      "nativeStep": 0.016666666666666666,
+      "nativeTraceSha256": "fb4197600d91d7cb4c82e73b57613d8b685a4070558667011842da6729d2d8db",
+      "counts": {
+        "hook": 19,
+        "zip": 268,
+        "coat": 20
+      },
+      "segments": [
+        {
+          "simulatedInterval": [
+            0,
+            2
+          ],
+          "counts": {
+            "hook": 5,
+            "zip": 156,
+            "coat": 12
+          }
+        },
+        {
+          "simulatedInterval": [
+            2,
+            3
+          ],
+          "counts": {
+            "hook": 8,
+            "zip": 56,
+            "coat": 4
+          }
+        },
+        {
+          "simulatedInterval": [
+            3,
+            4
+          ],
+          "counts": {
+            "hook": 6,
+            "zip": 56,
+            "coat": 4
+          }
+        }
+      ],
+      "packetSummary": {
+        "hook": {
+          "packets": 19,
+          "maxBirthsPerPacket": 1,
+          "sameOriginPairs": 0
+        },
+        "zip": {
+          "packets": 134,
+          "maxBirthsPerPacket": 2,
+          "sameOriginPairs": 0
+        }
+      },
+      "renderedFrames": 41,
+      "effectCallbacks": 264,
+      "elapsedWallMs": 43043.28021699999,
+      "effectCallbacksPerWallSecond": 6.133361553047551,
+      "actualRenderCallsPerWallSecond": 0.9525296351323849,
+      "renderCallCpuMedianMs": 9,
+      "peakPuffs": 96,
+      "puffCap": 208,
+      "glErrors": [],
+      "directorErrors": 0,
+      "contextLost": 0,
+      "finalRibbons": [
+        {
+          "ended": false,
+          "points": 0
+        },
+        {
+          "ended": false,
+          "points": 0
+        }
+      ],
+      "snapshots": {
+        "hook": {
+          "frame": 15,
+          "time": 0.26666666666666666,
+          "phase": "hookFlight",
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 5,
+            "ribbons": 0,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": null,
+          "oldTrails": [],
+          "liveRibbonCount": 0,
+          "contextLost": false,
+          "glError": 0
+        },
+        "zip": {
+          "frame": 47,
+          "time": 0.8000000000000008,
+          "phase": "zip",
+          "pos": [
+            5.903094337406704,
+            1.056746140037222,
+            33.65229130297266
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.621715751844861,
+              3.0313161525951853,
+              28.95730744158527
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 43,
+            "ribbons": 1,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": false,
+          "oldTrails": [],
+          "liveRibbonCount": 1,
+          "contextLost": false,
+          "glError": 0
+        },
+        "phase-end": {
+          "frame": 113,
+          "time": 1.8999999999999981,
+          "phase": "ready",
+          "pos": [
+            5.720896,
+            3.006016666666667,
+            49.569900000000004
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.433242156727461,
+              5.056728800996615,
+              45.26459133543141
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 28,
+            "ribbons": 0,
+            "shapes": 4,
+            "draws": 12
+          },
+          "lineAlpha": 0,
+          "trailEnded": null,
+          "oldTrails": [],
+          "liveRibbonCount": 0,
+          "contextLost": false,
+          "glError": 0
+        },
+        "cancel": {
+          "frame": 183,
+          "time": 3.0666666666666607,
+          "phase": null,
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 58,
+            "ribbons": 1,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": null,
+          "trailEnded": null,
+          "oldTrails": [
+            {
+              "ended": false,
+              "points": 11
+            }
+          ],
+          "liveRibbonCount": 1,
+          "contextLost": false,
+          "glError": 0
+        },
+        "reuse": {
+          "frame": 221,
+          "time": 3.6999999999999917,
+          "phase": "zip",
+          "pos": [
+            5.9664595353118255,
+            0.36575526801807884,
+            27.994684347158152
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.688209244686729,
+              2.2938329807533444,
+              23.292844313359677
+            ]
+          },
+          "particles": {
+            "sparks": 2,
+            "puffs": 94,
+            "ribbons": 2,
+            "shapes": 4,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": false,
+          "oldTrails": [
+            {
+              "ended": false,
+              "points": 0
+            }
+          ],
+          "liveRibbonCount": 2,
+          "contextLost": false,
+          "glError": 0
+        },
+        "clear": {
+          "frame": 261,
+          "time": 4.3666666666666565,
+          "phase": null,
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 1,
+            "ribbons": 2,
+            "shapes": 1,
+            "draws": 12
+          },
+          "lineAlpha": null,
+          "trailEnded": null,
+          "oldTrails": [
+            {
+              "ended": false,
+              "points": 0
+            },
+            {
+              "ended": false,
+              "points": 0
+            }
+          ],
+          "liveRibbonCount": 2,
+          "contextLost": false,
+          "glError": 0
+        }
+      }
+    },
+    {
+      "lane": "base",
+      "sourceSha": "726e338ac256ba9609086ce65e25a68ddd99df85",
+      "nominalFxHz": 120,
+      "simulatedSeconds": 4.4,
+      "nativeTicks": 264,
+      "nativeStep": 0.016666666666666666,
+      "nativeTraceSha256": "fb4197600d91d7cb4c82e73b57613d8b685a4070558667011842da6729d2d8db",
+      "counts": {
+        "hook": 28,
+        "zip": 532,
+        "coat": 20
+      },
+      "segments": [
+        {
+          "simulatedInterval": [
+            0,
+            2
+          ],
+          "counts": {
+            "hook": 8,
+            "zip": 312,
+            "coat": 12
+          }
+        },
+        {
+          "simulatedInterval": [
+            2,
+            3
+          ],
+          "counts": {
+            "hook": 10,
+            "zip": 110,
+            "coat": 4
+          }
+        },
+        {
+          "simulatedInterval": [
+            3,
+            4
+          ],
+          "counts": {
+            "hook": 10,
+            "zip": 110,
+            "coat": 4
+          }
+        }
+      ],
+      "packetSummary": {
+        "hook": {
+          "packets": 28,
+          "maxBirthsPerPacket": 1,
+          "sameOriginPairs": 0
+        },
+        "zip": {
+          "packets": 266,
+          "maxBirthsPerPacket": 2,
+          "sameOriginPairs": 0
+        }
+      },
+      "renderedFrames": 78,
+      "effectCallbacks": 528,
+      "elapsedWallMs": 76302.174545,
+      "effectCallbacksPerWallSecond": 6.919855209219581,
+      "actualRenderCallsPerWallSecond": 1.02225133772562,
+      "renderCallCpuMedianMs": 7.149999999906868,
+      "peakPuffs": 130,
+      "puffCap": 208,
+      "glErrors": [],
+      "directorErrors": 0,
+      "contextLost": 0,
+      "finalRibbons": [
+        {
+          "ended": false,
+          "points": 0
+        },
+        {
+          "ended": false,
+          "points": 0
+        }
+      ],
+      "snapshots": {
+        "hook": {
+          "frame": 31,
+          "time": 0.26666666666666666,
+          "phase": "hookFlight",
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 6,
+            "ribbons": 0,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": null,
+          "oldTrails": [],
+          "liveRibbonCount": 0,
+          "contextLost": false,
+          "glError": 0
+        },
+        "zip": {
+          "frame": 95,
+          "time": 0.8000000000000008,
+          "phase": "zip",
+          "pos": [
+            5.903094337406704,
+            1.056746140037222,
+            33.65229130297266
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.623607582801321,
+              3.011978284609822,
+              28.800353042393866
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 85,
+            "ribbons": 1,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": false,
+          "oldTrails": [],
+          "liveRibbonCount": 1,
+          "contextLost": false,
+          "glError": 0
+        },
+        "phase-end": {
+          "frame": 227,
+          "time": 1.8999999999999981,
+          "phase": "ready",
+          "pos": [
+            5.720896,
+            3.006016666666667,
+            49.569900000000004
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.433133467557628,
+              5.062002773000617,
+              45.294826443452095
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 41,
+            "ribbons": 0,
+            "shapes": 4,
+            "draws": 12
+          },
+          "lineAlpha": 0,
+          "trailEnded": null,
+          "oldTrails": [],
+          "liveRibbonCount": 0,
+          "contextLost": false,
+          "glError": 0
+        },
+        "cancel": {
+          "frame": 367,
+          "time": 3.0666666666666607,
+          "phase": null,
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 83,
+            "ribbons": 1,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": null,
+          "trailEnded": null,
+          "oldTrails": [
+            {
+              "ended": false,
+              "points": 12
+            }
+          ],
+          "liveRibbonCount": 1,
+          "contextLost": false,
+          "glError": 0
+        },
+        "reuse": {
+          "frame": 443,
+          "time": 3.6999999999999917,
+          "phase": "zip",
+          "pos": [
+            5.9664595353118255,
+            0.36575526801807884,
+            27.994684347158152
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.690068601255733,
+              2.2721062056923986,
+              23.134531429038255
+            ]
+          },
+          "particles": {
+            "sparks": 1,
+            "puffs": 116,
+            "ribbons": 2,
+            "shapes": 4,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": false,
+          "oldTrails": [
+            {
+              "ended": false,
+              "points": 0
+            }
+          ],
+          "liveRibbonCount": 2,
+          "contextLost": false,
+          "glError": 0
+        },
+        "clear": {
+          "frame": 523,
+          "time": 4.3666666666666565,
+          "phase": null,
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 4,
+            "ribbons": 2,
+            "shapes": 1,
+            "draws": 12
+          },
+          "lineAlpha": null,
+          "trailEnded": null,
+          "oldTrails": [
+            {
+              "ended": false,
+              "points": 0
+            },
+            {
+              "ended": false,
+              "points": 0
+            }
+          ],
+          "liveRibbonCount": 2,
+          "contextLost": false,
+          "glError": 0
+        }
+      }
+    },
+    {
+      "lane": "candidate",
+      "sourceSha": "66a271f8fe5d91fc108f1f2a8a3d13860bff410e",
+      "nominalFxHz": 30,
+      "simulatedSeconds": 4.4,
+      "nativeTicks": 264,
+      "nativeStep": 0.016666666666666666,
+      "nativeTraceSha256": "fb4197600d91d7cb4c82e73b57613d8b685a4070558667011842da6729d2d8db",
+      "counts": {
+        "hook": 16,
+        "zip": 268,
+        "coat": 20
+      },
+      "segments": [
+        {
+          "simulatedInterval": [
+            0,
+            2
+          ],
+          "counts": {
+            "hook": 5,
+            "zip": 156,
+            "coat": 12
+          }
+        },
+        {
+          "simulatedInterval": [
+            2,
+            3
+          ],
+          "counts": {
+            "hook": 5,
+            "zip": 56,
+            "coat": 4
+          }
+        },
+        {
+          "simulatedInterval": [
+            3,
+            4
+          ],
+          "counts": {
+            "hook": 6,
+            "zip": 56,
+            "coat": 4
+          }
+        }
+      ],
+      "packetSummary": {
+        "hook": {
+          "packets": 11,
+          "maxBirthsPerPacket": 2,
+          "sameOriginPairs": 5
+        },
+        "zip": {
+          "packets": 67,
+          "maxBirthsPerPacket": 4,
+          "sameOriginPairs": 0
+        }
+      },
+      "renderedFrames": 22,
+      "effectCallbacks": 132,
+      "elapsedWallMs": 29103.637746999993,
+      "effectCallbacksPerWallSecond": 4.5355154962924376,
+      "actualRenderCallsPerWallSecond": 0.755919249382073,
+      "renderCallCpuMedianMs": 16.5999999998603,
+      "peakPuffs": 97,
+      "puffCap": 208,
+      "glErrors": [],
+      "directorErrors": 0,
+      "contextLost": 0,
+      "finalRibbons": [],
+      "snapshots": {
+        "hook": {
+          "frame": 7,
+          "time": 0.26666666666666666,
+          "phase": "hookFlight",
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 5,
+            "ribbons": 0,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": null,
+          "oldTrails": [],
+          "liveRibbonCount": 0,
+          "contextLost": false,
+          "glError": 0
+        },
+        "zip": {
+          "frame": 23,
+          "time": 0.8000000000000008,
+          "phase": "zip",
+          "pos": [
+            5.903094337406704,
+            1.056746140037222,
+            33.65229130297266
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.619885413315253,
+              3.050567648987626,
+              29.112903488119677
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 43,
+            "ribbons": 1,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": false,
+          "oldTrails": [],
+          "liveRibbonCount": 1,
+          "contextLost": false,
+          "glError": 0
+        },
+        "phase-end": {
+          "frame": 56,
+          "time": 1.8999999999999981,
+          "phase": "ready",
+          "pos": [
+            5.720896,
+            3.006016666666667,
+            49.569900000000004
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.4333131742869245,
+              5.051397446608031,
+              45.211809970293324
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 28,
+            "ribbons": 0,
+            "shapes": 4,
+            "draws": 12
+          },
+          "lineAlpha": 0,
+          "trailEnded": null,
+          "oldTrails": [],
+          "liveRibbonCount": 0,
+          "contextLost": false,
+          "glError": 0
+        },
+        "cancel": {
+          "frame": 91,
+          "time": 3.0666666666666607,
+          "phase": null,
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 54,
+            "ribbons": 1,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": null,
+          "trailEnded": null,
+          "oldTrails": [
+            {
+              "ended": true,
+              "points": 5
+            }
+          ],
+          "liveRibbonCount": 1,
+          "contextLost": false,
+          "glError": 0
+        },
+        "reuse": {
+          "frame": 110,
+          "time": 3.6999999999999917,
+          "phase": "zip",
+          "pos": [
+            5.9664595353118255,
+            0.36575526801807884,
+            27.994684347158152
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.686461506853487,
+              2.3142281288685767,
+              23.44339565764533
+            ]
+          },
+          "particles": {
+            "sparks": 2,
+            "puffs": 94,
+            "ribbons": 1,
+            "shapes": 4,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": false,
+          "oldTrails": [
+            {
+              "ended": true,
+              "points": 1
+            }
+          ],
+          "liveRibbonCount": 1,
+          "contextLost": false,
+          "glError": 0
+        },
+        "clear": {
+          "frame": 130,
+          "time": 4.3666666666666565,
+          "phase": null,
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 5,
+            "ribbons": 0,
+            "shapes": 1,
+            "draws": 12
+          },
+          "lineAlpha": null,
+          "trailEnded": null,
+          "oldTrails": [
+            {
+              "ended": true,
+              "points": 1
+            },
+            {
+              "ended": true,
+              "points": 1
+            }
+          ],
+          "liveRibbonCount": 0,
+          "contextLost": false,
+          "glError": 0
+        }
+      }
+    },
+    {
+      "lane": "candidate",
+      "sourceSha": "66a271f8fe5d91fc108f1f2a8a3d13860bff410e",
+      "nominalFxHz": 60,
+      "simulatedSeconds": 4.4,
+      "nativeTicks": 264,
+      "nativeStep": 0.016666666666666666,
+      "nativeTraceSha256": "fb4197600d91d7cb4c82e73b57613d8b685a4070558667011842da6729d2d8db",
+      "counts": {
+        "hook": 16,
+        "zip": 268,
+        "coat": 20
+      },
+      "segments": [
+        {
+          "simulatedInterval": [
+            0,
+            2
+          ],
+          "counts": {
+            "hook": 6,
+            "zip": 156,
+            "coat": 12
+          }
+        },
+        {
+          "simulatedInterval": [
+            2,
+            3
+          ],
+          "counts": {
+            "hook": 5,
+            "zip": 56,
+            "coat": 4
+          }
+        },
+        {
+          "simulatedInterval": [
+            3,
+            4
+          ],
+          "counts": {
+            "hook": 5,
+            "zip": 56,
+            "coat": 4
+          }
+        }
+      ],
+      "packetSummary": {
+        "hook": {
+          "packets": 16,
+          "maxBirthsPerPacket": 1,
+          "sameOriginPairs": 0
+        },
+        "zip": {
+          "packets": 134,
+          "maxBirthsPerPacket": 2,
+          "sameOriginPairs": 0
+        }
+      },
+      "renderedFrames": 41,
+      "effectCallbacks": 264,
+      "elapsedWallMs": 38886.040469,
+      "effectCallbacksPerWallSecond": 6.789068694470478,
+      "actualRenderCallsPerWallSecond": 1.054362941186703,
+      "renderCallCpuMedianMs": 9,
+      "peakPuffs": 98,
+      "puffCap": 208,
+      "glErrors": [],
+      "directorErrors": 0,
+      "contextLost": 0,
+      "finalRibbons": [],
+      "snapshots": {
+        "hook": {
+          "frame": 15,
+          "time": 0.26666666666666666,
+          "phase": "hookFlight",
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 7,
+            "ribbons": 0,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": null,
+          "oldTrails": [],
+          "liveRibbonCount": 0,
+          "contextLost": false,
+          "glError": 0
+        },
+        "zip": {
+          "frame": 47,
+          "time": 0.8000000000000008,
+          "phase": "zip",
+          "pos": [
+            5.903094337406704,
+            1.056746140037222,
+            33.65229130297266
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.621715751844861,
+              3.0313161525951853,
+              28.95730744158527
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 43,
+            "ribbons": 1,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": false,
+          "oldTrails": [],
+          "liveRibbonCount": 1,
+          "contextLost": false,
+          "glError": 0
+        },
+        "phase-end": {
+          "frame": 113,
+          "time": 1.8999999999999981,
+          "phase": "ready",
+          "pos": [
+            5.720896,
+            3.006016666666667,
+            49.569900000000004
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.433242156727461,
+              5.056728800996615,
+              45.26459133543141
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 28,
+            "ribbons": 0,
+            "shapes": 4,
+            "draws": 12
+          },
+          "lineAlpha": 0,
+          "trailEnded": null,
+          "oldTrails": [],
+          "liveRibbonCount": 0,
+          "contextLost": false,
+          "glError": 0
+        },
+        "cancel": {
+          "frame": 183,
+          "time": 3.0666666666666607,
+          "phase": null,
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 48,
+            "ribbons": 1,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": null,
+          "trailEnded": null,
+          "oldTrails": [
+            {
+              "ended": true,
+              "points": 11
+            }
+          ],
+          "liveRibbonCount": 1,
+          "contextLost": false,
+          "glError": 0
+        },
+        "reuse": {
+          "frame": 221,
+          "time": 3.6999999999999917,
+          "phase": "zip",
+          "pos": [
+            5.9664595353118255,
+            0.36575526801807884,
+            27.994684347158152
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.688209244686729,
+              2.2938329807533444,
+              23.292844313359677
+            ]
+          },
+          "particles": {
+            "sparks": 1,
+            "puffs": 93,
+            "ribbons": 1,
+            "shapes": 4,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": false,
+          "oldTrails": [
+            {
+              "ended": true,
+              "points": 1
+            }
+          ],
+          "liveRibbonCount": 1,
+          "contextLost": false,
+          "glError": 0
+        },
+        "clear": {
+          "frame": 261,
+          "time": 4.3666666666666565,
+          "phase": null,
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 3,
+            "ribbons": 0,
+            "shapes": 1,
+            "draws": 12
+          },
+          "lineAlpha": null,
+          "trailEnded": null,
+          "oldTrails": [
+            {
+              "ended": true,
+              "points": 1
+            },
+            {
+              "ended": true,
+              "points": 1
+            }
+          ],
+          "liveRibbonCount": 0,
+          "contextLost": false,
+          "glError": 0
+        }
+      }
+    },
+    {
+      "lane": "candidate",
+      "sourceSha": "66a271f8fe5d91fc108f1f2a8a3d13860bff410e",
+      "nominalFxHz": 120,
+      "simulatedSeconds": 4.4,
+      "nativeTicks": 264,
+      "nativeStep": 0.016666666666666666,
+      "nativeTraceSha256": "fb4197600d91d7cb4c82e73b57613d8b685a4070558667011842da6729d2d8db",
+      "counts": {
+        "hook": 13,
+        "zip": 264,
+        "coat": 20
+      },
+      "segments": [
+        {
+          "simulatedInterval": [
+            0,
+            2
+          ],
+          "counts": {
+            "hook": 4,
+            "zip": 156,
+            "coat": 12
+          }
+        },
+        {
+          "simulatedInterval": [
+            2,
+            3
+          ],
+          "counts": {
+            "hook": 4,
+            "zip": 54,
+            "coat": 4
+          }
+        },
+        {
+          "simulatedInterval": [
+            3,
+            4
+          ],
+          "counts": {
+            "hook": 5,
+            "zip": 54,
+            "coat": 4
+          }
+        }
+      ],
+      "packetSummary": {
+        "hook": {
+          "packets": 13,
+          "maxBirthsPerPacket": 1,
+          "sameOriginPairs": 0
+        },
+        "zip": {
+          "packets": 132,
+          "maxBirthsPerPacket": 2,
+          "sameOriginPairs": 0
+        }
+      },
+      "renderedFrames": 78,
+      "effectCallbacks": 528,
+      "elapsedWallMs": 74451.010796,
+      "effectCallbacksPerWallSecond": 7.091911773323669,
+      "actualRenderCallsPerWallSecond": 1.047668784695542,
+      "renderCallCpuMedianMs": 6.5,
+      "peakPuffs": 96,
+      "puffCap": 208,
+      "glErrors": [],
+      "directorErrors": 0,
+      "contextLost": 0,
+      "finalRibbons": [],
+      "snapshots": {
+        "hook": {
+          "frame": 31,
+          "time": 0.26666666666666666,
+          "phase": "hookFlight",
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 5,
+            "ribbons": 0,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": null,
+          "oldTrails": [],
+          "liveRibbonCount": 0,
+          "contextLost": false,
+          "glError": 0
+        },
+        "zip": {
+          "frame": 95,
+          "time": 0.8000000000000008,
+          "phase": "zip",
+          "pos": [
+            5.903094337406704,
+            1.056746140037222,
+            33.65229130297266
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.623607582801321,
+              3.011978284609822,
+              28.800353042393866
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 45,
+            "ribbons": 1,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": false,
+          "oldTrails": [],
+          "liveRibbonCount": 1,
+          "contextLost": false,
+          "glError": 0
+        },
+        "phase-end": {
+          "frame": 227,
+          "time": 1.8999999999999981,
+          "phase": "ready",
+          "pos": [
+            5.720896,
+            3.006016666666667,
+            49.569900000000004
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.433133467557628,
+              5.062002773000617,
+              45.294826443452095
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 31,
+            "ribbons": 0,
+            "shapes": 4,
+            "draws": 12
+          },
+          "lineAlpha": 0,
+          "trailEnded": null,
+          "oldTrails": [],
+          "liveRibbonCount": 0,
+          "contextLost": false,
+          "glError": 0
+        },
+        "cancel": {
+          "frame": 367,
+          "time": 3.0666666666666607,
+          "phase": null,
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 56,
+            "ribbons": 1,
+            "shapes": 2,
+            "draws": 12
+          },
+          "lineAlpha": null,
+          "trailEnded": null,
+          "oldTrails": [
+            {
+              "ended": true,
+              "points": 12
+            }
+          ],
+          "liveRibbonCount": 1,
+          "contextLost": false,
+          "glError": 0
+        },
+        "reuse": {
+          "frame": 443,
+          "time": 3.6999999999999917,
+          "phase": "zip",
+          "pos": [
+            5.9664595353118255,
+            0.36575526801807884,
+            27.994684347158152
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.690068601255733,
+              2.2721062056923986,
+              23.134531429038255
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 93,
+            "ribbons": 1,
+            "shapes": 4,
+            "draws": 12
+          },
+          "lineAlpha": 1,
+          "trailEnded": false,
+          "oldTrails": [
+            {
+              "ended": true,
+              "points": 1
+            }
+          ],
+          "liveRibbonCount": 1,
+          "contextLost": false,
+          "glError": 0
+        },
+        "clear": {
+          "frame": 523,
+          "time": 4.3666666666666565,
+          "phase": null,
+          "pos": [
+            6,
+            0,
+            25
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              5.72,
+              2,
+              20.5
+            ]
+          },
+          "particles": {
+            "sparks": 0,
+            "puffs": 4,
+            "ribbons": 0,
+            "shapes": 1,
+            "draws": 12
+          },
+          "lineAlpha": null,
+          "trailEnded": null,
+          "oldTrails": [
+            {
+              "ended": true,
+              "points": 1
+            },
+            {
+              "ended": true,
+              "points": 1
+            }
+          ],
+          "liveRibbonCount": 0,
+          "contextLost": false,
+          "glError": 0
+        }
+      }
+    }
+  ],
+  "fresh60Control": {
+    "durationSeconds": 2,
+    "nominalFxHz": 60,
+    "nativeTicks": 120,
+    "nativeTracesEqual": true,
+    "counts": {
+      "hook": 5,
+      "zip": 156,
+      "coat": 12
+    },
+    "peakPuffs": [
+      59,
+      59
+    ],
+    "zipAndCoatBirthRowsExactlyEqual": true,
+    "hookNonPositionFieldsExactlyEqual": true,
+    "hookPositionRowsDifferent": 5,
+    "maximumHookPositionDifferenceWorldUnits": 0.03337587995780412,
+    "allBirthRowsExactlyEqual": false,
+    "beforeBirthRowsSha256": "ef85abd7cabc49f55e538801f080d7123a0b3ef69ac6d725136d825e5f686a55",
+    "afterBirthRowsSha256": "4785ba03dfa992e18417b7478d83b429dc4f2b13f26b7fa65dc37f0030e1f3c3",
+    "note": "Independent ordinary Character hand-animation anchor inputs were not aligned in this browser fixture; origin difference is not an isolated runtime regression claim."
+  },
+  "unresolved": [
+    "30Hz candidate has co-located hook pairs and four zip births per callback around one current pose. Fluent real-time clumping acceptance is not established.",
+    "120Hz interrupted sequences emit 54 drops per short zip versus 56 at 30/60Hz; total 264 versus 268. Full uninterrupted first zip emits 156 at every rate.",
+    "True displayed FPS and physical-device pacing are unmeasured. Wall call throughput includes Playwright/IPC/stills and deliberate skipped draw intervals.",
+    "Nintendo retail video comparison not performed. Existing minimum-quality eight-actor overload was not retested or fixed."
+  ],
+  "failuresAndExcludedRuns": [
+    "First boot probe reached the real range, then its helper incorrectly called .filter on the canonical-kit object; helper corrected, no game/runtime source change.",
+    "Initial full-draw candidate 30/60Hz completed at about 1.33 script-delivered draw calls per wall second. Full-draw 120Hz was deliberately stopped to avoid unnecessary work. Raw completed data preserved.",
+    "First sampled 120Hz run advanced only 228 native ticks: the automatic platform driver timer-gap rebase reset half-tick carry between manual calls despite game freeze. It is excluded. Final sole-manual-owner runs all advance 264 ticks and have exactly identical native traces."
+  ],
+  "media": "Six unedited JPEG captures of this INKWAVE browser session; no Nintendo reference media or extracted assets",
+  "imageSha256": {
+    "before-30-hook.jpg": "582134ffcf247bd6dc782bf151f146347d42013467060d0d2b66e4676eae3672",
+    "after-30-hook.jpg": "f047722478bc14ef0a7e278205dfa5880caf255aa16842ba2eb5e7bea3cac712",
+    "before-30-zip.jpg": "87d913d010460ea38b1ea13dc81d14d70090e58a2df6944c5b34364a231bd80b",
+    "after-30-zip.jpg": "d7b2efc3d71c95511670d8a8209f58113b2da0195bf1c9bb81710ae3d589b363",
+    "before-60-control-zip.jpg": "5d72ba48919df1f05383abffa0af4581767f4407816f68d79330ee71a33689d5",
+    "after-60-control-zip.jpg": "2e47fbe2000f11e71113c388fc772aa3b4832ded69a041dee870d1c72e4f030f"
+  },
+  "harnessSha256": "06ed2134b612c31272181431d904697ef9d728438913311c3cbe714aab2bce64",
+  "rawPrivateEvidenceSha256": {
+    "final/base-browser.json": "3936718a44fa4606e0b651305694055457c3b2857c305e912cdd8f202e6947c5",
+    "final/candidate-browser.json": "dff4123c45cd8da3ceccdde7e8d449fef956b228d754e700fb72e595be507e5e",
+    "control60/base-browser.json": "9067bf82d1caa20a3bdb7055929caa31bb26ab5013077329c7d94dfce8799bce",
+    "control60/candidate-browser.json": "9d39ad390a64d15957cb80d7c998bd58c56c792ef3369c4f5a38710d40d5928f",
+    "sampled-invalid120/candidate-browser.json": "e779b68fafaf9021df759b6c1fcce3aea06a25971f4589bc3c78604e3af81f24",
+    "candidate-browser.initial-full.json": "bb765248d5e4aafd2664050c215031e90e9b21156965fd00fe388072650748c3"
+  }
+}
