@@ -1,7 +1,8 @@
 {
+  "artifact-upload-strict-final.tap": "5814a6e1fc7a79590f02da472c25adc31ad97b546ae3677df7df7343d336c828",
   "artifact-repair-guard.tap": "c53949ef734a25b8d7d3aa24adbec4d394e4a51a4e02e1e908838faaa631a1af",
   "repaired-fidelity-step.tap": "1c4a75c94a47c4823ff2ae4b08a798322055d011e81aa34fe6ab8a287c41609f",
   "artifact-repair-guards-final.tap": "d1d37bc7ee0035128b959439ea0a6133a005d28ea6584440b9c8e07968f50c9b",
-  "README.md": "b12a5dbbf1e53ff5c9a96a1d76df078195acb0282a892408f2b447fa7b15f12f",
+  "README.md": "df19f8515f8599ed7c54ff91fb7287f7d0a2fcba91eefa393f443771bfaf22c8",
   "repaired-fidelity-step.sh": "09179baf4f3840162ab74e50b2dce3156b9fb3d18d88880950146a86e177d4f7"
 }

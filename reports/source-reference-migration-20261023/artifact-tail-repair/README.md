@@ -11,3 +11,5 @@ Node22.23.4: wall/integration/added-contract/projectile-introの47/47成功。�
 修正後のworkflowからrun本文をそのまま抽出し、Bashの`-e -o pipefail`で実行した[生成物テスト](repaired-fidelity-step.tap)も201/201成功、exit0。サイトはsource005f2c52、content24be9651の通常minify生成物です。この参照/QA修正でruntimeを変更していません。生成物upload自体はremote CIでの確認が残ります。
 
 同じrunのactive browserはrunner shutdown通知後にブラウザが閉じ、responsiveはcancelled。これらを成功には数えず、修正後のremote CIで確認します。並行PR #1861にもworkflow変更があるため、この修復はtailだけに限定し、その未受入runtime/CI最適化は取り込んでいません。
+
+最終uploadは`if: always()`と`if-no-files-found: error`で実行します。途中の試案のfile存在条件は取り除き、生成器が成功扱いでも成果物が欠ければ必須jobを失敗させます。最終workflow guard47/47は`artifact-upload-strict-final.tap`。既存rawログ内のfile存在条件は途中版の記録であり、最終条件ではありません。元の7job hashは引き続き不変です。
