@@ -5883,3 +5883,5 @@ CPU回帰の成功は物理GPU/実機性能の受け入れではない。Splatoo
 ### 2026-10-23：ジェットパックの噴流接続（独立担当）
 
 固定基準 `a4e81347906c0d60ceef76a69f476261bf8d3f86` の実ゲーム画面と近接検査表示で、噴流始点が装置の開口中心から0.14〜0.59 WUずれることを確認した。`DIRECTORS.inkjet.frame()`だけで描画中のパックのworld matrixを読み、既存ノズル端へ始点を接続した。30/60/120Hzで誤差約0.005 WU、元実装を戻したnegative controlは12ケース失敗。source／emitted回帰は各55/55。native発射、イベント、位置、反動、statsは固定seedでbefore／after一致。帰還はnative superJumpのcharge／flight／着地を通常ゲーム画面と状態記録で確認し、今回変更していない。本担当は本家参照画像を直接見ておらず、連続フレーム同等性や曲線調整の完了は認定しない。根拠、検査の区別、追加参照対象は [inkjet-presentation-20261023.md](inkjet-presentation-20261023.md)。
+
+同日追補：不正なCharacter借用／detached／hiddenモデルのfixture負例を受け、Inkjetの座標取得だけに所有者・現在の装備への接続・Character階層・可視性チェックを追加した。条件外は既存actor-space fallback。local／remoteの新規10件と既存55件はsource／emitted fixture各65/65、5d4516の負例は10件失敗。通常の30/60/120Hzブラウザ検査、約0.005WUの精度、native発射／イベント記録は維持。通常発生経路の立証や本家比較の完了は主張しない。

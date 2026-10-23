@@ -979,7 +979,15 @@ const DIRECTORS = {
       const ground = groundBelow(this, a);
       // The chest/body can trail the aim while turning. Read the drawn pack's
       // nozzle mouths (inkjetPack), rather than placing detached jets from aimYaw.
-      const pack = a.character?.s3SpecialDevices?.()?.find(d => d.spec?.model === 'spInkjetPack')?.model?.root;
+      const ch = a.character;
+      const device = ch?.actor === a ? ch.s3SpecialDevices?.()?.find(d => d.spec?.model === 'spInkjetPack') : null;
+      let pack = device?.model?.root, attached = false;
+      if (pack?.parent !== device?.holder) pack = null;
+      for (let host = pack; host; host = host.parent) {
+        if (host.visible === false) { pack = null; break; }
+        if (host === ch.root) attached = true;
+      }
+      if (!attached) pack = null;
       pack?.updateWorldMatrix(true, false);
       for (let i = 0; i < 2; i++) {
         const s = i ? 1 : -1;

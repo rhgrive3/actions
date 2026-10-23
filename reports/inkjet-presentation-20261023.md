@@ -71,3 +71,13 @@ candidate contentHash：`406e1f3cc48d6a873d94d7fe66d1931f6cb95782ae8342614051ad1
 3. 装置消滅の2枚前〜帰還着地：カメラ移動を背景で補正して、charge／flightと体の姿勢を区別する。
 
 絶対の録画frame番号は未取得なので推測で埋めない。参照の版・gear・入力・native FPSも引き続き未確認。拒否された参照取得の迂回や公開はしていない。
+
+## 同日追補：ノズル座標の所有者・所属・可視性
+
+独立レビューの指摘を実 Character／FX fixture で再現した。`A.character` が生存中のBの実Inkjet Characterを参照すると、Aの噴流がBの位置（x約99.93）へ出た。holderを外すとローカル座標y約-0.1874を使い、model／holder／祖先が非表示でもモデル座標を読むことも再現した。いずれも不正な参照・階層・可視性を明示的に作る負例であり、通常のゲームプレイでの発生経路を立証したものではない。
+
+- `5d4516a69b6fff18a2798c90a2a26632c7494aa6`を親として保護し、`DIRECTORS.inkjet.frame()`のモデル取得に限定した防御条件を追加。`ch.actor===a`、現在の装備モデルがそのholderに接続、正しいCharacter rootへつながる階層、モデルから祖先までの可視性を検査する。条件外は既存actor-space fallback。装備参照はキャッシュしない。他スペシャル、モデル、材質、寿命、alpha、ゲーム処理、通信に変更なし。
+- 新規 `patches/splatoon3/tests/inkjet-nozzle-owner.test.mjs` はlocal（isLocal=true、remote=false）／remote（isLocal=false、remote=true）それぞれで、foreign alias、detached holder、hidden model、hidden holder、hidden ancestorの10件。条件を戻した後の正常ノズル、native非表示→再表示の装備再生成、死亡による解除も確認する。CPU fixtureの物理はスタブで、Actor／Character／装置／FXは実モジュールを使う。通常の移動・帰還は別の実Physicsブラウザ検査で確認する。
+- Node22.23.4で既存55件＋新規10件：source **65/65**、emitted fixture **65/65**（レシピのfs直読検査はsourceのまま）。保存済み5d4516のemittedビルドを読む負例は **0/10成功、10件失敗**。所有者一致だけの中間版はforeignの2件成功、detached／hiddenの8件失敗。
+- Chromium154／WebGL2／SwiftShaderで既存ブラウザ検査を再実行し、30/60/120Hzの回転・移動・発射・停止・イカ降下・時間終了→帰還→着地・reset・再利用・死亡が通過。通常ケースの誤差／位置／反動／stats、全native発射レコード、全Inkjetイベントは5d4516と一致。最大ノズル誤差 **0.004960240809 WU**。全FX合成画像のpixel一致は主張しない。
+- 本番ビルド、quick patch check、構文、diff checkが通過。最終contentHashは `6687f87a7a1edb2146b537435cc89776ed244e94705a723af7aa1eacc7b04bba`。追加証拠は `/workspace/inkjet-owner-evidence/`。既に完走した固定a4e8134の共有83件は再実行していない。本家フレーム比較の未確認範囲は上記から変わらない。
