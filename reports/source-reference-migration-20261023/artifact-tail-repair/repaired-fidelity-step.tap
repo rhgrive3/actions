@@ -1,0 +1,1436 @@
+TAP version 13
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE network built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15229) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: host publishes the exact 60Hz pose before a Mine reference; follower accepts only the current host and a synchronized collider
+ok 1 - host publishes the exact 60Hz pose before a Mine reference; follower accepts only the current host and a synchronized collider
+  ---
+  duration_ms: 6.060644
+  type: 'test'
+  ...
+# Subtest: fixed local attachment follows a canonical corner and keeps the Mine raw paint offset; teleport and malformed deck attachments fail
+ok 2 - fixed local attachment follows a canonical corner and keeps the Mine raw paint offset; teleport and malformed deck attachments fail
+  ---
+  duration_ms: 1.1912
+  type: 'test'
+  ...
+# Subtest: duplicate or reordered host snapshots cannot replace a pose; bounded history, host handoff and match epochs retire references
+ok 3 - duplicate or reordered host snapshots cannot replace a pose; bounded history, host handoff and match epochs retire references
+  ---
+  duration_ms: 12.082323
+  type: 'test'
+  ...
+# Subtest: JSON Mine birth/core replay paints the moved Tower location once; owner/life/epoch, foreign support, radius and teleport claims stay closed
+ok 4 - JSON Mine birth/core replay paints the moved Tower location once; owner/life/epoch, foreign support, radius and teleport claims stay closed
+  ---
+  duration_ms: 1284.191297
+  type: 'test'
+  ...
+# Subtest: cross-peer JSON birth/core waits for later genuine host proofs, and duplicate proofs do not consume twice
+ok 5 - cross-peer JSON birth/core waits for later genuine host proofs, and duplicate proofs do not consume twice
+  ---
+  duration_ms: 2469.973696
+  type: 'test'
+  ...
+# Subtest: late host proofs expire closed after two seconds for both a missing birth pose and a missing core pose
+ok 6 - late host proofs expire closed after two seconds for both a missing birth pose and a missing core pose
+  ---
+  duration_ms: 2599.260811
+  type: 'test'
+  ...
+# Subtest: invalid canonical host proof, owner life changes and host handoff cannot authorize a pending Tower Mine
+ok 7 - invalid canonical host proof, owner life changes and host handoff cannot authorize a pending Tower Mine
+  ---
+  duration_ms: 3738.72582
+  type: 'test'
+  ...
+# Subtest: older recovered birth envelopes retain original ts/u admission across later genuine host-proof retries
+ok 8 - older recovered birth envelopes retain original ts/u admission across later genuine host-proof retries
+  ---
+  duration_ms: 4189.430863
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15249) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: six native active gauges stop on death before ordinary loss / Special Saver at 30Hz
+ok 9 - six native active gauges stop on death before ordinary loss / Special Saver at 30Hz
+  ---
+  duration_ms: 65.228178
+  type: 'test'
+  ...
+# Subtest: six native active gauges stop on death before ordinary loss / Special Saver at 60Hz
+ok 10 - six native active gauges stop on death before ordinary loss / Special Saver at 60Hz
+  ---
+  duration_ms: 37.845122
+  type: 'test'
+  ...
+# Subtest: six native active gauges stop on death before ordinary loss / Special Saver at 120Hz
+ok 11 - six native active gauges stop on death before ordinary loss / Special Saver at 120Hz
+  ---
+  duration_ms: 50.311029
+  type: 'test'
+  ...
+# Subtest: Zipcaster gauge includes the actual native shot and successful hook ink debits
+ok 12 - Zipcaster gauge includes the actual native shot and successful hook ink debits
+  ---
+  duration_ms: 5.146353
+  type: 'test'
+  ...
+# Subtest: Zipcaster lifetime follows the source tank/drain and a last empty hook reaches impact at 30Hz
+ok 13 - Zipcaster lifetime follows the source tank/drain and a last empty hook reaches impact at 30Hz
+  ---
+  duration_ms: 24.601496
+  type: 'test'
+  ...
+# Subtest: Zipcaster lifetime follows the source tank/drain and a last empty hook reaches impact at 60Hz
+ok 14 - Zipcaster lifetime follows the source tank/drain and a last empty hook reaches impact at 60Hz
+  ---
+  duration_ms: 36.96405
+  type: 'test'
+  ...
+# Subtest: Zipcaster lifetime follows the source tank/drain and a last empty hook reaches impact at 120Hz
+ok 15 - Zipcaster lifetime follows the source tank/drain and a last empty hook reaches impact at 120Hz
+  ---
+  duration_ms: 56.114593
+  type: 'test'
+  ...
+# Subtest: turf, both Tenacity lanes, Ranked gain and cheer cannot refill an active gauge or repay it later
+ok 16 - turf, both Tenacity lanes, Ranked gain and cheer cannot refill an active gauge or repay it later
+  ---
+  duration_ms: 5.156659
+  type: 'test'
+  ...
+# Subtest: body gauge clocks cannot overwrite remote, new-owner, new-life or new-match native points
+ok 17 - body gauge clocks cannot overwrite remote, new-owner, new-life or new-match native points
+  ---
+  duration_ms: 11.345752
+  type: 'test'
+  ...
+# Subtest: early throws and third Inkstrike release empty the native remainder while committed projectiles survive
+ok 18 - early throws and third Inkstrike release empty the native remainder while committed projectiles survive
+  ---
+  duration_ms: 9.142508
+  type: 'test'
+  ...
+# Subtest: timeout, objective pickup, reset and world clear empty tracked points, without changing Crab or Reef
+ok 19 - timeout, objective pickup, reset and world clear empty tracked points, without changing Crab or Reef
+  ---
+  duration_ms: 91.093401
+  type: 'test'
+  ...
+# Subtest: a temporary native point-cost change preserves the canonical active fraction
+ok 20 - a temporary native point-cost change preserves the canonical active fraction
+  ---
+  duration_ms: 2.737123
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15256) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: concurrent real Beakon jumps outlive the device; first carries Beakon=false
+ok 21 - concurrent real Beakon jumps outlive the device; first carries Beakon=false
+  ---
+  duration_ms: 667.120486
+  type: 'test'
+  ...
+# Subtest: concurrent real Beakon jumps outlive the device; first carries Beakon=true
+ok 22 - concurrent real Beakon jumps outlive the device; first carries Beakon=true
+  ---
+  duration_ms: 534.297544
+  type: 'test'
+  ...
+# Subtest: Beakon owner accepts concurrent remote identities without duplicate reservations or early consumption
+ok 23 - Beakon owner accepts concurrent remote identities without duplicate reservations or early consumption
+  ---
+  duration_ms: 514.722464
+  type: 'test'
+  ...
+# Subtest: offline owners without nids keep distinct map destinations, reservations and landing consumption at the same seq/life
+ok 24 - offline owners without nids keep distinct map destinations, reservations and landing consumption at the same seq/life
+  ---
+  duration_ms: 534.011662
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15263) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Beakon rejects native airborne use before payment and grounded release places at the feet
+ok 25 - Beakon rejects native airborne use before payment and grounded release places at the feet
+  ---
+  duration_ms: 603.488556
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15270) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: inkjet actual native explosion uses the source bands for actors and deployed objects
+ok 26 - inkjet actual native explosion uses the source bands for actors and deployed objects
+  ---
+  duration_ms: 25.509567
+  type: 'test'
+  ...
+# Subtest: tentaMissiles actual native explosion uses the source bands for actors and deployed objects
+ok 27 - tentaMissiles actual native explosion uses the source bands for actors and deployed objects
+  ---
+  duration_ms: 8.898016
+  type: 'test'
+  ...
+# Subtest: ultraStamp actual native explosion uses the source bands for actors and deployed objects
+ok 28 - ultraStamp actual native explosion uses the source bands for actors and deployed objects
+  ---
+  duration_ms: 5.23266
+  type: 'test'
+  ...
+# Subtest: crabTank actual native explosion uses the source bands for actors and deployed objects
+ok 29 - crabTank actual native explosion uses the source bands for actors and deployed objects
+  ---
+  duration_ms: 5.183488
+  type: 'test'
+  ...
+# Subtest: a native Inkjet outer blast spends the fixed 30 band at a real Bubbler interception
+ok 30 - a native Inkjet outer blast spends the fixed 30 band at a real Bubbler interception
+  ---
+  duration_ms: 29.980645
+  type: 'test'
+  ...
+# Subtest: ghost native special blasts retain no actor or object authority
+ok 31 - ghost native special blasts retain no actor or object authority
+  ---
+  duration_ms: 3.87219
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15277) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Kraken's spinning jump can hit after takeoff exactly once per victim at 30Hz
+ok 32 - Kraken's spinning jump can hit after takeoff exactly once per victim at 30Hz
+  ---
+  duration_ms: 20.099716
+  type: 'test'
+  ...
+# Subtest: Kraken dash falls through grates and loses the grounded 120 hit at 30Hz
+ok 33 - Kraken dash falls through grates and loses the grounded 120 hit at 30Hz
+  ---
+  duration_ms: 9.097321
+  type: 'test'
+  ...
+# Subtest: Inkjet ZL uses native squid floor and wall collision at 30Hz
+ok 34 - Inkjet ZL uses native squid floor and wall collision at 30Hz
+  ---
+  duration_ms: 3.295388
+  type: 'test'
+  ...
+# Subtest: Kraken's spinning jump can hit after takeoff exactly once per victim at 60Hz
+ok 35 - Kraken's spinning jump can hit after takeoff exactly once per victim at 60Hz
+  ---
+  duration_ms: 11.811401
+  type: 'test'
+  ...
+# Subtest: Kraken dash falls through grates and loses the grounded 120 hit at 60Hz
+ok 36 - Kraken dash falls through grates and loses the grounded 120 hit at 60Hz
+  ---
+  duration_ms: 10.148894
+  type: 'test'
+  ...
+# Subtest: Inkjet ZL uses native squid floor and wall collision at 60Hz
+ok 37 - Inkjet ZL uses native squid floor and wall collision at 60Hz
+  ---
+  duration_ms: 2.932132
+  type: 'test'
+  ...
+# Subtest: Kraken's spinning jump can hit after takeoff exactly once per victim at 120Hz
+ok 38 - Kraken's spinning jump can hit after takeoff exactly once per victim at 120Hz
+  ---
+  duration_ms: 10.859765
+  type: 'test'
+  ...
+# Subtest: Kraken dash falls through grates and loses the grounded 120 hit at 120Hz
+ok 39 - Kraken dash falls through grates and loses the grounded 120 hit at 120Hz
+  ---
+  duration_ms: 12.131544
+  type: 'test'
+  ...
+# Subtest: Inkjet ZL uses native squid floor and wall collision at 120Hz
+ok 40 - Inkjet ZL uses native squid floor and wall collision at 120Hz
+  ---
+  duration_ms: 4.165094
+  type: 'test'
+  ...
+# Subtest: Reefslider outer blast is a fixed 70 damage band for players and devices
+ok 41 - Reefslider outer blast is a fixed 70 damage band for players and devices
+  ---
+  duration_ms: 5.287703
+  type: 'test'
+  ...
+# Subtest: airborne Inkjet activation records the native last-grounded return position
+ok 42 - airborne Inkjet activation records the native last-grounded return position
+  ---
+  duration_ms: 10.574363
+  type: 'test'
+  ...
+# Subtest: Ultra Stamp selects its 8F swing when ZR is pressed after leaving the floor
+ok 43 - Ultra Stamp selects its 8F swing when ZR is pressed after leaving the floor
+  ---
+  duration_ms: 3.962525
+  type: 'test'
+  ...
+# Subtest: Ultra Stamp guard is absent while idle, before the first swing, and after releasing ZR
+ok 44 - Ultra Stamp guard is absent while idle, before the first swing, and after releasing ZR
+  ---
+  duration_ms: 5.846709
+  type: 'test'
+  ...
+# Subtest: remote Stamp guard follows accepted attack/release events rather than its whole activation
+ok 45 - remote Stamp guard follows accepted attack/release events rather than its whole activation
+  ---
+  duration_ms: 2.694601
+  type: 'test'
+  ...
+# Subtest: Booyah armor uses one 100-damage threshold and 80 cap per attack, independently of its remaining HP
+ok 46 - Booyah armor uses one 100-damage threshold and 80 cap per attack, independently of its remaining HP
+  ---
+  duration_ms: 5.403484
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15284) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: native Tenta/Chump/Wave/Screen spent HUD follows the captured lock after death/reset, without points or repayment
+ok 47 - native Tenta/Chump/Wave/Screen spent HUD follows the captured lock after death/reset, without points or repayment
+  ---
+  duration_ms: 655.838932
+  type: 'test'
+  ...
+# Subtest: Cooler displays the fixed 600F rate even when a Tower stand disappears at 450F, and Rainmaker cancels the display
+ok 48 - Cooler displays the fixed 600F rate even when a Tower stand disappears at 450F, and Rainmaker cancels the display
+  ---
+  duration_ms: 353.054222
+  type: 'test'
+  ...
+# Subtest: Bubbler spent display uses undamaged natural lifetime rather than remaining device HP, then disappears on real collapse
+ok 49 - Bubbler spent display uses undamaged natural lifetime rather than remaining device HP, then disappears on real collapse
+  ---
+  duration_ms: 420.328647
+  type: 'test'
+  ...
+# Subtest: spent display traces and point admission agree at 30/60/120 Hz, and changing matches retires old display state
+ok 50 - spent display traces and point admission agree at 30/60/120 Hz, and changing matches retires old display state
+  ---
+  duration_ms: 388.349409
+  type: 'test'
+  ...
+# Subtest: local body specials display their real action clock or special ink reserve, then end on native completion
+ok 51 - local body specials display their real action clock or special ink reserve, then end on native completion
+  ---
+  duration_ms: 456.618443
+  type: 'test'
+  ...
+# Subtest: Storm and Cooler flight stay full without a premature lock, then late operation starts the real depletion after owner death
+ok 52 - Storm and Cooler flight stay full without a premature lock, then late operation starts the real depletion after owner death
+  ---
+  duration_ms: 474.290973
+  type: 'test'
+  ...
+# Subtest: Vac spent display drains during inhale and is zero throughout its separate exhale mode
+ok 53 - Vac spent display drains during inhale and is zero throughout its separate exhale mode
+  ---
+  duration_ms: 416.378962
+  type: 'test'
+  ...
+# Subtest: body HUD rejects stale private action ownership, life or match without modifying a new authoritative charge value
+ok 54 - body HUD rejects stale private action ownership, life or match without modifying a new authoritative charge value
+  ---
+  duration_ms: 380.943818
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15291) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Fizzy every stage uses its own pinned six-droplet count, paint radius, offset, pitch and speed
+ok 55 - Fizzy every stage uses its own pinned six-droplet count, paint radius, offset, pitch and speed
+  ---
+  duration_ms: 1.297437
+  type: 'test'
+  ...
+# Subtest: actual Fizzy ground pops spawn six harmless detached drops per stage, retained after death and cleared with the world
+ok 56 - actual Fizzy ground pops spawn six harmless detached drops per stage, retained after death and cleared with the world
+  ---
+  duration_ms: 1216.83565
+  type: 'test'
+  ...
+# Subtest: Fizzy JSON replay paints all eighteen ordinary children and three bounded cores once while ghost impacts have no authority
+ok 57 - Fizzy JSON replay paints all eighteen ordinary children and three bounded cores once while ghost impacts have no authority
+  ---
+  duration_ms: 1309.809005
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15298) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Fizzy JSON hop replay resumes only the next owner stage and stays presentation-only through contact and clear
+ok 58 - Fizzy JSON hop replay resumes only the next owner stage and stays presentation-only through contact and clear
+  ---
+  duration_ms: 651.3099
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15305) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Fizzy admitted jump bonus starts on its input frame and drains only once per frame
+ok 59 - Fizzy admitted jump bonus starts on its input frame and drains only once per frame
+  ---
+  duration_ms: 541.015869
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15312) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Ink Mine placement, sensor and blast offsets match their distinct pinned fields
+ok 60 - Ink Mine placement, sensor and blast offsets match their distinct pinned fields
+  ---
+  duration_ms: 1.132533
+  type: 'test'
+  ...
+# Subtest: Ink Mine actual input paints its placement footprint once without inventing an early blast
+ok 61 - Ink Mine actual input paints its placement footprint once without inventing an early blast
+  ---
+  duration_ms: 682.661475
+  type: 'test'
+  ...
+# Subtest: Ink Mine rejects a native grate support before payment while the same solid floor admits feet placement
+ok 62 - Ink Mine rejects a native grate support before payment while the same solid floor admits feet placement
+  ---
+  duration_ms: 490.746177
+  type: 'test'
+  ...
+# Subtest: Ink Mine damage and marking use their raised source centers rather than the floor origin
+ok 63 - Ink Mine damage and marking use their raised source centers rather than the floor origin
+  ---
+  duration_ms: 526.794309
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15319) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Killer Wail follows the interpolated 0.5-second target trace at 30Hz
+ok 64 - Killer Wail follows the interpolated 0.5-second target trace at 30Hz
+  ---
+  duration_ms: 26.310657
+  type: 'test'
+  ...
+# Subtest: Killer Wail follows the interpolated 0.5-second target trace at 60Hz
+ok 65 - Killer Wail follows the interpolated 0.5-second target trace at 60Hz
+  ---
+  duration_ms: 8.778479
+  type: 'test'
+  ...
+# Subtest: Killer Wail follows the interpolated 0.5-second target trace at 120Hz
+ok 66 - Killer Wail follows the interpolated 0.5-second target trace at 120Hz
+  ---
+  duration_ms: 12.120594
+  type: 'test'
+  ...
+# Subtest: Killer Wail's launched pair continues after death and expires once at 30Hz
+ok 67 - Killer Wail's launched pair continues after death and expires once at 30Hz
+  ---
+  duration_ms: 66.709507
+  type: 'test'
+  ...
+# Subtest: Killer Wail's launched pair continues after death and expires once at 60Hz
+ok 68 - Killer Wail's launched pair continues after death and expires once at 60Hz
+  ---
+  duration_ms: 14.33733
+  type: 'test'
+  ...
+# Subtest: Killer Wail's launched pair continues after death and expires once at 120Hz
+ok 69 - Killer Wail's launched pair continues after death and expires once at 120Hz
+  ---
+  duration_ms: 17.150275
+  type: 'test'
+  ...
+# Subtest: Wail tails cease authority on ownership handoff and are removed by world teardown
+ok 70 - Wail tails cease authority on ownership handoff and are removed by world teardown
+  ---
+  duration_ms: 8.656858
+  type: 'test'
+  ...
+# Subtest: Wail's native Super Jump stops new pairs, keeps fired beams and clears remaining gauge on landing at 30Hz
+ok 71 - Wail's native Super Jump stops new pairs, keeps fired beams and clears remaining gauge on landing at 30Hz
+  ---
+  duration_ms: 23.012194
+  type: 'test'
+  ...
+# Subtest: Wail's native Super Jump stops new pairs, keeps fired beams and clears remaining gauge on landing at 60Hz
+ok 72 - Wail's native Super Jump stops new pairs, keeps fired beams and clears remaining gauge on landing at 60Hz
+  ---
+  duration_ms: 21.061003
+  type: 'test'
+  ...
+# Subtest: Wail's native Super Jump stops new pairs, keeps fired beams and clears remaining gauge on landing at 120Hz
+ok 73 - Wail's native Super Jump stops new pairs, keeps fired beams and clears remaining gauge on landing at 120Hz
+  ---
+  duration_ms: 33.729858
+  type: 'test'
+  ...
+# Subtest: world clear without Actor reset retires Wail and cannot relaunch old pairs on the next frame
+ok 74 - world clear without Actor reset retires Wail and cannot relaunch old pairs on the next frame
+  ---
+  duration_ms: 11.916033
+  type: 'test'
+  ...
+# Subtest: Wail cannot re-author old pairs after owner, life or match replacement
+ok 75 - Wail cannot re-author old pairs after owner, life or match replacement
+  ---
+  duration_ms: 18.308777
+  type: 'test'
+  ...
+# Subtest: rejected Super Jump retains Wail state; death stops its gauge clock without erasing committed lasers
+ok 76 - rejected Super Jump retains Wail state; death stops its gauge clock without erasing committed lasers
+  ---
+  duration_ms: 8.579724
+  type: 'test'
+  ...
+# Subtest: a committed Wail lock cannot acquire a later respawn of the same native Actor
+ok 77 - a committed Wail lock cannot acquire a later respawn of the same native Actor
+  ---
+  duration_ms: 8.043773
+  type: 'test'
+  ...
+# Subtest: Wail launches six distinct yaw-rotated source-radius origins and locks their world coordinates
+ok 78 - Wail launches six distinct yaw-rotated source-radius origins and locks their world coordinates
+  ---
+  duration_ms: 6.379184
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15326) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: all four native held devices preserve full points for ordinary death/Saver, without creating a deployed lock
+ok 79 - all four native held devices preserve full points for ordinary death/Saver, without creating a deployed lock
+  ---
+  duration_ms: 538.336599
+  type: 'test'
+  ...
+# Subtest: real Storm/Cooler flight retains its captured native cost until late operation consumes the saved next-life remainder
+ok 80 - real Storm/Cooler flight retains its captured native cost until late operation consumes the saved next-life remainder
+  ---
+  duration_ms: 500.784036
+  type: 'test'
+  ...
+# Subtest: pre-operation ownership is local, life/match bound, and reset/Rainmaker/teardown retire the canonical reserve
+ok 81 - pre-operation ownership is local, life/match bound, and reset/Rainmaker/teardown retire the canonical reserve
+  ---
+  duration_ms: 414.05898
+  type: 'test'
+  ...
+# Subtest: pre-operation full fraction follows native gear cost changes before ordinary death instead of restoring an obsolete point denomination
+ok 82 - pre-operation full fraction follows native gear cost changes before ordinary death instead of restoring an obsolete point denomination
+  ---
+  duration_ms: 376.452557
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15333) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: retained Autobomb launch consumes its own source Y clamp, axis inheritance and AP57 throw-speed tier
+ok 83 - retained Autobomb launch consumes its own source Y clamp, axis inheritance and AP57 throw-speed tier
+  ---
+  duration_ms: 513.129673
+  type: 'test'
+  ...
+# Subtest: Autobomb wall/ceiling bounces never arm a fuse or scan until an actual floor landing
+ok 84 - Autobomb wall/ceiling bounces never arm a fuse or scan until an actual floor landing
+  ---
+  duration_ms: 435.895449
+  type: 'test'
+  ...
+# Subtest: retained Autobomb owner and ghost apply the same extracted airborne XZ resistance at 30/60/120 render Hz
+ok 85 - retained Autobomb owner and ghost apply the same extracted airborne XZ resistance at 30/60/120 render Hz
+  ---
+  duration_ms: 1353.264127
+  type: 'test'
+  ...
+# Subtest: a chasing Autobomb keeps supported floor clearance, then falls off a ledge and lands without a second scan
+ok 86 - a chasing Autobomb keeps supported floor clearance, then falls off a ledge and lands without a second scan
+  ---
+  duration_ms: 459.430568
+  type: 'test'
+  ...
+# Subtest: a live target inside the community ~0.3-line approach range arms the warning without borrowing the .65 death parameter
+ok 87 - a live target inside the community ~0.3-line approach range arms the warning without borrowing the .65 death parameter
+  ---
+  duration_ms: 465.379813
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15340) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Vac wind protects a covered teammate from lateral and outgoing attacks, while back/LOS/team remain bounded
+ok 88 - Vac wind protects a covered teammate from lateral and outgoing attacks, while back/LOS/team remain bounded
+  ---
+  duration_ms: 563.028503
+  type: 'test'
+  ...
+# Subtest: Vac source muzzle sphere catches its own rim, resets with suction, and never widens the far wind
+ok 89 - Vac source muzzle sphere catches its own rim, resets with suction, and never widens the far wind
+  ---
+  duration_ms: 17.712146
+  type: 'test'
+  ...
+# Subtest: Vac native countershot adds source vertical spawn speed without changing its separate blast radii
+ok 90 - Vac native countershot adds source vertical spawn speed without changing its separate blast radii
+  ---
+  duration_ms: 16.277618
+  type: 'test'
+  ...
+# Subtest: Vac carrying the main weapon away cannot discharge an already charged native Charger
+ok 91 - Vac carrying the main weapon away cannot discharge an already charged native Charger
+  ---
+  duration_ms: 13.185581
+  type: 'test'
+  ...
+# Subtest: Vac explicit zero-charge player radius reaches a grazing capsule and excludes the next outside capsule
+ok 92 - Vac explicit zero-charge player radius reaches a grazing capsule and excludes the next outside capsule
+  ---
+  duration_ms: 23.587622
+  type: 'test'
+  ...
+# Subtest: Bubbler spends TimeDamage each source frame with identical AP/Tower duration at 30/60/120 Hz
+ok 93 - Bubbler spends TimeDamage each source frame with identical AP/Tower duration at 30/60/120 Hz
+  ---
+  duration_ms: 162.943371
+  type: 'test'
+  ...
+# Subtest: Bubbler replay source-frame burn changes displayed health without mutating HP or authoring expiry
+ok 94 - Bubbler replay source-frame burn changes displayed health without mutating HP or authoring expiry
+  ---
+  duration_ms: 8.129856
+  type: 'test'
+  ...
+# Subtest: Tacticooler source overlap removes either team stand, unlocks only that clock, and keeps already received drinks
+ok 95 - Tacticooler source overlap removes either team stand, unlocks only that clock, and keeps already received drinks
+  ---
+  duration_ms: 64.832599
+  type: 'test'
+  ...
+# Subtest: native Shooter and InkFlight Splatling heads stop at either team cooler before a farther victim
+ok 96 - native Shooter and InkFlight Splatling heads stop at either team cooler before a farther victim
+  ---
+  duration_ms: 48.800844
+  type: 'test'
+  ...
+# Subtest: native cooler cover preserves its pedestal gap and a nearer stage wall owns the contact
+ok 97 - native cooler cover preserves its pedestal gap and a nearer stage wall owns the contact
+  ---
+  duration_ms: 12.472118
+  type: 'test'
+  ...
+# Subtest: the native actor controller blocks human bodies, permits squid and active Dualies slides, and creates no roof
+ok 98 - the native actor controller blocks human bodies, permits squid and active Dualies slides, and creates no roof
+  ---
+  duration_ms: 47.889739
+  type: 'test'
+  ...
+# Subtest: native timed bombs bounce off cooler cover without detonation, attachment or an extra fuse
+ok 99 - native timed bombs bounce off cooler cover without detonation, attachment or an extra fuse
+  ---
+  duration_ms: 133.963667
+  type: 'test'
+  ...
+# Subtest: native Blaster hitting cooler uses one terrain burst, and a ghost never hurts the victim
+ok 100 - native Blaster hitting cooler uses one terrain burst, and a ghost never hurts the victim
+  ---
+  duration_ms: 19.557731
+  type: 'test'
+  ...
+# Subtest: native InkFlight participates in Vac absorption instead of bypassing the shared defense lane
+ok 101 - native InkFlight participates in Vac absorption instead of bypassing the shared defense lane
+  ---
+  duration_ms: 18.27022
+  type: 'test'
+  ...
+# Subtest: Screen absorption uses its own pinned 400 tag locally and validates the same ceiling on authenticated proposals
+ok 102 - Screen absorption uses its own pinned 400 tag locally and validates the same ceiling on authenticated proposals
+  ---
+  duration_ms: 29.356511
+  type: 'test'
+  ...
+# Subtest: Vac source 20F foot paint repeats at 30/60/120 Hz, awards turf once and cannot charge the special
+ok 103 - Vac source 20F foot paint repeats at 30/60/120 Hz, awards turf once and cannot charge the special
+  ---
+  duration_ms: 68.601234
+  type: 'test'
+  ...
+# Subtest: Vac canonical reserve blocks paint, Tenacity and repeat admission while native special presentation is masked
+ok 104 - Vac canonical reserve blocks paint, Tenacity and repeat admission while native special presentation is masked
+  ---
+  duration_ms: 13.756164
+  type: 'test'
+  ...
+# Subtest: Vac death passes its remaining native reserve through ordinary Special Saver at AP0 and AP30
+ok 105 - Vac death passes its remaining native reserve through ordinary Special Saver at AP0 and AP30
+  ---
+  duration_ms: 36.362998
+  type: 'test'
+  ...
+# Subtest: Vac completion, explicit disposal, reset and clear spend reserve and retire canonical claims
+ok 106 - Vac completion, explicit disposal, reset and clear spend reserve and retire canonical claims
+  ---
+  duration_ms: 75.699386
+  type: 'test'
+  ...
+# Subtest: Vac ownership, replica, life and match boundaries cannot consume a replacement authority reserve
+ok 107 - Vac ownership, replica, life and match boundaries cannot consume a replacement authority reserve
+  ---
+  duration_ms: 83.262195
+  type: 'test'
+  ...
+# Subtest: actual custom Fizzy and untransformed Torpedo rebound from Cooler through their single world-contact owner
+ok 108 - actual custom Fizzy and untransformed Torpedo rebound from Cooler through their single world-contact owner
+  ---
+  duration_ms: 172.762791
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15350) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: native Suction follows the hit Tower deck and explodes at its moved pose after the original120F fuse, render30Hz
+ok 109 - native Suction follows the hit Tower deck and explodes at its moved pose after the original120F fuse, render30Hz
+  ---
+  duration_ms: 1241.499407
+  type: 'test'
+  ...
+# Subtest: native Suction follows the hit Tower deck and explodes at its moved pose after the original120F fuse, render60Hz
+ok 110 - native Suction follows the hit Tower deck and explodes at its moved pose after the original120F fuse, render60Hz
+  ---
+  duration_ms: 1059.502604
+  type: 'test'
+  ...
+# Subtest: native Suction follows the hit Tower deck and explodes at its moved pose after the original120F fuse, render120Hz
+ok 111 - native Suction follows the hit Tower deck and explodes at its moved pose after the original120F fuse, render120Hz
+  ---
+  duration_ms: 1075.536123
+  type: 'test'
+  ...
+# Subtest: real ghost Suction follows the Tower pole but its expiry cannot paint, damage or promote kit authority
+ok 112 - real ghost Suction follows the Tower pole but its expiry cannot paint, damage or promote kit authority
+  ---
+  duration_ms: 1095.119864
+  type: 'test'
+  ...
+# Subtest: fixed-floor Suction remains at its first surface when a Tower passes, and clear cannot transfer attachment to a later native bomb
+ok 113 - fixed-floor Suction remains at its first surface when a Tower passes, and clear cannot transfer attachment to a later native bomb
+  ---
+  duration_ms: 1038.824807
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15357) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Wave actual throw uses raw velocity/gravity/drag and separates airborne gauge and ground pulse clocks
+ok 114 - Wave actual throw uses raw velocity/gravity/drag and separates airborne gauge and ground pulse clocks
+  ---
+  duration_ms: 630.001408
+  type: 'test'
+  ...
+# Subtest: Thrown Wave and Screen are lost in open water and clear retires in-flight records
+ok 115 - Thrown Wave and Screen are lost in open water and clear retires in-flight records
+  ---
+  duration_ms: 495.807367
+  type: 'test'
+  ...
+# Subtest: Triple guide sticks to wall terrain, then waits 82F and survives thrower death
+ok 116 - Triple guide sticks to wall terrain, then waits 82F and survives thrower death
+  ---
+  duration_ms: 485.69972
+  type: 'test'
+  ...
+# Subtest: Triple guide sticks to ceiling terrain, then waits 82F and survives thrower death
+ok 117 - Triple guide sticks to ceiling terrain, then waits 82F and survives thrower death
+  ---
+  duration_ms: 493.560738
+  type: 'test'
+  ...
+# Subtest: Triple guide sticks to grate terrain, then waits 82F and survives thrower death
+ok 118 - Triple guide sticks to grate terrain, then waits 82F and survives thrower death
+  ---
+  duration_ms: 453.261452
+  type: 'test'
+  ...
+# Subtest: Triple column crosses solid terrain, reaches the source upper height, and caps its lower reach
+ok 119 - Triple column crosses solid terrain, reaches the source upper height, and caps its lower reach
+  ---
+  duration_ms: 464.234215
+  type: 'test'
+  ...
+# Subtest: New flight birth and land replay preserve phase/age without granting ghost damage or paint authority
+ok 120 - New flight birth and land replay preserve phase/age without granting ghost damage or paint authority
+  ---
+  duration_ms: 439.626177
+  type: 'test'
+  ...
+# Subtest: Chump keeps airborne squid holding, rejects airborne placement, and emits after 13F grounded setup
+ok 121 - Chump keeps airborne squid holding, rejects airborne placement, and emits after 13F grounded setup
+  ---
+  duration_ms: 415.494381
+  type: 'test'
+  ...
+# Subtest: Wave flight/contact clocks remain identical at 30/60/120Hz outer updates
+ok 122 - Wave flight/contact clocks remain identical at 30/60/120Hz outer updates
+  ---
+  duration_ms: 560.182024
+  type: 'test'
+  ...
+# Subtest: Wave detector remains active through57F and applies raw45F status separately from detection
+ok 123 - Wave detector remains active through57F and applies raw45F status separately from detection
+  ---
+  duration_ms: 527.367576
+  type: 'test'
+  ...
+# Subtest: Real Actor jump clears a ground wave while a grounded control receives45 damage
+ok 124 - Real Actor jump clears a ground wave while a grounded control receives45 damage
+  ---
+  duration_ms: 676.582283
+  type: 'test'
+  ...
+# Subtest: A flying Screen generator is absorbed once with its400HP source tag; a ghost never credits intake
+ok 125 - A flying Screen generator is absorbed once with its400HP source tag; a ghost never credits intake
+  ---
+  duration_ms: 443.933452
+  type: 'test'
+  ...
+# Subtest: Screen opening/running ink uses twelve sourced positions/radius per45F cycle and never paints a nonexistent floor
+ok 126 - Screen opening/running ink uses twelve sourced positions/radius per45F cycle and never paints a nonexistent floor
+  ---
+  duration_ms: 463.910775
+  type: 'test'
+  ...
+# Subtest: Triple paint follows its own2F radius.5->7 clock and bounded +7.5/-6 floor reach
+ok 127 - Triple paint follows its own2F radius.5->7 clock and bounded +7.5/-6 floor reach
+  ---
+  duration_ms: 466.071256
+  type: 'test'
+  ...
+# Subtest: Chump preview and real setup use each landing surface and keep all twelve targets inside valid terrain
+ok 128 - Chump preview and real setup use each landing surface and keep all twelve targets inside valid terrain
+  ---
+  duration_ms: 400.563417
+  type: 'test'
+  ...
+# Subtest: Screen first JSON birth owns throw direction even when the receiving actor faces another yaw
+ok 129 - Screen first JSON birth owns throw direction even when the receiving actor faces another yaw
+  ---
+  duration_ms: 434.63912
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15364) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: waveBreaker AP0: both birth envelopes independently preserve canonical object state
+ok 130 - waveBreaker AP0: both birth envelopes independently preserve canonical object state
+  ---
+  duration_ms: 1330.257461
+  type: 'test'
+  ...
+# Subtest: waveBreaker AP57: both birth envelopes independently preserve canonical object state
+ok 131 - waveBreaker AP57: both birth envelopes independently preserve canonical object state
+  ---
+  duration_ms: 1242.5089
+  type: 'test'
+  ...
+# Subtest: splattercolorScreen AP0: both birth envelopes independently preserve canonical object state
+ok 132 - splattercolorScreen AP0: both birth envelopes independently preserve canonical object state
+  ---
+  duration_ms: 1206.88194
+  type: 'test'
+  ...
+# Subtest: splattercolorScreen AP57: both birth envelopes independently preserve canonical object state
+ok 133 - splattercolorScreen AP57: both birth envelopes independently preserve canonical object state
+  ---
+  duration_ms: 1244.508545
+  type: 'test'
+  ...
+# Subtest: waveBreaker: real tick receiver orders rows and survives a deliberately missing deploy through expiry
+ok 134 - waveBreaker: real tick receiver orders rows and survives a deliberately missing deploy through expiry
+  ---
+  duration_ms: 5130.502891
+  type: 'test'
+  ...
+# Subtest: splattercolorScreen: real tick receiver orders rows and survives a deliberately missing deploy through expiry
+ok 135 - splattercolorScreen: real tick receiver orders rows and survives a deliberately missing deploy through expiry
+  ---
+  duration_ms: 6045.430061
+  type: 'test'
+  ...
+# Subtest: waveBreaker: owner/life rejection, activation isolation, and explicit world cleanup remain intact
+ok 136 - waveBreaker: owner/life rejection, activation isolation, and explicit world cleanup remain intact
+  ---
+  duration_ms: 677.588449
+  type: 'test'
+  ...
+# Subtest: splattercolorScreen: owner/life rejection, activation isolation, and explicit world cleanup remain intact
+ok 137 - splattercolorScreen: owner/life rejection, activation isolation, and explicit world cleanup remain intact
+  ---
+  duration_ms: 665.673114
+  type: 'test'
+  ...
+# Subtest: waveBreaker: delayed sibling cannot rewind phase and legacy sparse sender waits for full deploy
+ok 138 - waveBreaker: delayed sibling cannot rewind phase and legacy sparse sender waits for full deploy
+  ---
+  duration_ms: 2785.638227
+  type: 'test'
+  ...
+# Subtest: splattercolorScreen: delayed sibling cannot rewind phase and legacy sparse sender waits for full deploy
+ok 139 - splattercolorScreen: delayed sibling cannot rewind phase and legacy sparse sender waits for full deploy
+  ---
+  duration_ms: 2422.000239
+  type: 'test'
+  ...
+# Subtest: waveBreaker: unseen late birth is retired by expiry, clear or terminal row; new life and land updates still work
+ok 140 - waveBreaker: unseen late birth is retired by expiry, clear or terminal row; new life and land updates still work
+  ---
+  duration_ms: 2329.955902
+  type: 'test'
+  ...
+# Subtest: splattercolorScreen: unseen late birth is retired by expiry, clear or terminal row; new life and land updates still work
+ok 141 - splattercolorScreen: unseen late birth is retired by expiry, clear or terminal row; new life and land updates still work
+  ---
+  duration_ms: 1962.232861
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15387) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: body-owning specials retain native HP recovery without ordinary ink refill at 30Hz
+ok 142 - body-owning specials retain native HP recovery without ordinary ink refill at 30Hz
+  ---
+  duration_ms: 35.688447
+  type: 'test'
+  ...
+# Subtest: body-owning specials retain native HP recovery without ordinary ink refill at 60Hz
+ok 143 - body-owning specials retain native HP recovery without ordinary ink refill at 60Hz
+  ---
+  duration_ms: 16.349205
+  type: 'test'
+  ...
+# Subtest: body-owning specials retain native HP recovery without ordinary ink refill at 120Hz
+ok 144 - body-owning specials retain native HP recovery without ordinary ink refill at 120Hz
+  ---
+  duration_ms: 8.839339
+  type: 'test'
+  ...
+# Subtest: Wail keeps ordinary main-ink recovery and enemy-ink contact at 30Hz
+ok 145 - Wail keeps ordinary main-ink recovery and enemy-ink contact at 30Hz
+  ---
+  duration_ms: 58.96779
+  type: 'test'
+  ...
+# Subtest: Wail keeps ordinary main-ink recovery and enemy-ink contact at 60Hz
+ok 146 - Wail keeps ordinary main-ink recovery and enemy-ink contact at 60Hz
+  ---
+  duration_ms: 39.011768
+  type: 'test'
+  ...
+# Subtest: Wail keeps ordinary main-ink recovery and enemy-ink contact at 120Hz
+ok 147 - Wail keeps ordinary main-ink recovery and enemy-ink contact at 120Hz
+  ---
+  duration_ms: 60.311456
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15394) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Wail restores its firing weapon and keeps speakers visible while swimming at 30Hz
+ok 148 - Wail restores its firing weapon and keeps speakers visible while swimming at 30Hz
+  ---
+  duration_ms: 10087.959923
+  type: 'test'
+  ...
+# Subtest: Wail restores its firing weapon and keeps speakers visible while swimming at 60Hz
+ok 149 - Wail restores its firing weapon and keeps speakers visible while swimming at 60Hz
+  ---
+  duration_ms: 885.165832
+  type: 'test'
+  ...
+# Subtest: Wail restores its firing weapon and keeps speakers visible while swimming at 120Hz
+ok 150 - Wail restores its firing weapon and keeps speakers visible while swimming at 120Hz
+  ---
+  duration_ms: 911.751287
+  type: 'test'
+  ...
+# Subtest: Zipcaster retirement preserves borrowed body geometry and disposes its coat material once
+ok 151 - Zipcaster retirement preserves borrowed body geometry and disposes its coat material once
+  ---
+  duration_ms: 747.349145
+  type: 'test'
+  ...
+# Subtest: Screen renders only the thrown jar in flight and unfolds from its actual landing time
+ok 152 - Screen renders only the thrown jar in flight and unfolds from its actual landing time
+  ---
+  duration_ms: 848.182323
+  type: 'test'
+  ...
+# Subtest: already fired Wail speakers survive the owner and retire with their native laser tail
+ok 153 - already fired Wail speakers survive the owner and retire with their native laser tail
+  ---
+  duration_ms: 795.489795
+  type: 'test'
+  ...
+# Subtest: accepted remote speaker observations cannot survive projectile clear or a match clock reset
+ok 154 - accepted remote speaker observations cannot survive projectile clear or a match clock reset
+  ---
+  duration_ms: 2.134302
+  type: 'test'
+  ...
+# Subtest: waveBreaker holding retains the admitted native squid pose
+ok 155 - waveBreaker holding retains the admitted native squid pose
+  ---
+  duration_ms: 788.313255
+  type: 'test'
+  ...
+# Subtest: splattercolorScreen holding retains the admitted native squid pose
+ok 156 - splattercolorScreen holding retains the admitted native squid pose
+  ---
+  duration_ms: 733.352099
+  type: 'test'
+  ...
+# Subtest: ultraStamp holding retains the admitted native squid pose
+ok 157 - ultraStamp holding retains the admitted native squid pose
+  ---
+  duration_ms: 838.906682
+  type: 'test'
+  ...
+# Subtest: storm holding retains the admitted native squid pose
+ok 158 - storm holding retains the admitted native squid pose
+  ---
+  duration_ms: 907.339927
+  type: 'test'
+  ...
+# Subtest: tacticooler holding retains the admitted native squid pose
+ok 159 - tacticooler holding retains the admitted native squid pose
+  ---
+  duration_ms: 743.616051
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15401) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Splash Wall velocity stays fixed relative to heading without movement inheritance or aim pitch arcs
+ok 160 - Splash Wall velocity stays fixed relative to heading without movement inheritance or aim pitch arcs
+  ---
+  duration_ms: 703.249299
+  type: 'test'
+  ...
+# Subtest: Splash Wall bounces a real vertical wall, opens after landing and preserves400F active life at 30Hz
+ok 161 - Splash Wall bounces a real vertical wall, opens after landing and preserves400F active life at 30Hz
+  ---
+  duration_ms: 537.350736
+  type: 'test'
+  ...
+# Subtest: Splash Wall bounces a real vertical wall, opens after landing and preserves400F active life at 60Hz
+ok 162 - Splash Wall bounces a real vertical wall, opens after landing and preserves400F active life at 60Hz
+  ---
+  duration_ms: 563.274068
+  type: 'test'
+  ...
+# Subtest: Splash Wall bounces a real vertical wall, opens after landing and preserves400F active life at 120Hz
+ok 163 - Splash Wall bounces a real vertical wall, opens after landing and preserves400F active life at 120Hz
+  ---
+  duration_ms: 538.68742
+  type: 'test'
+  ...
+# Subtest: the old Splash Wall remains active during replacement preparation, then retires exactly once at activation
+ok 164 - the old Splash Wall remains active during replacement preparation, then retires exactly once at activation
+  ---
+  duration_ms: 558.033937
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15408) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Sprinkler 0 AP middle stage lasts its full extracted duration
+ok 165 - Sprinkler 0 AP middle stage lasts its full extracted duration
+  ---
+  duration_ms: 1.086134
+  type: 'test'
+  ...
+# Subtest: Sprinkler 57 AP middle stage lasts its full extracted duration
+ok 166 - Sprinkler 57 AP middle stage lasts its full extracted duration
+  ---
+  duration_ms: 0.213876
+  type: 'test'
+  ...
+# Subtest: native input-created Sprinkler 0 AP emits the middle cadence until the cumulative boundary
+ok 167 - native input-created Sprinkler 0 AP emits the middle cadence until the cumulative boundary
+  ---
+  duration_ms: 707.827492
+  type: 'test'
+  ...
+# Subtest: native input-created Sprinkler 57 AP emits the middle cadence until the cumulative boundary
+ok 168 - native input-created Sprinkler 57 AP emits the middle cadence until the cumulative boundary
+  ---
+  duration_ms: 551.216307
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15415) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Angle Shooter distinguishes extracted ground and wall rebound coefficients
+ok 169 - Angle Shooter distinguishes extracted ground and wall rebound coefficients
+  ---
+  duration_ms: 1.298308
+  type: 'test'
+  ...
+# Subtest: Angle Shooter real plane reflection 0 at 30 Hz, ghost=false
+ok 170 - Angle Shooter real plane reflection 0 at 30 Hz, ghost=false
+  ---
+  duration_ms: 601.492556
+  type: 'test'
+  ...
+# Subtest: Angle Shooter real plane reflection 0.35 at 30 Hz, ghost=false
+ok 171 - Angle Shooter real plane reflection 0.35 at 30 Hz, ghost=false
+  ---
+  duration_ms: 440.54213
+  type: 'test'
+  ...
+# Subtest: Angle Shooter real plane reflection 1.5707963267948966 at 30 Hz, ghost=false
+ok 172 - Angle Shooter real plane reflection 1.5707963267948966 at 30 Hz, ghost=false
+  ---
+  duration_ms: 483.867197
+  type: 'test'
+  ...
+# Subtest: Angle Shooter real plane reflection 0 at 60 Hz, ghost=false
+ok 173 - Angle Shooter real plane reflection 0 at 60 Hz, ghost=false
+  ---
+  duration_ms: 431.847999
+  type: 'test'
+  ...
+# Subtest: Angle Shooter real plane reflection 0 at 60 Hz, ghost=true
+ok 174 - Angle Shooter real plane reflection 0 at 60 Hz, ghost=true
+  ---
+  duration_ms: 441.11676
+  type: 'test'
+  ...
+# Subtest: Angle Shooter real plane reflection 0.35 at 60 Hz, ghost=false
+ok 175 - Angle Shooter real plane reflection 0.35 at 60 Hz, ghost=false
+  ---
+  duration_ms: 451.941418
+  type: 'test'
+  ...
+# Subtest: Angle Shooter real plane reflection 0.35 at 60 Hz, ghost=true
+ok 176 - Angle Shooter real plane reflection 0.35 at 60 Hz, ghost=true
+  ---
+  duration_ms: 505.359994
+  type: 'test'
+  ...
+# Subtest: Angle Shooter real plane reflection 1.5707963267948966 at 60 Hz, ghost=false
+ok 177 - Angle Shooter real plane reflection 1.5707963267948966 at 60 Hz, ghost=false
+  ---
+  duration_ms: 469.813832
+  type: 'test'
+  ...
+# Subtest: Angle Shooter real plane reflection 1.5707963267948966 at 60 Hz, ghost=true
+ok 178 - Angle Shooter real plane reflection 1.5707963267948966 at 60 Hz, ghost=true
+  ---
+  duration_ms: 471.440552
+  type: 'test'
+  ...
+# Subtest: Angle Shooter real plane reflection 0 at 120 Hz, ghost=false
+ok 179 - Angle Shooter real plane reflection 0 at 120 Hz, ghost=false
+  ---
+  duration_ms: 496.352239
+  type: 'test'
+  ...
+# Subtest: Angle Shooter real plane reflection 0.35 at 120 Hz, ghost=false
+ok 180 - Angle Shooter real plane reflection 0.35 at 120 Hz, ghost=false
+  ---
+  duration_ms: 503.337878
+  type: 'test'
+  ...
+# Subtest: Angle Shooter real plane reflection 1.5707963267948966 at 120 Hz, ghost=false
+ok 181 - Angle Shooter real plane reflection 1.5707963267948966 at 120 Hz, ghost=false
+  ---
+  duration_ms: 497.665468
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15431) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: native Sprinkler source and ghost follow the contacted Tower while existing detached drops stay in world space
+ok 182 - native Sprinkler source and ghost follow the contacted Tower while existing detached drops stay in world space
+  ---
+  duration_ms: 1178.210761
+  type: 'test'
+  ...
+# Subtest: native Sprinkler on the Tower side retains the contacted local surface orientation after translation and rotation
+ok 183 - native Sprinkler on the Tower side retains the contacted local surface orientation after translation and rotation
+  ---
+  duration_ms: 1010.177363
+  type: 'test'
+  ...
+# Subtest: native Sprinkler on the Tower bottom retains the contacted local surface orientation after translation and rotation
+ok 184 - native Sprinkler on the Tower bottom retains the contacted local surface orientation after translation and rotation
+  ---
+  duration_ms: 1018.686087
+  type: 'test'
+  ...
+# Subtest: inkMine source and replay follow the canonical Tower without changing native committed jump behavior
+ok 185 - inkMine source and replay follow the canonical Tower without changing native committed jump behavior
+  ---
+  duration_ms: 985.54955
+  type: 'test'
+  ...
+# Subtest: beakon source and replay follow the canonical Tower without changing native committed jump behavior
+ok 186 - beakon source and replay follow the canonical Tower without changing native committed jump behavior
+  ---
+  duration_ms: 995.860051
+  type: 'test'
+  ...
+# Subtest: splashWall source and replay follow the canonical Tower without changing native committed jump behavior
+ok 187 - splashWall source and replay follow the canonical Tower without changing native committed jump behavior
+  ---
+  duration_ms: 1104.735434
+  type: 'test'
+  ...
+# Subtest: placing a third Mine synchronously bursts the oldest at its moved Tower pose before the next projectile tick
+ok 188 - placing a third Mine synchronously bursts the oldest at its moved Tower pose before the next projectile tick
+  ---
+  duration_ms: 988.908652
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15438) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Torpedo extracted chase and acquisition droplets are separate pinned patterns
+ok 189 - Torpedo extracted chase and acquisition droplets are separate pinned patterns
+  ---
+  duration_ms: 1.227624
+  type: 'test'
+  ...
+# Subtest: Torpedo main contact does not apply an immediate extra12 and each detached terrain blast paints once after owner death
+ok 190 - Torpedo main contact does not apply an immediate extra12 and each detached terrain blast paints once after owner death
+  ---
+  duration_ms: 744.551712
+  type: 'test'
+  ...
+# Subtest: Torpedo detached children clear with the world without inventing impact damage or paint
+ok 191 - Torpedo detached children clear with the world without inventing impact damage or paint
+  ---
+  duration_ms: 501.293774
+  type: 'test'
+  ...
+# Subtest: Torpedo JSON replay keeps native hit and paint authority while ghosts carry detached visuals only
+ok 192 - Torpedo JSON replay keeps native hit and paint authority while ghosts carry detached visuals only
+  ---
+  duration_ms: 1247.472887
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15445) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Torpedo stops, waits after rotation and flies straight at 30 Hz
+ok 193 - Torpedo stops, waits after rotation and flies straight at 30 Hz
+  ---
+  duration_ms: 631.324154
+  type: 'test'
+  ...
+# Subtest: Torpedo stops, waits after rotation and flies straight at 60 Hz
+ok 194 - Torpedo stops, waits after rotation and flies straight at 60 Hz
+  ---
+  duration_ms: 461.737783
+  type: 'test'
+  ...
+# Subtest: Torpedo stops, waits after rotation and flies straight at 120 Hz
+ok 195 - Torpedo stops, waits after rotation and flies straight at 120 Hz
+  ---
+  duration_ms: 511.270527
+  type: 'test'
+  ...
+# Subtest: Torpedo keeps the captured life through transform and cannot redirect to a respawn
+ok 196 - Torpedo keeps the captured life through transform and cannot redirect to a respawn
+  ---
+  duration_ms: 461.650092
+  type: 'test'
+  ...
+# Subtest: Torpedo search is bounded horizontally and asymmetrically above/below
+ok 197 - Torpedo search is bounded horizontally and asymmetrically above/below
+  ---
+  duration_ms: 497.375218
+  type: 'test'
+  ...
+# Subtest: rolling Torpedo cannot reacquire a target and its fuse pauses after leaving a ledge
+ok 198 - rolling Torpedo cannot reacquire a target and its fuse pauses after leaving a ledge
+  ---
+  duration_ms: 553.371384
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-ci/_site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:15452) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: current Triple Splashdown clocks cross actual JSON NetMatch snapshots without legacy Slam or duplicate fists
+ok 199 - current Triple Splashdown clocks cross actual JSON NetMatch snapshots without legacy Slam or duplicate fists
+  ---
+  duration_ms: 39.859221
+  type: 'test'
+  ...
+# Subtest: current Splashdown sidecar rejects malformed/old-life/other-owner/other-special samples and preserves legacy wp
+ok 200 - current Splashdown sidecar rejects malformed/old-life/other-owner/other-special samples and preserves legacy wp
+  ---
+  duration_ms: 4.328566
+  type: 'test'
+  ...
+# Subtest: Splashdown clock interpolation cannot blend activations, phases or lives
+ok 201 - Splashdown clock interpolation cannot blend activations, phases or lives
+  ---
+  duration_ms: 0.35184
+  type: 'test'
+  ...
+1..201
+# tests 201
+# suites 0
+# pass 201
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 129269.316285
