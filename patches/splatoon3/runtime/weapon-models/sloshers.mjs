@@ -149,7 +149,8 @@ function bloblobber(d) {
 function explosher(d) {
   // Wmn_Slosher_Washtub. Rebuilt from all stored turntable quadrants, not a front-facing can decal.
   // The cast can has a sloped shoulder, real lower slots, a rear box and a separate rectangular-section cage.
-  // Reference display tilt is handled by the review camera; gameplay hand and launch frames are unchanged.
+  // The launch landmark is derived below from this authored burner's lip plane.
+  // It is an INKWAVE mesh alignment, not a recovered Nintendo firing origin.
   const C={olive:'#59632f',ridge:'#69783a',darkOlive:'#435128',brass:'#ac8c48',brassEdge:'#d1b76e',silver:'#c2cbcf',steel:'#58646b',black:'#242b31',orange:'#f07931',panel:'#343943'};
   const body=new Pieces(),ink=new Pieces(),cy=BY-.004,cz=BZ+.010;
   const beam=(pts,r=.006,seg=24)=>{const g=sweep(pts.map(p=>V(...p)),{seg,radial:4,capSteps:1,radius:()=>r,flat:.75,outward:(_p,out)=>out.set(1,0,0),section:(c,s)=>[c-s,c+s]}).geo.toNonIndexed();g.computeVertexNormals();return g;};
@@ -229,7 +230,11 @@ function explosher(d) {
   body.add(beam([[-.082,cy-.042,cz+.139],[.082,cy-.042,cz+.139]],.0058,6),C.silver,M.metal);
   // The native hand grip is retained at the origin; it is not the high reference carry handle.
   wireHandle(body,cz-.107,C.black);
-  return rebuild(d,{body,ink,parts:{surface:inkDisc(.035,BY-.004+.06,BZ+.02)}});
+  const def=rebuild(d,{body,ink,parts:{surface:inkDisc(.035,BY-.004+.06,BZ+.02)},muzzle:[0,lipY,lipZ]});
+  // The exact transform used for the lip ring supplies its outward normal.
+  // Camera aim still owns projectile velocity; this names the model landmark.
+  def.muzzleLandmark={name:'explosher-burner-lip',axis:V(0,-Math.sin(tilt),Math.cos(tilt))};
+  return def;
 }
 
 function dreadWringer(d) {

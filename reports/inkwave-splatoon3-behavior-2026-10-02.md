@@ -5879,3 +5879,13 @@ Node v24.19.0の本番合成VMで新規3件と隣接9件、計12/12成功。原�
 INKWAVEの `patches/splatoon3/runtime/catalogue.mjs` では、native `_tick` が時刻を拒否しても、到着した `ts` が過去の受入値より大きいだけで `ck` の装備を変更していた。実composed受信の1000/torpedo受入後、1014/bombがclockで拒否されても装備だけ変わる反例に対応し、native処理後のpeer.lastTsが当該message.tsへ実際に進んだ場合だけsidecarを適用する。既存membership・actor owner・life・選択値の判定は維持する。prebind/future/stale/foreign/malformedの拒否不変と正常更新、実NetSession v1 freshness proofを専用回帰で検証し、既存clock再接続群とcompiled production形式も別記する。
 
 Node22でsource全対象92case（既存clock25含む）と通常production compiled20caseを確認した。人工1GiB capでpaint-authority1fileがOOMした初回78pass＋module失敗を保全し、同一sourceを通常heapで14/14完遂して分離集計する。旧compiledの実Session v1 future反例はkitだけ変わって失敗し、新compiledは実読込20回すべてmanifest SHA一致で通過した。独立source/test reviewおよび1364Git入力・2018出力の照合、fixture境界と既存browser証拠を別sourceに維持する範囲は `reports/issue-resolution-20261022/continuation/catalogue-admitted-ticks.json` に記録した。
+
+## 2026-10-22 weapon-only source correction checkpoint
+
+比較対象はSplatoon 3 11.3.0。今回の口先補正は既存INKWAVE meshのlandmarkから導出し、Nintendoの未公開firing originを復元したとは主張しない。Explosherのgeometry/手/animation channelを維持してmuzzleを既存burner lipへ合わせる。Quadはactual native InkVolume ownerで既存poseBirthOffsetを反映し、tipは物理位置、tailは既存保持期間後にdetachする。prediction/LOS fallback/ghostを接続へ強制しない。
+
+実Actor first/steady・30/60/120Hz・上下・Tidewater open/towerでsource/FX/muzzle/actual instanceを確認する。Explosher旧/newのvelocity/damage/ink/packet/tickが同一、candidate内のbirth/contact/paintは描画rate間で同一。口先を動かすため旧/newのphysical birth/contact座標は同一とは扱わずreceiptに分ける。Quadの修正は表示経路だけでphysical/contact/paint/network ownerを維持する。完成#1277とのgeometry lineageも確認する。
+
+Dynamo/他Roller/Brushの防御object・傘・BigBubblerへ、既存impactDamageで決済したUnit/距離/volley額を渡す。Bubbler queryは純粋に保ち、採用されたcontactだけ既存倍率を1回適用する。Unit1はdamage0のまま実CPU床paintとturf creditを維持。source UnitDamageRate0のNintendo engine解釈・実機unit分離は未確認で#1813を維持する。
+
+追加7 Roller/Brushの受入はactual Actor/Runner/Projectilesの330birth/22cover/780flight条件と、actual source pose/FX/WebGLのTidewater78条件。原作全parityとは区別する。Zipcaster失敗repeatは現45F境界を実Actorで確認し、原作ShotFailedIntervalFrm20とのphase意味は未確認。Urchin private physicsは正当なpinned source生成を用い60case完走したがassetsは公開せずhash/countのみ残す。詳細はcontinuation/weapons.mdおよび各receipt。

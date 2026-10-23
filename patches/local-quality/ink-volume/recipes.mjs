@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { INK_LOOK, shotTailFrames, fidelitySlosherDrawRadius, fidelitySlosherDrawTail } from '../../splatoon3/runtime/weapons-fidelity.mjs';
 import { captureRollerVolume, ROLLER_VOLUME } from './roller.mjs';
 import { usesBucketSlosherSheet, sharedBucketDraw, sharedBucketTailLength, projectileDrawRadius } from '../../splatoon3/runtime/projectile-visuals.mjs';
+import { poseBirthOffset } from '../../splatoon3/runtime/catalog-pose-birth.mjs';
 
 const states = new WeakMap();
 const X = new THREE.Vector3(1,0,0), Y = new THREE.Vector3(0,1,0), Z = new THREE.Vector3(0,0,1);
@@ -79,15 +80,30 @@ export function submitInkVolume(engine,p) {
     if(!(radius>0))return false;
     const speed=p.vel.length();s.dir.copy(p.vel);if(speed>1e-8)s.dir.multiplyScalar(1/speed);else s.dir.copy(p._inkVolumeDirection).normalize();
     const frame=p.catalog?.r?.parameters?.spl__BulletShooterTailLengthParam?.MaxLengthFrame,frames=Number.isFinite(frame)&&frame>0?frame:shotTailFrames(p);
-    const length=Math.max(0,Math.min(p.start.distanceTo(p.pos),speed*frames/60)-radius);
+    const travel=p.start.distanceTo(p.pos),retained=speed*frames/60;
+    const length=Math.max(0,Math.min(travel,retained)-radius);
     // RenderGeneral's tip sprite is 0.75 of beam width. Keep that source
     // artwork ratio, while the world's rod width/timing stays the S3 recipe.
     for(const a of s.parts){a.name=name;a.size=radius*2*.75;a.stretch.set(1,1,1);a.rotation.setFromUnitVectors(Z,s.dir);}
     part.pattern=1;part.position.copy(p.pos);
     if(length<1e-6)return engine.submitComposite(p,s.single);
     const back=s.parts[1],rod=s.parts[2];back.pattern=1;back.position.copy(p.pos).addScaledVector(s.dir,-length);
+    // The source volume owner bypasses ProjectileHistory. Join its retained
+    // birth end to the same post-pose socket as the FX/history fallback, but
+    // keep the tip physical and the existing tail-duration detachment rule.
+    // poseBirthOffset rejects pooled/seed-mismatched entries; the resolver has
+    // already rejected prediction, LOS fallback, ghosts and unsafe pose moves.
+    const birth=travel<=retained?poseBirthOffset(p,0):null;
+    let drawnLength=length;
     rod.pattern=0;rod.size=radius*2;rod.position.copy(p.pos).addScaledVector(s.dir,-length*.5);rod.rotation.setFromUnitVectors(X,s.dir);
-    const image=asset.patterns[0];rod.stretch.x=length/(radius*2*image.aspect);
+    if(birth){
+      back.position.set(p.start.x+birth.x,p.start.y+birth.y,p.start.z+birth.z);
+      s.right.copy(p.pos).sub(back.position);drawnLength=s.right.length();
+      if(drawnLength>1e-9)s.right.multiplyScalar(1/drawnLength);else s.right.copy(s.dir);
+      back.rotation.setFromUnitVectors(Z,s.right);
+      rod.position.copy(p.pos).add(back.position).multiplyScalar(.5);rod.rotation.setFromUnitVectors(X,s.right);
+    }
+    const image=asset.patterns[0];rod.stretch.x=drawnLength/(radius*2*image.aspect);
     return engine.submitComposite(p,s.parts);
   }
   return false;

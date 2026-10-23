@@ -1,0 +1,258 @@
+{
+  "issue": 1813,
+  "date": "2026-10-22",
+  "reference": {
+    "game": "Splatoon 3",
+    "version": "11.3.0",
+    "dataCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6"
+  },
+  "change": "Resolve existing sourced Roller/Brush hit bands at actual defense contact before device/canopy reads projectile damage. No new gameplay values or UnitDamageRate interpretation. Stable Big Bubbler dome identity and explicit settlement setter retain the pure query and apply existing target/raw/canopy factors once after catalog band/volley resolution.",
+  "builds": {
+    "old": {
+      "path": ".built-site/issue-resolution-final",
+      "contentHash": "46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4",
+      "inputHash": "d10d948ff89e8d3a03e547c95fb46fbbf4d4892b3322f9c00c20de7f4fb457eb",
+      "runtimeSha256": "293d37ae6171d2965db4a88207a583cc0ef2bb88c175c54aa53e3a2bf1276769"
+    },
+    "new": {
+      "path": ".built-site/weapons-continuation",
+      "contentHash": "29480edcc1b2ecf984e65e532af1f07eb2766b9b09495752b167f9ad9fb16962",
+      "inputHash": "881587c25e992cb63470336a22b009d1cd370a03150f061d1a343f96397cf59c",
+      "runtimeSha256": "cbc834ed0db4a31393e328b5c5b49a4a2280332bc01a386ce5cc90f49115dd84"
+    }
+  },
+  "observations": [
+    {
+      "dynamoAuthority": [
+        {
+          "kind": "player",
+          "unit": 0,
+          "before": 1000,
+          "after": 820,
+          "damage": 180,
+          "resolvedDamage": 0
+        },
+        {
+          "kind": "player",
+          "unit": 1,
+          "before": 1000,
+          "after": 1000,
+          "damage": 0,
+          "resolvedDamage": 0
+        },
+        {
+          "kind": "player",
+          "unit": "native",
+          "before": 1000,
+          "after": 850,
+          "damage": 150,
+          "resolvedDamage": 150
+        },
+        {
+          "kind": "beakon",
+          "unit": 0,
+          "before": 1000,
+          "after": 481.6,
+          "damage": 518.4,
+          "resolvedDamage": 180
+        },
+        {
+          "kind": "beakon",
+          "unit": 1,
+          "before": 1000,
+          "after": 1000,
+          "damage": 0,
+          "resolvedDamage": 0
+        },
+        {
+          "kind": "beakon",
+          "unit": "native",
+          "before": 1000,
+          "after": 568,
+          "damage": 432,
+          "resolvedDamage": 150
+        },
+        {
+          "kind": "canopy",
+          "unit": 0,
+          "before": 200,
+          "after": 20,
+          "damage": 180,
+          "resolvedDamage": 180
+        },
+        {
+          "kind": "canopy",
+          "unit": 1,
+          "before": 200,
+          "after": 200,
+          "damage": 0,
+          "resolvedDamage": 0
+        },
+        {
+          "kind": "canopy",
+          "unit": "native",
+          "before": 200,
+          "after": 50,
+          "damage": 150,
+          "resolvedDamage": 150
+        }
+      ]
+    },
+    {
+      "dynamoSecondaryPaint": {
+        "index": 0,
+        "paintCalls": 2,
+        "claimed": 10.125,
+        "turf": 10.125
+      }
+    },
+    {
+      "dynamoSecondaryPaint": {
+        "index": 1,
+        "paintCalls": 2,
+        "claimed": 10.1875,
+        "turf": 10.1875
+      }
+    },
+    {
+      "dynamoBubblerAuthority": [
+        {
+          "unit": 0,
+          "damage": 1164.9142459443065,
+          "contacts": [
+            {
+              "cachedAtQuery": 0,
+              "settledDamage": 1164.9142459443062,
+              "resolvedProjectileDamage": 101.12102829377659,
+              "applied": 1164.9142459443062,
+              "hpDamage": 1164.9142459443065,
+              "fieldDamage": 0
+            }
+          ]
+        },
+        {
+          "unit": 1,
+          "damage": 0,
+          "contacts": []
+        },
+        {
+          "unit": "native",
+          "damage": 1020.7038939505983,
+          "contacts": [
+            {
+              "cachedAtQuery": 1020.7038939505991,
+              "settledDamage": 1020.7038939505991,
+              "resolvedProjectileDamage": 150,
+              "applied": 1020.7038939505991,
+              "hpDamage": 1020.7038939505983,
+              "fieldDamage": 0
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "receipts": {
+    "source": {
+      "path": ".ci-scratch/continuation-weapons/dynamo-authority-cpu-paint.log",
+      "sha256": "efbc37cd4250f0544b07101678258ddba99c8c940e377e13fdadd14f1063f603",
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 2914.624216
+    },
+    "newEmittedPositiveSelection": {
+      "path": ".ci-scratch/continuation-weapons/flick-new-emitted-selected.log",
+      "sha256": "985ef1e98f4ca0a97754d38f24be59bd1c2574c56872c66ddca7de573a8a0f9e",
+      "tests": 3,
+      "pass": 3,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 20381.864853,
+      "includes": "#1812 actual-flight 780 + both #1813 tests"
+    },
+    "oldEmittedNegative": {
+      "path": ".ci-scratch/continuation-weapons/dynamo-old-emitted-negative-final.log",
+      "sha256": "a83ca5a66c2bccc9e333995a7bda9842332d655e68a8d301ff5c9a85ffd2614f",
+      "tests": 2,
+      "pass": 1,
+      "fail": 1,
+      "skipped": 0,
+      "durationMs": 3729.699568,
+      "expectedFailure": "beakon positive unit proves this exact geometric collision route reaches its target"
+    },
+    "affectedCanopy": {
+      "path": ".ci-scratch/continuation-weapons/flick-brella-focused.log",
+      "sha256": "87354f8dcea98f01dbea3338bf1bc9840c0b79847337c4fbfc87b74147566585",
+      "tests": 4,
+      "pass": 4,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 4729.382869
+    },
+    "affectedDeviceRates": {
+      "path": ".ci-scratch/continuation-weapons/flick-object-rate-focused.log",
+      "sha256": "89743038015adade3e1cf6b778e21c243fd158cad9ac5d4ab277492dd8a8a787",
+      "tests": 3,
+      "pass": 3,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 2577.754919
+    },
+    "broaderResourceFailure": {
+      "path": ".ci-scratch/continuation-weapons/flick-object-regressions.log",
+      "sha256": "cf6f6910fba1a9848be8201619cdfbb40258fe7e0ba9b5a9761740f3305ea883",
+      "status": "preserved heap exhaustion in two broad file suites at 768MiB; not a full pass"
+    },
+    "unfilteredEmittedCounterfactuals": {
+      "path": ".ci-scratch/continuation-weapons/flick-new-emitted.log",
+      "sha256": "4ad2b9e9c85c428fee5014c0997a7fed56fe3cf1f0bff5c0f174cdea3117cdd7",
+      "pass": 11,
+      "fail": 2,
+      "scope": "source-only mutation controls do not modify emitted artifacts; retained as failures; production-positive selection reported separately"
+    },
+    "sourceFinalWithBubbler": {
+      "path": ".ci-scratch/continuation-weapons/dynamo-authority-settlement-final.log",
+      "sha256": "900f43190af8d3d958670635cb6d05a6d9aa2aa7053d5e863f73d18e67a71086",
+      "tests": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 9822.608392
+    },
+    "bubblerOldEmittedNegative": {
+      "path": ".ci-scratch/continuation-weapons/dynamo-bubbler-emitted-negative.log",
+      "sha256": "1164821789fa06d6bdc306b22a52cd8875b9373c131b97eeeea51cdcff50c22f",
+      "status": "expected failure: positive Dynamo reaches actual dome but query-time cached damage is zero",
+      "contentHash": "8c108a1c65f8c22912494a2cdb030a64037f300120f1ea04c5849b68c9575864"
+    }
+  },
+  "limits": [
+    "Actual Actor/WeaponRunner/projectile/collision and CPU PaintSystem, with Character/movement fixture stubs and controlled target staging.",
+    "No hardware, rendered acceptance or Nintendo zero-unit interpretation is established.",
+    "Latest issue author condition keeps UnitDamageRate=0 independent Nintendo meaning open.",
+    "Private geometry is not included.",
+    "Earlier emitted2/2/780 positive receipt predates the Bubbler setter; final3-test emitted acceptance must bind the final isolated weapon-only build."
+  ],
+  "earlierNarrowFreeze": {
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs": "d1f4a68ea6d8a7ac60a69c1720a9558374ca9f4147736b50ff8a05ea8c21e35e",
+    "patches/splatoon3/tests/issue-1813-dynamo-unit-authority-live.test.mjs": "f4d22974e9cdf6b1ad17b80913db1b8ec6f2c8b6ab2ae4875f3720b7a6399d72"
+  },
+  "files": {
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs": "f111d9f021119ce902188d7d55a901d466db7939af7c1ffe4fd0e5055a1f2a16",
+    "patches/splatoon3/runtime/kit-big-bubbler.mjs": "acded6f40be219075978696983fb0bd84e91d54ce85362b4c5812e6580189c3e",
+    "patches/splatoon3/tests/issue-1813-dynamo-unit-authority-live.test.mjs": "fccdc39de8d249706202b3f96452776cc3fcb2435ac565f34929f94cd75eaeba",
+    "patches/splatoon3/tests/kit-big-bubbler-contact-settlement.test.mjs": "810c5e5517db684f53c1f2db745fa1ea43d684aff1d6d46f2d825a3abcccd52a"
+  },
+  "finalIsolatedBuildAcceptance": {
+    "receipt": "weapon-only-final-acceptance.json",
+    "contentHash": "d3d77b98076f1f1ca251c9c6968e1339bc648de1239720883e71204ec39bd718",
+    "inputHash": "84571b440d934b2d576c7699ae48c420d5aa9c83db5f8a6f217a03f1d45a452e",
+    "emittedPositiveTests": 5,
+    "pass": 5,
+    "fail": 0,
+    "skip": 0,
+    "durationMs": 42972.408676
+  }
+}
