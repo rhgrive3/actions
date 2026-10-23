@@ -1,0 +1,10 @@
+{
+  "name": "inkwave-sheet-v2-verification-tools",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "esbuild": "0.28.2",
+    "playwright": "1.62.1",
+    "ws": "8.22.0"
+  }
+}

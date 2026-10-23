@@ -1,0 +1,204 @@
+{
+  "schema": 1,
+  "epoch": "main7e-sixway-sheet-birth-v2",
+  "historicalContract": "unchanged; v1 remains rejecting c55",
+  "base": {
+    "commit": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+    "tree": "965c98442df0c42cd092f7a6eb9b0535f51b8b38"
+  },
+  "v1": {
+    "six": {
+      "commit": "7c8a5ebf10c27411025522fe1d362c81c1e89e4a",
+      "tree": "1931a39ebab081375b5ff7b54c576c9d3ebefde7"
+    },
+    "fixtureQA": {
+      "commit": "0cabb66c92c07eecc7e649ddb74d26fcab8e02a1",
+      "tree": "8d726abff9665ed7c8fcad77af188e22006f6fed"
+    },
+    "inventorySha256": "be9782496f38b321b58152919a959a0f983082e0c2fa6602ed64d6bb1f41c94d",
+    "build": {
+      "inputHash": "09589df9b999fcad5c6ae7db6d9ad4519816ff0231736f2f5492ea4a1ff83003",
+      "contentHash": "8e3a99d990ef0f2185c0b013386c24b8e1c676975927a255efd6808ff2b0e09f",
+      "revision": "dc0e75e02fade00360f07355c9d8c629113bd904b532eda0dbcce52f77813baa",
+      "esbuild": "0.28.2",
+      "optimization": "esbuild-minify",
+      "inputs": 1426,
+      "artifacts": 2120
+    },
+    "buildManifestSha256": "633795a82c8f673ba7b256d4ab9f4521717a97c71c472a5b57e57ea27342e7d8"
+  },
+  "v2": {
+    "candidate": {
+      "commit": "c55cdcb4dc607e5fe26fbf703001ba4c94083402",
+      "tree": "daf9b1bd65ef9408d78c2dd5aa1bfe04fd7ac330"
+    },
+    "parent": "baf2b738b897d49df04aba70fcd88017ad7c79da",
+    "inventorySha256": "477c44922eef210612f9502649336d8b33a95d6cc5940a54aa07112667a77ac9",
+    "build": {
+      "inputHash": "bc94b8a80c6f2cae21e2c34cca7dd20239e0bf5f5a4cd2460fee416a0af94d3f",
+      "contentHash": "eb7f9690bde28e66f5365c7768ef82a85298a666ffbe055a48d516ccf06c21a7",
+      "revision": "ab8f27ea7f5e05b5ba67bdde61f1fe520e3ebf0d4fb0c8337021d4921a284191",
+      "inputs": 1426,
+      "artifacts": 2120,
+      "optimization": "esbuild-minify",
+      "esbuild": "0.28.2"
+    },
+    "buildManifestSha256": "477e00d5fb3bfedf111b796e6d15820a0e4f521678e32949d5f0de28aa84f467",
+    "baseLeaves": 6254,
+    "candidateLeaves": 7246,
+    "newProductionRows": [
+      {
+        "path": "patches/splatoon3/runtime/s3-projectile-shapes.mjs",
+        "mode": "100644",
+        "sha": "b788e93b9620b98f4f5d007466336d222710d888",
+        "sha256": "8614565e8a7b7245ab2a1a3bd9a947bede90bc26806bcc812a8e7a8bb0fe7ce9"
+      }
+    ],
+    "unchangedProductionRows": [
+      {
+        "path": "inkwave-public/src/net/transport.js",
+        "mode": "100644",
+        "sha": "331b19f8eca109027138498a8beab2a8eb24c1d3",
+        "sha256": "8869f2c1db3328ab98e28ce1903207da5d304049932b3a45154d2a16860a402e"
+      },
+      {
+        "path": "patches/local-quality/s3-hud-look-adapter.mjs",
+        "mode": "100644",
+        "sha": "0bc60b0c9bbb0a4be1931f43e3c7d352c15b39a0",
+        "sha256": "92d36417080940b284b8754ce5c3f2af771f6b42e2d7c590e7beb729e2281579"
+      },
+      {
+        "path": "patches/splatoon3/firing-cosmetics-adapter.mjs",
+        "mode": "100644",
+        "sha": "19f4236fabcdcc99fd38253a3a87f3436b026a7b",
+        "sha256": "264ab6f40fd2970de39a4ffd0c54f142683544b072169ef74dcace219ceaef6f"
+      },
+      {
+        "path": "patches/splatoon3/runtime/area-special-vfx-clock.mjs",
+        "mode": "100644",
+        "sha": "ab89853da521ba320d2973da32eed25bad824ff2",
+        "sha256": "33a7665957f01ab4daa3e1b3b2871c8511432b11a315fa7bd6e2d77f4ba829df"
+      },
+      {
+        "path": "patches/splatoon3/runtime/projectile-presentation.mjs",
+        "mode": "100644",
+        "sha": "54f90896181bd28feefbd0bdff2c9347db03265f",
+        "sha256": "38bcf7cb73b1cd6c1f755b7b8ffcc39c2fb384fd2973f3976a2b634f05493910"
+      },
+      {
+        "path": "patches/splatoon3/runtime/respawn-lifecycle.mjs",
+        "mode": "100644",
+        "sha": "b33bc03d59ce7625cebec4603a24ec9f4475ffcd",
+        "sha256": "3950009e94d2afbe50f89897ce4e31409b1088ecfaaaa276b9b1f1943196621f"
+      },
+      {
+        "path": "patches/splatoon3/runtime/roller-detail-motion.mjs",
+        "mode": "100644",
+        "sha": "3b73ea41616362487b69b75b0b42e13bf58d9980",
+        "sha256": "90529a44115980da5c63af34905d157da8134075da59cbcc0eb2cb65b47dc228"
+      },
+      {
+        "path": "patches/splatoon3/runtime/roller.mjs",
+        "mode": "100644",
+        "sha": "df2851585c5281efafb135f21e8dafa1621eb206",
+        "sha256": "0ba7a5cd6edb7f178fa055bbc2c19c609f10d5ed85768f71a02c50c33db33533"
+      },
+      {
+        "path": "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+        "mode": "100644",
+        "sha": "523afbd9e550f2b65d2848eec89d445bac270f12",
+        "sha256": "3b4a10c2e9a956c68005116425f9c14b8025e6cd471afc5d82b2350d0ceed50d"
+      },
+      {
+        "path": "patches/splatoon3/runtime/spawn-exclusion.mjs",
+        "mode": "100644",
+        "sha": "4b68c6d7a3f4223521ca316792e1e76e6f7b71aa",
+        "sha256": "15ce9f42f70ceaa4dc4c2ba10c125227a0eca8ca422a2dd277f853fb7fb26f38"
+      },
+      {
+        "path": "patches/splatoon3/runtime/spawn-pose-motion.mjs",
+        "mode": "100644",
+        "sha": "2e0034b7cd09650301b65e7ab18757420e5f5044",
+        "sha256": "1756151408ac7e6a27ae97b4ce62044bea04d9782924928b96b7a30112663dde"
+      },
+      {
+        "path": "patches/splatoon3/runtime/special-motion.mjs",
+        "mode": "100644",
+        "sha": "a4c86517cee3a825cc0160f6cf3088410ff27b32",
+        "sha256": "a3194e8a627686c18893ddd9c8985bb051324f29b0cc2fddbe4d4d58d4860c50"
+      },
+      {
+        "path": "patches/splatoon3/runtime/special-presentation.mjs",
+        "mode": "100644",
+        "sha": "90e867dba6bfc4e450b08d1478da0ae310e255a5",
+        "sha256": "805133fad74e144c7f63890ad5f09ce648c04a870445e207ffa41de1d76034e4"
+      },
+      {
+        "path": "patches/splatoon3/runtime/special-vfx.mjs",
+        "mode": "100644",
+        "sha": "c2e921d822f9dee48a330567d977be3f7b0cff81",
+        "sha256": "49376532199d68253b2fb05c3ac54260d0650959bfea4ba13f8c13465f51b75c"
+      },
+      {
+        "path": "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+        "mode": "100644",
+        "sha": "1a0909ac79aeed0e059b7730d31de3a463f6dca4",
+        "sha256": "f230328b269e8c3d5f2c8daf00adafb080da7c0ad617f8149683593a24aebba7"
+      },
+      {
+        "path": "patches/splatoon3/runtime/weapon-handoff-motion.mjs",
+        "mode": "100644",
+        "sha": "267763bb5ad147ea56f8cd326672492fb8c19ba8",
+        "sha256": "dc507aa54dcec2aee09fcaea6dc5209b44ba0e635aa3a9d6d959f379005fb916"
+      },
+      {
+        "path": "patches/splatoon3/spawn-exclusion-adapter.mjs",
+        "mode": "100644",
+        "sha": "98b2eae7fa2c98cd2dca0c397cd8d86331ff6f10",
+        "sha256": "3acf3e0b1bd759aeca4ab15a9f530502e74cf91a60cfa1bdfde4a0da9fb0b94c"
+      },
+      {
+        "path": "scripts/inkwave-source-composition.mjs",
+        "mode": "100644",
+        "sha": "72cbcd54fd5e2340abec94bd69d2c9a73a4c70f7",
+        "sha256": "ed05babeb6ecc73f2988d3cf3ce4b55a684075f904baf3823a3d0b3aa1d11eb2"
+      },
+      {
+        "path": "scripts/lib/inkwave-build-only-modules.mjs",
+        "mode": "100644",
+        "sha": "64012e646a889ef090b8b0e21cd82d30e0670130",
+        "sha256": "a46aa5dfd05f66a57aafc064315ca2d273c7df442e6dfd509c8f23c3d6b81727"
+      }
+    ],
+    "productionPaths": [
+      "inkwave-public/src/net/transport.js",
+      "patches/local-quality/s3-hud-look-adapter.mjs",
+      "patches/splatoon3/firing-cosmetics-adapter.mjs",
+      "patches/splatoon3/runtime/area-special-vfx-clock.mjs",
+      "patches/splatoon3/runtime/projectile-presentation.mjs",
+      "patches/splatoon3/runtime/respawn-lifecycle.mjs",
+      "patches/splatoon3/runtime/roller-detail-motion.mjs",
+      "patches/splatoon3/runtime/roller.mjs",
+      "patches/splatoon3/runtime/s3-projectile-shapes.mjs",
+      "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+      "patches/splatoon3/runtime/spawn-exclusion.mjs",
+      "patches/splatoon3/runtime/spawn-pose-motion.mjs",
+      "patches/splatoon3/runtime/special-motion.mjs",
+      "patches/splatoon3/runtime/special-presentation.mjs",
+      "patches/splatoon3/runtime/special-vfx.mjs",
+      "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+      "patches/splatoon3/runtime/weapon-handoff-motion.mjs",
+      "patches/splatoon3/spawn-exclusion-adapter.mjs",
+      "scripts/inkwave-source-composition.mjs",
+      "scripts/lib/inkwave-build-only-modules.mjs"
+    ],
+    "newTestRows": [
+      {
+        "path": "patches/splatoon3/tests/s3-fire-birth-cache.test.mjs",
+        "mode": "100644",
+        "sha": "e2ba5edbdf224f8ca211bf534d364f530fc5a26e",
+        "sha256": "cc36f21ec9abf1bb2638cb5380f0506ec3e72b08dd8af958bd2f47265daa93f5"
+      }
+    ]
+  }
+}
