@@ -1,0 +1,25 @@
+desktop main
+desktop main
+desktop main/mode
+desktop main/mode
+desktop main/mode/range
+phone main
+phone main
+phone main/mode
+phone main/mode
+phone main/mode/range
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: normal projectile must reach a real target
+    at file:///workspace/actions/scripts/check-inkwave-reticle-feedback-browser.mjs:57:3 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.19.0

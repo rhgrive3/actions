@@ -1,0 +1,607 @@
+{
+  "before": true,
+  "build": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+  "seed": 1380275273,
+  "errors": [],
+  "scenarios": [
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 720,
+      "touch": false,
+      "entry": {
+        "route": [
+          "main",
+          "mode",
+          "range"
+        ],
+        "gestures": [
+          {
+            "type": "click",
+            "trusted": true,
+            "selector": ".iw-ui [data-id=\"play\"]"
+          },
+          {
+            "type": "click",
+            "trusted": true,
+            "selector": ".iw-ui [data-id=\"mode-range\"]"
+          }
+        ]
+      },
+      "normal": {
+        "ticks": 3,
+        "hits": [
+          {
+            "damage": 36,
+            "killed": false,
+            "weapon": "shooter"
+          }
+        ],
+        "position": [
+          -14.6,
+          -5.551115123125783e-17,
+          0
+        ],
+        "camera": [
+          -14.879999981500543,
+          2.352268313243575,
+          -2.9214649988186108
+        ],
+        "yaw": 0,
+        "pitch": -0.12,
+        "renderer": "WebKit WebGL",
+        "reticle": {
+          "x": 638.7999877929688,
+          "y": 396.5,
+          "width": 0,
+          "height": 0,
+          "top": 396.5,
+          "right": 638.7999877929688,
+          "bottom": 396.5,
+          "left": 638.7999877929688
+        },
+        "kind": "shooter"
+      },
+      "component": {
+        "rows": [
+          {
+            "hz": 30,
+            "target": {
+              "scale": "1.14",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.2",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "first": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.27",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "repeated": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "switched": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "0.0",
+              "retTranslate": "-28px 9px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            }
+          },
+          {
+            "hz": 60,
+            "target": {
+              "scale": "1.14",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "first": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "repeated": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "switched": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "0.0",
+              "retTranslate": "-28px 9px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            }
+          },
+          {
+            "hz": 120,
+            "target": {
+              "scale": "1.14",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "first": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "repeated": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "switched": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "0.0",
+              "retTranslate": "-28px 9px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            }
+          },
+          {
+            "hz": 144,
+            "target": {
+              "scale": "1.14",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "first": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "repeated": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "switched": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "0.0",
+              "retTranslate": "-28px 9px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            }
+          }
+        ],
+        "expired": [
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        "zeroKill": {
+          "scale": "1.45",
+          "rotate": "45deg",
+          "spread": "0.0",
+          "retTranslate": "-28px 9px",
+          "hitTranslate": "",
+          "hitScale": "1.63",
+          "tickTransition": "0.06s",
+          "animations": 4,
+          "hit": "iw-hit is-on",
+          "kill": "iw-kill is-on"
+        },
+        "hidden": {
+          "scale": "1.45",
+          "rotate": "45deg",
+          "spread": "0.0",
+          "retTranslate": "-28px 9px",
+          "hitTranslate": "",
+          "hitScale": "1.63",
+          "tickTransition": "0.06s",
+          "animations": 4,
+          "hit": "iw-hit is-on",
+          "kill": "iw-kill is-on"
+        },
+        "children": 4,
+        "life": true
+      }
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844,
+      "touch": true,
+      "entry": {
+        "route": [
+          "main",
+          "mode",
+          "range"
+        ],
+        "gestures": [
+          {
+            "type": "click",
+            "trusted": true,
+            "selector": ".iw-ui [data-id=\"play\"]"
+          },
+          {
+            "type": "click",
+            "trusted": true,
+            "selector": ".iw-ui [data-id=\"mode-range\"]"
+          }
+        ]
+      },
+      "normal": {
+        "ticks": 180,
+        "hits": [],
+        "position": [
+          -14.6,
+          0.04,
+          0
+        ],
+        "camera": [
+          -14.879999999999999,
+          2.392683145906977,
+          -2.924905328422307
+        ],
+        "yaw": 0,
+        "pitch": -0.12,
+        "renderer": "WebKit WebGL",
+        "reticle": {
+          "x": 195,
+          "y": 422,
+          "width": 0,
+          "height": 0,
+          "top": 422,
+          "right": 195,
+          "bottom": 422,
+          "left": 195
+        },
+        "kind": "shooter"
+      },
+      "component": {
+        "rows": [
+          {
+            "hz": 30,
+            "target": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1",
+              "tickTransition": "0.06s",
+              "animations": 0,
+              "hit": "iw-hit",
+              "kill": "iw-kill"
+            },
+            "first": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.2",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "repeated": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "switched": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "0.0",
+              "retTranslate": "-28px 9px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            }
+          },
+          {
+            "hz": 60,
+            "target": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "first": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "repeated": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "switched": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "0.0",
+              "retTranslate": "-28px 9px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            }
+          },
+          {
+            "hz": 120,
+            "target": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "first": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "repeated": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "switched": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "0.0",
+              "retTranslate": "-28px 9px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            }
+          },
+          {
+            "hz": 144,
+            "target": {
+              "scale": "1",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "first": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "repeated": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "18.3",
+              "retTranslate": "37px -19px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            },
+            "switched": {
+              "scale": "1.12",
+              "rotate": "none",
+              "spread": "0.0",
+              "retTranslate": "-28px 9px",
+              "hitTranslate": "",
+              "hitScale": "1.63",
+              "tickTransition": "0.06s",
+              "animations": 4,
+              "hit": "iw-hit is-on",
+              "kill": "iw-kill"
+            }
+          }
+        ],
+        "expired": [
+          "0",
+          "0",
+          "0",
+          "0"
+        ],
+        "zeroKill": {
+          "scale": "1.45",
+          "rotate": "45deg",
+          "spread": "0.0",
+          "retTranslate": "-28px 9px",
+          "hitTranslate": "",
+          "hitScale": "1.63",
+          "tickTransition": "0.06s",
+          "animations": 4,
+          "hit": "iw-hit is-on",
+          "kill": "iw-kill is-on"
+        },
+        "hidden": {
+          "scale": "1.45",
+          "rotate": "45deg",
+          "spread": "0.0",
+          "retTranslate": "-28px 9px",
+          "hitTranslate": "",
+          "hitScale": "1.63",
+          "tickTransition": "0.06s",
+          "animations": 4,
+          "hit": "iw-hit is-on",
+          "kill": "iw-kill is-on"
+        },
+        "children": 4,
+        "life": true
+      }
+    }
+  ],
+  "acceptance": {
+    "component": "pending",
+    "browser": "pending",
+    "gpu": "SwiftShader only; hardware GPU and Switch unverified"
+  },
+  "status": "failed",
+  "failure": "AssertionError [ERR_ASSERTION]: normal projectile must reach a real target"
+}
