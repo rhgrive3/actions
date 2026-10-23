@@ -1,0 +1,256 @@
+{
+  "head": "2e8d90b8afb6aac057edfbb988fae789ef36cfd3",
+  "run": 39953697907,
+  "coreJob": 120415050551,
+  "aggregateJob": 120431911691,
+  "firstFailingStep": "Check local module and stylesheet references",
+  "command": "node --test scripts/tests/inkwave-local-references.test.mjs",
+  "followingCommandNotReached": "node scripts/check-inkwave-local-references.mjs .",
+  "tests": {
+    "pass": 2,
+    "fail": 5,
+    "failedNames": [
+      "all nine exact production source/site mappings retain pinned bytes and classifications",
+      "source and target byte changes or absent target reject instead of waiving missing imports",
+      "mapped target symlinks cannot escape repository even with matching bytes",
+      "emitted proof requires exact input keys and both root/versioned artifact digests",
+      "known mappings cannot bypass pins through inkwave-public patch shadows"
+    ]
+  },
+  "firstFailure": {
+    "test": "all nine exact production source/site mappings retain pinned bytes and classifications",
+    "testFileLine": "scripts/tests/inkwave-local-references.test.mjs:14",
+    "checkerLine": "scripts/check-inkwave-local-references.mjs:107",
+    "message": "Pinned reference source mismatch: inkwave-public/src/game/nav.js"
+  },
+  "pinChecks": [
+    {
+      "source": "inkwave-public/src/game/nav.js",
+      "ref": "../../patches/native-stages/runtime/engine.mjs",
+      "role": "source",
+      "path": "inkwave-public/src/game/nav.js",
+      "expectedSHA256": "419738ae4f8e23096b0ead55c9d353dc1e36867965d4515170dbe6046be3db4a",
+      "actualSHA256": "d6fc66dbb6f15957638d29d501e47fe281a68be8d229cfd981bea7b8d9d45e2c",
+      "matchesPin": false,
+      "sameBlobOnMain726": true
+    },
+    {
+      "source": "inkwave-public/src/game/nav.js",
+      "ref": "../../patches/native-stages/runtime/engine.mjs",
+      "role": "target",
+      "path": "patches/native-stages/runtime/engine.mjs",
+      "expectedSHA256": "58b35201cbbe67d54244645faf856d5570f6e09549a04f4b36c3ca4ab669a4ea",
+      "actualSHA256": "0e4312862c7e22923d056af96d68a999c6877f9c3551b7434778f7f656e410de",
+      "matchesPin": false,
+      "sameBlobOnMain726": true
+    },
+    {
+      "source": "inkwave-public/src/world/maps.js",
+      "ref": "../../patches/practice-range/stage/layout.mjs",
+      "role": "source",
+      "path": "inkwave-public/src/world/maps.js",
+      "expectedSHA256": "cbe20f7a354d2860429d12701af7730f96377589e0d9dbef9dda7c60b1e196f4",
+      "actualSHA256": "cbe20f7a354d2860429d12701af7730f96377589e0d9dbef9dda7c60b1e196f4",
+      "matchesPin": true,
+      "sameBlobOnMain726": true
+    },
+    {
+      "source": "inkwave-public/src/world/maps.js",
+      "ref": "../../patches/practice-range/stage/layout.mjs",
+      "role": "target",
+      "path": "patches/practice-range/stage/layout.mjs",
+      "expectedSHA256": "8903cb70167972cac2388dbb5f92f7b70ed2abb032a6971df8b7c84c84014acb",
+      "actualSHA256": "8903cb70167972cac2388dbb5f92f7b70ed2abb032a6971df8b7c84c84014acb",
+      "matchesPin": true,
+      "sameBlobOnMain726": true
+    },
+    {
+      "source": "inkwave-public/src/world/maps.js",
+      "ref": "../../patches/native-stages/runtime/registry.mjs",
+      "role": "source",
+      "path": "inkwave-public/src/world/maps.js",
+      "expectedSHA256": "cbe20f7a354d2860429d12701af7730f96377589e0d9dbef9dda7c60b1e196f4",
+      "actualSHA256": "cbe20f7a354d2860429d12701af7730f96377589e0d9dbef9dda7c60b1e196f4",
+      "matchesPin": true,
+      "sameBlobOnMain726": true
+    },
+    {
+      "source": "inkwave-public/src/world/maps.js",
+      "ref": "../../patches/native-stages/runtime/registry.mjs",
+      "role": "target",
+      "path": "patches/native-stages/runtime/registry.mjs",
+      "expectedSHA256": "bec89cade19764800de9bf5abd781c488c3e204e42f9033f58515646b051039b",
+      "actualSHA256": "bec89cade19764800de9bf5abd781c488c3e204e42f9033f58515646b051039b",
+      "matchesPin": true,
+      "sameBlobOnMain726": true
+    },
+    {
+      "source": "inkwave-public/src/world/maps.js",
+      "ref": "../../patches/splatoon3/stage/scorch-layout.mjs",
+      "role": "source",
+      "path": "inkwave-public/src/world/maps.js",
+      "expectedSHA256": "cbe20f7a354d2860429d12701af7730f96377589e0d9dbef9dda7c60b1e196f4",
+      "actualSHA256": "cbe20f7a354d2860429d12701af7730f96377589e0d9dbef9dda7c60b1e196f4",
+      "matchesPin": true,
+      "sameBlobOnMain726": true
+    },
+    {
+      "source": "inkwave-public/src/world/maps.js",
+      "ref": "../../patches/splatoon3/stage/scorch-layout.mjs",
+      "role": "target",
+      "path": "patches/splatoon3/stage/scorch-layout.mjs",
+      "expectedSHA256": "898f0f021e4c2c38dd060598f1d27f3cafc45430788b6f0db560d6f502a1d9c0",
+      "actualSHA256": "898f0f021e4c2c38dd060598f1d27f3cafc45430788b6f0db560d6f502a1d9c0",
+      "matchesPin": true,
+      "sameBlobOnMain726": true
+    },
+    {
+      "source": "inkwave-public/src/world/stages/surfaces.js",
+      "ref": "../../../patches/practice-range/stage/surfaces.mjs",
+      "role": "source",
+      "path": "inkwave-public/src/world/stages/surfaces.js",
+      "expectedSHA256": "e62996527e177450d2060ff00518ee602b7006d918bc68485f7679b4cb2f38fd",
+      "actualSHA256": "e62996527e177450d2060ff00518ee602b7006d918bc68485f7679b4cb2f38fd",
+      "matchesPin": true,
+      "sameBlobOnMain726": true
+    },
+    {
+      "source": "inkwave-public/src/world/stages/surfaces.js",
+      "ref": "../../../patches/practice-range/stage/surfaces.mjs",
+      "role": "target",
+      "path": "patches/practice-range/stage/surfaces.mjs",
+      "expectedSHA256": "4754a45da6fe0cfe8eaeb3c3f1c9b7df848e2e1a89dea89e9f09ac2e12a557a5",
+      "actualSHA256": "4754a45da6fe0cfe8eaeb3c3f1c9b7df848e2e1a89dea89e9f09ac2e12a557a5",
+      "matchesPin": true,
+      "sameBlobOnMain726": true
+    },
+    {
+      "source": "inkwave-public/src/world/stages/index.js",
+      "ref": "../../../patches/practice-range/stage/props.mjs",
+      "role": "source",
+      "path": "inkwave-public/src/world/stages/index.js",
+      "expectedSHA256": "5f6d1fcd0d6b2ffd0a7027e27d75f7188b91c426999ad37674e3e2669ccacd28",
+      "actualSHA256": "c5de32f49be415435f63930d6459011e8d24d415536df28526aa410f2b3a6295",
+      "matchesPin": false,
+      "sameBlobOnMain726": true
+    },
+    {
+      "source": "inkwave-public/src/world/stages/index.js",
+      "ref": "../../../patches/practice-range/stage/props.mjs",
+      "role": "target",
+      "path": "patches/practice-range/stage/props.mjs",
+      "expectedSHA256": "ba662b0c794d94b03c07fbbdcfaf4c0fcb5bc178624a8c1064f6e1c1877071e4",
+      "actualSHA256": "ba662b0c794d94b03c07fbbdcfaf4c0fcb5bc178624a8c1064f6e1c1877071e4",
+      "matchesPin": true,
+      "sameBlobOnMain726": true
+    },
+    {
+      "source": "inkwave-public/src/world/stages/index.js",
+      "ref": "../../../patches/practice-range/stage/surfaces.mjs",
+      "role": "source",
+      "path": "inkwave-public/src/world/stages/index.js",
+      "expectedSHA256": "5f6d1fcd0d6b2ffd0a7027e27d75f7188b91c426999ad37674e3e2669ccacd28",
+      "actualSHA256": "c5de32f49be415435f63930d6459011e8d24d415536df28526aa410f2b3a6295",
+      "matchesPin": false,
+      "sameBlobOnMain726": true
+    },
+    {
+      "source": "inkwave-public/src/world/stages/index.js",
+      "ref": "../../../patches/practice-range/stage/surfaces.mjs",
+      "role": "target",
+      "path": "patches/practice-range/stage/surfaces.mjs",
+      "expectedSHA256": "4754a45da6fe0cfe8eaeb3c3f1c9b7df848e2e1a89dea89e9f09ac2e12a557a5",
+      "actualSHA256": "4754a45da6fe0cfe8eaeb3c3f1c9b7df848e2e1a89dea89e9f09ac2e12a557a5",
+      "matchesPin": true,
+      "sameBlobOnMain726": true
+    },
+    {
+      "source": "inkwave-public/src/world/stages/index.js",
+      "ref": "../../../patches/practice-range/stage/layout.mjs",
+      "role": "source",
+      "path": "inkwave-public/src/world/stages/index.js",
+      "expectedSHA256": "5f6d1fcd0d6b2ffd0a7027e27d75f7188b91c426999ad37674e3e2669ccacd28",
+      "actualSHA256": "c5de32f49be415435f63930d6459011e8d24d415536df28526aa410f2b3a6295",
+      "matchesPin": false,
+      "sameBlobOnMain726": true
+    },
+    {
+      "source": "inkwave-public/src/world/stages/index.js",
+      "ref": "../../../patches/practice-range/stage/layout.mjs",
+      "role": "target",
+      "path": "patches/practice-range/stage/layout.mjs",
+      "expectedSHA256": "8903cb70167972cac2388dbb5f92f7b70ed2abb032a6971df8b7c84c84014acb",
+      "actualSHA256": "8903cb70167972cac2388dbb5f92f7b70ed2abb032a6971df8b7c84c84014acb",
+      "matchesPin": true,
+      "sameBlobOnMain726": true
+    },
+    {
+      "source": "inkwave-public/src/world/stages/index.js",
+      "ref": "../../../patches/practice-range/stage/murals.mjs",
+      "role": "source",
+      "path": "inkwave-public/src/world/stages/index.js",
+      "expectedSHA256": "5f6d1fcd0d6b2ffd0a7027e27d75f7188b91c426999ad37674e3e2669ccacd28",
+      "actualSHA256": "c5de32f49be415435f63930d6459011e8d24d415536df28526aa410f2b3a6295",
+      "matchesPin": false,
+      "sameBlobOnMain726": true
+    },
+    {
+      "source": "inkwave-public/src/world/stages/index.js",
+      "ref": "../../../patches/practice-range/stage/murals.mjs",
+      "role": "target",
+      "path": "patches/practice-range/stage/murals.mjs",
+      "expectedSHA256": "5541174932dcdc23b272f1afac24b3e761f67ee4c73113415bfa65d079bd38b2",
+      "actualSHA256": "5541174932dcdc23b272f1afac24b3e761f67ee4c73113415bfa65d079bd38b2",
+      "matchesPin": true,
+      "sameBlobOnMain726": true
+    }
+  ],
+  "changedInspectedPathsRelativeToMain726": [],
+  "checkerAndTestIdentities": [
+    {
+      "path": "scripts/check-inkwave-local-references.mjs",
+      "headBlob": "d9bf99790c87ec4bb697e6c74ae0d57d378e9bbb",
+      "mainBlob": "d9bf99790c87ec4bb697e6c74ae0d57d378e9bbb"
+    },
+    {
+      "path": "scripts/tests/inkwave-local-references.test.mjs",
+      "headBlob": "4838afe757b9870cee275443013530b966caaa57",
+      "mainBlob": "4838afe757b9870cee275443013530b966caaa57"
+    }
+  ],
+  "nativeEngineRelativeImports": [
+    "./native-level.mjs",
+    "./native-physics.mjs",
+    "./native-world.mjs",
+    "./native-nav.mjs",
+    "./native-minimap.mjs",
+    "./native-ranked.mjs",
+    "./native-spawn.mjs",
+    "./native-bots.mjs",
+    "./native-climb.mjs",
+    "./native-bot-support.mjs",
+    "./native-bot-form.mjs",
+    "./native-quality.mjs",
+    "./source-menu.mjs",
+    "./rule-availability.mjs",
+    "./native-tower-clearance.mjs",
+    "./native-tower-boarding.mjs",
+    "./native-projectile-sweep.mjs",
+    "./native-ranked.mjs",
+    "./native-spawn.mjs",
+    "./native-drop.mjs",
+    "./native-surge.mjs",
+    "./native-ranked-goals.mjs",
+    "./native-ranked-boarding.mjs",
+    "./native-jump-attach.mjs",
+    "./native-combat-support.mjs",
+    "./native-jump-input.mjs",
+    "./native-approach.mjs"
+  ],
+  "minimalDiagnosis": "Static comparison proves the registry pins are inconsistent with the existing main726 source/target bytes; inspected checker, tests and mapped leaves are unchanged from main726. The first failure precedes intended negative-control checks, so later ENOENT/escape/emitted/shadow assertions see that earlier pin mismatch. The shadow fixture also copies engine.mjs without its relative native-module dependency closure, producing extra missing-import noise. This is a failing QA reference-audit gate, not evidence that the sealed production site has missing imports. The CLI real-root graph check did not run after Node tests exited1.",
+  "secondaryFailures": [
+    "validate aggregate failed because CORE_RESULT=failure; eight patch shards were successful",
+    "Retain bounded Turf finish evidence failed because earlier core failure prevented the later Turf fixture/evidence generation; upload step requires files and found none"
+  ],
+  "repairProposalOnly": "Independently review and refresh exact registry pins to the intended main726 source/target identities; make disposable negative fixtures contain a valid transitive dependency closure before mutating one condition. Preserve unknown-ref, traversal, symlink, build-only and root/versioned emitted-digest rejection. Do not change runtime or merely loosen expected assertions. No repair or rerun was performed."
+}

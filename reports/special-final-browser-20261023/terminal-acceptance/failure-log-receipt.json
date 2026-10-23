@@ -1,0 +1,169 @@
+{
+  "head": "2e8d90b8afb6aac057edfbb988fae789ef36cfd3",
+  "run": 39953697907,
+  "core": {
+    "job": 120415050551,
+    "url": "https://github.com/rhgrive3/actions/actions/runs/39953697907/job/120415050551",
+    "originalDecodedLogSHA256": "aaf4888f67dea8dbec9e23c21fa6a4204f0a5d4f67a660d6dd9251b22e1129c8",
+    "originalBytes": 1898034,
+    "publishedStepLineRange": [
+      26338,
+      26604
+    ],
+    "publishedStepSHA256": "8f124c37a070c28eff5c196339c02bcc29bc65aaa691cda7708588359870b5ce",
+    "result": {
+      "tests": 7,
+      "pass": 2,
+      "fail": 5
+    },
+    "firstError": "Pinned reference source mismatch: inkwave-public/src/game/nav.js"
+  },
+  "active": {
+    "job": 120415050667,
+    "url": "https://github.com/rhgrive3/actions/actions/runs/39953697907/job/120415050667",
+    "originalDecodedLogSHA256": "c6ded30afe153ac5cf557fd70016324d5e784d00cef5b15f7a9c6cbffc322af0",
+    "originalBytes": 239482,
+    "jobConclusion": "failure",
+    "stepConclusion": "cancelled",
+    "selectedOriginalLines": [
+      {
+        "line": 69,
+        "text": "2026-10-23T12:42:59.1387681Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 266,
+        "text": "2026-10-23T12:43:09.6517614Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 295,
+        "text": "2026-10-23T12:43:10.4976359Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 324,
+        "text": "2026-10-23T12:43:11.3841994Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 357,
+        "text": "2026-10-23T12:43:13.1786131Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 394,
+        "text": "2026-10-23T12:43:19.5845126Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 434,
+        "text": "2026-10-23T12:43:24.6277441Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 1635,
+        "text": "2026-10-23T12:44:15.9158733Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 1652,
+        "text": "2026-10-23T12:44:17.8701805Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 1767,
+        "text": "2026-10-23T12:44:57.3141071Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 1853,
+        "text": "2026-10-23T12:44:58.5912237Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 1879,
+        "text": "2026-10-23T12:49:08.2545153Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 1896,
+        "text": "2026-10-23T12:50:07.1693872Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 1913,
+        "text": "2026-10-23T12:50:59.8623938Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 1931,
+        "text": "2026-10-23T12:51:01.5602755Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 1950,
+        "text": "2026-10-23T12:51:11.6582586Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 1969,
+        "text": "2026-10-23T12:51:36.3919999Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 1988,
+        "text": "2026-10-23T12:51:59.7868139Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 2006,
+        "text": "2026-10-23T12:52:37.6912384Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 2023,
+        "text": "2026-10-23T12:53:36.4542067Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 2040,
+        "text": "2026-10-23T12:54:43.4456235Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 2057,
+        "text": "2026-10-23T12:57:28.4588312Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 2074,
+        "text": "2026-10-23T13:01:32.5331634Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 2144,
+        "text": "2026-10-23T13:02:12.8083684Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 2162,
+        "text": "2026-10-23T13:03:37.5388276Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 2266,
+        "text": "2026-10-23T13:03:38.2218761Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 2283,
+        "text": "2026-10-23T13:04:14.6762988Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 2300,
+        "text": "2026-10-23T13:04:41.6982595Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 2314,
+        "text": "2026-10-23T13:04:45.0313544Z \u001b[36;1mnode scripts/check-inkwave-idle-resources.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/idle-resources\" --profile-dir \"$CI_STORAGE/cache/idle-resources\" --exact-source\u001b[0m"
+      },
+      {
+        "line": 2317,
+        "text": "2026-10-23T13:04:45.0378888Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3"
+      },
+      {
+        "line": 2329,
+        "text": "2026-10-23T13:17:43.5572479Z ##[error]The runner has received a shutdown signal. This can happen when the runner service is stopped, or a manually started runner is canceled."
+      },
+      {
+        "line": 2330,
+        "text": "2026-10-23T13:17:44.4262664Z page.evaluate: Target page, context or browser has been closed"
+      },
+      {
+        "line": 2372,
+        "text": "2026-10-23T13:17:44.4574157Z     at main (/home/runner/work/actions/actions/scripts/check-inkwave-idle-resources.mjs:168:25) {"
+      },
+      {
+        "line": 2375,
+        "text": "2026-10-23T13:17:44.7240017Z ##[error]The operation was canceled."
+      }
+    ],
+    "diagnosis": "Runner shutdown precedes page/context closure at line168 GPU identity read. No assertion failure or job-timeout message is shown. Initiator/cause of runner shutdown cannot be established from this log. Remaining steps were skipped; this is incomplete browser coverage."
+  },
+  "preservation": "Full original decoded logs and official raw responses remain unchanged in the saved workspace terminal-acceptance directory. Setup/checkout sections are not republished."
+}

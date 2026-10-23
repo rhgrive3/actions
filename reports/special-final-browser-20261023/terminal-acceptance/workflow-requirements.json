@@ -1,0 +1,57 @@
+{
+  "sourceHead": "2e8d90b8afb6aac057edfbb988fae789ef36cfd3",
+  "workflowSources": [
+    {
+      "path": ".github/workflows/validate-inkwave-update.yml",
+      "gitBlob": "e8aa7e4f3dc01b902aae907a36cc3b26acfc4ef4",
+      "sha256": "4ef2dabeff98b5fdb399b77b14fdaf59cd2f2a9fdd0127ec25df6b27d6a1a9a2"
+    },
+    {
+      "path": ".github/workflows/inkwave-projectile-visuals.yml",
+      "gitBlob": "a135fdfac91039dc4c63f6b4289924247adb0dc8",
+      "sha256": "8a2c0e88b65abc4bfc16a99810df4cf8b94b70225ed051424680b0af22a54e10"
+    },
+    {
+      "path": ".github/workflows/inkwave-specials-1130.yml",
+      "gitBlob": "db1800b1a708f04228f67b7db98ab265725f1495",
+      "sha256": "27b8a29b4765e63e580f1ffa4f7cb72caccd62d1bc5db9a3a2ff2a7f081c4c7a"
+    },
+    {
+      "path": ".github/workflows/inkwave-main-weapons.yml",
+      "gitBlob": "511391dd6594ea43fe037a637b9de43423855087",
+      "sha256": "38e0aae9bd40f88578174db4073592267cde4f272b3b41edb1cff54cee01144d"
+    },
+    {
+      "path": ".github/workflows/inkwave-ink-volumes.yml",
+      "gitBlob": "20d9175fac18263a73e7c06c8c879f9a687be837",
+      "sha256": "1d29ba558062d069db405dcf39f7e1cb8ee117ec3e2d22709113f06118672b63"
+    },
+    {
+      "path": ".github/workflows/inkwave-crab-gyro.yml",
+      "gitBlob": "cb867a12918e530d3a01706f3b5d85f8bb801116",
+      "sha256": "c9a3661edd30fda6e79b8ba1de5c010da4fc88e909f86a8b1757e54d69d0fbb0"
+    },
+    {
+      "path": ".github/workflows/inkwave-reopened-six.yml",
+      "gitBlob": "b8df8b5c1e5a49b2c21d7dfa8fe0cd3ea3799b98",
+      "sha256": "e28af5f96d708003bdd1ca964d4a6d8c202438c7a2e33d3539a231494d09a4ed"
+    },
+    {
+      "path": ".github/workflows/ci-quality-gate.yml",
+      "gitBlob": "585842f294dc4b79bc9e97a38edcd263de22f25c",
+      "sha256": "e2f2f8b4c1bae316ef235e8fe6dc2761f2034a40cde7b60b4247901e09cd3e38"
+    },
+    {
+      "path": ".github/workflows/inkwave-combined-qa.yml",
+      "gitBlob": "229ab7160f035972baadb9699b3c191fe8067769",
+      "sha256": "6f660bc52fbf94dfdb709ba8b38f591a4c6e4489ad7f9f87f3cf6816db0890fc"
+    }
+  ],
+  "taskRequired": "All applicable automatic exact-head acceptance workflows must succeed. Required does not mean that server branch protection is configured. No gate is waived from an empty server contexts list.",
+  "legitimateSkips": {
+    "combined-QA": "job if github.head_ref == test/inkwave-combined-qa-20261021; false for PR1854 branch",
+    "volume-video-lifecycle-pilot": "workflow_dispatch and inputs.video_lifecycle_pilot; false for ordinary PR",
+    "validate-render-network-wall-diagnostics": "explicit diagnostic_only/dispatch predicates, false for this normal PR acceptance run"
+  },
+  "manualGate": "Broad independent source-admission review remains incomplete, even if all CI tests succeed. Draft remains and merge is not authorized."
+}

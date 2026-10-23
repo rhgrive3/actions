@@ -1,0 +1,497 @@
+{
+  "observedAt": "2026-10-23T13:18:36.895Z",
+  "head": "2e8d90b8afb6aac057edfbb988fae789ef36cfd3",
+  "base": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "main": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "pr": {
+    "number": 1854,
+    "url": "https://github.com/rhgrive3/actions/pull/1854",
+    "state": "open",
+    "draft": true,
+    "merged": false,
+    "head": "inkwave/special-reviewed-main726-20261023",
+    "head_sha": "2e8d90b8afb6aac057edfbb988fae789ef36cfd3",
+    "base_sha": "726e338ac256ba9609086ce65e25a68ddd99df85"
+  },
+  "validateRun": {
+    "id": 39953697907,
+    "head_sha": "2e8d90b8afb6aac057edfbb988fae789ef36cfd3",
+    "status": "completed",
+    "conclusion": "failure",
+    "updated_at": "2026-10-23T13:17:47Z",
+    "html_url": "https://github.com/rhgrive3/actions/actions/runs/39953697907",
+    "run_attempt": 1
+  },
+  "workflows": [
+    {
+      "id": 39953697822,
+      "name": "INKWAVE main-weapon numerical regressions",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 1867,
+      "jobs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953697822/jobs",
+      "logs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953697822/logs",
+      "workflow_id": 380949176
+    },
+    {
+      "id": 39953697737,
+      "name": "INKWAVE 19-special source and runtime boundaries",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 293,
+      "jobs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953697737/jobs",
+      "logs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953697737/logs",
+      "workflow_id": 382836752
+    },
+    {
+      "id": 39953697916,
+      "name": "INKWAVE projectile visuals",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 336,
+      "jobs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953697916/jobs",
+      "logs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953697916/logs",
+      "workflow_id": 381040733
+    },
+    {
+      "id": 39953697768,
+      "name": "INKWAVE Crab Tank and simultaneous touch gyro",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 210,
+      "jobs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953697768/jobs",
+      "logs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953697768/logs",
+      "workflow_id": 387531580
+    },
+    {
+      "id": 39953697752,
+      "name": "INKWAVE combined QA dependency validation",
+      "status": "completed",
+      "conclusion": "skipped",
+      "run_number": 215,
+      "jobs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953697752/jobs",
+      "logs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953697752/logs",
+      "workflow_id": 392076794
+    },
+    {
+      "id": 39953697793,
+      "name": "INKWAVE reopened-six focused regressions",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 2150,
+      "jobs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953697793/jobs",
+      "logs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953697793/logs",
+      "workflow_id": 380208013
+    },
+    {
+      "id": 39953698074,
+      "name": "INKWAVE A+ Quality & Security Gate",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 329,
+      "jobs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953698074/jobs",
+      "logs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953698074/logs",
+      "workflow_id": 391723648
+    },
+    {
+      "id": 39953697839,
+      "name": "INKWAVE alpha volume geometry and game rendering",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 476,
+      "jobs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953697839/jobs",
+      "logs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953697839/logs",
+      "workflow_id": 381477517
+    },
+    {
+      "id": 39953697907,
+      "name": "Validate INKWAVE update",
+      "status": "completed",
+      "conclusion": "failure",
+      "run_number": 4871,
+      "jobs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953697907/jobs",
+      "logs_url": "https://api.github.com/repos/rhgrive3/actions/actions/runs/39953697907/logs",
+      "workflow_id": 367459153
+    }
+  ],
+  "jobs": [
+    {
+      "id": 120414745048,
+      "name": "resource_paint_continuation",
+      "status": "completed",
+      "conclusion": "success",
+      "stepConclusionCounts": {
+        "success": 15,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120414745358,
+      "name": "build_site",
+      "status": "completed",
+      "conclusion": "success",
+      "stepConclusionCounts": {
+        "success": 9,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120414745425,
+      "name": "patch_tests (5)",
+      "status": "completed",
+      "conclusion": "success",
+      "stepConclusionCounts": {
+        "success": 13,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120414745447,
+      "name": "patch_tests (4)",
+      "status": "completed",
+      "conclusion": "success",
+      "stepConclusionCounts": {
+        "success": 13,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120414745452,
+      "name": "seven_claims",
+      "status": "completed",
+      "conclusion": "success",
+      "stepConclusionCounts": {
+        "success": 14,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120414745487,
+      "name": "patch_tests (1)",
+      "status": "completed",
+      "conclusion": "success",
+      "stepConclusionCounts": {
+        "success": 13,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120414745564,
+      "name": "patch_tests (2)",
+      "status": "completed",
+      "conclusion": "success",
+      "stepConclusionCounts": {
+        "success": 13,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120414745600,
+      "name": "patch_tests (0)",
+      "status": "completed",
+      "conclusion": "success",
+      "stepConclusionCounts": {
+        "success": 13,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120414745623,
+      "name": "patch_tests (6)",
+      "status": "completed",
+      "conclusion": "success",
+      "stepConclusionCounts": {
+        "success": 13,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120414745700,
+      "name": "patch_tests (7)",
+      "status": "completed",
+      "conclusion": "success",
+      "stepConclusionCounts": {
+        "success": 13,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120414745725,
+      "name": "patch_tests (3)",
+      "status": "completed",
+      "conclusion": "success",
+      "stepConclusionCounts": {
+        "success": 13,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120414746986,
+      "name": "render-diagnostic",
+      "status": "completed",
+      "conclusion": "skipped",
+      "stepConclusionCounts": {
+        "success": 0,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120414747204,
+      "name": "wall-render-diagnostic",
+      "status": "completed",
+      "conclusion": "skipped",
+      "stepConclusionCounts": {
+        "success": 0,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120414797649,
+      "name": "network-opening-diagnostic",
+      "status": "completed",
+      "conclusion": "skipped",
+      "stepConclusionCounts": {
+        "success": 0,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120415050536,
+      "name": "browser (ui, chromium webkit)",
+      "status": "completed",
+      "conclusion": "success",
+      "stepConclusionCounts": {
+        "success": 25,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 42
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120415050551,
+      "name": "validate_core",
+      "status": "completed",
+      "conclusion": "failure",
+      "stepConclusionCounts": {
+        "success": 52,
+        "failure": 2,
+        "cancelled": 0,
+        "skipped": 39
+      },
+      "nonpassingSteps": [
+        {
+          "name": "Check local module and stylesheet references",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 54
+        },
+        {
+          "name": "Retain bounded Turf finish evidence",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 59
+        }
+      ]
+    },
+    {
+      "id": 120415050561,
+      "name": "browser (startup, chromium webkit)",
+      "status": "completed",
+      "conclusion": "success",
+      "stepConclusionCounts": {
+        "success": 17,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 50
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120415050633,
+      "name": "browser (responsive, chromium webkit)",
+      "status": "completed",
+      "conclusion": "success",
+      "stepConclusionCounts": {
+        "success": 16,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 51
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120415050662,
+      "name": "browser (range, chromium webkit)",
+      "status": "completed",
+      "conclusion": "success",
+      "stepConclusionCounts": {
+        "success": 16,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 51
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120415050667,
+      "name": "browser (active, chromium webkit)",
+      "status": "completed",
+      "conclusion": "failure",
+      "stepConclusionCounts": {
+        "success": 30,
+        "failure": 0,
+        "cancelled": 1,
+        "skipped": 36
+      },
+      "nonpassingSteps": [
+        {
+          "name": "Verify idle music and paused/render-target resources",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "number": 41
+        }
+      ],
+      "completedSuccessfulStepNames": [
+        "Set up job",
+        "Run actions/checkout@v4",
+        "Run actions/setup-node@v4",
+        "Cache verified npm tarballs",
+        "Run actions/download-artifact@v4",
+        "Verify immutable site for this browser shard",
+        "Cache pinned browser executables",
+        "Prepare workspace storage and browser",
+        "Verify emitted renderer and Input resource lifetimes",
+        "Verify PR1171 rendered reticle and GPU paint parity",
+        "Verify minimap observation symmetry and strict failure controls",
+        "Verify active browser behavior and loaded artifact bytes",
+        "Verify both teams wait and launch together at match start",
+        "Verify queued native Showcase weapon selection across render rates",
+        "Verify emitted BVH query equivalence and work reduction in Chromium",
+        "Verify native normal browser pixels bound to production sources",
+        "Compare emitted motion caches with the frozen baseline in Chromium and WebKit",
+        "Verify mobile post depth allocation and exact pixels in Chromium and WebKit",
+        "Verify grate orientation and painted level normals in Chromium and WebKit",
+        "Verify browser movement speed across directions and native firing/rolling transitions",
+        "Verify existing special models, grips, shaders and GPU retirement",
+        "Verify rendered walking contacts and transitions",
+        "Verify rendered sub, Flow and weapon detail transitions",
+        "Verify seven weapon models and source-loaded attack grip ownership",
+        "Verify existing Ballpoint gallery in the current exact-head build",
+        "Verify Flow response lifetime and late-error receipts",
+        "Verify Flow geometry through actual GTAO and GPU disposal",
+        "Verify wall geometry through actual GTAO and GPU disposal",
+        "Verify depth-only shadows and effective reflection budgets on WebGL",
+        "Complete job"
+      ]
+    },
+    {
+      "id": 120415050672,
+      "name": "browser (catalog, chromium)",
+      "status": "completed",
+      "conclusion": "success",
+      "stepConclusionCounts": {
+        "success": 18,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 49
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120415050715,
+      "name": "browser (network, chromium webkit)",
+      "status": "completed",
+      "conclusion": "success",
+      "stepConclusionCounts": {
+        "success": 24,
+        "failure": 0,
+        "cancelled": 0,
+        "skipped": 43
+      },
+      "nonpassingSteps": []
+    },
+    {
+      "id": 120431911691,
+      "name": "validate",
+      "status": "completed",
+      "conclusion": "failure",
+      "stepConclusionCounts": {
+        "success": 2,
+        "failure": 1,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "nonpassingSteps": [
+        {
+          "name": "Require every source and patch regression to pass",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 2
+        }
+      ]
+    }
+  ],
+  "serverPolicy": {
+    "mainProtected": false,
+    "protection": {
+      "enabled": false,
+      "required_status_checks": {
+        "enforcement_level": "off",
+        "contexts": [],
+        "checks": []
+      }
+    },
+    "rulesetsIncludingParents": [],
+    "acceptanceGatesWaived": false
+  },
+  "verdict": "NOT MERGE READY: exact-head Validate failure; active browser incomplete after runner shutdown; independent broad source-admission review incomplete; normal hardware performance not certified.",
+  "noActions": [
+    "No rerun or dispatch",
+    "No runtime/test/workflow repair",
+    "No PR/main/Draft/protection/auth change",
+    "No additional browser probes"
+  ]
+}

@@ -1,0 +1,267 @@
+2026-10-23T13:10:13.3717402Z ##[group]Run node --test scripts/tests/inkwave-local-references.test.mjs
+2026-10-23T13:10:13.3717972Z [36;1mnode --test scripts/tests/inkwave-local-references.test.mjs[0m
+2026-10-23T13:10:13.3718422Z [36;1mnode scripts/check-inkwave-local-references.mjs .[0m
+2026-10-23T13:10:13.3780063Z shell: /usr/bin/bash -e {0}
+2026-10-23T13:10:13.3780330Z env:
+2026-10-23T13:10:13.3780588Z   SOURCE_SHA: 2e8d90b8afb6aac057edfbb988fae789ef36cfd3
+2026-10-23T13:10:13.3781479Z   FOCUSED_EVIDENCE_DIR: /mnt/workspace/.dev-state/agent-work/evidence/inkwave-focused-39953697907-1
+2026-10-23T13:10:13.3782184Z   INKWAVE_TEST_SCRATCH: /mnt/workspace/.dev-state/agent-work/scratch/inkwave-worker-39953697907-1
+2026-10-23T13:10:13.3782665Z   RUNTIME_PERFORMANCE: false
+2026-10-23T13:10:13.3782918Z   REMATCH_CYCLES: 3
+2026-10-23T13:10:13.3783135Z ##[endgroup]
+2026-10-23T13:10:13.4247195Z TAP version 13
+2026-10-23T13:10:13.4981081Z # Subtest: all nine exact production source/site mappings retain pinned bytes and classifications
+2026-10-23T13:10:13.4989569Z not ok 1 - all nine exact production source/site mappings retain pinned bytes and classifications
+2026-10-23T13:10:13.4990519Z   ---
+2026-10-23T13:10:13.5021798Z   duration_ms: 1.734688
+2026-10-23T13:10:13.5022304Z   type: 'test'
+2026-10-23T13:10:13.5023195Z   location: '/home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:14:1'
+2026-10-23T13:10:13.5024147Z   failureType: 'testCodeFailure'
+2026-10-23T13:10:13.5024901Z   error: 'Pinned reference source mismatch: inkwave-public/src/game/nav.js'
+2026-10-23T13:10:13.5025610Z   code: 'ERR_TEST_FAILURE'
+2026-10-23T13:10:13.5025962Z   stack: |-
+2026-10-23T13:10:13.5026566Z     verifyMappedReference (file:///home/runner/work/actions/actions/scripts/check-inkwave-local-references.mjs:107:85)
+2026-10-23T13:10:13.5027557Z     TestContext.<anonymous> (file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:16:53)
+2026-10-23T13:10:13.5028510Z     Test.runInAsyncScope (node:async_hooks:214:14)
+2026-10-23T13:10:13.5028921Z     Test.run (node:internal/test_runner/test:1047:25)
+2026-10-23T13:10:13.5029312Z     Test.start (node:internal/test_runner/test:944:17)
+2026-10-23T13:10:13.5029796Z     startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+2026-10-23T13:10:13.5030192Z   ...
+2026-10-23T13:10:13.5030808Z # Subtest: unknown, additional traversal, changed ref and changed owner are not mapped
+2026-10-23T13:10:13.5031698Z ok 2 - unknown, additional traversal, changed ref and changed owner are not mapped
+2026-10-23T13:10:13.5032116Z   ---
+2026-10-23T13:10:13.5032322Z   duration_ms: 0.554191
+2026-10-23T13:10:13.5032561Z   type: 'test'
+2026-10-23T13:10:13.5032761Z   ...
+2026-10-23T13:10:13.5033269Z # Subtest: source and target byte changes or absent target reject instead of waiving missing imports
+2026-10-23T13:10:13.5034386Z not ok 3 - source and target byte changes or absent target reject instead of waiving missing imports
+2026-10-23T13:10:13.5035230Z   ---
+2026-10-23T13:10:13.5035581Z   duration_ms: 9.16428
+2026-10-23T13:10:13.5035963Z   type: 'test'
+2026-10-23T13:10:13.5036822Z   location: '/home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:23:1'
+2026-10-23T13:10:13.5037762Z   failureType: 'testCodeFailure'
+2026-10-23T13:10:13.5038123Z   error: |-
+2026-10-23T13:10:13.5038458Z     The input did not match the regular expression /ENOENT/. Input:
+2026-10-23T13:10:13.5038806Z     
+2026-10-23T13:10:13.5039178Z     'Error: Pinned reference source mismatch: inkwave-public/src/game/nav.js'
+2026-10-23T13:10:13.5039573Z     
+2026-10-23T13:10:13.5039772Z   code: 'ERR_ASSERTION'
+2026-10-23T13:10:13.5040014Z   name: 'AssertionError'
+2026-10-23T13:10:13.5040252Z   expected:
+2026-10-23T13:10:13.5040449Z   actual:
+2026-10-23T13:10:13.5041416Z   error: 'Pinned reference source mismatch: inkwave-public/src/game/nav.js'
+2026-10-23T13:10:13.5041843Z   stack: |-
+2026-10-23T13:10:13.5042637Z     verifyMappedReference (file:///home/runner/work/actions/actions/scripts/check-inkwave-local-references.mjs:107:85)
+2026-10-23T13:10:13.5043489Z     file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:26:93
+2026-10-23T13:10:13.5044024Z     getActual (node:assert:609:5)
+2026-10-23T13:10:13.5044335Z     Function.throws (node:assert:757:24)
+2026-10-23T13:10:13.5044882Z     file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:26:82
+2026-10-23T13:10:13.5045669Z     fixture (file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:11:107)
+2026-10-23T13:10:13.5046554Z     TestContext.<anonymous> (file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:23:102)
+2026-10-23T13:10:13.5047203Z     Test.runInAsyncScope (node:async_hooks:214:14)
+2026-10-23T13:10:13.5047911Z     Test.run (node:internal/test_runner/test:1047:25)
+2026-10-23T13:10:13.5048775Z     Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+2026-10-23T13:10:13.5049497Z   operator: 'throws'
+2026-10-23T13:10:13.5049873Z   stack: |-
+2026-10-23T13:10:13.5050894Z     file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:26:82
+2026-10-23T13:10:13.5052340Z     fixture (file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:11:107)
+2026-10-23T13:10:13.5053945Z     TestContext.<anonymous> (file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:23:102)
+2026-10-23T13:10:13.5055110Z     Test.runInAsyncScope (node:async_hooks:214:14)
+2026-10-23T13:10:13.5055789Z     Test.run (node:internal/test_runner/test:1047:25)
+2026-10-23T13:10:13.5056619Z     Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+2026-10-23T13:10:13.5057396Z     Test.postRun (node:internal/test_runner/test:1173:19)
+2026-10-23T13:10:13.5057799Z     Test.run (node:internal/test_runner/test:1101:12)
+2026-10-23T13:10:13.5058466Z     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+2026-10-23T13:10:13.5058868Z   ...
+2026-10-23T13:10:13.5059351Z # Subtest: ordinary missing, escaping local refs and runtime build-only imports remain rejected
+2026-10-23T13:10:13.5060088Z ok 4 - ordinary missing, escaping local refs and runtime build-only imports remain rejected
+2026-10-23T13:10:13.5060525Z   ---
+2026-10-23T13:10:13.5061085Z   duration_ms: 4.511512
+2026-10-23T13:10:13.5061329Z   type: 'test'
+2026-10-23T13:10:13.5061537Z   ...
+2026-10-23T13:10:13.5061979Z # Subtest: mapped target symlinks cannot escape repository even with matching bytes
+2026-10-23T13:10:13.5062636Z not ok 5 - mapped target symlinks cannot escape repository even with matching bytes
+2026-10-23T13:10:13.5063043Z   ---
+2026-10-23T13:10:13.5063242Z   duration_ms: 4.544063
+2026-10-23T13:10:13.5063475Z   type: 'test'
+2026-10-23T13:10:13.5063970Z   location: '/home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:36:1'
+2026-10-23T13:10:13.5064530Z   failureType: 'testCodeFailure'
+2026-10-23T13:10:13.5064793Z   error: |-
+2026-10-23T13:10:13.5065167Z     The input did not match the regular expression /escapes repository/. Input:
+2026-10-23T13:10:13.5078636Z     
+2026-10-23T13:10:13.5079448Z     'Error: Pinned reference source mismatch: inkwave-public/src/game/nav.js'
+2026-10-23T13:10:13.5080086Z     
+2026-10-23T13:10:13.5080323Z   code: 'ERR_ASSERTION'
+2026-10-23T13:10:13.5080601Z   name: 'AssertionError'
+2026-10-23T13:10:13.5081183Z   expected:
+2026-10-23T13:10:13.5081425Z   actual:
+2026-10-23T13:10:13.5081843Z   error: 'Pinned reference source mismatch: inkwave-public/src/game/nav.js'
+2026-10-23T13:10:13.5082278Z   stack: |-
+2026-10-23T13:10:13.5082903Z     verifyMappedReference (file:///home/runner/work/actions/actions/scripts/check-inkwave-local-references.mjs:107:85)
+2026-10-23T13:10:13.5083859Z     file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:37:237
+2026-10-23T13:10:13.5084477Z     getActual (node:assert:609:5)
+2026-10-23T13:10:13.5085052Z     Function.throws (node:assert:757:24)
+2026-10-23T13:10:13.5085669Z     file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:37:226
+2026-10-23T13:10:13.5086518Z     fixture (file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:11:107)
+2026-10-23T13:10:13.5088121Z     TestContext.<anonymous> (file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:36:85)
+2026-10-23T13:10:13.5088874Z     Test.runInAsyncScope (node:async_hooks:214:14)
+2026-10-23T13:10:13.5089452Z     Test.run (node:internal/test_runner/test:1047:25)
+2026-10-23T13:10:13.5089945Z     Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+2026-10-23T13:10:13.5090342Z   operator: 'throws'
+2026-10-23T13:10:13.5090570Z   stack: |-
+2026-10-23T13:10:13.5091300Z     file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:37:226
+2026-10-23T13:10:13.5092122Z     fixture (file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:11:107)
+2026-10-23T13:10:13.5093009Z     TestContext.<anonymous> (file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:36:85)
+2026-10-23T13:10:13.5093661Z     Test.runInAsyncScope (node:async_hooks:214:14)
+2026-10-23T13:10:13.5094049Z     Test.run (node:internal/test_runner/test:1047:25)
+2026-10-23T13:10:13.5094517Z     Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+2026-10-23T13:10:13.5094996Z     Test.postRun (node:internal/test_runner/test:1173:19)
+2026-10-23T13:10:13.5095397Z     Test.run (node:internal/test_runner/test:1101:12)
+2026-10-23T13:10:13.5095872Z     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+2026-10-23T13:10:13.5096272Z   ...
+2026-10-23T13:10:13.5096745Z # Subtest: emitted proof requires exact input keys and both root/versioned artifact digests
+2026-10-23T13:10:13.5097661Z not ok 6 - emitted proof requires exact input keys and both root/versioned artifact digests
+2026-10-23T13:10:13.5098092Z   ---
+2026-10-23T13:10:13.5098298Z   duration_ms: 1.631774
+2026-10-23T13:10:13.5098532Z   type: 'test'
+2026-10-23T13:10:13.5099024Z   location: '/home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:39:1'
+2026-10-23T13:10:13.5099555Z   failureType: 'testCodeFailure'
+2026-10-23T13:10:13.5099987Z   error: 'Pinned reference source mismatch: inkwave-public/src/game/nav.js'
+2026-10-23T13:10:13.5100404Z   code: 'ERR_TEST_FAILURE'
+2026-10-23T13:10:13.5101014Z   stack: |-
+2026-10-23T13:10:13.5101633Z     verifyMappedReference (file:///home/runner/work/actions/actions/scripts/check-inkwave-local-references.mjs:107:85)
+2026-10-23T13:10:13.5102460Z     file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:42:133
+2026-10-23T13:10:13.5103244Z     fixture (file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:11:107)
+2026-10-23T13:10:13.5104136Z     TestContext.<anonymous> (file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:39:93)
+2026-10-23T13:10:13.5104828Z     Test.runInAsyncScope (node:async_hooks:214:14)
+2026-10-23T13:10:13.5105215Z     Test.run (node:internal/test_runner/test:1047:25)
+2026-10-23T13:10:13.5105679Z     Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+2026-10-23T13:10:13.5106156Z     Test.postRun (node:internal/test_runner/test:1173:19)
+2026-10-23T13:10:13.5106550Z     Test.run (node:internal/test_runner/test:1101:12)
+2026-10-23T13:10:13.5107025Z     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+2026-10-23T13:10:13.5107426Z   ...
+2026-10-23T13:10:13.5107893Z # Subtest: known mappings cannot bypass pins through inkwave-public patch shadows
+2026-10-23T13:10:13.5108556Z not ok 7 - known mappings cannot bypass pins through inkwave-public patch shadows
+2026-10-23T13:10:13.5108957Z   ---
+2026-10-23T13:10:13.5109169Z   duration_ms: 9.111851
+2026-10-23T13:10:13.5109400Z   type: 'test'
+2026-10-23T13:10:13.5110070Z   location: '/home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:48:1'
+2026-10-23T13:10:13.5110862Z   failureType: 'testCodeFailure'
+2026-10-23T13:10:13.5111266Z   error: |-
+2026-10-23T13:10:13.5111691Z     The input did not match the regular expression /Unexpected source\/site shadow/. Input:
+2026-10-23T13:10:13.5112113Z     
+2026-10-23T13:10:13.5113020Z     'Error: MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-level.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-level.mjs\n' +
+2026-10-23T13:10:13.5114592Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-physics.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-physics.mjs\n' +
+2026-10-23T13:10:13.5116145Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-world.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-world.mjs\n' +
+2026-10-23T13:10:13.5117646Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-nav.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-nav.mjs\n' +
+2026-10-23T13:10:13.5119164Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-minimap.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-minimap.mjs\n' +
+2026-10-23T13:10:13.5120939Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-ranked.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-ranked.mjs\n' +
+2026-10-23T13:10:13.5122601Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-spawn.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-spawn.mjs\n' +
+2026-10-23T13:10:13.5124283Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-bots.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-bots.mjs\n' +
+2026-10-23T13:10:13.5125779Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-climb.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-climb.mjs\n' +
+2026-10-23T13:10:13.5127340Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-bot-support.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-bot-support.mjs\n' +
+2026-10-23T13:10:13.5128924Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-bot-form.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-bot-form.mjs\n' +
+2026-10-23T13:10:13.5130475Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-quality.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-quality.mjs\n' +
+2026-10-23T13:10:13.5132264Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./source-menu.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./source-menu.mjs\n' +
+2026-10-23T13:10:13.5133867Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./rule-availability.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./rule-availability.mjs\n' +
+2026-10-23T13:10:13.5135541Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-tower-clearance.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-tower-clearance.mjs\n' +
+2026-10-23T13:10:13.5137363Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-tower-boarding.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-tower-boarding.mjs\n' +
+2026-10-23T13:10:13.5139073Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-projectile-sweep.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-projectile-sweep.mjs\n' +
+2026-10-23T13:10:13.5141532Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-drop.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-drop.mjs\n' +
+2026-10-23T13:10:13.5144355Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-surge.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-surge.mjs\n' +
+2026-10-23T13:10:13.5146806Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-ranked-goals.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-ranked-goals.mjs\n' +
+2026-10-23T13:10:13.5148486Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-ranked-boarding.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-ranked-boarding.mjs\n' +
+2026-10-23T13:10:13.5150146Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-jump-attach.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-jump-attach.mjs\n' +
+2026-10-23T13:10:13.5152161Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-combat-support.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-combat-support.mjs\n' +
+2026-10-23T13:10:13.5153798Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-jump-input.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-jump-input.mjs\n' +
+2026-10-23T13:10:13.5155571Z       'MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-approach.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-approach.mjs\n' +
+2026-10-23T13:10:13.5156938Z       'MISSING inkwave-public/src/game/nav.js ../../patches/native-stages/runtime/engine.mjs Pinned reference source mismatch: inkwave-public/src/game/nav.js\n' +
+2026-10-23T13:10:13.5158085Z       'MISSING inkwave-public/src/game/nav.js ../config.js Unknown source/site reference: inkwave-public/src/game/nav.js -> ../config.js\n' +
+2026-10-23T13:10:13.5159183Z       'MISSING inkwave-public/src/world/maps.js ./mapkit.js Unknown source/site reference: inkwave-public/src/world/maps.js -> ./mapkit.js\n' +
+2026-10-23T13:10:13.5160398Z       'MISSING inkwave-public/src/world/maps.js ./stages/cargo/layout.js Unknown source/site reference: inkwave-public/src/world/maps.js -> ./stages/cargo/layout.js\n' +
+2026-10-23T13:10:13.5162331Z       'MISSING inkwave-public/src/world/stages/index.js ./cargo/layout.js Unknown source/site reference: inkwave-public/src/world/stages/index.js -> ./cargo/layout.js\n' +
+2026-10-23T13:10:13.5163743Z       'MISSING inkwave-public/src/world/stages/index.js ./cargo/props.js Unknown source/site reference: inkwave-public/src/world/stages/index.js -> ./cargo/props.js\n' +
+2026-10-23T13:10:13.5165129Z       'MISSING inkwave-public/src/world/stages/index.js ./cargo/surfaces.js Unknown source/site reference: inkwave-public/src/world/stages/index.js -> ./cargo/surfaces.js\n' +
+2026-10-23T13:10:13.5166475Z       'MISSING inkwave-public/src/world/stages/index.js ./cargo/murals.js Unknown source/site reference: inkwave-public/src/world/stages/index.js -> ./cargo/murals.js\n' +
+2026-10-23T13:10:13.5167868Z       'MISSING inkwave-public/src/world/stages/index.js ../../../patches/practice-range/stage/layout.mjs Pinned reference source mismatch: inkwave-public/src/world/stages/index.js\n' +
+2026-10-23T13:10:13.5169503Z       'MISSING inkwave-public/src/world/stages/index.js ../../../patches/practice-range/stage/props.mjs Pinned reference source mismatch: inkwave-public/src/world/stages/index.js\n' +
+2026-10-23T13:10:13.5172106Z       'MISSING inkwave-public/src/world/stages/index.js ../../../patches/practice-range/stage/surfaces.mjs Pinned reference source mismatch: inkwave-public/src/world/stages/index.js\n' +
+2026-10-23T13:10:13.5173492Z       'MISSING inkwave-public/src/world/stages/index.js ../../../patches/practice-range/stage/murals.mjs Pinned reference source mismatch: inkwave-public/src/world/stages/index.js\n' +
+2026-10-23T13:10:13.5174809Z       'MISSING inkwave-public/src/world/stages/surfaces.js ./cargo/surfaces.js Unknown source/site reference: inkwave-public/src/world/stages/surfaces.js -> ./cargo/surfaces.js'
+2026-10-23T13:10:13.5175555Z     
+2026-10-23T13:10:13.5175760Z   code: 'ERR_ASSERTION'
+2026-10-23T13:10:13.5176021Z   name: 'AssertionError'
+2026-10-23T13:10:13.5176255Z   expected:
+2026-10-23T13:10:13.5176451Z   actual:
+2026-10-23T13:10:13.5176643Z   error: |-
+2026-10-23T13:10:13.5177513Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-level.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-level.mjs
+2026-10-23T13:10:13.5179007Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-physics.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-physics.mjs
+2026-10-23T13:10:13.5180509Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-world.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-world.mjs
+2026-10-23T13:10:13.5182213Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-nav.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-nav.mjs
+2026-10-23T13:10:13.5183879Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-minimap.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-minimap.mjs
+2026-10-23T13:10:13.5185383Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-ranked.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-ranked.mjs
+2026-10-23T13:10:13.5186851Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-spawn.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-spawn.mjs
+2026-10-23T13:10:13.5188310Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-bots.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-bots.mjs
+2026-10-23T13:10:13.5189790Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-climb.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-climb.mjs
+2026-10-23T13:10:13.5191617Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-bot-support.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-bot-support.mjs
+2026-10-23T13:10:13.5193747Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-bot-form.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-bot-form.mjs
+2026-10-23T13:10:13.5196675Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-quality.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-quality.mjs
+2026-10-23T13:10:13.5198448Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./source-menu.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./source-menu.mjs
+2026-10-23T13:10:13.5200215Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./rule-availability.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./rule-availability.mjs
+2026-10-23T13:10:13.5202216Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-tower-clearance.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-tower-clearance.mjs
+2026-10-23T13:10:13.5203859Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-tower-boarding.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-tower-boarding.mjs
+2026-10-23T13:10:13.5205874Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-projectile-sweep.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-projectile-sweep.mjs
+2026-10-23T13:10:13.5207604Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-drop.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-drop.mjs
+2026-10-23T13:10:13.5209408Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-surge.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-surge.mjs
+2026-10-23T13:10:13.5211244Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-ranked-goals.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-ranked-goals.mjs
+2026-10-23T13:10:13.5213347Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-ranked-boarding.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-ranked-boarding.mjs
+2026-10-23T13:10:13.5215244Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-jump-attach.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-jump-attach.mjs
+2026-10-23T13:10:13.5217344Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-combat-support.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-combat-support.mjs
+2026-10-23T13:10:13.5218942Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-jump-input.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-jump-input.mjs
+2026-10-23T13:10:13.5220472Z     MISSING inkwave-public/patches/native-stages/runtime/engine.mjs ./native-approach.mjs Unknown source/site reference: inkwave-public/patches/native-stages/runtime/engine.mjs -> ./native-approach.mjs
+2026-10-23T13:10:13.5222141Z     MISSING inkwave-public/src/game/nav.js ../../patches/native-stages/runtime/engine.mjs Pinned reference source mismatch: inkwave-public/src/game/nav.js
+2026-10-23T13:10:13.5223195Z     MISSING inkwave-public/src/game/nav.js ../config.js Unknown source/site reference: inkwave-public/src/game/nav.js -> ../config.js
+2026-10-23T13:10:13.5224176Z     MISSING inkwave-public/src/world/maps.js ./mapkit.js Unknown source/site reference: inkwave-public/src/world/maps.js -> ./mapkit.js
+2026-10-23T13:10:13.5225290Z     MISSING inkwave-public/src/world/maps.js ./stages/cargo/layout.js Unknown source/site reference: inkwave-public/src/world/maps.js -> ./stages/cargo/layout.js
+2026-10-23T13:10:13.5226483Z     MISSING inkwave-public/src/world/stages/index.js ./cargo/layout.js Unknown source/site reference: inkwave-public/src/world/stages/index.js -> ./cargo/layout.js
+2026-10-23T13:10:13.5227673Z     MISSING inkwave-public/src/world/stages/index.js ./cargo/props.js Unknown source/site reference: inkwave-public/src/world/stages/index.js -> ./cargo/props.js
+2026-10-23T13:10:13.5228868Z     MISSING inkwave-public/src/world/stages/index.js ./cargo/surfaces.js Unknown source/site reference: inkwave-public/src/world/stages/index.js -> ./cargo/surfaces.js
+2026-10-23T13:10:13.5230211Z     MISSING inkwave-public/src/world/stages/index.js ./cargo/murals.js Unknown source/site reference: inkwave-public/src/world/stages/index.js -> ./cargo/murals.js
+2026-10-23T13:10:13.5231933Z     MISSING inkwave-public/src/world/stages/index.js ../../../patches/practice-range/stage/layout.mjs Pinned reference source mismatch: inkwave-public/src/world/stages/index.js
+2026-10-23T13:10:13.5233277Z     MISSING inkwave-public/src/world/stages/index.js ../../../patches/practice-range/stage/props.mjs Pinned reference source mismatch: inkwave-public/src/world/stages/index.js
+2026-10-23T13:10:13.5234577Z     MISSING inkwave-public/src/world/stages/index.js ../../../patches/practice-range/stage/surfaces.mjs Pinned reference source mismatch: inkwave-public/src/world/stages/index.js
+2026-10-23T13:10:13.5235867Z     MISSING inkwave-public/src/world/stages/index.js ../../../patches/practice-range/stage/murals.mjs Pinned reference source mismatch: inkwave-public/src/world/stages/index.js
+2026-10-23T13:10:13.5237171Z     MISSING inkwave-public/src/world/stages/surfaces.js ./cargo/surfaces.js Unknown source/site reference: inkwave-public/src/world/stages/surfaces.js -> ./cargo/surfaces.js
+2026-10-23T13:10:13.5237906Z   stack: |-
+2026-10-23T13:10:13.5238465Z     checkLocalReferences (file:///home/runner/work/actions/actions/scripts/check-inkwave-local-references.mjs:153:27)
+2026-10-23T13:10:13.5239282Z     file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:51:20
+2026-10-23T13:10:13.5239804Z     getActual (node:assert:609:5)
+2026-10-23T13:10:13.5240106Z     Function.throws (node:assert:757:24)
+2026-10-23T13:10:13.5240860Z     file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:51:9
+2026-10-23T13:10:13.5241785Z     fixture (file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:11:107)
+2026-10-23T13:10:13.5242675Z     TestContext.<anonymous> (file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:48:83)
+2026-10-23T13:10:13.5243485Z     Test.runInAsyncScope (node:async_hooks:214:14)
+2026-10-23T13:10:13.5243875Z     Test.run (node:internal/test_runner/test:1047:25)
+2026-10-23T13:10:13.5244338Z     Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+2026-10-23T13:10:13.5244735Z   operator: 'throws'
+2026-10-23T13:10:13.5244952Z   stack: |-
+2026-10-23T13:10:13.5245409Z     file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:51:9
+2026-10-23T13:10:13.5246186Z     fixture (file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:11:107)
+2026-10-23T13:10:13.5247071Z     TestContext.<anonymous> (file:///home/runner/work/actions/actions/scripts/tests/inkwave-local-references.test.mjs:48:83)
+2026-10-23T13:10:13.5247711Z     Test.runInAsyncScope (node:async_hooks:214:14)
+2026-10-23T13:10:13.5248096Z     Test.run (node:internal/test_runner/test:1047:25)
+2026-10-23T13:10:13.5248557Z     Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+2026-10-23T13:10:13.5249035Z     Test.postRun (node:internal/test_runner/test:1173:19)
+2026-10-23T13:10:13.5249425Z     Test.run (node:internal/test_runner/test:1101:12)
+2026-10-23T13:10:13.5249901Z     async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+2026-10-23T13:10:13.5250291Z   ...
+2026-10-23T13:10:13.5250501Z 1..7
+2026-10-23T13:10:13.5250924Z # tests 7
+2026-10-23T13:10:13.5251130Z # suites 0
+2026-10-23T13:10:13.5251326Z # pass 2
+2026-10-23T13:10:13.5251508Z # fail 5
+2026-10-23T13:10:13.5251699Z # cancelled 0
+2026-10-23T13:10:13.5251899Z # skipped 0
+2026-10-23T13:10:13.5252089Z # todo 0
+2026-10-23T13:10:13.5252299Z # duration_ms 101.646592
+2026-10-23T13:10:13.5263072Z ##[error]Process completed with exit code 1.

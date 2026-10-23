@@ -2,6 +2,8 @@
 
 **Production/build-input equivalence passes. The observed common renderer stall is not established as a candidate-specific regression. Exact-head CI is still pending in the recorded snapshot; no final acceptance or merge is claimed.**
 
+**Later terminal result:** [Validate failed; merge-readiness checklist and preserved exact failure](../terminal-acceptance/README.md). The checkpoint below remains the historical observation, not the latest status.
+
 ## Official identity and explicit evidence binding
 
 Official GitHub readback confirms PR1854 open/Draft at `2e8d90b8afb6aac057edfbb988fae789ef36cfd3`, sole parent `4c9b7861038189e709db5e80e64d2a2712f7b877`, tree `54d7fabb65d8148bcdbdfbaf52425bd6645353bb`. The only changed leaf is `scripts/tests/inkwave-reviewed-special-delta-admission.test.mjs`, mode100644, blob `ee7325945233057573b807babec13cd5536b523f`, SHA-256 `8e26e73560f2ee0dce55f30e422cbd70b52bfb8fbc4489d124f836bca5d84ada`. Official file bytes, local fetched Git bytes and the supplied hash agree. The other **6326 of6327 leaves** retain identical path/mode/type/blob, including all production code, build controls, QA drivers and assets.
