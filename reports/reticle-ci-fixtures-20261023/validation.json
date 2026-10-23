@@ -1,0 +1,117 @@
+{
+  "base": "f72ccdb4b11cb76b01dd0567975924cbd6d83c60",
+  "implementation": "fe7ac7a50912b23ad08ca56f415148367baed8c5",
+  "nodeVersion": "v24.19.0",
+  "productionChanges": [],
+  "testFiles": {
+    "patches/reliability/tests/hud-fixture.mjs": {
+      "sha256": "9566641bfc1abbc22bdc3e6185acbbc6300816ae624d32771602e37930caacb7",
+      "gitBlob": "b76cbfff5b8541ae53e71906eec3e8ae3568b212"
+    },
+    "patches/splatoon3/tests/assist-presentation.test.mjs": {
+      "sha256": "a0a0bc1aa0ba4af6933cc11b7f908d9db7aa9aa6e23978733ceb664ccb27487e",
+      "gitBlob": "28ea1279c5dd93b19e5a9722a11f46084bcacf40"
+    },
+    "patches/splatoon3/tests/judd-result-scene.test.mjs": {
+      "sha256": "516eab475230ef0c6f9328336904477d8b204d0cdbfa219e7436ac0329f983d8",
+      "gitBlob": "625d2cf117c8139506a93965f3a0c7d4c2240349"
+    }
+  },
+  "logs": {
+    "f72-before.tap": {
+      "rawSHA256": "4f604aebdec2ae88ffba0ba5738cfd2d8c72c08c726d706f02df9c8431fcacf6",
+      "bytes": 5365,
+      "counts": {
+        "tests": 21,
+        "pass": 17,
+        "fail": 4,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "skippedNames": [],
+      "dynamicImportCallbackMissingObserved": false
+    },
+    "f72-ci-source-before.tap": {
+      "rawSHA256": "c4ddee074b15045c228bf838a090d545c9954297e3002bdcb1e278bbd0caa2c7",
+      "bytes": 3948,
+      "counts": {
+        "tests": 21,
+        "pass": 17,
+        "fail": 3,
+        "cancelled": 0,
+        "skipped": 1,
+        "todo": 0
+      },
+      "skippedNames": [
+        "﹣ #561: installed built site presents the assist exactly like the composition (0.100986ms) # SKIP"
+      ],
+      "dynamicImportCallbackMissingObserved": false
+    },
+    "fixed-ci-source-after.tap": {
+      "rawSHA256": "a77150917de21fa6577b3f96703ca5e95e078ad02069113c6efca10eca1668fb",
+      "bytes": 2590,
+      "counts": {
+        "tests": 21,
+        "pass": 20,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 1,
+        "todo": 0
+      },
+      "skippedNames": [
+        "﹣ #561: installed built site presents the assist exactly like the composition (0.207769ms) # SKIP"
+      ],
+      "dynamicImportCallbackMissingObserved": false
+    },
+    "fixed-emitted-and-targeted.tap": {
+      "rawSHA256": "9f67c77c62eb745c4eac68d17410cb06de18e04cc777b09b2368b7ec87bc6b44",
+      "bytes": 3786,
+      "counts": {
+        "tests": 33,
+        "pass": 33,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "skippedNames": [],
+      "dynamicImportCallbackMissingObserved": false
+    },
+    "fixed-targeted.tap": {
+      "rawSHA256": "84114059372a54a4d07c0c564451bcebf1c9c6618a6f41ac3735df9e7c0e4dd7",
+      "bytes": 2587,
+      "counts": {
+        "tests": 21,
+        "pass": 21,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "skippedNames": [],
+      "dynamicImportCallbackMissingObserved": false
+    },
+    "surrounding-source.tap": {
+      "rawSHA256": "1ab5dbdf4f1c2003c1e9a323bad20075d8950a046595c5edbde24435f9549af9",
+      "bytes": 14248,
+      "counts": {
+        "tests": 120,
+        "pass": 117,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 3,
+        "todo": 0
+      },
+      "skippedNames": [
+        "﹣ #425: emitted full HUD and touch modules retain quantization and authoritative readiness (0.088686ms) # SKIP",
+        "﹣ #561: installed built site presents the assist exactly like the composition (1.046962ms) # SKIP",
+        "﹣ #158: emitted full Match module judges deterministic Alpha and preserves close non-ties (0.26077ms) # SKIP"
+      ],
+      "dynamicImportCallbackMissingObserved": false
+    }
+  },
+  "emittedSubset": "13 actual emitted HUD checks within final 33; remaining 20 use composed source",
+  "browserRerun": false,
+  "remoteCI": "new candidate not asserted; PR remains f72 until parent review"
+}

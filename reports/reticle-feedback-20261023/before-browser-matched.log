@@ -1,0 +1,12 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.waitForFunction: Timeout 90000ms exceeded.
+    at enterRangeFromMenu (/workspace/actions/scripts/lib/inkwave-range-menu-entry.mjs:23:14)
+    at async file:///workspace/actions/scripts/check-inkwave-reticle-feedback-browser.mjs:21:15 {
+  log: [],
+  name: 'TimeoutError'
+}
+
+Node.js v24.19.0

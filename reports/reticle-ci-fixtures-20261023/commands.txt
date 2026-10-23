@@ -1,0 +1,23 @@
+Worktree: /workspace/reticle-ci-fixtures
+Base: f72ccdb4b11cb76b01dd0567975924cbd6d83c60
+Fixture implementation: fe7ac7a50912b23ad08ca56f415148367baed8c5
+
+Old f72 and fixed source comparison (same command):
+node --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/assist-presentation.test.mjs patches/splatoon3/tests/judd-result-scene.test.mjs
+
+Initial f72 extra emitted check (legacy addon resolver ENOENT recorded separately):
+INKWAVE_ASSIST_BUILT_SITE=/workspace/scratch/reticle-final-main7e027-site node --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/assist-presentation.test.mjs patches/splatoon3/tests/judd-result-scene.test.mjs
+
+Normal build:
+node scripts/build-inkwave.mjs inkwave-public /workspace/scratch/reticle-ci-fixtures-site
+
+Final actual emitted and targeted validation:
+INKWAVE_ASSIST_BUILT_SITE=/workspace/scratch/reticle-ci-fixtures-site INKWAVE_RETICLE_SITE=/workspace/scratch/reticle-ci-fixtures-site node --experimental-vm-modules --test --test-concurrency=1 patches/splatoon3/tests/assist-presentation.test.mjs patches/splatoon3/tests/judd-result-scene.test.mjs patches/local-quality/tests/reticle-feedback.test.mjs
+
+Surrounding source validation:
+node --experimental-vm-modules --test --test-concurrency=1 patches/reliability/tests/hud.test.mjs patches/splatoon3/tests/assist-presentation.test.mjs patches/splatoon3/tests/judd-result-scene.test.mjs patches/splatoon3/tests/match-hud.test.mjs patches/splatoon3/tests/turf-alpha-tie.test.mjs patches/local-quality/tests/s3-squid-look.test.mjs patches/local-quality/tests/visual-probe-subchip.test.mjs patches/local-quality/tests/s3-face-look.test.mjs patches/local-quality/tests/hud-authority.test.mjs patches/local-quality/tests/s3-hud-look.test.mjs patches/local-quality/tests/pause-gpu.test.mjs patches/local-quality/tests/reticle-feedback.test.mjs
+
+node reports/reticle-final-main7e027-20261023/compare-build.mjs /workspace/reticle-ci-fixtures /workspace/scratch/reticle-ci-fixtures-site /workspace/scratch/reticle-final-main7e027-site /workspace/scratch/reticle-after-site
+node scripts/check-inkwave-startup-budget.mjs /workspace/scratch/reticle-ci-fixtures-site
+node scripts/check-inkwave-local-references.mjs . --site /workspace/scratch/reticle-ci-fixtures-site
+git diff --check

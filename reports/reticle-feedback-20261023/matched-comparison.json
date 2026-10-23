@@ -1,0 +1,82 @@
+{
+  "probeScriptSha256": "358c78a96f633e22245b09197ef354ee495ce041202855c06a6c0dbf66a2202e",
+  "seed": 1380275273,
+  "scenarios": [
+    {
+      "name": "desktop",
+      "viewport": [
+        1280,
+        720
+      ],
+      "cameraAndPositionMatched": true,
+      "normalAcceptedHitsUnchanged": [
+        {
+          "damage": 36,
+          "killed": false,
+          "weapon": "shooter"
+        },
+        {
+          "damage": 36,
+          "killed": false,
+          "weapon": "shooter"
+        },
+        {
+          "damage": 36,
+          "killed": true,
+          "weapon": "shooter"
+        }
+      ],
+      "missAcceptedHits": 0,
+      "missHitAnimationsBefore": 4,
+      "missHitAnimationsAfter": 0,
+      "targetScaleBefore": "1",
+      "targetScaleAfter": "1",
+      "repeatedMarkerScaleBefore": "1.63",
+      "repeatedMarkerScaleAfter": "1.2",
+      "fadeHz": [
+        30,
+        60,
+        120,
+        144
+      ]
+    },
+    {
+      "name": "phone",
+      "viewport": [
+        844,
+        390
+      ],
+      "cameraAndPositionMatched": true,
+      "normalAcceptedHitsUnchanged": [
+        {
+          "damage": 36,
+          "killed": false,
+          "weapon": "shooter"
+        },
+        {
+          "damage": 36,
+          "killed": false,
+          "weapon": "shooter"
+        },
+        {
+          "damage": 36,
+          "killed": true,
+          "weapon": "shooter"
+        }
+      ],
+      "missAcceptedHits": 0,
+      "missHitAnimationsBefore": 4,
+      "missHitAnimationsAfter": 0,
+      "targetScaleBefore": "1",
+      "targetScaleAfter": "1",
+      "repeatedMarkerScaleBefore": "1.63",
+      "repeatedMarkerScaleAfter": "1.2",
+      "fadeHz": [
+        30,
+        60,
+        120,
+        144
+      ]
+    }
+  ]
+}
