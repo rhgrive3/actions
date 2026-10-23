@@ -11,11 +11,17 @@ export function compareComposedCpu(before,repeat,after){
  return before.scenarios.map((base,i)=>{
   for(const row of [repeat.scenarios[i],after.scenarios[i]]){
    assert.deepEqual(row.initial,base.initial,'same loaded geometry, roster, source readiness and settings');
-   for(const key of ['frames','hz','ticks','digest','digests','counts','state','bvh','draw','resources'])assert.deepEqual(row[key],base[key],base.stage+' '+key+' parity');
+   for(const key of ['frames','hz','ticks','digest','digests','counts','state','bvh','draw'])assert.deepEqual(row[key],base[key],base.stage+' '+key+' parity');
    assert.equal(row.contextLost,false);assert.deepEqual(row.errors,[]);
   }
-  return {stage:base.stage,status:'exact-gameplay-parity',beforeMs:base.cpuFrameMs,repeatMs:repeat.scenarios[i].cpuFrameMs,afterMs:after.scenarios[i].cpuFrameMs,
-   gc:[base.gc,repeat.scenarios[i].gc,after.scenarios[i].gc],limits:'Host CPU workload only. No physical-device or presented FPS claim; A/A noise must accompany A/B timings.'};
+  return {stage:base.stage,status:'exact-recorded-state-parity',beforeMs:base.cpuFrameMs,repeatMs:repeat.scenarios[i].cpuFrameMs,afterMs:after.scenarios[i].cpuFrameMs,
+   // WebGLRenderer.info.memory counts GPU-initialized resources, including
+   // earlier menu frames. In a skip-scene-render workload these totals are
+   // not reproducible even in A/A; retain them without claiming resource or
+   // geometry acceptance from that counter. Character transforms/skin buffers
+   // are checked independently by the source/emitted regression.
+   resources:[base.resources,repeat.scenarios[i].resources,after.scenarios[i].resources],
+   gc:[base.gc,repeat.scenarios[i].gc,after.scenarios[i].gc],limits:'Host CPU workload only. No physical-device, presented FPS, whole-image or resource-budget acceptance; A/A noise must accompany A/B timings.'};
  });
 }
 if(import.meta.url===new URL(process.argv[1],'file:').href){

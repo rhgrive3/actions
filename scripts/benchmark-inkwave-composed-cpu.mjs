@@ -9,6 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 import {verifyRuntimeBuild, hash, persistentDirectory, persistentBrowserTemp} from './lib/inkwave-runtime-evidence.mjs';
 import {summarizeGcTrace} from './lib/inkwave-cpu-trace.mjs';
+import {installCpuStateHash} from './lib/inkwave-cpu-state-hash.mjs';
 
 const get=(name,fallback)=>{const i=process.argv.indexOf(name);return i<0?fallback:process.argv[i+1];};
 const site=fs.realpathSync(get('--site','_site'));
@@ -48,7 +49,7 @@ const server=http.createServer((req,res)=>{try{
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 let browser;
 const report={schema:1,sourceSha,contentHash:manifest.contentHash,revision:manifest.build.revision,
- environment:{node:process.version,cpu:os.cpus()[0].model,logicalCpus:os.cpus().length,quality,viewport:[960,640],render,wrappers},
+ environment:{node:process.version,cpu:os.cpus()[0].model,logicalCpus:os.cpus().length,cpuQuota:fs.existsSync('/sys/fs/cgroup/cpu.max')?fs.readFileSync('/sys/fs/cgroup/cpu.max','utf8').trim():null,quality,viewport:[960,640],render,wrappers},
  limits:['Linux Chromium/SwiftShader; no physical iPad or FPS evidence.',
  'Fixed-step CPU transaction; loading, async cold startup and presentation pacing are excluded.',
  'Inclusive scopes overlap. Wrappers and GC tracing perturb timings; use --no-wrappers as a control.',
@@ -98,9 +99,12 @@ try{
     sourceCharacters:characters.length,triangles:G.level.triangleWorld?.triangleCount??0,paintFaces:G.paint.paintFaces?.length,atlas:G.paint.size,ppm:G.paint.ppm,settings:g.settings};
   },{stage,render});
   const cdp=await context.newCDPSession(page);
-  await cdp.send('Performance.enable');
+  // Keep actual renderer thread CPU counters alongside wrapper wall times;
+  // shared/container CPU throttling can inflate elapsed per-frame scopes.
+  await cdp.send('Performance.enable',{timeDomain:'threadTicks'});
   const before=await cdp.send('Performance.getMetrics');
   await cdp.send('Tracing.start',{categories:'v8,devtools.timeline,blink.user_timing',transferMode:'ReturnAsStream'});
+  await page.evaluate(installCpuStateHash);
   const result=await page.evaluate(({frames,hz,wrappers})=>{
    const G=window.__G,g=window.__inkwave,acc={},restore=[];
    const wrap=(obj,key,name)=>{const fn=obj?.[key];if(typeof fn!=='function')return;
@@ -122,21 +126,19 @@ try{
     wrap(G.projectiles,'update','projectiles.update');wrap(G.fx,'update','fx.update');wrap(G.env,'update','environment.update');wrap(g.R,'render','render.submit');wrap(G.renderer.shadowMap,'render','render.shadow');wrap(G.scene,'updateMatrixWorld','render.sceneMatrices');wrap(g,'_updateHud','hud.update');
    }
    const w=G.level.triangleWorld,q0=w?.queryCount??0,t0=w?.triangleTests??0,ticks0=g.s3Clock.ticks,times=[],digests=[];
-   const f64=new Float64Array(1),u32=new Uint32Array(f64.buffer);let digest=2166136261;
-   const mix=x=>{digest=Math.imul(digest^x,16777619)>>>0;};
-   const number=v=>{f64[0]=+v;mix(u32[0]);mix(u32[1]);};
+   const hasher=window.cpuBenchStateHash,{mix,number}=hasher;
    g.debug.key('KeyW',true);g.debug.fire(true);
    performance.mark('inkwave-cpu-start');
    try{for(let i=0;i<frames;i++){
     window.cpuBenchResetStep(i);g.rig.yaw+=.6/hz;g.debug.key('Space',i%Math.round(hz*2)===0);
     const t=performance.now();g._frame(1/hz);times.push(performance.now()-t);
-    for(const a of G.actors){for(const v of [a.pos.x,a.pos.y,a.pos.z,a.vel.x,a.vel.y,a.vel.z,a.hp,a.ink,a.alive,a.grounded,a.yaw,a.turf])number(v);mix(a.form==='kid'?1:2);}
+    for(const a of G.actors){for(const v of [a.pos.x,a.pos.y,a.pos.z,a.vel.x,a.vel.y,a.vel.z,a.hp,a.ink,a.alive,a.grounded,a.yaw,a.stats.turf])number(v);mix(a.form==='kid'?1:2);}
     for(const v of [...G.paint.counts,G.paint.version,G.paint.growing.length])number(v);
-    digests.push(digest);
+    digests.push(hasher.value);
    }}finally{performance.mark('inkwave-cpu-end');for(const undo of restore.reverse())undo();g.debug.key('KeyW',false);g.debug.fire(false);}
    const ticks=g.s3Clock.ticks-ticks0;
    for(const v of G.paint.grid)mix(v);for(const v of G.paint._paintOwnershipOrder||[])mix(v);
-   return {frames,hz,ticks,times,digests,digest,counts:[...G.paint.counts],state:G.match.state,
+   return {frames,hz,ticks,times,digests,digest:hasher.value,counts:[...G.paint.counts],state:G.match.state,
     bvh:{queries:(w?.queryCount??0)-q0,triangleTests:(w?.triangleTests??0)-t0},
     categories:Object.fromEntries(Object.entries(acc).sort((a,b)=>b[1].ms-a[1].ms).map(([k,v])=>[k,{msPerTick:v.ms/ticks,callsPerTick:v.calls/ticks}])),
     draw:{...G.renderer.info.render},resources:{...G.renderer.info.memory},contextLost:G.renderer.getContext().isContextLost()};
@@ -146,9 +148,11 @@ try{
   let trace='';for(;;){const part=await cdp.send('IO.read',{handle:stream});trace+=part.base64Encoded?Buffer.from(part.data,'base64').toString():part.data;if(part.eof)break;}await cdp.send('IO.close',{handle:stream});
   fs.writeFileSync(path.join(evidence,stage+'-trace.json'),trace);
   const after=await cdp.send('Performance.getMetrics');
+  const metric=(m,name)=>m.metrics.find(x=>x.name===name)?.value??null;
+  const threadCpuMs=Object.fromEntries(['TaskDuration','ScriptDuration','ThreadTime'].map(name=>[name,metric(before,name)===null||metric(after,name)===null?null:(metric(after,name)-metric(before,name))*1000]));
   const heap=m=>Object.fromEntries(m.metrics.filter(x=>/JSHeap|Nodes|Documents/.test(x.name)).map(x=>[x.name,x.value]));
   const sorted=[...result.times].sort((a,b)=>a-b),pick=p=>sorted[Math.min(sorted.length-1,Math.floor(sorted.length*p))];
-  const row={stage,initial,...result,cpuFrameMs:{mean:result.times.reduce((a,b)=>a+b,0)/frames,p50:pick(.5),p95:pick(.95),p99:pick(.99),max:sorted.at(-1)},gc:summarizeGcTrace(JSON.parse(trace).traceEvents),heap:{before:heap(before),after:heap(after)},errors};
+  const row={stage,initial,...result,threadCpuMs,cpuFrameMs:{mean:result.times.reduce((a,b)=>a+b,0)/frames,p50:pick(.5),p95:pick(.95),p99:pick(.99),max:sorted.at(-1)},gc:summarizeGcTrace(JSON.parse(trace).traceEvents),heap:{before:heap(before),after:heap(after)},errors};
   report.scenarios.push(row);fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify(report,null,2)+'\n');
   console.log(JSON.stringify({stage,cpuFrameMs:row.cpuFrameMs,categories:row.categories,gc:row.gc,errors}));
   if(errors.length||row.contextLost||row.ticks!==Math.round(frames*60/hz))throw Error('Runtime workload failed');

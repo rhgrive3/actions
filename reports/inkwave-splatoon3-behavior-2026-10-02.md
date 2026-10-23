@@ -5835,3 +5835,10 @@ CPU回帰の成功は物理GPU/実機性能の受け入れではない。Splatoo
 
 
 最終確認: runtime `df83a5c4265a9c8738d930dabaffb43cd31ae902` / build contentHash `7b0b597f308f86d2d9607e2a5e0e5f122fa7e0a7435810512039de7014565533` の総合active browserが成功した。65 canonical kit、14 defaults、装備12select、実キーボード移動・接地・射撃/塗り、20Hz時の3秒進行、finite velocity、752 responseの同一性とpage errors 0を確認した。実music Workerの作成元・97-byte body/hash・cleanupを含むnative試験7件、過去の固定gate20件、追加source admission24件も通過した。これはChromium 153 / SwiftShaderでの公開版の回帰確認であり、物理端末FPSやSwitch実機・完了動画の受け入れではない。GitHub上のCI待機は別に残る。
+
+
+## 2026-10-23: #1671 / #1757 の合成ランタイムCPU調査（PR #1851）
+
+参照対象は公開版の全パッチ合成後。S3 Ver.11.3.0に関する既存の未確認値は変更せず、ソースモーション（既存のWii U由来パックを含む）の中間計算だけを削減した。BodyBalanceのgain対象と祖先以外の中間world回転を省き、最終全ボーンFK・足接地・IK・銃口・移動・射撃・塗り・当たり判定・描画設定は維持する。2種の実ソースキャラクター、シューター/チャージャー/ローラーの30/60/120Hz、1260フレームで最終local/world姿勢・skin行列・接地・銃口が一致し、通常minify配信物でも同じ比較が成功。これはロジック/配信物検証であり、Nintendo実機やiPad SafariのFPS比較ではない。
+
+Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテゴリ。修正対象のBodyBalanceはその一部にすぎず、iPad上での支配要因の確定や重いフレームの完全解消とは扱わない。#1671/#1757の実機受入はOpenのまま。条件・既存PRとの重複確認・再現コマンド・証跡は[調査記録](inkwave-composed-cpu-20261023/README.md)。

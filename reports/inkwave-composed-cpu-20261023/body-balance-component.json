@@ -1,0 +1,95 @@
+{
+  "scope": "40000 actual production-composed BodyBalance.apply calls/window, lossless Player00; ABBA x2. Not whole-game/device FPS.",
+  "environment": {
+    "node": "v24.19.0",
+    "cpu": "AMD EPYC 9V74 80-Core Processor"
+  },
+  "intermediateWorldRotations": [
+    66,
+    8
+  ],
+  "outputBones": 66,
+  "samples": [
+    {
+      "variant": "before",
+      "ms": 1353.9743689999996,
+      "cpu": {
+        "user": 1352312,
+        "system": 535
+      },
+      "checksum": 363429.87572841265
+    },
+    {
+      "variant": "after",
+      "ms": 1349.1051469999984,
+      "cpu": {
+        "user": 1347560,
+        "system": 1412
+      },
+      "checksum": 363429.87572841265
+    },
+    {
+      "variant": "after",
+      "ms": 1329.4645769999988,
+      "cpu": {
+        "user": 1328638,
+        "system": 770
+      },
+      "checksum": 363429.87572841265
+    },
+    {
+      "variant": "before",
+      "ms": 1357.4108410000008,
+      "cpu": {
+        "user": 1356931,
+        "system": 481
+      },
+      "checksum": 363429.87572841265
+    },
+    {
+      "variant": "before",
+      "ms": 1398.3710520000022,
+      "cpu": {
+        "user": 1398204,
+        "system": 1106
+      },
+      "checksum": 363429.87572841265
+    },
+    {
+      "variant": "after",
+      "ms": 1243.0336020000032,
+      "cpu": {
+        "user": 1242986,
+        "system": 0
+      },
+      "checksum": 363429.87572841265
+    },
+    {
+      "variant": "after",
+      "ms": 1244.562211999997,
+      "cpu": {
+        "user": 1244458,
+        "system": 0
+      },
+      "checksum": 363429.87572841265
+    },
+    {
+      "variant": "before",
+      "ms": 1315.3826839999965,
+      "cpu": {
+        "user": 1315231,
+        "system": 0
+      },
+      "checksum": 363429.87572841265
+    }
+  ],
+  "medianMs": {
+    "before": 1355.6926050000002,
+    "after": 1287.013394499998
+  },
+  "source": {
+    "baselineCommit": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+    "baselineSha256": "c5d204af3e91dcb544941eaa2c0da9ffb920087866d4c3571aee484a2e896a9e",
+    "candidateSha256": "596a48101c488f862ffb515fae4b0c4ed2c51da43de03b41792d3979fcbc51c0"
+  }
+}
