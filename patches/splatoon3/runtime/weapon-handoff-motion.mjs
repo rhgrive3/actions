@@ -157,7 +157,7 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
     if (!st.valid) { st.t = st.d = 0; st.spawnLanding = false; }
     else if (st.owner !== owner || landed) {
       for (let i = 0; i < BONES.length; i++) st.from[i].copy(st.prev[i]);
-      st.t = 0; st.d = owner === 'native' ? HANDOFF_RAISE : HANDOFF_FADE;
+      st.t = 0; st.d = landed ? HANDOFF_FADE : owner === 'native' ? HANDOFF_RAISE : HANDOFF_FADE;
       st.spawnLanding = landed;
     }
     // The native ready/attack pose is already evaluated. Only its idle display

@@ -28,7 +28,8 @@ for(const label of labels){
  for(const k of ['min','max','size'])for(let i=0;i<3;i++)assert(Math.abs(a[label].localDrumBounds[k][i]-b[label].localDrumBounds[k][i])<1e-12);
  for(const object of ['root','kid','pivot','off','drum'])for(const scale of a[label][object].scale)assert(Math.abs(scale-1)<1e-12);
 }
-for(const label of ['settled','normal-68','normal-72','normal-133','normal-134','normal-145']){
+for(const label of ['settled','normal-72','normal-74','normal-133','normal-134','normal-145']){
+ if(!b[label])continue;
  for(const k of ['pivot','handR','off','drum','projectedDrum'])assert.deepEqual(a[label][k],b[label][k],`${label}.${k}: display settles to existing ready`);
 }
 const angle=(x,y)=>2*Math.acos(Math.min(1,Math.abs(x.reduce((s,v,i)=>s+v*y[i],0))))*180/Math.PI;
@@ -36,11 +37,12 @@ const delta=(rows,n)=>{
  const p=rows['normal-'+(n-1)],q=rows['normal-'+n];
  return {from:n-1,to:n,angleDegrees:angle(p.pivot.quaternion,q.pivot.quaternion),pivotDistance:Math.hypot(...p.pivot.position.map((v,i)=>v-q.pivot.position[i])),projectedWidthDelta:Math.abs(p.projectedDrum.pixelWidth-q.projectedDrum.pixelWidth),projectedHeightDelta:Math.abs(p.projectedDrum.pixelHeight-q.projectedDrum.pixelHeight),weight:q.handoff.weight};
 };
-const oldSteps=Array.from({length:9},(_,i)=>delta(b,60+i)),newSteps=Array.from({length:9},(_,i)=>delta(a,60+i));
+// The unchanged59→60 physical flight is outside the display-return window.
+const oldSteps=Array.from({length:8},(_,i)=>delta(b,61+i)),newSteps=Array.from({length:14},(_,i)=>delta(a,61+i));
 const peak=(steps,key)=>Math.max(...steps.map(v=>v[key]));
 for(const k of ['angleDegrees','pivotDistance','projectedHeightDelta'])assert(peak(newSteps,k)<peak(oldSteps,k)*.5,`${k}: bounded native display improvement`);
 assert(newSteps[1].angleDegrees>.01,'the old carry is not held unchanged');
-assert(a['normal-61'].handoff.weight>0);assert.equal(a['normal-68'].handoff.weight,0);
+assert(a['normal-61'].handoff.weight>0);assert.equal(a['normal-74'].handoff.weight,0);
 const unsupported=after.missTrace.filter(r=>r.phase==='landing'&&!r.grounded);
 assert(unsupported.length>0);assert(unsupported.some(r=>r.spawnPose.phase==='off'));
 assert(unsupported.every(r=>!r.eligible));

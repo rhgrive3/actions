@@ -7,7 +7,7 @@ let cached;
 const fixture = () => cached ??= sourceLoadedActorFixture({random: () => .314159, extraExports: `
   export {spawnMotionAllowsAction, spawnPoseSnapshot} from './patches/splatoon3/runtime/spawn-pose-motion.mjs';
   export {ROLLER_POSE} from './patches/splatoon3/runtime/roller.mjs';
-  export {weaponHandoffSnapshot} from './patches/splatoon3/runtime/weapon-handoff-motion.mjs';
+  export {weaponHandoffSnapshot, HANDOFF_FADE} from './patches/splatoon3/runtime/weapon-handoff-motion.mjs';
 `});
 const rotation = (f, c) => c.weapon.pivot.getWorldQuaternion(new f.THREE.Quaternion());
 function touchdown(f, a, dt) {
@@ -40,12 +40,12 @@ test('native respawn ready handoff starts immediately without a one-tick half-tu
     assertReady(f, c); // canonical ready/action is immediate, display only is faded
     assert.equal(f.spawnMotionAllowsAction(c, false), true);
     assert(c.tr[f.CHARACTER_TIMERS.T_SPAWN] < 1.4);
-    for (let i=0; i<Math.ceil(.1/dt)+2; i++) {
+    for (let i=0; i<Math.ceil(f.HANDOFF_FADE/dt)+2; i++) {
       f.tick(a, dt);assertReady(f, c);
       assert.equal(a.ink,100);assert.equal(a.stats.turf,0);assert.equal(f.G.projectiles.list.length,0);
       assert.equal(a.weaponRunner.rolling,false);assert.equal(a.weaponRunner.flick,-1);
     }
-    assert.equal(f.weaponHandoffSnapshot(c).weight, 0, 'settles within existing .1s raise plus frame rounding');
+    assert.equal(f.weaponHandoffSnapshot(c).weight, 0, 'settles within existing .2s return plus frame rounding');
   }
 });
 

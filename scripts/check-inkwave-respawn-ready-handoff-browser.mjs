@@ -57,7 +57,7 @@ try{
  await capture('settled');
  const launch=async seed=>page.evaluate(seed=>{const a=window.__G.local;window.__readyResetRng(seed);a.splat(null,'weapon');for(let i=0;i<900&&!a.alive;i++)__readyStep();if(a.s3.squidSpawn?.phase!=='aim')throw Error('Native countdown did not respawn');__readyStep();window.__inkwave.debug.fire(true);__readyStep();window.__inkwave.debug.fire(false);if(a.s3.squidSpawn?.phase!=='flight')throw Error('Native launch failed');__readyDiag.flightTick=0;},seed);
  await launch(0x4c414e44);
- for(const target of [59,60,61,62,63,64,65,66,67,68,72,133,134,145]){await page.evaluate(target=>{for(;__readyDiag.flightTick<target;__readyDiag.flightTick++)__readyStep(__readyDiag.flightTick===target-1);},target);await capture('normal-'+target,[60,61,63,66,145].includes(target));}
+ for(const target of [59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,133,134,145]){await page.evaluate(target=>{for(;__readyDiag.flightTick<target;__readyDiag.flightTick++)__readyStep(__readyDiag.flightTick===target-1);},target);await capture('normal-'+target,[60,61,63,66,72,145].includes(target));}
  receipt.cameraCross=await page.evaluate(()=>__readyCameraCross());
  if (!process.argv.includes('--normal-only')) {
  await launch(0x4d495353);
