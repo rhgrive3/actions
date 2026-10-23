@@ -1,0 +1,16 @@
+Worktree: /workspace/reticle-idle-deadline
+Fixed base: 2e2bc38661dd49655ee3b4abc491dcc8ee65e8e1
+Implementation: 1c3b3c9b924c86fcb2d85e91dc607278b53229df
+
+node --check scripts/check-inkwave-idle-resources.mjs
+node --test scripts/tests/inkwave-idle-resources-gates.test.mjs scripts/tests/inkwave-cold-observer.test.mjs
+node --expose-internals reports/reticle-idle-evaluate-deadline-20261023/audit-source.cjs
+
+Already-executed saved component replay (no browser/GPU; original output paths are protected, do not rerun over them):
+node /workspace/scratch/reticle-idle-deadline-20261023/replay-timeout.mjs
+
+Existing production build input/artifact readback, not a new build:
+node reports/reticle-final-main7e027-20261023/compare-build.mjs /workspace/reticle-idle-deadline /workspace/scratch/reticle-ci-fixtures-site /workspace/scratch/reticle-final-main7e027-site /workspace/scratch/reticle-after-site
+git diff --check
+
+The AST audit compares all twelve evaluate arguments, validateIdleResult, six existing helpers, browser flags, and explicit timeout/sleep values to git show 2e2bc38661dd49655ee3b4abc491dcc8ee65e8e1:scripts/check-inkwave-idle-resources.mjs. Hashes are in source-preservation.json. No denied browser download or browser test was invoked for this candidate.
