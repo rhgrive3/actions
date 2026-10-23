@@ -1,6 +1,6 @@
 # Respawn landing weapon state — review checkpoint, 2026-10-23
 
-> Historical pre-coordination checkpoint. The parent subsequently assigned these shared paths and authorized applying the candidate. See [the applied candidate and normal-build results](integration/README.md). The exact original checkpoint is preserved in `integration/checkpoint-README.md`; the pending wording below describes that earlier stage.
+> Historical pre-coordination checkpoint. The parent subsequently assigned these shared paths and authorized applying the candidate. See [the applied candidate and normal-build results](integration/README.md). Three original failure logs are losslessly stored as `.tap.gz` (see `raw-log-archives.json`). The exact original checkpoint is preserved in `integration/checkpoint-README.md`; the pending wording below describes that earlier stage.
 
 **Pending parent coordination; runtime patch is unapplied.** Branch `fix/respawn-weapon-state-20261023` is based on official main `7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51` (tree `965c98442df0c42cd092f7a6eb9b0535f51b8b38`, includes #1858). The four production files remain byte-identical to that base. There is no published candidate, PR, merge or force push from this task.
 
