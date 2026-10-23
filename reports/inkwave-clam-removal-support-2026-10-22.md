@@ -35,7 +35,8 @@ node --max-old-space-size=384 scripts/build-inkwave.mjs inkwave-public work/clam
 node work/clam-removal/check-browser.mjs
 ```
 
-build inputHash: `a30ad3585af5c9c39c34b7361de5494913d6bdcbc7ef48b96964a9ed97d88465`  
+build inputHash: `a30ad3585af5c9c39c34b7361de5494913d6bdcbc7ef48b96964a9ed97d88465`
+
 build contentHash: `fd7226305fd867a9d110108cb3f3d337d15d2cf44e6b06f13a16392aab066037`
 
 生ログとブラウザ用スクリプトは `work/clam-removal/`。コードは独立ローカルブランチに保存。PR作成・更新、push、merge、デプロイは行っていない。

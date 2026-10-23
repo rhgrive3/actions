@@ -54,7 +54,8 @@ node --max-old-space-size=384 scripts/build-inkwave.mjs inkwave-public work/addi
 node work/additional-fixes/check-browser.mjs
 ```
 
-inputHash: `cfb93fab74f32f67849b72ab59f463df9c57e08093fcccf8237afca66a06f8e5`  
+inputHash: `cfb93fab74f32f67849b72ab59f463df9c57e08093fcccf8237afca66a06f8e5`
+
 contentHash: `83b4299e23f3ab83f1e4a8306fb1214b2462d374270cb7d9a44402521db78dbc`
 
 生ログ、比較JSON、ブラウザ用スクリプトは `work/additional-fixes/` に保存。ローカル独立ブランチでの修正であり、push・PR作成/更新・merge・デプロイは行っていない。
