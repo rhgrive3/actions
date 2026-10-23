@@ -43,3 +43,9 @@ CoreIndexから左右へ走査し、各翼の接触時刻を外側へ伝播さ�
 `ReserveAcceptFrame` の先行入力、`WeakSwingASFrame` / `ChargeSwingASFrame`、ドライブ/ジムの省略step-add既定値、空中からの踏込受付、`MoveDistKd_OnSlideGnd`、slashのpitch/追従anchor、接触したlobeでの原典のActor貫通則は未回収。今回の変更は地形によるcascadeを扱い、Actor接触で同様の貫通方式を推測して追加しない。減った判定に対応する波の描画形状、原典の腕/刀身軌道・効果音、実通信での表示時刻も完全一致未立証のまま。
 
 検証結果は [validation.json](validation.json)、弓側は [stringer.md](stringer.md)。
+
+## 描画した射撃状態
+
+![s3-saber-normal](images/s3-saber-normal.png) | ![s3-saber-lite](images/s3-saber-lite.png) | ![s3-saber-heavy](images/s3-saber-heavy.png)
+
+production Character/Runnerによる制御シーンの1サンプル。[描画receipt](gallery.json)の6モデルすべてで非有限値なし。画像はモデル/構えの目視確認であり、原典の全関節曲線・武器軌道の一致判定ではない。

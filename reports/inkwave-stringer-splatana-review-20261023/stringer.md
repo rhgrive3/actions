@@ -41,3 +41,9 @@ Actor更新前後でRunnerの傾斜更新serialを比較し、そのtickで未�
 `BowTiltKeepFrame` / `BowTiltResetSpeed` の発動条件、LACTの `KeepChargePreDelayFrame` / `_Pre` の厳密な復帰受付、フルイドの `MoveJumpDownBias` の適用則、7発周期の矢ごとの飛沫割当と省略既定値は未回収である。今回の傾斜補完はこれらを推測で確定しない。CPU/GPUの塗り面積・実音波形・実機の骨軌道・実通信遅延を完全一致と扱わない。
 
 検証結果と実行条件は [validation.json](validation.json)、ワイパー側は [splatana.md](splatana.md)。
+
+## 描画した射撃状態
+
+![s3-stringer-normal](images/s3-stringer-normal.png) | ![s3-stringer-short](images/s3-stringer-short.png) | ![s3-stringer-explosion](images/s3-stringer-explosion.png)
+
+production Character/Runnerによる制御シーンの1サンプル。[描画receipt](gallery.json)の6モデルすべてで非有限値なし。画像はモデル/構えの目視確認であり、原典の全関節曲線・武器軌道の一致判定ではない。
