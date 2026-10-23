@@ -35,7 +35,12 @@ const baseline=path.join(scratch,'baseline'),candidate=path.join(scratch,'candid
 function commit(root){git(root,['add','-A']);return git(root,['-c','user.name=Source Admission Fixture','-c','user.email=source-admission@example.invalid','commit','--quiet','--allow-empty','-m','Disposable source-only fixture']);}
 for(const [root,isBefore]of [[baseline,true],[candidate,false]]){
  fs.mkdirSync(root);for(const row of originalRows){if(isBefore&&row.path.endsWith('/area-special-vfx-clock.mjs'))continue;const file=path.join(root,row.path);fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,isBefore&&oldBodies.has(row.path)?oldBodies.get(row.path):fs.readFileSync(path.join(sourceRoot,row.path)));fs.chmodSync(file,row.mode==='100755'?0o755:0o644);}
- git(root,['init','--quiet']);commit(root);
+ // These are disposable object stores, not the source checkout or user config.
+ // Detached automatic packing can race the intentionally exact metadata walk.
+ git(root,['init','--quiet']);
+ git(root,['config','--local','gc.auto','0']);
+ git(root,['config','--local','maintenance.auto','false']);
+ commit(root);
 }
 const initialHeads=[baseline,candidate].map(root=>git(root,['rev-parse','HEAD']));
 function options(){const [baseSha,candidateSha]=[baseline,candidate].map(root=>git(root,['rev-parse','HEAD']));return{baseline,candidate,baseSha,candidateSha,baseTree:git(baseline,['rev-parse','HEAD^{tree}']),candidateTree:git(candidate,['rev-parse','HEAD^{tree}']),sourceBase:baseSha,sourceHead:candidateSha,mode:REVIEWED_SPECIAL_DELTA_MODE};}
@@ -67,7 +72,39 @@ test('unrelated actual main production update safely follows without a new main-
 test('unrelated actual main production addition safely follows only when preserved in candidate',()=>{try{for(const root of [baseline,candidate]){change(root,'inkwave-public/unrelated-main.js');commit(root);}withEvent(()=>assert.equal(verifyReviewedSpecialDeltaPair(options()).productionLeaves,originalRows.length+1));}finally{restore();}});
 test('future main changes to reviewed before or direct/transitive build dependencies reject even if shared on both sides',()=>{try{for(const relative of [pins[0].path,'scripts/build-inkwave.mjs','patches/splatoon3/runtime/special-presentation-owner.mjs','patches/splatoon3/profile.json','patches/splatoon3/upstream-lock.json','patches/loading-cache/shell.html']){restore();for(const root of [baseline,candidate]){change(root,relative);commit(root);}withEvent(()=>assert.throws(()=>verifyReviewedSpecialDeltaPair(options())));}}finally{restore();}});
 test('unknown native-definition or loading-runtime build controls reject even when actual advanced main and candidate share them',()=>{try{for(const relative of ['patches/native-stages/definitions/unreviewed.json','patches/loading-cache/runtime/unreviewed.md']){restore();for(const root of [baseline,candidate]){change(root,relative);commit(root);}withEvent(()=>assert.throws(()=>verifyReviewedSpecialDeltaPair(options()),/build-control\/data dependency inventory/));}}finally{restore();}});
-test('actual HEAD/full-tree declarations, separate roots and complete immutable object presence fail closed',()=>{const o=options();withEvent(()=>{for(const changed of [{baseSha:'a'.repeat(40),sourceBase:'a'.repeat(40)},{candidateSha:'a'.repeat(40),sourceHead:'a'.repeat(40)},{baseTree:'a'.repeat(40)},{candidateTree:'a'.repeat(40)},{candidate:baseline}])assert.throws(()=>verifyReviewedSpecialDeltaPair({...o,...changed}));});const sha=scanReviewedSpecialProduction(candidate).find(row=>!deltas.includes(row.path)).sha,object=path.join(candidate,'.git','objects',sha.slice(0,2),sha.slice(2));assert.ok(fs.existsSync(object));const bytes=fs.readFileSync(object);try{fs.unlinkSync(object);withEvent(()=>assert.throws(()=>verifyReviewedSpecialDeltaPair(options()),/materialized in Git/));}finally{fs.writeFileSync(object,bytes);}});
+test('actual HEAD/full-tree declarations, separate roots and complete immutable object presence fail closed',()=>{
+ const o=options();withEvent(()=>{for(const changed of [{baseSha:'a'.repeat(40),sourceBase:'a'.repeat(40)},{candidateSha:'a'.repeat(40),sourceHead:'a'.repeat(40)},{baseTree:'a'.repeat(40)},{candidateTree:'a'.repeat(40)},{candidate:baseline}])assert.throws(()=>verifyReviewedSpecialDeltaPair({...o,...changed}));});
+ // Complete packed stores are legitimate. Pack synchronously in our own
+ // fixtures before any snapshot; the original exact metadata walk is retained.
+ for(const root of [baseline,candidate]){
+  assert.equal(git(root,['config','--local','--get','gc.auto']),'0');
+  assert.equal(git(root,['config','--local','--get','maintenance.auto']),'false');
+  git(root,['-c','pack.threads=1','repack','-a','-d']);
+  assert.ok(fs.readdirSync(path.join(root,'.git','objects','pack')).some(name=>name.endsWith('.pack')));
+ }
+ const completeBefore=snapshot();withEvent(()=>verifyReviewedSpecialDeltaPair(o));assert.equal(snapshot(),completeBefore);
+ const sha=scanReviewedSpecialProduction(candidate).find(row=>!deltas.includes(row.path)).sha;
+ assert.equal(git(candidate,['cat-file','-t',sha]),'blob','required object is available in the complete packed fixture');
+ // Build a separate packed store from an explicit reachable-object inventory,
+ // excluding exactly one required blob. Do not assume the blob is loose or
+ // delete a pack containing unrelated required metadata. No alternates/fallback.
+ const objects=git(candidate,['rev-list','--objects','--no-object-names','HEAD']).split('\n');
+ assert.ok(objects.includes(sha));
+ const pack=execFileSync('git',['-C',candidate,'-c','pack.threads=1','pack-objects','--stdout','--window=0','--compression=0','--no-reuse-delta','--no-reuse-object'],{env:cleanEnv(),input:objects.filter(object=>object!==sha).join('\n')+'\n',timeout:30000,maxBuffer:256*1024*1024});
+ const missing=path.join(scratch,'missing-required-object');
+ try{
+  fs.cpSync(candidate,missing,{recursive:true});
+  fs.rmSync(path.join(missing,'.git','objects'),{recursive:true});
+  fs.mkdirSync(path.join(missing,'.git','objects','pack'),{recursive:true});
+  execFileSync('git',['-C',missing,'-c','index.threads=1','index-pack','--stdin'],{env:cleanEnv(),input:pack,timeout:30000,maxBuffer:1024*1024});
+  assert.throws(()=>git(missing,['cat-file','-e',sha]),'required blob must genuinely be absent, not merely packed');
+  assert.equal(git(missing,['rev-parse','HEAD']),o.candidateSha);
+  assert.equal(git(missing,['rev-parse','HEAD^{tree}']),o.candidateTree);
+  const before=snapshot([missing]);
+  withEvent(()=>assert.throws(()=>verifyReviewedSpecialDeltaPair({...o,candidate:missing}),/materialized in Git/));
+  assert.equal(snapshot([missing]),before,'rejected missing-object verification writes no metadata');
+ }finally{fs.rmSync(missing,{recursive:true,force:true});}
+});
 test('official event contract rejects fork/wrong repo/base branch/dispatch/declaration spoofing; branch is no permission',()=>{const o=options(),e=eventFor(o);assert.equal(assertReviewedSpecialEvent(e,o,context).head,o.candidateSha);for(const edit of [e=>e.repository.full_name='fork/actions',e=>e.number=0,e=>e.pull_request.base.ref='other',e=>e.pull_request.head.repo.full_name='fork/actions',e=>e.pull_request.base.repo.full_name='fork/actions',e=>e.pull_request.base.sha='main',e=>e.pull_request.head.sha=o.baseSha,e=>delete e.pull_request.head]){const wrong=structuredClone(e);edit(wrong);assert.throws(()=>assertReviewedSpecialEvent(wrong,o,context));}for(const change of [{eventName:'workflow_dispatch'},{eventName:'push'},{repository:'fork/actions'}])assert.throws(()=>assertReviewedSpecialEvent(e,o,{...context,...change}));for(const change of [{mode:'main26a4-reviewed-runtime-ui-production-pair'},{baseSha:'a'.repeat(40)},{candidateSha:'a'.repeat(40)},{sourceBase:'a'.repeat(40)},{sourceHead:'a'.repeat(40)},{candidateTree:'main'},{baseTree:'main'}])assert.throws(()=>assertReviewedSpecialEvent(e,{...o,...change},context));});
 test('event file symlink, malformed JSON, oversize and external account input reject without receipts',()=>{for(const role of ['prepare','controls']){rejected(cli(role,{environment:{INKWAVE_ACCOUNT_BUILD:'/unreviewed/account'}}),/external account/);rejected(cli(role,{environment:{GITHUB_EVENT_NAME:'workflow_dispatch'}}),/official PR event/);}const alias=path.join(scratch,'event-alias.json');eventEnv();fs.symlinkSync(eventPath,alias);rejected(cli('prepare',{environment:{GITHUB_EVENT_PATH:alias}}),/bounded regular event/);const bad=path.join(scratch,'bad-event.json');fs.writeFileSync(bad,'{');rejected(cli('prepare',{environment:{GITHUB_EVENT_PATH:bad}}));fs.writeFileSync(bad,' '.repeat(2*1024*1024+1));rejected(cli('controls',{environment:{GITHUB_EVENT_PATH:bad}}),/bounded regular event/);});
 for(const role of ['prepare','controls'])test('actual '+role+' CLI admits exact final Git HEAD/tree, binds receipt and writes zero source/metadata',()=>{const before=snapshot(),result=cli(role);assert.equal(result.status,0,result.stderr);const receipt=JSON.parse(fs.readFileSync(result.receipt));assert.equal(receipt.sourceHead,options().candidateSha);assert.equal(receipt.declaredCandidateTree,options().candidateTree);assert.deepEqual(receipt.writtenPaths,[]);if(role==='controls')assert.equal(receipt.controls.rejected,(originalRows.length-1)+originalRows.length+7);assert.equal(snapshot(),before);});
