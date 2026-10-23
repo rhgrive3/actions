@@ -126,3 +126,30 @@ test('direct remote post-touchdown presentation uses the same display return wit
   c.setVisible(false);c.setWeapon('shooter');c.setWeapon('roller');c.setVisible(true);
   a._finishFrame(1/60);assert.equal(f.weaponHandoffSnapshot(c).weight,0);
 });
+
+test('direct Actor.reset during a live spawn return cannot carry its display record or pose into the new life', async () => {
+  const f=await fixture();
+  async function run(enabled){
+    let paintCalls=0;f.G.paint.splat=()=>{paintCalls++;return 0;};
+    const a=await prepareSpawn(f),c=a.character;c.s3WeaponHandoffEnabled=enabled;
+    launchSpawn(f,a);touchdown(f,a,1/60);f.tick(a);f.tick(a);
+    if(enabled){const before=f.weaponHandoffSnapshot(c);assert(before.weight>0&&before.weight<1);assert.equal(before.duration,f.HANDOFF_FADE);}
+    // No jump, weapon change, hide, death or other invalidate intervenes.
+    a.reset();
+    if(enabled)assert.equal(f.weaponHandoffSnapshot(c),null,'old spawn display record is retired immediately by reset');
+    else assert.equal(f.weaponHandoffSnapshot(c)?.weight??0,0,'disabled control has no active return');
+    c.root.updateMatrixWorld(true);
+    const display=()=>({hand:c.bones.handR.getWorldQuaternion(new f.THREE.Quaternion()).toArray(),pivot:rotation(f,c).toArray()});
+    const rows=[{native:nativeRow(f,a),display:display(),paintCalls}];
+    for(let i=0;i<45;i++){
+      if(i===2)a.intent.fire=true;
+      f.tick(a);f.G.projectiles.update(1/60);
+      assert.equal(f.weaponHandoffSnapshot(c)?.weight??0,0,'first and later new-life updates cannot resume the old return');
+      rows.push({native:nativeRow(f,a),display:display(),paintCalls});
+    }
+    assert(rows.some(r=>r.native.projectiles.length>0),'a fresh new-life attack still emits native projectiles');
+    return rows;
+  }
+  const raw=await run(false),shown=await run(true);
+  for(let i=0;i<raw.length;i++)assert.deepEqual(shown[i],raw[i],`reset/new-life ${i}: canonical, display and native attack match unfaded control`);
+});

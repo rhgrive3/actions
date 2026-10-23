@@ -1,0 +1,21 @@
+{
+  "head": "a042911bf1df6cdd4f1e431fa205aa4e4f2c7f97",
+  "tree": "b9ca9a09b3d6f915db60ad7ec5a8c7b041002611",
+  "productionDeltaVsBd5": [],
+  "officialVerifiedBodies": [
+    {
+      "path": "scripts/check-inkwave-local-references.mjs",
+      "gitBlob": "6d8a6eb13d36bf33bb4655b3fa21219e550683e7",
+      "bytes": 11322,
+      "sha256": "96f0b939f7f7a13d89de9f00ee881bf8727755624f4f6194c694779c7e6c965d",
+      "officialBodyMatches": true
+    },
+    {
+      "path": "scripts/tests/inkwave-local-references.test.mjs",
+      "gitBlob": "24311c5d9dc055831ad1c4f1757cde93bc0d28f5",
+      "bytes": 8405,
+      "sha256": "f451147afa18761b5267a2add04887166631b11e71e365248469e3c25a69c0f2",
+      "officialBodyMatches": true
+    }
+  ]
+}

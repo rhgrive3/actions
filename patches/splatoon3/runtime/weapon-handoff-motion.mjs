@@ -34,7 +34,7 @@ export function weaponHandoffSnapshot(ch) {
   return st ? { owner: st.owner, elapsed: st.t, duration: st.d, weight: st.w, valid: st.valid } : null;
 }
 
-export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNELS: C, G }) {
+export function installWeaponHandoffMotion({ THREE, Character, Actor, CHARACTER_CHANNELS: C, G }) {
   const proto = Character?.prototype;
   if (!proto?._applyPose || !proto?._solveLimb || !proto?._kidXform || !C) throw Error('Weapon handoff motion requires the native Character');
   if (Object.hasOwn(proto, INSTALLED)) return;
@@ -306,4 +306,19 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
   };
   proto.setWeapon = function (...args) { if (this.s3RainmakerSupportPending) this._restoreRainmakerSupport(); supportStates.delete(this); formStates.delete(this); states.delete(this); return setWeapon.apply(this, args); };
   proto.dispose = function (...args) { if (this.s3RainmakerSupportPending) this._restoreRainmakerSupport(); supportStates.delete(this); formStates.delete(this); states.delete(this); return dispose.apply(this, args); };
+  const A = Actor?.prototype;
+  if (A && !Object.hasOwn(A, INSTALLED)) {
+    const reset = A.reset;
+    Object.defineProperty(A, INSTALLED, { value: true });
+    A.reset = function (...args) {
+      const ch = this.character, st = ch?.actor === this ? states.get(ch) : null;
+      if (st && (st.spawning || st.spawnLanding)) {
+        // Retire this life's display before native reset exposes the new life.
+        // Keep its unfaded native pose, never the old in-between wrist/arms.
+        if (st.faded) for (let i=0; i<BONES.length; i++) st.bones[i].quaternion.copy(st.raw[i]);
+        states.delete(ch);
+      }
+      return reset.apply(this, args);
+    };
+  }
 }
