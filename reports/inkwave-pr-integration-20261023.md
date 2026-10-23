@@ -59,6 +59,24 @@ Node 22 (npm-distributed Node 22 executable), source checkout:
 Hosted checks must run on the final published head. Historical successes,
 queued/running jobs and scoped diagnostic skips do not establish acceptance.
 
+## Final-head CI reconciliation
+
+- The old queue-equivalence reference grounded unsupported Clams after three
+  reflections and snapped airborne inventory drops to a distant floor. Keep its
+  immutable fixture unchanged and apply only the two explicit #1849 support
+  corrections to the reference before checking optimized queues. A discriminating
+  control verifies the old verdict, corrected verdict, and current verdict for
+  missing, distant, and nearby floors. The 600-step comparison still checks every
+  snapshot, ordered event, catch-up interval, and detached restore.
+- Opening diagnostics added actor state to the existing ten-game-second error.
+  Both source-contract tests now require that exact timeout and diagnostic prefix;
+  readiness and failure thresholds are unchanged. These corrections and the
+  support regressions pass 38/38 with zero skips.
+- Incorporate #1844's additive projection-installer fixture repair at b6a4996e.
+  It binds the real installer in the VM, tests initialization failure and cleanup,
+  and removes each reviewed projection-only hunk before checking the unchanged
+  historical runner hash. No capture workload or runtime acceptance gate changes.
+
 ## Queue cleanup review
 
 Addresses the outstanding #1840 review: immediately before cancellation,
