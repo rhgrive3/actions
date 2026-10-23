@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
+import {readSplatlingBackend,assertSplatlingBackend,createSplatlingInspector} from './lib/inkwave-splatling-render-evidence.mjs';
 import { chromium,webkit } from 'playwright';
 const [siteArg,sheetArg,rodArg,outArg]=process.argv.slice(2);
 if(!outArg)throw Error('Usage: node scripts/check-inkwave-projectile-volumes.mjs <site> <sheet-pack> <rod-pack> <evidence> [--webkit --quick]');
@@ -48,8 +49,11 @@ try {
    const visuals=G.projectiles.projectileVisuals,historyOwned=eligible.filter(p=>visuals?.handles(p)).length;
    window.volumeHeads=eligible;return {id,vertical,ticks,eligible:eligible.length,recipes:eligible.map(p=>p._inkVolumeRecipe),metrics:{...e.metrics},history:{owned:historyOwned,visible:!!visuals?.mesh?.visible,triangles:visuals?.stats?.triangles||0,indices:visuals?.geometry?.drawRange?.count||0},authorityUnchanged:before===after,calls:G.renderer.info.render.calls,triangles:G.renderer.info.render.triangles,positions:eligible.map(p=>p.pos.toArray())};
   },{id,vertical});
+  if(id==='splatling')data.splatling=await page.evaluate(readSplatlingBackend);
+  result.pendingCase=data; // Preserve the failing backend evidence too.
   assert(data.eligible>0,'native action emitted volume heads: '+label);assert(data.authorityUnchanged);
-  if(data.history.owned){
+  if(id==='splatling')assertSplatlingBackend(data);
+  else if(data.history.owned){
    assert.equal(data.history.owned,data.eligible,'one presentation backend per native volley: '+label);
    assert(data.history.visible&&data.history.triangles>0&&data.history.indices===data.history.triangles*3,'history-owned native heads have visible uploaded geometry: '+label);
    assert.equal(data.metrics.active,0,'history-owned bodies must not duplicate the volume draw: '+label);
@@ -57,6 +61,17 @@ try {
   assert.equal(data.metrics.overflow,0,'bounded native volley fits: '+label);
   if(vertical)assert(data.recipes.every(x=>x==='roller-vertical'),'jump + fire must select actual vertical mode');
   assert(data.recipes.every(x=>x===data.recipes[0]));await page.screenshot({path:path.join(out,label+'-game.png')});
+  if(id==='splatling'){
+   data.views=await page.evaluate(createSplatlingInspector);data.grazing=[];
+   for(const [view,dir]of [['front',[0,.3,-1]],['side',[1,.2,0]],['oblique',[1,.7,-1]],['top',[0,1,.001]],['bottom',[0,-1,.001]]]){
+    const check=await page.evaluate(dir=>renderSplatlingView(dir),dir);
+    assert(check.visiblePixels>0&&check.calls>0&&check.triangles>0,'production Splatling body renders pixels: '+view);
+    assert.equal(check.suppressedPixels,0,'hiding only the selected production body removes every pixel: '+view);
+    assert.equal(check.instances,data.eligible,'every retained native Splatling body is rendered: '+view);
+    await page.locator('#splatling-inspect').screenshot({path:path.join(out,label+'-'+view+'.png')});data.grazing.push({view,...check});
+   }
+   await page.evaluate(()=>disposeSplatlingInspector());
+  }else{
   // Render the very same native heads, with their original positions/data,
   // in a controlled scene. The game's camera is not modified by inspection.
   data.views=await page.evaluate(async()=>{
@@ -88,6 +103,7 @@ try {
    assert.equal(check.darkTransparent,0,label+' '+name+' opaque body must remain solid');assert.equal(check.blackPixels,0,label+' '+name+' black side regression');data.grazing.push({view:name,...check});
   }
   await page.evaluate(()=>{volumeInspector.engine.clear();document.getElementById('volume-inspect').remove();});
+  }
   if(!process.argv.includes('--no-performance')&&['roller','dualies','slosher'].includes(id)&&(id!=='roller'||vertical)) {
    data.performance=await page.evaluate(async({quick})=>{
     const G=window.__G,g=window.__inkwave,e=G.fx.inkVolumes,gl=G.renderer.getContext(),ext=gl.getExtension('EXT_disjoint_timer_query_webgl2'),rows=[],median=a=>[...a].sort((a,b)=>a-b)[Math.floor((a.length-1)/2)];
@@ -102,7 +118,7 @@ try {
    },{quick});
   }
   data.flight=await page.evaluate(()=>{const G=window.__G,g=window.__inkwave,heads=volumeHeads.slice(),samples=[];g._skipRender=true;for(let i=0;i<150;i++){g._frame(1/60);if(i%15===0)samples.push({tick:i,alive:heads.filter(p=>G.projectiles.list.includes(p)).length,positions:heads.filter(p=>G.projectiles.list.includes(p)).map(p=>p.pos.toArray())});}g._skipRender=false;g._frame(1/60);return {samples,remaining:heads.filter(p=>G.projectiles.list.includes(p)).length,paint:G.paint.coverage?.()||null};});
-  result.cases.push(data);fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({...result,errors},null,2));
+  result.cases.push(data);delete result.pendingCase;fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({...result,errors},null,2));
  }
  result.lifecycle=await page.evaluate(()=>{volumeInspector.engine.dispose();volumeInspector.target.dispose();volumeInspector.renderer.dispose();volumeInspector.renderer.forceContextLoss();window.volumeInspector=null;window.renderProjectileView=null;const G=window.__G,e=G.fx.inkVolumes,counts=[];for(let i=0;i<20;i++){G.projectiles.clear();G.fx.clear();G.projectiles._draw();G.renderer.render(G.scene,G.camera);counts.push({...G.renderer.info.memory,bytes:e.metrics.bytes,active:e.metrics.active});}const before={...G.renderer.info.memory};e.dispose();G.renderer.render(G.scene,G.camera);return {counts,before,after:{...G.renderer.info.memory}};});
  for(const c of result.lifecycle.counts){assert.equal(c.bytes,result.lifecycle.counts[0].bytes);assert.equal(c.geometries,result.lifecycle.counts[0].geometries);assert.equal(c.textures,result.lifecycle.counts[0].textures);assert.equal(c.active,0);}assert(result.lifecycle.after.geometries<result.lifecycle.before.geometries);assert.equal(result.lifecycle.after.textures,result.lifecycle.before.textures-4);
