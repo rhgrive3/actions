@@ -96,7 +96,9 @@ for (const [workflow, names] of Object.entries(jobs)) for (const job of names) {
 }
 
 const allPrBranch = 'integrate/inkwave-all-prs-20261022';
-const allPrEpoch={mode:'current-pair-with-gameplay-differences',sha:'26a4db4123d23162a3dbf8a12150b1b5bc6ccf64',head:'83403aaab0043633f1ad1c963068cd0566c5b6fc'};
+const allPrEpoch={mode:'current-pair-with-gameplay-differences',sha:'26a4db4123d23162a3dbf8a12150b1b5bc6ccf64',head:'c9218d19b98a3bc63c9266738e1d67a64d9d1ff0'};
+const stringerBranch = 'fix/stringer-splatana-review-20261023';
+const stringerEpoch = {mode:'current-pair-with-gameplay-differences',sha:'83403aaab0043633f1ad1c963068cd0566c5b6fc',head:'c9218d19b98a3bc63c9266738e1d67a64d9d1ff0'};
 const queueBranch = 'fix/queue-30-recovery-20261022';
 const queueEpoch = {mode:'queue1801-reviewed-paint-source-pair',sha:'28d2c888704d32304d1c938c51d7d2d230eddbbd',head:'df83a5c4265a9c8738d930dabaffb43cd31ae902'};
 const integrationBranch = 'integrate/all-open-prs-20261022';
@@ -106,9 +108,10 @@ const a350Epoch = {mode:'maina350-byte-identical-paint-source-epoch',sha:'a350b6
 const epoch = {mode: 'maine1f-byte-identical-paint-source-epoch', sha: 'e1fa66ad8465bf87caaf232d51543def72c35875'};
 const runtimeUiBranch = 'inkwave/runtime-ui-acceptance-20261022';
 const runtimeUiEpoch = {mode:'main26a4-reviewed-runtime-ui-production-pair',sha:'26a4db4123d23162a3dbf8a12150b1b5bc6ccf64'};
-// Exact seven reviewed PR families: a count alone would hide missing or weaker guards.
+// Exact eight reviewed PR families: a count alone would hide missing or weaker guards.
 const reviewedPrShells = [
   "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$DECLARED_BASE_SHA\" = \"26a4db4123d23162a3dbf8a12150b1b5bc6ccf64\" ] && [ \"$PAIR_REPOSITORY\" = \"rhgrive3/actions\" ] && [ \"$PAIR_HEAD_REPO\" = \"$PAIR_REPOSITORY\" ] && [ \"$PAIR_HEAD_REF\" = \"inkwave/runtime-ui-acceptance-20261022\" ]; then",
+  "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$PAIR_HEAD_REF\" = \"fix/stringer-splatana-review-20261023\" ] && [ \"$PAIR_HEAD_REPO\" = \"$PAIR_REPOSITORY\" ] && [ -n \"$PAIR_REPOSITORY\" ]; then",
   "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$PAIR_HEAD_REF\" = \"integrate/inkwave-all-prs-20261022\" ] && [ \"$PAIR_HEAD_REPO\" = \"$PAIR_REPOSITORY\" ] && [ -n \"$PAIR_REPOSITORY\" ]; then",
   "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$PAIR_HEAD_REF\" = \"inkwave/exact-head-ci-main144-20261022\" ] && [ -n \"$PAIR_REPOSITORY\" ] && [ \"$PAIR_HEAD_REPO\" = \"$PAIR_REPOSITORY\" ]; then",
   "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && { [ \"$PAIR_HEAD_REF\" = \"inkwave/runtime-acceptance-0f3-prep-20261022\" ] || [ \"$PAIR_HEAD_REF\" = \"inkwave/runtime-acceptance-followup-20261022\" ]; }; then",
@@ -165,6 +168,12 @@ function sourceRouteContract(source) {
   }
   const cases = [
     [context(allPrBranch,'1843'),true,true,'allpr'],
+    [context(stringerBranch,'1850'),true,true,'stringer'],
+    [context(stringerBranch+'-foreign','1850'),false,true,'legacy'],
+    [context(stringerBranch,'1850',{headRepo:'foreign/repo'}),false,true,'legacy'],
+    [context(stringerBranch,'1850',{baseRef:'not-main'}),false,true,'legacy'],
+    [context(stringerBranch,'1850',{event:'push'}),false,true,'legacy'],
+    [context(stringerBranch,'1850',{side:'after'}),false,false,'none'],
     [context(allPrBranch+'-foreign','1843'),false,true,'legacy'],
     [context(allPrBranch,'1843',{headRepo:'foreign/repo'}),false,true,'legacy'],
     [context(allPrBranch,'1843',{baseRef:'not-main'}),false,true,'legacy'],
@@ -223,14 +232,14 @@ function sourceRouteContract(source) {
     const {result, calls} = probe(body, c); assert.equal(result.status, 0, result.stderr); assert.equal(calls.length, 1);
     const script = index === 0 ? 'check-inkwave-current-pair-controls' : 'prepare-inkwave-projectile-baseline';
     const receipt = index === 0 ? 'current-pair-controls' : 'baseline-birth-adjustment';
-    const chosenEpoch = route === 'allpr' ? allPrEpoch : route === 'runtime-ui' ? runtimeUiEpoch : route === 'exact' ? exactEpoch : route === 'queue' ? queueEpoch : route === 'integration' ? integrationEpoch : route === 'a350' ? a350Epoch : epoch;
+    const chosenEpoch = route === 'allpr' ? allPrEpoch : route === 'stringer' ? stringerEpoch : route === 'runtime-ui' ? runtimeUiEpoch : route === 'exact' ? exactEpoch : route === 'queue' ? queueEpoch : route === 'integration' ? integrationEpoch : route === 'a350' ? a350Epoch : epoch;
     const wanted = [`scripts/${script}.mjs`, '--baseline', '.ci-baseline', '--candidate', '.',
       ...(route === 'legacy' ? [] : ['--base-sha', c.github.event.pull_request.base.sha, '--candidate-sha', c.github.event.pull_request.head.sha]),
-      ...(['allpr','runtime-ui','current','a350','integration','queue','exact','dispatch'].includes(route) ? ['--expected-mode', chosenEpoch.mode, '--expected-source-base', chosenEpoch.sha, '--expected-source-head', route === 'runtime-ui' ? c.github.event.pull_request.head.sha : chosenEpoch.head || chosenEpoch.sha] : []),
+      ...(['allpr','stringer','runtime-ui','current','a350','integration','queue','exact','dispatch'].includes(route) ? ['--expected-mode', chosenEpoch.mode, '--expected-source-base', chosenEpoch.sha, '--expected-source-head', route === 'runtime-ui' ? c.github.event.pull_request.head.sha : chosenEpoch.head || chosenEpoch.sha] : []),
       '--receipt', `.ci-scratch/projectile-visuals/before/${receipt}.json`];
     assert.deepEqual(calls[0], wanted, route + ': exact original/new consumer arguments');
   }
-  for (const body of bodies) for (const selectedBranch of [allPrBranch,runtimeBranch,a350Branch,integrationBranch,queueBranch,exactBranch]) {
+  for (const body of bodies) for (const selectedBranch of [allPrBranch,stringerBranch,runtimeBranch,a350Branch,integrationBranch,queueBranch,exactBranch]) {
     const {result, calls} = probe(body, context(selectedBranch, '1770'), 42);
     assert.equal(result.status, 42, 'current-epoch rejection must stop the step');
     assert.equal(calls.length, 1, 'no retry or legacy fallback after current-epoch rejection');
