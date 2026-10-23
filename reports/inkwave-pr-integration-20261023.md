@@ -157,6 +157,25 @@ missing harness identities fail. The four digest/trace/comparison guards pass.
 Retain both original raw measurements and the original comparator's rejection.
 Fresh authenticated A/A, subsequent A/B and final native-game checks are pending.
 
+The finite-score A/A repeats match every gameplay digest on range, Tidewater and
+Scorch. They expose a separate counter-scope defect: renderer totals include
+startup/menu work. Tidewater's absolute frame total is 310 versus 333; GPU totals
+are 328/60 versus 317/61 geometries/textures. Scorch's totals also differ, while
+all measured gameplay and geometry-query results agree. Those measurements are
+retained and are not accepted as A/B evidence.
+
+Schema 2 observes actual counter changes during the CPU window and retains both
+raw process snapshots. Warm the actual native playing scene once before a
+non-rendering CPU window and assert no simulation tick advances. Independently
+compare initial/final live scene objects, meshes, visible meshes/vertices, unique
+geometry/material/texture counts, indices and bones. This retains quality and
+allocation controls without comparing cached menu allocations as gameplay work.
+The comparator requires the reported window to equal its raw observations and
+rejects changed draw, allocation, visible scene, initial scene, schema and harness
+identity. Seven controls pass, including hidden-parent quality reduction with
+unchanged allocation totals. All numeric state digests remain exact. New A/A/B
+measurements are required under this same five-file harness identity.
+
 ## Queue cleanup review
 
 Addresses the outstanding #1840 review: immediately before cancellation,

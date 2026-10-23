@@ -9,6 +9,7 @@ on:
       - 'scripts/benchmark-inkwave-body-balance.mjs'
       - 'scripts/lib/inkwave-cpu-trace.mjs'
       - 'scripts/lib/inkwave-cpu-gameplay-digest.mjs'
+      - 'scripts/lib/inkwave-cpu-counters.mjs'
       - 'scripts/tests/inkwave-*cpu*.test.mjs'
       - '.github/workflows/inkwave-composed-cpu.yml'
 permissions:
@@ -36,7 +37,7 @@ jobs:
       - name: Source composition, strict output and GC/comparison controls
         run: |
           node scripts/check-inkwave-patches.mjs --quick
-          node --experimental-vm-modules --test patches/local-quality/tests/body-balance-work.test.mjs scripts/tests/inkwave-cpu-trace.test.mjs scripts/tests/inkwave-cpu-gameplay-digest.test.mjs scripts/tests/inkwave-composed-cpu-comparison.test.mjs
+          node --experimental-vm-modules --test patches/local-quality/tests/body-balance-work.test.mjs scripts/tests/inkwave-cpu-trace.test.mjs scripts/tests/inkwave-cpu-gameplay-digest.test.mjs scripts/tests/inkwave-cpu-counters.test.mjs scripts/tests/inkwave-composed-cpu-comparison.test.mjs
       - name: Existing source motion regression
         run: node --experimental-vm-modules --test patches/local-quality/tests/motion-fk-hotpath.test.mjs
       - name: Build production output
