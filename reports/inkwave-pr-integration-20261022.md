@@ -367,3 +367,47 @@ Its other components completed; the isolated jump file then passed 8/8 with the
 normal 2240MiB heap (no skips). Required reference-data/full-special commands
 and procfs-sensitive supervision remain hosted obligations; no workflow skip,
 heap change, case reduction or acceptance-threshold change was introduced.
+
+### Repeated module loads and stamped relay QA, 2026-10-23 UTC
+
+On actual head d9491798, hosted job 120163247631 reached raw83 release capture
+but rejected two byte-identical responses for the same music owner URL. Keep
+one immutable owner per exact URL only after comparing every response byte;
+retain both distinct timer creation/observation/response records and all AST,
+callsite, manifest and native-module Worker checks. Replaying the actual saved
+raw83 provenance against its actual build manifest now binds both timers.
+This replay is not a replacement for the six required native captures.
+
+Hosted network job 120165212512 passed ordinary two-peer replication, then
+timed out in the delayed guest lobby. Its QA delay callback parsed the new
+`m|sender|@relayTime|JSON` envelope as legacy JSON; the production relay safely
+caught that callback exception, so the guest never received its lobby. Classify
+only tick envelopes in both formats and forward the complete original string
+unchanged. The actual browser callback is tested through production Worker
+fetch/RoomDurableObject for legacy and stamped recipients, preserving positive
+latency, START delivery, trace bytes and closed-socket behavior. No production
+Transport, relay admission, gameplay clock or wire bytes are changed.
+
+Job 120163612634 exhausted its install window on the Azure Ubuntu mirror.
+The existing HTTPS archive preparation missed the hosted `mirror+file` lists;
+cover apt-mirrors.txt and apt-mirrors-security.txt while preserving suites,
+packages, signing keys and unrelated repositories. Register the helper in each
+affected workflow's path filters. The core's exact job-body guard now permits
+only this exact additive preparation immediately before the same install;
+all pinned acceptance-body hashes and existing mutation negatives remain.
+
+Validation: Worker/source/CI guard group 90 pass / 1 existing opt-in native
+browser case unavailable locally; scoped workflow/relay group 22/22; actual
+browser callback plus relay tests 16/16, no skips. Clean fixed Git archive
+standard npm test completed: Node 93/93, Python 13/13, no skips. Production
+build and startup budget passed; emitted contentHash is unchanged at
+f85b54e2a4309530aab0f923de7f40fb8592cf3c36b7e254661ce8318c3892f1.
+Only QA, workflow setup and reports changed. No transient Blender asset was
+staged or included in that source archive. Original 23 PR heads were refreshed
+and independently confirmed as ancestors of d9491798 by GitHub comparisons.
+
+All eight hosted patch shards passed on d9491798, but core/fan-in, delayed
+network and Roller did not pass, and other browser lanes were unfinished.
+Those results do not establish green CI for this repair's new head. Require
+all applicable exact-head hosted checks before merge; pending, cancelled,
+scope-specific skips and prior-head passes are not acceptance evidence.

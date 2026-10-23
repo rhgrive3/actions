@@ -3,9 +3,35 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 const workflow = fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml', import.meta.url), 'utf8');
 const weaponWorkflow = fs.readFileSync(new URL('../../.github/workflows/inkwave-main-weapons.yml', import.meta.url), 'utf8');
+
+test('hosted apt mirror lists retain suites, signing keys and packages while switching only the stalled Azure URL', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'inkwave-apt-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(root, 'sources.list.d'));
+  const files = {
+    'sources.list': 'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] http://azure.archive.ubuntu.com/ubuntu noble main universe\n',
+    'sources.list.d/ubuntu.sources': 'Types: deb\nURIs: mirror+file:/etc/apt/apt-mirrors.txt\nSuites: noble noble-updates noble-backports\nComponents: main universe\nSigned-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg\n',
+    'sources.list.d/security.list': 'deb mirror+file:/etc/apt/apt-mirrors-security.txt noble-security main\n',
+    'apt-mirrors.txt': 'http://azure.archive.ubuntu.com/ubuntu\thttps://archive.ubuntu.com/ubuntu\nhttps://packages.microsoft.com/ubuntu/24.04/prod\n',
+    'apt-mirrors-security.txt': 'https://azure.archive.ubuntu.com/ubuntu\nhttp://security.ubuntu.com/ubuntu\n',
+    'sources.list.d/foreign.list': 'deb https://foreign.invalid/azure.archive.ubuntu.com/ubuntu noble main\n',
+  };
+  for (const [file, text] of Object.entries(files)) fs.writeFileSync(path.join(root, file), text);
+  const helper = fileURLToPath(new URL('../prepare-inkwave-ci-apt.py', import.meta.url));
+  for (let i = 0; i < 2; i++) {
+    const result = spawnSync('python3', [helper, root], { encoding: 'utf8', timeout: 10000 });
+    assert.equal(result.status, 0, result.stderr);
+    for (const [file, before] of Object.entries(files)) {
+      const expected = before.replaceAll('http://azure.archive.ubuntu.com/ubuntu', 'https://archive.ubuntu.com/ubuntu').replaceAll('https://azure.archive.ubuntu.com/ubuntu', 'https://archive.ubuntu.com/ubuntu');
+      assert.equal(fs.readFileSync(path.join(root, file), 'utf8'), expected, file);
+    }
+  }
+});
 
 // Configuration ownership checks, not a simulation of GitHub's scheduler.
 function mainWeaponTriggerContract(source) {

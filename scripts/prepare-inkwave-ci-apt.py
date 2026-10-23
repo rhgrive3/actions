@@ -5,7 +5,8 @@ import sys
 root = Path(sys.argv[1]) if len(sys.argv) == 2 else Path('/etc/apt')
 if len(sys.argv) > 2:
     raise SystemExit('usage: prepare-inkwave-ci-apt.py [apt-root]')
-files = [root / 'sources.list', *(root / 'sources.list.d').glob('*.list'), *(root / 'sources.list.d').glob('*.sources')]
+files = [root / 'sources.list', root / 'apt-mirrors.txt', root / 'apt-mirrors-security.txt',
+         *(root / 'sources.list.d').glob('*.list'), *(root / 'sources.list.d').glob('*.sources')]
 for file in files:
     if not file.is_file():
         continue

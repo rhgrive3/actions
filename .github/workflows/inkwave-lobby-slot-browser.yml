@@ -2,6 +2,7 @@ name: INKWAVE lobby slot native CSSOM regression
 on:
   pull_request:
     paths:
+      - 'scripts/prepare-inkwave-ci-apt.py'
       - patches/local-quality/adapter.mjs
       - patches/local-quality/lobby-slot-transform-adapter.mjs
       - patches/local-quality/tests/lobby-slot-transform.test.mjs

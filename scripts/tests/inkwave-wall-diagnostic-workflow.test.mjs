@@ -88,7 +88,11 @@ const acceptedJobHashes = {
 };
 test('accepted Turf and network job bodies are preserved without gate weakening',()=> {
   for(const [name, expected] of Object.entries(acceptedJobHashes)) {
-    const body = job(workflow,name).replace(' scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs','');
+    // Reviewed setup-only addition: the signed Ubuntu archive transport helper
+    // runs immediately before the same browser install. All acceptance bytes
+    // still match the independently pinned job bodies below.
+    const body = job(workflow,name).replace(' scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs','')
+      .replaceAll('          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx playwright install --with-deps', '          npx playwright install --with-deps');
     assert.equal(createHash('sha256').update(body).digest('hex'),expected,name);
   }
 });

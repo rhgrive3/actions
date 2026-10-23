@@ -180,7 +180,14 @@ export async function recordLoadedModuleResponse(response, origin, loadedModules
   }
   assert(['http:', 'https:'].includes(url.protocol), 'Unexpected script protocol: ' + url.protocol);
   const rel = decodeURIComponent(url.pathname).replace(/^\//, '');
-  if (blobEvidence && (isMusicOwner(rel)||isNativeModuleWorkerOwner(rel))) blobEvidence.owners.push({ url: response.url(), body: bytes.toString('utf8') });
+  if (blobEvidence && (isMusicOwner(rel)||isNativeModuleWorkerOwner(rel))) {
+    // Navigation/preload may request an owner twice. Retain one immutable source
+    // per exact URL, after checking every response; Worker instances stay distinct.
+    const owner = { url: response.url(), body: bytes.toString('utf8') };
+    const previous = blobEvidence.owners.find(row => row.url === owner.url);
+    if (previous) assert.deepEqual(owner, previous, 'Loaded Worker owner changed within capture: ' + rel);
+    else blobEvidence.owners.push(owner);
+  }
   const actual = { sha256: hashBytes(bytes), bytes: bytes.length };
   if (loadedModules[rel]) assert.deepEqual(loadedModules[rel], actual, 'Loaded module changed within capture: ' + rel);
   loadedModules[rel] = actual;

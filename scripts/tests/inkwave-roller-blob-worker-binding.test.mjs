@@ -40,6 +40,20 @@ test('unobserved, foreign, data, mutated and missing worker executables fail clo
  const missing=await fixture();creation(missing,url);observeGeneratedWorker(missing.evidence,url,ORIGIN);assert.throws(()=>bindBlobWorkerEvidence(missing.evidence,missing.loaded,missing.manifest),/response missing/);
  await assert.rejects(recordLoadedModuleResponse(response(url,SOURCE,'other'),ORIGIN,{}),/lacks creation provenance/);
 });
+test('repeated identical owner loads bind two distinct native timers without accepting changed owner bytes',async()=>{
+ const f=await fixture();
+ await recordLoadedModuleResponse(response(ORIGIN+'/'+creatorPath,creatorCode),ORIGIN,f.loaded,f.evidence);
+ assert.equal(f.evidence.owners.length,1);
+ for(const suffix of ['first','restarted']){
+  const url='blob:'+ORIGIN+'/'+suffix;creation(f,url);observeGeneratedWorker(f.evidence,url,ORIGIN);
+  await recordLoadedModuleResponse(response(url,SOURCE,'other'),ORIGIN,f.loaded,f.evidence);
+ }
+ assert.equal(f.evidence.workers.length,2);assert.equal(f.evidence.responses.length,2);
+ bindBlobWorkerEvidence(f.evidence,f.loaded,f.manifest);verifyLoadedModules(f.loaded,f.manifest);
+ await assert.rejects(recordLoadedModuleResponse(response(ORIGIN+'/'+creatorPath,creatorCode+';'),ORIGIN,f.loaded,f.evidence),/owner changed/);
+ const missing=await fixture(),url='blob:'+ORIGIN+'/missing';creation(missing,url);observeGeneratedWorker(missing.evidence,url,ORIGIN);
+ assert.throws(()=>bindBlobWorkerEvidence(missing.evidence,missing.loaded,missing.manifest),/response missing/);
+});
 test('minified native timer keeps lexical URL identity across callback name reuse',async()=>{
  const {transform}=await import('esbuild');
  const fs=await import('node:fs');
@@ -125,6 +139,9 @@ test('actual minified native audio module Workers bind beside the unchanged Blob
   const code=(await transform(fs.readFileSync(new URL('../../patches/splatoon3/runtime/audio/'+name+'-prewarm.mjs',import.meta.url),'utf8'),{minify:true,format:'esm',target:'es2022'})).code;
   const body=fs.readFileSync(new URL('../../patches/splatoon3/runtime/audio/'+name+'-worker.mjs',import.meta.url),'utf8');f.manifest.artifacts[owner]=hashBytes(code);f.manifest.artifacts[path]=hashBytes(body);
   await recordLoadedModuleResponse(response(ORIGIN+'/'+owner,code),ORIGIN,f.loaded,f.evidence);
+  await recordLoadedModuleResponse(response(ORIGIN+'/'+owner,code),ORIGIN,f.loaded,f.evidence);
+  assert.equal(f.evidence.owners.filter(o=>o.url===ORIGIN+'/'+owner).length,1);
+  await assert.rejects(recordLoadedModuleResponse(response(ORIGIN+'/'+owner,code+';'),ORIGIN,f.loaded,f.evidence),/owner changed/);
   const lines=code.split('\n'),line=lines.findIndex(l=>l.includes('new Worker(')),column=lines[line].indexOf('new Worker(')+1,url=ORIGIN+'/'+path;
   creation(f,url,{kind:'native-module',url,workerOptions:{type:'module',name:'inkwave-'+name},workerStack:`Error\n at construct (<anonymous>:1:1)\n at native (${ORIGIN}/${owner}:${line+1}:${column})`});observeGeneratedWorker(f.evidence,url,ORIGIN);
   await recordLoadedModuleResponse(response(url,body,'other'),ORIGIN,f.loaded,f.evidence);

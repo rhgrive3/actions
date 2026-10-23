@@ -2,6 +2,7 @@ name: INKWAVE narrow HUD tank regression
 on:
   pull_request:
     paths:
+      - 'scripts/prepare-inkwave-ci-apt.py'
       - 'inkwave-public/src/ui/hud.js'
       - 'inkwave-public/styles/hud.css'
       - 'inkwave-public/styles/ui.css'

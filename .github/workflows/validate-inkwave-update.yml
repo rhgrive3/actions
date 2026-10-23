@@ -3,6 +3,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'scripts/prepare-inkwave-ci-apt.py'
       - .github/workflows/validate-inkwave-update.yml
       - "inkwave-public/**"
       - "patches/splatoon3/**"
@@ -27,6 +28,7 @@ on:
       - "tests/issue-queue/**"
   pull_request:
     paths:
+      - 'scripts/prepare-inkwave-ci-apt.py'
       - .github/workflows/validate-inkwave-update.yml
       - "inkwave-public/**"
       - "patches/splatoon3/**"
