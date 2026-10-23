@@ -1,0 +1,30 @@
+{
+  "status": "passed",
+  "checkedCommit": "0ffb2c4de5095c69029baf252a469c1f84517934",
+  "independentHeads": {
+    "watchdog": "39866a132c4e295b949787d757097d054511b10e",
+    "tail": "d7bae63fe40bc87511f659075a093fada9cab56c"
+  },
+  "sources": {
+    "scripts/check-inkwave-idle-resources.mjs": {
+      "blob": "bc5ad497b0b2d3e5f21e792d9c0ced0608b822d9",
+      "sameAsIndependent": "watchdog"
+    },
+    "scripts/tests/inkwave-idle-evaluate-deadline.test.mjs": {
+      "blob": "0dcb6fe498086c81a2c5218347ca7cd8f451274f",
+      "sameAsIndependent": "watchdog"
+    },
+    "scripts/tests/inkwave-idle-resources-gates.test.mjs": {
+      "blob": "d384824f3ac170167db9ff5e3dd0a62ee77e7518",
+      "sameAsIndependent": "watchdog"
+    },
+    ".github/workflows/validate-inkwave-update.yml": {
+      "blob": "8972387ee7f27a2b28dacd2f657e3995be923a2b",
+      "sameAsIndependent": "tail"
+    },
+    "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs": {
+      "blob": "36b7c577e4e629b61e8c32c3b31c7781c5662e39",
+      "sameAsIndependent": "tail"
+    }
+  }
+}
