@@ -27,7 +27,7 @@ function verify(text) {
   assert.match(native, /^    timeout-minutes: 30$/m);
   for (const literal of [
     'timeout-minutes: 30', 'runs-on: ubuntu-latest', 'WORKFLOW_SHA: ${{ github.workflow_sha }}',
-    'ref: ${{ env.SOURCE_SHA }}', 'persist-credentials: false',
+    'ref: \${{ env.SOURCE_SHA }}', 'persist-credentials: false',
     '[[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]', 'test "$WORKFLOW_SHA" = "$SOURCE_SHA"',
     'test "$(git rev-parse HEAD)" = "$SOURCE_SHA"',
     'node scripts/build-inkwave.mjs inkwave-public .built-site/_site',
@@ -36,7 +36,7 @@ function verify(text) {
     guard, source, emitted, verifier,
     'uses: actions/upload-artifact@v4\n        if: always()',
     'path: ${{ env.CI_STORAGE }}/evidence/wall/',
-    'name: inkwave-wall-render-diagnostic-${{ env.SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}'
+    'name: inkwave-wall-render-diagnostic-\${{ env.SOURCE_SHA }}-${{ github.run_id }}-\${{ github.run_attempt }}'
   ]) assert.ok(native.includes(literal), `Missing ${literal}`);
   assert.ok(job(text,'validate_core').includes('scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs'));
   assert.ok(native.indexOf(source) < native.indexOf('node scripts/build-inkwave.mjs'));
@@ -89,13 +89,52 @@ const acceptedJobHashes = {
   "seven_claims": "34ef0c57320a741be38b42f6e0e9eb62e8d7f0b9bbb55b6b9a091c26a828c3cd",
   "resource_paint_continuation": "78e0d3ebf1290c9250339e8dcef35c9b60077c82fd5a99ff51da01b3c50a442b"
 };
-test('accepted Turf and network job bodies are preserved without gate weakening',()=> {
+// A reviewed repair moves the orphaned artifact name out of Bash and into an
+// actual upload action. Restore only that exact edit when comparing the original
+// job pins; every pre-existing test command, failure gate and hash stays fixed.
+const legacyCoreEvidenceTail = '            _site-launch-packets.json\n          retention-days: 14\n';
+const repairedCoreEvidenceTail = `      - name: Retain exact emitted launch packet evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkwave-launch-packets-\${{ env.SOURCE_SHA }}-\${{ github.run_attempt }}
+          path: _site-launch-packets.json
+          if-no-files-found: error
+          retention-days: 14
+`;
+function canonicalCoreEvidence(body) {
+  assert.equal(body.split(repairedCoreEvidenceTail).length, 2, 'exact reviewed upload repair required');
+  assert.ok(body.includes('            patches/network-replication/tests/tower-mine-paint-admission.test.mjs\n' + repairedCoreEvidenceTail), 'all fidelity tests must run before upload');
+  assert.ok(!body.includes(legacyCoreEvidenceTail), 'artifact names cannot execute as shell commands');
+  return body.replace(repairedCoreEvidenceTail, legacyCoreEvidenceTail);
+}
+function verifyAcceptedJobs(text) {
   for(const [name, expected] of Object.entries(acceptedJobHashes)) {
-    // Reviewed setup-only addition: the signed Ubuntu archive transport helper
-    // runs immediately before the same browser install. All acceptance bytes
-    // still match the independently pinned job bodies below.
-    const body = job(workflow,name).replace(' scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs','')
+    let body = job(text,name).replace(' scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs','')
       .replaceAll('          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx playwright install --with-deps', '          npx playwright install --with-deps');
+    if (name === 'validate_core') body = canonicalCoreEvidence(body);
     assert.equal(createHash('sha256').update(body).digest('hex'),expected,name);
+  }
+}
+test('accepted Turf and network job bodies retain their original pins after exact artifact repair',()=>verifyAcceptedJobs(workflow));
+test('the previously pinned broken artifact command is rejected despite its original digest',()=> {
+  const broken=workflow.replace(repairedCoreEvidenceTail,legacyCoreEvidenceTail);
+  assert.notEqual(broken,workflow);
+  assert.throws(()=>verifyAcceptedJobs(broken),/exact reviewed upload repair required/);
+});
+test('artifact repair cannot waive tests, paths, identity, upload errors or unrelated job edits',()=> {
+  for(const [before,after] of [
+    ['patches/splatoon3/tests/active-special-gauge.test.mjs',''],
+    ['patches/network-replication/tests/tower-mine-paint-admission.test.mjs','patches/network-replication/tests/not-a-real-test.mjs'],
+    ['      - name: Retain exact emitted launch packet evidence\n        if: always()', '      - name: Retain exact emitted launch packet evidence\n        if: false'],
+    ['path: _site-launch-packets.json','path: another-report.json'],
+    ['if-no-files-found: error\n          retention-days: 14\n  # The test-file set','if-no-files-found: warn\n          retention-days: 14\n  # The test-file set'],
+    ['name: inkwave-launch-packets-${{ env.SOURCE_SHA }}-${{ github.run_attempt }}','name: inkwave-launch-packets-unbound'],
+    ['      - name: Retain exact emitted launch packet evidence','            true # extra shell command\n      - name: Retain exact emitted launch packet evidence'],
+    ['test "$CORE_RESULT" = success','true # no core requirement']
+  ]) {
+    const changed=workflow.replace(before,after);
+    assert.notEqual(changed,workflow,before);
+    assert.throws(()=>verifyAcceptedJobs(changed),before);
   }
 });

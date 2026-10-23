@@ -1,0 +1,18 @@
+{
+  "120523763416": {
+    "decodedUtf8Bytes": 2408646,
+    "decodedUtf16CodeUnits": 2408369,
+    "rawSha256": "9bbfd6b84165579cea94692ec10d3e8b584eacf243840edb8c4ea370fdb6d3ff",
+    "gzipBytes": 426211,
+    "gzipSha256": "21940bd880d5e8ce08b01a7a91d33a46e5fa3fe5c65f772bd874bd1a389b4e26",
+    "file": "logs/official-job-120523763416.log.gz"
+  },
+  "120523763671": {
+    "decodedUtf8Bytes": 239371,
+    "decodedUtf16CodeUnits": 239367,
+    "rawSha256": "bb9a787843de1b79d01fa51f6b1d7da3ccf8f97930de1ae45b0822fe0271304d",
+    "gzipBytes": 47061,
+    "gzipSha256": "a4fb7efeaeb45afaf2f717cad8133b6350df71019d265248923b3c9de1d50a5f",
+    "file": "logs/official-job-120523763671.log.gz"
+  }
+}
