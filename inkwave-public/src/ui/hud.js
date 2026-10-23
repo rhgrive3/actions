@@ -539,7 +539,7 @@ export class HUD {
     this._clearDamageDirs();
     this.kcards.innerHTML = ''; this.callouts.innerHTML = ''; this.tpops.innerHTML = ''; this.downLayer.innerHTML = ''; this._downs = [];
     this.el.classList.remove('is-live');
-    this._L.turfTxt = null;
+    this._L.turfTxt = null; this._L.turfInt = null; this._L.timerSecond = null;
     this.turfNum.textContent = '0';
     this.boss.setMode(!!match && match.mode === 'boss', match && match.boss);
     this._lineup(match);
@@ -748,11 +748,15 @@ export class HUD {
   _updTimer(time) {
     if (time == null) return;
     const L = this._L;
-    const txt = fmtTime(time);
-    if (txt !== L.timer) {
-      L.timer = txt;
-      this.timerTxt.textContent = txt;
-      if (time <= 10.001 && time > 0) this.timer.animate([{ transform: 'scale(1.3) rotate(-4deg)' }, { transform: 'scale(1)' }], BUMP);
+    const second = Math.max(0, Math.ceil(time - 1e-6));
+    if (second !== L.timerSecond || L.timer == null) {
+      L.timerSecond = second;
+      const txt = fmtTime(time);
+      if (txt !== L.timer) {
+        L.timer = txt;
+        this.timerTxt.textContent = txt;
+        if (time <= 10.001 && time > 0) this.timer.animate([{ transform: 'scale(1.3) rotate(-4deg)' }, { transform: 'scale(1)' }], BUMP);
+      }
     }
     const fin = time <= 10.001;
     if (fin !== L.fin) { L.fin = fin; this.timer.classList.toggle('is-final', fin); }
@@ -1079,9 +1083,13 @@ export class HUD {
     // total counts up toward the real value
     const tgt = this._turfTotal;
     if (this._turfShown < tgt) this._turfShown = Math.min(tgt, this._turfShown + Math.max(6, (tgt - this._turfShown) * 7) * dt);
-    const txt = fmtInt(Math.floor(this._turfShown));
-    if (txt !== this._L.turfTxt) {
-      this._L.turfTxt = txt; this.turfNum.textContent = txt;
+    const whole = Math.floor(this._turfShown);
+    if (whole !== this._L.turfInt || this._L.turfTxt == null) {
+      this._L.turfInt = whole;
+      const txt = fmtInt(whole);
+      if (txt !== this._L.turfTxt) {
+        this._L.turfTxt = txt; this.turfNum.textContent = txt;
+      }
     }
   }
   _turfPop(n) {
