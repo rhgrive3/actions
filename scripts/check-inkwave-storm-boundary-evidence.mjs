@@ -17,12 +17,12 @@ const manifests=[baseSite,candidateSite].map(site=>{
 const [before,after]=manifests;
 assert.equal(before.files['patch/runtime/special-motion.mjs'],hash(execFileSync('git',['show',baseSha+':patches/splatoon3/runtime/special-motion.mjs'])),'original implementation restored in the negative control');
 const changed=[...new Set([...Object.keys(before.files),...Object.keys(after.files)])].filter(k=>before.files[k]!==after.files[k]).sort();
-assert.deepEqual(changed,['patch/runtime/special-motion.mjs','patch/runtime/storm-boundary.mjs']);
-for(const file of ['special-motion.mjs','storm-boundary.mjs'])assert.equal(after.files['patch/runtime/'+file],hash(fs.readFileSync('patches/splatoon3/runtime/'+file)));
+assert.deepEqual(changed,['patch/runtime/special-motion.mjs','patch/runtime/storm-boundary-occlusion.mjs','patch/runtime/storm-boundary.mjs']);
+for(const file of ['special-motion.mjs','storm-boundary.mjs','storm-boundary-occlusion.mjs'])assert.equal(after.files['patch/runtime/'+file],hash(fs.readFileSync('patches/splatoon3/runtime/'+file)));
 const [b,c]=[baseRun,candidateRun].map(p=>read(path.join(p,'probe.json')));
 for(const r of [b,c]){assert.deepEqual(r.errors,[]);assert.equal(r.error,undefined);}
 assert.equal(b.identity,before.contentHash);assert.equal(c.identity,after.contentHash);
-const gameplay=f=>{const {calls,triangles,cloud,...rest}=f;if(cloud){const {boundary,vertices,...state}=cloud;rest.cloud=state;}else rest.cloud=null;return rest;};
+const gameplay=f=>{const {calls,triangles,cloud,...rest}=f;if(cloud){const {boundary,vertices,boundaryRadius,boundaryVisible,occlusion,...state}=cloud;rest.cloud=state;}else rest.cloud=null;return rest;};
 assert.equal(b.frames.length,c.frames.length);
 for(let i=0;i<b.frames.length;i++)assert.deepEqual(gameplay(b.frames[i]),gameplay(c.frames[i]),'sampled simulation state '+b.frames[i].frame);
 assert.ok(b.frames.every(f=>!f.cloud?.boundary));
@@ -41,7 +41,7 @@ for(let i=0;i<3;i++){
 }
 const summary={status:'passed',baseSha,baseTree:'34236683e6776aac9d8b1d4ae0b8a1b31d3f2df2',changedInputs:changed,
  baselineContentHash:before.contentHash,candidateContentHash:after.contentHash,candidateSources:Object.fromEntries(Object.entries(after.files).filter(([k])=>changed.includes(k))),
- artifactHashesVerified:true,negativeControlRejected:true,normalFrameGameplayEqual:true,rateRows,visibilityControl:c.visibilityControl,
+ artifactHashesVerified:true,negativeControlRejected:true,normalFrameGameplayEqual:true,rateRows,visibilityControl:c.visibilityControl,boundaryCpu:c.boundaryCpu,
  drawDelta:c.frames.filter(f=>f.cloud).map(f=>({simulationFrame:f.frame,calls:f.calls-b.frames.find(b=>b.frame===f.frame).calls,triangles:f.triangles-b.frames.find(b=>b.frame===f.frame).triangles})),
  limitations:['No direct Nintendo clip access; parent observation of encoded 30fps f173–183 is the comparison target.','Normal-game captures use the procedural practice range, not a retail or native-source stage.','Rates are render delivery schedules with the same fixed 60Hz simulation. Ray counts include presentation queries and are not equal-work timings.','Warm renderer timings use Chromium SwiftShader in one context; mobile/hardware and large native stages are unmeasured.']};
 fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(summary,null,2)+'\n');console.log(JSON.stringify(summary,null,2));

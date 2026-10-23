@@ -1,0 +1,873 @@
+{
+  "status": "passed",
+  "baseSha": "a4e81347906c0d60ceef76a69f476261bf8d3f86",
+  "baseTree": "34236683e6776aac9d8b1d4ae0b8a1b31d3f2df2",
+  "changedInputs": [
+    "patch/runtime/special-motion.mjs",
+    "patch/runtime/storm-boundary-occlusion.mjs",
+    "patch/runtime/storm-boundary.mjs"
+  ],
+  "baselineContentHash": "e1c18a72dc8a4e358944f8a8dec59f0d4e178c2d2da9881c8af2d2946e380ab2",
+  "candidateContentHash": "adc14699526a24f35e9489d67118fb68c82718392f88fe8ae29b1a6dd7b8b298",
+  "candidateSources": {
+    "patch/runtime/special-motion.mjs": "e66fd37f9a566ba7f10ac83dd8be3c6227976f3a4081fbaadaebf0e9cee24fbd",
+    "patch/runtime/storm-boundary-occlusion.mjs": "9359732cb2c7fe1523c1f7c65689205b88bec245504d6c7d82d2a2205b1d6013",
+    "patch/runtime/storm-boundary.mjs": "fa2afda188fa83c057c5c9f3e72470c7194ee1c16d551b9df023a53e6777a58e"
+  },
+  "artifactHashesVerified": true,
+  "negativeControlRejected": true,
+  "normalFrameGameplayEqual": true,
+  "rateRows": [
+    {
+      "hz": 30,
+      "ticks": 123,
+      "traceHash": "83982ab730cbd425e590131089966bac34f3ec5dc9fdcebb2e56bfbec1b48837",
+      "paintHash": "d22dcd399adb3b9504a666f4109bd99bd09dd9b9a944c3531ada3e07d2d8a147",
+      "deathAndClear": true
+    },
+    {
+      "hz": 60,
+      "ticks": 123,
+      "traceHash": "881a9372fcc529fc29d6ce7eda419d53f6902cfc964acc41556e63455904bd5b",
+      "paintHash": "d22dcd399adb3b9504a666f4109bd99bd09dd9b9a944c3531ada3e07d2d8a147",
+      "deathAndClear": true
+    },
+    {
+      "hz": 120,
+      "ticks": 123,
+      "traceHash": "6a6261d389692007a2f546cf0a83fff116e0e09c6e07b71a61f7f8f8b7f97847",
+      "paintHash": "d22dcd399adb3b9504a666f4109bd99bd09dd9b9a944c3531ada3e07d2d8a147",
+      "deathAndClear": true
+    }
+  ],
+  "visibilityControl": {
+    "pixels": 3818,
+    "onMedianMs": 0.7999999998137355,
+    "offMedianMs": 0.7000000001862645,
+    "onP90Ms": 1.7000000001862645,
+    "offP90Ms": 3.900000000372529,
+    "vertices": 456
+  },
+  "boundaryCpu": {
+    "rebuildMedianMs": 1,
+    "rebuildP95Ms": 7.400000000372529,
+    "maxRebuildRays": 14,
+    "stableMs": 0.009999999993791182,
+    "stableRays": 0,
+    "bytes": 5472,
+    "occlusion": {
+      "rays": 14,
+      "cuts": 590,
+      "occluders": 28,
+      "fallback": null
+    }
+  },
+  "drawDelta": [
+    {
+      "simulationFrame": 15,
+      "calls": 1,
+      "triangles": 152
+    },
+    {
+      "simulationFrame": 45,
+      "calls": 1,
+      "triangles": 152
+    },
+    {
+      "simulationFrame": 90,
+      "calls": 1,
+      "triangles": 152
+    },
+    {
+      "simulationFrame": 120,
+      "calls": 1,
+      "triangles": 152
+    },
+    {
+      "simulationFrame": 180,
+      "calls": 1,
+      "triangles": 139
+    },
+    {
+      "simulationFrame": 300,
+      "calls": 1,
+      "triangles": 113
+    },
+    {
+      "simulationFrame": 462,
+      "calls": 1,
+      "triangles": 89
+    },
+    {
+      "simulationFrame": 479,
+      "calls": 1,
+      "triangles": 89
+    }
+  ],
+  "limitations": [
+    "No direct Nintendo clip access; parent observation of encoded 30fps f173–183 is the comparison target.",
+    "Normal-game captures use the procedural practice range, not a retail or native-source stage.",
+    "Rates are render delivery schedules with the same fixed 60Hz simulation. Ray counts include presentation queries and are not equal-work timings.",
+    "Warm renderer timings use Chromium SwiftShader in one context; mobile/hardware and large native stages are unmeasured."
+  ],
+  "adoption": "HOLD: eight-cloud rebuild p95 exceeds one 60Hz frame; actual native-stage assets could not be fetched.",
+  "roofNegativeControl": false,
+  "roofCases": [
+    {
+      "name": "open-floor",
+      "floorY": 0,
+      "firstRainHit": {
+        "y": 0,
+        "block": 0
+      },
+      "point": [
+        3.4,
+        0,
+        0
+      ],
+      "roiPixels": 46,
+      "changedPixels": 1474,
+      "renderedBoundaryOnFloor": true,
+      "vertices": 6,
+      "occlusion": {
+        "rays": 1,
+        "cuts": 0,
+        "occluders": 2,
+        "fallback": null
+      },
+      "glError": 0
+    },
+    {
+      "name": "partial-roof",
+      "floorY": 0,
+      "firstRainHit": {
+        "y": 2.8,
+        "block": 1
+      },
+      "point": [
+        3.4,
+        0,
+        0
+      ],
+      "roiPixels": 0,
+      "changedPixels": 739,
+      "renderedBoundaryOnFloor": false,
+      "vertices": 6,
+      "occlusion": {
+        "rays": 1,
+        "cuts": 10,
+        "occluders": 4,
+        "fallback": null
+      },
+      "glError": 0
+    },
+    {
+      "name": "complete-roof",
+      "floorY": 0,
+      "firstRainHit": {
+        "y": 2.8,
+        "block": 1
+      },
+      "point": [
+        3.4,
+        0,
+        0
+      ],
+      "roiPixels": 0,
+      "changedPixels": 0,
+      "renderedBoundaryOnFloor": false,
+      "vertices": 0,
+      "occlusion": {
+        "rays": 0,
+        "cuts": 10,
+        "occluders": 4,
+        "fallback": null
+      },
+      "glError": 0
+    },
+    {
+      "name": "moving-roof-out",
+      "floorY": 0,
+      "firstRainHit": {
+        "y": 0,
+        "block": 0
+      },
+      "point": [
+        3.4,
+        0,
+        0
+      ],
+      "roiPixels": 46,
+      "changedPixels": 1474,
+      "renderedBoundaryOnFloor": true,
+      "vertices": 6,
+      "occlusion": {
+        "rays": 1,
+        "cuts": 0,
+        "occluders": 2,
+        "fallback": null
+      },
+      "glError": 0
+    },
+    {
+      "name": "wall-floor",
+      "floorY": 0,
+      "firstRainHit": {
+        "y": 0,
+        "block": 0
+      },
+      "point": [
+        3.4,
+        0,
+        0
+      ],
+      "roiPixels": 76,
+      "changedPixels": 3203,
+      "renderedBoundaryOnFloor": true,
+      "vertices": 30,
+      "occlusion": {
+        "rays": 4,
+        "cuts": 11,
+        "occluders": 4,
+        "fallback": null
+      },
+      "glError": 0
+    },
+    {
+      "name": "nonpaintable-floor",
+      "floorY": 0,
+      "firstRainHit": {
+        "y": 0,
+        "block": 0
+      },
+      "point": [
+        3.4,
+        0,
+        0
+      ],
+      "roiPixels": 0,
+      "changedPixels": 0,
+      "renderedBoundaryOnFloor": false,
+      "vertices": 0,
+      "occlusion": {
+        "rays": 0,
+        "cuts": 0,
+        "occluders": 0,
+        "fallback": null
+      },
+      "glError": 0
+    },
+    {
+      "name": "below-rain-reach",
+      "floorY": -10,
+      "firstRainHit": null,
+      "point": [
+        3.4,
+        -10,
+        0
+      ],
+      "roiPixels": 0,
+      "changedPixels": 0,
+      "renderedBoundaryOnFloor": false,
+      "vertices": 0,
+      "occlusion": {
+        "rays": 0,
+        "cuts": 0,
+        "occluders": 2,
+        "fallback": null
+      },
+      "glError": 0
+    },
+    {
+      "name": "above-cloud",
+      "floorY": 5,
+      "firstRainHit": null,
+      "point": [
+        3.4,
+        5,
+        0
+      ],
+      "roiPixels": 0,
+      "changedPixels": 0,
+      "renderedBoundaryOnFloor": false,
+      "vertices": 0,
+      "occlusion": {
+        "rays": 0,
+        "cuts": 0,
+        "occluders": 0,
+        "fallback": null
+      },
+      "glError": 0
+    }
+  ],
+  "rangeBurstCpu": {
+    "burst8": {
+      "rebuildMedianMs": 4.7000000001862645,
+      "rebuildP95Ms": 23.600000000558794,
+      "maxRebuildRays": 112,
+      "bytes": 43776,
+      "fallbacks": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "rebuildMedianMs": 1.599999999627471,
+    "rebuildP95Ms": 8.200000000186265,
+    "maxRebuildRays": 14,
+    "stableMs": 0.008333333333333333,
+    "stableRays": 0,
+    "bytes": 5472,
+    "occlusion": {
+      "rays": 14,
+      "cuts": 590,
+      "occluders": 28,
+      "fallback": null
+    }
+  },
+  "syntheticBvh": {
+    "scope": "Synthetic regular collision grids using the production BVH builder, TriangleWorld and NativePhysics in Chromium. This is not a measured retail/native stage.",
+    "contentHash": "adc14699526a24f35e9489d67118fb68c82718392f88fe8ae29b1a6dd7b8b298",
+    "stages": [
+      {
+        "id": "grid-2048",
+        "collisionTriangles": 2048,
+        "paintFaces": 1,
+        "measurements": [
+          {
+            "name": "spawn",
+            "point": [
+              0.3,
+              0,
+              0.7
+            ],
+            "coldMs": 5.7000000001862645,
+            "coldRays": 1,
+            "rebuildMedianMs": 1.5,
+            "rebuildP95Ms": 4.2000000001862645,
+            "maxRebuildRays": 1,
+            "stableMs": 0.0008333333379899462,
+            "stableRays": 0,
+            "bytes": 8496,
+            "vertices": 708,
+            "initial": {
+              "rays": 1,
+              "cuts": 0,
+              "occluders": 0,
+              "fallback": null,
+              "visits": 288,
+              "sourceTriangles": 200
+            },
+            "chartReads": 0,
+            "drawCalls": 1,
+            "triangles": 236,
+            "glError": 0
+          },
+          {
+            "name": "center",
+            "point": [
+              0,
+              0,
+              0
+            ],
+            "coldMs": 1.7000000001862645,
+            "coldRays": 1,
+            "rebuildMedianMs": 1,
+            "rebuildP95Ms": 1.8999999994412065,
+            "maxRebuildRays": 1,
+            "stableMs": 0,
+            "stableRays": 0,
+            "bytes": 8424,
+            "vertices": 702,
+            "initial": {
+              "rays": 1,
+              "cuts": 0,
+              "occluders": 0,
+              "fallback": null,
+              "visits": 288,
+              "sourceTriangles": 200
+            },
+            "chartReads": 0,
+            "drawCalls": 1,
+            "triangles": 234,
+            "glError": 0
+          }
+        ],
+        "burst": {
+          "count": 8,
+          "rebuildMedianMs": 7.900000000372529,
+          "rebuildP95Ms": 8.900000000372529,
+          "maxRebuildRays": 8,
+          "stableMs": 0.004166666666666667,
+          "stableRays": 0,
+          "bytes": 67392,
+          "fallbacks": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "drawCalls": 8,
+          "triangles": 1872
+        }
+      },
+      {
+        "id": "grid-131072",
+        "collisionTriangles": 131072,
+        "paintFaces": 1,
+        "measurements": [
+          {
+            "name": "spawn",
+            "point": [
+              0.3,
+              0,
+              0.7
+            ],
+            "coldMs": 1.3999999994412065,
+            "coldRays": 1,
+            "rebuildMedianMs": 1.099999999627471,
+            "rebuildP95Ms": 1.7000000001862645,
+            "maxRebuildRays": 1,
+            "stableMs": 0,
+            "stableRays": 0,
+            "bytes": 8496,
+            "vertices": 708,
+            "initial": {
+              "rays": 1,
+              "cuts": 0,
+              "occluders": 0,
+              "fallback": null,
+              "visits": 288,
+              "sourceTriangles": 200
+            },
+            "chartReads": 0,
+            "drawCalls": 1,
+            "triangles": 236,
+            "glError": 0
+          },
+          {
+            "name": "center",
+            "point": [
+              0,
+              0,
+              0
+            ],
+            "coldMs": 0.599999999627471,
+            "coldRays": 1,
+            "rebuildMedianMs": 0.7000000001862645,
+            "rebuildP95Ms": 1,
+            "maxRebuildRays": 1,
+            "stableMs": 0,
+            "stableRays": 0,
+            "bytes": 8424,
+            "vertices": 702,
+            "initial": {
+              "rays": 1,
+              "cuts": 0,
+              "occluders": 0,
+              "fallback": null,
+              "visits": 288,
+              "sourceTriangles": 200
+            },
+            "chartReads": 0,
+            "drawCalls": 1,
+            "triangles": 234,
+            "glError": 0
+          }
+        ],
+        "burst": {
+          "count": 8,
+          "rebuildMedianMs": 4.900000000372529,
+          "rebuildP95Ms": 16.899999999441206,
+          "maxRebuildRays": 8,
+          "stableMs": 0.0016666666682188709,
+          "stableRays": 0,
+          "bytes": 67392,
+          "fallbacks": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "drawCalls": 8,
+          "triangles": 1872
+        }
+      },
+      {
+        "id": "dense-32768",
+        "collisionTriangles": 32768,
+        "paintFaces": 1,
+        "measurements": [
+          {
+            "name": "spawn",
+            "point": [
+              0.3,
+              0,
+              0.7
+            ],
+            "coldMs": 0.39999999944120646,
+            "coldRays": 0,
+            "rebuildMedianMs": 0.10000000055879354,
+            "rebuildP95Ms": 0.5,
+            "maxRebuildRays": 0,
+            "stableMs": 0,
+            "stableRays": 0,
+            "bytes": 0,
+            "vertices": 0,
+            "initial": {
+              "rays": 0,
+              "cuts": 0,
+              "occluders": 0,
+              "fallback": "occluder-budget",
+              "visits": 513,
+              "sourceTriangles": 512
+            },
+            "chartReads": 0,
+            "drawCalls": 0,
+            "triangles": 0,
+            "glError": 0
+          },
+          {
+            "name": "center",
+            "point": [
+              0,
+              0,
+              0
+            ],
+            "coldMs": 0.19999999925494194,
+            "coldRays": 0,
+            "rebuildMedianMs": 0.09999999962747097,
+            "rebuildP95Ms": 0.20000000018626451,
+            "maxRebuildRays": 0,
+            "stableMs": 0.0008333333302289247,
+            "stableRays": 0,
+            "bytes": 0,
+            "vertices": 0,
+            "initial": {
+              "rays": 0,
+              "cuts": 0,
+              "occluders": 0,
+              "fallback": "occluder-budget",
+              "visits": 513,
+              "sourceTriangles": 512
+            },
+            "chartReads": 0,
+            "drawCalls": 0,
+            "triangles": 0,
+            "glError": 0
+          }
+        ],
+        "burst": {
+          "count": 8,
+          "rebuildMedianMs": 0.599999999627471,
+          "rebuildP95Ms": 0.8999999994412065,
+          "maxRebuildRays": 0,
+          "stableMs": 0.0066666666651144625,
+          "stableRays": 0,
+          "bytes": 0,
+          "fallbacks": [
+            "occluder-budget",
+            "occluder-budget",
+            "occluder-budget",
+            "occluder-budget",
+            "occluder-budget",
+            "occluder-budget",
+            "occluder-budget",
+            "occluder-budget"
+          ],
+          "drawCalls": 0,
+          "triangles": 0
+        }
+      }
+    ],
+    "errors": []
+  },
+  "original194SyntheticBvh": {
+    "scope": "Synthetic regular collision grids using the production BVH builder, TriangleWorld and NativePhysics in Chromium. This is not a measured retail/native stage.",
+    "contentHash": "5c877be70b6b373c9a1dfe93ffc6d73ae9ce9bb6e922645ce7d9746656e4aaf2",
+    "stages": [
+      {
+        "id": "grid-2048",
+        "collisionTriangles": 2048,
+        "paintFaces": 1,
+        "measurements": [
+          {
+            "name": "spawn",
+            "point": [
+              0.3,
+              0,
+              0.7
+            ],
+            "coldMs": 2.5,
+            "coldRays": 0,
+            "rebuildMedianMs": 0.20000000018626451,
+            "rebuildP95Ms": 1,
+            "maxRebuildRays": 0,
+            "stableMs": 0,
+            "stableRays": 0,
+            "bytes": 7200,
+            "vertices": 600,
+            "initial": {
+              "sourceTriangles": null
+            },
+            "chartReads": 42,
+            "drawCalls": 1,
+            "triangles": 200,
+            "glError": 0
+          },
+          {
+            "name": "center",
+            "point": [
+              0,
+              0,
+              0
+            ],
+            "coldMs": 1.1000000005587935,
+            "coldRays": 0,
+            "rebuildMedianMs": 0.20000000018626451,
+            "rebuildP95Ms": 0.7999999998137355,
+            "maxRebuildRays": 0,
+            "stableMs": 0,
+            "stableRays": 0,
+            "bytes": 7200,
+            "vertices": 600,
+            "initial": {
+              "sourceTriangles": null
+            },
+            "chartReads": 84,
+            "drawCalls": 1,
+            "triangles": 200,
+            "glError": 0
+          }
+        ],
+        "burst": {
+          "count": 8,
+          "rebuildMedianMs": 2.599999999627471,
+          "rebuildP95Ms": 3.6000000005587935,
+          "maxRebuildRays": 0,
+          "stableMs": 0.0008333333302289247,
+          "stableRays": 0,
+          "bytes": 57600,
+          "fallbacks": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "drawCalls": 8,
+          "triangles": 1600
+        }
+      },
+      {
+        "id": "grid-131072",
+        "collisionTriangles": 131072,
+        "paintFaces": 1,
+        "measurements": [
+          {
+            "name": "spawn",
+            "point": [
+              0.3,
+              0,
+              0.7
+            ],
+            "coldMs": 22.100000000558794,
+            "coldRays": 0,
+            "rebuildMedianMs": 2.2000000001862645,
+            "rebuildP95Ms": 15.099999999627471,
+            "maxRebuildRays": 0,
+            "stableMs": 0,
+            "stableRays": 0,
+            "bytes": 7200,
+            "vertices": 600,
+            "initial": {
+              "sourceTriangles": null
+            },
+            "chartReads": 42,
+            "drawCalls": 1,
+            "triangles": 200,
+            "glError": 0
+          },
+          {
+            "name": "center",
+            "point": [
+              0,
+              0,
+              0
+            ],
+            "coldMs": 1.099999999627471,
+            "coldRays": 0,
+            "rebuildMedianMs": 1.099999999627471,
+            "rebuildP95Ms": 1.300000000745058,
+            "maxRebuildRays": 0,
+            "stableMs": 0,
+            "stableRays": 0,
+            "bytes": 7200,
+            "vertices": 600,
+            "initial": {
+              "sourceTriangles": null
+            },
+            "chartReads": 84,
+            "drawCalls": 1,
+            "triangles": 200,
+            "glError": 0
+          }
+        ],
+        "burst": {
+          "count": 8,
+          "rebuildMedianMs": 8.200000000186265,
+          "rebuildP95Ms": 8.799999999813735,
+          "maxRebuildRays": 0,
+          "stableMs": 0,
+          "stableRays": 0,
+          "bytes": 57600,
+          "fallbacks": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "drawCalls": 8,
+          "triangles": 1600
+        }
+      },
+      {
+        "id": "dense-32768",
+        "collisionTriangles": 32768,
+        "paintFaces": 1,
+        "measurements": [
+          {
+            "name": "spawn",
+            "point": [
+              0.3,
+              0,
+              0.7
+            ],
+            "coldMs": 6.900000000372529,
+            "coldRays": 0,
+            "rebuildMedianMs": 5,
+            "rebuildP95Ms": 6.7000000001862645,
+            "maxRebuildRays": 0,
+            "stableMs": 0,
+            "stableRays": 0,
+            "bytes": 1179648,
+            "vertices": 98304,
+            "initial": {
+              "sourceTriangles": null
+            },
+            "chartReads": 42,
+            "drawCalls": 1,
+            "triangles": 32768,
+            "glError": 0
+          },
+          {
+            "name": "center",
+            "point": [
+              0,
+              0,
+              0
+            ],
+            "coldMs": 4.5,
+            "coldRays": 0,
+            "rebuildMedianMs": 4.5,
+            "rebuildP95Ms": 7.900000000372529,
+            "maxRebuildRays": 0,
+            "stableMs": 0,
+            "stableRays": 0,
+            "bytes": 1179648,
+            "vertices": 98304,
+            "initial": {
+              "sourceTriangles": null
+            },
+            "chartReads": 84,
+            "drawCalls": 1,
+            "triangles": 32768,
+            "glError": 0
+          }
+        ],
+        "burst": {
+          "count": 8,
+          "rebuildMedianMs": 32.39999999944121,
+          "rebuildP95Ms": 110.40000000037253,
+          "maxRebuildRays": 0,
+          "stableMs": 0.0008333333379899462,
+          "stableRays": 0,
+          "bytes": 9437184,
+          "fallbacks": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "drawCalls": 8,
+          "triangles": 262144
+        }
+      }
+    ],
+    "errors": []
+  },
+  "actualNativeStageFailure": {
+    "scope": "Actual pinned native collision data and NativePhysics in Chromium; isolated boundary benchmark, not a normal game frame.",
+    "contentHash": "10f612a8dff55b7015c914d8d367a010c6017d48e4c85487c3515068fcc13586",
+    "stages": [],
+    "errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      {
+        "url": "https://media.githubusercontent.com/media/kirakira-dev/KiTrix/0611f51b35c9736ee986fb2218461e2585b7875e/stages/Vss_Yunohana/Vss_Yunohana.obj",
+        "failure": "net::ERR_TUNNEL_CONNECTION_FAILED"
+      }
+    ],
+    "error": "page.evaluate: Error: Failed to fetch\n    at a.onmessage (http://127.0.0.1:39231/_versions/ee04637298e2aacc76290fefbb933d8728ec1e45d2d2f77d6f06946153879bad/patches/native-stages/runtime/storm-boundary-data-probe.mjs:1:763)\n    at /workspace/actions/scripts/check-inkwave-storm-boundary-native-data.mjs:11:110"
+  },
+  "libraryRetry": {
+    "status": "failed_before_upload",
+    "attemptsThisFollowup": 1,
+    "error": "hosted apps tools/list request failed: network",
+    "library_file_ids": [],
+    "pending": false,
+    "uncertain": false
+  },
+  "bounds": {
+    "blocks": 128,
+    "nativeCandidates": 512,
+    "bvhInspections": 2048,
+    "clipCuts": 4096,
+    "raysPerRebuild": 64,
+    "polygons": 512,
+    "vertices": 8192
+  },
+  "sourceRuntimeFinding": {
+    "rawWeaponSourceIsNotEmittedRuntime": true,
+    "paintRadius": "sp.radius * s",
+    "actorGate": "stormRainContains(c, e, sp.radius, s)",
+    "rainUntil": "c.t <= c.dur + 1e-10",
+    "fixedVisualEnd": "c.t >= c.dur",
+    "initialRadiusWU": 3.676925925925927,
+    "radiusAt7_6SecondsWU": 7.333333333333333
+  },
+  "importantScope": "Boundary uses the surface rain ray origin/reach/grate policy. Actor body-height/LOS rules remain distinct and unchanged; no claim of complete 3D actor-volume equivalence."
+}
