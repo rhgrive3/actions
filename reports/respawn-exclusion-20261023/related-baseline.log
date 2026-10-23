@@ -1,0 +1,430 @@
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+(node:2068) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #582 tidewater: native Slam remains outside spawn through all phases and impact (784.485444ms)
+✔ #582 kelpline: native Slam remains outside spawn through all phases and impact (926.169603ms)
+✔ #582 halyard: native Slam remains outside spawn through all phases and impact (671.166991ms)
+✔ #582 cargo: native Slam remains outside spawn through all phases and impact (796.100089ms)
+✔ #582 range: native Slam remains outside spawn through all phases and impact (776.753631ms)
+✖ #582 scorch: native Slam remains outside spawn through all phases and impact (461.258218ms)
+✖ #582 hagglefish: native Slam remains outside spawn through all phases and impact (500.694943ms)
+✖ #582 inkblot: native Slam remains outside spawn through all phases and impact (766.088813ms)
+✖ #582 mako: native Slam remains outside spawn through all phases and impact (704.525846ms)
+✖ #582 brinewater: native Slam remains outside spawn through all phases and impact (713.61623ms)
+✖ #582 airport: native Slam remains outside spawn through all phases and impact (738.622424ms)
+✖ #582 barnacle: native Slam remains outside spawn through all phases and impact (825.817104ms)
+✖ #582 bluefin: native Slam remains outside spawn through all phases and impact (765.210453ms)
+✖ #582 crableg: native Slam remains outside spawn through all phases and impact (800.497499ms)
+✖ #582 eeltail: native Slam remains outside spawn through all phases and impact (1732.524011ms)
+✖ #582 flounder: native Slam remains outside spawn through all phases and impact (1787.536268ms)
+✖ #582 hammerhead: native Slam remains outside spawn through all phases and impact (1715.7849ms)
+✖ #582 humpback: native Slam remains outside spawn through all phases and impact (1683.473895ms)
+✖ #582 manta: native Slam remains outside spawn through all phases and impact (1449.505828ms)
+✖ #582 mincemeat: native Slam remains outside spawn through all phases and impact (605.299928ms)
+✖ #582 museum: native Slam remains outside spawn through all phases and impact (688.149026ms)
+✖ #582 robo: native Slam remains outside spawn through all phases and impact (1110.978713ms)
+✖ #582 shipshape: native Slam remains outside spawn through all phases and impact (1136.211255ms)
+✖ #582 sturgeon: native Slam remains outside spawn through all phases and impact (2192.653152ms)
+✖ #582 umami: native Slam remains outside spawn through all phases and impact (1046.323353ms)
+✖ #582 undertow: native Slam remains outside spawn through all phases and impact (615.192956ms)
+✖ #582 urchin: native Slam remains outside spawn through all phases and impact (818.078072ms)
+✖ #582 wahoo: native Slam remains outside spawn through all phases and impact (814.630485ms)
+✔ #582 the five-tick inward rise reproduction reaches the barrier without crossing (861.459041ms)
+✔ #582 Storm residual movement obeys the same barrier without changing its phase timer (675.51664ms)
+✔ #582 fixed-step boundary histories agree at 30/60/120/144Hz rendering (3602.377384ms)
+✔ #582 steering and phase timing outside spawn are byte-identical to an unclamped control (4630.921496ms)
+✔ #582 ordinary run/swim retain current geometry-only movement and preserve the below-pad exception (3135.499487ms)
+✔ #582 native owner packet and remote pose carry the bounded special position (1699.520749ms)
+✔ Slam boundary composes with the action-owned gauge exactly once before forecast and impact (19.034886ms)
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/before-site contentHash=ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30
+(node:2069) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ post-splat gauge including equipped Special Saver survives Squid Spawn; initial spawn/reset still clears (1204.9806ms)
+✔ armor durability, delayed break and uncapped per-hit overflow replace binary immunity (1279.426193ms)
+✔ armor clock expires at 235F, ink bypasses it, reset/death clear and generic invulnerability remains separate (2128.623428ms)
+✔ rearm blocks held Roller across actual death/respawn until release, without synthetic airborne flick (587.448796ms)
+✔ all held action keys rearm independently, stale press ordering disappears, and bots are not trapped (984.099727ms)
+✔ HUD samples final actor timer after gear wrapper, ignores independent FX time and isolates players (1702.636433ms)
+✔ #93 Turf Squid Spawn preserves Quick Respawn history through launch and feeds the gear-adjusted HUD timer (603.179681ms)
+✔ 30/60/120 render schedules preserve armor and retained gauge boundaries (4522.146223ms)
+✔ real composed controller keeps held mouse blocked through map filtering and release re-arms it (1173.056768ms)
+✔ source-connected HUD owns actual actor count/ring rather than the early splatted-event base value (14.05313ms)
+✖ native NetMatch mirrors launch-owned armor; proxy stays presentation-only throughout landing (1663.225234ms)
+✔ a spawn hit has one armor owner even when roll/surge protection overlaps (1850.585512ms)
+✔ #93 normal Turf battle human post-death Squid Spawn selects supported targets from camera aim and confirms via FIRE (1081.633602ms)
+✔ #93 height-only endpoints rejected by native Actor._resolve stay out of aim and launch (2576.748032ms)
+✔ #1005 launch-owned armor clock is consumed through Squid Spawn touchdown (2122.891859ms)
+✔ #93 supported touchdown uses native collision, preserves launch armor time, and adds no paint (1130.086157ms)
+✔ #93 a real native Actor._resolve miss cannot award touchdown, reset armor, or paint (729.968165ms)
+✔ Practice Range keeps immediate control and legacy respawn without Turf Squid Spawn (712.797154ms)
+✔ #512 opening bots choose different deterministic and collision-supported Squid Spawn landings (784.309053ms)
+✔ #512 human opening choice is still aim-owned and invalid bot landings fail closed (532.604554ms)
+ℹ tests 55
+ℹ suites 0
+ℹ pass 31
+ℹ fail 24
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44792.246556
+
+✖ failing tests:
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 scorch: native Slam remains outside spawn through all phases and impact (461.258218ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 hagglefish: native Slam remains outside spawn through all phases and impact (500.694943ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 inkblot: native Slam remains outside spawn through all phases and impact (766.088813ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 mako: native Slam remains outside spawn through all phases and impact (704.525846ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 brinewater: native Slam remains outside spawn through all phases and impact (713.61623ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 airport: native Slam remains outside spawn through all phases and impact (738.622424ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 barnacle: native Slam remains outside spawn through all phases and impact (825.817104ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 bluefin: native Slam remains outside spawn through all phases and impact (765.210453ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 crableg: native Slam remains outside spawn through all phases and impact (800.497499ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 eeltail: native Slam remains outside spawn through all phases and impact (1732.524011ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 flounder: native Slam remains outside spawn through all phases and impact (1787.536268ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 hammerhead: native Slam remains outside spawn through all phases and impact (1715.7849ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 humpback: native Slam remains outside spawn through all phases and impact (1683.473895ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 manta: native Slam remains outside spawn through all phases and impact (1449.505828ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 mincemeat: native Slam remains outside spawn through all phases and impact (605.299928ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 museum: native Slam remains outside spawn through all phases and impact (688.149026ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 robo: native Slam remains outside spawn through all phases and impact (1110.978713ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 shipshape: native Slam remains outside spawn through all phases and impact (1136.211255ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 sturgeon: native Slam remains outside spawn through all phases and impact (2192.653152ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 umami: native Slam remains outside spawn through all phases and impact (1046.323353ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 undertow: native Slam remains outside spawn through all phases and impact (615.192956ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 urchin: native Slam remains outside spawn through all phases and impact (818.078072ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/reliability/tests/special-spawn-barrier.test.mjs:28:56
+✖ #582 wahoo: native Slam remains outside spawn through all phases and impact (814.630485ms)
+  AssertionError [ERR_ASSERTION]: crossing cannot turn the protected-side victim into an inner-band hit
+      at TestContext.<anonymous> (file:///workspace/actions/patches/reliability/tests/special-spawn-barrier.test.mjs:33:39)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/splatoon3/tests/respawn-lifecycle.test.mjs:164:1
+✖ native NetMatch mirrors launch-owned armor; proxy stays presentation-only throughout landing (1663.225234ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  26 !== 23
+  
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/respawn-lifecycle.test.mjs:173:48)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 26,
+    expected: 23,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
