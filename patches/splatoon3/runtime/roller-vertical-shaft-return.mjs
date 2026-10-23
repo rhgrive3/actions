@@ -34,7 +34,7 @@ export function createVerticalShaftReturn(){
     m.a.copy(m.q0).slerp(m.qUp,u);m.b.copy(m.qUp).slerp(input,u);
     return m.result.copy(m.a).slerp(m.b,u);
   }
-  read.capture=(ch,orientation,socket,kid,floorAxis,floorAngle)=>{const m=records.get(ch);if(!m?.pending)return;
+  read.capture=(ch,orientation,socket,kid,floorAxis,floorAngle,projectSupport)=>{const m=records.get(ch);if(!m?.pending)return;
     // Only bridge a real native floor-search correction. If this first
     // eligible sample is already clear, keep its native carry for the rest
     // of this attack rather than arming an unnecessary late waypoint.
@@ -44,6 +44,10 @@ export function createVerticalShaftReturn(){
     m.shaft.set(0,0,1).applyQuaternion(m.result).normalize();
     m.up.set(0,1,0).applyQuaternion(m.a.copy(kid.quaternion).invert()).divide(kid.scale).normalize();
     m.qUp.copy(m.b.setFromUnitVectors(m.shaft,m.up)).multiply(m.result).multiply(socket).normalize();
+    // The upright control can exceed the opposite arm's live reach even when
+    // q0 is legal. Project it once with the same existing support constraint,
+    // then keep that control fixed. No future pose or extra floor search.
+    projectSupport?.(m.qUp);
     m.pending=false;m.active=true;m.captures++;
   };
   read.reject=ch=>{const m=records.get(ch);if(m)m.fallbacks++;};

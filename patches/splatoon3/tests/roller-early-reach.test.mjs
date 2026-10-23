@@ -1,0 +1,12 @@
+import test from'node:test';import assert from'node:assert/strict';import fs from'node:fs';import{createHash}from'node:crypto';import*as T from'../../../inkwave-public/vendor/three/build/three.module.js';
+import{floorEvaluator}from'../../../scripts/lib/inkwave-roller-floor-constraints.mjs';import{createVerticalShaftReturn as current}from'../runtime/roller-vertical-shaft-return.mjs';import{createVerticalShaftReturn as old}from'./fixtures/roller-vertical-shaft-return.0278293.source.mjs';
+const saved=JSON.parse(fs.readFileSync(new URL('./fixtures/roller-early-reach-0278293.json',import.meta.url)));
+test('native early fixture: frozen upright control exceeds left reach; one live projection bounds the fixed control',()=>{
+ assert.equal(createHash('sha256').update(fs.readFileSync(new URL('./fixtures/roller-vertical-shaft-return.0278293.source.mjs',import.meta.url))).digest('hex'),'5c9ffdebe8871b0736f047bcc4461a2abadbf605209f1be70831971e50538ae0');
+ const controls=[];for(const[factory,projected]of[[old,false],[current,true]]){const read=factory(),ch={},a={windup:31/60,interval:56/60,elapsed:46/60},socket=new T.Quaternion().fromArray(saved.constraints.handR.q),input=new T.Quaternion().fromArray(saved.input),q0=new T.Quaternion().fromArray(saved.q0),kid={quaternion:new T.Quaternion().fromArray(saved.constraints.kid.q),scale:new T.Vector3().fromArray(saved.constraints.kid.scale)},evaluate=floorEvaluator(saved.constraints,saved.target);let calls=0;
+  assert.equal(read(ch,a,input,socket,kid,true),null);const project=q=>{calls++;q.fromArray(evaluate(q.toArray()).q);};read.capture(ch,q0,socket,kid,saved.axis,saved.angle,project);const s=read.snapshot(ch),control=evaluate(s.qUp,{applyAlign:false});controls.push(s.qUp);assert.deepEqual(s.q0,saved.q0,'capture sample unchanged');assert.equal(calls,projected?1:0);
+  if(projected)assert(control.leftReachError<1e-12,'existing reach bound');else assert(control.leftReachError>0,'frozen negative control');
+  for(const tick of[47,48,49,55]){a.elapsed=tick/60;assert(read(ch,a,input,socket,kid,true));read.capture(ch,q0,socket,kid,saved.axis,saved.angle,project);assert.deepEqual(read.snapshot(ch).qUp,s.qUp,'control never chases later samples');}assert.equal(calls,projected?1:0);
+  a.elapsed=56/60;assert.equal(read(ch,a,input,socket,kid,true),null,'same deadline');
+ }assert(new T.Quaternion().fromArray(controls[0]).angleTo(new T.Quaternion().fromArray(controls[1]))>0);
+});
