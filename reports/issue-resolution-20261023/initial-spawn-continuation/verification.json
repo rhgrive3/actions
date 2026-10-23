@@ -1,0 +1,14 @@
+{
+  "source": "cc5625d4e8dbd636432d3fa14bfd65bc3e92d11b",
+  "node": "22.23.4",
+  "fullNetworkSuiteRerun": false,
+  "productionDamageGate": false,
+  "files": {
+    "foundation.tap": "8dd7535ef1eceea62e79e32a1d3263e2d43b4dae3b90df5196d55c01dac2644a",
+    "receiver-after.tap": "1d167198e63cd82b813705956ab7029c920b79a94e29f9ec2feae16ffa55d9bf",
+    "receiver-before-fixture.tap": "3b5be6d9aa804fd7a02c4de28d48a0e9615f4b97466f2080bc5d9da4693c6ee5",
+    "receiver-final.tap": "68593d896acf7b378d8c99e08879cf78ac537701a499397754b372946ffd27cc",
+    "receiver-expanded.tap": "a852476363c688a40d6f386b2acae4775450a4538d41c0e0a849fec1999a446c"
+  },
+  "archiveSha256": "d51c42727a027a2b70e8b524ee0141b27da7afc7c7ffd97b04ef4876fc4626b2"
+}
