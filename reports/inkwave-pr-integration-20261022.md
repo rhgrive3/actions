@@ -342,3 +342,28 @@ all missing-route negatives. Added-CI/integration contracts now pass 31/31.
 No gate is removed or bypassed. Main and all 23 source heads were unchanged
 when the preceding repair was published. All applicable CI must run on the
 new actual head; the older head remains nonaccepting.
+
+### Proactive emitted follow-through, 2026-10-23 JST
+
+Before the hosted core reaches its later emitted steps, exercised 28 selected
+commands against the same clean fixed production bundle. 26 commands completed
+successfully, covering Charger trajectory, Boss proof, launch packets, bot
+retry, weapon holds/hit pose, Ballpoint, material handoff, motion caches, actual
+codec/rejoin, locks/HUD, native BVH, touch/range, ranked input, paint/hidden-host,
+session/view settings, gyro, audio disposal, queue hardening and paint lifetime.
+This was a local partial exploration, not full hosted-core completion.
+
+The streamed-music command reproduced 22/23 passing: its last fixture counted
+new PCM-prewarm Workers as the procedural note clock. Restrict the existing
+clock-count assertions to the actual numeric delay/zero protocol; PCM requests
+are objects. Retain exact stream preservation, gap/rollback/hidden recovery,
+priming, procedural start/pause/resume and mute teardown. All 23 cases now pass
+in both source and the real emitted bundle, without skips. Production audio is
+unchanged; native Worker byte/protocol acceptance remains independently required.
+
+The final seven-file inertia/launch/charge/hurtbox group hit the deliberately
+local 768MiB heap cap in jump-recovery-airborne-native. It is not marked green.
+Its other components completed; the isolated jump file then passed 8/8 with the
+normal 2240MiB heap (no skips). Required reference-data/full-special commands
+and procfs-sensitive supervision remain hosted obligations; no workflow skip,
+heap change, case reduction or acceptance-threshold change was introduced.
