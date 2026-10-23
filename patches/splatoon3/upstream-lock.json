@@ -4,28 +4,28 @@
   "files": {
     "src/fx/fx.js": "4f73310a0d6d190601a29811eb39548f223b68226c2d8581ea9e3388e6e0cb90",
     "index.html": "13e4485f3974f806a1672e60200d6c86efd419a1cd41b18c9aa3e9cbf461a580",
-    "src/main.js": "0d2323593dfbb078dc88a3cf0782314deb94ace0ac1dca5350bb2349df62dd09",
-    "src/game/actor.js": "f8c85831733661d6e40aa58f8d588ca576ab2affece932d7f2a574bd49cb2d5d",
+    "src/main.js": "43a1340b94c416686b205dcc152b11068c87d67fe33f718f2f74d732aef9c417",
+    "src/game/actor.js": "eddf4f40001e3fb863daef36a5943581069562660acdc11f8e3f76bc701a29ff",
     "src/game/weapons.js": "b1a427eee47d5634ebca3230e2f966f53a9d35fd71d87dd023204561bc374881",
     "src/game/player.js": "96b7ebb2e1c8715f08d15aeb292f9090d64c38f255361cfd78a0a095a53f9dfa",
     "src/game/match.js": "c76ca6b008204c70f3514d4fdfb76c19721d4363f8f6184f62067bc736d082c0",
     "src/world/paint.js": "19a4172bb263aac5406fe297897302c428ee4efc1a3b5c409a69413991737342",
     "src/config.js": "ae57e67f0dd6e44e988dbfeef20c8583a61f1a3fdb69d3f1aa5032afd16f8868",
     "src/ui/menus.js": "9b8c5f5adeec0e94ab64fb4eb2d802526bebdb2059547130bd0713e387ab2a1e",
-    "src/core/shadowcache.js": "5ef1a20d86d0b03c0aeb503e64acd92dd81d3e314f57957933f02fad45f55680",
+    "src/core/shadowcache.js": "0b06a8e8525cb3a0a8736884d622abd92f449e3d2f03a2214f9f163d2e49a53f",
     "src/core/input.js": "cc320e31be3b9be5c6ef80e4120e59a130068272e4bd30ae6585601ae4b04ae4",
     "src/ui/hud.js": "213407a8ef2ecb124df7990069a6eb3891c9a47201ec413dbd30591ab3dfd80a",
     "src/i18n.js": "48f38fafdcbf75d93bbf46a0566b96f2d409025f48e9893c7ad316a6acecef07",
     "src/game/physics.js": "129c60ab0f5ed1874b7bbc4bc6d0beb510b08dde0efddc844a9f5289b5d4087d",
     "src/core/ctx.js": "3bac560e4a49b949890b54f7cbbdf9c7ed378aa2c9a1c3878b1d6df2589e5c04",
-    "src/game/character.js": "1b2f3c7209c661763110254787b06a7ce1ea317c456c41ff717bed854590eb8c",
+    "src/game/character.js": "ff6a8a7bd7ac1c441464598ebff1af94fead2514893f96ea39b41f86634a6221",
     "src/game/character-weapons.js": "aa6f865e329016aff6efac127ee69dd288b046a911f89189466a4f18c68f5f89",
     "src/net/netmatch.js": "b9ae0235b623c463f04f075dd1bbc305b15add3595dc8e776837e18caa9555d8",
     "src/core/mobile.js": "b22456fd45f74580d38b0cf40de15ee2ef670fbbb9f9043badc2c3d323ce6400",
     "src/game/cameraRig.js": "46a8beabfaab8bdaf00ea1e11df4ee907d71279b419f5533500ce45aa98c24d1",
-    "src/game/motion/retarget.js": "3e35c49ace95b6548d09b188cfb439cf50b9bb9013897fa3ad092a8938af6459",
-    "src/game/motion/source-controller.js": "1b9c098b4835bcf6dc1e3216cb2d39197b50c13edae45a78ff4fbd37f94d6074",
-    "src/game/character-geo.js": "c5540b2e6dcecd7278d47f6e62bd62906b12ff976445d4aac0eb1ebe88e7b693"
+    "src/game/motion/retarget.js": "f2a465cce04e66cb9fc3aad3dfe2cf78d7245a6f054ba76d3727d3944e2222bd",
+    "src/game/motion/source-controller.js": "bd5e5dd15228d9554a3559111086d3e066cdae73b1d113d3db6adbe6cfb768e3",
+    "src/game/character-geo.js": "1e8b8874385b3a429ceb10e043c0234f60615a7de0c08cfcab4a58d460994179"
   },
-  "integrationNote": "Three upstream-file overrides from INKWAVE PR #1142 are reviewed and pinned here; base sourceCommit describes the imported upstream snapshot, not these local overrides. Motion ContactPolish: src/game/character.js hash updated after reviewing additive source-motion lifecycle hooks, preserving issue-483 exact disposal anchor and all existing upstream pins. Optional source motion now imports dynamically so its ~70KB of JS and 10MiB of cold coefficient packs never increase the immutable 5MiB startup precache; runtime URLs remain versioned and on-demand integrity checked. Reviewed PR #1463 additive legacy Slam damage-radius source change separately against the unchanged S3 adapter actor insertion anchors, native old-radius fallback and tests. Only src/game/actor.js source checksum changes; new 6.4/9.6 local-calibration fields are independently recorded in numeric-status.json.\n2026-10-19: reviewed camera basis alias fix; gameplay raycast collision and UV semantics unchanged, fixed 15-ray origins. Rebased physics.js hash."
+  "integrationNote": "Three upstream-file overrides from INKWAVE PR #1142 are reviewed and pinned here; base sourceCommit describes the imported upstream snapshot, not these local overrides. Motion ContactPolish: src/game/character.js hash updated after reviewing additive source-motion lifecycle hooks, preserving issue-483 exact disposal anchor and all existing upstream pins. Optional source motion now imports dynamically so its ~70KB of JS and 10MiB of cold coefficient packs never increase the immutable 5MiB startup precache; runtime URLs remain versioned and on-demand integrity checked. Reviewed PR #1463 additive legacy Slam damage-radius source change separately against the unchanged S3 adapter actor insertion anchors, native old-radius fallback and tests. Only src/game/actor.js source checksum changes; new 6.4/9.6 local-calibration fields are independently recorded in numeric-status.json.\n2026-10-19: reviewed camera basis alias fix; gameplay raycast collision and UV semantics unchanged, fixed 15-ray origins. Rebased physics.js hash.\n2026-10-23: reviewed layout metadata prefetch and build-derived lightmap presence admission in src/main.js, preserving hash validation/PNG loading/error fallback. Exact-once source composition anchors remain mandatory."
 }

@@ -111,8 +111,39 @@ export function splashPaintFootprint(shape) {
   const { amount, centreBack } = splashStretch(depth, shape?.radius ?? 0);
   return { radius: shape?.radius ?? 0, stretch: amount, centreBack };
 }
+// Keep only the latest scale/configuration per source. Live source edits must
+// invalidate before the next birth; the public spec factory remains fresh.
+const configuredSpecs = new WeakMap();
+const SPEC_INPUTS = Object.freeze([
+  ['SplashSpawnParam','SpawnBetweenLength'],['SplashSpawnParam','SpawnNearestLength'],
+  ['SplashSpawnParam','SpawnNum'],['SplashSpawnParam','SplitNum'],
+  ['SplashPaintParam','WidthHalf'],['SplashPaintParam','WidthHalfNearest'],
+  ['SplashPaintParam','DepthScaleMax'],['SplashPaintParam','DepthScaleMin'],
+  ['SplashPaintParam','DepthMaxDropHeight'],['SplashPaintParam','DepthMinDropHeight'],
+  ['SplashSpawnParam','RandomSpawnVelXMax'],['SplashSpawnParam','RandomSpawnVelYMax'],
+  ['SplashSpawnParam','RandomSpawnVelZMax'],['SplashSpawnParam','RandomSpawnVelZMin'],
+  ['MoveParam','FreeGravity'],
+]);
+function configuredBlasterSpec(source, scale) {
+  const cached=source && configuredSpecs.get(source);
+  if(cached && Object.is(cached.scale,scale) && cached.spawn===source.SplashSpawnParam &&
+      cached.paint===source.SplashPaintParam && cached.move===source.MoveParam &&
+      cached.forceLength===source.SplashSpawnParam?.ForceSpawnNearestAddNumArray?.length){
+    let same=true;
+    for(let i=0;i<SPEC_INPUTS.length;i++){
+      const [group,key]=SPEC_INPUTS[i];
+      if(!Object.is(cached.values[i],source[group]?.[key])){same=false;break;}
+    }
+    if(same)return cached.spec;
+  }
+  const spec=blasterFlightPaintSpec(source,scale);
+  configuredSpecs.set(source,{scale,spec,spawn:source.SplashSpawnParam,paint:source.SplashPaintParam,move:source.MoveParam,
+    forceLength:source.SplashSpawnParam?.ForceSpawnNearestAddNumArray?.length,
+    values:SPEC_INPUTS.map(([group,key])=>source[group]?.[key])});
+  return spec;
+}
 export function configureBlasterFlightPaint(projectile, source, scale) {
-  const spec = blasterFlightPaintSpec(source, scale);
+  const spec = configuredBlasterSpec(source, scale);
   projectile.s3BlasterFlightPaint = { spec, distance: 0, index: 0,
     last: projectile.pos.clone(), sample: projectile.pos.clone(), down: projectile.pos.clone().set(0, -1, 0),
     direction: projectile.pos.clone(), end: projectile.pos.clone(),
@@ -247,7 +278,8 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
   if (!queue?.length || !Number.isFinite(dt) || dt < 0) return 0;
   const physics = game?.physics;
   let landed = 0, write = 0;
-  const landings = [],retired=[],epoch=system._s3SplashDropEpoch||0;
+  let landings=null;
+  const retired=[],epoch=system._s3SplashDropEpoch||0;
   for (let i = 0; i < queue.length; i++) {
     const d = queue[i];
     let done = !physics?.segment || !d.owner || d.owner.remote;
@@ -264,7 +296,7 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
         ?sweptWorldHit(physics,d.pos,d.next,radius,radius,record,true)
         :physics.segment(d.pos, d.next, record, true);
       d.frames++;
-      if (hit?.hit) { landings.push({drop:d,hit,time:stepTime});landed++;done=true;break; }
+      if (hit?.hit) { (landings ||= []).push({drop:d,hit,time:stepTime});landed++;done=true;break; }
       d.pos.copy(d.next);
       stepTime += step;
       if (d.frames >= MAX_DROP_FRAMES || d.pos.y < waterY - 2) done = true;
@@ -277,8 +309,8 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
   // Two opposite-team drops may land on different reference ticks inside one
   // 30Hz update. Apply them by collision time, not by queue iteration order;
   // otherwise the earlier landing can incorrectly overwrite the later one.
-  landings.sort((a,b)=>a.time-b.time);
-  try{for(const landing of landings)landSplashDrop(game,landing.drop,landing.hit);}
+  if(landings?.length>1)landings.sort((a,b)=>a.time-b.time);
+  try{if(landings)for(const landing of landings)landSplashDrop(game,landing.drop,landing.hit);}
   finally{for(const drop of retired)recycleSplashDrop(system,drop,epoch);}
   return landed;
 }

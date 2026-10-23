@@ -33,7 +33,12 @@ export const SOURCE_DRAW_1130=Object.freeze(Object.fromEntries(
 
 export function catalogVisualSpec(record,descriptor,index=0){
   const family=record?.family, b=descriptor?.b||{}, c=descriptor?.c||{};
-  const shared={catalog:{r:record,descriptor,index}},bucket=sharedBucketDraw(shared);
+  // Normal records own a data sourceActor. Preserve the original helper path
+  // for inherited/accessor/dynamic records whose value may change on a read.
+  const source=record && Object.getOwnPropertyDescriptor(record,'sourceActor');
+  const needsBucket=!source || !Object.hasOwn(source,'value') || typeof source.value!=='string' ||
+    source.value==='WeaponSlosherDiffusion' || source.value==='WeaponSlosherDouble';
+  const shared=needsBucket?{catalog:{r:record,descriptor,index}}:null,bucket=shared?sharedBucketDraw(shared):null;
   const draw=bucket||b.DrawSizeParam||b.UnitParam?.DrawSizeParam||SOURCE_DRAW_1130[record?.sourceActor]?.[descriptor?.unit]||null;
   if(family==='slosher'){
     return {style:record.sourceActor==='WeaponSlosherBathtub'?'bubble':'sheet',
@@ -54,13 +59,19 @@ export function catalogVisualSpec(record,descriptor,index=0){
   }
   return {style:'normal',draw,index,baseRadius:.1};
 }
+const radiusCache=new WeakMap();
 export function catalogVisualRadius(spec,ageSeconds=0){
   if(!spec?.draw)return spec?.baseRadius??0;
   const d=spec.draw,i=spec.index,frame=Math.max(0,ageSeconds)*60;
+  let cached=Object.isFrozen(d)?radiusCache.get(spec):null;
+  if(cached && cached.draw===d && Object.is(cached.index,i) && Object.is(cached.base,spec.baseRadius))
+    return cached.f>0 ? Math.max(0,lerp(cached.init,cached.end,clamp(frame/cached.f,0,1))) : cached.radius;
   const init=finite(d.InitRadius,spec.baseRadius)+i*finite(d.AfterOffsetInitRadius,0);
   const end=finite(d.EndRadius,init)+i*finite(d.AfterOffsetEndRadius,0);
   const f=Math.max(0,finite(d.ChangeFrame,0));
-  return Math.max(0,lerp(init,end,f>0?clamp(frame/f,0,1):1));
+  const radius=Math.max(0,lerp(init,end,f>0?clamp(frame/f,0,1):1));
+  if(Object.isFrozen(d))radiusCache.set(spec,{draw:d,index:i,base:spec.baseRadius,init,end,f,radius});
+  return radius;
 }
 export function updateCatalogVisual(p){
   const v=p?.catalogVisual;if(!v)return;
@@ -124,9 +135,10 @@ export function catalogBubbleLimitGroundNormalSpeed(velocity, normal, perFrameLi
   if(!Number.isFinite(perFrameLimit)||perFrameLimit<0||!normal)return velocity;
   const lengthSq=normal.lengthSq();
   if(!(lengthSq>1e-12))return velocity;
-  const normalSpeed=velocity.dot(normal)/Math.sqrt(lengthSq);
+  const normalDot=velocity.dot(normal),normalLength=Math.sqrt(lengthSq);
+  const normalSpeed=normalDot/normalLength;
   const maxSpeed=perFrameLimit*hz;
-  if(normalSpeed>maxSpeed)velocity.addScaledVector(normal,(maxSpeed-normalSpeed)/Math.sqrt(lengthSq));
+  if(normalSpeed>maxSpeed)velocity.addScaledVector(normal,(maxSpeed-normalSpeed)/normalLength);
   return velocity;
 }
 

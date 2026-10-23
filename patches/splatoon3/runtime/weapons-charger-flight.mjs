@@ -89,6 +89,7 @@ export function installChargerFlight(api,completion) {
   Object.defineProperty(P,INSTALLED,{value:true});
   const raw=completion.weapons.charger.MoveParam,collision=completion.weapons.charger.CollisionParam;
   const nativeGhost=P.ghostFire,nativeUpdate=P.update,nativeClear=P.clear;
+  const nativeMuzzle=P._muzzle,nativeAimFrom=P._aimFrom;
   // Single source of the finite flight distance (world units); begin() and the HUD reach query share it.
   // #514: remap raw charge through the legal-minimum band so the first legal
   // 8F release (authoritative linear charge 8/60) lands on DistanceMinCharge exactly.
@@ -157,12 +158,14 @@ export function installChargerFlight(api,completion) {
       out.distanceToSquared(keepBody) <= 2.5 && G.physics.los(keepBody, out);
   }
   P.fireCharger=function(actor,w,charge){
-    const origin=this._muzzle(actor,new THREE.Vector3()).clone();
+    const muzzleMethod=this._muzzle,muzzleOut=new THREE.Vector3(),muzzle=muzzleMethod.call(this,actor,muzzleOut);
+    const origin=muzzleMethod===nativeMuzzle&&muzzle===muzzleOut?muzzleOut:muzzle.clone();
     if (actor.weaponRunner?.s3KeepMuzzleFiring) {
       const kept = new THREE.Vector3();
       if (resolveKeepOrigin(actor, kept)) origin.copy(kept);
     }
-    const dir=this._aimFrom(actor,origin,new THREE.Vector3()).clone();
+    const aimMethod=this._aimFrom,aimOut=new THREE.Vector3(),aim=aimMethod.call(this,actor,origin,aimOut);
+    const dir=aimMethod===nativeAimFrom&&aim===aimOut?aimOut:aim.clone();
     begin(this,actor,w,charge,origin,dir);
   };
   P.ghostFire=function(actor,event){
@@ -245,6 +248,7 @@ export function installChargerFlight(api,completion) {
     const boss=G.boss?.segHit(job.prev,job.pos,collision.InitRadiusForPlayer);
     if(boss&&boss.dist<distance-EPS){distance=boss.dist;ended=true;normal=job.dir.clone().negate();target='boss';}
     const actors=job.hitCandidates||=([]);actors.length=0;
+    let clippedFraction;
     for(const actor of G.actors){
       // Partial rounds meet allied bodies; full rounds retain teammate piercing.
       if(!actor.alive||actor===job.owner||(job.full&&actor.team===job.team)||job.seen.has(actor))continue;
@@ -256,7 +260,7 @@ export function installChargerFlight(api,completion) {
         job.base.set(motion.x0,motion.y0,motion.z0);
         // A last range-clipped segment expires before the tick ends. Scale the
         // target interval by that same flight duration, never later movement.
-        const fraction=Math.min(1,length/(job.speed*dt));
+        const fraction=clippedFraction ??= Math.min(1,length/(job.speed*dt));
         job.moved.set(job.pos.x-(actor.pos.x-motion.x0)*fraction,job.pos.y-(actor.pos.y-motion.y0)*fraction,job.pos.z-(actor.pos.z-motion.z0)*fraction);
         end=job.moved;
       }else job.base.copy(actor.pos);

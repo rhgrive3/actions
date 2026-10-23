@@ -10,7 +10,7 @@
     "catalogueIds": 33,
     "auditedFieldRecords": 392,
     "sourceLeaves": 1631,
-    "entriesWithConfirmedOrLikelyGaps": 10,
+    "entriesWithConfirmedOrLikelyGaps": 11,
     "note": "Raw source leaf counts describe extracted data only. Audited field records may cover multiple raw scalar leaves; every remaining scalar leaf is listed once as unreviewed and separated into probable presentation/metadata versus gameplay-or-engine relevance unclassified. These counts are not gameplay feature requirements and do not certify runtime/retail parity.",
     "entriesWithAuditedFieldsNotProven": 10,
     "unreviewedLeafScopeCategories": {
@@ -21,8 +21,8 @@
     "auditedStatusCounts": {
       "used": 168,
       "absent": 7,
-      "used_approx": 165,
-      "missing": 33,
+      "used_approx": 163,
+      "missing": 35,
       "unconsumed_visual": 2,
       "not_proven": 15,
       "interpretation": 2
@@ -2877,9 +2877,9 @@
         },
         {
           "sourcePath": "MoveParam.FlySplashPaintRadiusArray",
-          "status": "used_approx",
-          "runtimeUse": "ALL_SUB_SPECS.fizzy.flySplashPaintRadius supplies the three stage radii to fizzy flight-paint events.",
-          "difference": "Stage values .9/1.0/1.1 are consumed; stamp footprint and world mapping remain calibrated.",
+          "status": "missing",
+          "runtimeUse": "Stored in ALL_SUB_SPECS.fizzy.flySplashPaintRadius. The sole reader is paintFizzyFlight in patches/splatoon3/runtime/all-subs.mjs, which has no caller; no live flight-paint events are produced.",
+          "difference": "Stage radii .9/1.0/1.1 and FlySplashDistanceArray spacing 2.2 are retained, but threshold-to-terrain contact timing and detached-drop motion/defaults are unresolved. The dead helper instead projects immediately by a 10m ray or y-1.35 fallback. Ordinary ordered native paint rows already provide accepted paint replication; the ignored fizzyFlightPaint action need not be enabled.",
           "confidence": "medium",
           "evidenceUrls": [],
           "sourcePresent": true,
@@ -2888,14 +2888,14 @@
             1.0,
             1.1
           ],
-          "sourceUseState": "implemented_source_value_engine_mapping_unverified",
-          "engineMappingState": "retail_not_verified"
+          "sourceUseState": "source_field_unconsumed",
+          "engineMappingState": "source_mapping_not_proven"
         },
         {
           "sourcePath": "MoveParam.FlySplashPaintParamArray",
-          "status": "used_approx",
-          "runtimeUse": "ALL_SUB_SPECS.fizzy.flySplashPaintParam stores and applies the staged width/depth parameters.",
-          "difference": "Raw width/depth arrays are consumed; texture/stamp shape and vertical projection remain calibrated.",
+          "status": "missing",
+          "runtimeUse": "Stored in ALL_SUB_SPECS.fizzy.flySplashPaintParam, with no runtime consumer. The uncalled paintFizzyFlight helper does not read these shape fields.",
+          "difference": "Widths 1.2/1.26/1.32 and depth scales 1.6 are retained only. Their mapping with FlySplashPaintRadiusArray to the authoritative terrain footprint remains unresolved. BlastParamArray SplashAroundParam is a separate active route emitting six burst droplets and is unaffected by this flight-paint gap.",
           "confidence": "medium",
           "evidenceUrls": [],
           "sourcePresent": true,
@@ -2921,8 +2921,8 @@
               "WidthHalfNearest": 1.32
             }
           ],
-          "sourceUseState": "implemented_source_value_engine_mapping_unverified",
-          "engineMappingState": "retail_not_verified"
+          "sourceUseState": "source_field_unconsumed",
+          "engineMappingState": "source_mapping_not_proven"
         },
         {
           "sourcePath": "MoveParam.HopPitchH",
@@ -3247,7 +3247,8 @@
       "unreviewedSourceLeafCount": 27,
       "auditedStatusCounts": {
         "used": 4,
-        "used_approx": 7
+        "used_approx": 5,
+        "missing": 2
       },
       "unreviewedSourceFieldRecordCount": 27
     },

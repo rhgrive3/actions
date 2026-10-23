@@ -28,7 +28,7 @@ export function adaptResultContinuation(rel, code, once) {
     if (netm) {
       if (net.isHost) this._netEndT = setTimeout(() => {
         if (!resultsCurrent() || m.state !== 'results' || !net.isHost) return;
-        netm.sendEnd(); this.netMatchEnd();
+        if (netm.sendEnd() !== false) this.netMatchEnd();
       }, 12000);
     }`;
     code=once(code, code.includes(timerGuarded) ? timerGuarded : timerRaw,
@@ -40,7 +40,9 @@ export function adaptResultContinuation(rel, code, once) {
     code=once(code,'  endMatch() {', '  endMatch() {\n    const continuationReady = continuationReadyPlayers(this);', 'consume match-scoped continuation ready intent');
     const readyRaw='if (this.isHost) { this.tr.lock(false); for (const p of this.lobby.players) p.ready = false;';
     const readyGuarded='if (this.isHost) { this.tr.lock(false); this.lobby.teamsConfirmed=false;\n      for (const p of this.lobby.players) p.ready=false;';
-    const ready=code.includes(readyGuarded)?readyGuarded:readyRaw;
+    const controlReady = code.includes("sendCriticalControl(this, 'UNLOCK'")
+      ? (code.includes('this.lobby.teamsConfirmed=false;') ? readyGuarded : readyRaw).replace('this.tr.lock(false); ', '') : null;
+    const ready=controlReady || (code.includes(readyGuarded)?readyGuarded:readyRaw);
     return once(code,ready,ready.replace(/p\.ready\s*=\s*false/, 'p.ready = continuationReady.has(p.id)'), 'carry explicit keep choices into lobby');
   }
   if(rel==='styles/ui.css')return code+'\n/* #478: existing loadout actions, preserving responsive flow. */\n.iw-continuation-actions { flex-direction: column; gap: 12px; max-height: calc(100vh - var(--u) * 5.2 - var(--sat) - var(--sab)); overflow-y: auto; }\n.iw-continuation-actions > * { flex-shrink: 0; }\n.iw-continuation-actions > .s3-gear { position: relative; inset: auto; width: 100%; max-height: none; box-sizing: border-box; }\n.iw-res__btns { flex-wrap: wrap; }\n.iw-results .iw-res__btns [data-id="change-gear-continue"] { height: auto; min-height: 48px; padding-top: 10px; padding-bottom: 10px; }\n';

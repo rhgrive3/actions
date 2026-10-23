@@ -151,7 +151,10 @@ const game = new Game();`);
   once('  startBlock() {', `  startBlock() {
     const unavailable = UNAVAILABLE_NATIVE_STAGES.find(stage => stage.id === this.lobby?.map);
     if (unavailable) return unavailable.name + '：' + unavailable.reason;`);
-  once('    this.tr.broadcast(cfg);', '    const stageFingerprint = nativeStageFingerprint(l.map); if (stageFingerprint) cfg.nativeStage = stageFingerprint;\n    this.tr.broadcast(cfg);');
+  const startSend = code.includes("    if (!sendCriticalControl(this, 'START',")
+    ? "    if (!sendCriticalControl(this, 'START', () => this.tr.broadcast(cfg), G)) return false;"
+    : '    this.tr.broadcast(cfg);';
+  once(startSend, '    const stageFingerprint = nativeStageFingerprint(l.map); if (stageFingerprint) cfg.nativeStage = stageFingerprint;\n' + startSend);
   once('  async _begin(cfg) {', `  async _begin(cfg) {
     const unavailable = UNAVAILABLE_NATIVE_STAGES.find(stage => stage.id === cfg.map);
     if (unavailable) { this._fail(new Error(unavailable.name + '：' + unavailable.reason)); return; }

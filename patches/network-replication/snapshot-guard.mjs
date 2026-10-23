@@ -120,9 +120,11 @@ export const NETWORK_PROJECTILE_TAIL_EXTENT_MAX = 128;
 export function validNetworkProjectileCosmetics(e) {
   if (!Array.isArray(e) || e[1] !== 'p') return false;
   if (e[19] !== undefined && e[19] !== 0 && e[19] !== 1) return false;
-  for (const [i,low,high] of [[20,0,8],[22,0,16],[23,0,4],[24,0,512],[25,-2,4]]) {
-    if (e[i] !== undefined && !bounded(e[i], low, high)) return false;
-  }
+  if (e[20] !== undefined && !bounded(e[20], 0, 8)) return false;
+  if (e[22] !== undefined && !bounded(e[22], 0, 16)) return false;
+  if (e[23] !== undefined && !bounded(e[23], 0, 4)) return false;
+  if (e[24] !== undefined && !bounded(e[24], 0, 512)) return false;
+  if (e[25] !== undefined && !bounded(e[25], -2, 4)) return false;
   if (e[21] !== undefined) {
     const width = e[20] ?? e[15];
     if (!bounded(e[21], 0, NETWORK_PROJECTILE_TAIL_RATIO_MAX) || !finite(width) || width < 0
@@ -232,8 +234,8 @@ export function validBossMove(move) {
     || !(move.d[0] > 0) || !move.d.every(v => wireScalar(v) && v >= 0) || !move.p || typeof move.p !== 'object' || Array.isArray(move.p)) return false;
   const p = move.p, fields = keys => keys.every(key => wireScalar(p[key]));
   switch (move.id) {
-    case 'slam': return fields(['x', 'y', 'z']) && Array.isArray(p.rings) && p.rings.every(v => wireScalar(v) && v >= 0);
-    case 'barrage': return fields(['sx', 'sy', 'sz']) && Array.isArray(p.b) && p.b.length > 0
+    case 'slam': return fields(['x', 'y', 'z']) && Array.isArray(p.rings) && p.rings.length <= 2 && p.rings.every(v => wireScalar(v) && v >= 0);
+    case 'barrage': return fields(['sx', 'sy', 'sz']) && Array.isArray(p.b) && p.b.length > 0 && p.b.length <= 7
       && p.b.every(b => Array.isArray(b) && b.length === 4 && b.every(wireScalar));
     case 'sweep': return move.d[1] > 0 && fields(['ox', 'oy', 'oz', 'y', 'a0', 'a1', 'c']);
     case 'charge': return fields(['x', 'y', 'z', 'yaw', 'L', 'v', 'wall', 'stun']) && p.L >= 0 && p.v > 0;

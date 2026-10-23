@@ -9,6 +9,10 @@ export const CLAM_VISUAL_HALF_HEIGHT = Object.freeze({ small: .066 * 1.4, power:
 export const CLAM_FRAGMENT_COUNT = 8;
 export const CLAM_BREAK_VISUAL_SECONDS = .55;
 const TAU = Math.PI * 2;
+const FRAGMENT_POSES = Array.from({ length: CLAM_FRAGMENT_COUNT }, (_, i) => {
+  const yaw = i * TAU / CLAM_FRAGMENT_COUNT, middle = yaw + Math.PI / CLAM_FRAGMENT_COUNT;
+  return { yaw, sin: Math.sin(middle), cos: Math.cos(middle) };
+});
 const unit = n => Math.max(0, Math.min(1, Number.isFinite(n) ? n : 0));
 
 export function createClamPose(THREE) {
@@ -73,9 +77,9 @@ export function createClamBarrier(THREE, color) {
     const spread = breaking ? .8 * t + .55 * t * t : 0;
     const shrink = breaking ? 1 - unit((t - .7) / .3) : 1;
     for (let i = 0; i < CLAM_FRAGMENT_COUNT; i++) {
-      const yaw = i * TAU / CLAM_FRAGMENT_COUNT, middle = yaw + Math.PI / CLAM_FRAGMENT_COUNT;
-      transform.position.set(-Math.cos(middle) * spread, breaking ? .4 * t - 1.1 * t * t : 0, Math.sin(middle) * spread);
-      transform.rotation.set(breaking ? Math.sin(middle) * t * .9 : 0, yaw, breaking ? Math.cos(middle) * t * .9 : 0);
+      const { yaw, sin, cos } = FRAGMENT_POSES[i];
+      transform.position.set(-cos * spread, breaking ? .4 * t - 1.1 * t * t : 0, sin * spread);
+      transform.rotation.set(breaking ? sin * t * .9 : 0, yaw, breaking ? cos * t * .9 : 0);
       transform.scale.setScalar((1 + pulse) * Math.max(.001, shrink));
       transform.updateMatrix(); mesh.setMatrixAt(i, transform.matrix);
     }

@@ -1,5 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';import {execFileSync,spawnSync} from 'node:child_process';import path from 'node:path';import os from 'node:os';import crypto from 'node:crypto';
 import {parse} from '../vendor/acorn.mjs';import {adaptCompiledMain,loadingIdentity,PRECACHE_BUDGET_BYTES,REVISION_BUDGET_BYTES,WORKER_BUDGET_BYTES,INITIAL_JS_BUDGET_BYTES,RANGE_PRELOAD_BUDGET_BYTES,STARTUP_ENTRY_BUDGET_BYTES,CRITICAL_HTML_BUDGET_BYTES} from '../adapter.mjs';
+import {transform} from 'esbuild';
+import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 test('generous but bounded production delivery budgets stay independent and consistent',()=>{
  assert.equal(PRECACHE_BUDGET_BYTES,24*1024*1024);
  assert.equal(REVISION_BUDGET_BYTES,48*1024*1024);
@@ -33,6 +35,55 @@ function uninstrument(node){if(Array.isArray(node))return node.map(uninstrument)
  if(node.type==='FunctionDeclaration'&&node.id?.name==='__iwStartupMeasure')return null;
  if(node.type==='CallExpression'&&node.callee.name==='__iwStartupMeasure')return uninstrument(node.arguments[1].body);
  return Object.fromEntries(Object.entries(node).map(([k,v])=>[k,uninstrument(v)]));}
+function normalizeStartupEdits(node,lightmap=false){if(!node||typeof node!=='object')return;
+ if(node.type==='MethodDefinition')lightmap=node.key?.name==='_loadLightmap';
+ if(node.type==='AwaitExpression'&&node.argument.type==='NewExpression'&&node.argument.callee.name==='Promise'){
+  const cb=node.argument.arguments[0];if(cb?.body?.callee?.name==='setTimeout'&&cb.body.arguments[1]?.value===250)cb.body.arguments[1].value=0;
+ }
+ if(lightmap&&node.type==='Property'&&(node.key.name||node.key.value)==='cache'&&node.value.value==='no-cache')node.value.value='force-cache';
+ if(lightmap&&node.type==='TemplateLiteral'&&node.quasis?.[0]?.value.raw==='assets/lightmaps/'&&node.quasis[1]?.value.raw==='.png?h='){
+  node.expressions.pop();node.quasis.pop();node.quasis[1].value={raw:'.png',cooked:'.png'};node.quasis[1].tail=true;
+ }
+ for(const [key,v]of Object.entries(node))if(Array.isArray(v)){v.forEach(n=>normalizeStartupEdits(n,lightmap));node[key]=v.filter(n=>n?.type!=='EmptyStatement');}else if(v&&typeof v==='object')normalizeStartupEdits(v,lightmap);
+}
+
+test('actual source and composed/minified concurrent boot retain exact full AST and resource phase identity',async()=>{
+ const raw=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
+ const composed=adaptBuildSource('src/main.js',raw);
+ for(const [name,code]of [['historical source',raw],['composed',composed],['minified',(await transform(composed,{minify:true,format:'esm',target:'es2022'})).code]]){
+  const adapted=adaptCompiledMain(code),before=parse(code,{ecmaVersion:'latest',sourceType:'module'});
+  const after=uninstrument(parse(adapted.code,{ecmaVersion:'latest',sourceType:'module'}));normalizeStartupEdits(before);normalizeStartupEdits(after);
+  const digest=node=>crypto.createHash('sha256').update(JSON.stringify(shape(node))).digest('hex');
+  assert.equal(digest(after),digest(before),name+' full AST only receives the explicit profiler/dwell/cache/empty-statement edits');
+  const phases=adapted.phases;
+  if(name==='historical source'){assert.equal(phases.length,22);assert.equal(phases[17].name,'boot/shader-compile');}
+  else{
+   assert.equal(phases.length,23);assert.deepEqual(phases.slice(6,11).map(p=>p.name),['boot/texture-library-module','boot/procedural-textures','boot/mural-generation','boot/wave-generation','boot/stage-build']);
+   assert.equal(phases[18].name,'boot/shader-compile');assert.match(phases[18].source,/\.compileAsync\(/);
+   assert.equal(phases.at(-1).name,'boot/readiness-dwell');
+  }
+ }
+});
+test('concurrent boot rejects missing, reordered, unrelated or changed resource joins before and after minification',async()=>{
+ const code=adaptBuildSource('src/main.js',fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8'));
+ const cases=[
+  ['missing wave join','const waveData = await waveReady;','const waveData = waveReady;'],
+  ['missing mural join','const muralResult = await muralReady;','const muralResult = muralReady;'],
+  ['swapped joins','const muralResult = await muralReady;','const muralResult = await waveReady;'],
+  ['unrelated wave join','const waveData = await waveReady;','const waveData = await muralReady;'],
+  ['world before wave','const waveData = await waveReady;','await this._buildWorld(map); const waveData = waveReady;'],
+  ['extra join','const waveData = await waveReady;','const waveData = await waveReady; await waveReady;'],
+  ['wrong wave owner','envMod.prewarmWaveTexture','charMod.prewarmWaveTexture'],
+  ['unowned signal','signal: waveController.signal','signal: unrelatedController.signal'],
+  ['wrong texture library import',"import('./world/texlib.js')","import('./world/other.js')"],
+  ['unbound mural factory','const muralReady = createMuralTexture(', 'const muralReady = otherMuralTexture('],
+  ['changed compile','G.renderer.compileAsync(','G.renderer.compileUnknown('],
+  ['changed dwell','setTimeout(r, 250)','setTimeout(r, 251)'],
+ ];
+ for(const [name,find,replacement]of cases){assert(code.includes(find),name+' mutation targets actual composition');const changed=code.replace(find,replacement);
+  for(const s of [changed,(await transform(changed,{minify:true,format:'esm',target:'es2022'})).code])assert.throws(()=>adaptCompiledMain(s),/boot phase topology changed|expected explicit 250ms ready dwell/,name);
+ }
+});
 
 test('adapter exact baseline parses, preserves every method except three startup-owned methods',{skip:!source},()=>{
  const adapted=adaptCompiledMain(source),old=classMethods(source),current=classMethods(adapted.code);assert.equal(adapted.removedDwellMs,250);assert.equal(adapted.phases.length,22);

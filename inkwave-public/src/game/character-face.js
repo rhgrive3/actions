@@ -860,9 +860,11 @@ function bakeAO(acc, N) {
       a *= 1 - 0.12 * gauss(Math.abs(az) - 0.058, 0.03) * gauss(el + 0.17, 0.02);     // nose-wing crease
     }
     if (acc.part[i] === 3) a *= lerp(1, 0.55, acc.uv[i][0]);                          // tucked lid margin
-    if (acc.part[i] === 4 && acc.uv[i][1] > 0) { const dz = MF.C.clone().sub(acc.P[i]).dot(MF.F); a = lerp(a, lerp(0.85, 0.3, sstep(0.003, 0.022, dz)), acc.uv[i][1]); }
-    if (sub === 11) { const dz = MF.C.clone().sub(acc.P[i]).dot(MF.F); a = lerp(0.9, 0.55, sstep(0.004, 0.011, dz)); }
-    if (sub === 12) { const dz = MF.C.clone().sub(acc.P[i]).dot(MF.F); a = lerp(0.8, 0.4, sstep(0.006, 0.024, dz)); }
+    const mouth = acc.part[i] === 4 && acc.uv[i][1] > 0;
+    const dz = mouth || sub === 11 || sub === 12 ? v.copy(MF.C).sub(acc.P[i]).dot(MF.F) : 0;
+    if (mouth) { a = lerp(a, lerp(0.85, 0.3, sstep(0.003, 0.022, dz)), acc.uv[i][1]); }
+    if (sub === 11) { a = lerp(0.9, 0.55, sstep(0.004, 0.011, dz)); }
+    if (sub === 12) { a = lerp(0.8, 0.4, sstep(0.006, 0.024, dz)); }
     if (acc.part[i] === 1 && acc.P[i].y < 0.99) a *= lerp(0.7, 1, sstep(NECK_BOTTOM, 0.99, acc.P[i].y)); // collar contact
     ao[i] = clamp(a, 0.08, 1);
   }

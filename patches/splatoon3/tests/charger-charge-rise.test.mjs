@@ -101,3 +101,61 @@ test('production adapters add no manual uploader and native + remote old charge 
  const menu=fs.readFileSync(new URL('../../../inkwave-public/src/ui/menus.js',import.meta.url),'utf8');
  assert.equal(adaptWeaponAudio('src/ui/menus.js',menu),menu);
 });
+
+test('transient failures retry only after explicit prewarm and backoff, sharing concurrent requests',async()=>{
+ const a=mock();let clock=0,calls=0;
+ const options={now:()=>clock,fetcher:async()=>{calls++;return calls===1?{ok:false,status:503}:a.fetcher();}};
+ assert.equal(await chargerRiseBuffer(a.ctx,options),null);
+ clock=5000;
+ assert.equal(await chargerRiseBuffer(a.ctx,options),null);
+ assert.equal(calls,1,'ordinary frames never retry');
+ clock=3999;assert.equal(await chargerRiseBuffer(a.ctx,{...options,retry:true}),null);
+ assert.equal(calls,1);
+ clock=4000;
+ const values=await Promise.all(Array.from({length:10},()=>chargerRiseBuffer(a.ctx,{...options,retry:true})));
+ assert.ok(values[0]);assert.ok(values.every(x=>x===values[0]));assert.equal(calls,2);assert.equal(a.decoded.length,1);
+ assert.equal(chargerRecordedStatus(a.ctx).error,null);
+});
+
+test('permanent HTTP/decode/payload failures and exhausted attempts never retry',async()=>{
+ for(const fail of [async()=>({ok:false,status:404}),async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(3)})]){
+  const a=mock();let calls=0;
+  const options={fetcher:()=>{calls++;return fail();},now:()=>10000*calls,retry:true};
+  for(let i=0;i<5;i++)assert.equal(await chargerRiseBuffer(a.ctx,options),null);
+  assert.equal(calls,1);
+ }
+ const a=mock();let calls=0,clock=0;
+ const options={fetcher:async()=>{calls++;throw new TypeError('offline');},now:()=>clock,retry:true};
+ for(let i=0;i<8;i++){await chargerRiseBuffer(a.ctx,options);clock+=4000;}
+ assert.equal(calls,3);
+});
+
+test('stalled fetch, body and decode time out; late results cannot replace retry buffers',async()=>{
+ for(const phase of ['fetch','body','decode']){
+  const a=mock();let resolve;
+  const stalled=new Promise(r=>{resolve=r;});
+  const fetcher=phase==='fetch'?()=>stalled:async()=>({ok:true,arrayBuffer:phase==='body'?()=>stalled:async()=>new ArrayBuffer(36571)});
+  const original=a.ctx.decodeAudioData;
+  if(phase==='decode')a.ctx.decodeAudioData=()=>stalled;
+  assert.equal(await chargerRiseBuffer(a.ctx,{fetcher,timeoutMs:5,now:()=>0}),null);
+  assert.equal(chargerRecordedStatus(a.ctx).loading,false);
+  a.ctx.decodeAudioData=original;
+  const ready=await chargerRiseBuffer(a.ctx,{fetcher:a.fetcher,retry:true,now:()=>4000});
+  assert.ok(ready);
+  resolve(phase==='fetch'?await a.fetcher():phase==='body'?new ArrayBuffer(36571):{duration:2,sampleRate:44100,numberOfChannels:1});
+  await new Promise(r=>setImmediate(r));
+  assert.equal(await chargerRiseBuffer(a.ctx),ready);
+  assert.equal(a.decoded.length,1,'expired fetch/body work cannot trigger a second decode');
+ }
+});
+
+test('disposed and closed contexts never admit outstanding decode results',async()=>{
+ const {disposeChargerRise}=await import('../runtime/audio/charger-charge-rise.mjs');
+ const a=mock();let finish;
+ a.ctx.decodeAudioData=()=>new Promise(r=>{finish=r;});
+ const pending=chargerRiseBuffer(a.ctx,{fetcher:a.fetcher});
+ await new Promise(r=>setImmediate(r));disposeChargerRise(a.ctx);
+ finish({duration:2,sampleRate:44100,numberOfChannels:2});
+ assert.equal(await pending,null);assert.equal(chargerRecordedStatus(a.ctx).ready,false);
+ a.ctx.state='closed';assert.equal(await chargerRiseBuffer(a.ctx,{fetcher:a.fetcher}),null);
+});

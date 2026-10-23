@@ -1,3 +1,5 @@
+import { makeWaveData } from './wave-data.js';
+export { prewarmWaveTexture } from './wave-prewarm.js';
 // INKWAVE — Environment: everything outside the playable deck.
 // Sky dome (gradient + stylized clouds + sun), sun/hemisphere lights, PMREM env map from the sky, stylized animated sea,
 // pier pilings + dock details hugging the deck, and far scenery (skyline, port cranes, lighthouse, islands, bridge,
@@ -1109,15 +1111,22 @@ const polar = (deg, d) => [Math.cos(deg * DEG) * d, Math.sin(deg * DEG) * d];
 // (ax, az) (unit), local z = (−az, ax), plus the XZ AABB. `aligned` rects keep their exact min/max and take the exact
 // axis-aligned code paths below (so axis-aligned stages build exactly what they always did). Accepts a legacy
 // {minX..maxZ} rect or an oriented {cx,cz,hx,hz,ax,az} one; extra fields (y0, y1 …) are kept.
+function cacheWaterRect(r) {
+  if (r.aligned) {
+    r.waterCx = (r.minX + r.maxX) / 2; r.waterCz = (r.minZ + r.maxZ) / 2;
+    r.waterHx = (r.maxX - r.minX) / 2; r.waterHz = (r.maxZ - r.minZ) / 2;
+  }
+  return r;
+}
 function orect(r) {
-  if (r.hx === undefined) return { ...r, cx: (r.minX + r.maxX) / 2, cz: (r.minZ + r.maxZ) / 2, hx: (r.maxX - r.minX) / 2, hz: (r.maxZ - r.minZ) / 2, ax: 1, az: 0, aligned: true };
+  if (r.hx === undefined) return cacheWaterRect({ ...r, cx: (r.minX + r.maxX) / 2, cz: (r.minZ + r.maxZ) / 2, hx: (r.maxX - r.minX) / 2, hz: (r.maxZ - r.minZ) / 2, ax: 1, az: 0, aligned: true });
   let ax = r.ax ?? 1, az = r.az ?? 0, hx = r.hx, hz = r.hz;
   const l = Math.hypot(ax, az) || 1; ax /= l; az /= l;
   // quarter turns are axis-aligned rects (swap the extents for 90° / 270°)
   if (Math.abs(az) < 1e-7) { ax = 1; az = 0; } else if (Math.abs(ax) < 1e-7) { ax = 1; az = 0; [hx, hz] = [hz, hx]; }
   const aligned = ax === 1 && az === 0;
   const ex = Math.abs(ax) * hx + Math.abs(az) * hz, ez = Math.abs(az) * hx + Math.abs(ax) * hz;
-  return { ...r, hx, hz, ax, az, aligned, minX: r.cx - ex, maxX: r.cx + ex, minZ: r.cz - ez, maxZ: r.cz + ez };
+  return cacheWaterRect({ ...r, hx, hz, ax, az, aligned, minX: r.cx - ex, maxX: r.cx + ex, minZ: r.cz - ez, maxZ: r.cz + ez });
 }
 // point strictly inside rect r grown by pad
 function inRect(r, x, z, pad = 0) {
@@ -1206,46 +1215,8 @@ function vcolorBy(g, fn) { // recolour vertices: fn(x,y,z,nx,ny,nz) -> THREE.Col
 }
 
 // Tileable wave normal/height texture from integer-frequency sine sums (perfectly periodic).
-function makeWaveTexture(size = 256, seed = 11) {
-  const rnd = mulberry(seed);
-  const waves = [];
-  const wind = 0.55;
-  for (let i = 0; i < 44; i++) {
-    const f = 2 + Math.pow(rnd(), 1.5) * 26;
-    const ang = wind + (rnd() - 0.5) * 2.4;
-    let kx = Math.round(Math.cos(ang) * f), ky = Math.round(Math.sin(ang) * f);
-    if (kx === 0 && ky === 0) kx = 2;
-    const kl = Math.hypot(kx, ky);
-    waves.push([kx, ky, 1 / Math.pow(kl, 1.3), rnd() * Math.PI * 2]);
-  }
-  const N = size * size;
-  const H = new Float32Array(N), GX = new Float32Array(N), GY = new Float32Array(N);
-  let hMin = Infinity, hMax = -Infinity, gMax = 0;
-  const TAU = Math.PI * 2;
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const u = x / size, v = y / size;
-      let h = 0, gx = 0, gy = 0;
-      for (let k = 0; k < waves.length; k++) {
-        const w = waves[k];
-        const ph = TAU * (w[0] * u + w[1] * v) + w[3];
-        const s = Math.sin(ph), c = Math.cos(ph);
-        h += w[2] * s; gx += w[2] * w[0] * c; gy += w[2] * w[1] * c;
-      }
-      const i = y * size + x;
-      H[i] = h; GX[i] = gx; GY[i] = gy;
-      if (h < hMin) hMin = h; if (h > hMax) hMax = h;
-      gMax = Math.max(gMax, Math.abs(gx), Math.abs(gy));
-    }
-  }
-  const data = new Uint8Array(N * 4);
-  for (let i = 0; i < N; i++) {
-    const hn = (H[i] - hMin) / (hMax - hMin);
-    data[i * 4] = Math.round((GX[i] / gMax * 0.5 + 0.5) * 255);
-    data[i * 4 + 1] = Math.round((GY[i] / gMax * 0.5 + 0.5) * 255);
-    data[i * 4 + 2] = Math.round(Math.pow(hn, 1.8) * 255);
-    data[i * 4 + 3] = 255;
-  }
+function makeWaveTexture(size = 256, seed = 11, prepared = null) {
+  const data = prepared || makeWaveData(size, seed);
   const tex = new THREE.DataTexture(data, size, size, THREE.RGBAFormat, THREE.UnsignedByteType);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.magFilter = THREE.LinearFilter;
@@ -1412,6 +1383,7 @@ export class Environment {
     this.footprint = (opts.footprint && opts.footprint.length ? opts.footprint : [this.bounds]).slice(0, MAX_RECTS).map(orect);
     this.shadowSize = opts.shadowSize || 4096;
     this.waterY = WATER_Y;
+    this._waveData = opts.waveData instanceof Uint8Array && opts.waveData.byteLength === 256 * 256 * 4 ? opts.waveData : null;
     this.time = 0;
     this.theme = null;
     this.envMap = null;
@@ -1608,7 +1580,8 @@ export class Environment {
 
   // ------------------------------------------------------------------ sea
   _buildSea() {
-    this.U.uWaveTex.value = makeWaveTexture(256, 11);
+    this.U.uWaveTex.value = makeWaveTexture(256, 11, this._waveData);
+    this._waveData = null;
     // polar grid: dense near the arena, stretching to the horizon
     const rings = [0];
     let r = 1.5;
@@ -1617,7 +1590,9 @@ export class Environment {
     const S = 128;
     const pos = [], idx = [];
     pos.push(0, 0, 0);
-    for (let k = 1; k < rings.length; k++) for (let s = 0; s < S; s++) { const a = (s / S) * Math.PI * 2; pos.push(Math.cos(a) * rings[k], 0, Math.sin(a) * rings[k]); }
+    const cos = [], sin = [];
+    for (let s = 0; s < S; s++) { const a = (s / S) * Math.PI * 2; cos.push(Math.cos(a)); sin.push(Math.sin(a)); }
+    for (let k = 1; k < rings.length; k++) for (let s = 0; s < S; s++) pos.push(cos[s] * rings[k], 0, sin[s] * rings[k]);
     for (let s = 0; s < S; s++) idx.push(0, 1 + ((s + 1) % S), 1 + s);
     for (let k = 1; k < rings.length - 1; k++) {
       const a0 = 1 + (k - 1) * S, a1 = 1 + k * S;
@@ -1625,7 +1600,7 @@ export class Environment {
     }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    geo.setAttribute('normal', new THREE.Float32BufferAttribute(new Float32Array(pos.length).map((_, i) => (i % 3 === 1 ? 1 : 0)), 3));
+    geo.setAttribute('normal', new THREE.Int8BufferAttribute(new Int8Array(pos.length).map((_, i) => (i % 3 === 1 ? 1 : 0)), 3, false));
     geo.setIndex(idx);
     const uniforms = { ...THREE.UniformsUtils.clone(THREE.UniformsLib.lights), ...this.U };
     this.seaMat = new THREE.ShaderMaterial({ name: 'Sea', uniforms, vertexShader: SEA_VERT, fragmentShader: SEA_FRAG, lights: true, fog: false });
@@ -1908,18 +1883,15 @@ export class Environment {
     const minX = b.minX - pad, minZ = b.minZ - pad;
     const W = Math.ceil((b.maxX - b.minX + pad * 2) / res), H = Math.ceil((b.maxZ - b.minZ + pad * 2) / res);
     const data = new Uint8Array(W * H).fill(255);
-    const segDist = (px, pz, ax, az, bx, bz) => {
-      const dx = bx - ax, dz = bz - az; const l2 = dx * dx + dz * dz;
-      const t = l2 > 0 ? Math.min(1, Math.max(0, ((px - ax) * dx + (pz - az) * dz) / l2)) : 0;
-      return Math.hypot(px - ax - dx * t, pz - az - dz * t);
-    };
     for (const s of shapes) {
+      const dx = s.bx - s.ax, dz = s.bz - s.az, l2 = dx * dx + dz * dz;
       const reach = s.r + (s.reach ?? 3);
       const x0 = Math.max(0, Math.floor((Math.min(s.ax, s.bx) - reach - minX) / res)), x1 = Math.min(W - 1, Math.ceil((Math.max(s.ax, s.bx) + reach - minX) / res));
       const z0 = Math.max(0, Math.floor((Math.min(s.az, s.bz) - reach - minZ) / res)), z1 = Math.min(H - 1, Math.ceil((Math.max(s.az, s.bz) + reach - minZ) / res));
       for (let j = z0; j <= z1; j++) for (let i = x0; i <= x1; i++) {
         const px = minX + (i + 0.5) * res, pz = minZ + (j + 0.5) * res;
-        const d = Math.max(0, segDist(px, pz, s.ax, s.az, s.bx, s.bz) - s.r);
+        const t = l2 > 0 ? Math.min(1, Math.max(0, ((px - s.ax) * dx + (pz - s.az) * dz) / l2)) : 0;
+        const d = Math.max(0, Math.hypot(px - s.ax - dx * t, pz - s.az - dz * t) - s.r);
         const v = Math.min(255, Math.round((d / range) * 255));
         const k = j * W + i;
         if (v < data[k]) data[k] = v;
@@ -2261,6 +2233,7 @@ export class Environment {
     const toQ = (lx, lz) => { const c = Math.cos(qYaw), s = Math.sin(qYaw); return [qx + lx * c + lz * s, qz - lx * s + lz * c]; };
     const craneCols = ['#e8927f', '#6fa6cf', '#e8927f'];
     [-55, 0, 55].forEach((lx, i) => { const [x, z] = toQ(lx, 30); staticParts.push(this._craneGeo(x, quayTop, z, qYaw, craneCols[i])); });
+    const containers = [];
     const contCols = ['#e9967a', '#7fb8c9', '#e8c56b', '#a99fd3', '#8fcf9f', '#f2efe8', '#d97f8f', '#6f9fd8'];
     for (let row = 0; row < 7; row++) {
       for (let col = 0; col < 12; col++) {
@@ -2269,7 +2242,10 @@ export class Environment {
         const lx = -85 + col * 14.5, lz = -25 + row * 3.1;
         for (let k = 0; k < stack; k++) {
           const [x, z] = toQ(lx + (rnd() - 0.5) * 0.6, lz);
-          staticParts.push(xf(box(12.2, 2.6, 2.45, contCols[Math.floor(rnd() * contCols.length)]), x, quayTop + 1.3 + k * 2.6, z, qYaw + Math.PI / 2 + (rnd() - 0.5) * 0.02));
+          const color = contCols[Math.floor(rnd() * contCols.length)];
+          const yaw = qYaw + Math.PI / 2 + (rnd() - 0.5) * 0.02;
+          _e.set(0, yaw, 0, 'YXZ'); _q.setFromEuler(_e);
+          containers.push({ matrix: new THREE.Matrix4().compose(new THREE.Vector3(x, quayTop + 1.3 + k * 2.6, z), _q, new THREE.Vector3(1, 1, 1)), color });
         }
       }
     }
@@ -2304,6 +2280,13 @@ export class Environment {
     this.staticScenery.name = 'FarScenery';
     this.staticScenery.frustumCulled = false;
     this.root.add(this.staticScenery);
+    // One unit container retains every seeded placement and linear vertex tint.
+    // Parent to the existing far-scenery owner so reflection hiding and teardown
+    // cover this draw together with the merged backdrop.
+    const containerMesh = new THREE.InstancedMesh(box(12.2, 2.6, 2.45, '#ffffff'), shoreMat, containers.length);
+    containerMesh.name = 'FarScenery:containers'; containerMesh.frustumCulled = false;
+    containers.forEach(({ matrix, color }, i) => { containerMesh.setMatrixAt(i, matrix); containerMesh.setColorAt(i, new THREE.Color(color)); });
+    this.staticScenery.add(containerMesh);
 
     // --- city buildings (instanced boxes + round towers, window shader) ---
     this._buildCity(city, rnd);
@@ -2754,9 +2737,8 @@ export class Environment {
     const M = this._marinaData;
     for (const set of M ? [M.decks, M.wet] : [this.footprint]) for (const r of set) {
       // (turned rects: the distance in the rect's own frame, matching sdORect in the sea shaders)
-      const cx = (r.minX + r.maxX) / 2, cz = (r.minZ + r.maxZ) / 2, hx = (r.maxX - r.minX) / 2, hz = (r.maxZ - r.minZ) / 2;
-      const qx = r.aligned ? Math.abs(x - cx) - hx : Math.abs((x - r.cx) * r.ax + (z - r.cz) * r.az) - r.hx;
-      const qz = r.aligned ? Math.abs(z - cz) - hz : Math.abs((z - r.cz) * r.ax - (x - r.cx) * r.az) - r.hz;
+      const qx = r.aligned ? Math.abs(x - (r.waterCx ?? (r.minX + r.maxX) / 2)) - (r.waterHx ?? (r.maxX - r.minX) / 2) : Math.abs((x - r.cx) * r.ax + (z - r.cz) * r.az) - r.hx;
+      const qz = r.aligned ? Math.abs(z - (r.waterCz ?? (r.minZ + r.maxZ) / 2)) - (r.waterHz ?? (r.maxZ - r.minZ) / 2) : Math.abs((z - r.cz) * r.ax - (x - r.cx) * r.az) - r.hz;
       const dd = Math.hypot(Math.max(qx, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qz), 0);
       d = Math.min(d, dd);
     }

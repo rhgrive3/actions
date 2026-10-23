@@ -28,7 +28,6 @@ function tint(g, color, k = 1) {
   const n = g.attributes.position.count, a = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) { a[i * 3] = c.r; a[i * 3 + 1] = c.g; a[i * 3 + 2] = c.b; }
   g.setAttribute('color', new THREE.BufferAttribute(a, 3));
-  if (!g.attributes.uv) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(n * 2), 2));
   return g;
 }
 const at = (g, x, y, z, rx = 0, ry = 0, rz = 0, s = 1) => g.applyMatrix4(new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz, 'YXZ')), new THREE.Vector3(s, s, s)));
@@ -205,7 +204,7 @@ function frondMaterial(uTime) {
 }
 
 export class Decor {
-  constructor(scene, level) {
+  constructor(scene, level, textures = null) {
     this.scene = scene; this.level = level;
     this.group = new THREE.Group();
     this.group.name = 'decor';
@@ -213,12 +212,16 @@ export class Decor {
     this.pads = []; this.flags = []; this.barriers = [];
     this.time = 0;
     this.uTime = { value: 0 };
-    this.emblem = new THREE.CanvasTexture(emblemCanvas(256, true));
+    this.emblem = textures?.emblem || new THREE.CanvasTexture(emblemCanvas(256, true));
+    this.flagTex = textures?.flagTex || null;
     this.emblem.colorSpace = THREE.SRGBColorSpace; this.emblem.anisotropy = 4;
-    this._buildPads();
-    this._buildLamps();
-    this._buildPalms();
-    this._buildFlags();
+    try {
+      this._buildPads();
+      this._buildLamps();
+      this._buildPalms();
+      this._buildFlags();
+      if (!this.flagMesh) { this.flagTex?.dispose(); this.flagTex = null; }
+    } catch (error) { this.dispose(); throw error; }
   }
 
   // ------------------------------------------------------------------ spawn pads
@@ -439,7 +442,7 @@ export class Decor {
       const u = (Pp.getX(i) - 0.05) / FLAG_W, v = (Pp.getY(i) + FLAG_H) / FLAG_H;
       uv.setXY(i, u, v);
     }
-    this.flagTex = new THREE.CanvasTexture((() => {
+    this.flagTex ||= new THREE.CanvasTexture((() => {
       const cv = document.createElement('canvas'); cv.width = 512; cv.height = 320;
       const x = cv.getContext('2d'); x.clearRect(0, 0, 512, 320);
       x.drawImage(this.emblem.image, 256 - 120, 160 - 120, 240, 240);
@@ -490,6 +493,15 @@ export class Decor {
       }
       b.uAlpha.value = 0.12 + near * 0.55;
     }
+  }
+
+  // Called only after the replacement stage has finished its asynchronous work.
+  // Transfer sole ownership; ordinary/final disposal continues to release textures.
+  takeStaticTextures() {
+    if (this._disposed) return null;
+    const textures = { emblem: this.emblem, flagTex: this.flagTex };
+    this.emblem = null; this.flagTex = null;
+    return textures;
   }
 
   dispose() {

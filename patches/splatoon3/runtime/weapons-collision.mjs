@@ -114,9 +114,9 @@ export function capsuleEntry(from, to, base, bodyRadius, height, bulletRadius0, 
 export function sweptWorldHit(physics, from, to, r0, r1, out, skipGrates = true) {
   if (physics?.level?.native) return sweepNativeCatalogueSphere(physics, from, to, r0, r1, out, skipGrates, sweptWorldHit);
   const level = physics?.level;
+  if (!level?.queryBlocks || !level.blocks) return physics.segment(from, to, out, skipGrates);
   const dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z;
   const len = Math.hypot(dx, dy, dz);
-  if (!level?.queryBlocks || !level.blocks) return physics.segment(from, to, out, skipGrates);
   out.hit = false; out.dist = len; out.block = -1; out.face = -1;
   const r = Math.max(r0, r1);
   const xLo = Math.min(from.x, to.x) - r - 1e-6, xHi = Math.max(from.x, to.x) + r + 1e-6;

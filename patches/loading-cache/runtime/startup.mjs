@@ -33,20 +33,38 @@ const updateConnectivity = () => {
   cacheMessage = (navigator.onLine === false ? 'オフライン：保存済みデータを使用中。' : '') + (updateAvailable ? updateText : '');
   badgeMessage(cacheMessage);
 };
-addEventListener('online', () => { updateConnectivity(); deferRegistration(); });
+addEventListener('online', () => { updateConnectivity(); deferRegistration(); cacheStatus(navigator.serviceWorker?.controller, true); });
 addEventListener('offline', updateConnectivity);
 
-async function cacheStatus(worker) {
-  if (!worker || typeof MessageChannel !== 'function') return;
-  const channel = new MessageChannel();
-  const timer = setTimeout(() => { channel.port1.close(); channel.port2.close(); }, 2500);
-  channel.port1.onmessage = event => {
-    clearTimeout(timer); channel.port1.close(); channel.port2.close();
-    if (event.data?.type === 'INKWAVE_CACHE_STATUS') report.cache = event.data;
+// Share only in-flight work; readiness is never a durable cache assertion.
+const cacheProbes = new WeakMap();
+let latestCacheWorker = null;
+function cacheStatus(worker, refresh = false) {
+  if (!worker || typeof MessageChannel !== 'function') return Promise.resolve(null);
+  latestCacheWorker = worker;
+  const pending = cacheProbes.get(worker);
+  if (pending) { if (refresh) pending.refresh = true; return pending.promise; }
+  const channel = new MessageChannel(), entry = { promise: null, refresh: false };
+  let resolve, timer;
+  entry.promise = new Promise(done => { resolve = done; });
+  cacheProbes.set(worker, entry);
+  let finished = false;
+  const finish = value => {
+    if (finished) return;
+    finished = true; clearTimeout(timer); channel.port1.close(); channel.port2.close();
+    cacheProbes.delete(worker);
+    if (value && latestCacheWorker === worker) report.cache = value;
+    resolve(value);
+    // Activation during an older probe needs a fresh integrity scan afterwards.
+    if (entry.refresh && latestCacheWorker === worker) cacheStatus(worker);
   };
+  timer = setTimeout(() => finish(null), 2500);
+  channel.port1.onmessage = event => finish(event.data?.type === 'INKWAVE_CACHE_STATUS' ? event.data : null);
   try { worker.postMessage({ type: 'INKWAVE_CACHE_STATUS' }, [channel.port2]); }
-  catch { clearTimeout(timer); channel.port1.close(); channel.port2.close(); }
+  catch { finish(null); }
+  return entry.promise;
 }
+navigator.serviceWorker?.addEventListener?.('controllerchange', () => cacheStatus(navigator.serviceWorker.controller, true));
 function deferRegistration() {
   if (registered || registrationPending || !engine || !menuVisible()) return;
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
@@ -73,15 +91,18 @@ function deferRegistration() {
         const worker = registration.installing;
         if (!worker || watched.has(worker)) return;
         watched.add(worker);
-        const changed = () => { if (worker.state === 'installed') notifyWaiting(); if (worker.state === 'activated') cacheStatus(registration.active); };
+        const changed = () => { if (worker.state === 'installed') notifyWaiting(); if (worker.state === 'activated') cacheStatus(registration.active, true); };
         worker.addEventListener('statechange', changed);
         changed();
       };
       registration.addEventListener('updatefound', watchInstalling);
       // updatefound may have occurred before register() resolved.
       watchInstalling();
-      await cacheStatus(registration.active);
-      navigator.serviceWorker.ready.then(reg => cacheStatus(reg.active)).catch(() => {});
+      const initiallyActive = registration.active;
+      const initialStatus = await cacheStatus(initiallyActive);
+      navigator.serviceWorker.ready.then(reg => {
+        if (reg.active !== initiallyActive || !initialStatus?.offlineReady) cacheStatus(reg.active);
+      }).catch(() => {});
     } catch (error) { report.swError = String(error); /* A later reconnect/menu return can retry; no automatic retry loop. */ }
     finally { registrationPending = false; }
   };

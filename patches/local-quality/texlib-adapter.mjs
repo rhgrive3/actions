@@ -109,6 +109,7 @@ export function adaptTexlibSource(rel, code) {
     code = replaceOnceTexlib(code,
       '    if (!worldCurrent()) { lightmap?.dispose?.(); props?.dispose?.(); return; }\n' +
       '    if (this.levelMesh) { scene.remove(this.levelMesh, this.grateMesh); this.levelMesh.geometry.dispose(); this.grateMesh?.geometry.dispose(); this.levelMat.dispose(); this.grateMat?.dispose(); }\n' +
+      '    const decorTextures = this.decor?.takeStaticTextures?.();\n' +
       '    this.decor?.dispose?.();\n' +
       '    if (this.stageLightmap) { this.stageLightmap.dispose(); this.stageLightmap = null; }\n' +
       '    if (this.props) { this.props.dispose?.(); this.props = null; }\n' +
@@ -118,6 +119,7 @@ export function adaptTexlibSource(rel, code) {
       '    const { nextTexlib, oldTexlib } = await syncWorldTexlib(this, layoutId, G.renderer, q.paintAtlas >= 4096 ? 512 : 256, null, STAGE_SURFACES);\n' +
       '    if (!worldCurrent()) { lightmap?.dispose?.(); props?.dispose?.(); if (nextTexlib && nextTexlib !== this.texlib) nextTexlib.dispose(); return; }\n' +
       '    if (this.levelMesh) { scene.remove(this.levelMesh, this.grateMesh); this.levelMesh.geometry.dispose(); this.grateMesh?.geometry.dispose(); this.levelMat.dispose(); this.grateMat?.dispose(); }\n' +
+      '    const decorTextures = this.decor?.takeStaticTextures?.();\n' +
       '    this.decor?.dispose?.();\n' +
       '    if (this.stageLightmap) { this.stageLightmap.dispose(); this.stageLightmap = null; }\n' +
       '    if (this.props) { this.props.dispose?.(); this.props = null; }\n' +

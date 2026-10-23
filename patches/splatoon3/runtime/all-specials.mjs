@@ -556,13 +556,13 @@ function damageBandRadius(rt, actor, center, bands, radius, source, once = null,
 // 11.3.0 WeaponSpCastle.BodyParam.CollisionDashRadiusForPlayer = 1.5.
 // Test against the whole travel segment, not just the centre of one frame.
 export function krakenDashSweptContact(from,to,target,radius=1.5){
-  if(![from?.x,from?.z,to?.x,to?.z,target?.x,target?.z,radius].every(finite)||radius<0)return false;
+  if(!finite(from?.x)||!finite(from?.z)||!finite(to?.x)||!finite(to?.z)||!finite(target?.x)||!finite(target?.z)||!finite(radius)||radius<0)return false;
   // Test-only planar positions are supported when all three omit y. Actual
   // Actor positions include y; a horizontal-only sweep incorrectly hits an
   // opponent on an upper platform through the floor.
-  const missing=[from.y,to.y,target.y].filter(y=>y===undefined).length;
+  const missing=Number(from.y===undefined)+Number(to.y===undefined)+Number(target.y===undefined);
   if(missing!==0&&missing!==3)return false;
-  if(missing===0&&![from.y,to.y,target.y].every(finite))return false;
+  if(missing===0&&(!finite(from.y)||!finite(to.y)||!finite(target.y)))return false;
   const dy=missing===3?0:to.y-from.y,dx=to.x-from.x,dz=to.z-from.z;
   const lengthSq=dx*dx+dy*dy+dz*dz;
   const proj=(target.x-from.x)*dx+(target.z-from.z)*dz+
@@ -767,13 +767,13 @@ function paintRing(rt, actor, point, radius, seed) {
   }
   return painted;
 }
-function projectileObjectCause(p) {
+function projectileObjectCause(p, mode=p?.s3AllSpecialMode) {
   const id=p?.s3AllSpecial||p?.s3SpecialWeapon?.id||p?.wid;
-  if(id==='inkjet')return p.s3AllSpecialMode==='blast'?'Jetpack_BombCore':'Jetpack_Bullet';
-  if(id==='tentaMissiles')return p.s3AllSpecialMode==='blast'?'MultiMissile_BombCore':'MultiMissile_Bullet';
-  if(id==='inkVac')return p.s3AllSpecialMode==='blast'?'BlowerExhale_BombCore':'BlowerExhale';
-  if(id==='ultraStamp')return p.s3AllSpecialMode==='blast'?'UltraStamp_Throw_BombCore':'UltraStamp_Throw';
-  if(id==='crabTank')return p.s3AllSpecialMode==='blast'?'Chariot_Cannon':'Default';
+  if(id==='inkjet')return mode==='blast'?'Jetpack_BombCore':'Jetpack_Bullet';
+  if(id==='tentaMissiles')return mode==='blast'?'MultiMissile_BombCore':'MultiMissile_Bullet';
+  if(id==='inkVac')return mode==='blast'?'BlowerExhale_BombCore':'BlowerExhale';
+  if(id==='ultraStamp')return mode==='blast'?'UltraStamp_Throw_BombCore':'UltraStamp_Throw';
+  if(id==='crabTank')return mode==='blast'?'Chariot_Cannon':'Default';
   return id||null;
 }
 function objectHitProposal(rt, p, object, cause=projectileObjectCause(p)) {
@@ -859,23 +859,29 @@ function stampGuardCandidate(rt,p,start,end,owner,state) {
     return true;
   }};
 }
+const hitBeamPools=new WeakMap();
 function hitBeam(rt, actor, state, origin, direction, length, damage) {
   const system=rt.system;
   // Killer Wail is a piercing laser. Generic projectile arbitration would
   // truncate it at walls and apply an untagged projectile hit before the
   // source-aware MicroLaser object pass below.
   const end=rt.v12.copy(origin).addScaledVector(direction,length);
-  const touched=new Set();
+  let pool=hitBeamPools.get(rt);if(!pool)hitBeamPools.set(rt,pool=[]);
+  const touched=pool.pop() || new Set();
+  let segmentReady=false,dx,dy,dz,dd;
+  try {
   for(const victim of rt.api.G.actors||[]) {
     if(!victim.alive||victim.team===actor.team||touched.has(victim))continue;
     const base=rt.v13.set(victim.pos.x,victim.pos.y+.7,victim.pos.z);
     // closest point on the finite beam segment; a cylinder radius of 0.85 is
     // a world-scale calibration of the sourced continuous laser capsule.
-    const d=rt.v14.subVectors(end,origin), dd=d.lengthSq();
-    const t=dd>1e-9?clamp(rt.v10.subVectors(base,origin).dot(d)/dd,0,1):0;
-    const near=rt.v15.copy(origin).addScaledVector(d,t);
+    if(!segmentReady){dx=end.x-origin.x;dy=end.y-origin.y;dz=end.z-origin.z;dd=dx*dx+dy*dy+dz*dz;segmentReady=true;}
+    const t=dd>1e-9?clamp(((base.x-origin.x)*dx+(base.y-origin.y)*dy+(base.z-origin.z)*dz)/dd,0,1):0;
+    const near=rt.v15.set(origin.x+dx*t,origin.y+dy*t,origin.z+dz*t);
     if(base.distanceTo(near)>.85)continue;
     rt.api.G.projectiles.applyHit(actor,victim,damage,'killerWail');touched.add(victim);
+    // Synchronous hit hooks may reenter and reuse the runtime vectors.
+    segmentReady=false;
   }
   if(!actor.remote&&system){
     for(const object of system._s3AllSpecialObjects||[]){
@@ -888,6 +894,7 @@ function hitBeam(rt, actor, state, origin, direction, length, damage) {
   }
   rt.api.G.fx?.ring?.(origin, direction, colorOf(rt,actor), {radius:Math.min(4,length),life:.22});
   return end;
+  } finally {touched.clear();if(pool.length<2)pool.push(touched);}
 }
 function beamTouchesObject(rt,from,to,object) {
   const pos=object?.pos;if(!pos)return false;
@@ -1276,28 +1283,33 @@ export function tentaMissilesLockPreview(api,actor) {
 export function superChumpLandingPreview(api,actor) {
   const rt=runtimes.get(api?.Projectiles),state=actorStates.get(actor);
   if(!rt||!state||state.id!=='superChump'||!actor?.alive||actor.remote)return null;
-  return chumpLandingPlan(rt,actor,state);
+  // Collision queries stay fresh: Physics/Level expose no revision that could
+  // safely certify a cached landing plan after moving colliders or platforms.
+  const V=rt.api.THREE.Vector3;
+  const out=state.chumpPreview||(state.chumpPreview={target:new V(),positions:Array.from({length:12},()=>new V()),direction:new V(),side:new V()});
+  return chumpLandingPlan(rt,actor,state,out);
 }
-function chumpLandingPlan(rt,actor,state){
-  const target=groundAt(rt,aimPoint(rt,actor,26,rt.v0),rt.v1).clone();
+function chumpLandingPlan(rt,actor,state,out=null){
+  let target=groundAt(rt,aimPoint(rt,actor,26,rt.v0),out?out.target:rt.v1);
+  if(!out)target=target.clone();
   const offset=rt.v3.copy(target).sub(actor.pos).setY(0),distance=offset.length();
   if(distance<1e-8)offset.set(Math.sin(actor.aimYaw||0),0,Math.cos(actor.aimYaw||0));
   if(distance<18)target.copy(actor.pos).addScaledVector(offset.normalize(),18);
   else if(distance>35)target.copy(actor.pos).addScaledVector(offset.normalize(),35);
   groundAt(rt,target,target);
-  const count=12,positions=[],rotation=seedUnit(state.seed,17)*Math.PI*2;
-  const direction=target.clone().sub(actor.pos).setY(0).normalize(),side=new rt.api.THREE.Vector3(direction.z,0,-direction.x);
+  const count=12,positions=out?out.positions:[],rotation=seedUnit(state.seed,17)*Math.PI*2;
+  const direction=(out?out.direction.copy(target):target.clone()).sub(actor.pos).setY(0).normalize(),side=out?out.side.set(direction.z,0,-direction.x):new rt.api.THREE.Vector3(direction.z,0,-direction.x);
   for(let i=0;i<count;i++){
-    const angle=(i/count)*Math.PI*2+rotation,pos=target.clone();
+    const angle=(i/count)*Math.PI*2+rotation,pos=out?positions[i].copy(target):target.clone();
     pos.addScaledVector(side,Math.cos(angle)*17.5).addScaledVector(direction,Math.sin(angle)*10);
     groundAt(rt,pos,pos);
     // Public gameplay: decoys do not select a landing point outside the map.
     // Keep this deterministic preview/launch fallback inside the valid target;
     // retail edge redistribution and exact random distribution remain unmeasured.
     if(rt.api.G.level?.groundHeight?.(pos.x,pos.z,pos.y+12)===-Infinity)pos.copy(target);
-    positions.push(pos);
+    if(!out)positions.push(pos);
   }
-  return {target,positions};
+  return out||{target,positions};
 }
 function deployScreen(rt,actor,state) {
   const pos=actor.pos.clone();pos.y+=1.1;
@@ -2401,6 +2413,8 @@ function installRuntime(api) {
   };
   P.update=function(dt){
     rt.system=this;
+    const groundEpoch=rt.groundEpoch=(rt.groundEpoch||0)+1;
+    const targetGround=rt.targetGround||(rt.targetGround=new WeakMap());
     // World effects use source frames too: e.g. NiceBall's 3.3 damage is per
     // 60 Hz frame, never per rendered update. Native projectile motion keeps
     // its own integrator; only catalogue devices consume this accumulator.
@@ -2420,8 +2434,15 @@ function installRuntime(api) {
         // Keep the existing calibrated .7s transition; its retail timing and
         // the missing long-range horizontal phase remain unverified.
         const target=p.s3TentaTargetActor;
-        if(!p.s3TentaDescending&&target?.alive&&finite3(target.pos)&&actorLife(target)===p.s3TentaTargetLife)
-          p.s3TentaTarget.copy(groundAt(rt,target.pos,rt.v2));
+        if(!p.s3TentaDescending&&target?.alive&&finite3(target.pos)&&actorLife(target)===p.s3TentaTargetLife){
+          const pos=target.pos,life=p.s3TentaTargetLife;let cached=targetGround.get(target);
+          if(!cached){cached={pos:new THREE.Vector3()};targetGround.set(target,cached);}
+          if(cached.epoch!==groundEpoch||cached.life!==life||cached.x!==pos.x||cached.y!==pos.y||cached.z!==pos.z){
+            cached.x=pos.x;cached.y=pos.y;cached.z=pos.z;cached.life=life;
+            groundAt(rt,pos,cached.pos);cached.epoch=groundEpoch;
+          }
+          p.s3TentaTarget.copy(cached.pos);
+        }
         p.s3TentaAge=(p.s3TentaAge||0)+dt;
         if(p.s3TentaAge<.7){const d=p.s3TentaDirection||rt.up;p.vel.x=d.x*4;p.vel.z=d.z*4;p.vel.y=14;p.grav=12;p.drag=.03;}
         else {p.s3TentaDescending=true;p.grav=0;p.drag=0;const diff=rt.v11.subVectors(p.s3TentaTarget,p.pos),distance=diff.length(),flight=clamp(distance/25,.12,.55);p.vel.copy(diff).multiplyScalar(1/flight);}
@@ -2444,7 +2465,7 @@ function installRuntime(api) {
   if(typeof blast==='function')P._blastBurst=function(p,at,...args){
     rt.system=this;
     const owner=p?.owner,previousCause=owner?._s3AllSpecialDamageCause;
-    const cause=projectileObjectCause({...p,s3AllSpecialMode:'blast'});
+    const cause=projectileObjectCause(p,'blast');
     if(owner&&!p?.ghost&&!owner.remote)owner._s3AllSpecialDamageCause=cause;
     let result;
     try{result=blast.call(this,p,at,...args);}finally{

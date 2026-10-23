@@ -2,6 +2,9 @@ name: INKWAVE reopened-six focused regressions
 on:
   pull_request:
     paths:
+      - 'patches/loading-cache/tests/cargo-offline-precache.test.mjs'
+      - 'patches/loading-cache/adapter.mjs'
+      - 'inkwave-public/src/config.js'
       - 'patches/splatoon3/**'
       - 'patches/local-quality/**'
       - 'scripts/run-inkwave-turf-finish-isolated.mjs'

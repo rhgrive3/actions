@@ -77,12 +77,14 @@ export function stepSprinkler(b,paint,projectiles,G,physics,player){
     for(let arm=0;arm<3;arm++){
       if(st.drops.length>=spec.maxDrops)break;
       const theta=angle+arm*Math.PI*2/3;
-      const recycled=b.ghost?st.receiverPool?.pop():null;
+      const recycled=b.ghost?st.receiverPool?.pop():st.ownerPool?.pop();
       const velocity=(recycled?recycled.vel.copy(t):t.clone()).multiplyScalar(Math.cos(theta))
         .addScaledVector(bit,Math.sin(theta)).multiplyScalar(spec.dropletSpeed)
         .addScaledVector(n,spec.dropletLift);
       const pos=(recycled?recycled.pos.copy(b.pos):b.pos.clone()).addScaledVector(n,.1);
-      st.drops.push({pos,vel:velocity,life:0,seed:unit(st.baseSeed+st.spraySequence*3+arm)});
+      const seed=unit(st.baseSeed+st.spraySequence*3+arm);
+      if(!b.ghost&&recycled){recycled.life=0;recycled.seed=seed;st.drops.push(recycled);}
+      else st.drops.push({pos,vel:velocity,life:0,seed});
     }
     st.spraySequence++;
     let next=at+spec.cadenceFrames[phase];
@@ -104,6 +106,7 @@ export function stepSprinkler(b,paint,projectiles,G,physics,player){
         area+=paint.splat(at,spec.dropletPaintRadius,b.team,
           {seed:d.seed,kind:'drop',claimOwner:b.owner})||0;}
       if(b.ghost)(st.receiverPool||=[]).push(d);
+      else if((st.ownerPool||=[]).length<spec.maxDrops)st.ownerPool.push(d);
       st.drops.splice(i,1);continue;
     }
     let struck=false;
@@ -123,7 +126,8 @@ export function stepSprinkler(b,paint,projectiles,G,physics,player){
         struck=true;break;
       }
     }
-    if(struck||d.life>2||!Number.isFinite(st.p1.y)){if(b.ghost)(st.receiverPool||=[]).push(d);st.drops.splice(i,1);}
+    if(struck||d.life>2||!Number.isFinite(st.p1.y)){if(b.ghost)(st.receiverPool||=[]).push(d);
+      else if((st.ownerPool||=[]).length<spec.maxDrops)st.ownerPool.push(d);st.drops.splice(i,1);}
     else d.pos.copy(st.p1);
   }
   if(area>0&&Number.isFinite(area))b.owner?.addTurf?.(area);

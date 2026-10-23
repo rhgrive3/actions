@@ -1,0 +1,100 @@
+{
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+  "scope": "Actual pinned source PNG and synthetic alpha/NPOT pixel comparison; not resident memory or Safari/iPad measurement",
+  "rows": [
+    {
+      "name": "pinned-Terrain_Alb",
+      "source": [
+        2048,
+        2048
+      ],
+      "cap": 512,
+      "target": [
+        512,
+        512
+      ],
+      "differingChannels": 0,
+      "channels": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "maxDelta": 0,
+      "twoStepMs": 74.20000000018626,
+      "directMs": 61.39999999944121
+    },
+    {
+      "name": "pinned-Terrain_Alb",
+      "source": [
+        2048,
+        2048
+      ],
+      "cap": 1024,
+      "target": [
+        1024,
+        1024
+      ],
+      "differingChannels": 0,
+      "channels": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "maxDelta": 0,
+      "twoStepMs": 82.3999999994412,
+      "directMs": 68.29999999981374
+    },
+    {
+      "name": "synthetic-alpha-NPOT",
+      "source": [
+        2049,
+        1025
+      ],
+      "cap": 512,
+      "target": [
+        512,
+        256
+      ],
+      "differingChannels": 0,
+      "channels": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "maxDelta": 0,
+      "twoStepMs": 20.59999999962747,
+      "directMs": 19.300000000745058
+    },
+    {
+      "name": "synthetic-alpha-NPOT",
+      "source": [
+        2049,
+        1025
+      ],
+      "cap": 1024,
+      "target": [
+        1024,
+        512
+      ],
+      "differingChannels": 1,
+      "channels": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "maxDelta": 1,
+      "twoStepMs": 38.09999999962747,
+      "directMs": 21.300000000745058
+    }
+  ],
+  "pin": {
+    "path": "stages/Vss_Yunohana/textures/Terrain_Alb.png",
+    "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "gitSha1": "087033ba0ba1308f2786dae4fed0d08da1070402",
+    "bytes": 3930806
+  }
+}

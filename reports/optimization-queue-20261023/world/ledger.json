@@ -1,0 +1,229 @@
+{
+  "base": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "implemented": [
+    "legacy-nav-build-drop-unused-filter-and-cache-edge-distances",
+    "legacy-minimap-use-guarded-int16-block-id-raster",
+    "far-lod-defer-final-index-allocation-until-material-splits",
+    "propkit-radial-lathe-tube-reuse-sincos-per-ring",
+    "propkit-core-gb-direct-typed-vertex-staging",
+    "environment-instance-far-scenery-containers",
+    "decor-transfer-static-emblem-and-flag-textures-between-legacy-stages",
+    "legacy-level-pack-signed-face-flags-vertex-attribute",
+    "environment-sea-polar-mesh-angle-reuse-and-constant-normal-packing",
+    "native-source-mtl-download-overlap-with-obj",
+    "mural-atlas-switch-avoid-eight-mib-canvas-readback",
+    "overlap-legacy-ao-metadata-fetch-with-propkit-build",
+    "legacy-nav-batch-27-clearance-broadphase-probes",
+    "legacy-nav-union-find-avoid-transient-reverse-adjacency",
+    "character-lod-hoist-material-attribute-pair-check",
+    "legacy-minimap-derive-surface-normals-from-block-id",
+    "native-minimap-drop-always-zero-bilinear-neighbor-arrays",
+    "legacy-face-hidden-cache-spatial-cell-candidates",
+    "native-source-share-immutable-neutral-face-colors",
+    "native-nav-share-empty-grid-cell-arrays",
+    "decor-drop-unused-uv-on-untextured-merged-meshes",
+    "environment-water-height-cache-postnormalized-rect-bounds",
+    "skip-known-absent-practice-range-lightmap-fetch",
+    "release-cargo-procedural-template-cache-on-stage-exit",
+    "native-quality-reuse-unchanged-albedo-across-profiles",
+    "environment-foam-field-segment-invariants-inside-pixel-loop",
+    "environment-sea-wave-mainthread-256px-trig-prewarm",
+    "shadowcache-cull-share-sun-horizontal-hypot",
+    "native-source-share-byte-identical-png-aliases",
+    "overlap-mural-font-load-with-texlib-shader-compile",
+    "native-ink-overlay-compact-constant-vertex-channels",
+    "native-source-retention-amortize-per-file-cache-ledger"
+  ],
+  "already_effective": {
+    "decor-preserve-indexed-geometry-before-merge": "runtime-frame-scratch-adapter decor merge uses sharing BufferGeometry wrappers and sequential typed index only for nonindexed inputs; queue-character-world test verifies expanded attributes exactly and vertex savings",
+    "decor-pad-barrier-broadphase-skip-far-hypot": "runtime-frame-scratch-adapter keeps exact hypot for in-range actors and skips safely outside axis-aligned outer glow bound",
+    "legacy-level-buildgeometry-typed-staging": "geometry-build-storage-adapter uses chunked Float32 staging, typed index, double JS positions for original CPU winding; geometry-build-storage tests compare all layouts and instrument construction allocations",
+    "defer-nonvisible-map-svg-thumbnail-generation": "The new batch358 ticket is separately counted. Prior305 thumbnail evidence was supplemental to descriptor deferral. Actual boot installs cached lazy thumbnail getters; five authored SVGs match, repeated reads reuse the string, setters remain live and failed fallback is retryable."
+  },
+  "partial": {},
+  "open": {},
+  "validation": {
+    "world_existing": "176 pass, 0 fail, 1 emitted-only skip / 177 tests",
+    "world_new_frozen_base": "14/14 actual-module frozen-source tests, plus300 additional union graphs",
+    "native_existing": "31/31 pass",
+    "native_overlap": "5/5 pass; MTL begins when tree resolves while OBJ pending, all failure branches abort sibling and cannot publish",
+    "extra": "32 pass, 1 fails required src/main.js input-lock review; root owns semantic lock review",
+    "quick": "blocked by required src/main.js input-lock review; root owns review",
+    "attribute_logical_bytes_saved": 466578,
+    "far_container_count": 145,
+    "far_container_max_world_position_difference": 2.982132014039962e-05,
+    "limitations": "Node synthetic/frozen-source comparisons are not Safari/iPad or retail Splatoon 3 acceptance. Instance transforms use Float32 matrices and can differ by <0.0001 world units from old baked Float32 world vertices. No claimed battle FPS or iPad improvement.",
+    "second_chunk": "13 actual module tests + 300 prune graphs + 182 AO/reliability/native tests +80 decor/native tests +7 PropKit tests pass",
+    "browser_evidence": "reports/optimization-queue-20261023/world/{cloud,mural}-desktop-profile.json",
+    "native_texture_reuse": "94/94 pass; dedicated source identity guard then strengthened and rerun3/3",
+    "retained_contracts": "46/46 existing tower/score/coverage/cache integrity tests pass; no mask or SHA implementation change",
+    "paint_capacity": "0/1/1023/1024 identical;1025 drying:55254 green channel differences max2;1025 no-drying control0differences;6000 render+mipmap1to6,12000 2to12. Desktop SwiftShader256² synthetic actual shader diagnostics only.",
+    "direct_source_ownership": "14/14 pass after narrow lazy registry contract migration",
+    "ink_contract_restoration": "49 tests:44pass5asset-onlyskip0fail; mixedatlas/noatlas frozenallattribute parity. Actual Chromium composed484ad80 positivepaint: grate37892–45292changedpixels across4controls, microtexlib31711; topfaceData[1,1,3,2]; originalnormal parity0/stable0. Combat QAfixture21569aa; desktop only.",
+    "batch358": "35initialfocused;20wave/provenance;45nativeconstant40pass5assetonlyskip;94loader/quality+4aliasfocused;31finalthumbnail/cachetests pass; four reproducible desktopbrowser profiles attached."
+  },
+  "rejected_conditional": {
+    "environment-cloud-bake-scissor-yield-between-render-batches": "Actual day-theme Chromium154 SwiftShader isolated submit cold32.4ms/warm1.6,.6,.5ms. No demonstrated isolated >50ms cloud task here; async staging adds memory/lifecycle risk without established target benefit. iPad not measured; not claimed code-fixed.",
+    "legacy-minimap-adaptive-raster-resolution-for-mobile": "Changes raster resolution and fine ink/terrain visibility. Rejected under preserve appearance constraint; lossless normal/ID/zero-array removal implemented instead.",
+    "reclaim-native-texture-bitmaps-after-safe-upload": "Closing sources without tested offline context restoration violates lazy reupload/quality lifecycle. Current retained sources intentionally support reconstruction; safe resource policy not established; no immediate close implemented.",
+    "defer-unselected-stage-descriptor-and-mural-modules": "Partial registry/mural/placement/Range-prop graph deferral implemented. Remaining layout deferral rejected because public MAP_LAYOUTS and thumbnail callers require synchronous complete layouts; preserving that contract takes precedence over the proposed asynchronous migration. In the historical prior305 intake, cached lazy m.thumb getter was a supplemental implemented descriptor subpart without its own intake ID. Batch358 introduced a distinct thumbnail intake ID, now counted separately as already effective.",
+    "paint-atlas-adaptive-active-quad-buffer-capacity": "Rejected 1024 flush threshold: actual PaintSystem/Chromium154 deterministic GPU comparison changes wetness pixels above1024 due drying before finalbatch; more render/mipmap work. 6000 capacity and original flush boundary preserved. Lazy growth would temporarily retain old+new attributes during busyframe; no lowmemory acceptance established. See paint-capacity-desktop-profile.json.",
+    "native-paint-reuse-source-mask-instead-of-inverted-dead-array": "Rejected immutable mask accessor migration in current API: ranked/world.mjs _installTowerPaintFace requires dead.length, typedarray.set, subarray, new-cell writes, and restoration of earlier dead array. A level.mask-only accessor omits dynamic cells and cannot preserve public mutable dead semantics. No proxy or destructive mask inversion adopted. A compatible lazy-materialized/mutable-overlay migration remains separate work requiring CPU and mode acceptance.",
+    "native-source-git-blob-sha1-avoid-whole-file-clone": "Conditional adoption rejected: WebCrypto subtle.digest accepts one complete input and no incremental browser API or vetted browser incremental SHA1 dependency exists in this repository. Node createHash equivalence does not establish browser CPU benefit; required iPad CPU+RAM comparison unavailable. Preserve exact byte count and Git SHA1 validation before decode/cache publication.",
+    "legacy-level-elide-unused-faceData-atlas-flag": "Proposal premise invalid: imported inkShading.js INK_COLOR line99 reads vFaceData.y to enable all ink. Compact change was caught in cross-review and fully restored in484ad80: legacy/native explicit vec4 [pattern,hasAtlas,su,sv], vertex passes all4; unpainted surfaces retain flag0. Frozen comparisons mix atlas/noatlas faces; Positive actual composed484ad80 Chromium verification: grate37892–45292paint/dry changedpixels over4controls, microtexlib31711; normalparity/stability0difference; QAfixture21569aa.",
+    "native-texture-resize-before-full-bitmap-decode": "ActualChromiumdirectBlob vs original2step: pinned2048²ScorchTerrain512/1024 targets exact, but alphaNPOT2049×1025→1024×512 differs1redbyte max1/255. Global adoption rejected under exactpixels; Safari/iPad decoderRAM notmeasured; originaldecode/orientation/filters/ownership retained."
+  },
+  "pending": [],
+  "implementation_evidence": {
+    "legacy-nav-build-drop-unused-filter-and-cache-edge-distances": {
+      "source": "src/game/nav.js; src/world/level.js",
+      "evidence": "world-queue-optimizations: actual nodes/edges/path/tie parity; authored maps; union prune300 extra synthetic graphs; original27 clear probes retained"
+    },
+    "legacy-nav-batch-27-clearance-broadphase-probes": {
+      "source": "src/game/nav.js; src/world/level.js",
+      "evidence": "world-queue-optimizations: actual nodes/edges/path/tie parity; authored maps; union prune300 extra synthetic graphs; original27 clear probes retained"
+    },
+    "legacy-nav-union-find-avoid-transient-reverse-adjacency": {
+      "source": "src/game/nav.js; src/world/level.js",
+      "evidence": "world-queue-optimizations: actual nodes/edges/path/tie parity; authored maps; union prune300 extra synthetic graphs; original27 clear probes retained"
+    },
+    "legacy-minimap-use-guarded-int16-block-id-raster": {
+      "source": "src/game/minimap.js; native-minimap.mjs; runtime-frame-scratch-adapter.mjs",
+      "evidence": "world-queue-optimizations: generated base/ink pixel buffers exact across5legacy layouts/day-dusk/both sides; guarded Int32 fallback; native direct-cell selection"
+    },
+    "legacy-minimap-derive-surface-normals-from-block-id": {
+      "source": "src/game/minimap.js; native-minimap.mjs; runtime-frame-scratch-adapter.mjs",
+      "evidence": "world-queue-optimizations: generated base/ink pixel buffers exact across5legacy layouts/day-dusk/both sides; guarded Int32 fallback; native direct-cell selection"
+    },
+    "native-minimap-drop-always-zero-bilinear-neighbor-arrays": {
+      "source": "src/game/minimap.js; native-minimap.mjs; runtime-frame-scratch-adapter.mjs",
+      "evidence": "world-queue-optimizations: generated base/ink pixel buffers exact across5legacy layouts/day-dusk/both sides; guarded Int32 fallback; native direct-cell selection"
+    },
+    "far-lod-defer-final-index-allocation-until-material-splits": {
+      "source": "src/game/character-lod.js",
+      "evidence": "world-queue-optimizations actual material split attributes exact, exactly1finalindex; existing main everycheck alreadyhoisted; leftover split loop removed"
+    },
+    "character-lod-hoist-material-attribute-pair-check": {
+      "source": "src/game/character-lod.js",
+      "evidence": "world-queue-optimizations actual material split attributes exact, exactly1finalindex; existing main everycheck alreadyhoisted; leftover split loop removed"
+    },
+    "propkit-radial-lathe-tube-reuse-sincos-per-ring": {
+      "source": "src/world/props-core.js; attribute-staging.js",
+      "evidence": "world-queue-optimizations: exact allattributes/topology including degenerate/varyingradius; double precision positions/normals retained for decisions"
+    },
+    "propkit-core-gb-direct-typed-vertex-staging": {
+      "source": "src/world/props-core.js; attribute-staging.js",
+      "evidence": "world-queue-optimizations: exact allattributes/topology including degenerate/varyingradius; double precision positions/normals retained for decisions"
+    },
+    "environment-instance-far-scenery-containers": {
+      "source": "src/world/environment.js",
+      "evidence": "world-queue-optimizations: seeded145placement/color ownership, max worldposition delta2.98214e-5; sea exact positions/normals/index; normalized water boundaries exact"
+    },
+    "environment-sea-polar-mesh-angle-reuse-and-constant-normal-packing": {
+      "source": "src/world/environment.js",
+      "evidence": "world-queue-optimizations: seeded145placement/color ownership, max worldposition delta2.98214e-5; sea exact positions/normals/index; normalized water boundaries exact"
+    },
+    "environment-water-height-cache-postnormalized-rect-bounds": {
+      "source": "src/world/environment.js",
+      "evidence": "world-queue-optimizations: seeded145placement/color ownership, max worldposition delta2.98214e-5; sea exact positions/normals/index; normalized water boundaries exact"
+    },
+    "decor-transfer-static-emblem-and-flag-textures-between-legacy-stages": {
+      "source": "src/world/decor.js; src/main.js; start-adapter; runtime-frame-scratch-adapter",
+      "evidence": "world-queue-optimizations soleowner transfer/errors/finaldispose; queue-character-world expandedgeometry exact with cloth UV retained"
+    },
+    "decor-drop-unused-uv-on-untextured-merged-meshes": {
+      "source": "src/world/decor.js; src/main.js; start-adapter; runtime-frame-scratch-adapter",
+      "evidence": "world-queue-optimizations soleowner transfer/errors/finaldispose; queue-character-world expandedgeometry exact with cloth UV retained"
+    },
+    "legacy-level-pack-signed-face-flags-vertex-attribute": {
+      "source": "src/world/level.js; geometry-build-storage-adapter.mjs",
+      "evidence": "world-queue-optimizations fullgeometry exact all4faceData; noninteger/outofrange/NaNmural Float32fallback; signed Int8 nonnormalized saves466578logicalbytes"
+    },
+    "native-source-mtl-download-overlap-with-obj": {
+      "source": "native-stages/runtime/source-worker.mjs",
+      "evidence": "source-worker-overlap5tests: tree-driven MTL starts withOBJpending; failures abortsiblings; conversion onlycompleteinputs"
+    },
+    "mural-atlas-switch-avoid-eight-mib-canvas-readback": {
+      "source": "src/world/murals.js",
+      "evidence": "desktop24stagechanges0pixelmismatch; median10.10to4.85ms; guarded same loadedfontset redraw; changedfontset originalreadbackfallback"
+    },
+    "overlap-legacy-ao-metadata-fetch-with-propkit-build": {
+      "source": "src/main.js; src/world/level.js; src/world/lightmap-assets.js; scripts/lib/inkwave-lightmap-index.mjs",
+      "evidence": "actual worldqueue test verifies metadata beforeCPUprops andPNGafterexacthash; buildinventory JSON+PNGpairs discovered selectedtree; helperincluded buildidentity"
+    },
+    "skip-known-absent-practice-range-lightmap-fetch": {
+      "source": "src/main.js; src/world/level.js; src/world/lightmap-assets.js; scripts/lib/inkwave-lightmap-index.mjs",
+      "evidence": "actual worldqueue test verifies metadata beforeCPUprops andPNGafterexacthash; buildinventory JSON+PNGpairs discovered selectedtree; helperincluded buildidentity"
+    },
+    "legacy-face-hidden-cache-spatial-cell-candidates": {
+      "source": "src/world/level.js",
+      "evidence": "actual authored allfaces/blocks exact, hashqueries566to329; perface bounded16cache; canonical Levelguard customfallback"
+    },
+    "native-source-share-immutable-neutral-face-colors": {
+      "source": "native-level.mjs; native-nav.mjs",
+      "evidence": "static neutral Color frozen shared; dynamic facesprivate; frozen sharedemptycells and privatepopulated arrays covered native/world tests"
+    },
+    "native-nav-share-empty-grid-cell-arrays": {
+      "source": "native-level.mjs; native-nav.mjs",
+      "evidence": "static neutral Color frozen shared; dynamic facesprivate; frozen sharedemptycells and privatepopulated arrays covered native/world tests"
+    },
+    "release-cargo-procedural-template-cache-on-stage-exit": {
+      "source": "props-core.js; stages/cargo/props.js; prop-packs.js",
+      "evidence": "worldqueue tests overlapping owners +registrationrollback +glyph geometrywrapper disposal; existing PropKit7tests pass"
+    },
+    "native-quality-reuse-unchanged-albedo-across-profiles": {
+      "source": "native-load.mjs; native-quality.mjs; native-render.mjs",
+      "evidence": "94native loader/quality/ownership tests; new exacthandle reuse, cap/dataidentity/inference/role/state/integrity mismatch authenticatedreload, abort leaves borrowedhandlesalive"
+    },
+    "environment-foam-field-segment-invariants-inside-pixel-loop": {
+      "source": "src/world/environment.js",
+      "evidence": "Fullfoambytes andtexturecontract exact for5layoutbounds×2marinamodes, zero/tiny/reversed/overlap shapes; world358tests."
+    },
+    "environment-sea-wave-mainthread-256px-trig-prewarm": {
+      "source": "src/world/wave-{data,prewarm,worker}.js; environment.js; mural-atlas-adapter; native-module-worker provenance",
+      "evidence": "ActualChromiumWorker4runs exact262144RGBAbytes original; timerliveness37–44beats vs0sync, workerwalloverhead recorded;20algorithm/lifecycle/provenance tests pass."
+    },
+    "shadowcache-cull-share-sun-horizontal-hypot": {
+      "source": "src/core/shadowcache.js",
+      "evidence": "Actualculling100cases every sphere, flag, skipped count exact; onepasslocalsunhypot; noframecache."
+    },
+    "native-source-share-byte-identical-png-aliases": {
+      "source": "native-load.mjs; native-world pending cleanup alreadySet; native-render/native-quality existingSetowners",
+      "evidence": "Authenticated fivebaseOBJ+MTL active-job scan982571duplicatecompressedbyte candidates;4focused alias oldloader/normalbytes/invalidation/failuretests+94regressions pass. Git-onlypin, bytes,role,cap,encoding match; uniquehandleclose/dispose."
+    },
+    "overlap-mural-font-load-with-texlib-shader-compile": {
+      "source": "mural-atlas-adapter.mjs",
+      "evidence": "Concurrentstart/resourcejoin and fontinternalawait unchanged; immediate rejection observed, proceduraltexlibfallback retained, completedtexlibreleased+waveaborted onfatalmuralfailure."
+    },
+    "native-ink-overlay-compact-constant-vertex-channels": {
+      "source": "native-render.mjs; native-world.mjs; src/world/levelMaterial.js",
+      "evidence": "Nativeonly explicitattributevariant restoresall4livefaceData values; legacyunchanged. Chromium4floor/wallwetcontrols0differingchannels, positivepaint3195/5210pixels,0GLerrors,80→64logicalbytespervertex. Detachedvariantwarmup cancel/reject tests.45suite40pass5asset-onlyskip."
+    },
+    "native-source-retention-amortize-per-file-cache-ledger": {
+      "source": "source-retention.mjs",
+      "evidence": "Bounded4file/2MiB groups requestgloballock immediately, freshledgerunderlock, pending-before-body, historicalpeakscount eachreplacement, finalseal/trim; deletebarrier.24cachetests+actualChromium100→40put/20→5key-lock-estimate,20bodies exact; actual2tabs12files78bytessealed."
+    }
+  },
+  "subpart_evidence": {
+    "defer-nonvisible-map-svg-thumbnail-generation": {
+      "owning_ticket": "defer-unselected-stage-descriptor-and-mural-modules",
+      "source": "src/main.js",
+      "evidence": "cached lazy getter defers makeThumbnail untilread, preservesstring API/cache; composition no forced eager evaluation",
+      "scope": "Historical prior305 descriptor supplemental implementation, not an additional prior305 intake row. New358 distinct ID is separately counted in already_effective and batch358.intake_ids."
+    }
+  },
+  "batch358": {
+    "base": "7c94a8b",
+    "prior305_intake_count": 36,
+    "new_intake_count": 9,
+    "aggregate_intake_count": 45,
+    "counts": {
+      "implemented": 7,
+      "already_effective": 1,
+      "rejected_conditional": 1
+    },
+    "evidence_directory": "reports/optimization-queue-20261023/world/batch358",
+    "limitations": "DesktopChromium/Node comparisons, not Safari/iPad or retailSplatoon3 acceptance; no frame/FPS/tabkill/RAM benefit claims. Fullbuild/offline/runtimeadmission remain integratingchecks.",
+    "intake_count": 9
+  }
+}

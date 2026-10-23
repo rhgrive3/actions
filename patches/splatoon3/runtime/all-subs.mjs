@@ -362,8 +362,12 @@ function poseVisual(api, object, dt) {
   if (id === 'fizzy') bulge = Math.min(1, .25 * (object.popLimit - 1) + (object.fuse > 0 ? .5 * Math.min(1, object.age / object.fuse) : 0));
   if (id === 'splashWall' && !Number.isFinite(object.s3HpMax)) object.s3HpMax = object.hp;
   const fill = id === 'splashWall' && object.s3HpMax > 0 ? object.hp / object.s3HpMax : 1;
-  poseSubModel(model, { dt, speed: object.grounded ? Math.hypot(v.x, v.z) : 0, unfold, fill,
-    armed: deployed && now >= object.activeAt, flying: !deployed, active: deployed, bulge });
+  // poseSubModel consumes this synchronously; each model owns its input.
+  const pose = model.s3PoseInput ||= { dt: 0, speed: 0, unfold: 0, fill: 1, armed: false, flying: false, active: false, bulge: 0 };
+  pose.dt=dt;pose.speed=id === 'autobomb' && object.grounded ? Math.hypot(v.x, v.z) : 0;
+  pose.unfold=unfold;pose.fill=fill;pose.armed=deployed && now >= object.activeAt;
+  pose.flying=!deployed;pose.active=deployed;pose.bulge=bulge;
+  poseSubModel(model, pose);
 }
 function disposeVisual(api, object, projectiles) {
   const mesh = object?.mesh;
@@ -660,9 +664,16 @@ function updateAngleLine(api,projectiles,object,dt){
   object.age+=dt;
   if(!object.ghost){
     const hostiles=hostileActors(api,object.owner),base=new api.THREE.Vector3(),result={t:0,dist:Infinity};
+    let boundsReady=false,minX=Infinity,maxX=-Infinity,minZ=Infinity,maxZ=-Infinity;
+    const reach=api.PLAYER.radius+object.spec.collisionRadius+1e-9;
     try{
       for(const target of hostiles){
         if(object.seenMarks.get(target)===ownerLife(target))continue;
+        if(!boundsReady){
+          for(const [start,end] of object.lineSegments||[]){minX=Math.min(minX,start.x,end.x);maxX=Math.max(maxX,start.x,end.x);minZ=Math.min(minZ,start.z,end.z);maxZ=Math.max(maxZ,start.z,end.z);}
+          boundsReady=true;
+        }
+        if(target.pos.x<minX-reach||target.pos.x>maxX+reach||target.pos.z<minZ-reach||target.pos.z>maxZ+reach)continue;
         base.copy(target.pos);base.y+=target.smoothY||0;
         const height=target.form==='squid'?api.PLAYER.squidHeight:api.PLAYER.height;
         for(const [start,end] of object.lineSegments||[]){
@@ -734,6 +745,12 @@ function damageSubObjectsInRadius(api,projectiles,source,center,radius,damageAt,
     syncObjectAttachment(api,target);
     const sourceTeam=source?.team??source?.owner?.team;
     if(target===source||target.dead||!isSubObjectBlastTarget(target)||target.team===sourceTeam)continue;
+    // A conservative axis bound avoids allocating points for distant devices.
+    // Keep shape callbacks and malformed radii on their original path.
+    if(!options.shapeContact && target.subId!=='splashWall' && Number.isFinite(radius) && radius>=0){
+      const reach=radius+Math.max(1e-9,Math.abs(radius)*1e-12);
+      if(Math.abs(target.pos.x-center.x)>reach || Math.abs(target.pos.y+.7-center.y)>reach || Math.abs(target.pos.z-center.z)>reach)continue;
+    }
     const point=subObjectBlastPoint(api,target,center),distance=point.distanceTo(center);
     if(options.shapeContact?!options.shapeContact(target,point):distance>radius)continue;
     if(!options.pierceLOS&&api.G.physics?.los&&!api.G.physics.los(center,point))continue;
@@ -1217,12 +1234,19 @@ function applyRemoteObjectHit(api,event) {
   return true;
 }
 
+function refreshToxicLease(api, cloud, target, until = (api.G.time||0)+2*STEP, speedScale, jumpScale) {
+  if(!target?.alive||target.remote||target.team===cloud.team)return;
+  if(speedScale===undefined){const scale=subEffectScale(target,'mist');speedScale=1-(1-cloud.spec.slowScale)*scale;jumpScale=1-(1-cloud.spec.jumpScale)*scale;}
+  target.s3 ||= {};
+  target.s3.toxicMistSlowUntil=Math.max(target.s3.toxicMistSlowUntil||0,until);
+  target.s3.toxicMistScale=Math.min(target.s3.toxicMistScale??1,speedScale);
+  target.s3.toxicMistJumpScale=Math.min(target.s3.toxicMistJumpScale??1,jumpScale);
+}
 function armToxicStatus(api, cloud, target, emit = true) {
   if(!target?.alive||target.team===cloud.team)return;
   const now=api.G.time||0, spec=cloud.spec, effectScale=subEffectScale(target,'mist');
   const speedScale=1-(1-spec.slowScale)*effectScale;
   const jumpScale=1-(1-spec.jumpScale)*effectScale;
-  const until=now+2*STEP;
   cloud.toxicProgress ||= new WeakMap();
   let progress=cloud.toxicProgress.get(target);
   if(!progress){progress={level:0,count:0,elapsed:0,nextAt:frameSeconds(spec.effectLevels[0].frame),drained:0};cloud.toxicProgress.set(target,progress);}
@@ -1241,10 +1265,7 @@ function armToxicStatus(api, cloud, target, emit = true) {
   // a short lease for remote enemies; a replayed cloud directly affects local
   // enemies so its area status remains active on the authority.
   if(!target.remote){
-    target.s3 ||= {};
-    target.s3.toxicMistSlowUntil=Math.max(target.s3.toxicMistSlowUntil||0,until);
-    target.s3.toxicMistScale=Math.min(target.s3.toxicMistScale??1,speedScale);
-    target.s3.toxicMistJumpScale=Math.min(target.s3.toxicMistJumpScale??1,jumpScale);
+    refreshToxicLease(api,cloud,target,undefined,speedScale,jumpScale);
     if(inkLoss>0)target.ink=Math.max(0,(target.ink??100)-inkLoss);
   }
   const prev=cloud.seenToxic.get(target)||-Infinity;
@@ -1263,7 +1284,13 @@ function replayStatus(api,event) {
      event.subId!=='toxicMist'||event.status!=='toxicMist'||!Number.isFinite(event.until)||event.until<(api.G.time||0)||event.until>(api.G.time||0)+1)return false;
   const cloud=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===event.sourceLife&&o.subId==='toxicMist');
   if(!toxicMistContains(target,cloud))return false;
-  armToxicStatus(api,cloud,target,false);
+  if(!Number.isSafeInteger(event.eventSeq)||event.eventSeq<1)return false;
+  const key=objectHitKey(event);if(statusEventSeen.has(key))return false;
+  statusEventSeen.add(key);while(statusEventSeen.size>MAX_REPLAY_EVENTS)statusEventSeen.delete(statusEventSeen.values().next().value);
+  // Remote contact confirms only a short lease at the current local geometry.
+  // The owning client's fixed cloud tick alone advances exposure and drains ink;
+  // a late packet never manufactures catch-up contact in an unobserved interval.
+  refreshToxicLease(api,cloud,target,Math.min(event.until,(api.G.time||0)+2*STEP));
   return true;
 }
 function updateStatuses(api, dt) {

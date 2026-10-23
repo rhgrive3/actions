@@ -6,6 +6,10 @@ const clamp01 = value => Math.max(0, Math.min(1, value));
 const INSTALLED = Symbol.for('inkwave.s3.splatling.v1');
 const sampledSpeedViews = new WeakMap();
 const LOG_HALF=Math.log(.5);
+function updateSpinLoop(runner,pitch,pos){
+  const update=runner._s3SpinLoopUpdate ||= {pitch:0,pos:undefined};
+  update.pitch=pitch;update.pos=pos;runner.spinLoop.set(update);
+}
 let lastSpeedMedian=NaN,lastSpeedExponent=0;
 
 function cancelSplatlingStream(runner, refund, inkMax) {
@@ -60,7 +64,7 @@ export function refundSplatlingReservation(runner, snapshot, life, sequence, ink
   return unspent;
 }
 
-function withSampledProjectileSpeed(source, value, run) {
+function sampledProjectileSpeedEntry(source) {
   let entry = sampledSpeedViews.get(source);
   if (!entry) {
     const values = [], view = {};
@@ -85,6 +89,10 @@ function withSampledProjectileSpeed(source, value, run) {
     entry = { view: Object.freeze(view), values };
     sampledSpeedViews.set(source, entry);
   }
+  return entry;
+}
+function withSampledProjectileSpeed(source, value, run) {
+  const entry=sampledProjectileSpeedEntry(source);
   entry.values.push(value);
   try { return run(entry.view); }
   finally { entry.values.pop(); }
@@ -214,7 +222,7 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
         a.character.trigger('shoot');
       }
       this.cooldown = state.emitted * w.fireInterval - state.elapsed;
-      this.spinLoop?.set({ pitch: 1.5 + .06 * Math.sin(G.time * 31), pos });
+      if(this.spinLoop)updateSpinLoop(this,1.5 + .06 * Math.sin(G.time * 31),pos);
       if (this.burstT <= EPS) {
         this.streaming = false; this.charge = this.burstFrac = 0;
         this.s3Spin = null; this.cooldown = Math.max(this.cooldown, w.postStreamDelay ?? .22);
@@ -244,7 +252,7 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
       if (1 - this.charge < EPS) this.charge = 1;
       this.chargeT = this.charge * w.chargeTime;
       a.fireFacing = .45;
-      this.spinLoop?.set({ pitch: .6 + .85 * this.charge, pos });
+      if(this.spinLoop)updateSpinLoop(this,.6 + .85 * this.charge,pos);
       if (this.charge === 1 && !this.chargeDinged) {
         this.chargeDinged = true;
         if (a.isLocal) { G.audio?.play('splatling_ready', { volume: .7 }); if (!a.isBot) G.input?.rumble?.(.05, .28, 60); }
@@ -271,10 +279,17 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
   // transmitted velocity and never samples again. PR #64 may supply a different
   // charge-dependent base to _fireRound; the jitter composes with that base.
   const fireRound = Projectiles.prototype._fireRound;
-  Projectiles.prototype._fireRound = function (a, w, ...args) {
-    if (w.kind !== 'splatling') return fireRound.call(this, a, w, ...args);
+  Projectiles.prototype._fireRound = function (a,w,spreadDeg,m,look,snd,sndVol,pitch) {
+    if (w.kind !== 'splatling') return arguments.length===8
+      ? fireRound.call(this,a,w,spreadDeg,m,look,snd,sndVol,pitch) : fireRound.apply(this,arguments);
     const sampled = sampleSplatlingSpeed(w.projSpeed, w.speedRandomRate, w.speedRandomBias, Math.random());
-    return withSampledProjectileSpeed(w, sampled, config => fireRound.call(this, a, config, ...args));
+    if(arguments.length!==8){
+      const args=Array.from(arguments);
+      return withSampledProjectileSpeed(w,sampled,config=>{args[1]=config;return fireRound.apply(this,args);});
+    }
+    const entry=sampledProjectileSpeedEntry(w);entry.values.push(sampled);
+    try{return fireRound.call(this,a,entry.view,spreadDeg,m,look,snd,sndVol,pitch);}
+    finally{entry.values.pop();}
   };
 
   // #940: A sourced Stand_DegBiasMax specifies an angular median fraction.

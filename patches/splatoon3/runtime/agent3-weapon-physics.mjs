@@ -80,7 +80,7 @@ export function rollerBodyOverlap(fwd, lat, dy, horizontalSpeed, body, playerRad
   const radius = Number(body?.Radius) * scale;
   const widthHalf = Number(body?.WidthHalf) * scale;
   const targetRadius = Number(playerRadius);
-  if (![radius, widthHalf, targetRadius].every(Number.isFinite) || radius < 0 || widthHalf < radius || targetRadius < 0) return false;
+  if ((!Number.isFinite(radius) || !Number.isFinite(widthHalf) || !Number.isFinite(targetRadius)) || radius < 0 || widthHalf < radius || targetRadius < 0) return false;
   // A valid #1109 stick-driven roll can be almost stationary. The old
   // direct callers still require the original 1-unit/s speed threshold.
   // Owner report 2026-10-18: a target touching the front of the drawn drum

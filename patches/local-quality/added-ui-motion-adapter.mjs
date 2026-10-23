@@ -10,7 +10,7 @@ const REWRITES = [
   [
     "src/main.js",
     "    const spread = kind === 'roller' ? 28 : Math.min(90, (Math.tan((coneDeg * Math.PI) / 180) / Math.tan(vHalf)) * (innerHeight / 2));",
-    "    let spread = 28;\n    if (kind !== 'roller') {\n      const height = innerHeight, memo = this._crosshairSpread;\n      if (memo && Object.is(memo[0], coneDeg) && Object.is(memo[1], vHalf) && Object.is(memo[2], height)) spread = memo[3];\n      else {\n        spread = Math.min(90, (Math.tan((coneDeg * Math.PI) / 180) / Math.tan(vHalf)) * (height / 2));\n        this._crosshairSpread = [coneDeg, vHalf, height, spread];\n      }\n    }"
+    "    let spread = 28;\n    if (kind !== 'roller') {\n      const fov = G.camera.fov, cache = this._hudTangents || (this._hudTangents = {});\n      if (!cache.fovReady || !Object.is(cache.fov, fov)) { cache.fovReady = true; cache.fov = fov; cache.halfFov = Math.tan(vHalf); }\n      if (!cache.coneReady || !Object.is(cache.cone, coneDeg)) { cache.coneReady = true; cache.cone = coneDeg; cache.coneTan = Math.tan((coneDeg * Math.PI) / 180); }\n      spread = Math.min(90, (cache.coneTan / cache.halfFov) * (innerHeight / 2));\n    }"
   ],
   [
     "src/ui/hud.js",

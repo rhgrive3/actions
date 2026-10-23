@@ -1,3 +1,4 @@
+import { adaptVisualAudioQueue } from './visual-audio-queue-adapter.mjs';
 import { adaptInkMicroSurface } from './ink-micro-surface-adapter.mjs';
 import { adaptHeadgear } from './headgear-adapter.mjs';
 import { adaptLobbySlotTransform } from './lobby-slot-transform-adapter.mjs';
@@ -94,12 +95,15 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'world-queue-build-adapter.mjs', 'settings-hud-queue-adapter.mjs',
   'character-shadow-batch-adapter.mjs', 'character-shadow-batch.mjs',
   'ink-micro-surface-adapter.mjs',
   'headgear-adapter.mjs', 'headgear/catalog.mjs', 'headgear/lifecycle.mjs', 'headgear/armor-helmet.js', 'headgear/two-line-mesh.js', 'headgear/camo-headphones.js', 'headgear/character-headgear-ink-black-flap-cap.js',
   'view-settings.mjs',
   'material-handoff-adapter.mjs', 'material-handoff.mjs',
   'lobby-slot-transform-adapter.mjs',
+  'visual-audio-queue-adapter.mjs',
+  'input-lens-queue-adapter.mjs',
   'camera-fov-cache-adapter.mjs',
   'cloth-derivative-adapter.mjs',
   'retarget-branch-update-adapter.mjs',
@@ -316,10 +320,6 @@ function adaptQualityLayer(rel, code) {
   for(const e of this.accessories){
    if(e.hair){
     // Express hair deformation in source HEAD space. This preserves arbitrary target hair rest directions.
-    if(e.head!==lastHead){poseHeadInvQ.copy(pose.wq[e.head]).invert();lastHead=e.head;}
-    this.q.copy(poseHeadInvQ).multiply(pose.wq[e.i]);
-    if(e.restHeadRelQ)this.q.multiply(e.restHeadRelQ);
-    else{this.q3.copy(this.bank.rest.wq[e.head]).invert().multiply(this.bank.rest.wq[e.i]).invert();this.q.multiply(this.q3);}
     if(hasHairTargets){
      const gain=e.hairGain*ampScale;
      this.q.identity().slerp(hairTargets.q[e.i],gain);
@@ -328,6 +328,11 @@ function adaptQualityLayer(rel, code) {
      if(!e.hairReady){e.hairQ.copy(this.q);e.hairReady=true;}
      else e.hairQ.slerp(this.q,hairAlpha);
      this.q.copy(e.hairQ);
+    }else{
+     if(e.head!==lastHead){poseHeadInvQ.copy(pose.wq[e.head]).invert();lastHead=e.head;}
+     this.q.copy(poseHeadInvQ).multiply(pose.wq[e.i]);
+     if(e.restHeadRelQ)this.q.multiply(e.restHeadRelQ);
+     else{this.q3.copy(this.bank.rest.wq[e.head]).invert().multiply(this.bank.rest.wq[e.i]).invert();this.q.multiply(this.q3);}
     }
     if(!headWorldReady){c._kidXform(c.bones.head,this.p,headWorldQ);headWorldReady=true;}
     this.q.premultiply(headWorldQ);
@@ -1437,8 +1442,8 @@ function clusterTopology(src, cell, sigs) {
       '  if(transition<1&&!c._oobBudget)this.hairTargets.mix(this.previousHairTargets,1-transition);',
       'skip offscreen hairTargets transition mix');
     code = replaceOnce(code,
-      'this.gaitTargets.add(this.tmp,item.weight,p,mod(frame/clip.frames,1));this.shortTargets.add({wp:p.centers,wq:this.tmp.wq},item.weight);',
-      'this.gaitTargets.add(this.tmp,item.weight,p,mod(frame/clip.frames,1));if(stepAmplitude<1){const st=this._shortPoseArg||(this._shortPoseArg={wp:null,wq:null});st.wp=p.centers;st.wq=this.tmp.wq;this.shortTargets.add(st,item.weight);}',
+      'this.gaitTargets.add(this.tmp,item.weight,p,normalizedFrame);this.shortTargets.add({wp:p.centers,wq:this.tmp.wq},item.weight);',
+      'this.gaitTargets.add(this.tmp,item.weight,p,normalizedFrame);if(stepAmplitude<1){const st=this._shortPoseArg||(this._shortPoseArg={wp:null,wq:null});st.wp=p.centers;st.wq=this.tmp.wq;this.shortTargets.add(st,item.weight);}',
       'only accumulate shortTargets when stepAmplitude < 1 and reuse descriptor');
     code = replaceOnce(code,
       '   c._kidXform(c.bones.handR.parent,this.gripV,this.parentQ);',
@@ -1466,7 +1471,7 @@ function clusterTopology(src, cell, sigs) {
     }
   }
 
-  return code;
+  return adaptVisualAudioQueue(rel, code);
 }
 
 export function qualityIdentity() {

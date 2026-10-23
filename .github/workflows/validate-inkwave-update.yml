@@ -3,6 +3,15 @@ on:
   push:
     branches: [main]
     paths:
+      - 'scripts/check-weapons-reference.mjs'
+      - 'scripts/verify-completion-sources.mjs'
+      - 'package.json'
+      - 'tests/ink-flight/model.test.mjs'
+      - 'tests/platform-lifecycle/platform-smoke.test.mjs'
+      - 'scripts/lib/minimap-canvas-observation.test.mjs'
+      - 'scripts/lib/minimap-canvas-three-binding.test.mjs'
+      - 'scripts/fetch-inkwave-pinned-references.py'
+      - 'scripts/tests/test_fetch_inkwave_pinned_references.py'
       - 'scripts/prepare-inkwave-ci-apt.py'
       - .github/workflows/validate-inkwave-update.yml
       - "inkwave-public/**"
@@ -28,6 +37,15 @@ on:
       - "tests/issue-queue/**"
   pull_request:
     paths:
+      - 'scripts/check-weapons-reference.mjs'
+      - 'scripts/verify-completion-sources.mjs'
+      - 'package.json'
+      - 'tests/ink-flight/model.test.mjs'
+      - 'tests/platform-lifecycle/platform-smoke.test.mjs'
+      - 'scripts/lib/minimap-canvas-observation.test.mjs'
+      - 'scripts/lib/minimap-canvas-three-binding.test.mjs'
+      - 'scripts/fetch-inkwave-pinned-references.py'
+      - 'scripts/tests/test_fetch_inkwave_pinned_references.py'
       - 'scripts/prepare-inkwave-ci-apt.py'
       - .github/workflows/validate-inkwave-update.yml
       - "inkwave-public/**"
@@ -265,7 +283,7 @@ jobs:
       - name: Verify source OBJ pattern cache semantics
         run: node --test patches/native-stages/tests/source-obj-semantics-regex-cache.test.mjs
       - name: Verify deterministic network replication
-        run: node --experimental-vm-modules --test patches/network-replication/tests/*.test.mjs
+        run: node scripts/run-inkwave-source-remainder.mjs network
       - name: Verify remote combat provenance and equipped hit ceilings
         run: |
           node patches/network-replication/tools/combat-hit-ceilings.mjs
@@ -280,7 +298,7 @@ jobs:
           path: .ci-scratch/network-comparison/
           retention-days: 14
       - name: Verify local quality regressions
-        run: node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs scripts/tests/inkwave-idle-resources-gates.test.mjs
+        run: node scripts/run-inkwave-source-remainder.mjs quality
       - name: Verify migrated direct game source ownership
         run: node --test scripts/tests/inkwave-direct-source-ownership.test.mjs
       - name: Verify platform lifecycle smoke regressions
@@ -305,42 +323,19 @@ jobs:
           sudo mkdir -p "$browser_tmp"
           sudo chown "$(id -u):$(id -g)" "$browser_tmp"
       - name: Verify motion verifier regressions
-        run: node --test scripts/tests/inkwave-test-shards.test.mjs scripts/tests/inkwave-accepted-default-probe.test.mjs scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs scripts/tests/inkwave-ci-queue-relief.test.mjs scripts/tests/inkwave-added-ci-contracts.test.mjs scripts/tests/inkwave-ci-source-admission.test.mjs scripts/tests/inkwave-main9fe-paint-admission.test.mjs scripts/tests/inkwave-maine1f-paint-admission.test.mjs scripts/tests/inkwave-pad-map-evidence.test.mjs scripts/tests/inkwave-range-pause-readiness.test.mjs scripts/tests/inkwave-range-profile-receipt.test.mjs scripts/tests/inkwave-range-menu-entry.test.mjs scripts/tests/inkwave-range-trusted-entry.test.mjs scripts/tests/inkwave-responsive-fixture.test.mjs scripts/tests/inkwave-responsive-diagnostics.test.mjs scripts/tests/inkwave-ballpoint-evidence.test.mjs scripts/tests/inkwave-streamed-music-diagnostics.test.mjs scripts/tests/inkwave-active-media-diagnostics.test.mjs scripts/tests/inkwave-context-raf-diagnostics.test.mjs scripts/tests/inkwave-static-menu-gpu-budget.test.mjs scripts/tests/inkwave-selected-prop-pack-contracts.test.mjs scripts/tests/inkwave-roller-blob-worker-binding.test.mjs scripts/tests/inkwave-exact-checkout-head.test.mjs scripts/tests/inkwave-responsive-progress-summary.test.mjs
+        run: node --test scripts/tests/inkwave-source-remainder.test.mjs scripts/tests/inkwave-quality-shallow-history.test.mjs scripts/tests/inkwave-optimization-workflows.test.mjs scripts/tests/inkwave-test-shards.test.mjs scripts/tests/inkwave-accepted-default-probe.test.mjs scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs scripts/tests/inkwave-ci-queue-relief.test.mjs scripts/tests/inkwave-added-ci-contracts.test.mjs scripts/tests/inkwave-ci-source-admission.test.mjs scripts/tests/inkwave-main9fe-paint-admission.test.mjs scripts/tests/inkwave-maine1f-paint-admission.test.mjs scripts/tests/inkwave-pad-map-evidence.test.mjs scripts/tests/inkwave-range-pause-readiness.test.mjs scripts/tests/inkwave-range-profile-receipt.test.mjs scripts/tests/inkwave-range-menu-entry.test.mjs scripts/tests/inkwave-range-trusted-entry.test.mjs scripts/tests/inkwave-responsive-fixture.test.mjs scripts/tests/inkwave-responsive-diagnostics.test.mjs scripts/tests/inkwave-ballpoint-evidence.test.mjs scripts/tests/inkwave-streamed-music-diagnostics.test.mjs scripts/tests/inkwave-active-media-diagnostics.test.mjs scripts/tests/inkwave-context-raf-diagnostics.test.mjs scripts/tests/inkwave-static-menu-gpu-budget.test.mjs scripts/tests/inkwave-selected-prop-pack-contracts.test.mjs scripts/tests/inkwave-roller-blob-worker-binding.test.mjs scripts/tests/inkwave-exact-checkout-head.test.mjs scripts/tests/inkwave-responsive-progress-summary.test.mjs
       - name: Verify aggregate QA acceptance guards
         run: |
           node --max-old-space-size=384 --test --test-concurrency=1 scripts/tests/run-inkwave-turf-finish-isolated.test.mjs scripts/tests/run-inkwave-turf-finish-supervision.test.mjs scripts/tests/inkwave-paint-snapshot-storage.test.mjs scripts/tests/inkwave-wiper-current-binding.test.mjs scripts/tests/inkwave-exact-head-workflow-routes.test.mjs scripts/tests/inkwave-queue1801-source-pairs.test.mjs scripts/tests/inkwave-23pr-paint-source-pair.test.mjs scripts/tests/inkwave-29pr-paint-source-pair.test.mjs scripts/tests/inkwave-31pr-paint-source-pair.test.mjs scripts/tests/inkwave-main26a4-production-epoch.test.mjs scripts/tests/run-inkwave-turf-finish-selection.test.mjs
           node --max-old-space-size=128 --test --test-concurrency=1 scripts/tests/continuous-browser-video.test.mjs
+      - name: Verify pinned-fetch deduplication and dedicated QA routing
+        run: |
+          python3 -m unittest discover -s scripts/tests -p test_fetch_inkwave_pinned_references.py -v
+          node --test scripts/tests/inkwave-optimization-workflows.test.mjs
       - name: Verify pinned primary numerical sources
         run: |
-          python3 - <<'PY'
-          import hashlib, json, pathlib, urllib.request
-          fetched={}
-          def reference_bytes(url):
-            if url not in fetched:
-              with urllib.request.urlopen(url,timeout=30) as response: fetched[url]=response.read()
-            return fetched[url]
-          reference=json.loads(pathlib.Path('patches/splatoon3/reference/curated-numbers.json').read_text())
-          for source in reference['sources']:
-            target=pathlib.Path('.reference-data')/source['id']
-            target.parent.mkdir(parents=True,exist_ok=True)
-            target.write_bytes(reference_bytes(source['url']))
-          weapons=json.loads(pathlib.Path('patches/splatoon3/reference/weapons-fidelity-reference.json').read_text())
-          for source in weapons['sources']:
-            if not source.get('expectedFileSha256'): continue
-            target=pathlib.Path('.reference-data/weapons')/source['url'].rsplit('/',1)[-1]
-            target.parent.mkdir(parents=True,exist_ok=True)
-            data=reference_bytes(source['url'])
-            assert hashlib.sha256(data).hexdigest()==source['expectedFileSha256'], source['url']
-            target.write_bytes(data)
-          PY
+          python3 scripts/fetch-inkwave-pinned-references.py
           INKWAVE_WEIGHT_PARAMS=.reference-data/data/parameter/1130/misc/params.json node --experimental-vm-modules --test patches/splatoon3/tests/weapon-weight-gear.test.mjs
-          python3 - <<'PYOBJ'
-          import json, pathlib, urllib.request
-          receipt=json.loads(pathlib.Path('patches/splatoon3/reference/object-shredder-1130.json').read_text())['receipt']
-          url='https://raw.githubusercontent.com/Leanny/splat3/'+receipt['commit']+'/'+receipt['path']
-          with urllib.request.urlopen(url,timeout=30) as response:
-            pathlib.Path('.reference-data/object-damage.json').write_bytes(response.read())
-          PYOBJ
           INKWAVE_OBJECT_DAMAGE_REFERENCE=.reference-data/object-damage.json node --experimental-vm-modules --test patches/splatoon3/tests/object-shredder-1130.test.mjs patches/splatoon3/tests/native-sprinkler-damage.test.mjs
           node scripts/verify-inkwave-reference.mjs .reference-data
           node scripts/check-weapons-reference.mjs .reference-data/weapons
@@ -348,23 +343,6 @@ jobs:
         run: node scripts/verify-completion-sources.mjs .reference-data/weapons
       - name: Compare every catalog record with its pinned numerical source
         run: |
-          node --input-type=module - <<'JS'
-          import fs from 'node:fs';
-          import { MAIN_WEAPON_CATALOG as catalog } from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs';
-          fs.writeFileSync('.reference-catalog-index.json',JSON.stringify({commit:catalog.sourceCommit,paths:catalog.records.map(r=>r.sourcePath)}));
-          JS
-          python3 - <<'PY'
-          import concurrent.futures, json, pathlib, urllib.request
-          index=json.loads(pathlib.Path('.reference-catalog-index.json').read_text())
-          paths=set(index['paths']) | {'data/mush/1130/WeaponInfoMain.json','data/language/USen.json','data/language/JPja.json'}
-          def fetch_source(relative):
-            target=pathlib.Path('.reference-data/catalog')/relative
-            target.parent.mkdir(parents=True,exist_ok=True)
-            url='https://raw.githubusercontent.com/Leanny/splat3/'+index['commit']+'/'+relative
-            with urllib.request.urlopen(url,timeout=30) as response: target.write_bytes(response.read())
-          with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
-            list(pool.map(fetch_source,sorted(paths)))
-          PY
           INKWAVE_MAIN_WEAPON_REFERENCE=.reference-data/catalog node --test patches/splatoon3/tests/main-weapon-catalog-data.test.mjs
           node scripts/generate-inkwave-catalog-wall-drop.mjs .reference-data/catalog/data/parameter/1130/weapon
           git diff --exit-code -- patches/splatoon3/runtime/catalog-wall-drop-data.mjs

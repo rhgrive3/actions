@@ -131,7 +131,8 @@ export function collision(geo){
  }
  return count===max?{triangles,normals,flags,objectIds,areas}:{triangles:triangles.slice(0,count*9),normals:normals.slice(0,count*3),flags:flags.slice(0,count),objectIds:objectIds.slice(0,count),areas:areas.slice(0,count)};
 }
-export function buildSourceBVH(triangles){
+export function buildSourceBVH(triangles,{compactCenters=false}={}){
+ if(compactCenters)return buildSourceBVHCompact(triangles);
  const count=triangles.length/9,min=new Float32Array(count*3),max=new Float32Array(count*3),center=new Float32Array(count*3),order=new Uint32Array(count);
  for(let i=0;i<count;i++){
   order[i]=i;
@@ -148,6 +149,33 @@ export function buildSourceBVH(triangles){
  function recurse(start,end){
   const at=used++;bounds.fill(Infinity,0,3);bounds.fill(-Infinity,3,6);bounds.fill(Infinity,6,9);bounds.fill(-Infinity,9,12);
   for(let i=start;i<end;i++){const id=order[i];for(let k=0;k<3;k++){bounds[k]=Math.min(bounds[k],min[id*3+k]);bounds[3+k]=Math.max(bounds[3+k],max[id*3+k]);bounds[6+k]=Math.min(bounds[6+k],center[id*3+k]);bounds[9+k]=Math.max(bounds[9+k],center[id*3+k]);}}
+  for(let k=0;k<6;k++)nodes[at*8+k]=bounds[k];
+  if(end-start<=12){nodes[at*8+6]=-start-1;nodes[at*8+7]=end-start;}
+  else{let axis=0;for(let k=1;k<3;k++)if(F(bounds[9+k]-bounds[6+k])>F(bounds[9+axis]-bounds[6+axis]))axis=k;const half=start+((end-start)>>>1);partition(start,end-1,half,axis);nodes[at*8+6]=recurse(start,half);nodes[at*8+7]=recurse(half,end);}
+  return at;
+ }
+ if(count)recurse(0,count);return {nodes,order};
+}
+function buildSourceBVHCompact(triangles){
+ const count=triangles.length/9,min=new Float32Array(count*3),max=new Float32Array(count*3),order=new Uint32Array(count);
+ for(let i=0;i<count;i++){
+  order[i]=i;
+  for(let k=0;k<3;k++){const a=Math.min(triangles[i*9+k],triangles[i*9+3+k],triangles[i*9+6+k]),b=Math.max(triangles[i*9+k],triangles[i*9+3+k],triangles[i*9+6+k]);min[i*3+k]=a;max[i*3+k]=b;}
+ }
+ // Bounds already contain the exact Float32 extrema. Derive each center with
+ // the original rounding order instead of retaining another 12 bytes/triangle.
+ const centerAt=(id,axis)=>{const i=id*3+axis;return F(F(min[i]+max[i])/2);};
+ const nodeCount=n=>n<=12?1:1+nodeCount(n>>>1)+nodeCount(n-(n>>>1));
+ const nodes=new Float32Array(count?nodeCount(count)*8:0),bounds=new Float64Array(12);let used=0;
+ function partition(left,right,target,axis){
+  while(left<right){const pivot=centerAt(order[(left+right)>>>1],axis);let i=left,j=right;
+   while(i<=j){while(centerAt(order[i],axis)<pivot)i++;while(centerAt(order[j],axis)>pivot)j--;if(i<=j){const t=order[i];order[i++]=order[j];order[j--]=t;}}
+   if(target<=j)right=j;else if(target>=i)left=i;else return;
+  }
+ }
+ function recurse(start,end){
+  const at=used++;bounds.fill(Infinity,0,3);bounds.fill(-Infinity,3,6);bounds.fill(Infinity,6,9);bounds.fill(-Infinity,9,12);
+  for(let i=start;i<end;i++){const id=order[i];for(let k=0;k<3;k++){const center=centerAt(id,k);bounds[k]=Math.min(bounds[k],min[id*3+k]);bounds[3+k]=Math.max(bounds[3+k],max[id*3+k]);bounds[6+k]=Math.min(bounds[6+k],center);bounds[9+k]=Math.max(bounds[9+k],center);}}
   for(let k=0;k<6;k++)nodes[at*8+k]=bounds[k];
   if(end-start<=12){nodes[at*8+6]=-start-1;nodes[at*8+7]=end-start;}
   else{let axis=0;for(let k=1;k<3;k++)if(F(bounds[9+k]-bounds[6+k])>F(bounds[9+axis]-bounds[6+axis]))axis=k;const half=start+((end-start)>>>1);partition(start,end-1,half,axis);nodes[at*8+6]=recurse(start,half);nodes[at*8+7]=recurse(half,end);}
@@ -238,14 +266,14 @@ export function parseSourceMaterials(text,objects,files){
  }
  return materials;
 }
-export function convertSource(stage,obj,mtl,files,progress=()=>{},placement=null){
+export function convertSource(stage,obj,mtl,files,progress=()=>{},placement=null,{compactBVHCenters=false}={}){
  progress('OBJ');let geometry=parseSourceOBJ(obj,stage.sourceSemantics);
  if(placement){
   if(placement.plan?.stageId!==stage.id)throw Error('Placement stage differs from requested source');
   geometry=applySourcePlacements(geometry,placement.document,placement.plan,stage.sourceSha256);
  }
  progress('collision');const data=collision(geometry);
- progress('BVH');Object.assign(data,buildSourceBVH(data.triangles));
+ progress('BVH');Object.assign(data,buildSourceBVH(data.triangles,{compactCenters:compactBVHCenters}));
  progress('paint');const charts=paintCharts(data);
  const materials=parseSourceMaterials(mtl,geometry.objects,files);
  const integrity={};for(const m of Object.values(materials))for(const p of [m.albedo,...Object.values(m.maps)])if(p)integrity[p]=files[p];

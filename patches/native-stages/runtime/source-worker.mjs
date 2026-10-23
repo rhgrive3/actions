@@ -36,15 +36,24 @@ self.onmessage=async({data:{id,runtimeSha256,constrainedClient=false}})=>{
    const objectPin={sha256:stage.sourceSha256};
    // Authenticated LFS payload length; inventory blob sizes describe pointers.
    if(!constrained)objectPin.bytes=sourceObjectBytes(stage);
-   const [obj,tree]=await Promise.all([
-    sourceBytes(id,sourceURL(stage,stage.internal+'.obj'),objectPin,undefined,constrained?undefined:p=>self.postMessage({progress:'download',id,...p})),
-    sourceTree(id,stage.tree),
-   ]);
+   // The authenticated tree can admit MTL while the larger OBJ is still in flight.
+   // Observe both branches immediately and cancel sibling fetches on failure.
+   const abort = typeof AbortController === 'function' ? new AbortController() : null;
+   let obj, mtl, files;
+   try {
+    [obj,{mtl,files}]=await Promise.all([
+     sourceBytes(id,sourceURL(stage,stage.internal+'.obj'),objectPin,abort?.signal,constrained?undefined:p=>self.postMessage({progress:'download',id,...p})),
+     sourceTree(id,stage.tree,abort?.signal).then(async tree=>{
+      const files={};for(const f of tree.tree)if(f.type==='blob'){if(f.path.startsWith('/')||f.path.split('/').some(p=>p==='..'||p===''))throw Error('Unsafe source path');files[f.path]={bytes:f.size,gitSha1:f.sha};}
+      const name=stage.internal+'.mtl';if(!files[name])throw Error('Missing pinned MTL');
+      if(abort?.signal.aborted)throw abort.signal.reason;
+      const mtl=await sourceBytes(id,sourceURL(stage,name),files[name],abort?.signal);
+      return {mtl,files};
+     }),
+    ]);
+   } catch(error) { abort?.abort(error); throw error; }
    self.postMessage({progress:'download',id,bytes:obj.byteLength,total:obj.byteLength});
-   const files={};for(const f of tree.tree)if(f.type==='blob'){if(f.path.startsWith('/')||f.path.split('/').some(p=>p==='..'||p===''))throw Error('Unsafe source path');files[f.path]={bytes:f.size,gitSha1:f.sha};}
-   const name=stage.internal+'.mtl';if(!files[name])throw Error('Missing pinned MTL');
-   const mtl=await sourceBytes(id,sourceURL(stage,name),files[name]);
-   data=convertSource(stage,new Uint8Array(obj),new TextDecoder().decode(mtl),files,p=>self.postMessage({progress:p,id}));
+   data=convertSource(stage,new Uint8Array(obj),new TextDecoder().decode(mtl),files,p=>self.postMessage({progress:p,id}),null,{compactBVHCenters:constrained});
    data=compactInactiveDisplay(data);
    // Derived IndexedDB writes clone every large typed array before the
    // renderer takes ownership. Avoid that competing peak on small devices.

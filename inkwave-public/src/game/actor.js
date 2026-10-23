@@ -241,8 +241,11 @@ export class Actor {
     this.hardLand = Math.max(0, this.hardLand - dt / P.hardLandTime);
 
     // aim vector from yaw/pitch
-    const cp = Math.cos(this.aimPitch);
-    this.aimDir.set(Math.sin(this.aimYaw) * cp, Math.sin(this.aimPitch), Math.cos(this.aimYaw) * cp);
+    const dir=this.aimDir,yaw=this.aimYaw,pitch=this.aimPitch,cached=this._cachedAimDir;
+    if(!(cached&&Number.isFinite(yaw)&&Number.isFinite(pitch)&&Object.is(cached.yaw,yaw)&&Object.is(cached.pitch,pitch)&&Object.is(cached.x,dir.x)&&Object.is(cached.y,dir.y)&&Object.is(cached.z,dir.z))){
+      const cp=Math.cos(pitch),x=Math.sin(yaw)*cp,y=Math.sin(pitch),z=Math.cos(yaw)*cp;
+      dir.set(x,y,z);const out=cached||(this._cachedAimDir={});out.yaw=yaw;out.pitch=pitch;out.x=x;out.y=y;out.z=z;
+    }
 
     // ---- super jump / specials in progress own the body
     if (this.superJumpState) { this._updateSuperJump(dt); this._finishFrame(dt); return; }
@@ -863,12 +866,11 @@ export class Actor {
   // ------------------------------------------------------------------ facing
   // Critically-damped angular spring with a rate cap: small corrections are quick, big turns sweep with a smooth
   // ease-in/out instead of an exponential snap. yawVel doubles as the animation's turnRate.
-  _face(dt, isSquid) {
+  _face(dt, isSquid, hs = Math.hypot(this.vel.x, this.vel.z)) {
     const P = PLAYER;
     const a = this.anim;
     const mv = this.intent.move;
     const mh = Math.hypot(mv.x, mv.z);
-    const hs = Math.hypot(this.vel.x, this.vel.z);
     this.fireFacing = Math.max(0, this.fireFacing - dt);
     let target = null, omega = P.faceOmega, maxRate = P.faceMaxRate, maxAcc = P.faceMaxAcc;
     if (this.specialActive || this.superJumpState) {
@@ -905,10 +907,10 @@ export class Actor {
   _finishFrame(dt) {
     const a = this.anim;
     const isSquid = this.form === 'squid';
+    const hs = Math.hypot(this.vel.x, this.vel.z);
     // online proxies arrive already facing the owner's way (net/netmatch.js applyRemote)
     if (this.remote) a.turnRate = this.netTurnRate || 0;
-    else this._face(dt, isSquid);
-    const hs = Math.hypot(this.vel.x, this.vel.z);
+    else this._face(dt, isSquid, hs);
     const cy = Math.cos(this.yaw), sy = Math.sin(this.yaw);
     a.speed = hs;
     const inv = 1 / Math.max(hs, 0.001);

@@ -203,16 +203,16 @@ const S3_DRAW_TANK = `  _drawTank(dt, sub, low, nosub) {
     let B = this._tankBox;
     if (!B || B.cv !== cv) {
       // A box belongs to one canvas (and may be inherited from a prototype HUD); never disconnect another's observer.
-      B = this._tankBox = { cv, w: cv.clientWidth, h: cv.clientHeight, args: null, ro: null };
+      B = this._tankBox = { cv, w: cv.clientWidth, h: cv.clientHeight, sub: 0, low: false, nosub: false, valid: false, ro: null };
       if (typeof ResizeObserver === 'function') {
         B.ro = new ResizeObserver(() => {
           B.w = cv.clientWidth; B.h = cv.clientHeight;
-          if (B.args && B.w && B.h && this.tankCanvas === cv) this._s3PaintTank(...B.args);
+          if (B.valid && B.w && B.h && this.tankCanvas === cv) this._s3PaintTank(B.sub, B.low, B.nosub);
         });
         B.ro.observe(cv);
       }
     } else if (!B.ro) { B.w = cv.clientWidth; B.h = cv.clientHeight; }
-    B.args = [sub, low, nosub];
+    B.sub = sub; B.low = low; B.nosub = nosub; B.valid = true;
     return B;
   }
 

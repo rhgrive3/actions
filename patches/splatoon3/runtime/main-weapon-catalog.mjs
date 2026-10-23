@@ -41,7 +41,7 @@ import { installCatalogPoseBirth } from './catalog-pose-birth.mjs';
 import { addedFamilySplash, brellaSplashPlan, collectBrellaSplashes } from './added-family-paint.mjs';
 import { paintDualiesSlide } from './dualies-slide-paint.mjs';
 import { catalogDualiesTurret, writeCatalogDualiesVelocity } from './catalog-dualies-motion.mjs';
-import { saberSlashShape, saberSlashContact, saberSlashWallContact, placeSaberSlash } from './saber-melee.mjs';
+import { saberSlashShape, saberSlashContactBasis, saberSlashWallContactBasis, placeSaberSlash } from './saber-melee.mjs';
 import { recordSaberStick, saberStepRequested, createSaberStep, saberStepSpeed } from './saber-step.mjs';
 import { encodeSaberSwingVisual, decodeSaberSwingVisual } from './saber-presentation.mjs';
 
@@ -49,6 +49,9 @@ import { encodeSaberSwingVisual, decodeSaberSwingVisual } from './saber-presenta
 // retain their mature owners. Canonical kit identities use the pinned table.
 // Models remain separate work. Extracted numbers do not certify Nintendo engine equivalence.
 const EPS = 1e-9, HZ = 60, DT = 1 / HZ, RAD = Math.PI / 180;
+const UNMODIFIED_MOVE_FAMILIES=Object.freeze(['roller','brush','splatana']);
+const SWING_MODES=Object.freeze(['horizontal','vertical','brush']);
+const NEAREST_SPLASH_FAMILIES=Object.freeze(['shooter','splatling','dualies']);
 const EMPTY_LOBE_OFFSETS=Object.freeze([]),EMPTY_LOBE_OFFSET=Object.freeze({});
 const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -402,7 +405,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // existing sub-ready owner before selecting main-weapon movement.
     const throwingStorm = this.a.specialActive?.id === 'storm' && this.a.specialActive.phase === 'hold' && this.a.specialActive.subArmed && this.a.intent.sub;
     if (this.a.grounded && (this.aimingSub || throwingStorm)) return profile.bomb.holdMoveSpeed;
-    const mod = ['roller','brush','splatana'].includes(r.family)?1:this.a.s3?.modifiers?.runSpeedFiring ?? 1;
+    const mod = UNMODIFIED_MOVE_FAMILIES.includes(r.family)?1:this.a.s3?.modifiers?.runSpeedFiring ?? 1;
     if (s?.roll || s?.lunge || s?.turret>EPS && r.sourceActor !== 'WeaponManeuverDual') return 0;
     if (this.rolling) {
       const roll=p.WeaponRollParam||{},normal=finite(roll.SpeedNormal,.132);
@@ -494,7 +497,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function angle(direction,yaw=0,pitch=0) {
     const y = Math.atan2(direction.x,direction.z)+yaw*RAD;
     const p = Math.atan2(direction.y,Math.hypot(direction.x,direction.z))+pitch*RAD;
-    return new THREE.Vector3(Math.sin(y)*Math.cos(p),Math.sin(p),Math.cos(y)*Math.cos(p));
+    const sinYaw=Math.sin(y),cosPitch=Math.cos(p);
+    return new THREE.Vector3(sinYaw*cosPitch,Math.sin(p),Math.cos(y)*cosPitch);
   }
   function paint(owner, at, radius, depth=1, direction=null, face=-1, footprint=null, seed=null) {
     if (!(radius>0) || !owner || owner.remote) return;
@@ -648,7 +652,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if (key==='turret') b = { ...p, MoveParam:p.MoveLapOverParam||p.MoveParam,
       DamageParam:p.DamageLapOverParam||p.DamageParam, CollisionParam:p.CollisionLapOverParam||p.CollisionParam,
       SplashSpawnParam:p.SplashSpawnLapOverParam||p.SplashSpawnParam };
-    if (['horizontal','vertical','brush'].includes(key)) {
+    if (SWING_MODES.includes(key)) {
       const group = key==='vertical'?p.VerticalSwingUnitGroupParam:key==='brush'?p.SwingUnitGroupParam:p.WideSwingUnitGroupParam;
       packet = group.Unit[unit]; b = {...packet.UnitParam, DamageParam:group.DamageParam};
     }
@@ -764,8 +768,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         Number.isFinite(sourceNum) && sourceNum >= 0) {
       const ordinal=s.paintShotOrdinal||0;
       desc.splashCount=catalogFractionalSplashCount(sourceNum,ordinal);
-      desc.splashFirst=catalogSplashFirst(desc.b.SplashSpawnParam,ordinal);
       desc.splashNearest=catalogSplashNearestSlot(desc.b.SplashSpawnParam,ordinal);
+      desc.splashFirst=catalogSplashFirst(desc.b.SplashSpawnParam,ordinal,desc.splashNearest);
       desc.splashStaggered=true;
       s.paintShotOrdinal=ordinal+1;
     }
@@ -818,7 +822,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const splash=desc.b.SplashSpawnParam,nearest=desc.b.SplashPaintParam;
     // Staggered source rounds already own the nearest event in their splash
     // budget. Re-stamping here double-counts feet paint (and bypasses occlusion).
-    if(!desc.splashStaggered&&['shooter','splatling','dualies'].includes(r.family)&&Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
+    if(!desc.splashStaggered&&NEAREST_SPLASH_FAMILIES.includes(r.family)&&Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
        advanceShooterNearestSlot(s,{...splash,ForceSpawnNearestAddNumArray:splash.ForceSpawnNearestAddNumArray||[]})){
       const at=a.pos.clone().addScaledVector(a.aimDir.clone().setY(0).normalize(),finite(splash.SpawnNearestLength,0));
       floorPaint(a,at,nearest.WidthHalfNearest,1,null,mainInkFootprint(r));
@@ -868,8 +872,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         ?catalogDepletedUnitCount(u,depleted):finite(u.BulletNum,1);
       for(let i=0;i<count;i++) {
         const groupKey=r.sourceActor==='WeaponSlosherBathtub'?j+':'+i:String(u.DamageParam?.GroupNum??0);
-        if(!volleys.has(groupKey))volleys.set(groupKey,{hits:new Map(),id:++s.shotSerial});
-        const volley=volleys.get(groupKey);
+        let volley=volleys.get(groupKey);
+        if(!volley){volley={hits:new Map(),id:++s.shotSerial};volleys.set(groupKey,volley);}
         const velocity=key==='slosh'?finite(a.grounded?u.SpawnSpeedGround:u.SpawnSpeedAir,1):finite(u.SpawnSpeedBase,1);
         const sampledSpeed=velocity+(Math.random()*2-1)*finite(u.SpawnSpeedRandom,0);
         const speed=(key==='brush'||key==='horizontal'||key==='vertical')
@@ -1103,7 +1107,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function collisionRadius(c,what,frames,index=0,bounces=0) {
     const init=finite(c['InitRadiusFor'+what],.2)+finite(c['AfterOffsetInitRadiusFor'+what],0)*index;
     const end=finite(c['EndRadiusFor'+what],init)+finite(c['AfterOffsetEndRadiusFor'+what],0)*index;
-    return Math.max(0,lerp(init,end,clamp(frames/Math.max(1,finite(c['ChangeFrameFor'+what],0))))) * catalogBubbleRadiusScale(bounces);
+    const radius=Math.max(0,lerp(init,end,clamp(frames/Math.max(1,finite(c['ChangeFrameFor'+what],0)))));
+    return bounces===0 ? radius : radius*catalogBubbleRadiusScale(bounces);
   }
   function lobes(p){
     const s=p.catalog,c=s.descriptor.c,params=c.ParamArray||(s.singleLobeParams||=[c]),offsets=c.OffsetArray||EMPTY_LOBE_OFFSETS;
@@ -1328,13 +1333,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           const q=shapes[i];cutoff=Math.min(cutoff,q.stop);q.stop=cutoff;
         }
       }
-      let stop=world.hit?world.dist/Math.max(EPS,len):Infinity,target=null,boss=null,defense=this.kitDefenseCandidate?.(p);
-      if(!unitCanDamage)defense=null;
+      let stop=world.hit?world.dist/Math.max(EPS,len):Infinity,target=null,boss=null,defense=unitCanDamage?this.kitDefenseCandidate?.(p):null;
       if(defense&&defense.distance/Math.max(EPS,len)<stop)stop=defense.distance/Math.max(EPS,len);
       else defense=null;
       // Math.max's -Infinity for an empty list and NaN propagation are kept.
       let pr1=-Infinity;
-      for(let i=0;i<shapes.length;i++){
+      if(unitCanDamage)for(let i=0;i<shapes.length;i++){
         const q=shapes[i];
         q.playerRadius0=collisionRadius(q.param,'Player',(p.age-DT)*HZ,s.index,bounceScale);
         q.playerRadius1=collisionRadius(q.param,'Player',p.age*HZ,s.index,bounceScale);
@@ -1728,7 +1732,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(melee.seen.has(target)||!feet)return false;
     const shape=melee.shape,bound=shape.bound+radius;
     if(Math.abs(feet.x-melee.origin.x)>bound||Math.abs(feet.z-melee.origin.z)>bound)return false;
-    if(!saberSlashContact(shape,melee.origin,melee.yaw,feet,radius,height,melee.contact)||
+    if(!saberSlashContactBasis(shape,melee.origin,melee.cy,melee.sy,feet,radius,height,melee.contact)||
       G.physics.los&&!G.physics.los(melee.origin,melee.contact))return false;
     if(mark)melee.seen.add(target);return true;
   }
@@ -1736,13 +1740,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const shape=saberSlashShape(r,key,ordinal),a=runner.a;
     const attack={owner:a,team:a.team,type:'saber-melee',catalog:{r,descriptor:{key}}};
     const melee={age:-delay,shape,attack,cause:catalogueAttackRow(attack),damage:shape.bullet.DamageParam.DamageValue/10,
-      origin:new THREE.Vector3(),contact:new THREE.Vector3(),objectFeet:new THREE.Vector3(),seen:new Set(),key,yaw:0,active:false};
+      origin:new THREE.Vector3(),contact:new THREE.Vector3(),objectFeet:new THREE.Vector3(),seen:new Set(),key,yaw:0,cy:1,sy:0,active:false};
     // Allocate device callbacks once per swing. Their existing owners supply
     // actual target geometry and HP/peer authority; do not mistake sphere
     // centres for capsule feet or special blast radii for collider sizes.
     melee.options={shapeContact:(object,point)=>{
       if(melee.seen.has(object)||!object.pos)return false;
-      if(object.subId==='splashWall')return saberSlashWallContact(shape,melee.origin,melee.yaw,object.pos,
+      if(object.subId==='splashWall')return saberSlashWallContactBasis(shape,melee.origin,melee.cy,melee.sy,object.pos,
         object.yaw||0,object.spec.wallWidth,object.spec.wallHeight,point);
       const radius=object.kind==='wave'?.72:object.kind==='decoy'?.48:object.subId==='torpedo'?.3:
         ['sprinkler','beakon'].includes(object.subId)?.42:finite(object.collisionRadius,finite(object.spec?.collisionRadius,0));
@@ -1763,7 +1767,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // Sample ages 0,1,2,3 for AliveFrame=4. The expired fifth frame must
     // never hit a newly entering actor; each victim/device is hit once.
     if(melee.age+EPS>=finite(shape.bullet.MoveParam?.AliveFrame,0)){state(runner).melee=null;return;}
-    if(!melee.active){melee.yaw=placeSaberSlash(a,shape,melee.origin);melee.active=true;}
+    if(!melee.active){melee.yaw=placeSaberSlash(a,shape,melee.origin,melee);melee.active=true;}
     for(const enemy of G.actors||[])if(enemy!==a&&enemy.alive&&enemy.team!==a.team&&
       saberMeleeContact(melee,enemy,enemy.pos,hurtboxRadius(enemy,PLAYER),hurtboxHeight(enemy,PLAYER)))
       withObjectDamageCause(melee.attack,()=>G.projectiles.applyHit(a,enemy,melee.damage,r.id));

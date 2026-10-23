@@ -83,19 +83,21 @@ async function timedFetch(request, timeout, inspect) {
 async function verifiedAsset(request, expected) {
   let response;
   try {
-    return await timedFetch(request, 30000, async value => {
+    const verified = await timedFetch(request, 30000, async value => {
       response = value;
       await verify(value, expected);
     });
+    return { response: verified, verified: true };
   }
   catch (error) {
     // An interrupted deployment can leave a cached 404 or mismatching 200 in
     // the HTTP cache. Retry the EXACT revision URL once, bypassing that cache.
     if (!response) throw error;
-    if (response.status !== 200 && response.status !== 404 && response.status !== 410) return response;
-    return timedFetch(new Request(request, { cache: 'reload' }), 30000, async fresh => {
-      if (fresh.ok) await verify(fresh, expected);
+    if (response.status !== 200 && response.status !== 404 && response.status !== 410) return { response, verified: false };
+    const fresh = await timedFetch(new Request(request, { cache: 'reload' }), 30000, async value => {
+      if (value.ok) await verify(value, expected);
     });
+    return { response: fresh, verified: fresh.ok };
   }
 }
 async function populate(cache, rel, reusable, reusableRevision) {
@@ -110,9 +112,9 @@ async function populate(cache, rel, reusable, reusableRevision) {
     if (valid) { await cache.put(url, old); return; }
   }
   // HTTP cache can satisfy this without a transfer. Only immutable, exact revision URLs use force-cache.
-  const response = await verifiedAsset(new Request(url, { cache: 'force-cache', credentials: 'same-origin' }), BUILD.assets[rel]);
-  await verify(response, BUILD.assets[rel]);
-  await cache.put(url, response);
+  const result = await verifiedAsset(new Request(url, { cache: 'force-cache', credentials: 'same-origin' }), BUILD.assets[rel]);
+  if (!result.verified) throw new Error('Uncacheable');
+  await cache.put(url, result.response);
 }
 async function installSnapshot() {
   if (BUILD.declaredBytes > MAX_REVISION_BYTES || BUILD.index.bytes > MAX_HTML_BYTES) throw new Error('Cache budget');
@@ -232,9 +234,9 @@ async function currentAsset(request, rel) {
   let task = flights.get(request.url);
   if (!task) {
     task = (async () => {
-      const response = await verifiedAsset(request, BUILD.assets[rel]);
+      const { response, verified } = await verifiedAsset(request, BUILD.assets[rel]);
       if (!response.ok) return response;
-      await verify(response, BUILD.assets[rel]);
+      if (!verified) throw new Error('Uncacheable');
       try { await cache.put(request, response.clone()); } catch { /* quota: online play must still work */ }
       return response;
     })();

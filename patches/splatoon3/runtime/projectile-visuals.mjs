@@ -665,8 +665,6 @@ export class ProjectileVisualRuntime {
         if(Number.isFinite(pi)&&Number.isFinite(qi)&&Math.abs(pi-qi)!==1)continue;
         if(!Number.isFinite(pi)&&!Number.isFinite(qi)&&p.fidelityRollerUnitIndex!==q.fidelityRollerUnitIndex)continue;
         const age=renderAge(p,alpha),qage=renderAge(q,alpha);
-        p._iwVisualHistory.sample(age,this.sample);q._iwVisualHistory.sample(qage,this.sample2);
-        const distance=Math.hypot(this.sample[0]-this.sample2[0],this.sample[1]-this.sample2[1],this.sample[2]-this.sample2[2]);
         const radius=Math.min(projectileDrawRadius(p,age),projectileDrawRadius(q,qage));
         if(!(radius>0)||this.bodies>=this.capacity)continue;
         const start=max(p._iwVisualRenderStart,q._iwVisualRenderStart),end=min(age,qage);
@@ -674,6 +672,8 @@ export class ProjectileVisualRuntime {
           if(this._rollerMembrane(p,q,radius,start,end)){this.stats.linkedRollerPairs++;break;}
           continue;
         }
+        p._iwVisualHistory.sample(age,this.sample);q._iwVisualHistory.sample(qage,this.sample2);
+        const distance=Math.hypot(this.sample[0]-this.sample2[0],this.sample[1]-this.sample2[1],this.sample[2]-this.sample2[2]);
         if(distance<radius*.6||distance>radius*3)continue;
         const c=this.centers,w=this.widths,t=this.thicknesses;
         const dx=this.sample2[0]-this.sample[0],dy=this.sample2[1]-this.sample[1],dz=this.sample2[2]-this.sample[2];

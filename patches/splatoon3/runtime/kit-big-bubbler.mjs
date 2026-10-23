@@ -459,7 +459,7 @@ function buildVisual(dome) {
   if (!scene) return;
   const group = createBubblerHardware(dome.color, api.THREE);
   const shell = group.userData.shell;
-  shell.castShadow = false; shell.receiveShadow = false; shell.frustumCulled = false;
+  shell.castShadow = false; shell.receiveShadow = false; shell.frustumCulled = true;
   const emitter = group.userData.emitter;
   emitter.frustumCulled = false;
   group.position.copy(dome.pos);
@@ -654,6 +654,8 @@ export function damageBigBubblerFromInkVac(dome, attacker, amount, point = dome?
 // without joining projectile first-contact arbitration: the laser keeps
 // travelling and cannot be swallowed by Ink Vac. The explicit source row goes
 // through the same object-rate table and Object Shredder boundary as rounds.
+const beamDamageFrames=[];
+let beamDamageDepth=0;
 export function damageBigBubblerFromBeam(attacker, start, end, damage, cause = 'MicroLaser') {
   if (!api || !attacker || attacker.remote || !attacker.alive || !Number.isInteger(attacker.team) ||
       !start?.isVector3 || !end?.isVector3 || !(damage > 0) || cause !== 'MicroLaser') return 0;
@@ -661,10 +663,12 @@ export function damageBigBubblerFromBeam(attacker, start, end, damage, cause = '
   // No target can be queried or damaged. Avoid per-beam scratch allocations;
   // read the live pools each call so later deployments are admitted immediately.
   if (maxContacts === 0) return 0;
-  const probe = { owner: attacker, team: attacker.team, damage, size: 0, type: 'beam',
-    s3BubblerRow: cause, damageSource: cause, ghost: false };
-  const excludedDomeIds = new Set();
+  const frame=beamDamageFrames[beamDamageDepth++] ||= {probe:{},excluded:new Set()};
+  const probe=frame.probe,excludedDomeIds=frame.excluded;
   let applied = 0;
+  try {
+  probe.owner=attacker;probe.team=attacker.team;probe.damage=damage;probe.size=0;probe.type='beam';
+  probe.s3BubblerRow=cause;probe.damageSource=cause;probe.ghost=false;
   for (let i = 0; i < maxContacts; i++) {
     const candidate = kitBarrierCandidate(probe, start, end, excludedDomeIds);
     if (!candidate) break;
@@ -673,6 +677,7 @@ export function damageBigBubblerFromBeam(attacker, start, end, damage, cause = '
     applied += candidate.onHit();
   }
   return applied;
+  } finally {probe.owner=null;excludedDomeIds.clear();beamDamageDepth--;}
 }
 
 // ------------------------------------------------------------------- query

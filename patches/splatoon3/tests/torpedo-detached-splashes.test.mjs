@@ -89,7 +89,12 @@ test('Torpedo main contact does not apply an immediate extra12 and each detached
 });
 
 test('Torpedo detached children clear with the world without inventing impact damage or paint',async()=>{
-  const w=await world(),b=w.fire(),drops=w.contact(b),meshes=drops.map(d=>d.mesh);
+  const w=await world(),b=w.fire(),drops=w.contact(b),meshes=drops.map(d=>d.visual.mesh);
+  assert.equal(new Set(meshes).size,1,'all detached children share one GPU draw');
+  assert.equal(meshes[0].isInstancedMesh,true);
+  const active=w.f.G.projectiles._s3TorpedoSplashes,matrix=new w.f.THREE.Matrix4();
+  assert.equal(meshes[0].count,active.length);
+  for(let i=0;i<active.length;i++) { meshes[0].getMatrixAt(i,matrix);const actual=new w.f.THREE.Vector3().setFromMatrixPosition(matrix);assert.ok(actual.distanceTo(active[i].pos)<1e-4); }
   const before=[w.hits.length,w.stamps.length];w.f.G.projectiles.clear();
   assert.equal(w.f.G.projectiles._s3TorpedoSplashes.length,0);
   assert.ok(meshes.every(m=>m.parent===null));for(let i=0;i<200;i++)w.step();

@@ -9,7 +9,7 @@ export const HOST_HAIR=Object.freeze({amplitude:.65,aimAmplitude:.48,maxDelta:1.
 export class HairTargets {
  constructor(bank){
   this.bank=bank;this.indices=bank.bones.map((b,i)=>/^Hair/.test(b.name)?i:-1).filter(i=>i>=0);
-  this.q=bank.bones.map(()=>new THREE.Quaternion());this.total=0;
+  this.q=new Array(bank.bones.length);for(const i of this.indices)this.q[i]=new THREE.Quaternion();this.total=0;
   this.identity=new THREE.Quaternion();this.headInverse=new THREE.Quaternion();this.swing=new THREE.Quaternion();this.axis=new THREE.Vector3();this.mean=new THREE.Vector3();
   this.entries=this.indices.map(i=>({i,child:bank.bones.findIndex(b=>b.parent===i&&/^Hair/.test(b.name)),restAxis:bank.rest.wp[i].clone().sub(bank.rest.wp[bank.bones[i].parent]).applyQuaternion(bank.rest.wq[i].clone().invert()).normalize()}));
  }

@@ -16,7 +16,7 @@ function stopLegacyShotDoublePlay(audio){
   };
   Object.defineProperty(audio,'__iwRealShotGuard',{value:true,configurable:true});
 }
-const finite3=p=>!!p&&[p.x,p.y,p.z].every(Number.isFinite);
+const finite3=p=>{if(!p)return false;const x=p.x,y=p.y,z=p.z;return Number.isFinite(x)&&Number.isFinite(y)&&Number.isFinite(z);};
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export function installWeaponAudioRuntime(api){
   const {G,on,Actor,WeaponRunner,Projectiles}=api,R=WeaponRunner.prototype;
@@ -31,23 +31,36 @@ export function installWeaponAudioRuntime(api){
     return withBlasterSplashHit(p.owner,()=>oldBurst.call(this,p,...args));
   };
   const unsubs=[],active=new Set(),obstruction=new WeakMap();
-  const stateFor=r=>r._mainAudioState||=( {id:null,engine:null,loops:{},wasReady:false,wasCharge:false,keepEmergePlayed:false,canopy:null,sBlastMode:null} );
-  function options(a,pos=a?.pos,volume=1){
-    const local=!!a?.isLocal,listener=G.camera?.position||G.local?.pos;
-    let occ=0;
-    if(!local&&a&&finite3(pos)&&finite3(listener)&&typeof G.physics?.los==='function'){
+  const stateFor=r=>r._mainAudioState||=( {id:null,engine:null,loops:{},loopUpdates:{},wasReady:false,wasCharge:false,keepEmergePlayed:false,canopy:null,sBlastMode:null} );
+  // One-shot spatial work runs only when the engine resolves a playable source.
+  // Loop options stay eager: their pending handles may start after decoding.
+  const deferredOcclusion=Symbol.for('inkwave.weapon-audio.resolve-occlusion'),deferredPosition=Symbol.for('inkwave.weapon-audio.occlusion-position');
+  function resolveOcclusion(o){o.occlusion=occlusion(o.actor,o[deferredPosition]);}
+  function occlusion(a,pos){
+    const listener=G.camera?.position||G.local?.pos;
+    if(!a?.isLocal&&a&&finite3(pos)&&finite3(listener)&&typeof G.physics?.los==='function'){
       let cached=obstruction.get(a);const now=G.time||0;
       if(!cached||now<cached.at||now-cached.at>=.1){let clear=true;try{clear=G.physics.los(listener,pos);}catch{}cached={at:now,value:clear?0:.78};obstruction.set(a,cached);}
-      occ=cached.value;
+      return cached.value;
     }
-    return {actor:a,pos:local?undefined:finite3(pos)?pos:undefined,volume,priority:local?88:64,occlusion:occ};
+    return 0;
   }
-  function play(a,event,pos,volume=1,id=a?.weapon?.id){id=mainAudioSourceId(id);if(WEAPON_AUDIO[id]?.events.includes(event))return G.audio?.playWeapon?.(id,event,options(a,pos,volume));return null;}
+  function options(a,pos=a?.pos,volume=1,defer=false){
+    const local=!!a?.isLocal,o={actor:a,pos:local?undefined:finite3(pos)?pos:undefined,volume,priority:local?88:64,occlusion:defer?0:occlusion(a,pos)};
+    if(defer){o[deferredOcclusion]=resolveOcclusion;o[deferredPosition]=pos;}
+    return o;
+  }
+  function play(a,event,pos,volume=1,id=a?.weapon?.id){id=mainAudioSourceId(id);if(WEAPON_AUDIO[id]?.events.includes(event))return G.audio?.playWeapon?.(id,event,options(a,pos,volume,true));return null;}
   function stop(r){const s=r?._mainAudioState;if(!s)return;s.chargeRise?.stop?.(.04);s.chargeRise=null;for(const h of Object.values(s.loops))h?.stop(.04);s.loops={};s.wasCharge=s.wasReady=false;s.keepEmergePlayed=false;s.pending=false;s.canopy=null;s.sBlastMode=null;active.delete(r);}
-  function keepLoop(r,event,enabled,pitch=1){const s=stateFor(r),a=r.a,id=mainAudioSourceId(a?.weapon?.id);
+  function keepLoop(r,event,enabled,pitch=1){if(!enabled&&!r?._mainAudioState?.loops[event])return;const s=stateFor(r),a=r.a,id=mainAudioSourceId(a?.weapon?.id);
     if(enabled&&WEAPON_AUDIO[id]?.events.includes(event)&&!!G.audio?.ctx&&G.audio.ctx.state!=='closed'){
       if(!s.loops[event]?.playing)s.loops[event]=G.audio?.loopWeapon?.(id,event,{...options(a,a.pos,.68),pitch});
-      s.loops[event]?.set({pos:a.isLocal?undefined:a.pos,pitch,volume:.68});active.add(r);
+      if(s.loops[event]){
+        const update=s.loopUpdates[event] ||= {pos:undefined,pitch:1,volume:.68};
+        update.pos=a.isLocal?undefined:a.pos;update.pitch=pitch;update.volume=.68;
+        s.loops[event].set(update);
+      }
+      active.add(r);
     }else{ s.loops[event]?.stop(.06);delete s.loops[event];}
   }
   const listen=(event,fn)=>{const u=on?.(event,fn);if(typeof u==='function')unsubs.push(u);};
@@ -60,7 +73,7 @@ export function installWeaponAudioRuntime(api){
     const runner=a.weaponRunner;
     if(runner?._mainAudioState)runner._mainAudioState.firedThisUpdate=true;
     // The call is synchronous with the actual admitted projectile event, never with raw input.
-    G.audio?.playWeapon?.(id,articulation,{...options(a,e.muzzle||a.pos,a.isLocal?.82:.68),variant:e.audioVariant});
+    G.audio?.playWeapon?.(id,articulation,{...options(a,e.muzzle||a.pos,a.isLocal?.82:.68,true),variant:e.audioVariant});
   });
   // Source HoldNoise is a single onset, including the documented
   // full-charge-keep squid-to-kid return. Only replay on emergence when the
@@ -93,7 +106,7 @@ export function installWeaponAudioRuntime(api){
     const event=['burst','blast','explosion'].includes(e.kind)?'explosion':'impact';
     if(!WEAPON_AUDIO[id].events.includes(event))return;
     // Impacts always remain positional, including the local owner's distant hits.
-    const o=options(a,e.pos,.55);o.pos=finite3(e.pos)?e.pos:undefined;o.priority=58;
+    const o=options(a,e.pos,.55,true);o.pos=finite3(e.pos)?e.pos:undefined;o.priority=58;
     G.audio?.playWeapon?.(id,event,o);
   });
   listen('weapon:canopy',e=>play(e?.actor,e?.event,e?.pos,.72));
@@ -109,8 +122,9 @@ export function installWeaponAudioRuntime(api){
     // starts AudioContext. Preload the actual selected sub/special *events*
     // rather than decoding all 381 samples or warming every remote actor.
     const loader=G.audio?._realS3Loader,sub=a?.weapon?.sub,special=a?.weapon?.special;
+    if(a?.isLocal&&loader&&G.audio?.ctx?.state!=='closed'){
     const kitKey=String(sub||'')+'|'+String(special||'');
-    if(a?.isLocal&&loader&&G.audio?.ctx?.state!=='closed'&&s.preloadedKit!==kitKey){
+    if(s.preloadedKit!==kitKey){
       s.preloadedKit=kitKey;
       for(const [kit,events] of [['sub:'+sub,['fire','explosion']],['special:'+special,['open','fire','explosion','ready','release','spin']]])
         for(const event of events){
@@ -120,6 +134,7 @@ export function installWeaponAudioRuntime(api){
         }
       for(const [action,cue] of Object.entries(EXTRA_SPECIAL_ACTION_SOURCE))
         if(action.startsWith(special+':'))loader.ensure(cue,'fire').catch(()=>{});
+    }
     }
     s.firedThisUpdate=false;
     const result=oldUpdate.call(this,dt,input,...rest);

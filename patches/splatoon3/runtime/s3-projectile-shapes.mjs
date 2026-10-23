@@ -338,7 +338,7 @@ function createRenderer(THREE, scene) {
   sparks.onBeforeRender = (renderer, sc, camera, geometry) => { geometry.drawRange.count = sc.overrideMaterial ? 0 : sparks.userData.count || 0; };
   scene.add(body, slashH, slashV, shell, core, sparks);
   const sheets = createInkSheets(THREE, scene, { nearDither: NEAR_DITHER, rim: RIM });
-  return { body, bodyData, slashH, slashV, shell, core, sparks, sparkPos, sparkSize, sheets, fireVolleys: new WeakSet(), lastFire: { owner: null, kind: '', x: 0, y: 0, z: 0, t: -1 },
+  return { body, bodyData, slashH, slashV, shell, core, sparks, sparkPos, sparkSize, sheets, sparkleCoefficients: new WeakMap(), fireVolleys: new WeakSet(), lastFire: { owner: null, kind: '', x: 0, y: 0, z: 0, t: -1 },
     m: new THREE.Matrix4(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), s: new THREE.Vector3(),
     v: new THREE.Vector3(), v2: new THREE.Vector3(), f: new THREE.Vector3(), x: new THREE.Vector3(), y: new THREE.Vector3(),
     basis: new THREE.Matrix4(), Z: new THREE.Vector3(0, 0, 1), UP: new THREE.Vector3(0, 1, 0), c: new THREE.Color(),
@@ -529,36 +529,47 @@ export function drawS3Shapes(system, THREE, G) {
       }
       // tiny empty bubbles drifting behind a young shot (calibration: 0.6 s)
       const fade = 1 - smooth(0.25, 0.6, p.age);
-      if (fade > 0 && p.start) for (let i = 0; i < S3_SHAPE.bubble.trailing && ns < MAX_SHELL; i++) {
+      if (fade > 0 && p.start && ns < MAX_SHELL) {
+      const bubbleTravel = p.start.distanceTo(p.pos);
+      for (let i = 0; i < S3_SHAPE.bubble.trailing && ns < MAX_SHELL; i++) {
         const seed = (p.seed || 0) * 13.1 + i * 7.3;
         const back = (0.35 + 0.45 * i) * r + 0.2;
-        if (back > p.start.distanceTo(p.pos)) break;
+        if (back > bubbleTravel) break;
         v.copy(p.pos).addScaledVector(f, -back);
         v.x += (hash(seed, 1) - 0.5) * r; v.y += (hash(seed, 2) - 0.3) * r * 0.8 + p.age * 0.3; v.z += (hash(seed, 3) - 0.5) * r;
         m.compose(v, q.identity(), s.setScalar(r * (0.1 + 0.1 * hash(seed, 4)) * fade));
         shell.setMatrixAt(ns, m); shell.setColorAt(ns, color); ns++;
       }
+      }
     } else if (kind === 'explosher') {
       if (cam && cam.distanceToSquared(p.pos) > 3600) continue;
       const n = S3_SHAPE.explosher.sparkles, rad = S3_SHAPE.explosher.radius;
+      const normalizedSeed = p.seed || 0;
+      let coefficients = R.sparkleCoefficients.get(p);
+      if (!coefficients || !Object.is(coefficients.seed, normalizedSeed)) {
+        const rows = [];
+        for (let i = 0; i < n; i++) {
+          const seed = normalizedSeed * 91.7 + i * 3.17;
+          const a = hash(seed, 1) * 6.2832, y = 2 * hash(seed, 2) - 1, ring = Math.sqrt(Math.max(0, 1 - y * y));
+          rows.push({ seed, x: ring * Math.cos(a), y, z: ring * Math.sin(a), rate: 1.8 + hash(seed, 5), phase: hash(seed, 6), d: rad * (0.9 + 0.8 * hash(seed, 3)), fall: 0.35 + 0.3 * hash(seed, 7), size: hash(seed, 8) });
+        }
+        coefficients = { seed: normalizedSeed, rows }; R.sparkleCoefficients.set(p, coefficients);
+      }
       for (let i = 0; i < n && nk < MAX_SPARK; i++) {
-        const seed = (p.seed || 0) * 91.7 + i * 3.17;
+        const c = coefficients.rows[i], seed = c.seed;
         // Presentation calibration, not recovered effect data: a tight uneven
         // glitter cloud sheds short trailing/falling flecks. Do not orbit an
         // expanding spherical halo around the projectile. All 28 points still
         // use the existing batch; simulation and gameplay droplets are untouched.
-        const a = hash(seed, 1) * 6.2832, y = 2 * hash(seed, 2) - 1;
-        const ring = Math.sqrt(Math.max(0, 1 - y * y));
-        const phase = fract(p.age * (1.8 + hash(seed, 5)) + hash(seed, 6));
+        const phase = fract(p.age * c.rate + c.phase);
         const shed = Math.min(p.age * 3, phase);
-        const d = rad * (0.9 + 0.8 * hash(seed, 3));
-        v.set(ring * Math.cos(a), y, ring * Math.sin(a)).multiplyScalar(d);
+        v.set(c.x, c.y, c.z).multiplyScalar(c.d);
         v.addScaledVector(f, -shed * 0.55 * Math.min(1, sp * 0.05));
-        v.y -= shed * shed * (0.35 + 0.3 * hash(seed, 7));
+        v.y -= shed * shed * c.fall;
         v.add(p.pos);
         sparkPos.array[nk * 3] = v.x; sparkPos.array[nk * 3 + 1] = v.y; sparkPos.array[nk * 3 + 2] = v.z;
         const tw = 0.5 + 0.5 * Math.sin(p.age * 30 + seed * 10);
-        sparkSize.array[nk] = (0.04 + 0.07 * tw * hash(seed, 8)) * (1 - 0.6 * shed);
+        sparkSize.array[nk] = (0.04 + 0.07 * tw * c.size) * (1 - 0.6 * shed);
         nk++;
       }
     }

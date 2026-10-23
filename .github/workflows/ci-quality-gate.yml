@@ -24,7 +24,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           filter: blob:none
-          fetch-depth: 0
+          fetch-depth: 1
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /package.json
@@ -56,7 +56,7 @@ jobs:
         env:
           QUALITY_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           QUALITY_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: node scripts/inkwave-quality-scope.mjs
+        run: node scripts/inkwave-quality-scope.mjs --fetch-base
 
       - if: steps.scope.outputs.relevant == 'true'
         name: Setup Node.js 22 LTS

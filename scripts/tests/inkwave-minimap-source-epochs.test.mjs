@@ -4,11 +4,11 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import {assertReviewedMinimapSources,REVIEWED_MINIMAP_SOURCE_EPOCHS} from '../lib/minimap-canvas-probe.mjs';
 const epochs=REVIEWED_MINIMAP_SOURCE_EPOCHS;
-test('both independent reviewed four-file minimap source epochs retain their exact pins',()=>{
- assert.equal(epochs.length,2);
- for(const epoch of epochs){assert.equal(Object.keys(epoch.pins).length,4);assert.equal(assertReviewedMinimapSources(epoch.pins),epoch.name);}
- const actual=Object.fromEntries(Object.keys(epochs[1].pins).map(file=>[file,crypto.createHash('sha256').update(fs.readFileSync(new URL('../../'+file,import.meta.url))).digest('hex')]));
- assert.equal(assertReviewedMinimapSources(actual),epochs[1].name);
+test('all independently reviewed minimap source epochs retain their exact pins',()=>{
+ assert.equal(epochs.length,3);
+ for(const epoch of epochs){assert.equal(Object.keys(epoch.pins).length,epoch===epochs.at(-1)?5:4);assert.equal(assertReviewedMinimapSources(epoch.pins),epoch.name);}
+ const actual=Object.fromEntries(Object.keys(epochs.at(-1).pins).map(file=>[file,crypto.createHash('sha256').update(fs.readFileSync(new URL('../../'+file,import.meta.url))).digest('hex')]));
+ assert.equal(assertReviewedMinimapSources(actual),epochs.at(-1).name);
 });
 test('every missing or byte-edited minimap source fails closed in either epoch',()=>{
  for(const {pins} of epochs)for(const file of Object.keys(pins)){

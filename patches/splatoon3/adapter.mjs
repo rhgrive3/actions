@@ -131,6 +131,11 @@ export function adaptSource(rel, code) {
   // projectile, rather than silently letting bullets cross an ally.
   if (rel === 'src/game/inkFlightRuntime.js') {
     code = replaceOnce(code,
+      '      const length = p.prev.distanceTo(p.pos);\n      const world = this.world(p.prev, p.pos, p.inkProfile.collision.field * INK_LENGTH_SCALE, this.worldHit);',
+      '      const reuseLength = !!G.physics.level && this.world === sourceLengthWorld;\n      const fallbackLength = reuseLength ? null : p.prev.distanceTo(p.pos);\n      const world = this.world(p.prev, p.pos, p.inkProfile.collision.field * INK_LENGTH_SCALE, this.worldHit);\n      const length = reuseLength ? (!world.hit ? world.dist : p.prev.distanceTo(p.pos)) : fallbackLength;',
+      'ink flight reuses built-in no-hit sweep length');
+    code += '\nconst sourceLengthWorld = InkFlightRuntime.prototype.world;\n';
+    code = replaceOnce(code,
       '      let first = world.hit ? world.dist / Math.max(EPS, length) : Infinity, target = null, boss = null;',
       '      let first = world.hit ? world.dist / Math.max(EPS, length) : Infinity, target = null, boss = null;\n' +
       '      world.kitDefense = null; p.damage = damageAt(p.inkProfile, p.age);\n' +
@@ -889,7 +894,22 @@ export function adaptSource(rel, code) {
       "if (!touchContact && (Math.abs(ax[0]) > 0.3 || Math.abs(ax[1]) > 0.3 || Math.abs(ax[2]) > 0.3 || Math.abs(ax[3]) > 0.3)) this.lastDevice = 'pad';",
       'held axis cannot cancel live touch');
   }
+  if (rel === 'src/boss/bossHazards.js') {
+    code = replaceOnce(code, "            const s = chargeDist(p, u1, tele), bx = p.x + Math.sin(p.yaw) * s, bz = p.z + Math.cos(p.yaw) * s;",
+      "            const sy = Math.sin(p.yaw), cy = Math.cos(p.yaw);\n            const s = chargeDist(p, u1, tele), bx = p.x + sy * s, bz = p.z + cy * s;", 'Boss charge shared yaw basis 0');
+    code = replaceOnce(code, "              const cx = bx + Math.sin(p.yaw) * c.z, cz = bz + Math.cos(p.yaw) * c.z;",
+      "              const cx = bx + sy * c.z, cz = bz + cy * c.z;", 'Boss charge shared yaw basis 1');
+    code = replaceOnce(code, "                  const side = (a.pos.x - bx) * Math.cos(p.yaw) - (a.pos.z - bz) * Math.sin(p.yaw) >= 0 ? 1 : -1;",
+      "                  const side = (a.pos.x - bx) * cy - (a.pos.z - bz) * sy >= 0 ? 1 : -1;", 'Boss charge shared yaw basis 2');
+    code = replaceOnce(code, "                  a.vel.x += Math.cos(p.yaw) * side * 9 + Math.sin(p.yaw) * 5; a.vel.z += -Math.sin(p.yaw) * side * 9 + Math.cos(p.yaw) * 5; a.vel.y = 7;",
+      "                  a.vel.x += cy * side * 9 + sy * 5; a.vel.z += -sy * side * 9 + cy * 5; a.vel.y = 7;", 'Boss charge shared yaw basis 3');
+  }
   if (rel === 'src/game/player.js') {
+    code = replaceOnce(code, 'const DEG = Math.PI / 180;',
+      'const DEG = Math.PI / 180;\nconst COS_ASSIST_MAX = Math.cos(10 * DEG) - 1e-12;', 'Aim Assist conservative maximum cone');
+    code = replaceOnce(code,
+      '      const ang = Math.acos(clamp(_v.dot(fwd), -1, 1));',
+      '      const dot = _v.dot(fwd);\n      if (dot < COS_ASSIST_MAX) continue;\n      const ang = Math.acos(clamp(dot, -1, 1));', 'Aim Assist skip candidates outside maximum cone');
     code = replaceOnce(code, '  update(dt) {', `  _s3ClearDisabledLook() {
     if (this.padLook) this.padLook.x = this.padLook.y = 0;
     this.edgeT = 0;
@@ -1187,6 +1207,11 @@ export function adaptSource(rel, code) {
       '      if (agent3RollerBodyContact(a, e, hs) && rollerContactClear(a, e, w, G.physics, PLAYER)) {',
       '      if (rollerStickActive(a) && rollerContactCandidate(a, e, w, PLAYER) && agent3RollerBodyContact(a, e, hs, true) && rollerContactClear(a, e, w, G.physics, PLAYER)) {',
       'Roller micro-speed actor contact admission');
+    // Both composed admission volumes own their geometry; these native
+    // opponent deltas no longer feed the predicate. fx/fz still feed the boss.
+    code = replaceOnce(code,
+      '      const dx = e.pos.x - a.pos.x, dz = e.pos.z - a.pos.z, dy = e.pos.y - a.pos.y;\n      const fwd = dx * fx + dz * fz, lat = Math.abs(dx * fz - dz * fx);\n',
+      '', 'Roller composed contact unused native geometry');
     code = replaceOnce(code,
       '    if (G.boss && hs > 1.0) {',
       '    if (G.boss && rollerStickActive(a)) {',
@@ -1437,6 +1462,19 @@ export function adaptSource(rel, code) {
     return `import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { beginTidalSlamGauge, updateTidalSlamGauge, completeTidalSlamGauge, queueTidalSlamGaugeFinish, finishTidalSlamGauge, clearTidalSlamGaugeFinish } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { rollerEmergeDelay, rollerFireBuffer } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, stealthJumpExtraTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity, clearFullCancelCandidate, hasFullCancelGroundAttack, takeFullCancelJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, updateHealthRecovery, updateSpecialHealthRecovery } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
   }
   if (rel === 'src/game/character-weapons.js') {
+    code = replaceOnce(code, 'export function animateWeapon(w, st) {', `function sprELiquidPair(S,targetX,targetZ,dt) {
+  const hz=2.2,zeta=.16,w=Math.PI*2*hz;
+  const wd=w*Math.sqrt(1-zeta*zeta),e=Math.exp(-zeta*w*dt),c=Math.cos(wd*dt),sn=Math.sin(wd*dt);
+  for(let i=6;i<=8;i+=2){
+    const target=i===6?targetX:targetZ,x0=S[i]-target,v0=S[i+1],B=(v0+zeta*w*x0)/wd;
+    const x=e*(x0*c+B*sn),v=e*((-zeta*w*x0+wd*B)*c+(-zeta*w*B-wd*x0)*sn);
+    S[i]=x+target;S[i+1]=v;
+  }
+}
+export function animateWeapon(w, st) {`, 'Slosher liquid paired spring coefficients');
+    code = replaceOnce(code,
+      '      sprE(ps, 6, _av2.x * a, 2.2, 0.16, dt); sprE(ps, 8, _av2.z * a, 2.2, 0.16, dt);',
+      '      sprELiquidPair(ps,_av2.x*a,_av2.z*a,dt);', 'Slosher liquid paired state updates');
     code = replaceOnce(code, 'export function getWeaponDef(kind) {\n  if (!_cache.has(kind)) {', 'export function getWeaponDef(kind) {\n  kind = weaponModelKey(kind); // weapon ID → its own model, else the shared family model\n  if (!_cache.has(kind)) {', 'per-weapon model cache key');
     code = replaceOnce(code, 'const d = finishParts((BUILDERS[kind] || buildShooter)());', 'const d = finishParts(buildWeaponModel(kind, referenceWeaponModel((BUILDERS[weaponModelFamily(kind)] || buildShooter)())));', 'base weapon reference silhouettes and per-weapon models');
     code = replaceOnce(code, 'export function animateWeapon(w, st) {', 'export function animateWeapon(w, st) {\n  const pose = w.def.parts?.canopy ? { ...st, near: true } : st;\n  animateNativeWeapon(w, pose);\n  if (w.def.animate && pose.near !== false) w.def.animate(w, pose);\n}\nfunction animateNativeWeapon(w, st) {', 'per-weapon part animation after the native family channels');

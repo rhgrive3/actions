@@ -23,8 +23,24 @@ function sync(n,s,refresh=false){
  if(refresh||s.rows!==n.out.length){s.rows=n.out.length;s.bytes=n.out.length?bytes(n.out)-1:0;}
  return s.rows<=OUTBOUND_LIMITS.rows&&s.bytes<=OUTBOUND_LIMITS.bytes;
 }
+// A confirmed live match is closed to JOINs. Its authenticated membership may
+// therefore prove that no other endpoint can consume these combat-only rows.
+function soloOwner(n,G){
+ const session=n.s,members=session?._members;
+ return !n._disposed&&n.isHost&&session?.state==='match'&&session.match===n&&
+   session.myId===n.myId&&session.hostId===n.myId&&G?.netm===n&&G?.match===n.match&&
+   members?.size===1&&members.has(n.myId);
+}
+export function discardSoloTick(n,G){
+ const s=state(n);
+ if(s.failed||!soloOwner(n,G))return false;
+ s.discardedSoloRows=(s.discardedSoloRows||0)+n.out.length;
+ n.out.length=0;s.rows=s.bytes=0;s.window=256;s.backlogged=false;
+ return true;
+}
 export function queueOutboundEvent(n,event,G){
  const s=state(n);if(s.failed)return event;
+ if(soloOwner(n,G)){s.discardedSoloRows=(s.discardedSoloRows||0)+1;return event;}
  // Count is bounded immediately. Exact bytes, including later producer metadata,
  // are measured at each send boundary; retained backlog also accounts additions.
  if(n.out.length>=OUTBOUND_LIMITS.rows){abort(n,s,'Outbound event backlog exceeded',G);return event;}

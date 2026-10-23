@@ -9,7 +9,11 @@ const states = new WeakMap(), sampleCaches = new WeakMap(), disposed = new WeakS
 const stowedWeapons=new WeakMap();
 function restoreMainWeapon(ch){
   const saved=stowedWeapons.get(ch);
-  if(saved){for(const [pivot,visible] of saved)pivot.visible=visible;stowedWeapons.delete(ch);}
+  if(saved){
+    if(saved.pivot0)saved.pivot0.visible=saved.visible0;
+    if(saved.pivot1)saved.pivot1.visible=saved.visible1;
+    saved.pivot0=saved.pivot1=null;
+  }
 }
 const RELEASE_AGE = .10, NATIVE_END = .62, RECOVERY = NATIVE_END - RELEASE_AGE;
 const enabled = ch => !!ch && ch.s3BombMotionEnabled !== false && !registry(ch)?.disposed?.has(ch);
@@ -197,9 +201,11 @@ export function installBombMotion({ Character, WeaponRunner, CHARACTER_TIMERS: t
     restoreMainWeapon(this);
     const result=updateCharacter.apply(this,args),value=state(this);
     if(enabled(this)&&this.kidForm&&(this.bombHeld||value.throwing)&&this.weapon?.pivot){
-      const pivots=[this.weapon.pivot,this.weapon.left?.pivot].filter(Boolean);
-      stowedWeapons.set(this,pivots.map(p=>[p,p.visible]));
-      for(const p of pivots)p.visible=false;
+      let saved=stowedWeapons.get(this);
+      if(!saved)stowedWeapons.set(this,saved={pivot0:null,pivot1:null,visible0:false,visible1:false});
+      const pivot0=this.weapon.pivot,pivot1=this.weapon.left?.pivot;
+      saved.pivot0=pivot0;saved.visible0=pivot0.visible;saved.pivot1=pivot1||null;saved.visible1=pivot1?.visible;
+      pivot0.visible=false;if(pivot1)pivot1.visible=false;
     }
     return result;
   };

@@ -83,8 +83,6 @@ export function signedBiasSample(u, bias = .5) {
 export function spreadWeaponRound(system, dir, a, w, spread) {
   const horizontal = spread ?? (a.grounded ? w.spreadGround : w.spreadAir);
   const bias = a.weaponRunner?.s3ShotBias;
-  const radiusSample = u => Number.isFinite(bias?.horizontal)
-    ? biasQuantile(u, bias.horizontal) : Math.sqrt(u);
   // S3 source-backed: Shooter, Blaster and Dualies have horizontal (yaw)
   // deviation only. Splatlings uniquely carry independent PitchDegSwerve.
   // Sources: https://note.com/kanamoji_1027/n/n20cb3c3fb251 and
@@ -93,7 +91,8 @@ export function spreadWeaponRound(system, dir, a, w, spread) {
   // the shot seed, network replay and later paint use this gameplay RNG stream.
   if (w.kind === 'dualies' || w.kind === 'shooter' || w.kind === 'blaster') {
     if (horizontal <= 0) return dir;
-    const magnitude = horizontal * DEG * radiusSample(Math.random());
+    const u=Math.random(),radius=Number.isFinite(bias?.horizontal)?biasQuantile(u,bias.horizontal):Math.sqrt(u);
+    const magnitude = horizontal * DEG * radius;
     const side = Math.random() < .5 ? -1 : 1;
     const yaw = magnitude * side, c = Math.cos(yaw), s = Math.sin(yaw);
     // Rotate around world up: preserve the vertical aim component exactly.
@@ -114,7 +113,8 @@ export function spreadWeaponRound(system, dir, a, w, spread) {
   const pitch = Math.atan2(dir.y, Math.hypot(dir.x, dir.z)) + pitchOffset;
   // Horizontal aim is rotated around world Y; independent pitch is then added
   // to the original aim elevation. This retains speed and unit direction.
-  return dir.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)).normalize();
+  const sinYaw=Math.sin(yaw),cosPitch=Math.cos(pitch);
+  return dir.set(sinYaw * cosPitch, Math.sin(pitch), Math.cos(yaw) * cosPitch).normalize();
 }
 
 export function blasterBurstDamage(p, w, distance, distanceDamage) {
@@ -155,6 +155,7 @@ export function appendRollerNearUnit(system, a, w) {
   system._push(p);
 }
 
+const footPaintFrames=new WeakMap();
 export function paintRollerReleaseFootprint(system, a, w, { G, PLAYER, Hit, WALKABLE }) {
   const mode = a?.weaponRunner?.s3FlickVertical ? 'vertical' : 'horizontal';
   const shape = w?.releaseFootPaint?.[mode];
@@ -163,7 +164,12 @@ export function paintRollerReleaseFootprint(system, a, w, { G, PLAYER, Hit, WALK
   const rightX = Math.cos(a.yaw), rightZ = -Math.sin(a.yaw);
   const x = a.pos.x + rightX * shape.offset.x + forwardX * shape.offset.z;
   const z = a.pos.z + rightZ * shape.offset.x + forwardZ * shape.offset.z;
-  const ground = new Hit();
+  let lease=footPaintFrames.get(system);
+  if(!lease)footPaintFrames.set(system,lease={depth:0,frames:[]});
+  const index=lease.depth++;
+  const ground=lease.frames[index] ||= new Hit();
+  ground.hit=false;ground.dist=0;ground.normal.set(0,0,0);ground.point.set(0,0,0);ground.block=-1;ground.face=-1;ground.u=ground.v=0;ground.y=undefined;
+  try {
   // SplashNearest's downward offset and MaxHeight bound the real ground query;
   // this lets an airborne vertical swing paint only when walkable ground is in range.
   G.physics.groundProbe(x, a.pos.y, z, shape.maxHeight, Math.abs(shape.offset.y), PLAYER.footRadius, ground, false);
@@ -177,6 +183,7 @@ export function paintRollerReleaseFootprint(system, a, w, { G, PLAYER, Hit, WALK
     footprint: mainInkFootprint(w), stretch: heading, stretchAmt: 0, claimOwner: a });
   if (area > 0) a.addTurf?.(area);
   return area;
+  } finally {ground.__level=null;lease.depth--;}
 }
 
 export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYER, G, THREE, Hit }) {

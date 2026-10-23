@@ -3,6 +3,7 @@ import {dedupeVersionedVolumeAssets} from './lib/inkwave-volume-packaging.mjs';
 import {compactInstalledAudioManifest} from './lib/inkwave-audio-manifest.mjs';
 import { NATIVE_ROOT, nativeStageIdentity,NATIVE_RUNTIME_EXTERNALS, prepareNativeStageBuild, copyLocalNativeAssets } from './lib/inkwave-native-stages.mjs';
 import { adaptBuildSource } from './inkwave-source-composition.mjs';
+import { emitLightmapIndex } from './lib/inkwave-lightmap-index.mjs';
 // Build the INKWAVE GitHub Pages site with the independent gameplay patches applied to the output tree.
 // Keep inkwave-public/ unchanged, then minify every JS and CSS file
 // (esbuild, per file — the ES-module layout, import.meta.url asset URLs and the import map stay exactly as they are)
@@ -91,7 +92,9 @@ const compactEsm = (code, file) => {
 
 const dependencySpecs = new Map(), composedOwners = new Map();
 function composeSource(rel, source) {
-  const code=adaptBuildSource(rel,source), specs=[];
+  let code=adaptBuildSource(rel,source);
+  if (rel === 'src/world/lightmap-assets.js') code = emitLightmapIndex(code, SRC);
+  const specs=[];
   if (/\.m?js$/.test(rel)) {
     for(const m of code.matchAll(/(?:^|[;\n}])\s*(?:import|export)\s+(?:[\w*{}\s,$]+\s+from\s+)?['"]([^'"]+)['"]/g)) specs.push(m[1]);
     for(const m of code.matchAll(/(?:loadModule|import)\(\s*['"]([^'"]+\.js)['"]/g)) specs.push(m[1]);
@@ -666,7 +669,7 @@ for (const [file, hash] of Object.entries(identity.build.range)) identity.files[
 for (const [file, hash] of Object.entries(identity.build.loadingCache.source)) identity.files['loading-cache/' + file] = hash;
 // Direct script helpers also control composition, packaging and worker output.
 // Include them in the same input hash and committed-source checks as overlays.
-for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-module-imports.mjs', 'lib/inkwave-reviewed-audio-orphan.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-source-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-lightmap.mjs', 'lib/inkwave-audio-manifest.mjs', 'lib/inkwave-volume-packaging.mjs', 'lib/inkwave-account-bundle.mjs']) {
+for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-module-imports.mjs', 'lib/inkwave-reviewed-audio-orphan.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-source-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-lightmap.mjs', 'lib/inkwave-lightmap-index.mjs', 'lib/inkwave-audio-manifest.mjs', 'lib/inkwave-volume-packaging.mjs', 'lib/inkwave-account-bundle.mjs']) {
   identity.files['build-script/' + file] = sha256(fs.readFileSync(new URL(file, import.meta.url)));
 }
 for (const [file, hash] of Object.entries(nativeSourceIdentity)) identity.files['native-stages/' + file] = hash;

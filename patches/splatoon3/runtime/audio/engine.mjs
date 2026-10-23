@@ -1,12 +1,13 @@
 import { audioLoadDeadline } from './load-deadline.mjs';
 import { WeaponSoundBank, AUDIO_RECIPES, MAIN_AUDIO_PREFIX, mainAudioSourceId } from './bank.mjs';
 import { RealS3SampleLoader } from './real-s3-loader.mjs';
-import { chargerRiseBuffer, playChargerRise } from './charger-charge-rise.mjs';
+import { chargerRiseBuffer, playChargerRise, disposeChargerRise } from './charger-charge-rise.mjs';
 import { blasterHitCuePitch } from './blaster-hit.mjs';
 import { borrowedRecordedMainId, isBorrowedRecordedMain } from './borrowed-recorded-mains.mjs';
 import { sourceEventRoute } from './extra-source-routes.mjs';
 
 const INSTALLED=Symbol.for('inkwave.weapon-audio.engine.v1');
+const RESOLVE_OCCLUSION=Symbol.for('inkwave.weapon-audio.resolve-occlusion');
 
 // Extends the existing mixer; its unlock, mute, compressor and spatial paths remain authoritative.
 export function installWeaponAudioEngine(Engine){
@@ -35,7 +36,7 @@ export function installWeaponAudioEngine(Engine){
     this._weaponBank?.dispose();this._weaponBank=new WeaponSoundBank(this.ctx,{realOnly:true,audibleShotFallback:true});
     this._realS3Loader=new RealS3SampleLoader(this._weaponBank);
   }return this._weaponBank;};
-  p.resolveWeaponSound=function(name){return this.weaponBank()?.resolve(name)||null;};
+  p.resolveWeaponSound=function(name){if(typeof name!=='string'||!name.startsWith(MAIN_AUDIO_PREFIX))return null;return this.weaponBank()?.resolve(name)||null;};
   p.loadAuthorizedWeaponAudio=async function(manifest,options={}){if(!this.ctx)this.init();if(!this.ctx)throw new Error("Web Audio context not initialized; unlock with a user gesture first");return this.weaponBank().authorized.load(manifest,options);};
   p.prepareWeapon=function(id,{urgent=true}={}){
     const requested=mainAudioSourceId(id),borrowed=isBorrowedRecordedMain(requested);
@@ -177,8 +178,9 @@ export function installWeaponAudioEngine(Engine){
       // only recorded fire (notably Spinners at full charge). Prefer the real
       // regular shot over a non-existent specialized synthesized sample.
       if(mainAttack&&event!=='fire'&&bank.has(id,'fire')){
-        if(bank.authorized.byEvent.has(`${id}:fire`))
-          return this.play(bank.name(id,'fire'),{...options,priority:options.priority??(options.actor?.isLocal?88:64)});
+        if(bank.authorized.byEvent.has(`${id}:fire`)){
+          options[RESOLVE_OCCLUSION]?.(options);
+          return this.play(bank.name(id,'fire'),{...options,priority:options.priority??(options.actor?.isLocal?88:64)});}
         if(loader?.declares(id,'fire')===true)loader?.ensure(id,'fire');
       }
       const declared=loader?.declares(id,event);
@@ -201,6 +203,7 @@ export function installWeaponAudioEngine(Engine){
       }
       this._realAudioFallbackShots=(this._realAudioFallbackShots||0)+1;
     }
+    options[RESOLVE_OCCLUSION]?.(options);
     return this.play(name,{...options,priority:options.priority??(options.actor?.isLocal?88:64)});
   };
   p.loopWeapon=function(id,event,options={}){
@@ -247,10 +250,10 @@ export function installWeaponAudioEngine(Engine){
   const stats=p.stats;p.stats=function(){const result=stats.call(this);for(const [key,list] of this.byName){if(!list.some(v=>!v.v.dead&&!v.stolen))this.byName.delete(key);}return {...result,weaponBank:this._weaponBank?.stats()||null,
     realS3Loader:this._realS3Loader?.stats()||null,realAudioSuppressed:this._realAudioSuppressed||0,authoredFallbackShots:this._realAudioFallbackShots||0,baseLatencySeconds:this.ctx?.baseLatency??null,outputLatencySeconds:this.ctx?.outputLatency??null,
     latencyMeaning:'reported Web Audio components; not measured end-to-end input latency'};};
-  p.disposeWeaponAudio=function(){this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmPreparedContext=null;this._warmPreparedBank=null;this._warmWeapons?.clear();};
+  p.disposeWeaponAudio=function(){disposeChargerRise(this.ctx);this.stopAll(.02);this._weaponBank?.dispose();this._weaponBank=null;this._realS3Loader=null;this._warmPreparedContext=null;this._warmPreparedBank=null;this._warmWeapons?.clear();};
   p.prewarmChargerChargeRise=function(){
     if(!this.ctx)return false;
-    chargerRiseBuffer(this.ctx).catch(()=>{});
+    chargerRiseBuffer(this.ctx,{retry:true}).catch(()=>{});
     return true;
   };
   p.playChargerChargeRise=function(options){

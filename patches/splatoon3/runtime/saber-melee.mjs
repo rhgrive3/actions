@@ -35,7 +35,10 @@ export function saberSlashShape(record,key,ordinal=0){
 // turn into a capsule: that would wrongly extend its flat ends by its radius.
 // `out` receives a point on the slash shape for contact-specific terrain LOS.
 export function saberSlashContact(shape,origin,yaw,feet,radius,height,out){
-  const cy=Math.cos(yaw),sy=Math.sin(yaw),dx=feet.x-origin.x,dz=feet.z-origin.z;
+  return saberSlashContactBasis(shape,origin,Math.cos(yaw),Math.sin(yaw),feet,radius,height,out);
+}
+export function saberSlashContactBasis(shape,origin,cy,sy,feet,radius,height,out){
+  const dx=feet.x-origin.x,dz=feet.z-origin.z;
   const x=dx*cy-dz*sy,z=dx*sy+dz*cy;
   const lo=feet.y-origin.y+radius,hi=feet.y-origin.y+Math.max(radius,height-radius);
   const h=shape.half,c=shape.center;
@@ -64,9 +67,10 @@ export function saberSlashContact(shape,origin,yaw,feet,radius,height,out){
   return true;
 }
 
-export function placeSaberSlash(actor,shape,out){
+export function placeSaberSlash(actor,shape,out,basis){
   const yaw=Math.atan2(actor.aimDir.x,actor.aimDir.z),cy=Math.cos(yaw),sy=Math.sin(yaw),o=shape.offset;
   out.set(actor.pos.x+v(o,'X')*cy+v(o,'Z')*sy,actor.pos.y+v(o,'Y'),actor.pos.z-v(o,'X')*sy+v(o,'Z')*cy);
+  if(basis){basis.cy=cy;basis.sy=sy;}
   return yaw;
 }
 
@@ -79,7 +83,10 @@ function clipWallAxis(p,d,min,max,range){
   range[0]=Math.max(range[0],a);range[1]=Math.min(range[1],b);return range[0]<=range[1]+EPS;
 }
 export function saberSlashWallContact(shape,origin,yaw,pos,wallYaw,width,height,out){
-  const cy=Math.cos(yaw),sy=Math.sin(yaw),wx=Math.cos(wallYaw)*width,wz=-Math.sin(wallYaw)*width;
+  return saberSlashWallContactBasis(shape,origin,Math.cos(yaw),Math.sin(yaw),pos,wallYaw,width,height,out);
+}
+export function saberSlashWallContactBasis(shape,origin,cy,sy,pos,wallYaw,width,height,out){
+  const wx=Math.cos(wallYaw)*width,wz=-Math.sin(wallYaw)*width;
   const dx=pos.x-wx/2-origin.x,dz=pos.z-wz/2-origin.z;
   const x=dx*cy-dz*sy,z=dx*sy+dz*cy,vx=wx*cy-wz*sy,vz=wx*sy+wz*cy;
   const y0=pos.y-origin.y,y1=y0+height,c=shape.center,h=shape.half;

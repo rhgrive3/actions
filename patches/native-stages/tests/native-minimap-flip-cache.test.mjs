@@ -20,12 +20,12 @@ function makeMap(level,w,h){
  for(const [name,ctx]of [['canvas','ctx'],['base','bctx'],['inkC','ictx'],['flashC','fctx']]){map[name]={width:w,height:h};map[ctx]={reset(){map.resets++},createImageData(w,h){return{width:w,height:h,data:new Uint8ClampedArray(w*h*4)}}};}
  return map;
 }
-const snapshot=map=>Object.fromEntries(['hgt','topBlock','nrm','pixCell','pixFx','pixFy','pixSx','pixSy','owner'].map(key=>[key,Array.from(map[key])]));
+const snapshot=map=>Object.fromEntries(['hgt','topBlock','nrm','pixCell','pixFx','pixFy','pixSx','pixSy','owner'].map(key=>[key,map[key] ? Array.from(map[key]) : null]));
 function pair(withNav,w,h){const L=makeLevel(withNav),cached=makeMap(L,w,h),control=makeMap(L,w,h);build(cached,true);build(control,false);return{L,cached,control};}
 for(const withNav of [false,true])for(const [w,h]of [[4,4],[5,3],[1,1]])test(`team flips match fresh support bytes with signed zeros, holes and slopes: nav=${withNav} ${w}x${h}`,()=>{
  const {L,cached,control}=pair(withNav,w,h),world=L.triangleWorld;
  for(let i=0;i<6;i++){
-  cached.flip=control.flip=!cached.flip;for(const m of [cached,control]){m.owner.fill(9);m.pixFx.fill(9);m.inkImg.data.fill(99);m.flashImg.data.fill(77);}
+  cached.flip=control.flip=!cached.flip;for(const m of [cached,control]){m.owner.fill(9);assert.equal(m.pixFx,null);m.inkImg.data.fill(99);m.flashImg.data.fill(77);}
   const before=world.queryCount;build(cached,true);assert.equal(world.queryCount,before,'flip-only cache must issue zero BVH queries');build(control,false);
   assert.deepEqual(snapshot(cached),snapshot(control));assert.deepEqual(cached.inkImg.data,control.inkImg.data);assert.deepEqual(cached.flashImg.data,control.flashImg.data);assert.equal(cached.resets,control.resets);assert.equal(cached.draws,control.draws);
  }
@@ -37,4 +37,8 @@ test('changed nav values/reachability, scale, mask owner and explicit source rev
 });
 test('custom projection caller keeps complete support rebuilds',()=>{
  const {L,cached}=pair(false,5,4);cached._worldX=()=>0;const before=L.triangleWorld.queryCount;cached.flip=true;build(cached,false);assert(L.triangleWorld.queryCount>before);assert.equal(cached._nativeSupportCache,null);
+});
+
+test('source faces share one immutable neutral color while dynamic/object colors keep independent owners',()=>{
+ const a=makeLevel(false),b=makeLevel(false);assert.equal(a.faces[0].color,a.faces[1].color);assert.equal(a.faces[0].color,b.faces[0].color);assert(Object.isFrozen(a.faces[0].color));assert.equal(a.blocks[0].color,a.faces[0].color);assert.notEqual(a.blocks[a.faces.length].color,a.faces[0].color);assert.notEqual(a.blocks[a.faces.length].color,a.blocks[a.faces.length+1].color);assert.equal(a.faces[0].color.getHexString(),'bfc3c6');
 });

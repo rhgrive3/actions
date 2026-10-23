@@ -50,6 +50,7 @@ export class HumanRetarget {
    this.addAccessory('ear'+side,'ear_'+side);
   }
   const head=ix.head;
+  const hairSourceLengths=new Map();
   // Each authored target hair strand retains its shape. Only the source head-relative deformation is transferred.
   for(let strand=0;strand<character.hairMeta.length;strand++){
    const side=character.rest[`hair${strand}_0`].x>=0?'L':'R';
@@ -58,7 +59,7 @@ export class HumanRetarget {
     let source=`Hair${k+1}_${side}`;
     if(ix[source]===undefined && k===0)source='Hair1';
     if(ix[source]!==undefined){
-     let sourceLength=0;for(let j=1;j<4;j++){const a=ix[`Hair${j}_${side}`],b=ix[`Hair${j+1}_${side}`];if(a!==undefined&&b!==undefined)sourceLength+=R.wp[a].distanceTo(R.wp[b]);}
+     let sourceLength=hairSourceLengths.get(side);if(sourceLength===undefined){sourceLength=0;for(let j=1;j<4;j++){const a=ix[`Hair${j}_${side}`],b=ix[`Hair${j+1}_${side}`];if(a!==undefined&&b!==undefined)sourceLength+=R.wp[a].distanceTo(R.wp[b]);}hairSourceLengths.set(side,sourceLength);}
      const meta=character.hairMeta[strand],lengthRatio=sourceLength>1e-6?clamp(meta.len/(sourceLength*this.scale),0,1):1;
      this.addAccessory(target,source,{hair:true,head,hairGain:lengthRatio/Math.sqrt(Math.max(.25,meta.K))});
     }
@@ -220,7 +221,8 @@ export class HumanRetarget {
   f.limb.end.getWorldPosition(this.ccdTarget);
   this.ccdTarget.y+=-clearance+0.001;
   for(let iteration=0;iteration<8;iteration++){
-   for(const joint of [f.limb.lo,f.limb.up]){
+   for(let pass=0;pass<2;pass++){
+    const joint=pass===0?f.limb.lo:f.limb.up;
     joint.getWorldPosition(this.ccdA);f.limb.end.getWorldPosition(this.ccdB);
     this.ccdB.sub(this.ccdA);this.ccdC.subVectors(this.ccdTarget,this.ccdA);
     if(this.ccdB.lengthSq()<1e-10||this.ccdC.lengthSq()<1e-10)continue;
@@ -282,13 +284,16 @@ export class HumanRetarget {
   if(!grounded||!enabled){this.reset();if(grounded&&freeProtect)this.protectTurningFeet();return;}
   c.root.updateWorldMatrix(true,true);
   const inv=this.groundInverse.copy(c.kid.matrixWorld).invert(),invRot=c.kid.getWorldQuaternion(this.groundInvQ).invert();
+  const walkMix=clamp((3.5-speed)/1,0,1),walkEase=walkMix*walkMix*(3-2*walkMix);
+  // Lazy bases preserve the per-foot locomotion gate, including callbacks.
+  let walkBase,runBase,soleFactor,decay26,decay32,run22,run50;
   for(let side=0;side<2;side++){
    const f=this.contacts[side],{bone,limb}=f,p=bone.getWorldPosition(f.ankle),q=bone.getWorldQuaternion(f.worldQ);
    // Filter orientation in actor space, so root turning is not delayed.
    // Apply BEFORE measuring heel/ball offsets or locking an anchor.
    this.q.copy(invRot).multiply(q);
    if(!f.orientationReady){f.orientation.copy(this.q);f.orientationReady=true;}
-   else f.orientation.slerp(this.q,-Math.expm1(-HOST_RETARGET.soleResponse*dt));
+   else f.orientation.slerp(this.q,soleFactor??=-Math.expm1(-HOST_RETARGET.soleResponse*dt));
    q.copy(this.groundInvQ).invert().multiply(f.orientation);
    c._ground(p.x,p.z,f.normal);if(f.normal.lengthSq()<.5)f.normal.copy(UP);else f.normal.normalize();
    this.slopeQ.setFromUnitVectors(UP,f.normal);q.premultiply(this.slopeQ);
@@ -391,17 +396,16 @@ export class HumanRetarget {
    // Direction-dependent host swing clearance keeps the lateral shoe from
    // scraping the floor without lifting straight-ahead steps excessively.
    // This is a host retarget correction, not a purported source-game value.
-   const walkClearance=this.locomotion?Math.min(.052,.008+speed*.013+.003*Math.abs(lateral))*airWeight:0;
-   const runClearance=this.locomotion?Math.min(.048,.004+speed*.007)*airWeight:0;
+   const walkClearance=this.locomotion?(walkBase??=Math.min(.052,.008+speed*.013+.003*Math.abs(lateral)))*airWeight:0;
+   const runClearance=this.locomotion?(runBase??=Math.min(.048,.004+speed*.007))*airWeight:0;
    const h=Math.max(0,dt),omega=walkClearance<f.airLiftWalk?32:26;
-   const offset=f.airLiftWalk-walkClearance,impulse=f.airLiftVelocity+omega*offset,decay=Math.exp(-omega*h);
+   const offset=f.airLiftWalk-walkClearance,impulse=f.airLiftVelocity+omega*offset,decay=omega===32?(decay32??=Math.exp(-omega*h)):(decay26??=Math.exp(-omega*h));
    f.airLiftWalk=walkClearance+(offset+impulse*h)*decay;
    f.airLiftVelocity=(f.airLiftVelocity-omega*impulse*h)*decay;
    if(f.airLiftWalk<0){f.airLiftWalk=0;f.airLiftVelocity=Math.max(0,f.airLiftVelocity);}
    if(f.airLiftWalk>.052){f.airLiftWalk=.052;f.airLiftVelocity=Math.min(0,f.airLiftVelocity);}
    const runResponse=runClearance<f.airLiftRun?50:22;
-   f.airLiftRun+=(runClearance-f.airLiftRun)*(-Math.expm1(-runResponse*h));
-   const walkMix=clamp((3.5-speed)/1,0,1),walkEase=walkMix*walkMix*(3-2*walkMix);
+   f.airLiftRun+=(runClearance-f.airLiftRun)*(runResponse===50?(run50??=-Math.expm1(-runResponse*h)):(run22??=-Math.expm1(-runResponse*h)));
    f.airLift=f.airLiftWalk*walkEase+f.airLiftRun*(1-walkEase);
    f.support.copy(f.filter.position).add(f.offset);
    const minimumSole=c._ground(f.support.x,f.support.z,this.v)+f.airLift;

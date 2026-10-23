@@ -42,8 +42,8 @@ export function registerMarinaDock(D, H) {
   // ------------------------------------------------------------------------------------------ geometry helpers
   // tiny builder (same contract as props.js GB: triangles auto-orient to the supplied outward normals)
   class GB {
-    constructor() { this.p = []; this.n = []; this.uv = []; this.c = []; this.idx = []; }
-    v(x, y, z, nx, ny, nz, r = 1, g = r, b = r) { this.p.push(x, y, z); this.n.push(nx, ny, nz); this.uv.push(0, 0); this.c.push(r, g, b); return this.p.length / 3 - 1; }
+    constructor() { this.p = []; this.n = []; this.c = []; this.idx = []; }
+    v(x, y, z, nx, ny, nz, r = 1, g = r, b = r) { this.p.push(x, y, z); this.n.push(nx, ny, nz); this.c.push(r, g, b); return this.p.length / 3 - 1; }
     tri(a, b, c) {
       const P = this.p, N = this.n;
       const ax = P[a * 3], ay = P[a * 3 + 1], az = P[a * 3 + 2];
@@ -59,7 +59,6 @@ export function registerMarinaDock(D, H) {
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3));
       g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3));
-      g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2));
       g.setAttribute('color', new THREE.Float32BufferAttribute(this.c, 3));
       g.setIndex(this.idx);
       return g;
@@ -1862,4 +1861,5 @@ export function registerMarinaDock(D, H) {
     const def = D[t], build = def.build;
     def.build = function (B, o) { const prev = curB; curB = B; try { return build.call(this, B, o); } finally { curB = prev; } };
   }
+  return () => { for (const g of new Set([...TPL.values()].map(value => value?.isBufferGeometry ? value : value?.geo))) g?.dispose(); TPL.clear(); };
 }

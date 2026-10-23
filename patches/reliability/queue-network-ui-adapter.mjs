@@ -282,17 +282,17 @@ const patches = {
     ],
     [
       "    this.knob.style.transform = `translate3d(${dx.toFixed(1)}px,${dy.toFixed(1)}px,0)`;",
-      "    const knobTransform = `translate3d(${dx.toFixed(1)}px,${dy.toFixed(1)}px,0)`;\n    if (this.knob.style.transform !== knobTransform) this.knob.style.transform = knobTransform;",
+      "    const knobTransform = `translate3d(${dx.toFixed(1)}px,${dy.toFixed(1)}px,0)`;\n    const knobStyle = this.knob.style;\n    if (this._knobStyle !== knobStyle || this._knobTransform !== knobTransform || knobStyle.transform !== this._knobActual) {\n      knobStyle.transform = knobTransform; this._knobStyle = knobStyle; this._knobTransform = knobTransform; this._knobActual = knobStyle.transform;\n    }",
       1
     ],
     [
       "      this.dirEl.style.opacity = String(Math.min(1, mag * 1.4));",
-      "      const opacity = String(Math.min(1, mag * 1.4));\n      if (this.dirEl.style.opacity !== opacity) this.dirEl.style.opacity = opacity;",
+      "      const opacity = String(Math.min(1, mag * 1.4));\n      const directionStyle = this.dirEl.style;\n      if (this._directionStyle !== directionStyle || this._directionOpacity !== opacity || directionStyle.opacity !== this._directionOpacityActual) {\n        directionStyle.opacity = opacity; this._directionStyle = directionStyle; this._directionOpacity = opacity; this._directionOpacityActual = directionStyle.opacity;\n      }",
       1
     ],
     [
       "      this.dirEl.style.transform = `rotate(${Math.atan2(dy, dx).toFixed(3)}rad)`;",
-      "      const direction = `rotate(${Math.atan2(dy, dx).toFixed(3)}rad)`;\n      if (this.dirEl.style.transform !== direction) this.dirEl.style.transform = direction;",
+      "      const direction = `rotate(${Math.atan2(dy, dx).toFixed(3)}rad)`;\n      if (this._directionTransformStyle !== this.dirEl.style || this._directionTransform !== direction || this.dirEl.style.transform !== this._directionActual) {\n        this.dirEl.style.transform = direction; this._directionTransformStyle = this.dirEl.style; this._directionTransform = direction; this._directionActual = this.dirEl.style.transform;\n      }",
       1
     ],
     [
@@ -541,7 +541,7 @@ const patches = {
   "src/ui/menus.js": [
     [
       "        fill.style.transform = `translateX(${(-100 + p * 100).toFixed(2)}%)`;",
-      "        const transform = `translateX(${(-100 + p * 100).toFixed(2)}%)`;\n        if (fill.style.transform !== transform) fill.style.transform = transform;",
+      "        const transform = `translateX(${(-100 + p * 100).toFixed(2)}%)`;\n        if (fill._iwMeterTransform !== transform || fill.style.transform !== fill._iwMeterActual) {\n          fill.style.transform = transform; fill._iwMeterTransform = transform; fill._iwMeterActual = fill.style.transform;\n        }",
       1
     ],
     [

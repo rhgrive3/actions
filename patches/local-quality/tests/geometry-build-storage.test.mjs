@@ -51,7 +51,7 @@ test('composed legacy layout × filter × paint/light atlas produces byte-identi
    for(const kind of ['solid','grate','all','none']){
     const calls=[[],[]],build=(level,index)=>{const start=performance.now();const geo=level.buildGeometry(2048,block=>{calls[index].push(block.id);return kind==='all'||kind==='solid'&&!block.grate||kind==='grate'&&block.grate;});return {geo,ms:performance.now()-start};};
     const x=build(a,0),y=build(b,1);
-    for(const [geo,T] of [[x.geo,old.THREE],[y.geo,now.THREE]]){for(const attr of Object.values(geo.attributes))assert(attr instanceof T.Float32BufferAttribute);const Index=geo.index.array.constructor.name==='Uint32Array'?T.Uint32BufferAttribute:T.Uint16BufferAttribute;assert(geo.index instanceof Index);}
+    for(const [geo,T] of [[x.geo,old.THREE],[y.geo,now.THREE]]){for(const [name,attr] of Object.entries(geo.attributes))assert(attr instanceof (name === 'faceFlags' ? T.Int8BufferAttribute : T.Float32BufferAttribute));const Index=geo.index.array.constructor.name==='Uint32Array'?T.Uint32BufferAttribute:T.Uint16BufferAttribute;assert(geo.index instanceof Index);}
     sameGeometry(x.geo,y.geo,id+'/'+kind+'/'+atlas);assert.deepEqual(calls[0],calls[1]);assert.equal(new Set(calls[1]).size,calls[1].length,'filter called once per eligible block');assert.equal(a.renderTris,b.renderTris);
     timings.push({id,kind,atlas,vertices:x.geo.attributes.position.count,index:x.geo.index.count,oldMs:x.ms,newMs:y.ms});x.geo.dispose();y.geo.dispose();
    }

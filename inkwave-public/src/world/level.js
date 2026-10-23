@@ -196,6 +196,20 @@ export class Level {
     }return false;
   }
 
+  // Construction-only union for NavGraph's fixed clearance probes. Custom
+  // Level/query implementations keep their original pointInside contract.
+  queryClearanceBlocks(x, z, radius, out) {
+    if (this.constructor !== Level || this.pointInside !== Level.prototype.pointInside ||
+        this.pointInBlock !== Level.prototype.pointInBlock || this.queryBlocks !== Level.prototype.queryBlocks ||
+        this._hxi !== Level.prototype._hxi || this._hzi !== Level.prototype._hzi ||
+        !Number.isFinite(x) || !Number.isFinite(z) || !Number.isFinite(radius) ||
+        Math.abs(x) > 1e9 || Math.abs(z) > 1e9 || Math.abs(radius) > 1e6) return null;
+    const extent = Math.abs(radius) + 0.010001;
+    const x0 = this._hxi(x - extent), x1 = this._hxi(x + extent), z0 = this._hzi(z - extent), z1 = this._hzi(z + extent);
+    if (x0 === x1 && z0 === z1) return this.hash[z0 * this.hw + x0];
+    return this.queryBlocks(x - extent, z - extent, x + extent, z + extent, out);
+  }
+
   pointInside(p, pad = 0, exclude = -1) {
     const ids = this.queryBlocks(p.x - 0.01, p.z - 0.01, p.x + 0.01, p.z + 0.01, this._qtmp || (this._qtmp = []));
     for (const id of ids) {
@@ -260,12 +274,36 @@ export class Level {
   // A face is hidden when every sample point just outside it lies inside another solid block.
   _faceHidden(f) {
     const nu = Math.max(2, Math.ceil(f.su / 1.25)), nv = Math.max(2, Math.ceil(f.sv / 1.25));
+    const canonical = this.constructor === Level && this.pointInside === Level.prototype.pointInside &&
+      this.pointInBlock === Level.prototype.pointInBlock && this.queryBlocks === Level.prototype.queryBlocks &&
+      this._hxi === Level.prototype._hxi && this._hzi === Level.prototype._hzi;
+    // Exact cell rectangles, bounded to one face; no candidate alias escapes.
+    let candidates = null;
     for (let j = 0; j <= nv; j++) {
       for (let i = 0; i <= nu; i++) {
         const uu = Math.min(f.su - 0.05, Math.max(0.05, (i / nu) * f.su));
         const vv = Math.min(f.sv - 0.05, Math.max(0.05, (j / nv) * f.sv));
         _v.copy(f.origin).addScaledVector(f.u, uu).addScaledVector(f.v, vv).addScaledVector(f.n, 0.03);
-        if (!this.pointInside(_v, 0, f.block)) return false;
+        if (!canonical || !Number.isFinite(_v.x) || !Number.isFinite(_v.z)) {
+          if (!this.pointInside(_v, 0, f.block)) return false;
+          continue;
+        }
+        const x0 = this._hxi(_v.x - 0.01), x1 = this._hxi(_v.x + 0.01);
+        const z0 = this._hzi(_v.z - 0.01), z1 = this._hzi(_v.z + 0.01);
+        let ids;
+        if (x0 === x1 && z0 === z1) ids = this.hash[z0 * this.hw + x0];
+        else {
+          const key = `${x0},${x1},${z0},${z1}`;
+          ids = candidates?.get(key);
+          if (!ids) {
+            ids = this.queryBlocks(_v.x - 0.01, _v.z - 0.01, _v.x + 0.01, _v.z + 0.01, []);
+            candidates ||= new Map();
+            if (candidates.size < 16) candidates.set(key, ids);
+          }
+        }
+        let inside = false;
+        for (const id of ids) if (id !== f.block && this.blocks[id].solid && this.pointInBlock(this.blocks[id], _v, 0)) { inside = true; break; }
+        if (!inside) return false;
       }
     }
     return true;
@@ -298,6 +336,7 @@ export class Level {
   // paint atlas (the 8-texel padding holds extrapolated ink), so ink wraps smoothly over the rounded edges.
   // Requires faces to have been laid out in the paint atlas (face.atlas = {x, y, ppm, pad}) — non-paintable faces render too.
   buildGeometry(atlasSize, filter = (b) => !b.grate) {
+    const FlagAttribute = this.faces.every((f) => Number.isInteger(f.mural) && f.mural >= -128 && f.mural <= 127) ? THREE.Int8BufferAttribute : THREE.Float32BufferAttribute;
     const B = { pos: [], nor: [], col: [], puv: [], luv: [], fuv: [], fdat: [], fflag: [], ftan: [], idx: [] };
     const LS = this.lightSize || 1;
     const lin = new THREE.Color();
@@ -330,7 +369,7 @@ export class Level {
       if (_c.dot(n) >= 0) B.idx.push(i0, i1, i2); else B.idx.push(i0, i2, i1);
     }
     for (const b of this.blocks) {
-      if ((!b.solid && !b.render) || !filter(b)) continue;
+      if (b.hidden || (!b.solid && !b.render) || !filter(b)) continue;
       const ax = b.axes, h = [b.half.x, b.half.y, b.half.z];
       const minH = Math.min(h[0], h[1], h[2]);
       // bevel scales with the block: chunky rounded edges on big structures, finer on crates/ramps/rails
@@ -428,7 +467,7 @@ export class Level {
     g.setAttribute('lightUv', new THREE.Float32BufferAttribute(B.luv, 2));
     g.setAttribute('faceUv', new THREE.Float32BufferAttribute(B.fuv, 2));
     g.setAttribute('faceData', new THREE.Float32BufferAttribute(B.fdat, 4));
-    g.setAttribute('faceFlags', new THREE.Float32BufferAttribute(B.fflag, 3));
+    g.setAttribute('faceFlags', new FlagAttribute(B.fflag, 3, false));
     g.setAttribute('faceTan', new THREE.Float32BufferAttribute(B.ftan, 3));
     g.setIndex(B.idx);
     g.computeBoundingSphere();

@@ -697,7 +697,8 @@ export class RankedWorld {
     const radius = 1.5 + 1.2 * pressure;
     this.rainmakerShield.visible = shield;
     this.rainmakerShield.scale.setScalar(radius / 1.45);
-    this.rainmakerShield.material.color.setHex(validTeam(barrier.team) ? this.teamInk[barrier.team] : 0xffdc5c);
+    const shieldColor = validTeam(barrier.team) ? this.teamInk[barrier.team] : 0xffdc5c;
+    if (this._shieldColor !== shieldColor) { this.rainmakerShield.material.color.setHex(shieldColor); this._shieldColor = shieldColor; }
     this.rainmakerShield.material.opacity = 0.12 + 0.14 * pressure;
     this.rainmakerCarrier.visible = !!carrier;
     if (carrier?.pos) this.rainmakerCarrier.position.set(carrier.pos.x, carrier.pos.y + 2.45, carrier.pos.z);
@@ -705,17 +706,22 @@ export class RankedWorld {
     const charge = rainmaker?.charge?.value || 0;
     this.rainmakerPresentation.update(carrier, charge);
     const checkpoints = rainmaker?.checkpoint?.passed;
-    this.rainmakerCore.material.color.setHex(0xffffff);
-    this.rainmaker.userData.checkpointsPassed = Array.isArray(checkpoints) ? checkpoints.slice() : [];
+    if (!this._rainmakerCoreWhite) { this.rainmakerCore.material.color.setHex(0xffffff); this._rainmakerCoreWhite = true; }
+    const shown = this.rainmaker.userData.checkpointsPassed;
+    let same = Array.isArray(shown) && shown.length === (Array.isArray(checkpoints) ? checkpoints.length : 0);
+    if (same && Array.isArray(checkpoints)) for (let i = 0; i < checkpoints.length; i++) {
+      if ((i in shown) !== (i in checkpoints) || !Object.is(shown[i], checkpoints[i])) { same = false; break; }
+    }
+    if (!same) this.rainmaker.userData.checkpointsPassed = Array.isArray(checkpoints) ? checkpoints.slice() : [];
     const opened = rainmaker?.checkpoint?.goalOpen || [];
     for (const marker of this.rainmakerMarkers?.checkpoints || []) {
       const passed = !!checkpoints?.[marker.team]?.[marker.index];
-      marker.ring.material.opacity = passed ? 0.28 : 0.9;
+      if (marker._passed !== passed) { marker.ring.material.opacity = passed ? 0.28 : 0.9; marker._passed = passed; }
       marker.group.userData.passed = passed;
     }
     for (const marker of this.rainmakerMarkers?.goals || []) {
       const isOpen = !!opened[marker.team];
-      marker.ring.material.opacity = isOpen ? 0.95 : 0.3;
+      if (marker._open !== isOpen) { marker.ring.material.opacity = isOpen ? 0.95 : 0.3; marker._open = isOpen; }
       marker.group.userData.open = isOpen;
     }
   }
@@ -729,7 +735,8 @@ export class RankedWorld {
       item.marker.position.set(goal[0], goal[1], goal[2]);
       const open = !!state.barrierOpen;
       item.barrier.update(state, dt);
-      item.hoop.material.color.setHex(open ? 0x8dffcf : this.teamInk[team]);
+      const color = open ? 0x8dffcf : this.teamInk[team];
+      if (item._hoopColor !== color) { item.hoop.material.color.setHex(color); item._hoopColor = color; }
       item.marker.userData.barrierOpen = open;
       item.marker.userData.openTimer = finite(state.openTimer) ? state.openTimer : 0;
       item.marker.userData.cooldown = finite(state.cooldown) ? state.cooldown : 0;
@@ -790,10 +797,18 @@ export class RankedWorld {
   _updateInventories(engine) {
     if (this.mode !== 'clams' || !this.smallClamResources) return;
     const inventories = engine?.rule?.state?.inventories || {};
-    const present = new Set();
-    for (const [id, inventory] of Object.entries(inventories)) {
+    const scratch = this._inventoryScratch || (this._inventoryScratch = { present: new Set(), actors: new Map(), busy: false });
+    const nested = scratch.busy, present = nested ? new Set() : scratch.present, actors = nested ? new Map() : scratch.actors;
+    if (!nested) scratch.busy = true;
+    try {
+    for (const actor of this.match?.actors || []) {
+      const key = idKey(actor?.nid ?? `${actor?.team}:${actor?.slot}`);
+      if (!actors.has(key)) actors.set(key, actor);
+    }
+    for (const id of Object.keys(inventories)) {
+      const inventory = inventories[id];
       if (!inventory || !(inventory.small > 0 || inventory.power)) continue;
-      const actor = this._findActor(id);
+      const actor = actors.get(id) || null;
       if (!actor?.pos) continue;
       present.add(id);
       let marker = this._inventoryMarkers.get(id);
@@ -821,6 +836,7 @@ export class RankedWorld {
 
     }
     for (const [id, marker] of this._inventoryMarkers) if (!present.has(id)) marker.visible = false;
+    } finally { present.clear(); actors.clear(); if (!nested) scratch.busy = false; }
   }
 
   _buildZoneIndex() {
@@ -851,9 +867,11 @@ export class RankedWorld {
   }
 
   zoneCoverage() {
-    const zones = this.stage?.zones || [], paint = this.paint, grid = paint?.grid, version = paint?.version;
+    const zones = this.stage?.zones || [], paint = this.paint, grid = paint?.grid;
+    const turfVersion = paint?._s3ObservedPaintVersion === paint?.version && finite(paint?._s3TurfVersion);
+    const version = turfVersion ? paint._s3TurfVersion : paint?.version;
     const cached = this._zoneCoverageCache;
-    if (grid && finite(version) && cached?.paint === paint && cached.grid === grid && cached.version === version
+    if (grid && finite(version) && cached?.paint === paint && cached.grid === grid && cached.version === version && cached.turfVersion === turfVersion
       && cached.cells === this._zoneCells && cached.zones === zones && cached.value.length === zones.length) return cached.value;
     const value = zones.map((_, index) => {
       const area = [0, 0, 0];
@@ -870,21 +888,24 @@ export class RankedWorld {
       // Production clear, stamped paint and owner replay all advance version.
       // A replaced grid/index invalidates even if its numeric version repeats.
       for (const pair of value) Object.freeze(pair); Object.freeze(value);
-      this._zoneCoverageCache = { paint, grid, version, cells: this._zoneCells, zones, value };
+      this._zoneCoverageCache = { paint, grid, version, turfVersion, cells: this._zoneCells, zones, value };
     }
     return value;
   }
 
   captureZone(index, team) {
     if (!validTeam(team) || typeof this.paint?.splat !== 'function') return 0;
-    let claimed = 0;
+    let claimed = 0, lastFace = null, radius = 0;
     for (const entry of this._zoneCells[index] || []) {
       const { face, cell, i, j } = entry;
       const center = floorCellCenter(face, i, j, this._zoneCapturePoint || (this._zoneCapturePoint = new this.THREE.Vector3()));
       // Use the native splat path (CPU grid, ink atlas, and online splat
       // recording) restricted to each live turf face. Each exposed cell gets a
       // centered stamp, so capture never reaches walls or a hidden floor.
-      const radius = Math.max(0.08, Math.min(0.42, Math.hypot(face.cu, face.cv) * 0.72));
+      if (face !== lastFace) {
+        radius = Math.max(0.08, Math.min(0.42, Math.hypot(face.cu, face.cv) * 0.72));
+        lastFace = face;
+      }
       claimed += this.paint.splat(center, radius, team, {
         seed: ((index + 1) * 0x9e3779b1 + (cell + 1) * 0x85ebca6b) >>> 0,
         kind: 'blast', instant: true, face: face.id,

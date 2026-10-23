@@ -93,10 +93,10 @@ export function rollerStickActive(a) {
 // #1122: authoritative lowered-drum contact. The 0.75 forward offset and
 // 0.4/1.4 drum dimensions are existing/pinned values above; vertical aim rotates
 // that offset in 3D instead of inventing an angle→height tuning coefficient.
-function segmentDistanceSq(p1, q1, p2, q2) {
-  const ux=q1.x-p1.x, uy=q1.y-p1.y, uz=q1.z-p1.z;
-  const vx=q2.x-p2.x, vy=q2.y-p2.y, vz=q2.z-p2.z;
-  const wx=p1.x-p2.x, wy=p1.y-p2.y, wz=p1.z-p2.z;
+function segmentDistanceSq(p1x,p1y,p1z,q1x,q1y,q1z,p2x,p2y,p2z,q2x,q2y,q2z) {
+  const ux=q1x-p1x, uy=q1y-p1y, uz=q1z-p1z;
+  const vx=q2x-p2x, vy=q2y-p2y, vz=q2z-p2z;
+  const wx=p1x-p2x, wy=p1y-p2y, wz=p1z-p2z;
   const a=ux*ux+uy*uy+uz*uz, b=ux*vx+uy*vy+uz*vz, cc=vx*vx+vy*vy+vz*vz;
   const d=ux*wx+uy*wy+uz*wz, e=vx*wx+vy*wy+vz*wz, D=a*cc-b*b;
   let sN, sD=D, tN, tD=D;
@@ -130,13 +130,13 @@ export function rollerContactCandidate(actor, target, weapon, player) {
   // WidthHalf is the sourced physical drum half-width; weapon.rollWidth is
   // paint/gameplay reach and must not reshape the body-contact volume.
   const half=ROLLER_BODY_HALF_WIDTH;
-  const d0={x:cx-rx*half,y:cy,z:cz-rz*half}, d1={x:cx+rx*half,y:cy,z:cz+rz*half};
+  const d0x=cx-rx*half,d0z=cz-rz*half,d1x=cx+rx*half,d1z=cz+rz*half;
   const tr=Number.isFinite(player.radius)?player.radius:0.35;
   const h=target.form==='squid' ? player.squidHeight : player.height;
   const low=target.pos.y+Math.min(tr,h/2), high=target.pos.y+Math.max(Math.min(tr,h/2),h-tr);
-  const t0={x:target.pos.x,y:low,z:target.pos.z}, t1={x:target.pos.x,y:high,z:target.pos.z};
+  const t0x=target.pos.x,t0z=target.pos.z,t1x=target.pos.x,t1z=target.pos.z;
   const rr=ROLLER_BODY_RADIUS+tr;
-  return segmentDistanceSq(d0,d1,t0,t1) <= rr*rr+CONTACT_EPS;
+  return segmentDistanceSq(d0x,cy,d0z,d1x,cy,d1z,t0x,low,t0z,t1x,high,t1z) <= rr*rr+CONTACT_EPS;
 }
 
 function rollerCapsuleTouchesBlock(start, delta, block, scratch) {

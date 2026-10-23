@@ -4,6 +4,8 @@ import { nativeInkGeometry } from './native-render.mjs';
 import { TriangleWorld } from './triangle-world.mjs';
 import { assertSourceTerrainObjects } from './source-terrain-contract.mjs';
 const DOWN = new THREE.Vector3(0,-1,0);
+// Source face tints are immutable; dynamic object colors retain separate owners.
+const SOURCE_NEUTRAL_COLOR = Object.freeze(new THREE.Color('#bfc3c6'));
 
 /** Compatibility with the original Level's face/grid and dynamic box contracts.
  * Static collision remains exact triangles; chart rectangles are NEVER colliders. */
@@ -19,7 +21,7 @@ export class NativeLevel extends Level {
   this.faces=m.faces.map((s,id)=>({...s,id,block:id,
    n:new THREE.Vector3(...s.n),u:new THREE.Vector3(...s.u),v:new THREE.Vector3(...s.v),origin:new THREE.Vector3(...s.origin),
    wall:Math.abs(s.n[1])<.3,turf:s.n[1]>.7,ceiling:s.n[1]<-.5,paintable:true,
-   color:new THREE.Color('#bfc3c6'),pattern:0,groundedBottom:false,mural:-1,atlas:null,
+   color:SOURCE_NEUTRAL_COLOR,pattern:0,groundedBottom:false,mural:-1,atlas:null,
   }));
   this.blocks=this.faces.map(f=>({
    id:f.id,nativeFace:f.id,center:f.origin.clone().addScaledVector(f.u,f.su*.5).addScaledVector(f.v,f.sv*.5),

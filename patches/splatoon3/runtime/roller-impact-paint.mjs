@@ -48,7 +48,7 @@ export function rollerPaintAgeMultiplier(projectile) {
       projectile.s3Weapon?.kind !== 'roller') return 1;
   const p=rollerImpactPaintParam(projectile);
   const from=p?.ChangeWidthStartFrame, to=p?.ChangeWidthEndFrame, rate=p?.ChangeFrameWidthRate;
-  if (![from,to,rate].every(Number.isFinite) || !(to>from) || !(rate>0) || rate>1) return 1;
+  if ((!Number.isFinite(from)||!Number.isFinite(to)||!Number.isFinite(rate)) || !(to>from) || !(rate>0) || rate>1) return 1;
   const frame=Math.max(0,Number.isFinite(projectile.age)?projectile.age*60:0);
   if (frame<=from) return 1;
   if (frame>=to) return rate;
@@ -143,8 +143,10 @@ export function rollerImpactHeight(projectile, hit, scale=1) {
   if(Number.isFinite(projectile.fidelityImpactHeight))
     return Math.max(0,projectile.fidelityImpactHeight)/unitScale;
   let highest=-Infinity;
-  for(const point of [projectile.pos,projectile.prev,projectile.start])
-    if(Number.isFinite(point?.y))highest=Math.max(highest,point.y);
+  const pos=projectile.pos,prev=projectile.prev,start=projectile.start;
+  if(Number.isFinite(pos?.y))highest=Math.max(highest,pos.y);
+  if(Number.isFinite(prev?.y))highest=Math.max(highest,prev.y);
+  if(Number.isFinite(start?.y))highest=Math.max(highest,start.y);
   if(Number.isFinite(projectile.fidelityMaxY))highest=Math.max(highest,projectile.fidelityMaxY);
   if(!Number.isFinite(highest))return null;
   if(!Number.isFinite(hit.point?.y))return null;

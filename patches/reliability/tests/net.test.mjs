@@ -163,8 +163,8 @@ test('ordinary success keeps normal relay payloads and close notifies once', asy
   assert.match(socket.sent[1], /^s\|host\|\{"k":"me",/);
   const events = [];
   f.net.on('emote', value => events.push(value));
-  f.message(socket, 'm|host|{"k":"emote","n":"hello"}');
-  assert.equal(events[0].name, 'hello');
+  f.message(socket, 'm|host|{"k":"emote","n":"wave"}');
+  assert.equal(events[0].name, 'wave');
   const callback = socket.onclose;
   callback({ reason: 'Disconnected' }); callback({ reason: 'Disconnected' });
   assert.equal(f.net.state, 'error'); assert.equal(f.net.error, 'Lost connection to the room');

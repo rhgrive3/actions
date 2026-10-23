@@ -27,7 +27,7 @@ for(const ap of [0,57])test(`JSON replayed cloud applies only local victim ${ap}
  assert.equal(receive(wire),true);assert.equal(receive({...wire,phase:'deploy',eventSeq:402,lifeSeconds:6}),true);
  const scale=1-.5*gearCurve(ap,...MIST_RESISTANCE_CURVE);near(f.toxicMistScale(v),scale);
  const status={...wire,phase:'status',eventSeq:403,targetId:32,targetLife:2,status:'toxicMist',sourceTeam:0,until:f.G.time+.35,slowScale:.01,subResistance:57};
- assert.equal(receive(status),true);near(f.toxicMistScale(v),scale);assert.equal(receive(status),true);near(f.toxicMistScale(v),scale);
+ assert.equal(receive(status),true);near(f.toxicMistScale(v),scale);assert.equal(receive(status),false);near(f.toxicMistScale(v),scale);
  assert.equal(receive({...status,sourceLife:3}),false);assert.equal(receive({...status,seq:999}),false);assert.equal(receive({...status,targetLife:1}),false);
  v.pos.x+=20;assert.equal(receive(status),false);near(f.toxicMistScale(v),1);v.pos.copy(c.pos);assert.equal(receive({...wire,phase:'expire',eventSeq:404}),true);assert.equal(receive(status),false);near(f.toxicMistScale(v),1);
 });
@@ -47,4 +47,30 @@ test('native Mist jump reduction keeps native admission and landing',async()=>{
  f.G.projectiles.update(1/60);const insideY=[],outsideY=[];
  for(let i=0;i<70;i++){f.G.time+=1/60;for(const a of[v,outside])a.update(1/60);f.G.projectiles.update(1/60);if(i===0)for(const a of[v,outside])a.intent.jump=false;insideY.push(v.pos.y);outsideY.push(outside.pos.y);}
  assert.ok(v.s3JumpSerial>0&&outside.s3JumpSerial>0,'both native jump requests admitted');assert.ok(Math.max(...insideY)>.1);assert.ok(Math.max(...insideY)<Math.max(...outsideY),'calibrated jump reduction lowers the native peak');assert.equal(v.grounded,true);near(f.toxicMistScale(v),.75);near(f.toxicMistScale(outside),1);
+});
+
+for(const hz of [30,60,120])test(`remote status does not add progress or ink drain beyond local fixed ticks at ${hz}Hz`,async()=>{
+ const {f,o,v,c}=await world();Object.assign(o,{remote:true,nid:31,netLife:4});Object.assign(v,{nid:32,netLife:2,ink:100});
+ f.G.netm={byNid:new Map([[31,o],[32,v]])};f.G.projectiles.clear();
+ const spawn={v:1,phase:'spawn',subId:'toxicMist',seq:400,eventSeq:401,life:4,sourceLife:4,x:c.pos.x,y:c.pos.y,z:c.pos.z,vx:0,vy:0,vz:0,charge:0,seed:5,actor:o};
+ const replay=event=>f.installedRuntime.replaySub(event);
+ assert.equal(replay(spawn),true);assert.equal(replay({...spawn,phase:'deploy',eventSeq:402,lifeSeconds:6}),true);
+ const cloud=f.G.projectiles._s3SubObjects.find(x=>x.seq===400);let sequence=403,previousSteps=0;
+ for(let frame=1;frame<=hz;frame++){
+  f.G.time+=1/hz;
+  if(frame===1||frame%Math.max(1,Math.floor(hz/4))===0){
+   const status={...spawn,phase:'status',eventSeq:sequence++,targetId:32,targetLife:2,status:'toxicMist',sourceTeam:0,until:f.G.time+.35,inkLoss:999};
+   const progress=cloud.toxicProgress?.get(v)?.elapsed??0,before=v.ink;
+   assert.equal(replay(status),true);assert.equal(replay(status),false);
+   near(cloud.toxicProgress?.get(v)?.elapsed??0,progress);near(v.ink,before);
+  }
+  f.G.projectiles.update(1/hz);
+  const elapsed=cloud.toxicProgress?.get(v)?.elapsed??0;
+  assert.ok(elapsed>=previousSteps);previousSteps=elapsed;
+  if(elapsed<1-1e-8)near(v.ink,100);
+ }
+ near(cloud.toxicProgress.get(v).elapsed,1);near(v.ink,100-40/7);
+ const progress=cloud.toxicProgress.get(v).elapsed;v.pos.x+=20;
+ assert.equal(replay({...spawn,phase:'status',eventSeq:sequence++,targetId:32,targetLife:2,status:'toxicMist',sourceTeam:0,until:f.G.time+.35}),false);
+ near(cloud.toxicProgress.get(v).elapsed,progress);
 });

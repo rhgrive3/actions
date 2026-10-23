@@ -25,6 +25,7 @@ import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { coherentMotionStart } from './actor-motion.mjs';
 import { installChargerFlight } from './weapons-charger-flight.mjs';
 export const EPSILON = 1e-10;
+const DAMAGE_FALLOFF_FAMILIES=Object.freeze(['shooter','dualies','splatling']);
 const INSTALLED = Symbol.for('inkwave.weapons-fidelity.v1');
 const NORMALIZED_PROJECTILE_PACKET = Symbol('inkwave.normalizedProjectilePacket');
 const inkFlightHelpers = new WeakMap();
@@ -925,7 +926,7 @@ export function slosherDropScale(p, atY=p?.pos?.y) {
   const src=slosherPaintRecord(p), origin=p?.start?.y;
   if (!src || !Number.isFinite(origin) || !Number.isFinite(atY)) return 1;
   const from=src.ScaleStartFallDistance, to=src.ScaleEndFallDistance, rate=src.WidthDepthScaleFall;
-  if (![from,to,rate].every(Number.isFinite) || !(to>from) || !(rate>0&&rate<=1)) return 1;
+  if ((!Number.isFinite(from)||!Number.isFinite(to)||!Number.isFinite(rate)) || !(to>from) || !(rate>0&&rate<=1)) return 1;
   const drop=Math.max(0,origin-atY);
   if (drop<=from) return 1;
   const scale=1-(1-rate)*clamp01((drop-from)/(to-from));
@@ -1263,7 +1264,7 @@ function flickUnitFor(weapon,vertical,index,depleted=false) {
   let offset=index;
   // #305: a depleted swing emits the sourced DepletionBulletNum per unit; an
   // absent field falls back to that unit's own BulletNum, never a foreign unit.
-  for(const u of group.Unit){const count=depleted?(u.DepletionBulletNum??u.BulletNum??1):(u.BulletNum??1);if(offset<count)return {unit:u,offset};offset-=count;}
+  for(let groupIndex=0;groupIndex<group.Unit.length;groupIndex++){const u=group.Unit[groupIndex],count=depleted?(u.DepletionBulletNum??u.BulletNum??1):(u.BulletNum??1);if(offset<count)return {unit:u,offset,groupIndex};offset-=count;}
   return null;
 }
 export function rollerFlickDrawRadius(weapon,vertical,index,age=0,fallback=null,depleted=false) {
@@ -1376,7 +1377,7 @@ export function configureFidelityFlick(p, actor, weapon, index, angle, speed) {
   p.vel.set(Math.sin(angle)*cp*speed,Math.sin(pitch)*speed,Math.cos(angle)*cp*speed);
   p.fidelityYaw=Math.atan2(Math.sin(angle-actor.yaw),Math.cos(angle-actor.yaw));
   p.fidelitySectorYaw=vertical?null:actor.yaw;
-  p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;p.fidelityRollerUnitIndex=group.Unit.indexOf(unit);
+  p.fidelityMode=vertical?'vertical':'horizontal';p.fidelityRollerUnit=unit;p.fidelityRollerUnitIndex=picked.groupIndex;
   // #305: the depletion-marked attack mode carries the sourced DepletionRate
   // into the round's collision record; a full swing never sets the mark.
   setCollision(p,unit.UnitParam.CollisionParam,0,!!weapon.s3Depletion);
@@ -1447,7 +1448,7 @@ export function fidelityProjectileTargets(system,p) {
   // Ghosts share visual collision chronology, but never damage/paint ownership.
   const r0=slosherCollisionRadius(p,p.fidelityPrevAge??p.age,false,p.prev?.y);
   const r1=fidelityPlayerCollisionRadius(p);
-  let nearest=null,best=Infinity;
+  let nearest=null,best=Infinity,krReady=false,kr=null;
   for(const actor of G.actors){
     if(!actor.alive||actor===p.owner)continue;
     const friendly=actor.team===p.team;
@@ -1468,7 +1469,7 @@ export function fidelityProjectileTargets(system,p) {
     const segMinZ=Math.min(p.prev.z,p.pos.z)-radius,segMaxZ=Math.max(p.prev.z,p.pos.z)+radius;
     if(Math.min(x0,actor.pos.x)>segMaxX||Math.max(x0,actor.pos.x)<segMinX||
        Math.min(z0,actor.pos.z)>segMaxZ||Math.max(z0,actor.pos.z)<segMinZ)continue;
-    const kr=kitTrizookaActorRadius(system,p);
+    if(!krReady){kr=kitTrizookaActorRadius(system,p);krReady=true;}
     let t;
     if(rec){
       // Time-coherent relative motion: solving the round segment shifted back
@@ -1583,7 +1584,7 @@ export function fidelityDamage(p,point,impactT=p.fidelityImpactT??1) {
     const t=clamp01((fall-d.ReduceStartFallDistance)/(d.ReduceEndFallDistance-d.ReduceStartFallDistance));
     return (d.ValueMax+(d.ValueMin-d.ValueMax)*t)/10;
   }
-  if(['shooter','dualies','splatling'].includes(w.kind)){
+  if(DAMAGE_FALLOFF_FAMILIES.includes(w.kind)){
     const startFrame = Math.round((w.damageReduceStart ?? 0) * 60);
     const endFrame = Math.round((w.damageReduceEnd ?? 0) * 60);
     // #875: the damage age is the number of completed fixed 60Hz frames, the
@@ -1867,9 +1868,10 @@ export function installWeaponsFidelity(context,profile) {
         if(Number.isSafeInteger(p.fidelityRollerUnitIndex)&&units[p.fidelityRollerUnitIndex])p.fidelityRollerUnit=units[p.fidelityRollerUnitIndex];
         if(!p.fidelityRollerUnit)p.fidelityRollerUnit=p.ghost&&!vertical?horizontalRollerReplayUnit(units,p.vel.length()):null;
         if(!p.fidelityRollerUnit){
+          const speed=p.vel.length();
           let best=Infinity;
           for(const u of units)for(let i=0;i<(u.BulletNum??1);i++){
-            const d=Math.abs(p.vel.length()-60*(u.SpawnSpeedBase+i*(u.AfterOffsetSpawnSpeed||0)));
+            const d=Math.abs(speed-60*(u.SpawnSpeedBase+i*(u.AfterOffsetSpawnSpeed||0)));
             if(d<best){best=d;p.fidelityRollerUnit=u;}
           }
         }
@@ -1879,7 +1881,8 @@ export function installWeaponsFidelity(context,profile) {
         // record rather than guessing depletion from velocity.
         setCollision(p,p.fidelityRollerUnit.UnitParam.CollisionParam,0,p.s3DepletionRound===true);
       }
-      p.fidelityRollerUnitIndex=units.indexOf(p.fidelityRollerUnit);
+      if(p.ghost || !Number.isSafeInteger(p.fidelityRollerUnitIndex) || units[p.fidelityRollerUnitIndex] !== p.fidelityRollerUnit)
+        p.fidelityRollerUnitIndex=units.indexOf(p.fidelityRollerUnit);
       // The appended nearest glob bypasses configureFidelityFlick. Initialize
       // its paint from the resolved unit too, rather than the pool's scale 1.
       const depletionPaintRate=p.fidelityRollerUnit.UnitParam?.PaintParam?.DepletionDepthWidthRate;
@@ -2000,10 +2003,10 @@ export function installWeaponsFidelity(context,profile) {
       // #305: preserve the owner's explicit depleted-attack identity before
       // initialize() rebuilds the remote presentation collision record.
       p.s3DepletionRound=packet[NORMALIZED_PROJECTILE_PACKET].depleted;
-      const powerShape=projectilePacketShape(packet);
-      p.s3SpecialPowerAP=powerShape?.hasPower?packet[31+powerShape.birthOffset].s3SpecialPowerAP:0;
+      const shape=projectilePacketShape(packet);
+      p.s3SpecialPowerAP=shape?.hasPower?packet[31+shape.birthOffset].s3SpecialPowerAP:0;
       if(!p.s3SpecialWeapon&&typeof special?.projectileDescriptor==='function'){p.s3SpecialWeapon=special.projectileDescriptor(p);p.s3Weapon=p.s3SpecialWeapon;}
-      const shape=projectilePacketShape(packet),birthOffset=shape?.birthOffset??0;if(!shape?.legacy&&packet[30+birthOffset]>=0){p.fidelitySloshPacketIndex=packet[30+birthOffset];p.fidelityRollerUnitIndex=packet[30+birthOffset];p.fidelityMode=packet[27+birthOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);if(p.ghost&&p.type==='slosh'&&p.s3Weapon?.kind==='slosher'){p._s3SloshBirthGhost=true;p.delay=0;p._s3SloshBirthPending=false;}}
+      const birthOffset=shape?.birthOffset??0;if(!shape?.legacy&&packet[30+birthOffset]>=0){p.fidelitySloshPacketIndex=packet[30+birthOffset];p.fidelityRollerUnitIndex=packet[30+birthOffset];p.fidelityMode=packet[27+birthOffset]===1?'vertical':'horizontal';}initialize(p,p.s3SpecialWeapon||WEAPONS[p.wid]||actor.weapon);if(p.ghost&&p.type==='slosh'&&p.s3Weapon?.kind==='slosher'){p._s3SloshBirthGhost=true;p.delay=0;p._s3SloshBirthPending=false;}}
     return result;
   };
   const slosh=Projectiles.prototype.fireSlosh;

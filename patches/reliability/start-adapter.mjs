@@ -148,6 +148,7 @@ export function adaptStart(rel, code) {
     ].join('\n'), 'world transaction ownership');
     const teardown = [
       '    if (this.levelMesh) { scene.remove(this.levelMesh, this.grateMesh); this.levelMesh.geometry.dispose(); this.grateMesh?.geometry.dispose(); this.levelMat.dispose(); this.grateMat?.dispose(); }',
+      '    const decorTextures = this.decor?.takeStaticTextures?.();',
       '    this.decor?.dispose?.();',
       '    if (this.stageLightmap) { this.stageLightmap.dispose(); this.stageLightmap = null; }',
       '    if (this.props) { this.props.dispose?.(); this.props = null; }',
@@ -162,12 +163,12 @@ export function adaptStart(rel, code) {
     source = replaceOnce(source, '        this.props.build();', '        props.build();', 'detached props build');
     source = replaceOnce(source, "      } catch (e) { console.error('[inkwave] props failed', e); this.props = null; }", "      } catch (e) { console.error('[inkwave] props failed', e); props?.dispose?.(); props = null; colliders.length = 0; }", 'failed detached props cleanup');
     source = replaceOnce(source,
-      '    const level = (G.level = new Level(MAP_LAYOUTS[layoutId], colliders));\n    G.physics = new Physics(level);\n    const lightmap = await this._loadLightmap(level, layoutId);',
+      '    const level = (G.level = new Level(MAP_LAYOUTS[layoutId], colliders));\n    G.physics = new Physics(level);\n    const lightmap = await this._loadLightmap(level, layoutId, lightmapMetadata);',
       [
         '    let level, lightmap;',
         '    try {',
         '      level = new Level(MAP_LAYOUTS[layoutId], colliders);',
-        '      lightmap = await this._loadLightmap(level, layoutId);',
+        '      lightmap = await this._loadLightmap(level, layoutId, lightmapMetadata);',
         '    } catch (e) { props?.dispose?.(); throw e; }',
         '    if (!worldCurrent()) { lightmap?.dispose?.(); props?.dispose?.(); return; }',
         teardown,

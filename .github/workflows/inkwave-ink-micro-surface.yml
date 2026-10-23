@@ -2,6 +2,8 @@ name: INKWAVE ink micro surface QA
 on:
   pull_request:
     paths:
+      - 'patches/local-quality/tests/grate-normal.test.mjs'
+      - 'patches/local-quality/tests/paint-hotpath.test.mjs'
       - "patches/local-quality/ink-micro-surface-adapter.mjs"
       - "patches/local-quality/tests/ink-micro-surface.test.mjs"
       - "scripts/check-inkwave-ink-micro-surface.mjs"

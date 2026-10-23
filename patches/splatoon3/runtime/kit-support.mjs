@@ -197,8 +197,11 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
         point:new THREE.Vector3(),result:{t:0,dist:Infinity}};
       const delta=scratch.delta.copy(sensor.pos).sub(sensor.prev),length=delta.length();
       let body=null,best=hit?.hit&&vec3(hit.point)?sensor.prev.distanceTo(hit.point):Infinity;
+      const reach=PLAYER.radius+.2, minX=Math.min(sensor.prev.x,sensor.pos.x)-reach, maxX=Math.max(sensor.prev.x,sensor.pos.x)+reach,
+        minZ=Math.min(sensor.prev.z,sensor.pos.z)-reach, maxZ=Math.max(sensor.prev.z,sensor.pos.z)+reach;
       for(const actor of G.actors||[]){
         if(!actor.alive||actor.team===sensor.team||!Physics?.segmentCapsuleDist)continue;
+        if(actor.pos.x<minX||actor.pos.x>maxX||actor.pos.z<minZ||actor.pos.z>maxZ)continue;
         const base=scratch.base.copy(actor.pos);base.y+=actor.smoothY||0;
         const result=scratch.result;result.t=0;result.dist=Infinity;
         Physics.segmentCapsuleDist(sensor.prev,sensor.pos,base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,result);

@@ -11,10 +11,10 @@ const sha=b=>createHash('sha256').update(b).digest('hex');
 function fixture(fn){const root=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-ref-contract-'));try{return fn(root);}finally{fs.rmSync(root,{recursive:true,force:true});}}
 function put(root,p,bytes){const f=path.join(root,p);fs.mkdirSync(path.dirname(f),{recursive:true});fs.writeFileSync(f,bytes);}
 function copied(root){for(const row of SOURCE_SITE_REFERENCES)for(const p of [row.source,row.target])put(root,p,fs.readFileSync(path.join(repo,p)));}
-test('all nine exact production source/site mappings retain pinned bytes and classifications',()=>{
- assert.equal(SOURCE_SITE_REFERENCES.length,9);
+test('all thirteen exact production source/site mappings retain pinned bytes and classifications',()=>{
+ assert.equal(SOURCE_SITE_REFERENCES.length,13);
  for(const r of SOURCE_SITE_REFERENCES)assert.equal(verifyMappedReference(repo,r.source,r.ref).target,r.target);
- assert.equal(checkLocalReferences(repo).mapped.length,9);
+ assert.equal(checkLocalReferences(repo).mapped.length,13);
 });
 test('unknown, additional traversal, changed ref and changed owner are not mapped',()=>{
  const r=SOURCE_SITE_REFERENCES[0];
@@ -24,6 +24,22 @@ test('source and target byte changes or absent target reject instead of waiving 
  copied(root);const r=SOURCE_SITE_REFERENCES[0];
  for(const p of [r.source,r.target]){const b=fs.readFileSync(path.join(root,p));put(root,p,Buffer.concat([b,Buffer.from('// mutation')]));assert.throws(()=>verifyMappedReference(root,r.source,r.ref),/Pinned reference source mismatch/);put(root,p,b);}
  fs.renameSync(path.join(root,r.target),path.join(root,r.target+'.kept'));assert.throws(()=>verifyMappedReference(root,r.source,r.ref),/ENOENT/);
+}));
+test('every migrated navigation, facade and descriptor edge stays owner-bound and byte-pinned',()=>fixture(root=>{
+ copied(root);
+ const migrated=SOURCE_SITE_REFERENCES.filter(r=>/src\/game\/nav\.js$|src\/world\/stages\/(?:index|range-data)\.js$/.test(r.source));
+ assert.equal(migrated.length,9);
+ for(const r of migrated){
+  assert.equal(verifyMappedReference(root,r.source,r.ref).target,r.target);
+  assert.throws(()=>verifyMappedReference(root,r.source,r.ref.replace('.mjs','-unknown.mjs')),/Unknown source\/site reference/);
+  assert.throws(()=>verifyMappedReference(root,r.source.replace(/[^/]+$/,'unreviewed.js'),r.ref),/Unknown source\/site reference/);
+  for(const p of [r.source,r.target]){
+   const bytes=fs.readFileSync(path.join(root,p));
+   put(root,p,Buffer.concat([bytes,Buffer.from('\n// unreviewed mutation')]));
+   assert.throws(()=>verifyMappedReference(root,r.source,r.ref),/Pinned reference source mismatch/);
+   put(root,p,bytes);
+  }
+ }
 }));
 test('ordinary missing, escaping local refs and runtime build-only imports remain rejected',()=>fixture(root=>{
  put(root,'inkwave-public/src/game/probe.js',"import './absent.js';");assert.throws(()=>checkLocalReferences(root),/MISSING/);

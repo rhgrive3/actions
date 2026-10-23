@@ -1,3 +1,4 @@
+import { adaptQueueNetwork } from './queue-network-adapter.mjs';
 // Build-time overlay for the public room lifecycle. Upstream remains untouched.
 // Each replacement requires its complete anchor exactly once; source drift fails closed.
 function replaceOnce(code, before, after, rel) {
@@ -9,7 +10,10 @@ function replaceOnce(code, before, after, rel) {
 }
 
 export function adaptNet(rel, code) {
+  code = adaptQueueNetwork(rel, code);
   if (rel === 'src/net/session.js') {
+    code = "import { installLobbyGuards, sendCriticalControl } from '../../patches/reliability/lobby-guards.mjs';\n" + code;
+    code += "\ninstallLobbyGuards(NetSession, p => typeof p.weapon === 'string' && validMeUpdate(p, WEAPONS));\n";
     code = replaceOnce(code, "import { Transport } from './transport.js';",
       "import { Transport, PROTO, COMPAT } from './transport.js';", rel);
     code = replaceOnce(code, "const cfg = { k: 'start', roster,",
@@ -237,7 +241,7 @@ export function adaptNet(rel, code) {
     if (this.isHost) this._markReady(this.myId);`, `    if (!current() || !this.match || this.match._disposed) return;
     this._setupReady = true;
     if (this.isHost) this._markReady(this.myId);`, rel);
-    code = replaceOnce(code, `    else this.tr?.sendTo(this.hostId, { k: 'ready', id: cfg.id });`, `    else this.tr?.sendTo(this.hostId, { k: 'ready', id: cfg.id });
+    code = replaceOnce(code, `    else this.tr?.sendTo(this.hostId, { k: 'ready', id: cfg.id });`, `    else if (!sendCriticalControl(this, 'READY', () => this.tr?.sendTo(this.hostId, { k: 'ready', id: cfg.id }), G)) return;
     if (current() && this._goPending === cfg.id) this._launch(cfg.id);`, rel);
     code = replaceOnce(code, `      case 'go': if (from === this.hostId && this.state === 'starting') this._launch(); break;`,
       `      case 'go': if (from === this.hostId && this.state === 'starting' && d.id === this._startCfg?.id) this._launch(d.id); break;`, rel);
@@ -266,6 +270,7 @@ export function adaptNet(rel, code) {
 `, rel);
   }
   if (rel === 'src/net/netmatch.js') {
+    code = "import { sendCriticalControl } from '../../patches/reliability/lobby-guards.mjs';\n" + code;
     if (code.includes('const reliabilityBind =')) throw new Error(`Reliability network anchor mismatch: ${rel}`);
     // #1157: wrap the final native methods without competing for bind/dispose
     // entry anchors owned by inventory/replication adapters later in the build.
@@ -483,6 +488,26 @@ NetMatch.prototype.dispose = function(...args) {
           }`, rel);
     code = replaceOnce(code, '        this.bytesIn += s.length;',
       '        if (s.length > MAX_RELAY_FRAME_CHARS) return;\n        this.bytesIn += s.length;', rel);
+  }
+  if (rel === 'src/net/transport.js') {
+    code = replaceOnce(code, '      if (this.ws !== ws) return;', `      if (this.ws !== ws) return;
+      const at = performance.now();
+      // A delayed browser timer indicates suspension, not twenty missed probes.
+      if (this._heartbeatLast != null && at - this._heartbeatLast > 5000) this._heartbeatDeadline = at + 20000;
+      this._heartbeatLast = at;
+      if (this._heartbeatDeadline && at >= this._heartbeatDeadline) {
+        const closed = this.onClose;
+        this._disconnect?.(new Error('Heartbeat timeout'));
+        if (!this.ws && this.onClose === closed) closed?.('Heartbeat timeout');
+        return;
+      }
+      if (!this._heartbeatDeadline) this._heartbeatDeadline = at + 20000;`, rel);
+    code = replaceOnce(code, "if (this._pingSent) { const r = performance.now() - this._pingSent; this._pingSent = 0;",
+      "if (this._pingSent) { this._heartbeatDeadline = 0; const r = performance.now() - this._pingSent; this._pingSent = 0;", rel);
+    code = replaceOnce(code, '          this._pingSent = 0;\n          this.rtt =',
+      '          this._pingSent = 0; this._heartbeatDeadline = 0;\n          this.rtt =', rel);
+    code = replaceOnce(code, '  _stopPing() { if (this._pingT) clearInterval(this._pingT); this._pingT = null; }',
+      '  _stopPing() { if (this._pingT) clearInterval(this._pingT); this._pingT = null; this._heartbeatDeadline = 0; this._heartbeatLast = null; }', rel);
   }
   return code;
 }

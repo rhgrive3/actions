@@ -20,10 +20,18 @@ function rankedPoseContext(nm, m, api) {
     now: Number.isFinite(clock) ? clock / 1000 : null, level, fallDeathY: api.PLAYER?.fallDeathY,
     landings: actor => [level?.homeSuperJumpPoints?.[actor.team], level?.spawnPads?.[actor.team],
       ...(G.bigBubblerJumpTargets?.(actor.team) || []).map(t => t?.pos)],
-    allies: actor => m.actors.filter(a => a !== actor && a.team === actor.team && a.alive && !a.s3Disconnected).flatMap(a => {
-      const pose = a.remote ? nm.rankedPose?.get(actorId(a)) : null;
-      return [pose?.actor === a ? pose.last.pos : a.pos, a.superJumpGround, a.superJumpState?.to];
-    }),
+    *allies(actor) {
+      const actors=m.actors,length=actors.length;
+      for (let i=0;i<length;i++) {
+        if(!(i in actors))continue;
+        const a=actors[i];
+        if (a === actor || a.team !== actor.team || !a.alive || a.s3Disconnected) continue;
+        const pose = a.remote ? nm.rankedPose?.get(actorId(a)) : null;
+        yield pose?.actor === a ? pose.last.pos : a.pos;
+        yield a.superJumpGround;
+        yield a.superJumpState?.to;
+      }
+    },
   };
 }
 
@@ -101,7 +109,7 @@ export function installRankedNetwork(api) {
       if (!a?.alive || a.owner !== from || !Number.isSafeInteger(d.seq) || d.seq <= 0 || !Number.isFinite(d.damage) || !(d.damage > 0) || d.damage > 2000 || !finiteVector(d.pos)) return;
       if (d.seq <= (this.rankedHitSeq?.get(from) || 0)) return;
       const s = m.ranked.rule.state;
-      if (m.mode !== 'rainmaker' || !s.barrier?.active || !finiteVector(s.pos) || Math.hypot(...s.pos.map((n, i) => n - d.pos[i])) > 6) return;
+      if (m.mode !== 'rainmaker' || !s.barrier?.active || !finiteVector(s.pos) || Math.hypot(s.pos[0]-d.pos[0],s.pos[1]-d.pos[1],s.pos[2]-d.pos[2]) > 6) return;
       // A client's impact is a proposal only. Admission waits for matching
       // owner-stamped, geometrically plausible shot evidence in the tick stream.
       queueRankedBarrierHit(this, from, d, G.time);

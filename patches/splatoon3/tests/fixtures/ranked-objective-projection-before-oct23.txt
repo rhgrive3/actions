@@ -1,0 +1,71 @@
+const pos3 = value => Array.isArray(value) && value.length >= 3 && value.slice(0, 3).every(Number.isFinite)
+  ? value : value && [value.x, value.y, value.z].every(Number.isFinite) ? [value.x, value.y, value.z] : null;
+function marker(ctx, minimap, point, color, label, radius = 5) {
+  const p = pos3(point);
+  if (!p) return;
+  const xy = minimap.toCanvas(p[0], p[2], { x: 0, y: 0 });
+  ctx.beginPath(); ctx.arc(xy.x, xy.y, radius + 2, 0, Math.PI * 2); ctx.fillStyle = '#15121c'; ctx.fill();
+  ctx.beginPath(); ctx.arc(xy.x, xy.y, radius, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
+  if (label) { ctx.font = '900 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 2.5; ctx.strokeStyle = '#15121c'; ctx.strokeText(label, xy.x, xy.y); ctx.fillStyle = '#fff'; ctx.fillText(label, xy.x, xy.y); }
+}
+function drawObjectives(minimap, engine, G) {
+  const stage = engine?.stage, state = engine?.rule?.state;
+  if (!stage || !state || !minimap?.ctx || !minimap.toCanvas) return;
+  const ctx = minimap.ctx, colors = G.teamHex || ['#ff8a14', '#3675ff'];
+  ctx.save(); ctx.globalAlpha = .94;
+  if (engine.mode === 'zones') {
+    (stage.zones || []).forEach((zone, i) => {
+      const center = pos3(zone.center), size = zone.size;
+      if (!center || !Array.isArray(size)) return;
+      const p = minimap.toCanvas(center[0], center[2], { x: 0, y: 0 });
+      const owner = state.zones?.[i]?.team;
+      const color = owner === 0 || owner === 1 ? colors[owner] : '#fff';
+      const w = Math.max(6, size[0] * minimap.s), h = Math.max(6, size[1] * minimap.s);
+      ctx.fillStyle = color; ctx.globalAlpha = owner === 0 || owner === 1 ? .18 : .08; ctx.fillRect(p.x - w / 2, p.y - h / 2, w, h);
+      ctx.globalAlpha = .95; ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.strokeRect(p.x - w / 2, p.y - h / 2, w, h);
+      marker(ctx, minimap, center, color, String(i + 1), 4);
+    });
+  } else if (engine.mode === 'tower') {
+    const path = stage.tower?.path || [];
+    if (path.length > 1) {
+      if (!strokeTowerRoute(minimap, stage, path, ctx)) {
+        ctx.beginPath(); path.forEach((p, i) => { const v = pos3(p); if (!v) return; const xy = minimap.toCanvas(v[0], v[2], { x: 0, y: 0 }); if (!i) ctx.moveTo(xy.x, xy.y); else ctx.lineTo(xy.x, xy.y); });
+        ctx.strokeStyle = '#fff'; ctx.globalAlpha = .58; ctx.lineWidth = Math.max(2, minimap.s * .32); ctx.stroke();
+      }
+    }
+    const position = state.position || path[Math.round(finite(stage.tower?.centerIndex, Math.floor(path.length / 2)))];
+    marker(ctx, minimap, position, state.controllingTeam === 0 || state.controllingTeam === 1 ? colors[state.controllingTeam] : '#ffe28a', 'T', 6);
+    (stage.tower?.checkpoints || []).forEach((team, t) => (team || []).forEach((cp, i) => {
+      const p = path[Math.round(clamp01(cp.progress) * Math.max(0, path.length - 1))];
+      if (p) marker(ctx, minimap, p, colors[t], String(i + 1), 3);
+    }));
+  } else if (engine.mode === 'rainmaker') {
+    const pos = state.pos || stage.rainmaker?.center;
+    marker(ctx, minimap, pos, state.carrier != null ? colors[state.carrierTeam ?? 0] : '#ffe28a', 'R', 6);
+    const checkpoint = state.checkpoint || {};
+    (stage.rainmaker?.checkpoints || []).forEach((points, team) => {
+      const choices = Array.isArray(points) ? points : [];
+      const passed = checkpoint.passed?.[team] === true;
+      const selected = checkpoint.choice?.[team];
+      choices.forEach((point, index) => {
+        if (passed && index !== selected) return;
+        marker(ctx, minimap, point, colors[team], passed ? '✓' : `C${index + 1}`, 4);
+      });
+    });
+    (stage.rainmaker?.goals || []).forEach((p, team) => {
+      const open = checkpoint.goalOpen?.[team] === true;
+      marker(ctx, minimap, p, open ? colors[team] : '#8a8792', open ? 'G' : '×', open ? 5 : 4);
+    });
+  } else if (engine.mode === 'clams') {
+    // Draw the rule's live positions (including thrown and dropped clams),
+    // never the stage's spawn anchors, which only seed a match at setup.
+    (state.clams || []).forEach(clam => marker(ctx, minimap, clam.pos, clam.kind === 'power' ? '#ffe28a' : '#fff', clam.kind === 'power' ? 'P' : null, clam.kind === 'power' ? 5 : 2.5));
+    (stage.clams?.goals || []).forEach((p, team) => marker(ctx, minimap, p, colors[team], 'B', 6));
+    for (const [id, inventory] of Object.entries(state.inventories || {})) {
+      if (!inventory?.power) continue;
+      const actor = (G.match?.actors || []).find(a => String(a.nid ?? `${a.team}:${a.slot}`) === id);
+      if (actor?.pos) marker(ctx, minimap, [actor.pos.x, actor.pos.y, actor.pos.z], colors[actor.team], 'P', 6);
+    }
+  }
+  ctx.restore();
+}

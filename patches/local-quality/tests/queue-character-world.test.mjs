@@ -116,6 +116,8 @@ test('indexed decor keeps exactly the expanded attribute stream without duplicat
   const parts=[new THREE.BoxGeometry(1,2,3),new THREE.SphereGeometry(.7,12,8),new THREE.PlaneGeometry(1,1).toNonIndexed()];
   for(const g of parts)g.setAttribute('color',new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count*3).fill(.5),3));
   const results=functions.map(f=>f(parts.map(g=>g.clone()))),expanded=results.map(g=>g.index?g.toNonIndexed():g);
+  assert.equal(results[1].attributes.uv,undefined,'untextured merged decor does not retain UVs');
+  for(const g of expanded)g.deleteAttribute('uv');
   assert.deepEqual(geometrySnapshot({...expanded[1],index:{array:new Uint16Array()}}),geometrySnapshot({...expanded[0],index:{array:new Uint16Array()}}));
   assert.ok(results[1].attributes.position.count<results[0].attributes.position.count);
   [...parts,...results,...expanded].forEach(g=>g.dispose());

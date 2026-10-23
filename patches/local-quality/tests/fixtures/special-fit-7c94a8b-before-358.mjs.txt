@@ -1,0 +1,24 @@
+  function fit(ch,m,g){
+    const R=ch.limbs.armR,L=ch.limbs.armL,r=(R.a+R.b)*.999,l=(L.a+L.b)*.999;
+    for(let side=0;side<2;side++){const limb=side?L:R;
+      ch._kidXform(limb.up.parent,m.shoulders[side],m.handQ);m.shoulders[side].add(m.b.copy(limb.up.position).applyQuaternion(m.handQ));}
+    for(let j=0;j<20;j++){
+      for(let side=0;side<2;side++){
+        const limb=side?L:R,socket=side?g.userData.handL:g.userData.handR;
+        m.a.copy(m.shoulders[side]);
+        m.b.copy(socket).applyQuaternion(g.quaternion).add(g.position).sub(m.a);
+        const d=m.b.length(),radius=side?l:r;if(d>radius)g.position.addScaledVector(m.b,-(d-radius)/d);
+      }
+    }
+    for(let side=0;side<2;side++){
+      const limb=side?L:R,socket=side?g.userData.handL:g.userData.handR;
+      m.p.copy(socket).applyQuaternion(g.quaternion).add(g.position);
+      m.handQ.copy(g.quaternion).multiply(g.userData[side?'handQL':'handQR']);
+      m.pole.set(side?.8:-.8,-.5,-.22);ch._solveLimb(limb,m.p,m.pole,m.handQ,1,side?0:1);
+    }
+    ch.kid.updateWorldMatrix(true,true);m.error=0;
+    for(let side=0;side<2;side++){
+      const socket=side?g.userData.gripL:g.userData.gripR,bone=side?ch.bones.handL:ch.bones.handR;
+      m.a.copy(socket);g.localToWorld(m.a);m.b.copy(g.userData[side?'holeL':'holeR']);bone.localToWorld(m.b);m.error=Math.max(m.error,m.a.distanceTo(m.b));
+    }
+  }

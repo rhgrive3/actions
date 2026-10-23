@@ -1,0 +1,75 @@
+{
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+  "scope": "Actual native geometry+materials rendered with floor/wall and wet/dry controls; synthetic sixvertex overlay, desktop only",
+  "rows": [
+    {
+      "wall": false,
+      "wet": 0,
+      "differingChannels": 0,
+      "maxDelta": 0,
+      "outcomes": [
+        {
+          "bytes": 480,
+          "paintSignal": 3195
+        },
+        {
+          "bytes": 384,
+          "paintSignal": 3195
+        }
+      ],
+      "glError": 0
+    },
+    {
+      "wall": false,
+      "wet": 1,
+      "differingChannels": 0,
+      "maxDelta": 0,
+      "outcomes": [
+        {
+          "bytes": 480,
+          "paintSignal": 3195
+        },
+        {
+          "bytes": 384,
+          "paintSignal": 3195
+        }
+      ],
+      "glError": 0
+    },
+    {
+      "wall": true,
+      "wet": 0,
+      "differingChannels": 0,
+      "maxDelta": 0,
+      "outcomes": [
+        {
+          "bytes": 480,
+          "paintSignal": 5210
+        },
+        {
+          "bytes": 384,
+          "paintSignal": 5210
+        }
+      ],
+      "glError": 0
+    },
+    {
+      "wall": true,
+      "wet": 1,
+      "differingChannels": 0,
+      "maxDelta": 0,
+      "outcomes": [
+        {
+          "bytes": 480,
+          "paintSignal": 5210
+        },
+        {
+          "bytes": 384,
+          "paintSignal": 5210
+        }
+      ],
+      "glError": 0
+    }
+  ],
+  "consoleErrors": []
+}

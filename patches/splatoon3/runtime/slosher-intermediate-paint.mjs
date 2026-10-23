@@ -117,6 +117,17 @@ export function installSlosherIntermediatePaint(api, profile) {
     const spec = eligible(p) ? specFor(p) : null;
     if (!spec) return step.call(this, p, dt);
     p.trailEvery = 0;
+    if(p.s3SloshIntermediateSeed===p.seed && (p.s3SloshIntermediateCount || 0)>=spec.spawnNum){
+      const seed=p.seed,unit=p.fidelitySloshUnit,index=p.fidelitySloshIndex,x=p.pos.x,y=p.pos.y,z=p.pos.z;
+      p.s3SloshIntermediateSegmentHandled=false;
+      const dead=step.call(this,p,dt);
+      if(!p.s3SloshIntermediateSegmentHandled && !dead){
+        if(Object.is(p.seed,seed) && p.fidelitySloshUnit===unit && p.fidelitySloshIndex===index
+          && (p.s3SloshIntermediateCount || 0)>=spec.spawnNum)p.s3SloshIntermediateSegmentHandled=true;
+        else this.s3PaintSlosherSegment(p,{x,y,z},p.pos);
+      }
+      return dead;
+    }
     before.copy(p.pos);
     p.s3SloshIntermediateSegmentHandled = false;
     const dead = step.call(this, p, dt);

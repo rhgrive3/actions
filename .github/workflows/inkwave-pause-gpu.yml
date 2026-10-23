@@ -2,6 +2,10 @@ name: INKWAVE pause GPU work
 on:
   pull_request:
     paths:
+      - 'patches/local-quality/idle-resources.mjs'
+      - 'patches/local-quality/tests/idle-resources.test.mjs'
+      - 'patches/local-quality/tests/idle-attract-budget.test.mjs'
+      - 'patches/local-quality/tests/idle-fixture.mjs'
       - "patches/local-quality/idle-adapter.mjs"
       - "patches/local-quality/tests/pause-gpu.test.mjs"
       - "patches/reliability/tests/hud-fixture.mjs"

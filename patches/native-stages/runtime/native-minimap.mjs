@@ -67,7 +67,6 @@ function rotateSupport(map,cache){
   normal[i*2]=hj?-otherX:otherX;normal[i*2+1]=hj?-otherZ:otherZ;
   normal[j*2]=hi?-x:x;normal[j*2+1]=hi?-z:z;hits[i]=hj;hits[j]=hi;
  }
- for(const key of ['pixFx','pixFy','pixSx','pixSy'])map[key].fill(0);
  cache.flip=map.flip;
 }
 
@@ -86,7 +85,9 @@ export function buildNativeMinimap(map,canonicalProjection=false){
  const hits=canonicalProjection?new Uint8Array(N):null;
  map._nativeSupportCache=null;
  map.hgt=new Float32Array(N).fill(-99);map.topBlock=new Int32Array(N).fill(-1);map.nrm=new Float32Array(N*2);
- map.pixCell=new Int32Array(N).fill(-1);map.pixFx=new Uint8Array(N);map.pixFy=new Uint8Array(N);map.pixSx=new Int8Array(N);map.pixSy=new Int32Array(N);
+ map.pixCell=new Int32Array(N).fill(-1);
+ // Native projection selects one exact paint cell; no bilinear neighbors exist.
+ map.pixFx=map.pixFy=map.pixSx=map.pixSy=null;
  const scratch={candidates:[],first:{point:new THREE.Vector3(),normal:new THREE.Vector3()},next:{point:new THREE.Vector3(),normal:new THREE.Vector3()},options:{minNormalY:.45}};
  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
   const i=y*W+x,wx=map._worldX(x+.5),wz=map._worldZ(y+.5),h=nativeMinimapSupport(L,wx,wz,layers,scratch);if(!h)continue;

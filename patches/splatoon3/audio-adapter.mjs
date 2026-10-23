@@ -29,6 +29,14 @@ export function adaptWeaponAudio(rel,code){
     voice.priority=priority;
     const obstruction=Math.min(1,Math.max(0,Number(o.occlusion)||0));
     if(obstruction&&voice.lp){voice.lp.frequency.value=Math.min(voice.lp.frequency.value,22000*Math.pow(.055,obstruction));voice.vol*=1-obstruction*.38;voice.out.gain.value=voice.vol;}`,'spatial priority');
+    code=once(code,'    if (this.loops.size >= MAX_LOOPS) this.loops.values().next().value.stop(0.05);',`    const priority = Number.isFinite(o.priority) ? o.priority : 35;
+    if (this.loops.size >= MAX_LOOPS) {
+      let victim = null;
+      for (const h of this.loops) if (!victim || h.priority < victim.priority) victim = h;
+      if (!victim || victim.priority > priority) { this.counts.dropped++; return NOOP_HANDLE; }
+      victim.stop(0.05);
+    }`,'loop priority admission before graph creation');
+    code=once(code,'    let stopped = false;\n    const h = {\n      name,','    let stopped = false;\n    const h = {\n      name, priority,','retain live loop admission priority');
     code=once(code,'export const audio = new AudioEngine();','installWeaponAudioEngine(AudioEngine);\ninstallReverbPrewarmCleanup(AudioEngine);\ninstallGrainPrewarmCleanup(AudioEngine);\nexport const audio = new AudioEngine();','installation');
   }
   if(rel==='src/game/weapons.js'){

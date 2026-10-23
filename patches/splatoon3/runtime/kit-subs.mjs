@@ -542,7 +542,9 @@ export function kitBombStep(SUB, b, dt) {
   const spec = presentedOf(b)?.spec;
   if (!spec || !(dt > 0) || !b?.vel) return;
   if(spec.mode==='stick'&&b.s3Mode==='stuck') {
-    syncSubAttachment(G_REF,b,b.s3SuctionAttachment,{normal:b.s3SurfaceNormal});
+    const frame=b.s3SuctionFrame||(b.s3SuctionFrame={normal:null});
+    frame.normal=b.s3SurfaceNormal;
+    syncSubAttachment(G_REF,b,b.s3SuctionAttachment,frame);
     return;
   }
   if(spec.mode==='chase') {

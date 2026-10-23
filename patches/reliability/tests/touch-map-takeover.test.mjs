@@ -32,3 +32,14 @@ test('#571 pointer cancellation and touch-only toggles retain the same touch map
 test('#571 closed maps have no spurious open transition on alternating input owners',async()=>{
  const h=await rig();for(const owner of ['kbm','pad','touch','pad','kbm']){h.input.lastDevice=owner;h.update();assert.equal(h.m.mapOpen,false);assert.equal(h.c.mapHeld,false);}
 });
+
+test('production releaseAll clears pressed CSS and all pointers without single-button release scans',async()=>{
+ const h=await rig(),els={};h.m.els={};
+ for(const id of ['fire','sub','jump']){const pressed=new Set(['is-down']);els[id]={classList:{remove:k=>pressed.delete(k),contains:k=>pressed.has(k)}};h.m.els[id]=els[id];h.m.buttons[id]=true;}
+ h.m.root.querySelectorAll=()=>Object.values(els).filter(el=>el.classList.contains('is-down'));
+ h.m._ptr.set(1,{kind:'btn',id:'fire'});h.m._ptr.set(2,{kind:'btn',id:'fire'});h.m._ptr.set(3,{kind:'btn',id:'sub'});h.m._ptr.set(4,{kind:'look'});
+ const release=h.m._release;h.m._release=()=>{throw Error('releaseAll must not scan still-held button pointers');};h.m.buttons.map=true;
+ h.m._releaseAll(true);assert.equal(h.m._ptr.size,0);assert.equal(h.m.buttons.map,true);
+ for(const id of ['fire','sub','jump']){assert.equal(h.m.buttons[id],false);assert.equal(els[id].classList.contains('is-down'),false);}
+ h.m._release=release;h.m._releaseAll(false);assert.equal(h.m.buttons.map,false);
+});

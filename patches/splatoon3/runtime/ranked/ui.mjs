@@ -94,7 +94,7 @@ export function objectiveText(engine, G, api = {}) {
     const inventory = state.inventories || {};
     const localId = local ? String(local.nid ?? `${local.team}:${local.slot}`) : '';
     const own = inventory[localId];
-    const carried = team >= 0 ? Object.values(inventory).filter(item => item?.team === team)
+    const carried = !own && team >= 0 ? Object.values(inventory).filter(item => item?.team === team)
       .reduce((sum, item) => sum + finite(item?.small) + finite(item?.power ? 8 : 0), 0) : 0;
     const basket = team >= 0 ? state.baskets?.[team] : null;
     const count = own ? (own.power ? t('POWER CLAM') : t('{n}/8 CLAMS', { n: Math.ceil(finite(own.small)) }))
@@ -208,13 +208,23 @@ function rankedJudge(hud, engine, data = {}, G = {}, api = {}) {
   });
 }
 
+const objectiveScratch = new WeakMap();
+function projectObjective(minimap, point) {
+  let x, y, z;
+  if (Array.isArray(point)) { if (point.length < 3) return null; x=point[0]; y=point[1]; z=point[2]; }
+  else if(point) { x=point.x; y=point.y; z=point.z; }
+  if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return null;
+  let xy=objectiveScratch.get(minimap);if(!xy){xy={x:0,y:0};objectiveScratch.set(minimap,xy);}
+  return minimap.toCanvas(x,z,xy);
+}
+
 function marker(ctx, minimap, point, color, label, radius = 5) {
-  const p = pos3(point);
-  if (!p) return;
-  const xy = minimap.toCanvas(p[0], p[2], { x: 0, y: 0 });
-  ctx.beginPath(); ctx.arc(xy.x, xy.y, radius + 2, 0, Math.PI * 2); ctx.fillStyle = '#15121c'; ctx.fill();
-  ctx.beginPath(); ctx.arc(xy.x, xy.y, radius, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
-  if (label) { ctx.font = '900 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 2.5; ctx.strokeStyle = '#15121c'; ctx.strokeText(label, xy.x, xy.y); ctx.fillStyle = '#fff'; ctx.fillText(label, xy.x, xy.y); }
+  const xy = projectObjective(minimap,point);
+  if (!xy) return;
+  const x=xy.x,y=xy.y;
+  ctx.beginPath(); ctx.arc(x, y, radius + 2, 0, Math.PI * 2); ctx.fillStyle = '#15121c'; ctx.fill();
+  ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
+  if (label) { ctx.font = '900 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 2.5; ctx.strokeStyle = '#15121c'; ctx.strokeText(label, x, y); ctx.fillStyle = '#fff'; ctx.fillText(label, x, y); }
 }
 
 function drawObjectives(minimap, engine, G) {
@@ -224,21 +234,21 @@ function drawObjectives(minimap, engine, G) {
   ctx.save(); ctx.globalAlpha = .94;
   if (engine.mode === 'zones') {
     (stage.zones || []).forEach((zone, i) => {
-      const center = pos3(zone.center), size = zone.size;
-      if (!center || !Array.isArray(size)) return;
-      const p = minimap.toCanvas(center[0], center[2], { x: 0, y: 0 });
+      const center = zone.center, size = zone.size, p = projectObjective(minimap,center);
+      if (!p || !Array.isArray(size)) return;
+      const px=p.x,py=p.y;
       const owner = state.zones?.[i]?.team;
       const color = owner === 0 || owner === 1 ? colors[owner] : '#fff';
       const w = Math.max(6, size[0] * minimap.s), h = Math.max(6, size[1] * minimap.s);
-      ctx.fillStyle = color; ctx.globalAlpha = owner === 0 || owner === 1 ? .18 : .08; ctx.fillRect(p.x - w / 2, p.y - h / 2, w, h);
-      ctx.globalAlpha = .95; ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.strokeRect(p.x - w / 2, p.y - h / 2, w, h);
+      ctx.fillStyle = color; ctx.globalAlpha = owner === 0 || owner === 1 ? .18 : .08; ctx.fillRect(px - w / 2, py - h / 2, w, h);
+      ctx.globalAlpha = .95; ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.strokeRect(px - w / 2, py - h / 2, w, h);
       marker(ctx, minimap, center, color, String(i + 1), 4);
     });
   } else if (engine.mode === 'tower') {
     const path = stage.tower?.path || [];
     if (path.length > 1) {
       if (!strokeTowerRoute(minimap, stage, path, ctx)) {
-        ctx.beginPath(); path.forEach((p, i) => { const v = pos3(p); if (!v) return; const xy = minimap.toCanvas(v[0], v[2], { x: 0, y: 0 }); if (!i) ctx.moveTo(xy.x, xy.y); else ctx.lineTo(xy.x, xy.y); });
+        ctx.beginPath(); path.forEach((p, i) => { const xy = projectObjective(minimap,p); if (!xy) return; if (!i) ctx.moveTo(xy.x, xy.y); else ctx.lineTo(xy.x, xy.y); });
         ctx.strokeStyle = '#fff'; ctx.globalAlpha = .58; ctx.lineWidth = Math.max(2, minimap.s * .32); ctx.stroke();
       }
     }
@@ -270,10 +280,20 @@ function drawObjectives(minimap, engine, G) {
     // never the stage's spawn anchors, which only seed a match at setup.
     (state.clams || []).forEach(clam => marker(ctx, minimap, clam.pos, clam.kind === 'power' ? '#ffe28a' : '#fff', clam.kind === 'power' ? 'P' : null, clam.kind === 'power' ? 5 : 2.5));
     (stage.clams?.goals || []).forEach((p, team) => marker(ctx, minimap, p, colors[team], 'B', 6));
-    for (const [id, inventory] of Object.entries(state.inventories || {})) {
+    const inventories = Object.entries(state.inventories || {}), actors = G.match?.actors || [];
+    let powerCount=0,actorIndex=null;
+    for(const [,inventory] of inventories)if(inventory?.power)powerCount++;
+    if(powerCount>=4 && actors.length>=4){
+      actorIndex=new Map();
+      for(const actor of actors){
+        const id=String(actor.nid ?? `${actor.team}:${actor.slot}`);
+        if(!actorIndex.has(id))actorIndex.set(id,actor);
+      }
+    }
+    for (const [id, inventory] of inventories) {
       if (!inventory?.power) continue;
-      const actor = (G.match?.actors || []).find(a => String(a.nid ?? `${a.team}:${a.slot}`) === id);
-      if (actor?.pos) marker(ctx, minimap, [actor.pos.x, actor.pos.y, actor.pos.z], colors[actor.team], 'P', 6);
+      const actor = actorIndex ? actorIndex.get(id) : actors.find(a => String(a.nid ?? `${a.team}:${a.slot}`) === id);
+      if (actor?.pos) marker(ctx, minimap, actor.pos, colors[actor.team], 'P', 6);
     }
   }
   ctx.restore();

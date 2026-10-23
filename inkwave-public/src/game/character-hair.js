@@ -138,7 +138,8 @@ export class TentacleSurface {
       rho[i] = 1 + clamp(k * 0.03, 0, 3.5) + tipBias * (0.9 * sstep(0.8, 1.0, t) + 0.4 * (1 - sstep(0, 0.08, t)));
     }
     // soften (curvature from a spline is noisy) — two box passes
-    for (let pass = 0; pass < 2; pass++) { const c = rho.slice(); for (let i = 0; i < N; i++) rho[i] = (c[Math.max(0, i - 2)] + c[Math.max(0, i - 1)] + c[i] + c[Math.min(N - 1, i + 1)] + c[Math.min(N - 1, i + 2)]) / 5; }
+    const temp = new Float64Array(N);
+    for (let pass = 0; pass < 2; pass++) { const c = pass === 0 ? rho : temp, dst = pass === 0 ? temp : rho; for (let i = 0; i < N; i++) dst[i] = (c[Math.max(0, i - 2)] + c[Math.max(0, i - 1)] + c[i] + c[Math.min(N - 1, i + 1)] + c[Math.min(N - 1, i + 2)]) / 5; }
     const cum = new Float64Array(N + 1);
     for (let i = 0; i < N; i++) cum[i + 1] = cum[i] + rho[i];
     const out = [0]; let j = 0;
@@ -227,6 +228,7 @@ export function suctionCups(S, opts) {
   const radial = opts.radial ?? 9;
   const gap = opts.gap ?? 1;
   const pos = [], tt = [], rr = [], idx = [], list = [];
+  let cosByK, sinByK;
   const n = new V3(), et = new V3(), ea = new V3(), C = new V3(), q = new V3(), qn = new V3();
   const eps = 1e-3;
   const rimK = prof.findIndex((p) => p[1] >= 0.99);
@@ -243,6 +245,8 @@ export function suctionCups(S, opts) {
         const lt = S.point(t + eps, row.th, new V3()).distanceTo(S.point(t - eps, row.th, new V3())) / (2 * eps);
         const la = S.point(t, row.th + eps, new V3()).distanceTo(S.point(t, row.th - eps, new V3())) / (2 * eps);
         const h = R * (opts.height ?? 0.46);
+        const denT = Math.max(lt, 1e-6), denA = Math.max(la, 1e-6);
+        if (!cosByK) { cosByK = []; sinByK = []; for (let k = 0; k < radial; k++) { const a = (k / radial) * TAU; cosByK.push(Math.cos(a)); sinByK.push(Math.sin(a)); } }
         const b0 = pos.length / 3;
         const nr = prof.length;
         for (let j = 0; j < nr; j++) {
@@ -253,8 +257,7 @@ export function suctionCups(S, opts) {
             continue;
           }
           for (let k = 0; k < radial; k++) {
-            const a = (k / radial) * TAU;
-            const dt = (pr * R * Math.cos(a)) / Math.max(lt, 1e-6), da = (pr * R * Math.sin(a)) / Math.max(la, 1e-6);
+            const dt = (pr * R * cosByK[k]) / denT, da = (pr * R * sinByK[k]) / denA;
             S.normal(t + dt, row.th + da, qn);
             S.point(t + dt, row.th + da, q).addScaledVector(qn, pz * h - (j === 0 ? 0.0004 : 0));
             pos.push(q.x, q.y, q.z); tt.push(t); rr.push(j === 0 ? 1.4 : j < rimK ? 1 + 0.4 * (rimK - j) / rimK : pr / prof[rimK][0]);

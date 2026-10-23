@@ -1,6 +1,11 @@
 const INSTALLED_SPLATLING = Symbol.for('inkwave.s3.weapon-accuracy.splatling.v3');
 const finite = (x, otherwise) => Number.isFinite(x) ? x : otherwise;
 const clamp01 = x => Math.max(0, Math.min(1, x));
+const LOG_HALF = Math.log(.5);
+// Two numeric entries cover independently sampled yaw/pitch biases without
+// retaining actors. Misses use exactly the original exponent expression.
+let lastQuantileBias = NaN, lastQuantileExponent = NaN;
+let otherQuantileBias = NaN, otherQuantileExponent = NaN;
 
 /**
  * Sourced jump hold/recovery endpoints, shared by every angular family.
@@ -53,7 +58,14 @@ export function biasQuantile(u, bias) {
   if (b <= 0 || x <= 0) return 0;
   if (x >= 1) return 1;
   if (b >= 1) return 1;
-  return Math.pow(x, Math.log(b) / Math.log(.5));
+  if (b !== lastQuantileBias) {
+    if (b === otherQuantileBias) return Math.pow(x, otherQuantileExponent);
+    otherQuantileBias = lastQuantileBias;
+    otherQuantileExponent = lastQuantileExponent;
+    lastQuantileExponent = Math.log(b) / LOG_HALF;
+    lastQuantileBias = b;
+  }
+  return Math.pow(x, lastQuantileExponent);
 }
 
 // Ephemeral, synchronous launch context: no extra random draw, no actor-wide

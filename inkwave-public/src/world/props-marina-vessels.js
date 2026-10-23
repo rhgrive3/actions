@@ -29,23 +29,23 @@ export function registerMarinaVessels(D, H) {
   const cached = (key, fn) => { let g = CACHE.get(key); if (!g) { g = fn(); CACHE.set(key, g); } return g; };
 
   // Cheap primitives for small flat details (12-tri box, low-seg cylinder) — scaled unit templates.
-  const UBOX = new THREE.BoxGeometry(1, 1, 1);
-  const bx = (B, mat, c, w, h, d, x, y, z, o = {}) => B.add(mat, UBOX, c, x, y, z, { ...o, sx: w, sy: h, sz: d });
+  const unitBox = () => cached('unitBox', () => new THREE.BoxGeometry(1, 1, 1));
+  const bx = (B, mat, c, w, h, d, x, y, z, o = {}) => B.add(mat, unitBox(), c, x, y, z, { ...o, sx: w, sy: h, sz: d });
   const ucyl = (seg) => cached('ucyl|' + seg, () => new THREE.CylinderGeometry(1, 1, 1, seg, 1, false));
   const cy = (B, mat, c, r, h, x, y, z, o = {}) => B.add(mat, ucyl(o.seg ?? 6), c, x, y, z, { ...o, sx: r, sy: h, sz: r });
   const ucylO = (seg) => cached('ucylO|' + seg, () => new THREE.CylinderGeometry(1, 1, 1, seg, 1, true));
   const post = (B, mat, c, r, h, x, y, z, o = {}) => B.add(mat, ucylO(o.seg ?? 6), c, x, y, z, { ...o, sx: r, sy: h, sz: r });
 
   // Ring buoy (coral/white quarters baked in vertex colour), faces +Z. ≈ 290 tris.
-  const RINGBUOY = (() => {
+  const ringBuoyGeometry = () => cached('ringBuoy', () => {
     const g = new THREE.TorusGeometry(0.28, 0.068, 6, 24), P = g.attributes.position, cl = new Float32Array(P.count * 3);
     const a = new THREE.Color('#e9836c'), b = new THREE.Color('#f2eee6');
     for (let i = 0; i < P.count; i++) { const ang = Math.atan2(P.getY(i), P.getX(i)) + TAU; const q = Math.floor((ang + PI / 8) / (TAU / 8)) % 2 ? b : a; cl.set([q.r, q.g, q.b], i * 3); }
     g.setAttribute('color', new THREE.BufferAttribute(cl, 3));
     return g;
-  })();
+  });
   function ringBuoy(B, x, y, z, s = 0.8) {
-    B.add('gloss', RINGBUOY, 'white', x, y, z, { s });
+    B.add('gloss', ringBuoyGeometry(), 'white', x, y, z, { s });
     for (let k = 0; k < 4; k++) { const a = PI / 4 + (k / 4) * TAU; B.tor('rubber', C.cream, 0.075 * s, 0.011, x + Math.cos(a) * 0.28 * s, y + Math.sin(a) * 0.28 * s, z, { rz: a, ry: HP, rs: 3, ts: 8 }); }
   }
 
@@ -83,7 +83,6 @@ export function registerMarinaVessels(D, H) {
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3));
       g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3));
-      g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array((this.p.length / 3) * 2), 2));
       g.setAttribute('color', new THREE.Float32BufferAttribute(this.c, 3));
       g.setIndex(this.i);
       return g;
@@ -1965,6 +1964,16 @@ export function registerMarinaVessels(D, H) {
       B.col(-1.5, 0, -1.9, 1.5, 1.5, 1.9);
       B.blob(3.2, 4.2);
     },
+  };
+  // PropKit releases this private generation only after the last pack user clears.
+  return () => {
+    const geometries = new Set();
+    for (const value of CACHE.values()) {
+      if (value?.isBufferGeometry) geometries.add(value);
+      else for (const key of ['body', 'deckGeo', 'canvas']) if (value?.[key]?.isBufferGeometry) geometries.add(value[key]);
+    }
+    for (const g of geometries) g.dispose();
+    CACHE.clear();
   };
 }
 

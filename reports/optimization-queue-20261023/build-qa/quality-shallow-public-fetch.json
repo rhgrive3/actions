@@ -1,0 +1,23 @@
+{
+  "base": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+  "head": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "history": {
+    "available": true,
+    "fetched": true,
+    "reason": "immutable base tree fetched at depth one"
+  },
+  "scope": {
+    "relevant": true,
+    "reason": "immutable changed paths",
+    "changedFiles": 893
+  },
+  "headAfter": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "baseTree": "40cd5c2b6fe399b52b7b82c37ee546fc40f9abaf",
+  "headTree": "cfd4402fa796d11daffe2db0d34cdfcac8a4c71c",
+  "shallow": [
+    "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+    "726e338ac256ba9609086ce65e25a68ddd99df85"
+  ],
+  "initialObjectCounts": "count: 0\nsize: 0\nin-pack: 283\npacks: 1\nsize-pack: 218\nprune-packable: 0\ngarbage: 0\nsize-garbage: 0\n",
+  "finalObjectCounts": "count: 0\nsize: 0\nin-pack: 382\npacks: 2\nsize-pack: 369\nprune-packable: 0\ngarbage: 0\nsize-garbage: 0\n"
+}

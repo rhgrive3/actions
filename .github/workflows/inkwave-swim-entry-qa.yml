@@ -2,6 +2,7 @@ name: INKWAVE swim owner entry native QA
 on:
   pull_request:
     paths:
+      - 'patches/splatoon3/tests/source-loaded-actor-fixture.mjs'
       - patches/splatoon3/runtime/swim-motion.mjs
       - patches/splatoon3/tests/swim-motion.test.mjs
       - tools/swim-entry-qa/**

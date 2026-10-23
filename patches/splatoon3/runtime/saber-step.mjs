@@ -34,7 +34,14 @@ export function saberStepSpeed(step,dt,grounded,sliding=false){
   let distance=0;
   const p=step.param,k=Math.max(0,Math.min(1,finite(grounded?p.MoveStepKd:p.MoveStepKd_Air,finite(p.MoveStepKd,1))));
   const total=finite(p.MoveDist,0)*(grounded&&sliding?finite(p.MoveDistKd_OnSlideGnd,1):1);
-  const norm=totalWeights(k,step.duration);
+  let norm;
+  if(grounded){
+    if(!Object.is(step._normGroundK,k)||!Object.is(step._normGroundN,step.duration)){step._normGroundK=k;step._normGroundN=step.duration;step._normGround=totalWeights(k,step.duration);}
+    norm=step._normGround;
+  }else{
+    if(!Object.is(step._normAirK,k)||!Object.is(step._normAirN,step.duration)){step._normAirK=k;step._normAirN=step.duration;step._normAir=totalWeights(k,step.duration);}
+    norm=step._normAir;
+  }
   let f=Math.max(start,step.delay)-step.delay,last=Math.max(0,end-step.delay);
   // Integrate each source-frame bucket exactly. This preserves the finite
   // MoveDist also when this helper is observed at 30/60/120 Hz.

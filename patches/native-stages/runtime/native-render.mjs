@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { createLevelMaterial } from '../../../src/world/levelMaterial.js';
 
 export function nativeInkMaterial(paint, murals, texlib){
- const mat=createLevelMaterial(paint.texture,paint.size,murals,{paint,texlib});
+ const mat=createLevelMaterial(paint.texture,paint.size,murals,{paint,texlib,nativeInkOverlay:true});
  mat.transparent=true;mat.depthWrite=false;mat.polygonOffset=true;mat.polygonOffsetFactor=-2;mat.polygonOffsetUnits=-2;
  const compile=mat.onBeforeCompile;
  mat.onBeforeCompile=shader=>{
@@ -13,32 +13,32 @@ export function nativeInkMaterial(paint, murals, texlib){
   shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>','if (texture2D(uPaint, vPaintUv).a < 0.015) discard;\ndiffuseColor.a *= gInk;\n#include <opaque_fragment>');
  };
  mat.defaultAttributeValues={...mat.defaultAttributeValues,color:[1,1,1],lightUv:[-1,-1]};
- mat.customProgramCacheKey=()=> 'native-ink-overlay-v4';return mat;
+ mat.customProgramCacheKey=()=> 'native-ink-overlay-v5';return mat;
 }
 
 export function nativeInkGeometry(level,paint){
   // The source triangle/paint order is fixed. Allocate final GPU attributes once:
   // temporary JS number arrays used to double peak memory on large OBJ stages.
   const specs=[['position',3],['normal',3],['paintUv',2],['faceUv',2],
-    ['faceData',4],['faceFlags',3],['faceTan',3]];
+    ['nativeFaceSize',2],['nativeWall',1],['faceTan',3]];
   let count=0;
   for(const f of paint.paintFaces)if(f.atlas&&f.triangles)count+=f.triangles.length*3;
   const arrays=Object.fromEntries(specs.map(([name,size])=>[name,new Float32Array(count*size)]));
-  const {position,normal,paintUv,faceUv,faceData,faceFlags,faceTan}=arrays;
+  const {position,normal,paintUv,faceUv,nativeFaceSize,nativeWall,faceTan}=arrays;
   const p=new THREE.Vector3(),rel=new THREE.Vector3();
   let vertex=0;
   for(const f of paint.paintFaces){
     const a=f.atlas;if(!a||!f.triangles)continue;
     for(const id of f.triangles)for(let k=0;k<3;k++){
       p.fromArray(level.data.triangles,id*9+k*3);rel.copy(p).sub(f.origin);
-      const u=rel.dot(f.u),v=rel.dot(f.v),i2=vertex*2,i3=vertex*3,i4=vertex*4;
+      const u=rel.dot(f.u),v=rel.dot(f.v),i2=vertex*2,i3=vertex*3;
       position[i3]=p.x;position[i3+1]=p.y;position[i3+2]=p.z;
       normal[i3]=f.n.x;normal[i3+1]=f.n.y;normal[i3+2]=f.n.z;
       paintUv[i2]=(a.x+a.pad+u*a.ppm)/paint.size;
       paintUv[i2+1]=(a.y+a.pad+v*a.ppm)/paint.size;
       faceUv[i2]=u;faceUv[i2+1]=v;
-      faceData[i4+1]=1;faceData[i4+2]=f.su;faceData[i4+3]=f.sv;
-      faceFlags[i3]=f.wall?1:0;faceFlags[i3+2]=-1;
+      nativeFaceSize[i2]=f.su;nativeFaceSize[i2+1]=f.sv;
+      nativeWall[vertex]=f.wall?1:0;
       faceTan[i3]=f.u.x;faceTan[i3+1]=f.u.y;faceTan[i3+2]=f.u.z;
       vertex++;
     }
@@ -102,12 +102,17 @@ export function nativeDisplay(data,textures,quality){
   }
   mesh.userData.nativeObject=o;group.add(mesh);geometries.push(g);
  }
- return {group,updateTextures(next,quality){
+ return {group,currentTextures(){return liveTextures;},updateTextures(next,quality){
   for(const [name,mat] of cache){const src=m.materials[name]||{};mat.map=next.get(src.albedo)||null;mat.alphaMap=next.get(src.maps?.opacity)||null;
    mat.normalMap=quality==='high'?(next.get(src.maps?.normal)||null):null;mat.normalScale.set(.28,.28);
    mat.roughnessMap=quality==='high'?(next.get(src.maps?.roughness)||null):null;mat.emissiveMap=quality==='high'?(next.get(src.maps?.emissive)||null):null;
    mat.emissive.set(mat.emissiveMap?0xffffff:0x000000);mat.emissiveIntensity=.13;mat.needsUpdate=true;
   }
-  for(const t of liveTextures.values()){t.image?.close?.();t.dispose();}liveTextures.clear();liveTextures=next;
- },dispose(){group.removeFromParent();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());for(const t of liveTextures.values()){t.image?.close?.();t.dispose();}liveTextures.clear();}};
+  if(liveTextures!==next){
+   const retained=new Set(next.values());
+   for(const t of new Set(liveTextures.values()))if(!retained.has(t)){t.image?.close?.();t.dispose();}
+   liveTextures.clear();liveTextures=next;
+  }
+  next._nativeBorrowed?.clear(); // the new displayed profile now owns all entries
+ },dispose(){group.removeFromParent();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());for(const t of new Set(liveTextures.values())){t.image?.close?.();t.dispose();}liveTextures.clear();}};
 }

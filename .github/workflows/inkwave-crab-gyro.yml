@@ -2,6 +2,9 @@ name: INKWAVE Crab Tank and simultaneous touch gyro
 on:
   pull_request:
     paths:
+      - 'patches/splatoon3/tests/special-projectile-paint-credit.test.mjs'
+      - 'patches/reliability/tests/input-ownership.test.mjs'
+      - 'patches/reliability/tests/stick-inversion-scope.test.mjs'
       - 'patches/splatoon3/runtime/all-specials.mjs'
       - 'patches/splatoon3/runtime/crab-tank-*.mjs'
       - 'patches/splatoon3/runtime/special-*.mjs'

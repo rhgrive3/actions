@@ -79,10 +79,16 @@ export async function buildNativeWorld(game,map,current){
   finally { r.setRenderTarget(previousTarget);paint.dryMesh.visible=dryVisible; }
   await warmed;
   if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
-  const shaderWarmMilliseconds=performance.now()-warmStart;
+  let shaderWarmMilliseconds=performance.now()-warmStart;
   level.nativePaint=paint;
   inkGeometry=nativeInkGeometry(level,paint);inkMat=nativeInkMaterial(paint,game.murals,game.texlib);
   inkMesh=new NativeInkMesh(inkGeometry,inkMat).bindPaint(paint);
+  // Compile the native-only constant-attribute variant before publication.
+  // Like actor warm-up, use the live scene only for its lighting configuration;
+  // this detached ink mesh is not rendered and no target state spans the await.
+  const inkWarmStart=performance.now();
+  await r.compileAsync(inkMesh,G.camera,G.scene);
+  shaderWarmMilliseconds+=performance.now()-inkWarmStart;
   status.update('navigation');await new Promise(resolve=>requestAnimationFrame(resolve));
   if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
   const navStart=performance.now(),nav=await NavGraph.createNative(level,physics,{signal,current});
@@ -134,7 +140,7 @@ export async function buildNativeWorld(game,map,current){
   }finally{
    // A recovery exception must not bypass disposal of the detached candidate.
    // Attempt each independently, while preserving the original publication error.
-   for(const t of pendingTextures?.values()||[]){
+   for(const t of new Set(pendingTextures?.values()||[])){
     safely(()=>t.image?.close?.(),'pending image');safely(()=>t.dispose(),'pending texture');
    }
    pendingTextures?.clear();
