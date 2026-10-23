@@ -11,6 +11,64 @@ import { verifyWallBuild } from './check-inkwave-wall-render.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const BROWSER_ARGS=['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader'];
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+export const IDLE_OPERATION_TIMEOUT_MS=120000;
+const boundedPages=new WeakSet();
+// Playwright evaluate uses kNoTimeout, independently of setDefaultTimeout.
+// This is a host-side failure deadline, not cancellation or GPU completion proof.
+export function boundIdleEvaluations(page,phase=()=> 'evaluate',timers=globalThis){
+ if(boundedPages.has(page))return page;
+ const evaluate=page.evaluate;
+ if(typeof evaluate!=='function')throw TypeError('Idle page has no evaluate method');
+ page.evaluate=async function(...args){
+  const operationPhase=phase();let timer;
+  try{return await Promise.race([
+   Promise.resolve().then(()=>evaluate.apply(this,args)),
+   new Promise((_,reject)=>{timer=timers.setTimeout(()=>{
+    const error=Error(`Idle evaluate exceeded ${IDLE_OPERATION_TIMEOUT_MS} ms (${operationPhase})`);
+    Object.assign(error,{name:'IdleEvaluationTimeoutError',code:'INKWAVE_IDLE_EVALUATION_TIMEOUT',phase:operationPhase,timeoutMs:IDLE_OPERATION_TIMEOUT_MS});
+    reject(error);
+   },IDLE_OPERATION_TIMEOUT_MS);})
+  ]);}finally{timers.clearTimeout(timer);}
+ };
+ boundedPages.add(page);
+ return page;
+}
+export function primaryIdleFailure(error){
+ const seen=new Set();
+ for(let i=0;i<16&&error instanceof AggregateError&&Object.hasOwn(error,'cause')&&!seen.has(error);i++){seen.add(error);error=error.cause;}
+ return error;
+}
+const combineFailure=(primary,secondary,message)=>secondary instanceof AggregateError&&secondary.cause===primary
+ ? secondary : new AggregateError([primary,secondary],message,{cause:primary});
+// Failure diagnostics precede cleanup; no success receipt is committed until
+// both the task and cleanup finish. Diagnostic/cleanup errors retain the cause.
+export async function runIdleProbe(task,{diagnose,cleanup}){
+ let value,failure,failed=false;
+ const record=async error=>{try{await diagnose(error);return error;}catch(diagnosticError){return combineFailure(error,diagnosticError,'Idle failure diagnostics failed');}};
+ try{value=await task();}catch(error){failed=true;failure=await record(error);}
+ try{await cleanup(failure);}catch(cleanupError){failure=await record(failed?combineFailure(failure,cleanupError,'Idle probe cleanup failed'):cleanupError);failed=true;}
+ if(failed)throw failure;
+ return value;
+}
+export function idleFailureReporter({publish,snapshot,page,screenshotPath}){
+ let screenshotAttempted=false;
+ return async error=>{
+  const primary=primaryIdleFailure(error),timedOut=primary?.code==='INKWAVE_IDLE_EVALUATION_TIMEOUT';
+  publish({...snapshot(),status:'failed',error:error?.stack||String(error),primaryError:primary?.stack||String(primary),relatedErrors:error instanceof AggregateError?error.errors.slice(0,8).map(e=>e?.stack||String(e)):undefined,operation:timedOut?{phase:primary.phase,timeoutMs:primary.timeoutMs,code:primary.code}:undefined});
+  const activePage=page();
+  if(!timedOut&&activePage&&!screenshotAttempted){screenshotAttempted=true;await activePage.screenshot({path:screenshotPath}).catch(()=>{});}
+ };
+}
+export async function closeIdleResources(owner,server,primaryError){
+ const errors=[];
+ try{await owner?.close();}catch(error){errors.push(error);}
+ try{if(server)await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));}catch(error){errors.push(error);}
+ if(errors.length){
+  if(primaryError)throw new AggregateError([primaryError,...errors],'Idle probe and cleanup failed',{cause:primaryError});
+  if(errors.length===1)throw errors[0];
+  throw new AggregateError(errors,'Idle cleanup failed');
+ }
+}
 export function validateIdleResult(r) {
   const c=r.coldBoot;
   if(c?.quality!=='high'||c?.touch!==true||c?.gamePublishedAtAllocation!==false||c?.marina!==true||c?.cloud?.[0]!==1024||c?.cloud?.[1]!==320||c?.farSize!==256||c?.sameTargetsAfterBoot!==true)throw Error('Cold-boot mobile allocation gate');
@@ -69,9 +127,10 @@ async function main(){
  const site=fs.realpathSync(option('--site')),output=option('--evidence-dir'),profile=option('--profile-dir');
  for(const d of [output,profile]){if(['/tmp','/var/tmp','/dev/shm'].some(p=>d===p||d.startsWith(p+'/')))throw Error('Persistent evidence required');fs.mkdirSync(d,{recursive:true});}
  const publish=r=>fs.writeFileSync(path.join(output,'idle-resources-result.json'),JSON.stringify(r,null,2)+'\n');
- let browser,server,page,identity,result,failure=null;const errors=[];let phase='identity';
+ let browser,server,page,identity,result;const errors=[],loaded=new Set();let phase='identity';
  publish({status:'running',phase});
- try{
+ const diagnose=idleFailureReporter({publish,snapshot:()=>({phase,errors,result,loaded:[...loaded].slice(0,4096),loadedDropped:Math.max(0,loaded.size-4096),sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash}),page:()=>page,screenshotPath:path.join(output,'failure.png')});
+ const receipt=await runIdleProbe(async()=>{
   identity=verifyWallBuild(site,process.argv.includes('--exact-source'));
   if(process.argv.includes('--exact-source')){
    const p='scripts/check-inkwave-idle-resources.mjs';
@@ -83,9 +142,9 @@ async function main(){
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const address='http://127.0.0.1:'+server.address().port+'/';
   const {chromium}=await import(process.env.PLAYWRIGHT_MODULE?pathToFileURL(process.env.PLAYWRIGHT_MODULE).href:'playwright');
   browser=await chromium.launchPersistentContext(profile,{headless:true,viewport:{width:800,height:600},args:BROWSER_ARGS});
-  page=await browser.newPage();page.setDefaultTimeout(120000);page.on('pageerror',e=>errors.push(e.message));
+  page=boundIdleEvaluations(await browser.newPage(),()=>phase);page.setDefaultTimeout(IDLE_OPERATION_TIMEOUT_MS);page.on('pageerror',e=>errors.push(e.message));
   page.on('console',m=>{if(m.type()==='error')errors.push(m.text().slice(0,1500));});
-  const loaded=new Set();await page.route(address+'**',async route=>{try{const response=await route.fetch(),body=await response.body(),key=decodeURIComponent(new URL(response.url()).pathname).slice(1)||'index.html';if(manifest.artifacts[key]&&sha(body)!==manifest.artifacts[key])throw Error('Loaded byte mismatch '+key);loaded.add(key);await route.fulfill({response,body});}catch(e){errors.push(e.message);await route.abort();}});
+  await page.route(address+'**',async route=>{try{const response=await route.fetch(),body=await response.body(),key=decodeURIComponent(new URL(response.url()).pathname).slice(1)||'index.html';if(manifest.artifacts[key]&&sha(body)!==manifest.artifacts[key])throw Error('Loaded byte mismatch '+key);loaded.add(key);await route.fulfill({response,body});}catch(e){errors.push(e.message);await route.abort();}});
   await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,music:0,sfx:1})));
   phase='boot';await page.goto(address+'?devstage&skipTitle',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.__inkwave?.debug&&window.__G?.s3?.installed,null,{timeout:180000});
@@ -165,14 +224,15 @@ async function main(){
    try{return {frames:120,playing:sample('playing'),results:sample('results'),measurement:'native published Game._frame producers and real WebGL submission counts; not GPU execution time or device power'};}
    finally{restore.forEach(f=>f());match.state=beforeState;match.paused=beforePaused;}
   });
-  result.gpu=await page.evaluate(()=>{const gl=__G.renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return {webgl:gl.getParameter(gl.VERSION),renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};});
+  phase='gpu-identity';result.gpu=await page.evaluate(()=>{const gl=__G.renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return {webgl:gl.getParameter(gl.VERSION),renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};});
   for(const f of ['patches/local-quality/idle-resources.mjs','patches/local-quality/music-idle.mjs'])if(![...loaded].some(p=>p.endsWith('/'+f)))throw Error('Runtime module not actually loaded: '+f);
   phase='cold-boot-mobile';
   // The preceding desktop measurements are complete. Retire its live renderer
   // before measuring an isolated cold mobile allocation in a fresh context.
   page=await retireDesktopForCold(page,browser);browser=null;
-  const {context:coldContext,page:coldPage}=await launchColdMobileBrowser(chromium,profile);const coldBrowserVersion=coldContext.browser()?.version();let hooked=false,mainReleased=false,coldError=null;const coldLoaded=new Set(),coldPending=new Map();let pendingDropped=0,pendingSerial=0;
+  const {context:coldContext,page:coldPage}=await launchColdMobileBrowser(chromium,profile);const coldBrowserVersion=coldContext.browser()?.version();let hooked=false,mainReleased=false,coldError=null,coldEvaluationError=null;const coldLoaded=new Set(),coldPending=new Map();let pendingDropped=0,pendingSerial=0;
   try {
+   boundIdleEvaluations(coldPage,()=>phase);
    coldPage.on('pageerror',e=>errors.push('cold boot: '+e.message));
    coldPage.on('console',m=>{if(m.type()==='error')errors.push('cold boot console: '+m.text().slice(0,1500));});
    await coldPage.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:false,bloom:false,music:0,sfx:0})));
@@ -187,7 +247,8 @@ async function main(){
       hooked=true;
       // Observe the real G.env publication before the unmodified main module
       // executes. No constructor, target factory, budget, or served bytes change.
-      await coldPage.evaluate(observeColdEnvironment,new URL('./core/ctx.js',response.url()).href);
+      try{await coldPage.evaluate(observeColdEnvironment,new URL('./core/ctx.js',response.url()).href);}
+      catch(error){coldEvaluationError??=error;throw error;}
      }
      await route.fulfill({response,body});
      if(key.endsWith('/src/main.js'))mainReleased=true;
@@ -201,17 +262,26 @@ async function main(){
    if(!hooked||![...coldLoaded].some(p=>p.endsWith('/src/world/environment.js')))throw Error('Cold native Environment bytes not observed');
    await coldPage.screenshot({path:path.join(output,'cold-boot-mobile-halyard.png'),animations:'disabled'});
   } catch(error) {
-   coldError=error;
-   const diagnostic=result.coldDiagnostic={error:String(error),hooked,mainReleased,desktopRetired:page===null,loaded:[...coldLoaded].sort(),pendingDropped,pending:[...coldPending].slice(0,256).map(([,r])=>({path:r.path,type:r.type,elapsedMs:Math.max(0,Date.now()-r.started)}))};
+   coldError=coldEvaluationError??error;
+   const diagnostic=result.coldDiagnostic={error:String(coldError),hooked,mainReleased,desktopRetired:page===null,loaded:[...coldLoaded].sort(),pendingDropped,pending:[...coldPending].slice(0,256).map(([,r])=>({path:r.path,type:r.type,elapsedMs:Math.max(0,Date.now()-r.started)}))};
+   if(primaryIdleFailure(coldError)?.code==='INKWAVE_IDLE_EVALUATION_TIMEOUT'){
+    diagnostic.inspectionUnavailable='Evaluation deadline expired; available Node-side observations retained without another browser call';
+   }else{
    let timer;
    try {diagnostic.page=await Promise.race([coldPage.evaluate(inspectColdBoot),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Cold diagnostic evaluation timed out')),10000);})]);}
    catch(inspectError){diagnostic.inspectionError=String(inspectError);}finally{clearTimeout(timer);}
    try{await coldPage.screenshot({path:path.join(output,'cold-boot-failure.png'),timeout:15000});}catch(captureError){diagnostic.screenshotError=String(captureError);}
-   throw error;
+   }
+   // Persist the available cold observations before a potentially stalled close.
+   try{await diagnose(coldError);}catch(diagnosticError){coldError=combineFailure(coldError,diagnosticError,'Idle failure diagnostics failed');}
+   throw coldError;
   } finally {try{await closeProbeOwner(coldContext,coldError);}catch(closeError){if(coldError)result.coldDiagnostic.closeError=String(closeError.errors?.at(-1)||closeError);throw closeError;}}
   result.errors=errors;const summary=validateIdleResult(result);
-  publish({status:'passed',...result,summary,sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash,verifierSha256:sha(fs.readFileSync(fileURLToPath(import.meta.url))),browser:coldBrowserVersion});
- }catch(error){failure=error;publish({status:'failed',phase,error:error.stack,errors,result,sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash});if(page)await page.screenshot({path:path.join(output,'failure.png')}).catch(()=>{});throw error;}
- finally{try{await closeProbeOwner(browser,failure);}finally{if(server)await new Promise(r=>server.close(r));}}
+  return {status:'passed',...result,summary,sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash,verifierSha256:sha(fs.readFileSync(fileURLToPath(import.meta.url))),browser:coldBrowserVersion};
+ },{
+  diagnose,
+  cleanup:error=>closeIdleResources(browser,server,error)
+ });
+ publish(receipt);
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))main().catch(e=>{console.error(e);process.exitCode=1;});
