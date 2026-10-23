@@ -6146,3 +6146,7 @@ main `726e338ac256ba9609086ce65e25a68ddd99df85` の production composition を�
 ### 2026-10-23 current-main firing cosmetic candidate
 
 最新公式main `7e027ac2` と承認済み96efの発射cosmeticを別候補へ合成。production4パスは96efと同一、ヒッセン共有描画leaf・4special runtime・最新mainの静的メニュー修正を保持する。22fから参照QA2ファイルだけを採用し、9-edge負例を維持。正規minify前後build、source66/生成物34/参照等28、960stepの物理/塗り一致、実Game通常/ジャンプ4条件の発射/更新順/RNG一致、残余0/1/2枠と既存40滴保持を確認。[正確な入力・生成物・制約](firing-cosmetics-main7e-20261023/README.md)。PR1857 refは確認待ちで未更新。本家参照403・retail寸法・実機性能・公開CIを確認済みへ変更しない。
+
+## 2026-10-23: 原典ステージの GPU 描画負荷上限
+
+原典ステージ表示中だけ GTAO を外し、MSAA・pixelRatio に上限をかけ、コンテキストロスト後は段階的に描画負荷を下げる（[記録](inkwave-native-gpu-budget-2026-10-23.md)）。描画表現のみの変更で、歩行・泳ぎ・射撃・塗り判定・インク回復・カメラ操作のロジックは変更していない。本家 Ver.11.3.0 との既存の差分・未確認項目はそのまま。計測は Chromium + SwiftShader の WebGL 確保量の集計で、実機の GPU 落ち解消は未確認。
