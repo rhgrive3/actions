@@ -6144,3 +6144,7 @@ Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテ�
 - 変更: `spawn-pose-motion.mjs::spawnMotionAllowsAction`が既存表示ownerの終了を読む。無効／未対応の表示は旧native timer判定を保持する。Actor.resetではwRollだけを初期化し、respawn-lifecycleは照準／飛行中の実物理入力解除を既存rearmへ反映する。native武器のwindup／cooldown／emerge gate、弾／塗り、移動、無敵、network、ローラー回復曲線／grip／接地IKは変更しない。
 - 本家の根拠・限界: [任天堂公式紹介](https://www.nintendo.com/jp/switch/av5ja/index.html)および既存の[spawn較正記録](../patches/splatoon3/reference/spawn-pose-calibration.md)を参照。本変更は既存INKWAVEの通常構えへの復帰修正で、新たな本家joint曲線や着地フレーム値を作らない。同条件の本家実機映像／精密な軌道一致は未確認のまま。
 - 検証・実際の本番build identity・通常native前後11地点・原本と中間失敗は[候補レポート](respawn-weapon-state-20261023/integration/README.md)を参照。fixed simulation／実Chromium／retail実機／公開exact HEAD CIの結果を分けて記録する。
+
+### 2026-10-23 follow-up: 未接地Squid Spawn landingの表示owner
+
+親の独立検証で、`702ce3d`はsupport消失後の未接地landing中に較正spawn表示が先に終了するとreadyを許可する回帰が見つかった。別candidateの`spawnMotionAllowsAction`は正しく結び付いたActorのactive squidSpawnをread-onlyで優先し、実支持への着地・lifecycle終了後は古い時計を待たず既存readyへ戻す。helperの実行2行だけを追加し、時計／physics／攻撃gate／grip／IK／曲線は変更しない。[元702との88点の一致、source・通常生成物の焦点回帰、exact patch/hash](respawn-spawn-owner-20261023/README.md)を保存する。PR1862は独立再確認まで更新しない。巨大に見えるreadyの最終pivot／投影の切り分けは未判定であり、モデル変更・見た目受入済みとは扱わない。

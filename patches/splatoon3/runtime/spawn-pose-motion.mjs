@@ -131,9 +131,11 @@ export function installSpawnPoseMotion({ Character, Actor, CHARACTER_CHANNELS: c
   }
 }
 
-// A retired spawn pose yields immediately; its native timer still measures
-// elapsed time. Disabled/unsupported presentations keep the native caller gate.
+// Squid Spawn still owns the body if its calibrated overlay ends in flight.
+// Once that lifecycle finishes, a retired pose yields without aging the clock.
 export function spawnMotionAllowsAction(ch, nativeEligible) {
+  const owner = ch?.actor;
+  if (owner && owner.character === ch && owner.s3?.squidSpawn) return false;
   const s = hooks(ch)?.states.get(ch);
   if (!s || ch.s3SpawnPoseMotionEnabled === false || ch.s3HitSpawnMotionEnabled === false) return nativeEligible;
   return s.phase === 'off';
