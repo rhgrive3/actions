@@ -81,7 +81,8 @@ test('only the sixteen pinned pose source leaves are identical after the first b
  assert.deepEqual([...result.sources],[...before]);
  for(const path of CHARACTER_POSE_PATHS){
   assert.equal(gitBlobSha1(before.get(path)),POST_30_PRS_POSE_PAIR.paths[path].baseline);
-  assert.equal(fs.readFileSync(new URL('../../'+path,import.meta.url),'utf8'),after.get(path));
+  // This is the frozen historical tuple, not the newer PR1856 motion epoch.
+  assert.equal(gitBlobSha1(after.get(path)),POST_30_PRS_POSE_PAIR.paths[path].candidate);
   for(const side of [0,1])for(const omit of [false,true]){
    const pair=maps();if(omit)pair[side].delete(path);else pair[side].set(path,pair[side].get(path)+' ');
    assert.throws(()=>planCharacterPoseBaseline(...pair));
