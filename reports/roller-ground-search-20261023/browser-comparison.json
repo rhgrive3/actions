@@ -1,0 +1,106 @@
+[
+  {
+    "scenario": "released-edge",
+    "sameConditions": true,
+    "sameNativeGameplay": true,
+    "outOfScopeExact": false,
+    "beforePeak": {
+      "tick": 30,
+      "value": 1.5594890879816306
+    },
+    "candidatePeak": {
+      "tick": 30,
+      "value": 1.5594890879816306
+    },
+    "beforeRenderPeak": {
+      "calls": 3310,
+      "triangles": 14552177
+    },
+    "candidateRenderPeak": {
+      "calls": 3310,
+      "triangles": 14552175
+    },
+    "errors": [
+      [],
+      []
+    ]
+  },
+  {
+    "scenario": "landing-edge",
+    "sameConditions": true,
+    "sameNativeGameplay": true,
+    "outOfScopeExact": false,
+    "beforePeak": {
+      "tick": 30,
+      "value": 1.6435187536903375
+    },
+    "candidatePeak": {
+      "tick": 30,
+      "value": 1.6435187536903375
+    },
+    "beforeRenderPeak": {
+      "calls": 6571,
+      "triangles": 29053595
+    },
+    "candidateRenderPeak": {
+      "calls": 6571,
+      "triangles": 29053597
+    },
+    "errors": [
+      [],
+      []
+    ]
+  },
+  {
+    "scenario": "horizontal",
+    "sameConditions": true,
+    "sameNativeGameplay": true,
+    "outOfScopeExact": true,
+    "beforePeak": {
+      "tick": 19,
+      "value": 1.47413708620346
+    },
+    "candidatePeak": {
+      "tick": 19,
+      "value": 1.47413708620346
+    },
+    "beforeRenderPeak": {
+      "calls": 9841,
+      "triangles": 44391661
+    },
+    "candidateRenderPeak": {
+      "calls": 9841,
+      "triangles": 44391689
+    },
+    "errors": [
+      [],
+      []
+    ]
+  },
+  {
+    "scenario": "airborne",
+    "sameConditions": true,
+    "sameNativeGameplay": true,
+    "outOfScopeExact": true,
+    "beforePeak": {
+      "tick": 30,
+      "value": 1.6324263058865367
+    },
+    "candidatePeak": {
+      "tick": 30,
+      "value": 1.6324263058865367
+    },
+    "beforeRenderPeak": {
+      "calls": 13101,
+      "triangles": 58889165
+    },
+    "candidateRenderPeak": {
+      "calls": 13101,
+      "triangles": 58889203
+    },
+    "errors": [
+      [],
+      []
+    ]
+  }
+]

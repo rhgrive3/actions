@@ -1053,6 +1053,13 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       let bestCost = bestGroundError*30 + switchCost(-1, 0, 0);
       baseQ.copy(orientation);
       for(let axisIndex=0;axisIndex<SEARCH_AXES.length;axisIndex++)for(const sign of [-1,1]) {
+        // A released vertical flick recovers in its authored pitch plane.
+        // A cross-axis floor solution rolls the long drum sideways, then
+        // disappears in one tick as the returning swing clears the floor.
+        // Keep this display-only correction on the swing axis; the existing
+        // finite reaches, paired grips and penetration recovery still apply.
+        if (this.s3RollerFlick?.vertical && this.s3RollerFlick.released &&
+            !this.s3RollerFlick.rolling && !contacting && axisIndex !== 0) continue;
         const [x,y,z] = SEARCH_AXES[axisIndex];
         searchAxis.set(x,y,z);
         for(let step=1;step<=30;step++){

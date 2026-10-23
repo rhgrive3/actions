@@ -1,0 +1,19 @@
+(node:8058) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ one production installer and duplicate module realms preserve hook identity; nullable previews use native IK (15046.650336ms)
+✔ horizontal startup removes the double lift in actual posed geometry while preserving gameplay and native grips (693.003783ms)
+✔ vertical release, recovery, held ground pushing and lift on a fresh attack retain native geometry and timing (835.297139ms)
+✔ 35F/42F instance timing never replays the horizontal legacy tail; gameplay clocks are unchanged (508.868412ms)
+✔ 30/60/120Hz presentation and zero elapsed pause give identical 60Hz posed bones and indexed geometry (752.685859ms)
+✔ reset, death, sub aim, form, weapon and special interruption clear addon state without changing the runner (302.655359ms)
+✔ hide interrupts the current roller startup without cancelling its native runner (147.614962ms)
+✔ vertical lift keeps rising to the late crest instead of borrowing the horizontal overhead hold (4.256411ms)
+✔ vertical fitted grip has continuous position and velocity across crest, release, follow-through and return (0.504132ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 18837.582983

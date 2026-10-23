@@ -1,0 +1,32 @@
+INKWAVE built fixture /workspace/actions/.roller-recovery/axis/site contentHash=20e611b86990505d9d515f8d48b757b376a9a68cb3e596167f103834bc804969
+INKWAVE built fixture /workspace/actions/.roller-recovery/axis/site contentHash=20e611b86990505d9d515f8d48b757b376a9a68cb3e596167f103834bc804969
+(node:8580) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ late ZR release: old cross-axis drum jump fails the 0.30 lateral regression limit (26174.369651ms)
+✖ whole transition: reducing the late jump must not move a larger jump to landing (568.925846ms)
+✔ horizontal and airborne output stay identical; ZR release and landing preserve native gameplay (2767.157499ms)
+✔ per-weapon clocks and trajectories remain refresh independent across restart/reuse (6407.358847ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 36639.067396
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/roller-vertical-ground-search.test.mjs:80:1
+✖ whole transition: reducing the late jump must not move a larger jump to landing (568.925846ms)
+  AssertionError [ERR_ASSERTION]: whole-transition peak worsened: 0.5735896243193509 -> 0.8424666399328198
+      at TestContext.<anonymous> (file:///workspace/roller-ground-candidate/patches/splatoon3/tests/roller-vertical-ground-search.test.mjs:82:3)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

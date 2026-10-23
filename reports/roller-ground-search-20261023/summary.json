@@ -1,0 +1,295 @@
+{
+  "acceptance": {
+    "scope": "INKWAVE regression only; NOT a retail match",
+    "lateOldFails": true,
+    "lateCandidatePasses": true,
+    "wholeTransitionPasses": false,
+    "status": "REJECTED if any whole transition or browser gate fails"
+  },
+  "results": [
+    {
+      "name": "before",
+      "observationalEquivalence": true,
+      "excluded": [
+        "cumulative renderer.info counters"
+      ],
+      "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+      "inputHash": "350b861c6d2ca16e5430ffc5b4f7e39cfbefc9df67290de1746b077ae256eb81",
+      "windows": {
+        "31-56": {
+          "maxStep": {
+            "tick": 31,
+            "value": 1.2789993270748106
+          },
+          "maxAcceleration": {
+            "tick": 31,
+            "value": 5148.310538856002
+          },
+          "maxScreenStep": {
+            "tick": 31,
+            "value": 144.32425529999347
+          },
+          "totalDistance": 7.187254935659487
+        },
+        "39-56": {
+          "maxStep": {
+            "tick": 49,
+            "value": 1.1091286239057678
+          },
+          "maxAcceleration": {
+            "tick": 49,
+            "value": 4155.844201258958
+          },
+          "maxScreenStep": {
+            "tick": 49,
+            "value": 129.74999332811768
+          },
+          "totalDistance": 5.124046299380309
+        },
+        "48-56": {
+          "maxStep": {
+            "tick": 49,
+            "value": 1.1091286239057678
+          },
+          "maxAcceleration": {
+            "tick": 49,
+            "value": 4155.844201258958
+          },
+          "maxScreenStep": {
+            "tick": 49,
+            "value": 129.74999332811768
+          },
+          "totalDistance": 4.063007994850028
+        },
+        "50-56": {
+          "maxStep": {
+            "tick": 50,
+            "value": 0.7171404111637811
+          },
+          "maxAcceleration": {
+            "tick": 50,
+            "value": 2956.1860249157908
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 59.85169069428436
+          },
+          "totalDistance": 2.6613871057010705
+        }
+      }
+    },
+    {
+      "name": "cf9",
+      "observationalEquivalence": true,
+      "excluded": [
+        "cumulative renderer.info counters"
+      ],
+      "contentHash": "733b2f0c33836fb92b867d6b0b21d9c02d18804f1d1188bad84a6d0571b5010f",
+      "inputHash": "f0b931db340409eb82452aa8cc0996eee65abfe7e5e964ffa10e2fb5221e3e26",
+      "windows": {
+        "31-56": {
+          "maxStep": {
+            "tick": 31,
+            "value": 1.2789993270748106
+          },
+          "maxAcceleration": {
+            "tick": 31,
+            "value": 5148.310538856002
+          },
+          "maxScreenStep": {
+            "tick": 31,
+            "value": 144.32425529999347
+          },
+          "totalDistance": 7.067613853603348
+        },
+        "39-56": {
+          "maxStep": {
+            "tick": 51,
+            "value": 0.9082543165200908
+          },
+          "maxAcceleration": {
+            "tick": 51,
+            "value": 3061.883177278835
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 90.5910297470787
+          },
+          "totalDistance": 5.0044052173241695
+        },
+        "48-56": {
+          "maxStep": {
+            "tick": 51,
+            "value": 0.9082543165200908
+          },
+          "maxAcceleration": {
+            "tick": 51,
+            "value": 3061.883177278835
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 90.5910297470787
+          },
+          "totalDistance": 3.943366912793889
+        },
+        "50-56": {
+          "maxStep": {
+            "tick": 51,
+            "value": 0.9082543165200908
+          },
+          "maxAcceleration": {
+            "tick": 51,
+            "value": 3061.883177278835
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 90.5910297470787
+          },
+          "totalDistance": 3.7394394364831545
+        }
+      }
+    },
+    {
+      "name": "weighted",
+      "observationalEquivalence": true,
+      "excluded": [
+        "cumulative renderer.info counters"
+      ],
+      "contentHash": "40d7741f41281e9333f032f67b2c5b0b1dbd953a9fde9b3ac972748965461da1",
+      "inputHash": "a27c8ea00d871b5a7e01b4258276a2f123edb1337842465c87a6a50fa15cce32",
+      "windows": {
+        "31-56": {
+          "maxStep": {
+            "tick": 31,
+            "value": 1.2789993270748106
+          },
+          "maxAcceleration": {
+            "tick": 31,
+            "value": 5148.310538856002
+          },
+          "maxScreenStep": {
+            "tick": 31,
+            "value": 144.32425529999347
+          },
+          "totalDistance": 7.107447161858632
+        },
+        "39-56": {
+          "maxStep": {
+            "tick": 40,
+            "value": 0.788756163066068
+          },
+          "maxAcceleration": {
+            "tick": 41,
+            "value": 2846.478548699579
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 75.07536044730809
+          },
+          "totalDistance": 5.044238525579452
+        },
+        "48-56": {
+          "maxStep": {
+            "tick": 53,
+            "value": 0.7537768081510847
+          },
+          "maxAcceleration": {
+            "tick": 50,
+            "value": 1951.9998634909878
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 75.07536044730809
+          },
+          "totalDistance": 3.9369258614401774
+        },
+        "50-56": {
+          "maxStep": {
+            "tick": 53,
+            "value": 0.7537768081510847
+          },
+          "maxAcceleration": {
+            "tick": 50,
+            "value": 1951.9998634909878
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 75.07536044730809
+          },
+          "totalDistance": 3.776748767178307
+        }
+      }
+    },
+    {
+      "name": "axis",
+      "observationalEquivalence": true,
+      "excluded": [
+        "cumulative renderer.info counters"
+      ],
+      "contentHash": "20e611b86990505d9d515f8d48b757b376a9a68cb3e596167f103834bc804969",
+      "inputHash": "98c8d00983fb6554b0720cbd7df64ae7b835b99a1372591dc6061f5e1fedb194",
+      "windows": {
+        "31-56": {
+          "maxStep": {
+            "tick": 31,
+            "value": 1.2789993270748106
+          },
+          "maxAcceleration": {
+            "tick": 31,
+            "value": 5148.310538856002
+          },
+          "maxScreenStep": {
+            "tick": 31,
+            "value": 144.32425529999347
+          },
+          "totalDistance": 7.4866336088509815
+        },
+        "39-56": {
+          "maxStep": {
+            "tick": 40,
+            "value": 1.1696967051337195
+          },
+          "maxAcceleration": {
+            "tick": 40,
+            "value": 4202.827564972891
+          },
+          "maxScreenStep": {
+            "tick": 40,
+            "value": 97.27518181280313
+          },
+          "totalDistance": 5.423424972571803
+        },
+        "48-56": {
+          "maxStep": {
+            "tick": 50,
+            "value": 0.7171404111637811
+          },
+          "maxAcceleration": {
+            "tick": 49,
+            "value": 1931.2666226296037
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 59.85169069428436
+          },
+          "totalDistance": 3.6601533447302437
+        },
+        "50-56": {
+          "maxStep": {
+            "tick": 50,
+            "value": 0.7171404111637811
+          },
+          "maxAcceleration": {
+            "tick": 51,
+            "value": 1731.8118355570668
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 59.85169069428436
+          },
+          "totalDistance": 2.6613871057010705
+        }
+      }
+    }
+  ]
+}

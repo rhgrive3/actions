@@ -1,0 +1,275 @@
+{
+  "acceptance": {
+    "scope": "INKWAVE regression only; NOT a retail match",
+    "lateOldFails": true,
+    "lateCandidatePasses": true,
+    "wholeTransitionPasses": false,
+    "status": "REJECTED if any whole transition or browser gate fails"
+  },
+  "summary": [
+    {
+      "name": "before",
+      "observationalEquivalence": true,
+      "windows": {
+        "31-56": {
+          "maxStep": {
+            "tick": 31,
+            "value": 1.2789993270748106
+          },
+          "maxAcceleration": {
+            "tick": 31,
+            "value": 5148.310538856002
+          },
+          "maxScreenStep": {
+            "tick": 31,
+            "value": 144.32425529999347
+          },
+          "totalDistance": 7.187254935659487
+        },
+        "39-56": {
+          "maxStep": {
+            "tick": 49,
+            "value": 1.1091286239057678
+          },
+          "maxAcceleration": {
+            "tick": 49,
+            "value": 4155.844201258958
+          },
+          "maxScreenStep": {
+            "tick": 49,
+            "value": 129.74999332811768
+          },
+          "totalDistance": 5.124046299380309
+        },
+        "48-56": {
+          "maxStep": {
+            "tick": 49,
+            "value": 1.1091286239057678
+          },
+          "maxAcceleration": {
+            "tick": 49,
+            "value": 4155.844201258958
+          },
+          "maxScreenStep": {
+            "tick": 49,
+            "value": 129.74999332811768
+          },
+          "totalDistance": 4.063007994850028
+        },
+        "50-56": {
+          "maxStep": {
+            "tick": 50,
+            "value": 0.7171404111637811
+          },
+          "maxAcceleration": {
+            "tick": 50,
+            "value": 2956.1860249157908
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 59.85169069428436
+          },
+          "totalDistance": 2.6613871057010705
+        }
+      }
+    },
+    {
+      "name": "cf9",
+      "observationalEquivalence": true,
+      "windows": {
+        "31-56": {
+          "maxStep": {
+            "tick": 31,
+            "value": 1.2789993270748106
+          },
+          "maxAcceleration": {
+            "tick": 31,
+            "value": 5148.310538856002
+          },
+          "maxScreenStep": {
+            "tick": 31,
+            "value": 144.32425529999347
+          },
+          "totalDistance": 7.067613853603348
+        },
+        "39-56": {
+          "maxStep": {
+            "tick": 51,
+            "value": 0.9082543165200908
+          },
+          "maxAcceleration": {
+            "tick": 51,
+            "value": 3061.883177278835
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 90.5910297470787
+          },
+          "totalDistance": 5.0044052173241695
+        },
+        "48-56": {
+          "maxStep": {
+            "tick": 51,
+            "value": 0.9082543165200908
+          },
+          "maxAcceleration": {
+            "tick": 51,
+            "value": 3061.883177278835
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 90.5910297470787
+          },
+          "totalDistance": 3.943366912793889
+        },
+        "50-56": {
+          "maxStep": {
+            "tick": 51,
+            "value": 0.9082543165200908
+          },
+          "maxAcceleration": {
+            "tick": 51,
+            "value": 3061.883177278835
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 90.5910297470787
+          },
+          "totalDistance": 3.7394394364831545
+        }
+      }
+    },
+    {
+      "name": "weighted",
+      "observationalEquivalence": true,
+      "windows": {
+        "31-56": {
+          "maxStep": {
+            "tick": 31,
+            "value": 1.2789993270748106
+          },
+          "maxAcceleration": {
+            "tick": 31,
+            "value": 5148.310538856002
+          },
+          "maxScreenStep": {
+            "tick": 31,
+            "value": 144.32425529999347
+          },
+          "totalDistance": 7.107447161858632
+        },
+        "39-56": {
+          "maxStep": {
+            "tick": 40,
+            "value": 0.788756163066068
+          },
+          "maxAcceleration": {
+            "tick": 41,
+            "value": 2846.478548699579
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 75.07536044730809
+          },
+          "totalDistance": 5.044238525579452
+        },
+        "48-56": {
+          "maxStep": {
+            "tick": 53,
+            "value": 0.7537768081510847
+          },
+          "maxAcceleration": {
+            "tick": 50,
+            "value": 1951.9998634909878
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 75.07536044730809
+          },
+          "totalDistance": 3.9369258614401774
+        },
+        "50-56": {
+          "maxStep": {
+            "tick": 53,
+            "value": 0.7537768081510847
+          },
+          "maxAcceleration": {
+            "tick": 50,
+            "value": 1951.9998634909878
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 75.07536044730809
+          },
+          "totalDistance": 3.776748767178307
+        }
+      }
+    },
+    {
+      "name": "axis",
+      "observationalEquivalence": true,
+      "windows": {
+        "31-56": {
+          "maxStep": {
+            "tick": 31,
+            "value": 1.2789993270748106
+          },
+          "maxAcceleration": {
+            "tick": 31,
+            "value": 5148.310538856002
+          },
+          "maxScreenStep": {
+            "tick": 31,
+            "value": 144.32425529999347
+          },
+          "totalDistance": 7.4866336088509815
+        },
+        "39-56": {
+          "maxStep": {
+            "tick": 40,
+            "value": 1.1696967051337195
+          },
+          "maxAcceleration": {
+            "tick": 40,
+            "value": 4202.827564972891
+          },
+          "maxScreenStep": {
+            "tick": 40,
+            "value": 97.27518181280313
+          },
+          "totalDistance": 5.423424972571803
+        },
+        "48-56": {
+          "maxStep": {
+            "tick": 50,
+            "value": 0.7171404111637811
+          },
+          "maxAcceleration": {
+            "tick": 49,
+            "value": 1931.2666226296037
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 59.85169069428436
+          },
+          "totalDistance": 3.6601533447302437
+        },
+        "50-56": {
+          "maxStep": {
+            "tick": 50,
+            "value": 0.7171404111637811
+          },
+          "maxAcceleration": {
+            "tick": 51,
+            "value": 1731.8118355570668
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 59.85169069428436
+          },
+          "totalDistance": 2.6613871057010705
+        }
+      }
+    }
+  ]
+}

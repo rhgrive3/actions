@@ -6136,3 +6136,7 @@ main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、Splatoon 3 Ver.11
 参照対象は公開版の全パッチ合成後。S3 Ver.11.3.0に関する既存の未確認値は変更せず、ソースモーション（既存のWii U由来パックを含む）の中間計算だけを削減した。BodyBalanceのgain対象と祖先以外の中間world回転を省き、最終全ボーンFK・足接地・IK・銃口・移動・射撃・塗り・当たり判定・描画設定は維持する。2種の実ソースキャラクター、シューター/チャージャー/ローラーの30/60/120Hz、1260フレームで最終local/world姿勢・skin行列・接地・銃口が一致し、通常minify配信物でも同じ比較が成功。これはロジック/配信物検証であり、Nintendo実機やiPad SafariのFPS比較ではない。
 
 Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテゴリ。修正対象のBodyBalanceはその一部にすぎず、iPad上での支配要因の確定や重いフレームの完全解消とは扱わない。#1671/#1757の実機受入はOpenのまま。条件・既存PRとの重複確認・再現コマンド・証跡は[調査記録](inkwave-composed-cpu-20261023/README.md)。
+
+### 2026-10-23 ローラー縦振りの接地探索診断（未解決・候補不採用）
+
+同じ既存avatar/gear/palette/seed/cameraとnative tickで、右腕roller wrapperのground searchとalignLeftを分離した。元49tickの入力quaternion変化0.600radに対し、採用ground回転後・align前は1.569rad、align後は1.899rad。前tickのZ+1.3rad床補正が探索不要の判定で一度に外れることが主な増幅だった。縦振り発射後の探索を既存X軸へ限定する最小候補は49tickのdrum移動を減らしたが、着地40tickの移動を0.789→1.170へ増やし、全区間guardがsource/emittedとも失敗したため不採用。共有native IK・grip基準・横振り・入力/攻撃/移動/paint・spawn/reset/landing gateは編集しない。原作公式ページ/playerの既存403拒否は再取得せず、retail同条件比較は未確認のまま。[原因・保存した不採用候補・検査・実画面](roller-ground-search-20261023/README.md)。この追記は差分解消や本家一致の承認ではない。
