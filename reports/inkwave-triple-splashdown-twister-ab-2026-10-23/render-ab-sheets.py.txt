@@ -1,0 +1,33 @@
+from pathlib import Path
+from PIL import Image,ImageDraw,ImageFont
+import json,hashlib
+root=Path('.ci-scratch/triple-splashdown/band-ab');out=Path('reports/inkwave-triple-splashdown-twister-ab-2026-10-23');out.mkdir(exist_ok=True)
+a=json.loads((root/'before/receipt.json').read_text());b=json.loads((root/'after/receipt.json').read_text());result=json.loads((root/'comparison.json').read_text());assert result['matchedSetupAndNonBand']
+font=ImageFont.truetype('/usr/share/fonts/truetype/open-sans/OpenSans-Regular.ttf',17);bold=ImageFont.truetype('/usr/share/fonts/truetype/open-sans/OpenSans-Semibold.ttf',23)
+title=ImageFont.truetype('/usr/share/fonts/truetype/open-sans/OpenSans-Semibold.ttf',29)
+figures=[]
+def draw(group,phase,offsets,crop=None):
+ cw,ch=(512,320) if crop is None else (300,420);margin,gap=24,12
+ rowh=ch+108;w=margin*2+len(offsets)*cw+(len(offsets)-1)*gap;h=104+2*rowh+72
+ im=Image.new('RGB',(w,h),'#111722');d=ImageDraw.Draw(im)
+ name=f'{group}-{phase}.png';detail='' if crop is None else f' | detail crop {crop}'
+ d.text((margin,14),f'Triple Splashdown | {group} | {phase} | normal follow camera A/B',font=title,fill='#f3f5fa')
+ d.text((margin,58),'A: original crown 6f8a4b63... | B: private TWISTER patch d980f1ca...'+detail,font=font,fill='#c2cfe1')
+ for row,(mode,r,label) in enumerate([('before',a,'A: original SHOCK crown'),('after',b,'B: private TWISTER candidate')]):
+  y=104+row*rowh;d.text((margin,y),label,font=bold,fill='#d5eaff')
+  for col,offset in enumerate(offsets):
+   c=next(c for c in r['captures'] if c['group']==group and c['offset']==offset);p=root/mode/c['file']
+   assert hashlib.sha256(p.read_bytes()).hexdigest()==c['sha256']
+   image=Image.open(p).convert('RGB');assert image.size==(1280,800)
+   if crop:image=image.crop(crop)
+   x=margin+col*(cw+gap);im.paste(image.resize((cw,ch),Image.Resampling.LANCZOS),(x,y+34))
+   d.text((x,y+ch+39),f"+{offset} ticks | sim f{c['frame']:03}",font=bold,fill='#f3f5fa')
+   d.text((x,y+ch+67),f"G.time {c['time']:.6f}s",font=font,fill='#b9c7db')
+ d.text((margin,h-44),'60 Hz fixed simulation; selected stills, no encoded FPS. Same seed/input/camera/time/lighting; no fixed inspection camera.',font=font,fill='#c2cfe1')
+ d.text((margin,h-22),'Audit setup leaves HUD hidden (wall-clock intro timer). Whole viewport unless explicitly labelled detail crop; no retail images.',font=font,fill='#c2cfe1')
+ im.save(out/name,optimize=True);figures.append({'file':name,'group':group,'phase':phase,'offsets':offsets,'crop':crop,'size':im.size,'bytes':(out/name).stat().st_size})
+for group in ['central','paired']:
+ draw(group,'early',[0,2,4,6,10]);draw(group,'spread',[10,18,26,38,48]);draw(group,'retirement',[38,40,41,42,43])
+draw('paired','retirement-right-edge-detail',[38,40,41,42,43],(1080,160,1280,440))
+(out/'figures.json').write_text(json.dumps(figures,indent=2)+'\n')
+print(json.dumps(figures,indent=2))

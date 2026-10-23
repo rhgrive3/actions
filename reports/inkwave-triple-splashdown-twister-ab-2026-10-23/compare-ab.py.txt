@@ -1,0 +1,44 @@
+from pathlib import Path
+from PIL import Image
+import json,hashlib,numpy as np
+root=Path('.ci-scratch/triple-splashdown/band-ab')
+a=json.loads((root/'before/receipt.json').read_text());b=json.loads((root/'after/receipt.json').read_text())
+def stats(records):
+ x=sorted(r['ms'] for r in records)
+ return {'n':len(x),'meanMs':sum(x)/len(x) if x else None,'medianMs':x[len(x)//2] if x else None,'p95Ms':x[min(len(x)-1,int(len(x)*.95))] if x else None,'maxMs':max(x) if x else None}
+checks={};failures=[]
+def same(label,x,y):
+ ok=x==y;checks[label]=ok
+ if not ok:failures.append(label)
+for key in ['baseCommit','checkoutBase','time','pos','introSteps','math','map','viewport','qualitySetup','events','origins']:
+ same('setup/'+key,a[key],b[key])
+for key in ['nonBandHashes','lighting','poolLayout','math','teamColors','kitTime']:
+ same('initial/'+key,a['initialSnapshot'][key],b['initialSnapshot'][key])
+same('per-frame/native-camera-input-time', [{k:r[k] for k in ['frame','time','math','actorPos','phase','fists','camera','poolInstances']} for r in a['rows']], [{k:r[k] for k in ['frame','time','math','actorPos','phase','fists','camera','poolInstances']} for r in b['rows']])
+same('capture/keys',[(c['group'],c['offset'],c['frame']) for c in a['captures']],[(c['group'],c['offset'],c['frame']) for c in b['captures']])
+images=[]
+for ca,cb in zip(a['captures'],b['captures']):
+ label=f"{ca['group']}+{ca['offset']}"
+ for key in ['nonBandHashes','lighting','poolLayout','math','teamColors','kitTime']:
+  same(label+'/'+key,ca['snapshot'][key],cb['snapshot'][key])
+ for mode,c in [('before',ca),('after',cb)]:
+  assert hashlib.sha256((root/mode/c['file']).read_bytes()).hexdigest()==c['sha256']
+ ia=np.asarray(Image.open(root/'before'/ca['file']).convert('RGB')).astype(np.int16)
+ ib=np.asarray(Image.open(root/'after'/cb['file']).convert('RGB')).astype(np.int16)
+ delta=np.abs(ia-ib);mask=delta.max(2)>8
+ ys,xs=np.where(mask)
+ def owned(c,receipt):
+  pos=[e['pos'] for e in receipt['events'] if e['action']=='impact' and ((e['index']<0)==(c['group']=='central'))]
+  return [r for r in c['bandRecords'] if any(abs(r['v'][0]-p[0])<.01 and abs(r['v'][2]-p[2])<.01 for p in pos)]
+ images.append({'group':ca['group'],'offset':ca['offset'],'frame':ca['frame'],'beforeFile':ca['file'],'afterFile':cb['file'],
+   'changedPixelsGt8':int(mask.sum()),'meanAbsoluteRGBDifference':float(delta.mean()),'differenceBounds':None if not len(xs) else [int(xs.min()),int(ys.min()),int(xs.max()+1),int(ys.max()+1)],
+   'beforeOwnedBands':owned(ca,a),'afterOwnedBands':owned(cb,b)})
+performance={}
+for label,r in [('before',a),('after',b)]:
+ performance[label]={'fxCPU':stats(r['cpuFx']),'renderSubmissionCPU':stats(r['cpuRender']),'gpuTimerAvailable':r['gpuTimerAvailable'],'gpu':stats(r['gpu']),'gpuDisjoint':r['gpuDisjoint']}
+for key in ['fxCPU','renderSubmissionCPU']:
+ x=performance['before'][key]['meanMs'];y=performance['after'][key]['meanMs']
+ performance[key+'MeanChangePercent']=(y/x-1)*100 if x else None
+result={'checks':checks,'matchFailures':failures,'matchedSetupAndNonBand':not failures,'images':images,'performance':performance,'scope':'Two sequential single-run normal-camera captures on SwiftShader. CPU is observed native director update / whole-scene render submission; GPU only if EXT_disjoint_timer_query_webgl2 is available. Pool equality and source tests do not establish visual improvement.'}
+(root/'comparison.json').write_text(json.dumps(result,indent=2)+'\n')
+print(json.dumps({'matchFailures':failures,'performance':performance,'terminalPixels':[{k:i[k] for k in ['group','offset','frame','changedPixelsGt8']} for i in images if i['offset']>=38]},indent=2))

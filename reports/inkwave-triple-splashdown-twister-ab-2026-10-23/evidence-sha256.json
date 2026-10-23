@@ -1,0 +1,22 @@
+{
+  "README.md": "2d0009bd136e456444435c6340c3f980ad2e06e6934cbe9b3f7b2ba129dc6c84",
+  "after-build.log": "66d6f18f535b5c890390eaa7dd198e764adef5e7b9cbc669960d9a27aa48140e",
+  "after-capture.log": "0369c7bc065d463f38df044eefc5c0c6e785db415339aab7a400918f4420966b",
+  "after-native-impact-tests.log": "daf42bfb8e91da26ab3b3dc58fa69d54ffa7aa0722ae9c1af773974639593c64",
+  "after-receipt.json": "0fcccbc1d527d6d1e418aee93525008bb2c0c5b2ddb615d65b6536c97ad803f5",
+  "before-capture.log": "2a9214722e260666c05a7682757135c43258fa612df0202dda45fa690f961093",
+  "before-receipt.json": "be072429df8f0d8b42aca718d989017c7a65bf3503964c483bb273e190b0bfd8",
+  "build-identities.json": "02ffe31c507810c4efa1803bc6f2d92153cd54abbccb40ba475394254f0e4e85",
+  "capture-ab.mjs.txt": "c184a98776611c0d8c7f2203bc987e20f1da6a984b3e5cb61e1ddf942b1cbdb3",
+  "central-early.png": "fd8c7485d130696f3758e6a0ba39bc615dbce31da639abd28957de34b5a7c88d",
+  "central-retirement.png": "2595e9654f1de01a75ff35787849542dd0736c9b9eb56e1a996ca5948f709ff3",
+  "central-spread.png": "e89707ac93a1f8fdf857c3b59ad11f75ff10ae0ea4d50e159e3d49d324cc0bb6",
+  "compare-ab.py.txt": "5cc57fff01d1c1df935da855e13707f50d8817e034658324ab529ce71a46b1ba",
+  "comparison.json": "298f74ad88e26dda0542091cd48e769a380f5e4084e604e39808306b56b92331",
+  "figures.json": "ecd04749f639f0ce644b8b5fdee3ffc8fd54c44f37eb1c522a6391e8482d1afd",
+  "paired-early.png": "63ba6b452c8d796de327c5cb4715a6fba88d93350e31acc3498857d1a9bbc509",
+  "paired-retirement-right-edge-detail.png": "c2daa729a4cb1cc42ae8bc39da6f5989081e144bb928d731beb637316012c5dc",
+  "paired-retirement.png": "f19f1d21843abcc9098ecb4979a0abfaaf3464f1c2e987697c9f837ebf72d382",
+  "paired-spread.png": "61501652a09bee0fd3d46f743347d9facf24ba15a2b511555d2e447976bb7182",
+  "render-ab-sheets.py.txt": "76fb7699ee14235acf0ae852c6906f26017ca2da7f1c5a9e13189d9a7d1406e3"
+}
