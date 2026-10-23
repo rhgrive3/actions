@@ -1,0 +1,13 @@
+{"utc":"2026-10-23T19:35:59.777Z","event":"launch","directory":"/workspace/scratch/reticle-idle-ci-20261023/traced-profile","options":{"headless":true,"viewport":{"width":800,"height":600},"args":["--no-sandbox","--disable-dev-shm-usage","--use-angle=swiftshader","--enable-unsafe-swiftshader"]},"browserOverride":"/usr/bin/chromium"}
+{"utc":"2026-10-23T19:36:01.027Z","event":"begin","id":1,"name":"goto","label":"http://127.0.0.1:35279/?devstage&skipTitle"}
+{"utc":"2026-10-23T19:36:02.687Z","event":"end","id":1,"name":"goto","elapsedMs":1659.7530760000004}
+{"utc":"2026-10-23T19:36:02.687Z","event":"begin","id":2,"name":"waitForFunction","label":"()=>!!window.__inkwave?.debug&&window.__G?.s3?.installed"}
+{"utc":"2026-10-23T19:36:56.708Z","event":"end","id":2,"name":"waitForFunction","elapsedMs":54021.242794}
+{"utc":"2026-10-23T19:36:56.708Z","event":"begin","id":3,"name":"evaluate","label":"()=>{__inkwave.debug.freeze();__inkwave.menus.wipe.cancel();}"}
+{"utc":"2026-10-23T19:36:56.725Z","event":"end","id":3,"name":"evaluate","elapsedMs":16.960336999996798}
+{"utc":"2026-10-23T19:36:57.101Z","event":"begin","id":4,"name":"evaluate","label":"async()=>{\n   const G=window.__G,g=G.game,m=G.music,a=G.audio;\n   const initialPlayers=m.players.length,initialScheduler=!!(m.worker||m.timer);let ticks=0,nodes=0;\n   const tick=m."}
+{"utc":"2026-10-23T19:36:57.784Z","event":"end","id":4,"name":"evaluate","elapsedMs":682.2046359999949}
+{"utc":"2026-10-23T19:36:57.784Z","event":"begin","id":5,"name":"evaluate","label":"async()=>{\n   const G=__G,g=G.game,THREE=await import('three'),{refreshEnvironmentBudget}=await import(new URL('patches/local-quality/idle-resources.mjs',document.baseURI).href);\n "}
+{"utc":"2026-10-23T19:40:12.514Z","event":"error","id":5,"name":"evaluate","elapsedMs":194730.30606499998,"error":"Error: page.evaluate: Target page, context or browser has been closed"}
+{"utc":"2026-10-23T19:40:12.528Z","event":"begin","id":6,"name":"screenshot","label":"screenshot"}
+{"utc":"2026-10-23T19:40:12.531Z","event":"error","id":6,"name":"screenshot","elapsedMs":2.691886999993585,"error":"Error: page.screenshot: Target page, context or browser has been closed"}

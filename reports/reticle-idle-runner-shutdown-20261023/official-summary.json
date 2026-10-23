@@ -1,0 +1,70 @@
+{
+  "head": "2e2bc38661dd49655ee3b4abc491dcc8ee65e8e1",
+  "comparisonHead": "784615eaddd13e1cb4d9dd6bf202990a4aaa6d3f",
+  "checkerBlobBothHeads": "2a7e398ce274e2542f471bcd5b4714e41bce07e0",
+  "hudWorkflowBlob": "e8aa7e4f3dc01b902aae907a36cc3b26acfc4ef4",
+  "jobs": {
+    "hudJob": {
+      "id": 120574653079,
+      "run_id": 39986361808,
+      "head": "2e2bc38661dd49655ee3b4abc491dcc8ee65e8e1",
+      "status": "completed",
+      "conclusion": "failure",
+      "runner_name": "GitHub Actions 1000353404",
+      "jobStarted": "2026-10-23T18:50:48Z",
+      "jobCompleted": "2026-10-23T19:19:15Z",
+      "jobDurationSeconds": 1707.0,
+      "idleStarted": "2026-10-23T19:08:53Z",
+      "idleCompleted": "2026-10-23T19:19:12Z",
+      "idleSeconds": 619.0,
+      "idleConclusion": "cancelled",
+      "configuredJobTimeoutSeconds": 7200
+    },
+    "triJob": {
+      "id": 120523763671,
+      "run_id": 39980858842,
+      "head": "784615eaddd13e1cb4d9dd6bf202990a4aaa6d3f",
+      "status": "completed",
+      "conclusion": "failure",
+      "runner_name": "GitHub Actions 1000353315",
+      "jobStarted": "2026-10-23T18:01:32Z",
+      "jobCompleted": "2026-10-23T18:35:09Z",
+      "jobDurationSeconds": 2017.0,
+      "idleStarted": "2026-10-23T18:21:54Z",
+      "idleCompleted": "2026-10-23T18:35:07Z",
+      "idleSeconds": 793.0,
+      "idleConclusion": "cancelled",
+      "configuredJobTimeoutSeconds": 7200
+    }
+  },
+  "logs": {
+    "hud": {
+      "rawSha256": "79f3ff35e34445c8d9361ad507c895180198f9d77f9b46ff49a0e19f26344a17",
+      "rawBytes": 239783,
+      "excerpts": [
+        "﻿2026-10-23T18:50:48.8525025Z Current runner version: '2.338.0'",
+        "2026-10-23T19:08:53.5005592Z ##[group]Run node scripts/check-inkwave-idle-resources.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/idle-resources\" --profile-dir \"$CI_STORAGE/cache/idle-resources\" --exact-source",
+        "2026-10-23T19:19:12.0417112Z ##[error]The runner has received a shutdown signal. This can happen when the runner service is stopped, or a manually started runner is canceled.",
+        "2026-10-23T19:19:12.3797267Z page.evaluate: Target page, context or browser has been closed",
+        "2026-10-23T19:19:12.3933764Z     at main (/home/runner/work/actions/actions/scripts/check-inkwave-idle-resources.mjs:168:25) {",
+        "2026-10-23T19:19:12.5596676Z ##[error]The operation was canceled."
+      ]
+    },
+    "tri": {
+      "rawSha256": "bb9a787843de1b79d01fa51f6b1d7da3ccf8f97930de1ae45b0822fe0271304d",
+      "rawBytes": 239371,
+      "excerpts": [
+        "﻿2026-10-23T18:01:32.9842985Z Current runner version: '2.338.0'",
+        "2026-10-23T18:21:54.8523077Z ##[group]Run node scripts/check-inkwave-idle-resources.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/idle-resources\" --profile-dir \"$CI_STORAGE/cache/idle-resources\" --exact-source",
+        "2026-10-23T18:35:06.5837850Z ##[error]The runner has received a shutdown signal. This can happen when the runner service is stopped, or a manually started runner is canceled.",
+        "2026-10-23T18:35:07.4962132Z page.evaluate: Target page, context or browser has been closed",
+        "2026-10-23T18:35:07.5112679Z     at main (/home/runner/work/actions/actions/scripts/check-inkwave-idle-resources.mjs:168:25) {",
+        "2026-10-23T18:35:07.7127620Z ##[error]The operation was canceled."
+      ]
+    }
+  },
+  "classification": "Runner shutdown occurs before Target closed. Configured 120 minute timeout was not reached. External runner termination is observed; initiator and host resource cause are not established. No gameplay regression is inferred.",
+  "directJobMetadataEndpoint": "github.fetch rejected direct /actions/jobs/id as INVALID_ARGUMENT; no bypass attempted. Official full job data obtained from the allowed workflow-run jobs collection.",
+  "gpuAcceptance": "not completed locally; pinned Chromium151 download denied403; separate installed154 observation does not close exact-CI gate",
+  "triWorkflowBlob": "e8aa7e4f3dc01b902aae907a36cc3b26acfc4ef4"
+}

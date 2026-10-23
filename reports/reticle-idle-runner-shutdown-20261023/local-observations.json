@@ -1,0 +1,204 @@
+{
+  "status": "incomplete_manual_stop",
+  "noGPUAcceptance": true,
+  "productionHead": "2e2bc38661dd49655ee3b4abc491dcc8ee65e8e1",
+  "baselineInvocation": {
+    "args": [
+      "node",
+      "scripts/check-inkwave-idle-resources.mjs",
+      "--site",
+      "/workspace/scratch/reticle-ci-fixtures-site",
+      "--evidence-dir",
+      "/workspace/scratch/reticle-idle-ci-20261023/baseline",
+      "--profile-dir",
+      "/workspace/scratch/reticle-idle-ci-20261023/baseline-profile",
+      "--exact-source"
+    ],
+    "started": "2026-10-23T19:28:00.945601+00:00",
+    "browserOverride": "installed /usr/bin/chromium 154, exact pinned 151 download denied",
+    "productionSource": "2e2bc38661dd49655ee3b4abc491dcc8ee65e8e1"
+  },
+  "baselineCompletion": {
+    "returncode": 130,
+    "elapsedSeconds": 458.4546256379999,
+    "started": "2026-10-23T19:28:00.945601+00:00",
+    "finished": "2026-10-23T19:35:39.400546+00:00",
+    "maximumChildRSSKiB": 377028
+  },
+  "baselineManualStop": {
+    "at": "2026-10-23T19:35:37.023490+00:00",
+    "pid": 1821,
+    "action": "SIGINT to this diagnostic Node only",
+    "reason": "Unchanged full checker has no live per-phase receipts; preserve this as incomplete and use observer-only call tracing for localization",
+    "classification": "manual diagnostic stop, not a natural test failure or reproduction of GitHub runner shutdown"
+  },
+  "tracedInvocation": {
+    "args": [
+      "node",
+      "scripts/check-inkwave-idle-resources.mjs",
+      "--site",
+      "/workspace/scratch/reticle-ci-fixtures-site",
+      "--evidence-dir",
+      "/workspace/scratch/reticle-idle-ci-20261023/traced",
+      "--profile-dir",
+      "/workspace/scratch/reticle-idle-ci-20261023/traced-profile",
+      "--exact-source"
+    ],
+    "started": "2026-10-23T19:35:57.209685+00:00",
+    "observer": "Node-side begin/end of unchanged evaluate/goto/wait/screenshot only",
+    "browserOverride": "installed Chromium154; pinned151 unavailable403",
+    "productionHead": "2e2bc38661dd49655ee3b4abc491dcc8ee65e8e1"
+  },
+  "tracedCompletion": {
+    "returncode": 130,
+    "elapsedSeconds": 255.46379620399966,
+    "started": "2026-10-23T19:35:57.209685+00:00",
+    "finished": "2026-10-23T19:40:12.673584+00:00"
+  },
+  "tracedManualStop": {
+    "at": "2026-10-23T19:40:12.382565+00:00",
+    "pid": 2183,
+    "action": "SIGINT to this diagnostic Node only",
+    "reason": "Pinned CI browser is denied; alternate browser remains in earlier cloud readback. Preserve observed pending call without claiming same CI failure or GPU acceptance.",
+    "classification": "manual diagnostic stop, not test pass/failure or natural runner shutdown",
+    "pending": [
+      {
+        "utc": "2026-10-23T19:36:57.784Z",
+        "event": "begin",
+        "id": 5,
+        "name": "evaluate",
+        "label": "async()=>{\n   const G=__G,g=G.game,THREE=await import('three'),{refreshEnvironmentBudget}=await import(new URL('patches/local-quality/idle-resources.mjs',document.baseURI).href);\n "
+      }
+    ],
+    "pendingSeconds": [
+      194.598565
+    ],
+    "resources": [
+      {
+        "pid": 2208,
+        "type": "browser",
+        "utime": 526,
+        "stime": 246,
+        "rssKiB": 176808
+      },
+      {
+        "pid": 2225,
+        "type": "--type=zygote",
+        "utime": 2,
+        "stime": 5,
+        "rssKiB": 50604
+      },
+      {
+        "pid": 2226,
+        "type": "--type=zygote",
+        "utime": 1,
+        "stime": 6,
+        "rssKiB": 50608
+      },
+      {
+        "pid": 2246,
+        "type": "--type=gpu-process",
+        "utime": 88998,
+        "stime": 1173,
+        "rssKiB": 582660
+      },
+      {
+        "pid": 2256,
+        "type": "--type=utility",
+        "utime": 36,
+        "stime": 21,
+        "rssKiB": 62436
+      },
+      {
+        "pid": 2271,
+        "type": "--type=utility",
+        "utime": 5,
+        "stime": 5,
+        "rssKiB": 21788
+      },
+      {
+        "pid": 2289,
+        "type": "--type=renderer",
+        "utime": 133,
+        "stime": 51,
+        "rssKiB": 77856
+      },
+      {
+        "pid": 2298,
+        "type": "--type=renderer",
+        "utime": 2181,
+        "stime": 378,
+        "rssKiB": 509896
+      },
+      {
+        "pid": 2299,
+        "type": "--type=renderer",
+        "utime": 11,
+        "stime": 5,
+        "rssKiB": 51032
+      },
+      {
+        "pid": 2319,
+        "type": "--type=renderer",
+        "utime": 4,
+        "stime": 3,
+        "rssKiB": 33968
+      },
+      {
+        "pid": 2362,
+        "type": "--type=utility",
+        "utime": 136,
+        "stime": 115,
+        "rssKiB": 54932
+      }
+    ]
+  },
+  "completedCalls": [
+    {
+      "utc": "2026-10-23T19:36:02.687Z",
+      "event": "end",
+      "id": 1,
+      "name": "goto",
+      "elapsedMs": 1659.7530760000004
+    },
+    {
+      "utc": "2026-10-23T19:36:56.708Z",
+      "event": "end",
+      "id": 2,
+      "name": "waitForFunction",
+      "elapsedMs": 54021.242794
+    },
+    {
+      "utc": "2026-10-23T19:36:56.725Z",
+      "event": "end",
+      "id": 3,
+      "name": "evaluate",
+      "elapsedMs": 16.960336999996798
+    },
+    {
+      "utc": "2026-10-23T19:36:57.784Z",
+      "event": "end",
+      "id": 4,
+      "name": "evaluate",
+      "elapsedMs": 682.2046359999949
+    }
+  ],
+  "initialNonExecution": {
+    "exitCode": 127,
+    "reason": "/usr/bin/time missing; checker did not start; rerun used an external Python timing wrapper"
+  },
+  "checkerChanged": false,
+  "runtimeChanged": false,
+  "workflowChanged": false,
+  "flagsChanged": false,
+  "timeoutsChanged": false,
+  "workloadChanged": false,
+  "pinnedBinaryReproduction": "blocked by download403",
+  "localBrowserBinary": "installed Chromium154.0.8037.57",
+  "sourceGate": {
+    "pass": 34,
+    "fail": 0,
+    "skip": 0,
+    "isGPUAcceptance": false
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "head": "2e2bc38661dd49655ee3b4abc491dcc8ee65e8e1",
+  "rawRoot": "/workspace/scratch/reticle-idle-ci-20261023",
+  "rawSha256": {
+    "hud-job.log": "79f3ff35e34445c8d9361ad507c895180198f9d77f9b46ff49a0e19f26344a17",
+    "tri-job.log": "bb9a787843de1b79d01fa51f6b1d7da3ccf8f97930de1ae45b0822fe0271304d",
+    "official-raw.json": "2e69faa6b9b36201c5c937b33f9d514ad0ec268a46424a060b03a4f3de67bb60",
+    "job-summary.json": "88c7cd2ba5faaff24e2413b0a48bba985c42534c19f591251d808c2cd0f4167e",
+    "browser-install.log": "ae84e66bd4f3c404a0defb146d008871d93720db381736c553e9e4bdd5571e8a",
+    "system-chromium.mjs": "a3f4bd907c196f34884d393b44cce02749a74718433fd8c0d0899483ca02d57a",
+    "traced-system-chromium.mjs": "aae793f6d6e9cb60b81de1a09068cb402a692f95d5a779f5160d31881b35d066",
+    "baseline.log": "3e737f6a9117cec194b02103b357f8668fae9adb86a8a8cd0bf25efab8948548",
+    "baseline-actual.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "baseline-invocation.json": "8d46f7ebdf158d8d39529960f90573d0f8c34bf69beafbad90561c70eeaab932",
+    "baseline-process.json": "24ce0176bea86de3a92b0a095b84d596c4fdf0180f6946b764b5208343c4523c",
+    "baseline-manual-stop.json": "b72d7455ec46e583e1edf96cb720202547b3abdb05565c5e2af7cc423bbd76c7",
+    "baseline/idle-resources-result.json": "d52da7ef8425827bde45a4d3a09b5d86e3302023811f759a886dba95a55b457f",
+    "traced-actual.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "traced-invocation.json": "47e0d37c95e9197f44fbc5d3a9a4313f54e22a6498f3327d53e012ba4d042ed3",
+    "traced-process.json": "98ac6eeb54dcaeaf3d7ccb35c89dc451f88a684b92e188ea24e8ab7dbe2aac80",
+    "traced-manual-stop.json": "eb7b119459580f2cef498af8e33c92613a90aafdeeb82abe6b3241992f453cc9",
+    "traced/idle-resources-result.json": "bf6c9037b7f0ef88e9df8acbb1fc8ed31841a0f02f7eeb9def2826ab1df4b55a",
+    "traced-calls.jsonl": "4c6f7d8787fb3f29b6073d27779003949d128e179d10bc20b56cf3e8902fe4a4",
+    "resource-samples.json": "6954116fbdee805fffb03eb9f2cc5207b267c4ad0636822b6888809b2841ccad",
+    "source-gates.tap": "aa1ce1125993ebe8eea6cffd83141b21640231be36619ebcfe4f2b21ca4c4c05"
+  },
+  "checkerBlob": "2a7e398ce274e2542f471bcd5b4714e41bce07e0",
+  "workflowBlob": "e8aa7e4f3dc01b902aae907a36cc3b26acfc4ef4",
+  "playwrightVersion": "1.62.1",
+  "playwrightBundleSha256": "9393fa79e1c67c74edc26b610d65a4f7ed73d345a762465cc88340a33a2454ac",
+  "publishedSha256": {
+    "README.md": "8519e1c84f250ecae745b00d99af7cb2890d458bb84636d26aae89f27d6ea893",
+    "local-observations.json": "6deb5bb97b6634951515fbc777f2e07f4ba1ad183dc6a147251caf20e213f7ff",
+    "official-summary.json": "fb00ccb172a6b5000d0a59baea7fb70c2fd5f9216040f048aaae9bf752286d0a",
+    "source-gates.tap.gz": "2f9e5927183d643582520d8206e59d1192573381b0ab6679c5d80f1f6ce09f59",
+    "traced-calls.jsonl": "4c6f7d8787fb3f29b6073d27779003949d128e179d10bc20b56cf3e8902fe4a4"
+  }
+}
