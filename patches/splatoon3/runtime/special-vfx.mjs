@@ -539,9 +539,13 @@ const ROUND_FX = {
       r.d.glow = this.ribbon(true, { width: 1.1, widthTail: 0.15, color: this.hdr(r.color, 1.6, 1.4), alpha: 1, style: RIBBON.GLOW, life: 0.45, spacing: 0.15 });
       r.d.core = this.shell(true, 0, SHELL.ORB, p.pos, 0.9, 0.9, this.hdr(r.color, 0.6, 6), 1, { fade: false, follow: (rec) => { if (r.done) return false; rec.v[0] = r.last.x; rec.v[1] = r.last.y; rec.v[2] = r.last.z; } });
     },
-    frame(r, p) {
+    frame(r, p, dt) {
+      if (!(dt > 0) || !Number.isFinite(dt)) return;
       this.pushRibbon(r.d.glow, p.pos, true);
-      if (vfxRandom() < 0.9) this.spark(SPARK.STAR, this.v[0].copy(p.pos).add(this.v[1].set(rnd(0.6, -0.6), rnd(0.6, -0.6), rnd(0.6, -0.6))), 0, 0, 0, 0.35, 0.3, 0.02, this.hdr(r.color, 1.8, 1.6), 1);
+      // Keep the original 60 Hz trials, with fractional carry and at most two after a stall.
+      const frames = (r.d.starCarry || 0) + Math.min(dt * 60, 2), ticks = Math.floor(frames + 1e-9);
+      r.d.starCarry = Math.max(0, frames - ticks);
+      for (let i = 0; i < ticks; i++) if (vfxRandom() < 0.9) this.spark(SPARK.STAR, this.v[0].copy(p.pos).add(this.v[1].set(rnd(0.6, -0.6), rnd(0.6, -0.6), rnd(0.6, -0.6))), 0, 0, 0, 0.35, 0.3, 0.02, this.hdr(r.color, 1.8, 1.6), 1);
     },
     impact(r) { r.done = true; this.flash(r.last, r.color, 2.2, 0.3); },
   },
@@ -723,12 +727,18 @@ const OBJECT_FX = {
       r.d.orb = this.shell(true, 0, SHELL.ORB, this.v[0].copy(p).setY(p.y + 1), 1, 1, this.hdr(c, 0.6, 6), 1, { fade: false,
         follow: (rec) => { const f = (o.frameCount || 0); const k = clamp01(f / 40); rec.v[4] = rec.v[5] = rec.v[6] = 0.9 + 0.7 * k + 0.12 * Math.sin(this.time * (14 + 30 * k)); rec.v[11] = f >= 40 ? 0 : 1; } });
       r.d.warn = this.disc(true, 0, DISC.RUNE, this.v[0].copy(p).setY(p.y + 0.05), this.up, 1, 1, this.hdr(c, 1.3, 0.6), 0.8, { fade: false,
-        follow: (rec) => { const f = (o.frameCount || 0); rec.v[3] = (o.maxRadius || 12.6) * smooth(f / 20); rec.v[7] += 0.02; rec.v[11] = f >= 40 ? 0 : 0.8; } });
+        follow: (rec) => { const f = (o.frameCount || 0); rec.v[3] = (o.maxRadius || 12.6) * smooth(f / 20); rec.v[7] = (rec.booyahAngle ??= rec.v[7]) + rec.t * 1.2; rec.v[11] = f >= 40 ? 0 : 0.8; } });
     },
-    frame(r, o) {
+    frame(r, o, dt) {
+      if (!(dt > 0) || !Number.isFinite(dt)) return;
       const f = o.frameCount || 0, p = o.pos, c = r.color, R = o.maxRadius || 12.6;
+      // A phase boundary discards fractional trials; it never replays the preceding phase.
+      const phase = f < 40 ? 'hold' : r.blasted ? 'scatter' : 'burst';
+      if (r.particlePhase !== phase) { r.particlePhase = phase; r.particleCarry = 0; }
+      const frames = (r.particleCarry || 0) + Math.min(dt * 60, 2), ticks = Math.floor(frames + 1e-9);
+      r.particleCarry = Math.max(0, frames - ticks);
       if (f < 40) {
-        if (vfxRandom() < 0.8) { // energy drawn into the ball
+        for (let i = 0; i < ticks; i++) if (vfxRandom() < 0.8) { // energy drawn into the ball
           const th = rnd(TAU), el = rnd(1.2, -0.3), d = rnd(4, 2.5);
           this.v[0].set(p.x + Math.cos(th) * Math.cos(el) * d, p.y + 1 + Math.sin(el) * d, p.z + Math.sin(th) * Math.cos(el) * d);
           this.spark(SPARK.STREAK, this.v[0], (p.x - this.v[0].x) * 3.2, (p.y + 1 - this.v[0].y) * 3.2, (p.z - this.v[0].z) * 3.2, 0.3, 0.06, 0.02, this.hdr(c, 2.2, 1.4), 1, { drag: 0, stretch: 0.07 });
@@ -746,7 +756,7 @@ const OBJECT_FX = {
         this.streaks(this.v[0].copy(k0).setY(k0.y + 1), 46, 26, c, { up: 0.4, life: 0.9, size: 0.09, drag: 1.5 });
         this.chunks(this.v[0].copy(k0).setY(k0.y + 0.5), 30, 20, c, { size: 0.3 });
         this.petals(this.v[0].copy(k0).setY(k0.y + 1), 40, 18, c, { size: 0.34 });
-      } else if (this.near(p, 80) && vfxRandom() < 0.9) {
+      } else if (this.near(p, 80)) for (let i = 0; i < ticks; i++) if (vfxRandom() < 0.9) {
         const k = clamp01((f - 40) / 40), th = rnd(TAU), rr = R * smooth(k * 1.4);
         this.v[0].set(p.x + Math.cos(th) * rr, p.y + rnd(1.5, 0.2), p.z + Math.sin(th) * rr);
         this.drop(this.v[0], Math.cos(th) * 5, rnd(6, 2), Math.sin(th) * 5, 0.7, 0.16, c);
@@ -1013,6 +1023,7 @@ const DIRECTORS = {
   booyahBomb: {
     start(a, t) { this.activation(a, t.color, 1); },
     frame(a, t, dt) {
+      if (!(dt > 0) || !Number.isFinite(dt)) return;
       const st = a._s3AllSpecialState, c = t.color;
       const charge = st ? clamp01(st.charge || 0) : clamp01((this.time - t.start - 0.5) / 4);
       const ball = this.v[0].set(a.pos.x, a.pos.y + 1.95 + 0.3 * charge, a.pos.z);
@@ -1038,7 +1049,9 @@ const DIRECTORS = {
       while (t.rayAcc >= 1) { t.rayAcc -= 1; const th = rnd(TAU), el = rnd(1.3, -1.3);
         this.spark(SPARK.RAY, ball, Math.cos(th) * Math.cos(el), Math.sin(el), Math.sin(th) * Math.cos(el), rnd(0.18, 0.1), 0.06 + 0.05 * charge, 0.02, this.hdr(c, 2.3, 1.0), 1, { drag: 0, stretch: 0.9 + 1.6 * charge, grav: 0 }); }
       if (charge >= 1 && !t.d.full) { t.d.full = true; this.flash(ball, c, 2.6, 0.3); this.disc(true, 0.4, DISC.SHOCK, ball, this.v[2].copy(this.camPos).sub(ball).normalize(), 0.5, 2.3, this.hdr(c, 1.6, 0.8), 0.8); }
-      if (charge >= 1 && vfxRandom() < 0.4) this.spark(SPARK.STAR, this.v[1].copy(ball).add(this.v[2].set(rnd(1, -1), rnd(1, -1), rnd(1, -1))), 0, 0, 0, 0.2, 0.32, 0.03, this.hdr(c, 2, 1.8), 1);
+      const frames = charge >= 1 ? (t.d.starCarry || 0) + Math.min(dt * 60, 2) : 0, ticks = Math.floor(frames + 1e-9);
+      t.d.starCarry = Math.max(0, frames - ticks);
+      for (let i = 0; i < ticks; i++) if (vfxRandom() < 0.4) this.spark(SPARK.STAR, this.v[1].copy(ball).add(this.v[2].set(rnd(1, -1), rnd(1, -1), rnd(1, -1))), 0, 0, 0, 0.2, 0.32, 0.03, this.hdr(c, 2, 1.8), 1);
     },
     event(a, e, pos, target) {
       const c = this.rgb(a);
