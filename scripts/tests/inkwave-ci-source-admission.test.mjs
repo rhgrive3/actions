@@ -120,6 +120,7 @@ const reviewedPrShells = [
   "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$PAIR_HEAD_REF\" = \"fix/queue-30-recovery-20261022\" ]; then"
 ];
 const historicalPrepareGuard = 'elif [ "$PAIR_PR_NUMBER" = "1758" ] || [ "$PAIR_HEAD_REF" = "test/inkwave-combined-qa-20261021" ]; then';
+const rollerGuard='elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_PR_NUMBER" = "1856" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$DECLARED_BASE_SHA" = "3003088e7d3da6e3b41829a96714698a348b555b" ] && [ "$PAIR_HEAD_REF" = "fix/roller-vertical-recovery-20261023" ] && [ "$PAIR_REPOSITORY" = "rhgrive3/actions" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ]; then';
 const controlName = 'Bind reviewed source controls to declared immutable Git source leaves';
 const prepareName = 'Replay reviewed Roller births, pool reset and pinned paint in the main reference';
 const step = (source, name) => {
@@ -144,12 +145,12 @@ function policyEnv(c) {
     PAIR_HEAD_REPO: c.github.event.pull_request.head.repo.full_name, PAIR_REPOSITORY: c.github.repository,
     DISPATCH_MODE: epoch.mode, DISPATCH_SOURCE_BASE: epoch.sha, DISPATCH_SOURCE_HEAD: epoch.sha,
     PAIR_HEAD_REF: c.github.head_ref, PAIR_PR_NUMBER: c.github.event.pull_request.number,
-    INKWAVE_REFERENCE_ROOT: '.ci-baseline', DECLARED_BASE_SHA: c.github.event.pull_request.base.sha, DECLARED_HEAD_SHA: c.github.event.pull_request.head.sha};
+    INKWAVE_REFERENCE_ROOT: '.ci-baseline', GITHUB_EVENT_PATH:'/event.json', DECLARED_BASE_SHA: c.github.event.pull_request.base.sha, DECLARED_HEAD_SHA: c.github.event.pull_request.head.sha};
 }
 function probe(body, c, failure = 0) {
   const commands = shell(body); assert.ok(commands, 'real selector shell required');
   const result = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c',
-    'node() { printf "<call>\\n"; printf "%s\\n" "$@"; return "$PROBE_EXIT"; }\n' + commands],
+    'git() { [ "$1" = "cat-file" ]; }\nnode() { printf "<call>\\n"; printf "%s\\n" "$@"; return "$PROBE_EXIT"; }\n' + commands],
     {encoding: 'utf8', env: {...policyEnv(c), PROBE_EXIT: String(failure)}});
   assert.equal(result.error, undefined); assert.equal(result.signal, null);
   return {result, calls: result.stdout.split('<call>\n').slice(1).map(row => row.trimEnd().split('\n'))};
@@ -159,7 +160,7 @@ function sourceRouteContract(source) {
   for (const body of bodies) {
     assert.doesNotMatch(body, /^        continue-on-error:/m);
     const guards=(body.match(/^          elif .*; then$/gm)||[]).map(line=>line.trim());
-    assert.deepEqual(guards, body===bodies[1] ? [...reviewedPrShells,historicalPrepareGuard] : reviewedPrShells, 'exact reviewed route inventory retains every guard and rejects unexpected routes');
+    assert.deepEqual(guards, body===bodies[1] ? [rollerGuard,...reviewedPrShells,historicalPrepareGuard] : reviewedPrShells, 'exact reviewed route inventory retains every guard and rejects unexpected routes');
     for (const [name, value] of [['PAIR_EVENT_NAME', 'github.event_name'], ['PAIR_BASE_REF', 'github.event.pull_request.base.ref'],
       ['PAIR_HEAD_REF', 'github.head_ref'], ['DECLARED_BASE_SHA', 'github.event.pull_request.base.sha || inputs.base_sha'], ['DECLARED_HEAD_SHA', 'github.event.pull_request.head.sha || inputs.candidate_sha'],
       ['PAIR_HEAD_REPO','github.event.pull_request.head.repo.full_name'], ['PAIR_REPOSITORY','github.repository'],
@@ -167,6 +168,9 @@ function sourceRouteContract(source) {
       assert.ok(body.includes('          ' + name + ': ${{ ' + value + ' }}\n'), name + ': dynamic immutable event declaration');
   }
   const cases = [
+    [context('fix/roller-vertical-recovery-20261023','1856',{baseSha:'3003088e7d3da6e3b41829a96714698a348b555b',headSha:'2b103150d808c623c39268d6aa1833b3075d3a7c'}),false,true,'roller'],
+    [context('fix/roller-vertical-recovery-20261023','1857',{baseSha:'3003088e7d3da6e3b41829a96714698a348b555b'}),false,true,'legacy'],
+    [context('fix/roller-vertical-recovery-20261023','1856'),false,true,'legacy'],
     [context(allPrBranch,'1843'),true,true,'allpr'],
     [context(stringerBranch,'1850'),true,true,'stringer'],
     [context(stringerBranch+'-foreign','1850'),false,true,'legacy'],
@@ -230,12 +234,13 @@ function sourceRouteContract(source) {
     const body = bodies[index]; assert.equal(enabled(body, c), active, JSON.stringify(c));
     if (!active) continue;
     const {result, calls} = probe(body, c); assert.equal(result.status, 0, result.stderr); assert.equal(calls.length, 1);
-    const script = index === 0 ? 'check-inkwave-current-pair-controls' : 'prepare-inkwave-projectile-baseline';
+    const script = route==='roller'?'verify-inkwave-roller-pr1856-projectile-pair':index === 0 ? 'check-inkwave-current-pair-controls' : 'prepare-inkwave-projectile-baseline';
     const receipt = index === 0 ? 'current-pair-controls' : 'baseline-birth-adjustment';
     const chosenEpoch = route === 'allpr' ? allPrEpoch : route === 'stringer' ? stringerEpoch : route === 'runtime-ui' ? runtimeUiEpoch : route === 'exact' ? exactEpoch : route === 'queue' ? queueEpoch : route === 'integration' ? integrationEpoch : route === 'a350' ? a350Epoch : epoch;
     const wanted = [`scripts/${script}.mjs`, '--baseline', '.ci-baseline', '--candidate', '.',
       ...(route === 'legacy' ? [] : ['--base-sha', c.github.event.pull_request.base.sha, '--candidate-sha', c.github.event.pull_request.head.sha]),
       ...(['allpr','stringer','runtime-ui','current','a350','integration','queue','exact','dispatch'].includes(route) ? ['--expected-mode', chosenEpoch.mode, '--expected-source-base', chosenEpoch.sha, '--expected-source-head', route === 'runtime-ui' ? c.github.event.pull_request.head.sha : chosenEpoch.head || chosenEpoch.sha] : []),
+      ...(route==='roller'?['--event','/event.json']:[]),
       '--receipt', `.ci-scratch/projectile-visuals/before/${receipt}.json`];
     assert.deepEqual(calls[0], wanted, route + ': exact original/new consumer arguments');
   }
@@ -257,6 +262,13 @@ function sourceRouteContract(source) {
 
 test('reviewed PR and explicit immutable dispatch routes select their exact epoch in both actual YAML shells', () => {
   sourceRouteContract(readWorkflow('inkwave-projectile-visuals.yml'));
+});
+test('exact Roller guard inventory rejects every removed ownership/identity condition and unexpected replacement',()=>{
+ const source=readWorkflow('inkwave-projectile-visuals.yml'),original=step(source,prepareName);
+ for(const part of ['[ "$PAIR_EVENT_NAME" = "pull_request" ] && ','[ "$PAIR_PR_NUMBER" = "1856" ] && ','[ "$PAIR_BASE_REF" = "main" ] && ','[ "$DECLARED_BASE_SHA" = "3003088e7d3da6e3b41829a96714698a348b555b" ] && ','[ "$PAIR_HEAD_REF" = "fix/roller-vertical-recovery-20261023" ] && ','[ "$PAIR_REPOSITORY" = "rhgrive3/actions" ] && ',' && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ]']){
+  const changed=original.replace(rollerGuard,rollerGuard.replace(part,''));assert.notEqual(changed,original);assert.throws(()=>sourceRouteContract(source.replace(original,changed)));
+ }
+ assert.throws(()=>sourceRouteContract(source.replace(rollerGuard,rollerGuard.replace('1856','1857'))));
 });
 
 test('reviewed runtime UI inventory rejects missing, unexpected and weakened routes in each shell', () => {
