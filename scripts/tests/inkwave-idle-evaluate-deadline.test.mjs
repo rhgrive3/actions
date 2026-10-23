@@ -7,7 +7,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import {
   IDLE_OPERATION_TIMEOUT_MS, boundIdleEvaluations, runIdleProbe,
-  idleFailureReporter, closeIdleResources, primaryIdleFailure,
+  idleFailureReporter, closeIdleResources, primaryIdleFailure, closeProbeOwner,
 } from '../check-inkwave-idle-resources.mjs';
 
 function clock() {
@@ -159,4 +159,24 @@ test('actual desktop setup bounds its first evaluate, rather than only setting P
   timers.tick(1);await work.done;assert.equal(work.error.code,'INKWAVE_IDLE_EVALUATION_TIMEOUT');
   await closeIdleResources({close:async()=>{closes++;}},null,work.error);
   assert.equal(closes,1);assert.equal(timers.pending.size,0);
+});
+
+for(const failsClose of [false,true])test(`actual cold timeout persists observations before ${failsClose?'failing':'ordinary'} browser cleanup`,async()=>{
+  const source=fs.readFileSync(new URL('../check-inkwave-idle-resources.mjs',import.meta.url),'utf8');
+  const start=source.indexOf('  } catch(error) {\n   coldError='),end=source.indexOf('\n  result.errors=errors;',start);
+  assert(start>=0&&end>start);
+  const original=Object.assign(Error('cold evaluation deadline'),{code:'INKWAVE_IDLE_EVALUATION_TIMEOUT',phase:'cold-boot-mobile',timeoutMs:120000});
+  const closeError=Error('cold browser close failed'),order=[],receipts=[],result={};
+  const diagnose=idleFailureReporter({publish:r=>{order.push('failed-receipt');receipts.push(r);},snapshot:()=>({phase:'cold-boot-mobile',result}),page:()=>null,screenshotPath:'unused'});
+  const context={original,diagnose,result,closeProbeOwner,primaryIdleFailure,AggregateError,Date,
+    coldEvaluationError:original,coldError:null,hooked:true,mainReleased:false,page:null,
+    coldLoaded:new Set(['src/core/ctx.js']),coldPending:new Map(),pendingDropped:0,
+    coldContext:{async close(){order.push('cold-close');assert.equal(receipts[0]?.status,'failed','cold evidence must precede cleanup');if(failsClose)throw closeError;}}};
+  const helper=source.slice(source.indexOf('const combineFailure='),source.indexOf('// Failure diagnostics'));
+  const work=observe(vm.runInNewContext(helper+'\n(async()=>{try{throw original;'+source.slice(start,end)+'\n})()',context));
+  await work.done;assert.equal(primaryIdleFailure(work.error),original);
+  assert.deepEqual(order,['failed-receipt','cold-close']);assert.equal(receipts[0].primaryError,original.stack);
+  assert.equal(result.coldDiagnostic.inspectionUnavailable.includes('deadline'),true);
+  if(failsClose){assert.equal(work.error.errors[1],closeError);assert.equal(result.coldDiagnostic.closeError,String(closeError));}
+  else assert.equal(work.error,original);
 });

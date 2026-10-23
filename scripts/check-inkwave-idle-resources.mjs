@@ -129,6 +129,7 @@ async function main(){
  const publish=r=>fs.writeFileSync(path.join(output,'idle-resources-result.json'),JSON.stringify(r,null,2)+'\n');
  let browser,server,page,identity,result;const errors=[],loaded=new Set();let phase='identity';
  publish({status:'running',phase});
+ const diagnose=idleFailureReporter({publish,snapshot:()=>({phase,errors,result,loaded:[...loaded].slice(0,4096),loadedDropped:Math.max(0,loaded.size-4096),sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash}),page:()=>page,screenshotPath:path.join(output,'failure.png')});
  const receipt=await runIdleProbe(async()=>{
   identity=verifyWallBuild(site,process.argv.includes('--exact-source'));
   if(process.argv.includes('--exact-source')){
@@ -271,12 +272,14 @@ async function main(){
    catch(inspectError){diagnostic.inspectionError=String(inspectError);}finally{clearTimeout(timer);}
    try{await coldPage.screenshot({path:path.join(output,'cold-boot-failure.png'),timeout:15000});}catch(captureError){diagnostic.screenshotError=String(captureError);}
    }
+   // Persist the available cold observations before a potentially stalled close.
+   try{await diagnose(coldError);}catch(diagnosticError){coldError=combineFailure(coldError,diagnosticError,'Idle failure diagnostics failed');}
    throw coldError;
   } finally {try{await closeProbeOwner(coldContext,coldError);}catch(closeError){if(coldError)result.coldDiagnostic.closeError=String(closeError.errors?.at(-1)||closeError);throw closeError;}}
   result.errors=errors;const summary=validateIdleResult(result);
   return {status:'passed',...result,summary,sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash,verifierSha256:sha(fs.readFileSync(fileURLToPath(import.meta.url))),browser:coldBrowserVersion};
  },{
-  diagnose:idleFailureReporter({publish,snapshot:()=>({phase,errors,result,loaded:[...loaded].slice(0,4096),loadedDropped:Math.max(0,loaded.size-4096),sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash}),page:()=>page,screenshotPath:path.join(output,'failure.png')}),
+  diagnose,
   cleanup:error=>closeIdleResources(browser,server,error)
  });
  publish(receipt);
