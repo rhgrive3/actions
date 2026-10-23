@@ -138,3 +138,16 @@ hash-bound fixture instead. Its temporary real-Git scanner still verifies exact
 blob/SHA256 identity and rejects modified, missing, renamed and extra inputs.
 The nine-delta production seal and all expected hashes stay unchanged. Clock
 and source-admission guards pass 15/15, zero skips.
+
+## Hosted comparison controls follow-up
+
+The 7a19e57e reference capture failed before rendering: the controls CLI
+recognized the new immutable source tuple, then incorrectly fell back to the
+historical four-difference count. Add the exact new base/head tuple alongside
+the unchanged 23-PR tuple; both independently require nine differing leaves.
+No arbitrary source pair gains admission and no source pin or native gate is
+relaxed. Add an actual CLI regression over the frozen 29-PR fixture, including
+two accepted invocations, 56 rejected CLI mutations and 29 helper rejections.
+The three-file fixed-epoch tests pass; the real distinct Git worktrees at
+26a4db41 and 7a19e57e also pass all 87 controls with both inputs unchanged.
+Native physical/image comparisons remain mandatory and are still running.
