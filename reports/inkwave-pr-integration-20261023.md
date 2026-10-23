@@ -108,3 +108,24 @@ See reports/inkwave-splatoon3-behavior-2026-10-02.md and original evidence.
 | #1846 | `69bab40d6a1a4cd38aaa85afb5b9d31af8610a9c` |
 | #1847 | `1de4e29a42bcc10feb1bbb601126ff1a4d3c6a06` |
 | #1848 | `b711c0c1b5ba73f94b244b6fe1f95742586d9027` |
+
+## Refreshed source heads and first hosted failure
+
+During acceptance, #1844 advanced to 354536b365ae54bac71c9ce2970a5c5f322c1304
+and #1848 to 9ce56829b9c536d3f976a45716dce569d65d7d27. Both are now ancestors.
+Their changes are QA only. Preserve the existing independently offset peer
+clocks and full snapshot validation; add timestamp/admission/playback assertions.
+The stronger existing wall readiness validator already enforces the hidden body
+and ghost plus visible indexed glint. Relevant source/clock/provenance checks:
+64/64 pass, zero skips. Production inputs and comparison pins are unchanged.
+
+Hosted 37bfe99c failed the imported runtime/UI preflight workflow contract: it
+still required a main-base checkout and inline state comparison. The composed
+workflow intentionally uses the separately admitted 364dd0 common experiment,
+with an additional mandatory exact-current-head native execution. Reconcile
+that contract to require both immutable sources, inverse/controlled receipts,
+strict stage-pair validation and all three existing disabled long captures.
+Negative controls reject missing native execution, admission or stage checks.
+Driver admission, runtime/UI output seals and stage mismatch assertions stay
+unchanged. The related three-file batch passes 63/63, zero skips. This is not a
+claim of complete hosted acceptance or of full Explosher comparison acceptance.
