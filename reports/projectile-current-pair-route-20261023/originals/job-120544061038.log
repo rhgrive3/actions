@@ -1,0 +1,659 @@
+﻿2026-10-23T17:08:49.5250961Z Current runner version: '2.338.0'
+2026-10-23T17:08:49.5277374Z ##[group]Runner Image Provisioner
+2026-10-23T17:08:49.5278170Z Hosted Compute Agent
+2026-10-23T17:08:49.5278668Z Version: 20261012.601
+2026-10-23T17:08:49.5279318Z Commit: f3dc54e1fb89da6852db922499a0233137369e1d
+2026-10-23T17:08:49.5279946Z Build Date: 2026-10-12T17:48:21Z
+2026-10-23T17:08:49.5280536Z Worker ID: {f5854994-e2e9-4485-a69e-db69c5794668}
+2026-10-23T17:08:49.5281410Z Region: westus2
+2026-10-23T17:08:49.5281910Z Cloud: Azure
+2026-10-23T17:08:49.5282461Z ##[endgroup]
+2026-10-23T17:08:49.5283850Z ##[group]Operating System
+2026-10-23T17:08:49.5284377Z Ubuntu
+2026-10-23T17:08:49.5284915Z 24.04.5
+2026-10-23T17:08:49.5285359Z LTS
+2026-10-23T17:08:49.5285840Z ##[endgroup]
+2026-10-23T17:08:49.5286376Z ##[group]Runner Image
+2026-10-23T17:08:49.5286885Z Image: ubuntu-24.04
+2026-10-23T17:08:49.5287430Z Version: 20261012.334.1
+2026-10-23T17:08:49.5288596Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261012.334/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-23T17:08:49.5290070Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261012.334
+2026-10-23T17:08:49.5291094Z ##[endgroup]
+2026-10-23T17:08:49.5292166Z ##[group]GITHUB_TOKEN Permissions
+2026-10-23T17:08:49.5294113Z Contents: read
+2026-10-23T17:08:49.5294797Z Metadata: read
+2026-10-23T17:08:49.5295317Z ##[endgroup]
+2026-10-23T17:08:49.5297552Z Secret source: Actions
+2026-10-23T17:08:49.5298365Z Cache mode: write
+2026-10-23T17:08:49.5299139Z Prepare workflow directory
+2026-10-23T17:08:49.5591902Z Prepare all required actions
+2026-10-23T17:08:49.5626208Z Getting action download info
+2026-10-23T17:08:49.9169992Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-23T17:08:50.0385855Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-23T17:08:50.1365348Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-10-23T17:08:50.3341437Z Complete job name: Capture before
+2026-10-23T17:08:50.4047381Z ##[group]Run actions/checkout@v4
+2026-10-23T17:08:50.4047828Z with:
+2026-10-23T17:08:50.4048103Z   ref: d278a495a90ff0b6067d3dd26aa4d9ce40af53d4
+2026-10-23T17:08:50.4048443Z   repository: rhgrive3/actions
+2026-10-23T17:08:50.4050790Z   token: ***
+2026-10-23T17:08:50.4051108Z   ssh-strict: true
+2026-10-23T17:08:50.4051356Z   ssh-user: git
+2026-10-23T17:08:50.4051602Z   persist-credentials: true
+2026-10-23T17:08:50.4051874Z   clean: true
+2026-10-23T17:08:50.4052121Z   sparse-checkout-cone-mode: true
+2026-10-23T17:08:50.4052415Z   fetch-depth: 1
+2026-10-23T17:08:50.4052659Z   fetch-tags: false
+2026-10-23T17:08:50.4052910Z   show-progress: true
+2026-10-23T17:08:50.4053162Z   lfs: false
+2026-10-23T17:08:50.4053391Z   submodules: false
+2026-10-23T17:08:50.4053639Z   set-safe-directory: true
+2026-10-23T17:08:50.4053921Z   allow-unsafe-pr-checkout: false
+2026-10-23T17:08:50.4054300Z env:
+2026-10-23T17:08:50.4054564Z   INKWAVE_REFERENCE_ROOT: .ci-baseline
+2026-10-23T17:08:50.4054895Z ##[endgroup]
+2026-10-23T17:08:50.4794453Z Syncing repository: rhgrive3/actions
+2026-10-23T17:08:50.4796296Z ##[group]Getting Git version info
+2026-10-23T17:08:50.4796924Z Working directory is '/home/runner/work/actions/actions'
+2026-10-23T17:08:50.4797896Z [command]/usr/bin/git version
+2026-10-23T17:08:50.4860050Z git version 2.55.0
+2026-10-23T17:08:50.4877834Z ##[endgroup]
+2026-10-23T17:08:50.4890322Z Temporarily overriding HOME='/home/runner/work/_temp/fa4533b6-d71d-4750-b213-7f57cee7206a' before making global git config changes
+2026-10-23T17:08:50.4895408Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-23T17:08:50.4896054Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/actions/actions
+2026-10-23T17:08:50.4948665Z Deleting the contents of '/home/runner/work/actions/actions'
+2026-10-23T17:08:50.4954164Z ##[group]Initializing the repository
+2026-10-23T17:08:50.4958173Z [command]/usr/bin/git init /home/runner/work/actions/actions
+2026-10-23T17:08:50.5106154Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-23T17:08:50.5107313Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-23T17:08:50.5108344Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-23T17:08:50.5109190Z hint: call:
+2026-10-23T17:08:50.5109719Z hint:
+2026-10-23T17:08:50.5110356Z hint: 	git config --global init.defaultBranch <name>
+2026-10-23T17:08:50.5111319Z hint:
+2026-10-23T17:08:50.5112060Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-23T17:08:50.5113419Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-23T17:08:50.5114399Z hint:
+2026-10-23T17:08:50.5114950Z hint: 	git branch -m <name>
+2026-10-23T17:08:50.5115552Z hint:
+2026-10-23T17:08:50.5116162Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-23T17:08:50.5117115Z Initialized empty Git repository in /home/runner/work/actions/actions/.git/
+2026-10-23T17:08:50.5137954Z [command]/usr/bin/git remote add origin https://github.com/rhgrive3/actions
+2026-10-23T17:08:50.5190376Z ##[endgroup]
+2026-10-23T17:08:50.5191075Z ##[group]Disabling automatic garbage collection
+2026-10-23T17:08:50.5195144Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-23T17:08:50.5232913Z ##[endgroup]
+2026-10-23T17:08:50.5233428Z ##[group]Setting up auth
+2026-10-23T17:08:50.5240216Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-23T17:08:50.5277609Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-23T17:08:50.5597276Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-23T17:08:50.5633292Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-23T17:08:50.5831634Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-23T17:08:50.5874879Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-23T17:08:50.6083518Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-23T17:08:50.6126358Z ##[endgroup]
+2026-10-23T17:08:50.6127323Z ##[group]Fetching the repository
+2026-10-23T17:08:50.6135077Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin d278a495a90ff0b6067d3dd26aa4d9ce40af53d4
+2026-10-23T17:09:04.9199213Z From https://github.com/rhgrive3/actions
+2026-10-23T17:09:04.9199877Z  * branch            d278a495a90ff0b6067d3dd26aa4d9ce40af53d4 -> FETCH_HEAD
+2026-10-23T17:09:04.9202718Z ##[endgroup]
+2026-10-23T17:09:04.9203184Z ##[group]Determining the checkout info
+2026-10-23T17:09:04.9204943Z ##[endgroup]
+2026-10-23T17:09:04.9210497Z [command]/usr/bin/git sparse-checkout disable
+2026-10-23T17:09:04.9269146Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-23T17:09:04.9296206Z ##[group]Checking out the ref
+2026-10-23T17:09:04.9298761Z [command]/usr/bin/git checkout --progress --force d278a495a90ff0b6067d3dd26aa4d9ce40af53d4
+2026-10-23T17:09:06.0342522Z Updating files:  92% (5816/6295)
+2026-10-23T17:09:06.0558830Z Updating files:  93% (5855/6295)
+2026-10-23T17:09:06.0852465Z Updating files:  94% (5918/6295)
+2026-10-23T17:09:06.1063073Z Updating files:  95% (5981/6295)
+2026-10-23T17:09:06.1082703Z Updating files:  96% (6044/6295)
+2026-10-23T17:09:06.1173661Z Updating files:  97% (6107/6295)
+2026-10-23T17:09:06.1226815Z Updating files:  98% (6170/6295)
+2026-10-23T17:09:06.1253445Z Updating files:  99% (6233/6295)
+2026-10-23T17:09:06.1254160Z Updating files: 100% (6295/6295)
+2026-10-23T17:09:06.1254488Z Updating files: 100% (6295/6295), done.
+2026-10-23T17:09:06.1294599Z Note: switching to 'd278a495a90ff0b6067d3dd26aa4d9ce40af53d4'.
+2026-10-23T17:09:06.1294876Z 
+2026-10-23T17:09:06.1295105Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-23T17:09:06.1295536Z changes and commit them, and you can discard any commits you make in this
+2026-10-23T17:09:06.1297211Z state without impacting any branches by switching back to a branch.
+2026-10-23T17:09:06.1297693Z 
+2026-10-23T17:09:06.1298019Z If you want to create a new branch to retain commits you create, you may
+2026-10-23T17:09:06.1298538Z do so (now or later) by using -c with the switch command. Example:
+2026-10-23T17:09:06.1298780Z 
+2026-10-23T17:09:06.1298890Z   git switch -c <new-branch-name>
+2026-10-23T17:09:06.1299047Z 
+2026-10-23T17:09:06.1299142Z Or undo this operation with:
+2026-10-23T17:09:06.1299245Z 
+2026-10-23T17:09:06.1299330Z   git switch -
+2026-10-23T17:09:06.1299469Z 
+2026-10-23T17:09:06.1299626Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-23T17:09:06.1299810Z 
+2026-10-23T17:09:06.1299974Z HEAD is now at d278a49 docs: distinguish source Scorch from the emitted native registry
+2026-10-23T17:09:06.1362054Z ##[endgroup]
+2026-10-23T17:09:06.1408833Z [command]/usr/bin/git log -1 --format=%H
+2026-10-23T17:09:06.1440431Z d278a495a90ff0b6067d3dd26aa4d9ce40af53d4
+2026-10-23T17:09:06.1615323Z ##[group]Run [[ "$EXPECTED_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+2026-10-23T17:09:06.1615649Z [36;1m[[ "$EXPECTED_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]][0m
+2026-10-23T17:09:06.1615898Z [36;1mtest "$(git rev-parse HEAD)" = "$EXPECTED_SOURCE_SHA"[0m
+2026-10-23T17:09:06.1616158Z [36;1mif [ "$PAIR_EVENT_NAME" = "workflow_dispatch" ]; then[0m
+2026-10-23T17:09:06.1616493Z [36;1m  for sha in "$DISPATCH_BASE_SHA" "$DISPATCH_HEAD_SHA" "$DISPATCH_SOURCE_BASE" "$DISPATCH_SOURCE_HEAD"; do[0m
+2026-10-23T17:09:06.1616799Z [36;1m    [[ "$sha" =~ ^[0-9a-f]{40}$ ]][0m
+2026-10-23T17:09:06.1616998Z [36;1m  done[0m
+2026-10-23T17:09:06.1617178Z [36;1m  test "$DISPATCH_HEAD_SHA" = "$EXPECTED_SOURCE_SHA"[0m
+2026-10-23T17:09:06.1617413Z [36;1m  [[ "$DISPATCH_MODE" =~ ^[a-z0-9][a-z0-9-]+$ ]][0m
+2026-10-23T17:09:06.1617604Z [36;1mfi[0m
+2026-10-23T17:09:06.1852758Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-23T17:09:06.1853046Z env:
+2026-10-23T17:09:06.1853309Z   INKWAVE_REFERENCE_ROOT: .ci-baseline
+2026-10-23T17:09:06.1853537Z   EXPECTED_SOURCE_SHA: d278a495a90ff0b6067d3dd26aa4d9ce40af53d4
+2026-10-23T17:09:06.1853770Z   PAIR_EVENT_NAME: pull_request
+2026-10-23T17:09:06.1853941Z   DISPATCH_BASE_SHA: 
+2026-10-23T17:09:06.1854088Z   DISPATCH_HEAD_SHA: 
+2026-10-23T17:09:06.1854236Z   DISPATCH_MODE: 
+2026-10-23T17:09:06.1854383Z   DISPATCH_SOURCE_BASE: 
+2026-10-23T17:09:06.1854540Z   DISPATCH_SOURCE_HEAD: 
+2026-10-23T17:09:06.1854698Z ##[endgroup]
+2026-10-23T17:09:06.2054031Z ##[group]Run actions/checkout@v4
+2026-10-23T17:09:06.2054251Z with:
+2026-10-23T17:09:06.2054421Z   ref: 7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51
+2026-10-23T17:09:06.2054618Z   path: .ci-baseline
+2026-10-23T17:09:06.2054778Z   persist-credentials: false
+2026-10-23T17:09:06.2054951Z   repository: rhgrive3/actions
+2026-10-23T17:09:06.2056349Z   token: ***
+2026-10-23T17:09:06.2056491Z   ssh-strict: true
+2026-10-23T17:09:06.2056637Z   ssh-user: git
+2026-10-23T17:09:06.2056776Z   clean: true
+2026-10-23T17:09:06.2056929Z   sparse-checkout-cone-mode: true
+2026-10-23T17:09:06.2057102Z   fetch-depth: 1
+2026-10-23T17:09:06.2057244Z   fetch-tags: false
+2026-10-23T17:09:06.2057391Z   show-progress: true
+2026-10-23T17:09:06.2057536Z   lfs: false
+2026-10-23T17:09:06.2057671Z   submodules: false
+2026-10-23T17:09:06.2057821Z   set-safe-directory: true
+2026-10-23T17:09:06.2057994Z   allow-unsafe-pr-checkout: false
+2026-10-23T17:09:06.2058165Z env:
+2026-10-23T17:09:06.2058369Z   INKWAVE_REFERENCE_ROOT: .ci-baseline
+2026-10-23T17:09:06.2058543Z ##[endgroup]
+2026-10-23T17:09:06.2637509Z Syncing repository: rhgrive3/actions
+2026-10-23T17:09:06.2638555Z ##[group]Getting Git version info
+2026-10-23T17:09:06.2639089Z Working directory is '/home/runner/work/actions/actions/.ci-baseline'
+2026-10-23T17:09:06.2658831Z [command]/usr/bin/git version
+2026-10-23T17:09:06.2694010Z git version 2.55.0
+2026-10-23T17:09:06.2708054Z ##[endgroup]
+2026-10-23T17:09:06.2718695Z Temporarily overriding HOME='/home/runner/work/_temp/e9cadcb9-dfe7-4cd6-8f2e-efa3767671de' before making global git config changes
+2026-10-23T17:09:06.2719283Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-23T17:09:06.2722820Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/actions/actions/.ci-baseline
+2026-10-23T17:09:06.2755831Z ##[group]Initializing the repository
+2026-10-23T17:09:06.2759223Z [command]/usr/bin/git init /home/runner/work/actions/actions/.ci-baseline
+2026-10-23T17:09:06.2799005Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-23T17:09:06.2799922Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-23T17:09:06.2800757Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-23T17:09:06.2801133Z hint: call:
+2026-10-23T17:09:06.2801344Z hint:
+2026-10-23T17:09:06.2801641Z hint: 	git config --global init.defaultBranch <name>
+2026-10-23T17:09:06.2801943Z hint:
+2026-10-23T17:09:06.2802262Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-23T17:09:06.2802755Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-23T17:09:06.2803119Z hint:
+2026-10-23T17:09:06.2803346Z hint: 	git branch -m <name>
+2026-10-23T17:09:06.2803591Z hint:
+2026-10-23T17:09:06.2803935Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-23T17:09:06.2804522Z Initialized empty Git repository in /home/runner/work/actions/actions/.ci-baseline/.git/
+2026-10-23T17:09:06.2810085Z [command]/usr/bin/git remote add origin https://github.com/rhgrive3/actions
+2026-10-23T17:09:06.2842989Z ##[endgroup]
+2026-10-23T17:09:06.2843406Z ##[group]Disabling automatic garbage collection
+2026-10-23T17:09:06.2847146Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-23T17:09:06.2874409Z ##[endgroup]
+2026-10-23T17:09:06.2874799Z ##[group]Setting up auth
+2026-10-23T17:09:06.2881136Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-23T17:09:06.2910358Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-23T17:09:06.3118318Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-23T17:09:06.3162723Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-23T17:09:06.3339425Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-23T17:09:06.3371658Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-23T17:09:06.3552226Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-23T17:09:06.3588810Z ##[endgroup]
+2026-10-23T17:09:06.3589326Z ##[group]Fetching the repository
+2026-10-23T17:09:06.3595677Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin 7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51
+2026-10-23T17:09:20.3954874Z From https://github.com/rhgrive3/actions
+2026-10-23T17:09:20.3955396Z  * branch            7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51 -> FETCH_HEAD
+2026-10-23T17:09:20.3964393Z ##[endgroup]
+2026-10-23T17:09:20.3964693Z ##[group]Determining the checkout info
+2026-10-23T17:09:20.3965260Z ##[endgroup]
+2026-10-23T17:09:20.3973517Z [command]/usr/bin/git sparse-checkout disable
+2026-10-23T17:09:20.4003172Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-23T17:09:20.4027340Z ##[group]Checking out the ref
+2026-10-23T17:09:20.4029703Z [command]/usr/bin/git checkout --progress --force 7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51
+2026-10-23T17:09:21.4676710Z Updating files:  92% (5775/6254)
+2026-10-23T17:09:21.4887654Z Updating files:  93% (5817/6254)
+2026-10-23T17:09:21.5178675Z Updating files:  94% (5879/6254)
+2026-10-23T17:09:21.5377120Z Updating files:  95% (5942/6254)
+2026-10-23T17:09:21.5397563Z Updating files:  96% (6004/6254)
+2026-10-23T17:09:21.5489183Z Updating files:  97% (6067/6254)
+2026-10-23T17:09:21.5544808Z Updating files:  98% (6129/6254)
+2026-10-23T17:09:21.5572113Z Updating files:  99% (6192/6254)
+2026-10-23T17:09:21.5572446Z Updating files: 100% (6254/6254)
+2026-10-23T17:09:21.5572797Z Updating files: 100% (6254/6254), done.
+2026-10-23T17:09:21.5612348Z Note: switching to '7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51'.
+2026-10-23T17:09:21.5612829Z 
+2026-10-23T17:09:21.5613203Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-23T17:09:21.5633648Z changes and commit them, and you can discard any commits you make in this
+2026-10-23T17:09:21.5634231Z state without impacting any branches by switching back to a branch.
+2026-10-23T17:09:21.5634509Z 
+2026-10-23T17:09:21.5634681Z If you want to create a new branch to retain commits you create, you may
+2026-10-23T17:09:21.5635097Z do so (now or later) by using -c with the switch command. Example:
+2026-10-23T17:09:21.5635355Z 
+2026-10-23T17:09:21.5635456Z   git switch -c <new-branch-name>
+2026-10-23T17:09:21.5635640Z 
+2026-10-23T17:09:21.5635761Z Or undo this operation with:
+2026-10-23T17:09:21.5635921Z 
+2026-10-23T17:09:21.5636004Z   git switch -
+2026-10-23T17:09:21.5636172Z 
+2026-10-23T17:09:21.5636401Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-23T17:09:21.5636695Z 
+2026-10-23T17:09:21.5636960Z HEAD is now at 7e027ac Merge pull request #1858 from rhgrive3/claude/frontend-options-crash-v2fhre
+2026-10-23T17:09:21.5663576Z ##[endgroup]
+2026-10-23T17:09:21.5701687Z [command]/usr/bin/git log -1 --format=%H
+2026-10-23T17:09:21.5726241Z 7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51
+2026-10-23T17:09:21.5733691Z ##[group]Removing auth
+2026-10-23T17:09:21.5735955Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-23T17:09:21.5764003Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-23T17:09:21.5947006Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-23T17:09:21.5972356Z http.https://github.com/.extraheader
+2026-10-23T17:09:21.5978953Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-23T17:09:21.6007674Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-23T17:09:21.6188793Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-23T17:09:21.6249536Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-23T17:09:21.6428070Z ##[endgroup]
+2026-10-23T17:09:21.6543356Z ##[group]Run [[ "$EXPECTED_BASE_SHA" =~ ^[0-9a-f]{40}$ ]]
+2026-10-23T17:09:21.6543615Z [36;1m[[ "$EXPECTED_BASE_SHA" =~ ^[0-9a-f]{40}$ ]][0m
+2026-10-23T17:09:21.6543857Z [36;1mtest "$(git -C .ci-baseline rev-parse HEAD)" = "$EXPECTED_BASE_SHA"[0m
+2026-10-23T17:09:21.6599421Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-23T17:09:21.6599619Z env:
+2026-10-23T17:09:21.6599748Z   INKWAVE_REFERENCE_ROOT: .ci-baseline
+2026-10-23T17:09:21.6600083Z   EXPECTED_BASE_SHA: 7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51
+2026-10-23T17:09:21.6600276Z ##[endgroup]
+2026-10-23T17:09:21.6739240Z ##[group]Run actions/setup-node@v4
+2026-10-23T17:09:21.6739405Z with:
+2026-10-23T17:09:21.6739526Z   node-version: 22
+2026-10-23T17:09:21.6739649Z   always-auth: false
+2026-10-23T17:09:21.6739772Z   check-latest: false
+2026-10-23T17:09:21.6741209Z   token: ***
+2026-10-23T17:09:21.6741331Z env:
+2026-10-23T17:09:21.6741456Z   INKWAVE_REFERENCE_ROOT: .ci-baseline
+2026-10-23T17:09:21.6741606Z ##[endgroup]
+2026-10-23T17:09:21.7629296Z Found in cache @ /opt/hostedtoolcache/node/22.23.3/x64
+2026-10-23T17:09:21.7632740Z (node:2601) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-23T17:09:21.7633288Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-23T17:09:21.7634520Z ##[group]Environment details
+2026-10-23T17:09:22.0877012Z node: v22.23.3
+2026-10-23T17:09:22.0877297Z npm: 10.9.9
+2026-10-23T17:09:22.0877469Z yarn: 1.22.22
+2026-10-23T17:09:22.0878622Z ##[endgroup]
+2026-10-23T17:09:22.0982964Z ##[group]Run npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+2026-10-23T17:09:22.0983353Z [36;1mnpm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8[0m
+2026-10-23T17:09:22.1043555Z shell: /usr/bin/bash -e {0}
+2026-10-23T17:09:22.1043711Z env:
+2026-10-23T17:09:22.1043838Z   INKWAVE_REFERENCE_ROOT: .ci-baseline
+2026-10-23T17:09:22.1043990Z ##[endgroup]
+2026-10-23T17:09:29.3130981Z 
+2026-10-23T17:09:29.3137456Z added 20 packages, and audited 21 packages in 7s
+2026-10-23T17:09:29.3137974Z 
+2026-10-23T17:09:29.3138479Z 8 packages are looking for funding
+2026-10-23T17:09:29.3138791Z   run `npm fund` for details
+2026-10-23T17:09:29.3139030Z 
+2026-10-23T17:09:29.3139318Z found 0 vulnerabilities
+2026-10-23T17:09:29.3594928Z ##[group]Run npx playwright install --with-deps chromium
+2026-10-23T17:09:29.3595197Z [36;1mnpx playwright install --with-deps chromium[0m
+2026-10-23T17:09:29.3650096Z shell: /usr/bin/bash -e {0}
+2026-10-23T17:09:29.3650251Z env:
+2026-10-23T17:09:29.3650380Z   INKWAVE_REFERENCE_ROOT: .ci-baseline
+2026-10-23T17:09:29.3650535Z ##[endgroup]
+2026-10-23T17:09:29.8881150Z Installing dependencies...
+2026-10-23T17:09:29.8935546Z Switching to root user to install dependencies...
+2026-10-23T17:09:29.9788825Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-10-23T17:09:30.0403796Z Hit:2 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+2026-10-23T17:09:30.0405673Z Get:6 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
+2026-10-23T17:09:30.0472057Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+2026-10-23T17:09:30.0510588Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+2026-10-23T17:09:30.0542548Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+2026-10-23T17:09:30.1317417Z Get:7 https://packages.microsoft.com/ubuntu/24.04/prod noble/main amd64 Packages [640 kB]
+2026-10-23T17:09:30.1497540Z Get:8 https://packages.microsoft.com/ubuntu/24.04/prod noble/main armhf Packages [12.4 kB]
+2026-10-23T17:09:30.1525810Z Get:9 https://packages.microsoft.com/ubuntu/24.04/prod noble/main arm64 Packages [576 kB]
+2026-10-23T17:09:30.1753689Z Get:10 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1401 kB]
+2026-10-23T17:09:30.1862370Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [310 kB]
+2026-10-23T17:09:30.1887743Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1706 kB]
+2026-10-23T17:09:30.1962123Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [342 kB]
+2026-10-23T17:09:30.1995039Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1805 kB]
+2026-10-23T17:09:30.2079781Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [411 kB]
+2026-10-23T17:09:30.2617039Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [1146 kB]
+2026-10-23T17:09:30.2675858Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [231 kB]
+2026-10-23T17:09:30.2703946Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1222 kB]
+2026-10-23T17:09:30.2763281Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-security/universe Translation-en [246 kB]
+2026-10-23T17:09:30.3217361Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1713 kB]
+2026-10-23T17:09:30.3292554Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted Translation-en [392 kB]
+2026-10-23T17:09:35.3594873Z Fetched 12.5 MB in 1s (12.2 MB/s)
+2026-10-23T17:09:36.0035801Z Reading package lists...
+2026-10-23T17:09:36.0225902Z Reading package lists...
+2026-10-23T17:09:36.2160216Z Building dependency tree...
+2026-10-23T17:09:36.2165100Z Reading state information...
+2026-10-23T17:09:36.3493114Z libasound2t64 is already the newest version (1.2.11-1ubuntu0.3).
+2026-10-23T17:09:36.3493676Z libasound2t64 set to manually installed.
+2026-10-23T17:09:36.3494082Z libatk-bridge2.0-0t64 is already the newest version (2.52.0-1build1).
+2026-10-23T17:09:36.3494489Z libatk-bridge2.0-0t64 set to manually installed.
+2026-10-23T17:09:36.3494874Z libatk1.0-0t64 is already the newest version (2.52.0-1build1).
+2026-10-23T17:09:36.3495238Z libatk1.0-0t64 set to manually installed.
+2026-10-23T17:09:36.3495612Z libatspi2.0-0t64 is already the newest version (2.52.0-1build1).
+2026-10-23T17:09:36.3496031Z libatspi2.0-0t64 set to manually installed.
+2026-10-23T17:09:36.3496395Z libcairo2 is already the newest version (1.18.0-3build1).
+2026-10-23T17:09:36.3496738Z libcairo2 set to manually installed.
+2026-10-23T17:09:36.3497711Z libcups2t64 is already the newest version (2.4.7-1.2ubuntu7.14).
+2026-10-23T17:09:36.3497967Z libcups2t64 set to manually installed.
+2026-10-23T17:09:36.3498236Z libdbus-1-3 is already the newest version (1.14.10-4ubuntu4.1).
+2026-10-23T17:09:36.3498476Z libdbus-1-3 set to manually installed.
+2026-10-23T17:09:36.3498825Z libdrm2 is already the newest version (2.4.125-1ubuntu0.1~24.04.2).
+2026-10-23T17:09:36.3499106Z libdrm2 set to manually installed.
+2026-10-23T17:09:36.3499388Z libgbm1 is already the newest version (25.2.8-0ubuntu0.24.04.4).
+2026-10-23T17:09:36.3499641Z libgbm1 set to manually installed.
+2026-10-23T17:09:36.3499951Z libnspr4 is already the newest version (2:4.35-1.1build1).
+2026-10-23T17:09:36.3500215Z libnspr4 set to manually installed.
+2026-10-23T17:09:36.3500592Z libpango-1.0-0 is already the newest version (1.52.1+ds-1build1).
+2026-10-23T17:09:36.3501476Z libpango-1.0-0 set to manually installed.
+2026-10-23T17:09:36.3501871Z libx11-6 is already the newest version (2:1.8.7-1ubuntu0.1).
+2026-10-23T17:09:36.3502317Z libx11-6 set to manually installed.
+2026-10-23T17:09:36.3502644Z libxcb1 is already the newest version (1.15-1ubuntu2).
+2026-10-23T17:09:36.3502958Z libxcb1 set to manually installed.
+2026-10-23T17:09:36.3503316Z libxcomposite1 is already the newest version (1:0.4.5-1build3).
+2026-10-23T17:09:36.3503728Z libxcomposite1 set to manually installed.
+2026-10-23T17:09:36.3504102Z libxdamage1 is already the newest version (1:1.1.6-1build1).
+2026-10-23T17:09:36.3504437Z libxdamage1 set to manually installed.
+2026-10-23T17:09:36.3504777Z libxext6 is already the newest version (2:1.3.4-1build2).
+2026-10-23T17:09:36.3505182Z libxext6 set to manually installed.
+2026-10-23T17:09:36.3505538Z libxfixes3 is already the newest version (1:6.0.0-2build1).
+2026-10-23T17:09:36.3505870Z libxfixes3 set to manually installed.
+2026-10-23T17:09:36.3506227Z libxkbcommon0 is already the newest version (1.6.0-1build1).
+2026-10-23T17:09:36.3506594Z libxkbcommon0 set to manually installed.
+2026-10-23T17:09:36.3506829Z libxrandr2 is already the newest version (2:1.5.2-2build1).
+2026-10-23T17:09:36.3507036Z libxrandr2 set to manually installed.
+2026-10-23T17:09:36.3507471Z fonts-noto-color-emoji is already the newest version (2.047-0ubuntu0.24.04.1).
+2026-10-23T17:09:36.3507875Z libfontconfig1 is already the newest version (2.15.0-1.1ubuntu2).
+2026-10-23T17:09:36.3508147Z libfontconfig1 set to manually installed.
+2026-10-23T17:09:36.3508434Z libfreetype6 is already the newest version (2.13.2+dfsg-1ubuntu0.2).
+2026-10-23T17:09:36.3508690Z libfreetype6 set to manually installed.
+2026-10-23T17:09:36.3508935Z fonts-liberation is already the newest version (1:2.1.5-3).
+2026-10-23T17:09:36.3509209Z fonts-liberation set to manually installed.
+2026-10-23T17:09:36.3509504Z The following additional packages will be installed:
+2026-10-23T17:09:36.3509803Z   gir1.2-glib-2.0 libglib2.0-bin libglib2.0-data libnss3-tools
+2026-10-23T17:09:36.3510068Z   xfonts-encodings xfonts-utils xserver-common
+2026-10-23T17:09:36.3510252Z Suggested packages:
+2026-10-23T17:09:36.3510384Z   low-memory-monitor
+2026-10-23T17:09:36.3510523Z Recommended packages:
+2026-10-23T17:09:36.3510823Z   fonts-ipafont-mincho fonts-tlwg-loma xfonts-base
+2026-10-23T17:09:36.3725161Z The following NEW packages will be installed:
+2026-10-23T17:09:36.3725596Z   fonts-freefont-ttf fonts-ipafont-gothic fonts-tlwg-loma-otf fonts-unifont
+2026-10-23T17:09:36.3732108Z   fonts-wqy-zenhei xfonts-cyrillic xfonts-encodings xfonts-scalable
+2026-10-23T17:09:36.3732456Z   xfonts-utils
+2026-10-23T17:09:36.3735024Z The following packages will be upgraded:
+2026-10-23T17:09:36.3736338Z   gir1.2-glib-2.0 libglib2.0-0t64 libglib2.0-bin libglib2.0-data libnss3
+2026-10-23T17:09:36.3738820Z   libnss3-tools xserver-common xvfb
+2026-10-23T17:09:36.3882920Z 8 upgraded, 9 newly installed, 0 to remove and 91 not upgraded.
+2026-10-23T17:09:36.3883267Z Need to get 25.9 MB of archives.
+2026-10-23T17:09:36.3883620Z After this operation, 79.5 MB of additional disk space will be used.
+2026-10-23T17:09:36.3884306Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-10-23T17:09:36.4822025Z Get:2 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 fonts-ipafont-gothic all 00303-21ubuntu1 [3513 kB]
+2026-10-23T17:09:36.7373689Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libglib2.0-data all 2.80.0-6ubuntu3.10 [50.2 kB]
+2026-10-23T17:09:36.8099055Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libglib2.0-bin amd64 2.80.0-6ubuntu3.10 [97.9 kB]
+2026-10-23T17:09:36.8907330Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 gir1.2-glib-2.0 amd64 2.80.0-6ubuntu3.10 [183 kB]
+2026-10-23T17:09:36.9683000Z Get:6 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libglib2.0-0t64 amd64 2.80.0-6ubuntu3.10 [1548 kB]
+2026-10-23T17:09:37.0775506Z Get:7 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 fonts-freefont-ttf all 20211204+svn4273-2 [5641 kB]
+2026-10-23T17:09:37.3535727Z Get:8 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 fonts-tlwg-loma-otf all 1:0.7.3-1 [107 kB]
+2026-10-23T17:09:37.4254564Z Get:9 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 fonts-unifont all 1:15.1.01-1build1 [2993 kB]
+2026-10-23T17:09:37.6696279Z Get:10 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 fonts-wqy-zenhei all 0.9.45-8 [7472 kB]
+2026-10-23T17:09:38.0827257Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libnss3 amd64 2:3.98-1ubuntu0.3 [1445 kB]
+2026-10-23T17:09:38.3184818Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libnss3-tools amd64 2:3.98-1ubuntu0.3 [615 kB]
+2026-10-23T17:09:38.4478183Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 xfonts-encodings all 1:1.0.5-0ubuntu2 [578 kB]
+2026-10-23T17:09:38.5673604Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 xfonts-utils amd64 1:7.7+6build3 [94.4 kB]
+2026-10-23T17:09:38.6496233Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 xfonts-cyrillic all 1:1.0.5+nmu1 [384 kB]
+2026-10-23T17:09:38.7768157Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 xfonts-scalable all 1:1.0.3-1.3 [304 kB]
+2026-10-23T17:09:38.8857604Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 xserver-common all 2:21.1.12-1ubuntu1.9 [35.0 kB]
+2026-10-23T17:09:38.9952190Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 xvfb amd64 2:21.1.12-1ubuntu1.9 [877 kB]
+2026-10-23T17:09:39.3592447Z Fetched 25.9 MB in 3s (9521 kB/s)
+2026-10-23T17:09:39.8022640Z Selecting previously unselected package fonts-ipafont-gothic.
+2026-10-23T17:09:39.8286012Z (Reading database ... 
+2026-10-23T17:09:39.8286265Z (Reading database ... 5%
+2026-10-23T17:09:39.8286426Z (Reading database ... 10%
+2026-10-23T17:09:39.8286654Z (Reading database ... 15%
+2026-10-23T17:09:39.8286796Z (Reading database ... 20%
+2026-10-23T17:09:39.8286965Z (Reading database ... 25%
+2026-10-23T17:09:39.8287106Z (Reading database ... 30%
+2026-10-23T17:09:39.8287516Z (Reading database ... 35%
+2026-10-23T17:09:39.8287805Z (Reading database ... 40%
+2026-10-23T17:09:39.8288051Z (Reading database ... 45%
+2026-10-23T17:09:39.8288604Z (Reading database ... 50%
+2026-10-23T17:09:39.8329770Z (Reading database ... 55%
+2026-10-23T17:09:39.9285481Z (Reading database ... 60%
+2026-10-23T17:09:40.1364367Z (Reading database ... 65%
+2026-10-23T17:09:40.3379544Z (Reading database ... 70%
+2026-10-23T17:09:40.5356082Z (Reading database ... 75%
+2026-10-23T17:09:40.6280381Z (Reading database ... 80%
+2026-10-23T17:09:40.7480920Z (Reading database ... 85%
+2026-10-23T17:09:40.8600412Z (Reading database ... 90%
+2026-10-23T17:09:40.9534269Z (Reading database ... 95%
+2026-10-23T17:09:40.9550293Z (Reading database ... 100%
+2026-10-23T17:09:40.9550716Z (Reading database ... 203540 files and directories currently installed.)
+2026-10-23T17:09:40.9574562Z Preparing to unpack .../00-fonts-ipafont-gothic_00303-21ubuntu1_all.deb ...
+2026-10-23T17:09:40.9759950Z Unpacking fonts-ipafont-gothic (00303-21ubuntu1) ...
+2026-10-23T17:09:41.2196675Z Preparing to unpack .../01-libglib2.0-data_2.80.0-6ubuntu3.10_all.deb ...
+2026-10-23T17:09:41.2218499Z Unpacking libglib2.0-data (2.80.0-6ubuntu3.10) over (2.80.0-6ubuntu3.9) ...
+2026-10-23T17:09:41.2522388Z Preparing to unpack .../02-libglib2.0-bin_2.80.0-6ubuntu3.10_amd64.deb ...
+2026-10-23T17:09:41.2541117Z Unpacking libglib2.0-bin (2.80.0-6ubuntu3.10) over (2.80.0-6ubuntu3.9) ...
+2026-10-23T17:09:41.2977471Z Preparing to unpack .../03-gir1.2-glib-2.0_2.80.0-6ubuntu3.10_amd64.deb ...
+2026-10-23T17:09:41.2998308Z Unpacking gir1.2-glib-2.0:amd64 (2.80.0-6ubuntu3.10) over (2.80.0-6ubuntu3.9) ...
+2026-10-23T17:09:41.3346678Z Preparing to unpack .../04-libglib2.0-0t64_2.80.0-6ubuntu3.10_amd64.deb ...
+2026-10-23T17:09:41.3416630Z Unpacking libglib2.0-0t64:amd64 (2.80.0-6ubuntu3.10) over (2.80.0-6ubuntu3.9) ...
+2026-10-23T17:09:41.3838775Z Selecting previously unselected package fonts-freefont-ttf.
+2026-10-23T17:09:41.3943230Z Preparing to unpack .../05-fonts-freefont-ttf_20211204+svn4273-2_all.deb ...
+2026-10-23T17:09:41.3950101Z Unpacking fonts-freefont-ttf (20211204+svn4273-2) ...
+2026-10-23T17:09:41.4785123Z Selecting previously unselected package fonts-tlwg-loma-otf.
+2026-10-23T17:09:41.4881897Z Preparing to unpack .../06-fonts-tlwg-loma-otf_1%3a0.7.3-1_all.deb ...
+2026-10-23T17:09:41.4887534Z Unpacking fonts-tlwg-loma-otf (1:0.7.3-1) ...
+2026-10-23T17:09:41.5062109Z Selecting previously unselected package fonts-unifont.
+2026-10-23T17:09:41.5160279Z Preparing to unpack .../07-fonts-unifont_1%3a15.1.01-1build1_all.deb ...
+2026-10-23T17:09:41.5166041Z Unpacking fonts-unifont (1:15.1.01-1build1) ...
+2026-10-23T17:09:41.6985338Z Selecting previously unselected package fonts-wqy-zenhei.
+2026-10-23T17:09:41.7081542Z Preparing to unpack .../08-fonts-wqy-zenhei_0.9.45-8_all.deb ...
+2026-10-23T17:09:41.7165023Z Unpacking fonts-wqy-zenhei (0.9.45-8) ...
+2026-10-23T17:09:42.1564349Z Preparing to unpack .../09-libnss3_2%3a3.98-1ubuntu0.3_amd64.deb ...
+2026-10-23T17:09:42.1584037Z Unpacking libnss3:amd64 (2:3.98-1ubuntu0.3) over (2:3.98-1ubuntu0.2) ...
+2026-10-23T17:09:42.2083984Z Preparing to unpack .../10-libnss3-tools_2%3a3.98-1ubuntu0.3_amd64.deb ...
+2026-10-23T17:09:42.2100197Z Unpacking libnss3-tools (2:3.98-1ubuntu0.3) over (2:3.98-1ubuntu0.2) ...
+2026-10-23T17:09:42.2452091Z Selecting previously unselected package xfonts-encodings.
+2026-10-23T17:09:42.2552790Z Preparing to unpack .../11-xfonts-encodings_1%3a1.0.5-0ubuntu2_all.deb ...
+2026-10-23T17:09:42.2559634Z Unpacking xfonts-encodings (1:1.0.5-0ubuntu2) ...
+2026-10-23T17:09:42.2792137Z Selecting previously unselected package xfonts-utils.
+2026-10-23T17:09:42.2890195Z Preparing to unpack .../12-xfonts-utils_1%3a7.7+6build3_amd64.deb ...
+2026-10-23T17:09:42.2897579Z Unpacking xfonts-utils (1:7.7+6build3) ...
+2026-10-23T17:09:42.3165008Z Selecting previously unselected package xfonts-cyrillic.
+2026-10-23T17:09:42.3264856Z Preparing to unpack .../13-xfonts-cyrillic_1%3a1.0.5+nmu1_all.deb ...
+2026-10-23T17:09:42.3271211Z Unpacking xfonts-cyrillic (1:1.0.5+nmu1) ...
+2026-10-23T17:09:42.3546168Z Selecting previously unselected package xfonts-scalable.
+2026-10-23T17:09:42.3645463Z Preparing to unpack .../14-xfonts-scalable_1%3a1.0.3-1.3_all.deb ...
+2026-10-23T17:09:42.3652505Z Unpacking xfonts-scalable (1:1.0.3-1.3) ...
+2026-10-23T17:09:42.3954522Z Preparing to unpack .../15-xserver-common_2%3a21.1.12-1ubuntu1.9_all.deb ...
+2026-10-23T17:09:42.3972307Z Unpacking xserver-common (2:21.1.12-1ubuntu1.9) over (2:21.1.12-1ubuntu1.8) ...
+2026-10-23T17:09:42.4273467Z Preparing to unpack .../16-xvfb_2%3a21.1.12-1ubuntu1.9_amd64.deb ...
+2026-10-23T17:09:42.4290481Z Unpacking xvfb (2:21.1.12-1ubuntu1.9) over (2:21.1.12-1ubuntu1.8) ...
+2026-10-23T17:09:42.4783208Z Setting up fonts-wqy-zenhei (0.9.45-8) ...
+2026-10-23T17:09:42.4879498Z Setting up fonts-freefont-ttf (20211204+svn4273-2) ...
+2026-10-23T17:09:42.4894912Z Setting up libnss3:amd64 (2:3.98-1ubuntu0.3) ...
+2026-10-23T17:09:42.4909918Z Setting up libglib2.0-0t64:amd64 (2.80.0-6ubuntu3.10) ...
+2026-10-23T17:09:42.5030107Z Setting up libglib2.0-data (2.80.0-6ubuntu3.10) ...
+2026-10-23T17:09:42.5045234Z Setting up fonts-tlwg-loma-otf (1:0.7.3-1) ...
+2026-10-23T17:09:42.5060425Z Setting up xfonts-encodings (1:1.0.5-0ubuntu2) ...
+2026-10-23T17:09:42.5075985Z Setting up gir1.2-glib-2.0:amd64 (2.80.0-6ubuntu3.10) ...
+2026-10-23T17:09:42.5091153Z Setting up fonts-ipafont-gothic (00303-21ubuntu1) ...
+2026-10-23T17:09:42.5142454Z update-alternatives: using /usr/share/fonts/opentype/ipafont-gothic/ipag.ttf to provide /usr/share/fonts/truetype/fonts-japanese-gothic.ttf (fonts-japanese-gothic.ttf) in auto mode
+2026-10-23T17:09:42.5156640Z Setting up xserver-common (2:21.1.12-1ubuntu1.9) ...
+2026-10-23T17:09:42.5171339Z Setting up libnss3-tools (2:3.98-1ubuntu0.3) ...
+2026-10-23T17:09:42.5185742Z Setting up fonts-unifont (1:15.1.01-1build1) ...
+2026-10-23T17:09:42.5200821Z Setting up xvfb (2:21.1.12-1ubuntu1.9) ...
+2026-10-23T17:09:42.5214369Z Setting up libglib2.0-bin (2.80.0-6ubuntu3.10) ...
+2026-10-23T17:09:42.5227910Z Setting up xfonts-utils (1:7.7+6build3) ...
+2026-10-23T17:09:42.5261754Z Setting up xfonts-cyrillic (1:1.0.5+nmu1) ...
+2026-10-23T17:09:42.5503528Z Setting up xfonts-scalable (1:1.0.3-1.3) ...
+2026-10-23T17:09:42.5722827Z Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+2026-10-23T17:09:42.7568344Z Processing triggers for man-db (2.12.0-4build2) ...
+2026-10-23T17:09:42.7587616Z Not building database; man-db/auto-update is not 'true'.
+2026-10-23T17:09:42.7598978Z Processing triggers for fontconfig (2.15.0-1.1ubuntu2) ...
+2026-10-23T17:09:43.2219768Z 
+2026-10-23T17:09:43.2220361Z Running kernel seems to be up-to-date.
+2026-10-23T17:09:43.2220545Z 
+2026-10-23T17:09:43.2220753Z Restarting services...
+2026-10-23T17:09:43.2623982Z  systemctl restart packagekit.service php8.3-fpm.service polkit.service udisks2.service
+2026-10-23T17:09:43.3799126Z 
+2026-10-23T17:09:43.3800212Z Service restarts being deferred:
+2026-10-23T17:09:43.3801820Z  systemctl restart ModemManager.service
+2026-10-23T17:09:43.3811953Z  systemctl restart networkd-dispatcher.service
+2026-10-23T17:09:43.3812230Z 
+2026-10-23T17:09:43.3812454Z No containers need to be restarted.
+2026-10-23T17:09:43.3813735Z 
+2026-10-23T17:09:43.3813895Z No user sessions are running outdated binaries.
+2026-10-23T17:09:43.3814129Z 
+2026-10-23T17:09:43.3814959Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+2026-10-23T17:09:44.2674821Z Downloading Chrome for Testing 151.0.7922.34 (playwright chromium v1234) from https://cdn.playwright.dev/builds/cft/151.0.7922.34/linux64/chrome-linux64.zip
+2026-10-23T17:09:45.1734869Z |                                                                                |   0% of 184.3 MiB
+2026-10-23T17:09:45.3125817Z |■■■■■■■■                                                                        |  10% of 184.3 MiB
+2026-10-23T17:09:45.4144995Z |■■■■■■■■■■■■■■■■                                                                |  20% of 184.3 MiB
+2026-10-23T17:09:45.5126287Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 184.3 MiB
+2026-10-23T17:09:45.6335038Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 184.3 MiB
+2026-10-23T17:09:45.7388860Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 184.3 MiB
+2026-10-23T17:09:45.8519922Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 184.3 MiB
+2026-10-23T17:09:45.9424115Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 184.3 MiB
+2026-10-23T17:09:46.1276329Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 184.3 MiB
+2026-10-23T17:09:46.2366943Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 184.3 MiB
+2026-10-23T17:09:46.3728684Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 184.3 MiB
+2026-10-23T17:09:48.1911715Z Chrome for Testing 151.0.7922.34 (playwright chromium v1234) downloaded to /home/runner/.cache/ms-playwright/chromium-1234
+2026-10-23T17:09:48.1915026Z Downloading FFmpeg (playwright ffmpeg v1011) from https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1011/ffmpeg-linux.zip
+2026-10-23T17:09:49.1353003Z |                                                                                |   0% of 2.3 MiB
+2026-10-23T17:09:49.1872617Z |■■■■■■■■                                                                        |  10% of 2.3 MiB
+2026-10-23T17:09:49.2256399Z |■■■■■■■■■■■■■■■■                                                                |  20% of 2.3 MiB
+2026-10-23T17:09:49.2398391Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 2.3 MiB
+2026-10-23T17:09:49.2568594Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 2.3 MiB
+2026-10-23T17:09:49.2748720Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 2.3 MiB
+2026-10-23T17:09:49.2806020Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 2.3 MiB
+2026-10-23T17:09:49.2961221Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 2.3 MiB
+2026-10-23T17:09:49.3008719Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 2.3 MiB
+2026-10-23T17:09:49.3059546Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 2.3 MiB
+2026-10-23T17:09:49.3169275Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 2.3 MiB
+2026-10-23T17:09:49.3557150Z FFmpeg (playwright ffmpeg v1011) downloaded to /home/runner/.cache/ms-playwright/ffmpeg-1011
+2026-10-23T17:09:49.3558969Z Downloading Chrome Headless Shell 151.0.7922.34 (playwright chromium-headless-shell v1234) from https://cdn.playwright.dev/builds/cft/151.0.7922.34/linux64/chrome-headless-shell-linux64.zip
+2026-10-23T17:09:50.2575430Z |                                                                                |   0% of 114.7 MiB
+2026-10-23T17:09:50.3863493Z |■■■■■■■■                                                                        |  10% of 114.7 MiB
+2026-10-23T17:09:50.4362368Z |■■■■■■■■■■■■■■■■                                                                |  20% of 114.7 MiB
+2026-10-23T17:09:50.4947829Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 114.7 MiB
+2026-10-23T17:09:50.5553686Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 114.7 MiB
+2026-10-23T17:09:50.6120480Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 114.7 MiB
+2026-10-23T17:09:50.6696920Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 114.7 MiB
+2026-10-23T17:09:50.7357141Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 114.7 MiB
+2026-10-23T17:09:50.7890155Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 114.7 MiB
+2026-10-23T17:09:50.8529369Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 114.7 MiB
+2026-10-23T17:09:50.9055634Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 114.7 MiB
+2026-10-23T17:09:52.1763501Z Chrome Headless Shell 151.0.7922.34 (playwright chromium-headless-shell v1234) downloaded to /home/runner/.cache/ms-playwright/chromium_headless_shell-1234
+2026-10-23T17:09:52.2526557Z ##[group]Run if [ "$PAIR_EVENT_NAME" = "workflow_dispatch" ]; then
+2026-10-23T17:09:52.2526888Z [36;1mif [ "$PAIR_EVENT_NAME" = "workflow_dispatch" ]; then[0m
+2026-10-23T17:09:52.2527727Z [36;1m  node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode "$DISPATCH_MODE" --expected-source-base "$DISPATCH_SOURCE_BASE" --expected-source-head "$DISPATCH_SOURCE_HEAD" --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json[0m
+2026-10-23T17:09:52.2529126Z [36;1melif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$DECLARED_BASE_SHA" = "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64" ] && [ "$PAIR_REPOSITORY" = "rhgrive3/actions" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ] && [ "$PAIR_HEAD_REF" = "inkwave/runtime-ui-acceptance-20261022" ]; then[0m
+2026-10-23T17:09:52.2530462Z [36;1m  node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode main26a4-reviewed-runtime-ui-production-pair --expected-source-base 26a4db4123d23162a3dbf8a12150b1b5bc6ccf64 --expected-source-head "$DECLARED_HEAD_SHA" --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json[0m
+2026-10-23T17:09:52.2531736Z [36;1melif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "fix/stringer-splatana-review-20261023" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ] && [ -n "$PAIR_REPOSITORY" ]; then[0m
+2026-10-23T17:09:52.2532939Z [36;1m  node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode current-pair-with-gameplay-differences --expected-source-base 83403aaab0043633f1ad1c963068cd0566c5b6fc --expected-source-head c9218d19b98a3bc63c9266738e1d67a64d9d1ff0 --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json[0m
+2026-10-23T17:09:52.2534118Z [36;1melif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "integrate/inkwave-all-prs-20261022" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ] && [ -n "$PAIR_REPOSITORY" ]; then[0m
+2026-10-23T17:09:52.2535289Z [36;1m  node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode current-pair-with-gameplay-differences --expected-source-base 26a4db4123d23162a3dbf8a12150b1b5bc6ccf64 --expected-source-head c9218d19b98a3bc63c9266738e1d67a64d9d1ff0 --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json[0m
+2026-10-23T17:09:52.2536476Z [36;1melif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "inkwave/exact-head-ci-main144-20261022" ] && [ -n "$PAIR_REPOSITORY" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ]; then[0m
+2026-10-23T17:09:52.2537673Z [36;1m  node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode queue1801-byte-identical-paint-source-epoch --expected-source-base df83a5c4265a9c8738d930dabaffb43cd31ae902 --expected-source-head df83a5c4265a9c8738d930dabaffb43cd31ae902 --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json[0m
+2026-10-23T17:09:52.2538899Z [36;1melif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && { [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-0f3-prep-20261022" ] || [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-followup-20261022" ]; }; then[0m
+2026-10-23T17:09:52.2540270Z [36;1m  node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode maine1f-byte-identical-paint-source-epoch --expected-source-base e1fa66ad8465bf87caaf232d51543def72c35875 --expected-source-head e1fa66ad8465bf87caaf232d51543def72c35875 --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json[0m
+2026-10-23T17:09:52.2541447Z [36;1melif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "inkwave/runtime-main-a350-integration-20261022" ]; then[0m
+2026-10-23T17:09:52.2542538Z [36;1m  node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode maina350-byte-identical-paint-source-epoch --expected-source-base a350b6b89e4cb86abe37273db6315c74085f8ac5 --expected-source-head a350b6b89e4cb86abe37273db6315c74085f8ac5 --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json[0m
+2026-10-23T17:09:52.2543683Z [36;1melif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "integrate/all-open-prs-20261022" ]; then[0m
+2026-10-23T17:09:52.2544749Z [36;1m  node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode mainceb58-byte-identical-paint-source-epoch --expected-source-base ceb58f24d8188d3a5179e013399ba37ef4c41f47 --expected-source-head ceb58f24d8188d3a5179e013399ba37ef4c41f47 --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json[0m
+2026-10-23T17:09:52.2545810Z [36;1melif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "fix/queue-30-recovery-20261022" ]; then[0m
+2026-10-23T17:09:52.2546859Z [36;1m  node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode queue1801-reviewed-paint-source-pair --expected-source-base 28d2c888704d32304d1c938c51d7d2d230eddbbd --expected-source-head df83a5c4265a9c8738d930dabaffb43cd31ae902 --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json[0m
+2026-10-23T17:09:52.2547850Z [36;1melif [ "$PAIR_PR_NUMBER" = "1758" ] || [ "$PAIR_HEAD_REF" = "test/inkwave-combined-qa-20261021" ]; then[0m
+2026-10-23T17:09:52.2548501Z [36;1m  node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json[0m
+2026-10-23T17:09:52.2549047Z [36;1melse[0m
+2026-10-23T17:09:52.2549450Z [36;1m  node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json[0m
+2026-10-23T17:09:52.2549881Z [36;1mfi[0m
+2026-10-23T17:09:52.2603859Z shell: /usr/bin/bash -e {0}
+2026-10-23T17:09:52.2604007Z env:
+2026-10-23T17:09:52.2604136Z   INKWAVE_REFERENCE_ROOT: .ci-baseline
+2026-10-23T17:09:52.2604303Z   PAIR_EVENT_NAME: pull_request
+2026-10-23T17:09:52.2604448Z   PAIR_BASE_REF: main
+2026-10-23T17:09:52.2604576Z   PAIR_PR_NUMBER: 1860
+2026-10-23T17:09:52.2604737Z   PAIR_HEAD_REF: fix/respawn-enemy-exclusion-20261023
+2026-10-23T17:09:52.2604928Z   PAIR_HEAD_REPO: rhgrive3/actions
+2026-10-23T17:09:52.2605083Z   PAIR_REPOSITORY: rhgrive3/actions
+2026-10-23T17:09:52.2605271Z   DECLARED_BASE_SHA: 7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51
+2026-10-23T17:09:52.2605503Z   DECLARED_HEAD_SHA: d278a495a90ff0b6067d3dd26aa4d9ce40af53d4
+2026-10-23T17:09:52.2605685Z   DISPATCH_MODE: 
+2026-10-23T17:09:52.2605806Z   DISPATCH_SOURCE_BASE: 
+2026-10-23T17:09:52.2605940Z   DISPATCH_SOURCE_HEAD: 
+2026-10-23T17:09:52.2606070Z ##[endgroup]
+2026-10-23T17:09:52.3954539Z file:///home/runner/work/actions/actions/scripts/lib/inkwave-main-ink-baseline.mjs:35
+2026-10-23T17:09:52.3955111Z const fail = message => { throw Error('INKWAVE paint baseline: ' + message); };
+2026-10-23T17:09:52.3955452Z                                 ^
+2026-10-23T17:09:52.3955597Z 
+2026-10-23T17:09:52.3956041Z Error: INKWAVE paint baseline: patches/splatoon3/main-ink-footprint-adapter.mjs: candidate module is not the pinned final blob
+2026-10-23T17:09:52.3956768Z     at fail (file:///home/runner/work/actions/actions/scripts/lib/inkwave-main-ink-baseline.mjs:35:33)
+2026-10-23T17:09:52.3957524Z     at planMainInkBaseline (file:///home/runner/work/actions/actions/scripts/lib/inkwave-main-ink-baseline.mjs:758:51)
+2026-10-23T17:09:52.3958347Z     at file:///home/runner/work/actions/actions/scripts/prepare-inkwave-projectile-baseline.mjs:89:15
+2026-10-23T17:09:52.3958679Z     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+2026-10-23T17:09:52.3958974Z     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+2026-10-23T17:09:52.3959309Z     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2026-10-23T17:09:52.3959487Z 
+2026-10-23T17:09:52.3959541Z Node.js v22.23.3
+2026-10-23T17:09:52.4005369Z ##[error]Process completed with exit code 1.
+2026-10-23T17:09:52.4132093Z ##[group]Run actions/upload-artifact@v4
+2026-10-23T17:09:52.4132264Z with:
+2026-10-23T17:09:52.4132460Z   name: projectile-capture-before-d278a495a90ff0b6067d3dd26aa4d9ce40af53d4
+2026-10-23T17:09:52.4132715Z   path: .ci-scratch/projectile-visuals/before/
+2026-10-23T17:09:52.4132888Z   if-no-files-found: warn
+2026-10-23T17:09:52.4133036Z   retention-days: 14
+2026-10-23T17:09:52.4133163Z   compression-level: 0
+2026-10-23T17:09:52.4133286Z   overwrite: false
+2026-10-23T17:09:52.4133410Z   include-hidden-files: false
+2026-10-23T17:09:52.4133544Z env:
+2026-10-23T17:09:52.4133661Z   INKWAVE_REFERENCE_ROOT: .ci-baseline
+2026-10-23T17:09:52.4133811Z ##[endgroup]
+2026-10-23T17:09:52.5216953Z (node:3450) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-23T17:09:52.5217480Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-23T17:09:52.5239609Z ##[warning]No files were found with the provided path: .ci-scratch/projectile-visuals/before/. No artifacts will be uploaded.
+2026-10-23T17:09:52.5405039Z Post job cleanup.
+2026-10-23T17:09:52.5995385Z [command]/usr/bin/git version
+2026-10-23T17:09:52.6030859Z git version 2.55.0
+2026-10-23T17:09:52.6059243Z Temporarily overriding HOME='/home/runner/work/_temp/b1dc0040-4688-4e56-b28c-d9fd6ffdd034' before making global git config changes
+2026-10-23T17:09:52.6059834Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-23T17:09:52.6063781Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/actions/actions/.ci-baseline
+2026-10-23T17:09:52.6102922Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-23T17:09:52.6137757Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-23T17:09:52.6351952Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-23T17:09:52.6393611Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-23T17:09:52.6605047Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-23T17:09:52.6636549Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-23T17:09:52.6944382Z Post job cleanup.
+2026-10-23T17:09:52.7608127Z [command]/usr/bin/git version
+2026-10-23T17:09:52.7651839Z git version 2.55.0
+2026-10-23T17:09:52.7671054Z Temporarily overriding HOME='/home/runner/work/_temp/205ce2c2-9eb4-4181-8555-b855d1e06ddd' before making global git config changes
+2026-10-23T17:09:52.7672170Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-23T17:09:52.7675390Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/actions/actions
+2026-10-23T17:09:52.7716298Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-23T17:09:52.7753700Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-23T17:09:52.8005593Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-23T17:09:52.8029226Z http.https://github.com/.extraheader
+2026-10-23T17:09:52.8051954Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-23T17:09:52.8074054Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-23T17:09:52.8352945Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-23T17:09:52.8405329Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-23T17:09:52.8739292Z Cleaning up orphan processes
+2026-10-23T17:09:52.9034492Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

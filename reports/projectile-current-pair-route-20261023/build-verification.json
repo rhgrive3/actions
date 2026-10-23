@@ -1,0 +1,46 @@
+{
+  "rows": [
+    {
+      "name": "fresh-base726",
+      "epoch": "726e338ac256ba9609086ce65e25a68ddd99df85",
+      "canonicalInputs": 1420,
+      "artifacts": 2110,
+      "inputHash": "350b861c6d2ca16e5430ffc5b4f7e39cfbefc9df67290de1746b077ae256eb81",
+      "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+      "allInputBodiesAndPinsMatch": true,
+      "allArtifactBodiesMatch": true
+    },
+    {
+      "name": "existing-base7e",
+      "epoch": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+      "canonicalInputs": 1420,
+      "artifacts": 2110,
+      "inputHash": "8710f36362bd7e4c59b52cf6dd8d95a2ac720ee8b8b64541e1f0aecc8c4925f5",
+      "contentHash": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+      "allInputBodiesAndPinsMatch": true,
+      "allArtifactBodiesMatch": true
+    },
+    {
+      "name": "existing-1857",
+      "epoch": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "canonicalInputs": 1423,
+      "artifacts": 2116,
+      "inputHash": "9e8b33fb99224088ee00aa2fba80aef88f619b1e8e94f8cb1462b252d2154150",
+      "contentHash": "f740110d0f27536f46725d2299710bf4e01a08c0e7ddc6efba75dbe27a61c965",
+      "allInputBodiesAndPinsMatch": true,
+      "allArtifactBodiesMatch": true
+    },
+    {
+      "name": "fresh-QA-candidate",
+      "epoch": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+      "canonicalInputs": 1420,
+      "artifacts": 2110,
+      "inputHash": "8710f36362bd7e4c59b52cf6dd8d95a2ac720ee8b8b64541e1f0aecc8c4925f5",
+      "contentHash": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+      "allInputBodiesAndPinsMatch": true,
+      "allArtifactBodiesMatch": true
+    }
+  ],
+  "qaCandidateMatchesMain7e": true,
+  "note": "Existing current-head firing builds are rehashed, not represented as new full browser runs. PR1860 candidate build/capture remains its separate hosted run."
+}

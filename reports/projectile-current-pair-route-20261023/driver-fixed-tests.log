@@ -1,0 +1,18 @@
+✔ closed inventories name all four real source epochs and exact reviewed deltas (13.953597ms)
+✔ every paint/native/pose leaf keeps current pins; historical replay pin remains unchanged (3.363504ms)
+✔ only the two owned PRs and their actual admitted event bases select this route (3.041016ms)
+✔ QA-only new head is declared separately from the completely pinned production epoch (2.134436ms)
+✔ every production leaf rejects drift, including added/missing/duplicate paths and modes (1717.96787ms)
+✔ real filesystem and Git readers detect dirty source, unknown files, symlinks and wrong HEAD (39.895554ms)
+✔ CLI rejects ambiguous flags and invalid events without replacing an existing receipt (167.496099ms)
+✔ receipt cannot overwrite production, verifier, fixture or event inputs (270.494467ms)
+✔ CLI success runs controls with the selected route and writes only the receipt (orchestration stubs) (58.7868ms)
+✔ workflow admits only after successful controls and retains both captures and strict comparisons (8.364594ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2406.560339

@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {execFileSync,spawnSync} from 'node:child_process';
+const dir='reports/projectile-current-pair-route-20261023',result=[];
+const codeCommit='4fa8848e3c1437522b1d85c882115b70133abeb8';
+const qa=['.github/workflows/inkwave-projectile-visuals.yml','scripts/fixtures/inkwave-projectile-current-pair-20261023.json.gz','scripts/lib/inkwave-projectile-current-pair.mjs','scripts/tests/inkwave-ci-source-admission.test.mjs','scripts/tests/inkwave-projectile-current-pair.test.mjs','scripts/verify-inkwave-projectile-current-pair.mjs'].sort();
+for(const [pr,base,original,root,input] of [[1857,'/workspace/projectile-route-base726','d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c','/workspace/projectile-route-final1857','pr1857-base726'],[1860,'/workspace/projectile-route-base7e','d278a495a90ff0b6067d3dd26aa4d9ce40af53d4','/workspace/projectile-route-final1860','pr1860-base7e']]){
+ const git=(...args)=>execFileSync('git',['-C',root,...args],{encoding:'utf8'}).trim(),head=git('rev-parse','HEAD');
+ const changed=git('diff','--name-only',original,head).split('\n').sort();assert.deepEqual(changed,qa);
+ const event=JSON.parse(fs.readFileSync(dir+'/'+input+'.json'));event.pull_request.head.sha=head;
+ const eventFile=path.resolve(dir,'final-composed-pr'+pr+'-prospective-event.json'),receipt=path.resolve(dir,'final-composed-pr'+pr+'-receipt.json');
+ fs.writeFileSync(eventFile,JSON.stringify(event,null,2)+'\n');
+ const run=spawnSync(process.execPath,[root+'/scripts/verify-inkwave-projectile-current-pair.mjs','--baseline',base,'--candidate',root,'--event',eventFile,'--receipt',receipt],{encoding:'utf8',env:{...process.env,GITHUB_EVENT_NAME:'pull_request',GITHUB_REPOSITORY:'rhgrive3/actions'}});
+ fs.writeFileSync(dir+'/final-composed-pr'+pr+'.log',run.stdout+run.stderr);assert.equal(run.status,0,run.stderr);
+ assert.equal(git('status','--porcelain'),'');const evidence=JSON.parse(fs.readFileSync(receipt));assert.deepEqual(evidence.writtenPaths,[]);
+ result.push({pr,originalHead:original,localComposedHead:head,published:false,codeCommit,cleanCherryPick:true,changedPaths:changed,productionChanges:[],admission:evidence.checkouts,controls:evidence.controls,writtenPaths:evidence.writtenPaths});
+}
+fs.writeFileSync(dir+'/composition-verification.json',JSON.stringify(result,null,2)+'\n');
+console.log(result.map(row=>({pr:row.pr,head:row.localComposedHead,cleanCherryPick:row.cleanCherryPick,productionChanges:row.productionChanges,controls:row.controls})));

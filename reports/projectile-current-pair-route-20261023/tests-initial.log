@@ -1,0 +1,34 @@
+✔ the subsequent weapon batch binds actual Git commits to its exact integrated-main source pair (66.661693ms)
+✔ relay dispatch retains checkout and both regression suites (2.290192ms)
+✔ dispatch has five required explicit inputs and no mutable baseline fallback (0.528188ms)
+✔ frozen dispatch candidate accepts complete identities (5.518542ms)
+✔ reject missing or mutable DISPATCH_BASE_SHA (22.524574ms)
+✔ reject missing or mutable DISPATCH_HEAD_SHA (20.131671ms)
+✔ reject missing or mutable DISPATCH_SOURCE_BASE (18.644383ms)
+✔ reject missing or mutable DISPATCH_SOURCE_HEAD (17.091857ms)
+✔ reject candidate mismatch and invalid mode (16.798372ms)
+✔ baseline identity fails closed (14.400227ms)
+✔ dispatch both controls and preparation receive all five immutable assertions (7.759389ms)
+✔ existing reviewed integration PR remains bound to fixed a350 source epoch (7.763961ms)
+✔ comparison retains complete and synthetic gates plus checkout identity (9.881367ms)
+✔ rejected dispatch admission or preparation fails the step without legacy fallback (6.533827ms)
+✔ queue1801 dispatch preserves checkout SHA versus reviewed source-epoch distinction (14.562418ms)
+✔ queue-30 PR retains exact admission/preparation branch and all new regression triggers (12.235295ms)
+✔ only owned same-repository main PR selects queue1801 identity route (44.115977ms)
+✔ the fixed 32-PR aggregate routes both source controls to the full main pair (58.263543ms)
+✔ closed inventories name all four real source epochs and exact reviewed deltas (12.56252ms)
+✔ every paint/native/pose leaf keeps current pins; historical replay pin remains unchanged (2.860424ms)
+✔ only the two owned PRs and their actual admitted event bases select this route (5.85464ms)
+✔ QA-only new head is declared separately from the completely pinned production epoch (2.254322ms)
+✔ every production leaf rejects drift, including added/missing/duplicate paths and modes (1674.128359ms)
+✔ real filesystem and Git readers detect dirty source, unknown files, symlinks and wrong HEAD (41.622458ms)
+✔ CLI rejects ambiguous flags and invalid events without replacing an existing receipt (178.018487ms)
+✔ workflow admits only after successful controls and retains both captures and strict comparisons (16.687685ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2073.798525

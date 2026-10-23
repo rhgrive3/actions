@@ -1,0 +1,24 @@
+[
+  {
+    "pr": 1857,
+    "selectedRoute": "legacy fallback without declared commits or expected epoch",
+    "birthChanges": [],
+    "poolChanges": [],
+    "firstRejectedPath": "patches/splatoon3/main-ink-footprint-adapter.mjs",
+    "historicalExpectedBlob": "8ddbf0c56af50c68a645701c94a11fa81e6a2666",
+    "actualBaseBlob": "cdcc9e94cfe5b754a0b1f99fbd204b28ff24d91c",
+    "actualCandidateBlob": "cdcc9e94cfe5b754a0b1f99fbd204b28ff24d91c",
+    "writesBeforeRejection": 0
+  },
+  {
+    "pr": 1860,
+    "selectedRoute": "legacy fallback without declared commits or expected epoch",
+    "birthChanges": [],
+    "poolChanges": [],
+    "firstRejectedPath": "patches/splatoon3/main-ink-footprint-adapter.mjs",
+    "historicalExpectedBlob": "8ddbf0c56af50c68a645701c94a11fa81e6a2666",
+    "actualBaseBlob": "cdcc9e94cfe5b754a0b1f99fbd204b28ff24d91c",
+    "actualCandidateBlob": "cdcc9e94cfe5b754a0b1f99fbd204b28ff24d91c",
+    "writesBeforeRejection": 0
+  }
+]

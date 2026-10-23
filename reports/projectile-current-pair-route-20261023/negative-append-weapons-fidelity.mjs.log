@@ -1,0 +1,25 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: patches/splatoon3/runtime/weapons-fidelity.mjs: pinned sha
++ actual - expected
+
++ '7653e9e14dc866b8c6ede5363f6b0880ef77355d'
+- '7b90706ec5cc5bb05d9f150344495753a7f1acad'
+
+    at assertCurrentPairRows (file:///workspace/projectile-route-repair/scripts/lib/inkwave-projectile-current-pair.mjs:48:14)
+    at verifyCurrentProjectilePair (file:///workspace/projectile-route-repair/scripts/lib/inkwave-projectile-current-pair.mjs:110:5)
+    at file:///workspace/projectile-route-repair/scripts/verify-inkwave-projectile-current-pair.mjs:23:18
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '7653e9e14dc866b8c6ede5363f6b0880ef77355d',
+  expected: '7b90706ec5cc5bb05d9f150344495753a7f1acad',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.19.0

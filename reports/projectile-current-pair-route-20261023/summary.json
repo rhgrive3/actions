@@ -1,0 +1,509 @@
+{
+  "codeCommit": "4fa8848e3c1437522b1d85c882115b70133abeb8",
+  "productionChanges": [],
+  "tests": {
+    "sourceCases": 94,
+    "pass": 94,
+    "fail": 0,
+    "skip": 0,
+    "driverCases": 10
+  },
+  "realSourceNegatives": [
+    {
+      "name": "paint drift",
+      "relative": "patches/splatoon3/main-ink-footprint-adapter.mjs",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: patches/splatoon3/main-ink-footprint-adapter.mjs: pinned sha"
+    },
+    {
+      "name": "native birth drift",
+      "relative": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: patches/splatoon3/runtime/weapons-fidelity.mjs: pinned sha"
+    },
+    {
+      "name": "missing cosmetic",
+      "relative": "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+    },
+    {
+      "name": "untracked production",
+      "relative": "patches/splatoon3/runtime/unreviewed-route-negative.mjs",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+    },
+    {
+      "name": "source symlink",
+      "relative": "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: patches/splatoon3/runtime/splatling-cosmetics.mjs: source symlinks rejected"
+    },
+    {
+      "name": "declared head mismatch",
+      "relative": null,
+      "status": 1,
+      "priorReceiptPreserved": true,
+      "reason": "AssertionError [ERR_ASSERTION]: declared commit must equal actual HEAD"
+    }
+  ],
+  "preparations": [
+    {
+      "file": "pr1857-base726-receipt.json",
+      "schema": 1,
+      "mode": "oct23-reviewed-projectile-pairs",
+      "pr": 1857,
+      "repository": "rhgrive3/actions",
+      "branch": "fix/shooter-splatling-cosmetics-20261023",
+      "declaredBaseCommit": "726e338ac256ba9609086ce65e25a68ddd99df85",
+      "declaredCandidateCommit": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "sourceBase": "726e338ac256ba9609086ce65e25a68ddd99df85",
+      "sourceHead": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "fixtureSha256": "adf375e9e5a53d3f7ea0724d296a4b201c68edbfc6aea44291617a7d9de20ad9",
+      "checkouts": [
+        {
+          "commit": "726e338ac256ba9609086ce65e25a68ddd99df85",
+          "tree": "cfd4402fa796d11daffe2db0d34cdfcac8a4c71c",
+          "sourceEpoch": "726e338ac256ba9609086ce65e25a68ddd99df85",
+          "productionLeaves": 1458,
+          "inventorySha256": "0fd0762216e121b78e94d7c6023783967056c24f7cd1fbe445276765e1e7956a"
+        },
+        {
+          "commit": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+          "tree": "72c4cf18d9654925954472a3716541a9c76b8298",
+          "sourceEpoch": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+          "productionLeaves": 1461,
+          "inventorySha256": "0638c5087ab87639b94cb20bd9e9136f4305149da37624307f887dd760a4843c"
+        }
+      ],
+      "productionDeltas": [
+        {
+          "path": "patches/local-quality/static-menu-adapter.mjs",
+          "before": {
+            "path": "patches/local-quality/static-menu-adapter.mjs",
+            "mode": "100644",
+            "sha": "209e1b21d25d790e8b3725a8f2f0bed363547d53",
+            "sha256": "c8bec2d3404d9574243388bb036ddbefa176dd1a5ccd5aa52936046a4ba3683e"
+          },
+          "after": {
+            "path": "patches/local-quality/static-menu-adapter.mjs",
+            "mode": "100644",
+            "sha": "e9ec35da5e1f96d9e312ba18f89585c0222e26cc",
+            "sha256": "991dd8f97df2508e6ef090d9a80457d741492ab2de9537ebde328afdc62ba62f"
+          }
+        },
+        {
+          "path": "patches/splatoon3/firing-cosmetics-adapter.mjs",
+          "before": null,
+          "after": {
+            "path": "patches/splatoon3/firing-cosmetics-adapter.mjs",
+            "mode": "100644",
+            "sha": "19f4236fabcdcc99fd38253a3a87f3436b026a7b",
+            "sha256": "264ab6f40fd2970de39a4ffd0c54f142683544b072169ef74dcace219ceaef6f"
+          }
+        },
+        {
+          "path": "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+          "before": null,
+          "after": {
+            "path": "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+            "mode": "100644",
+            "sha": "523afbd9e550f2b65d2848eec89d445bac270f12",
+            "sha256": "3b4a10c2e9a956c68005116425f9c14b8025e6cd471afc5d82b2350d0ceed50d"
+          }
+        },
+        {
+          "path": "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+          "before": null,
+          "after": {
+            "path": "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+            "mode": "100644",
+            "sha": "1a0909ac79aeed0e059b7730d31de3a463f6dca4",
+            "sha256": "f230328b269e8c3d5f2c8daf00adafb080da7c0ad617f8149683593a24aebba7"
+          }
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "before": {
+            "path": "scripts/inkwave-source-composition.mjs",
+            "mode": "100644",
+            "sha": "a61100acdd90db510fafb99d6636c8fffff1295c",
+            "sha256": "0992c6800164f0682611322aa0b2ad548cc82bf67e3af75077a0e86cddb2fc03"
+          },
+          "after": {
+            "path": "scripts/inkwave-source-composition.mjs",
+            "mode": "100644",
+            "sha": "a6dfbe6fa07a4ba54bfe316c67fb8cc8d9d4a9e9",
+            "sha256": "b7973c61b34fae2da69b0d1af22fc4239d28e8db0dc492d17a41b6838631e8ad"
+          }
+        }
+      ],
+      "changes": [],
+      "writtenPaths": [],
+      "scope": "Preserve the actual event base and complete pinned candidate production epoch, including paint, births, RNG, pose and network. No historical Roller, pool, paint or pose replay.",
+      "limitation": "Pinned source admission only. Listed production differences remain visible. Does not establish compiled, physical-state, RNG, visual, retail or hardware equivalence; full capture and comparison remain mandatory.",
+      "controls": {
+        "kind": "all-production-leaf-and-inventory-negative-controls",
+        "rejected": 2925
+      }
+    },
+    {
+      "file": "pr1860-base7e-receipt.json",
+      "schema": 1,
+      "mode": "oct23-reviewed-projectile-pairs",
+      "pr": 1860,
+      "repository": "rhgrive3/actions",
+      "branch": "fix/respawn-enemy-exclusion-20261023",
+      "declaredBaseCommit": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+      "declaredCandidateCommit": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+      "sourceBase": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+      "sourceHead": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+      "fixtureSha256": "adf375e9e5a53d3f7ea0724d296a4b201c68edbfc6aea44291617a7d9de20ad9",
+      "checkouts": [
+        {
+          "commit": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+          "tree": "965c98442df0c42cd092f7a6eb9b0535f51b8b38",
+          "sourceEpoch": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+          "productionLeaves": 1458,
+          "inventorySha256": "46e64fbea2073e1333cbdbfd7af9fffb3e144193675446d507826ddffe57036c"
+        },
+        {
+          "commit": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+          "tree": "bd6be2e907878a9ea6ffa47fd66b4c8f51dd299c",
+          "sourceEpoch": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+          "productionLeaves": 1460,
+          "inventorySha256": "6ff054c8ec48117788ca80196a5ccc6fd5dc6a2268ef5cfa56cc2086292b1a2d"
+        }
+      ],
+      "productionDeltas": [
+        {
+          "path": "inkwave-public/src/net/transport.js",
+          "before": {
+            "path": "inkwave-public/src/net/transport.js",
+            "mode": "100644",
+            "sha": "1fbd79cfe58681901b7d5581d4db984c7c581761",
+            "sha256": "8e90e02226f617e70cd0eee96295b2d7c02aa37cb4768064bd00a863f4bf666e"
+          },
+          "after": {
+            "path": "inkwave-public/src/net/transport.js",
+            "mode": "100644",
+            "sha": "331b19f8eca109027138498a8beab2a8eb24c1d3",
+            "sha256": "8869f2c1db3328ab98e28ce1903207da5d304049932b3a45154d2a16860a402e"
+          }
+        },
+        {
+          "path": "patches/splatoon3/runtime/spawn-exclusion.mjs",
+          "before": null,
+          "after": {
+            "path": "patches/splatoon3/runtime/spawn-exclusion.mjs",
+            "mode": "100644",
+            "sha": "4b68c6d7a3f4223521ca316792e1e76e6f7b71aa",
+            "sha256": "15ce9f42f70ceaa4dc4c2ba10c125227a0eca8ca422a2dd277f853fb7fb26f38"
+          }
+        },
+        {
+          "path": "patches/splatoon3/spawn-exclusion-adapter.mjs",
+          "before": null,
+          "after": {
+            "path": "patches/splatoon3/spawn-exclusion-adapter.mjs",
+            "mode": "100644",
+            "sha": "98b2eae7fa2c98cd2dca0c397cd8d86331ff6f10",
+            "sha256": "3acf3e0b1bd759aeca4ab15a9f530502e74cf91a60cfa1bdfde4a0da9fb0b94c"
+          }
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "before": {
+            "path": "scripts/inkwave-source-composition.mjs",
+            "mode": "100644",
+            "sha": "a61100acdd90db510fafb99d6636c8fffff1295c",
+            "sha256": "0992c6800164f0682611322aa0b2ad548cc82bf67e3af75077a0e86cddb2fc03"
+          },
+          "after": {
+            "path": "scripts/inkwave-source-composition.mjs",
+            "mode": "100644",
+            "sha": "e870e95e1d3ab82ab5412888fd3ca0ba0d48fcd5",
+            "sha256": "039a6e1884a50e02dd3945b030f069c833131e886bd45bbc1e70d634d68e7b40"
+          }
+        },
+        {
+          "path": "scripts/lib/inkwave-build-only-modules.mjs",
+          "before": {
+            "path": "scripts/lib/inkwave-build-only-modules.mjs",
+            "mode": "100644",
+            "sha": "5408d3598bd60d661f003f5ea0e7c02ef55e4d62",
+            "sha256": "28718d1528f16db6e06b9821695da4f84625e13893361cd54349c4530a5c3f20"
+          },
+          "after": {
+            "path": "scripts/lib/inkwave-build-only-modules.mjs",
+            "mode": "100644",
+            "sha": "64012e646a889ef090b8b0e21cd82d30e0670130",
+            "sha256": "a46aa5dfd05f66a57aafc064315ca2d273c7df442e6dfd509c8f23c3d6b81727"
+          }
+        }
+      ],
+      "changes": [],
+      "writtenPaths": [],
+      "scope": "Preserve the actual event base and complete pinned candidate production epoch, including paint, births, RNG, pose and network. No historical Roller, pool, paint or pose replay.",
+      "limitation": "Pinned source admission only. Listed production differences remain visible. Does not establish compiled, physical-state, RNG, visual, retail or hardware equivalence; full capture and comparison remain mandatory.",
+      "controls": {
+        "kind": "all-production-leaf-and-inventory-negative-controls",
+        "rejected": 2924
+      }
+    },
+    {
+      "file": "pr1857-base7e-prospective-receipt.json",
+      "schema": 1,
+      "mode": "oct23-reviewed-projectile-pairs",
+      "pr": 1857,
+      "repository": "rhgrive3/actions",
+      "branch": "fix/shooter-splatling-cosmetics-20261023",
+      "declaredBaseCommit": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+      "declaredCandidateCommit": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "sourceBase": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+      "sourceHead": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "fixtureSha256": "adf375e9e5a53d3f7ea0724d296a4b201c68edbfc6aea44291617a7d9de20ad9",
+      "checkouts": [
+        {
+          "commit": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+          "tree": "965c98442df0c42cd092f7a6eb9b0535f51b8b38",
+          "sourceEpoch": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+          "productionLeaves": 1458,
+          "inventorySha256": "46e64fbea2073e1333cbdbfd7af9fffb3e144193675446d507826ddffe57036c"
+        },
+        {
+          "commit": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+          "tree": "72c4cf18d9654925954472a3716541a9c76b8298",
+          "sourceEpoch": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+          "productionLeaves": 1461,
+          "inventorySha256": "0638c5087ab87639b94cb20bd9e9136f4305149da37624307f887dd760a4843c"
+        }
+      ],
+      "productionDeltas": [
+        {
+          "path": "patches/splatoon3/firing-cosmetics-adapter.mjs",
+          "before": null,
+          "after": {
+            "path": "patches/splatoon3/firing-cosmetics-adapter.mjs",
+            "mode": "100644",
+            "sha": "19f4236fabcdcc99fd38253a3a87f3436b026a7b",
+            "sha256": "264ab6f40fd2970de39a4ffd0c54f142683544b072169ef74dcace219ceaef6f"
+          }
+        },
+        {
+          "path": "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+          "before": null,
+          "after": {
+            "path": "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+            "mode": "100644",
+            "sha": "523afbd9e550f2b65d2848eec89d445bac270f12",
+            "sha256": "3b4a10c2e9a956c68005116425f9c14b8025e6cd471afc5d82b2350d0ceed50d"
+          }
+        },
+        {
+          "path": "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+          "before": null,
+          "after": {
+            "path": "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+            "mode": "100644",
+            "sha": "1a0909ac79aeed0e059b7730d31de3a463f6dca4",
+            "sha256": "f230328b269e8c3d5f2c8daf00adafb080da7c0ad617f8149683593a24aebba7"
+          }
+        },
+        {
+          "path": "scripts/inkwave-source-composition.mjs",
+          "before": {
+            "path": "scripts/inkwave-source-composition.mjs",
+            "mode": "100644",
+            "sha": "a61100acdd90db510fafb99d6636c8fffff1295c",
+            "sha256": "0992c6800164f0682611322aa0b2ad548cc82bf67e3af75077a0e86cddb2fc03"
+          },
+          "after": {
+            "path": "scripts/inkwave-source-composition.mjs",
+            "mode": "100644",
+            "sha": "a6dfbe6fa07a4ba54bfe316c67fb8cc8d9d4a9e9",
+            "sha256": "b7973c61b34fae2da69b0d1af22fc4239d28e8db0dc492d17a41b6838631e8ad"
+          }
+        }
+      ],
+      "changes": [],
+      "writtenPaths": [],
+      "scope": "Preserve the actual event base and complete pinned candidate production epoch, including paint, births, RNG, pose and network. No historical Roller, pool, paint or pose replay.",
+      "limitation": "Pinned source admission only. Listed production differences remain visible. Does not establish compiled, physical-state, RNG, visual, retail or hardware equivalence; full capture and comparison remain mandatory.",
+      "controls": {
+        "kind": "all-production-leaf-and-inventory-negative-controls",
+        "rejected": 2925
+      }
+    }
+  ],
+  "composed": [
+    {
+      "pr": 1857,
+      "originalHead": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "localComposedHead": "5bb94b6fd94d23261705dcc5dfe92d09c4d53536",
+      "published": false,
+      "codeCommit": "4fa8848e3c1437522b1d85c882115b70133abeb8",
+      "cleanCherryPick": true,
+      "changedPaths": [
+        ".github/workflows/inkwave-projectile-visuals.yml",
+        "scripts/fixtures/inkwave-projectile-current-pair-20261023.json.gz",
+        "scripts/lib/inkwave-projectile-current-pair.mjs",
+        "scripts/tests/inkwave-ci-source-admission.test.mjs",
+        "scripts/tests/inkwave-projectile-current-pair.test.mjs",
+        "scripts/verify-inkwave-projectile-current-pair.mjs"
+      ],
+      "productionChanges": [],
+      "admission": [
+        {
+          "commit": "726e338ac256ba9609086ce65e25a68ddd99df85",
+          "tree": "cfd4402fa796d11daffe2db0d34cdfcac8a4c71c",
+          "sourceEpoch": "726e338ac256ba9609086ce65e25a68ddd99df85",
+          "productionLeaves": 1458,
+          "inventorySha256": "0fd0762216e121b78e94d7c6023783967056c24f7cd1fbe445276765e1e7956a"
+        },
+        {
+          "commit": "5bb94b6fd94d23261705dcc5dfe92d09c4d53536",
+          "tree": "a24fe701c8e2dd574ec436c512466ba1531708dc",
+          "sourceEpoch": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+          "productionLeaves": 1461,
+          "inventorySha256": "0638c5087ab87639b94cb20bd9e9136f4305149da37624307f887dd760a4843c"
+        }
+      ],
+      "controls": {
+        "kind": "all-production-leaf-and-inventory-negative-controls",
+        "rejected": 2925
+      },
+      "writtenPaths": []
+    },
+    {
+      "pr": 1860,
+      "originalHead": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+      "localComposedHead": "61c1b57872fbd96e7a2a5444d12150bdd20888f2",
+      "published": false,
+      "codeCommit": "4fa8848e3c1437522b1d85c882115b70133abeb8",
+      "cleanCherryPick": true,
+      "changedPaths": [
+        ".github/workflows/inkwave-projectile-visuals.yml",
+        "scripts/fixtures/inkwave-projectile-current-pair-20261023.json.gz",
+        "scripts/lib/inkwave-projectile-current-pair.mjs",
+        "scripts/tests/inkwave-ci-source-admission.test.mjs",
+        "scripts/tests/inkwave-projectile-current-pair.test.mjs",
+        "scripts/verify-inkwave-projectile-current-pair.mjs"
+      ],
+      "productionChanges": [],
+      "admission": [
+        {
+          "commit": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+          "tree": "965c98442df0c42cd092f7a6eb9b0535f51b8b38",
+          "sourceEpoch": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+          "productionLeaves": 1458,
+          "inventorySha256": "46e64fbea2073e1333cbdbfd7af9fffb3e144193675446d507826ddffe57036c"
+        },
+        {
+          "commit": "61c1b57872fbd96e7a2a5444d12150bdd20888f2",
+          "tree": "82dd1c8964242551ab55f9903ecdd639d8dcbbfc",
+          "sourceEpoch": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+          "productionLeaves": 1460,
+          "inventorySha256": "6ff054c8ec48117788ca80196a5ccc6fd5dc6a2268ef5cfa56cc2086292b1a2d"
+        }
+      ],
+      "controls": {
+        "kind": "all-production-leaf-and-inventory-negative-controls",
+        "rejected": 2924
+      },
+      "writtenPaths": []
+    }
+  ],
+  "build": {
+    "rows": [
+      {
+        "name": "fresh-base726",
+        "epoch": "726e338ac256ba9609086ce65e25a68ddd99df85",
+        "canonicalInputs": 1420,
+        "artifacts": 2110,
+        "inputHash": "350b861c6d2ca16e5430ffc5b4f7e39cfbefc9df67290de1746b077ae256eb81",
+        "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+        "allInputBodiesAndPinsMatch": true,
+        "allArtifactBodiesMatch": true
+      },
+      {
+        "name": "existing-base7e",
+        "epoch": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+        "canonicalInputs": 1420,
+        "artifacts": 2110,
+        "inputHash": "8710f36362bd7e4c59b52cf6dd8d95a2ac720ee8b8b64541e1f0aecc8c4925f5",
+        "contentHash": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+        "allInputBodiesAndPinsMatch": true,
+        "allArtifactBodiesMatch": true
+      },
+      {
+        "name": "existing-1857",
+        "epoch": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+        "canonicalInputs": 1423,
+        "artifacts": 2116,
+        "inputHash": "9e8b33fb99224088ee00aa2fba80aef88f619b1e8e94f8cb1462b252d2154150",
+        "contentHash": "f740110d0f27536f46725d2299710bf4e01a08c0e7ddc6efba75dbe27a61c965",
+        "allInputBodiesAndPinsMatch": true,
+        "allArtifactBodiesMatch": true
+      },
+      {
+        "name": "fresh-QA-candidate",
+        "epoch": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+        "canonicalInputs": 1420,
+        "artifacts": 2110,
+        "inputHash": "8710f36362bd7e4c59b52cf6dd8d95a2ac720ee8b8b64541e1f0aecc8c4925f5",
+        "contentHash": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+        "allInputBodiesAndPinsMatch": true,
+        "allArtifactBodiesMatch": true
+      }
+    ],
+    "qaCandidateMatchesMain7e": true,
+    "note": "Existing current-head firing builds are rehashed, not represented as new full browser runs. PR1860 candidate build/capture remains its separate hosted run."
+  },
+  "protected": {
+    "originals": {
+      "job-120518917745.log": {
+        "bytes": 63351,
+        "sha256": "f0a0159ef74fa3b98921bb9588c44fd8cdf7e1dce44046d0382f05406a42fa50"
+      },
+      "job-120544061038.log": {
+        "bytes": 63378,
+        "sha256": "db95048ae41a4e07e28a048dc125ef22df91493559935de557687049f24ddbbc"
+      }
+    },
+    "protectedWorktrees": {
+      "main": {
+        "head": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+        "status": ""
+      },
+      "PR1857": {
+        "head": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+        "status": ""
+      },
+      "PR1860": {
+        "head": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+        "status": ""
+      },
+      "negative-restored": {
+        "head": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+        "status": ""
+      }
+    },
+    "fixtureEpochs": [
+      "726e338ac256ba9609086ce65e25a68ddd99df85",
+      "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+      "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4"
+    ]
+  },
+  "remaining": [
+    "Hosted repaired before/after capture and comparison at updated PR heads requires parent review and is unverified",
+    "Retail reference CONNECT403 remains denied",
+    "Physical phone/tablet hardware performance remains unverified"
+  ]
+}

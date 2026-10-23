@@ -1,0 +1,13 @@
+file:///workspace/projectile-route-head1857/scripts/lib/inkwave-main-ink-baseline.mjs:35
+const fail = message => { throw Error('INKWAVE paint baseline: ' + message); };
+                                ^
+
+Error: INKWAVE paint baseline: patches/splatoon3/main-ink-footprint-adapter.mjs: candidate module is not the pinned final blob
+    at fail (file:///workspace/projectile-route-head1857/scripts/lib/inkwave-main-ink-baseline.mjs:35:33)
+    at planMainInkBaseline (file:///workspace/projectile-route-head1857/scripts/lib/inkwave-main-ink-baseline.mjs:758:51)
+    at file:///workspace/projectile-route-head1857/scripts/prepare-inkwave-projectile-baseline.mjs:89:15
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.19.0

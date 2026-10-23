@@ -1,0 +1,17 @@
+✔ closed inventories name all four real source epochs and exact reviewed deltas (7.035194ms)
+✔ every paint/native/pose leaf keeps current pins; historical replay pin remains unchanged (2.670737ms)
+✔ only the two owned PRs and their actual admitted event bases select this route (2.580811ms)
+✔ QA-only new head is declared separately from the completely pinned production epoch (2.131061ms)
+✔ every production leaf rejects drift, including added/missing/duplicate paths and modes (1267.205394ms)
+✔ real filesystem and Git readers detect dirty source, unknown files, symlinks and wrong HEAD (48.839114ms)
+✔ CLI rejects ambiguous flags and invalid events without replacing an existing receipt (171.758469ms)
+✔ receipt cannot overwrite production, verifier, fixture or event inputs (257.467168ms)
+✔ workflow admits only after successful controls and retains both captures and strict comparisons (8.347933ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1884.504893

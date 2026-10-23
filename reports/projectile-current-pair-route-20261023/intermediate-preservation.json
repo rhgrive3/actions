@@ -1,0 +1,48 @@
+{
+  "commits": {
+    "first": "a95c6168a9f45cd888ee9a2ee1f349dad8ff0cdc",
+    "driverFix": "7f8fa715e8872700ca139a6490992a483994ecee",
+    "final": "4fa8848e3c1437522b1d85c882115b70133abeb8"
+  },
+  "localAuditRef": "audit/projectile-route-first-candidate-20261023",
+  "files": [
+    {
+      "path": ".github/workflows/inkwave-projectile-visuals.yml",
+      "firstBlob": "d53cc6ae4b68f8dee4da1484c8a142a96753602e",
+      "finalBlob": "d53cc6ae4b68f8dee4da1484c8a142a96753602e",
+      "preservedBody": ".github/workflows/inkwave-projectile-visuals.yml"
+    },
+    {
+      "path": "scripts/fixtures/inkwave-projectile-current-pair-20261023.json.gz",
+      "firstBlob": "23d7e88913114ce013423b80ffd2a4ae58616f65",
+      "finalBlob": "23d7e88913114ce013423b80ffd2a4ae58616f65",
+      "preservedBody": "scripts/fixtures/inkwave-projectile-current-pair-20261023.json.gz"
+    },
+    {
+      "path": "scripts/lib/inkwave-projectile-current-pair.mjs",
+      "firstBlob": "139261e2823daceb33e3be364ea381530fe8fd9e",
+      "finalBlob": "139261e2823daceb33e3be364ea381530fe8fd9e",
+      "preservedBody": "scripts/lib/inkwave-projectile-current-pair.mjs"
+    },
+    {
+      "path": "scripts/tests/inkwave-ci-source-admission.test.mjs",
+      "firstBlob": "bb7e7b3d69ab99ee04d1384a90e6a79689947f87",
+      "finalBlob": "bb7e7b3d69ab99ee04d1384a90e6a79689947f87",
+      "preservedBody": "scripts/tests/inkwave-ci-source-admission.test.mjs"
+    },
+    {
+      "path": "scripts/tests/inkwave-projectile-current-pair.test.mjs",
+      "firstBlob": "88886dd51efdf28c65127a3c7bb007928fc5f821",
+      "finalBlob": "57bc5f670426700073327c9e47af68fd92d98703",
+      "preservedBody": "originals/first-candidate-tests.mjs.txt"
+    },
+    {
+      "path": "scripts/verify-inkwave-projectile-current-pair.mjs",
+      "firstBlob": "f27836d86368e0cfda29a905ec8ebc50b3f8e03b",
+      "finalBlob": "e08fed2a3dd51e7b2ff51d2077f54f973fdf0d67",
+      "preservedBody": "originals/first-candidate-driver.mjs.txt"
+    }
+  ],
+  "failedRealPositive": "composed-pr1857-initial-driver-failure.log",
+  "failedEvent": "composed-pr1857-initial-driver-event.json"
+}

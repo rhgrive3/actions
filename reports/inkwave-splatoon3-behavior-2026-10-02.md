@@ -6136,3 +6136,6 @@ main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、Splatoon 3 Ver.11
 参照対象は公開版の全パッチ合成後。S3 Ver.11.3.0に関する既存の未確認値は変更せず、ソースモーション（既存のWii U由来パックを含む）の中間計算だけを削減した。BodyBalanceのgain対象と祖先以外の中間world回転を省き、最終全ボーンFK・足接地・IK・銃口・移動・射撃・塗り・当たり判定・描画設定は維持する。2種の実ソースキャラクター、シューター/チャージャー/ローラーの30/60/120Hz、1260フレームで最終local/world姿勢・skin行列・接地・銃口が一致し、通常minify配信物でも同じ比較が成功。これはロジック/配信物検証であり、Nintendo実機やiPad SafariのFPS比較ではない。
 
 Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテゴリ。修正対象のBodyBalanceはその一部にすぎず、iPad上での支配要因の確定や重いフレームの完全解消とは扱わない。#1671/#1757の実機受入はOpenのまま。条件・既存PRとの重複確認・再現コマンド・証跡は[調査記録](inkwave-composed-cpu-20261023/README.md)。
+# 2026-10-23 — projectile before-source QA route repair
+
+PR1857/1860 の before capture は、両側で同一の現行 footprint blob `cdcc9e94cfe5b754a0b1f99fbd204b28ff24d91c` を過去の `8ddbf0c56af50c68a645701c94a11fa81e6a2666` と照合する既定 Roller replay で停止していた。別候補は二つの既知 PR の実 event/base/head と全 production pin を読取り検証し、元の基準を保持する QA 修復のみ。runtime・塗り・物理・pose・比較条件は変更しない。失敗原本、94件の回帰、実 source 改変拒否と通常 build の証跡は `reports/projectile-current-pair-route-20261023/README.md`。修復後 hosted before/after 比較は未通過。本家参照拒否・実機性能未確認は維持する。

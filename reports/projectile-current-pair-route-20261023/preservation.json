@@ -1,0 +1,36 @@
+{
+  "originals": {
+    "job-120518917745.log": {
+      "bytes": 63351,
+      "sha256": "f0a0159ef74fa3b98921bb9588c44fd8cdf7e1dce44046d0382f05406a42fa50"
+    },
+    "job-120544061038.log": {
+      "bytes": 63378,
+      "sha256": "db95048ae41a4e07e28a048dc125ef22df91493559935de557687049f24ddbbc"
+    }
+  },
+  "protectedWorktrees": {
+    "main": {
+      "head": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+      "status": ""
+    },
+    "PR1857": {
+      "head": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "status": ""
+    },
+    "PR1860": {
+      "head": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+      "status": ""
+    },
+    "negative-restored": {
+      "head": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "status": ""
+    }
+  },
+  "fixtureEpochs": [
+    "726e338ac256ba9609086ce65e25a68ddd99df85",
+    "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+    "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+    "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4"
+  ]
+}

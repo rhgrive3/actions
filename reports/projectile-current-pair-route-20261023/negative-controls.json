@@ -1,0 +1,44 @@
+[
+  {
+    "name": "paint drift",
+    "relative": "patches/splatoon3/main-ink-footprint-adapter.mjs",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: patches/splatoon3/main-ink-footprint-adapter.mjs: pinned sha"
+  },
+  {
+    "name": "native birth drift",
+    "relative": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: patches/splatoon3/runtime/weapons-fidelity.mjs: pinned sha"
+  },
+  {
+    "name": "missing cosmetic",
+    "relative": "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+  },
+  {
+    "name": "untracked production",
+    "relative": "patches/splatoon3/runtime/unreviewed-route-negative.mjs",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: complete production inventory: missing, extra or duplicate path"
+  },
+  {
+    "name": "source symlink",
+    "relative": "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: patches/splatoon3/runtime/splatling-cosmetics.mjs: source symlinks rejected"
+  },
+  {
+    "name": "declared head mismatch",
+    "relative": null,
+    "status": 1,
+    "priorReceiptPreserved": true,
+    "reason": "AssertionError [ERR_ASSERTION]: declared commit must equal actual HEAD"
+  }
+]

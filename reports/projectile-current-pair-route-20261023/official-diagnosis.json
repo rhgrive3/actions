@@ -1,0 +1,102 @@
+{
+  "source": "authorized GitHub connector readback",
+  "logPreservation": [
+    {
+      "job": 120518917745,
+      "sourceBodyMatches": true
+    },
+    {
+      "job": 120544061038,
+      "sourceBodyMatches": true
+    }
+  ],
+  "main": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "runs": [
+    {
+      "id": 39979905986,
+      "event": "pull_request",
+      "head": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "prs": [
+        {
+          "number": 1857,
+          "base": "726e338ac256ba9609086ce65e25a68ddd99df85",
+          "head": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+          "branch": "fix/shooter-splatling-cosmetics-20261023"
+        }
+      ],
+      "jobs": [
+        {
+          "id": 120504155145,
+          "name": "automatic_capture_route",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 120518917745,
+          "name": "Capture before",
+          "status": "completed",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120518917828,
+          "name": "Capture after",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 120536058416,
+          "name": "Compare all 48 original native captures",
+          "status": "completed",
+          "conclusion": "skipped"
+        }
+      ]
+    },
+    {
+      "id": 39988920467,
+      "event": "pull_request",
+      "head": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+      "prs": [
+        {
+          "number": 1860,
+          "base": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+          "head": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+          "branch": "fix/respawn-enemy-exclusion-20261023"
+        }
+      ],
+      "jobs": [
+        {
+          "id": 120535296331,
+          "name": "automatic_capture_route",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 120544061038,
+          "name": "Capture before",
+          "status": "completed",
+          "conclusion": "failure"
+        },
+        {
+          "id": 120544061105,
+          "name": "Capture after",
+          "status": "in_progress",
+          "conclusion": null
+        }
+      ]
+    }
+  ],
+  "footprints": [
+    {
+      "source": "base726",
+      "sha": "cdcc9e94cfe5b754a0b1f99fbd204b28ff24d91c"
+    },
+    {
+      "source": "head1857",
+      "sha": "cdcc9e94cfe5b754a0b1f99fbd204b28ff24d91c"
+    },
+    {
+      "source": "head1860",
+      "sha": "cdcc9e94cfe5b754a0b1f99fbd204b28ff24d91c"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "number": 1860,
+  "pull_request": {
+    "number": 1860,
+    "base": {
+      "ref": "main",
+      "sha": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+      "repo": {
+        "full_name": "rhgrive3/actions"
+      }
+    },
+    "head": {
+      "ref": "fix/respawn-enemy-exclusion-20261023",
+      "sha": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+      "repo": {
+        "full_name": "rhgrive3/actions"
+      }
+    }
+  }
+}
