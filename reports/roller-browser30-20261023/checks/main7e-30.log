@@ -1,0 +1,6 @@
+{"scenario":"released-edge","hz":30,"id":"roller","status":"passed","renderFrames":33,"frames":66,"release":31,"errors":[]}
+{"scenario":"early40-edge","hz":30,"id":"roller","status":"passed","renderFrames":33,"frames":66,"release":31,"errors":[]}
+{"scenario":"early-edge","hz":30,"id":"roller","status":"passed","renderFrames":33,"frames":66,"release":31,"errors":[]}
+{"scenario":"repress-edge","hz":30,"id":"roller","status":"passed","renderFrames":33,"frames":66,"release":31,"errors":[]}
+{"scenario":"late-edge","hz":30,"id":"roller","status":"passed","renderFrames":33,"frames":66,"release":31,"errors":[]}
+{"scenario":"no-input","hz":30,"id":"roller","status":"passed","renderFrames":33,"frames":66,"errors":[]}

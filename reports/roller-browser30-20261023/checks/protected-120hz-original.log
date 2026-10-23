@@ -1,0 +1,24 @@
+{"scenario":"repress-edge","hz":30,"id":"roller","status":"passed","renderFrames":33,"frames":66,"release":31,"errors":[]}
+{"scenario":"late-edge","hz":30,"id":"roller","status":"passed","renderFrames":33,"frames":66,"release":31,"errors":[]}
+{"scenario":"repress-edge","hz":60,"id":"roller","status":"passed","renderFrames":66,"frames":66,"release":31,"errors":[]}
+{"scenario":"late-edge","hz":60,"id":"roller","status":"passed","renderFrames":66,"frames":66,"release":31,"errors":[]}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.screenshot: Timeout 60000ms exceeded.
+Call log:
+[2m  - taking page screenshot[22m
+[2m  - waiting for fonts to load...[22m
+[2m  - fonts loaded[22m
+
+    at /workspace/roller-shaft-once/scripts/check-inkwave-roller-shaft-once.mjs:46:178 {
+  log: [
+    '  - taking page screenshot',
+    '  - waiting for fonts to load...',
+    '  - fonts loaded'
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v24.19.0

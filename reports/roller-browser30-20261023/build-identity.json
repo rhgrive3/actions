@@ -1,0 +1,36 @@
+{
+  "main7e": {
+    "sourceRef": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+    "contentHash": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+    "inputHash": "8710f36362bd7e4c59b52cf6dd8d95a2ac720ee8b8b64541e1f0aecc8c4925f5",
+    "manifestSha256": "374be491c20f28e01ae2963d07f322dd4d2421c4b68994d509608571d2b958fc",
+    "runtimeInputSha256": {
+      "patch/runtime/roller.mjs": "4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973"
+    },
+    "runtimeGitBlobs": {
+      "patches/splatoon3/runtime/roller.mjs": "f18ba0af47efddf0be713dac17fe1d909fe27edf"
+    }
+  },
+  "candidate": {
+    "sourceRef": "433299cb5e1518458e00f520d0a9845baa560db3",
+    "contentHash": "6184fb028078c618018d8b7b7cd4ec0d2dd5fc79d3319ec5080a9efb5af8d6f0",
+    "inputHash": "327937c902b4bdd350184424a9d67b77164c55309f3dde122dbe78d37c5816c5",
+    "manifestSha256": "b0eb4d3594a55224f1ad4f874d1fcc3ba809dcdb7291848cc18476b3f1a1bd71",
+    "runtimeInputSha256": {
+      "patch/runtime/roller-vertical-shaft-return.mjs": "b8af8bf02405cb132532142afbf0e5e2bf0f081e0cd23966856ccd289a72d87e",
+      "patch/runtime/roller.mjs": "fd4e07a11b36625cc6a00a888b6bf56670b51950f8bf2102a762d57c1659dcbb"
+    },
+    "runtimeGitBlobs": {
+      "patches/splatoon3/runtime/roller.mjs": "263aabc49d83d3b37e7229f201e7514048884bce",
+      "patches/splatoon3/runtime/roller-vertical-shaft-return.mjs": "ae0fb4b2ac534f3190dee913ca24daf71e79018e"
+    }
+  },
+  "protected120": {
+    "fixedRef": "433299cb5e1518458e00f520d0a9845baa560db3",
+    "sourcePath": "reports/roller-shaft-once-20261023/checks/browser-before.log",
+    "sha256": "062ace2a0c496609286bf4982bad17724da3ce60aaa524bbdb48d6565164668c",
+    "workspaceOriginalByteIdentical": true,
+    "rerun": false
+  },
+  "excludedFirstAttempt": "Initial main7e-site output was built from the candidate cwd and is excluded. Actual baseline is baseline-main7e-site from detached main7e, with packaging input/blob checks."
+}

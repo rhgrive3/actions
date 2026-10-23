@@ -6152,3 +6152,7 @@ Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテ�
 ### 2026-10-23 roller early returnのsupport control部分改善（別候補・未承認）
 
 early40/46のVM速度谷は、helper角stepが増加中でも既存alignLeft補正が抜ける接続で起きていた。実browserでは同じ速度谷は再現せず、027自体に元49の跳ねを減らす利点もあるため、early全体のnative fallbackは採らない。既存stationary follow-through key（native return weight1）で捕捉する場合だけ、qUpを現在の既存support reachへ一度投影して固定する別候補を保存した。新しいframe/角度閾値・共有IK/grip・native gameplay・lifecycleは変更しない。通常48は027の全66 native行と一致し、short repress/late49/52/55/新attack再利用を保つ。source/emitted各11、focused47、単体9、packaging10と、元/027/候補の60Hz×3操作が通過。module前に同じ乱数closureを設置するQAで各tickのFX配列/乱数stateも一致した。ただし上部背景pixel差は残る。earlyのVM速度谷・jerk/57減速の元より悪い点、実browserの最終減速、本家参照403・120Hz撮影timeout・全CIは未解消。全体受入ではない。[phase切り分け・棄却試行・同条件選択画像・raw](roller-early-condition-20261023/README.md)。027・全旧候補・main/PR1856を保護する。
+
+### 2026-10-23 固定head433299の実browser30Hz追加証拠（runtime未変更）
+
+別QA枝でmain7e30Hz×6、候補43329930Hz×6、同60Hz×6を実行し、18case/1188native ticks/792drawsを完了。普通rollerの通常/early40/early46/短い再押下/late52/ready無入力を同選択・camera/geometry・pre-module RNGで比較した。30Hzの各33描画で、対応60Hz native pose/drum/axle/grip/fold/kidが一致。全6traceのcanonical/物理paint/CPUgridと元deadline31/56も一致し、無入力は0attack/0projectile/0stampだった。ただし厳密なFX/RNG比較は7件未一致を保持し、全画面や本家受入は未完。新しい120Hz実行・timeout/flags変更・PRhead/runtime変更はない。[限定確認・raw・画像・未一致](roller-browser30-20261023/README.md)。
