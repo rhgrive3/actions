@@ -1,0 +1,364 @@
+{
+  "runtimeSource": "f292a305ef7a7da2f7dffb94465717c3f55ea05b",
+  "qaSource": "70b722ba4fc522127b5b9698cf77816b572bbfb7",
+  "node": "v22.23.4",
+  "build": {
+    "status": "passed",
+    "sourceSha": "f292a305ef7a7da2f7dffb94465717c3f55ea05b",
+    "node": "v22.23.4",
+    "inputHash": "1c5354ed9218e54c10d02ed8e3e3486ba928c327f6fac050f8fa3b9de41275ba",
+    "contentHash": "f464322fd9bcb3201abdf7c1b8a67980b7156002bce6bc97e73a7f539acf586d",
+    "revision": "5139323cb51488404a2bad406bbb1fa5de6e8b1aa83739ff47918b37e45d8120",
+    "checkedInputs": 1363,
+    "artifactsVerified": 2016,
+    "inputsVerified": 1362
+  },
+  "sourceSelection": {
+    "files": 43,
+    "tests": 244,
+    "pass": 244,
+    "fail": 0,
+    "skipped": 0,
+    "scope": "Separate file processes during development; not a single exact-final-head hosted CI run",
+    "raw": "regressions/results.json"
+  },
+  "additionalRuns": [
+    {
+      "file": "security-all.tap",
+      "tests": 62,
+      "pass": 62,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "file": "walk.tap",
+      "tests": 50,
+      "pass": 50,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "file": "blob-keep.tap",
+      "tests": 8,
+      "pass": 8,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "file": "audio-onset.tap",
+      "tests": 23,
+      "pass": 23,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "file": "brella-before.tap",
+      "tests": 1,
+      "pass": 0,
+      "fail": 1,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "file": "brella-after.tap",
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "file": "prediction-before.tap",
+      "tests": 1,
+      "pass": 0,
+      "fail": 1,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "file": "prediction-after.tap",
+      "tests": 5,
+      "pass": 5,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "file": "final-emitted.tap",
+      "tests": 25,
+      "pass": 24,
+      "fail": 1,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    {
+      "file": "emitted-pose-final.tap",
+      "tests": 4,
+      "pass": 4,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    }
+  ],
+  "emittedCoverage": {
+    "distinctCases": 25,
+    "initial": {
+      "pass": 24,
+      "fail": 1
+    },
+    "correctedPoseFile": {
+      "pass": 4,
+      "fail": 0
+    },
+    "scope": "All 25 distinct cases passed across the initial 21 unaffected passes plus the final whole four-case pose-file rerun. The historical 24/1 run remains a failed aggregate, not relabeled as green."
+  },
+  "ownerClockBrowser": {
+    "status": "passed",
+    "source": "4e8fc32076796e57c684d97e169649d76808b6be",
+    "cases": [
+      "cold-start",
+      "same-room-rematch",
+      "socket-reconnect"
+    ],
+    "directions": 6,
+    "limits": [
+      "Local Node adapts the Cloudflare WebSocket upgrade; not the deployed relay service.",
+      "Two isolated browser contexts share one Chromium process.",
+      "Software rendering and manually scheduled native frames do not establish physical-device frame pacing or Switch parity."
+    ]
+  },
+  "quadBrowser": {
+    "status": "passed",
+    "source": "f292a305ef7a7da2f7dffb94465717c3f55ea05b",
+    "qaScriptSha256": "662a4aad55d83a38c911318dbb95c0c18c9add3722a622b375e44727920fbcb0",
+    "cases": [
+      {
+        "hz": 30,
+        "wall": false,
+        "births": 14,
+        "ticks": 120,
+        "actualDraws": 5,
+        "prediction": {
+          "tick": 37,
+          "socketError": 0,
+          "backError": 3.749871156328936e-07,
+          "rodError": 1.039859980567388e-07,
+          "scope": "extra diagnostic draw after the first fixed tick; not an additional gameplay or cadence frame"
+        }
+      },
+      {
+        "hz": 30,
+        "wall": true,
+        "births": 14,
+        "ticks": 120,
+        "actualDraws": 4,
+        "prediction": null
+      },
+      {
+        "hz": 60,
+        "wall": false,
+        "births": 14,
+        "ticks": 120,
+        "actualDraws": 5,
+        "prediction": {
+          "tick": 37,
+          "socketError": 0,
+          "backError": 3.749871156328936e-07,
+          "rodError": 1.039859980567388e-07,
+          "scope": "extra diagnostic draw after the first fixed tick; not an additional gameplay or cadence frame"
+        }
+      },
+      {
+        "hz": 60,
+        "wall": true,
+        "births": 14,
+        "ticks": 120,
+        "actualDraws": 4,
+        "prediction": null
+      },
+      {
+        "hz": 120,
+        "wall": false,
+        "births": 14,
+        "ticks": 120,
+        "actualDraws": 5,
+        "prediction": {
+          "tick": 37,
+          "socketError": 0,
+          "backError": 3.749871156328936e-07,
+          "rodError": 1.039859980567388e-07,
+          "scope": "extra diagnostic draw after the first fixed tick; not an additional gameplay or cadence frame"
+        }
+      },
+      {
+        "hz": 120,
+        "wall": true,
+        "births": 14,
+        "ticks": 120,
+        "actualDraws": 4,
+        "prediction": null
+      }
+    ],
+    "errors": [],
+    "limits": [
+      "Actual source-loaded Actor/Physics/Character/native volume buffers and software WebGL.",
+      "The extra prediction sample is one diagnostic draw after its first fixed tick; it is not an additional physics/animation/cadence frame.",
+      "The earlier frame-end 30Hz sample legitimately saw the native tail already detached. No tail lifetime or visibility gate was relaxed.",
+      "No Switch or hardware GPU parity is established."
+    ]
+  },
+  "audioBrowser": {
+    "status": "passed",
+    "browser": "154.0.8037.57",
+    "cases": [
+      {
+        "id": "charger",
+        "duration": 0.2,
+        "loop": false,
+        "playbackRate": 1,
+        "sameDecodedBuffer": true,
+        "sources": 1,
+        "energy": 2.556072148026322,
+        "maximumAfterEnd": 0,
+        "loaderErrors": []
+      },
+      {
+        "id": "s3-charger-long",
+        "duration": 0.37497916666666664,
+        "loop": false,
+        "playbackRate": 1,
+        "sameDecodedBuffer": true,
+        "sources": 1,
+        "energy": 7.487051729991415,
+        "maximumAfterEnd": 0,
+        "loaderErrors": []
+      },
+      {
+        "id": "s3-charger-light",
+        "duration": 0.3,
+        "loop": false,
+        "playbackRate": 1,
+        "sameDecodedBuffer": true,
+        "sources": 1,
+        "energy": 2.789726430298395,
+        "maximumAfterEnd": 0,
+        "loaderErrors": []
+      },
+      {
+        "id": "s3-charger-keeper",
+        "duration": 0.3,
+        "loop": false,
+        "playbackRate": 1,
+        "sameDecodedBuffer": true,
+        "sources": 1,
+        "energy": 4.757420198899189,
+        "maximumAfterEnd": 0,
+        "loaderErrors": []
+      }
+    ],
+    "limits": [
+      "Actual Chromium OfflineAudioContext and production emitted bank/loader/MP3 decode; not real-time device latency or human listening.",
+      "Existing 2022 recordings do not certify the missing S3 11.3.0 rising layer.",
+      "No WebKit or physical device execution."
+    ]
+  },
+  "wholeGameCalibration": {
+    "status": "rejected-native-self-control",
+    "source": "4e8fc32076796e57c684d97e169649d76808b6be",
+    "freshProcesses": 4,
+    "comparability": [
+      {
+        "ordinal": 0,
+        "variant": "C",
+        "startStateEqual": true,
+        "endStateEqual": true,
+        "pixelEqual": true,
+        "inputNodesEqual": true,
+        "frameWorkEqual": true
+      },
+      {
+        "ordinal": 1,
+        "variant": "B",
+        "startStateEqual": true,
+        "endStateEqual": true,
+        "pixelEqual": false,
+        "inputNodesEqual": true,
+        "frameWorkEqual": true
+      },
+      {
+        "ordinal": 2,
+        "variant": "B",
+        "startStateEqual": true,
+        "endStateEqual": true,
+        "pixelEqual": true,
+        "inputNodesEqual": true,
+        "frameWorkEqual": true
+      },
+      {
+        "ordinal": 3,
+        "variant": "C",
+        "startStateEqual": true,
+        "endStateEqual": true,
+        "pixelEqual": false,
+        "inputNodesEqual": true,
+        "frameWorkEqual": true
+      }
+    ],
+    "visualValidation": {
+      "CRepeatExact": false,
+      "BRepeatExact": false,
+      "CBExact": false,
+      "accepted": false,
+      "allowedChange": "none; exact pixels and workload required for both current refs"
+    },
+    "pixelDeltasAgainstFirst": [
+      {
+        "trial": 0,
+        "changedChannels": 0,
+        "changedPixels": 0,
+        "maximumChannelDelta": 0
+      },
+      {
+        "trial": 1,
+        "changedChannels": 4,
+        "changedPixels": 2,
+        "maximumChannelDelta": 1
+      },
+      {
+        "trial": 2,
+        "changedChannels": 0,
+        "changedPixels": 0,
+        "maximumChannelDelta": 0
+      },
+      {
+        "trial": 3,
+        "changedChannels": 1,
+        "changedPixels": 1,
+        "maximumChannelDelta": 1
+      }
+    ],
+    "claimsPerformanceImprovement": false,
+    "limits": [
+      "Strict unchanged-source CBBC control failed exact pixels; no ABBA/BAAB performance measurement accepted.",
+      "Software SwiftShader with synchronous readback is not physical-device FPS.",
+      "Some source tests ran concurrently; timing is not a fair comparative performance result.",
+      "Unused zero-instance roller model-view matrices and intermediate composer textures differed; this does not prove a renderer root cause."
+    ]
+  },
+  "unavailable": [
+    "Physical iPad mini 6/Safari and Switch",
+    "Verified S3 11.3.0 missing audio/motion/footwear and calibration data",
+    "Complete trusted attack authority for all main/sub/special, spawn and migration contracts"
+  ],
+  "notCompleted": [
+    "All-29 issue resolution",
+    "Main merge or deployment",
+    "Hosted final-head CI",
+    "WebKit execution"
+  ],
+  "rawArchiveSha256": "dc7aff4c1712951330100110aa769f9b267ff560013e7552e6c055583bfefc11"
+}
