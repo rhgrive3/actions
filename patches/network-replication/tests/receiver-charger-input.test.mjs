@@ -42,6 +42,35 @@ test('actual dual-peer source input binds trusted spawn, arbitrary sim origin an
   const receipt=receiver.peekReceiverChargerBirth(w.target.n,w.births[0]);assert.ok(receipt);assert.equal(receipt.damage,160);assert.equal(receiver.commitReceiverChargerBirth(w.target.n,w.births[0]),true);assert.equal(receiver.commitReceiverChargerBirth(w.target.n,w.births[0]),false);
  }finally{w.close();}
 });
+test('a matched launch proof expires on the receiver clock even when source inputs stop',()=>{
+ const w=setup();try{
+  for(let i=0;i<64;i++)w.step({fire:true});for(let i=0;i<5;i++)w.step();
+  const e=w.births[0];assert.ok(receiver.peekReceiverChargerBirth(w.target.n,e));
+  wall+=1.5;
+  assert.equal(receiver.peekReceiverChargerBirth(w.target.n,e),null);
+  assert.equal(receiver.commitReceiverChargerBirth(w.target.n,e),false);
+  assert.equal(w.status().actors[0].committed,0);
+ }finally{w.close();}
+});
+test('changing an already matched event cannot reuse its private native proof for another payload',()=>{
+ const w=setup();try{
+  for(let i=0;i<64;i++)w.step({fire:true});for(let i=0;i<5;i++)w.step();
+  const e=w.births[0];assert.ok(receiver.peekReceiverChargerBirth(w.target.n,e));e[3].len*=.5;
+  assert.equal(receiver.peekReceiverChargerBirth(w.target.n,e),null);
+  assert.equal(receiver.commitReceiverChargerBirth(w.target.n,e),false);
+ }finally{w.close();}
+});
+test('two requests matching one native launch cannot both expose an unspent proof after commit',()=>{
+ const w=setup();try{
+  w.setFilter(p=>{const e=(p.e||[]).find(e=>e[1]==='ev'&&e[2]==='weapon:fire');if(e){const copy=structuredClone(e);copy[copy.length-1]=Math.max(...p.e.map(e=>e.at(-1)))+1;p.e.push(copy);}return p;});
+  for(let i=0;i<64;i++)w.step({fire:true});for(let i=0;i<5;i++)w.step();
+  assert.equal(w.births.length,2);assert.equal(w.status().actors[0].matched,2);
+  for(const e of w.births)assert.ok(receiver.peekReceiverChargerBirth(w.target.n,e));
+  assert.equal(receiver.commitReceiverChargerBirth(w.target.n,w.births[0]),true);
+  assert.equal(receiver.peekReceiverChargerBirth(w.target.n,w.births[1]),null);
+  assert.equal(receiver.commitReceiverChargerBirth(w.target.n,w.births[1]),false);
+ }finally{w.close();}
+});
 
 for(const hz of [30,120])test(`initial Turf source wait/steering/landing and one native shot at ${hz}Hz`,()=>{
  const w=setup({initialTurf:true,hz});try{

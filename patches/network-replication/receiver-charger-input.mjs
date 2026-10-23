@@ -4,6 +4,7 @@
 import { validNativeChargerInputPacket } from '../splatoon3/runtime/native-charger-input.mjs';
 import { createNativeChargerReplay, advanceNativeChargerReplay, nativeChargerReplayState, peekNativeChargerReplayLaunch, commitNativeChargerReplayLaunch, nativeChargerReplayAimMatches, retireNativeChargerReplay } from '../splatoon3/runtime/native-charger-replay.mjs';
 const states=new WeakMap(),worlds=new WeakMap(),births=new WeakMap();
+const MAX_BIRTH_AGE=1.4;
 export const RECEIVER_CHARGER_INPUT_LIMITS=Object.freeze({actors:32,frames:4096,actorFrames:512,bytes:512*1024,steps:256,births:256,peerBirths:48,history:512,checkpoints:32});
 const finite=Number.isFinite,safe=Number.isSafeInteger,life=a=>Math.max(a?.netLife??0,a?.net?.lastLife??0);
 const native=a=>a?.remote&&a.weapon?.id==='charger'&&a.weapon.kind==='charger'&&!a.weapon.catalogRecord;
@@ -59,14 +60,14 @@ export function observeReceiverChargerInputs(nm,from,packet,G,at){
 }
 function matchBirths(s,c,at){
  for(const [seq,item] of c.pending){
-  if(at-item.at>1.4){c.pending.delete(seq);s.birthCount--;continue;}
+  if(at<item.at||at-item.at>MAX_BIRTH_AGE||!validBirth(item.event)||item.event[3].actor?.n!==c.actor.nid){c.pending.delete(seq);s.birthCount--;continue;}
   if(!c.driver||c.reason||c.verified<item.frameMinimum)continue;
   const d=item.event[3],receipt=peekNativeChargerReplayLaunch(c.driver,{tick:item.event._netTick,charge:d.charge,full:d.full});
   if(!receipt||receipt.frame>c.verified)continue;
   const body=receipt.body,V=s.nm._combatProvenanceTHREE?.Vector3;
   if(!body||typeof V!=='function'||Math.hypot(d.muzzle[0]-body[0],d.muzzle[1]-body[1]-1.05,d.muzzle[2]-body[2])>1.7||Math.abs(d.len-receipt.range)>.011||
    !nativeChargerReplayAimMatches(c.driver,receipt,d.muzzle,d.dir)||s.physics.segment(new V(body[0],body[1]+1.05,body[2]),new V(...d.muzzle),undefined,true).hit){c.pending.delete(seq);s.birthCount--;continue;}
-  births.set(item.event,{s,c,receipt,used:false});c.matched++;c.pending.delete(seq);s.birthCount--;
+  births.set(item.event,{s,c,receipt,used:false,at:item.at,signature:Object.freeze(birthSignature(item.event))});c.matched++;c.pending.delete(seq);s.birthCount--;
  }
 }
 export function advanceReceiverChargerInputs(nm,G,at,from=null,event=null){
@@ -109,6 +110,7 @@ export function advanceReceiverChargerInputs(nm,G,at,from=null,event=null){
  return count;
 }
 function validBirth(e){const d=e?.[3];return e?.[1]==='ev'&&e[2]==='weapon:fire'&&safe(e._netSeq)&&safe(e._netTick)&&finite(e[0])&&d?.weapon==='charger'&&finite(d.charge)&&d.charge>=0&&d.charge<=1&&typeof d.full==='boolean'&&finite(d.len)&&d.len>0&&['muzzle','dir'].every(k=>Array.isArray(d[k])&&d[k].length===3&&d[k].every(v=>finite(v)&&Math.abs(v)<=100000))&&Math.abs(Math.hypot(...d.dir)-1)<.02;}
+function birthSignature(e){const d=e[3];return [e[0],e._netSeq,e._netTick,d.actor?.n,d.weapon,d.charge,d.full,d.len,...d.muzzle,...d.dir];}
 export function observeReceiverChargerBirth(nm,from,e,G,at){
  const s=states.get(nm),c=s?.channels.get(e?.[3]?.actor?.n),peer=nm.peers.get(from);
  if(!live(s)||G!==s.G||!c||c.reason||c.from!==from||!actorLive(s,c)||!validBirth(e)||!peer?.events?.includes(e)||c.pending.has(e._netSeq)||births.has(e))return false;
@@ -117,7 +119,13 @@ export function observeReceiverChargerBirth(nm,from,e,G,at){
  // separate bounded pending birth never blocks normal production playback.
  c.pending.set(e._netSeq,{event:e,at,frameMinimum:c.nextExecuted-1});s.birthCount++;matchBirths(s,c,at);return true;
 }
-export function peekReceiverChargerBirth(nm,e){const b=births.get(e);return b&&!b.used&&b.s.nm===nm&&actorLive(b.s,b.c)&&!b.c.reason?b.receipt:null;}
+export function peekReceiverChargerBirth(nm,e){
+ const b=births.get(e),at=performance.now()/1000;
+ if(!b||b.used||b.s.nm!==nm||!actorLive(b.s,b.c)||b.c.reason||at<b.at||at-b.at>MAX_BIRTH_AGE||!validBirth(e))return null;
+ const signature=birthSignature(e);
+ if(signature.some((value,i)=>value!==b.signature[i])||!nativeChargerReplayAimMatches(b.c.driver,b.receipt,e[3].muzzle,e[3].dir))return null;
+ return b.receipt;
+}
 export function commitReceiverChargerBirth(nm,e){const b=births.get(e);if(!peekReceiverChargerBirth(nm,e)||!commitNativeChargerReplayLaunch(b.c.driver,b.receipt))return false;b.used=true;b.c.committed++;return true;}
 export function receiverChargerInputStatus(nm){
  const s=states.get(nm);if(!s)return {bound:false};
