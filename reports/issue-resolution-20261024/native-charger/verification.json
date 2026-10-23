@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-24 Asia/Tokyo",
+  "finalRuntimeSource": "b5c49fa58e657a4476e22968016facedbf3056c0",
+  "fullNetwork": {
+    "sourceSha": "4d09927ab37b7156ee6021b06260332a42a274ea",
+    "trackedTreeCleanAfterRun": true,
+    "files": 125,
+    "tests": 901,
+    "pass": 901,
+    "fail": 0,
+    "skip": 0,
+    "cancelled": 0,
+    "node": "22.23.4",
+    "command": "node --max-old-space-size=3072 --experimental-vm-modules --test --test-concurrency=1 patches/network-replication/tests/*.test.mjs",
+    "laterSupplementSource": "b5c49fa58e657a4476e22968016facedbf3056c0",
+    "fullSuiteOnLaterSupplement": false
+  },
+  "finalFocused": {
+    "sourcePass": 111,
+    "emittedPass": 92,
+    "fail": 0,
+    "skip": 0,
+    "fullNetworkOnFinalSupplement": false
+  },
+  "earlierAimAndCycle": {
+    "source": "4d09927ab37b7156ee6021b06260332a42a274ea",
+    "sourcePass": 108,
+    "emittedPass": 89,
+    "browser": {
+      "source": "4d09927ab37b7156ee6021b06260332a42a274ea",
+      "status": "passed",
+      "cases": 3,
+      "directions": 6,
+      "scope": "native boot and owner-clock, not adversarial aim/damage browser acceptance"
+    }
+  },
+  "finalBuild": {
+    "sourceSha": "b5c49fa58e657a4476e22968016facedbf3056c0",
+    "checkedInputs": 1370,
+    "inputHash": "36e18f2384b4c7aa983842fefdd6ce3d75b1d641d06b2b9b6a25032949b7aa11",
+    "contentHash": "36ef05963db4d8b776be097b238bb7e43086dc054372788f86316da88e36ab4e",
+    "revision": "52c824cde47d2e3b1aae4d9d85965c5b0ec3287402ef2b0b534f74a039aca3ee",
+    "checkedArtifacts": 2030
+  },
+  "earlierBuild": {
+    "sourceSha": "4d09927ab37b7156ee6021b06260332a42a274ea",
+    "checkedInputs": 1370,
+    "inputHash": "9dd403e10401c7548b60f2ef8675c2852b8cbcea0b39f7dfa3978038f29a0003",
+    "contentHash": "b1a9b0d0daa3cc21c22f7dc41f0e737749b5ccf5ec4d738d860a544f2a635639",
+    "revision": "39acea05d7b165dce512843e028f737b02817669f1cfae5486e5db1e29558398",
+    "checkedArtifacts": 2030
+  },
+  "productionMerged": false,
+  "mandatoryDamageGate": false,
+  "mainWeaponsCovered": 1,
+  "mainWeaponsTotal": 65,
+  "archive": {
+    "members": 20,
+    "sha256": "c1eb46a7cc8fe274df5bc43ccc9cc8adf8363099cdc307b475cb7d459eb4f078"
+  },
+  "beforeFailures": {
+    "forgedDirection": 1,
+    "matchedLifetimePayloadAndAlias": 3,
+    "cycle": "same initialization failure reproduced on unchanged a8da7f29; corrected via installer callback, not fixture bypass"
+  }
+}

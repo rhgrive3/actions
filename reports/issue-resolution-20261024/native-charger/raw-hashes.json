@@ -1,0 +1,102 @@
+[
+  {
+    "path": "aim/after.tap",
+    "bytes": 14539,
+    "sha256": "e5ed56ccd4b98de3c706200a818eb1ff66e50729cd1b5ae4a987767544f24d3f"
+  },
+  {
+    "path": "aim/baseline-authority.tap",
+    "bytes": 1293,
+    "sha256": "04b4a9ac55caff3db8d2ed143eed116a01fb1d4b1cf6082aa9da304ef0253738"
+  },
+  {
+    "path": "aim/before.tap",
+    "bytes": 1259,
+    "sha256": "b4584200f6d3a4d5f86e8cfbb31f376fc92155417e635962ee2faf6bda4a59f2"
+  },
+  {
+    "path": "aim/browser-boot.log",
+    "bytes": 130,
+    "sha256": "7a4f5d7ff36b07d9b02356e42a3616848cfbf2004f8b8ef67a12569f9dce158c"
+  },
+  {
+    "path": "aim/browser/online.json",
+    "bytes": 291580,
+    "sha256": "f433bb3f0d7fdf219cfb654dc5c5683b450130b91bc71cb80c87c1a6b3986c9f"
+  },
+  {
+    "path": "aim/browser/owner-clock-browser.json",
+    "bytes": 253518,
+    "sha256": "0904cb03e1366e5e0efc7df72485763f2b9c8a9a685a774ea6e1d88e42ca3bae"
+  },
+  {
+    "path": "aim/build-identity.json",
+    "bytes": 365,
+    "sha256": "f8cf05c26cb2d7b7505d165f1e3e739bf7d19e6117c3fb4a6f908a967f1a524a"
+  },
+  {
+    "path": "aim/build.log",
+    "bytes": 812,
+    "sha256": "d93de44d68f0a27c6d3904be3a34dbc88524ef3043ca9521f126748423f13fe7"
+  },
+  {
+    "path": "aim/emitted.tap",
+    "bytes": 21754,
+    "sha256": "a4a9cf76fd034313b10166154f247b8d8888842fcf3f04716efeaa659871af28"
+  },
+  {
+    "path": "aim/final-fixed-cycle.tap",
+    "bytes": 26283,
+    "sha256": "6c6806fa787616a633bc2ba25a1ac9f45ff888ce56963dbcd35440e9b6719cf8"
+  },
+  {
+    "path": "aim/final.tap",
+    "bytes": 18028,
+    "sha256": "3dcacf1bc70c242fce3edba0836c9f0b5903ae96d40c18960f06de314749a37e"
+  },
+  {
+    "path": "aim/module-debug.log",
+    "bytes": 681,
+    "sha256": "f14926dc1e936feb356a008dbe4ebca6bc9efc88130a19c2f3db30480198a8a1"
+  },
+  {
+    "path": "aim/module-graph.json",
+    "bytes": 157750,
+    "sha256": "2a53af8ea317ee1755ae0f531a993b63524186616547901bc092ba26e786ae29"
+  },
+  {
+    "path": "aim/network-all.tap",
+    "bytes": 233624,
+    "sha256": "f43b32e08fbb070b295aba68c5f83ed11649b704e34d7aa8449e00ee88def1cc"
+  },
+  {
+    "path": "aim/network-source-receipt.json",
+    "bytes": 466,
+    "sha256": "adb9ec30a3489656fd8c35cca2a7d939dbef2169d05b3022d2ec4249dbe68857"
+  },
+  {
+    "path": "lifetime/after.tap",
+    "bytes": 27026,
+    "sha256": "adc6ed95d4dbfb0b566fdac1e4fb449160ec95db4d99d69cae0ef440e198ab94"
+  },
+  {
+    "path": "lifetime/before.tap",
+    "bytes": 5893,
+    "sha256": "547a29b4d5f4592a11793af1f212a8da3b15d50bcf99f8d0e44105bee20fc487"
+  },
+  {
+    "path": "lifetime/build-identity.json",
+    "bytes": 365,
+    "sha256": "2130acc8408d36d8bd91579b8268979119694fba33410f9b2650b21e85922504"
+  },
+  {
+    "path": "lifetime/build.log",
+    "bytes": 812,
+    "sha256": "642c02148f6c3ed5d21c858ff70e22837bd7a1205f618a46b232b83a6057949e"
+  },
+  {
+    "path": "lifetime/emitted.tap",
+    "bytes": 22490,
+    "sha256": "3278211263b8432de910456433925b8345e42145e4d36060d2aabb2a3858adc3"
+  }
+]
