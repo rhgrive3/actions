@@ -1,0 +1,12 @@
+{
+  "parent": "a92f35a37302d8c88592064635ca1de044ccfefd",
+  "sourceRuntimeUnchanged": true,
+  "status": "stopped-on-existing-baseline-obstacle",
+  "completeNewCases": 0,
+  "newQSubStartupRendered": true,
+  "furtherVariantsAndMatrixNotRun": true,
+  "artifacts": {
+    "diagnostic-probe.txt": "ec9bab3f2fa118ab3514b9eff2d63e778974eca4ed7d53b184e105d97779ff1e",
+    "diagnostic.json": "e44cfe4d8f3344281571d280d45abbc6b2640ca4f5e2deec34ac9e9608183a38"
+  }
+}

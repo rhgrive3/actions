@@ -1,5 +1,9 @@
 # INKWAVE とスプラトゥーン3の挙動比較
 
+## 2026-10-23：投擲の描画timeout診断（元版の新contextで停止）
+
+既存Chromium・同じflags・新contextの元版GP0水平60Hzで、Q/Sub発動3tickを含め描画を有効にして診断した。発射・飛行描画は進んだが、最後の確認tick100/缶54.88m以後のbatchが30秒応答せず、読み取りも5秒応答しなかった。直前10描画のgeometry257/texture31/program140とcompile/link数は一定、監視範囲でcontext-lost・pageerrorは0。複数ケース再利用を必要とせず元版でも起こるため候補固有と扱わず、残り2版・連続描画補完は停止。90trace/180replay/既存画像を保持し、runtime未変更。[停止位置・準備/再利用の切り分け・最小不足](inkwave-storm-capture-diagnostic-2026-10-23.md)。
+
 ## 2026-10-23：アメフラシ投擲の表示m・私有校正案3版比較（runtime未採用）
 
 通常練習場の射撃線から、before・距離のみ・距離＋contactの別コピーを実Q/Sub入力で90trace検証。1表示m=1WU、GP0/57水平で候補の雲初期距離は距離のみ15.806620/23.709930m、contact併用15.709586/23.564379mだった。beforeは高さ5mの50m壁を越え、床がない所へ落ちて98.56/147.84mで雲なし消滅し、障害物なし診断値86.24mとは異なる。30組の配信Hz別tick列、同版replay/catch-up180条件が一致。実通常画面6枚を報告へ保存したが、90traceは飛行renderを抑制した配信dt検証であり、連続GPU描画は未完了。Mission/Rival値を用いたinferred案で、対戦既定値/本家実機一致を認定せず、元runtime・投擲/接触は未変更。[数値・原始記録・画像・残件](inkwave-storm-throw-calibration-browser-2026-10-23.md)。
