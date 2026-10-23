@@ -1,4 +1,5 @@
 import test from 'node:test';
+import * as nativeGpuBudget from '../runtime/native-gpu-budget.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -18,13 +19,13 @@ async function fixture({initial='high',load,roleCap=512}={}){
  const world={level:{data,layout:{id:'stage'}},metrics:{},textureProfile:{data,quality:initial,caps:caps(initial)},display:{updateTextures(textures,quality){counts.handoffs++;world.received=textures;world.receivedQuality=quality;}}};
  const game={nativeWorld:world,_nativeAbort:parent},deps={G,q:{paintAtlas:2048,shadowSize:2048,particles:.7},updatePaintQuality(){counts.paint++;},updateEnvironmentShadowQuality(){counts.shadows++;},updateFXQuality(){counts.fx++;}};
  const context=vm.createContext({console:{warn(){}},AbortController,Promise,navigator:{deviceMemory:4}});
- const values={three:{LinearFilter:1},'./native-texture-budget.mjs':{nativeStageTextureCaps:(_m,q)=>caps(q)},'./native-load.mjs':{loadNativeTextures:async(...args)=>{
+ const values={three:{LinearFilter:1},'./native-gpu-budget.mjs':{...nativeGpuBudget},'./native-texture-budget.mjs':{nativeStageTextureCaps:(_m,q)=>caps(q)},'./native-load.mjs':{loadNativeTextures:async(...args)=>{
   counts.loads++;if(load)return load(args,makeTextures);
   return new Promise((resolve,reject)=>pending.push({signal:args[4],resolve:()=>resolve(makeTextures()),reject}));
  }}};
  const mod=new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/native-quality.mjs',import.meta.url),'utf8'),{context});
  await mod.link(spec=>{const v=values[spec];assert(v,spec);return new vm.SyntheticModule(Object.keys(v),function(){for(const k in v)this.setExport(k,v[k]);},{context});});await mod.evaluate();
- return {world,game,deps,parent,counts,pending,makeTextures,change:q=>mod.namespace.applyNativeQuality(game,{quality:q},{touch:true},deps),setRoleCap:n=>roleCap=n};
+ return {world,game,deps,parent,counts,pending,makeTextures,change:q=>mod.namespace.applyNativeQuality(game,{quality:q},{touch:false},deps),setRoleCap:n=>roleCap=n};
 }
 test('High/Ultra preserve initial textures but still apply all other quality settings',async()=>{
  const f=await fixture({load:async(_a,make)=>make()});await f.change('ultra');await f.change('high');

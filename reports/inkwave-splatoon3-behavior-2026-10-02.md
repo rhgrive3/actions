@@ -6231,3 +6231,7 @@ Actor A の character が、内部では別Actor Bと正常に結び付く生存
 今回の実装基準は公式main `726e338ac256ba9609086ce65e25a68ddd99df85`、runtime固定 `02154df66a065a039a1519990fbabff0130304af`。raw/transform source選択回帰は履歴を含む19成功run・254test実行（重複再実行を含む）で、Triz/fist fixtureのimport不足による旧2失敗試行を削除していない。最新built sourceは `c6a75315dd9f428d674b5356e7c5e8a936039264`。Node22.23.3/esbuild0.28.2の登録direct fullbuildを新規1回実行し、1421inputs `3fbcdb527d87ae0318e1e1df3037088e8d82ae8f979d6d7cae00b9a353ce4f91`、2113出力ファイルの物理readback、deterministic startup budget、emitted VM24/24（旧8・Inkjet10・Reef2・Splash4、fail/skip0）が通過した。contentHashは `bd3d8d2715b53a842901be6457bdb777621c4290f60a2c37a1404e4f9e5d3707`。これは新mainでのCPU/ファイル検証であり、実browser・GPU・実オンライン・本家との視覚一致の証拠ではない。Vite/account buildや外部native媒体のpackagingは実行していない。
 
 新規のSplashdown radial/liquid品質、Cooler展開motion、Storm距離/contact/境界/held-release、未採用TWISTERは別候補であり、この統合には含めず完成扱いしない。既存承認済Cooler mist cadenceの履歴は新Cooler motionの完成を意味しない。source-admission新入口は別担当の未完了QAであり、この記録では許可/通過を主張しない。公開・merge・dispatchや新main実画面撮影も実施していない。
+
+## 2026-10-23: 原典ステージの GPU 描画負荷上限
+
+原典ステージ表示中だけ GTAO を外し、MSAA・pixelRatio に上限をかけ、コンテキストロスト後は段階的に描画負荷を下げる（[記録](inkwave-native-gpu-budget-2026-10-23.md)）。描画表現のみの変更で、歩行・泳ぎ・射撃・塗り判定・インク回復・カメラ操作のロジックは変更していない。本家 Ver.11.3.0 との既存の差分・未確認項目はそのまま。計測は Chromium + SwiftShader の WebGL 確保量の集計で、実機の GPU 落ち解消は未確認。
