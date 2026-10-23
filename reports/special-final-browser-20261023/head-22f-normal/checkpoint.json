@@ -1,0 +1,141 @@
+{
+  "observedAtUTC": "2026-10-23T15:45:41Z",
+  "status": "PASS: bounded normal-render gameplay smoke only",
+  "candidate": {
+    "publicHead": "22f3b7534ae2093aef4c2549112a85a1da09bbf3",
+    "tree": "0d9b6632a4f872014e34d12a91856647f6f0a1ab",
+    "privateBuildSourceHead": "10265ced65866219c58b1ca3f43220e0a032ef27",
+    "binding": "The public candidate and private build source have the same reviewed complete tree and1421 build-input bytes. This browser uses that private normal build, not a newly rebuilt hosted artifact.",
+    "inputHash": "0d01f5100cb7517858bd0ae4069cca82fbe7760546e721d729b1506103ae2fdc",
+    "contentHash": "2e47659321f5a8762ff901a632f9901e680266259e5cabcc52a2dbe0f90ecbdf",
+    "revision": "e56bfef13980a2dc5144237f974f21949b327c737612d92ebdbd20f3e8e43b60"
+  },
+  "conditions": {
+    "browser": "System Chromium 154.0.8037.57",
+    "playwright": "1.62.1",
+    "executable": "/usr/bin/chromium",
+    "launchArgs": [
+      "--no-sandbox",
+      "--disable-dev-shm-usage",
+      "--use-angle=swiftshader",
+      "--enable-unsafe-swiftshader"
+    ],
+    "launchArgsChanged": false,
+    "viewport": {
+      "width": 960,
+      "height": 640
+    },
+    "seed": 27440068,
+    "map": "tidewater",
+    "lighting": "day",
+    "quality": "low",
+    "shadows": false,
+    "bloom": false,
+    "minimap": false,
+    "controllerInput": "native debug physical key/fire injection; no direct actor intent or phase assignment",
+    "perOperationLimitMs": 30000,
+    "bootstrapLimitMs": 180000,
+    "manualSimulationSteps": 0,
+    "renderSkipping": false,
+    "camera": "native gameplay follow; yaw0/pitch0.1",
+    "capture": "Only after the functional observations: debug.freeze at the last naturally rendered native tick; PNG and tick readback both408."
+  },
+  "observations": {
+    "firstNativeTick": 18,
+    "initialPlayingTick": 273,
+    "landingTick": 363,
+    "landing": {
+      "spawn": null,
+      "grounded": true,
+      "supported": true,
+      "alive": true,
+      "controllerEnabled": true
+    },
+    "movement": {
+      "fromTick": 363,
+      "toTick": 393,
+      "fromPosition": [
+        0.404163128121078,
+        0,
+        -27.206808091009826
+      ],
+      "toPosition": [
+        0.404163128121078,
+        0,
+        -26.180808091009826
+      ],
+      "horizontalDistance": 1.0259999999999998,
+      "nativeControllerMove": [
+        0,
+        0,
+        1
+      ],
+      "sameMatchActorInputOwner": true,
+      "renderCallsAt393": 25,
+      "browserWallNowAt393Ms": 61577.90000000037
+    },
+    "image": {
+      "path": "normal-follow-native-tick408.png",
+      "nativeTick": 408,
+      "lastRenderedTick": 408,
+      "size": 511006,
+      "sha256": "042e8bffc67445f45b77427c4db5cda548e3fc71798c39bce5b161551210e325",
+      "visuallyInspected": true
+    },
+    "pageErrors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "httpFailures": [],
+    "observedGLerrors": [
+      0
+    ],
+    "contextLost": false,
+    "specialDirectorErrors": 0,
+    "warning": "KHR_parallel_shader_compile unsupported"
+  },
+  "clockMeaning": "Native ticks are fixed1/60 simulation steps. Render calls and browser performance.now are separate observations; these do not establish hardware display FPS.",
+  "failedProbesPreserved": {
+    "filesSHA256": {
+      "normal-game-smoke.mjs": "e17ec9862094c3cc2ad7620e042e9b504360f1a5502e5bec6b2c0b086bd7fd9f",
+      "normal-game-result.json": "b74ef126951f0267c2f717775b93d6cac8f635507868814af444f1d26512d097",
+      "normal-follow-native-tick33.png": "99fd920a17356dc1619ed67d3f4a16a4364641471c310a76d97e8bc9582e63de",
+      "normal-playing-smoke.mjs": "e2a54d4ec894b276cfdd36bcf6c765efcb964e2d8a41e02c9a6d3dfa5fdda4c5",
+      "normal-playing-result.json": "4847bd62d5f1c28f6fee8ad4007191dea9b97a4c4188775000efaa78fdd7642f",
+      "normal-playing-runner.log": "37f534f9e9f1b70a7121304778d082cc0635d687012e55d70d59ee44d86a9504",
+      "normal-landed-smoke.mjs": "fb96a55fee3e80a8f1164e6a4de308d3171fe9721af001cf16d2d47949682ae1",
+      "normal-landed-result.json": "336fce310920c444b1754ed22f87bce078962f351d00b1ef0ba76982a33b115e",
+      "normal-landed.log": "8263b9178bf226eb55ef8dc1375766a7643acbd470fa20edf3afef0f610eea60"
+    },
+    "correction": "Original walk check ran while the initial spawn still owned motion. An instrumentation attempt referenced g.controller instead of g.match.controller. A one-sample fire assertion checked before the next simulation update: at tick288 physical fire was true, but the last controller update at287 had sampled false. Native flight was later observed with playWait0.3166667, before the1.0-second auto-launch gate, followed by supported landing and walking. All failed outputs remain separate and were rehashed; no runtime fix was made.",
+    "passingProbeSHA256": "3d264496a2a31968f06e995e9b030137eb9145613276765a1a56fa1988b67170",
+    "passingResultSHA256": "955fe7efc72adc17e626fd6f58eac5f9abfad228ca83071fc7a2483eb6c821e5",
+    "passingLogSHA256": "cc27582cc179e53dec9ea3d904e4a4691e280806b3a5a5f4666ca611efa37a7f"
+  },
+  "ciCheckpoint": {
+    "asOfUTC": "2026-10-23T15:45:25Z",
+    "head": "22f3b7534ae2093aef4c2549112a85a1da09bbf3",
+    "validateRun": 39977387271,
+    "passedJobs": [
+      "build_site",
+      "seven_claims",
+      "resource_paint_continuation"
+    ],
+    "inProgressShards": [
+      7,
+      5
+    ],
+    "otherRequiredJobs": "queued or pending; not accepted as passed",
+    "diagnosticJobs": "skipped, not passed",
+    "projectileRun": 39977387256,
+    "projectileAutomaticCaptureRoute": "queued",
+    "actualComparisonEventBase": "NOT OBSERVED. PR/run API metadata still reports726; current main ref7e. Actual event payload and before-checkout are unverified."
+  },
+  "remaining": [
+    "Exact22f mandatory hosted CI completion remains separate parent-owned work.",
+    "Bundled Chromium1234 and WebKit2336 are absent; only actual system Chromium was used.",
+    "No new full special A/B, repeated-lifecycle matrix, real-peer test, prolonged resource stress or device-performance certification in this small check. Prior own-game A/B and startup12/12/emitted24/24 retain their original provenance.",
+    "Common software-renderer stalls were already paired with baseline; no further expensive stall probe or hardware-FPS inference.",
+    "This bounded pass does not grant complete visual acceptance, Nintendo retail fidelity or merge readiness."
+  ],
+  "writes": "Only this report-only checkpoint is authorized for publication. PR1854/main/runtime/builder/production imports are unchanged."
+}
