@@ -977,9 +977,14 @@ const DIRECTORS = {
       const ticks = inkjetVfxTicks(t.d, dt, !squid), admission = inkjetVfxAdmission(this, a);
       const c = t.color, f = this.forward(a, this.v[5]), side = this.v[6].set(f.z, 0, -f.x);
       const ground = groundBelow(this, a);
+      // The chest/body can trail the aim while turning. Read the drawn pack's
+      // nozzle mouths (inkjetPack), rather than placing detached jets from aimYaw.
+      const pack = a.character?.s3SpecialDevices?.()?.find(d => d.spec?.model === 'spInkjetPack')?.model?.root;
+      pack?.updateWorldMatrix(true, false);
       for (let i = 0; i < 2; i++) {
         const s = i ? 1 : -1;
         const nozzle = this.v[0].set(a.pos.x - f.x * 0.32 + side.x * s * 0.16, a.pos.y + 0.55, a.pos.z - f.z * 0.32 + side.z * s * 0.16);
+        if (pack) nozzle.set(s * 0.105, -0.27, -0.05).applyMatrix4(pack.matrixWorld);
         const len = squid ? 0 : clamp(nozzle.y - ground, 0.5, 1.5);   // S3: short jets under the pack, not columns to the floor
         const end = this.v[1].copy(nozzle).setY(nozzle.y - len);
         end.x -= f.x * 0.35; end.z -= f.z * 0.35;
