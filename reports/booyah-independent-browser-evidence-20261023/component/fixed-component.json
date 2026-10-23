@@ -1,0 +1,3157 @@
+{
+  "label": "fixed",
+  "status": "observed-component-checks-passed",
+  "kind": "emitted component/WebGL diagnostic; NOT full-game acceptance",
+  "startedAt": "2026-10-23T14:33:53.400Z",
+  "contentHash": "5fee0f381775a10c34f261395ebe042a96ac94010db9b7610be207c0153f6c66",
+  "buildRevision": "30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21",
+  "operation": "component observation finished",
+  "frameCount": 301,
+  "delivery": [
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/vendor/three/build/three.module.js",
+      "status": 200,
+      "sha256": "bd678b13ead72402e78aacaac9ea3e3b04d269ce3c7b670a0882e50d02c61e43",
+      "manifestSha256": "bd678b13ead72402e78aacaac9ea3e3b04d269ce3c7b670a0882e50d02c61e43"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/install.mjs",
+      "status": 200,
+      "sha256": "e2be088d7dede309c27d921fbb46042021244bf1ffe8e196ae7d844154cd2985",
+      "manifestSha256": "e2be088d7dede309c27d921fbb46042021244bf1ffe8e196ae7d844154cd2985"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/native-sprinkler-damage.mjs",
+      "status": 200,
+      "sha256": "61df331829d24b074d2e3101b8204436e7caa4475c163fa69f9366c79499a04a",
+      "manifestSha256": "61df331829d24b074d2e3101b8204436e7caa4475c163fa69f9366c79499a04a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/main-weapon-catalog-data.mjs",
+      "status": 200,
+      "sha256": "59488db01ab731b93ff6cab536fe1c84b18a704e7376d905a4e5ca5eb3e3536f",
+      "manifestSha256": "59488db01ab731b93ff6cab536fe1c84b18a704e7376d905a4e5ca5eb3e3536f"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/turf-combat.mjs",
+      "status": 200,
+      "sha256": "fea526f6ba4d229b6449d8f482775d669bfbe0dcad11123a536e432679ba489c",
+      "manifestSha256": "fea526f6ba4d229b6449d8f482775d669bfbe0dcad11123a536e432679ba489c"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/sub-resistance.mjs",
+      "status": 200,
+      "sha256": "8462f4c13d58a85b2462071b6050e6970765002b1553eefd0b2212c0d2f8ea8f",
+      "manifestSha256": "8462f4c13d58a85b2462071b6050e6970765002b1553eefd0b2212c0d2f8ea8f"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/issue-284-adapter.mjs",
+      "status": 200,
+      "sha256": "b2fb45aaf92e9717150e84aeac57521eec6f1d6832c715e9aa3678724271d994",
+      "manifestSha256": "b2fb45aaf92e9717150e84aeac57521eec6f1d6832c715e9aa3678724271d994"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/issue-196-adapter.mjs",
+      "status": 200,
+      "sha256": "1aa071643c73ff63dd57d7abc9b55f0bc9517051b8d8de9dd6d7657d105aeaaa",
+      "manifestSha256": "1aa071643c73ff63dd57d7abc9b55f0bc9517051b8d8de9dd6d7657d105aeaaa"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/core/ctx.js",
+      "status": 200,
+      "sha256": "1c56245ee5659b8a7149b2a5e8983509d9c4fab9029aca9b690fa7558779c855",
+      "manifestSha256": "1c56245ee5659b8a7149b2a5e8983509d9c4fab9029aca9b690fa7558779c855"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/config.js",
+      "status": 200,
+      "sha256": "cf20044a165212cd874266099eccb279fe3dcb15c94aa594cae37084b83ba30a",
+      "manifestSha256": "cf20044a165212cd874266099eccb279fe3dcb15c94aa594cae37084b83ba30a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/cameraRig.js",
+      "status": 200,
+      "sha256": "558263cecfe96de17a4f65bc30ae1228dfc605d4c6d1faeeb1cbbcbe0375cb01",
+      "manifestSha256": "558263cecfe96de17a4f65bc30ae1228dfc605d4c6d1faeeb1cbbcbe0375cb01"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/actor.js",
+      "status": 200,
+      "sha256": "7867b91ba868006ed5f5de736ac1406e407021038ae77a492c8273ad4e9b4d14",
+      "manifestSha256": "7867b91ba868006ed5f5de736ac1406e407021038ae77a492c8273ad4e9b4d14"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/fx/fx.js",
+      "status": 200,
+      "sha256": "b5aea5ddfbbe41de6fd46340d44575a024dc3413408241a232489c2e947e787f",
+      "manifestSha256": "b5aea5ddfbbe41de6fd46340d44575a024dc3413408241a232489c2e947e787f"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/character.js",
+      "status": 200,
+      "sha256": "52616d88d3071ca0b182cfa06be00fb47f2e719295cbe9620bcde7ad42de5d22",
+      "manifestSha256": "52616d88d3071ca0b182cfa06be00fb47f2e719295cbe9620bcde7ad42de5d22"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/weapons.js",
+      "status": 200,
+      "sha256": "89a7872da2b1701287bab43cf86513a7f94e1958becede9bd4042ad0b387daee",
+      "manifestSha256": "89a7872da2b1701287bab43cf86513a7f94e1958becede9bd4042ad0b387daee"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/net/netmatch.js",
+      "status": 200,
+      "sha256": "3a390aac319d3f6c6fc2f76f5610db497692694cd5dcb8aa64217d86ad186b22",
+      "manifestSha256": "3a390aac319d3f6c6fc2f76f5610db497692694cd5dcb8aa64217d86ad186b22"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/i18n.js",
+      "status": 200,
+      "sha256": "01f5751d186d63edb7ff463391e80e01ebb032e7181a870867cd54d1dd008950",
+      "manifestSha256": "01f5751d186d63edb7ff463391e80e01ebb032e7181a870867cd54d1dd008950"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/world/paint.js",
+      "status": 200,
+      "sha256": "bbc0a333187ee664f7138fb6b7145de9461b9dd6f7ca5a30eabcfe16fc6b55d0",
+      "manifestSha256": "bbc0a333187ee664f7138fb6b7145de9461b9dd6f7ca5a30eabcfe16fc6b55d0"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/physics.js",
+      "status": 200,
+      "sha256": "1c1e7c85a4ca294381966b9e5a15283c00dc536f1518dbcf4e0e300508807662",
+      "manifestSha256": "1c1e7c85a4ca294381966b9e5a15283c00dc536f1518dbcf4e0e300508807662"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/core/input.js",
+      "status": 200,
+      "sha256": "ddb3f50704e7a49c9a212ab675099ee7adee7c54416b66049c95a289e8d23d14",
+      "manifestSha256": "ddb3f50704e7a49c9a212ab675099ee7adee7c54416b66049c95a289e8d23d14"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/minimap.js",
+      "status": 200,
+      "sha256": "3c09f63b4fe85b09385c943459fb47c3f1743559228ff81d2fa945ade9c0ce00",
+      "manifestSha256": "3c09f63b4fe85b09385c943459fb47c3f1743559228ff81d2fa945ade9c0ce00"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/player.js",
+      "status": 200,
+      "sha256": "e2605a8d1c7682c77e1f59a5d74c643daf5e8dafe6aa97126723b5b5263a7011",
+      "manifestSha256": "e2605a8d1c7682c77e1f59a5d74c643daf5e8dafe6aa97126723b5b5263a7011"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/ui/ui-icons.js",
+      "status": 200,
+      "sha256": "4ea9119e2c1e7028292a022fd3a2d92673f06552f2c406774d5db16b402efdf3",
+      "manifestSha256": "4ea9119e2c1e7028292a022fd3a2d92673f06552f2c406774d5db16b402efdf3"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/core/shadowcache.js",
+      "status": 200,
+      "sha256": "3167b5aa737f1c5aa52057861c3f5b16ceb6eebf9091861b187515467707dac6",
+      "manifestSha256": "3167b5aa737f1c5aa52057861c3f5b16ceb6eebf9091861b187515467707dac6"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/movement.mjs",
+      "status": 200,
+      "sha256": "def1727a6b898f8fb780fb96c39dfadb44c799555b0d69b79ae547927b621236",
+      "manifestSha256": "def1727a6b898f8fb780fb96c39dfadb44c799555b0d69b79ae547927b621236"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/normal-jump-hold.mjs",
+      "status": 200,
+      "sha256": "1d4d0d365d5ffb0e0b7dbce5a6c5497c7631518d0d80af7111d789f4912acbb9",
+      "manifestSha256": "1d4d0d365d5ffb0e0b7dbce5a6c5497c7631518d0d80af7111d789f4912acbb9"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/ui/hud.js",
+      "status": 200,
+      "sha256": "a787724491bd9bc43da3acdeda12122695c34fed9a56cc4f378bab30dfa39ffb",
+      "manifestSha256": "a787724491bd9bc43da3acdeda12122695c34fed9a56cc4f378bab30dfa39ffb"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/movement-motion.mjs",
+      "status": 200,
+      "sha256": "e30edd455a23509e1156ad9ee4bf68af3dcb4429acb744579a1eaff3f946664c",
+      "manifestSha256": "e30edd455a23509e1156ad9ee4bf68af3dcb4429acb744579a1eaff3f946664c"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/ui/menus.js",
+      "status": 200,
+      "sha256": "5d451dee5cfde81a26e91192379c9a1b24a5ddb75626c8ce832a05f02659ceaa",
+      "manifestSha256": "5d451dee5cfde81a26e91192379c9a1b24a5ddb75626c8ce832a05f02659ceaa"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/minimap-dirty.mjs",
+      "status": 200,
+      "sha256": "d6133df98d8fbad73ccd3922c9486cabf6198f22802f1f0803b87c789cfeeb4f",
+      "manifestSha256": "d6133df98d8fbad73ccd3922c9486cabf6198f22802f1f0803b87c789cfeeb4f"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/alternate-weapon-kits.mjs",
+      "status": 200,
+      "sha256": "dc0fc8b0128986a2d1f2c5045588ef4d48f705c44d3bd0e7c1f2896e5d39cedc",
+      "manifestSha256": "dc0fc8b0128986a2d1f2c5045588ef4d48f705c44d3bd0e7c1f2896e5d39cedc"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapons-fidelity.mjs",
+      "status": 200,
+      "sha256": "df5430e38d393b8f8f883f322157336f70788c3c8a8f238f826631e200c84fa9",
+      "manifestSha256": "df5430e38d393b8f8f883f322157336f70788c3c8a8f238f826631e200c84fa9"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapons.mjs",
+      "status": 200,
+      "sha256": "df475b1259c980aa6bf3bf2a8122c62c844f2f001905af3953b208ff69738f54",
+      "manifestSha256": "df475b1259c980aa6bf3bf2a8122c62c844f2f001905af3953b208ff69738f54"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/main-weapon-catalog.mjs",
+      "status": 200,
+      "sha256": "c4ccbb68fcdb34a84acede798b007e5cc66a5c79714b5d52fae98d9839fff198",
+      "manifestSha256": "c4ccbb68fcdb34a84acede798b007e5cc66a5c79714b5d52fae98d9839fff198"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/charger-surface.mjs",
+      "status": 200,
+      "sha256": "9f0e0ee9d5de4c67d412ef36dc2e9e2e7d323de8de236fe49dbe5f172f42d70f",
+      "manifestSha256": "9f0e0ee9d5de4c67d412ef36dc2e9e2e7d323de8de236fe49dbe5f172f42d70f"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/roller-body-knockback.mjs",
+      "status": 200,
+      "sha256": "c927768a5300c660567a295bc01f62ffea51f4a37efb5b3c6c51ef15d38f24ed",
+      "manifestSha256": "c927768a5300c660567a295bc01f62ffea51f4a37efb5b3c6c51ef15d38f24ed"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/kit-defense.mjs",
+      "status": 200,
+      "sha256": "f8909d7c52f55e426d388b0e6b7a169e809a70e8f73878eee403d3d3a8db5440",
+      "manifestSha256": "f8909d7c52f55e426d388b0e6b7a169e809a70e8f73878eee403d3d3a8db5440"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/muzzle-feedback.mjs",
+      "status": 200,
+      "sha256": "c8eaab1d87705950b9e4a272e74dfb983dfb36a083a02a5e1b35c797e2f11888",
+      "manifestSha256": "c8eaab1d87705950b9e4a272e74dfb983dfb36a083a02a5e1b35c797e2f11888"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/menu-layout.mjs",
+      "status": 200,
+      "sha256": "391e7e73580e29cb1cf32ac05bc88b7a6ddce791a1f752cf799a8b6f3525230b",
+      "manifestSha256": "391e7e73580e29cb1cf32ac05bc88b7a6ddce791a1f752cf799a8b6f3525230b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/sub-special-fidelity.mjs",
+      "status": 200,
+      "sha256": "456f93e0576b44e2c8b40c8090b40f2c1e483f1003e32785d7e5dffc3fc04ead",
+      "manifestSha256": "456f93e0576b44e2c8b40c8090b40f2c1e483f1003e32785d7e5dffc3fc04ead"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/kit-subs.mjs",
+      "status": 200,
+      "sha256": "ac8514e714ae4611170b3ca2bf9039c14ddc4fc2b74d7f8954cd32d6f3e3315e",
+      "manifestSha256": "ac8514e714ae4611170b3ca2bf9039c14ddc4fc2b74d7f8954cd32d6f3e3315e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/bomb-models.mjs",
+      "status": 200,
+      "sha256": "d01231a5bc298deb206f388a835f1ea90876e8cdd2e7c0340f9ee5cefab5d861",
+      "manifestSha256": "d01231a5bc298deb206f388a835f1ea90876e8cdd2e7c0340f9ee5cefab5d861"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/kit-big-bubbler.mjs",
+      "status": 200,
+      "sha256": "6e0ebcb07b0585c346bf4b6646c61a3abc337487ba117dd8a66533d0b7956f23",
+      "manifestSha256": "6e0ebcb07b0585c346bf4b6646c61a3abc337487ba117dd8a66533d0b7956f23"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/kit-ink-vac.mjs",
+      "status": 200,
+      "sha256": "92750560e92fca6b2f69890141d23a926f51ea8365824e79fe3bb645717fe5bd",
+      "manifestSha256": "92750560e92fca6b2f69890141d23a926f51ea8365824e79fe3bb645717fe5bd"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/kit-network.mjs",
+      "status": 200,
+      "sha256": "af9f28089282171d3d83f52f2dfe4f908f28ef2f272f85817df2ae67e71fee67",
+      "manifestSha256": "af9f28089282171d3d83f52f2dfe4f908f28ef2f272f85817df2ae67e71fee67"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/bot-paint-device-profile.mjs",
+      "status": 200,
+      "sha256": "061dfeec287fe4b49896ce0726333723dc7c828af91ad660a6dc31474caadaba",
+      "manifestSha256": "061dfeec287fe4b49896ce0726333723dc7c828af91ad660a6dc31474caadaba"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/kit-support.mjs",
+      "status": 200,
+      "sha256": "9a1d6c12e8871ed0aff2aab47576e756536fa0ddc578568f560ba4f2637eec42",
+      "manifestSha256": "9a1d6c12e8871ed0aff2aab47576e756536fa0ddc578568f560ba4f2637eec42"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/kit-trizooka.mjs",
+      "status": 200,
+      "sha256": "7b081089997dcf20177a120b053e057b010ff7ed50aab00033cc7d6401af91e2",
+      "manifestSha256": "7b081089997dcf20177a120b053e057b010ff7ed50aab00033cc7d6401af91e2"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/kit-composition.mjs",
+      "status": 200,
+      "sha256": "317f7600ee516692910f5be6f0d75da4dfa3fd0d2eccc911aba24b453cf012ce",
+      "manifestSha256": "317f7600ee516692910f5be6f0d75da4dfa3fd0d2eccc911aba24b453cf012ce"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/gear.mjs",
+      "status": 200,
+      "sha256": "5adb399c3f5670fd6af5a5ca12e91f3c2bb08c4b7c6f86e7b9eba5888f1a4a6c",
+      "manifestSha256": "5adb399c3f5670fd6af5a5ca12e91f3c2bb08c4b7c6f86e7b9eba5888f1a4a6c"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/health-bars.mjs",
+      "status": 200,
+      "sha256": "7f3c07da73cbf2a937377d3199754d7827db4b548cf0cad36237b3aee0c58a0f",
+      "manifestSha256": "7f3c07da73cbf2a937377d3199754d7827db4b548cf0cad36237b3aee0c58a0f"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/flow.mjs",
+      "status": 200,
+      "sha256": "a42fa9e5da7a3a28df2f4f4e961962544bc41b2d07aca4462f3294758422df26",
+      "manifestSha256": "a42fa9e5da7a3a28df2f4f4e961962544bc41b2d07aca4462f3294758422df26"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/resources.mjs",
+      "status": 200,
+      "sha256": "12f1a67c847dd30df422a651a979b5cfc17a66435f8701ff9509cdf7cfcf48e1",
+      "manifestSha256": "12f1a67c847dd30df422a651a979b5cfc17a66435f8701ff9509cdf7cfcf48e1"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/clock.mjs",
+      "status": 200,
+      "sha256": "65e550d65a0905207c6c09882093bc8182edde95f170d42db8a5924851ee3bcf",
+      "manifestSha256": "65e550d65a0905207c6c09882093bc8182edde95f170d42db8a5924851ee3bcf"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/scoring.mjs",
+      "status": 200,
+      "sha256": "7a59e821a1ec61c5ce54cda362832e16829d2b52023d3a3dce4bb2ff2a84ebe2",
+      "manifestSha256": "7a59e821a1ec61c5ce54cda362832e16829d2b52023d3a3dce4bb2ff2a84ebe2"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/ui.mjs",
+      "status": 200,
+      "sha256": "2561a12727b36d145e10a1e423a140c8a7c828a27be09be95445a652499e3693",
+      "manifestSha256": "2561a12727b36d145e10a1e423a140c8a7c828a27be09be95445a652499e3693"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/render.mjs",
+      "status": 200,
+      "sha256": "f3c738da0d31dff12d86b032b52a4a42a71e8f01cd45ad4b846f7ea6f75383f5",
+      "manifestSha256": "f3c738da0d31dff12d86b032b52a4a42a71e8f01cd45ad4b846f7ea6f75383f5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/roller.mjs",
+      "status": 200,
+      "sha256": "3bb6bb6f9ceeffed97b0cbaf1f2737d84fca7362b7700892070e2a0219073598",
+      "manifestSha256": "3bb6bb6f9ceeffed97b0cbaf1f2737d84fca7362b7700892070e2a0219073598"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/walk.mjs",
+      "status": 200,
+      "sha256": "e42e84704115d11278b85eacc69f2656ab964598d119292ecbc6a4406fa56ed1",
+      "manifestSha256": "e42e84704115d11278b85eacc69f2656ab964598d119292ecbc6a4406fa56ed1"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapon-motion.mjs",
+      "status": 200,
+      "sha256": "cd030e4aad8d3c9389d1c51e0bbd91b5008fa504a4ac9e66d2fad15b8f867b98",
+      "manifestSha256": "cd030e4aad8d3c9389d1c51e0bbd91b5008fa504a4ac9e66d2fad15b8f867b98"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/bomb-motion.mjs",
+      "status": 200,
+      "sha256": "caed71582fb33e57f3febc6be3446674f763acc9b47e733354b7de161769891b",
+      "manifestSha256": "caed71582fb33e57f3febc6be3446674f763acc9b47e733354b7de161769891b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/flow-motion.mjs",
+      "status": 200,
+      "sha256": "70e3e72529a4ce5da3bb152699657bc3f7a788eb8c1b9ccc3dd04bafafd979b3",
+      "manifestSha256": "70e3e72529a4ce5da3bb152699657bc3f7a788eb8c1b9ccc3dd04bafafd979b3"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapon-detail-motion.mjs",
+      "status": 200,
+      "sha256": "e0dd9e9576ddfb777221a3564bbc00230468ba85431139f0ad5027b02f2b814e",
+      "manifestSha256": "e0dd9e9576ddfb777221a3564bbc00230468ba85431139f0ad5027b02f2b814e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapon-family-motion.mjs",
+      "status": 200,
+      "sha256": "7d54168e55795e1688722c118ace9187a5b37bad489edd8d260ed4e5f4478048",
+      "manifestSha256": "7d54168e55795e1688722c118ace9187a5b37bad489edd8d260ed4e5f4478048"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapon-handoff-motion.mjs",
+      "status": 200,
+      "sha256": "c00e022c53b7c2c94ed923d1c7a2894a4c28196fbdd1696e7e48f10087c48fdc",
+      "manifestSha256": "c00e022c53b7c2c94ed923d1c7a2894a4c28196fbdd1696e7e48f10087c48fdc"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/jump-motion.mjs",
+      "status": 200,
+      "sha256": "666102a51c3393e030070d0339cf89b79cdc096b6ca73094921baf87b4364f45",
+      "manifestSha256": "666102a51c3393e030070d0339cf89b79cdc096b6ca73094921baf87b4364f45"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/landing-motion.mjs",
+      "status": 200,
+      "sha256": "b6418547e797ed0fab07dee168c89c93856d4637aa3946d58451efea466f2620",
+      "manifestSha256": "b6418547e797ed0fab07dee168c89c93856d4637aa3946d58451efea466f2620"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/swim-motion.mjs",
+      "status": 200,
+      "sha256": "cc89c1dad1f49514f3d8db0e8960bdba3c480a36858b0e7e2d01e17478c5b15a",
+      "manifestSha256": "cc89c1dad1f49514f3d8db0e8960bdba3c480a36858b0e7e2d01e17478c5b15a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/form-motion.mjs",
+      "status": 200,
+      "sha256": "cd26c94bed1d4c414920448bcd7e01a5dd5baa4212f85f6ce0859a6a8c9c84d5",
+      "manifestSha256": "cd26c94bed1d4c414920448bcd7e01a5dd5baa4212f85f6ce0859a6a8c9c84d5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/dualies-motion.mjs",
+      "status": 200,
+      "sha256": "2ea07982b771b47e42c0325a20f72512c7789d661ba815a0f2447e2e133fa8f0",
+      "manifestSha256": "2ea07982b771b47e42c0325a20f72512c7789d661ba815a0f2447e2e133fa8f0"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/wall-motion.mjs",
+      "status": 200,
+      "sha256": "309020e7d204a4409eece83fb0d2a34f2896be22d50fd9db543b155b07137d72",
+      "manifestSha256": "309020e7d204a4409eece83fb0d2a34f2896be22d50fd9db543b155b07137d72"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/dualies-network.mjs",
+      "status": 200,
+      "sha256": "ad119d6fae5bd267582e35c08dd83b22607062767965bb7052b05215f59a887e",
+      "manifestSha256": "ad119d6fae5bd267582e35c08dd83b22607062767965bb7052b05215f59a887e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/brella-network.mjs",
+      "status": 200,
+      "sha256": "5c8b1a4c665f941a26809ade582dd0d06a2c46adebf098ae66e4ceefd06acd6e",
+      "manifestSha256": "5c8b1a4c665f941a26809ade582dd0d06a2c46adebf098ae66e4ceefd06acd6e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/roller-detail-motion.mjs",
+      "status": 200,
+      "sha256": "c62102b32d29792a197d76ab37f6074849f2d78efd6b02a0c8f96fc40e1f934b",
+      "manifestSha256": "c62102b32d29792a197d76ab37f6074849f2d78efd6b02a0c8f96fc40e1f934b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/roller-fold.mjs",
+      "status": 200,
+      "sha256": "535b078a826e192f2b8dcbad71945906c31a4b0955ea32a2c461118d5dd947d7",
+      "manifestSha256": "535b078a826e192f2b8dcbad71945906c31a4b0955ea32a2c461118d5dd947d7"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/superjump-motion.mjs",
+      "status": 200,
+      "sha256": "4872c82a3bdff29f60402c4979a2bd9375b181b9ca3a91818ace0e4cc1f9e9d1",
+      "manifestSha256": "4872c82a3bdff29f60402c4979a2bd9375b181b9ca3a91818ace0e4cc1f9e9d1"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/superjump-target-notification.mjs",
+      "status": 200,
+      "sha256": "fca720be399dba302756f148eaf95e8e25bec7228807124f301673cb7c3c85a5",
+      "manifestSha256": "fca720be399dba302756f148eaf95e8e25bec7228807124f301673cb7c3c85a5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/squidroll-motion.mjs",
+      "status": 200,
+      "sha256": "3c94b1e72e45c9d43e5e202397bf93e9deb7b13ff125e0e521dcc83e36cac686",
+      "manifestSha256": "3c94b1e72e45c9d43e5e202397bf93e9deb7b13ff125e0e521dcc83e36cac686"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/hit-spawn-motion.mjs",
+      "status": 200,
+      "sha256": "71e45e92111c409f28e3e282237cddc7b8002e2c6bee02c80d0b8116ad8b64a1",
+      "manifestSha256": "71e45e92111c409f28e3e282237cddc7b8002e2c6bee02c80d0b8116ad8b64a1"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapon-hit-reaction.mjs",
+      "status": 200,
+      "sha256": "3562619fcf0646e10f27b2e4bc8a43313f4be1a9b7d2141fb69ef0dac8e52953",
+      "manifestSha256": "3562619fcf0646e10f27b2e4bc8a43313f4be1a9b7d2141fb69ef0dac8e52953"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+      "status": 200,
+      "sha256": "1c1bfc50619302e977e0df005d130a7c1757aac636fa6bbde93a780bf40390d4",
+      "manifestSha256": "1c1bfc50619302e977e0df005d130a7c1757aac636fa6bbde93a780bf40390d4"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/idle-motion.mjs",
+      "status": 200,
+      "sha256": "435becd4661b74a2beb7a98120e81fd37d01cd1a93585136676fa4fa89498f1e",
+      "manifestSha256": "435becd4661b74a2beb7a98120e81fd37d01cd1a93585136676fa4fa89498f1e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/body-proportion.mjs",
+      "status": 200,
+      "sha256": "58845efca1fc2d1511f412cd0eb7506f7005d022526bade11b240f84299cdd6f",
+      "manifestSha256": "58845efca1fc2d1511f412cd0eb7506f7005d022526bade11b240f84299cdd6f"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/emotes-motion.mjs",
+      "status": 200,
+      "sha256": "95405e0d3be3cd3ebf2ee601d23b23217b52858e1b1c2253ab3e3575605be203",
+      "manifestSha256": "95405e0d3be3cd3ebf2ee601d23b23217b52858e1b1c2253ab3e3575605be203"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/special-motion.mjs",
+      "status": 200,
+      "sha256": "55e7751f94eef2aa08978d41d342402e7301bbc01c74bf03535dfc90723b6b83",
+      "manifestSha256": "55e7751f94eef2aa08978d41d342402e7301bbc01c74bf03535dfc90723b6b83"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/squid-spawn-presentation.mjs",
+      "status": 200,
+      "sha256": "0002213c031ddd42d7faed2206ca556c1a6d00f68702ae7daa6591d68db6d756",
+      "manifestSha256": "0002213c031ddd42d7faed2206ca556c1a6d00f68702ae7daa6591d68db6d756"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/face-motion.mjs",
+      "status": 200,
+      "sha256": "2fd4711db95773a98f271d26f30f4573f54d1dba3ba07a54290bc39f48eb0a7b",
+      "manifestSha256": "2fd4711db95773a98f271d26f30f4573f54d1dba3ba07a54290bc39f48eb0a7b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/respawn-lifecycle.mjs",
+      "status": 200,
+      "sha256": "3efcb07ae094262be3eebc68b048662331b084fec01eb53061c74ddbb1bbfb2c",
+      "manifestSha256": "3efcb07ae094262be3eebc68b048662331b084fec01eb53061c74ddbb1bbfb2c"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/carry-motion.mjs",
+      "status": 200,
+      "sha256": "70227cfaf5227036e4ab0aebb9f42619249c1c30a93ea49f3c7f0819c2540b72",
+      "manifestSha256": "70227cfaf5227036e4ab0aebb9f42619249c1c30a93ea49f3c7f0819c2540b72"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/controller-motion.mjs",
+      "status": 200,
+      "sha256": "93a47ccef96827ed1aac68843ce81fe32ab4bb6cebf878b562cced4abee58526",
+      "manifestSha256": "93a47ccef96827ed1aac68843ce81fe32ab4bb6cebf878b562cced4abee58526"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/triple-slam-fists.mjs",
+      "status": 200,
+      "sha256": "5a45005cbfe9d4739a938c11bc1d9c3442822d332ae3c44fca45ef556227925f",
+      "manifestSha256": "5a45005cbfe9d4739a938c11bc1d9c3442822d332ae3c44fca45ef556227925f"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/death-blast.mjs",
+      "status": 200,
+      "sha256": "fe63e4732f1d50a5bf7d7a9b84d567a6c1ec46c6f34baa3745d61ec6d7ad28b3",
+      "manifestSha256": "fe63e4732f1d50a5bf7d7a9b84d567a6c1ec46c6f34baa3745d61ec6d7ad28b3"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/all-subs.mjs",
+      "status": 200,
+      "sha256": "99f9adb107ddb6017c677f20553576c64c2a93c3a05f767de071a2daef159d27",
+      "manifestSha256": "99f9adb107ddb6017c677f20553576c64c2a93c3a05f767de071a2daef159d27"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/all-specials.mjs",
+      "status": 200,
+      "sha256": "d63f5d93d4a3307dd197f54ebe679b3beebf375b4c1a3c2e0e1fcb1c5c877030",
+      "manifestSha256": "d63f5d93d4a3307dd197f54ebe679b3beebf375b4c1a3c2e0e1fcb1c5c877030"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/special-presentation.mjs",
+      "status": 200,
+      "sha256": "c1bbf7dceaef1c54604fb87447a63706c25bab0c0a4b41aad5f2cd599af43f98",
+      "manifestSha256": "c1bbf7dceaef1c54604fb87447a63706c25bab0c0a4b41aad5f2cd599af43f98"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/object-gear.mjs",
+      "status": 200,
+      "sha256": "263b54b9cbc422f704e2a16908cda7b65be0516703358b8ad0fc9e440267f7b5",
+      "manifestSha256": "263b54b9cbc422f704e2a16908cda7b65be0516703358b8ad0fc9e440267f7b5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/special-vfx.mjs",
+      "status": 200,
+      "sha256": "ffd253d0911b20dc495c3f138f236e304de6d07e5a673b1e08fe56dc527288a3",
+      "manifestSha256": "ffd253d0911b20dc495c3f138f236e304de6d07e5a673b1e08fe56dc527288a3"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/catalogue.mjs",
+      "status": 200,
+      "sha256": "755abfd587722b135c19079d4e02ac7e892fe4d581f8e5a99001d188d003c021",
+      "manifestSha256": "755abfd587722b135c19079d4e02ac7e892fe4d581f8e5a99001d188d003c021"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/kit-sprinkler.mjs",
+      "status": 200,
+      "sha256": "58c0af938deae47316270e516d3b9b55bb4a6c29a575228a582952d996f702a7",
+      "manifestSha256": "58c0af938deae47316270e516d3b9b55bb4a6c29a575228a582952d996f702a7"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/native-stages/runtime/registry.mjs",
+      "status": 200,
+      "sha256": "1bf16874c8975caaba63f42008186a4e2dbdef51009b62e7ce89dff8be6c3112",
+      "manifestSha256": "1bf16874c8975caaba63f42008186a4e2dbdef51009b62e7ce89dff8be6c3112"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/inkFlight.js",
+      "status": 200,
+      "sha256": "a335c7dd5f0e29a4b5a88afea669d8dd1b3243217e9f263c540be61e974e9c0d",
+      "manifestSha256": "a335c7dd5f0e29a4b5a88afea669d8dd1b3243217e9f263c540be61e974e9c0d"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/camera-aim-controls.mjs",
+      "status": 200,
+      "sha256": "5d5ce1a6c0546fff9812dfe1d831024980ed0d819d7292136fa502ba96bd26f9",
+      "manifestSha256": "5d5ce1a6c0546fff9812dfe1d831024980ed0d819d7292136fa502ba96bd26f9"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/battle-framing.mjs",
+      "status": 200,
+      "sha256": "1c79abc631ec3a6bbd435409f938bf0d4898ba08c866e0d7a2f781f33c9317b3",
+      "manifestSha256": "1c79abc631ec3a6bbd435409f938bf0d4898ba08c866e0d7a2f781f33c9317b3"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/chargerTuning.js",
+      "status": 200,
+      "sha256": "a4dcb4c792bac956fa875bcb15d6f7fdfb2c77466a5962f36703906af6cc6ee1",
+      "manifestSha256": "a4dcb4c792bac956fa875bcb15d6f7fdfb2c77466a5962f36703906af6cc6ee1"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/tidal-slam-gauge.mjs",
+      "status": 200,
+      "sha256": "7fabcaf7f1a657a5ccd362ce4efc070c2c50413080b92fc727c048b7971b7098",
+      "manifestSha256": "7fabcaf7f1a657a5ccd362ce4efc070c2c50413080b92fc727c048b7971b7098"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/final-damage.mjs",
+      "status": 200,
+      "sha256": "1a6af1dbd60efb6dd5f55aca0ecead58eadd13fb7b22e89e430547d03fb0c18e",
+      "manifestSha256": "1a6af1dbd60efb6dd5f55aca0ecead58eadd13fb7b22e89e430547d03fb0c18e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/swim-stealth.mjs",
+      "status": 200,
+      "sha256": "9bce1b6837295f0891bb4c92045a64aea61832687ee5495e2c8ce24e231e4d86",
+      "manifestSha256": "9bce1b6837295f0891bb4c92045a64aea61832687ee5495e2c8ce24e231e4d86"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/superjump.mjs",
+      "status": 200,
+      "sha256": "55a2a0683e794bca53c81523a6e33911cc94cc0dc53740c2efea66b411d960e1",
+      "manifestSha256": "55a2a0683e794bca53c81523a6e33911cc94cc0dc53740c2efea66b411d960e1"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/native-stages/runtime/engine.mjs",
+      "status": 200,
+      "sha256": "2d90ba1c075d210b8a9f27f7df6ad2077d40e2a848fd0f2fde2f14d103ef65a9",
+      "manifestSha256": "2d90ba1c075d210b8a9f27f7df6ad2077d40e2a848fd0f2fde2f14d103ef65a9"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/damage-timing.mjs",
+      "status": 200,
+      "sha256": "454afa22617e6f2d39018887e8209f57a6d2306a90f014c3e2ad8fa2acde962c",
+      "manifestSha256": "454afa22617e6f2d39018887e8209f57a6d2306a90f014c3e2ad8fa2acde962c"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/brella-guard-facing.mjs",
+      "status": 200,
+      "sha256": "b4fdb3b55efd9e25b99dd0a74102db5c42e048db1b6ac876a54470a96332bd3b",
+      "manifestSha256": "b4fdb3b55efd9e25b99dd0a74102db5c42e048db1b6ac876a54470a96332bd3b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/special-presentation-owner.mjs",
+      "status": 200,
+      "sha256": "68a8f6b6ad16c7cee6a76f2988151835aa81a1a58438a90c53c944dd24ba7975",
+      "manifestSha256": "68a8f6b6ad16c7cee6a76f2988151835aa81a1a58438a90c53c944dd24ba7975"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/shooter-movement.mjs",
+      "status": 200,
+      "sha256": "6a67d3884c86d3bbc15e4be89febc5e10d7e457a87b7f5e9a16c98ed212ff923",
+      "manifestSha256": "6a67d3884c86d3bbc15e4be89febc5e10d7e457a87b7f5e9a16c98ed212ff923"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/toxic-mist.mjs",
+      "status": 200,
+      "sha256": "e33d75dd8da69ba739c520d276e07bd0ee70c7608439758d36e8118cfd496519",
+      "manifestSha256": "e33d75dd8da69ba739c520d276e07bd0ee70c7608439758d36e8118cfd496519"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/movement-physics.mjs",
+      "status": 200,
+      "sha256": "5d5b8c9567a96fd3b19ebdce6b26d7678400eac64522bc47d501a1f3f43ad47d",
+      "manifestSha256": "5d5b8c9567a96fd3b19ebdce6b26d7678400eac64522bc47d501a1f3f43ad47d"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/actor-motion.mjs",
+      "status": 200,
+      "sha256": "b913b223cc63ab20b0bd084bba96ba26a2f908cc49c374b130ce229d318b3a33",
+      "manifestSha256": "b913b223cc63ab20b0bd084bba96ba26a2f908cc49c374b130ce229d318b3a33"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/storm-effects.mjs",
+      "status": 200,
+      "sha256": "99916933299358a8e9c290771587bf0bddf2c3351e45e34666f7237d98e6111b",
+      "manifestSha256": "99916933299358a8e9c290771587bf0bddf2c3351e45e34666f7237d98e6111b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/issue-460-marker.mjs",
+      "status": 200,
+      "sha256": "b9f0e56025fa6ea4e9d3f4698c334a45aa838f5ccaff8914a55036dd64d11372",
+      "manifestSha256": "b9f0e56025fa6ea4e9d3f4698c334a45aa838f5ccaff8914a55036dd64d11372"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/ink-volume/runtime.mjs",
+      "status": 200,
+      "sha256": "67de4381b26ae5a268204509a6e79322f0539fb97a38ecde4b78b09f42d621eb",
+      "manifestSha256": "67de4381b26ae5a268204509a6e79322f0539fb97a38ecde4b78b09f42d621eb"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/issue-460-gauge.mjs",
+      "status": 200,
+      "sha256": "7922f6fb2f133f10a9c544114eef42e75920c701a2438a12523aafce42209a0a",
+      "manifestSha256": "7922f6fb2f133f10a9c544114eef42e75920c701a2438a12523aafce42209a0a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/ink-volume/pack.mjs",
+      "status": 200,
+      "sha256": "54d6a304efec2516f2e1d67f75eae9bd44b8ffaf9ef57b918c33f35460b62ad3",
+      "manifestSha256": "54d6a304efec2516f2e1d67f75eae9bd44b8ffaf9ef57b918c33f35460b62ad3"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/roller-visual.mjs",
+      "status": 200,
+      "sha256": "8ad7aef849adebafe388c109d5641a035b2282e6526d4cc4d5b09f3c5cd6b944",
+      "manifestSha256": "8ad7aef849adebafe388c109d5641a035b2282e6526d4cc4d5b09f3c5cd6b944"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/character-shadow-batch.mjs",
+      "status": 200,
+      "sha256": "f8d5f4024b2db7dc68d2ee07ecfdbabfd6d454bd3f46e26d1d50c404142b9b12",
+      "manifestSha256": "f8d5f4024b2db7dc68d2ee07ecfdbabfd6d454bd3f46e26d1d50c404142b9b12"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/swim-surface.mjs",
+      "status": 200,
+      "sha256": "a54c551045f50c6e710b638818016b06e7bdcef44c2f9a96bc966cb95437441c",
+      "manifestSha256": "a54c551045f50c6e710b638818016b06e7bdcef44c2f9a96bc966cb95437441c"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapon-opponent-palette.mjs",
+      "status": 200,
+      "sha256": "c305e7a943208bb56142a95d798fd9f9c6fdd3d1aca3dd77aa126f70368abbcf",
+      "manifestSha256": "c305e7a943208bb56142a95d798fd9f9c6fdd3d1aca3dd77aa126f70368abbcf"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/headgear/lifecycle.mjs",
+      "status": 200,
+      "sha256": "424d381ad7cc81780e2b96907d4e0e2060c3c5e7d10a9070e25b847ebacce42b",
+      "manifestSha256": "424d381ad7cc81780e2b96907d4e0e2060c3c5e7d10a9070e25b847ebacce42b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/hair-cache.mjs",
+      "status": 200,
+      "sha256": "0b7dd9d63b2f792f93b62ac882736309371bd71690a8c4b4044aab356d9b265a",
+      "manifestSha256": "0b7dd9d63b2f792f93b62ac882736309371bd71690a8c4b4044aab356d9b265a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/character-hair.js",
+      "status": 200,
+      "sha256": "b26f6288632d9b6460983332610022c5bd27096c6b7808946477daf957ce5916",
+      "manifestSha256": "b26f6288632d9b6460983332610022c5bd27096c6b7808946477daf957ce5916"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/portrait-work.mjs",
+      "status": 200,
+      "sha256": "a2cf27c8f69ab36d391af686623c6479972b49bd8bf680cd5129f9d63db27844",
+      "manifestSha256": "a2cf27c8f69ab36d391af686623c6479972b49bd8bf680cd5129f9d63db27844"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapon-models/kit.mjs",
+      "status": 200,
+      "sha256": "e2994c95fc3fcba5760c4528bf5dc72468c74cb2001064786a9be039e051fe48",
+      "manifestSha256": "e2994c95fc3fcba5760c4528bf5dc72468c74cb2001064786a9be039e051fe48"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/action-admission.mjs",
+      "status": 200,
+      "sha256": "8d81f5ac785624bb55e212dfd6323dc77f93145ef3e60677c4915a3390cb9ec0",
+      "manifestSha256": "8d81f5ac785624bb55e212dfd6323dc77f93145ef3e60677c4915a3390cb9ec0"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/character-geo.js",
+      "status": 200,
+      "sha256": "99c244207d8a3d2385275cee76105e9dbedb97bfabc37887466cee513a519acf",
+      "manifestSha256": "99c244207d8a3d2385275cee76105e9dbedb97bfabc37887466cee513a519acf"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapon-appearance.mjs",
+      "status": 200,
+      "sha256": "a75e798a4542e0f464774e9095c88d19def38ee970e4a0576f5c9d348c847c98",
+      "manifestSha256": "a75e798a4542e0f464774e9095c88d19def38ee970e4a0576f5c9d348c847c98"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/character-weapons.js",
+      "status": 200,
+      "sha256": "d38aed9755d3cf128e91c6c17ba804081f54a6ee9dcfdd63e5533afe696b59aa",
+      "manifestSha256": "d38aed9755d3cf128e91c6c17ba804081f54a6ee9dcfdd63e5533afe696b59aa"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/character-mats.js",
+      "status": 200,
+      "sha256": "27c433bde258cf0fa6cd67f4d01dfb9e68456fa9dea018439e74c486d3918eb0",
+      "manifestSha256": "27c433bde258cf0fa6cd67f4d01dfb9e68456fa9dea018439e74c486d3918eb0"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/character-style.js",
+      "status": 200,
+      "sha256": "53731936dd8625bca421bcd28c2a445f383b19944f20d1adc28d89ba4e7e8001",
+      "manifestSha256": "53731936dd8625bca421bcd28c2a445f383b19944f20d1adc28d89ba4e7e8001"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/character-lod.js",
+      "status": 200,
+      "sha256": "fc94224ee0fad7a5aad9e7ba7d702ca194040d4c450da54cd37c2265733b34dc",
+      "manifestSha256": "fc94224ee0fad7a5aad9e7ba7d702ca194040d4c450da54cd37c2265733b34dc"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/ghost-live-index.mjs",
+      "status": 200,
+      "sha256": "d41c7a42685fc77226906d821aaeda6e5436ab729d49dbc95f9a09b0c9f6abdc",
+      "manifestSha256": "d41c7a42685fc77226906d821aaeda6e5436ab729d49dbc95f9a09b0c9f6abdc"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/main-ink-footprints.mjs",
+      "status": 200,
+      "sha256": "1b8c04d657bf34fd1176a9f95f060f6a42bc270b4139158baf1c4d5026fd63b3",
+      "manifestSha256": "1b8c04d657bf34fd1176a9f95f060f6a42bc270b4139158baf1c4d5026fd63b3"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/slosher-paint-admission.mjs",
+      "status": 200,
+      "sha256": "c8b56d97bfd9f1250f82b0282b849ceda12fe5bf3eb3c9a4998cdc6273dba5f8",
+      "manifestSha256": "c8b56d97bfd9f1250f82b0282b849ceda12fe5bf3eb3c9a4998cdc6273dba5f8"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/snapshot-guard.mjs",
+      "status": 200,
+      "sha256": "361964cf90f96bb58dab46c7a9dbc5e07a1f99125d82d05af27d9a9008543c17",
+      "manifestSha256": "361964cf90f96bb58dab46c7a9dbc5e07a1f99125d82d05af27d9a9008543c17"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/s3-projectile-shapes.mjs",
+      "status": 200,
+      "sha256": "4c6d320391efbc6c812bd8b522509ee01041e35e889a2d840b40474f4051390a",
+      "manifestSha256": "4c6d320391efbc6c812bd8b522509ee01041e35e889a2d840b40474f4051390a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/projectile-visuals.mjs",
+      "status": 200,
+      "sha256": "70c7815152fd3280a8e3559b5584f7b415dc3ae5c7a96cd5391b7d8da7cc9bda",
+      "manifestSha256": "70c7815152fd3280a8e3559b5584f7b415dc3ae5c7a96cd5391b7d8da7cc9bda"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/ink-volume/recipes.mjs",
+      "status": 200,
+      "sha256": "1d7971b4a9e57bd086e55bc35dad88397ede74cbfc5cebf5716401ec5215c4e4",
+      "manifestSha256": "1d7971b4a9e57bd086e55bc35dad88397ede74cbfc5cebf5716401ec5215c4e4"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/charger-sight.mjs",
+      "status": 200,
+      "sha256": "1739829d36b19934a6f9b7050edecad09c3b7d1def7da4d25929f4b3822dab8c",
+      "manifestSha256": "1739829d36b19934a6f9b7050edecad09c3b7d1def7da4d25929f4b3822dab8c"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapon-models/registry.mjs",
+      "status": 200,
+      "sha256": "4315418a108a5fea0db70fca556222d7eaa034e67102bae608aba910d4475649",
+      "manifestSha256": "4315418a108a5fea0db70fca556222d7eaa034e67102bae608aba910d4475649"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/blast-occlusion.mjs",
+      "status": 200,
+      "sha256": "23756f33a35fa58e5c34206211eb0b2a58d1e55ed90fc1ae02696a33e8830726",
+      "manifestSha256": "23756f33a35fa58e5c34206211eb0b2a58d1e55ed90fc1ae02696a33e8830726"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/roller-impact-paint.mjs",
+      "status": 200,
+      "sha256": "1dbe93351e8e9030e577dbd50110cd6daadd731589b03418b6d3f4cc660b2f9a",
+      "manifestSha256": "1dbe93351e8e9030e577dbd50110cd6daadd731589b03418b6d3f4cc660b2f9a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/source-shot-footprint.mjs",
+      "status": 200,
+      "sha256": "1eca075b46b91e569b289ad06518ed72192fcb6381d22e121cc5f58b17a45d1b",
+      "manifestSha256": "1eca075b46b91e569b289ad06518ed72192fcb6381d22e121cc5f58b17a45d1b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/paint-ownership.mjs",
+      "status": 200,
+      "sha256": "bf1470ddd9c0838fff4cf5af6bcca6e14e2fdf8580fa52d2dbd29642380ec591",
+      "manifestSha256": "bf1470ddd9c0838fff4cf5af6bcca6e14e2fdf8580fa52d2dbd29642380ec591"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/agent3-weapon-physics.mjs",
+      "status": 200,
+      "sha256": "b2401d3c0e7895b5db240e3660ddd132237f668b9a674e52e6e33ce4c622a3c4",
+      "manifestSha256": "b2401d3c0e7895b5db240e3660ddd132237f668b9a674e52e6e33ce4c622a3c4"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/trizooka-collision.mjs",
+      "status": 200,
+      "sha256": "c22ecc5cf0bc29ec08b54461d3b6869fb942f9d45ef08955724afa22a7f616e6",
+      "manifestSha256": "c22ecc5cf0bc29ec08b54461d3b6869fb942f9d45ef08955724afa22a7f616e6"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/projectile-presentation.mjs",
+      "status": 200,
+      "sha256": "7c2ecd396ccef792651b635d27ce4a07d48a953bec18a90b6470deb2c8d6e789",
+      "manifestSha256": "7c2ecd396ccef792651b635d27ce4a07d48a953bec18a90b6470deb2c8d6e789"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapon-paint-inertia.mjs",
+      "status": 200,
+      "sha256": "b2b77d66b918cc4e28416fb1126c8d91fee6880840ed43410e66626c2ecbbec9",
+      "manifestSha256": "b2b77d66b918cc4e28416fb1126c8d91fee6880840ed43410e66626c2ecbbec9"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/charger-sight-cache.mjs",
+      "status": 200,
+      "sha256": "e9bb566a52b8806cfa52e81244ff2b7c08defe714ba0478db0ee07258562a8ba",
+      "manifestSha256": "e9bb566a52b8806cfa52e81244ff2b7c08defe714ba0478db0ee07258562a8ba"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/storm-power.mjs",
+      "status": 200,
+      "sha256": "276e085875ac9dbab5117a19d7873d35ac94299a611ca21b4e4d49f016b75ee5",
+      "manifestSha256": "276e085875ac9dbab5117a19d7873d35ac94299a611ca21b4e4d49f016b75ee5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/contact-recovery.mjs",
+      "status": 200,
+      "sha256": "147ac3499a0083ddf83c40f95803ef4670fe5446e27cf8b41d4818b4359bf16b",
+      "manifestSha256": "147ac3499a0083ddf83c40f95803ef4670fe5446e27cf8b41d4818b4359bf16b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapon-edgecases.mjs",
+      "status": 200,
+      "sha256": "30c4be67d50fd9ce7e661e1062186fa61268ae264df4f2fcdd6d0d47ccb56fb8",
+      "manifestSha256": "30c4be67d50fd9ce7e661e1062186fa61268ae264df4f2fcdd6d0d47ccb56fb8"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/sub-ready.mjs",
+      "status": 200,
+      "sha256": "c661f212ed0b274714048708ae65526721f388f13af073fba9646ba11c04dafc",
+      "manifestSha256": "c661f212ed0b274714048708ae65526721f388f13af073fba9646ba11c04dafc"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/rolling-quantile.mjs",
+      "status": 200,
+      "sha256": "c4356c68445945d251b10ee8d905b78f82fc3cce05fda57191b7184231459f7d",
+      "manifestSha256": "c4356c68445945d251b10ee8d905b78f82fc3cce05fda57191b7184231459f7d"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/owner-clock.mjs",
+      "status": 200,
+      "sha256": "34621982be42c67c1052ec70ce0dfab7b05732792d02cc397a62657fa5e1ba81",
+      "manifestSha256": "34621982be42c67c1052ec70ce0dfab7b05732792d02cc397a62657fa5e1ba81"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/paint-authority.mjs",
+      "status": 200,
+      "sha256": "d9e226387df6c54d93e0537d1386f40ee2cc12978eb1684e78441bf367d272d8",
+      "manifestSha256": "d9e226387df6c54d93e0537d1386f40ee2cc12978eb1684e78441bf367d272d8"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/inkFlightRuntime.js",
+      "status": 200,
+      "sha256": "6092f4ea3b2f6a2819b8e39a4811f74cd9c14dae20657c46c7ef808721edaacd",
+      "manifestSha256": "6092f4ea3b2f6a2819b8e39a4811f74cd9c14dae20657c46c7ef808721edaacd"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/transient-gear-network.mjs",
+      "status": 200,
+      "sha256": "2a1d001bb8a2d93f1253ce7d5d28705d4044bea2c58d36451385617150fb4cf2",
+      "manifestSha256": "2a1d001bb8a2d93f1253ce7d5d28705d4044bea2c58d36451385617150fb4cf2"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/combat-provenance.mjs",
+      "status": 200,
+      "sha256": "ac68236840380a3732a8b1939575ab7caa3685e0208450b6832ca0c837e3db3c",
+      "manifestSha256": "ac68236840380a3732a8b1939575ab7caa3685e0208450b6832ca0c837e3db3c"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/conditional-gear-network.mjs",
+      "status": 200,
+      "sha256": "c27ee8a9c380306f7de8ccfe56df278e161d6d05b8a44fef4878fa6cefb7ef6b",
+      "manifestSha256": "c27ee8a9c380306f7de8ccfe56df278e161d6d05b8a44fef4878fa6cefb7ef6b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/gear-loadout-network.mjs",
+      "status": 200,
+      "sha256": "8a9033b727b164c0d60f92e2a823e82ed68c4dae819b0afa580d81370724950f",
+      "manifestSha256": "8a9033b727b164c0d60f92e2a823e82ed68c4dae819b0afa580d81370724950f"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/outbound-prefix.mjs",
+      "status": 200,
+      "sha256": "56a04d2240a52197c1681ccc85e0fc12d8a42fd89ed348893c272603463addf4",
+      "manifestSha256": "56a04d2240a52197c1681ccc85e0fc12d8a42fd89ed348893c272603463addf4"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/remote-dodge-clock.mjs",
+      "status": 200,
+      "sha256": "7c15701366778d63c21e28ee383a37a167c756b95785b0e8eb3776b182dfc3ab",
+      "manifestSha256": "7c15701366778d63c21e28ee383a37a167c756b95785b0e8eb3776b182dfc3ab"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/paint-packet-codec.mjs",
+      "status": 200,
+      "sha256": "d033680f21461c0f9d7d073a37bd923a58bacd4954ae1fce7f009ec39561de6e",
+      "manifestSha256": "d033680f21461c0f9d7d073a37bd923a58bacd4954ae1fce7f009ec39561de6e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/superjump-epoch.mjs",
+      "status": 200,
+      "sha256": "dba16939086de7d0a4a88ae778061065d8e8811fa1ea564efdae0be832d6cd41",
+      "manifestSha256": "dba16939086de7d0a4a88ae778061065d8e8811fa1ea564efdae0be832d6cd41"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/kit-paint-admission.mjs",
+      "status": 200,
+      "sha256": "64c18e43d6bd4d88dea0231780c686467fc4aaf4325a5fe287f8a82e09cc2e8e",
+      "manifestSha256": "64c18e43d6bd4d88dea0231780c686467fc4aaf4325a5fe287f8a82e09cc2e8e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/catalog-dualies-motion.mjs",
+      "status": 200,
+      "sha256": "f77fdebc1bfcc40c7928eaacdb88301caabe34c6e49b6ce07309d2897dcbf2d5",
+      "manifestSha256": "f77fdebc1bfcc40c7928eaacdb88301caabe34c6e49b6ce07309d2897dcbf2d5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/issue-1088-surge-presentation.mjs",
+      "status": 200,
+      "sha256": "4455faf75a3973bf902df04137849a693483cfb13ff9969f764f252aaa23195a",
+      "manifestSha256": "4455faf75a3973bf902df04137849a693483cfb13ff9969f764f252aaa23195a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/roller-presentation.mjs",
+      "status": 200,
+      "sha256": "853518ab6ff160d15daa56c81cec1c1e57e5ed53ea5ca857e2544cb697cbbf7d",
+      "manifestSha256": "853518ab6ff160d15daa56c81cec1c1e57e5ed53ea5ca857e2544cb697cbbf7d"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/splashdown-network.mjs",
+      "status": 200,
+      "sha256": "1df55e052d4a5eac454e6972140d3695cb9611e1524d91b32a6ed79e9f685cd4",
+      "manifestSha256": "1df55e052d4a5eac454e6972140d3695cb9611e1524d91b32a6ed79e9f685cd4"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/sub-birth-commit.mjs",
+      "status": 200,
+      "sha256": "0aeaa722f7a71d076d32287d339ee0f0d52ae41ab6229711ba825fa83082b34f",
+      "manifestSha256": "0aeaa722f7a71d076d32287d339ee0f0d52ae41ab6229711ba825fa83082b34f"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/disconnect-fidelity.mjs",
+      "status": 200,
+      "sha256": "ade153345a3c0039c874070cd76910581926e51e7345b81e7c136d2311d82ccf",
+      "manifestSha256": "ade153345a3c0039c874070cd76910581926e51e7345b81e7c136d2311d82ccf"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/result-admission.mjs",
+      "status": 200,
+      "sha256": "3b676af571ed02d2116f8d757658320761f43958f4555061c7645a9987a62d0e",
+      "manifestSha256": "3b676af571ed02d2116f8d757658320761f43958f4555061c7645a9987a62d0e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/team-wipeout.mjs",
+      "status": 200,
+      "sha256": "a906be3b4d045a9271620a813ea052f8ab7b9b17945c19cdd6d72b3160fdd435",
+      "manifestSha256": "a906be3b4d045a9271620a813ea052f8ab7b9b17945c19cdd6d72b3160fdd435"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/clothing-gear.mjs",
+      "status": 200,
+      "sha256": "389403b737fd0c120eded4934e8f90bc95dc9f9894ab848759f2d6fcbd6f53d5",
+      "manifestSha256": "389403b737fd0c120eded4934e8f90bc95dc9f9894ab848759f2d6fcbd6f53d5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/splatling.mjs",
+      "status": 200,
+      "sha256": "fd571e82ec3faa4da87e9e62a5451ec318f18f1dbb791b5444c0483a52f09a54",
+      "manifestSha256": "fd571e82ec3faa4da87e9e62a5451ec318f18f1dbb791b5444c0483a52f09a54"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/turf-finish.mjs",
+      "status": 200,
+      "sha256": "4c137be9c26e0e67adc958f1850ad804cce453701e9131e56bd6f794748bcecf",
+      "manifestSha256": "4c137be9c26e0e67adc958f1850ad804cce453701e9131e56bd6f794748bcecf"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/bots.js",
+      "status": 200,
+      "sha256": "e81bec4aad0e1f77d6ede8b2ab2d9208e5457ed106c3321d188b92df2e5650d2",
+      "manifestSha256": "e81bec4aad0e1f77d6ede8b2ab2d9208e5457ed106c3321d188b92df2e5650d2"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/core/device.js",
+      "status": 200,
+      "sha256": "ace6f5de445d9891cc500120c4f1c905aff8dda011c84700ecdbad4b31154cdb",
+      "manifestSha256": "ace6f5de445d9891cc500120c4f1c905aff8dda011c84700ecdbad4b31154cdb"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/platform-input.mjs",
+      "status": 200,
+      "sha256": "055eab35769ea1a15849e2ad56fe280fcd58eca8f6d31df7c418cc46c74585de",
+      "manifestSha256": "055eab35769ea1a15849e2ad56fe280fcd58eca8f6d31df7c418cc46c74585de"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/first-touch-adapter.mjs",
+      "status": 200,
+      "sha256": "8ff037093db1986ff7d48eb2bcded30f3259e383da3ca76bf608b7bf6707a285",
+      "manifestSha256": "8ff037093db1986ff7d48eb2bcded30f3259e383da3ca76bf608b7bf6707a285"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/ui-strings.mjs",
+      "status": 200,
+      "sha256": "3c9d747fd6e44c78274372ffbe9216597cbdb4975c26a54847fa3576248e0f8f",
+      "manifestSha256": "3c9d747fd6e44c78274372ffbe9216597cbdb4975c26a54847fa3576248e0f8f"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/superjump-destination.mjs",
+      "status": 200,
+      "sha256": "36babb7b42e646775406a40b29650a3c2f12154703ac91c46013cdb5181ccf0d",
+      "manifestSha256": "36babb7b42e646775406a40b29650a3c2f12154703ac91c46013cdb5181ccf0d"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/core/mobile.js",
+      "status": 200,
+      "sha256": "005bb87e55570618d69420ba1a3cfbede0268c91d2a8a8ac3c9d358bdb2d4c9a",
+      "manifestSha256": "005bb87e55570618d69420ba1a3cfbede0268c91d2a8a8ac3c9d358bdb2d4c9a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/reliability/menu-takeover.mjs",
+      "status": 200,
+      "sha256": "64ae157419b8bc8ffd054dd0e4feaa413f3d1a8a24d8ea623ca810c668b42e1a",
+      "manifestSha256": "64ae157419b8bc8ffd054dd0e4feaa413f3d1a8a24d8ea623ca810c668b42e1a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/player-hurtbox.mjs",
+      "status": 200,
+      "sha256": "ae5048ed4a6c1bac7bdf82a445d6ee993c6e9dc7afdf5f82ff8b2c0feab8032d",
+      "manifestSha256": "ae5048ed4a6c1bac7bdf82a445d6ee993c6e9dc7afdf5f82ff8b2c0feab8032d"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/pad-sensitivity.mjs",
+      "status": 200,
+      "sha256": "6d4dffbf799864968830eb2ac575730ec5f06f89e4c64d5fbd533a35259ebdf4",
+      "manifestSha256": "6d4dffbf799864968830eb2ac575730ec5f06f89e4c64d5fbd533a35259ebdf4"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/ui/ui-util.js",
+      "status": 200,
+      "sha256": "f0df3b57f40b2c6f12528d6732601c937d2a49cea88bccd159474daa86c551e5",
+      "manifestSha256": "f0df3b57f40b2c6f12528d6732601c937d2a49cea88bccd159474daa86c551e5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/zipcaster-armor.mjs",
+      "status": 200,
+      "sha256": "ca76e67b35280ceb433f85c767bf6fc0113b43ac6a9ffed9418fc8ccd18b6b46",
+      "manifestSha256": "ca76e67b35280ceb433f85c767bf6fc0113b43ac6a9ffed9418fc8ccd18b6b46"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/depth-cache.mjs",
+      "status": 200,
+      "sha256": "9c02c4ff9750779c69df802d7210b43322923568ba9ea85d9c918161c9a84931",
+      "manifestSha256": "9c02c4ff9750779c69df802d7210b43322923568ba9ea85d9c918161c9a84931"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/shadow-visibility-pass.mjs",
+      "status": 200,
+      "sha256": "4a0c18a97e5499fe3ab77ab6de772625e6a9f2a598e3737970b562f40c5c1c6a",
+      "manifestSha256": "4a0c18a97e5499fe3ab77ab6de772625e6a9f2a598e3737970b562f40c5c1c6a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/layout-sample.mjs",
+      "status": 200,
+      "sha256": "54ec76e86a25238728b373b153e2863e9e8076af19a646f24d5b2f58ec312386",
+      "manifestSha256": "54ec76e86a25238728b373b153e2863e9e8076af19a646f24d5b2f58ec312386"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/splatling-reticle.mjs",
+      "status": 200,
+      "sha256": "60b7af6c0ee0d71c491cc7c72423e1f952521e0aef388f4771b8abeedc37bd5e",
+      "manifestSha256": "60b7af6c0ee0d71c491cc7c72423e1f952521e0aef388f4771b8abeedc37bd5e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/ui/menu-art.js",
+      "status": 200,
+      "sha256": "46821218b5e2fd02594c56ac789f15036530f9481d63202b41b0c36668ff82e6",
+      "manifestSha256": "46821218b5e2fd02594c56ac789f15036530f9481d63202b41b0c36668ff82e6"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/ui/hud-boss.js",
+      "status": 200,
+      "sha256": "c38b8a0127107dd6fc63413d006cb01ddfdb9dcb4e970347b61cfd0be9aa6705",
+      "manifestSha256": "c38b8a0127107dd6fc63413d006cb01ddfdb9dcb4e970347b61cfd0be9aa6705"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/audio/bossAudio.js",
+      "status": 200,
+      "sha256": "097cb27d94b92a0b009c427bf2e696a406f2a0362e2b02c3808c2db9415f39ae",
+      "manifestSha256": "097cb27d94b92a0b009c427bf2e696a406f2a0362e2b02c3808c2db9415f39ae"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/ui/boss-art.js",
+      "status": 200,
+      "sha256": "229597208c862feedecd438c0a004d0ddba03e2ccf414815a574bc441c0de579",
+      "manifestSha256": "229597208c862feedecd438c0a004d0ddba03e2ccf414815a574bc441c0de579"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/results-scoring.mjs",
+      "status": 200,
+      "sha256": "48a9b1a20341667a9edc88c9d9633a2206d5160813ae611e564b1c25071f5d9a",
+      "manifestSha256": "48a9b1a20341667a9edc88c9d9633a2206d5160813ae611e564b1c25071f5d9a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/ui/news.js",
+      "status": 200,
+      "sha256": "55ddb96ccca2560bc0671e6df4365ca6ea3e0b2871c9b53b4267f2b70db7737f",
+      "manifestSha256": "55ddb96ccca2560bc0671e6df4365ca6ea3e0b2871c9b53b4267f2b70db7737f"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/result-continuation.mjs",
+      "status": 200,
+      "sha256": "9593558fe3b941a5e9562da3953c5eddb110518cc471ce016290a4e17f073707",
+      "manifestSha256": "9593558fe3b941a5e9562da3953c5eddb110518cc471ce016290a4e17f073707"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/alternate-weapon-kits-data.mjs",
+      "status": 200,
+      "sha256": "2da7a227e20a58ad74caf407180ee5fc75e1c3bde421037fc8f77f59a3a22e67",
+      "manifestSha256": "2da7a227e20a58ad74caf407180ee5fc75e1c3bde421037fc8f77f59a3a22e67"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/brella-physics.mjs",
+      "status": 200,
+      "sha256": "d5c36d1d7d995771bac49e35b2d065fdd863327a0ac1eda69be7c2b32814911e",
+      "manifestSha256": "d5c36d1d7d995771bac49e35b2d065fdd863327a0ac1eda69be7c2b32814911e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/roller-vertical-paint.mjs",
+      "status": 200,
+      "sha256": "5dc8d8a0bf3ead403562b411551d567280f60f4802c13ec5a24e6413887dcdd3",
+      "manifestSha256": "5dc8d8a0bf3ead403562b411551d567280f60f4802c13ec5a24e6413887dcdd3"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/private-tracking.mjs",
+      "status": 200,
+      "sha256": "7d21186ab3435a752c3ace85f1b9444092db0a4f4c9f3f1f77a67825849577b5",
+      "manifestSha256": "7d21186ab3435a752c3ace85f1b9444092db0a4f4c9f3f1f77a67825849577b5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/roller-max-paint.mjs",
+      "status": 200,
+      "sha256": "bc7c46b4d7a20e962f19f407b88cb1e5ca9cca6b207c1b68cb48a88a4a93ca11",
+      "manifestSha256": "bc7c46b4d7a20e962f19f407b88cb1e5ca9cca6b207c1b68cb48a88a4a93ca11"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/roller-contact-paint.mjs",
+      "status": 200,
+      "sha256": "4e0925fa182c91ac4b1bd08299f15e7a21d471391de05e7774b5ff4a6a6480d8",
+      "manifestSha256": "4e0925fa182c91ac4b1bd08299f15e7a21d471391de05e7774b5ff4a6a6480d8"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/blaster-flight-paint.mjs",
+      "status": 200,
+      "sha256": "e20c94a023d4d9543f54bd34121733375dd99a47aa89551a805cd591da588669",
+      "manifestSha256": "e20c94a023d4d9543f54bd34121733375dd99a47aa89551a805cd591da588669"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/main-knockback.mjs",
+      "status": 200,
+      "sha256": "ac9b32a5709dac0b85b315c9f85b42b5398e01c9e6405b26ea9f946a58cbe534",
+      "manifestSha256": "ac9b32a5709dac0b85b315c9f85b42b5398e01c9e6405b26ea9f946a58cbe534"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/dualies-guide-cache.mjs",
+      "status": 200,
+      "sha256": "cd0229c182048dce8385e8003d55aeeecb1cffd20e75ae64b03deba7c808f569",
+      "manifestSha256": "cd0229c182048dce8385e8003d55aeeecb1cffd20e75ae64b03deba7c808f569"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/slosher-nearest-paint.mjs",
+      "status": 200,
+      "sha256": "876f300d3a8480a4e132c967fd629d5653c30e0cfcf478f7152ab8832911b13f",
+      "manifestSha256": "876f300d3a8480a4e132c967fd629d5653c30e0cfcf478f7152ab8832911b13f"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/shooter-impact-paint.mjs",
+      "status": 200,
+      "sha256": "a9eba76ebed40a538ab763f06027eb5e5ccb8e4b24e562068af57a73cc0c5eb9",
+      "manifestSha256": "a9eba76ebed40a538ab763f06027eb5e5ccb8e4b24e562068af57a73cc0c5eb9"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/dualies-slide-paint.mjs",
+      "status": 200,
+      "sha256": "f31a1a869ec3f221ecd31e6c1ee1324e33c1d11a59c5248beccbd84b30b32e4b",
+      "manifestSha256": "f31a1a869ec3f221ecd31e6c1ee1324e33c1d11a59c5248beccbd84b30b32e4b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/projectile-collision.mjs",
+      "status": 200,
+      "sha256": "5cb60082b7ddfe8a20d51a373eba016cb609a75557a4a464d568eb82a7ef9606",
+      "manifestSha256": "5cb60082b7ddfe8a20d51a373eba016cb609a75557a4a464d568eb82a7ef9606"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapons-collision.mjs",
+      "status": 200,
+      "sha256": "0a0be15677695b77fb18d4d30fb79a0deb5b34ce166ca52e7bb221f39d1cf5fc",
+      "manifestSha256": "0a0be15677695b77fb18d4d30fb79a0deb5b34ce166ca52e7bb221f39d1cf5fc"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapon-accuracy.mjs",
+      "status": 200,
+      "sha256": "924b509a4a4141aee6bbbe973e2aed5a0590697e0879cc184ddad2bbe013b7bd",
+      "manifestSha256": "924b509a4a4141aee6bbbe973e2aed5a0590697e0879cc184ddad2bbe013b7bd"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/dualies-accuracy.mjs",
+      "status": 200,
+      "sha256": "1e884cdfe48cbc1fb7b83e6acb36875a318a68c5df56567098d45b6787594dad",
+      "manifestSha256": "1e884cdfe48cbc1fb7b83e6acb36875a318a68c5df56567098d45b6787594dad"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/issue-465-blaster-startup.mjs",
+      "status": 200,
+      "sha256": "afe2c144d773739bac95e8561101d2e4855c6703907a9d066646007beee1617b",
+      "manifestSha256": "afe2c144d773739bac95e8561101d2e4855c6703907a9d066646007beee1617b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapons-charger-flight.mjs",
+      "status": 200,
+      "sha256": "80fd9d57280657195f92849b48e627891ee0df048706c709fbf5d8aff13237ef",
+      "manifestSha256": "80fd9d57280657195f92849b48e627891ee0df048706c709fbf5d8aff13237ef"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/shooter-accuracy.mjs",
+      "status": 200,
+      "sha256": "813e499078e71db3bb9c7caf61d2d2f79ddb2d44136aaaea99c610a7b3f941d1",
+      "manifestSha256": "813e499078e71db3bb9c7caf61d2d2f79ddb2d44136aaaea99c610a7b3f941d1"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/splatling-radius-charge.mjs",
+      "status": 200,
+      "sha256": "c9b83896876d6500c6f6da19448f96c791398778d515ce9757c8b836ebd8f09c",
+      "manifestSha256": "c9b83896876d6500c6f6da19448f96c791398778d515ce9757c8b836ebd8f09c"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/splatling-startup-compat.mjs",
+      "status": 200,
+      "sha256": "79547f524014f9ad84d15ac688232b143508defa372ce68af969d5eb6984a4d8",
+      "manifestSha256": "79547f524014f9ad84d15ac688232b143508defa372ce68af969d5eb6984a4d8"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapon-gates.mjs",
+      "status": 200,
+      "sha256": "b01779faae8618d849aa4423e4e4254628e911ed2273edd483bc37c72f48e427",
+      "manifestSha256": "b01779faae8618d849aa4423e4e4254628e911ed2273edd483bc37c72f48e427"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/shooter-nearest-paint.mjs",
+      "status": 200,
+      "sha256": "a7ac74d71806980c46a47d0523ac419d69ac7a72da9556a4e59c4ecebac605dd",
+      "manifestSha256": "a7ac74d71806980c46a47d0523ac419d69ac7a72da9556a4e59c4ecebac605dd"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/content-language.mjs",
+      "status": 200,
+      "sha256": "d42c0a2d65e0d981ee5a4a44fc372b7fcd2e868d7c9fac0d37a9702e1b3493dc",
+      "manifestSha256": "d42c0a2d65e0d981ee5a4a44fc372b7fcd2e868d7c9fac0d37a9702e1b3493dc"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/splatling-jump-spread.mjs",
+      "status": 200,
+      "sha256": "9895f1af00ec78e49f36ee7443815178a5748eff6fda0da427fc3931db3657fc",
+      "manifestSha256": "9895f1af00ec78e49f36ee7443815178a5748eff6fda0da427fc3931db3657fc"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/brella-canopy-visual.mjs",
+      "status": 200,
+      "sha256": "334bfaa61bd0cd662d95a0949ef0d4f1ca220bed7e79a6c5103e6c8c3c0858df",
+      "manifestSha256": "334bfaa61bd0cd662d95a0949ef0d4f1ca220bed7e79a6c5103e6c8c3c0858df"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/catalog-splash-paint.mjs",
+      "status": 200,
+      "sha256": "49604de053f2040626ff8fb0245102557d3d0dd366447b0845d4875d457c08ab",
+      "manifestSha256": "49604de053f2040626ff8fb0245102557d3d0dd366447b0845d4875d457c08ab"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/catalog-flick-damage.mjs",
+      "status": 200,
+      "sha256": "5b7ce984b14d9f9ca404830c3e4ad585d62c3bb34b12f537b1c5ecba023c9182",
+      "manifestSha256": "5b7ce984b14d9f9ca404830c3e4ad585d62c3bb34b12f537b1c5ecba023c9182"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/catalog-depletion.mjs",
+      "status": 200,
+      "sha256": "bc2ce8d7c2a4b061eec999766a3c37fad3344a192640fe7338fa56ac04245300",
+      "manifestSha256": "bc2ce8d7c2a4b061eec999766a3c37fad3344a192640fe7338fa56ac04245300"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapon-weight.mjs",
+      "status": 200,
+      "sha256": "80d31c5ed41875914196290e2cc9581140c5f265418b0ce330b075d440496024",
+      "manifestSha256": "80d31c5ed41875914196290e2cc9581140c5f265418b0ce330b075d440496024"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/canonical-kits.mjs",
+      "status": 200,
+      "sha256": "4a28a8f5524100ef7d86847e6e1f79ab33b6b0d1b1b3502aff3f80f1cf05fa55",
+      "manifestSha256": "4a28a8f5524100ef7d86847e6e1f79ab33b6b0d1b1b3502aff3f80f1cf05fa55"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/canonical-kits-data.mjs",
+      "status": 200,
+      "sha256": "1cc9dacc19dc7d923e05c50a44824918865f0ef6053c78b4cdc00d574ddd05b0",
+      "manifestSha256": "1cc9dacc19dc7d923e05c50a44824918865f0ef6053c78b4cdc00d574ddd05b0"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/catalog-wall-drop-data.mjs",
+      "status": 200,
+      "sha256": "0981846b994dde46cf857b1f13e4f536331a3cf8054b88dabe82a0bc4bed1b0e",
+      "manifestSha256": "0981846b994dde46cf857b1f13e4f536331a3cf8054b88dabe82a0bc4bed1b0e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/audio/blaster-hit.mjs",
+      "status": 200,
+      "sha256": "9d391da0f27b289be9173bcb8dabb78e15a393e2f3c4f06f2c1bdbf12cd0aafd",
+      "manifestSha256": "9d391da0f27b289be9173bcb8dabb78e15a393e2f3c4f06f2c1bdbf12cd0aafd"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/catalog-source-launch.mjs",
+      "status": 200,
+      "sha256": "250d1acad728b2b77ad3e16bc3da532ab0140b7ff67a06693dddfa22ca4499ab",
+      "manifestSha256": "250d1acad728b2b77ad3e16bc3da532ab0140b7ff67a06693dddfa22ca4499ab"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/bloblobber-launch-sweep.mjs",
+      "status": 200,
+      "sha256": "a1d0143c37cf472501e6e1597236f3af16bb109e0f2461ab49ea129e3d7855be",
+      "manifestSha256": "a1d0143c37cf472501e6e1597236f3af16bb109e0f2461ab49ea129e3d7855be"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/roller-freefall.mjs",
+      "status": 200,
+      "sha256": "c3ed2d72c5c53d1ec32d7b66994168e0d4e288d83de3c3f178c30785dc2d39d5",
+      "manifestSha256": "c3ed2d72c5c53d1ec32d7b66994168e0d4e288d83de3c3f178c30785dc2d39d5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/catalog-pose-birth.mjs",
+      "status": 200,
+      "sha256": "f452cfd07ea10b7b15b5b9a5613ea9c53a9bd49ec8dea470632c1627e97cc33b",
+      "manifestSha256": "f452cfd07ea10b7b15b5b9a5613ea9c53a9bd49ec8dea470632c1627e97cc33b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/saber-melee.mjs",
+      "status": 200,
+      "sha256": "6fad8e6134afed78b4bc4a38a346691129832bfe1cb1af99a31ab7332f21cd73",
+      "manifestSha256": "6fad8e6134afed78b4bc4a38a346691129832bfe1cb1af99a31ab7332f21cd73"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/saber-step.mjs",
+      "status": 200,
+      "sha256": "7699cd3c24e8f37015dd0809e27c79608538e63163984700825aa7b9fe43fc7b",
+      "manifestSha256": "7699cd3c24e8f37015dd0809e27c79608538e63163984700825aa7b9fe43fc7b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/added-family-paint.mjs",
+      "status": 200,
+      "sha256": "5fb727ff619e3b1ae1fd1befff4b511b2be4be5a141e16852f6f8e35e3f0541e",
+      "manifestSha256": "5fb727ff619e3b1ae1fd1befff4b511b2be4be5a141e16852f6f8e35e3f0541e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/sub-surface-attachment.mjs",
+      "status": 200,
+      "sha256": "606fa4385b7d4aa85f582fcb10faf8f9229b10974f5c19b2dedde5aa5ea01208",
+      "manifestSha256": "606fa4385b7d4aa85f582fcb10faf8f9229b10974f5c19b2dedde5aa5ea01208"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/saber-presentation.mjs",
+      "status": 200,
+      "sha256": "50741b8635b53468db1364cc86fbbf200fa69278a50d2b8d2f0b05a64552fd45",
+      "manifestSha256": "50741b8635b53468db1364cc86fbbf200fa69278a50d2b8d2f0b05a64552fd45"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/kit-autobomb.mjs",
+      "status": 200,
+      "sha256": "bb65d75af81443fa6be9a5f66f9ae4232ecbca9887ac5cf80859a84bea69a3f3",
+      "manifestSha256": "bb65d75af81443fa6be9a5f66f9ae4232ecbca9887ac5cf80859a84bea69a3f3"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/replica-retirement.mjs",
+      "status": 200,
+      "sha256": "d9d36974b5e6079c45326d2c45e5551ba69b563587e272a1bfe58d874d387984",
+      "manifestSha256": "d9d36974b5e6079c45326d2c45e5551ba69b563587e272a1bfe58d874d387984"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/sub-models.mjs",
+      "status": 200,
+      "sha256": "924730572d423ba3811be0a26dc6ed54ae3540546ac1d0b019f774ff71f54c7b",
+      "manifestSha256": "924730572d423ba3811be0a26dc6ed54ae3540546ac1d0b019f774ff71f54c7b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/tacticooler-gauge.mjs",
+      "status": 200,
+      "sha256": "fa1d104c37af1815476856b1b8c79aa1a8e5c80812cf0f69f3c235571d1988f2",
+      "manifestSha256": "fa1d104c37af1815476856b1b8c79aa1a8e5c80812cf0f69f3c235571d1988f2"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/support-cooler.mjs",
+      "status": 200,
+      "sha256": "3680cfe40f4cbdfc183b217dceb0bdd740c307d1e9c147d4355fd96da4565f3a",
+      "manifestSha256": "3680cfe40f4cbdfc183b217dceb0bdd740c307d1e9c147d4355fd96da4565f3a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/dry-ink.mjs",
+      "status": 200,
+      "sha256": "57ad5208ca8d685b463cee9b5a40daa70b3f29bcc2fd27f943b23c8efa13764a",
+      "manifestSha256": "57ad5208ca8d685b463cee9b5a40daa70b3f29bcc2fd27f943b23c8efa13764a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/conditional-gear.mjs",
+      "status": 200,
+      "sha256": "3983c31f7c4df66f08614579a1e6d940bc06aae1c40e90425fcb1330152ce80a",
+      "manifestSha256": "3983c31f7c4df66f08614579a1e6d940bc06aae1c40e90425fcb1330152ce80a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/flow-effects.mjs",
+      "status": 200,
+      "sha256": "8039983b7448694a75ee83b9ea141f4aa382b54a66109844c77a1ca6604bada7",
+      "manifestSha256": "8039983b7448694a75ee83b9ea141f4aa382b54a66109844c77a1ca6604bada7"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/support-recon.mjs",
+      "status": 200,
+      "sha256": "b4b9aad6843bc433406045b248a14a7f1390d5f956f0f84bd3d250f93768ef5e",
+      "manifestSha256": "b4b9aad6843bc433406045b248a14a7f1390d5f956f0f84bd3d250f93768ef5e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/sub-mark-resistance.mjs",
+      "status": 200,
+      "sha256": "f72526349c486c5856f8fce1a65ff37ac048b3af01bbe712820995de22b63690",
+      "manifestSha256": "f72526349c486c5856f8fce1a65ff37ac048b3af01bbe712820995de22b63690"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/support-cooler-collision.mjs",
+      "status": 200,
+      "sha256": "514d7c98ae9a2aae61688b337416d5a02babaef16c19c9788a4c93ad888b763c",
+      "manifestSha256": "514d7c98ae9a2aae61688b337416d5a02babaef16c19c9788a4c93ad888b763c"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/haunt.mjs",
+      "status": 200,
+      "sha256": "f509237b73aed1d9ccd1bc954ca93025704d76c874e124d379cd7b06797727ef",
+      "manifestSha256": "f509237b73aed1d9ccd1bc954ca93025704d76c874e124d379cd7b06797727ef"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/combat-info.mjs",
+      "status": 200,
+      "sha256": "52a9e299c7858114c11aeb1612147fd3d1080819e2853dfbe652c13432f06836",
+      "manifestSha256": "52a9e299c7858114c11aeb1612147fd3d1080819e2853dfbe652c13432f06836"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/issue-415-adapter.mjs",
+      "status": 200,
+      "sha256": "a0d38b700a8e12d0b801dc7afa8103a88ca8f50702d071a95c15719c2c5ae7af",
+      "manifestSha256": "a0d38b700a8e12d0b801dc7afa8103a88ca8f50702d071a95c15719c2c5ae7af"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/intro-presentation.mjs",
+      "status": 200,
+      "sha256": "f0c5e4957d4952411b4f33edc0129ab750f7f8aa46a3ba6259a56a1260ddb1cc",
+      "manifestSha256": "f0c5e4957d4952411b4f33edc0129ab750f7f8aa46a3ba6259a56a1260ddb1cc"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/recovery-gate.mjs",
+      "status": 200,
+      "sha256": "0e8354b393200a74a6b9162bf1a3d585a3e132bba15759845f9ecce0198b911b",
+      "manifestSha256": "0e8354b393200a74a6b9162bf1a3d585a3e132bba15759845f9ecce0198b911b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/idle-resources.mjs",
+      "status": 200,
+      "sha256": "2130d3ebe0a77506d2085a1b903ce9081ae09e6b922567f1d4f70163efb5a27e",
+      "manifestSha256": "2130d3ebe0a77506d2085a1b903ce9081ae09e6b922567f1d4f70163efb5a27e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/roller-model.mjs",
+      "status": 200,
+      "sha256": "70c1607142df10aea0babbe72d475f3238b531d6c591e05c1af60c726101daa6",
+      "manifestSha256": "70c1607142df10aea0babbe72d475f3238b531d6c591e05c1af60c726101daa6"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/ranked/rainmaker-motion.mjs",
+      "status": 200,
+      "sha256": "ca85f073d8121e9b9831f103005730db48323aa7833ee2cecf4a96f28888b3e5",
+      "manifestSha256": "ca85f073d8121e9b9831f103005730db48323aa7833ee2cecf4a96f28888b3e5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/blaster-mechanism.mjs",
+      "status": 200,
+      "sha256": "fd9b9c26b4faa1de3515bcfc8ce541f53d9cbb7d7022b779333128c43d75fad0",
+      "manifestSha256": "fd9b9c26b4faa1de3515bcfc8ce541f53d9cbb7d7022b779333128c43d75fad0"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/walk-foot-clearance.mjs",
+      "status": 200,
+      "sha256": "b8175364fb94dba2d79417a8e40373fb58ddf10dbe86db1ee05317c3de0069d3",
+      "manifestSha256": "b8175364fb94dba2d79417a8e40373fb58ddf10dbe86db1ee05317c3de0069d3"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/roller-heavy-swing.mjs",
+      "status": 200,
+      "sha256": "817d544ba0fbf742887f4a2f4f92131f2e51e1191e7772b5fd953bf4b284ba38",
+      "manifestSha256": "817d544ba0fbf742887f4a2f4f92131f2e51e1191e7772b5fd953bf4b284ba38"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/special-vfx-kit.mjs",
+      "status": 200,
+      "sha256": "614374a0c9835f1fd0107bc5e377e62587a884f8d2b73b61d8fd01d79686cf26",
+      "manifestSha256": "614374a0c9835f1fd0107bc5e377e62587a884f8d2b73b61d8fd01d79686cf26"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/legacy-walk-curves.mjs",
+      "status": 200,
+      "sha256": "bb77c9564044a7f1e39a7c94030a662adecaabd42e932b0ad8de0bc69cdb92e5",
+      "manifestSha256": "bb77c9564044a7f1e39a7c94030a662adecaabd42e932b0ad8de0bc69cdb92e5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/torpedo-contact-commit.mjs",
+      "status": 200,
+      "sha256": "8fcb05401d8738e7e80164d116a7bfb8a6b649962ebb182cd601bc59f680b4c3",
+      "manifestSha256": "8fcb05401d8738e7e80164d116a7bfb8a6b649962ebb182cd601bc59f680b4c3"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/tower-paint-support.mjs",
+      "status": 200,
+      "sha256": "361fbce9433f12c5058455f9e7b3d69f92b3d763054ff86c41268f80f565e5d7",
+      "manifestSha256": "361fbce9433f12c5058455f9e7b3d69f92b3d763054ff86c41268f80f565e5d7"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/torpedo-splashes.mjs",
+      "status": 200,
+      "sha256": "e16d44b994e8d111fb8bbe4b9602cb9eae061d07530dce923f96b11691873770",
+      "manifestSha256": "e16d44b994e8d111fb8bbe4b9602cb9eae061d07530dce923f96b11691873770"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/torpedo-receiver-trajectory.mjs",
+      "status": 200,
+      "sha256": "8c86940147ce7700bf887312a3e8738ed90a497752cceafe8eb9c3463b3dfdc7",
+      "manifestSha256": "8c86940147ce7700bf887312a3e8738ed90a497752cceafe8eb9c3463b3dfdc7"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/character-face.js",
+      "status": 200,
+      "sha256": "e72b655546a65060c319bec33e690cdf60b8f53c583a7fbb20ee0c10a51550f6",
+      "manifestSha256": "e72b655546a65060c319bec33e690cdf60b8f53c583a7fbb20ee0c10a51550f6"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/special-device-flight.mjs",
+      "status": 200,
+      "sha256": "ae989266f2d9f545dd5dedae58acb343f7e7659a02a81c1a7cd0a5f46f709275",
+      "manifestSha256": "ae989266f2d9f545dd5dedae58acb343f7e7659a02a81c1a7cd0a5f46f709275"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/active-special-gauge.mjs",
+      "status": 200,
+      "sha256": "8bb41406deb306df295c19d3b8db1ec24d87745307bb85155b6f7fffce571dab",
+      "manifestSha256": "8bb41406deb306df295c19d3b8db1ec24d87745307bb85155b6f7fffce571dab"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/wail-speakers.mjs",
+      "status": 200,
+      "sha256": "8d00a65e13c2e687a9e03f8e01ada36c6709ed2a8ec7371c6aa225aa5e86e3b6",
+      "manifestSha256": "8d00a65e13c2e687a9e03f8e01ada36c6709ed2a8ec7371c6aa225aa5e86e3b6"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/crab-tank-aim.mjs",
+      "status": 200,
+      "sha256": "a35a97d76e9c87195913dd423e8a4b52707310508640aaa30e64de0f9398f899",
+      "manifestSha256": "a35a97d76e9c87195913dd423e8a4b52707310508640aaa30e64de0f9398f899"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/crab-tank-projectile.mjs",
+      "status": 200,
+      "sha256": "3666c39d2757536236fe250913027f3fce1d4fe3a56fdd0fa6d7c82784766a12",
+      "manifestSha256": "3666c39d2757536236fe250913027f3fce1d4fe3a56fdd0fa6d7c82784766a12"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/special-models.mjs",
+      "status": 200,
+      "sha256": "bc658ac2e050f47c4183a9b985fbdd729cd07e3e7b68ed61ef90ae6c96743e36",
+      "manifestSha256": "bc658ac2e050f47c4183a9b985fbdd729cd07e3e7b68ed61ef90ae6c96743e36"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/crab-tank-splash-visual.mjs",
+      "status": 200,
+      "sha256": "a5a8cf82a0ce98911acbd0c213604659c8a0d62d6155ccb604c2c0030575249b",
+      "manifestSha256": "a5a8cf82a0ce98911acbd0c213604659c8a0d62d6155ccb604c2c0030575249b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/inkjet-vfx-budget.mjs",
+      "status": 200,
+      "sha256": "6060fc47c1c6673dedfa8ce654bf285370ebd69345db255cc524f7b6f1346c05",
+      "manifestSha256": "6060fc47c1c6673dedfa8ce654bf285370ebd69345db255cc524f7b6f1346c05"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/inkjet-vfx-clock.mjs",
+      "status": 200,
+      "sha256": "c008253dbb2f0cec80c51ad49866b3fc104323731ac766a54ffdefcd20025933",
+      "manifestSha256": "c008253dbb2f0cec80c51ad49866b3fc104323731ac766a54ffdefcd20025933"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/sprinkler-contact-commit.mjs",
+      "status": 200,
+      "sha256": "99e08e938db9fc4438dfda69ec8c52a02638bc27afec70133598ab5766611c61",
+      "manifestSha256": "99e08e938db9fc4438dfda69ec8c52a02638bc27afec70133598ab5766611c61"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/native-stages/runtime/build-config.mjs",
+      "status": 200,
+      "sha256": "f33e46bd20e3bf553cd8a95756d9c1256e0a408dd8ef1883740c33b1ea1ba59c",
+      "manifestSha256": "f33e46bd20e3bf553cd8a95756d9c1256e0a408dd8ef1883740c33b1ea1ba59c"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/catalogue-payload.mjs",
+      "status": 200,
+      "sha256": "8260135635ce1d7b3e0ba6b73de3f116bd91745e3da2b7d320a1c5d3dab73ac9",
+      "manifestSha256": "8260135635ce1d7b3e0ba6b73de3f116bd91745e3da2b7d320a1c5d3dab73ac9"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/world/levelMaterial.js",
+      "status": 200,
+      "sha256": "358e8352b885f77cd83bebb3ca0563572fadabe57c9ac42537f30e2baa8c75dd",
+      "manifestSha256": "358e8352b885f77cd83bebb3ca0563572fadabe57c9ac42537f30e2baa8c75dd"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/world/level.js",
+      "status": 200,
+      "sha256": "816abe36fa201f9418bff1230e31bb33f29f97998d2eaa28eb27e167f45f7ba3",
+      "manifestSha256": "816abe36fa201f9418bff1230e31bb33f29f97998d2eaa28eb27e167f45f7ba3"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/resource-budget.mjs",
+      "status": 200,
+      "sha256": "8b8ddc63d552d04295dd474e28471e30381f0f5c17153119d3a63f5d932ee5a6",
+      "manifestSha256": "8b8ddc63d552d04295dd474e28471e30381f0f5c17153119d3a63f5d932ee5a6"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/fx/swimWake.js",
+      "status": 200,
+      "sha256": "d12af3e636bf1636b8277e9e74bd0ec260a64dc2dbb5c3579d780a8e5ab17ed1",
+      "manifestSha256": "d12af3e636bf1636b8277e9e74bd0ec260a64dc2dbb5c3579d780a8e5ab17ed1"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/headgear/catalog.mjs",
+      "status": 200,
+      "sha256": "e50a6dccf5c3fea4dd5336ae7be799dadacd27f7da1f116f3171e6b1f1f6d9f3",
+      "manifestSha256": "e50a6dccf5c3fea4dd5336ae7be799dadacd27f7da1f116f3171e6b1f1f6d9f3"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/nav.js",
+      "status": 200,
+      "sha256": "7e6d519bec34e4872a664cf26d63139abd9d1b3153b46234e16e371f15a15cfa",
+      "manifestSha256": "7e6d519bec34e4872a664cf26d63139abd9d1b3153b46234e16e371f15a15cfa"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapon-reference-models.mjs",
+      "status": 200,
+      "sha256": "f31bf393bbb2f8fb8b9e5bd6b42bf4dfa8ca6cf92258355e2ac816d55d5adf1c",
+      "manifestSha256": "f31bf393bbb2f8fb8b9e5bd6b42bf4dfa8ca6cf92258355e2ac816d55d5adf1c"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/blaster-mechanism-model.mjs",
+      "status": 200,
+      "sha256": "e168c448efb337b90bcf7ea2fdeddc4817ac2c2ae6bdc84ee0924e620eef768a",
+      "manifestSha256": "e168c448efb337b90bcf7ea2fdeddc4817ac2c2ae6bdc84ee0924e620eef768a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/s3-ink-sheets.mjs",
+      "status": 200,
+      "sha256": "e70385575b10e9181e64f7146566aeffcdf9e8e3a8f401a9f9ca444d5e9106ca",
+      "manifestSha256": "e70385575b10e9181e64f7146566aeffcdf9e8e3a8f401a9f9ca444d5e9106ca"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/projectile-visual-source-data.mjs",
+      "status": 200,
+      "sha256": "202dc32cd0863961436ffc4ddfa147ed5b733ff483421fe3955827731dcca362",
+      "manifestSha256": "202dc32cd0863961436ffc4ddfa147ed5b733ff483421fe3955827731dcca362"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/vendor/three/jsm/utils/BufferGeometryUtils.js",
+      "status": 200,
+      "sha256": "95e981b4081e48d6bbc4c5e946e1a1898a864bd258a9ce6dd5ad1945167b65e5",
+      "manifestSha256": "95e981b4081e48d6bbc4c5e946e1a1898a864bd258a9ce6dd5ad1945167b65e5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/character-outfit.js",
+      "status": 200,
+      "sha256": "c2499c480285c2d60678adf05ec5731c01bdbc2a4e56072ff1814f127971513e",
+      "manifestSha256": "c2499c480285c2d60678adf05ec5731c01bdbc2a4e56072ff1814f127971513e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/ink-volume/roller.mjs",
+      "status": 200,
+      "sha256": "80c54f825abaddb910827a2488add7a38dc0490c6351eea4c2bab42166602d74",
+      "manifestSha256": "80c54f825abaddb910827a2488add7a38dc0490c6351eea4c2bab42166602d74"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/brella-aperture.mjs",
+      "status": 200,
+      "sha256": "3cae7bceeca8925996b89c7ffaf3ff24f2c9b4343d778e9d91a536d60e507e1a",
+      "manifestSha256": "3cae7bceeca8925996b89c7ffaf3ff24f2c9b4343d778e9d91a536d60e507e1a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapon-models/family-holds.mjs",
+      "status": 200,
+      "sha256": "1de9209961ebbbfe9817f7d24e2d4f097ee1b9c6b14383b26dcf3fb2adee46ec",
+      "manifestSha256": "1de9209961ebbbfe9817f7d24e2d4f097ee1b9c6b14383b26dcf3fb2adee46ec"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/native-stages/runtime/native-paint.mjs",
+      "status": 200,
+      "sha256": "de0ee3af8fafb8a94590157e3478d0c257780e817629eb40dda4e77c470d0e50",
+      "manifestSha256": "de0ee3af8fafb8a94590157e3478d0c257780e817629eb40dda4e77c470d0e50"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/inkCollision.js",
+      "status": 200,
+      "sha256": "41b0b87c58358841a1f9cdd39f877d0f48bb4a53202d8e12d4dc7ea1dc424a05",
+      "manifestSha256": "41b0b87c58358841a1f9cdd39f877d0f48bb4a53202d8e12d4dc7ea1dc424a05"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/roller-source-scale.mjs",
+      "status": 200,
+      "sha256": "54c53dc0bb9d4832f7102541d977d04d2315790b53ed46face616e01d0e6a774",
+      "manifestSha256": "54c53dc0bb9d4832f7102541d977d04d2315790b53ed46face616e01d0e6a774"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/combat-hit-ceilings-data.mjs",
+      "status": 200,
+      "sha256": "b42be8d0dfbd36f0b3cee6faaa941051c3bb3f4c1e123c7c76700819dbd9fc71",
+      "manifestSha256": "b42be8d0dfbd36f0b3cee6faaa941051c3bb3f4c1e123c7c76700819dbd9fc71"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/damage-leaves.mjs",
+      "status": 200,
+      "sha256": "ac623ae994cf9f5b568c38b384e29aa3a7531b81512ba1b40cd3e196ff6f47b4",
+      "manifestSha256": "ac623ae994cf9f5b568c38b384e29aa3a7531b81512ba1b40cd3e196ff6f47b4"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/utf8-length.mjs",
+      "status": 200,
+      "sha256": "414f6a1bbf4537b66b0b2d1b423d6ae642a9f321ac6b0581e31b78040513189a",
+      "manifestSha256": "414f6a1bbf4537b66b0b2d1b423d6ae642a9f321ac6b0581e31b78040513189a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/catalog-paint-admission.mjs",
+      "status": 200,
+      "sha256": "660d1b11df73a340d8c6d6183e7411c146a54fb70b16e3376fa4936f75d81689",
+      "manifestSha256": "660d1b11df73a340d8c6d6183e7411c146a54fb70b16e3376fa4936f75d81689"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/bot-navigation.mjs",
+      "status": 200,
+      "sha256": "8eae523bb99b5286521d93e4ba6b2fb11c6cfb68a5153b646e45af1ee86ecc4f",
+      "manifestSha256": "8eae523bb99b5286521d93e4ba6b2fb11c6cfb68a5153b646e45af1ee86ecc4f"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/platform-lifecycle.mjs",
+      "status": 200,
+      "sha256": "868b4ae629646774091e91b58a34764ef5d7abf6fd8061c0b0baab31c7fa274a",
+      "manifestSha256": "868b4ae629646774091e91b58a34764ef5d7abf6fd8061c0b0baab31c7fa274a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/mobile-platform.mjs",
+      "status": 200,
+      "sha256": "7da8024491554801a4be197949b374c2fb878964e17b428a414c1ea70cf18a31",
+      "manifestSha256": "7da8024491554801a4be197949b374c2fb878964e17b428a414c1ea70cf18a31"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/core/gyro.js",
+      "status": 200,
+      "sha256": "d1240f10079d576a012cd4b53c7cbb9cb2937f679718baa3a540c1868c702c09",
+      "manifestSha256": "d1240f10079d576a012cd4b53c7cbb9cb2937f679718baa3a540c1868c702c09"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/menu-preview.mjs",
+      "status": 200,
+      "sha256": "ba0b48369f0977a66bc371daca420615f7df1df895afa9e0f6cdddc19299788b",
+      "manifestSha256": "ba0b48369f0977a66bc371daca420615f7df1df895afa9e0f6cdddc19299788b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/private-tracking-render.mjs",
+      "status": 200,
+      "sha256": "594b6e42c4e82fcf5120c8a00c2b04748756bfbef59c275d289dad1d2daadfca",
+      "manifestSha256": "594b6e42c4e82fcf5120c8a00c2b04748756bfbef59c275d289dad1d2daadfca"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/portrait-guard.mjs",
+      "status": 200,
+      "sha256": "b8696c0a812bac24d160a1df6fabb4dc42a3aec1ab92a905ea2f71259678c234",
+      "manifestSha256": "b8696c0a812bac24d160a1df6fabb4dc42a3aec1ab92a905ea2f71259678c234"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/touch-relayout.mjs",
+      "status": 200,
+      "sha256": "4fe8eaacbe23d5d23fb7736540ad8e67cd780ea6ec709f9fa7f8b8c43fcd2ed5",
+      "manifestSha256": "4fe8eaacbe23d5d23fb7736540ad8e67cd780ea6ec709f9fa7f8b8c43fcd2ed5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/roller-paint-calibration.mjs",
+      "status": 200,
+      "sha256": "a5097281a06a0d0b05891dd3d8ce7682ffe29c69025a9b5ea382e67cf787dce1",
+      "manifestSha256": "a5097281a06a0d0b05891dd3d8ce7682ffe29c69025a9b5ea382e67cf787dce1"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/source-distance.mjs",
+      "status": 200,
+      "sha256": "086ef127a559b0abd19687d3bd7448ea02e01d02c95ee1361aa60553f619843c",
+      "manifestSha256": "086ef127a559b0abd19687d3bd7448ea02e01d02c95ee1361aa60553f619843c"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/native-stages/runtime/native-projectile-sweep.mjs",
+      "status": 200,
+      "sha256": "17129df2a5aa5697685455ccb07997c8ec47e71cca798b104ce4289d7d754afc",
+      "manifestSha256": "17129df2a5aa5697685455ccb07997c8ec47e71cca798b104ce4289d7d754afc"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/ranked-gear.mjs",
+      "status": 200,
+      "sha256": "e3f49cf595def95994fa5d7debce9e7710194023ec34c0b05a81a536d5f4d0a6",
+      "manifestSha256": "e3f49cf595def95994fa5d7debce9e7710194023ec34c0b05a81a536d5f4d0a6"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/audio/bank.mjs",
+      "status": 200,
+      "sha256": "d7ed3b3e628fb7b903a5396dc91107b97241e951aae0eed855aa2f6bf35125c6",
+      "manifestSha256": "d7ed3b3e628fb7b903a5396dc91107b97241e951aae0eed855aa2f6bf35125c6"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/weapon-weight-data.mjs",
+      "status": 200,
+      "sha256": "d643ec61ec854401ce0c3136fa13a7063e40600aae69af8066b8746d6ffcc908",
+      "manifestSha256": "d643ec61ec854401ce0c3136fa13a7063e40600aae69af8066b8746d6ffcc908"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/tenacity.mjs",
+      "status": 200,
+      "sha256": "8346f4d794581f8d4c51cec7266e1c17c986b86127e5882fc510ec95ccb4a33a",
+      "manifestSha256": "8346f4d794581f8d4c51cec7266e1c17c986b86127e5882fc510ec95ccb4a33a"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/map-reveal.mjs",
+      "status": 200,
+      "sha256": "5f78e95c263b95e371b41803256c60fc45ec7d008bd9cfc3dc621bac9fc2b3f5",
+      "manifestSha256": "5f78e95c263b95e371b41803256c60fc45ec7d008bd9cfc3dc621bac9fc2b3f5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/torpedo-birth-envelope.mjs",
+      "status": 200,
+      "sha256": "9de88fb3169c3728c9ad050644fde37d142b53623a1c45b8c6edd976fdfdcaf4",
+      "manifestSha256": "9de88fb3169c3728c9ad050644fde37d142b53623a1c45b8c6edd976fdfdcaf4"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/world/stages/surfaces.js",
+      "status": 200,
+      "sha256": "7e3678a6e21922d45f577bad4e2af7e09f60ec7e37d6727dfc049c2e5f940e20",
+      "manifestSha256": "7e3678a6e21922d45f577bad4e2af7e09f60ec7e37d6727dfc049c2e5f940e20"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/ranked/rainmaker.mjs",
+      "status": 200,
+      "sha256": "3e162c4035955d0b864a87af3f56753b1c9294fcb40ceadb33aeafe11996da0f",
+      "manifestSha256": "3e162c4035955d0b864a87af3f56753b1c9294fcb40ceadb33aeafe11996da0f"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/world/texlib.js",
+      "status": 200,
+      "sha256": "e7b139c6d6a6e975948799d648bc527d4a5c16912b5907f33abc99b2b7b0567c",
+      "manifestSha256": "e7b139c6d6a6e975948799d648bc527d4a5c16912b5907f33abc99b2b7b0567c"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/geometry-build-storage.mjs",
+      "status": 200,
+      "sha256": "fa069e81b01c4916d1b21bc9a3a494ec224bae3d95885042f6148a4910df27ad",
+      "manifestSha256": "fa069e81b01c4916d1b21bc9a3a494ec224bae3d95885042f6148a4910df27ad"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/headgear/samurai-helmet.js",
+      "status": 200,
+      "sha256": "df1669507275a21162bb4084150b3e3a9eb943b6d7af82bf0c0c7e1cb73c9ae6",
+      "manifestSha256": "df1669507275a21162bb4084150b3e3a9eb943b6d7af82bf0c0c7e1cb73c9ae6"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/headgear/goldfish-mask.js",
+      "status": 200,
+      "sha256": "1d24d60ce94d9fa03eb9d0c8b0fc4b135faf68e4029ff850b0bcfd9d43e521f3",
+      "manifestSha256": "1d24d60ce94d9fa03eb9d0c8b0fc4b135faf68e4029ff850b0bcfd9d43e521f3"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/headgear/face-goggles.js",
+      "status": 200,
+      "sha256": "0cfe732fc9e0ba56209d2b53f16c78a2469fc113b904bdc0d252f1db8a254b20",
+      "manifestSha256": "0cfe732fc9e0ba56209d2b53f16c78a2469fc113b904bdc0d252f1db8a254b20"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/world/inkShading.js",
+      "status": 200,
+      "sha256": "006dc86dd7a3b7d750f56724318e0dc3a9a2f6302967ec8b7ecb8a03f83f5adf",
+      "manifestSha256": "006dc86dd7a3b7d750f56724318e0dc3a9a2f6302967ec8b7ecb8a03f83f5adf"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/world/maps.js",
+      "status": 200,
+      "sha256": "42763c2fde4acbbb9bad3b44fa52365b15cc6c7888467836572aaccd3da50394",
+      "manifestSha256": "42763c2fde4acbbb9bad3b44fa52365b15cc6c7888467836572aaccd3da50394"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/headgear/camo-headphones.js",
+      "status": 200,
+      "sha256": "ce170eac4db67fb1738f85fa3b2ececdd95fcd02cc055f26b1c99f410fc72c94",
+      "manifestSha256": "ce170eac4db67fb1738f85fa3b2ececdd95fcd02cc055f26b1c99f410fc72c94"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/headgear/two-line-mesh.js",
+      "status": 200,
+      "sha256": "8c6a13ec853a0636981a94c06a13636f60e98e0b06bee8f7777cf250fe4f9528",
+      "manifestSha256": "8c6a13ec853a0636981a94c06a13636f60e98e0b06bee8f7777cf250fe4f9528"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/headgear/armor-helmet.js",
+      "status": 200,
+      "sha256": "50210482d0c745f54f72a722c9dcbc184831cec1216c3be02eae8fd99faea6a5",
+      "manifestSha256": "50210482d0c745f54f72a722c9dcbc184831cec1216c3be02eae8fd99faea6a5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/s3-sweps-assets.mjs",
+      "status": 200,
+      "sha256": "f8871dae97bdb6a4b78e730e0ce936a3183c9583c4429052400942f7052b1735",
+      "manifestSha256": "f8871dae97bdb6a4b78e730e0ce936a3183c9583c4429052400942f7052b1735"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/headgear/thief-hook.js",
+      "status": 200,
+      "sha256": "dfedb0a683c8c0827d8cc1c865963aefa3c53fc8e9be64c9b939e2a99ebf9218",
+      "manifestSha256": "dfedb0a683c8c0827d8cc1c865963aefa3c53fc8e9be64c9b939e2a99ebf9218"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/headgear/character-headgear-ink-black-flap-cap.js",
+      "status": 200,
+      "sha256": "0aaec05e746d031bee5e10c86d2116d4210d4be57b23e9d2bf620577d8920273",
+      "manifestSha256": "0aaec05e746d031bee5e10c86d2116d4210d4be57b23e9d2bf620577d8920273"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/screen-angle.mjs",
+      "status": 200,
+      "sha256": "68f2adac5f7b4c02faec22718e7a0037a3469e03ec0b0e6ca079fb6dc6e044b9",
+      "manifestSha256": "68f2adac5f7b4c02faec22718e7a0037a3469e03ec0b0e6ca079fb6dc6e044b9"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/audio/kit-recipes.mjs",
+      "status": 200,
+      "sha256": "331e87eeaba5c49f36e47810d60ddf8acfad81382e6680f1253bd89cb3002dbd",
+      "manifestSha256": "331e87eeaba5c49f36e47810d60ddf8acfad81382e6680f1253bd89cb3002dbd"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/audio/combat-recipes.mjs",
+      "status": 200,
+      "sha256": "d101a87743ffd200a26b3216a000bac73d39028bc275f41e971f1bd19393bfb8",
+      "manifestSha256": "d101a87743ffd200a26b3216a000bac73d39028bc275f41e971f1bd19393bfb8"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/gyro.mjs",
+      "status": 200,
+      "sha256": "e6771717e332db5c4990e2e2d7e90e0156396736b99273e0842ded712d2a462e",
+      "manifestSha256": "e6771717e332db5c4990e2e2d7e90e0156396736b99273e0842ded712d2a462e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/audio/source-cue-registry.mjs",
+      "status": 200,
+      "sha256": "1f4c11ced6eee35487ebf6f172b98da89fb0f0e1fd7df44e7e221d49b1e5f9cc",
+      "manifestSha256": "1f4c11ced6eee35487ebf6f172b98da89fb0f0e1fd7df44e7e221d49b1e5f9cc"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/audio/weapon-recipes.mjs",
+      "status": 200,
+      "sha256": "4a88739d5b144300e8ba529c22fc3bc0d8e44ea1f7481b7d534237107c63e2a3",
+      "manifestSha256": "4a88739d5b144300e8ba529c22fc3bc0d8e44ea1f7481b7d534237107c63e2a3"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/audio/render.mjs",
+      "status": 200,
+      "sha256": "fc060cef188094305009c06cd90bd0555e6184d8615f50e2d1e08e79d643d235",
+      "manifestSha256": "fc060cef188094305009c06cd90bd0555e6184d8615f50e2d1e08e79d643d235"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/audio/authorized-samples.mjs",
+      "status": 200,
+      "sha256": "7c7e28c868aed51b40564460935496f312182b0f579f402767142f03d94c0af6",
+      "manifestSha256": "7c7e28c868aed51b40564460935496f312182b0f579f402767142f03d94c0af6"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/torpedo-launch-set.mjs",
+      "status": 200,
+      "sha256": "4ec425f693c57c889fd8a0c777263cfafb131d9bf035d96dfd970d189abbb401",
+      "manifestSha256": "4ec425f693c57c889fd8a0c777263cfafb131d9bf035d96dfd970d189abbb401"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/practice-range/stage/surfaces.mjs",
+      "status": 200,
+      "sha256": "941aace332e11a33e80eea62d70c0a4c64c518e606e87f0d1b2e7f38e76588ee",
+      "manifestSha256": "941aace332e11a33e80eea62d70c0a4c64c518e606e87f0d1b2e7f38e76588ee"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/ranked/rainmaker-shot-origin.mjs",
+      "status": 200,
+      "sha256": "32e12b3e03e9e2aa5d936866b5102404e6fcc317459fb0702a1a609c483b6143",
+      "manifestSha256": "32e12b3e03e9e2aa5d936866b5102404e6fcc317459fb0702a1a609c483b6143"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/world/stages/cargo/surfaces.js",
+      "status": 200,
+      "sha256": "2dd4cf9e953384538fba591d2124d26acd00937d03a47384e9d8953b18daf475",
+      "manifestSha256": "2dd4cf9e953384538fba591d2124d26acd00937d03a47384e9d8953b18daf475"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/ink-ripple-presentation.mjs",
+      "status": 200,
+      "sha256": "144ec747c2da9e48bf484d7702e774f94bc3e83ebdb0f0a3c801bde2f75cfde1",
+      "manifestSha256": "144ec747c2da9e48bf484d7702e774f94bc3e83ebdb0f0a3c801bde2f75cfde1"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/ranked/clams.mjs",
+      "status": 200,
+      "sha256": "66a400f3344252c81a7a42d6921ef48c0eb7850f205d34a29a34dc3d6b649a22",
+      "manifestSha256": "66a400f3344252c81a7a42d6921ef48c0eb7850f205d34a29a34dc3d6b649a22"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/world/mapkit.js",
+      "status": 200,
+      "sha256": "5e4a4233aa01ecd42de7cdb1fe88f63b3982e53635bb30a31a48f20ea5a3aab5",
+      "manifestSha256": "5e4a4233aa01ecd42de7cdb1fe88f63b3982e53635bb30a31a48f20ea5a3aab5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/world/stages/cargo/layout.js",
+      "status": 200,
+      "sha256": "9b0656d4125bf053003d7cbf79aad2c8a3e017f88fa2fae6615a51dab5c93cff",
+      "manifestSha256": "9b0656d4125bf053003d7cbf79aad2c8a3e017f88fa2fae6615a51dab5c93cff"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/stage/scorch-layout.mjs",
+      "status": 200,
+      "sha256": "eba846284eaaadbece090b9e02fc8b1a8422b8004e0dacfaac5fecc94c4f59f3",
+      "manifestSha256": "eba846284eaaadbece090b9e02fc8b1a8422b8004e0dacfaac5fecc94c4f59f3"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/practice-range/stage/layout.mjs",
+      "status": 200,
+      "sha256": "90e256a3f42588df81fd156bc23b28ae429000b71e25bc9c7a0e8cb10b2f7320",
+      "manifestSha256": "90e256a3f42588df81fd156bc23b28ae429000b71e25bc9c7a0e8cb10b2f7320"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/audio/source-guided-render.mjs",
+      "status": 200,
+      "sha256": "f391bd55ffc79e82bd9fbd28ee5fbf6f3c816597f3bf686b64887064c4022793",
+      "manifestSha256": "f391bd55ffc79e82bd9fbd28ee5fbf6f3c816597f3bf686b64887064c4022793"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/audio/load-deadline.mjs",
+      "status": 200,
+      "sha256": "043bfb52bb8fbb344b30ff6490824c4296f42ddec200ef056642cb3e4b400560",
+      "manifestSha256": "043bfb52bb8fbb344b30ff6490824c4296f42ddec200ef056642cb3e4b400560"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/gyro-permission.mjs",
+      "status": 200,
+      "sha256": "99ea8902c974af7b4a433ae50c6ab37701d52916e334c0eb92aa39e8ad8fd3dc",
+      "manifestSha256": "99ea8902c974af7b4a433ae50c6ab37701d52916e334c0eb92aa39e8ad8fd3dc"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/audio/priority-signatures.mjs",
+      "status": 200,
+      "sha256": "c368511a14b04416552ed9d6b207bd4091bf99acf9346f07a04919e56b4492a0",
+      "manifestSha256": "c368511a14b04416552ed9d6b207bd4091bf99acf9346f07a04919e56b4492a0"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/audio/no-bleep-foley.mjs",
+      "status": 200,
+      "sha256": "5f473d08cc8323285f9b78f15c3b92167130532050cec819ba439273f11ac07e",
+      "manifestSha256": "5f473d08cc8323285f9b78f15c3b92167130532050cec819ba439273f11ac07e"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/audio/s3-articulation.mjs",
+      "status": 200,
+      "sha256": "ed64ec24e474095761729fdb5df8314b9e2e2b96ebc82afb83350dc1c61475ee",
+      "manifestSha256": "ed64ec24e474095761729fdb5df8314b9e2e2b96ebc82afb83350dc1c61475ee"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/practice-range/stage/zones.mjs",
+      "status": 200,
+      "sha256": "cd0fdc4a97901a993578985463ec2068831d6cc69e4fd1963c6b34b193ca97df",
+      "manifestSha256": "cd0fdc4a97901a993578985463ec2068831d6cc69e4fd1963c6b34b193ca97df"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/audio/reference-profiles.mjs",
+      "status": 200,
+      "sha256": "64a619273cc0db2963d0d8bf22cea8a7aa80e7fa799b17226f689f765677b449",
+      "manifestSha256": "64a619273cc0db2963d0d8bf22cea8a7aa80e7fa799b17226f689f765677b449"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/issue-five-hotfix-a.mjs",
+      "status": 200,
+      "sha256": "4b23bbde04042a3c6a4bfc49bbdc4bc2d0bf00ce9e741147624f6107acb1a5fb",
+      "manifestSha256": "4b23bbde04042a3c6a4bfc49bbdc4bc2d0bf00ce9e741147624f6107acb1a5fb"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/issue-five-hotfix-b.mjs",
+      "status": 200,
+      "sha256": "bf0fa1c35bf1b82c3ab7d7bcb65b7610f0f1ba31b957821cc9c163ad6bc0c240",
+      "manifestSha256": "bf0fa1c35bf1b82c3ab7d7bcb65b7610f0f1ba31b957821cc9c163ad6bc0c240"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/issue-five-hotfix-c.mjs",
+      "status": 200,
+      "sha256": "4ee0dc22bf161c910289942f5ba31235ff24a76c6866fc216de57e8facc146c9",
+      "manifestSha256": "4ee0dc22bf161c910289942f5ba31235ff24a76c6866fc216de57e8facc146c9"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/slosher-intermediate-paint.mjs",
+      "status": 200,
+      "sha256": "2da4c07fb29ec62ece62efe1ca432c549bdcc490efcf33f2334537145dab02cc",
+      "manifestSha256": "2da4c07fb29ec62ece62efe1ca432c549bdcc490efcf33f2334537145dab02cc"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/install.mjs",
+      "status": 200,
+      "sha256": "6d121123b3d04bd8ac343fa5202c05bbcce5fd91820570d6eb48365b41f238c2",
+      "manifestSha256": "6d121123b3d04bd8ac343fa5202c05bbcce5fd91820570d6eb48365b41f238c2"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/roller-motion.mjs",
+      "status": 200,
+      "sha256": "5874de0f591c3b0b14e65efcde0d11861f71b9d4609d2d8a6a6afc6356a6d151",
+      "manifestSha256": "5874de0f591c3b0b14e65efcde0d11861f71b9d4609d2d8a6a6afc6356a6d151"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/offscreen-visual-budget.mjs",
+      "status": 200,
+      "sha256": "ed5aedc168713b8897b3648d65b6223ea9d487ad21c2141189ce10a2b2eef2f0",
+      "manifestSha256": "ed5aedc168713b8897b3648d65b6223ea9d487ad21c2141189ce10a2b2eef2f0"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/intermediate-tick-budget.mjs",
+      "status": 200,
+      "sha256": "d747833e09ad91dcb0e25d7955a4c825dcc49deeff238d2b6137e03bb1c0b0b5",
+      "manifestSha256": "d747833e09ad91dcb0e25d7955a4c825dcc49deeff238d2b6137e03bb1c0b0b5"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/menu.mjs",
+      "status": 200,
+      "sha256": "26bbe53669261519c0324e5ef19fb10093a7cebc3159ce383e893c8b14733267",
+      "manifestSha256": "26bbe53669261519c0324e5ef19fb10093a7cebc3159ce383e893c8b14733267"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/kid-shadow-proxy.mjs",
+      "status": 200,
+      "sha256": "6f590833ed243d5a4204ea5e89d203083b88446d2a56e988e06d297203b49c82",
+      "manifestSha256": "6f590833ed243d5a4204ea5e89d203083b88446d2a56e988e06d297203b49c82"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/offline-offscreen-budget.mjs",
+      "status": 200,
+      "sha256": "8009b07c628f21c576b4e1db6419d6255357d18b2f62633b21a9f26317a0e71b",
+      "manifestSha256": "8009b07c628f21c576b4e1db6419d6255357d18b2f62633b21a9f26317a0e71b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/issue-eight-followup.mjs",
+      "status": 200,
+      "sha256": "ffb214f38efec94e82820f8d14d7ddc68e62566c697166311afdfb41df917a8b",
+      "manifestSha256": "ffb214f38efec94e82820f8d14d7ddc68e62566c697166311afdfb41df917a8b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/audio/runtime.mjs",
+      "status": 200,
+      "sha256": "67a0a7b9bed45ba8125feb6b31bbb08306b44d4ab9d6cbc1f9fc92398d5d2150",
+      "manifestSha256": "67a0a7b9bed45ba8125feb6b31bbb08306b44d4ab9d6cbc1f9fc92398d5d2150"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/audio/extra-source-routes.mjs",
+      "status": 200,
+      "sha256": "409ff4ad8fd95653585f8e62afb2697edc03edd4545b45c213b54c8cb896fb15",
+      "manifestSha256": "409ff4ad8fd95653585f8e62afb2697edc03edd4545b45c213b54c8cb896fb15"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/audio/kit-runtime.mjs",
+      "status": 200,
+      "sha256": "82b78bd50b665fa83192a52b7431a6a5455d227c4becd049b00e3e8c5b9cdc9f",
+      "manifestSha256": "82b78bd50b665fa83192a52b7431a6a5455d227c4becd049b00e3e8c5b9cdc9f"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/match.js",
+      "status": 200,
+      "sha256": "755d50185e26cf3cfecce6e81d1ec85c00976b17572b7bd098a1a1e34bc9064c",
+      "manifestSha256": "755d50185e26cf3cfecce6e81d1ec85c00976b17572b7bd098a1a1e34bc9064c"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/network-replication/queue-recovery.mjs",
+      "status": 200,
+      "sha256": "7602182c7ba9ae5c634a78d5b7d944c6eda9dc5004dafa34bf7ae1846735583c",
+      "manifestSha256": "7602182c7ba9ae5c634a78d5b7d944c6eda9dc5004dafa34bf7ae1846735583c"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/tenacity.mjs",
+      "status": 200,
+      "sha256": "11d0b39810856ee509791bb694e2daf6d6dd6d95c9e938d45c01fbb28d287d65",
+      "manifestSha256": "11d0b39810856ee509791bb694e2daf6d6dd6d95c9e938d45c01fbb28d287d65"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/hud-snapshots.mjs",
+      "status": 200,
+      "sha256": "996bb8dac05a8951e3ba2ca9183ab777afed6e2ea175ea4e6d19e8a2f0c31bec",
+      "manifestSha256": "996bb8dac05a8951e3ba2ca9183ab777afed6e2ea175ea4e6d19e8a2f0c31bec"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/ranked/engine.mjs",
+      "status": 200,
+      "sha256": "8f92cdd058700c966383349480058ea07333db28aa80bac1db8d03eecc77eaae",
+      "manifestSha256": "8f92cdd058700c966383349480058ea07333db28aa80bac1db8d03eecc77eaae"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/ranked/zones.mjs",
+      "status": 200,
+      "sha256": "af0aaeb27ea23f8e12d0083056cf67a6bc3cab9e00282e225ca58783a6dda79b",
+      "manifestSha256": "af0aaeb27ea23f8e12d0083056cf67a6bc3cab9e00282e225ca58783a6dda79b"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/ranked/tower.mjs",
+      "status": 200,
+      "sha256": "3c79981f677be5d32810a63677e85de9ac1b7d3ca7f2e5fbe0692e9a77cace93",
+      "manifestSha256": "3c79981f677be5d32810a63677e85de9ac1b7d3ca7f2e5fbe0692e9a77cace93"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/motion/source-controller.js",
+      "status": 200,
+      "sha256": "ea9bf31e305756c9c9c5a1b1a9bef19b37d52336163121745a91b7e184acaae4",
+      "manifestSha256": "ea9bf31e305756c9c9c5a1b1a9bef19b37d52336163121745a91b7e184acaae4"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/source-weapon-owner.mjs",
+      "status": 200,
+      "sha256": "fe313a5b7ce73456177a2453274d3aea8d712bbc9d72244b5e2706a80c14fca6",
+      "manifestSha256": "fe313a5b7ce73456177a2453274d3aea8d712bbc9d72244b5e2706a80c14fca6"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/local-quality/motion-diagnostics.mjs",
+      "status": 200,
+      "sha256": "5e750f44337eb2ca08e8862a214b8f3dfbbc68529f34886f4e4f7c43c24fb914",
+      "manifestSha256": "5e750f44337eb2ca08e8862a214b8f3dfbbc68529f34886f4e4f7c43c24fb914"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/source-form-transition.mjs",
+      "status": 200,
+      "sha256": "83002a18fb9968e38eb44678d3745d64c1f6f28f3068db506221a9e8489b840d",
+      "manifestSha256": "83002a18fb9968e38eb44678d3745d64c1f6f28f3068db506221a9e8489b840d"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/motion/source-bank.js",
+      "status": 200,
+      "sha256": "939549b47e3ae1fab56e3a601febb501a13d58d44504098a73c6dadf659fb57f",
+      "manifestSha256": "939549b47e3ae1fab56e3a601febb501a13d58d44504098a73c6dadf659fb57f"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/patches/splatoon3/runtime/source-posture.mjs",
+      "status": 200,
+      "sha256": "4dbc30beb14f89adf1608f2a4115005107116792ecf19885e4ca9e3a16335492",
+      "manifestSha256": "4dbc30beb14f89adf1608f2a4115005107116792ecf19885e4ca9e3a16335492"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/motion/locomotion-profile.js",
+      "status": 200,
+      "sha256": "7756125cf053799c9dcdac7cb3f546bdc08c9495fd0a0409fa7718400fdf8ed7",
+      "manifestSha256": "7756125cf053799c9dcdac7cb3f546bdc08c9495fd0a0409fa7718400fdf8ed7"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/motion/gait-targets.js",
+      "status": 200,
+      "sha256": "d4608e3daba386e6c9d187ec2c51e955585fc9b6759547e4ea3e049c65f2efda",
+      "manifestSha256": "d4608e3daba386e6c9d187ec2c51e955585fc9b6759547e4ea3e049c65f2efda"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/motion/retarget.js",
+      "status": 200,
+      "sha256": "583507ddcc10b2818150b7431b167c713e413d24e75bfabeb68e64f978558a0d",
+      "manifestSha256": "583507ddcc10b2818150b7431b167c713e413d24e75bfabeb68e64f978558a0d"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/motion/squid-rig.js",
+      "status": 200,
+      "sha256": "ca333934af14a405c2654cb1800d75bfee21a9d3cb2d81413300fbecec62b77d",
+      "manifestSha256": "ca333934af14a405c2654cb1800d75bfee21a9d3cb2d81413300fbecec62b77d"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/motion/root-hair.js",
+      "status": 200,
+      "sha256": "4e7eb3f192c53ee4eb69c4c6f083c9f9d6651d531841f1cea377a8e5febe2959",
+      "manifestSha256": "4e7eb3f192c53ee4eb69c4c6f083c9f9d6651d531841f1cea377a8e5febe2959"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/motion/body-balance.js",
+      "status": 200,
+      "sha256": "d90817762caa53fede7dfb815247f3b596e430fff0615ec70e4cdec10805e41d",
+      "manifestSha256": "d90817762caa53fede7dfb815247f3b596e430fff0615ec70e4cdec10805e41d"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/motion/hair-targets.js",
+      "status": 200,
+      "sha256": "0a8887e45474e65c610c6de5e0c2d497cc30a82d508d1851aad0ff7cc863ea54",
+      "manifestSha256": "0a8887e45474e65c610c6de5e0c2d497cc30a82d508d1851aad0ff7cc863ea54"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/motion/cadence-control.js",
+      "status": 200,
+      "sha256": "b602c005cb0492687ec97f3f669e211581d71204c55122698bf9db48916d4df2",
+      "manifestSha256": "b602c005cb0492687ec97f3f669e211581d71204c55122698bf9db48916d4df2"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/motion/run-foot-path.js",
+      "status": 200,
+      "sha256": "00549ac8d7ac0315fcde569b7e6c514092bcdf8ca1f87acbf230cdf30ddd0bcf",
+      "manifestSha256": "00549ac8d7ac0315fcde569b7e6c514092bcdf8ca1f87acbf230cdf30ddd0bcf"
+    },
+    {
+      "path": "_versions/30a769c9d0229ef61428e6f2c4487b8f05f29c0b33118444a478ddcdcb21bf21/src/game/motion/contact-transition.js",
+      "status": 200,
+      "sha256": "16343f10cfee0ed47d6ab12853440e0f8e637b4f88914daad5389985c49447a9",
+      "manifestSha256": "16343f10cfee0ed47d6ab12853440e0f8e637b4f88914daad5389985c49447a9"
+    }
+  ],
+  "console": [
+    {
+      "type": "warning",
+      "text": "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+    }
+  ],
+  "pageErrors": [],
+  "captures": [
+    {
+      "file": "fixed-natural-38.png",
+      "frame": 97,
+      "nativeFrame": 38
+    },
+    {
+      "file": "fixed-natural-40.png",
+      "frame": 98,
+      "nativeFrame": 40
+    },
+    {
+      "file": "fixed-natural-78.png",
+      "frame": 117,
+      "nativeFrame": 78
+    },
+    {
+      "file": "fixed-natural-80.png",
+      "frame": 118,
+      "nativeFrame": 80
+    },
+    {
+      "file": "fixed-early-cancel.png",
+      "frame": 281,
+      "nativeFrame": 38
+    }
+  ],
+  "milestones": [
+    {
+      "at": "2026-10-23T14:33:53.708Z",
+      "op": "launch component Chromium"
+    },
+    {
+      "at": "2026-10-23T14:33:54.498Z",
+      "op": "initialize existing emitted Actor/Physics/PaintSystem/Projectiles/FX"
+    },
+    {
+      "at": "2026-10-23T14:34:00.705Z",
+      "op": "natural lifecycle: one rendered frame per browser operation"
+    },
+    {
+      "at": "2026-10-23T14:34:19.481Z",
+      "op": "natural native 38",
+      "detail": {
+        "frame": 97,
+        "counts": {
+          "suction": 30,
+          "scatter": 0,
+          "burst": 0,
+          "flightStar": 8,
+          "chargedStar": 5
+        }
+      }
+    },
+    {
+      "at": "2026-10-23T14:34:19.677Z",
+      "op": "natural native 40",
+      "detail": {
+        "frame": 98,
+        "counts": {
+          "suction": 31,
+          "scatter": 0,
+          "burst": 1,
+          "flightStar": 8,
+          "chargedStar": 5
+        }
+      }
+    },
+    {
+      "at": "2026-10-23T14:34:26.328Z",
+      "op": "natural native 78",
+      "detail": {
+        "frame": 117,
+        "counts": {
+          "suction": 31,
+          "scatter": 32,
+          "burst": 1,
+          "flightStar": 8,
+          "chargedStar": 5
+        }
+      }
+    },
+    {
+      "at": "2026-10-23T14:34:26.546Z",
+      "op": "natural native 80",
+      "detail": {
+        "frame": 118,
+        "counts": {
+          "suction": 31,
+          "scatter": 33,
+          "burst": 1,
+          "flightStar": 8,
+          "chargedStar": 5
+        }
+      }
+    },
+    {
+      "at": "2026-10-23T14:34:26.613Z",
+      "op": "natural residual fade: one rendered frame per browser operation"
+    },
+    {
+      "at": "2026-10-23T14:34:34.659Z",
+      "op": "early cancel: regenerate through same native producer"
+    },
+    {
+      "at": "2026-10-23T14:34:47.305Z",
+      "op": "native Projectiles.clear at observed native 38"
+    },
+    {
+      "at": "2026-10-23T14:34:49.666Z",
+      "op": "component observation finished",
+      "detail": {
+        "nativeBurstAt40": true,
+        "nativeRetireAt80": true,
+        "immediateNaturalCleanup": true,
+        "noLingeringAfterFade": true,
+        "noCancelBurst": true,
+        "immediateCancelCleanup": true,
+        "noErrors": true
+      }
+    }
+  ],
+  "artifactsVerified": 2110,
+  "launch": {
+    "executablePath": "/usr/bin/chromium",
+    "headless": true,
+    "args": [
+      "--no-sandbox",
+      "--disable-dev-shm-usage",
+      "--use-angle=swiftshader",
+      "--enable-unsafe-swiftshader"
+    ]
+  },
+  "browser": "154.0.8037.57",
+  "setup": {
+    "weapon": "s3-shooter-blaze-01",
+    "style": {
+      "hair": 0,
+      "skin": 2,
+      "outfit": 0,
+      "eyes": 0
+    },
+    "gear": null,
+    "avatarClass": "hi",
+    "sourceMotionStatus": "ready",
+    "camera": [
+      19,
+      18,
+      -24
+    ],
+    "lookAt": [
+      0,
+      1,
+      3
+    ],
+    "teamColors": [
+      [
+        1,
+        0.1844749944900301,
+        0.005605391621829108
+      ],
+      [
+        0.015996293361446288,
+        0.09084171117479915,
+        0.7230551289161951
+      ]
+    ],
+    "lights": {
+      "hemisphere": [
+        16777215,
+        6517368,
+        2.4
+      ],
+      "directional": [
+        16777215,
+        2.8,
+        -3,
+        8,
+        5
+      ]
+    },
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "controls": "Fixture intent.special; ordinary charge + native Nice edge every 10 native frames; native sub press/release at ready; actual projectile-floor collision. No charge/frameCount assignment, producer/emitter stubs, direct _blastBurst, or presentation RNG replacement.",
+    "order": "G.time -> native Actor.update(1/60) twice -> native Projectiles.update(1/30) -> native FX.update(1/30) -> native PaintSystem.flush -> WebGLRenderer.render -> full framebuffer readPixels",
+    "limitations": "Small explicit diagnostic scene: no full Game/Match setup, UI/controller, environment or postprocessor. Native Match contract uses a real Match instance with the directly constructed real Actor."
+  },
+  "lastCompletedFrame": {
+    "frame": 301,
+    "phase": "cancel",
+    "time": 10.033333333333308,
+    "nativeFrame": 38,
+    "nativeDead": true,
+    "position": [
+      0,
+      0.08,
+      2.7158250233638253
+    ],
+    "counts": {
+      "suction": 63,
+      "scatter": 33,
+      "burst": 1,
+      "flightStar": 16,
+      "chargedStar": 11
+    },
+    "actorSpecial": null,
+    "charge": null,
+    "objects": 0,
+    "objectRecords": 0,
+    "roundRecords": 0,
+    "actorTrack": false,
+    "warnDead": true,
+    "orbDead": true,
+    "stats": {
+      "sparks": 0,
+      "puffs": 0,
+      "ribbons": 0,
+      "shapes": 0,
+      "draws": 12
+    },
+    "directorErrors": 0,
+    "renderCalls": 21,
+    "triangles": 16469,
+    "pixelHash": "d3bafd91",
+    "glError": 0,
+    "contextLost": false,
+    "events": []
+  },
+  "naturalRetirement": {
+    "frame": 118,
+    "phase": "natural",
+    "time": 3.933333333333329,
+    "nativeFrame": 80,
+    "nativeDead": true,
+    "position": [
+      0,
+      0.08,
+      2.7158250233638253
+    ],
+    "counts": {
+      "suction": 31,
+      "scatter": 33,
+      "burst": 1,
+      "flightStar": 8,
+      "chargedStar": 5
+    },
+    "actorSpecial": null,
+    "charge": null,
+    "objects": 0,
+    "objectRecords": 0,
+    "roundRecords": 0,
+    "actorTrack": false,
+    "warnDead": true,
+    "orbDead": true,
+    "stats": {
+      "sparks": 0,
+      "puffs": 106,
+      "ribbons": 0,
+      "shapes": 4,
+      "draws": 12
+    },
+    "directorErrors": 0,
+    "renderCalls": 22,
+    "triangles": 20795,
+    "pixelHash": "b1709b1a",
+    "glError": 0,
+    "contextLost": false,
+    "events": [
+      {
+        "type": "nativeSpecialEvent",
+        "frame": 118,
+        "time": 3.933333333333329,
+        "phase": "natural",
+        "nativeFrame": 80,
+        "id": "booyahBomb",
+        "action": "expire",
+        "seed": 2581140980,
+        "pos": [
+          0,
+          0.08,
+          2.72
+        ],
+        "kind": "booyahBlast"
+      },
+      {
+        "type": "recipeEmission",
+        "frame": 118,
+        "time": 3.933333333333329,
+        "phase": "natural",
+        "nativeFrame": 80,
+        "role": "scatter"
+      },
+      {
+        "type": "particleBirth",
+        "frame": 118,
+        "time": 3.933333333333329,
+        "phase": "natural",
+        "nativeFrame": 80,
+        "pool": "puffs",
+        "id": 394,
+        "role": "scatter",
+        "position": [
+          10.045358657836914,
+          1.5407001972198486,
+          -4.890143871307373
+        ],
+        "life": 0.699999988079071,
+        "kind": 2,
+        "seed": 0.7947142720222473
+      },
+      {
+        "type": "particleRetire",
+        "frame": 118,
+        "time": 3.933333333333329,
+        "phase": "natural",
+        "nativeFrame": 80,
+        "pool": "puffs",
+        "id": 331,
+        "age": 0.7000001668930054,
+        "life": 0.667695939540863
+      },
+      {
+        "type": "particleRetire",
+        "frame": 118,
+        "time": 3.933333333333329,
+        "phase": "natural",
+        "nativeFrame": 80,
+        "pool": "puffs",
+        "id": 356,
+        "age": 0.7000001668930054,
+        "life": 0.6688935160636902
+      },
+      {
+        "type": "particleRetire",
+        "frame": 118,
+        "time": 3.933333333333329,
+        "phase": "natural",
+        "nativeFrame": 80,
+        "pool": "puffs",
+        "id": 313,
+        "age": 0.7000001668930054,
+        "life": 0.6720274090766907
+      },
+      {
+        "type": "particleRetire",
+        "frame": 118,
+        "time": 3.933333333333329,
+        "phase": "natural",
+        "nativeFrame": 80,
+        "pool": "puffs",
+        "id": 308,
+        "age": 0.7000001668930054,
+        "life": 0.6709810495376587
+      },
+      {
+        "type": "shapeRetire",
+        "frame": 118,
+        "time": 3.933333333333329,
+        "phase": "natural",
+        "nativeFrame": 80,
+        "pool": "special-vfx:shells+",
+        "id": 207,
+        "age": 1.3666666666666676,
+        "life": 0,
+        "dead": true
+      },
+      {
+        "type": "shapeRetire",
+        "frame": 118,
+        "time": 3.933333333333329,
+        "phase": "natural",
+        "nativeFrame": 80,
+        "pool": "special-vfx:discs+",
+        "id": 208,
+        "age": 1.3666666666666676,
+        "life": 0,
+        "dead": true
+      }
+    ]
+  },
+  "afterFade": {
+    "frame": 183,
+    "phase": "natural",
+    "time": 6.099999999999988,
+    "nativeFrame": 80,
+    "nativeDead": true,
+    "position": [
+      0,
+      0.08,
+      2.7158250233638253
+    ],
+    "counts": {
+      "suction": 31,
+      "scatter": 33,
+      "burst": 1,
+      "flightStar": 8,
+      "chargedStar": 5
+    },
+    "actorSpecial": null,
+    "charge": null,
+    "objects": 0,
+    "objectRecords": 0,
+    "roundRecords": 0,
+    "actorTrack": false,
+    "warnDead": true,
+    "orbDead": true,
+    "stats": {
+      "sparks": 0,
+      "puffs": 0,
+      "ribbons": 0,
+      "shapes": 0,
+      "draws": 12
+    },
+    "directorErrors": 0,
+    "renderCalls": 21,
+    "triangles": 16469,
+    "pixelHash": "129e389c",
+    "glError": 0,
+    "contextLost": false,
+    "events": []
+  },
+  "beforeCancel": {
+    "frame": 280,
+    "phase": "cancel",
+    "time": 9.33333333333331,
+    "nativeFrame": 38,
+    "nativeDead": false,
+    "position": [
+      0,
+      0.08,
+      2.7158250233638253
+    ],
+    "counts": {
+      "suction": 63,
+      "scatter": 33,
+      "burst": 1,
+      "flightStar": 16,
+      "chargedStar": 11
+    },
+    "actorSpecial": null,
+    "charge": null,
+    "objects": 1,
+    "objectRecords": 1,
+    "roundRecords": 0,
+    "actorTrack": false,
+    "warnDead": false,
+    "orbDead": false,
+    "stats": {
+      "sparks": 14,
+      "puffs": 0,
+      "ribbons": 0,
+      "shapes": 2,
+      "draws": 12
+    },
+    "directorErrors": 0,
+    "renderCalls": 25,
+    "triangles": 18063,
+    "pixelHash": "f6be2745",
+    "glError": 0,
+    "contextLost": false,
+    "events": [
+      {
+        "type": "recipeEmission",
+        "frame": 280,
+        "time": 9.33333333333331,
+        "phase": "cancel",
+        "nativeFrame": 38,
+        "role": "suction"
+      },
+      {
+        "type": "particleBirth",
+        "frame": 280,
+        "time": 9.33333333333331,
+        "phase": "cancel",
+        "nativeFrame": 38,
+        "pool": "sparks",
+        "id": 634,
+        "role": "suction",
+        "position": [
+          2.458721399307251,
+          1.5899022817611694,
+          5.463869571685791
+        ],
+        "life": 0.30000001192092896,
+        "kind": 0,
+        "seed": 0.17301352322101593
+      },
+      {
+        "type": "recipeEmission",
+        "frame": 280,
+        "time": 9.33333333333331,
+        "phase": "cancel",
+        "nativeFrame": 38,
+        "role": "suction"
+      },
+      {
+        "type": "particleBirth",
+        "frame": 280,
+        "time": 9.33333333333331,
+        "phase": "cancel",
+        "nativeFrame": 38,
+        "pool": "sparks",
+        "id": 635,
+        "role": "suction",
+        "position": [
+          -0.38510239124298096,
+          0.9570685625076294,
+          0.1019774004817009
+        ],
+        "life": 0.30000001192092896,
+        "kind": 0,
+        "seed": 0.2671065926551819
+      },
+      {
+        "type": "particleRetire",
+        "frame": 280,
+        "time": 9.33333333333331,
+        "phase": "cancel",
+        "nativeFrame": 38,
+        "pool": "sparks",
+        "id": 620,
+        "age": 0.30000001192092896,
+        "life": 0.30000001192092896
+      },
+      {
+        "type": "particleRetire",
+        "frame": 280,
+        "time": 9.33333333333331,
+        "phase": "cancel",
+        "nativeFrame": 38,
+        "pool": "sparks",
+        "id": 621,
+        "age": 0.30000001192092896,
+        "life": 0.30000001192092896
+      }
+    ]
+  },
+  "clear": {
+    "before": {
+      "nativeFrame": 38,
+      "counts": {
+        "suction": 63,
+        "scatter": 33,
+        "burst": 1,
+        "flightStar": 16,
+        "chargedStar": 11
+      }
+    },
+    "afterNativeDead": true,
+    "afterNativeFrame": 38,
+    "objects": 0
+  },
+  "immediateCancel": {
+    "frame": 281,
+    "phase": "cancel",
+    "time": 9.366666666666644,
+    "nativeFrame": 38,
+    "nativeDead": true,
+    "position": [
+      0,
+      0.08,
+      2.7158250233638253
+    ],
+    "counts": {
+      "suction": 63,
+      "scatter": 33,
+      "burst": 1,
+      "flightStar": 16,
+      "chargedStar": 11
+    },
+    "actorSpecial": null,
+    "charge": null,
+    "objects": 0,
+    "objectRecords": 0,
+    "roundRecords": 0,
+    "actorTrack": false,
+    "warnDead": true,
+    "orbDead": true,
+    "stats": {
+      "sparks": 12,
+      "puffs": 0,
+      "ribbons": 0,
+      "shapes": 0,
+      "draws": 12
+    },
+    "directorErrors": 0,
+    "renderCalls": 24,
+    "triangles": 16541,
+    "pixelHash": "d27986a0",
+    "glError": 0,
+    "contextLost": false,
+    "events": [
+      {
+        "type": "particleRetire",
+        "frame": 281,
+        "time": 9.366666666666644,
+        "phase": "cancel",
+        "nativeFrame": 38,
+        "pool": "sparks",
+        "id": 623,
+        "age": 0.30000001192092896,
+        "life": 0.30000001192092896
+      },
+      {
+        "type": "particleRetire",
+        "frame": 281,
+        "time": 9.366666666666644,
+        "phase": "cancel",
+        "nativeFrame": 38,
+        "pool": "sparks",
+        "id": 622,
+        "age": 0.30000001192092896,
+        "life": 0.30000001192092896
+      },
+      {
+        "type": "shapeRetire",
+        "frame": 281,
+        "time": 9.366666666666644,
+        "phase": "cancel",
+        "nativeFrame": 38,
+        "pool": "special-vfx:shells+",
+        "id": 602,
+        "age": 0.7,
+        "life": 0,
+        "dead": true
+      },
+      {
+        "type": "shapeRetire",
+        "frame": 281,
+        "time": 9.366666666666644,
+        "phase": "cancel",
+        "nativeFrame": 38,
+        "pool": "special-vfx:discs+",
+        "id": 603,
+        "age": 0.7,
+        "life": 0,
+        "dead": true
+      }
+    ]
+  },
+  "afterCancel": {
+    "frame": 301,
+    "phase": "cancel",
+    "time": 10.033333333333308,
+    "nativeFrame": 38,
+    "nativeDead": true,
+    "position": [
+      0,
+      0.08,
+      2.7158250233638253
+    ],
+    "counts": {
+      "suction": 63,
+      "scatter": 33,
+      "burst": 1,
+      "flightStar": 16,
+      "chargedStar": 11
+    },
+    "actorSpecial": null,
+    "charge": null,
+    "objects": 0,
+    "objectRecords": 0,
+    "roundRecords": 0,
+    "actorTrack": false,
+    "warnDead": true,
+    "orbDead": true,
+    "stats": {
+      "sparks": 0,
+      "puffs": 0,
+      "ribbons": 0,
+      "shapes": 0,
+      "draws": 12
+    },
+    "directorErrors": 0,
+    "renderCalls": 21,
+    "triangles": 16469,
+    "pixelHash": "d3bafd91",
+    "glError": 0,
+    "contextLost": false,
+    "events": []
+  },
+  "checks": {
+    "nativeBurstAt40": true,
+    "nativeRetireAt80": true,
+    "immediateNaturalCleanup": true,
+    "noLingeringAfterFade": true,
+    "noCancelBurst": true,
+    "immediateCancelCleanup": true,
+    "noErrors": true
+  },
+  "endedAt": "2026-10-23T14:34:50.056Z"
+}

@@ -1,0 +1,747 @@
+{
+  "kind": "emitted component/WebGL diagnostic; full-game gate remains open",
+  "comparisons": {
+    "setupIdentical": true,
+    "sameFrameCount": true,
+    "sameNativeTiming": true,
+    "firstFramebufferHashDifferenceFrame": 78,
+    "firstDifferenceNativeFrame": null,
+    "identicalFramesBeforeDifference": 77,
+    "nativeSpecialEventsIdentical": true
+  },
+  "cases": {
+    "before": {
+      "status": "observed-component-checks-passed",
+      "renderedFrames": 301,
+      "elapsedSeconds": 59.629,
+      "deliveredModules": 408,
+      "allModuleHashesMatch": true,
+      "particleBirthRetireIds": 608,
+      "shapeBirthRetireIds": 27,
+      "allIdsRetireOnce": true,
+      "milestones": {
+        "38": {
+          "frame": 97,
+          "time": 3.2333333333333316,
+          "counts": {
+            "suction": 31,
+            "scatter": 0,
+            "burst": 0,
+            "flightStar": 8,
+            "chargedStar": 5
+          },
+          "births": [
+            {
+              "id": 238,
+              "role": "suction",
+              "pool": "sparks",
+              "position": [
+                -1.8915046453475952,
+                1.7145615816116333,
+                0.7864280939102173
+              ],
+              "seed": 0.18763414025306702
+            },
+            {
+              "id": 239,
+              "role": "suction",
+              "pool": "sparks",
+              "position": [
+                0.9654294848442078,
+                4.111423969268799,
+                4.7442708015441895
+              ],
+              "seed": 0.8498437404632568
+            }
+          ],
+          "objects": 1,
+          "objectRecords": 1,
+          "warnDead": false,
+          "orbDead": false,
+          "pixelHash": "85c0ab97"
+        },
+        "40": {
+          "frame": 98,
+          "time": 3.266666666666665,
+          "counts": {
+            "suction": 31,
+            "scatter": 0,
+            "burst": 1,
+            "flightStar": 8,
+            "chargedStar": 5
+          },
+          "births": [],
+          "objects": 1,
+          "objectRecords": 1,
+          "warnDead": false,
+          "orbDead": false,
+          "pixelHash": "d77522f8"
+        },
+        "78": {
+          "frame": 117,
+          "time": 3.899999999999996,
+          "counts": {
+            "suction": 31,
+            "scatter": 32,
+            "burst": 1,
+            "flightStar": 8,
+            "chargedStar": 5
+          },
+          "births": [
+            {
+              "id": 393,
+              "role": "scatter",
+              "pool": "puffs",
+              "position": [
+                6.62992525100708,
+                1.108568549156189,
+                -7.998842239379883
+              ],
+              "seed": 0.40456074476242065
+            }
+          ],
+          "objects": 1,
+          "objectRecords": 1,
+          "warnDead": false,
+          "orbDead": false,
+          "pixelHash": "74bfee94"
+        },
+        "80": {
+          "frame": 118,
+          "time": 3.933333333333329,
+          "counts": {
+            "suction": 31,
+            "scatter": 32,
+            "burst": 1,
+            "flightStar": 8,
+            "chargedStar": 5
+          },
+          "births": [],
+          "objects": 0,
+          "objectRecords": 0,
+          "warnDead": true,
+          "orbDead": true,
+          "pixelHash": "89209eb6"
+        }
+      },
+      "cancel": {
+        "nativeBefore": 38,
+        "nativeAfter": 38,
+        "deadAfter": true,
+        "burstBefore": 1,
+        "burstAfter": 1,
+        "objectsAfter": 0,
+        "recordsAfter": 0,
+        "poolsAfterObservation": {
+          "sparks": 0,
+          "puffs": 0,
+          "ribbons": 0,
+          "shapes": 0,
+          "draws": 12
+        }
+      },
+      "checks": {
+        "nativeBurstAt40": true,
+        "nativeRetireAt80": true,
+        "immediateNaturalCleanup": true,
+        "noLingeringAfterFade": true,
+        "noCancelBurst": true,
+        "immediateCancelCleanup": true,
+        "noErrors": true
+      },
+      "nativeTiming": {
+        "deployFrame": 78,
+        "deployTime": 2.6000000000000005,
+        "burstFrame": 98,
+        "burstTime": 3.266666666666665,
+        "retireFrame": 118,
+        "retireTime": 3.933333333333329,
+        "burstSecondsAfterDeploy": 0.6666666666666643,
+        "retireSecondsAfterDeploy": 1.3333333333333286
+      },
+      "nativeEvents": [
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 1,
+          "time": 0.03333333333333333,
+          "phase": "natural",
+          "nativeFrame": null,
+          "id": "booyahBomb",
+          "action": "activate",
+          "seed": 1995429033,
+          "pos": [
+            0,
+            0,
+            -4
+          ]
+        },
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 74,
+          "time": 2.4666666666666677,
+          "phase": "natural",
+          "nativeFrame": null,
+          "id": "booyahBomb",
+          "action": "throw",
+          "seed": 2953332931,
+          "pos": [
+            0,
+            4.95,
+            -4
+          ]
+        },
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 74,
+          "time": 2.4666666666666677,
+          "phase": "natural",
+          "nativeFrame": null,
+          "id": "booyahBomb",
+          "action": "end",
+          "seed": 2497926982,
+          "pos": [
+            0,
+            3.75,
+            -4
+          ]
+        },
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 78,
+          "time": 2.6000000000000005,
+          "phase": "natural",
+          "nativeFrame": null,
+          "id": "booyahBomb",
+          "action": "deploy",
+          "seed": 2581140980,
+          "pos": [
+            0,
+            0.08,
+            2.72
+          ],
+          "kind": "booyahBlast"
+        },
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 118,
+          "time": 3.933333333333329,
+          "phase": "natural",
+          "nativeFrame": 80,
+          "id": "booyahBomb",
+          "action": "expire",
+          "seed": 2581140980,
+          "pos": [
+            0,
+            0.08,
+            2.72
+          ],
+          "kind": "booyahBlast"
+        },
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 184,
+          "time": 6.133333333333321,
+          "phase": "cancel",
+          "nativeFrame": null,
+          "id": "booyahBomb",
+          "action": "activate",
+          "seed": 2970606581,
+          "pos": [
+            0,
+            0,
+            -4
+          ]
+        },
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 257,
+          "time": 8.566666666666647,
+          "phase": "cancel",
+          "nativeFrame": null,
+          "id": "booyahBomb",
+          "action": "throw",
+          "seed": 4268517871,
+          "pos": [
+            0,
+            4.95,
+            -4
+          ]
+        },
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 257,
+          "time": 8.566666666666647,
+          "phase": "cancel",
+          "nativeFrame": null,
+          "id": "booyahBomb",
+          "action": "end",
+          "seed": 2994507394,
+          "pos": [
+            0,
+            3.75,
+            -4
+          ]
+        },
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 261,
+          "time": 8.69999999999998,
+          "phase": "cancel",
+          "nativeFrame": null,
+          "id": "booyahBomb",
+          "action": "deploy",
+          "seed": 114146512,
+          "pos": [
+            0,
+            0.08,
+            2.72
+          ],
+          "kind": "booyahBlast"
+        }
+      ]
+    },
+    "fixed": {
+      "status": "observed-component-checks-passed",
+      "renderedFrames": 301,
+      "elapsedSeconds": 56.656,
+      "deliveredModules": 408,
+      "allModuleHashesMatch": true,
+      "particleBirthRetireIds": 608,
+      "shapeBirthRetireIds": 27,
+      "allIdsRetireOnce": true,
+      "milestones": {
+        "38": {
+          "frame": 97,
+          "time": 3.2333333333333316,
+          "counts": {
+            "suction": 30,
+            "scatter": 0,
+            "burst": 0,
+            "flightStar": 8,
+            "chargedStar": 5
+          },
+          "births": [
+            {
+              "id": 237,
+              "role": "suction",
+              "pool": "sparks",
+              "position": [
+                -1.801749587059021,
+                2.8835530281066895,
+                3.8346991539001465
+              ],
+              "seed": 0.40184563398361206
+            },
+            {
+              "id": 238,
+              "role": "suction",
+              "pool": "sparks",
+              "position": [
+                -1.8915046453475952,
+                1.7145615816116333,
+                0.7864280939102173
+              ],
+              "seed": 0.18763414025306702
+            }
+          ],
+          "objects": 1,
+          "objectRecords": 1,
+          "warnDead": false,
+          "orbDead": false,
+          "pixelHash": "57cc2ab5"
+        },
+        "40": {
+          "frame": 98,
+          "time": 3.266666666666665,
+          "counts": {
+            "suction": 31,
+            "scatter": 0,
+            "burst": 1,
+            "flightStar": 8,
+            "chargedStar": 5
+          },
+          "births": [
+            {
+              "id": 239,
+              "role": "suction",
+              "pool": "sparks",
+              "position": [
+                0.9654294848442078,
+                4.111423969268799,
+                4.7442708015441895
+              ],
+              "seed": 0.8498437404632568
+            }
+          ],
+          "objects": 1,
+          "objectRecords": 1,
+          "warnDead": false,
+          "orbDead": false,
+          "pixelHash": "25f782bc"
+        },
+        "78": {
+          "frame": 117,
+          "time": 3.899999999999996,
+          "counts": {
+            "suction": 31,
+            "scatter": 32,
+            "burst": 1,
+            "flightStar": 8,
+            "chargedStar": 5
+          },
+          "births": [
+            {
+              "id": 393,
+              "role": "scatter",
+              "pool": "puffs",
+              "position": [
+                6.62992525100708,
+                1.108568549156189,
+                -7.998842239379883
+              ],
+              "seed": 0.40456074476242065
+            }
+          ],
+          "objects": 1,
+          "objectRecords": 1,
+          "warnDead": false,
+          "orbDead": false,
+          "pixelHash": "9445b814"
+        },
+        "80": {
+          "frame": 118,
+          "time": 3.933333333333329,
+          "counts": {
+            "suction": 31,
+            "scatter": 33,
+            "burst": 1,
+            "flightStar": 8,
+            "chargedStar": 5
+          },
+          "births": [
+            {
+              "id": 394,
+              "role": "scatter",
+              "pool": "puffs",
+              "position": [
+                10.045358657836914,
+                1.5407001972198486,
+                -4.890143871307373
+              ],
+              "seed": 0.7947142720222473
+            }
+          ],
+          "objects": 0,
+          "objectRecords": 0,
+          "warnDead": true,
+          "orbDead": true,
+          "pixelHash": "b1709b1a"
+        }
+      },
+      "cancel": {
+        "nativeBefore": 38,
+        "nativeAfter": 38,
+        "deadAfter": true,
+        "burstBefore": 1,
+        "burstAfter": 1,
+        "objectsAfter": 0,
+        "recordsAfter": 0,
+        "poolsAfterObservation": {
+          "sparks": 0,
+          "puffs": 0,
+          "ribbons": 0,
+          "shapes": 0,
+          "draws": 12
+        }
+      },
+      "checks": {
+        "nativeBurstAt40": true,
+        "nativeRetireAt80": true,
+        "immediateNaturalCleanup": true,
+        "noLingeringAfterFade": true,
+        "noCancelBurst": true,
+        "immediateCancelCleanup": true,
+        "noErrors": true
+      },
+      "nativeTiming": {
+        "deployFrame": 78,
+        "deployTime": 2.6000000000000005,
+        "burstFrame": 98,
+        "burstTime": 3.266666666666665,
+        "retireFrame": 118,
+        "retireTime": 3.933333333333329,
+        "burstSecondsAfterDeploy": 0.6666666666666643,
+        "retireSecondsAfterDeploy": 1.3333333333333286
+      },
+      "nativeEvents": [
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 1,
+          "time": 0.03333333333333333,
+          "phase": "natural",
+          "nativeFrame": null,
+          "id": "booyahBomb",
+          "action": "activate",
+          "seed": 1995429033,
+          "pos": [
+            0,
+            0,
+            -4
+          ]
+        },
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 74,
+          "time": 2.4666666666666677,
+          "phase": "natural",
+          "nativeFrame": null,
+          "id": "booyahBomb",
+          "action": "throw",
+          "seed": 2953332931,
+          "pos": [
+            0,
+            4.95,
+            -4
+          ]
+        },
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 74,
+          "time": 2.4666666666666677,
+          "phase": "natural",
+          "nativeFrame": null,
+          "id": "booyahBomb",
+          "action": "end",
+          "seed": 2497926982,
+          "pos": [
+            0,
+            3.75,
+            -4
+          ]
+        },
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 78,
+          "time": 2.6000000000000005,
+          "phase": "natural",
+          "nativeFrame": null,
+          "id": "booyahBomb",
+          "action": "deploy",
+          "seed": 2581140980,
+          "pos": [
+            0,
+            0.08,
+            2.72
+          ],
+          "kind": "booyahBlast"
+        },
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 118,
+          "time": 3.933333333333329,
+          "phase": "natural",
+          "nativeFrame": 80,
+          "id": "booyahBomb",
+          "action": "expire",
+          "seed": 2581140980,
+          "pos": [
+            0,
+            0.08,
+            2.72
+          ],
+          "kind": "booyahBlast"
+        },
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 184,
+          "time": 6.133333333333321,
+          "phase": "cancel",
+          "nativeFrame": null,
+          "id": "booyahBomb",
+          "action": "activate",
+          "seed": 2970606581,
+          "pos": [
+            0,
+            0,
+            -4
+          ]
+        },
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 257,
+          "time": 8.566666666666647,
+          "phase": "cancel",
+          "nativeFrame": null,
+          "id": "booyahBomb",
+          "action": "throw",
+          "seed": 4268517871,
+          "pos": [
+            0,
+            4.95,
+            -4
+          ]
+        },
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 257,
+          "time": 8.566666666666647,
+          "phase": "cancel",
+          "nativeFrame": null,
+          "id": "booyahBomb",
+          "action": "end",
+          "seed": 2994507394,
+          "pos": [
+            0,
+            3.75,
+            -4
+          ]
+        },
+        {
+          "type": "nativeSpecialEvent",
+          "frame": 261,
+          "time": 8.69999999999998,
+          "phase": "cancel",
+          "nativeFrame": null,
+          "id": "booyahBomb",
+          "action": "deploy",
+          "seed": 114146512,
+          "pos": [
+            0,
+            0.08,
+            2.72
+          ],
+          "kind": "booyahBlast"
+        }
+      ],
+      "terminalParticle": {
+        "birth": {
+          "type": "particleBirth",
+          "frame": 118,
+          "time": 3.933333333333329,
+          "phase": "natural",
+          "nativeFrame": 80,
+          "pool": "puffs",
+          "id": 394,
+          "role": "scatter",
+          "position": [
+            10.045358657836914,
+            1.5407001972198486,
+            -4.890143871307373
+          ],
+          "life": 0.699999988079071,
+          "kind": 2,
+          "seed": 0.7947142720222473
+        },
+        "retirement": {
+          "type": "particleRetire",
+          "frame": 138,
+          "time": 4.599999999999993,
+          "phase": "natural",
+          "nativeFrame": 80,
+          "pool": "puffs",
+          "id": 394,
+          "age": 0.7000001668930054,
+          "life": 0.699999988079071
+        }
+      }
+    }
+  },
+  "imageComparisons": {
+    "natural-38": {
+      "dimensions": [
+        320,
+        240
+      ],
+      "changedPixels": 18,
+      "changedFraction": 0.000234375,
+      "meanAbsoluteDifferenceRGB": [
+        0.0049479166666666664,
+        0.0036197916666666666,
+        0.003411458333333333
+      ],
+      "boundingBox": [
+        147,
+        99,
+        171,
+        123
+      ],
+      "identicalPixels": false
+    },
+    "natural-40": {
+      "dimensions": [
+        320,
+        240
+      ],
+      "changedPixels": 18,
+      "changedFraction": 0.000234375,
+      "meanAbsoluteDifferenceRGB": [
+        0.002434895833333333,
+        0.00328125,
+        0.0026171875
+      ],
+      "boundingBox": [
+        145,
+        94,
+        170,
+        122
+      ],
+      "identicalPixels": false
+    },
+    "natural-78": {
+      "dimensions": [
+        320,
+        240
+      ],
+      "changedPixels": 179,
+      "changedFraction": 0.0023307291666666667,
+      "meanAbsoluteDifferenceRGB": [
+        0.006861979166666666,
+        0.019479166666666665,
+        0.021653645833333332
+      ],
+      "boundingBox": [
+        74,
+        107,
+        263,
+        188
+      ],
+      "identicalPixels": false
+    },
+    "natural-80": {
+      "dimensions": [
+        320,
+        240
+      ],
+      "changedPixels": 188,
+      "changedFraction": 0.002447916666666667,
+      "meanAbsoluteDifferenceRGB": [
+        0.006276041666666667,
+        0.023841145833333334,
+        0.024205729166666665
+      ],
+      "boundingBox": [
+        73,
+        107,
+        264,
+        189
+      ],
+      "identicalPixels": false
+    },
+    "early-cancel": {
+      "dimensions": [
+        320,
+        240
+      ],
+      "changedPixels": 0,
+      "changedFraction": 0.0,
+      "meanAbsoluteDifferenceRGB": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "boundingBox": null,
+      "identicalPixels": true
+    }
+  },
+  "birthObserverLimit": "On the real deploy callback (global rendered frame 78), the native object exists but frameCount is not initialized yet: nativeObjectBirth omits frameCount and the sampled nativeFrame is null. The next callback reads native frameCount=2. The recipe source uses o.frameCount || 0, so frame zero is a source-based interpretation of that first callback, not a direct native frameCount readback. No frameCount was authored or retroactively inserted into the raw logs."
+}

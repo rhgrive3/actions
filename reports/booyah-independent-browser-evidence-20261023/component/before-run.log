@@ -1,0 +1,11 @@
+before: launch component Chromium
+before: initialize existing emitted Actor/Physics/PaintSystem/Projectiles/FX
+before: natural lifecycle: one rendered frame per browser operation
+before: natural native 38
+before: natural native 40
+before: natural native 78
+before: natural native 80
+before: natural residual fade: one rendered frame per browser operation
+before: early cancel: regenerate through same native producer
+before: native Projectiles.clear at observed native 38
+before: component observation finished

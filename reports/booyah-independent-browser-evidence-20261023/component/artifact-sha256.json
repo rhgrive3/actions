@@ -1,0 +1,78 @@
+{
+  "README.md": {
+    "bytes": 11660,
+    "sha256": "fec038b5fbe2f8f7bd8b7608eef7d571e306496ba322f53df11e697c13683009"
+  },
+  "before-component.json": {
+    "bytes": 155990,
+    "sha256": "f5235a6da86df6ace52220893e7c74005466fc2cd2026ba98924d8e29392a42e"
+  },
+  "before-early-cancel.png": {
+    "bytes": 39510,
+    "sha256": "45bbb3dadd30910eec2432a10908fe0e60dc7a1638213a58075787a392dd1fa9"
+  },
+  "before-frames.jsonl": {
+    "bytes": 447545,
+    "sha256": "2a244d4dcb991bba7a810feaba2d3cdf84ae56ecc13f6e7c049bcbdc2739221b"
+  },
+  "before-natural-38.png": {
+    "bytes": 50384,
+    "sha256": "2b98e4c35ab95296fca5517caff6173580e7f74d40a8d1e2a1dde4b1b53ac8f2"
+  },
+  "before-natural-40.png": {
+    "bytes": 50815,
+    "sha256": "0a8ce165e63b0a8e617ef8d68762e97f604b430d4720fb93773f0c08c6529268"
+  },
+  "before-natural-78.png": {
+    "bytes": 57210,
+    "sha256": "aa9083efe12f524625e165b60c433e589d06421cbe9077e8aacab86473647ef9"
+  },
+  "before-natural-80.png": {
+    "bytes": 56379,
+    "sha256": "568370c708e75ab4f7792245245abc81a71ec4b9a83f5ece57bc9e62c7580fe6"
+  },
+  "before-run.log": {
+    "bytes": 511,
+    "sha256": "8205da641fb780d2b3cff1d62dab1fb6e1d373459decb229ac3bf19d7efc464e"
+  },
+  "comparison.json": {
+    "bytes": 18789,
+    "sha256": "e1d04f3b09271358429a2333405f6c80a0f4b9d9eff313eaab70f5804c94f06e"
+  },
+  "diagnostic-harness.log": {
+    "bytes": 17223,
+    "sha256": "cd2f982178680b48f00718091432ab35edf46d004c8953753a62a26d9835c254"
+  },
+  "fixed-component.json": {
+    "bytes": 156617,
+    "sha256": "51dcc74f076faf145004fbc87e5922564520726aae7e0a81db461e61ad088ff1"
+  },
+  "fixed-early-cancel.png": {
+    "bytes": 39510,
+    "sha256": "45bbb3dadd30910eec2432a10908fe0e60dc7a1638213a58075787a392dd1fa9"
+  },
+  "fixed-frames.jsonl": {
+    "bytes": 447575,
+    "sha256": "285d619354b8e8fd6ad783789f2377ec2c3350c87a30495ec777d5e42ddc3952"
+  },
+  "fixed-natural-38.png": {
+    "bytes": 50439,
+    "sha256": "4dad34b2e44dc7375fec99dedfe574b7cc5b43b1a77a838fccb550282366718f"
+  },
+  "fixed-natural-40.png": {
+    "bytes": 50832,
+    "sha256": "d70e1f13a12e1c55356dc63ed261738274faf363078c77e6ee2b3d0e22a1bd60"
+  },
+  "fixed-natural-78.png": {
+    "bytes": 57131,
+    "sha256": "c33b4f3b9a8692ff2a9eba44d2872d15981f8228d7ad3528726ec5a5c720177a"
+  },
+  "fixed-natural-80.png": {
+    "bytes": 56468,
+    "sha256": "a8f299ca5895ee100a64f001348f474733a559b9a03485fd193fe8b7178bfa98"
+  },
+  "fixed-run.log": {
+    "bytes": 500,
+    "sha256": "c8e75492949d91fe5e836ebb7194dba41547e485aa8e7c571cd41b73b176c638"
+  }
+}
