@@ -91,9 +91,14 @@
     "emittedGround": "First test referenced a bundled-away leaf; switched fixture to actual shipped engine.mjs exports. No built artifact rewritten."
   },
   "ci": {
-    "head": "421fb93320021e619c88271a56137c0f92e6b8d9",
+    "head": "005f2c52c56b6543a6c10c32a8b68a21268f24bb",
     "fullRemoteComplete": false,
-    "pullRequest": "https://github.com/rhgrive3/actions/pull/1852"
+    "pullRequest": "https://github.com/rhgrive3/actions/pull/1852",
+    "mainBaselineFailures": {
+      "run": 39938396410,
+      "validateCore": "local reference records lag accepted nav/stage source changes; fixed by def8b30d / PR1853, also integrated into PR1852",
+      "browserActive": "runner received shutdown signal, then browser closed; not a passed browser run"
+    }
   },
   "archive": {
     "members": 56,
@@ -111,5 +116,20 @@
     "relativeCpuReductionPercent": 7.538679654158105,
     "equalChecksums": true,
     "scope": "actual NativePhysics on synthetic triangle-hole/dynamic-box terrain; replay actual60Hz sole queries with memo enabled/disabled in the same wrapper. Not total game or physical-device FPS."
+  },
+  "integrationHead": "005f2c52c56b6543a6c10c32a8b68a21268f24bb",
+  "postCiMigration": {
+    "runtimeAndBuilderUnchangedFrom": "421fb93320021e619c88271a56137c0f92e6b8d9",
+    "buildIdentity": {
+      "sourceSha": "005f2c52c56b6543a6c10c32a8b68a21268f24bb",
+      "checkedInputs": 1421,
+      "inputHash": "7d497d34aa804706b237e39bac414b17345f95b13dc81a3c4e2a21535210a239",
+      "contentHash": "24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026",
+      "revision": "e13164da537f52b95835e5daf602b2b9684c46df219f17e49c0d422405935706",
+      "checkedArtifacts": 2110
+    },
+    "focusedPass": 10,
+    "sourceSiteMappings": 13,
+    "ciRepairPullRequest": "https://github.com/rhgrive3/actions/pull/1853"
   }
 }

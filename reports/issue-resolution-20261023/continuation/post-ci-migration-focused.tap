@@ -1,0 +1,70 @@
+TAP version 13
+# Subtest: all thirteen exact production source/site mappings retain pinned bytes and classifications
+ok 1 - all thirteen exact production source/site mappings retain pinned bytes and classifications
+  ---
+  duration_ms: 63.816597
+  type: 'test'
+  ...
+# Subtest: unknown, additional traversal, changed ref and changed owner are not mapped
+ok 2 - unknown, additional traversal, changed ref and changed owner are not mapped
+  ---
+  duration_ms: 0.544644
+  type: 'test'
+  ...
+# Subtest: source and target byte changes or absent target reject instead of waiving missing imports
+ok 3 - source and target byte changes or absent target reject instead of waiving missing imports
+  ---
+  duration_ms: 3.184404
+  type: 'test'
+  ...
+# Subtest: every migrated navigation, facade and descriptor edge stays owner-bound and byte-pinned
+ok 4 - every migrated navigation, facade and descriptor edge stays owner-bound and byte-pinned
+  ---
+  duration_ms: 5.916992
+  type: 'test'
+  ...
+# Subtest: ordinary missing, escaping local refs and runtime build-only imports remain rejected
+ok 5 - ordinary missing, escaping local refs and runtime build-only imports remain rejected
+  ---
+  duration_ms: 1.80743
+  type: 'test'
+  ...
+# Subtest: mapped target symlinks cannot escape repository even with matching bytes
+ok 6 - mapped target symlinks cannot escape repository even with matching bytes
+  ---
+  duration_ms: 1.531923
+  type: 'test'
+  ...
+# Subtest: emitted proof requires exact input keys and both root/versioned artifact digests
+ok 7 - emitted proof requires exact input keys and both root/versioned artifact digests
+  ---
+  duration_ms: 3.218435
+  type: 'test'
+  ...
+# Subtest: known mappings cannot bypass pins through inkwave-public patch shadows
+ok 8 - known mappings cannot bypass pins through inkwave-public patch shadows
+  ---
+  duration_ms: 11.83894
+  type: 'test'
+  ...
+# Subtest: clock probe reads legacy and relay-stamped frames without trusting payload timestamp fields
+ok 9 - clock probe reads legacy and relay-stamped frames without trusting payload timestamp fields
+  ---
+  duration_ms: 1.591682
+  type: 'test'
+  ...
+# Subtest: real production relay stamped ticks are held and released byte-for-byte in both directions
+ok 10 - real production relay stamped ticks are held and released byte-for-byte in both directions
+  ---
+  duration_ms: 20.727431
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 240.842931
