@@ -53,3 +53,13 @@ test('driver sets camera fixture and brackets real render and image boundaries w
   assert.match(source, /aim: sample\.aim, fov: cam\.fov/);
   assert.match(source, /fov: camera\.fov, actorInkHex/);
 });
+test('CI compares the same canonical projection with complete evidence and no historical FOV normalization', () => {
+  const workflow = fs.readFileSync(new URL('../../.github/workflows/inkwave-projectile-visuals.yml', import.meta.url), 'utf8');
+  const begin = workflow.indexOf('      - name: Verify exact paired native physical states, firing workloads and image hashes');
+  assert(begin >= 0);
+  const end = workflow.indexOf('      - name:', begin + 10);
+  const step = workflow.slice(begin, end);
+  assert.match(step, /compare-inkwave-projectile-captures\.py --before \.ci-scratch\/projectile-visuals\/before --after \.ci-scratch\/projectile-visuals\/after/);
+  assert.match(step, /--require-complete\s*$/);
+  assert.doesNotMatch(step, /--admit-camera-epoch|CAMERA_EPOCH|continue-on-error|if:/);
+});

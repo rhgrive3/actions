@@ -151,3 +151,28 @@ two accepted invocations, 56 rejected CLI mutations and 29 helper rejections.
 The three-file fixed-epoch tests pass; the real distinct Git worktrees at
 26a4db41 and 7a19e57e also pass all 87 controls with both inputs unchanged.
 Native physical/image comparisons remain mandatory and are still running.
+
+## Canonical projection and full local pair
+
+The merged PR1844 capture helper already sets and checks the actual camera,
+projection matrix and viewport at 55 degrees in both lanes. The old automatic
+23-PR 55-to-60 FOV exception no longer describes these captures. Remove that
+exception from the integrated comparison command and retain the stricter full
+camera/physics/image comparison. Historical comparator opt-in logic and its
+negative tests remain unchanged; no new camera epoch is admitted.
+
+Full local software-Chromium reference and candidate captures each pass, with
+48 original screenshots, live firing workloads and zero page/game errors. The
+unmodified comparator with --require-complete and no FOV normalization passes
+48/48 pairs: physical state pass, post-fire RNG matched, complete image/workload
+verification passed, zero physical mismatches. Reference build c37e66cd and
+candidate dad26d26 retain the previously recorded fixed inputs. The two capture
+harness checkouts are 7a19e57e and ab6b5ae7 with identical harness bytes; these
+local results do not replace final-published-head hosted acceptance or retail
+hardware measurements. Current actual-Git source controls also pass 2 positive,
+56 CLI rejection and 29 helper rejection cases without source writes.
+
+Projection/source-route/workflow contracts: 46/46 Node tests; unchanged strict
+Python comparator suite: 7/7. The new cross-module guard requires both canonical
+capture projections and an unconditional complete comparison without historical
+FOV normalization. No production/runtime source changed in this follow-up.

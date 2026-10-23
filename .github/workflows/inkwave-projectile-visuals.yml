@@ -378,16 +378,10 @@ jobs:
           path: .ci-scratch/projectile-visuals/after
       - name: Verify exact paired native physical states, firing workloads and image hashes
         shell: bash
-        env:
-          CAMERA_EPOCH: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.base.sha == '26a4db4123d23162a3dbf8a12150b1b5bc6ccf64' && github.head_ref == 'integrate/inkwave-all-prs-20261022' && github.event.pull_request.head.repo.full_name == github.repository && 'main26a4-23pr' || 'none' }}
-          DECLARED_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          # Source-epoch-pinned native FOV proof; full physical and image gates remain.
-          epoch=()
-          if [ "$CAMERA_EPOCH" = 'main26a4-23pr' ]; then
-            epoch=(--admit-camera-epoch --expected-head "$DECLARED_HEAD_SHA")
-          fi
-          python3 scripts/compare-inkwave-projectile-captures.py --before .ci-scratch/projectile-visuals/before --after .ci-scratch/projectile-visuals/after --output .ci-scratch/projectile-visuals/paired-verification.json --require-complete "${epoch[@]}"
+          # Both capture lanes now assert the same 55-degree projection.
+          # Require exact camera/physical/image evidence without historical FOV normalization.
+          python3 scripts/compare-inkwave-projectile-captures.py --before .ci-scratch/projectile-visuals/before --after .ci-scratch/projectile-visuals/after --output .ci-scratch/projectile-visuals/paired-verification.json --require-complete
       - name: Exercise camera, RNG, contact, retirement and paint comparison gates
         if: ${{ !cancelled() }}
         run: python3 scripts/tests/inkwave-projectile-captures-synthetic.py --before .ci-scratch/projectile-visuals/before/projectile-visuals-result.json --after .ci-scratch/projectile-visuals/after/projectile-visuals-result.json --out .ci-scratch/projectile-visuals/comparator-synthetic-gates.json
