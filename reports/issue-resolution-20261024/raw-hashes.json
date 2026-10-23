@@ -1,0 +1,92 @@
+[
+  {
+    "path": "budget.log",
+    "bytes": 520,
+    "sha256": "604f8c4582d5ce95cdc8189c12ee7ec08be58a618bccc5d039af3d67e5ec2996"
+  },
+  {
+    "path": "build-identity.json",
+    "bytes": 480,
+    "sha256": "44a0bd932cc8a746933d406b9c56a634beec8540daae20e654fe2e58ec2fe8b2"
+  },
+  {
+    "path": "build.log",
+    "bytes": 904,
+    "sha256": "0d5ed107b5558cd9003f9c4a6cb82439e6a8aaad7c983ad46aa6dbd178049789"
+  },
+  {
+    "path": "ci/artifact-upload-strict-final.tap",
+    "bytes": 11305,
+    "sha256": "5814a6e1fc7a79590f02da472c25adc31ad97b546ae3677df7df7343d336c828"
+  },
+  {
+    "path": "clock-browser.log",
+    "bytes": 130,
+    "sha256": "7a4f5d7ff36b07d9b02356e42a3616848cfbf2004f8b8ef67a12569f9dce158c"
+  },
+  {
+    "path": "clock/online.json",
+    "bytes": 314942,
+    "sha256": "6ce418f490d76ee0d53b557dedc750912a9606bb450eebeb96891177322e7df7"
+  },
+  {
+    "path": "clock/owner-clock-browser.json",
+    "bytes": 274584,
+    "sha256": "1b9d046cdeeeeaa4d14d94caf7969541e2faab27d80f161bb6ae8cf1698cb72c"
+  },
+  {
+    "path": "fidelity-201.tap",
+    "bytes": 78535,
+    "sha256": "605ded7e28f4abe788aaf3341f52f1b929418e1f33f8cbb456db3cc4b68ca7ac"
+  },
+  {
+    "path": "integration-emitted.tap",
+    "bytes": 11728,
+    "sha256": "1c7e918a4cbbcb9965c2516278ba67f1a51e0fa9c7345819b9966655890d7907"
+  },
+  {
+    "path": "launch-packets.json",
+    "bytes": 26414,
+    "sha256": "67fefa6d92df291ca63832e9eb8e61b2fa2371e1c2bca8f73d162373621d2d4c"
+  },
+  {
+    "path": "launch-packets.log",
+    "bytes": 808,
+    "sha256": "aea12df1bf0887c8edefa1f49c31d042f72e6630c8730f33de12c7e8c90b88d3"
+  },
+  {
+    "path": "pr-1852.json",
+    "bytes": 3429,
+    "sha256": "7f59aba0fc3a1525ee1e8a44764b90db8527977a85f8a3b46f5eb881d9575f2b"
+  },
+  {
+    "path": "pr-1853.json",
+    "bytes": 5109,
+    "sha256": "553acc4eda2c338978063318ea27d09677849598bb7d5ab8fdaf9cfd19864d8d"
+  },
+  {
+    "path": "quad-browser.log",
+    "bytes": 2136,
+    "sha256": "61f3c9cdaa6d6a6f8fa65ecaf497230ad8d999223466fdf2c0220f001689479c"
+  },
+  {
+    "path": "quad/result.json",
+    "bytes": 271111,
+    "sha256": "7b53cd61f7ec2bc61dcf86045cfc8816deb4c11fe28fa8d3d8d8c53b60ef6811"
+  },
+  {
+    "path": "quick.log",
+    "bytes": 63,
+    "sha256": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b"
+  },
+  {
+    "path": "references.json",
+    "bytes": 6820,
+    "sha256": "ad5f553fa9f3c2f2edac254e5f873518f4391ce1bde3fde7045041a01e4c23f3"
+  },
+  {
+    "path": "repaired-fidelity-step.sh",
+    "bytes": 1796,
+    "sha256": "09179baf4f3840162ab74e50b2dce3156b9fb3d18d88880950146a86e177d4f7"
+  }
+]

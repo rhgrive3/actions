@@ -1,0 +1,87 @@
+[
+  {
+    "path": "/workspace/actions-current/work/issue-continuation-20261024/quad-browser/s3-maneuver-stepper-horizontal-120-0-open-steady.png",
+    "bytes": 114426,
+    "sha256": "163b8c9cd38e05bc7673ec528ef4af398065b115a2fd8e97fb7b90960ee718c5"
+  },
+  {
+    "path": "/workspace/actions-current/work/issue-continuation-20261024/quad-browser/s3-maneuver-stepper-horizontal-30-0-wall-steady.png",
+    "bytes": 102104,
+    "sha256": "6405a7afa46ca057f909abd4269f773e085b0e44a1af4d051d2a1bfa1c540499"
+  },
+  {
+    "path": "/workspace/actions-current/work/issue-continuation-20261024/quad-browser/s3-maneuver-stepper-horizontal-30-0-open-steady.png",
+    "bytes": 117463,
+    "sha256": "754927ef0cda4320230295b948abc0f625897a3c3724bb69f5c5df264e6f83d9"
+  },
+  {
+    "path": "/workspace/actions-current/work/issue-continuation-20261024/quad-browser/s3-maneuver-stepper-horizontal-60-0-open-prediction.png",
+    "bytes": 110575,
+    "sha256": "3ea67ad5d6216f0bc1cb972ea808b68852a620178126e6986aa1870a5480d5bc"
+  },
+  {
+    "path": "/workspace/actions-current/work/issue-continuation-20261024/quad-browser/s3-maneuver-stepper-horizontal-120-0-wall-steady.png",
+    "bytes": 101318,
+    "sha256": "49ec0948c49d89b140bc88bc10eafa200bf95d447aebace04e0e98d0dfca990f"
+  },
+  {
+    "path": "/workspace/actions-current/work/issue-continuation-20261024/quad-browser/s3-maneuver-stepper-horizontal-60-0-wall-steady.png",
+    "bytes": 101044,
+    "sha256": "d3b6cd77323dd81d7cf1e9cd11325a9ef850f15aaa88a26366e1e0420e663031"
+  },
+  {
+    "path": "/workspace/actions-current/work/issue-continuation-20261024/quad-browser/s3-maneuver-stepper-horizontal-60-0-open-first.png",
+    "bytes": 104483,
+    "sha256": "8262752cc6e7257ed86f440ad8f66d8abd63652a27c59c4ab4b5d4c6a54e1f69"
+  },
+  {
+    "path": "/workspace/actions-current/work/issue-continuation-20261024/quad-browser/s3-maneuver-stepper-horizontal-30-0-open-prediction.png",
+    "bytes": 109712,
+    "sha256": "809db2ff5a72eee3d598cad9cf3b2df255ba0742267fb357f6181f288a292fe3"
+  },
+  {
+    "path": "/workspace/actions-current/work/issue-continuation-20261024/quad-browser/s3-maneuver-stepper-horizontal-30-0-wall-first.png",
+    "bytes": 97923,
+    "sha256": "69f0f745fcf6d76572f68a1b03587184f9cd16f1f4659562ac56ee7a5826cedc"
+  },
+  {
+    "path": "/workspace/actions-current/work/issue-continuation-20261024/quad-browser/s3-maneuver-stepper-horizontal-30-0-open-first.png",
+    "bytes": 109938,
+    "sha256": "e934d1e048c22d0a686ebe7329244a8427ad50742b0d2512763b8291e77ea28f"
+  },
+  {
+    "path": "/workspace/actions-current/work/issue-continuation-20261024/quad-browser/s3-maneuver-stepper-horizontal-120-0-open-first.png",
+    "bytes": 104320,
+    "sha256": "87a493355514638c6bc0244d3992c130003ba66288cb3746a167d728560a5bec"
+  },
+  {
+    "path": "/workspace/actions-current/work/issue-continuation-20261024/quad-browser/s3-maneuver-stepper-horizontal-60-0-wall-first.png",
+    "bytes": 95585,
+    "sha256": "ee442bb207ffbcc6ff32be38b56aca0927898e8af99c7d1a31c0dddcd8e954b3"
+  },
+  {
+    "path": "/workspace/actions-current/work/issue-continuation-20261024/quad-browser/s3-maneuver-stepper-horizontal-60-0-open-steady.png",
+    "bytes": 114730,
+    "sha256": "d769ae2fc980ca4e040544fc8a5167476ea3923633d3d43cee5d1634cfe7748b"
+  },
+  {
+    "path": "/workspace/actions-current/work/issue-continuation-20261024/quad-browser/s3-maneuver-stepper-horizontal-120-0-open-prediction.png",
+    "bytes": 110517,
+    "sha256": "1ac10a0f2778c009556fba79bca657d2f67ab806882a477a30beaa8307cf2c13"
+  },
+  {
+    "path": "/workspace/actions-current/work/issue-continuation-20261024/quad-browser/s3-maneuver-stepper-horizontal-120-0-wall-first.png",
+    "bytes": 95562,
+    "sha256": "3645fc5c9be4029f3cc7433ddb0018aa74cc9685afb5491713c5d80886895fd1"
+  },
+  {
+    "path": "/workspace/actions-current/work/issue-continuation-20261024/clock-browser/clock-reconnect-peer-1.png",
+    "bytes": 499352,
+    "sha256": "cb5872d0e756c03992bf254e020195bddfe1435bc6516e664a1902ad8a27f48e"
+  },
+  {
+    "path": "/workspace/actions-current/work/issue-continuation-20261024/clock-browser/clock-reconnect-peer-0.png",
+    "bytes": 506523,
+    "sha256": "3479f5e3ba8e79e6227f4bbcaaba39e79e8f9bd602815521116cf0cb64ced71f"
+  }
+]

@@ -1,0 +1,366 @@
+{
+  "dateJst": "2026-10-24T01:00:07.507631+09:00",
+  "production": {
+    "head": "9d075e26fcc4e78b70c6ad94958842a317048e98",
+    "mainBaseline": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+    "browserExecutionSource": "b8af626b3a23543f59f3441f556844f59378b42f",
+    "runtimeUnchangedByFinalCiOnlyCommit": true,
+    "build": {
+      "sourceSha": "b8af626b3a23543f59f3441f556844f59378b42f",
+      "checkedInputs": 1421,
+      "inputHash": "54b9e8593fe7c1ca8b0a5a0a3af18a6136d12105b233d1f6e9474cdb9e5d9941",
+      "contentHash": "70ad429d704571381920075c638f9d8c4a4e69edccb78b8afe914e5cae410379",
+      "revision": "ecd8e6cdedb90b9c8a62cd7247b5425b9a4c4be2f5c17f77dc01c392e7afb559",
+      "checkedArtifacts": 2110,
+      "integrationHead": {
+        "sourceSha": "9d075e26fcc4e78b70c6ad94958842a317048e98",
+        "checkedInputs": 1421
+      }
+    },
+    "focusedEmittedPass": 30,
+    "fidelityPass": 201,
+    "quadBrowserPass": 6,
+    "clockBrowserCases": 3,
+    "clockBrowserDirections": 6,
+    "launchPacketReportStatus": "passed",
+    "workflowContractsPass": 47,
+    "merged": false
+  },
+  "ciSnapshots": [
+    {
+      "headRefOid": "9d075e26fcc4e78b70c6ad94958842a317048e98",
+      "isDraft": false,
+      "mergeable": "MERGEABLE",
+      "number": 1852,
+      "state": "OPEN",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980207924/job/120505222711",
+          "name": "verify-aplus-suite",
+          "startedAt": "2026-10-23T15:39:56Z",
+          "status": "QUEUED",
+          "workflowName": "INKWAVE A+ Quality & Security Gate"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980207860/job/120505711038",
+          "name": "numerical-main",
+          "startedAt": "2026-10-23T15:40:54Z",
+          "status": "QUEUED",
+          "workflowName": "INKWAVE main-weapon numerical regressions"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980207846/job/120505222709",
+          "name": "paint-parity",
+          "startedAt": "2026-10-23T15:39:56Z",
+          "status": "QUEUED",
+          "workflowName": "INKWAVE paint hotpath parity"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T15:39:55Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980207803/job/120505225210",
+          "name": "immutable-source-pairs-and-focused-qa",
+          "startedAt": "2026-10-23T15:39:56Z",
+          "status": "COMPLETED",
+          "workflowName": "INKWAVE combined QA dependency validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T15:52:49Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980207817/job/120505222209",
+          "name": "frame-parity",
+          "startedAt": "2026-10-23T15:52:27Z",
+          "status": "COMPLETED",
+          "workflowName": "INKWAVE allocation-only frame parity"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T15:49:45Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980207955/job/120505222756",
+          "name": "relay-probe",
+          "startedAt": "2026-10-23T15:49:20Z",
+          "status": "COMPLETED",
+          "workflowName": "INKWAVE owner clock relay probe"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T15:52:41Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980207812/job/120505223027",
+          "name": "reopened-six",
+          "startedAt": "2026-10-23T15:51:08Z",
+          "status": "COMPLETED",
+          "workflowName": "INKWAVE reopened-six focused regressions"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T15:55:29Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980207974/job/120505241213",
+          "name": "frame-pacing",
+          "startedAt": "2026-10-23T15:54:53Z",
+          "status": "COMPLETED",
+          "workflowName": "INKWAVE touch frame pacing"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980207860/job/120505711030",
+          "name": "browser-origins",
+          "startedAt": "2026-10-23T15:40:54Z",
+          "status": "QUEUED",
+          "workflowName": "INKWAVE main-weapon numerical regressions"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980207860/job/120505710509",
+          "name": "roller-grip-comparison",
+          "startedAt": "2026-10-23T15:40:54Z",
+          "status": "QUEUED",
+          "workflowName": "INKWAVE main-weapon numerical regressions"
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "CodeRabbit",
+          "startedAt": "2026-10-23T15:40:00Z",
+          "state": "SUCCESS",
+          "targetUrl": ""
+        }
+      ],
+      "url": "https://github.com/rhgrive3/actions/pull/1852"
+    },
+    {
+      "headRefOid": "62d6eb3e448d68fe8a41303f344d6a88076aa338",
+      "isDraft": false,
+      "mergeable": "MERGEABLE",
+      "number": 1853,
+      "state": "OPEN",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980178404/job/120510075330",
+          "name": "build_site",
+          "startedAt": "2026-10-23T15:49:49Z",
+          "status": "QUEUED",
+          "workflowName": "Validate INKWAVE update"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T15:39:43Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980178317/job/120505203086",
+          "name": "immutable-source-pairs-and-focused-qa",
+          "startedAt": "2026-10-23T15:39:53Z",
+          "status": "COMPLETED",
+          "workflowName": "INKWAVE combined QA dependency validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T15:55:41Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980178361/job/120505261122",
+          "name": "verify-aplus-suite",
+          "startedAt": "2026-10-23T15:53:24Z",
+          "status": "COMPLETED",
+          "workflowName": "INKWAVE A+ Quality & Security Gate"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980178404/job/120510075350",
+          "name": "patch_tests (0)",
+          "startedAt": "2026-10-23T15:49:49Z",
+          "status": "QUEUED",
+          "workflowName": "Validate INKWAVE update"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980178404/job/120510075519",
+          "name": "patch_tests (1)",
+          "startedAt": "2026-10-23T15:49:49Z",
+          "status": "QUEUED",
+          "workflowName": "Validate INKWAVE update"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980178404/job/120510075516",
+          "name": "patch_tests (2)",
+          "startedAt": "2026-10-23T15:49:49Z",
+          "status": "QUEUED",
+          "workflowName": "Validate INKWAVE update"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980178404/job/120510075432",
+          "name": "patch_tests (3)",
+          "startedAt": "2026-10-23T15:49:49Z",
+          "status": "QUEUED",
+          "workflowName": "Validate INKWAVE update"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980178404/job/120510075270",
+          "name": "patch_tests (4)",
+          "startedAt": "2026-10-23T15:49:49Z",
+          "status": "QUEUED",
+          "workflowName": "Validate INKWAVE update"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980178404/job/120510075299",
+          "name": "patch_tests (5)",
+          "startedAt": "2026-10-23T15:49:49Z",
+          "status": "QUEUED",
+          "workflowName": "Validate INKWAVE update"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980178404/job/120510075305",
+          "name": "patch_tests (6)",
+          "startedAt": "2026-10-23T15:49:49Z",
+          "status": "QUEUED",
+          "workflowName": "Validate INKWAVE update"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980178404/job/120510075400",
+          "name": "patch_tests (7)",
+          "startedAt": "2026-10-23T15:49:49Z",
+          "status": "QUEUED",
+          "workflowName": "Validate INKWAVE update"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T15:49:49Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980178404/job/120510076346",
+          "name": "render-diagnostic",
+          "startedAt": "2026-10-23T15:49:49Z",
+          "status": "COMPLETED",
+          "workflowName": "Validate INKWAVE update"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T15:49:49Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980178404/job/120510132884",
+          "name": "network-opening-diagnostic",
+          "startedAt": "2026-10-23T15:49:56Z",
+          "status": "COMPLETED",
+          "workflowName": "Validate INKWAVE update"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-10-23T15:49:49Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980178404/job/120510077251",
+          "name": "wall-render-diagnostic",
+          "startedAt": "2026-10-23T15:49:49Z",
+          "status": "COMPLETED",
+          "workflowName": "Validate INKWAVE update"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980178404/job/120510074905",
+          "name": "seven_claims",
+          "startedAt": "2026-10-23T15:49:49Z",
+          "status": "QUEUED",
+          "workflowName": "Validate INKWAVE update"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "0001-01-01T00:00:00Z",
+          "conclusion": "",
+          "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/39980178404/job/120510075469",
+          "name": "resource_paint_continuation",
+          "startedAt": "2026-10-23T15:49:49Z",
+          "status": "QUEUED",
+          "workflowName": "Validate INKWAVE update"
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "CodeRabbit",
+          "startedAt": "2026-10-23T15:39:47Z",
+          "state": "SUCCESS",
+          "targetUrl": ""
+        }
+      ],
+      "url": "https://github.com/rhgrive3/actions/pull/1853"
+    }
+  ],
+  "ciRepair": {
+    "pullRequest": 1853,
+    "head": "62d6eb3e448d68fe8a41303f344d6a88076aa338",
+    "existingJobPinsUnchanged": true,
+    "exactReviewedTailInverseOnly": true,
+    "missingArtifactFails": true,
+    "fullRemoteComplete": false,
+    "obsoleteOwnRunsCancelled": [
+      39977600677,
+      39977601637,
+      39977567682
+    ]
+  },
+  "experiment": {
+    "finalRuntime": "b5c49fa58e657a4476e22968016facedbf3056c0",
+    "finalSourcePass": 111,
+    "finalEmittedPass": 92,
+    "fullNetworkSource": "4d09927ab37b7156ee6021b06260332a42a274ea",
+    "fullNetworkFiles": 125,
+    "fullNetworkPass": 901,
+    "fullNetworkRepeatedOnFinalSupplement": false,
+    "report": "https://github.com/rhgrive3/actions/blob/fix/native-charger-initial-spawn-20261023/reports/issue-resolution-20261024/native-charger/README.md",
+    "mandatoryDamageGate": false,
+    "productionMerged": false
+  },
+  "remainingWithoutDevice": [
+    "mandatory PvP/Boss source damage admission and other64 main owners/sub/special",
+    "historical trusted Match/world/lifecycle and migration",
+    "strict pixel-equivalent whole-game calibration #1434",
+    "remaining full leg/ground CPU work #845",
+    "remote CI acceptance"
+  ],
+  "externalEvidenceAndDeviceRemaining": [
+    "S3 11.3.0 movement/gyro/paint/gear/audio reference gaps",
+    "physical GPU memory, frame pacing and device gameplay acceptance"
+  ],
+  "archive": {
+    "members": 18,
+    "sha256": "89c3b074121ef8bebe455837d6bc1d0ae10c34316888f6376eef1696c6825f03",
+    "containsBrowserProfiles": false
+  }
+}
