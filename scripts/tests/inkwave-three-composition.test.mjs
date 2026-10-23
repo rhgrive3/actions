@@ -69,7 +69,7 @@ async function runProductionThreeStage(t, compose = adaptBuildSource) {
     loads.push({ rel, input: hash(code), output: hash(output) });
     return output;
   };
-  const params = { fs, path, SRC, BUILD, unminified: false, esbuild, walk,
+  const params = { fs, path, SRC, BUILD, unminified: false, reportGzip: false, esbuild, walk,
     PATCH_ROOT: path.join(root, 'patches/splatoon3'), QUALITY_ROOT: path.join(root, 'patches/local-quality'),
     RELIABILITY_ROOT: path.join(root, 'patches/reliability'), NETWORK_ROOT: path.join(root, 'patches/network-replication'),
     RANGE_ROOT: path.join(root, 'patches/practice-range'), NATIVE_ROOT: path.join(root, 'patches/native-stages'),

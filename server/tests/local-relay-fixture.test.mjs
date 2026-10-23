@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
-import {createLocalRelay} from '../../scripts/lib/inkwave-local-relay-fixture.mjs';
+import {createLocalRelay,isRelayTickFrame} from '../../scripts/lib/inkwave-local-relay-fixture.mjs';
 const compat='iw-gameplay-20261019-r2';
 class Socket extends EventEmitter {
  constructor(){super();this.sent=[];this.readyState=1;this.bufferedAmount=0;}
@@ -42,4 +42,22 @@ test('explicit source Worker is used and thrown fetch restores platform globals'
  const before={Response:globalThis.Response,WebSocketPair:globalThis.WebSocketPair};let calls=0;
  const connect=createLocalRelay({worker:{default:{fetch(){calls++;throw new Error('Injected source failure');}}}}),socket=new Socket();
  const promise=connect(socket,req());assert.equal(globalThis.Response,before.Response);assert.equal(globalThis.WebSocketPair,before.WebSocketPair);await assert.rejects(promise,/Injected source failure/);assert.equal(calls,1);socket.close();
+});
+
+test('delay classifier preserves native stamped lobby/READY and delays only unchanged tick envelopes',async()=>{
+ for (const stamped of [false,true]) {
+  const rooms=new Map(),connect=createLocalRelay({rooms}),host=new Socket(),peer=new Socket(),held=[];
+  const request=(create=false)=>({...req('BCEFG',compat,create),url:req('BCEFG',compat,create).url+(stamped?'&relayClock=1':'')});
+  await connect(host,request(true));
+  await connect(peer,request(),{send:(text,deliver)=>{if(isRelayTickFrame(text))held.push(text);else deliver(text);}});
+  for (const data of [{k:'lobby',l:{players:['host','guest'],label:'a|b'}},{k:'ready',id:'current'},{k:'t',t:100,e:[]}]) host.emit('message','b|'+JSON.stringify(data));
+  const forwarded=peer.sent.filter(s=>s.startsWith('m|'));
+  assert.equal(forwarded.length,2);assert(forwarded.every(s=>!isRelayTickFrame(s)));
+  assert.equal(held.length,1);assert.equal(isRelayTickFrame(held[0]),true);
+  assert.equal(held[0].includes('|@'),stamped);
+  const original=held.shift();peer.send(original);assert.equal(peer.sent.at(-1),original,'delay must not strip authenticated relay time');
+  host.close();peer.close();
+ }
+ for (const bad of ['m||{}','m|owner|@bad|{}','m|owner|@9999999999999999|{}','m|owner|@123','m|owner|{bad']) assert.throws(()=>isRelayTickFrame(bad));
+ for (const control of ['pong',JSON.stringify({t:'welcome'}),'m|owner|{}','m|owner|null']) assert.equal(isRelayTickFrame(control),false);
 });

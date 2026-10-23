@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
+import {beginActorMotionTick,coherentMotionStart,actorMotionTick} from '../../patches/splatoon3/runtime/actor-motion.mjs';
+import {adaptSource} from '../../patches/splatoon3/adapter.mjs';
 import {installCombatPlacementQA,advanceUntilNativeShotProof,advanceUntilNativePlacement} from '../lib/inkwave-combat-ceiling-placement.mjs';
 
 // These are bounded helper contracts plus the real Actor barrier method,
@@ -174,13 +177,121 @@ test('placement handshake waits for delayed actual peer readiness and is bounded
  for(const maxSteps of [0,-1,181,NaN,.5])await assert.rejects(advanceUntilNativePlacement({maxSteps,step:async()=>{},hasPlacement:()=>false}),/step budget/);
 });
 
-test('browser waits before freezing, relocates owners only and preserves remote native state',()=>{
+test('browser keeps native RAF through opening, relocates owners only and preserves remote native state',()=>{
  const source=fs.readFileSync(new URL('../check-inkwave-combat-ceiling-browser.mjs',import.meta.url),'utf8');
  assert(source.indexOf("report.phase='native-opening-spawn'")<source.indexOf('__inkwave.debug.freeze()'));
+ const drawHold=source.indexOf('__ceilingPlacement.holdOpeningDraw()'),start=source.indexOf('assert.equal(await host.evaluate(()=>__G.net.start())');
+ assert(drawHold>=0&&drawHold<start,'both original RAF loops suppress draw before START can publish the first snapshot');
+ assert(source.indexOf('__ceilingPlacement.releaseOpeningDraw()')>source.indexOf('report.spawnReady='));
+ const opening=source.slice(source.indexOf("report.phase='native-opening-spawn'"),source.indexOf("report.phase='native-actor-placement'"));
+ assert(opening.includes('__ceilingPlacement.spawnReady()')&&opening.includes('__G.time-start>10'));
+ assert(!/debug\.(step|freeze)|_frame\(|\.update\(|\.ready\s*=|delete .*squidSpawn|net\.cur\s*=|buf\./.test(opening));
  const placement=source.slice(source.indexOf('const placement=await host.evaluate'),source.indexOf('const step=async'));
  assert(placement.includes('if(a.remote)continue;'));
  assert(!placement.includes('buf.length=0'));
  assert(!/\.ready\s*=|delete .*squidSpawn|net\.cur\s*=/.test(placement));
  assert(source.indexOf('assert(report.placementAdvance.ready')<source.indexOf('report.settled='));
  assert(source.includes('setTimeout(resolve,1000/60)'));
+ const step=source.slice(source.indexOf('const step=async'),source.indexOf('report.placementAdvance='));
+ const order=['G.net.update(dt)','G.time+=dt','window.__ceilingBeginActorMotionTick(G.actors)',
+  'for(const a of G.match.actors)','G.projectiles.update(dt)'].map(anchor=>step.indexOf(anchor));
+ assert(order.every((index,i)=>index>=0&&(i===0||index>order[i-1])), 'all native tick owners must exist in order');
+});
+
+test('scenario wire evidence is copied before socket teardown and cleanup has its own trace',()=>{
+ const source=fs.readFileSync(new URL('../check-inkwave-combat-ceiling-browser.mjs',import.meta.url),'utf8');
+ const snapshot=source.indexOf('report.wire=wire.slice()'),close=source.indexOf('await c.close()');
+ assert(snapshot>=0&&snapshot<close);assert(source.indexOf('report.cleanupWire=wire.slice(report.wire.length)')>close);
+});
+
+test('intro draw hold preserves native RAF/frame and actor state and restores the original flag',()=>{
+ const previous=globalThis.__inkwave,previousQA=globalThis.__ceilingPlacement;
+ try{
+  const frame=()=>{},game={_frame:frame,frozen:false,actors:[{alive:true,spawnPhase:'aim'}]};
+  globalThis.__inkwave=game;installCombatPlacementQA();const q=globalThis.__ceilingPlacement;
+  const actors=JSON.stringify(game.actors);
+  q.holdOpeningDraw();assert.equal(game._skipRender,true);assert.equal(game._frame,frame);assert.equal(game.frozen,false);
+  assert.equal(JSON.stringify(game.actors),actors);assert.throws(()=>q.holdOpeningDraw(),/already held/);
+  q.releaseOpeningDraw();assert.equal(game._skipRender,undefined);q.releaseOpeningDraw();
+  game._skipRender=false;q.holdOpeningDraw();q.releaseOpeningDraw();assert.equal(game._skipRender,false);
+  const nativeMain=fs.readFileSync(new URL('../../inkwave-public/src/main.js',import.meta.url),'utf8');
+  const frameSource=nativeMain.slice(nativeMain.indexOf('  _frame(dt) {'),nativeMain.indexOf('  _updateAmbience(dt) {'));
+  assert(!/_skipRender\s*=/.test(frameSource),'the unchanged native frame does not reset the audit draw hold');
+ }finally{
+  if(previous===undefined)delete globalThis.__inkwave;else globalThis.__inkwave=previous;
+  if(previousQA===undefined)delete globalThis.__ceilingPlacement;else globalThis.__ceilingPlacement=previousQA;
+ }
+});
+
+// Execute the exact browser callback without importing/launching Playwright.
+// The native motion module remains real; only the surrounding actor drivers are
+// small fixtures. This proves ordering, not browser contact or receiver success.
+const browserSource=()=>fs.readFileSync(new URL('../check-inkwave-combat-ceiling-browser.mjs',import.meta.url),'utf8');
+function manualCallback(source=browserSource()) {
+ const start=source.indexOf('p.evaluate(({attacker,victim,placement})=>{',source.indexOf('const step=async'));
+ const end=source.indexOf(',{attacker,victim,placement})))',start);
+ assert(start>=0&&end>start,'unique manual component callback');
+ return source.slice(start+'p.evaluate('.length,end);
+}
+function motionFixture(source=browserSource(),install=true) {
+ const calls=[];
+ const actor=(nid,remote,x)=>({nid,owner:'fixture-owner-'+nid,remote,alive:true,form:'kid',net:{ready:true,tp:1},pos:new V(x,0,0),ink:100});
+ const remote=actor(0,true,0),local=actor(1,false,10),actors=[remote,local];
+ // Simulate a pre-freeze capture followed by owner relocation. Without the
+ // native boundary call the old remote start remains eligible indefinitely.
+ beginActorMotionTick(actors);remote.pos.x=2;local.pos.x=12;
+ let expectedTick=actorMotionTick(),expectedStart;
+ const G={time:0,actors,match:{actors,local},net:{update(){calls.push('network');}},
+  netm:{applyRemote(a){calls.push('remote');a.pos.x+=.125;}},
+  projectiles:{update(){calls.push('projectiles');
+   assert.equal(actorMotionTick(),expectedTick+1,'one fresh motion boundary per manual tick');
+   assert.equal(coherentMotionStart(remote)?.x0,expectedStart[0],'capture remote before sampling');
+   assert.equal(coherentMotionStart(local)?.x0,expectedStart[1],'capture local before update');
+  }}};
+ local.update=()=>{calls.push('local');local.pos.x+=.25;};
+ const window={};
+ if(install)window.__ceilingBeginActorMotionTick=list=>{calls.push('motion');assert.equal(list,G.actors);beginActorMotionTick(list);};
+ const run=vm.runInNewContext('('+manualCallback(source)+')',{__G:G,window});
+ return {calls,G,remote,local,step(){expectedTick=actorMotionTick();expectedStart=actors.map(a=>a.pos.x);run({attacker:1,victim:0,placement:[]});}};
+}
+test('browser manual steps capture the native motion interval before both actor paths every tick',()=>{
+ const f=motionFixture();
+ for(let i=0;i<8;i++){
+  f.calls.length=0;f.step();
+  assert.deepEqual(f.calls,['network','motion','remote','local','projectiles']);
+ }
+ assert.equal(f.G.time,8/60);
+});
+test('missing, late or duplicated motion boundaries cannot pass the manual-step contract',()=>{
+ const source=browserSource(),call='  window.__ceilingBeginActorMotionTick(G.actors);';
+ assert.equal(source.split(call).length,2);
+ const removed=source.replace(call,''),late=removed.replace('  G.projectiles.update(dt);',call+'\n  G.projectiles.update(dt);');
+ for(const mutation of [removed,late,source.replace(call,call+'\n'+call)]){
+  assert.notEqual(mutation,source);assert.throws(()=>motionFixture(mutation).step(),/motion boundary|capture remote|capture local/);
+ }
+ const absent=motionFixture(source,false);
+ assert.throws(()=>absent.step(),/is not a function/);
+ assert.deepEqual(absent.calls,['network'],'missing native import must fail before actors or projectiles');
+});
+test('harness, adapted collision, Actor and native clock resolve one revision-scoped motion module',()=>{
+ const source=browserSource();
+ const expression=source.match(/^ const motionURL=(.+);$/m)?.[1];assert(expression);
+ const actorURL='http://127.0.0.1:1234/_versions/fixture-revision/src/game/actor.js';
+ const url=new Function('actorURL','return '+expression)(actorURL);
+ const expected='http://127.0.0.1:1234/_versions/fixture-revision/patches/splatoon3/runtime/actor-motion.mjs';
+ assert.equal(url,expected);assert.equal(new URL(url).search,'');
+ const imports=[
+  [actorURL,adaptSource('src/game/actor.js',actorSource)],
+  [new URL('inkFlightRuntime.js',actorURL).href,adaptSource('src/game/inkFlightRuntime.js',fs.readFileSync(new URL('../../inkwave-public/src/game/inkFlightRuntime.js',import.meta.url),'utf8'))],
+  [new URL('clock.mjs',url).href,fs.readFileSync(new URL('../../patches/splatoon3/runtime/clock.mjs',import.meta.url),'utf8')],
+ ];
+ for(const [parent,code] of imports){
+  const paths=[...code.matchAll(/from ['"]([^'"]*actor-motion\.mjs)['"]/g)].map(m=>m[1]);
+  assert.equal(paths.length,1);assert.equal(new URL(paths[0],parent).href,url);
+ }
+ assert(source.includes("assert(build.artifacts[motionPath],'Actor motion module must be part of the verified build')"));
+ assert(source.includes("assert(loaded.has(motionPath),'Native game must already load the same actor motion module')"));
+ assert(source.includes('{beginActorMotionTick}=await import(motionURL)'));
+ assert(source.includes('window.__ceilingBeginActorMotionTick=beginActorMotionTick'));
+ const body=manualCallback(source);assert(!body.includes('__ceilingBeginActorMotionTick?.'));
 });

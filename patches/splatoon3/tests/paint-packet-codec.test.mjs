@@ -1,9 +1,20 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import path from 'node:path';import{pathToFileURL}from'node:url';
+import vm from 'node:vm';
 const codecPath=process.env.INKWAVE_BUILT_SITE?pathToFileURL(path.resolve(process.env.INKWAVE_BUILT_SITE,'patches/splatoon3/runtime/paint-packet-codec.mjs')):new URL('../runtime/paint-packet-codec.mjs',import.meta.url);
 const{encodePaintEvents:encode,decodePaintEvents:decode,PAINT_PACKET_CODEC_VERSION:V,PaintPacketNegotiation:Negotiation}=await import(codecPath);
 const row=(i=0)=>[i/60,'s',i*.003,-2.5,8,1.56,0,.412,0,0,0,0,0,1,['inkwave-paint-order-v1','match',i,0],i,i];
 const rows=()=>Array.from({length:40},(_,i)=>row(i));
+test('native membership Map branding survives realm boundaries and rejects lookalikes',()=>{
+ const foreign=vm.runInNewContext("new Map([['a',{}],['b',{}]])");
+ let nonce=0;const n=new Negotiation(()=> (++nonce).toString(16).padStart(32,'0'));
+ assert.equal(n.sync('match','a',foreign),true);assert.deepEqual([...n.members.keys()],['b']);
+ const peer=n.members.get('b');peer.received=true;assert.equal(n.sync('match','a',foreign),true);assert.equal(n.members.get('b'),peer);
+ foreign.set('c',{});n.sync('match','a',foreign);assert.equal(n.members.get('b'),peer);
+ foreign.delete('b');n.sync('match','a',foreign);assert.deepEqual([...n.members.keys()],['c']);
+ assert.equal(n.sync('match','a',{[Symbol.toStringTag]:'Map',size:2,keys:()=>['a','b']}),false);
+ assert.equal(n.members.size,0);
+});
 test('JSON roundtrip preserves every value, sender-independent ordering and duplicates',()=>{const r=rows();r.splice(3,0,r[0]);r.push([.5,'foreign',{owner:'untrusted',value:7}]);const p=encode(r);assert.ok(p);assert.deepEqual(decode(JSON.parse(JSON.stringify(p))),r);assert.equal(r[0][0],0);});
 test('wire dictionary preserves safe-integer overflow HLC strings verbatim',()=>{const r=rows();r[2][14][2]='90071992547409930000001';assert.deepEqual(decode(encode(r)),r);});
 test('negotiated JSON paint packets retain compressed contact depth exactly',()=>{

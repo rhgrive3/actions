@@ -5,11 +5,11 @@ export function teamHudSnapshot(match, colors, viewerTeam = 0, paint = null) {
   let cache = match._teamHudSnapshot;
   if (!cache) {
     const a = { color: '', players: [] }, b = { color: '', players: [] };
-    cache = match._teamHudSnapshot = { teams: [a, b], forward: [a, b], reverse: [b, a], players: new WeakMap() };
+    cache = match._teamHudSnapshot = { teams: [a, b], forward: [a, b], reverse: [b, a], players: new WeakMap(), coverage: [0, 0] };
   }
   const t0 = cache.teams[0], t1 = cache.teams[1];
   t0.color = colors[0]; t1.color = colors[1];
-  const coverage = match.mode === 'turf' && match.state === 'playing' && !match.attract ? paint?.coverage?.() : null;
+  const coverage = match.mode === 'turf' && match.state === 'playing' && !match.attract ? paint?.coverage?.(cache.coverage) : null;
   const valid = Array.isArray(coverage) && coverage.length === 2 && coverage.every(v => Number.isFinite(v) && v >= 0 && v <= 1) && coverage[0] + coverage[1] <= 1 + Number.EPSILON * 4;
   const delta = valid ? coverage[0] - coverage[1] : 0;
   const leader = Math.abs(delta) + Number.EPSILON >= 0.1 ? (delta > 0 ? 0 : 1) : -1;
@@ -55,4 +55,15 @@ export function hudFrameSnapshot(game, m, a, w, spread, players, markers, prompt
   mobile.special = frame.special; mobile.ready = frame.specialReady; mobile.activeSp = frame.specialActive; mobile.weapon = w.kind || a.weaponId;
   mobile.specialId = w.special; mobile.ink = frame.ink; mobile.inkLow = frame.inkLow; mobile.subCost = frame.subCost; mobile.subReady = frame.subReady;
   return frame;
+}
+// Touch controls stay live while the full intro HUD is hidden. This transport
+// intentionally avoids roster/minimap/projection work and shares scalar owners
+// with the visible snapshot above.
+export function mobileHudSnapshot(game,a,w,PLAYER,subCost) {
+  const cache=game._hudTransport||(game._hudTransport={frame:{},crosshair:{},map:{},mobile:{}}),mobile=cache.mobile;
+  const spent=specialGaugeFraction(a);
+  mobile.special=spent??a.specialFrac();mobile.ready=a.specialReady();mobile.activeSp=spent!==null||!!a.specialActive;
+  mobile.weapon=w.kind||a.weaponId;mobile.specialId=w.special;
+  mobile.ink=a.ink/PLAYER.inkMax;mobile.inkLow=game._lowInkFlash>0;mobile.subCost=subCost/PLAYER.inkMax;mobile.subReady=a.ink>=subCost;
+  return mobile;
 }

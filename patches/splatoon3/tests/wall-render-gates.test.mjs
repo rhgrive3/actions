@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { wallPixelDifference, validateWallRenderResult, WALL_RENDER_SCENARIOS, verifyWallBuild } from '../../../scripts/check-inkwave-wall-render.mjs';
+import { wallPixelDifference, validateWallReadiness, validateWallRenderResult, WALL_RENDER_SCENARIOS, verifyWallBuild } from '../../../scripts/check-inkwave-wall-render.mjs';
 
 // Synthetic receipts self-test the evidence validator, never claim GPU proof.
 // INKWAVE_WALL_RENDER_RECEIPT adds validation of the actual browser receipt.
@@ -23,7 +23,7 @@ function complete() {
     disposal: { uploadedNativeBuffers: 10, uploadedNativeAttributes: 10, deletedOwnedBuffers: 2, releasedGlintVAOs: 1,
       survivorPixels: 100, deletedNativeBuffers: 0, nativeBuffersAlive: 10, survivorNormalChangedBytes: 0,
       glintGeometryDisposals: 1, glintMaterialDisposals: 1, glintDetached: true },
-    lifecycle: { nativeAttached: true, nativeReadyTicks: 45, zeroDtFrozen: true, cancelImmediate: true,
+    lifecycle: { readiness: { attached: true, form: 'climb', ready: true, charge: 1, glow: .85, glintPresent: true, glintVisible: true, indexCount: 24, bodyVisible: false, ghostVisible: false, eyesVisible: false, darkVisible: false }, nativeAttached: true, nativeReadyTicks: 45, zeroDtFrozen: true, cancelImmediate: true,
       hideImmediate: true, resetImmediate: true, deathImmediate: true, disposedTerminal: true, nonuniformRatio: 2 },
   };
 }
@@ -72,4 +72,16 @@ if (process.env.INKWAVE_WALL_RENDER_SITE) test('actual wall build is bound to co
   const identity = verifyWallBuild(fs.realpathSync(process.env.INKWAVE_WALL_RENDER_SITE), true);
   assert.match(identity.source.sourceSha, /^[a-f0-9]{40}$/);
   assert.ok(identity.source.sourceFiles > 100);
+});
+
+test('composed wall readiness rejects missing glint and any submerged body leak', () => {
+  const good = complete().lifecycle.readiness;
+  assert.equal(validateWallReadiness(good), true);
+  for (const [key, bad] of Object.entries({ attached: false, form: 'squid', ready: false, charge: .99, glow: 0,
+    glintPresent: false, glintVisible: false, indexCount: 0, bodyVisible: true, ghostVisible: true, eyesVisible: true, darkVisible: true })) {
+    assert.throws(() => validateWallReadiness({ ...good, [key]: bad }), undefined, key);
+    const receipt = complete(); receipt.lifecycle.readiness[key] = bad;
+    assert.throws(() => validateWallRenderResult(receipt), undefined, 'receipt/' + key);
+  }
+  for (const key of Object.keys(good)) { const partial = { ...good }; delete partial[key]; assert.throws(() => validateWallReadiness(partial), undefined, 'missing/' + key); }
 });

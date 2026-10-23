@@ -1,3 +1,4 @@
+import { notePaintMutation } from './scoring.mjs';
 const STEP = 1 / 60;
 const EPS = 1e-10;
 const INSTALLED = Symbol.for('inkwave.issue264.paint-ownership-installed');
@@ -90,10 +91,9 @@ function allocPiece(idx) {
 // pieces (the settled pass's drip-only contract) reads none of its values.
 const sameTemplateValue = (a, b) => a === b || (a !== a && b !== b);
 function ancillaryTemplate(g, seed, word, sa, dirAng, spread, rayCount, satelliteCount, spatterCount) {
-  const t = g._s3AncillaryTemplate;
-  if (t && sameTemplateValue(t.seed, seed) && sameTemplateValue(t.sa, sa) && sameTemplateValue(t.dirAng, dirAng)
-      && (!rayCount || t.rayCount === rayCount) && (!satelliteCount || t.satelliteCount === satelliteCount)
-      && (!spatterCount || t.spatterCount === spatterCount)) return t;
+  const templates=g._s3AncillaryTemplates ||= [];
+  for(const t of templates)if(sameTemplateValue(t.seed,seed)&&sameTemplateValue(t.sa,sa)&&sameTemplateValue(t.dirAng,dirAng)
+      &&(!rayCount||t.rayCount===rayCount)&&(!satelliteCount||t.satelliteCount===satelliteCount)&&(!spatterCount||t.spatterCount===spatterCount))return (g._s3AncillaryTemplate=t);
   const wobbles = g._s3Wobble && g._s3WobbleSeed === seed ? g._s3Wobble : (g._s3WobbleSeed = seed, g._s3Wobble = new Map());
   const rays = new Float64Array(rayCount * 6), sats = new Float64Array(satelliteCount * 7);
   const spats = new Float64Array(spatterCount * 7), drips = new Float64Array(6 * 3);
@@ -102,24 +102,25 @@ function ancillaryTemplate(g, seed, word, sa, dirAng, spread, rayCount, satellit
     const a = sa > 0 ? dirAng + (h1 - 0.5) * spread : (k + 0.35 + 0.6 * h1) / rayCount * 6.2831 + seed * 6.2831;
     let w = wobbles.get(a);
     if (w === undefined) { w = wobble(a, seed); wobbles.set(a, w); }
-    rays.set([Math.cos(a), Math.sin(a), w, h1, h2, h3], k * 6);
+    const at=k*6;rays[at]=Math.cos(a);rays[at+1]=Math.sin(a);rays[at+2]=w;rays[at+3]=h1;rays[at+4]=h2;rays[at+5]=h3;
   }
   for (let k = 0; k < satelliteCount; k++) {
     const h1 = paintShapeHash(word, 3, k), h2 = paintShapeHash(word, 4, k), h3 = paintShapeHash(word, 5, k);
     const a = sa > 0 ? dirAng + (h1 - 0.5) * spread : h1 * 6.2831;
     const ux = Math.cos(a), uy = Math.sin(a);
     const nx = ux * 0.68, ny = uy * 0.68 - 0.32; const l = Math.hypot(nx, ny) || 1;
-    sats.set([h1, h2, h3, ux, uy, nx / l, ny / l], k * 7);
+    const at=k*7;sats[at]=h1;sats[at+1]=h2;sats[at+2]=h3;sats[at+3]=ux;sats[at+4]=uy;sats[at+5]=nx/l;sats[at+6]=ny/l;
   }
   for (let k = 0; k < spatterCount; k++) {
     const h1 = paintShapeHash(word, 6, k), h2 = paintShapeHash(word, 7, k), h3 = paintShapeHash(word, 8, k);
     const a = sa > 0 ? dirAng + (h1 - 0.5) * spread * 1.15 : h1 * 6.2831;
     const ux = Math.cos(a), uy = Math.sin(a);
     const nx = ux * 0.75, ny = uy * 0.75 - 0.25; const l = Math.hypot(nx, ny) || 1;
-    spats.set([h1, h2, h3, ux, uy, nx / l, ny / l], k * 7);
+    const at=k*7;spats[at]=h1;spats[at+1]=h2;spats[at+2]=h3;spats[at+3]=ux;spats[at+4]=uy;spats[at+5]=nx/l;spats[at+6]=ny/l;
   }
-  for (let k = 0; k < 6; k++) drips.set([paintShapeHash(word, 9, k), paintShapeHash(word, 10, k), paintShapeHash(word, 11, k)], k * 3);
-  return (g._s3AncillaryTemplate = { seed, sa, dirAng, rayCount, satelliteCount, spatterCount, rays, sats, spats, drips });
+  for (let k = 0; k < 6; k++) {const at=k*3;drips[at]=paintShapeHash(word,9,k);drips[at+1]=paintShapeHash(word,10,k);drips[at+2]=paintShapeHash(word,11,k);}
+  const template={seed,sa,dirAng,rayCount,satelliteCount,spatterCount,rays,sats,spats,drips};
+  if(templates.length>=8)templates.shift();templates.push(template);return (g._s3AncillaryTemplate=template);
 }
 
 function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
@@ -355,8 +356,8 @@ function ensureOwnershipState(paint) {
   if (!Number.isFinite(paint._paintSimulationAccumulator)) paint._paintSimulationAccumulator = 0;
 }
 
-function paintOrderId(paint, order) {
-  ensureOwnershipState(paint);
+function paintOrderId(paint, order, prepared=false) {
+  if(!prepared)ensureOwnershipState(paint);
   const clock = order?.clock ?? order?.tick;
   const validNetworkOrder = order && isPaintOrderClock(clock)
     && typeof order.peer === 'string' && order.peer.length > 0
@@ -371,7 +372,10 @@ function paintOrderId(paint, order) {
   } else {
     paint._paintOwnershipSequence = (paint._paintOwnershipSequence + 1) >>> 0;
     if (paint._paintOwnershipSequence === 0) paint._paintOwnershipSequence = 1;
-    record = { local: true, seq: paint._paintOwnershipSequence, legacy: false };
+    // Local metadata needs only the wrapping sequence. Keep the stable record
+    // index/returned ID, without retaining one object per local stamp. Network
+    // metadata and deduplicated receipt identities remain unchanged.
+    record = paint._paintOwnershipSequence;
   }
   const id = paint._paintOrderRecords.length;
   paint._paintOrderRecords.push(record);
@@ -385,9 +389,10 @@ function paintOrderComesAfter(paint, nextId, previousId) {
   const a = paint._paintOrderRecords[nextId], b = paint._paintOrderRecords[previousId];
   if (!a) return false;
   if (!b) return true;
-  if (a.local || b.local) {
-    if (a.local && b.local) return a.seq > b.seq;
-    return !a.local;
+  const aLocal = typeof a === 'number' || a.local, bLocal = typeof b === 'number' || b.local;
+  if (aLocal || bLocal) {
+    if (aLocal && bLocal) return (typeof a === 'number' ? a : a.seq) > (typeof b === 'number' ? b : b.seq);
+    return !aLocal;
   }
   if (a.legacy !== b.legacy) return !a.legacy;
   if (a.clock !== b.clock) return paintClockComesAfter(a.clock, b.clock);
@@ -480,6 +485,23 @@ function storeCellCache(cache, cells, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0
   cache.cells = cells;
 }
 
+// Status bits: 1 cacheable/visited, 2 changed ownership, 4 awarded turf area.
+function visitAncillaryCell(paint,g,face,mask,visit,stamp,value,order,index,x,y,piece){
+ if(visit[index]===stamp)return 1;
+ const previousOrder=paint._paintOwnershipOrder[index]||0;
+ if(previousOrder&&order&&!paintOrderComesAfter(paint,order,previousOrder)){visit[index]=stamp;return 1;}
+ const previous=paint.grid[index];
+ if(previous===value&&previousOrder===order){visit[index]=stamp;return 1;}
+ if(!cellIsSolidlyVisible(mask,face,x,y,piece))return 0;
+ visit[index]=stamp;
+ if(previous===value){claimPaintCell(paint,index,value,order);return 1;}
+ if(!claimPaintCell(paint,index,value,order))return 1;
+ paint.grid[index]=value;
+ if(paint._inkMark){const cell=index-face.grid,j=Math.floor(cell/face.nu);paint._inkMark(face,cell-j*face.nu,j);}
+ if(face.turf&&!paint.dead[index]){if(previous)paint.counts[previous-1]--;paint.counts[g.team]++;return 7;}
+ return 3;
+}
+
 function claimAncillaryCells(paint, g, tn, dT, contract) {
   const E = g.entries;
   if (g.R <= 0.02 || !Array.isArray(E) || !E.length || g.kind === contract.kind.speck) return 0;
@@ -511,35 +533,6 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
     const visit = paint._paintVisitStamp;
     const pad = Math.max(face.cu, face.cv) * 0.5 + mask.margin * (1 + Math.max(0, sa)) + 1e-9;
     const yLo = -Math.max(ext, down);
-    // One cell of the original loop body. false means only that this piece's
-    // pure shape test missed; every other path has the original effects.
-    const visitCell = (index, x, y, piece) => {
-      if (visit[index] === stamp) return true;
-      const previousOrder = paint._paintOwnershipOrder[index] || 0;
-      if (previousOrder && order && !paintOrderComesAfter(paint, order, previousOrder)) { visit[index] = stamp; return true; }
-      const previous = paint.grid[index];
-      if (previous === value && previousOrder === order) { visit[index] = stamp; return true; }
-      // This cell was enumerated from this piece's conservative box.
-      // Test only that piece, marking it visited only after a hit. A miss
-      // must remain eligible for overlapping pieces later in this stamp.
-      if (!cellIsSolidlyVisible(mask, face, x, y, piece)) return false;
-      visit[index] = stamp;
-      if (previous === value) {
-        claimPaintCell(paint, index, value, order);
-        return true;
-      }
-      if (!claimPaintCell(paint, index, value, order)) return true;
-      paint.grid[index] = value;
-      changed = true;
-      // Match the composed native body scorer: walls and occluded cells
-      // remain paintable, but never award turf points or special charge.
-      if (face.turf && !paint.dead[index]) {
-        claimed += cellArea;
-        if (previous) paint.counts[previous - 1]--;
-        paint.counts[g.team]++;
-      }
-      return true;
-    };
     for (let n2 = 0; n2 < mask.pieces.length; n2++) {
       const piece = mask.pieces[n2];
       const box = pieceCellBox(mask, piece, pad);
@@ -552,7 +545,8 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
       if (cells) {
         for (let k = 0; k < cells.length; k++) {
           const i = cells[k] % face.nu, j = (cells[k] - i) / face.nu;
-          visitCell(face.grid + cells[k], (i + 0.5) * face.cu - lu, (j + 0.5) * face.cv - lv, piece);
+          const status=visitAncillaryCell(paint,g,face,mask,visit,stamp,value,order,face.grid+cells[k],(i+.5)*face.cu-lu,(j+.5)*face.cv-lv,piece);
+          if(status&2)changed=true;if(status&4)claimed+=cellArea;
         }
         continue;
       }
@@ -564,7 +558,9 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
           const x = (i + 0.5) * face.cu - lu;
           const index = face.grid + j * face.nu + i;
           if (x + face.cu * 0.5 < -ext || x - face.cu * 0.5 > ext) continue;
-          if (visitCell(index, x, y, piece) && record) record.push(j * face.nu + i);
+          const status=visitAncillaryCell(paint,g,face,mask,visit,stamp,value,order,index,x,y,piece);
+          if(status&2)changed=true;if(status&4)claimed+=cellArea;
+          if(status&&record)record.push(j*face.nu+i);
         }
       }
       if (record) storeCellCache(cache, record, face, lu, lv, ext, yLo, pad, bi0, bi1, bj0, bj1, mask, piece);
@@ -582,7 +578,7 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
       g._ancillaryDoneRadius = g.R;
     }
   }
-  if (changed) paint.version++;
+  if (changed) notePaintMutation(paint, claimed > 0);
   if (claimed > 0 && g.paintOwner && !g.paintOwner.remote) {
     if (g.paintCreditMode === 1) g.paintOwner.addTurfNoSpecial?.(claimed);
     else g.paintOwner.addTurf?.(claimed);
@@ -616,8 +612,10 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
         // Only those records may be pruned: local sub-cell visual ink is
         // intentionally retained even if it has never claimed a grid cell.
         // Future growth may re-add a network stamp when it gains a cell.
-        const live = new Set(this._paintOwnershipOrder);
-        for (const [id, snapshot] of pending) if (snapshot.g.netOrderId && !live.has(id)) pending.delete(id);
+        const missing = new Set();
+        for(const [id,snapshot] of pending)if(snapshot.g.netOrderId)missing.add(id);
+        for(let i=0;i<this._paintOwnershipOrder.length&&missing.size;i++)missing.delete(this._paintOwnershipOrder[i]);
+        for(const id of missing)pending.delete(id);
         this._hiddenPaintInsertions = 0;
       }
 
@@ -646,6 +644,8 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
     ensureOwnershipState(this);
     return paintOrderComesAfter(this, nextId, previousId);
   };
+  proto._preparePaintOwnership=function(){ensureOwnershipState(this);};
+  proto._paintClaimPreparedCell=function(index,value,orderId,orderState){return claimPaintCell(this,index,value,orderId,orderState);};
   proto._paintClaimCell = function issue264ClaimPaintCell(index, value, orderId, orderState) {
     ensureOwnershipState(this);
     return claimPaintCell(this, index, value, orderId, orderState);
@@ -697,7 +697,7 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
     const mode = opts.claimMode === 'no-special' ? 1 : 0;
     const callOpts = ('claimOwner' in opts || 'claimMode' in opts) ? { ...opts } : opts;
     if (callOpts !== opts) { delete callOpts.claimOwner; delete callOpts.claimMode; }
-    const order = paintOrderId(this, opts.__netOrder);
+    const order = paintOrderId(this, opts.__netOrder,true);
     const previousOrder = this._paintCurrentOrder, previousContext = this._paintOwnerContext;
     this._paintCurrentOrder = order;
     this._paintOwnerContext = { owner, mode, order, accepted: false };
@@ -705,11 +705,11 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
     finally { this._paintCurrentOrder = previousOrder; this._paintOwnerContext = previousContext; }
   };
 
-  proto._advanceSplatOwnership = function issue264AdvanceOwnership(g) {
+  proto._advanceSplatOwnership = function issue264AdvanceOwnership(g, phase, dripPhase) {
     if (!g || g.kind === contract.kind.speck || g.R <= 0.02) return 0;
-    const tn = Math.min(3, Math.max(0, g.age / Math.max(g.dur, 1e-6)));
+    const tn = phase === undefined ? Math.min(3, Math.max(0, g.age / Math.max(g.dur, 1e-6))) : phase;
     const td = g.dripDur ? Math.min(1, g.age / g.dripDur) : 1;
-    const dT = 1 - Math.pow(1 - td, 2.2);
+    const dT = dripPhase === undefined ? (g.dripDur ? 1 - Math.pow(1 - td, 2.2) : 1) : dripPhase;
     return claimAncillaryCells(this, g, tn, dT, contract);
   };
   proto._finishSplatOwnership = function issue264FinishOwnership(g) {

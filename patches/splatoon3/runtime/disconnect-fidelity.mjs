@@ -1,3 +1,4 @@
+import { retireActorReplicas } from './replica-retirement.mjs';
 const EPS = 1e-10;
 const NO_CONTEST_WINDOW = 60;
 const NO_CONTEST_DELAY = 6;
@@ -41,6 +42,7 @@ export function retireDisconnectedStorms(netmatch, actor) {
 
 export function deactivateDisconnectedActor(netmatch, actor) {
   if (!actor || actor.s3?.disconnected) return actor;
+  retireActorReplicas(netmatch?.__s3G || world, actor);
   retireDisconnectedStorms(netmatch, actor);
   retireDisconnectedMainProjectiles((netmatch?.__s3G || world)?.projectiles, actor);
   actor.s3 ||= {};
@@ -188,6 +190,7 @@ export function installDisconnectFidelity(api) {
     // available for the final authoritative statistics and results presentation.
     if (!participated) {
       for (const a of affected) {
+        retireActorReplicas(this.__s3G || world, a);
         // An owner may leave during finish/judge while an old Storm is still
         // animated. The roster removal must not strand its projectile objects.
         retireDisconnectedStorms(this, a);

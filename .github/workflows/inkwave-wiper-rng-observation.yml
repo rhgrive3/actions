@@ -21,7 +21,7 @@ permissions:
   contents: read
 jobs:
   capture:
-    if: ${{ github.event_name != 'pull_request' || (github.head_ref == 'diagnostic/wiper-rng-observation-20261021' && github.event.pull_request.head.repo.full_name == github.repository) }}
+    if: ${{ github.event_name != 'pull_request' || ((github.head_ref == 'diagnostic/wiper-rng-observation-20261021' || github.head_ref == 'diagnostic/wiper-first-divergence-20261022') && github.event.pull_request.head.repo.full_name == github.repository) }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:

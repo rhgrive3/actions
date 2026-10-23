@@ -3,9 +3,35 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 const workflow = fs.readFileSync(new URL('../../.github/workflows/validate-inkwave-update.yml', import.meta.url), 'utf8');
 const weaponWorkflow = fs.readFileSync(new URL('../../.github/workflows/inkwave-main-weapons.yml', import.meta.url), 'utf8');
+
+test('hosted apt mirror lists retain suites, signing keys and packages while switching only the stalled Azure URL', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'inkwave-apt-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(root, 'sources.list.d'));
+  const files = {
+    'sources.list': 'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] http://azure.archive.ubuntu.com/ubuntu noble main universe\n',
+    'sources.list.d/ubuntu.sources': 'Types: deb\nURIs: mirror+file:/etc/apt/apt-mirrors.txt\nSuites: noble noble-updates noble-backports\nComponents: main universe\nSigned-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg\n',
+    'sources.list.d/security.list': 'deb mirror+file:/etc/apt/apt-mirrors-security.txt noble-security main\n',
+    'apt-mirrors.txt': 'http://azure.archive.ubuntu.com/ubuntu\thttps://archive.ubuntu.com/ubuntu\nhttps://packages.microsoft.com/ubuntu/24.04/prod\n',
+    'apt-mirrors-security.txt': 'https://azure.archive.ubuntu.com/ubuntu\nhttp://security.ubuntu.com/ubuntu\n',
+    'sources.list.d/foreign.list': 'deb https://foreign.invalid/azure.archive.ubuntu.com/ubuntu noble main\n',
+  };
+  for (const [file, text] of Object.entries(files)) fs.writeFileSync(path.join(root, file), text);
+  const helper = fileURLToPath(new URL('../prepare-inkwave-ci-apt.py', import.meta.url));
+  for (let i = 0; i < 2; i++) {
+    const result = spawnSync('python3', [helper, root], { encoding: 'utf8', timeout: 10000 });
+    assert.equal(result.status, 0, result.stderr);
+    for (const [file, before] of Object.entries(files)) {
+      const expected = before.replaceAll('http://azure.archive.ubuntu.com/ubuntu', 'https://archive.ubuntu.com/ubuntu').replaceAll('https://azure.archive.ubuntu.com/ubuntu', 'https://archive.ubuntu.com/ubuntu');
+      assert.equal(fs.readFileSync(path.join(root, file), 'utf8'), expected, file);
+    }
+  }
+});
 
 // Configuration ownership checks, not a simulation of GitHub's scheduler.
 function mainWeaponTriggerContract(source) {
@@ -58,7 +84,10 @@ test('integration retains immutable source and independently rebuilt artifact id
     "PR validation uses its immutable head, explicit dispatch takes precedence, push falls back to github.sha");
   assert.equal(pinnedCheckoutCount, checkoutCount);
   assert.ok(workflow.includes('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"'));
-  assert.ok(workflow.includes('node scripts/build-inkwave.mjs inkwave-public .built-site/_site'));
+  assert.ok(workflow.includes('node scripts/build-inkwave.mjs inkwave-public _site'));
+  assert.ok(workflow.includes('tar -xf .built-site/immutable-site.tar -C .built-site'));
+  assert.ok(workflow.includes("needs: build_site"));
+  assert.ok(workflow.includes("assert.equal(JSON.parse(fs.readFileSync('.built-site/_site/inkwave-build.json')).contentHash,process.env.EXPECTED_CONTENT_HASH)"));
   assert.ok(workflow.includes('test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"'));
   assert.ok(workflow.includes("assert reports['game/browser-result.json']['sourceSha']==os.environ['SOURCE_SHA']"));
 });
@@ -70,7 +99,7 @@ test('parallel browser families retain every final integration acceptance surfac
   assert.ok(workflow.includes('browsers: chromium webkit'));
   assert.ok(workflow.includes('npx playwright install --with-deps ${{ matrix.browsers }}'));
   assert.ok(!workflow.includes('needs: validate'));
-  assert.ok(workflow.includes('cancel-in-progress: true'));
+  assertCancellationPolicy(workflow);
   for (const gate of ['browser', 'motion', 'motion-detail', 'flow-render', 'wall-render', 'motion-catalog', 'touch-layout', 'reliability', 'touch-layout-identity', 'network-browser', 'paint-mask', 'range', 'startup-browser', 'rematch-lifecycle'])
     assert.ok(workflow.includes(`node scripts/check-inkwave-${gate}.mjs`), gate);
   // The isolated wrapper keeps every original responsive case but avoids
@@ -135,7 +164,7 @@ test('ancillary paint WebGL source and emitted masks are mandatory exact-head ne
   assert.ok(workflow.includes('node scripts/check-inkwave-paint-mask.mjs --site .built-site/_site'));
   assert.match(workflow, /check-inkwave-paint-mask\.mjs[^\n]+--exact-source/);
   const receipts = ['paint-mask/paint-mask-result.json', 'network/network-browser-result.json',
-    'network-delay/network-browser-result.json', 'combat-ceiling/combat-ceiling-browser-result.json'];
+    'network-delay/network-browser-result.json', 'combat-ceiling/combat-ceiling-browser-result.json', 'startup-clock/startup-clock-result.json'];
   const requireReceipts = source => assert.ok(source.includes("'network':[" + receipts.map(value => "'" + value + "'").join(',') + "]"));
   requireReceipts(workflow);
   for (const receipt of receipts)
@@ -148,7 +177,12 @@ test('ancillary paint WebGL source and emitted masks are mandatory exact-head ne
 });
 
 test('compatibility failure preserves its primary error without a missing diagnostic upload', () => {
-  assert.ok(workflow.includes("if: failure() && hashFiles('.ci-scratch/inkwave-patches/patch-tests.log') != ''"));
+  assertShardEvidencePolicy(workflow);
+  const runner=fs.readFileSync(new URL('../check-inkwave-patches.mjs',import.meta.url),'utf8');
+  const manifest=runner.indexOf("'shard-manifest.json'");assert(manifest>runner.indexOf('checkCompatibility(SRC)'));
+  assert(manifest<runner.indexOf('const turf = await runLoggedTestProcess('));assert(manifest<runner.indexOf('? await runLoggedTestProcess('));
+  assert(runner.includes('sourceSha: process.env.SOURCE_SHA ?? null, shardIndex, shardCount'));
+  assert(runner.includes('process.exitCode = 1'));
 });
 
 test('runtime verifier storage is prepared before runtime evidence tests and baseline checkout creation', () => {
@@ -255,7 +289,7 @@ test('all eight patch shards report into the existing required validate gate', (
   assert.ok(shards.includes("INKWAVE_TEST_CONCURRENCY: '2'"));
   assert.ok(shards.includes('INKWAVE_TEST_SHARD_INDEX: ${{ matrix.shard }}'));
   assert.ok(shards.includes('run: node --experimental-vm-modules scripts/check-inkwave-patches.mjs'));
-  assert.ok(shards.includes('if: failure() && hashFiles('));
+  assertShardEvidencePolicy(workflow);
   assert.ok(gate.includes('needs: [validate_core, patch_tests]'));
   assert.ok(gate.includes('always()'));
   assert.ok(gate.includes('test "$CORE_RESULT" = success'));
@@ -268,7 +302,7 @@ test('emitted Bot respawn and retry regressions reuse the complete production si
   const marker = '      - name: Verify emitted Bot navigation respawn and retry state';
   assert.equal(validate.split(marker).length - 1, 1);
   const at = validate.indexOf(marker);
-  const build = validate.indexOf('node scripts/build-inkwave.mjs inkwave-public _site');
+  const build = validate.indexOf('tar -xf immutable-site.tar');
   const receipt = validate.indexOf('git rev-parse HEAD > _site-source-sha.txt');
   assert.ok(build >= 0 && receipt > build && at > receipt, 'use the completed production build');
   const end = validate.indexOf('\n      - name:', at + marker.length);
@@ -351,7 +385,7 @@ test('emitted streamed music gate runs all twenty-three cases on the built runti
   streamedMusicRegistrationContract(tests);
   const core = workflow.slice(workflow.indexOf('  validate_core:'), workflow.indexOf('  patch_tests:'));
   assert.ok(core.includes(match[0]), 'required validate core owns emitted music');
-  assert.ok(core.indexOf('node scripts/build-inkwave.mjs') >= 0 && core.indexOf('node scripts/build-inkwave.mjs') < core.indexOf(match[0]), 'same immutable build runs first');
+  assert.ok(core.indexOf('tar -xf immutable-site.tar') >= 0 && core.indexOf('tar -xf immutable-site.tar') < core.indexOf(match[0]), 'same source-bound immutable build is verified first');
 });
 
 
@@ -364,4 +398,46 @@ test('context RAF diagnostic contracts remain in the required verifier regressio
   assert.ok(fs.existsSync(new URL('../../' + target, import.meta.url)), 'registered diagnostic test exists');
   const core = workflow.slice(workflow.indexOf('  validate_core:'), workflow.indexOf('  patch_tests:'));
   assert.ok(core.includes(match[0]), 'required core owns the diagnostics contract tests');
+});
+
+// Protect the reviewed diagnostic exception without turning ordinary CI cancellation off.
+function assertCancellationPolicy(source){
+ const expression=source.match(/^  cancel-in-progress: \$\{\{ (.+) \}\}$/m)?.[1];
+ assert.equal(expression,'!(inputs.diagnostic_only == true && (inputs.network_opening_diagnostic == true || inputs.wall_render_diagnostic == true))');
+ for(const diagnostic of [false,true])for(const opening of [false,true])for(const wall of [false,true]){
+  const actual=Function('inputs','return '+expression)({diagnostic_only:diagnostic,network_opening_diagnostic:opening,wall_render_diagnostic:wall});
+  assert.equal(actual,!(diagnostic&&(opening||wall)));
+ }
+}
+function assertShardEvidencePolicy(source){
+ const start=source.indexOf('  patch_tests:'),end=source.indexOf('  validate:',start);assert(start>=0&&end>start);
+ const shard=source.slice(start,end),upload=shard.slice(shard.indexOf('      - uses: actions/upload-artifact@v4'));
+ assert(upload.startsWith('      - uses: actions/upload-artifact@v4'));
+ assert(upload.includes("if: always() && hashFiles('.ci-scratch/inkwave-patches/shard-manifest.json') != ''"));
+ assert(upload.includes('name: inkwave-patch-evidence-shard-${{ matrix.shard }}-${{ env.SOURCE_SHA }}'));
+ assert.equal((upload.match(/if-no-files-found:/g)||[]).length,1);assert(upload.includes('if-no-files-found: error'));assert.match(upload,/^          path: \.ci-scratch\/inkwave-patches\/$/m);
+ const condition=upload.match(/^        if: (.+)$/m)[1];
+ // A compatibility error before the manifest skips upload; a later isolated
+ // child failure with a manifest but no patch-tests.log still preserves evidence.
+ for(const manifest of [false,true])for(const failure of [false,true]){
+  const actual=Function('always','failure','hashFiles','return '+condition)(()=>true,()=>failure,name=>{assert.equal(name,'.ci-scratch/inkwave-patches/shard-manifest.json');return manifest?'sha':'';});
+  assert.equal(actual,manifest);
+ }
+ const gate=source.slice(end,source.indexOf('  browser:',end));
+ assert(gate.includes('test "$CORE_RESULT" = success'));assert(gate.includes('test "$PATCH_RESULT" = success'));
+ assert(!shard.includes('continue-on-error: true'));
+
+}
+test('workflow policy negatives reject cancellation loss and failure-only or unbound shard evidence',()=>{
+ assertCancellationPolicy(workflow);assertShardEvidencePolicy(workflow);
+ for(const [from,to,check]of [
+  ['!(inputs.diagnostic_only == true && (inputs.network_opening_diagnostic == true || inputs.wall_render_diagnostic == true))','true',assertCancellationPolicy],
+  ['!(inputs.diagnostic_only == true && (','!(inputs.diagnostic_only == true || (',assertCancellationPolicy],
+  ["if: always() && hashFiles('.ci-scratch/inkwave-patches/shard-manifest.json')", "if: failure() && hashFiles('.ci-scratch/inkwave-patches/shard-manifest.json')",assertShardEvidencePolicy],
+  ["hashFiles('.ci-scratch/inkwave-patches/shard-manifest.json')", "hashFiles('.ci-scratch/inkwave-patches/patch-tests.log')",assertShardEvidencePolicy],
+  ['name: inkwave-patch-evidence-shard-${{ matrix.shard }}-${{ env.SOURCE_SHA }}','name: unbound-evidence',assertShardEvidencePolicy],
+  ['path: .ci-scratch/inkwave-patches/','path: .ci-scratch/inkwave-patches/patch-tests.log',assertShardEvidencePolicy],
+  ['test "$PATCH_RESULT" = success','test "$PATCH_RESULT" = failure',assertShardEvidencePolicy],
+  ['name: inkwave-patch-evidence-shard-','if-no-files-found: ignore\n          name: inkwave-patch-evidence-shard-',assertShardEvidencePolicy]
+ ]){assert(workflow.includes(from));const mutant=workflow.replace(from,to);assert.notEqual(mutant,workflow);assert.throws(()=>check(mutant));}
 });

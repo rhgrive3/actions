@@ -90,6 +90,8 @@ test('real catalog Roller and Brush shots follow down-45 camera pitch despite ho
   for(const [name,vertical] of [['Carbon Roller',true],['Dynamo Roller',true],
     ['Flingza Roller',true],['Big Swig Roller',true],['Inkbrush',false],['Painbrush',false]]){
     const r=source(name),a=f.make(r.id);
+    const vmRecord=a.weapon.catalogRecord;
+    assert.equal(vmRecord.id,r.id,name+' native VM owns the selected source row');
     f.G.projectiles.clear();f.G.actors.length=0;
     a.form='kid';a.ink=100;a.grounded=!vertical;a.s3JumpAirborne=vertical;
     a.aimPitch=-Math.PI/4;a.aimYaw=0;
@@ -98,15 +100,17 @@ test('real catalog Roller and Brush shots follow down-45 camera pitch despite ho
     a.weaponRunner.update(1/60,{fire:true,firePressed:true});
     for(let tick=0;tick<75;tick++)
       a.weaponRunner.update(1/60,{fire:false,firePressed:false,sub:false});
-    const rounds=f.G.projectiles.list.filter(p=>p.catalog?.r?.id===r.id);
+    const rounds=f.G.projectiles.list.filter(p=>p.catalog?.r===vmRecord);
     assert.ok(rounds.length>0,name+' emitted source round');
     const p=rounds[0],actualPitch=Math.atan2(p.vel.y,Math.hypot(p.vel.x,p.vel.z));
     const unit=r.parameters[vertical?'VerticalSwingUnitGroupParam':'SwingUnitGroupParam'].Unit[0];
     const basePitch=vertical?catalogRollerSourcePitch(unit,0,true):0;
-    const sourcePitch=-Math.PI/4+basePitch*DEG;
-    const lift=unit.AddSpawnSpeedYRateByXZ??unit.AddSpawnSpeedYRateBySpeed??0;
-    near(actualPitch,Math.atan2(Math.sin(sourcePitch)+lift,Math.cos(sourcePitch)),
-      name+' real camera-pitch launch with source lift');
+    const admittedPitch=-Math.PI/4+basePitch*DEG;
+    // Brush's pinned -0.02 vertical speed term applies after aiming. Its
+    // source tilt is retained; the test must not silently require zero lift.
+    const sourceLift=unit.AddSpawnSpeedYRateByXZ??unit.AddSpawnSpeedYRateBySpeed??0;
+    const expectedPitch=Math.atan2(Math.sin(admittedPitch)+sourceLift,Math.cos(admittedPitch));
+    near(actualPitch,expectedPitch,name+' real camera-pitch launch with source vertical speed');
     assert.ok(actualPitch<-.35,name+' must not be flattened onto horizontal reticle');
   }
 });

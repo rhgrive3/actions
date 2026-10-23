@@ -21,7 +21,7 @@ const life = a => a?.remote ? a.net?.lastLife ?? a.netLife ?? 0 : a?.netLife ?? 
 const key = (from, seq) => JSON.stringify([from,seq]);
 const isKit = id => id === 'suction' || id === 'curling';
 const clock = () => performance.now()/1000;
-function state(nm) {
+function state(nm,prune=true) {
  let s=states.get(nm);
  if(!s || s.epoch!==epoch(nm)){
   s={epoch:epoch(nm),births:new Map(),pending:new Map(),expired:new Map(),retiredBirths:new Map(),retiredProjectiles:new Map(),
@@ -33,9 +33,13 @@ function state(nm) {
    finally{s.proofFlushing=false;}
   });
  }
+ if(prune)pruneState(nm,s);
+ return s;
+}
+function pruneState(nm,s){
  for(const [k,b] of s.births){const a=nm.byNid.get(b.nid);if(!a || a.owner!==b.owner || !nm.s._members?.has(b.owner))s.births.delete(k);}
  for(const from of s.pending.keys())if(!nm.s._members?.has(from))s.pending.delete(from);
- return s;
+ s.lastPrune=clock();
 }
 function identify(e) {
  if(!Array.isArray(e))return false;
@@ -278,9 +282,9 @@ export function prepareKitPaintEvents(nm,from,d){
  return ready;
 }
 export function kitPaintPlayback(nm,from,e){
- const s=state(nm);if(s.flushing)return true;
+ const s=state(nm,false);if(s.flushing)return true;
  const birth=bubblerBirth(e)||catalogueBirth(e)||e[1]==='b'||e[1]==='p'&&e[3]==='slosh'&&e[4]==='slosher';
- if(!birth&&!paintMeta(e)&&!s.pending.has(from))return true;
+ if(!birth&&!paintMeta(e)&&!s.pending.has(from)){if(!(clock()<s.lastPrune+.25))pruneState(nm,s);return true;}
  const ready=prepareKitPaintEvents(nm,from,{r:2,e:[e]});
  if(ready.length===1&&ready[0]===e)return true;
  s.flushing=true;try{for(const row of ready)nm._play(from,row);}finally{s.flushing=false;}

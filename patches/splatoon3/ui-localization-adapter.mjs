@@ -14,7 +14,14 @@ export function adaptUiLocalization(rel, code) {
     code = code.slice(0,dictionary.end-1)+'\n  ...UI_JA,\n'+code.slice(dictionary.end-1);
     code = code.replace('if (out == null && isJa) out = JA[s];', 'if (out == null) out = isJa ? JA[s] : UI_EN[s];');
     code = code.replace('if (!isJa) return s;\n  const v = JA[s];', 'if (!isJa) return UI_EN[s] ?? s;\n  const v = JA[s];');
-    return "import { makeUiTranslator, UI_JA, UI_EN } from '../patches/splatoon3/runtime/ui-strings.mjs';\n" + code + '\nexport const tu = makeUiTranslator(t, JA, isJa);\n';
+    // Arbitrary text nodes include player names such as "constructor". An
+    // inherited Object.prototype member is not a dictionary translation.
+    let lookups = 0;
+    code = code.replace(/\b(JA_TOUCH|EN_TOUCH|JA|UI_EN)\[s\]/g, (_, name) => { lookups++; return `ownTranslation(${name}, s)`; });
+    if (lookups !== 8) throw Error('Missing exact/touch dictionary lookup anchors');
+    return "import { makeUiTranslator, UI_JA, UI_EN } from '../patches/splatoon3/runtime/ui-strings.mjs';\n" +
+      'const ownTranslation = (dictionary, key) => Object.hasOwn(dictionary, key) ? dictionary[key] : undefined;\n' +
+      code + '\nexport const tu = makeUiTranslator(t, JA, isJa);\n';
   }
   if (rel === 'src/ui/news.js') {
     // h() localises each literal text child; keep the bullet's separator out of its text so the text matches an entry.

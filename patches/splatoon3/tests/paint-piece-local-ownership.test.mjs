@@ -10,7 +10,7 @@ const legacySampling=source.replace('return !!paintDotCellWitness(mask, face, x,
  .replace('Math.max(face.cu, face.cv) * 0.5 + mask.margin','Math.max(face.cu, face.cv) * 0.32 + mask.margin')
  .replace('y + face.cv * 0.5 < yLo || y - face.cv * 0.5 > ext','y < yLo || y > ext')
  .replace('x + face.cu * 0.5 < -ext || x - face.cu * 0.5 > ext','x < -ext || x > ext');
-const candidate=await import('data:text/javascript;base64,'+Buffer.from(legacySampling+'\nexport {claimAncillaryCells,ensureOwnershipState};').toString('base64'));
+const candidate=await import('data:text/javascript;base64,'+Buffer.from(legacySampling.replace(/from '(\.\/[^']+)'/g, (_, rel) => 'from ' + JSON.stringify(new URL('../runtime/' + rel, import.meta.url).href))+'\nexport {claimAncillaryCells,ensureOwnershipState};').toString('base64'));
 const contract={shapes:[[5,0,0,3],[3,0,0,2],[7,0,0,4],[10,0,0,5],[3,0,0,2],[2,0,0,1],[0,0,0,0],[0,0,0,0]],kind:{speck:7},reach:[2.8,3,2.8,2.8,3,2.8,1,1],dripReach:4};
 function paint(){const p={grid:new Uint8Array(96*96),dead:new Uint8Array(96*96),counts:[0,0],version:0};candidate.ensureOwnershipState(p);p._paintOrderRecords=[null,{clock:1,peer:'a',seq:1},{clock:2,peer:'b',seq:1},{clock:3,peer:'a',seq:2}];return p;}
 function face(wall,cell=.25){return{atlas:{ppm:32},su:24,sv:24,nu:96,nv:96,cu:cell,cv:cell,grid:0,wall,turf:!wall};}

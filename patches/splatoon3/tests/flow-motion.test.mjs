@@ -452,3 +452,18 @@ test('native animation interruptions and null-owner preview preserve authoritati
     progress('passed');
   } finally { r.close(); victim.close(); }
 });
+
+test('active cached Flow tiers only copy matrices when visible, refreshing every first re-entry', async () => {
+ const api=await production(),r=rig(api),victim=rig(api,'shooter',1);
+ try{
+  prepare(api,r.a);award(api,r.a,victim.a);for(let i=0;i<30;i++)r.step();
+  for(const tier of [0,1,2]){r.ch.setLod(tier);r.visual();}
+  const shells=r.ch.root.getObjectsByProperty('isSkinnedMesh',true).filter(o=>o.name.startsWith('s3-flow-edge:'));
+  assert(shells.length>0);const counts=new Map();
+  for(const shell of shells){const copy=shell.matrix.copy;counts.set(shell,0);shell.matrix.copy=function(m){counts.set(shell,counts.get(shell)+1);return copy.call(this,m);};}
+  for(const tier of [0,2,1,0,1,2]){
+   r.ch.setLod(tier);for(const shell of shells)counts.set(shell,0);r.visual();
+   for(const shell of shells){assert.equal(counts.get(shell),shell.visible?1:0);if(shell.visible){const source=shell.parent.children.find(o=>o!==shell&&!o.name.startsWith('s3-flow-edge:')&&o.geometry?.index===shell.geometry.index);assert(source);assert.deepEqual(shell.matrix.elements,source.matrix.elements);}}
+  }
+ }finally{r.close();victim.close();}
+});

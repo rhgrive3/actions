@@ -106,15 +106,16 @@ export function installMenuQuality(Menus, env=globalThis){
     // lists). Convert to the scroller's content box; its own overflow clip
     // replaces the computed one. Keep the ring inside the host horizontally
     // so a full-width row is not cut along its sides.
-    const C=m._cur,b=host.getBoundingClientRect();
+    const C=m._cur,b=m._queueLayoutSample?.rect(host)||host.getBoundingClientRect();
     const ox=b.left+host.clientLeft-host.scrollLeft,oy=b.top+host.clientTop-host.scrollTop;
     let x=C.x.x-ox,w=Math.max(0,C.w.x);
     const lo=host.scrollLeft+1,hi=host.scrollLeft+host.clientWidth-1;
     if(x<lo){w-=lo-x;x=lo;}
     if(x+w>hi)w=Math.max(0,hi-x);
     const st=ring.style;
-    st.transform=`translate3d(${x.toFixed(1)}px,${(C.y.x-oy).toFixed(1)}px,0)`;
-    st.width=w.toFixed(1)+'px';
+    const transform=`translate3d(${x.toFixed(1)}px,${(C.y.x-oy).toFixed(1)}px,0)`,width=w.toFixed(1)+'px';
+    if(st.transform!==transform)st.transform=transform;
+    if(st.width!==width)st.width=width;
     if(C.clip){C.clip='';st.clipPath='';}
   }
   if(cursor)P._updateCursor=function(dt){frameTick(this);return place(this,dt);};

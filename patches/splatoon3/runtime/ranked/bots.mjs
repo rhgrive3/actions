@@ -1,3 +1,18 @@
+// Exact, directly evaluated angles; no trigonometric approximation or reordered arithmetic.
+const CLAM_ARC_SAMPLES = Array.from({ length: 211 }, (_, step) => {
+  const pitch = -1.1 + step * 0.01;
+  return { pitch, cosine: Math.cos(pitch), sine: Math.sin(pitch) };
+});
+function captureRankedTail(dt, move, yaw, pitch, distance, moving) {
+  // Assigned once per brain; avoid a fresh interceptor closure per update.
+  const out = this._rankedTailArguments || (this._rankedTailArguments = []);
+  out.length = arguments.length;
+  if (out.length > 0) out[0] = dt; if (out.length > 1) out[1] = move;
+  if (out.length > 2) out[2] = yaw; if (out.length > 3) out[3] = pitch;
+  if (out.length > 4) out[4] = distance; if (out.length > 5) out[5] = moving;
+  for (let i = 6; i < out.length; i++) out[i] = arguments[i];
+  this._rankedTailReady = true;
+}
 const RANKED_MODES = new Set(['zones', 'tower', 'rainmaker', 'clams']);
 const finite = (n, fallback = 0) => Number.isFinite(n) ? n : fallback;
 const point = value => Array.isArray(value) && value.length >= 3 && value.slice(0, 3).every(Number.isFinite)
@@ -40,11 +55,10 @@ function clamThrowAim(actor, goal, engine) {
   // corresponding ballistic arc so the flight crosses the basket or pass
   // target instead of aiming along a level line.
   for (let step = 0; step <= 210; step++) {
-    const pitch = -1.1 + step * 0.01;
-    const cosine = Math.cos(pitch);
+    const { pitch, cosine, sine } = CLAM_ARC_SAMPLES[step];
     if (cosine < 0.15) continue;
     const flight = horizontal / (speed * cosine);
-    const y = speed * (Math.sin(pitch) + 0.42) * flight - 4.9 * flight * flight;
+    const y = speed * (sine + 0.42) * flight - 4.9 * flight * flight;
     const error = Math.abs(y - height);
     if (error < bestError) { bestPitch = pitch; bestError = error; }
   }
@@ -74,7 +88,7 @@ function towerApproachPath(brain, target, engine, G, frame, jumpHeight, nativeTo
   const approachX = target.x + ux * (halfSize + 0.45);
   const approachZ = target.z + uz * (halfSize + 0.45);
   const lowY = target.y - jumpHeight - 0.2;
-  let best = null;
+  let best = null, nonNegativeRouteCosts;
   for (const id of nav.validIds || []) {
     const node = nav.nodes[id];
     const toDeck = Math.hypot(node.x - target.x, node.z - target.z);
@@ -90,6 +104,15 @@ function towerApproachPath(brain, target, engine, G, frame, jumpHeight, nativeTo
         if (frame.blocked([node.x, node.y + 0.45, node.z], [jumpStart[0], jumpStart[1] + 0.45, jumpStart[2]]) === true) continue;
       } catch { continue; }
     }
+    const approachError = Math.hypot(node.x - approachX, node.z - approachZ);
+    // Zero is an admissible route-cost bound only for a nonnegative graph.
+    // Verify that contract lazily within this synchronous selection, including
+    // custom graphs; do not cache it across graph edits or truncate candidates.
+    const lowerScore = 0 + approachError * 1.5 + Math.abs(height - 0.45) * 0.2;
+    if (best && lowerScore >= best.score) {
+      if (nonNegativeRouteCosts === undefined) nonNegativeRouteCosts = nav.nodes.every(n => n.nb.every(edge => Number.isFinite(edge.cost) && edge.cost >= 0));
+      if (nonNegativeRouteCosts) continue;
+    }
     const path = nav.path(start, id, actor.team);
     if (!path) continue;
     let routeCost = 0;
@@ -97,7 +120,6 @@ function towerApproachPath(brain, target, engine, G, frame, jumpHeight, nativeTo
       const edge = nav.nodes[path[i - 1]].nb.find(item => item.to === path[i]);
       routeCost += edge?.cost ?? 1;
     }
-    const approachError = Math.hypot(node.x - approachX, node.z - approachZ);
     const score = routeCost + approachError * 1.5 + Math.abs(height - 0.45) * 0.2;
     if (!best || score < best.score) best = { path, node, score };
   }
@@ -110,6 +132,18 @@ function towerApproachPath(brain, target, engine, G, frame, jumpHeight, nativeTo
   brain._rankedApproachGoal = { x: target.x, y: target.y, z: target.z };
   brain._rankedApproachNode = best.node.id;
   return true;
+}
+
+function compareApproach(a, b) { return a.score - b.score || a.order - b.order; }
+function siftApproach(heap, index) {
+  const value = heap[index], n = heap.length;
+  while (index * 2 + 1 < n) {
+    let child = index * 2 + 1;
+    if (child + 1 < n && compareApproach(heap[child + 1], heap[child]) < 0) child++;
+    if (compareApproach(value, heap[child]) <= 0) break;
+    heap[index] = heap[child]; index = child;
+  }
+  heap[index] = value;
 }
 
 function rainmakerBarrierApproach(brain, objective, shieldAim, frame, G) {
@@ -143,10 +177,12 @@ function rainmakerBarrierApproach(brain, objective, shieldAim, frame, G) {
     // shorter real projectile path reduces spread and flight error; route cost
     // still breaks ties between equally close reachable positions.
     const score = travel * 0.35 + distance * 5 + Math.abs(node.y - actor.pos.y) * 5;
-    candidates.push({ node, score });
+    candidates.push({ node, score, order: candidates.length });
   }
-  candidates.sort((a, b) => a.score - b.score);
-  for (const { node } of candidates) {
+  for (let i = (candidates.length >>> 1) - 1; i >= 0; i--) siftApproach(candidates, i);
+  while (candidates.length) {
+    const { node } = candidates[0], last = candidates.pop();
+    if (candidates.length) { candidates[0] = last; siftApproach(candidates, 0); }
     if (!nav.path(start, node.id, actor.team)) continue;
     return { x: node.x, y: node.y, z: node.z, node: node.id };
   }
@@ -195,12 +231,12 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER, nativeTower) {
   }
   const dx = target.x - a.pos.x, dy = target.y - a.pos.y, dz = target.z - a.pos.z;
   const horizontal = Math.hypot(dx, dz);
-  const key = `${action}:${target.x.toFixed(1)}:${target.y.toFixed(1)}:${target.z.toFixed(1)}`;
   brain._rankedPathRetry = Math.max(0, finite(brain._rankedPathRetry) - dt);
   const movedTarget = !brain._rankedGoalKey || horizontalDistance(brain._rankedGoalPos, target) > 1.1;
   const pathChanged = brain.path !== brain._rankedPathRef;
   const needPath = movedTarget || pathChanged || brain.repath <= 0 || (!brain.path && brain._rankedPathRetry <= 0) || brain.pi >= brain.path?.length;
   if (needPath && typeof brain._pathTo === 'function') {
+    const key = `${action}:${target.x.toFixed(1)}:${target.y.toFixed(1)}:${target.z.toFixed(1)}`;
     const jumpVelocity = finite(PLAYER?.jumpVel, 8.4);
     const gravity = Math.max(1, finite(PLAYER?.gravity, 25));
     const maxJumpHeight = jumpVelocity * jumpVelocity / (2 * gravity) + 0.22;
@@ -368,7 +404,7 @@ export function installRankedBots(api = {}) {
   if (!proto || proto._rankedBotWrapped) return () => {};
   Object.defineProperty(proto, '_rankedBotWrapped', { value: true });
   const update = proto.update;
-  proto.update = function (dt) {
+  const rankedUpdate = function (dt) {
     const match = G?.match, engine = match?.ranked, actor = this.a;
     if (!engine || !RANKED_MODES.has(engine.mode) || !actor?.alive || actor.superJumpState
       || (typeof match.playing === 'function' && !match.playing())) {
@@ -387,10 +423,12 @@ export function installRankedBots(api = {}) {
     let nativeTail = null;
     const hadOwnTail = Object.prototype.hasOwnProperty.call(this, '_tail');
     const oldTail = this._tail;
-    this._tail = (...args) => { nativeTail = args; };
+    this._rankedTailReady = false;
+    this._tail = this._rankedTailInterceptor || (this._rankedTailInterceptor = captureRankedTail.bind(this));
     let result;
     try { result = update.call(this, dt); }
     finally { if (hadOwnTail) this._tail = oldTail; else delete this._tail; }
+    if (this._rankedTailReady) nativeTail = this._rankedTailArguments;
 
     // A screened native wall/drop transition owns ordinary inputs until actual
     // touchdown. Objective steering resumes after that physical transition.
@@ -442,6 +480,13 @@ export function installRankedBots(api = {}) {
     // objective action then take ownership for this frame.
     if (!steerRanked(this, dt, goal, engine, frame, G, api.PLAYER, api.nativeTower) && nativeTail && typeof oldTail === 'function') oldTail.apply(this, nativeTail);
     return result;
+  };
+  proto.update = function (dt) {
+    const nav = G?.nav, engine = G?.match?.ranked;
+    if (engine && RANKED_MODES.has(engine.mode) && typeof nav?.withPathMemo === 'function') {
+      return nav.withPathMemo(rankedUpdate, this, dt);
+    }
+    return rankedUpdate.call(this, dt);
   };
   return () => { proto.update = update; delete proto._rankedBotWrapped; };
 }

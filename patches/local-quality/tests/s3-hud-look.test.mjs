@@ -84,7 +84,8 @@ test('S3 look: a pinned squiggle joins the squid to the tank foot and beats whil
   const tube = hud.slice(hud.indexOf('  _s3TankTube(ink, dt) {'), hud.indexOf('  _drawTank('));
   assert.ok(tube.length > 0);
   assert.match(hud, /this\._s3TankTube\(ink, dt\);/);
-  assert.match(tube, /env = Math\.sin\(Math\.PI \* u\)/, 'both ends stay pinned');
+  assert.match(tube, /env: Math\.sin\(Math\.PI \* u\)/, 'cached basis keeps both ends pinned');
+  assert.match(tube, /const o = p\.env \* amp/, 'each frame consumes the pinned basis envelope');
   assert.match(tube, /const flowing = ink < 0\.995;/);
   assert.doesNotMatch(tube.split('if (!L.tubeGeo')[1].split('\n')[0], /offset(Height|Width|Left|Top)/, 'no per-frame layout read in the guard');
 });

@@ -21,9 +21,14 @@ export function resetPlatformInput(input, controller) {
   const actor = controller.a;
   if (actor?.intent) {
     actor.intent.move?.set(0, 0, 0);
-    for (const key of ['fire', 'jump', 'squid', 'sub', 'special']) actor.intent[key] = false;
+    for (const key of ['fire', 'jump', 'squid', 'sub', 'special', 'throw']) actor.intent[key] = false;
   }
   if (actor) {
+    // A network tick can precede the next Actor update on resume. Retire the
+    // derived command and any transport-refused one-shot at the same boundary
+    // as physical input, rather than broadcasting the previous frame again.
+    if (actor._rankedInput) actor._rankedInput.fire = actor._rankedInput.throw = false;
+    actor._rankedThrowPending = actor._rankedThrowHeld = actor._rankedTouchThrowHeld = false;
     for (const key of ['jumpBuffer', 'fireBuffer']) if (key in actor) actor[key] = 0;
     const weapon = actor.weaponRunner;
     if (weapon?.charging) {
@@ -34,7 +39,7 @@ export function resetPlatformInput(input, controller) {
     // Deferred shots are derived from the input just neutralized; do not let
     // them survive a platform boundary and synthesize a later fire (#991).
     weapon?.cancelPendingInput?.();
-    if (actor._prevIntent) for (const key of ['fire', 'jump', 'squid', 'sub', 'special']) actor._prevIntent[key] = false;
+    if (actor._prevIntent) for (const key of ['fire', 'jump', 'squid', 'sub', 'special', 'throw']) actor._prevIntent[key] = false;
   }
 }
 export function installInputPlatform(Input, env = globalThis) {

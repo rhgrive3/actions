@@ -1,9 +1,7 @@
-// Browser-serializable QA composition. The ordinary Game._intro HUD reveal is
-// a real 3000 ms timer guarded by the owning match remaining in intro. Finishing
-// intro synchronously before that timer would legitimately cancel the reveal.
-// Hold only the noninteractive cinematic while its native timers/CSS settle;
-// then call the unchanged native-frame helper. Never step or suppress a live
-// gameplay frame, mutate UI, run timers manually, or extend the host deadline.
+// Current HUD presentation uses the Match clock; historical builds use wall
+// timers. Advance only owned intro frames to finish a native presentation
+// record, then hold the cinematic while DOM/CSS settles. Never advance a live
+// gameplay frame, mutate UI or extend the original host deadline.
 export function nativeTurfIntroWithUiFunction(completeIntro, deadline) {
   if (!Number.isFinite(deadline)) throw new Error('Native intro requires the original finite deadline');
   return new Function(`return async function(){
@@ -26,7 +24,8 @@ export function nativeTurfIntroWithUiFunction(completeIntro, deadline) {
       return result;
     }
     if(m.state!=='intro')throw new Error('Native cinematic UI requires intro');
-    const time=m.time,stateT=m.stateT,skipRender=g._skipRender;
+    const time=m.time,initialStateT=m.stateT,skipRender=g._skipRender;
+    let stateT=m.stateT,presentationFrames=0;
     const intact=()=>{
       if(g.match!==m || G.match!==m || G.mode!=='match' || m.state!=='intro' ||
          m.time!==time || m.stateT!==stateT || m.paused || m.attract || m.bossMode ||
@@ -38,9 +37,25 @@ export function nativeTurfIntroWithUiFunction(completeIntro, deadline) {
     g.debug.freeze();
     try{
       g._skipRender=true;
+      receipt.initialUi=window.__iwProjectileCaptureUiGate({phase:'intro-ui-wait',allowIntro:true,settled:false,requireHudSettled:true});
+      const presentation=g._introPresentation;
+      if(presentation){
+        if(presentation.match!==m || presentation.flow!==g._matchFlow)
+          throw new Error('Native cinematic presentation ownership changed');
+        while(g._introPresentation===presentation){
+          budget();intact();
+          if(presentationFrames>=360)throw new Error('Native cinematic presentation did not finish');
+          g._frame(1/60);presentationFrames++;stateT=m.stateT;
+          intact();
+        }
+        if(g._introPresentation)throw new Error('Native cinematic presentation was replaced');
+      }
+      receipt.presentationFrames=presentationFrames;
+      let initialUi=receipt.initialUi;
       while(true){
         budget();intact();
-        const ui=window.__iwProjectileCaptureUiGate({phase:'intro-ui-wait',allowIntro:true,settled:false,requireHudSettled:true});
+        const ui=initialUi||window.__iwProjectileCaptureUiGate({phase:'intro-ui-wait',allowIntro:true,settled:false,requireHudSettled:true});
+        initialUi=null;
         receipt.lastUi=ui;
         const history=receipt.history;
         const sample=JSON.parse(JSON.stringify({attempt:++history.count,observedAtMs:ui.observedAtMs,
@@ -67,7 +82,8 @@ export function nativeTurfIntroWithUiFunction(completeIntro, deadline) {
       budget();
       const result=(${completeIntro.toString()})();
       receipt.completedAtMs=Date.now();receipt.outcome='completed';
-      return {...result,uiWait:{startedAtMs:receipt.startedAtMs,uiReadyAtMs:receipt.uiReadyAtMs,waits:receipt.waits}};
+      return {...result,frames:result.frames+presentationFrames,stateTBefore:initialStateT,
+        uiWait:{startedAtMs:receipt.startedAtMs,uiReadyAtMs:receipt.uiReadyAtMs,waits:receipt.waits,presentationFrames}};
     }catch(error){receipt.outcome='failed';receipt.error=String(error?.message||error);throw error;}
     }catch(error){receipt.outcome='failed';receipt.error=String(error?.message||error);throw error;}
   }`)();

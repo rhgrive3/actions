@@ -164,6 +164,11 @@ test('wall collision wins over basket contact and repeated impacts settle on the
   rule.state.inventories.carrier = { team: 0, small: 1, power: false };
   rule.update(1 / 60, blankFrame([actor], { carrier: { throw: true, aim: [0, 0, 1] } }));
 
+  // Place the collision just above the elevated support. The previous fixture
+  // returned a floor at y=2 for a clam at y=1.15, above floorAt's yMax and
+  // therefore unreachable by the production height-bounded floor query.
+  rule.state.clams[0].pos[1] = 2.1;
+
   for (let i = 0; i < 3; i++) {
     rule.update(1 / 30, blankFrame([actor], {}, {
       blocked: () => true,

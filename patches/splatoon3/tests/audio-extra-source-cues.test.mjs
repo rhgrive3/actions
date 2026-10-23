@@ -22,7 +22,19 @@ const { installWeaponAudioEngine }=await audioModule('engine.mjs');
 const { installWeaponAudioRuntime }=await audioModule('runtime.mjs');
 
 const dir = new URL('s3-real/',audioRoot);
-const installed = JSON.parse(fs.readFileSync(new URL('real-s3-installed.json',audioRoot),'utf8'));
+const installedText = fs.readFileSync(new URL('real-s3-installed.json',audioRoot),'utf8');
+const runtimeInstalled = JSON.parse(installedText);
+// The deployed projection omits audit-only metadata. Bind it to the complete
+// source manifest, then independently compare every ordered runtime declaration.
+const auditText = built ? fs.readFileSync(new URL('../runtime/audio/real-s3-installed.json',import.meta.url),'utf8') : installedText;
+const installed = JSON.parse(auditText);
+if(built){
+ assert.equal(runtimeInstalled.provenance.sourceManifestSha256,crypto.createHash('sha256').update(auditText).digest('hex'));
+ const fields=['id','event','variant','file','gain','sha256','loopStart','loopEnd','seamlessLoop'];
+ const signature=m=>validateAuthorizedManifest(m).map(c=>fields.map(k=>c[k]));
+ assert.deepEqual(signature(runtimeInstalled),signature(installed),'all emitted audio routes, hashes and playback values retain source order');
+}
+
 const original = JSON.parse(fs.readFileSync(new URL('real-s3-samples.json',audioRoot),'utf8'));
 const gitBlobSha = bytes => crypto.createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');
 
@@ -148,7 +160,7 @@ test('production runtime prefetches routed kit sounds and retains original audio
   class Projectiles {throwBomb(){} _push(){} _blastBurst(){}}
   const ensured=[],loops=[],listeners=new Map();
   const G={time:0,audio:{ctx:{state:'running'},play(){},prepareWeapon(){},
-    _realS3Loader:{ensure(id,event){ensured.push([id,event]);return Promise.resolve();}},
+    _realS3Loader:{declares(id,event){return id==='special:booyahBomb'&&event==='spin';},ensure(id,event){ensured.push([id,event]);return Promise.resolve();}},
     loopWeapon(id,event){const h={id,event,playing:true,stops:0,set(){},stop(){this.playing=false;this.stops++;}};loops.push(h);return h;}}};
   const on=(name,fn)=>{if(!listeners.has(name))listeners.set(name,new Set());listeners.get(name).add(fn);return ()=>listeners.get(name).delete(fn);};
   const runtime=installWeaponAudioRuntime({G,Actor,WeaponRunner,Projectiles,on});

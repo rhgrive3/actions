@@ -730,6 +730,7 @@ function domeEntry(dome, start, end, radius, out) {
  */
 export function kitBarrierCandidate(p, start, end, excludedDomeIds = null) {
   if (!p || !start || !end) return null;
+  if (!domes.length && !remoteDomes.length) return null;
   const radius = p.size || 0;
   // A neutral round (no team, or a non-integer one) may only ever be intercepted
   // visually; it must never be able to spend a dome budget.

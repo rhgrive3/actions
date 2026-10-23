@@ -26,7 +26,7 @@ const { G } = f;
 installClock({ G });
 const Game = new Function('G', `return class Game {
   ${section('  resume() {', '  async quitToMenu() {')}
-  ${section('  _padMenus() {', '  _updateHud(dt) {')}
+  ${section('  _padMenus(', '  _updateHud(dt) {')}
   ${section('  _startAttract() {', '  _attractShot() {')}
   ${section('  _beginMatchFlow() {', '  async _startMenuMatch(')}
 }`)(G);

@@ -15,7 +15,7 @@ export function adaptPaintBodyEdge(rel, code, replaceOnce) {
 
 export function adaptPaintOwnership(rel, code, replaceOnce) {
   if (rel === 'src/world/paint.js') {
-    code = "import { paintShapeSeed } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
+    code = "import { notePaintMutation } from '../../patches/splatoon3/runtime/scoring.mjs';\nimport { paintShapeSeed } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
     code = replaceOnce(code,
       'float hsh(float n) { return fract(sin(n) * 43758.5453123); }',
       'float hsh(float n) { return fract(sin(n) * 43758.5453123); }\n' + PAINT_SHAPE_HASH_GLSL,
@@ -47,25 +47,57 @@ export function adaptPaintOwnership(rel, code, replaceOnce) {
       'finish completed paint ownership');
     code = replaceOnce(code,
       '      this._emitGrowth(g, Math.min(tn, 3), dT, bodyDone);',
-      '      this._advanceSplatOwnership(g);\n      this._emitGrowth(g, Math.min(tn, 3), dT, bodyDone);',
+      '      this._advanceSplatOwnership(g, Math.min(tn, 3), dT);\n      this._emitGrowth(g, Math.min(tn, 3), dT, bodyDone);',
       'advance ownership at the native growth phase');
 
     code = replaceOnce(code,
       '        const k = f.grid + j * f.nu + i;\n        const prev = this.grid[k];\n        if (prev === val) continue;\n        this.grid[k] = val;',
       '        const k = f.grid + j * f.nu + i;\n' +
       '        const prev = this.grid[k];\n' +
-      '        if (!this._paintClaimCell(k, val, orderId || this._paintCurrentOrder, orderState)) continue;\n' +
+      '        if (!this._paintClaimPreparedCell(k, val, orderId || this._paintCurrentOrder, orderState)) continue;\n' +
       '        if (prev === val) continue;\n' +
       '        this.grid[k] = val;',
       'preserve newest paint ownership order');
+    code = replaceOnce(code,
+      '    r.setRenderTarget(this.rt);\n    r.setClearColor(0x000000, 0);\n    r.clear(true, false, false);\n    r.setRenderTarget(prev);\n    r.setClearColor(cc, ca);',
+      '    try { r.setRenderTarget(this.rt);r.setClearColor(0x000000, 0);r.clear(true, false, false); }\n    finally { try { r.setRenderTarget(prev); } finally { r.setClearColor(cc, ca); } }\n    this._paintRenderError=null;',
+      'paint atlas clear restores renderer even after failure');
+    code = replaceOnce(code,
+      '    r.autoClear = false;\n    r.setRenderTarget(this.rt);\n    r.render(this.scene, this.cam);\n    r.setRenderTarget(prev);\n    r.autoClear = ac;',
+      '    if(this._paintRenderError)throw this._paintRenderError;\n    try { r.autoClear=false;r.setRenderTarget(this.rt);r.render(this.scene,this.cam); }\n    catch(error){this._paintRenderError=error;throw error;}\n    finally { try { r.setRenderTarget(prev); } finally { r.autoClear=ac; } }',
+      'paint atlas draw restores target and fails closed before retrying a partial pass');
+    code = replaceOnce(code,
+      '      const dT = 1 - Math.pow(1 - td, 2.2);',
+      '      const dT = g.dripDur ? 1 - Math.pow(1 - td, 2.2) : 1;',
+      'non-dripping growth has exact constant phase');
+    code = replaceOnce(code,
+      '        if (lvl.pointInside(p, 0, f.block)) this.dead[k] = 1;',
+      '        if (lvl.pointInsideGrid ? lvl.pointInsideGrid(p, f.block) : lvl.pointInside(p, 0, f.block)) this.dead[k] = 1;',
+      'legacy grid reuses a single hash bucket with canonical fallback');
+    code = replaceOnce(code, '    if (changed) this.version++;',
+      '    if (changed) notePaintMutation(this, claimed > 0);', 'turf-specific coverage invalidation');
+    // Only the canonical body loop is batched. Ancillary sparse visitors retain
+    // their exact per-cell notifications, including rejected/dead exclusions.
+    const bodyStart = code.indexOf('  _cpuSplat('), bodyEnd = code.indexOf('\n  _pushQuad(', bodyStart);
+    let body = code.slice(bodyStart, bodyEnd);
+    body = replaceOnce(body, '    for (let j = j0; j <= j1; j++) {',
+      '    for (let j = j0; j <= j1; j++) {\n      let dirtyMin = Infinity, dirtyMax = -Infinity, dirtyCount = 0;', 'body dirty row accumulator');
+    body = replaceOnce(body, '        if (this._inkMark) this._inkMark(f, i, j);   // #895 map-space dirty bounds for the live minimap',
+      '        if (this._inkMarkRow) { if (f.turf && !this.dead[k]) { dirtyMin = Math.min(dirtyMin, i); dirtyMax = Math.max(dirtyMax, i); dirtyCount++; } } else if (this._inkMark) this._inkMark(f, i, j);', 'body dirty row accepted cells');
+    body = replaceOnce(body, '      }\n    }\n    if (changed)',
+      '      }\n      if (dirtyCount && this._inkMarkRow) this._inkMarkRow(f, dirtyMin, dirtyMax, j, dirtyCount);\n    }\n    if (changed)', 'body dirty row flush');
+    code = code.slice(0, bodyStart) + body + code.slice(bodyEnd);
     code = adaptPaintBodyEdge(rel, code, replaceOnce);
     code = replaceOnce(code,
       '  _cpuSplat(f, lu, lv, r, team, seed, sdu, sdv, sa, kind) {',
-      '  _cpuSplat(f, lu, lv, r, team, seed, sdu, sdv, sa, kind, orderId = 0, orderState = null) {',
+      '  _cpuSplat(f, lu, lv, r, team, seed, sdu, sdv, sa, kind, orderId = 0, orderState = null) {\n    this._preparePaintOwnership();',
       'canonical paint ownership receives network order');
   }
 
   if (rel === 'src/game/weapons.js') {
+    code=replaceOnce(code,'for (let i = 1; i < pos.count; i++) {','for (let i = 1; i < n; i++) {','native sub preview only accumulates visible line distances');
+    code=replaceOnce(code,'new THREE.Color(0.6, 0.6, 0.6);','(this._arcLowInkColor ||= new THREE.Color(0.6, 0.6, 0.6));','reuse native sub preview low-ink colour');
+
     code = "import { projectileBurstPaintSeed } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
     const edits = [
       ["seed: Math.random(), kind: 'roll', stretch: _fwd });", "seed: Math.random(), kind: 'roll', stretch: _fwd, claimOwner: a });", 'roller body ownership credit'],

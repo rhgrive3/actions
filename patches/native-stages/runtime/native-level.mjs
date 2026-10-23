@@ -11,7 +11,7 @@ export class NativeLevel extends Level {
  constructor(data) {
   const m=data.manifest;
   assertSourceTerrainObjects(m);
-  super({id:m.id,bounds:m.bounds,spawnPads:m.spawnPads,spawnBarrier:m.spawnBarrier,single:[],half:[]});
+  super({id:m.id,bounds:m.bounds,spawnPads:m.spawnPads,spawnBarrier:m.spawnBarrier,single:[],half:[],skipInitialSpatialHash:true});
   this.native=true;this.manifest=m;this.data=data;this.layout.nativeSource=true;
   this.homeSuperJumpPoints=this.spawnPads.map(p=>p.clone());
   this.triangleWorld=new TriangleWorld(data);this.hasRails=false;
@@ -43,11 +43,14 @@ export class NativeLevel extends Level {
   this.staticBlockCount=this.blocks.length;
   this._buildHash();
   this._probe=new THREE.Vector3();
+  this._groundHit={point:new THREE.Vector3(),normal:new THREE.Vector3()};
+  this._groundOptions={minNormalY:.68};this._supportOptions={minNormalY:.68,anyHit:true,minHitY:-Infinity};
  }
+ invalidateMinimapSupport(){this.minimapSupportRevision=(this.minimapSupportRevision||0)+1;}
  groundHeight(x,z,yMax=50){
   const yMin=this.triangleWorld.nodes[1]-1;
   if(yMax<yMin)return -Infinity;
-  const hit=this.triangleWorld.ray(this._probe.set(x,yMax+.001,z),DOWN,yMax-yMin+1,{minNormalY:.68});
+  const hit=this.triangleWorld.ray(this._probe.set(x,yMax+.001,z),DOWN,yMax-yMin+1,this._groundOptions,this._groundHit);
   return hit?hit.point.y:-Infinity;
  }
  // Bot water guards need only one walkable support above the fall limit.
@@ -59,7 +62,8 @@ export class NativeLevel extends Level {
   }
   const yMin=this.triangleWorld.nodes[1]-1;
   if(yMax<yMin)return false;
-  return !!this.triangleWorld.ray(this._probe.set(x,yMax+.001,z),DOWN,yMax-yMin+1,{minNormalY:.68,anyHit:true,minHitY:minimumY});
+  this._supportOptions.minHitY=minimumY;
+  return !!this.triangleWorld.ray(this._probe.set(x,yMax+.001,z),DOWN,yMax-yMin+1,this._supportOptions);
  }
  containsOnFace(face,p,tolerance=.002){
   const rel=this._relNative||(this._relNative=new THREE.Vector3());rel.copy(p).sub(face.origin);
@@ -99,11 +103,12 @@ export class NativeLevel extends Level {
  queryBlocksBand(minX,minZ,maxX,maxZ,out,y,reach,mode){
   out.length=0;
   if(this._bandHash!==this.hash){this._bandHash=this.hash;this._bandCells=new Array(this.hash.length);}
-  const st=++this._stamp,stamps=this.blockStamp,cells=this._bandCells;
+  const st=this._nextQueryStamp(),stamps=this.blockStamp,cells=this._bandCells;
   const x0=this._hxi(minX),x1=this._hxi(maxX),z0=this._hzi(minZ),z1=this._hzi(maxZ);
   for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++){
    const c=z*this.hw+x,cell=this.hash[c];let band=cells[c];
-   if(!band||band.length!==cell.length)band=cells[c]=this._bandCell(cell);
+   if(!band||band.length!==cell.length)band=cells[c]={length:cell.length};
+   if(mode===0&&!band.lo||mode!==0&&!band.origin)this._bandCell(cell,band,mode);
    if(mode===0){
     const lo=band.lo,hi=band.hi;
     for(let i=0;i<cell.length;i++){
@@ -120,18 +125,20 @@ export class NativeLevel extends Level {
   }
   return out;
  }
- _bandCell(cell){
-  const n=cell.length,lo=new Float64Array(n),hi=new Float64Array(n),origin=new Float64Array(n);
-  for(let i=0;i<n;i++){
-   const id=cell[i],b=this.blocks[id];
-   if(id>=this.staticBlockCount||!b){lo[i]=-Infinity;hi[i]=Infinity;origin[i]=NaN;continue;}
-   lo[i]=b.aabbMin.y;hi[i]=b.aabbMax.y;
-   const f=b.faces,single=b.nativeFace!==undefined&&f[0]===b.nativeFace&&f[1]<0&&f[2]<0&&f[3]<0&&f[4]<0&&f[5]<0;
-   // A static object has no paint face, so regionStats never reads it
-   // (Infinity rejects it unless y is NaN; then it passes and is a no-op).
-   origin[i]=single?this.faces[b.nativeFace].origin.y:f.every(face=>face<0)?Infinity:NaN;
+ _bandCell(cell,band,mode){
+  const n=cell.length;
+  if(mode===0){
+   const lo=band.lo=new Float64Array(n),hi=band.hi=new Float64Array(n);
+   for(let i=0;i<n;i++){const id=cell[i],b=this.blocks[id];if(id>=this.staticBlockCount||!b){lo[i]=-Infinity;hi[i]=Infinity;}else{lo[i]=b.aabbMin.y;hi[i]=b.aabbMax.y;}}
+  }else{
+   const origin=band.origin=new Float64Array(n);
+   for(let i=0;i<n;i++){
+    const id=cell[i],b=this.blocks[id];if(id>=this.staticBlockCount||!b){origin[i]=NaN;continue;}
+    const f=b.faces,single=b.nativeFace!==undefined&&f[0]===b.nativeFace&&f[1]<0&&f[2]<0&&f[3]<0&&f[4]<0&&f[5]<0;
+    origin[i]=single?this.faces[b.nativeFace].origin.y:f.every(face=>face<0)?Infinity:NaN;
+   }
   }
-  return {length:n,lo,hi,origin};
+  return band;
  }
  queryDynamicBlocks(minX,minZ,maxX,maxZ,out){
   out.length=0;
@@ -160,6 +167,18 @@ export function initNativeGrid(paint){
 
 export function layoutNativePaint(paint,maxDensity){
  paint.pad=2;paint.paintFaces=paint.level.faces.filter(f=>f.paintable);
- for(let ppm=maxDensity;ppm>.05;ppm*=.8)if(paint._tryPack(paint.paintFaces,ppm,paint.size)){paint.ppm=ppm;return;}
+ const rects=paint.paintFaces.map((f,index)=>({f,index,w:0,h:0,x:0,y:0})),S=paint.size,pad=paint.pad;
+ for(let ppm=maxDensity;ppm>.05;ppm*=.8){
+  let area=0,valid=Number.isSafeInteger(S)&&S>0;
+  for(const r of rects){r.w=Math.ceil(r.f.su*ppm)+pad*2;r.h=Math.ceil(r.f.sv*ppm)+pad*2;area+=r.w*r.h;if(!Number.isSafeInteger(r.w)||!Number.isSafeInteger(r.h)||r.w<0||r.h<0||!Number.isSafeInteger(area))valid=false;}
+  if(!valid){if(paint._tryPack(paint.paintFaces,ppm,S)){paint.ppm=ppm;return;}continue;}
+  if(area>S*S)continue;
+  rects.sort((a,b)=>b.h-a.h||a.index-b.index);
+  let x=0,y=0,rowH=0,fits=true;
+  for(const r of rects){if(r.w>S){fits=false;break;}if(x+r.w>S){x=0;y+=rowH;rowH=0;}if(y+r.h>S){fits=false;break;}r.x=x;r.y=y;x+=r.w;rowH=Math.max(rowH,r.h);}
+  if(!fits)continue;
+  for(const r of rects)r.f.atlas={x:r.x,y:r.y,w:r.w,h:r.h,ppm,pad};
+  paint.usedHeight=y+rowH;paint.ppm=ppm;return;
+ }
  throw Error('Native ink atlas capacity exceeded');
 }

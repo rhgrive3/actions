@@ -1,0 +1,63 @@
+  spark(kind, p, vx, vy, vz, life, s0, s1, col, a = 1, o = null) {
+    this.kit.sparks.spawn(p.x, p.y, p.z, vx, vy, vz, life, s0, s1, col[0], col[1], col[2], a, kind, o);
+  }
+  puff(kind, p, vx, vy, vz, life, s0, s1, col, a = 1, o = null) {
+    if (kind === PUFF.CHUNK) { col = this.inkCol(col); if (o?.stretch === undefined) o = { ...o, stretch: 0.03 }; }   // liquid drops
+    this.kit.puffs.spawn(p.x, p.y, p.z, vx, vy, vz, life, s0, s1, col[0], col[1], col[2], a, kind, o);
+  }
+  // radial burst of thrown ink: glossy teardrops stretched along their flight, falling under gravity
+  // (S3 sprays liquid ink, not light; o.glow keeps the old additive light streaks for genuinely luminous sources)
+  streaks(p, n, speed, col, o = {}) {
+    n = Math.max(1, Math.round(n * this.kit.q));
+    const up = o.up ?? 0.4, life = o.life ?? 0.45, size = o.size ?? 0.06, drag = o.drag ?? 3.2;
+    for (let i = 0; i < n; i++) {
+      const th = rnd(TAU), y = clamp(up + rnd(o.spread ?? 1, -(o.spread ?? 1)) * 0.6, -1, 1), h = Math.sqrt(1 - y * y), s = speed * rnd(1.2, 0.55);
+      if (o.glow) this.spark(SPARK.STREAK, p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.2, 0.7), size, size * 0.4, col, o.alpha ?? 1, { drag, grav: o.grav ?? 4, stretch: o.stretch ?? 0.09 });
+      else if (i % 3 === 2) {   // glossy shards with white cores among the drops (S3 splatter)
+        const c = this.inkCol(col), sz = size * rnd(3.6, 2);
+        this.kit.puffs.spawn(p.x, p.y, p.z, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.4, 0.9), sz, sz * 0.5, c[0], c[1], c[2], 1, PUFF.PETAL, { drag: drag * 0.5, grav: (o.grav ?? 14) * 0.6, rot: rnd(TAU), spin: rnd(12, -12), fadeIn: 0.01 });
+      } else this.drop(p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.6, 1.0), size * rnd(2.6, 0.8), col, { drag: drag * 0.35, grav: o.grav ?? 14, stretch: 0.05 });
+    }
+  }
+  // one liquid ink drop (a lit teardrop impostor in the puff pool); col is the plain team colour
+  drop(p, vx, vy, vz, life, size, col, o = {}) {
+    const c = this.inkCol(col);
+    this.puff(PUFF.CHUNK, p, vx, vy, vz, life, size, size * (o.shrink ?? 0.45), c, 1, { drag: o.drag ?? 0.9, grav: o.grav ?? 14, stretch: o.stretch ?? 0.035, fadeIn: 0.01 });
+  }
+  // ink is the team colour itself: strip any HDR lift a caller meant for glow (bloom threshold 2.4)
+  inkCol(c) { const m = Math.max(c[0], c[1], c[2]); if (m <= 1) return c; const lo = Math.min(c[0], c[1], c[2]), w = Math.min(lo, m - 1) * 0.8;
+    return [(c[0] - w) / (m - w), (c[1] - w) / (m - w), (c[2] - w) / (m - w)]; }
+  stars(p, n, radius, col, o = {}) {
+    n = Math.max(1, Math.round(n * this.kit.q));
+    for (let i = 0; i < n; i++) {
+      const th = rnd(TAU), r = radius * Math.sqrt(vfxRandom()), y = rnd(o.h ?? 1.2, o.h0 ?? 0);
+      this.v[7].set(p.x + Math.cos(th) * r, p.y + y, p.z + Math.sin(th) * r);
+      this.spark(SPARK.STAR, this.v[7], rnd(0.6, -0.6), rnd(o.rise ?? 1.4, 0.2), rnd(0.6, -0.6), rnd(o.life ?? 0.7, 0.35), o.size ?? 0.22, 0.02, col, 1, { drag: 1.5, spin: rnd(4, -4) });
+    }
+  }
+  chunks(p, n, speed, col, o = {}) {
+    n = Math.max(1, Math.round(n * this.kit.q));
+    const c = this.inkCol(col);
+    for (let i = 0; i < n; i++) {
+      const th = rnd(TAU), y = rnd(o.upMax ?? 1, o.upMin ?? 0.25), h = Math.sqrt(Math.max(0, 1 - y * y)), s = speed * rnd(1.15, 0.45);
+      this.puff(PUFF.CHUNK, p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, rnd(o.life ?? 0.9, 0.5), (o.size ?? 0.18) * rnd(1.4, 0.6), (o.size ?? 0.18) * 0.4, c, 1, { drag: 0.8, grav: 15, rot: rnd(TAU), spin: rnd(6, -6), stretch: 0.03, fadeIn: 0.01 });
+    }
+  }
+  // S3 ink petals: pointed glossy leaves with a white core, thrown out and tumbling (83.0s, 96.8s)
+  petals(p, n, speed, col, o = {}) {
+    n = Math.max(1, Math.round(n * this.kit.q));
+    const c = this.inkCol(col);
+    for (let i = 0; i < n; i++) {
+      const th = rnd(TAU), y = rnd(o.upMax ?? 0.9, o.upMin ?? -0.1), h = Math.sqrt(Math.max(0, 1 - y * y)), sp = speed * rnd(1.2, 0.5);
+      const sz = (o.size ?? 0.22) * rnd(1.5, 0.7);
+      this.kit.puffs.spawn(p.x, p.y, p.z, Math.cos(th) * h * sp, y * sp, Math.sin(th) * h * sp, rnd(o.life ?? 0.8, 0.45), sz, sz * 0.5, c[0], c[1], c[2], 1, PUFF.PETAL,
+        { drag: o.drag ?? 2.2, grav: o.grav ?? 7, rot: rnd(TAU), spin: rnd(10, -10), fadeIn: 0.01 });
+    }
+  }
+  smoke(p, n, col, o = {}) {
+    n = Math.max(1, Math.round(n * this.kit.q));
+    for (let i = 0; i < n; i++) {
+      const th = rnd(TAU), s = (o.speed ?? 2) * rnd(1, 0.3);
+      this.puff(o.kind ?? PUFF.SMOKE, p, Math.cos(th) * s, rnd(o.rise ?? 1.2, 0.2), Math.sin(th) * s, rnd(o.life ?? 1.2, 0.6), (o.size ?? 0.5) * rnd(1.2, 0.7), (o.size ?? 0.5) * (o.grow ?? 2.4), col, o.alpha ?? 0.6, { drag: o.drag ?? 2.2, buoy: o.buoy ?? 0.6, spin: rnd(1, -1), fadeIn: 0.05 });
+    }
+  }

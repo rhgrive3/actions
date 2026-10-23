@@ -111,8 +111,9 @@ export function stepSprinkler(b,paint,projectiles,G,physics,player){
       for(const actor of G.actors||[]){
         if(!actor?.alive||actor.team===b.team||!actor.pos||b.ghost&&(actor.remote||actor.owner!==G.netm?.myId))continue;
         // Exact capsule broad-phase: avoid allocating centres or querying LOS for distant actors.
-        if(b.ghost&&(Math.abs(st.p1.x-actor.pos.x)>.3||Math.abs(st.p1.z-actor.pos.z)>.3))continue;
-        const centre=b.ghost?(st.receiverCentre||=(actor.pos.clone())).copy(actor.pos):actor.pos.clone();centre.y+=actor.smoothY||0;
+        const reach=b.ghost?.3:player?.radius+.3;
+        if(Number.isFinite(reach)&&reach>=0&&(Math.abs(st.p1.x-actor.pos.x)>reach||Math.abs(st.p1.z-actor.pos.z)>reach))continue;
+        const centre=(st.receiverCentre||=(actor.pos.clone())).copy(actor.pos);centre.y+=actor.smoothY||0;
         const h=actor.form==='squid'?player?.squidHeight:player?.height;
         if(!Number.isFinite(h))continue;
         if(physics.pointCapsuleDist(st.p1,centre,player.radius,h)>.3)continue;

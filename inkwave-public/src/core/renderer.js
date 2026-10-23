@@ -241,8 +241,19 @@ export class Renderer {
 
   // Install (or replace) the screen-FX post pass; kept across quality/setting rebuilds.
   setExtraPass(pass) {
+    if (pass === this.extraPass) return;
+    const previous = this.extraPass, comp = this.composer;
     this.extraPass = pass;
-    if (this.scene) this._buildComposer();
+    if (!this.scene) return;
+    const gradeIndex = comp?.passes?.indexOf(this.grade) ?? -1;
+    // A new pass may impose different packed-color constraints after a native
+    // target exists. Rebuild that case through the existing format selector.
+    if (gradeIndex < 0 || typeof comp.insertPass !== 'function' || typeof comp.removePass !== 'function' || (pass && this._composerUsesPackedTarget)) {
+      this._buildComposer();
+      return;
+    }
+    if (previous) comp.removePass(previous);
+    if (pass) comp.insertPass(pass, comp.passes.indexOf(this.grade) + 1);
   }
 
   applySettings(settings) {
@@ -250,7 +261,7 @@ export class Renderer {
     this.settings = settings;
     this.q = effectiveQuality(settings, this.mobile);
     const shadowChanged = this.renderer.shadowMap.enabled !== (settings.shadows !== false);
-    const qualityChanged = prevQ !== this.q;
+    const qualityChanged = prevQ !== this.q && (!prevQ || Object.keys(prevQ).length !== Object.keys(this.q).length || Object.keys(this.q).some(key => prevQ[key] !== this.q[key]));
     if (qualityChanged) {
       this.dynScale = 1;
       this._buildComposer();

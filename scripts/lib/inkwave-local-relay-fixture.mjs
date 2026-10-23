@@ -2,6 +2,21 @@
 // through the production Worker fetch/RoomDurableObject, never handleSession.
 import * as productionWorker from '../../server/src/index.js';
 
+// Classify for QA delay only. Forward the original envelope unchanged so the
+// production Transport retains ownership of relay-clock authentication.
+export function isRelayTickFrame(text) {
+  if (!text.startsWith('m|')) return false;
+  const senderEnd = text.indexOf('|', 2);
+  if (senderEnd < 3) throw new Error('Malformed relay sender');
+  let start = senderEnd + 1;
+  if (text[start] === '@') {
+    const end = text.indexOf('|', start), token = text.slice(start + 1, end);
+    if (end < 0 || !/^\d{1,16}$/.test(token) || !Number.isSafeInteger(Number(token))) throw new Error('Malformed relay timestamp');
+    start = end + 1;
+  }
+  return JSON.parse(text.slice(start))?.k === 't';
+}
+
 class Endpoint {
   constructor() { this.listeners=new Map();this.pending=[];this.closed=null;this.external=null; }
   accept() {}

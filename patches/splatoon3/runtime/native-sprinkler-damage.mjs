@@ -84,8 +84,11 @@ export function installNativeSprinklerDamage(api){
  const play=NetMatch.prototype._play;
  NetMatch.prototype._play=function(from,event){
   if(event?.[1]!=='b')return play.call(this,from,event);
-  const before=new Set(G.projectiles?.bombs||[]),result=play.call(this,from,event);
   const a=this.byNid?.get(event[2]);
+  if(!a?.remote||a.owner!==from)return play.call(this,from,event);
+  // Composed bomb wrappers may evict/replace existing entries: retain identity
+  // membership for admitted owners rather than assuming an append-only list.
+  const before=new Set(G.projectiles?.bombs||[]),result=play.call(this,from,event);
   if(a?.remote&&a.owner===from)for(const b of G.projectiles?.bombs||[])if(!before.has(b)&&b.owner===a&&b.ghost&&sprinkler(b))birth(b,this,event._netSeq);
   return result;
  };

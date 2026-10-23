@@ -48,7 +48,8 @@ export async function fixture({ search = '', adapt = true } = {}) {
   const session = load('src/net/session.js');
   const admission = module(fs.readFileSync(new URL('../session-admission.mjs', import.meta.url),'utf8'));
   const outbound = module(fs.readFileSync(new URL('../../network-replication/outbound-prefix.mjs', import.meta.url),'utf8'));
-  await session.link(spec => ({ '../core/ctx.js': core, '../config.js': config, '../game/character-style.js': style, './transport.js': transport, './netmatch.js': match, '../../patches/reliability/session-admission.mjs': admission, '../../patches/network-replication/outbound-prefix.mjs': outbound })[spec]);
+  const utf8 = module(fs.readFileSync(new URL('../../network-replication/utf8-length.mjs', import.meta.url),'utf8'));
+  await session.link(spec => ({ '../core/ctx.js': core, '../config.js': config, '../game/character-style.js': style, './transport.js': transport, './netmatch.js': match, '../../patches/reliability/session-admission.mjs': admission, '../../patches/network-replication/outbound-prefix.mjs': outbound, './utf8-length.mjs': utf8, '../../patches/network-replication/utf8-length.mjs': utf8 })[spec]);
   await session.evaluate();
   const G = core.namespace.G;
   G.game = { netMatchGo() {} };

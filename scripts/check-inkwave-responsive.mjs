@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {responsiveAnimationsSettled} from './lib/inkwave-responsive-animation-settle.mjs';
 // Focused menu regression. Runs the production menu DOM/CSS with the
 // existing offline session fixture; does not claim real-device or gameplay proof.
 import assert from 'node:assert/strict';
@@ -7,10 +8,11 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { settleResponsiveAnimationsInPage } from './lib/inkwave-responsive-animation-diagnostics.mjs';
 import { checkCoreMenus } from './check-inkwave-responsive-core.mjs';
 import { createResponsiveAssetServer } from './lib/inkwave-responsive-server.mjs';
 import { confirmResponsiveMockHostTeams } from './inkwave-responsive-fixture.mjs';
-import { createResponsiveDiagnostics, collectResponsiveFailure, createResponsiveProgressWriter } from './lib/inkwave-responsive-diagnostics.mjs';
+import { createResponsiveDiagnostics, collectResponsiveFailure, createResponsiveProgressWriter, createResponsiveFatalPageError } from './lib/inkwave-responsive-diagnostics.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const arg = (name) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : null; };
@@ -81,7 +83,7 @@ const sourceHashes = () => Object.fromEntries(['styles/mobile.css', 'styles/ui.c
   return [f, hash(fs.readFileSync(original ? path.join(path.resolve(baseline), 'inkwave-public', f) : path.join(source, f)))];
 }));
 result.sourceHashes = sourceHashes();
-const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs', 'check-inkwave-result-continuation.mjs', 'lib/inkwave-responsive-server.mjs', 'lib/inkwave-responsive-diagnostics.mjs', 'inkwave-responsive-fixture.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
+const runnerHashes = () => Object.fromEntries(['check-inkwave-responsive.mjs', 'check-inkwave-responsive-core.mjs', 'check-inkwave-result-continuation.mjs', 'lib/inkwave-responsive-server.mjs', 'lib/inkwave-responsive-diagnostics.mjs', 'lib/inkwave-responsive-animation-diagnostics.mjs', 'lib/inkwave-responsive-animation-settle.mjs', 'inkwave-responsive-fixture.mjs'].map((f) => [f, hash(fs.readFileSync(path.join(repo, 'scripts', f)))]));
 result.runnerHashes = runnerHashes();
 const configurations = [
   ['phone-portrait', { ...devices['iPhone 13'], viewport: { width: 390, height: 844 } }],
@@ -96,9 +98,7 @@ const show = async (page, name) => {
   await page.evaluate((screen) => { menus.wipe.cancel(); menus.show(screen, { wipe: false, light: false, force: true }); }, name);
   await settle(page);
 };
-const settle = async (page) => page.evaluate(async () => {
-  await Promise.all(document.getAnimations().filter((a) => a.effect?.getTiming().iterations !== Infinity).map((a) => a.finished.catch(() => {})));
-});
+const settle = async (page, observe = false) => page.evaluate(settleResponsiveAnimationsInPage, observe);
 const geometry = async (page, selector, label) => {
   await settle(page);
   const controls = page.locator(selector);
@@ -140,25 +140,29 @@ try {
       context.on('close', () => diagnostics.unavailable('context-close'));
       context.browser()?.on('disconnected', () => diagnostics.unavailable('browser-disconnected'));
       page.on('console', message => {
+        if (message.type() === 'info') diagnostics.animations(message.text());
         if (['error', 'warning'].includes(message.type())) diagnostics.record('console-' + message.type(), message.text());
       });
       const onStageComplete = name => diagnostics.stage(name);
-      page.on('pageerror', (e) => result.errors.push(`${engineName}/${name}: ${e.message}`));
-      await page.addInitScript(() => {
-        window.responsiveEvents = [];
-        for (const event of ['pointerdown', 'pointerup', 'click', 'gotpointercapture', 'lostpointercapture']) document.addEventListener(event, (e) => {
-          responsiveEvents.push({ event, pointerType: e.pointerType, target: e.target.closest('button,input')?.className || e.target.className, tag: e.target.tagName, x: e.clientX, y: e.clientY });
-          if (responsiveEvents.length > 12) responsiveEvents.shift();
-        }, true);
-      });
+      const onOperation = (id, boundary) => diagnostics.operation(id, boundary);
+      const fatalPageError = createResponsiveFatalPageError({ diagnostics, closeContext: () => context.close(),
+        recordError: e => result.errors.push(`${engineName}/${name}: ${e.message}`) });
+      page.on('pageerror', e => fatalPageError.handle(e));
       try {
+        await page.addInitScript(() => {
+          window.responsiveEvents = [];
+          for (const event of ['pointerdown', 'pointerup', 'click', 'gotpointercapture', 'lostpointercapture']) document.addEventListener(event, (e) => {
+            responsiveEvents.push({ event, pointerType: e.pointerType, target: e.target.closest('button,input')?.className || e.target.className, tag: e.target.tagName, x: e.clientX, y: e.clientY });
+            if (responsiveEvents.length > 12) responsiveEvents.shift();
+          }, true);
+        });
         await page.goto(address);
         await page.waitForFunction(() => window.menuReady);
         await page.evaluate(() => document.fonts.ready);
         await show(page, 'online');
         if (name === 'desktop') {
           if (section !== 'expansion') {
-            await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, onStageComplete,
+            await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, onStageComplete, onOperation,
               geometry: async (page, selector) => { assert(await page.locator(selector).count()); return 'desktop-captured'; },
               tap: async (page, selector) => { const el=page.locator(selector).first();await el.scrollIntoViewIfNeeded();await el.click(); }, audit: true, testContinuation: !audit });
             for (const [screen, selector] of [['main', '.iw-main__menu'], ['setup', '.iw-ss__hero'], ['settings', '.iw-settings__panel']]) {
@@ -185,7 +189,7 @@ try {
         entry.touchMode = await page.locator('.iw-ui').evaluate((el) => el.classList.contains('is-touch'));
         assert(entry.touchMode, `${name}: touch mode not detected`);
         if (section !== 'expansion') {
-          await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, onStageComplete, geometry, tap, audit });
+          await checkCoreMenus({ touchCameraReset, page, entry, config, engineName, evidence, show, settle, onStageComplete, onOperation, geometry, tap, audit });
           if (section === 'core') { entry.status = audit ? 'audited' : 'passed'; continue; }
           await show(page, 'online');
         }
@@ -302,6 +306,7 @@ try {
         await page.waitForFunction(() => !menus._news.open);
         entry.status = 'passed';
       } catch (error) {
+        error = fatalPageError.error || error;
         await collectResponsiveFailure({ entry, error, diagnostics, page,
           readInteraction: () => page.evaluate(() => ({ events: window.responsiveEvents, inputMode: menus._input, newsPage: document.querySelector('.iw-news')?.dataset.page, newsBusy: menus._news._busy,
           lobby: { state: G.net?.state, isMock: G.net?.isMock, isHost: G.net?.isHost, mode: G.net?.lobby?.mode, teamsConfirmed: G.net?.lobby?.teamsConfirmed, ready: G.net?.lobby?.players.find(p => p.you)?.ready },
@@ -311,9 +316,12 @@ try {
       } finally {
         try {
           diagnostics.record('context-close-start');
-          await diagnostics.close(() => context.close());
+          await diagnostics.close(() => fatalPageError.close());
         }
-        finally { entry.diagnostics = diagnostics.snapshot(); }
+        finally {
+          if (fatalPageError.error) { entry.status = 'failed'; entry.error ||= fatalPageError.error.message; }
+          entry.diagnostics = diagnostics.snapshot();
+        }
       }
     }
   }

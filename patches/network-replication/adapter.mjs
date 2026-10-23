@@ -28,7 +28,7 @@ export function networkIdentity() {
   // keys by writeBuildIdentity. Network keys must stay relative to NETWORK_ROOT:
   // cross-root aliases cannot be bound to exact git-tree paths by the verifiers.
   return Object.fromEntries(['adapter.mjs', 'roller-presentation.mjs', 'issue-1088-surge-adapter.mjs', 'issue-1088-surge-presentation.mjs',
-    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'owner-clock.mjs', 'combat-provenance.mjs', 'sub-birth-commit.mjs', 'sprinkler-contact-commit.mjs', 'torpedo-contact-commit.mjs', 'torpedo-birth-envelope.mjs', 'torpedo-launch-set.mjs', 'combat-provenance-adapter.mjs', 'outbound-prefix.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs', 'combat-hit-ceilings-data.mjs', 'damage-leaves.mjs']
+    'gear-loadout-adapter.mjs', 'conditional-gear-adapter.mjs', 'transient-gear-adapter.mjs', 'paint-authority.mjs', 'paint-authority-adapter.mjs', 'dodge-clock-adapter.mjs', 'snapshot-guard.mjs', 'owner-clock.mjs', 'combat-provenance.mjs', 'sub-birth-commit.mjs', 'sprinkler-contact-commit.mjs', 'torpedo-contact-commit.mjs', 'torpedo-birth-envelope.mjs', 'torpedo-launch-set.mjs', 'combat-provenance-adapter.mjs', 'outbound-prefix.mjs', 'utf8-length.mjs', 'rolling-quantile.mjs', 'ghost-live-index.mjs', 'catalog-paint-admission.mjs', 'superjump-epoch.mjs', 'kit-paint-adapter.mjs', 'kit-paint-admission.mjs', 'tower-paint-support.mjs', 'result-admission.mjs', 'slosher-paint-admission.mjs', 'queue-recovery.mjs', 'queue-recovery-adapter.mjs', 'combat-hit-ceilings-data.mjs', 'damage-leaves.mjs']
     .map(file => [file,crypto.createHash('sha256').update(fs.readFileSync(new URL(file,import.meta.url))).digest('hex')]));
 }
 export function adaptNetworkSource(rel, code) {
@@ -2587,10 +2587,19 @@ function canAllocateNetworkGhost(projectiles, actor) {
     if (!this.match) return;
     const receivedAt = now();
     const previous = this.peers.get(from);
-    if (!validOwnerTickAdvance(d.ts, previous?.lastTs, receivedAt, previous?.lastReceiveAt)) return;
+    // #1767: browser startup can process old ticks late, then drain newer
+    // ticks immediately. Use the relay's forwarding interval when negotiated;
+    // peer JSON cannot manufacture it. Preserve the original five-second guard.
+    const relayMillis = this.s.tr?.relayReceipt?.(from);
+    const relayAt = Number.isSafeInteger(relayMillis) && relayMillis >= 0 ? relayMillis / 1000 : undefined;
+    const useRelay = relayAt !== undefined && (previous?.lastTs === undefined || previous?.lastRelayAt !== undefined)
+      && (previous?.lastRelayAt === undefined || relayAt >= previous.lastRelayAt);
+    if (!validOwnerTickAdvance(d.ts, previous?.lastTs, useRelay ? relayAt : receivedAt,
+      useRelay ? previous?.lastRelayAt : previous?.lastReceiveAt)) return;
     this.stats.in++;
     const p = this._peer(from);
-    p.lastReceiveAt = receivedAt;`,
+    p.lastReceiveAt = receivedAt;
+    p.lastRelayAt = relayAt;`,
       'bound owner tick forward progression');
     // #574: use the established authenticated, life-scoped, deduplicated hit
     // transaction. A zero-damage Blaster contact is admitted only with bounded
@@ -2723,8 +2732,8 @@ function canAllocateNetworkGhost(projectiles, actor) {
     patch('  onMessage(from, d) {',
       '  onMessage(from, d) {\n    if (handleOwnerClockMessage(this, from, d, now())) return;',
       'freshness protocol precedes codec and birth normalization');
-    patch('    if (!validOwnerTickAdvance(d.ts, previous?.lastTs, receivedAt, previous?.lastReceiveAt)) return;',
-      '    if (!validOwnerClockTick(this, from, d, receivedAt, previous)) return;',
+    patch('    if (!validOwnerTickAdvance(d.ts, previous?.lastTs, useRelay ? relayAt : receivedAt,\n      useRelay ? previous?.lastRelayAt : previous?.lastReceiveAt)) return;',
+      '    if (!validOwnerClockTick(this, from, d, receivedAt, previous, useRelay ? relayAt : receivedAt,\n      useRelay ? previous?.lastRelayAt : previous?.lastReceiveAt)) return;',
       'fixed fresh origin cannot gain grace from repeated arrivals');
   }
   return code;

@@ -27,11 +27,13 @@ async function charger(air=false) {
   const step=(dt=DT)=>{f.G.time+=dt;r._charger(dt,{fire:true},a.weapon);};
   return {...f,a,r,pitch,dings,step};
 }
-test('#961 linear charge drives native charge, loop pitch, paid ink and full ding together',async()=>{
+test('#961 linear charge retains progress, paid ink and full ding without a legacy charge loop',async()=>{
   const f=await charger();
   for(let frame=1;frame<=60;frame++){
     f.step();near(f.r.chargeT,frame/60);near(f.r.charge,frame/60);
-    near(f.pitch.at(-1),1+frame/60*1.5);
+    // WeaponRunner.update owns the recorded onset; this charge primitive must
+    // not add a guessed pitch ramp over the source recording's rising tone.
+    assert.equal(f.r.chargeLoop,null);assert.equal(f.pitch.length,0);
     assert.equal(f.dings.filter(s=>s==='charger_full').length,frame===60?1:0);
     if(frame===8)near(100-f.a.ink,2.25);
   }

@@ -9,8 +9,9 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: headgear-sharded-${{ github.ref }}
-  cancel-in-progress: false
+  # Cancel obsolete PR-head checks; keep every main push and manually dispatched run.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   render-headgear:
     runs-on: ubuntu-latest

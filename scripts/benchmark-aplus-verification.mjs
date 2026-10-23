@@ -56,7 +56,12 @@ function benchmarkComposedProductionBuildParity() {
     'BodyBalance current ancestor closure admission'),
     '  for(let i=0;i<this.bank.bones.length;i++){','  for(const i of this.rotationWorldIndices){',
     'BodyBalance current bounded traversal admission')+'\n';
-  assert.equal(bbCurrentSrc,boundedBb,'Current BodyBalance must differ only by the explicit ancestor closure (and final newline)');
+  // The integrated #1815 foot-target/reach-chain caches are independently
+  // retained. Admit only their exact combination with this ancestor closure,
+  // anchored at integration 42b76fba; do not reconstruct them in historical data.
+  const combinedBodySha='ae785b2132151a8a4b40d3d50f416def2704567d70b27bc2f591bb7bd6d078c6';
+  const currentBodySha=createHash('sha256').update(bbCurrentSrc).digest('hex');
+  if(bbCurrentSrc!==boundedBb)assert.equal(currentBodySha,combinedBodySha,'Current BodyBalance must be the exact reviewed closure or its fixed #1815 cache integration');
 
   // Reconstruct exact pre-migration ink-public/src/ raw sources (before Direct-Source migration)
   const lodBeforeSrc = "// INKWAVE — squidkid LOD kit (used by character.js only).\n" +
@@ -137,13 +142,12 @@ function benchmarkComposedProductionBuildParity() {
     "  // the existing cluster result; nonweapon geometries take the original path.\n" +
     "  if (A.aMat && A.color) {\n" +
     "    const attributes = out.attributes, extras = [], splits = new Map(), remapped = [];\n" +
+    "    const sourceMat = A.aMat, sourceColor = A.color, clusterMat = attributes.aMat, clusterColor = attributes.color;\n" +
     "    for (let i = 0; i < tris.length; i++) {\n" +
     "      const cluster = tris[i], original = sourceCorners[i];\n" +
-    "      const same = ['aMat', 'color'].every(name => {\n" +
-    "        const a = A[name], b = attributes[name];\n" +
-    "        for (let k = 0; k < a.itemSize; k++) if (a.getComponent(original, k) !== b.getComponent(cluster, k)) return false;\n" +
-    "        return true;\n" +
-    "      });\n" +
+    "      let same = true;\n" +
+    "      for (let k = 0; k < sourceMat.itemSize; k++) if (sourceMat.getComponent(original, k) !== clusterMat.getComponent(cluster, k)) { same = false; break; }\n" +
+    "      if (same) for (let k = 0; k < sourceColor.itemSize; k++) if (sourceColor.getComponent(original, k) !== clusterColor.getComponent(cluster, k)) { same = false; break; }\n" +
     "      if (same) { remapped.push(cluster); continue; }\n" +
     "      const values = [cluster];\n" +
     "      for (const name of ['aMat', 'color']) for (let k = 0; k < A[name].itemSize; k++) values.push(A[name].getComponent(original, k));\n" +
@@ -244,7 +248,7 @@ function benchmarkComposedProductionBuildParity() {
 
   return {
     auditDisclosure: 'Historical migration only: baseline main (225f1d30 / 8bebf5cf) already injected LOD, AO and BodyBalance optimization in _site/. The frozen migration pairs below remain byte-identical and supply zero new runtime/FPS gain. Later BodyBalance ancestor-closure work is admitted separately and tested by the real source/emitted character regression; it is not covered by the historical identity claim.',
-    currentBodyBalanceFollowup:{baseline:'26a4db41',byteIdentical:false,strictDeltaAdmitted:true,validation:'body-balance-work.test.mjs: real source/emitted 30/60/120Hz final pose/skin/contact/muzzle parity'},
+    currentBodyBalanceFollowup:{baseline:'26a4db41',byteIdentical:false,strictDeltaAdmitted:true,currentSourceSha256:currentBodySha,combinedSourceEpoch:currentBodySha===combinedBodySha?'42b76fba916054a0058c196d70dbc21d6873b705':null,validation:'body-balance-work.test.mjs: real source/emitted 30/60/120Hz final pose/skin/contact/muzzle parity, retaining the separately integrated #1815 caches'},
     composedSiteByteParity: {
       'src/game/character-lod.js': { beforeBytes: Buffer.byteLength(composedLodBefore), afterBytes: Buffer.byteLength(composedLodAfter), byteIdentical: true },
       'src/game/character-outfit.js': { beforeBytes: Buffer.byteLength(composedOutfitBefore), afterBytes: Buffer.byteLength(composedOutfitAfter), byteIdentical: true },

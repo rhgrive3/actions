@@ -44,7 +44,7 @@ export async function fixture(options = {}) {
     fullRuntime, productionComposition, realProjectiles, includeCharacter, extraExports]));
   let generationSucceeded = false;
   try {
-  const context = vm.createContext({ console, performance: vmPerformance, URL, URLSearchParams, TextEncoder, TextDecoder,
+  const context = vm.createContext({ console, crypto: globalThis.crypto, performance: vmPerformance, URL, URLSearchParams, TextEncoder, TextDecoder,
     setTimeout, clearTimeout, queueMicrotask, innerWidth:1280, innerHeight:720 });
   if (typeof vmMathRandom === 'function') {
     context.__inkwaveFixtureMathRandom = vmMathRandom;

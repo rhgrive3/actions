@@ -134,7 +134,13 @@ function record(nm,from,packet,t,acceptedSub=null) {
   const packetStart=store.length;
   for(let i=0;i<Math.min(packet.e.length,256);i++) {
     const candidate=proofFromEvent(nm,from,packet.e[i],poses,packet.ts,t,acceptedSub);
-    if(!candidate || store.some(p=>p.key===candidate.key))continue;
+    if(!candidate)continue;
+    let duplicate=false,recent=0;
+    for(const proof of store) {
+      if(proof.key===candidate.key){duplicate=true;break;}
+      if(proof.actor===candidate.actor && t-proof.at<1)recent++;
+    }
+    if(duplicate)continue;
     // #1665: one main shot records its projectile birth ('p') and then its
     // weapon:fire presentation event in the same frame. Both used to mint a
     // proof, doubling the hits one real round could authorize. The fire event
@@ -143,8 +149,6 @@ function record(nm,from,packet,t,acceptedSub=null) {
     const actor=ownerActor(nm,from,candidate.actor);
     const interval=actor?.weapon?.fireInterval;
     const rate=finite(interval)&&interval>0 ? Math.min(75,Math.ceil(2/interval)+6):32;
-    let recent=0;
-    for(const shot of store)if(shot.actor===candidate.actor && t-shot.at<1)recent++;
     if(recent>=rate)continue;
     store.push(candidate);if(acceptedSub)acceptedProof=candidate;
   }
@@ -437,7 +441,8 @@ function take(nm,from,d,type,t,sprinklerScope=null,allowPoseFallback=true) {
   }
   if(type==='pvp'&&d.w==='torpedo-splash'&&consumeLimitedContact(nm,from,d,t))return true;
   if(type==='pvp'&&d.w==='sprinkler')return consumeReceiverSprinklerContact(nm,from,d,t,sprinklerScope);
-  const s=state(nm);prune(s,t);
+  // combatAdmission is take's sole entry and already prunes at this same t.
+  const s=state(nm);
   const shots=s.proofs.get(from)||[];
   for(const p of shots) {
     if(p.actor!==d.a || p.uses>=p.maxUses || !rayNear(p,target,type==='boss'?6:5.5))continue;

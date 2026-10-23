@@ -18,7 +18,7 @@ export function nativeStageTextureLimit(manifest, quality, {
         if (m.maps?.[key]) unique.add(m.maps[key]);
     }
   }
-  const vertices = Number(manifest?.geometry?.vertices) || 0;
+  const vertices = Number((manifest?.sourceGeometry||manifest?.geometry)?.vertices) || 0;
   const heavy = mats.length >= 30 || vertices >= 150000;
   const memory = Number.isFinite(Number(deviceMemoryGB)) && Number(deviceMemoryGB) > 0
     ? Number(deviceMemoryGB) : null;
@@ -53,7 +53,7 @@ export function nativeStageTextureLimit(manifest, quality, {
 export function nativeStageTextureCaps(manifest, quality, options = {}) {
   const maxDimension = nativeStageTextureLimit(manifest, quality, options);
   const count = Object.keys(manifest?.materials || {}).length;
-  const heavy = count >= 30 || (Number(manifest?.geometry?.vertices) || 0) >= 150000;
+  const heavy = count >= 30 || (Number((manifest?.sourceGeometry||manifest?.geometry)?.vertices) || 0) >= 150000;
   const perRole = {};
   if (quality === 'high' && heavy) {
     if (options.mobile && maxDimension >= 1024) {

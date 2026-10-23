@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "status": "candidate-rejected",
+  "candidate": "49aa562a",
+  "revert": "bfaa6f3e",
+  "canonicalIssue": "https://github.com/rhgrive3/actions/issues/1767",
+  "scope": "Ordered bootstrap backlog accepted by original guard; fixed-anchor candidate permanently rejects healthy successors. Existing later-batch clock limitation remains open; no runtime fix claimed.",
+  "rows": [
+    {
+      "timestamp": 61.5,
+      "receivedAt": 51.611,
+      "retainedProduction": true,
+      "rejectedCandidate": true
+    },
+    {
+      "timestamp": 63,
+      "receivedAt": 51.661,
+      "retainedProduction": true,
+      "rejectedCandidate": true
+    },
+    {
+      "timestamp": 64.5,
+      "receivedAt": 51.711,
+      "retainedProduction": true,
+      "rejectedCandidate": true
+    },
+    {
+      "timestamp": 66,
+      "receivedAt": 51.761,
+      "retainedProduction": true,
+      "rejectedCandidate": false
+    },
+    {
+      "timestamp": 67.5,
+      "receivedAt": 51.811,
+      "retainedProduction": true,
+      "rejectedCandidate": false
+    },
+    {
+      "timestamp": 69,
+      "receivedAt": 51.861,
+      "retainedProduction": true,
+      "rejectedCandidate": false
+    },
+    {
+      "timestamp": 70.5,
+      "receivedAt": 51.911,
+      "retainedProduction": true,
+      "rejectedCandidate": false
+    },
+    {
+      "timestamp": 72,
+      "receivedAt": 51.961,
+      "retainedProduction": true,
+      "rejectedCandidate": false
+    },
+    {
+      "timestamp": 73.5,
+      "receivedAt": 52.011,
+      "retainedProduction": true,
+      "rejectedCandidate": false
+    }
+  ],
+  "candidateFunction": "export function validOwnerTickAdvance(timestamp, previousTimestamp, receivedAt, previousReceivedAt, anchorTimestamp, anchorReceivedAt) {\n  if (!validSnapshotTimestamp(timestamp) || timestamp > OWNER_CLOCK_MAX) return false;\n  if (previousTimestamp === undefined) return true;\n  if (!validSnapshotTimestamp(previousTimestamp) || timestamp <= previousTimestamp) return false;\n  if (anchorTimestamp !== undefined || anchorReceivedAt !== undefined) {\n    if (!validSnapshotTimestamp(anchorTimestamp) || anchorTimestamp > previousTimestamp\n      || !finite(anchorReceivedAt) || !finite(receivedAt)) return false;\n    return timestamp - anchorTimestamp <= Math.max(0, receivedAt - anchorReceivedAt) + OWNER_TICK_FORWARD_GRACE;\n  }\n  const senderDelta = timestamp - previousTimestamp;\n  if (!finite(receivedAt) || !finite(previousReceivedAt)) return senderDelta <= OWNER_TICK_FORWARD_GRACE;\n  const receiveDelta = Math.max(0, receivedAt - previousReceivedAt);\n  return senderDelta <= receiveDelta + OWNER_TICK_FORWARD_GRACE;\n}",
+  "constants": {
+    "OWNER_CLOCK_MAX": 31536000,
+    "OWNER_TICK_FORWARD_GRACE": 5
+  },
+  "candidateGuardSha256": "49ce886a1e76efbbb557d89bce079cad7f9f5d16a4b1b067f50ddf06998c4508"
+}

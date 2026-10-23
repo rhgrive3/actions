@@ -3,7 +3,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import {adaptNativeStages} from '../adapter.mjs';
 import {nativePieceHasInterior,nativeAncillaryCanClaim,nativeAncillaryMaskFind,nativeAncillaryMaskStore,nativeAncillaryMaskReplace,nativeSettledAncillarySlot,nativeSettledAncillaryMatches,nativeStoreSettledAncillary} from '../runtime/native-paint.mjs';
-const load=source=>import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
+const load=source=>import('data:text/javascript;base64,'+Buffer.from(source.replace(/from '(\.\/[^']+)'/g, (_, rel) => 'from ' + JSON.stringify(new URL('../../splatoon3/runtime/' + rel, import.meta.url).href))).toString('base64'));
 const oracle=await load(fs.readFileSync(new URL('./fixtures/paint-ownership-native-b77b51d.mjs.txt',import.meta.url),'utf8'));
 const current=adaptNativeStages('patches/splatoon3/runtime/paint-ownership.mjs',fs.readFileSync(new URL('../../splatoon3/runtime/paint-ownership.mjs',import.meta.url),'utf8'))
  .replace(/import .*native-paint.*;\n/,[nativePieceHasInterior,nativeAncillaryCanClaim,nativeAncillaryMaskFind,nativeAncillaryMaskStore,nativeAncillaryMaskReplace,nativeSettledAncillarySlot,nativeSettledAncillaryMatches,nativeStoreSettledAncillary].map(f=>f.toString()).join('\n')+'\n');

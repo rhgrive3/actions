@@ -228,7 +228,7 @@ test('stage mesh attributes release temporary JS arrays while keeping native ind
   assert.match(changed,/B\.pos = null/);
   assert.match(changed,/B\.ftan = null/);
   assert.match(changed,/B\.idx = null/);
-  assert.match(changed,/g\.setIndex\(B\.idx\)/);
+  assert.match(changed,/g\.setIndex\(B\.idx\.maximum >= 65535\s+\? new THREE\.Uint32BufferAttribute\(B\.idx\.finish\(Uint32Array\)\.buffer, 1\)\s+: new THREE\.Uint16BufferAttribute\(B\.idx\.finish\(Uint16Array\)\.buffer, 1\)\)/);
   assert.match(changed,/this\.renderTris = B\.idx\.length \/ 3/);
   assert.doesNotThrow(()=>new vm.SourceTextModule(changed));
   assert.match(adaptBuildSource('src/world/level.js',original),/B\.idx = null/);

@@ -165,22 +165,26 @@ test('rollback replay remapped to another track drops primed battle',async()=>{
 
 test('stream-only BGM keeps the procedural clock parked and later synthesized music starts its normal scheduler', async () => {
   const f = await rig();
+  // Native prewarm Workers exchange PCM request objects; the note clock uses
+  // numeric delay/zero messages. Count and assert the actual timer protocol.
+  const timers=()=>[...f.workers].filter(w=>typeof w.delay==='number');
+  const clockCount=()=>timers().length+f.intervals.size;
   try {
     assert.equal(f.intervals.size, 0);
-    assert.ok([...f.workers].every(w => !w.delay), 'recorded stream does not run the 25ms note clock');
+    assert.ok(timers().every(w => !w.delay), 'recorded stream does not run the 25ms note clock');
     f.music.play('title', { fade: 0 });
     assert.equal(f.music.current.element, undefined);
-    assert.equal(f.workers.size + f.intervals.size, 1);
-    assert.ok([...f.workers].every(w => w.delay > 0), 'procedural track starts its authoritative clock');
+    assert.equal(clockCount(), 1);
+    assert.ok(timers().every(w => w.delay > 0), 'procedural track starts its authoritative clock');
     f.music._pauseTimer();
     assert.equal(f.intervals.size, 0);
-    assert.ok([...f.workers].every(w => !w.delay));
+    assert.ok(timers().every(w => !w.delay));
     f.music._resumeTimer();
-    assert.equal(f.workers.size + f.intervals.size, 1);
-    assert.ok([...f.workers].every(w => w.delay > 0));
+    assert.equal(clockCount(), 1);
+    assert.ok(timers().every(w => w.delay > 0));
     f.music.setMusicEnabled(false);
-    assert.equal(f.workers.size + f.intervals.size, 0);
+    assert.equal(clockCount(), 0);
     f.music.setMusicEnabled(true);
-    assert.equal(f.workers.size + f.intervals.size, 1);
+    assert.equal(clockCount(), 1);
   } finally { f.music.dispose(); }
 });

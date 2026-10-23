@@ -37,7 +37,7 @@ export function shooterImpactRadius(weapon, projectile, hitPoint) {
   const near = paint.distanceNear ?? SHOOTER_PARAMTABLE_DEFAULTS.distanceNear;
   const middle = paint.distanceMiddle;
   const far = paint.distanceFar ?? SHOOTER_PARAMTABLE_DEFAULTS.distanceFar;
-  if (![near, middle, far].every(Number.isFinite) || near < 0 || middle < near || far <= middle) return null;
+  if ((!Number.isFinite(near) || !Number.isFinite(middle) || !Number.isFinite(far)) || near < 0 || middle < near || far <= middle) return null;
   if (distance <= near) return paint.widthNear;
   if (distance < middle && middle > near)
     return lerp(paint.widthNear, paint.widthMiddle, clamp01((distance - near) / (middle - near)));

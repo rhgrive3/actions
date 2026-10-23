@@ -9,6 +9,7 @@ const end=source.indexOf('\n  // Dynamic resolution',start);
 assert.ok(start>0&&end>start);
 const method=source.slice(start,end).trim().replace(/^applySettings\(settings\)/,'function applySettings(settings)');
 const q={low:{bloom:false},high:{bloom:true}};
+q.ultra={bloom:true};
 const apply=vm.runInNewContext('('+method+')',{effectiveQuality:(settings)=>q[settings.quality]});
 function harness(){
  let builds=0,materialsUpdated=0;
@@ -46,4 +47,14 @@ test('bloom-only setting does not rebuild composer or invalidate material progra
  assert.equal(r.builds(),0);assert.equal(r.materialsUpdated(),0);
  assert.equal(r.instance.bloom.enabled,false);
  assert.equal(r.instance.composer,r.original);
+});
+test('equal effective quality values preserve composer despite distinct preset objects',()=>{
+ const r=harness();
+ for(let i=0;i<50;i++)r.apply({quality:i%2?'high':'ultra',shadows:true,bloom:true});
+ assert.equal(r.builds(),0);assert.equal(r.materialsUpdated(),0);
+ assert.equal(r.instance.composer,r.original);assert.equal(r.instance.dynScale,.75);
+ q.ultra.pixelRatio=2;
+ r.apply({quality:'ultra',shadows:true,bloom:true});
+ assert.equal(r.builds(),1,'a new effective field still requires rebuilding');
+ delete q.ultra.pixelRatio;
 });

@@ -34,7 +34,7 @@ let browser;
 test.before(async()=>{browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});});
 test.after(async()=>{await browser?.close();});
 
-test('real native timers + CSS finish while cinematic is held, then actual native update reaches playing without live skipping',async()=>{
+test('native Match-clock presentation and real CSS settle before live gameplay',async()=>{
   const page=await fixture(browser);
   try {
     const early=await page.evaluate(()=>({admission:window.__iwProjectileCaptureUiGate({phase:'admission',allowIntro:true,settled:false,cinematicAdmission:true}),capture:window.__iwProjectileCaptureUiGate()}));
@@ -59,11 +59,11 @@ test('real native timers + CSS finish while cinematic is held, then actual nativ
   } finally {await page.close();}
 });
 
-test('negative control: immediate old helper outruns actual native HUD timer and remains hidden',async()=>{
+test('negative control: immediate native completion cannot bypass lineup and GO settlement',async()=>{
   const page=await fixture(browser);
   try {await page.evaluate(completeNativeTurfIntro);await page.waitForTimeout(3100);
     const r=await page.evaluate(()=>({hud:window.__inkwave.hud._visible,gate:window.__iwProjectileCaptureUiGate()}));
-    assert.equal(r.hud,false);assert.equal(r.gate.ready,false);assert(r.gate.failed.includes('hud'));
+    assert.equal(r.hud,true);assert.equal(r.gate.ready,false);assert(r.gate.failed.includes('lineup'));
   }finally{await page.close();}
 });
 
@@ -96,7 +96,7 @@ for(const fault of ['hidden ancestor','permanent lineup','ownership change','nat
     // run and restore before inspecting, without ever accepting a late result.
     await page.waitForFunction(()=>window.__iwProjectileIntroUiReceipt?.restoredAtMs,{},{timeout:1000});
     const s=await page.evaluate(()=>({calls:window.calls,frozen:window.__inkwave.frozen,skip:window.__inkwave._skipRender,state:window.__inkwave.match.state,receipt:window.__iwProjectileIntroUiReceipt}));
-    assert.equal(s.calls.frames,0);assert.equal(s.state,'intro');assert.equal(s.frozen,false);assert.equal(s.skip,false);assert.equal(s.receipt.outcome,'failed');
+    assert.equal(s.calls.frames,180);assert.equal(s.calls.liveFrames,0);assert.equal(s.state,'intro');assert.equal(s.frozen,false);assert.equal(s.skip,false);assert.equal(s.receipt.outcome,'failed');
   }finally{await page.close();}
 });
 

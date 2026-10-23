@@ -13,6 +13,8 @@ import {WebSocketServer} from 'ws';
 import {createLocalRelay} from './lib/inkwave-local-relay-fixture.mjs';
 import {installCombatPlacementQA,advanceUntilNativeShotProof,advanceUntilNativePlacement} from './lib/inkwave-combat-ceiling-placement.mjs';
 import {verifyRuntimeBuild, persistentDirectory, hash} from './lib/inkwave-runtime-evidence.mjs';
+import {installOwnerClockDiagnostic,readOwnerClockDiagnostic} from './lib/inkwave-owner-clock-diagnostic.mjs';
+import {collectOpeningPeerDiagnostics} from './lib/inkwave-opening-peer-diagnostic.mjs';
 import {serveProjectileCaptureFile} from './lib/inkwave-projectile-http-file.mjs';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const option=(name,fallback)=>{const i=process.argv.indexOf(name);return i<0?fallback:process.argv[i+1];};
@@ -23,7 +25,7 @@ assert.equal(option('--source-sha',sourceSha),sourceSha,'checkout must equal req
 const build=verifyRuntimeBuild(site,ROOT,sourceSha);
 assert.equal(build.schema,1);assert.equal(hash(JSON.stringify(build.files)),build.inputHash);
 const self=fileURLToPath(import.meta.url),selfRelative=path.relative(ROOT,self);
-for(const file of [selfRelative,'scripts/lib/inkwave-combat-ceiling-placement.mjs','scripts/lib/inkwave-local-relay-fixture.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/lib/inkwave-projectile-http-file.mjs','server/src/index.js']){
+for(const file of [selfRelative,'scripts/lib/inkwave-owner-clock-diagnostic.mjs','scripts/lib/inkwave-opening-peer-diagnostic.mjs','scripts/lib/inkwave-combat-ceiling-placement.mjs','scripts/lib/inkwave-local-relay-fixture.mjs','scripts/lib/inkwave-runtime-evidence.mjs','scripts/lib/inkwave-projectile-http-file.mjs','server/src/index.js']){
  const actual=execFileSync('git',['hash-object','--',file],{cwd:ROOT,encoding:'utf8'}).trim();
  const expected=execFileSync('git',['rev-parse',sourceSha+':'+file],{cwd:ROOT,encoding:'utf8'}).trim();
  assert.equal(actual,expected,'QA/relay source must match head: '+file);
@@ -32,7 +34,7 @@ const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript'
 const errors=[],wire=[],loaded=new Set(),contexts=[],pages=[];
 const report={schema:1,status:'running',sourceSha,inputHash:build.inputHash,contentHash:build.contentHash,
  harnessHash:hash(fs.readFileSync(self)),scenario:'native-shooter-220-reject-36-accept',
- scope:'Full native Game/Actor/Projectiles/NetMatch; deterministic native component steps after online startup; no Actor damage or receiver admission replacement',
+ scope:'Full native Game/Actor/Projectiles/NetMatch; draw-suppressed native RAF startup then deterministic native component steps; separate warm-session combat QA, cold-start #1767 remains open; no Actor damage or receiver admission replacement',
  phase:'initialization'};
 let server,relay,browser;
 try {
@@ -51,12 +53,19 @@ try {
  const base='http://127.0.0.1:'+server.address().port;
  const relayURL='ws://127.0.0.1:'+relay.address().port;
  const address=base+'/?map=tidewater&difficulty=normal&skipTitle&relay='+encodeURIComponent(relayURL);
+ const netmatchURL=base+'/_versions/'+build.build.revision+'/src/net/netmatch.js';
  const actorURL=base+'/_versions/'+build.build.revision+'/src/game/actor.js';
+ // Resolve the same revision-scoped ESM instance imported by Actor and InkFlight.
+ const motionURL=new URL('../../patches/splatoon3/runtime/actor-motion.mjs',actorURL).href;
+ const motionPath=new URL(motionURL).pathname.slice(1);
+ assert(build.artifacts[motionPath],'Actor motion module must be part of the verified build');
  browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--disable-background-timer-throttling','--disable-renderer-backgrounding','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  report.phase='native-menu';
  for(let i=0;i<2;i++){
   const context=await browser.newContext({viewport:{width:1280,height:720},serviceWorkers:'block'});contexts.push(context);
   const page=await context.newPage();pages.push(page);page.setDefaultTimeout(30000);
+  report.clockReceipts ||= [[],[]];
+  page.on('console',message=>{const receipt=readOwnerClockDiagnostic(message.text());if(receipt&&report.clockReceipts[i].length<96)report.clockReceipts[i].push(receipt);});
   page.on('pageerror',e=>errors.push('player'+i+': '+e.message));
   page.on('requestfailed',r=>errors.push('player'+i+': '+r.url()+': '+r.failure()?.errorText));
   await page.addInitScript(installCombatPlacementQA);
@@ -69,6 +78,8 @@ try {
   await page.goto(address,{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>{if(document.querySelector('#boot-error')?.textContent)throw Error('Native boot error');const G=window.__G,g=window.__inkwave;return !!G&&!!g&&G.game===g&&G.mode==='menu'&&g.menus&&g.debug&&G.net&&!g._nativeStageSwitchPending&&!g.frozen;},null,{timeout:180000});
  }
+ // Install before the room starts, including the unbound asynchronous startup window.
+ await Promise.all(pages.map(page=>page.evaluate(installOwnerClockDiagnostic,netmatchURL)));
  const [host,guest]=pages;
  report.phase='native-room-start';
  const code=await host.evaluate(()=>__G.net.create('Ceiling QA Host'));
@@ -81,25 +92,36 @@ try {
  assert.equal(await host.evaluate(()=>__G.net.confirmTeams()),true);
  await guest.waitForFunction(()=>__G.net.lobby.teamsConfirmed===true);
  await guest.evaluate(()=>__G.net.setMe({ready:true}));await host.evaluate(()=>__G.net.setMe({ready:true}));
- await host.waitForFunction(()=>__G.net.canStart());assert.equal(await host.evaluate(()=>__G.net.start()),true);
+ await host.waitForFunction(()=>__G.net.canStart());
+ // Suppress draw before the first owner snapshot. Keep the original RAF,
+ // full native frame and READY/GO loading lifecycle active through the intro.
+ report.introDraw=await Promise.all(pages.map(p=>p.evaluate(()=>{__ceilingPlacement.holdOpeningDraw();return {held:__inkwave._skipRender===true,frozen:__inkwave.frozen===true};})));
+ assert(report.introDraw.every(s=>s.held&&!s.frozen),'Native RAF must remain active while opening draw is held');
+ assert.equal(await host.evaluate(()=>__G.net.start()),true);
  await Promise.all(pages.map(p=>p.waitForFunction(()=>{const G=__G,g=__inkwave,m=g.match,n=G.net;return G.mode==='match'&&m===G.match&&m?.state==='playing'&&!m.attract&&m.local?.isLocal&&m.controller&&n.active&&n._setupReady&&G.netm===n.match&&G.netm.match===m&&m.actors.length===2;},null,{timeout:240000})));
  report.phase='native-opening-spawn';
+ // Keep original RAF, controllers and transport through native touchdown.
+ // This separate warm-session combat fixture does not close cold-start #1767.
+ report.openingPeers={start:await collectOpeningPeerDiagnostics(pages)};
  // Playing starts before the opening Squid Spawn finishes. Leave the real game
  // running until both owners land and their proxies adopt the completed phase.
  const spawnStarts=await Promise.all(pages.map(p=>p.evaluate(()=>__G.time)));
  await Promise.all(pages.map((p,i)=>p.waitForFunction(start=>{
   if(__ceilingPlacement.spawnReady())return true;
-  if(__G.time-start>10)throw Error('Native opening spawn did not settle within 10 game seconds');
+  if(__G.time-start>10)throw Error('Native opening spawn did not settle within 10 game seconds: '+JSON.stringify({state:__G.match?.state,elapsed:__G.time-start,actors:(__G.match?.actors||[]).map(a=>({remote:!!a.remote,alive:a.alive,grounded:a.grounded,form:a.form,spawn:a.s3?.squidSpawn?.phase??null,netReady:a.net?.ready??null}))}));
   return false;
  },spawnStarts[i],{timeout:180000})));
  report.spawnReady=await Promise.all(pages.map(p=>p.evaluate(()=>({at:__G.time,ready:__ceilingPlacement.spawnReady()}))));
+ await Promise.all(pages.map(p=>p.evaluate(()=>__ceilingPlacement.releaseOpeningDraw())));
  report.phase='native-actor-placement';
- report.roles=await Promise.all(pages.map(p=>p.evaluate(async url=>{
-  const {Actor}=await import(url),G=__G,n=G.netm;__inkwave.debug.freeze();
+ assert(loaded.has(motionPath),'Native game must already load the same actor motion module');
+ report.roles=await Promise.all(pages.map(p=>p.evaluate(async ({actorURL,motionURL})=>{
+  const {Actor}=await import(actorURL),{beginActorMotionTick}=await import(motionURL),G=__G,n=G.netm;
+  window.__ceilingBeginActorMotionTick=beginActorMotionTick;__inkwave.debug.freeze();
   const actors=G.match.actors.map(a=>{if(!(a instanceof Actor)||a.damage!==Actor.prototype.damage||a.weapon.id!=='shooter'||a.weapon.damage!==36)throw Error('Native Actor/shooter identity failed');return {nid:a.nid,owner:a.owner,remote:a.remote,team:a.team,weapon:a.weapon.id,damage:a.weapon.damage};});
   window.__ceilingOriginalDamage=new Map(G.match.actors.map(a=>[a,a.damage]));
   return {myId:n.myId,isHost:n.isHost,local:G.match.local.nid,actors};
- },actorURL)));
+ },{actorURL,motionURL})));
  assert.equal(report.roles[0].isHost,true);assert.equal(report.roles[1].isHost,false);
  const attacker=report.roles[1].local,victim=report.roles[0].local,attackerOwner=owners[1];
  const placement=await host.evaluate(()=>__ceilingPlacement.select());
@@ -121,7 +143,11 @@ try {
   G.scene.updateMatrixWorld(true);
  },{attacker,placement})));
  const step=async()=>{await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement})=>{
-  const G=__G,dt=1/60;G.time+=dt;G.net.update(dt);
+  const G=__G,dt=1/60;G.net.update(dt);G.time+=dt;
+  // Match the native fixed clock: every sweep owns this tick's actor origins.
+  // Otherwise freeze retains the opening pose as a false motion interval after
+  // owner relocation, even though both peers have accepted the new positions.
+  window.__ceilingBeginActorMotionTick(G.actors);
   for(const a of G.match.actors){
    if(a.remote)G.netm.applyRemote(a,dt);
    else {
@@ -263,7 +289,22 @@ try {
  report.status='passed';report.phase='complete';
 } catch(error) {
  report.status='failed';report.error=String(error.stack||error);process.exitCode=1;
+ if(report.openingPeers)report.openingPeers.failure=await collectOpeningPeerDiagnostics(pages);
  try{if(pages[1])report.shot=await pages[1].evaluate(()=>{const q=window.__ceilingShot;return q?{initial:q.initial,removal:q.removal,steps:q.steps}:null;});}catch{}
+ try{report.openingDiagnostics=await Promise.all(pages.map(page=>page.evaluate(()=>{
+  const G=window.__G,n=x=>Number.isFinite(x)?x:null;
+  const state=s=>s?{time:n(s.t),life:n(s.life),sequence:n(s.adoption?.sequence),tick:n(s.adoption?.tick),
+   spawnPhase:s.adoption?.squidSpawn?.phase||null,flags:n(s.f),pos:[n(s.x),n(s.y),n(s.z)]}:null;
+  return {time:n(G?.time),frozen:window.__inkwave?.frozen===true,drawSuppressed:window.__inkwave?._skipRender===true,state:G?.match?.state,
+   actors:(G?.match?.actors||[]).slice(0,2).map(a=>{
+    const p=G.netm?.peers?.get(a.owner);
+    return {nid:a.nid,local:a.isLocal===true,alive:a.alive===true,spawnPhase:a.s3?.squidSpawn?.phase||null,
+     acceptedSequence:n(a.net?._adoptionSeq),latest:state(a.net?.buf?.at(-1)),sample:state(a.net?.cur),
+     peer:p?{tr:n(p.tr),lastTs:n(p.lastTs),lastReceiveAt:n(p.lastReceiveAt),sim:n(p.sim),
+      delay:n(p.delay),want:n(p.want),off:n(p.off),clockAnchorTs:n(p.clockAnchorTs),
+      clockAnchorReceiveAt:n(p.clockAnchorReceiveAt),physicsTail:p.physicsPoints?.slice(-8)||[]}:null};
+   })};
+ })));}catch{}
  try{if(pages[1])report.placementDiagnostic=await pages[1].evaluate(()=>{
   const G=window.__G,n=x=>Number.isFinite(x)?x:null,xyz=p=>p?[n(p.x),n(p.y),n(p.z)]:null;
   return {bounds:G?.level?.bounds?Object.fromEntries(['minX','maxX','minZ','maxZ'].map(k=>[k,n(G.level.bounds[k])])):null,
@@ -273,9 +314,12 @@ try {
     spawnPhase:['aim','flight','landing'].includes(a.s3?.squidSpawn?.phase)?a.s3.squidSpawn.phase:null,form:['kid','squid'].includes(a.form)?a.form:'other',pos:xyz(a.pos)}))};
  });}catch{}
 } finally {
- report.errors=errors;report.loadedArtifacts=[...loaded];report.wire=wire;
+ report.errors=errors;report.loadedArtifacts=[...loaded];
+ // Socket teardown may author a legitimate no-contest message. Keep that
+ // traffic separate from the immutable scenario trace used for diagnosis.
+ report.preCleanupAt=Date.now();report.wire=wire.slice();
  for(const page of pages){
-  try{await page.evaluate(()=>{const g=window.__ceilingGuest,h=window.__ceilingHost,s=window.__ceilingShot;if(s){s.system._step=s.step;s.flight.impact=s.impact;}if(g){g.tr.sendTo=g.send;g.n.onMessage=g.originalMessage;}if(h)h.n.onMessage=h.original;});}
+  try{await page.evaluate(()=>{window.__ceilingPlacement?.releaseOpeningDraw();const g=window.__ceilingGuest,h=window.__ceilingHost,s=window.__ceilingShot;if(s){s.system._step=s.step;s.flight.impact=s.impact;}if(g){g.tr.sendTo=g.send;g.n.onMessage=g.originalMessage;}if(h)h.n.onMessage=h.original;});}
   catch(e){(report.cleanupErrors||=[]).push(String(e));}
  }
  // Persist before closing sockets/browser, so a cleanup failure cannot erase evidence.
@@ -284,6 +328,7 @@ try {
  try{await browser?.close();}catch(e){(report.cleanupErrors||=[]).push(String(e));}
  if(relay){for(const ws of relay.clients)ws.terminate();await new Promise(resolve=>relay.close(resolve));}
  if(server)await new Promise(resolve=>server.close(resolve));
+ report.cleanupWire=wire.slice(report.wire.length);
  if(report.cleanupErrors?.length||errors.length){report.status='failed';process.exitCode=1;}
  fs.writeFileSync(path.join(evidence,'combat-ceiling-browser-result.json'),JSON.stringify(report,null,2)+'\n');
 }
@@ -332,6 +377,7 @@ const failure = report.status === 'failed' ? {
   ready: report.placementAdvance.ready===true,
  } : null,
  placement: report.placementDiagnostic||null,
+ openingPeers: report.openingPeers||null,
  browserErrorCount: errors.length,
 } : undefined;
 console.log(JSON.stringify({status:report.status,sourceSha,phase:report.phase,evidence,failure}));

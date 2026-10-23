@@ -1,0 +1,314 @@
+{
+  "schema": 1,
+  "baseline_sha256": "ae01fb9e56d093357ed6fb29fd4b1888d8486d609b571c0c984b22b6a5aa38d8",
+  "candidate_sources": {
+    "inkwave-public/src/world/props-core.js": "72e347b4c0560eef8a3c8007329fc1e89882ac629c68df37bef4d7877a7b5eb3",
+    "inkwave-public/src/world/props.js": "3892caf1a82c952649dc7e31ff47ff86af7abe3753917d861338c7e9d795c48c",
+    "inkwave-public/src/world/prop-packs.js": "0d980c6e9f5377c0b7f3235a4ba7e8e7668ebc9cfe8d103e2517268f41f9596c",
+    "inkwave-public/src/world/dressing.js": "1c3c133dae54c883a9f7fe1bbc65ebda55d70ea572fb50e0c1d94ad380bc46d1",
+    "inkwave-public/src/world/stages/data.js": "61b0c6f7644b988e717f03ea235c1bf11bf88d9f4b9dfb45dba7876c95e1981b",
+    "inkwave-public/src/world/stages/cargo/props.js": "7d837a4ac0b2666135fdc7baf22ecfe4ab41e0c64656c88573e97ae059636eeb",
+    "inkwave-public/src/world/stages/cargo/placements.js": "378ab125fce68535d800b08f745d1fd2cc405e6e22fcd19baaaedcdf69f9d938",
+    "inkwave-public/src/world/props-marina-vessels.js": "90e7828d6c4032c052ecc76e8b090dbea1b3b0030063958971f942fe44778d38",
+    "inkwave-public/src/world/props-marina-placements.js": "7746e35f37dd20dc903d916ba6a19ebce3983b45df32d863288bbe24f12fcdf8",
+    "inkwave-public/src/world/murals.js": "5167616b40ad53ac38610b932ea088889f6cb8e7a30e8a18dccd6ff579925565",
+    "patches/reliability/start-adapter.mjs": "8cd4c7df67395bf6edcb3f2a7748f874eba25c541b163c54f5ad4205e2083e28",
+    "scripts/inkwave-source-composition.mjs": "fcd1069fde2048f61eea01cc2ed44133194bef985c710fff29f72ca2ec64c4ba",
+    "scripts/build-inkwave.mjs": "cfab51d3bb69e8b614eee7612ba5e850af553ce780ffe4e928f8df6c875bbdfe"
+  },
+  "receipts": [
+    {
+      "scenario": "cold-tidewater",
+      "baseTypes": [
+        "railing",
+        "fence",
+        "bollard",
+        "bench",
+        "trashbin",
+        "planter",
+        "bush",
+        "tree",
+        "vending",
+        "acunit",
+        "vent",
+        "pipes",
+        "ladder",
+        "sign",
+        "neon",
+        "awning",
+        "bunting",
+        "banner",
+        "speaker",
+        "crates",
+        "barrel",
+        "pallet",
+        "tires",
+        "cone",
+        "barrier",
+        "lightpole",
+        "container_door",
+        "skateramp",
+        "buoy",
+        "lifering",
+        "poster",
+        "stickers",
+        "streetsign",
+        "fingerpost",
+        "bike",
+        "bikerack",
+        "scooter",
+        "skateboard",
+        "skaterail",
+        "stall",
+        "cart",
+        "picnic",
+        "deckchair",
+        "cooler",
+        "surfrack",
+        "stringlights",
+        "cable",
+        "cabinet",
+        "hydrant",
+        "newsbox",
+        "gascage",
+        "dish",
+        "ropecoil",
+        "crabtrap",
+        "net",
+        "hosereel",
+        "palletjack",
+        "sandbags",
+        "aboard",
+        "ferryboard",
+        "pot"
+      ],
+      "selectedTypes": [
+        "railing",
+        "fence",
+        "bollard",
+        "bench",
+        "trashbin",
+        "planter",
+        "bush",
+        "tree",
+        "vending",
+        "acunit",
+        "vent",
+        "pipes",
+        "ladder",
+        "sign",
+        "neon",
+        "awning",
+        "bunting",
+        "banner",
+        "speaker",
+        "crates",
+        "barrel",
+        "pallet",
+        "tires",
+        "cone",
+        "barrier",
+        "lightpole",
+        "container_door",
+        "skateramp",
+        "buoy",
+        "lifering",
+        "poster",
+        "stickers",
+        "streetsign",
+        "fingerpost",
+        "bike",
+        "bikerack",
+        "scooter",
+        "skateboard",
+        "skaterail",
+        "stall",
+        "cart",
+        "picnic",
+        "deckchair",
+        "cooler",
+        "surfrack",
+        "stringlights",
+        "cable",
+        "cabinet",
+        "hydrant",
+        "newsbox",
+        "gascage",
+        "dish",
+        "ropecoil",
+        "crabtrap",
+        "net",
+        "hosereel",
+        "palletjack",
+        "sandbags",
+        "aboard",
+        "ferryboard",
+        "pot"
+      ],
+      "placements": 144,
+      "nativeIds": [
+        "scorch",
+        "hagglefish",
+        "inkblot",
+        "mako",
+        "brinewater"
+      ]
+    },
+    {
+      "scenario": "cold-request-graph",
+      "optionalBuilderRequests": [],
+      "requests": [
+        "/",
+        "/inkwave-public/src/world/props-core.js",
+        "/inkwave-public/src/world/render-bounds.js",
+        "/inkwave-public/src/core/ctx.js",
+        "/inkwave-public/vendor/three/build/three.module.js",
+        "/inkwave-public/vendor/three/jsm/utils/BufferGeometryUtils.js",
+        "/inkwave-public/vendor/three/build/three.core.js",
+        "/inkwave-public/src/world/prop-packs.js",
+        "/inkwave-public/src/world/dressing.js",
+        "/patches/practice-range/stage/props.mjs",
+        "/patches/practice-range/stage/zones.mjs",
+        "/inkwave-public/src/world/props-marina-placements.js",
+        "/inkwave-public/src/world/stages/data.js",
+        "/inkwave-public/src/world/stages/cargo/layout.js",
+        "/inkwave-public/src/world/stages/cargo/placements.js",
+        "/inkwave-public/src/world/stages/cargo/surfaces.js",
+        "/inkwave-public/src/world/stages/cargo/murals.js",
+        "/inkwave-public/patches/practice-range/stage/layout.mjs",
+        "/inkwave-public/patches/practice-range/stage/props.mjs",
+        "/inkwave-public/patches/practice-range/stage/surfaces.mjs",
+        "/inkwave-public/patches/practice-range/stage/murals.mjs",
+        "/inkwave-public/src/world/mapkit.js",
+        "/inkwave-public/patches/practice-range/stage/zones.mjs",
+        "/patches/native-stages/runtime/registry.mjs",
+        "/patches/native-stages/runtime/build-config.mjs",
+        "/patches/native-stages/runtime/source-catalog.mjs",
+        "/inkwave-public/src/world/stages/cargo/props.js",
+        "/inkwave-public/src/world/props-marina-vessels.js",
+        "/inkwave-public/src/world/props-marina-dock.js"
+      ]
+    },
+    {
+      "scenario": "failed-and-canceled-preparation",
+      "passed": true
+    },
+    {
+      "scenario": "all-stage-geometry-collider-animation-and-catalogue-parity",
+      "results": [
+        {
+          "stage": "tidewater",
+          "placements": 144,
+          "colliders": 82,
+          "stats": {
+            "props": 144,
+            "meshes": 13,
+            "merged": 9,
+            "instanced": 4,
+            "triangles": 134262
+          }
+        },
+        {
+          "stage": "kelpline",
+          "placements": 130,
+          "colliders": 70,
+          "stats": {
+            "props": 130,
+            "meshes": 13,
+            "merged": 9,
+            "instanced": 4,
+            "triangles": 120340
+          }
+        },
+        {
+          "stage": "halyard",
+          "placements": 219,
+          "colliders": 149,
+          "stats": {
+            "props": 219,
+            "meshes": 23,
+            "merged": 17,
+            "instanced": 6,
+            "triangles": 510748
+          }
+        },
+        {
+          "stage": "cargo",
+          "placements": 223,
+          "colliders": 428,
+          "stats": {
+            "props": 223,
+            "meshes": 10,
+            "merged": 9,
+            "instanced": 1,
+            "triangles": 430938
+          }
+        },
+        {
+          "stage": "range",
+          "placements": 27,
+          "colliders": 30,
+          "stats": {
+            "props": 27,
+            "meshes": 7,
+            "merged": 7,
+            "instanced": 0,
+            "triangles": 33996
+          }
+        }
+      ],
+      "registrationTransitions": 100,
+      "rollbackControls": true
+    },
+    {
+      "scenario": "actual-canvas-success",
+      "firstDraws": [
+        2,
+        2
+      ],
+      "warmDraws": [
+        2,
+        1
+      ],
+      "actualPixelParity": true,
+      "resizeDisposals": 3,
+      "independentWritableCanvas": true,
+      "fontFacesCreated": 4
+    },
+    {
+      "scenario": "actual-canvas-failure",
+      "firstDraws": [
+        2,
+        1
+      ],
+      "warmDraws": [
+        2,
+        1
+      ],
+      "actualPixelParity": true,
+      "resizeDisposals": 3,
+      "independentWritableCanvas": true,
+      "fontFacesCreated": 4
+    },
+    {
+      "scenario": "actual-canvas-unsupported",
+      "firstDraws": [
+        2,
+        1
+      ],
+      "warmDraws": [
+        2,
+        1
+      ],
+      "actualPixelParity": true,
+      "resizeDisposals": 3,
+      "independentWritableCanvas": true,
+      "fontFacesCreated": 0
+    }
+  ],
+  "limits": [
+    "Desktop Chromium source/Canvas evidence only; no iPad, network-byte, FPS, GPU upload or cold latency claim.",
+    "Cargo mural implementation remains eagerly imported to preserve the synchronous public setStage API.",
+    "100 registration transitions verify memoization; geometry parity is exercised once per complete stage."
+  ]
+}

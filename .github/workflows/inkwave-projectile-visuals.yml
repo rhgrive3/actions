@@ -12,6 +12,8 @@ on:
       - 'scripts/fixtures/inkwave-reference-audio.json'
       - 'scripts/tests/inkwave-reference-audio.test.mjs'
       - 'scripts/check-inkwave-projectile-visuals.mjs'
+      - 'scripts/lib/inkwave-projectile-capture-projection.mjs'
+      - 'scripts/tests/inkwave-projectile-capture-projection.test.mjs'
       - 'scripts/lib/inkwave-streamed-music-diagnostics.mjs'
       - 'scripts/tests/inkwave-streamed-music-diagnostics.test.mjs'
       - 'scripts/lib/inkwave-capture-source-identity.mjs'
@@ -35,7 +37,21 @@ on:
       - 'scripts/tests/inkwave-projectile-ci-roster.test.mjs'
       - 'scripts/lib/inkwave-roller-birth-baseline.mjs'
       - 'scripts/lib/inkwave-main-ink-baseline.mjs'
+      - 'scripts/lib/inkwave-23pr-paint-source-pair.mjs'
+      - 'scripts/fixtures/inkwave-23pr-paint-source-pair.json.gz'
+      - 'scripts/tests/inkwave-23pr-paint-source-pair.test.mjs'
+      - 'scripts/lib/inkwave-29pr-paint-source-pair.mjs'
+      - 'scripts/fixtures/inkwave-29pr-paint-source-pair.json.gz'
+      - 'scripts/tests/inkwave-29pr-paint-source-pair.test.mjs'
+      - 'scripts/lib/inkwave-31pr-paint-source-pair.mjs'
+      - 'scripts/fixtures/inkwave-31pr-paint-source-pair.json.gz'
+      - 'scripts/tests/inkwave-31pr-paint-source-pair.test.mjs'
       - 'scripts/lib/inkwave-source-admission-cli.mjs'
+      - 'scripts/lib/inkwave-runtime-ui-production-epoch.mjs'
+      - 'scripts/tests/inkwave-runtime-ui-production-epoch.test.mjs'
+      - 'scripts/lib/inkwave-main26a4-production-epoch.mjs'
+      - 'scripts/fixtures/inkwave-main26a4-production-epoch.json.gz'
+      - 'scripts/tests/inkwave-main26a4-production-epoch.test.mjs'
       - 'scripts/lib/inkwave-declared-paint-source-pair.mjs'
       - 'scripts/tests/inkwave-ci-source-admission.test.mjs'
       - 'scripts/tests/inkwave-main9fe-paint-admission.test.mjs'
@@ -81,8 +97,30 @@ on:
       - 'scripts/tests/inkwave-projectile-captures-synthetic.py'
       - 'scripts/tests/inkwave-projectile-captures.test.py'
       - 'scripts/inkwave-source-composition.mjs'
+      - 'scripts/tests/inkwave-exact-head-workflow-routes.test.mjs'
       - '.github/workflows/inkwave-projectile-visuals.yml'
   workflow_dispatch:
+    inputs:
+      base_sha:
+        description: Immutable baseline commit (40 lowercase hex characters)
+        required: true
+        type: string
+      candidate_sha:
+        description: Immutable candidate commit, must equal the frozen dispatch ref SHA
+        required: true
+        type: string
+      expected_mode:
+        description: Reviewed source-pair mode, independently enforced by admission controls
+        required: true
+        type: string
+      expected_source_base:
+        description: Immutable reviewed baseline source epoch (40 lowercase hex characters)
+        required: true
+        type: string
+      expected_source_head:
+        description: Immutable reviewed candidate source epoch (40 lowercase hex characters)
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -92,7 +130,32 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  automatic_capture_route:
+    runs-on: ubuntu-latest
+    outputs:
+      capture_required: ${{ steps.route.outputs.capture_required }}
+    steps:
+      - name: Route exact-case aggregate without untrusted expression interpolation
+        id: route
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os
+          with open(os.environ['GITHUB_EVENT_PATH'], encoding='utf-8') as source:
+              event = json.load(source)
+          head = (event.get('pull_request') or {}).get('head') or {}
+          repository = os.environ.get('GITHUB_REPOSITORY', '')
+          skip = (os.environ.get('GITHUB_EVENT_NAME') == 'pull_request'
+                  and bool(repository)
+                  and (head.get('repo') or {}).get('full_name') == repository
+                  and head.get('ref') == 'inkwave/qa-main26a4-integration-20261022')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              output.write('capture_required=' + ('false' if skip else 'true') + '\n')
+          PY
   capture:
+    # An automatic skip is not acceptance; immutable manual comparison is required.
+    needs: automatic_capture_route
+    if: ${{ needs.automatic_capture_route.outputs.capture_required == 'true' }}
     name: Capture ${{ matrix.side }}
     runs-on: ubuntu-latest
     timeout-minutes: 75
@@ -106,16 +169,47 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - name: Check out immutable PR-base main for the explicitly aligned reference
+      - name: Verify immutable candidate and dispatch pair
+        shell: bash
+        env:
+          EXPECTED_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PAIR_EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_BASE_SHA: ${{ inputs.base_sha }}
+          DISPATCH_HEAD_SHA: ${{ inputs.candidate_sha }}
+          DISPATCH_MODE: ${{ inputs.expected_mode }}
+          DISPATCH_SOURCE_BASE: ${{ inputs.expected_source_base }}
+          DISPATCH_SOURCE_HEAD: ${{ inputs.expected_source_head }}
+        run: |
+          [[ "$EXPECTED_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SOURCE_SHA"
+          if [ "$PAIR_EVENT_NAME" = "workflow_dispatch" ]; then
+            for sha in "$DISPATCH_BASE_SHA" "$DISPATCH_HEAD_SHA" "$DISPATCH_SOURCE_BASE" "$DISPATCH_SOURCE_HEAD"; do
+              [[ "$sha" =~ ^[0-9a-f]{40}$ ]]
+            done
+            test "$DISPATCH_HEAD_SHA" = "$EXPECTED_SOURCE_SHA"
+            [[ "$DISPATCH_MODE" =~ ^[a-z0-9][a-z0-9-]+$ ]]
+          fi
+      - name: Check out immutable base for the explicitly aligned reference
         if: ${{ matrix.side == 'before' }}
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.number == 1651 && 'd42f3f26372361332bdf596ac88155b153557538' || github.event.pull_request.base.sha || 'main' }}
+          ref: ${{ github.event.pull_request.number == 1651 && 'd42f3f26372361332bdf596ac88155b153557538' || github.event.pull_request.base.sha || inputs.base_sha }}
           path: .ci-baseline
           persist-credentials: false
+      - name: Verify immutable baseline checkout before any alignment
+        if: ${{ matrix.side == 'before' }}
+        shell: bash
+        env:
+          EXPECTED_BASE_SHA: ${{ github.event.pull_request.number == 1651 && 'd42f3f26372361332bdf596ac88155b153557538' || github.event.pull_request.base.sha || inputs.base_sha }}
+        run: |
+          [[ "$EXPECTED_BASE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git -C .ci-baseline rev-parse HEAD)" = "$EXPECTED_BASE_SHA"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Verify fail-closed immutable workflow routes
+        if: ${{ matrix.side == 'after' }}
+        run: node --test scripts/tests/inkwave-exact-head-workflow-routes.test.mjs scripts/tests/inkwave-main26a4-production-epoch.test.mjs scripts/tests/inkwave-runtime-ui-production-epoch.test.mjs
       - name: Install pinned build and browser tools
         run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
       - name: Install Chromium
@@ -123,7 +217,7 @@ jobs:
       - name: Verify native intro timers and strict UI admission
         if: ${{ matrix.side == 'after' }}
         run: |
-          node --test scripts/tests/inkwave-projectile-capture-ui.test.mjs scripts/tests/inkwave-projectile-atomic-intro.test.mjs scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-intro-ui.test.mjs
+          node --test scripts/tests/inkwave-projectile-capture-ui.test.mjs scripts/tests/inkwave-projectile-atomic-intro.test.mjs scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-intro-ui.test.mjs scripts/tests/inkwave-projectile-capture-projection.test.mjs
           CHROMIUM_PATH="$(node -e "process.stdout.write(require('playwright').chromium.executablePath())")"
           test -n "$CHROMIUM_PATH" && test -x "$CHROMIUM_PATH"
           export CHROMIUM_PATH
@@ -135,6 +229,7 @@ jobs:
           python3 scripts/tests/inkwave-projectile-captures.test.py
           node --experimental-vm-modules --test scripts/tests/inkwave-projectile-ci-intro.test.mjs scripts/tests/inkwave-projectile-ci-roster.test.mjs scripts/tests/inkwave-projectile-character-reset.test.mjs
           node --test scripts/tests/inkwave-projectile-pr-diff-cli.test.mjs
+          node --test scripts/tests/inkwave-23pr-paint-source-pair.test.mjs
           node --test scripts/tests/inkwave-main9fe-paint-admission.test.mjs scripts/tests/inkwave-maine1f-paint-admission.test.mjs scripts/tests/inkwave-ci-source-admission.test.mjs
           node --test scripts/tests/inkwave-maina350-paint-admission.test.mjs scripts/tests/inkwave-mainceb58-paint-admission.test.mjs scripts/tests/inkwave-oct22-pose-pair.test.mjs scripts/tests/inkwave-queue1801-source-pairs.test.mjs
           node --test scripts/tests/inkwave-projectile-atomic-intro.test.mjs scripts/tests/inkwave-projectile-boolean-gate.test.mjs scripts/tests/inkwave-audio-readiness-diagnostics.test.mjs scripts/tests/inkwave-projectile-menu-start.test.mjs scripts/tests/inkwave-audio-timing-observer.test.mjs scripts/tests/inkwave-roller-birth-baseline.test.mjs scripts/tests/inkwave-main-ink-baseline.test.mjs scripts/tests/inkwave-character-pose-baseline.test.mjs scripts/tests/inkwave-current-owner-admission.test.mjs scripts/tests/inkwave-current-owner-receipts.test.mjs scripts/tests/inkwave-paint-owner-context.test.mjs scripts/tests/inkwave-projectile-http-file.test.mjs scripts/tests/inkwave-capture-source-identity.test.mjs
@@ -147,15 +242,30 @@ jobs:
           node .ci-baseline/scripts/build-inkwave.mjs .ci-baseline/inkwave-public .built-site/pristine-main
           cp .built-site/pristine-main/inkwave-build.json .ci-scratch/projectile-visuals/before/pristine-main-build.json
       - name: Bind reviewed source controls to declared immutable Git source leaves
-        if: ${{ matrix.side == 'before' && (github.event.pull_request.number == 1758 || github.head_ref == 'test/inkwave-combined-qa-20261021' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && (github.head_ref == 'inkwave/runtime-acceptance-0f3-prep-20261022' || github.head_ref == 'inkwave/runtime-acceptance-followup-20261022' || github.head_ref == 'inkwave/runtime-main-a350-integration-20261022' || github.head_ref == 'integrate/all-open-prs-20261022' || github.head_ref == 'fix/queue-30-recovery-20261022'))) }}
+        if: ${{ matrix.side == 'before' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.base.sha == '26a4db4123d23162a3dbf8a12150b1b5bc6ccf64' && github.repository == 'rhgrive3/actions' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'inkwave/runtime-ui-acceptance-20261022') || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'inkwave/exact-head-ci-main144-20261022') || github.event.pull_request.number == 1758 || github.head_ref == 'test/inkwave-combined-qa-20261021' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && (github.head_ref == 'inkwave/runtime-acceptance-0f3-prep-20261022' || github.head_ref == 'inkwave/runtime-acceptance-followup-20261022' || github.head_ref == 'inkwave/runtime-main-a350-integration-20261022' || github.head_ref == 'integrate/all-open-prs-20261022' || github.head_ref == 'fix/queue-30-recovery-20261022' || (github.head_ref == 'fix/stringer-splatana-review-20261023' && github.event.pull_request.head.repo.full_name == github.repository) || (github.head_ref == 'integrate/inkwave-all-prs-20261022' && github.event.pull_request.head.repo.full_name == github.repository)))) }}
         env:
           PAIR_EVENT_NAME: ${{ github.event_name }}
           PAIR_BASE_REF: ${{ github.event.pull_request.base.ref }}
           PAIR_HEAD_REF: ${{ github.head_ref }}
-          DECLARED_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          DECLARED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PAIR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          PAIR_REPOSITORY: ${{ github.repository }}
+          DECLARED_BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.base_sha }}
+          DECLARED_HEAD_SHA: ${{ github.event.pull_request.head.sha || inputs.candidate_sha }}
+          DISPATCH_MODE: ${{ inputs.expected_mode }}
+          DISPATCH_SOURCE_BASE: ${{ inputs.expected_source_base }}
+          DISPATCH_SOURCE_HEAD: ${{ inputs.expected_source_head }}
         run: |
-          if [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && { [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-0f3-prep-20261022" ] || [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-followup-20261022" ]; }; then
+          if [ "$PAIR_EVENT_NAME" = "workflow_dispatch" ]; then
+            node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode "$DISPATCH_MODE" --expected-source-base "$DISPATCH_SOURCE_BASE" --expected-source-head "$DISPATCH_SOURCE_HEAD" --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
+          elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$DECLARED_BASE_SHA" = "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64" ] && [ "$PAIR_REPOSITORY" = "rhgrive3/actions" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ] && [ "$PAIR_HEAD_REF" = "inkwave/runtime-ui-acceptance-20261022" ]; then
+            node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode main26a4-reviewed-runtime-ui-production-pair --expected-source-base 26a4db4123d23162a3dbf8a12150b1b5bc6ccf64 --expected-source-head "$DECLARED_HEAD_SHA" --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
+          elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "fix/stringer-splatana-review-20261023" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ] && [ -n "$PAIR_REPOSITORY" ]; then
+            node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode current-pair-with-gameplay-differences --expected-source-base 83403aaab0043633f1ad1c963068cd0566c5b6fc --expected-source-head c9218d19b98a3bc63c9266738e1d67a64d9d1ff0 --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
+          elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "integrate/inkwave-all-prs-20261022" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ] && [ -n "$PAIR_REPOSITORY" ]; then
+            node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode current-pair-with-gameplay-differences --expected-source-base 26a4db4123d23162a3dbf8a12150b1b5bc6ccf64 --expected-source-head c9218d19b98a3bc63c9266738e1d67a64d9d1ff0 --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
+          elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "inkwave/exact-head-ci-main144-20261022" ] && [ -n "$PAIR_REPOSITORY" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ]; then
+            node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode queue1801-byte-identical-paint-source-epoch --expected-source-base df83a5c4265a9c8738d930dabaffb43cd31ae902 --expected-source-head df83a5c4265a9c8738d930dabaffb43cd31ae902 --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
+          elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && { [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-0f3-prep-20261022" ] || [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-followup-20261022" ]; }; then
             node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode maine1f-byte-identical-paint-source-epoch --expected-source-base e1fa66ad8465bf87caaf232d51543def72c35875 --expected-source-head e1fa66ad8465bf87caaf232d51543def72c35875 --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
           elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "inkwave/runtime-main-a350-integration-20261022" ]; then
             node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode maina350-byte-identical-paint-source-epoch --expected-source-base a350b6b89e4cb86abe37273db6315c74085f8ac5 --expected-source-head a350b6b89e4cb86abe37273db6315c74085f8ac5 --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
@@ -176,10 +286,25 @@ jobs:
           PAIR_BASE_REF: ${{ github.event.pull_request.base.ref }}
           PAIR_PR_NUMBER: ${{ github.event.pull_request.number }}
           PAIR_HEAD_REF: ${{ github.head_ref }}
-          DECLARED_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          DECLARED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PAIR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          PAIR_REPOSITORY: ${{ github.repository }}
+          DECLARED_BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.base_sha }}
+          DECLARED_HEAD_SHA: ${{ github.event.pull_request.head.sha || inputs.candidate_sha }}
+          DISPATCH_MODE: ${{ inputs.expected_mode }}
+          DISPATCH_SOURCE_BASE: ${{ inputs.expected_source_base }}
+          DISPATCH_SOURCE_HEAD: ${{ inputs.expected_source_head }}
         run: |
-          if [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && { [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-0f3-prep-20261022" ] || [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-followup-20261022" ]; }; then
+          if [ "$PAIR_EVENT_NAME" = "workflow_dispatch" ]; then
+            node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode "$DISPATCH_MODE" --expected-source-base "$DISPATCH_SOURCE_BASE" --expected-source-head "$DISPATCH_SOURCE_HEAD" --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
+          elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$DECLARED_BASE_SHA" = "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64" ] && [ "$PAIR_REPOSITORY" = "rhgrive3/actions" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ] && [ "$PAIR_HEAD_REF" = "inkwave/runtime-ui-acceptance-20261022" ]; then
+            node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode main26a4-reviewed-runtime-ui-production-pair --expected-source-base 26a4db4123d23162a3dbf8a12150b1b5bc6ccf64 --expected-source-head "$DECLARED_HEAD_SHA" --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
+          elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "fix/stringer-splatana-review-20261023" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ] && [ -n "$PAIR_REPOSITORY" ]; then
+            node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode current-pair-with-gameplay-differences --expected-source-base 83403aaab0043633f1ad1c963068cd0566c5b6fc --expected-source-head c9218d19b98a3bc63c9266738e1d67a64d9d1ff0 --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
+          elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "integrate/inkwave-all-prs-20261022" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ] && [ -n "$PAIR_REPOSITORY" ]; then
+            node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode current-pair-with-gameplay-differences --expected-source-base 26a4db4123d23162a3dbf8a12150b1b5bc6ccf64 --expected-source-head c9218d19b98a3bc63c9266738e1d67a64d9d1ff0 --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
+          elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "inkwave/exact-head-ci-main144-20261022" ] && [ -n "$PAIR_REPOSITORY" ] && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ]; then
+            node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode queue1801-byte-identical-paint-source-epoch --expected-source-base df83a5c4265a9c8738d930dabaffb43cd31ae902 --expected-source-head df83a5c4265a9c8738d930dabaffb43cd31ae902 --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
+          elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && { [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-0f3-prep-20261022" ] || [ "$PAIR_HEAD_REF" = "inkwave/runtime-acceptance-followup-20261022" ]; }; then
             node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode maine1f-byte-identical-paint-source-epoch --expected-source-base e1fa66ad8465bf87caaf232d51543def72c35875 --expected-source-head e1fa66ad8465bf87caaf232d51543def72c35875 --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
           elif [ "$PAIR_EVENT_NAME" = "pull_request" ] && [ "$PAIR_BASE_REF" = "main" ] && [ "$PAIR_HEAD_REF" = "inkwave/runtime-main-a350-integration-20261022" ]; then
             node scripts/prepare-inkwave-projectile-baseline.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode maina350-byte-identical-paint-source-epoch --expected-source-base a350b6b89e4cb86abe37273db6315c74085f8ac5 --expected-source-head a350b6b89e4cb86abe37273db6315c74085f8ac5 --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
@@ -244,6 +369,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify immutable comparison checkout
+        shell: bash
+        env:
+          EXPECTED_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          [[ "$EXPECTED_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SOURCE_SHA"
       - name: Retrieve immutable reference capture and alignment receipts
         uses: actions/download-artifact@v4
         with:
@@ -255,7 +387,11 @@ jobs:
           name: projectile-capture-after-${{ github.event.pull_request.head.sha || github.sha }}
           path: .ci-scratch/projectile-visuals/after
       - name: Verify exact paired native physical states, firing workloads and image hashes
-        run: python3 scripts/compare-inkwave-projectile-captures.py --before .ci-scratch/projectile-visuals/before --after .ci-scratch/projectile-visuals/after --output .ci-scratch/projectile-visuals/paired-verification.json --require-complete
+        shell: bash
+        run: |
+          # Both capture lanes now assert the same 55-degree projection.
+          # Require exact camera/physical/image evidence without historical FOV normalization.
+          python3 scripts/compare-inkwave-projectile-captures.py --before .ci-scratch/projectile-visuals/before --after .ci-scratch/projectile-visuals/after --output .ci-scratch/projectile-visuals/paired-verification.json --require-complete
       - name: Exercise camera, RNG, contact, retirement and paint comparison gates
         if: ${{ !cancelled() }}
         run: python3 scripts/tests/inkwave-projectile-captures-synthetic.py --before .ci-scratch/projectile-visuals/before/projectile-visuals-result.json --after .ci-scratch/projectile-visuals/after/projectile-visuals-result.json --out .ci-scratch/projectile-visuals/comparator-synthetic-gates.json

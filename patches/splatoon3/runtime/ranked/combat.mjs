@@ -15,6 +15,19 @@ export function sphereEntry(start, end, center, radius) {
   return t >= 0 && t <= 1 ? t : null;
 }
 
+// Same left-to-right reductions as sphereEntry's Array.reduce, without temporary arrays.
+export function sphereEntryComponents(sx, sy, sz, ex, ey, ez, cx, cy, cz, radius) {
+  const dx = ex - sx, dy = ey - sy, dz = ez - sz, ox = sx - cx, oy = sy - cy, oz = sz - cz;
+  const aa = ((0 + dx * dx) + dy * dy) + dz * dz;
+  const bb = ((0 + ox * dx) + oy * dy) + oz * dz;
+  const cc = ((0 + ox * ox) + oy * oy) + oz * oz - radius * radius;
+  if (cc <= 0) return 0;
+  const det = bb * bb - aa * cc;
+  if (aa <= 1e-12 || det < 0) return null;
+  const t = (-bb - Math.sqrt(det)) / aa;
+  return t >= 0 && t <= 1 ? t : null;
+}
+
 function impactDomeShelters(dome, start, end) {
   if (!dome) return false;
   const enters = (center, radius) => start.distanceToSquared(center) > radius * radius
@@ -116,7 +129,8 @@ function barrierDamage(m, actor, amount, kind, pos, api) {
 
 export function createRankedEffects(api, match) {
   const { THREE, G, Hit } = api;
-  const shots = [], geometries = [], materials = [];
+  const shots = [], shotMaterials = new Map();
+  let shotGeometry = null;
   const hit = new Hit();
   function damage(victim, attacker, amount, cause = 'Gachihoko_Bullet') {
     if (!victim.alive || victim.team === attacker?.team) return;
@@ -156,11 +170,16 @@ export function createRankedEffects(api, match) {
     else if (e.kind === 'rainmaker-shot' && Array.isArray(e.pos) && Array.isArray(e.aim)) {
       const a = match.actors.find(a => actorId(a) === String(e.actorId ?? e.carrier ?? e.id));
       if (!a || !a.alive || !validRainmakerShotOrigin(e.shotOrigin, e) || !rainmakerShotOwnerMatches(e.shotOrigin, a)) return;
-      const geometry = new THREE.SphereGeometry(.32, 10, 8), material = new THREE.MeshBasicMaterial({ color: G.teamColors[e.team] });
+      const geometry = shotGeometry || (shotGeometry = new THREE.SphereGeometry(.32, 10, 8));
+      const color = G.teamColors[e.team], materialKey = color?.isColor ? `${color.r}:${color.g}:${color.b}` : color;
+      let resource = shotMaterials.get(materialKey);
+      if (!resource) { resource = { material: new THREE.MeshBasicMaterial({ color }), count: 0, key: materialKey }; shotMaterials.set(materialKey, resource); }
+      resource.count++;
+      const material = resource.material;
       const mesh = new THREE.Mesh(geometry, material); mesh.position.fromArray(e.shotOrigin.muzzle);
-      G.scene.add(mesh); geometries.push(geometry); materials.push(material);
+      G.scene.add(mesh);
       shots.push({ releaseStart: new THREE.Vector3(...e.shotOrigin.body), pos: mesh.position, previous: mesh.position.clone(), vel: new THREE.Vector3(...e.aim).normalize().multiplyScalar(e.speed || 22), age: 0, team: e.team,
-        actor: a, mesh, geometry, material, origin: mesh.position.clone(), maxRange: e.directRange ?? e.effectiveRange ?? 4.4, trailRadius: e.trailRadius ?? .48, landed: false, wait: 0, damage: e.blastDamage ?? e.splashDamage ?? 180, directDamage: e.damage || 60, outerDamage: e.outerDamage ?? 40, paintRadius: e.paintRadius || e.radius || 3.5, nearRadius: e.nearRadius ?? .92, radius: e.radius ?? 1.4, visualOnly });
+        actor: a, mesh, geometry, material, resource, origin: mesh.position.clone(), maxRange: e.directRange ?? e.effectiveRange ?? 4.4, trailRadius: e.trailRadius ?? .48, landed: false, wait: 0, damage: e.blastDamage ?? e.splashDamage ?? 180, directDamage: e.damage || 60, outerDamage: e.outerDamage ?? 40, paintRadius: e.paintRadius || e.radius || 3.5, nearRadius: e.nearRadius ?? .92, radius: e.radius ?? 1.4, visualOnly });
       shots.at(-1).vel.y += e.launchY ?? (e.charge >= 1 ? 3.36 : 1.68);
       if (!a.remote && a.vel) {
         const recoil = e.recoil ?? (e.charge >= 1 ? 1.44 : .72);
@@ -184,8 +203,8 @@ export function createRankedEffects(api, match) {
   }
   const ownsDefense = s => s.actor?.remote !== true;
   function retire(s) {
-    G.scene.remove(s.mesh); s.geometry.dispose(); s.material.dispose();
-    geometries.splice(geometries.indexOf(s.geometry), 1); materials.splice(materials.indexOf(s.material), 1);
+    G.scene.remove(s.mesh);
+    if (--s.resource.count === 0) { s.resource.material.dispose(); shotMaterials.delete(s.resource.key); }
   }
   function advanceShot(s, dt, release = false) {
     if (!release) s.previous.copy(s.pos);
@@ -209,8 +228,8 @@ export function createRankedEffects(api, match) {
     if (blocked) nearest = blocked.distance / Math.max(1e-9, s.previous.distanceTo(s.pos));
     let target = null;
     for (const a of match.actors) if (a.alive && a.team !== s.team) {
-      const center = a.pos.toArray(); center[1] += .7;
-      const t = sphereEntry(s.previous.toArray(), s.pos.toArray(), center, .85);
+      const t = sphereEntryComponents(s.previous.x, s.previous.y, s.previous.z, s.pos.x, s.pos.y, s.pos.z,
+        a.pos.x, a.pos.y + .7, a.pos.z, .85);
       if (t !== null && t < nearest) { nearest = t; target = a; blocked = null; }
     }
     let terminal = !!worldPoint || !!blocked || !!target;
@@ -225,7 +244,7 @@ export function createRankedEffects(api, match) {
     if (blocked?.object?.subId === 'splashWall') s.impactWall = blocked.object;
     if (blocked?.dome) s.impactDome = { center: blocked.dome.pos.clone(), radius: blocked.dome.radius,
       ignited: blocked.dome.ignited, emitterY: blocked.dome.emitterY };
-    s.blastStart = s.pos.clone().addScaledVector(s.previous.clone().sub(s.pos).normalize(), .01);
+    if (terminal && s.damage > 0) s.blastStart = s.pos.clone().addScaledVector(s.previous.clone().sub(s.pos).normalize(), .01);
     if (blocked && ownsDefense(s)) blocked.onHit(probe);
     if (target && !s.visualOnly) damage(target, s.actor, s.directDamage);
     if (!s.visualOnly && (!release || terminal)) {
@@ -280,6 +299,6 @@ export function createRankedEffects(api, match) {
 
       }
     },
-    dispose() { for (const s of shots) retire(s); shots.length = 0; },
+    dispose() { for (const s of shots) retire(s); shots.length = 0; shotGeometry?.dispose(); shotGeometry = null; shotMaterials.clear(); },
   };
 }

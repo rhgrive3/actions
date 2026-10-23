@@ -15,6 +15,21 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const option = name => { const i=process.argv.indexOf(name); if(i<0 || !process.argv[i+1]) throw new Error('Required '+name); return path.resolve(process.argv[i+1]); };
 const site=option('--site'), evidence=option('--evidence-dir'), profile=option('--profile-dir');
 const uiProbesOnly = process.argv.includes('--ui-probes-only');
+// A frozen QA clock must still advance the real native intro. READY/HUD now
+// share Match.stateT and correctly stop with offline pause; do not force UI
+// flags or restore abandoned wall-clock timers just to satisfy this probe.
+async function advanceFrozenNativeIntro(page) {
+  return page.evaluate(() => {
+    const g=globalThis.s3ProbeG.game, m=g.match;
+    if (!g.frozen || m?.state !== 'intro' || m.paused) throw Error('Native intro clock admission');
+    const before=m.stateT, skip=g._skipRender;
+    g._skipRender=true;
+    try { for(let i=0;i<186;i++) g._frame(1/60); } finally { g._skipRender=skip; }
+    if(g.match!==m || m.state!=='intro' || !(m.stateT-before>=3.09)) throw Error('Native intro did not advance unchanged component clock');
+    return {before,after:m.stateT,steps:186,hz:60,state:m.state};
+  });
+}
+
 const ROOT = fileURLToPath(new URL('../',import.meta.url));
 const physicalLocation = name => fs.existsSync(name) ? fs.realpathSync(name) : path.join(physicalLocation(path.dirname(name)),path.basename(name));
 for(const directory of [evidence,profile]) {
@@ -121,6 +136,7 @@ try {
   if (uiProbesOnly) {
     // Same native offline bootstrap, intro dismissal and frozen match as full acceptance.
     await page.evaluate(async () => { const G=globalThis.s3ProbeG; G.game.debug.freeze(); G.game.menus.wipe.cancel(); await G.game.startMatch({mapId:'tidewater',difficulty:'easy',duration:180,mode:'turf'}); });
+    result.nativeIntroClock=await advanceFrozenNativeIntro(page);
     await page.waitForFunction(() => globalThis.s3ProbeG.game.hud?._visible && !document.querySelector('.iw-lineup'), null, {timeout:15000});
     await page.evaluate(() => { const g=globalThis.s3ProbeG.game; g.debug.freezeBots(); g._skipRender=true; try {for(let i=0;i<270;i++)g._frame(1/60);} finally {g._skipRender=false;} });
     await streamedMusic.snapshot('native-playing-capture-ready');
@@ -206,9 +222,8 @@ try {
   await page.screenshot({path:path.join(evidence,'loadout-small-viewport.png'),animations:'disabled',timeout:90000});
   await page.setViewportSize({width:1280,height:800});
   await page.evaluate(async () => { const { G } = await import(new URL('src/core/ctx.js',document.baseURI).href); await G.game.startMatch({mapId:'tidewater', difficulty:'easy', duration:180, mode:'turf'}); });
-  // The frozen fixture advances simulation explicitly below. Let the native
-  // wall-clock intro reveal run while this same Match is still in intro;
-  // fast-forwarding first makes its legitimate intro-only timer a no-op.
+  result.nativeIntroClock=await advanceFrozenNativeIntro(page);
+  // Retain the real intro state, HUD ownership and visible-style assertions.
   await page.waitForFunction(() => {
     const g = globalThis.s3ProbeG?.game, h = g?.hud;
     if (!g?.frozen || g.match?.state !== 'intro' || !h?._visible) return false;

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ZEVANT Account UI Harness</title>
+<link rel="icon" href="data:,">
+<!-- Development only (npm run dev → /dev.html): a stand-in main menu built from the game's own stylesheet,
+     so the account card and dialog can be worked on without booting the 3D game. -->
+<link rel="stylesheet" href="/game-styles/ui.css">
+<link rel="stylesheet" href="/game-styles/mobile.css">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0d1020; }
+  .hz-bg { position: fixed; inset: 0; background: url(/assets/stages/tidewater-day.webp) center / cover; }
+  #ui-root { position: fixed; inset: 0; z-index: 10; }
+  .hz-bar { position: fixed; z-index: 60; left: 50%; bottom: 10px; translate: -50% 0; display: flex; gap: 6px; padding: 6px; border-radius: 12px; background: rgba(0,0,0,.7); font: 600 12px system-ui; color: #fff; }
+  .hz-bar button { font: inherit; border: 0; border-radius: 8px; padding: 6px 10px; background: #2c2540; color: #fff; cursor: pointer; }
+  .hz-bar button[aria-pressed="true"] { background: #ff8a14; color: #15121c; }
+</style>
+</head>
+<body>
+<div class="hz-bg"></div>
+<div id="ui-root">
+  <div class="iw-ui is-active" data-screen="main">
+    <div class="iw-ui__layer">
+      <div class="iw-screen iw-main" id="hz-main">
+        <div class="iw-scrim-left"></div>
+        <nav class="iw-main__menu">
+          <button class="iw-btn iw-btn--menu iw-btn--xl iw-btn--primary" type="button"><span class="iw-btn__blob"></span><span class="iw-btn__text"><span class="iw-btn__label">バトル</span><span class="iw-btn__sub">ナワバリ・ガチルール・ボスバトル</span></span></button>
+          <button class="iw-btn iw-btn--menu" type="button"><span class="iw-btn__blob"></span><span class="iw-btn__text"><span class="iw-btn__label">オンライン</span></span></button>
+          <button class="iw-btn iw-btn--menu" type="button"><span class="iw-btn__blob"></span><span class="iw-btn__text"><span class="iw-btn__label">ブキ</span></span></button>
+          <button class="iw-btn iw-btn--menu" type="button"><span class="iw-btn__blob"></span><span class="iw-btn__text"><span class="iw-btn__label">オプション</span></span></button>
+        </nav>
+        <div class="iw-main__desc"><i class="iw-main__descdot"></i><span class="iw-main__desctext">4対4のナワバリバトル</span></div>
+        <div class="iw-main__side">
+          <div class="iw-panel iw-profile">
+            <div class="iw-profile__avatar"></div>
+            <div class="iw-profile__info"><div class="iw-profile__name">プレイヤー</div><div class="iw-profile__rank"><span>ルーキー</span></div></div>
+          </div>
+          <div class="iw-panel iw-kitcard"><div class="iw-kitcard__label">いまのブキ</div><div class="iw-kitcard__main"><div class="iw-kitcard__id"><div class="iw-kitcard__name">スプラシューター</div></div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="hz-bar">
+  <button type="button" data-screen="main" aria-pressed="true">main</button>
+  <button type="button" data-screen="title">title</button>
+  <button type="button" id="hz-touch">touch</button>
+  <button type="button" id="hz-lang">lang</button>
+</div>
+<script type="module">
+  const ui = document.querySelector('.iw-ui'), layer = ui.querySelector('.iw-ui__layer');
+  const main = document.getElementById('hz-main');
+  const title = Object.assign(document.createElement('div'), { className: 'iw-screen iw-title', innerHTML: '<div class="iw-title__scrim"></div>' });
+  for (const b of document.querySelectorAll('[data-screen]')) b.addEventListener('click', () => {
+    document.querySelectorAll('[data-screen]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    layer.replaceChildren(b.dataset.screen === 'title' ? title : main);
+    ui.dataset.screen = b.dataset.screen;
+  });
+  document.getElementById('hz-touch').addEventListener('click', (e) => { ui.classList.toggle('is-touch'); e.target.setAttribute('aria-pressed', String(ui.classList.contains('is-touch'))); });
+  document.getElementById('hz-lang').addEventListener('click', () => {
+    const s = JSON.parse(localStorage.getItem('inkwave.settings') || '{}');
+    s.lang = s.lang === 'en' ? 'ja' : 'en';
+    localStorage.setItem('inkwave.settings', JSON.stringify(s));
+    location.reload();
+  });
+  if (new URLSearchParams(location.search).get('screen') === 'title') document.querySelector('[data-screen="title"]').click();
+</script>
+<script type="module" src="/src/entry.js"></script>
+</body>
+</html>

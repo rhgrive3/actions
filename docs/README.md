@@ -7,6 +7,7 @@
 - [INKWAVE 開発ガイド](inkwave-development.md): 入力と出力、依存ツール、ビルド、テスト、ブラウザ確認。
 - [パッチ構成](../patches/README.md): 変更の置き場所と各領域の資料。
 - [コントリビューション手順](../CONTRIBUTING.md): 並行ブランチ、検証、PR に残す情報。
+- [アカウントと Workers 配信](../account/README.md): ログイン UI、アカウント API（D1）、`vite build` による本番ビルドとデプロイ。
 - [PR Worker](pr-worker.md): 他リポジトリでの調査・修正・テストと push の条件。
 - [Hex worker lanes](../lanes/README.md): exact SHA、タイムアウト、計測成果物の契約。
 

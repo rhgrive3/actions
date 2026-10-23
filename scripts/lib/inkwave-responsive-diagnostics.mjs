@@ -1,4 +1,9 @@
 import fs from 'node:fs';
+import { parseResponsiveAnimations } from './inkwave-responsive-animation-diagnostics.mjs';
+
+// Fixed harness IDs only; never persist selector, weapon ID, page text or errors here.
+const operationIds = new Set(['continuation-read-callback', 'continuation-tap-change', 'continuation-wait-loadout', 'continuation-settle-loadout', 'continuation-ready-loadout', 'continuation-read-weapon', 'continuation-list-weapons', 'continuation-select-weapon', 'continuation-verify-weapon', 'continuation-scroll-action', 'continuation-settle-action', 'continuation-visible-action', 'continuation-label-action', 'continuation-capture-action']);
+export const responsiveOperationId = value => operationIds.has(value) ? value : null;
 
 // Bounded evidence only. No browser retry, deadline, or acceptance changes.
 export const boundedText = (value, limit = 4096) => String(value ?? '').slice(0, limit);
@@ -8,6 +13,7 @@ const errorRecord = error => ({ name: boundedText(error?.name || 'Error', 80),
 export function createResponsiveDiagnostics({ now = () => Date.now(), maxEvents = 32, onChange = () => {} } = {}) {
   const started = now(), events = [];
   let firstError = null, lastCompletedStage = null, pageUnavailable = false, droppedEvents = 0;
+  let pendingOperation = null, animationSnapshots = [];
   const record = (type, detail = '') => {
     if (events.length === maxEvents) { events.shift(); droppedEvents++; }
     events.push({ ms: Math.max(0, now() - started), type: boundedText(type, 80), detail: boundedText(detail, 1024) });
@@ -15,10 +21,24 @@ export function createResponsiveDiagnostics({ now = () => Date.now(), maxEvents 
     catch (error) { console.error(JSON.stringify({ event: 'responsive-progress-write-error', error: boundedText(error?.message ?? error) })); }
   };
   const fail = error => { if (!firstError) { firstError = errorRecord(error); record('first-error', firstError.message); } };
-  const snapshot = () => ({ firstError, lastCompletedStage, pageUnavailable,
-    droppedEvents, events: events.map(row => ({ ...row })) });
+  const snapshot = () => ({ firstError, lastCompletedStage, pendingOperation, pageUnavailable,
+    ...(animationSnapshots.length ? { animationSnapshots } : {}), droppedEvents, events: events.map(row => ({ ...row })) });
   return {
     record, fail, snapshot,
+    animations(text) {
+      if (pendingOperation !== 'continuation-settle-action') return;
+      const value = parseResponsiveAnimations(text);
+      if (!value) return;
+      animationSnapshots = [...animationSnapshots.filter(row => row.phase !== value.phase), value].slice(-2);
+      record('animation-snapshot', value.phase);
+    },
+    operation(id, boundary) {
+      id = responsiveOperationId(id);
+      if (!id || !['before', 'after'].includes(boundary)) return;
+      if (boundary === 'before') pendingOperation = id;
+      else if (pendingOperation === id) pendingOperation = null;
+      record('operation-' + boundary, id);
+    },
     stage(name) { lastCompletedStage = boundedText(name, 160); record('stage-complete', name); },
     unavailable(type) { pageUnavailable = true; record(type); },
     async optional(label, action, isClosed = () => false) {
@@ -61,5 +81,32 @@ export function createResponsiveProgressWriter(file, identity) {
     const receipt = { kind: 'responsive-diagnostic-progress', ...identity, diagnostics };
     fs.writeFileSync(file + '.pending', JSON.stringify(receipt, null, 2) + '\n');
     fs.renameSync(file + '.pending', file);
+  };
+}
+
+// Every uncaught page error already fails acceptance. Close only that case's
+// context to interrupt pending Playwright waits; do not throw from an event
+// callback or change the outer child deadline. Earlier captures remain on disk.
+export function createResponsiveFatalPageError({ diagnostics, closeContext, recordError }) {
+  let firstError = null, closing = null;
+  const close = () => {
+    if (!closing) {
+      closing = Promise.resolve().then(closeContext);
+      // Event callbacks cannot await cleanup. Observe rejection immediately;
+      // the existing finally block still awaits this same rejecting promise.
+      closing.catch(() => {});
+    }
+    return closing;
+  };
+  return {
+    get error() { return firstError; }, close,
+    handle(error) {
+      recordError(error);
+      if (firstError) return;
+      firstError = error;
+      diagnostics.fail(error);
+      diagnostics.unavailable('fatal-pageerror-context-closing');
+      close();
+    },
   };
 }

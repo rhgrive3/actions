@@ -33,7 +33,7 @@ const updateConnectivity = () => {
   cacheMessage = (navigator.onLine === false ? 'オフライン：保存済みデータを使用中。' : '') + (updateAvailable ? updateText : '');
   badgeMessage(cacheMessage);
 };
-addEventListener('online', updateConnectivity);
+addEventListener('online', () => { updateConnectivity(); deferRegistration(); });
 addEventListener('offline', updateConnectivity);
 
 async function cacheStatus(worker) {
@@ -52,13 +52,14 @@ function deferRegistration() {
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
   registrationPending = true;
   const run = async () => {
-    registrationPending = false;
-    if (!menuVisible() || registered) return; // A quick Play click must not start an install during the transition.
-    registered = true;
+    // Keep the pending guard through register(): reconnect/menu events may run
+    // while the browser is still resolving its registration request.
+    if (!menuVisible() || registered) { registrationPending = false; return; } // A quick Play click must not start an install during the transition.
     try {
       // document.baseURI points into _versions; registration is rooted in the document URL, not that base.
       const root = new URL('./', location.href);
       const registration = await navigator.serviceWorker.register(new URL('sw.js', root), { scope: root.pathname, updateViaCache: 'none' });
+      registered = true;
       mark('sw-registration');
       const notifyWaiting = () => {
         if (registration.waiting && navigator.serviceWorker.controller) {
@@ -81,7 +82,8 @@ function deferRegistration() {
       watchInstalling();
       await cacheStatus(registration.active);
       navigator.serviceWorker.ready.then(reg => cacheStatus(reg.active)).catch(() => {});
-    } catch (error) { report.swError = String(error); /* Storage/install denial must never block online play. */ }
+    } catch (error) { report.swError = String(error); /* A later reconnect/menu return can retry; no automatic retry loop. */ }
+    finally { registrationPending = false; }
   };
   if (typeof requestIdleCallback === 'function') requestIdleCallback(run, { timeout: 2500 });
   else setTimeout(run, 1000);

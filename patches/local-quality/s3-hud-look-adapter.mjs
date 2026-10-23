@@ -139,12 +139,17 @@ function once(code, before, after, label) {
 }
 
 const S3_DRAW_TANK = `  _drawTank(dt, sub, low, nosub) {
+    return this._s3PaintTank(sub, low, nosub);
+  }
+
+  _s3PaintTank(sub, low, nosub) {
     // Splatoon 3 ink tank (flat ink surface, as in the footage): a near-black bottle (stepped cap: shoulders, neck, nub; straight sides,
     // rounded foot) with a thick frame; the ink is flat team colour inside the frame with one bright
     // meniscus line, and a thin white line marks the sub-weapon cost. No gloss, no bubbles.
     const T = this._tank, c = this.tankCtx, cv = this.tankCanvas;
     const dpr = Math.min(2, devicePixelRatio || 1);
-    const cw = cv.clientWidth || 18, chh = cv.clientHeight || 74;
+    const box = this._s3TankBox(cv, sub, low, nosub);
+    const cw = box.w || 18, chh = box.h || 74;
     const W = Math.round(cw * dpr), H = Math.round(chh * dpr);
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
     const L = this._L;
@@ -191,6 +196,26 @@ const S3_DRAW_TANK = `  _drawTank(dt, sub, low, nosub) {
     T.bubbles.length = 0;
   }
 
+  // Reading clientWidth/clientHeight after the frame's HUD DOM writes forced a synchronous layout on every repaint.
+  // Read the size once, then only when a ResizeObserver reports a change. Its callback runs after layout and before
+  // paint, so the tank is repainted at the new size in the same frame (entering squid form resizes it).
+  _s3TankBox(cv, sub, low, nosub) {
+    let B = this._tankBox;
+    if (!B || B.cv !== cv) {
+      // A box belongs to one canvas (and may be inherited from a prototype HUD); never disconnect another's observer.
+      B = this._tankBox = { cv, w: cv.clientWidth, h: cv.clientHeight, args: null, ro: null };
+      if (typeof ResizeObserver === 'function') {
+        B.ro = new ResizeObserver(() => {
+          B.w = cv.clientWidth; B.h = cv.clientHeight;
+          if (B.args && B.w && B.h && this.tankCanvas === cv) this._s3PaintTank(...B.args);
+        });
+        B.ro.observe(cv);
+      }
+    } else if (!B.ro) { B.w = cv.clientWidth; B.h = cv.clientHeight; }
+    B.args = [sub, low, nosub];
+    return B;
+  }
+
 `;
 
 // Squid form: the tank leaves the reticle and rides beside the player's squid on screen, as in the
@@ -229,17 +254,26 @@ const TANK_TUBE = `  _s3TankTube(ink, dt) {
     if (!L.tubeGeo || L.tubeGeo.vw !== vw || L.tubeGeo.vh !== vh)
       L.tubeGeo = { vw, vh, l: this.tank.offsetLeft, t: this.tank.offsetTop, h: this.tank.offsetHeight, w: this.tank.offsetWidth };
     const g = L.tubeGeo;
-    const x0 = g.w * 0.1, y0 = g.h * 0.94, x1 = -g.l * 0.72, y1 = -g.t + g.l * 0.08;
-    const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len;
+    let basis = g.basis;
+    if (!basis || basis.w !== g.w || basis.h !== g.h || basis.l !== g.l || basis.t !== g.t) {
+      const x0 = g.w * 0.1, y0 = g.h * 0.94, x1 = -g.l * 0.72, y1 = -g.t + g.l * 0.08;
+      const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy) || 1;
+      basis = g.basis = { w: g.w, h: g.h, l: g.l, t: g.t, len, nx: -dy / len, ny: dx / len, points: [] };
+      for (let i = 0; i <= 18; i++) {
+        const u = i / 18;
+        basis.points.push({ x: x0 + dx * u, y: y0 + dy * u, env: Math.sin(Math.PI * u), u15: u * 15, u31: u * 31 });
+      }
+    }
+    const { len, nx, ny } = basis;
     const flowing = ink < 0.995;
     L.tubePhase = ((L.tubePhase || 0) + dt * (flowing ? 11 : 3)) % (Math.PI * 2000);
     const beat = flowing ? 0.55 + 0.45 * Math.max(0, Math.sin(T.t * 8.5)) ** 2 : 0.35;
     const amp = Math.min(5, len * 0.07) * beat;
     let d = '';
     for (let i = 0; i <= 18; i++) {
-      const u = i / 18, env = Math.sin(Math.PI * u);
-      const o = env * amp * (Math.sin(u * 15 + L.tubePhase) + 0.25 * Math.sin(u * 31 + L.tubePhase * 1.6));   // u = 0 is the tank foot: + phase travels into the tank
-      d += (i ? 'L' : 'M') + (x0 + dx * u + nx * o).toFixed(1) + ' ' + (y0 + dy * u + ny * o).toFixed(1);
+      const p = basis.points[i];
+      const o = p.env * amp * (Math.sin(p.u15 + L.tubePhase) + 0.25 * Math.sin(p.u31 + L.tubePhase * 1.6));   // u = 0 is the tank foot: + phase travels into the tank
+      d += (i ? 'L' : 'M') + (p.x + nx * o).toFixed(1) + ' ' + (p.y + ny * o).toFixed(1);
     }
     this._tube[0].setAttribute('d', d); this._tube[1].setAttribute('d', d);
   }

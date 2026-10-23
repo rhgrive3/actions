@@ -39,15 +39,27 @@ export function renderLockerStage(game, G, dt) {
   if (game._skipRender) return;
   const s = backdrop(), size = renderer.getSize(new THREE.Vector2());
   const autoClear = renderer.autoClear, alpha = renderer.getClearAlpha(), color = renderer.getClearColor(new THREE.Color());
-  renderer.setRenderTarget(null);
-  renderer.setClearColor(FALLBACK, 1);
-  renderer.clear(true, true, false);
-  if (s.texture) {
-    cover(s.texture, size.x, size.y);
-    renderer.autoClear = false;
-    renderer.render(s.scene, s.camera);
+  const target = renderer.getRenderTarget(), face = renderer.getActiveCubeFace(), mip = renderer.getActiveMipmapLevel();
+  let failed = false, failure;
+  try {
+    renderer.setRenderTarget(null);
+    renderer.setClearColor(FALLBACK, 1);
+    renderer.clear(true, true, false);
+    if (s.texture) {
+      cover(s.texture, size.x, size.y);
+      renderer.autoClear = false;
+      renderer.render(s.scene, s.camera);
+    }
+  } catch (error) { failed = true; failure = error; }
+  try {
+    renderer.autoClear = autoClear;
+    renderer.setClearColor(color, alpha);
+  } catch (error) { if (!failed) { failed = true; failure = error; } }
+  if (failed) {
+    // The successful frame intentionally composites to the canvas. A failed
+    // backdrop must instead restore the caller's target, including cube/mip.
+    try { renderer.setRenderTarget(target, face, mip); } catch { /* preserve the first failure */ }
+    throw failure;
   }
-  renderer.autoClear = autoClear;
-  renderer.setClearColor(color, alpha);
   showcase.render();
 }

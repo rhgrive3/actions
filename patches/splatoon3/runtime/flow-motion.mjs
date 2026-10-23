@@ -229,7 +229,7 @@ function syncShell(ch, s, r, THREE, shown) {
   }
   for (const [t, shells] of r.kidShells) for (const { source: mesh, shell } of shells) {
     shell.visible = shown && t === tier && ch.kid.visible && mesh.visible;
-    shell.matrix.copy(mesh.matrix); shell.matrixWorldNeedsUpdate = true;
+    if (shell.visible) { shell.matrix.copy(mesh.matrix); shell.matrixWorldNeedsUpdate = true; }
   }
   const sq = ch.squid.body;
   if (r.squidSource !== sq.geometry || !!r.squidShell.isSkinnedMesh !== !!sq.isSkinnedMesh
@@ -246,7 +246,12 @@ function anchors(ch, s) {
   if (ch.kidForm) {
     for (let i = 0; i < 3; i++) ch.root.worldToLocal(s.bones[i].getWorldPosition(s.anchors[i]));
   } else {
-    ch.root.worldToLocal(ch.squid.pivot.getWorldPosition(s.anchors[0]));
+    // A source swimmer's pivot is intentionally below the ink surface. Flow
+    // particles stay above its authoritative foot/surface origin; following
+    // the submerged pivot hides the entire active glint envelope in the floor.
+    if (ch.form === 'swim' && ch.grounded) ch.root.getWorldPosition(s.anchors[0]);
+    else ch.squid.pivot.getWorldPosition(s.anchors[0]);
+    ch.root.worldToLocal(s.anchors[0]);
     s.anchors[1].copy(s.anchors[0]); s.anchors[2].copy(s.anchors[0]);
   }
 }
@@ -287,7 +292,8 @@ function draw(ch, s, THREE) {
     s.point.copy(s.anchors[i % 3]);
     s.point.y = Math.max(s.point.y, swimSurfaceY);
     s.point.x += Math.cos(angle) * radial; s.point.z += Math.sin(angle) * radial;
-    s.point.y += (phase - .5) * leg * (ch.kidForm ? .75 : .35);
+    const verticalPhase = ch.form === 'swim' && ch.grounded ? phase : phase - .5;
+    s.point.y += verticalPhase * leg * (ch.kidForm ? .75 : .35);
     const duty = .24 + .58 * burst;
     const life = phase < duty ? Math.sin(phase / duty * Math.PI) ** 4 : 0;
     const size = leg * (.14 + .12 * life + .1 * burst);

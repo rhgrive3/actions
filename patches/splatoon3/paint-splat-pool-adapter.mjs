@@ -13,6 +13,7 @@ const SPLAT_ENTRY_POOL_MAX_FACES = ${ENTRY_POOL_MAX_FACES};`, 'splat pool bounds
     '    this.growing = [];            // splats still spreading / dripping on screen (the gameplay grid is already updated)',
     '    this.growing = [];            // splats still spreading / dripping on screen (the gameplay grid is already updated)\n' +
     '    this._splatEntryPool = [];\n' +
+    '    this._growthTeams = [0, 0]; this._growthTrackedCount = 0; this._growthUnknownCount = 0;\n' +
     '    this._splatGrowthPool = [];\n' +
     '    this._splatPoolsDisposed = false;\n' +
     '    this._splatPoolStats = { entryArraysCreated: 0, entryArraysReused: 0, growthRecordsCreated: 0, growthRecordsReused: 0 };',
@@ -40,12 +41,37 @@ const SPLAT_ENTRY_POOL_MAX_FACES = ${ENTRY_POOL_MAX_FACES};`, 'splat pool bounds
     return { entries: null, R: 0, team: 0, seed: 0, kind: 0, age: 0, dur: 0, dripDur: 0, cx: 0, cy: 0, cz: 0, paintOwner: null, paintCreditMode: 0, paintOrder: 0, netOrderId: 0 };
   }
 
+  _retainSplatGrowth(g) {
+    if (!this._growthTeams) { this._growthTeams = [0, 0]; this._growthTrackedCount = 0; this._growthUnknownCount = 0; }
+    g._growthTrackedTeam = g.kind === K_SPECK ? -1 : (g.team === 0 || g.team === 1 ? g.team : -2);
+    if (g._growthTrackedTeam === -2) this._growthUnknownCount++;
+    if (g._growthTrackedTeam === 0 || g._growthTrackedTeam === 1) this._growthTeams[g._growthTrackedTeam]++;
+    this._growthTrackedCount++;
+  }
+
+  _hasOpposingGrowth(team) {
+    // Unexpected externally supplied records fail open to the original loop.
+    return !this._growthTeams || this._growthTrackedCount !== this.growing.length ||
+      (team !== 0 && team !== 1) || this._growthUnknownCount > 0 || this._growthTeams[1 - team] > 0;
+  }
+
   _releaseSplatGrowth(g) {
     if (!g) return;
+    if (g._growthTrackedTeam !== undefined) {
+      if (g._growthTrackedTeam === 0 || g._growthTrackedTeam === 1) this._growthTeams[g._growthTrackedTeam]--;
+      if (g._growthTrackedTeam === -2) this._growthUnknownCount--;
+      this._growthTrackedCount--; delete g._growthTrackedTeam;
+    }
     this._releaseSplatEntries(g.entries);
     g.entries = null;
     g.R = g.team = g.seed = g.kind = g.age = g.dur = g.dripDur = g.cx = g.cy = g.cz = 0;
     g.paintOwner = null; g.paintCreditMode = 0; g.paintOrder = 0; g.netOrderId = 0;
+    // A released lease cannot retain face/cell graphs or a preceding stamp's completion state.
+    g._s3AncillaryCells = g._s3AncillaryTemplate = g._s3AncillaryTemplates = g._s3Wobble = g._s3SettledAncillary = null;
+    g._s3WobbleSeed = undefined;
+    g._ancillaryAllDone = g._ancillaryFloorDone = 0;
+    g._ancillaryDoneEntries = g._ancillaryFloorEntries = 0;
+    g._ancillaryDoneAge = g._ancillaryFloorDoneAge = g._ancillaryDoneRadius = g._ancillaryFloorRadius = 0;
     const pool = this._splatGrowthPool;
     if (!this._splatPoolsDisposed && pool && pool.length < SPLAT_GROWTH_POOL_MAX) pool.push(g);
   }
@@ -101,8 +127,10 @@ const SPLAT_ENTRY_POOL_MAX_FACES = ${ENTRY_POOL_MAX_FACES};`, 'splat pool bounds
   code = replaceOnce(code,
     '      if (opts.instant) this._emitGrowth(g, 3, 1, false);\n      else this.growing.push(g);',
     '      if (opts.instant) { this._emitGrowth(g, 3, 1, false); this._releaseSplatGrowth(g); growth = null; }\n' +
-    '      else { this.growing.push(g); growth = null; }',
+    '      else { this._retainSplatGrowth(g); this.growing.push(g); growth = null; }',
     'return or retain growth lease');
+
+  code = replaceOnce(code, '      if (!cosmetic) {\n        for (let i = this.growing.length', '      if (!cosmetic && this._hasOpposingGrowth(team)) {\n        for (let i = this.growing.length', 'skip scan when no opposing non-speck growth');
 
   const methodStart = code.indexOf('  splat(center, radius, team, opts = {}) {');
   const bodyStart = code.indexOf('    let wall = false;', methodStart);

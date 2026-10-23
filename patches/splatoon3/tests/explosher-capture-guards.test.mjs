@@ -2,6 +2,7 @@ import os from 'node:os';
 import realPath from 'node:path';
 import realCrypto from 'node:crypto';
 import {spawnSync as realSpawn} from 'node:child_process';
+import {requireRuntimeUIPreflight} from '../../../scripts/lib/inkwave-explosher-runtime-ui-preflight.mjs';
 import {inspectCommonBuild, requireApprovedCommonBuild} from '../../../scripts/lib/inkwave-explosher-common-build.mjs';
 import {installProjectileCaptureUiGate} from '../../../scripts/lib/inkwave-projectile-capture-ui.mjs';
 import {requireControlledStartupPair} from '../../../scripts/lib/inkwave-explosher-volume-barrier.mjs';
@@ -30,7 +31,7 @@ function inspectorFixture(){
  const approval={schema:1,head:git('rev-parse','HEAD'),tree:git('rev-parse','HEAD^{tree}'),buildIdentitySha256:hash(fs.readFileSync(realPath.join(site,'inkwave-build.json'))),inputHash:build.inputHash,contentHash:build.contentHash,outputManifest,outputManifestSha256:hash(JSON.stringify(outputManifest))};
  return {dir,root,site,approval};
 }
-function diagnostic({publicAdmission=false,corrupt=false}={}){
+function diagnostic({publicAdmission=false,corrupt=false,runtimeMode=false}={}){
  const fixture=inspectorFixture();
  try {
  const saved={},sha=fixture.approval.head;let admissionCalls=0,evidenceWrites=0,spawns=0;
@@ -43,7 +44,7 @@ function diagnostic({publicAdmission=false,corrupt=false}={}){
 
  const fakeFs={mkdirSync(){evidenceWrites++;},readFileSync(p){if(p.endsWith('check-inkwave-projectile-visuals.mjs'))return nativeResetSource;if(p.endsWith('render-inkwave-projectile-shapes.mjs'))return driver;if(p.endsWith('inkwave-build.json'))return JSON.stringify({build:{revision:'test'},artifacts:{'patches/splatoon3/runtime/s3-projectile-shapes.mjs':'hash','_versions/test/patches/practice-range/runtime/dummy.mjs':'hash'},contentHash:'hash'});if(p.endsWith('manifest.json'))return '[]';return 'source';},writeFileSync(p,v){evidenceWrites++;saved[p]=v;}};
  const path={resolve:x=>x,join:(...a)=>a.join('/')},crypto={createHash(){return {update(){return this;},digest(){return 'hash';}}}};
- const process={argv:['node','wrapper',fixture.site,'out',sha,fixture.root],execPath:'node',env:{},exit(){}};
+ const process={argv:['node','wrapper',fixture.site,'out',sha,fixture.root],execPath:'node',env:runtimeMode?{EXPLOSHER_RUNTIME_UI_PREFLIGHT:'test-unapproved'}:{},exit(){}};
  const spawn=(bin,args)=>{spawns++;return bin==='git'?{status:0,stdout:args.includes('rev-parse')?sha:'source'}:{status:0};};
  // Exercise actual generator and result-validation code, not full capture orchestration.
  // Common/inverse production admission is separately checked below; no synthetic
@@ -53,14 +54,14 @@ function diagnostic({publicAdmission=false,corrupt=false}={}){
  const validation=wrapper.slice(wrapper.indexOf('const expected=new Set'));
  const code=(
   "const [site,out,sourceSha,sourceRoot]=process.argv.slice(2);const root=sourceRoot;"+
-  section('const commonBuildAdmission=', 'const preflight=')+section('const git=(args)=>', 'fs.mkdirSync(out,')+
+  section('const runtimeUIRoute=', 'const preflight=')+section('const git=(args)=>', 'fs.mkdirSync(out,')+
   "const preflight=false,video=false,controlled=null,shapeOverlay=null,expectedFrame=null;"+section('const captureTicks=', 'const expectedPath=')+
   "const hash=b=>crypto.createHash('sha256').update(b).digest('hex');const once=(s,a,b)=>{if(s.split(a).length!==2)throw Error('capture anchor mismatch: '+a);return s.replace(a,b);};"+
   generation+"const captures=[];"+validation
  ).replace(/import\.meta\.url/g,"'file:///tmp/x'").replace(/import\.meta\.resolve\('playwright'\)/g,"'playwright'");
 
- assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process','awaitExplosherSceneSources','explosherSceneCensus','readExplosherSceneClocks','requireExplosherStyle','installExplosherEarlyFreeze','installExplosherRandom','readExplosherEffects','readExplosherCaptureSurface','explosherSurfaceReady','requireApprovedCommonBuild','installProjectileCaptureUiGate','requireControlledStartupPair',code)(fakeFs,path,crypto,spawn,()=>'/root/',process,awaitExplosherSceneSources,explosherSceneCensus,readExplosherSceneClocks,requireExplosherStyle,installExplosherEarlyFreeze,installExplosherRandom,readExplosherEffects,readExplosherCaptureSurface,explosherSurfaceReady,admission,installProjectileCaptureUiGate,requireControlledStartupPair),publicAdmission?/Checkout head differs/:corrupt?/Output size differs/:/Wrong native capture count/);
- assert.equal(admissionCalls,1);if(publicAdmission||corrupt){assert.equal(evidenceWrites,0);assert.equal(spawns,0);}
+ assert.throws(()=>new Function('fs','path','crypto','spawnSync','fileURLToPath','process','awaitExplosherSceneSources','explosherSceneCensus','readExplosherSceneClocks','requireExplosherStyle','installExplosherEarlyFreeze','installExplosherRandom','readExplosherEffects','readExplosherCaptureSurface','explosherSurfaceReady','requireApprovedCommonBuild','installProjectileCaptureUiGate','requireControlledStartupPair','requireRuntimeUIPreflight',code)(fakeFs,path,crypto,spawn,()=>'/root/',process,awaitExplosherSceneSources,explosherSceneCensus,readExplosherSceneClocks,requireExplosherStyle,installExplosherEarlyFreeze,installExplosherRandom,readExplosherEffects,readExplosherCaptureSurface,explosherSurfaceReady,admission,installProjectileCaptureUiGate,requireControlledStartupPair,args=>requireRuntimeUIPreflight({...args,env:process.env})),runtimeMode?/Official event path required/:publicAdmission?/Checkout head differs/:corrupt?/Output size differs/:/Wrong native capture count/);
+ assert.equal(admissionCalls,runtimeMode?0:1);if(publicAdmission||corrupt||runtimeMode){assert.equal(evidenceWrites,0);assert.equal(spawns,0);}
  return saved['out/native-capture-driver.mjs'];
  }finally{fs.rmSync(fixture.dir,{recursive:true,force:true});}
 }
@@ -251,9 +252,16 @@ test('generated driver preserves ordinary UI and binds the renderer canvas',()=>
 test('public common admission rejects synthetic unit provenance before driver side effects',()=>{assert.equal(diagnostic({publicAdmission:true}),undefined);});
 test('actual common inspector rejects corrupted output before driver side effects',()=>{assert.equal(diagnostic({corrupt:true}),undefined);});
 
-test('actual wrapper retains admission and inverse gates before launching or validating capture results',()=>{
- const ordered=['const commonBuildAdmission=requireApprovedCommonBuild(sourceRoot,site);',"if(commonBuildAdmission.head!==sourceSha)throw Error('Admitted common source differs');","if(!shapeOverlay||!controlled)throw Error('This LOCAL stage candidate requires the reviewed common shape and controlled-main receipts');",'const rangeEntryUrl=','requireInverseShapePair(...','const run=spawnSync(process.execPath,','const expected=new Set'];
+function assertWrapperAdmissionOrder(source){
+ const ordered=['const runtimeUIRoute=Boolean(process.env.EXPLOSHER_RUNTIME_UI_PREFLIGHT);','const commonBuildAdmission=runtimeUIRoute',"?requireRuntimeUIPreflight({root:sourceRoot,site,sourceSha,baseline:path.join(root,'.ci-explosher-base'),candidate:root})",':requireApprovedCommonBuild(sourceRoot,site);',"if(commonBuildAdmission.head!==sourceSha)throw Error('Admitted common source differs');","if(!runtimeUIRoute&&(!shapeOverlay||!controlled))throw Error('This LOCAL stage candidate requires the reviewed common shape and controlled-main receipts');",'const rangeEntryUrl=','if(!runtimeUIRoute){','requireInverseShapePair(...','const run=spawnSync(process.execPath,','const expected=new Set'];
  let previous=-1;
- for(const anchor of ordered){assert.equal(wrapper.split(anchor).length,2,anchor);const at=wrapper.indexOf(anchor);assert(at>previous,anchor);previous=at;}
- assert(wrapper.includes("if(!shapeOverlay||!controlled)throw Error('This LOCAL stage candidate requires the reviewed common shape and controlled-main receipts');"));
+ for(const anchor of ordered){assert.equal(source.split(anchor).length,2,anchor);const at=source.indexOf(anchor);assert(at>previous,anchor);previous=at;}
+ assert(source.includes('receipt.diagnosticOnly=true;receipt.fullPairAccepted=false;'));
+}
+test('actual wrapper retains both strict admission routes and inverse gates before captures',()=>{assertWrapperAdmissionOrder(wrapper);});
+test('runtime route cannot admit synthetic fixture without official event evidence',()=>{assert.equal(diagnostic({runtimeMode:true}),undefined);});
+test('admission order controls reject missing route selector, strict helper, inverse gate and diagnostic boundary',()=>{
+ for(const anchor of ['const runtimeUIRoute=Boolean(process.env.EXPLOSHER_RUNTIME_UI_PREFLIGHT);',':requireApprovedCommonBuild(sourceRoot,site);','?requireRuntimeUIPreflight(',"if(!runtimeUIRoute&&(!shapeOverlay||!controlled))",'requireInverseShapePair(...','receipt.fullPairAccepted=false;']){
+  assert(wrapper.includes(anchor));const mutant=wrapper.replace(anchor,'/* mutation */');assert.notEqual(mutant,wrapper);assert.throws(()=>assertWrapperAdmissionOrder(mutant));
+ }
 });

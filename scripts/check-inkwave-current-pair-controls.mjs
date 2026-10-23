@@ -6,12 +6,26 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import {ALL_29_PRS_SOURCE_PAIR} from './lib/inkwave-29pr-paint-source-pair.mjs';
+import {ALL_31_PRS_SOURCE_PAIR,POST_30_PRS_SOURCE_PAIR} from './lib/inkwave-31pr-paint-source-pair.mjs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { verifyDeclaredPaintSources } from './lib/inkwave-declared-paint-source-pair.mjs';
-import { QUEUE1801_PAINT_SOURCE_PAIR, MAINCEB58_PAINT_SOURCE_PAIR, MAINA350_PAINT_SOURCE_PAIR, paintSourcePaths, MAINE1F_PAINT_SOURCE_PAIR, MAIN9FE_PAINT_SOURCE_PAIR, MAIN_INK_BASELINE_PATHS, planMainInkBaseline } from './lib/inkwave-main-ink-baseline.mjs';
+import { QUEUE1801_IDENTICAL_PAINT_SOURCE_PAIR, QUEUE1801_PAINT_SOURCE_PAIR, MAINCEB58_PAINT_SOURCE_PAIR, MAINA350_PAINT_SOURCE_PAIR, paintSourcePaths, MAINE1F_PAINT_SOURCE_PAIR, MAIN9FE_PAINT_SOURCE_PAIR, MAIN_INK_BASELINE_PATHS, planMainInkBaseline } from './lib/inkwave-main-ink-baseline.mjs';
 
 const options = parseSourceAdmissionArgs(process.argv.slice(2), ['--baseline', '--candidate', '--receipt', '--base-sha', '--candidate-sha', '--expected-mode', '--expected-source-base', '--expected-source-head'], ['--baseline', '--candidate']);
+// Separate reviewed eight-delta epoch; never treat changed production as byte-identical.
+if (options.get('--expected-mode') === 'main26a4-reviewed-runtime-ui-production-pair') {
+  const {runRuntimeUIAdmissionCLI} = await import('./lib/inkwave-runtime-ui-production-epoch.mjs');
+  await runRuntimeUIAdmissionCLI(options, 'controls');
+  process.exit(0);
+}
+// New immutable QA-only epoch; historical planners below remain unchanged.
+if (options.get('--expected-mode') === 'main26a4-byte-identical-production-epoch') {
+  const {runMain26a4AdmissionCLI} = await import('./lib/inkwave-main26a4-production-epoch.mjs');
+  await runMain26a4AdmissionCLI(options, 'controls');
+  process.exit(0);
+}
 const value = name => options.get(name) ?? null;
 const selectedPaths = paintSourcePaths({mode: value('--expected-mode')});
 const arg = name => path.resolve(value(name));
@@ -42,7 +56,7 @@ if (hasExpectation) {
 const hasDeclared=options.has('--base-sha')||options.has('--candidate-sha');
 if(requestedPair?.mode === MAIN9FE_PAINT_SOURCE_PAIR.mode)
  assert.ok(hasDeclared,'main9fe source epoch requires declared immutable Git source commits');
-if(requestedPair?.mode === QUEUE1801_PAINT_SOURCE_PAIR.mode)
+if([QUEUE1801_PAINT_SOURCE_PAIR.mode,QUEUE1801_IDENTICAL_PAINT_SOURCE_PAIR.mode].includes(requestedPair?.mode))
  assert.ok(hasDeclared,'queue1801 source epoch requires declared immutable Git source commits');
 if(requestedPair?.mode === MAINCEB58_PAINT_SOURCE_PAIR.mode)
  assert.ok(hasDeclared,'mainceb58 source epoch requires declared immutable Git source commits');
@@ -58,7 +72,8 @@ const maine1f = admitted.evidence.mode === MAINE1F_PAINT_SOURCE_PAIR.mode;
 const maina350 = admitted.evidence.mode === MAINA350_PAINT_SOURCE_PAIR.mode;
 const mainceb58 = admitted.evidence.mode === MAINCEB58_PAINT_SOURCE_PAIR.mode;
 const queue1801 = admitted.evidence.mode === QUEUE1801_PAINT_SOURCE_PAIR.mode;
-const identity = mainceb58 || maina350 || maine1f || main9fe || admitted.evidence.mode === 'pr1746-byte-identical-current-paint';
+const queue1801Identity = admitted.evidence.mode === QUEUE1801_IDENTICAL_PAINT_SOURCE_PAIR.mode;
+const identity = queue1801Identity || mainceb58 || maina350 || maine1f || main9fe || admitted.evidence.mode === 'pr1746-byte-identical-current-paint';
 assert.ok(identity || queue1801 || admitted.evidence.mode === 'current-pair-with-gameplay-differences', 'current controls cannot test a legacy replay');
 const expectedPair = Object.freeze(Object.fromEntries(['mode','sourceBase','sourceHead'].map(key=>[key,admitted.evidence[key]])));
 assert.deepEqual(admitted.changes, []);
@@ -100,15 +115,19 @@ function positive() {
   assert.equal(evidence.paint.paths.length, selectedPaths.length);
   // PR1746's exact 95c -> f312 tuple has two differing leaves. The older
   // four-leaf contract remains unchanged for its separately pinned pairs.
-  const expectedChanged = queue1801 ? 2 : identity ? 0 : evidence.paint.sourceBase === '95c25af145418691991a1452d4d10589754a0f1c' &&
+  const integrated23 = evidence.paint.sourceBase === '26a4db4123d23162a3dbf8a12150b1b5bc6ccf64' && evidence.paint.sourceHead === 'c8564cb617e1708759a502a662ef1b538eaad14c';
+  const integrated29 = evidence.paint.sourceBase === ALL_29_PRS_SOURCE_PAIR.baseCommit && evidence.paint.sourceHead === ALL_29_PRS_SOURCE_PAIR.candidateCommit;
+  const integrated31 = evidence.paint.sourceBase === ALL_31_PRS_SOURCE_PAIR.baseCommit && evidence.paint.sourceHead === ALL_31_PRS_SOURCE_PAIR.candidateCommit;
+  const post30 = evidence.paint.sourceBase === POST_30_PRS_SOURCE_PAIR.baseCommit && evidence.paint.sourceHead === POST_30_PRS_SOURCE_PAIR.candidateCommit;
+  const expectedChanged = post30 ? 1 : integrated23 || integrated29 || integrated31 ? 9 : queue1801 ? 2 : identity ? 0 : evidence.paint.sourceBase === '95c25af145418691991a1452d4d10589754a0f1c' &&
     evidence.paint.sourceHead === 'f31238a48b9d1a4af2d4f5f5f9182af777a79c83' ? 2 : 4;
   assert.equal(evidence.paint.paths.filter(row => row.originalSha256 !== row.candidateSha256).length, expectedChanged);
   for (const row of evidence.paint.paths) {
-    assert.equal(row.mode, queue1801 ? 'queue1801-exact-paint-source-pair' : mainceb58 ? 'mainceb58-exact-paint-source' : maina350 ? 'maina350-exact-paint-source' : maine1f ? 'maine1f-exact-paint-source' : main9fe ? 'main9fe-exact-paint-source' : identity ? 'pr1746-exact-current-paint' : 'reviewed-current-pair');
+    assert.equal(row.mode, queue1801Identity ? 'queue1801-exact-paint-source-epoch' : queue1801 ? 'queue1801-exact-paint-source-pair' : mainceb58 ? 'mainceb58-exact-paint-source' : maina350 ? 'maina350-exact-paint-source' : maine1f ? 'maine1f-exact-paint-source' : main9fe ? 'main9fe-exact-paint-source' : identity ? 'pr1746-exact-current-paint' : 'reviewed-current-pair');
     assert.deepEqual(row.replayed, []);
     assert.equal(row.referenceSha256, row.originalSha256);
   }
-  assert.match(evidence.scope, queue1801 ? /explicitly selected queue1801 fourteen-leaf paint source pair/ : mainceb58 ? /explicitly selected mainceb58 fourteen-leaf paint source epoch/ : maina350 ? /explicitly selected maina350 fourteen-leaf paint source epoch/ : maine1f ? /explicitly selected maine1f thirteen-leaf paint source epoch/ : main9fe ? /explicitly selected main9fe thirteen-leaf paint source epoch/ : identity ? /complete byte-identical PR1746 source epoch/ : /Gameplay differences remain/);
+  assert.match(evidence.scope, queue1801Identity ? /explicitly selected queue1801 fourteen-leaf paint source epoch/ : queue1801 ? /explicitly selected queue1801 fourteen-leaf paint source pair/ : mainceb58 ? /explicitly selected mainceb58 fourteen-leaf paint source epoch/ : maina350 ? /explicitly selected maina350 fourteen-leaf paint source epoch/ : maine1f ? /explicitly selected maine1f thirteen-leaf paint source epoch/ : main9fe ? /explicitly selected main9fe thirteen-leaf paint source epoch/ : identity ? /complete byte-identical PR1746 source epoch/ : /Gameplay differences remain/);
   assert.doesNotMatch(evidence.scope, /identical.*physics/);
   verify(left, before); verify(right, after);
   counts.positiveCli++;

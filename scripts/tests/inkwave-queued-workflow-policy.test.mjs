@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 // Configuration contracts, not a simulation of GitHub's hosted scheduler.
-// GitHub retains the running member when cancel-in-progress is false and
-// replaces the older pending member of a group when a newer run arrives.
+// A fresh PR may retire its obsolete run; non-PR diagnostics retain evidence.
+// Both permitted policies replace only pending members of their own group.
 const workflows = [
   'validate-inkwave-native-stage5.yml',
   'validate-inkwave-ranked.yml',
@@ -16,9 +16,9 @@ function policy(source) {
   const blocks = [...source.matchAll(/^concurrency:\n((?:[ \t].*(?:\n|$))*)/gm)];
   assert.equal(blocks.length, 1, 'one workflow-level concurrency policy');
   const group = /^  group: (.+)$/m.exec(blocks[0][1])?.[1];
-  const cancel = /^  cancel-in-progress: (true|false)$/m.exec(blocks[0][1])?.[1];
+  const cancel = /^  cancel-in-progress: (.+)$/m.exec(blocks[0][1])?.[1];
   assert.equal(group, expression, 'workflow + PR identity, unique non-PR fallback');
-  assert.equal(cancel, 'false', 'running jobs and their evidence are retained');
+  assert.ok(['false', "${{ github.event_name == 'pull_request' }}"].includes(cancel), 'only same-PR supersession can cancel a running job');
   return { group, cancel };
 }
 // This resolver expresses the exact bounded expression checked above. It
@@ -49,11 +49,19 @@ for (const name of workflows) {
       source.replace(/^concurrency:\n(?:[ \t].*(?:\n|$))*/m, ''),
       source.replace(expression, 'all-inkwave'),
       source.replace(expression, '${{ github.sha }}'),
-      source.replace('cancel-in-progress: false', 'cancel-in-progress: true'),
+      source.replace(/^  cancel-in-progress: .+$/m, '  cancel-in-progress: true'),
     ]) assert.throws(() => policy(mutant));
   });
 }
 test('the policy contracts are wired into the existing General source gate', () => {
   const source = read('validate-inkwave-update.yml');
   assert.match(source, /run: node --test[^\n]*scripts\/tests\/inkwave-motion-gates\.test\.mjs[^\n]*scripts\/tests\/inkwave-integration-workflow\.test\.mjs[^\n]*scripts\/tests\/inkwave-runtime-evidence\.test\.mjs[^\n]*scripts\/tests\/inkwave-queued-workflow-policy\.test\.mjs/);
+});
+
+test('actual conditional policies retain push/manual evidence and supersede only the same PR',()=>{
+ for(const name of workflows){const {cancel}=policy(read(name));
+  assert.equal(cancel==='false'?false:'push'==='pull_request',false);
+  assert.equal(cancel==='false'?false:'workflow_dispatch'==='pull_request',false);
+  assert.equal(cancel==='false'?false:'pull_request'==='pull_request',name!=='validate-inkwave-ranked.yml');
+ }
 });

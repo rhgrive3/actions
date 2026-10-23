@@ -117,15 +117,15 @@ export function handleOwnerClockMessage(nm, from, d, at) {
   return true;
 }
 
-export function validOwnerClockTick(nm, from, d, at, previous) {
-  if (!enabled(nm)) return validOwnerTickAdvance(d.ts, previous?.lastTs, at, previous?.lastReceiveAt);
+export function validOwnerClockTick(nm, from, d, at, previous, legacyAt = at, previousLegacyAt = previous?.lastReceiveAt) {
+  if (!enabled(nm)) return validOwnerTickAdvance(d.ts, previous?.lastTs, legacyAt, previousLegacyAt);
   if (!member(nm, from) || states.get(nm)?.closed) return false;
   const p = peer(nm, from);
   if (!p) return false;
   if (d.oc !== undefined && d.oc !== OWNER_CLOCK_VERSION || p.required && d.oc !== OWNER_CLOCK_VERSION
     || d.oc === OWNER_CLOCK_VERSION && d.ocm !== nm.cfg.id) return false;
   if (d.oc === OWNER_CLOCK_VERSION) p.required = true;
-  if (!p.required) return validOwnerTickAdvance(d.ts, previous?.lastTs, at, previous?.lastReceiveAt);
+  if (!p.required) return validOwnerTickAdvance(d.ts, previous?.lastTs, legacyAt, previousLegacyAt);
   if (!p.origin) { request(nm, from, p, at); return false; }
   return validOwnerClockOriginAdvance(d.ts, previous?.lastTs, at, p.origin.timestamp, p.origin.sentAt);
 }

@@ -23,10 +23,18 @@ test('native opening and death respawn use actual Urchin support and opposing-pa
   const expected=nativeSpawnYaw(L,team,0);assert(Math.abs(a.yaw-expected)<1e-12);assert(Math.abs(a.aimYaw-expected)<1e-12);
   if(a.isBot){a.bot=new f.BotBrain(a,'normal');assert(Math.abs(a.bot.aimYaw-expected)<1e-12);}
   const target=a.s3.squidSpawn.target;assert(target);const pad=L.spawnPads[team],sign=team?-1:1;assert(((target.x-pad.x)*basis.forward.x+(target.z-pad.z)*basis.forward.z)*sign>0,'actual supported target lies toward opponent');
-  // Opening bots ignore early human ZR and wait for the configured auto launch.
-  // Keep the existing half-second touchdown margin after the full flight.
-  const settleSeconds=SQUID_SPAWN_FLIGHT_DURATION+.5+(opening&&a.isBot?SQUID_SPAWN_PRESENTATION.initialAutoLaunch:0);
-  a.intent.fire=true;a.update(1/hz);a.intent.fire=false;for(let i=0;i<Math.ceil(hz*settleSeconds);i++){G.time+=1/hz;a.update(1/hz);}
+  a.intent.fire=true;a.update(1/hz);a.intent.fire=false;
+  if(opening&&a.isBot){
+   // Opening bots ignore the human trigger and launch after the production aim window.
+   assert.equal(a.s3.squidSpawn.phase,'aim');
+   const aimFrames=Math.ceil(hz*SQUID_SPAWN_PRESENTATION.initialAutoLaunch);
+   for(let i=1;i<aimFrames;i++){
+    assert.equal(a.s3.squidSpawn.phase,'aim','opening bot retains its calibrated aim window');
+    G.time+=1/hz;a.update(1/hz);
+   }
+  }
+  assert.equal(a.s3.squidSpawn.phase,'flight','supported spawn launches before landing checks');
+  for(let i=0;i<Math.ceil(hz*(SQUID_SPAWN_FLIGHT_DURATION+.5));i++){G.time+=1/hz;a.update(1/hz);}
   assert.equal(a.s3.squidSpawn,undefined);assert(a.alive&&a.grounded&&a.ground.hit,'actual source launch lands '+team+' '+hz+' '+opening);proof.push({team,hz,opening,slot,yaw:expected,grounded:a.grounded});
  }
  // Fallback candidates also use longitudinal/cross-axis selection and real source resolution.

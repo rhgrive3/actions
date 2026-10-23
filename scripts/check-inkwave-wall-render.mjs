@@ -26,6 +26,17 @@ export function wallPixelDifference(a, b) {
   }
   return { pixels: a.length / 4, changedPixels, changedBytes, totalDifference };
 }
+// QA contract for the fully composed production presentation, not the legacy
+// unadapted Character: submerged bodies stay hidden; readiness glint stays visible.
+export function validateWallReadiness(r) {
+  if (r?.attached !== true || r.form !== 'climb' || r.ready !== true || r.charge !== 1 || !(r.glow > .5))
+    throw Error('Native wall readiness missing: ' + JSON.stringify(r));
+  if (r.glintPresent !== true || r.glintVisible !== true || r.indexCount !== 24)
+    throw Error('Indexed local wall readiness glint missing: ' + JSON.stringify(r));
+  for (const key of ['bodyVisible', 'ghostVisible', 'eyesVisible', 'darkVisible'])
+    if (r[key] !== false) throw Error('Submerged wall body leaked: ' + key + ': ' + JSON.stringify(r));
+  return true;
+}
 export const WALL_RENDER_SCENARIOS = Object.freeze(['charge', 'ready-front', 'ready-oblique', 'ready-side', 'ready-scaled',
   'cancel', 'hidden', 'reset', 'death', 'disposed']);
 export function validateWallRenderResult(result) {
@@ -72,6 +83,7 @@ export function validateWallRenderResult(result) {
       || d.glintGeometryDisposals !== 1 || d.glintMaterialDisposals !== 1 || d.glintDetached !== true)
     throw Error('Wall disposal damaged native buffers/resources');
   const l = result.lifecycle;
+  validateWallReadiness(l?.readiness);
   if (l?.nativeAttached !== true || l.nativeReadyTicks !== 45 || l.zeroDtFrozen !== true || l.cancelImmediate !== true
       || l.hideImmediate !== true || l.resetImmediate !== true || l.deathImmediate !== true || l.disposedTerminal !== true
       || !(l.nonuniformRatio > 1.5)) throw Error('Wall native lifecycle incomplete');
@@ -180,7 +192,7 @@ async function main() {
       } catch (error) { recordError(error.message); await route.abort(); }
     });
     await page.goto(address + '/wall-render');
-    await page.addScriptTag({ content: 'globalThis.wallPixelDifference = ' + wallPixelDifference.toString() + ';' });
+    await page.addScriptTag({ content: 'globalThis.wallPixelDifference = ' + wallPixelDifference.toString() + ';globalThis.validateWallReadiness = ' + validateWallReadiness.toString() + ';' });
     result = await page.evaluate(async ({ prefix, width, height }) => {
       const THREE = await import('three');
       const { GTAOPass } = await import('three/addons/postprocessing/GTAOPass.js');
@@ -355,7 +367,14 @@ async function main() {
         let chargeTicks = 20;
         while (!wallMotionSnapshot(ch)?.ready && chargeTicks < 48) { step(); chargeTicks++; }
         const lifecycle = { nativeAttached: actor.climbing, nativeReadyTicks: chargeTicks };
-        assert(star && star.geometry.index.count === 24 && ch.squid.ghost.visible, 'Indexed local wall ghost/glint missing');
+        // The production squid-look adapter deliberately hides the submerged body
+        // and its old GreaterDepth ghost. Keep the independently owned glint gate.
+        lifecycle.readiness = { attached: actor.climbing, form: actor.anim.form,
+          ready: wallMotionSnapshot(ch)?.ready, charge: wallMotionSnapshot(ch)?.charge, glow: wallMotionSnapshot(ch)?.glow,
+          glintPresent: !!star?.parent, glintVisible: star?.visible === true, indexCount: star?.geometry.index?.count,
+          bodyVisible: ch.squid.body.visible, ghostVisible: ch.squid.ghost.visible,
+          eyesVisible: ch.squid.eyes.visible, darkVisible: ch.squid.dark.visible };
+        globalThis.validateWallReadiness(lifecycle.readiness);
         for (const [name, offset] of [['ready-front', [0, .3, 2.2]], ['ready-oblique', [1.5, 1, 1.8]], ['ready-side', [-2, .5, .8]]]) {
           cameraAt(offset); capture(name);
         }

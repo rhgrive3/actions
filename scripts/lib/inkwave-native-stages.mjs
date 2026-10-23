@@ -9,7 +9,7 @@ export const NATIVE_ROOT=path.resolve((import.meta.dirname || fileURLToPath(new 
 export const NATIVE_RUNTIME_EXTERNALS=['three','../../../src/*','./registry.mjs','./build-config.mjs','../../splatoon3/runtime/movement.mjs','../../splatoon3/runtime/clock.mjs'];
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 export function nativeStageIdentity(){
- const files={};const walk=dir=>{for(const d of fs.readdirSync(dir,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name,'en'))){const file=path.join(dir,d.name);if(d.isDirectory())walk(file);else if(!file.includes('/tests/')&&!file.includes('/tools/')&&(file.endsWith('.mjs')||file.includes('/definitions/')&&file.endsWith('.json')))files[path.relative(NATIVE_ROOT,file)]=hash(fs.readFileSync(file));}};walk(NATIVE_ROOT);return files;
+ const files={};const walk=dir=>{for(const d of fs.readdirSync(dir,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name,'en'))){const file=path.join(dir,d.name);if(d.isDirectory())walk(file);else if(!file.includes('/tests/')&&!file.includes('/tools/')&&(file.endsWith('.mjs')||(file.includes('/definitions/')||file.includes('/source-inventories/'))&&file.endsWith('.json')))files[path.relative(NATIVE_ROOT,file)]=hash(fs.readFileSync(file));}};walk(NATIVE_ROOT);return files;
 }
 export function nativeStageCatalog(definitions=path.join(NATIVE_ROOT,'definitions')){
  const stages=BASE_SOURCE_STAGES.map(s=>({...s})),unavailableStages=[],seen=new Set(stages.map(s=>s.id));
@@ -37,8 +37,8 @@ export function nativeStageCatalog(definitions=path.join(NATIVE_ROOT,'definition
 /** Keep the large third-party payload outside the revision/PWA snapshot. The
  * runtime verifies it with a pinned integrity manifest. Only opt-in builds get it. */
 export function nativeBrowserStageIntegrity(s){return hash(JSON.stringify([SOURCE_RECIPE,s.sourceSha256,s.tree,s.sourceSemantics||null,s.bounds,s.spawnPads,...(s.sourceNavigation?[s.sourceNavigation]:[])]));}
-export function prepareNativeStageBuild(assetPath){
- const available=nativeStageCatalog(),runtimeSha256=hash(JSON.stringify(nativeStageIdentity()));
+export function prepareNativeStageBuild(assetPath,sourceIdentity=nativeStageIdentity()){
+ const available=nativeStageCatalog(),runtimeSha256=hash(JSON.stringify(sourceIdentity));
  if(!assetPath)return {root:null,config:{schema:1,mode:'browser-direct',runtimeSha256,unavailableStages:available.unavailableStages,stages:available.stages.map(s=>({...s,integritySha256:nativeBrowserStageIntegrity(s)}))}};
  const root=fs.realpathSync(path.resolve(assetPath)),catalog=JSON.parse(fs.readFileSync(path.join(root,'catalog.json')));
  if(catalog.schema!==1||catalog.sourceCommit!==SOURCE_COMMIT||!Array.isArray(catalog.stages)||!catalog.stages.length||new Set(catalog.stages.map(s=>s.id)).size!==catalog.stages.length)throw Error('Native build requires unique pinned stage conversions');

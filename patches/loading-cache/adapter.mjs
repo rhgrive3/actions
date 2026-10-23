@@ -113,6 +113,9 @@ export const coldOfflineLightmap = rel => rel.startsWith('assets/lightmaps/') &&
   rel !== 'assets/lightmaps/cargo.png';
 // Loading-screen backdrop: precached so a first offline launch still shows the arena art.
 export const LOADING_ART_PRECACHE = 'patches/local-quality/assets/loading/arena.webp';
+// These public synchronous entry points remain usable in an installed offline
+// session even though production startup no longer imports their facades.
+export const PROP_COMPATIBILITY_PRECACHE = Object.freeze(['src/world/props.js', 'src/world/stages/index.js']);
 export function prepareLoading(build, preloads, options = {}) {
   // Compose main's startup-runtime minifier with the PR's explicit diagnostic
   // limits. Preserve the old third-argument callback for existing callers.
@@ -168,7 +171,7 @@ export function prepareLoading(build, preloads, options = {}) {
   // cache-on-request; precache the manifest and actual gameplay dependencies.
   // Title-only Titan One remains hash-declared and cache-on-demand; all critical
   // game scripts, HUD fonts, current stage and Range lightmaps stay offline-ready.
-  const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',LOADING_ART_PRECACHE,...Object.keys(assets).filter(rel=>(rel.startsWith('assets/fonts/') && rel !== 'assets/fonts/TitanOne-latin.woff2')||coldOfflineLightmap(rel)||rel==='assets/stages/manifest.json'||rel==='patches/splatoon3/pwa/manifest.webmanifest'||/^patches\/local-quality\/ink-volume\/assets\/(roller|shooter)\/manifest\.json$/.test(rel))]);
+  const core=new Set([...preloads,...css,...PROP_COMPATIBILITY_PRECACHE,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',LOADING_ART_PRECACHE,...Object.keys(assets).filter(rel=>(rel.startsWith('assets/fonts/') && rel !== 'assets/fonts/TitanOne-latin.woff2')||coldOfflineLightmap(rel)||rel==='assets/stages/manifest.json'||rel==='patches/splatoon3/pwa/manifest.webmanifest'||/^patches\/local-quality\/ink-volume\/assets\/(roller|shooter)\/manifest\.json$/.test(rel))]);
   for(const rel of core)if(!assets[rel])throw new Error(`loading-cache: missing precache dependency ${rel}`);
   const precache=[...core].sort();
   const precacheBytes=precache.reduce((sum,rel)=>sum+assets[rel][0],0);

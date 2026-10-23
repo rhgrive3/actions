@@ -125,7 +125,8 @@ jobs:
             patches/splatoon3/tests/triple-splashdown-presentation.test.mjs
   catalogue-browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Keep all native grids and emitted cases when browser installation takes 6+ minutes.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:

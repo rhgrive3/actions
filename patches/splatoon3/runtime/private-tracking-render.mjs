@@ -2,10 +2,17 @@
 // No gameplay mesh/material is modified and no geometry/skeleton is disposed.
 const installed = new WeakMap();
 export function installPrivateTrackingRenderer({ G, THREE, on }, opacityFor) {
+  let attachedRenderer = null;
   function attach() {
     const renderer = G.renderer;
-    if (!renderer?.render || installed.has(renderer)) return;
+    if (!renderer?.render || renderer === attachedRenderer) return;
+    if (installed.has(renderer)) { attachedRenderer = renderer; return; }
     const native = renderer.render, scene = new THREE.Scene(), entries = new Map();
+    // Nested renders borrow distinct sets. Every release removes Actor/Mesh
+    // references even on failed traversal or overlay drawing.
+    const setPool = [];
+    const borrowSet = () => setPool.pop() || new Set();
+    const releaseSet = set => { set.clear(); setPool.push(set); };
     let rendering = false;
     function retire(actor) {
       const entry = entries.get(actor); if (!entry) return;
@@ -24,7 +31,8 @@ export function installPrivateTrackingRenderer({ G, THREE, on }, opacityFor) {
         entry = { root, material, meshes: new Map() }; entries.set(actor, entry);
       }
       entry.material.opacity = alpha;
-      const used = new Set();
+      const used = borrowSet();
+      try {
       root.traverse(source => {
         if (!source.isMesh) return;
         let visible = true;
@@ -49,6 +57,7 @@ export function installPrivateTrackingRenderer({ G, THREE, on }, opacityFor) {
         if (source.morphTargetInfluences) proxy.morphTargetInfluences = source.morphTargetInfluences;
       });
       for (const [source, proxy] of entry.meshes) if (!used.has(source)) { scene.remove(proxy); entry.meshes.delete(source); }
+      } finally { releaseSet(used); }
     }
     renderer.render = function (source, camera, ...args) {
       const result = native.call(this, source, camera, ...args);
@@ -56,7 +65,8 @@ export function installPrivateTrackingRenderer({ G, THREE, on }, opacityFor) {
       const viewer = G.match?.local, actors = G.match?.actors;
       if (!viewer?.alive || viewer.remote || G.match?.attract || G.match?.state !== 'playing' ||
           (G.rig?.mapK || 0) > .05 || G.rig?.mapOpen || !Array.isArray(actors)) { clear(); return result; }
-      const shown = new Set();
+      const shown = borrowSet();
+      try {
       for (const actor of actors) {
         const alpha = opacityFor(actor, viewer, G.time);
         if (!(alpha > 0)) continue;
@@ -71,11 +81,13 @@ export function installPrivateTrackingRenderer({ G, THREE, on }, opacityFor) {
         try { native.call(this, scene, camera); }
         finally { this.autoClear = autoClear; rendering = false; }
       }
+      } finally { releaseSet(shown); }
       return result;
     };
     const dispose = renderer.dispose;
     if (dispose) renderer.dispose = function (...args) { clear(); return dispose.apply(this, args); };
     installed.set(renderer, { clear });
+    attachedRenderer = renderer;
     on?.('match:state', ({ state }) => { if (state !== 'playing') clear(); });
   }
   attach(); return attach;

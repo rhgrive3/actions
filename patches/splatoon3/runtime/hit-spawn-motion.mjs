@@ -109,6 +109,7 @@ export function installHitSpawnMotion(api, _profile) {
     C.warmAll = function (...args) {
       coatAll(this); return warm.apply(this, args);
     };
+    Object.defineProperty(C.warmAll, Symbol.for('inkwave.characterWarmParent'), { value: warm });
     C.trigger = function (name, ...args) {
       const result = trigger.call(this, name, ...args);
       if (name === 'spawn' && this.s3HitSpawnMotionEnabled !== false) start(this);

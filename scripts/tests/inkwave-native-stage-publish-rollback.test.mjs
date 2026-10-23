@@ -43,7 +43,7 @@ function fixture(fail) {
   const mock={
     G,THREE:{LinearFilter:1},
     PaintSystem,NativeLevel,NativePhysics:class{},
-    NativeInkMesh,Minimap,SwimWake:class{reset(){}},NavGraph:class{},
+    NativeInkMesh,Minimap,SwimWake:class{reset(){}},NavGraph:class{static createNative(){return new this();}},
     loadNativeData:async()=>({manifest:{geometry:{vertices:3,triangles:1}}}),
     loadNativeTextures:async()=>new Map(),
     nativeStageTextureCaps:()=>({maxDimension:1024}),

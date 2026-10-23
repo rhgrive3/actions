@@ -8,7 +8,7 @@ const main=adaptBuildSource('src/main.js',fs.readFileSync(path.join(ROOT,'inkwav
 function section(a,z){const i=main.indexOf(a),j=main.indexOf(z,i);assert(i>=0&&j>i,a);return main.slice(i,j);}
 const f=await sourceLoadedActorFixture({sourceOnly:true}),{G}=f;installClock({G});
 
-const Game=new Function('G',`return class Game {${section('  resume() {','  async quitToMenu() {')} ${section('  _padMenus() {','  _updateHud(dt) {')} ${section('  _startAttract() {','  _attractShot() {')} ${section('  _frame(dt) {','  _updateAmbience(dt) {')} ${section('  _loop() {','  _frame(dt) {')}}`)(G);installGame(Game);
+const Game=new Function('G',`return class Game {${section('  resume() {','  async quitToMenu() {')} ${section('  _padMenus(', '  _updateHud(dt) {')} ${section('  _startAttract() {','  _attractShot() {')} ${section('  _frame(dt) {','  _updateAmbience(dt) {')} ${section('  _loop() {','  _frame(dt) {')}}`)(G);installGame(Game);
 const rows=[];
 for(const hz of[30,60,120])for(const failedRecovery of[false,true])test('real stage '+(failedRecovery?'failed rollback':'successful rollback')+' to real clock '+hz+'Hz',async()=>{
  const w=await fixture({shadow:1,env:0,palette:0,minimap:0},{sharedG:G});const game=w.game;Object.setPrototypeOf(game,Game.prototype);G.net=G.netm=null;G.actors=[];G.time=0;G.mode='match';const match=new f.Match({duration:180});match.state='playing';match.paused=true;G.match=game.match=match;

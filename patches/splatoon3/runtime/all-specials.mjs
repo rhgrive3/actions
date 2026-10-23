@@ -17,6 +17,7 @@
 // may change local-owned device HP after the catalogue owner/life gate.
 
 import { gearCurve } from './gear.mjs';
+import { registerReplicaRetirement } from './replica-retirement.mjs';
 import { validDamageGroup } from './final-damage.mjs';
 import { disposeInkVac, inkVacAbsorbCandidate } from './kit-ink-vac.mjs';
 import { endTrizooka } from './kit-trizooka.mjs';
@@ -89,7 +90,10 @@ const descriptions = Object.freeze({
   waveBreaker: { radius: 27, paintRadius: 0, damageMax: 45, damageMin: 45, directDamage: 45, splashBands: [[27, 45]] },
 });
 
+let activeStampCount=0;
 const actorStates = new WeakMap();
+function setActorState(actor,state){const old=actorStates.get(actor);if(old?.id==='ultraStamp')activeStampCount--;if(state?.id==='ultraStamp')activeStampCount++;actorStates.set(actor,state);}
+function deleteActorState(actor){if(actorStates.get(actor)?.id==='ultraStamp')activeStampCount--;return actorStates.delete(actor);}
 const booyahAfterArmor = new WeakMap();
 const runtimes = new WeakMap();
 const replaySeen = new WeakMap();
@@ -191,10 +195,10 @@ function groundAt(rt, point, out = rt.v2) {
     // Preserve an already contacted surface before considering a distant floor.
     // A broad ray from 24 WU above could jump to an unrelated upper storey.
     let result = rt.api.G.physics.raycast(from, rt.down, .5, rt.hit, true);
-    if(!result?.hit){from.copy(point);from.y+=24;result=rt.api.G.physics.raycast(from,rt.down,60,rt.hit,true);}
+    if(!result?.hit){from.copy(point);from.y+=.25;result=rt.api.G.physics.raycast(from,rt.down,60,rt.hit,true);}
     if (result?.hit && result.point && [result.point.x,result.point.y,result.point.z].every(finite)) return out.copy(result.point).addScaledVector(result.normal || rt.up, .08);
   }
-  const g = rt.api.G.level?.groundHeight?.(point.x, point.z, point.y + 12);
+  const g = rt.api.G.level?.groundHeight?.(point.x, point.z, point.y + .25);
   if (finite(g)) out.y = g + .08;
   else if (out.y < .08) out.y = .08;
   return out;
@@ -388,8 +392,20 @@ function paintStamp(rt, actor, point, radius, seed) {
   if (finite(area) && area > 0) actor.addTurfNoSpecial?.(area);
   return finite(area) ? area : 0;
 }
-function paintDiskLayout(rt, point, radius) {
-  const spacing = 2.82, rowZ = spacing * Math.sqrt(3) / 2;
+function paintDiskCentres(radius){
+  const spacing=2.82,rowZ=spacing*Math.sqrt(3)/2;
+  const maxCentre=Math.max(0,radius-MAX_STAMP_RADIUS),centres=[[0,0]];
+  for(let row=-Math.ceil(maxCentre/rowZ);row<=Math.ceil(maxCentre/rowZ);row++){
+    const z=row*rowZ,shift=row&1?spacing*.5:0;
+    for(let col=-Math.ceil(maxCentre/spacing);col<=Math.ceil(maxCentre/spacing);col++){
+      const x=col*spacing+shift;if((x||z)&&Math.hypot(x,z)<=maxCentre)centres.push([x,z]);
+    }
+  }
+  if(maxCentre>0){// Doubling retains every previous angle; n-to-n+1 rephasing can remove painted cells.
+    const count=6*2**Math.max(0,Math.ceil(Math.log2((2*Math.PI*maxCentre/spacing)/6)));for(let i=0;i<count;i++){const angle=2*Math.PI*i/count;centres.push([Math.cos(angle)*maxCentre,Math.sin(angle)*maxCentre]);}}
+  return centres;
+}
+function paintDiskLayout(rt, point, radius, plan = null) {
   // Tile in the nearby contact plane. Keeping every tile at the same world Y
   // leaves large holes on slopes; projecting each tile from above can instead
   // jump between disconnected floors. The short probe avoids both mistakes.
@@ -401,15 +417,7 @@ function paintDiskLayout(rt, point, radius) {
   // A constant-radius stamp must remain inside the nominal source disk.
   // An outer ring closes lattice scallops without placing stamp centres near R.
   // Reuse one mask seed so the R=3.74 transition cannot union unrelated shapes.
-  let area=0;const maxCentre=Math.max(0,radius-MAX_STAMP_RADIUS),centres=[[0,0]];
-  for(let row=-Math.ceil(maxCentre/rowZ);row<=Math.ceil(maxCentre/rowZ);row++){
-    const z=row*rowZ,shift=row&1?spacing*.5:0;
-    for(let col=-Math.ceil(maxCentre/spacing);col<=Math.ceil(maxCentre/spacing);col++){
-      const x=col*spacing+shift;if((x||z)&&Math.hypot(x,z)<=maxCentre)centres.push([x,z]);
-    }
-  }
-  if(maxCentre>0){// Doubling retains every previous angle; n-to-n+1 rephasing can remove painted cells.
-    const count=6*2**Math.max(0,Math.ceil(Math.log2((2*Math.PI*maxCentre/spacing)/6)));for(let i=0;i<count;i++){const angle=2*Math.PI*i/count;centres.push([Math.cos(angle)*maxCentre,Math.sin(angle)*maxCentre]);}}
+  const centres=plan || paintDiskCentres(radius);
   const seen=new Set(),tiles=[];
   for(const [x,z]of centres){
     const at=rt.v4.copy(point).addScaledVector(tangent,x).addScaledVector(bitangent,z);at.set(q2(at.x),q2(at.y),q2(at.z));
@@ -423,11 +431,11 @@ function paintDiskTile(rt,actor,point,layout,tile,maskSeed){
   const got=rt.api.G.paint.splat(at,MAX_STAMP_RADIUS,actor.team,{seed:maskSeed,claimOwner:actor,claimMode:'no-special'});
   return finite(got)?got:0;
 }
-function paintDisk(rt, actor, point, radius, seed, maskSeed = seedUnit(seed,0), alreadyPainted = null) {
+function paintDisk(rt, actor, point, radius, seed, maskSeed = seedUnit(seed,0), alreadyPainted = null, plan = null) {
   if (radius <= MAX_STAMP_RADIUS) return paintStamp(rt, actor, point, radius, seed);
   // Cluster ordinary network-admissible stamps; do not emit one over-limit paint
   // row, which the public replication owner correctly rejects.
-  const layout=paintDiskLayout(rt,point,radius);let area=0;
+  const layout=paintDiskLayout(rt,point,radius,plan);let area=0;
   for(const tile of layout.tiles){if(alreadyPainted?.has(tile.key))continue;area+=paintDiskTile(rt,actor,point,layout,tile,maskSeed);}
   if (area > 0) actor.addTurfNoSpecial?.(area);
   return area;
@@ -436,7 +444,10 @@ function paintBooyahGrowth(rt,object,paintFrame,paintRadius,seed){
   const growthRadius=paintRadius*paintFrame/6;
   if(paintFrame===1){const area=paintStamp(rt,object.owner,object.pos,growthRadius,seed);object.paintFrame=paintFrame;object.paintedRadius=growthRadius;return area;}
   object.paintDiskTiles||=new Set();
-  const layout=paintDiskLayout(rt,object.pos,paintRadius),maskSeed=seedUnit(seed,0),limit=growthRadius-MAX_STAMP_RADIUS;
+  if(!object.paintDiskPlan||object.paintDiskPlan.radius!==paintRadius)
+    object.paintDiskPlan={radius:paintRadius,centres:paintDiskCentres(paintRadius)};
+  const plan=object.paintDiskPlan.centres;
+  const layout=paintDiskLayout(rt,object.pos,paintRadius,plan),maskSeed=seedUnit(seed,0),limit=growthRadius-MAX_STAMP_RADIUS;
   let area=0;
   for(const tile of layout.tiles){
     if(object.paintDiskTiles.has(tile.key)||Math.hypot(tile.x,tile.z)>limit+1e-8)continue;
@@ -444,7 +455,7 @@ function paintBooyahGrowth(rt,object,paintFrame,paintRadius,seed){
   }
   if(area>0)object.owner.addTurfNoSpecial?.(area);
   object.paintFrame=paintFrame;object.paintedRadius=growthRadius;
-  if(paintFrame===6)paintDisk(rt,object.owner,object.pos,paintRadius,seed,maskSeed,object.paintDiskTiles);
+  if(paintFrame===6)paintDisk(rt,object.owner,object.pos,paintRadius,seed,maskSeed,object.paintDiskTiles,plan);
   return area;
 }
 function paintCross(rt,actor,point,radius,checkLength,seed) {
@@ -723,7 +734,7 @@ function worldMesh(rt, owner, kind, center, scale = [1,1,1]) {
   return mesh;
 }
 function emitObject(rt, object, action) {
-  if (object.owner?.remote) return null;
+  if (object.remote || object.owner?.remote) return null;
   object.eventSerial=(object.eventSerial||0)+1;
   const target = object.kind === 'screen' ? object.pos.clone().add(object.normal) : object.target || null;
   return emitAction(rt, object.owner, object.id, object.activation, action,
@@ -815,10 +826,10 @@ function candidate(rt, p, start, end) {
     const c=breakerCandidate(rt,p,start,end,object)||chumpCandidate(rt,p,start,end,object);
     if(c&&(!best||c.distance<best.distance))best=c;
   }
-  for(const owner of rt.api.G.actors||[]) {
+  if(activeStampCount>0)for(const owner of rt.api.G.actors||[]) {
     const state=actorStates.get(owner);
     if(!state||state.id!=='ultraStamp'||state.phase==='throw'||!owner?.alive||owner.team===p?.team)continue;
-    if(state.expiresAt&&rt.api.G.time>state.expiresAt){actorStates.delete(owner);continue;}
+    if(state.expiresAt&&rt.api.G.time>state.expiresAt){deleteActorState(owner);continue;}
     const d=stampGuardCandidate(rt,p,start,end,owner,state);
     if(d&&(!best||d.distance<best.distance))best=d;
   }
@@ -881,6 +892,16 @@ function hitBeam(rt, actor, state, origin, direction, length, damage) {
 function beamTouchesObject(rt,from,to,object) {
   const pos=object?.pos;if(!pos)return false;
   if(object.subId==='splashWall'){
+    const width=object.spec?.wallWidth||2,height=object.spec?.wallHeight||3;
+    const cy=pos.y+height/2,radius=Math.hypot(width/2+.2,height/2+.25,.45);
+    const dx=to.x-from.x,dy=to.y-from.y,dz=to.z-from.z,den=dx*dx+dy*dy+dz*dz;
+    const t=den>0?Math.max(0,Math.min(1,((pos.x-from.x)*dx+(cy-from.y)*dy+(pos.z-from.z)*dz)/den)):0;
+    const distance=Math.hypot(from.x+dx*t-pos.x,from.y+dy*t-cy,from.z+dz*t-pos.z);
+    // The sphere encloses every accepted sample. Unusual/nonfinite inputs
+    // retain the exact original loop; roundoff gets a scale-aware margin.
+    const margin=1e-8*(1+Math.abs(from.x)+Math.abs(from.y)+Math.abs(from.z)+
+      Math.abs(to.x)+Math.abs(to.y)+Math.abs(to.z)+Math.abs(pos.x)+Math.abs(cy)+Math.abs(pos.z)+radius);
+    if(width>0&&height>0&&Number.isFinite(distance)&&Number.isFinite(radius)&&distance>radius+margin)return false;
     const yaw=object.yaw||0,tx=Math.cos(yaw),tz=-Math.sin(yaw),nx=Math.sin(yaw),nz=Math.cos(yaw);
     const span=from.distanceTo(to),steps=Math.max(1,Math.ceil(span/.35));
     for(let i=0;i<=steps;i++){
@@ -960,7 +981,8 @@ function stepWailPairs(rt,actor,state){
     // terminal tracking/fade after death remains unmeasured.
     if(pair.target&&(!pair.target.alive||actorLife(pair.target)!==pair.targetLife))pair.targetRetired=true;
     if(pair.target?.alive&&!pair.targetRetired){
-      pair.trace.push({t:state.t,pos:pair.target.pos.clone()});
+      const reusable=pair.trace.length>2&&pair.trace[1].t<state.t-WAIL_TRACK_DELAY-5/FPS?pair.trace.shift():null;
+      const sample=reusable||{t:0,pos:pair.target.pos.clone()};sample.t=state.t;sample.pos.copy(pair.target.pos);pair.trace.push(sample);
       // Keep the two samples bracketing the delayed damage tick. A fixed
       // 20-element ring covered only 1/6 second at 120 Hz.
       const earliest=state.t-WAIL_TRACK_DELAY-5/FPS;
@@ -1058,7 +1080,7 @@ function selectTargets(rt, actor, max=4, range=32) {
     const dot=offset.normalize().dot(dir);if(dot<=0)continue;
     if(actor.specialActive?.id==='tentaMissiles'){
       const ap=actorStates.get(actor)?.specialPowerAP||0,camera=rt.api.G.camera;
-      if(camera?.isPerspectiveCamera){const projected=target.pos.clone();projected.y+=.7;projected.project(camera);
+      if(camera?.isPerspectiveCamera){const projected=(rt._missilePreview ||= target.pos.clone()).copy(target.pos);projected.y+=.7;projected.project(camera);
         const aspect=camera.aspect||1,limit=gearCurve(ap,140,190,240)/360;
         if(projected.z< -1||Math.hypot(projected.x*aspect,projected.y)>limit)continue;
       }else if(dot<.94)continue;
@@ -1220,11 +1242,11 @@ function inkstrikePaint(rt,o,elapsed){
   // calibration, but never substitute damage radius7.7 or an unbounded floor.
   const radius=.5+6.5*clamp(elapsed/(50/FPS),0,1),stamp=Math.min(.78,radius),ring=radius-stamp,n=ring>0?20:1;
   for(let i=0;i<n;i++){
-    const angle=i/n*Math.PI*2,from=new rt.api.THREE.Vector3(o.pos.x+Math.cos(angle)*ring,o.pos.y+7.5,o.pos.z+Math.sin(angle)*ring);
+    const angle=i/n*Math.PI*2,from=(o._inkstrikeProbe ||= new rt.api.THREE.Vector3()).set(o.pos.x+Math.cos(angle)*ring,o.pos.y+7.5,o.pos.z+Math.sin(angle)*ring);
     const hit=rt.api.G.physics?.raycast?.(from,rt.down,13.5,rt.hit,true);let point=null;
-    if(hit?.hit&&hit.normal?.y>.4&&hit.point.y>=o.pos.y-6-1e-8&&hit.point.y<=o.pos.y+7.5+1e-8)point=hit.point.clone().addScaledVector(hit.normal,.08);
+    if(hit?.hit&&hit.normal?.y>.4&&hit.point.y>=o.pos.y-6-1e-8&&hit.point.y<=o.pos.y+7.5+1e-8)point=(o._inkstrikePoint ||= new rt.api.THREE.Vector3()).copy(hit.point).addScaledVector(hit.normal,.08);
     else {const floor=rt.api.G.level?.groundHeight?.(from.x,from.z,from.y);
-      if(finite(floor)&&floor>=o.pos.y-6&&floor<=o.pos.y+7.5)point=from.clone().setY(floor+.08);}
+      if(finite(floor)&&floor>=o.pos.y-6&&floor<=o.pos.y+7.5)point=(o._inkstrikePoint ||= new rt.api.THREE.Vector3()).copy(from).setY(floor+.08);}
     if(point)paintStamp(rt,o.owner,point,stamp,seedUnit(o.seed,(o.paintPulse||0)*32+i));
   }
   o.paintPulse=(o.paintPulse||0)+1;
@@ -1389,7 +1411,7 @@ function endSpecial(rt,actor,reason='duration') {
   if(state.ballMesh){disposeMesh(rt,{mesh:state.ballMesh});state.ballMesh=null;}
   if(actor.specialActive?.id===state.id)actor.specialActive=null;
   if(actor._s3AllSpecialState===state)actor._s3AllSpecialState=null;
-  actorStates.delete(actor);
+  deleteActorState(actor);
   actor.form='kid';
   return state;
 }
@@ -1556,8 +1578,8 @@ function updateWorld(rt,dt) {
     const o=list[i];if(!o||o.dead){list.splice(i,1);continue;}
     o.age+=dt;
     if(o.phase==='flight'&&o.vel&&['marker','wave','screen'].includes(o.kind)){
-      const from=o.pos.clone();
-      const hit=stepSpecialDeviceFlight(rt.api,o,dt,rt.hit);
+      const from=(o._flightFrom ||= o.pos.clone()).copy(o.pos);
+      const hit=stepSpecialDeviceFlight(rt.api,o,dt,rt.hit,from);
       o.mesh?.position.copy(o.pos);
       if(o.kind==='screen'||o.kind==='wave'){
         // Chimney MoveParam.DamageValueForDamageTag=4000 (400 HP) is the
@@ -1643,7 +1665,7 @@ function updateWorld(rt,dt) {
       o.contactTimes ||= new Map();
       for(const victim of rt.api.G.actors||[]){
         if(!victim?.alive||victim.team===o.team)continue;
-        const dx=victim.pos.x-o.pos.x,dz=victim.pos.z-o.pos.z,dy=victim.pos.y-o.pos.y,d=Math.hypot(dx,dz);
+        const dx=victim.pos.x-o.pos.x,dz=victim.pos.z-o.pos.z,dy=victim.pos.y-o.pos.y,d=Math.abs(dx)>Math.max(o.maxRadius*markRatio,1.2)+1e-9||Math.abs(dz)>Math.max(o.maxRadius*markRatio,1.2)+1e-9?Infinity:Math.hypot(dx,dz);
         if(frame<=57+1e-8&&d<=o.maxRadius*markRatio&&dy>=-5.2&&dy<=2.8){
           victim.s3 ||= {};victim.s3.revealedUntil ||= {};
           // Detection has source radius records through57F; MarkingFrame45
@@ -1708,7 +1730,8 @@ function updateWorld(rt,dt) {
             }
           }
         }
-        o.previous.set(victim,{pos:victim.pos.clone(),screen:o.pos.clone()});
+        if(previous){previous.pos.copy(victim.pos);previous.screen.copy(o.pos);}
+        else o.previous.set(victim,{pos:victim.pos.clone(),screen:o.pos.clone()});
       }
       screenDamageObjects(rt,o,oldScreenPos,o.pos);o.lastObjectScreenPos=o.pos.clone();
       paintScreenDrops(rt,o,deviceAge);
@@ -1755,7 +1778,7 @@ function activeStep(rt,actor,dt) {
     if(state.id==='zipcaster')clearZipcasterArmor(actor);
     if(actor.specialActive===state.controlToken)actor.specialActive=null;
     if(actor._s3AllSpecialState===state)actor._s3AllSpecialState=null;
-    actorStates.delete(actor);return;
+    deleteActorState(actor);return;
   }
   const edges=inputEdges(actor,state);
   state.t+=dt;s.t=state.t;
@@ -1780,9 +1803,10 @@ function activeStep(rt,actor,dt) {
     else {
       actor._setClimb?.(false);
       // Wiki hover height ~one lobby line; exact retail servo remains calibrated.
-      const probe=rt.v3.copy(actor.pos);probe.y+=20;
+      // Query below this hover, not from above unrelated roofs/storeys.
+      const probe=rt.v3.copy(actor.pos);probe.y+=.25;
       const hit=rt.api.G.physics?.raycast?.(probe,rt.down,80,rt.hit,true);
-      const floor=hit?.hit&&hit.normal?.y>.4?hit.point.y:rt.api.G.level?.groundHeight?.(actor.pos.x,actor.pos.z);
+      const floor=hit?.hit&&hit.normal?.y>.4?hit.point.y:rt.api.G.level?.groundHeight?.(actor.pos.x,actor.pos.z,actor.pos.y+.25);
       if(edges.jump)state.boostUntil=elapsed+.75;
       if(Number.isFinite(floor)){const boost=elapsed<(state.boostUntil||0)?2.5:0;
         actor.vel.y=clamp((floor+5+boost-actor.pos.y)*6,-12,12);
@@ -2173,7 +2197,7 @@ function makeState(rt,actor,id) {
     state.hookInk=gearCurve(ap,.04,.025,.015);state.inkPerSecond=gearCurve(ap,.15,.1305,.12);
     state.duration=150/state.inkDrainPerSecond;}
 
-  actorStates.set(actor,state);actor._s3AllSpecialState=state;
+  setActorState(actor,state);actor._s3AllSpecialState=state;
   actor.specialActive={id,t:0,phase:state.phase,armor:false,armorHP:state.armorHP,activation:serial};
   state.controlToken=actor.specialActive;
   startActiveSpecialGauge(actor,state,rt.api.G);
@@ -2204,6 +2228,46 @@ function installRuntime(api) {
       creditBooyahGauge(rt,event.actor,event.ownerNid,event.ownerLife,event.activation,event.seed,event.call);
   });
   const proto=Actor.prototype,start=proto._startSpecial,step=proto._updateSpecial,reset=proto.reset,splat=proto.splat,damage=proto.damage;
+  // These presentation copies must not acquire combat authority when native
+  // host adoption flips their Actor.remote flag to false. Match the ordinary
+  // ghost retirement boundary and release their meshes/colliders first.
+  const retireReplicas=actor=>{
+    rt.system=api.G.projectiles||rt.system;if(!rt.system)return;
+    for(const object of [...rt.system._s3AllSpecialObjects||[]])if(object.owner===actor&&object.remote)removeWorld(rt,object,'expire');
+  };
+  registerReplicaRetirement(api.G,retireReplicas);
+  const net=api.NetMatch?.prototype;
+  if(net){
+    const leave=net.onLeave;
+    net.onLeave=function(id,...args){
+      for(const actor of this.byNid?.values?.()||[])if(actor.owner===id)retireReplicas(actor);
+      return leave?.call(this,id,...args);
+    };
+    for(const name of ['_adopt','_remove']){
+      const original=net[name];if(typeof original!=='function')continue;
+      net[name]=function(actor,...args){retireReplicas(actor);return original.call(this,actor,...args);};
+    }
+  }
+  // A cancelled physical hold is not the release edge owned by this runtime.
+  // Preserve already-admitted throwAt/marker startup and all action clocks.
+  const cancelInput=(actor,fire,sub)=>{
+    const state=actorStates.get(actor);
+    if(!state||actor.remote||state.controlToken!==actor.specialActive)return;
+    if(fire){
+      if(state.held)state.held.fire=false;
+      if(state.edges)state.edges.fireUp=false;
+      if(state.id==='krakenRoyale'&&state.phase==='charge'){
+        state.phase='active';state.chargeT=0;actor.specialActive.phase='active';
+      }
+    }
+    if(sub){if(state.held)state.held.sub=false;if(state.edges)state.edges.subUp=false;}
+  };
+  const runner=api.WeaponRunner?.prototype;
+  if(runner){
+    const pending=runner.cancelPendingInput,hold=runner.cancelHold;
+    runner.cancelPendingInput=function(...args){cancelInput(this.a,true,true);return pending?.apply(this,args);};
+    runner.cancelHold=function(fire,sub){cancelInput(this.a,fire,sub);return hold?.call(this,fire,sub);};
+  }
   const canJump=proto.canSuperJump,jump=proto.superJump,jumpStep=proto._updateSuperJump;
   Object.defineProperty(proto,INSTALL,{value:true});
   proto.canSuperJump=function(...args){
@@ -2248,7 +2312,7 @@ function installRuntime(api) {
     rt.system=api.G.projectiles||rt.system;
     if(this.remote){
       const state=actorStates.get(this);
-      if(state?.gaugeTracked){endActiveSpecialGauge(this);actorStates.delete(this);if(this._s3AllSpecialState===state)this._s3AllSpecialState=null;}
+      if(state?.gaugeTracked){endActiveSpecialGauge(this);deleteActorState(this);if(this._s3AllSpecialState===state)this._s3AllSpecialState=null;}
       this.specialActive=null;return undefined;
     }
     if(id==='crabTank'){
@@ -2602,9 +2666,9 @@ export function replaySpecial(api,event) {
   }
   if(actor.remote&&event.id==='ultraStamp'){
     const state=actorStates.get(actor);
-    if(event.action==='activate')actorStates.set(actor,{id:'ultraStamp',serial:event.activation,seed:event.seed,phase:'active',stampHolding:false,stampCount:0,expiresAt:api.G.time+(finite(event.duration)?event.duration:7.5)});
+    if(event.action==='activate')setActorState(actor,{id:'ultraStamp',serial:event.activation,seed:event.seed,phase:'active',stampHolding:false,stampCount:0,expiresAt:api.G.time+(finite(event.duration)?event.duration:7.5)});
     else if(state?.id==='ultraStamp'&&state.serial===event.activation){
-      if(event.action==='throw'||event.action==='end')actorStates.delete(actor);
+      if(event.action==='throw'||event.action==='end')deleteActorState(actor);
       else if(event.action==='swing'||event.action==='jumpSwing'){state.stampHolding=true;state.stampCount=1;}
       else if(event.action==='swingEnd'){state.stampHolding=false;state.stampCount=0;}
     }

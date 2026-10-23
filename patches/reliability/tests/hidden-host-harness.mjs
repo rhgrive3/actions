@@ -16,13 +16,19 @@ let ms=1000000;
 // Evaluate the unchanged server module with a local Date; never replace Node's
 // global clock or relax the production frame/byte admission limits.
 const relaySource = new URL('../../../server/src/index.js', import.meta.url);
+const relayContext = vm.createContext({ Date: class extends Date { static now(){return ms;} }, TextEncoder, TextDecoder });
 const relayModule = new vm.SourceTextModule(fs.readFileSync(relaySource, 'utf8'), {
  identifier: relaySource.href,
  // The production Worker exposes both Web Encoding globals. Node's isolated
  // VM omits them unless explicitly provided; do not stub relay behavior.
- context: vm.createContext({ Date: class extends Date { static now(){return ms;} }, TextEncoder, TextDecoder }),
+ context: relayContext,
 });
-await relayModule.link(spec => { throw new Error('Unexpected relay dependency: ' + spec); });
+const utf8Source = new URL('../../../patches/network-replication/utf8-length.mjs', import.meta.url);
+const utf8Module = new vm.SourceTextModule(fs.readFileSync(utf8Source, 'utf8'), { identifier:utf8Source.href, context:relayContext });
+await relayModule.link((spec, from) => {
+ if (new URL(spec, from.identifier).href === utf8Source.href) return utf8Module;
+ throw new Error('Unexpected relay dependency: ' + spec);
+});
 await relayModule.evaluate();
 export const { RoomDurableObject } = relayModule.namespace;
 class Socket {

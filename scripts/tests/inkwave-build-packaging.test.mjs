@@ -207,7 +207,7 @@ test('emitted worker keeps the complete runtime graph, installs, and replays ver
   const identity = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json')));
   const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
   assert.equal(identity.inputHash, hash(JSON.stringify(identity.files)));
-  for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-source-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-lightmap.mjs']) {
+  for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-source-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-lightmap.mjs', 'lib/inkwave-account-bundle.mjs']) {
     assert.equal(identity.files['build-script/' + file], hash(fs.readFileSync(new URL('scripts/' + file, root))),
       'direct builder helper participates in source identity: ' + file);
   }

@@ -1,8 +1,11 @@
+import {isNativeModuleWorkerOwner,verifyNativeModuleWorkerRows} from './inkwave-native-module-worker.mjs';
 // A declared QA comparison, never a production overlay or a rebaseline.
 // Retain the raw historical build and A/A captures. The only controlled variable
 // is the already-shipped Three UUID isolation, composed from verified source.
 import fs from 'node:fs';
 import { isMusicOwner, verifyMusicWorkers } from './inkwave-roller-blob-provenance.mjs';
+import {verifyGeneratedWorkerRows} from './inkwave-generated-music-worker.mjs';
+export {NATIVE_MUSIC_TIMER_SOURCE,createBlobWorkerEvidence,recordBlobWorkerCreation,observeGeneratedWorker,bindBlobWorkerEvidence,installBlobWorkerObserver} from './inkwave-generated-music-worker.mjs';
 import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -171,13 +174,20 @@ export async function recordLoadedModuleResponse(response, origin, loadedModules
   assert(response.ok(), 'Failed loaded module: ' + url.pathname);
   const bytes = await response.body();
   if (url.protocol === 'blob:') {
-    assert(blobEvidence, 'Blob script requires explicit provenance');
+    assert(blobEvidence, 'Blob script lacks creation provenance; explicit provenance required');
     blobEvidence.responses.push({ url: response.url(), protocol: url.protocol, body: bytes.toString('utf8'), sha256: hashBytes(bytes), bytes: bytes.length });
     return true;
   }
   assert(['http:', 'https:'].includes(url.protocol), 'Unexpected script protocol: ' + url.protocol);
   const rel = decodeURIComponent(url.pathname).replace(/^\//, '');
-  if (blobEvidence && isMusicOwner(rel)) blobEvidence.owners.push({ url: response.url(), body: bytes.toString('utf8') });
+  if (blobEvidence && (isMusicOwner(rel)||isNativeModuleWorkerOwner(rel))) {
+    // Navigation/preload may request an owner twice. Retain one immutable source
+    // per exact URL, after checking every response; Worker instances stay distinct.
+    const owner = { url: response.url(), body: bytes.toString('utf8') };
+    const previous = blobEvidence.owners.find(row => row.url === owner.url);
+    if (previous) assert.deepEqual(owner, previous, 'Loaded Worker owner changed within capture: ' + rel);
+    else blobEvidence.owners.push(owner);
+  }
   const actual = { sha256: hashBytes(bytes), bytes: bytes.length };
   if (loadedModules[rel]) assert.deepEqual(loadedModules[rel], actual, 'Loaded module changed within capture: ' + rel);
   loadedModules[rel] = actual;
@@ -187,8 +197,11 @@ export async function recordLoadedModuleResponse(response, origin, loadedModules
 export function verifyLoadedModules(loaded, manifest, isolation = null, blobEvidence = null) {
   const entries = Object.entries(loaded).sort(([a], [b]) => a.localeCompare(b));
   assert(entries.length > 100, 'Complete loaded runtime module evidence is required');
+  const generated=verifyGeneratedWorkerRows(loaded,manifest);
+  verifyNativeModuleWorkerRows(loaded,manifest);
   let isolatedLoads = 0;
   for (const [rel, actual] of entries) {
+    if(generated&&rel==='@generated/native-music-timer-worker')continue;
     assert(Object.hasOwn(manifest.artifacts, rel), 'Unbound loaded module: ' + rel);
     const controlled = isolation?.paths.includes(rel);
     if (controlled) {
@@ -199,8 +212,8 @@ export function verifyLoadedModules(loaded, manifest, isolation = null, blobEvid
     assert(Number.isInteger(actual.bytes) && actual.bytes > 0);
   }
   if (isolation) assert(isolatedLoads > 0, 'The declared controlled module was not loaded');
-  if (entries.some(([rel]) => isMusicOwner(rel))) assert(blobEvidence, 'Loaded music requires Blob provenance');
-  const dynamicWorkers = blobEvidence ? verifyMusicWorkers(blobEvidence, loaded, manifest) : null;
+  if (!generated && entries.some(([rel]) => isMusicOwner(rel))) assert(blobEvidence, 'Loaded music requires Blob provenance');
+  const dynamicWorkers = blobEvidence && blobEvidence.schema!==2 ? verifyMusicWorkers(blobEvidence, loaded, manifest) : null;
   return { ...(dynamicWorkers ? { dynamicWorkers } : {}), schema: 1, mode: isolation ? P.kind : 'unmodified-production', moduleCount: entries.length,
     isolatedLoads, sha256: hashBytes(JSON.stringify(entries)), modules: Object.fromEntries(entries) };
 }

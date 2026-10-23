@@ -15,7 +15,7 @@ function state(nm) {
   const id = nm.cfg?.id;
   let s = matches.get(id);
   if (!s) {
-    s = { owners: new Map(), deaths: new Map() }; matches.set(id, s);
+    s = { owners: new Map(), deaths: new Map(), deathPlans: new Map() }; matches.set(id, s);
     if (matches.size > 8) matches.delete(matches.keys().next().value);
   }
   return s;
@@ -62,16 +62,24 @@ function deathPaint(nm, from, e, proof) {
   const attacker = nm.byNid.get(proof[5]);
   const victim = nm.byNid.get(proof[2]);
   const life = victim.remote ? victim.net?.lastLife ?? victim.netLife ?? 0 : victim.netLife ?? 0;
-  if (proof[4] !== life || !attacker || attacker.team !== e[6] || attacker.team === victim.team
+  if (proof[4] !== life || !attacker || attacker.team !== e[6] || attacker.team === victim.team || proof[10] !== e[6]
     || e[8] !== 0 || e.slice(9, 13).some(n => n !== 0) || e[13] !== -1
     || Array.isArray(e[15])) return false;
   const position = { x: proof[6], y: proof[7], z: proof[8] };
   if (!victim.pos || Math.hypot(position.x-victim.pos.x, position.y-victim.pos.y,
     position.z-victim.pos.z) > 6) return false;
-  const row = deathBlastPlan(position, proof[9], DEATH_PAINT_SPEC)[proof[11]];
+  const plans=state(nm).deathPlans;
+  let cached=plans.get(proof[2]),same=!!cached;
+  if(same)for(let i=3;i<=10;i++)if(cached.keys[i-3]!==proof[i]){same=false;break;}
+  if(!same){
+    cached={keys:proof.slice(3,11),plan:deathBlastPlan(position,proof[9],DEATH_PAINT_SPEC)};
+    plans.set(proof[2],cached);
+    if(plans.size>8)plans.delete(plans.keys().next().value);
+  }
+  const row = cached.plan[proof[11]];
   // Exact unrounded producer values, including the deterministic droplets.
   if (row.x !== e[2] || row.y !== e[3] || row.z !== e[4]
-    || row.radius !== e[5] || row.seed !== e[7] || proof[10] !== e[6]) return false;
+    || row.radius !== e[5] || row.seed !== e[7]) return false;
   const previous = state(nm).deaths.get(proof[2]);
   const fingerprint = JSON.stringify(proof.slice(3, 11));
   return !previous || previous.generation < proof[3] || previous.generation === proof[3]

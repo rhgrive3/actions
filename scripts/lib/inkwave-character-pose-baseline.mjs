@@ -1,3 +1,5 @@
+import {POST_30_PRS_POSE_PAIR} from './inkwave-31pr-paint-source-pair.mjs';
+import {ALL_PRS_POSE_PAIR} from './inkwave-23pr-paint-source-pair.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -508,6 +510,15 @@ export const QUEUE1801_POSE_PAIR = Object.freeze({
     }
   }
 });
+export const QUEUE1801_IDENTICAL_POSE_PAIR = Object.freeze({
+  mode: 'queue1801-byte-identical-pose-source-epoch',
+  sourceBase: QUEUE1801_POSE_PAIR.sourceHead,
+  sourceHead: QUEUE1801_POSE_PAIR.sourceHead,
+  paths: Object.freeze(Object.fromEntries(CHARACTER_POSE_PATHS.map(path=>[path,Object.freeze({
+    baseline: QUEUE1801_POSE_PAIR.paths[path].candidate,
+    candidate: QUEUE1801_POSE_PAIR.paths[path].candidate,
+  })]))),
+});
 function currentPosePair(baseline, candidate) {
   const epoch = [
     { blobs: OCT21_PR1746_POSE_MAIN_BLOBS, source: 'f31238a48b9d1a4af2d4f5f5f9182af777a79c83' },
@@ -538,7 +549,7 @@ function currentPosePair(baseline, candidate) {
     })),
   };
 
-  const pair = [QUEUE1801_POSE_PAIR, OCT22_INTEGRATION_POSE_PAIR, CURRENT_POSE_PAIR, RESOLVED_POSE_PAIR, PR1746_POSE_PAIR].find(pair => CHARACTER_POSE_PATHS.every(path =>
+  const pair = [POST_30_PRS_POSE_PAIR, ALL_PRS_POSE_PAIR, QUEUE1801_IDENTICAL_POSE_PAIR, QUEUE1801_POSE_PAIR, OCT22_INTEGRATION_POSE_PAIR, CURRENT_POSE_PAIR, RESOLVED_POSE_PAIR, PR1746_POSE_PAIR].find(pair => CHARACTER_POSE_PATHS.every(path =>
     typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string' &&
     blob(baseline.get(path)) === pair.paths[path].baseline &&
     blob(candidate.get(path)) === pair.paths[path].candidate));
@@ -550,11 +561,11 @@ function currentPosePair(baseline, candidate) {
     return null;
   }
   return { sources: new Map(baseline), changes: [],
-    pairEvidence: { mode: 'current-pose-pair-with-gameplay-differences',
+    pairEvidence: { mode: pair.mode || 'current-pose-pair-with-gameplay-differences',
       sourceBase: pair.sourceBase, sourceHead: pair.sourceHead,
-      scope: 'Preserve the exact current main/candidate pose source pair without replay. Pose and gameplay differences remain visible to independent native-state and image comparison gates.',
+      scope: pair === QUEUE1801_IDENTICAL_POSE_PAIR ? 'Preserve all sixteen exact queue1801 candidate pose leaves on both sides without replay. Independent native-state and image comparison remains required.' : 'Preserve the exact current main/candidate pose source pair without replay. Pose and gameplay differences remain visible to independent native-state and image comparison gates.',
       validationLimit: 'Source identity only; this is not pose or gameplay equivalence.' },
-    evidence: CHARACTER_POSE_PATHS.map(path => ({path, mode: 'pinned-current-pose-pair',
+    evidence: CHARACTER_POSE_PATHS.map(path => ({path, mode: pair === QUEUE1801_IDENTICAL_POSE_PAIR ? 'queue1801-exact-pose-source-epoch' : 'pinned-current-pose-pair',
       originalGitBlob: blob(baseline.get(path)), referenceGitBlob: blob(baseline.get(path)), candidateGitBlob: blob(candidate.get(path)),
       originalSha256: poseSourceSha256(baseline.get(path)), referenceSha256: poseSourceSha256(baseline.get(path)),
       candidateSha256: poseSourceSha256(candidate.get(path)), changed: false, replayed: []})) };

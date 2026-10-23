@@ -6,12 +6,14 @@ import {sourceLoadedActorFixture} from './source-loaded-actor-fixture.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {compactModuleStrings} from '../../../scripts/lib/inkwave-source-compaction.mjs';
 const file='patches/splatoon3/runtime/flow-motion.mjs';
-const anchor="    s.point.y = Math.max(s.point.y, swimSurfaceY);\n";
+import {withoutFlowSurfaceFixes} from './flow-surface-negative.mjs';
 const fingerprint=g=>createHash('sha256').update(JSON.stringify([Array.from(g.index.array),...Object.values(g.attributes).map(a=>Array.from(a.array))])).digest('hex');
 async function trace(compiled,negative=false){
  const f=await sourceLoadedActorFixture({sourceOnly:true,random:()=>.5,moduleTransform:(rel,code)=>{
   if(rel!==file)return code;
-  if(negative){assert.ok(code.includes(anchor));code=code.replace(anchor,'');}
+  // Keep root/ribbon anchors identical; invert only the two glint-height
+  // protections, otherwise one fix can mask the other's negative control.
+  if(negative)code=withoutFlowSurfaceFixes(rel,code,{root:false});
   code=adaptBuildSource(file,code);
   return compiled?compactModuleStrings(transformSync(code,{loader:'js',format:'esm',minify:true,charset:'utf8',legalComments:'inline',sourcefile:file}).code).code:code;
  }});

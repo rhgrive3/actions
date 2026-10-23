@@ -1,3 +1,4 @@
+import { audioLoadDeadline } from './load-deadline.mjs';
 /**
  * Optional operator-provided sound library. No Nintendo or reference WAVs are bundled.
  * Replacement is transactional: an in-progress download NEVER changes the live bank.
@@ -27,6 +28,15 @@ function canReusePCM(row,clip){
     && LOOP_EVENTS.has(row.event)===LOOP_EVENTS.has(clip.event)
     && (row.loopStart??null)===(clip.loopStart??null)
     && (row.loopEnd??null)===(clip.loopEnd??null)
+    && row.seamlessLoop!==false && clip.seamlessLoop!==false;
+}
+function canReuseBrushWindup(row,clip){
+  // Only this verified one-shot is a raw source for its separately repaired
+  // loop. A repaired roll must never become a later windup's source.
+  return clip.id==='s3-brush-normal' && clip.event==='roll'
+    && row.id===clip.id && row.event==='windup'
+    && row.file===clip.file && !!row.sha256 && row.sha256===clip.sha256
+    && row.loopStart==null && row.loopEnd==null
     && row.seamlessLoop!==false && clip.seamlessLoop!==false;
 }
 
@@ -147,7 +157,7 @@ export class AuthorizedSamplePack {
     // The same file can back multiple variants: download/decode it once per import.
     const getDecoded=(clip)=>{
       if(decoded.has(clip.file))return decoded.get(clip.file);
-      const promise=(async()=>{
+      const promise=audioLoadDeadline((async()=>{
         const url=baseURL.replace(/\/$/,'')+'/'+clip.file;
         if(!current())throw cancelled;
         const res=await this.fetcher(url);
@@ -164,8 +174,8 @@ export class AuthorizedSamplePack {
         if(!pcm||!finite(pcm.duration)||pcm.duration<=0||pcm.duration>30||!Number.isInteger(pcm.length)||pcm.length<=0||
            !Number.isInteger(pcm.numberOfChannels)||pcm.numberOfChannels<1||pcm.numberOfChannels>8)
           throw new Error('Invalid decoded sample');
-        return {bytes,pcm};
-      })();
+        return {bytes,pcm,digest:null};
+      })());
       decoded.set(clip.file,promise);return promise;
     };
     const jobs=Array.from({length:Math.min(concurrency,Math.max(1,valid.length))},async()=>{
@@ -175,18 +185,25 @@ export class AuthorizedSamplePack {
           // Reuse an already verified, byte-identical source buffer across IDs.
           // The same source is intentionally referenced by e.g. several chargers.
           // Loop endpoints/repair mode must match, so no PCM is ever reinterpreted.
-          let existing=null;
-          for(const row of next.values())if(canReusePCM(row,clip)){existing=row;break;}
+          let existing=null,rawWindup=null;
+          for(const row of next.values()){
+            if(canReusePCM(row,clip)){existing=row;break;}
+            if(!rawWindup&&canReuseBrushWindup(row,clip))rawWindup=row;
+          }
           let buffer;
           if(existing){buffer=existing.buffer;}
           else {
-            const {bytes,pcm}=await getDecoded(clip);
+            const decodedFile=rawWindup?null:await getDecoded(clip);
+            const pcm=rawWindup?rawWindup.buffer:decodedFile.pcm;
             if(!current())return;
-            if(clip.sha256){
+            if(clip.sha256&&!rawWindup){
               if(!globalThis.crypto?.subtle)throw new Error('SHA256 requested but SubtleCrypto unavailable');
-              const dig=await globalThis.crypto.subtle.digest('SHA-256',bytes);
+              // Memoize only this transaction's actual fetched bytes; every
+              // manifest row still compares its own declared checksum.
+              if(!decodedFile.digest)decodedFile.digest=globalThis.crypto.subtle.digest('SHA-256',decodedFile.bytes)
+                .then(dig=>Array.from(new Uint8Array(dig),v=>v.toString(16).padStart(2,'0')).join(''));
+              const sha=await decodedFile.digest;
               if(!current())return;
-              const sha=Array.from(new Uint8Array(dig),v=>v.toString(16).padStart(2,'0')).join('');
               if(sha.toLowerCase()!==clip.sha256.toLowerCase())throw new Error('Checksum mismatch');
             }
             if(clip.loopEnd!=null&&clip.loopEnd>pcm.duration)throw new Error('Loop end exceeds decoded duration');

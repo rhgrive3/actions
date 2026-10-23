@@ -1,0 +1,234 @@
+{
+  "source_head": "33477f26d642e02143d4c9bc452b54ace0bb0063",
+  "end_head": "33477f26d642e02143d4c9bc452b54ace0bb0063",
+  "registered": 83,
+  "executed": 83,
+  "unique_executed": 83,
+  "all_once": true,
+  "source_files_unchanged": true,
+  "passes": 83,
+  "failures": 0,
+  "skipped": 0,
+  "passed": true,
+  "fixture_test_sha256": {
+    "patches/splatoon3/tests/all-specials.test.mjs": "d22f00fb40e90788086cc180d634cc0be1a3448f4ce7113f4d03148888912f6e",
+    "patches/splatoon3/tests/kraken-dash-occlusion.test.mjs": "cfad9b86b25bb52a00c0e2ff8ca0e49615b12382802dd4a3850fd84b9927e580",
+    "patches/splatoon3/tests/source-fixture.mjs": "4fa68ce9bc0f0fc00d861fb49d992df6fb98f0caf7f20b91cd31eadfdcff109c",
+    "patches/splatoon3/tests/fixture-cache.mjs": "ed2c627bbd62162ea27ad1e94fbf90ae5945e09cd20d6108190a70eb3e789131"
+  },
+  "method": "83 registered top-level cases from actual imports; native node:test executes7 disjoint exact-name batches (12/8/20/12/12/12/7), max2children, unchanged assertions. Original monolithic attempts incomplete due resource exhaustion.",
+  "chunks": [
+    {
+      "range": [
+        0,
+        12
+      ],
+      "exit": 0,
+      "executed": [
+        "native wall stops body and occludes dash at 30Hz",
+        "clear path retains source reach at 30Hz",
+        "native wall stops body and occludes dash at 60Hz",
+        "clear path retains source reach at 60Hz",
+        "native wall stops body and occludes dash at 120Hz",
+        "clear path retains source reach at 120Hz",
+        "capsule height exclusion remains",
+        "capsule width exclusion remains",
+        "wall beyond victim does not block contact",
+        "side wall outside line does not block contact",
+        "nearest wall wins independently of solid ordering",
+        "end of a longer resolved sweep remains reachable"
+      ],
+      "counts": {
+        "tests": 12,
+        "pass": 12,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "elapsed_seconds": 1.9749474179989193,
+      "passed": true
+    },
+    {
+      "range": [
+        12,
+        20
+      ],
+      "exit": 0,
+      "executed": [
+        "past the sourced longer sweep endpoint remains excluded",
+        "wall occludes the endpoint of a longer resolved sweep",
+        "multiple clear victims remain eligible in either array order",
+        "occluded victim does not consume its later clear contact",
+        "visible victim beside a wall edge retains contact",
+        "victim just occluded by the wider wall edge receives no contact",
+        "host owner routes visible contact to victim authority",
+        "host owner sends no contact through wall"
+      ],
+      "counts": {
+        "tests": 8,
+        "pass": 8,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "elapsed_seconds": 1.8676734709988523,
+      "passed": true
+    },
+    {
+      "range": [
+        20,
+        40
+      ],
+      "exit": 0,
+      "executed": [
+        "guest owner routes visible contact to victim authority",
+        "guest owner sends no contact through wall",
+        "native receiver: valid",
+        "native receiver: duplicate",
+        "native receiver: wrong-match",
+        "native receiver: wrong-owner",
+        "native receiver: future-victim-life",
+        "native receiver: attacker-life-change-keeps-committed-hit",
+        "native receiver: remote-recipient",
+        "remote owner cannot emit a local dash contact",
+        "dead owner cannot emit a local dash contact",
+        "missing special inventory is source versioned and Tenta stages ten source-cadence rounds",
+        "Tenta Missiles retain their four-source-frame salvo clock after coarse actor ticks",
+        "Tenta Missiles rise, dive onto the locked ground coordinate, and apply impact damage",
+        "Wave Breaker keeps source pulse schedule and owner-owned device survives owner death",
+        "Wave Breaker device destruction cancels later emissions but preserves the emitted annulus",
+        "Wave Breaker marks nearby placement for 45 frames and holds until a manual deploy input",
+        "Wave Breaker first deploy packet preserves 11.3.0 AP-scaled 160/192/216F wave travel on remote replay",
+        "Wave Breaker remote replay marks for 45F and reuses a waveFront packet received before the simulated pulse",
+        "Wave Breaker pulse misses a jumping player above the source height limit"
+      ],
+      "counts": {
+        "tests": 20,
+        "pass": 20,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "elapsed_seconds": 16.012018649998936,
+      "timing": {
+        "max_rss_kib": 916836
+      },
+      "passed": true
+    },
+    {
+      "range": [
+        40,
+        52
+      ],
+      "exit": 0,
+      "executed": [
+        "Wave Breaker annulus damages a live Super Chump device through the special-object path",
+        "special object area routing preserves exact attack-phase damage rows",
+        "native and ordinary blast bursts damage both deployed object arrays with the projectile source row",
+        "Booyah Bomb armor and delayed expanding damage are timed independently from impact",
+        "Booyah Bomb uses source growth and damage frames at 30, 60, and 120 Hz",
+        "Splattercolor Screen applies the recipient color and mark timers on a real crossing",
+        "Splattercolor Screen does not stop a native enemy shot from reaching a player behind it",
+        "remote screen replay creates presentation and recipient status without authoring hits or paint",
+        "Zipcaster repeats hooks, fires the equipped main from its special ink tank, and returns through native Super Jump",
+        "Kraken Royale charges while held, starts its 35F dash on release, and supports the 34F cancel",
+        "Inkjet fires native rounds, descends in squid form, and starts a Super Jump return at expiry",
+        "Inkjet exhaust applies Jetpack_Jet damage once per source frame at 30, 60, and 120 Hz"
+      ],
+      "counts": {
+        "tests": 12,
+        "pass": 12,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "elapsed_seconds": 18.082377148999512,
+      "passed": true
+    },
+    {
+      "range": [
+        52,
+        64
+      ],
+      "exit": 0,
+      "executed": [
+        "Inkjet exhaust stops during squid descent and return",
+        "Ultra Stamp uses jump swings and blocks a projectile through its forward guard",
+        "Crab Tank fires shooter and cannon rounds and exposes ball posture while squid is held",
+        "Reefslider waits for grounded 38F startup, gates cancel to15F, and deals dash contact damage",
+        "Killer Wail beams tick through terrain and the main weapon remains live during the special",
+        "Killer Wail applies MicroLaser object rows through walls to special and sub devices",
+        "Splattercolor Screen moving plane damages deployed Splash Wall with Chimney row",
+        "direct Crab cannon and thrown Stamp hits retain their source rows on actor armor",
+        "Crab Tank rolling body actor damage carries Chariot_Body cause",
+        "Tenta and Inkjet special paint channels stamp the sourced cross and satellites",
+        "Super Chump expiry paints sourced cross and satellite channels",
+        "Zipcaster hook movement paints sourced cross marks and a two-frame calibrated trail"
+      ],
+      "counts": {
+        "tests": 12,
+        "pass": 12,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "elapsed_seconds": 15.666269530000136,
+      "passed": true
+    },
+    {
+      "range": [
+        64,
+        76
+      ],
+      "exit": 0,
+      "executed": [
+        "Booyah cheer accepts distinct calls up to the source cap and rejects duplicate or stale remote calls",
+        "remote destructible hit proposal validates the owner life using the network last-life fallback",
+        "local Booyah calls credit gauge for a remote catalogue caster once per call",
+        "source special launch forces advance the same actual projectile at 30/60/120Hz",
+        "Zipcaster special-power AP controls native hook cost and time drain at 30/60/120 Hz",
+        "Reefslider snapshots special-power paint and damage-distance curves without increasing damage",
+        "Screen source movement follows activation AP and remote device replay preserves it",
+        "Screen travel integrates startup and closing boundaries identically at 30/60/120 Hz",
+        "catalogue world damage uses the same 60 Hz samples at 30/60/120 rendering rates",
+        "recycling a special round cannot give a later main weapon special paint, blast or damage aging",
+        "Inkjet power snapshot survives the actual projectile packet and ghost without increasing direct damage",
+        "every catalogue-launched special projectile keeps a wire identity accepted by ghost reconstruction"
+      ],
+      "counts": {
+        "tests": 12,
+        "pass": 12,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "elapsed_seconds": 24.095362154999748,
+      "passed": true
+    },
+    {
+      "range": [
+        76,
+        83
+      ],
+      "exit": 0,
+      "executed": [
+        "world effect clock rejects invalid elapsed time and clear removes its remainder",
+        "Super Chump activation power scales decoy paint and blast reach but never damage or HP",
+        "Tenta Missiles retain the source paint-power curve in their launch and remote descriptor",
+        "#1606 waveBreaker AP0 complete companion vs deploy replay in both arrival orders",
+        "#1606 waveBreaker AP57 complete companion vs deploy replay in both arrival orders",
+        "#1606 splattercolorScreen AP0 complete companion vs deploy replay in both arrival orders",
+        "#1606 splattercolorScreen AP57 complete companion vs deploy replay in both arrival orders"
+      ],
+      "counts": {
+        "tests": 7,
+        "pass": 7,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "elapsed_seconds": 8.90607279699907,
+      "passed": true
+    }
+  ]
+}

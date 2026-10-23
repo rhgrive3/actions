@@ -16,8 +16,13 @@ const exports = `
 async function rig({ negative = false } = {}) {
   const adapt = (rel, code) => {
     const out = adaptBuildSource(rel, code);
-    if (negative === 'row' && rel === 'src/net/netmatch.js')
-      return out.replace('.filter(Array.isArray)', '.filter(() => true)').replace('e => Array.isArray(e) && (', 'e => (');
+    if (negative === 'row' && rel === 'src/net/netmatch.js') {
+      // Poison both composed defenses, retaining the row budget in this negative control.
+      const rowGuard='for (let i = 0; i < limit; i++) if (Array.isArray(d.e[i])) rows.push(d.e[i]);';
+      const creditGuard='e => Array.isArray(e) && (';
+      assert.equal(out.split(rowGuard).length,2);assert.equal(out.split(creditGuard).length,2);
+      return out.replace(rowGuard,'for (let i = 0; i < limit; i++) rows.push(d.e[i]);').replace(creditGuard,'e => (');
+    }
     return negative && rel === 'src/net/netmatch.js'
       ? out.replace('    if (d.e != null && !Array.isArray(d.e)) return;\n', '').replace('    else if (d?.e != null) d = { ...d, e: [] };\n', '') : out;
   };

@@ -63,8 +63,8 @@ async function setup(){const f=await fixture({fullRuntime:true,productionComposi
  export {NetMatch} from './inkwave-public/src/net/netmatch.js';
  export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs';
  export {installWeaponAudioRuntime} from './patches/splatoon3/runtime/audio/runtime.mjs';`});
- f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);const calls=[];f.G.audio={ctx:{},prepareWeapon(){},play(name,o){calls.push({legacy:true,name,o});},playWeapon(id,event,o){calls.push({id,event,o});},loopWeapon(id,event,o){calls.push({loop:true,id,event,o});return{playing:true,set(){},stop(){this.playing=false;}};},loop(){return{playing:true,set(){},stop(){this.playing=false;}};},duck(){}};
- f.installWeaponAudioRuntime(f.installedRuntime);f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};return {...f,calls};}
+ f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);const calls=[],rises=[],prewarms=[];f.G.audio={ctx:{},prepareWeapon(){},prewarmChargerChargeRise(d){prewarms.push(d);},play(name,o){calls.push({legacy:true,name,o});},playWeapon(id,event,o){calls.push({id,event,o});},playChargerChargeRise(options){const h={playing:true,options,stops:0,stop(){this.playing=false;this.stops++;}};rises.push(h);return h;},loopWeapon(id,event,o){calls.push({loop:true,id,event,o});return{playing:true,set(){},stop(){this.playing=false;}};},loop(){return{playing:true,set(){},stop(){this.playing=false;}};},duck(){}};
+ f.installWeaponAudioRuntime(f.installedRuntime);f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};return {...f,calls,rises,prewarms};}
 test('all 65 actual Actor admission paths emit one weapon sound for each fire event, with no legacy shot',async()=>{
  const f=await setup();let fireCount=0;f.on('weapon:fire',()=>fireCount++);
  for(const r of Object.values(WEAPON_AUDIO)){
@@ -87,8 +87,10 @@ test('Charger onset occurs once on initial hold and again only after real stored
  const f=await setup(),id='s3-charger-long',a=f.make(id);
  a.form='kid';a.isLocal=true;a.intent.fire=true;f.tick(a,160);
  const onsets=()=>f.calls.filter(c=>c.id===id&&c.event==='charge');
- assert.equal(onsets().length,1,'a continuous held charge emits a single click, not 160 repeated loops');
- assert.ok(onsets().every(c=>!c.loop),'the Charger clip must use playWeapon instead of loopWeapon');
+ assert.equal(onsets().length,0,'recorded first phrase contains its own click; no duplicate HoldNoise on charge start');
+ assert.ok(f.prewarms.length>0,'first-charge MP3 preload begins before the first trigger');
+ assert.equal(f.rises.length,1,'one exact first-charge recording plays, not a synthesized second layer');
+ assert.equal(f.rises[0].options.volume,.55,'selected local recording uses configured game SFX gain');
  assert.equal(f.calls.filter(c=>c.id===id&&c.event==='ready').length,1);
  assert.equal(a.weaponRunner._mainAudioState.loops.charge,undefined);
  // The actual S3 charger owner stores this structure while diving after
@@ -102,14 +104,14 @@ test('Charger onset occurs once on initial hold and again only after real stored
  assert.ok(a.weaponRunner.s3Stored?.charge>0,'real underwater frame preserves charge keep');
  a.form='kid';a.submerged=false;
  f.emit('actor:form',{actor:a,form:'kid'});
- assert.equal(onsets().length,2,'squid-frame stop may not erase real emergence onset');
+ assert.equal(onsets().length,1,'squid-frame stop may not erase real emergence onset');
  f.emit('actor:form',{actor:a,form:'kid'});
- assert.equal(onsets().length,2,'duplicate form events cannot repeat a click');
+ assert.equal(onsets().length,1,'duplicate form events cannot repeat a click');
  // A fresh dive whose stored charge was lost must not play the keep cue.
  f.emit('actor:form',{actor:a,form:'squid'});
  a.weaponRunner.s3Stored=null;
  f.emit('actor:form',{actor:a,form:'kid'});
- assert.equal(onsets().length,2,'expired/cancelled charge keep is silent on resurfacing');
+ assert.equal(onsets().length,1,'expired/cancelled charge keep is silent on resurfacing');
  // A scoped model is not eligible for S3 charge-keep audio even if an
  // invalid saved charge is injected. Keep the catalog weapon immutable.
  const scoped=f.make('s3-charger-normalscope');
@@ -129,7 +131,8 @@ test('Charger onset occurs once on initial hold and again only after real stored
  assert.equal(f.calls.filter(c=>c.id==='s3-charger-keeper'&&c.event==='charge').length,1,
    'stored partial charge on Goo Tuber triggers one emergence cue');
  a.setWeapon('shooter');f.emit('actor:form',{actor:a,form:'kid'});
- assert.equal(onsets().length,2,'weapon switching clears Charger onset routing');
+ assert.equal(onsets().length,1,'weapon switching clears Charger onset routing');
+ assert.ok(f.rises[0].stops>=1,'changing weapon stops any active rising tone');
 });
 
 test('all 14 actual sub admissions produce the corresponding sub sound',async()=>{
@@ -191,21 +194,24 @@ test('native Charger re-arms emergence onset across two retained-charge dives',a
  // fixture normally suppresses _finishFrame; retain real event dispatch after weapon update.
  a._finishFrame=()=>a._events(a.anim);
  a.form='kid';a.isLocal=true;a.intent.fire=true;f.tick(a,160);
- const onsets=()=>f.calls.filter(c=>c.id===id&&c.event==='charge');
- assert.equal(onsets().length,1,'continuous initial hold has one onset');
+ const onsets=()=>f.rises.length+f.calls.filter(c=>c.id===id&&c.event==='charge').length;
+ assert.equal(onsets(),1,'continuous initial hold has one onset');
+ assert.equal(f.rises.length,1,'first charge uses the complete recorded phrase');
  assert.ok(r.charging&&r.charge>=1,'actual native gameplay reaches full charge');
  for(let cycle=1;cycle<=2;cycle++){
   a.intent.squid=true;f.tick(a);
   assert.equal(a.form,'squid','actual Actor enters squid');
   assert.ok(r.s3Stored?.charge>0,'actual native squid update retains charge');
+  assert.equal(f.rises[0].playing,false,'diving stops the original recorded phrase');
   a.intent.squid=false;f.tick(a);
   assert.equal(a.form,'kid','actual Actor emits emergence after weapon update');
-  assert.equal(onsets().length,1+cycle,`emergence ${cycle} plays one cue`);
+  assert.equal(onsets(),1+cycle,`emergence ${cycle} plays one cue`);
   f.emit('actor:form',{actor:a,form:'kid'});
-  assert.equal(onsets().length,1+cycle,'same-kid duplicate form event stays silent');
+  assert.equal(onsets(),1+cycle,'same-kid duplicate form event stays silent');
   assert.ok(r.s3Stored?.fireDelay>0,'redive before actual stored-shot readiness');
  }
+ assert.equal(f.rises.length,1,'stored-charge emergence adds only a click, never another full phrase');
  a.setWeapon('shooter');f.emit('actor:form',{actor:a,form:'kid'});
- assert.equal(onsets().length,3,'weapon switch cannot replay the Charger cue');
+ assert.equal(onsets(),3,'weapon switch cannot replay the Charger cue');
  assert.equal(r._mainAudioState,null,'weapon reset discards the old latch state');
 });

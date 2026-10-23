@@ -1,0 +1,402 @@
+{
+  "date": "2026-10-23",
+  "referenceVersion": "Splatoon 3 11.3.0",
+  "baselineCommit": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+  "testedCodeCommit": "fc040010e8a50e4f23159927ff942abe09781dd0",
+  "environment": {
+    "node": "22.23.3",
+    "esbuild": "0.28.2",
+    "browser": "Chromium 154.0.8037.57",
+    "galleryBrowser": "Playwright Chromium 151.0.7922.34, SwiftShader",
+    "platform": "Linux x64"
+  },
+  "runtimeSha256": "69116f85554815872901070917c27efded49cc609711a26a551f3fc93ed30331",
+  "sourceRegression": {
+    "tests": 182,
+    "pass": 182,
+    "fail": 0,
+    "skipped": 0
+  },
+  "focusedSource": {
+    "tests": 25,
+    "pass": 25,
+    "fail": 0,
+    "skipped": 0
+  },
+  "focusedMinifiedBuild": {
+    "tests": 25,
+    "pass": 25,
+    "fail": 0,
+    "skipped": 0
+  },
+  "counterfactual": {
+    "description": "Same final 17 new tests, substituting only the main-weapon-catalog module with git-show baseline bytes in productionComposition fixture. One existing-order positive control still passes; sixteen test cases fail. These are not sixteen distinct bugs.",
+    "tests": 17,
+    "pass": 1,
+    "fail": 16,
+    "skipped": 0
+  },
+  "standardNpmTest": {
+    "status": "passed",
+    "nodeTests": 89,
+    "pythonTests": 4,
+    "note": "Standard npm test includes check:patches --quick, not the entire patch suite. The separate 182-case weapon run is above."
+  },
+  "build": {
+    "sourceCommit": "fc040010e8a50e4f23159927ff942abe09781dd0",
+    "contentHash": "8a8d6d02f7a1486972efdbb8d1375dd4569abb64f1eca66d40c9658cad9f646d",
+    "revision": "36004efdc15b72d6440b687a326d7a09f7aeff956e94aa49154ec24ebd06811d",
+    "inputs": 1362,
+    "artifacts": 2016,
+    "status": "passed"
+  },
+  "startupBudget": {
+    "status": "passed",
+    "revision": "36004efdc15b72d6440b687a326d7a09f7aeff956e94aa49154ec24ebd06811d",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 78161,
+    "initialJSBytes": 2199635,
+    "criticalHTMLBytes": 23925,
+    "precacheCount": 499,
+    "precacheBytes": 7354222,
+    "workerBytes": 78227,
+    "declaredBytes": 14933592,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "catalogBrowser": {
+    "status": "passed",
+    "records": 65,
+    "emittedWeapons": 58,
+    "projectiles": 887,
+    "reviewCases": 34,
+    "stringerJumps": 8,
+    "splatanaWingContacts": 26,
+    "checks": [
+      {
+        "id": "s3-stringer-normal",
+        "action": "native-superjump",
+        "air": 138,
+        "landed": true,
+        "tilt": 78
+      },
+      {
+        "id": "s3-stringer-short",
+        "action": "native-superjump",
+        "air": 138,
+        "landed": true,
+        "tilt": 78
+      },
+      {
+        "id": "s3-stringer-explosion",
+        "action": "native-superjump",
+        "air": 138,
+        "landed": true,
+        "tilt": 81
+      },
+      {
+        "id": "s3-stringer-explosion-01",
+        "action": "native-superjump",
+        "air": 138,
+        "landed": true,
+        "tilt": 81
+      },
+      {
+        "id": "s3-stringer-normal-01",
+        "action": "native-superjump",
+        "air": 138,
+        "landed": true,
+        "tilt": 78
+      },
+      {
+        "id": "s3-stringer-normal-02",
+        "action": "native-superjump",
+        "air": 138,
+        "landed": true,
+        "tilt": 78
+      },
+      {
+        "id": "s3-stringer-short-01",
+        "action": "native-superjump",
+        "air": 138,
+        "landed": true,
+        "tilt": 78
+      },
+      {
+        "id": "s3-stringer-short-02",
+        "action": "native-superjump",
+        "air": 138,
+        "landed": true,
+        "tilt": 78
+      },
+      {
+        "id": "s3-saber-normal",
+        "action": "saber-horizontal",
+        "side": -1,
+        "inner": 1,
+        "outer": 0,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-normal",
+        "action": "saber-horizontal",
+        "side": 1,
+        "inner": 3,
+        "outer": 4,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-normal",
+        "action": "saber-vertical",
+        "side": -1,
+        "inner": 1,
+        "outer": 0,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-normal",
+        "action": "saber-vertical",
+        "side": 1,
+        "inner": 5,
+        "outer": 6,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-lite",
+        "action": "saber-vertical",
+        "side": -1,
+        "inner": 1,
+        "outer": 0,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-lite",
+        "action": "saber-vertical",
+        "side": 1,
+        "inner": 5,
+        "outer": 6,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-heavy",
+        "action": "saber-horizontal",
+        "side": -1,
+        "inner": 1,
+        "outer": 0,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-heavy",
+        "action": "saber-horizontal",
+        "side": 1,
+        "inner": 5,
+        "outer": 6,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-heavy",
+        "action": "saber-vertical",
+        "side": -1,
+        "inner": 1,
+        "outer": 0,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-heavy",
+        "action": "saber-vertical",
+        "side": 1,
+        "inner": 5,
+        "outer": 6,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-heavy-01",
+        "action": "saber-horizontal",
+        "side": -1,
+        "inner": 1,
+        "outer": 0,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-heavy-01",
+        "action": "saber-horizontal",
+        "side": 1,
+        "inner": 5,
+        "outer": 6,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-heavy-01",
+        "action": "saber-vertical",
+        "side": -1,
+        "inner": 1,
+        "outer": 0,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-heavy-01",
+        "action": "saber-vertical",
+        "side": 1,
+        "inner": 5,
+        "outer": 6,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-lite-01",
+        "action": "saber-vertical",
+        "side": -1,
+        "inner": 1,
+        "outer": 0,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-lite-01",
+        "action": "saber-vertical",
+        "side": 1,
+        "inner": 5,
+        "outer": 6,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-lite-02",
+        "action": "saber-vertical",
+        "side": -1,
+        "inner": 1,
+        "outer": 0,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-lite-02",
+        "action": "saber-vertical",
+        "side": 1,
+        "inner": 5,
+        "outer": 6,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-normal-01",
+        "action": "saber-horizontal",
+        "side": -1,
+        "inner": 1,
+        "outer": 0,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-normal-01",
+        "action": "saber-horizontal",
+        "side": 1,
+        "inner": 3,
+        "outer": 4,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-normal-01",
+        "action": "saber-vertical",
+        "side": -1,
+        "inner": 1,
+        "outer": 0,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-normal-01",
+        "action": "saber-vertical",
+        "side": 1,
+        "inner": 5,
+        "outer": 6,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-normal-02",
+        "action": "saber-horizontal",
+        "side": -1,
+        "inner": 1,
+        "outer": 0,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-normal-02",
+        "action": "saber-horizontal",
+        "side": 1,
+        "inner": 3,
+        "outer": 4,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-normal-02",
+        "action": "saber-vertical",
+        "side": -1,
+        "inner": 1,
+        "outer": 0,
+        "retired": true
+      },
+      {
+        "id": "s3-saber-normal-02",
+        "action": "saber-vertical",
+        "side": 1,
+        "inner": 5,
+        "outer": 6,
+        "retired": true
+      }
+    ],
+    "firstAttempt": {
+      "status": "failed",
+      "assertion": "native receiver contact and ACK agree",
+      "context": "Concurrent final browser/render/regression runs. This does not establish the cause. The identical checker and build passed on retry after the other browser processes exited. Original failure stderr is retained."
+    }
+  },
+  "gameBrowser": {
+    "status": "passed",
+    "sourceSha": "fc040010e8a50e4f23159927ff942abe09781dd0",
+    "verifiedResponses": 758,
+    "errors": [],
+    "note": "check-inkwave-browser --exact-source; ordinary native boot, loadout, gameplay and reliability probes. Separate from catalogue controlled scenes."
+  },
+  "gallery": {
+    "status": "passed",
+    "models": 6,
+    "renderedImages": 72,
+    "retainedImages": 6,
+    "nonFinite": false,
+    "pageErrors": [],
+    "note": "Retained six firing frames are byte-identical to the six images directly inspected in the earlier render. All pose/camera images remain local; six representative images plus gallery.json are committed."
+  },
+  "evidence": {
+    "archive": "evidence.tar.gz",
+    "sha256": "09c8ae6cfe4bdd6df93e400e1bff2cc4b8af22c1fe7b2276443858c32b45c5ad",
+    "logs": {
+      "build-final.log": "4646b4167d3ee14c71724e3d7ac205ece9851365bfef1ac2363ec3f3c2fec7c6",
+      "budget-final.json": "e48f776fb7f33bec507cd4a6930ef496baba35bc9293ad2d0768ba765ca7d1a9",
+      "build-identity-final.json": "4b9d838989b26ba6eeda1e001f28d98342c16c63a4fa199a3b8e578cb8df0e8f",
+      "source-final.log": "c9c537a7dd7d949ed1ba77409745cddbf0f8095a2c26d1f38a7b3f4dd7a6f43b",
+      "emitted-final.log": "58e8ce877f9730e7e9d450709fde526b0d521038045a2c268d8a5f7e2b11eac2",
+      "regressions-final.log": "bdb2430a37d6e58eeb1d18c72d47697025dc6b56d9f1bb2c2eb4c6c436077d33",
+      "final-baseline.log": "e8d937b2e7607abe9a2fc52ac88436a014da76eaf19189f3a4343014ee2396ff",
+      "npm-test.log": "335b56bbe1ffb77688efe3ec435492143df6aa44eb05899202520a79457af6e8",
+      "browser-final.json": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "browser-final-stderr.log": "6d09636ff14bdaab4ca185986174cb2f44000d4c3cf9057b7cf5eff50cac42cd",
+      "browser-final-retry.json": "54181cbd5764f5008f91d1585d48655fd99b33c07b76af68ce34a571c3ca17a5",
+      "browser-final-retry-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "game-browser.log": "3e47c7b761c3cb20a1f7e4cea902cbdb7f3ff3ca3fc81fc304eeff3f5fdefc56",
+      "gallery-final.log": "1bb4c8707401ab47beff9adc857e2063b4bbc8d5ec4181dcd07c4e06d989c588",
+      "verify-build.mjs": "aabf65933d840118b424a2be9132afbbac0b12cc2cbb450e2d30b7bd8bdfdc0e"
+    }
+  },
+  "commands": [
+    "node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/stringer-*.test.mjs patches/splatoon3/tests/catalog-stringer-unarmed-tilt.test.mjs patches/splatoon3/tests/catalog-saber-*.test.mjs patches/splatoon3/tests/catalog-splatana-*.test.mjs patches/splatoon3/tests/splatana-lobe-hit-order.test.mjs patches/splatoon3/tests/catalog-lact-charge-keep.test.mjs patches/splatoon3/tests/catalog-charge-keep-input.test.mjs patches/splatoon3/tests/wiki-full-runtime.test.mjs patches/splatoon3/tests/catalog-added-family-paint.test.mjs patches/splatoon3/tests/catalog-paint-timing-boundaries.test.mjs patches/splatoon3/tests/weapon-models-stringers-splatanas.test.mjs",
+    "INKWAVE_BUILT_SITE=\"$PWD/_site\" node --experimental-vm-modules --test --test-concurrency=2 patches/splatoon3/tests/catalog-stringer-unarmed-tilt.test.mjs patches/splatoon3/tests/catalog-saber-lobe-cascade.test.mjs patches/splatoon3/tests/splatana-lobe-hit-order.test.mjs",
+    "npm test",
+    "npm run build",
+    "node scripts/check-inkwave-startup-budget.mjs _site",
+    "CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium node scripts/check-inkwave-catalog-browser.mjs _site",
+    "CHROMIUM_PATH=/usr/bin/chromium node scripts/check-inkwave-browser.mjs --site _site --evidence-dir work/stringer-splatana-review/game-browser --profile-dir work/stringer-splatana-review/browser-profile --exact-source",
+    "node scripts/render-inkwave-weapon-gallery.mjs --site _site --out work/stringer-splatana-review/gallery-final --ids s3-stringer-normal,s3-stringer-short,s3-stringer-explosion,s3-saber-normal,s3-saber-lite,s3-saber-heavy --size 400"
+  ],
+  "limits": [
+    "No Switch/physical-device comparison.",
+    "No assertion of recovered sparse defaults, retail skeleton/SE/paint parity or actual relay latency.",
+    "No hosted CI success, merge or deployment claimed.",
+    "The broad patch suite beyond the selected 182 tests was not run."
+  ]
+}

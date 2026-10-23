@@ -1,0 +1,61 @@
+class BufferBuilder{
+ constructor(Type,initial=4096){this.Type=Type;this.array=new Type(initial);this.length=0;}
+ push(...values){if(this.length+values.length>this.array.length){const a=new this.Type(Math.max(this.length+values.length,this.array.length*2));a.set(this.array);this.array=a;}this.array.set(values,this.length);this.length+=values.length;}
+ finish(){return this.array.slice(0,this.length);}
+}
+function lines(text,visit){let start=0;while(start<text.length){let end=text.indexOf('\n',start);if(end<0)end=text.length;visit(text.slice(start,end).trimEnd());start=end+1;}}
+const any=(s,words)=>words.some(w=>s.includes(w));
+function classify(name,material,semantics){
+ const s=(name+' '+material).toLowerCase(),m=(material||'').toLowerCase();
+ const alpha=any(s,['graffiti','warningtape','canola','leaf','grass','cloth','flag','stencil','notice','chainlink','net','grate','fence','vinyl','alpha','rope','fabric','dvpoolfloat','spotlight']);
+ // GroundGrass* names are structural soil/moss surfaces, not grass blades.
+ // Excluding them here removed real floors from collision and paint while
+ // nativeDisplay still rendered the exact source triangles (Bluefin centre).
+ const decor=any(s,['graffiti','warningtape','canola','leaf','flag','cloth','stencil','light_cp','spotlight','lens','vinylseat','carshadow','__carsset','_car_','buss_shadow','treebush','watersurfice','__water_','__waterpuddle','watersurface','seawater','skyplane'])||m.endsWith('_water')||name.toLowerCase().includes('_water_')||m.endsWith('_plant')||m.endsWith('_code00');
+ const layer=name.match(/(?:Pack|_)(Pnt|Var|Vlf|Vgl|Vcl|Tcl)(?:Set)?(?:_|$)/)?.[1]||null;
+ const matches=key=>(semantics?.[key]||[]).some(pattern=>new RegExp(pattern).test(name));
+ const active=(!layer||layer==='Pnt')&&!name.includes('TriColor')&&!matches('inactiveObjectPatterns');
+ const grate=any(m,['grate','coppernet','chainlink','meshfloor','waffledplate']),glass=any(m,['glass','window']);
+ const background=name.startsWith('FldBG')||name.startsWith('Fld_BG');
+ const collidable=active&&!background&&(name.startsWith('Fld_')||name.startsWith('FldObj_'))&&!decor&&!matches('nonCollidableObjectPatterns');
+ const paintable=collidable&&!grate&&!glass&&!['_np','_cp','_op'].some(x=>m.endsWith(x))&&!matches('nonPaintableObjectPatterns');
+ return {background,collidable,paintable,grate,glass,alpha,active,ruleLayer:layer};
+}
+export function parseSourceOBJ(text,semantics){
+ const geometry=[],indexChunks=[],objects=[];
+ let v=new BufferBuilder(Float32Array),n=new BufferBuilder(Float32Array),uv=new BufferBuilder(Float32Array),ix=new BufferBuilder(Uint32Array);
+ let name=null,material=null,vo=0,io=0,uvOffset=0,normalOffset=0;
+ function flush(){
+  const count=v.length/3;if(!name||!count)return;
+  if(n.length!==v.length||(uv.length!==0&&uv.length/2!==count))throw Error('Unsupported split OBJ attributes: '+name);
+  const g=new Float32Array(count*8),min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
+  for(let i=0;i<count;i++){
+   for(let k=0;k<3;k++){const p=v.array[i*3+k];g[i*8+k]=p;g[i*8+3+k]=n.array[i*3+k];min[k]=Math.min(min[k],p);max[k]=Math.max(max[k],p);}
+   if(uv.length){g[i*8+6]=uv.array[i*2];g[i*8+7]=uv.array[i*2+1];}
+  }
+  geometry.push(g);indexChunks.push(ix.finish());
+  objects.push({name,material,vo,vc:count,io,ic:ix.length,bounds:[min,max],sourceHasUV:!!uv.length,...classify(name,material,semantics)});
+  vo+=count;io+=ix.length;uvOffset+=uv.length/2;normalOffset+=n.length/3;
+  v=new BufferBuilder(Float32Array);n=new BufferBuilder(Float32Array);uv=new BufferBuilder(Float32Array);ix=new BufferBuilder(Uint32Array);
+ }
+ lines(text,l=>{
+  if(l.startsWith('o ')){flush();name=l.slice(2).trim();material=null;}
+  else if(l.startsWith('v ')){const p=l.split(/\s+/);v.push(Number(p[1]),Number(p[2]),Number(p[3]));}
+  else if(l.startsWith('vn ')){const p=l.split(/\s+/);n.push(Number(p[1]),Number(p[2]),Number(p[3]));}
+  else if(l.startsWith('vt ')){const p=l.split(/\s+/);uv.push(Number(p[1]),Number(p[2]));}
+  else if(l.startsWith('usemtl '))material=l.slice(7).trim();
+  else if(l.startsWith('f ')){
+   const face=l.slice(2).trim().split(/\s+/).map(t=>{
+    const [vi,ui,ni]=t.split('/'),local=Number(vi)-1-vo;
+    if(!Number.isSafeInteger(Number(vi))||!Number.isSafeInteger(Number(ni))||(ui&&!Number.isSafeInteger(Number(ui)))||Number(ni)-1-normalOffset!==local||(ui&&Number(ui)-1-uvOffset!==local)||local<0||local>=v.length/3)throw Error('Unsupported separate OBJ indices: '+name);
+    return local;
+   });
+   if(face.length<3)throw Error('Incomplete OBJ face: '+name);
+   for(let j=1;j<face.length-1;j++)ix.push(face[0],face[j],face[j+1]);
+  }
+ });flush();
+ const vertices=new Float32Array(vo*8),indices=new Uint32Array(io);let a=0,b=0;
+ for(const chunk of geometry){vertices.set(chunk,a);a+=chunk.length;}for(const chunk of indexChunks){indices.set(chunk,b);b+=chunk.length;}
+ if(!objects.length||!vertices.every(Number.isFinite))throw Error('Invalid source OBJ');
+ return {vertices,indices,objects};
+}

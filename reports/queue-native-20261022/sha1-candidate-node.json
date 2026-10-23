@@ -1,0 +1,131 @@
+{
+  "node": "v24.19.0",
+  "package": "@noble/hashes@1.8.0",
+  "integrity": "sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==",
+  "vectors": 20,
+  "gitLengthVectors": 260,
+  "auditScope": "Upstream independent audit excludes SHA1",
+  "rows": [
+    {
+      "mode": "native",
+      "size": 1048576,
+      "elapsed": 2.3517170000000007,
+      "before": {
+        "rss": 41078784,
+        "heapTotal": 12316672,
+        "heapUsed": 8448080,
+        "external": 5007481,
+        "arrayBuffers": 1195687
+      },
+      "after": {
+        "rss": 43307008,
+        "heapTotal": 12316672,
+        "heapUsed": 8562952,
+        "external": 6077137,
+        "arrayBuffers": 2244276
+      },
+      "peakRss": 43307008
+    },
+    {
+      "mode": "stream",
+      "size": 1048576,
+      "elapsed": 8.048125999999996,
+      "before": {
+        "rss": 40935424,
+        "heapTotal": 12316672,
+        "heapUsed": 8449664,
+        "external": 5007481,
+        "arrayBuffers": 1195687
+      },
+      "after": {
+        "rss": 46178304,
+        "heapTotal": 12316672,
+        "heapUsed": 8897696,
+        "external": 5007585,
+        "arrayBuffers": 1195751
+      },
+      "peakRss": 46178304
+    },
+    {
+      "mode": "native",
+      "size": 16777216,
+      "elapsed": 25.900162,
+      "before": {
+        "rss": 56672256,
+        "heapTotal": 12840960,
+        "heapUsed": 8446120,
+        "external": 20736121,
+        "arrayBuffers": 16924327
+      },
+      "after": {
+        "rss": 90488832,
+        "heapTotal": 12840960,
+        "heapUsed": 8560992,
+        "external": 37534418,
+        "arrayBuffers": 33701557
+      },
+      "peakRss": 90488832
+    },
+    {
+      "mode": "stream",
+      "size": 16777216,
+      "elapsed": 62.975117,
+      "before": {
+        "rss": 56467456,
+        "heapTotal": 12316672,
+        "heapUsed": 8419424,
+        "external": 20736121,
+        "arrayBuffers": 16924327
+      },
+      "after": {
+        "rss": 60829696,
+        "heapTotal": 12316672,
+        "heapUsed": 8787528,
+        "external": 20736225,
+        "arrayBuffers": 16924391
+      },
+      "peakRss": 61317120
+    },
+    {
+      "mode": "native",
+      "size": 67108864,
+      "elapsed": 106.82708399999999,
+      "before": {
+        "rss": 108019712,
+        "heapTotal": 12316672,
+        "heapUsed": 8448904,
+        "external": 71067769,
+        "arrayBuffers": 67255743
+      },
+      "after": {
+        "rss": 242368512,
+        "heapTotal": 12316672,
+        "heapUsed": 7360032,
+        "external": 138197482,
+        "arrayBuffers": 134364621
+      },
+      "peakRss": 242368512
+    },
+    {
+      "mode": "stream",
+      "size": 67108864,
+      "elapsed": 245.54666600000002,
+      "before": {
+        "rss": 107814912,
+        "heapTotal": 12316672,
+        "heapUsed": 8463608,
+        "external": 71067769,
+        "arrayBuffers": 67255743
+      },
+      "after": {
+        "rss": 112242688,
+        "heapTotal": 12578816,
+        "heapUsed": 7998168,
+        "external": 71067641,
+        "arrayBuffers": 67255807
+      },
+      "peakRss": 112402432
+    }
+  ],
+  "decision": "Rejected as default runtime: extra synchronous CPU / main-thread work; keep WebCrypto. No physical device benefit claimed."
+}

@@ -32,6 +32,7 @@ import { withSpecialPresentation } from './special-presentation-owner.mjs';
 import { bigBubblerDomes, bigBubblerRemoteDomes, damageBigBubblerFromInkVac } from './kit-big-bubbler.mjs';
 import {splashPaintFootprint} from './blaster-flight-paint.mjs';
 import {startSpecialGauge,endSpecialGauge} from './tacticooler-gauge.mjs';
+import { registerReplicaRetirement } from './replica-retirement.mjs';
 
 let api = null;
 const INSTALL = Symbol.for('inkwave.s3.kit-ink-vac.install.v1');
@@ -139,6 +140,9 @@ const clamp01 = v => Math.max(0, Math.min(1, v));
 const states = new WeakMap();
 const liveStates = new Set();
 const vacLife=a=>Math.max(Number.isSafeInteger(a?.netLife)?a.netLife:0,Number.isSafeInteger(a?.net?.lastLife)?a.net.lastLife:0);
+const currentVacOwner=state=>state.actor.alive!==false&&!!state.actor.remote===state.remote
+  &&state.actor.owner===state.authorityOwner&&vacLife(state.actor)===state.authorityLife
+  &&state.game.match===state.match;
 const ownsVacGauge=state=>!state.remote&&!state.actor.remote&&state.actor.owner===state.authorityOwner
   &&vacLife(state.actor)===state.authorityLife&&state.game.match===state.match;
 function syncInkVacGauge(state){
@@ -280,7 +284,7 @@ function originOf(a, out) { return out.set(a.pos.x, a.pos.y + INK_VAC_CALIBRATIO
 // The allowed t interval comes from the truncation, then the first F(t) <= 0 inside
 // it is found from the quadratic roots. No sampling, no per-projectile allocation.
 function firstEntry(state, start, end) {
-  if(state.sucking===false)return Infinity;
+  if(state.sucking===false||!currentVacOwner(state))return Infinity;
   const { _org: o, _fwd: f, _m: m, _e: e } = state;
   originOf(state.actor, o); forwardOf(state.actor, f);
   m.copy(start).sub(o);
@@ -335,7 +339,7 @@ function firstEntry(state, start, end) {
 // Independent source muzzle sphere, centred one source metre along the aim.
 // Reuse the state's scratch vectors; return the same distance contract as wind.
 function muzzleEntry(state, start, end) {
-  if (state.sucking === false || !(state.length > 0)) return Infinity;
+  if (state.sucking === false || !currentVacOwner(state) || !(state.length > 0)) return Infinity;
   const { _org: o, _fwd: f, _m: m, _e: e } = state;
   originOf(state.actor, o).addScaledVector(forwardOf(state.actor, f), MUZZLE_OFFSET);
   m.copy(start).sub(o); e.copy(end).sub(start);
@@ -463,7 +467,7 @@ function proposeAbsorption(state, projectile, damage) {
 // onHit closure must be a no-op.
 function absorb(state, projectile) {
   if (!projectile) return false;
-  if (states.get(state.actor) !== state || state.phase !== 'inhale') return false;  // stale / disposed
+  if (states.get(state.actor) !== state || state.phase !== 'inhale' || !currentVacOwner(state)) return false;  // stale / disposed
   const nativeBomb = projectile.s3InkVacBomb;
   if (projectile.s3InkVacAbsorbed || nativeBomb?.s3InkVacAbsorbed) return false;
   projectile.s3InkVacAbsorbed = true;
@@ -597,6 +601,7 @@ export function inkVacActorContact(owner, victim) {
   return Number.isFinite(firstEntry(state, point, point)) && !!api.G.physics?.los?.(state._org, point);
 }
 function actorInVortex(victim) {
+  if(liveStates.size===0)return false;
   return !victim.remote && victim.alive && (api.G.actors || []).some(owner => inkVacActorContact(owner, victim));
 }
 // #1149: the Dualies dodge-roll cost (rollInk) is multiplied by the sourced
@@ -699,7 +704,7 @@ function inkVacUpdate(a, dt) {
   if (state.sucking)state.inhaleAge+=eligible;else state.inhaleAge=0;
   if (!a.remote && !state.remote && state.sucking) {
     paintInhaleFeet(state,eligible);
-    const seen = new Set(); let count = 0;
+    const seen = state._inhaleActorSeen ||= new Set();seen.clear(); let count = 0;
     for (const victim of api.G.actors || []) {
       const identity = victim.nid === undefined ? victim : `${victim.owner}:${victim.nid}`;
       if (seen.has(identity)) continue; seen.add(identity);
@@ -707,7 +712,8 @@ function inkVacUpdate(a, dt) {
     }
     const amount = count * eligible * INK_VAC_CALIBRATION.actorContactDamagePerSecond;
     if (amount > 0) creditCharge(state, amount, false);
-    damageInhaleObjects(state, eligible, new Set());
+    const objectSeen=state._inhaleObjectSeen ||= new Set();objectSeen.clear();
+    try{damageInhaleObjects(state, eligible, objectSeen);}finally{seen.clear();objectSeen.clear();}
   }else state.footPaintAccum=0;
   state.t += dt;
   updateVisual(state);
@@ -724,6 +730,7 @@ function inkVacUpdate(a, dt) {
 export function advanceInkVacReplica(actor, dt) {
   const state = states.get(actor);
   if (!state || !state.remote || !(dt > 0)) return false;
+  if(!currentVacOwner(state)){disposeInkVac(actor,{preserveGauge:true});return false;}
   state.t += dt;
   if (state.phase === 'inhale') {
     // Native samples carry the physical intake level in their existing firing
@@ -736,7 +743,9 @@ export function advanceInkVacReplica(actor, dt) {
         state.charge >= 1 && state.t + 1e-10 >= INK_VAC_CALIBRATION.minInhaleSeconds) beginExhale(state);
   } else if (state.phase === 'exhale' && state.t >= INK_VAC_CALIBRATION.inhaleToExhaleSeconds+INK_VAC_CALIBRATION.exhaleHoldSeconds + 5) {
     state.phase = 'done';
-    states.delete(actor);
+    // The bounded lost-packet fallback must use the same resource/liveStates
+    // retirement as an explicit release, including the native display token.
+    disposeInkVac(actor,{preserveGauge:true});
   }
   return true;
 }
@@ -900,6 +909,20 @@ export function installKitInkVac(context, _profile) {
     Object.defineProperty(proto, INSTALL, { value: true });
     const update = proto.update, startSpecial = proto._startSpecial;
     const splat = proto.splat, reset = proto.reset;
+    // Platform/menu cancellation ends a physical hold without requesting the
+    // return shot. Preserve a previously accepted request and the 20F/150F
+    // clocks; clearing the held level must not masquerade as a ZR release.
+    const cancelInput = actor => {
+      const state = states.get(actor);
+      if (!state || state.remote || actor.remote || actor.specialActive?.id !== VAC_ID) return;
+      state.fireHeld = state.exhaleArmed = false;
+    };
+    const cancelRunner = api.WeaponRunner?.prototype;
+    if (cancelRunner) {
+      const pending = cancelRunner.cancelPendingInput, hold = cancelRunner.cancelHold;
+      cancelRunner.cancelPendingInput = function (...args) { cancelInput(this.a); return pending?.apply(this, args); };
+      cancelRunner.cancelHold = function (fire, sub) { if (fire) cancelInput(this.a); return hold?.call(this, fire, sub); };
+    }
 
     proto.update = function (dt) {
       const s = this.specialActive;
@@ -1094,6 +1117,20 @@ export function installKitInkVac(context, _profile) {
   const NM = api.NetMatch;
   if (NM?.prototype?.applyRemote && !NM.prototype[INSTALL]) {
     Object.defineProperty(NM.prototype, INSTALL, { value: true });
+    const retirePeerState=actor=>{
+      disposeInkVac(actor,{preserveGauge:true});
+      remoteSerials.delete(actor);tombstones.delete(actor);seenProposals.delete(actor);
+    };
+    registerReplicaRetirement(api.G,retirePeerState);
+    const leave=NM.prototype.onLeave;
+    NM.prototype.onLeave=function(id,...args){
+      for(const actor of this.byNid?.values?.()||[])if(actor.owner===id)retirePeerState(actor);
+      return leave?.call(this,id,...args);
+    };
+    for(const name of ['_adopt','_remove']){
+      const original=NM.prototype[name];if(typeof original!=='function')continue;
+      NM.prototype[name]=function(actor,...args){retirePeerState(actor);return original.call(this,actor,...args);};
+    }
     const applyRemote = NM.prototype.applyRemote;
     NM.prototype.applyRemote = function (a, dt) {
       const r = applyRemote.call(this, a, dt);

@@ -1,3 +1,8 @@
+import { adaptAddedUiMotion } from '../patches/local-quality/added-ui-motion-adapter.mjs';
+import { adaptCharacterShadowBatch } from '../patches/local-quality/character-shadow-batch-adapter.mjs';
+import { adaptQueueNetworkUi } from '../patches/reliability/queue-network-ui-adapter.mjs';
+import { adaptInkRipplePresentation } from '../patches/local-quality/ink-ripple-presentation-adapter.mjs';
+import { adaptShowcaseIdlePools } from '../patches/local-quality/showcase-idle-pools-adapter.mjs';
 import { adaptQueueNine } from '../patches/reliability/queue-nine-final-adapter.mjs';
 import { adaptCombatProvenance } from '../patches/network-replication/combat-provenance-adapter.mjs';
 import { adaptWeaponOpponentPreview } from '../patches/splatoon3/weapon-opponent-preview-adapter.mjs';
@@ -38,6 +43,10 @@ export function adaptBuildSource(rel, code) {
   // Source lives under inkwave-public/, whereas compiled modules share the
   // versioned site's root with patches/. Keep direct Node imports working and
   // remap exactly this import in published output.
+  if (rel === 'src/world/prop-packs.js') code = replaceOnce(code,
+    "from '../../../patches/practice-range/stage/props.mjs'",
+    "from '../../patches/practice-range/stage/props.mjs'",
+    'selected prop packs source/site relocation');
   if (rel === 'src/game/inkCollision.js') code = replaceOnce(code,
     "from '../../../patches/native-stages/runtime/native-projectile-sweep.mjs'",
     "from '../../patches/native-stages/runtime/native-projectile-sweep.mjs'",
@@ -50,6 +59,8 @@ export function adaptBuildSource(rel, code) {
   code = adaptRange(rel, code);
   code = adaptRanked(rel, code);
   code = adaptNativeStages(rel, code);
+  code = adaptShowcaseIdlePools(rel, code, replaceOnce);
+  code = adaptInkRipplePresentation(rel, code, replaceOnce);
   // Audio patches are applied before the verified final camera pass.
   // The camera adapter must retain the terminal fail-closed position.
   code = adaptWeaponAudio(rel, code);
@@ -59,7 +70,7 @@ export function adaptBuildSource(rel, code) {
   code = adaptRollerBandParity(rel, code);
   code = adaptWeaponOpponentPalette(rel, code);
   code = adaptWeaponOpponentPreview(rel, code);
-  return adaptCombatProvenance(rel, applyZevantDisplayName(rel, adaptLoadingScreen(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce)))));
+  return adaptAddedUiMotion(rel, adaptCharacterShadowBatch(rel, adaptQueueNetworkUi(rel, adaptCombatProvenance(rel, applyZevantDisplayName(rel, adaptLoadingScreen(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce)))))), replaceOnce));
 }
 
 // Display-only rename applied after all gameplay/UI adapters. Keep the upstream

@@ -43,17 +43,43 @@ export function adaptTexlibSource(rel, code) {
       '    names: activeMaterials.map((m) => m.name),\n    size,\n    stage: stagePack,\n    stats: { ms: +(t1 - t0).toFixed(1), compileMs: +(tCompiled - t0).toFixed(1), size },\n    dispose() { this.disposed = true; out.dispose(); },',
       'createTextureLibrary return object');
     code = replaceOnceTexlib(code,
-      '  await renderer.compileAsync(scene, cam);',
-      '  try { await renderer.compileAsync(scene, cam); } catch (error) { progs.forEach((p) => p.dispose()); geo.dispose(); out.dispose(); throw error; }',
-      'texlib compile failure cleanup');
+      '  // one array target with three colour attachments (albedo sRGB, normal + orm linear), written in one MRT pass',
+      `  const prevRT = renderer.getRenderTarget(), prevAutoClear = renderer.autoClear, prevXR = renderer.xr.enabled;
+  let out = null, geo = null, complete = false;
+  const progs = [];
+  try {
+  // one array target with three colour attachments (albedo sRGB, normal + orm linear), written in one MRT pass`,
+      'texlib complete acquisition guard');
+    code = replaceOnceTexlib(code, '  const out = new THREE.WebGLArrayRenderTarget', '  out = new THREE.WebGLArrayRenderTarget', 'texlib tracked target');
+    code = replaceOnceTexlib(code, '  const geo = new THREE.BufferGeometry();', '  geo = new THREE.BufferGeometry();', 'texlib tracked geometry');
+    code = replaceOnceTexlib(code, '  const progs = groups.map((list) => {', '  for (const list of groups) {', 'texlib incremental program ownership');
     code = replaceOnceTexlib(code,
-      '  renderer.autoClear = false;\n  renderer.xr.enabled = false;',
-      '  let generated = false;\n  try {\n  renderer.autoClear = false;\n  renderer.xr.enabled = false;',
-      'texlib generation guard');
+      "    return raw(GEN_COMMON + fns + GEN_MAIN.replace('PREP_SWITCH', sw('prep', 'uv, P, f, w')).replace('SURF_SWITCH', sw('surf', 'uv, P, n, c, s')), uniforms);\n  });",
+      "    progs.push(raw(GEN_COMMON + fns + GEN_MAIN.replace('PREP_SWITCH', sw('prep', 'uv, P, f, w')).replace('SURF_SWITCH', sw('surf', 'uv, P, n, c, s')), uniforms));\n  }", 'texlib retain each acquired shader');
+    code = replaceOnceTexlib(code,
+      '  const prevRT = renderer.getRenderTarget();\n  const prevAutoClear = renderer.autoClear;\n  const prevXR = renderer.xr.enabled;\n',
+      '', 'texlib renderer snapshot precedes acquisition');
     code = replaceOnceTexlib(code,
       '  renderer.setRenderTarget(prevRT);\n  renderer.autoClear = prevAutoClear;\n  renderer.xr.enabled = prevXR;\n  progs.forEach((p) => p.dispose());\n  geo.dispose();',
-      '  generated = true;\n  } finally {\n    try { renderer.setRenderTarget(prevRT); } finally {\n      renderer.autoClear = prevAutoClear;\n      renderer.xr.enabled = prevXR;\n      progs.forEach((p) => p.dispose());\n      geo.dispose();\n      if (!generated) out.dispose();\n    }\n  }',
-      'texlib render failure cleanup');
+      '', 'texlib one cleanup owner');
+    code = replaceOnceTexlib(code, '  const t1 = performance.now();\n  return {',
+      '  const t1 = performance.now();\n  const library = {', 'texlib successful target handoff');
+    code = replaceOnceTexlib(code,
+      '    dispose() { this.disposed = true; out.dispose(); },\n  };\n}',
+      `    dispose() { this.disposed = true; out.dispose(); },
+  };
+  complete = true;
+  return library;
+  } finally {
+    try { renderer.setRenderTarget(prevRT); } finally {
+      renderer.autoClear = prevAutoClear;
+      renderer.xr.enabled = prevXR;
+      for (const p of progs) p.dispose();
+      geo?.dispose();
+      if (!complete) out?.dispose();
+    }
+  }
+}`, 'texlib all factory compile render and metadata failures retire resources');
     code += '\nif (typeof globalThis !== \'undefined\') { globalThis.__inkwave_stage_surfaces = STAGE_SURFACES; }\nexport { MATERIALS, STAGE_SURFACES };\n';
     return code;
   }

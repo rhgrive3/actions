@@ -10,7 +10,7 @@ import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mj
 const site=process.env.INKWAVE_CONTROLS_SITE;
 const raw=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
 const code=site?fs.readFileSync(path.join(site,'src/main.js'),'utf8'):adaptBuildSource('src/main.js',raw);
-const start=code.search(/\b_padMenus\(\)\s*\{/),end=code.indexOf('_updateHud(',start);
+const start=code.search(/\b_padMenus\([^)]*\)\s*\{/),end=code.indexOf('_updateHud(',start);
 assert.ok(start>=0&&end>start,'actual Game pad router boundaries');
 const method=code.slice(start,end).trim();
 const contextImport=code.match(/import\s*\{([^}]+)\}\s*from\s*['"]\.\/core\/ctx\.js['"]/);

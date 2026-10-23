@@ -2,10 +2,10 @@ import {PLAYER} from '../../../src/config.js';
 import {nativeDropClearance} from './native-drop.mjs';
 import {nativeSourceFootSupported} from './native-bot-support.mjs';
 
-function liveSourceFloor(L,hit){
+function liveSourceFloor(L,hit,localScratch){
  if(!hit||!(hit.flags&2))return false;
  const face=L.faces[L.data.triangleFace[hit.triangle]];if(!face?.turf||!L.containsOnFace(face,hit.point))return false;
- const local=hit.point.clone().sub(face.origin),u=local.dot(face.u),v=local.dot(face.v),i=Math.max(0,Math.min(face.nu-1,Math.floor(u/face.cu))),j=Math.max(0,Math.min(face.nv-1,Math.floor(v/face.cv)));
+ const local=localScratch.copy(hit.point).sub(face.origin),u=local.dot(face.u),v=local.dot(face.v),i=Math.max(0,Math.min(face.nu-1,Math.floor(u/face.cu))),j=Math.max(0,Math.min(face.nv-1,Math.floor(v/face.cv)));
  return !!L.mask[face.grid+j*face.nu+i];
 }
 
@@ -18,15 +18,16 @@ export function nativeRankedBotGoalReachable(G,row,target){
  const a=G.actors.find(a=>String(a.nid??`${a.team??0}:${a.slot??0}`)===String(row.id));
  if(!a?.alive||a.team!==row.team||!a.bot||a.weaponId!=='shooter'||a.specialActive||a.superJumpState||a.s3?.squidSpawn||Object.values(a.s3?.abilityPoints||{}).some(n=>n>0))return false;
  const start=N.nearest(a.pos,.6);if(start<0||!nativeSourceFootSupported(G,a,N.nodes[start])||Math.hypot(N.nodes[start].x-a.pos.x,N.nodes[start].z-a.pos.z)>.85)return false;
- const point=a.pos.clone().fromArray(target),goal=N.nearest(point,.6),n=N.nodes[goal];
+ const scratch=a.bot._nativeRankedGoalQuery||(a.bot._nativeRankedGoalQuery={point:a.pos.clone(),down:a.pos.clone().set(0,-1,0),origin:a.pos.clone(),startFeet:a.pos.clone(),goalFeet:a.pos.clone(),sample:a.pos.clone(),local:a.pos.clone(),hit:{point:a.pos.clone(),normal:a.pos.clone()},options:{minNormalY:.68}});
+ const point=scratch.point.fromArray(target),goal=N.nearest(point,.6),n=N.nodes[goal];
  if(!n?.nativePaintable||!N.valid[goal]||n.zone===1-a.team||Math.hypot(n.x-point.x,n.z-point.z)>.85)return false;
- const down=point.clone().set(0,-1,0),support=L.triangleWorld.ray(point.clone().setY(point.y+.25),down,2,{minNormalY:.68});
- if(!liveSourceFloor(L,support)||Math.abs(support.point.y-n.y)>PLAYER.stepUp||point.y-support.point.y>1.75)return false;
- const goalFeet=support.point,startFeet=point.clone().set(n.x,n.y,n.z),sweep=G.physics._nativeGoalClearance||(G.physics._nativeGoalClearance=nativeDropClearance(L));
+ const down=scratch.down,support=L.triangleWorld.ray(scratch.origin.copy(point).setY(point.y+.25),down,2,scratch.options,scratch.hit);
+ if(!liveSourceFloor(L,support,scratch.local)||Math.abs(support.point.y-n.y)>PLAYER.stepUp||point.y-support.point.y>1.75)return false;
+ const goalFeet=scratch.goalFeet.copy(support.point),startFeet=scratch.startFeet.set(n.x,n.y,n.z),sweep=G.physics._nativeGoalClearance||(G.physics._nativeGoalClearance=nativeDropClearance(L));
  if(!sweep.clear(startFeet,goalFeet,PLAYER.s3HumanoidTerrainRadiusRaw*PLAYER.s3TerrainDistanceScale,PLAYER.stepUp,PLAYER.height))return false;
  for(let i=0,count=Math.max(1,Math.ceil(startFeet.distanceTo(goalFeet)/.1));i<=count;i++){
-  const p=startFeet.clone().lerp(goalFeet,i/count),h=L.triangleWorld.ray(p.clone().setY(p.y+.25),down,.5,{minNormalY:.68});
-  if(!liveSourceFloor(L,h)||Math.abs(h.point.y-p.y)>.16)return false;
+  const p=scratch.sample.copy(startFeet).lerp(goalFeet,i/count),h=L.triangleWorld.ray(scratch.origin.copy(p).setY(p.y+.25),down,.5,scratch.options,scratch.hit);
+  if(!liveSourceFloor(L,h,scratch.local)||Math.abs(h.point.y-p.y)>.16)return false;
  }
  const cached=a.bot._nativeRankedGoalRoutes;
  const cache=cached?.nav===N&&cached.start===start&&cached.team===a.team?cached:{nav:N,start,team:a.team,results:new Map()};a.bot._nativeRankedGoalRoutes=cache;

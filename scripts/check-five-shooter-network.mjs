@@ -45,7 +45,7 @@ const relay=new WebSocketServer({host:'127.0.0.1',port:0});await new Promise(r=>
 const rooms=new Map(),wire=[],pending=[];let wireFrame=0;
 const flushWire=()=>{wireFrame++;while(pending.length&&pending[0].due<=wireFrame){const p=pending.shift();if(p.ws.readyState===1)p.ws.send(p.text);}};
 const connectRelay=createLocalRelay({rooms});
-relay.on('connection',(ws,req)=>connectRelay(ws,req,{send:(s,deliver)=>{if(delayFrames&&s.startsWith('m|')&&JSON.parse(s.slice(s.indexOf('|',2)+1)).k==='t')pending.push({ws,text:s,due:wireFrame+delayFrames});else deliver(s);},receive:s=>wire.push({at:Date.now(),bytes:Buffer.byteLength(s),text:s})}));
+relay.on('connection',(ws,req)=>connectRelay(ws,req,{send:(s,deliver)=>{if(delayFrames&&s.startsWith('m|')&&JSON.parse((m=>m[0]==='@'?m.slice(m.indexOf('|')+1):m)(s.slice(s.indexOf('|',2)+1))).k==='t')pending.push({ws,text:s,due:wireFrame+delayFrames});else deliver(s);},receive:s=>wire.push({at:Date.now(),bytes:Buffer.byteLength(s),text:s})}));
 const address='http://127.0.0.1:'+server.address().port+'/network-fixture.html?relay='+encodeURIComponent('ws://127.0.0.1:'+relay.address().port)+(novaMouth?'&novaMouth=1':'');
 const contexts=[],pages=[],errors=[],receipts=new Set();let result;
 // This arena contains only the native WebGL canvas. Read its rendered pixels

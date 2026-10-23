@@ -57,6 +57,15 @@ export function installMinimapDirty(context) {
     };
   }
 
+  // For a fixed row the world transform is affine in i; accepted extrema
+  // therefore enclose exactly the same XZ bounds, even on rotated faces.
+  PaintSystem.prototype._inkMarkRow = function (f, first, last, j, count) {
+    if (!count) return;
+    this._inkMark(f, first, j);
+    if (last !== first) this._inkMark(f, last, j);
+    this.inkDirty.gen += count - (last === first ? 1 : 2);
+  };
+
   // ---- minimap side: bounded partial redraw
   proto._drawDirtyInk = function (rec) {
     const W = this.w, H = this.h, gen = rec.gen;

@@ -61,11 +61,13 @@ export class StreamedTrack {
     this._pausedAfterFade = false;
     clearTimeout(this._pauseTimer);
     this._pauseTimer = setTimeout(() => {
+      this._pauseTimer = null;
       if (!this.disposed) {
         this.element.pause();
         this._pausedAfterFade = true;
         // Stream-only playback has no 25 ms procedural scheduler to clean up.
-        this.engine._tick();
+        if (this.engine.retireStream) this.engine.retireStream(this);
+        else this.engine._tick();
       }
     }, Math.max(0, (end - now) * 1000) + 30);
   }

@@ -12,30 +12,17 @@ test('workflow encodes bounded trigger and cannot launch later ladder stages',()
  assert.match(y,/contents: read/);assert.match(y,/EXPLOSHER_PREFLIGHT: '1'/);assert.match(y,/ADMISSION_RELEASE_ENABLED/);assert.doesNotMatch(y,/pull_request_target:|workflow_dispatch:|EXPLOSHER_VIDEO:|encode-inkwave-explosher-comparison/);
  const guard=y.indexOf('Verify exact owned PR event'),release=y.indexOf('Refuse native work'),build=y.indexOf('Verify immutable common checkout'),capture=y.indexOf('Capture only initial short pair');assert(guard<release&&release<build&&build<capture);
 });
-
-function requireGlitterRoutes(y){
- const head=y.slice(y.indexOf('  native-pair:'),y.indexOf('  reviewed-common-build-diagnostic:'));
- const common=y.slice(y.indexOf('  reviewed-common-build-diagnostic:'));
- assert(head.includes('ref: ${{ github.event.pull_request.head.sha }}'));
- assert(head.includes('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"'));
- assert(head.includes('INKWAVE_BUILT_SITE=.built-site/explosher-current node --experimental-vm-modules --test patches/splatoon3/tests/issue-1431-explosher-authored-muzzle.test.mjs'));
- assert.doesNotMatch(head,/continue-on-error:|if: false/);
- const reviewed=JSON.parse(fs.readFileSync(new URL('../fixtures/explosher-common-build-364dd0.json',import.meta.url))).head;
- assert(common.includes('ref: '+reviewed));
- assert(common.includes('test "$(git -C .ci-explosher-common rev-parse HEAD)" = "'+reviewed+'"'));
- assert.equal((common.match(/EXPLOSHER_PREFLIGHT=1 node /g)||[]).length,2);
- for(const side of ['before','after'])assert(common.includes('.built-site/explosher-common .ci-scratch/explosher/preflight-'+side+' "'+reviewed+'" .ci-explosher-common'));
- assert.doesNotMatch(common,/pull_request\.base\.sha|continue-on-error:|if: false/);
- assert(common.includes("assert.equal(mismatches.length,0,'Every preflight state must agree')"));
-}
-test('glitter current-head regressions and reviewed historical A/A cannot exchange subjects or suppress gates',()=>{
+test('general PR regressions retain latest build while specialized native QA uses the admitted immutable source',()=>{
  const y=fs.readFileSync(new URL('../../.github/workflows/inkwave-explosher-flight-glitter.yml',import.meta.url),'utf8');
- requireGlitterRoutes(y);
- const reviewed=JSON.parse(fs.readFileSync(new URL('../fixtures/explosher-common-build-364dd0.json',import.meta.url))).head;
- for(const [before,after] of [
-  ['ref: '+reviewed,'ref: ${{ github.event.pull_request.base.sha }}'],
-  ['preflight-after "'+reviewed+'" .ci-explosher-common','preflight-after "'+reviewed+'" .'],
-  ['INKWAVE_BUILT_SITE=.built-site/explosher-current node','INKWAVE_BUILT_SITE=.built-site/explosher-common node'],
-  ["assert.equal(mismatches.length,0,'Every preflight state must agree')",'void mismatches'],
- ]){assert(y.includes(before));assert.throws(()=>requireGlitterRoutes(y.replace(before,after)));}
+ assert.match(y,/ref: \$\{\{ github\.event\.pull_request\.head\.sha \}\}/);
+ assert.match(y,/ref: 364dd0a7fad9508652b4b4c6ec3d82eb124e9c5c/);
+ assert.match(y,/node scripts\/build-inkwave\.mjs inkwave-public \.built-site\/explosher-current/);
+ for(const gate of ['requireApprovedCommonBuild','compile-inkwave-explosher-inverse-pair.mjs','compile-inkwave-explosher-controlled-main.mjs','readExplosherStagePair'])assert(y.includes(gate));
+ assert(y.indexOf('requireApprovedCommonBuild')<y.indexOf('- name: Short admitted same-build native preflight'));
+ assert.match(y,/check-inkwave-current-explosher-native\.mjs \.built-site\/explosher-current/);
+ assert.match(y,/EXPECTED_HEAD: \$\{\{ github\.event\.pull_request\.head\.sha \}\}/);
+ assert.match(y,/sudo apt-get install --no-install-recommends -y ffmpeg/);
+ assert(y.indexOf('Install required PNG decoder')<y.indexOf('Native production-composition regressions'));
+ assert.match(y,/same-build native preflight/);assert.match(y,/Historical common-build QA; no latest-gameplay parity claim/);
+ assert.doesNotMatch(y,/check-inkwave-explosher-flight-glitter\.mjs \.built-site\/explosher-current/);
 });

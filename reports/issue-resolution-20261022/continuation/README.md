@@ -9,7 +9,9 @@
 
 [Raw receipt archive](completed-browser-raw.tar.gz) contains exactly 12 JSON/log files at their original repository-relative paths: both rematch engines' three raw files, #1165 final normal/independent normal/two declared counterfactual failures, and both composer/context JSON receipts. [Hash map and attempt distinctions](completed-browser-raw-hashes.json) lists every member's SHA256, archive hash and superseded attempts. Extract from a clean directory or repository root with `tar -xzf <archive-path>` to restore `.browser-evidence/…` paths.
 
-The archive excludes images, private audio, credentials and public boot traces (the completed dedicated-suite receipts are stored separately). All accepted browser receipts describe build content hash `46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4`; they do not attest the concurrently edited whole working tree, CI, deployment, Nintendo parity or physical hardware.
+The archive excludes images, private audio, credentials and public boot traces (the completed dedicated-suite receipts are stored separately). The #1165/#1432/#642 receipts describe build content hash `46e01879c9e4facd3ef99bdeb095b5962098036021ff6dd1a4685f44b8a0a3c4`; #1608 and #1711 explicitly identify their own historical source/build; they do not attest the concurrently edited whole working tree, CI, deployment, Nintendo parity or physical hardware.
+
+Historical parent-base publication updates (separate source/build scopes):
 
 **Current issue state: six closed, 29 open.** #1812 closed after source aim-path and actual native rendering acceptance on the isolated weapon build. [Pinned acceptance](https://github.com/rhgrive3/actions/blob/fcbbbbe9f529afb4bef2ac565d6c49c8f75a308e/reports/issue-resolution-20261022/continuation/issue-1812-acceptance.md) preserves the scope: 780 source-flight cases and 114 unique native diagnostics, 396 sparse draws, without claiming every tick was rendered or Nintendo parity measured.
 
