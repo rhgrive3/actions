@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
-import {readSplatlingBackend,assertSplatlingBackend,createSplatlingInspector} from './lib/inkwave-splatling-render-evidence.mjs';
+import {readSplatlingBackend,assertSplatlingBackend,assertSplatlingPixels,createSplatlingInspector} from './lib/inkwave-splatling-render-evidence.mjs';
 import { chromium,webkit } from 'playwright';
 const [siteArg,sheetArg,rodArg,outArg]=process.argv.slice(2);
 if(!outArg)throw Error('Usage: node scripts/check-inkwave-projectile-volumes.mjs <site> <sheet-pack> <rod-pack> <evidence> [--webkit --quick]');
@@ -65,10 +65,17 @@ try {
    data.views=await page.evaluate(createSplatlingInspector);data.grazing=[];
    for(const [view,dir]of [['front',[0,.3,-1]],['side',[1,.2,0]],['oblique',[1,.7,-1]],['top',[0,1,.001]],['bottom',[0,-1,.001]]]){
     const check=await page.evaluate(dir=>renderSplatlingView(dir),dir);
-    assert(check.visiblePixels>0&&check.calls>0&&check.triangles>0,'production Splatling body renders pixels: '+view);
-    assert.equal(check.suppressedPixels,0,'hiding only the selected production body removes every pixel: '+view);
+    assertSplatlingPixels(check,view);
     assert.equal(check.instances,data.eligible,'every retained native Splatling body is rendered: '+view);
     await page.locator('#splatling-inspect').screenshot({path:path.join(out,label+'-'+view+'.png')});data.grazing.push({view,...check});
+   }
+   data.shader=await page.evaluate(()=>readSplatlingShaderEvidence());data.negativeControls=[];
+   for(const [fault,pattern]of [['half-alpha',/interior opacity/],['black-side',/black side/]]){
+    const check=await page.evaluate(fault=>renderSplatlingView([1,.2,0],fault),fault);
+    assert(check.visiblePixels>0&&check.calls>0&&check.triangles>0&&check.suppressedPixels===0&&check.instances===data.eligible,'old positive-pixel checks still pass the injected fault');
+    assert.throws(()=>assertSplatlingPixels(check,fault),pattern);
+    data.negativeControls.push({fault,...check,oldPixelGatePasses:true,newGuardRejects:true});
+    await page.locator('#splatling-inspect').screenshot({path:path.join(out,label+'-negative-'+fault+'.png')});
    }
    await page.evaluate(()=>disposeSplatlingInspector());
   }else{

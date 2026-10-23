@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assertSplatlingBackend} from '../../../scripts/lib/inkwave-splatling-render-evidence.mjs';
+import {assertSplatlingBackend,assertSplatlingPixels} from '../../../scripts/lib/inkwave-splatling-render-evidence.mjs';
 
 const evidence=()=>({eligible:2,splatling:{backend:'splatling-shared-blob',visible:true,count:2,capacity:700,
   volumeActive:0,historyOwned:0,tailLength:.72,heads:[0,1].map(index=>({owned:true,index,
@@ -27,4 +27,18 @@ test('wrong radius, non-finite transforms, Shooter rods, excessive tails and sta
     p=>p.shape[1]=NaN,p=>p.look[1]=-4,p=>p.look[3]=Infinity,p=>p.petals=[.2,.3],
   ];
   for(const mutate of mutations){const d=evidence();mutate(d.splatling.heads[0]);assert.throws(()=>assertSplatlingBackend(d));}
+});
+
+test('native opaque colored interiors require nonempty independent reference coverage',()=>{
+  const good={visiblePixels:100,suppressedPixels:0,calls:1,triangles:1360,interior:50,brightInterior:50,darkTransparent:0,blackPixels:0};
+  assert.doesNotThrow(()=>assertSplatlingPixels(good));
+  for(const key of ['interior','brightInterior'])assert.throws(()=>assertSplatlingPixels({...good,[key]:0}));
+});
+
+test('positive alpha and draw counts cannot conceal translucent interiors or black side output',()=>{
+  const good={visiblePixels:100,suppressedPixels:0,calls:1,triangles:1360,interior:50,brightInterior:50,darkTransparent:0,blackPixels:0};
+  for(const [key,pattern]of [['darkTransparent',/interior opacity/],['blackPixels',/black side/]]){
+    const bad={...good,[key]:1};assert(bad.visiblePixels>0&&bad.calls>0&&bad.triangles>0&&bad.suppressedPixels===0,'old pixel gate passes');
+    assert.throws(()=>assertSplatlingPixels(bad),pattern);
+  }
 });

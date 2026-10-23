@@ -43,6 +43,14 @@ export function assertSplatlingBackend(data) {
   }
 }
 
+export function assertSplatlingPixels(check,view='') {
+  assert(check.visiblePixels>0&&check.calls>0&&check.triangles>0,'production Splatling body renders pixels: '+view);
+  assert.equal(check.suppressedPixels,0,'selected production body owns every pixel: '+view);
+  assert(check.interior>0&&check.brightInterior>0,'nonempty opaque, colored reference interior: '+view);
+  assert.equal(check.darkTransparent,0,'Splatling interior opacity: '+view);
+  assert.equal(check.blackPixels,0,'Splatling black side: '+view);
+}
+
 // Inspector-only copies of the exact selected production matrices/attributes.
 // The original Game camera, native heads, material and buffers stay unchanged.
 export async function createSplatlingInspector() {
@@ -61,17 +69,54 @@ export async function createSplatlingInspector() {
   const light=new T.DirectionalLight(0xffffff,3);light.position.set(-4,9,-3);scene.add(light);
   const renderer=new T.WebGLRenderer({alpha:true,antialias:true,preserveDrawingBuffer:true});renderer.setSize(640,640);renderer.setClearColor(0,0);
   renderer.domElement.id='splatling-inspect';renderer.domElement.style.cssText='position:fixed;left:0;top:0;z-index:999999;background:#161c2a';document.body.append(renderer.domElement);
-  const target=new T.WebGLRenderTarget(256,256),pixels=new Uint8Array(256*256*4),box=new T.Box3();
+  const production=source.material,key=production.customProgramCacheKey();
+  const diagnosticMaterial=mode=>{
+    const material=production.clone();
+    material.customProgramCacheKey=()=>key+'-qa-'+mode;
+    material.onBeforeCompile=(shader,r)=>{
+      production.onBeforeCompile.call(material,shader,r);
+      if(mode==='reference'){
+        // Native blobs have no volume alpha texture. Preserve their exact
+        // vertex deformation and intentional near discard in an unlit mask.
+        const near=shader.fragmentShader.match(/\{\s*float iwNear\s*=[\s\S]*?if\s*\(iwIgn\s*>\s*iwNear\)\s*discard;\s*\}/g);
+        if(near?.length!==1)throw Error('one production near-discard block required');
+        shader.fragmentShader='#include <common>\n#include <color_pars_fragment>\nvarying vec3 vViewPosition;\nvoid main(){\n'+near[0]+'\ngl_FragColor=vec4(vColor.rgb,1.0);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}';
+      }else{
+        const anchor='#include <colorspace_fragment>';
+        if(shader.fragmentShader.split(anchor).length!==2)throw Error('one production output color stage required');
+        const fault=mode==='half-alpha'?'gl_FragColor.a=0.5;':'gl_FragColor.rgb=vec3(0.0);';
+        shader.fragmentShader=shader.fragmentShader.replace(anchor,anchor+'\n'+fault);
+      }
+    };
+    if(mode==='reference')Object.assign(material,{transparent:false,opacity:1,alphaTest:0,transmission:0,blending:T.NoBlending,map:null,alphaMap:null});
+    return material;
+  };
+  const reference=diagnosticMaterial('reference'),halfAlpha=diagnosticMaterial('half-alpha'),blackSide=diagnosticMaterial('black-side');
+  const target=new T.WebGLRenderTarget(256,256),pixels=new Uint8Array(256*256*4),mask=new Uint8Array(pixels.length),box=new T.Box3();
   for(const p of window.volumeHeads)box.expandByPoint(p.pos);
   const centre=box.getCenter(new T.Vector3()),span=Math.max(1,box.getSize(new T.Vector3()).length()*.6),camera=new T.PerspectiveCamera(45,1,.01,200);
   const count=()=>{renderer.readRenderTargetPixels(target,0,0,256,256,pixels);let n=0;for(let i=3;i<pixels.length;i+=4)if(pixels[i]>0)n++;return n;};
-  window.renderSplatlingView=xyz=>{
+  window.renderSplatlingView=(xyz,fault=null)=>{
     camera.position.copy(centre).add(new T.Vector3(...xyz).normalize().multiplyScalar(span*2.5));camera.lookAt(centre);camera.updateMatrixWorld();
-    renderer.setRenderTarget(target);mesh.visible=true;renderer.render(scene,camera);const visiblePixels=count();
+    const actual=fault==='half-alpha'?halfAlpha:fault==='black-side'?blackSide:production;
+    renderer.setRenderTarget(target);mesh.visible=true;mesh.material=reference;renderer.render(scene,camera);renderer.readRenderTargetPixels(target,0,0,256,256,mask);
+    mesh.material=actual;renderer.render(scene,camera);const visiblePixels=count();
+    let interior=0,brightInterior=0,darkTransparent=0,blackPixels=0;
+    for(let y=2;y<254;y++)for(let x=2;x<254;x++){
+      let inside=true;for(let dy=-2;dy<=2&&inside;dy++)for(let dx=-2;dx<=2;dx++)if(mask[((y+dy)*256+x+dx)*4+3]<254){inside=false;break;}
+      if(!inside)continue;interior++;const i=(y*256+x)*4;
+      if(pixels[i+3]<254)darkTransparent++;
+      if(Math.max(mask[i],mask[i+1],mask[i+2])>64){brightInterior++;if(Math.max(pixels[i],pixels[i+1],pixels[i+2])<8)blackPixels++;}
+    }
     mesh.visible=false;renderer.render(scene,camera);const suppressedPixels=count();mesh.visible=true;
     renderer.setRenderTarget(null);renderer.render(scene,camera);
-    return {visiblePixels,suppressedPixels,instances:mesh.count,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles};
+    return {visiblePixels,suppressedPixels,instances:mesh.count,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,interior,brightInterior,darkTransparent,blackPixels};
   };
-  window.disposeSplatlingInspector=()=>{geometry.dispose();mesh.dispose();target.dispose();renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove();delete window.renderSplatlingView;delete window.disposeSplatlingInspector;};
-  return {instances:mesh.count,productionMaterial:true,selectedProductionAttributes:true};
+  window.readSplatlingShaderEvidence=()=>{
+    const program=renderer.properties.get(production).currentProgram,gl=renderer.getContext();
+    if(!program?.vertexShader||!program.fragmentShader)throw Error('compiled production shader evidence required');
+    return {material:{type:production.type,transparent:production.transparent,opacity:production.opacity,alphaTest:production.alphaTest,transmission:production.transmission,map:!!production.map,alphaMap:!!production.alphaMap,cacheKey:key},vertex:gl.getShaderSource(program.vertexShader),fragment:gl.getShaderSource(program.fragmentShader)};
+  };
+  window.disposeSplatlingInspector=()=>{geometry.dispose();mesh.dispose();for(const m of [reference,halfAlpha,blackSide])m.dispose();target.dispose();renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove();delete window.renderSplatlingView;delete window.readSplatlingShaderEvidence;delete window.disposeSplatlingInspector;};
+  return {instances:mesh.count,productionMaterial:true,selectedProductionAttributes:true,scope:'isolated selected production instances; Game-camera visibility is not established'};
 }
