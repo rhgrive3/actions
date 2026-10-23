@@ -120,8 +120,13 @@ try {
   }
   G.scene.updateMatrixWorld(true);
  },{attacker,placement})));
+ // The fixed clock (clock.mjs) captures every actor's start-of-tick pose before any actor moves (#1040);
+ // projectile sweeps reject that record only when its tick is stale. Manual ticks must do the same, or a
+ // record taken before the owner relocation stays current and shifts every sweep by the relocation.
+ await Promise.all(pages.map(p=>p.evaluate(async()=>{window.__ceilingMotion=await import(new URL('patches/splatoon3/runtime/actor-motion.mjs',document.baseURI).href);})));
  const step=async()=>{await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement})=>{
   const G=__G,dt=1/60;G.time+=dt;G.net.update(dt);
+  __ceilingMotion.beginActorMotionTick(G.actors);
   for(const a of G.match.actors){
    if(a.remote)G.netm.applyRemote(a,dt);
    else {
