@@ -1182,6 +1182,9 @@ const DIRECTORS = {
     },
     phase(a, t, phase) {
       const c = t.color;
+      t.d.emitCarry = 0;
+      if (phase !== 'brake' && t.d.warn) t.d.warn.dead = true;
+      if (phase === 'recovery') for (const k of ['wakeL', 'wakeR', 'speed']) this.kit.ribbons.end(t.d[k]);
       if (phase === 'dash') {
         this.puff(PUFF.MIST, a.pos, 0, 1, 0, 0.6, 1, 2, this.hdr(c, 0.9), 0.5);
         t.d.wakeL = this.ribbon(false, { width: 0.7, widthTail: 1.6, color: c, alpha: 1, style: RIBBON.INK, life: 0.7, spacing: 0.3, flat: true });
@@ -1190,7 +1193,14 @@ const DIRECTORS = {
         t.d.speed = this.ribbon(false, { width: 0.3, widthTail: 0.05, color: [0.95, 0.97, 1.0], alpha: 0.35, style: RIBBON.SMOKE, life: 0.2, spacing: 0.2 });
       } else if (phase === 'brake') {
         t.d.warn = this.disc(true, 0, DISC.TARGET, a.pos, this.up, 1, 1, this.hdr(c, 1.6, 0.8), 0.9, { fade: false,
-          follow: (rec) => { const k = clamp01((this.time - t.phaseAt) / (38 / 60)); rec.v[0] = a.pos.x; rec.v[1] = a.pos.y + 0.06; rec.v[2] = a.pos.z; rec.v[3] = 1 + 8 * easeOut(k); rec.v[7] += 0.03 + 0.1 * k; } });
+          follow: (rec) => {
+            const duration = 38 / 60, age = Math.max(0, this.time - t.phaseAt), k = clamp01(age / duration);
+            rec.v[0] = a.pos.x; rec.v[1] = a.pos.y + 0.06; rec.v[2] = a.pos.z; rec.v[3] = 1 + 8 * easeOut(k);
+            // Integrate the former 60 Hz spin curve from phase time. Render
+            // cadence must not multiply the arming rotation or restart it at impact.
+            rec.v[7] = t.d.warnAngle + 60 * (0.03 * age + 0.05 * duration * k * k + 0.1 * Math.max(0, age - duration));
+          } });
+        t.d.warnAngle = t.d.warn.v[7];
         (t.d.recs ||= []).push(t.d.warn);
       }
     },
@@ -1198,6 +1208,11 @@ const DIRECTORS = {
       const st = a._s3AllSpecialState, c = t.color, phase = st?.phase ?? t.phase;
       const dir = st?.direction || this.forward(a, this.v[5]);
       const side = this.v[6].set(dir.z, 0, -dir.x);
+      // Keep the established 60 Hz startup/arming density at every render
+      // rate. This is a visual clock; no source simulation frame is changed.
+      t.d.emitCarry = (t.d.emitCarry || 0) + dt;
+      const ticks = Math.floor(t.d.emitCarry * 60 + 1e-8);
+      t.d.emitCarry = Math.max(0, t.d.emitCarry - ticks / 60);
       if (phase === 'dash' || phase === 'brake') {
         const g = groundBelow(this, a);
         for (const [rib, s] of [[t.d.wakeL, -1], [t.d.wakeR, 1]]) this.pushRibbon(rib, this.v[0].set(a.pos.x + side.x * s * 0.55, g + 0.05, a.pos.z + side.z * s * 0.55), false);
@@ -1215,10 +1230,12 @@ const DIRECTORS = {
         }
         if (phase === 'brake') { // arming: the shark glows harder and faster before it bursts
           const k = clamp01((this.time - t.phaseAt) / (38 / 60));
-          if (vfxRandom() < 0.3 + 0.6 * k) this.spark(SPARK.GLOW, this.v[2].set(a.pos.x, a.pos.y + 0.7, a.pos.z), 0, 0, 0, 0.12, 1.0 + k, 1.6 + 1.6 * k, this.hdr(c, 1.2, 1.0), 0.45);
-          if (vfxRandom() < 0.4 + 0.5 * k) this.drop(this.v[2].set(a.pos.x + rnd(0.6, -0.6), a.pos.y + rnd(0.9, 0.3), a.pos.z + rnd(0.6, -0.6)), rnd(2, -2), rnd(3, 1), rnd(2, -2), 0.4, 0.1, c);   // the shark sheds ink as it swells
+          for (let i = 0; i < ticks; i++) {
+            if (vfxRandom() < 0.3 + 0.6 * k) this.spark(SPARK.GLOW, this.v[2].set(a.pos.x, a.pos.y + 0.7, a.pos.z), 0, 0, 0, 0.12, 1.0 + k, 1.6 + 1.6 * k, this.hdr(c, 1.2, 1.0), 0.45);
+            if (vfxRandom() < 0.4 + 0.5 * k) this.drop(this.v[2].set(a.pos.x + rnd(0.6, -0.6), a.pos.y + rnd(0.9, 0.3), a.pos.z + rnd(0.6, -0.6)), rnd(2, -2), rnd(3, 1), rnd(2, -2), 0.4, 0.1, c);   // the shark sheds ink as it swells
+          }
         }
-      } else if (phase === 'startup' && vfxRandom() < 0.5) {
+      } else if (phase === 'startup') for (let i = 0; i < ticks; i++) if (vfxRandom() < 0.5) {
         const th = rnd(TAU); this.puff(PUFF.CHUNK, this.v[1].set(a.pos.x + Math.cos(th) * 0.9, a.pos.y + 0.2, a.pos.z + Math.sin(th) * 0.9), -Math.sin(th) * 3, rnd(4, 2), Math.cos(th) * 3, 0.5, 0.14, 0.04, c, 1, { grav: 14 });
       }
     },
