@@ -6147,3 +6147,7 @@ One opposing pad volume is tested per actor, using existing level radius and low
 07a979214の独立レビューが、通常box脇の自然落下・固定1/60更新で、補正が以前のX/Zと現在のYを混ぜて本番capsuleをsolid内へ置く問題を再現した。別candidateはPhysics.bodyFitsで完全な座標を確認し、不正な補正先だけ既存の垂直進行を8回の有界検査で戻す。通常の重力・launch・味方exit、半径設定、stage mesh、landing表示は変更しない。本番Actor._resolveの既存フォーム別terrain capsuleと旧PLAYER.radiusの診断を区別して記録する。元07a・PR1860は保持し、未確定の壁横断sweep問題やSplatoon 3 11.3.0実機一致を解消済みとはしない。[再現・失敗原本・候補検証・パラメータの区別](respawn-fallback-safe-20261023/README.md)。
 
 2026-10-23 respawn candidate contract reconciliation: collision exclusion moves opposing actor origins; it adds no damage immunity inside a pad. The old native-radius Slam <max assertion and 23-column packet assumption were pre-existing fixture/contract defects. Production-composed, native-Physics component checks retain legal near/falloff attacks, LOS/friendly filtering, allied entry, launch-owned armor and existing network sidecars. Retail pad collision/damage equivalence remains unverified; details: `reports/respawn-exclusion-final-candidate-20261023/README.md`.
+
+## 2026-10-23: 原典ステージの GPU 描画負荷上限
+
+原典ステージ表示中だけ GTAO を外し、MSAA・pixelRatio に上限をかけ、コンテキストロスト後は段階的に描画負荷を下げる（[記録](inkwave-native-gpu-budget-2026-10-23.md)）。描画表現のみの変更で、歩行・泳ぎ・射撃・塗り判定・インク回復・カメラ操作のロジックは変更していない。本家 Ver.11.3.0 との既存の差分・未確認項目はそのまま。計測は Chromium + SwiftShader の WebGL 確保量の集計で、実機の GPU 落ち解消は未確認。
