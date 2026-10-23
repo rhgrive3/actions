@@ -43,7 +43,7 @@ INKWAVE座標の測定。49tickの見た目は両側で同じ姿勢に到達し�
 - 旧版相当の正確な条件削除をfault注入すると、後半横移動の0.30 INKWAVE fixture限界を検出するテストが **旧fail / 候補pass**。この限界はretail測定ではない。actual emitted browserでも元50–56の既存最大移動0.717140を基準にすると、48–56は旧fail / 候補passだが、39–56 guardは候補fail。
 - 同検査の横振り/空中継続は全姿勢とdrumが旧版相当と一致。ZR解除/着地のnative clocks・弾の生成/位置/速度/ダメージ・ink・移動が一致。左右grip閾値は維持した。
 - Carbon / 通常 / Dynamo / Flingzaの30/60/120Hz、restart/reuseの全180 native tick行が一致。variantの時計はcatalog runnerとCharacterの既存表示状態から別々に記録し、3種以上の異なるwindupを確認した。新しい共通durationはない。
-- 既存focused **9/9**、support故障注入 **8/8**。support検査の入力SHAだけを今回sourceへ追随し、3つの故障anchor・historical b34 fixture・閾値は維持した。
+- 既存focused **9/9**、support故障注入 **8/8**、commit `174629931c18d0281cc0a4e64a4e55c681c7e800` の全入力blobへ生成物を照合するpackaging **10/10**。support検査の入力SHAだけを今回sourceへ追随し、3つの故障anchor・historical b34 fixture・閾値は維持した。
 - 実Chromeのpractice rangeで、元/候補それぞれZR解除、着地を48tickに変更、通常横振り、空中継続の4条件×66tickを完走、page errorなし。条件は同じ既存avatar/gear、名前seed3564230742、Aqua/Cherry palette、25 geometry SHA `b984d502777fda1948cef806a72e952639d709432fab328283ae48ab0c739f56`、camera/射影、水平aim。横振りと空中はnative出力全行が一致し、全4条件でink/攻撃/弾が一致した。[照合](browser-comparison.json)
 - flags（SwiftShader等）・800×600・60000ms撮影timeout・描画方式は既存と同じ。新候補の実ブラウザは60Hzのみで、実ブラウザ30/120Hz受入は未完。source/emittedのFixedClock検査と分ける。
 - modest operation check: 4条件の描画call増分はそれぞれ元/候補3233、3212、3221、3211で同じ。triangle累積増分は±2〜26の差があり、boot/背景描画を含むためpixel/負荷完全一致は主張しない。actor/weapon geometryは同じで装飾・particle追加なし。これはhardware GPU性能測定ではない。
@@ -55,6 +55,8 @@ INKWAVE座標の測定。49tickの見た目は両側で同じ姿勢に到達し�
 以前の通常GETで任天堂紹介ページ `https://www.nintendo.com/jp/ichikara/av5ja/index_en.html` と公式player `https://media-assets.apps-jp.nintendo.com/contents/embed/NablZy7jqxO` がHTTP403で拒否された状態を継続扱いとした。今回再取得・迂回はしていない。参照バージョン/gear/入力/camera一致の新規retail比較は未確認。本家一致、全体受入、候補の必須CI成功は主張しない。任天堂mediaは含めていない。
 
 床補正の連続性を保ち、着地から後半へ悪化を移さない修正は未完成。共有IKの全面変更、grip基準変更、予約中のspawn/reset/landing gateの編集には進まない。候補は不採用のまま別branchに保存し、PR1856/cf9、weighted37a、PR1854、mainは更新しない。
+
+read-only remote照合ではmain `7e027ac2`、PR1856 branch `cf9c9d89`、weighted `37a33b4f` を確認した。PR1854 live headは共有時の `2e8d90b8` から `22f3b7534ae2093aef4c2549112a85a1da09bbf3` へ変わっていることを観測した。本作業からPR1854へのwriteは行っていない。
 
 ## 再現
 
