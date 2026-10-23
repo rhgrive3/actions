@@ -1,0 +1,90 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import http from 'node:http';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import {chromium} from '/workspace/actions/node_modules/playwright/index.mjs';
+
+const base='/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser';
+const out=base+'/reef-diagnosis',site=base+'/site-after';
+const manifest=JSON.parse(fs.readFileSync(site+'/inkwave-build.json'));
+const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+assert.equal(manifest.inputHash,'3fbcdb527d87ae0318e1e1df3037088e8d82ae8f979d6d7cae00b9a353ce4f91');
+assert.equal(manifest.contentHash,'bd3d8d2715b53a842901be6457bdb777621c4290f60a2c37a1404e4f9e5d3707');
+for(const[f,h]of Object.entries(manifest.artifacts))assert.equal(hash(fs.readFileSync(path.join(site,f))),h,f);
+const report={candidate:'4c9b7861038189e709db5e80e64d2a2712f7b877',inputHash:manifest.inputHash,contentHash:manifest.contentHash,
+ scope:'One fresh full-game Chromium context: reproduce early checkpoint, observe actual native arming, then reset; repeat activation and observe arming before death. No phase assignment, no draw suppression during observed cases.',
+ defaultOperationDeadlineMs:30000,errors:[],consoleErrors:[],requestFailures:[],httpFailures:[],frames:[],checkpoints:[],images:[],operations:[]};
+const save=()=>fs.writeFileSync(out+'/result.json',JSON.stringify(report,null,2)+'\n');
+const operation=async(label,fn,ms=30000)=>{const before=Date.now();report.operations.push({label,state:'started',wall:before});save();let timer;try{
+ const value=await Promise.race([fn(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label+': existing '+ms+'ms operation deadline')),ms);})]);
+ report.operations.push({label,state:'completed',wall:Date.now(),wallMs:Date.now()-before});save();return value;
+}finally{clearTimeout(timer);}};
+const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.woff2':'font/woff2','.webp':'image/webp','.mp3':'audio/mpeg'};
+const server=http.createServer((req,res)=>{try{const u=new URL(req.url,'http://localhost'),f=path.resolve(site,'.'+(u.pathname==='/'?'/index.html':decodeURIComponent(u.pathname)));if(!f.startsWith(site+'/')||!fs.statSync(f).isFile())throw Error();res.writeHead(200,{'content-type':mime[path.extname(f)]||'application/octet-stream','cache-control':'no-store'});fs.createReadStream(f).pipe(res);}catch{report.httpFailures.push(req.url);res.writeHead(404);res.end();}});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));
+let browser,context,page;
+try{
+ browser=await chromium.launch({headless:true,executablePath:'/usr/bin/chromium',args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+ report.browser=browser.version();
+ context=await browser.newContext({viewport:{width:960,height:640}});page=await context.newPage();page.setDefaultTimeout(30000);
+ page.on('pageerror',e=>{report.errors.push(e.stack);save();});page.on('console',m=>{if(m.type()==='error'){report.consoleErrors.push(m.text());save();}});page.on('requestfailed',r=>{report.requestFailures.push({url:r.url(),error:r.failure()});save();});
+ await page.exposeFunction('saveReefPartial',partial=>{report.partial=partial;save();});
+ await page.addInitScript(()=>{let seed=0x1a2b3c4;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,timeOfDay:'day'}));let game;Object.defineProperty(window,'__inkwave',{configurable:true,get:()=>game,set:g=>{game=g;g.frozen=true;}});});
+ await operation('navigate',()=>page.goto(`http://127.0.0.1:${server.address().port}/?news=0&time=day`,{waitUntil:'domcontentloaded',timeout:30000}));
+ // Inherited boot ceiling from the original full-game runner; not increased.
+ await operation('boot',()=>page.waitForFunction(()=>!!window.__inkwave?.debug&&window.__G?.s3?.installed&&window.__G.mode!=='boot',null,{timeout:180000}),180000);
+ console.log('fresh candidate boot ready');
+ await operation('ordinary-match-initialization',()=>page.evaluate(async()=>{
+  const g=__inkwave,G=__G;await g.startMatch({mapId:'tidewater',time:'day',difficulty:'easy',duration:180,mode:'turf'});g.debug.freezeBots();g.input.keys.clear();g.debug.fire(false);
+  // Exactly the original ordinary-match warmup; no new suppression is added.
+  g._skipRender=true;for(let i=0;i<330;i++)g._frame(1/60);g._skipRender=false;
+  const a=g.match.local;await a.character._sourceMotionLoader;await a.character.sourceMotion?.ready;
+  const config=await import(new URL('src/config.js',document.baseURI)),catalogue=await import(new URL('patches/splatoon3/runtime/catalogue.mjs',document.baseURI));
+  localStorage.setItem(catalogue.CATALOGUE_STORAGE,JSON.stringify({[a.weaponId]:{sub:'bomb',special:'reefslider'}}));catalogue.applyCatalogueChoice(a,{sub:'bomb',special:'reefslider'},config);
+  g.rig.follow(a,true);g.rig.yaw=0;g.rig.pitch=.1;
+  g._skipRender=true;for(let i=0;i<60;i++)g._frame(1/60);g._skipRender=false;a.invuln=0;a.special=a.specialCost();
+  const{on}=await import(new URL('src/core/ctx.js',document.baseURI));
+  const q=window.reefQA={a,initial:a.pos.clone(),director:G.fx.s3SpecialVfx,events:[],timeline:[],startCalls:[],renderCalls:0,warning:null,ids:new WeakMap(),serial:0,base:g.s3Clock.ticks};
+  q.uid=x=>{if(!x)return null;if(!q.ids.has(x))q.ids.set(x,++q.serial);return q.ids.get(x);};
+  q.tick=()=>g.s3Clock.ticks+(g.s3Clock.advancing?1:0);
+  q.snap=label=>{const d=G.fx.s3SpecialVfx,t=d.tracks.get(q.a),s=q.a._s3AllSpecialState,w=t?.d.warn;return{label,tick:q.tick(),relative:q.tick()-q.base,time:G.time,actor:q.uid(q.a),localActor:q.uid(G.match.local),actorInRoster:G.actors.includes(q.a),alive:q.a.alive,remote:!!q.a.remote,gauge:q.a.special,cost:q.a.specialCost(),ready:q.a.specialReady(),activeId:q.a.specialActive?.id||null,phase:s?.phase||q.a.specialActive?.phase||null,startupFrames:(s?.startupT||0)*60,dashFrames:(s?.dashT||0)*60,brakeFrames:(s?.brakeT||0)*60,intentFire:q.a.intent.fire,intentSpecial:q.a.intent.special,prevFire:q.a._prevIntent.fire,matchPlaying:G.match.playing(),matchState:G.match.state,paused:G.match.paused,controller:G.match.controller.enabled,director:q.uid(d),sameDirector:d===q.director,track:q.uid(t),trackId:t?.id||null,trackPhase:t?.phase||null,warning:q.uid(w),warningDead:w?!!w.dead:null,warningInPool:w?d.kit.discs.recs.includes(w):false,savedWarning:q.uid(q.warning),savedWarningDead:q.warning?!!q.warning.dead:null,savedWarningInPool:q.warning?d.kit.discs.recs.includes(q.warning):false,skipRender:g._skipRender,renderCalls:q.renderCalls,pos:q.a.pos.toArray()};};
+  on('all:special',e=>{if(e.actor===q.a)q.events.push({id:e.id,action:e.action,tick:q.tick(),phase:q.a._s3AllSpecialState?.phase,pos:e.pos});});
+  const start=a._startSpecial;a._startSpecial=function(...args){const before=q.snap('start-enter'),stats=this.stats.specials;const result=start.apply(this,args);q.startCalls.push({before,after:q.snap('start-return'),statsDelta:this.stats.specials-stats});return result;};
+  const update=q.director.update;q.director.update=function(...args){const before=q.snap('fx-enter');const result=update.apply(this,args);const after=q.snap('fx-return');if(before.warning!==after.warning||before.savedWarningDead!==after.savedWarningDead||before.trackPhase!==after.trackPhase)q.timeline.push({before,after});return result;};
+  const render=g.R.render;g.R.render=function(...args){q.renderCalls++;return render.apply(this,args);};
+  return q.snap('initialized');
+ }));
+ const snapshot=async label=>{const v=await operation(label,()=>page.evaluate(label=>reefQA.snap(label),label));report.checkpoints.push(v);save();return v;};
+ const step=async(n,label)=>{const rows=await operation(label,()=>page.evaluate(n=>{const q=reefQA,g=__inkwave,rows=[];for(let i=0;i<n;i++){if(g._skipRender)throw Error('Observed case must render every frame');const t=performance.now(),before=q.renderCalls;g._frame(1/60);const r=q.snap('frame');r.frameCpuWallMs=performance.now()-t;r.renderCallsThisFrame=q.renderCalls-before;if(r.renderCallsThisFrame!==1)throw Error('Observed frame did not render once');rows.push(r);}return rows;},n));report.frames.push(...rows);save();return rows.at(-1);};
+ const input=async(fire,special)=>operation('set-native-input',()=>page.evaluate(({fire,special})=>{__inkwave.debug.fire(fire);__inkwave.debug.key('KeyF',special);},{fire,special}));
+ const image=async label=>{const s=await snapshot(label);const file=label+'-tick'+s.tick+'.png';await operation('screenshot-'+label,()=>page.screenshot({path:out+'/'+file}));report.images.push({file,...s});save();};
+ await snapshot('ready-before-first-activation');await input(false,true);await step(1,'native-activation');await input(false,false);
+ let s=await snapshot('first-activation-returned');assert.equal(s.activeId,'reefslider');assert.equal(s.phase,'startup');assert(s.matchPlaying&&s.actorInRoster&&s.actor===s.localActor&&s.sameDirector);
+ // Reproduce the original input/checkpoint before correcting its observation gate.
+ for(let i=0;i<8;i++)await step(6,'old-order-startup-'+i);await input(true,false);await step(1,'old-fire-relative50');await input(false,false);await step(2,'old-warning-check-relative52');
+ const old=await snapshot('original-assertion-checkpoint');assert.equal(old.relative,52);report.originalCheckpoint=old;
+ assert.equal(old.phase,'dash');assert(old.dashFrames<15);assert.equal(old.warning,null);
+ // Native state, not elapsed waiting or a manually assigned phase, admits this fire.
+ while((await snapshot('wait-cancel-admission')).dashFrames<15)await step(1,'native-dash-to-admission');
+ await input(true,false);await step(1,'admitted-fire');await input(false,false);
+ s=await snapshot('actual-arming-observed');assert.equal(s.phase,'brake');assert(s.warning&&!s.warningDead&&s.warningInPool&&s.trackId==='reefslider'&&s.sameDirector);
+ await operation('retain-current-warning-identity',()=>page.evaluate(()=>{reefQA.warning=__G.fx.s3SpecialVfx.tracks.get(reefQA.a).d.warn;}));
+ await image('armed-before-reset');
+ await operation('native-reset',()=>page.evaluate(()=>reefQA.a.reset()));await step(1,'presentation-after-reset');
+ s=await snapshot('reset-retired');assert.equal(s.activeId,null);assert.equal(s.track,null);assert.equal(s.savedWarningDead,true);assert.equal(s.savedWarningInPool,false);await image('after-reset');
+ // A second activation tests reuse, with the same native actor and fresh warning.
+ await operation('prepare-reuse',()=>page.evaluate(()=>{const q=reefQA,a=q.a,g=__inkwave;a.spawnAt(q.initial,0);g.rig.follow(a,true);g.rig.yaw=0;g.rig.pitch=.1;a.invuln=0;a.special=a.specialCost();q.base=g.s3Clock.ticks;}));
+ await input(false,false);await step(3,'reuse-neutral-input');await input(false,true);await step(1,'reuse-native-activation');await input(false,false);
+ s=await snapshot('reuse-started');assert.equal(s.activeId,'reefslider');assert.equal(s.phase,'startup');
+ for(let i=0;i<11;i++){s=await step(5,'reuse-to-dash-'+i);if(s.phase==='dash'&&s.dashFrames>=15)break;assert(s.alive&&s.activeId==='reefslider');}
+ assert.equal(s.phase,'dash');assert(s.dashFrames>=15);await input(true,false);await step(1,'reuse-admitted-fire');await input(false,false);
+ s=await snapshot('reuse-arming-observed');assert.equal(s.phase,'brake');assert(s.warning&&!s.warningDead&&s.warningInPool);assert.notEqual(s.warning,report.images[0].warning);
+ await operation('retain-reuse-warning',()=>page.evaluate(()=>{reefQA.warning=__G.fx.s3SpecialVfx.tracks.get(reefQA.a).d.warn;}));await image('armed-before-death');
+ await operation('native-splat',()=>page.evaluate(()=>reefQA.a.splat(null,'QA observed arming')));await step(1,'presentation-after-death');
+ s=await snapshot('death-retired');assert.equal(s.alive,false);assert.equal(s.track,null);assert.equal(s.savedWarningDead,true);assert.equal(s.savedWarningInPool,false);await image('after-death');
+ report.observation=await operation('final-observations',()=>page.evaluate(()=>{const q=reefQA,gl=__G.renderer.getContext();return{events:q.events,timeline:q.timeline,startCalls:q.startCalls,glError:gl.getError(),glLost:gl.isContextLost(),directorErrors:__G.fx.s3SpecialVfx.errors,renderCalls:q.renderCalls};}));
+ assert.equal(report.observation.glError,0);assert.equal(report.observation.glLost,false);assert.equal(report.observation.directorErrors,0);assert.deepEqual(report.errors,[]);assert.deepEqual(report.consoleErrors,[]);assert.deepEqual(report.requestFailures,[]);assert.deepEqual(report.httpFailures,[]);
+ report.status='passed';save();console.log(JSON.stringify({status:report.status,oldCheckpoint:old,images:report.images.map(x=>({file:x.file,tick:x.tick,phase:x.phase,warning:x.warning,savedWarning:x.savedWarning,savedWarningDead:x.savedWarningDead}))}));
+}catch(e){report.status='failed';report.failure=e.stack;if(page)report.observation=await page.evaluate(()=>window.reefQA&&({current:reefQA.snap('failure'),events:reefQA.events,timeline:reefQA.timeline,startCalls:reefQA.startCalls})).catch(()=>null);save();console.error(e.stack);process.exitCode=1;}
+finally{await context?.close();await browser?.close();await new Promise(r=>server.close(r));}

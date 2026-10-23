@@ -1,0 +1,121 @@
+{
+  "candidateCommit": "4c9b7861038189e709db5e80e64d2a2712f7b877",
+  "beforeCommit": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "verdict": "Old missing-warning lifecycle failures were an invalid early input/checkpoint. Fresh ordinary full-game native cases pass reset/reuse/death on both pinned sources. No runtime fix needed.",
+  "sameNativeCheckpointsBothSources": {
+    "original-assertion-checkpoint": {
+      "tick": 445,
+      "phase": "dash",
+      "activeId": "reefslider",
+      "dashFrames": 12.999999999999998,
+      "actor": 1,
+      "localActor": 1,
+      "actorInRoster": true,
+      "matchPlaying": true,
+      "sameDirector": true,
+      "track": 3,
+      "warning": null,
+      "savedWarningDead": null,
+      "savedWarningInPool": false
+    },
+    "actual-arming-observed": {
+      "tick": 449,
+      "phase": "brake",
+      "activeId": "reefslider",
+      "dashFrames": 17,
+      "actor": 1,
+      "localActor": 1,
+      "actorInRoster": true,
+      "matchPlaying": true,
+      "sameDirector": true,
+      "track": 3,
+      "warning": 4,
+      "savedWarningDead": null,
+      "savedWarningInPool": false
+    },
+    "reset-retired": {
+      "tick": 450,
+      "phase": null,
+      "activeId": null,
+      "dashFrames": 0,
+      "actor": 1,
+      "localActor": 1,
+      "actorInRoster": true,
+      "matchPlaying": true,
+      "sameDirector": true,
+      "track": null,
+      "warning": null,
+      "savedWarningDead": true,
+      "savedWarningInPool": false
+    },
+    "reuse-arming-observed": {
+      "tick": 510,
+      "phase": "brake",
+      "activeId": "reefslider",
+      "dashFrames": 18,
+      "actor": 1,
+      "localActor": 1,
+      "actorInRoster": true,
+      "matchPlaying": true,
+      "sameDirector": true,
+      "track": 5,
+      "warning": 6,
+      "savedWarningDead": true,
+      "savedWarningInPool": false
+    },
+    "death-retired": {
+      "tick": 511,
+      "phase": null,
+      "activeId": null,
+      "dashFrames": 0,
+      "actor": 1,
+      "localActor": 1,
+      "actorInRoster": true,
+      "matchPlaying": true,
+      "sameDirector": true,
+      "track": null,
+      "warning": null,
+      "savedWarningDead": true,
+      "savedWarningInPool": false
+    }
+  },
+  "protectedOriginalFiles": 145,
+  "protectedOriginalsChanged": [],
+  "runtimeTrackedChanges": [],
+  "observedFramesPerSource": 118,
+  "allObservedFramesRenderedExactlyOnce": true,
+  "performanceTimingScope": "JS wall brackets around native Game._frame, CDP operation/screenshot wall time, and old stored Game.perf EMA. No isolated R.render timing, GPU fence/timer query or display FPS measurement.",
+  "maximumNonBootOperationMs": {
+    "candidate": 26366,
+    "parent": 24790
+  },
+  "cpuFrameBracketMs": {
+    "candidate": {
+      "min": 8.599999999627471,
+      "median": 14.75,
+      "max": 15584.80000000028
+    },
+    "parent": {
+      "min": 7.7000000001862645,
+      "median": 13.949999999953434,
+      "max": 15593.5
+    }
+  },
+  "continuousStallExactParentControlAvailable": false,
+  "maximumFrameBySource": {
+    "candidate": {
+      "tick": 437,
+      "relative": 44,
+      "phase": "dash",
+      "frameCpuWallMs": 15584.80000000028,
+      "renderCallsThisFrame": 1
+    },
+    "parent": {
+      "tick": 437,
+      "relative": 44,
+      "phase": "dash",
+      "frameCpuWallMs": 15593.5,
+      "renderCallsThisFrame": 1
+    }
+  }
+}

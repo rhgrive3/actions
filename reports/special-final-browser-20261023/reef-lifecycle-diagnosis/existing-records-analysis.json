@@ -1,0 +1,292 @@
+{
+  "oldCallOrder": {
+    "activationRelative": 1,
+    "stepAfterActivation": 48,
+    "earlyFireAtRelative": 50,
+    "warningAssertAtRelative": 52,
+    "requiredGroundedStartupFrames": 38,
+    "minimumDashFramesForFireCancellation": 15,
+    "theoreticalFirstCancellableRelativeTick": 54,
+    "whyOldAssertionIsNotRetirementEvidence": "Without earlier wall admission, fire at50 occurs before the native 15-dash-frame gate and is not queued; checkpoint52 is still too early. Warning is only allocated by the director brake-phase hook. The failed warning assertion is a prerequisite failure, not a valid retirement assertion."
+  },
+  "existingNormalReef": {
+    "before": {
+      "baseTick": 5153,
+      "phases": [
+        {
+          "tick": 5155,
+          "relative": 2,
+          "phase": "startup",
+          "pos": [
+            0.4041631281210781,
+            0,
+            -27.206808091009826
+          ]
+        },
+        {
+          "tick": 5192,
+          "relative": 39,
+          "phase": "dash",
+          "pos": [
+            0.4041631281210781,
+            0,
+            -27.206808091009826
+          ]
+        },
+        {
+          "tick": 5213,
+          "relative": 60,
+          "phase": "brake",
+          "pos": [
+            0.3795365674586742,
+            0,
+            -21.176858378739418
+          ]
+        },
+        {
+          "tick": 5251,
+          "relative": 98,
+          "phase": "recovery",
+          "pos": [
+            0.3710826734999387,
+            0,
+            -19.106875641691367
+          ]
+        },
+        {
+          "tick": 5279,
+          "relative": 126,
+          "phase": null,
+          "pos": [
+            0.3710826734999387,
+            0,
+            -19.106875641691367
+          ]
+        }
+      ],
+      "events": [
+        {
+          "name": "special:use",
+          "id": "reefslider",
+          "tick": 5154
+        },
+        {
+          "name": "all:special",
+          "id": "reefslider",
+          "action": "activate",
+          "tick": 5154,
+          "pos": [
+            0.4,
+            0,
+            -27.21
+          ]
+        },
+        {
+          "name": "all:special",
+          "id": "reefslider",
+          "action": "impact",
+          "tick": 5251,
+          "pos": [
+            0.37,
+            0.08,
+            -19.11
+          ]
+        },
+        {
+          "name": "all:special",
+          "id": "reefslider",
+          "action": "end",
+          "tick": 5279,
+          "pos": [
+            0.37,
+            0,
+            -19.11
+          ]
+        }
+      ]
+    },
+    "after": {
+      "baseTick": 5153,
+      "phases": [
+        {
+          "tick": 5155,
+          "relative": 2,
+          "phase": "startup",
+          "pos": [
+            0.4041631281210781,
+            0,
+            -27.206808091009826
+          ]
+        },
+        {
+          "tick": 5192,
+          "relative": 39,
+          "phase": "dash",
+          "pos": [
+            0.4041631281210781,
+            0,
+            -27.206808091009826
+          ]
+        },
+        {
+          "tick": 5213,
+          "relative": 60,
+          "phase": "brake",
+          "pos": [
+            0.3795365674586742,
+            0,
+            -21.176858378739418
+          ]
+        },
+        {
+          "tick": 5251,
+          "relative": 98,
+          "phase": "recovery",
+          "pos": [
+            0.3710826734999387,
+            0,
+            -19.106875641691367
+          ]
+        },
+        {
+          "tick": 5279,
+          "relative": 126,
+          "phase": null,
+          "pos": [
+            0.3710826734999387,
+            0,
+            -19.106875641691367
+          ]
+        }
+      ],
+      "events": [
+        {
+          "name": "special:use",
+          "id": "reefslider",
+          "tick": 5154
+        },
+        {
+          "name": "all:special",
+          "id": "reefslider",
+          "action": "activate",
+          "tick": 5154,
+          "pos": [
+            0.4,
+            0,
+            -27.21
+          ]
+        },
+        {
+          "name": "all:special",
+          "id": "reefslider",
+          "action": "impact",
+          "tick": 5251,
+          "pos": [
+            0.37,
+            0.08,
+            -19.11
+          ]
+        },
+        {
+          "name": "all:special",
+          "id": "reefslider",
+          "action": "end",
+          "tick": 5279,
+          "pos": [
+            0.37,
+            0,
+            -19.11
+          ]
+        }
+      ]
+    }
+  },
+  "renderRecords": [
+    {
+      "case": "inkVac",
+      "beforeWallMs": 19672.600000000093,
+      "afterWallMs": 14772.599999999977,
+      "beforeMaxStoredRenderEmaMs": 22.68943993366778,
+      "afterMaxStoredRenderEmaMs": 16.1770411938293,
+      "note": "Whole-case wall includes stepping, readback, screenshots and CDP; render is Game.perf EMA of CPU brackets, not GPU completion or display FPS."
+    },
+    {
+      "case": "trizooka",
+      "beforeWallMs": 22913.5,
+      "afterWallMs": 12634.599999999977,
+      "beforeMaxStoredRenderEmaMs": 29.38722899773284,
+      "afterMaxStoredRenderEmaMs": 19.057870959129435,
+      "note": "Whole-case wall includes stepping, readback, screenshots and CDP; render is Game.perf EMA of CPU brackets, not GPU completion or display FPS."
+    },
+    {
+      "case": "ultraStamp",
+      "beforeWallMs": 18999.600000000093,
+      "afterWallMs": 8982,
+      "beforeMaxStoredRenderEmaMs": 82.67429323011646,
+      "afterMaxStoredRenderEmaMs": 28.394810623931225,
+      "note": "Whole-case wall includes stepping, readback, screenshots and CDP; render is Game.perf EMA of CPU brackets, not GPU completion or display FPS."
+    },
+    {
+      "case": "superChump",
+      "beforeWallMs": 11202.400000000023,
+      "afterWallMs": 7408.099999999977,
+      "beforeMaxStoredRenderEmaMs": 33.229375793932526,
+      "afterMaxStoredRenderEmaMs": 23.858313241805764,
+      "note": "Whole-case wall includes stepping, readback, screenshots and CDP; render is Game.perf EMA of CPU brackets, not GPU completion or display FPS."
+    },
+    {
+      "case": "bubbler",
+      "beforeWallMs": 21403.300000000047,
+      "afterWallMs": 8868.400000000023,
+      "beforeMaxStoredRenderEmaMs": 154.9981551649385,
+      "afterMaxStoredRenderEmaMs": 76.14479176417744,
+      "note": "Whole-case wall includes stepping, readback, screenshots and CDP; render is Game.perf EMA of CPU brackets, not GPU completion or display FPS."
+    },
+    {
+      "case": "krakenRoyale",
+      "beforeWallMs": 21809.800000000047,
+      "afterWallMs": 7114.20000000007,
+      "beforeMaxStoredRenderEmaMs": 84.21888740405986,
+      "afterMaxStoredRenderEmaMs": 25.91175836887341,
+      "note": "Whole-case wall includes stepping, readback, screenshots and CDP; render is Game.perf EMA of CPU brackets, not GPU completion or display FPS."
+    },
+    {
+      "case": "splattercolorScreen",
+      "beforeWallMs": 44136.70000000007,
+      "afterWallMs": 21209.70000000007,
+      "beforeMaxStoredRenderEmaMs": 844.2644053869789,
+      "afterMaxStoredRenderEmaMs": 461.41006397244894,
+      "note": "Whole-case wall includes stepping, readback, screenshots and CDP; render is Game.perf EMA of CPU brackets, not GPU completion or display FPS."
+    },
+    {
+      "case": "reefslider",
+      "beforeWallMs": 14940.20000000007,
+      "afterWallMs": 11667.79999999993,
+      "beforeMaxStoredRenderEmaMs": 32.04038074966062,
+      "afterMaxStoredRenderEmaMs": 18.118325557812753,
+      "note": "Whole-case wall includes stepping, readback, screenshots and CDP; render is Game.perf EMA of CPU brackets, not GPU completion or display FPS."
+    },
+    {
+      "case": "tripleSplashdown",
+      "beforeWallMs": 14084,
+      "afterWallMs": 13401.900000000023,
+      "beforeMaxStoredRenderEmaMs": 196.93386349503885,
+      "afterMaxStoredRenderEmaMs": 186.02282232083465,
+      "note": "Whole-case wall includes stepping, readback, screenshots and CDP; render is Game.perf EMA of CPU brackets, not GPU completion or display FPS."
+    },
+    {
+      "case": "inkjet",
+      "beforeWallMs": 13311,
+      "afterWallMs": 20954.600000000093,
+      "beforeMaxStoredRenderEmaMs": 78.72722634585101,
+      "afterMaxStoredRenderEmaMs": 108.20933498926308,
+      "note": "Whole-case wall includes stepping, readback, screenshots and CDP; render is Game.perf EMA of CPU brackets, not GPU completion or display FPS."
+    }
+  ],
+  "continuousSubmissionControl": {
+    "candidateOnlyCadenceReceipt": "gameplay-lifecycle-fixed-after/result.json",
+    "equivalentParentCadenceReceiptPresent": false,
+    "conclusion": "The stored before sweep also has long software-rendered case times (e.g. Screen44136.7ms, CPU render EMA844.264ms). However the exact sustained15/30/60 submission cadence was only exercised on the candidate. Existing data cannot establish whether the exact49s/89s sustained stall reproduces on parent under identical cadence. No hardware/display FPS can be inferred."
+  },
+  "sourceFramesUnchangedByCandidate": true
+}
