@@ -1,0 +1,37 @@
+boot peer 0
+boot peer 1
+wait room membership
+wait settings
+wait teams
+wait ready
+wait playing
+playing id7g09
+ingress {"hz":30,"peer":0,"jump":false}
+ingress {"hz":30,"peer":0,"jump":true}
+ingress {"hz":30,"peer":1,"jump":false}
+ingress {"hz":30,"peer":1,"jump":true}
+ingress {"hz":60,"peer":0,"jump":false}
+ingress {"hz":60,"peer":0,"jump":true}
+ingress {"hz":60,"peer":1,"jump":false}
+ingress {"hz":60,"peer":1,"jump":true}
+ingress {"hz":120,"peer":0,"jump":false}
+ingress {"hz":120,"peer":0,"jump":true}
+ingress {"hz":120,"peer":1,"jump":false}
+ingress {"hz":120,"peer":1,"jump":true}
+respawn/superjump peer 0
+wait respawn aim
+wait respawn launch
+wait respawn landing
+wait home Super Jump flight
+wait home Super Jump landing
+respawn/superjump peer 1
+wait respawn aim
+wait respawn launch
+wait respawn landing
+wait home Super Jump flight
+wait home Super Jump landing
+wait room membership
+wait settings
+wait teams
+wait ready
+wait playing

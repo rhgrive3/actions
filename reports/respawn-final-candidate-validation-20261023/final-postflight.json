@@ -1,0 +1,8 @@
+{
+  "head": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+  "artifactCount": 2112,
+  "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+  "status": "passed",
+  "scope": "Post-network filesystem rehash, not response-body attestation",
+  "worktreeStatus": ""
+}

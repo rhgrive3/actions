@@ -1,0 +1,14 @@
+{
+  "pr1860": {
+    "head": "07a9792142564756189342a2e86d0bc3afe275ed",
+    "branch": "fix/respawn-enemy-exclusion-20261023",
+    "draft": true
+  },
+  "main": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "candidateChecks": {
+    "total": 0,
+    "runs": []
+  },
+  "candidate": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+  "fallbackRef": "9cee2c425bf7d31ac5312c1e108fab10afc36c8a"
+}

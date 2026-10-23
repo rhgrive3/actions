@@ -1,0 +1,2 @@
+First emitted-reference check incorrectly called: node scripts/check-inkwave-local-references.mjs --site .ci-scratch/final-candidate/exact-site
+Exit 1: repo positional argument was parsed as --site, ENOENT scandir /workspace/respawn-final/--site/inkwave-public. Source/artifact identity and budget had already passed. Corrected read-only invocation adds positional .; original error retained separately.

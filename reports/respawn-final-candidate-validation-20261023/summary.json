@@ -1,0 +1,516 @@
+{
+  "candidate": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+  "candidateBranch": "candidate/respawn-exclusion-final-20261023",
+  "runtimeUnchangedFrom9cee": true,
+  "protectedRefs": {
+    "pr1860": {
+      "head": "07a9792142564756189342a2e86d0bc3afe275ed",
+      "branch": "fix/respawn-enemy-exclusion-20261023",
+      "draft": true
+    },
+    "main": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+    "candidateChecks": {
+      "total": 0,
+      "runs": []
+    },
+    "candidate": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+    "fallbackRef": "9cee2c425bf7d31ac5312c1e108fab10afc36c8a"
+  },
+  "oldFailures": {
+    "07aEmitted": {
+      "tests": 55,
+      "pass": 31,
+      "fail": 24,
+      "skipped": 0
+    },
+    "9ceeEmitted": {
+      "tests": 55,
+      "pass": 31,
+      "fail": 24,
+      "skipped": 0
+    },
+    "constrainedSource": {
+      "tests": 33,
+      "pass": 33,
+      "fail": 0,
+      "skipped": 0
+    },
+    "classification": {
+      "23DamageAssertions": "pre-existing false near-band assumption on 2.5-radius native pads; no new damage regression",
+      "1PacketWidth": "pre-existing 26-column production schema; source constrained fixture hides full composition",
+      "additionalFixtureDefect": "manual proxy sample used lockT instead of lock, so the real pose guard correctly rejected it",
+      "intentionalChangedContract": "ordinary enemy entry is now forbidden; allied entry, below-pad exception and existing attacks retained"
+    }
+  },
+  "tests": {
+    "source": {
+      "tests": 74,
+      "pass": 74,
+      "fail": 0,
+      "skipped": 0
+    },
+    "emittedWithBothRoots": {
+      "tests": 96,
+      "pass": 96,
+      "fail": 0,
+      "skipped": 0
+    },
+    "referenceAndWorkflow": {
+      "tests": 16,
+      "pass": 16,
+      "fail": 0,
+      "skipped": 0
+    }
+  },
+  "build": {
+    "sourceSha": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+    "checkedInputs": 1423,
+    "inputHash": "f65b5c1b8569c5b6364a31c32b45e3107d23247a2c030fb764c565c064e0d517",
+    "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+    "revision": "150caf88b35d2d6f915309f35373269cf7487ecc74e672ecd40eff0803df4996",
+    "artifacts": 2112,
+    "runtimeBlob": "4b68c6d7a3f4223521ca316792e1e76e6f7b71aa",
+    "matches9cee": {
+      "files": true,
+      "artifacts": true
+    }
+  },
+  "officialReadback": {
+    "head": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+    "officialRef": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+    "tree": "bd6be2e907878a9ea6ffa47fd66b4c8f51dd299c",
+    "files": [
+      {
+        "path": "patches/splatoon3/runtime/spawn-exclusion.mjs",
+        "sha": "4b68c6d7a3f4223521ca316792e1e76e6f7b71aa",
+        "match": true
+      },
+      {
+        "path": "patches/reliability/tests/special-spawn-barrier.test.mjs",
+        "sha": "215ec3f1818fc886d892134051549bbccce142ab",
+        "match": true
+      },
+      {
+        "path": "patches/splatoon3/tests/respawn-lifecycle.test.mjs",
+        "sha": "6ecff107a94e71d944842dc5257dbbb896644aca",
+        "match": true
+      },
+      {
+        "path": "scripts/check-inkwave-local-references.mjs",
+        "sha": "6d8a6eb13d36bf33bb4655b3fa21219e550683e7",
+        "match": true
+      },
+      {
+        "path": "scripts/tests/inkwave-local-references.test.mjs",
+        "sha": "c247014f322f52cfaa2821046c872dc3ab74d048",
+        "match": true
+      },
+      {
+        "path": "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs",
+        "sha": "a9b71df1932e64fb34116a13ec403117f4edab4e",
+        "match": true
+      },
+      {
+        "path": "reports/respawn-exclusion-final-candidate-20261023/README.md",
+        "sha": "cab5bd686ae47b3790077f8d7f59aff380bb926e",
+        "match": true
+      }
+    ],
+    "rootEntries": 24,
+    "rootMatches": true
+  },
+  "provenance": {
+    "head": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+    "ancestors": {
+      "07a9792142564756189342a2e86d0bc3afe275ed": true,
+      "9cee2c425bf7d31ac5312c1e108fab10afc36c8a": true,
+      "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51": true,
+      "62d6eb3e448d68fe8a41303f344d6a88076aa338": true
+    },
+    "c68ReferenceCheckerByteMatch": true,
+    "c68OtherAncestorsImported": false,
+    "pr1853NineEdgeTestPresent": true,
+    "runtimeUnchangedFrom9cee": true,
+    "worktreeStatus": ""
+  },
+  "startupBudget": "passed",
+  "emittedReferenceProof": {
+    "status": "passed",
+    "mapped": 13
+  },
+  "network": {
+    "status": "passed",
+    "headAtExecution": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+    "cases": 27,
+    "wireTicks": 3315,
+    "pageErrors": [],
+    "transport": "two browser contexts, real WebSockets, production Worker fetch/RoomDurableObject with local upgrade shim",
+    "limits": [
+      "Software Chromium; controlled native frame scheduling, not physical-device timing.",
+      "Local production relay shim, not public/deployed network or mixed-version clients.",
+      "Bot receives forced inward intent, not autonomous navigation."
+    ],
+    "ingress": [
+      {
+        "team": 0,
+        "hz": 30,
+        "peer": 0,
+        "jump": false,
+        "minOwner": 4.6,
+        "minRemote": 4.599999999999999,
+        "minWire": 4.6,
+        "wireRows": 40,
+        "remoteReceived": true
+      },
+      {
+        "team": 0,
+        "hz": 30,
+        "peer": 0,
+        "jump": true,
+        "minOwner": 4.6,
+        "minRemote": 4.599999999999999,
+        "minWire": 4.6,
+        "wireRows": 40,
+        "remoteReceived": true
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "peer": 1,
+        "jump": false,
+        "minOwner": 4.6,
+        "minRemote": 4.6,
+        "minWire": 4.6,
+        "wireRows": 40,
+        "remoteReceived": true
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "peer": 1,
+        "jump": true,
+        "minOwner": 4.6,
+        "minRemote": 4.599999999999999,
+        "minWire": 4.6,
+        "wireRows": 40,
+        "remoteReceived": true
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "peer": 0,
+        "jump": false,
+        "minOwner": 4.6,
+        "minRemote": 4.6,
+        "minWire": 4.6,
+        "wireRows": 40,
+        "remoteReceived": true
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "peer": 0,
+        "jump": true,
+        "minOwner": 4.6,
+        "minRemote": 4.599999999999999,
+        "minWire": 4.6,
+        "wireRows": 40,
+        "remoteReceived": true
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "peer": 1,
+        "jump": false,
+        "minOwner": 4.6,
+        "minRemote": 4.6,
+        "minWire": 4.6,
+        "wireRows": 40,
+        "remoteReceived": true
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "peer": 1,
+        "jump": true,
+        "minOwner": 4.6,
+        "minRemote": 4.6,
+        "minWire": 4.6,
+        "wireRows": 40,
+        "remoteReceived": true
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "peer": 0,
+        "jump": false,
+        "minOwner": 4.6,
+        "minRemote": 4.599999999999999,
+        "minWire": 4.6,
+        "wireRows": 40,
+        "remoteReceived": true
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "peer": 0,
+        "jump": true,
+        "minOwner": 4.6,
+        "minRemote": 4.599999999999999,
+        "minWire": 4.6,
+        "wireRows": 40,
+        "remoteReceived": true
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "peer": 1,
+        "jump": false,
+        "minOwner": 4.6,
+        "minRemote": 4.599999999999999,
+        "minWire": 4.6,
+        "wireRows": 40,
+        "remoteReceived": true
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "peer": 1,
+        "jump": true,
+        "minOwner": 4.6,
+        "minRemote": 4.6,
+        "minWire": 4.6,
+        "wireRows": 40,
+        "remoteReceived": true
+      }
+    ],
+    "alliedExits": [
+      {
+        "team": 0,
+        "hz": 30,
+        "peer": 0,
+        "jump": false,
+        "displacement": 11.106000000000009
+      },
+      {
+        "team": 0,
+        "hz": 30,
+        "peer": 0,
+        "jump": true,
+        "displacement": 11.106000000000009
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "peer": 1,
+        "jump": false,
+        "displacement": 11.106000000000009
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "peer": 1,
+        "jump": true,
+        "displacement": 11.106000000000009
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "peer": 0,
+        "jump": false,
+        "displacement": 11.106000000000009
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "peer": 0,
+        "jump": true,
+        "displacement": 11.106000000000009
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "peer": 1,
+        "jump": false,
+        "displacement": 11.106000000000009
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "peer": 1,
+        "jump": true,
+        "displacement": 11.106000000000009
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "peer": 0,
+        "jump": false,
+        "displacement": 11.010000000000009
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "peer": 0,
+        "jump": true,
+        "displacement": 11.106000000000009
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "peer": 1,
+        "jump": false,
+        "displacement": 11.106000000000009
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "peer": 1,
+        "jump": true,
+        "displacement": 11.106000000000009
+      }
+    ],
+    "respawnAndHomeSuperjump": [
+      {
+        "kind": "respawn-and-home-superjump",
+        "peer": 0,
+        "aim": [
+          0.9078691764006462,
+          6.7,
+          -38.578893279265465
+        ],
+        "landed": {
+          "team": 0,
+          "pos": [
+            0.6278691764006465,
+            -1.1102230246251565e-16,
+            -30.086723898460093
+          ],
+          "grounded": true,
+          "alive": true,
+          "invuln": 0
+        },
+        "home": {
+          "pos": [
+            0,
+            2.2,
+            -39.2
+          ],
+          "pad": [
+            0,
+            2.2,
+            -39.2
+          ],
+          "alive": true
+        }
+      },
+      {
+        "kind": "respawn-and-home-superjump",
+        "peer": 1,
+        "aim": [
+          0.9078691764006462,
+          6.7,
+          39.82110672073454
+        ],
+        "landed": {
+          "team": 1,
+          "pos": [
+            1.1878691764006468,
+            -1.1102230246251565e-16,
+            31.32893733992917
+          ],
+          "grounded": true,
+          "alive": true,
+          "invuln": 0
+        },
+        "home": {
+          "pos": [
+            0,
+            2.2,
+            39.2
+          ],
+          "pad": [
+            0,
+            2.2,
+            39.2
+          ],
+          "alive": true
+        }
+      }
+    ],
+    "hostBot": [
+      {
+        "kind": "host-owned-bot-inward-intent",
+        "nid": 1,
+        "team": 0,
+        "pad": [
+          0,
+          2.2,
+          39.2
+        ],
+        "radius": 4.2,
+        "rows": [
+          {
+            "nid": 1,
+            "team": 0,
+            "owner": "p_vxlcf51",
+            "remote": false,
+            "alive": true,
+            "pos": [
+              -4.6,
+              2.2,
+              39.2
+            ],
+            "vel": [
+              0,
+              0,
+              0
+            ],
+            "buffer": 0,
+            "netTp": 1
+          },
+          {
+            "nid": 1,
+            "team": 0,
+            "owner": "p_vxlcf51",
+            "remote": true,
+            "alive": true,
+            "pos": [
+              -4.6,
+              2.2,
+              39.2
+            ],
+            "vel": [
+              0,
+              0,
+              0
+            ],
+            "buffer": 9,
+            "netTp": 1
+          }
+        ]
+      }
+    ],
+    "freshReconnect": {
+      "previousMatch": "id7g09",
+      "nextMatch": "7hlu67",
+      "actorCounts": [
+        8,
+        8
+      ]
+    }
+  },
+  "browserGame9cee": {
+    "evidence": "../respawn-browser-9cee-20261023/summary.json",
+    "sameProductionBytes": true,
+    "combinedManifestFailurePreserved": true,
+    "correctRootSupplementSeparate": true,
+    "uncapturedCosmeticResponseBodies": 1
+  },
+  "remaining": [
+    "All eight outside candidates blocked and no usable outside origin: clear native endpoint may remain inside protection; real-map ordinary-path reachability unverified.",
+    "Normal rendered Game covers one Tidewater corner and local team 0; broader stage/corner/device/retail/deployed-network acceptance not claimed.",
+    "Exact-head CI has zero check runs on the candidate-only branch; PR1860 update and overall acceptance await parent diff review.",
+    "Landing weapon animation is owned separately and unchanged."
+  ]
+}

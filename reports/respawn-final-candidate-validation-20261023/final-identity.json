@@ -1,0 +1,13 @@
+{
+  "sourceSha": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4",
+  "checkedInputs": 1423,
+  "inputHash": "f65b5c1b8569c5b6364a31c32b45e3107d23247a2c030fb764c565c064e0d517",
+  "contentHash": "535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008",
+  "revision": "150caf88b35d2d6f915309f35373269cf7487ecc74e672ecd40eff0803df4996",
+  "artifacts": 2112,
+  "runtimeBlob": "4b68c6d7a3f4223521ca316792e1e76e6f7b71aa",
+  "matches9cee": {
+    "files": true,
+    "artifacts": true
+  }
+}

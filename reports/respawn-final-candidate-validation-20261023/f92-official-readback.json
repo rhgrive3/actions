@@ -1,0 +1,39 @@
+{
+  "head": "f92f089c283840b2e2a162dd63602e2e0d783833",
+  "officialRef": "f92f089c283840b2e2a162dd63602e2e0d783833",
+  "tree": "aa70c593917123150109028195377c0a1047807a",
+  "files": [
+    {
+      "path": "patches/splatoon3/runtime/spawn-exclusion.mjs",
+      "sha": "4b68c6d7a3f4223521ca316792e1e76e6f7b71aa",
+      "match": true
+    },
+    {
+      "path": "patches/reliability/tests/special-spawn-barrier.test.mjs",
+      "sha": "215ec3f1818fc886d892134051549bbccce142ab",
+      "match": true
+    },
+    {
+      "path": "patches/splatoon3/tests/respawn-lifecycle.test.mjs",
+      "sha": "6ecff107a94e71d944842dc5257dbbb896644aca",
+      "match": true
+    },
+    {
+      "path": "scripts/check-inkwave-local-references.mjs",
+      "sha": "6d8a6eb13d36bf33bb4655b3fa21219e550683e7",
+      "match": true
+    },
+    {
+      "path": "scripts/tests/inkwave-local-references.test.mjs",
+      "sha": "c247014f322f52cfaa2821046c872dc3ab74d048",
+      "match": true
+    },
+    {
+      "path": "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs",
+      "sha": "a9b71df1932e64fb34116a13ec403117f4edab4e",
+      "match": true
+    }
+  ],
+  "rootEntries": 24,
+  "rootMatches": true
+}
