@@ -355,7 +355,8 @@ async function main() {
         let chargeTicks = 20;
         while (!wallMotionSnapshot(ch)?.ready && chargeTicks < 48) { step(); chargeTicks++; }
         const lifecycle = { nativeAttached: actor.climbing, nativeReadyTicks: chargeTicks };
-        assert(star && star.geometry.index.count === 24 && ch.squid.ghost.visible, 'Indexed local wall ghost/glint missing');
+        // #1742 hides the submerged/wall squid and its depth ghost; the separate ready glint stays.
+        assert(star && star.geometry.index.count === 24 && !ch.squid.ghost.visible, 'Indexed local wall glint missing or wall ghost shown');
         for (const [name, offset] of [['ready-front', [0, .3, 2.2]], ['ready-oblique', [1.5, 1, 1.8]], ['ready-side', [-2, .5, .8]]]) {
           cameraAt(offset); capture(name);
         }
