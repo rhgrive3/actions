@@ -103,7 +103,17 @@ jobs:
               // A completed or newly executing run is not cleanup fodder. Recheck just before POST.
               const latest = await api('/actions/runs/' + run.id);
               if (!['queued', 'pending'].includes(latest.status) ||
-                  latest.event !== 'pull_request' || latest.head_sha !== run.head_sha) {
+                  latest.event !== 'pull_request' || latest.head_sha !== run.head_sha ||
+                  latest.pull_requests?.length !== 1 || latest.pull_requests[0].number !== number) {
+                report.untouched++;
+                continue;
+              }
+              // Cached PR state is only a candidate filter. Reopening or moving
+              // the head back can make this run current while we inspect it.
+              // This narrows the race; GitHub's cancel API is not conditional.
+              const currentPr = await api('/pulls/' + number);
+              if (currentPr.head.repo?.full_name !== repo ||
+                  (currentPr.state === 'open' && currentPr.head.sha === latest.head_sha)) {
                 report.untouched++;
                 continue;
               }

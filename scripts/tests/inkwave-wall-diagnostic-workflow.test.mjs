@@ -80,7 +80,7 @@ test('scope, timeout, evidence, failure suppression and concurrency mutations ar
 // Shared immutable build, additive acceptance guards,
 // exact-head startup clock evidence, and complete sparse diagnostic checkouts.
 const acceptedJobHashes = {
-  "validate_core": "7d98e11540f36b16d67357a008aa01e48b05bcf1bfe73a8e654d62d7850cc708",
+  "validate_core": "fb999372eb49ea1a8c74bb4c710125b0163a679f3efe4b18c2eef81c3ecc80a9",
   "patch_tests": "f4aed2dfb7766fc1497498fc2d6d7689ec90441f0747b854b07a4e631109c5b1",
   "validate": "54ac81f9c3cfa0e1eaed643dc62b644e9658abef0b53faced3a7d47888b790f9",
   "browser": "2d925a6bece5c03d5f5a2fefa550a622d1589e8e3ab41ac517d6d624cd93bb9c",

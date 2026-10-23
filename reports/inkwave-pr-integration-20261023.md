@@ -37,11 +37,30 @@ Node 22 (npm-distributed Node 22 executable), source checkout:
 - Historical and additional fixed paint-source pairs: 5/5 pass.
 - Production game build and startup budget pass.
 - Vite account production build and startup budget pass.
-- Focused runtime regressions, packaging and native Chromium acceptance are
-  running; no success is claimed before their reports complete.
+- Focused batch: 285 pass, three prior workflow-contract failures. The three
+  failures are corrected and verified by the 54/54 workflow rerun above.
+- Source-bound packaging: 10/10 for Pages and 10/10 for Workers, zero skips.
+- Queue cancellation race regression: 9/9; tests execute the actual workflow
+  against head rollback, reopen, foreign head and changed run associations.
+- Native Chromium game acceptance passes on fixed runtime source 83403aaa:
+  boot, fourteen defaults, 65 canonical kits, real keyboard movement, shooting,
+  floor paint, 757 verified responses and zero errors. Content hash
+  dad26d26f850a033d209b5d2211e841e74f5ca5a44c0fd57521c6fc0477c5973.
+  Later changes are QA/report/CI only; this does not replace hosted checks on
+  the latest published head.
+- Final queue/workflow/source-route batch: 63/63 pass, zero skips.
 
 Hosted checks must run on the final published head. Historical successes,
 queued/running jobs and scoped diagnostic skips do not establish acceptance.
+
+## Queue cleanup review
+
+Addresses the outstanding #1840 review: immediately before cancellation,
+recheck the run state, event, SHA and exact PR association, then refresh the PR
+state/head/repository. A reopened or rolled-back current head is preserved.
+This narrows the race; GitHub provides no atomic conditional cancellation.
+Workflow concurrency replaces PR executions, including same-head reruns;
+it does not order executions by commit ancestry or establish acceptance.
 
 ## Reference and limits
 
