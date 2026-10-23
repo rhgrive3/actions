@@ -28,7 +28,9 @@ async function scene(id,key,side,{blocked=true,ghost=false}={}){
   // outermost lobe, keeping its body away from the surviving centre.
   b.pos.y-=axis==='y'?(coordinate(out)>0?0:f.PLAYER.height):.8;
   p.ghost=ghost;
-  return {f,a,b,p,core,inner,outer,paint};
+  // Retirement clears the pooled projectile slot; retain its observed state
+  // so post-contact assertions inspect the original flight, not a recycled slot.
+  return {f,a,b,p,catalog:p.catalog,core,inner,outer,paint};
 }
 for(const id of ['s3-saber-normal','s3-saber-heavy'])for(const key of ['saber-horizontal','saber-vertical'])for(const side of [-1,1]){
   test(`${id} ${key} side ${side}: an inner terrain hit removes outward lobes before their later Actor contact`,async()=>{
@@ -36,16 +38,16 @@ for(const id of ['s3-saber-normal','s3-saber-heavy'])for(const key of ['saber-ho
     for(let i=0;i<3;i++){x.f.G.projectiles.update(DT);control.f.G.projectiles.update(DT);}
     assert.ok(control.b.hp<1000,'unblocked outer lobe really reaches this target');
     assert.equal(x.b.hp,1000,'the removed outer lobe cannot hit beside the post');
-    assert.equal(x.p.catalog.lobeGone?.[x.inner],true,'contacted inner lobe retires');
-    assert.equal(x.p.catalog.lobeGone?.[x.outer],true,'same-side outer lobe retires with it');
-    assert.notEqual(x.p.catalog.lobeGone?.[x.core],true,'the centre keeps flying');
+    assert.equal(x.catalog.lobeGone?.[x.inner],true,'contacted inner lobe retires');
+    assert.equal(x.catalog.lobeGone?.[x.outer],true,'same-side outer lobe retires with it');
+    assert.notEqual(x.catalog.lobeGone?.[x.core],true,'the centre keeps flying');
   });
 }
 for(const side of [-1,1])test(`charged Wiper side ${side}: vertical lobe cascade is shared by local and ghost geometry`,async()=>{
   for(const ghost of [false,true]){
     const x=await scene('s3-saber-lite','saber-vertical',side,{ghost});
     for(let i=0;i<3;i++)x.f.G.projectiles.update(DT);
-    assert.equal(x.p.catalog.lobeGone?.[x.outer],true);assert.equal(x.b.hp,1000);
+    assert.equal(x.catalog.lobeGone?.[x.outer],true);assert.equal(x.b.hp,1000);
     if(ghost){assert.equal(x.paint.counts[0],0);assert.equal(x.a.stats.turf,0);}
   }
 });
@@ -53,13 +55,13 @@ for(const side of [-1,1])test(`charged Wiper side ${side}: vertical lobe cascade
 for(const hz of [30,60,120])test(`cascade at ${hz}Hz cannot invent an outer wall stamp and leaves the opposite wing active`,async()=>{
   const x=await scene('s3-saber-heavy','saber-horizontal',1),stamps=[];
   x.f.G.paint.splat=(at,radius)=>{stamps.push({at:at.clone(),radius});return 0;};
-  const c=x.p.catalog.descriptor.c,opposite=c.OffsetArray[0];
+  const c=x.catalog.descriptor.c,opposite=c.OffsetArray[0];
   x.b.pos.copy(x.p.pos).add(new x.f.THREE.Vector3(opposite.X,-.8,opposite.Z+3.5));
   for(let i=0;i<hz/15;i++)x.f.G.projectiles.update(1/hz);
   assert.ok(x.b.hp<1000,'the opposite wing can still hit an actual Actor');
   assert.equal(stamps.length,1,'only the inner physical contact paints, never its clear outward path');
-  assert.equal(x.p.catalog.lobeGone[x.inner],true);assert.equal(x.p.catalog.lobeGone[x.outer],true);
-  assert.notEqual(x.p.catalog.lobeGone[0],true);
+  assert.equal(x.catalog.lobeGone[x.inner],true);assert.equal(x.catalog.lobeGone[x.outer],true);
+  assert.notEqual(x.catalog.lobeGone[0],true);
 });
 
 test('an outer Actor contact before the inner terrain cutoff still wins the continuous ordering',async()=>{
@@ -69,5 +71,5 @@ test('an outer Actor contact before the inner terrain cutoff still wins the cont
   x.b.pos.z=x.p.pos.z+.1;
   x.f.G.projectiles.update(DT);
   assert.equal(x.b.hp,965);assert.equal(x.f.G.projectiles.list.includes(x.p),false);
-  assert.notEqual(x.p.catalog.lobeGone?.[x.inner],true,'later terrain never commits after the earlier Actor');
+  assert.notEqual(x.catalog.lobeGone?.[x.inner],true,'later terrain never commits after the earlier Actor');
 });

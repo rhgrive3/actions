@@ -75,12 +75,13 @@ test('scope, timeout, evidence, failure suppression and concurrency mutations ar
   }
 });
 
-// Reviewed 29-PR integration adds source/clock/animation acceptance guards only.
+// Reviewed integration adds source/clock/animation acceptance guards only.
+// The later 31-PR source epoch adds its independent immutable-pair guard.
 // Existing jobs, failures, thresholds and immutable builds remain required.
 // Shared immutable build, additive acceptance guards,
 // exact-head startup clock evidence, and complete sparse diagnostic checkouts.
 const acceptedJobHashes = {
-  "validate_core": "fb999372eb49ea1a8c74bb4c710125b0163a679f3efe4b18c2eef81c3ecc80a9",
+  "validate_core": "80f5bcdbcf39f3f616c231c0cbad3eea93849fed3fb19c20e22f7c063ab47a39",
   "patch_tests": "f4aed2dfb7766fc1497498fc2d6d7689ec90441f0747b854b07a4e631109c5b1",
   "validate": "54ac81f9c3cfa0e1eaed643dc62b644e9658abef0b53faced3a7d47888b790f9",
   "browser": "2d925a6bece5c03d5f5a2fefa550a622d1589e8e3ab41ac517d6d624cd93bb9c",

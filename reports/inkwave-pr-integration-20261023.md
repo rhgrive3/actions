@@ -77,6 +77,37 @@ queued/running jobs and scoped diagnostic skips do not establish acceptance.
   and removes each reviewed projection-only hunk before checking the unchanged
   historical runner hash. No capture workload or runtime acceptance gate changes.
 
+## Subsequent fixed batch: #1850 and final #1848 history
+
+Prepared separately from the 30-PR acceptance head while its hosted checks run.
+This adds #1850 at d44f1a90 and #1848 through 9e10ab15, bringing the observed
+request scope to 31 PRs. It is not acceptance of the still-running first batch.
+
+- Keep both the new Stringer body-owned tilt update and the Splatana same-wing
+  terrain retirement. The behavioural comparison, source conditions, and hardware
+  limits remain in the two individual source-PR reports.
+- The combined runtime already clears pooled catalogue references when a round
+  retires. Retain the original flight state in the new Splatana test fixture so
+  its post-contact assertions inspect that flight after pool cleanup. Keep all
+  damage, real terrain contact, stamp-count, timing, and opposite-wing assertions.
+  The full fourteen-test Splatana file passes, including all four formerly
+  invalid accesses; the earlier Stringer and relay regressions also pass.
+- #1848's owner-clock port is already present in the integrated runtime. Preserve
+  the nonce-origin checks, separate legacy counterfactual, robust stamped-frame
+  parser, and required latest-head native Explosher check. The proposed conditional
+  preflight skip is superseded by the already-reviewed immutable common-build
+  inverse pair. Keep its additional five-shooter delayed-frame parser repair.
+- Add a separate thirteen-leaf paint source pair at c9218d19b98a3bc63c9266738e1d67a64d9d1ff0.
+  The 23- and 29-PR fixtures remain byte-for-byte unchanged, independently admitted,
+  and tested. The current source match moves to the new fixed fixture, with all
+  missing, changed, reversed, false-identity, and actual CLI negative controls.
+  Only an additive guard command changes the pinned core job; independently verify
+  removing that command reproduces the prior accepted job hash before updating it.
+- New and historical source guards plus integration routing pass 37/37. Additional
+  source, default and strict Explosher guards pass 93/93; workflow mutation guards
+  pass 5/5. Production build and startup budget pass. Full browser and final hosted
+  acceptance remain required on the eventual published commit.
+
 ## Queue cleanup review
 
 Addresses the outstanding #1840 review: immediately before cancellation,
