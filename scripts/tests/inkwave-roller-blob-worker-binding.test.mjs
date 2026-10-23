@@ -149,3 +149,16 @@ test('actual minified native audio module Workers bind beside the unchanged Blob
  const identity=await native(f);assert.equal(identity.moduleCount,107);
  for(const name of ['grain','reverb'])assert.equal(f.loaded[`_versions/pinned-revision/patches/splatoon3/runtime/audio/${name}-worker.mjs`].nativeWorkerProvenance.observed,true);
 });
+
+test('A/A roller capture accounts for the exact optional Three addon only after all visual evidence',async()=>{
+ const fs=await import('node:fs'),code=fs.readFileSync(new URL('../check-inkwave-roller-scale-range.mjs',import.meta.url),'utf8');
+ const captured=code.indexOf("assert.deepEqual(receipt.release.frames.map(f=>f.tick),[1,4,12])");
+ const addon=code.indexOf("await import('three/addons/geometries/RoundedBoxGeometry.js')");
+ const owner=code.indexOf("Object.hasOwn(buildManifest.artifacts,optionalGeometry)");
+ const receipt=code.indexOf("loadedModules[optionalGeometry]?.sha256");
+ const bind=code.indexOf("bindBlobWorkerEvidence(blobWorkerEvidence,loadedModules,buildManifest)");
+ assert(captured>=0&&captured<owner&&owner<addon&&addon<receipt&&receipt<bind,
+   'Geometry identity admission must follow frozen images, precede worker/manifest binding');
+ assert(code.includes("'_versions/'+buildManifest.build.revision+'/vendor/three/jsm/geometries/RoundedBoxGeometry.js'"));
+ assert(code.includes("'Lazy geometry addon must be loaded from the immutable emitted manifest'"));
+});

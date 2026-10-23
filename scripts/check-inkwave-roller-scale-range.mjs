@@ -369,11 +369,23 @@ try{
   assert.deepEqual(receipt.release.renderSize,m.renderSize);
   for(const frame of receipt.release.frames)assert.ok(Math.abs(frame.time-receipt.release.start.time-frame.tick/60)<1e-8);
   assert.equal(receipt.errors.length,0);
+  // Captured pixels, poses, release ticks and RNG are frozen above. A lazy
+  // production Three addon can race the receipt in identical A/A captures.
+  // Admit its actual immutable emitted bytes after visual capture on every side
+  // rather than omit an observed module or loosen the full identity comparison.
+  const optionalGeometry='_versions/'+buildManifest.build.revision+'/vendor/three/jsm/geometries/RoundedBoxGeometry.js';
+  assert(Object.hasOwn(buildManifest.artifacts,optionalGeometry),'Pinned emitted geometry addon missing');
+  await page.evaluate(async()=>{
+    const module=await import('three/addons/geometries/RoundedBoxGeometry.js');
+    if(typeof module.RoundedBoxGeometry!=='function')throw Error('Native RoundedBoxGeometry export missing');
+  });
   await page.evaluate(()=>{
     if(!globalThis.__inkwaveBlobWorkerAudit)throw Error('Missing Blob worker observer');
     return globalThis.__inkwaveBlobWorkerAudit.flush();
   });
   await Promise.all(loadedTasks);
+  assert.equal(loadedModules[optionalGeometry]?.sha256,buildManifest.artifacts[optionalGeometry],
+    'Lazy geometry addon must be loaded from the immutable emitted manifest');
   bindBlobWorkerEvidence(blobWorkerEvidence,loadedModules,buildManifest);
   receipt.runtimeIdentity=verifyLoadedModules(loadedModules,buildManifest,isolation?.declaration,blobWorkerEvidence);
   assert.equal(receipt.errors.length,0);
