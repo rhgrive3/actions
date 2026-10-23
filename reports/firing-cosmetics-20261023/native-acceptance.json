@@ -1,0 +1,891 @@
+{
+  "status": "unverified",
+  "reason": "Both full Game runs completed. Palette/style/aim/configured seed/native age/actor state match; native boot phase and actual launch velocity/position do not. No controlled native visual acceptance claimed.",
+  "components": "invariance-release.json is the separate fully matching emitted-component/CPU-paint comparison.",
+  "beforeBuild": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+  "afterBuild": "a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc",
+  "rows": [
+    {
+      "case": "shooter",
+      "view": "wide",
+      "tick": 0,
+      "matched": {
+        "quality": true,
+        "style": true,
+        "palette": true,
+        "configuredSeed": true,
+        "actorPosition": true,
+        "grounded": true,
+        "actualRoundSeeds": true,
+        "roundAges": true,
+        "velocity": false,
+        "projectilePositions": false
+      },
+      "beforeTime": 1.5999999999999992,
+      "afterTime": 1.866666666666665,
+      "beforeRounds": [
+        {
+          "wid": "shooter",
+          "vis": 0.10728254574909807,
+          "size": 0.285,
+          "recipe": null,
+          "shape": "shot",
+          "seed": 0.30208519427105784,
+          "age": 0.03333333333333333,
+          "vel": [
+            -0.59598789269224,
+            10.319181220241727,
+            135.56651834939032
+          ]
+        }
+      ],
+      "afterRounds": [
+        {
+          "wid": "shooter",
+          "vis": 0.10728254574909807,
+          "size": 0.285,
+          "recipe": null,
+          "shape": "shot",
+          "seed": 0.30208519427105784,
+          "age": 0.03333333333333333,
+          "vel": [
+            -0.6299775838693128,
+            10.324715183848973,
+            135.5659433066293
+          ]
+        }
+      ],
+      "beforeFile": "native-before-low/shooter-t00-wide.png",
+      "afterFile": "native-release-low/shooter-t00-wide.png"
+    },
+    {
+      "case": "shooter",
+      "view": "muzzle-side",
+      "tick": 0,
+      "matched": {
+        "quality": true,
+        "style": true,
+        "palette": true,
+        "configuredSeed": true,
+        "actorPosition": true,
+        "grounded": true,
+        "actualRoundSeeds": true,
+        "roundAges": true,
+        "velocity": false,
+        "projectilePositions": false
+      },
+      "beforeTime": 1.5999999999999992,
+      "afterTime": 1.866666666666665,
+      "beforeRounds": [
+        {
+          "wid": "shooter",
+          "vis": 0.10728254574909807,
+          "size": 0.285,
+          "recipe": null,
+          "shape": "shot",
+          "seed": 0.30208519427105784,
+          "age": 0.03333333333333333,
+          "vel": [
+            -0.59598789269224,
+            10.319181220241727,
+            135.56651834939032
+          ]
+        }
+      ],
+      "afterRounds": [
+        {
+          "wid": "shooter",
+          "vis": 0.10728254574909807,
+          "size": 0.285,
+          "recipe": null,
+          "shape": "shot",
+          "seed": 0.30208519427105784,
+          "age": 0.03333333333333333,
+          "vel": [
+            -0.6299775838693128,
+            10.324715183848973,
+            135.5659433066293
+          ]
+        }
+      ],
+      "beforeFile": "native-before-low/shooter-t00-muzzle-side.png",
+      "afterFile": "native-release-low/shooter-t00-muzzle-side.png"
+    },
+    {
+      "case": "shooter",
+      "view": "wide",
+      "tick": 2,
+      "matched": {
+        "quality": true,
+        "style": true,
+        "palette": true,
+        "configuredSeed": true,
+        "actorPosition": true,
+        "grounded": true,
+        "actualRoundSeeds": true,
+        "roundAges": true,
+        "velocity": false,
+        "projectilePositions": false
+      },
+      "beforeTime": 1.6333333333333324,
+      "afterTime": 1.8999999999999981,
+      "beforeRounds": [
+        {
+          "wid": "shooter",
+          "vis": 0.10728254574909807,
+          "size": 0.285,
+          "recipe": null,
+          "shape": "shot",
+          "seed": 0.30208519427105784,
+          "age": 0.06666666666666667,
+          "vel": [
+            -0.59598789269224,
+            10.319181220241727,
+            135.56651834939032
+          ]
+        }
+      ],
+      "afterRounds": [
+        {
+          "wid": "shooter",
+          "vis": 0.10728254574909807,
+          "size": 0.285,
+          "recipe": null,
+          "shape": "shot",
+          "seed": 0.30208519427105784,
+          "age": 0.06666666666666667,
+          "vel": [
+            -0.6299775838693128,
+            10.324715183848973,
+            135.5659433066293
+          ]
+        }
+      ],
+      "beforeFile": "native-before-low/shooter-t02-wide.png",
+      "afterFile": "native-release-low/shooter-t02-wide.png"
+    },
+    {
+      "case": "shooter",
+      "view": "muzzle-side",
+      "tick": 2,
+      "matched": {
+        "quality": true,
+        "style": true,
+        "palette": true,
+        "configuredSeed": true,
+        "actorPosition": true,
+        "grounded": true,
+        "actualRoundSeeds": true,
+        "roundAges": true,
+        "velocity": false,
+        "projectilePositions": false
+      },
+      "beforeTime": 1.6333333333333324,
+      "afterTime": 1.8999999999999981,
+      "beforeRounds": [
+        {
+          "wid": "shooter",
+          "vis": 0.10728254574909807,
+          "size": 0.285,
+          "recipe": null,
+          "shape": "shot",
+          "seed": 0.30208519427105784,
+          "age": 0.06666666666666667,
+          "vel": [
+            -0.59598789269224,
+            10.319181220241727,
+            135.56651834939032
+          ]
+        }
+      ],
+      "afterRounds": [
+        {
+          "wid": "shooter",
+          "vis": 0.10728254574909807,
+          "size": 0.285,
+          "recipe": null,
+          "shape": "shot",
+          "seed": 0.30208519427105784,
+          "age": 0.06666666666666667,
+          "vel": [
+            -0.6299775838693128,
+            10.324715183848973,
+            135.5659433066293
+          ]
+        }
+      ],
+      "beforeFile": "native-before-low/shooter-t02-muzzle-side.png",
+      "afterFile": "native-release-low/shooter-t02-muzzle-side.png"
+    },
+    {
+      "case": "splatling",
+      "view": "wide",
+      "tick": 0,
+      "matched": {
+        "quality": true,
+        "style": true,
+        "palette": true,
+        "configuredSeed": true,
+        "actorPosition": true,
+        "grounded": true,
+        "actualRoundSeeds": false,
+        "roundAges": true,
+        "velocity": false,
+        "projectilePositions": false
+      },
+      "beforeTime": 3.4999999999999925,
+      "afterTime": 3.766666666666658,
+      "beforeRounds": [
+        {
+          "wid": "splatling",
+          "vis": 0.086,
+          "size": 0.225,
+          "recipe": "shooter",
+          "shape": null,
+          "seed": 0.4469642781186849,
+          "age": 0.016666666666666666,
+          "vel": [
+            -5.739603665913119,
+            12.428298261776638,
+            116.02712045744029
+          ]
+        }
+      ],
+      "afterRounds": [
+        {
+          "wid": "splatling",
+          "vis": 0.086,
+          "size": 0.225,
+          "recipe": "shooter",
+          "shape": null,
+          "seed": 0.9680347354151309,
+          "age": 0.016666666666666666,
+          "vel": [
+            -1.319049096577655,
+            13.295023920272264,
+            124.75902434060505
+          ]
+        }
+      ],
+      "beforeFile": "native-before-low/splatling-t00-wide.png",
+      "afterFile": "native-release-low/splatling-t00-wide.png"
+    },
+    {
+      "case": "splatling",
+      "view": "muzzle-side",
+      "tick": 0,
+      "matched": {
+        "quality": true,
+        "style": true,
+        "palette": true,
+        "configuredSeed": true,
+        "actorPosition": true,
+        "grounded": true,
+        "actualRoundSeeds": false,
+        "roundAges": true,
+        "velocity": false,
+        "projectilePositions": false
+      },
+      "beforeTime": 3.4999999999999925,
+      "afterTime": 3.766666666666658,
+      "beforeRounds": [
+        {
+          "wid": "splatling",
+          "vis": 0.086,
+          "size": 0.225,
+          "recipe": "shooter",
+          "shape": null,
+          "seed": 0.4469642781186849,
+          "age": 0.016666666666666666,
+          "vel": [
+            -5.739603665913119,
+            12.428298261776638,
+            116.02712045744029
+          ]
+        }
+      ],
+      "afterRounds": [
+        {
+          "wid": "splatling",
+          "vis": 0.086,
+          "size": 0.225,
+          "recipe": "shooter",
+          "shape": null,
+          "seed": 0.9680347354151309,
+          "age": 0.016666666666666666,
+          "vel": [
+            -1.319049096577655,
+            13.295023920272264,
+            124.75902434060505
+          ]
+        }
+      ],
+      "beforeFile": "native-before-low/splatling-t00-muzzle-side.png",
+      "afterFile": "native-release-low/splatling-t00-muzzle-side.png"
+    },
+    {
+      "case": "splatling",
+      "view": "wide",
+      "tick": 2,
+      "matched": {
+        "quality": true,
+        "style": true,
+        "palette": true,
+        "configuredSeed": true,
+        "actorPosition": true,
+        "grounded": true,
+        "actualRoundSeeds": false,
+        "roundAges": true,
+        "velocity": false,
+        "projectilePositions": false
+      },
+      "beforeTime": 3.5333333333333257,
+      "afterTime": 3.7999999999999914,
+      "beforeRounds": [
+        {
+          "wid": "splatling",
+          "vis": 0.086,
+          "size": 0.225,
+          "recipe": "shooter",
+          "shape": null,
+          "seed": 0.4469642781186849,
+          "age": 0.05,
+          "vel": [
+            -5.739603665913119,
+            12.428298261776638,
+            116.02712045744029
+          ]
+        }
+      ],
+      "afterRounds": [
+        {
+          "wid": "splatling",
+          "vis": 0.086,
+          "size": 0.225,
+          "recipe": "shooter",
+          "shape": null,
+          "seed": 0.9680347354151309,
+          "age": 0.05,
+          "vel": [
+            -1.319049096577655,
+            13.295023920272264,
+            124.75902434060505
+          ]
+        }
+      ],
+      "beforeFile": "native-before-low/splatling-t02-wide.png",
+      "afterFile": "native-release-low/splatling-t02-wide.png"
+    },
+    {
+      "case": "splatling",
+      "view": "muzzle-side",
+      "tick": 2,
+      "matched": {
+        "quality": true,
+        "style": true,
+        "palette": true,
+        "configuredSeed": true,
+        "actorPosition": true,
+        "grounded": true,
+        "actualRoundSeeds": false,
+        "roundAges": true,
+        "velocity": false,
+        "projectilePositions": false
+      },
+      "beforeTime": 3.5333333333333257,
+      "afterTime": 3.7999999999999914,
+      "beforeRounds": [
+        {
+          "wid": "splatling",
+          "vis": 0.086,
+          "size": 0.225,
+          "recipe": "shooter",
+          "shape": null,
+          "seed": 0.4469642781186849,
+          "age": 0.05,
+          "vel": [
+            -5.739603665913119,
+            12.428298261776638,
+            116.02712045744029
+          ]
+        }
+      ],
+      "afterRounds": [
+        {
+          "wid": "splatling",
+          "vis": 0.086,
+          "size": 0.225,
+          "recipe": "shooter",
+          "shape": null,
+          "seed": 0.9680347354151309,
+          "age": 0.05,
+          "vel": [
+            -1.319049096577655,
+            13.295023920272264,
+            124.75902434060505
+          ]
+        }
+      ],
+      "beforeFile": "native-before-low/splatling-t02-muzzle-side.png",
+      "afterFile": "native-release-low/splatling-t02-muzzle-side.png"
+    },
+    {
+      "case": "splatling-jump",
+      "view": "wide",
+      "tick": 0,
+      "matched": {
+        "quality": true,
+        "style": true,
+        "palette": true,
+        "configuredSeed": true,
+        "actorPosition": true,
+        "grounded": true,
+        "actualRoundSeeds": false,
+        "roundAges": true,
+        "velocity": false,
+        "projectilePositions": false
+      },
+      "beforeTime": 5.399999999999986,
+      "afterTime": 5.666666666666652,
+      "beforeRounds": [
+        {
+          "wid": "splatling",
+          "vis": 0.086,
+          "size": 0.225,
+          "recipe": "shooter",
+          "shape": null,
+          "seed": 0.8854080380406231,
+          "age": 0.016666666666666666,
+          "vel": [
+            -7.394258140674235,
+            7.6461052360203245,
+            122.92980513334307
+          ]
+        }
+      ],
+      "afterRounds": [
+        {
+          "wid": "splatling",
+          "vis": 0.086,
+          "size": 0.225,
+          "recipe": "shooter",
+          "shape": null,
+          "seed": 0.18220434547401965,
+          "age": 0.016666666666666666,
+          "vel": [
+            -8.358988850969238,
+            8.943741114098893,
+            124.9960996352601
+          ]
+        }
+      ],
+      "beforeFile": "native-before-low/splatling-jump-t00-wide.png",
+      "afterFile": "native-release-low/splatling-jump-t00-wide.png"
+    },
+    {
+      "case": "splatling-jump",
+      "view": "muzzle-side",
+      "tick": 0,
+      "matched": {
+        "quality": true,
+        "style": true,
+        "palette": true,
+        "configuredSeed": true,
+        "actorPosition": true,
+        "grounded": true,
+        "actualRoundSeeds": false,
+        "roundAges": true,
+        "velocity": false,
+        "projectilePositions": false
+      },
+      "beforeTime": 5.399999999999986,
+      "afterTime": 5.666666666666652,
+      "beforeRounds": [
+        {
+          "wid": "splatling",
+          "vis": 0.086,
+          "size": 0.225,
+          "recipe": "shooter",
+          "shape": null,
+          "seed": 0.8854080380406231,
+          "age": 0.016666666666666666,
+          "vel": [
+            -7.394258140674235,
+            7.6461052360203245,
+            122.92980513334307
+          ]
+        }
+      ],
+      "afterRounds": [
+        {
+          "wid": "splatling",
+          "vis": 0.086,
+          "size": 0.225,
+          "recipe": "shooter",
+          "shape": null,
+          "seed": 0.18220434547401965,
+          "age": 0.016666666666666666,
+          "vel": [
+            -8.358988850969238,
+            8.943741114098893,
+            124.9960996352601
+          ]
+        }
+      ],
+      "beforeFile": "native-before-low/splatling-jump-t00-muzzle-side.png",
+      "afterFile": "native-release-low/splatling-jump-t00-muzzle-side.png"
+    },
+    {
+      "case": "splatling-jump",
+      "view": "wide",
+      "tick": 2,
+      "matched": {
+        "quality": true,
+        "style": true,
+        "palette": true,
+        "configuredSeed": true,
+        "actorPosition": true,
+        "grounded": true,
+        "actualRoundSeeds": false,
+        "roundAges": true,
+        "velocity": false,
+        "projectilePositions": false
+      },
+      "beforeTime": 5.433333333333319,
+      "afterTime": 5.699999999999985,
+      "beforeRounds": [
+        {
+          "wid": "splatling",
+          "vis": 0.086,
+          "size": 0.225,
+          "recipe": "shooter",
+          "shape": null,
+          "seed": 0.8854080380406231,
+          "age": 0.05,
+          "vel": [
+            -7.394258140674235,
+            7.6461052360203245,
+            122.92980513334307
+          ]
+        }
+      ],
+      "afterRounds": [
+        {
+          "wid": "splatling",
+          "vis": 0.086,
+          "size": 0.225,
+          "recipe": "shooter",
+          "shape": null,
+          "seed": 0.18220434547401965,
+          "age": 0.05,
+          "vel": [
+            -8.358988850969238,
+            8.943741114098893,
+            124.9960996352601
+          ]
+        }
+      ],
+      "beforeFile": "native-before-low/splatling-jump-t02-wide.png",
+      "afterFile": "native-release-low/splatling-jump-t02-wide.png"
+    },
+    {
+      "case": "splatling-jump",
+      "view": "muzzle-side",
+      "tick": 2,
+      "matched": {
+        "quality": true,
+        "style": true,
+        "palette": true,
+        "configuredSeed": true,
+        "actorPosition": true,
+        "grounded": true,
+        "actualRoundSeeds": false,
+        "roundAges": true,
+        "velocity": false,
+        "projectilePositions": false
+      },
+      "beforeTime": 5.433333333333319,
+      "afterTime": 5.699999999999985,
+      "beforeRounds": [
+        {
+          "wid": "splatling",
+          "vis": 0.086,
+          "size": 0.225,
+          "recipe": "shooter",
+          "shape": null,
+          "seed": 0.8854080380406231,
+          "age": 0.05,
+          "vel": [
+            -7.394258140674235,
+            7.6461052360203245,
+            122.92980513334307
+          ]
+        }
+      ],
+      "afterRounds": [
+        {
+          "wid": "splatling",
+          "vis": 0.086,
+          "size": 0.225,
+          "recipe": "shooter",
+          "shape": null,
+          "seed": 0.18220434547401965,
+          "age": 0.05,
+          "vel": [
+            -8.358988850969238,
+            8.943741114098893,
+            124.9960996352601
+          ]
+        }
+      ],
+      "beforeFile": "native-before-low/splatling-jump-t02-muzzle-side.png",
+      "afterFile": "native-release-low/splatling-jump-t02-muzzle-side.png"
+    },
+    {
+      "case": "shooter-jump",
+      "view": "wide",
+      "tick": 0,
+      "matched": {
+        "quality": true,
+        "style": true,
+        "palette": true,
+        "configuredSeed": true,
+        "actorPosition": true,
+        "grounded": true,
+        "actualRoundSeeds": true,
+        "roundAges": true,
+        "velocity": false,
+        "projectilePositions": false
+      },
+      "beforeTime": 6.16666666666665,
+      "afterTime": 6.433333333333316,
+      "beforeRounds": [
+        {
+          "wid": "shooter",
+          "vis": 0.10638469045236708,
+          "size": 0.285,
+          "recipe": null,
+          "shape": "shot",
+          "seed": 0.08880924410186708,
+          "age": 0.03333333333333333,
+          "vel": [
+            -0.25770794621509213,
+            9.833861880650288,
+            135.60365167327447
+          ]
+        }
+      ],
+      "afterRounds": [
+        {
+          "wid": "shooter",
+          "vis": 0.10638469045236708,
+          "size": 0.285,
+          "recipe": null,
+          "shape": "shot",
+          "seed": 0.08880924410186708,
+          "age": 0.03333333333333333,
+          "vel": [
+            -0.2565371317229969,
+            9.901827979851555,
+            135.59870792657827
+          ]
+        }
+      ],
+      "beforeFile": "native-before-low/shooter-jump-t00-wide.png",
+      "afterFile": "native-release-low/shooter-jump-t00-wide.png"
+    },
+    {
+      "case": "shooter-jump",
+      "view": "muzzle-side",
+      "tick": 0,
+      "matched": {
+        "quality": true,
+        "style": true,
+        "palette": true,
+        "configuredSeed": true,
+        "actorPosition": true,
+        "grounded": true,
+        "actualRoundSeeds": true,
+        "roundAges": true,
+        "velocity": false,
+        "projectilePositions": false
+      },
+      "beforeTime": 6.16666666666665,
+      "afterTime": 6.433333333333316,
+      "beforeRounds": [
+        {
+          "wid": "shooter",
+          "vis": 0.10638469045236708,
+          "size": 0.285,
+          "recipe": null,
+          "shape": "shot",
+          "seed": 0.08880924410186708,
+          "age": 0.03333333333333333,
+          "vel": [
+            -0.25770794621509213,
+            9.833861880650288,
+            135.60365167327447
+          ]
+        }
+      ],
+      "afterRounds": [
+        {
+          "wid": "shooter",
+          "vis": 0.10638469045236708,
+          "size": 0.285,
+          "recipe": null,
+          "shape": "shot",
+          "seed": 0.08880924410186708,
+          "age": 0.03333333333333333,
+          "vel": [
+            -0.2565371317229969,
+            9.901827979851555,
+            135.59870792657827
+          ]
+        }
+      ],
+      "beforeFile": "native-before-low/shooter-jump-t00-muzzle-side.png",
+      "afterFile": "native-release-low/shooter-jump-t00-muzzle-side.png"
+    },
+    {
+      "case": "shooter-jump",
+      "view": "wide",
+      "tick": 2,
+      "matched": {
+        "quality": true,
+        "style": true,
+        "palette": true,
+        "configuredSeed": true,
+        "actorPosition": true,
+        "grounded": true,
+        "actualRoundSeeds": true,
+        "roundAges": true,
+        "velocity": false,
+        "projectilePositions": false
+      },
+      "beforeTime": 6.199999999999983,
+      "afterTime": 6.466666666666649,
+      "beforeRounds": [
+        {
+          "wid": "shooter",
+          "vis": 0.10638469045236708,
+          "size": 0.285,
+          "recipe": null,
+          "shape": "shot",
+          "seed": 0.08880924410186708,
+          "age": 0.06666666666666667,
+          "vel": [
+            -0.25770794621509213,
+            9.833861880650288,
+            135.60365167327447
+          ]
+        }
+      ],
+      "afterRounds": [
+        {
+          "wid": "shooter",
+          "vis": 0.10638469045236708,
+          "size": 0.285,
+          "recipe": null,
+          "shape": "shot",
+          "seed": 0.08880924410186708,
+          "age": 0.06666666666666667,
+          "vel": [
+            -0.2565371317229969,
+            9.901827979851555,
+            135.59870792657827
+          ]
+        }
+      ],
+      "beforeFile": "native-before-low/shooter-jump-t02-wide.png",
+      "afterFile": "native-release-low/shooter-jump-t02-wide.png"
+    },
+    {
+      "case": "shooter-jump",
+      "view": "muzzle-side",
+      "tick": 2,
+      "matched": {
+        "quality": true,
+        "style": true,
+        "palette": true,
+        "configuredSeed": true,
+        "actorPosition": true,
+        "grounded": true,
+        "actualRoundSeeds": true,
+        "roundAges": true,
+        "velocity": false,
+        "projectilePositions": false
+      },
+      "beforeTime": 6.199999999999983,
+      "afterTime": 6.466666666666649,
+      "beforeRounds": [
+        {
+          "wid": "shooter",
+          "vis": 0.10638469045236708,
+          "size": 0.285,
+          "recipe": null,
+          "shape": "shot",
+          "seed": 0.08880924410186708,
+          "age": 0.06666666666666667,
+          "vel": [
+            -0.25770794621509213,
+            9.833861880650288,
+            135.60365167327447
+          ]
+        }
+      ],
+      "afterRounds": [
+        {
+          "wid": "shooter",
+          "vis": 0.10638469045236708,
+          "size": 0.285,
+          "recipe": null,
+          "shape": "shot",
+          "seed": 0.08880924410186708,
+          "age": 0.06666666666666667,
+          "vel": [
+            -0.2565371317229969,
+            9.901827979851555,
+            135.59870792657827
+          ]
+        }
+      ],
+      "beforeFile": "native-before-low/shooter-jump-t02-muzzle-side.png",
+      "afterFile": "native-release-low/shooter-jump-t02-muzzle-side.png"
+    }
+  ],
+  "images": {
+    "native-before-low/shooter-t00-wide.png": "f62c4f1a0038e799f462be613e2330992ca20cb347636baf9554aae4614e0e45",
+    "native-before-low/shooter-t00-muzzle-side.png": "d6a737167cfa83a3fc2e3c12a5411488d0c5c2a28019bf8c4fcf7f3a1d20b8b7",
+    "native-before-low/shooter-t02-wide.png": "d86cac223633399941532eb9d82dde2fa2c7c35183daf6ed2af5e6a9ddc5003a",
+    "native-before-low/shooter-t02-muzzle-side.png": "77bd2cc04ae835362ab6b333bfc90bac28f704308ca4599d8bf7d16cae6b1b82",
+    "native-before-low/splatling-t00-wide.png": "8bebc49f53df4b9b38471c085353a89b785e4c1d98de605b19d443f231a8aba5",
+    "native-before-low/splatling-t00-muzzle-side.png": "b7e584872e2c0ec70787f28fcc17610ca5c1fd2fe9ab8b4944216ddae8a7ec2b",
+    "native-before-low/splatling-t02-wide.png": "f11a030201c2b06b2f2115c9a858001ee0b288d3269cad50d453095df3525796",
+    "native-before-low/splatling-t02-muzzle-side.png": "cac7a3a5ef4c130e008c0412e012b4ae44dbd350c65e70907fcaef864b631067",
+    "native-before-low/splatling-jump-t00-wide.png": "ca457575380917b840a6e55504993ff09885e9989c1533684cc60f822b348600",
+    "native-before-low/splatling-jump-t00-muzzle-side.png": "32c7233692889ff871f8f41b68329ec6ac4239906004bd283422b65a09149170",
+    "native-before-low/splatling-jump-t02-wide.png": "65b0772e03d7618ac8d0cec960da7517805d26509aabab466fb6d181080811ed",
+    "native-before-low/splatling-jump-t02-muzzle-side.png": "f3f7b361d773d4e7a31100ed355f0bfb0ab9b96a734816a5b6c9cb8338cdd037",
+    "native-before-low/shooter-jump-t00-wide.png": "e9d12e2c70a867b5e649fc03d3a44117c8429a8ef8d110b6845f21f77fee5f81",
+    "native-before-low/shooter-jump-t00-muzzle-side.png": "db2661e6bb05b9b08efd8011e259ee2a6a28c4bb30620988f841a038fbc7f607",
+    "native-before-low/shooter-jump-t02-wide.png": "f06621fc9e8bc7569849b795a38d31d58240fce5e369d36064db2fc16d8712e8",
+    "native-before-low/shooter-jump-t02-muzzle-side.png": "768cea7b486554ea9abfe7c93f407fbe00a5d9819afaea75a83da2e7fb3afff0",
+    "native-release-low/shooter-t00-wide.png": "de773f0e8960e8e794b74b995d401e06583aa1d182bbbdde07a2eca82d87c4c3",
+    "native-release-low/shooter-t00-muzzle-side.png": "92c005ae99126e6b1a80a942c3f0c455041e963c72502152977371ad88bff9cc",
+    "native-release-low/shooter-t02-wide.png": "c6ccc8d36a7b9ce3ebb16d76896446fab893d1eb4dfce04751f30eaa9c1cccfa",
+    "native-release-low/shooter-t02-muzzle-side.png": "ec296b546fc614b0fbc51491ace0f36fe3e38d3c46b3bc53839e5644c74bbaf7",
+    "native-release-low/splatling-t00-wide.png": "cb5e7287ff37bffc0dc70eca23a35be1425b437075b3248be75fc07d3a4e05ae",
+    "native-release-low/splatling-t00-muzzle-side.png": "487b410ff762d0b7b03fb86e50b5bcf0264402cb9fb0c2bde45e63404bcf12c6",
+    "native-release-low/splatling-t02-wide.png": "26deee9cd5fc6298e4dadcae96846cba0a436165046356ff5a62e141af910f03",
+    "native-release-low/splatling-t02-muzzle-side.png": "32e4cae7052a6fd4517a0ad2089adff1f10c45cd9bf9796b8f848e18c28a0fa0",
+    "native-release-low/splatling-jump-t00-wide.png": "135e4c502aab69c582873de25d2cf6eb76936a79750c21fba283d16a46642586",
+    "native-release-low/splatling-jump-t00-muzzle-side.png": "49eede4f8b9eb6621fadb1ffcc32629ad3133ca3e6e1db68eeb4cf0f24597d19",
+    "native-release-low/splatling-jump-t02-wide.png": "3a16825317c3b7b6cba6e5749bc021e7b0ca84e3ce651483e1cbf15e4a48ae38",
+    "native-release-low/splatling-jump-t02-muzzle-side.png": "069480a1da66136c1c154103504d4902124f8524b4ef04fb54992b4a4996560f",
+    "native-release-low/shooter-jump-t00-wide.png": "0b4404fc35648217191b3b4b5321bbccc91db798516f3ff50ad132f2e7c48a8b",
+    "native-release-low/shooter-jump-t00-muzzle-side.png": "8aef5a14eb0d69fa5a6196353cc84b7bdace9f09bb758815b7031823489922c2",
+    "native-release-low/shooter-jump-t02-wide.png": "35f6b815f0fd6d83c2f1d8573370852cfdce82adca88e2eaa6a95642049855aa",
+    "native-release-low/shooter-jump-t02-muzzle-side.png": "f6760151154ca632b8f9d339a2c659c5c709f418f77d0e6f9561749359cd1e90"
+  }
+}
