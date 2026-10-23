@@ -13,6 +13,7 @@ import { adaptNetworkSource } from '../adapter.mjs';
 import { validDamageGroup } from '../../splatoon3/runtime/final-damage.mjs';
 import { respawnPunisherEquipped, withHitPunisher } from '../../splatoon3/runtime/clothing-gear.mjs';
 import { clearRemoteC1088Surge } from '../issue-1088-surge-presentation.mjs';
+import { handleOwnerClockMessage } from '../owner-clock.mjs';
 import { clearRemoteRollerPresentation } from '../roller-presentation.mjs';
 import { clearRemoteDodgeClock } from '../../splatoon3/runtime/remote-dodge-clock.mjs';
 import { rearmTeamWipe } from '../../local-quality/team-wipeout.mjs';
@@ -50,11 +51,11 @@ function matchWorld({ myId, cfgId }) {
     emit('damage', { victim: v, attacker: a, amount: damage });
   } } };
   const Klass = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'now', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'objectShredderEquipped', 'withObjectHitGear', 'clearRemoteC1088Surge',
-    'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'clearRemoteDodgeClock', 'acceptPaintTick',
+    'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'clearRemoteDodgeClock', 'acceptPaintTick', 'handleOwnerClockMessage',
     source.slice(source.indexOf('function clearRemoteSquidroll('), source.indexOf('function syncRemoteSquidroll(')) + dropCleanup + hitLimits + hitAuthoritySource
       + 'return class {' + METHODS.map(method).join('\n') + '}');
   const NetMatchClass = Klass(G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, () => 1, 1000, new Set(['shooter']), rearmTeamWipe,
-    respawnPunisherEquipped, withHitPunisher, objectShredderEquipped, withObjectHitGear, clearRemoteC1088Surge, { slosher: { kind: 'slosher' } }, validDamageGroup, clearRemoteRollerPresentation, clearRemoteDodgeClock, acceptPaintTick);
+    respawnPunisherEquipped, withHitPunisher, objectShredderEquipped, withObjectHitGear, clearRemoteC1088Surge, { slosher: { kind: 'slosher' } }, validDamageGroup, clearRemoteRollerPresentation, clearRemoteDodgeClock, acceptPaintTick, handleOwnerClockMessage);
   const n = new NetMatchClass();
   Object.assign(n, { myId, cfg: { id: cfgId }, hitNextSeq: 0, byNid: new Map(), hitPending: new Map(),
     s: { tr: { sendTo(to, data) { sent.push({ to, data }); return true; } } }, peers: new Map(),

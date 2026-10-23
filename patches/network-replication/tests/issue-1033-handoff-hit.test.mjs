@@ -1,3 +1,4 @@
+import { beginOwnerClock, retireOwnerClock, closeOwnerClock, handleOwnerClockMessage } from '../owner-clock.mjs';
 import { splashdownProtected } from '../../splatoon3/runtime/splashdown-network.mjs';
 import { transferPaintOwner } from '../paint-authority.mjs';
 import { acceptPaintTick, forgetPaintPeer } from '../../splatoon3/runtime/paint-packet-codec.mjs';
@@ -115,6 +116,7 @@ function makeWorld(id) {
     'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'objectShredderEquipped', 'withObjectHitGear', 'clearRemoteC1088Surge',
     'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'C1088_SURGE_TAG',
     'retireDisconnectedMainProjectiles', 'clearRemoteDodgeClock', 'KIT_FORWARD', 'acceptPaintTick', 'forgetPaintPeer', 'transferPaintOwner',
+    'beginOwnerClock', 'retireOwnerClock', 'closeOwnerClock', 'handleOwnerClockMessage',
     `${helpers}\n${ghostHelper}\n${dropCleanup}\n${hitLimits}\n${hitAuthoritySource}\n${forwardList}\nreturn class NetMatchHarness {
 ${methods}
   _setupActor() {}
@@ -132,6 +134,7 @@ ${methods}
     () => {}, respawnPunisherEquipped, withHitPunisher, objectShredderEquipped, withObjectHitGear, clearRemoteC1088Surge,
     WEAPONS, validDamageGroup, clearRemoteRollerPresentation, C1088_SURGE_TAG,
     retireDisconnectedMainProjectiles, clearRemoteDodgeClock, KIT_FORWARD, acceptPaintTick, forgetPaintPeer, transferPaintOwner,
+    beginOwnerClock, retireOwnerClock, closeOwnerClock, handleOwnerClockMessage,
   );
   const net = new NetMatchHarness();
   Object.assign(net, {

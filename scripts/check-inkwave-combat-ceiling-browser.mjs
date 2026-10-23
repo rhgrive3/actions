@@ -55,6 +55,10 @@ try {
  const address=base+'/?map=tidewater&difficulty=normal&skipTitle&relay='+encodeURIComponent(relayURL);
  const netmatchURL=base+'/_versions/'+build.build.revision+'/src/net/netmatch.js';
  const actorURL=base+'/_versions/'+build.build.revision+'/src/game/actor.js';
+ // Resolve the same revision-scoped ESM instance imported by Actor and InkFlight.
+ const motionURL=new URL('../../patches/splatoon3/runtime/actor-motion.mjs',actorURL).href;
+ const motionPath=new URL(motionURL).pathname.slice(1);
+ assert(build.artifacts[motionPath],'Actor motion module must be part of the verified build');
  browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--disable-background-timer-throttling','--disable-renderer-backgrounding','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  report.phase='native-menu';
  for(let i=0;i<2;i++){
@@ -102,12 +106,14 @@ try {
  },spawnStarts[i],{timeout:180000})));
  report.spawnReady=await Promise.all(pages.map(p=>p.evaluate(()=>({at:__G.time,ready:__ceilingPlacement.spawnReady()}))));
  report.phase='native-actor-placement';
- report.roles=await Promise.all(pages.map(p=>p.evaluate(async url=>{
-  const {Actor}=await import(url),G=__G,n=G.netm;__inkwave.debug.freeze();
+ assert(loaded.has(motionPath),'Native game must already load the same actor motion module');
+ report.roles=await Promise.all(pages.map(p=>p.evaluate(async ({actorURL,motionURL})=>{
+  const {Actor}=await import(actorURL),{beginActorMotionTick}=await import(motionURL),G=__G,n=G.netm;
+  window.__ceilingBeginActorMotionTick=beginActorMotionTick;__inkwave.debug.freeze();
   const actors=G.match.actors.map(a=>{if(!(a instanceof Actor)||a.damage!==Actor.prototype.damage||a.weapon.id!=='shooter'||a.weapon.damage!==36)throw Error('Native Actor/shooter identity failed');return {nid:a.nid,owner:a.owner,remote:a.remote,team:a.team,weapon:a.weapon.id,damage:a.weapon.damage};});
   window.__ceilingOriginalDamage=new Map(G.match.actors.map(a=>[a,a.damage]));
   return {myId:n.myId,isHost:n.isHost,local:G.match.local.nid,actors};
- },actorURL)));
+ },{actorURL,motionURL})));
  assert.equal(report.roles[0].isHost,true);assert.equal(report.roles[1].isHost,false);
  const attacker=report.roles[1].local,victim=report.roles[0].local,attackerOwner=owners[1];
  const placement=await host.evaluate(()=>__ceilingPlacement.select());
@@ -130,6 +136,9 @@ try {
  },{attacker,placement})));
  const step=async()=>{await Promise.all(pages.map(p=>p.evaluate(({attacker,victim,placement})=>{
   const G=__G,dt=1/60;G.time+=dt;G.net.update(dt);
+  // Match the native fixed clock: capture starts before remote/local movement,
+  // then sweep projectiles over that same interval, never a pre-freeze pose.
+  window.__ceilingBeginActorMotionTick(G.actors);
   for(const a of G.match.actors){
    if(a.remote)G.netm.applyRemote(a,dt);
    else {
