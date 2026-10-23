@@ -134,39 +134,57 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
     }
   }
 
-  function handoff(ch, dt) {
+  function handoff(ch, dt, frame) {
     const sm = ch.sourceMotion;
     const on = ch.s3WeaponHandoffEnabled !== false && ch.kidForm && !ch.dance && !!ch.weapon && !!sm?.active && !sm.manual && !ch._rainmakerPose;
     let st = states.get(ch);
     if (st) st.faded = false;
-    if (!on) { if (st) { st.valid = false; st.t = st.d = 0; st.w = 0; } return; }
+    if (!on) { if (st) { st.valid = false; st.t = st.d = 0; st.w = 0; st.spawning = st.spawnLanding = false; } return; }
     if (!st) states.set(ch, st = { valid: false, faded: false, owner: '', t: 0, d: 0, w: 0, time: 0, weapon: null,
       bones: BONES.map(n => ch.bones[n]), prev: BONES.map(() => new THREE.Quaternion()),
       from: BONES.map(() => new THREE.Quaternion()), raw: BONES.map(() => new THREE.Quaternion()), shown: BONES.map(() => new THREE.Quaternion()) });
     // Hidden frames skip _applyPose: a stale previous pose is not a fade source.
     if (st.valid && (st.weapon !== ch.weapon || ch.t - st.time > 0.1 || ch.t < st.time)) st.valid = false;
     const owner = sm.sourceUpper ? 'source' : 'native';
-    if (!st.valid) st.t = st.d = 0;
-    else if (st.owner !== owner) {
+    const actor = ch.actor, bound = actor?.character === ch;
+    const spawning = ch.weaponKind === 'roller' && bound && !!actor.s3?.squidSpawn;
+    const ready = ch.weaponKind === 'roller' && bound && actor.alive !== false && ch.grounded && !spawning &&
+      ch.s3SpawnPoseMotionEnabled !== false && ch.s3HitSpawnMotionEnabled !== false &&
+      !actor.intent?.fire && !actor.intent?.sub && !actor.intent?.special && !actor.intent?.jump && !actor.intent?.squid &&
+      !frame?.firing && !frame?.rolling && !(frame?.charge > 0) && !frame?.subAim && !(ch.wSub > .001) &&
+      !ch.s3RollerFlick && !actor.weaponRunner?.s3RollerAttack && !actor.weaponRunner?.dodge && !actor.specialActive && !actor.superJumpState;
+    const landed = st.valid && st.spawning && ready && owner === 'native';
+    if (!st.valid) { st.t = st.d = 0; st.spawnLanding = false; }
+    else if (st.owner !== owner || landed) {
       for (let i = 0; i < BONES.length; i++) st.from[i].copy(st.prev[i]);
       st.t = 0; st.d = owner === 'native' ? HANDOFF_RAISE : HANDOFF_FADE;
+      st.spawnLanding = landed;
     }
+    // The native ready/attack pose is already evaluated. Only its idle display
+    // handoff fades; a fresh/held attack, jump or other action owns this frame.
+    if (st.spawnLanding && !ready) { st.t = st.d = 0; st.spawnLanding = false; }
     st.w = 0;
     if (st.t < st.d) {
       st.t += Math.max(0, dt || 0);
       st.w = 1 - smooth(st.t / st.d);
       if (st.w > 1e-4) {
-        for (let i = 0; i < BONES.length; i++) { st.raw[i].copy(st.bones[i].quaternion); st.bones[i].quaternion.slerp(st.from[i], st.w); }
+        for (let i = 0; i < BONES.length; i++) {
+          st.raw[i].copy(st.bones[i].quaternion);
+          // Spawn landing keeps native torso/neck motion; reuse only the
+          // existing arm display fade and support refit, with no new solver.
+          if (!st.spawnLanding || i >= 3) st.bones[i].quaternion.slerp(st.from[i], st.w);
+        }
         st.faded = true;
         const err = ch.ikErr[0];
         refitSupport(ch);
         ch.ikErr[0] = err;   // presentation only: next frame's reach integration keeps its native input
         const saved = sm.renderedPose, list = ch.boneList;
-        if (saved && list) for (const b of st.bones) { const k = list.indexOf(b); if (k >= 0) saved[k].q.copy(b.quaternion); }
+        // A short spawn display return must not seed future action/body history.
+        if (saved && list && !st.spawnLanding) for (const b of st.bones) { const k = list.indexOf(b); if (k >= 0) saved[k].q.copy(b.quaternion); }
       }
     }
     for (let i = 0; i < BONES.length; i++) st.prev[i].copy(st.bones[i].quaternion);
-    st.owner = owner; st.weapon = ch.weapon; st.time = ch.t; st.valid = true;
+    st.owner = owner; st.weapon = ch.weapon; st.time = ch.t; st.valid = true; st.spawning = spawning;
   }
 
   // Interrupted source return still evaluates its canonical pose and history.
@@ -239,7 +257,7 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
       result = applyPose.call(this, dt, s);
       if (this._rainmakerPose) objectiveSupport(this);
     }
-    handoff(this, dt);
+    handoff(this, dt, s);
     return result;
   };
   // Gameplay muzzle: evaluated on the unfaded upper body (the pose every
