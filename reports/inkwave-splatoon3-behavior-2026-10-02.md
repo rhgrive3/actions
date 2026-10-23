@@ -6148,3 +6148,5 @@ Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテ�
 ### 2026-10-23 follow-up: 未接地Squid Spawn landingの表示owner
 
 親の独立検証で、`702ce3d`はsupport消失後の未接地landing中に較正spawn表示が先に終了するとreadyを許可する回帰が見つかった。別candidateの`spawnMotionAllowsAction`は正しく結び付いたActorのactive squidSpawnをread-onlyで優先し、実支持への着地・lifecycle終了後は古い時計を待たず既存readyへ戻す。helperの実行2行だけを追加し、時計／physics／攻撃gate／grip／IK／曲線は変更しない。[元702との88点の一致、source・通常生成物の焦点回帰、exact patch/hash](respawn-spawn-owner-20261023/README.md)を保存する。PR1862は独立再確認まで更新しない。巨大に見えるreadyの最終pivot／投影の切り分けは未判定であり、モデル変更・見た目受入済みとは扱わない。
+
+追加の[通常生成物・実ブラウザ診断](respawn-ready-pivot-20261023/README.md)では、初期settledと着地後145の全記録が元mainと一致し、ドラムの実寸／scaleは一定だった。702/708の通常8地点も最終pivot・カメラまで完全一致する。61のspawn加算は0だが、既存readyが着地中の胴体／速度swayと近いカメラで投影され、145より横46.81%大きく見える。一方、60→61は174.881°の1tick切替であり、元mainの同地点13.110°、従来の遅い133→134切替153.212°より大きい。早期ready復帰による着地時の表示popは実在し、純粋な遠近だけとは扱わない。708の支持消失ケースは85更新のnative状態が702と一致し、空中ready4→0、実支持着地後の次更新で即ready、無入力発射／塗り0を確認した。これは表示原因の切り分けで、curve／geometry／grip変更や見た目／Switch実機受入を追加したものではない。PR/main判断は親の独立確認に残す。

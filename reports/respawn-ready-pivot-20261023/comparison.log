@@ -1,0 +1,57 @@
+{
+  "status": "pass",
+  "matchedNormalRows": 8,
+  "matchedMissRows": 85,
+  "premature": {
+    "old702": 4,
+    "new708": 0
+  },
+  "transitions": [
+    {
+      "tag": "708",
+      "from": "normal-60",
+      "to": "normal-61",
+      "ticks": 1,
+      "pivotWorldRotationDegrees": 174.881224764038,
+      "pivotWorldTranslation": 0.2531888387615761
+    },
+    {
+      "tag": "708",
+      "from": "normal-61",
+      "to": "normal-62",
+      "ticks": 1,
+      "pivotWorldRotationDegrees": 1.331109455911802,
+      "pivotWorldTranslation": 0.018632149395328566
+    },
+    {
+      "tag": "main7e",
+      "from": "normal-60",
+      "to": "normal-61",
+      "ticks": 1,
+      "pivotWorldRotationDegrees": 13.109646871465248,
+      "pivotWorldTranslation": 0.07996367316837814
+    },
+    {
+      "tag": "main7e",
+      "from": "normal-133",
+      "to": "normal-134",
+      "ticks": 1,
+      "pivotWorldRotationDegrees": 153.2119893434004,
+      "pivotWorldTranslation": 0.15917083895206116
+    }
+  ],
+  "ratios": {
+    "actual61To145": [
+      1.4680601246876135,
+      1.0385957133377384
+    ],
+    "frozen61PoseCamera61To145": [
+      1.1018106448459815,
+      1.0994399944590372
+    ],
+    "frozen145CameraPose61To145": [
+      1.3324069172455935,
+      0.9446588432038654
+    ]
+  }
+}

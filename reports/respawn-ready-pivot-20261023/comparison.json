@@ -1,0 +1,1121 @@
+{
+  "scope": "Native offline Game, fixed 60Hz input; normal versioned emitted builds. Missed support uses a genuine native lower dry collision floor while retaining the stage visual. No transport, FPS, retail equivalence or visual acceptance claim.",
+  "builds": [
+    {
+      "tag": "main7e",
+      "contentHash": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+      "inputHash": "8710f36362bd7e4c59b52cf6dd8d95a2ac720ee8b8b64541e1f0aecc8c4925f5",
+      "optimization": "esbuild-minify",
+      "version": "cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558",
+      "inputCount": 1420,
+      "artifactCount": 2110,
+      "servedRuntimeResponses": [
+        {
+          "path": "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/roller.mjs",
+          "status": 200,
+          "sha256": "3bb6bb6f9ceeffed97b0cbaf1f2737d84fca7362b7700892070e2a0219073598"
+        },
+        {
+          "path": "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/roller-detail-motion.mjs",
+          "status": 200,
+          "sha256": "c62102b32d29792a197d76ab37f6074849f2d78efd6b02a0c8f96fc40e1f934b"
+        },
+        {
+          "path": "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+          "status": 200,
+          "sha256": "1c1bfc50619302e977e0df005d130a7c1757aac636fa6bbde93a780bf40390d4"
+        },
+        {
+          "path": "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/respawn-lifecycle.mjs",
+          "status": 200,
+          "sha256": "3efcb07ae094262be3eebc68b048662331b084fec01eb53061c74ddbb1bbfb2c"
+        }
+      ]
+    },
+    {
+      "tag": "702",
+      "contentHash": "f4e8d88d57e6d32b1de97d204628680d39b36ec23a2e586d0b73e9482cf67ac2",
+      "inputHash": "18f8d3566ffd8285705333d621392687402ce51b378add1eae7722ad087d60c5",
+      "optimization": "esbuild-minify",
+      "version": "ddf8641a13d75e1c3bad22ffdf0c4b6445a03673d0016cb575617c93f5ebdf05",
+      "inputCount": 1420,
+      "artifactCount": 2110,
+      "servedRuntimeResponses": [
+        {
+          "path": "/_versions/ddf8641a13d75e1c3bad22ffdf0c4b6445a03673d0016cb575617c93f5ebdf05/patches/splatoon3/runtime/roller.mjs",
+          "status": 200,
+          "sha256": "5f8d7c69c100759cf9408d0ef9a31969469a365a1473aa2dd04dbdc4072ef826"
+        },
+        {
+          "path": "/_versions/ddf8641a13d75e1c3bad22ffdf0c4b6445a03673d0016cb575617c93f5ebdf05/patches/splatoon3/runtime/roller-detail-motion.mjs",
+          "status": 200,
+          "sha256": "8ecafe227f5d40dc0e1581f907a55695797a962529c3573dfe81990c58516ac2"
+        },
+        {
+          "path": "/_versions/ddf8641a13d75e1c3bad22ffdf0c4b6445a03673d0016cb575617c93f5ebdf05/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+          "status": 200,
+          "sha256": "b77b7e6561b53cd4831fbf682a329251d972419b0afa28a9680fa5639434b9e8"
+        },
+        {
+          "path": "/_versions/ddf8641a13d75e1c3bad22ffdf0c4b6445a03673d0016cb575617c93f5ebdf05/patches/splatoon3/runtime/respawn-lifecycle.mjs",
+          "status": 200,
+          "sha256": "b61a139346626b5fbe1fc5dd01f49a23faf3f57ef7adafb51a179ca2618bb99f"
+        }
+      ]
+    },
+    {
+      "tag": "708",
+      "contentHash": "d06bdd157e91f91b87c2e55cb6394ffdb0e85188ec81e68a875a73c7286be557",
+      "inputHash": "fedfdd0c90001397b7a905d4ce4892d472c3d208f428f72a847b4c3fbcd9c8b1",
+      "optimization": "esbuild-minify",
+      "version": "a5ebc35d4144c9b5fd6a8d268da7c3e4a17cc29ec60ee3700dffb62f22b27dad",
+      "inputCount": 1420,
+      "artifactCount": 2110,
+      "servedRuntimeResponses": [
+        {
+          "path": "/_versions/a5ebc35d4144c9b5fd6a8d268da7c3e4a17cc29ec60ee3700dffb62f22b27dad/patches/splatoon3/runtime/roller.mjs",
+          "status": 200,
+          "sha256": "5f8d7c69c100759cf9408d0ef9a31969469a365a1473aa2dd04dbdc4072ef826"
+        },
+        {
+          "path": "/_versions/a5ebc35d4144c9b5fd6a8d268da7c3e4a17cc29ec60ee3700dffb62f22b27dad/patches/splatoon3/runtime/roller-detail-motion.mjs",
+          "status": 200,
+          "sha256": "8ecafe227f5d40dc0e1581f907a55695797a962529c3573dfe81990c58516ac2"
+        },
+        {
+          "path": "/_versions/a5ebc35d4144c9b5fd6a8d268da7c3e4a17cc29ec60ee3700dffb62f22b27dad/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+          "status": 200,
+          "sha256": "3f86060768bc6d76516345e080c0c9abc68cc8794243f939040af92e0aeb9427"
+        },
+        {
+          "path": "/_versions/a5ebc35d4144c9b5fd6a8d268da7c3e4a17cc29ec60ee3700dffb62f22b27dad/patches/splatoon3/runtime/respawn-lifecycle.mjs",
+          "status": 200,
+          "sha256": "b61a139346626b5fbe1fc5dd01f49a23faf3f57ef7adafb51a179ca2618bb99f"
+        }
+      ]
+    }
+  ],
+  "matchedNormalRows702To708": [
+    "settled",
+    "normal-59",
+    "normal-60",
+    "normal-61",
+    "normal-62",
+    "normal-133",
+    "normal-134",
+    "normal-145"
+  ],
+  "originalMainInitialAndPost145Exact": true,
+  "normalNativeFieldsAndCameraAllThreeExact": true,
+  "matchedMissNativeRows": 85,
+  "nativeFieldsCompared": [
+    "tick",
+    "position",
+    "velocity",
+    "alive",
+    "grounded",
+    "groundHit",
+    "phase",
+    "spawnTime",
+    "spawnPose",
+    "ink",
+    "turf",
+    "rolling",
+    "flick",
+    "fire",
+    "physical",
+    "previous",
+    "shotCount",
+    "paintCalls",
+    "projectiles"
+  ],
+  "intrinsicBoundsRoundtrip": {
+    "maxDifference": 7.105427357601002e-15,
+    "tolerance": 1e-12,
+    "units": "world units"
+  },
+  "prematureAirborneReady": {
+    "old702": 4,
+    "new708": 0
+  },
+  "missedSupport": {
+    "miss-air": {
+      "tick": 1722,
+      "position": [
+        -1.887497760614327,
+        -6.687921178423599,
+        -31.186197177973785
+      ],
+      "grounded": false,
+      "groundHit": false,
+      "lifecycle": "landing",
+      "spawnTime": 0.5333334803581238,
+      "eligible": false,
+      "ANCR": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "projectedPixels": [
+        177.65131108115412,
+        64.44752057181181
+      ]
+    },
+    "miss-touchdown": {
+      "tick": 1726,
+      "position": [
+        -1.887497760614327,
+        -8,
+        -31.186197177973785
+      ],
+      "grounded": true,
+      "groundHit": true,
+      "lifecycle": null,
+      "spawnTime": 0.6000000834465027,
+      "eligible": true,
+      "ANCR": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "projectedPixels": [
+        179.64983696734015,
+        60.96019382885691
+      ]
+    },
+    "miss-post": {
+      "tick": 1727,
+      "position": [
+        -1.887497760614327,
+        -8,
+        -31.186197177973785
+      ],
+      "grounded": true,
+      "groundHit": true,
+      "lifecycle": null,
+      "spawnTime": 0.6166667342185974,
+      "eligible": true,
+      "ANCR": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ],
+      "projectedPixels": [
+        236.1794491033522,
+        256.50236905743844
+      ]
+    }
+  },
+  "noInput": {
+    "shots": 0,
+    "paintSplatCalls": 0,
+    "projectiles": 0,
+    "turf": 0,
+    "ink": 100,
+    "rolling": false,
+    "flick": -1
+  },
+  "dimensionsAndTransforms": [
+    {
+      "label": "settled",
+      "pivotWorldPosition": [
+        0.3070481712514252,
+        0.626385083990827,
+        -26.896220703432448
+      ],
+      "pivotWorldQuaternion": [
+        0.8008954505458511,
+        -0.48366518321766616,
+        -0.22687694476421558,
+        -0.27048349260617516
+      ],
+      "pivotLocalPosition": [
+        0.0255,
+        -0.0525,
+        0
+      ],
+      "pivotLocalQuaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "offLocalPosition": [
+        3.469446951953614e-18,
+        -6.938893903907228e-18,
+        0.02977295429443282
+      ],
+      "offLocalQuaternion": [
+        0,
+        0,
+        -0.1452131446854048,
+        0.9894003954974829
+      ],
+      "worldDrumSize": [
+        1.6693065917503562,
+        1.4029878172942924,
+        1.445561339002296
+      ],
+      "intrinsicDrumSize": [
+        2.089520215988159,
+        0.43197852373123347,
+        0.43197852373122814
+      ],
+      "projectedPixels": [
+        223.16888669478618,
+        240.64625471920232
+      ],
+      "cameraWorldPosition": [
+        0.12350129995780129,
+        3.9540102270263637,
+        -31.25191896788036
+      ],
+      "cameraRelativeMatrix": [
+        -0.9990207899878102,
+        0,
+        0.04424320481306516,
+        0,
+        0.019244269212307444,
+        0.9004471023526769,
+        0.43453961150527115,
+        0,
+        -0.03983866557272053,
+        0.4349655341112302,
+        -0.8995653755346059,
+        0,
+        -0.4594245083350592,
+        3.9540102270263637,
+        -4.028727108430697,
+        1
+      ],
+      "fov": 70.24080820418966,
+      "body": {
+        "form": "kid",
+        "formPrev": "squid",
+        "formT": 1.8499999999999983,
+        "kidScale": 1,
+        "kidSY": 1,
+        "kidSXZ": 1,
+        "kidLift": 0,
+        "wAir": 4.248332884134119e-18,
+        "wAim": 0,
+        "wRoll": 0,
+        "wSub": 0,
+        "vyS": -9.763736781929953e-10,
+        "sourceState": "idle",
+        "sourceUpper": false,
+        "sourceClips": [
+          {
+            "name": "WaitHold_Nrml",
+            "frame": 471.99999999999864,
+            "weight": 1
+          }
+        ]
+      },
+      "ANC": [
+        -0.07999999821186066,
+        0.800000011920929,
+        0.2800000011920929
+      ],
+      "ANCR": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ],
+      "AFOLT": [
+        1
+      ],
+      "AFOLR": [
+        1
+      ],
+      "spawnChannelL1": 0
+    },
+    {
+      "label": "normal-60",
+      "pivotWorldPosition": [
+        -0.7569063324985139,
+        0.8593553455130044,
+        -29.468805978889264
+      ],
+      "pivotWorldQuaternion": [
+        0.16972796223965428,
+        -0.14622830566047235,
+        0.1820989429930725,
+        0.9574182348474713
+      ],
+      "pivotLocalPosition": [
+        0.0255,
+        -0.0525,
+        0
+      ],
+      "pivotLocalQuaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "offLocalPosition": [
+        3.469446951953614e-18,
+        -6.938893903907228e-18,
+        0.02977295429443282
+      ],
+      "offLocalQuaternion": [
+        0,
+        0,
+        -0.1452131446854048,
+        0.9894003954974829
+      ],
+      "worldDrumSize": [
+        2.0802943550435558,
+        0.501024241439378,
+        0.9162829811299247
+      ],
+      "intrinsicDrumSize": [
+        2.08952021598816,
+        0.4319785237312316,
+        0.43197852373123524
+      ],
+      "projectedPixels": [
+        188.1875248890687,
+        68.15549727084903
+      ],
+      "cameraWorldPosition": [
+        -0.9364075449571092,
+        3.8075116944876686,
+        -33.35321440543203
+      ],
+      "cameraRelativeMatrix": [
+        -0.9860430778542038,
+        0,
+        0.1664903859560899,
+        0,
+        0.07241757965177553,
+        0.9004471023526769,
+        0.42889475401553523,
+        0,
+        -0.14991578560373997,
+        0.4349655341112302,
+        -0.8878796322487328,
+        0,
+        -0.9485055352314058,
+        3.8075116944876686,
+        -3.7389127310972228,
+        1
+      ],
+      "fov": 70.21186784201439,
+      "body": {
+        "form": "kid",
+        "formPrev": "squid",
+        "formT": 0.18333333333333332,
+        "kidScale": 1,
+        "kidSY": 1,
+        "kidSXZ": 1,
+        "kidLift": 0,
+        "wAir": 0.9999949695443929,
+        "wAim": 0,
+        "wRoll": 0,
+        "wSub": 0,
+        "vyS": -13.278651530890793,
+        "sourceState": "air",
+        "sourceUpper": false,
+        "sourceClips": [
+          {
+            "name": "Jump_Nrml00",
+            "frame": 21,
+            "weight": 1
+          }
+        ]
+      },
+      "ANC": [
+        -0.11999999731779099,
+        0.8549999594688416,
+        0.13499999046325684
+      ],
+      "ANCR": [
+        0.6000000238418579,
+        -0.03999999910593033,
+        -0.03999999910593033
+      ],
+      "AFOLT": [
+        1
+      ],
+      "AFOLR": [
+        1
+      ],
+      "spawnChannelL1": 0.7249999698251486
+    },
+    {
+      "label": "normal-61",
+      "pivotWorldPosition": [
+        -0.7406312251981468,
+        0.7485601502071578,
+        -29.24172860517507
+      ],
+      "pivotWorldQuaternion": [
+        0.7893022475739142,
+        -0.5490890877938056,
+        -0.11857723009381618,
+        -0.24787613064555453
+      ],
+      "pivotLocalPosition": [
+        0.0255,
+        -0.0525,
+        0
+      ],
+      "pivotLocalQuaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "offLocalPosition": [
+        3.469446951953614e-18,
+        -6.938893903907228e-18,
+        0.02977295429443282
+      ],
+      "offLocalQuaternion": [
+        0,
+        0,
+        -0.1452131446854048,
+        0.9894003954974829
+      ],
+      "worldDrumSize": [
+        1.5855277160673409,
+        1.7143639227852436,
+        1.131386439235854
+      ],
+      "intrinsicDrumSize": [
+        2.089520215988161,
+        0.4319785237312326,
+        0.4319785237312317
+      ],
+      "projectedPixels": [
+        241.33214304677995,
+        285.6876586165424
+      ],
+      "cameraWorldPosition": [
+        -0.9473320147664431,
+        3.6541815796779917,
+        -33.29531032921498
+      ],
+      "cameraRelativeMatrix": [
+        -0.9860430778542042,
+        0,
+        0.16649038595608998,
+        0,
+        0.07241757965177556,
+        0.9004471023526769,
+        0.4288947540155354,
+        0,
+        -0.14991578560374005,
+        0.43496553411123035,
+        -0.8878796322487332,
+        0,
+        -0.9496370610683194,
+        3.6541815796779917,
+        -3.6799979983689326,
+        1
+      ],
+      "fov": 70.21418192013822,
+      "body": {
+        "form": "kid",
+        "formPrev": "squid",
+        "formT": 0.19999999999999998,
+        "kidScale": 1,
+        "kidSY": 1,
+        "kidSXZ": 1,
+        "kidLift": 0,
+        "wAir": 0.6703166740204052,
+        "wAim": 0,
+        "wRoll": 0,
+        "wSub": 0,
+        "vyS": -10.51522560233435,
+        "sourceState": "land",
+        "sourceUpper": false,
+        "sourceClips": [
+          {
+            "name": "Jump_Nrml00_Ed",
+            "frame": 0,
+            "weight": 1
+          }
+        ]
+      },
+      "ANC": [
+        -0.07999999821186066,
+        0.800000011920929,
+        0.2800000011920929
+      ],
+      "ANCR": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ],
+      "AFOLT": [
+        1
+      ],
+      "AFOLR": [
+        1
+      ],
+      "spawnChannelL1": 0
+    },
+    {
+      "label": "normal-133",
+      "pivotWorldPosition": [
+        -0.7612173660076085,
+        0.6862482442928008,
+        -29.209741024744954
+      ],
+      "pivotWorldQuaternion": [
+        0.6864238933967238,
+        -0.6222911802539262,
+        -0.13897115508396352,
+        -0.34966118401516594
+      ],
+      "pivotLocalPosition": [
+        0.0255,
+        -0.0525,
+        0
+      ],
+      "pivotLocalQuaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "offLocalPosition": [
+        3.469446951953614e-18,
+        -6.938893903907228e-18,
+        0.02977295429443282
+      ],
+      "offLocalQuaternion": [
+        0,
+        0,
+        -0.1452131446854048,
+        0.9894003954974829
+      ],
+      "worldDrumSize": [
+        1.2937951525811369,
+        1.771530552402975,
+        1.3993422781570644
+      ],
+      "intrinsicDrumSize": [
+        2.089520215988158,
+        0.4319785237312318,
+        0.4319785237312318
+      ],
+      "projectedPixels": [
+        176.89801638729483,
+        273.0901901972015
+      ],
+      "cameraWorldPosition": [
+        -0.9107743588438393,
+        3.944842435221862,
+        -33.5346968221144
+      ],
+      "cameraRelativeMatrix": [
+        -0.9860430778542042,
+        0,
+        0.16649038595608998,
+        0,
+        0.07241757965177555,
+        0.9004471023526769,
+        0.4288947540155353,
+        0,
+        -0.14991578560374005,
+        0.43496553411123023,
+        -0.8878796322487332,
+        0,
+        -0.953445187098759,
+        3.944842435221862,
+        -3.922129890868405,
+        1
+      ],
+      "fov": 70.24074220805771,
+      "body": {
+        "form": "kid",
+        "formPrev": "squid",
+        "formT": 1.4,
+        "kidScale": 1,
+        "kidSY": 1,
+        "kidSXZ": 1,
+        "kidLift": 0,
+        "wAir": 2.0825668147428955e-13,
+        "wAim": 0,
+        "wRoll": 0,
+        "wSub": 0,
+        "vyS": -5.317056789302388e-7,
+        "sourceState": "idle",
+        "sourceUpper": false,
+        "sourceClips": [
+          {
+            "name": "WaitHold_Nrml",
+            "frame": 607.0000000000049,
+            "weight": 1
+          }
+        ]
+      },
+      "ANC": [
+        -0.07999999821186066,
+        0.800000011920929,
+        0.2800000011920929
+      ],
+      "ANCR": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ],
+      "AFOLT": [
+        1
+      ],
+      "AFOLR": [
+        1
+      ],
+      "spawnChannelL1": 0
+    },
+    {
+      "label": "normal-134",
+      "pivotWorldPosition": [
+        -0.7600483615933628,
+        0.6826884060211352,
+        -29.20933505314378
+      ],
+      "pivotWorldQuaternion": [
+        0.6804932862348457,
+        -0.6276649854214874,
+        -0.13961162219224305,
+        -0.3513888848754255
+      ],
+      "pivotLocalPosition": [
+        0.0255,
+        -0.0525,
+        0
+      ],
+      "pivotLocalQuaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "offLocalPosition": [
+        3.469446951953614e-18,
+        -6.938893903907228e-18,
+        0.02977295429443282
+      ],
+      "offLocalQuaternion": [
+        0,
+        0,
+        -0.1452131446854048,
+        0.9894003954974829
+      ],
+      "worldDrumSize": [
+        1.2701182293328996,
+        1.7773721310553046,
+        1.4102382265078504
+      ],
+      "intrinsicDrumSize": [
+        2.089520215988161,
+        0.4319785237312317,
+        0.43197852373123524
+      ],
+      "projectedPixels": [
+        173.69181658993912,
+        273.82929520070803
+      ],
+      "cameraWorldPosition": [
+        -0.9104820943355122,
+        3.945420144734766,
+        -33.53589262698909
+      ],
+      "cameraRelativeMatrix": [
+        -0.9860430778542038,
+        0,
+        0.1664903859560899,
+        0,
+        0.07241757965177553,
+        0.9004471023526769,
+        0.42889475401553523,
+        0,
+        -0.14991578560373997,
+        0.4349655341112302,
+        -0.8878796322487328,
+        0,
+        -0.9533560917185371,
+        3.945420144734766,
+        -3.9233576652183473,
+        1
+      ],
+      "fov": 70.24074748481779,
+      "body": {
+        "form": "kid",
+        "formPrev": "squid",
+        "formT": 1.4166666666666665,
+        "kidScale": 1,
+        "kidSY": 1,
+        "kidSXZ": 1,
+        "kidLift": 0,
+        "wAir": 1.3959862831307524e-13,
+        "wAim": 0,
+        "wRoll": 0,
+        "wSub": 0,
+        "vyS": -4.2105217950687086e-7,
+        "sourceState": "idle",
+        "sourceUpper": false,
+        "sourceClips": [
+          {
+            "name": "WaitHold_Nrml",
+            "frame": 608.000000000005,
+            "weight": 1
+          }
+        ]
+      },
+      "ANC": [
+        -0.07999999821186066,
+        0.800000011920929,
+        0.2800000011920929
+      ],
+      "ANCR": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ],
+      "AFOLT": [
+        1
+      ],
+      "AFOLR": [
+        1
+      ],
+      "spawnChannelL1": 0
+    },
+    {
+      "label": "normal-145",
+      "pivotWorldPosition": [
+        -0.7593163181513937,
+        0.6730620627502887,
+        -29.208490721136418
+      ],
+      "pivotWorldQuaternion": [
+        0.6641434188333305,
+        -0.6423264874793465,
+        -0.1413409293108208,
+        -0.3554615934308149
+      ],
+      "pivotLocalPosition": [
+        0.0255,
+        -0.0525,
+        0
+      ],
+      "pivotLocalQuaternion": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "offLocalPosition": [
+        3.469446951953614e-18,
+        -6.938893903907228e-18,
+        0.02977295429443282
+      ],
+      "offLocalQuaternion": [
+        0,
+        0,
+        -0.1452131446854048,
+        0.9894003954974829
+      ],
+      "worldDrumSize": [
+        1.2033865043210534,
+        1.7913503914095852,
+        1.439173041108873
+      ],
+      "intrinsicDrumSize": [
+        2.0895202159881627,
+        0.4319785237312317,
+        0.43197852373123524
+      ],
+      "projectedPixels": [
+        164.3884599740986,
+        275.0710935426713
+      ],
+      "cameraWorldPosition": [
+        -0.907923400485867,
+        3.95032238235263,
+        -33.546041784307754
+      ],
+      "cameraRelativeMatrix": [
+        -0.986043077854204,
+        0,
+        0.16649038595608995,
+        0,
+        0.07241757965177555,
+        0.9004471023526769,
+        0.42889475401553534,
+        0,
+        -0.14991578560373997,
+        0.4349655341112303,
+        -0.8878796322487328,
+        0,
+        -0.9525228464788595,
+        3.95032238235263,
+        -3.933791169465046,
+        1
+      ],
+      "fov": 70.24078392557173,
+      "body": {
+        "form": "kid",
+        "formPrev": "squid",
+        "formT": 1.5999999999999992,
+        "kidScale": 1,
+        "kidSY": 1,
+        "kidSXZ": 1,
+        "kidLift": 0,
+        "wAir": 1.7138998098017385e-15,
+        "wAim": 0,
+        "wRoll": 0,
+        "wSub": 0,
+        "vyS": -3.233305563393185e-8,
+        "sourceState": "idle",
+        "sourceUpper": false,
+        "sourceClips": [
+          {
+            "name": "WaitHold_Nrml",
+            "frame": 619.0000000000056,
+            "weight": 1
+          }
+        ]
+      },
+      "ANC": [
+        -0.07999999821186066,
+        0.800000011920929,
+        0.2800000011920929
+      ],
+      "ANCR": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ],
+      "AFOLT": [
+        1
+      ],
+      "AFOLR": [
+        1
+      ],
+      "spawnChannelL1": 0
+    }
+  ],
+  "transitions": [
+    {
+      "tag": "708",
+      "from": "normal-60",
+      "to": "normal-61",
+      "ticks": 1,
+      "pivotWorldRotationDegrees": 174.881224764038,
+      "pivotWorldTranslation": 0.2531888387615761
+    },
+    {
+      "tag": "708",
+      "from": "normal-61",
+      "to": "normal-62",
+      "ticks": 1,
+      "pivotWorldRotationDegrees": 1.331109455911802,
+      "pivotWorldTranslation": 0.018632149395328566
+    },
+    {
+      "tag": "main7e",
+      "from": "normal-60",
+      "to": "normal-61",
+      "ticks": 1,
+      "pivotWorldRotationDegrees": 13.109646871465248,
+      "pivotWorldTranslation": 0.07996367316837814
+    },
+    {
+      "tag": "main7e",
+      "from": "normal-133",
+      "to": "normal-134",
+      "ticks": 1,
+      "pivotWorldRotationDegrees": 153.2119893434004,
+      "pivotWorldTranslation": 0.15917083895206116
+    }
+  ],
+  "crossProjection": [
+    {
+      "pose": "settled",
+      "camera": "settled",
+      "projected": {
+        "min": [
+          -0.24805562049695318,
+          -0.5994279717786481,
+          0.9173185018818626
+        ],
+        "max": [
+          0.19828215289261916,
+          0.0338516459034632,
+          0.9342720421739436
+        ],
+        "pixelWidth": 223.16888669478618,
+        "pixelHeight": 240.64625471920232
+      }
+    },
+    {
+      "pose": "settled",
+      "camera": "normal-61",
+      "projected": {
+        "min": [
+          -0.32609206556006703,
+          -0.5822822958000917,
+          0.9095578514447615
+        ],
+        "max": [
+          0.19980925536501326,
+          0.08094567327856689,
+          0.9269461030204805
+        ],
+        "pixelWidth": 262.9506604625401,
+        "pixelHeight": 252.02662824989028
+      }
+    },
+    {
+      "pose": "settled",
+      "camera": "normal-145",
+      "projected": {
+        "min": [
+          -0.28467783424232934,
+          -0.5866683406029657,
+          0.9183004789613992
+        ],
+        "max": [
+          0.1929255187958995,
+          0.020796054037750988,
+          0.9327595170431007
+        ],
+        "pixelWidth": 238.80167651911444,
+        "pixelHeight": 230.83646996347233
+      }
+    },
+    {
+      "pose": "normal-61",
+      "camera": "settled",
+      "projected": {
+        "min": [
+          -0.23573955281931355,
+          -0.6994133729917638,
+          0.9182293088403163
+        ],
+        "max": [
+          0.1766215978574587,
+          0.007116931223546417,
+          0.9299571523821821
+        ],
+        "pixelWidth": 206.18057533838612,
+        "pixelHeight": 268.4815156018179
+      }
+    },
+    {
+      "pose": "normal-61",
+      "camera": "normal-61",
+      "projected": {
+        "min": [
+          -0.3172106146823847,
+          -0.693711460187916,
+          0.9106187248177182
+        ],
+        "max": [
+          0.16545367141117517,
+          0.058098167750353535,
+          0.9218466566101614
+        ],
+        "pixelWidth": 241.33214304677995,
+        "pixelHeight": 285.6876586165424
+      }
+    },
+    {
+      "pose": "normal-61",
+      "camera": "normal-145",
+      "projected": {
+        "min": [
+          -0.2767617693131496,
+          -0.6876253779921587,
+          0.9191672421264088
+        ],
+        "max": [
+          0.1613028730565291,
+          -0.0038139542425742207,
+          0.9284627420824341
+        ],
+        "pixelWidth": 219.03232118483933,
+        "pixelHeight": 259.8483410248421
+      }
+    },
+    {
+      "pose": "normal-145",
+      "camera": "settled",
+      "projected": {
+        "min": [
+          -0.26706322060368554,
+          -0.6298679530850111,
+          0.9186467249124904
+        ],
+        "max": [
+          0.02897392018620564,
+          0.10754854660667604,
+          0.9334500111463071
+        ],
+        "pixelWidth": 148.01857039494558,
+        "pixelHeight": 280.21826988284107
+      }
+    },
+    {
+      "pose": "normal-145",
+      "camera": "normal-61",
+      "projected": {
+        "min": [
+          -0.3468548110994425,
+          -0.6152412675387112,
+          0.9113700350720797
+        ],
+        "max": [
+          0.015650849106021072,
+          0.17621128380247375,
+          0.9272547874108177
+        ],
+        "pixelWidth": 181.25283010273176,
+        "pixelHeight": 300.7519695096503
+      }
+    },
+    {
+      "pose": "normal-145",
+      "camera": "normal-145",
+      "projected": {
+        "min": [
+          -0.30440839534328906,
+          -0.616513348229748,
+          0.919782273607104
+        ],
+        "max": [
+          0.02436852460490815,
+          0.10735795056675534,
+          0.9330211442020945
+        ],
+        "pixelWidth": 164.3884599740986,
+        "pixelHeight": 275.0710935426713
+      }
+    }
+  ],
+  "ratios": {
+    "actual61To145": [
+      1.4680601246876135,
+      1.0385957133377384
+    ],
+    "frozen61PoseCamera61To145": [
+      1.1018106448459815,
+      1.0994399944590372
+    ],
+    "frozen145CameraPose61To145": [
+      1.3324069172455935,
+      0.9446588432038654
+    ]
+  },
+  "receiptSHA256": {
+    "702": "51c9424290c449dd43e963e36d3d33d99aa19e122a2a862b347178269db03dd6",
+    "708": "9f2f0eb09d95b92b9669d32e4b087a0125e863ab476af843557bbf04e78345b9",
+    "main7e": "5f01e1da322b23669aaa54f0e4524f798dd04f792159fc299434af29a1878b20"
+  }
+}

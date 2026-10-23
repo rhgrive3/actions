@@ -1,0 +1,33 @@
+{
+  "site": "/workspace/scratch/respawn-weapon-20261023/before-site",
+  "scriptSha256": "4d93f9c4cd96ec88002b9a0708bf64bf0aa9a92875acc82076bcbac0f45347d9",
+  "normalOnly": true,
+  "build": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+  "scope": "real offline Game at fixed 60Hz, normal production versioned site; controlled lower dry floor only in missed-support case; no runtime/model/geometry edits, overlays, FPS or transport claim",
+  "errors": [],
+  "rows": [],
+  "runtimeResponses": [
+    {
+      "path": "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/roller.mjs",
+      "status": 200,
+      "sha256": "3bb6bb6f9ceeffed97b0cbaf1f2737d84fca7362b7700892070e2a0219073598"
+    },
+    {
+      "path": "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/roller-detail-motion.mjs",
+      "status": 200,
+      "sha256": "c62102b32d29792a197d76ab37f6074849f2d78efd6b02a0c8f96fc40e1f934b"
+    },
+    {
+      "path": "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+      "status": 200,
+      "sha256": "1c1bfc50619302e977e0df005d130a7c1757aac636fa6bbde93a780bf40390d4"
+    },
+    {
+      "path": "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/respawn-lifecycle.mjs",
+      "status": 200,
+      "sha256": "3efcb07ae094262be3eebc68b048662331b084fec01eb53061c74ddbb1bbfb2c"
+    }
+  ],
+  "status": "failed",
+  "error": "page.evaluate: TypeError: spawnMotionAllowsAction is not a function\n    at globalThis.__readyBasic (eval at evaluate (:311:30), <anonymous>:14:268)\n    at globalThis.__readySnapshot (eval at evaluate (:311:30), <anonymous>:22:21)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:8)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at capture (/workspace/actions/scripts/check-inkwave-respawn-ready-pivot-browser.mjs:56:61)\n    at /workspace/actions/scripts/check-inkwave-respawn-ready-pivot-browser.mjs:57:8"
+}
