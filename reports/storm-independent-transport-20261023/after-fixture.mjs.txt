@@ -1,0 +1,58 @@
+// Browser-only arena: native runner/projectiles/physics/FX/NetSession/Transport.
+// UI, character meshes and audio are omitted to keep software-GPU evidence bounded.
+import * as THREE from 'three';
+import {G, emit} from '/ASSET/src/core/ctx.js';
+import {WEAPONS, MAPS} from '/ASSET/src/config.js';
+import {Actor} from '/ASSET/src/game/actor.js';
+import {WeaponRunner, Projectiles} from '/ASSET/src/game/weapons.js';
+import {Physics} from '/ASSET/src/game/physics.js';
+import {FX} from '/ASSET/src/fx/fx.js';
+import {initFxHooks} from '/ASSET/src/fx/fxHooks.js';
+import {installNet} from '/ASSET/src/net/session.js';
+import {install} from '/ASSET/patches/splatoon3/runtime/install.mjs';
+import {installQuality} from '/ASSET/patches/local-quality/install.mjs';
+const profile=await fetch('/ASSET/patches/splatoon3/profile.json').then(r=>r.json());
+install(profile);installQuality(profile);
+G.scene=new THREE.Scene();G.scene.background=new THREE.Color('#172838');
+G.renderer=new THREE.WebGLRenderer({antialias:false,preserveDrawingBuffer:true});G.renderer.setSize(1000,700);document.body.appendChild(G.renderer.domElement);
+G.camera=new THREE.PerspectiveCamera(55,1000/700,.1,150);G.camera.position.set(19,17,-17);G.camera.lookAt(0,2,10);G.time=0;
+const floor=new THREE.Mesh(new THREE.BoxGeometry(400,1,400),new THREE.MeshBasicMaterial({color:'#253e4f'}));floor.position.y=-.5;G.scene.add(floor);G.scene.add(new THREE.HemisphereLight(0xffffff,0x335566,3));
+G.teamColors=[new THREE.Color('#ff852a'),new THREE.Color('#315cff')];
+const block={id:0,solid:true,grate:false,center:new THREE.Vector3(0,-.5,0),half:new THREE.Vector3(200,.5,200),aabbMin:new THREE.Vector3(-200,-1,-200),aabbMax:new THREE.Vector3(200,0,200),axes:[new THREE.Vector3(1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]};
+G.level={blocks:[block],faces:[],bounds:{minX:-200,maxX:200,minZ:-200,maxZ:200},queryBlocks(_x,_z,_xx,_zz,out){out.length=0;out.push(0);return out;},groundHeight:()=>0,spawnPads:[new THREE.Vector3(-5,0,0),new THREE.Vector3(5,0,0)]};G.physics=new Physics(G.level);
+G.fx=new FX(G.scene,{quality:.25});G.fx.paintEffects=false;G.fx.onSpeck=null;G.projectiles=new Projectiles(G.scene);G.boss=null;G.actors=[];
+G.paint={splat(c,r,t,o={}){const nm=G.netm;if(nm?.mute)return 0;if(nm&&!nm.applying)nm.recSplat(c,r,t,o);return Math.PI*r*r;},sample:()=>1,clear(){}};
+// Diagnostic display shell only; all Actor gameplay and physics methods are native emitted methods.
+class DiagnosticCharacter {
+ constructor({color}){this.color=color;this.root=new THREE.Group();this.events=[];G.scene.add(this.root);}
+ trigger(name,data){this.events.push({name,tick:Math.round(G.time*60)});}
+ setVisible(v){this.root.visible=v;} setHurt(){} setWeapon(){} update(){}
+ getMuzzle(out){return out.copy(this.root.position).add(new THREE.Vector3(0,1.05,.3));}
+ _owner(){return G.actors.find(a=>a.character===this);}
+ _s3CancelRollerFlick(){}
+}
+function makeActor(r){
+ const a=new Actor({team:r.team,name:r.name||'Probe',weapon:r.weapon,isLocal:r.owner===G.net.myId,slot:r.nid,CharacterClass:DiagnosticCharacter});
+ Object.assign(a,{nid:r.nid,owner:r.owner});a.spawnAt(new THREE.Vector3(r.nid?5:-5,0,0),0);a.invuln=0;a.aimPitch=.05;a.aimPoint.set(a.pos.x,1,35);return a;
+}
+
+const game=G.game={profile:{weapon:'roller',name:'Probe'},mapDef:MAPS[0],settings:{matchLength:180},menus:{launchLobby:async()=>{}},debug:{freeze(){}},paletteIndex:()=>0,rig:{mode:'follow'},
+ async startNetMatch(cfg,nm){G.actors=cfg.roster.map(makeActor);G.local=G.actors.find(a=>a.isLocal);G.match=this.match={actors:G.actors,local:G.local,state:'init',time:180,attract:false,playing:()=>true,canRespawn:()=>false,removeActor(a){this.actors.splice(this.actors.indexOf(a),1);},follower:false};nm.bind(this.match);},
+ netMatchGo(){this.match.state='playing';},netMatchAborted(){},fxHooks:null};
+game.fxHooks=initFxHooks(G);G.fx.onSpeck=null;installNet();G.mode='match';globalThis.NG=G;globalThis.networkArenaReady=true;
+
+globalThis.stormProbeSetup=()=>{
+ const nm=G.netm,P=G.projectiles;globalThis.trace={records:[],plays:[],births:[],clouds:[],inputs:[],renders:0};
+ const auth=a=>{const q=a?.net?._stormBirthAuth;return q?{owner:q.owner,life:q.life,tick:q.tick,useSeq:q.useSeq,releaseTick:q.releaseTick,releaseSeq:q.releaseSeq,birthSeq:q.birthSeq,used:q.used,epochCurrent:q.epoch===a.net._stormEpoch}:null;};
+ const rec=nm._rec.bind(nm);nm._rec=e=>{const result=rec(e);trace.records.push({tick:Math.round(G.time*60),event:nm.out.at(-1)});return result;};
+ const play=nm._playOne?.bind(nm)||nm._play?.bind(nm);
+ const key=nm._playOne?'_playOne':'_play';
+ if(play)nm[key]=(from,e)=>{const a=nm.byNid.get(e[2]=== 'special:use'?e[3]?.actor?.n:e[2]);const row={event:Array.from(e),tick:e._netTick,seq:e._netSeq,from,authBefore:auth(a),latest:a?.net?.buf?.at(-1)&&{life:a.net.buf.at(-1).life,t:a.net.buf.at(-1).t,f:a.net.buf.at(-1).f},proof:e._stormSnapshot&&{owner:e._stormSnapshot.owner,life:e._stormSnapshot.life,at:e._stormSnapshot.at,tick:e._stormSnapshot.tick,epochCurrent:e._stormSnapshot.epoch===a?.net?._stormEpoch}};const result=play(from,e);row.authAfter=auth(a);trace.plays.push(row);return result;};
+ const ghost=P.ghostBomb.bind(P);P.ghostBomb=(...args)=>{const result=ghost(...args),b=P.bombs.at(-1);if(b)trace.births.push({owner:b.owner.owner,nid:b.owner.nid,life:b.owner.netLife,kind:b.kind,ghost:b.ghost,pos:b.pos.toArray(),vel:b.vel.toArray(),mesh:b.mesh?.type,meshChildren:b.mesh?.children.length,auth:auth(b.owner),tick:Math.round(G.time*60)});return result;};
+ const cloud=P._spawnCloud.bind(P);P._spawnCloud=b=>{const r=cloud(b),c=P.clouds.at(-1);trace.clouds.push({ghost:!!b.ghost,owner:b.owner.owner,nid:b.owner.nid,life:b.owner.netLife,contact:b.pos.toArray(),position:c.group.position.toArray(),mesh:c.group.type,meshChildren:c.group.children.length,tick:Math.round(G.time*60)});return r;};
+ globalThis.probeState=()=>({id:G.net.myId,match:nm.cfg.id,nativeTick:Math.round(G.time*60),clockNative:Function.prototype.toString.call(performance.now).includes('[native code]'),trace,actors:G.actors.map(a=>({nid:a.nid,owner:a.owner,remote:a.remote,alive:a.alive,life:a.netLife,phase:a.specialActive?.phase,special:a.specialActive?.id,auth:auth(a),buf:a.net?.buf?.length,lastLife:a.net?.lastLife,latest:a.net?.buf?.at(-1)&&{t:a.net.buf.at(-1).t,f:a.net.buf.at(-1).f,life:a.net.buf.at(-1).life}})),peers:[...nm.peers].map(([id,p])=>({id,lastTs:p.lastTs,lastSeq:p._lastEventSeq,physics:p.physicsPoints?.slice(-6),queued:p.events.length})),bombs:P.bombs.map(b=>({kind:b.kind,ghost:b.ghost,pos:b.pos.toArray()})),clouds:P.clouds.map(c=>({ghost:c.ghost,pos:c.group.position.toArray()}))});
+ globalThis.probeInput=(data)=>{Object.assign(G.local.intent,data);trace.inputs.push({tick:Math.round(G.time*60),...data});};
+ globalThis.advance=()=>{const dt=1/60;G.local.update(dt);G.net.update(dt);for(const a of G.actors)if(a.remote){G.netm.applyRemote(a,dt);a._finishFrame(dt);}P.update(dt);G.fx.update(dt,G.camera);game.fxHooks?.update(dt);G.renderer.render(G.scene,G.camera);trace.renders++;G.time+=dt;};
+};
+
+globalThis.stormWeapon=Object.values(WEAPONS).find(w=>w.special==='storm')?.id;

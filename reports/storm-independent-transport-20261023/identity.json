@@ -1,0 +1,72 @@
+{
+  "baseline": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "patchSha256": "d33f44474820e07cf090e427e6c347ea719b2e52b7bf0745c3357d5a9c32bd57",
+  "sourceFiles": 6254,
+  "changed": [
+    {
+      "version": "after",
+      "path": "patches/network-replication/adapter.mjs",
+      "sha256": "aaabac7d788db42436f338e0364f8bd48340862140cec297619bcb6cae95bd5a"
+    },
+    {
+      "version": "after",
+      "path": "patches/splatoon3/runtime/kit-subs.mjs",
+      "sha256": "d96dcaa7b458119d16db54fb42d11dad5610fa913836b18e0569c0b6d19dbea3"
+    },
+    {
+      "version": "after",
+      "path": "patches/splatoon3/storm-effects-adapter.mjs",
+      "sha256": "4c8ab7df9306cbcdb3ac40057256cf559d465a50c7981a1014d029768be9adbc"
+    }
+  ],
+  "versions": {
+    "before": {
+      "inputHash": "350b861c6d2ca16e5430ffc5b4f7e39cfbefc9df67290de1746b077ae256eb81",
+      "contentHash": "dacf1240f2e9ebf76a9a755de05bed9818c31b42506dbc909a534e4655baa922",
+      "buildRevision": "349a27b6b012caf8f65999d63a78b3f50fdd23490a803ddd67c006ee30793f0a",
+      "buildScriptSha256": "a2814e623a81811aca5a6b5079d566ab88fabaa9b9a8d9351fadd45c25a98242",
+      "optimization": "none-offline",
+      "verifiedBuildInputs": 1420,
+      "verifiedArtifacts": 2316,
+      "files": {
+        "patches/network-replication/adapter.mjs": "1144965d1c79cd1502fb5d48f85bd595163bd1d761d8c18bd38a78055509e192",
+        "patches/splatoon3/runtime/kit-subs.mjs": "f9960ade7a9d335bf6897a8ff1763955bfdde8314827153afa73acd1cc7d96a8",
+        "patches/splatoon3/storm-effects-adapter.mjs": "011a471b5f95b0952d7c2bfb9629af9d783d083c7f996c408e1d82c841ec30c7",
+        "scripts/independent-storm.mjs": "4dc9aede5ca7a985c81bbea407b14dc2a9cc952dd0fad7a32408d8235ac76d59",
+        "scripts/storm-diagnostic-fixture.mjs": "b3ec1f99a406b8e2387dc4fa89115f890e4479cbad156f25aae346f1ac91f313",
+        "server/src/index.js": "ead4ad4137e5e7a1a648b1191c6c43b229fb864dd488e7aa2b555e31f1017a79",
+        "scripts/lib/inkwave-local-relay-fixture.mjs": "2af07e3afadff14353c9fafa328fe3ba6f12e2ddeebd9640b118ecb1f0e43523"
+      }
+    },
+    "after": {
+      "inputHash": "bbc60631e7a8abe02805ab12eda1dd8feb6d90ce83fb22d6f6fe044f367859d1",
+      "contentHash": "6c07e2876c0ad78bf9e932848a5668fe90cbfa9d43f618c542c2c40f2f11d14d",
+      "buildRevision": "b4cd8a93d51820f945bac0df89d71d9d68d26616ade1f41cf25de749bd33368e",
+      "buildScriptSha256": "a2814e623a81811aca5a6b5079d566ab88fabaa9b9a8d9351fadd45c25a98242",
+      "optimization": "none-offline",
+      "verifiedBuildInputs": 1420,
+      "verifiedArtifacts": 2316,
+      "files": {
+        "patches/network-replication/adapter.mjs": "aaabac7d788db42436f338e0364f8bd48340862140cec297619bcb6cae95bd5a",
+        "patches/splatoon3/runtime/kit-subs.mjs": "d96dcaa7b458119d16db54fb42d11dad5610fa913836b18e0569c0b6d19dbea3",
+        "patches/splatoon3/storm-effects-adapter.mjs": "4c8ab7df9306cbcdb3ac40057256cf559d465a50c7981a1014d029768be9adbc",
+        "scripts/independent-storm.mjs": "d50e31ec37137c562bc4691757acd97bec7dcef6c158e325bdc1bb50a100eda7",
+        "scripts/storm-diagnostic-fixture.mjs": "b83a0d2f27e159124a5d11881450489e19b8bccd6d725422983f4dfb552a63ce",
+        "server/src/index.js": "ead4ad4137e5e7a1a648b1191c6c43b229fb864dd488e7aa2b555e31f1017a79",
+        "scripts/lib/inkwave-local-relay-fixture.mjs": "2af07e3afadff14353c9fafa328fe3ba6f12e2ddeebd9640b118ecb1f0e43523"
+      }
+    }
+  },
+  "originalCheckoutHead": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "originalCheckoutStatus": "",
+  "releaseRunHarnessSha256": {
+    "before": "4dc9aede5ca7a985c81bbea407b14dc2a9cc952dd0fad7a32408d8235ac76d59",
+    "after": "f1abd651391ccba4aaca76a591282bbe5cee05412fcc2693b8c589991ee3c591",
+    "lifecycle": "d50e31ec37137c562bc4691757acd97bec7dcef6c158e325bdc1bb50a100eda7"
+  },
+  "releaseRunFixtureSha256": {
+    "before": "b08d992a8a65b2cc82d64d2ea4e674d3c503e98c63e0d90fe2506fa68b9d1465",
+    "after": "bd99cdcfa3bd7795415f864fd61d82405be95102bc1b429a3ffb8e6b764f4bc3",
+    "lifecycle": "bd99cdcfa3bd7795415f864fd61d82405be95102bc1b429a3ffb8e6b764f4bc3"
+  }
+}
