@@ -56,8 +56,21 @@ function assertTurfWorkflowRoute(workflow) {
  const steps=core.split(/^      - /m);
  const execution=steps.find(step=>step.startsWith('name: Verify all Turf finish cases on emitted site\n'));
  assert.equal(execution, 'name: Verify all Turf finish cases on emitted site\n        run: node scripts/run-inkwave-turf-finish-isolated.mjs . emitted .ci-scratch/turf-finish _site\n');
- const build=steps.findIndex(step=>step.includes('node scripts/build-inkwave.mjs inkwave-public _site\n'));
- assert(build>=0 && build<steps.indexOf(execution),'Emitted mode must follow the real checkout build');
+ const sharedBuild=workflow.split('  build_site:\n')[1]?.split('  validate_core:\n')[0];
+ assert(sharedBuild && sharedBuild.includes('node scripts/build-inkwave.mjs inkwave-public _site\n'),
+   'Emitted site must be built at the exact source in the dedicated build job');
+ assert(sharedBuild.includes('tar -cf immutable-site.tar _site _site-source-sha.txt'),
+   'Built site and source identity must be archived together');
+ assert(sharedBuild.includes('name: inkwave-patched-site-${{ env.SOURCE_SHA }}'),
+   'Immutable emitted archive must be uploaded for the exact head');
+ assert(core.includes('needs: build_site\n'), 'Core must require successful build job');
+ const download=steps.findIndex(step=>step.includes('uses: actions/download-artifact@v4\n') &&
+   step.includes('name: inkwave-patched-site-${{ env.SOURCE_SHA }}'));
+ const built=steps.findIndex(step=>step.includes('tar -xf immutable-site.tar\n') &&
+   step.includes('test "$(cat _site-source-sha.txt)" = "$SOURCE_SHA"') &&
+   step.includes("EXPECTED_CONTENT_HASH='${{ needs.build_site.outputs.content_hash }}'"));
+ assert(download>=0 && download<built && built<steps.indexOf(execution),
+   'Emitted mode must consume the real immutable build artifact and verify its HEAD and hash');
  assert(core.includes('test "$(git rev-parse HEAD)" = "$SOURCE_SHA"'),'Checkout must be immutable');
  assert(core.includes('scripts/tests/run-inkwave-turf-finish-isolated.test.mjs'),'This workflow guard must remain wired');
  const evidence=steps.find(step=>step.startsWith('name: Retain bounded Turf finish evidence\n'));
@@ -76,6 +89,11 @@ test('Turf workflow guard rejects list-only, source-only, wrong site, optional e
   ['name: Verify all Turf finish cases on emitted site\n','name: Verify all Turf finish cases on emitted site\n        if: false\n'],
   ['name: Retain bounded Turf finish evidence\n        if: always()','name: Retain bounded Turf finish evidence\n        if: success()'],
   ['node scripts/build-inkwave.mjs inkwave-public _site','echo skipped-build'],
+  ['needs: build_site\n','needs: other\n'],
+  ['tar -xf immutable-site.tar','echo no-archive'],
+  ['name: inkwave-patched-site-${{ env.SOURCE_SHA }}','name: missing-artifact'],
+  ['test "$(cat _site-source-sha.txt)" = "$SOURCE_SHA"','echo no-source-proof'],
+  ["EXPECTED_CONTENT_HASH='${{ needs.build_site.outputs.content_hash }}'",'EXPECTED_CONTENT_HASH='],
  ]) {assert(source.includes(from));assert.throws(()=>assertTurfWorkflowRoute(source.replace(from,to)));}
 });
 

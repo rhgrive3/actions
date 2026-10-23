@@ -440,10 +440,81 @@ def projection(receipt: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+
+def projected_crop(points: list[dict[str, Any]], width: int, height: int) -> dict[str, int] | None:
+    """Recompute the shipped 112px crop from independently captured screen positions."""
+    if not points:
+        return None
+    if any(not isinstance(p, dict) or
+           any(not isinstance(p.get(k), (int, float)) or isinstance(p.get(k), bool) or not math.isfinite(p[k])
+               for k in ("x", "y", "z")) for p in points):
+        raise ValueError("Malformed projected head coordinates")
+    x0 = max(0, min(p["x"] for p in points) - 112)
+    y0 = max(0, min(p["y"] for p in points) - 112)
+    x1 = min(width, max(p["x"] for p in points) + 112)
+    y1 = min(height, max(p["y"] for p in points) + 112)
+    if x1 <= x0 or y1 <= y0:
+        return None
+    return {"x": math.floor(x0), "y": math.floor(y0),
+            "width": math.ceil(x1 - x0), "height": math.ceil(y1 - y0)}
+
+
+def verify_camera_epoch_pair(before: dict[str, Any], after: dict[str, Any]) -> dict[str, Any]:
+    """Prove 55°→60° is the *only* projected difference, without altering native receipts.
+
+    Native world-space projectiles, full roster, RNG, contacts, physics, pose and
+    all non-camera physical fields are still strictly compared by make_pair_entry.
+    """
+    try:
+        left_camera, right_camera = before["camera"], after["camera"]
+        left_conditions, right_conditions = before["captureConditions"], after["captureConditions"]
+        left_runtime, right_runtime = before["runtime"], after["runtime"]
+        before_fov, after_fov = left_camera["fov"], right_camera["fov"]
+        if not (all(isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
+                    for v in (before_fov, after_fov)) and
+                math.isclose(before_fov, 55, abs_tol=1e-8, rel_tol=0) and
+                math.isclose(after_fov, 60, abs_tol=1e-8, rel_tol=0)):
+            raise ValueError("Not the declared 55-to-60 degree native camera epoch")
+        if not (left_conditions["fov"] == before_fov and right_conditions["fov"] == after_fov):
+            raise ValueError("Camera field disagrees with its own native capture conditions")
+        size = left_runtime["drawingBuffer"]
+        if (not isinstance(size, list) or len(size) != 2 or
+                not all(isinstance(n, int) and not isinstance(n, bool) and n > 0 for n in size) or
+                right_runtime["drawingBuffer"] != size):
+            raise ValueError("Native viewport dimensions differ")
+        width, height = size
+        left = left_runtime["projectileScreen"]
+        right = right_runtime["projectileScreen"]
+        if not isinstance(left, list) or not isinstance(right, list) or len(left) != len(right):
+            raise ValueError("Projected native head count changed")
+        if (projected_crop(left, width, height) != left_runtime["projectileCrop"] or
+                projected_crop(right, width, height) != right_runtime["projectileCrop"]):
+            raise ValueError("Recorded native projectile crop does not match its actual screen positions")
+        ratio = math.tan(math.radians(before_fov / 2)) / math.tan(math.radians(after_fov / 2))
+        max_error = 0.0
+        for source, target in zip(left, right):
+            if source["z"] != target["z"]:
+                raise ValueError("Native projectile depth changed")
+            predicted_x = width / 2 + (source["x"] - width / 2) * ratio
+            predicted_y = height / 2 + (source["y"] - height / 2) * ratio
+            error = max(abs(target["x"] - predicted_x), abs(target["y"] - predicted_y))
+            if not math.isfinite(error) or error > 1e-8:
+                raise ValueError("Native projectile screen coordinate is not explained by the exact FOV epoch")
+            max_error = max(max_error, error)
+        return {"status": "verified", "nativeBeforeFov": before_fov,
+                "nativeAfterFov": after_fov, "headCount": len(left),
+                "maxReprojectionErrorPx": max_error,
+                "nativeCropsIndependentlyVerified": True,
+                "note": "Only declared camera-dependent coordinates are normalized for physical pair comparison. Original native screens, crops, screenshots, and FOV are preserved."}
+    except (KeyError, TypeError, IndexError) as exc:
+        raise ValueError("Incomplete native camera epoch proof") from exc
+
+
 def make_pair_entry(
     key: tuple[Any, ...],
     before_rows: list[tuple[int, dict[str, Any]]],
     after_rows: list[tuple[int, dict[str, Any]]],
+    admit_camera_epoch: bool = False,
 ) -> dict[str, Any]:
     entry: dict[str, Any] = {
         "key": printable_key(key),
@@ -500,7 +571,24 @@ def make_pair_entry(
             "after": missing_receipt_evidence(after),
         },
     })
+    epoch_error = None
+    if admit_camera_epoch:
+        try:
+            proof = verify_camera_epoch_pair(before, after)
+            entry["cameraEpochProof"] = proof
+            # Normalize only the mathematically proven camera-dependent fields.
+            # The unmodified native FOV, pixels and crop remain in the receipt
+            # and are independently verified before normalization.
+            after_projection["receipt"]["camera"]["fov"] = before_projection["receipt"]["camera"]["fov"]
+            after_projection["receipt"]["captureConditions"]["fov"] = before_projection["receipt"]["captureConditions"]["fov"]
+            after_projection["runtimePhysicalState"]["projectileScreen"] = before_projection["runtimePhysicalState"]["projectileScreen"]
+            after_projection["runtimePhysicalState"]["projectileCrop"] = before_projection["runtimePhysicalState"]["projectileCrop"]
+        except ValueError as exc:
+            epoch_error = str(exc)
+            entry["cameraEpochProof"] = {"status": "rejected", "reason": epoch_error}
     entry["mismatches"] = differences(before_projection, after_projection, "capture")
+    if epoch_error:
+        entry["mismatches"].append({"path": "capture.cameraEpochProof", "reason": epoch_error})
     for side, receipt in (("before", before), ("after", after)):
         missing = entry["requiredEvidenceMissing"][side]
         if missing:
@@ -866,13 +954,13 @@ def verify_complete(document: dict[str, Any]) -> dict[str, Any]:
     return {"status": "pass" if not errors else "fail", "errors": errors}
 
 
-def compare(before_path: Path, after_path: Path, output_path: Path) -> dict[str, Any]:
+def compare(before_path: Path, after_path: Path, output_path: Path, admit_camera_epoch: bool = False) -> dict[str, Any]:
     before, before_file_hash = read_json(before_path)
     after, after_file_hash = read_json(after_path)
     before_receipts, malformed_before = index_receipts(before)
     after_receipts, malformed_after = index_receipts(after)
 
-    pairs = [make_pair_entry(key, before_receipts.get(key, []), after_receipts.get(key, []))
+    pairs = [make_pair_entry(key, before_receipts.get(key, []), after_receipts.get(key, []), admit_camera_epoch)
              for key in sorted(before_receipts.keys() | after_receipts.keys(), key=lambda value: repr(value))]
     pair_status_counts = Counter(pair["status"] for pair in pairs)
     unique_pair_count = sum(1 for pair in pairs if pair["status"] == "matched")
@@ -982,6 +1070,9 @@ def main() -> int:
     parser.add_argument("--output", required=True, help="paired verification JSON output path")
     parser.add_argument("--require-complete", action="store_true",
                         help="also require both full capture runs, live workloads and exact image hashes")
+    parser.add_argument("--admit-camera-epoch", action="store_true",
+                        help="strictly verify the reviewed main26a4 55° to 23-PR 60° projection epoch")
+    parser.add_argument("--expected-head", help="exact immutable PR head required for the epoch proof")
     args = parser.parse_args()
 
     before_path, after_path = input_file(args.before), input_file(args.after)
@@ -992,7 +1083,20 @@ def main() -> int:
         parser.error("--output must end in .json")
 
     try:
-        result = compare(before_path, after_path, output_path)
+        if args.admit_camera_epoch:
+            proof, _ = read_json(before_path.parent / "current-pair-controls.json")
+            admitted = proof.get("declaredSources")
+            if (not isinstance(args.expected_head, str) or len(args.expected_head) != 40 or
+                    any(ch not in "0123456789abcdef" for ch in args.expected_head) or
+                    proof.get("mode") != "current-pair-with-gameplay-differences" or
+                    proof.get("reviewedBaseSourceEpoch") != "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64" or
+                    proof.get("reviewedCandidateSourceEpoch") != "c8564cb617e1708759a502a662ef1b538eaad14c" or
+                    proof.get("originalInputsUnchanged") is not True or
+                    not isinstance(admitted, dict) or
+                    admitted.get("declaredBaseCommit") != "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64" or
+                    admitted.get("declaredCandidateCommit") != args.expected_head):
+                raise ValueError("Camera epoch requested without immutable reviewed 23-PR source admission")
+        result = compare(before_path, after_path, output_path, args.admit_camera_epoch)
         if args.require_complete:
             before, _ = read_json(before_path)
             after, _ = read_json(after_path)
