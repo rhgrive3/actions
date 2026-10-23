@@ -1,0 +1,76 @@
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+wire-before-after shooter [["p",7,"shot","shooter",0,1.05,0.3,-0.01559695498212199,2.5983583585502745,135.93516796832068,0,3,0.06666666666666667,1.93,0.28,57.6,1.2,0,0,0.104,0.8,1.3,0.035,26,0.3,0,["iw-ink-flight-1","shooter",0,0.37,false],0,0,0,0.37,1,-1]]
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+wire-before-after splatling [["p",7,"shot","splatling",0,1.05,0.3,-0.6954309205130039,1.80561938663641,125.3226003717545,0,3,0.13333333333333333,2.23,0.23,57.6,1.2,0,0,0.086,0.9,1.6,0.025,30,0.35,0,["iw-ink-flight-1","splatling",0,0.37,false],0,0,0,0.37,1,-1]]
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+wire-before-after s3-shooter-heavy [["p",7,"shot","s3-shooter-heavy",0,1.05,0.3,-0.10138325672657165,2.8093459746020177,146.97311759852633,0,1.2,0.08333333333333333,2.57,0.24,0,0,0,0,0.075,1,0,0.006,26,0,0,{"s3Catalog":[1,"normal",0,0,0]},0,0,0,0.37,1,-1]]
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+wire-before-after s3-spinner-quick [["p",7,"shot","s3-spinner-quick",0,1.05,0.3,-0.602623007942093,1.3962691777627019,89.59277054568925,0,1.2,0.13333333333333333,2.28,0.26,0,0,0,0,0.08,1,0,0.006,26,0,0,{"s3Catalog":[1,"normal",0,1,0]},0,0,0,0.37,1,-1]]
+(node:4234) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ shooter native wire bytes do not depend on cosmetic drawing (1869.725832ms)
+✔ splatling native wire bytes do not depend on cosmetic drawing (1216.938671ms)
+✔ s3-shooter-heavy native wire bytes do not depend on cosmetic drawing (1096.165028ms)
+✔ s3-spinner-quick native wire bytes do not depend on cosmetic drawing (679.572357ms)
+(node:4235) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #873 native flight paint consumes sourced intermediate width, independent of radius RNG (3123.370396ms)
+✔ #873 conversion and independent source fields remain explicit dependencies (789.530961ms)
+✔ #873 projectile snapshot survives owner weapon changes and consumes the same RNG draw count (1683.047035ms)
+✔ #873 invalid conversion or missing source paint fields fail closed (2243.667557ms)
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+(node:4236) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #682 horizontal flight has no recurring trail; #423 owns vertical group paint (2720.927005ms)
+✔ #682 raw horizontal group has no intermediate splash cadence; vertical ownership remains separate (1245.400404ms)
+✔ #683 actual cloud uses the same growing/fading radius for Player, Boss and rain FX (11851.545985ms)
+✔ #683 ownership, LOS and cloud-height rejections remain active (727.341423ms)
+✔ #683 missing or duplicate player-radius anchor fails closed (5.019801ms)
+✔ #683 30/60/120Hz rendering has identical fixed-step growth and damage onset (1158.66647ms)
+✔ #682 remote Roller packets cannot restore horizontal recurring trail; vertical path remains independent (916.173845ms)
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+(node:4256) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ only ordinary Shooter families and their catalogue kits receive muzzle beads (20.160972ms)
+✔ real composed Shooter appends one bounded burst per birth without RNG/gameplay/paint writes (1054.828013ms)
+✔ cessation expires, switching retires, clear/reuse resets a pooled birth (703.586662ms)
+✔ stress stays within fixed 32 bursts/96 drops and writes no new GPU resources (669.728935ms)
+INKWAVE built fixture /tmp/inkwave-firing-release contentHash=a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc
+(node:4263) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Splatling family ownership does not claim Shooter, Dualies, Slosher, special or delayed non-shot objects (0.909615ms)
+✔ native standing/jumping Splatling gets its own compact bead and no Shooter volume/history body (976.33139ms)
+(node:4270) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ production six-adapter native jump age holds 25F, recovers by 70F, and never snaps on either landing at 30/60/120Hz (2922.391771ms)
+✔ zero-time pause, form and weapon switches preserve jump age; repeat jump, death and reset own their lifecycle (870.003387ms)
+✔ HUD scalar drives the native owner projectile; pitch recovers without a landing snap and remote wire stays authoritative (2006.203951ms)
+✔ zero-spread ground Splatling range probe preserves its native projectile and paint RNG sequence (2007.488304ms)
+✔ upstream still has the offline droplet-to-turf hook this patch removes (1.446436ms)
+✔ production composition: VFX droplet landings never reach PaintSystem.splat (151.4944ms)
+✔ production composition: VFX droplets leave no paint-like speck (1.333035ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19955.377258

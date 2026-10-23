@@ -1,0 +1,34 @@
+[
+  {
+    "name": "before",
+    "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+    "revision": "d0aad52ff86d0915c282be5ff1cc481fa63f7511ed765743c9d9e62f73e59f9d",
+    "manifestSHA256": "6a8c82a5d5dc29a458902e3982424e97eb39c099dc85f0aaa568244b266456e7",
+    "files": 1420,
+    "artifacts": 2110
+  },
+  {
+    "name": "initial",
+    "contentHash": "c465b2be5fbe131a4c31c89a81e61693591bab67bf6d81bd621a66ac20912886",
+    "revision": "11f399970fee71d9c3b415a6ead64eabaa0f059056fa270f0fd343562d766733",
+    "manifestSHA256": "3b66f5bcff2260ee292052c7f41c8407e5d5a7937d5a79ddb7b018bd60c09c51",
+    "files": 1423,
+    "artifacts": 2116
+  },
+  {
+    "name": "final",
+    "contentHash": "9907e7ab8a0f6456b8ff530b8742f2708f2e009a4aa7ac9f43551d5ae7de74fa",
+    "revision": "07d000c79bc9d38bd15f0544869c6e2ab6340697882c5d9c175592018432a786",
+    "manifestSHA256": "068ccccb88ecd0df5b92ddd0cbaab50061ba7ba30bffbe8004991b30839988f6",
+    "files": 1423,
+    "artifacts": 2116
+  },
+  {
+    "name": "release",
+    "contentHash": "a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc",
+    "revision": "e6dc1b2c956f212f959d68111e86f62c77cd6495e5dde3226db0bdc3a61080a5",
+    "manifestSHA256": "f51d63549eca320fbe9eac15e0be1a2c83bd5c6add98d5f4b27fb1b0dd5e3510",
+    "files": 1423,
+    "artifacts": 2116
+  }
+]
