@@ -82,7 +82,8 @@
       "remaining": "pelvis/muzzle依存のnative leg/ground処理の追加最適化、実描画reentryと端末CPU受入",
       "previousEvidence": "performance.json",
       "work": "native triangle穴・dynamic supportを誤ってOBB支持にしない既存修正を統合し、offscreen回帰を再検証",
-      "closedByThisTask": false
+      "closedByThisTask": false,
+      "continuationWork": "native足元の完全同一queryのみ同一update内で再利用。30/60/120Hz全pose/skin/接地/銃口一致、約9%query削減、問い合わせcomponentのCPU約7%短縮。全ゲーム/実機FPSは未測定。"
     },
     {
       "number": 890,
@@ -202,7 +203,8 @@
       "remaining": "未実装: trusted authorityによる全main/sub/special攻撃の生成・資源・衝突と初回spawn/移管の統合。自己申告eventを証明とみなさない",
       "previousEvidence": "network-security.json",
       "work": "既存のhit上限・life/owner・接触/LOS/provenance回帰を再検証。Charger実験版の残境界も確認",
-      "closedByThisTask": false
+      "closedByThisTask": false,
+      "continuationWork": "別実験でtrusted初回spawnの待機・飛行・着地・最初のnative Charger発射を30/60/120Hzでreplay。全武器の必須damage gateは未完。"
     },
     {
       "number": 1666,
@@ -212,7 +214,8 @@
       "remaining": "未実装: hostの全攻撃生成とBoss弱点/無敵/接触/移管の一貫した決済。単なるpayload capでは完了しない",
       "previousEvidence": "network-security.json",
       "work": "Boss/crabletの既存provenance正例・拒否・lifecycle回帰を再検証",
-      "closedByThisTask": false
+      "closedByThisTask": false,
+      "continuationWork": "同じprivate source replayを継続。全Boss攻撃生成・資源・衝突の統合、後続life/移管は未完。"
     },
     {
       "number": 1671,
@@ -222,7 +225,8 @@
       "remaining": "実iPadのnative stage profileとdominant CPU処理の等価修正・実測",
       "previousEvidence": "performance.json",
       "work": "30秒/4000frame/4MiB有限captureとnative支持判定修正を統合し回帰を再検証",
-      "closedByThisTask": false
+      "closedByThisTask": false,
+      "continuationWork": "既存PR1851のBodyBalance計算削減はmain726eに統合済み。実機profile受入は未確認。"
     },
     {
       "number": 1708,
@@ -242,17 +246,19 @@
       "remaining": "同じiPad mini 6・通常Turf条件のbefore/after frame time・memory",
       "previousEvidence": "performance.json",
       "work": "既存の描画/resource/offscreen回帰を再検証",
-      "closedByThisTask": false
+      "closedByThisTask": false,
+      "continuationWork": "既存PR1851のBodyBalance計算削減はmain726eに統合済み。実機Turfの前後比較は未測定。"
     },
     {
       "number": 1767,
       "title": "[INKWAVE][Bug] Delayed startup tick can leave valid owner snapshots permanently rejected",
       "url": "https://github.com/rhgrive3/actions/issues/1767",
       "status": "fix-verified-in-work-branch-integration-pending",
-      "remaining": "main統合と適用されるCI。実機の発生頻度やdeployed relay性能は別",
+      "remaining": "main統合済み。最新mainに対するrequired CI最終結果の確認",
       "previousEvidence": "https://github.com/rhgrive3/actions/tree/a91137d452169baba8c2e9b0e4c7ea4f59f16a65/reports/issue-resolution-20261022/continuation/clock-native-browser.json",
       "work": "fresh nonce owner-clock修正を統合。実2context/Worker relayでcold/rematch/reconnectの3局面6方向が成功",
-      "closedByThisTask": false
+      "closedByThisTask": false,
+      "continuationWork": "修正と関連PRはmain726eへ統合済み。最新main側のCI最終結果は別途確認する。main統合前という旧記述は履歴。"
     },
     {
       "number": 1789,
@@ -292,7 +298,15 @@
       "remaining": "S3固有の持続上昇音とSLINKイベント。S2録音追加なし。原作認証と混同しない",
       "previousEvidence": "weapons.json",
       "work": "7c96d754/32eebaf9の音源追加前6pathを抽出し、誤ったHoldNoiseループを1回の開始/keep復帰へ修正",
-      "closedByThisTask": false
+      "closedByThisTask": false,
+      "continuationWork": "main側の新しい音声実装を保持。Splatune2の一時phraseは本物S3 11.3.0上昇音の出典証明には数えない。"
     }
-  ]
+  ],
+  "continuation": {
+    "mainBaseline": "726e338ac256ba9609086ce65e25a68ddd99df85",
+    "runtimeSource": "4875be37",
+    "pullRequest": "https://github.com/rhgrive3/actions/pull/1852",
+    "combatExperiment": "a8da7f29b3b7ea2af56fd08ffff679095fd764af",
+    "scope": "three remaining production leaf fixes after main integrated32 existing PRs; final integration verification in progress"
+  }
 }

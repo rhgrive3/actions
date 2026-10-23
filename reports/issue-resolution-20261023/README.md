@@ -1,3 +1,7 @@
+> 2026-10-23 継続更新: 比較元mainは現在 `726e338a`（32件の既存PRを統合）。今回の最終差分はBrella拒否済みpacket、Quad初回予測銃口、native足元query再利用の3箇所です。[PR #1852](https://github.com/rhgrive3/actions/pull/1852)で統合後の検証を進めています。以下の初回実行のbuild/hash/失敗は当時のsourceに対する履歴として保持し、最新mainの検証結果と混ぜません。
+>
+> #1767の時計修正・BodyBalance・音声などは新しいmainに取り込まれています。Charger初回Squid Spawn再実行は[別の実験ブランチ](https://github.com/rhgrive3/actions/tree/fix/native-charger-initial-spawn-20261023)に追加し、receiver24件とinput/replay/実Worker quota39件が成功しています。必須damage gate、残64main、過去Match/world順序・後続life・移管は未完です。
+
 # 全29 issue の継続対応（2026-10-23 JST）
 
 **全件解消ではない。** 全29件を調査対象にし、確定できる修正を専用ブランチへ統合・追加した。本家原典・物理端末受入と、未完成のtrusted attack authorityは残っている。issueを根拠なく閉じていない。
