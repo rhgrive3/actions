@@ -1,7 +1,9 @@
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 export const balanceRel='src/game/motion/body-balance.js';
 export const balanceBefore=fs.readFileSync(new URL('./fixtures/motion-balance/body-balance-26a4db41.js.txt',import.meta.url),'utf8');
+if(createHash('sha256').update(balanceBefore).digest('hex')!=='c5d204af3e91dcb544941eaa2c0da9ffb920087866d4c3571aee484a2e896a9e')throw Error('Immutable main26a4 BodyBalance fixture changed');
 export const baselineBalanceSource=(rel,raw)=>adaptBuildSource(rel,rel===balanceRel?balanceBefore:raw);
 export function poseSnapshot(p){return p&&{p:p.p.map(v=>v.toArray()),q:p.q.map(v=>v.toArray()),s:p.s.map(v=>v.toArray()),world:p.world.map(m=>[...m.elements]),wp:p.wp.map(v=>v.toArray()),wq:p.wq.map(v=>v.toArray()),flags:[...p.flags]};}
 export function characterSnapshot(ch){

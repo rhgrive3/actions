@@ -27,8 +27,8 @@ export function compareComposedCpu(before,repeat,after){
    for(const key of ['frames','hz','ticks','digest','digests','counts','state','bvh','draw','resources','scene'])assert.deepEqual(row[key],base[key],base.stage+' '+key+' parity');
    assert.equal(row.contextLost,false);assert.deepEqual(row.errors,[]);
   }
-  return {stage:base.stage,status:'exact-gameplay-parity',beforeMs:base.cpuFrameMs,repeatMs:repeat.scenarios[i].cpuFrameMs,afterMs:after.scenarios[i].cpuFrameMs,
-   gc:[base.gc,repeat.scenarios[i].gc,after.scenarios[i].gc],limits:'Host CPU workload only. No physical-device or presented FPS claim; A/A noise must accompany A/B timings.'};
+  return {stage:base.stage,status:'exact-recorded-state-parity',beforeMs:base.cpuFrameMs,repeatMs:repeat.scenarios[i].cpuFrameMs,afterMs:after.scenarios[i].cpuFrameMs,
+   gc:[base.gc,repeat.scenarios[i].gc,after.scenarios[i].gc],limits:'Host CPU workload only; measured draw/allocation and live-scene counters are compared. No physical-device, presented FPS, whole-image or absolute resource-budget acceptance; A/A noise must accompany A/B timings.'};
  });
 }
 if(import.meta.url===new URL(process.argv[1],'file:').href){

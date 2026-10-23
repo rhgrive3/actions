@@ -24,6 +24,7 @@ import assert from 'node:assert/strict';
 import { performance } from 'node:perf_hooks';
 import vm from 'node:vm';
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 import { effectiveQuality, DEFAULT_SETTINGS } from '../inkwave-public/src/config.js';
 
 // ---------------------------------------------------------------------------
@@ -36,7 +37,31 @@ import { adaptMotionFkHotpath } from '../patches/local-quality/motion-fk-hotpath
 function benchmarkComposedProductionBuildParity() {
   const lodAfterSrc = fs.readFileSync(new URL('../inkwave-public/src/game/character-lod.js', import.meta.url), 'utf8');
   const outfitAfterSrc = fs.readFileSync(new URL('../inkwave-public/src/game/character-outfit.js', import.meta.url), 'utf8');
-  const bbAfterSrc = fs.readFileSync(new URL('../inkwave-public/src/game/motion/body-balance.js', import.meta.url), 'utf8');
+  // The migration proved an identity, not a permanent ban on later runtime
+  // work. Freeze that historical BodyBalance pair at main26a4, and admit only
+  // the exact independently tested ancestor-closure delta in today's source.
+  const bbCurrentSrc = fs.readFileSync(new URL('../inkwave-public/src/game/motion/body-balance.js', import.meta.url), 'utf8');
+  const bbAfterSrc = fs.readFileSync(new URL('../patches/local-quality/tests/fixtures/motion-balance/body-balance-26a4db41.js.txt', import.meta.url), 'utf8');
+  assert.equal(createHash('sha256').update(bbAfterSrc).digest('hex'),'c5d204af3e91dcb544941eaa2c0da9ffb920087866d4c3571aee484a2e896a9e','Immutable historical BodyBalance migration input');
+  const ancestorBlock = `  // Only gain joints and their ancestors feed a changed world rotation.
+  // Other local rotations already came from pose.copy(source); the full
+  // pose.fk() below still evaluates every output bone in its original order.
+  const needed=new Set();
+  for(let i=0;i<bank.bones.length;i++)if(this.rotationGainByIndex[i]!==undefined)
+   for(let j=i;j>=0&&!needed.has(j);j=bank.bones[j].parent)needed.add(j);
+  this.rotationWorldIndices=bank.bones.map((_,i)=>i).filter(i=>!bank.parentsFirst||needed.has(i));
+`;
+  const boundedBb = replaceOnce(replaceOnce(bbAfterSrc,
+    '  this.hipIndex=bank.index.hip;',ancestorBlock+'  this.hipIndex=bank.index.hip;',
+    'BodyBalance current ancestor closure admission'),
+    '  for(let i=0;i<this.bank.bones.length;i++){','  for(const i of this.rotationWorldIndices){',
+    'BodyBalance current bounded traversal admission')+'\n';
+  // The integrated #1815 foot-target/reach-chain caches are independently
+  // retained. Admit only their exact combination with this ancestor closure,
+  // anchored at integration 42b76fba; do not reconstruct them in historical data.
+  const combinedBodySha='ae785b2132151a8a4b40d3d50f416def2704567d70b27bc2f591bb7bd6d078c6';
+  const currentBodySha=createHash('sha256').update(bbCurrentSrc).digest('hex');
+  if(bbCurrentSrc!==boundedBb)assert.equal(currentBodySha,combinedBodySha,'Current BodyBalance must be the exact reviewed closure or its fixed #1815 cache integration');
 
   // Reconstruct exact pre-migration ink-public/src/ raw sources (before Direct-Source migration)
   const lodBeforeSrc = "// INKWAVE — squidkid LOD kit (used by character.js only).\n" +
@@ -222,13 +247,14 @@ function benchmarkComposedProductionBuildParity() {
   const buildComposeAfterMs = (performance.now() - t1) / ITERS;
 
   return {
-    auditDisclosure: 'In baseline main (225f1d30 / 8bebf5cf), patches/local-quality/adapter.mjs already injected the LOD, AO, and BodyBalance optimizations at build time into _site/. Therefore, the completed production build (_site/) is 100% byte-for-byte identical before vs after migration (0 double-counted runtime speedup in _site/), while build-time composition (adaptQualitySource) is faster because 6 multi-KB string replacement passes are eliminated.',
+    auditDisclosure: 'Historical migration only: baseline main (225f1d30 / 8bebf5cf) already injected LOD, AO and BodyBalance optimization in _site/. The frozen migration pairs below remain byte-identical and supply zero new runtime/FPS gain. Later BodyBalance ancestor-closure work is admitted separately and tested by the real source/emitted character regression; it is not covered by the historical identity claim.',
+    currentBodyBalanceFollowup:{baseline:'26a4db41',byteIdentical:false,strictDeltaAdmitted:true,currentSourceSha256:currentBodySha,combinedSourceEpoch:currentBodySha===combinedBodySha?'42b76fba916054a0058c196d70dbc21d6873b705':null,validation:'body-balance-work.test.mjs: real source/emitted 30/60/120Hz final pose/skin/contact/muzzle parity, retaining the separately integrated #1815 caches'},
     composedSiteByteParity: {
       'src/game/character-lod.js': { beforeBytes: Buffer.byteLength(composedLodBefore), afterBytes: Buffer.byteLength(composedLodAfter), byteIdentical: true },
       'src/game/character-outfit.js': { beforeBytes: Buffer.byteLength(composedOutfitBefore), afterBytes: Buffer.byteLength(composedOutfitAfter), byteIdentical: true },
       'src/game/motion/body-balance.js': { beforeBytes: Buffer.byteLength(composedBbBefore), afterBytes: Buffer.byteLength(composedBbAfter), byteIdentical: true },
     },
-    netNewRuntimeSpeedupInComposedSiteBuild: '1.00x (byte-identical _site/ output; 0% double-counted from existing build-time adapter)',
+    netNewRuntimeSpeedupInComposedSiteBuild: 'Historical migration: 1.00x, zero new runtime gain. Later BodyBalance work requires its separate measurements; no FPS claim.',
     buildTimeCompositionBenchmark: {
       iterations: ITERS,
       beforeMsPerPass: Number(buildComposeBeforeMs.toFixed(4)),

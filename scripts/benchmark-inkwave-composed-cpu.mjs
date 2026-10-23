@@ -51,7 +51,7 @@ await new Promise(r=>server.listen(0,'127.0.0.1',r));
 let browser;
 const report={schema:2,sourceSha,contentHash:manifest.contentHash,revision:manifest.build.revision,
  harness:Object.fromEntries(['benchmark-inkwave-composed-cpu.mjs','lib/inkwave-cpu-gameplay-digest.mjs','lib/inkwave-cpu-counters.mjs','lib/inkwave-cpu-trace.mjs','lib/inkwave-runtime-evidence.mjs'].map(file=>[file,hash(fs.readFileSync(new URL(file,import.meta.url)))])),
- environment:{node:process.version,cpu:os.cpus()[0].model,logicalCpus:os.cpus().length,quality,viewport:[960,640],render,wrappers},
+ environment:{node:process.version,cpu:os.cpus()[0].model,logicalCpus:os.cpus().length,cpuQuota:fs.existsSync('/sys/fs/cgroup/cpu.max')?fs.readFileSync('/sys/fs/cgroup/cpu.max','utf8').trim():null,quality,viewport:[960,640],render,wrappers},
  limits:['Linux Chromium/SwiftShader; no physical iPad or FPS evidence.',
  'Fixed-step CPU transaction; loading, async cold startup and presentation pacing are excluded.',
  'Inclusive scopes overlap. Wrappers and GC tracing perturb timings; use --no-wrappers as a control.',
@@ -111,7 +111,7 @@ try{
     sourceCharacters:characters.length,triangles:G.level.triangleWorld?.triangleCount??0,paintFaces:G.paint.paintFaces?.length,atlas:G.paint.size,ppm:G.paint.ppm,settings:g.settings,scene:globalThis.__iwReadCpuCounters(G.renderer,G.scene).scene};
   },{stage,render});
   const cdp=await context.newCDPSession(page);
-  await cdp.send('Performance.enable');
+  await cdp.send('Performance.enable',{timeDomain:'threadTicks'});
   const before=await cdp.send('Performance.getMetrics');
   await cdp.send('Tracing.start',{categories:'v8,devtools.timeline,blink.user_timing',transferMode:'ReturnAsStream'});
   const result=await page.evaluate(({frames,hz,wrappers})=>{
@@ -154,9 +154,11 @@ try{
   let trace='';for(;;){const part=await cdp.send('IO.read',{handle:stream});trace+=part.base64Encoded?Buffer.from(part.data,'base64').toString():part.data;if(part.eof)break;}await cdp.send('IO.close',{handle:stream});
   fs.writeFileSync(path.join(evidence,stage+'-trace.json'),trace);
   const after=await cdp.send('Performance.getMetrics');
+  const metric=(m,name)=>m.metrics.find(x=>x.name===name)?.value??null;
+  const threadCpuMs=Object.fromEntries(['TaskDuration','ScriptDuration','ThreadTime'].map(name=>[name,metric(before,name)===null||metric(after,name)===null?null:(metric(after,name)-metric(before,name))*1000]));
   const heap=m=>Object.fromEntries(m.metrics.filter(x=>/JSHeap|Nodes|Documents/.test(x.name)).map(x=>[x.name,x.value]));
   const sorted=[...result.times].sort((a,b)=>a-b),pick=p=>sorted[Math.min(sorted.length-1,Math.floor(sorted.length*p))];
-  const row={stage,preparedScene:initial.scene,initial:{...initial,scene:result.rawCounters.before.scene},...result,cpuFrameMs:{mean:result.times.reduce((a,b)=>a+b,0)/frames,p50:pick(.5),p95:pick(.95),p99:pick(.99),max:sorted.at(-1)},gc:summarizeGcTrace(JSON.parse(trace).traceEvents),heap:{before:heap(before),after:heap(after)},errors};
+  const row={stage,preparedScene:initial.scene,initial:{...initial,scene:result.rawCounters.before.scene},...result,threadCpuMs,cpuFrameMs:{mean:result.times.reduce((a,b)=>a+b,0)/frames,p50:pick(.5),p95:pick(.95),p99:pick(.99),max:sorted.at(-1)},gc:summarizeGcTrace(JSON.parse(trace).traceEvents),heap:{before:heap(before),after:heap(after)},errors};
   report.scenarios.push(row);fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify(report,null,2)+'\n');
   console.log(JSON.stringify({stage,cpuFrameMs:row.cpuFrameMs,categories:row.categories,gc:row.gc,errors}));
   if(errors.length||row.contextLost||row.ticks!==Math.round(frames*60/hz))throw Error('Runtime workload failed');
