@@ -10,6 +10,17 @@ async function fixture(name,{minify=false,mutate=s=>s,revision='test'}={}){
 }
 function accept(f){create(f.e,f.payload,origin);observe(f.e,f.payload.url,origin);bind(f.e,f.loaded,f.manifest);verify(f.loaded,f.manifest);}
 for(const name of ['grain','reverb'])for(const minify of [false,true])test(`${name} exact native source/calls/manifest bind, minified=${minify}`,async()=>{const f=await fixture(name,{minify});accept(f);for(const mutate of [g=>delete g.loaded[g.path].nativeWorkerProvenance,g=>g.loaded[g.owner].sha256='0'.repeat(64),g=>g.loaded[g.path].nativeWorkerProvenance.creator.column=1,g=>g.loaded[g.path].sha256='1'.repeat(64)]){const g=structuredClone(f);mutate(g);assert.throws(()=>verify(g.loaded,g.manifest));}});
+test('anonymous grain timer stack binds the exact emitted callsite without relaxing caller checks',async()=>{
+ const f=await fixture('grain',{minify:true});
+ f.payload.workerStack=f.payload.workerStack.replace('at native (','at ').replace(/\)$/, '');
+ accept(f);
+ const forged=await fixture('grain',{minify:true});
+ forged.payload.workerStack=forged.payload.workerStack.replace('at native (','at ').replace(/\)$/, '').replace(/:\d+$/,':1');
+ assert.throws(()=>accept(forged),/callsite/);
+ const foreign=await fixture('grain',{minify:true});
+ foreign.payload.workerStack=foreign.payload.workerStack.replace('at native (','at ').replace(/\)$/, '').replace('grain-prewarm.mjs','reverb-prewarm.mjs');
+ assert.throws(()=>accept(foreign),/Wrong native module Worker owner/);
+});
 test('unknown targets, options, missing observations/responses and foreign revisions reject',async()=>{
  for(const mutate of [f=>f.payload.url='data:text/javascript,1',f=>f.payload.url='blob:'+origin+'/x',f=>f.payload.url=origin+'/unbound-worker.mjs',f=>f.payload.url=f.payload.url.replace(origin,'https://foreign.invalid'),f=>f.payload.workerOptions.type='classic',f=>f.payload.workerOptions.credentials='include',f=>f.payload.workerStack=f.payload.workerStack.replace('grain-prewarm.mjs','other.mjs')]){const f=await fixture('grain');mutate(f);assert.throws(()=>accept(f));}
  const f=await fixture('grain');create(f.e,f.payload,origin);assert.throws(()=>bind(f.e,f.loaded,f.manifest),/denominator/);observe(f.e,f.payload.url,origin);delete f.loaded[f.path];assert.throws(()=>bind(f.e,f.loaded,f.manifest),/response missing/);

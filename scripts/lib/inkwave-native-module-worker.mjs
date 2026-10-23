@@ -6,7 +6,12 @@ const hash=b=>createHash('sha256').update(b).digest('hex');
 const workerName=path=>/^((?:_versions\/[A-Za-z0-9_-]+\/)?patches\/splatoon3\/runtime\/audio\/)(grain|reverb)-worker\.mjs$/.exec(path);
 export const isNativeModuleWorkerOwner=path=>/^(?:_versions\/[A-Za-z0-9_-]+\/)?patches\/splatoon3\/runtime\/audio\/(grain|reverb)-prewarm\.mjs$/.test(path);
 function target(url,origin){const u=new URL(url);assert(['http:','https:'].includes(u.protocol)&&u.origin===origin&&!u.search&&!u.hash,'Foreign or unpinned native module Worker');const path=decodeURIComponent(u.pathname).slice(1),m=workerName(path);assert(m,'Unknown native module Worker');return{path,prefix:m[1],name:m[2]};}
-function caller(stack,origin){const line=stack?.split('\n')[2],m=line?.match(/\((https?:\/\/[^\s)]+):(\d+):(\d+)\)$/);assert(m,'Missing direct native module Worker caller');const u=new URL(m[1]);assert.equal(u.origin,origin);assert.equal(u.search+u.hash,'');return{path:decodeURIComponent(u.pathname).slice(1),line:Number(m[2]),column:Number(m[3])};}
+function caller(stack,origin){const line=stack?.split('\n')[2]?.trim();
+ // V8's direct anonymous/timer callbacks use "at URL:line:column"; named
+ // frames use "at function (URL:line:column)". Only the immediate caller is
+ // admitted, and its exact module callsite is checked against loaded bytes.
+ const m=line?.match(/\((https?:\/\/[^\s)]+):(\d+):(\d+)\)$/)
+   || line?.match(/^at (https?:\/\/[^\s)]+):(\d+):(\d+)$/);assert(m,'Missing direct native module Worker caller');const u=new URL(m[1]);assert.equal(u.origin,origin);assert.equal(u.search+u.hash,'');return{path:decodeURIComponent(u.pathname).slice(1),line:Number(m[2]),column:Number(m[3])};}
 const options=(value,name)=>{assert.deepEqual(Object.keys(value||{}).sort(),['name','type']);assert.equal(value.type,'module');assert.equal(value.name,'inkwave-'+name);};
 export function recordNativeModuleWorkerCreation(e,p,origin){
  const t=target(p.url,origin);options(p.workerOptions,t.name);const frame=caller(p.workerStack,origin);
