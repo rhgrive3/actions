@@ -1,0 +1,15 @@
+Working directory: /workspace/reticle-final-main7e027
+Build implementation commit: 8902adfd232754af807ec734e9bddf64ae2b6436
+
+node --experimental-vm-modules --test --test-concurrency=1 patches/local-quality/tests/reticle-feedback.test.mjs patches/local-quality/tests/s3-hud-look.test.mjs patches/local-quality/tests/score-reticle.test.mjs patches/local-quality/tests/static-menu-art.test.mjs patches/splatoon3/tests/issue-871-shooter-reticle-corners.test.mjs patches/splatoon3/tests/issue-1100-splatling-reticle.test.mjs patches/splatoon3/tests/hud-slosher-reticle.test.mjs patches/splatoon3/tests/dualies-reticle-state.test.mjs patches/splatoon3/tests/charger-reticle-delay.test.mjs scripts/tests/inkwave-local-references.test.mjs
+node scripts/build-inkwave.mjs inkwave-public /workspace/scratch/reticle-final-main7e027-site
+INKWAVE_RETICLE_SITE=/workspace/scratch/reticle-final-main7e027-site node --experimental-vm-modules --test patches/local-quality/tests/reticle-feedback.test.mjs
+node scripts/check-inkwave-local-references.mjs .
+node scripts/check-inkwave-local-references.mjs . --site /workspace/scratch/reticle-final-main7e027-site
+node scripts/check-inkwave-patches.mjs --quick
+node scripts/check-inkwave-startup-budget.mjs /workspace/scratch/reticle-final-main7e027-site
+node reports/reticle-final-main7e027-20261023/compare-build.mjs /workspace/reticle-final-main7e027 /workspace/scratch/reticle-final-main7e027-site /workspace/scratch/reticle-main7e027-site /workspace/scratch/reticle-after-site
+git diff --check
+
+The comparison script is run again after the evidence commit. Build inputs and artifacts stay unchanged; the report's build-readback.json identifies the implementation commit, while the final task response identifies the published evidence commit.
+The prior browser evidence is reused by exact canonical-input and artifact equality. No browser run or retail-reference retrieval was performed in this packaging step.

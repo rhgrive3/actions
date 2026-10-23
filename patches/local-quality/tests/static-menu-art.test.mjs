@@ -48,7 +48,7 @@ function runGate(screen, overrides = {}) {
   const calls = [];
   const G = { mode: overrides.mode || 'menu', time: 5, net: { update: dt => calls.push('net') } };
   const menus = { current: screen, _scr: { name: screen }, update: dt => calls.push('menu') };
-  if (overrides.mismatch) menus.current = 'main';
+  if (overrides.mismatch) menus.current = overrides.mismatch;
   const showcase = { _pq: overrides.portrait ? [{}] : [], _portraitStep: () => calls.push('portrait') };
   const gameState = {
     menus,
@@ -108,7 +108,40 @@ test('title, real match, room, pause and results preserve the original 3D/game f
   }
   assert.equal(runGate('main', { attract: false }).full, true, 'real match');
   assert.equal(runGate('main', { mode: 'match' }).full, true, 'match startup');
-  assert.equal(runGate('locker', { mismatch: true }).full, true, 'wiped screen is not yet mounted');
+  for (const from of ['loading', 'title', 'lobby']) {
+    assert.equal(runGate(from, { mismatch: 'main' }).full, true, from + ' stays drawn until the wipe swaps in the art');
+  }
+  assert.equal(runGate('main', { mismatch: 'lobby' }).full, true, 'room set takes over as soon as it is current');
+});
+
+test('a wipe between two art screens never draws the demo world in between', () => {
+  for (const [from, to] of [['main', 'settings'], ['settings', 'main'], ['main', 'locker'], ['locker', 'main'], ['setup', 'loadout']]) {
+    const r = runGate(from, { mismatch: to });
+    assert.equal(r.full, false, from + ' -> ' + to);
+  }
+});
+
+test('the demo canvas is hidden behind art screens and shown again before any world frame', () => {
+  const frame = (screen, owner) => {
+    const canvas = { style: { visibility: '' } };
+    const G = { mode: 'menu', time: 0, renderer: { domElement: canvas } };
+    const self = owner || { showcase: { _pq: [] }, match: { attract: true }, input: { pollPad() {}, endFrame() {} }, _padMenus() {} };
+    self.menus = { current: screen, _scr: { name: screen }, update() {} };
+    const gate = new Function('G', 'INKWAVE_ART_MENU_SCREENS', 'renderInkwaveLockerStage',
+      'return function(dt) {' + framePrefix(game) + '\nthrow new Error("full-world-frame");\n}')(
+      G, new Set(STATIC_MENU_SCREENS), () => {});
+    let full = false;
+    try { gate.call(self, 1 / 60); } catch (e) { if (e.message !== 'full-world-frame') throw e; full = true; }
+    return { self, canvas, full };
+  };
+  const settings = frame('settings');
+  assert.equal(settings.canvas.style.visibility, 'hidden');
+  assert.equal(frame('locker').canvas.style.visibility, '', 'locker draws its pedestal kid into the canvas');
+  // the next real 3D frame (title, room, match) unhides before it renders
+  const title = frame('title', settings.self);
+  assert.equal(title.full, true);
+  assert.equal(title.canvas.style.visibility, '');
+  assert.equal(settings.self._artCanvasHidden, false);
 });
 
 test('static screens do not construct hidden 3D loadout or Online hub showcases', () => {
@@ -142,6 +175,9 @@ test('CSS maps exactly three generated locally hosted WebP backgrounds to the co
   assert.ok(generated.includes('data-screen="loadout"'));
   assert.ok(generated.includes('data-screen="locker"'));
   assert.match(generated, /background-size: cover/);
+  const blurOff = generated.match(/\.iw-ui\.is-active:is\(([^)]*)\) \* \{\n  -webkit-backdrop-filter: none;\n  backdrop-filter: none;\n\}/);
+  assert.ok(blurOff, 'art screens drop the per-frame backdrop blur');
+  assert.deepEqual(blurOff[1].match(/data-screen="([a-z]+)"/g).map((x) => x.slice(13, -1)), STATIC_MENU_SCREENS);
   assert.ok(qualityIdentity()['static-menu-adapter.mjs']);
 });
 
