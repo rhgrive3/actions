@@ -1098,26 +1098,44 @@ const DIRECTORS = {
       const st = a._s3AllSpecialState, c = t.color;
       const hand = this.bone(a, 'handR', this.v[0]) || this.chest(a, this.v[0], 1.2);
       const phase = st?.phase ?? null, target = st?.zipTarget;
-      if ((phase === 'hookFlight' || phase === 'zip') && target) {
-        let head = target;
+      // Keep the existing 60 Hz particle recipe (including coat/RNG order).
+      // The track owns fractional time; stalls admit at most two opportunities
+      // and discard backlog. Beams and ribbons still follow every render frame.
+      let ticks = 0;
+      if (dt > 0 && Number.isFinite(dt)) {
+        const frames = (t.d.zipVfxCarry || 0) + Math.min(dt * 60, 2);
+        ticks = Math.min(2, Math.floor(frames + 1e-9));
+        t.d.zipVfxCarry = Math.max(0, frames - ticks);
+      }
+      const casting = (phase === 'hookFlight' || phase === 'zip') && target;
+      let head = target;
+      if (casting) {
         if (phase === 'hookFlight') { const k = clamp01((st.hookFlightT || 0) / Math.max(1e-3, st.hookFlightDuration || 0.1)); head = this.v[1].copy(hand).lerp(target, easeOut(k)); }
         // the line is a stretched strand of liquid ink (S3), not a light beam
         if (!t.d.line) { t.d.line = this.beam(false, 0, BEAM.JET, hand, head, 0.06, 0.09, c, 1, { speed: 20 }); (t.d.recs ||= []).push(t.d.line); }
         const thick = phase === 'zip' ? 0.1 : 0.06;
         this.setBeam(t.d.line, hand, head, thick * 0.8, thick, 1);
-        if (phase === 'hookFlight' && vfxRandom() < 0.6) this.drop(head, rnd(1, -1), rnd(1, -1.5), rnd(1, -1), 0.35, 0.09, c, { grav: 10 });
         if (phase === 'zip') {      // the pull: streaks peeling off the body and an ink trail behind
-          if (!t.d.trail) t.d.trail = this.ribbon(false, { width: 0.8, widthTail: 0.15, color: c, alpha: 1, style: RIBBON.INK, life: 0.25, spacing: 0.15 });
+          if (!t.d.trail) {
+            t.d.trail = this.ribbon(false, { width: 0.8, widthTail: 0.15, color: c, alpha: 1, style: RIBBON.INK, life: 0.25, spacing: 0.15 });
+            // Let endTrack retire the current trail on cancellation/removal.
+            (t.d.ribbons ||= [])[0] = t.d.trail;
+          }
           this.pushRibbon(t.d.trail, this.chest(a, this.v[2], 0.8), false);
-          const v = a.vel || this.v[3].set(0, 0, 0);
-          for (let i = 0; i < 2; i++) this.drop(this.v[2].set(a.pos.x + rnd(0.5, -0.5), a.pos.y + rnd(1.4, 0.2), a.pos.z + rnd(0.5, -0.5)), -v.x * 0.3, -v.y * 0.3, -v.z * 0.3, 0.35, 0.08, c, { drag: 3, grav: 8, stretch: 0.06 });
         }
       } else {
         if (t.d.line) t.d.line.v[11] = 0;
         if (t.d.trail) { this.kit.ribbons.end(t.d.trail); t.d.trail = null; }
       }
-      // the coated body drips
-      t.acc = (t.acc || 0) + dt; if (t.acc > 0.16) { t.acc = 0; this.puff(PUFF.CHUNK, this.v[2].set(a.pos.x + rnd(0.25, -0.25), a.pos.y + rnd(1.2, 0.4), a.pos.z + rnd(0.25, -0.25)), 0, -0.5, 0, 0.6, 0.06, 0.03, c, 1, { grav: 10 }); }
+      for (let k = 0; k < ticks; k++) {
+        if (casting && phase === 'hookFlight' && vfxRandom() < 0.6) this.drop(head, rnd(1, -1), rnd(1, -1.5), rnd(1, -1), 0.35, 0.09, c, { grav: 10 });
+        if (casting && phase === 'zip') {
+          const v = a.vel || this.v[3].set(0, 0, 0);
+          for (let i = 0; i < 2; i++) this.drop(this.v[2].set(a.pos.x + rnd(0.5, -0.5), a.pos.y + rnd(1.4, 0.2), a.pos.z + rnd(0.5, -0.5)), -v.x * 0.3, -v.y * 0.3, -v.z * 0.3, 0.35, 0.08, c, { drag: 3, grav: 8, stretch: 0.06 });
+        }
+        // the coated body drips at its original ten-native-frame interval
+        t.acc = (t.acc || 0) + 1 / 60; if (t.acc > 0.16) { t.acc = 0; this.puff(PUFF.CHUNK, this.v[2].set(a.pos.x + rnd(0.25, -0.25), a.pos.y + rnd(1.2, 0.4), a.pos.z + rnd(0.25, -0.25)), 0, -0.5, 0, 0.6, 0.06, 0.03, c, 1, { grav: 10 }); }
+      }
     },
     event(a, e, pos, target) {
       const c = this.rgb(a);
