@@ -30,6 +30,8 @@ const compose = (rel, code = read(rel)) => adaptQualitySource(rel, adaptReliabil
 // Every HUD method the rig runs, in source order. A body runs to the next signature, so
 // the same extraction works for the raw file and for the composed/installed output.
 const SIGS = [
+  '  _clearReticleFeedback() {',
+  '  hitMarker(', // Boundary for the cleanup method, not part of this rig.
   '  _onSplatted(', // Current HUD also consumes the accepted helper list.
   '  _assistMark(victim) {',
   '  _killCard(victim, kind) {',
@@ -38,7 +40,7 @@ const SIGS = [
   '  _allyDown(victim, attacker) {',
   '  _updDowns(dt) {',
 ];
-const WALKED = ['_onSplatted', '_assistMark', '_killCard', '_dropCard', '_allyDown'];
+const WALKED = ['_clearReticleFeedback', '_onSplatted', '_assistMark', '_killCard', '_dropCard', '_allyDown'];
 function body(code, signature) {
   const at = code.indexOf(signature);
   if (at < 0) return null;
@@ -202,9 +204,18 @@ test('#561: current authoritative no-credit, enemy-finished and self events pres
   assert.equal(r.hud.downLayer.children.length, 0, 'an enemy finisher is not an assist');
   assert.equal(r.hud.kcards.children.length, 0, 'enemy-versus-enemy kills stay out of the local card stack');
 
+  const pulse = { playState: 'running', cancel() { this.playState = 'idle'; } };
+  r.hud._hitAnimations = [pulse];
+  r.hud._lastHitDmg = 36;
+  r.hud.killEl = r.context.document.createElement('div');
+  r.hud.killEl.classList.add('is-on');
   r.splat(r.me, r.enemy('Killer'));
   assert.equal(r.hud.downLayer.children.length, 0);
   assert.equal(r.hud.kcards.children.length, 0);
+  assert.deepEqual(r.sounds, []);
+  assert.equal(pulse.playState, 'idle', 'self splat runs the actual reticle cleanup');
+  assert.equal(r.hud.killEl.classList.contains('is-on'), false);
+  assert.equal(r.hud._lastHitDmg, 0);
 
   // Per-actor bookkeeping that Flow Aura and result stats rely on is untouched: the teammate
   // streak is credited for the expired assist attempt exactly as before the patch.
@@ -273,6 +284,8 @@ async function installedRig(site) {
   const hud = load(path.join(site, 'src/ui/hud.js'));
   await hud.link((spec, from) => load(spec === 'three'
     ? path.join(site, 'vendor/three/build/three.module.js')
+    : spec.startsWith('three/addons/')
+      ? path.join(site, 'vendor/three/jsm', spec.slice('three/addons/'.length))
     : path.resolve(path.dirname(from.identifier), spec)));
   await hud.evaluate();
   const sounds = [], timers = [];
@@ -316,6 +329,15 @@ test('#561: installed built site presents the assist exactly like the compositio
   assert.equal(direct.kcards.children.length, 1, 'the installed direct-splat card is unaffected');
   assert.deepEqual(r.sounds, []);
   assert.deepEqual(r.timers, [2200], 'the installed direct-splat card keeps its 2200 ms lifetime');
+
+  const self = r.make();
+  const pulse = { playState: 'running', cancel() { this.playState = 'idle'; } };
+  self._hitAnimations = [pulse]; self._lastHitDmg = 36;
+  assert.equal(typeof self._clearReticleFeedback, 'function', 'the full emitted HUD prototype owns cleanup');
+  self._onSplatted({ victim: r.me, attacker: r.enemy('Killer') });
+  assert.equal(pulse.playState, 'idle'); assert.equal(self._lastHitDmg, 0);
+  assert.equal(self.kcards.children.length, 0); assert.equal(self.downLayer.children.length, 0);
+  assert.deepEqual(r.sounds, []); assert.deepEqual(r.timers, [2200], 'self splat adds no card or timer');
 
   const css = fs.readFileSync(path.join(site, 'patches/splatoon3/ui.css'), 'utf8');
   assert.ok(css.includes('.iw-down--assist'), 'the installed stylesheet ships the assist marker rule');
