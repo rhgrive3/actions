@@ -13,6 +13,13 @@ export class BodyBalance {
   this.total=0;this.world=bank.bones.map(()=>new THREE.Quaternion());this.q=new THREE.Quaternion();this.v=new THREE.Vector3();this.p=new THREE.Vector3();this.parent=new THREE.Quaternion();
   this.rotationGain=new Map([['hip',HOST_BALANCE.pelvisRotation],['spine1',HOST_BALANCE.torsoRotation],['spine2',HOST_BALANCE.torsoRotation],['chest',HOST_BALANCE.torsoRotation],['neck',HOST_BALANCE.headRotation],['head',HOST_BALANCE.headRotation]]);
   this.rotationGainByIndex=bank.bones.map(b=>this.rotationGain.get(b.name));
+  // Only gain joints and their ancestors feed a changed world rotation.
+  // Other local rotations already came from pose.copy(source); the full
+  // pose.fk() below still evaluates every output bone in its original order.
+  const needed=new Set();
+  for(let i=0;i<bank.bones.length;i++)if(this.rotationGainByIndex[i]!==undefined)
+   for(let j=i;j>=0&&!needed.has(j);j=bank.bones[j].parent)needed.add(j);
+  this.rotationWorldIndices=bank.bones.map((_,i)=>i).filter(i=>!bank.parentsFirst||needed.has(i));
   this.hipIndex=bank.index.hip;
   this.reset();
  }
@@ -30,7 +37,7 @@ export class BodyBalance {
   if(root!==undefined){const p=this.pose.p[root],m=this.center.p[root];p.set(m.x+(p.x-m.x)*(1-weight+weight*gainX),m.y+(p.y-m.y)*(1-weight+weight*gainY),m.z+(p.z-m.z)*(1-weight+weight*HOST_BALANCE.forward));}
   // Preserve the source's global counter-rotation. Scaling LOCAL rotations
   // independently destroys the head's counter-motion to its parent chest.
-  for(let i=0;i<this.bank.bones.length;i++){
+  for(const i of this.rotationWorldIndices){
    const b=this.bank.bones[i],rawGain=this.rotationGainByIndex[i],gain=rawGain===undefined?undefined:rawGain*(i===this.hipIndex?1-.85*pivot:1)*(1-.78*clamp(strafe,0,1)),parent=b.parent;
    if(gain!==undefined){this.world[i].copy(this.center.wq[i]).slerp(source.wq[i],1-weight+weight*gain);this.pose.q[i].copy(this.world[i]);if(parent>=0)this.pose.q[i].premultiply(this.q.copy(this.world[parent]).invert());}
    else{this.world[i].copy(this.pose.q[i]);if(parent>=0)this.world[i].premultiply(this.world[parent]);}
