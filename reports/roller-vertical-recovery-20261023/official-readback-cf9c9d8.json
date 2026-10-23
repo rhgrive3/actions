@@ -1,0 +1,311 @@
+{
+  "schema": 1,
+  "pr": 1856,
+  "head": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2",
+  "tree": "25cbb18cad196b979296ff3591a15c22e2d4fe04",
+  "officialRef": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2",
+  "officialCommitTree": "25cbb18cad196b979296ff3591a15c22e2d4fe04",
+  "treeTruncated": false,
+  "treeEntries": 6558,
+  "blobLeaves": 6274,
+  "changedBlobChecks": [
+    {
+      "path": ".github/workflows/inkwave-main-weapons.yml",
+      "expected": "4fbc302f4e1524a499487c116c68b63917459e28",
+      "official": "4fbc302f4e1524a499487c116c68b63917459e28",
+      "equal": true
+    },
+    {
+      "path": "patches/splatoon3/runtime/roller-vertical-recovery.mjs",
+      "expected": "c293a0745664ac8126c6ec467f4b82a710c6b044",
+      "official": "c293a0745664ac8126c6ec467f4b82a710c6b044",
+      "equal": true
+    },
+    {
+      "path": "patches/splatoon3/runtime/roller.mjs",
+      "expected": "192e0a41e46528b3b68f2acb4dd64055447ee41c",
+      "official": "192e0a41e46528b3b68f2acb4dd64055447ee41c",
+      "equal": true
+    },
+    {
+      "path": "patches/splatoon3/tests/roller-vertical-recovery.test.mjs",
+      "expected": "804b20277359b4be41a9ae8905da1e5d33474f79",
+      "official": "804b20277359b4be41a9ae8905da1e5d33474f79",
+      "equal": true
+    },
+    {
+      "path": "reports/inkwave-splatoon3-behavior-2026-10-02.md",
+      "expected": "939bdfde3daef3b56fabbb801d3ba763a43f354d",
+      "official": "939bdfde3daef3b56fabbb801d3ba763a43f354d",
+      "equal": true
+    },
+    {
+      "path": "reports/roller-vertical-recovery-20261023/README.md",
+      "expected": "73d9c2397e50c7ae535c9ad755fca81b1f7b8c17",
+      "official": "73d9c2397e50c7ae535c9ad755fca81b1f7b8c17",
+      "equal": true
+    },
+    {
+      "path": "reports/roller-vertical-recovery-20261023/before/initial-60hz-receipt.json.gz",
+      "expected": "53d1b86eccc6aac5229f0622bca62416ec332b9a",
+      "official": "53d1b86eccc6aac5229f0622bca62416ec332b9a",
+      "equal": true
+    },
+    {
+      "path": "reports/roller-vertical-recovery-20261023/before/tick-48.png",
+      "expected": "49f7a49180c70fc3ba707f1c333167bdc24bbdb3",
+      "official": "49f7a49180c70fc3ba707f1c333167bdc24bbdb3",
+      "equal": true
+    },
+    {
+      "path": "reports/roller-vertical-recovery-20261023/before/tick-49.png",
+      "expected": "108627a3eefb166c539e007bf32d27a7b888ea7e",
+      "official": "108627a3eefb166c539e007bf32d27a7b888ea7e",
+      "equal": true
+    },
+    {
+      "path": "reports/roller-vertical-recovery-20261023/budget.log",
+      "expected": "cd6db156cfee628d2a902fe1d8c7251c5beac976",
+      "official": "cd6db156cfee628d2a902fe1d8c7251c5beac976",
+      "equal": true
+    },
+    {
+      "path": "reports/roller-vertical-recovery-20261023/candidate/initial-60hz-receipt.json.gz",
+      "expected": "2078dd23cc356b96c277c4854b6601e40a73b428",
+      "official": "2078dd23cc356b96c277c4854b6601e40a73b428",
+      "equal": true
+    },
+    {
+      "path": "reports/roller-vertical-recovery-20261023/candidate/tick-48.png",
+      "expected": "44413443d0e42561208b4643425fe9159d05ffb8",
+      "official": "44413443d0e42561208b4643425fe9159d05ffb8",
+      "equal": true
+    },
+    {
+      "path": "reports/roller-vertical-recovery-20261023/candidate/tick-49.png",
+      "expected": "3be290b4aa60daf42d989df8a5d479b9badf88f6",
+      "official": "3be290b4aa60daf42d989df8a5d479b9badf88f6",
+      "equal": true
+    },
+    {
+      "path": "reports/roller-vertical-recovery-20261023/ci-contracts.tap",
+      "expected": "8f40b6b16aa94286d0a1c9be07ab717f1db292cf",
+      "official": "8f40b6b16aa94286d0a1c9be07ab717f1db292cf",
+      "equal": true
+    },
+    {
+      "path": "reports/roller-vertical-recovery-20261023/emitted.tap",
+      "expected": "5c22d939b6d8a2b7bd46e540599fd12592cfaa6a",
+      "official": "5c22d939b6d8a2b7bd46e540599fd12592cfaa6a",
+      "equal": true
+    },
+    {
+      "path": "reports/roller-vertical-recovery-20261023/focused.tap",
+      "expected": "164d66d66f20a280b2e907e49298b963f734841d",
+      "official": "164d66d66f20a280b2e907e49298b963f734841d",
+      "equal": true
+    },
+    {
+      "path": "reports/roller-vertical-recovery-20261023/load.json",
+      "expected": "b4d81a80098686759376ce41bbb5c844d3c024b7",
+      "official": "b4d81a80098686759376ce41bbb5c844d3c024b7",
+      "equal": true
+    },
+    {
+      "path": "reports/roller-vertical-recovery-20261023/old-fails.tap",
+      "expected": "d1b7275e7bab9dc84c8883e4af7519b67995bfab",
+      "official": "d1b7275e7bab9dc84c8883e4af7519b67995bfab",
+      "equal": true
+    },
+    {
+      "path": "reports/roller-vertical-recovery-20261023/packaging.tap",
+      "expected": "6a7ffa01c20c8281cb83ab2ee47d5b94f57becc3",
+      "official": "6a7ffa01c20c8281cb83ab2ee47d5b94f57becc3",
+      "equal": true
+    },
+    {
+      "path": "reports/roller-vertical-recovery-20261023/patch-check.log",
+      "expected": "6d96912e76100d03da968def769a771bbc51fe9d",
+      "official": "6d96912e76100d03da968def769a771bbc51fe9d",
+      "equal": true
+    },
+    {
+      "path": "reports/roller-vertical-recovery-20261023/source.tap",
+      "expected": "efa2d905978d7727f07884e05c06e3829cc8ddc1",
+      "official": "efa2d905978d7727f07884e05c06e3829cc8ddc1",
+      "equal": true
+    },
+    {
+      "path": "reports/roller-vertical-recovery-20261023/verification.json",
+      "expected": "3b063a303740d43bb530f2c3b16a5cb23d3a6bba",
+      "official": "3b063a303740d43bb530f2c3b16a5cb23d3a6bba",
+      "equal": true
+    },
+    {
+      "path": "scripts/check-inkwave-roller-recovery-browser.mjs",
+      "expected": "b1a8b9d1a987fe8189d4388228468c5d2c4c1b2a",
+      "official": "b1a8b9d1a987fe8189d4388228468c5d2c4c1b2a",
+      "equal": true
+    }
+  ],
+  "physicalBodyChecks": [
+    {
+      "path": ".github/workflows/inkwave-main-weapons.yml",
+      "sha": "4fbc302f4e1524a499487c116c68b63917459e28",
+      "equal": true,
+      "isError": false
+    },
+    {
+      "path": "patches/splatoon3/runtime/roller-vertical-recovery.mjs",
+      "sha": "c293a0745664ac8126c6ec467f4b82a710c6b044",
+      "equal": true,
+      "isError": false
+    },
+    {
+      "path": "patches/splatoon3/runtime/roller.mjs",
+      "sha": "192e0a41e46528b3b68f2acb4dd64055447ee41c",
+      "equal": true,
+      "isError": false
+    },
+    {
+      "path": "patches/splatoon3/tests/roller-vertical-recovery.test.mjs",
+      "sha": "804b20277359b4be41a9ae8905da1e5d33474f79",
+      "equal": true,
+      "isError": false
+    },
+    {
+      "path": "scripts/check-inkwave-roller-recovery-browser.mjs",
+      "sha": "b1a8b9d1a987fe8189d4388228468c5d2c4c1b2a",
+      "equal": true,
+      "isError": false
+    }
+  ],
+  "ciAtRead": [
+    {
+      "name": "roller-grip-comparison",
+      "status": "queued",
+      "conclusion": null,
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "browser-origins",
+      "status": "queued",
+      "conclusion": null,
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "immutable-source-pairs-and-focused-qa",
+      "status": "completed",
+      "conclusion": "skipped",
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "numerical-main",
+      "status": "queued",
+      "conclusion": null,
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "render-diagnostic",
+      "status": "completed",
+      "conclusion": "skipped",
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "network-opening-diagnostic",
+      "status": "completed",
+      "conclusion": "skipped",
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "wall-render-diagnostic",
+      "status": "completed",
+      "conclusion": "skipped",
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "reopened-six",
+      "status": "queued",
+      "conclusion": null,
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "patch_tests (5)",
+      "status": "in_progress",
+      "conclusion": null,
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "patch_tests (6)",
+      "status": "in_progress",
+      "conclusion": null,
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "patch_tests (1)",
+      "status": "in_progress",
+      "conclusion": null,
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "seven_claims",
+      "status": "queued",
+      "conclusion": null,
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "patch_tests (7)",
+      "status": "in_progress",
+      "conclusion": null,
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "verify-aplus-suite",
+      "status": "queued",
+      "conclusion": null,
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "patch_tests (2)",
+      "status": "in_progress",
+      "conclusion": null,
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "patch_tests (0)",
+      "status": "in_progress",
+      "conclusion": null,
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "resource_paint_continuation",
+      "status": "in_progress",
+      "conclusion": null,
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "native",
+      "status": "queued",
+      "conclusion": null,
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "patch_tests (4)",
+      "status": "in_progress",
+      "conclusion": null,
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "patch_tests (3)",
+      "status": "in_progress",
+      "conclusion": null,
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "name": "build_site",
+      "status": "in_progress",
+      "conclusion": null,
+      "head_sha": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    }
+  ]
+}

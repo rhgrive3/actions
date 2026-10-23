@@ -1,0 +1,46 @@
+(node:1231) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ late landing / ZR destination changes retain position and velocity and finish on the original interval (3.069517ms)
+✔ unchanged holds are byte-identical; repeated interruption, rewind, new attack and explicit clear do not reuse offsets (1.424502ms)
+✔ production pose hook prevents the old late recovery jump in both directions, before the native arm IK (9218.642352ms)
+✖ real per-weapon recovery, landing, held/released edges, reset and restart retain finite native grips at 30/60/120Hz (3307.318613ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 2
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12920.131713
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/roller-vertical-recovery.test.mjs:13:1
+✖ late landing / ZR destination changes retain position and velocity and finish on the original interval (3.069517ms)
+  AssertionError [ERR_ASSERTION]: original target switch exposes the regression
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/roller-vertical-recovery.test.mjs:26:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/splatoon3/tests/roller-vertical-recovery.test.mjs:71:1
+✖ real per-weapon recovery, landing, held/released edges, reset and restart retain finite native grips at 30/60/120Hz (3307.318613ms)
+  TypeError: G.projectiles._muzzle is not a function
+      at origin (/workspace/actions/patches/splatoon3/runtime/main-weapon-catalog.mjs:482:40)
+      at emitUnits (/workspace/actions/patches/splatoon3/runtime/main-weapon-catalog.mjs:833:5)
+      at Object.fire (/workspace/actions/patches/splatoon3/runtime/main-weapon-catalog.mjs:1792:36)
+      at R.update (/workspace/actions/patches/splatoon3/runtime/main-weapon-catalog.mjs:2175:54)
+      at file:///workspace/actions/patches/splatoon3/tests/roller-vertical-recovery.test.mjs:82:24
+      at runTickWithGameplayRandom (/workspace/actions/patches/splatoon3/runtime/clock.mjs:43:65)
+      at FixedClock.advance (/workspace/actions/patches/splatoon3/runtime/clock.mjs:60:13)
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/roller-vertical-recovery.test.mjs:77:48)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)

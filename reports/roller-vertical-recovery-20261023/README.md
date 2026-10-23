@@ -1,5 +1,7 @@
 # ローラー縦振りの発射後接続：部分修正候補
 
+**追加判定: cf9とweighted別候補は、ともに実画面の回復軌道を採用不可。** 下記matched比較を優先する。source検査の成功を実画面／本家一致の承認に使わない。
+
 本家一致の完了報告ではない。通常ローラーの発射後、着地やZR解除で回復先が切り替わる瞬間の姿勢ジャンプを修正した。継続中の振り抜き・戻り全体の軌道、本家映像と同じカメラ・照準・動作位相での新規比較は未完。マージしない。
 
 基準は公式 main `726e338ac256ba9609086ce65e25a68ddd99df85`。作業枝は `fix/roller-vertical-recovery-20261023`、runtime候補を最初に保存したcommitは `51dcd0e5ffd5c5488741900610d183eb874a6e17`。通常のCodex cloud `/workspace/actions` で作業し、Workやサブエージェントは使用していない。#1854 `2e8d90b8afb6aac057edfbb988fae789ef36cfd3`、#1852、#1853を事前に読み、変更していない。ヒッセンの床飛沫、髪・キャラクター形状・skin・meshも対象外。
@@ -64,3 +66,33 @@ node scripts/check-inkwave-roller-recovery-browser.mjs work/roller-candidate wor
 ```
 
 元は別checkoutのmain `726e338a`から `work/roller-before` へbuildし、同じcheckerをそれぞれに使用する。出力先を共用しない。最初の行列はscreenshot timeoutで中断した記録をローカル `.roller-recovery/before/matrix*` に残し、合格に数えない。最終行列と公式ref/tree/blob読み戻しの結果は後続の証拠に記録する。13:27 UTC時点では最終行列は進行中。旧検証器の30/60Hz計6条件成功は記録し、120Hz撮影timeoutを合格にしない。各描画でGPU完了を待つ修正版を別出力先で実行している。
+
+### 検証器の失敗と訂正
+
+初回の新規CPU検証器は、catalogueにstub projectileを渡したため `_muzzle` がなく、observerが開始済みの `swingCount` から参加したため別ブキのattack recordも取れなかった。実Projectilesへ置き換え、実runnerのidleを先に更新して `swingCount=0` を観察してから攻撃するよう訂正した（[初回失敗](initial-harness-failure.tap)、[observer失敗](harness-catalog-observer-failure.tap)）。元の宛先差が0.5を超える代表点は48tickではなく52tickとし、閾値を下げずに終盤の再現点を訂正した。productionの時計・既存のテスト閾値は変更していない。
+
+公式読み戻しの初回記録は [cf9c9d8](official-readback-cf9c9d8.json)。branch ref、commit tree、全23 changed blob SHA、およびruntime2本・回帰・checker・workflowの5本文が一致した。6274 blob leaves、6558 tree entries、truncated=false。ここに記録したCIは取得時点のqueued/in_progress/skippedであり、passではない。
+
+
+## 追加の同条件比較と不採用判定
+
+[matched/comparison.json](matched/comparison.json) は、元main・PR1856 cf9・別weighted候補を同じcheckerで比較した結果。列挙した条件に差はなかった: 名前 `Roller Recovery QA`、名前由来seed `3564230742`、既存style `{hair:0,skin:2,outfit:0,eyes:0,hat:0,brows:0}`、3装備とも能力none、既存Aqua/Cherry `#10d2e6/#ff4150`、基本roller、25 geometryの属性内容hash `b984d502777fda1948cef806a72e952639d709432fab328283ae48ab0c739f56`、服色uniforms、初期pose・時計、origin(0,0,0)、FOV/射影行列、カメラ(3,1.8,4)。同じ66 native ticks、40tick着地、48tick ZR解除。弾・ink・cooldown・攻撃時計・rollingも一致した。比較用には既存Characterを同じ既存選択から再構築して初期状態を揃えた。geometry定義を編集せず、髪・skin・meshの新設計はしていない。原作のカメラ／実機との一致ではない。
+
+初回60Hz画像にはavatar/gear/paletteの一致記録がなく、完全な同条件A/Bの承認証拠として使わない。上記の列挙条件を検証したmatched比較とは区別する。
+
+| 50–56tickのドラム中心移動 | 元main | cf9 | weighted別候補 |
+| --- | ---: | ---: | ---: |
+| 最大1tick移動 | 0.717140 | 0.908254 | 0.753777 |
+| 移動総量 | 2.661387 | 3.739439 | 3.776749 |
+
+cf9の51/52/53tickは0.908/0.882/0.653で、元0.713/0.570/0.372より大きい。weightedはraw角度とweightの独立補正によるlate catch-upを避け、重み付き目標を既存deadlineへ直接接続する試み。sourceの表示角速度ピークは改善したが、実ドラムの後半最大移動と総量は元より大きい。**weightedも採用しない。** 元のcf9 branch/commitと両ビルドを保護し、別枝 `experiment/roller-vertical-return-weighted-20261023` に不採用実験として保存する。共有grip・接地solver・横振り・respawn/resetのinput/runner初期化へ範囲を広げない。
+
+元/cf9/weightedのraw receiptは [before](matched/before.json.gz)、[cf9](matched/cf9.json.gz)、[weighted](matched/weighted-rejected.json.gz)。51tick画像は [元](matched/before-51.png)、[cf9](matched/cf9-51.png)、[weighted](matched/weighted-rejected-51.png)。
+
+weightedはsource5/5、実minify生成物5/5、既存focused39/39が成功した。凍結したcf9 helperを負対照として後半の表示角速度回帰を追加したが、これは実ドラムの軌道承認の代わりにはならない。最初のweighted回帰は同時刻の丸め差で1件失敗し、閾値を緩めず切替瞬間の既存値を保持して訂正した。各TAPはmatched配下に保存した。
+
+cf9のCI patch_tests(3)の失敗は `issue-847-roller-drum-support.test.mjs` のcurrent-source入力SHA固定がroller.mjs差分に未追随のためだった。別枝では、当該差分が表示helper接続のみで、stick/support/physical-paintの3故障注入anchorが不変と照合し、SHAをc694...へ追随した。歴史的b34 fixture、故障注入と閾値は維持し8/8成功。実装のshared gripやcontact admissionは編集していない。cf9のPR head自体は変更しておらず、そちらのCI失敗は解消済みと扱わない。
+
+## session39616とtimeoutの区別
+
+session39616はexit0。freshな候補120Hzの1条件は66 simulation ticks/132 renders、発射31tick、page errorなしで完了した: [receipt](fresh-candidate-120.json.gz)、[log](fresh-candidate-120.log)。これは [元の連続コンテキストtimeout](before-reused-context-timeout.log) とは別の実行であり、120Hz全条件の受入を意味しない。元の連続実行は30/60Hzの6条件を終え、120Hz released-edgeの最後の `page.screenshot` が60000msでtimeoutし、最終画像とreceiptが保存されなかった。失敗をpassに数えない。今回のmatched比較は既存checkerのChromium flags・60000ms撮影timeout・描画方式を維持した。

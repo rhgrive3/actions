@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
+import { createVerticalRecoverySampler as legacySampler } from './fixtures/roller-vertical-recovery.cf9c9d89.source.mjs';
 import { createVerticalRecoverySampler } from '../runtime/roller-vertical-recovery.mjs';
 import { verticalRollerPose, VERTICAL_ROLLER_SWING, heavyRollerSwingEnd } from '../runtime/roller.mjs';
 import { fixture } from './source-fixture.mjs';
@@ -10,6 +12,22 @@ const flat = p => [...p.anchor, ...p.rotation, p.weight, p.coil, p.whip];
 const end = a => a.swingShape === 'heavy' ? heavyRollerSwingEnd(a.windup, a.interval) : a.interval;
 const sampler = () => createVerticalRecoverySampler(verticalRollerPose, VERTICAL_ROLLER_SWING.ret, end);
 const attack = () => ({ windup:31/60, interval:56/60, elapsed:0, holdRoll:false });
+
+test('weighted return avoids the late angular catch-up peak in preserved cf9 without extending recovery', () => {
+  const legacy=fs.readFileSync(new URL('./fixtures/roller-vertical-recovery.cf9c9d89.source.mjs',import.meta.url));
+  assert.equal(createHash('sha256').update(legacy).digest('hex'),'ca47ab3469ca8c87bf9226763fdd84d8429b497e2aaa7824566a00969e75105f');
+  const reference=verticalRollerPose(0,31/60,56/60).rotation[0];
+  const displayed=p=>reference+(p.rotation[0]-reference)*p.weight;
+  const peak=read=>{
+    const owner={},a=attack(),rows=[];
+    for(let tick=0;tick<=56;tick++){a.elapsed=tick/60;a.holdRoll=tick<48;rows.push(displayed(read(owner,a)));}
+    assert.equal(rows[56],reference,'ready at the original deadline');
+    return Math.max(...rows.slice(50,57).map((v,i)=>Math.abs(v-rows[49+i])));
+  };
+  const baseline=peak((_owner,a)=>verticalRollerPose(a.elapsed,a.windup,a.interval,null,a.holdRoll));
+  assert(peak(legacySampler(verticalRollerPose,VERTICAL_ROLLER_SWING.ret,end))>baseline,'frozen cf9 demonstrates the late catch-up regression');
+  assert(peak(sampler())<=baseline,'no higher late displayed angular step than the original curve');
+});
 
 test('late landing / ZR destination changes retain position and velocity and finish on the original interval', () => {
   for (const [windup,interval,swingShape] of [[12,33,null],[31,56,null],[55,76,'heavy'],[42,63,null]])for (const held of [true, false]) {
