@@ -86,7 +86,7 @@ import { installBodyProportion } from './body-proportion.mjs';
 import { installEmotesMotion } from './emotes-motion.mjs';
 import { installSpecialMotion, installSpecialPresentation } from './special-motion.mjs';
 import { installFaceMotion } from './face-motion.mjs';
-import { installRespawnLifecycle } from './respawn-lifecycle.mjs';
+import { installRespawnLifecycle, beginInitialSquidSpawn } from './respawn-lifecycle.mjs';
 import { installSquidSpawnPresentation } from './squid-spawn-presentation.mjs';
 import { installCarryMotion } from './carry-motion.mjs';
 import { installControllerMotion } from './controller-motion.mjs';
@@ -253,6 +253,8 @@ export function install(profile) {
   installMainWeaponCatalogRuntime(api, profile);
   // Observe the final installed source owner, including every input gate.
   installNativeChargerInput(api);
-  installNativeChargerReplay(api);
+  // ctx imports the small replay scope guard. Supply the native lifecycle here
+  // so that guard never imports the stage engine back through ctx during boot.
+  installNativeChargerReplay({...api,beginInitialSquidSpawn});
   return api;
 }

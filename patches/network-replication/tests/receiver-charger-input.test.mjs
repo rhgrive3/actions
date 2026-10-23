@@ -116,6 +116,26 @@ test('co-forged full fire cannot turn an actual minimum-charge native launch int
   for(let i=0;i<9;i++)w.step({fire:true});for(let i=0;i<6;i++)w.step();assert.equal(w.births.length,1);assert.equal(receiver.peekReceiverChargerBirth(w.target.n,w.births[0]),null);assert.equal(w.status().actors[0].matched,0);
  }finally{w.close();}
 });
+test('a real native launch cannot authorize a forged direction absent from its source aim request',()=>{
+ const w=setup();try{
+  w.setFilter(p=>{for(const e of p.e||[])if(e[1]==='ev'&&e[2]==='weapon:fire')e[3].dir=[1,0,0];return p;});
+  for(let i=0;i<64;i++)w.step({fire:true});for(let i=0;i<5;i++)w.step();
+  const c=w.status().actors[0];assert.equal(c.reason,null);assert.equal(c.replay.shots.length,1,'the source really fired');
+  assert.equal(c.matched,0);assert.equal(receiver.peekReceiverChargerBirth(w.target.n,w.births[0]),null);
+ }finally{w.close();}
+});
+for(const [kind,point] of [['far',[30,20,90]],['near',[0,1.05,.5]],['behind',[0,1.05,-10]]])test(`launch-time native ${kind} aim survives later aim changes`,()=>{
+ const w=setup();try{
+  w.source.a.aimYaw=.3;w.source.a.aimPitch=.1;w.source.a.aimPoint.set(...point);
+  // Delay the exact prefix until later inputs have already requested another
+  // aim. Admission must use the immutable launch snapshot, not the last row.
+  for(let i=0;i<64;i++)w.step({fire:true},false);w.step({},false);
+  w.source.a.aimPoint.set(-80,40,10);w.source.a.aimYaw=-1;w.source.a.aimPitch=-.2;
+  for(let i=0;i<4;i++)w.step({},false);w.source.n._sendTick();w.playback();
+  const c=w.status().actors[0];assert.equal(c.reason,null);assert.equal(c.matched,1);
+  assert.ok(receiver.peekReceiverChargerBirth(w.target.n,w.births[0]));
+ }finally{w.close();}
+});
 test('pressing unready Special remains a legal native no-op input during a normal full charge',()=>{
  const w=setup();try{
   for(let i=0;i<64;i++)w.step({fire:true,special:i===11});for(let i=0;i<5;i++)w.step();const c=w.status().actors[0];assert.equal(c.reason,null);assert.equal(c.matched,1);assert.equal(w.source.a.specialActive,null);

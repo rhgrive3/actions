@@ -5887,3 +5887,7 @@ Mandatory damage admission remains disconnected. Cross-owner historical paint/wo
 本番と別の実験ブランチで、受信側bind時の信頼済み初回spawnを`beginInitialSquidSpawn`から再構築する。待機・合法target/steering・飛行・着地・最初の発射まで、実Actor/Physics/資源/WeaponRunnerで再実行する。原典比較基準はS3 11.3.0で、Nintendo未公開値は追加していない。入力には3D aimPointリクエストを追加し、位置・ink・groundedの自己申告を初期化に使わない。resource-phaseとeffective inputの0/nullも実実行結果とのwitness照合に使い、phaseを省略する権限にはしない。
 
 CPU/Node22でreceiver24件、input/replay/Worker quota39件成功。初回spawnは30/60/120Hzの待機から最初のfull shotまで再現し、実inkが一致する。偽のresource/effective/bodyとaim request欠落は拒否する。intro→playingの現在phase一致は成功し、過去intro入力がphase変更後に届く場合はbody不一致でproofを失効させ、通常snapshot受理を継続する。これは過去Match/world順序やloadingを解決したものではない。必須damage gate・残64main・後続life・移管は未完で、実機/ブラウザ/完全S3一致を認定しない。
+
+### 2026-10-24: experimental native Charger launch aim binding
+
+Reference remains Splatoon3 11.3.0, base Splat Charger. No new Nintendo timing or geometry values. The isolated receiver proof now evaluates the existing INKWAVE native aim owner from immutable launch-time requests; a real shot with a forged event direction no longer earns that proof. Far/near/behind native aim and later input changes pass. An initial-spawn import cycle from the prior experiment is removed by installer callback injection. Source/actual-Worker/contact regression108/108 passed; source proof is still optional and not a completed PvP/Boss damage authority. All64 other mains and historical Match/world/lifecycle contracts remain open. No real-device parity claim.

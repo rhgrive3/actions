@@ -5,7 +5,7 @@ import {fixture} from '../../splatoon3/tests/source-fixture.mjs';
 const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:`
  export {NetSession} from './inkwave-public/src/net/session.js';
  export {prepareNativeChargerInputs,commitNativeChargerInputs} from './patches/splatoon3/runtime/native-charger-input.mjs';
- export {createNativeChargerReplay,advanceNativeChargerReplay,nativeChargerReplayState,retireNativeChargerReplay,peekNativeChargerReplayLaunch,commitNativeChargerReplayLaunch} from './patches/splatoon3/runtime/native-charger-replay.mjs';
+ export {createNativeChargerReplay,advanceNativeChargerReplay,nativeChargerReplayState,retireNativeChargerReplay,peekNativeChargerReplayLaunch,commitNativeChargerReplayLaunch,nativeChargerReplayAimMatches} from './patches/splatoon3/runtime/native-charger-replay.mjs';
 `});
 f.context.crypto=webcrypto;
 const V=(x=0,y=0,z=0)=>new f.THREE.Vector3(x,y,z);
@@ -111,6 +111,30 @@ test('only a private actual source fire produces a single-use launch receipt',()
   const shot=f.nativeChargerReplayState(w.token).shots[0],request={tick:Math.round(shot.time*60),charge:1,full:true};
   const receipt=f.peekNativeChargerReplayLaunch(w.token,request);assert.ok(receipt);assert.equal(receipt.damage,160);
   assert.equal(f.commitNativeChargerReplayLaunch(w.token,{...receipt}),false);assert.equal(f.commitNativeChargerReplayLaunch(w.token,receipt),true);assert.equal(f.commitNativeChargerReplayLaunch(w.token,receipt),false);assert.equal(f.peekNativeChargerReplayLaunch(w.token,request),null);
+ }finally{w.close();}
+});
+test('native aim binding requires the live branded unspent launch and immutable source requests',()=>{
+ const w=setup();try{
+  w.a.aimPoint.set(0,1.05,100);
+  for(let i=0;i<64;i++)assert.ok(w.step({fire:true}).accepted);for(let i=0;i<2;i++)assert.ok(w.step().accepted);
+  const shot=f.nativeChargerReplayState(w.token).shots[0],receipt=f.peekNativeChargerReplayLaunch(w.token,{tick:Math.round(shot.time*60),charge:1,full:true});
+  assert.ok(Object.isFrozen(receipt.aimPoint));assert.ok(Object.isFrozen(receipt.aimDirection));
+  const muzzle=[0,1.05,0],direction=[0,0,1];
+  assert.equal(f.nativeChargerReplayAimMatches(w.token,receipt,muzzle,direction),true);
+  assert.equal(f.nativeChargerReplayAimMatches(w.token,{...receipt},muzzle,direction),false);
+  assert.equal(f.nativeChargerReplayAimMatches({},receipt,muzzle,direction),false);
+  for(const bad of [[1,0,0],[0,0,2],[NaN,0,1],null])assert.equal(f.nativeChargerReplayAimMatches(w.token,receipt,muzzle,bad),false);
+  assert.equal(f.commitNativeChargerReplayLaunch(w.token,receipt),true);
+  assert.equal(f.nativeChargerReplayAimMatches(w.token,receipt,muzzle,direction),false);
+ }finally{w.close();}
+});
+test('legacy seventeen-field input may replay resources but cannot claim missing aim-point authority',()=>{
+ const w=setup();try{
+  const legacy=rows=>{for(const row of rows)row.splice(17);};
+  for(let i=0;i<64;i++)assert.ok(w.step({fire:true},1/60,legacy).accepted);for(let i=0;i<2;i++)assert.ok(w.step({},1/60,legacy).accepted);
+  const shot=f.nativeChargerReplayState(w.token).shots[0],receipt=f.peekNativeChargerReplayLaunch(w.token,{tick:Math.round(shot.time*60),charge:1,full:true});
+  assert.ok(receipt);assert.equal(receipt.aimPoint,null);
+  assert.equal(f.nativeChargerReplayAimMatches(w.token,receipt,[0,1.05,0],[0,0,1]),false);
  }finally{w.close();}
 });
 for(const change of ['life','weapon','world-clear','retire'])test(`a native launch receipt cannot cross ${change}`,()=>{

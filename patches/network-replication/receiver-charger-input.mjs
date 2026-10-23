@@ -2,7 +2,7 @@
 // This connection collects a stronger private proof; it does not replace the
 // production damage admission until the remaining action contracts are ready.
 import { validNativeChargerInputPacket } from '../splatoon3/runtime/native-charger-input.mjs';
-import { createNativeChargerReplay, advanceNativeChargerReplay, nativeChargerReplayState, peekNativeChargerReplayLaunch, commitNativeChargerReplayLaunch, retireNativeChargerReplay } from '../splatoon3/runtime/native-charger-replay.mjs';
+import { createNativeChargerReplay, advanceNativeChargerReplay, nativeChargerReplayState, peekNativeChargerReplayLaunch, commitNativeChargerReplayLaunch, nativeChargerReplayAimMatches, retireNativeChargerReplay } from '../splatoon3/runtime/native-charger-replay.mjs';
 const states=new WeakMap(),worlds=new WeakMap(),births=new WeakMap();
 export const RECEIVER_CHARGER_INPUT_LIMITS=Object.freeze({actors:32,frames:4096,actorFrames:512,bytes:512*1024,steps:256,births:256,peerBirths:48,history:512,checkpoints:32});
 const finite=Number.isFinite,safe=Number.isSafeInteger,life=a=>Math.max(a?.netLife??0,a?.net?.lastLife??0);
@@ -64,7 +64,8 @@ function matchBirths(s,c,at){
   const d=item.event[3],receipt=peekNativeChargerReplayLaunch(c.driver,{tick:item.event._netTick,charge:d.charge,full:d.full});
   if(!receipt||receipt.frame>c.verified)continue;
   const body=receipt.body,V=s.nm._combatProvenanceTHREE?.Vector3;
-  if(!body||typeof V!=='function'||Math.hypot(d.muzzle[0]-body[0],d.muzzle[1]-body[1]-1.05,d.muzzle[2]-body[2])>1.7||Math.abs(d.len-receipt.range)>.011||s.physics.segment(new V(body[0],body[1]+1.05,body[2]),new V(...d.muzzle),undefined,true).hit){c.pending.delete(seq);s.birthCount--;continue;}
+  if(!body||typeof V!=='function'||Math.hypot(d.muzzle[0]-body[0],d.muzzle[1]-body[1]-1.05,d.muzzle[2]-body[2])>1.7||Math.abs(d.len-receipt.range)>.011||
+   !nativeChargerReplayAimMatches(c.driver,receipt,d.muzzle,d.dir)||s.physics.segment(new V(body[0],body[1]+1.05,body[2]),new V(...d.muzzle),undefined,true).hit){c.pending.delete(seq);s.birthCount--;continue;}
   births.set(item.event,{s,c,receipt,used:false});c.matched++;c.pending.delete(seq);s.birthCount--;
  }
 }

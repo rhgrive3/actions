@@ -2,7 +2,6 @@
 // the installed Actor, Physics, resource and weapon owners decide the result.
 // No public actor flag enrolls a replay or grants a launch receipt.
 import { validNativeChargerInputPacket } from './native-charger-input.mjs';
-import { beginInitialSquidSpawn } from './respawn-lifecycle.mjs';
 const actors=new WeakMap(),handles=new WeakMap(),generations=new WeakMap(),launches=new WeakMap();let api=null,executing=null;
 const life=a=>Math.max(a?.netLife??0,a?.net?.lastLife??0),MAX_SHOTS=32;
 const effective=i=>(i?.fire?1:0)|(i?.firePressed?2:0)|(i?.sub?4:0)|(i?.subReleased?8:0);
@@ -18,7 +17,8 @@ export function captureNativeChargerReplayShot(system,a,shot){
  const r=actors.get(a);if(!r)return false;
  r.pending=r.pending.filter(s=>api.G.time-s.time<=1.4);
  if(r!==executing||system!==r.system||r.pending.length>=MAX_SHOTS)throw Error('Invalid native replay launch scope or backlog');
- const record=Object.freeze({...shot,frame:r.next,time:api.G.time,body:Object.freeze([a.pos.x,a.pos.y,a.pos.z]),aimYaw:a.aimYaw,aimPitch:a.aimPitch});
+ const record=Object.freeze({...shot,frame:r.next,time:api.G.time,body:Object.freeze([a.pos.x,a.pos.y,a.pos.z]),aimYaw:a.aimYaw,aimPitch:a.aimPitch,
+  aimPoint:r.aimRequested?Object.freeze(a.aimPoint.toArray()):null,aimDirection:Object.freeze(a.aimDir.toArray())});
  if(r.shots.length>=MAX_SHOTS)r.shots.shift();r.shots.push(record);r.pending.push(record);return true;
 }
 export function captureNativeChargerReplaySub(system,a){
@@ -61,7 +61,7 @@ export function createNativeChargerReplay(owner,{position,yaw=0,velocity=null,ti
  actors.set(a,r);handles.set(token,r);a.weapon=owner.weapon;a.weaponId=owner.weaponId;
  a.s3||={};a.s3.loadout=loadout?.map(part=>({...part,subs:[...(part.subs||[])]}));
  a._nearCamera=()=>false;a._finishFrame=()=>{};
- scope(r,time,()=>{a.spawnAt(position,yaw);if(initialSpawn&&!beginInitialSquidSpawn(a))throw Error('Native initial spawn unavailable');});if(velocity&&!initialSpawn)a.vel.copy(velocity);
+ scope(r,time,()=>{a.spawnAt(position,yaw);if(initialSpawn&&!api.beginInitialSquidSpawn?.(a))throw Error('Native initial spawn unavailable');});if(velocity&&!initialSpawn)a.vel.copy(velocity);
  r.initialSpawn=initialSpawn;
  return token;
 }
@@ -75,7 +75,7 @@ export function advanceNativeChargerReplay(token,rows){
   // own trusted source inputs before this driver can own those transitions.
   const initial=r.initialSpawn&&r.actor.s3?.squidSpawn?.initial===true;
   if(!initial&&(row[14]!==1||row[4]===null)||initial&&row.length!==20){r.error='Native input requires another action owner';return false;}
-  const a=r.actor,i=a.intent,bits=row[3];i.fire=!!(bits&1);i.squid=!!(bits&2);i.sub=!!(bits&4);i.jump=!!(bits&8);i.special=!!(bits&16);i.move.set(row[12],0,row[13]);a.aimYaw=row[10];a.aimPitch=row[11];if(row.length===20)a.aimPoint.set(row[17],row[18],row[19]);r.effective=null;r.resource=false;r.body=null;r.dt=row[1];
+  const a=r.actor,i=a.intent,bits=row[3];i.fire=!!(bits&1);i.squid=!!(bits&2);i.sub=!!(bits&4);i.jump=!!(bits&8);i.special=!!(bits&16);i.move.set(row[12],0,row[13]);a.aimYaw=row[10];a.aimPitch=row[11];r.aimRequested=row.length===20;if(r.aimRequested)a.aimPoint.set(row[17],row[18],row[19]);r.effective=null;r.resource=false;r.body=null;r.dt=row[1];
   const shotCount=r.shots.length,subCount=r.subs;
   try{scope(r,row[2],()=>a.update(row[1]));}catch(error){r.shots.length=shotCount;r.pending.length=0;r.subs=subCount;r.error=String(error?.message||error);return false;}
   const body=r.body||[a.pos.x,a.pos.y,a.pos.z,a.vel.y,a.form==='squid'?1:0];
@@ -93,6 +93,18 @@ export function peekNativeChargerReplayLaunch(token,{tick,charge,full}){
 export function commitNativeChargerReplayLaunch(token,receipt){
  const r=handles.get(token),c=launches.get(receipt);if(!live(r)||!c||c.r!==r||c.used||!r.pending.includes(c.shot)||r.time-c.shot.time>1.4)return false;
  c.used=true;r.pending.splice(r.pending.indexOf(c.shot),1);return true;
+}
+export function nativeChargerReplayAimMatches(token,receipt,muzzle,direction){
+ const r=handles.get(token),c=launches.get(receipt);
+ if(!live(r)||!c||c.r!==r||c.used||!r.pending.includes(c.shot)||r.time-c.shot.time>1.4||!c.shot.aimPoint||
+  ![muzzle,direction].every(v=>Array.isArray(v)&&v.length===3&&v.every(Number.isFinite)))return false;
+ const V=api.THREE.Vector3,shot=c.shot;
+ // Native Charger events preserve vector doubles on the wire. Evaluate the
+ // actual source aim owner with the launch-time requests, including its close
+ // target / rear-hemisphere fallback; do not use the actor's later aim state.
+ const expected=api.Projectiles.prototype._aimFrom.call(r.system,
+  {aimPoint:new V(...shot.aimPoint),aimDir:new V(...shot.aimDirection)},new V(...muzzle),new V());
+ return expected.distanceToSquared(new V(...direction))<=1e-18;
 }
 export function nativeChargerReplayState(token){
  const r=handles.get(token);if(!r)return null;const a=r.actor,w=a.weaponRunner;
