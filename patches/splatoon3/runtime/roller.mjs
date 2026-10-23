@@ -3,6 +3,7 @@ import { ROLLER_DRUM } from './roller-model.mjs';
 import { HEAVY_ROLLER_SWING, STANDARD_ROLLER_SWING, heavyRollerSwingEnd } from './roller-heavy-swing.mjs';
 import { hasFullCancelGroundAttack, takeFullCancelGroundAttack } from './movement.mjs';
 import { rollerBubblerCandidate, applyRollerBubblerHit } from './kit-big-bubbler.mjs';
+import { createVerticalRecoverySampler } from './roller-vertical-recovery.mjs';
 // Roller-specific refinements. Timing comes from the existing gameplay profile;
 // joint curves are visual calibration against Nintendo's public roller videos.
 const EPS = 1e-10;
@@ -797,6 +798,9 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   const flick = Character.prototype._poseFlick, animate = Character.prototype._animWeapon, setWeapon = Character.prototype.setWeapon;
   const updateStates = Character.prototype._updateStates, weaponPose = Character.prototype._poseWeapon;
   const applyPose = Character.prototype._applyPose;
+  const verticalRecovery = createVerticalRecoverySampler(verticalRollerPose, VERTICAL_ROLLER_SWING.ret,
+    a => a.swingShape === 'heavy' ? heavyRollerSwingEnd(a.windup, a.swingInterval ?? a.interval)
+      : Math.max(a.windup + 2 / 60, a.swingInterval ?? a.interval));
   // The native torso/foot solver moves the admitted contact anchor with its
   // gait spring. Ground-align the right-hand
   // target BEFORE the native arm IK; its left-hand solver then follows the same
@@ -1173,6 +1177,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     }
   };
   Character.prototype._s3CancelRollerFlick = function () {
+    verticalRecovery.clear(this);
     restoreRightGrip(this);
     this.s3RollerFlick = null;
     this._s3RollerContactPose = false;
@@ -1273,7 +1278,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       }finally{this._s3FlickPoseDepth=depth;}
       return;
     }
-    const p = verticalRollerPose(state.elapsed, state.windup, state.swingInterval ?? state.interval, state.swingShape, state.holdRoll === true), w = p.weight * (state.released && state.rolling ? 1 - this.wRoll : 1);
+    const p = verticalRecovery(this, state), w = p.weight * (state.released && state.rolling ? 1 - this.wRoll : 1);
     for (let i = 0; i < 3; i++) {
       P[C.ANC + i] = mix(P[C.ANC + i], p.anchor[i], w);
       P[C.ANCR + i] = mix(P[C.ANCR + i], p.rotation[i], w);
