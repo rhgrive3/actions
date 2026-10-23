@@ -6144,3 +6144,7 @@ Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテ�
 ### 2026-10-23 基本ローラーのunheld shaft経路候補（未受入）
 
 独立レビューのgeometry由来のupright shaftを経由する球面二次経路を基本weaponId=rollerの表示wrapperだけへ実装した。back以降の最初のunheld sampleを通常solverの結果で捕捉し、今回のfixtureはt0=48、heldの46から始めない。実browserでは40・48開始点・56以降が元と一致し、49tickのdrum移動は1.109129→0.253771、48–56最大加速度は4155.844→1959.650。実vertex最低点+0.024645、grip gap最大1.35e−15、fallback0。ただし50–56移動総量は2.661387→3.816900へ増え、53tickの軸向きも大きく違うため、見た目全体・本家一致は未承認。遅い解放の開始sampleの既存jumpも未解消。他roller・grip・共有native IK・入力/runner/physics/paint/network・別担当spawn/reset/landing gateは変更しない。[候補・全区間数値・同条件画像・検査](roller-shaft-return-20261023/README.md)。既存3不採用案・a8診断・main/PRを保護し、公式参照403は再取得しない。
+
+### 2026-10-23 roller shaft-returnの同attack再arm/late carry部分修正（別候補・全体未承認）
+
+凍結ecf5の48解放→51/52再押下→53再解放でhelperがattack identityを忘れ、54/55で再captureして56に余分な戻りを加えていた。ACTIVE中断後だけ同attack再armを禁止し、新attack/初回heldを区別する。最初の通常solverに実際の非ゼロ床探索補正がないrelease49/52/55では経路を開始せずnative carryを保つ。表示helperと既存chosenAxis/chosenAを渡す1行に限定し、共有IK/grip、native入力/runner/physics/paint/network、別担当spawn/reset/landing gateは変更しない。source/実emittedの全10操作と実attack再利用追加1操作が成功、47focused/10packaging/公開raw再生も通過。60Hz実browserでは再押下51–65とlate52全66tickが元と一致した。ただしearly40/46の加速度/57減速悪化は未修復、元版reused-context120Hz最終撮影は60000ms timeout、FX粒子stream差もあり全画像pixel parityは未確認。本家映像403は再取得せず、本家一致/全体見た目/全必須CIは未完。[別候補・全区間raw・負例・失敗ログ](roller-shaft-once-20261023/README.md)。main/既存PRと全旧候補は保護する。

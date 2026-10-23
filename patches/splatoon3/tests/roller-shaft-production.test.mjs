@@ -110,3 +110,11 @@ test('late release with no native floor correction keeps the entire clear native
   trace.push({release,before:b,candidate:c,metrics:{before:motionMetrics(b),candidate:motionMetrics(c)}});
  }if(process.env.INKWAVE_SHAFT_LATE_TRACE)fs.writeFileSync(process.env.INKWAVE_SHAFT_LATE_TRACE,JSON.stringify(trace));
 });
+
+test('an interrupted attack spends its own path and the next real native attack can capture again',async()=>{
+ const options={release:48,repress:true,repeated:true},b=await run({...options,old:true}),c=await run(options);
+ eq(c.map(r=>r.native),b.map(r=>r.native));eq(c.paintTrace,b.paintTrace);assert.deepEqual(c.fallbacks,[]);
+ for(const start of[0,95]){assert(dist(c[start+49].centre,c[start+48].centre)<dist(b[start+49].centre,b[start+48].centre),'real attack49 uses a fresh eligible path '+start);
+  for(let i=start+51;i<=start+58;i++)eq(c[i],b[i],'that attack stays native after repress '+i);
+ }
+});

@@ -1,0 +1,20 @@
+(node:13516) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ production fixed-tick return improves49, preserves40/start/end and all native gameplay/paint (24391.608918ms)
+✔ release before/at/after back, late release and repress preserve native gates and paint without a delayed tail (68580.46697ms)
+✔ held rolling, horizontal and Carbon/Dynamo/Flingza keep the complete original output (42959.405791ms)
+✔ 30/60/120Hz plus repeated reset/reuse retain identical real poses, clocks, per-weapon timings and paint (60467.182246ms)
+✔ active return is discarded through existing reset, display cancellation and form interruption (27762.91674ms)
+✔ native CPU paint receives identical physical stamp inputs after release and repress (18891.914812ms)
+✔ repressing into native ground contact abandons carry without worsening the switch (8942.748976ms)
+✔ sub aim and throw interrupt the active visual return while native sub admission stays original (10001.956504ms)
+✔ same-attack repress never recaptures a late return; protect54/55 and deceleration through58 (9306.088081ms)
+✔ late release with no native floor correction keeps the entire clear native carry (27173.182239ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 298956.952718

@@ -1,6 +1,7 @@
 // Small diagnostic benchmark of the helper, not a GPU/frame-rate claim.
 import fs from'node:fs';import path from'node:path';import{pathToFileURL}from'node:url';import{gunzipSync}from'node:zlib';import*as T from'../inkwave-public/vendor/three/build/three.module.js';
 import{createVerticalShaftReturn as sourceFactory}from'../patches/splatoon3/runtime/roller-vertical-shaft-return.mjs';
+import{createVerticalShaftReturn as frozenEcf5Factory}from'../patches/splatoon3/tests/fixtures/roller-vertical-shaft-return.ecf5eedb.source.mjs';
 const site=path.resolve(process.argv[2]),out=path.resolve(process.argv[3]),{createVerticalShaftReturn:emittedFactory}=await import(pathToFileURL(path.join(site,'patches/splatoon3/runtime/roller-vertical-shaft-return.mjs'))),
  p=JSON.parse(gunzipSync(fs.readFileSync(new URL('../reports/roller-ground-boundary-20261023/observed.json.gz',import.meta.url)))),e=p.layerEvents.find(e=>e.tick===48&&e.stage==='rollerIKIn'&&e.side==='R'),
  q0=p.layerEvents.find(e=>e.tick===48&&e.stage==='nativeIKIn'&&e.side==='R').quaternion;
@@ -9,4 +10,4 @@ function bench(factory){const ch={},a={windup:31/60,interval:56/60,elapsed:e.att
  for(let sample=0;sample<7;sample++){const run=(fn)=>{const start=process.hrtime.bigint();for(let i=0;i<50000;i++)checksum+=fn().w;return Number(process.hrtime.bigint()-start)/50000;};
   const current=()=>read(ch,a,input,socket,kid,true),baseline=()=>copy.copy(input);let candidateNs,baselineNs;if(sample%2){baselineNs=run(baseline);candidateNs=run(current);}else{candidateNs=run(current);baselineNs=run(baseline);}samples.push({candidateNs,baselineNs});}
  global.gc?.();const after=process.memoryUsage().heapUsed,median=k=>samples.map(x=>x[k]).sort((a,b)=>a-b)[3];return{samples,candidateMedianNs:median('candidateNs'),copyMedianNs:median('baselineNs'),retainedHeapDeltaBytes:after-before,checksum};}
-const result={scope:'Helper-only 7x50000 repeated eligible reads; identity-copy comparison excludes IK/render/physics. GC retained heap is noisy; not total allocation or GPU performance.',source:bench(sourceFactory),emitted:bench(emittedFactory),flags:{explicitGc:!!global.gc}};fs.writeFileSync(out,JSON.stringify(result,null,2));console.log(result);
+const result={scope:'Helper-only 7x50000 repeated eligible reads; identity-copy and frozen-ecf5 comparisons exclude IK/render/physics. GC retained heap and sub-microsecond timing are noisy; not total allocation or GPU performance.',frozenEcf5:bench(frozenEcf5Factory),source:bench(sourceFactory),emitted:bench(emittedFactory),flags:{explicitGc:!!global.gc}};fs.writeFileSync(out,JSON.stringify(result,null,2));console.log(result);
