@@ -10,3 +10,9 @@ test('native early fixture: frozen upright control exceeds left reach; one live 
   a.elapsed=56/60;assert.equal(read(ch,a,input,socket,kid,true),null,'same deadline');
  }assert(new T.Quaternion().fromArray(controls[0]).angleTo(new T.Quaternion().fromArray(controls[1]))>0);
 });
+
+test('a return already blending toward ready preserves the original control even with a projection callback',()=>{
+ const ch={},read=current(),input=new T.Quaternion().fromArray(saved.input),socket=new T.Quaternion().fromArray(saved.constraints.handR.q),kid={quaternion:new T.Quaternion().fromArray(saved.constraints.kid.q),scale:new T.Vector3().fromArray(saved.constraints.kid.scale)},a={windup:31/60,interval:56/60,elapsed:48/60};let calls=0;
+ read(ch,a,input,socket,kid,true);read.capture(ch,input,socket,kid,saved.axis,saved.angle,()=>{calls++;});assert.equal(calls,0,'native return weight is below1');
+ const frozen=old(),other={};frozen(other,a,input,socket,kid,true);frozen.capture(other,input,socket,kid,saved.axis,saved.angle);assert.deepEqual(read.snapshot(ch).qUp,frozen.snapshot(other).qUp);
+});

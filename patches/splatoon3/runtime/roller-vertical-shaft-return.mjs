@@ -29,7 +29,12 @@ export function createVerticalShaftReturn(){
       shaft:kid.scale.clone(),up:kid.scale.clone(),captures:0,fallbacks:0};records.set(ch,m);}
     m.attack=attack;m.lastElapsed=elapsed;m.pending=false;
     if(m.spent)return null;
-    if(!m.active){m.pending=true;m.t0=elapsed;m.end=end;return null;}
+    if(!m.active){
+      m.pending=true;m.t0=elapsed;m.end=end;
+      const phase=Math.max(0,Math.min(1,(elapsed-back)/(end-back)));
+      m.fullFollowThrough=1-phase*phase*(3-2*phase)===1;
+      return null;
+    }
     const x=Math.max(0,Math.min(1,(elapsed-m.t0)/(m.end-m.t0))),u=x*x*(3-2*x);
     m.a.copy(m.q0).slerp(m.qUp,u);m.b.copy(m.qUp).slerp(input,u);
     return m.result.copy(m.a).slerp(m.b,u);
@@ -44,10 +49,11 @@ export function createVerticalShaftReturn(){
     m.shaft.set(0,0,1).applyQuaternion(m.result).normalize();
     m.up.set(0,1,0).applyQuaternion(m.a.copy(kid.quaternion).invert()).divide(kid.scale).normalize();
     m.qUp.copy(m.b.setFromUnitVectors(m.shaft,m.up)).multiply(m.result).multiply(socket).normalize();
-    // The upright control can exceed the opposite arm's live reach even when
-    // q0 is legal. Project it once with the same existing support constraint,
-    // then keep that control fixed. No future pose or extra floor search.
-    projectSupport?.(m.qUp);
+    // At the stationary authored follow-through key the upright control can
+    // exceed opposite-arm reach although q0 is legal. Sample that existing
+    // support constraint once, then freeze it. A return already blended toward
+    // ready keeps its established control; no new phase threshold or tail.
+    if(m.fullFollowThrough)projectSupport?.(m.qUp);
     m.pending=false;m.active=true;m.captures++;
   };
   read.reject=ch=>{const m=records.get(ch);if(m)m.fallbacks++;};
