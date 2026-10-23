@@ -1,11 +1,5 @@
 # INKWAVE とスプラトゥーン3の挙動比較
 
-## 2026-10-23：照準と確定命中マークの表示（本家の動的照合は未完）
-
-main `726e338a` の通常ビルドで、試し撃ちのスプラシューターから5mの的へ実弾を当てると、弾道ガイドで照準は画面中央より約36px下へ移っているのに、命中マークは中央に残った。また、敵を狙うだけで照準全体が1.14倍になり、連続命中ではマークが1.20→最大1.63倍へ膨らむ。HUD専用 `patches/local-quality/s3-hud-look-adapter.mjs` で、確定通知時の表示照準位置にマークを置き、その後の標的切替では動かさず、連続命中は同じ大きさで4個のアニメーションを再利用する。標的取得・命中・撃破で照準全体を拡大／回転させず、拡散目盛の二重のCSS追従も除いた。ダメージ0の正当な撃破確定（ネットワーク／ストーム）は撃破表示だけを出す。ブキ別の形・チャージ・双銃の表示、入力・カメラ・弾・ダメージ・遮蔽・塗り・ネットワーク判定は維持する。
-
-本家の根拠は既存の公式2024-04-01記事とシューター静止画計測記録、既存スピナーの第三者画像計測記録に限る。今回は本家メディア取得が403／取得不可で、同じブキ・ギア・状態・カメラ・照準を揃えた動的参照は取得できなかった。マークの形、240msの寿命、移動・フェード曲線は従来のINKWAVE値を保持したもので、本家の抽出値・測定値ではない。60Hzゲームtickと30/60/120/144HzのHUD／ブラウザ時計、映像の符号化フレームは区別する。参照映像、Switch・実GPU・Safari、完全な視覚的一致は未確認のまま。[再現・失敗履歴・検証結果と残るゲート](reticle-feedback-20261023/README.md)。
-
 ## 2026-10-22：インク表面の質感（見た目のみ）
 
 床・壁インクのシェーダーだけを変更した（[記録](ink-reflection-lines-20261022/README.md)）。塗り判定・所有・移動・射撃・カメラは変えていないため、操作時の挙動差は増減しない。参照は任天堂公式（オーストラリア・フィリピン）の試合・サーモンラン画像と、Nintendo 提供のステージ画像（海女美術大学・ユノハナ大渓谷）。版・ブキ・経過時間は不明。観察した本家の特徴（乾いた面も艶がある、白いハイライトは周囲の反射で、大きなうねりや重なった塗りの輪郭・縁に沿う細い線、線の間と縁まで均一なチーム色、太陽側にぼやけた光の塊が無い）に合わせ、顔料層の広い鏡面反射を消し、乾いた後もコートの艶を保ち、ゲル法線を大きなうねりだけにし、空の反射を雲の縁の明るさの帯で白い線として映し、塗りごとの色ばらつきの段差から塗りの輪郭に丸い縁を付けた。比較は Chromium/SwiftShader の本番ビルド同士の画面と連続フレームで、本家の実機・同条件の比較ではない。物の映り込み、本家でインクが乾いて変化しないこと、どの塗りが上に乗るか、空のテーマ・原典ステージ・壁・低画質経路・実機での見え方は**未確認**。
@@ -6153,3 +6147,23 @@ One opposing pad volume is tested per actor, using existing level radius and low
 07a979214の独立レビューが、通常box脇の自然落下・固定1/60更新で、補正が以前のX/Zと現在のYを混ぜて本番capsuleをsolid内へ置く問題を再現した。別candidateはPhysics.bodyFitsで完全な座標を確認し、不正な補正先だけ既存の垂直進行を8回の有界検査で戻す。通常の重力・launch・味方exit、半径設定、stage mesh、landing表示は変更しない。本番Actor._resolveの既存フォーム別terrain capsuleと旧PLAYER.radiusの診断を区別して記録する。元07a・PR1860は保持し、未確定の壁横断sweep問題やSplatoon 3 11.3.0実機一致を解消済みとはしない。[再現・失敗原本・候補検証・パラメータの区別](respawn-fallback-safe-20261023/README.md)。
 
 2026-10-23 respawn candidate contract reconciliation: collision exclusion moves opposing actor origins; it adds no damage immunity inside a pad. The old native-radius Slam <max assertion and 23-column packet assumption were pre-existing fixture/contract defects. Production-composed, native-Physics component checks retain legal near/falloff attacks, LOS/friendly filtering, allied entry, launch-owned armor and existing network sidecars. Retail pad collision/damage equivalence remains unverified; details: `reports/respawn-exclusion-final-candidate-20261023/README.md`.
+
+## 2026-10-23：照準と確定命中マークの表示（本家の動的照合は未完）
+
+main `726e338a` の通常ビルドで、試し撃ちのスプラシューターから5mの的へ実弾を当てると、弾道ガイドで照準は画面中央より約36px下へ移っているのに、命中マークは中央に残った。また、敵を狙うだけで照準全体が1.14倍になり、連続命中ではマークが1.20→最大1.63倍へ膨らむ。HUD専用 `patches/local-quality/s3-hud-look-adapter.mjs` で、確定通知時の表示照準位置にマークを置き、その後の標的切替では動かさず、連続命中は同じ大きさで4個のアニメーションを再利用する。標的取得・命中・撃破で照準全体を拡大／回転させず、拡散目盛の二重のCSS追従も除いた。ダメージ0の正当な撃破確定（ネットワーク／ストーム）は撃破表示だけを出す。ブキ別の形・チャージ・双銃の表示、入力・カメラ・弾・ダメージ・遮蔽・塗り・ネットワーク判定は維持する。
+
+本家の根拠は既存の公式2024-04-01記事とシューター静止画計測記録、既存スピナーの第三者画像計測記録に限る。今回は本家メディア取得が403／取得不可で、同じブキ・ギア・状態・カメラ・照準を揃えた動的参照は取得できなかった。マークの形、240msの寿命、移動・フェード曲線は従来のINKWAVE値を保持したもので、本家の抽出値・測定値ではない。60Hzゲームtickと30/60/120/144HzのHUD／ブラウザ時計、映像の符号化フレームは区別する。参照映像、Switch・実GPU・Safari、完全な視覚的一致は未確認のまま。[再現・失敗履歴・検証結果と残るゲート](reticle-feedback-20261023/README.md)。
+
+
+## 2026-10-23 ヒッセン床塗り用飛沫の表示補正候補
+
+ヒッセンの床滴だけ、既存Bucketの幅補正 `.5` と保存済み水平headingを表示に使う。旧表示はDrawRadius `.2/.3` を無補正で描き、最初の重力stepで表示軸を真下90度へ変えていた。本番合成 `Projectiles._drawLegacy` → `appendSourcedSplashVisuals` の当該actor分岐だけを変更。物理drop位置・速度・着地塗り・主弾・damage・ink・networkは変更しない。滴が落下する運動自体も維持する。
+
+本家の原典パラメータはSplatoon 3 11.3.0。任天堂ページの映像取得はHTTP403で停止し、同条件の本家encoded frame比較は未完。幅補正は既存INKWAVEの見た目較正であり、本家の物理発射角・メッシュ・メートル換算を確定したものではない。source29/29、本番生成物26/26、emitted塗りgolden3/3、制御Chromium10条件80instanceでbefore/afterの全物理trace・塗りが一致。通常メニューから練習場へ入ったnativeブラウザも両版成功、8点のsimulation frame比較で最終1315cellsを保持。粒子数は主弾9・床滴最大5で不変。本家見た目の最終承認と公開候補exact-head CIは別段階で、マージしない。[比較・阻害・画像・再実行記録](tri-slosher-floor-20261023/README.md)。
+
+
+## 2026-10-23 ヒッセン候補のmain7e依存照合・native画像訂正
+
+公式main7e `7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51` 比で元ヒッセンruntime blob `54f90896181bd28feefbd0bdff2c9347db03265f` だけを維持し、c68の閉じた参照QA修復とPR1853の追加9-edge拒否試験を両方保存した。special4runtimeと別担当のfiring adapterは取り込まない。source37成功/1emitted専用skip、生成物35/35、共通参照/メニュー18/18、両buildの13root/versioned参照とstartup budgetが成功。固定60Hz計測の9条件でcontrol/source/emittedの塗り・弾道・ink・damage・seed・着地が厳密一致した。
+
+旧native-before/afterの色/装備不一致を訂正し、旧画像は同条件の見た目A/Bに数えない。旧7bの訂正済みペアを保持し、新mainも同palette/Rookie/能力none/camera/seedで18Fだけ再撮影した。trusted menu入場後、freeze下の既存startMatch APIでfresh actorを作る制御replayによりcamera/87bone/物理traceが一致した。これは本家encoded frame比較ではなく、`.5` のUNSOURCED暫定校正も未承認のまま。[依存・build・測定・画像・初回失敗を含む記録](tri-slosher-floor-main7e-20261023/README.md)。PR1855 ref/mainはこの保存作業では動かさず、新候補のhosted CI成功も未主張。

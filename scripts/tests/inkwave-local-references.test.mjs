@@ -45,6 +45,8 @@ test('source and target byte changes or absent target reject instead of waiving 
  for(const p of [r.source,r.target]){assert.equal(verifyMappedReference(root,r.source,r.ref).target,r.target);const b=fs.readFileSync(path.join(root,p));put(root,p,Buffer.concat([b,Buffer.from('// mutation')]));assert.throws(()=>verifyMappedReference(root,r.source,r.ref),error=>{assert.equal(error.message,'Pinned reference source mismatch: '+p);return true;});put(root,p,b);}
  fs.renameSync(path.join(root,r.target),path.join(root,r.target+'.kept'));assert.throws(()=>verifyMappedReference(root,r.source,r.ref),/ENOENT/);
 }));
+// PR1853's nine-edge mutation controls need all pinned pairs; keep c68's
+// closed, isolated negative-import fixtures above/below unchanged.
 test('every migrated navigation, facade and descriptor edge stays owner-bound and byte-pinned',()=>fixture(root=>{
  // This test calls the individual mapping verifier, not the closure scanner.
  for(const row of SOURCE_SITE_REFERENCES)for(const p of [row.source,row.target])put(root,p,fs.readFileSync(path.join(repo,p)));

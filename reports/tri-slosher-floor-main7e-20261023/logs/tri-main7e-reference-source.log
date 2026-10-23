@@ -1,0 +1,26 @@
+✔ title -> main and weapon/locker panels show still art with zero attract updates or screen render (2.670495ms)
+✔ requested portrait previews retain on-demand offscreen generation, not a continuous render (0.391942ms)
+✔ only the locker draws its art and live pedestal kid into the canvas (40.627857ms)
+✔ title, real match, room, pause and results preserve the original 3D/game frame (1.011559ms)
+✔ a wipe between two art screens never draws the demo world in between (0.404592ms)
+✔ the demo canvas is hidden behind art screens and shown again before any world frame (0.46305ms)
+✔ static screens do not construct hidden 3D loadout or Online hub showcases (1.831638ms)
+✔ CSS maps exactly three generated locally hosted WebP backgrounds to the correct menu screens (282.63231ms)
+✔ CSS ownership rejects a new static lobby background and loss of existing room rules (83.636861ms)
+✔ source transform is strict, idempotence fails closed, and unrelated source is unchanged (35.935491ms)
+✔ all thirteen exact production source/site mappings retain pinned bytes and classifications (103.663137ms)
+✔ unknown, additional traversal, changed ref and changed owner are not mapped (4.594061ms)
+✔ source and target byte changes or absent target reject instead of waiving missing imports (31.521564ms)
+✔ every migrated navigation, facade and descriptor edge stays owner-bound and byte-pinned (7.603377ms)
+✔ ordinary missing, escaping local refs and runtime build-only imports remain rejected (3.333526ms)
+✔ mapped target symlinks cannot escape repository even with matching bytes (17.042719ms)
+✔ emitted proof requires exact input keys and both root/versioned artifact digests (3.745309ms)
+✔ known mappings cannot bypass pins through inkwave-public patch shadows (88.194337ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1423.578875
