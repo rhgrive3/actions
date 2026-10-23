@@ -1,0 +1,47 @@
+// Post-capture inspection only: replay saved records with exact emitted shaders.
+import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import assert from 'node:assert/strict';import {createHash}from'node:crypto';import {chromium}from'playwright';
+const root=path.resolve('.ci-scratch/triple-splashdown/arch-ab'),sites={before:path.resolve('.ci-scratch/triple-splashdown/candidate-site'),after:path.join(root,'after-site')};
+const data=Object.fromEntries(['before','after'].map(m=>[m,JSON.parse(fs.readFileSync(path.join(root,m,'receipt.json')))]));
+const manifests=Object.fromEntries(Object.entries(sites).map(([k,p])=>[k,JSON.parse(fs.readFileSync(path.join(p,'inkwave-build.json')))]));
+const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://local');if(url.pathname==='/'){res.writeHead(200,{'content-type':'text/html'});res.end('<!doctype html><link rel="icon" href="data:,"><body>Saved-state GL inspection</body>');return;}
+ if(url.pathname==='/data'){res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(data));return;}
+ const [mode,...rel]=decodeURIComponent(url.pathname.slice(1)).split('/'),base=sites[mode];if(!base){res.writeHead(404);res.end();return;}const file=path.resolve(base,rel.join('/'));
+ if(!file.startsWith(base+'/')||!fs.existsSync(file)){res.writeHead(404);res.end();return;}res.writeHead(200,{'content-type':'text/javascript'});res.end(fs.readFileSync(file));});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true});const page=await browser.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+try{await page.goto('http://127.0.0.1:'+server.address().port+'/');
+ const result=await page.evaluate(async revisions=>{const THREE=await import('/before/_versions/'+revisions.before+'/vendor/three/build/three.module.js'),data=await fetch('/data').then(r=>r.json());
+  const renderer=new THREE.WebGLRenderer({antialias:false,preserveDrawingBuffer:true});renderer.setSize(1280,800);renderer.autoClear=false;
+  const scene=new THREE.Scene(),target=new THREE.WebGLRenderTarget(1280,800,{depthBuffer:false,stencilBuffer:false});renderer.setRenderTarget(target);renderer.setClearColor(0,0);
+  const rows=[],images=[];
+  const digest=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
+  for(const mode of ['before','after']){const r=data[mode],{SpecialVfxKit}=await import('/'+mode+'/_versions/'+revisions[mode]+'/patches/splatoon3/runtime/special-vfx-kit.mjs');
+   const lighting=r.captures.find(c=>c.group==='paired'&&c.offset===18).snapshot.lighting,at26=r.captures.find(c=>c.group==='paired'&&c.offset===26).snapshot.lighting;
+   if(JSON.stringify(lighting)!==JSON.stringify(at26))throw Error('Lighting varies between adjacent saved reference snapshots');
+   const light={};for(const[k,value]of Object.entries(lighting)){light[k]={value:k==='uSunDirV'||k==='uUpV'?new THREE.Vector3().fromArray(value):new THREE.Color().fromArray(value)};}
+   const parent=new THREE.Group(),kit=new SpecialVfxKit(THREE,parent,.35,light),pool=kit.inkBands,mesh=pool.mesh,g=mesh.geometry;scene.add(mesh);
+   const pos=g.attributes.position.array,idx=g.index.array,seam=[];
+   for(let i=0;i<idx.length;i+=3){const u=[idx[i],idx[i+1],idx[i+2]].map(j=>Math.atan2(pos[j*3+2],pos[j*3])/(2*Math.PI)+.5);if(Math.max(...u)-Math.min(...u)>.5)seam.push([i,3]);}
+   const merged=[];for(const[start,count]of seam){const last=merged.at(-1);if(last&&last[0]+last[1]===start)last[1]+=count;else merged.push([start,count]);}
+   const non=[];let from=0;for(const[start,count]of merged){if(start>from)non.push([from,start-from]);from=start+count;}if(from<idx.length)non.push([from,idx.length-from]);
+   for(const group of ['central','paired'])for(const offset of [18,22,24,26]){
+    const origin=r.origins[group],row=r.rows.find(x=>x.frame===origin.frame+offset),locations=r.events.filter(e=>e.action==='impact'&&((e.index<0)===(group==='central'))).map(e=>e.pos);
+    const records=row.bandRecords.filter(x=>locations.some(p=>Math.abs(x.v[0]-p[0])<.01&&Math.abs(x.v[2]-p[2])<.01));pool.clear();for(const record of records)pool.add(.7,record.v);pool.update(0);
+    kit.uTime.value=(r.initialSnapshot.kitTime+row.frame/60)%1000;
+    const c=row.camera,camera=new THREE.PerspectiveCamera(c.fov,c.aspect,c.near,c.far);camera.position.fromArray(c.position);camera.quaternion.fromArray(c.quaternion);camera.zoom=c.zoom;camera.updateProjectionMatrix();camera.updateMatrixWorld();
+    for(const[subset,ranges]of [['full',[[0,idx.length]]],['seam-only',merged],['non-seam',non]]){
+     renderer.clear(true,true,true);for(const[start,count]of ranges){g.setDrawRange(start,count);renderer.render(scene,camera);}
+     const pixels=new Uint8Array(1280*800*4);renderer.readRenderTargetPixels(target,0,0,1280,800,pixels);const hist=[0,0,0,0,0];let max=0;
+     for(let i=3;i<pixels.length;i+=4){const a=pixels[i];hist[a===0?0:a<=8?1:a<=32?2:a<=127?3:4]++;max=Math.max(max,a);}
+     rows.push({mode,group,offset,frame:row.frame,time:row.time,subset,seamTriangles:seam.length,drawRanges:ranges,nonzeroAlphaPixels:1280*800-hist[0],maxAlpha:max,histogram:{zero:hist[0],oneTo8:hist[1],nineTo32:hist[2],thirtyThreeTo127:hist[3],oneTwentyEightTo255:hist[4]},rgbaSHA256:await digest(pixels),recordControls:records.map(x=>({age:x.t,alphaControl:x.v[11],style:x.v[12]}))});
+     if(mode==='after'&&group==='paired'){
+      const canvas=document.createElement('canvas');canvas.width=1280;canvas.height=800;const flip=new Uint8ClampedArray(pixels.length);for(let y=0;y<800;y++)flip.set(pixels.subarray((799-y)*1280*4,(800-y)*1280*4),y*1280*4);canvas.getContext('2d').putImageData(new ImageData(flip,1280,800),0,0);images.push({file:`inspection-saved-${mode}-${group}-plus-${offset}-${subset}.png`,data:canvas.toDataURL('image/png')});
+     }
+    }
+   }
+   g.setDrawRange(0,Infinity);mesh.removeFromParent();parent.add(mesh);kit.dispose();
+  }
+  const gl=renderer.getContext(),glError=gl.getError();target.dispose();renderer.dispose();return{scope:'Isolated saved-state GL inspection. Exact emitted pool geometry/material; captured normal-camera records, lighting and time; no world/postprocessing. Same geometry drawRange selects actual atan-wrap triangles or their complement. No shader or runtime edit.',rows,images,glError};
+ },Object.fromEntries(Object.entries(manifests).map(([m,r])=>[m,r.build.revision])));
+ const hash=b=>createHash('sha256').update(b).digest('hex');for(const img of result.images){const bytes=Buffer.from(img.data.split(',')[1],'base64');fs.writeFileSync(path.join(root,img.file),bytes);delete img.data;img.sha256=hash(bytes);}
+ result.errors=errors;fs.writeFileSync(path.join(root,'saved-state-gl-probe.json'),JSON.stringify(result,null,2)+'\n');assert.equal(result.glError,0);assert.deepEqual(errors,[]);console.log(JSON.stringify({rows:result.rows.length,images:result.images.length,errors,alpha:result.rows.filter(r=>r.mode==='after'&&r.group==='paired').map(({offset,subset,nonzeroAlphaPixels,maxAlpha})=>({offset,subset,nonzeroAlphaPixels,maxAlpha}))}));
+}finally{await browser.close();await new Promise(r=>server.close(r));}

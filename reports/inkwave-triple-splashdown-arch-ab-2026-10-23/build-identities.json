@@ -1,0 +1,39 @@
+{
+  "sourceBaseCommit": "8437516cebd527e033711631174c4a711083aa26",
+  "changedInputs": [
+    "patch/runtime/special-vfx-kit.mjs",
+    "patch/runtime/special-vfx.mjs"
+  ],
+  "before": {
+    "inputHash": "dd7b1fee6db68e0cae0dbce9bd97e150e4b6def1b2cc1dc8451f82386ec31e33",
+    "contentHash": "ed7294f6204a4ed3965bc686282f5ee116c43a4ecce3489f176f4cae21b72638",
+    "revision": "ddb44ae400c150197e567a67b85016e01f7556a724258cc17c930ac3b31b13d7"
+  },
+  "after": {
+    "inputHash": "21941c74d1c2c2111d9020b83a1f79934653c68608c846795fc3c0e1e4899571",
+    "contentHash": "b6708cb06d7854b3e519064f68e93089e5209661fb6fd75d707e866f98c067a0",
+    "revision": "d6c6ea04a0f02e1e81a385523cd2c6f83c397ae567438581460ecb31553cf508"
+  },
+  "sourceProof": {
+    "baseCommit": "8437516cebd527e033711631174c4a711083aa26",
+    "patchExpectedSHA256": "535b249ce3cb5569aebbaf7c234dde92b1c41f5599621b90fe9edd6992ac95c2",
+    "patchExactMatch": true,
+    "patchSerialization": {
+      "abbrev": 7,
+      "minimal": true,
+      "reverseFiles": true,
+      "functionContextRemoved": true,
+      "newline": "LF"
+    },
+    "files": {
+      "patches/splatoon3/runtime/special-vfx.mjs": {
+        "beforeSHA256": "6f8a4b63fc09553392cd6adeeeb10189c56b55f3bbdd24808eda4263807afbcb",
+        "afterSHA256": "d825798b9cb19dd14a317eb62bb9d33c62fe222a0ef966eb8fb45a30d1150912"
+      },
+      "patches/splatoon3/runtime/special-vfx-kit.mjs": {
+        "beforeSHA256": "8c1dd55a8aad05c19df6b3a1f173ddfdbe2ad8eb7f8c579c3d47219f871e0630",
+        "afterSHA256": "7d1be7d84e249d9d0b4929661861fe15f95ad8547d78edbd38c1a47282460e0f"
+      }
+    }
+  }
+}

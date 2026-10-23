@@ -1,0 +1,14 @@
+(node:8175) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ body and both side blasts follow native impacts exactly once at 30/60/120Hz; FX preserves gameplay (56428.085255ms)
+✔ cancellation/clear has no landing blast and a new activation still lands normally (9547.345275ms)
+✔ owner death keeps independent fists and produces only their two accepted impacts (9278.81932ms)
+✔ remote visual expiry waits for accepted impact; remote fistGone shatters without a landing blast (9169.281915ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 84807.003815

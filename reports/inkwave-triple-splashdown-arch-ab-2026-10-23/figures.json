@@ -1,0 +1,110 @@
+[
+  {
+    "file": "central-early.png",
+    "group": "central",
+    "phase": "early",
+    "offsets": [
+      0,
+      2,
+      4,
+      6,
+      10
+    ],
+    "crop": null,
+    "size": [
+      2656,
+      1032
+    ],
+    "bytes": 1763311
+  },
+  {
+    "file": "central-spread.png",
+    "group": "central",
+    "phase": "spread",
+    "offsets": [
+      10,
+      18,
+      26,
+      38,
+      48
+    ],
+    "crop": null,
+    "size": [
+      2656,
+      1032
+    ],
+    "bytes": 1570673
+  },
+  {
+    "file": "central-retirement.png",
+    "group": "central",
+    "phase": "retirement",
+    "offsets": [
+      38,
+      40,
+      41,
+      42,
+      43
+    ],
+    "crop": null,
+    "size": [
+      2656,
+      1032
+    ],
+    "bytes": 1343552
+  },
+  {
+    "file": "paired-early.png",
+    "group": "paired",
+    "phase": "early",
+    "offsets": [
+      0,
+      2,
+      4,
+      6,
+      10
+    ],
+    "crop": null,
+    "size": [
+      2656,
+      1032
+    ],
+    "bytes": 1585831
+  },
+  {
+    "file": "paired-spread.png",
+    "group": "paired",
+    "phase": "spread",
+    "offsets": [
+      10,
+      18,
+      26,
+      38,
+      48
+    ],
+    "crop": null,
+    "size": [
+      2656,
+      1032
+    ],
+    "bytes": 1437712
+  },
+  {
+    "file": "paired-retirement.png",
+    "group": "paired",
+    "phase": "retirement",
+    "offsets": [
+      38,
+      40,
+      41,
+      42,
+      43
+    ],
+    "crop": null,
+    "size": [
+      2656,
+      1032
+    ],
+    "bytes": 1052290
+  }
+]

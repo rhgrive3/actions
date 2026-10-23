@@ -1,0 +1,1886 @@
+{
+  "checks": {
+    "setup/baseCommit": true,
+    "setup/sourceSnapshot": true,
+    "setup/time": true,
+    "setup/pos": true,
+    "setup/introSteps": true,
+    "setup/math": true,
+    "setup/map": true,
+    "setup/viewport": true,
+    "setup/qualitySetup": true,
+    "setup/events": true,
+    "setup/origins": true,
+    "initial/nonBandHashes": true,
+    "initial/lighting": true,
+    "initial/poolLayout": true,
+    "initial/math": true,
+    "initial/teamColors": true,
+    "initial/kitTime": true,
+    "per-frame/native-camera-input-time": true,
+    "capture/common-26": true,
+    "old-styles-0-to-4/RGBA-ten": true,
+    "per-frame/draw-triangles": true,
+    "central+0/nonBandHashes": true,
+    "central+0/lighting": true,
+    "central+0/poolLayout": true,
+    "central+0/math": true,
+    "central+0/teamColors": true,
+    "central+0/kitTime": true,
+    "central+2/nonBandHashes": true,
+    "central+2/lighting": true,
+    "central+2/poolLayout": true,
+    "central+2/math": true,
+    "central+2/teamColors": true,
+    "central+2/kitTime": true,
+    "central+4/nonBandHashes": true,
+    "central+4/lighting": true,
+    "central+4/poolLayout": true,
+    "central+4/math": true,
+    "central+4/teamColors": true,
+    "central+4/kitTime": true,
+    "central+6/nonBandHashes": true,
+    "central+6/lighting": true,
+    "central+6/poolLayout": true,
+    "central+6/math": true,
+    "central+6/teamColors": true,
+    "central+6/kitTime": true,
+    "central+10/nonBandHashes": true,
+    "central+10/lighting": true,
+    "central+10/poolLayout": true,
+    "central+10/math": true,
+    "central+10/teamColors": true,
+    "central+10/kitTime": true,
+    "paired+0/nonBandHashes": true,
+    "paired+0/lighting": true,
+    "paired+0/poolLayout": true,
+    "paired+0/math": true,
+    "paired+0/teamColors": true,
+    "paired+0/kitTime": true,
+    "central+18/nonBandHashes": true,
+    "central+18/lighting": true,
+    "central+18/poolLayout": true,
+    "central+18/math": true,
+    "central+18/teamColors": true,
+    "central+18/kitTime": true,
+    "paired+2/nonBandHashes": true,
+    "paired+2/lighting": true,
+    "paired+2/poolLayout": true,
+    "paired+2/math": true,
+    "paired+2/teamColors": true,
+    "paired+2/kitTime": true,
+    "paired+4/nonBandHashes": true,
+    "paired+4/lighting": true,
+    "paired+4/poolLayout": true,
+    "paired+4/math": true,
+    "paired+4/teamColors": true,
+    "paired+4/kitTime": true,
+    "paired+6/nonBandHashes": true,
+    "paired+6/lighting": true,
+    "paired+6/poolLayout": true,
+    "paired+6/math": true,
+    "paired+6/teamColors": true,
+    "paired+6/kitTime": true,
+    "central+26/nonBandHashes": true,
+    "central+26/lighting": true,
+    "central+26/poolLayout": true,
+    "central+26/math": true,
+    "central+26/teamColors": true,
+    "central+26/kitTime": true,
+    "paired+10/nonBandHashes": true,
+    "paired+10/lighting": true,
+    "paired+10/poolLayout": true,
+    "paired+10/math": true,
+    "paired+10/teamColors": true,
+    "paired+10/kitTime": true,
+    "paired+18/nonBandHashes": true,
+    "paired+18/lighting": true,
+    "paired+18/poolLayout": true,
+    "paired+18/math": true,
+    "paired+18/teamColors": true,
+    "paired+18/kitTime": true,
+    "central+38/nonBandHashes": true,
+    "central+38/lighting": true,
+    "central+38/poolLayout": true,
+    "central+38/math": true,
+    "central+38/teamColors": true,
+    "central+38/kitTime": true,
+    "central+40/nonBandHashes": true,
+    "central+40/lighting": true,
+    "central+40/poolLayout": true,
+    "central+40/math": true,
+    "central+40/teamColors": true,
+    "central+40/kitTime": true,
+    "central+41/nonBandHashes": true,
+    "central+41/lighting": true,
+    "central+41/poolLayout": true,
+    "central+41/math": true,
+    "central+41/teamColors": true,
+    "central+41/kitTime": true,
+    "central+42/nonBandHashes": true,
+    "central+42/lighting": true,
+    "central+42/poolLayout": true,
+    "central+42/math": true,
+    "central+42/teamColors": true,
+    "central+42/kitTime": true,
+    "central+43/nonBandHashes": true,
+    "central+43/lighting": true,
+    "central+43/poolLayout": true,
+    "central+43/math": true,
+    "central+43/teamColors": true,
+    "central+43/kitTime": true,
+    "paired+26/nonBandHashes": true,
+    "paired+26/lighting": true,
+    "paired+26/poolLayout": true,
+    "paired+26/math": true,
+    "paired+26/teamColors": true,
+    "paired+26/kitTime": true,
+    "central+48/nonBandHashes": true,
+    "central+48/lighting": true,
+    "central+48/poolLayout": true,
+    "central+48/math": true,
+    "central+48/teamColors": true,
+    "central+48/kitTime": true,
+    "paired+38/nonBandHashes": true,
+    "paired+38/lighting": true,
+    "paired+38/poolLayout": true,
+    "paired+38/math": true,
+    "paired+38/teamColors": true,
+    "paired+38/kitTime": true,
+    "paired+40/nonBandHashes": true,
+    "paired+40/lighting": true,
+    "paired+40/poolLayout": true,
+    "paired+40/math": true,
+    "paired+40/teamColors": true,
+    "paired+40/kitTime": true,
+    "paired+41/nonBandHashes": true,
+    "paired+41/lighting": true,
+    "paired+41/poolLayout": true,
+    "paired+41/math": true,
+    "paired+41/teamColors": true,
+    "paired+41/kitTime": true,
+    "paired+42/nonBandHashes": true,
+    "paired+42/lighting": true,
+    "paired+42/poolLayout": true,
+    "paired+42/math": true,
+    "paired+42/teamColors": true,
+    "paired+42/kitTime": true,
+    "paired+43/nonBandHashes": true,
+    "paired+43/lighting": true,
+    "paired+43/poolLayout": true,
+    "paired+43/math": true,
+    "paired+43/teamColors": true,
+    "paired+43/kitTime": true,
+    "paired+48/nonBandHashes": true,
+    "paired+48/lighting": true,
+    "paired+48/poolLayout": true,
+    "paired+48/math": true,
+    "paired+48/teamColors": true,
+    "paired+48/kitTime": true
+  },
+  "matchFailures": [],
+  "matchedSetupAndNonBand": true,
+  "images": [
+    {
+      "group": "central",
+      "offset": 0,
+      "frame": 70,
+      "beforeFile": "normal-central-plus-00-sim-f070.png",
+      "afterFile": "normal-central-plus-00-sim-f070.png",
+      "changedPixelsGt8": 4004,
+      "meanAbsoluteRGBDifference": 0.04378157552083333,
+      "differenceBounds": [
+        442,
+        640,
+        769,
+        760
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.016666666666666666,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            1.4287338256835938,
+            0.5595682859420776,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            1,
+            0.02380952425301075,
+            0.778218150138855,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.016666666666666666,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            1.4287338256835938,
+            0.5595682859420776,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            5,
+            0.02380952425301075,
+            0.778218150138855,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "central",
+      "offset": 2,
+      "frame": 72,
+      "beforeFile": "normal-central-plus-02-sim-f072.png",
+      "afterFile": "normal-central-plus-02-sim-f072.png",
+      "changedPixelsGt8": 8989,
+      "meanAbsoluteRGBDifference": 0.13919986979166668,
+      "differenceBounds": [
+        343,
+        519,
+        861,
+        760
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.05,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            1.9429970979690552,
+            0.8560991287231445,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            1,
+            0.0714285746216774,
+            0.778218150138855,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.05,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            1.9429970979690552,
+            0.8560991287231445,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            5,
+            0.0714285746216774,
+            0.778218150138855,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "central",
+      "offset": 4,
+      "frame": 74,
+      "beforeFile": "normal-central-plus-04-sim-f074.png",
+      "afterFile": "normal-central-plus-04-sim-f074.png",
+      "changedPixelsGt8": 39186,
+      "meanAbsoluteRGBDifference": 0.5024749348958333,
+      "differenceBounds": [
+        233,
+        431,
+        945,
+        760
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.08333333333333333,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            2.407130002975464,
+            1.1237242221832275,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            1,
+            0.1190476194024086,
+            0.778218150138855,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.08333333333333333,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            2.407130002975464,
+            1.1237242221832275,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            5,
+            0.1190476194024086,
+            0.778218150138855,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "central",
+      "offset": 6,
+      "frame": 76,
+      "beforeFile": "normal-central-plus-06-sim-f076.png",
+      "afterFile": "normal-central-plus-06-sim-f076.png",
+      "changedPixelsGt8": 80996,
+      "meanAbsoluteRGBDifference": 1.0590091145833334,
+      "differenceBounds": [
+        119,
+        367,
+        1049,
+        760
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.11666666666666665,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            2.8237037658691406,
+            1.3639259338378906,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            1,
+            0.1666666716337204,
+            0.778218150138855,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.11666666666666665,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            2.8237037658691406,
+            1.3639259338378906,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            5,
+            0.1666666716337204,
+            0.778218150138855,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "central",
+      "offset": 10,
+      "frame": 80,
+      "beforeFile": "normal-central-plus-10-sim-f080.png",
+      "afterFile": "normal-central-plus-10-sim-f080.png",
+      "changedPixelsGt8": 132364,
+      "meanAbsoluteRGBDifference": 2.106810221354167,
+      "differenceBounds": [
+        18,
+        298,
+        1204,
+        760
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.18333333333333332,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            3.5244557857513428,
+            1.7679885625839233,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.9992521405220032,
+            1,
+            0.261904776096344,
+            0.778218150138855,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.18333333333333332,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            3.5244557857513428,
+            1.7679885625839233,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.9992521405220032,
+            5,
+            0.261904776096344,
+            0.778218150138855,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "paired",
+      "offset": 0,
+      "frame": 87,
+      "beforeFile": "normal-paired-plus-00-sim-f087.png",
+      "afterFile": "normal-paired-plus-00-sim-f087.png",
+      "changedPixelsGt8": 146312,
+      "meanAbsoluteRGBDifference": 2.425130859375,
+      "differenceBounds": [
+        0,
+        247,
+        1264,
+        760
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.016666666666666666,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            1.4287338256835938,
+            0.5595682859420776,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            1,
+            0.02380952425301075,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.016666666666666666,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            1.4287338256835938,
+            0.5595682859420776,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            1,
+            0.02380952425301075,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.016666666666666666,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            1.4287338256835938,
+            0.5595682859420776,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            5,
+            0.02380952425301075,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.016666666666666666,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            1.4287338256835938,
+            0.5595682859420776,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            5,
+            0.02380952425301075,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "central",
+      "offset": 18,
+      "frame": 88,
+      "beforeFile": "normal-central-plus-18-sim-f088.png",
+      "afterFile": "normal-central-plus-18-sim-f088.png",
+      "changedPixelsGt8": 126123,
+      "meanAbsoluteRGBDifference": 2.1073291015625,
+      "differenceBounds": [
+        0,
+        241,
+        1274,
+        744
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.31666666666666665,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            4.468360424041748,
+            2.312256336212158,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.8208536505699158,
+            1,
+            0.4523809552192688,
+            0.778218150138855,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.31666666666666665,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            4.468360424041748,
+            2.312256336212158,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.8208536505699158,
+            5,
+            0.4523809552192688,
+            0.778218150138855,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "paired",
+      "offset": 2,
+      "frame": 89,
+      "beforeFile": "normal-paired-plus-02-sim-f089.png",
+      "afterFile": "normal-paired-plus-02-sim-f089.png",
+      "changedPixelsGt8": 103507,
+      "meanAbsoluteRGBDifference": 1.7079899088541666,
+      "differenceBounds": [
+        0,
+        237,
+        1277,
+        683
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.05,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            1.9429970979690552,
+            0.8560991287231445,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            1,
+            0.0714285746216774,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.05,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            1.9429970979690552,
+            0.8560991287231445,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            1,
+            0.0714285746216774,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.05,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            1.9429970979690552,
+            0.8560991287231445,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            5,
+            0.0714285746216774,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.05,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            1.9429970979690552,
+            0.8560991287231445,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            5,
+            0.0714285746216774,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "paired",
+      "offset": 4,
+      "frame": 91,
+      "beforeFile": "normal-paired-plus-04-sim-f091.png",
+      "afterFile": "normal-paired-plus-04-sim-f091.png",
+      "changedPixelsGt8": 90346,
+      "meanAbsoluteRGBDifference": 1.4824098307291667,
+      "differenceBounds": [
+        0,
+        233,
+        1280,
+        611
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.08333333333333333,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            2.407130002975464,
+            1.1237242221832275,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            1,
+            0.1190476194024086,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.08333333333333333,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            2.407130002975464,
+            1.1237242221832275,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            1,
+            0.1190476194024086,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.08333333333333333,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            2.407130002975464,
+            1.1237242221832275,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            5,
+            0.1190476194024086,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.08333333333333333,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            2.407130002975464,
+            1.1237242221832275,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            5,
+            0.1190476194024086,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "paired",
+      "offset": 6,
+      "frame": 93,
+      "beforeFile": "normal-paired-plus-06-sim-f093.png",
+      "afterFile": "normal-paired-plus-06-sim-f093.png",
+      "changedPixelsGt8": 98316,
+      "meanAbsoluteRGBDifference": 1.7300983072916667,
+      "differenceBounds": [
+        0,
+        237,
+        1279,
+        637
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.11666666666666665,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            2.8237037658691406,
+            1.3639259338378906,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            1,
+            0.1666666716337204,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.11666666666666665,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            2.8237037658691406,
+            1.3639259338378906,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            1,
+            0.1666666716337204,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.11666666666666665,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            2.8237037658691406,
+            1.3639259338378906,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            5,
+            0.1666666716337204,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.11666666666666665,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            2.8237037658691406,
+            1.3639259338378906,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            1,
+            5,
+            0.1666666716337204,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "central",
+      "offset": 26,
+      "frame": 96,
+      "beforeFile": "normal-central-plus-26-sim-f096.png",
+      "afterFile": "normal-central-plus-26-sim-f096.png",
+      "changedPixelsGt8": 127280,
+      "meanAbsoluteRGBDifference": 2.357240234375,
+      "differenceBounds": [
+        0,
+        212,
+        1280,
+        652
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.44999999999999996,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            4.939241886138916,
+            2.583772659301758,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.46431270241737366,
+            1,
+            0.6428571343421936,
+            0.778218150138855,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.44999999999999996,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            4.939241886138916,
+            2.583772659301758,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.46431270241737366,
+            5,
+            0.6428571343421936,
+            0.778218150138855,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "paired",
+      "offset": 10,
+      "frame": 97,
+      "beforeFile": "normal-paired-plus-10-sim-f097.png",
+      "afterFile": "normal-paired-plus-10-sim-f097.png",
+      "changedPixelsGt8": 135640,
+      "meanAbsoluteRGBDifference": 2.593188802083333,
+      "differenceBounds": [
+        0,
+        207,
+        1280,
+        649
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.18333333333333332,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            3.5244557857513428,
+            1.7679885625839233,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.9992521405220032,
+            1,
+            0.261904776096344,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.18333333333333332,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            3.5244557857513428,
+            1.7679885625839233,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.9992521405220032,
+            1,
+            0.261904776096344,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.18333333333333332,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            3.5244557857513428,
+            1.7679885625839233,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.9992521405220032,
+            5,
+            0.261904776096344,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.18333333333333332,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            3.5244557857513428,
+            1.7679885625839233,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.9992521405220032,
+            5,
+            0.261904776096344,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "paired",
+      "offset": 18,
+      "frame": 105,
+      "beforeFile": "normal-paired-plus-18-sim-f105.png",
+      "afterFile": "normal-paired-plus-18-sim-f105.png",
+      "changedPixelsGt8": 155699,
+      "meanAbsoluteRGBDifference": 3.0557509765625,
+      "differenceBounds": [
+        0,
+        173,
+        1242,
+        583
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.31666666666666665,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            4.468360424041748,
+            2.312256336212158,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.8208536505699158,
+            1,
+            0.4523809552192688,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.31666666666666665,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            4.468360424041748,
+            2.312256336212158,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.8208536505699158,
+            1,
+            0.4523809552192688,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.31666666666666665,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            4.468360424041748,
+            2.312256336212158,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.8208536505699158,
+            5,
+            0.4523809552192688,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.31666666666666665,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            4.468360424041748,
+            2.312256336212158,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.8208536505699158,
+            5,
+            0.4523809552192688,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "central",
+      "offset": 38,
+      "frame": 108,
+      "beforeFile": "normal-central-plus-38-sim-f108.png",
+      "afterFile": "normal-central-plus-38-sim-f108.png",
+      "changedPixelsGt8": 122816,
+      "meanAbsoluteRGBDifference": 1.9698424479166667,
+      "differenceBounds": [
+        0,
+        171,
+        1261,
+        549
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.6500000000000004,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            5.11855411529541,
+            2.687166213989258,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.025483209639787674,
+            1,
+            0.9285714030265808,
+            0.778218150138855,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.6500000000000004,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            5.11855411529541,
+            2.687166213989258,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.025483209639787674,
+            5,
+            0.9285714030265808,
+            0.778218150138855,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "central",
+      "offset": 40,
+      "frame": 110,
+      "beforeFile": "normal-central-plus-40-sim-f110.png",
+      "afterFile": "normal-central-plus-40-sim-f110.png",
+      "changedPixelsGt8": 103481,
+      "meanAbsoluteRGBDifference": 1.4647190755208332,
+      "differenceBounds": [
+        0,
+        166,
+        1277,
+        557
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.6833333333333338,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            5.119946479797363,
+            2.687969207763672,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.002959443721920252,
+            1,
+            0.976190447807312,
+            0.778218150138855,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.6833333333333338,
+          "life": 0.7,
+          "v": [
+            0,
+            0,
+            -27.200000762939453,
+            4.8782196044921875,
+            5.119946479797363,
+            2.687969207763672,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.002959443721920252,
+            5,
+            0.976190447807312,
+            0.778218150138855,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "central",
+      "offset": 41,
+      "frame": 111,
+      "beforeFile": "normal-central-plus-41-sim-f111.png",
+      "afterFile": "normal-central-plus-41-sim-f111.png",
+      "changedPixelsGt8": 94749,
+      "meanAbsoluteRGBDifference": 1.2708151041666667,
+      "differenceBounds": [
+        0,
+        165,
+        1276,
+        561
+      ],
+      "beforeOwnedBands": [],
+      "afterOwnedBands": []
+    },
+    {
+      "group": "central",
+      "offset": 42,
+      "frame": 112,
+      "beforeFile": "normal-central-plus-42-sim-f112.png",
+      "afterFile": "normal-central-plus-42-sim-f112.png",
+      "changedPixelsGt8": 85148,
+      "meanAbsoluteRGBDifference": 1.1031041666666668,
+      "differenceBounds": [
+        0,
+        163,
+        1277,
+        564
+      ],
+      "beforeOwnedBands": [],
+      "afterOwnedBands": []
+    },
+    {
+      "group": "central",
+      "offset": 43,
+      "frame": 113,
+      "beforeFile": "normal-central-plus-43-sim-f113.png",
+      "afterFile": "normal-central-plus-43-sim-f113.png",
+      "changedPixelsGt8": 74919,
+      "meanAbsoluteRGBDifference": 0.9446432291666667,
+      "differenceBounds": [
+        0,
+        161,
+        1277,
+        567
+      ],
+      "beforeOwnedBands": [],
+      "afterOwnedBands": []
+    },
+    {
+      "group": "paired",
+      "offset": 26,
+      "frame": 113,
+      "beforeFile": "normal-paired-plus-26-sim-f113.png",
+      "afterFile": "normal-paired-plus-26-sim-f113.png",
+      "changedPixelsGt8": 74919,
+      "meanAbsoluteRGBDifference": 0.9446432291666667,
+      "differenceBounds": [
+        0,
+        161,
+        1277,
+        567
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.44999999999999996,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            4.939241886138916,
+            2.583772659301758,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.46431270241737366,
+            1,
+            0.6428571343421936,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.44999999999999996,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            4.939241886138916,
+            2.583772659301758,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.46431270241737366,
+            1,
+            0.6428571343421936,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.44999999999999996,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            4.939241886138916,
+            2.583772659301758,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.46431270241737366,
+            5,
+            0.6428571343421936,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.44999999999999996,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            4.939241886138916,
+            2.583772659301758,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.46431270241737366,
+            5,
+            0.6428571343421936,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "central",
+      "offset": 48,
+      "frame": 118,
+      "beforeFile": "normal-central-plus-48-sim-f118.png",
+      "afterFile": "normal-central-plus-48-sim-f118.png",
+      "changedPixelsGt8": 30763,
+      "meanAbsoluteRGBDifference": 0.370240234375,
+      "differenceBounds": [
+        0,
+        238,
+        1280,
+        576
+      ],
+      "beforeOwnedBands": [],
+      "afterOwnedBands": []
+    },
+    {
+      "group": "paired",
+      "offset": 38,
+      "frame": 125,
+      "beforeFile": "normal-paired-plus-38-sim-f125.png",
+      "afterFile": "normal-paired-plus-38-sim-f125.png",
+      "changedPixelsGt8": 10,
+      "meanAbsoluteRGBDifference": 0.0031839192708333335,
+      "differenceBounds": [
+        494,
+        379,
+        1277,
+        485
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.6500000000000004,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            5.11855411529541,
+            2.687166213989258,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.025483209639787674,
+            1,
+            0.9285714030265808,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.6500000000000004,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            5.11855411529541,
+            2.687166213989258,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.025483209639787674,
+            1,
+            0.9285714030265808,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.6500000000000004,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            5.11855411529541,
+            2.687166213989258,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.025483209639787674,
+            5,
+            0.9285714030265808,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.6500000000000004,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            5.11855411529541,
+            2.687166213989258,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.025483209639787674,
+            5,
+            0.9285714030265808,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "paired",
+      "offset": 40,
+      "frame": 127,
+      "beforeFile": "normal-paired-plus-40-sim-f127.png",
+      "afterFile": "normal-paired-plus-40-sim-f127.png",
+      "changedPixelsGt8": 3,
+      "meanAbsoluteRGBDifference": 0.0006435546875,
+      "differenceBounds": [
+        744,
+        371,
+        1273,
+        493
+      ],
+      "beforeOwnedBands": [
+        {
+          "t": 0.6833333333333338,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            5.119946479797363,
+            2.687969207763672,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.002959443721920252,
+            1,
+            0.976190447807312,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.6833333333333338,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            5.119946479797363,
+            2.687969207763672,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.002959443721920252,
+            1,
+            0.976190447807312,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ],
+      "afterOwnedBands": [
+        {
+          "t": 0.6833333333333338,
+          "life": 0.7,
+          "v": [
+            3.2699999809265137,
+            0,
+            -21.540000915527344,
+            3.900181293487549,
+            5.119946479797363,
+            2.687969207763672,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.002959443721920252,
+            5,
+            0.976190447807312,
+            0.06307204067707062,
+            1
+          ]
+        },
+        {
+          "t": 0.6833333333333338,
+          "life": 0.7,
+          "v": [
+            -3.2699999809265137,
+            0,
+            -21.540000915527344,
+            5.94779109954834,
+            5.119946479797363,
+            2.687969207763672,
+            1,
+            0,
+            1,
+            0.04970656707882881,
+            0.34191441535949707,
+            0.002959443721920252,
+            5,
+            0.976190447807312,
+            0.5859176516532898,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "group": "paired",
+      "offset": 41,
+      "frame": 128,
+      "beforeFile": "normal-paired-plus-41-sim-f128.png",
+      "afterFile": "normal-paired-plus-41-sim-f128.png",
+      "changedPixelsGt8": 0,
+      "meanAbsoluteRGBDifference": 0.0,
+      "differenceBounds": null,
+      "beforeOwnedBands": [],
+      "afterOwnedBands": []
+    },
+    {
+      "group": "paired",
+      "offset": 42,
+      "frame": 129,
+      "beforeFile": "normal-paired-plus-42-sim-f129.png",
+      "afterFile": "normal-paired-plus-42-sim-f129.png",
+      "changedPixelsGt8": 0,
+      "meanAbsoluteRGBDifference": 0.0,
+      "differenceBounds": null,
+      "beforeOwnedBands": [],
+      "afterOwnedBands": []
+    },
+    {
+      "group": "paired",
+      "offset": 43,
+      "frame": 130,
+      "beforeFile": "normal-paired-plus-43-sim-f130.png",
+      "afterFile": "normal-paired-plus-43-sim-f130.png",
+      "changedPixelsGt8": 0,
+      "meanAbsoluteRGBDifference": 0.0,
+      "differenceBounds": null,
+      "beforeOwnedBands": [],
+      "afterOwnedBands": []
+    },
+    {
+      "group": "paired",
+      "offset": 48,
+      "frame": 135,
+      "beforeFile": "normal-paired-plus-48-sim-f135.png",
+      "afterFile": "normal-paired-plus-48-sim-f135.png",
+      "changedPixelsGt8": 0,
+      "meanAbsoluteRGBDifference": 0.0,
+      "differenceBounds": null,
+      "beforeOwnedBands": [],
+      "afterOwnedBands": []
+    }
+  ],
+  "performance": {
+    "before": {
+      "fxCPU": {
+        "n": 135,
+        "meanMs": 0.14222222223050066,
+        "medianMs": 0.09999999962747097,
+        "p95Ms": 0.40000000037252903,
+        "maxMs": 2.300000000745058
+      },
+      "renderSubmissionCPU": {
+        "n": 135,
+        "meanMs": 3.7822222222746524,
+        "medianMs": 3.400000000372529,
+        "p95Ms": 6.900000000372529,
+        "maxMs": 9.700000001117587
+      },
+      "gpuTimerAvailable": false,
+      "gpu": {
+        "n": 0,
+        "meanMs": null,
+        "medianMs": null,
+        "p95Ms": null,
+        "maxMs": null
+      },
+      "gpuDisjoint": 0
+    },
+    "after": {
+      "fxCPU": {
+        "n": 135,
+        "meanMs": 0.1474074073963695,
+        "medianMs": 0.09999999962747097,
+        "p95Ms": 0.40000000037252903,
+        "maxMs": 1.8999999985098839
+      },
+      "renderSubmissionCPU": {
+        "n": 135,
+        "meanMs": 3.583703703681628,
+        "medianMs": 3.400000000372529,
+        "p95Ms": 5.800000000745058,
+        "maxMs": 7.400000000372529
+      },
+      "gpuTimerAvailable": false,
+      "gpu": {
+        "n": 0,
+        "meanMs": null,
+        "medianMs": null,
+        "p95Ms": null,
+        "maxMs": null
+      },
+      "gpuDisjoint": 0
+    },
+    "fxCPUMeanChangePercent": 3.6458333195393156,
+    "renderSubmissionCPUMeanChangePercent": -5.24872698975456
+  },
+  "scope": "Two sequential single-run normal-camera captures on SwiftShader. CPU is observed native director update / whole-scene render submission; GPU only if EXT_disjoint_timer_query_webgl2 is available. Pool equality and source tests do not establish visual improvement."
+}

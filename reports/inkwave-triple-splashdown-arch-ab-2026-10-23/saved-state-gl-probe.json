@@ -1,0 +1,1777 @@
+{
+  "scope": "Isolated saved-state GL inspection. Exact emitted pool geometry/material; captured normal-camera records, lighting and time; no world/postprocessing. Same geometry drawRange selects actual atan-wrap triangles or their complement. No shader or runtime edit.",
+  "rows": [
+    {
+      "mode": "before",
+      "group": "central",
+      "offset": 18,
+      "frame": 88,
+      "time": 6.766666666666648,
+      "subset": "full",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          4608
+        ]
+      ],
+      "nonzeroAlphaPixels": 105455,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 918545,
+        "oneTo8": 1127,
+        "nineTo32": 1752,
+        "thirtyThreeTo127": 4287,
+        "oneTwentyEightTo255": 98289
+      },
+      "rgbaSHA256": "3bd4c3a76a44bb1a93d21d28f8880cf89c4068d9e7b3e050f9f0991eb828f98e",
+      "recordControls": [
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "central",
+      "offset": 18,
+      "frame": 88,
+      "time": 6.766666666666648,
+      "subset": "seam-only",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          3456,
+          72
+        ]
+      ],
+      "nonzeroAlphaPixels": 2079,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 1021921,
+        "oneTo8": 38,
+        "nineTo32": 77,
+        "thirtyThreeTo127": 192,
+        "oneTwentyEightTo255": 1772
+      },
+      "rgbaSHA256": "976875da1ef4fa7a5d43e4a86bb69f8a7f799f9ce257c6c83434a536f3a2d363",
+      "recordControls": [
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "central",
+      "offset": 18,
+      "frame": 88,
+      "time": 6.766666666666648,
+      "subset": "non-seam",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          3456
+        ],
+        [
+          3528,
+          1080
+        ]
+      ],
+      "nonzeroAlphaPixels": 103376,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 920624,
+        "oneTo8": 1089,
+        "nineTo32": 1675,
+        "thirtyThreeTo127": 4095,
+        "oneTwentyEightTo255": 96517
+      },
+      "rgbaSHA256": "54f7d8e75159d9c74ace69a2388fc3f015208affdb26120bbe506ad451a9f411",
+      "recordControls": [
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "central",
+      "offset": 22,
+      "frame": 92,
+      "time": 6.833333333333314,
+      "subset": "full",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          4608
+        ]
+      ],
+      "nonzeroAlphaPixels": 78690,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 945310,
+        "oneTo8": 1125,
+        "nineTo32": 1767,
+        "thirtyThreeTo127": 4287,
+        "oneTwentyEightTo255": 71511
+      },
+      "rgbaSHA256": "e821c81907474ce046be20da07427b5a5c2bdca6977451199427e9fdc1ebdecf",
+      "recordControls": [
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "central",
+      "offset": 22,
+      "frame": 92,
+      "time": 6.833333333333314,
+      "subset": "seam-only",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          3456,
+          72
+        ]
+      ],
+      "nonzeroAlphaPixels": 1665,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 1022335,
+        "oneTo8": 52,
+        "nineTo32": 65,
+        "thirtyThreeTo127": 163,
+        "oneTwentyEightTo255": 1385
+      },
+      "rgbaSHA256": "f6cfc93bb06c2f93d0b47b2b166a9ab5a20bcff3c89c318c2128d4946053248d",
+      "recordControls": [
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "central",
+      "offset": 22,
+      "frame": 92,
+      "time": 6.833333333333314,
+      "subset": "non-seam",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          3456
+        ],
+        [
+          3528,
+          1080
+        ]
+      ],
+      "nonzeroAlphaPixels": 77025,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 946975,
+        "oneTo8": 1073,
+        "nineTo32": 1702,
+        "thirtyThreeTo127": 4124,
+        "oneTwentyEightTo255": 70126
+      },
+      "rgbaSHA256": "b52683ea982375bf5c71e51fd0bc13d1291b87881ce11cc014990c3fdc31463d",
+      "recordControls": [
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "central",
+      "offset": 24,
+      "frame": 94,
+      "time": 6.866666666666648,
+      "subset": "full",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          4608
+        ]
+      ],
+      "nonzeroAlphaPixels": 65604,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 958396,
+        "oneTo8": 1120,
+        "nineTo32": 1747,
+        "thirtyThreeTo127": 4309,
+        "oneTwentyEightTo255": 58428
+      },
+      "rgbaSHA256": "c5a59b13dfdc1f575c8de632e672d13ed7e7e08bec3c42623b1486cb0c23675d",
+      "recordControls": [
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "central",
+      "offset": 24,
+      "frame": 94,
+      "time": 6.866666666666648,
+      "subset": "seam-only",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          3456,
+          72
+        ]
+      ],
+      "nonzeroAlphaPixels": 1415,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 1022585,
+        "oneTo8": 49,
+        "nineTo32": 65,
+        "thirtyThreeTo127": 154,
+        "oneTwentyEightTo255": 1147
+      },
+      "rgbaSHA256": "08c90f20348c350e538e3cfcf901bdc421ebfe7f08da1e7911f9276e589bd2ec",
+      "recordControls": [
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "central",
+      "offset": 24,
+      "frame": 94,
+      "time": 6.866666666666648,
+      "subset": "non-seam",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          3456
+        ],
+        [
+          3528,
+          1080
+        ]
+      ],
+      "nonzeroAlphaPixels": 64189,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 959811,
+        "oneTo8": 1071,
+        "nineTo32": 1682,
+        "thirtyThreeTo127": 4155,
+        "oneTwentyEightTo255": 57281
+      },
+      "rgbaSHA256": "aa2a87f0be8532390c45c0ae1099a97d1dbd4448dc3e5ec70208af9d6cbb5b1e",
+      "recordControls": [
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "central",
+      "offset": 26,
+      "frame": 96,
+      "time": 6.899999999999981,
+      "subset": "full",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          4608
+        ]
+      ],
+      "nonzeroAlphaPixels": 52564,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 971436,
+        "oneTo8": 1113,
+        "nineTo32": 1787,
+        "thirtyThreeTo127": 4288,
+        "oneTwentyEightTo255": 45376
+      },
+      "rgbaSHA256": "31b536281af85e9c72f1c896d443e52282d04f004c394587c76d25fa865e7b17",
+      "recordControls": [
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "central",
+      "offset": 26,
+      "frame": 96,
+      "time": 6.899999999999981,
+      "subset": "seam-only",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          3456,
+          72
+        ]
+      ],
+      "nonzeroAlphaPixels": 1145,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 1022855,
+        "oneTo8": 41,
+        "nineTo32": 68,
+        "thirtyThreeTo127": 162,
+        "oneTwentyEightTo255": 874
+      },
+      "rgbaSHA256": "23a5eee6227e29bd47f80bf28bbc38c7df842128ecde8b599da46ee1c1f6bd89",
+      "recordControls": [
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "central",
+      "offset": 26,
+      "frame": 96,
+      "time": 6.899999999999981,
+      "subset": "non-seam",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          3456
+        ],
+        [
+          3528,
+          1080
+        ]
+      ],
+      "nonzeroAlphaPixels": 51419,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 972581,
+        "oneTo8": 1072,
+        "nineTo32": 1719,
+        "thirtyThreeTo127": 4126,
+        "oneTwentyEightTo255": 44502
+      },
+      "rgbaSHA256": "78dea9b0f053ae6fa927852d83a09444119a0fa2635879da8162ca45eac7afd7",
+      "recordControls": [
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "paired",
+      "offset": 18,
+      "frame": 105,
+      "time": 7.04999999999998,
+      "subset": "full",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          4608
+        ]
+      ],
+      "nonzeroAlphaPixels": 165437,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 858563,
+        "oneTo8": 1613,
+        "nineTo32": 2570,
+        "thirtyThreeTo127": 6449,
+        "oneTwentyEightTo255": 154805
+      },
+      "rgbaSHA256": "ceae0b460e63d2dcfc42794f7431a5347188766dbe00d336588ff65778492f5a",
+      "recordControls": [
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 1
+        },
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "paired",
+      "offset": 18,
+      "frame": 105,
+      "time": 7.04999999999998,
+      "subset": "seam-only",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          3456,
+          72
+        ]
+      ],
+      "nonzeroAlphaPixels": 2657,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 1021343,
+        "oneTo8": 83,
+        "nineTo32": 124,
+        "thirtyThreeTo127": 328,
+        "oneTwentyEightTo255": 2122
+      },
+      "rgbaSHA256": "88f18624c872b807dc12c7a6d5796daf653e4ecf04b7f173da2fb7f94130c35c",
+      "recordControls": [
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 1
+        },
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "paired",
+      "offset": 18,
+      "frame": 105,
+      "time": 7.04999999999998,
+      "subset": "non-seam",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          3456
+        ],
+        [
+          3528,
+          1080
+        ]
+      ],
+      "nonzeroAlphaPixels": 162780,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 861220,
+        "oneTo8": 1530,
+        "nineTo32": 2446,
+        "thirtyThreeTo127": 6121,
+        "oneTwentyEightTo255": 152683
+      },
+      "rgbaSHA256": "cc5d39557c400df03da29cd2e00eac4bee713c708410d0066daf95b9b7e00b25",
+      "recordControls": [
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 1
+        },
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "paired",
+      "offset": 22,
+      "frame": 109,
+      "time": 7.116666666666647,
+      "subset": "full",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          4608
+        ]
+      ],
+      "nonzeroAlphaPixels": 142106,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 881894,
+        "oneTo8": 1854,
+        "nineTo32": 2975,
+        "thirtyThreeTo127": 7263,
+        "oneTwentyEightTo255": 130014
+      },
+      "rgbaSHA256": "603589a9e88ad386f5e29fa03b9bb20facaa5153f149e14944299a954c733d6e",
+      "recordControls": [
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 1
+        },
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "paired",
+      "offset": 22,
+      "frame": 109,
+      "time": 7.116666666666647,
+      "subset": "seam-only",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          3456,
+          72
+        ]
+      ],
+      "nonzeroAlphaPixels": 2257,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 1021743,
+        "oneTo8": 68,
+        "nineTo32": 129,
+        "thirtyThreeTo127": 316,
+        "oneTwentyEightTo255": 1744
+      },
+      "rgbaSHA256": "d50e2a5f9686c9690556e8fdc8fc3bf10ca50548b1cca65e81b0a8559ed31d61",
+      "recordControls": [
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 1
+        },
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "paired",
+      "offset": 22,
+      "frame": 109,
+      "time": 7.116666666666647,
+      "subset": "non-seam",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          3456
+        ],
+        [
+          3528,
+          1080
+        ]
+      ],
+      "nonzeroAlphaPixels": 139849,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 884151,
+        "oneTo8": 1786,
+        "nineTo32": 2846,
+        "thirtyThreeTo127": 6947,
+        "oneTwentyEightTo255": 128270
+      },
+      "rgbaSHA256": "6e2008be9f987e995a96ec025bf61dee269628722c14a272f5083d891bc2bebc",
+      "recordControls": [
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 1
+        },
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "paired",
+      "offset": 24,
+      "frame": 111,
+      "time": 7.14999999999998,
+      "subset": "full",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          4608
+        ]
+      ],
+      "nonzeroAlphaPixels": 122759,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 901241,
+        "oneTo8": 2016,
+        "nineTo32": 3032,
+        "thirtyThreeTo127": 7569,
+        "oneTwentyEightTo255": 110142
+      },
+      "rgbaSHA256": "e8c3072280992f1735482c5fd0737e1ffd1b84bc0ec6e374f69e588171a80089",
+      "recordControls": [
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 1
+        },
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "paired",
+      "offset": 24,
+      "frame": 111,
+      "time": 7.14999999999998,
+      "subset": "seam-only",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          3456,
+          72
+        ]
+      ],
+      "nonzeroAlphaPixels": 1947,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 1022053,
+        "oneTo8": 75,
+        "nineTo32": 122,
+        "thirtyThreeTo127": 283,
+        "oneTwentyEightTo255": 1467
+      },
+      "rgbaSHA256": "ad36bede1ce24c0a768da24236d60ce7fa41ab1ad0c42699e175c4571ba953c1",
+      "recordControls": [
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 1
+        },
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "paired",
+      "offset": 24,
+      "frame": 111,
+      "time": 7.14999999999998,
+      "subset": "non-seam",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          3456
+        ],
+        [
+          3528,
+          1080
+        ]
+      ],
+      "nonzeroAlphaPixels": 120812,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 903188,
+        "oneTo8": 1941,
+        "nineTo32": 2910,
+        "thirtyThreeTo127": 7286,
+        "oneTwentyEightTo255": 108675
+      },
+      "rgbaSHA256": "f9b66924f7370f06e67c444b8c80e1dfc1bd4e829534bdd9d4d340d8c16d7244",
+      "recordControls": [
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 1
+        },
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "paired",
+      "offset": 26,
+      "frame": 113,
+      "time": 7.183333333333313,
+      "subset": "full",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          4608
+        ]
+      ],
+      "nonzeroAlphaPixels": 101268,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 922732,
+        "oneTo8": 2109,
+        "nineTo32": 3154,
+        "thirtyThreeTo127": 7899,
+        "oneTwentyEightTo255": 88106
+      },
+      "rgbaSHA256": "cfb2d9755956ee47c8a02ef0fc2b26a07af3f6d90eac0d6996fb81e6234492eb",
+      "recordControls": [
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 1
+        },
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "paired",
+      "offset": 26,
+      "frame": 113,
+      "time": 7.183333333333313,
+      "subset": "seam-only",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          3456,
+          72
+        ]
+      ],
+      "nonzeroAlphaPixels": 1563,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 1022437,
+        "oneTo8": 68,
+        "nineTo32": 98,
+        "thirtyThreeTo127": 227,
+        "oneTwentyEightTo255": 1170
+      },
+      "rgbaSHA256": "2d47a4e0415cc27f715bf8150ee82df6e0a220ddbd69fba398fbb1fd9c716b96",
+      "recordControls": [
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 1
+        },
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "before",
+      "group": "paired",
+      "offset": 26,
+      "frame": 113,
+      "time": 7.183333333333313,
+      "subset": "non-seam",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          3456
+        ],
+        [
+          3528,
+          1080
+        ]
+      ],
+      "nonzeroAlphaPixels": 99705,
+      "maxAlpha": 255,
+      "histogram": {
+        "zero": 924295,
+        "oneTo8": 2041,
+        "nineTo32": 3056,
+        "thirtyThreeTo127": 7672,
+        "oneTwentyEightTo255": 86936
+      },
+      "rgbaSHA256": "38410a7f056baf7737fb8147977121b2c15937b12b2c25fd949f78a13b3a1644",
+      "recordControls": [
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 1
+        },
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 1
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "central",
+      "offset": 18,
+      "frame": 88,
+      "time": 6.766666666666648,
+      "subset": "full",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          4608
+        ]
+      ],
+      "nonzeroAlphaPixels": 80382,
+      "maxAlpha": 247,
+      "histogram": {
+        "zero": 943618,
+        "oneTo8": 3397,
+        "nineTo32": 5444,
+        "thirtyThreeTo127": 11917,
+        "oneTwentyEightTo255": 59624
+      },
+      "rgbaSHA256": "0b71f426b7b546ff3be14994ff185233642100b7708d8cfe3360b1a42ad4f415",
+      "recordControls": [
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "central",
+      "offset": 18,
+      "frame": 88,
+      "time": 6.766666666666648,
+      "subset": "seam-only",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          3456,
+          72
+        ]
+      ],
+      "nonzeroAlphaPixels": 2486,
+      "maxAlpha": 209,
+      "histogram": {
+        "zero": 1021514,
+        "oneTo8": 548,
+        "nineTo32": 550,
+        "thirtyThreeTo127": 1006,
+        "oneTwentyEightTo255": 382
+      },
+      "rgbaSHA256": "cba8b300798d471e1fca891ff96fac50edd9987821c4cadc475fb351219f1d2c",
+      "recordControls": [
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "central",
+      "offset": 18,
+      "frame": 88,
+      "time": 6.766666666666648,
+      "subset": "non-seam",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          3456
+        ],
+        [
+          3528,
+          1080
+        ]
+      ],
+      "nonzeroAlphaPixels": 77896,
+      "maxAlpha": 247,
+      "histogram": {
+        "zero": 946104,
+        "oneTo8": 2849,
+        "nineTo32": 4894,
+        "thirtyThreeTo127": 10911,
+        "oneTwentyEightTo255": 59242
+      },
+      "rgbaSHA256": "3e2aa4f00a9bbb6f91db8f788286afd06daea9191d96a88d1efe2abc091a8326",
+      "recordControls": [
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "central",
+      "offset": 22,
+      "frame": 92,
+      "time": 6.833333333333314,
+      "subset": "full",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          4608
+        ]
+      ],
+      "nonzeroAlphaPixels": 12565,
+      "maxAlpha": 166,
+      "histogram": {
+        "zero": 1011435,
+        "oneTo8": 990,
+        "nineTo32": 1350,
+        "thirtyThreeTo127": 2928,
+        "oneTwentyEightTo255": 7297
+      },
+      "rgbaSHA256": "fc8593b79fb0c3fbc8ca800bf8547d8e182b324832d01c178690a0a37927d932",
+      "recordControls": [
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "central",
+      "offset": 22,
+      "frame": 92,
+      "time": 6.833333333333314,
+      "subset": "seam-only",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          3456,
+          72
+        ]
+      ],
+      "nonzeroAlphaPixels": 1423,
+      "maxAlpha": 105,
+      "histogram": {
+        "zero": 1022577,
+        "oneTo8": 270,
+        "nineTo32": 381,
+        "thirtyThreeTo127": 772,
+        "oneTwentyEightTo255": 0
+      },
+      "rgbaSHA256": "3573bf9dbeffa5ec37cd37d2dff42e4920f5975449cd274c127c1752981a1e76",
+      "recordControls": [
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "central",
+      "offset": 22,
+      "frame": 92,
+      "time": 6.833333333333314,
+      "subset": "non-seam",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          3456
+        ],
+        [
+          3528,
+          1080
+        ]
+      ],
+      "nonzeroAlphaPixels": 11142,
+      "maxAlpha": 166,
+      "histogram": {
+        "zero": 1012858,
+        "oneTo8": 720,
+        "nineTo32": 969,
+        "thirtyThreeTo127": 2156,
+        "oneTwentyEightTo255": 7297
+      },
+      "rgbaSHA256": "d7575e4d1fa77a52d21fd0b631bef953c0cd3c96671fc7a5ca312e8192ed8ffc",
+      "recordControls": [
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "central",
+      "offset": 24,
+      "frame": 94,
+      "time": 6.866666666666648,
+      "subset": "full",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          4608
+        ]
+      ],
+      "nonzeroAlphaPixels": 1448,
+      "maxAlpha": 83,
+      "histogram": {
+        "zero": 1022552,
+        "oneTo8": 391,
+        "nineTo32": 570,
+        "thirtyThreeTo127": 487,
+        "oneTwentyEightTo255": 0
+      },
+      "rgbaSHA256": "8a217fe7f18ad8ca82797dbbccd5288c84abde7da84b33dc604b7c9df6af41ad",
+      "recordControls": [
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "central",
+      "offset": 24,
+      "frame": 94,
+      "time": 6.866666666666648,
+      "subset": "seam-only",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          3456,
+          72
+        ]
+      ],
+      "nonzeroAlphaPixels": 1108,
+      "maxAlpha": 70,
+      "histogram": {
+        "zero": 1022892,
+        "oneTo8": 232,
+        "nineTo32": 456,
+        "thirtyThreeTo127": 420,
+        "oneTwentyEightTo255": 0
+      },
+      "rgbaSHA256": "51258ea0cff2e06492c2b98017296a6dd0114f0237e1e013df70f87c8c2829f2",
+      "recordControls": [
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "central",
+      "offset": 24,
+      "frame": 94,
+      "time": 6.866666666666648,
+      "subset": "non-seam",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          3456
+        ],
+        [
+          3528,
+          1080
+        ]
+      ],
+      "nonzeroAlphaPixels": 340,
+      "maxAlpha": 83,
+      "histogram": {
+        "zero": 1023660,
+        "oneTo8": 159,
+        "nineTo32": 114,
+        "thirtyThreeTo127": 67,
+        "oneTwentyEightTo255": 0
+      },
+      "rgbaSHA256": "a98fa24cd0657bb45031e6fb71b65f32e24784f3d52b4ff881b56897b43e836a",
+      "recordControls": [
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "central",
+      "offset": 26,
+      "frame": 96,
+      "time": 6.899999999999981,
+      "subset": "full",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          4608
+        ]
+      ],
+      "nonzeroAlphaPixels": 903,
+      "maxAlpha": 48,
+      "histogram": {
+        "zero": 1023097,
+        "oneTo8": 305,
+        "nineTo32": 475,
+        "thirtyThreeTo127": 123,
+        "oneTwentyEightTo255": 0
+      },
+      "rgbaSHA256": "41dcaeda312675f4013c2feda852e4a2e477371bc8fc191ccd27d1fef982f18e",
+      "recordControls": [
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "central",
+      "offset": 26,
+      "frame": 96,
+      "time": 6.899999999999981,
+      "subset": "seam-only",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          3456,
+          72
+        ]
+      ],
+      "nonzeroAlphaPixels": 881,
+      "maxAlpha": 48,
+      "histogram": {
+        "zero": 1023119,
+        "oneTo8": 286,
+        "nineTo32": 472,
+        "thirtyThreeTo127": 123,
+        "oneTwentyEightTo255": 0
+      },
+      "rgbaSHA256": "f008d6d8f45a7064a9e9510aa30d4e8e40fb456798fcb7f26f2d94ca908bc7d4",
+      "recordControls": [
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "central",
+      "offset": 26,
+      "frame": 96,
+      "time": 6.899999999999981,
+      "subset": "non-seam",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          3456
+        ],
+        [
+          3528,
+          1080
+        ]
+      ],
+      "nonzeroAlphaPixels": 22,
+      "maxAlpha": 9,
+      "histogram": {
+        "zero": 1023978,
+        "oneTo8": 19,
+        "nineTo32": 3,
+        "thirtyThreeTo127": 0,
+        "oneTwentyEightTo255": 0
+      },
+      "rgbaSHA256": "fdbd37b10f83a5d86abf1675506a0a7add92daea3045e60592fa88abd3b9a4d0",
+      "recordControls": [
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "paired",
+      "offset": 18,
+      "frame": 105,
+      "time": 7.04999999999998,
+      "subset": "full",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          4608
+        ]
+      ],
+      "nonzeroAlphaPixels": 32462,
+      "maxAlpha": 254,
+      "histogram": {
+        "zero": 991538,
+        "oneTo8": 1522,
+        "nineTo32": 2164,
+        "thirtyThreeTo127": 4900,
+        "oneTwentyEightTo255": 23876
+      },
+      "rgbaSHA256": "df9a787095eaffb751a9fa44a9b00b3becc755ea55d4c44cb72c25e6682c9864",
+      "recordControls": [
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 5
+        },
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "paired",
+      "offset": 18,
+      "frame": 105,
+      "time": 7.04999999999998,
+      "subset": "seam-only",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          3456,
+          72
+        ]
+      ],
+      "nonzeroAlphaPixels": 2292,
+      "maxAlpha": 221,
+      "histogram": {
+        "zero": 1021708,
+        "oneTo8": 341,
+        "nineTo32": 529,
+        "thirtyThreeTo127": 1116,
+        "oneTwentyEightTo255": 306
+      },
+      "rgbaSHA256": "5a0202ba87f3afe3bf8d31e17b28a76417e61021a51c16c9848c9c5cf49b0d71",
+      "recordControls": [
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 5
+        },
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "paired",
+      "offset": 18,
+      "frame": 105,
+      "time": 7.04999999999998,
+      "subset": "non-seam",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          3456
+        ],
+        [
+          3528,
+          1080
+        ]
+      ],
+      "nonzeroAlphaPixels": 30855,
+      "maxAlpha": 254,
+      "histogram": {
+        "zero": 993145,
+        "oneTo8": 1268,
+        "nineTo32": 1791,
+        "thirtyThreeTo127": 4112,
+        "oneTwentyEightTo255": 23684
+      },
+      "rgbaSHA256": "5a1710070724ffa92d509ff5e3bf51d464171679cfd3732e235145387ae2b31a",
+      "recordControls": [
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 5
+        },
+        {
+          "age": 0.31666666666666665,
+          "alphaControl": 0.8208536505699158,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "paired",
+      "offset": 22,
+      "frame": 109,
+      "time": 7.116666666666647,
+      "subset": "full",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          4608
+        ]
+      ],
+      "nonzeroAlphaPixels": 6382,
+      "maxAlpha": 224,
+      "histogram": {
+        "zero": 1017618,
+        "oneTo8": 634,
+        "nineTo32": 980,
+        "thirtyThreeTo127": 1405,
+        "oneTwentyEightTo255": 3363
+      },
+      "rgbaSHA256": "e40d0c7bba2e9c2b788e4f36aba80a375bb5c4091ce22659a1ce502beeb5f1d3",
+      "recordControls": [
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 5
+        },
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "paired",
+      "offset": 22,
+      "frame": 109,
+      "time": 7.116666666666647,
+      "subset": "seam-only",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          3456,
+          72
+        ]
+      ],
+      "nonzeroAlphaPixels": 1636,
+      "maxAlpha": 140,
+      "histogram": {
+        "zero": 1022364,
+        "oneTo8": 370,
+        "nineTo32": 588,
+        "thirtyThreeTo127": 677,
+        "oneTwentyEightTo255": 1
+      },
+      "rgbaSHA256": "9e721445874ca58a9adfbaf54126b6bddf9f6c7f2eab826c8ec973aea01e2204",
+      "recordControls": [
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 5
+        },
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "paired",
+      "offset": 22,
+      "frame": 109,
+      "time": 7.116666666666647,
+      "subset": "non-seam",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          3456
+        ],
+        [
+          3528,
+          1080
+        ]
+      ],
+      "nonzeroAlphaPixels": 5214,
+      "maxAlpha": 224,
+      "histogram": {
+        "zero": 1018786,
+        "oneTo8": 348,
+        "nineTo32": 538,
+        "thirtyThreeTo127": 966,
+        "oneTwentyEightTo255": 3362
+      },
+      "rgbaSHA256": "c3e5d9bccdfcaa2902db7d77404fde79a0def5a1d7156161d2f9445cb23f8164",
+      "recordControls": [
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 5
+        },
+        {
+          "age": 0.3833333333333333,
+          "alphaControl": 0.6525653004646301,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "paired",
+      "offset": 24,
+      "frame": 111,
+      "time": 7.14999999999998,
+      "subset": "full",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          4608
+        ]
+      ],
+      "nonzeroAlphaPixels": 1363,
+      "maxAlpha": 76,
+      "histogram": {
+        "zero": 1022637,
+        "oneTo8": 434,
+        "nineTo32": 566,
+        "thirtyThreeTo127": 363,
+        "oneTwentyEightTo255": 0
+      },
+      "rgbaSHA256": "f2f6750cd553f08567f75dfa86ab92166c5cb74a087faf5d15320edd2c5f6cd7",
+      "recordControls": [
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 5
+        },
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "paired",
+      "offset": 24,
+      "frame": 111,
+      "time": 7.14999999999998,
+      "subset": "seam-only",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          3456,
+          72
+        ]
+      ],
+      "nonzeroAlphaPixels": 1250,
+      "maxAlpha": 69,
+      "histogram": {
+        "zero": 1022750,
+        "oneTo8": 389,
+        "nineTo32": 519,
+        "thirtyThreeTo127": 342,
+        "oneTwentyEightTo255": 0
+      },
+      "rgbaSHA256": "026d9d618440f73fd57eef564cb696ab4f763f4184ae73b551f38b6d2facd598",
+      "recordControls": [
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 5
+        },
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "paired",
+      "offset": 24,
+      "frame": 111,
+      "time": 7.14999999999998,
+      "subset": "non-seam",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          3456
+        ],
+        [
+          3528,
+          1080
+        ]
+      ],
+      "nonzeroAlphaPixels": 113,
+      "maxAlpha": 76,
+      "histogram": {
+        "zero": 1023887,
+        "oneTo8": 45,
+        "nineTo32": 47,
+        "thirtyThreeTo127": 21,
+        "oneTwentyEightTo255": 0
+      },
+      "rgbaSHA256": "f5fe12f2a1e66b1cafb753ab4d240b7e2394738b4f636b6f50245962941e4b7f",
+      "recordControls": [
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 5
+        },
+        {
+          "age": 0.41666666666666663,
+          "alphaControl": 0.5593988299369812,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "paired",
+      "offset": 26,
+      "frame": 113,
+      "time": 7.183333333333313,
+      "subset": "full",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          4608
+        ]
+      ],
+      "nonzeroAlphaPixels": 956,
+      "maxAlpha": 50,
+      "histogram": {
+        "zero": 1023044,
+        "oneTo8": 406,
+        "nineTo32": 422,
+        "thirtyThreeTo127": 128,
+        "oneTwentyEightTo255": 0
+      },
+      "rgbaSHA256": "8589aea1b7c5611994e8a8c563aa28a46c1632358c3b16a80500b0659f4e19c4",
+      "recordControls": [
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 5
+        },
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "paired",
+      "offset": 26,
+      "frame": 113,
+      "time": 7.183333333333313,
+      "subset": "seam-only",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          3456,
+          72
+        ]
+      ],
+      "nonzeroAlphaPixels": 901,
+      "maxAlpha": 50,
+      "histogram": {
+        "zero": 1023099,
+        "oneTo8": 385,
+        "nineTo32": 392,
+        "thirtyThreeTo127": 124,
+        "oneTwentyEightTo255": 0
+      },
+      "rgbaSHA256": "f00731824f9c8d287de88e557d1644b168bbdb00036a4220270360cadec2a945",
+      "recordControls": [
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 5
+        },
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 5
+        }
+      ]
+    },
+    {
+      "mode": "after",
+      "group": "paired",
+      "offset": 26,
+      "frame": 113,
+      "time": 7.183333333333313,
+      "subset": "non-seam",
+      "seamTriangles": 24,
+      "drawRanges": [
+        [
+          0,
+          3456
+        ],
+        [
+          3528,
+          1080
+        ]
+      ],
+      "nonzeroAlphaPixels": 55,
+      "maxAlpha": 42,
+      "histogram": {
+        "zero": 1023945,
+        "oneTo8": 21,
+        "nineTo32": 30,
+        "thirtyThreeTo127": 4,
+        "oneTwentyEightTo255": 0
+      },
+      "rgbaSHA256": "7ec266eb314efd27ac8bbdda296aef90fb92f589a2e3599473e9f5e70882910f",
+      "recordControls": [
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 5
+        },
+        {
+          "age": 0.44999999999999996,
+          "alphaControl": 0.46431270241737366,
+          "style": 5
+        }
+      ]
+    }
+  ],
+  "images": [
+    {
+      "file": "inspection-saved-after-paired-plus-18-full.png",
+      "sha256": "01eb4461bfaf92f5c591b2ed5d43791aeb1828bb9f7736cad7329a742b1da041"
+    },
+    {
+      "file": "inspection-saved-after-paired-plus-18-seam-only.png",
+      "sha256": "54ea722eccd0ce9b3262509b8e6716b256cd4fcbd85cdeac30ad0d64a33b9c1e"
+    },
+    {
+      "file": "inspection-saved-after-paired-plus-18-non-seam.png",
+      "sha256": "7b353ac0ee70e80a00a4bb5626c64dbff25ad1aa2727e772b4cc00ea83dff1ca"
+    },
+    {
+      "file": "inspection-saved-after-paired-plus-22-full.png",
+      "sha256": "2c21c263e865f38958b60a6f026c2b176d3957ef88ef76c15630650ecd73f2ee"
+    },
+    {
+      "file": "inspection-saved-after-paired-plus-22-seam-only.png",
+      "sha256": "475111d0896624cbe87f44536f1ba3aee6d909785a82c64435013acf29b66c71"
+    },
+    {
+      "file": "inspection-saved-after-paired-plus-22-non-seam.png",
+      "sha256": "6b12f43002f4b797cf963cb6c840fcffda30915717ca82918d07b3874919aa17"
+    },
+    {
+      "file": "inspection-saved-after-paired-plus-24-full.png",
+      "sha256": "e6b7166a31d33c2e4b2e0ee374643186ecca328de252bb51558f2c42fca6e07b"
+    },
+    {
+      "file": "inspection-saved-after-paired-plus-24-seam-only.png",
+      "sha256": "ecd1dcdf9a00ad8be15b5b1ce2c7589cf0090e95cdc79c22813f05108267058d"
+    },
+    {
+      "file": "inspection-saved-after-paired-plus-24-non-seam.png",
+      "sha256": "d21bc7204f5b79dfa39e6d6520cf802797938166b9c3da36246bc6119cfab5a0"
+    },
+    {
+      "file": "inspection-saved-after-paired-plus-26-full.png",
+      "sha256": "e5516928ce9d32bc0e0f92ee5780063efd2b8a994ede6b3c14853d1f00f82e9f"
+    },
+    {
+      "file": "inspection-saved-after-paired-plus-26-seam-only.png",
+      "sha256": "8408bff1bd3c95760119adb117354eb2ca06701626f078293e19a7da9a1a2804"
+    },
+    {
+      "file": "inspection-saved-after-paired-plus-26-non-seam.png",
+      "sha256": "2351f6447aedb8a79be9061a74dee58f66d1084f57cbf1752b07f3231b4474af"
+    }
+  ],
+  "glError": 0,
+  "errors": []
+}

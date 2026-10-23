@@ -1,0 +1,161 @@
+#!/usr/bin/env node
+// Emitted normal-game capture and separately labelled interruption inspection.
+import {chromium} from 'playwright';
+import path from 'node:path';
+import http from 'node:http';
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import fs from 'node:fs';
+const opt=(name,fallback)=>{const i=process.argv.indexOf(name);return i<0?fallback:process.argv[i+1];};
+const site=fs.realpathSync(opt('--site','_site')),out=path.resolve(opt('--evidence-dir','.ci-scratch/triple-splashdown/post-impact/raw'));
+fs.mkdirSync(out,{recursive:true});
+const hash=b=>createHash('sha256').update(b).digest('hex');
+const manifestBytes=fs.readFileSync(path.join(site,'inkwave-build.json')),manifest=JSON.parse(manifestBytes);
+assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash);
+for(const [name,digest] of Object.entries(manifest.artifacts))assert.equal(hash(fs.readFileSync(path.join(site,name))),digest,name);
+const variant=opt('--variant','before');assert.ok(['before','after'].includes(variant));
+const expectedSourceSHA256=variant==='before'?'6f8a4b63fc09553392cd6adeeeb10189c56b55f3bbdd24808eda4263807afbcb':'d825798b9cb19dd14a317eb62bb9d33c62fe222a0ef966eb8fb45a30d1150912';
+assert.equal(manifest.files['patch/runtime/special-vfx.mjs'],expectedSourceSHA256);
+const expectedKitSHA256=variant==='before'?'8c1dd55a8aad05c19df6b3a1f173ddfdbe2ad8eb7f8c579c3d47219f871e0630':'7d1be7d84e249d9d0b4929661861fe15f95ad8547d78edbd38c1a47282460e0f';
+assert.equal(manifest.files['patch/runtime/special-vfx-kit.mjs'],expectedKitSHA256);
+const probeBytes=fs.readFileSync(new URL('./gl-probes.mjs',import.meta.url));
+const served=new Set(),mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.woff2':'font/woff2','.glb':'model/gltf-binary','.webp':'image/webp','.jpg':'image/jpeg','.mp3':'audio/mpeg'};
+const server=http.createServer((req,res)=>{try{
+ if(req.url==='/qa/arch-probes.mjs'){res.writeHead(200,{'content-type':'text/javascript'});res.end(probeBytes);return;}
+ const name=decodeURIComponent(new URL(req.url,'http://local').pathname),rel=name==='/'?'index.html':name.slice(1),file=path.resolve(site,rel);
+ assert.ok(file.startsWith(site+'/')&&fs.statSync(file).isFile());const body=fs.readFileSync(file);
+ assert.equal(hash(body),rel==='inkwave-build.json'?hash(manifestBytes):manifest.artifacts[rel],rel+' served build identity');served.add(rel);
+ res.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream','cache-control':'no-store'});res.end(body);
+}catch{res.writeHead(404);res.end();}});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));
+const browser=await chromium.launch({...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),headless:true});
+const page=await browser.newPage({viewport:{width:1280,height:800}}),errors=[];
+page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text().slice(0,400));});
+await page.addInitScript(()=>{
+ localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false}));
+ let seed=12345,calls=0;Math.random=()=>{calls++;seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+ window.captureMathState=()=>({seed,calls});
+ // Freeze the existing loop as its documented audit hook is assigned, before
+ // its first rAF can run. Boot's three native warmup frames remain unchanged.
+ let game;Object.defineProperty(window,'__inkwave',{configurable:true,get(){return game;},set(value){game=value;game.frozen=true;}});
+});
+await page.addInitScript(variant=>window.archCaptureVariant=variant,variant);
+try{
+ await page.goto('http://127.0.0.1:'+server.address().port+'/?autostart=180',{timeout:120000});
+ await page.waitForFunction(()=>window.__G?.mode==='match'&&window.__inkwave?.match?.local&&!window.__inkwave.match.attract&&window.__inkwave?.debug,null,{timeout:180000});
+ await page.waitForTimeout(800);
+ const info=await page.evaluate(async()=>{
+  const g=window.__inkwave,G=window.__G;g.debug.freeze();g.debug.freezeBots();
+  const manifest=await fetch('/inkwave-build.json').then(r=>r.json()),prefix='/_versions/'+manifest.build.revision+'/';
+  const api={...await import(prefix+'src/config.js'),...await import(prefix+'src/core/ctx.js')};
+  const {applyCatalogueChoice,CATALOGUE_STORAGE}=await import(prefix+'patches/splatoon3/runtime/catalogue.mjs');
+  const a=g.match.local;window.splashProbe={g,G,a,api,events:[],origins:{},frame:0,rows:[]};
+  if(!a)throw Error('No local actor');
+  if(a.character._sourceMotionLoader)await a.character._sourceMotionLoader;
+  if(a.character.sourceMotion?.ready)await a.character.sourceMotion.ready;
+  let introSteps=0;g._skipRender=true;
+  try{while(g.match.state!=='playing'&&introSteps<600){g._frame(1/60);introSteps++;}}finally{g._skipRender=false;}
+  if(g.match.state!=='playing')throw Error('Native intro did not finish');
+  window.splashProbe.introSteps=introSteps;
+  // Leave the opening spawner through the ordinary fire input, then finish
+  // its native flight before measuring a ground activation.
+  g.debug.step(1000/60);g.debug.fire(true);g.debug.step(1000/60);g.debug.fire(false);
+  for(let i=0;i<12&&a.s3?.squidSpawn;i++)g.debug.step(20*1000/60);
+  if(a.s3?.squidSpawn||!a.grounded)throw Error('Opening spawn has not landed');
+  G.fx.clear();G.projectiles.clear();
+  const choice={sub:'bomb',special:'tripleSplashdown'};
+  localStorage.setItem(CATALOGUE_STORAGE,JSON.stringify({[a.weaponId]:choice}));
+  if(!applyCatalogueChoice(a,choice,api))throw Error('Catalogue choice rejected');a.special=a.specialCost();a.invuln=0;
+  api.on('all:special',e=>{
+    if(e.actor!==a||e.id!=='tripleSplashdown')return;
+    const p=window.splashProbe,event={frame:p.frame,time:G.time,action:e.action,index:e.index??-1,pos:e.pos,
+      cameraAtEvent:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),fov:G.camera.fov}};
+    p.events.push(event);
+    if(e.action==='impact'){
+      const group=(e.index??-1)<0?'central':'paired';
+      const origin=p.origins[group]??={frame:p.frame,time:G.time,indices:[]};
+      if(origin.frame!==p.frame||origin.time!==G.time)throw Error('Paired impacts are not simultaneous in this capture');
+      origin.indices.push(e.index??-1);
+    }
+  });
+  const gl=G.renderer.getContext(),debug=gl.getExtension('WEBGL_debug_renderer_info');
+  const p=window.splashProbe,d=G.fx.s3SpecialVfx,kit=d.kit;
+  p.cpuFx=[];p.cpuRender=[];p.gpu=[];p.pendingQueries=[];p.disjoint=0;
+  const ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');p.gpuTimerAvailable=!!ext;
+  p.collectGpu=()=>{for(let i=p.pendingQueries.length-1;i>=0;i--){const q=p.pendingQueries[i];
+    if(!gl.getQueryParameter(q.query,gl.QUERY_RESULT_AVAILABLE))continue;
+    if(gl.getParameter(ext.GPU_DISJOINT_EXT))p.disjoint++;else p.gpu.push({frame:q.frame,ms:gl.getQueryParameter(q.query,gl.QUERY_RESULT)/1e6});
+    gl.deleteQuery(q.query);p.pendingQueries.splice(i,1);
+  }};
+  const update=d.update;d.update=function(...args){const t=performance.now();try{return update.apply(this,args);}finally{p.cpuFx.push({frame:p.frame,ms:performance.now()-t});}};
+  const render=g.R.render;g.R.render=function(...args){const q=ext?gl.createQuery():null;if(q)gl.beginQuery(ext.TIME_ELAPSED_EXT,q);
+    const t=performance.now();try{return render.apply(this,args);}finally{p.cpuRender.push({frame:p.frame,ms:performance.now()-t});
+      if(q){gl.endQuery(ext.TIME_ELAPSED_EXT);p.pendingQueries.push({frame:p.frame,query:q});}if(ext)p.collectGpu();}
+  };
+  const names=['sparks','puffs','beams','inkBeams','shells','inkShells','bands','inkBands','discs','inkDiscs','ribbons','glowRibbons'];
+  p.poolLayout=names.map(name=>{const pool=kit[name],geo=pool.mesh.geometry;const seen=new Set();let bytes=0;
+    for(const a of [...Object.values(geo.attributes),...(geo.index?[geo.index]:[])]){const array=a.array??a.data?.array;if(array&&!seen.has(array.buffer)){seen.add(array.buffer);bytes+=array.buffer.byteLength;}}
+    return{name,cap:pool.cap??null,geometryBytes:bytes,indexCount:geo.index?.count??0,attributes:Object.keys(geo.attributes).sort()};
+  });
+  const hex=bytes=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');
+  async function digestGeometry(mesh,meta){const geo=mesh.geometry,chunks=[new TextEncoder().encode(JSON.stringify(meta))];
+    for(const key of Object.keys(geo.attributes).sort()){const a=geo.attributes[key],array=a.array??a.data?.array;if(array)chunks.push(new Uint8Array(array.buffer,array.byteOffset,array.byteLength));}
+    const joined=new Uint8Array(chunks.reduce((n,a)=>n+a.byteLength,0));let at=0;for(const chunk of chunks){joined.set(chunk,at);at+=chunk.byteLength;}
+    return hex(await crypto.subtle.digest('SHA-256',joined));
+  }
+  p.snapshot=async()=>{const hashes={};
+    for(const name of names){if(name==='inkBands')continue;const pool=kit[name];hashes[name]=await digestGeometry(pool.mesh,{n:pool.n??pool.recs?.length??pool.list?.length,instances:pool.mesh.geometry.instanceCount,
+      records:pool.recs?.map(r=>({t:r.t,life:r.life,dead:r.dead,v:Array.from(r.v)})),time:kit.time});}
+    let index=0;const meshes=[];G.fx.root.traverse(o=>{if(o.isMesh&&!o.name.startsWith('special-vfx:'))meshes.push(o);});
+    for(const mesh of meshes)hashes['nativeFx'+index++]=await digestGeometry(mesh,{name:mesh.name,instances:mesh.geometry.instanceCount});
+    const lighting={};for(const [name,u]of Object.entries(G.fx._dropU||{})){if(name.startsWith('uSun')||name==='uSkyCol'||name==='uGroundCol'||name==='uUpV')lighting[name]=u.value?.toArray?.()??u.value;}
+    return{nonBandHashes:hashes,lighting,poolLayout:p.poolLayout,math:window.captureMathState(),teamColors:G.teamColors.map(c=>c.toArray()),kitTime:kit.time};
+  };
+  const THREE=await import(prefix+'vendor/three/build/three.module.js');const {installArchAudit}=await import('/qa/arch-probes.mjs');p.archAudit=installArchAudit({THREE,G,probe:p,variant:window.archCaptureVariant});
+  p.initialSnapshot=await p.snapshot();
+  return {revision:manifest.build.revision,contentHash:manifest.contentHash,inputHash:manifest.inputHash,map:g.mapDef.id,pos:a.pos.toArray(),time:G.time,
+    introSteps,math:window.captureMathState(),initialSnapshot:p.initialSnapshot,webgl2:gl instanceof WebGL2RenderingContext,
+    gpuTimerAvailable:p.gpuTimerAvailable,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),browser:navigator.userAgent};
+ });
+ console.log('Normal game ready; preserving existing game camera. Capturing native impact offsets.');
+ const captures=[];
+ await page.evaluate(()=>window.splashProbe.g.debug.key('KeyQ',true));
+ for(let frame=1;frame<=180;frame++){
+  const row=await page.evaluate(async frame=>{
+    const p=window.splashProbe,{g,G,a}=p;p.frame=frame;g.debug.step(1000/60);g.debug.key('KeyQ',false);
+    const camera={kind:'existing game camera',position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),
+      fov:G.camera.fov,aspect:G.camera.aspect,near:G.camera.near,far:G.camera.far,zoom:G.camera.zoom,
+      matrixWorld:G.camera.matrixWorld.toArray(),projectionMatrix:G.camera.projectionMatrix.toArray(),rigYaw:g.rig.yaw,rigPitch:g.rig.pitch};
+    const wanted=[];
+    for(const [group,origin]of Object.entries(p.origins)){
+      const offset=frame-origin.frame;if([0,2,4,6,10,18,26,38,40,41,42,43,48].includes(offset))wanted.push({group,offset,impactFrame:origin.frame,impactTime:origin.time});
+    }
+    const row={frame,time:G.time,math:window.captureMathState(),bandRecords:G.fx.s3SpecialVfx.kit.inkBands.recs.map(r=>({t:r.t,life:r.life,v:Array.from(r.v)})),poolInstances:G.fx.s3SpecialVfx.kit.pools.map(pool=>pool.mesh.geometry.instanceCount),actorPos:a.pos.toArray(),phase:a.specialActive?.phase??null,fists:(G.projectiles._catalogueFists||[]).length,camera,wanted,
+      drawCalls:G.renderer.info.render.calls,triangles:G.renderer.info.render.triangles};p.rows.push(row);
+    if(wanted.length){row.snapshot=await p.snapshot();row.seamProjection=p.archAudit.projectSeams();}
+    return {row,done:!!p.origins.paired&&frame>=p.origins.paired.frame+48};
+  },frame);
+  for(const wanted of row.row.wanted){
+    const name=`normal-${wanted.group}-plus-${String(wanted.offset).padStart(2,'0')}-sim-f${String(frame).padStart(3,'0')}.png`;
+    const file=path.join(out,name);await page.screenshot({path:file});
+    captures.push({...wanted,frame,time:row.row.time,camera:row.row.camera,snapshot:row.row.snapshot,bandRecords:row.row.bandRecords,seamProjection:row.row.seamProjection,file:name,sha256:hash(fs.readFileSync(file))});
+    console.log(JSON.stringify({capture:name,time:row.row.time,impactTime:wanted.impactTime,cameraPosition:row.row.camera.position}));
+  }
+  if(row.done)break;
+ }
+ const result=await page.evaluate(async()=>{const p=window.splashProbe,{events,origins,rows,G}=p;
+  if(p.gpuTimerAvailable){G.renderer.getContext().finish();p.collectGpu();}
+  const extra=await p.archAudit.postProbes();
+  return {...extra,events,origins,rows,vfxErrors:G.fx.s3SpecialVfx.errors,cpuFx:p.cpuFx,cpuRender:p.cpuRender,gpu:p.gpu,gpuTimerAvailable:p.gpuTimerAvailable,gpuDisjoint:p.disjoint,pendingGpuQueries:p.pendingQueries.length};});
+ for(const img of result.bandInspectionImages){const name=`inspection-band-only-${img.group}-plus-${img.offset}.png`;fs.writeFileSync(path.join(out,name),Buffer.from(img.data.split(',')[1],'base64'));delete img.data;img.file=name;img.sha256=hash(fs.readFileSync(path.join(out,name)));}
+ const receipt={scope:'A/B audit hook freezes the documented game loop before its first rAF, then native intro/spawner and every game step run at fixed dt; same initial Math.random seed 12345. Normal production game camera on tidewater, native opening launch and Q activation. Fixed native debug stepping 1/60; one ordinary game render per simulation step, selected still screenshots only. Bots frozen; catalogue/gauge setup only. No fixed inspection camera, physics or VFX modification.',
+   baseCommit:'8437516cebd527e033711631174c4a711083aa26',sourceSnapshot:'8437516cebd527e033711631174c4a711083aa26',experiment:'SPLASHDOWN5-arch-7d1b',variant,runtimeSourceSHA256:expectedSourceSHA256,runtimeKitSHA256:expectedKitSHA256,privatePatchSHA256:variant==='after'?'535b249ce3cb5569aebbaf7c234dde92b1c41f5599621b90fe9edd6992ac95c2':null,auditProbeSHA256:hash(probeBytes),privateUncommittedPatch:variant==='after',simulationHz:60,dt:1/60,captureFPS:null,encodedFPS:null,
+   referenceRecording:'Parent reports encoded 25fps; not inspected in this task; recording frames are not simulation frames.',viewport:{width:1280,height:800},
+   qualitySetup:{quality:'low',shadows:false,bloom:false,minimap:false},...info,...result,captures,errors,served:[...served]};
+ fs.writeFileSync(path.join(out,'receipt.json'),JSON.stringify(receipt,null,2)+'\n');
+ assert.equal(result.glError,0);assert.ok(result.glslProof.length>0&&result.glslProof.every(p=>p.linked&&p.shaders.every(s=>s.compiled)),'actual GLSL compile/link');if(variant==='after'){assert.ok(result.glslProof.some(p=>p.isBand&&p.hasArch5),'arch style5 GLSL compiled');assert.equal(result.alphaZeroProbe.nonzeroAlphaPixels,0);}
+ assert.deepEqual(errors,[]);assert.equal(info.webgl2,true);assert.equal(result.vfxErrors,0);assert.equal(captures.length,26);
+ assert.deepEqual(result.events.filter(e=>e.action==='impact').map(e=>e.index),[-1,1,0]);
+ for(const group of ['central','paired'])assert.deepEqual(captures.filter(c=>c.group===group).map(c=>c.offset),[0,2,4,6,10,18,26,38,40,41,42,43,48]);
+ console.log(JSON.stringify({out,origins:result.origins,captures:captures.length,errors}));
+}catch(e){console.log(JSON.stringify({failure:String(e),errors}));throw e;}finally{await browser.close();await new Promise(r=>server.close(r));}

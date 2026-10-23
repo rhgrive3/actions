@@ -1,0 +1,22 @@
+{
+  "baseCommit": "8437516cebd527e033711631174c4a711083aa26",
+  "patchExpectedSHA256": "535b249ce3cb5569aebbaf7c234dde92b1c41f5599621b90fe9edd6992ac95c2",
+  "patchExactMatch": true,
+  "patchSerialization": {
+    "abbrev": 7,
+    "minimal": true,
+    "reverseFiles": true,
+    "functionContextRemoved": true,
+    "newline": "LF"
+  },
+  "files": {
+    "patches/splatoon3/runtime/special-vfx.mjs": {
+      "beforeSHA256": "6f8a4b63fc09553392cd6adeeeb10189c56b55f3bbdd24808eda4263807afbcb",
+      "afterSHA256": "d825798b9cb19dd14a317eb62bb9d33c62fe222a0ef966eb8fb45a30d1150912"
+    },
+    "patches/splatoon3/runtime/special-vfx-kit.mjs": {
+      "beforeSHA256": "8c1dd55a8aad05c19df6b3a1f173ddfdbe2ad8eb7f8c579c3d47219f871e0630",
+      "afterSHA256": "7d1be7d84e249d9d0b4929661861fe15f95ad8547d78edbd38c1a47282460e0f"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+from pathlib import Path
+from PIL import Image,ImageDraw,ImageFont
+import json
+root=Path('.ci-scratch/triple-splashdown/arch-ab');out=Path('reports/inkwave-triple-splashdown-arch-ab-2026-10-23')
+a=json.loads((root/'before/receipt.json').read_text());b=json.loads((root/'after/receipt.json').read_text());probe=json.loads((root/'saved-state-gl-probe.json').read_text())
+font=ImageFont.truetype('/usr/share/fonts/truetype/open-sans/OpenSans-Regular.ttf',17);bold=ImageFont.truetype('/usr/share/fonts/truetype/open-sans/OpenSans-Semibold.ttf',23);title=ImageFont.truetype('/usr/share/fonts/truetype/open-sans/OpenSans-Semibold.ttf',27)
+def sheet(name,heading,subtitle,rowLabels,cols,load,cell=(512,320)):
+ cw,ch=cell;m,g=24,12;rh=ch+108;w=m*2+len(cols)*cw+(len(cols)-1)*g;h=104+len(rowLabels)*rh+68
+ im=Image.new('RGB',(w,h),'#111722');d=ImageDraw.Draw(im);d.text((m,14),heading,font=title,fill='#f3f5fa');d.text((m,58),subtitle,font=font,fill='#c2cfe1')
+ for row,label in enumerate(rowLabels):
+  y=104+row*rh;d.text((m,y),label,font=bold,fill='#d5eaff')
+  for col,offset in enumerate(cols):
+   image,caption,detail=load(row,offset);x=m+col*(cw+g);im.paste(image.resize((cw,ch),Image.Resampling.LANCZOS),(x,y+34));d.text((x,y+ch+39),caption,font=bold,fill='#f3f5fa');d.text((x,y+ch+67),detail,font=font,fill='#b9c7db')
+ d.text((m,h-44),'All time labels are 60 Hz simulation ticks from accepted native impact. Selected stills; no encoded video FPS.',font=font,fill='#c2cfe1');d.text((m,h-22),'Exact frozen 7d1b patch. No retail images; original SHOCK and rejected TWISTER records preserved.',font=font,fill='#c2cfe1');im.save(out/name,optimize=True)
+def fade(row,offset):
+ group=['central','paired'][row];c=next(c for c in b['captures'] if c['group']==group and c['offset']==offset);return Image.open(root/'after'/c['file']).convert('RGB'),f"+{offset} | sim f{c['frame']:03}",f"G.time {c['time']:.6f}s"
+sheet('candidate-fade-18-22-24-26.png','Candidate normal follow camera | added fade observations','Candidate-only stills. Before-state records at +22/+24 were preserved and used in separate GL replay.',['Central impact','Paired impacts'],[18,22,24,26],fade)
+def alphaAB(row,offset):
+ mode=['before','after'][row];r=[a,b][row];x=next(x for x in r['bandInspectionImages'] if x['group']=='paired'and x['offset']==offset);img=Image.open(root/mode/x['file']).getchannel('A').convert('RGB');return img,f"+{offset} | sim f{x['frame']:03}",f"nonzero alpha {x['nonzeroAlphaPixels']} | max {x['maxAlpha']}"
+sheet('inspection-band-alpha-ab.png','GL inspection | isolated band alpha A/B','Grayscale is exact 8-bit alpha (no gain). No world/postprocessing; this is not a game screenshot.',['A: original SHOCK band','B: SPLASHDOWN5 arch band'],[10,18],alphaAB,cell=(640,400))
+def split(row,offset):
+ subset=['full','seam-only','non-seam'][row];p=root/f'inspection-saved-after-paired-plus-{offset}-{subset}.png';x=next(x for x in probe['rows'] if x['mode']=='after'and x['group']=='paired'and x['offset']==offset and x['subset']==subset)
+ img=Image.open(p).getchannel('A').point(lambda x:255 if x>0 else 0).convert('RGB');return img,f"+{offset} | sim f{x['frame']:03}",f"support {x['nonzeroAlphaPixels']} px | max alpha {x['maxAlpha']}"
+sheet('inspection-seam-support.png','GL inspection | saved-state alpha support','White means alpha > 0, NOT opacity. Same actual geometry/shader; drawRange splits atan-wrap triangles.',['Full band','Only the 24 atan-wrap triangles per band','Remaining triangles'],[18,22,24,26],split)
+def normalCrop(row,offset):
+ c=next(c for c in b['captures'] if c['group']=='paired'and c['offset']==offset);im=Image.open(root/'after'/c['file']).convert('RGB').crop((200,120,430,380));return im,f"+{offset} | sim f{c['frame']:03}",'normal image ROI (200,120,430,380)'
+sheet('normal-seam-area-crop.png','Candidate normal-camera seam-area detail','Unannotated crop of actual game stills. Geometric seam projection can overlap/lie behind other effects.',['Candidate normal camera crop'],[10,18,22,24,26],normalCrop,cell=(345,390))

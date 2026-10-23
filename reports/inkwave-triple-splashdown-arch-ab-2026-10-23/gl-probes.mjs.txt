@@ -1,0 +1,56 @@
+// Audit-only observations and post-capture isolated renders; never loaded by the game build.
+export function installArchAudit({THREE,G,probe,variant}) {
+ const renderer=G.renderer,gl=renderer.getContext(),kit=G.fx.s3SpecialVfx.kit,pool=kit.inkBands,geometry=pool.mesh.geometry;
+ const positions=geometry.attributes.position.array,indices=geometry.index.array;
+ const point=i=>new THREE.Vector3(positions[i*3],positions[i*3+1],positions[i*3+2]);
+ const triangles=[];
+ for(let i=0;i<indices.length;i+=3){const ids=Array.from(indices.slice(i,i+3)),uv=ids.map(j=>{const p=point(j);return Math.atan2(p.z,p.x)/(2*Math.PI)+.5;});triangles.push({index:i/3,ids,seam:Math.max(...uv)-Math.min(...uv)>.5});}
+ function world(p,v){const k=p.y,ang=Math.atan2(p.z,p.x)+v[3]+v[7]*k,r=v[4]*(1+(v[6]-1)*k),reach=Math.round(v[12])===5?.14+.86*k:1;
+  return new THREE.Vector3(v[0]+Math.cos(ang)*r*reach,v[1]+(Math.round(v[12])===5?4*k*(1-k)*v[5]:k*v[5]),v[2]+Math.sin(ang)*r*reach);
+ }
+ function projectSeams(){return pool.recs.map((record,recordIndex)=>{
+  const v=record.v;let minDot=1,maxDot=-1,front=0,back=0;const points=[];
+  for(const t of triangles){const src=t.ids.map(point),w=src.map(p=>world(p,v)),cross=w[1].clone().sub(w[0]).cross(w[2].clone().sub(w[0]));if(cross.lengthSq()<1e-15)continue;cross.normalize();
+   const center=src[0].clone().add(src[1]).add(src[2]).multiplyScalar(1/3),k=center.y,ang=Math.atan2(center.z,center.x)+v[3]+v[7]*k,r=v[4]*(1+(v[6]-1)*k);
+   const n=Math.round(v[12])===5?new THREE.Vector3(Math.cos(ang)*4*v[5]*(1-2*k),-.86*r,Math.sin(ang)*4*v[5]*(1-2*k)):new THREE.Vector3(Math.cos(ang),0,Math.sin(ang));
+   const dot=cross.dot(n.normalize());minDot=Math.min(minDot,dot);maxDot=Math.max(maxDot,dot);
+   if(t.seam){const centerW=w[0].clone().add(w[1]).add(w[2]).multiplyScalar(1/3);if(cross.dot(G.camera.position.clone().sub(centerW))>=0)front++;else back++;
+    for(const p of w){const ndc=p.clone().project(G.camera);points.push([(ndc.x*.5+.5)*1280,(.5-ndc.y*.5)*800,ndc.z]);}}
+  }
+  const x=points.map(p=>p[0]),y=points.map(p=>p[1]);return{recordIndex,position:[v[0],v[1],v[2]],style:v[12],angle:v[3],age:record.t,life:record.life,normalDotMin:minDot,normalDotMax:maxDot,seamTriangles:triangles.filter(t=>t.seam).length,frontFacingSeamTriangles:front,backFacingSeamTriangles:back,projectedBounds:points.length?[Math.min(...x),Math.min(...y),Math.max(...x),Math.max(...y)]:null};
+ });}
+ const hex=b=>Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,'0')).join('');
+ const sha=b=>crypto.subtle.digest('SHA-256',b).then(hex);
+ async function shaderProof(){const out=[];for(const p of renderer.info.programs){if(!p.program)continue;
+  const shaders=gl.getAttachedShaders(p.program)||[];const item={id:p.id,name:p.name,linked:gl.getProgramParameter(p.program,gl.LINK_STATUS),shaders:[]};let vertex='',fragment='';
+  for(const shader of shaders){const src=gl.getShaderSource(shader)||'',type=gl.getShaderParameter(shader,gl.SHADER_TYPE),compiled=gl.getShaderParameter(shader,gl.COMPILE_STATUS);if(type===gl.VERTEX_SHADER)vertex=src;else if(type===gl.FRAGMENT_SHADER)fragment=src;
+   item.shaders.push({type:type===gl.VERTEX_SHADER?'vertex':'fragment',compiled,sourceSHA256:await sha(new TextEncoder().encode(src)),log:gl.getShaderInfoLog(shader)||''});}
+  const a=vertex.replace(/\s/g,''),b=fragment.replace(/\s/g,'');item.isBand=a.includes('iDim')&&a.includes('atan(position.z,position.x)');item.hasArch5=a.includes('0.14+0.86*k')&&b.includes('u*18.0+v*0.6+seed*9.0');item.log=gl.getProgramInfoLog(p.program)||'';out.push(item);
+ }return out;}
+ function cameraFrom(c){const camera=new THREE.PerspectiveCamera(c.fov,c.aspect,c.near,c.far);camera.position.fromArray(c.position);camera.quaternion.fromArray(c.quaternion);camera.zoom=c.zoom;camera.updateProjectionMatrix();camera.updateMatrixWorld();return camera;}
+ async function renderRecords(targetPool,records,camera,width=256,height=256,includeImage=false){const mesh=targetPool.mesh,parent=mesh.parent,oldTarget=renderer.getRenderTarget(),oldClear=renderer.getClearColor(new THREE.Color()),oldAlpha=renderer.getClearAlpha(),oldAuto=renderer.autoClear;
+  const target=new THREE.WebGLRenderTarget(width,height,{depthBuffer:false,stencilBuffer:false}),scene=new THREE.Scene();scene.add(mesh);
+  try{targetPool.clear();for(const v of records)targetPool.add(.7,v);targetPool.update(0);renderer.autoClear=true;renderer.setClearColor(0,0);renderer.setRenderTarget(target);renderer.clear(true,true,true);renderer.render(scene,camera);
+   const data=new Uint8Array(width*height*4);renderer.readRenderTargetPixels(target,0,0,width,height,data);let n=0,max=0;for(let i=3;i<data.length;i+=4){if(data[i])n++;max=Math.max(max,data[i]);}
+   const result={rgbaSHA256:await sha(data),nonzeroAlphaPixels:n,maxAlpha:max,width,height};
+   if(includeImage){const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const flipped=new Uint8ClampedArray(data.length);for(let y=0;y<height;y++)flipped.set(data.subarray((height-1-y)*width*4,(height-y)*width*4),y*width*4);canvas.getContext('2d').putImageData(new ImageData(flipped,width,height),0,0);result.data=canvas.toDataURL('image/png');}
+   return result;
+  }finally{targetPool.clear();targetPool.update(0);parent.add(mesh);renderer.setRenderTarget(oldTarget);renderer.setClearColor(oldClear,oldAlpha);renderer.autoClear=oldAuto;target.dispose();}
+ }
+ async function postProbes(){const oldStyleProbe=[],terminalRawAlpha=[],bandInspectionImages=[];
+  const camera=new THREE.PerspectiveCamera(55,1,.1,100);camera.position.set(5,4,6);camera.lookAt(0,.7,0);camera.updateMatrixWorld();
+  for(const name of ['bands','inkBands'])for(let style=0;style<5;style++){
+   const values=[0,0,0,.35,2,1.5,1,.2,.85,.1,.5,.8,style,.35,.123456,1];const result=await renderRecords(kit[name],[values],camera);oldStyleProbe.push({pool:name,style,...result});
+  }
+  for(const offset of [38,40,41,42,43,48]){const row=probe.rows.find(r=>r.wanted.some(w=>w.group==='paired'&&w.offset===offset));const cam=cameraFrom(row.camera),saved=kit.uTime.value;kit.uTime.value=(row.snapshot?.kitTime??row.time)%1000;
+   const result=await renderRecords(pool,row.bandRecords.map(r=>r.v),cam,1280,800);kit.uTime.value=saved;terminalRawAlpha.push({offset,frame:row.frame,...result});}
+  for(const [group,offset]of [['central',10],['paired',10],['paired',18]]){
+   const row=probe.rows.find(r=>r.wanted.some(w=>w.group===group&&w.offset===offset)),positions=probe.events.filter(e=>e.action==='impact'&&((e.index<0)===(group==='central'))).map(e=>e.pos);
+   const records=row.bandRecords.filter(r=>positions.some(p=>Math.abs(r.v[0]-p[0])<.01&&Math.abs(r.v[2]-p[2])<.01)).map(r=>r.v),saved=kit.uTime.value;kit.uTime.value=row.snapshot.kitTime%1000;
+   const result=await renderRecords(pool,records,cameraFrom(row.camera),1280,800,true);kit.uTime.value=saved;bandInspectionImages.push({group,offset,frame:row.frame,scope:'Isolated replay of captured band records with the same normal camera, time and shader. No world geometry or postprocessing; inspection only.',...result});
+  }
+  let alphaZeroProbe=null;if(variant==='after'){const values=[0,0,0,.35,2,1.5,1,0,.85,.1,.5,0,5,.35,.123456,1];alphaZeroProbe=await renderRecords(pool,[values],camera);}
+  const glslProof=await shaderProof(),glError=gl.getError();return{oldStyleProbe,terminalRawAlpha,bandInspectionImages,alphaZeroProbe,glslProof,glError};
+ }
+ return{projectSeams,postProbes,seamTriangleCount:triangles.filter(t=>t.seam).length};
+}
