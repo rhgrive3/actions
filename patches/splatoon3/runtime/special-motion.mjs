@@ -580,6 +580,29 @@ function mapped(ch){const a=ch.actor,token=specialPresentationToken(a);if(!a||bl
   const id=token?.id;return id==='trizooka'||id==='inkVac'||isSlam(id)||id==='storm'&&token.phase==='hold'?id:null;}
 export function specialPresentationSnapshot(ch){const m=presentationMap(ch).get(ch);return m?{kind:m.kind,handError:m.error,
   heldVisible:!!m.model?.visible,fistsVisible:!!m.fists?.visible,ejects:m.ejects?.children.filter(x=>x.visible).length||0,status:SPECIAL_ART_STATUS}:null;}
+// Read-only cosmetic origin. Projectile launch snapshots and native getMuzzle
+// stay untouched; only the currently owned, visible held Trizooka can anchor FX.
+export function trizookaPresentationMuzzle(ch,out){const a=ch?.actor;
+  if(!a||a.character!==ch||mapped(ch)!=='trizooka')return false;
+  const m=presentationMap(ch).get(ch),g=m?.model,nozzle=g?.userData?.muzzle;
+  if(m?.kind!=='trizooka'||!g||g!==m.models?.get('trizooka')||g.parent!==ch.kid||
+    !Number.isFinite(nozzle?.x)||!Number.isFinite(nozzle?.y)||!Number.isFinite(nozzle?.z))return false;
+  for(let p=g;p;p=p.parent)if(p.visible===false)return false;
+  g.updateWorldMatrix(true,false);g.localToWorld(out.copy(nozzle));
+  return Number.isFinite(out.x)&&Number.isFinite(out.y)&&Number.isFinite(out.z);
+}
+// Cosmetic anchor only. Ink Vac's native breath/projectile origin
+// remains independent of the fitted held model; never route gameplay through it.
+export function inkVacPresentationMuzzle(ch,out){const a=ch?.actor;if(!a||a.character!==ch||!a.alive||a.superJumpState||ch.dance||ch.s3SpecialPresentationEnabled===false||!ch.kidForm||!presentationShown(ch))return false;
+  const m=presentationMap(ch).get(ch),g=m?.model,s=inkVacState(a);
+  // Native release clears specialActive BEFORE _push, then retires the state
+  // after the synchronous birth. That one window still owns the visible Vac.
+  const releasing=!specialPresentationToken(a)&&s?.actor===a&&!s.remote&&s.phase==='done'&&!s.s3Retired;
+  if((mapped(ch)!=='inkVac'&&!releasing)||m?.kind!=='inkVac'||g!==m.models.get('inkVac')||!g?.userData.muzzle||g.parent!==ch.kid)return false;
+  for(let p=g;p;p=p.parent)if(!p.visible)return false;
+  g.updateWorldMatrix(true,false);g.localToWorld(out.copy(g.userData.muzzle));
+  return Number.isFinite(out.x)&&Number.isFinite(out.y)&&Number.isFinite(out.z);
+}
 function restore(ch,m){if(m.weapon){m.weapon.pivot.visible=m.weaponVisible;if(m.weapon.left)m.weapon.left.pivot.visible=m.leftVisible;m.weapon=null;}
   if(m.bomb){m.bomb.visible=m.bombVisible;m.bomb=null;}
   if(m.model)m.model.visible=false;if(m.pack)m.pack.visible=false;m.kind=null;m.error=0;}

@@ -7,6 +7,22 @@ on:
       - 'patches/splatoon3/runtime/kit-*.mjs'
       - 'patches/splatoon3/runtime/catalogue.mjs'
       - 'patches/splatoon3/runtime/special-*.mjs'
+      - 'patches/splatoon3/runtime/area-special-vfx-clock.mjs'
+      - 'patches/splatoon3/tests/area-special-vfx-clock.test.mjs'
+      - 'patches/splatoon3/tests/booyah-orb-clock.test.mjs'
+      - 'patches/splatoon3/tests/projectile-special-vfx-clock.test.mjs'
+      - 'patches/splatoon3/tests/support-special-vfx-cadence.test.mjs'
+      - 'patches/splatoon3/tests/zipcaster-trail-lifecycle.test.mjs'
+      - 'patches/splatoon3/tests/ink-vac-shot-vfx.test.mjs'
+      - 'patches/splatoon3/tests/screen-close-presentation.test.mjs'
+      - 'patches/splatoon3/tests/super-chump-launch-direction.test.mjs'
+      - 'patches/splatoon3/tests/ultra-stamp-jump-presentation.test.mjs'
+      - 'patches/splatoon3/tests/trizooka-lobe-vfx.test.mjs'
+      - 'patches/splatoon3/tests/ink-vac-model-muzzle.test.mjs'
+      - 'patches/network-replication/tests/robustness-fixture.mjs'
+      - 'scripts/tests/inkwave-special-workflow-registration.test.mjs'
+      - 'scripts/tests/inkwave-special-frame-emitted.test.mjs'
+      - 'patches/loading-cache/vendor/acorn.mjs'
       - 'patches/splatoon3/runtime/inkjet-vfx-*.mjs'
       - 'patches/splatoon3/tests/inkjet-vfx-*.test.mjs'
       - 'patches/splatoon3/runtime/support-cooler.mjs'
@@ -54,6 +70,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           filter: blob:none
           sparse-checkout: |
+            .github/workflows
             inkwave-public
             patches
             scripts
@@ -69,6 +86,52 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Install pinned special fixture transformer
+        run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2
+      - name: Verify special CI registration contracts
+        run: node --test scripts/tests/inkwave-special-workflow-registration.test.mjs
+      - name: Special source and transformed fixture regressions (not emitted-site coverage)
+        run: |
+          ESBUILD_MODULE="$(node -p "require.resolve('esbuild')")"
+          export ESBUILD_MODULE
+          export AREA_VFX_ESBUILD="$ESBUILD_MODULE" SPECIAL_VFX_ESBUILD="$ESBUILD_MODULE" SUPPORT_VFX_ESBUILD="$ESBUILD_MODULE"
+          node --experimental-vm-modules --test --test-concurrency=2 \
+            patches/splatoon3/tests/area-special-vfx-clock.test.mjs \
+            patches/splatoon3/tests/booyah-orb-clock.test.mjs \
+            patches/splatoon3/tests/projectile-special-vfx-clock.test.mjs \
+            patches/splatoon3/tests/special-crab-ribbon-lifetime.test.mjs \
+            patches/splatoon3/tests/support-special-vfx-cadence.test.mjs \
+            patches/splatoon3/tests/zipcaster-trail-lifecycle.test.mjs \
+            patches/splatoon3/tests/ink-vac-shot-vfx.test.mjs \
+            patches/splatoon3/tests/kraken-jump-spin.test.mjs \
+            patches/splatoon3/tests/screen-close-presentation.test.mjs
+      - name: Reviewed Chump and Stamp source/transform regressions
+        run: |
+          ESBUILD_MODULE="$(node -p "require.resolve('esbuild')")"
+          export ESBUILD_MODULE
+          node --experimental-vm-modules --test --test-concurrency=1 \
+            patches/splatoon3/tests/super-chump-launch-direction.test.mjs \
+            patches/splatoon3/tests/ultra-stamp-jump-presentation.test.mjs
+          STAMP_PRESENTATION_EMITTED=1 node --experimental-vm-modules --test --test-concurrency=1 \
+            patches/splatoon3/tests/ultra-stamp-jump-presentation.test.mjs
+      - name: Reviewed Trizooka glob source/transform regressions
+        run: |
+          ESBUILD_MODULE="$(node -p "require.resolve('esbuild')")"
+          export ESBUILD_MODULE
+          node --experimental-vm-modules --test --test-concurrency=1 \
+            patches/splatoon3/tests/trizooka-lobe-vfx.test.mjs
+          TRIZOOKA_VFX_ESBUILD="$ESBUILD_MODULE" node --experimental-vm-modules --test --test-concurrency=1 \
+            patches/splatoon3/tests/trizooka-lobe-vfx.test.mjs
+      - name: Reviewed Ink Vac nozzle source/transform regressions
+        run: |
+          ESBUILD_MODULE="$(node -p "require.resolve('esbuild')")"
+          export ESBUILD_MODULE
+          node --experimental-vm-modules --test --test-concurrency=1 \
+            patches/splatoon3/tests/ink-vac-model-muzzle.test.mjs \
+            patches/splatoon3/tests/ink-vac-shot-vfx.test.mjs
+          SPECIAL_VFX_ESBUILD="$ESBUILD_MODULE" node --experimental-vm-modules --test --test-concurrency=1 \
+            patches/splatoon3/tests/ink-vac-model-muzzle.test.mjs \
+            patches/splatoon3/tests/ink-vac-shot-vfx.test.mjs
       - name: Source-backed 19-special runtime and gameplay boundaries
         run: |
           node --experimental-vm-modules --test \
@@ -150,6 +213,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Build actual production composition
         run: node scripts/build-inkwave.mjs inkwave-public _site
+      - name: Verify special frame corrections in actual emitted modules
+        run: INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test scripts/tests/inkwave-special-frame-emitted.test.mjs
       - name: Check actual catalogue activation with and without optional VFX
         run: node scripts/check-inkwave-splashdown-browser.mjs --site _site --evidence-dir .ci-scratch/splashdown-browser
       - name: Probe emitted Inkjet presentation on SwiftShader (candidate only)

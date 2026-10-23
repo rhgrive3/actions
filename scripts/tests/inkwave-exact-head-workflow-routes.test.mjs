@@ -122,3 +122,22 @@ test('only owned same-repository main PR selects queue1801 identity route',()=>{
  }
  assert.match(step('Bind reviewed source controls to declared immutable Git source leaves'),/github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'inkwave\/exact-head-ci-main144-20261022'/);
 });
+
+// The special route is explicit differential dispatch, never full main26a4 acceptance.
+test('special differential dispatch binds frozen354 and actual final head in both commands',()=>{
+ const base='354536b365ae54bac71c9ce2970a5c5f322c1304',head=H,mode='frozen354-reviewed-special-production-pair';
+ const env={DISPATCH_BASE_SHA:base,DISPATCH_HEAD_SHA:head,DISPATCH_MODE:mode,DISPATCH_SOURCE_BASE:base,DISPATCH_SOURCE_HEAD:head,DECLARED_BASE_SHA:base,DECLARED_HEAD_SHA:head};
+ assert.equal(shell('Verify immutable candidate and dispatch pair',env).status,0);
+ for(const name of ['Bind reviewed source controls to declared immutable Git source leaves','Replay reviewed Roller births, pool reset and pinned paint in the main reference']){
+  const result=shell(name,env);assert.equal(result.status,0,result.stderr);
+  for(const[flag,value]of [['--base-sha',base],['--candidate-sha',head],['--expected-mode',mode],['--expected-source-base',base],['--expected-source-head',head]])assert.ok(result.stdout.includes(`${flag}\n${value}\n`),name+': '+flag);
+  const rejected=shell(name,{...env,NODE_STATUS:'9'});assert.equal(rejected.status,9);assert.equal(rejected.stdout.split('--receipt').length-1,1);
+ }
+ assert.notEqual(shell('Verify immutable candidate and dispatch pair',{...env,ACTUAL_SHA:B}).status,0);
+ assert.notEqual(shell('Verify immutable candidate and dispatch pair',{...env,DISPATCH_HEAD_SHA:base}).status,0);
+ // Historical automatic PR1844 remains on its original nine-delta source epoch.
+ for(const name of ['Bind reviewed source controls to declared immutable Git source leaves','Replay reviewed Roller births, pool reset and pinned paint in the main reference']){
+  const result=shell(name,{...env,PAIR_EVENT_NAME:'pull_request',PAIR_BASE_REF:'main',PAIR_REPOSITORY:'rhgrive3/actions',PAIR_HEAD_REPO:'rhgrive3/actions',PAIR_HEAD_REF:'inkwave/runtime-ui-acceptance-20261022',DECLARED_BASE_SHA:'26a4db4123d23162a3dbf8a12150b1b5bc6ccf64'});
+  assert.equal(result.status,0,result.stderr);assert.ok(result.stdout.includes('main26a4-reviewed-runtime-ui-production-pair'));assert.ok(!result.stdout.includes(mode));
+ }
+});
