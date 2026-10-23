@@ -5835,3 +5835,12 @@ CPU回帰の成功は物理GPU/実機性能の受け入れではない。Splatoo
 
 
 最終確認: runtime `df83a5c4265a9c8738d930dabaffb43cd31ae902` / build contentHash `7b0b597f308f86d2d9607e2a5e0e5f122fa7e0a7435810512039de7014565533` の総合active browserが成功した。65 canonical kit、14 defaults、装備12select、実キーボード移動・接地・射撃/塗り、20Hz時の3秒進行、finite velocity、752 responseの同一性とpage errors 0を確認した。実music Workerの作成元・97-byte body/hash・cleanupを含むnative試験7件、過去の固定gate20件、追加source admission24件も通過した。これはChromium 153 / SwiftShaderでの公開版の回帰確認であり、物理端末FPSやSwitch実機・完了動画の受け入れではない。GitHub上のCI待機は別に残る。
+
+## 2026-10-23: 弓・ワイパーの個別再レビュー
+
+main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、Splatoon 3 Ver.11.3.0の固定抽出データ、任天堂の更新履歴、攻略＆検証Wikiを照合した。対象は各3ベース＋5派生、通常バトル、ギアなしを基本に既存の低インク・キープ・ギア条件も含む。実装・再現・影響・未確認範囲は別々の個別記録に残した。
+
+- **弓**: ActorがRunnerを呼ばないスペシャル/スーパージャンプ中も、原典の接地/空中速度で扇面の傾斜時計を進める。従来は直前の角度で停止していた。通常Runnerとの二重更新を防ぎ、実際のジャンプ受付から着地まで30/60/120Hzで検査。[弓の個別記録](inkwave-stringer-splatana-review-20261023/stringer.md)。
+- **ワイパー**: 内側の波判定が地形に触れると、同じ翼の外側もその接触時刻で消滅するよう修正。従来は外側が残り柱の脇の敵へダメージを与えた。接触順、中心/反対翼の存続、外側の架空塗り禁止、ghost非権威を検査。[ワイパーの個別記録](inkwave-stringer-splatana-review-20261023/splatana.md)。
+
+根拠は各記録の固定原典とWikiの観察。ソース構成・minify生成物・Chromiumの制御シーンは別の検証種別として [検証receipt](inkwave-stringer-splatana-review-20261023/validation.json) に記録する。Switch実機、原典の省略既定値、入力先行受付、骨軌道・実音波形の一致を解消済みにしない。

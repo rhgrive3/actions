@@ -302,6 +302,27 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if (!runner.catalogState || runner.catalogState.id !== r.id) runner.catalogState = initialState(r,runner.a);
     return runner.catalogState;
   }
+  function advanceBowTilt(runner,r,dt) {
+    const s=state(runner),shot=r.parameters.spl__WeaponStringerParam.ShotParam;
+    s.bowTilt=clamp(s.bowTilt+finite(runner.a.grounded?shot.BowJumpTiltSpeedReverse:shot.BowJumpTiltSpeedForward,
+      runner.a.grounded?-12:9)*dt*HZ,0,finite(shot.BowTiltDegreeMax,90));
+    s.bowTiltStep=(s.bowTiltStep||0)+1;
+  }
+  // Body-owned actions can bypass WeaponRunner entirely. The fan still turns
+  // while unarmed (S3 verification Wiki, Stringer ground/air action notes).
+  // Observe the runner's update serial so a late Super Jump main update cannot
+  // advance it twice. The ordinary path retains its post-movement sample.
+  const actorUpdate=Actor.prototype.update;
+  Actor.prototype.update=function(dt){
+    const r=this.weapon?.catalogRecord;
+    if(r?.family!=='stringer'||this.remote||!this.alive||!Number.isFinite(dt)||dt<=0)
+      return actorUpdate.call(this,dt);
+    const runner=this.weaponRunner,s=state(runner),serial=s.bowTiltStep;
+    const result=actorUpdate.call(this,dt);
+    if(this.alive&&!this.remote&&this.weapon?.catalogRecord===r&&runner.catalogState===s&&s.bowTiltStep===serial)
+      advanceBowTilt(runner,r,dt);
+    return result;
+  };
   function slidePaint(r,s,ending=false){
     const width=r.parameters.SideStepParam?.SplashSlideParam?.PaintWidthHalf;
     if(s.slideRunner&&width>0)paintDualiesSlide(G,s.slideRunner,
@@ -1211,13 +1232,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const graze=(s.r.family==='roller'||s.r.family==='slosher')&&!bubble;
       // A multi-lobe round (Splatana waves) ends only when its sourced CoreIndex
       // lobe reaches terrain. An outer lobe that meets a wall, pillar or the floor
-      // splashes there and leaves the wave; the untouched lobes fly on. q.stop is
+      // splashes there and removes its outward wing; inner/opposite lobes fly on. q.stop is
       // the fraction of this step a lobe still exists for (-1: already gone).
       const coreLobe=shapes.length>1?Math.max(0,Math.min(shapes.length-1,Math.round(finite(d.c.CoreIndex,0)))):0;
       for(let i=0;i<shapes.length;i++){
         const q=shapes[i];
-        if(s.lobeGone?.[i]){q.stop=-1;continue;}
-        q.stop=Infinity;
+        if(s.lobeGone?.[i]){q.stop=q.terrainStop=-1;continue;}
+        q.stop=q.terrainStop=Infinity;
         const f0=collisionRadius(q.param,'Field',(p.age-DT)*HZ,s.index,bounceScale),f1=collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale);
         let candidate=sweptWorldHit(G.physics,q.from,q.to,f0,f1,q.hit,true);
         if(candidate.hit && (graze || bubble && catalogBubbleSurfaceNormalY(candidate,G.physics?.level)>.35)){
@@ -1235,7 +1256,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         }
         if(!candidate.hit)continue;
         if(i!==coreLobe){
-          q.stop=candidate.dist/Math.max(EPS,len);
+          q.stop=q.terrainStop=candidate.dist/Math.max(EPS,len);
           // Keep the existing candidate-order seed budget, including a later
           // rejected contact. Reserving here avoids shifting subsequent shots;
           // only the reached contact may commit paint or retire the lobe.
@@ -1243,6 +1264,17 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           continue;
         }
         if(!world.hit||candidate.dist<world.dist)world=candidate;
+      }
+      // Splatana lobes form two ordered wings around CoreIndex. Losing an
+      // inner lobe also removes every outward lobe on that side, at the same
+      // swept time, even when its own path misses terrain. Do this before
+      // Actor admission; only the lobe that actually touches terrain paints.
+      // https://wikiwiki.jp/splatoon3mix/ブキ/ワイパー属
+      if(s.r.family==='splatana'&&shapes.length>1)for(let side=-1;side<=1;side+=2){
+        let cutoff=Infinity;
+        for(let i=coreLobe+side;i>=0&&i<shapes.length;i+=side){
+          const q=shapes[i];cutoff=Math.min(cutoff,q.stop);q.stop=cutoff;
+        }
       }
       let stop=world.hit?world.dist/Math.max(EPS,len):Infinity,target=null,boss=null,defense=this.kitDefenseCandidate?.(p);
       if(!unitCanDamage)defense=null;
@@ -1277,7 +1309,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const q=shapes[i];
         if(i===coreLobe||!Number.isFinite(q.stop)||q.stop<0||q.stop>Math.min(1,stop)+EPS)continue;
         (s.lobeGone||=[])[i]=true;
-        if(!p.ghost)paint(p.owner,q.hit.point,collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale),
+        if(!p.ghost&&q.terrainStop<=q.stop+EPS)paint(p.owner,q.hit.point,collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale),
           1,null,q.hit.face,mainInkFootprint(s.r),q.paintSeed);
       }
       if(!p.ghost&&s.r.family==='charger') {
@@ -2036,9 +2068,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // Use explicit per-weapon forward/reverse rates; omitted tilt keep/reset
     // semantics remain unverified, rather than inventing a 45F freeze.
     if(r.family==='stringer'){
-      const shot=r.parameters.spl__WeaponStringerParam.ShotParam;
-      s.bowTilt=clamp(s.bowTilt+finite(a.grounded?shot.BowJumpTiltSpeedReverse:shot.BowJumpTiltSpeedForward,a.grounded?-12:9)*dt*HZ,
-        0,finite(shot.BowTiltDegreeMax,90));
+      advanceBowTilt(this,r,dt);
     }
     if(r.family==='splatana'){
       if(a.form==='kid')recordSaberStick(s,a,dt*HZ,r.parameters.spl__WeaponSaberParam.SwingParam.StepStartStickHistoryFrame);
