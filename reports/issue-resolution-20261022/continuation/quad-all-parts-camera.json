@@ -1,0 +1,54 @@
+{
+  "status": "passed",
+  "contentHash": "d3d77b98076f1f1ca251c9c6968e1339bc648de1239720883e71204ec39bd718",
+  "inputHash": "84571b440d934b2d576c7699ae48c420d5aa9c83db5f8a6f217a03f1d45a452e",
+  "applicationSourceCommit": "931e4c4af71ecc48f6648828aee2dff16a30f5f3",
+  "camera": {
+    "position": [
+      -5.2,
+      2.3,
+      -3
+    ],
+    "lookAt": [
+      0,
+      1,
+      1.3
+    ]
+  },
+  "onlyCameraChanged": true,
+  "diagnosticCopySha256": "9ac040a70bf9828d35369577c80f99bdc48e86f7ae88ceec80093907e74ee306",
+  "sourceHarnessSha256": "439f276a5048db8ed91ece5b78985fb332b56da9464eb8245608ccdfc6ef2ad5",
+  "nativeVolumeAllPartsVisible": 26,
+  "nativeVolumeConnectionsChecked": 26,
+  "sameDrawFirstSteadyChecks": [
+    {
+      "phase": "first",
+      "tick": 31,
+      "age": 0.016666666666666666,
+      "headPhysicalError": 8.818914895902673e-08,
+      "backPoseError": 1.721558909734015e-08,
+      "rodMidpointError": 8.948454372185702e-08,
+      "rodDirectionError": 1.681843219302795e-08,
+      "rodLengthError": 1.5549401988224076e-07
+    },
+    {
+      "phase": "steady",
+      "tick": 43,
+      "age": 0.016666666666666666,
+      "headPhysicalError": 1.0523505257003312e-07,
+      "backPoseError": 1.1287988002490212e-08,
+      "rodMidpointError": 1.043081283569336e-07,
+      "rodDirectionError": 9.345358001175842e-09,
+      "rodLengthError": 7.719094297087281e-08
+    }
+  ],
+  "sourceReceipt": ".browser-evidence/weapons-final/quad-all-parts-ready/result.json",
+  "sourceReceiptSha256": "7e546822f4bde619d93e8deac1a8beb45cf25915e4ecf5fbe8a921adef598453",
+  "actualDraws": 4,
+  "historySamplesChecked": 0,
+  "limits": [
+    "This separate camera control does not change the main36-case visibility/null records.",
+    "Actual native volume matrices read from instance buffers; no projectile history is owned.",
+    "Native not-ready second-shot prediction image is separately retained and is not replaced by the fully-ready steady image."
+  ]
+}

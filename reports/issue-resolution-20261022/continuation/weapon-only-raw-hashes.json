@@ -1,0 +1,1159 @@
+{
+  "archive": "weapon-only-raw-evidence.tar.gz",
+  "archiveSha256": "f6cc29002cc4a7041eb4409405c077e8c1054e5414661bd8bbd7aa1c02624cee",
+  "archiveBytes": 711304,
+  "files": {
+    "browser/flick-horizontal/result.json": {
+      "sha256": "cbeb400fbca200443a0ef89dcb00f1dd5b0540ac4ee987671364b278d7ef430b",
+      "bytes": 1467947
+    },
+    "browser/flick-vertical/result.json": {
+      "sha256": "50beb45a4c06fa58a0ce97a2eeda1477192761150f379f3f093a612f839ace79",
+      "bytes": 593914
+    },
+    "browser/observer-debug/result.json": {
+      "sha256": "bf5089564c8b998b8d816aae1671aa0098a116763c767942ef5db2ca8542b151",
+      "bytes": 87412
+    },
+    "browser/pose-observed/result.json": {
+      "sha256": "fce7030e8ea11e3da493cfd7d372fc1612afb29c66f3b2d206ed5b3f5531c346",
+      "bytes": 827703
+    },
+    "browser/pose/result.json": {
+      "sha256": "338c22e227f71e99a3466ac0074bc1f4a6c973a1edb95a43742e2daee247e6ff",
+      "bytes": 822899
+    },
+    "browser/quad-all-parts-ready/result.json": {
+      "sha256": "7e546822f4bde619d93e8deac1a8beb45cf25915e4ecf5fbe8a921adef598453",
+      "bytes": 87568
+    },
+    "browser/quad-all-parts/result.json": {
+      "sha256": "8f8f1a57eb14256c2035bab0364d4e55bf2a8395359557ce4c9b5c005d570382",
+      "bytes": 87149
+    },
+    "browser/quad-steady-ready/result.json": {
+      "sha256": "f2f0ce13ef46c4c3a190c3bcbc165423c7da02b218960caf186554302cbe2281",
+      "bytes": 685952
+    },
+    "harness-camera-controls/wide-camera-ready.mjs": {
+      "sha256": "9ac040a70bf9828d35369577c80f99bdc48e86f7ae88ceec80093907e74ee306",
+      "bytes": 25924
+    },
+    "harness-camera-controls/wide-camera.mjs": {
+      "sha256": "4a8a66ba02554e0204310a65df5e82ee180982bc453e460a73b1f9495290d85f",
+      "bytes": 25303
+    },
+    "logs/development/dynamo-authority-settlement-final.log": {
+      "sha256": "900f43190af8d3d958670635cb6d05a6d9aa2aa7053d5e863f73d18e67a71086",
+      "bytes": 2179
+    },
+    "logs/development/dynamo-bubbler-emitted-negative.log": {
+      "sha256": "1164821789fa06d6bdc306b22a52cd8875b9373c131b97eeeea51cdcff50c22f",
+      "bytes": 1308
+    },
+    "logs/development/dynamo-old-emitted-negative-final.log": {
+      "sha256": "a83ca5a66c2bccc9e333995a7bda9842332d655e68a8d301ff5c9a85ffd2614f",
+      "bytes": 1811
+    },
+    "logs/development/explosher-authored-lip-regressions.log": {
+      "sha256": "cd8a10760885b31350496d4fae835ea2d974c6e0fb7e32f466e7e1cb46dbf656",
+      "bytes": 4732
+    },
+    "logs/development/explosher-authored-muzzle-models-final.log": {
+      "sha256": "64e8277be3bdd00ea18c0f392b8809a711333880c609eac1928dd127a3f47370",
+      "bytes": 1167
+    },
+    "logs/development/explosher-authored-muzzle-source-final.log": {
+      "sha256": "1116aba3d503e083b01073f821ce1339814b7bcf109101378e3ac65d5164f722",
+      "bytes": 53551
+    },
+    "logs/development/flick-new-emitted.log": {
+      "sha256": "4ad2b9e9c85c428fee5014c0997a7fed56fe3cf1f0bff5c0f174cdea3117cdd7",
+      "bytes": 6938
+    },
+    "logs/development/flick-object-regressions.log": {
+      "sha256": "cf6f6910fba1a9848be8201619cdfbb40258fe7e0ba9b5a9761740f3305ea883",
+      "bytes": 4910
+    },
+    "logs/development/quad-native-volume-pose.log": {
+      "sha256": "9c27954e19ecce307572735d01da1a2081f02a67b779d5d8454cf51ffad38d35",
+      "bytes": 1638
+    },
+    "logs/development/quad-volume-affected-regressions.log": {
+      "sha256": "172cc1bfa085fe4863ab57abfb885320093d2e9a8d3ac16b8446d8e91e1968e3",
+      "bytes": 640
+    },
+    "logs/development/source-launch-full.log": {
+      "sha256": "b1d414259f7080d565a6b58cf48830b4e465159a3f7d6db1331f498e087bbd93",
+      "bytes": 1488
+    },
+    "logs/development/urchin-native-arena-final.tap": {
+      "sha256": "bcbcfa56a20925b2bfb6318f8a9aff1d0e2f39c20dbc825a2245e853424007f8",
+      "bytes": 6268
+    },
+    "logs/development/urchin-native-arena.tap": {
+      "sha256": "75be00aac06290b0f26fa9f261a3d61452ce8215aba2cc9aa1f6c6ac0377d923",
+      "bytes": 2080
+    },
+    "logs/development/zipcaster-retry-boundary-built.log": {
+      "sha256": "3ceb5844715bebdb6700f3286f7d5ca56a2c15aa3433f7a7e18b6e7292f64dd3",
+      "bytes": 572
+    },
+    "logs/development/zipcaster-retry-boundary-reused.log": {
+      "sha256": "1068c416a46a1e7f547b6ae39e1cc2b16c4e0fcfd954a028c7e595efe983cb16",
+      "bytes": 420
+    },
+    "logs/final/dynamo-emitted.log": {
+      "sha256": "0cf1b82d3fcbe23b6cf1184ae28dd7fb00d40054e568e422c7c122bb0d231434",
+      "bytes": 2716
+    },
+    "logs/final/emitted-positive.log": {
+      "sha256": "2db014ba9355fe29e16824e7421385ab5b33363810866864114435fb3ff091a6",
+      "bytes": 4738
+    },
+    "logs/final/flick-horizontal.log": {
+      "sha256": "38eb8bc867ae3c2a8d7d93bd87a6c42d0743d853b75cbe8b3091ff65a46e2830",
+      "bytes": 17082
+    },
+    "logs/final/flick-vertical.log": {
+      "sha256": "180ad81f538bee6cb3799c4fd9ae598fe3814d65b2019c51c3429c2a38cf09b8",
+      "bytes": 10744
+    },
+    "logs/final/observer-debug.log": {
+      "sha256": "3ff1f589824504bd31e0b36db9b0532292f7bef32c3bc2549990bea21af79616",
+      "bytes": 474
+    },
+    "logs/final/pose-observed.log": {
+      "sha256": "16cec717e7aab76156eb33bf6a078664c1964550c0e10e4696be0cb0bb056d24",
+      "bytes": 12795
+    },
+    "logs/final/pose.log": {
+      "sha256": "8528ec15991322e4fc42c9789326a363ad8df5da0281e87489cc36ec9af4226c",
+      "bytes": 12882
+    },
+    "logs/final/quad-all-parts-ready.log": {
+      "sha256": "fddb0c9d51cf3597d6fee1058fa40eab66236dbd1095e830647f42588d905561",
+      "bytes": 475
+    },
+    "logs/final/quad-all-parts.log": {
+      "sha256": "cf1f0c82bca9e4d4eb021ce04c19147b863ed2cb203f7a48579ace176d882e07",
+      "bytes": 485
+    },
+    "logs/final/quad-steady-ready.log": {
+      "sha256": "8463f2f8bd2c163ce3f807f7f3c58ed53427b1b38ea4c70413f36b83ef0a63a9",
+      "bytes": 6530
+    },
+    "source-owned-sha256.json": {
+      "sha256": "0e702dc08036015ff99aa466beaa4adc0837d2d357eaaa802d3ce9d2f355e7e4",
+      "bytes": 3179
+    },
+    "aggregate/weapon-only-final-acceptance.full.json": {
+      "sha256": "6bbf1812db4782c1e2e2c7e10df300e66c944ce42931fd464ce696d0c6984d64",
+      "bytes": 3312124
+    }
+  },
+  "excluded": [
+    "Browser profiles/caches",
+    "Private Urchin OBJ/MTL/tree/numeric buffers/serialized source manifest",
+    "Unrelated clock/contact/performance source or evidence",
+    "All PNG/image and audio payloads; local screenshots are hash-indexed only"
+  ],
+  "scope": "Text-only public raw evidence: all accepted native-render result JSON, final emitted CPU logs, development negative logs, camera controls and source hashes, plus the byte-identical full original aggregate (including all114 selected cases). PNGs remain local; all244 original file hashes and the ignored complete original archive hash are retained.",
+  "completeOriginalEvidence": {
+    "workspacePath": ".ci-scratch/weapons-final/weapon-only-full-raw-evidence.tar.gz",
+    "sha256": "438e21664aaaf9e7ece786b2d1e79d51683dea49d970f329245b5501ecdb24e7",
+    "bytes": 28302452,
+    "entries": 244,
+    "note": "All original screenshots and text evidence remain in this ignored archive. Public archive contains text only; all244 original member hashes are recorded in allRetainedFiles."
+  },
+  "allRetainedFiles": {
+    "browser/flick-horizontal/result.json": {
+      "sha256": "cbeb400fbca200443a0ef89dcb00f1dd5b0540ac4ee987671364b278d7ef430b",
+      "bytes": 1467947
+    },
+    "browser/flick-horizontal/roller-horizontal-120--45-open-first.png": {
+      "sha256": "cabc176dfff911b0aa5508cfb271ed3c05be8444bf500077f063120951437341",
+      "bytes": 195449
+    },
+    "browser/flick-horizontal/roller-horizontal-120--45-wall-first.png": {
+      "sha256": "21959be2735a1f029d8777773cd7f9f0553ba030b7e4eddde676805cbacf224e",
+      "bytes": 149911
+    },
+    "browser/flick-horizontal/roller-horizontal-30--45-open-first.png": {
+      "sha256": "38c6d66df2b94a6c29f405d088d192be550ad41fcc66182e4a521272a411f95d",
+      "bytes": 195446
+    },
+    "browser/flick-horizontal/roller-horizontal-30--45-wall-first.png": {
+      "sha256": "062ec195051be1664f9bea51db8a30aaee0665acf3069824146255e54200f0c9",
+      "bytes": 149308
+    },
+    "browser/flick-horizontal/roller-horizontal-60--45-open-first.png": {
+      "sha256": "ea2016809cf03503955b670862a8a6b054f20512d25c04462e677d9b264c5f1a",
+      "bytes": 195408
+    },
+    "browser/flick-horizontal/roller-horizontal-60--45-wall-first.png": {
+      "sha256": "64cc17d7f948f068ddf045db37905299e8bade63b4a381df1b71517c62d8a62e",
+      "bytes": 149828
+    },
+    "browser/flick-horizontal/s3-brush-heavy-horizontal-120--45-open-first.png": {
+      "sha256": "7040e4dbbc009e757edbcfdd45230a71d52e65971443cdb6ba2bc70272a5a738",
+      "bytes": 175680
+    },
+    "browser/flick-horizontal/s3-brush-heavy-horizontal-120--45-open-steady.png": {
+      "sha256": "cbeb847e2b561ab6d41ae321eaf6d67f5b14be8a097142280ea5a24ebcefc1a1",
+      "bytes": 167293
+    },
+    "browser/flick-horizontal/s3-brush-heavy-horizontal-120--45-wall-first.png": {
+      "sha256": "6d0b45b9766fc34625816f3b88b735eae3700ad45f2d75562f10412da3cec4b8",
+      "bytes": 122286
+    },
+    "browser/flick-horizontal/s3-brush-heavy-horizontal-120--45-wall-steady.png": {
+      "sha256": "7f5d21b18e2fe9d441f2aed2eaf49269da941f17c2b559b6c4f319d0cf3baf14",
+      "bytes": 148651
+    },
+    "browser/flick-horizontal/s3-brush-heavy-horizontal-30--45-open-first.png": {
+      "sha256": "fc62d1819d28c7fc4f0f32cd2c0c169a483e47b69ad979c63b7b29ba1558c205",
+      "bytes": 175801
+    },
+    "browser/flick-horizontal/s3-brush-heavy-horizontal-30--45-open-steady.png": {
+      "sha256": "16b2ad0e3a8cfa3acbffa32d5620961bc557e845537f49d956022ba3599aec6b",
+      "bytes": 166578
+    },
+    "browser/flick-horizontal/s3-brush-heavy-horizontal-30--45-wall-first.png": {
+      "sha256": "575570f9306e78d12a470c3259ed495104ce391d9574c2d9adc6e9d32537eb20",
+      "bytes": 121807
+    },
+    "browser/flick-horizontal/s3-brush-heavy-horizontal-30--45-wall-steady.png": {
+      "sha256": "a0a1bc13bc5693dcd84fc1b6226394c49c499fc04994fb74a1b03b9d061d9655",
+      "bytes": 152813
+    },
+    "browser/flick-horizontal/s3-brush-heavy-horizontal-60--45-open-first.png": {
+      "sha256": "195fd69491c796cb8402a297e8854baa72a45665249fe0effa7d2f887ee77857",
+      "bytes": 175919
+    },
+    "browser/flick-horizontal/s3-brush-heavy-horizontal-60--45-open-steady.png": {
+      "sha256": "3c9eb28038c816f18dfae2fd780ac790d86fa2bdd2114f0bc3ffbeb1d338f1b8",
+      "bytes": 166731
+    },
+    "browser/flick-horizontal/s3-brush-heavy-horizontal-60--45-wall-first.png": {
+      "sha256": "ace3f126ab650f538cffc9500871cba4a84d301a6c099ccbb0072a30c830885e",
+      "bytes": 121383
+    },
+    "browser/flick-horizontal/s3-brush-heavy-horizontal-60--45-wall-steady.png": {
+      "sha256": "14f3de3dbea869bc2cef333a086be57f36a1554615036ee316ea500ab2057076",
+      "bytes": 150976
+    },
+    "browser/flick-horizontal/s3-brush-mini-horizontal-120--45-open-first.png": {
+      "sha256": "d2fcda36081dba110c32cc700db9e4f290de7dd190a3b86a11b4c2abf08f6ac5",
+      "bytes": 168346
+    },
+    "browser/flick-horizontal/s3-brush-mini-horizontal-120--45-open-steady.png": {
+      "sha256": "cc3d93997cece8b01a9fde445f7b445dcb0951ae3c8bf7aa7966b07875936dd8",
+      "bytes": 182752
+    },
+    "browser/flick-horizontal/s3-brush-mini-horizontal-120--45-wall-first.png": {
+      "sha256": "a4f2c87ccb4193f0e1b7788baa089be7d1d86d9b712a8b7d2a3808b6cb02e636",
+      "bytes": 122576
+    },
+    "browser/flick-horizontal/s3-brush-mini-horizontal-120--45-wall-steady.png": {
+      "sha256": "45fba360a0695f278f1daa4af5f90b556c068aeff9c9364f0f77f2840fb56c92",
+      "bytes": 117997
+    },
+    "browser/flick-horizontal/s3-brush-mini-horizontal-30--45-open-first.png": {
+      "sha256": "54059d4654ba6e6dfebf3a01b5831e75e8f47a24161fba44a543069ea49b6b12",
+      "bytes": 168317
+    },
+    "browser/flick-horizontal/s3-brush-mini-horizontal-30--45-open-steady.png": {
+      "sha256": "ca958a847c388cb0ef11ee60ec78a7abeab8c8c4945ba3cd0b2e7ab2331f51fd",
+      "bytes": 156359
+    },
+    "browser/flick-horizontal/s3-brush-mini-horizontal-30--45-wall-first.png": {
+      "sha256": "a17293ac7dea93dd9dd8becaa7ccfba4815b0d60cbf63a3a2c4f02503f44eae0",
+      "bytes": 121837
+    },
+    "browser/flick-horizontal/s3-brush-mini-horizontal-30--45-wall-steady.png": {
+      "sha256": "5ea04a7f238dd34f26fbf896261a0e7fcde32cd1255988fdd8cb6dfc3a866b0a",
+      "bytes": 124648
+    },
+    "browser/flick-horizontal/s3-brush-mini-horizontal-60--45-open-first.png": {
+      "sha256": "52a4c315fc3998140255f33f3674c17c646af98da91135597019afc16dc02282",
+      "bytes": 168050
+    },
+    "browser/flick-horizontal/s3-brush-mini-horizontal-60--45-open-steady.png": {
+      "sha256": "42c90d4fd10cba593d6aed24aa3e89b3702bc0b3d173d9f6d60fc8de1ce2a553",
+      "bytes": 182485
+    },
+    "browser/flick-horizontal/s3-brush-mini-horizontal-60--45-wall-first.png": {
+      "sha256": "9fd571c57e19b9be326c8e4d62a5effaed045c1a7b8b7b9a81ad3838bc3a8de8",
+      "bytes": 122276
+    },
+    "browser/flick-horizontal/s3-brush-mini-horizontal-60--45-wall-steady.png": {
+      "sha256": "083dda31dcbbc190620c73109c5b026c730293b6fcb48839908d049e5b1ff0ae",
+      "bytes": 115118
+    },
+    "browser/flick-horizontal/s3-brush-normal-horizontal-120--45-open-first.png": {
+      "sha256": "68ff7e36e47b5fb6705bc206abd747670975446f7345d7f3dfb26368b484c0d4",
+      "bytes": 190428
+    },
+    "browser/flick-horizontal/s3-brush-normal-horizontal-120--45-open-steady.png": {
+      "sha256": "ad2475df61fef34d414a147424b71b3ed3a4604b6806e11c4bdaee00033b0e18",
+      "bytes": 190291
+    },
+    "browser/flick-horizontal/s3-brush-normal-horizontal-120--45-wall-first.png": {
+      "sha256": "8708a4b759dc0a5173c2aaf23696c1566ee7ef8fbe4f4f6fd875f654997e3372",
+      "bytes": 144123
+    },
+    "browser/flick-horizontal/s3-brush-normal-horizontal-120--45-wall-steady.png": {
+      "sha256": "4d2fdc326f296892d3132544d377af62e84da77e8550a739faf9316697d60cfc",
+      "bytes": 133109
+    },
+    "browser/flick-horizontal/s3-brush-normal-horizontal-30--45-open-first.png": {
+      "sha256": "97b25605491a2eca84dbb9282935889a3bcfc0a37f9a434c26f3dc5172811969",
+      "bytes": 191143
+    },
+    "browser/flick-horizontal/s3-brush-normal-horizontal-30--45-open-steady.png": {
+      "sha256": "f1de3321d303c77ac55046853059c12314b5cc944769ae81b5fc00dc3702590f",
+      "bytes": 129744
+    },
+    "browser/flick-horizontal/s3-brush-normal-horizontal-30--45-wall-first.png": {
+      "sha256": "84268f7e6cba62d8e629d6ff6a2dd88333339f326f8c877c8a8d70af4fce282b",
+      "bytes": 143582
+    },
+    "browser/flick-horizontal/s3-brush-normal-horizontal-30--45-wall-steady.png": {
+      "sha256": "f533f8a3cea940bc616bbc268cb6b21a6a5d2ba9e3dac0133253a6388e5f6719",
+      "bytes": 134294
+    },
+    "browser/flick-horizontal/s3-brush-normal-horizontal-60--45-open-first.png": {
+      "sha256": "619d9aa25b6115c522691f74aeba5e84abe2bfc3e92ca3a809dfb3890ff0636c",
+      "bytes": 190854
+    },
+    "browser/flick-horizontal/s3-brush-normal-horizontal-60--45-open-steady.png": {
+      "sha256": "62a31d2bf43f6f22cf64f3acb3731c613e2dd19b058cc43be8547d93d855f388",
+      "bytes": 193836
+    },
+    "browser/flick-horizontal/s3-brush-normal-horizontal-60--45-wall-first.png": {
+      "sha256": "dbb4bf587ac465aafbebdf2b773c9639a5cd73566f2329513b22238ad5b9f029",
+      "bytes": 144162
+    },
+    "browser/flick-horizontal/s3-brush-normal-horizontal-60--45-wall-steady.png": {
+      "sha256": "49e149be6aba4d027068260abf3f3f8992d6dd82b37af71afef572b513c09ebd",
+      "bytes": 129121
+    },
+    "browser/flick-horizontal/s3-roller-compact-horizontal-120--45-open-first.png": {
+      "sha256": "c4ab1ab23ea9f6081bbce314f978dafca753d974ab8b005ca9fc8ef10a8988cf",
+      "bytes": 188516
+    },
+    "browser/flick-horizontal/s3-roller-compact-horizontal-120--45-wall-first.png": {
+      "sha256": "49cebe21f367061c3a322b90103dc4148c554758a42c2b5951ed5d9b756d0056",
+      "bytes": 144646
+    },
+    "browser/flick-horizontal/s3-roller-compact-horizontal-30--45-open-first.png": {
+      "sha256": "eb7df7cb3a2461b51961b645e8591b7f6f6c45cc22b239784fdeebcfb7e07870",
+      "bytes": 155883
+    },
+    "browser/flick-horizontal/s3-roller-compact-horizontal-30--45-wall-first.png": {
+      "sha256": "a8f7fa3b3e63048a44bb93f557cf1c45d71e4b141e4b46a356989c2cae47baa9",
+      "bytes": 162884
+    },
+    "browser/flick-horizontal/s3-roller-compact-horizontal-60--45-open-first.png": {
+      "sha256": "afbe0a931f42d8b079413083f91d0a602c1e994900e91feb5a62a62744266d2a",
+      "bytes": 188477
+    },
+    "browser/flick-horizontal/s3-roller-compact-horizontal-60--45-wall-first.png": {
+      "sha256": "3c0bc784ec29711db16367c2b4eeed67cdd6eb74aafa04df4577de692596cf36",
+      "bytes": 144094
+    },
+    "browser/flick-horizontal/s3-roller-heavy-horizontal-120--45-open-first.png": {
+      "sha256": "7a6deee7016471fab4f492c8e1b78eec1120464e48c341abeba3a4d761a61a62",
+      "bytes": 167571
+    },
+    "browser/flick-horizontal/s3-roller-heavy-horizontal-120--45-wall-first.png": {
+      "sha256": "2df41067a5e73a6b4987ea81dc8cf2f621d9b5fa62718c4bf6141768ae08011a",
+      "bytes": 154202
+    },
+    "browser/flick-horizontal/s3-roller-heavy-horizontal-30--45-open-first.png": {
+      "sha256": "533b98a6dbd7d925e8782ea915fb1b6708b6436c5748c38a1e46bcbfb23dbcf2",
+      "bytes": 168524
+    },
+    "browser/flick-horizontal/s3-roller-heavy-horizontal-30--45-wall-first.png": {
+      "sha256": "fdd3cd159784b281c861b5b8d25026157d1f880cae85d0ee3b5dc74fb3d49927",
+      "bytes": 150911
+    },
+    "browser/flick-horizontal/s3-roller-heavy-horizontal-60--45-open-first.png": {
+      "sha256": "3eb0fbbced514b6ce4bb7b90612004581b6d5089f1c8090f60c85fbe7d8c51f9",
+      "bytes": 168161
+    },
+    "browser/flick-horizontal/s3-roller-heavy-horizontal-60--45-wall-first.png": {
+      "sha256": "0da053393880066e6364f5cc4db014f16ffece411d49563e84f01b27cdfe9335",
+      "bytes": 153156
+    },
+    "browser/flick-horizontal/s3-roller-hunter-horizontal-120--45-open-first.png": {
+      "sha256": "8f14e26f16922b48bcd7dd09c801c8a982734dde1f85ed89293274d4dc461c96",
+      "bytes": 180122
+    },
+    "browser/flick-horizontal/s3-roller-hunter-horizontal-120--45-wall-first.png": {
+      "sha256": "434c76aa8b8b57e4749bbc3877f8f1d1650e9949b4ba577d38a4d2abd4f522fe",
+      "bytes": 143288
+    },
+    "browser/flick-horizontal/s3-roller-hunter-horizontal-30--45-open-first.png": {
+      "sha256": "35335f938a8404d80a12e6388c2a1df4ee8f01796553d77747c16f0a897a5b9e",
+      "bytes": 180865
+    },
+    "browser/flick-horizontal/s3-roller-hunter-horizontal-30--45-wall-first.png": {
+      "sha256": "5470d2941c9adee4f711a520d693699b519387b74415a3b7831e1abd712576f5",
+      "bytes": 144006
+    },
+    "browser/flick-horizontal/s3-roller-hunter-horizontal-60--45-open-first.png": {
+      "sha256": "a08b4cd194ed1341f822a8b90db564479426d80079f5091a9c15b9caa03ef3fb",
+      "bytes": 179892
+    },
+    "browser/flick-horizontal/s3-roller-hunter-horizontal-60--45-wall-first.png": {
+      "sha256": "d5a5fcec831e3de45f93736c37651550ec79ff3b6edf82c836a6f0d45ef8f593",
+      "bytes": 144205
+    },
+    "browser/flick-horizontal/s3-roller-wide-horizontal-120--45-open-first.png": {
+      "sha256": "36ae21f5f92a3d5e0d4fe8f907693449cf620ca2533a0f9059795f4a9850164b",
+      "bytes": 192702
+    },
+    "browser/flick-horizontal/s3-roller-wide-horizontal-120--45-wall-first.png": {
+      "sha256": "cee03e6591192c5d60cb41f5265623c4d513ad61001f01ff826f66877a68c37d",
+      "bytes": 193096
+    },
+    "browser/flick-horizontal/s3-roller-wide-horizontal-30--45-open-first.png": {
+      "sha256": "de09f5de06db0d6d28d279250da9e31edc042043aa94f222a6a9320c17dec5e7",
+      "bytes": 179614
+    },
+    "browser/flick-horizontal/s3-roller-wide-horizontal-30--45-wall-first.png": {
+      "sha256": "53cc425838b6f7fa5af8fa11ca98771d129e8964337c810a0cb80c1f0e92a81c",
+      "bytes": 221182
+    },
+    "browser/flick-horizontal/s3-roller-wide-horizontal-60--45-open-first.png": {
+      "sha256": "eace13229fb4befce9da9b2701c112b929396ecc2ed93cecad6c8b7a3f15d165",
+      "bytes": 196539
+    },
+    "browser/flick-horizontal/s3-roller-wide-horizontal-60--45-wall-first.png": {
+      "sha256": "1c9037d7f83329150def6daa7768a57b7e016be33015b6daf8da6d3703e9be07",
+      "bytes": 196576
+    },
+    "browser/flick-vertical/result.json": {
+      "sha256": "50beb45a4c06fa58a0ce97a2eeda1477192761150f379f3f093a612f839ace79",
+      "bytes": 593914
+    },
+    "browser/flick-vertical/roller-vertical-120--45-open-first.png": {
+      "sha256": "068cb7959796d5192d42276227108c3118d7dfd399a9f89a580a68d97e92929a",
+      "bytes": 142710
+    },
+    "browser/flick-vertical/roller-vertical-120--45-wall-first.png": {
+      "sha256": "d94a14f2460dbd446ee6390e9ac5a59551600e8288d1b8f264a4dea4361b7379",
+      "bytes": 172701
+    },
+    "browser/flick-vertical/roller-vertical-30--45-open-first.png": {
+      "sha256": "962b1c9595a745d88c101e10f6d6e3a5a9694cc149cadb9ccaee40da5c2b1f6e",
+      "bytes": 143619
+    },
+    "browser/flick-vertical/roller-vertical-30--45-wall-first.png": {
+      "sha256": "46250576eb6bf0ff6e6c1e4b83d21a6221b94f59b1bb464be05ab0cc5b5f1b36",
+      "bytes": 171694
+    },
+    "browser/flick-vertical/roller-vertical-60--45-open-first.png": {
+      "sha256": "a16aa139aac22a8b3f2d149aad292db42200390627f132c8a68298836b1f5202",
+      "bytes": 142038
+    },
+    "browser/flick-vertical/roller-vertical-60--45-wall-first.png": {
+      "sha256": "2097da45cf75474c9319cfb4f1e4c12edd9f647589a0570d755fa509fa4d09fc",
+      "bytes": 171076
+    },
+    "browser/flick-vertical/s3-roller-compact-vertical-120--45-open-first.png": {
+      "sha256": "3f2519a2017a1ce55aa5fd1cb846c84ac31a9dbc4c311ce2720c7ab96b7093ad",
+      "bytes": 137157
+    },
+    "browser/flick-vertical/s3-roller-compact-vertical-120--45-wall-first.png": {
+      "sha256": "ab66c115669e13743e5c07fe9d580594071fd435606a0b946c068eff17efa440",
+      "bytes": 108541
+    },
+    "browser/flick-vertical/s3-roller-compact-vertical-30--45-open-first.png": {
+      "sha256": "b79cc2a66322a6dbeea292f8da53d429c0fde5bf41b59bfdfd2b9126e0aba312",
+      "bytes": 127637
+    },
+    "browser/flick-vertical/s3-roller-compact-vertical-30--45-wall-first.png": {
+      "sha256": "926e46ac36f6dbc591b0f000ca2a438cd27fe2aeb4883218bbee0af89171aa87",
+      "bytes": 123670
+    },
+    "browser/flick-vertical/s3-roller-compact-vertical-60--45-open-first.png": {
+      "sha256": "bc0b07ea4f6e35600fcb4038b4ee32e6863271fab06fa0e2553c54832bba653e",
+      "bytes": 136968
+    },
+    "browser/flick-vertical/s3-roller-compact-vertical-60--45-wall-first.png": {
+      "sha256": "5db2653958ac26b436303beae0e81b6e7fb8eced0b551631877a764c41fe3388",
+      "bytes": 107736
+    },
+    "browser/flick-vertical/s3-roller-heavy-vertical-120--45-open-first.png": {
+      "sha256": "46890c9c2db1f53feb126234cab6dbf85ab3ba92f083756723efee199cf47de6",
+      "bytes": 145372
+    },
+    "browser/flick-vertical/s3-roller-heavy-vertical-120--45-wall-first.png": {
+      "sha256": "7b4e2fe96baf43c10b12754a2489905c2943fa16cdcafa9fa6ecfc4bb19daba2",
+      "bytes": 133081
+    },
+    "browser/flick-vertical/s3-roller-heavy-vertical-30--45-open-first.png": {
+      "sha256": "e0a40056a5c5a5ae7ce50abc1bddc81017526e219a5b4ba2ac5984f5563b482b",
+      "bytes": 142782
+    },
+    "browser/flick-vertical/s3-roller-heavy-vertical-30--45-wall-first.png": {
+      "sha256": "ff0c07a5b62545aaba18d17935effa530efe17d59804484f8ef2de3a7f48c051",
+      "bytes": 129803
+    },
+    "browser/flick-vertical/s3-roller-heavy-vertical-60--45-open-first.png": {
+      "sha256": "566d521c3b5b094f5593dfe4a60d8da48f11ecd9017c92d82815bd13a45eb8f3",
+      "bytes": 144375
+    },
+    "browser/flick-vertical/s3-roller-heavy-vertical-60--45-wall-first.png": {
+      "sha256": "8b3a9c1a3cfd8abc6b1e2b694849dc2243729a250de00d35b7ed5e3a1fd5148b",
+      "bytes": 131730
+    },
+    "browser/flick-vertical/s3-roller-hunter-vertical-120--45-open-first.png": {
+      "sha256": "5fe588a1a1f1853e32220810be24acf85600023185f61216523eb3827b8cffc9",
+      "bytes": 176438
+    },
+    "browser/flick-vertical/s3-roller-hunter-vertical-120--45-wall-first.png": {
+      "sha256": "474181862810730f751cfa00a1243aa61270b5159583faceb1de745cdad2c9b6",
+      "bytes": 113291
+    },
+    "browser/flick-vertical/s3-roller-hunter-vertical-30--45-open-first.png": {
+      "sha256": "826af4d6ef8acff48d48de116f05275700127fcc4748ddfedb6c296734f3941a",
+      "bytes": 119345
+    },
+    "browser/flick-vertical/s3-roller-hunter-vertical-30--45-wall-first.png": {
+      "sha256": "8b97f8a4db3c94b922a226d319baa19df1306bd3f67d21342f3bb80a28ac659b",
+      "bytes": 123382
+    },
+    "browser/flick-vertical/s3-roller-hunter-vertical-60--45-open-first.png": {
+      "sha256": "8fdbda323afe3d84326f4ab5c46c45e0126d8737fbf569d2ef12ce875143525c",
+      "bytes": 151809
+    },
+    "browser/flick-vertical/s3-roller-hunter-vertical-60--45-wall-first.png": {
+      "sha256": "382a5516a66356865549a36f1e34d5ec7419e52ccdfc5990b584a3d128ed1145",
+      "bytes": 113556
+    },
+    "browser/flick-vertical/s3-roller-wide-vertical-120--45-open-first.png": {
+      "sha256": "32cbedc6484acca994cf34950421c9334f9f4ce4b871298389a3e564b46a76e0",
+      "bytes": 135026
+    },
+    "browser/flick-vertical/s3-roller-wide-vertical-120--45-wall-first.png": {
+      "sha256": "bbfd1c260ad9b5f9dd97561a55690f2ca084cee82f30ff61ac22d10cf4dabef9",
+      "bytes": 163947
+    },
+    "browser/flick-vertical/s3-roller-wide-vertical-30--45-open-first.png": {
+      "sha256": "d3ffe8ba15f5ad899c40f0868affb3ac270fbfbb8e1aa410bb73180cb7c0d4f3",
+      "bytes": 158581
+    },
+    "browser/flick-vertical/s3-roller-wide-vertical-30--45-wall-first.png": {
+      "sha256": "217537a4ca60c3e4bf99167b11713e84743eb0888c1c243ef272527fced856ff",
+      "bytes": 181230
+    },
+    "browser/flick-vertical/s3-roller-wide-vertical-60--45-open-first.png": {
+      "sha256": "25ab1e5364be6ebfb6d0825e1222598e90b166eefdeb410b67c0fe6f2ea2dfb4",
+      "bytes": 136118
+    },
+    "browser/flick-vertical/s3-roller-wide-vertical-60--45-wall-first.png": {
+      "sha256": "399238c1c9f1bdb21cd5463b8fa7de17b095e64a5250d0833b50a136cce85958",
+      "bytes": 163228
+    },
+    "browser/observer-debug/result.json": {
+      "sha256": "bf5089564c8b998b8d816aae1671aa0098a116763c767942ef5db2ca8542b151",
+      "bytes": 87412
+    },
+    "browser/pose-observed/result.json": {
+      "sha256": "fce7030e8ea11e3da493cfd7d372fc1612afb29c66f3b2d206ed5b3f5531c346",
+      "bytes": 827703
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-120--45-open-first.png": {
+      "sha256": "47a66df1026f68a62f838844832b412bd4d3b45f0e3b742b5532519919ed744d",
+      "bytes": 92166
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-120--45-open-steady.png": {
+      "sha256": "9e4811cd6013db1acd39277328ad039779cdc4c52aa12ff95e3373a798b9b254",
+      "bytes": 95451
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-120--45-wall-first.png": {
+      "sha256": "95e120d25096ab4f6be17794e2d0b2ae9a2a6f42d774c4ffd558ae1e367c7686",
+      "bytes": 93968
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-120--45-wall-steady.png": {
+      "sha256": "84df5608abc8a8cd2d775c4fe117498f22ecb864426d81ff3f0223cc304269c6",
+      "bytes": 98196
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-120-0-open-first.png": {
+      "sha256": "10f919dc7ff5d93d2d10393f762113dc958088ffb870aab4e95100e6cfcf180b",
+      "bytes": 99228
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-120-0-open-steady.png": {
+      "sha256": "f3be149a0ccf7959a5475a97450dfc876f67a06101463bdafbd048592a480c51",
+      "bytes": 106954
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-120-0-wall-first.png": {
+      "sha256": "de5649c5035db3602437d170f422691dbaed13de862f8b2ddce4922f297cf353",
+      "bytes": 96098
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-120-0-wall-steady.png": {
+      "sha256": "8e6cf33c5c7ed5473b3698315a7085430b8b303893f9080ec1e31a7ca2341653",
+      "bytes": 102733
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-120-40-open-first.png": {
+      "sha256": "7de528f489032f21c56013d5291633e74283b6de42fba8317b97c5f2c6e30746",
+      "bytes": 103026
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-120-40-open-steady.png": {
+      "sha256": "22666841a2f935619ebdb8373dad63678adcd16fb971ca8199f9b2eb3916e5cb",
+      "bytes": 114612
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-120-40-wall-first.png": {
+      "sha256": "11f6979372d9815ca99e16825e85c9f5308a69081a0f36635c5f10c88977dea2",
+      "bytes": 96573
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-120-40-wall-steady.png": {
+      "sha256": "d977792669d5d8786ca0c6d0db21dd09663ce4093d74e3d998e0ba2a5fbd46be",
+      "bytes": 106668
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-30--45-open-first.png": {
+      "sha256": "18fa3b27c60d6e351a2bf5d42ed3ce908c43da07725afbcccc984b03bc053783",
+      "bytes": 94150
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-30--45-open-steady.png": {
+      "sha256": "e8f1cb2f626e8b170f43b13842298719e26958e8745f1167c4146ef0a86f5184",
+      "bytes": 97071
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-30--45-wall-first.png": {
+      "sha256": "ce9c203706cb1bdcda9cae26af36058ac58d76b290f8c25841962b839350c02f",
+      "bytes": 97214
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-30--45-wall-steady.png": {
+      "sha256": "5e1a76246908664a3bcbb1a0103d1f92d474e9f1d773207fe3faf957a66aa419",
+      "bytes": 101429
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-30-0-open-first.png": {
+      "sha256": "3372d13ddc2a0124dbdc930a8a82f8fb2e3b6eb72ae5b1d03cecc882be88e517",
+      "bytes": 103833
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-30-0-open-steady.png": {
+      "sha256": "f657f58f022517acaebb00ecc9b7ac0d3c4a35cf730f89061431a5745a177355",
+      "bytes": 109838
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-30-0-wall-first.png": {
+      "sha256": "21eec8f646a3ee6ee45ead6ddb4b04ad08cb7f955b753dca0b09df0c22f9424b",
+      "bytes": 99037
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-30-0-wall-steady.png": {
+      "sha256": "0cafa18f6f48750f6eab7e1444e5cdef25ff6b211b7bd9f25b8d665ce77a168a",
+      "bytes": 105499
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-30-40-open-first.png": {
+      "sha256": "296135474a3065207d9aa154b2e70fd31849a44f1b143c19390ae6174bd074db",
+      "bytes": 109715
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-30-40-open-steady.png": {
+      "sha256": "94896fce84ae5c7f50fa72ec576b0c1e9099ff5d06d0eac231c09fb57a18313d",
+      "bytes": 120172
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-30-40-wall-first.png": {
+      "sha256": "f8c14a4390a5d9942f0958009218fa3e1c1ce2d132307caff2203aae883371df",
+      "bytes": 99489
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-30-40-wall-steady.png": {
+      "sha256": "aa770aa054f49e4327e1adc62e836ef2f7708d52e0852f4c4ac267025ea86788",
+      "bytes": 110874
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-60--45-open-first.png": {
+      "sha256": "aed05dd7022f16d4f4bef8d6bd2cce80262054fa58d191ed652402aeca463ba5",
+      "bytes": 92199
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-60--45-open-steady.png": {
+      "sha256": "36c3d27a42113f2a8158e31f52540752c6660155e75cdbe886e39b980b182fee",
+      "bytes": 95263
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-60--45-wall-first.png": {
+      "sha256": "4e46b45e8066d09c43b604cb88b704a2394da2b716fdc53284ae0c849e886a18",
+      "bytes": 93908
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-60--45-wall-steady.png": {
+      "sha256": "2c38108c369db46acbbc9ce7b26f7ed155f041927d3e28900d32d32cb1c82a6e",
+      "bytes": 98089
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-60-0-open-first.png": {
+      "sha256": "bb56c56efeb387fc596647869b8313953669bed71bab74ebfef1983b2634be99",
+      "bytes": 99302
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-60-0-open-steady.png": {
+      "sha256": "a9123e7c7896e210b08bc4a0081bb7bd6cac5b628e7b3a5386dea17e33da0062",
+      "bytes": 106046
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-60-0-wall-first.png": {
+      "sha256": "214aa0414750320837fd25b6c17841266754a4e5b6de30b6835b1081aa06673f",
+      "bytes": 96099
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-60-0-wall-steady.png": {
+      "sha256": "c59b4eb5c0c37fa1e54ff5a686d4c1b19315eb3b3389fb6874f3bd93e9db8e7c",
+      "bytes": 102747
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-60-40-open-first.png": {
+      "sha256": "698f637f2cf57a797f444253d486e89a91b9ff6210ddf45925445cad8d135593",
+      "bytes": 102684
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-60-40-open-steady.png": {
+      "sha256": "5d1eace21a3711e0b020e5b58c4236b1bb0ff1808393fad73ff3b80a79b34032",
+      "bytes": 114065
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-60-40-wall-first.png": {
+      "sha256": "c24125cacbd0372a3e04af1a27d0664fa5f90d40f0f4a64abf26a688f66fd33e",
+      "bytes": 96562
+    },
+    "browser/pose-observed/s3-maneuver-stepper-horizontal-60-40-wall-steady.png": {
+      "sha256": "28e0b5ba092c8d09b03713990985085eb41401892622efa3f47585675648a8db",
+      "bytes": 107094
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-120--45-open-first.png": {
+      "sha256": "a16d81151d1bee55aee0229faf878f133381d2b01cfb85eba40c28feb6dae354",
+      "bytes": 171500
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-120--45-open-steady.png": {
+      "sha256": "eaffe30c81426c0fc0022cd49abe44a5e63e3c8974fa857327324a991aa51006",
+      "bytes": 176734
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-120--45-wall-first.png": {
+      "sha256": "76e33a5a302a2a61ce26a8bf4261f5dc5bbccd1774dd0b9624953569315bbe86",
+      "bytes": 126873
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-120--45-wall-steady.png": {
+      "sha256": "d45d1e72b8e8302e5ed23fee949ee1d5a24f54296164f6370f6b881b2f0fa9c8",
+      "bytes": 166886
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-120-0-open-first.png": {
+      "sha256": "c15299b46b5eae767ae08cf9770d113374fe043cd85f1ce0a7609f4f3133ba2b",
+      "bytes": 106319
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-120-0-open-steady.png": {
+      "sha256": "438c2649c1e499ff90b3e5448dea3309940ec94f772098ceb85588b8c330d1fb",
+      "bytes": 106096
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-120-0-wall-first.png": {
+      "sha256": "f7a84b9d8ed17c087710d23e688f26cf28c2fb6695e6833a433f4561ad033ab6",
+      "bytes": 159315
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-120-0-wall-steady.png": {
+      "sha256": "d0b3d2ba24ba675fb3dd9d85e62d862155f5a140a648a69f60052b60a4eec24b",
+      "bytes": 114980
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-120-40-open-first.png": {
+      "sha256": "205dfd6c1c3d54abb9f6a1e23e5d17ae18ca13b1bf13e2dc0e03f7049e611ce6",
+      "bytes": 112109
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-120-40-open-steady.png": {
+      "sha256": "10a085a02afe456d4079efb9a3bf94ae1883815a3062b59b0b6399b929c949b2",
+      "bytes": 112174
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-120-40-wall-first.png": {
+      "sha256": "60d9a7a44db702777cc3e1108fe6e534b1355bb8fa5fcaef792b5220c962deb1",
+      "bytes": 235558
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-120-40-wall-steady.png": {
+      "sha256": "276f5ac5cfe780cd01f47a44e4d3454a9c09dcd9fc9ae81409a711e00d3af51a",
+      "bytes": 183535
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-30--45-open-first.png": {
+      "sha256": "697c1837525b71a14b09a07e9058119a2c82850c9898452ca86af29bf297ac82",
+      "bytes": 214052
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-30--45-open-steady.png": {
+      "sha256": "0ded8f7667eb34e392428dc36c3a368eb6e06e50c21908519f6a7e3d4467914e",
+      "bytes": 189569
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-30--45-wall-first.png": {
+      "sha256": "55fe16885177a62f9255f3f6009a9c65c5d3c9111808e46a1257af01c3ec5805",
+      "bytes": 181762
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-30--45-wall-steady.png": {
+      "sha256": "d50b8bf72bcc41212de3854e8f4c50a5d09b7661abf4ab996b40cfa997918b8e",
+      "bytes": 138270
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-30-0-open-first.png": {
+      "sha256": "2c855db42f66557da8941937b944fb57bab15682410c811095899a41be0d56af",
+      "bytes": 106371
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-30-0-open-steady.png": {
+      "sha256": "27bf392cfcad22d665b3368df65c11cb0704803631353503f93ad7a84dfd78b7",
+      "bytes": 106043
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-30-0-wall-first.png": {
+      "sha256": "afdabdecc26750eaf48f7ac21b1897e36405c98d917b4561e7e4eb9fad748a53",
+      "bytes": 188730
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-30-0-wall-steady.png": {
+      "sha256": "827875be1bc2b083d4d03c093395e15ecec681f3ba351383ac09e5d25ca0efa9",
+      "bytes": 150141
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-30-40-open-first.png": {
+      "sha256": "5c5ea70b9817cfb572a78860ffe700f0e95529132485a18764cdb92a81fdf1bb",
+      "bytes": 115307
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-30-40-open-steady.png": {
+      "sha256": "6cf2ea65f4bf95b9bcbfd0a4760bdcee23763d3918efd71957ddefb6f1bce375",
+      "bytes": 112665
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-30-40-wall-first.png": {
+      "sha256": "0a4b0e37ed00c5718329891b71471df4dc34d4de861ab807db6cd69c86ced9eb",
+      "bytes": 218255
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-30-40-wall-steady.png": {
+      "sha256": "9ff52b60982609ba316755412e53dfe66b23fd3e42ac494f2fab311225b5f270",
+      "bytes": 194616
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-60--45-open-first.png": {
+      "sha256": "8949c09bee6e2efead1a51f6b570ee39ca89adbf8b2308784e6a2e2c1f39e515",
+      "bytes": 189994
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-60--45-open-steady.png": {
+      "sha256": "7e4966de0cb55b6167997f5466b70b674c2d8664a7971de5c5383b1a6e52a423",
+      "bytes": 195734
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-60--45-wall-first.png": {
+      "sha256": "8065519f27af47a13fa40615203c5c7d8ca7e66b220e149bd2c28af85ac0d401",
+      "bytes": 163137
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-60--45-wall-steady.png": {
+      "sha256": "c8718adc381e5d4a5a703ef1fcad877c7efe15b6e78560f36e70e1fc5dcc815e",
+      "bytes": 115672
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-60-0-open-first.png": {
+      "sha256": "c3e2df53844cfddf3a6c447512003a4062650db5dd4e47e75f9b7ea89af56f17",
+      "bytes": 105650
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-60-0-open-steady.png": {
+      "sha256": "4e6a6f25304f9d827f8779c5c4c3a602c045d2650cf648b8200695e4526269f2",
+      "bytes": 106398
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-60-0-wall-first.png": {
+      "sha256": "ca9e0331895b6cc8868f9e9f60ec863bf440c206aa3c5ce037898e29554717a4",
+      "bytes": 116866
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-60-0-wall-steady.png": {
+      "sha256": "e3cc1a6a64d7df86a1da3cfe96530d31d3fcbeb9fe4e3ca5bbc9a5e3e216241b",
+      "bytes": 189789
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-60-40-open-first.png": {
+      "sha256": "f00b700ed3fee7fcab7715032070496abdd22539365efa4bcddaae5962ed17cb",
+      "bytes": 112155
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-60-40-open-steady.png": {
+      "sha256": "9d554358cb14471536827b2e5a53328c20088b5e40a796b78b5434e16dc14ccc",
+      "bytes": 112172
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-60-40-wall-first.png": {
+      "sha256": "0ef7891e73d2ab6a6e2e1a435573d7cb0ae854de18b360ce15da0e2f9b056a66",
+      "bytes": 226835
+    },
+    "browser/pose-observed/s3-slosher-washtub-horizontal-60-40-wall-steady.png": {
+      "sha256": "3c28143e2dfc72920f707fddbbcdafb65b19a229185e8959ae14aeadc81a1568",
+      "bytes": 182676
+    },
+    "browser/pose/result.json": {
+      "sha256": "338c22e227f71e99a3466ac0074bc1f4a6c973a1edb95a43742e2daee247e6ff",
+      "bytes": 822899
+    },
+    "browser/quad-all-parts-ready/result.json": {
+      "sha256": "7e546822f4bde619d93e8deac1a8beb45cf25915e4ecf5fbe8a921adef598453",
+      "bytes": 87568
+    },
+    "browser/quad-all-parts-ready/s3-maneuver-stepper-horizontal-60-0-open-first.png": {
+      "sha256": "068056d1520cc1caf299b98fc5fe5fbe26cb4c64c730b3fce59d1b8848f89294",
+      "bytes": 37169
+    },
+    "browser/quad-all-parts-ready/s3-maneuver-stepper-horizontal-60-0-open-steady.png": {
+      "sha256": "54a3a8100b95f611a09b537ec07c99f2514c1fdf5ddd72eaba96caf385cd57fc",
+      "bytes": 41388
+    },
+    "browser/quad-all-parts/result.json": {
+      "sha256": "8f8f1a57eb14256c2035bab0364d4e55bf2a8395359557ce4c9b5c005d570382",
+      "bytes": 87149
+    },
+    "browser/quad-all-parts/s3-maneuver-stepper-horizontal-60-0-open-first.png": {
+      "sha256": "264ebe34de49b7f572b73a1356c4e58241bd48471c5e3fbe3e9239312f36e6b2",
+      "bytes": 37424
+    },
+    "browser/quad-all-parts/s3-maneuver-stepper-horizontal-60-0-open-steady.png": {
+      "sha256": "074fa221f1af4e529d3997ce09259a2d0620437ef5e6664afc41d47e219960ec",
+      "bytes": 40316
+    },
+    "browser/quad-steady-ready/result.json": {
+      "sha256": "f2f0ce13ef46c4c3a190c3bcbc165423c7da02b218960caf186554302cbe2281",
+      "bytes": 685952
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-120--45-open-first.png": {
+      "sha256": "66145c13c20ae305ff7cd0e7ef0d09fe5f2d18ede5b7f115b8bf633c60971ab9",
+      "bytes": 92370
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-120--45-open-steady.png": {
+      "sha256": "80c5d940081bfc257a5ab18598285c22902b18b8203cea8043a0367bba81c4fa",
+      "bytes": 98712
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-120--45-wall-first.png": {
+      "sha256": "498ed210f4492d5f3ea403ce14d80aa0ac5782d1d4c1aa34e37197caf7c71497",
+      "bytes": 93836
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-120--45-wall-steady.png": {
+      "sha256": "8c437fb333c912ff55bd9f1788b83291799fc8331d4dcf94f88ebf2b25448724",
+      "bytes": 100874
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-120-0-open-first.png": {
+      "sha256": "a325d4977c89688b366ef686f2c9c06dc47b6b0a308bf2f9bca147ba9035a3c0",
+      "bytes": 98963
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-120-0-open-steady.png": {
+      "sha256": "e336b31567ae7859f34a9aba30b58c0b55535b849b8553e95a2698603ae50613",
+      "bytes": 110760
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-120-0-wall-first.png": {
+      "sha256": "b63c2262d05898158228afba0831138f7b2628b8a6d3cf95f1e4265fdbbfbe4c",
+      "bytes": 96374
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-120-0-wall-steady.png": {
+      "sha256": "46b58312759bda1f29f2a517c866d973aaeeafb6858e02a442a1a362e6ada4d1",
+      "bytes": 102168
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-120-40-open-first.png": {
+      "sha256": "c38b49a815ef7d50d4229ec795a1aa23546051ce9fa20d3cdbbd1db6167e041c",
+      "bytes": 102846
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-120-40-open-steady.png": {
+      "sha256": "beb29896901e6fd273e4e68e0aee488a91635834c887e08d42fe18b770be2656",
+      "bytes": 116307
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-120-40-wall-first.png": {
+      "sha256": "9b1760f552d091846b5b40a6382dd22a75798e8cc006d6a8337345246f37bad4",
+      "bytes": 96306
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-120-40-wall-steady.png": {
+      "sha256": "50e3e28a8f56a8469f7adb0b3f821861f3eb41a0737b461978e4d78d88e21243",
+      "bytes": 111002
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-30--45-open-first.png": {
+      "sha256": "2c4836658b56416ceb3f88155d69eec096aadfe52d3695e8ac2211fd49bae035",
+      "bytes": 93970
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-30--45-open-steady.png": {
+      "sha256": "4a96041fdef9401e1a29f4599bd5c4a840fd2b7b6c5b42efef99ea09a767f86d",
+      "bytes": 100573
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-30--45-wall-first.png": {
+      "sha256": "a52f77dc30a6722de7f6e16b1440b1f8370abfe98bfd2b29033e617b9e5d2e16",
+      "bytes": 97371
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-30--45-wall-steady.png": {
+      "sha256": "071f3fdefbb25f6dcfa7ee02c3ba0e6c43c88b2369c54e9866637264bd2820f3",
+      "bytes": 103291
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-30-0-open-first.png": {
+      "sha256": "dd12d77110c4c5302a52621c11ac1fd5d001a4c2d3866e0d25cb7c3b5053541c",
+      "bytes": 104312
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-30-0-open-steady.png": {
+      "sha256": "3663831215e9dad827514ee469d1edaa5c4ae88e5b12ca135ed6b12be654faf3",
+      "bytes": 111734
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-30-0-wall-first.png": {
+      "sha256": "a7e3e5a386332dbd0ce17a2b92a02d810b9e4a69582e59fb5bb2b2ab338c0c35",
+      "bytes": 98832
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-30-0-wall-steady.png": {
+      "sha256": "4fc49af3fb8d28c86815b3ebb84c5d9e1eb4b9b8b1d9e0cc51497be2c15e9af5",
+      "bytes": 103160
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-30-40-open-first.png": {
+      "sha256": "14e0533a2fedbbbc1653a2fd3d598db65d27cdf17e7b8971e917f0f28cfaf469",
+      "bytes": 109512
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-30-40-open-steady.png": {
+      "sha256": "18e03c7567b34d8bea17ec7de26ed8aa0a46683652f7f7b82d17d85b151e1279",
+      "bytes": 121082
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-30-40-wall-first.png": {
+      "sha256": "a3bb4e1bfd0b28c4dbfdbfd366a21bd2c878527da0878c61afb5a82a41a8de70",
+      "bytes": 100158
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-30-40-wall-steady.png": {
+      "sha256": "dd0695bd47b1da8a742eb74a6483e31397b3f50fbdddcb1a93b572c99786fbcb",
+      "bytes": 112687
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-60--45-open-first.png": {
+      "sha256": "d962ff08c1c45a4b2b08aae6a463f21a4b2d3804f0d9235714c4d8f87efeb72c",
+      "bytes": 92173
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-60--45-open-steady.png": {
+      "sha256": "dc12f8e0c7753b1c81d262f091580dcd2761d642481fa66f106377eab0a2b0b9",
+      "bytes": 98719
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-60--45-wall-first.png": {
+      "sha256": "60ae6db17d55c3ff10cf06f80fa6795ec4fc8515843b4f5b664c62ace7a5254e",
+      "bytes": 93955
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-60--45-wall-steady.png": {
+      "sha256": "aa990f0093c1ad428c2f65ae3d592891e39bd67148bc3d80305f67fbdebe9dfb",
+      "bytes": 101017
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-60-0-open-first.png": {
+      "sha256": "6b204af9bc1a026bea1ff0be4469862825e53bbc62ee23a87c7ef27d4daaff9b",
+      "bytes": 99292
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-60-0-open-steady.png": {
+      "sha256": "6de81ec8de7cac924497d5c5aa34e9b83c30ee600bc02ca3dd206889ece87398",
+      "bytes": 109428
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-60-0-wall-first.png": {
+      "sha256": "e3eefaf6c47e6dabfef238f49b855f25cc7220846711b1f59aaa26f7426ce579",
+      "bytes": 96336
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-60-0-wall-steady.png": {
+      "sha256": "5125be76d6378cb6f10739159a3d316fdc81605a1b63317c4a90a029ed23fafa",
+      "bytes": 102134
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-60-40-open-first.png": {
+      "sha256": "9c71ddcfce0116d764b42a0daf2a6da5a6825b0119aa8e7e164d05fd7ce5c2c7",
+      "bytes": 102761
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-60-40-open-steady.png": {
+      "sha256": "6e28a0019a0f8dc46aa18a4a7297db07062e3c9d4b71fb311bd54df2269bad90",
+      "bytes": 117482
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-60-40-wall-first.png": {
+      "sha256": "a608fcf7a10a0f469d5d839fc212517345703303e80b0491bb7bc0de7cf2c3d7",
+      "bytes": 96553
+    },
+    "browser/quad-steady-ready/s3-maneuver-stepper-horizontal-60-40-wall-steady.png": {
+      "sha256": "a940af3fd37ed0d172abfbbdaf00f14053df8f45f9aecaa5e574cac1153e3052",
+      "bytes": 110786
+    },
+    "harness-camera-controls/wide-camera-ready.mjs": {
+      "sha256": "9ac040a70bf9828d35369577c80f99bdc48e86f7ae88ceec80093907e74ee306",
+      "bytes": 25924
+    },
+    "harness-camera-controls/wide-camera.mjs": {
+      "sha256": "4a8a66ba02554e0204310a65df5e82ee180982bc453e460a73b1f9495290d85f",
+      "bytes": 25303
+    },
+    "logs/development/dynamo-authority-settlement-final.log": {
+      "sha256": "900f43190af8d3d958670635cb6d05a6d9aa2aa7053d5e863f73d18e67a71086",
+      "bytes": 2179
+    },
+    "logs/development/dynamo-bubbler-emitted-negative.log": {
+      "sha256": "1164821789fa06d6bdc306b22a52cd8875b9373c131b97eeeea51cdcff50c22f",
+      "bytes": 1308
+    },
+    "logs/development/dynamo-old-emitted-negative-final.log": {
+      "sha256": "a83ca5a66c2bccc9e333995a7bda9842332d655e68a8d301ff5c9a85ffd2614f",
+      "bytes": 1811
+    },
+    "logs/development/explosher-authored-lip-regressions.log": {
+      "sha256": "cd8a10760885b31350496d4fae835ea2d974c6e0fb7e32f466e7e1cb46dbf656",
+      "bytes": 4732
+    },
+    "logs/development/explosher-authored-muzzle-models-final.log": {
+      "sha256": "64e8277be3bdd00ea18c0f392b8809a711333880c609eac1928dd127a3f47370",
+      "bytes": 1167
+    },
+    "logs/development/explosher-authored-muzzle-source-final.log": {
+      "sha256": "1116aba3d503e083b01073f821ce1339814b7bcf109101378e3ac65d5164f722",
+      "bytes": 53551
+    },
+    "logs/development/flick-new-emitted.log": {
+      "sha256": "4ad2b9e9c85c428fee5014c0997a7fed56fe3cf1f0bff5c0f174cdea3117cdd7",
+      "bytes": 6938
+    },
+    "logs/development/flick-object-regressions.log": {
+      "sha256": "cf6f6910fba1a9848be8201619cdfbb40258fe7e0ba9b5a9761740f3305ea883",
+      "bytes": 4910
+    },
+    "logs/development/quad-native-volume-pose.log": {
+      "sha256": "9c27954e19ecce307572735d01da1a2081f02a67b779d5d8454cf51ffad38d35",
+      "bytes": 1638
+    },
+    "logs/development/quad-volume-affected-regressions.log": {
+      "sha256": "172cc1bfa085fe4863ab57abfb885320093d2e9a8d3ac16b8446d8e91e1968e3",
+      "bytes": 640
+    },
+    "logs/development/source-launch-full.log": {
+      "sha256": "b1d414259f7080d565a6b58cf48830b4e465159a3f7d6db1331f498e087bbd93",
+      "bytes": 1488
+    },
+    "logs/development/urchin-native-arena-final.tap": {
+      "sha256": "bcbcfa56a20925b2bfb6318f8a9aff1d0e2f39c20dbc825a2245e853424007f8",
+      "bytes": 6268
+    },
+    "logs/development/urchin-native-arena.tap": {
+      "sha256": "75be00aac06290b0f26fa9f261a3d61452ce8215aba2cc9aa1f6c6ac0377d923",
+      "bytes": 2080
+    },
+    "logs/development/zipcaster-retry-boundary-built.log": {
+      "sha256": "3ceb5844715bebdb6700f3286f7d5ca56a2c15aa3433f7a7e18b6e7292f64dd3",
+      "bytes": 572
+    },
+    "logs/development/zipcaster-retry-boundary-reused.log": {
+      "sha256": "1068c416a46a1e7f547b6ae39e1cc2b16c4e0fcfd954a028c7e595efe983cb16",
+      "bytes": 420
+    },
+    "logs/final/dynamo-emitted.log": {
+      "sha256": "0cf1b82d3fcbe23b6cf1184ae28dd7fb00d40054e568e422c7c122bb0d231434",
+      "bytes": 2716
+    },
+    "logs/final/emitted-positive.log": {
+      "sha256": "2db014ba9355fe29e16824e7421385ab5b33363810866864114435fb3ff091a6",
+      "bytes": 4738
+    },
+    "logs/final/flick-horizontal.log": {
+      "sha256": "38eb8bc867ae3c2a8d7d93bd87a6c42d0743d853b75cbe8b3091ff65a46e2830",
+      "bytes": 17082
+    },
+    "logs/final/flick-vertical.log": {
+      "sha256": "180ad81f538bee6cb3799c4fd9ae598fe3814d65b2019c51c3429c2a38cf09b8",
+      "bytes": 10744
+    },
+    "logs/final/observer-debug.log": {
+      "sha256": "3ff1f589824504bd31e0b36db9b0532292f7bef32c3bc2549990bea21af79616",
+      "bytes": 474
+    },
+    "logs/final/pose-observed.log": {
+      "sha256": "16cec717e7aab76156eb33bf6a078664c1964550c0e10e4696be0cb0bb056d24",
+      "bytes": 12795
+    },
+    "logs/final/pose.log": {
+      "sha256": "8528ec15991322e4fc42c9789326a363ad8df5da0281e87489cc36ec9af4226c",
+      "bytes": 12882
+    },
+    "logs/final/quad-all-parts-ready.log": {
+      "sha256": "fddb0c9d51cf3597d6fee1058fa40eab66236dbd1095e830647f42588d905561",
+      "bytes": 475
+    },
+    "logs/final/quad-all-parts.log": {
+      "sha256": "cf1f0c82bca9e4d4eb021ce04c19147b863ed2cb203f7a48579ace176d882e07",
+      "bytes": 485
+    },
+    "logs/final/quad-steady-ready.log": {
+      "sha256": "8463f2f8bd2c163ce3f807f7f3c58ed53427b1b38ea4c70413f36b83ef0a63a9",
+      "bytes": 6530
+    },
+    "source-owned-sha256.json": {
+      "sha256": "0e702dc08036015ff99aa466beaa4adc0837d2d357eaaa802d3ce9d2f355e7e4",
+      "bytes": 3179
+    }
+  },
+  "localScreenshotRoot": "/workspace/scratch/actions-weapons-stage-acceptance/.browser-evidence/weapons-final",
+  "localScreenshotsVisualReview": {
+    "quadFirstAndFullyReadySteady": ".browser-evidence/weapons-final/quad-all-parts-ready/s3-maneuver-stepper-horizontal-60-0-open-{first,steady}.png",
+    "explosherFirst": ".browser-evidence/weapons-final/pose-observed/s3-slosher-washtub-horizontal-60-0-open-first.png",
+    "scope": "Both Quad wide-camera images and Explosher front-FX first image visually inspected. All first/steady/native-prediction original hashes remain in allRetainedFiles; screenshot payloads are local only."
+  },
+  "fullAggregate": {
+    "archiveMember": "aggregate/weapon-only-final-acceptance.full.json",
+    "sha256": "6bbf1812db4782c1e2e2c7e10df300e66c944ce42931fd464ce696d0c6984d64",
+    "bytes": 3312124,
+    "note": "Exact original 3,312,124-byte aggregate, preserved without parse/reserialize or any byte change."
+  }
+}

@@ -6032,3 +6032,12 @@ existing Match intro clock before waiting for DOM presentation; existing scoring
 and 30/60/120Hz comparisons remain required. The reference remains Splatoon 3
 Ver.11.3.0. Local VM/emitted checks are separate from hosted native rendering
 and do not establish retail or physical-device parity.
+## 2026-10-22 weapon-only source correction checkpoint
+
+比較対象はSplatoon 3 11.3.0。今回の口先補正は既存INKWAVE meshのlandmarkから導出し、Nintendoの未公開firing originを復元したとは主張しない。Explosherのgeometry/手/animation channelを維持してmuzzleを既存burner lipへ合わせる。Quadはactual native InkVolume ownerで既存poseBirthOffsetを反映し、tipは物理位置、tailは既存保持期間後にdetachする。prediction/LOS fallback/ghostを接続へ強制しない。
+
+実Actor first/steady・30/60/120Hz・上下・Tidewater open/towerでsource/FX/muzzle/actual instanceを確認する。Explosher旧/newのvelocity/damage/ink/packet/tickが同一、candidate内のbirth/contact/paintは描画rate間で同一。口先を動かすため旧/newのphysical birth/contact座標は同一とは扱わずreceiptに分ける。Quadの修正は表示経路だけでphysical/contact/paint/network ownerを維持する。完成#1277とのgeometry lineageも確認する。
+
+Dynamo/他Roller/Brushの防御object・傘・BigBubblerへ、既存impactDamageで決済したUnit/距離/volley額を渡す。Bubbler queryは純粋に保ち、採用されたcontactだけ既存倍率を1回適用する。Unit1はdamage0のまま実CPU床paintとturf creditを維持。source UnitDamageRate0のNintendo engine解釈・実機unit分離は未確認で#1813を維持する。
+
+追加7 Roller/Brushの受入はactual Actor/Runner/Projectilesの330birth/22cover/780flight条件と、actual source pose/FX/WebGLのTidewater78条件。原作全parityとは区別する。Zipcaster失敗repeatは現45F境界を実Actorで確認し、原作ShotFailedIntervalFrm20とのphase意味は未確認。Urchin private physicsは正当なpinned source生成を用い60case完走したがassetsは公開せずhash/countのみ残す。詳細はcontinuation/weapons.mdおよび各receipt。

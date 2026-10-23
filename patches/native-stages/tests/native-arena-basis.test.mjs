@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';
 import {nativeArenaBasis,nativeSpawnYaw,nativeInitialLanding,nativeRetreatCoordinate} from '../runtime/native-spawn.mjs';
 import {nativeFixture,readStage} from './fixture.mjs';
-import {SQUID_SPAWN_PRESENTATION} from '../../splatoon3/runtime/respawn-lifecycle.mjs';
+import {SQUID_SPAWN_PRESENTATION,SQUID_SPAWN_FLIGHT_DURATION} from '../../splatoon3/runtime/respawn-lifecycle.mjs';
 import {fixture} from '../../splatoon3/tests/source-fixture.mjs';import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 const ROOT=process.env.INKWAVE_NATIVE_STAGE_ASSETS,hasUrchin=ROOT&&fs.existsSync(path.join(ROOT,'urchin','manifest.json'));
 
@@ -34,7 +34,7 @@ test('native opening and death respawn use actual Urchin support and opposing-pa
    }
   }
   assert.equal(a.s3.squidSpawn.phase,'flight','supported spawn launches before landing checks');
-  for(let i=0;i<Math.ceil(hz*1.5);i++){G.time+=1/hz;a.update(1/hz);}
+  for(let i=0;i<Math.ceil(hz*(SQUID_SPAWN_FLIGHT_DURATION+.5));i++){G.time+=1/hz;a.update(1/hz);}
   assert.equal(a.s3.squidSpawn,undefined);assert(a.alive&&a.grounded&&a.ground.hit,'actual source launch lands '+team+' '+hz+' '+opening);proof.push({team,hz,opening,slot,yaw:expected,grounded:a.grounded});
  }
  // Fallback candidates also use longitudinal/cross-axis selection and real source resolution.

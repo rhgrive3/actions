@@ -23,21 +23,28 @@ function authored(f,id){
 }
 const rounded=x=>JSON.parse(JSON.stringify(x),(_k,v)=>typeof v==='number'?round(v):v);
 function signature(d){const h=crypto.createHash('sha256');for(const g of[d.body,d.ink]){for(const a of Object.values(g.attributes))h.update(Buffer.from(a.array.buffer,a.array.byteOffset,a.array.byteLength));h.update(Buffer.from(g.index.array.buffer));}return h.digest('hex');}
-test('both families preserve main hand/muzzle/channel contracts',async()=>{
- // The two rebuilt weapons must retain the pinned gameplay contracts. Other
- // models are compared against the actual current-main production snapshot,
+test('both families preserve main hand/channel contracts; Explosher muzzle follows its authored lip',async()=>{
+ // The two rebuilt weapons retain the pinned hand/channel contracts. #1431
+ // deliberately moves only Explosher's muzzle onto its existing mesh lip.
+ // Other models use the actual current-main production snapshot,
  // never against the stale b078 fixture after unrelated model additions.
  const liveBefore=process.env.QUAD_EXPLOSHER_BASELINE
    ? JSON.parse(fs.readFileSync(process.env.QUAD_EXPLOSHER_BASELINE,'utf8')):null;
  const f=await production();let pinned=0;
  for(const [id,b]of Object.entries(baseline.models)){
-  const d=authored(f,id),socket=k=>({pos:Array.from(d[k].pos.toArray()),quat:Array.from(d[k].quat.toArray())});
+  // Pinned historical target contracts are authored units; the same-runner
+  // current-main snapshot already contains family-scaled production units.
+  const d=IDS.includes(id)?authored(f,id):f.getWeaponDef(id),socket=k=>({pos:Array.from(d[k].pos.toArray()),quat:Array.from(d[k].quat.toArray())});
   const current={muzzle:Array.from(d.muzzle.toArray()),handR:socket('handR'),handL:socket('handL'),inHand:socket('inHand'),dual:d.dual??false,channels:Object.fromEntries(Object.entries(d.parts).map(([k,p])=>[k,{pivot:Array.from(p.pivot.toArray()),mat:p.mat}]))};
   if(IDS.includes(id))pinned++;
   const reference=IDS.includes(id)?b:liveBefore?.[id];
   if(!reference) continue; // Dedicated CI supplies immutable current-main before snapshot.
   const {geometryHash,triangles,bytes,bounds,...contract}=reference;
-  assert.deepEqual(rounded(current),rounded(contract),id+' no gameplay frame or animation channel change');
+  if(id==='s3-slosher-washtub'){
+   const {muzzle:oldMuzzle,...oldFrames}=contract,{muzzle,...frames}=current;
+   assert.deepEqual(rounded(frames),rounded(oldFrames),id+' no hand frame or animation channel change');
+   assert.notDeepEqual(rounded(muzzle),rounded(oldMuzzle),'old native offset is intentionally replaced by authored lip');
+  }else assert.deepEqual(rounded(current),rounded(contract),id+' no gameplay frame or animation channel change');
 
  }
  assert.equal(pinned,2,'both rebuilt model contracts are always checked');
@@ -90,6 +97,9 @@ test('angle-only Explosher trial keeps the fe242 mouth centre fixed',async()=>{
  // The family model scale (FAMILY_MODEL_SCALE.slosher) scales the authored geometry about the grip.
  const k=def.modelScale||1;
  const centre=new f.THREE.Vector3(0,.069+Math.sin(.48)*.05472,.249+Math.cos(.48)*.05472).multiplyScalar(k),axis=new f.THREE.Vector3(0,Math.sin(.70),Math.cos(.70));
+ assert.equal(def.muzzleLandmark?.name,'explosher-burner-lip');
+ assert.ok(def.muzzle.distanceTo(centre)<1e-12,'named gameplay muzzle is derived from the actual lip centre');
+ assert.ok(def.muzzleLandmark.axis.distanceTo(axis)<1e-12,'landmark normal uses the actual burner transform');
  const brass=new f.THREE.Color('#d1b76e'),bounds=new f.THREE.Box3();let witnesses=0;
  for(let i=0;i<p.count;i++){
   if(Math.max(Math.abs(c.getX(i)-brass.r),Math.abs(c.getY(i)-brass.g),Math.abs(c.getZ(i)-brass.b))>1e-6)continue;
