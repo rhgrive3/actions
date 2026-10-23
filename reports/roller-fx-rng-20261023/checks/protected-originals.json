@@ -1,0 +1,25 @@
+{
+  "privateQaHeadUnchanged": "e3758490f65f2e288acd8124561c3e08d8551a70",
+  "privateQaPatchSha256": "d895c42654c1ec61afa9a94589b585388a9ae7dd0f62612baa37d5dcbd1fe3ed",
+  "original18RawUnchanged": {
+    "reports/roller-browser30-20261023/raw/candidate-released-edge-30.json.gz": "950284e2f19938c946ca31861046ff9179061037ab6e32f7f47be12b3806c0dc",
+    "reports/roller-browser30-20261023/raw/main7e-released-edge-30.json.gz": "53db8254b91073b50b5a5b4fb74d337b602f28c347072f7c590f1d5c5870dd6b",
+    "reports/roller-browser30-20261023/raw/candidate-repress-edge-30.json.gz": "29a098332f3f8cdb412ea8c29a3e53b62261dc477513f38b2dd5228d0d50246a",
+    "reports/roller-browser30-20261023/raw/main7e-repress-edge-30.json.gz": "d9e28338a87ad57b9596b4945f2bfc5608058b63abaee7cc5fc1ef8d81022913",
+    "reports/roller-browser30-20261023/raw/main7e-late-edge-30.json.gz": "b186257508f1b1249633d0e5b8700760dbd8bc7de1859eb236b7aaf2562228b8",
+    "reports/roller-browser30-20261023/raw/main7e-early-edge-30.json.gz": "6e2c5301173e9dd72699f0294a8c1d017bc302efa85e044ad11805fd81b15a8d",
+    "reports/roller-browser30-20261023/raw/candidate-no-input-60.json.gz": "aa6acb25a9dfbf732fef687ceb577a6f71f7404b12a6895ad6f67aa2014d9b12",
+    "reports/roller-browser30-20261023/raw/candidate-early-edge-30.json.gz": "2fb9c0fa78ea062ebafd8b3e18c05e59c244ce809a5ec473658c17704dc6a721",
+    "reports/roller-browser30-20261023/raw/candidate-early40-edge-30.json.gz": "f4ed5ce1079e387f057b36c6541b3ab2d95d778c3f4083bd19e8c589974a34f2",
+    "reports/roller-browser30-20261023/raw/candidate-early40-edge-60.json.gz": "27625551bb08baddb4db52637497cdb11f269a4afc07a55618c23e95b2eaec2f",
+    "reports/roller-browser30-20261023/raw/candidate-late-edge-60.json.gz": "735765e7365f1c4fb47711baf71bf7ecfe304c85b38b91b239a06c64f29df1e4",
+    "reports/roller-browser30-20261023/raw/candidate-repress-edge-60.json.gz": "6fb3db8b08e61008ff963c7b2107d873eff7f57511d19a75a1a00ad3ebc9ff72",
+    "reports/roller-browser30-20261023/raw/candidate-no-input-30.json.gz": "8463b097f5d325a7289a50090d2bfee445e8a95476146a7a8891a07ebac10321",
+    "reports/roller-browser30-20261023/raw/candidate-late-edge-30.json.gz": "5dac4a202cf4a985b6844d22784c3f201dfaaa86a67aeba83f453b2ae977ad4d",
+    "reports/roller-browser30-20261023/raw/main7e-early40-edge-30.json.gz": "52d109fc400d7362786c39fe4fa9c02b8e5f17be090b2495e2d2e57d6e9c692f",
+    "reports/roller-browser30-20261023/raw/candidate-early-edge-60.json.gz": "c28f60e2d4f146ba392d9183268ad5306bf049c6cb27426e6b93c63771633119",
+    "reports/roller-browser30-20261023/raw/candidate-released-edge-60.json.gz": "910fcf3f11bc088c6dc856411aaff23737ce051dfff410bc8c435de3ef23077d",
+    "reports/roller-browser30-20261023/raw/main7e-no-input-30.json.gz": "b2859ac22b324ac45de6bcd35b9134865f8b597caa0eb591c047210e50b39159"
+  },
+  "original120HzLogUnchanged": true
+}

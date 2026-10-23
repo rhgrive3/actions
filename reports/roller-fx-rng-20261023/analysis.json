@@ -1,0 +1,1564 @@
+{
+  "matrix": [
+    {
+      "role": "main7e-30",
+      "case": "early-edge",
+      "hz": 30,
+      "ticks": 66,
+      "draws": 33,
+      "phaseBeforeClear": 1,
+      "phaseAfterClear": 1,
+      "phaseAfterWarmup": 1,
+      "rngCalls": 492,
+      "rngFinal": {
+        "state": 1219865415,
+        "draws": 492
+      },
+      "rawSha256": "98b5cf67db13b56cb356e22d6289458ea3f50107fcdce9f8bbc3eb058ca18c68",
+      "gzipSha256": "3ebc2df4c98e71b01e56cbfa95bcc2a2d56c1a37e96825b3de86372b3500fa1c"
+    },
+    {
+      "role": "main7e-30",
+      "case": "early40-edge",
+      "hz": 30,
+      "ticks": 66,
+      "draws": 33,
+      "phaseBeforeClear": 1,
+      "phaseAfterClear": 1,
+      "phaseAfterWarmup": 1,
+      "rngCalls": 492,
+      "rngFinal": {
+        "state": 1219865415,
+        "draws": 492
+      },
+      "rawSha256": "64157d35eb45a12122d2abcaa623130c6967a5209fd0dfc09477cdbe47628122",
+      "gzipSha256": "dc30f96a8c4d9aa602ce2de055111e3eb957e335fd5045b212b30d610d1abfb0"
+    },
+    {
+      "role": "main7e-30",
+      "case": "late-edge",
+      "hz": 30,
+      "ticks": 66,
+      "draws": 33,
+      "phaseBeforeClear": 1,
+      "phaseAfterClear": 1,
+      "phaseAfterWarmup": 1,
+      "rngCalls": 492,
+      "rngFinal": {
+        "state": 1219865415,
+        "draws": 492
+      },
+      "rawSha256": "619a0d7a35f6652ea091efa37a4196c0f3e8adebebd146937161486c9021a2c7",
+      "gzipSha256": "aee75b1b99d0da9564dfa060a492ac0b423dc44c2dc851658ac60c8843232e41"
+    },
+    {
+      "role": "main7e-30",
+      "case": "no-input",
+      "hz": 30,
+      "ticks": 66,
+      "draws": 33,
+      "phaseBeforeClear": 1,
+      "phaseAfterClear": 1,
+      "phaseAfterWarmup": 1,
+      "rngCalls": 0,
+      "rngFinal": {
+        "state": 123,
+        "draws": 0
+      },
+      "rawSha256": "6001e68fb89408506d5675a4debf30d450a05b65a5d90a902dd161249276ec7b",
+      "gzipSha256": "a48132112c81f7adcb698ae7aff15f8bdfb4543a66729bc31de5fb1b5553e097"
+    },
+    {
+      "role": "main7e-30",
+      "case": "released-edge",
+      "hz": 30,
+      "ticks": 66,
+      "draws": 33,
+      "phaseBeforeClear": 1,
+      "phaseAfterClear": 1,
+      "phaseAfterWarmup": 1,
+      "rngCalls": 555,
+      "rngFinal": {
+        "state": 1461262024,
+        "draws": 555
+      },
+      "rawSha256": "db1243c355d8e022da1de135429421b60316e22983d53fc8992a94ac379798b9",
+      "gzipSha256": "f2c2acb97a1205c201f2dc2f3412f6becd001500832d6c0be6137ca202cdb162"
+    },
+    {
+      "role": "main7e-30",
+      "case": "repress-edge",
+      "hz": 30,
+      "ticks": 66,
+      "draws": 33,
+      "phaseBeforeClear": 1,
+      "phaseAfterClear": 1,
+      "phaseAfterWarmup": 1,
+      "rngCalls": 492,
+      "rngFinal": {
+        "state": 1219865415,
+        "draws": 492
+      },
+      "rawSha256": "045d68e90fbf6926f41152e1db7a9ada6c6765c30fd8bcfbc1c295f0926f4032",
+      "gzipSha256": "f2eee964fbf1fb777a96e2869742b4d49d7d9d7398c6c3314399312ab8c9aefc"
+    },
+    {
+      "role": "candidate-30",
+      "case": "early-edge",
+      "hz": 30,
+      "ticks": 66,
+      "draws": 33,
+      "phaseBeforeClear": 0,
+      "phaseAfterClear": 0,
+      "phaseAfterWarmup": 0,
+      "rngCalls": 492,
+      "rngFinal": {
+        "state": 1219865415,
+        "draws": 492
+      },
+      "rawSha256": "85ce344d8265b29e828d24f77dd51974c8f7017e13a631d75b8f3308b3ad14d2",
+      "gzipSha256": "7b17aed9e7a1257c1da0558f7d00ac5f61e2bf8545e6559c97e54e4206cc5173"
+    },
+    {
+      "role": "candidate-30",
+      "case": "early40-edge",
+      "hz": 30,
+      "ticks": 66,
+      "draws": 33,
+      "phaseBeforeClear": 0,
+      "phaseAfterClear": 0,
+      "phaseAfterWarmup": 0,
+      "rngCalls": 492,
+      "rngFinal": {
+        "state": 1219865415,
+        "draws": 492
+      },
+      "rawSha256": "b458a8c09d5f6648909b1f11b2bfcb80ff4d31ce45d1c8003c40268e2aa03af0",
+      "gzipSha256": "ebfefec185531d8d8d5bed1af0abad7a42d9883b433283496c03e342eb18e000"
+    },
+    {
+      "role": "candidate-30",
+      "case": "late-edge",
+      "hz": 30,
+      "ticks": 66,
+      "draws": 33,
+      "phaseBeforeClear": 0,
+      "phaseAfterClear": 0,
+      "phaseAfterWarmup": 0,
+      "rngCalls": 492,
+      "rngFinal": {
+        "state": 1219865415,
+        "draws": 492
+      },
+      "rawSha256": "4a9ad5842b56782c5e0d443e2315c4c760233db74391f522b7060282edc522ad",
+      "gzipSha256": "67c78675e7385e4998a90528bc97cc2be86933beae971b41191a380171b700bf"
+    },
+    {
+      "role": "candidate-30",
+      "case": "no-input",
+      "hz": 30,
+      "ticks": 66,
+      "draws": 33,
+      "phaseBeforeClear": 0,
+      "phaseAfterClear": 0,
+      "phaseAfterWarmup": 0,
+      "rngCalls": 0,
+      "rngFinal": {
+        "state": 123,
+        "draws": 0
+      },
+      "rawSha256": "203d49b2581baf90ccb7f7518e483f799f997dae74283b48eefe43073840f033",
+      "gzipSha256": "2c04f8fad496b174b0149c9bac303fa0fb41d981768aa4e73114f61f17ee8684"
+    },
+    {
+      "role": "candidate-30",
+      "case": "released-edge",
+      "hz": 30,
+      "ticks": 66,
+      "draws": 33,
+      "phaseBeforeClear": 0,
+      "phaseAfterClear": 0,
+      "phaseAfterWarmup": 0,
+      "rngCalls": 555,
+      "rngFinal": {
+        "state": 1461262024,
+        "draws": 555
+      },
+      "rawSha256": "f062b9c544ceb8e018b7f7807e713d9d553c366e57aa2ba0a3e5d273665f7a16",
+      "gzipSha256": "a723663c7d1c8f891343de15e52fb72893a80b0222fe49581bb9a0f63c8435ab"
+    },
+    {
+      "role": "candidate-30",
+      "case": "repress-edge",
+      "hz": 30,
+      "ticks": 66,
+      "draws": 33,
+      "phaseBeforeClear": 0,
+      "phaseAfterClear": 0,
+      "phaseAfterWarmup": 0,
+      "rngCalls": 492,
+      "rngFinal": {
+        "state": 1219865415,
+        "draws": 492
+      },
+      "rawSha256": "1e5a5886a8fa1606bcea730b5ee57774641db739f19901523a7b6ca8049deee2",
+      "gzipSha256": "02cc0c6140ccd37ee03d1da42e0835e1d3bcd69fff79c10370f8c0caeb027f48"
+    },
+    {
+      "role": "candidate-60",
+      "case": "early-edge",
+      "hz": 60,
+      "ticks": 66,
+      "draws": 66,
+      "phaseBeforeClear": 0,
+      "phaseAfterClear": 0,
+      "phaseAfterWarmup": 0,
+      "rngCalls": 512,
+      "rngFinal": {
+        "state": 1216324219,
+        "draws": 512
+      },
+      "rawSha256": "6d032deaf71c2704fbd7a0c28d6686ad28ccac93c1188216e1cc1746e75c101e",
+      "gzipSha256": "b2f642996314420688d4927b1291df20c5d2d85aaf289f178553e378ccfd2117"
+    },
+    {
+      "role": "candidate-60",
+      "case": "early40-edge",
+      "hz": 60,
+      "ticks": 66,
+      "draws": 66,
+      "phaseBeforeClear": 0,
+      "phaseAfterClear": 0,
+      "phaseAfterWarmup": 0,
+      "rngCalls": 492,
+      "rngFinal": {
+        "state": 1219865415,
+        "draws": 492
+      },
+      "rawSha256": "908c3357a18736130427130224173e6d1abadd5972e97ad3caa1c14b869b3341",
+      "gzipSha256": "2b59bdeea972d0fb5bc76d1de545fa6f9e6bbd92aaff595e3cb7167fee890ca7"
+    },
+    {
+      "role": "candidate-60",
+      "case": "late-edge",
+      "hz": 60,
+      "ticks": 66,
+      "draws": 66,
+      "phaseBeforeClear": 0,
+      "phaseAfterClear": 0,
+      "phaseAfterWarmup": 0,
+      "rngCalls": 492,
+      "rngFinal": {
+        "state": 1219865415,
+        "draws": 492
+      },
+      "rawSha256": "cf234214358a139f54ab60fd7eab64c35f641039b36dd7e3d66e3bedb3aa6062",
+      "gzipSha256": "c7c887e9a3ded20aad67a2dee3c28c66f17fd1aa4b2202b86d9e1ed5677b6607"
+    },
+    {
+      "role": "candidate-60",
+      "case": "no-input",
+      "hz": 60,
+      "ticks": 66,
+      "draws": 66,
+      "phaseBeforeClear": 0,
+      "phaseAfterClear": 0,
+      "phaseAfterWarmup": 0,
+      "rngCalls": 0,
+      "rngFinal": {
+        "state": 123,
+        "draws": 0
+      },
+      "rawSha256": "d019685d3f56cd4bac09ed4ba67fc56b9ef2ac23e7d712a470b232b629d8e6fb",
+      "gzipSha256": "05415899af941a8342692bdb2d3a4da9de0232217f7ba35a484480a862d80d9f"
+    },
+    {
+      "role": "candidate-60",
+      "case": "released-edge",
+      "hz": 60,
+      "ticks": 66,
+      "draws": 66,
+      "phaseBeforeClear": 0,
+      "phaseAfterClear": 0,
+      "phaseAfterWarmup": 0,
+      "rngCalls": 556,
+      "rngFinal": {
+        "state": 3780168583,
+        "draws": 556
+      },
+      "rawSha256": "10577d06f1e0e7f0983ae6127f125676d6312b92737f1d43da76985716abb863",
+      "gzipSha256": "f1a175e923bd7e3fa5abe83b00c244cf56197bdc927b3ab18d013fc01af69c32"
+    },
+    {
+      "role": "candidate-60",
+      "case": "repress-edge",
+      "hz": 60,
+      "ticks": 66,
+      "draws": 66,
+      "phaseBeforeClear": 0,
+      "phaseAfterClear": 0,
+      "phaseAfterWarmup": 0,
+      "rngCalls": 492,
+      "rngFinal": {
+        "state": 1219865415,
+        "draws": 492
+      },
+      "rawSha256": "35fdb2de7a2e75d4af4f34cb7f586845a86a2f271303d2f3d4feba6eb70d2a99",
+      "gzipSha256": "2e88534524e3fd246d3fe06c4ece7e216b4ff2941a4536f6d5fdfe82537e3b9a"
+    }
+  ],
+  "matrixCount": 18,
+  "matrixTicks": 1188,
+  "matrixActualRenders": 792,
+  "originalAnalyzerRequiredGates": "passed without changes",
+  "strictFailures": [
+    {
+      "scene": "released-edge",
+      "comparison": "main7e30/candidate30",
+      "field": "fx",
+      "firstDifference": {
+        "path": ".34.stats.checks",
+        "before": 36,
+        "after": 32
+      }
+    },
+    {
+      "scene": "released-edge",
+      "comparison": "candidate30/candidate60",
+      "field": "rng",
+      "firstDifference": {
+        "path": ".33.state",
+        "before": 1104127845,
+        "after": 3901164550
+      }
+    },
+    {
+      "scene": "released-edge",
+      "comparison": "candidate30/candidate60",
+      "field": "fx",
+      "firstDifference": {
+        "path": ".33.stats.drops",
+        "before": 31,
+        "after": 30
+      }
+    },
+    {
+      "scene": "early40-edge",
+      "comparison": "main7e30/candidate30",
+      "field": "fx",
+      "firstDifference": {
+        "path": ".35.stats.checks",
+        "before": 40,
+        "after": 36
+      }
+    },
+    {
+      "scene": "early-edge",
+      "comparison": "main7e30/candidate30",
+      "field": "fx",
+      "firstDifference": {
+        "path": ".35.stats.checks",
+        "before": 40,
+        "after": 36
+      }
+    },
+    {
+      "scene": "early-edge",
+      "comparison": "candidate30/candidate60",
+      "field": "rng",
+      "firstDifference": {
+        "path": ".35.state",
+        "before": 1618043562,
+        "after": 810445542
+      }
+    },
+    {
+      "scene": "early-edge",
+      "comparison": "candidate30/candidate60",
+      "field": "fx",
+      "firstDifference": {
+        "path": ".35.stats.drops",
+        "before": 44,
+        "after": 43
+      }
+    },
+    {
+      "scene": "repress-edge",
+      "comparison": "main7e30/candidate30",
+      "field": "fx",
+      "firstDifference": {
+        "path": ".35.stats.checks",
+        "before": 40,
+        "after": 36
+      }
+    },
+    {
+      "scene": "late-edge",
+      "comparison": "main7e30/candidate30",
+      "field": "fx",
+      "firstDifference": {
+        "path": ".35.stats.checks",
+        "before": 40,
+        "after": 36
+      }
+    }
+  ],
+  "phaseProof": {
+    "tick34AllFiveDropArraysBeforeUpdateEqual": true,
+    "rows": [
+      {
+        "role": "main7e-30",
+        "tick": 34,
+        "phaseBefore": 2,
+        "phaseUsed": 0,
+        "dropCountBefore": 41,
+        "predictedChecks": 36,
+        "observedChecks": 36,
+        "deferredIndices": [
+          13,
+          20,
+          22,
+          23,
+          32
+        ],
+        "assumptions": "Native FX default gravity17 and PLAYER.waterY-1.6; fixed1/60, float32 assignment; no drop died/collided in this interval."
+      },
+      {
+        "role": "candidate-30",
+        "tick": 34,
+        "phaseBefore": 1,
+        "phaseUsed": 2,
+        "dropCountBefore": 41,
+        "predictedChecks": 32,
+        "observedChecks": 32,
+        "deferredIndices": [
+          3,
+          12,
+          15,
+          20,
+          21,
+          23,
+          27,
+          32,
+          33
+        ],
+        "assumptions": "Native FX default gravity17 and PLAYER.waterY-1.6; fixed1/60, float32 assignment; no drop died/collided in this interval."
+      }
+    ]
+  },
+  "observedAudioProducerCounts": [
+    {
+      "role": "main7e-30",
+      "perTickAudioRngCalls": {
+        "31": 1,
+        "33": 17,
+        "34": 17,
+        "48": 12
+      },
+      "rng33to35": [
+        {
+          "tick": 33,
+          "rng": {
+            "state": 1104127845,
+            "draws": 258
+          }
+        },
+        {
+          "tick": 34,
+          "rng": {
+            "state": 2254629689,
+            "draws": 342
+          }
+        },
+        {
+          "tick": 35,
+          "rng": {
+            "state": 1080072278,
+            "draws": 409
+          }
+        }
+      ]
+    },
+    {
+      "role": "candidate-30",
+      "perTickAudioRngCalls": {
+        "31": 1,
+        "33": 17,
+        "34": 17,
+        "48": 12
+      },
+      "rng33to35": [
+        {
+          "tick": 33,
+          "rng": {
+            "state": 1104127845,
+            "draws": 258
+          }
+        },
+        {
+          "tick": 34,
+          "rng": {
+            "state": 2254629689,
+            "draws": 342
+          }
+        },
+        {
+          "tick": 35,
+          "rng": {
+            "state": 1080072278,
+            "draws": 409
+          }
+        }
+      ]
+    },
+    {
+      "role": "candidate-60",
+      "perTickAudioRngCalls": {
+        "31": 1,
+        "33": 29,
+        "34": 12,
+        "35": 17,
+        "48": 17
+      },
+      "rng33to35": [
+        {
+          "tick": 33,
+          "rng": {
+            "state": 3901164550,
+            "draws": 265
+          }
+        },
+        {
+          "tick": 34,
+          "rng": {
+            "state": 1618043562,
+            "draws": 349
+          }
+        },
+        {
+          "tick": 35,
+          "rng": {
+            "state": 283356825,
+            "draws": 438
+          }
+        }
+      ]
+    }
+  ],
+  "originalRed": [
+    {
+      "path": "reports/roller-browser30-20261023/raw/candidate-released-edge-30.json.gz",
+      "sha256": "950284e2f19938c946ca31861046ff9179061037ab6e32f7f47be12b3806c0dc",
+      "tick35": {
+        "state": 1080072278,
+        "draws": 409
+      }
+    },
+    {
+      "path": "reports/roller-browser30-20261023/raw/candidate-released-edge-60.json.gz",
+      "sha256": "910fcf3f11bc088c6dc856411aaff23737ce051dfff410bc8c435de3ef23077d",
+      "tick35": {
+        "state": 3980743378,
+        "draws": 421
+      }
+    }
+  ],
+  "originalTick35NewDropSeedDrawIndices": {
+    "30": [
+      {
+        "drop": 41,
+        "drawIndex": 349
+      },
+      {
+        "drop": 42,
+        "drawIndex": 356
+      },
+      {
+        "drop": 43,
+        "drawIndex": 362
+      },
+      {
+        "drop": 44,
+        "drawIndex": 369
+      },
+      {
+        "drop": 45,
+        "drawIndex": 376
+      },
+      {
+        "drop": 46,
+        "drawIndex": 382
+      },
+      {
+        "drop": 47,
+        "drawIndex": 388
+      },
+      {
+        "drop": 48,
+        "drawIndex": 395
+      },
+      {
+        "drop": 49,
+        "drawIndex": 402
+      },
+      {
+        "drop": 50,
+        "drawIndex": 408
+      }
+    ],
+    "60": [
+      {
+        "drop": 41,
+        "drawIndex": 349
+      },
+      {
+        "drop": 42,
+        "drawIndex": 356
+      },
+      {
+        "drop": 43,
+        "drawIndex": 362
+      },
+      {
+        "drop": 44,
+        "drawIndex": 381
+      },
+      {
+        "drop": 45,
+        "drawIndex": 387
+      },
+      {
+        "drop": 46,
+        "drawIndex": 393
+      },
+      {
+        "drop": 47,
+        "drawIndex": 400
+      },
+      {
+        "drop": 48,
+        "drawIndex": 407
+      },
+      {
+        "drop": 49,
+        "drawIndex": 414
+      },
+      {
+        "drop": 50,
+        "drawIndex": 420
+      }
+    ]
+  },
+  "audioPrefixes": [
+    {
+      "name": "audio-prefix-30",
+      "hz": 30,
+      "ticks": 66,
+      "renders": 33,
+      "frames33to35": [
+        {
+          "tick": 33,
+          "rng": {
+            "state": 1104127845,
+            "draws": 258
+          }
+        },
+        {
+          "tick": 34,
+          "rng": {
+            "state": 2254629689,
+            "draws": 342
+          }
+        },
+        {
+          "tick": 35,
+          "rng": {
+            "state": 1080072278,
+            "draws": 409
+          }
+        }
+      ],
+      "audioClockEvents": [
+        {
+          "before": {
+            "tick": 31,
+            "name": "main:roller:fire",
+            "ctxTime": 23.071927437641722,
+            "last": null,
+            "counts": {
+              "played": 0,
+              "dropped": 0,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 270552769,
+              "draws": 30
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.82,
+            "fxPhase": 1,
+            "simulationTime": 12.516666666666792
+          },
+          "after": {
+            "ctxTime": 23.071927437641722,
+            "last": null,
+            "counts": {
+              "played": 1,
+              "dropped": 0,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 2655836460,
+              "draws": 31
+            },
+            "returnedVoice": true
+          }
+        },
+        {
+          "before": {
+            "tick": 33,
+            "name": "splat_small",
+            "ctxTime": 32.69079365079365,
+            "last": null,
+            "counts": {
+              "played": 1,
+              "dropped": 0,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 2164156667,
+              "draws": 128
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.6,
+            "fxPhase": 0,
+            "simulationTime": 12.566666666666794
+          },
+          "after": {
+            "ctxTime": 32.69079365079365,
+            "last": null,
+            "counts": {
+              "played": 2,
+              "dropped": 0,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1284439534,
+              "draws": 145
+            },
+            "returnedVoice": true
+          }
+        },
+        {
+          "before": {
+            "tick": 33,
+            "name": "splat_small",
+            "ctxTime": 32.699501133786846,
+            "last": null,
+            "counts": {
+              "played": 2,
+              "dropped": 0,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1389352623,
+              "draws": 212
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.6,
+            "fxPhase": 0,
+            "simulationTime": 12.566666666666794
+          },
+          "after": {
+            "ctxTime": 32.699501133786846,
+            "last": null,
+            "counts": {
+              "played": 2,
+              "dropped": 1,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1389352623,
+              "draws": 212
+            },
+            "returnedVoice": false
+          }
+        },
+        {
+          "before": {
+            "tick": 34,
+            "name": "splat_small",
+            "ctxTime": 32.74013605442177,
+            "last": null,
+            "counts": {
+              "played": 2,
+              "dropped": 1,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1708789252,
+              "draws": 279
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.6,
+            "fxPhase": 1,
+            "simulationTime": 12.583333333333462
+          },
+          "after": {
+            "ctxTime": 32.74013605442177,
+            "last": null,
+            "counts": {
+              "played": 3,
+              "dropped": 1,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 2385421987,
+              "draws": 296
+            },
+            "returnedVoice": true
+          }
+        },
+        {
+          "before": {
+            "tick": 35,
+            "name": "splat_small",
+            "ctxTime": 32.75174603174603,
+            "last": null,
+            "counts": {
+              "played": 3,
+              "dropped": 1,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1708090120,
+              "draws": 363
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.6,
+            "fxPhase": 2,
+            "simulationTime": 12.60000000000013
+          },
+          "after": {
+            "ctxTime": 32.75174603174603,
+            "last": null,
+            "counts": {
+              "played": 3,
+              "dropped": 2,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1708090120,
+              "draws": 363
+            },
+            "returnedVoice": false
+          }
+        },
+        {
+          "before": {
+            "tick": 48,
+            "name": "splat_small",
+            "ctxTime": 39.24172335600907,
+            "last": null,
+            "counts": {
+              "played": 3,
+              "dropped": 2,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 601535697,
+              "draws": 430
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.6,
+            "fxPhase": 0,
+            "simulationTime": 12.816666666666807
+          },
+          "after": {
+            "ctxTime": 39.24172335600907,
+            "last": null,
+            "counts": {
+              "played": 4,
+              "dropped": 2,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 2513192669,
+              "draws": 442
+            },
+            "returnedVoice": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "audio-prefix-60",
+      "hz": 60,
+      "ticks": 66,
+      "renders": 66,
+      "frames33to35": [
+        {
+          "tick": 33,
+          "rng": {
+            "state": 1104127845,
+            "draws": 258
+          }
+        },
+        {
+          "tick": 34,
+          "rng": {
+            "state": 2254629689,
+            "draws": 342
+          }
+        },
+        {
+          "tick": 35,
+          "rng": {
+            "state": 1080072278,
+            "draws": 409
+          }
+        }
+      ],
+      "audioClockEvents": [
+        {
+          "before": {
+            "tick": 31,
+            "name": "main:roller:fire",
+            "ctxTime": 21.942857142857143,
+            "last": null,
+            "counts": {
+              "played": 0,
+              "dropped": 0,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 270552769,
+              "draws": 30
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.82,
+            "fxPhase": 1,
+            "simulationTime": 12.516666666666792
+          },
+          "after": {
+            "ctxTime": 21.942857142857143,
+            "last": null,
+            "counts": {
+              "played": 1,
+              "dropped": 0,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 2655836460,
+              "draws": 31
+            },
+            "returnedVoice": true
+          }
+        },
+        {
+          "before": {
+            "tick": 33,
+            "name": "splat_small",
+            "ctxTime": 39.61034013605442,
+            "last": null,
+            "counts": {
+              "played": 1,
+              "dropped": 0,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 2164156667,
+              "draws": 128
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.6,
+            "fxPhase": 0,
+            "simulationTime": 12.566666666666794
+          },
+          "after": {
+            "ctxTime": 39.61034013605442,
+            "last": null,
+            "counts": {
+              "played": 2,
+              "dropped": 0,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1284439534,
+              "draws": 145
+            },
+            "returnedVoice": true
+          }
+        },
+        {
+          "before": {
+            "tick": 33,
+            "name": "splat_small",
+            "ctxTime": 39.63065759637188,
+            "last": null,
+            "counts": {
+              "played": 2,
+              "dropped": 0,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1389352623,
+              "draws": 212
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.6,
+            "fxPhase": 0,
+            "simulationTime": 12.566666666666794
+          },
+          "after": {
+            "ctxTime": 39.63065759637188,
+            "last": null,
+            "counts": {
+              "played": 2,
+              "dropped": 1,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1389352623,
+              "draws": 212
+            },
+            "returnedVoice": false
+          }
+        },
+        {
+          "before": {
+            "tick": 34,
+            "name": "splat_small",
+            "ctxTime": 40.8409977324263,
+            "last": null,
+            "counts": {
+              "played": 2,
+              "dropped": 1,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1708789252,
+              "draws": 279
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.6,
+            "fxPhase": 1,
+            "simulationTime": 12.583333333333462
+          },
+          "after": {
+            "ctxTime": 40.8409977324263,
+            "last": null,
+            "counts": {
+              "played": 3,
+              "dropped": 1,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 2385421987,
+              "draws": 296
+            },
+            "returnedVoice": true
+          }
+        },
+        {
+          "before": {
+            "tick": 35,
+            "name": "splat_small",
+            "ctxTime": 40.86131519274377,
+            "last": null,
+            "counts": {
+              "played": 3,
+              "dropped": 1,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1708090120,
+              "draws": 363
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.6,
+            "fxPhase": 2,
+            "simulationTime": 12.60000000000013
+          },
+          "after": {
+            "ctxTime": 40.86131519274377,
+            "last": null,
+            "counts": {
+              "played": 3,
+              "dropped": 2,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1708090120,
+              "draws": 363
+            },
+            "returnedVoice": false
+          }
+        },
+        {
+          "before": {
+            "tick": 48,
+            "name": "splat_small",
+            "ctxTime": 50.09124716553288,
+            "last": null,
+            "counts": {
+              "played": 3,
+              "dropped": 2,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 601535697,
+              "draws": 430
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.6,
+            "fxPhase": 0,
+            "simulationTime": 12.816666666666807
+          },
+          "after": {
+            "ctxTime": 50.09124716553288,
+            "last": null,
+            "counts": {
+              "played": 4,
+              "dropped": 2,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 2513192669,
+              "draws": 442
+            },
+            "returnedVoice": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "audio-key-prefix-60",
+      "hz": 60,
+      "ticks": 66,
+      "renders": 66,
+      "frames33to35": [
+        {
+          "tick": 33,
+          "rng": {
+            "state": 1104127845,
+            "draws": 258
+          }
+        },
+        {
+          "tick": 34,
+          "rng": {
+            "state": 2254629689,
+            "draws": 342
+          }
+        },
+        {
+          "tick": 35,
+          "rng": {
+            "state": 1080072278,
+            "draws": 409
+          }
+        }
+      ],
+      "audioClockEvents": [
+        {
+          "before": {
+            "key": "main:roller:fire:<actor-key-observe-map>",
+            "position": null,
+            "lastEntries": [],
+            "tick": 31,
+            "name": "main:roller:fire",
+            "ctxTime": 18.63111111111111,
+            "last": null,
+            "counts": {
+              "played": 0,
+              "dropped": 0,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 270552769,
+              "draws": 30
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.82,
+            "fxPhase": 1,
+            "simulationTime": 12.516666666666792
+          },
+          "after": {
+            "lastEntries": [
+              [
+                "main:roller:fire:actor1",
+                18.634013605442178
+              ]
+            ],
+            "ctxTime": 18.642721088435373,
+            "last": null,
+            "counts": {
+              "played": 1,
+              "dropped": 0,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 2655836460,
+              "draws": 31
+            },
+            "returnedVoice": true
+          }
+        },
+        {
+          "before": {
+            "key": "splat_small:cell:0:1:2",
+            "position": [
+              0,
+              2.25,
+              4.38
+            ],
+            "lastEntries": [
+              [
+                "main:roller:fire:actor1",
+                18.634013605442178
+              ]
+            ],
+            "tick": 33,
+            "name": "splat_small",
+            "ctxTime": 42.060045351473924,
+            "last": null,
+            "counts": {
+              "played": 1,
+              "dropped": 0,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 2164156667,
+              "draws": 128
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.6,
+            "fxPhase": 0,
+            "simulationTime": 12.566666666666794
+          },
+          "after": {
+            "lastEntries": [
+              [
+                "main:roller:fire:actor1",
+                18.634013605442178
+              ],
+              [
+                "splat_small:cell:0:1:2",
+                42.060045351473924
+              ]
+            ],
+            "ctxTime": 42.060045351473924,
+            "last": 42.060045351473924,
+            "counts": {
+              "played": 2,
+              "dropped": 0,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1284439534,
+              "draws": 145
+            },
+            "returnedVoice": true
+          }
+        },
+        {
+          "before": {
+            "key": "splat_small:cell:0:1:2",
+            "position": [
+              0,
+              2.201295939771621,
+              4.38
+            ],
+            "lastEntries": [
+              [
+                "main:roller:fire:actor1",
+                18.634013605442178
+              ],
+              [
+                "splat_small:cell:0:1:2",
+                42.060045351473924
+              ]
+            ],
+            "tick": 33,
+            "name": "splat_small",
+            "ctxTime": 42.07165532879819,
+            "last": 42.060045351473924,
+            "counts": {
+              "played": 2,
+              "dropped": 0,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1389352623,
+              "draws": 212
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.6,
+            "fxPhase": 0,
+            "simulationTime": 12.566666666666794
+          },
+          "after": {
+            "lastEntries": [
+              [
+                "main:roller:fire:actor1",
+                18.634013605442178
+              ],
+              [
+                "splat_small:cell:0:1:2",
+                42.060045351473924
+              ]
+            ],
+            "ctxTime": 42.07165532879819,
+            "last": 42.060045351473924,
+            "counts": {
+              "played": 2,
+              "dropped": 1,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1389352623,
+              "draws": 212
+            },
+            "returnedVoice": false
+          }
+        },
+        {
+          "before": {
+            "key": "splat_small:cell:0:0:2",
+            "position": [
+              0,
+              0.8793376579962207,
+              4.92
+            ],
+            "lastEntries": [
+              [
+                "main:roller:fire:actor1",
+                18.634013605442178
+              ],
+              [
+                "splat_small:cell:0:1:2",
+                42.060045351473924
+              ]
+            ],
+            "tick": 34,
+            "name": "splat_small",
+            "ctxTime": 44.98285714285714,
+            "last": null,
+            "counts": {
+              "played": 2,
+              "dropped": 1,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1708789252,
+              "draws": 279
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.6,
+            "fxPhase": 1,
+            "simulationTime": 12.583333333333462
+          },
+          "after": {
+            "lastEntries": [
+              [
+                "main:roller:fire:actor1",
+                18.634013605442178
+              ],
+              [
+                "splat_small:cell:0:1:2",
+                42.060045351473924
+              ],
+              [
+                "splat_small:cell:0:0:2",
+                44.98285714285714
+              ]
+            ],
+            "ctxTime": 44.98285714285714,
+            "last": 44.98285714285714,
+            "counts": {
+              "played": 3,
+              "dropped": 1,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 2385421987,
+              "draws": 296
+            },
+            "returnedVoice": true
+          }
+        },
+        {
+          "before": {
+            "key": "splat_small:cell:0:0:2",
+            "position": [
+              0,
+              0.9450884789222997,
+              4.92
+            ],
+            "lastEntries": [
+              [
+                "main:roller:fire:actor1",
+                18.634013605442178
+              ],
+              [
+                "splat_small:cell:0:1:2",
+                42.060045351473924
+              ],
+              [
+                "splat_small:cell:0:0:2",
+                44.98285714285714
+              ]
+            ],
+            "tick": 35,
+            "name": "splat_small",
+            "ctxTime": 45.008979591836734,
+            "last": 44.98285714285714,
+            "counts": {
+              "played": 3,
+              "dropped": 1,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1708090120,
+              "draws": 363
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.6,
+            "fxPhase": 2,
+            "simulationTime": 12.60000000000013
+          },
+          "after": {
+            "lastEntries": [
+              [
+                "main:roller:fire:actor1",
+                18.634013605442178
+              ],
+              [
+                "splat_small:cell:0:1:2",
+                42.060045351473924
+              ],
+              [
+                "splat_small:cell:0:0:2",
+                44.98285714285714
+              ]
+            ],
+            "ctxTime": 45.008979591836734,
+            "last": 44.98285714285714,
+            "counts": {
+              "played": 3,
+              "dropped": 2,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 1708090120,
+              "draws": 363
+            },
+            "returnedVoice": false
+          }
+        },
+        {
+          "before": {
+            "key": "splat_small:cell:0:1:7",
+            "position": [
+              0,
+              2.25,
+              15.011713236923324
+            ],
+            "lastEntries": [
+              [
+                "main:roller:fire:actor1",
+                18.634013605442178
+              ],
+              [
+                "splat_small:cell:0:1:2",
+                42.060045351473924
+              ],
+              [
+                "splat_small:cell:0:0:2",
+                44.98285714285714
+              ]
+            ],
+            "tick": 48,
+            "name": "splat_small",
+            "ctxTime": 53.83256235827665,
+            "last": null,
+            "counts": {
+              "played": 3,
+              "dropped": 2,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 601535697,
+              "draws": 430
+            },
+            "at": null,
+            "delay": 0,
+            "volume": 0.6,
+            "fxPhase": 0,
+            "simulationTime": 12.816666666666807
+          },
+          "after": {
+            "lastEntries": [
+              [
+                "main:roller:fire:actor1",
+                18.634013605442178
+              ],
+              [
+                "splat_small:cell:0:1:2",
+                42.060045351473924
+              ],
+              [
+                "splat_small:cell:0:0:2",
+                44.98285714285714
+              ],
+              [
+                "splat_small:cell:0:1:7",
+                53.83256235827665
+              ]
+            ],
+            "ctxTime": 53.83256235827665,
+            "last": 53.83256235827665,
+            "counts": {
+              "played": 4,
+              "dropped": 2,
+              "stolen": 0
+            },
+            "rng": {
+              "state": 2513192669,
+              "draws": 442
+            },
+            "returnedVoice": true
+          }
+        }
+      ]
+    }
+  ],
+  "prefixCount": 3,
+  "allScreenshots": 231,
+  "limits": [
+    "Original35 AudioContext time was not recorded; do not invent it.",
+    "Instrumented full60 run diverged at33, not an exact original35 replay.",
+    "Prefixes observed accepted/dropped native clocks; early unkeyed probes do not identify actual last-map entries.",
+    "Keyed probe uses actual spatial emitter key and complete last-map snapshots; actor-key lookup is not invented.",
+    "Emitted source replay uses mocked WebAudio nodes/diagnostic gaps and is separate from browser acceptance.",
+    "Original7 failures remain unchanged. No runtime fixes, native state resets, flags/deadlines changes,120Hz or retail retry."
+  ]
+}

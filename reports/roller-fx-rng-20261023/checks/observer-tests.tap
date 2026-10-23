@@ -1,0 +1,11 @@
+✔ traced pre-module closure preserves all original LCG results, cached identity and reset behavior (37.19452ms)
+✔ producer wrappers preserve this, return value, shared default-seed draw and native phase across clear (1.607498ms)
+✔ keyed audio observer reads the actual last map while preserving native reject/accept, options, phase and RNG (1.422628ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 101.174678

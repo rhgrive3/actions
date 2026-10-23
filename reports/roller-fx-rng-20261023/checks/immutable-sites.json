@@ -1,0 +1,24 @@
+[
+  {
+    "site": "/workspace/actions/.roller-recovery/browser30-20261023/baseline-main7e-site",
+    "inputHash": "8710f36362bd7e4c59b52cf6dd8d95a2ac720ee8b8b64541e1f0aecc8c4925f5",
+    "contentHash": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+    "artifacts": {
+      "_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/src/fx/fx.js": "b5aea5ddfbbe41de6fd46340d44575a024dc3413408241a232489c2e947e787f",
+      "_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/src/fx/fxHooks.js": "2431e0718001e8fdc69ba70c1bc356084587e7de161fbce9056c18c8d0b39d0b",
+      "_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/src/main.js": "881c160ed4782c6d974925a0c1468299d706d21cc814185499476b21f56a99d4",
+      "_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/src/world/paint.js": "bbc0a333187ee664f7138fb6b7145de9461b9dd6f7ca5a30eabcfe16fc6b55d0"
+    }
+  },
+  {
+    "site": "/workspace/actions/.roller-recovery/shaft-early/stationary-site",
+    "inputHash": "327937c902b4bdd350184424a9d67b77164c55309f3dde122dbe78d37c5816c5",
+    "contentHash": "6184fb028078c618018d8b7b7cd4ec0d2dd5fc79d3319ec5080a9efb5af8d6f0",
+    "artifacts": {
+      "_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/fx/fx.js": "b5aea5ddfbbe41de6fd46340d44575a024dc3413408241a232489c2e947e787f",
+      "_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/fx/fxHooks.js": "2431e0718001e8fdc69ba70c1bc356084587e7de161fbce9056c18c8d0b39d0b",
+      "_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/main.js": "881c160ed4782c6d974925a0c1468299d706d21cc814185499476b21f56a99d4",
+      "_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/world/paint.js": "bbc0a333187ee664f7138fb6b7145de9461b9dd6f7ca5a30eabcfe16fc6b55d0"
+    }
+  }
+]

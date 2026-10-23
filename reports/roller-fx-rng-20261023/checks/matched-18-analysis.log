@@ -1,0 +1,268 @@
+{
+  "status": "actual30Hz rendered motion and captured canonical/physical-paint invariance verified for six controlled ordinary-roller traces; strict FX/refresh RNG matching and full visual/retail acceptance remain open",
+  "cases": [
+    {
+      "scene": "released-edge",
+      "deadlines": {
+        "firstProjectile": 31,
+        "release": 31,
+        "firstAttackCleared": 56,
+        "windup": 0.5166666666666667,
+        "interval": 0.9333333333333333
+      },
+      "paint": {
+        "stamps": 13,
+        "versionDelta": 14,
+        "counts": [
+          494,
+          0
+        ],
+        "gridSha256": "d37108c61da2a926c8470689ab9e72d05c311cda0ad2dd8eb9dab9578150e514"
+      },
+      "comparisons": [
+        {
+          "label": "main7e30/candidate30",
+          "rng": true,
+          "fx": false,
+          "fullPaintAudit": true,
+          "firstDifferences": {
+            "fx": {
+              "path": ".34.stats.checks",
+              "before": 36,
+              "after": 32
+            }
+          }
+        },
+        {
+          "label": "candidate30/candidate60",
+          "rng": false,
+          "fx": false,
+          "fullPaintAudit": false,
+          "firstDifferences": {
+            "rng": {
+              "path": ".33.state",
+              "before": 1104127845,
+              "after": 3901164550
+            },
+            "fx": {
+              "path": ".33.stats.drops",
+              "before": 31,
+              "after": 30
+            }
+          }
+        }
+      ]
+    },
+    {
+      "scene": "early40-edge",
+      "deadlines": {
+        "firstProjectile": 31,
+        "release": 31,
+        "firstAttackCleared": 56,
+        "windup": 0.5166666666666667,
+        "interval": 0.9333333333333333
+      },
+      "paint": {
+        "stamps": 13,
+        "versionDelta": 16,
+        "counts": [
+          497,
+          0
+        ],
+        "gridSha256": "be535bfd8b3f9a98a5b226bbe92344e67efd1af447690d5d0b556e3bbeeafa44"
+      },
+      "comparisons": [
+        {
+          "label": "main7e30/candidate30",
+          "rng": true,
+          "fx": false,
+          "fullPaintAudit": true,
+          "firstDifferences": {
+            "fx": {
+              "path": ".35.stats.checks",
+              "before": 40,
+              "after": 36
+            }
+          }
+        },
+        {
+          "label": "candidate30/candidate60",
+          "rng": true,
+          "fx": true,
+          "fullPaintAudit": true,
+          "firstDifferences": {}
+        }
+      ]
+    },
+    {
+      "scene": "early-edge",
+      "deadlines": {
+        "firstProjectile": 31,
+        "release": 31,
+        "firstAttackCleared": 56,
+        "windup": 0.5166666666666667,
+        "interval": 0.9333333333333333
+      },
+      "paint": {
+        "stamps": 13,
+        "versionDelta": 16,
+        "counts": [
+          497,
+          0
+        ],
+        "gridSha256": "be535bfd8b3f9a98a5b226bbe92344e67efd1af447690d5d0b556e3bbeeafa44"
+      },
+      "comparisons": [
+        {
+          "label": "main7e30/candidate30",
+          "rng": true,
+          "fx": false,
+          "fullPaintAudit": true,
+          "firstDifferences": {
+            "fx": {
+              "path": ".35.stats.checks",
+              "before": 40,
+              "after": 36
+            }
+          }
+        },
+        {
+          "label": "candidate30/candidate60",
+          "rng": false,
+          "fx": false,
+          "fullPaintAudit": false,
+          "firstDifferences": {
+            "rng": {
+              "path": ".35.state",
+              "before": 1618043562,
+              "after": 810445542
+            },
+            "fx": {
+              "path": ".35.stats.drops",
+              "before": 44,
+              "after": 43
+            }
+          }
+        }
+      ]
+    },
+    {
+      "scene": "repress-edge",
+      "deadlines": {
+        "firstProjectile": 31,
+        "release": 31,
+        "firstAttackCleared": 56,
+        "windup": 0.5166666666666667,
+        "interval": 0.9333333333333333
+      },
+      "paint": {
+        "stamps": 13,
+        "versionDelta": 16,
+        "counts": [
+          497,
+          0
+        ],
+        "gridSha256": "be535bfd8b3f9a98a5b226bbe92344e67efd1af447690d5d0b556e3bbeeafa44"
+      },
+      "comparisons": [
+        {
+          "label": "main7e30/candidate30",
+          "rng": true,
+          "fx": false,
+          "fullPaintAudit": true,
+          "firstDifferences": {
+            "fx": {
+              "path": ".35.stats.checks",
+              "before": 40,
+              "after": 36
+            }
+          }
+        },
+        {
+          "label": "candidate30/candidate60",
+          "rng": true,
+          "fx": true,
+          "fullPaintAudit": true,
+          "firstDifferences": {}
+        }
+      ]
+    },
+    {
+      "scene": "late-edge",
+      "deadlines": {
+        "firstProjectile": 31,
+        "release": 31,
+        "firstAttackCleared": 56,
+        "windup": 0.5166666666666667,
+        "interval": 0.9333333333333333
+      },
+      "paint": {
+        "stamps": 13,
+        "versionDelta": 16,
+        "counts": [
+          497,
+          0
+        ],
+        "gridSha256": "be535bfd8b3f9a98a5b226bbe92344e67efd1af447690d5d0b556e3bbeeafa44"
+      },
+      "comparisons": [
+        {
+          "label": "main7e30/candidate30",
+          "rng": true,
+          "fx": false,
+          "fullPaintAudit": true,
+          "firstDifferences": {
+            "fx": {
+              "path": ".35.stats.checks",
+              "before": 40,
+              "after": 36
+            }
+          }
+        },
+        {
+          "label": "candidate30/candidate60",
+          "rng": true,
+          "fx": true,
+          "fullPaintAudit": true,
+          "firstDifferences": {}
+        }
+      ]
+    },
+    {
+      "scene": "no-input",
+      "deadlines": {
+        "firstProjectile": null,
+        "release": null,
+        "firstAttackCleared": null,
+        "windup": null,
+        "interval": null
+      },
+      "paint": {
+        "stamps": 0,
+        "versionDelta": 0,
+        "counts": [
+          0,
+          0
+        ],
+        "gridSha256": "5c4c8dbc680583c4c4c99a516be8e3e7d01d6b09b98d0520c9cf6806ae4ed01c"
+      },
+      "comparisons": [
+        {
+          "label": "main7e30/candidate30",
+          "rng": true,
+          "fx": true,
+          "fullPaintAudit": true,
+          "firstDifferences": {}
+        },
+        {
+          "label": "candidate30/candidate60",
+          "rng": true,
+          "fx": true,
+          "fullPaintAudit": true,
+          "firstDifferences": {}
+        }
+      ]
+    }
+  ],
+  "strictFailureCount": 9
+}

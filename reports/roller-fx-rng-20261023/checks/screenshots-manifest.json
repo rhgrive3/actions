@@ -1,0 +1,1157 @@
+[
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-key-prefix-60/tick-39.png",
+    "bytes": 346374,
+    "sha256": "a52ddc9ac0693dd6baf39216b158c8e334a2788983ef841a74e78b6ff5ddcfda"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-key-prefix-60/tick-41.png",
+    "bytes": 338852,
+    "sha256": "2658d36b7fd8932d1040a002a273a0f5aeb23fa8f7b5259c4173d8c10cba0813"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-key-prefix-60/tick-45.png",
+    "bytes": 337223,
+    "sha256": "5e0e6d24854bacda31b140937aef17e91bfef4b5188336e016edbc2923429c7f"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-key-prefix-60/tick-47.png",
+    "bytes": 338320,
+    "sha256": "bb66afdb7d1d03a6ce7b06151902ded5e0f8f09947b2c9460cc7916538faf8e7"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-key-prefix-60/tick-49.png",
+    "bytes": 337060,
+    "sha256": "9e843b1ef3d0ad35ad4e227b3721f54eefffc74e50314a96e5066dc31ee174ab"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-key-prefix-60/tick-51.png",
+    "bytes": 340502,
+    "sha256": "a8dc8334a37cf15b1f99543a2072fc397509c9def140e6a98e9de94d6be0deb7"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-key-prefix-60/tick-53.png",
+    "bytes": 342846,
+    "sha256": "922efa26b62b151bc426efd306a1588a5a1489f4e643712722fba4f648ed6697"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-key-prefix-60/tick-55.png",
+    "bytes": 346645,
+    "sha256": "436044b46f52bd11fa41eef33e1d67591b1b4a8055c2af0dd5bfd8d2ca3592b9"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-key-prefix-60/tick-57.png",
+    "bytes": 348484,
+    "sha256": "c37dbe5995dfceb853a7bd797687e6413e9cd0761e3fbb9186273d3a8bdf3d9a"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-key-prefix-60/tick-59.png",
+    "bytes": 346355,
+    "sha256": "27c1d8881369fa7e9fb98bdc43645413b36d305e5afe26b998cc21c9cd641ca6"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-key-prefix-60/tick-65.png",
+    "bytes": 343888,
+    "sha256": "8d4cc8158e0e83fd9fbbcf04b52f22629ff3d5d926796b345be400df2a49a4ea"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-30/tick-39.png",
+    "bytes": 346374,
+    "sha256": "a7eb94bd9b34f4afe78ae17d5b904464e55869ef1f95684ff1ac9b9c4b6e77cd"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-30/tick-41.png",
+    "bytes": 338849,
+    "sha256": "68db0aac23112948936eec8156ff3cc1a650ff4349a4978a7c69ff60a577bd1d"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-30/tick-45.png",
+    "bytes": 337223,
+    "sha256": "5e0e6d24854bacda31b140937aef17e91bfef4b5188336e016edbc2923429c7f"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-30/tick-47.png",
+    "bytes": 338320,
+    "sha256": "bb66afdb7d1d03a6ce7b06151902ded5e0f8f09947b2c9460cc7916538faf8e7"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-30/tick-49.png",
+    "bytes": 337060,
+    "sha256": "9e843b1ef3d0ad35ad4e227b3721f54eefffc74e50314a96e5066dc31ee174ab"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-30/tick-51.png",
+    "bytes": 340502,
+    "sha256": "a8dc8334a37cf15b1f99543a2072fc397509c9def140e6a98e9de94d6be0deb7"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-30/tick-53.png",
+    "bytes": 342846,
+    "sha256": "922efa26b62b151bc426efd306a1588a5a1489f4e643712722fba4f648ed6697"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-30/tick-55.png",
+    "bytes": 346645,
+    "sha256": "436044b46f52bd11fa41eef33e1d67591b1b4a8055c2af0dd5bfd8d2ca3592b9"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-30/tick-57.png",
+    "bytes": 348484,
+    "sha256": "c37dbe5995dfceb853a7bd797687e6413e9cd0761e3fbb9186273d3a8bdf3d9a"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-30/tick-59.png",
+    "bytes": 346355,
+    "sha256": "27c1d8881369fa7e9fb98bdc43645413b36d305e5afe26b998cc21c9cd641ca6"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-30/tick-65.png",
+    "bytes": 343888,
+    "sha256": "8d4cc8158e0e83fd9fbbcf04b52f22629ff3d5d926796b345be400df2a49a4ea"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-60/tick-39.png",
+    "bytes": 346437,
+    "sha256": "14ce02001b6833bb37c9417ed1885b1d81353d9c61b06b1410270c9a08917294"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-60/tick-41.png",
+    "bytes": 338864,
+    "sha256": "4ca2e59ab9079beec08fa58019ceeb076bd3a0f55f2ccbeb212e24b1c07091ae"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-60/tick-45.png",
+    "bytes": 337186,
+    "sha256": "875d918b0009913cba3733fc07ea748b3f7bda34df2dde3345956e980f11800b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-60/tick-47.png",
+    "bytes": 338316,
+    "sha256": "61a672939e77ac17e5015be41c5bb892f44302fe9fda322a11f62a710048e0ea"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-60/tick-49.png",
+    "bytes": 337087,
+    "sha256": "e26ec14a60f5284d1dce3e268ad56b81ff78cd04b11d9f88021a8a63ae9b6f64"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-60/tick-51.png",
+    "bytes": 340490,
+    "sha256": "be5ea401b36d578b58fe2f1956047e4f58ee2b03f21dd5b841032c0ce6661c7b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-60/tick-53.png",
+    "bytes": 342871,
+    "sha256": "564caf55ee49e14f60ca24e7ed51125784bb22ef8f1a16133dce9e9fdd20d9a1"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-60/tick-55.png",
+    "bytes": 346564,
+    "sha256": "4442dcfb5fee72c0dfa689c8e3da2a1867f001d28c1f672e1567b7615d42da4f"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-60/tick-57.png",
+    "bytes": 348414,
+    "sha256": "c605163be0256a0c863b468e294cee7ce1fac68b82abc5c320fa3e2a63ad8e29"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-60/tick-59.png",
+    "bytes": 346294,
+    "sha256": "8488575a2004bfa648174d721e6c5a1ce6a32c980fd1a7e533df3306ffc1bf16"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/audio-prefix-60/tick-65.png",
+    "bytes": 343825,
+    "sha256": "cce836cf203cbebc0e2de3cc7b123ac82c53356a5b1417431fb30527f14dafaf"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early-edge-30/tick-39.png",
+    "bytes": 344980,
+    "sha256": "521bfcacdd9c672044fbb1a82d1c00b1dfcaa43a428176ce202c4704eef10a78"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early-edge-30/tick-41.png",
+    "bytes": 337357,
+    "sha256": "cbcbb7b5c6cbdf8ea3c6a1252aa7129bbad6a378effab0e4aa84a820b7709600"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early-edge-30/tick-45.png",
+    "bytes": 335179,
+    "sha256": "b100cdadc36f9deaa8932bd818cefdaf0341099f7ce9a4209037e9a2fb1953e2"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early-edge-30/tick-47.png",
+    "bytes": 334884,
+    "sha256": "bec6273611d0fdf49a1cd09c07baf75c448e6b5cbed2d62090777e312bc17d2d"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early-edge-30/tick-49.png",
+    "bytes": 333949,
+    "sha256": "bed23c6e6a5fc3f9edbd7628274180f12944f61b51e5f21cca07d83f91667cb7"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early-edge-30/tick-51.png",
+    "bytes": 335597,
+    "sha256": "d4fce6f575728e0b7f9a7092d9c987cd3f59f6755c3c518f0e4b2b5717cf6df8"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early-edge-30/tick-53.png",
+    "bytes": 340608,
+    "sha256": "fc790f1087922d4a2db13d5ab986d60e36da542f3be119a81b617be5e648d0e7"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early-edge-30/tick-55.png",
+    "bytes": 341797,
+    "sha256": "acf181f82f252f388dfe5eef40d2021223365ce1c8655a56eb913940974fa681"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early-edge-30/tick-57.png",
+    "bytes": 343066,
+    "sha256": "25100ba2db73b44cb390d1c15dc8432b6eb303a416aa0ba76ec2c21e06a01b4c"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early-edge-30/tick-59.png",
+    "bytes": 342874,
+    "sha256": "f4401fd8d8606e79fb5a9f515dac13d7a5ce153bcbf73b833a59de675185f53e"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early-edge-30/tick-65.png",
+    "bytes": 340854,
+    "sha256": "ea7fbe0e4506a1411201529bc5c2065d5637e5e84976547493b1371f5840e95c"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early40-edge-30/tick-39.png",
+    "bytes": 344947,
+    "sha256": "971a7bc880d2f146ca35b05c516c7922f756473c6610097c78f2c8123f799492"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early40-edge-30/tick-41.png",
+    "bytes": 337313,
+    "sha256": "d5a7a30d10177c2d55f468b41b457c8005e296f3e6077145afa4ba82736e5980"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early40-edge-30/tick-45.png",
+    "bytes": 335126,
+    "sha256": "29a32afe80de617f0ec80e084f7a5a16e179c26e10f1a64813d9fcd0b31aa32b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early40-edge-30/tick-47.png",
+    "bytes": 334839,
+    "sha256": "cd13776477ffd1301d279e0b5232e366227da8a95e88b8adf7a51295dddd6814"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early40-edge-30/tick-49.png",
+    "bytes": 333919,
+    "sha256": "315b9125720de2f67ce63e1955e0f24ac902d930d7a8b5388e057028e2ab174c"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early40-edge-30/tick-51.png",
+    "bytes": 335564,
+    "sha256": "3548354f5b9c25d8b188b68d1ab5089c01d5a82df60d72908a01cc9d8eaeb726"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early40-edge-30/tick-53.png",
+    "bytes": 340571,
+    "sha256": "182f4f10808cdd546ec509e8313ef8db77d61ebe59f5ad35bb73a191aa98d0f3"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early40-edge-30/tick-55.png",
+    "bytes": 341778,
+    "sha256": "78643671f281504c168601c65c61e92017283eccd67ffee9b71dbf2f255b1084"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early40-edge-30/tick-57.png",
+    "bytes": 343040,
+    "sha256": "c14a1d3e966554a6dfdec27b80696ee2088e76f1de663b61bfbcca8e5338f6c7"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early40-edge-30/tick-59.png",
+    "bytes": 342854,
+    "sha256": "435c56a44e9967644a90650194fb540fb9ed57c93bb4351d82bc66af3a42aed5"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/early40-edge-30/tick-65.png",
+    "bytes": 340846,
+    "sha256": "50a1dd05099e1a64e84763fd1f88a4a4d9d2ecc3948db9302db99d6bf8d705d5"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/late-edge-30/tick-39.png",
+    "bytes": 345011,
+    "sha256": "8a57f9ce0bc3e322cd8c54b256e818ea0c6c045e92601e2c2a6bd31703bd7a6f"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/late-edge-30/tick-41.png",
+    "bytes": 337339,
+    "sha256": "ad4488a1063d9664769adedc40d99afc3073f5a1dfaec362983bbd2e0417a674"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/late-edge-30/tick-45.png",
+    "bytes": 335143,
+    "sha256": "907fe24c83deccf72132b93b19ea05a4073f8eef783863a1b13143fa74b9cafa"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/late-edge-30/tick-47.png",
+    "bytes": 335728,
+    "sha256": "ea62aeeb53be01c950d12a8465c492c022280494e24fa97016504b12e96e326a"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/late-edge-30/tick-49.png",
+    "bytes": 336962,
+    "sha256": "489b4ebfa65dc17de346477d783f6ac7abab94dfbcb75d16c68f7ccfb263579b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/late-edge-30/tick-51.png",
+    "bytes": 338900,
+    "sha256": "112dbdce703c6a2606c712ed7ba5732989d06503ae5c5a87f2dc57be515ce6f8"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/late-edge-30/tick-53.png",
+    "bytes": 340810,
+    "sha256": "5e5b3400c7648206469c933e442b59dffad7cc5027055f487abf7871d07d697e"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/late-edge-30/tick-55.png",
+    "bytes": 341335,
+    "sha256": "b8345832dc7ee6b4d87303b3c0544a8944e4bd62c69278c89d8f730103881469"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/late-edge-30/tick-57.png",
+    "bytes": 343092,
+    "sha256": "24ee1e2e8363953f849a165ea4b7ddac358c8a499edcfc1f8762498198dca4f4"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/late-edge-30/tick-59.png",
+    "bytes": 342876,
+    "sha256": "96ddceaf598c095bc1b509305e008fad1d0d47d9893c707f9324b88e195efeb1"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/late-edge-30/tick-65.png",
+    "bytes": 340884,
+    "sha256": "63ab549495d9156414764c679dafda5b28e893370f497425fa13b51f9eec99c3"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/no-input-30/tick-39.png",
+    "bytes": 338026,
+    "sha256": "7856f993a664371089fb617a347e3e0b88a34e932ee0c948a106a47615a5fe83"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/no-input-30/tick-41.png",
+    "bytes": 337965,
+    "sha256": "48539bf7bc653ca8c5ec76e615f3985068339713b2e3121552462fdf51fb6f91"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/no-input-30/tick-45.png",
+    "bytes": 338060,
+    "sha256": "965068189e144a0220aad8bca795638507a035c45b797a8f02e698d882292152"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/no-input-30/tick-47.png",
+    "bytes": 337983,
+    "sha256": "3813e53e0d70baefc15374f53145e7278733f8556b6209ca392555404683e42d"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/no-input-30/tick-49.png",
+    "bytes": 338158,
+    "sha256": "e7b3217ececc391068f45a1c42185cbe9a30ffcfb882f815f8c6d9e9e2cabaad"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/no-input-30/tick-51.png",
+    "bytes": 338125,
+    "sha256": "a9572b23d50c44cf0eb27997ddf5601cb2f74f1b3c23566968043a63ed83f378"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/no-input-30/tick-53.png",
+    "bytes": 338092,
+    "sha256": "3f8f5bfde1b06f42a2dee79a5c43ff12d584a7da998cc39ec294e82dabe9f5d0"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/no-input-30/tick-55.png",
+    "bytes": 338205,
+    "sha256": "78de544ee42794ec147358e16e3f39cae3c604749da8d6d92d3890ec02e9ddee"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/no-input-30/tick-57.png",
+    "bytes": 338143,
+    "sha256": "612c24a023bc02e7893311c7216ea67e3034b33f0997d997e8fa09b1c2a4843e"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/no-input-30/tick-59.png",
+    "bytes": 338564,
+    "sha256": "ac884b66929e7b146aac2a629929ba7ca1d3ad69508caf0612dfdfcd1d4a7569"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/no-input-30/tick-65.png",
+    "bytes": 339080,
+    "sha256": "3fcd5da9e8036a4fa74fc8a26edfda51c6bbf747d08b31ded9794f944d475254"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/released-edge-30/tick-39.png",
+    "bytes": 346435,
+    "sha256": "64d0492992f8d3189703f778510591792749627aaa377476f8a8bfef8a6c6c67"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/released-edge-30/tick-41.png",
+    "bytes": 338864,
+    "sha256": "4011e4cef06122c916439f7861687d3fdda2d2496e00c7d6345096ca1a1e6166"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/released-edge-30/tick-45.png",
+    "bytes": 337186,
+    "sha256": "875d918b0009913cba3733fc07ea748b3f7bda34df2dde3345956e980f11800b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/released-edge-30/tick-47.png",
+    "bytes": 338316,
+    "sha256": "61a672939e77ac17e5015be41c5bb892f44302fe9fda322a11f62a710048e0ea"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/released-edge-30/tick-49.png",
+    "bytes": 337087,
+    "sha256": "e26ec14a60f5284d1dce3e268ad56b81ff78cd04b11d9f88021a8a63ae9b6f64"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/released-edge-30/tick-51.png",
+    "bytes": 340490,
+    "sha256": "be5ea401b36d578b58fe2f1956047e4f58ee2b03f21dd5b841032c0ce6661c7b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/released-edge-30/tick-53.png",
+    "bytes": 342871,
+    "sha256": "564caf55ee49e14f60ca24e7ed51125784bb22ef8f1a16133dce9e9fdd20d9a1"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/released-edge-30/tick-55.png",
+    "bytes": 346564,
+    "sha256": "4442dcfb5fee72c0dfa689c8e3da2a1867f001d28c1f672e1567b7615d42da4f"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/released-edge-30/tick-57.png",
+    "bytes": 348414,
+    "sha256": "c605163be0256a0c863b468e294cee7ce1fac68b82abc5c320fa3e2a63ad8e29"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/released-edge-30/tick-59.png",
+    "bytes": 346294,
+    "sha256": "8488575a2004bfa648174d721e6c5a1ce6a32c980fd1a7e533df3306ffc1bf16"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/released-edge-30/tick-65.png",
+    "bytes": 343825,
+    "sha256": "cce836cf203cbebc0e2de3cc7b123ac82c53356a5b1417431fb30527f14dafaf"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/repress-edge-30/tick-39.png",
+    "bytes": 345000,
+    "sha256": "e8cc7d6a22240bd921976026472cc1889db646e36a677b6822473d9d0426eae3"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/repress-edge-30/tick-41.png",
+    "bytes": 337320,
+    "sha256": "cd52133e15e87b49db7e13b346b7b39beb1f17228d12ed61fb71c46ad78bbd57"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/repress-edge-30/tick-45.png",
+    "bytes": 335154,
+    "sha256": "eb760b23870a76eb1887ae81e4ae240501b43bb1367743d89345091dc850bb16"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/repress-edge-30/tick-47.png",
+    "bytes": 335739,
+    "sha256": "53c42f675115b30a10e223d1ad2d9c2f4fe31dd40ec075593a2e0fb4bd54c6ec"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/repress-edge-30/tick-49.png",
+    "bytes": 334742,
+    "sha256": "19c4ae8c036f14943e5e37c1a389dd9c5e9105587f77f8fbc36bf1c738f02527"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/repress-edge-30/tick-51.png",
+    "bytes": 338915,
+    "sha256": "495a3fa2fbf811822a11e13c7e6c325c6b134afbd2a1a1bcd0575d8296ae6f26"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/repress-edge-30/tick-53.png",
+    "bytes": 340833,
+    "sha256": "109ed90df26485070247582072ba89e8b4aa583a88a449bed73dbdae3451c97c"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/repress-edge-30/tick-55.png",
+    "bytes": 341320,
+    "sha256": "a8385d3adfba44a9adb6a9980350a4c01fd84ec6dbd756743350ddaa279e9b10"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/repress-edge-30/tick-57.png",
+    "bytes": 343070,
+    "sha256": "bd24b7f96a53915746b29844c1ef8eeef5bd1145f834ae7c3779786afac6a40d"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/repress-edge-30/tick-59.png",
+    "bytes": 342885,
+    "sha256": "ca3eef0ae497445f386eb86fd256f6b362c833443f5be8731e09e02167931f1b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-30/repress-edge-30/tick-65.png",
+    "bytes": 340884,
+    "sha256": "f9ba43e29457cecec937b7dc17151c64f48fd13caf540fda6cdd4cfa6e3a62da"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early-edge-60/tick-39.png",
+    "bytes": 344980,
+    "sha256": "083527a38206ea41664c9a47a52882fa78be70fc56a82272cc2d9d4eab7b4b4d"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early-edge-60/tick-41.png",
+    "bytes": 337357,
+    "sha256": "703097e485c9deb139994101badb23e1e08fdc5e27caa72c7773f479c58e7a10"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early-edge-60/tick-45.png",
+    "bytes": 335179,
+    "sha256": "b100cdadc36f9deaa8932bd818cefdaf0341099f7ce9a4209037e9a2fb1953e2"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early-edge-60/tick-47.png",
+    "bytes": 334884,
+    "sha256": "bec6273611d0fdf49a1cd09c07baf75c448e6b5cbed2d62090777e312bc17d2d"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early-edge-60/tick-49.png",
+    "bytes": 333949,
+    "sha256": "bed23c6e6a5fc3f9edbd7628274180f12944f61b51e5f21cca07d83f91667cb7"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early-edge-60/tick-51.png",
+    "bytes": 335597,
+    "sha256": "d4fce6f575728e0b7f9a7092d9c987cd3f59f6755c3c518f0e4b2b5717cf6df8"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early-edge-60/tick-53.png",
+    "bytes": 340608,
+    "sha256": "fc790f1087922d4a2db13d5ab986d60e36da542f3be119a81b617be5e648d0e7"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early-edge-60/tick-55.png",
+    "bytes": 341797,
+    "sha256": "acf181f82f252f388dfe5eef40d2021223365ce1c8655a56eb913940974fa681"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early-edge-60/tick-57.png",
+    "bytes": 343066,
+    "sha256": "25100ba2db73b44cb390d1c15dc8432b6eb303a416aa0ba76ec2c21e06a01b4c"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early-edge-60/tick-59.png",
+    "bytes": 342874,
+    "sha256": "f4401fd8d8606e79fb5a9f515dac13d7a5ce153bcbf73b833a59de675185f53e"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early-edge-60/tick-65.png",
+    "bytes": 340854,
+    "sha256": "ea7fbe0e4506a1411201529bc5c2065d5637e5e84976547493b1371f5840e95c"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early40-edge-60/tick-39.png",
+    "bytes": 344949,
+    "sha256": "c2fd6da5af4d2ede8d79328474a1e18bbe320b1bcbe0b150d3238fb5af80ae88"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early40-edge-60/tick-41.png",
+    "bytes": 337313,
+    "sha256": "ab307e6ed676be5a827a5a37cc18a27749ee362f836bc842bd2f4b95159efdeb"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early40-edge-60/tick-45.png",
+    "bytes": 335126,
+    "sha256": "29a32afe80de617f0ec80e084f7a5a16e179c26e10f1a64813d9fcd0b31aa32b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early40-edge-60/tick-47.png",
+    "bytes": 334839,
+    "sha256": "cd13776477ffd1301d279e0b5232e366227da8a95e88b8adf7a51295dddd6814"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early40-edge-60/tick-49.png",
+    "bytes": 333919,
+    "sha256": "315b9125720de2f67ce63e1955e0f24ac902d930d7a8b5388e057028e2ab174c"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early40-edge-60/tick-51.png",
+    "bytes": 335564,
+    "sha256": "3548354f5b9c25d8b188b68d1ab5089c01d5a82df60d72908a01cc9d8eaeb726"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early40-edge-60/tick-53.png",
+    "bytes": 340571,
+    "sha256": "182f4f10808cdd546ec509e8313ef8db77d61ebe59f5ad35bb73a191aa98d0f3"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early40-edge-60/tick-55.png",
+    "bytes": 341778,
+    "sha256": "78643671f281504c168601c65c61e92017283eccd67ffee9b71dbf2f255b1084"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early40-edge-60/tick-57.png",
+    "bytes": 343040,
+    "sha256": "c14a1d3e966554a6dfdec27b80696ee2088e76f1de663b61bfbcca8e5338f6c7"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early40-edge-60/tick-59.png",
+    "bytes": 342854,
+    "sha256": "435c56a44e9967644a90650194fb540fb9ed57c93bb4351d82bc66af3a42aed5"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/early40-edge-60/tick-65.png",
+    "bytes": 340846,
+    "sha256": "50a1dd05099e1a64e84763fd1f88a4a4d9d2ecc3948db9302db99d6bf8d705d5"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/late-edge-60/tick-39.png",
+    "bytes": 345012,
+    "sha256": "33b302b54beb502ed54db769eafbdbd7b0719786386b76dee382166f79be9326"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/late-edge-60/tick-41.png",
+    "bytes": 337338,
+    "sha256": "ccc1a185c462c8027009da93781cc66a331dcee3e5b14bc930501e1b69288734"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/late-edge-60/tick-45.png",
+    "bytes": 335143,
+    "sha256": "907fe24c83deccf72132b93b19ea05a4073f8eef783863a1b13143fa74b9cafa"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/late-edge-60/tick-47.png",
+    "bytes": 335728,
+    "sha256": "ea62aeeb53be01c950d12a8465c492c022280494e24fa97016504b12e96e326a"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/late-edge-60/tick-49.png",
+    "bytes": 336962,
+    "sha256": "489b4ebfa65dc17de346477d783f6ac7abab94dfbcb75d16c68f7ccfb263579b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/late-edge-60/tick-51.png",
+    "bytes": 338900,
+    "sha256": "112dbdce703c6a2606c712ed7ba5732989d06503ae5c5a87f2dc57be515ce6f8"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/late-edge-60/tick-53.png",
+    "bytes": 340810,
+    "sha256": "5e5b3400c7648206469c933e442b59dffad7cc5027055f487abf7871d07d697e"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/late-edge-60/tick-55.png",
+    "bytes": 341335,
+    "sha256": "b8345832dc7ee6b4d87303b3c0544a8944e4bd62c69278c89d8f730103881469"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/late-edge-60/tick-57.png",
+    "bytes": 343092,
+    "sha256": "24ee1e2e8363953f849a165ea4b7ddac358c8a499edcfc1f8762498198dca4f4"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/late-edge-60/tick-59.png",
+    "bytes": 342876,
+    "sha256": "96ddceaf598c095bc1b509305e008fad1d0d47d9893c707f9324b88e195efeb1"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/late-edge-60/tick-65.png",
+    "bytes": 340884,
+    "sha256": "63ab549495d9156414764c679dafda5b28e893370f497425fa13b51f9eec99c3"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/no-input-60/tick-39.png",
+    "bytes": 338026,
+    "sha256": "7856f993a664371089fb617a347e3e0b88a34e932ee0c948a106a47615a5fe83"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/no-input-60/tick-41.png",
+    "bytes": 337965,
+    "sha256": "48539bf7bc653ca8c5ec76e615f3985068339713b2e3121552462fdf51fb6f91"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/no-input-60/tick-45.png",
+    "bytes": 338060,
+    "sha256": "965068189e144a0220aad8bca795638507a035c45b797a8f02e698d882292152"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/no-input-60/tick-47.png",
+    "bytes": 337983,
+    "sha256": "3813e53e0d70baefc15374f53145e7278733f8556b6209ca392555404683e42d"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/no-input-60/tick-49.png",
+    "bytes": 338158,
+    "sha256": "e7b3217ececc391068f45a1c42185cbe9a30ffcfb882f815f8c6d9e9e2cabaad"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/no-input-60/tick-51.png",
+    "bytes": 338125,
+    "sha256": "a9572b23d50c44cf0eb27997ddf5601cb2f74f1b3c23566968043a63ed83f378"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/no-input-60/tick-53.png",
+    "bytes": 338092,
+    "sha256": "3f8f5bfde1b06f42a2dee79a5c43ff12d584a7da998cc39ec294e82dabe9f5d0"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/no-input-60/tick-55.png",
+    "bytes": 338205,
+    "sha256": "78de544ee42794ec147358e16e3f39cae3c604749da8d6d92d3890ec02e9ddee"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/no-input-60/tick-57.png",
+    "bytes": 338143,
+    "sha256": "612c24a023bc02e7893311c7216ea67e3034b33f0997d997e8fa09b1c2a4843e"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/no-input-60/tick-59.png",
+    "bytes": 338564,
+    "sha256": "ac884b66929e7b146aac2a629929ba7ca1d3ad69508caf0612dfdfcd1d4a7569"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/no-input-60/tick-65.png",
+    "bytes": 339080,
+    "sha256": "3fcd5da9e8036a4fa74fc8a26edfda51c6bbf747d08b31ded9794f944d475254"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/released-edge-60/tick-39.png",
+    "bytes": 346437,
+    "sha256": "14ce02001b6833bb37c9417ed1885b1d81353d9c61b06b1410270c9a08917294"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/released-edge-60/tick-41.png",
+    "bytes": 338864,
+    "sha256": "4ca2e59ab9079beec08fa58019ceeb076bd3a0f55f2ccbeb212e24b1c07091ae"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/released-edge-60/tick-45.png",
+    "bytes": 337186,
+    "sha256": "875d918b0009913cba3733fc07ea748b3f7bda34df2dde3345956e980f11800b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/released-edge-60/tick-47.png",
+    "bytes": 338316,
+    "sha256": "61a672939e77ac17e5015be41c5bb892f44302fe9fda322a11f62a710048e0ea"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/released-edge-60/tick-49.png",
+    "bytes": 337087,
+    "sha256": "e26ec14a60f5284d1dce3e268ad56b81ff78cd04b11d9f88021a8a63ae9b6f64"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/released-edge-60/tick-51.png",
+    "bytes": 340490,
+    "sha256": "be5ea401b36d578b58fe2f1956047e4f58ee2b03f21dd5b841032c0ce6661c7b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/released-edge-60/tick-53.png",
+    "bytes": 342503,
+    "sha256": "166a8b51c065552a61d022d6f9565d5c9fefa80ec9a48e9b2a5bb03dfa50ff72"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/released-edge-60/tick-55.png",
+    "bytes": 344360,
+    "sha256": "6cf6313ab1e3d04d941649c695787babb322141f2c94331bc5ea6f9cb3d692bd"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/released-edge-60/tick-57.png",
+    "bytes": 345111,
+    "sha256": "eb9099ea7530fb011f03afb3da583dd3367f58682d1ccd2319f00be782cfa938"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/released-edge-60/tick-59.png",
+    "bytes": 343379,
+    "sha256": "7358486e5d151fd0cb122719a3b88824a54849f66fcc66e20f99b04d7790b613"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/released-edge-60/tick-65.png",
+    "bytes": 342222,
+    "sha256": "43dc21875621d761df0b8d8445bdbc2e1ed108b7d8d1402433e8a7d8440ba38d"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/repress-edge-60/tick-39.png",
+    "bytes": 345003,
+    "sha256": "d66f602a73638c89de542d581ec68e75e4f5eeddd22146a04d69ad099af41455"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/repress-edge-60/tick-41.png",
+    "bytes": 337320,
+    "sha256": "39ae11830db7120072e66103f48943ed0f72819c11191e74a55cf8c660c65f00"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/repress-edge-60/tick-45.png",
+    "bytes": 335154,
+    "sha256": "eb760b23870a76eb1887ae81e4ae240501b43bb1367743d89345091dc850bb16"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/repress-edge-60/tick-47.png",
+    "bytes": 335739,
+    "sha256": "53c42f675115b30a10e223d1ad2d9c2f4fe31dd40ec075593a2e0fb4bd54c6ec"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/repress-edge-60/tick-49.png",
+    "bytes": 334742,
+    "sha256": "19c4ae8c036f14943e5e37c1a389dd9c5e9105587f77f8fbc36bf1c738f02527"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/repress-edge-60/tick-51.png",
+    "bytes": 338915,
+    "sha256": "495a3fa2fbf811822a11e13c7e6c325c6b134afbd2a1a1bcd0575d8296ae6f26"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/repress-edge-60/tick-53.png",
+    "bytes": 340833,
+    "sha256": "109ed90df26485070247582072ba89e8b4aa583a88a449bed73dbdae3451c97c"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/repress-edge-60/tick-55.png",
+    "bytes": 341320,
+    "sha256": "a8385d3adfba44a9adb6a9980350a4c01fd84ec6dbd756743350ddaa279e9b10"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/repress-edge-60/tick-57.png",
+    "bytes": 343070,
+    "sha256": "bd24b7f96a53915746b29844c1ef8eeef5bd1145f834ae7c3779786afac6a40d"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/repress-edge-60/tick-59.png",
+    "bytes": 342885,
+    "sha256": "ca3eef0ae497445f386eb86fd256f6b362c833443f5be8731e09e02167931f1b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/candidate-60/repress-edge-60/tick-65.png",
+    "bytes": 340884,
+    "sha256": "f9ba43e29457cecec937b7dc17151c64f48fd13caf540fda6cdd4cfa6e3a62da"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early-edge-30/tick-39.png",
+    "bytes": 344980,
+    "sha256": "521bfcacdd9c672044fbb1a82d1c00b1dfcaa43a428176ce202c4704eef10a78"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early-edge-30/tick-41.png",
+    "bytes": 337357,
+    "sha256": "cbcbb7b5c6cbdf8ea3c6a1252aa7129bbad6a378effab0e4aa84a820b7709600"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early-edge-30/tick-45.png",
+    "bytes": 335179,
+    "sha256": "b100cdadc36f9deaa8932bd818cefdaf0341099f7ce9a4209037e9a2fb1953e2"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early-edge-30/tick-47.png",
+    "bytes": 338763,
+    "sha256": "71916276732db606143a91f1b2f75bfec45147a3eaa5486443677fe42d990245"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early-edge-30/tick-49.png",
+    "bytes": 339448,
+    "sha256": "dbb978cb8318b8d39b1c28e06d36c564f336079fef00b662e686d8ab0dcf462e"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early-edge-30/tick-51.png",
+    "bytes": 335789,
+    "sha256": "2f5ad8b43e7b67493e772799b2438d00169117399c650ddacc0b032c4f319db0"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early-edge-30/tick-53.png",
+    "bytes": 340840,
+    "sha256": "a3e2054e078a7aabe39ce29bc10b3f1dc960ef49b737571f9da13cf8eee7f453"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early-edge-30/tick-55.png",
+    "bytes": 341333,
+    "sha256": "39a6f9e67b74c67dcecb60d7dded99e7fe6ea9906c0a5dd26545c651246589eb"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early-edge-30/tick-57.png",
+    "bytes": 343066,
+    "sha256": "25100ba2db73b44cb390d1c15dc8432b6eb303a416aa0ba76ec2c21e06a01b4c"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early-edge-30/tick-59.png",
+    "bytes": 342874,
+    "sha256": "f4401fd8d8606e79fb5a9f515dac13d7a5ce153bcbf73b833a59de675185f53e"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early-edge-30/tick-65.png",
+    "bytes": 340854,
+    "sha256": "ea7fbe0e4506a1411201529bc5c2065d5637e5e84976547493b1371f5840e95c"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early40-edge-30/tick-39.png",
+    "bytes": 344947,
+    "sha256": "971a7bc880d2f146ca35b05c516c7922f756473c6610097c78f2c8123f799492"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early40-edge-30/tick-41.png",
+    "bytes": 337313,
+    "sha256": "d5a7a30d10177c2d55f468b41b457c8005e296f3e6077145afa4ba82736e5980"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early40-edge-30/tick-45.png",
+    "bytes": 335126,
+    "sha256": "29a32afe80de617f0ec80e084f7a5a16e179c26e10f1a64813d9fcd0b31aa32b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early40-edge-30/tick-47.png",
+    "bytes": 338719,
+    "sha256": "dda69b81c13d26ab89bffc9d0130fd197088030335ba8bbd83999b2445f35a3e"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early40-edge-30/tick-49.png",
+    "bytes": 339416,
+    "sha256": "07bfd04b85e491c61f61a941e1056bd423bb430f00cea88886dba29542843c4b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early40-edge-30/tick-51.png",
+    "bytes": 335761,
+    "sha256": "be4af8f29f2330da2d1dda04c943adc7372e2be4f967e219f9d2534657205f70"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early40-edge-30/tick-53.png",
+    "bytes": 340801,
+    "sha256": "233eb6502264285a2870dd4928b429269fb96ad10c056d5242c0a286bc3ea8f8"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early40-edge-30/tick-55.png",
+    "bytes": 341307,
+    "sha256": "a5dd0d4e95086b766c3e7be68cb8546a2c739a27f6eeaf036ff787447a1c4645"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early40-edge-30/tick-57.png",
+    "bytes": 343040,
+    "sha256": "c14a1d3e966554a6dfdec27b80696ee2088e76f1de663b61bfbcca8e5338f6c7"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early40-edge-30/tick-59.png",
+    "bytes": 342854,
+    "sha256": "435c56a44e9967644a90650194fb540fb9ed57c93bb4351d82bc66af3a42aed5"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/early40-edge-30/tick-65.png",
+    "bytes": 340846,
+    "sha256": "50a1dd05099e1a64e84763fd1f88a4a4d9d2ecc3948db9302db99d6bf8d705d5"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/late-edge-30/tick-39.png",
+    "bytes": 345011,
+    "sha256": "8a57f9ce0bc3e322cd8c54b256e818ea0c6c045e92601e2c2a6bd31703bd7a6f"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/late-edge-30/tick-41.png",
+    "bytes": 337339,
+    "sha256": "ad4488a1063d9664769adedc40d99afc3073f5a1dfaec362983bbd2e0417a674"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/late-edge-30/tick-45.png",
+    "bytes": 335143,
+    "sha256": "907fe24c83deccf72132b93b19ea05a4073f8eef783863a1b13143fa74b9cafa"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/late-edge-30/tick-47.png",
+    "bytes": 335728,
+    "sha256": "ea62aeeb53be01c950d12a8465c492c022280494e24fa97016504b12e96e326a"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/late-edge-30/tick-49.png",
+    "bytes": 336962,
+    "sha256": "489b4ebfa65dc17de346477d783f6ac7abab94dfbcb75d16c68f7ccfb263579b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/late-edge-30/tick-51.png",
+    "bytes": 338900,
+    "sha256": "112dbdce703c6a2606c712ed7ba5732989d06503ae5c5a87f2dc57be515ce6f8"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/late-edge-30/tick-53.png",
+    "bytes": 340810,
+    "sha256": "5e5b3400c7648206469c933e442b59dffad7cc5027055f487abf7871d07d697e"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/late-edge-30/tick-55.png",
+    "bytes": 341335,
+    "sha256": "b8345832dc7ee6b4d87303b3c0544a8944e4bd62c69278c89d8f730103881469"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/late-edge-30/tick-57.png",
+    "bytes": 343092,
+    "sha256": "24ee1e2e8363953f849a165ea4b7ddac358c8a499edcfc1f8762498198dca4f4"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/late-edge-30/tick-59.png",
+    "bytes": 342876,
+    "sha256": "96ddceaf598c095bc1b509305e008fad1d0d47d9893c707f9324b88e195efeb1"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/late-edge-30/tick-65.png",
+    "bytes": 340884,
+    "sha256": "63ab549495d9156414764c679dafda5b28e893370f497425fa13b51f9eec99c3"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/no-input-30/tick-39.png",
+    "bytes": 338026,
+    "sha256": "7856f993a664371089fb617a347e3e0b88a34e932ee0c948a106a47615a5fe83"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/no-input-30/tick-41.png",
+    "bytes": 337965,
+    "sha256": "48539bf7bc653ca8c5ec76e615f3985068339713b2e3121552462fdf51fb6f91"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/no-input-30/tick-45.png",
+    "bytes": 338060,
+    "sha256": "965068189e144a0220aad8bca795638507a035c45b797a8f02e698d882292152"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/no-input-30/tick-47.png",
+    "bytes": 337983,
+    "sha256": "3813e53e0d70baefc15374f53145e7278733f8556b6209ca392555404683e42d"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/no-input-30/tick-49.png",
+    "bytes": 338158,
+    "sha256": "e7b3217ececc391068f45a1c42185cbe9a30ffcfb882f815f8c6d9e9e2cabaad"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/no-input-30/tick-51.png",
+    "bytes": 338125,
+    "sha256": "a9572b23d50c44cf0eb27997ddf5601cb2f74f1b3c23566968043a63ed83f378"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/no-input-30/tick-53.png",
+    "bytes": 338092,
+    "sha256": "3f8f5bfde1b06f42a2dee79a5c43ff12d584a7da998cc39ec294e82dabe9f5d0"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/no-input-30/tick-55.png",
+    "bytes": 338205,
+    "sha256": "78de544ee42794ec147358e16e3f39cae3c604749da8d6d92d3890ec02e9ddee"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/no-input-30/tick-57.png",
+    "bytes": 338143,
+    "sha256": "612c24a023bc02e7893311c7216ea67e3034b33f0997d997e8fa09b1c2a4843e"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/no-input-30/tick-59.png",
+    "bytes": 338564,
+    "sha256": "ac884b66929e7b146aac2a629929ba7ca1d3ad69508caf0612dfdfcd1d4a7569"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/no-input-30/tick-65.png",
+    "bytes": 339080,
+    "sha256": "3fcd5da9e8036a4fa74fc8a26edfda51c6bbf747d08b31ded9794f944d475254"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/released-edge-30/tick-39.png",
+    "bytes": 346435,
+    "sha256": "64d0492992f8d3189703f778510591792749627aaa377476f8a8bfef8a6c6c67"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/released-edge-30/tick-41.png",
+    "bytes": 338864,
+    "sha256": "4011e4cef06122c916439f7861687d3fdda2d2496e00c7d6345096ca1a1e6166"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/released-edge-30/tick-45.png",
+    "bytes": 337186,
+    "sha256": "875d918b0009913cba3733fc07ea748b3f7bda34df2dde3345956e980f11800b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/released-edge-30/tick-47.png",
+    "bytes": 338316,
+    "sha256": "61a672939e77ac17e5015be41c5bb892f44302fe9fda322a11f62a710048e0ea"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/released-edge-30/tick-49.png",
+    "bytes": 341709,
+    "sha256": "7bce23c7489ae226eabe774ef5b177e37c517fa38fd8e06798cc2c70f01bbfd8"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/released-edge-30/tick-51.png",
+    "bytes": 338752,
+    "sha256": "618eb461e55507517e4d8d3996b19fc37e3ae6e2d8142baa67e81604bdd888e2"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/released-edge-30/tick-53.png",
+    "bytes": 345200,
+    "sha256": "f2af68ad240ea8c8135c9bf5e62fb58aab86bcd0aedee6d79fc9cd43a6fbd9b5"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/released-edge-30/tick-55.png",
+    "bytes": 346983,
+    "sha256": "7478df5ca489ae4b64f1810b7c70ddc678faf2fc92a1810091ccee3a13c39b9b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/released-edge-30/tick-57.png",
+    "bytes": 348414,
+    "sha256": "c605163be0256a0c863b468e294cee7ce1fac68b82abc5c320fa3e2a63ad8e29"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/released-edge-30/tick-59.png",
+    "bytes": 346294,
+    "sha256": "8488575a2004bfa648174d721e6c5a1ce6a32c980fd1a7e533df3306ffc1bf16"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/released-edge-30/tick-65.png",
+    "bytes": 343825,
+    "sha256": "cce836cf203cbebc0e2de3cc7b123ac82c53356a5b1417431fb30527f14dafaf"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/repress-edge-30/tick-39.png",
+    "bytes": 345000,
+    "sha256": "e8cc7d6a22240bd921976026472cc1889db646e36a677b6822473d9d0426eae3"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/repress-edge-30/tick-41.png",
+    "bytes": 337320,
+    "sha256": "cd52133e15e87b49db7e13b346b7b39beb1f17228d12ed61fb71c46ad78bbd57"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/repress-edge-30/tick-45.png",
+    "bytes": 335154,
+    "sha256": "eb760b23870a76eb1887ae81e4ae240501b43bb1367743d89345091dc850bb16"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/repress-edge-30/tick-47.png",
+    "bytes": 335739,
+    "sha256": "53c42f675115b30a10e223d1ad2d9c2f4fe31dd40ec075593a2e0fb4bd54c6ec"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/repress-edge-30/tick-49.png",
+    "bytes": 339461,
+    "sha256": "de10ba7ce48615aaa4125b1ae63c1f69c9d79b59ec5bd9231344b659ffb3faf4"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/repress-edge-30/tick-51.png",
+    "bytes": 338915,
+    "sha256": "495a3fa2fbf811822a11e13c7e6c325c6b134afbd2a1a1bcd0575d8296ae6f26"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/repress-edge-30/tick-53.png",
+    "bytes": 340833,
+    "sha256": "109ed90df26485070247582072ba89e8b4aa583a88a449bed73dbdae3451c97c"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/repress-edge-30/tick-55.png",
+    "bytes": 341320,
+    "sha256": "a8385d3adfba44a9adb6a9980350a4c01fd84ec6dbd756743350ddaa279e9b10"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/repress-edge-30/tick-57.png",
+    "bytes": 343070,
+    "sha256": "bd24b7f96a53915746b29844c1ef8eeef5bd1145f834ae7c3779786afac6a40d"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/repress-edge-30/tick-59.png",
+    "bytes": 342885,
+    "sha256": "ca3eef0ae497445f386eb86fd256f6b362c833443f5be8731e09e02167931f1b"
+  },
+  {
+    "workspacePath": "/workspace/actions/.roller-recovery/fx-rng-20261023/main7e-30/repress-edge-30/tick-65.png",
+    "bytes": 340884,
+    "sha256": "f9ba43e29457cecec937b7dc17151c64f48fd13caf540fda6cdd4cfa6e3a62da"
+  }
+]

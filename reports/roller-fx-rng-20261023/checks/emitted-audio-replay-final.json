@@ -1,0 +1,110 @@
+{
+  "site": "/workspace/actions/.roller-recovery/shaft-early/stationary-site",
+  "contentHash": "6184fb028078c618018d8b7b7cd4ec0d2dd5fc79d3319ec5080a9efb5af8d6f0",
+  "audioSha256": "8094cc2ddbdb90fc89ad23b33f39bcb4b04b280c294944627efd5744ea200fd7",
+  "playMethodSha256": "456c49f0d0dd3cf0448b4f8d7d9b41f0c69fed0eb8f7fa3ad4cbeee6ca007a7a",
+  "splatBuilderSha256": "f49eb55962bab85961319c6f60489eeaf3c6ebebf9236ce08a86a434d1ff13d2",
+  "startState": 1080072278,
+  "rows": [
+    {
+      "gap": 0.01,
+      "minGap": 0.03,
+      "returnedVoice": false,
+      "draws": 0,
+      "state": 1080072278,
+      "counts": {
+        "played": 0,
+        "dropped": 1,
+        "stolen": 0
+      },
+      "calls": []
+    },
+    {
+      "gap": 0.04,
+      "minGap": 0.03,
+      "returnedVoice": true,
+      "draws": 12,
+      "state": 3980743378,
+      "counts": {
+        "played": 1,
+        "dropped": 0,
+        "stolen": 0
+      },
+      "calls": [
+        {
+          "draw": 1,
+          "before": 1080072278,
+          "after": 3731813309,
+          "stack": "Error\n    at V.random [as rng] (file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:8:142)\n    at V.play (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:7677)\n    at file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:29:21"
+        },
+        {
+          "draw": 2,
+          "before": 3731813309,
+          "after": 2325979640,
+          "stack": "Error\n    at T.random [as rng] (file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:8:142)\n    at T.r (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/music.js:2:4684)\n    at Object.build (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:22704)\n    at V.play (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:7968)\n    at file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:29:21"
+        },
+        {
+          "draw": 3,
+          "before": 2325979640,
+          "after": 1249836279,
+          "stack": "Error\n    at T.random [as rng] (file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:8:142)\n    at T.r (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/music.js:2:4684)\n    at Object.build (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:22723)\n    at V.play (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:7968)\n    at file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:29:21"
+        },
+        {
+          "draw": 4,
+          "before": 1249836279,
+          "after": 1372272106,
+          "stack": "Error\n    at T.random [as rng] (file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:8:142)\n    at T.r (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/music.js:2:4684)\n    at Object.build (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:22748)\n    at V.play (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:7968)\n    at file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:29:21"
+        },
+        {
+          "draw": 5,
+          "before": 1372272106,
+          "after": 2669014081,
+          "stack": "Error\n    at T.random [as rng] (file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:8:142)\n    at T.noise (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/music.js:2:6024)\n    at T.nz (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/music.js:2:7227)\n    at Object.build (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:22696)\n    at V.play (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:7968)\n    at file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:29:21"
+        },
+        {
+          "draw": 6,
+          "before": 2669014081,
+          "after": 520542380,
+          "stack": "Error\n    at T.random [as rng] (file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:8:142)\n    at T.r (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/music.js:2:4684)\n    at Object.build (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:22789)\n    at V.play (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:7968)\n    at file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:29:21"
+        },
+        {
+          "draw": 7,
+          "before": 520542380,
+          "after": 3001580571,
+          "stack": "Error\n    at T.random [as rng] (file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:8:142)\n    at Object.build (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:22875)\n    at V.play (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:7968)\n    at file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:29:21"
+        },
+        {
+          "draw": 8,
+          "before": 3001580571,
+          "after": 307430078,
+          "stack": "Error\n    at T.random [as rng] (file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:8:142)\n    at T.r (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/music.js:2:4684)\n    at S (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:12338)\n    at Object.build (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:22862)\n    at V.play (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:7968)\n    at file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:29:21"
+        },
+        {
+          "draw": 9,
+          "before": 307430078,
+          "after": 2186005253,
+          "stack": "Error\n    at T.random [as rng] (file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:8:142)\n    at T.r (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/music.js:2:4684)\n    at S (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:12347)\n    at Object.build (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:22862)\n    at V.play (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:7968)\n    at file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:29:21"
+        },
+        {
+          "draw": 10,
+          "before": 2186005253,
+          "after": 3769188512,
+          "stack": "Error\n    at T.random [as rng] (file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:8:142)\n    at T.r (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/music.js:2:4684)\n    at S (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:12366)\n    at Object.build (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:22862)\n    at V.play (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:7968)\n    at file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:29:21"
+        },
+        {
+          "draw": 11,
+          "before": 3769188512,
+          "after": 1684470655,
+          "stack": "Error\n    at T.random [as rng] (file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:8:142)\n    at T.r (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/music.js:2:4684)\n    at S (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:12376)\n    at Object.build (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:22862)\n    at V.play (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:7968)\n    at file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:29:21"
+        },
+        {
+          "draw": 12,
+          "before": 1684470655,
+          "after": 3980743378,
+          "stack": "Error\n    at T.random [as rng] (file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:8:142)\n    at T.r (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/music.js:2:4684)\n    at S (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:12389)\n    at Object.build (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:22862)\n    at V.play (_versions/42cd29c3f87d703e8c5d5c942c470200b3b40a7324ef017e1244b7165335d7a3/src/audio/audio.js:2:7968)\n    at file:///workspace/roller-fx-rng/scripts/replay-inkwave-splat-audio-rng.mjs:29:21"
+        }
+      ]
+    }
+  ],
+  "limit": "Isolated real emitted AudioEngine.play/SFX/V source with mocked WebAudio nodes and diagnostic clock gaps. It reproduces the exact 12-call source transition, not a completed original-browser replay or a proposed fix."
+}

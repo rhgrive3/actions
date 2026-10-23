@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {installDeterministicRollerRandom} from '../lib/inkwave-roller-qa-random.mjs';
 import {installTracedRollerRandom,installRollerProducerTrace} from '../lib/inkwave-roller-rng-producer-trace.mjs';
+import {installRollerAudioKeyClockTrace} from '../lib/inkwave-roller-audio-key-clock-trace.mjs';
 const rig=fn=>{const c=vm.createContext({});vm.runInContext('('+fn.toString()+')()',c);return c;};
 const json=(c,s)=>JSON.parse(vm.runInContext('JSON.stringify('+s+')',c));
 test('traced pre-module closure preserves all original LCG results, cached identity and reset behavior',()=>{
@@ -31,4 +32,15 @@ test('producer wrappers preserve this, return value, shared default-seed draw an
  assert.equal(trace.calls.length,1);assert.deepEqual(trace.calls[0].producer,['FX.update','FX._updateDrops','FX.onSpeck','Paint.speck']);
  assert.equal(trace.calls[0].before,123);assert.equal(trace.calls[0].after,1218640798);
  assert.equal(trace.events.filter(e=>e.name==='Paint.speck').length,1);
+});
+test('keyed audio observer reads the actual last map while preserving native reject/accept, options, phase and RNG',()=>{
+ const c=rig(installTracedRollerRandom);vm.runInContext('('+installRollerAudioKeyClockTrace.toString()+')()',c);
+ vm.runInContext(`globalThis.options={pos:{x:0,y:1,z:4.88}};globalThis.G={fx:{_iwCosmeticPhase:2,dN:0,stats:()=>({})},audio:{ctx:{currentTime:1.02},last:new Map([['splat_small:cell:0:0:2',1]]),counts:{played:0,dropped:0},
+ play(name,o){if(this!==G.audio||o!==options)throw Error('observer changed invocation');const key=name+':cell:0:0:2';if(this.ctx.currentTime-this.last.get(key)<.03){this.counts.dropped++;return null;}this.last.set(key,this.ctx.currentTime);this.counts.played++;return {seed:Math.random()};}}};
+ __rollerInstallAudioClockTrace(G);__rollerQaRandom.startCase({},G);__rollerQaRandom.reset();__rollerQaRandom.beginTick(35);__rollerQaRandom.stage('projectiles');
+ globalThis.rejected=G.audio.play('splat_small',options);G.audio.ctx.currentTime=1.04;globalThis.accepted=G.audio.play('splat_small',options);__rollerQaRandom.endTick();globalThis.trace=__rollerQaRandom.finish();`,c);
+ assert.equal(vm.runInContext('rejected',c),null);assert.equal(vm.runInContext('accepted.seed',c),1218640798/4294967296);
+ const events=json(c,'__rollerAudioClockEvents');assert.equal(events.length,2);assert.equal(events[0].before.key,'splat_small:cell:0:0:2');assert.equal(events[0].before.last,1);assert.equal(events[0].after.last,1);assert.equal(events[1].after.last,1.04);
+ assert.equal(events[0].after.rng.draws-events[0].before.rng.draws,0);assert.equal(events[1].after.rng.draws-events[1].before.rng.draws,1);
+ assert.equal(vm.runInContext('G.fx._iwCosmeticPhase',c),2);assert.equal(json(c,'trace').calls.length,1);
 });

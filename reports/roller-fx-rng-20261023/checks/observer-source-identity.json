@@ -1,0 +1,33 @@
+{
+  "matrixCodeCommit": "fa53b70ec",
+  "matrixScript": "22726e20c5f110db6a3f08dea521d21dd18cf388137c3184b55bbc7beb125bbe",
+  "files": {
+    "scripts/check-inkwave-roller-rng-trace.mjs": "22726e20c5f110db6a3f08dea521d21dd18cf388137c3184b55bbc7beb125bbe",
+    "scripts/lib/inkwave-roller-rng-producer-trace.mjs": "f0070d210af1f8a3648ff0da2fb24e6bfaa0919bcfd6ae7c60914dd45831addc",
+    "scripts/check-inkwave-roller-audio-clock-probe.mjs": "0ff8263fe7e1c47d8c6c73608b35c47d20ac5302a5d5368c5998f34d7ad86e09",
+    "scripts/lib/inkwave-roller-audio-clock-trace.mjs": "303b2c5e3d6fe2faf2b1e16ab157a1ac38d5024118dc2d721983d64f88442a81",
+    "scripts/check-inkwave-roller-audio-key-clock-probe.mjs": "8bc6a32b446c3b84a9e6302752bab47cbec1385bea2be61517cd6b1285564f3e",
+    "scripts/lib/inkwave-roller-audio-key-clock-trace.mjs": "be4287bb002407a49f9a67c2ed2d13142c71c808cd6df27a837e816126504577",
+    "scripts/replay-inkwave-splat-audio-rng.mjs": "b4ecb3d86efc6d5933295a783129b740b6fbcd6c63f4aa8e60c2b15c6505164e"
+  },
+  "browserFlags": [
+    "--no-sandbox",
+    "--use-angle=swiftshader",
+    "--enable-unsafe-swiftshader"
+  ],
+  "viewport": [
+    800,
+    600
+  ],
+  "screenshotTimeoutMs": 60000,
+  "playingWaitTimeoutMs": 180000,
+  "matrixPlan": [
+    "released-edge",
+    "early40-edge",
+    "early-edge",
+    "repress-edge",
+    "late-edge",
+    "no-input"
+  ],
+  "extraProbes": "Fresh first-case prefix only,30,60,then keyed60. All completed; no settings changed or runs retried for a pass."
+}
