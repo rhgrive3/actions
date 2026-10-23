@@ -400,7 +400,7 @@ test('actual serialized settle watches same original promises and cannot pass a 
   assert.equal(after.pendingCount, 1); assert.deepEqual(after.rows.map(row => row.index), [1]);
   assert.equal(passed, false, 'watchdog is not acceptance or timeout fallback');
   second.resolve(); await waiting;
-  assert.equal(passed, true); assert.equal(h.timers.size, 0); assert.equal(h.clears(), 1);
+  assert.equal(passed, true); assert.equal(h.timers.size, 0); assert.equal(h.clears(), 2);
 });
 
 for (const reject of [false, true]) test('resolution/cancellation keeps old behavior and removes watchdog: ' + reject, async () => {
@@ -408,7 +408,7 @@ for (const reject of [false, true]) test('resolution/cancellation keeps old beha
   const waiting = h.run(true);
   reject ? item.reject(Error('original cancellation')) : item.resolve();
   await waiting; h.watchdog();
-  assert.equal(h.messages.length, 1); assert.equal(h.timers.size, 0); assert.equal(h.clears(), 1);
+  assert.equal(h.messages.length, 1); assert.equal(h.timers.size, 0); assert.equal(h.clears(), 2);
 });
 
 test('infinite animations never have finished read and unobserved settles add no diagnostics', async () => {
@@ -524,3 +524,143 @@ test('two full diagnostic snapshots fit with max-length ASCII event and error re
   // Non-ASCII or escaped text may still exceed the unchanged fail-closed reader.
   assert(Buffer.byteLength(JSON.stringify(receipt, null, 2) + '\n') < 65536, 'keep ASCII worst-case below unchanged progress read bound');
 });
+
+
+const flushAnimationMicrotasks = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
+
+test('unresolved original promise requires asynchronous whole-cohort finished confirmation', async () => {
+  const item = deferredAnimation({ playState: 'finished' });
+  const h = animationHarness([item.animation]); let passed = false;
+  const waiting = h.run(true).then(() => { passed = true; });
+  assert.equal(item.reads(), 1); assert.equal(h.timers.size, 2);
+  await flushAnimationMicrotasks(); assert.equal(passed, false, 'time or initial state is not enough');
+  h.watchdog(); assert.equal(passed, false, 'first finished read cannot synchronously complete');
+  await flushAnimationMicrotasks();
+  assert.equal(passed, true, 'confirmed native finished state must release the stale promise');
+  await waiting;
+  assert.equal(passed, true); assert.equal(item.reads(), 1);
+  assert.equal(h.messages.length, 2); assert.equal(h.timers.size, 0);
+});
+
+for (const extra of [
+  { playState: 'running' }, { playState: 'paused' }, { playState: 'idle' },
+  { playState: 'running', playbackRate: 0 }, { playState: 'finished', pending: true },
+  { playState: 'finished', pending: undefined }, { playState: 'unknown' },
+]) test('timer ticks never accept active or unconfirmed native state: ' + JSON.stringify(extra), async () => {
+  const item = deferredAnimation(extra), h = animationHarness([item.animation]); let passed = false;
+  const waiting = h.run(true).then(() => { passed = true; });
+  for (let i = 0; i < 5; i++) {
+    h.watchdog(); await flushAnimationMicrotasks();
+    assert.equal(passed, false); assert.equal(h.timers.size, 1, 'at most one state timer');
+  }
+  assert.equal(item.reads(), 1, 'never substitute a newer finished promise');
+  item.reject(Error('original cancellation')); await waiting;
+  assert.equal(h.timers.size, 0);
+});
+
+for (const property of ['playState', 'pending']) test('unavailable ' + property + ' is never completion evidence', async () => {
+  const extra = { playState: 'finished' };
+  Object.defineProperty(extra, property, { get() { throw Error('unavailable state'); } });
+  const item = deferredAnimation(extra), h = animationHarness([item.animation]); let passed = false;
+  const waiting = h.run(true).then(() => { passed = true; });
+  h.watchdog(); await flushAnimationMicrotasks();
+  assert.equal(passed, false); assert.equal(h.timers.size, 1);
+  item.resolve(); await waiting; assert.equal(h.timers.size, 0);
+});
+
+for (const reversal of [{ playState: 'running' }, { playState: 'paused' }, { pending: true }])
+  test('finished state reversal before asynchronous confirmation keeps waiting: ' + JSON.stringify(reversal), async () => {
+    const item = deferredAnimation({ playState: 'finished' });
+    const h = animationHarness([item.animation]); let passed = false;
+    const waiting = h.run(true).then(() => { passed = true; });
+    h.watchdog(); Object.assign(item.animation, reversal);
+    await flushAnimationMicrotasks();
+    assert.equal(passed, false); assert.equal(h.timers.size, 1);
+    Object.assign(item.animation, { playState: 'finished', pending: false });
+    h.watchdog(); await waiting;
+    assert.equal(passed, true); assert.equal(h.timers.size, 0);
+  });
+
+test('whole unresolved cohort is rechecked without individually latching finished objects', async () => {
+  const first = deferredAnimation({ playState: 'finished' }), second = deferredAnimation();
+  const h = animationHarness([first.animation, second.animation]); let passed = false;
+  const waiting = h.run(true).then(() => { passed = true; });
+  h.watchdog(); await flushAnimationMicrotasks(); assert.equal(passed, false);
+  first.animation.playState = 'running'; second.animation.playState = 'finished';
+  h.watchdog(); await flushAnimationMicrotasks(); assert.equal(passed, false, 'first object restarted');
+  first.animation.playState = 'finished';
+  h.watchdog(); second.animation.pending = true;
+  await flushAnimationMicrotasks(); assert.equal(passed, false, 'second object has a pending play');
+  second.animation.pending = false;
+  h.watchdog(); await waiting;
+  assert.equal(first.reads(), 1); assert.equal(second.reads(), 1); assert.equal(h.timers.size, 0);
+});
+
+for (const reject of [false, true]) test('original promise completion remains authoritative within a mixed cohort: ' + reject, async () => {
+  const native = deferredAnimation(), stale = deferredAnimation({ playState: 'finished' });
+  const h = animationHarness([native.animation, stale.animation]); let passed = false;
+  const waiting = h.run(true).then(() => { passed = true; });
+  h.watchdog(); await flushAnimationMicrotasks(); assert.equal(passed, false);
+  reject ? native.reject(Error('native cancellation')) : native.resolve();
+  await flushAnimationMicrotasks(); assert.equal(passed, false, 'stale promise remains pending');
+  h.watchdog(); await waiting;
+  assert.equal(h.timers.size, 0); assert.equal(native.reads(), 1); assert.equal(stale.reads(), 1);
+});
+
+test('state confirmation is passive and includes the entire original cohort, not only eight diagnostic rows', async () => {
+  let forbiddenCalls = 0;
+  const forbidden = () => { forbiddenCalls++; throw Error('animation or rendering mutation'); };
+  const target = { getBoundingClientRect: forbidden, getClientRects: forbidden, checkVisibility: forbidden };
+  const items = Array.from({ length: 9 }, () => deferredAnimation({ playState: 'finished',
+    effect: { getTiming: () => ({ iterations: 1 }), target }, finish: forbidden, cancel: forbidden,
+    play: forbidden, pause: forbidden }));
+  items[8].animation.playState = 'running';
+  const h = animationHarness(items.map(item => item.animation), { onStyleProbe: forbidden }); let passed = false;
+  const waiting = h.run(true).then(() => { passed = true; });
+  h.watchdog(); await flushAnimationMicrotasks(); assert.equal(passed, false);
+  items[8].animation.playState = 'finished'; h.watchdog(); await waiting;
+  assert.equal(forbiddenCalls, 0); assert.equal(h.timers.size, 0);
+  assert(items.every(item => item.reads() === 1));
+});
+
+test('native fast path clears both timers and a late state callback cannot reschedule', async () => {
+  const item = deferredAnimation(), h = animationHarness([item.animation]);
+  const waiting = h.run(true); const callbacks = [...h.timers.values()];
+  assert.equal(callbacks.length, 2);
+  item.resolve(); await waiting;
+  assert.equal(h.timers.size, 0); assert.equal(h.clears(), 2);
+  callbacks[1](); await flushAnimationMicrotasks();
+  assert.equal(h.timers.size, 0, 'completion prevents a late callback from installing another timer');
+});
+
+test('state path cleanup removes the observational watchdog without turning it into acceptance', async () => {
+  const item = deferredAnimation({ playState: 'finished' }), h = animationHarness([item.animation]);
+  const waiting = h.run(true); h.watchdog(); await waiting;
+  assert.equal(h.timers.size, 0); assert.equal(h.messages.length, 2);
+  const snapshot = parseResponsiveAnimations(h.messages[1]);
+  assert.equal(snapshot.phase, 'watchdog'); assert.equal(snapshot.pendingCount, 1, 'native promise is still unresolved');
+  assert.equal(snapshot.rows[0].playState, 'finished');
+});
+
+
+test('unobserved callers retain the original promise-only gate even for finished native state', async () => {
+  const item = deferredAnimation({ playState: 'finished' }), h = animationHarness([item.animation]); let passed = false;
+  const waiting = h.run(false).then(() => { passed = true; });
+  h.watchdog(); await flushAnimationMicrotasks();
+  assert.equal(passed, false); assert.equal(h.timers.size, 0); assert.equal(h.messages.length, 0);
+  item.resolve(); await waiting; assert.equal(item.reads(), 1);
+});
+
+for (const reversal of [{ playState: 'running' }, { pending: true }])
+  test('reversal after state confirmation but before helper return cannot pass: ' + JSON.stringify(reversal), async () => {
+    const item = deferredAnimation({ playState: 'finished' }), h = animationHarness([item.animation]); let passed = false;
+    const waiting = h.run(true).then(() => { passed = true; });
+    h.watchdog();
+    // The confirmation continuation is already queued; this runs after it
+    // resolves the state promise but before Promise.race resumes the helper.
+    Promise.resolve().then(() => Object.assign(item.animation, reversal));
+    await flushAnimationMicrotasks();
+    assert.equal(passed, false); assert.equal(h.timers.size, 1);
+    Object.assign(item.animation, { playState: 'finished', pending: false });
+    h.watchdog(); await waiting; assert.equal(h.timers.size, 0);
+  });

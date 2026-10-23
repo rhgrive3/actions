@@ -2,15 +2,18 @@ export const RESPONSIVE_ANIMATION_PREFIX = 'INKWAVE_RESPONSIVE_ANIMATIONS:';
 export const MAX_ANIMATION_MESSAGE = 16384;
 
 // This function is serialized into the page. Keep it self-contained. The
-// original animation cohort, finished promises, and acceptance are unchanged.
+// original cohort and captured finished promises remain the normal fast path.
 export async function settleResponsiveAnimationsInPage(observe = false) {
   const animations = document.getAnimations().filter(a => a.effect?.getTiming().iterations !== Infinity);
   const waits = animations.map(a => a.finished.catch(() => {}));
+  // Only the observed loadout-continuation operation has demonstrated stale
+  // finish notifications. Every other caller retains the promise-only gate.
+  if (!observe) { await Promise.all(waits); return; }
   const settled = animations.map(() => false);
+  waits.forEach((wait, i) => { wait.then(() => { settled[i] = true; }); });
   let timer;
   if (observe) {
     try {
-      waits.forEach((wait, i) => { wait.then(() => { settled[i] = true; }); });
       const number = value => typeof value === 'number' && Number.isFinite(value)
         ? Math.max(-2147483647, Math.min(2147483647, value)) : null;
       const timing = value => value === Infinity ? 'infinite' : value === -Infinity ? '-infinite'
@@ -46,13 +49,53 @@ export async function settleResponsiveAnimationsInPage(observe = false) {
         } catch {}
       };
       emit('before-await');
-      // Observability only, never a timeout or a successful fallback. The same
-      // Promise.all below remains pending when any original promise is pending.
+      // This watchdog only reports the original captured promises. It never
+      // decides completion or changes the acceptance check below.
       timer = setTimeout(() => emit('watchdog'), 1000);
     } catch {}
   }
-  try { await Promise.all(waits); }
-  finally { if (timer !== undefined) { try { clearTimeout(timer); } catch {} } }
+  // A native CSS transition can report finished while its captured promise
+  // remains unresolved after scrolling. Never treat elapsed time as success:
+  // recheck every unresolved original object, including any that restarted.
+  let stateTimer, stopped = false;
+  const allFinished = () => animations.every((animation, i) => {
+    if (settled[i]) return true; // Original resolution/cancellation semantics.
+    try { return animation.playState === 'finished' && animation.pending === false; }
+    catch { return false; } // Unavailable state is not proof of completion.
+  });
+  const finishedState = () => new Promise(resolve => {
+    const schedule = () => {
+      try { stateTimer = setTimeout(check, 1000); } catch {} // Keep waiting on native promises.
+    };
+    const check = async () => {
+      stateTimer = undefined;
+      if (stopped) return;
+      if (allFinished()) {
+        // Native finish notification is asynchronous too. A pending play or
+        // state reversal during this checkpoint must keep the cohort blocked.
+        await Promise.resolve();
+        if (stopped) return;
+        if (allFinished()) { resolve(false); return; }
+      }
+      schedule();
+    };
+    if (animations.length) schedule();
+  });
+  const nativeFinished = Promise.all(waits).then(() => true);
+  try {
+    while (true) {
+      const nativeCompleted = await Promise.race([nativeFinished, finishedState()]);
+      // The state promise and this continuation run in separate microtasks.
+      // Revalidate again rather than accepting a reversal in between them.
+      if (nativeCompleted || allFinished()) break;
+    }
+  }
+  finally {
+    stopped = true;
+    for (const id of [timer, stateTimer]) {
+      if (id !== undefined) { try { clearTimeout(id); } catch {} }
+    }
+  }
 }
 
 // Revalidate the page message and stored receipt independently. No arbitrary
