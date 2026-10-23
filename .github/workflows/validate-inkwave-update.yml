@@ -565,7 +565,13 @@ jobs:
             patches/splatoon3/tests/torpedo-detached-splashes.test.mjs \
             patches/splatoon3/tests/torpedo-flight-stages.test.mjs \
             patches/network-replication/tests/tower-mine-paint-admission.test.mjs
-            _site-launch-packets.json
+      - name: Retain exact emitted launch packet evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkwave-launch-packets-${{ env.SOURCE_SHA }}-${{ github.run_attempt }}
+          path: _site-launch-packets.json
+          if-no-files-found: error
           retention-days: 14
   # The test-file set is partitioned across isolated, independent machines.
   patch_tests:
