@@ -58,29 +58,58 @@ function classify(name,material,semantics,compiledSemantics){
  const paintable=collidable&&!grate&&!glass&&!['_np','_cp','_op'].some(x=>m.endsWith(x))&&!matches('nonPaintableObjectPatterns');
  return {background,collidable,paintable,grate,glass,alpha,active,ruleLayer:layer};
 }
-export function parseSourceOBJ(text,semantics){
- // Count directly from the same line grammar, then fill exact final buffers.
- // This extra linear scan avoids retaining a complete per-object render copy.
- let vertexCapacity=0,indexCapacity=0;
- const gap=/\s/;
+export function parseSourceOBJ(text,semantics,{compactInactiveDisplay=false}={}){
+ // First pass keeps the original global capacities and, on worker opt-in,
+ // reserves display storage only for objects classified as active.
+ let vertexCapacity=0,indexCapacity=0,packedVertices=0,packedIndices=0;
+ let countedName=null,countedMaterial=null,countedVertices=0,countedIndices=0;
+ const gap=/\s/,countedSemantics=Object.create(null);
+ const flushCount=()=>{
+  if(!countedName||!countedVertices)return;
+  if(classify(countedName,countedMaterial,semantics,countedSemantics).active){
+   packedVertices+=countedVertices;packedIndices+=countedIndices;
+  }
+  countedVertices=countedIndices=0;
+ };
  lines(text,line=>{
-  if(line.startsWith('v '))vertexCapacity++;
-  else if(line.startsWith('f ')){let words=0,inside=false;for(let i=2;i<line.length;i++){if(gap.test(line[i]))inside=false;else if(!inside){inside=true;words++;}}indexCapacity+=Math.max(0,words-2)*3;}
+  if(compactInactiveDisplay&&line.startsWith('o ')){flushCount();countedName=line.slice(2).trim();countedMaterial=null;}
+  else if(compactInactiveDisplay&&line.startsWith('usemtl '))countedMaterial=line.slice(7).trim();
+  if(line.startsWith('v ')){vertexCapacity++;if(compactInactiveDisplay)countedVertices++;}
+  else if(line.startsWith('f ')){
+   let words=0,inside=false;for(let i=2;i<line.length;i++){if(gap.test(line[i]))inside=false;else if(!inside){inside=true;words++;}}
+   const count=Math.max(0,words-2)*3;indexCapacity+=count;if(compactInactiveDisplay)countedIndices+=count;
+  }
  });
- const vertices=new Float32Array(vertexCapacity*8),indices=new Uint32Array(indexCapacity),objects=[],compiledSemantics=Object.create(null);
+ if(compactInactiveDisplay)flushCount();
+ const displayVertices=compactInactiveDisplay?packedVertices:vertexCapacity,displayIndices=compactInactiveDisplay?packedIndices:indexCapacity;
+ const vertices=new Float32Array(displayVertices*8),indices=new Uint32Array(displayIndices),objects=[],compiledSemantics=Object.create(null);
  let v=new BufferBuilder(Float32Array),n=new BufferBuilder(Float32Array),uv=new BufferBuilder(Float32Array),ix=new BufferBuilder(Uint32Array);
- let name=null,material=null,vo=0,io=0,uvOffset=0,normalOffset=0;
+ let name=null,material=null,vo=0,io=0,sourceVo=0,sourceIo=0,allFinite=true,uvOffset=0,normalOffset=0;
  function flush(){
   const count=v.length/3;if(!name||!count)return;
   if(n.length!==v.length||(uv.length!==0&&uv.length/2!==count))throw Error('Unsupported split OBJ attributes: '+name);
-  const g=new Float32Array(vertices.buffer,vo*32,count*8),min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
+  const classification=classify(name,material,semantics,compiledSemantics);
+  const keep=!compactInactiveDisplay||classification.active;
+  const g=keep?new Float32Array(vertices.buffer,vo*32,count*8):null;
+  const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
   for(let i=0;i<count;i++){
-   for(let k=0;k<3;k++){const p=v.array[i*3+k];g[i*8+k]=p;g[i*8+3+k]=n.array[i*3+k];min[k]=Math.min(min[k],p);max[k]=Math.max(max[k],p);}
-   if(uv.length){g[i*8+6]=uv.array[i*2];g[i*8+7]=uv.array[i*2+1];}
+   for(let k=0;k<3;k++){
+    const p=v.array[i*3+k],normal=n.array[i*3+k];
+    if(!Number.isFinite(p)||!Number.isFinite(normal))allFinite=false;
+    if(keep){g[i*8+k]=p;g[i*8+3+k]=normal;}
+    min[k]=Math.min(min[k],p);max[k]=Math.max(max[k],p);
+   }
+   if(uv.length){
+    const u=uv.array[i*2],v0=uv.array[i*2+1];
+    if(!Number.isFinite(u)||!Number.isFinite(v0))allFinite=false;
+    if(keep){g[i*8+6]=u;g[i*8+7]=v0;}
+   }
   }
-  indices.set(ix.array.subarray(0,ix.length),io);
-  objects.push({name,material,vo,vc:count,io,ic:ix.length,bounds:[min,max],sourceHasUV:!!uv.length,...classify(name,material,semantics,compiledSemantics)});
-  vo+=count;io+=ix.length;uvOffset+=uv.length/2;normalOffset+=n.length/3;
+  if(keep)indices.set(ix.array.subarray(0,ix.length),io);
+  objects.push({name,material,vo,vc:keep?count:0,io,ic:keep?ix.length:0,bounds:[min,max],sourceHasUV:!!uv.length,...classification});
+  sourceVo+=count;sourceIo+=ix.length;
+  if(keep){vo+=count;io+=ix.length;}
+  uvOffset+=uv.length/2;normalOffset+=n.length/3;
   v.length=n.length=uv.length=ix.length=0;
  }
  let line='',cursor=0;
@@ -97,7 +126,7 @@ export function parseSourceOBJ(text,semantics){
    let count=0,first,previous,t;
    while((t=token())!==undefined){
     const slash=t.indexOf('/'),next=slash<0?-1:t.indexOf('/',slash+1),last=next<0?-1:t.indexOf('/',next+1);
-    const vi=Number(slash<0?t:t.slice(0,slash)),ui=slash<0?undefined:t.slice(slash+1,next<0?t.length:next),ni=next<0?NaN:Number(t.slice(next+1,last<0?t.length:last)),local=vi-1-vo;
+    const vi=Number(slash<0?t:t.slice(0,slash)),ui=slash<0?undefined:t.slice(slash+1,next<0?t.length:next),ni=next<0?NaN:Number(t.slice(next+1,last<0?t.length:last)),local=vi-1-sourceVo;
     if(!Number.isSafeInteger(vi)||!Number.isSafeInteger(ni)||(ui&&!Number.isSafeInteger(Number(ui)))||ni-1-normalOffset!==local||(ui&&Number(ui)-1-uvOffset!==local)||local<0||local>=v.length/3)throw Error('Unsupported separate OBJ indices: '+name);
     if(count===0)first=local;else if(count>=2)ix.push3(first,previous,local);
     previous=local;count++;
@@ -105,9 +134,12 @@ export function parseSourceOBJ(text,semantics){
    if(count<3)throw Error('Incomplete OBJ face: '+name);
   }
  });flush();
- if(vo!==vertexCapacity||io!==indexCapacity)throw Error('Invalid source OBJ allocation');
- if(!objects.length||!vertices.every(Number.isFinite))throw Error('Invalid source OBJ');
- return {vertices,indices,objects};
+ if(sourceVo!==vertexCapacity||sourceIo!==indexCapacity||vo!==displayVertices||io!==displayIndices)throw Error('Invalid source OBJ allocation');
+ if(!objects.length||!allFinite||!vertices.every(Number.isFinite))throw Error('Invalid source OBJ');
+ const result={vertices,indices,objects};
+ if(compactInactiveDisplay&&displayVertices!==vertexCapacity)
+  result.sourceGeometry={vertices:vertexCapacity,triangles:indexCapacity/3};
+ return result;
 }
 export function collision(geo){
  const max=geo.objects.reduce((n,o)=>n+(o.collidable?o.ic/3:0),0);
@@ -243,8 +275,8 @@ export function parseSourceMaterials(text,objects,files){
  }
  return materials;
 }
-export function convertSource(stage,obj,mtl,files,progress=()=>{},placement=null){
- progress('OBJ');let geometry=parseSourceOBJ(obj,stage.sourceSemantics);
+export function convertSource(stage,obj,mtl,files,progress=()=>{},placement=null,{compactInactiveDisplay=false}={}){
+ progress('OBJ');let geometry=parseSourceOBJ(obj,stage.sourceSemantics,{compactInactiveDisplay:compactInactiveDisplay&&!placement});
  if(placement){
   if(placement.plan?.stageId!==stage.id)throw Error('Placement stage differs from requested source');
   geometry=applySourcePlacements(geometry,placement.document,placement.plan,stage.sourceSha256);
@@ -260,6 +292,7 @@ export function convertSource(stage,obj,mtl,files,progress=()=>{},placement=null
   collisionStatus:'inferred display triangles, not native collision',paintStatus:'inferred planar masks, not native masks',ruleStatus:'Pnt display only; ranked objectives are local calibration',
   objects:geometry.objects,materials,faces:charts.faces,textureIntegrity:integrity,
   gridCells:charts.mask.length,geometry:{vertices:geometry.vertices.length/8,triangles:geometry.indices.length/3,collisionTriangles:data.flags.length,bvhNodes:data.nodes.length/8,paintFaces:charts.faces.length},chartMaxPlaneError:charts.chartMaxPlaneError,cell:.25};
+ if(geometry.sourceGeometry)manifest.sourceGeometry={...manifest.geometry,...geometry.sourceGeometry};
  if(geometry.placementReceipt){manifest.diagnosticOnly=true;manifest.placementReceipt=geometry.placementReceipt;manifest.coordinates='Explicit actor-local Banc binding; scales/Euler convention declared in placementReceipt';manifest.spawnStatus='Existing inferred trial pads, not Banc respawns';}
  delete data.areas;
  return {...data,vertices:geometry.vertices,indices:geometry.indices,mask:charts.mask,triangleFace:charts.triangleFace,manifest,integrity};
