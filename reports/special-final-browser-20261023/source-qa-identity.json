@@ -1,0 +1,26 @@
+{
+  "candidate": "4c9b7861038189e709db5e80e64d2a2712f7b877",
+  "candidateTree": "8dc50f1832b8f54d06ccee88c827f1b2fc9a4aff",
+  "soleParent": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "normalBuilder": "node scripts/build-inkwave.mjs inkwave-public .ci-scratch/special-final-browser/site-after",
+  "node": "v24.19.0",
+  "esbuild": "0.28.2",
+  "playwright": "1.62.1",
+  "browserExecutable": "/usr/bin/chromium",
+  "browserVersion": "154.0.8037.57",
+  "qaSourceSHA256": {
+    "scripts/check-inkwave-inkjet-presentation-browser.mjs": "e6675939810b3e8d076569e997ac7f303832add5604f34760f99063f92ae82be",
+    "scripts/check-inkwave-result-continuation.mjs": "a464000506a8d881c5074f484dc1d1bdcb9c9c432c702591e1f17b6e042d5c53",
+    "scripts/check-inkwave-responsive.mjs": "f97f5f7efae70176fd33e382ff68e8b751303ac2723466c1feec5a7c2665f529",
+    "scripts/lib/inkwave-responsive-animation-settle.mjs": "b50957fa8a72362885c978b183fbbac88540103a3cc5ed66317d6f16baf7a82c",
+    "scripts/lib/inkwave-responsive-animation-diagnostics.mjs": "a37def039b2f87fec6f0dca14fe75dbdcbdb4e2d1ae5e393f53b9042d47ae722"
+  },
+  "productionLeaves": [
+    "patches/splatoon3/runtime/area-special-vfx-clock.mjs",
+    "patches/splatoon3/runtime/special-motion.mjs",
+    "patches/splatoon3/runtime/special-presentation.mjs",
+    "patches/splatoon3/runtime/special-vfx.mjs"
+  ],
+  "webkitAbsent": "/home/agent/.cache/ms-playwright/webkit-2336/pw_run.sh",
+  "bundledChromiumAbsent": "/home/agent/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome"
+}

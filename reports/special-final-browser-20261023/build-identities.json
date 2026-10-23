@@ -1,0 +1,30 @@
+[
+  {
+    "side": "before",
+    "source": "/workspace/actions",
+    "site": "/workspace/actions/.ci-scratch/special-final-browser/site-before",
+    "commit": "726e338ac256ba9609086ce65e25a68ddd99df85",
+    "tree": "cfd4402fa796d11daffe2db0d34cdfcac8a4c71c",
+    "revision": "d0aad52ff86d0915c282be5ff1cc481fa63f7511ed765743c9d9e62f73e59f9d",
+    "inputHash": "350b861c6d2ca16e5430ffc5b4f7e39cfbefc9df67290de1746b077ae256eb81",
+    "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+    "inputCount": 1420,
+    "artifactCount": 2110,
+    "script": "a2814e623a81811aca5a6b5079d566ab88fabaa9b9a8d9351fadd45c25a98242",
+    "manifestSHA256": "6a8c82a5d5dc29a458902e3982424e97eb39c099dc85f0aaa568244b266456e7"
+  },
+  {
+    "side": "after",
+    "source": "/workspace/inkwave-special-candidate",
+    "site": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/site-after",
+    "commit": "4c9b7861038189e709db5e80e64d2a2712f7b877",
+    "tree": "8dc50f1832b8f54d06ccee88c827f1b2fc9a4aff",
+    "revision": "a73fa9410e41bf635a38b36165e333965ae4d0f606b0b28f6fd9965e37fdd4f9",
+    "inputHash": "3fbcdb527d87ae0318e1e1df3037088e8d82ae8f979d6d7cae00b9a353ce4f91",
+    "contentHash": "bd3d8d2715b53a842901be6457bdb777621c4290f60a2c37a1404e4f9e5d3707",
+    "inputCount": 1421,
+    "artifactCount": 2112,
+    "script": "a2814e623a81811aca5a6b5079d566ab88fabaa9b9a8d9351fadd45c25a98242",
+    "manifestSHA256": "a7aef69a5118bbb274948b67aa86af24d21757c818935d9ea9f8132a0164c4e2"
+  }
+]

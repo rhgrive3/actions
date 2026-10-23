@@ -1,0 +1,453 @@
+{
+  "browser": "154.0.8037.57",
+  "contentHash": "bd3d8d2715b53a842901be6457bdb777621c4290f60a2c37a1404e4f9e5d3707",
+  "result": {
+    "scope": "Actual emitted native Actor/Projectiles/FX flat-floor browser probe, explicit 1/60 Actor steps. Not full Game FixedClock or wall-clock FPS.",
+    "rows": [
+      {
+        "actorStep": 1,
+        "secondsAfterActivation": 0.016666666666666666,
+        "domes": [
+          {
+            "ignited": false,
+            "pillar": 0,
+            "halo": 0
+          }
+        ]
+      },
+      {
+        "actorStep": 2,
+        "secondsAfterActivation": 0.03333333333333333,
+        "domes": [
+          {
+            "ignited": false,
+            "pillar": 0,
+            "halo": 0
+          }
+        ]
+      },
+      {
+        "actorStep": 3,
+        "secondsAfterActivation": 0.05,
+        "domes": [
+          {
+            "ignited": false,
+            "pillar": 0,
+            "halo": 0
+          }
+        ]
+      },
+      {
+        "actorStep": 4,
+        "secondsAfterActivation": 0.06666666666666667,
+        "domes": [
+          {
+            "ignited": false,
+            "pillar": 0,
+            "halo": 0
+          }
+        ]
+      },
+      {
+        "actorStep": 5,
+        "secondsAfterActivation": 0.08333333333333333,
+        "domes": [
+          {
+            "ignited": false,
+            "pillar": 0,
+            "halo": 0
+          }
+        ]
+      },
+      {
+        "actorStep": 6,
+        "secondsAfterActivation": 0.1,
+        "domes": [
+          {
+            "ignited": false,
+            "pillar": 0,
+            "halo": 0
+          }
+        ]
+      },
+      {
+        "actorStep": 7,
+        "secondsAfterActivation": 0.11666666666666667,
+        "domes": [
+          {
+            "ignited": false,
+            "pillar": 0,
+            "halo": 0
+          }
+        ]
+      },
+      {
+        "actorStep": 8,
+        "secondsAfterActivation": 0.13333333333333333,
+        "domes": [
+          {
+            "ignited": false,
+            "pillar": 0,
+            "halo": 0
+          }
+        ]
+      },
+      {
+        "actorStep": 9,
+        "secondsAfterActivation": 0.15,
+        "domes": [
+          {
+            "ignited": false,
+            "pillar": 0,
+            "halo": 0
+          }
+        ]
+      },
+      {
+        "actorStep": 10,
+        "secondsAfterActivation": 0.16666666666666666,
+        "domes": [
+          {
+            "ignited": false,
+            "pillar": 0,
+            "halo": 0
+          }
+        ]
+      },
+      {
+        "actorStep": 11,
+        "secondsAfterActivation": 0.18333333333333332,
+        "domes": [
+          {
+            "ignited": false,
+            "pillar": 0,
+            "halo": 0
+          }
+        ]
+      },
+      {
+        "actorStep": 12,
+        "secondsAfterActivation": 0.2,
+        "domes": [
+          {
+            "ignited": false,
+            "pillar": 0,
+            "halo": 0
+          }
+        ]
+      },
+      {
+        "actorStep": 13,
+        "secondsAfterActivation": 0.21666666666666667,
+        "domes": [
+          {
+            "ignited": false,
+            "pillar": 0,
+            "halo": 0
+          }
+        ]
+      },
+      {
+        "actorStep": 14,
+        "secondsAfterActivation": 0.23333333333333334,
+        "domes": [
+          {
+            "ignited": false,
+            "pillar": 0,
+            "halo": 0
+          }
+        ]
+      },
+      {
+        "actorStep": 15,
+        "secondsAfterActivation": 0.25,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.8625110387802124,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 16,
+        "secondsAfterActivation": 0.26666666666666666,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.8946099281311035,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 17,
+        "secondsAfterActivation": 0.2833333333333333,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.9234612584114075,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 18,
+        "secondsAfterActivation": 0.3,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.9484169483184814,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 19,
+        "secondsAfterActivation": 0.31666666666666665,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.968916654586792,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 20,
+        "secondsAfterActivation": 0.3333333333333333,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.984499990940094,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 21,
+        "secondsAfterActivation": 0.35,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.9948169589042664,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 22,
+        "secondsAfterActivation": 0.36666666666666664,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.9996358156204224,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 23,
+        "secondsAfterActivation": 0.38333333333333336,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.9988484382629395,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 24,
+        "secondsAfterActivation": 0.4,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.9924724698066711,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 25,
+        "secondsAfterActivation": 0.4166666666666667,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.9806510806083679,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 26,
+        "secondsAfterActivation": 0.43333333333333335,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.9636497497558594,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 27,
+        "secondsAfterActivation": 0.45,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.9418503046035767,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 28,
+        "secondsAfterActivation": 0.4666666666666667,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.9157422780990601,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 29,
+        "secondsAfterActivation": 0.48333333333333334,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.8859121203422546,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 30,
+        "secondsAfterActivation": 0.5,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.8530296087265015,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 31,
+        "secondsAfterActivation": 0.5166666666666667,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.8178333044052124,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 32,
+        "secondsAfterActivation": 0.5333333333333333,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.7811136245727539,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 33,
+        "secondsAfterActivation": 0.55,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.7436951398849487,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 34,
+        "secondsAfterActivation": 0.5666666666666667,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.7064182758331299,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 35,
+        "secondsAfterActivation": 0.5833333333333334,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.6701201796531677,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 36,
+        "secondsAfterActivation": 0.6,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.6356160044670105,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 37,
+        "secondsAfterActivation": 0.6166666666666667,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.6036806702613831,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 38,
+        "secondsAfterActivation": 0.6333333333333333,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.5750313401222229,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 39,
+        "secondsAfterActivation": 0.65,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.5503113865852356,
+            "halo": 0.25
+          }
+        ]
+      },
+      {
+        "actorStep": 40,
+        "secondsAfterActivation": 0.6666666666666666,
+        "domes": [
+          {
+            "ignited": true,
+            "pillar": 0.5300760865211487,
+            "halo": 0.25
+          }
+        ]
+      }
+    ],
+    "glError": 0,
+    "glLost": false,
+    "directorErrors": 0
+  },
+  "errors": []
+}

@@ -1,0 +1,300 @@
+[
+  {
+    "path": "images/before-inkVac-tick1344-rel381.png",
+    "source": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/gameplay-release-lobes-before/inkVac-tick1344-rel381.png",
+    "side": "before",
+    "case": "inkVac",
+    "nativeTick": 1344,
+    "activationRelativeTick": 381,
+    "nativeGameTimeSeconds": 22.40000000000001,
+    "camera": {
+      "mode": "follow",
+      "targetLocal": true,
+      "pos": [
+        0.12416312782967176,
+        1.5507496251358341,
+        -31.684326834296883
+      ]
+    },
+    "scope": "ordinary full-game native follow camera",
+    "sha256": "8c26726c6c175e32116217f73f4be220a4c988f64f09a1ec08f1ef3742e31b3e"
+  },
+  {
+    "path": "images/after-inkVac-tick1344-rel381.png",
+    "source": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/gameplay-release-lobes-after/inkVac-tick1344-rel381.png",
+    "side": "after",
+    "case": "inkVac",
+    "nativeTick": 1344,
+    "activationRelativeTick": 381,
+    "nativeGameTimeSeconds": 22.40000000000001,
+    "camera": {
+      "mode": "follow",
+      "targetLocal": true,
+      "pos": [
+        0.12416312782967176,
+        1.5507496251358341,
+        -31.684326834296883
+      ]
+    },
+    "scope": "ordinary full-game native follow camera",
+    "sha256": "b918687172d0abb11164aa6c08e9e6e5ef0f1fd93b914d23bd1e7915f1324ab9"
+  },
+  {
+    "path": "images/before-trizooka-tick456-rel63.png",
+    "source": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/gameplay-release-lobes-before/trizooka-tick456-rel63.png",
+    "side": "before",
+    "case": "trizooka",
+    "nativeTick": 456,
+    "activationRelativeTick": 63,
+    "nativeGameTimeSeconds": 7.599999999999978,
+    "camera": {
+      "mode": "follow",
+      "targetLocal": true,
+      "pos": [
+        0.12272017161633392,
+        1.552643275327024,
+        -31.665461549723943
+      ]
+    },
+    "scope": "ordinary full-game native follow camera",
+    "sha256": "60003976bc4654ebebee002748ca9a7ee4bdd468361d677d0549b53a84f8d6b0"
+  },
+  {
+    "path": "images/after-trizooka-tick456-rel63.png",
+    "source": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/gameplay-release-lobes-after/trizooka-tick456-rel63.png",
+    "side": "after",
+    "case": "trizooka",
+    "nativeTick": 456,
+    "activationRelativeTick": 63,
+    "nativeGameTimeSeconds": 7.599999999999978,
+    "camera": {
+      "mode": "follow",
+      "targetLocal": true,
+      "pos": [
+        0.12272017161633392,
+        1.552643275327024,
+        -31.665461549723943
+      ]
+    },
+    "scope": "ordinary full-game native follow camera",
+    "sha256": "c8d49797dbbcf3e9e52f03dc9eb7c20559e84eb520868a0b9632192b247255e0"
+  },
+  {
+    "path": "images/before-ultraStamp-tick1826-rel43.png",
+    "source": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/gameplay-accepted-before/ultraStamp-tick1826-rel43.png",
+    "side": "before",
+    "case": "ultraStamp",
+    "nativeTick": 1826,
+    "activationRelativeTick": 43,
+    "nativeGameTimeSeconds": 30.433333333332886,
+    "camera": {
+      "mode": "follow",
+      "targetLocal": true,
+      "pos": [
+        0.12072880006071024,
+        2.0018118583848534,
+        -31.636162228480707
+      ]
+    },
+    "scope": "ordinary full-game native follow camera",
+    "sha256": "85fc2857e5f660db17919f26c3d80d177b199d7ef64941bc3bca2235569cd293"
+  },
+  {
+    "path": "images/after-ultraStamp-tick1826-rel43.png",
+    "source": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/gameplay-accepted-after/ultraStamp-tick1826-rel43.png",
+    "side": "after",
+    "case": "ultraStamp",
+    "nativeTick": 1826,
+    "activationRelativeTick": 43,
+    "nativeGameTimeSeconds": 30.433333333332886,
+    "camera": {
+      "mode": "follow",
+      "targetLocal": true,
+      "pos": [
+        0.12072880006071024,
+        2.0018118583848534,
+        -31.636162228480707
+      ]
+    },
+    "scope": "ordinary full-game native follow camera",
+    "sha256": "196bc0b8392cf12e90f4c44056925f82475134ae20415ba278bbfc5ef5417ed3"
+  },
+  {
+    "path": "images/before-superChump-tick447-rel54.png",
+    "source": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/gameplay-shapes-before/superChump-tick447-rel54.png",
+    "side": "before",
+    "case": "superChump",
+    "nativeTick": 447,
+    "activationRelativeTick": 54,
+    "nativeGameTimeSeconds": 7.449999999999979,
+    "camera": {
+      "mode": "follow",
+      "targetLocal": true,
+      "pos": [
+        0.12202881384962583,
+        1.553659172066,
+        -31.655336237615685
+      ]
+    },
+    "scope": "ordinary full-game native follow camera",
+    "sha256": "3de675eba8c4d51908f5c04d1571bdc4b2fcddfb088ddfacadda37429d1c576e"
+  },
+  {
+    "path": "images/after-superChump-tick447-rel54.png",
+    "source": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/gameplay-shapes-after/superChump-tick447-rel54.png",
+    "side": "after",
+    "case": "superChump",
+    "nativeTick": 447,
+    "activationRelativeTick": 54,
+    "nativeGameTimeSeconds": 7.449999999999979,
+    "camera": {
+      "mode": "follow",
+      "targetLocal": true,
+      "pos": [
+        0.12202881384962583,
+        1.553659172066,
+        -31.655336237615685
+      ]
+    },
+    "scope": "ordinary full-game native follow camera",
+    "sha256": "fff5edd553bfa8fad8a7252fbed9d691557ef1c2574086980b53d24c1264a480"
+  },
+  {
+    "path": "images/after-reefslider-tick5253-rel100.png",
+    "source": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/gameplay-accepted-after/reefslider-tick5253-rel100.png",
+    "side": "after",
+    "case": "reefslider",
+    "nativeTick": 5253,
+    "activationRelativeTick": 100,
+    "nativeGameTimeSeconds": 87.54999999999632,
+    "camera": {
+      "mode": "follow",
+      "targetLocal": true,
+      "pos": [
+        0.08962794079621283,
+        1.5510444844824178,
+        -23.58145484141015
+      ]
+    },
+    "scope": "ordinary full-game native follow camera",
+    "sha256": "3f753769bb765db5ab01397e83c9bfa1ff4cb86162c2f5d0481b7be89fe2d98d"
+  },
+  {
+    "path": "images/after-inkjet-tick6383-rel90.png",
+    "source": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/gameplay-accepted-after/inkjet-tick6383-rel90.png",
+    "side": "after",
+    "case": "inkjet",
+    "nativeTick": 6383,
+    "activationRelativeTick": 90,
+    "nativeGameTimeSeconds": 106.38333333332858,
+    "camera": {
+      "mode": "follow",
+      "targetLocal": true,
+      "pos": [
+        0.12369922602177957,
+        6.550932902883793,
+        -31.679411761788714
+      ]
+    },
+    "scope": "ordinary full-game native follow camera",
+    "sha256": "f1dccd1c7f972a05370e4b170a04ee255f58638ba126a7fbc4b9fd499cb3c78f"
+  },
+  {
+    "path": "images/after-tripleSplashdown-tick5798-rel75.png",
+    "source": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/gameplay-accepted-after/tripleSplashdown-tick5798-rel75.png",
+    "side": "after",
+    "case": "tripleSplashdown",
+    "nativeTick": 5798,
+    "activationRelativeTick": 75,
+    "nativeGameTimeSeconds": 96.63333333332913,
+    "camera": {
+      "mode": "follow",
+      "targetLocal": true,
+      "pos": [
+        0.12326129288860016,
+        1.5785899802926668,
+        -31.67385525876469
+      ]
+    },
+    "scope": "ordinary full-game native follow camera",
+    "sha256": "65ddabd6d39463514ff4b44ec57571c78f0942f472cbbb81113dfcacb3931e7e"
+  },
+  {
+    "path": "images/before-splattercolorScreen-tick2763-rel760.png",
+    "source": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/gameplay-shapes-before/splattercolorScreen-tick2763-rel760.png",
+    "side": "before",
+    "case": "splattercolorScreen",
+    "nativeTick": 2763,
+    "activationRelativeTick": 760,
+    "nativeGameTimeSeconds": 46.04999999999867,
+    "camera": {
+      "mode": "follow",
+      "targetLocal": true,
+      "pos": [
+        -0.2239775688417685,
+        1.9999999999742515,
+        43.5
+      ]
+    },
+    "scope": "controlled position at Screen relative640; native follow camera",
+    "sha256": "2973ae400c6d751a11a055db1212456336751e4a14c8525aca12d3f869a8fab8"
+  },
+  {
+    "path": "images/after-splattercolorScreen-tick2763-rel760.png",
+    "source": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/gameplay-shapes-after/splattercolorScreen-tick2763-rel760.png",
+    "side": "after",
+    "case": "splattercolorScreen",
+    "nativeTick": 2763,
+    "activationRelativeTick": 760,
+    "nativeGameTimeSeconds": 46.04999999999867,
+    "camera": {
+      "mode": "follow",
+      "targetLocal": true,
+      "pos": [
+        -0.2239775688417685,
+        1.9999999999742515,
+        43.5
+      ]
+    },
+    "scope": "controlled position at Screen relative640; native follow camera",
+    "sha256": "a3e2597e04d14ea32e2d8f252037e8e5c0717d20c3cb54d3f3ec91e3cdf115f5"
+  },
+  {
+    "path": "images/after-krakenRoyale-tick1510-rel77.png",
+    "source": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/gameplay-shapes-after/krakenRoyale-tick1510-rel77.png",
+    "side": "after",
+    "case": "krakenRoyale",
+    "nativeTick": 1510,
+    "activationRelativeTick": 77,
+    "nativeGameTimeSeconds": 25.16666666666652,
+    "camera": {
+      "mode": "follow",
+      "targetLocal": true,
+      "pos": [
+        0.12333688457064124,
+        1.266101656075631,
+        -29.4825998027698
+      ]
+    },
+    "scope": "ordinary full-game native follow camera",
+    "sha256": "e71fc2475919fbc5cce25c9550e6348776acc218a727bfb296c7a52078723876"
+  },
+  {
+    "path": "images/before-bubbler-actorstep8.png",
+    "source": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/bubbler-before/bubbler-actorstep8.png",
+    "side": "before",
+    "case": "bubbler",
+    "actorStep": 8,
+    "scope": "emitted Actor/Projectiles/FX flat-floor browser diagnostic; 1/60 step; not Game FixedClock count",
+    "sha256": "16eff76a09b4d60a0119785c0ee7fba04777f9fdceb733a6b706a8e4e6e2c163"
+  },
+  {
+    "path": "images/after-bubbler-actorstep8.png",
+    "source": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/bubbler-after/bubbler-actorstep8.png",
+    "side": "after",
+    "case": "bubbler",
+    "actorStep": 8,
+    "scope": "emitted Actor/Projectiles/FX flat-floor browser diagnostic; 1/60 step; not Game FixedClock count",
+    "sha256": "277d8c8665a8a06aaf85bb832a7392a860697418f17cb0ccff6d469cb1802b81"
+  }
+]

@@ -1,0 +1,41 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {chromium} from '/workspace/actions/node_modules/playwright/index.mjs';
+import {createResponsiveAssetServer} from '/workspace/inkwave-special-candidate/scripts/lib/inkwave-responsive-server.mjs';
+import {checkResultContinuation} from '/workspace/inkwave-special-candidate/scripts/check-inkwave-result-continuation.mjs';
+import {settleResponsiveAnimationsInPage} from '/workspace/inkwave-special-candidate/scripts/lib/inkwave-responsive-animation-diagnostics.mjs';
+import {responsiveAnimationsSettled} from '/workspace/inkwave-special-candidate/scripts/lib/inkwave-responsive-animation-settle.mjs';
+const base='/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser',source=base+'/site-after',out=base+'/continuation-clean';fs.mkdirSync(out,{recursive:true});
+// Reuse the exact registered production-menu fixture HTML, selecting its already
+// built styles/runtime. No production or runner input is changed.
+const text=fs.readFileSync('/workspace/inkwave-special-candidate/scripts/check-inkwave-responsive.mjs','utf8');
+const patchStyles='<link rel="stylesheet" href="/patches/splatoon3/ui.css">';
+const runtimeInstaller=text.match(/const runtimeInstaller = patchStyles \? `([\s\S]*?)` : '';/)[1];
+const template=text.match(/const html = `([\s\S]*?)`;\nconst server =/)[1];
+const html=template.replace('${patchStyles}',patchStyles).replace('${runtimeInstaller}',runtimeInstaller).replace('<html lang="ja">','<html lang="ja"><link rel="icon" href="data:,">');
+const server=createResponsiveAssetServer({source,html});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+const browser=await chromium.launch({headless:true,executablePath:'/usr/bin/chromium',args:['--no-sandbox','--disable-dev-shm-usage']});
+const report={scope:'Focused real Chromium production Menus DOM with registered offline session fixture. Native continuation check after actual geometry and PNG; not hosted responsive matrix or real multiplayer.',browser:browser.version(),cases:[]};
+const save=()=>fs.writeFileSync(path.join(out,'result.json'),JSON.stringify(report,null,2));
+try{
+for(const [name,viewport]of [['phone-portrait',{width:390,height:844}],['desktop',{width:1440,height:900}]]){
+ const context=await browser.newContext({viewport,hasTouch:true,reducedMotion:'reduce'}),page=await context.newPage();
+ const entry={name,viewport,errors:[],consoleErrors:[],httpErrors:[],operations:[],captures:[]};report.cases.push(entry);save();
+ page.on('response',r=>{if(r.status()>=400)entry.httpErrors.push({url:r.url(),status:r.status()});});page.on('pageerror',e=>entry.errors.push(e.stack));page.on('console',m=>{if(m.type()==='error')entry.consoleErrors.push(m.text());});
+ try{
+ await page.goto(`http://127.0.0.1:${server.address().port}/__menus?netmock=1&mockauto=0&mocklat=0&news=0`);
+ await page.waitForFunction(()=>window.menuReady===true);
+ const tap=async(page,selector)=>{const el=page.locator(selector).first();await el.scrollIntoViewIfNeeded();await el.tap();};
+ const settle=(page,observe=false)=>page.evaluate(settleResponsiveAnimationsInPage,observe);
+ const capture=async(label,selector)=>{
+  if(label==='loadout-continue')await page.waitForFunction(responsiveAnimationsSettled);else await settle(page);
+  const geometry=await page.locator(selector).evaluateAll(els=>els.filter(el=>el.getClientRects().length&&!el.closest('.is-leaving')).map(el=>{let r=el.getBoundingClientRect();return {width:r.width,height:r.height,left:r.left,right:r.right,viewport:innerWidth};}));
+  assert(geometry.length);for(const r of geometry){assert(r.left>=-1&&r.right<=r.viewport+1,label+': overflow');assert(r.width>=43&&r.height>=43,label+': touch size');}
+  const image=name+'-'+label+'.png';await page.screenshot({path:path.join(out,image)});entry.captures.push({label,image,geometry});save();
+ };
+ await checkResultContinuation({page,tap,settle,capture,entry,onOperation:(id,boundary)=>{entry.operations.push({id,boundary,wall:Date.now()});save();}});
+ assert.deepEqual(entry.errors,[]);assert.deepEqual(entry.consoleErrors,[]);entry.status='passed';console.log(name+' continuation passed');
+ }catch(e){entry.status='failed';entry.failure=e.stack;console.error(e.stack);await page.screenshot({path:path.join(out,name+'-failure.png')}).catch(()=>{});process.exitCode=1;}finally{save();await context.close();}
+}
+}finally{save();await browser.close();await new Promise(r=>server.close(r));}

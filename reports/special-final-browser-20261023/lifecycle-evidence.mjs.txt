@@ -1,0 +1,115 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import http from 'node:http';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {chromium} from '/workspace/actions/node_modules/playwright/index.mjs';
+
+const root='/workspace/inkwave-special-candidate', out=path.join(root,'.ci-scratch/special-final-browser');
+const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+const sides=[['before','/workspace/actions','726e338ac256ba9609086ce65e25a68ddd99df85'],['after',root,'4c9b7861038189e709db5e80e64d2a2712f7b877']];
+const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.woff2':'font/woff2','.webp':'image/webp','.mp3':'audio/mpeg','.glb':'model/gltf-binary'};
+const identities=[];
+for(const [side,source,commit] of sides){
+ const site=path.join(source,'.ci-scratch/special-final-browser/site-'+side), m=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
+ assert.equal(hash(JSON.stringify(m.artifacts)),m.contentHash);
+ for(const [f,h] of Object.entries(m.artifacts))assert.equal(hash(fs.readFileSync(path.join(site,f))),h,f);
+ const namespaces={'upstream/':'inkwave-public/','patch/':'patches/splatoon3/','touch-layout/':'patches/touch-layout/','reliability/':'patches/reliability/','local-quality/':'patches/local-quality/','network-replication/':'patches/network-replication/','loading-cache/':'patches/loading-cache/','practice-range/':'patches/practice-range/','native-stages/':'patches/native-stages/','build-script/':'scripts/'};
+ const tree=new Map(execFileSync('git',['ls-tree','-r','-z',commit],{cwd:source,encoding:'utf8'}).split('\0').filter(Boolean).map(s=>{let [meta,f]=s.split('\t');return [f,meta.split(' ')[2]];}));
+ for(const [k,h] of Object.entries(m.files)){
+  const n=Object.keys(namespaces).find(n=>k.startsWith(n));assert(n,k);const f=namespaces[n]+k.slice(n.length),b=fs.readFileSync(path.join(source,f));assert.equal(hash(b),h,k);
+  const blob=crypto.createHash('sha1').update(Buffer.from('blob '+b.length+'\0')).update(b).digest('hex');assert.equal(blob,tree.get(f),f);
+ }
+ identities.push({side,source,site,commit,tree:execFileSync('git',['rev-parse',commit+'^{tree}'],{cwd:source,encoding:'utf8'}).trim(),revision:m.build.revision,inputHash:m.inputHash,contentHash:m.contentHash,inputCount:Object.keys(m.files).length,artifactCount:Object.keys(m.artifacts).length,script:m.build.script,manifestSHA256:hash(fs.readFileSync(path.join(site,'inkwave-build.json')))});
+ fs.copyFileSync(path.join(site,'inkwave-build.json'),path.join(out,'original-'+side+'-inkwave-build.json'));
+}
+fs.writeFileSync(path.join(out,'build-identities.json'),JSON.stringify(identities,null,2));
+const browser=await chromium.launch({headless:true,executablePath:'/usr/bin/chromium',args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+try{
+for(const identity of (process.env.QA_SIDES?process.env.QA_SIDES.split(',').map(s=>identities.find(x=>x.side===s)):identities)){
+ const {side,site}=identity,dir=path.join(out,'gameplay-'+(process.env.QA_RUN?process.env.QA_RUN+'-':'')+side);fs.mkdirSync(dir,{recursive:true});
+ const served=new Set(),httpFailures=[];
+ const server=http.createServer((req,res)=>{try{const u=new URL(req.url,'http://localhost'),f=path.resolve(site,'.'+(u.pathname==='/'?'/index.html':decodeURIComponent(u.pathname)));if(!f.startsWith(site+'/')||!fs.statSync(f).isFile())throw Error();served.add(path.relative(site,f));res.writeHead(200,{'content-type':mime[path.extname(f)]||'application/octet-stream','cache-control':'no-store'});fs.createReadStream(f).pipe(res);}catch{httpFailures.push(req.url);res.writeHead(404);res.end();}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ const context=await browser.newContext({viewport:{width:960,height:640}}),page=await context.newPage(),errors=[],consoleErrors=[],warnings=[],requestFailures=[];
+ page.on('pageerror',e=>errors.push(e.stack));page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text());if(m.type()==='warning')warnings.push(m.text());});page.on('requestfailed',r=>requestFailures.push({url:r.url(),error:r.failure()}));
+ await page.addInitScript(()=>{let seed=0x1a2b3c4;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,timeOfDay:'day'}));let game;Object.defineProperty(window,'__inkwave',{configurable:true,get:()=>game,set:g=>{game=g;g.frozen=true;}});});
+ const report={identity,browser:browser.version(),viewport:{width:960,height:640},seed:0x1a2b3c4,lighting:'tidewater day',driver:'frozen ordinary game; native Game._frame(1/60), debug keyboard/fire; native follow camera; full production bootstrap; no manual special phases',cases:[],errors,consoleErrors,warnings,requestFailures,httpFailures};
+ const save=()=>fs.writeFileSync(path.join(dir,'result.json'),JSON.stringify(report,null,2));
+ try{
+ await page.goto(`http://127.0.0.1:${server.address().port}/?news=0&time=day`,{waitUntil:'domcontentloaded',timeout:30000});
+ await page.waitForFunction(()=>!!window.__inkwave?.debug&&window.__G?.s3?.installed&&window.__G.mode!=='boot',null,{timeout:180000});
+ console.log(side+' boot ready');
+ await page.evaluate(async()=>{
+  const {on}=await import(new URL('src/core/ctx.js',document.baseURI));const config=await import(new URL('src/config.js',document.baseURI)),catalogue=await import(new URL('patches/splatoon3/runtime/catalogue.mjs',document.baseURI));window.qa={events:[],births:[],muzzles:[],flashes:[],blasts:[],phaseRows:[],tick:()=>__inkwave.s3Clock.ticks,seed(n){let s=n;Math.random=()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};}};
+  for(const name of ['all:special','special:use','special:inkvac','special:inkvac-release','special:inkvac-dispose','catalogue:splashdown'])on(name,e=>qa.events.push({name,id:e.id,action:e.action,index:e.index,phase:e.phase,tick:qa.eventTick(),pos:e.pos,target:e.target}));
+  qa.config=config;qa.catalogue=catalogue;qa.eventTick=()=>qa.tick()+(__inkwave.s3Clock.advancing?1:0);const p=__G.projectiles,push=p._push;p._push=function(x,...args){const result=push.call(this,x,...args);if(this.list.includes(x)&&['trizooka','inkVac','inkjet'].includes(x.wid))qa.births.push({wid:x.wid,tick:qa.eventTick(),seed:x.seed,index:x.s3VolleyIndex,pending:x.s3TrizookaBirthPending,delay:x.delay,pos:x.pos.toArray(),start:x.start?.toArray()});return result;};
+  const step=p._step;p._step=function(x,...args){const pending=x?.wid==='trizooka'&&x.s3TrizookaBirthPending;const result=step.call(this,x,...args);if(pending&&!x.s3TrizookaBirthPending&&!x.s3TrizookaBirthCancelled)qa.acceptedBirths.push({wid:x.wid,index:x.s3VolleyIndex,tick:qa.eventTick(),pos:x.pos.toArray()});return result;};qa.acceptedBirths=[];const d=__G.fx.s3SpecialVfx;qa.glows=[];qa.endpointBirths=[];qa.notices=[];const nativeUpdate=p.update;p.update=function(...args){const pending=this.list.filter(x=>x.s3TrizookaBirthPending).map(x=>({p:x,index:x.s3VolleyIndex}));const result=nativeUpdate.apply(this,args);for(const {p:x,index}of pending)if(!x.s3TrizookaBirthPending&&!x.s3TrizookaBirthCancelled)qa.endpointBirths.push({index,tick:qa.eventTick(),dead:x.dead,notified:d.trizookaShots?.has(x)});return result;};if(d.trizookaShot){const nativeNotice=d.trizookaShot;d.trizookaShot=function(p,...args){const was=this.trizookaShots.has(p),result=nativeNotice.call(this,p,...args);if(!was&&this.trizookaShots.has(p))qa.notices.push({index:p.s3VolleyIndex,tick:qa.eventTick(),pos:p.pos.toArray()});return result;};}const nativeSpark=d.spark;d.spark=function(style,p,x,y,z,life,...args){if(Math.abs(life-3/60)<1e-8)qa.glows.push({style,tick:qa.eventTick(),pos:p.toArray()});return nativeSpark.call(this,style,p,x,y,z,life,...args);};
+  for(const [method,key] of [['muzzle','muzzles'],['flash','flashes'],['inkBlast','blasts']]){const old=d[method];d[method]=function(p,...args){const a=__G.match?.local,g=a?.character?.kid?.getObjectByName('special:'+qa.id),n=g?.userData?.muzzle?.clone();if(n){g.updateWorldMatrix(true,false);g.localToWorld(n);}qa[key].push({tick:qa.eventTick(),heldNozzle:n?.toArray(),heldVisible:g?.visible,active:a?.specialActive?.id,pos:p.toArray(),args:args.map(v=>v?.isVector3?v.toArray():v)});return old.call(this,p,...args);};}
+ });
+ const ids=(process.env.QA_IDS||'inkVac,trizooka,ultraStamp,superChump,bubbler,krakenRoyale,splattercolorScreen,reefslider,tripleSplashdown,inkjet').split(',');
+ for(const id of ids){
+  console.log(side+' '+id+' start');
+  await page.evaluate(async id=>{const g=__inkwave,G=__G;g.debug.freeze();qa.seed(0x1a2b3c4);await g.startMatch({mapId:'tidewater',time:'day',difficulty:'easy',duration:180,mode:'turf'});g.debug.freezeBots();g.input.keys.clear();g.debug.fire(false);g._skipRender=true;for(let i=0;i<330;i++)g._frame(1/60);g._skipRender=false;const a=g.match.local;await a.character._sourceMotionLoader;await a.character.sourceMotion?.ready;g.input.keys.clear();g.debug.fire(false);g.rig.follow(a,true);g.rig.yaw=0;g.rig.pitch=.1;localStorage.setItem(qa.catalogue.CATALOGUE_STORAGE,JSON.stringify({[a.weaponId]:{sub:'bomb',special:id}}));if(!qa.catalogue.applyCatalogueChoice(a,{sub:'bomb',special:id},qa.config))throw Error('Catalogue selection refused '+id);g._skipRender=true;for(let i=0;i<60;i++)g._frame(1/60);g._skipRender=false;a.special=a.specialCost();qa.ready={ready:a.specialReady(),special:a.special,cost:a.specialCost(),weaponSpecial:a.weapon.special,alive:a.alive,controller:g.match.controller.enabled,superJump:!!a.superJumpState,prevSpecial:a._prevIntent.special};if(!a.specialReady())throw Error('Not ready '+JSON.stringify(qa.ready));a.invuln=0;qa.events=[];qa.births=[];qa.muzzles=[];qa.flashes=[];qa.blasts=[];qa.phaseRows=[];qa.acceptedBirths=[];qa.glows=[];qa.endpointBirths=[];qa.notices=[];qa.base=g.s3Clock.ticks;qa.previous=null;qa.id=id;qa.frames=0;qa.started=performance.now();g.debug.key('KeyF',true);g._frame(1/60);g.debug.key('KeyF',false);},id);
+  const row=await page.evaluate(()=>({id:qa.id,baseTick:qa.base,startTick:qa.tick(),matchState:__G.match.state,position:__G.match.local.pos.toArray(),palette:__G.teamHex,active:__G.match.local.specialActive,ready:qa.ready,clock:__G.time,sourceMotion:__G.match.local.character.sourceMotion?.status}));
+  row.samples=[];report.cases.push(row);save();
+  const max=id==='inkVac'?430:id==='splattercolorScreen'?800:id==='krakenRoyale'?180:id==='inkjet'?160:id==='bubbler'?80:180;
+  const targets=id==='inkVac'?[35,358,360,379,380,381,382,390]:id==='trizooka'?[40,54,55,58,59,62,63,90,150]:id==='ultraStamp'?[35,43,47,52,58,70]:id==='superChump'?[35,40,45,60,90]:id==='bubbler'?[15,20,21,30,45,60]:id==='splattercolorScreen'?[35,90,650,700,730,760]:id==='reefslider'?[40,65,80,100,130]:id==='tripleSplashdown'?[35,50,60,75,90]:[35,60,90,140];
+  let f=1;
+  for(const target of [...new Set([...targets,max])].sort((a,b)=>a-b)){
+   if(target<=f)continue;
+   const sample=await page.evaluate(({from,to})=>{const g=__inkwave,G=__G,a=g.match.local;g._skipRender=true;for(let f=from+1;f<=to;f++){
+    g.debug.fire(qa.id==='inkVac'&&f<380||qa.id==='trizooka'&&f>=40&&f<55||qa.id==='ultraStamp'&&f>=38&&f<90||qa.id==='superChump'&&f>=40&&f<43||qa.id==='reefslider'&&f>=60&&f<63||qa.id==='inkjet'&&f>=80&&f<83);
+    g.debug.key('Space',qa.id==='ultraStamp'&&f>=38&&f<40||qa.id==='krakenRoyale'&&f>=55&&f<58);
+    g.debug.key('KeyE',qa.id==='splattercolorScreen'&&f>=35&&f<38);
+    if(qa.id==='krakenRoyale')g.debug.key('KeyW',f>=40&&f<100);
+    g._skipRender=f!==to;g._frame(1/60);qa.frames++;
+    const s=a._s3AllSpecialState||a.specialActive,phase=s?.phase||a.specialActive?.id||null;if(phase!==qa.previous){qa.phaseRows.push({tick:qa.tick(),relative:qa.tick()-qa.base,phase,pos:a.pos.toArray()});qa.previous=phase;}
+   }g._skipRender=false;const d=G.fx.s3SpecialVfx,t=d.tracks.get(a),gl=G.renderer.getContext();let sheets=[];G.scene.traverse(o=>{if(o.userData.s3ScreenSheet?.mat)sheets.push({scale:o.scale.toArray(),visible:o.visible,opacity:o.userData.s3ScreenSheet.mat.opacity});});return {tick:qa.tick(),relative:qa.tick()-qa.base,time:G.time,active:a.specialActive?.id||null,phase:a._s3AllSpecialState?.phase||a.specialActive?.phase||null,alive:a.alive,grounded:a.grounded,pos:a.pos.toArray(),camera:{mode:g.rig.mode,targetLocal:g.rig.target===a,pos:G.camera.position.toArray()},warn:t?.d.warn?{dead:!!t.d.warn.dead,alpha:t.d.warn.v[11]}:null,sheets,devices:a.character.s3SpecialDevices()?.map(x=>({model:x.spec.model,visible:x.holder.visible,rotation:x.holder.rotation.toArray()})),muzzleCount:qa.muzzles.length,blastCount:qa.blasts.length,births:qa.births.length,glError:gl.getError(),glLost:gl.isContextLost(),directorErrors:d.errors,resources:{...G.renderer.info.memory},render:{...G.renderer.info.render},perf:{...g.perf}};},{from:f,to:target});
+   f=target;row.samples.push(sample);
+   const selected=(id==='inkVac'&&[358,380,381,382].includes(target))||(id==='trizooka'&&[55,59,63].includes(target))||(id==='ultraStamp'&&[43,52].includes(target))||(id==='superChump'&&target===45)||(id==='bubbler'&&[20,45].includes(target))||(id==='krakenRoyale'&&target===60)||(id==='reefslider'&&[80,100].includes(target))||(id==='tripleSplashdown'&&target===75)||(id==='splattercolorScreen'&&[90,700,730].includes(target))||(id==='inkjet'&&target===90);
+   if(selected){sample.image=`${id}-tick${sample.tick}-rel${sample.relative}.png`;await page.screenshot({path:path.join(dir,sample.image)});}
+   save();
+  }
+  Object.assign(row,await page.evaluate(()=>({events:qa.events,births:qa.births,acceptedBirths:qa.acceptedBirths,endpointBirths:qa.endpointBirths,glows:qa.glows,notices:qa.notices,muzzles:qa.muzzles,flashes:qa.flashes,blasts:qa.blasts,phases:qa.phaseRows,wallMs:performance.now()-qa.started})));save();
+  console.log(side+' '+id+' done '+JSON.stringify({active:row.samples.at(-1).active,phase:row.samples.at(-1).phase,position:row.samples.at(-1).pos,muzzles:row.muzzles.length,births:row.births.length}));
+ }
+
+ report.lifecycle=await page.evaluate(async()=>{
+  const g=__inkwave,G=__G,d=G.fx.s3SpecialVfx,a=G.match.local,rows=[],failures=[];
+  const expect=(ok,label,actual)=>{if(!ok)failures.push({label,actual});};
+  const step=(n=1)=>{g._skipRender=true;for(let i=0;i<n;i++)g._frame(1/60);g._skipRender=false;};
+  const select=(actor,id)=>{localStorage.setItem(qa.catalogue.CATALOGUE_STORAGE,JSON.stringify({[actor.weaponId]:{sub:'bomb',special:id}}));qa.catalogue.applyCatalogueChoice(actor,{sub:'bomb',special:id},qa.config);};
+  const prepare=(id)=>{g.input.keys.clear();g.debug.fire(false);a.remote=false;a.reset();a.spawnAt(G.level.spawnPads[a.team],0);select(a,id);step(3);a.special=a.specialCost();qa.blasts=[];qa.events=[];};
+  const start=()=>{g.debug.key('KeyF',true);step();g.debug.key('KeyF',false);expect(!!a.specialActive,'native activation',a.weapon.special);};
+  prepare('tripleSplashdown');start();step(1);a.reset();G.projectiles.clear();step(2);rows.push({name:'Splash reset and clear',blasts:qa.blasts.length,fists:d.fists.size,tick:qa.tick()});expect(qa.blasts.length===0&&d.fists.size===0,'clear creates no blast',rows.at(-1));
+  prepare('tripleSplashdown');start();step(130);rows.push({name:'Splash repeat after clear',blasts:qa.blasts,impacts:qa.events.filter(e=>e.action==='impact'),tick:qa.tick()});expect(qa.blasts.length===3,'repeat has three accepted blasts',rows.at(-1));
+  prepare('tripleSplashdown');start();step(1);a.splat(null,'QA death');step(130);rows.push({name:'Splash owner death',blasts:qa.blasts,impacts:qa.events.filter(e=>e.action==='impact'),alive:a.alive,tick:qa.tick()});expect(qa.blasts.length===2,'death keeps only two independent fist impacts',rows.at(-1));
+  G.projectiles.clear();G.fx.clear();qa.blasts=[];
+  const remote=G.actors.find(x=>x!==a&&x.alive),wasRemote=remote.remote;remote.remote=true;
+  const THREE=await import('three'),{observeSpecialReplay}=await import(new URL('patches/splatoon3/runtime/special-vfx.mjs',document.baseURI));
+  const api={...qa.config,THREE,G,Projectiles:G.projectiles.constructor,specialVfxReplay:e=>d.event(e)};
+  const replay=observeSpecialReplay(api,qa.catalogue.replaySplashdown),event={actor:remote,id:'tripleSplashdown',activation:777,pos:remote.pos.toArray(),seed:777};
+  expect(replay(api,{...event,action:'activate',yaw:0})===true,'remote replay activate');step(1);
+  expect(replay(api,{...event,action:'fistGone',index:0})===true,'remote replay fistGone');step(130);
+  const expiry={name:'Remote Splash accepted replay diagnostic',scope:'Emitted replay entry and cosmetic route, no real peer transport',expiryBlasts:qa.blasts.length,fists:d.fists.size,tick:qa.tick()};expect(qa.blasts.length===0,'remote destruction/expiry no fake impact',expiry);
+  expect(replay(api,{...event,action:'impact',index:1,pos:[6,0,0]})===true,'remote accepted impact');expiry.afterAcceptedImpact=qa.blasts.length;expect(qa.blasts.length===1,'remote impact appears once',expiry);rows.push(expiry);remote.remote=wasRemote;G.projectiles.clear();G.fx.clear();
+  const resources=[];
+  for(let cycle=0;cycle<3;cycle++){
+   prepare('reefslider');start();step(48);g.debug.fire(true);step(1);g.debug.fire(false);step(2);let warn=d.tracks.get(a)?.d.warn;expect(!!warn,'native Reef arming warning '+cycle);
+   if(cycle===0){a.reset();step(2);expect(warn?.dead&&!d.tracks.has(a),'Reef reset retires warning');}
+   else if(cycle===1){a.splat(null,'QA death');step(2);expect(warn?.dead&&!d.tracks.has(a),'Reef death retires warning');}
+   else {step(100);expect(warn?.dead,'Reef impact retires warning');}
+   G.projectiles.clear();G.fx.clear();step(120);g._frame(1/60);resources.push({cycle,memory:{...G.renderer.info.memory},tracks:d.tracks.size,objects:d.objects.size,fists:d.fists.size,errors:d.errors,tick:qa.tick()});
+  }
+  rows.push({name:'Reef repeated activation, reset, death, normal impact',resources});
+  prepare('trizooka');step(120);const cadence=[];
+  for(const hz of [30,60,120]){const frames=hz/2,before=qa.tick(),wall=performance.now();let rendered=0;const render=g.R.render;g.R.render=function(...args){rendered++;return render.apply(this,args);};try{for(let i=0;i<frames;i++)g._frame(1/hz);}finally{g.R.render=render;}const elapsed=performance.now()-wall;cadence.push({deliveryHzRequested:hz,deliveryCalls:frames,nativeTicks:qa.tick()-before,nativeSeconds:(qa.tick()-before)/60,rendered,wallMs:elapsed,deliveredPerWallSecond:frames*1000/elapsed,memory:{...G.renderer.info.memory}});expect(qa.tick()-before===30&&rendered===frames,'fixed clock/render separation '+hz,cadence.at(-1));}
+  const gl=G.renderer.getContext();return {scope:'Actual candidate full production page, native input/update/reset/splat/clear; one explicit remote replay fixture, no transport claim',rows,failures,cadence,glError:gl.getError(),glLost:gl.isContextLost(),directorErrors:d.errors};
+ });
+
+ report.served=[...served].sort();report.status='completed';save();
+ }catch(e){report.status='failed';report.failure=e.stack;save();console.error(e.stack);process.exitCode=1;}finally{await context.close();await new Promise(r=>server.close(r));}
+}
+}finally{await browser.close();}

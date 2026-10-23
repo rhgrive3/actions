@@ -1,0 +1,595 @@
+{
+  "identity": {
+    "side": "after",
+    "source": "/workspace/inkwave-special-candidate",
+    "site": "/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/site-after",
+    "commit": "4c9b7861038189e709db5e80e64d2a2712f7b877",
+    "tree": "8dc50f1832b8f54d06ccee88c827f1b2fc9a4aff",
+    "revision": "a73fa9410e41bf635a38b36165e333965ae4d0f606b0b28f6fd9965e37fdd4f9",
+    "inputHash": "3fbcdb527d87ae0318e1e1df3037088e8d82ae8f979d6d7cae00b9a353ce4f91",
+    "contentHash": "bd3d8d2715b53a842901be6457bdb777621c4290f60a2c37a1404e4f9e5d3707",
+    "inputCount": 1421,
+    "artifactCount": 2112,
+    "script": "a2814e623a81811aca5a6b5079d566ab88fabaa9b9a8d9351fadd45c25a98242",
+    "manifestSHA256": "a7aef69a5118bbb274948b67aa86af24d21757c818935d9ea9f8132a0164c4e2"
+  },
+  "browser": "154.0.8037.57",
+  "viewport": {
+    "width": 960,
+    "height": 640
+  },
+  "seed": 27440068,
+  "lighting": "tidewater day",
+  "driver": "frozen ordinary game; native Game._frame(1/60), debug keyboard/fire; native follow camera; full production bootstrap; no manual special phases",
+  "cases": [
+    {
+      "id": "tripleSplashdown",
+      "baseTick": 393,
+      "startTick": 394,
+      "matchState": "playing",
+      "position": [
+        0.40423213662020635,
+        0,
+        -27.206810416752205
+      ],
+      "palette": [
+        "#10d2e6",
+        "#ff4150"
+      ],
+      "active": {
+        "id": "tripleSplashdown",
+        "age": 0,
+        "phase": "rise",
+        "activation": 1,
+        "origin": {
+          "x": 0.40423213662020635,
+          "y": 0,
+          "z": -27.206810416752205
+        },
+        "superJump": false,
+        "armor": false
+      },
+      "ready": {
+        "ready": true,
+        "special": 200,
+        "cost": 200,
+        "weaponSpecial": "tripleSplashdown",
+        "alive": true,
+        "controller": true,
+        "superJump": false,
+        "prevSpecial": false
+      },
+      "clock": 6.566666666666649,
+      "sourceMotion": "ready",
+      "samples": [
+        {
+          "tick": 428,
+          "relative": 35,
+          "time": 7.133333333333313,
+          "active": "tripleSplashdown",
+          "phase": "rise",
+          "alive": true,
+          "grounded": false,
+          "pos": [
+            0.40423213662020635,
+            5.05144874947031,
+            -27.206810416752205
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              0.11955897013949424,
+              6.591934768456067,
+              -31.615696610859523
+            ]
+          },
+          "warn": null,
+          "sheets": [],
+          "muzzleCount": 0,
+          "blastCount": 0,
+          "births": 0,
+          "glError": 0,
+          "glLost": false,
+          "directorErrors": 0,
+          "resources": {
+            "geometries": 263,
+            "textures": 31
+          },
+          "render": {
+            "frame": 98,
+            "calls": 116,
+            "triangles": 389631,
+            "points": 0,
+            "lines": 0
+          },
+          "perf": {
+            "sim": 9.307026452445788,
+            "render": 26.338999342268384,
+            "calls": 116,
+            "tris": 389631
+          }
+        },
+        {
+          "tick": 443,
+          "relative": 50,
+          "time": 7.383333333333312,
+          "active": "tripleSplashdown",
+          "phase": "rise",
+          "alive": true,
+          "grounded": false,
+          "pos": [
+            0.40423213662020635,
+            6.2323282766432575,
+            -27.206810416752205
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              0.12163697046409233,
+              7.829027387827105,
+              -31.6493738416116
+            ]
+          },
+          "warn": null,
+          "sheets": [],
+          "muzzleCount": 0,
+          "blastCount": 0,
+          "births": 0,
+          "glError": 0,
+          "glLost": false,
+          "directorErrors": 0,
+          "resources": {
+            "geometries": 263,
+            "textures": 31
+          },
+          "render": {
+            "frame": 103,
+            "calls": 96,
+            "triangles": 378689,
+            "points": 0,
+            "lines": 0
+          },
+          "perf": {
+            "sim": 10.469369162493415,
+            "render": 12.504834117934793,
+            "calls": 96,
+            "tris": 378689
+          }
+        },
+        {
+          "tick": 453,
+          "relative": 60,
+          "time": 7.5499999999999785,
+          "active": "tripleSplashdown",
+          "phase": "rise",
+          "alive": true,
+          "grounded": false,
+          "pos": [
+            0.40423213662020635,
+            6.497772612341123,
+            -27.206810416752205
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              0.12251595147167033,
+              8.12899521646565,
+              -31.66252918259722
+            ]
+          },
+          "warn": null,
+          "sheets": [],
+          "muzzleCount": 0,
+          "blastCount": 0,
+          "births": 0,
+          "glError": 0,
+          "glLost": false,
+          "directorErrors": 0,
+          "resources": {
+            "geometries": 263,
+            "textures": 31
+          },
+          "render": {
+            "frame": 108,
+            "calls": 96,
+            "triangles": 378525,
+            "points": 0,
+            "lines": 0
+          },
+          "perf": {
+            "sim": 9.841240130461212,
+            "render": 7.960612978447602,
+            "calls": 96,
+            "tris": 378525
+          }
+        },
+        {
+          "tick": 468,
+          "relative": 75,
+          "time": 7.799999999999978,
+          "active": null,
+          "phase": null,
+          "alive": true,
+          "grounded": true,
+          "pos": [
+            0.40423213662020635,
+            0,
+            -27.206810416752205
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              0.12333042494066437,
+              1.5785899802926668,
+              -31.67385758450707
+            ]
+          },
+          "warn": null,
+          "sheets": [],
+          "muzzleCount": 0,
+          "blastCount": 1,
+          "births": 0,
+          "glError": 0,
+          "glLost": false,
+          "directorErrors": 0,
+          "resources": {
+            "geometries": 269,
+            "textures": 32
+          },
+          "render": {
+            "frame": 119,
+            "calls": 118,
+            "triangles": 449189,
+            "points": 0,
+            "lines": 0
+          },
+          "perf": {
+            "sim": 74.1642204823617,
+            "render": 267.56091277881103,
+            "calls": 118,
+            "tris": 449189
+          },
+          "image": "tripleSplashdown-tick468-rel75.png"
+        },
+        {
+          "tick": 483,
+          "relative": 90,
+          "time": 8.04999999999998,
+          "active": null,
+          "phase": null,
+          "alive": true,
+          "grounded": true,
+          "pos": [
+            0.40423213662020635,
+            0,
+            -27.206810416752205
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              0.12376829807622242,
+              1.4551534580713015,
+              -31.679414087531093
+            ]
+          },
+          "warn": null,
+          "sheets": [],
+          "muzzleCount": 0,
+          "blastCount": 3,
+          "births": 0,
+          "glError": 0,
+          "glLost": false,
+          "directorErrors": 0,
+          "resources": {
+            "geometries": 269,
+            "textures": 32
+          },
+          "render": {
+            "frame": 139,
+            "calls": 106,
+            "triangles": 431163,
+            "points": 0,
+            "lines": 0
+          },
+          "perf": {
+            "sim": 43.83842288376083,
+            "render": 124.44934193930727,
+            "calls": 106,
+            "tris": 431163
+          }
+        },
+        {
+          "tick": 573,
+          "relative": 180,
+          "time": 9.550000000000054,
+          "active": null,
+          "phase": null,
+          "alive": true,
+          "grounded": true,
+          "pos": [
+            0.40423213662020635,
+            0,
+            -27.206810416752205
+          ],
+          "camera": {
+            "mode": "follow",
+            "targetLocal": true,
+            "pos": [
+              0.12422542214440346,
+              1.550753648149012,
+              -31.684289040422108
+            ]
+          },
+          "warn": null,
+          "sheets": [],
+          "muzzleCount": 0,
+          "blastCount": 3,
+          "births": 0,
+          "glError": 0,
+          "glLost": false,
+          "directorErrors": 0,
+          "resources": {
+            "geometries": 269,
+            "textures": 32
+          },
+          "render": {
+            "frame": 234,
+            "calls": 104,
+            "triangles": 418185,
+            "points": 0,
+            "lines": 0
+          },
+          "perf": {
+            "sim": 15.846057206887108,
+            "render": 3.7967755689418192,
+            "calls": 104,
+            "tris": 418185
+          }
+        }
+      ],
+      "events": [
+        {
+          "name": "special:use",
+          "id": "tripleSplashdown",
+          "tick": 394
+        },
+        {
+          "name": "all:special",
+          "id": "tripleSplashdown",
+          "action": "activate",
+          "tick": 394,
+          "pos": [
+            0.4,
+            0,
+            -27.21
+          ]
+        },
+        {
+          "name": "all:special",
+          "id": "tripleSplashdown",
+          "action": "impact",
+          "index": -1,
+          "tick": 463,
+          "pos": [
+            0.4,
+            0,
+            -27.21
+          ]
+        },
+        {
+          "name": "all:special",
+          "id": "tripleSplashdown",
+          "action": "impact",
+          "index": 1,
+          "tick": 480,
+          "pos": [
+            3.67,
+            0,
+            -21.54
+          ]
+        },
+        {
+          "name": "all:special",
+          "id": "tripleSplashdown",
+          "action": "impact",
+          "index": 0,
+          "tick": 480,
+          "pos": [
+            -2.87,
+            0,
+            -21.54
+          ]
+        }
+      ],
+      "births": [],
+      "acceptedBirths": [],
+      "endpointBirths": [],
+      "glows": [],
+      "notices": [],
+      "muzzles": [],
+      "flashes": [
+        {
+          "tick": 394,
+          "active": "tripleSplashdown",
+          "pos": [
+            0.40423213662020635,
+            0.95,
+            -27.206810416752205
+          ],
+          "args": [
+            [
+              0.005181516700061659,
+              0.6444796819634361,
+              0.7912979403281551
+            ],
+            1.02,
+            0.2
+          ]
+        },
+        {
+          "tick": 463,
+          "active": "tripleSplashdown",
+          "pos": [
+            0.4,
+            0.6,
+            -27.21
+          ],
+          "args": [
+            [
+              0.005181516700061659,
+              0.6444796819634361,
+              0.7912979403281551
+            ],
+            1.92
+          ]
+        },
+        {
+          "tick": 480,
+          "pos": [
+            3.67,
+            0.6,
+            -21.54
+          ],
+          "args": [
+            [
+              0.005181516700061659,
+              0.6444796819634361,
+              0.7912979403281551
+            ],
+            1.92
+          ]
+        },
+        {
+          "tick": 480,
+          "pos": [
+            -2.87,
+            0.6,
+            -21.54
+          ],
+          "args": [
+            [
+              0.005181516700061659,
+              0.6444796819634361,
+              0.7912979403281551
+            ],
+            1.92
+          ]
+        }
+      ],
+      "blasts": [
+        {
+          "tick": 463,
+          "active": "tripleSplashdown",
+          "pos": [
+            0.4,
+            0,
+            -27.21
+          ],
+          "args": [
+            [
+              0.005181516700061659,
+              0.6444796819634361,
+              0.7912979403281551
+            ],
+            6.4,
+            {
+              "streaks": 30,
+              "chunks": 18,
+              "native": false,
+              "dome": 0.55
+            }
+          ]
+        },
+        {
+          "tick": 480,
+          "pos": [
+            3.67,
+            0,
+            -21.54
+          ],
+          "args": [
+            [
+              0.005181516700061659,
+              0.6444796819634361,
+              0.7912979403281551
+            ],
+            6.4,
+            {
+              "streaks": 24,
+              "chunks": 14,
+              "native": false
+            }
+          ]
+        },
+        {
+          "tick": 480,
+          "pos": [
+            -2.87,
+            0,
+            -21.54
+          ],
+          "args": [
+            [
+              0.005181516700061659,
+              0.6444796819634361,
+              0.7912979403281551
+            ],
+            6.4,
+            {
+              "streaks": 24,
+              "chunks": 14,
+              "native": false
+            }
+          ]
+        }
+      ],
+      "phases": [
+        {
+          "tick": 395,
+          "relative": 2,
+          "phase": "rise",
+          "pos": [
+            0.40423213662020635,
+            0.17015016400117547,
+            -27.206810416752205
+          ]
+        },
+        {
+          "tick": 454,
+          "relative": 61,
+          "phase": "drop",
+          "pos": [
+            0.40423213662020635,
+            5.847772612341123,
+            -27.206810416752205
+          ]
+        },
+        {
+          "tick": 463,
+          "relative": 70,
+          "phase": null,
+          "pos": [
+            0.40423213662020635,
+            1.1102230246251565e-16,
+            -27.206810416752205
+          ]
+        }
+      ],
+      "wallMs": 23145.800000000047
+    }
+  ],
+  "errors": [],
+  "consoleErrors": [],
+  "warnings": [
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "requestFailures": [],
+  "httpFailures": [],
+  "status": "failed",
+  "failure": "page.evaluate: TypeError: e.Hit is not a constructor\n    at Q (http://127.0.0.1:36103/_versions/a73fa9410e41bf635a38b36165e333965ae4d0f606b0b28f6fd9965e37fdd4f9/patches/splatoon3/runtime/catalogue.mjs:2:11106)\n    at Ie (http://127.0.0.1:36103/_versions/a73fa9410e41bf635a38b36165e333965ae4d0f606b0b28f6fd9965e37fdd4f9/patches/splatoon3/runtime/catalogue.mjs:2:14038)\n    at http://127.0.0.1:36103/_versions/a73fa9410e41bf635a38b36165e333965ae4d0f606b0b28f6fd9965e37fdd4f9/patches/splatoon3/runtime/special-vfx.mjs:2:67452\n    at eval (eval at evaluate (:311:30), <anonymous>:16:10)\n    at async <anonymous>:337:30\n    at /workspace/inkwave-special-candidate/.ci-scratch/special-final-browser/lifecycle-evidence.mjs:79:30"
+}

@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "matchedSetupTicksPaletteAndNativeSamplePositionsPhases": [
+    "inkVac",
+    "trizooka",
+    "ultraStamp",
+    "superChump",
+    "bubbler",
+    "krakenRoyale",
+    "splattercolorScreen",
+    "reefslider",
+    "tripleSplashdown",
+    "inkjet"
+  ],
+  "cleanPageRequestGLAndDirectorChecksBothSides": true
+}

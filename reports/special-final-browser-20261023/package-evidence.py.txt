@@ -1,0 +1,58 @@
+import json,pathlib,shutil,hashlib,subprocess
+base=pathlib.Path('/workspace/inkwave-special-candidate/.ci-scratch/special-final-browser')
+out=pathlib.Path('/workspace/inkwave-special-browser-report/reports/special-final-browser-20261023')
+out.mkdir(parents=True,exist_ok=True)
+(out/'images').mkdir(exist_ok=True)
+copy={
+ 'build-identities.json':'build-identities.json',
+ 'original-before-inkwave-build.json':'original-before-inkwave-build.json',
+ 'original-after-inkwave-build.json':'original-after-inkwave-build.json',
+ 'build-after.log':'build-after.log',
+ 'continuation-clean/result.json':'continuation.json',
+ 'inkjet/result.json':'registered-inkjet.json',
+ 'gameplay-lifecycle-fixed-after/result.json':'lifecycle-after.json',
+ 'gameplay-reef-valid-placement-after/result.json':'reef-placement-repeat-after.json',
+ 'gameplay-lifecycle-after/result.json':'retained-remote-fixture-missing-Hit.json',
+ 'continuation/result.json':'retained-fixture-favicon-404.json',
+}
+for side in ['before','after']:
+ for run,label in [('accepted','ordinary'),('release-lobes','release-lobes'),('shapes','shapes')]:copy[f'gameplay-{run}-{side}/result.json']=f'{label}-{side}.json'
+ copy[f'gameplay-{side}/result.json']=f'retained-field-only-selection-{side}.json'
+ copy[f'bubbler-{side}/result.json']=f'bubbler-ignition-{side}.json'
+for s,d in copy.items():shutil.copyfile(base/s,out/d)
+for name in ['gameplay-evidence','shapes-evidence','lifecycle-evidence','lifecycle-fixed','reef-valid-placement','continuation-smoke','bubbler-ignition']:
+ shutil.copyfile(base/(name+'.mjs'),out/(name+'.mjs.txt'))
+shutil.copyfile(base/'package-evidence.py',out/'package-evidence.py.txt')
+# Original PNG bytes: no crop, composite, scaling, relabelled pixels, or character edits.
+selections=[('release-lobes','inkVac',381,['before','after']),('release-lobes','trizooka',63,['before','after']),('accepted','ultraStamp',43,['before','after']),('shapes','superChump',54,['before','after']),('accepted','reefslider',100,['after']),('accepted','inkjet',90,['after']),('accepted','tripleSplashdown',75,['after']),('shapes','splattercolorScreen',760,['before','after']),('shapes','krakenRoyale',77,['after'])]
+images=[]
+for run,id,rel,sides in selections:
+ for side in sides:
+  data=json.load(open(base/f'gameplay-{run}-{side}/result.json'))
+  c=next(c for c in data['cases']if c['id']==id)
+  sample=next(s for s in c['samples']if s['relative']==rel)
+  src=base/f'gameplay-{run}-{side}'/sample['image'];dst='images/'+side+'-'+sample['image'];shutil.copyfile(src,out/dst)
+  images.append({'path':dst,'source':str(src),'side':side,'case':id,'nativeTick':sample['tick'],'activationRelativeTick':sample['relative'],'nativeGameTimeSeconds':sample['time'],'camera':sample['camera'],'scope':'controlled position at Screen relative640; native follow camera'if id=='splattercolorScreen'else'ordinary full-game native follow camera','sha256':hashlib.sha256(src.read_bytes()).hexdigest()})
+for side in ['before','after']:
+ src=base/f'bubbler-{side}'/'bubbler-actorstep8.png';dst='images/'+side+'-bubbler-actorstep8.png';shutil.copyfile(src,out/dst)
+ images.append({'path':dst,'source':str(src),'side':side,'case':'bubbler','actorStep':8,'scope':'emitted Actor/Projectiles/FX flat-floor browser diagnostic; 1/60 step; not Game FixedClock count','sha256':hashlib.sha256(src.read_bytes()).hexdigest()})
+(out/'images.json').write_text(json.dumps(images,indent=2)+'\n')
+# Record exact QA and tooling identity, separate from production build inputs.
+root=pathlib.Path('/workspace/inkwave-special-candidate')
+qa=['scripts/check-inkwave-inkjet-presentation-browser.mjs','scripts/check-inkwave-result-continuation.mjs','scripts/check-inkwave-responsive.mjs','scripts/lib/inkwave-responsive-animation-settle.mjs','scripts/lib/inkwave-responsive-animation-diagnostics.mjs']
+identity={'candidate':'4c9b7861038189e709db5e80e64d2a2712f7b877','candidateTree':'8dc50f1832b8f54d06ccee88c827f1b2fc9a4aff','soleParent':'726e338ac256ba9609086ce65e25a68ddd99df85','normalBuilder':'node scripts/build-inkwave.mjs inkwave-public .ci-scratch/special-final-browser/site-after','node':'v24.19.0','esbuild':'0.28.2','playwright':'1.62.1','browserExecutable':'/usr/bin/chromium','browserVersion':'154.0.8037.57','qaSourceSHA256':{p:hashlib.sha256((root/p).read_bytes()).hexdigest()for p in qa},'productionLeaves':subprocess.check_output(['git','diff','--name-only','726e338ac256ba9609086ce65e25a68ddd99df85','4c9b7861038189e709db5e80e64d2a2712f7b877','--','patches/splatoon3/runtime'],cwd=root,text=True).splitlines(),'webkitAbsent':'/home/agent/.cache/ms-playwright/webkit-2336/pw_run.sh','bundledChromiumAbsent':'/home/agent/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome'}
+(out/'source-qa-identity.json').write_text(json.dumps(identity,indent=2)+'\n')
+# Verify native A/B setup and page/GL observations independently of driver completion.
+ordinary={s:json.load(open(out/f'ordinary-{s}.json'))for s in ['before','after']}
+checks=[]
+for side,r in ordinary.items():
+ assert r['status']=='completed'
+ assert not any(r[k]for k in ['errors','consoleErrors','requestFailures','httpFailures'])
+ assert all(not(s['glError']or s['glLost']or s['directorErrors'])for c in r['cases']for s in c['samples'])
+for a in ordinary['after']['cases']:
+ b=next(c for c in ordinary['before']['cases']if c['id']==a['id'])
+ assert a['baseTick']==b['baseTick']and a['position']==b['position']and a['palette']==b['palette']
+ assert [(s['relative'],s['pos'],s['phase'])for s in a['samples']]==[(s['relative'],s['pos'],s['phase'])for s in b['samples']]
+ checks.append(a['id'])
+(out/'comparison-checks.json').write_text(json.dumps({'status':'passed','matchedSetupTicksPaletteAndNativeSamplePositionsPhases':checks,'cleanPageRequestGLAndDirectorChecksBothSides':True},indent=2)+'\n')
+print('Packaged',len(images),'original own-game/diagnostic images')

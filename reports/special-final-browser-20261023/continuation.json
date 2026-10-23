@@ -1,0 +1,442 @@
+{
+  "scope": "Focused real Chromium production Menus DOM with registered offline session fixture. Native continuation check after actual geometry and PNG; not hosted responsive matrix or real multiplayer.",
+  "browser": "154.0.8037.57",
+  "cases": [
+    {
+      "name": "phone-portrait",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "consoleErrors": [],
+      "httpErrors": [],
+      "operations": [
+        {
+          "id": "continuation-read-callback",
+          "boundary": "before",
+          "wall": 1792756090782
+        },
+        {
+          "id": "continuation-read-callback",
+          "boundary": "after",
+          "wall": 1792756090791
+        },
+        {
+          "id": "continuation-tap-change",
+          "boundary": "before",
+          "wall": 1792756090791
+        },
+        {
+          "id": "continuation-tap-change",
+          "boundary": "after",
+          "wall": 1792756091375
+        },
+        {
+          "id": "continuation-wait-loadout",
+          "boundary": "before",
+          "wall": 1792756091375
+        },
+        {
+          "id": "continuation-wait-loadout",
+          "boundary": "after",
+          "wall": 1792756091415
+        },
+        {
+          "id": "continuation-settle-loadout",
+          "boundary": "before",
+          "wall": 1792756091415
+        },
+        {
+          "id": "continuation-settle-loadout",
+          "boundary": "after",
+          "wall": 1792756091872
+        },
+        {
+          "id": "continuation-ready-loadout",
+          "boundary": "before",
+          "wall": 1792756091872
+        },
+        {
+          "id": "continuation-ready-loadout",
+          "boundary": "after",
+          "wall": 1792756091909
+        },
+        {
+          "id": "continuation-read-weapon",
+          "boundary": "before",
+          "wall": 1792756091909
+        },
+        {
+          "id": "continuation-read-weapon",
+          "boundary": "after",
+          "wall": 1792756091922
+        },
+        {
+          "id": "continuation-list-weapons",
+          "boundary": "before",
+          "wall": 1792756091922
+        },
+        {
+          "id": "continuation-list-weapons",
+          "boundary": "after",
+          "wall": 1792756091940
+        },
+        {
+          "id": "continuation-select-weapon",
+          "boundary": "before",
+          "wall": 1792756091941
+        },
+        {
+          "id": "continuation-select-weapon",
+          "boundary": "after",
+          "wall": 1792756092252
+        },
+        {
+          "id": "continuation-verify-weapon",
+          "boundary": "before",
+          "wall": 1792756092252
+        },
+        {
+          "id": "continuation-verify-weapon",
+          "boundary": "after",
+          "wall": 1792756092274
+        },
+        {
+          "id": "continuation-scroll-action",
+          "boundary": "before",
+          "wall": 1792756092275
+        },
+        {
+          "id": "continuation-scroll-action",
+          "boundary": "after",
+          "wall": 1792756092340
+        },
+        {
+          "id": "continuation-settle-action",
+          "boundary": "before",
+          "wall": 1792756092340
+        },
+        {
+          "id": "continuation-settle-action",
+          "boundary": "after",
+          "wall": 1792756092709
+        },
+        {
+          "id": "continuation-visible-action",
+          "boundary": "before",
+          "wall": 1792756092709
+        },
+        {
+          "id": "continuation-visible-action",
+          "boundary": "after",
+          "wall": 1792756092736
+        },
+        {
+          "id": "continuation-label-action",
+          "boundary": "before",
+          "wall": 1792756092736
+        },
+        {
+          "id": "continuation-label-action",
+          "boundary": "after",
+          "wall": 1792756092759
+        },
+        {
+          "id": "continuation-capture-action",
+          "boundary": "before",
+          "wall": 1792756092760
+        },
+        {
+          "id": "continuation-capture-action",
+          "boundary": "after",
+          "wall": 1792756092885
+        }
+      ],
+      "captures": [
+        {
+          "label": "results-change-gear",
+          "image": "phone-portrait-results-change-gear.png",
+          "geometry": [
+            {
+              "width": 178.6949920654297,
+              "height": 67.925048828125,
+              "left": 17.75250244140625,
+              "right": 196.44749450683594,
+              "viewport": 390
+            },
+            {
+              "width": 171,
+              "height": 65,
+              "left": 203,
+              "right": 374,
+              "viewport": 390
+            },
+            {
+              "width": 171,
+              "height": 56,
+              "left": 16,
+              "right": 187,
+              "viewport": 390
+            }
+          ]
+        },
+        {
+          "label": "loadout-continue",
+          "image": "phone-portrait-loadout-continue.png",
+          "geometry": [
+            {
+              "width": 358,
+              "height": 64,
+              "left": 16,
+              "right": 374,
+              "viewport": 390
+            },
+            {
+              "width": 358,
+              "height": 48,
+              "left": 16,
+              "right": 374,
+              "viewport": 390
+            },
+            {
+              "width": 132.46875,
+              "height": 44,
+              "left": 42.375,
+              "right": 174.84375,
+              "viewport": 390
+            }
+          ]
+        }
+      ],
+      "resultContinuation": {
+        "status": "passed",
+        "changedWeapon": "shooter-01",
+        "starts": 1,
+        "resultPreserved": true,
+        "backWithoutStart": true,
+        "staleResultRejected": true,
+        "lockerRoundtrip": true
+      },
+      "status": "passed"
+    },
+    {
+      "name": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "errors": [],
+      "consoleErrors": [],
+      "httpErrors": [],
+      "operations": [
+        {
+          "id": "continuation-read-callback",
+          "boundary": "before",
+          "wall": 1792756105720
+        },
+        {
+          "id": "continuation-read-callback",
+          "boundary": "after",
+          "wall": 1792756105728
+        },
+        {
+          "id": "continuation-tap-change",
+          "boundary": "before",
+          "wall": 1792756105728
+        },
+        {
+          "id": "continuation-tap-change",
+          "boundary": "after",
+          "wall": 1792756106266
+        },
+        {
+          "id": "continuation-wait-loadout",
+          "boundary": "before",
+          "wall": 1792756106266
+        },
+        {
+          "id": "continuation-wait-loadout",
+          "boundary": "after",
+          "wall": 1792756106364
+        },
+        {
+          "id": "continuation-settle-loadout",
+          "boundary": "before",
+          "wall": 1792756106364
+        },
+        {
+          "id": "continuation-settle-loadout",
+          "boundary": "after",
+          "wall": 1792756106859
+        },
+        {
+          "id": "continuation-ready-loadout",
+          "boundary": "before",
+          "wall": 1792756106860
+        },
+        {
+          "id": "continuation-ready-loadout",
+          "boundary": "after",
+          "wall": 1792756106888
+        },
+        {
+          "id": "continuation-read-weapon",
+          "boundary": "before",
+          "wall": 1792756106889
+        },
+        {
+          "id": "continuation-read-weapon",
+          "boundary": "after",
+          "wall": 1792756106909
+        },
+        {
+          "id": "continuation-list-weapons",
+          "boundary": "before",
+          "wall": 1792756106909
+        },
+        {
+          "id": "continuation-list-weapons",
+          "boundary": "after",
+          "wall": 1792756106935
+        },
+        {
+          "id": "continuation-select-weapon",
+          "boundary": "before",
+          "wall": 1792756106935
+        },
+        {
+          "id": "continuation-select-weapon",
+          "boundary": "after",
+          "wall": 1792756107315
+        },
+        {
+          "id": "continuation-verify-weapon",
+          "boundary": "before",
+          "wall": 1792756107315
+        },
+        {
+          "id": "continuation-verify-weapon",
+          "boundary": "after",
+          "wall": 1792756107331
+        },
+        {
+          "id": "continuation-scroll-action",
+          "boundary": "before",
+          "wall": 1792756107332
+        },
+        {
+          "id": "continuation-scroll-action",
+          "boundary": "after",
+          "wall": 1792756107447
+        },
+        {
+          "id": "continuation-settle-action",
+          "boundary": "before",
+          "wall": 1792756107447
+        },
+        {
+          "id": "continuation-settle-action",
+          "boundary": "after",
+          "wall": 1792756107773
+        },
+        {
+          "id": "continuation-visible-action",
+          "boundary": "before",
+          "wall": 1792756107773
+        },
+        {
+          "id": "continuation-visible-action",
+          "boundary": "after",
+          "wall": 1792756107838
+        },
+        {
+          "id": "continuation-label-action",
+          "boundary": "before",
+          "wall": 1792756107838
+        },
+        {
+          "id": "continuation-label-action",
+          "boundary": "after",
+          "wall": 1792756107862
+        },
+        {
+          "id": "continuation-capture-action",
+          "boundary": "before",
+          "wall": 1792756107863
+        },
+        {
+          "id": "continuation-capture-action",
+          "boundary": "after",
+          "wall": 1792756108428
+        }
+      ],
+      "captures": [
+        {
+          "label": "results-change-gear",
+          "image": "desktop-results-change-gear.png",
+          "geometry": [
+            {
+              "width": 470.93572998046875,
+              "height": 58.52001953125,
+              "left": 26.260238647460938,
+              "right": 497.1959686279297,
+              "viewport": 1440
+            },
+            {
+              "width": 450.671875,
+              "height": 56,
+              "left": 494.65625,
+              "right": 945.328125,
+              "viewport": 1440
+            },
+            {
+              "width": 450.65625,
+              "height": 56,
+              "left": 961.328125,
+              "right": 1411.984375,
+              "viewport": 1440
+            }
+          ]
+        },
+        {
+          "label": "loadout-continue",
+          "image": "desktop-loadout-continue.png",
+          "geometry": [
+            {
+              "width": 420,
+              "height": 64,
+              "left": 28,
+              "right": 448,
+              "viewport": 1440
+            },
+            {
+              "width": 1384,
+              "height": 60,
+              "left": 28,
+              "right": 1412,
+              "viewport": 1440
+            },
+            {
+              "width": 132.46875,
+              "height": 44,
+              "left": 61.59375,
+              "right": 194.0625,
+              "viewport": 1440
+            }
+          ]
+        }
+      ],
+      "resultContinuation": {
+        "status": "passed",
+        "changedWeapon": "shooter-01",
+        "starts": 1,
+        "resultPreserved": true,
+        "backWithoutStart": true,
+        "staleResultRejected": true,
+        "lockerRoundtrip": true
+      },
+      "status": "passed"
+    }
+  ]
+}
