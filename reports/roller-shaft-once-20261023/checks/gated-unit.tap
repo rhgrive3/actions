@@ -1,0 +1,14 @@
+✔ saved production snapshot reproduces q0/qUp and old-fails/new-passes49 without a late residual (5.273371ms)
+✔ release captures only a corrected native sample; clear late carry stays native through the deadline (3.646239ms)
+✔ waypoint uses the real socket, world up and live scale; fixed waypoint and record storage are reused (1.77796ms)
+✔ active interruption spends only that attack; first release and a new attack remain reusable (1.000735ms)
+✔ frozen ecf5 recaptures after repress; current helper retains one-shot ownership (1.45353ms)
+✔ a clear first native sample consumes no curve and cannot retry later in the same attack (0.258872ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 437.781865

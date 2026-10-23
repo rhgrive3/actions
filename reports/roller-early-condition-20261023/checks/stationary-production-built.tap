@@ -1,0 +1,23 @@
+INKWAVE built fixture /workspace/actions/.roller-recovery/shaft-early/stationary-site contentHash=6184fb028078c618018d8b7b7cd4ec0d2dd5fc79d3319ec5080a9efb5af8d6f0
+INKWAVE built fixture /workspace/actions/.roller-recovery/shaft-early/stationary-site contentHash=6184fb028078c618018d8b7b7cd4ec0d2dd5fc79d3319ec5080a9efb5af8d6f0
+(node:17710) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ production fixed-tick return improves49, preserves40/start/end and all native gameplay/paint (38760.431322ms)
+✔ release before/at/after back, late release and repress preserve native gates and paint without a delayed tail (35124.796338ms)
+✔ held rolling, horizontal and Carbon/Dynamo/Flingza keep the complete original output (18174.436835ms)
+✔ 30/60/120Hz plus repeated reset/reuse retain identical real poses, clocks, per-weapon timings and paint (17825.10033ms)
+✔ active return is discarded through existing reset, display cancellation and form interruption (6465.206389ms)
+✔ native CPU paint receives identical physical stamp inputs after release and repress (6107.01068ms)
+✔ repressing into native ground contact abandons carry without worsening the switch (2627.160186ms)
+✔ sub aim and throw interrupt the active visual return while native sub admission stays original (2924.750496ms)
+✔ same-attack repress never recaptures a late return; protect54/55 and deceleration through58 (2541.04896ms)
+✔ late release with no native floor correction keeps the entire clear native carry (11514.687513ms)
+✔ an interrupted attack spends its own path and the next real native attack can capture again (4512.6584ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 147236.747602

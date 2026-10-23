@@ -1,0 +1,17 @@
+✔ native early fixture: frozen upright control exceeds left reach; one live projection bounds the fixed control (3.362823ms)
+✔ a return already blending toward ready preserves the original control even with a projection callback (0.257189ms)
+✔ saved production snapshot reproduces q0/qUp and old-fails/new-passes49 without a late residual (3.092384ms)
+✔ release captures only a corrected native sample; clear late carry stays native through the deadline (2.575313ms)
+✔ waypoint uses the real socket, world up and live scale; fixed waypoint and record storage are reused (1.356981ms)
+✔ active interruption spends only that attack; first release and a new attack remain reusable (0.343919ms)
+✔ frozen ecf5 recaptures after repress; current helper retains one-shot ownership (1.470262ms)
+✔ a clear first native sample consumes no curve and cannot retry later in the same attack (0.208435ms)
+✔ pre-module QA reset rewinds the same random closure held by FX (2.414469ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 174.484974

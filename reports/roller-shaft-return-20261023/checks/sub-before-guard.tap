@@ -1,0 +1,27 @@
+(node:12664) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ sub aim and throw interrupt the active visual return while native sub admission stays original (9574.72077ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9929.013763
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/roller-shaft-production.test.mjs:88:1
+✖ sub aim and throw interrupt the active visual return while native sub admission stays original (9574.72077ms)
+  TypeError: Cannot read properties of null (reading 'position')
+      at Projectiles._updateBombs (/workspace/roller-shaft-return/inkwave-public/src/game/weapons.js:1815:24)
+      at Projectiles._updateBombs (/workspace/roller-shaft-return/patches/splatoon3/runtime/bomb-models.mjs:432:29)
+      at Projectiles.update (/workspace/roller-shaft-return/inkwave-public/src/game/weapons.js:1544:10)
+      at Projectiles.update (/workspace/roller-shaft-return/patches/splatoon3/runtime/weapon-edgecases.mjs:428:30)
+      at Projectiles.update (/workspace/roller-shaft-return/patches/splatoon3/runtime/kit-big-bubbler.mjs:1555:19)
+      at Projectiles.update (/workspace/roller-shaft-return/patches/splatoon3/runtime/weapons-fidelity.mjs:1831:209)
+      at P.update (/workspace/roller-shaft-return/patches/splatoon3/runtime/weapons-charger-flight.mjs:321:25)
+      at Projectiles.update (/workspace/roller-shaft-return/patches/splatoon3/runtime/kit-support.mjs:292:25)
+      at Projectiles.update (/workspace/roller-shaft-return/patches/splatoon3/runtime/all-subs.mjs:1930:31)
+      at P.update (/workspace/roller-shaft-return/patches/splatoon3/runtime/all-specials.mjs:2434:25)

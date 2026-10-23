@@ -6137,12 +6137,18 @@ main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、Splatoon 3 Ver.11
 
 Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテゴリ。修正対象のBodyBalanceはその一部にすぎず、iPad上での支配要因の確定や重いフレームの完全解消とは扱わない。#1671/#1757の実機受入はOpenのまま。条件・既存PRとの重複確認・再現コマンド・証跡は[調査記録](inkwave-composed-cpu-20261023/README.md)。
 
-## 2026-10-23 ローラー縦振り・発射後の回復先切替（部分修正候補）
+### 2026-10-23 ローラー縦振りの接地解境界（保証未成立・runtime変更なし）
 
-main `726e338ac256ba9609086ce65e25a68ddd99df85` を基準に、通常ローラーの縦振り後、着地／ZR解除によって `holdRoll` が変わると同じ経過時刻の末尾キーが即座にROLL/READY間で切り替わる不連続を修正した。`runtime/roller-vertical-recovery.mjs` が旧目標の位置・速度からのHermite補正を既存の戻り区間内でゼロへ減衰させる。`roller.mjs` の縦振り表示呼び出しとcancelだけを接続し、横振り、既存の左右握り・接地IK、発射・回復入力ゲート、弾birth・威力・射程・消費・移動・networkは変更しない。新しい本家の関節角・攻撃時間は導入していない。
+元の実minifyビルドから腕/握り/cylinder/kid変換を取得し、1,472件のnative床評価を最大1.3e−15程度で再現した。前姿勢を保持すると、着地40tickの床誤差0.769353、復帰49tickの床誤差0.038359が既存許容0.003を超える。49tickでは合法なZ補正1.25/1.50radの間のscalar/slerp中点が床を破るため、両端だけでは連続な合法経路を保証できない。探索admissionを広げるだけの案も1.880radの段差を残し、既存costで前軸を追う案はnative56tickまで補正が残った。新しい表示係数や巨大なruntime探索を追加せず、受入候補のruntime実装は見送った。一般の3D合法経路の不存在を断定せず、未成立の条件として保存する。[制約・負例・4/4診断テスト・実測時間](roller-ground-boundary-20261023/README.md)。本家403は再取得せず、同条件比較は未確認のまま。
 
-本家比較は未完。既存の公式スプラローラー動画 `NablZy7jqxO` と別の任天堂ブキ紹介ページへの通常GETは本環境でHTTP403となり、拒否を回避していない。過去のデコード425–448Fの観察と、現在のINKWAVE31F発射／56F終了を同じ入力tickとして扱わない。映像版・ギア・FOV・入力開始tickは不明のまま。継続中の振り抜き・構え直し全体には大きなドラム移動が残り、本家一致・受入完了・merge可能とはしない。
+### 2026-10-23 基本ローラーのunheld shaft経路候補（未受入）
 
-元のminify生成物で新しい本番pose回帰が失敗し、候補はsource/emitted各4/4、既存の握り・detail中断・ローラー・発射後ゲート・振り中移動39/39、commit入力packaging10/10、workflow契約33/33が成功。通常・Carbon・Dynamo・Flingza×30/60/120Hzの各120tickで、記録したゲーム時計・ink・rollingは元／候補一致。実練習場の初回60Hz比較では、48tick ZR解除時のドラム中心移動が0.3076→0.0509、49tickが1.1057→0.1744（INKWAVE座標）に減少したが、その後も大きい戻りが残る。正規参照との位相一致確認、公開headのCI・全体ブラウザ受入は別ゲートである。
+独立レビューのgeometry由来のupright shaftを経由する球面二次経路を基本weaponId=rollerの表示wrapperだけへ実装した。back以降の最初のunheld sampleを通常solverの結果で捕捉し、今回のfixtureはt0=48、heldの46から始めない。実browserでは40・48開始点・56以降が元と一致し、49tickのdrum移動は1.109129→0.253771、48–56最大加速度は4155.844→1959.650。実vertex最低点+0.024645、grip gap最大1.35e−15、fallback0。ただし50–56移動総量は2.661387→3.816900へ増え、53tickの軸向きも大きく違うため、見た目全体・本家一致は未承認。遅い解放の開始sampleの既存jumpも未解消。他roller・grip・共有native IK・入力/runner/physics/paint/network・別担当spawn/reset/landing gateは変更しない。[候補・全区間数値・同条件画像・検査](roller-shaft-return-20261023/README.md)。既存3不採用案・a8診断・main/PRを保護し、公式参照403は再取得しない。
 
-詳細・raw検査・失敗履歴・再実行手順・native画像は [部分修正候補の報告](roller-vertical-recovery-20261023/README.md) に記録する。#1854のspecial受入、別担当のヒッセン床飛沫、髪やキャラクターモデル形状には手を加えていない。
+### 2026-10-23 roller shaft-returnの同attack再arm/late carry部分修正（別候補・全体未承認）
+
+凍結ecf5の48解放→51/52再押下→53再解放でhelperがattack identityを忘れ、54/55で再captureして56に余分な戻りを加えていた。ACTIVE中断後だけ同attack再armを禁止し、新attack/初回heldを区別する。最初の通常solverに実際の非ゼロ床探索補正がないrelease49/52/55では経路を開始せずnative carryを保つ。表示helperと既存chosenAxis/chosenAを渡す1行に限定し、共有IK/grip、native入力/runner/physics/paint/network、別担当spawn/reset/landing gateは変更しない。source/実emittedの全10操作と実attack再利用追加1操作が成功、47focused/10packaging/公開raw再生も通過。60Hz実browserでは再押下51–65とlate52全66tickが元と一致した。ただしearly40/46の加速度/57減速悪化は未修復、元版reused-context120Hz最終撮影は60000ms timeout、FX粒子stream差もあり全画像pixel parityは未確認。本家映像403は再取得せず、本家一致/全体見た目/全必須CIは未完。[別候補・全区間raw・負例・失敗ログ](roller-shaft-once-20261023/README.md)。main/既存PRと全旧候補は保護する。
+
+### 2026-10-23 roller early returnのsupport control部分改善（別候補・未承認）
+
+early40/46のVM速度谷は、helper角stepが増加中でも既存alignLeft補正が抜ける接続で起きていた。実browserでは同じ速度谷は再現せず、027自体に元49の跳ねを減らす利点もあるため、early全体のnative fallbackは採らない。既存stationary follow-through key（native return weight1）で捕捉する場合だけ、qUpを現在の既存support reachへ一度投影して固定する別候補を保存した。新しいframe/角度閾値・共有IK/grip・native gameplay・lifecycleは変更しない。通常48は027の全66 native行と一致し、short repress/late49/52/55/新attack再利用を保つ。source/emitted各11、focused47、単体9、packaging10と、元/027/候補の60Hz×3操作が通過。module前に同じ乱数closureを設置するQAで各tickのFX配列/乱数stateも一致した。ただし上部背景pixel差は残る。earlyのVM速度谷・jerk/57減速の元より悪い点、実browserの最終減速、本家参照403・120Hz撮影timeout・全CIは未解消。全体受入ではない。[phase切り分け・棄却試行・同条件選択画像・raw](roller-early-condition-20261023/README.md)。027・全旧候補・main/PR1856を保護する。

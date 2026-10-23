@@ -29,9 +29,19 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
     // The input/menu/net clocks remain live; real matches and online rooms do
     // not take this path. Portraits are on-demand offscreen renders, not demos.
     const anchor = '    const tA = performance.now();';
+    // A wipe between two art screens keeps the old art mounted until the swap,
+    // so it gates too; title -> main still draws the title demo until the swap.
+    // Outside the art screens the canvas is shown again before this frame draws.
     const replacement = `    const artScreen = this.menus?._scr?.name;
     if (G.mode === 'menu' && this.match?.attract &&
-        artScreen === this.menus?.current && INKWAVE_ART_MENU_SCREENS.has(artScreen)) {
+        INKWAVE_ART_MENU_SCREENS.has(artScreen) && INKWAVE_ART_MENU_SCREENS.has(this.menus?.current)) {
+      // Nothing of the demo world stays on screen behind the art: hide the
+      // canvas so the compositor stops blending a stale full-screen frame.
+      const artCanvas = G.renderer?.domElement, hideCanvas = artScreen !== 'locker';
+      if (artCanvas && this._artCanvasHidden !== hideCanvas) {
+        artCanvas.style.visibility = hideCanvas ? 'hidden' : '';
+        this._artCanvasHidden = hideCanvas;
+      }
       G.time += dt;
       this.input.pollPad();
       this._padMenus();
@@ -53,6 +63,7 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
       this.input.endFrame();
       return;
     }
+    if (this._artCanvasHidden) { G.renderer.domElement.style.visibility = ''; this._artCanvasHidden = false; }
     const tA = performance.now();`;
     code = replaceOnce(code, anchor, replacement, 'static menu world-frame gate');
     // The old loadout handler eagerly instantiates a second 3D squidkid,
@@ -173,6 +184,13 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
     content-visibility: auto;
     contain-intrinsic-size: auto 116px;
   }
+}
+/* The art under these panels is still, so a backdrop blur only re-filters it
+   (and the locker's live canvas) each frame: on phones that GPU work alone made
+   SETTINGS lose its WebGL context. The panels are already ~90% opaque. */
+.iw-ui.is-active:is(${STATIC_MENU_SCREENS.map((s) => `[data-screen="${s}"]`).join(', ')}) * {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 /* Locker art is drawn in the canvas (locker-stage.mjs) under the live kid. */
 .iw-ui.is-active[data-screen="locker"] {
