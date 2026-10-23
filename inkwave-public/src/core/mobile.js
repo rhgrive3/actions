@@ -62,6 +62,7 @@ export class MobileInput {
     this.onGyroToggle = null;
     this.gyro = new Gyro();
     this.s = { touchSens: 0, touchScale: 1, touchOpacity: 0.85, stickMode: 'float', fireAim: true, gyro: false, rumble: 1 };
+    this._touchSensCached = false; this._touchSensRaw = undefined; this._touchSensMultiplier = 1;
     this.layout = loadLayout();
     this.visible = false;
     this.editing = false;
@@ -321,7 +322,11 @@ export class MobileInput {
         p.aiming = true;
       }
       dx = clamp(dx, -140, 140); dy = clamp(dy, -140, 140);
-      const k = (Math.PI * 2) / (2.8 * (this._H || layoutUnit())) * touchSensMul(this.s.touchSens);
+      const sens = this.s.touchSens;
+      if (!this._touchSensCached || !Object.is(sens, this._touchSensRaw)) {
+        this._touchSensRaw = sens; this._touchSensMultiplier = touchSensMul(sens); this._touchSensCached = true;
+      }
+      const k = (Math.PI * 2) / (2.8 * (this._H || layoutUnit())) * this._touchSensMultiplier;
       this.lookDX += dx * k; this.lookDY += dy * k * 0.9;
     }
   }
