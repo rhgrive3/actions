@@ -9,7 +9,6 @@ import { adaptCameraFovCache } from './camera-fov-cache-adapter.mjs';
 import { adaptMaterialHandoff } from './material-handoff-adapter.mjs';
 import { adaptRetargetBranchUpdates } from './retarget-branch-update-adapter.mjs';
 import { adaptSquidMotionBinding } from './squid-motion-binding-adapter.mjs';
-import { adaptSquidFormEase } from './squid-form-ease-adapter.mjs';
 import { adaptMotionFkHotpath, adaptMotionSampleFkRange } from './motion-fk-hotpath-adapter.mjs';
 import { adaptClothDerivativeFlow } from './cloth-derivative-adapter.mjs';
 import { adaptInkVolumes } from './ink-volume-adapter.mjs';
@@ -231,9 +230,6 @@ function adaptQualityLayer(rel, code) {
   code = adaptRetargetBranchUpdates(rel, code);
   code = adaptMotionFkHotpath(rel, code, replaceOnce);
   code = adaptSquidMotionBinding(rel, code, replaceOnce);
-  // Apply authored-pose reversal continuity to the actual published build,
-  // not only the isolated adapter tests. Gameplay input/physics remain untouched.
-  code = adaptSquidFormEase(rel, code, replaceOnce);
   if (rel === 'src/game/motion/root-hair.js') {
     code = replaceOnce(code,
       `  const c=this.c;c._kidXform(c.bones.head,this.p,this.head);this.q.copy(this.head).invert();this.axis.set(0,rootTurnRate,0).applyQuaternion(this.q);`,
