@@ -126,9 +126,15 @@ export function installBrellaNetwork(api){
   };
   const tick=P._tick;
   P._tick=function(from,packet,...args){
+    const before=this.peers.get(from)?.lastTs;
     const result=tick.call(this,from,packet,...args);
     if(!Array.isArray(packet?.a)||packet.a.length>128)return result;
-    const points=this.peers.get(from)?.physicsPoints;
+    const peer=this.peers.get(from);
+    // A previously accepted (ts,u) can still be the latest physics point after
+    // native admission rejects a replay. Require this call to advance the
+    // native watermark before touching any buffered presentation snapshot.
+    if(peer?.lastTs!==packet.ts||!(peer.lastTs>(before??-Infinity)))return result;
+    const points=peer.physicsPoints;
     const acceptedTick=points?.length>=2&&points[points.length-2]===packet.ts&&points[points.length-1]===packet.u;
     for(const row of packet.a){
       const actor=this.byNid.get(row?.[0]),snap=actor?.net?.buf?.at(-1);

@@ -1,0 +1,12 @@
+✔ observation preserves all 66 actual native frames including landing40 and recovery49 (3.967776ms)
+✔ hold-only correction violates the existing floor admission at both required witnesses (1.573568ms)
+✔ legal floor endpoints do not make scalar or quaternion interpolation legal (0.597683ms)
+✔ bounded replay matches native floor queries and rejects both boundary-only prototypes (140.94651ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 319.040889

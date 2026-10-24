@@ -1,0 +1,30 @@
+{
+  "before": {
+    "codeCommit": "726e338ac256ba9609086ce65e25a68ddd99df85",
+    "manifestSha256": "6a8c82a5d5dc29a458902e3982424e97eb39c099dc85f0aaa568244b266456e7",
+    "inputHash": "350b861c6d2ca16e5430ffc5b4f7e39cfbefc9df67290de1746b077ae256eb81",
+    "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+    "runtimeInputSha256": {}
+  },
+  "previous": {
+    "codeCommit": "1c449d63b719a00c35775a60ecd0eae6438f4fd0",
+    "manifestSha256": "08e85f5879aad6f56b60c78dc6b08f9801ed93b9a95038d0b4e703c12b9f2814",
+    "inputHash": "e0250cea35c5ca753d1c8ae4701470015c7c6520ca4c242d14c5fb620054e9a9",
+    "contentHash": "3a029b963c89bdd3305bf52a989afde6b2112bbee615b525bcfd99ea7833adf6",
+    "runtimeInputSha256": {}
+  },
+  "generalized": {
+    "codeCommit": "1b2517b78",
+    "manifestSha256": "a73f4081bfb29019d44c42f685e366657a3be0c8093e96ed7ca69d13775fc083",
+    "inputHash": "62a7438b99ba05d774a97339851ff0bdfcb170f357048e85441621ad2aea3b58",
+    "contentHash": "266ee5a8b532266a5c52107754195adcd3cfc1d00f602caa6377364a6cb88026",
+    "runtimeInputSha256": {}
+  },
+  "candidate": {
+    "codeCommit": "96a5836ced682d3c9846c82483032f8884f51923",
+    "manifestSha256": "b0eb4d3594a55224f1ad4f874d1fcc3ba809dcdb7291848cc18476b3f1a1bd71",
+    "inputHash": "327937c902b4bdd350184424a9d67b77164c55309f3dde122dbe78d37c5816c5",
+    "contentHash": "6184fb028078c618018d8b7b7cd4ec0d2dd5fc79d3319ec5080a9efb5af8d6f0",
+    "runtimeInputSha256": {}
+  }
+}

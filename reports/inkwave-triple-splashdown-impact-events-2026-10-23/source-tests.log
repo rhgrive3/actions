@@ -1,0 +1,50 @@
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:591:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/special-vfx.test.mjs:192:17)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+(node:3091) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ the effect pools attach to the game FX root once, one draw per pool, with a degenerate warm instance (1021.876205ms)
+✔ presentation never changes gameplay: identical state, paint, events and randomness with effects on or off (2278.060038ms)
+✔ every special drives effects at 30/60/120 Hz and the pools stay bounded (3491.642445ms)
+✔ impact effects reuse the game blast without its droplet paint, and never call Math.random (797.954712ms)
+✔ remote replay rows reach the effects only when accepted, and only for remote actors (516.982033ms)
+✔ fired Wail effects keep their accepted world origins after death and expire without an actor track (608.020588ms)
+✔ the effect kit retires its GPU resources with the FX instance (689.790489ms)
+✔ Ultra Stamp is raised while held, anticipates the authoritative swing and lands on it (30140.117401ms)
+✔ effect meshes stay out of override passes (GTAO normal/depth) and draw normally otherwise (748.615998ms)
+✔ Super Chump aim preview shows exactly the twelve landing points the throw uses (690.248406ms)
+✔ Tenta Missiles lock HUD brackets exactly the opponents the salvo locks (702.722207ms)
+✔ a remote Kraken is drawn dashing only at dash speed (the network carries no phase) (0.412831ms)
+✔ sprite quads face the camera (a mirrored, back-facing quad is culled and never draws) (547.610514ms)
+✔ a follow callback drives the shape it owns (the default easing never overwrites it) (596.129073ms)
+✔ the Ink Vac burst covers the blast radius the shot actually carries (6..11 by charge) (697.917648ms)
+(node:3094) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ body and both side blasts follow native impacts exactly once at 30/60/120Hz; FX preserves gameplay (84316.437395ms)
+✔ cancellation/clear has no landing blast and a new activation still lands normally (9488.265766ms)
+✔ owner death keeps independent fists and produces only their two accepted impacts (9542.223227ms)
+✔ remote visual expiry waits for accepted impact; remote fistGone shatters without a landing blast (9293.746992ms)
+(node:3099) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ current Triple Splashdown clocks cross actual JSON NetMatch snapshots without legacy Slam or duplicate fists (26.445325ms)
+✔ current Splashdown sidecar rejects malformed/old-life/other-owner/other-special samples and preserves legacy wp (4.378144ms)
+✔ Splashdown clock interpolation cannot blend activations, phases or lives (0.407543ms)
+(node:3179) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ real catalogue activation owns hand models before an optional VFX update and through FX.clear (17053.051659ms)
+✔ real tripleSplashdown age/drop lifecycle owns the unarmed pose and restores normal control at 30/60/120Hz (20952.686028ms)
+✔ independent fists stay visible after owner death through 86F and retire their owned materials once at 87F (13716.78066ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 113225.765431

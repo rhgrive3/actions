@@ -1,0 +1,21 @@
+{
+  "baseCommit": "a4e81347906c0d60ceef76a69f476261bf8d3f86",
+  "baseTree": "34236683e6776aac9d8b1d4ae0b8a1b31d3f2df2",
+  "runtimeFile": "patches/splatoon3/runtime/special-vfx.mjs",
+  "baselineSourceSHA256": "81b50f2b3ee54e324d6f1f626e6d7966fe4567e5ecc947eb5a3b11c7dc808256",
+  "candidateSourceSHA256": "6f8a4b63fc09553392cd6adeeeb10189c56b55f3bbdd24808eda4263807afbcb",
+  "builds": {
+    "baseline": {
+      "revision": "838cfb268cba2b6c4ae3f13918ed0a197bbc0fa453883dfea010c1e9fa02248d",
+      "inputHash": "e73bd22f1a3b552f4e085e55163cf396ef96bbaf844be5e27603c6e94a26366b",
+      "contentHash": "e1c18a72dc8a4e358944f8a8dec59f0d4e178c2d2da9881c8af2d2946e380ab2",
+      "emittedVfxSHA256": "32736b5e4130f60533cd9cae40eb894151e88ec5f503e9a9eac15873cb119fc1"
+    },
+    "candidate": {
+      "revision": "ddb44ae400c150197e567a67b85016e01f7556a724258cc17c930ac3b31b13d7",
+      "inputHash": "dd7b1fee6db68e0cae0dbce9bd97e150e4b6def1b2cc1dc8451f82386ec31e33",
+      "contentHash": "ed7294f6204a4ed3965bc686282f5ee116c43a4ecce3489f176f4cae21b72638",
+      "emittedVfxSHA256": "4c86053d309f3b220e5f1dc2db424090a4824970fe6dfab17f8ae31f9eba6822"
+    }
+  }
+}

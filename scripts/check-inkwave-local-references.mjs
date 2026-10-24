@@ -90,15 +90,6 @@ export const SOURCE_SITE_REFERENCES = Object.freeze([
   },
   {
     "source": "inkwave-public/src/world/stages/data.js",
-    "ref": "../../../patches/practice-range/stage/layout.mjs",
-    "target": "patches/practice-range/stage/layout.mjs",
-    "inputKey": "practice-range/stage/layout.mjs",
-    "sourceInputKey": "upstream/src/world/stages/data.js",
-    "sourceSha256": "61b0c6f7644b988e717f03ea235c1bf11bf88d9f4b9dfb45dba7876c95e1981b",
-    "targetSha256": "8903cb70167972cac2388dbb5f92f7b70ed2abb032a6971df8b7c84c84014acb"
-  },
-  {
-    "source": "inkwave-public/src/world/stages/data.js",
     "ref": "../../../patches/practice-range/stage/props.mjs",
     "target": "patches/practice-range/stage/props.mjs",
     "inputKey": "practice-range/stage/props.mjs",
@@ -114,6 +105,15 @@ export const SOURCE_SITE_REFERENCES = Object.freeze([
     "sourceInputKey": "upstream/src/world/stages/data.js",
     "sourceSha256": "61b0c6f7644b988e717f03ea235c1bf11bf88d9f4b9dfb45dba7876c95e1981b",
     "targetSha256": "4754a45da6fe0cfe8eaeb3c3f1c9b7df848e2e1a89dea89e9f09ac2e12a557a5"
+  },
+  {
+    "source": "inkwave-public/src/world/stages/data.js",
+    "ref": "../../../patches/practice-range/stage/layout.mjs",
+    "target": "patches/practice-range/stage/layout.mjs",
+    "inputKey": "practice-range/stage/layout.mjs",
+    "sourceInputKey": "upstream/src/world/stages/data.js",
+    "sourceSha256": "61b0c6f7644b988e717f03ea235c1bf11bf88d9f4b9dfb45dba7876c95e1981b",
+    "targetSha256": "8903cb70167972cac2388dbb5f92f7b70ed2abb032a6971df8b7c84c84014acb"
   },
   {
     "source": "inkwave-public/src/world/stages/data.js",
