@@ -1,0 +1,33 @@
+{
+  "base": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "patchSha256": "63e3edf7ba951b6e469f899838af309f7e86b5b4aad46bda30640f1cb3b46dd8",
+  "files": [
+    {
+      "path": "patches/splatoon3/runtime/respawn-lifecycle.mjs",
+      "sha256": "3950009e94d2afbe50f89897ce4e31409b1088ecfaaaa276b9b1f1943196621f",
+      "gitBlob": "b33bc03d59ce7625cebec4603a24ec9f4475ffcd"
+    },
+    {
+      "path": "patches/splatoon3/runtime/spawn-pose-motion.mjs",
+      "sha256": "3ac1f93b87f00159ccd902f9cdb12d4629c494dfe5388a4e3f9007e8170b09f7",
+      "gitBlob": "143633e189a684bf493b16136fd9f5ed65a558c7"
+    },
+    {
+      "path": "patches/splatoon3/runtime/roller.mjs",
+      "sha256": "0ba7a5cd6edb7f178fa055bbc2c19c609f10d5ed85768f71a02c50c33db33533",
+      "gitBlob": "df2851585c5281efafb135f21e8dafa1621eb206"
+    },
+    {
+      "path": "patches/splatoon3/runtime/roller-detail-motion.mjs",
+      "sha256": "90529a44115980da5c63af34905d157da8134075da59cbcc0eb2cb65b47dc228",
+      "gitBlob": "3b73ea41616362487b69b75b0b42e13bf58d9980"
+    }
+  ],
+  "changedFunctions": [
+    "spawn-pose-motion: Actor.prototype.reset wrapper (wRoll only)",
+    "spawn-pose-motion: spawnMotionAllowsAction (new read-only helper)",
+    "roller: Character.prototype._poseWeapon (spawn eligibility only)",
+    "roller-detail-motion: interrupted (spawn eligibility only)",
+    "respawn-lifecycle: Actor.prototype.update wrapper (spawn-time physical release observation only)"
+  ]
+}

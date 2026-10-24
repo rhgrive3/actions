@@ -732,14 +732,15 @@ export class LobbySet {
     // neon: INK & SKATE steady with a faint mains shimmer, its 'A' buzzing in bursts; the squid breathes slightly
     const n = this.mats.neon.uniforms.uI.value;
     const shimmer = 1 + 0.02 * Math.sin(t * 120) * Math.sin(t * 7.3);
+    const neonBreathe = 1 + 0.03 * Math.sin(t * 1.7);
     const burst = Math.sin(t * 0.37) * Math.sin(t * 0.91 + 1.3) > 0.55;
     const buzz = burst ? (hash1(Math.floor(t * 22)) > 0.45 ? 1 : 0.08) : 1;
-    n.x = 7 * shimmer; n.y = 7.5 * (1 + 0.03 * Math.sin(t * 1.7)); n.z = buzz;
+    n.x = 7 * shimmer; n.y = 7.5 * neonBreathe; n.z = buzz;
     this.halos[0].material.uniforms.uI.value = 1.0 * shimmer * (0.93 + 0.07 * buzz);
-    this.halos[1].material.uniforms.uI.value = 1.05 * (1 + 0.03 * Math.sin(t * 1.7));
+    this.halos[1].material.uniforms.uI.value = 1.05 * neonBreathe;
     const colA = this.U.uTeamA.value, colB = this.U.uTeamB.value;
     L.neonA.color.copy(colA).multiplyScalar(1 / Math.max(colA.r, colA.g, colA.b, 1e-3)); L.neonA.intensity = 16 * shimmer * (0.93 + 0.07 * buzz);
-    L.neonB.color.copy(colB).multiplyScalar(1 / Math.max(colB.r, colB.g, colB.b, 1e-3)); L.neonB.intensity = 26 * (1 + 0.03 * Math.sin(t * 1.7));
+    L.neonB.color.copy(colB).multiplyScalar(1 / Math.max(colB.r, colB.g, colB.b, 1e-3)); L.neonB.intensity = 26 * neonBreathe;
     // bulbs sway + the one flickery bulb
     this._placeGlows(t);
     // drips: every ~1.5-3 s one falls from a drip tray; its splash starts a ripple in the puddle below

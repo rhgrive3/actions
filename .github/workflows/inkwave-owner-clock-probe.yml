@@ -1,0 +1,41 @@
+name: INKWAVE owner clock relay probe
+on:
+  pull_request:
+    paths:
+      - 'scripts/lib/inkwave-owner-clock-browser.mjs'
+      - 'scripts/lib/inkwave-local-relay-fixture.mjs'
+      - 'scripts/tests/inkwave-owner-clock-relay-probe.test.mjs'
+      - 'patches/reliability/net-adapter.mjs'
+      - 'patches/network-replication/utf8-length.mjs'
+      - 'server/**'
+      - '.github/workflows/inkwave-owner-clock-probe.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/lib/inkwave-owner-clock-browser.mjs'
+      - 'scripts/lib/inkwave-local-relay-fixture.mjs'
+      - 'scripts/tests/inkwave-owner-clock-relay-probe.test.mjs'
+      - 'patches/reliability/net-adapter.mjs'
+      - 'patches/network-replication/utf8-length.mjs'
+      - 'server/**'
+      - '.github/workflows/inkwave-owner-clock-probe.yml'
+permissions:
+  contents: read
+jobs:
+  relay-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Verify exact checkout
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Preserve stamped and legacy relay frames
+        run: node --test scripts/tests/inkwave-owner-clock-relay-probe.test.mjs

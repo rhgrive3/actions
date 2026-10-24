@@ -1,0 +1,39 @@
+{
+  "main": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "pr1862": "6755954a13c8135bfac4102580f81f1cb553c640",
+  "parentTree": "1074c7beda0448602ffe262e1e925fb2eef89d42",
+  "runtimeReadback": [
+    {
+      "path": "patches/splatoon3/runtime/roller.mjs",
+      "blob": "df2851585c5281efafb135f21e8dafa1621eb206",
+      "utf8Characters": 75418,
+      "bodyEqualsLocal": true
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-handoff-motion.mjs",
+      "blob": "267763bb5ad147ea56f8cd326672492fb8c19ba8",
+      "utf8Characters": 19517,
+      "bodyEqualsLocal": true
+    }
+  ],
+  "jobs": [
+    {
+      "id": 120560901852,
+      "run": 39996193183,
+      "name": "patch_tests (3)",
+      "conclusion": "failure"
+    },
+    {
+      "id": 120574973106,
+      "run": 39996193183,
+      "name": "validate_core",
+      "conclusion": "failure"
+    },
+    {
+      "id": 120574973230,
+      "run": 39996193183,
+      "name": "browser (active, chromium webkit)",
+      "conclusion": "failure"
+    }
+  ]
+}

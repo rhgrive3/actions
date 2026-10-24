@@ -1,0 +1,21 @@
+(node:1892) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ s3-slosher-diffusion delayed globs select ground/air base speed at birth across 30/60/120 Hz (120.884027ms)
+✔ s3-slosher-launcher delayed globs select ground/air base speed at birth across 30/60/120 Hz (27.111091ms)
+✔ s3-slosher-bathtub delayed globs select ground/air base speed at birth across 30/60/120 Hz (17.280969ms)
+✔ s3-slosher-double delayed globs select ground/air base speed at birth across 30/60/120 Hz (112.281195ms)
+✔ stationary delayed globs preserve the admitted velocity exactly when grounded state stays the same (78.900117ms)
+✔ Bloblobber delayed bubbles retain the windup-release direction and replay without double-aim (4.998793ms)
+(node:1897) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Slosher silhouette keeps source dimensions and rejects stale scale and double-counted depth (3177.430358ms)
+✔ removing only the silhouette restores every archived source-circle and generic-mask cell (5323.286082ms)
+﹣ emitted Slosher profile retains the complete source receipt and independent scoring oracle (0.17228ms) # SKIP
+ℹ tests 9
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 9766.542507

@@ -1,0 +1,29 @@
+{
+  "scope": "review-only emitted module overlay; not a normal candidate build or publishable source tree",
+  "files": [
+    {
+      "rel": "patches/splatoon3/runtime/spawn-pose-motion.mjs",
+      "originalSha256": "06b41abecc0180da38930a1e058a6c071d7d888953bc564eadc658d5ced7f532",
+      "candidateSha256": "c3096e9f4ccd8cf5112168c640b9a10982d72cfa1fd8fd87083322c35385e5fc",
+      "emittedSha256": "b77b7e6561b53cd4831fbf682a329251d972419b0afa28a9680fa5639434b9e8"
+    },
+    {
+      "rel": "patches/splatoon3/runtime/roller.mjs",
+      "originalSha256": "4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973",
+      "candidateSha256": "0ba7a5cd6edb7f178fa055bbc2c19c609f10d5ed85768f71a02c50c33db33533",
+      "emittedSha256": "5a2628e2ce848c8a8498bf06201d87228c60ca0508f405c95636eeab5794a397"
+    },
+    {
+      "rel": "patches/splatoon3/runtime/roller-detail-motion.mjs",
+      "originalSha256": "b316765bc2df072f1a034936148ae2d2d3fe9cb8760e2dcb3c2935230cece6ed",
+      "candidateSha256": "90529a44115980da5c63af34905d157da8134075da59cbcc0eb2cb65b47dc228",
+      "emittedSha256": "8ecafe227f5d40dc0e1581f907a55695797a962529c3573dfe81990c58516ac2"
+    },
+    {
+      "rel": "patches/splatoon3/runtime/respawn-lifecycle.mjs",
+      "originalSha256": "c6d2e84e1912c08344e811c1ee6a261a1392b04897e7ce42ce3ec597b271a82f",
+      "candidateSha256": "0e60f8ca90497c7a43a76ccbabe08bd7866c9082df49e3a941f00ab688054b2d",
+      "emittedSha256": "b61a139346626b5fbe1fc5dd01f49a23faf3f57ef7adafb51a179ca2618bb99f"
+    }
+  ]
+}

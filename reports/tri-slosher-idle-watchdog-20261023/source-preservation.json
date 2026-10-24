@@ -1,0 +1,45 @@
+{
+  "status": "passed",
+  "base": "4d6166936eaa8058a8b936053992960b510eec88",
+  "checkedCommit": "4d6166936eaa8058a8b936053992960b510eec88",
+  "checkedSourceSha256": "d9aad10cc522dd787b9197c62df03d480b834767462c1b878bf317dfd5d09ef8",
+  "evaluatedRoutineCount": 12,
+  "evaluatedRoutinesByteUnchanged": true,
+  "evaluatedRoutineSha256": [
+    "48cec000fbb6ec5632c50a2b0ff52a47c43b1aad86c380f840a5d73e8b1d7617",
+    "6787dec1d602050f0c89c6be3e1fd30794ae2c435816794a2509fd5e652b6bdc",
+    "cfe167257b9f747451f1f6ad8644e9651b70f535ec326ebaac23251d2a75be6a",
+    "0f225c3bbd35102087663a518dacc475d72dba233f1b3c4f049c78782ebd6d97",
+    "703222dc5609c3a9fdebb7ceef0df1cbb093f865d4d5b692d99fae488d2f961f",
+    "90367ea4fbf8f2e614b4e60d4b3d2a09cc41bbd9b4b0afb01956cae37df35712",
+    "ff1c23527d45032277530fb6e684249b0d495752c6f6c8c7d1336af8ae37e323",
+    "27510a169f39a0937d4d65b8b3ef93c766c0f32cfba43eb586d7ec3dc323bfed",
+    "1440bbd7eee094fcffe08a3f04cedb9ecb3689c44de7a6dc5030bf11719b63bf",
+    "bf40087cf704f24bd9da705a8d76574a3118cd09e0944aaecb0f6fef37b25982",
+    "2ae2e4b8f18de0fde37561fc54833b1cb4daa475f4e76cb11e410a40bedbcdc6",
+    "b4755d51a2d7a8d196a74783e3a9d7ebde79f600e22b5c21d6412fe688b085b5"
+  ],
+  "validatorByteUnchanged": true,
+  "validatorSha256": "58af076b843553c2f453ecb011a220a77188d30a22472764217d9499771d25b7",
+  "browserFlagsByteUnchanged": true,
+  "explicitTimeoutsUnchanged": [
+    180000,
+    200,
+    400,
+    180000,
+    10000
+  ],
+  "screenshotTimeoutsUnchanged": [
+    15000
+  ],
+  "existingFunctionsByteUnchanged": [
+    "validateIdleResult",
+    "observeColdEnvironment",
+    "inspectColdBoot",
+    "retireDesktopForCold",
+    "closeProbeOwner",
+    "launchColdMobileBrowser"
+  ],
+  "existingOperationLimitMs": 120000,
+  "watchdogScope": "each page.evaluate; not a fix for external runner shutdown or GPU completion proof"
+}

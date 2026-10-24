@@ -1,0 +1,4 @@
+Initial evidence packaging helper failed before writing summary/compressed records:
+  fatal: could not open 'patches/splatoon3/runtime/area-special-vfx-clock.mjs' for reading: No such file or directory
+  Error: Command failed: git hash-object patches/splatoon3/runtime/area-special-vfx-clock.mjs
+The helper incorrectly required a blob for an intentionally absent unrelated module. The initial evidence commit16d393695 is retained. The corrected helper verifies both filesystem and Git-tree absence when main has no leaf; source/build/test results are unchanged. summary-verification.log records the corrected result.

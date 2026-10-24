@@ -1,0 +1,12 @@
+console warning THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported.
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.waitForFunction: Timeout 240000ms exceeded.
+    at /workspace/actions/scripts/check-inkwave-firing-cosmetics-browser.mjs:55:20 {
+  log: [],
+  name: 'TimeoutError'
+}
+
+Node.js v24.19.0

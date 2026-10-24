@@ -1,0 +1,787 @@
+{
+  "status": "pass",
+  "productionChange": "only firing-cosmetics-adapter.mjs: defer Splatling submission after existing effects; Shooter stays last; capacities unchanged",
+  "prior": "d7cc9dd3 40->8 failure remains in 84075c767",
+  "build": "84073826099b7166a711b58d5cb0d9f9df20057549d63dac60d845d70028c8b9",
+  "sourceTests": 55,
+  "emittedTests": 33,
+  "resourceRows": [
+    {
+      "case": 0,
+      "before": {
+        "count": 700,
+        "drops": 40,
+        "spinners": 0,
+        "muzzle": 0,
+        "calls": 2,
+        "triangles": 952600
+      },
+      "after": {
+        "count": 700,
+        "drops": 40,
+        "spinners": 0,
+        "muzzle": 0,
+        "calls": 2,
+        "triangles": 952600
+      }
+    },
+    {
+      "case": 1,
+      "before": {
+        "count": 700,
+        "drops": 40,
+        "spinners": 0,
+        "muzzle": 0,
+        "calls": 6,
+        "triangles": 1189016
+      },
+      "after": {
+        "count": 700,
+        "drops": 40,
+        "spinners": 0,
+        "muzzle": 0,
+        "calls": 2,
+        "triangles": 952600
+      }
+    },
+    {
+      "case": 2,
+      "before": {
+        "count": 700,
+        "drops": 40,
+        "spinners": 0,
+        "muzzle": 0,
+        "calls": 8,
+        "triangles": 1190740
+      },
+      "after": {
+        "count": 700,
+        "drops": 40,
+        "spinners": 0,
+        "muzzle": 0,
+        "calls": 4,
+        "triangles": 954324
+      }
+    },
+    {
+      "case": 3,
+      "before": {
+        "count": 698,
+        "drops": 48,
+        "spinners": 0,
+        "muzzle": 0,
+        "calls": 2,
+        "triangles": 949880
+      },
+      "after": {
+        "count": 698,
+        "drops": 48,
+        "spinners": 0,
+        "muzzle": 0,
+        "calls": 2,
+        "triangles": 949880
+      }
+    },
+    {
+      "case": 4,
+      "before": {
+        "count": 698,
+        "drops": 48,
+        "spinners": 0,
+        "muzzle": 0,
+        "calls": 7,
+        "triangles": 957968
+      },
+      "after": {
+        "count": 700,
+        "drops": 48,
+        "spinners": 1,
+        "muzzle": 1,
+        "calls": 3,
+        "triangles": 953300
+      }
+    },
+    {
+      "case": 5,
+      "before": {
+        "count": 16,
+        "drops": 4,
+        "spinners": 0,
+        "muzzle": 0,
+        "calls": 7,
+        "triangles": 37836
+      },
+      "after": {
+        "count": 21,
+        "drops": 4,
+        "spinners": 2,
+        "muzzle": 3,
+        "calls": 3,
+        "triangles": 29860
+      }
+    }
+  ],
+  "performance": {
+    "measurement": "two-actor emitted component, high particle preset128 parts,400x225,60Hz sim/30Hz sampled software WebGL; no hardware claim; one bounded run each",
+    "before": [
+      {
+        "id": "shooter",
+        "actors": 2,
+        "simulationSteps": 360,
+        "displaySamplingHz": 30,
+        "cpuMean": 1.898749999993015,
+        "cpuP95": 4.5,
+        "submitMean": 2.0650000000139697,
+        "submitP95": 7.600000000093132,
+        "peakShared": 8,
+        "peakMuzzle": 0,
+        "maxNativeRounds": 6,
+        "beginResources": {
+          "geometries": 174,
+          "materials": 48,
+          "gpu": {
+            "geometries": 146,
+            "textures": 7
+          },
+          "matrixCapacity": 700,
+          "burstCapacity": 0,
+          "volumeCapacity": 128
+        },
+        "steadyResources": {
+          "geometries": 190,
+          "materials": 60,
+          "gpu": {
+            "geometries": 171,
+            "textures": 10
+          },
+          "matrixCapacity": 700,
+          "burstCapacity": 0,
+          "volumeCapacity": 128
+        },
+        "endResources": {
+          "geometries": 190,
+          "materials": 60,
+          "gpu": {
+            "geometries": 171,
+            "textures": 10
+          },
+          "matrixCapacity": 700,
+          "burstCapacity": 0,
+          "volumeCapacity": 128
+        },
+        "heapStart": 90974191,
+        "heapEnd": 91379451,
+        "remaining": {
+          "rounds": 0,
+          "drops": 0,
+          "bursts": 0
+        }
+      },
+      {
+        "id": "splatling",
+        "actors": 2,
+        "simulationSteps": 360,
+        "displaySamplingHz": 30,
+        "cpuMean": 3.392500000004657,
+        "cpuP95": 10.200000000186265,
+        "submitMean": 2.9074999999953435,
+        "submitP95": 6.2999999998137355,
+        "peakShared": 11,
+        "peakMuzzle": 0,
+        "maxNativeRounds": 10,
+        "beginResources": {
+          "geometries": 184,
+          "materials": 60,
+          "gpu": {
+            "geometries": 170,
+            "textures": 8
+          },
+          "matrixCapacity": 700,
+          "burstCapacity": 0,
+          "volumeCapacity": 128
+        },
+        "steadyResources": {
+          "geometries": 188,
+          "materials": 60,
+          "gpu": {
+            "geometries": 178,
+            "textures": 10
+          },
+          "matrixCapacity": 700,
+          "burstCapacity": 0,
+          "volumeCapacity": 128
+        },
+        "endResources": {
+          "geometries": 188,
+          "materials": 60,
+          "gpu": {
+            "geometries": 178,
+            "textures": 10
+          },
+          "matrixCapacity": 700,
+          "burstCapacity": 0,
+          "volumeCapacity": 128
+        },
+        "heapStart": 92842017,
+        "heapEnd": 92749600,
+        "remaining": {
+          "rounds": 0,
+          "drops": 0,
+          "bursts": 0
+        }
+      }
+    ],
+    "after": [
+      {
+        "id": "shooter",
+        "actors": 2,
+        "simulationSteps": 360,
+        "displaySamplingHz": 30,
+        "cpuMean": 2.100000000017462,
+        "cpuP95": 5,
+        "submitMean": 1.8399999999674037,
+        "submitP95": 4.100000000093132,
+        "peakShared": 20,
+        "peakMuzzle": 12,
+        "maxNativeRounds": 6,
+        "beginResources": {
+          "geometries": 174,
+          "materials": 48,
+          "gpu": {
+            "geometries": 146,
+            "textures": 7
+          },
+          "matrixCapacity": 700,
+          "burstCapacity": 32,
+          "volumeCapacity": 128
+        },
+        "steadyResources": {
+          "geometries": 190,
+          "materials": 60,
+          "gpu": {
+            "geometries": 171,
+            "textures": 10
+          },
+          "matrixCapacity": 700,
+          "burstCapacity": 32,
+          "volumeCapacity": 128
+        },
+        "endResources": {
+          "geometries": 190,
+          "materials": 60,
+          "gpu": {
+            "geometries": 171,
+            "textures": 10
+          },
+          "matrixCapacity": 700,
+          "burstCapacity": 32,
+          "volumeCapacity": 128
+        },
+        "heapStart": 91892911,
+        "heapEnd": 91277767,
+        "remaining": {
+          "rounds": 0,
+          "drops": 0,
+          "bursts": 0
+        }
+      },
+      {
+        "id": "splatling",
+        "actors": 2,
+        "simulationSteps": 360,
+        "displaySamplingHz": 30,
+        "cpuMean": 1.2787499999976717,
+        "cpuP95": 2.3999999999068677,
+        "submitMean": 1.945000000006985,
+        "submitP95": 21.800000000279397,
+        "peakShared": 21,
+        "peakMuzzle": 0,
+        "maxNativeRounds": 10,
+        "beginResources": {
+          "geometries": 184,
+          "materials": 60,
+          "gpu": {
+            "geometries": 170,
+            "textures": 8
+          },
+          "matrixCapacity": 700,
+          "burstCapacity": 32,
+          "volumeCapacity": 128
+        },
+        "steadyResources": {
+          "geometries": 188,
+          "materials": 60,
+          "gpu": {
+            "geometries": 178,
+            "textures": 10
+          },
+          "matrixCapacity": 700,
+          "burstCapacity": 32,
+          "volumeCapacity": 128
+        },
+        "endResources": {
+          "geometries": 188,
+          "materials": 60,
+          "gpu": {
+            "geometries": 178,
+            "textures": 10
+          },
+          "matrixCapacity": 700,
+          "burstCapacity": 32,
+          "volumeCapacity": 128
+        },
+        "heapStart": 92763041,
+        "heapEnd": 92603484,
+        "remaining": {
+          "rounds": 0,
+          "drops": 0,
+          "bursts": 0
+        }
+      }
+    ],
+    "sequential": {
+      "before": [
+        {
+          "id": "shooter",
+          "actors": 2,
+          "simulationSteps": 360,
+          "displaySamplingHz": 30,
+          "cpuMean": 0.853749999991851,
+          "cpuP95": 1.3000000002793968,
+          "submitMean": 0.7,
+          "submitP95": 1.5,
+          "peakShared": 8,
+          "peakMuzzle": 0,
+          "maxNativeRounds": 6,
+          "beginResources": {
+            "geometries": 174,
+            "materials": 48,
+            "gpu": {
+              "geometries": 146,
+              "textures": 7
+            },
+            "matrixCapacity": 700,
+            "burstCapacity": 0,
+            "volumeCapacity": 128
+          },
+          "steadyResources": {
+            "geometries": 190,
+            "materials": 60,
+            "gpu": {
+              "geometries": 171,
+              "textures": 10
+            },
+            "matrixCapacity": 700,
+            "burstCapacity": 0,
+            "volumeCapacity": 128
+          },
+          "endResources": {
+            "geometries": 190,
+            "materials": 60,
+            "gpu": {
+              "geometries": 171,
+              "textures": 10
+            },
+            "matrixCapacity": 700,
+            "burstCapacity": 0,
+            "volumeCapacity": 128
+          },
+          "heapStart": 203041107,
+          "heapEnd": 91323899,
+          "remaining": {
+            "rounds": 0,
+            "drops": 0,
+            "bursts": 0
+          }
+        },
+        {
+          "id": "splatling",
+          "actors": 2,
+          "simulationSteps": 360,
+          "displaySamplingHz": 30,
+          "cpuMean": 1.1787500000093132,
+          "cpuP95": 2.1999999997206032,
+          "submitMean": 0.8399999999906868,
+          "submitP95": 1.3999999999068677,
+          "peakShared": 11,
+          "peakMuzzle": 0,
+          "maxNativeRounds": 10,
+          "beginResources": {
+            "geometries": 184,
+            "materials": 60,
+            "gpu": {
+              "geometries": 170,
+              "textures": 8
+            },
+            "matrixCapacity": 700,
+            "burstCapacity": 0,
+            "volumeCapacity": 128
+          },
+          "steadyResources": {
+            "geometries": 188,
+            "materials": 60,
+            "gpu": {
+              "geometries": 178,
+              "textures": 10
+            },
+            "matrixCapacity": 700,
+            "burstCapacity": 0,
+            "volumeCapacity": 128
+          },
+          "endResources": {
+            "geometries": 188,
+            "materials": 60,
+            "gpu": {
+              "geometries": 178,
+              "textures": 10
+            },
+            "matrixCapacity": 700,
+            "burstCapacity": 0,
+            "volumeCapacity": 128
+          },
+          "heapStart": 92790808,
+          "heapEnd": 92728120,
+          "remaining": {
+            "rounds": 0,
+            "drops": 0,
+            "bursts": 0
+          }
+        }
+      ],
+      "after": [
+        {
+          "id": "shooter",
+          "actors": 2,
+          "simulationSteps": 360,
+          "displaySamplingHz": 30,
+          "cpuMean": 1.0250000000116415,
+          "cpuP95": 2.099999999627471,
+          "submitMean": 0.9199999999837019,
+          "submitP95": 2.1000000000931323,
+          "peakShared": 20,
+          "peakMuzzle": 12,
+          "maxNativeRounds": 6,
+          "beginResources": {
+            "geometries": 174,
+            "materials": 48,
+            "gpu": {
+              "geometries": 146,
+              "textures": 7
+            },
+            "matrixCapacity": 700,
+            "burstCapacity": 32,
+            "volumeCapacity": 128
+          },
+          "steadyResources": {
+            "geometries": 190,
+            "materials": 60,
+            "gpu": {
+              "geometries": 171,
+              "textures": 10
+            },
+            "matrixCapacity": 700,
+            "burstCapacity": 32,
+            "volumeCapacity": 128
+          },
+          "endResources": {
+            "geometries": 190,
+            "materials": 60,
+            "gpu": {
+              "geometries": 171,
+              "textures": 10
+            },
+            "matrixCapacity": 700,
+            "burstCapacity": 32,
+            "volumeCapacity": 128
+          },
+          "heapStart": 203295723,
+          "heapEnd": 91273923,
+          "remaining": {
+            "rounds": 0,
+            "drops": 0,
+            "bursts": 0
+          }
+        },
+        {
+          "id": "splatling",
+          "actors": 2,
+          "simulationSteps": 360,
+          "displaySamplingHz": 30,
+          "cpuMean": 0.9987500000162981,
+          "cpuP95": 1.6000000000931323,
+          "submitMean": 0.8324999999604188,
+          "submitP95": 1.3999999999068677,
+          "peakShared": 21,
+          "peakMuzzle": 0,
+          "maxNativeRounds": 10,
+          "beginResources": {
+            "geometries": 184,
+            "materials": 60,
+            "gpu": {
+              "geometries": 170,
+              "textures": 8
+            },
+            "matrixCapacity": 700,
+            "burstCapacity": 32,
+            "volumeCapacity": 128
+          },
+          "steadyResources": {
+            "geometries": 188,
+            "materials": 60,
+            "gpu": {
+              "geometries": 178,
+              "textures": 10
+            },
+            "matrixCapacity": 700,
+            "burstCapacity": 32,
+            "volumeCapacity": 128
+          },
+          "endResources": {
+            "geometries": 188,
+            "materials": 60,
+            "gpu": {
+              "geometries": 178,
+              "textures": 10
+            },
+            "matrixCapacity": 700,
+            "burstCapacity": 32,
+            "volumeCapacity": 128
+          },
+          "heapStart": 92762109,
+          "heapEnd": 92611456,
+          "remaining": {
+            "rounds": 0,
+            "drops": 0,
+            "bursts": 0
+          }
+        }
+      ]
+    },
+    "limitation": "Original parallel Splatling submit-p95 6.3->21.8ms is preserved. Sequential follow-up: Shooter1.5->2.1ms, Splatling1.4->1.4ms. One bounded sample per run, no hardware or universal FPS claim."
+  },
+  "invariance": [
+    {
+      "weapon": "shooter",
+      "mode": "standing",
+      "hz": 60,
+      "steps": 240,
+      "shots": 18,
+      "paintWrites": 44,
+      "gameplaySHA256": "79a5fb360b00a9a92864dc1af0a3d1ae972f3a0a2198a1ef8e544fc9d944f10d",
+      "paintSHA256": "4d3ca0abc5ce74fc7fd411501dd7aa5529cb26f943e5de5cb48a3537a70ab39b",
+      "gridSHA256": "6f5d2c10378dbac288e2e1d83cbbddab8077bad5b76e4a8739696861e324b3ee"
+    },
+    {
+      "weapon": "shooter",
+      "mode": "moving-jump",
+      "hz": 60,
+      "steps": 240,
+      "shots": 18,
+      "paintWrites": 45,
+      "gameplaySHA256": "08d00adb4e938bd10eef1575b28ec7b843242017d2f4d927b29be966c280c596",
+      "paintSHA256": "0bb6b6c06134e69c1ad061562e4e7d24c17e7d6aab4a4c9a1ba24ce6d2c5a9a1",
+      "gridSHA256": "70fb7dff7917913cc86902f4269d4005afdd0a0aa9c97720771499349d61f392"
+    },
+    {
+      "weapon": "splatling",
+      "mode": "standing",
+      "hz": 60,
+      "steps": 240,
+      "shots": 25,
+      "paintWrites": 50,
+      "gameplaySHA256": "0afd950526fabb863d8af0f1dc0d193b8440b49ebfb31446d6983737c4c0fa29",
+      "paintSHA256": "57d7d476be5fd924d4e010d422ae4b31537caf4dacdb866774909d6e92338bd5",
+      "gridSHA256": "6e5e3d4120161024747988350b286236cd5d95a14042b4d58d6663aec0973fc9"
+    },
+    {
+      "weapon": "splatling",
+      "mode": "moving-jump",
+      "hz": 60,
+      "steps": 240,
+      "shots": 25,
+      "paintWrites": 50,
+      "gameplaySHA256": "9d2588b644d9617ce10ecd26cdbe60e0f6ae46dd48a1757a0241b7a4e1fc52bf",
+      "paintSHA256": "97c46ab30998ec7dcff1e26e35dbdf10fe4499551ef0d45ef3edc9c6aa189993",
+      "gridSHA256": "5f0b7a5fe3d6830dd25872f5d72a0e34ef1f149032d448682f14e1b0717a5c74"
+    }
+  ],
+  "nativePhase": {
+    "status": "pass",
+    "controlledBoot": "freeze at native __inkwave handoff before ordinary loop, await source loader, no assignment to clock/actor timers",
+    "cases": [
+      {
+        "weapon": "shooter",
+        "birthsEqual": true,
+        "fireEqual": true,
+        "updateOrderEqual": true,
+        "rngEqual": true,
+        "gear": {
+          "loadout": [
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            },
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            },
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            }
+          ],
+          "abilityPoints": {},
+          "modifiers": {
+            "runSpeed": 1,
+            "swimSpeed": 1,
+            "inkSaverMain": 1,
+            "inkSaverSub": 1,
+            "inkRecovery": 180,
+            "inkResistance": 0.024,
+            "specialCharge": 1,
+            "specialSaver": 0.5,
+            "quickRespawn": 1,
+            "quickSuperJump": 1,
+            "subPower": 1,
+            "actionIntensify": 1,
+            "subResistance": 1,
+            "specialPower": 0,
+            "ninjaSquid": false,
+            "objectShredder": false,
+            "stealthJump": false,
+            "dropRoller": false,
+            "subMistResistance": 1,
+            "subResistanceLow": 1,
+            "subLineMarkerResistance": 1,
+            "subSprinklerResistance": 1,
+            "subMarkResistance": 1,
+            "subMineMarkResistance": 1,
+            "specialPowerAP": 0,
+            "quickRespawnReduction": 0,
+            "inkRecoverySwim": 1,
+            "inkRecoveryKid": 1,
+            "enemyMoveSpeed": 1.44,
+            "enemyActionSpeedScale": 0.5,
+            "enemyInkGrace": 0,
+            "enemyShotSpeed": 0.72,
+            "enemyDamageCap": 40,
+            "enemyDamageRate": 18,
+            "enemyJumpVelocity": 4.8,
+            "rollRetention": 0.85,
+            "surgeChargeScale": 1,
+            "runSpeedFiring": 1,
+            "actionAirSpread": 0,
+            "stormDuration": 8,
+            "stormThrowScale": 1
+          }
+        },
+        "prepared": {
+          "time": 0.7166666666666672,
+          "actorT": 0.6666666666666671,
+          "tick": 43
+        }
+      },
+      {
+        "weapon": "splatling",
+        "birthsEqual": true,
+        "fireEqual": true,
+        "updateOrderEqual": true,
+        "rngEqual": true,
+        "gear": {
+          "loadout": [
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            },
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            },
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            }
+          ],
+          "abilityPoints": {},
+          "modifiers": {
+            "runSpeed": 1,
+            "swimSpeed": 1,
+            "inkSaverMain": 1,
+            "inkSaverSub": 1,
+            "inkRecovery": 180,
+            "inkResistance": 0.024,
+            "specialCharge": 1,
+            "specialSaver": 0.5,
+            "quickRespawn": 1,
+            "quickSuperJump": 1,
+            "subPower": 1,
+            "actionIntensify": 1,
+            "subResistance": 1,
+            "specialPower": 0,
+            "ninjaSquid": false,
+            "objectShredder": false,
+            "stealthJump": false,
+            "dropRoller": false,
+            "subMistResistance": 1,
+            "subResistanceLow": 1,
+            "subLineMarkerResistance": 1,
+            "subSprinklerResistance": 1,
+            "subMarkResistance": 1,
+            "subMineMarkResistance": 1,
+            "specialPowerAP": 0,
+            "quickRespawnReduction": 0,
+            "inkRecoverySwim": 1,
+            "inkRecoveryKid": 1,
+            "enemyMoveSpeed": 1.44,
+            "enemyActionSpeedScale": 0.5,
+            "enemyInkGrace": 0,
+            "enemyShotSpeed": 0.72,
+            "enemyDamageCap": 40,
+            "enemyDamageRate": 18,
+            "enemyJumpVelocity": 4.8,
+            "rollRetention": 0.85,
+            "surgeChargeScale": 1,
+            "runSpeedFiring": 1,
+            "actionAirSpread": 0,
+            "stormDuration": 8,
+            "stormThrowScale": 1
+          }
+        },
+        "prepared": {
+          "time": 1.649999999999999,
+          "actorT": 1.5999999999999992,
+          "tick": 99
+        }
+      }
+    ]
+  },
+  "remaining": [
+    "retail reference media403 remains denied; no bypass",
+    "hardware GPU/thermal acceptance not measured",
+    "parent independent review and PR1857 update pending"
+  ]
+}

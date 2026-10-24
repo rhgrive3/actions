@@ -1,0 +1,89 @@
+{
+  "status": "passed",
+  "checks": [
+    {
+      "variant": "before",
+      "path": "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/roller.mjs",
+      "sha256": "3bb6bb6f9ceeffed97b0cbaf1f2737d84fca7362b7700892070e2a0219073598",
+      "manifestMatch": true
+    },
+    {
+      "variant": "before",
+      "path": "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/roller-detail-motion.mjs",
+      "sha256": "c62102b32d29792a197d76ab37f6074849f2d78efd6b02a0c8f96fc40e1f934b",
+      "manifestMatch": true
+    },
+    {
+      "variant": "before",
+      "path": "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+      "sha256": "1c1bfc50619302e977e0df005d130a7c1757aac636fa6bbde93a780bf40390d4",
+      "manifestMatch": true
+    },
+    {
+      "variant": "before",
+      "path": "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/respawn-lifecycle.mjs",
+      "sha256": "3efcb07ae094262be3eebc68b048662331b084fec01eb53061c74ddbb1bbfb2c",
+      "manifestMatch": true
+    },
+    {
+      "variant": "before",
+      "path": "/patches/splatoon3/runtime/roller.mjs",
+      "sha256": "3bb6bb6f9ceeffed97b0cbaf1f2737d84fca7362b7700892070e2a0219073598",
+      "manifestMatch": true
+    },
+    {
+      "variant": "before",
+      "path": "/patches/splatoon3/runtime/respawn-lifecycle.mjs",
+      "sha256": "3efcb07ae094262be3eebc68b048662331b084fec01eb53061c74ddbb1bbfb2c",
+      "manifestMatch": true
+    },
+    {
+      "variant": "before",
+      "path": "/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+      "sha256": "1c1bfc50619302e977e0df005d130a7c1757aac636fa6bbde93a780bf40390d4",
+      "manifestMatch": true
+    },
+    {
+      "variant": "after",
+      "path": "/_versions/ddf8641a13d75e1c3bad22ffdf0c4b6445a03673d0016cb575617c93f5ebdf05/patches/splatoon3/runtime/roller.mjs",
+      "sha256": "5f8d7c69c100759cf9408d0ef9a31969469a365a1473aa2dd04dbdc4072ef826",
+      "manifestMatch": true
+    },
+    {
+      "variant": "after",
+      "path": "/_versions/ddf8641a13d75e1c3bad22ffdf0c4b6445a03673d0016cb575617c93f5ebdf05/patches/splatoon3/runtime/roller-detail-motion.mjs",
+      "sha256": "8ecafe227f5d40dc0e1581f907a55695797a962529c3573dfe81990c58516ac2",
+      "manifestMatch": true
+    },
+    {
+      "variant": "after",
+      "path": "/_versions/ddf8641a13d75e1c3bad22ffdf0c4b6445a03673d0016cb575617c93f5ebdf05/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+      "sha256": "b77b7e6561b53cd4831fbf682a329251d972419b0afa28a9680fa5639434b9e8",
+      "manifestMatch": true
+    },
+    {
+      "variant": "after",
+      "path": "/_versions/ddf8641a13d75e1c3bad22ffdf0c4b6445a03673d0016cb575617c93f5ebdf05/patches/splatoon3/runtime/respawn-lifecycle.mjs",
+      "sha256": "b61a139346626b5fbe1fc5dd01f49a23faf3f57ef7adafb51a179ca2618bb99f",
+      "manifestMatch": true
+    },
+    {
+      "variant": "after",
+      "path": "/patches/splatoon3/runtime/roller.mjs",
+      "sha256": "5f8d7c69c100759cf9408d0ef9a31969469a365a1473aa2dd04dbdc4072ef826",
+      "manifestMatch": true
+    },
+    {
+      "variant": "after",
+      "path": "/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+      "sha256": "b77b7e6561b53cd4831fbf682a329251d972419b0afa28a9680fa5639434b9e8",
+      "manifestMatch": true
+    },
+    {
+      "variant": "after",
+      "path": "/patches/splatoon3/runtime/respawn-lifecycle.mjs",
+      "sha256": "b61a139346626b5fbe1fc5dd01f49a23faf3f57ef7adafb51a179ca2618bb99f",
+      "manifestMatch": true
+    }
+  ]
+}

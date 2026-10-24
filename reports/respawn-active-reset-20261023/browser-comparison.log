@@ -1,0 +1,26 @@
+{
+  "status": "pass",
+  "oldAfterReset": {
+    "owner": "native",
+    "elapsed": 0.03333333333333333,
+    "duration": 0.2,
+    "weight": 0.9259259259259259,
+    "valid": true
+  },
+  "oldFirstNewUpdate": {
+    "owner": "native",
+    "elapsed": 0.05,
+    "duration": 0.2,
+    "weight": 0.84375,
+    "valid": true
+  },
+  "newAfterReset": null,
+  "newFirstNewUpdate": {
+    "owner": "native",
+    "elapsed": 0,
+    "duration": 0,
+    "weight": 0,
+    "valid": true
+  },
+  "preResetExact": 5
+}

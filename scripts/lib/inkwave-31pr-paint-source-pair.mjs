@@ -73,6 +73,17 @@ export const RESPAWN_05EB_SOURCE_PAIR = Object.freeze({
     'scripts/lib/inkwave-build-only-modules.mjs': Object.freeze({base:'5408d3598bd60d661f003f5ea0e7c02ef55e4d62',candidate:'64012e646a889ef090b8b0e21cd82d30e0670130'}),
   })
 });
+// Additional live thirteen-leaf epoch for PR1857's reviewed firing adapter.
+// The historical fixture/paint pairs above remain immutable. This tuple is
+// source identity only: it grants no replay or gameplay/physics equivalence.
+export const FIRING_31_PRS_SOURCE_EPOCH = Object.freeze({
+  sourceHead: 'd7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c',
+  blobs: Object.freeze({
+    ...Object.fromEntries(Object.entries(ALL_31_PRS_SOURCE_PAIR.blobs).map(([path,row]) => [path,row.candidate])),
+    'scripts/inkwave-source-composition.mjs': 'a6dfbe6fa07a4ba54bfe316c67fb8cc8d9d4a9e9',
+  }),
+});
+export const FIRING_31_PRS_COMPOSITION_FIXTURE_SHA256 = '24fa40eb790cbfad29f5b0b797faf5073f52741173a3118643551360ed77538c';
 
 // The following batch compares against the already-integrated 30-PR main.
 // Its selected source leaves are the exact earlier 29-PR candidate epoch.

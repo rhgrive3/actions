@@ -1,0 +1,53 @@
+{
+  "status": "controlled-aligned-native-pass",
+  "method": "native __inkwave handoff freeze; fixed boot seed; await native source-motion loader; no clock assignment or physics/source edits",
+  "rows": [
+    {
+      "id": "shooter",
+      "birthsEqual": true,
+      "fireEqual": true,
+      "updateOrderEqual": true,
+      "rngEqual": true,
+      "firstRngMismatch": null,
+      "preparedPhase": {
+        "before": {
+          "time": 0.7166666666666672,
+          "charT": 0.6666666666666671,
+          "fx": 0.7166666666666672
+        },
+        "after": {
+          "time": 0.7166666666666672,
+          "charT": 0.6666666666666671,
+          "fx": 0.7166666666666672
+        }
+      }
+    },
+    {
+      "id": "splatling",
+      "birthsEqual": true,
+      "fireEqual": true,
+      "updateOrderEqual": true,
+      "rngEqual": true,
+      "firstRngMismatch": null,
+      "preparedPhase": {
+        "before": {
+          "time": 1.649999999999999,
+          "charT": 1.5999999999999992,
+          "fx": 1.649999999999999
+        },
+        "after": {
+          "time": 1.649999999999999,
+          "charT": 1.5999999999999992,
+          "fx": 1.649999999999999
+        }
+      }
+    }
+  ],
+  "poolContention": {
+    "status": "regression confirmed in d7cc9dd3",
+    "fixture": "32 Splatling volume triples (96/128 prior parts), 660 ordinary blob effects, 48 late falling drops, shared capacity700",
+    "beforeRetained": 40,
+    "d7ccRetained": 8,
+    "next": "defer Splatling-only cosmetic submission until after existing effects; native gameplay unchanged"
+  }
+}

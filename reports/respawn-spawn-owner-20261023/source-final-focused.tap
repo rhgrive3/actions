@@ -1,0 +1,36 @@
+TAP version 13
+# (node:6285) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: lost support over a lower dry floor never releases ready before native supported touchdown
+ok 1 - lost support over a lower dry floor never releases ready before native supported touchdown
+  ---
+  duration_ms: 48856.154743
+  type: 'test'
+  ...
+# Subtest: native aim and flight keep ownership; a supported landing releases ready immediately
+ok 2 - native aim and flight keep ownership; a supported landing releases ready immediately
+  ---
+  duration_ms: 4482.155743
+  type: 'test'
+  ...
+# Subtest: helper reads only its bound active local/remote lifecycle and respects reuse and reset
+ok 3 - helper reads only its bound active local/remote lifecycle and respects reuse and reset
+  ---
+  duration_ms: 2.208986
+  type: 'test'
+  ...
+# Subtest: detached ordinary air/hold and disabled presentation retain their existing fallback and pose gates
+ok 4 - detached ordinary air/hold and disabled presentation retain their existing fallback and pose gates
+  ---
+  duration_ms: 0.198525
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 54911.91504

@@ -3,7 +3,7 @@
 // The source does not publish a matching shooter pixel/mesh radius. The bounded
 // shooter cross-section multiplier below is an INKWAVE visual calibration,
 // never used for player or field collision, damage, trajectory or turf paint.
-import { sharedBucketDraw, sharedBucketDrawIndex } from './projectile-visuals.mjs';
+import { sharedBucketDraw, sharedBucketDrawIndex, VISUAL_WIDTH_CALIBRATION } from './projectile-visuals.mjs';
 const finite=(v,f)=>Number.isFinite(v)?v:f;
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -144,9 +144,17 @@ export function appendSourcedSplashVisuals(system, mesh, shapes, inkLook, petals
     if(!d?.owner?.color||!d.pos||!d.vel||d.owner.remote)continue;
     if(cameraPosition&&cameraPosition.distanceToSquared(d.pos)>900)continue;
     const speed=d.vel.length();
+    const tri=d.sourceActor==='WeaponSlosherDiffusion';
     direction.copy(d.vel);
     if(speed>1e-6)direction.multiplyScalar(1/speed);
     else direction.copy(axis);
+    // The paint solver releases stationary drops, then integrates gravity.
+    // Its vertical velocity is not a cosmetic launch heading: using it flips
+    // the bead straight down on its first tick. Tri-Slosher's shared Bucket
+    // art follows the existing captured paint heading; positions still fall
+    // exactly with the authoritative queue. No second flight is simulated.
+    if(tri&&Math.hypot(d.dirX||0,d.dirZ||0)>1e-6)
+      direction.set(d.dirX,0,d.dirZ).normalize();
     rotation.setFromUnitVectors(axis,direction);
     // d.radius is a *floor paint* footprint, not an ink model radius.
     // Slosher splashes carry their sourced DrawRadius; Shooter drops keep the
@@ -155,7 +163,9 @@ export function appendSourcedSplashVisuals(system, mesh, shapes, inkLook, petals
     // Sloshing Machine drops hang off its membrane as thin strands, not balls
     // (Splatoon 3 promotional screenshot, 2026-10-15 report).
     const strand=d.sourceActor==='WeaponSlosherLauncher';
-    scale.setScalar(strand?radius*.4:radius);
+    // Match the shared Bucket sheet's existing *visual* width calibration.
+    // This is not a new retail draw-radius or world-unit conversion claim.
+    scale.setScalar(strand?radius*.4:tri?radius*VISUAL_WIDTH_CALIBRATION.bucket:radius);
     matrix.compose(d.pos,rotation,scale);
     mesh.setMatrixAt(count,matrix);mesh.setColorAt(count,d.owner.color);
     const o=count*4;

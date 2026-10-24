@@ -1,0 +1,210 @@
+{
+  "README.md": {
+    "bytes": 7455,
+    "sha256": "92b04c31a2f491dc162aafebe0d6bf15c9e6db314fb14f2cf043e8fa0f79c4af"
+  },
+  "build-proof.json": {
+    "bytes": 170634,
+    "sha256": "4c45261c940b9d64353ba76df2117305600fc525bcbd71e6a08e2d018ded15d8"
+  },
+  "compare-native.py.txt": {
+    "bytes": 3739,
+    "sha256": "77441bf62b948eec7bf6c0e931a0191037eaa948f6eaacd4d0e53c6c74062a05"
+  },
+  "dependency-audit.json": {
+    "bytes": 2178,
+    "sha256": "2c8496bb2177cb60d639faebb61285790fb06e9e087879c3448699a9b9518e94"
+  },
+  "final-input-artifact-readback.json": {
+    "bytes": 571,
+    "sha256": "860ad42dfe80bd1247bf00c2bb06799ca3104a0c207cc275c13dd3d4b2717a79"
+  },
+  "gameplay-after.json": {
+    "bytes": 869550,
+    "sha256": "437bd86cd4639574100c4dbbe0414e8ae9c8fd082a885c1cd33908d80a33d6ea"
+  },
+  "gameplay-before.json": {
+    "bytes": 869551,
+    "sha256": "4032c77163295fa4cae1663167982277764a4d9e2afbe248b7c6f64a1335b9cb"
+  },
+  "gameplay-receipt.mjs.txt": {
+    "bytes": 3732,
+    "sha256": "4dd0d022e118fad9b1516f53ba7633dbe37fac43d39915648ee4d95d7f7aede8"
+  },
+  "gameplay-source.json": {
+    "bytes": 869523,
+    "sha256": "435fbc62204937db68d90347ec6d173e8254ff2fca78e8f4ffc41f31bb8181a0"
+  },
+  "intermediate/native-v1-after/native-browser.json": {
+    "bytes": 45909,
+    "sha256": "e7a840b53ac0b538fd906b3827031054407efb37142bc60505df0ff8d3affc5c"
+  },
+  "intermediate/native-v1-after/sim18.png": {
+    "bytes": 466500,
+    "sha256": "00dc7d56094ec3483b06bd7b5ed6c31bf1c3ceafa870f73a4c7c4e7e4d26af86"
+  },
+  "intermediate/native-v1-before/native-browser.json": {
+    "bytes": 45844,
+    "sha256": "f7f5d8df324e9694e07201fc9ac1aec0e41dfb0324634e2104abf26990ab37d5"
+  },
+  "intermediate/native-v1-before/sim18.png": {
+    "bytes": 464739,
+    "sha256": "dfd4465f8e10ca101fe6c7dead075bff484f67de64e87a5361cf6ee1c108ab54"
+  },
+  "intermediate/tri-main7e-gameplay-receipt-v1-coarse-update.mjs.txt": {
+    "bytes": 3322,
+    "sha256": "bb2c13816bd268dddb7ea3851187580fc6712bf8b1eba26c17cc7a065995fdbd"
+  },
+  "intermediate/tri-main7e-gameplay-receipt-v2-cross-realm.mjs.txt": {
+    "bytes": 3558,
+    "sha256": "9f3979b9286ebfa182f000191a187d280b5e63acb2192a3d8c484ed2b3a1acd5"
+  },
+  "intermediate/tri-main7e-native-qa-v1.mjs.txt": {
+    "bytes": 6909,
+    "sha256": "df53d4ba9b8a4d31b046fd7b351e727afa4788c50d98b4e2a78ec33dcc4b9fc6"
+  },
+  "logs/tri-main7e-after-build.log": {
+    "bytes": 904,
+    "sha256": "05ef71d499e5c6dc97cd4fcf30ff92f7e898730a8263effdc414a325c8213319"
+  },
+  "logs/tri-main7e-before-build.log": {
+    "bytes": 904,
+    "sha256": "6be3be6777f2117326fd2f7b5929ee5187c3e009a216cdf7a88299b5292b90bf"
+  },
+  "logs/tri-main7e-emitted-tests.log": {
+    "bytes": 10067,
+    "sha256": "86153cd066ca5c1efa581b4b8a73a96917fe9b8d2d5c9d2960e33851f22fc267"
+  },
+  "logs/tri-main7e-gameplay-after-failed-v1.log": {
+    "bytes": 67514,
+    "sha256": "f7fa049099804ce50bda966c98ce4696dfadc21104a708a963ef3804eb4b7a1c"
+  },
+  "logs/tri-main7e-gameplay-after-failed-v2.log": {
+    "bytes": 58712,
+    "sha256": "0d15bbc2247a1f0d31db96a8f8a5edcc007ec0c62992c2131c758f00c61ea90d"
+  },
+  "logs/tri-main7e-gameplay-after.log": {
+    "bytes": 4240,
+    "sha256": "9a15195354cf5e37765b6d679640625ab7649b76637ed081ea03dab58bce3aa2"
+  },
+  "logs/tri-main7e-gameplay-before-failed-v1.log": {
+    "bytes": 67523,
+    "sha256": "9827b5c83a783abd12b0a67fddf8dde73d8a71ff8ca58e4221b3cd645ac3cc50"
+  },
+  "logs/tri-main7e-gameplay-before-failed-v2.log": {
+    "bytes": 58721,
+    "sha256": "37ff356382da08e0d6a7e1a420b4a536c34c1a4b634538fe7dcf887e908da710"
+  },
+  "logs/tri-main7e-gameplay-before.log": {
+    "bytes": 4249,
+    "sha256": "19bdca9ddefb848a642bbfd2e156d004f95e7d4f4c4cd81b6feba66ff2bd7fe5"
+  },
+  "logs/tri-main7e-gameplay-source-failed-v1.log": {
+    "bytes": 66353,
+    "sha256": "f9490b2f12cc8dc8b60f26bccc7bdeb3de0c3de3615eb39fb5f40dd78b0d48d8"
+  },
+  "logs/tri-main7e-gameplay-source-failed-v2.log": {
+    "bytes": 57551,
+    "sha256": "54ecb2008baaa1457f17126869baf205e62cb4604ed9a17fc3be83712579d2cd"
+  },
+  "logs/tri-main7e-gameplay-source.log": {
+    "bytes": 3079,
+    "sha256": "c1c06e389e4676e018775d71983568e2919ca9775018d4868d01dd0790cc1c1c"
+  },
+  "logs/tri-main7e-native-after.log": {
+    "bytes": 20011,
+    "sha256": "97c1d8d07f0586be81b75699aec568cca65e83ca9cc7bc19c27264c8b411ff26"
+  },
+  "logs/tri-main7e-native-before.log": {
+    "bytes": 19946,
+    "sha256": "f3bcffb98286cde095d4656becdc5718a9b398c52bccecbf6e57ecab02d72afb"
+  },
+  "logs/tri-main7e-native-comparison-v2.log": {
+    "bytes": 2883,
+    "sha256": "0f5bbb49e45c5f6bbf8b64e379384e167abadc05c65d23fe1eaabd8e7bd5e2c0"
+  },
+  "logs/tri-main7e-native-comparison.log": {
+    "bytes": 243,
+    "sha256": "4a692e4bdb967902e9e1fa895f3dba74f56bdd0b45327d2e0be2a06396da7449"
+  },
+  "logs/tri-main7e-native-v2-after.log": {
+    "bytes": 20237,
+    "sha256": "a0a7608040df9e5639d3c83bb75822954fc504d6c7dd65bad895d1d225a7d85c"
+  },
+  "logs/tri-main7e-native-v2-before.log": {
+    "bytes": 20163,
+    "sha256": "20a8b355a23716de29b355785ef614e43d5784bff1b91a96eec687f60ce3538b"
+  },
+  "logs/tri-main7e-old-behavior-negative.log": {
+    "bytes": 2841,
+    "sha256": "bad5c4fec9c15161507ee687f2de2283fa7e066ea6646d8f27c58ba352fb48df"
+  },
+  "logs/tri-main7e-reference-emitted-after.log": {
+    "bytes": 6820,
+    "sha256": "ad5f553fa9f3c2f2edac254e5f873518f4391ce1bde3fde7045041a01e4c23f3"
+  },
+  "logs/tri-main7e-reference-emitted-before.log": {
+    "bytes": 6820,
+    "sha256": "ad5f553fa9f3c2f2edac254e5f873518f4391ce1bde3fde7045041a01e4c23f3"
+  },
+  "logs/tri-main7e-reference-emitted-control.log": {
+    "bytes": 6834,
+    "sha256": "67a4c6bc0df9978f2c7e3228f36dcadbf3af6986fd6f0a67720d888104fd8795"
+  },
+  "logs/tri-main7e-reference-source.log": {
+    "bytes": 1914,
+    "sha256": "cbdb135efa841ced651cacc77daa8c550ea0d5c0e91b7bb081629d1f7e345dcf"
+  },
+  "logs/tri-main7e-source-tests.log": {
+    "bytes": 6865,
+    "sha256": "5a946cafa3f83068af920f6f1bc7eebc07e143f6efec599399395dc3b10e138c"
+  },
+  "logs/tri-main7e-startup-budget.log": {
+    "bytes": 520,
+    "sha256": "a7e7c0eb148129f4ecb7bb7d9e922e28d44fb1e622eed852de4901e2800a84ec"
+  },
+  "native-after/native-browser.json": {
+    "bytes": 46135,
+    "sha256": "d9c6eb24f7a72e543dd6fdce971616acd5ec66ed59a367e1e60302cf510fb645"
+  },
+  "native-after/sim18.png": {
+    "bytes": 465678,
+    "sha256": "3193f9c925274c2a96d6a978e94999f7fc57503ba795e90516bc1f9f39c0c7a2"
+  },
+  "native-before/native-browser.json": {
+    "bytes": 46061,
+    "sha256": "249cd07b2d3c49fbc7fa0cd40a1014f726fb53c2cabbc5610e9c021bdcea898a"
+  },
+  "native-before/sim18.png": {
+    "bytes": 465953,
+    "sha256": "a4d501a6802efe6ee67372bb51511b3080c2388c6b76e00fc9dc0b4a540a0777"
+  },
+  "native-comparison.json": {
+    "bytes": 3433,
+    "sha256": "95a64ee1a263d1c2b3c0074fff414787ce794b5179075ebc6192890969eff8e4"
+  },
+  "physical-comparison.json": {
+    "bytes": 4073,
+    "sha256": "3f43f2ac2c236f5061d8c3c29202907fc62d962d69b026e359feb1a6bc88acc0"
+  },
+  "previous-matched-after/native-browser.json": {
+    "bytes": 45909,
+    "sha256": "93c4c873e2c35e6275fd9d7bc4f658e6d3847c32163b52efb174142ea275084e"
+  },
+  "previous-matched-after/sim18.png": {
+    "bytes": 464926,
+    "sha256": "e1dd9e1732a88d5de5bf0f7c5051ead41761729e405a78f9eb54590d11abfd2c"
+  },
+  "previous-matched-before/native-browser.json": {
+    "bytes": 45835,
+    "sha256": "be2c576c7fdb9d860d09a6812c411030b2a53bb83102ccf5bcb0dbcccd93584c"
+  },
+  "previous-matched-before/sim18.png": {
+    "bytes": 464412,
+    "sha256": "fef53d4abd29c1bbf2a0e2a7841140e6b89d3c9c46dfac42da7c8ec4064d0203"
+  },
+  "previous-matched-comparison.json": {
+    "bytes": 3403,
+    "sha256": "03639a0c430e5170fcb3523eac00570cadca36d92509f72ecd3e18cf84225b71"
+  }
+}

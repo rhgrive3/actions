@@ -1,0 +1,15 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.evaluate: TypeError: Cannot read properties of null (reading 'getRenderTarget')
+    at CpuPaint.clear (http://127.0.0.1:34907/src/world/paint.js:200:7053)
+    at r.clear (http://127.0.0.1:34907/patches/splatoon3/runtime/paint-ownership.mjs:7:19273)
+    at eval (eval at evaluate (:311:30), <anonymous>:16:47)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+    at /workspace/actions/scripts/check-inkwave-firing-budget-browser.mjs:37:26 {
+  log: []
+}
+
+Node.js v24.19.0

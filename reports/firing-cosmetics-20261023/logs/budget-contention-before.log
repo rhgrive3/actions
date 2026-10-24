@@ -1,0 +1,13 @@
+INKWAVE built fixture /tmp/inkwave-firing-before contentHash=caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100
+mixed-pool {"sharedCount":700,"retainedFallingDrops":40,"oldSplatlingParts":96,"additionalShooter":0}
+(node:5632) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Splatling cosmetics do not evict pre-existing late falling-drop effects from the shared 700-slot mesh (583.775478ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 969.058816
