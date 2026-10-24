@@ -219,8 +219,8 @@ for (const mode of ['zones', 'tower', 'rainmaker', 'clams']) test(`native ranked
   const peers = new Map([['host', host], ['guest', guest]]), packets = [];
   for (const [id, net] of peers) {
     Object.assign(net, {myId:id, hostId:'host', state:'lobby', _members:new Map([['host','Host'],['guest','Guest']])});
-    net.tr = {broadcast(packet) { packets.push(structuredClone(packet)); for(const [other, peer] of peers) if(other!==id) peer._message(id,structuredClone(packet)); },
-      sendTo(id,packet) {peers.get(id)?._message(net.myId,structuredClone(packet));}, lock() {}, close() {}};
+    net.tr = {broadcast(packet) { packets.push(structuredClone(packet)); for(const [other, peer] of peers) if(other!==id) peer._message(id,structuredClone(packet)); return true; },
+      sendTo(id,packet) {peers.get(id)?._message(net.myId,structuredClone(packet));return true;}, lock() {return true;}, close() {}};
   }
   f.G.projectiles = new f.Projectiles(new f.THREE.Scene());
   f.G.game = {menus:{launchLobby:async()=>{}}, startNetMatch:async()=>{}, netMatchGo() {}};

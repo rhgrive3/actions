@@ -36,7 +36,7 @@ async function rig() {
  return {...f,input,a,allies,c,camera,m,frame,dead,touch};
 }
 
-const element=()=>({style:{setProperty(){}},classList:{toggle(){}},children:[],setAttribute(){}});
+const element=()=>{const classes=new Set();return {style:{setProperty(){}},classList:{contains:n=>classes.has(n),toggle(n,on){if(on)classes.add(n);else classes.delete(n);}},children:[],setAttribute(){}};};
 async function setup(dead=false){
  const h=await rig();h.allies.forEach((a,i)=>a.pos.set((i-1)*4,0,-i*3));if(dead)h.dead();h.touch();h.input.mobile.gyro.enabled=true;h.G.rig=h.camera;h.camera.dioLook={x:0,y:0};
  h.G.camera=new h.THREE.PerspectiveCamera(60,1000/700,.1,100);h.G.camera.position.set(0,8,12);h.G.camera.lookAt(0,0,0);h.G.camera.updateMatrixWorld();

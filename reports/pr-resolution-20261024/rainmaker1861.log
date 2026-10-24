@@ -1,0 +1,16 @@
+✔ final owner samples carry, charge, actual pending release and recovery without writing game state (1.473121ms)
+✔ 20F authority recovery returns monotonically at 30/60/120 Hz with identical sampled peaks (4.693393ms)
+✔ partial cancel has no recoil and the raise blend does not snap to carry (0.400967ms)
+✔ noncarriers, drop, death, squid, special, goal hold and opt-out leave native channels untouched (1.006126ms)
+✔ reuses the one final weapon owner and all model geometry; no frame array or math-object allocation (0.722024ms)
+✔ canonical string and numeric IDs match without allocating state for a noncarrier (0.19537ms)
+✔ visual RNG is per-character and does not consume the gameplay random stream (6.079205ms)
+✔ upright objective aim is shared, normalized and continuous over heading seams and near-vertical pitch (8.769457ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 318.175482

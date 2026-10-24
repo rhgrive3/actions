@@ -1,0 +1,11 @@
+✔ actual historical gate admits the exact independently verified cache/closure integration (5.908561ms)
+✔ arbitrary current runtime drift cannot inherit the historical identity claim (2.600059ms)
+✔ the immutable historical reference is checked independently of the current source (4.656167ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 308.077612

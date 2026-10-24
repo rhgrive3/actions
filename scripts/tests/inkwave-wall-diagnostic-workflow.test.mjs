@@ -75,13 +75,15 @@ test('scope, timeout, evidence, failure suppression and concurrency mutations ar
   }
 });
 
-// Reviewed integration adds source/clock/animation acceptance guards only.
+// Queue revision: source-remainder routing, pinned-fetch deduplication and
+// additive coverage are separately exercised by their routing/mutation suites.
+// Pin the final job bodies; changes still require an explicit epoch update.
 // The later 31-PR source epoch adds its independent immutable-pair guard.
 // Existing jobs, failures, thresholds and immutable builds remain required.
 // Shared immutable build, additive acceptance guards,
 // exact-head startup clock evidence, and complete sparse diagnostic checkouts.
 const acceptedJobHashes = {
-  "validate_core": "80f5bcdbcf39f3f616c231c0cbad3eea93849fed3fb19c20e22f7c063ab47a39",
+  "validate_core": "6f208bec8d27778626a1b4458ed9dcda021b8acbadd86143488dd76f4efaff47",
   "patch_tests": "f4aed2dfb7766fc1497498fc2d6d7689ec90441f0747b854b07a4e631109c5b1",
   "validate": "54ac81f9c3cfa0e1eaed643dc62b644e9658abef0b53faced3a7d47888b790f9",
   "browser": "2d925a6bece5c03d5f5a2fefa550a622d1589e8e3ab41ac517d6d624cd93bb9c",
@@ -89,7 +91,7 @@ const acceptedJobHashes = {
   "seven_claims": "34ef0c57320a741be38b42f6e0e9eb62e8d7f0b9bbb55b6b9a091c26a828c3cd",
   "resource_paint_continuation": "78e0d3ebf1290c9250339e8dcef35c9b60077c82fd5a99ff51da01b3c50a442b"
 };
-test('accepted Turf and network job bodies are preserved without gate weakening',()=> {
+test('queue Turf and network job bodies match the source-routing and fetch epoch',()=> {
   for(const [name, expected] of Object.entries(acceptedJobHashes)) {
     // Reviewed setup-only addition: the signed Ubuntu archive transport helper
     // runs immediately before the same browser install. All acceptance bytes

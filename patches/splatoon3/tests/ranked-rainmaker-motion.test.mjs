@@ -83,7 +83,7 @@ test('visual RNG is per-character and does not consume the gameplay random strea
  for(let i=0;i<1000;i++)a();for(let i=0;i<100;i++)assert.equal(b(),reference());assert.equal(gameplayDraws,0);
  assert.match(character,/const seed = hashStr\(this.name\);[\s\S]*?this.rng = mulberry\(seed\)/);
  assert.match(actor,/this.character = new CharacterClass\(\{ color: G.teamColors\[team\], weapon, style, name, isLocal \}\)/);
- assert.doesNotMatch(actor,/character\.rng|\brng\s*:/);assert.match(spread,/radiusSample\(Math.random\(\)\)/);
+ assert.doesNotMatch(actor,/character\.rng|\brng\s*:/);assert.match(spread,/const u=Math.random\(\),radius=Number.isFinite\(bias\?\.horizontal\)\?biasQuantile\(u,bias.horizontal\):Math.sqrt\(u\)/);
 });
 
 test('upright objective aim is shared, normalized and continuous over heading seams and near-vertical pitch',()=>{

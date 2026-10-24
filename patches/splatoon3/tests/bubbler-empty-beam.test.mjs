@@ -41,7 +41,7 @@ test('empty beam queries allocate no Set and admit a later real activation witho
  const remoteDome=bigBubblerRemoteDomes()[0],remoteHp=remoteDome.hp,proposals=[];
  const stop=f.on('kit:bubbler:damage-proposal',e=>proposals.push(e));
  const remoteHit=countSets(()=>damageBigBubblerFromBeam(attacker,start,end,3.5));
- assert.equal(remoteHit.allocations,1);assert.equal(remoteDome.hp,remoteHp,'remote HP remains owner-authoritative');
+ assert.equal(remoteHit.allocations,0,'remote-only path reuses the released beam deduplication Set');assert.equal(remoteDome.hp,remoteHp,'remote HP remains owner-authoritative');
  assert.equal(proposals.length,1,'remote-only pool produces a proposal immediately');
  stop();off();clearBigBubblers('test-finish');
 });

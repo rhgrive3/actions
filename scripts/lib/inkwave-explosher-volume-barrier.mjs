@@ -26,7 +26,7 @@ export function adaptExplosherControlledBoot(source) {
   const anchor='    this._bindEvents();\n    this._startAttract();';
   if(source.split(anchor).length!==2)throw Error('Unique initial boot anchor missing');
   const begin='class Game {\n  async boot() {';
-  const ends=['\n  async _buildWorld(map) {','\n  async _buildWorld(map, flow = null) {'];
+  const ends=['\n  async _buildWorld(map) {','\n  async _buildWorld(map, flow = null) {','\n  async _buildWorld(map, flow = null, theme = null) {'];
   const present=ends.filter(end=>source.includes(end));
   if(source.split(begin).length!==2||present.length!==1||source.split(present[0]).length!==2)throw Error('Native boot boundaries missing');
   const end=present[0];

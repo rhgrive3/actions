@@ -1,0 +1,19 @@
+(node:6389) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ warm stale stops detached work and cleans once (17.038851ms)
+✔ warm abort stops detached work and cleans once (7.268174ms)
+✔ frame stale stops detached work and cleans once (6.999585ms)
+✔ frame abort stops detached work and cleans once (6.625859ms)
+✔ successful publish and explicit release retain existing ownership (2.235997ms)
+✔ new build aborts warm old build without releasing new world (15.574704ms)
+✔ compile rejection preserves primary error and detached cleanup (3.105931ms)
+✔ stage shader warm-up precedes publication and an abort during it cleans the candidate (3.792073ms)
+✔ native stage compile rejection releases detached geometry without publication (2.657034ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 121.481419

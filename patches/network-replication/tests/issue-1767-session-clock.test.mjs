@@ -21,7 +21,7 @@ async function sessions(fixtures, id) {
     s.lobby.players = [{ id: 'A', ready: false }, { id: 'B', ready: false }];
     f.G.net = s;
     const send = (to, data) => { wire.push({ from: name, to, data: clone(data) }); return true; };
-    s.tr = { sendTo: send, broadcast(data) { send(name === 'A' ? 'B' : 'A', data); return true; }, lock() {}, close() {} };
+    s.tr = { sendTo: send, broadcast(data) { send(name === 'A' ? 'B' : 'A', data); return true; }, lock() { return true; }, close() {} };
     clients.set(name, { name, f, s, net: null, actors: [], triggers: 0 });
   }
   const cfg = { id, proto: fixtures[0].PROTO, compat: fixtures[0].COMPAT,

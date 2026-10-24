@@ -54,7 +54,7 @@ function boot(source, held = []) {
   };
   const maps = ['old', 'a', 'b', 'c'].map(id => ({ id, name: id }));
   class Level {
-    constructor(layout) { this.id = layout.id; this.bounds = {}; this.faces = [{}]; this.layoutHash = 'good'; }
+    constructor(layout) { this.id = layout.id; this.bounds = {}; this.faces = [{}]; this.blocks = []; this.layoutHash = 'good'; }
     buildGeometry() { return resource('geometry:' + this.id, { index: { count: 1 } }); }
     layoutLightmap() { this.lightSize = 64; }
   }
@@ -431,7 +431,7 @@ test('actual upstream PropKit supports null scene and disposes detached geometry
   const props = fs.readFileSync(new URL('../../../inkwave-public/src/world/props-core.js', import.meta.url), 'utf8');
   const builder = section(props, 'class Builder {', '\n// ------------------------------------------------------------------------------------------------ neon path helpers');
   const klass = section(props, 'export class PropKit {', '\nexport const PROP_TYPES').replace('export ', '');
-  const PropKit = vm.runInNewContext(`${builder}\n${klass}\nPropKit`, { THREE, Math });
+  const PropKit = vm.runInNewContext(`${section(props, 'const TPL = new Map();', 'const kf =')}\n${builder}\n${klass}\nPropKit`, { THREE, Math });
   const kit = new PropKit(null, { quality: 'high', headless: true });
   assert.equal(kit.scene, null); assert.equal(kit.group.parent, null);
   assert.equal(kit.build(), kit);

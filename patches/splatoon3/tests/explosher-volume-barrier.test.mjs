@@ -28,7 +28,7 @@ test('controlled pair rejects retained timer/post RNG/asset drift but retains le
 test('actual composed main preserves synchronous attract and accepts only its verified boot boundary',async()=>{
  const {adaptBuildSource}=await import(pathToFileURL(path.join(sourceRoot,'scripts/inkwave-source-composition.mjs')));
  const raw=fs.readFileSync(path.join(sourceRoot,'inkwave-public/src/main.js'),'utf8');
- const source=adaptBuildSource('src/main.js',raw),end='\n  async _buildWorld(map, flow = null) {';
+ const source=adaptBuildSource('src/main.js',raw),end='\n  async _buildWorld(map, flow = null, theme = null) {';
  assert(source.includes(end));const result=adapt(source);
  assert.equal(result.slice(result.indexOf(end)),source.slice(source.indexOf(end)));
  assert.equal((result.match(/globalThis.__inkwaveExplosherControlledStartup/g)||[]).length,1);

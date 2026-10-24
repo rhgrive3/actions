@@ -64,5 +64,5 @@ test('real Session rejects previous gameplay COMPAT before building or sending r
     ]});
   assert.equal(starts,0);assert.equal(sends,0);assert.equal(session.match,null);
   assert.equal(session.state,'error');
-  assert.equal(f.COMPAT,'iw-gameplay-20261022-owner-clock-v1');
+  assert.equal(f.COMPAT,'iw-gameplay-20261023-start-admission-v1');
 });

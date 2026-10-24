@@ -1,0 +1,17 @@
+(node:5549) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native heading QA uses actual input and restores global state even when capture fails (17865.065422ms)
+✔ actual Actor probe rejects a wrong bank coefficient and an extra drawn pivot tilt (21462.494579ms)
+✔ rollback is exactly the reviewed initialization change and refuses changed source (2.750442ms)
+✔ tracked source proof permits one named rollback and rejects all other edits, modes and missing inputs (68.038929ms)
+(node:5702) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ real mobile consumer removes initial/reentry mantle snap and restores the fixture after capture failure (16386.838525ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 56594.132993

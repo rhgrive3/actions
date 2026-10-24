@@ -1,0 +1,27 @@
+✔ actual rounded OBB candidate t/kind/axis/sign preserves all face/edge/corner and degenerate results (307.521748ms)
+✔ actual no-offset and Splatana lobe coordinates preserve Object.is including signed zero/nonfinite fallbacks (60.884147ms)
+✔ Wail broadphase retains the original discrete wall hits including contact bounds, unusual dimensions and zero segments (903.988911ms)
+✔ Booyah radius plan preserves ordered slope-projected tiles, repeated terrain probes and final paint/turf payloads (20.720299ms)
+✔ Toxic Mist absent state skips empty deletes while own undefined/stale properties preserve deletion semantics (2.111041ms)
+✔ Storm recovery scratch preserves LOS coordinates across actors, nesting, exceptions and changing cloud height (0.565682ms)
+✔ Torpedo/Fizzy share exact geometry while individual birth colors, cap evictions and last-user disposal remain independent (9.361599ms)
+✔ Point Sensor per-record sweep scratch resets partial capsule outputs and preserves nearest body vs terrain contact (5.944065ms)
+✔ Tacticooler flat sweeps match original motion, Tower updates and reentrant/throwing resolver while reusing private Hit records (19.27644ms)
+✔ catalog splash direction is created only for an admitted release, preserving exhaustion, threshold, head-stop and payload order (22.233741ms)
+✔ one Booyah growth builds its radius ring once while retaining six terrain projections (4.615798ms)
+✔ news-owned templates retain exact source clip strings through expansion, contraction and rounding boundaries (390.394972ms)
+✔ offscreen ally marker arithmetic preserves exact edge, rear and nonfinite coordinates (37.219617ms)
+✔ crosshair cache invalidates numerator and denominator independently without changing signed zero or nonfinite results (24.502466ms)
+✔ diorama compares authored and CSSOM forms, restores external edits and handles replacement nodes (17.036859ms)
+✔ dust ring retains all emitted arguments and RNG order over quality and burst sizes (584.003433ms)
+✔ only documented model branches consume speed and independent Wail pose clocks still advance (21.422964ms)
+✔ five Wail finish batches preserve six source transforms, per-speaker visibility, shadows, culling and divergence fallback (48.885785ms)
+✔ Storm factory skips all discarded meshes/materials while preserving native RNG, record, events and fallback (71.26306ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3210.706027
