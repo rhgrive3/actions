@@ -93,7 +93,6 @@ const compactEsm = (code, file) => {
 const dependencySpecs = new Map(), composedOwners = new Map();
 function composeSource(rel, source) {
   let code=adaptBuildSource(rel,source);
-  if (rel === 'src/world/lightmap-assets.js') code = emitLightmapIndex(code, SRC);
   const specs=[];
   if (/\.m?js$/.test(rel)) {
     for(const m of code.matchAll(/(?:^|[;\n}])\s*(?:import|export)\s+(?:[\w*{}\s,$]+\s+from\s+)?['"]([^'"]+)['"]/g)) specs.push(m[1]);
@@ -127,6 +126,7 @@ const BUILD = OUT + '.building';
 fs.rmSync(BUILD, { recursive: true, force: true });
 let rawJs = 0, minJs = 0, gzRaw = 0, gzMin = 0, rawCss = 0, minCss = 0;
 let losslessLightmapSavings = 0;
+let pendingLightmapIndex = null;
 for (const file of walk(SRC)) {
   const rel = path.relative(SRC, file);
   if (SKIP.has(rel) || rel.startsWith('assets/native-stages' + path.sep) || rel.startsWith('_native-reference-assets' + path.sep)) continue;
@@ -135,6 +135,11 @@ for (const file of walk(SRC)) {
   const ext = path.extname(file);
   if (ext === '.js' || ext === '.mjs' || ext === '.css') {
     const code = composeSource(rel, fs.readFileSync(file, 'utf8'));
+    // Its asset inventory is not complete until the late overlays finish.
+    if (rel.split(path.sep).join('/') === 'src/world/lightmap-assets.js') {
+      pendingLightmapIndex = { code, dst, rel };
+      continue;
+    }
     // These exact production inputs are reread/composed by the mandatory
     // Three bundle below, which replaces module and removes core. Copying
     // composed source here keeps the intermediate paths/diagnostics intact
@@ -291,6 +296,21 @@ for (const file of walk(RANGE_ROOT)) {
 }
 
 await finishTransforms();
+
+// Final lightmap inventory: all asset overlays are complete before emission.
+if (pendingLightmapIndex) {
+  const { code: source, dst, rel } = pendingLightmapIndex;
+  const code = emitLightmapIndex(source, BUILD);
+  await stageTransform(code, {
+    loader: 'js', format: 'esm', minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: rel,
+  }, res => {
+    const output = !unminified ? compactEsm(res.code, rel.split(path.sep).join('/')) : res.code;
+    fs.writeFileSync(dst, output);
+    rawJs += Buffer.byteLength(code); minJs += Buffer.byteLength(output);
+    gzRaw += gz(Buffer.from(code)); gzMin += gz(Buffer.from(output));
+  });
+  await finishTransforms();
+}
 
 // Re-encode every final lightmap once after upstream, Scorch, and Range assets
 // have been overlaid. Keep all five assets offline and verify exact pixels.

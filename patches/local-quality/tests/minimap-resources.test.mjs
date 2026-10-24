@@ -56,7 +56,7 @@ function makeHarness({ minimapOff }) {
   };
   const G = { settings: state.settings, match: null, teamHex: ['#ff8a14', '#2f5bff'], projectiles: null };
   const sandbox = {
-    console, Math, JSON, Object, Array, Float32Array, Int32Array, Uint8Array, Uint8ClampedArray, Int8Array, Map, Set, Infinity,
+    console, Math, JSON, Object, Array, Float32Array, Int16Array, Int32Array, Uint8Array, Uint8ClampedArray, Int8Array, Map, Set, Infinity,
     G,
     document: { createElement: () => mkCanvas() },
     requestIdleCallback: (fn) => { state.idleFns.push(fn); return state.idleFns.length; },
@@ -189,8 +189,23 @@ test('off->on then explicit ensure builds complete native raster once; on->off c
   assert.equal(mm.flip, true);    // correct team orientation built
   for (const c of h.state.canvases) { assert.equal(c.width, 56); assert.equal(c.height, 56); }
   assert.ok(mm.hgt instanceof Float32Array && mm.hgt.length === 56 * 56);
-  assert.ok(mm.topBlock instanceof Int32Array && mm.nrm instanceof Float32Array);
+  assert.ok(mm.topBlock instanceof Int16Array);
+  assert.equal(mm.topBlock.length, 56 * 56);
+  assert.equal(mm.topBlock.byteLength, 56 * 56 * 2);
+  assert.ok(mm.topBlock.every(id => id === -1), 'empty sea keeps signed sentinel');
+  assert.equal(mm.nrm, null, 'legacy normals are recovered from block axes');
   assert.ok(mm.pixCell instanceof Int32Array && mm.owner instanceof Uint8Array);
+  assert.equal(mm.pixCell.length, 56 * 56);
+  assert.ok(mm.pixCell.every(id => id === -1));
+  assert.ok(mm.hgt.every(height => height === -99));
+  assert.equal(mm.owner.length, 56 * 56);
+  assert.ok(mm.owner.every(team => team === 0));
+  for (const fraction of [mm.pixFx, mm.pixFy]) {
+    assert.ok(fraction instanceof Uint8Array);
+    assert.equal(fraction.length, 56 * 56);
+    assert.equal(fraction.byteLength, 56 * 56);
+    assert.ok(fraction.every(value => value === 0));
+  }
   const builds = h.state.fullBuilds;
   h.G.settings.minimap = false;   // OFF again: no rebuild; HUD uses tickHidden
   mm.setViewerTeam(1);
@@ -339,4 +354,61 @@ test('deferred native-world candidate schedules no raster until activation',()=>
  assert.equal(h.state.idleFns.length,0);assert.equal(h.state.fullBuilds,0);
  mm.activate();assert.equal(h.state.idleFns.length,1);h.runIdle();
  assert.equal(h.state.fullBuilds,1);assert.equal(mm._built,true);
+});
+
+test('legacy block IDs retain the signed sentinel and cross the Int16 capacity boundary', () => {
+  for (const [id, Type] of [[32767, Int16Array], [32768, Int32Array]]) {
+    const h = makeHarness({ minimapOff: true });
+    const Minimap = h.load('src/game/minimap.js');
+    const level = h.level();
+    // IDs are also the native block lookup indices; retain a real indexed level.
+    level.blocks = Array.from({ length: id + 1 }, (_, index) => ({ id: index, solid: false }));
+    level.blocks[id] = {
+      id, solid: true, center: { x: 4, y: 0, z: 4 }, half: { x: 2, y: 1, z: 2 },
+      aabbMin: { x: 2, y: -1, z: 2 }, aabbMax: { x: 6, y: 1, z: 6 },
+      axes: [{ x: 1, y: 0, z: 0 }, { x: 0, y: 1, z: 0 }, { x: 0, y: 0, z: 1 }],
+      color: { r: 0.5, g: 0.5, b: 0.5 },
+    };
+    const mm = new Minimap(level, h.paint, 1);
+    mm.ensure();
+    assert.ok(mm.topBlock instanceof Type);
+    assert.equal(mm.topBlock.length, 64);
+    assert.equal(mm.topBlock.byteLength, 64 * Type.BYTES_PER_ELEMENT);
+    assert.equal(mm.topBlock[3 * 8 + 3], id, 'rasterized IDs are not truncated');
+    assert.equal(mm.hgt[3 * 8 + 3], 1);
+    assert.equal(mm.topBlock[0], -1);
+    assert.equal(mm.hgt[0], -99);
+    assert.equal(mm.nrm, null);
+    assert.equal(mm._built, true);
+  }
+});
+test('quantized paint fractions preserve mapping, edge clamps and native bilinear decoding', () => {
+  const h = makeHarness({ minimapOff: true });
+  const Minimap = h.load('src/game/minimap.js');
+  const offset = 40000;
+  const paint = {
+    grid: new Uint8Array(offset + 16), dead: new Uint8Array(offset + 16), version: 0,
+    paintFaces: [{ turf: true, origin: { x: 0, y: 0, z: 0 }, n: { x: 0, y: 1, z: 0 },
+      u: { x: 1, y: 0, z: 0 }, v: { x: 0, y: 0, z: 1 }, su: 8, sv: 8, cu: 2, cv: 2, nu: 4, nv: 4, grid: offset }],
+  };
+  const mm = new Minimap(h.level(), paint, 1);
+  mm.ensure();
+  const i = 3 * 8 + 4, k = offset + 5;
+  assert.ok(mm.pixCell instanceof Int32Array);
+  assert.equal(mm.pixCell[i], k, 'paint cell offsets above Int16 capacity survive');
+  assert.ok(mm.pixFx instanceof Uint8Array && mm.pixFy instanceof Uint8Array);
+  assert.equal(mm.pixFx[i], 64);
+  assert.equal(mm.pixFy[i], 191);
+  assert.equal(mm.pixSx[i], 1); assert.equal(mm.pixSy[i], 4);
+  assert.equal(mm.pixCell[0], offset + 15);
+  assert.equal(mm.pixFx[0], 0); assert.equal(mm.pixFy[0], 0);
+  assert.equal(mm.pixSx[0], 0); assert.equal(mm.pixSy[0], 0);
+  assert.equal(mm.pixCell[63], offset);
+  assert.equal(mm.pixFx[63], 0); assert.equal(mm.pixFy[63], 0);
+  paint.grid[k + 4] = 1;
+  mm._drawInk();
+  const weight = (1 - 64 / 255) * (191 / 255);
+  const t = Math.min(1, Math.max(0, (weight - 0.34) / (0.62 - 0.34)));
+  assert.ok(Math.abs(mm._alpha[i] - t * t * (3 - 2 * t)) < 1e-6, 'actual ink pass decodes quantized fractions using 255');
+  assert.equal(mm.owner[i], 1);
 });

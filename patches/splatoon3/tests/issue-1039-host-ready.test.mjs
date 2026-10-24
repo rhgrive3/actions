@@ -13,25 +13,48 @@ const section = (start, end) => {
   assert.equal(menuSource.indexOf(start, at + start.length), -1, `unique ${start}`);
   return menuSource.slice(at, until);
 };
-async function room(mode = 'turf') {
+async function room(mode = 'turf', { deferStart = false } = {}) {
   const f = await fixture({ productionComposition: true, realProjectiles: true,
-    extraExports: "export { NetSession } from './inkwave-public/src/net/session.js';" });
-  const host = new f.NetSession(), guest = new f.NetSession(), packets = [], locks = [];
+    extraExports: "export { NetSession } from './inkwave-public/src/net/session.js'; export { PROTO, COMPAT } from './inkwave-public/src/net/transport.js';" });
+  const host = new f.NetSession(), guest = new f.NetSession(), packets = [], locks = [], startResults = [], startDeliveries = [];
   const peers = new Map([['host', host], ['guest', guest]]);
   for (const [id, net] of peers) {
     net.myId = id; net.hostId = 'host'; net.state = 'lobby';
     net._members = new Map([['host', 'Host'], ['guest', 'Guest']]);
-    net.tr = { broadcast(packet) { packets.push({ from:id, packet:structuredClone(packet) });
-        for (const [other, peer] of peers) if (other !== id) peer._message(id, structuredClone(packet)); },
-      sendTo(to, packet) { peers.get(to)?._message(id, structuredClone(packet)); },
-      lock(value) { locks.push(value); }, close() {} };
+    // Lobby delivery stays synchronous for the existing UI bindings. START is
+    // queued, preserving the real relay's ACK, lock, then peer-forward order.
+    const transport = net.tr = { broadcast(packet) {
+        packet = structuredClone(packet);
+        packets.push({ from:id, packet:structuredClone(packet) });
+        if (packet.k === 'start') {
+          const deliver = () => {
+            if (net.tr !== transport) return;
+            assert.equal(id, 'host'); assert.equal(packet.host, id);
+            assert.equal(packet.proto, f.PROTO); assert.equal(packet.compat, f.COMPAT);
+            assert.ok(typeof packet.id === 'string' && packet.id.length > 0);
+            assert.deepEqual(Array.from(packet.roster.filter(p => !p.bot), p => p.owner).sort(), [...peers.keys()].sort());
+            const result = { t:'start_result', id:packet.id, ok:true };
+            startResults.push(result); net._control(structuredClone(result));
+            locks.push(true);
+            for (const [other, peer] of peers) if (other !== id) peer._message(id, structuredClone(packet));
+          };
+          if (deferStart) startDeliveries.push(deliver); else queueMicrotask(deliver);
+          return true;
+        }
+        for (const [other, peer] of peers) if (other !== id) peer._message(id, structuredClone(packet));
+        return true;
+      },
+      sendTo(to, packet) { const peer = peers.get(to); if (!peer) return false; peer._message(id, structuredClone(packet)); return true; },
+      lock(value) { locks.push(value); return true; }, close() {} };
   }
   host.lobby.mode = mode; host.lobby.bots = false;
   host.lobby.players = [host._newPlayer('host', 'Host', {}), host._newPlayer('guest', 'Guest', {})];
   host._fixTeams(); host._broadcastLobby();
   // Full Session.start/_begin stay native; only stage rendering/loading is inert.
   f.G.game = { menus:{ launchLobby:async()=>{} }, startNetMatch:async()=>{}, netMatchGo() {} };
-  return { host, guest, packets, locks, close() { host.leave(); guest.leave(); } };
+  return { host, guest, packets, locks, startResults,
+    deliverStart() { assert.equal(startDeliveries.length, 1); startDeliveries.shift()(); },
+    close() { host.leave(); guest.leave(); } };
 }
 function readyControl(net) {
   const logs = [], node = { classList:{}, querySelector:()=>({}) };
@@ -81,11 +104,13 @@ test('#1039 composed host Ready is reachable after confirmation and starts the a
     assert.equal(r.host.lobby.players[0].ready, true, 'native host Ready action must not redirect to blocked Start');
     assert.equal(r.host.canStart(), true);
     hostUI.tryStart();
+    assert.equal(r.host._startCfg, null); assert.ok(r.host._pendingStart);
     await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
     const launch = r.packets.find(p=>p.packet.k==='start').packet;
     assert.deepEqual(launch.roster.map(p=>[p.owner,p.team]), [['host',0],['guest',1]]);
     assert.equal(r.host._startCfg.id, r.guest._startCfg.id);
     assert.equal(r.locks[0], true);
+    assert.deepEqual(r.startResults, [{ t:'start_result', id:launch.id, ok:true }]);
   } finally { r.close(); }
 });
 
@@ -222,4 +247,27 @@ test('#1039 fully composed desktop stylesheet exposes only the host Turf assignm
     'host roster remains scrollable alongside the native-stage list');
   assert.match(menuSource,/bar\.insertBefore\(confirmTeamsBtn, readyBtn\)/);
   assert.doesNotMatch(menuSource,/side, touchRoster, confirmTeamsBtn, bar/,'confirmation belongs to the reachable control dock');
+});
+
+test('#1039 native host waits for the matching START result and ignores wrong or duplicate ACKs', async () => {
+  const r = await room('turf', { deferStart:true });
+  try {
+    assert.equal(r.host.confirmTeams(), true);
+    const hostUI = readyControl(r.host), guestUI = readyControl(r.guest);
+    guestUI.toggleReady(); hostUI.toggleReady(); hostUI.tryStart();
+    await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+    const launch = r.packets.find(p => p.packet.k === 'start').packet;
+    assert.equal(r.host._startCfg, null); assert.equal(r.guest._startCfg, null);
+    assert.equal(r.host._pendingStart.id, launch.id);
+    assert.equal(r.locks.length, 0); assert.equal(r.startResults.length, 0);
+    r.host._control({ t:'start_result', id:launch.id + '-wrong', ok:true });
+    assert.equal(r.host._startCfg, null); assert.equal(r.host._pendingStart.id, launch.id);
+    r.deliverStart();
+    assert.equal(r.host._startCfg.id, launch.id); assert.equal(r.guest._startCfg.id, launch.id);
+    assert.equal(r.host._pendingStart, null); assert.equal(r.locks[0], true);
+    assert.deepEqual(r.startResults, [{ t:'start_result', id:launch.id, ok:true }]);
+    const cfg = r.host._startCfg;
+    r.host._control(structuredClone(r.startResults[0]));
+    assert.strictEqual(r.host._startCfg, cfg);
+  } finally { r.close(); }
 });

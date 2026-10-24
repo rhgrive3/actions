@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import {createRequire} from 'node:module';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {compactModuleStrings} from '../../../scripts/lib/inkwave-source-compaction.mjs';
+import {nonWailVfxTicks} from '../runtime/nonwail-vfx-clock.mjs';
 
 // Executes the actual director and retained-shell callback, not a copied curve.
 // This is source-only presentation verification, not GPU or retail-frame evidence.
@@ -14,7 +15,7 @@ function orb(raw = source) {
   const shell = raw.slice(raw.indexOf('  shell(add,'), raw.indexOf('  disc(add,'));
   assert.ok(actor.startsWith('  booyahBomb: {') && shell.startsWith('  shell(add,'));
   const clamp01 = n => Math.max(0, Math.min(1, n));
-  const api = Function('clamp01', 'easeOut', 'vfxRandom', 'SHELL', 'DISC', transformBody(`return {${shell},${actor}};`))(clamp01, n => 1 - (1 - clamp01(n)) ** 3, () => 0.5, {ORB: 0}, {RUNE: 0});
+  const api = Function('clamp01', 'easeOut', 'vfxRandom', 'SHELL', 'DISC', 'nonWailVfxTicks', transformBody(`return {${shell},${actor}};`))(clamp01, n => 1 - (1 - clamp01(n)) ** 3, () => 0.5, {ORB: 0}, {RUNE: 0}, nonWailVfxTicks);
   const pool = {add(life, values, follow) { return {life, v: new Float32Array(values), t: 0, follow}; }};
   const director = {kit:{shells:pool}, time:0, v:[{set(x,y,z){Object.assign(this,{x,y,z});return this;}}], up:{}, hdr:c=>c, shell:api.shell, disc:()=>({})};
   const actorState = {pos:{x:2,y:3,z:4},_s3AllSpecialState:{charge:0.5}};
@@ -39,7 +40,10 @@ test('irregular cadence and repeated zero-time callbacks do not advance the orb'
   assert.equal(r.v[7],3);
 });
 test('negative control detects the previous render-count-dependent rotation',()=>{
-  const old=source.replace('rec.v[7] = rec.t * 3;', 'rec.v[7] += 0.05;');
+  // Model the former per-callback rotation fault, not literal historical source: the current shell resets its angle before this callback.
+  const rotation = 'rec.v[7] = rec.t * 3;';
+  assert.equal(source.split(rotation).length - 1, 1);
+  const old=source.replace(rotation, 'rec.v[7] = (rec._booyahRenderCount = (rec._booyahRenderCount || 0) + 1) * 0.05;');
   assert.notEqual(old,source);
   const at30=advance(old,Array(30).fill(1/30)).record.v[7];
   const at120=advance(old,Array(120).fill(1/120)).record.v[7];

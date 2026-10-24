@@ -1,3 +1,4 @@
+import { installRankedDocument } from './ranked-dom-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ADDITIONAL_BASE_KITS } from '../runtime/catalogue.mjs';
@@ -8,8 +9,7 @@ const stage = { id: 'ranked-lifecycle', zones: [{ center: [0,0,0], size: [8,8] }
   rainmaker: { center: [0,0,0], checkpoints: [[],[]], goals: [[0,0,20],[0,0,-20]] } };
 async function world(mode = 'clams', host = false, weapon = 'shooter') {
   const f = await fixture({ ranked: true, network: true });
-  f.context.document.createElement = () => ({ dataset: {} });
-  f.context.document.head = { appendChild() {} }; f.context.structuredClone = structuredClone;
+  installRankedDocument(f.context.document); f.context.structuredClone = structuredClone;
   f.installRanked(f);
   f.G.projectiles = new f.Projectiles(new f.THREE.Scene());
   if (weapon === 'dualies') {

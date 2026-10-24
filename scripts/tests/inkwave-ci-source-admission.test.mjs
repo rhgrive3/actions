@@ -162,7 +162,7 @@ function sourceRouteContract(source) {
   for (const body of bodies) {
     assert.doesNotMatch(body, /^        continue-on-error:/m);
     const guards=(body.match(/^          elif .*; then$/gm)||[]).map(line=>line.trim());
-    assert.deepEqual(guards, body===bodies[1] ? [rollerGuard,...reviewedPrShells,historicalPrepareGuard] : reviewedPrShells, 'exact reviewed route inventory retains every guard and rejects unexpected routes');
+    assert.deepEqual(guards, body===bodies[1] ? [reviewedPrShells[0],rollerGuard,...reviewedPrShells.slice(1),historicalPrepareGuard] : reviewedPrShells, 'exact reviewed route inventory retains every guard and rejects unexpected routes');
     for (const [name, value] of [['PAIR_EVENT_NAME', 'github.event_name'], ['PAIR_BASE_REF', 'github.event.pull_request.base.ref'],
       ['PAIR_HEAD_REF', 'github.head_ref'], ['DECLARED_BASE_SHA', 'github.event.pull_request.base.sha || inputs.base_sha'], ['DECLARED_HEAD_SHA', 'github.event.pull_request.head.sha || inputs.candidate_sha'],
       ['PAIR_HEAD_REPO','github.event.pull_request.head.repo.full_name'], ['PAIR_REPOSITORY','github.repository'],
@@ -170,6 +170,8 @@ function sourceRouteContract(source) {
       assert.ok(body.includes('          ' + name + ': ${{ ' + value + ' }}\n'), name + ': dynamic immutable event declaration');
   }
   const cases = [
+    [context('inkwave/special-reviewed-main726-20261023','1856',{event:'workflow_dispatch',baseSha:'3003088e7d3da6e3b41829a96714698a348b555b'}),true,true,'dispatch'],
+    [context('fix/roller-vertical-recovery-20261023','1856',{event:'workflow_dispatch',baseSha:'3003088e7d3da6e3b41829a96714698a348b555b'}),true,true,'dispatch'],
     [context('fix/roller-vertical-recovery-20261023','1856',{baseSha:'3003088e7d3da6e3b41829a96714698a348b555b',headSha:'2b103150d808c623c39268d6aa1833b3075d3a7c'}),false,true,'roller'],
     [context('fix/roller-vertical-recovery-20261023','1857',{baseSha:'3003088e7d3da6e3b41829a96714698a348b555b'}),false,true,'legacy'],
     [context('fix/roller-vertical-recovery-20261023','1856'),false,true,'legacy'],
@@ -265,6 +267,33 @@ function sourceRouteContract(source) {
 test('reviewed PR and explicit immutable dispatch routes select their exact epoch in both actual YAML shells', () => {
   sourceRouteContract(readWorkflow('inkwave-projectile-visuals.yml'));
 });
+test('special and Roller guards are mutually exclusive before explicit dispatch selection', () => {
+  const source = readWorkflow('inkwave-projectile-visuals.yml');
+  const prepare = step(source, prepareName);
+  const guards = (prepare.match(/^          elif .*; then$/gm) || []).slice(0, 2).map(line => line.trim());
+  const special = 'inkwave/special-reviewed-main726-20261023', roller = 'fix/roller-vertical-recovery-20261023';
+  const baseSha = '3003088e7d3da6e3b41829a96714698a348b555b';
+  const check = selected => {
+    const commands = selected.map(guard => guard.replace(/^elif /, 'if ') + '\n  printf "1\\n"\nelse\n  printf "0\\n"\nfi').join('\n');
+    for (const branch of [roller, special, 'unreviewed']) {
+      for (const options of [{}, {event:'workflow_dispatch'}, {baseRef:'other'}, {headRepo:'fork/actions'}, {repository:'fork/actions'}]) {
+        const c = context(branch, '1856', {baseSha, ...options});
+        const result = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', commands],
+          {encoding:'utf8', env:policyEnv(c)});
+        assert.equal(result.error, undefined); assert.equal(result.signal, null); assert.equal(result.status, 0, result.stderr);
+        const admitted = result.stdout.trim().split('\n').map(Number);
+        const valid = Object.keys(options).length === 0;
+        assert.ok(admitted.reduce((sum, value) => sum + value, 0) <= 1, 'no context can select both reviewed guards');
+        assert.deepEqual(admitted, [Number(valid && branch === special), Number(valid && branch === roller)]);
+      }
+    }
+  };
+  check(guards);
+  const overlapping = guards.map(guard => guard.replace(special, roller));
+  assert.notDeepEqual(overlapping, guards);
+  assert.throws(() => check(overlapping), /no context can select both reviewed guards/, 'an overlapping head-ref guard fails the bounded proof');
+});
+
 test('exact Roller guard inventory rejects every removed ownership/identity condition and unexpected replacement',()=>{
  const source=readWorkflow('inkwave-projectile-visuals.yml'),original=step(source,prepareName);
  for(const part of ['[ "$PAIR_EVENT_NAME" = "pull_request" ] && ','[ "$PAIR_PR_NUMBER" = "1856" ] && ','[ "$PAIR_BASE_REF" = "main" ] && ','[ "$DECLARED_BASE_SHA" = "3003088e7d3da6e3b41829a96714698a348b555b" ] && ','[ "$PAIR_HEAD_REF" = "fix/roller-vertical-recovery-20261023" ] && ','[ "$PAIR_REPOSITORY" = "rhgrive3/actions" ] && ',' && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ]']){

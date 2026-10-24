@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import {fixture} from './controls-fixture.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { webcrypto } from 'node:crypto';
 const {installPlatformGame} = await import(process.env.INKWAVE_CONTROLS_SITE
   ? pathToFileURL(path.resolve(process.env.INKWAVE_CONTROLS_SITE, 'patches/local-quality/platform-game.mjs')).href
   : '../../local-quality/platform-game.mjs');
@@ -16,7 +17,7 @@ let ms=1000000;
 // Evaluate the unchanged server module with a local Date; never replace Node's
 // global clock or relax the production frame/byte admission limits.
 const relaySource = new URL('../../../server/src/index.js', import.meta.url);
-const relayContext = vm.createContext({ Date: class extends Date { static now(){return ms;} }, TextEncoder, TextDecoder });
+const relayContext = vm.createContext({ Date: class extends Date { static now(){return ms;} }, TextEncoder, TextDecoder, crypto:webcrypto });
 const relayModule = new vm.SourceTextModule(fs.readFileSync(relaySource, 'utf8'), {
  identifier: relaySource.href,
  // The production Worker exposes both Web Encoding globals. Node's isolated
@@ -25,8 +26,11 @@ const relayModule = new vm.SourceTextModule(fs.readFileSync(relaySource, 'utf8')
 });
 const utf8Source = new URL('../../../patches/network-replication/utf8-length.mjs', import.meta.url);
 const utf8Module = new vm.SourceTextModule(fs.readFileSync(utf8Source, 'utf8'), { identifier:utf8Source.href, context:relayContext });
+const admissionSource = new URL('../session-admission.mjs', import.meta.url);
+const admissionModule = new vm.SourceTextModule(fs.readFileSync(admissionSource, 'utf8'), { identifier:admissionSource.href, context:relayContext });
 await relayModule.link((spec, from) => {
  if (new URL(spec, from.identifier).href === utf8Source.href) return utf8Module;
+ if (new URL(spec, from.identifier).href === admissionSource.href) return admissionModule;
  throw new Error('Unexpected relay dependency: ' + spec);
 });
 await relayModule.evaluate();
@@ -40,7 +44,7 @@ class Socket {
 }
 export async function pair(){
  const relay=new RoomDurableObject({},{}),participants=[];
- async function client(name){const socket=new Socket();relay.handleSession(socket,name);const welcome=JSON.parse(socket.sent.find(x=>x.startsWith('{')&&JSON.parse(x).t==='welcome'));
+ async function client(name){const socket=new Socket();assert.notEqual(relay.handleSession(socket,name),false,'real relay must admit fixture client');const welcome=JSON.parse(socket.sent.find(x=>x.startsWith('{')&&JSON.parse(x).t==='welcome'));
   const f=await fixture({match:true,network:true,session:true,clock:{now:()=>ms}}),s=new f.NetSession();installDisconnectFidelity({NetMatch:f.NetMatch,G:f.G});s.myId=welcome.id;s.hostId=welcome.host;s.state='match';s.code='room';s._members=new Map(welcome.members.map(x=>[x.id,x.name]));s.lobby.players=welcome.members.map(x=>({...x,host:x.id===s.hostId,team:0,ready:true}));
   const m=new f.Match({duration:10,mode:'turf',roster:[],host:s.isHost});m.follower=!s.isHost;m.setState('playing');
   const nm=new f.NetMatch(s,{map:'reef'});s.match=nm;nm.bind(m);let sends=0,physics=0,aborted=0;
