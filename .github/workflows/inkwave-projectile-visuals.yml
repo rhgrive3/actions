@@ -100,6 +100,10 @@ on:
       - 'scripts/prepare-inkwave-projectile-baseline.mjs'
       - 'scripts/check-inkwave-current-pair-controls.mjs'
       - 'scripts/verify-inkwave-projectile-current-pair.mjs'
+      - 'scripts/verify-inkwave-pr1869-current-pair.mjs'
+      - 'scripts/lib/inkwave-pr1869-current-pair.mjs'
+      - 'scripts/tests/inkwave-pr1869-current-pair.test.mjs'
+      - 'scripts/tests/inkwave-pr1869-workflow-route.test.mjs'
       - 'scripts/lib/inkwave-projectile-current-pair.mjs'
       - 'scripts/fixtures/inkwave-projectile-current-pair-20261023.json.gz'
       - 'scripts/tests/inkwave-projectile-current-pair.test.mjs'
@@ -221,14 +225,14 @@ jobs:
             [[ "$DISPATCH_MODE" =~ ^[a-z0-9][a-z0-9-]+$ ]]
           fi
       - name: Check out immutable base for the explicitly aligned reference
-        if: ${{ matrix.side == 'before' }}
+        if: ${{ matrix.side == 'before' || (github.event_name == 'pull_request' && (github.event.pull_request.number == 1869 || github.head_ref == 'fix/inkwave-ci-composed-regressions-20261024')) }}
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.number == 1651 && 'd42f3f26372361332bdf596ac88155b153557538' || github.event.pull_request.base.sha || inputs.base_sha }}
           path: .ci-baseline
           persist-credentials: false
       - name: Verify immutable baseline checkout before any alignment
-        if: ${{ matrix.side == 'before' }}
+        if: ${{ matrix.side == 'before' || (github.event_name == 'pull_request' && (github.event.pull_request.number == 1869 || github.head_ref == 'fix/inkwave-ci-composed-regressions-20261024')) }}
         shell: bash
         env:
           EXPECTED_BASE_SHA: ${{ github.event.pull_request.number == 1651 && 'd42f3f26372361332bdf596ac88155b153557538' || github.event.pull_request.base.sha || inputs.base_sha }}
@@ -240,7 +244,7 @@ jobs:
           node-version: 22
       - name: Verify fail-closed immutable workflow routes
         if: ${{ matrix.side == 'after' }}
-        run: node --test --test-concurrency=1 scripts/tests/inkwave-exact-head-workflow-routes.test.mjs scripts/tests/inkwave-main26a4-production-epoch.test.mjs scripts/tests/inkwave-runtime-ui-production-epoch.test.mjs scripts/tests/inkwave-projectile-current-pair.test.mjs scripts/tests/inkwave-main3003-firing-pair.test.mjs scripts/tests/inkwave-main3003-respawn-pair.test.mjs
+        run: node --test --test-concurrency=1 scripts/tests/inkwave-exact-head-workflow-routes.test.mjs scripts/tests/inkwave-main26a4-production-epoch.test.mjs scripts/tests/inkwave-runtime-ui-production-epoch.test.mjs scripts/tests/inkwave-projectile-current-pair.test.mjs scripts/tests/inkwave-main3003-firing-pair.test.mjs scripts/tests/inkwave-main3003-respawn-pair.test.mjs scripts/tests/inkwave-pr1869-current-pair.test.mjs scripts/tests/inkwave-pr1869-workflow-route.test.mjs
       - name: Verify historical projectile contracts only on their reviewed owner PR
         if: ${{ matrix.side == 'after' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && ((github.event.pull_request.number == 1856 && github.head_ref == 'fix/roller-vertical-recovery-20261023') || (github.event.pull_request.number == 1862 && github.head_ref == 'fix/respawn-weapon-state-20261023') || github.head_ref == 'inkwave/special-reviewed-main726-20261023') }}
         run: |
@@ -281,6 +285,15 @@ jobs:
           echo "INKWAVE_REFERENCE_ROOT=.ci-audio-reference" >> "$GITHUB_ENV"
           node .ci-baseline/scripts/build-inkwave.mjs .ci-baseline/inkwave-public .built-site/pristine-main
           cp .built-site/pristine-main/inkwave-build.json .ci-scratch/projectile-visuals/before/pristine-main-build.json
+      - name: Admit PR1869 immutable source pair without replay
+        id: pr1869_current_pair
+        if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.number == 1869 || github.head_ref == 'fix/inkwave-ci-composed-regressions-20261024') }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e '890e0ef8ab32238624b6ffff8069e2c9e3515dd6^{commit}' || git fetch --no-tags --depth=1 --filter=blob:none origin 890e0ef8ab32238624b6ffff8069e2c9e3515dd6
+          node scripts/verify-inkwave-pr1869-current-pair.mjs --phase source --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --event "$GITHUB_EVENT_PATH" --receipt "$RUNNER_TEMP/inkwave-pr1869-${{ matrix.side }}/source.json"
+          printf 'admitted=true\n' >> "$GITHUB_OUTPUT"
       - name: Preserve the two reviewed October 23 production pairs without historical replay
         id: reviewed_current_pair
         if: ${{ matrix.side == 'before' && github.event_name == 'pull_request' && github.repository == 'rhgrive3/actions' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.base.ref == 'main' && (github.event.pull_request.number == 1857 || github.event.pull_request.number == 1860) }}
@@ -407,6 +420,19 @@ jobs:
       - name: Verify candidate packaging
         if: ${{ matrix.side == 'after' }}
         run: INKWAVE_BUILT_SITE=.built-site/projectiles node --test scripts/tests/inkwave-build-packaging.test.mjs
+      - name: Bind PR1869 immutable source receipt to actual side build
+        if: ${{ github.event_name == 'pull_request' && (github.event.pull_request.number == 1869 || github.head_ref == 'fix/inkwave-ci-composed-regressions-20261024') }}
+        shell: bash
+        env:
+          PAIR_SIDE: ${{ matrix.side }}
+        run: |
+          set -euo pipefail
+          case "$PAIR_SIDE" in
+            before) site=.built-site/baseline ;;
+            after) site=.built-site/projectiles ;;
+            *) echo 'Invalid PR1869 capture side' >&2; exit 1 ;;
+          esac
+          node scripts/verify-inkwave-pr1869-current-pair.mjs --phase build --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --event "$GITHUB_EVENT_PATH" --source-receipt "$RUNNER_TEMP/inkwave-pr1869-${{ matrix.side }}/source.json" --side "$PAIR_SIDE" --site "$site" --receipt "$RUNNER_TEMP/inkwave-pr1869-${{ matrix.side }}/build.json"
       - name: Verify isolated reference inputs, distinct build identity and emitted BGM regressions
         if: ${{ matrix.side == 'before' && github.event.pull_request.number == 1695 && github.event.pull_request.base.ref == 'main' && (github.event.pull_request.base.sha == 'ada098a8fe5f2b9f2990f10812c01acb70bde190' || github.event.pull_request.base.sha == 'da285129eb919d094d29e6a9b388f5eeb11059e9') }}
         run: |
@@ -427,6 +453,15 @@ jobs:
           name: projectile-capture-${{ matrix.side }}-${{ github.event.pull_request.head.sha || github.sha }}
           path: .ci-scratch/projectile-visuals/${{ matrix.side }}/
           if-no-files-found: warn
+          retention-days: 14
+          compression-level: 0
+      - name: Preserve PR1869 source and build admission receipts
+        if: ${{ always() && github.event_name == 'pull_request' && (github.event.pull_request.number == 1869 || github.head_ref == 'fix/inkwave-ci-composed-regressions-20261024') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: projectile-pr1869-receipts-${{ matrix.side }}-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/inkwave-pr1869-${{ matrix.side }}/
+          if-no-files-found: error
           retention-days: 14
           compression-level: 0
 

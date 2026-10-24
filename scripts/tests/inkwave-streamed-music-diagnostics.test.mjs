@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import crypto from 'node:crypto';
+import path from 'node:path';
+import os from 'node:os';
+import http from 'node:http';
+import { serveProjectileCaptureFile } from '../lib/inkwave-projectile-http-file.mjs';
 import { observeStreamedMusic } from '../lib/inkwave-streamed-music-diagnostics.mjs';
 import { installProjectileCaptureUiGate, withProjectileCaptureUi } from '../lib/inkwave-projectile-capture-ui.mjs';
 import { installProjectileCaptureProjection } from '../lib/inkwave-projectile-capture-projection.mjs';
@@ -57,9 +61,14 @@ test('observer does not call playback, seek, network mutation, or schedule timer
 test('runner keeps historical workload and failure gates after reviewed capture updates',()=>{
  const runner=fs.readFileSync(new URL('../check-inkwave-projectile-visuals.mjs',import.meta.url),'utf8');
  const gate="page.on('requestfailed', r => mimeErrors.push(`request failed ${r.url()}: ${r.failure()?.errorText || 'unknown'}`));";
- assert.ok(runner.includes(gate));assert.ok(runner.includes("report.status = report.errors.length ? 'failed' : 'passed';"));
+ assert.ok(runner.includes("report.status = report.errors.length ? 'failed' : 'passed';"));
  let restored=runner;
  const revert=(current,prior)=>{assert.equal(restored.split(current).length,2);restored=restored.replace(current,prior);};
+ // The verified local S3 cancellation gate is exercised below using the actual
+ // listeners and manifest verifier. Restore only that reviewed hunk here so
+ // the historical hash still protects every unrelated workload/error gate.
+ const cancellationGate=runner.match(/page\.on\('requestfailed', r => \{[\s\S]*?\n  \}\);/);
+ assert.ok(cancellationGate);revert(cancellationGate[0],gate);
  // The current-pair verifier adds only exact-build admission before the
  // historical workload. Its own strict source/site negative controls stay active.
  revert("import {verifyCurrentPairCaptureBuild} from './lib/inkwave-projectile-current-pair.mjs';\n", "");
@@ -339,4 +348,110 @@ test('missing projection installer fails initialization and still closes the obs
  const f=await lifecycleFixture();delete f.realm.installProjectileCaptureProjection;
  await assert.rejects(f.realm.openGameContext(),/installProjectileCaptureProjection is not defined/);assertClosed(f);
  assert.equal(f.calls.includes('goto'),false);
+});
+
+// Execute the runner's actual failure listeners, not a copy of their predicate.
+// These bounded API doubles test classification, not native audio playback.
+const cancellationAddress='http://127.0.0.1:9999/';
+const cancellationRevision='a'.repeat(64);
+const cancellationAsset='patches/splatoon3/runtime/audio/s3-real/probe.mp3';
+const cancellationVersioned=`_versions/${cancellationRevision}/${cancellationAsset}`;
+const cancellationURL=new URL(cancellationVersioned,cancellationAddress).href;
+function cancellationFixture({artifacts={[cancellationAsset]:'verified-root',[cancellationVersioned]:'verified-versioned'}}={}) {
+ const callbacks=new Map(),mimeErrors=[],report={browserDiagnostics:[]};
+ const page={on(name,fn){const rows=callbacks.get(name)||[];rows.push(fn);callbacks.set(name,rows);}};
+ const text=functionText("  page.on('crash',",'  await page.addInitScript(installAudioTimingObserver);');
+ vm.runInNewContext(text,{page,mimeErrors,report,mobile:false,URL,Date,address:cancellationAddress,manifest:{build:{revision:cancellationRevision},artifacts}});
+ const emit=(name,value)=>{for(const fn of callbacks.get(name)||[])fn(value);};
+ return {mimeErrors,report,emit,request(url=cancellationURL,error='net::ERR_ABORTED'){
+  emit('requestfailed',{url:()=>url,failure:()=>error===null?null:{errorText:error}});
+ }};
+}
+test('runner accepts only verified same-origin versioned S3 MP3 cancellation',()=>{
+ for(const suffix of ['', '?cache=1']) {
+  const f=cancellationFixture();f.request(cancellationURL+suffix);
+  assert.deepEqual(f.mimeErrors,[]);assert.equal(f.report.browserDiagnostics.length,1);
+  assert.equal(f.report.browserDiagnostics[0].event,'verified-audio-fetch-cancelled');
+  assert.equal(f.report.browserDiagnostics[0].asset,cancellationAsset);
+ }
+});
+test('runner rejects other origins, revisions, missing manifest leaves, and non-S3/non-MP3 aborts',()=>{
+ const cases=[
+  ['other host',cancellationURL.replace('127.0.0.1','localhost')],
+  ['other port',cancellationURL.replace(':9999',':9998')],
+  ['other scheme',cancellationURL.replace('http:','https:')],
+  ['other revision',cancellationURL.replace(cancellationRevision,'b'.repeat(64))],
+  ['unlisted MP3',cancellationURL.replace('probe.mp3','missing.mp3')],
+  ['non-MP3',cancellationURL.replace('probe.mp3','probe.json')],
+  ['nested MP3',cancellationURL.replace('probe.mp3','nested/probe.mp3')],
+  ['unversioned MP3',new URL(cancellationAsset,cancellationAddress).href],
+  ['other audio directory',new URL(`_versions/${cancellationRevision}/assets/audio/Jet_Arrow.mp3`,cancellationAddress).href],
+  ['missing root manifest leaf',cancellationURL,{[cancellationVersioned]:'verified-versioned'}],
+  ['missing served manifest leaf',cancellationURL,{[cancellationAsset]:'verified-root'}],
+ ];
+ for(const [label,url,artifacts]of cases){
+  const f=cancellationFixture(artifacts?{artifacts}:{});f.request(url);
+  assert.equal(f.report.browserDiagnostics.length,0,label);assert.equal(f.mimeErrors.length,1,label);
+  assert.match(f.mimeErrors[0],/request failed .*net::ERR_ABORTED/,label);
+ }
+});
+test('runner retains all non-abort and unknown request failures for known MP3s',()=>{
+ for(const error of ['net::ERR_FAILED','net::ERR_CONNECTION_RESET','net::ERR_TIMED_OUT','net::ERR_FILE_NOT_FOUND','unknown',null]){
+  const f=cancellationFixture();f.request(cancellationURL,error);
+  assert.equal(f.report.browserDiagnostics.length,0);assert.equal(f.mimeErrors.length,1);
+  assert.ok(f.mimeErrors[0].endsWith(error||'unknown'));
+ }
+});
+test('404 and corrupt-audio console/page errors remain fatal beside an accepted cancellation',()=>{
+ const f=cancellationFixture();f.request();
+ f.emit('console',{type:()=> 'error',text:()=> 'Failed to load resource: the server responded with a status of 404 (Not Found)'});
+ f.emit('console',{type:()=> 'error',text:()=> 'MP3 decode failed: corrupt data'});
+ f.emit('pageerror',new Error('audio decode rejected'));
+ assert.equal(f.report.browserDiagnostics.length,1);
+ assert.deepEqual(f.mimeErrors,[
+  'Failed to load resource: the server responded with a status of 404 (Not Found)',
+  'MP3 decode failed: corrupt data','audio decode rejected',
+ ]);
+});
+function cancellationBuildFixture(t) {
+ const site=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-audio-cancellation-'));
+ t.after(()=>fs.rmSync(site,{recursive:true,force:true}));
+ const bytes=Buffer.from('synthetic bytes for integrity/network tests, not playback');
+ const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+ const artifacts={};
+ for(const relative of [cancellationAsset,cancellationVersioned]){
+  const file=path.join(site,relative);fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,bytes);artifacts[relative]=hash(bytes);
+ }
+ const manifest={build:{revision:cancellationRevision},artifacts,contentHash:hash(JSON.stringify(artifacts))};
+ fs.writeFileSync(path.join(site,'inkwave-build.json'),JSON.stringify(manifest));
+ const startup=functionText('const manifest = JSON.parse',"const { serveProjectileCaptureFile }");
+ const verify=()=>vm.runInNewContext(startup,{fs,path,site,hash});
+ return {site,bytes,manifest,verify};
+}
+test('actual startup verifier rejects corrupt or missing root and served-version MP3 bytes',t=>{
+ const f=cancellationBuildFixture(t);f.verify();
+ for(const relative of [cancellationAsset,cancellationVersioned]){
+  const file=path.join(f.site,relative);fs.writeFileSync(file,'corrupt');
+  assert.throws(f.verify,/Built artifact checksum mismatch/);
+  fs.unlinkSync(file);assert.throws(f.verify,/Built artifact checksum mismatch/);
+  fs.writeFileSync(file,f.bytes);f.verify();
+ }
+ f.manifest.artifacts[cancellationVersioned]='0'.repeat(64);
+ fs.writeFileSync(path.join(f.site,'inkwave-build.json'),JSON.stringify(f.manifest));
+ assert.throws(f.verify,/Build artifact manifest identity mismatch/);
+});
+test('actual loopback file handler serves the verified leaf and still returns 404 for missing assets',async t=>{
+ const f=cancellationBuildFixture(t);f.verify();
+ const serverText=functionText('const server = http.createServer','await new Promise(resolve => server.listen');
+ const realm={fs,path,http,URL,site:f.site,mime:{},serveProjectileCaptureFile};
+ vm.runInNewContext(serverText+'\nglobalThis.captureServer=server;',realm);
+ const server=realm.captureServer;
+ t.after(async()=>{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));});
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ const url=`http://127.0.0.1:${server.address().port}/${cancellationVersioned}`;
+ const valid=await fetch(url);assert.equal(valid.status,200);assert.equal(valid.headers.get('content-type'),'audio/mp3');
+ assert.deepEqual(Buffer.from(await valid.arrayBuffer()),f.bytes);
+ const missing=await fetch(url.replace('probe.mp3','missing.mp3'));assert.equal(missing.status,404);assert.equal(await missing.text(),'Not found');
+ fs.unlinkSync(path.join(f.site,cancellationVersioned));
+ const removed=await fetch(url);assert.equal(removed.status,404);assert.equal(await removed.text(),'Not found');
 });

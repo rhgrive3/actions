@@ -136,7 +136,7 @@ function enabled(body, context) {
   // Execute this workflow's bounded boolean selector, not the GitHub API or a
   // hosted runner. These expressions use only equality, &&, || and parentheses.
   assert.match(expression, /^[a-zA-Z0-9_.'/= !&|()\-]+$/);
-  const steps = context.steps ?? {reviewed_current_pair:{outputs:{}}};
+  const steps = {reviewed_current_pair:{outputs:{}},pr1869_current_pair:{outputs:{}},...context.steps};
   return Function('github', 'matrix', 'steps', `return Boolean(${expression});`)(context.github, context.matrix, steps);
 }
 function context(branch, number, {event = 'pull_request', baseRef = 'main', side = 'before', headRepo = 'rhgrive3/actions', repository = 'rhgrive3/actions', baseSha = '1'.repeat(40), headSha = '2'.repeat(40)} = {}) {
@@ -173,50 +173,50 @@ function sourceRouteContract(source) {
     [context('inkwave/special-reviewed-main726-20261023','1856',{event:'workflow_dispatch',baseSha:'3003088e7d3da6e3b41829a96714698a348b555b'}),true,true,'dispatch'],
     [context('fix/roller-vertical-recovery-20261023','1856',{event:'workflow_dispatch',baseSha:'3003088e7d3da6e3b41829a96714698a348b555b'}),true,true,'dispatch'],
     [context('fix/roller-vertical-recovery-20261023','1856',{baseSha:'3003088e7d3da6e3b41829a96714698a348b555b',headSha:'2b103150d808c623c39268d6aa1833b3075d3a7c'}),false,true,'roller'],
-    [context('fix/roller-vertical-recovery-20261023','1857',{baseSha:'3003088e7d3da6e3b41829a96714698a348b555b'}),false,false,'none'],
-    [context('fix/roller-vertical-recovery-20261023','1856'),false,false,'none'],
+    [context('fix/roller-vertical-recovery-20261023','1857',{baseSha:'3003088e7d3da6e3b41829a96714698a348b555b'}),false, false, 'none'],
+    [context('fix/roller-vertical-recovery-20261023','1856'),false, false, 'none'],
     [context(allPrBranch,'1843'),true,true,'allpr'],
     [context(stringerBranch,'1850'),true,true,'stringer'],
-    [context(stringerBranch+'-foreign','1850'),false,false,'legacy'],
-    [context(stringerBranch,'1850',{headRepo:'foreign/repo'}),false,false,'legacy'],
-    [context(stringerBranch,'1850',{baseRef:'not-main'}),false,false,'legacy'],
-    [context(stringerBranch,'1850',{event:'push'}),false,false,'legacy'],
+    [context(stringerBranch+'-foreign','1850'),false, false, 'none'],
+    [context(stringerBranch,'1850',{headRepo:'foreign/repo'}),false, false, 'none'],
+    [context(stringerBranch,'1850',{baseRef:'not-main'}),false, false, 'none'],
+    [context(stringerBranch,'1850',{event:'push'}),false, false, 'none'],
     [context(stringerBranch,'1850',{side:'after'}),false,false,'none'],
-    [context(allPrBranch+'-foreign','1843'),false,false,'legacy'],
-    [context(allPrBranch,'1843',{headRepo:'foreign/repo'}),false,false,'legacy'],
-    [context(allPrBranch,'1843',{baseRef:'not-main'}),false,false,'legacy'],
+    [context(allPrBranch+'-foreign','1843'),false, false, 'none'],
+    [context(allPrBranch,'1843',{headRepo:'foreign/repo'}),false, false, 'none'],
+    [context(allPrBranch,'1843',{baseRef:'not-main'}),false, false, 'none'],
     [context(allPrBranch,'1843',{side:'after'}),false,false,'none'],
     [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha}),true,true,'runtime-ui'],
     [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha,headSha:'3'.repeat(40)}),true,true,'runtime-ui'],
-    [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha,headRepo:'foreign/repo'}),false,false,'legacy'],
-    [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha,repository:'foreign/repo'}),false,false,'legacy'],
-    [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha,baseRef:'not-main'}),false,false,'legacy'],
-    [context(runtimeUiBranch,'1844',{}),false,false,'legacy'],
-    [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha,event:'push'}),false,false,'legacy'],
+    [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha,headRepo:'foreign/repo'}),false, false, 'none'],
+    [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha,repository:'foreign/repo'}),false, false, 'none'],
+    [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha,baseRef:'not-main'}),false, false, 'none'],
+    [context(runtimeUiBranch,'1844',{}),false, false, 'none'],
+    [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha,event:'push'}),false, false, 'none'],
     [context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha,side:'after'}),false,false,'none'],
-    [context(runtimeUiBranch+'-foreign','1844',{baseSha:runtimeUiEpoch.sha}),false,false,'legacy'],
+    [context(runtimeUiBranch+'-foreign','1844',{baseSha:runtimeUiEpoch.sha}),false, false, 'none'],
     [context(exactBranch,'1817'),true,true,'exact'],
-    [context(exactBranch+'-foreign','1817'),false,false,'legacy'],
-    [context(exactBranch,'1817',{headRepo:'foreign/repo'}),false,false,'legacy'],
-    [context(exactBranch,'1817',{headRepo:''}),false,false,'legacy'],
-    [context(exactBranch,'1817',{baseRef:'not-main'}),false,false,'legacy'],
-    [context(exactBranch,'1817',{event:'push'}),false,false,'legacy'],
+    [context(exactBranch+'-foreign','1817'),false, false, 'none'],
+    [context(exactBranch,'1817',{headRepo:'foreign/repo'}),false, false, 'none'],
+    [context(exactBranch,'1817',{headRepo:''}),false, false, 'none'],
+    [context(exactBranch,'1817',{baseRef:'not-main'}),false, false, 'none'],
+    [context(exactBranch,'1817',{event:'push'}),false, false, 'none'],
     [context(exactBranch,'1817',{side:'after'}),false,false,'none'],
     [context(exactBranch,'1817',{event:'workflow_dispatch'}),true,true,'dispatch'],
     [context(exactBranch,'1817',{event:'workflow_dispatch',side:'after'}),false,false,'none'],
     [context(queueBranch,'1801'),true,true,'queue'],
-    [context(queueBranch+'-foreign','1801'),false,false,'legacy'],
-    [context(queueBranch,'1801',{baseRef:'not-main'}),false,false,'legacy'],
+    [context(queueBranch+'-foreign','1801'),false, false, 'none'],
+    [context(queueBranch,'1801',{baseRef:'not-main'}),false, false, 'none'],
     [context(queueBranch,'1801',{event:'workflow_dispatch'}),true,true,'dispatch'],
     [context(queueBranch,'1801',{side:'after'}),false,false,'none'],
     [context(integrationBranch, '1796'), true, true, 'integration'],
-    [context(integrationBranch+'-foreign', '1796'), false, true, 'legacy'],
-    [context(integrationBranch, '1796', {baseRef:'not-main'}), false, true, 'legacy'],
+    [context(integrationBranch+'-foreign', '1796'), false, false, 'none'],
+    [context(integrationBranch, '1796', {baseRef:'not-main'}), false, false, 'none'],
     [context(integrationBranch, '1796', {event:'workflow_dispatch'}), true, true, 'dispatch'],
     [context(integrationBranch, '1796', {side:'after'}), false, false, 'none'],
     [context(a350Branch, '1788'), true, true, 'a350'],
-    [context(a350Branch + '-unreviewed', '1788'), false, true, 'legacy'],
-    [context(a350Branch, '1788', {baseRef: 'not-main'}), false, true, 'legacy'],
+    [context(a350Branch + '-unreviewed', '1788'), false, false, 'none'],
+    [context(a350Branch, '1788', {baseRef: 'not-main'}), false, false, 'none'],
     [context(a350Branch, '1788', {event: 'workflow_dispatch'}), true, true, 'dispatch'],
     [context(a350Branch, '1788', {side: 'after'}), false, false, 'none'],
     [context(runtimeBranch, '1770'), true, true, 'current'],
@@ -225,15 +225,15 @@ function sourceRouteContract(source) {
     [context(runtimeBranch, '1758', {event: 'workflow_dispatch'}), true, true, 'dispatch'],
     [context('test/inkwave-combined-qa-20261021', '0'), true, true, 'declared-legacy'],
     [context('historical', '1758'), true, true, 'declared-legacy'],
-    [context(runtimeBranch + '-unreviewed', '0'), false, true, 'legacy'],
-    [context('other', '0'), false, true, 'legacy'],
-    [context(runtimeBranch, '1770', {baseRef: 'not-main'}), false, true, 'legacy'],
+    [context(runtimeBranch + '-unreviewed', '0'), false, false, 'none'],
+    [context('other', '0'), false, false, 'none'],
+    [context(runtimeBranch, '1770', {baseRef: 'not-main'}), false, false, 'none'],
     [context(runtimeBranch, '1770', {event: 'workflow_dispatch'}), true, true, 'dispatch'],
     [context('', '', {event: 'workflow_dispatch', baseRef: ''}), true, true, 'dispatch'],
-    [context('', '', {event: 'push', baseRef: ''}), false, true, 'legacy'],
+    [context('', '', {event: 'push', baseRef: ''}), false, false, 'none'],
     [context(runtimeBranch, '1770', {side: 'after'}), false, false, 'none'],
     [context('historical', '1651'), false, false, 'none'],
-  ].map(([c,controls,prepare,route]) => [c,controls,route === 'legacy' ? false : prepare,route]);
+  ];
   for (const [c, controls, prepare, route] of cases) for (const [index, active] of [[0, controls], [1, prepare]]) {
     const body = bodies[index]; assert.equal(enabled(body, c), active, JSON.stringify(c));
     if (!active) continue;
@@ -267,6 +267,23 @@ function sourceRouteContract(source) {
 test('reviewed PR and explicit immutable dispatch routes select their exact epoch in both actual YAML shells', () => {
   sourceRouteContract(readWorkflow('inkwave-projectile-visuals.yml'));
 });
+// f6328c3 narrows the actual outer selectors. Invalid identity combinations
+// must not execute either historical replay shell or character-pose alignment.
+test('actual replay and pose outer selectors reject mixed identities without legacy fallback',()=>{
+ const source=readWorkflow('inkwave-projectile-visuals.yml');
+ const bodies=[step(source,prepareName),step(source,'Align only the reviewed character pose for exact projectile comparison')];
+ const roller='fix/roller-vertical-recovery-20261023',baseSha='3003088e7d3da6e3b41829a96714698a348b555b';
+ const invalid=[context(roller,'1857',{baseSha}),context(roller,'1856'),context('unknown','0'),context(roller+'-foreign','1856',{baseSha}),
+  ...[{headRepo:'fork/actions'},{repository:'fork/actions'},{baseRef:'other'},{event:'push'},{side:'after'}].map(options=>context(roller,'1856',{baseSha,...options})),
+  context(runtimeUiBranch,'1844'),context(runtimeUiBranch,'1844',{baseSha:runtimeUiEpoch.sha,headRepo:'fork/actions'}),
+  context('fix/inkwave-ci-composed-regressions-20261024','1869')];
+ for(const body of bodies){
+  for(const c of invalid)assert.equal(enabled(body,c),false,'no historical shell for '+JSON.stringify(c));
+  assert.equal(enabled(body,context(roller,'1856',{baseSha})),true,'exact reviewed owner remains');
+  assert.equal(enabled(body,context('', '',{event:'workflow_dispatch',baseRef:''})),true,'explicit dispatch remains');
+ }
+});
+
 test('special and Roller guards are mutually exclusive before explicit dispatch selection', () => {
   const source = readWorkflow('inkwave-projectile-visuals.yml');
   const prepare = step(source, prepareName);

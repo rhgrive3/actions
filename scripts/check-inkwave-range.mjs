@@ -33,17 +33,18 @@ const hash = (b) => crypto.createHash('sha256').update(b).digest('hex');
 const manifest = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json'), 'utf8'));
 if (hash(JSON.stringify(manifest.artifacts)) !== manifest.contentHash) throw new Error('Build identity mismatch');
 if (!Object.keys(manifest.files).some((k) => k.startsWith('practice-range/'))) throw new Error('Build does not include the practice range layer');
-// No baked AO pair exists for the range in this source tree. Verify the actual
-// artifact contract rather than requiring an asset that was never shipped.
+// The normal Practice Range build includes its baked AO pair. The completed
+// artifact inventory and emitted runtime index must agree before browser checks.
 const rangeLightmapFiles=['assets/lightmaps/range.json','assets/lightmaps/range.png'];
 const rangeLightmapCount=rangeLightmapFiles.filter(f=>Object.hasOwn(manifest.artifacts,f)).length;
 if (rangeLightmapCount===1) throw new Error('Incomplete baked range AO pair');
-// The emitted runtime index is authoritative: packaged but unregistered
-// lightmap assets are not loaded by Game._loadLightmap, including Range.
+// Game._loadLightmap only loads registered assets; neither a missing pair nor
+// a packaged but unregistered pair may silently disable Range AO acceptance.
 const emittedLightmaps=(await import(pathToFileURL(path.join(site,'src/world/lightmap-assets.js')).href)).LIGHTMAP_LAYOUTS;
 if (!Array.isArray(emittedLightmaps) || emittedLightmaps.some(id=>typeof id!=='string')) throw new Error('Invalid emitted lightmap index');
 const rangeLightmapAvailable=emittedLightmaps.includes('range');
-if (rangeLightmapAvailable && rangeLightmapCount!==2) throw new Error('Emitted Range lightmap index is missing its complete asset pair');
+if (rangeLightmapAvailable !== (rangeLightmapCount===2)) throw new Error('Range lightmap asset pair and emitted index disagree');
+if (!rangeLightmapAvailable) throw new Error('Practice Range is missing required baked AO assets and registration');
 
 const pw = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : 'playwright');
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2' };
