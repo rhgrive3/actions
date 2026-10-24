@@ -53,7 +53,7 @@ test('motion optimization is guarded, composed and excluded from browser payload
 
 function countFkCalls(proto, onCall) {
   const original = proto.fk;
-  proto.fk = function (...args) { onCall(...args); return original.apply(this, args); };
+  proto.fk = function (...args) { onCall.call(this,...args); return original.apply(this, args); };
   return () => { proto.fk = original; };
 }
 
@@ -165,7 +165,7 @@ test('real source motion preserves every frame at 30/60/120 Hz and irregular/pau
   const extraExports = "export { recordMovementLaunch } from './patches/splatoon3/runtime/roller-freefall.mjs';";
   const apis=await Promise.all([sourceLoadedActorFixture({sourceOnly:true,transform:baselineMotionSource,random:()=>.4,extraExports}),sourceLoadedActorFixture({sourceOnly:true,random:()=>.4,extraExports})]);
   await heldRollerReleaseParity(apis);
-  const totals=[0,0], states=new Set(),clips=new Set();let compared=0;
+  const totals=[0,0], fkBoneTotals=[0,0], states=new Set(),clips=new Set();let compared=0;
   for (const variant of ['Player00','Player01']) for (const hz of [30,60,120]) {
     const actors=await Promise.all(apis.map(api=>api.make()));
     const chars=actors.map(a=>a.character);
@@ -185,7 +185,16 @@ test('real source motion preserves every frame at 30/60/120 Hz and irregular/pau
         }
       }
     }
-    const counts=[0,0],restores=chars.map((ch,k)=>{return countFkCalls(ch.sourceMotion.pose.constructor.prototype,()=>{counts[k]++;});});
+    const counts=[0,0], fkBoneCounts=[0,0],restores=chars.map((ch,k)=>countFkCalls(
+      ch.sourceMotion.pose.constructor.prototype,function(count=true){
+        counts[k]++;
+        // SourcePose.fk evaluates [0,count) on a parent-first bank. A ranged
+        // call is not a complete FK pass; measure actual visited bones.
+        const all=this.bank.bones.length;
+        const evaluated=typeof count==='number'&&this.bank.parentsFirst
+          ? Math.max(0,Math.min(all,Math.ceil(count))):all;
+        fkBoneCounts[k]+=evaluated;
+      }));
     try {
       // Motion speed/direction, short strides, overlays, pivots, airborne/land,
       // squid transitions, native weapon ownership, manual seeking and reset.
@@ -212,11 +221,9 @@ test('real source motion preserves every frame at 30/60/120 Hz and irregular/pau
         assert.deepEqual(motionSnapshot(chars[1]),motionSnapshot(chars[0]),'manual seek '+frame);compared++;
       }
     } finally { restores.forEach(f=>f());apis.forEach(api=>api.reset()); }
-    totals.forEach((_,i)=>totals[i]+=counts[i]);
+    totals.forEach((_,i)=>{totals[i]+=counts[i];fkBoneTotals[i]+=fkBoneCounts[i];});
   }
   assert.ok(states.has('move')&&states.has('idle')&&states.has('air'),JSON.stringify([...states]));
-  assert.ok(clips.size>=8, 'real clip coverage');
-   console.log(JSON.stringify({fixture:'full FK operations after form reversal',fkBefore:totals[0],fkAfter:totals[1],saved:totals[0]-totals[1],reduction:1-totals[1]/totals[0]}));
-   assert.ok(totals[1]<totals[0]*.95,`fewer complete FK evaluations: before=${totals[0]} after=${totals[1]}`);
-  console.log(JSON.stringify({fixture:'real source-loaded Character; exact before/after, not device FPS',compared,states:[...states],clips:clips.size,fkBefore:totals[0],fkAfter:totals[1],reduction:1-totals[1]/totals[0]}));
+  assert.ok(clips.size>=8, 'real clip coverage');assert.ok(fkBoneTotals[1]<fkBoneTotals[0]*.95,`at least 5% fewer evaluated FK bones: before=${fkBoneTotals[0]}, after=${fkBoneTotals[1]}`);
+  console.log(JSON.stringify({fixture:'real source-loaded Character; exact before/after, not device FPS',compared,states:[...states],clips:clips.size,fkBefore:totals[0],fkAfter:totals[1],fkBonesBefore:fkBoneTotals[0],fkBonesAfter:fkBoneTotals[1],reduction:1-fkBoneTotals[1]/fkBoneTotals[0],callReduction:1-totals[1]/totals[0]}));
 });
