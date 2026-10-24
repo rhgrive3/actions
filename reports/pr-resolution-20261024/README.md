@@ -36,3 +36,9 @@ A preliminary real Chromium 154 + SwiftShader special-presentation run passed ag
 - #1861's previously failed closed source-pair/capture epochs require a real current comparison and provenance review. They are not waived by these test-fixture repairs. The full patch matrix and full hosted browser lane have not been accepted.
 - #1854's active job failed on loopback route.fetch ECONNRESET. Exactly one job-only retry was requested; success is not assumed.
 - Required retail dynamic footage, real-device/Safari/iPad GPU behavior, deployed relay acceptance and the original queue's deferred/unresolved requirements remain unverified. These cannot be replaced with source tests or the local SwiftShader run.
+
+## Final source/build readback
+
+On source commit 64bf3c7c6a6bf176d2dbdeb1f0b9642b8a708c2b, the normal minified build and quick compatibility gate pass. verifyWallBuild(..., true) checked all 1435 current source inputs against committed HEAD and reread all 2130 artifacts. Final contentHash is 6051c09b4f8036007d12e4d29b9ea2178080e4610ba14928a7a78d7f3cf35cc7: every artifact digest is identical to the passing special-presentation browser build. Input maps differ because the build-time adapter source changed; the emitted bytes do not. This establishes artifact identity, not a second browser run or final hosted CI acceptance.
+
+The closed 23-PR paint source-pair suite was rerun and remains failed on its exact Roller/pose blob expectation (93e2a103 versus required d0fa9907). Its output is preserved in sourcepair1861-final.log. That gate is not re-pinned or bypassed by this repair.
