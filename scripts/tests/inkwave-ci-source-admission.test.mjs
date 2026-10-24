@@ -162,7 +162,7 @@ function sourceRouteContract(source) {
   for (const body of bodies) {
     assert.doesNotMatch(body, /^        continue-on-error:/m);
     const guards=(body.match(/^          elif .*; then$/gm)||[]).map(line=>line.trim());
-    assert.deepEqual(guards, body===bodies[1] ? [rollerGuard,...reviewedPrShells,historicalPrepareGuard] : reviewedPrShells, 'exact reviewed route inventory retains every guard and rejects unexpected routes');
+    assert.deepEqual(guards, body===bodies[1] ? [reviewedPrShells[0],rollerGuard,...reviewedPrShells.slice(1),historicalPrepareGuard] : reviewedPrShells, 'exact reviewed route inventory retains every guard and rejects unexpected routes');
     for (const [name, value] of [['PAIR_EVENT_NAME', 'github.event_name'], ['PAIR_BASE_REF', 'github.event.pull_request.base.ref'],
       ['PAIR_HEAD_REF', 'github.head_ref'], ['DECLARED_BASE_SHA', 'github.event.pull_request.base.sha || inputs.base_sha'], ['DECLARED_HEAD_SHA', 'github.event.pull_request.head.sha || inputs.candidate_sha'],
       ['PAIR_HEAD_REPO','github.event.pull_request.head.repo.full_name'], ['PAIR_REPOSITORY','github.repository'],
@@ -171,8 +171,8 @@ function sourceRouteContract(source) {
   }
   const cases = [
     [context('fix/roller-vertical-recovery-20261023','1856',{baseSha:'3003088e7d3da6e3b41829a96714698a348b555b',headSha:'2b103150d808c623c39268d6aa1833b3075d3a7c'}),false,true,'roller'],
-    [context('fix/roller-vertical-recovery-20261023','1857',{baseSha:'3003088e7d3da6e3b41829a96714698a348b555b'}),false,true,'legacy'],
-    [context('fix/roller-vertical-recovery-20261023','1856'),false,true,'legacy'],
+    [context('fix/roller-vertical-recovery-20261023','1857',{baseSha:'3003088e7d3da6e3b41829a96714698a348b555b'}),false,false,'none'],
+    [context('fix/roller-vertical-recovery-20261023','1856'),false,false,'none'],
     [context(allPrBranch,'1843'),true,true,'allpr'],
     [context(stringerBranch,'1850'),true,true,'stringer'],
     [context(stringerBranch+'-foreign','1850'),false,true,'legacy'],
