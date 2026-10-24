@@ -44,6 +44,30 @@ export async function loadNativeData(id,signal,options={}){
  if(manifest.schema!==1||manifest.id!==id||data.triangles.length/9!==manifest.geometry.collisionTriangles||data.triangleFace.length!==manifest.geometry.collisionTriangles||data.mask.length!==manifest.gridCells)throw Error('Unsupported native asset schema: '+id);
  return data;
 }
+// Loaded only for stages that ship KTX2 textures.
+let ktx2=null;
+async function ktx2Loader(renderer){
+ if(ktx2?.renderer!==renderer){
+  const previous=ktx2;
+  ktx2={renderer,loader:import('../../../vendor/three/jsm/loaders/KTX2Loader.js').then(({KTX2Loader})=>
+   new KTX2Loader().setTranscoderPath(new URL('vendor/three/jsm/libs/basis/',globalThis.document?.baseURI||globalThis.location?.href).href).detectSupport(renderer))};
+  previous?.loader.then(l=>l.dispose(),()=>{});
+ }
+ return ktx2.loader;
+}
+async function prebuiltCompressedTexture(variant,renderer,signal){
+ const {fetchVerified}=await import('./prebuilt-load.mjs');
+ const bytes=await fetchVerified(variant.file,variant,signal);
+ const loader=await ktx2Loader(renderer);
+ return new Promise((resolve,reject)=>loader.parse(bytes,resolve,reject));
+}
+/** Same bound as the PNG path's resize: start the chain at the first level within the cap. */
+export function capMipLevels(texture,limit){
+ const mips=texture.mipmaps;if(!Number.isFinite(limit)||!mips?.length)return;
+ let drop=0;while(drop<mips.length-1&&Math.max(mips[drop].width,mips[drop].height)>limit)drop++;
+ if(!drop)return;
+ texture.mipmaps=mips.slice(drop);texture.image={width:texture.mipmaps[0].width,height:texture.mipmaps[0].height};
+}
 export async function loadNativeTextures(id,data,renderer,quality,signal,textureLimit,previousTextures=null){
  const cap=textureLimit && typeof textureLimit==='object' ? textureLimit.maxDimension : textureLimit;
  const roleCaps=textureLimit && typeof textureLimit==='object' ? textureLimit.perRole : null;
@@ -95,7 +119,24 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
   const [file,job]=rows[next++],{role}=job;
   const borrowed=previousTextures?.get(file);
   if(canBorrowTexture(borrowed,data,file,job,renderer)){textures._nativeBorrowed.add(borrowed);for(const alias of job.aliases)textures.set(alias,borrowed);continue;}
-  let {encoding}=job;const buffer=await verified(id,file,data.integrity,signal);checkAbort();const blob=new Blob([buffer],{type:'image/png'});
+  let {encoding}=job;
+  const variant=data.manifest.prebuiltTextures?.[file]?.[role];
+  if(variant){
+   // Prebuilt KTX2 (UASTC): pixel inference already applied to the manifest
+   // at build time; the GPU receives a compressed format.
+   let texture;
+   try{
+    texture=await prebuiltCompressedTexture(variant,renderer,signal);checkAbort();
+    capMipLevels(texture,job.roleLimit);
+    texture.colorSpace=['albedo','emissive'].includes(role)?THREE.SRGBColorSpace:THREE.NoColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;rememberTextureInput(texture,data,file,job);for(const alias of job.aliases)textures.set(alias,texture);texture=null;
+    continue;
+   }catch(error){
+    // Abort and earlier failures still stop the pipeline; otherwise use the pinned PNG.
+    if(error?.name==='AbortError'||signal?.aborted||failure)throw error;
+    console.warn('[native] prebuilt texture unavailable, decoding source PNG: '+variant.file+' '+error.message);
+   }finally{texture?.dispose();}
+  }
+  const buffer=await verified(id,file,data.integrity,signal);checkAbort();const blob=new Blob([buffer],{type:'image/png'});
   let bitmap,texture,transferred=false;
   try{
   bitmap=await createImageBitmap(blob,{imageOrientation:'flipY'});checkAbort();const ratio=Math.min(1,job.roleLimit/Math.max(bitmap.width,bitmap.height));

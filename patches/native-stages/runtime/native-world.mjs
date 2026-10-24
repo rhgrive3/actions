@@ -60,12 +60,15 @@ export async function buildNativeWorld(game,map,current){
   status.update('textures');
   const level=new NativeLevel(data),physics=new NativePhysics(level);
   // A previous context loss on a native stage lowers this load's budget.
-  const gpuTier=nativeGpuTier(),quality=nativeTextureQuality(game.settings.quality,gpuTier,!!game.mobile?.touch);
+  // Touch devices start one texture step lower unless the stage ships
+  // GPU-compressed (KTX2) textures, which take about a quarter of the memory.
+  const textureTouch=!!game.mobile?.touch&&!data.manifest.prebuiltTextures;
+  const gpuTier=nativeGpuTier(),quality=nativeTextureQuality(game.settings.quality,gpuTier,textureTouch);
   const textureCaps=nativeTierTextureCaps(nativeStageTextureCaps(data.manifest,quality,{
     mobile:!!game.mobile?.touch,
     deviceMemoryGB:typeof navigator==='undefined'?null:navigator.deviceMemory,
     maxTextureSize:G.renderer.capabilities.maxTextureSize
-  }),gpuTier,!!game.mobile?.touch);
+  }),gpuTier,textureTouch);
   const textureLimit=textureCaps.maxDimension;
   const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,textureCaps);pendingTextures=textures;display=nativeDisplay(data,textures,quality);pendingTextures=null;
   if(!current())throw new DOMException('Aborted','AbortError');

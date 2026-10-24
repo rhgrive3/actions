@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import {dedupeVersionedVolumeAssets} from './lib/inkwave-volume-packaging.mjs';
 import {compactInstalledAudioManifest} from './lib/inkwave-audio-manifest.mjs';
-import { NATIVE_ROOT, nativeStageIdentity,NATIVE_RUNTIME_EXTERNALS, prepareNativeStageBuild, copyLocalNativeAssets } from './lib/inkwave-native-stages.mjs';
+import { NATIVE_ROOT, nativeStageIdentity,NATIVE_RUNTIME_EXTERNALS, prepareNativeStageBuild, copyLocalNativeAssets, copyPrebuiltNativeAssets } from './lib/inkwave-native-stages.mjs';
 import { adaptBuildSource } from './inkwave-source-composition.mjs';
 import { emitLightmapIndex } from './lib/inkwave-lightmap-index.mjs';
 // Build the INKWAVE GitHub Pages site with the independent gameplay patches applied to the output tree.
@@ -133,6 +133,9 @@ for (const file of walk(SRC)) {
   const dst = path.join(BUILD, rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   const ext = path.extname(file);
+  // The Basis transcoder is a classic script that KTX2Loader inlines into a
+  // Worker blob; it must stay byte-identical, never an ES module.
+  if (rel.startsWith(path.join('vendor', 'three', 'jsm', 'libs', 'basis') + path.sep)) { fs.copyFileSync(file, dst); continue; }
   if (ext === '.js' || ext === '.mjs' || ext === '.css') {
     const code = composeSource(rel, fs.readFileSync(file, 'utf8'));
     // These exact production inputs are reread/composed by the mandatory
@@ -680,6 +683,8 @@ if (accountBundle) identity.build.account = accountBundle;
 identity.inputHash = sha256(JSON.stringify(identity.files));
 fs.writeFileSync(path.join(BUILD, 'inkwave-build.json'), JSON.stringify(identity, null, 2) + '\n');
 copyLocalNativeAssets(BUILD, nativePrepared);
+const prebuiltCopy = copyPrebuiltNativeAssets(BUILD, nativePrepared);
+if (prebuiltCopy) console.log(`native prebuilt: ${prebuiltCopy.stages} stages, ${prebuiltCopy.files} files, ${(prebuiltCopy.bytes/1048576).toFixed(1)} MiB outside the revision`);
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.renameSync(BUILD, OUT);
 console.log(`patch: splatoon3+quality+range · build ${identity.contentHash.slice(0, 12)}`);

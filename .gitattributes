@@ -19,3 +19,4 @@ tools/inkwave-modeler/docs/** export-ignore
 reports/** export-ignore
 triggers/** export-ignore
 lanes/** export-ignore
+native-prebuilt/** filter=lfs diff=lfs merge=lfs -text
