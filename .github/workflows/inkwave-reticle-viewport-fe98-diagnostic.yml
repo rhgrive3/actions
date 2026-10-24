@@ -22,7 +22,7 @@ jobs:
       github.ref == 'refs/heads/fix/inkwave-ci-journal-stage-20261024' &&
       github.event.deleted != true &&
       github.event.created == false &&
-      github.event.before == '8ecbdf011c6f13a47b561ff64b8ce792c0e3d4a0'
+      github.event.before == '64e400ce91248ec529ffa31a2df1b436d91683bc'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -31,8 +31,8 @@ jobs:
     env:
       SOURCE_SHA: fe98b0a1b115e6709dae66e83876ddbdc5dcd33a
       SOURCE_TREE: a61b4055071360a72cd5dd7eecc9a86b2bef07bf
-      CONTROL_BASE_SHA: 8ecbdf011c6f13a47b561ff64b8ce792c0e3d4a0
-      CONTROL_BASE_TREE: a28ce27f4a8bca0b26a584e6d1a2df4399f09f14
+      CONTROL_BASE_SHA: 64e400ce91248ec529ffa31a2df1b436d91683bc
+      CONTROL_BASE_TREE: cf2961392bb476b23784c79900fcd6f35d41bf4f
       PUSH_BEFORE: ${{ github.event.before }}
       PUSH_AFTER: ${{ github.event.after }}
       WORKFLOW_DEFINITION_SHA: ${{ github.workflow_sha }}
@@ -40,10 +40,10 @@ jobs:
       WORKFLOW_SHA: ${{ github.sha }}
       WORKFLOW_REF: ${{ github.workflow_ref }}
       EVIDENCE_DIR: ${{ github.workspace }}/reticle-viewport-evidence
-      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/reticle-fe98-browsers
     steps:
       - name: Initialize diagnostic evidence
         run: |
+          printf 'PLAYWRIGHT_BROWSERS_PATH=%s/reticle-fe98-browsers\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
           mkdir -p "$EVIDENCE_DIR"
           printf 'not_started\n' > "$EVIDENCE_DIR/checker-status.txt"
           printf 'Source: %s\nWorkflow: %s\n' "$SOURCE_SHA" "$WORKFLOW_SHA"
@@ -69,7 +69,7 @@ jobs:
           test "$(git -C diagnostic-control rev-parse HEAD^1^{tree})" = "$CONTROL_BASE_TREE"
           test "$(git -C diagnostic-control rev-list --parents -n 1 HEAD | wc -w)" -eq 2
           git -C diagnostic-control diff-tree --no-commit-id --name-status -r HEAD > "$EVIDENCE_DIR/workflow-diff.txt"
-          printf 'A\t%s\n' "$WORKFLOW_PATH" > "$RUNNER_TEMP/reticle-expected-workflow-diff.txt"
+          printf 'M\t%s\n' "$WORKFLOW_PATH" > "$RUNNER_TEMP/reticle-expected-workflow-diff.txt"
           cmp "$RUNNER_TEMP/reticle-expected-workflow-diff.txt" "$EVIDENCE_DIR/workflow-diff.txt"
           cp "diagnostic-control/$WORKFLOW_PATH" "$EVIDENCE_DIR/workflow.yml"
           WORKFLOW_TREE="$(git -C diagnostic-control rev-parse HEAD^{tree})" \
