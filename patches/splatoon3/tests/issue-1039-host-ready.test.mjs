@@ -22,7 +22,10 @@ async function room(mode = 'turf') {
     net.myId = id; net.hostId = 'host'; net.state = 'lobby';
     net._members = new Map([['host', 'Host'], ['guest', 'Guest']]);
     net.tr = { broadcast(packet) { packets.push({ from:id, packet:structuredClone(packet) });
-        for (const [other, peer] of peers) if (other !== id) peer._message(id, structuredClone(packet)); },
+        // The production relay sends its authenticated ACK before host local start;
+        // this isolated two-peer fixture simulates that admission, not an optimistic start.
+        if (packet.k === 'start') net._control({ t:'start_result', id:packet.id, ok:true });
+        for (const [other, peer] of peers) if (other !== id) peer._message(id, structuredClone(packet)); return true; },
       sendTo(to, packet) { peers.get(to)?._message(id, structuredClone(packet)); },
       lock(value) { locks.push(value); }, close() {} };
   }
@@ -85,7 +88,8 @@ test('#1039 composed host Ready is reachable after confirmation and starts the a
     const launch = r.packets.find(p=>p.packet.k==='start').packet;
     assert.deepEqual(launch.roster.map(p=>[p.owner,p.team]), [['host',0],['guest',1]]);
     assert.equal(r.host._startCfg.id, r.guest._startCfg.id);
-    assert.equal(r.locks[0], true);
+    assert.deepEqual(r.locks, [], 'relay owns the atomic START lock, not the client Transport');
+    assert.equal(r.host._pendingStart, null, 'authenticated START acknowledgement retires the pending request');
   } finally { r.close(); }
 });
 
