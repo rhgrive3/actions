@@ -13,8 +13,8 @@ export const SOURCE_SITE_REFERENCES = Object.freeze([
     "target": "patches/native-stages/runtime/engine.mjs",
     "inputKey": "native-stages/runtime/engine.mjs",
     "sourceInputKey": "upstream/src/game/nav.js",
-    "sourceSha256": "419738ae4f8e23096b0ead55c9d353dc1e36867965d4515170dbe6046be3db4a",
-    "targetSha256": "58b35201cbbe67d54244645faf856d5570f6e09549a04f4b36c3ca4ab669a4ea"
+    "sourceSha256": "d6fc66dbb6f15957638d29d501e47fe281a68be8d229cfd981bea7b8d9d45e2c",
+    "targetSha256": "0e4312862c7e22923d056af96d68a999c6877f9c3551b7434778f7f656e410de"
   },
   {
     "source": "inkwave-public/src/world/maps.js",
@@ -58,7 +58,7 @@ export const SOURCE_SITE_REFERENCES = Object.freeze([
     "target": "patches/practice-range/stage/props.mjs",
     "inputKey": "practice-range/stage/props.mjs",
     "sourceInputKey": "upstream/src/world/stages/index.js",
-    "sourceSha256": "5f6d1fcd0d6b2ffd0a7027e27d75f7188b91c426999ad37674e3e2669ccacd28",
+    "sourceSha256": "c5de32f49be415435f63930d6459011e8d24d415536df28526aa410f2b3a6295",
     "targetSha256": "ba662b0c794d94b03c07fbbdcfaf4c0fcb5bc178624a8c1064f6e1c1877071e4"
   },
   {
@@ -67,7 +67,7 @@ export const SOURCE_SITE_REFERENCES = Object.freeze([
     "target": "patches/practice-range/stage/surfaces.mjs",
     "inputKey": "practice-range/stage/surfaces.mjs",
     "sourceInputKey": "upstream/src/world/stages/index.js",
-    "sourceSha256": "5f6d1fcd0d6b2ffd0a7027e27d75f7188b91c426999ad37674e3e2669ccacd28",
+    "sourceSha256": "c5de32f49be415435f63930d6459011e8d24d415536df28526aa410f2b3a6295",
     "targetSha256": "4754a45da6fe0cfe8eaeb3c3f1c9b7df848e2e1a89dea89e9f09ac2e12a557a5"
   },
   {
@@ -76,7 +76,7 @@ export const SOURCE_SITE_REFERENCES = Object.freeze([
     "target": "patches/practice-range/stage/layout.mjs",
     "inputKey": "practice-range/stage/layout.mjs",
     "sourceInputKey": "upstream/src/world/stages/index.js",
-    "sourceSha256": "5f6d1fcd0d6b2ffd0a7027e27d75f7188b91c426999ad37674e3e2669ccacd28",
+    "sourceSha256": "c5de32f49be415435f63930d6459011e8d24d415536df28526aa410f2b3a6295",
     "targetSha256": "8903cb70167972cac2388dbb5f92f7b70ed2abb032a6971df8b7c84c84014acb"
   },
   {
@@ -85,7 +85,43 @@ export const SOURCE_SITE_REFERENCES = Object.freeze([
     "target": "patches/practice-range/stage/murals.mjs",
     "inputKey": "practice-range/stage/murals.mjs",
     "sourceInputKey": "upstream/src/world/stages/index.js",
-    "sourceSha256": "5f6d1fcd0d6b2ffd0a7027e27d75f7188b91c426999ad37674e3e2669ccacd28",
+    "sourceSha256": "c5de32f49be415435f63930d6459011e8d24d415536df28526aa410f2b3a6295",
+    "targetSha256": "5541174932dcdc23b272f1afac24b3e761f67ee4c73113415bfa65d079bd38b2"
+  },
+  {
+    "source": "inkwave-public/src/world/stages/data.js",
+    "ref": "../../../patches/practice-range/stage/props.mjs",
+    "target": "patches/practice-range/stage/props.mjs",
+    "inputKey": "practice-range/stage/props.mjs",
+    "sourceInputKey": "upstream/src/world/stages/data.js",
+    "sourceSha256": "61b0c6f7644b988e717f03ea235c1bf11bf88d9f4b9dfb45dba7876c95e1981b",
+    "targetSha256": "ba662b0c794d94b03c07fbbdcfaf4c0fcb5bc178624a8c1064f6e1c1877071e4"
+  },
+  {
+    "source": "inkwave-public/src/world/stages/data.js",
+    "ref": "../../../patches/practice-range/stage/surfaces.mjs",
+    "target": "patches/practice-range/stage/surfaces.mjs",
+    "inputKey": "practice-range/stage/surfaces.mjs",
+    "sourceInputKey": "upstream/src/world/stages/data.js",
+    "sourceSha256": "61b0c6f7644b988e717f03ea235c1bf11bf88d9f4b9dfb45dba7876c95e1981b",
+    "targetSha256": "4754a45da6fe0cfe8eaeb3c3f1c9b7df848e2e1a89dea89e9f09ac2e12a557a5"
+  },
+  {
+    "source": "inkwave-public/src/world/stages/data.js",
+    "ref": "../../../patches/practice-range/stage/layout.mjs",
+    "target": "patches/practice-range/stage/layout.mjs",
+    "inputKey": "practice-range/stage/layout.mjs",
+    "sourceInputKey": "upstream/src/world/stages/data.js",
+    "sourceSha256": "61b0c6f7644b988e717f03ea235c1bf11bf88d9f4b9dfb45dba7876c95e1981b",
+    "targetSha256": "8903cb70167972cac2388dbb5f92f7b70ed2abb032a6971df8b7c84c84014acb"
+  },
+  {
+    "source": "inkwave-public/src/world/stages/data.js",
+    "ref": "../../../patches/practice-range/stage/murals.mjs",
+    "target": "patches/practice-range/stage/murals.mjs",
+    "inputKey": "practice-range/stage/murals.mjs",
+    "sourceInputKey": "upstream/src/world/stages/data.js",
+    "sourceSha256": "61b0c6f7644b988e717f03ea235c1bf11bf88d9f4b9dfb45dba7876c95e1981b",
     "targetSha256": "5541174932dcdc23b272f1afac24b3e761f67ee4c73113415bfa65d079bd38b2"
   }
 ]);
