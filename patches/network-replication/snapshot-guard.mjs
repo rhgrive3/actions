@@ -266,12 +266,13 @@ export function validActorSnapshotRow(row, timestamp) {
 }
 export function validRemoteActorPose(sample, correction) {
   if (!sample || !correction) return false;
-  for (const key of SNAPSHOT_FIELDS_5)
-    if (!finite(sample[key])) return false;
+  for (let i = 0; i < SNAPSHOT_FIELDS_5.length; i++)
+    if (!finite(sample[SNAPSHOT_FIELDS_5[i]])) return false;
   if (!integer(sample.f, 0, 0x7fffffff)) return false;
   if (!bounded(sample.x + correction.x, -1e6, 1e6)
       || !bounded(sample.y + correction.y, -1e6, 1e6)
       || !bounded(sample.z + correction.z, -1e6, 1e6)) return false;
-  for (const key of SNAPSHOT_FIELDS_6) if (!finite(correction[key])) return false;
+  for (let i = 0; i < SNAPSHOT_FIELDS_6.length; i++)
+    if (!finite(correction[SNAPSHOT_FIELDS_6[i]])) return false;
   return true;
 }
