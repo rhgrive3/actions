@@ -28,7 +28,14 @@ const pause=()=>new Promise(r=>setTimeout(r,5));
 async function until(fn,label){for(let i=0;i<200;i++){if(fn())return;await pause();}assert.fail('Timed out: '+label);}
 async function relay(){const server=new WebSocketServer({host:'127.0.0.1',port:0});await new Promise(r=>server.once('listening',r));const rooms=new Map(),wire=[];const connect=createLocalRelay({rooms});server.on('connection',(socket,request)=>connect(socket,request,{receive:text=>wire.push(text)}));return{rooms,wire,url:'ws://127.0.0.1:'+server.address().port,close:()=>new Promise(r=>server.close(r))};}
 async function peer(r,{token=null,legacy=false,native=false}={}){
- const replace=(rel,code)=>adaptBuildSource(rel,rel==='src/net/transport.js'&&token?code.replace(/export const COMPAT = '[^']+';/,`export const COMPAT = '${token}';`):code);
+ const replace=(rel,code)=>{
+  // Production composition requires the immutable raw transport epoch anchor.
+  // Only mutate the emitted epoch for the deliberate legacy-peer negative control.
+  const adapted=adaptBuildSource(rel,code);
+  return rel==='src/net/transport.js'&&token
+    ? adapted.replace(/export const COMPAT = '[^']+';/,`export const COMPAT = '${token}';`)
+    : adapted;
+ };
  let f;
  if(native){f=await sourceLoadedActorFixture({transform:replace,extraExports});}
  else{
