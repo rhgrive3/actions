@@ -181,6 +181,22 @@ test('CSS maps exactly three generated locally hosted WebP backgrounds to the co
   assert.ok(qualityIdentity()['static-menu-adapter.mjs']);
 });
 
+test('hidden HUD loops, leaving stage pickers and the picker backdrop drift stop compositing', () => {
+  const generated = checkedStaticMenuCss(css);
+  const paused = generated.match(/\n([^{}]*)\{\n  animation-play-state: paused !important;\n\}/);
+  assert.ok(paused, 'one paused-animation rule');
+  const selectors = paused[1].split('*/').pop().split(/,\s*(?![^()]*\))/).map((s) => s.trim());
+  for (const s of ['.iw-hud.is-hidden', '.iw-hud.is-hidden *', '.iw-screen.is-leaving:is(.iw-ss, .iw-modesel) *']) {
+    assert.ok(selectors.includes(s), s);
+  }
+  // Screens whose own leave animation runs on descendants (news, modals) keep it.
+  assert.ok(selectors.every((s) => s.startsWith('.iw-hud.is-hidden') || s.startsWith('.iw-screen.is-leaving:is(.iw-ss, .iw-modesel) ')), selectors.join(' | '));
+  assert.match(generated, /\.iw-ui\.is-active:is\(\[data-screen="mode"\], \[data-screen="setup"\]\) \.iw-ss__bgimg \{\n  animation: none;\n\}/);
+  // The HUD is only paused while hidden: the in-match rules are untouched.
+  assert.match(rawStyle, /\.iw-hud\.is-hidden \{ opacity: 0; visibility: hidden;/);
+  assert.match(rawStyle, /\.iw-ss__bgimg \{[^}]*animation: iw-ss-drift 26s/);
+});
+
 test('CSS ownership rejects a new static lobby background and loss of existing room rules', () => {
   const injected = css + '\n.iw-ui.is-active[data-screen="lobby"] { background-image: url("lobby.webp"); }';
   assert.throws(() => checkedStaticMenuCss(injected), /lobby stays unchanged/);

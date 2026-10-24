@@ -192,6 +192,22 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
+/* Every running animation makes the compositor redraw the menu each frame.
+   The HUD stays mounted (hidden) behind every menu with its squad and shield
+   loops still ticking, and the stage pickers keep a blurred, oversized stage
+   image drifting forever (WebKit re-applies that filter on each composite).
+   A picker that is leaving also keeps all of its loops running while the
+   next screen pops in. On phones PLAY -> TURF WAR -> WEAPON lost the WebGL
+   context in that hand-off; none of these frames is visible. */
+.iw-hud.is-hidden, .iw-hud.is-hidden *, .iw-hud.is-hidden *::before, .iw-hud.is-hidden *::after,
+.iw-screen.is-leaving:is(.iw-ss, .iw-modesel) *,
+.iw-screen.is-leaving:is(.iw-ss, .iw-modesel) *::before,
+.iw-screen.is-leaving:is(.iw-ss, .iw-modesel) *::after {
+  animation-play-state: paused !important;
+}
+.iw-ui.is-active:is([data-screen="mode"], [data-screen="setup"]) .iw-ss__bgimg {
+  animation: none;
+}
 /* Locker art is drawn in the canvas (locker-stage.mjs) under the live kid. */
 .iw-ui.is-active[data-screen="locker"] {
   background-color: transparent;
