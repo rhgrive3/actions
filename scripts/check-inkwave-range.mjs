@@ -38,7 +38,12 @@ if (!Object.keys(manifest.files).some((k) => k.startsWith('practice-range/'))) t
 const rangeLightmapFiles=['assets/lightmaps/range.json','assets/lightmaps/range.png'];
 const rangeLightmapCount=rangeLightmapFiles.filter(f=>Object.hasOwn(manifest.artifacts,f)).length;
 if (rangeLightmapCount===1) throw new Error('Incomplete baked range AO pair');
-const rangeLightmapAvailable=rangeLightmapCount===2;
+// The emitted runtime index is authoritative: packaged but unregistered
+// lightmap assets are not loaded by Game._loadLightmap, including Range.
+const emittedLightmaps=(await import(pathToFileURL(path.join(site,'src/world/lightmap-assets.js')).href)).LIGHTMAP_LAYOUTS;
+if (!Array.isArray(emittedLightmaps) || emittedLightmaps.some(id=>typeof id!=='string')) throw new Error('Invalid emitted lightmap index');
+const rangeLightmapAvailable=emittedLightmaps.includes('range');
+if (rangeLightmapAvailable && rangeLightmapCount!==2) throw new Error('Emitted Range lightmap index is missing its complete asset pair');
 
 const pw = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : 'playwright');
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2' };

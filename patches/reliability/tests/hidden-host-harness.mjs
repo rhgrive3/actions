@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import {fixture} from './controls-fixture.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { webcrypto } from 'node:crypto';
 const {installPlatformGame} = await import(process.env.INKWAVE_CONTROLS_SITE
   ? pathToFileURL(path.resolve(process.env.INKWAVE_CONTROLS_SITE, 'patches/local-quality/platform-game.mjs')).href
   : '../../local-quality/platform-game.mjs');
@@ -16,7 +17,7 @@ let ms=1000000;
 // Evaluate the unchanged server module with a local Date; never replace Node's
 // global clock or relax the production frame/byte admission limits.
 const relaySource = new URL('../../../server/src/index.js', import.meta.url);
-const relayContext = vm.createContext({ Date: class extends Date { static now(){return ms;} }, TextEncoder, TextDecoder });
+const relayContext = vm.createContext({ Date: class extends Date { static now(){return ms;} }, TextEncoder, TextDecoder, crypto: webcrypto });
 const relayModule = new vm.SourceTextModule(fs.readFileSync(relaySource, 'utf8'), {
  identifier: relaySource.href,
  // The production Worker exposes both Web Encoding globals. Node's isolated
