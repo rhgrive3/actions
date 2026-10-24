@@ -28,7 +28,15 @@ const pause=()=>new Promise(r=>setTimeout(r,5));
 async function until(fn,label){for(let i=0;i<200;i++){if(fn())return;await pause();}assert.fail('Timed out: '+label);}
 async function relay(){const server=new WebSocketServer({host:'127.0.0.1',port:0});await new Promise(r=>server.once('listening',r));const rooms=new Map(),wire=[];const connect=createLocalRelay({rooms});server.on('connection',(socket,request)=>connect(socket,request,{receive:text=>wire.push(text)}));return{rooms,wire,url:'ws://127.0.0.1:'+server.address().port,close:()=>new Promise(r=>server.close(r))};}
 async function peer(r,{token=null,legacy=false,native=false}={}){
- const replace=(rel,code)=>adaptBuildSource(rel,rel==='src/net/transport.js'&&token?code.replace(/export const COMPAT = '[^']+';/,`export const COMPAT = '${token}';`):code);
+ const replace=(rel,code)=>{
+  const composed=adaptBuildSource(rel,code);
+  if(rel!=='src/net/transport.js'||!token)return composed;
+  // Compose pristine input before applying the test-only legacy contract.
+  // Production adapters must retain their exact raw-source admission anchors.
+  assert.equal(token,OLD);const declarations=composed.match(/^export const COMPAT = '[^']+';$/gm)||[];
+  assert.equal(declarations.length,1,'one composed compatibility declaration');
+  return composed.replace(declarations[0],`export const COMPAT = '${token}';`);
+ };
  let f;
  if(native){f=await sourceLoadedActorFixture({transform:replace,extraExports});}
  else{
@@ -110,6 +118,16 @@ test('current/current native host and follower carrier release traverses real We
 
 test('current/current real session START and GO carry the new tuple once',async()=>{const r=await relay();let peers;try{peers=await pair(r);const[a,b]=peers;a.session.setSettings({bots:false,mode:'rainmaker'});await pause();assert.equal(a.session.confirmTeams(),true);await pause();b.session.setMe({ready:true});a.session.setMe({ready:true});await until(()=>a.session.canStart(),'both peers ready');assert.equal(a.session.start(),true);await until(()=>peers.every(p=>p.session.state==='match'),'both GO');assert.ok(peers.every(p=>p.session.match instanceof p.f.NetMatch));assert.deepEqual(peers.map(p=>p.starts),[1,1]);const start=r.wire.filter(x=>x.startsWith('b|')).map(x=>JSON.parse(x.slice(2))).find(x=>x.k==='start');assert.equal(start.compat,a.f.COMPAT);assert.equal(start.proto,2);assert.equal(start.mode,'rainmaker');}finally{peers?.forEach(p=>p.close());await r.close();}});
 
-test('START defense rejects old contract before constructing a world even inside an admitted room',async()=>{const r=await relay();let peers;try{peers=await pair(r);const[a,b]=peers;a.session.tr.broadcast({k:'start',id:'old-start',host:a.session.myId,proto:2,compat:OLD,roster:peers.map((p,i)=>({nid:i,owner:p.session.myId,bot:false,team:i,slot:0,name:'Peer '+i,weapon:'shooter',style:null})),mode:'rainmaker',map:'tidewater',time:'day',duration:180,difficulty:'normal',palette:0});await until(()=>b.session.state==='error','old START rejection');assert.equal(b.starts,0);assert.equal(b.session.match,null);}finally{peers?.forEach(p=>p.close());await r.close();}});
+test('relay START defense rejects an old contract before forwarding or constructing a world',async()=>{const r=await relay();let peers;try{
+ peers=await pair(r);const[a,b]=peers,acks=[],starts=[],control=a.session.tr.onControl,message=b.session.tr.onMessage;
+ // Observe actual wire delivery while retaining both production consumers.
+ a.session.tr.onControl=function(o){if(o.t==='start_result')acks.push(plain(o));return control?.call(this,o);};
+ b.session.tr.onMessage=function(from,o){if(o.k==='start')starts.push(plain(o));return message?.call(this,from,o);};
+ assert.equal(a.session.tr.broadcast({k:'start',id:'old-start',host:a.session.myId,proto:2,compat:OLD,roster:peers.map((p,i)=>({nid:i,owner:p.session.myId,bot:false,team:i,slot:0,name:'Peer '+i,weapon:'shooter',style:null})),mode:'rainmaker',map:'tidewater',time:'day',duration:180,difficulty:'normal',palette:0}),true);
+ await until(()=>acks.some(o=>o.id==='old-start'),'relay old START rejection');await pause();await pause();
+ assert.deepEqual(acks,[{t:'start_result',id:'old-start',ok:false}]);assert.deepEqual(starts,[]);
+ assert.equal([...r.rooms.values()][0].locked,false);assert.deepEqual(peers.map(p=>p.starts),[0,0]);
+ for(const p of peers){assert.equal(p.session.state,'lobby');assert.equal(p.session.match,null);}
+}finally{peers?.forEach(p=>p.close());await r.close();}});
 
 test('original current/old contract admits a legacy follower that uses the wrong body origin (negative control)',async t=>{const r=await relay();let peers;try{peers=await pair(r,[{token:OLD},{token:OLD,legacy:true}]);const[a,b]=peers,{f}=b;const actor=f.make();Object.assign(actor,{nid:0,owner:a.session.myId,team:0,remote:true,netLife:7});actor.pos.set(0,0,0);actor.net={lastLife:7};const m={mode:'rainmaker',state:'playing',ranked:new f.RankedEngine('rainmaker',stage),actors:[actor]};f.G.scene=new f.THREE.Scene();f.G.audio={play(){}};const fx=f.createRankedEffects(f,m);b.match=m;m.rankedEffects=fx;m.playRankedEvents=(events,visual)=>{for(const e of events)fx.event(e,visual);};const nm=b.session.match=new f.NetMatch(b.session,{id:'negative-current-old',mode:'rainmaker'});nm.match=m;f.G.netm=nm;b.session.state='match';const e={kind:'rainmaker-shot',at:1,actorId:'0',team:0,pos:[0,0,0],aim:[0,0,1],speed:18,shotOrigin:{actorId:'0',team:0,owner:a.session.myId,life:7,body:[0,.7,0],muzzle:[0,.75,1.2]}};a.session.tr.broadcast({k:'rkevent',match:nm.cfg.id,seq:1,events:[e]});await until(()=>f.G.scene.children.some(x=>x.geometry?.type==='SphereGeometry'),'legacy ghost birth');const mesh=f.G.scene.children.find(x=>x.geometry?.type==='SphereGeometry');assert.deepEqual(plain(mesh.position.toArray()),[0,1,0]);assert.notDeepEqual(plain(mesh.position.toArray()),e.shotOrigin.muzzle);t.diagnostic('Unbumped legacy follower ignores host muzzle and spawns at event.pos + [0,1,0].');}finally{peers?.forEach(p=>p.close());await r.close();}});
