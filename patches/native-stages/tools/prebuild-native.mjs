@@ -171,7 +171,15 @@ async function prebuild(stage, catalogStage) {
   const scratch = path.join(WORK, 'pixels', stage.id);
   fs.rmSync(scratch, {recursive: true, force: true}); fs.mkdirSync(scratch, {recursive: true});
   const keyOf = file => files[file].gitSha1;
-  const pyJobs = [...uses].map(([file, roles]) => ({png: fetchPinned(stage, file, files[file]), roles: [...roles], out: scratch, key: keyOf(file)}));
+  // Byte-identical files (same git blob) under different paths and roles
+  // share one decode with the union of their roles.
+  const byBlob = new Map();
+  for (const [file, roles] of uses) {
+    const job = byBlob.get(keyOf(file));
+    if (job) for (const role of roles) { if (!job.roles.includes(role)) job.roles.push(role); }
+    else byBlob.set(keyOf(file), {png: fetchPinned(stage, file, files[file]), roles: [...roles], out: scratch, key: keyOf(file)});
+  }
+  const pyJobs = [...byBlob.values()];
   console.log(`[${stage.id}] infer ${pyJobs.length} textures`);
   const inferred = JSON.parse(execFileSync('python3', [path.join(HERE, 'prebuild_textures.py')], {input: JSON.stringify(pyJobs), maxBuffer: 1 << 28}).toString());
   const byKey = new Map(inferred.map(r => [r.key, r]));
