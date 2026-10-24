@@ -1,0 +1,30 @@
+{
+  "frozenBase": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "frozenTree": "cfd4402fa796d11daffe2db0d34cdfcac8a4c71c",
+  "privateParentGivenByTask": "e9f59c085666a0128558c43da456801b42033cd1 (unavailable locally, not used or published)",
+  "node": "v24.19.0",
+  "chromium": "Chromium 154.0.8037.57 built on Debian GNU/Linux 13 (trixie)",
+  "playwright": "1.62.1",
+  "ws": "8.22.0",
+  "baseline": {
+    "inputHash": "350b861c6d2ca16e5430ffc5b4f7e39cfbefc9df67290de1746b077ae256eb81",
+    "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+    "revision": "d0aad52ff86d0915c282be5ff1cc481fa63f7511ed765743c9d9e62f73e59f9d",
+    "adapter": "1144965d1c79cd1502fb5d48f85bd595163bd1d761d8c18bd38a78055509e192"
+  },
+  "candidate": {
+    "inputHash": "968db27a5491109fa12fd4dda62e21080681079b146c655206b256adb71df386",
+    "contentHash": "4f8e1303d56fc4c2d2acdb1122312e22673e7990252502289cbe4471947c3ade",
+    "revision": "d80120fce454eb4de8cae14b3d33bcd47bf53fe245282b8a18ed1b02dd8390ae",
+    "adapter": "aaabac7d788db42436f338e0364f8bd48340862140cec297619bcb6cae95bd5a"
+  },
+  "changedInputs": [
+    "network-replication/adapter.mjs"
+  ],
+  "patchSha256": "e7e183dd4c0867c67341a00679eb6581af1df50c4b51f648d7c2d45c5a5e1e5f",
+  "adapterGitBlob": "7f0fe0d1658be5f6b797966bf1cbacb4dcd190c5",
+  "sourceUnchanged": true,
+  "candidateChanges": [
+    "patches/network-replication/adapter.mjs"
+  ]
+}

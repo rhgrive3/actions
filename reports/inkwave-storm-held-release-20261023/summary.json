@@ -1,0 +1,923 @@
+{
+  "inputIdentity": {
+    "frozenBase": "726e338ac256ba9609086ce65e25a68ddd99df85",
+    "frozenTree": "cfd4402fa796d11daffe2db0d34cdfcac8a4c71c",
+    "privateParentGivenByTask": "e9f59c085666a0128558c43da456801b42033cd1 (unavailable locally, not used or published)",
+    "node": "v24.19.0",
+    "chromium": "Chromium 154.0.8037.57 built on Debian GNU/Linux 13 (trixie)",
+    "playwright": "1.62.1",
+    "ws": "8.22.0",
+    "baseline": {
+      "inputHash": "350b861c6d2ca16e5430ffc5b4f7e39cfbefc9df67290de1746b077ae256eb81",
+      "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+      "revision": "d0aad52ff86d0915c282be5ff1cc481fa63f7511ed765743c9d9e62f73e59f9d",
+      "adapter": "1144965d1c79cd1502fb5d48f85bd595163bd1d761d8c18bd38a78055509e192"
+    },
+    "candidate": {
+      "inputHash": "968db27a5491109fa12fd4dda62e21080681079b146c655206b256adb71df386",
+      "contentHash": "4f8e1303d56fc4c2d2acdb1122312e22673e7990252502289cbe4471947c3ade",
+      "revision": "d80120fce454eb4de8cae14b3d33bcd47bf53fe245282b8a18ed1b02dd8390ae",
+      "adapter": "aaabac7d788db42436f338e0364f8bd48340862140cec297619bcb6cae95bd5a"
+    },
+    "changedInputs": [
+      "network-replication/adapter.mjs"
+    ],
+    "patchSha256": "e7e183dd4c0867c67341a00679eb6581af1df50c4b51f648d7c2d45c5a5e1e5f",
+    "adapterGitBlob": "7f0fe0d1658be5f6b797966bf1cbacb4dcd190c5",
+    "sourceUnchanged": true,
+    "candidateChanges": [
+      "patches/network-replication/adapter.mjs"
+    ]
+  },
+  "baseline": {
+    "harnessStatus": "failed",
+    "runtimeCases": [
+      {
+        "delay": 2,
+        "releaseTickDelta": 2,
+        "genuineNativeThrow": true,
+        "remoteBirths": 0,
+        "remoteClouds": 0,
+        "accepted": true
+      },
+      {
+        "delay": 30,
+        "releaseTickDelta": 30,
+        "genuineNativeThrow": true,
+        "remoteBirths": 0,
+        "remoteClouds": 0,
+        "accepted": true
+      },
+      {
+        "delay": 600,
+        "releaseTickDelta": 600,
+        "genuineNativeThrow": true,
+        "remoteBirths": 0,
+        "remoteClouds": 0,
+        "accepted": true
+      }
+    ],
+    "verifiedHttpResponses": 1118,
+    "errors": [
+      {
+        "peer": 0,
+        "responseError": "Error: response.body: Protocol error (Network.getResponseBody): Request content was evicted from inspector cache\nResponse body is not available for a response that was navigated away from. Read response.body() before triggering any navigation."
+      },
+      {
+        "peer": 1,
+        "responseError": "Error: response.body: Protocol error (Network.getResponseBody): Request content was evicted from inspector cache\nResponse body is not available for a response that was navigated away from. Read response.body() before triggering any navigation."
+      }
+    ]
+  },
+  "candidate": {
+    "status": "passed",
+    "runtimeCases": [
+      {
+        "delay": 2,
+        "releaseTickDelta": 2,
+        "genuineNativeThrow": true,
+        "remoteBirths": 1,
+        "remoteClouds": 1,
+        "accepted": true,
+        "canisterRender": {
+          "target": [
+            0.11,
+            1.5474999999999999,
+            -26.05933333333333
+          ],
+          "drawCalls": 75,
+          "triangles": 344572,
+          "contextLost": false,
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "observedObject": true
+        },
+        "cloudRender": {
+          "target": [
+            0.11,
+            4.6,
+            -4.368333333333324
+          ],
+          "drawCalls": 66,
+          "triangles": 336346,
+          "contextLost": false,
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "observedObject": true
+        }
+      },
+      {
+        "delay": 30,
+        "releaseTickDelta": 30,
+        "genuineNativeThrow": true,
+        "remoteBirths": 1,
+        "remoteClouds": 1,
+        "accepted": true,
+        "canisterRender": {
+          "target": [
+            0.11,
+            1.5474999999999999,
+            -26.05933333333333
+          ],
+          "drawCalls": 73,
+          "triangles": 347120,
+          "contextLost": false,
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "observedObject": true
+        },
+        "cloudRender": {
+          "target": [
+            0.11,
+            4.6,
+            -3.3416666666666464
+          ],
+          "drawCalls": 64,
+          "triangles": 340320,
+          "contextLost": false,
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "observedObject": true
+        }
+      },
+      {
+        "delay": 600,
+        "releaseTickDelta": 600,
+        "genuineNativeThrow": true,
+        "remoteBirths": 1,
+        "remoteClouds": 1,
+        "accepted": true,
+        "canisterRender": {
+          "target": [
+            0.11,
+            1.5474999999999999,
+            -26.05933333333333
+          ],
+          "drawCalls": 70,
+          "triangles": 340236,
+          "contextLost": false,
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "observedObject": true
+        },
+        "cloudRender": {
+          "target": [
+            0.11,
+            4.6,
+            -4.368333333333324
+          ],
+          "drawCalls": 62,
+          "triangles": 333562,
+          "contextLost": false,
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "observedObject": true
+        }
+      }
+    ],
+    "verifiedHttpResponses": 1118,
+    "errors": [],
+    "responseUnavailable": [
+      {
+        "peer": 0,
+        "file": "_versions/d80120fce454eb4de8cae14b3d33bcd47bf53fe245282b8a18ed1b02dd8390ae/patches/local-quality/ink-volume/assets/roller/volumes.bin.gz",
+        "error": "Error: response.body: Protocol error (Network.getResponseBody): Request content was evicted from inspector cache\nResponse body is not available for a response that was navigated away from. Read response.body() before triggering any navigation."
+      },
+      {
+        "peer": 1,
+        "file": "_versions/d80120fce454eb4de8cae14b3d33bcd47bf53fe245282b8a18ed1b02dd8390ae/patches/local-quality/ink-volume/assets/roller/volumes.bin.gz",
+        "error": "Error: response.body: Protocol error (Network.getResponseBody): Request content was evicted from inspector cache\nResponse body is not available for a response that was navigated away from. Read response.body() before triggering any navigation."
+      }
+    ],
+    "duplicate": {
+      "name": "Storm Guest",
+      "at": 1792754153378,
+      "sha256": "22cf545849de9271fde647700796b561e9edd4cf9d6b8c23e0e1904d83c1fa18",
+      "kind": "byte-identical relay delivery"
+    },
+    "afterEnd": [
+      {
+        "id": "p_efp1f2q",
+        "net": "match",
+        "active": true,
+        "mode": "match",
+        "match": "sb3lz9",
+        "state": "playing",
+        "time": 19.133233333333532,
+        "clockNative": true,
+        "actors": [
+          {
+            "nid": 0,
+            "owner": "p_efp1f2q",
+            "remote": false,
+            "alive": true,
+            "life": 1,
+            "weapon": "charger_scope",
+            "actorClass": "Ft",
+            "characterClass": "hi",
+            "meshChildren": 1,
+            "special": null,
+            "buffer": 0,
+            "auth": null,
+            "epoch": false
+          },
+          {
+            "nid": 1,
+            "owner": "p_8euinhl",
+            "remote": true,
+            "alive": true,
+            "life": 1,
+            "weapon": "charger_scope",
+            "actorClass": "Ft",
+            "characterClass": "hi",
+            "meshChildren": 1,
+            "special": null,
+            "buffer": 9,
+            "auth": null,
+            "epoch": false
+          }
+        ],
+        "peers": [
+          {
+            "id": "p_8euinhl",
+            "lastTs": 68.334,
+            "tr": 68.21677611837636,
+            "sim": 1136.2665671025816,
+            "lastEventSeq": 2,
+            "queued": 0,
+            "physics": [
+              68.282,
+              1140,
+              68.334,
+              1143
+            ]
+          }
+        ],
+        "trace": {
+          "recorded": [
+            [
+              71.157,
+              "ev",
+              "special:use",
+              {
+                "actor": {
+                  "n": 0
+                },
+                "id": "storm"
+              },
+              395,
+              3
+            ],
+            [
+              71.295,
+              "tr",
+              0,
+              "throw",
+              0,
+              397,
+              4
+            ],
+            [
+              71.296,
+              "b",
+              0,
+              "storm",
+              0.11,
+              1.45,
+              -27.2,
+              0,
+              6.25,
+              68.44,
+              {
+                "stormDuration": 8
+              },
+              "",
+              0,
+              397,
+              5
+            ],
+            [
+              78.584,
+              "ev",
+              "special:use",
+              {
+                "actor": {
+                  "n": 0
+                },
+                "id": "storm"
+              },
+              423,
+              9
+            ],
+            [
+              79.268,
+              "tr",
+              0,
+              "throw",
+              0,
+              453,
+              21
+            ],
+            [
+              79.268,
+              "b",
+              0,
+              "storm",
+              0.11,
+              1.45,
+              -27.2,
+              0,
+              6.25,
+              68.44,
+              {
+                "stormDuration": 8
+              },
+              "",
+              0,
+              453,
+              22
+            ],
+            [
+              82.294,
+              "ev",
+              "special:use",
+              {
+                "actor": {
+                  "n": 0
+                },
+                "id": "storm"
+              },
+              489,
+              44
+            ],
+            [
+              92.819,
+              "tr",
+              0,
+              "throw",
+              0,
+              1089,
+              366
+            ],
+            [
+              92.82,
+              "b",
+              0,
+              "storm",
+              0.11,
+              1.45,
+              -27.2,
+              0,
+              6.25,
+              68.44,
+              {
+                "stormDuration": 8
+              },
+              "",
+              0,
+              1089,
+              367
+            ]
+          ],
+          "births": [],
+          "clouds": [
+            {
+              "at": 77.11340000000003,
+              "tick": 416,
+              "ghost": false,
+              "owner": 0,
+              "clouds": 1
+            },
+            {
+              "at": 80.83390000000003,
+              "tick": 472,
+              "ghost": false,
+              "owner": 0,
+              "clouds": 2
+            },
+            {
+              "at": 94.25240000000002,
+              "tick": 1108,
+              "ghost": false,
+              "owner": 0,
+              "clouds": 1
+            }
+          ]
+        },
+        "bombs": [],
+        "clouds": [
+          {
+            "ghost": false,
+            "owner": 0,
+            "pos": [
+              0.10733643518983664,
+              4.6,
+              -3.6352813510854434
+            ],
+            "visible": true,
+            "t": 0.6833333333333338
+          }
+        ]
+      },
+      {
+        "id": "p_8euinhl",
+        "net": "match",
+        "active": true,
+        "mode": "match",
+        "match": "sb3lz9",
+        "state": "playing",
+        "time": 19.066633333333538,
+        "clockNative": true,
+        "actors": [
+          {
+            "nid": 0,
+            "owner": "p_efp1f2q",
+            "remote": true,
+            "alive": true,
+            "life": 1,
+            "weapon": "charger_scope",
+            "actorClass": "Ft",
+            "characterClass": "hi",
+            "meshChildren": 1,
+            "special": null,
+            "buffer": 8,
+            "auth": null,
+            "epoch": false
+          },
+          {
+            "nid": 1,
+            "owner": "p_8euinhl",
+            "remote": false,
+            "alive": true,
+            "life": 1,
+            "weapon": "charger_scope",
+            "actorClass": "Ft",
+            "characterClass": "hi",
+            "meshChildren": 1,
+            "special": null,
+            "buffer": 0,
+            "auth": null,
+            "epoch": false
+          }
+        ],
+        "peers": [
+          {
+            "id": "p_efp1f2q",
+            "lastTs": 96.247,
+            "tr": 96.18174925487656,
+            "sim": 1141.1201493198018,
+            "lastEventSeq": 380,
+            "queued": 2,
+            "physics": [
+              96.197,
+              1142,
+              96.247,
+              1145
+            ]
+          }
+        ],
+        "trace": {
+          "recorded": [],
+          "births": [
+            {
+              "at": 43.78369999999995,
+              "tick": 410,
+              "before": 0,
+              "after": 1,
+              "kind": "storm",
+              "owner": 0
+            },
+            {
+              "at": 51.71040000000002,
+              "tick": 464,
+              "before": 0,
+              "after": 1,
+              "kind": "storm",
+              "owner": 0
+            },
+            {
+              "at": 65.09209999999997,
+              "tick": 1093,
+              "before": 0,
+              "after": 1,
+              "kind": "storm",
+              "owner": 0
+            }
+          ],
+          "clouds": [
+            {
+              "at": 49.291400000000024,
+              "tick": 417,
+              "ghost": true,
+              "owner": 0,
+              "clouds": 1
+            },
+            {
+              "at": 53.22380000000005,
+              "tick": 483,
+              "ghost": true,
+              "owner": 0,
+              "clouds": 2
+            },
+            {
+              "at": 66.52709999999998,
+              "tick": 1114,
+              "ghost": true,
+              "owner": 0,
+              "clouds": 1
+            }
+          ]
+        },
+        "bombs": [],
+        "clouds": [
+          {
+            "ghost": true,
+            "owner": 0,
+            "pos": [
+              0.11,
+              4.6,
+              -3.7633333333333177
+            ],
+            "visible": true,
+            "t": 0.5666666666666668
+          }
+        ]
+      }
+    ],
+    "afterDeath": [
+      {
+        "id": "p_efp1f2q",
+        "net": "match",
+        "active": true,
+        "mode": "match",
+        "match": "sb3lz9",
+        "state": "playing",
+        "time": 19.633233333333504,
+        "clockNative": true,
+        "actors": [
+          {
+            "nid": 0,
+            "owner": "p_efp1f2q",
+            "remote": false,
+            "alive": false,
+            "life": 1,
+            "weapon": "charger_scope",
+            "actorClass": "Ft",
+            "characterClass": "hi",
+            "meshChildren": 1,
+            "special": null,
+            "buffer": 0,
+            "auth": null,
+            "epoch": false
+          },
+          {
+            "nid": 1,
+            "owner": "p_8euinhl",
+            "remote": true,
+            "alive": true,
+            "life": 1,
+            "weapon": "charger_scope",
+            "actorClass": "Ft",
+            "characterClass": "hi",
+            "meshChildren": 1,
+            "special": null,
+            "buffer": 10,
+            "auth": null,
+            "epoch": false
+          }
+        ],
+        "peers": [
+          {
+            "id": "p_8euinhl",
+            "lastTs": 68.949,
+            "tr": 68.75118027693256,
+            "sim": 1161.6845067509732,
+            "lastEventSeq": 2,
+            "queued": 0,
+            "physics": [
+              68.899,
+              1170,
+              68.949,
+              1173
+            ]
+          }
+        ],
+        "trace": {
+          "recorded": [
+            [
+              71.157,
+              "ev",
+              "special:use",
+              {
+                "actor": {
+                  "n": 0
+                },
+                "id": "storm"
+              },
+              395,
+              3
+            ],
+            [
+              71.295,
+              "tr",
+              0,
+              "throw",
+              0,
+              397,
+              4
+            ],
+            [
+              71.296,
+              "b",
+              0,
+              "storm",
+              0.11,
+              1.45,
+              -27.2,
+              0,
+              6.25,
+              68.44,
+              {
+                "stormDuration": 8
+              },
+              "",
+              0,
+              397,
+              5
+            ],
+            [
+              78.584,
+              "ev",
+              "special:use",
+              {
+                "actor": {
+                  "n": 0
+                },
+                "id": "storm"
+              },
+              423,
+              9
+            ],
+            [
+              79.268,
+              "tr",
+              0,
+              "throw",
+              0,
+              453,
+              21
+            ],
+            [
+              79.268,
+              "b",
+              0,
+              "storm",
+              0.11,
+              1.45,
+              -27.2,
+              0,
+              6.25,
+              68.44,
+              {
+                "stormDuration": 8
+              },
+              "",
+              0,
+              453,
+              22
+            ],
+            [
+              82.294,
+              "ev",
+              "special:use",
+              {
+                "actor": {
+                  "n": 0
+                },
+                "id": "storm"
+              },
+              489,
+              44
+            ],
+            [
+              92.819,
+              "tr",
+              0,
+              "throw",
+              0,
+              1089,
+              366
+            ],
+            [
+              92.82,
+              "b",
+              0,
+              "storm",
+              0.11,
+              1.45,
+              -27.2,
+              0,
+              6.25,
+              68.44,
+              {
+                "stormDuration": 8
+              },
+              "",
+              0,
+              1089,
+              367
+            ]
+          ],
+          "births": [],
+          "clouds": [
+            {
+              "at": 77.11340000000003,
+              "tick": 416,
+              "ghost": false,
+              "owner": 0,
+              "clouds": 1
+            },
+            {
+              "at": 80.83390000000003,
+              "tick": 472,
+              "ghost": false,
+              "owner": 0,
+              "clouds": 2
+            },
+            {
+              "at": 94.25240000000002,
+              "tick": 1108,
+              "ghost": false,
+              "owner": 0,
+              "clouds": 1
+            }
+          ]
+        },
+        "bombs": [],
+        "clouds": [
+          {
+            "ghost": false,
+            "owner": 0,
+            "pos": [
+              0.10733643518983664,
+              4.6,
+              -3.0852813510854373
+            ],
+            "visible": true,
+            "t": 1.183333333333334
+          }
+        ]
+      },
+      {
+        "id": "p_8euinhl",
+        "net": "match",
+        "active": true,
+        "mode": "match",
+        "match": "sb3lz9",
+        "state": "playing",
+        "time": 19.56663333333351,
+        "clockNative": true,
+        "actors": [
+          {
+            "nid": 0,
+            "owner": "p_efp1f2q",
+            "remote": true,
+            "alive": false,
+            "life": 1,
+            "weapon": "charger_scope",
+            "actorClass": "Ft",
+            "characterClass": "hi",
+            "meshChildren": 1,
+            "special": null,
+            "buffer": 6,
+            "auth": null,
+            "epoch": false
+          },
+          {
+            "nid": 1,
+            "owner": "p_8euinhl",
+            "remote": false,
+            "alive": true,
+            "life": 1,
+            "weapon": "charger_scope",
+            "actorClass": "Ft",
+            "characterClass": "hi",
+            "meshChildren": 1,
+            "special": null,
+            "buffer": 0,
+            "auth": null,
+            "epoch": false
+          }
+        ],
+        "peers": [
+          {
+            "id": "p_efp1f2q",
+            "lastTs": 96.867,
+            "tr": 96.71475658933086,
+            "sim": 1166.6453953598518,
+            "lastEventSeq": 402,
+            "queued": 4,
+            "physics": [
+              96.815,
+              1172,
+              96.867,
+              1175
+            ]
+          }
+        ],
+        "trace": {
+          "recorded": [],
+          "births": [
+            {
+              "at": 43.78369999999995,
+              "tick": 410,
+              "before": 0,
+              "after": 1,
+              "kind": "storm",
+              "owner": 0
+            },
+            {
+              "at": 51.71040000000002,
+              "tick": 464,
+              "before": 0,
+              "after": 1,
+              "kind": "storm",
+              "owner": 0
+            },
+            {
+              "at": 65.09209999999997,
+              "tick": 1093,
+              "before": 0,
+              "after": 1,
+              "kind": "storm",
+              "owner": 0
+            }
+          ],
+          "clouds": [
+            {
+              "at": 49.291400000000024,
+              "tick": 417,
+              "ghost": true,
+              "owner": 0,
+              "clouds": 1
+            },
+            {
+              "at": 53.22380000000005,
+              "tick": 483,
+              "ghost": true,
+              "owner": 0,
+              "clouds": 2
+            },
+            {
+              "at": 66.52709999999998,
+              "tick": 1114,
+              "ghost": true,
+              "owner": 0,
+              "clouds": 1
+            }
+          ]
+        },
+        "bombs": [],
+        "clouds": [
+          {
+            "ghost": true,
+            "owner": 0,
+            "pos": [
+              0.11,
+              4.6,
+              -3.3049999999999793
+            ],
+            "visible": true,
+            "t": 0.9833333333333347
+          }
+        ]
+      }
+    ]
+  },
+  "attempts": [
+    {
+      "path": "baseline-attempt1/result.json",
+      "outcome": "first +2 case never activated during native spawn; +30 and +600 reproduced. Rerun after 120 native frames."
+    },
+    {
+      "path": "candidate-attempt1-http-interception/result.json",
+      "outcome": "HTTP observation interception attempt: Chromium ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS at local WebSocket connect; zero relay connections. Interception removed for native-HTTP attempt; no permissions, security flags, auth or access settings changed."
+    }
+  ],
+  "unitChecks": {
+    "baselineUntouched": {
+      "tests": 24,
+      "passed": 24
+    },
+    "candidateUntouched": {
+      "tests": 30,
+      "passed": 28,
+      "failed": 2,
+      "reason": "two Storm quota fixtures serialize use and birth without the existing throw event now required by the patch"
+    },
+    "evidenceOnlyQuotaFixturesWithThrow": {
+      "source": {
+        "tests": 2,
+        "passed": 2
+      },
+      "minified": {
+        "tests": 2,
+        "passed": 2
+      }
+    }
+  }
+}
