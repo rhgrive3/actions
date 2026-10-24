@@ -19,6 +19,12 @@ const closureHashes = new Map([
     "095dd539c7a7d95cfc90067086e23f32dfe4d26dd2af4d7db5173a64a8fee631"
   ]
 ]);
+// Classic worker scripts that KTX2Loader fetches as text into a Blob Worker.
+// They run outside the module graph and cannot load this helper; their
+// Emscripten code generation is reviewed for this exact vendored file only.
+const sealedWorkerScripts = new Map([
+  ['vendor/three/jsm/libs/basis/basis_transcoder.js', '8478b5b6d6b74e7d3082b89f6417321d8d1dc0307f2b30d4484bb11b441696a1'],
+]);
 const clean = value => JSON.parse(JSON.stringify(value, (key, item) => ['start', 'end', 'loc', 'raw'].includes(key) ? undefined : item));
 // These complete QA URL expressions were included in the current graph review.
 const reviewedURLs = new Map([
@@ -26,6 +32,9 @@ const reviewedURLs = new Map([
   ['patches/local-quality/quality-probe.mjs', ['src/config.js']],
 ].map(([file, paths]) => [file, paths.map(target => JSON.stringify(clean(parse(
   `new URL(${JSON.stringify(target)}, document.baseURI).href`, { ecmaVersion: 'latest', sourceType: 'module' }).body[0].expression)))]));
+// KTX2Loader starts its transcoder as a Blob Worker built from its own worker
+// function and the sealed transcoder script: `new Worker(this.workerSourceURL)`.
+reviewedURLs.set('vendor/three/jsm/loaders/KTX2Loader.js', [JSON.stringify(clean(parse('this.workerSourceURL', { ecmaVersion: 'latest', sourceType: 'module' }).body[0].expression))]);
 export function reviewedLoaderClosure(file, source) {
   const nodes = [], parents = new WeakMap();
   const visit = (node, parent) => { if (!node?.type) return; nodes.push(node); parents.set(node, parent);
@@ -71,6 +80,7 @@ export function reviewedAudioOrphanDecision(authoredSource, modules, composedOwn
   const sites = new Map(); let reference = null, parseFailure = null;
   for (const [file, source] of modules) {
     if (file === REVIEWED_AUDIO_ORPHAN) continue;
+    if (sealedWorkerScripts.get(file) === createHash('sha256').update(source).digest('hex')) continue;
     let ast; try { ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module' }); }
     catch { parseFailure = file; break; }
     const walk = node => {

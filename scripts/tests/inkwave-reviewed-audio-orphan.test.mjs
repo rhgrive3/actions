@@ -141,3 +141,17 @@ test('only the three reviewed complete QA URL expressions bypass opaque-site ret
     assert.equal(decide(`import(new URL('${target}', nextBase).href);`,file).omit,false);
   }
 });
+
+test('the vendored KTX2 transcoder worker is exempt only as its exact reviewed bytes', () => {
+  const transcoderPath = 'vendor/three/jsm/libs/basis/basis_transcoder.js';
+  const transcoder = fs.readFileSync(new URL('../../inkwave-public/' + transcoderPath, import.meta.url), 'utf8');
+  assert.equal(decide(transcoder, transcoderPath).omit, true, 'sealed classic worker script');
+  assert.equal(decide(transcoder + '\n', transcoderPath).omit, false, 'changed transcoder bytes are scanned again');
+  assert.equal(decide('new Function("x")', transcoderPath).omit, false);
+});
+test('KTX2Loader may start only its own Blob worker URL', () => {
+  const loaderPath = 'vendor/three/jsm/loaders/KTX2Loader.js';
+  assert.equal(decide('class K { init() { return new Worker(this.workerSourceURL); } }', loaderPath).omit, true);
+  assert.equal(decide('class K { init() { return new Worker(this.otherURL); } }', loaderPath).omit, false);
+  assert.equal(decide('class K { init() { return new Worker(this.workerSourceURL); } }', 'src/probe.js').omit, false, 'the exemption is not global');
+});
