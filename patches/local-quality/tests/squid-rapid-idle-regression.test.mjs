@@ -37,6 +37,9 @@ test('rapid squid-button changes settle into genuine human and squid idle at 30/
 
     for (let tap = 0; tap < 24; tap++) {
       const before = [c.kidScale, c.sqScale], points = sourced ? renderedSquid() : null;
+      const shape = [c.kidSY, c.kidSXZ, c.sqSY, c.sqSXZ, c.kidLift];
+      const pivot = c.squid.pivot.scale.toArray();
+      const interrupted = c.formT < 0.45;
       actor.form = tap % 2 === 0 ? 'squid' : 'kid';
       actor.submerged = false;
       step(0); // A same-frame reversal must not change the rendered shape.
@@ -46,6 +49,16 @@ test('rapid squid-button changes settle into genuine human and squid idle at 30/
         const after = renderedSquid();
         assert(Math.max(...after.map((v, i) => Math.abs(v - points[i]))) < 1e-6,
           'source squid vertices remain continuous at input edge');
+      }
+      if (!sourced && interrupted) {
+        const current = [c.kidSY, c.kidSXZ, c.sqSY, c.sqSXZ, c.kidLift];
+        assert(Math.max(...current.map((v, i) => Math.abs(v - shape[i]))) < 1e-8,
+          'native fallback retains visible squash, stretch and lift on reversal');
+        if (before[1] > 0.001) {
+          const now = c.squid.pivot.scale.toArray();
+          assert(Math.max(...now.map((v, i) => Math.abs(v - pivot[i]))) < 1e-6,
+            'native squid mesh preserves world-visible stretch on reversal');
+        }
       }
       step();
       step();
