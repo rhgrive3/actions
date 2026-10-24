@@ -24,7 +24,7 @@ test('whole-tree admission permits only named QA controls, never production, rep
   const changed=base.map(x=>({...x}));const found=changed.find(x=>x.path===name);if(found)found.sha='b'.repeat(40);else changed.push(row(name));assert.throws(()=>assertReviewedTree(base,changed));
  }
  for(const name of CONTROL_PATHS)assert.throws(()=>assertReviewedTree(base,base.filter(x=>x.path!==name)),/every closed QA control must exist/);
- assert.equal(CONTROL_PATHS.length,16);
+ assert.equal(CONTROL_PATHS.length,19);
  assert.throws(()=>assertReviewedTree(base,base.map(x=>x.path===allowed?{...x,mode:'100755'}:x)));
  assert.throws(()=>assertReviewedTree(base,[...base,{...base[0]}]));
  assert.equal(new Set(CONTROL_PATHS).size,CONTROL_PATHS.length);assert.equal(PAINT_PATHS.length,13);assert.equal(new Set(PAINT_PATHS).size,13);
@@ -138,7 +138,7 @@ test('explicit controls inside excluded test directories remain mandatory physic
 
 test('every closed QA control is a mandatory physical input, not a sparse metadata exemption',()=>withRepo(({root,g,put})=>{
  for (const rel of CONTROL_PATHS) put(rel, '// committed QA control fixture\n');
- g('add','.');g('commit','-qm','all sixteen controls');const commit=g('rev-parse','HEAD');
+ g('add','.');g('commit','-qm','all nineteen controls');const commit=g('rev-parse','HEAD');
  const clean=readCheckout(root,commit);
  for (const rel of CONTROL_PATHS) {
   const file=path.join(root,rel),bytes=fs.readFileSync(file);
@@ -246,4 +246,25 @@ for (const testCase of cases) await t.test(testCase.name, async () => {
 });
 
  } finally {fs.rmSync(temporary,{recursive:true,force:true});}
+});
+
+// Only three reviewed historical and workflow QA inputs expand the closed control set.
+test('historical and workflow fixture admission names exactly three QA inputs and retains production exclusions',()=>{
+ const added=['scripts/fixtures/inkwave-historical-05eb-1862-leaves.json','scripts/tests/inkwave-31pr-paint-source-pair.test.mjs','scripts/tests/continuous-browser-video.test.mjs'];
+ const historical=CONTROL_PATHS.filter(name=>!added.includes(name));
+ assert.equal(historical.length,16);
+ for(const name of added)assert.equal(CONTROL_PATHS.filter(value=>value===name).length,1);
+ const reviewed=[row('patches/network-replication/adapter.mjs'),row('patches/splatoon3/adapter.mjs'),...historical.map(name=>row(name)),row(added[1]),row(added[2])];
+ const actual=[...reviewed.map(value=>added.includes(value.path)?{...value,sha:'b'.repeat(40)}:{...value}),row(added[0],'c'.repeat(40))];
+ assertReviewedTree(reviewed,actual);
+ for(const rel of [...PAINT_PATHS,'patches/splatoon3/adapter.mjs','scripts/lib/inkwave-main-ink-baseline.mjs','scripts/lib/inkwave-character-pose-baseline.mjs','scripts/fixtures/unreviewed-epoch.json','scripts/tests/unreviewed-epoch.test.mjs']){
+  const changed=actual.map(value=>({...value})),found=changed.find(value=>value.path===rel);
+  if(found)found.sha='d'.repeat(40);else changed.push(row(rel,'d'.repeat(40)));
+  assert.throws(()=>assertReviewedTree(reviewed,changed),/unreviewed tree delta/,rel);
+ }
+ for(const rel of added){
+  assert.throws(()=>assertReviewedTree(reviewed,actual.filter(value=>value.path!==rel)),/every closed QA control must exist/);
+  assert.throws(()=>assertReviewedTree(reviewed,actual.map(value=>value.path===rel?{...value,mode:'100755'}:value)),/control mode/);
+  assert.throws(()=>assertReviewedTree(reviewed,actual.map(value=>value.path===rel?{...value,type:'commit'}:value)));
+ }
 });
