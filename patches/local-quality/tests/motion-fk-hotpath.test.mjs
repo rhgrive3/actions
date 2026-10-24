@@ -215,6 +215,8 @@ test('real source motion preserves every frame at 30/60/120 Hz and irregular/pau
     totals.forEach((_,i)=>totals[i]+=counts[i]);
   }
   assert.ok(states.has('move')&&states.has('idle')&&states.has('air'),JSON.stringify([...states]));
-  assert.ok(clips.size>=8, 'real clip coverage');assert.ok(totals[1]<totals[0]*.95,'fewer complete FK evaluations');
+  assert.ok(clips.size>=8, 'real clip coverage');
+   console.log(JSON.stringify({fixture:'full FK operations after form reversal',fkBefore:totals[0],fkAfter:totals[1],saved:totals[0]-totals[1],reduction:1-totals[1]/totals[0]}));
+   assert.ok(totals[1]<totals[0]*.95,`fewer complete FK evaluations: before=${totals[0]} after=${totals[1]}`);
   console.log(JSON.stringify({fixture:'real source-loaded Character; exact before/after, not device FPS',compared,states:[...states],clips:clips.size,fkBefore:totals[0],fkAfter:totals[1],reduction:1-totals[1]/totals[0]}));
 });
