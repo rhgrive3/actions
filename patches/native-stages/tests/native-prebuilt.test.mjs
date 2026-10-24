@@ -136,16 +136,18 @@ if (!vm.SourceTextModule) {
     await assert.rejects(load(await loader(short.files), short.entry, 's'), /faces incomplete/);
   });
 
-  async function textures({ktx2Fails = false, abort = false, quality = 'balanced'} = {}) {
-    const calls = {bitmaps: 0, parsed: 0, warned: [], packs: [], slices: []}, signal = {aborted: false};
+  async function harness({ktx2Fails = false, abort = false, parse = null} = {}) {
+    const calls = {bitmaps: 0, parsed: 0, warned: [], packs: [], slices: [], resized: [], disposedLoaders: 0}, signal = {aborted: false};
     class Texture { constructor(image) { this.image = image; } dispose() { this.disposed = true; } }
     const context = vm.createContext({Map, Blob, Uint8Array, DOMException, URL, location: {href: 'https://game.test/_versions/r/index.html'},
       console: {warn: m => calls.warned.push(m)},
-      createImageBitmap: async () => { calls.bitmaps++; return {width: 64, height: 64, close() {}}; }});
+      createImageBitmap: async (_, options) => { if (options?.resizeWidth) calls.resized.push(options.resizeWidth); else calls.bitmaps++; return {width: options?.resizeWidth || 2048, height: options?.resizeHeight || 2048, close() {}}; },
+      OffscreenCanvas: class { getContext() { return {drawImage() {}, getImageData: (x, y, w, h) => ({data: new Uint8ClampedArray(w * h * 4).fill(128)})}; } }});
     const make = values => { const m = new vm.SyntheticModule(Object.keys(values), function () { for (const [k, v] of Object.entries(values)) this.setExport(k, v); }, {context}); return m; };
     const ready = async m => { await m.link(() => { throw Error('unexpected'); }); await m.evaluate(); return m; };
-    class KTX2Loader { setTranscoderPath() { return this; } detectSupport() { return this; } dispose() {}
+    class KTX2Loader { setTranscoderPath() { return this; } detectSupport() { return this; } dispose() { calls.disposedLoaders++; }
       parse(bytes, onLoad, onError) { calls.parsed++; calls.slices.push(Array.from(new Uint8Array(bytes))); if (abort) signal.aborted = true;
+        if (parse) return parse(onLoad, onError);
         if (ktx2Fails) return onError(Error('transcoder unavailable'));
         onLoad({isCompressedTexture: true, image: {width: 2048, height: 2048}, mipmaps: [2048, 1024, 512, 256].map(n => ({width: n, height: n, data: new Uint8Array(1)})), dispose() {}}); } }
     const dynamic = {
@@ -158,11 +160,18 @@ if (!vm.SourceTextModule) {
     const m = new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/native-load.mjs', import.meta.url), 'utf8'), {context,
       importModuleDynamically: async spec => ready(make(dynamic[spec]))});
     await m.link(async name => make(mods[name])); await m.evaluate();
-    const data = {manifest: {materials: {m: {albedo: 'a.png', maps: {}, channels: {}}, n: {albedo: 'b.png', maps: {}, channels: {}}},
+    return {calls, signal, m};
+  }
+  async function textures({quality = 'balanced', limit = {maxDimension: 1024, perRole: {}}, renderer = {capabilities: {getMaxAnisotropy: () => 16}}, normal = false, ...options} = {}) {
+    const {calls, signal, m} = await harness(options);
+    const data = {manifest: {materials: {m: {albedo: 'a.png', maps: normal ? {normal: 'n.png'} : {}, channels: {}}, n: {albedo: 'b.png', maps: {}, channels: {}}},
       prebuiltTextures: {'a.png': {albedo: {pack: 'packs/p.bin', offset: 2, bytes: 3, sha256: 'x'}}, 'b.png': {albedo: {pack: 'packs/p.bin', offset: 5, bytes: 2, sha256: 'y'}}},
       prebuiltTexturePacks: [{file: 'packs/p.bin', group: 'color', bytes: 8, sha256: 'z'}]}, integrity: {}};
+    if (normal) data.manifest.prebuiltTextures['n.png'] = {normal: {pack: 'packs/p.bin', offset: 0, bytes: 2, sha256: 'w'}};
     let result, error;
-    try { result = await m.namespace.loadNativeTextures('fixture', data, {capabilities: {getMaxAnisotropy: () => 16}}, quality, signal, {maxDimension: 1024, perRole: {}}); }
+    const run = (r = renderer, s = signal) => m.namespace.loadNativeTextures('fixture', data, r, quality, s, limit);
+    if (options.manual) return {calls, run, signal};
+    try { result = await run(); }
     catch (e) { error = e; }
     return {calls, result, error};
   }
@@ -187,6 +196,46 @@ if (!vm.SourceTextModule) {
     assert.equal(aborted.error?.name, 'AbortError');
     assert.equal(aborted.calls.bitmaps, 0);
   });
+  const compressed = (n = 1024) => ({isCompressedTexture: true, image: {width: n, height: n}, mipmaps: [{width: n, height: n, data: new Uint8Array(1)}], dispose() {}});
+  test('a renderer replacement waits for pending KTX2 parses before disposing the old loader', async () => {
+    const waiting = [];
+    const {calls, run} = await textures({manual: true, parse: (onLoad, onError) => waiting.push({onLoad, onError})});
+    const first = run({capabilities: {getMaxAnisotropy: () => 16}});
+    await new Promise(r => setTimeout(r, 0));
+    assert.equal(waiting.length, 2, 'two transcodes in flight on the first loader');
+    const second = run({capabilities: {getMaxAnisotropy: () => 16}});
+    await new Promise(r => setTimeout(r, 0));
+    assert.equal(calls.disposedLoaders, 0, 'old loader kept while its parses are pending');
+    for (const w of waiting.splice(0, 2)) w.onLoad(compressed());
+    assert.equal((await first).size, 2);
+    await new Promise(r => setTimeout(r, 0));
+    assert.equal(calls.disposedLoaders, 1, 'retired loader disposed once its parses settled');
+    for (const w of waiting.splice(0)) w.onLoad(compressed());
+    assert.equal((await second).size, 2);
+  });
+  test('an abort during a KTX2 transcode settles the load; the late texture is disposed', async () => {
+    const waiting = [], controller = new AbortController();
+    const {run} = await textures({manual: true, parse: onLoad => waiting.push(onLoad)});
+    const pending = run(undefined, controller.signal);
+    await new Promise(r => setTimeout(r, 0));
+    controller.abort();
+    await assert.rejects(pending, {name: 'AbortError'});
+    const late = compressed(); let disposed = false; late.dispose = () => { disposed = true; };
+    waiting[0](late);
+    assert.equal(disposed, true);
+  });
+  test('relieved touch budgets fall back to the uncompressed budget for PNG and RGBA32 output', async () => {
+    const fallback = {quality: 'balanced', maxDimension: 512, perRole: {}};
+    const limit = {maxDimension: 4096, perRole: {}, fallback};
+    const failed = await textures({quality: 'high', limit, normal: true, ktx2Fails: true});
+    assert.equal(failed.error, undefined);
+    assert.equal(failed.result.has('n.png'), false, 'balanced fallback drops the high-only normal map');
+    assert.deepEqual(failed.calls.resized, [512, 512], 'albedo PNGs decode at the fallback cap');
+    const rgba = await textures({quality: 'high', limit, parse: onLoad => onLoad({isCompressedTexture: false, image: {width: 2048, height: 2048}, mipmaps: [], dispose() {}})});
+    assert.equal(rgba.error, undefined);
+    assert.equal(rgba.calls.bitmaps, 2, 'uncompressed KTX2 output is replaced by the budgeted PNG path');
+    assert.match(rgba.calls.warned[0], /transcoded uncompressed/);
+  });
 }
 
 // CI scripts read `git ls-tree -r -z` with Node's default 1 MiB buffer; one
@@ -196,4 +245,22 @@ test('committed prebuilt data stays a few hundred files', () => {
   try { listing = execFileSync('git', ['ls-files', '-z', '--', 'native-prebuilt'], {cwd: fileURLToPath(new URL('../../..', import.meta.url)), encoding: 'utf8'}); }
   catch { return; }
   assert.ok(listing.split('\0').filter(Boolean).length <= 800, 'pack textures instead of tracking one file each');
+});
+
+// Every builder helper under scripts/lib, including ones reached only through
+// another helper, must be part of the build input identity.
+test('builder input identity hashes every scripts/lib helper it runs', () => {
+  const scripts = fileURLToPath(new URL('../../../scripts/', import.meta.url));
+  const builder = fs.readFileSync(path.join(scripts, 'build-inkwave.mjs'), 'utf8');
+  const reached = new Set(), queue = ['build-inkwave.mjs'];
+  while (queue.length) {
+    const file = queue.pop(), source = fs.readFileSync(path.join(scripts, file), 'utf8');
+    for (const [, spec] of source.matchAll(/^\s*import\s[^'"]*['"](\.{1,2}\/[^'"]+)['"]/gm)) {
+      const target = path.relative(scripts, path.resolve(path.dirname(path.join(scripts, file)), spec));
+      if (target.startsWith('lib' + path.sep) && !reached.has(target)) { reached.add(target); queue.push(target); }
+    }
+  }
+  assert.ok(reached.has(path.join('lib', 'inkwave-native-prebuilt.mjs')));
+  const unhashed = [...reached].filter(file => !builder.includes(`'${file.split(path.sep).join('/')}'`));
+  assert.deepEqual(unhashed, [], 'add these helpers to identity.files in build-inkwave.mjs');
 });

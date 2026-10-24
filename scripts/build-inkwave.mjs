@@ -679,6 +679,8 @@ for (const [file, hash] of Object.entries(nativeSourceIdentity)) identity.files[
 identity.build.nativeStages = nativePrepared?.config || null;
 identity.build.volumePackaging=volumePackaging;
 identity.files['build-script/lib/inkwave-native-stages.mjs'] = sha256(fs.readFileSync(new URL('lib/inkwave-native-stages.mjs', import.meta.url)));
+// Decides which prebuilt payloads are admitted and copied.
+identity.files['build-script/lib/inkwave-native-prebuilt.mjs'] = sha256(fs.readFileSync(new URL('lib/inkwave-native-prebuilt.mjs', import.meta.url)));
 if (accountBundle) identity.build.account = accountBundle;
 identity.inputHash = sha256(JSON.stringify(identity.files));
 fs.writeFileSync(path.join(BUILD, 'inkwave-build.json'), JSON.stringify(identity, null, 2) + '\n');

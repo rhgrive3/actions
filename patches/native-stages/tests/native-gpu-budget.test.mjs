@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   nativeGpuTier, recordNativeContextLoss, nativeRenderCaps, nativeTextureQuality, nativeTierTextureCaps,
   capQuality, setNativeRenderBudget, setNativeShadowSize, applyNativeGpuBudget, watchNativeContextLoss, NATIVE_GPU_MAX_TIER,
+  nativeTextureProfile, nativeCompressedTextureSupport,
 } from '../runtime/native-gpu-budget.mjs';
 
 const memoryStore = () => { const m = new Map(); return { getItem: k => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)), map: m }; };
@@ -125,4 +126,21 @@ test('context loss on a native stage records a step-down once per canvas', () =>
   } finally {
     if (previous) Object.defineProperty(globalThis, 'localStorage', previous); else delete globalThis.localStorage;
   }
+});
+
+test('touch texture relief requires compressed output and keeps the uncompressed budget as fallback', () => {
+  const stageCaps = quality => ({ maxDimension: quality === 'high' ? 2048 : 1024, perRole: { normal: 512 } });
+  const plain = nativeTextureProfile({ settingsQuality: 'high', tier: 0, touch: true, compressed: false, stageCaps });
+  assert.equal(plain.quality, 'balanced');
+  assert.equal(plain.caps.fallback, undefined);
+  const relieved = nativeTextureProfile({ settingsQuality: 'high', tier: 0, touch: true, compressed: true, stageCaps });
+  assert.equal(relieved.quality, 'high');
+  assert.deepEqual(relieved.caps.fallback, { quality: 'balanced', maxDimension: 1024, perRole: { normal: 512 } });
+  const desktop = nativeTextureProfile({ settingsQuality: 'high', tier: 0, touch: false, compressed: true, stageCaps });
+  assert.deepEqual([desktop.quality, desktop.caps.fallback], ['high', undefined]);
+  const has = names => ({ extensions: { has: name => names.includes(name) } });
+  assert.equal(nativeCompressedTextureSupport(has(['WEBGL_compressed_texture_astc'])), true);
+  assert.equal(nativeCompressedTextureSupport(has(['WEBGL_compressed_texture_etc'])), true);
+  assert.equal(nativeCompressedTextureSupport(has(['WEBGL_compressed_texture_etc1', 'WEBGL_compressed_texture_pvrtc'])), false, 'ETC1 and PVRTC cannot carry every UASTC map');
+  assert.equal(nativeCompressedTextureSupport(null), false);
 });

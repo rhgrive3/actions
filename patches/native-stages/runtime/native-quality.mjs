@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {loadNativeTextures} from './native-load.mjs';
 import {nativeStageTextureCaps} from './native-texture-budget.mjs';
-import {capQuality,nativeRenderCaps,nativeTextureQuality,nativeTierTextureCaps} from './native-gpu-budget.mjs';
+import {capQuality,nativeRenderCaps,nativeTextureProfile,nativeCompressedTextureSupport} from './native-gpu-budget.mjs';
 
 // A texture profile is owned by one loaded data object, not just a stage name.
 // All caps matter: equal top-level size does not imply equal normal-map size.
@@ -31,15 +31,15 @@ export async function applyNativeQuality(game,settings,mobile,deps){
  const ranked=G.match?.rankedWorld,face=ranked?.towerPaintFace,u=ranked?.towerInkMaterial?.uniforms;
  if(face?.atlas&&u){const a=face.atlas,S=G.paint.size;u.uPaint.value=G.paint.texture;u.uAtlasOrigin.value.set((a.x+a.pad)/S,(a.y+a.pad)/S);u.uAtlasScale.value.set(face.su*a.ppm/S,face.sv*a.ppm/S);}
  updateEnvironmentShadowQuality(G.env,q.shadowSize,game.shadowCache);updateFXQuality(G.fx,q.particles,THREE);
- const textureTouch=!!mobile?.touch&&!world.level.data.manifest?.prebuiltTextures;
- const quality=nativeTextureQuality(settings.quality,tier,textureTouch);
- game._builtQuality=settings.quality;
  const data=world.level.data;
- const caps=nativeTierTextureCaps(nativeStageTextureCaps(data.manifest,quality,{
-  mobile:!!mobile?.touch,
-  deviceMemoryGB:typeof navigator==='undefined'?null:navigator.deviceMemory,
-  maxTextureSize:G.renderer.capabilities.maxTextureSize
- }),tier,textureTouch);
+ game._builtQuality=settings.quality;
+ const {quality,caps}=nativeTextureProfile({settingsQuality:settings.quality,tier,touch:!!mobile?.touch,
+  compressed:!!data.manifest?.prebuiltTextures&&nativeCompressedTextureSupport(G.renderer),
+  stageCaps:q=>nativeStageTextureCaps(data.manifest,q,{
+   mobile:!!mobile?.touch,
+   deviceMemoryGB:typeof navigator==='undefined'?null:navigator.deviceMemory,
+   maxTextureSize:G.renderer.capabilities.maxTextureSize
+  })});
  world.metrics.atlas=G.paint.size;world.metrics.ppm=G.paint.ppm;
  const previous=world.qualityOperation;
  // Coalesce the same request without invalidating the current publisher.

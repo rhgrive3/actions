@@ -44,17 +44,19 @@ export async function loadNativeData(id,signal,options={}){
  if(manifest.schema!==1||manifest.id!==id||data.triangles.length/9!==manifest.geometry.collisionTriangles||data.triangleFace.length!==manifest.geometry.collisionTriangles||data.mask.length!==manifest.gridCells)throw Error('Unsupported native asset schema: '+id);
  return data;
 }
-// Loaded only for stages that ship KTX2 textures.
+// Loaded only for stages that ship KTX2 textures. A loader is bound to one
+// renderer; a replaced loader is disposed only after its pending parses
+// settle, because disposing the worker pool drops their callbacks.
 let ktx2=null;
-async function ktx2Loader(renderer){
+function ktx2Loader(renderer){
  if(ktx2?.renderer!==renderer){
-  const previous=ktx2;
-  ktx2={renderer,loader:import('../../../vendor/three/jsm/loaders/KTX2Loader.js').then(({KTX2Loader})=>
+  if(ktx2){ktx2.retired=true;releaseKtx2(ktx2);}
+  ktx2={renderer,pending:0,retired:false,loader:import('../../../vendor/three/jsm/loaders/KTX2Loader.js').then(({KTX2Loader})=>
    new KTX2Loader().setTranscoderPath(new URL('vendor/three/jsm/libs/basis/',globalThis.document?.baseURI||globalThis.location?.href).href).detectSupport(renderer))};
-  previous?.loader.then(l=>l.dispose(),()=>{});
  }
- return ktx2.loader;
+ return ktx2;
 }
+function releaseKtx2(entry){if(entry.retired&&!entry.pending)entry.loader.then(l=>l.dispose(),()=>{});}
 // Textures ship as whole KTX2 slices of per-stage packs. One load fetches a
 // pack once (verified) and drops it after its last listed texture is taken.
 function prebuiltPacks(stage,rows){
@@ -72,8 +74,20 @@ function prebuiltPacks(stage,rows){
 }
 async function prebuiltCompressedTexture(variant,packs,renderer,signal){
  const bytes=await packs.slice(variant,signal);
- const loader=await ktx2Loader(renderer);
- return new Promise((resolve,reject)=>loader.parse(bytes,resolve,reject));
+ const entry=ktx2Loader(renderer);entry.pending++;
+ try{
+  const loader=await entry.loader;
+  // The transcode cannot be cancelled. An abort settles this call at once;
+  // a texture that still arrives afterwards is disposed, never published.
+  return await new Promise((resolve,reject)=>{
+   let settled=false;
+   const settle=(fn,value)=>{if(settled)return false;settled=true;signal?.removeEventListener?.('abort',onAbort);fn(value);return true;};
+   const onAbort=()=>settle(reject,new DOMException('Aborted','AbortError'));
+   if(signal?.aborted)return onAbort();
+   signal?.addEventListener?.('abort',onAbort,{once:true});
+   loader.parse(bytes,texture=>{if(signal?.aborted)onAbort();if(!settle(resolve,texture))texture?.dispose?.();},error=>settle(reject,error));
+  });
+ }finally{entry.pending--;releaseKtx2(entry);}
 }
 /** Same bound as the PNG path's resize: start the chain at the first level within the cap. */
 export function capMipLevels(texture,limit){
@@ -85,6 +99,7 @@ export function capMipLevels(texture,limit){
 export async function loadNativeTextures(id,data,renderer,quality,signal,textureLimit,previousTextures=null){
  const cap=textureLimit && typeof textureLimit==='object' ? textureLimit.maxDimension : textureLimit;
  const roleCaps=textureLimit && typeof textureLimit==='object' ? textureLimit.perRole : null;
+ const fallback=textureLimit && typeof textureLimit==='object' ? textureLimit.fallback||null : null;
  const jobs=new Map(),textures=new Map(),limit=Math.min(cap||Infinity,quality==='low'?512:quality==='high'?4096:1024);
  textures._nativeBorrowed=new Set();
  // A source export can contain hundreds of textures for inactive/unrendered objects.
@@ -130,7 +145,7 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
  let next=0;const packs=prebuiltPacks(data,rows);
  const worker=async()=>{try{while(next<rows.length){
   checkAbort();
-  const [file,job]=rows[next++],{role}=job;
+  const [file,rowJob]=rows[next++],{role}=rowJob;let job=rowJob;
   const borrowed=previousTextures?.get(file);
   if(canBorrowTexture(borrowed,data,file,job,renderer)){textures._nativeBorrowed.add(borrowed);for(const alias of job.aliases)textures.set(alias,borrowed);continue;}
   let {encoding}=job;
@@ -141,14 +156,24 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
    let texture;
    try{
     texture=await prebuiltCompressedTexture(variant,packs,renderer,signal);checkAbort();
+    // Without a compressed target the transcoder returns RGBA32; the relaxed
+    // touch budget only holds for compressed output.
+    if(fallback&&!texture.isCompressedTexture)throw Error('KTX2 transcoded uncompressed');
     capMipLevels(texture,job.roleLimit);
     texture.colorSpace=['albedo','emissive'].includes(role)?THREE.SRGBColorSpace:THREE.NoColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;rememberTextureInput(texture,data,file,job);for(const alias of job.aliases)textures.set(alias,texture);texture=null;
     continue;
    }catch(error){
     // Abort and earlier failures still stop the pipeline; otherwise use the pinned PNG.
     if(error?.name==='AbortError'||signal?.aborted||failure)throw error;
-    console.warn('[native] prebuilt texture unavailable, decoding source PNG: '+variant.file+' '+error.message);
+    console.warn('[native] prebuilt texture unavailable, decoding source PNG: '+variant.pack+'@'+variant.offset+' '+error.message);
    }finally{texture?.dispose();}
+   // A PNG decode keeps the uncompressed budget this load was relieved from.
+   if(fallback){
+    const allowed=fallback.quality==='high'||['albedo','opacity'].includes(role);
+    if(!allowed)continue;
+    const roleLimit=Math.min(job.roleLimit,fallback.maxDimension||Infinity,fallback.perRole?.[role]||Infinity,fallback.quality==='low'?512:fallback.quality==='high'?4096:1024);
+    if(roleLimit!==job.roleLimit)job={...job,roleLimit};
+   }
   }
   const buffer=await verified(id,file,data.integrity,signal);checkAbort();const blob=new Blob([buffer],{type:'image/png'});
   let bitmap,texture,transferred=false;

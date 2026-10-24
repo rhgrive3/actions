@@ -10,7 +10,7 @@ import { NativePhysics } from './native-physics.mjs';
 import { nativeDisplay,nativeInkGeometry,nativeInkMaterial } from './native-render.mjs';
 import { NativeInkMesh } from './native-ink-chunks.mjs';
 import { nativeStageTextureCaps } from './native-texture-budget.mjs';
-import { nativeGpuTier,nativeRenderCaps,nativeTextureQuality,nativeTierTextureCaps,applyNativeGpuBudget,watchNativeContextLoss } from './native-gpu-budget.mjs';
+import { nativeGpuTier,nativeRenderCaps,nativeTextureProfile,nativeCompressedTextureSupport,applyNativeGpuBudget,watchNativeContextLoss } from './native-gpu-budget.mjs';
 import {sourceLoadingStatus,showNativeWorldRecovery} from './source-menu.mjs';
 
 // Snapshot keeps the previous playable world alive until every fallible
@@ -60,15 +60,16 @@ export async function buildNativeWorld(game,map,current){
   status.update('textures');
   const level=new NativeLevel(data),physics=new NativePhysics(level);
   // A previous context loss on a native stage lowers this load's budget.
-  // Touch devices start one texture step lower unless the stage ships
-  // GPU-compressed (KTX2) textures, which take about a quarter of the memory.
-  const textureTouch=!!game.mobile?.touch&&!data.manifest.prebuiltTextures;
-  const gpuTier=nativeGpuTier(),quality=nativeTextureQuality(game.settings.quality,gpuTier,textureTouch);
-  const textureCaps=nativeTierTextureCaps(nativeStageTextureCaps(data.manifest,quality,{
-    mobile:!!game.mobile?.touch,
-    deviceMemoryGB:typeof navigator==='undefined'?null:navigator.deviceMemory,
-    maxTextureSize:G.renderer.capabilities.maxTextureSize
-  }),gpuTier,textureTouch);
+  // Touch devices start one texture step lower unless the stage ships KTX2
+  // and this GPU receives it compressed (about a quarter of the memory).
+  const gpuTier=nativeGpuTier();
+  const {quality,caps:textureCaps}=nativeTextureProfile({settingsQuality:game.settings.quality,tier:gpuTier,touch:!!game.mobile?.touch,
+    compressed:!!data.manifest.prebuiltTextures&&nativeCompressedTextureSupport(G.renderer),
+    stageCaps:q=>nativeStageTextureCaps(data.manifest,q,{
+      mobile:!!game.mobile?.touch,
+      deviceMemoryGB:typeof navigator==='undefined'?null:navigator.deviceMemory,
+      maxTextureSize:G.renderer.capabilities.maxTextureSize
+    })});
   const textureLimit=textureCaps.maxDimension;
   const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,textureCaps);pendingTextures=textures;display=nativeDisplay(data,textures,quality);pendingTextures=null;
   if(!current())throw new DOMException('Aborted','AbortError');
