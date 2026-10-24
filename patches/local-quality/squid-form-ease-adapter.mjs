@@ -36,4 +36,6 @@ export function adaptSquidFormEase(rel,code,replaceOnce){
     `    this.formFromKidScale = this.kidScale;
     this.formPrev = this.form; this.form = newForm; this.formT = 0; this.tr[T_FORM] = 0;`,
     'native fallback zero-time reversal starts from displayed silhouette');
- }\n return code;\n}\n
+ }
+ return code;
+}
