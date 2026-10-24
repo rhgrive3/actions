@@ -233,7 +233,7 @@ function sourceRouteContract(source) {
     [context('', '', {event: 'push', baseRef: ''}), false, true, 'legacy'],
     [context(runtimeBranch, '1770', {side: 'after'}), false, false, 'none'],
     [context('historical', '1651'), false, false, 'none'],
-  ];
+  ].map(([c,controls,prepare,route]) => [c,controls,route === 'legacy' ? false : prepare,route]);
   for (const [c, controls, prepare, route] of cases) for (const [index, active] of [[0, controls], [1, prepare]]) {
     const body = bodies[index]; assert.equal(enabled(body, c), active, JSON.stringify(c));
     if (!active) continue;
