@@ -19,7 +19,7 @@ const mode=process.env.INKWAVE_UI_LIFETIME_MINIFY==='1';
 const transformSync=mode?(await import(process.env.ESBUILD_MODULE?pathToFileURL(process.env.ESBUILD_MODULE).href:'esbuild')).transformSync:null;
 const site=process.env.INKWAVE_UI_LIFETIME_SITE;
 class El {
-  constructor(){this.children=[];this.listeners=new Map();this.style={setProperty(k,v){this[k]=v;}};this.names=new Set();this.classList={add:(...n)=>n.forEach(x=>this.names.add(x)),remove:(...n)=>n.forEach(x=>this.names.delete(x)),toggle:(n,v)=>v?this.names.add(n):this.names.delete(n)};}
+  constructor(){this.children=[];this.listeners=new Map();this.style={setProperty(k,v){this[k]=v;}};this.names=new Set();this.classList={add:(...n)=>n.forEach(x=>this.names.add(x)),remove:(...n)=>n.forEach(x=>this.names.delete(x)),toggle:(n,v)=>v?this.names.add(n):this.names.delete(n),contains:n=>this.names.has(n)};}
   appendChild(c){if(c)this.children.push(c);return c;} append(...cs){cs.forEach(c=>this.appendChild(c));} prepend(...cs){this.children.unshift(...cs.filter(Boolean));}
   setAttribute(){} addEventListener(name, fn){const rows=this.listeners.get(name)||[];rows.push(fn);this.listeners.set(name,rows);}
   dispatch(name, event){for(const fn of this.listeners.get(name)||[])fn({preventDefault(){},stopPropagation(){},...event});} querySelector(){return new El();} querySelectorAll(){return [];} remove(){} get offsetWidth(){return 1;}
