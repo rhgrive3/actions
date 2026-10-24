@@ -1,0 +1,1648 @@
+{
+  "schema": 1,
+  "owner": "visual_audio",
+  "baseline": "7f863ea2",
+  "commits": [
+    "3ed1249",
+    "c82bba1"
+  ],
+  "counts": {
+    "already-effective": 18,
+    "implemented": 38,
+    "not-adopted": 8,
+    "needs-evidence": 1
+  },
+  "entries": [
+    {
+      "slug": "showcase-results-hoist-immutable-bomb-plan",
+      "sourcePaths": [
+        "inkwave-public/src/game/showcase.js"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "The composed baseline already uses one frozen RESULT_BOMB_PLAN, including frozen rows; no per-frame plan construction remains."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/added-ui-motion-adapter.mjs",
+        "scripts/inkwave-source-composition.mjs"
+      ],
+      "testEvidence": [],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "rearm-jet-arrow-bgm-on-connectivity-or-gesture-recovery",
+      "sourcePaths": [
+        "inkwave-public/src/audio/audio.js",
+        "inkwave-public/src/audio/music.js",
+        "inkwave-public/src/audio/streamedTrack.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "After the existing two bounded timed retries, transient recorded-BGM failures now rearm on recovery events. NotAllowedError waits for a trusted gesture, unsupported/decode failures do not rearm, and track switch/stop/dispose remove event listeners. Error reasons are forwarded without changing the recording."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: recorded music recovery and owner cleanup"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "music-event-recovery",
+        "music-preload-error-reason",
+        "music-stream-error-reason",
+        "music-recovery-after-retries",
+        "music-cancel-recovery"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "menus-self-raf-duplicates-main-engine-update",
+      "sourcePaths": [
+        "inkwave-public/src/main.js",
+        "inkwave-public/src/ui/menus.js"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "The menu RAF is already cancelled when the engine owns update; standalone menus retain their RAF, and the queued native callback exits once engine ownership is acquired."
+      ],
+      "evidencePaths": [
+        "patches/reliability/menu-raf-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/reliability/tests/queue-network-ui.test.mjs: existing composed regression suite passed"
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "mobile-editor-targeted-reflow-instead-of-all-controls",
+      "sourcePaths": [
+        "inkwave-public/src/core/mobile.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "The editor now lays out only the edited control. Width/height, layout unit or safe-area changes invalidate to the full layout; stick home and editor coordinate display stay synchronized."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: selected mobile geometry vs full layout and safe-area invalidation"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "mobile-single-control-layout",
+        "mobile-edit-scale",
+        "mobile-edit-position"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "showcase-fx-elide-redundant-tail-rescan",
+      "sourcePaths": [
+        "inkwave-public/src/game/showcase.js",
+        "inkwave-public/src/main.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "InkFX, Sparkles and InkTrail use the top index already computed in the forward update instead of rescanning every tail. Expiry, zero counts and upload decisions are retained."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: Sparkles/InkTrail exact matrices, ages and counts at 30/60/120 Hz"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "fx-forward-span",
+        "fx-remove-tail-helper",
+        "fx-forward-tail"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "defer-speculative-reverb-prewarm-until-audio-intent-and-match-sample-rate",
+      "sourcePaths": [
+        "inkwave-public/src/audio/audio.js",
+        "inkwave-public/src/main.js",
+        "patches/splatoon3/audio-adapter.mjs",
+        "patches/splatoon3/runtime/audio/reverb-impulse.mjs",
+        "patches/splatoon3/runtime/audio/reverb-prewarm.mjs",
+        "patches/splatoon3/runtime/audio/reverb-worker.mjs"
+      ],
+      "status": "not-adopted",
+      "reasons": [
+        "Retain eager IR preparation. Starting the one-shot worker only at AudioContext creation guarantees no prepared pair for that same synchronous init; the fallback then renders on the first gesture. The proposal requires measured non-regression of first audible latency, but no Safari/device A/B trace establishes that. take(ctx) already rejects wrong-rate PCM and disposes worker/timer ownership. This is a rejected scheduling change, not a claim that speculative waste is fixed."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/reverb-prewarm.mjs",
+        "patches/splatoon3/runtime/audio/reverb-impulse.mjs",
+        "patches/splatoon3/audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "Source and composed-output review; no browser/device latency or memory acceptance claim."
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "mobile-applysettings-avoid-unrelated-full-touch-relayout",
+      "sourcePaths": [
+        "inkwave-public/src/core/mobile.js",
+        "inkwave-public/src/main.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "applySettings caches root/scale/stick mode as layout inputs and only changes opacity when its value changes. Sensitivity, volume or other unrelated settings no longer run a full touch relayout."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: unrelated settings skip layout; geometry settings invalidate"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "mobile-settings-layout"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "lobby-drip-skip-empty-instance-matrix-dirty",
+      "sourcePaths": [
+        "inkwave-public/src/game/lobbySet.js",
+        "inkwave-public/src/game/showcase.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Empty lobby drip updates still set count to zero but no longer dirty the instance matrix; nonempty drips retain the upload."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: parse, exact-anchor composition and idempotence"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "drip-empty-upload"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "bind-default-fetch-for-recorded-charger-rise-safari",
+      "sourcePaths": [
+        "patches/splatoon3/runtime/audio/authorized-samples.mjs",
+        "patches/splatoon3/runtime/audio/charger-charge-rise.mjs",
+        "patches/splatoon3/runtime/audio/engine.mjs",
+        "patches/splatoon3/runtime/audio/real-s3-loader.mjs"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "The default Charger-rise fetch is bound to globalThis, preserving WebKit Window.fetch receiver requirements while leaving injected fetchers unchanged."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/charger-charge-rise.mjs"
+      ],
+      "testEvidence": [
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "changedPaths": [
+        "patches/splatoon3/runtime/audio/charger-charge-rise.mjs",
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "adapterLabels": [],
+      "commit": "3ed1249",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "lobby-palette-avoid-framewise-css-accent-array-join",
+      "sourcePaths": [
+        "inkwave-public/src/ui/menus.js"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "The current lobby palette key already concatenates scalar palette values; the queued colors().join() allocation no longer occurs."
+      ],
+      "evidencePaths": [
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/reliability/tests/queue-network-ui.test.mjs: 16 tests passed"
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "mobile-pointerdown-cache-touch-hitbox-visibility",
+      "sourcePaths": [
+        "inkwave-public/src/core/mobile.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Hit testing checks cached geometric bounds before reading offsetParent. Far controls never force visibility/layout reads, while a geometrically eligible newly hidden control is still rejected immediately; no stale visibility cache is introduced."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: candidate-only visibility reads and dynamic hidden controls"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "mobile-candidate-visibility"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "showcase-lobby-jumpout-rate-independent-ink-droplets",
+      "sourcePaths": [
+        "inkwave-public/src/core/ctx.js",
+        "inkwave-public/src/fx/fx.js",
+        "inkwave-public/src/game/showcase.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Jumpout droplets now consume the existing bounded 60 Hz cosmetic-trial clock: one reference trial at 60 Hz, two at 30 Hz and alternating trials at 120 Hz. Random call order is retained at 60 Hz; hitches cap work at two trials."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: identical seeded reference trial sequence at 30/60/120 Hz and hitch cap"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "jumpout-reference-clock",
+        "jumpout-fixed-trials"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "gate-recorded-charger-rise-mp3-prefetch-by-weapon-roster",
+      "sourcePaths": [
+        "inkwave-public/src/audio/audio.js",
+        "patches/splatoon3/audio-adapter.mjs",
+        "patches/splatoon3/runtime/audio/charger-charge-rise.mjs",
+        "patches/splatoon3/runtime/audio/engine.mjs",
+        "patches/splatoon3/runtime/audio/runtime.mjs"
+      ],
+      "status": "not-adopted",
+      "reasons": [
+        "Retain eager Charger-rise preload. The existing conditional hooks only warm local selected Chargers; nearby remote charge onset uses the same recording, and prepareWeapon explicitly declines nonurgent remote work. Removing the init warm before an announced-roster owner exists creates a cold late-remote/instant-swap onset gap. The ticket explicitly blocks increased first-onset misses; no such safe readiness gate was demonstrated."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/engine.mjs",
+        "patches/splatoon3/runtime/audio/runtime.mjs",
+        "patches/splatoon3/audio-adapter.mjs",
+        "patches/splatoon3/runtime/audio/charger-charge-rise.mjs"
+      ],
+      "testEvidence": [
+        "Source and composed-output review; no browser/device latency or memory acceptance claim."
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "defer-unneeded-procedural-grain-texture-prewarm",
+      "sourcePaths": [
+        "inkwave-public/src/audio/audio.js",
+        "patches/splatoon3/audio-adapter.mjs",
+        "patches/splatoon3/runtime/audio/grain-prewarm.mjs",
+        "patches/splatoon3/runtime/audio/grain-texture.mjs",
+        "patches/splatoon3/runtime/audio/grain-worker.mjs"
+      ],
+      "status": "not-adopted",
+      "reasons": [
+        "Retain all five grain warm kinds. The realOnly weapon bank does not make native environmental/movement voices unreachable: composed audio still uses squelch, bubbles, bubbles_bright, rain and sizzle, including swim/climb/enemy-ink loops invoked by main. A menu/practice intent boundary with guaranteed lead time is not currently present; delaying to the first loop moves synchronous texture work into first sound. No safe unused-kind proof or required device onset trace exists."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/audio-adapter.mjs",
+        "patches/splatoon3/runtime/audio/grain-prewarm.mjs",
+        "inkwave-public/src/audio/audio.js",
+        "inkwave-public/src/main.js"
+      ],
+      "testEvidence": [
+        "Source and composed-output review; no browser/device latency or memory acceptance claim."
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "settings-audio-muted-preview-skip-18-bar-per-frame-trigonometry",
+      "sourcePaths": [
+        "inkwave-public/src/ui/menu-art.js",
+        "inkwave-public/src/ui/menus.js",
+        "patches/local-quality/menu-preview.mjs"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "The muted audio preview already draws the settled floor once and returns before all eighteen bar trigonometric updates; spectrum factors are already cached."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/added-ui-motion-adapter.mjs"
+      ],
+      "testEvidence": [],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "superjump-charge-drop-reuse-angle-sincos",
+      "sourcePaths": [
+        "inkwave-public/src/fx/fx.js",
+        "inkwave-public/src/fx/fxHooks.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Each SuperJumpCharge droplet reuses one sine and cosine. Particle arguments, random draw order and numeric expression order otherwise remain identical."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: all particle arguments and RNG at 30/60/120 Hz and hitch dt"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "superjump-sincos"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "remove-redundant-noise-buffer-float32-scratch",
+      "sourcePaths": [
+        "inkwave-public/src/audio/music.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "The second DC-filter pass writes each output directly to the channel after retaining the original predecessor sample. This removes the redundant final Float32 copy without changing noise PCM."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: nine white/pink/brown PCM byte comparisons at 8/44.1/48 kHz"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "noise-inplace-dc"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "pad-menu-elide-per-frame-nav-wrapper",
+      "sourcePaths": [
+        "inkwave-public/src/main.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "The gamepad navigation closure now invokes menus.nav directly; the independent editor ownership latch remains intact."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: parse, exact-anchor composition and idempotence"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "pad-nav-wrapper"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "precompute-grain-attack-envelope-float64-with-bitexact-pcm",
+      "sourcePaths": [
+        "patches/splatoon3/runtime/audio/grain-prewarm.mjs",
+        "patches/splatoon3/runtime/audio/grain-texture.mjs"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "The exact attack envelope is calculated once in Float64 storage and reused inside grains; crackle semantics and original multiplication order are preserved."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/grain-texture.mjs"
+      ],
+      "testEvidence": [
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "changedPaths": [
+        "patches/splatoon3/runtime/audio/grain-texture.mjs",
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "adapterLabels": [],
+      "commit": "3ed1249",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "boss-hud-damage-number-projection-output-scratch",
+      "sourcePaths": [
+        "inkwave-public/src/ui/hud-boss.js",
+        "patches/local-quality/adapter.mjs"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Boss damage-number projection reuses a HUD-owned output object instead of allocating one per number per frame. The result is consumed synchronously and never retained by the number."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: parse, exact-anchor composition and idempotence"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "boss-number-scratch"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "gamepad-menu-stick-repeat-elapsed-dt-instead-of-fixed-frame",
+      "sourcePaths": [
+        "inkwave-public/src/main.js",
+        "inkwave-public/src/ui/menus.js"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "The actual composed main already passes bounded elapsed dt into _padMenus and uses it for stick repeat. The editor ownership/neutral handoff remains independent."
+      ],
+      "evidencePaths": [
+        "patches/touch-layout/adapter.mjs",
+        "patches/local-quality/input-lens-queue-adapter.mjs",
+        "scripts/inkwave-source-composition.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/touch-gyro-composition.test.mjs: 9 passed"
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "cache-source-guided-inverse-fft-twiddles",
+      "sourcePaths": [
+        "patches/splatoon3/runtime/audio/reference-profiles.mjs",
+        "patches/splatoon3/runtime/audio/render.mjs",
+        "patches/splatoon3/runtime/audio/source-guided-render.mjs"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "The fixed 1024-bin FFT retains exact Float64 sine/cosine twiddles per direction rather than recalculating them per transform."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/source-guided-render.mjs"
+      ],
+      "testEvidence": [
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "changedPaths": [
+        "patches/splatoon3/runtime/audio/source-guided-render.mjs",
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "adapterLabels": [],
+      "commit": "3ed1249",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "lobby-host-role-rebinding-stacks-row-event-listeners",
+      "sourcePaths": [
+        "inkwave-public/src/net/session.js",
+        "inkwave-public/src/ui/menus.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Each menu element owns only one event listener set; dispatch reads the latest binding. Repeated host-role changes cannot stack callbacks, and click:false, modal and noclick conditions remain effective."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: 25 rebindings: one listener set, latest callback, unbind and click:false"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "menu-bind-once"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "lobby-stage-ticket-elide-unchanged-innerhtml-reconstruction",
+      "sourcePaths": [
+        "inkwave-public/src/net/session.js",
+        "inkwave-public/src/ui/menus.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "The stage ticket updates innerHTML only when the complete rendered string changes; stage numbering and denominator formatting are unchanged."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: parse, exact-anchor composition and idempotence"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "lobby-stage-ticket"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "lobby-contact-skip-redundant-empty-shadow-buffer-updates",
+      "sourcePaths": [
+        "inkwave-public/src/game/showcase.js"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "The baseline contact instancer already uses count=ci and only dirties matrix/color attributes for nonzero ci. Empty synthetic instances are removed."
+      ],
+      "evidencePaths": [
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/reliability/tests/queue-network-ui.test.mjs: 16 passed"
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "stage-long-crab-tank-idle-mp3-predecode",
+      "sourcePaths": [
+        "patches/splatoon3/runtime/audio/authorized-samples.mjs",
+        "patches/splatoon3/runtime/audio/kit-runtime.mjs",
+        "patches/splatoon3/runtime/audio/real-s3-installed.json",
+        "patches/splatoon3/runtime/audio/real-s3-loader.mjs",
+        "patches/splatoon3/runtime/audio/runtime.mjs"
+      ],
+      "status": "not-adopted",
+      "reasons": [
+        "Retain current Crab idle preload. Local main-shot work is already admitted ahead of kit events and supports priority promotion. Delaying the two long spin variants to gauge readiness reduces the readiness window for instant/full-gauge and late remote activation; the ticket explicitly rejects any increased missing first activation. No device/bandwidth readiness measurement supports a safe delay, and merely retaining the existing queue order is not a new optimization."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/runtime.mjs",
+        "patches/splatoon3/runtime/audio/real-s3-loader.mjs",
+        "patches/splatoon3/runtime/audio/engine.mjs",
+        "patches/splatoon3/runtime/audio/kit-runtime.mjs"
+      ],
+      "testEvidence": [
+        "Source and composed-output review; no browser/device latency or memory acceptance claim."
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "mobile-hidden-hud-defer-dom-sync-until-touch-active",
+      "sourcePaths": [
+        "inkwave-public/src/core/device.js",
+        "inkwave-public/src/core/input.js",
+        "inkwave-public/src/core/mobile.js",
+        "inkwave-public/src/main.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Hidden touch HUD updates keep only the latest scalar state in a reused object. Ready haptics still follow the state transition while hidden; current state flushes before the touch overlay becomes active."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: hidden DOM stays unchanged; latest state flushes; ready buzz occurs once"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "mobile-latest-hidden-hud",
+        "mobile-hud-haptic-owner",
+        "mobile-flush-before-show"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "camera-rig-share-follow-yaw-sincos",
+      "sourcePaths": [
+        "inkwave-public/src/game/cameraRig.js"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "The baseline camera adapter already shares yaw sine/cosine when CameraRig.forward is the native implementation and preserves the custom-forward override branch."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/added-ui-motion-adapter.mjs"
+      ],
+      "testEvidence": [],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "hoist-render-fallback-tanh-normalizer",
+      "sourcePaths": [
+        "patches/splatoon3/runtime/audio/render.mjs"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Fallback rendering calculates Math.tanh(drive) once per render. Division remains division to avoid reciprocal rounding differences."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/render.mjs",
+        "patches/splatoon3/runtime/audio/render-worker.js"
+      ],
+      "testEvidence": [
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "changedPaths": [
+        "patches/splatoon3/runtime/audio/render.mjs",
+        "patches/splatoon3/runtime/audio/render-worker.js",
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "adapterLabels": [],
+      "commit": "3ed1249",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "hoist-guided-envelope-measured-span",
+      "sourcePaths": [
+        "patches/splatoon3/runtime/audio/source-guided-render.mjs"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Guided envelope measured duration/span are hoisted to one calculation per render, preserving exact samples."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/source-guided-render.mjs"
+      ],
+      "testEvidence": [
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "changedPaths": [
+        "patches/splatoon3/runtime/audio/source-guided-render.mjs",
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "adapterLabels": [],
+      "commit": "3ed1249",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "lobby-glow-elide-static-instance-color-uploads",
+      "sourcePaths": [
+        "inkwave-public/src/game/lobbySet.js"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "The baseline compares RGB per glow, calls setColorAt only for changed values and uploads instanceColor only when any color is dirty; animated matrix uploads remain."
+      ],
+      "evidencePaths": [
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/reliability/tests/queue-network-ui.test.mjs: 16 passed"
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "verify-rights-and-separate-public-distribution-of-recorded-audio",
+      "sourcePaths": [
+        "patches/splatoon3/runtime/audio/authorized-samples.mjs",
+        "patches/splatoon3/runtime/audio/real-s3-installed.json",
+        "patches/splatoon3/runtime/audio/real-s3-loader.mjs"
+      ],
+      "status": "needs-evidence",
+      "reasons": [
+        "A tracked-file and manifest inventory is complete and false no-bundled-recordings comments are corrected. All 390 tracked audio files remain permission-not-verified: no license/permission evidence was supplied or found in the repository. Asset deletion, public/private distribution changes and claims of rights clearance are not authorized by this audit. Rights verification and any distribution decision remain open."
+      ],
+      "evidencePaths": [
+        "reports/drive-audio-permission-inventory-20261024.json",
+        "patches/splatoon3/runtime/audio/real-s3-installed.jsonon"
+      ],
+      "testEvidence": [
+        "git tree and installed-manifest reconciliation: 390 files / 420 rows / 388 manifest paths; 0 verified permissions"
+      ],
+      "changedPaths": [
+        "reports/drive-audio-permission-inventory-20261024.json",
+        "patches/splatoon3/runtime/audio/authorized-samples.mjs",
+        "patches/splatoon3/runtime/audio/real-s3-loader.mjs"
+      ],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "settings-fireaim-preview-elide-static-thumb-and-share-pulse-sine",
+      "sourcePaths": [
+        "inkwave-public/src/ui/menu-art.js",
+        "inkwave-public/src/ui/menus.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "The disabled preview thumb no longer receives an unchanged transform each frame; fire and reticle reuse one pulse sine while preserving their animation."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: parse, exact-anchor composition and idempotence"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "fireaim-preview"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "showcase-lobby-inktrail-idle-scan-fastpath",
+      "sourcePaths": [
+        "inkwave-public/src/game/showcase.js"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "InkTrail already has an explicit empty-pool flag, skips idle updates in O(1), wakes on add and clears after the last live slot expires."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/showcase-idle-pools-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: expiration/idle parity at 30/60/120 Hz"
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "mobile-inactive-detach-document-nonpassive-touch-gesture-listeners",
+      "sourcePaths": [
+        "inkwave-public/src/core/mobile.js",
+        "patches/local-quality/adapter.mjs",
+        "patches/local-quality/mobile-platform.mjs"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "The original document-level touch/gesture listeners have already been replaced by root/canvas-owned listeners with AbortSignal cleanup. The cited global touch-scroll blocker is absent from composed production source. Document dblclick handling is a separate event and does not reinstate the premise."
+      ],
+      "evidencePaths": [
+        "patches/reliability/queue-network-ui-adapter.mjs",
+        "patches/local-quality/mobile-platform.mjs"
+      ],
+      "testEvidence": [
+        "patches/reliability/tests/queue-network-ui.test.mjs: 16 passed"
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "hoist-foley-noise-attack-denominator-from-sample-loop",
+      "sourcePaths": [
+        "patches/splatoon3/runtime/audio/no-bleep-foley.mjs",
+        "patches/splatoon3/runtime/audio/render-worker.js",
+        "patches/splatoon3/runtime/audio/render.mjs"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "The Foley noise attack denominator is invariant within a rendered sample loop and is now computed once, preserving floating-point operation order."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/no-bleep-foley.mjs"
+      ],
+      "testEvidence": [
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "changedPaths": [
+        "patches/splatoon3/runtime/audio/no-bleep-foley.mjs",
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "adapterLabels": [],
+      "commit": "3ed1249",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "memoize-immutable-s3-articulation-cue-plans",
+      "sourcePaths": [
+        "patches/splatoon3/runtime/audio/bank.mjs",
+        "patches/splatoon3/runtime/audio/s3-articulation.mjs"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Immutable cue plans are memoized only for known own actor IDs and a bounded known event set. Unknown/custom actors and events keep the original builder path. Variant semantics and frozen rows are unchanged."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/s3-articulation.mjs"
+      ],
+      "testEvidence": [
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "changedPaths": [
+        "patches/splatoon3/runtime/audio/s3-articulation.mjs",
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "adapterLabels": [],
+      "commit": "3ed1249",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "diorama-ally-pin-replace-per-frame-filter-with-first-three-walk",
+      "sourcePaths": [
+        "inkwave-public/src/main.js",
+        "inkwave-public/src/ui/diorama.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Diorama ally collection stops after the first three teammates instead of walking all later actors. Original actor order and independent targets are preserved."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: bounded first-three selection plus independent targets"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "first-three-allies"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "gyro-raw-rate-skip-redundant-orientation-omega",
+      "sourcePaths": [
+        "inkwave-public/src/core/gyro.js"
+      ],
+      "status": "not-adopted",
+      "reasons": [
+        "Reject the raw-rate orientation-omega shortcut. The production gyro installer overrides _calibrate to record orientation rate/time on every sample, checks raw/attitude disagreement and 75 ms staleness, and performs Android fallback. The proposed early return would bypass that trust/fallback evidence even when the native base method alone looks redundant."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/gyro.mjs",
+        "inkwave-public/src/core/gyro.js"
+      ],
+      "testEvidence": [
+        "Source and composed-output review; no browser/device latency or memory acceptance claim."
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "lobby-set-builder-release-consumed-geometry-buckets",
+      "sourcePaths": [
+        "inkwave-public/src/game/lobbySet-geo.js",
+        "inkwave-public/src/game/lobbySet.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "SetBuilder build({consume:true}) releases only merged scratch input geometries and clears consumed buckets. Singletons remain owned by the returned mesh, and default repeat-build behavior is unchanged. The lobby and curb one-shot builders opt in."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: merged disposal, singleton ownership and default repeat build"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "builder-consume",
+        "builder-main-consume",
+        "builder-curb-consume"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "reuse-brella-audio-canopy-transition-snapshot",
+      "sourcePaths": [
+        "patches/splatoon3/runtime/audio/runtime.mjs"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Brella canopy transitions reuse an instance-owned snapshot with all original scalar fields refreshed before the immediate transition comparison."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/runtime.mjs"
+      ],
+      "testEvidence": [
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "changedPaths": [
+        "patches/splatoon3/runtime/audio/runtime.mjs",
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "adapterLabels": [],
+      "commit": "3ed1249",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "hud-beacon-spread-break-on-settled-pass",
+      "sourcePaths": [
+        "inkwave-public/src/main.js",
+        "inkwave-public/src/ui/hud.js"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "The composed beacon-spread relaxation loop already records whether a pass moved any pair and exits on the first settled pass."
+      ],
+      "evidencePaths": [
+        "patches/reliability/queue-network-ui-adapter.mjs",
+        "scripts/inkwave-source-composition.mjs"
+      ],
+      "testEvidence": [],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "rearm-evicted-game-owned-ambient-and-movement-loops",
+      "sourcePaths": [
+        "inkwave-public/src/audio/audio.js",
+        "inkwave-public/src/main.js",
+        "patches/local-quality/platform-audio.mjs",
+        "patches/splatoon3/runtime/audio/kit-runtime.mjs",
+        "patches/splatoon3/runtime/audio/runtime.mjs"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Stopped game-owned ambience/movement handles rearm only when audible with a free loop slot. Full budgets do not churn or evict active loops; muted deferred handles remain owned by existing mute recovery."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: eviction recovery, full 24-slot budget, steady loop and deferred-mute cases"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "loop-rearm-admission",
+        "ambient-rearm",
+        "movement-rearm"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "hud-ally-marker-stable-key-elide-tofixed",
+      "sourcePaths": [
+        "inkwave-public/src/main.js",
+        "inkwave-public/src/ui/hud.js",
+        "patches/local-quality/added-ui-motion-adapter.mjs",
+        "patches/local-quality/hud-snapshots-adapter.mjs"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Marker raw scalars are compared before toFixed/string construction. The original rounded key still determines DOM thresholds, and missing markers or replacement HUD state invalidate the raw cache."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: baseline DOM/rounded thresholds, fallback metadata, hide/show and state reset"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "marker-clear-raw",
+        "marker-raw-fastpath"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "showcase-lobby-member-walk-avoid-per-frame-map-snapshot",
+      "sourcePaths": [
+        "inkwave-public/src/game/showcase.js"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "The baseline reuses a member snapshot array while retaining original snapshot semantics; a busy guard handles reentrancy and finally clears references. Direct live Map iteration would change mutation behavior."
+      ],
+      "evidencePaths": [
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/reliability/tests/queue-network-ui.test.mjs: 16 passed"
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "preserve-recorded-sample-lru-touches-across-async-load-commit",
+      "sourcePaths": [
+        "patches/splatoon3/runtime/audio/authorized-samples.mjs",
+        "patches/splatoon3/runtime/audio/engine.mjs",
+        "patches/splatoon3/runtime/audio/real-s3-loader.mjs"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Async sample import mirrors live playback touches into the staged LRU. Recently played rows evicted only in staging can be restored with correct shared-buffer accounting; same-key staged replacements are retained, and replace/clear generations cancel safely."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/authorized-samples.mjs"
+      ],
+      "testEvidence": [
+        "patches/splatoon3/tests/drive-audio-lru.test.mjs"
+      ],
+      "changedPaths": [
+        "patches/splatoon3/runtime/audio/authorized-samples.mjs",
+        "patches/splatoon3/tests/drive-audio-lru.test.mjs"
+      ],
+      "adapterLabels": [],
+      "commit": "3ed1249",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "lobby-atlas-release-static-canvas-backing-after-upload",
+      "sourcePaths": [
+        "inkwave-public/src/game/lobbySet-tex.js",
+        "inkwave-public/src/game/lobbySet.js",
+        "patches/local-quality/lobby-resource-adapter.mjs"
+      ],
+      "status": "not-adopted",
+      "reasons": [
+        "Retain static atlas backing canvases. Three.js uses the texture source again after context restoration; zero-sizing it after the first upload loses those pixels. A replacement ImageBitmap or regeneration path needs device memory and pixel/context-restore evidence, including font readiness, which is absent. Existing LOW atlas scaling is separate and is not claimed to implement backing-store release."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/lobbySet.js",
+        "inkwave-public/src/game/lobbySet-tex.js",
+        "inkwave-public/vendor/three/build/three.module.js"
+      ],
+      "testEvidence": [
+        "Source and composed-output review; no browser/device latency or memory acceptance claim."
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "menu-focus-cursor-elide-identical-transform-size-writes",
+      "sourcePaths": [
+        "inkwave-public/src/ui/menus.js"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "The composed menu cursor already caches rounded transform and size values before issuing style writes; identical frames do not write the same transform/width/height again."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs",
+        "scripts/inkwave-source-composition.mjs"
+      ],
+      "testEvidence": [],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "input-padstick-and-player-move-skip-deadzone-hypot",
+      "sourcePaths": [
+        "inkwave-public/src/core/input.js",
+        "inkwave-public/src/game/player.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "padStick uses the L1 upper bound to reject provably dead-zone vectors before radial hypot; every remaining vector follows the original radial formula. Player movement skips hypot only for the exact zero vector."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: 24000 exact radial comparisons including boundaries/nonfinite values; 1000 neutral vectors perform zero hypot"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "pad-deadzone-hypot",
+        "player-zero-hypot"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "skip-procedural-battle-song-compilation-for-recorded-stream",
+      "sourcePaths": [
+        "inkwave-public/src/audio/music.js",
+        "inkwave-public/src/audio/streamedTrack.js"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "The recorded battle branch already uses lightweight SONGS metadata and bypasses getSong procedural compilation; record failures remain recorded-only with no synthesized battle-song fallback."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/input-lens-queue-adapter.mjs",
+        "patches/splatoon3/audio-adapter.mjs",
+        "scripts/inkwave-source-composition.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/queue-30-audio.test.mjs: 2 passed"
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "lobby-renderbar-avoid-repeated-identical-colorvars",
+      "sourcePaths": [
+        "inkwave-public/src/ui/menus.js",
+        "inkwave-public/src/ui/ui-util.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Lobby renderBar stores the last team-A, team-B and self color separately and only calls colorVars for an actual change. Team/self/boss selection rules are unchanged."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: parse, exact-anchor composition and idempotence"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "lobby-bar-colors"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "gate-muted-recorded-battle-mp3-preload-and-decoding",
+      "sourcePaths": [
+        "inkwave-public/src/audio/audio.js",
+        "inkwave-public/src/audio/music.js",
+        "inkwave-public/src/audio/streamedTrack.js"
+      ],
+      "status": "not-adopted",
+      "reasons": [
+        "Retain recorded BGM prime/play at START even when mixer gain is zero. It establishes the trusted-gesture media unlock and continuously advances the existing track timeline. Deferring it would require a measured Safari-compatible later gesture and accurate seek/recovery policy; simply pausing is explicitly disallowed by the proposal. No iPad mute-to-unmute acceptance trace exists, so this conditional resource saving is not adopted."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/audio/music.js",
+        "inkwave-public/src/audio/streamedTrack.js",
+        "patches/local-quality/platform-audio.mjs",
+        "patches/splatoon3/audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "Source and composed-output review; no browser/device latency or memory acceptance claim."
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "gyro-reuse-lifecycle-screen-angle-in-sample",
+      "sourcePaths": [
+        "inkwave-public/src/core/gyro.js",
+        "patches/local-quality/adapter.mjs",
+        "patches/local-quality/gyro.mjs",
+        "patches/local-quality/screen-angle.mjs"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Gyro _sample reuses the screen angle already refreshed by the lifecycle wrapper for this event; an unwrapped gyro still uses screenAngle fallback. Raw-rate trust and sensor integration are untouched."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: production touch/gyro composition: 9 tests passed at 30/60/120/144 Hz and owner/reset boundaries"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "gyro-event-screen-angle"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "showcase-lobby-camera-elapsed-time-smoothing",
+      "sourcePaths": [
+        "inkwave-public/src/game/showcase.js",
+        "inkwave-public/src/main.js"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "Showcase update already stores bounded elapsed _fdt and both lobby camera damping formulas consume it; fixed per-frame damping is absent."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/runtime-frame-scratch-adapter.mjs"
+      ],
+      "testEvidence": [],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "minimap-storm-dash-reuse-canvas-pattern-arrays",
+      "sourcePaths": [
+        "inkwave-public/src/game/minimap.js",
+        "inkwave-public/src/main.js"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "The baseline minimap already shares STORM_LINE_DASH and SOLID_LINE_DASH arrays instead of constructing new arrays per storm/draw."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/minimap-dirty-adapter.mjs",
+        "scripts/inkwave-source-composition.mjs"
+      ],
+      "testEvidence": [],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "skip-grain-frequency-ramp-pow-after-saturation",
+      "sourcePaths": [
+        "inkwave-public/src/audio/audio.js",
+        "patches/splatoon3/runtime/audio/grain-prewarm.mjs",
+        "patches/splatoon3/runtime/audio/grain-texture.mjs",
+        "patches/splatoon3/runtime/audio/grain-worker.mjs"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Each grain caches f1/f0, and Math.pow is skipped only when the clamped exponent equals exactly one. f0*ratio and all nonsaturated arithmetic retain their original ordering."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/grain-texture.mjs"
+      ],
+      "testEvidence": [
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "changedPaths": [
+        "patches/splatoon3/runtime/audio/grain-texture.mjs",
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "adapterLabels": [],
+      "commit": "3ed1249",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "menus-spatial-navigation-avoid-repeat-layout-geometry-scans",
+      "sourcePaths": [
+        "inkwave-public/src/ui/menus.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "One spatial navigation query retains DOM rectangles in a local Map so wrapping reuses the first scan. The next query takes fresh geometry, avoiding persistent-cache invalidation bugs."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: original focus selection in all directions/from all nine nodes, wrap on/off, nine rectangle reads"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "spatial-single-query-rects"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "showcase-inkfx-sparkles-skip-idle-pool-updates",
+      "sourcePaths": [
+        "inkwave-public/src/game/showcase.js"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "InkFX and Sparkles already skip empty pools, wake on spawn and retire to idle after all entries expire; the new tail removal is a separate remaining optimization."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/showcase-idle-pools-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: expiration/idle parity at 30/60/120 Hz"
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "diorama-pin-status-flags-skip-unchanged-dom-calls",
+      "sourcePaths": [
+        "inkwave-public/src/main.js",
+        "inkwave-public/src/ui/diorama.js"
+      ],
+      "status": "already-effective",
+      "reasons": [
+        "Diorama pin DOM class toggles already occur inside a combined key guard containing alive/ok/hover and position. Identical state does not repeat classList mutations."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/ui/diorama.js",
+        "scripts/inkwave-source-composition.mjs"
+      ],
+      "testEvidence": [],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "input-gamepad-trigger-elide-synthetic-button-objects",
+      "sourcePaths": [
+        "inkwave-public/src/core/input.js",
+        "patches/reliability/adapter.mjs",
+        "patches/reliability/input-adapter.mjs",
+        "scripts/inkwave-source-composition.mjs"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "The two gamepad trigger branches keep a scalar pressed value instead of allocating replacement button objects. Held/edge thresholds and takeover/menu-block ownership are unchanged."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: parse, exact-anchor composition and idempotence"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "pad-trigger-scalar"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "precompute-guided-spectral-bin-routing-and-band-power",
+      "sourcePaths": [
+        "patches/splatoon3/runtime/audio/reference-profiles.mjs",
+        "patches/splatoon3/runtime/audio/render.mjs",
+        "patches/splatoon3/runtime/audio/source-guided-render.mjs"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "The guided renderer precomputes exact spectral bin routing and retains per-window band power, eliminating repeated band selection and sqrt work inside bin loops while keeping PCM bytes."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/source-guided-render.mjs"
+      ],
+      "testEvidence": [
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "changedPaths": [
+        "patches/splatoon3/runtime/audio/source-guided-render.mjs",
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "adapterLabels": [],
+      "commit": "3ed1249",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "optimize-audio-emitter-key-weakmap-and-positional-validation",
+      "sourcePaths": [
+        "inkwave-public/src/audio/audio.js",
+        "inkwave-public/src/main.js",
+        "patches/splatoon3/audio-adapter.mjs",
+        "patches/splatoon3/runtime/audio/bank.mjs"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "Emitter key lookup performs a single WeakMap get on the hot path. Positional validation checks the three scalars directly instead of allocating an array; nonfinite behavior is unchanged."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/bank.mjs"
+      ],
+      "testEvidence": [
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "changedPaths": [
+        "patches/splatoon3/runtime/audio/bank.mjs",
+        "patches/splatoon3/tests/drive-audio-dsp-parity.test.mjs"
+      ],
+      "adapterLabels": [],
+      "commit": "3ed1249",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "hud-fxloop-paused-elide-self-raf-until-resume",
+      "sourcePaths": [
+        "inkwave-public/src/ui/hud.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "HUD paused state now parks its RAF while retaining effects. Resume schedules one callback with a fresh timestamp, including world-pause and pause-during-effect ownership; no long catch-up delta is injected."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: pause/resume RAF ownership, retained effects and fresh clock"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "hud-pause-owner",
+        "hud-world-resume-paused",
+        "hud-addfx-paused",
+        "hud-park-paused",
+        "hud-pause-during-effect"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "reuse-verified-niceball-source-decode-across-fire-and-spin",
+      "sourcePaths": [
+        "patches/splatoon3/runtime/audio/authorized-samples.mjs",
+        "patches/splatoon3/runtime/audio/kit-runtime.mjs",
+        "patches/splatoon3/runtime/audio/real-s3-installed.json",
+        "patches/splatoon3/runtime/audio/real-s3-loader.mjs",
+        "patches/splatoon3/runtime/audio/weapon-recipes.mjs"
+      ],
+      "status": "not-adopted",
+      "reasons": [
+        "No production emitter for source:Sp_NiceBall_HoldFull_00/fire was found: the name occurs only in the source registry, while Booyah spin is the established route. The ticket explicitly says to close/deprioritize if the second route is not used. Both manifest rows lack raw SHA-256, Git blob identity is not that hash, and fire versus spin has different loop-repair semantics. Adding retained unlooped PCM for an unproven dual-route benefit is not adopted."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/source-cue-registry.mjs",
+        "patches/splatoon3/runtime/audio/extra-source-routes.mjs",
+        "patches/splatoon3/runtime/audio/runtime.mjs",
+        "patches/splatoon3/runtime/audio/kit-runtime.mjs",
+        "patches/splatoon3/runtime/audio/authorized-samples.mjs",
+        "patches/splatoon3/runtime/audio/real-s3-installed.jsonon"
+      ],
+      "testEvidence": [
+        "Source and composed-output review; no browser/device latency or memory acceptance claim."
+      ],
+      "changedPaths": [],
+      "adapterLabels": [],
+      "commit": null,
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    },
+    {
+      "slug": "hud-beacon-targets-bounded-ally-walk-no-filter-array",
+      "sourcePaths": [
+        "inkwave-public/src/ui/hud.js"
+      ],
+      "status": "implemented",
+      "reasons": [
+        "HUD beacon allies stop at the first three teammates. Base and live Big Bubbler jump targets are collected independently and stay available."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs"
+      ],
+      "testEvidence": [
+        "patches/local-quality/tests/drive-visual-audio.test.mjs: fourth ally is not inspected; base and Bubbler remain"
+      ],
+      "changedPaths": [
+        "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "patches/local-quality/tests/drive-visual-audio.test.mjs"
+      ],
+      "adapterLabels": [
+        "first-three-allies"
+      ],
+      "commit": "c82bba1",
+      "verificationScope": "Node/VM source composition and deterministic logic tests; no Safari/iPad/PWA/retail-device measurement."
+    }
+  ],
+  "validation": {
+    "newSuites": {
+      "drive-audio-dsp-parity": {
+        "tests": 5,
+        "passed": 5
+      },
+      "drive-audio-lru": {
+        "tests": 6,
+        "passed": 6
+      },
+      "drive-visual-audio": {
+        "tests": 18,
+        "passed": 18
+      }
+    },
+    "existingWeaponAudio": {
+      "tests": 18,
+      "passed": 18,
+      "pcmCases": 2088
+    },
+    "existingNativeRegression": {
+      "suites": 8,
+      "tests": 57,
+      "passed": 57
+    },
+    "buildWorker": "node tools/audio/build-worker.mjs --check: current",
+    "limitations": [
+      "No Safari/iPad/iPhone/PWA or real-device Splatoon 3 comparison was performed.",
+      "added-ui-motion-source fixture could not load its sparse source-motion manifest (HTTP 404) in this worktree. Parent has since restored shared objects and can rerun.",
+      "Existing charger-rise test was 9/10 in the sparse worktree; the remaining assertion needs the original tracked MP3 file, not a code correction."
+    ]
+  }
+}

@@ -1,7 +1,8 @@
 import { audioLoadScope } from './load-deadline.mjs';
 /**
- * Optional 2022 Splatoon 3 MP3 source bank. No game-owned MP3 is bundled here.
- * The user installs an authorized `s3-real` directory alongside this module.
+ * 2022 Splatoon 3 MP3 source bank. This repository tracks the `s3-real`
+ * files referenced by its installed manifest. Metadata and checksums establish
+ * provenance/identity only; they do not verify distribution permission.
  * Fetches only sounds for the selected/active weapon or kit. In real-only
  * deployment, a missing or late MP3 stays silent rather than synthesizing.
  */

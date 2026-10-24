@@ -17,6 +17,7 @@ async function room(mode = 'turf') {
   const f = await fixture({ productionComposition: true, realProjectiles: true,
     extraExports: "export { NetSession } from './inkwave-public/src/net/session.js';" });
   const host = new f.NetSession(), guest = new f.NetSession(), packets = [], locks = [];
+  const relay = { locked:false, acks:[] };
   const peers = new Map([['host', host], ['guest', guest]]);
   for (const [id, net] of peers) {
     net.myId = id; net.hostId = 'host'; net.state = 'lobby';
@@ -24,8 +25,15 @@ async function room(mode = 'turf') {
     net.tr = { broadcast(packet) { packets.push({ from:id, packet:structuredClone(packet) });
         // The production relay sends its authenticated ACK before host local start;
         // this isolated two-peer fixture simulates that admission, not an optimistic start.
-        if (packet.k === 'start') net._control({ t:'start_result', id:packet.id, ok:true });
-        for (const [other, peer] of peers) if (other !== id) peer._message(id, structuredClone(packet)); return true; }
+        if (packet.k === 'start') {
+          const ack = { t:'start_result', id:packet.id, ok:true };
+          relay.acks.push({ to:id, ...ack });
+          net._control(ack);
+          // Server admission owns the room lock; tr.lock remains a separate
+          // client-call record so an optimistic client lock cannot pass here.
+          relay.locked = true;
+        }
+        for (const [other, peer] of peers) if (other !== id) peer._message(id, structuredClone(packet)); return true; },
       sendTo(to, packet) { peers.get(to)?._message(id, structuredClone(packet)); },
       lock(value) { locks.push(value); }, close() {} };
   }
@@ -34,7 +42,7 @@ async function room(mode = 'turf') {
   host._fixTeams(); host._broadcastLobby();
   // Full Session.start/_begin stay native; only stage rendering/loading is inert.
   f.G.game = { menus:{ launchLobby:async()=>{} }, startNetMatch:async()=>{}, netMatchGo() {} };
-  return { host, guest, packets, locks, close() { host.leave(); guest.leave(); } };
+  return { host, guest, packets, locks, relay, close() { host.leave(); guest.leave(); } };
 }
 function readyControl(net) {
   const logs = [], node = { classList:{}, querySelector:()=>({}) };
@@ -83,12 +91,17 @@ test('#1039 composed host Ready is reachable after confirmation and starts the a
     hostUI.toggleReady();
     assert.equal(r.host.lobby.players[0].ready, true, 'native host Ready action must not redirect to blocked Start');
     assert.equal(r.host.canStart(), true);
+    assert.equal(r.relay.locked, false);
+    assert.deepEqual(r.relay.acks, []);
     hostUI.tryStart();
     await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
     const launch = r.packets.find(p=>p.packet.k==='start').packet;
     assert.deepEqual(launch.roster.map(p=>[p.owner,p.team]), [['host',0],['guest',1]]);
     assert.equal(r.host._startCfg.id, r.guest._startCfg.id);
-    assert.equal(r.locks[0], true);
+    assert.equal(r.relay.locked, true, 'accepted START atomically locks the relay room');
+    assert.deepEqual(r.locks, [], 'no optimistic client lock precedes relay admission');
+    assert.deepEqual(r.relay.acks, [{ to:'host', t:'start_result', id:launch.id, ok:true }]);
+    assert.equal(r.host._pendingStart, null, 'the matching ACK consumes the pending start');
   } finally { r.close(); }
 });
 

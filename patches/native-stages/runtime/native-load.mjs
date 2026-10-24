@@ -7,6 +7,9 @@ const hex=b=>Array.from(new Uint8Array(b),v=>v.toString(16).padStart(2,'0')).joi
 // Metadata belongs to the texture, not a persistent stage cache. Only unchanged
 // colour/cutout jobs may borrow from the currently displayed profile.
 const TEXTURE_INPUTS = new WeakMap();
+// Bounded scalar summaries of verified pixels. No bitmap, canvas, material or
+// stage is retained; every new request still verifies its source bytes.
+const CHANNEL_INFERENCE=new Map(),CHANNEL_INFERENCE_LIMIT=256;
 const TEXTURE_STATE = ['colorSpace','wrapS','wrapT','anisotropy','minFilter','magFilter','generateMipmaps','flipY','premultiplyAlpha'];
 function inferredInputs(job) {
  return (job.materials||[]).map(material=>({material,alpha:job.role==='albedo'?material.hasAlpha:undefined,channel:job.role==='opacity'?material.channels?.opacity:undefined}));
@@ -40,7 +43,12 @@ export async function loadNativeData(id,signal,options={}){
  if(manifest.diagnosticOnly||manifest.placementReceipt)throw Error('Diagnostic placement data cannot be loaded as a playable stage: '+id);
  const names={vertices:Float32Array,indices:Uint32Array,triangles:Float32Array,normals:Float32Array,flags:Uint32Array,objectIds:Uint32Array,nodes:Float32Array,order:Uint32Array,triangleFace:Int32Array,mask:Uint8Array};
  const file={triangles:'collision',objectIds:'objects',nodes:'bvh'};const data={manifest,integrity};
- await Promise.all(Object.entries(names).map(async([key,Type])=>{data[key]=new Type(await verified(id,(file[key]||key)+'.bin',integrity,signal));}));
+ const controller=new AbortController(),abort=()=>controller.abort(signal?.reason);let next=0,failure=null;
+ if(signal?.aborted)abort();else signal?.addEventListener('abort',abort,{once:true});
+ const rows=Object.entries(names);
+ const worker=async()=>{while(next<rows.length&&!failure){if(controller.signal.aborted)throw controller.signal.reason||new DOMException('Aborted','AbortError');const [key,Type]=rows[next++];try{data[key]=new Type(await verified(id,(file[key]||key)+'.bin',integrity,controller.signal));}catch(error){failure=error;controller.abort(error);throw error;}}};
+ try{const results=await Promise.allSettled(Array.from({length:options.constrained?2:3},worker));const rejected=results.find(result=>result.status==='rejected');if(rejected)throw failure||rejected.reason;}
+ finally{signal?.removeEventListener('abort',abort);}
  if(manifest.schema!==1||manifest.id!==id||data.triangles.length/9!==manifest.geometry.collisionTriangles||data.triangleFace.length!==manifest.geometry.collisionTriangles||data.mask.length!==manifest.gridCells)throw Error('Unsupported native asset schema: '+id);
  return data;
 }
@@ -96,11 +104,15 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
   const borrowed=previousTextures?.get(file);
   if(canBorrowTexture(borrowed,data,file,job,renderer)){textures._nativeBorrowed.add(borrowed);for(const alias of job.aliases)textures.set(alias,borrowed);continue;}
   let {encoding}=job;const buffer=await verified(id,file,data.integrity,signal);checkAbort();const blob=new Blob([buffer],{type:'image/png'});
-  let bitmap,texture,transferred=false;
+  let bitmap,texture,canvas,ctx,transferred=false;
   try{
   bitmap=await createImageBitmap(blob,{imageOrientation:'flipY'});checkAbort();const ratio=Math.min(1,job.roleLimit/Math.max(bitmap.width,bitmap.height));
   if(ratio<1){const original=bitmap;bitmap=null;try{bitmap=await createImageBitmap(original,{resizeWidth:Math.max(1,Math.round(original.width*ratio)),resizeHeight:Math.max(1,Math.round(original.height*ratio)),resizeQuality:'high'});}finally{original.close();}checkAbort();}
-   let pixels,canvas,ctx;
+   const pin=data.integrity?.[file],identity=pin?.sha256||pin?.gitSha1;
+   const inferenceKey=data.manifest.sourceMode==='browser-direct'&&/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(identity||'')&&Number.isSafeInteger(pin?.bytes)
+    ?JSON.stringify(['canvas-rgba-v1',identity,pin.bytes,role,job.roleLimit,bitmap.width,bitmap.height]):null;
+   const remembered=inferenceKey&&CHANNEL_INFERENCE.get(inferenceKey);let inference;
+   let pixels;
    const pixelContext=()=>{if(!ctx){canvas=new OffscreenCanvas(bitmap.width,bitmap.height);ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0);}return ctx;};
    // Keep the identical full canvas/drawImage and its colour conversion. Only
    // the JS readback is bounded: rows retain the original accumulation order.
@@ -110,31 +122,32 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
   if(data.manifest.sourceMode==='browser-direct'){
    const matched=job.materials;
    if(role==='albedo'){
-    let alpha=false;const pngType=new Uint8Array(buffer)[25];if(pngType===6||pngType===4)scanPixels(p=>{for(let i=3;i<p.length;i+=4)if(p[i]<250){alpha=true;return false;}});
+    let alpha=remembered?remembered.alpha:false;const pngType=new Uint8Array(buffer)[25];if(!remembered&&(pngType===6||pngType===4))scanPixels(p=>{for(let i=3;i<p.length;i+=4)if(p[i]<250){alpha=true;return false;}});
+    inference={alpha};
     for(const m of matched)if(job.aliases.includes(m.albedo))m.hasAlpha=alpha;
    }
    // Each role only consults a subset of channels. Preserve the original
    // accumulation order and exact channel threshold tests.
    if(role==='normal'){
     const count=bitmap.width*bitmap.height;let mean2=0,unorm=0,signed=0;
-    scanPixels(p=>{for(let i=0;i<p.length;i+=4){
+    if(!remembered)scanPixels(p=>{for(let i=0;i<p.length;i+=4){
      mean2+=p[i+2];
      const x=p[i]/127.5-1,y=p[i+1]/127.5-1;
      const sx=(p[i]>127?p[i]-256:p[i])/127,sy=(p[i+1]>127?p[i+1]-256:p[i+1])/127;
      unorm+=x*x+y*y>1.02;signed+=sx*sx+sy*sy>1.02;
     }});
-    encoding=mean2/count<1?(signed/count+.1<unorm/count?'signed-byte-rg':'unorm-rg'):'rgb';
+    encoding=remembered?remembered.encoding:mean2/count<1?(signed/count+.1<unorm/count?'signed-byte-rg':'unorm-rg'):'rgb';inference={encoding};
     for(const m of matched)m.normalEncoding=encoding;
    }else if(role==='roughness'||role==='opacity'){
     const count=bitmap.width*bitmap.height;let mean0=0,mean1=0,lo0=255,hi0=0;
-    scanPixels(p=>{for(let i=0;i<p.length;i+=4){const r=p[i];mean0+=r;mean1+=p[i+1];if(r<lo0)lo0=r;if(r>hi0)hi0=r;}});
-    const ch=mean1/count<1&&(mean0/count>2||hi0-lo0>4)?'r':'g';
+    if(!remembered)scanPixels(p=>{for(let i=0;i<p.length;i+=4){const r=p[i];mean0+=r;mean1+=p[i+1];if(r<lo0)lo0=r;if(r>hi0)hi0=r;}});
+    const ch=remembered?remembered.channel:mean1/count<1&&(mean0/count>2||hi0-lo0>4)?'r':'g';inference={channel:ch};
     for(const m of matched)m.channels[role]=ch;
    }
   }
   if(role==='normal'&&['rg-reconstruct-z','unorm-rg','signed-byte-rg'].includes(encoding)){
    const pixels=readPixels();
-   for(let i=0;i<pixels.length;i+=4){let x=encoding==='signed-byte-rg'?Math.max(-1,(pixels[i]>127?pixels[i]-256:pixels[i])/127):pixels[i]/127.5-1,y=encoding==='signed-byte-rg'?Math.max(-1,(pixels[i+1]>127?pixels[i+1]-256:pixels[i+1])/127):pixels[i+1]/127.5-1;const len=Math.hypot(x,y);if(len>.95){x*=.95/len;y*=.95/len;}pixels[i]=Math.round((x*.5+.5)*255);pixels[i+1]=Math.round((y*.5+.5)*255);pixels[i+2]=Math.round((Math.sqrt(Math.max(0,1-x*x-y*y))*.5+.5)*255);pixels[i+3]=255;}
+   for(let i=0;i<pixels.length;i+=4){let x=encoding==='signed-byte-rg'?Math.max(-1,(pixels[i]>127?pixels[i]-256:pixels[i])/127):pixels[i]/127.5-1,y=encoding==='signed-byte-rg'?Math.max(-1,(pixels[i+1]>127?pixels[i+1]-256:pixels[i+1])/127):pixels[i+1]/127.5-1;const len=x*x+y*y<.9025-1e-14?0:Math.hypot(x,y);if(len>.95){x*=.95/len;y*=.95/len;}pixels[i]=Math.round((x*.5+.5)*255);pixels[i+1]=Math.round((y*.5+.5)*255);pixels[i+2]=Math.round((Math.sqrt(Math.max(0,1-x*x-y*y))*.5+.5)*255);pixels[i+3]=255;}
    texture=new THREE.DataTexture(pixels,bitmap.width,bitmap.height);texture.generateMipmaps=true;texture.minFilter=THREE.LinearMipmapLinearFilter;texture.onUpdate=t=>{t.onUpdate=null;t.image.data=null;};bitmap.close();bitmap=null;
   }else{
    texture=new THREE.Texture(bitmap);
@@ -144,7 +157,8 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
    texture.onUpdate=t=>{t.onUpdate=null;t.image?.close?.();};
   }
   texture.colorSpace=['albedo','emissive'].includes(role)?THREE.SRGBColorSpace:THREE.NoColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;rememberTextureInput(texture,data,file,job);for(const alias of job.aliases)textures.set(alias,texture);transferred=true;
-  }finally{if(!transferred){bitmap?.close();texture?.dispose();}}
+  if(inferenceKey&&inference){CHANNEL_INFERENCE.delete(inferenceKey);CHANNEL_INFERENCE.set(inferenceKey,inference);while(CHANNEL_INFERENCE.size>CHANNEL_INFERENCE_LIMIT)CHANNEL_INFERENCE.delete(CHANNEL_INFERENCE.keys().next().value);}
+  }finally{if(canvas){canvas.width=0;canvas.height=0;ctx=null;canvas=null;}if(!transferred){bitmap?.close();texture?.dispose();}}
  }}catch(error){if(!failure)failure=error;throw error;}};
  // Bound concurrent full-resolution decode/upload peaks; the same images and filters are used.
   const results=await Promise.allSettled(Array.from({length:Math.min(rows.length,textureLimit?2:quality==='high'?2:3)},worker));const failed=results.find(r=>r.status==='rejected');

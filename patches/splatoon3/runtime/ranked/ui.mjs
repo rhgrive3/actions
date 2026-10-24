@@ -42,6 +42,7 @@ const UI_CSS = `
 `;
 
 const rankedStyleByDocument = new WeakMap();
+const zoneObjectiveText = new WeakMap();
 function addStyle() {
   if (typeof document === 'undefined') return;
   const doc = document, cached = rankedStyleByDocument.get(doc);
@@ -61,11 +62,31 @@ export function objectiveText(engine, G, api = {}) {
   if (engine.mode === 'zones') {
     const coverage = frame.zoneCoverage || [];
     const captured = state.zones || [];
-    if (coverage.length) return coverage.map((pair, i) => {
+    const names = G.palette?.names || G.match?.palette?.names;
+    // RankedWorld publishes immutable coverage pairs. Keep unusual external
+    // arrays on the original formatter; owners/names remain live inputs.
+    let cacheable = Array.isArray(coverage) && coverage.length > 0 && Object.isFrozen(coverage);
+    const old = cacheable && zoneObjectiveText.get(engine), lang = api.LANG;
+    let same = !!old && old.lang === lang && old.name0 === names?.[0] && old.name1 === names?.[1] && old.values.length === coverage.length * 3;
+    if (cacheable) for (let i = 0; i < coverage.length; i++) {
+      if (!(i in coverage) || !Array.isArray(coverage[i]) || !Object.isFrozen(coverage[i])) { cacheable = false; break; }
+      const a = Math.round(clamp01(coverage[i]?.[0]) * 100), b = Math.round(clamp01(coverage[i]?.[1]) * 100), owner = captured[i]?.team;
+      if (same && (old.values[i * 3] !== a || old.values[i * 3 + 1] !== b || old.values[i * 3 + 2] !== owner)) same = false;
+    }
+    if (cacheable && same) return old.text;
+    if (coverage.length) {
+      const text = coverage.map((pair, i) => {
       const a = Math.round(clamp01(pair?.[0]) * 100), b = Math.round(clamp01(pair?.[1]) * 100);
       const owner = captured[i]?.team;
       return `${t('ZONE {n}', { n: i + 1 })} ${a}/${b}${owner === 0 || owner === 1 ? ` · ${t(teamName(owner, G.palette?.names || G.match?.palette?.names))}` : ''}`;
-    }).join('   ');
+      }).join('   ');
+      if (cacheable) {
+        const values = [];
+        for (let i = 0; i < coverage.length; i++) values.push(Math.round(clamp01(coverage[i]?.[0]) * 100), Math.round(clamp01(coverage[i]?.[1]) * 100), captured[i]?.team);
+        zoneObjectiveText.set(engine, { lang, name0: names?.[0], name1: names?.[1], values, text });
+      }
+      return text;
+    }
     return state.controllingTeam === 0 || state.controllingTeam === 1
       ? t('{team} CONTROLS ALL ZONES', { team: t(teamName(state.controllingTeam, G.palette?.names || G.match?.palette?.names)) }) : t('CAPTURE ALL ZONES');
   }

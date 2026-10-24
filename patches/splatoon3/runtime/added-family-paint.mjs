@@ -15,16 +15,18 @@ export function addedFamilySplash(source, family, ordinal) {
   const first=catalogSplashFirst({ ...spawn, SpawnNearestLength:nearest, SpawnBetweenLength:spacing },ordinal);
   // Preserve the established positive-gravity path. A horizontal Saber has
   // explicit zero projectile gravity; it must not disable its detached drops.
-  const spec=catalogSplashDropSpec(source)||catalogSplashDropSpec({ ...source,
-    MoveParam:{ ...source.MoveParam, FreeGravity:ADDED_PAINT_MODEL.gravity } });
+  const spec=catalogSplashDropSpec(source)||catalogSplashDropSpec(source,null,'normal',ADDED_PAINT_MODEL.gravity);
   return { spec, first, spacing, count:Math.max(0,Math.floor(finite(spawn.SplashNumMax,
     family==='stringer'?ADDED_PAINT_MODEL.stringerCount:0))) };
 }
 
 export function brellaSplashPlan(source) {
   const p=source?.SplashParam;
-  if (!p || ![p.SplashPaintWidthFullActive,p.SplashPaintWidthOneActive,
-    p.SplashPaintDepthScaleFullActive,p.SplashPaintDepthScaleOneActive].every(v=>Number.isFinite(v)&&v>0)) return null;
+  if (!p) return null;
+  const fullWidth=p.SplashPaintWidthFullActive,oneWidth=p.SplashPaintWidthOneActive,
+    fullDepth=p.SplashPaintDepthScaleFullActive,oneDepth=p.SplashPaintDepthScaleOneActive;
+  if (!Number.isFinite(fullWidth)||!(fullWidth>0)||!Number.isFinite(oneWidth)||!(oneWidth>0)||
+      !Number.isFinite(fullDepth)||!(fullDepth>0)||!Number.isFinite(oneDepth)||!(oneDepth>0)) return null;
   return { first:finite(p.CreateSplashLength,ADDED_PAINT_MODEL.brellaSpacing),
     spacing:finite(p.CreateSplashLength,ADDED_PAINT_MODEL.brellaSpacing),
     count:Math.max(0,Math.floor(finite(p.CreateSplashNum,ADDED_PAINT_MODEL.brellaCount))), source:p };
@@ -47,7 +49,15 @@ export function collectBrellaSplashes(node, projectile, end, ended, release) {
   node.distance=limit;node.ended=ended;if(ended)node.endFrame=finite(projectile.age,0)*60;
   while(volley.next<plan.count){
     const i=volley.next,at=plan.first+i*plan.spacing;
-    if(!volley.nodes.every(n=>n.ended||n.distance+1e-9>=at))break;
+    const blocked=volley.blockedNode;
+    // A still-blocked member proves the whole threshold is not ready. If it
+    // advances, restart the scan so mutations of earlier members remain visible.
+    if(blocked&&volley.nodes[volley.blockedIndex]===blocked&&!blocked.ended&&blocked.distance+1e-9<at)break;
+    let ready=true;volley.blockedNode=null;
+    for(let j=0;j<volley.nodes.length;j++)if(j in volley.nodes){const n=volley.nodes[j];
+      if(!(n.ended||n.distance+1e-9>=at)){volley.blockedNode=n;volley.blockedIndex=j;ready=false;break;}
+    }
+    if(!ready)break;
     let centre=null,count=0,birthFrame=-Infinity;
     for(const n of volley.nodes){
       const sample=n.samples.get(i);

@@ -233,6 +233,8 @@ jobs:
           retention-days: 14
       - name: Verify queued InkFlight and catalogue bot liveness fixes
         run: node --experimental-vm-modules --test patches/network-replication/tests/queue-inkflight-owned-profile.test.mjs patches/local-quality/tests/catalog-charge-bot-release.test.mjs
+      - name: Verify Drive queue ownership and composed native parity
+        run: node --experimental-vm-modules --test --test-concurrency=1 scripts/tests/inkwave-build-input-coverage.test.mjs patches/network-replication/tests/drive-*.test.mjs patches/local-quality/tests/drive-*.test.mjs patches/local-quality/tests/queue-world-slicing.test.mjs
       - name: Verify paint ownership and frozen-host P0 regressions
         run: node --experimental-vm-modules --test patches/splatoon3/tests/issue-264-*.test.mjs patches/reliability/tests/hidden-host-*.test.mjs
       - name: Verify source session admission and finite view settings

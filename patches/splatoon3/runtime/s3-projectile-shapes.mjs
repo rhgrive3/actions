@@ -481,7 +481,7 @@ export function drawS3Shapes(system, THREE, G) {
     if (kind === 'machine' && p.vis > 0) {
       // the round itself: a spinning twisted membrane, never drawn behind the muzzle
       const travel = p.start ? p.start.distanceTo(p.pos) : MACHINE_DRILL.length;
-      R.sheets.drill(p.pos, f.clone(), color, p.seed || 0, (Number.isFinite(G?.time) ? G.time : 0), Math.min(MACHINE_DRILL.length, travel));
+      R.sheets.drill(p.pos, f, color, p.seed || 0, (Number.isFinite(G?.time) ? G.time : 0), Math.min(MACHINE_DRILL.length, travel));
     }
     if (kind === 'shot' || kind === 'pellet' || kind === 'arrow') {
       if (nb >= MAX_BODY) continue;

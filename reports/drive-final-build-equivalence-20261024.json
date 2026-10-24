@@ -1,0 +1,218 @@
+{
+  "schema": 1,
+  "status": "identical-artifact-payload-with-complete-static-adapter-input-registration",
+  "checkedAtUTC": "2026-10-24T16:13:32.511363+00:00",
+  "source": {
+    "identityRegistrationCommit": "3c5f6b828dfc5ac3753a748a355f2dcbc405fa32",
+    "buildStartedAtHead": "a7136c871b1780e3c21215f023ace7f411538f31",
+    "observedHead": "a7136c871b1780e3c21215f023ace7f411538f31",
+    "finalPublicCommitAsserted": false
+  },
+  "productionBuild": {
+    "newBuildInvocations": 1,
+    "exitCode": 0,
+    "command": "node scripts/build-inkwave.mjs inkwave-public <unique-final-output>",
+    "builderSHA256": "a66c66477087ee72c29c61b443fe7450fe1859e1ae000e7acfad806bf823aa35",
+    "builderUnchangedFromBrowserTestedBuild": true
+  },
+  "oldBuild": {
+    "revision": "f3222bf50c8986003a4032d02e24d7e8f6aa910f1a3860ba37981baf1bf3528a",
+    "contentHash": "30c3f5023a51395c79f25e15f0f3850c8a7b923d9c399379f1ba1cca26d34c41",
+    "inputHash": "1b3c5dfaef1503f17b481e8f83fa7d99457edd7f966e0ee169a587eb4208dbcd",
+    "declaredInputs": 1448,
+    "manifestSHA256": "9ae41550cd634b72f6225b8dd45a4a9ba536df703d9dc4d1b00ee817df69796f",
+    "manifestBytes": 588763,
+    "optimization": "esbuild-minify",
+    "esbuildVersion": "0.28.2"
+  },
+  "newBuild": {
+    "revision": "f3222bf50c8986003a4032d02e24d7e8f6aa910f1a3860ba37981baf1bf3528a",
+    "contentHash": "30c3f5023a51395c79f25e15f0f3850c8a7b923d9c399379f1ba1cca26d34c41",
+    "inputHash": "906b9616c1a785ab3aefc0de7245562dda241e0652a88cecd011f3358deec7a3",
+    "declaredInputs": 1458,
+    "manifestSHA256": "7332234e041bed25f427d039fd32306e96f3156cef53e94cf4e0d46a996cc2bb",
+    "manifestBytes": 591011,
+    "optimization": "esbuild-minify",
+    "esbuildVersion": "0.28.2"
+  },
+  "artifactComparison": {
+    "artifactCount": 2152,
+    "artifactBytes": 115861071,
+    "actualFiles": 2153,
+    "filesOutsideArtifactMap": [
+      "inkwave-build.json"
+    ],
+    "orderedPathHashSizeSetSHA256": "6dfab36065ebc0a816ba15efdb1538bb6e95101c7164faca6fb4427d435cb8be",
+    "allActualArtifactHashesMatchManifest": true,
+    "all2152PathHashSizeTriplesIdentical": true,
+    "pathsAdded": [],
+    "pathsRemoved": [],
+    "changedSHA256": [],
+    "changedByteLengths": [],
+    "runtimeRevisionUnchanged": true,
+    "contentHashUnchanged": true
+  },
+  "manifestOnlyChange": {
+    "path": "inkwave-build.json",
+    "oldBytes": 588763,
+    "newBytes": 591011,
+    "byteDelta": 2248,
+    "note": "The build identity manifest is excluded from its own artifact map. Its input/provenance metadata changed; all publishable artifact bytes remained identical."
+  },
+  "sourceInputVerification": {
+    "oldDeclaredInputs": 1448,
+    "newDeclaredInputs": 1458,
+    "addedInputs": [
+      {
+        "key": "local-quality/added-ui-motion-adapter.mjs",
+        "sourcePath": "patches/local-quality/added-ui-motion-adapter.mjs",
+        "sha256": "debed1bb9648e28de3e327983d210275f964e6c8d08903d88557b951e52cd440",
+        "bytes": 9139,
+        "gitBlobSHA1": "e23ac3e07edc5381bf7570d48c5dff858ee4a47d"
+      },
+      {
+        "key": "local-quality/drive-core-queue-adapter.mjs",
+        "sourcePath": "patches/local-quality/drive-core-queue-adapter.mjs",
+        "sha256": "ef11364b2144d8260a19bfc751ef499618a6db4b601ea7f54e3350b853a384dc",
+        "bytes": 13853,
+        "gitBlobSHA1": "a68c8e14e704457478cf36c59928dcbddc7a305e"
+      },
+      {
+        "key": "local-quality/drive-visual-audio-adapter.mjs",
+        "sourcePath": "patches/local-quality/drive-visual-audio-adapter.mjs",
+        "sha256": "aad5b2dee89a7ef6ee48732e81473dee004487a0cb9256da35c66eb68e9acd4f",
+        "bytes": 27738,
+        "gitBlobSHA1": "03807389933be069ae59d7027eb212f88dfd9a49"
+      },
+      {
+        "key": "local-quality/fx-empty-pools-adapter.mjs",
+        "sourcePath": "patches/local-quality/fx-empty-pools-adapter.mjs",
+        "sha256": "6eef7ed352e35587e1e5e3f9d2b4dc8b5d5e843a7ff018ebfb6f90b83ca97f19",
+        "bytes": 1189,
+        "gitBlobSHA1": "29cbc72257763409a5455ea9c69fd0222ba06997"
+      },
+      {
+        "key": "local-quality/ink-ripple-presentation-adapter.mjs",
+        "sourcePath": "patches/local-quality/ink-ripple-presentation-adapter.mjs",
+        "sha256": "c943ba25b9632c4c528f6d64c14b97a6c9eb8366ded51e6714d7db3f93ebdf79",
+        "bytes": 2058,
+        "gitBlobSHA1": "1f915ee1a66a00aae9bc3235739a7422dc31bf92"
+      },
+      {
+        "key": "local-quality/perf-readout-adapter.mjs",
+        "sourcePath": "patches/local-quality/perf-readout-adapter.mjs",
+        "sha256": "e02dffe040818bd8c31345b763c6ce03c8fa69b977f34e244c155439274654af",
+        "bytes": 1622,
+        "gitBlobSHA1": "ecc5116016064fcf8c0876ecf3281601c1c40a3c"
+      },
+      {
+        "key": "local-quality/queue-world-20261024-adapter.mjs",
+        "sourcePath": "patches/local-quality/queue-world-20261024-adapter.mjs",
+        "sha256": "2a4db16625f6d25adbe8193ee92ef270f91fdb1434555cb22b15cce8c1bbdb3e",
+        "bytes": 3111,
+        "gitBlobSHA1": "45ad590fbfe4722d4110bf0efe5937ab84534e47"
+      },
+      {
+        "key": "local-quality/showcase-idle-pools-adapter.mjs",
+        "sourcePath": "patches/local-quality/showcase-idle-pools-adapter.mjs",
+        "sha256": "dc73563b87cda9cc431a79f60baaa3850a7e51b56728a0f4d8b31123f38081e1",
+        "bytes": 3105,
+        "gitBlobSHA1": "74984b62abcd17e5d940b19671347081c19e7728"
+      },
+      {
+        "key": "reliability/queue-network-adapter.mjs",
+        "sourcePath": "patches/reliability/queue-network-adapter.mjs",
+        "sha256": "fcbc929dbce6cdf309e830deb51cde651bb90aedec5747c4cc9b61a6dc266e86",
+        "bytes": 11002,
+        "gitBlobSHA1": "f67bdeee4227bea540099e10e7aca9b6f00af11d"
+      },
+      {
+        "key": "reliability/queue-network-ui-adapter.mjs",
+        "sourcePath": "patches/reliability/queue-network-ui-adapter.mjs",
+        "sha256": "5794a286ae68919d509e92aafd856f1ff27ae9d5201f9bb6543099c34690dec2",
+        "bytes": 64148,
+        "gitBlobSHA1": "87fcbaa7b42f41214e7f34da12fd9310de6f9cc8"
+      }
+    ],
+    "removedInputs": [],
+    "changedExistingInputs": [
+      {
+        "key": "local-quality/adapter.mjs",
+        "oldSHA256": "fcf52479f74665a2011b2e4ce166ade24e0de629ebe584fad06ac93304485ef1",
+        "newSHA256": "c1efebce806821b645a4bf1a4c698edf780cc84a479a4d1e5b06424f59d1ca2a"
+      },
+      {
+        "key": "reliability/adapter.mjs",
+        "oldSHA256": "6876028828a6c9ed9422753628cfd5ced7f2ea31f906761e51ba87235241d095",
+        "newSHA256": "7b8d386eb590e1006a1e616db2e505ac144721beefcf117d32264168e4b130b9"
+      }
+    ],
+    "all1458CurrentSourceSHA256MatchManifest": true,
+    "all1458CurrentGitBlobsMatchObservedHead": true,
+    "currentSourceBytes": 75408268,
+    "inputHashRecomputedExactly": true
+  },
+  "upstreamLock": {
+    "pinnedRawFiles": 24,
+    "allCurrentSHA256Match": true,
+    "lockFileUnchangedFromBaseMain": true
+  },
+  "startupBudget": {
+    "status": "passed",
+    "revision": "f3222bf50c8986003a4032d02e24d7e8f6aa910f1a3860ba37981baf1bf3528a",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 78161,
+    "initialJSBytes": 2025179,
+    "criticalHTMLBytes": 24064,
+    "precacheCount": 543,
+    "precacheBytes": 7602183,
+    "workerBytes": 88049,
+    "declaredBytes": 15851091,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "finalStaticInventory": {
+    "report": "reports/drive-static-twins-inventory-20261024.json",
+    "build": {
+      "revision": "f3222bf50c8986003a4032d02e24d7e8f6aa910f1a3860ba37981baf1bf3528a",
+      "contentHash": "30c3f5023a51395c79f25e15f0f3850c8a7b923d9c399379f1ba1cca26d34c41",
+      "inputHash": "906b9616c1a785ab3aefc0de7245562dda241e0652a88cecd011f3358deec7a3",
+      "manifestSHA256": "7332234e041bed25f427d039fd32306e96f3156cef53e94cf4e0d46a996cc2bb",
+      "optimization": "esbuild-minify"
+    },
+    "summary": {
+      "totalFiles": 2153,
+      "totalLogicalBytes": 116452082,
+      "manifestArtifactsVerified": 2152,
+      "filesOutsideArtifactMap": 1,
+      "currentRevisionFiles": 1076,
+      "identicalPairs": 1071,
+      "identicalRootLogicalBytes": 48990113,
+      "differentPairs": 3,
+      "missingRootPairs": 2,
+      "rootOnlyFiles": 3,
+      "otherRevisionFiles": 0,
+      "actualFilesRemoved": 0,
+      "actualBytesRemoved": 0
+    }
+  },
+  "browserEvidenceReuse": {
+    "report": "reports/drive-browser-verification-20261024.json",
+    "retainedReportSHA256": "cba1a8b8a77b400eadabc3e8bb9a01abc8d9f4d2c433a4571c0feac8c3995a92",
+    "testedSourceHead": "b6ed09b0e5b183eac435062429af8368c9f9a0ad",
+    "testedSourceProofSHA256": "725f366196383f5236f12b3455f8b50cdf86e0861044deacb0e05136b3369f30",
+    "originalInputHashPreserved": "1b3c5dfaef1503f17b481e8f83fa7d99457edd7f966e0ee169a587eb4208dbcd",
+    "newBrowserInvocations": 0,
+    "inheritedBatchSelections": 22,
+    "inheritedNativeScenarioCases": 33,
+    "reason": "All 2152 published artifact paths, actual SHA-256 values and byte lengths are identical to the payload used by the retained successful Chromium batch.",
+    "scope": "Real Chromium ANGLE SwiftShader, controlled source-composed scenes, fixed dt=1/hz; not actual display refresh, native Safari/iPad or retail/performance acceptance.",
+    "sourceProofQualification": "The old source proof remains bound to its original head and inputHash. This equivalence record bridges the newly declared source inputs to the identical tested payload; it does not relabel the old proof as a new execution."
+  },
+  "limitations": [
+    "Only metadata/source-input registration changed. The retained browser result is a payload-equivalence inheritance, not a new browser run.",
+    "No Safari/iPad, retail-device performance, FPS, memory saving, permissions clearance or historical Pages failure cause is established by this build-equivalence check."
+  ]
+}

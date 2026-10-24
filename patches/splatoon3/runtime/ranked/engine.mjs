@@ -8,6 +8,16 @@ export const RANKED_MODES = Object.freeze(['zones', 'tower', 'rainmaker', 'clams
 export const isRankedMode = mode => RANKED_MODES.includes(mode);
 export const RULE_NAMES = Object.freeze({ zones: 'ガチエリア', tower: 'ガチヤグラ', rainmaker: 'ガチホコバトル', clams: 'ガチアサリ' });
 const RULES = { zones: ZonesRule, tower: TowerRule, rainmaker: RainmakerRule, clams: ClamsRule };
+// Only buildFrame brands its owned boolean-input rows. A wire packet cannot
+// create this symbol; external frame callers retain the cloning contract.
+export const OWNED_RANKED_FRAME = Symbol('owned ranked frame');
+function disarmCatchUp(frame) {
+  const inputs = frame.inputs || {};
+  let noThrow = frame[OWNED_RANKED_FRAME] === inputs;
+  if (noThrow) for (const id in inputs) if (Object.hasOwn(inputs, id) && inputs[id]?.throw !== false) { noThrow = false; break; }
+  return { ...frame, barrierHits: [], inputs: noThrow ? inputs
+    : Object.fromEntries(Object.entries(inputs).map(([id, input]) => [id, { ...input, throw: false }])) };
+}
 const teamOk = t => t === 0 || t === 1;
 const pair = (x, max = 100) => Array.isArray(x) && x.length === 2 && x.every(n => Number.isFinite(n) && n >= 0 && n <= max);
 
@@ -91,7 +101,7 @@ export class RankedEngine {
       }
       this.revision++; left -= step;
       // Edges/hits describe this interval, not every catch-up subinterval.
-      if (left > 1e-10) frame = disarmedFrame || (disarmedFrame = { ...frame, barrierHits: [], inputs: Object.fromEntries(Object.entries(frame.inputs || {}).map(([id, input]) => [id, { ...input, throw: false }])) });
+      if (left > 1e-10) frame = disarmedFrame || (disarmedFrame = disarmCatchUp(frame));
     }
   }
   snapshot() {
@@ -141,7 +151,11 @@ export function validRankedSnapshot(s, mode = s?.mode, stage = s?.stage) {
     if (typeof v === 'string') return v.length < 128;
     if (Array.isArray(v)) return v.length <= 128 && v.every(x => visit(x, depth + 1));
     if (typeof v !== 'object') return false;
-    return Object.entries(v).every(([k, x]) => !['__proto__', 'prototype', 'constructor'].includes(k) && k.length < 80 && visit(x, depth + 1));
+    for (const k in v) {
+      if (!Object.hasOwn(v, k)) continue;
+      if (k === '__proto__' || k === 'prototype' || k === 'constructor' || k.length >= 80 || !visit(v[k], depth + 1)) return false;
+    }
+    return true;
   };
   return !!s.rule && visit(s.rule, 0) && validRuleState(mode, s.rule);
 }

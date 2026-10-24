@@ -9,9 +9,9 @@ import {registerLimitedDrop,retireLimitedDrop} from '../../network-replication/t
 import { coolerSegmentContact } from './support-cooler-collision.mjs';
 const MAX_DROPS=768;
 function random(seed){let n=seed>>>0;return()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296;};}
-function remove(projectiles,drop){
+function remove(projectiles,drop,knownIndex=-1){
   retireLimitedDrop(drop);
-  const list=projectiles._s3TorpedoSplashes||[],i=list.indexOf(drop);
+  const list=projectiles._s3TorpedoSplashes||[],i=list[knownIndex]===drop?knownIndex:list.indexOf(drop);
   if(i>=0)list.splice(i,1);
   const pool=drop.visual;
   if(pool){drop.visual=null;if(--pool.users===0){pool.mesh.removeFromParent();pool.mesh.dispose();pool.mesh.geometry.dispose();pool.mesh.material.dispose();projectiles._s3TorpedoVisuals.delete(pool.scene);}else pool.dirty=true;}
@@ -49,7 +49,7 @@ export function spawnFizzySplashes(api,projectiles,source,position,stage){
 function spawnSplashes(api,projectiles,source,position,spec,kind,stage=0){
   const drops=projectiles._s3TorpedoSplashes ||= [],rng=random(source.seed^(kind==='find'?0xf1ad6571:kind==='fizzy'?0x3f125167^Math.imul(stage+1,0x85ebca6b):0x82a2b175)),offset=rng()*Math.PI*2;
   for(let i=0;i<spec.count;i++){
-    while(drops.length>=MAX_DROPS)remove(projectiles,drops[0]);
+    while(drops.length>=MAX_DROPS)remove(projectiles,drops[0],0);
     const angle=offset+i*Math.PI*2/spec.count;
     const pitch=(spec.pitchDegrees??(spec.pitchMinDegrees+(spec.pitchMaxDegrees-spec.pitchMinDegrees)*rng()))*Math.PI/180;
     const speed=spec.velocityMin+(spec.velocityMax-spec.velocityMin)*rng();
@@ -78,14 +78,14 @@ export function stepTorpedoSplashes(api,projectiles,dt,burst){
     if(defense&&defense.distance<=(contact?.distance??Infinity)){
       // The shared defense lane owns absorption/object damage. A replica may
       // stop visually but cannot author another damage proposal.
-      if(!d.ghost&&!d.owner.remote)defense.onHit?.();remove(projectiles,d);continue;
+      if(!d.ghost&&!d.owner.remote)defense.onHit?.();remove(projectiles,d,i);continue;
     }
     if(contact){
       const at=contact.point.addScaledVector(contact.normal,.035);
-      burst(d,at);remove(projectiles,d);continue;
+      burst(d,at);remove(projectiles,d,i);continue;
     }
     // Resource cleanup below the playable world is not an airborne detonation.
-    if(!Number.isFinite(d.pos.x+d.pos.y+d.pos.z)||d.pos.y< -100){remove(projectiles,d);continue;}
+    if(!Number.isFinite(d.pos.x+d.pos.y+d.pos.z)||d.pos.y< -100){remove(projectiles,d,i);continue;}
 
   }
   syncVisuals(projectiles);

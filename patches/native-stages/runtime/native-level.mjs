@@ -95,8 +95,8 @@ export class NativeLevel extends Level {
  }
  /** queryBlocks() followed by the caller's own first y rejection, in the same
   * order. The xz hash stacks every level of a source stage in one 4 m column
-  * (#1671: ~1100 splat and ~500 region candidates per query on Scorch). Each
-  * hash cell keeps a typed copy of the immutable static y values, so rejected
+  * (#1671: ~1100 splat and ~500 region candidates per query on Scorch). The
+  * level keeps one typed copy of immutable y values per static block, so rejected
   * ids are skipped before any block object is read. The test is the caller's
   * exact expression on the same doubles: mode 0 is splat's AABB y test, mode 1
   * regionStats' face-origin test. Kept ids keep their first-cell order and
@@ -104,43 +104,36 @@ export class NativeLevel extends Level {
   * later query can observe that. Dynamic blocks always pass to the caller. */
  queryBlocksBand(minX,minZ,maxX,maxZ,out,y,reach,mode){
   out.length=0;
-  if(this._bandHash!==this.hash){this._bandHash=this.hash;this._bandCells=new Array(this.hash.length);}
-  const st=this._nextQueryStamp(),stamps=this.blockStamp,cells=this._bandCells;
+  if(this._bandHash!==this.hash){this._bandHash=this.hash;this._bandLo=this._bandHi=this._bandOrigin=null;}
+  if(mode===0&&!this._bandLo||mode!==0&&!this._bandOrigin)this._buildBandValues(mode);
+  const st=this._nextQueryStamp(),stamps=this.blockStamp,limit=this.staticBlockCount;
+  const lo=this._bandLo,hi=this._bandHi,origin=this._bandOrigin;
   const x0=this._hxi(minX),x1=this._hxi(maxX),z0=this._hzi(minZ),z1=this._hzi(maxZ);
   for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++){
-   const c=z*this.hw+x,cell=this.hash[c];let band=cells[c];
-   if(!band||band.length!==cell.length)band=cells[c]={length:cell.length};
-   if(mode===0&&!band.lo||mode!==0&&!band.origin)this._bandCell(cell,band,mode);
-   if(mode===0){
-    const lo=band.lo,hi=band.hi;
-    for(let i=0;i<cell.length;i++){
-     if(y<lo[i]-reach||y>hi[i]+reach)continue;
-     const id=cell[i];if(stamps[id]!==st){stamps[id]=st;out.push(id);}
-    }
-   }else{
-    const o=band.origin;
-    for(let i=0;i<cell.length;i++){
-     if(Math.abs(o[i]-y)>reach)continue;
-     const id=cell[i];if(stamps[id]!==st){stamps[id]=st;out.push(id);}
-    }
+   const cell=this.hash[z*this.hw+x];
+   for(let i=0;i<cell.length;i++){
+    const id=cell[i];
+    if(id<limit&&(mode===0?(y<lo[id]-reach||y>hi[id]+reach):Math.abs(origin[id]-y)>reach))continue;
+    if(stamps[id]!==st){stamps[id]=st;out.push(id);}
    }
   }
   return out;
  }
- _bandCell(cell,band,mode){
-  const n=cell.length;
+ _buildBandValues(mode){
+  // Immutable heights are owned once per static block, even when an object
+  // overlaps many hash cells. Dynamic blocks retain the caller's live test.
+  const n=this.staticBlockCount;
   if(mode===0){
-   const lo=band.lo=new Float64Array(n),hi=band.hi=new Float64Array(n);
-   for(let i=0;i<n;i++){const id=cell[i],b=this.blocks[id];if(id>=this.staticBlockCount||!b){lo[i]=-Infinity;hi[i]=Infinity;}else{lo[i]=b.aabbMin.y;hi[i]=b.aabbMax.y;}}
+   const lo=this._bandLo=new Float64Array(n),hi=this._bandHi=new Float64Array(n);
+   for(let id=0;id<n;id++){const b=this.blocks[id];if(!b){lo[id]=-Infinity;hi[id]=Infinity;}else{lo[id]=b.aabbMin.y;hi[id]=b.aabbMax.y;}}
   }else{
-   const origin=band.origin=new Float64Array(n);
-   for(let i=0;i<n;i++){
-    const id=cell[i],b=this.blocks[id];if(id>=this.staticBlockCount||!b){origin[i]=NaN;continue;}
+   const origin=this._bandOrigin=new Float64Array(n);
+   for(let id=0;id<n;id++){
+    const b=this.blocks[id];if(!b){origin[id]=NaN;continue;}
     const f=b.faces,single=b.nativeFace!==undefined&&f[0]===b.nativeFace&&f[1]<0&&f[2]<0&&f[3]<0&&f[4]<0&&f[5]<0;
-    origin[i]=single?this.faces[b.nativeFace].origin.y:f.every(face=>face<0)?Infinity:NaN;
+    origin[id]=single?this.faces[b.nativeFace].origin.y:f.every(face=>face<0)?Infinity:NaN;
    }
   }
-  return band;
  }
  queryDynamicBlocks(minX,minZ,maxX,maxZ,out){
   out.length=0;

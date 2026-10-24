@@ -345,10 +345,10 @@ if (!unminified && fs.existsSync(path.join(THREE_DIR, 'three.module.js')) && pro
 const audioOrphan = path.join(BUILD, REVIEWED_AUDIO_ORPHAN);
 if (fs.existsSync(audioOrphan)) {
   const modules = new Map(walk(BUILD).filter(file => /\.m?js$/.test(file)).map(file =>
-    [path.relative(BUILD, file).split(path.sep).join('/'), fs.readFileSync(file, 'utf8')]));
+    [path.relative(BUILD, file).split(path.sep).join('/'), () => fs.readFileSync(file, 'utf8')]));
   // These modules are copied by prepareLoading after this graph pass.
   for (const file of [...walk(path.join(LOADING_ROOT, 'runtime')), path.join(LOADING_ROOT, 'sw.js')].filter(file => /\.m?js$/.test(file)))
-    modules.set('patches/loading-cache/' + path.relative(LOADING_ROOT, file).split(path.sep).join('/'), fs.readFileSync(file, 'utf8'));
+    modules.set('patches/loading-cache/' + path.relative(LOADING_ROOT, file).split(path.sep).join('/'), () => fs.readFileSync(file, 'utf8'));
   let inline = 0;
   for (const htmlFile of walk(BUILD).filter(file => file.endsWith('.html'))) {
     const html = fs.readFileSync(htmlFile, 'utf8');
@@ -659,6 +659,7 @@ const volumePackaging=dedupeVersionedVolumeAssets(BUILD,revision);
 fs.writeFileSync(path.join(BUILD,'index.html'), loadingHTML.replace('<head>', `<head>\n<base href="./_versions/${revision}/">`));
 const loadingSummary = finalizeLoadingWorker(BUILD, revision, loadingPlan,
   source => unminified ? source : compactLoadingWorkerTemplate(source, esbuild.transformSync));
+copyLocalNativeAssets(BUILD, nativePrepared);
 const identity = writeBuildIdentity(SRC, BUILD, PATCH_ROOT, { esbuild:esbuild?.version ?? null, optimization:unminified ? 'none-offline' : 'esbuild-minify', revision, script:sha256(fs.readFileSync(new URL(import.meta.url))), touchLayout:touchLayoutIdentity(), reliability:reliabilityIdentity(), quality:qualityIdentity(), network:networkIdentity(), range:rangeIdentity(), loadingCache:{ source:loadingIdentity(), ...loadingSummary } });
 // Include the independent editor in exact-source verification, not only artifact hashing.
 for (const [file, hash] of Object.entries(identity.build.touchLayout)) identity.files['touch-layout/' + file] = hash;
@@ -679,7 +680,6 @@ identity.files['build-script/lib/inkwave-native-stages.mjs'] = sha256(fs.readFil
 if (accountBundle) identity.build.account = accountBundle;
 identity.inputHash = sha256(JSON.stringify(identity.files));
 fs.writeFileSync(path.join(BUILD, 'inkwave-build.json'), JSON.stringify(identity, null, 2) + '\n');
-copyLocalNativeAssets(BUILD, nativePrepared);
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.renameSync(BUILD, OUT);
 console.log(`patch: splatoon3+quality+range · build ${identity.contentHash.slice(0, 12)}`);

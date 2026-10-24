@@ -18,6 +18,11 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
+          # Sparse checkout asks checkout v4 to fetch only required blobs.
+          sparse-checkout: |
+            /tools/audio/collect-public-reference-recordings.py
+            /.github/workflows/inkwave-audio-reference-fetch.yml
+          sparse-checkout-cone-mode: false
       - run: python3 tools/audio/collect-public-reference-recordings.py
       - uses: actions/upload-artifact@v4
         with:

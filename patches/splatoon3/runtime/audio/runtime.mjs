@@ -189,7 +189,7 @@ export function installWeaponAudioRuntime(api){
     if(canopy?.open&&!s.canopy?.open)play(a,'open',canopy.pos,.7);
     if(s.canopy?.open&&(!canopy?.open)&&!canopy?.launched)play(a,'close',a.pos,.6);
     if(canopy?.launched&&!s.canopy?.launched)play(a,'purge',canopy.pos,.75);
-    s.canopy=canopy?{open:canopy.open,launched:canopy.launched}:null;
+    if(canopy){const prior=s.canopy||(s.canopy={});prior.open=canopy.open;prior.launched=canopy.launched;}else s.canopy=null;
     return result;
   };
   const oldSet=Actor.prototype.setWeapon;

@@ -1,3 +1,4 @@
+import {buildPointBlocks,pointBlockMinimum} from './point-block-minimum.mjs';
 import { createWailSpeakerBatch, updateWailSpeakerBatch, retireWailSpeakerBatch } from './wail-speaker-batch.mjs';
 // Presentation for the thirteen all-specials actions (special-models.mjs):
 // the device each kid carries or rides while the special is active, the
@@ -233,7 +234,13 @@ function animateDevice(a, s, d, spec, state, t, dt) {
     // host origin (the actor's feet). A fixed lift left the Kraken hovering about 0.2 above the ground.
     const pts = krakenPoints(d.model), cx = Math.cos(rx), ry0 = cx * Math.sin(roll), ry1 = cx * Math.cos(roll), ry2 = -Math.sin(rx);
     let minY = Infinity;
-    for (let i = 0; i < pts.length; i += 3) { const y = ry0 * sx * pts[i] + ry1 * len * pts[i + 1] + ry2 * up * pts[i + 2]; if (y < minY) minY = y; }
+    if(pts.length<384){
+      for (let i = 0; i < pts.length; i += 3) { const y = ry0 * sx * pts[i] + ry1 * len * pts[i + 1] + ry2 * up * pts[i + 2]; if (y < minY) minY = y; }
+    } else {
+      let blocks=d.model.userData.krakenPointBlocks;
+      if(blocks?.points!==pts)blocks=d.model.userData.krakenPointBlocks=buildPointBlocks(pts);
+      minY=pointBlockMinimum(blocks,ry0*sx,ry1*len,ry2*up);
+    }
     const lift = Number.isFinite(minY) ? -minY * spec.scale * e : 0.25 * up * e;
     d.holder.position.set(0, lift + 0.025 * Math.abs(bodyWave) * (air ? 0 : 1), -1.15 * len * e);
     advanceKrakenArms(s,speed,phase,dt);
@@ -260,6 +267,13 @@ export function installSpecialModels(api) {
   if (!THREE || !Projectiles?.prototype?.update) return api;
   if (Projectiles.prototype[INSTALL]) return api;
   Object.defineProperty(Projectiles.prototype, INSTALL, { value: true });
+  // These native proxies are hidden by this installed replacement path before
+  // rendering. Keep their transform/material scalar contract without GPU assets.
+  api.specialWorldProxy=kind=>{
+    if(kind!=='decoy'&&kind!=='marker'&&kind!=='strike'&&kind!=='wave'&&kind!=='screen')return null;
+    const group=new THREE.Group();group.visible=false;group.material={emissiveIntensity:0,opacity:0};
+    group.userData.s3SpecialProxy=true;return group;
+  };
   // Device recoil must survive an absent/disabled FX director. Local rows
   // reach this observer only after gameplay emits; remote callers must route
   // through their accepted replay envelope before invoking this callback.
@@ -276,14 +290,16 @@ export function installSpecialModels(api) {
   const up = new THREE.Vector3(0, 1, 0), tailSpeakers = new Map(),speakerSeen=new Set();
   const roundSeen=new WeakMap(), worldLiveness=new WeakMap();
   let speakerMarks = new WeakMap();
+  const remoteSpeakerActors=new Set();
   function observeSpeaker(e) {
-    if (e?.id === 'killerWail' && e.actor && e.action === 'activate') { speakerMarks.delete(e.actor); return; }
+    if (e?.id === 'killerWail' && e.actor && e.action === 'activate') { speakerMarks.delete(e.actor);remoteSpeakerActors.delete(e.actor); return; }
     if (e?.id !== 'killerWail' || !e.actor || e.action !== 'laser' || !Number.isInteger(e.index) || e.index < 0 || e.index > 5
       || !Array.isArray(e.pos) || e.pos.length !== 3 || !e.pos.every(Number.isFinite)
       || !Array.isArray(e.target) || e.target.length !== 3 || !e.target.every(Number.isFinite)) return;
     let marks = speakerMarks.get(e.actor);
     if (!marks || marks.activation !== e.activation) { marks = { activation: e.activation, entries: [] }; speakerMarks.set(e.actor, marks); }
     marks.entries[e.index] = { origin: new THREE.Vector3(...e.pos), target: new THREE.Vector3(...e.target), at: G.time || 0 };
+    if(e.actor.remote)remoteSpeakerActors.add(e.actor);
   }
   api.on?.('all:special', e => { if (!e?.actor?.remote) observeSpeaker(e); });
   // Called only after the network replay owner accepts the event, including
@@ -312,7 +328,13 @@ export function installSpecialModels(api) {
         draw(tail.actor, tail.state.serial, pair.index * 2 + i, pair.origins[i], mark?.target || v.copy(pair.origins[i]).add(pair.direction));
       }
     }
-    for (const actor of G.actors || []) {
+    const now=G.time||0,roster=G.actors||[];
+    for(const actor of remoteSpeakerActors){
+      const marks=speakerMarks.get(actor);
+      if(!roster.includes(actor)||!marks?.entries.some(mark=>mark&&(now<mark.at||now-mark.at<=5/60+.1)))remoteSpeakerActors.delete(actor);
+    }
+    // Preserve the roster's draw order when marks exist; idle updates never walk it.
+    if(remoteSpeakerActors.size)for (const actor of roster) {
       if (!actor.remote || actor.alive && actor.specialActive?.id === 'killerWail') continue;
       const marks = speakerMarks.get(actor);
       for (const [i, mark] of (marks?.entries || []).entries()) if (mark && (G.time || 0) >= mark.at && (G.time || 0) - mark.at <= 5 / 60 + .1)
@@ -455,7 +477,7 @@ export function installSpecialModels(api) {
   if (clear) Projectiles.prototype.clear = function (...args) {
     for (const slots of tailSpeakers.values()) for (const r of slots.values()) disposeModel(r.holder);
     tailSpeakers.clear();
-    speakerMarks = new WeakMap();
+    speakerMarks = new WeakMap();remoteSpeakerActors.clear();
     for (const map of [this[OBJECTS], this[ROUNDS]]) if (map) { for (const r of map.values()) disposeModel(r.group); map.clear(); }
     return clear.apply(this, args);
   };

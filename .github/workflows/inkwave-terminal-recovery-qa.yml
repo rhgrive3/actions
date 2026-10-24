@@ -2,6 +2,8 @@ name: INKWAVE terminal recovery native QA
 on:
   pull_request:
     paths:
+      - 'scripts/package-inkwave-recovery-evidence.mjs'
+      - 'scripts/tests/inkwave-recovery-evidence.test.mjs'
       - 'patches/reliability/tests/start.test.mjs'
       - 'scripts/tests/inkwave-native-stage-publish-rollback.test.mjs'
       - 'inkwave-public/src/core/renderer.js'
@@ -63,6 +65,7 @@ jobs:
             tools/native-recovery-qa/stage-contract.test.mjs \
             tools/native-recovery-qa/emitted-fixture.test.mjs \
             tools/native-recovery-qa/workflow.test.mjs \
+            scripts/tests/inkwave-recovery-evidence.test.mjs \
             2>&1 | tee .qa-evidence/recovery/source/tests.log
       - name: Build production once for both independent browser lanes
         run: node scripts/build-inkwave.mjs inkwave-public _site-recovery
@@ -87,12 +90,12 @@ jobs:
       - name: Enforce bounded diagnostic artifact
         id: evidence_budget
         if: always()
-        run: |
-          node --input-type=module -e 'import fs from "node:fs";import path from "node:path";let bytes=0;function walk(p){if(!fs.existsSync(p))return;for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory())walk(f);else bytes+=fs.statSync(f).size;}}walk(".qa-evidence/recovery");console.log({bytes,limit:128*1024*1024});if(bytes>128*1024*1024)throw Error("Recovery evidence exceeds artifact budget; preserve outputs and fail");fs.appendFileSync(process.env.GITHUB_OUTPUT,"eligible=true\n");'
+        run: node scripts/package-inkwave-recovery-evidence.mjs .qa-evidence/recovery .qa-evidence/recovery-bounded
       - uses: actions/upload-artifact@v4
         if: ${{ always() && steps.evidence_budget.outputs.eligible == 'true' }}
         with:
           name: inkwave-terminal-recovery-${{ github.event.pull_request.head.sha || github.sha }}
-          path: .qa-evidence/recovery
+          path: ${{ steps.evidence_budget.outputs.path }}
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 7

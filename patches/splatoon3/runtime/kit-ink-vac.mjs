@@ -1,3 +1,4 @@
+import { SnapshotPool } from './snapshot-pool.mjs';
 // Splat Charger special "Ink Vac" (Splatoon 3 SpBlower) for the public composed
 // INKWAVE runtime. Owned by the freebuff-8 kit task. Native id: 'inkVac'.
 //
@@ -325,13 +326,16 @@ function firstEntry(state, start, end) {
   const disc = C1 * C1 - 4 * C2 * C0;
   if (disc < 0) return Infinity;                           // never crosses the surface
   const sq = Math.sqrt(disc);
-  const roots = Math.abs(C2) > 1e-12
-    ? [(-C1 - sq) / (2 * C2), (-C1 + sq) / (2 * C2)]
-    : (Math.abs(C1) > 1e-12 ? [-C0 / C1] : []);
-  roots.sort((x, y) => x - y);
-  for (const t of roots) {
-    if (t < lo - 1e-9 || t > hi + 1e-9) continue;
-    if (inside(t)) return Math.max(lo, t) * segLen;
+  let first,second,count=0;
+  if(Math.abs(C2)>1e-12){
+    first=(-C1-sq)/(2*C2);second=(-C1+sq)/(2*C2);count=2;
+    // Match stable numeric sort, including unordered NaN pairs.
+    if(second-first<0){const swap=first;first=second;second=swap;}
+  }else if(Math.abs(C1)>1e-12){first=-C0/C1;count=1;}
+  for(let index=0;index<count;index++){
+    const t=index===0?first:second;
+    if(t<lo-1e-9||t>hi+1e-9)continue;
+    if(inside(t))return Math.max(lo,t)*segLen;
   }
   return Infinity;
 }
@@ -368,7 +372,8 @@ export function inkVacAbsorbCandidate(actor, start, end, projectile) {
   const distance = Math.min(firstEntry(state, start, end), muzzleEntry(state, start, end));
   if (!Number.isFinite(distance)) return null;
   // Line of sight at the first-contact point (an intervening wall blocks intake).
-  const q = state._q.copy(start).lerp(end, start.distanceTo(end) > 0 ? distance / start.distanceTo(end) : 0);
+  const segmentLength=start.distanceTo(end);
+  const q = state._q.copy(start).lerp(end, segmentLength > 0 ? distance / segmentLength : 0);
   if (G.physics?.los && !G.physics.los(originOf(actor, state._org), q)) return null;
   return { distance, kind: 'ink-vac', onHit: () => absorb(state, projectile) };
 }
@@ -391,9 +396,14 @@ function proposalWeaponDamage(weapon) {
   if (!weapon) return 0;
   // The receiver's equipped weapon bounds the claimed projectile damage.
   // Chargers have a charge-dependent damageMax, not a fixed damage scalar.
-  const value = [weapon.damage, weapon.damageMax, weapon.damageHead, weapon.directDamage,
-    weapon.flickDamageNear, weapon.damageMin].find(v => Number.isFinite(v) && v > 0);
-  return value || 0;
+  const damage=weapon.damage,max=weapon.damageMax,head=weapon.damageHead,direct=weapon.directDamage,
+    flick=weapon.flickDamageNear,min=weapon.damageMin;
+  if(Number.isFinite(damage)&&damage>0)return damage;
+  if(Number.isFinite(max)&&max>0)return max;
+  if(Number.isFinite(head)&&head>0)return head;
+  if(Number.isFinite(direct)&&direct>0)return direct;
+  if(Number.isFinite(flick)&&flick>0)return flick;
+  return Number.isFinite(min)&&min>0?min:0;
 }
 // #1090: a thrown bomb retains its own sub identity. The main weapon's damage
 // is not a bound for that separate attack (e.g. Suction Bomb 180 vs Shooter 36).
@@ -670,13 +680,16 @@ function damageInhaleObjects(state, eligible, seen) {
   projectiles.s3DamageSubObjects?.(actor, center, radius, damageAtContact, INHALE_OBJECT_CAUSE);
   projectiles.s3DamageSpecialObjects?.(actor, center, radius, damageAtContact, INHALE_OBJECT_CAUSE);
 
-  for (const dome of [...bigBubblerDomes(), ...bigBubblerRemoteDomes()]) {
+  const snapshots = state._bubblerSnapshots ||= new SnapshotPool();
+  // Both rosters are captured before the first damage callback, as in the spread.
+  const snapshot = snapshots.take(bigBubblerDomes(), bigBubblerRemoteDomes());
+  try { for (const dome of snapshot) {
     if (!dome || seen.has(dome) || dome.team === actor.team || dome.owner?.team === actor.team) continue;
     const contact = bubblerConeContact(state, dome);
     if (!contact) continue;
     seen.add(dome);
     damageBigBubblerFromInkVac(dome, actor, amount, contact);
-  }
+  } } finally { snapshots.release(snapshot); }
 }
 
 // Per-frame advance of a LOCALLY owned inhale. dt <= 0 is a strict no-op.

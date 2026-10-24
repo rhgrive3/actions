@@ -231,8 +231,8 @@ const game = new Game();`);
   code=code.replaceAll(initial,'a.spawnAt(_v, nativeSpawnYaw(G.level, a.team, a.team === 0 ? 0 : Math.PI));');
  }
  if(rel==='src/game/minimap.js'){
-  code="import { buildNativeMinimap } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
-  once('  _build() {','  _build() {\n    if (this.level.native) return buildNativeMinimap(this, this._worldX === Minimap.prototype._worldX && this._worldZ === Minimap.prototype._worldZ);');
+  code="import { buildNativeMinimap, buildNativeMinimapAsync } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
+  once('  _build() {','  prepareNative(options) { return buildNativeMinimapAsync(this, this._worldX === Minimap.prototype._worldX && this._worldZ === Minimap.prototype._worldZ, options); }\n  _build() {\n    if (this.level.native) return buildNativeMinimap(this, this._worldX === Minimap.prototype._worldX && this._worldZ === Minimap.prototype._worldZ);');
  }
  if(rel==='patches/local-quality/world-quality.mjs'){
   code="import { applyNativeQuality } from '../native-stages/runtime/engine.mjs';\n"+code;

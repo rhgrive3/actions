@@ -1,9 +1,11 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
+import {adaptQueueWorld20261024} from '../../local-quality/queue-world-20261024-adapter.mjs';
 import {installIssue264PaintOwnership} from '../runtime/paint-ownership.mjs';
 import {installMinimapDirty} from '../runtime/minimap-dirty.mjs';
-const source=adaptBuildSource('src/world/paint.js',fs.readFileSync(new URL('../../../inkwave-public/src/world/paint.js',import.meta.url),'utf8'));
+const composed=adaptBuildSource('src/world/paint.js',fs.readFileSync(new URL('../../../inkwave-public/src/world/paint.js',import.meta.url),'utf8'));
+const source=composed.includes('at._paintRange')?composed:adaptQueueWorld20261024('src/world/paint.js',composed);
 const draw=source.slice(source.indexOf('  _drawQuads() {'),source.indexOf('  // ------------------------------------------------------------ queries'));
 const drawQuads=new Function('PAINT_GPU_ATTRIBUTE_NAMES','return ({'+draw+'})._drawQuads;')(['aPos','aLocal','aSplat','aStretch','aGrow']);
 const clearPart=source.slice(source.indexOf('\n  clear() {'),source.indexOf('  // Camera position for ripple priorities'));
@@ -11,8 +13,7 @@ const clear=new Function('THREE','RIP_N','return ({'+clearPart+'}).clear;')(THRE
 test('actual composed paint draw restores renderer state and blocks retry after a partial pass',()=>{
  const previous={},target={},error=Error('injected render failure');let rt=previous,calls=0;
  const renderer={autoClear:true,getRenderTarget:()=>rt,setRenderTarget:v=>{rt=v;},render(){calls++;throw error;}};
- const a={clearUpdateRanges(){},addUpdateRange(){},needsUpdate:false};
- const paint={quads:1,dryMesh:{visible:true},mesh:{visible:false},geo:{attributes:Object.fromEntries(['aPos','aLocal','aSplat','aStretch','aGrow'].map(k=>[k,{...a,itemSize:4}])),setDrawRange(){}},renderer,rt:{texture:{}},scene:{},cam:{},_mipRequested:true,clock:7};
+ const paint={quads:1,dryMesh:{visible:true},mesh:{visible:false},geo:{attributes:Object.fromEntries(['aPos','aLocal','aSplat','aStretch','aGrow'].map(k=>[k,new THREE.BufferAttribute(new Float32Array(64),4)])),setDrawRange(){}},renderer,rt:{texture:{}},scene:{},cam:{},_mipRequested:true,clock:7};
  assert.throws(()=>drawQuads.call(paint),e=>e===error);assert.equal(rt,previous);assert.equal(renderer.autoClear,true);assert.equal(paint.rt.texture.generateMipmaps,false);assert.equal(paint.quads,1);assert.equal(paint._lastMipClock,undefined);
  assert.throws(()=>drawQuads.call(paint),e=>e===error);assert.equal(calls,1,'a partial atlas pass must not be applied twice');
 });
@@ -43,4 +44,10 @@ test('released growth leases relinquish native/ordinary ancillary cache graphs',
  const paint={_splatGrowthPool:[],_releaseSplatEntries(entries){entries.length=0;}};release.call(paint,g);
  assert.equal(paint._splatGrowthPool[0],g);for(const name of ['entries','_s3AncillaryCells','_s3AncillaryTemplates','_s3AncillaryTemplate','_s3Wobble','_s3SettledAncillary'])assert.equal(g[name],null,name);
  assert.equal(g._ancillaryAllDone,0);assert.equal(g._ancillaryFloorDone,0);
+});
+
+test('atlas draw ranges retain exact counts across flushes while reusing one record per attribute',()=>{
+ const names=['aPos','aLocal','aSplat','aStretch','aGrow'],attributes=Object.fromEntries(names.map((name,i)=>[name,new THREE.BufferAttribute(new Float32Array(256),i+1)])),seen=[];
+ const paint={quads:0,dryMesh:{visible:false},mesh:{visible:false},geo:{attributes,setDrawRange(){}},renderer:{autoClear:true,getRenderTarget(){return null},setRenderTarget(){},render(){seen.push(names.map(name=>attributes[name].updateRanges[0]));for(const name of names)attributes[name].clearUpdateRanges();}},rt:{texture:{}},scene:{},cam:{},clock:0};
+ for(const count of [2,7,1]){paint.quads=count;drawQuads.call(paint);for(let i=0;i<names.length;i++){assert.equal(seen.at(-1)[i].start,0);assert.equal(seen.at(-1)[i].count,count*4*(i+1));if(seen.length>1)assert.equal(seen.at(-1)[i],seen[0][i]);}}
 });

@@ -1,0 +1,51 @@
+{
+  "scope": "Current uncached HTTP observations do not establish the cause of the historical 2026-10-22 response. No retry or gate weakening.",
+  "observations": [
+    {
+      "url": "https://rhgrive3.github.io/actions/_versions/10c06501ee25ba137081855fd18920adb82b251a9c2a06b149588850f4cbc657/patches/splatoon3/runtime/flow.mjs",
+      "at": "2026-10-24T14:10:08Z",
+      "status": 404,
+      "seconds": 0.259
+    },
+    {
+      "url": "https://rhgrive3.github.io/actions/inkwave-build.json?driveQueueAudit=1792851009",
+      "at": "2026-10-24T14:10:09Z",
+      "status": 200,
+      "headers": {
+        "server": "envoy",
+        "content-type": "application/json; charset=utf-8",
+        "last-modified": "Fri, 23 Oct 2026 22:54:51 GMT",
+        "etag": "\"6adbe5bb-8d508\"",
+        "x-github-request-id": "B0A4:10C34E:6E1E88:7BB15F:6ADCBC40",
+        "age": "0",
+        "via": "1.1 varnish",
+        "x-cache": "MISS",
+        "content-length": "578824"
+      },
+      "bytes": 578824,
+      "sha256": "aa55f9bf80c92cfbbddffaa7951f98d45c8c601d397435e6813c5784e13b446c",
+      "seconds": 0.327
+    },
+    {
+      "url": "https://rhgrive3.github.io/actions/_versions/3188e68242c3588f39974fa55ad366ac03816605f3179bf65472c136420856a2/patches/splatoon3/runtime/flow.mjs",
+      "at": "2026-10-24T14:10:09Z",
+      "status": 200,
+      "headers": {
+        "server": "envoy",
+        "content-type": "text/javascript; charset=utf-8",
+        "last-modified": "Fri, 23 Oct 2026 22:54:51 GMT",
+        "etag": "\"6adbe5bb-2589\"",
+        "x-github-request-id": "8570:298845:7048B7:7DDBAC:6ADCBC41",
+        "age": "0",
+        "via": "1.1 varnish",
+        "x-cache": "MISS",
+        "content-length": "9609"
+      },
+      "bytes": 9609,
+      "sha256": "a42fa9e5da7a3a28df2f4f4e961962544bc41b2d07aca4462f3294758422df26",
+      "seconds": 0.13,
+      "manifestExpected": "a42fa9e5da7a3a28df2f4f4e961962544bc41b2d07aca4462f3294758422df26",
+      "matchesExpected": true
+    }
+  ]
+}

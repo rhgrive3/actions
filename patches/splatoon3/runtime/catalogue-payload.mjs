@@ -1,3 +1,4 @@
+import {validSpecialWorldPayload} from './special-world-payload.mjs';
 // Shared by catalogue replay and causal paint admission.
 export function cataloguePayload(event) {
   if(!event||typeof event!=='object')return null;
@@ -10,5 +11,5 @@ export function cataloguePayload(event) {
     else if(typeof value==='boolean')payload[key]=value;
     else if(Array.isArray(value)){if(value.length>64||value.some(v=>!Number.isFinite(v)||Math.abs(v)>1e6))return null;payload[key]=value.slice();}
   }
-  return JSON.stringify(payload).length<=4096?payload:null;
+  return validSpecialWorldPayload(payload)&&JSON.stringify(payload).length<=4096?payload:null;
 }

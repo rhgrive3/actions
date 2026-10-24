@@ -483,6 +483,21 @@ export class RoomDurableObject {
   }
 
   _cleanupMember(id, ws) {
+    // Close failed control recipients and elect again. Drain iteratively so a
+    // synchronous close callback cannot resume an outer stale-host broadcast.
+    const queue = this._cleanupQueue || (this._cleanupQueue = []);
+    queue.push({ id, ws });
+    if (this._cleaningMembers) return;
+    this._cleaningMembers = true;
+    try {
+      while (queue.length) {
+        const next = queue.shift();
+        this._cleanupMemberOnce(next.id, next.ws);
+      }
+    } finally { this._cleaningMembers = false; }
+  }
+
+  _cleanupMemberOnce(id, ws) {
     if (!this.members.has(id)) return;
     const current = this.members.get(id);
     if (ws && current.ws !== ws) return;
@@ -506,7 +521,10 @@ export class RoomDurableObject {
     // Broadcast leave notification to remaining members
     const leaveMsg = JSON.stringify({ t: 'leave', id, host: this.hostId });
     for (const [_, member] of this.members) {
-      relaySend(member.ws, leaveMsg);
+      if (!relaySend(member.ws, leaveMsg)) {
+        try { member.ws.close(1013, 'Membership delivery failed'); } catch {}
+        this._cleanupMember(member.id, member.ws);
+      }
     }
   }
 }

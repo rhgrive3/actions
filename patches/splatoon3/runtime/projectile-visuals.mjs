@@ -279,6 +279,7 @@ export class ProjectileVisualRuntime {
     this.bodyColors=new Float64Array(this.capacity*3);this.bodyColors.fill(NaN);
     this.renderRecords=new Array(this.capacity);this.renderRecordCount=0;
     this.groupIds=new Float64Array(this.capacity);this.groupHeads=new Int32Array(this.capacity);
+    this.groupOccupied=new Uint32Array(Math.ceil(this.capacity/32));
     this.groupNext=new Int32Array(this.capacity);this.groupSequence=0;
     this.groupLedgerIds=new WeakMap();
     this.peerGroupOwners=new Array(this.capacity);this.peerGroupActors=new Array(this.capacity);
@@ -321,7 +322,7 @@ export class ProjectileVisualRuntime {
       cpuGeometryBytes:geometryBytes,gpuGeometryBytes:geometryBytes,
       auxiliaryTypedBytes:this.sample.byteLength+this.sample2.byteLength+this.centers.byteLength+
         this.widths.byteLength+this.thicknesses.byteLength+this.cross.byteLength+this.groupIds.byteLength+
-        this.groupHeads.byteLength+this.groupNext.byteLength+this.peerGroupBirths.byteLength+this.peerGroupIds.byteLength+
+        this.groupHeads.byteLength+this.groupOccupied.byteLength+this.groupNext.byteLength+this.peerGroupBirths.byteLength+this.peerGroupIds.byteLength+
         this.bodyColors.byteLength+this.membraneFrames.byteLength};
   }
   reset(p) {
@@ -577,8 +578,11 @@ export class ProjectileVisualRuntime {
     if(kind==='roller-horizontal'&&this.renderRecordCount<this.capacity&&p._iwVisualGroup) {
       const i=this.renderRecordCount++;this.renderRecords[i]=p;
       let slot=p._iwVisualGroup%this.capacity;
-      while(this.groupIds[slot]&&this.groupIds[slot]!==p._iwVisualGroup)slot=(slot+1)%this.capacity;
-      this.groupIds[slot]=p._iwVisualGroup;this.groupNext[i]=this.groupHeads[slot];this.groupHeads[slot]=i;
+      while((this.groupOccupied[slot>>>5]&(1<<(slot&31)))&&this.groupIds[slot]!==p._iwVisualGroup)slot=(slot+1)%this.capacity;
+      if(!(this.groupOccupied[slot>>>5]&(1<<(slot&31)))){
+        this.groupOccupied[slot>>>5]|=1<<(slot&31);this.groupIds[slot]=p._iwVisualGroup;this.groupHeads[slot]=-1;
+      }
+      this.groupNext[i]=this.groupHeads[slot];this.groupHeads[slot]=i;
     }
   }
   _rollerMembrane(p,q,radius,start,end) {
@@ -657,7 +661,11 @@ export class ProjectileVisualRuntime {
   _rollerLinks(alpha) {
     // Source-aware history ownership; membrane shape is an authored visual
     // reconstruction only. No collision, paint, RNG or packet work occurs here.
-    for(let slot=0;slot<this.capacity;slot++)for(let i=this.groupHeads[slot];i>=0;i=this.groupNext[i]) {
+    for(let word=0;word<this.groupOccupied.length;word++){
+      let occupied=this.groupOccupied[word];
+      while(occupied){
+        const bit=31-Math.clz32(occupied&-occupied),slot=word*32+bit;occupied=(occupied&(occupied-1))>>>0;
+        for(let i=this.groupHeads[slot];i>=0;i=this.groupNext[i]) {
       const p=this.renderRecords[i],pi=p._iwVisualOrdinal ?? p.catalog?.descriptor?.index;
       for(let j=this.groupNext[i];j>=0;j=this.groupNext[j]) {
         const q=this.renderRecords[j],qi=q._iwVisualOrdinal ?? q.catalog?.descriptor?.index;
@@ -684,13 +692,14 @@ export class ProjectileVisualRuntime {
         const color=p.owner.color;this._writeBody(c,w,t,'roller-link',color.r,color.g,color.b,finite(p.seed),0,0);
         this.stats.linkedRollerPairs++;break;
       }
+    } }
     }
   }
   draw(alpha=1) {
     if(this.disposed)return;
     alpha=clamp(finite(alpha,1));this.lastAlpha=alpha;this.bodies=0;this.renderRecordCount=0;this.stats.linkedRollerPairs=0;this.stats.historicalRollerPairs=0;
     this.colorDirtyStart=this.capacity*BODY_VERTICES*3;this.colorDirtyEnd=0;
-    this.groupIds.fill(0);this.groupHeads.fill(-1);
+    this.groupOccupied.fill(0);
     for(const p of this.system.list){this.ensureBirth(p);if(this.handles(p))this._drawRound(p,alpha);}
     this._rollerLinks(alpha);
     const now=finite(this.system.inkFlight?.time);
@@ -715,7 +724,7 @@ export class ProjectileVisualRuntime {
   clear() {
     for(const p of this.system.list)if(p._iwVisualHistory){this.historyPool.push(p._iwVisualHistory);p._iwVisualHistory=null;}
     for(const t of this.trails){this.historyPool.push(t.history);t.history=null;this.trailPool.push(t);}
-    this.trails.length=0;this.renderRecordCount=0;this.renderRecords.fill(null);
+    this.trails.length=0;this.renderRecordCount=0;this.renderRecords.fill(null);this.groupOccupied.fill(0);
     this.peerGroupOwners.fill(null);this.peerGroupActors.fill(null);this.peerGroupIds.fill(0);this.peerGroupNext=0;
     this.geometry.setDrawRange(0,0);this.mesh.visible=false;this.stats.vertexCount=this.stats.triangles=this.stats.drawCalls=0;
   }

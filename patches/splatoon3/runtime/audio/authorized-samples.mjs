@@ -1,6 +1,7 @@
 import { audioLoadScope } from './load-deadline.mjs';
 /**
- * Optional operator-provided sound library. No Nintendo or reference WAVs are bundled.
+ * Operator-provided sound library. The installed manifest can reference
+ * recorded MP3 files tracked alongside this module.
  * Replacement is transactional: an in-progress download NEVER changes the live bank.
  * Usage-rights statements are operator attestations, NOT license verification.
  */
@@ -123,7 +124,7 @@ export class AuthorizedSamplePack {
     this.ctx=ctx;this.maxBytes=maxBytes;this.fetcher=fetcher||globalThis.fetch?.bind(globalThis);
     this.loaded=new Map();this._mruKey=null;this.byEvent=new Map();this.bytes=0;this.errors=[];
     this.manifest=null;this.source='none';this.pending=0;this.generation=0;this.repaired=0;
-    this._loadScopes=new Set();
+    this._loadScopes=new Set();this._lruStage=null;
   }
   key(id,event,variant){return `${id}:${event}:${variant}`;}
   _cancelLoads(){const retired=[...this._loadScopes];this._loadScopes=new Set();for(const scope of retired)scope.cancel();}
@@ -133,6 +134,7 @@ export class AuthorizedSamplePack {
     if(!arr?.length)return null;const item=arr[index%arr.length];
     // Playback touches move entries to the end of the decoded-cache LRU.
     const key=this.key(item.id,item.event,item.variant);if(this.loaded.has(key)&&this._mruKey!==key){this.loaded.delete(key);this.loaded.set(key,item);this._mruKey=key;}
+    this._lruStage?.touch(key,item);
     return item;
   }
   _reindex(){
@@ -179,6 +181,24 @@ export class AuthorizedSamplePack {
     if(usePCMIndex)for(const row of next.values())indexRow(row,true);
     const acquire=row=>{if(!refs.has(row.buffer))total+=row.bytes;refs.set(row.buffer,(refs.get(row.buffer)||0)+1);};
     const release=row=>{const n=refs.get(row.buffer);if(n===1){refs.delete(row.buffer);total-=row.bytes;}else refs.set(row.buffer,n-1);};
+    // Playback keeps using the published bank while this transaction awaits
+    // network/decode. Mirror those real touches into staging, including a row
+    // staged eviction had removed but the still-live bank just played again.
+    const trim=protect=>{
+      while(total>this.maxBytes&&next.size>1){
+        const victim=next.keys().next().value;
+        if(victim===protect)break;
+        const removed=next.get(victim);next.delete(victim);release(removed);indexRow(removed,false);changedEvents.add(`${removed.id}:${removed.event}`);
+      }
+    };
+    const stage=replace?null:{generation,touch:(key,item)=>{
+      if(!current())return;
+      const row=next.get(key);
+      if(row){next.delete(key);next.set(key,row);indexRow(row,false);indexRow(row,true);}
+      else{next.set(key,item);acquire(item);indexRow(item,true);changedEvents.add(`${item.id}:${item.event}`);}
+      trim(key);
+    }};
+    this._lruStage=stage;
     const remainingByFile=new Map();
     for(const clip of valid)remainingByFile.set(clip.file,(remainingByFile.get(clip.file)||0)+1);
     const hashedFiles=new Set(valid.filter(clip=>clip.sha256).map(clip=>clip.file));
@@ -269,11 +289,7 @@ export class AuthorizedSamplePack {
           next.set(key,row);acquire(row);indexRow(row,true);changedEvents.add(`${row.id}:${row.event}`);
           // New row fits the budget alone; evict from the original LRU head
           // until the staged bank fits, accounting for shared PCM identities.
-          while(total>this.maxBytes&&next.size>1){
-            const victim=next.keys().next().value;
-            if(victim===key)break;
-            const removed=next.get(victim);next.delete(victim);release(removed);indexRow(removed,false);changedEvents.add(`${removed.id}:${removed.event}`);
-          }
+          trim(key);
           done++;
         }catch(e){if(e!==cancelled && current())errors.push({file:clip.file,id:clip.id,event:clip.event,error:String(e?.message||e)});}
         finally{
@@ -287,6 +303,7 @@ export class AuthorizedSamplePack {
       }
     });
     await Promise.all(jobs);
+    if(this._lruStage===stage)this._lruStage=null;
     // Last-request-wins. The old playback bank remains valid throughout network/decode.
     if(!current())return {loaded:0,rejected:errors.length,errors,cancelled:true,bytes:this.bytes};
     let byEvent;
@@ -308,7 +325,7 @@ export class AuthorizedSamplePack {
     this.source='user-supplied';
     return {loaded:done,rejected:errors.length,errors,cancelled:false,bytes:this.bytes,repairedLoops:repairs};
   }
-  clear(){this.generation++;this.loaded.clear();this._mruKey=null;this.byEvent.clear();this.bytes=0;this.manifest=null;this.source='none';this.errors=[];this.repaired=0;this._cancelLoads();}
+  clear(){this.generation++;this._lruStage=null;this.loaded.clear();this._mruKey=null;this.byEvent.clear();this.bytes=0;this.manifest=null;this.source='none';this.errors=[];this.repaired=0;this._cancelLoads();}
   stats(){return{source:this.source,clips:this.loaded.size,bytes:this.bytes,limitBytes:this.maxBytes,errors:this.errors.length,
     repairedLoops:this.repaired,pending:this.pending,rights:this.manifest?.usageRights||null,targetVersion:this.manifest?.targetVersion||null};}
 }

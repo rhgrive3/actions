@@ -355,7 +355,13 @@ export function packWipeoutTimeline(nm) {
   for (const a of nm.match.actors) if (!a.remote && a.owner === nm.myId) {
     const row = ownRow(nm, a); observe(nm, a);
     row.w = Math.max(row.w, frame(nm)); row.q++;
-    if (row.h.length <= MAX_EVENTS) rows.push({ n: row.n, q: row.q, w: row.w, h: row.h.map(x => [...x]) });
+    if (row.h.length <= MAX_EVENTS) {
+      // This owner history is append-only. Publish an immutable snapshot so
+      // later ticks can share it without leaking mutable ledger storage.
+      if (!row.packedHistory || row.packedHistory.length !== row.h.length)
+        row.packedHistory = Object.freeze(row.h.map(x => Object.freeze([...x])));
+      rows.push({ n: row.n, q: row.q, w: row.w, h: row.packedHistory });
+    }
   }
   const packet = { m: nm.cfg.id, rows };
   acceptWipeoutTimeline(nm, nm.myId, packet);
@@ -376,7 +382,9 @@ export function acceptWipeoutTimeline(nm, from, packet) {
     if (!actor || actor.owner !== from || !integer(row.q) || !row.q || !integer(row.w) || row.w > MAX_FRAME ||
         !validHistory(row.h, row.w) || prev && (row.q <= prev.q || row.w < prev.w || row.h.length < prev.h.length ||
           prev.h.some((e, i) => e.some((v, j) => row.h[i][j] !== v)) || row.h.slice(prev.h.length).some(e => e[0] < prev.w))) continue;
-    s.rows.set(row.n, { ...row, h: row.h.map(e => [...e]) });
+    // Full validation and prefix comparison above always run. Equal lengths
+    // now imply equal contents, so retain our already-owned safe copy.
+    s.rows.set(row.n, { ...row, h: prev && row.h.length === prev.h.length ? prev.h : row.h.map(e => [...e]) });
   }
   if (nm.isHost) confirmAvailable(nm);
   return true;
@@ -389,7 +397,12 @@ function confirmAvailable(nm) {
     const rows = actors.map(a => s.rows.get(a.nid));
     if (rows.some(r => !r)) continue;
     const cutoff = Math.min(...rows.map(r => r.w));
-    const times = [...new Set(rows.flatMap(r => r.h.map(e => e[0])))].filter(t => t < cutoff).sort((a,b) => a-b);
+    const caches = s.confirmCaches || (s.confirmCaches = [null, null]), cached = caches[team];
+    if (cached && cutoff <= cached.nextTime && actors.every((a,i) => a.nid === cached.ids[i] && rows[i].h === cached.histories[i])) continue;
+    const allTimes = [...new Set(rows.flatMap(r => r.h.map(e => e[0])))];
+    let nextTime = Infinity;
+    for (const t of allTimes) if (t >= cutoff && t < nextTime) nextTime = t;
+    const times = allTimes.filter(t => t < cutoff).sort((a,b) => a-b);
     let wiped = false;
     for (const t of times) {
       const lives = rows.map(r => r.h.findLast(e => e[0] <= t));
@@ -403,6 +416,7 @@ function confirmAvailable(nm) {
       }
       wiped = dead;
     }
+    caches[team] = { ids: actors.map(a => a.nid), histories: rows.map(r => r.h), nextTime };
   }
 }
 function apply(nm, d) {
@@ -417,10 +431,24 @@ export function acceptWipeoutConfirmation(nm, from, d) {
       !/^[01]:(?:\d+\/\d+\/\d+,){3}\d+\/\d+\/\d+$/.test(d.key)) return false;
   const s = state(nm); s.confirmed.set(d.key, {k:'wc',m:d.m,team:d.team,key:d.key}); apply(nm,d); return true;
 }
-export function replayWipeoutConfirmations(nm) {
+export function replayWipeoutConfirmations(nm, at = performance.now() / 1000) {
   // Repeated host confirmations recover a missed packet; applied keys survive
   // host migration on this match object and cannot award twice.
-  if (nm.isHost && valid(nm)) for (const d of state(nm).confirmed.values()) nm._sendNow(d);
+  if (!nm.isHost || !valid(nm) || !Number.isFinite(at)) return;
+  const s = state(nm);
+  if (!s.confirmed.size || at >= s.replayAt && at - s.replayAt < .5) return;
+  s.replayAt = at;
+  // One room-wide budget, independent of history length or render rate.
+  // The original immediate confirmation is unchanged; this fair round-robin
+  // recovers lost decisions without growing toward Relay's 80-frame limit.
+  if (!s.replayPending) {
+    s.replayIterator ||= s.confirmed.values();
+    let next = s.replayIterator.next();
+    if (next.done) { s.replayIterator = s.confirmed.values(); next = s.replayIterator.next(); }
+    if (next.done) return;
+    s.replayPending = next.value;
+  }
+  if (nm._sendNow(s.replayPending) !== false) s.replayPending = null;
 }
 
 // #478: each connected human chooses keep/change/leave. The existing room

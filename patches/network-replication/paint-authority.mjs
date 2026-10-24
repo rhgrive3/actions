@@ -81,10 +81,11 @@ function deathPaint(nm, from, e, proof) {
   if (row.x !== e[2] || row.y !== e[3] || row.z !== e[4]
     || row.radius !== e[5] || row.seed !== e[7]) return false;
   const previous = state(nm).deaths.get(proof[2]);
-  const fingerprint = JSON.stringify(proof.slice(3, 11));
-  return !previous || previous.generation < proof[3] || previous.generation === proof[3]
-    && (previous.life < proof[4] || previous.life === proof[4]
-      && previous.fingerprint === fingerprint && !(previous.mask & (1 << proof[11])));
+  if (!previous || previous.generation < proof[3]) return true;
+  if (previous.generation !== proof[3] || previous.life > proof[4]) return false;
+  if (previous.life < proof[4]) return true;
+  if (previous.mask & (1 << proof[11])) return false;
+  return previous.fingerprint === JSON.stringify(proof.slice(3, 11));
 }
 function zonePaint(nm, from, e, proof) {
   if (proof.length !== 5 || from !== nm.s.hostId || proof[2] !== from

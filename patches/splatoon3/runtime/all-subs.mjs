@@ -1,3 +1,4 @@
+import { SnapshotPool } from './snapshot-pool.mjs';
 import {observeLimitedContact} from '../../network-replication/torpedo-contact-commit.mjs';
 import { receiverTorpedoObservationState, retireReceiverTorpedoObservation, hasReceiverTorpedoObservation } from './torpedo-receiver-trajectory.mjs';
 import { configureToxicMist, toxicMistContains, toxicMistScale } from './toxic-mist.mjs';
@@ -412,7 +413,7 @@ function createObject(api, projectiles, owner, id, record = {}) {
     charge: clamp(Number.isFinite(record.charge) ? record.charge : 0,0,1),
     ghost: record.ghost === true, yaw: Number.isFinite(record.yaw) ? record.yaw : owner.aimYaw || owner.yaw || 0,
     fuse: 0, pops: 0, popLimit: 0, bounceCount: 0, pulse: .15,
-    seenMarks: new WeakMap(), seenToxic: new WeakMap(),
+    seenMarks: id==='angleShooter'?new WeakMap():null, seenToxic: id==='toxicMist'?new WeakMap():null,
     dead: false, hp: id === 'splashWall'
       ? gearCurve(ap, ...spec.wallHpTiers)
       : spec.hp || 0,
@@ -1044,12 +1045,12 @@ function customObjectCandidate(api, projectiles, p, start, end) {
     if(!torpedoTarget&&!targetableDeployable)continue;
     let hit=null;
     if (object.subId==='splashWall') {
-      const nX=Math.sin(object.yaw||0), nZ=Math.cos(object.yaw||0), den=(end.x-start.x)*nX+(end.z-start.z)*nZ;
+      const yawX=object.yaw||0,yawZ=object.yaw||0,nX=Math.sin(yawX), nZ=Math.cos(yawZ), den=(end.x-start.x)*nX+(end.z-start.z)*nZ;
       if(Math.abs(den)<1e-9)continue;
       const t=((object.pos.x-start.x)*nX+(object.pos.z-start.z)*nZ)/den;
       if(t<0||t>1)continue;
       const x=start.x+(end.x-start.x)*t,y=start.y+(end.y-start.y)*t,z=start.z+(end.z-start.z)*t;
-      const rX=Math.cos(object.yaw||0),rZ=-Math.sin(object.yaw||0),side=Math.abs((x-object.pos.x)*rX+(z-object.pos.z)*rZ);
+      const rightYaw=object.yaw||0,backYaw=object.yaw||0,rX=Object.is(rightYaw,yawZ)?nZ:Math.cos(rightYaw),rZ=-(Object.is(backYaw,yawX)?nX:Math.sin(backYaw)),side=Math.abs((x-object.pos.x)*rX+(z-object.pos.z)*rZ);
       if(side>ALL_SUB_SPECS.splashWall.wallWidth/2+(p.size||0)||y<object.pos.y-(p.size||0)||y>object.pos.y+ALL_SUB_SPECS.splashWall.wallHeight+(p.size||0))continue;
       hit={t,distance:t*length,point:new api.THREE.Vector3(x,y,z),normal:new api.THREE.Vector3(nX,0,nZ)};
     } else {
@@ -1553,7 +1554,7 @@ function updateDeployed(api,projectiles,object,dt){
     object.hp=Math.max(0,object.hp-object.wallHpInitial/spec.hpDecayFrames*60*dt);
     if(object.hp<=0){removeObject(api,projectiles,object);return;}
     if((G.time||0)>=object.activeAt){
-      const nX=Math.sin(object.yaw||0),nZ=Math.cos(object.yaw||0),rX=Math.cos(object.yaw||0),rZ=-Math.sin(object.yaw||0),now=G.time||0;
+      const yawX=object.yaw||0,yawZ=object.yaw||0,nX=Math.sin(yawX),nZ=Math.cos(yawZ),rightYaw=object.yaw||0,backYaw=object.yaw||0,rX=Object.is(rightYaw,yawZ)?nZ:Math.cos(rightYaw),rZ=-(Object.is(backYaw,yawX)?nX:Math.sin(backYaw)),now=G.time||0;
       { const __iwHostiles = hostileActors(api,object.owner);
         try {
           for (const target of __iwHostiles) {
@@ -1625,8 +1626,8 @@ function tickObjects(api,projectiles,dt){
   // once so removing an earlier sibling cannot advance this object twice.
   const active=entityList(projectiles);
   if(!active.length){updateStatuses(api,dt);return;}
-  const list=active.slice();
-  for(let i=list.length-1;i>=0;i--){
+  const snapshots=projectiles._s3SubTickSnapshots ||= new SnapshotPool(), list=snapshots.take(active);
+  try { for(let i=list.length-1;i>=0;i--){
     const o=list[i];if(o.dead||o.phase==='ghostWait')continue;
     syncObjectAttachment(api,o);
     if(o.subId==='sprinkler'&&!o.owner?.alive){removeObject(api,projectiles,o);continue;}
@@ -1640,6 +1641,7 @@ function tickObjects(api,projectiles,dt){
     if(!o.dead&&o.phase!=='ghostWait')poseVisual(api,o,dt);
   }
   updateStatuses(api,dt);
+  } finally { snapshots.release(list); }
 }
 
 function replaySpawn(api,event,owner,report){

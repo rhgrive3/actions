@@ -1,0 +1,1017 @@
+{
+  "status": "passed",
+  "processExitCode": 0,
+  "source": {
+    "head": "b6ed09b0e5b183eac435062429af8368c9f9a0ad",
+    "tree": "e55c9bdf2b4e5b044b6755dca3f8cc6f8d1e7d32",
+    "proofSHA256": "725f366196383f5236f12b3455f8b50cdf86e0861044deacb0e05136b3369f30",
+    "harnessSHA256": {
+      "scripts/check-inkwave-splashdown-browser.mjs": "5606520fc43cb389a28ab5fb02ba5878bd85ce6929dc2565fc8c662de07de024",
+      "scripts/lib/inkjet-terminal-probe.mjs": "e5176a46b65af4f5c5bc56f3df1f9e01b7afc33796c0c491e8031b227c7bbe4d"
+    }
+  },
+  "build": {
+    "buildRevision": "f3222bf50c8986003a4032d02e24d7e8f6aa910f1a3860ba37981baf1bf3528a",
+    "inputHash": "1b3c5dfaef1503f17b481e8f83fa7d99457edd7f966e0ee169a587eb4208dbcd",
+    "contentHash": "30c3f5023a51395c79f25e15f0f3850c8a7b923d9c399379f1ba1cca26d34c41"
+  },
+  "summary": {
+    "batchSelections": 22,
+    "nativeScenarioCases": 33,
+    "failedAssertions": 0,
+    "recordedConsolePageServerErrors": 0,
+    "successfulExpectInvocationCount": null,
+    "assertionCountNote": "The driver records assertion failures, not the total successful expect() calls. No successful-assertion invocation total is inferred.",
+    "browserLaunches": 1,
+    "artifactVerificationPasses": 1,
+    "artifactVerificationFiles": 2152,
+    "artifactVerificationBytes": 115861071,
+    "sourceProofVerificationPasses": 1,
+    "matchedTerminalProofReceipts": 3,
+    "pngFiles": 151,
+    "pngBytes": 11173055,
+    "browserVersions": [
+      "151.0.7922.34"
+    ]
+  },
+  "scope": "Real Chromium ANGLE SwiftShader, controlled source-composed scenes, fixed dt=1/hz; not actual display refresh, native Safari/iPad or retail/performance acceptance.",
+  "results": [
+    {
+      "id": "splashdown",
+      "status": "passed",
+      "nativeCases": 9,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 7,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "afcaf6f21c1f249df775a403cc8a2309fbba65f9183b195feaed234ef3c75236"
+    },
+    {
+      "id": "inkjet/30hz-1p-near",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 1,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "b4ceca5208480b344f29c5039d29f22f5b8091f32adf19d0813976ecfe6e94d2"
+    },
+    {
+      "id": "inkjet/30hz-1p-mixed",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 1,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "574bda93e79cf004797a3357f80f810c6614374b0e4084b5991cc5887e47ab9d"
+    },
+    {
+      "id": "inkjet/30hz-2p-near",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 1,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "25246a6cc49a7b5ac18e7404dc2a4d87345ecf18cc0697283304b72fd03acec7"
+    },
+    {
+      "id": "inkjet/30hz-2p-mixed",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 1,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "e7c43519decede6401c4a864553ecb9754c78205ae0e302de1bde7d8d480d580"
+    },
+    {
+      "id": "inkjet/30hz-4p-near",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 1,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "1305d721363b7a310150e6dce2dc05bcfccfe2b2c54bf6ddd65c0a3ae55491f8"
+    },
+    {
+      "id": "inkjet/30hz-4p-mixed",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 1,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "6b1cdcdea0788e5ffe4c1cf1f79233e7588f6ebf4df681e50a29c8c717afd73b"
+    },
+    {
+      "id": "inkjet/60hz-1p-near",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 12,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "7431446202299480361f01b8541a7f80d42dc3f54de38b20e26c758ca502a210"
+    },
+    {
+      "id": "inkjet/60hz-1p-mixed",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 12,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "2cb1b582d39648fc27bead9285f0d7901f2949a095bad78c96c37aff9ec53471"
+    },
+    {
+      "id": "inkjet/60hz-2p-near",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 12,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "88ddb89d97b9a73225e6b05ee5fb8e9d06effa86c7bbe8b053550656d6e2663b"
+    },
+    {
+      "id": "inkjet/60hz-2p-mixed",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 12,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "2e8fa1f020fa968e6271549742b60a8ee09806cc5e614694334af9f98795eded"
+    },
+    {
+      "id": "inkjet/60hz-4p-near",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 12,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "485a01e3601198e09b5e8afdfd4e7b2f18d592fbb2feee627b9c9d267191c1e3"
+    },
+    {
+      "id": "inkjet/60hz-4p-mixed",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 12,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "dc9e1cad9b3ec82e70c1e522c11735ee8e90607bf251345f509b3fde38d4d8d4"
+    },
+    {
+      "id": "inkjet/120hz-1p-near",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 1,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "43cf6bd1193fd5cf6395b5d290d2fd1847b11b25b3265d21267ccc65915d7549"
+    },
+    {
+      "id": "inkjet/120hz-1p-mixed",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 1,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "5f6f8eda29903d319f9dcc1be7cc073a84392268000e5eae4ea55e9bc209ff56"
+    },
+    {
+      "id": "inkjet/120hz-2p-near",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 1,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "87180c591470d90edfb8e938c71ad4d3022907c1738197b3ce83484f8d6c3507"
+    },
+    {
+      "id": "inkjet/120hz-2p-mixed",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 1,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "16369c8df022ae2f394e67d3386a4fca4872c514df8ee8d3db545c0d6c7052d4"
+    },
+    {
+      "id": "inkjet/120hz-4p-near",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 1,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "8abd750cd610ceb3463ebdef14ec785fb0b65f1138c7a31742ce53e0610d731d"
+    },
+    {
+      "id": "inkjet/120hz-4p-mixed",
+      "status": "passed",
+      "nativeCases": 1,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 1,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "6ce66f533e1e1db3d0742627550b388b1e212cfc79a386326ba88d7de090bb7e"
+    },
+    {
+      "id": "inkjet-terminal/30hz",
+      "status": "passed",
+      "nativeCases": 2,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 20,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "875ba4371d431f4dfc6955914492778b773ac5d54128d68c4d4ce2ea4b3de2e7"
+    },
+    {
+      "id": "inkjet-terminal/60hz",
+      "status": "passed",
+      "nativeCases": 2,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 20,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "c322f24037771142d9e5b01b2f7f52846da0d81cdd22ab1dc29b3d3f707479c9"
+    },
+    {
+      "id": "inkjet-terminal/120hz",
+      "status": "passed",
+      "nativeCases": 2,
+      "failedAssertions": 0,
+      "recordedErrors": 0,
+      "pngs": 20,
+      "browserVersion": "151.0.7922.34",
+      "resultSHA256": "035d07042a96a358ec0f993f74d903bd4131d9a6add27bb459a7c28dec731f1e"
+    }
+  ],
+  "pngs": [
+    {
+      "path": "splashdown-f001.png",
+      "bytes": 24985,
+      "sha256": "087ce3aaec9aef3a6aa45ac0d52b8a1fe20d3256888ed6a3c068e4a344fd6221"
+    },
+    {
+      "path": "splashdown-f030.png",
+      "bytes": 42325,
+      "sha256": "5f0e39c813ed371a55874b58842623c7c8d5c6dc14ad47134c33b84f991a82d3"
+    },
+    {
+      "path": "splashdown-f060.png",
+      "bytes": 45585,
+      "sha256": "87e1ee7a309102bc16ed92c188a307d8ae76cf9f9a6bcf8a7aad63f84b54e635"
+    },
+    {
+      "path": "splashdown-f070.png",
+      "bytes": 45251,
+      "sha256": "31fd9a3414d5a67a96050a675f7857acf36934dcc4354ef8a0a10d1687410fc2"
+    },
+    {
+      "path": "splashdown-f080.png",
+      "bytes": 43553,
+      "sha256": "6d44c957f5bdc49a7bceefe5b59f60725a652c114cf533209d77bdce5805179e"
+    },
+    {
+      "path": "splashdown-f087.png",
+      "bytes": 25312,
+      "sha256": "6dafe591fd8b82f5379625610dedd8f5e524f2b6f7415e1fd942081e3a3785cb"
+    },
+    {
+      "path": "splashdown-f120.png",
+      "bytes": 25187,
+      "sha256": "695259c492951e181dac76aca6621a18154319bf7db20201970bcf6454730a18"
+    },
+    {
+      "path": "inkjet/30hz-1p-near/inkjet-near-1p-f001.png",
+      "bytes": 37758,
+      "sha256": "54a65eb0f3086a0ee66afbfde8621632949c4cbf1f41591dfcb80877f4a73fd7"
+    },
+    {
+      "path": "inkjet/30hz-1p-mixed/inkjet-mixed-1p-f001.png",
+      "bytes": 38023,
+      "sha256": "54b68a681407606f27de0409ab53954fce2cad5af00e985cfbab7fc545b0e2f8"
+    },
+    {
+      "path": "inkjet/30hz-2p-near/inkjet-near-2p-f001.png",
+      "bytes": 54925,
+      "sha256": "44e360b65a257be7af855d24eae1b8a9d92a7d9e39914e82d06f4415cd7a2e62"
+    },
+    {
+      "path": "inkjet/30hz-2p-mixed/inkjet-mixed-2p-f001.png",
+      "bytes": 53588,
+      "sha256": "5f6458f02f006c6d659ea8c5f21ee4bde465eadd6796c324a880275f5c144b3b"
+    },
+    {
+      "path": "inkjet/30hz-4p-near/inkjet-near-4p-f001.png",
+      "bytes": 73139,
+      "sha256": "fd2291b3a43578f3c44ecb1b26e3a202d11bddf574d8b3fce512917afc3fd23b"
+    },
+    {
+      "path": "inkjet/30hz-4p-mixed/inkjet-mixed-4p-f001.png",
+      "bytes": 71738,
+      "sha256": "95e629adef6caa8ed40f2d18acde32ebf56caf3344c7dcdde90098ec65421b08"
+    },
+    {
+      "path": "inkjet/60hz-1p-near/inkjet-near-1p-f001.png",
+      "bytes": 41028,
+      "sha256": "32b71dd0427a242de5aea85e4eb0cea5cb2b648bd865978364f06de8fbe4864b"
+    },
+    {
+      "path": "inkjet/60hz-1p-near/inkjet-near-1p-f002.png",
+      "bytes": 41362,
+      "sha256": "ff1a91865660da510dfa8266d54594be209022e15de86aa4d6b59bd6a180fb7c"
+    },
+    {
+      "path": "inkjet/60hz-1p-near/inkjet-near-1p-f003.png",
+      "bytes": 41503,
+      "sha256": "005ed0b61dd6c4c14039ed5b1975e372a50f561ef40312bb9d32804d01982cbf"
+    },
+    {
+      "path": "inkjet/60hz-1p-near/inkjet-near-1p-f004.png",
+      "bytes": 41746,
+      "sha256": "6fc7194f1d09d7233806bf1d4b6966729982c02ee973df3f03702262646de243"
+    },
+    {
+      "path": "inkjet/60hz-1p-near/inkjet-near-1p-f005.png",
+      "bytes": 41713,
+      "sha256": "87c6f54e043dd87dd214c0b04c63adb59fa92e9869d2f50f8c87fe1a4e747e79"
+    },
+    {
+      "path": "inkjet/60hz-1p-near/inkjet-near-1p-f006.png",
+      "bytes": 41648,
+      "sha256": "c95ca5e16f89a42fa21514990ec6ee5d2d9fb86c496b918a6582d9ac53e0bd54"
+    },
+    {
+      "path": "inkjet/60hz-1p-near/inkjet-near-1p-f007.png",
+      "bytes": 41654,
+      "sha256": "0a70f6307fdda15301c09ae700d70872196c5dce2a19a8234629f6317278005a"
+    },
+    {
+      "path": "inkjet/60hz-1p-near/inkjet-near-1p-f008.png",
+      "bytes": 41497,
+      "sha256": "474da2ae9e25659f1138a5e8d5ef55c854efaf0b7bf11797a773a20624a785af"
+    },
+    {
+      "path": "inkjet/60hz-1p-near/inkjet-near-1p-f009.png",
+      "bytes": 41702,
+      "sha256": "8a2d0d63bb0f6f3b0e2643ede9b76756c91a771891d2db40a74dce2137976a70"
+    },
+    {
+      "path": "inkjet/60hz-1p-near/inkjet-near-1p-f010.png",
+      "bytes": 41842,
+      "sha256": "4308c5f2b937f413adee3161b6fab5a1bea164978abe41c39a4fb1f67abf97f8"
+    },
+    {
+      "path": "inkjet/60hz-1p-near/inkjet-near-1p-f011.png",
+      "bytes": 42114,
+      "sha256": "739635e5001073878af22f75a33179585b2c7aee6e33933da1d63b64e068e20f"
+    },
+    {
+      "path": "inkjet/60hz-1p-near/inkjet-near-1p-f012.png",
+      "bytes": 42262,
+      "sha256": "f08008407266953e686717358b2b02e4a4cb45f6ee9df99037c24afde44d8d1c"
+    },
+    {
+      "path": "inkjet/60hz-1p-mixed/inkjet-mixed-1p-f001.png",
+      "bytes": 39226,
+      "sha256": "234abaccddcaebe660365e4a09475a0492cf374a4f084a6235c2901eb22b5f83"
+    },
+    {
+      "path": "inkjet/60hz-1p-mixed/inkjet-mixed-1p-f002.png",
+      "bytes": 39493,
+      "sha256": "60684ca48f43427030da2b71be47c7f1351d98d1bccee02338e93aceabf0f15e"
+    },
+    {
+      "path": "inkjet/60hz-1p-mixed/inkjet-mixed-1p-f003.png",
+      "bytes": 39823,
+      "sha256": "c20a1e293b143fe5ece19eaaea6fa921c64c5d4c151f3fbfa921717115445593"
+    },
+    {
+      "path": "inkjet/60hz-1p-mixed/inkjet-mixed-1p-f004.png",
+      "bytes": 40124,
+      "sha256": "b066e1b10c7f0ee65018bc15a540bfa67c1d32bc3447db301f644a8ad5039c66"
+    },
+    {
+      "path": "inkjet/60hz-1p-mixed/inkjet-mixed-1p-f005.png",
+      "bytes": 40281,
+      "sha256": "9ed6fbf1edc35c30d8d52fd9142956d3966b31c35a3fde7bf1f6b59d3879e52c"
+    },
+    {
+      "path": "inkjet/60hz-1p-mixed/inkjet-mixed-1p-f006.png",
+      "bytes": 40645,
+      "sha256": "15aba5b48e798a65d550e2956cc79e9f9851726cffd2c02151cc5b6410d55044"
+    },
+    {
+      "path": "inkjet/60hz-1p-mixed/inkjet-mixed-1p-f007.png",
+      "bytes": 40850,
+      "sha256": "b8c7c46b4cfb81111cb29065c590465d7a8abf808ce0bb7a870238f658b4b339"
+    },
+    {
+      "path": "inkjet/60hz-1p-mixed/inkjet-mixed-1p-f008.png",
+      "bytes": 40923,
+      "sha256": "9c1c48443c906730e94695a3d05c812be39c42e4e6984d44785c088ab7e3ea89"
+    },
+    {
+      "path": "inkjet/60hz-1p-mixed/inkjet-mixed-1p-f009.png",
+      "bytes": 40855,
+      "sha256": "da043b093b4a4c37f36509619c74086f806a3861668c8f379370ab0b1cbe7b34"
+    },
+    {
+      "path": "inkjet/60hz-1p-mixed/inkjet-mixed-1p-f010.png",
+      "bytes": 41102,
+      "sha256": "2362d83db1a00cf060caf6486357d56532333f444da67362d18da541050ea3e5"
+    },
+    {
+      "path": "inkjet/60hz-1p-mixed/inkjet-mixed-1p-f011.png",
+      "bytes": 41518,
+      "sha256": "0b414be48ba184ee683c66af5fd57195e714a5f9f6da9d3d426f81dcf01e8f58"
+    },
+    {
+      "path": "inkjet/60hz-1p-mixed/inkjet-mixed-1p-f012.png",
+      "bytes": 41774,
+      "sha256": "a5b124e9013d287e3d3a4a90e1eef03e0227f27c5f19ccf88b8d0adad5cf7ca4"
+    },
+    {
+      "path": "inkjet/60hz-2p-near/inkjet-near-2p-f001.png",
+      "bytes": 51922,
+      "sha256": "704b1d096708cb1f3075801e9b009e78b144f64b4417a244b7e0546611ba8ea5"
+    },
+    {
+      "path": "inkjet/60hz-2p-near/inkjet-near-2p-f002.png",
+      "bytes": 52165,
+      "sha256": "b5b2d8e64280e80b7fc90523499d8c8d3de3dbce6e042ccc22173006b6bfef4a"
+    },
+    {
+      "path": "inkjet/60hz-2p-near/inkjet-near-2p-f003.png",
+      "bytes": 52454,
+      "sha256": "28a90f33178102a6fa35f924150e6f720e652b5e9e3b9555a137f2e24afbe638"
+    },
+    {
+      "path": "inkjet/60hz-2p-near/inkjet-near-2p-f004.png",
+      "bytes": 52252,
+      "sha256": "41ecb6732a47242451e0373fd25030e79ec3fb1160084f11a903ee806e95fc5a"
+    },
+    {
+      "path": "inkjet/60hz-2p-near/inkjet-near-2p-f005.png",
+      "bytes": 51781,
+      "sha256": "d282676b4ecb8ae9f8fcafc171c7f0b9c9e3f569b1c7ab4afc3b17eec79b088c"
+    },
+    {
+      "path": "inkjet/60hz-2p-near/inkjet-near-2p-f006.png",
+      "bytes": 51390,
+      "sha256": "1f1597795c94595391599fcc01786824c39aec719c137c91449097f630edaa03"
+    },
+    {
+      "path": "inkjet/60hz-2p-near/inkjet-near-2p-f007.png",
+      "bytes": 50934,
+      "sha256": "b27ab4d82f40f27739e2c8e19136706313284f62707c6048d6cafd2715597700"
+    },
+    {
+      "path": "inkjet/60hz-2p-near/inkjet-near-2p-f008.png",
+      "bytes": 51602,
+      "sha256": "eba995792b8a903cd0a848d912ddb030bd48b410e963d8c4d3563e713fee2208"
+    },
+    {
+      "path": "inkjet/60hz-2p-near/inkjet-near-2p-f009.png",
+      "bytes": 51424,
+      "sha256": "4db28d02d704253c511a4efe9349d00ab19daae75629bf763209746d6e2937e7"
+    },
+    {
+      "path": "inkjet/60hz-2p-near/inkjet-near-2p-f010.png",
+      "bytes": 51768,
+      "sha256": "140d5d3f935701249405a899fe39a691c8a9bef5d934a27742197b2901602fff"
+    },
+    {
+      "path": "inkjet/60hz-2p-near/inkjet-near-2p-f011.png",
+      "bytes": 51573,
+      "sha256": "a51765271bab7778f39a2b0fb7a44c5b45c16803dccb8fe74ec442556275e358"
+    },
+    {
+      "path": "inkjet/60hz-2p-near/inkjet-near-2p-f012.png",
+      "bytes": 51309,
+      "sha256": "ab4617e77435e76ce94dd898341af5ece8c32d640479133fd7a758dfb5a1b1de"
+    },
+    {
+      "path": "inkjet/60hz-2p-mixed/inkjet-mixed-2p-f001.png",
+      "bytes": 52165,
+      "sha256": "38ed2e40aa2272773d01e04029a10216b6b8b0e22f2b5972729961c13d5f7686"
+    },
+    {
+      "path": "inkjet/60hz-2p-mixed/inkjet-mixed-2p-f002.png",
+      "bytes": 52288,
+      "sha256": "e6459ebb6591e91964d8b5c31c9f32b31ab8d282cf4cf54cbf6e8c8fc6738780"
+    },
+    {
+      "path": "inkjet/60hz-2p-mixed/inkjet-mixed-2p-f003.png",
+      "bytes": 52507,
+      "sha256": "0c0aac0935a99f0e8e7e6864186e2bfdcff9c7d5aa725da0180abda63c1334b1"
+    },
+    {
+      "path": "inkjet/60hz-2p-mixed/inkjet-mixed-2p-f004.png",
+      "bytes": 52722,
+      "sha256": "36842b26b0302360f4ae72e382df43d618b32576e7426e91e79e41ef8f2e92c6"
+    },
+    {
+      "path": "inkjet/60hz-2p-mixed/inkjet-mixed-2p-f005.png",
+      "bytes": 52801,
+      "sha256": "683ad36450f357764cdac2e979220dd7c35c0546fa28433254e012bd375edff5"
+    },
+    {
+      "path": "inkjet/60hz-2p-mixed/inkjet-mixed-2p-f006.png",
+      "bytes": 52372,
+      "sha256": "8891b7c9d8ece31dbbb825d338cab5821d354b717172f7359d3151e61c262d28"
+    },
+    {
+      "path": "inkjet/60hz-2p-mixed/inkjet-mixed-2p-f007.png",
+      "bytes": 52092,
+      "sha256": "5e11c6c649a8a4789a67d7b05b96aef4c5a62f8cf61f499c6f04f6ac20ea454e"
+    },
+    {
+      "path": "inkjet/60hz-2p-mixed/inkjet-mixed-2p-f008.png",
+      "bytes": 52039,
+      "sha256": "a2ac3829971495b890c7ebdfb87b5804522778265592f6dfb098f9dba1e5a276"
+    },
+    {
+      "path": "inkjet/60hz-2p-mixed/inkjet-mixed-2p-f009.png",
+      "bytes": 52647,
+      "sha256": "a71d7152b1d15bdf8bfd2fcf29cf91a8759c62c4df933d830f3abff881d3412e"
+    },
+    {
+      "path": "inkjet/60hz-2p-mixed/inkjet-mixed-2p-f010.png",
+      "bytes": 52870,
+      "sha256": "aa15b10b0faac2334e7b5f8d59fdafef3039b05bbd5f35a2a00e2805b99b3121"
+    },
+    {
+      "path": "inkjet/60hz-2p-mixed/inkjet-mixed-2p-f011.png",
+      "bytes": 52590,
+      "sha256": "d00b8a60f0a827fb177e486731d11fb8b7fa264225922c4cdcb3d38b325388af"
+    },
+    {
+      "path": "inkjet/60hz-2p-mixed/inkjet-mixed-2p-f012.png",
+      "bytes": 52541,
+      "sha256": "684b829d8c610297216f418820f430471ba303dc8ec8435c300e4f0d1f929802"
+    },
+    {
+      "path": "inkjet/60hz-4p-near/inkjet-near-4p-f001.png",
+      "bytes": 69424,
+      "sha256": "72dbaaa9298e2d00864864669d83fa429717323002510212bfdece546492eb9e"
+    },
+    {
+      "path": "inkjet/60hz-4p-near/inkjet-near-4p-f002.png",
+      "bytes": 69983,
+      "sha256": "52e6c9189bf7e4b4ebd8751cb1f64e3de0924b2f19733441cb03eb918df226c3"
+    },
+    {
+      "path": "inkjet/60hz-4p-near/inkjet-near-4p-f003.png",
+      "bytes": 69656,
+      "sha256": "034d3bcae45fa923d032a4f2b66894355f84d97d537ce75574a685a886fceb3f"
+    },
+    {
+      "path": "inkjet/60hz-4p-near/inkjet-near-4p-f004.png",
+      "bytes": 69501,
+      "sha256": "38f8b1d4bae069819015c59a1b71de5b9838e9a483a5abbc424a0ed70e29ad99"
+    },
+    {
+      "path": "inkjet/60hz-4p-near/inkjet-near-4p-f005.png",
+      "bytes": 69238,
+      "sha256": "1db31d8f85caf994490801e1ceb7de8e381df06474f24d5337b7532e9c7b2c96"
+    },
+    {
+      "path": "inkjet/60hz-4p-near/inkjet-near-4p-f006.png",
+      "bytes": 69167,
+      "sha256": "237adf0b65d3cb3c0ae38947872f8966d0a882d54daabf6c67b45e80110eabe9"
+    },
+    {
+      "path": "inkjet/60hz-4p-near/inkjet-near-4p-f007.png",
+      "bytes": 69188,
+      "sha256": "b707e41dc937d4a0ee1850648a7ec322b187712268c0d429cc2e3f71ff996e70"
+    },
+    {
+      "path": "inkjet/60hz-4p-near/inkjet-near-4p-f008.png",
+      "bytes": 69194,
+      "sha256": "d0219947766e93bfd8072af8b49c1c87064aed21867600a8dbcfec53f791233e"
+    },
+    {
+      "path": "inkjet/60hz-4p-near/inkjet-near-4p-f009.png",
+      "bytes": 70225,
+      "sha256": "57df190bd089a96d8d277e31c7a48de63e58b1219b7b30f2a0793c54871c31d4"
+    },
+    {
+      "path": "inkjet/60hz-4p-near/inkjet-near-4p-f010.png",
+      "bytes": 70927,
+      "sha256": "e964aad6b7a9d25788ba1f93392bc8b68165529a354326a1e9b7e82b722cc90d"
+    },
+    {
+      "path": "inkjet/60hz-4p-near/inkjet-near-4p-f011.png",
+      "bytes": 71248,
+      "sha256": "d2febba6aeb2cfdb9931592e5e5b0d39981198ee615228685620a649603d2b45"
+    },
+    {
+      "path": "inkjet/60hz-4p-near/inkjet-near-4p-f012.png",
+      "bytes": 70798,
+      "sha256": "75fe5e6b85fb6f4684379ae60e217eedc87318f441581e2f6264a9d898dcc7c8"
+    },
+    {
+      "path": "inkjet/60hz-4p-mixed/inkjet-mixed-4p-f001.png",
+      "bytes": 66755,
+      "sha256": "a658038308a63db4adf63fe989a3df02f129d8c81f9b32c50dbb954b0535ce1e"
+    },
+    {
+      "path": "inkjet/60hz-4p-mixed/inkjet-mixed-4p-f002.png",
+      "bytes": 66918,
+      "sha256": "a2c4ea3548017004fb7f9b2f640ceaeda7048afa6d26049ee35a247a6f36ffcc"
+    },
+    {
+      "path": "inkjet/60hz-4p-mixed/inkjet-mixed-4p-f003.png",
+      "bytes": 66497,
+      "sha256": "57d7d84d1e12c4065b1b68b49855fb1441950a999b16ea721fe5aa121281148d"
+    },
+    {
+      "path": "inkjet/60hz-4p-mixed/inkjet-mixed-4p-f004.png",
+      "bytes": 66207,
+      "sha256": "334adec03191efe43e6923ba8521af7d21050eaead232d36e4356a4ee0bc2ae7"
+    },
+    {
+      "path": "inkjet/60hz-4p-mixed/inkjet-mixed-4p-f005.png",
+      "bytes": 67109,
+      "sha256": "c1f4690bad4d8351bfb1203678dfe6394159e188b7aec74466e2e63b9a7f2bfd"
+    },
+    {
+      "path": "inkjet/60hz-4p-mixed/inkjet-mixed-4p-f006.png",
+      "bytes": 66942,
+      "sha256": "681280d46902e412080632acb5df3205b13c8b846230c70336f4b84d59314d31"
+    },
+    {
+      "path": "inkjet/60hz-4p-mixed/inkjet-mixed-4p-f007.png",
+      "bytes": 66319,
+      "sha256": "4baed4d5d0b83048d4b79d8d643f8c1b1111a8a833c5d48e092e883db612f20d"
+    },
+    {
+      "path": "inkjet/60hz-4p-mixed/inkjet-mixed-4p-f008.png",
+      "bytes": 66200,
+      "sha256": "ee0de39ef7d9345631d3347b36e64b6d97444e2fe9a0575ae5089c24ac05780b"
+    },
+    {
+      "path": "inkjet/60hz-4p-mixed/inkjet-mixed-4p-f009.png",
+      "bytes": 67335,
+      "sha256": "941a0a2ac65419a7b6adb07c2db977b964743417c4dbe6080f0fe4ebdf18574f"
+    },
+    {
+      "path": "inkjet/60hz-4p-mixed/inkjet-mixed-4p-f010.png",
+      "bytes": 68630,
+      "sha256": "bd70a4caa210867e07b1f4f0d998af41be85678e8518d18a3b27560d9baf6955"
+    },
+    {
+      "path": "inkjet/60hz-4p-mixed/inkjet-mixed-4p-f011.png",
+      "bytes": 69336,
+      "sha256": "d4c0d3be86be0fa526d87558c05638f0ecdb56e0196851e7bee867d25b23a74b"
+    },
+    {
+      "path": "inkjet/60hz-4p-mixed/inkjet-mixed-4p-f012.png",
+      "bytes": 69440,
+      "sha256": "8a6b01f24d7623cfc104901c4a55121d7778b228fd97a290ef9edfbe9011ec07"
+    },
+    {
+      "path": "inkjet/120hz-1p-near/inkjet-near-1p-f001.png",
+      "bytes": 40915,
+      "sha256": "02a2d4c5da39ef6534e7c229cccc3aed1b7c0eabea8abdca7b10946e4c0d6eac"
+    },
+    {
+      "path": "inkjet/120hz-1p-mixed/inkjet-mixed-1p-f001.png",
+      "bytes": 40749,
+      "sha256": "3c21239d0d279450f2ecd8f15124fbfd78ed0ae89e3ffb9360ffd8f39f5e303c"
+    },
+    {
+      "path": "inkjet/120hz-2p-near/inkjet-near-2p-f001.png",
+      "bytes": 50252,
+      "sha256": "85ddfb52c9aa615acb40e1eb7c102fdc83acb93d014240b4080b062fb9a293f0"
+    },
+    {
+      "path": "inkjet/120hz-2p-mixed/inkjet-mixed-2p-f001.png",
+      "bytes": 50027,
+      "sha256": "64a122c60126a534e25098782e16419f5d51400ae14c4ebe02a3dd54ae625882"
+    },
+    {
+      "path": "inkjet/120hz-4p-near/inkjet-near-4p-f001.png",
+      "bytes": 69403,
+      "sha256": "ecf781cd0b06c9a1052ddadab6c8077a932d3e487ce69c028b801ef6ddab4b01"
+    },
+    {
+      "path": "inkjet/120hz-4p-mixed/inkjet-mixed-4p-f001.png",
+      "bytes": 70169,
+      "sha256": "ab69b1464b35d5a5f9674bfb9e0cc40fb5ea643d996dad2aedd177145b9922b3"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-ghost-1-before-step.png",
+      "bytes": 33889,
+      "sha256": "77896695aa9fed3d9295e354ab83fe8e6a9f3bab74c449e9fb46154ea63a9667"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-ghost-1-f0.png",
+      "bytes": 90070,
+      "sha256": "829a925492b2f0d7d54affbc07c9bef228852aedc1a980598c42958f5ed40437"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-ghost-1-f1.png",
+      "bytes": 121256,
+      "sha256": "d23221c05c860c18510cc1415ca39a3fb8d28db7be8ed29b7607ea7653488e81"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-ghost-1-f2.png",
+      "bytes": 128126,
+      "sha256": "006fd80f4dc309cc1e4647066d6310b20017253f99a5fa52fdd1e141c3b8a626"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-ghost-1-f3.png",
+      "bytes": 100449,
+      "sha256": "0dd5f2a5840db79d3eb4819a46004c70c7b6479a8a4af0d048b07d7fad902f56"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-ghost-2-before-step.png",
+      "bytes": 100449,
+      "sha256": "0dd5f2a5840db79d3eb4819a46004c70c7b6479a8a4af0d048b07d7fad902f56"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-ghost-2-f0.png",
+      "bytes": 107049,
+      "sha256": "2b3d5c42e4df5214fc41fbe1a31fa66a552d7ba854a8a5e6ddba471f0c24df90"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-ghost-2-f1.png",
+      "bytes": 128218,
+      "sha256": "4dd4b65a1c0ccf71400316be10b242f8db4e598008c8529dc599946c7d8c5008"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-ghost-2-f2.png",
+      "bytes": 133501,
+      "sha256": "ddb02573d75ba926b24302d944b0ff48c21a2339a336f1be78a39988a33ad6b8"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-ghost-2-f3.png",
+      "bytes": 116688,
+      "sha256": "29eebfa60eedfa877280d55968702882f30179231c9ed639726e59264a90bba4"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-ghost-3-before-step.png",
+      "bytes": 116688,
+      "sha256": "29eebfa60eedfa877280d55968702882f30179231c9ed639726e59264a90bba4"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-ghost-3-f0.png",
+      "bytes": 122205,
+      "sha256": "109709a7be8ff3ea08a637e63122a0b86e91ed49b7cb5aa454261391a6e20346"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-ghost-3-f1.png",
+      "bytes": 144575,
+      "sha256": "8939697611a76ccac1234651b91c76d05a68fd80681d9db63294bca7ee09b519"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-ghost-3-f2.png",
+      "bytes": 133400,
+      "sha256": "28cc3ff9a8b023cbeb80d2e8e99fba0e3702440b93d9f57d496d38d371fa836f"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-ghost-3-f3.png",
+      "bytes": 120807,
+      "sha256": "91d16c645b1bbb0828c63f1e01791d32b3f513a4b5fafaa4e67984d64d4b6f78"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-local-before-step.png",
+      "bytes": 70932,
+      "sha256": "8c6145007d9d3a71f234b3f9105b02a9b872e449e2159bca065af150ad4dd197"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-local-f0.png",
+      "bytes": 77897,
+      "sha256": "06be821c8d59a83f85011883d576a34ab3811b437d68518a420b191f9584918e"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-local-f1.png",
+      "bytes": 103228,
+      "sha256": "967f93a2d745312d9cb002cf09f631031892608f0d82b7ce81a5c07b8d15d812"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-local-f2.png",
+      "bytes": 115710,
+      "sha256": "1a974f16933f84da399239ffc83372fddb102334b41ebcde0cc166d0593e34da"
+    },
+    {
+      "path": "inkjet-terminal/30hz/inkjet-terminal-30hz-local-f3.png",
+      "bytes": 111095,
+      "sha256": "1a2b110031fa38764ca1332b4140a39bb4459373e8251940d057322318781aa8"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-ghost-1-before-step.png",
+      "bytes": 33889,
+      "sha256": "77896695aa9fed3d9295e354ab83fe8e6a9f3bab74c449e9fb46154ea63a9667"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-ghost-1-f0.png",
+      "bytes": 74651,
+      "sha256": "f7a7d9c13e359832deb4e735f301d4956b4b6981e344f7baddcd1c1b4341ca85"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-ghost-1-f1.png",
+      "bytes": 97174,
+      "sha256": "c56e259b5809664335406365228a6ca688aec79ccc637ae12336cf60d16bd850"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-ghost-1-f2.png",
+      "bytes": 112019,
+      "sha256": "16b76892d0fa6d09dd6924bc2fea0cd26eb13d70d01a2c0a43924e342779588b"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-ghost-1-f3.png",
+      "bytes": 117443,
+      "sha256": "55c9530cdb97364ce1330eccafd3b8650435fbc87e0e656c2d94e20384dc27c3"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-ghost-2-before-step.png",
+      "bytes": 117443,
+      "sha256": "55c9530cdb97364ce1330eccafd3b8650435fbc87e0e656c2d94e20384dc27c3"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-ghost-2-f0.png",
+      "bytes": 124297,
+      "sha256": "a8ca5887c19bbea2aa9e8f7a83f26386d5c95f897821eb9f6d94db3b98f6cffd"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-ghost-2-f1.png",
+      "bytes": 120961,
+      "sha256": "e8b7ea47eddb51e87860105921ff7e5d8dfe7f06c2e6b1da83f7c79d5b216be1"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-ghost-2-f2.png",
+      "bytes": 121522,
+      "sha256": "862ee424046443c34ae41c22fa512c65f0a3b0b8c6a7dfed1aae5ea363cbb854"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-ghost-2-f3.png",
+      "bytes": 125333,
+      "sha256": "5aec0c7c1fcb3cf41ea8bc8de41f81ad9a9f8b053a7121bf9e425d6e5d6359af"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-ghost-3-before-step.png",
+      "bytes": 125333,
+      "sha256": "5aec0c7c1fcb3cf41ea8bc8de41f81ad9a9f8b053a7121bf9e425d6e5d6359af"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-ghost-3-f0.png",
+      "bytes": 128607,
+      "sha256": "ce597759bd081a91931a697421ea66246a4496ba2c0f05086066884ae3e734df"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-ghost-3-f1.png",
+      "bytes": 132400,
+      "sha256": "6a6b31e9c65b39ccd72f0fd3b26ec27b6b6e2504bf157258f7807ffc09f51d69"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-ghost-3-f2.png",
+      "bytes": 136675,
+      "sha256": "f930479dc44ab12e4821d5c14d836e0cd06a5cc64e4c37b1dbe47596cec94b85"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-ghost-3-f3.png",
+      "bytes": 143471,
+      "sha256": "ef1edc1312ea9aca8d16241ad96326b2c3d56f27308f6e58b2a8a75b473540da"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-local-before-step.png",
+      "bytes": 79170,
+      "sha256": "ad6c2ccc3f234a725b8ff4832f276754ac7d62fb9ce4772fb6523ca5abc204d2"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-local-f0.png",
+      "bytes": 84548,
+      "sha256": "bd5e5879aa24db4a927247dc3c3b2750f0db2144947f419922c56922109fa378"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-local-f1.png",
+      "bytes": 96243,
+      "sha256": "bcd04f4c27e6591b846f12f1683d2e74fad9ffed6154c22ff96622c9b941d984"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-local-f2.png",
+      "bytes": 111971,
+      "sha256": "65c08783063222943198a7f1466bd84fdd7eb55ff8fea083be024576bd824045"
+    },
+    {
+      "path": "inkjet-terminal/60hz/inkjet-terminal-60hz-local-f3.png",
+      "bytes": 121892,
+      "sha256": "c135e77e1d3ad6786b535de857b427abf77d38b834d30bb6b85b153474d62da8"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-ghost-1-before-step.png",
+      "bytes": 34012,
+      "sha256": "1ed62f070c3d610910c70d15c992e01146d487340f39800f41cc0de8412e135f"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-ghost-1-f0.png",
+      "bytes": 62653,
+      "sha256": "b4206fc2bfb6e2f336b1b1405640ea4640ada24a009c40ad98c8bb38372ead17"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-ghost-1-f1.png",
+      "bytes": 71214,
+      "sha256": "1471d1a4687e5b3bd07ef751a721b460860c30d86ac6c49bcae581d007502a00"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-ghost-1-f2.png",
+      "bytes": 81994,
+      "sha256": "c6c0a56bc75d3254c6edd70bafe544ce854f925ebb945584b4a22cfc4559cc19"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-ghost-1-f3.png",
+      "bytes": 91723,
+      "sha256": "cffcf8a57705205d0b2248aec5906ead9c43be9fb0d282aaee4520cd997de641"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-ghost-2-before-step.png",
+      "bytes": 91723,
+      "sha256": "cffcf8a57705205d0b2248aec5906ead9c43be9fb0d282aaee4520cd997de641"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-ghost-2-f0.png",
+      "bytes": 104241,
+      "sha256": "c7115b4feca26d11dc9169865ae6866c995224049a01957ac3cf4dad66464cc7"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-ghost-2-f1.png",
+      "bytes": 112887,
+      "sha256": "a8b15807ff1c662e960ce5539007146b5c0b73e110b40f1cf1f5055a3aa3b0f3"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-ghost-2-f2.png",
+      "bytes": 119835,
+      "sha256": "d7de45eead6ed8a10cacb305fa49a6b52ce6dba6915bb0dfbaed4984fd56417d"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-ghost-2-f3.png",
+      "bytes": 123113,
+      "sha256": "6fdb1739c4a896f25472c9a7322c0c383e750b9646467031939491849188dfdd"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-ghost-3-before-step.png",
+      "bytes": 123113,
+      "sha256": "6fdb1739c4a896f25472c9a7322c0c383e750b9646467031939491849188dfdd"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-ghost-3-f0.png",
+      "bytes": 127981,
+      "sha256": "38f243332792f38f31ef611dc8b0854d001b06980c8ada0afd63ab32d899a5ca"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-ghost-3-f1.png",
+      "bytes": 132475,
+      "sha256": "864470003f4ead3ffb5b528b60c3e6c2e278a28c6bfe2b12c3ac02121203eda9"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-ghost-3-f2.png",
+      "bytes": 135821,
+      "sha256": "36dbecda85f4793c975cf98ad6d1a3fe22730e9474f2e4757319e5f48a73104b"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-ghost-3-f3.png",
+      "bytes": 136674,
+      "sha256": "8a177823d54c493d4617052ab458f5cc96aecae0a02b6936950ffe00aee4a5f6"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-local-before-step.png",
+      "bytes": 79492,
+      "sha256": "889c975f60ef35eee45366d77640a4edd2256af6acc1f73f9a525cb07f4e8f69"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-local-f0.png",
+      "bytes": 84191,
+      "sha256": "5d6cac1056b49e59694890bb57558e2157a57a980236502f6f712390b55e515a"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-local-f1.png",
+      "bytes": 90641,
+      "sha256": "0624c5bd15f55f61ed06aba6357b7683848f9ea7bade15e6e24cc5b3195fe6c1"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-local-f2.png",
+      "bytes": 96967,
+      "sha256": "6888d2c76b8e8c21a7749f35a7a991aa45a2a27df16a785ff2e1c55e4a9b9d49"
+    },
+    {
+      "path": "inkjet-terminal/120hz/inkjet-terminal-120hz-local-f3.png",
+      "bytes": 105017,
+      "sha256": "968a6f9ecdfe2ebeea105c1280694851c311d7074f079f31fff41484f3ab4351"
+    }
+  ]
+}

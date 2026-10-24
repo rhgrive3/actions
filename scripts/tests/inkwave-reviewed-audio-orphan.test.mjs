@@ -42,6 +42,21 @@ test('parse errors preserve the module instead of making incomplete graph claims
   assert.equal(decide('import(').omit, false);
 });
 
+test('streamed module readers preserve eager classification and fail closed on unreadable inputs', () => {
+  for (const code of ['export const safe=1;', 'import("../patches/splatoon3/runtime/audio/charge-hit-cue.mjs");', 'import(nextPath);', 'import(']) {
+    const eager = new Map([...fixture(), ['src/probe.js', code]]), reads = new Map();
+    const lazy = new Map([...eager].map(([file, source]) => [file, () => {
+      reads.set(file, (reads.get(file) || 0) + 1); return source;
+    }]));
+    assert.deepEqual(reviewedAudioOrphanDecision(source, lazy, owners), reviewedAudioOrphanDecision(source, eager, owners));
+    assert.ok([...reads.values()].every(count => count === 1), 'each visited module is read once');
+  }
+  const failed = new Map([...fixture(), ['src/unreadable.js', () => { throw new Error('read failed'); }]]);
+  const decision = reviewedAudioOrphanDecision(source, failed, owners);
+  assert.equal(decision.omit, false);
+  assert.match(decision.reason, /unparsed module/);
+});
+
 test('build guard precedes graph/assets/revision and retains source identity inputs', () => {
   const build = fs.readFileSync(new URL('../build-inkwave.mjs', import.meta.url), 'utf8');
   assert.ok(build.indexOf('const decision = reviewedAudioOrphanDecision(') < build.indexOf('const loadingPlan = prepareLoading('));

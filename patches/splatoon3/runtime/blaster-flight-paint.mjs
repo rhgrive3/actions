@@ -177,23 +177,22 @@ export function spawnSplashDrop(game, { owner, team, seed, salt = 0, from, direc
   const V = from.constructor;
   const dirX = direction ? direction.x : 0, dirZ = direction ? direction.z : 0, len = Math.hypot(dirX, dirZ);
   const fx = len > EPS ? dirX / len : 0, fz = len > EPS ? dirZ / len : 0;
-  const random = spec.randomVelocity, unit = k => seededSplashUnit(seed, (salt * 8 + k) >>> 0);
+  const random = spec.randomVelocity;
   // Sourced per-axis random spawn velocity (zero for every 11.3.0 Blaster but
   // Precision): X/Y symmetric, Z in [ZMin, ZMax] along the shot direction.
-  const vx = random ? (unit(1) * 2 - 1) * random.x : 0, vy = random ? (unit(2) * 2 - 1) * random.y : 0;
-  const vz = random ? random.zMin + unit(3) * (random.zMax - random.zMin) : 0;
+  const vx = random ? (seededSplashUnit(seed,(salt*8+1)>>>0) * 2 - 1) * random.x : 0, vy = random ? (seededSplashUnit(seed,(salt*8+2)>>>0) * 2 - 1) * random.y : 0;
+  const vz = random ? random.zMin + seededSplashUnit(seed,(salt*8+3)>>>0) * (random.zMax - random.zMin) : 0;
   const pool=game.projectiles._s3SplashDropPool||=([]);
   let drop=pool.pop();
   if(!drop||drop.pos.constructor!==V)drop={pos:new V(),vel:new V(),next:new V(),hit:hitRecord(from)};
   const collision=drop.hit;
   collision.hit=false;collision.dist=0;collision.block=collision.face=-1;collision.u=collision.v=0;
   collision.point.set(0,0,0);collision.normal.set(0,0,0);
-  Object.assign(drop,{
-    owner, team, seed: unit(0), radius, spec, depth, kind, footprint,
-    dirX: fx, dirZ: fz, spawnY: from.y, releaseX: from.x, releaseZ: from.z, frames: 0,
-    carry: Number.isFinite(catchUpSeconds) && catchUpSeconds > 0 ? catchUpSeconds * STEP_FRAMES_PER_SECOND : 0,
-    landing:null,landingDepth:undefined,drawRadius:undefined,sourceActor:undefined,_s3SplashDropPooled:false,
-  });
+  drop.owner=owner;drop.team=team;drop.seed=seededSplashUnit(seed,(salt*8)>>>0);drop.radius=radius;
+  drop.spec=spec;drop.depth=depth;drop.kind=kind;drop.footprint=footprint;
+  drop.dirX=fx;drop.dirZ=fz;drop.spawnY=from.y;drop.releaseX=from.x;drop.releaseZ=from.z;drop.frames=0;
+  drop.carry=Number.isFinite(catchUpSeconds)&&catchUpSeconds>0?catchUpSeconds*STEP_FRAMES_PER_SECOND:0;
+  drop.landing=null;drop.landingDepth=undefined;drop.drawRadius=undefined;drop.sourceActor=undefined;drop._s3SplashDropPooled=false;
   drop.pos.set(from.x,from.y,from.z);
   drop.vel.set(fx*vz-fz*vx,vy-Math.max(0,initialDownSpeed),fz*vz+fx*vx);
   drop.next.set(0,0,0);
@@ -321,7 +320,9 @@ export function advanceSplashDrops(system, dt, game, waterY = -Infinity) {
 export function paintDistanceFlight(game, projectile, state, end = projectile?.pos) {
   if (!state || (projectile.s3SpecialWeapon && !(projectile.s3AllSpecial === 'crabTank' && state === projectile.s3CrabFlightPaint)) || projectile.ghost ||
       projectile.owner?.remote || !game?.paint || !game?.physics ||
-      !end || ![end.x, end.y, end.z].every(Number.isFinite)) return 0;
+      !end) return 0;
+  const endX=end.x,endY=end.y,endZ=end.z;
+  if (!Number.isFinite(endX)||!Number.isFinite(endY)||!Number.isFinite(endZ)) return 0;
   const distance = state.last.distanceTo(end), limit = state.distance + distance, spec = state.spec;
   if (!(distance > EPS)) return 0;
   let released = 0;

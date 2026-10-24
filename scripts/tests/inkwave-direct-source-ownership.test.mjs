@@ -130,7 +130,9 @@ test('PropKit atlas, lifetime and rematch behavior are authored in the real modu
   assert.match(worldProps, /import \{ G as propAtlasGame \} from '\.\.\/core\/ctx\.js'/);
   assert.match(worldProps, /_replayBuckets\(\)/);
   assert.match(worldProps, /this\._buckets\.clear\(\);\s*this\._released = true/);
-  assert.match(worldProps, /build\(\) \{\s*syncPropAtlas\(this\)/);
+  assert.match(worldProps, /build\(\) \{ const steps = this\._buildSteps\(\)/);
+  assert.match(worldProps, /buildAsync\(options\) \{ return runBuildSlices\(this\._buildSteps\(\), options\)/);
+  assert.match(worldProps, /\*_buildSteps\(\) \{\s*syncPropAtlas\(this\)/);
   assert.match(worldProps, /update\(dt, time\) \{\s*syncPropAtlas\(this\)/);
   assert.match(worldProps, /this\._propAtlasRedraw = null/);
   assert.doesNotMatch(worldProps, /PropKit\.prototype\./);
@@ -293,7 +295,7 @@ test('native stage Node18 fallback preserves source terrain validation before st
   const src = fs.readFileSync(new URL('../lib/inkwave-native-stages.mjs', import.meta.url), 'utf8');
   assert.match(src, /import \{assertSourceTerrainObjects\} from '\.\.\/\.\.\/patches\/native-stages\/runtime\/source-terrain-contract\.mjs'/);
   assert.match(src, /fileURLToPath\(new URL\("\.", import\.meta\.url\)\)/);
-  const read = src.indexOf("const manifest=JSON.parse(fs.readFileSync(path.join(root,s.id,'manifest.json')))");
+  const read = src.indexOf('const checked=checkedPreparedFiles(root,s.id),manifest=checked.manifest;');
   const validate = src.indexOf('assertSourceTerrainObjects(manifest);', read);
   const publish = src.indexOf('return {...definition,integritySha256:', read);
   assert.ok(read >= 0 && validate > read && publish > validate, 'terrain validation must precede playable stage publication');

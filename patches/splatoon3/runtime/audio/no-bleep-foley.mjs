@@ -73,9 +73,9 @@ export function renderFoleySound(recipe,event,variant=0,sampleRate=48000){
     const from=Math.floor(Math.max(0,at)*sr),dur=Math.min(count-from,Math.ceil(7*dec*sr));
     if(dur<=0)return;
     const data=sources[which];
-    const shift=Math.floor(rng()*count);
+    const shift=Math.floor(rng()*count),attackDenominator=Math.max(1/sr,attack);
     for(let j=0;j<dur;j++){
-      const t=j/sr,env=(1-Math.exp(-t/Math.max(1/sr,attack)))*Math.exp(-t/dec);
+      const t=j/sr,env=(1-Math.exp(-t/attackDenominator))*Math.exp(-t/dec);
       const brightness=rise?(.47+.53*smooth(t/(rise))):1;
       signal[from+j]+=amp*env*brightness*data[(from+j+shift)%count];
     }

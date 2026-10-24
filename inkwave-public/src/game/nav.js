@@ -1,3 +1,4 @@
+import { runBuildSlices } from '../core/buildSlices.js';
 import { buildNativeNav, buildNativeNavAsync } from '../../patches/native-stages/runtime/engine.mjs';
 // Navigation graph auto-generated from the level: 1 m grid of walkable samples on every floor/platform/ramp,
 // connected by walk / jump-up / drop-down edges. A* with a binary heap.
@@ -24,8 +25,18 @@ export class NavGraph {
     return graph;
   }
 
+  static async createLegacy(level, physics, options) {
+    const graph = new this(level, physics, { deferBuild: true });
+    await runBuildSlices(graph._buildSteps(), options);
+    return graph;
+  }
+
   _build() {
     if (this.level.native) return buildNativeNav(this);
+    for (const _ of this._buildSteps()) {}
+  }
+
+  *_buildSteps() {
     const L = this.level, B = L.bounds, st = this.step;
     this.x0 = B.minX + st / 2; this.z0 = B.minZ + st / 2;
     this.nx = Math.floor((B.maxX - B.minX) / st); this.nz = Math.floor((B.maxZ - B.minZ) / st);
@@ -57,6 +68,7 @@ export class NavGraph {
           list.push(node.id);
         }
         this.cells[iz * this.nx + ix] = list;
+        yield;
       }
     }
     // The eight grid offsets have only two horizontal lengths.
@@ -83,9 +95,10 @@ export class NavGraph {
           }
         }
       }
+      yield;
     }
     // keep only the largest connected component (walk edges, both directions)
-    this._prune();
+    yield* this._pruneSteps();
   }
 
   _has(ix, iz, y) {
@@ -117,23 +130,27 @@ export class NavGraph {
     return true;
   }
 
-  _prune() {
+  _prune() { for (const _ of this._pruneSteps()) {} }
+
+  *_pruneSteps() {
     // undirected reachability from a spawn-adjacent node using all edges both ways
     const N = this.nodes.length;
     const parent = new Int32Array(N), size = new Int32Array(N).fill(1);
-    for (let i = 0; i < N; i++) parent[i] = i;
+    for (let i = 0; i < N; i++) { parent[i] = i; if ((i & 255) === 255) yield; }
     const root = (id) => { while (parent[id] !== id) { parent[id] = parent[parent[id]]; id = parent[id]; } return id; };
-    for (const n of this.nodes) for (const edge of n.nb) {
+    for (const n of this.nodes) { for (const edge of n.nb) {
       let a = root(n.id), b = root(edge.to);
       if (a === b) continue;
       if (size[a] < size[b]) [a, b] = [b, a];
       parent[b] = a; size[a] += size[b];
     }
+      yield;
+    }
     // Scan in node order to preserve the old first-component tie winner.
     let best = -1, bestSize = 0;
-    for (let i = 0; i < N; i++) { const component = root(i); if (size[component] > bestSize) { best = component; bestSize = size[component]; } }
+    for (let i = 0; i < N; i++) { const component = root(i); if (size[component] > bestSize) { best = component; bestSize = size[component]; } if ((i & 255) === 255) yield; }
     this.valid = new Uint8Array(N);
-    for (let i = 0; i < N; i++) this.valid[i] = root(i) === best ? 1 : 0;
+    for (let i = 0; i < N; i++) { this.valid[i] = root(i) === best ? 1 : 0; if ((i & 255) === 255) yield; }
     this.validIds = this.nodes.filter((n) => this.valid[n.id]).map((n) => n.id);
   }
 

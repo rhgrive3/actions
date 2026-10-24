@@ -31,6 +31,7 @@ function floorCellCenter(face, i, j, out) {
 }
 
 // Debug inspection retains `center` without one persistent Vector3 per cell.
+const zoneAreaTotals = new WeakMap();
 class RankedZoneCell {
   constructor(face, cell, area, i, j) { this.face = face; this.cell = cell; this.area = area; this.i = i; this.j = j; }
   get center() { return floorCellCenter(this.face, this.i, this.j, this.face.origin.clone()); }
@@ -781,7 +782,10 @@ export class RankedWorld {
     const clams = [...(state?.clams || [])];
     for (const basket of state?.baskets || []) if (basket.pendingBreak)
       clams.push({ id: `drill-${basket.team}`, kind: 'power', team: basket.team, pos: basket.pendingBreak.pos, drilling: true });
-    const present = new Set();
+    const scratch = this._clamSetScratch || (this._clamSetScratch = { value: new Set(), busy: false });
+    const nested = scratch.busy, present = nested ? new Set() : scratch.value;
+    if (!nested) scratch.busy = true;
+    try {
     for (const clam of clams) {
       if (!clam || clam.id === undefined || clam.carrier !== null && clam.carrier !== undefined) continue;
       const p = vec(clam.pos);
@@ -803,6 +807,7 @@ export class RankedWorld {
         if (this._clamMarkers.size > 48) { this.clamsGroup.remove(marker.mesh); this._clamMarkers.delete(key); }
       }
     }
+    } finally { present.clear(); if (!nested) scratch.busy = false; }
   }
 
   _updateInventories(engine) {
@@ -871,9 +876,15 @@ export class RankedWorld {
           if (finite(zone.heightTolerance) && Math.abs(p.y - cy) > Math.max(0, zone.heightTolerance) + EPSILON) continue;
           if (p.x < cx - width / 2 - EPSILON || p.x > cx + width / 2 + EPSILON
             || p.z < cz - depth / 2 - EPSILON || p.z > cz + depth / 2 + EPSILON) continue;
-          this._zoneCells[index].push(new RankedZoneCell(face, cell, face.cu * face.cv, i, j));
+          this._zoneCells[index].push(Object.freeze(new RankedZoneCell(face, cell, face.cu * face.cv, i, j)));
         }
       }
+    }
+    // These published lists/areas cannot change in place. A custom or replaced
+    // index has no private total and takes the original ordered sum below.
+    for (const cells of this._zoneCells) {
+      let total = 0; for (const entry of cells) total += entry.area;
+      Object.freeze(cells); zoneAreaTotals.set(cells, total);
     }
   }
 
@@ -885,9 +896,10 @@ export class RankedWorld {
     if (grid && finite(version) && cached?.paint === paint && cached.grid === grid && cached.version === version && cached.turfVersion === turfVersion
       && cached.cells === this._zoneCells && cached.zones === zones && cached.value.length === zones.length) return cached.value;
     const value = zones.map((_, index) => {
-      const area = [0, 0, 0];
-      for (const entry of this._zoneCells[index] || []) {
-        area[0] += entry.area;
+      const cells = this._zoneCells[index], total = cells && zoneAreaTotals.get(cells);
+      const area = [total === undefined ? 0 : total, 0, 0];
+      for (const entry of cells || []) {
+        if (total === undefined) area[0] += entry.area;
         const team = this.paint.grid[entry.cell];
         if (team === 1) area[1] += entry.area;
         else if (team === 2) area[2] += entry.area;

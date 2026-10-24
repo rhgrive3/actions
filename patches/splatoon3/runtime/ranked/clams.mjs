@@ -1,3 +1,4 @@
+import { firstThreeFinite } from './coordinates.mjs';
 // Splatoon3mix's S3-specific pickup/throw tables; no retail timing claims.
 const NO_CLAM_PICKUP = new Set(['zipcaster', 'crabTank', 'krakenRoyale', 'tripleSplashdown', 'slam']);
 const NO_CLAM_THROW = new Set(['trizooka', 'zipcaster', 'booyahBomb', 'inkVac', 'inkjet', 'ultraStamp', 'crabTank', 'reefslider', 'tripleInkstrike', 'krakenRoyale', 'tripleSplashdown', 'slam']);
@@ -40,7 +41,7 @@ const POWER_THROW_SPEED = 8.2 * 60 * 0.02;
 // is deliberately marked as approximate.
 
 const clone = value => structuredClone(value);
-const vec = value => Array.isArray(value) && value.length >= 3 && value.slice(0, 3).every(Number.isFinite)
+const vec = value => firstThreeFinite(value)
   ? [value[0], value[1], value[2]] : [0, 0, 0];
 const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
@@ -178,7 +179,10 @@ export class ClamsRule {
 
   totalClams() {
     let total = this.state.clams.length;
-    for (const inv of Object.values(this.state.inventories)) {
+    const inventories = this.state.inventories;
+    for (const id in inventories) {
+      if (!Object.hasOwn(inventories, id)) continue;
+      const inv = inventories[id];
       total += Math.max(0, Math.min(MAX_SMALL_CLAMS, Number(inv?.small) || 0));
       if (inv?.power) total += 1;
     }
@@ -187,6 +191,9 @@ export class ClamsRule {
 
   _spawnInterval() {
     if (this.state.overtime.active && this.state.overtime.mode === 'scoreless') return QUICK_SPAWN_SECONDS;
+    // Inventory contributions are nonnegative, so the field alone proves
+    // that the total is over the threshold. Do not cache a mutable total.
+    if (this.state.clams.length > QUICK_SPAWN_THRESHOLD) return NORMAL_SPAWN_SECONDS;
     return this.totalClams() <= QUICK_SPAWN_THRESHOLD ? QUICK_SPAWN_SECONDS : NORMAL_SPAWN_SECONDS;
   }
 
@@ -215,7 +222,12 @@ export class ClamsRule {
     let pointIndex = -1;
     for (let n = 0; n < points.length; n++) {
       const candidate = this.state.nextSpawnIndex++ % points.length, p = points[candidate];
-      if (!this.state.clams.some(c => c.grounded && Math.hypot(c.pos[0] - p[0], c.pos[2] - p[2]) <= .5 && Math.abs(c.pos[1] - p[1]) <= .4)) {
+      if (!this.state.clams.some(c => {
+        if (!c.grounded) return false;
+        const dx = c.pos[0] - p[0], dz = c.pos[2] - p[2];
+        if (Math.abs(dx) > .5 || Math.abs(dz) > .5) return false;
+        return Math.hypot(dx, dz) <= .5 && Math.abs(c.pos[1] - p[1]) <= .4;
+      })) {
         pointIndex = candidate; break;
       }
     }
@@ -344,18 +356,23 @@ export class ClamsRule {
     return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2;
   }
 
-  _pickupDistanceSq(position, target) {
+  _pickupDistanceSq(position, target, rejectOutsidePickup = false) {
     // Scalar distance only for ordinary dense finite coordinates. Keep the
     // original vec fallback for short, sparse and otherwise invalid inputs.
     const p = Array.isArray(position) && position.length >= 3 &&
       0 in position && 1 in position && 2 in position &&
       Number.isFinite(position[0]) && Number.isFinite(position[1]) && Number.isFinite(position[2])
       ? position : vec(position);
+    // Only reject a pair strictly beyond the existing radius. Keep the exact
+    // squared sum near its floating-point boundary and for unusual values.
+    const dx = p[0] - target[0], dy = p[1] - target[1], dz = p[2] - target[2];
+    if (rejectOutsidePickup && Number.isFinite(dx) && Number.isFinite(dy) && Number.isFinite(dz) &&
+        (Math.abs(dx) > .820001 || Math.abs(dy) > .820001 || Math.abs(dz) > .820001)) return Infinity;
     return this._distanceSq(p, target);
   }
 
   _pickup(clam, actor, frame) {
-    if (!actor.alive || !canCollectClam(actor) || !clam.grounded || this._pickupDistanceSq(actor.pos, clam.pos) > 0.82 ** 2) return false;
+    if (!actor.alive || !canCollectClam(actor) || !clam.grounded || this._pickupDistanceSq(actor.pos, clam.pos, true) > 0.82 ** 2) return false;
     const inv = this._inventory(actor.id, actor.team);
     if (clam.kind === 'power') {
       if (clam.team !== actor.team || inv.power) return false;
@@ -402,17 +419,23 @@ export class ClamsRule {
   }
 
   _processPickups(frame) {
-    const actors = this._actorList(frame).filter(actor => actor.alive !== false && canCollectClam(actor));
     const depth = this._pickupDepth || 0, snapshots = this._pickupSnapshots || (this._pickupSnapshots = []);
-    const field = snapshots[depth] || (snapshots[depth] = []);
-    this._pickupDepth = depth + 1; field.length = this.state.clams.length;
-    for (let i = 0; i < field.length; i++) field[i] = this.state.clams[i];
+    const buffers = this._pickupActorBuffers || (this._pickupActorBuffers = []);
+    const actors = buffers[depth] || (buffers[depth] = []), field = snapshots[depth] || (snapshots[depth] = []);
+    this._pickupDepth = depth + 1;
     try {
+      const source = this._actorList(frame), length = source.length;
+      for (let i = 0; i < length; i++) if (i in source) {
+        const actor = source[i];
+        if (actor.alive !== false && canCollectClam(actor)) actors.push(actor);
+      }
+      field.length = this.state.clams.length;
+      for (let i = 0; i < field.length; i++) field[i] = this.state.clams[i];
       for (const clam of field) {
         if (!clam.grounded) continue;
         for (const actor of actors) if (this._pickup(clam, actor, frame)) break;
       }
-    } finally { field.length = 0; this._pickupDepth = depth; }
+    } finally { field.length = 0; actors.length = 0; this._pickupDepth = depth; }
   }
 
   _throw(actor, input, frame) {
@@ -486,6 +509,14 @@ export class ClamsRule {
     if (!basket.goal) return false;
     const radius = Number.isFinite(this.stage?.clams?.goalRadius) ? this.stage.clams.goalRadius : 0.95;
     const center = [basket.goal[0], basket.goal[1] + 0.55, basket.goal[2]];
+    const broadRadius = radius + 1e-6;
+    if (radius >= 0 && radius <= 100 && Math.abs(center[0]) < 1000 && Math.abs(center[1]) < 1000 && Math.abs(center[2]) < 1000 &&
+        Math.abs(previous[0]) < 1000 && Math.abs(previous[1]) < 1000 && Math.abs(previous[2]) < 1000 &&
+        Math.abs(next[0]) < 1000 && Math.abs(next[1]) < 1000 && Math.abs(next[2]) < 1000 &&
+        ((previous[0] < center[0] - broadRadius && next[0] < center[0] - broadRadius) ||
+         (previous[0] > center[0] + broadRadius && next[0] > center[0] + broadRadius) ||
+         (previous[2] < center[2] - broadRadius && next[2] < center[2] - broadRadius) ||
+         (previous[2] > center[2] + broadRadius && next[2] > center[2] + broadRadius))) return false;
     const closestT = (() => {
       const d = sub(next, previous);
       const n = this._distanceSq(d, [0, 0, 0]);
@@ -680,7 +711,9 @@ export class ClamsRule {
         if (clam.grounded) continue;
         const previous = [...clam.pos];
         clam.velocity[1] -= GRAVITY * step;
-        const next = add(previous, scale(clam.velocity, step));
+        const velocity = clam.velocity;
+        const dx = velocity[0] * step, dy = velocity[1] * step, dz = velocity[2] * step;
+        const next = [previous[0] + dx, previous[1] + dy, previous[2] + dz];
         const blocked = typeof frame?.blocked === 'function' && frame.blocked(previous, next) === true;
         if (blocked) {
           this._paintPower(clam, previous);

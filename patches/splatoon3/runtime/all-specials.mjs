@@ -1,3 +1,4 @@
+import {validSpecialWorldPayload,admitsRemoteWorldBirth} from './special-world-payload.mjs';
 // Additional Splatoon 3 special actions for the public INKWAVE runtime.
 //
 // Reference: Leanny/splat3 11.3.0 tables at 7280ff9cde8bb1c5dcef46c700c326471584d2e6,
@@ -405,25 +406,42 @@ function paintDiskCentres(radius){
     const count=6*2**Math.max(0,Math.ceil(Math.log2((2*Math.PI*maxCentre/spacing)/6)));for(let i=0;i<count;i++){const angle=2*Math.PI*i/count;centres.push([Math.cos(angle)*maxCentre,Math.sin(angle)*maxCentre]);}}
   return centres;
 }
-function paintDiskLayout(rt, point, radius, plan = null) {
+function paintDiskLayout(rt, point, radius, plan = null, cache = null) {
   // Tile in the nearby contact plane. Keeping every tile at the same world Y
   // leaves large holes on slopes; projecting each tile from above can instead
   // jump between disconnected floors. The short probe avoids both mistakes.
   const normal=rt.up.clone(), from=point.clone();from.y+=.25;
   const contact=rt.api.G.physics?.raycast?.(from,rt.down,.5,rt.hit,true);
   if(contact?.hit&&contact.normal?.y>.4)normal.copy(contact.normal).normalize();
+  // Always probe again: moving floors and synchronous paint callbacks can
+  // change the contact plane without changing the physics object identity.
+  // Only the deterministic tiling work is retained by this blast object.
+  const centres=plan || paintDiskCentres(radius);
+  if(cache?.layout&&cache.plan===centres&&Object.is(cache.radius,radius)&&
+     Object.is(cache.x,point.x)&&Object.is(cache.y,point.y)&&Object.is(cache.z,point.z)&&
+     Object.is(cache.nx,normal.x)&&Object.is(cache.ny,normal.y)&&Object.is(cache.nz,normal.z)&&
+     cache.samples.length===centres.length*2){
+    let same=true;
+    for(let i=0;i<centres.length;i++)if(!Object.is(cache.samples[i*2],centres[i][0])||!Object.is(cache.samples[i*2+1],centres[i][1])){same=false;break;}
+    if(same){rt.v4.set(cache.lastX,cache.lastY,cache.lastZ);return cache.layout;}
+  }
   const tangent=new rt.api.THREE.Vector3(1,0,0).addScaledVector(normal,-normal.x).normalize();
   const bitangent=new rt.api.THREE.Vector3().crossVectors(tangent,normal).normalize();
   // A constant-radius stamp must remain inside the nominal source disk.
   // An outer ring closes lattice scallops without placing stamp centres near R.
   // Reuse one mask seed so the R=3.74 transition cannot union unrelated shapes.
-  const centres=plan || paintDiskCentres(radius);
   const seen=new Set(),tiles=[];
   for(const [x,z]of centres){
     const at=rt.v4.copy(point).addScaledVector(tangent,x).addScaledVector(bitangent,z);at.set(q2(at.x),q2(at.y),q2(at.z));
     const key=at.x+','+at.y+','+at.z;if(seen.has(key))continue;seen.add(key);tiles.push({x,z,key});
   }
-  return {tangent,bitangent,tiles};
+  const layout={tangent,bitangent,tiles};
+  if(cache){
+    const samples=[];for(const [x,z]of centres)samples.push(x,z);
+    Object.assign(cache,{layout,plan:centres,radius,x:point.x,y:point.y,z:point.z,nx:normal.x,ny:normal.y,nz:normal.z,
+      samples,lastX:rt.v4.x,lastY:rt.v4.y,lastZ:rt.v4.z});
+  }
+  return layout;
 }
 function paintDiskTile(rt,actor,point,layout,tile,maskSeed){
   const at=rt.v4.copy(point).addScaledVector(layout.tangent,tile.x).addScaledVector(layout.bitangent,tile.z);
@@ -431,11 +449,11 @@ function paintDiskTile(rt,actor,point,layout,tile,maskSeed){
   const got=rt.api.G.paint.splat(at,MAX_STAMP_RADIUS,actor.team,{seed:maskSeed,claimOwner:actor,claimMode:'no-special'});
   return finite(got)?got:0;
 }
-function paintDisk(rt, actor, point, radius, seed, maskSeed = seedUnit(seed,0), alreadyPainted = null, plan = null) {
+function paintDisk(rt, actor, point, radius, seed, maskSeed = seedUnit(seed,0), alreadyPainted = null, plan = null, layoutCache = null) {
   if (radius <= MAX_STAMP_RADIUS) return paintStamp(rt, actor, point, radius, seed);
   // Cluster ordinary network-admissible stamps; do not emit one over-limit paint
   // row, which the public replication owner correctly rejects.
-  const layout=paintDiskLayout(rt,point,radius,plan);let area=0;
+  const layout=paintDiskLayout(rt,point,radius,plan,layoutCache);let area=0;
   for(const tile of layout.tiles){if(alreadyPainted?.has(tile.key))continue;area+=paintDiskTile(rt,actor,point,layout,tile,maskSeed);}
   if (area > 0) actor.addTurfNoSpecial?.(area);
   return area;
@@ -447,7 +465,8 @@ function paintBooyahGrowth(rt,object,paintFrame,paintRadius,seed){
   if(!object.paintDiskPlan||object.paintDiskPlan.radius!==paintRadius)
     object.paintDiskPlan={radius:paintRadius,centres:paintDiskCentres(paintRadius)};
   const plan=object.paintDiskPlan.centres;
-  const layout=paintDiskLayout(rt,object.pos,paintRadius,plan),maskSeed=seedUnit(seed,0),limit=growthRadius-MAX_STAMP_RADIUS;
+  const layoutCache=object.paintDiskLayoutCache||={};
+  const layout=paintDiskLayout(rt,object.pos,paintRadius,plan,layoutCache),maskSeed=seedUnit(seed,0),limit=growthRadius-MAX_STAMP_RADIUS;
   let area=0;
   for(const tile of layout.tiles){
     if(object.paintDiskTiles.has(tile.key)||Math.hypot(tile.x,tile.z)>limit+1e-8)continue;
@@ -455,7 +474,7 @@ function paintBooyahGrowth(rt,object,paintFrame,paintRadius,seed){
   }
   if(area>0)object.owner.addTurfNoSpecial?.(area);
   object.paintFrame=paintFrame;object.paintedRadius=growthRadius;
-  if(paintFrame===6)paintDisk(rt,object.owner,object.pos,paintRadius,seed,maskSeed,object.paintDiskTiles,plan);
+  if(paintFrame===6)paintDisk(rt,object.owner,object.pos,paintRadius,seed,maskSeed,object.paintDiskTiles,plan,layoutCache);
   return area;
 }
 function paintCross(rt,actor,point,radius,checkLength,seed) {
@@ -725,8 +744,8 @@ export const WORLD_MESH_KINDS = Object.freeze(['screen', 'wave', 'waveFront', 'd
 function worldMesh(rt, owner, kind, center, scale = [1,1,1]) {
   const { THREE, G } = rt.api;
   if (!G.scene?.add || !THREE?.Mesh) return null;
-  const { geometry, material } = worldMeshParts(THREE, kind, colorOf(rt,owner));
-  const mesh = new THREE.Mesh(geometry, material);
+  let mesh=rt.api.specialWorldProxy?.(kind)||null;
+  if(!mesh){const {geometry,material}=worldMeshParts(THREE,kind,colorOf(rt,owner));mesh=new THREE.Mesh(geometry,material);}
   if (kind === 'waveFront') mesh.rotation.x = -Math.PI / 2;
   mesh.position.copy(center); mesh.scale.set(...scale);
   if (kind === 'screen') mesh.position.y += 2.2;
@@ -969,13 +988,16 @@ function lockWailPair(rt,actor,state,index) {
   emitAction(rt,actor,'killerWail',state.serial,'target',actor.pos,target?.pos||actor.pos.clone().add(direction),nextSeed(state),{index});
 }
 function fireWailTick(rt, actor, state, pair) {
+  const at=pair.nextTick-WAIL_TRACK_DELAY,trace=pair.trace;
+  const before=trace.findLast(p=>p.t<=at)||trace[0],after=trace.find(p=>p.t>at);
+  const sample=before?rt.v3.copy(before.pos):null;
+  if(sample&&after&&at>before.t)sample.lerp(after.pos,clamp((at-before.t)/(after.t-before.t),0,1));
+  // hitBeam uses the runtime vectors; scalar coordinates keep the paired
+  // sample intact through damage/event callbacks and their nested queries.
+  const sx=sample?.x,sy=sample?.y,sz=sample?.z;
   for(let i=0;i<2;i++){
-    const origin=pair.origins[i],target=pair.target;
-    const at=pair.nextTick-WAIL_TRACK_DELAY,trace=pair.trace;
-    const before=trace.findLast(p=>p.t<=at)||trace[0],after=trace.find(p=>p.t>at);
-    const sample=before?rt.v3.copy(before.pos):null;
-    if(sample&&after&&at>before.t)sample.lerp(after.pos,clamp((at-before.t)/(after.t-before.t),0,1));
-    const dir=sample?rt.v2.copy(sample).add(rt.v3.set(0,.75,0)).sub(origin).normalize():rt.v2.copy(pair.direction);
+    const origin=pair.origins[i];
+    const dir=sample?rt.v2.set(sx,sy,sz).add(rt.v3.set(0,.75,0)).sub(origin).normalize():rt.v2.copy(pair.direction);
     const end=hitBeam(rt,actor,state,origin,dir,1000,3.5);
     emitAction(rt,actor,'killerWail',state.serial,'laser',origin,end,nextSeed(state),{index:pair.index*2+i,tick:pair.tick});
   }
@@ -1080,16 +1102,18 @@ function doAreaImpact(rt, actor, id, state, center, seed=nextSeed(state), radius
 }
 function selectTargets(rt, actor, max=4, range=32, preview=false) {
   const dir=aimDirection(rt,actor,rt.v0), out=[];
+  const missiles=actor.specialActive?.id==='tentaMissiles',ap=missiles?(actorStates.get(actor)?.specialPowerAP||0):0;
+  let limit;
   for(const target of rt.api.G.actors||[]) {
     if(!target.alive||target.team===actor.team||target===actor)continue;
     const offset=rt.v1.copy(target.pos).sub(actor.pos);const d=offset.length();
     if(d>range||d<.1)continue;
     const dot=offset.normalize().dot(dir);if(dot<=0)continue;
     let x=null,y=null;
-    if(actor.specialActive?.id==='tentaMissiles'){
-      const ap=actorStates.get(actor)?.specialPowerAP||0,camera=rt.api.G.camera;
+    if(missiles){
+      const camera=rt.api.G.camera;
       if(camera?.isPerspectiveCamera){const projected=(rt._missilePreview ||= target.pos.clone()).copy(target.pos);projected.y+=.7;projected.project(camera);
-        const aspect=camera.aspect||1,limit=gearCurve(ap,140,190,240)/360;
+        const aspect=camera.aspect||1;limit??=gearCurve(ap,140,190,240)/360;
         if(projected.z< -1||Math.hypot(projected.x*aspect,projected.y)>limit)continue;
         if(preview){x=projected.x;y=projected.y;}
       }else if(dot<.94)continue;
@@ -1097,7 +1121,10 @@ function selectTargets(rt, actor, max=4, range=32, preview=false) {
     out.push(preview?{actor:target,d,dot,x,y}:{actor:target,d,dot});
   }
   out.sort((a,b)=>b.dot-a.dot||a.d-b.d);
-  return out.slice(0,max).map(row=>preview?{actor:row.actor,x:row.x,y:row.y}:row.actor);
+  const end=Math.trunc(Number(max))||0;
+  out.length=end<0?Math.max(0,out.length+end):Math.min(out.length,end);
+  for(let i=0;i<out.length;i++){const row=out[i];out[i]=preview?{actor:row.actor,x:row.x,y:row.y}:row.actor;}
+  return out;
 }
 function prepareMissiles(rt, actor, state) {
   const targets=selectTargets(rt,actor,5,Infinity),origin=rt.v0.set(actor.pos.x,actor.pos.y+2.4,actor.pos.z).clone();
@@ -1595,7 +1622,7 @@ function updateWorld(rt,dt) {
   for(let i=list.length-1;i>=0;i--){
     const o=list[i];if(!o||o.dead){list.splice(i,1);continue;}
     o.age+=dt;
-    if(o.phase==='flight'&&o.vel&&['marker','wave','screen'].includes(o.kind)){
+    if(o.phase==='flight'&&o.vel&&(o.kind==='marker'||o.kind==='wave'||o.kind==='screen')){
       const from=(o._flightFrom ||= o.pos.clone()).copy(o.pos);
       const hit=stepSpecialDeviceFlight(rt.api,o,dt,rt.hit,from);
       o.mesh?.position.copy(o.pos);
@@ -2668,6 +2695,8 @@ export function replaySpecial(api,event) {
     ||!Array.isArray(event.pos)||event.pos.length!==3||!event.pos.every(finite))return false;
   if(event.target!==undefined&&(!Array.isArray(event.target)||event.target.length!==3||!event.target.every(finite)))return false;
   if(event.tick!==undefined&&(!Number.isSafeInteger(event.tick)||event.tick<0||event.tick>1e9))return false;
+  // Validate before the replay ledger and before any mesh/device allocation.
+  if(!validSpecialWorldPayload(event)||!admitsRemoteWorldBirth((rt.system||api.G.projectiles)?._s3AllSpecialObjects||[],actor,event))return false;
   let cheerOwner=null,cheerState=null;
   if(event.action==='cheer'){
     if(event.id!=='booyahBomb'||!Number.isSafeInteger(event.ownerNid)||!Number.isSafeInteger(event.ownerLife)||event.ownerLife<0)return false;

@@ -337,8 +337,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   };
   function slidePaint(r,s,ending=false){
     const width=r.parameters.SideStepParam?.SplashSlideParam?.PaintWidthHalf;
-    if(s.slideRunner&&width>0)paintDualiesSlide(G,s.slideRunner,
-      {kind:'dualies',rollPaintWidthHalf:width,rollPaintWorldScale:1},ending);
+    if(s.slideRunner&&width>0){
+      const adapter=s.slidePaintAdapter||=( {kind:'dualies',rollPaintWidthHalf:width,rollPaintWorldScale:1} );
+      adapter.rollPaintWidthHalf=width;paintDualiesSlide(G,s.slideRunner,adapter,ending);
+    }
   }
   function canKeepCharge(r, s) {
     const kp = r.parameters.WeaponKeepChargeParam || r.parameters.spl__WeaponStringerParam?.ChargeKeepParam;
@@ -541,7 +543,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(!owner.ground?.hit || !level || !Number.isFinite(from.x+from.y+from.z+at.x+at.z))return;
     // Partial/test levels without collision queries cannot prove floor contact.
     if(typeof (level.triangleWorld?level.queryDynamicBlocks:level.queryBlocks)!=='function')return;
+    const scratchDepth=contact.rollScratchDepth||0,scratch=contact.rollScratch||=([]);
+    const lease=scratch[scratchDepth]||=( {ids:[],triangle:[null,null,null]} );contact.rollScratchDepth=scratchDepth+1;
     const surfaces=[], dx=at.x-from.x,dz=at.z-from.z;
+    try {
     function polygon(points,normal,faceId){
       const face=level.faces[faceId];
       if(!face?.paintable || !(normal.y>0))return;
@@ -574,9 +579,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(world.flags[id]&4)return;
       const normal=contact.point.fromArray(world.normals,id*3);
       const tri=world.triangle(id);
-      polygon([tri.a,tri.b,tri.c],normal,level.data.triangleFace[id]);
+      lease.triangle[0]=tri.a;lease.triangle[1]=tri.b;lease.triangle[2]=tri.c;
+      polygon(lease.triangle,normal,level.data.triangleFace[id]);
     });
-    const ids=[];
+    const ids=lease.ids;ids.length=0;
     if(world)level.queryDynamicBlocks(min.x,min.z,max.x,max.z,ids);
     else level.queryBlocks(min.x,min.z,max.x,max.z,ids);
     for(const id of ids){
@@ -633,6 +639,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const h=G.physics.raycast(contact.origin,contact.down,.3,contact.hit,true);
     if(h.hit&&current.endFaces.includes(h.face)&&h.point.distanceToSquared(contact.point)<1e-12)
       paint(owner,h.point,radius,depth,direction,h.face,'ink-contact');
+    }finally{lease.ids.length=0;lease.triangle.fill(null);contact.rollScratchDepth=scratchDepth;}
   }
 
   function mode(r, key='normal', unit=0, charge=0) {
@@ -870,6 +877,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const desc=mode(r,key,j,charge);
       const count=(key==='brush'||key==='horizontal'||key==='vertical')
         ?catalogDepletedUnitCount(u,depleted):finite(u.BulletNum,1);
+      // Recheck copied source values on each pellet: synchronous publication
+      // callbacks may edit parameters, while every pellet still owns its copy.
+      const depletionCache=depleted&&count>1?{}:null;
       for(let i=0;i<count;i++) {
         const groupKey=r.sourceActor==='WeaponSlosherBathtub'?j+':'+i:String(u.DamageParam?.GroupNum??0);
         let volley=volleys.get(groupKey);
@@ -893,17 +903,18 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         // Bloblobber overrides it to 0.3; other sourced Sloshers keep the
         // existing native policy. The 10-degree per-tick upper bound is
         // applied to the raw camera step before this actor-specific rate.
+        const sweepParams=hasSlosherSweep?weaponParam(r):null;
         const yaw=catalogUnitYawBase(u,key,i,brushLeftToRight)+fan+
           (hasSlosherSweep
             ?bloblobberSweepOffset(s.bloblobberYawStep,blobSweepFrames,
-              finite(weaponParam(r).FrameOffsetDegreeRate,1),
-              finite(weaponParam(r).FrameOffsetMaxDegree,10))/RAD:0)+
+              finite(sweepParams.FrameOffsetDegreeRate,1),
+              finite(sweepParams.FrameOffsetMaxDegree,10))/RAD:0)+
           (key==='slosh'?catalogSlosherYawScatter(u,i):0);
         const pitch=key==='vertical'
           ?catalogRollerSourcePitch(u,i,true)
           :finite(u.SpawnRotateXDegree,finite(u.SpawnRotateXDegreeBase,0));
         const aim=angle(direction,yaw,pitch);
-        const d=catalogDepletedDescriptor({...desc,index:i},u,depleted);
+        const d=catalogDepletedDescriptor({...desc,index:i},u,depleted,depletionCache);
         const sourceLiftRate=finite(u.AddSpawnSpeedYRateByXZ,finite(u.AddSpawnSpeedYRateBySpeed,0));
         // S3 AddSpawnSpeedYRateByXZ scales the HORIZONTAL launch component.
         // All sourced Sloshers, including Washtub/Explosher, share this law:
@@ -952,8 +963,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function paintCatalogBrushNearest(a,group,serial) {
     if(!catalogBrushNearestDue(group,serial)||a.remote||a.alive===false||a.grounded===false)return;
     const n=group.SplashNearestParam.SpawnParam,o=n?.Offset;
-    if(!(n?.PaintWidthHalf>0)||!o||![o.X,o.Y,o.Z].every(Number.isFinite))return;
-    const yaw=a.yaw,fx=Math.sin(yaw),fz=Math.cos(yaw),rx=Math.cos(yaw),rz=-fx;
+    if(!(n?.PaintWidthHalf>0)||!o)return;
+    const ox=o.X,oy=o.Y,oz=o.Z;
+    if(!Number.isFinite(ox)||!Number.isFinite(oy)||!Number.isFinite(oz))return;
+    const yaw=a.yaw,fx=Math.sin(yaw),fz=Math.cos(yaw),rx=fz,rz=-fx;
     // The source's offset is yaw-local; begin a short query just above the
     // player's grounded feet. No fabricated turf under airborne flicks.
     base.set(a.pos.x+rx*o.X+fx*o.Z,a.pos.y+.25,a.pos.z+rz*o.X+fz*o.Z);
@@ -963,8 +976,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function paintCatalogRollerNearest(a,group) {
     const n=group?.SplashNearestParam?.SpawnParam,o=n?.Offset;
-    if(!n||!o||a.remote||a.alive===false||![n.MaxHeight,o.X,o.Y,o.Z,n.PaintWidthHalf].every(Number.isFinite)||!(n.PaintWidthHalf>0))return;
-    const fx=Math.sin(a.yaw),fz=Math.cos(a.yaw),rx=Math.cos(a.yaw),rz=-Math.sin(a.yaw);
+    if(!n||!o||a.remote||a.alive===false)return;
+    const height=n.MaxHeight,ox=o.X,oy=o.Y,oz=o.Z,width=n.PaintWidthHalf;
+    if(!Number.isFinite(height)||!Number.isFinite(ox)||!Number.isFinite(oy)||!Number.isFinite(oz)||!Number.isFinite(width)||!(n.PaintWidthHalf>0))return;
+    const yawX=a.yaw,fx=Math.sin(yawX),yawZ=a.yaw,fz=Math.cos(yawZ),rightYaw=a.yaw;
+    const rx=Object.is(rightYaw,yawZ)?fz:Math.cos(rightYaw),backYaw=a.yaw,rz=-(Object.is(backYaw,yawX)?fx:Math.sin(backYaw));
     // SplashNearest's downward offset and MaxHeight bound the ground query, so a
     // high airborne swing paints nothing under the player (native foot-paint rule).
     base.set(a.pos.x+rx*o.X+fx*o.Z,a.pos.y+Math.max(0,n.MaxHeight),a.pos.z+rz*o.X+fz*o.Z);
@@ -986,10 +1002,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(right.lengthSq()<EPS)right.set(1,0,0);else right.normalize();
     const up=new THREE.Vector3().crossVectors(direction,right).normalize();
     const spreadAxis=right.multiplyScalar(Math.cos(tilt)).addScaledVector(up,Math.sin(tilt));
+    // The muzzle guard only passes the stable anchor and its own direction to
+    // physics; spawn copies both values before publishing the projectile.
+    // Invocation-local vectors remain isolated from recursive volleys.
+    let aim,birth;
     for(let i=0;i<count;i++) {
       const off=(i-(count-1)/2)*degrees;
-      const aim=direction.clone().multiplyScalar(Math.cos(off*RAD)).addScaledVector(spreadAxis,Math.sin(off*RAD));
-      const birth=at.clone().addScaledVector(spreadAxis,(i-(count-1)/2)*finite(t.ArrowMargin,0));
+      (aim||=direction.clone()).copy(direction).multiplyScalar(Math.cos(off*RAD)).addScaledVector(spreadAxis,Math.sin(off*RAD));
+      (birth||=at.clone()).copy(at).addScaledVector(spreadAxis,(i-(count-1)/2)*finite(t.ArrowMargin,0));
       // Separated nocks must obey the same muzzle obstruction guard.
       constrainMuzzle(G.physics,at,birth);
       spawn(a,r,desc,aim,birth,{index:i,bowTilt:s.bowTilt});
@@ -1006,13 +1026,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     p.GroupParams.forEach((g,j)=> {
       const count=finite(g.TotalNum,1),d=mode(r,'pellet',j);
       for(let i=0;i<count;i++) {
-        const az=2*Math.PI*i/count+finite(g.AddDegree,0)*RAD;
-        const birth=at.clone().addScaledVector(right,Math.cos(az)*finite(g.HorizontalOffset,0))
-          .addScaledVector(up,Math.sin(az)*finite(g.VerticalOffset,0));
+        const az=2*Math.PI*i/count+finite(g.AddDegree,0)*RAD,cosAz=Math.cos(az),sinAz=Math.sin(az);
+        const birth=at.clone().addScaledVector(right,cosAz*finite(g.HorizontalOffset,0))
+          .addScaledVector(up,sinAz*finite(g.VerticalOffset,0));
         constrainMuzzle(G.physics,at,birth);
         // Sparse shotgun groups inherit the volley centre speed, not 1 DU/F.
         const speed=brellaPelletSpeed(g,p.GroupParams[0].MoveParam.SpawnSpeed)*HZ;
-        const round=spawn(a,r,d,angle(direction,Math.cos(az)*finite(g.HorizontalDegree,0),Math.sin(az)*finite(g.VerticalDegree,0)),birth,{index:i,volley,speed});
+        const round=spawn(a,r,d,angle(direction,cosAz*finite(g.HorizontalDegree,0),sinAz*finite(g.VerticalDegree,0)),birth,{index:i,volley,speed});
         if(flight){const node={volley:flight,distance:0,ended:false,samples:new Map()};flight.nodes.push(node);round.catalog.brellaFlight=node;}
       }
     });notify(a,r,at,direction);
@@ -1102,12 +1122,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const factor=lerp(1,finite(q.WidthDepthScaleFall,1),fall);
     width*=factor;
     const depth=lerp(finite(q.DepthScaleNear,d.depth),finite(q.DepthScaleFar,d.depth),t)*factor;
-    return {width,depth};
+    const out=p.catalog.impactFootprint||=( {width:0,depth:0} );
+    out.width=width;out.depth=depth;return out;
   }
   function collisionRadius(c,what,frames,index=0,bounces=0) {
-    const init=finite(c['InitRadiusFor'+what],.2)+finite(c['AfterOffsetInitRadiusFor'+what],0)*index;
-    const end=finite(c['EndRadiusFor'+what],init)+finite(c['AfterOffsetEndRadiusFor'+what],0)*index;
-    const radius=Math.max(0,lerp(init,end,clamp(frames/Math.max(1,finite(c['ChangeFrameFor'+what],0)))));
+    const field=what==='Field',player=what==='Player';
+    const init=finite(c[field?'InitRadiusForField':player?'InitRadiusForPlayer':'InitRadiusFor'+what],.2)+finite(c[field?'AfterOffsetInitRadiusForField':player?'AfterOffsetInitRadiusForPlayer':'AfterOffsetInitRadiusFor'+what],0)*index;
+    const end=finite(c[field?'EndRadiusForField':player?'EndRadiusForPlayer':'EndRadiusFor'+what],init)+finite(c[field?'AfterOffsetEndRadiusForField':player?'AfterOffsetEndRadiusForPlayer':'AfterOffsetEndRadiusFor'+what],0)*index;
+    const radius=Math.max(0,lerp(init,end,clamp(frames/Math.max(1,finite(c[field?'ChangeFrameForField':player?'ChangeFrameForPlayer':'ChangeFrameFor'+what],0)))));
     return bounces===0 ? radius : radius*catalogBubbleRadiusScale(bounces);
   }
   function lobes(p){
@@ -1389,7 +1411,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
       if(!p.ghost&&s.brellaFlight&&s.brellaFlight.volley.next<s.brellaFlight.volley.plan.count){
         const fraction=Math.min(1,clamp(stop),clamp((p.life-(p.age-DT))/DT));
-        const end=p.prev.clone().lerp(p.pos,fraction);
+        const end=(s.brellaFlight.clipEnd||=p.prev.clone()).copy(p.prev).lerp(p.pos,fraction);
         collectBrellaSplashes(s.brellaFlight,p,end,stop<=1||p.age+EPS>=p.life||s.travel+EPS>=s.range||p.pos.y<PLAYER.waterY-1.8,
           (from,radius,spec,salt,birthFrame)=>spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:s.brellaFlight.volley.seed,salt,from,
             direction:s.brellaFlight.volley.direction,radius,spec,depth:true,footprint:mainInkFootprint(s.r),
@@ -1408,7 +1430,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         while(s.dropCount<d.splashCount&&s.nextSplash<=endTravel+EPS){
           if(stop<=1&&s.nextSplash>=endTravel-EPS)break;
           direction ||= p.vel.clone().setY(0).normalize();
-          const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));
+          const from=(s.splashReleasePoint ||= p.prev.clone()).copy(p.prev).lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));
           const radius=catalogSplashRadius(d,s.dropCount);
           if(d.splashDropSpec||d.sloshFall){
             const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,
@@ -1424,7 +1446,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         }
       }
       if(!p.ghost&&s.rollerFlight&&len>EPS)
-        paintDistanceFlight(G,p,s.rollerFlight,p.prev.clone().lerp(p.pos,clamp(Math.min(1,stop))));
+        paintDistanceFlight(G,p,s.rollerFlight,(s.rollerFlight.clipEnd||=p.prev.clone()).copy(p.prev).lerp(p.pos,clamp(Math.min(1,stop))));
       if(stop<=1){
         p.pos.lerpVectors(p.prev,p.pos,stop);
         if(defense){
@@ -1655,9 +1677,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // override the airborne multiplier and keep normal air charging.
       const minF=r.family==='charger'?finite(t.ChargeFrameMinCharge,8):0;
       const earlyTime=Math.min(dt,Math.max(0,minF-s.chargeF)/HZ);
-      const advance=time=>Math.min(full,s.chargeF+Math.min(time,earlyTime)*HZ+
-        Math.max(0,time-earlyTime)*HZ*airRate);
-      let target=advance(dt),cost=Math.max(0,inkAt(r,target)*mod-s.paid);
+      let target=Math.min(full,s.chargeF+Math.min(dt,earlyTime)*HZ+
+        Math.max(0,dt-earlyTime)*HZ*airRate),cost=Math.max(0,inkAt(r,target)*mod-s.paid);
+      const fundedTarget=target;
       if(a.ink<=EPS)target=Math.min(full,s.chargeF+dt*HZ*Math.min(airRate,emptyRate));
       else if(cost>a.ink+EPS){
         const limit=fundedChargeFrames(r,s.paid+a.ink,mod);
@@ -1665,7 +1687,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const fundedTime=Math.min(dt,earlyFrames/HZ+Math.max(0,limit-s.chargeF-earlyFrames)/(HZ*airRate));
         target=Math.min(full,Math.max(s.chargeF,limit)+(dt-fundedTime)*HZ*Math.min(airRate,emptyRate));
       }
-      cost=Math.min(Math.max(0,a.ink),Math.max(0,inkAt(r,target)*mod-s.paid));
+      cost=Math.min(Math.max(0,a.ink),Object.is(target,fundedTarget)?cost:Math.max(0,inkAt(r,target)*mod-s.paid));
       if(cost>0){if(!pay(runner,cost))return;s.paid+=cost;}
       s.chargeF=target;
       runner.charging=true;runner.charge=s.chargeF/full;runner.chargeT=runner.charge;a.lastFire=0;
@@ -1913,18 +1935,18 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       count++;
     }return count;
   };
+  function stampCanopyPoint(c,point){
+    base.copy(point);base.y+=.15;
+    const h=G.physics.raycast(base,down,1.5,floorHit,true);
+    if(h.hit&&h.normal.y>=.5)paint(c.owner,h.point,c.paintRadius,1,null,h.face,mainInkFootprint('brella'));
+  }
   function canopyTrail(c){
     const spacing=Math.max(.1,c.paintRadius*.5);
-    const stamp=point=>{
-      base.copy(point);base.y+=.15;
-      const h=G.physics.raycast(base,down,1.5,floorHit,true);
-      if(h.hit&&h.normal.y>=.5)paint(c.owner,h.point,c.paintRadius,1,null,h.face,mainInkFootprint('brella'));
-    };
-    if(!c.paintLast){c.paintLast=c.pos.clone();c.paintCarry=0;stamp(c.pos);return;}
+    if(!c.paintLast){c.paintLast=c.pos.clone();c.paintCarry=0;stampCanopyPoint(c,c.pos);return;}
     const distance=c.paintLast.distanceTo(c.pos);
     if(distance>EPS){
       for(let d=spacing-c.paintCarry;d<=distance+EPS;d+=spacing)
-        stamp((c.paintPoint||=c.pos.clone()).copy(c.paintLast).lerp(c.pos,Math.min(1,d/distance)));
+        stampCanopyPoint(c,(c.paintPoint||=c.pos.clone()).copy(c.paintLast).lerp(c.pos,Math.min(1,d/distance)));
       c.paintCarry=(c.paintCarry+distance)%spacing;
       if(c.paintCarry<EPS||spacing-c.paintCarry<EPS)c.paintCarry=0;
     }
@@ -2216,7 +2238,8 @@ export function applyCatalogPlayerVelocity(projectile, { guide = false } = {}) {
   state.playerVelocityApplied = true;
   if (!spec) return false;
   const velocity = actor.vel, out = projectile.vel;
-  if (![out.x, out.y, out.z].every(Number.isFinite)) return false;
+  const outX=out.x,outY=out.y,outZ=out.z;
+  if (!Number.isFinite(outX)||!Number.isFinite(outY)||!Number.isFinite(outZ)) return false;
   if (Number.isFinite(actor.yaw) && Number.isFinite(velocity?.x) && Number.isFinite(velocity?.z)) {
     const sx = Math.sin(actor.yaw), cz = Math.cos(actor.yaw);
     const x = Number.isFinite(spec.XRate) ? (velocity.x * cz - velocity.z * sx) * spec.XRate : 0;

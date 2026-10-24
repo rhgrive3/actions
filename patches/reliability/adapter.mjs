@@ -49,5 +49,7 @@ export function adaptReliability(rel, code) {
 }
 export function reliabilityIdentity() {
   const files = ['queue-nine-final-adapter.mjs', 'session-admission.mjs', 'home-jump-adapter.mjs', 'superjump-chain-adapter.mjs', 'map-toggle-adapter.mjs', 'menu-takeover.mjs', 'net-hit-payload-adapter.mjs', 'issue-464-adapter.mjs', 'adapter.mjs', 'special-water-adapter.mjs', 'special-barrier-adapter.mjs', 'sub-action-adapter.mjs', 'input-ownership-adapter.mjs', 'controls-adapter.mjs', 'navigation-adapter.mjs', 'respawn-navigation-adapter.mjs', 'map-gyro-adapter.mjs', 'touch-pointerlock-adapter.mjs', 'input-adapter.mjs', 'joycon-pair-adapter.mjs', 'net-adapter.mjs', 'results-adapter.mjs', 'mobile-adapter.mjs', 'touch-edge-adapter.mjs', 'intro-adapter.mjs', 'start-adapter.mjs', 'attract-adapter.mjs', 'hud-adapter.mjs', 'gyro-adapter.mjs', 'gyro-invert-adapter.mjs', 'pause-adapter.mjs', 'combat-life-adapter.mjs', 'combat-credit-adapter.mjs', 'touch-gyro-owner-adapter.mjs', 'pad-handoff-adapter.mjs', 'hold-cancel-adapter.mjs', 'pin-tap-adapter.mjs', 'map-look.mjs', 'inkwave-six-followup-adapter.mjs', 'inkwave-eight-followup-adapter.mjs', 'menu-raf-adapter.mjs'];
+  // Also bind the terminal network/UI composition and its transitive adapter.
+  files.push('queue-network-adapter.mjs', 'queue-network-ui-adapter.mjs');
   return Object.fromEntries(files.map(file => [file, crypto.createHash('sha256').update(fs.readFileSync(new URL(file, import.meta.url))).digest('hex')]));
 }

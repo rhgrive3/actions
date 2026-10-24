@@ -18,7 +18,8 @@ const MAX_BIRTHS = 128, MAX_PENDING = 256, WAIT_SECONDS = 2;
 const safe = n => Number.isSafeInteger(n) && n >= 0;
 const epoch = nm => typeof nm.cfg?.id === 'string' ? nm.cfg.id : '';
 const life = a => a?.remote ? a.net?.lastLife ?? a.netLife ?? 0 : a?.netLife ?? 0;
-const key = (from, seq) => JSON.stringify([from,seq]);
+const key = (from, seq) => typeof from==='string'&&safe(seq)
+ ? `${from.length}:${from}:${seq}` : JSON.stringify([from,seq]);
 const isKit = id => id === 'suction' || id === 'curling';
 const clock = () => performance.now()/1000;
 function state(nm,prune=true) {
@@ -37,8 +38,23 @@ function state(nm,prune=true) {
  return s;
 }
 function pruneState(nm,s){
+ const actors=nm.byNid,members=nm.s._members;
+ const ordinary=actors instanceof Map&&members instanceof Map&&actors.get===Map.prototype.get
+  &&members.has===Map.prototype.has&&members.keys===Map.prototype.keys&&actors[Symbol.iterator]===Map.prototype[Symbol.iterator]
+  &&members[Symbol.iterator]===Map.prototype[Symbol.iterator];
+ const cacheable=ordinary&&s.births.size>actors.size*2;
+ const previous=cacheable&&s.authority;
+ let same=!!previous&&previous.actors===actors&&previous.members===members
+  &&previous.rows.length===actors.size*3&&previous.keys.length===members.size;
+ if(same){let i=0;for(const [id,a] of actors){if(previous.rows[i++]!==id||previous.rows[i++]!==a||previous.rows[i++]!==a?.owner){same=false;break;}}}
+ if(same){let i=0;for(const id of members.keys())if(previous.keys[i++]!==id){same=false;break;}}
+ if(same){s.lastPrune=clock();return;}
  for(const [k,b] of s.births){const a=nm.byNid.get(b.nid);if(!a || a.owner!==b.owner || !nm.s._members?.has(b.owner))s.births.delete(k);}
  for(const from of s.pending.keys())if(!nm.s._members?.has(from))s.pending.delete(from);
+ if(cacheable){
+  const rows=[],keys=[];for(const [id,a] of actors)rows.push(id,a,a?.owner);for(const id of members.keys())keys.push(id);
+  s.authority={actors,members,rows,keys};
+ }else s.authority=null;
  s.lastPrune=clock();
 }
 function identify(e) {
@@ -131,7 +147,7 @@ function register(nm,from,e,s){
  const k=key(from,e._netSeq),old=s.births.get(k);
  if(old)return; // Never replace a birth/capability, including its used marker.
  if(e._netSeq <= Math.max(nm.peers.get(from)?._lastEventSeq||0,s.expired.get(from)||0,s.retiredBirths.get(key(from,record.kind))||0))return;
- let count=0;for(const birth of s.births.values())if(birth.owner===from&&birth.kind===record.kind)count++;
+ let count=0;if(s.births.size>=MAX_BIRTHS)for(const birth of s.births.values())if(birth.owner===from&&birth.kind===record.kind)count++;
  if(count>=MAX_BIRTHS)for(const [oldKey,birth] of s.births){if(birth.owner===from&&birth.kind===record.kind&&birth.used!==null){retireProjectile(s,birth);s.births.delete(oldKey);count--;}if(count<MAX_BIRTHS)break;}
  // A native bomb can retire in water without ever producing a core. Such
  // unspent records must not permanently close this owner's bounded window.
@@ -148,6 +164,7 @@ function register(nm,from,e,s){
  }
  if(record.kind==='slosher'&&record.projectileId<=(s.retiredProjectiles.get(from)||0))return;
  s.births.set(k,{...record,owner:from,nid:a.nid,seq:e._netSeq,tick:e._netTick,team:a.team,used:null});
+ s.authority=null;
 }
 // Conservative swept-flight envelope, including a fixed-step boundary and
 // contacted actor height. It rejects remote teleport cores without pretending
@@ -255,9 +272,17 @@ export function prepareKitPaintEvents(nm,from,d){
   old={since:now,rows:held};s.pending.delete(from);
  }
  for(const e of rows)s.envelopeEligible.add(e);
- const all=[...(old?.rows||[]),...rows],seen=new Set();
- const ordered=all.filter(e=>{if(!Array.isArray(e)||!s.envelopeEligible.has(e))return false;if(!identify(e))return true;if(seen.has(e._netSeq))return false;seen.add(e._netSeq);return true;})
-  .sort((a,b)=>(a._netSeq??Infinity)-(b._netSeq??Infinity));
+ let ordered=null;
+ if(!old){
+  let previous=0,monotonic=true;
+  for(const e of rows){if(!identify(e)||e._netSeq<=previous){monotonic=false;break;}previous=e._netSeq;}
+  if(monotonic)ordered=rows;
+ }
+ if(!ordered){
+  const all=[...(old?.rows||[]),...rows],seen=new Set();
+  ordered=all.filter(e=>{if(!Array.isArray(e)||!s.envelopeEligible.has(e))return false;if(!identify(e))return true;if(seen.has(e._netSeq))return false;seen.add(e._netSeq);return true;})
+   .sort((a,b)=>(a._netSeq??Infinity)-(b._netSeq??Infinity));
+ }
  const towerBirths=new Map();
  for(const e of ordered)if(s.envelopeEligible.has(e)){
   const scope=register(nm,from,e,s);if(scope)towerBirths.set(e._netSeq,scope);
@@ -271,7 +296,7 @@ export function prepareKitPaintEvents(nm,from,d){
   if(towerScope||e?.[1]==='s'&&couldWait(nm,from,e,s)){
    if(old&&now-old.since>=WAIT_SECONDS)continue; // missing proof expires closed, not a wider cap
    const waiting=ordered.slice(i);
-   if(waiting.length<=MAX_PENDING&&!d._eventOverBudget){s.pending.set(from,{since:old?.since??now,rows:waiting,
+   if(waiting.length<=MAX_PENDING&&!d._eventOverBudget){s.authority=null;s.pending.set(from,{since:old?.since??now,rows:waiting,
      ...(towerScope?{tower:{scope:towerScope,seq:e._netSeq,birth:!!birthScope}}:{})});return ready;}
    // Capacity or over-budget envelope closes only the unresolved claim; unrelated later rows
    // continue through their normal admission instead of being silently dropped.

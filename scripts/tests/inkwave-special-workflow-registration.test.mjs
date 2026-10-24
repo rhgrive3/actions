@@ -29,19 +29,18 @@ test('new-main special registration does not import obsolete frozen354 admission
  for(const file of ['scripts/lib/inkwave-special-production-epoch.mjs','scripts/tests/inkwave-special-production-epoch.test.mjs'])assert.ok(!projectile.includes("      - '"+file+"'"),'obsolete admission file is not registered');
  for(const mode of ['frozen354-reviewed-special-production-pair','frozen354-reviewed-special-nozzle-pair'])assert.ok(!projectile.includes(mode),'no obsolete automatic route');
 });
-// Protect existing genuine emitted coverage and immutable-source/browser gates.
+// Protect genuine emitted coverage and immutable-source gates. The approved
+// batch keeps all 22 browser cases; its isolation and failure contract runs separately.
 const historicalSteps={
   "Source-backed 19-special runtime and gameplay boundaries": "a2f088587a7407a86db98079d18ab23442c3dfd54c947c17b0d97dbaa8f1b0be",
   "Inkjet cadence, fair pool admission and production composition": "9c8cb8bc659f464d29a268853b5cbaa6cec595b6d1764110b06ddd4ddc1442b6",
   "Public sub and current catalogue lifecycle regressions": "354d01de6193d722388bac757fe7574728855a4e4867e7bddc555e28098e800e",
   "Build actual production composition": "0b06dd1c1d7205bdf5b23f8d427e7707d2a0aa44bb55a0852c6023afdc55bb71",
-  "Check actual catalogue activation with and without optional VFX": "db6525a0d7545fd95266aa369f7efabb6d56daac5e4df33a27efad95ccb0e499",
-  "Probe emitted Inkjet presentation on SwiftShader (candidate only)": "161a7ce1bbac4764819e2267362759099bf96dea9aea39d4f1c8d25509ab0ded",
-  "Verify native Inkjet terminal contacts and remote ghosts": "16edd6f741dd905298bfcadebabf488e1300fde87d3fa9a0ab4e157afffb9669",
+  "Run isolated special browser batch": "16f8cb07b5d2d75f4beb8e3f989c0937e4b1862122aaa535a5e51f7fe061c9b5",
   "Verify Inkjet production composition in emitted modules": "cf748c999f05143b7b14b6cd2dd791eff698fdadcda94c57b96555c761fb0241",
   "Verify new boundaries in emitted modules": "5d934260f791a937bee22f9e087b035d495362e65b46503ce5ddc91e22d1d133"
 };
-test('original emitted and browser gates are byte-identical',()=>{
+test('original emitted gates and approved isolated browser batch are byte-identical',()=>{
  for(const[name,sha]of Object.entries(historicalSteps))assert.equal(createHash('sha256').update(step(workflow,name)).digest('hex'),sha,name);
  assert.equal(workflow.split('test "$actual_source_sha" = "$EXPECTED_SOURCE_SHA"').length-1,2);
 });

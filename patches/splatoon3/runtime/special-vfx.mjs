@@ -102,18 +102,26 @@ class Director {
     n = Math.max(1, Math.round(n * this.kit.q));
     const up = o.up ?? 0.4, life = o.life ?? 0.45, size = o.size ?? 0.06, drag = o.drag ?? 3.2;
     const glowOptions={drag,grav:o.grav??4,stretch:o.stretch??.09},petalOptions={drag:drag*.5,grav:(o.grav??14)*.6,rot:0,spin:0,fadeIn:.01},dropOptions={drag:drag*.35,grav:o.grav??14,stretch:.05};
+    let petalColor,petalR,petalG,petalB;
     for (let i = 0; i < n; i++) {
       const th = rnd(TAU), y = clamp(up + rnd(o.spread ?? 1, -(o.spread ?? 1)) * 0.6, -1, 1), h = Math.sqrt(1 - y * y), s = speed * rnd(1.2, 0.55);
       if (o.glow) this.spark(SPARK.STREAK, p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.2, 0.7), size, size * 0.4, col, o.alpha ?? 1, glowOptions);
       else if (i % 3 === 2) {   // glossy shards with white cores among the drops (S3 splatter)
-        const c = this.inkCol(col), sz = size * rnd(3.6, 2);
+        const r=col[0],g=col[1],b=col[2];
+        if(this.inkCol!==Director.prototype.inkCol||!petalColor||!Object.is(r,petalR)||!Object.is(g,petalG)||!Object.is(b,petalB)){
+          petalColor=this.inkCol(col);petalR=r;petalG=g;petalB=b;
+        }
+        const c = petalColor, sz = size * rnd(3.6, 2);
         this.kit.puffs.spawn(p.x, p.y, p.z, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.4, 0.9), sz, sz * 0.5, c[0], c[1], c[2], 1, PUFF.PETAL, (petalOptions.rot=rnd(TAU),petalOptions.spin=rnd(12,-12),petalOptions));
       } else this.drop(p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.6, 1.0), size * rnd(2.6, 0.8), col, dropOptions);
     }
   }
   // one liquid ink drop (a lit teardrop impostor in the puff pool); col is the plain team colour
   drop(p, vx, vy, vz, life, size, col, o = {}) {
-    const c = this.inkCol(this.inkCol(col));
+    const normalized = this.inkCol(col);
+    // The native normalizer is idempotent for bounded output, including HDR input.
+    // Preserve custom methods and non-finite/overflow behavior on the slow path.
+    const c = this.inkCol === Director.prototype.inkCol && Math.max(normalized[0],normalized[1],normalized[2]) <= 1 ? normalized : this.inkCol(normalized);
     this.kit.puffs.spawnRaw(p.x,p.y,p.z,vx,vy,vz,life,size,size*(o.shrink??.45),c[0],c[1],c[2],1,PUFF.CHUNK,
       o.drag??.9,o.grav??14,undefined,undefined,undefined,o.stretch??.035,.01,undefined);
   }
@@ -162,7 +170,7 @@ class Director {
   shell(add, life, style, pos, s0, s1, col, a, o = {}) {
     const pool = add ? this.kit.shells : this.kit.inkShells, seed = vfxRandom();
     const ease = o.ease || easeOut;
-    return pool.add(life, [pos.x, pos.y, pos.z, o.hemi ? 1 : 0, s0, s0 * (o.sy ?? 1), s0, 0, col[0], col[1], col[2], a, style, 0, seed, 0], (r, dt) => {
+    return pool.addRaw(life, pos.x, pos.y, pos.z, o.hemi ? 1 : 0, s0, s0 * (o.sy ?? 1), s0, 0, col[0], col[1], col[2], a, style, 0, seed, 0, (r, dt) => {
       const t = r.life > 0 ? clamp01(r.t / r.life) : 0, s = s0 + (s1 - s0) * ease(t);
       r.v[4] = s; r.v[5] = s * (o.sy ?? 1); r.v[6] = s; r.v[7] = (r._spinOrigin ??= r.v[7]) + (o.spin ?? 0) * .96 * r.t;
       r.v[11] = a * (o.fade === false ? 1 : o.fadeIn ? Math.min(1, t / o.fadeIn) * (1 - smooth((t - 0.6) / 0.4)) : 1 - smooth((t - (o.hold ?? 0.35)) / (1 - (o.hold ?? 0.35))));
@@ -173,7 +181,7 @@ class Director {
   }
   disc(add, life, style, pos, nrm, r0, r1, col, a, o = {}) {
     const pool = add ? this.kit.discs : this.kit.inkDiscs, seed = vfxRandom(), ease = o.ease || easeOut;
-    return pool.add(life, [pos.x, pos.y, pos.z, r0, nrm.x, nrm.y, nrm.z, rnd(TAU), col[0], col[1], col[2], a, style, 0, seed, 0], (r, dt) => {
+    return pool.addRaw(life, pos.x, pos.y, pos.z, r0, nrm.x, nrm.y, nrm.z, rnd(TAU), col[0], col[1], col[2], a, style, 0, seed, 0, (r, dt) => {
       const t = r.life > 0 ? clamp01(r.t / r.life) : 0;
       r.v[3] = r0 + (r1 - r0) * ease(t); r.v[7] = (r._spinOrigin ??= r.v[7]) + (o.spin ?? 0) * .96 * r.t; r.v[13] = t;
       if (o.fade !== false) r.v[11] = a * (1 - smooth((t - (o.hold ?? 0.5)) / (1 - (o.hold ?? 0.5))));
@@ -182,7 +190,7 @@ class Director {
   }
   band(add, life, style, pos, r0, r1, h0, h1, col, a, o = {}) {
     const pool = add ? this.kit.bands : this.kit.inkBands, seed = vfxRandom(), ease = o.ease || easeOut;
-    return pool.add(life, [pos.x, pos.y, pos.z, rnd(TAU), r0, h0, o.taper ?? 1, o.twist ?? 0, col[0], col[1], col[2], a, style, 0, seed, o.speed ?? 1], (r, dt) => {
+    return pool.addRaw(life, pos.x, pos.y, pos.z, rnd(TAU), r0, h0, o.taper ?? 1, o.twist ?? 0, col[0], col[1], col[2], a, style, 0, seed, o.speed ?? 1, (r, dt) => {
       const t = r.life > 0 ? clamp01(r.t / r.life) : 0;
       r.v[4] = r0 + (r1 - r0) * ease(t); r.v[5] = h0 + (h1 - h0) * ease(t); r.v[3] = (r._spinOrigin ??= r.v[3]) + (o.spin ?? 0) * .96 * r.t; r.v[13] = t;
       if (o.fade !== false) r.v[11] = a * (1 - smooth((t - (o.hold ?? 0.5)) / (1 - (o.hold ?? 0.5))));
@@ -191,7 +199,7 @@ class Director {
   }
   beam(add, life, style, a, b, r0, r1, col, alpha, o = {}) {
     const pool = add ? this.kit.beams : this.kit.inkBeams;
-    return pool.add(life, [a.x, a.y, a.z, r0, b.x, b.y, b.z, r1, col[0], col[1], col[2], alpha, style, 0, o.seed ?? vfxRandom(), o.speed ?? 6], o.follow || null);
+    return pool.addRaw(life, a.x, a.y, a.z, r0, b.x, b.y, b.z, r1, col[0], col[1], col[2], alpha, style, 0, o.seed ?? vfxRandom(), o.speed ?? 6, o.follow || null);
   }
   setBeam(r, a, b, r0, r1, alpha) {
     const v = r.v; v[0] = a.x; v[1] = a.y; v[2] = a.z; v[4] = b.x; v[5] = b.y; v[6] = b.z;
@@ -315,10 +323,11 @@ class Director {
     this.kit.clear();this._speakerCache=new WeakMap();
   }
   updateWailLasers(dt) {
+      let alpha;
       for (const [key, L] of this.lasers) {
         if (this.time - L.seen > SPECIAL_VFX_CALIBRATION.killerWail.beamHold) { L.outer.dead = L.core.dead = L.halo.dead = true; this.lasers.delete(key); continue; }
         const c = this.rgb(L.actor,undefined,L.colorScratch ||= [0,0,0]), from = L.from, to = L.to;
-        L.drawTo.lerp(to, 1 - Math.exp(-dt * 30));
+        L.drawTo.lerp(to, alpha ??= 1 - Math.exp(-dt * 30));
         this.setBeam(L.outer, from, L.drawTo); this.setBeam(L.core, from, L.drawTo); this.setBeam(L.halo, from, L.drawTo);
         for (let tick = 0, ticks = nonWailVfxTicks(L, dt); tick < ticks; tick++) {
         if (vfxRandom() < 0.6) { // impact crackle
@@ -407,7 +416,10 @@ class Director {
     if (r?.wid === 'inkjet') { this.finishRound(r, false); this.rounds.delete(p); }
   }
   finishRound(r, impact) {
-    for (const rib of Object.values(r.d)) if (rib?.pts) { this.kit.ribbons.end(rib); this.kit.glowRibbons.end(rib); }
+    for (const rib of Object.values(r.d)) {
+      if (rib?.pts) { this.kit.ribbons.end(rib); this.kit.glowRibbons.end(rib); }
+      else if (rib?.v && 'dead' in rib) rib.dead = true;
+    }
     if (impact) this.call(r.spec.impact, r);
   }
   // ------------------------------------------------------------------ deployed world objects
@@ -429,7 +441,8 @@ class Director {
   // ------------------------------------------------------------------ kit specials with their own world records
   updateKits(dt) {
     const seen = this._kitSeen ||= new Set(); seen.clear();
-    for (const list of [bigBubblerDomes?.() || [], bigBubblerRemoteDomes?.() || []]) for (const d of list) {
+    const localDomes = bigBubblerDomes?.() || [], remoteDomes = bigBubblerRemoteDomes?.() || [];
+    for (let group = 0; group < 2; group++) for (const d of group ? remoteDomes : localDomes) {
       if (!d || d.dead) continue; seen.add(d);
       let r = this.domes.get(d);
       if (!r) { r = { d: {}, color: d.color?.isColor ? [d.color.r, d.color.g, d.color.b] : this.rgb(d.owner, d.team), age: 0 }; this.domes.set(d, r); this.call(KIT_FX.bubbler.start, r, d); }
@@ -1036,7 +1049,7 @@ const DIRECTORS = {
       const squid = a.form === 'squid' || a.intent?.squid;
       const ticks = inkjetVfxTicks(t.d, dt, !squid), admission = inkjetVfxAdmission(this, a);
       const c = t.color, f = this.forward(a, this.v[5]), side = this.v[6].set(f.z, 0, -f.x);
-      const ground = groundBelow(this, a);
+      const ground = squid ? 0 : groundBelow(this, a);
       // The chest/body can trail the aim while turning. Read the drawn pack's
       // nozzle mouths (inkjetPack), rather than placing detached jets from aimYaw.
       const ch = a.character;
@@ -1294,7 +1307,10 @@ const DIRECTORS = {
       t.d.emitCarry = Math.max(0, t.d.emitCarry - ticks / 60);
       if (phase === 'dash' || phase === 'brake') {
         const g = groundBelow(this, a);
-        for (const [rib, s] of [[t.d.wakeL, -1], [t.d.wakeR, 1]]) this.pushRibbon(rib, this.v[0].set(a.pos.x + side.x * s * 0.55, g + 0.05, a.pos.z + side.z * s * 0.55), false);
+        const wakeL = t.d.wakeL, wakeR = t.d.wakeR;
+        for (let i = 0; i < 2; i++) { const rib = i ? wakeR : wakeL, s = i ? 1 : -1;
+          this.pushRibbon(rib, this.v[0].set(a.pos.x + side.x * s * 0.55, g + 0.05, a.pos.z + side.z * s * 0.55), false);
+        }
         this.pushRibbon(t.d.speed, this.v[0].set(a.pos.x, a.pos.y + 0.7, a.pos.z), false);
         // bow spray: a V of ink chunks thrown off the nose
         t.acc = (t.acc || 0) + dt;
@@ -1476,9 +1492,11 @@ const DIRECTORS = {
         // dust and droplets dragged into the nozzle along a widening cone (S3: green swirling suction rings)
         t.acc = (t.acc || 0) + dt * (30 + 40 * (st?.charge || 0));
         const far = st?.farR || 3, len = clamp(st?.length || 6, 2, 9);
+        let basisReady = false;
+        const up = this.v[2], right = this.v[3];
         while (t.acc >= 1) { t.acc -= 1;
           const d = rnd(len, 1.2), w = (0.4 + (far - 0.4) * d / len) * Math.sqrt(vfxRandom()), th = rnd(TAU);
-          const up = this.v[2].set(0, 1, 0), right = this.v[3].crossVectors(f, up).normalize(); up.crossVectors(right, f).normalize();
+          if (!basisReady) { up.set(0, 1, 0); right.crossVectors(f, up).normalize(); up.crossVectors(right, f).normalize(); basisReady = true; }
           this.v[4].copy(mouth).addScaledVector(f, d).addScaledVector(right, Math.cos(th) * w).addScaledVector(up, Math.sin(th) * w);
           const k = 2.6 / 0.35;
           this.drop(this.v[4], (mouth.x - this.v[4].x) * k / d * 1.4, (mouth.y - this.v[4].y) * k / d * 1.4, (mouth.z - this.v[4].z) * k / d * 1.4, 0.32, 0.06, c, { drag: 0, grav: 0, stretch: 0.04, shrink: 0.3 });
@@ -1591,9 +1609,10 @@ function stepFilaments(self, a, fil, R, cy, speed, f, dt) {
   for (const q of fil) {
     const pool = q.white ? self.kit.glowRibbons : self.kit.ribbons, th0 = q.ang ?? q.ph, dth = speed * q.sp * dt;
     q.ang = th0 + dth;
+    const rh = R * q.rr, rv = R * q.rr * 0.72;
     for (let k = 1; k <= n; k++) {
-      const u = k / n, th = th0 + dth * u, rh = R * q.rr, rv = R * q.rr * 0.72;
-      const cs = Math.cos(th) * rh, sn = Math.sin(th) * rv, along = q.off + q.tip * Math.sin(th);   // a ring across the travel axis
+      const u = k / n, th = th0 + dth * u, sine = Math.sin(th);
+      const cs = Math.cos(th) * rh, sn = sine * rv, along = q.off + q.tip * sine;   // a ring across the travel axis
       pool.push(q.r, lc[0] + (cx - lc[0]) * u + sx * cs + fx * along, lc[1] + (cyy - lc[1]) * u + sn, lc[2] + (cz - lc[2]) * u + sz * cs + fz * along,
         now - dt * (1 - u));
     }
@@ -1606,10 +1625,16 @@ const SPEAKER_RING = WAIL_SPEAKER_POSITIONS;
 function speakerAnchors(self, a) {
   const cache=self._speakerCache ||= new WeakMap();let record=cache.get(a);
   if(record&&self._speakerCacheActive&&record.epoch===self._speakerEpoch)return record.out;
-  if(!record){record={out:SPEAKER_RING.map(()=>new self.THREE.Vector3()),epoch:-1};cache.set(a,record);}
+  if(!record){record={out:SPEAKER_RING.map(()=>new self.THREE.Vector3()),holders:[],epoch:-1};cache.set(a,record);}
   const out=record.out;record.epoch=self._speakerCacheActive?self._speakerEpoch:-1;
   const ch = a.character, list = ch?.s3SpecialDevices?.() || null;
-  const holders = list ? list.filter(d => d.spec?.speakers).map(d => d.holder) : [];
+  const nested=!!record.busy,holders=nested?[]:record.holders;record.busy=true;holders.length=0;
+  try {
+  if(list){
+    // Retain filter-then-map read order; holder access starts after every spec.
+    for(let i=0;i<list.length;i++)if(i in list){const d=list[i];if(d.spec?.speakers)holders.push(d);}
+    for(let i=0;i<holders.length;i++)holders[i]=holders[i].holder;
+  }
   if (holders.length === SPEAKER_RING.length) {
     for (let i = 0; i < holders.length; i++) { holders[i].updateWorldMatrix(true, false); out[i].set(0, 0, 0.035).applyMatrix4(holders[i].matrixWorld); }
     return out;
@@ -1617,6 +1642,7 @@ function speakerAnchors(self, a) {
   const y = a.aimYaw ?? a.yaw ?? 0, cs = Math.cos(y), sn = Math.sin(y);
   for (let i = 0; i < SPEAKER_RING.length; i++) { const [x, h, z] = SPEAKER_RING[i]; out[i].set(a.pos.x + x * cs + z * sn, a.pos.y + h, a.pos.z - x * sn + z * cs); }
   return out;
+  } finally {holders.length=0;record.busy=nested;}
 }
 function groundBelow(self, a) { return groundBelowPoint(self, a.pos, a.pos.y); }
 function groundBelowPoint(self, p, fallback) {

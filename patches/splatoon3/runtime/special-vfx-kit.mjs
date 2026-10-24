@@ -224,6 +224,7 @@ class SpritePool {
     this.aDir = new THREE.InstancedBufferAttribute(new Float32Array((cap + 1) * 4), 4).setUsage(THREE.DynamicDrawUsage);
     this.aCol = new THREE.InstancedBufferAttribute(new Float32Array((cap + 1) * 4), 4).setUsage(THREE.DynamicDrawUsage);
     this.aPar = new THREE.InstancedBufferAttribute(new Float32Array((cap + 1) * 4), 4).setUsage(THREE.DynamicDrawUsage);
+    this.updateAttributes = [this.aPos, this.aDir, this.aCol, this.aPar];
     g.setAttribute('iPos', this.aPos); g.setAttribute('iDir', this.aDir); g.setAttribute('iCol', this.aCol); g.setAttribute('iPar', this.aPar);
     g.instanceCount = 1;
     const m = new THREE.ShaderMaterial({ uniforms: { uTime, ...(additive ? {} : light) }, vertexShader: SPRITE_VERT, fragmentShader: additive ? SPARK_FRAG : PUFF_FRAG,
@@ -309,7 +310,7 @@ class SpritePool {
       R[o] = p[i + 16]; R[o + 1] = p[i + 17]; R[o + 2] = t; R[o + 3] = p[i + 19];
     }
     const count = this.n + 1;
-    for (const a of [this.aPos, this.aDir, this.aCol, this.aPar]) { a.clearUpdateRanges(); a.addUpdateRange(0, count * 4); a.needsUpdate = true; }
+    for (const a of this.updateAttributes) { a.clearUpdateRanges(); a.addUpdateRange(0, count * 4); a.needsUpdate = true; }
     this.mesh.geometry.instanceCount = count;this._emptyUploaded=this.n===0;this._drawCount=this.n;
   }
   clear() { this.n = 0;this._emptyUploaded=false;this._heapValid=false;this._heapBlocked=false;if(this._evictionHeap)this._evictionHeap.length=0; }
@@ -784,18 +785,43 @@ class ShapePool {
     this.recs.push(rec);
     return rec;
   }
+  // Scalar births retain fresh public handles while avoiding the transient values array.
+  addRaw(life, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15, follow = null) {
+    if (this.recs.length >= this.cap - 1) this._retire(this.recs.shift());
+    const rec = { v: new Float32Array(16), t: 0, life, follow, dead: false }, v = rec.v;
+    v[0]=a0;v[1]=a1;v[2]=a2;v[3]=a3;v[4]=a4;v[5]=a5;v[6]=a6;v[7]=a7;
+    v[8]=a8;v[9]=a9;v[10]=a10;v[11]=a11;v[12]=a12;v[13]=a13;v[14]=a14;v[15]=a15;
+    this.recs.push(rec);return rec;
+  }
   update(dt) {
     if(this.recs.length===0&&this._emptyUploaded)return;
-    for (let i = this.recs.length - 1; i >= 0; i--) {
+    // Follow/onEnd callbacks can inspect, clear or append to the live roster.
+    // Keep their original reverse-splice semantics; batch only callback-free lists.
+    let plain = true;
+    for (const r of this.recs) if (r.follow || r.onEnd) { plain = false; break; }
+    if (plain) {
+      const expired = this._expired ||= [], count = this.recs.length;
+      for (let i = count - 1; i >= 0; i--) {
+        const r = this.recs[i];r.t += dt;
+        expired[i] = r.dead || (r.life > 0 && r.t >= r.life);
+        if (expired[i]) this._retire(r);
+      }
+      let out = 0;
+      for (let i = 0; i < count; i++) if (!expired[i]) this.recs[out++] = this.recs[i];
+      this.recs.length = out;expired.length = 0;
+    } else for (let i = this.recs.length - 1; i >= 0; i--) {
       const r = this.recs[i]; r.t += dt;
       if (r.dead || (r.life > 0 && r.t >= r.life) || (r.follow && r.follow(r, dt) === false)) { this.recs.splice(i, 1); this._retire(r); }
     }
     const n = this.recs.length;
     for (let k = 0; k < this.buf.length; k++) {
       const A = this.buf[k].array;
-      A[0] = A[1] = A[2] = A[3] = 0;
-      for (let j = 0; j < n; j++) { const v = this.recs[j].v; const o = (j + 1) * 4, s = k * 4; A[o] = v[s]; A[o + 1] = v[s + 1]; A[o + 2] = v[s + 2]; A[o + 3] = v[s + 3]; }
-      this.buf[k].clearUpdateRanges(); this.buf[k].addUpdateRange(0, (n + 1) * 4); this.buf[k].needsUpdate = true;
+      let dirty = this._drawCount !== n;
+      for (let c = 0; c < 4; c++) { if (!Object.is(A[c], 0)) dirty = true; A[c] = 0; }
+      for (let j = 0; j < n; j++) { const v = this.recs[j].v; const o = (j + 1) * 4, s = k * 4;
+        for (let c = 0; c < 4; c++) { if (!Object.is(A[o+c], v[s+c])) dirty = true; A[o+c] = v[s+c]; }
+      }
+      if (dirty) { this.buf[k].clearUpdateRanges(); this.buf[k].addUpdateRange(0, (n + 1) * 4); this.buf[k].needsUpdate = true; }
     }
     // degenerate warm instance: alpha 0
     const col = this.buf[2].array; col[3] = 0;

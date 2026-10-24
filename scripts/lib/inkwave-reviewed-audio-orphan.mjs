@@ -69,9 +69,11 @@ export function reviewedAudioOrphanDecision(authoredSource, modules, composedOwn
   for (const required of [REVIEWED_AUDIO_ORPHAN, 'patches/splatoon3/bootstrap.mjs', 'patches/loading-cache/runtime/startup.mjs', 'patches/loading-cache/sw.js', 'entry-script-1.mjs'])
     if (!modules.has(required)) return keep('missing graph root: ' + required);
   const sites = new Map(); let reference = null, parseFailure = null;
-  for (const [file, source] of modules) {
+  for (const [file, entry] of modules) {
     if (file === REVIEWED_AUDIO_ORPHAN) continue;
-    let ast; try { ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module' }); }
+    // Build callers index lazy readers; unit callers may keep their small
+    // string Maps. Read failure is as unproven as parse failure: keep the file.
+    let ast; try { const source = typeof entry === 'function' ? entry() : entry; ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module' }); }
     catch { parseFailure = file; break; }
     const walk = node => {
       if (!node || typeof node !== 'object') return;

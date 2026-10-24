@@ -49,7 +49,7 @@ function disposeOldWorld(game,snap){
 /** Prepare detached, publish atomically through the existing worldCurrent guard. */
 export async function buildNativeWorld(game,map,current){
  game._nativeAbort?.abort();const controller=game._nativeAbort=new AbortController(),signal=controller.signal,start=performance.now();
- let display,paint,inkGeometry,inkMat,inkMesh,pendingTextures;
+ let display,paint,inkGeometry,inkMat,inkMesh,pendingTextures,pendingNavigation;
  let snapshot=null,published=false,committed=false;
  const safely=(fn,label)=>{try{fn();}catch(e){console.warn('[native] cleanup',label,e);}};
  const status=sourceLoadingStatus(map.name);
@@ -67,6 +67,11 @@ export async function buildNativeWorld(game,map,current){
     maxTextureSize:G.renderer.capabilities.maxTextureSize
   }),gpuTier,!!game.mobile?.touch);
   const textureLimit=textureCaps.maxDimension;
+  let navStart=performance.now();
+  // Desktop navigation yields in short slices while texture fetch/decode waits.
+  // Constrained devices retain serial construction to avoid competing peaks.
+  if(globalThis.navigator&&!game.mobile?.touch&&!(globalThis.navigator.deviceMemory>0&&globalThis.navigator.deviceMemory<=4))
+   pendingNavigation=NavGraph.createNative(level,physics,{signal,current}).then(nav=>({nav}),error=>{controller.abort(error);return {error};});
   const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,textureCaps);pendingTextures=textures;display=nativeDisplay(data,textures,quality);pendingTextures=null;
   if(!current())throw new DOMException('Aborted','AbortError');
   paint=new PaintSystem(G.renderer,level,{atlasSize:Math.min(G.renderer.capabilities.maxTextureSize,(game.mobile?.touch||gpuTier>0||['low','medium'].includes(game.settings.quality))?2048:4096),maxDensity:quality==='low'?4:8,cell:.25});
@@ -96,13 +101,17 @@ export async function buildNativeWorld(game,map,current){
   const stageShaderWarmMilliseconds=performance.now()-stageWarmStart;
   status.update('navigation');await new Promise(resolve=>requestAnimationFrame(resolve));
   if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
-  const navStart=performance.now(),nav=await NavGraph.createNative(level,physics,{signal,current});
+  if(!pendingNavigation)navStart=performance.now();
+  const navigation=pendingNavigation?await pendingNavigation:{nav:await NavGraph.createNative(level,physics,{signal,current})};
+  if(navigation.error)throw navigation.error;const nav=navigation.nav;
   // Minimap preparation must use this detached world's navigation, not G.nav
   // which still belongs to the current world until publication below.
   level.nativeNav=nav;
   if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
   // The minimap's global CURRENT is not touched until final commit.
   const minimap=new Minimap(level,paint,Math.min(3,512/Math.max(level.bounds.maxX-level.bounds.minX,level.bounds.maxZ-level.bounds.minZ)),{deferActivation:true});
+  if(G.settings?.minimap!==false)await minimap.prepareNative?.({signal,current});
+  if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
   const wake=new SwimWake();
   const gpuBudget=nativeRenderCaps({mobile:!!game.mobile?.touch,tier:gpuTier});
   const nextWorld={display,level,gpuTier,textureProfile:{data,quality,caps:textureCaps},disposed:false,metrics:{gpuTier,gpuBudget,loadMilliseconds:performance.now()-start,navMilliseconds:performance.now()-navStart,navBuild:nav.nativeBuildMetrics,shaderWarmMilliseconds,stageShaderWarmMilliseconds,vertices:data.manifest.geometry.vertices,triangles:data.manifest.geometry.triangles,faces:level.faces.length,gridBytes:paint.grid.byteLength,atlas:paint.size,ppm:paint.ppm,textureCount:textures.size,textureLimit,quality,version1130Verified:false},
@@ -135,6 +144,7 @@ export async function buildNativeWorld(game,map,current){
   data.vertices=null;data.indices=null;
   disposeOldWorld(game,snapshot);
  }catch(error){
+  controller.abort(error);if(pendingNavigation)await pendingNavigation;
   const recoveryErrors=[];
   const recover=(fn)=>{try{fn();}catch(e){recoveryErrors.push(e);}};
   try{

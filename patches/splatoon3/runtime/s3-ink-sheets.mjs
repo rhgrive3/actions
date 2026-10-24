@@ -258,7 +258,7 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
   }), MAX_DRILL);
   const da = new THREE.InstancedBufferAttribute(new Float32Array(MAX_DRILL * 4), 4).setUsage(THREE.DynamicDrawUsage);
   drillMesh.geometry.setAttribute('aDrill', da);
-  const drills = [];
+  const drills = [], drillSlots = [];
   const white = new THREE.Color(1, 1, 1);
   // GTAO/depth override passes would draw the raw unit grids.
   const gate = (r, sc, c, geometry) => { geometry.drawRange.count = sc.overrideMaterial ? 0 : Infinity; };
@@ -285,7 +285,9 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
     // `length` clamped to its travelled distance.
     drill(at, dir, color, seed, time, length) {
       if (drills.length >= MAX_DRILL) return;
-      drills.push({ at, dir, color, seed, time, length });
+      const record=drillSlots[drills.length] ||= {dir:new THREE.Vector3()};
+      record.at=at;record.dir.copy(dir);record.color=color;record.seed=seed;record.time=time;record.length=length;
+      drills.push(record);
     },
     // Remember one firing; `at` is the nozzle (or the swing pivot), `dir` the shot direction.
     // `owner` (SWEPs splash only) keeps the splash on that actor's muzzle.
@@ -324,6 +326,13 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
         if (!(age >= 0) || age >= 1) { bursts.splice(i, 1); continue; }
         if (cam && cam.distanceToSquared(burst.at) > 1600) continue;
         const d = burst.dir;
+        const staticSweep=cfg.style!==0 && !(burst.kind==='arrow'&&!burst.horizontalSweep);
+        if(staticSweep){
+          z.copy(d).setY(0);if(z.lengthSq()<1e-6)z.set(0,0,1);z.normalize();
+          x.crossVectors(UP,z).normalize();
+          if(burst.kind==='slash-h'||burst.horizontalSweep)basis.makeBasis(z,x,UP);else basis.makeBasis(z,UP,x);
+          q.setFromRotationMatrix(basis);
+        }
         for (let layer = 0; layer < cfg.layers && n < MAX_SHEET; layer++) {
           const ls = burst.seed + layer * 0.37, o = n * 4;
           if (cfg.style === 0) {
@@ -340,13 +349,8 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
               y.copy(UP).applyAxisAngle(d, ls * 6.2832 * 0.7);
               x.crossVectors(y, d).normalize();
               basis.makeBasis(x, y, d);
-            } else {
-              z.copy(d).setY(0); if (z.lengthSq() < 1e-6) z.set(0, 0, 1); z.normalize();
-              x.crossVectors(UP, z).normalize();
-              if (burst.kind === 'slash-h' || burst.horizontalSweep) basis.makeBasis(z, x, UP);
-              else basis.makeBasis(z, UP, x);
+              q.setFromRotationMatrix(basis);
             }
-            q.setFromRotationMatrix(basis);
             const off = (layer - (cfg.layers - 1) / 2) * 0.12 * cfg.radius;
             m.compose(drop.copy(burst.at).addScaledVector(x, burst.kind === 'arrow' ? 0 : off), q, s.setScalar(1 - 0.12 * layer));
             A[o] = cfg.tiles + (cfg.solid ? 0.25 : 0); A[o + 3] = cfg.length || 0; B[o] = cfg.radius;
@@ -373,12 +377,14 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
         D[nd * 4 + 2] = (d.seed * 6.2832 + d.time * MACHINE_DRILL.spin) % 6.283185307179586; D[nd * 4 + 3] = d.seed;
         nd++;
       }
+      for(const d of drills){d.at=null;d.color=null;}
       drills.length = 0;
       upload(drillMesh, nd, [da], 4);
       return { sheets: n, drills: nd };
     },
-    clear() { bursts.length = 0; drills.length = 0; for (const o of [mesh, drillMesh]) { o.count = 0; o.visible = false; } },
+    clear() { bursts.length = 0; for(const d of drillSlots){d.at=null;d.color=null;} drills.length = 0; for (const o of [mesh, drillMesh]) { o.count = 0; o.visible = false; } },
     dispose() {
+      this.clear();drillSlots.length=0;
       scene.remove(mesh, drillMesh);
       for (const o of [mesh, drillMesh]) { o.geometry.dispose(); o.material.dispose(); }
       splashTex.dispose(); ringTex.dispose();

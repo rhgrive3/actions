@@ -334,7 +334,7 @@ export function dualiesImpactPaintSource(p, hit, raw, scale = 1) {
       !Number.isFinite(scale) || !(scale > 0) || !paint) return null;
   const near = paint.DistanceNear ?? 1.1, middle = paint.DistanceMiddle, far = paint.DistanceFar ?? 20;
   const wn = paint.WidthHalfNear, wm = paint.WidthHalfMiddle, wf = paint.WidthHalfFar;
-  if (![near,middle,far,wn,wm,wf].every(Number.isFinite) ||
+  if ((!Number.isFinite(near)||!Number.isFinite(middle)||!Number.isFinite(far)||!Number.isFinite(wn)||!Number.isFinite(wm)||!Number.isFinite(wf)) ||
       near < 0 || middle < near || far <= middle || Math.min(wn,wm,wf) <= 0) return null;
   const distance = p.start.distanceTo(hit.point) / scale;
   if (!Number.isFinite(distance)) return null;
@@ -346,9 +346,12 @@ export function dualiesImpactPaintSource(p, hit, raw, scale = 1) {
   if ((phase ?? 0) === 0) {
     const angle = rollerImpactAngleDegrees(p.vel,hit.normal);
     const lo = paint.DegreeUseDepthScaleMax ?? 10, hi = paint.DegreeUseDepthScaleMin ?? 35;
-    if (angle !== null && [lo,hi,paint.DepthScaleMax,paint.DepthScaleMin].every(Number.isFinite) &&
-        hi > lo && paint.DepthScaleMax > 0 && paint.DepthScaleMin > 0)
-      depthScale = paint.DepthScaleMax + (paint.DepthScaleMin-paint.DepthScaleMax) * clamp01((angle-lo)/(hi-lo));
+    if (angle !== null) {
+      const maxDepth=paint.DepthScaleMax,minDepth=paint.DepthScaleMin;
+      if (Number.isFinite(lo)&&Number.isFinite(hi)&&Number.isFinite(maxDepth)&&Number.isFinite(minDepth)&&
+          hi > lo && paint.DepthScaleMax > 0 && paint.DepthScaleMin > 0)
+        depthScale = paint.DepthScaleMax + (paint.DepthScaleMin-paint.DepthScaleMax) * clamp01((angle-lo)/(hi-lo));
+    }
   }
   return { radius: width*scale, depthScale };
 }
@@ -996,7 +999,7 @@ export function fidelitySlosherImpactPaint(p, point) {
   if (!src || !start || !point || !(scale>0)) return null;
   const n=src.DistanceXZNear,f=src.DistanceXZFar,w0=src.WidthHalfNear,w1=src.WidthHalfFar;
   const d0=src.DepthScaleNear,d1=src.DepthScaleFar;
-  if (![n,f,w0,w1,d0,d1].every(Number.isFinite) || !(f>n) || !(w0>0&&w1>0)) return null;
+  if ((!Number.isFinite(n)||!Number.isFinite(f)||!Number.isFinite(w0)||!Number.isFinite(w1)||!Number.isFinite(d0)||!Number.isFinite(d1)) || !(f>n) || !(w0>0&&w1>0)) return null;
   const distance=Math.hypot(point.x-start.x,point.z-start.z)/scale;
   const t=clamp01((distance-n)/(f-n)), shrink=slosherDropScale(p,point.y);
   const radius=(w0+(w1-w0)*t)*scale*shrink;

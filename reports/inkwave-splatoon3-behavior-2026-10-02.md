@@ -6369,3 +6369,17 @@ main726eとの統合では、main側の新しいrelay時計・音声・capture a
 原典OBJの非表示配列圧縮と制限端末向けBVH、姿勢のprepared-centerと係数再利用、特殊武器の実発射イベントと描画キャッシュを両立する。protocolのCOMPATはspawn侵入防止と原子的な試合開始の両方を含む別epochにし、片方だけの旧クライアントを混在させない。これはINKWAVEの通信互換性制御であり、本家の通信仕様を抽出したとの主張ではない。
 
 統合ビルドの実Chromium/SwiftShaderで特殊武器の描画と資源解放を確認した。source/component、生成物の実ブラウザ、原作実機比較を区別し、詳細と未確認範囲をreports/pr-merge-integration-20261024/README.mdに記録する。
+
+## 2026-10-24: Drive キュー全329行の再照合と最適化統合
+
+指定sourceの最新manifestとmain `7f863ea2d65671abd1453fdae1b61de00f1d10e2` の1,578 after-blobが一致した。原作参照版は引き続きSplatoon 3 Ver.11.3.0で、既存のブキ・ギア・状態定義を使う。4並列で329行を照合し、新規実装205、既存有効99（うち66はPR1861で実装済み）、根拠付き不採用22、追加根拠待ち3とした。[統合記録](drive-queue-integration-20261024.md)と[全行一覧](drive-queue-dispositions-20261024.json)に実装箇所、判断、検証範囲を保存する。
+
+歩行・泳ぎ・旋回・反転・射撃姿勢・ジャンプ・接地を含むsource-loaded Characterは、30/60/120 Hzの追加216比較で変換とgeometryが厳密一致し、既存696比較も保持した。quality切替は同一partのmeshを保持し、geometry/material/skeleton/transform/callback等の状態を復元する。rankedの4ルールは360 stepのevent/snapshot、goal判定6,000例、catch-up/restoreの所有権境界で検証した。これは既存INKWAVEに対する数値・意味の比較で、本家の同条件実機映像との一致を認定しない。
+
+通信は認証済relay受領時刻とpacket由来originを分離し、現在protocolの未来origin偽装やreceipt欠落を拒否する。paint callback中のmembership変更は二度目の権限検証で検知し、wipeoutの確認replayは公平なroom単位予算内で未処理責務を保持する。Splatoon 3の非公開通信方式を再現したとの主張ではない。武器の発射・塗り・damage・pool reset・原典パラメータ、nativeのgeometry/collision/nav順序、raw upstream lock 24本を保持する。
+
+通常production buildの全2,152 manifest artifactを読戻し、startup予算を確認した。実Chromium/SwiftShaderの22 selectionはSplashdown、Inkjet 30/60/120 Hz×1/2/4人×near/mixed、native terminal 30/60/120 Hzを扱い、[実行時のsource/buildと結果](drive-browser-publish-audit-20261024.md)を別に記録する。CPU/VM、実ブラウザ、公開exact commit CI、本家実機、Safari/iPadのFPSを混同しない。
+
+Fizzy飛行飛沫の物理release・初速・重力・着地塗りは原典根拠不足のまま。収録音声の権利証跡と過去Pages503の原因も未解決として残し、定数の推測、音声の一括削除、retryによる失敗隠蔽で解消済みにしない。不採用の可変graph/SourceBank/ruleのmemo、readiness変更、広範なroot artifact削除等も、その前提を満たす追加証拠なしに有効化しない。
+
+入力identityの最終監査では、static adapter 10本の登録漏れを補い、CIで依存closureのSHA追跡を検査する。1,458 inputsでの再buildは検証済みの2,152 artifactsと全パス・サイズ・SHAが同一で、manifestの由来情報だけが2,248 bytes増えた。[最終build同一性](drive-final-build-equivalence-20261024.json)は旧browser proofを書き換えず、そのpayloadへの対応を記録する。並行PR1867の追加はtest/QAだけを保持し、host-ready fixtureもrelay側の原子的lockとACKを確認する契約へ整合した。

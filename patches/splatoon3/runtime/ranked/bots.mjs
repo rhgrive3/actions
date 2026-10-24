@@ -1,3 +1,5 @@
+import { firstThreeFinite } from './coordinates.mjs';
+const clamArcMemo = new WeakMap();
 // Exact, directly evaluated angles; no trigonometric approximation or reordered arithmetic.
 const CLAM_ARC_SAMPLES = Array.from({ length: 211 }, (_, step) => {
   const pitch = -1.1 + step * 0.01;
@@ -15,9 +17,13 @@ function captureRankedTail(dt, move, yaw, pitch, distance, moving) {
 }
 const RANKED_MODES = new Set(['zones', 'tower', 'rainmaker', 'clams']);
 const finite = (n, fallback = 0) => Number.isFinite(n) ? n : fallback;
-const point = value => Array.isArray(value) && value.length >= 3 && value.slice(0, 3).every(Number.isFinite)
-  ? { x: value[0], y: value[1], z: value[2] }
-  : value && [value.x, value.y, value.z].every(Number.isFinite) ? { x: value.x, y: value.y, z: value.z } : null;
+const point = value => {
+  if (firstThreeFinite(value)) return { x: value[0], y: value[1], z: value[2] };
+  if (!value) return null;
+  const x = value.x, y = value.y, z = value.z;
+  return Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z)
+    ? { x: value.x, y: value.y, z: value.z } : null;
+};
 const actorId = actor => String(actor?.nid ?? `${actor?.team ?? 0}:${actor?.slot ?? 0}`);
 
 function frameActor(actor, frame) {
@@ -51,6 +57,11 @@ function clamThrowAim(actor, goal, engine) {
   const targetY = target.y + (goal.pass ? 0.9 : 0.55);
   const height = targetY - (actor.pos.y + 1.15);
   let bestPitch = 0, bestError = Infinity;
+  const finiteInputs = Number.isFinite(horizontal) && Number.isFinite(height) && Number.isFinite(speed);
+  const memo = finiteInputs && clamArcMemo.get(actor);
+  if (memo && Object.is(memo.horizontal, horizontal) && Object.is(memo.height, height) && Object.is(memo.speed, speed)) {
+    bestPitch = memo.bestPitch; bestError = memo.bestError;
+  } else {
   // The objective model applies a fixed loft to clam throws. Solve the
   // corresponding ballistic arc so the flight crosses the basket or pass
   // target instead of aiming along a level line.
@@ -61,6 +72,8 @@ function clamThrowAim(actor, goal, engine) {
     const y = speed * (sine + 0.42) * flight - 4.9 * flight * flight;
     const error = Math.abs(y - height);
     if (error < bestError) { bestPitch = pitch; bestError = error; }
+  }
+    if (finiteInputs) clamArcMemo.set(actor, { horizontal, height, speed, bestPitch, bestError });
   }
   const reach = inventory?.power ? 14 : 18;
   return {

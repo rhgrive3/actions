@@ -84,7 +84,7 @@ export class NativeInkMesh extends THREE.Mesh {
     this._geometry = next;
     this.chunks = chunks;
     this._visible = new Uint8Array(chunks.length).fill(255);
-    this._triangleTile = triangleTile;
+    this._triangleTile = chunks.length<=65536?new Uint16Array(triangleTile):triangleTile;
 
     // The source is non-indexed. Precompute ascending contiguous runs in
     // *source triangle order*, never in tile order: transparent overlay
@@ -97,7 +97,7 @@ export class NativeInkMesh extends THREE.Mesh {
       tiles.push(tile); starts.push(start * 3); ends.push(end * 3);
       start = end;
     }
-    this._runTiles = Uint32Array.from(tiles);
+    this._runTiles = chunks.length<=65536?Uint16Array.from(tiles):Uint32Array.from(tiles);
     this._runStarts = Uint32Array.from(starts);
     this._runEnds = Uint32Array.from(ends);
     // Many tiny interleaved runs make subarray construction more costly than

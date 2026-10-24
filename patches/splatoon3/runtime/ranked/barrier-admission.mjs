@@ -84,13 +84,23 @@ function prune(nm,now) {
   for(const [peer,shots] of nm.rankedBarrierProofs) {
     // Retain already-consumed shots until their accounting window ends; otherwise
     // fast replayed claims could repeatedly evade the weapon fire-rate ceiling.
-    const kept=shots.filter(s => now-s.at<=RECEIPT_SECONDS && now>=s.at-0.01);
-    if(kept.length) nm.rankedBarrierProofs.set(peer,kept);
+    let count=0;
+    for (let i=0,length=shots.length;i<length;i++) if (i in shots) {
+      const shot=shots[i];
+      if (now-shot.at<=RECEIPT_SECONDS && now>=shot.at-0.01) shots[count++]=shot;
+    }
+    shots.length=count;
+    if(count) nm.rankedBarrierProofs.set(peer,shots);
     else nm.rankedBarrierProofs.delete(peer);
   }
   for(const [peer,hits] of nm.rankedBarrierPending) {
-    const kept=hits.filter(h=>now-h.at<=PENDING_SECONDS && now>=h.at-0.01);
-    if(kept.length) nm.rankedBarrierPending.set(peer,kept);
+    let count=0;
+    for (let i=0,length=hits.length;i<length;i++) if (i in hits) {
+      const hit=hits[i];
+      if (now-hit.at<=PENDING_SECONDS && now>=hit.at-0.01) hits[count++]=hit;
+    }
+    hits.length=count;
+    if(count) nm.rankedBarrierPending.set(peer,hits);
     else nm.rankedBarrierPending.delete(peer);
   }
   for(const [peer,keys] of nm.rankedBarrierEventKeys) {

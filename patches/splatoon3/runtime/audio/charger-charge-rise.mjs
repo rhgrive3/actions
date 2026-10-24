@@ -39,7 +39,7 @@ export async function chargerRiseBuffer(ctx,{fetcher,sourceUrl,retry=false,now=D
   const state=stateFor(ctx);
   if(state.buffer)return state.buffer;
   if(state.promise)return state.promise;
-  const fetchAudio=fetcher||(typeof fetch==='function'?fetch:null);
+  const fetchAudio=fetcher||(typeof globalThis.fetch==='function'?globalThis.fetch.bind(globalThis):null);
   if(!fetchAudio)return null;
   if(state.error&&(!retry||!state.retryable||state.attempts>=MAX_ATTEMPTS||now()<state.retryAfter))return null;
   const generation=++state.generation;

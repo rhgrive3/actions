@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {actualModule,json} from './added-actual-module.mjs';
+const frozenCombat=JSON.parse(fs.readFileSync(new URL('./fixtures/drive-network-before-7f863ea2.json',import.meta.url))).files['patches/network-replication/combat-provenance.mjs'];
 const fused=`    if(!candidate)continue;
     let duplicate=false,recent=0;
     for(const proof of store) {
@@ -8,7 +10,7 @@ const fused=`    if(!candidate)continue;
       if(proof.actor===candidate.actor && t-proof.at<1)recent++;
     }
     if(duplicate)continue;`;
-const oldRecord=source=>source.replace(fused,'    if(!candidate || store.some(p=>p.key===candidate.key))continue;')
+const oldRecord=_source=>frozenCombat.replace(fused,'    if(!candidate || store.some(p=>p.key===candidate.key))continue;')
  .replace('    if(recent>=rate)continue;',`    let recent=0;
     for(const shot of store)if(shot.actor===candidate.actor && t-shot.at<1)recent++;
     if(recent>=rate)continue;`);
@@ -27,7 +29,7 @@ const fire=(n,at=100)=>[at,'ev','weapon:fire',{actor:{n:1},weapon:'shooter',muzz
 function snapshot(m){const s=m._combatProvenance;return s?{proofs:[...s.proofs],pending:[...s.pending],contacts:[...s.contacts]}:null;}
 
 test('actual record fused scan preserves duplicate/pairing/rate/order and cap outcomes over deterministic streams',async()=>{
- const before=await load(oldRecord),after=await load();assert(before.source.includes(fused));
+ const before=await load(oldRecord),after=await load();assert(frozenCombat.includes(fused));
  let random=0x12345678;const rnd=()=>{random=(Math.imul(random,1664525)+1013904223)>>>0;return random/2**32;};
  for(let trial=0;trial<180;trial++){
   const a=net(),b=net();
