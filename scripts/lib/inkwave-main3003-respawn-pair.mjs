@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 
 export const RESPAWN3003_BASE='3003088e7d3da6e3b41829a96714698a348b555b';
 export const RESPAWN3003_HEAD='55c0ad791a3fc3529e89bf8d7466e04555fb6150';
@@ -41,14 +43,38 @@ export function respawn3003Route(pr,base){
 
 export {assertMain3003Environment as assertRespawn3003Environment} from './inkwave-main3003-firing-pair.mjs';
 
-// A source epoch and its reviewed QA-only direct successor are separate labels.
-// Future descendants, unrelated copied trees and additional changed paths fail.
-export function assertRespawn3003Head(declared,git){
-  if(declared===RESPAWN3003_HEAD)return;
-  assert.deepEqual(git(['show','-s','--format=%P',declared]).trim().split(' '),[RESPAWN3003_HEAD],
-    'respawn3003 head must be 55c0 or its one reviewed QA-only successor');
-  assert.deepEqual(git(['diff','--no-renames','--name-only',RESPAWN3003_HEAD,declared]).trim().split('\n').sort(),
-    [...RESPAWN3003_QA_PATHS].sort(),'exact respawn3003 QA successor paths');
+function git(root,args,encoding='utf8'){
+  const env={...process.env};for(const key of Object.keys(env))if(key.startsWith('GIT_'))delete env[key];
+  return execFileSync('git',['-C',root,...args],{encoding,env:{...env,GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null',GIT_NO_REPLACE_OBJECTS:'1'},
+    timeout:15000,maxBuffer:8*1024*1024,stdio:['ignore','pipe','pipe']});
+}
+const VERIFIER_ROOT=fs.realpathSync(fileURLToPath(new URL('../../',import.meta.url)));
+function executionIdentity(root){
+  assert.equal(fs.realpathSync(git(root,['rev-parse','--show-toplevel']).trim()),root,'actual QA checkout root');
+  const commit=git(root,['rev-parse','--verify','HEAD^{commit}']).trim();
+  const identity={commit,tree:git(root,['rev-parse',commit+'^{tree}']).trim(),
+    commitBodySHA256:hash(git(root,['cat-file','commit',commit],null)),qaLeaves:[]};
+  for(const relative of RESPAWN3003_QA_PATHS){
+    const entry=git(root,['ls-tree',commit,'--',relative]).trim(),match=/^(100644) blob ([0-9a-f]{40})\t/.exec(entry);
+    assert.ok(match,'reviewed regular QA leaf '+relative);
+    const bytes=git(root,['cat-file','blob',match[2]],null),file=path.join(root,relative),stat=fs.lstatSync(file);
+    assert.ok(stat.isFile()&&!stat.isSymbolicLink()&&!(stat.mode&0o111),'regular actual QA body '+relative);
+    assert.deepEqual(fs.readFileSync(file),bytes,'unchanged committed QA execution body '+relative);
+    identity.qaLeaves.push({path:relative,mode:match[1],sha:match[2],sha256:hash(bytes)});
+  }
+  return identity;
+}
+// The independently reviewed executing checkout is the trust boundary. Capture
+// it once from this module's location, never from the event/candidate/cwd. This
+// does not authenticate a future replacement of the executing validator itself.
+const reviewedExecution=freeze(executionIdentity(VERIFIER_ROOT));
+export const respawn3003ExecutionIdentity=()=>structuredClone(reviewedExecution);
+export function assertRespawn3003Head(declared,candidateRoot=VERIFIER_ROOT){
+  assert.deepEqual(executionIdentity(VERIFIER_ROOT),reviewedExecution,'reviewed execution snapshot remains fixed during invocation');
+  assert.equal(declared,reviewedExecution.commit,'candidate must match unchanged reviewed verifier execution commit');
+  const root=fs.realpathSync(candidateRoot);
+  assert.equal(git(root,['rev-parse','--verify','HEAD^{commit}']).trim(),declared,'actual candidate HEAD');
+  assert.deepEqual(executionIdentity(root),reviewedExecution,'exact reviewed candidate commit/tree/QA bodies');
 }
 
 export function assertRespawn3003Inputs(rows,epoch){

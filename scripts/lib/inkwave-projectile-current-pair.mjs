@@ -58,9 +58,9 @@ export function selectCurrentPair(event, eventName, repository) {
   assert.ok(route.bases.includes(pr.base.sha)||additional, 'actual event baseline must be a pinned reviewed epoch');
   assert.match(pr.head.sha ?? '', /^[0-9a-f]{40}$/, 'actual candidate immutable SHA required');
   assert.notEqual(pr.head.sha, pr.base.sha, 'separate reviewed candidate required');
-  // The new owner binding also rejects another PR's head before admission.
-  // Its only additional head is a direct, exactly scoped QA child of 55c0.
-  if(additional?.exactRespawn3003)assertRespawn3003Head(pr.head.sha,args=>git(process.cwd(),args));
+  // 55c0 labels source/build inputs; the declared head is the fixed reviewed
+  // execution snapshot, including its QA bodies, rather than a same-path sibling.
+  if(additional?.exactRespawn3003)assertRespawn3003Head(pr.head.sha);
   return {...structuredClone(route),...additional, baseSha:pr.base.sha, candidateSha:pr.head.sha};
 }
 
@@ -133,7 +133,7 @@ function verifySide(root,commit,epoch,isBase,route){
   const rows=scanCurrentPairProduction(root);assertCurrentPairRows(rows,epoch);
   if(route.exactMain3003){
     main3003Binding(route).inputs(rows,epoch);
-    if(!isBase)main3003Binding(route).head(commit,args=>git(root,args));
+    if(!isBase)main3003Binding(route).head(commit,route.exactRespawn3003?root:args=>git(root,args));
   }
   assert.deepEqual(readCurrentPairGitTree(root,commit),before,'declared checkout stable during verification');
   return {commit,tree:before.tree,sourceEpoch:epoch,productionLeaves:rows.length,inventorySha256:hash(JSON.stringify(rows))};

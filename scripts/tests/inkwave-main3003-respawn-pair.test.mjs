@@ -4,12 +4,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import {createHash} from 'node:crypto';
+import {execFileSync,spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {RESPAWN3003_BASE as B,RESPAWN3003_HEAD as H,RESPAWN3003_FIXTURE_SHA256,RESPAWN3003_QA_PATHS,
-  respawn3003Fixture,respawn3003Epoch,assertRespawn3003Environment,assertRespawn3003Head,assertRespawn3003Inputs,assertRespawn3003Artifacts} from '../lib/inkwave-main3003-respawn-pair.mjs';
+  respawn3003Fixture,respawn3003Epoch,respawn3003ExecutionIdentity,assertRespawn3003Environment,assertRespawn3003Head,assertRespawn3003Inputs,assertRespawn3003Artifacts} from '../lib/inkwave-main3003-respawn-pair.mjs';
 import {MAIN3003_HEAD as FIRING_HEAD,main3003Fixture} from '../lib/inkwave-main3003-firing-pair.mjs';
 import {currentPairFixture,selectCurrentPair,assertCurrentPairRows,currentPairNegativeControls,verifyCurrentPairCaptureBuild} from '../lib/inkwave-projectile-current-pair.mjs';
 const f=respawn3003Fixture(),old=currentPairFixture(),hash=x=>createHash('sha256').update(x).digest('hex');
-const event=()=>({number:1860,pull_request:{number:1860,base:{ref:'main',sha:B,repo:{full_name:f.repository}},head:{ref:f.branch,sha:H,repo:{full_name:f.repository}}}});
+const execution=respawn3003ExecutionIdentity();
+const event=()=>({number:1860,pull_request:{number:1860,base:{ref:'main',sha:B,repo:{full_name:f.repository}},head:{ref:f.branch,sha:execution.commit,repo:{full_name:f.repository}}}});
 const select=e=>selectCurrentPair(e,'pull_request',f.repository);
 
 test('PR1860 pins its own complete source/build pair and exact five existing respawn deltas',()=>{
@@ -47,12 +50,61 @@ test('owned PR/ref/base/head selection preserves the separate reviewed Firing ro
   for(const row of old.routes)for(const base of row.bases){const e=event();e.number=e.pull_request.number=row.pr;e.pull_request.base.sha=base;e.pull_request.head.ref=row.branch;e.pull_request.head.sha=row.sourceHead;assert.equal(select(e).sourceHead,row.sourceHead);}
 });
 
-test('only 55c0 or one direct exactly scoped QA successor is allowed; this is not future checker self-authentication',()=>{
-  assertRespawn3003Head(H,()=>assert.fail('source label needs no parent lookup'));
-  const next='a'.repeat(40),good=args=>args[0]==='show'?H+'\n':RESPAWN3003_QA_PATHS.join('\n')+'\n';assertRespawn3003Head(next,good);
-  for(const parents of ['',B,H+' '+B,FIRING_HEAD])assert.throws(()=>assertRespawn3003Head(next,args=>args[0]==='show'?parents:good(args)));
-  for(const paths of [RESPAWN3003_QA_PATHS.slice(1),[...RESPAWN3003_QA_PATHS,'inkwave-public/future.js'],[...RESPAWN3003_QA_PATHS,'patches/splatoon3/runtime/spawn-exclusion.mjs']])
-    assert.throws(()=>assertRespawn3003Head(next,args=>args[0]==='show'?H:paths.join('\n')));
+test('the unchanged executing snapshot binds commit/tree/all QA bodies, without candidate declarations or git stubs',()=>{
+  assertRespawn3003Head(execution.commit);
+  assert.deepEqual(execution.qaLeaves.map(r=>r.path),RESPAWN3003_QA_PATHS);
+  for(const row of execution.qaLeaves){assert.equal(row.mode,'100644');assert.match(row.sha,/^[a-f0-9]{40}$/);assert.match(row.sha256,/^[a-f0-9]{64}$/);}
+  assert.match(execution.tree,/^[a-f0-9]{40}$/);assert.match(execution.commitBodySHA256,/^[a-f0-9]{64}$/);
+  const copy=respawn3003ExecutionIdentity();copy.qaLeaves[0].sha='0'.repeat(40);assert.deepEqual(respawn3003ExecutionIdentity(),execution);
+  for(const declared of [H,B,FIRING_HEAD,'a'.repeat(40)])
+    assert.throws(()=>assertRespawn3003Head(declared,()=>assert.fail('candidate cannot supply trusted git results')),/unchanged reviewed verifier execution commit/);
+});
+
+test('real separate candidates reject a same-eleven-path altered checker and a same-tree different commit',
+  {skip:!process.env.INKWAVE_RESPAWN_PAIR_BASELINE},()=>{
+  const root=fs.realpathSync(fileURLToPath(new URL('../../',import.meta.url))),tmp=fs.mkdtempSync(path.join(os.tmpdir(),'respawn3003-sibling-'));
+  const candidate=path.join(tmp,'candidate'),entry=path.join(root,'scripts/verify-inkwave-projectile-current-pair.mjs'),cases=[];
+  const env={...process.env,GIT_AUTHOR_NAME:'Respawn QA',GIT_AUTHOR_EMAIL:'qa@example.invalid',GIT_COMMITTER_NAME:'Respawn QA',GIT_COMMITTER_EMAIL:'qa@example.invalid'};
+  for(const key of Object.keys(env))if(key.startsWith('GIT_')&&!/^(GIT_AUTHOR_|GIT_COMMITTER_)/.test(key))delete env[key];
+  const git=(cwd,args)=>execFileSync('git',['-C',cwd,...args],{env,encoding:'utf8',timeout:30000,maxBuffer:8*1024*1024,stdio:['ignore','pipe','pipe']}).trim();
+  const cli=(label,commit,accept,validator=entry)=>{
+    const e=event();e.pull_request.head.sha=commit;
+    const eventFile=path.join(tmp,label+'.json'),receipt=path.join(tmp,label+'-receipt.json');fs.writeFileSync(eventFile,JSON.stringify(e));fs.writeFileSync(receipt,'sentinel\n');
+    const before=git(candidate,['status','--porcelain=v1','--untracked-files=all']);
+    const r=spawnSync(process.execPath,[validator,'--baseline',process.env.INKWAVE_RESPAWN_PAIR_BASELINE,'--candidate',candidate,'--event',eventFile,'--receipt',receipt],
+      {cwd:candidate,env:{...env,GITHUB_EVENT_NAME:'pull_request',GITHUB_REPOSITORY:f.repository},encoding:'utf8',timeout:120000});
+    assert.equal(r.error,undefined);if(accept)assert.equal(r.status,0,r.stderr);else{assert.notEqual(r.status,0);assert.match(r.stderr,/unchanged reviewed verifier execution commit|unchanged committed QA execution body/);assert.equal(fs.readFileSync(receipt,'utf8'),'sentinel\n');}
+    assert.equal(git(candidate,['status','--porcelain=v1','--untracked-files=all']),before,'validator leaves candidate unchanged');
+    cases.push({label,commit,validator,status:r.status,stdout:r.stdout,stderr:r.stderr});
+  };
+  try{
+    git(tmp,['clone','--shared','--no-checkout',root,candidate]);git(candidate,['checkout','--detach',execution.commit]);
+    assertRespawn3003Head(execution.commit,candidate);cli('exact-execution-copy',execution.commit,true);
+    const checker='scripts/verify-inkwave-projectile-current-pair.mjs';fs.writeFileSync(path.join(candidate,checker),'#!/usr/bin/env node\nprocess.exit(0);\n');
+    assert.throws(()=>assertRespawn3003Head(execution.commit,candidate),/unchanged committed QA execution body/);cli('dirty-qa-body',execution.commit,false);
+    git(candidate,['add','--',checker]);const alteredTree=git(candidate,['write-tree']);
+    const sibling=git(candidate,['commit-tree',alteredTree,'-p',H,'-m','negative: unreviewed same-eleven-path altered-checker sibling']);
+    git(candidate,['reset','--hard',sibling]);git(candidate,['branch','control/altered-checker',sibling]);
+    assert.deepEqual(git(candidate,['diff','--no-renames','--name-only',H,sibling]).split('\n').sort(),[...RESPAWN3003_QA_PATHS].sort());
+    cli('altered-checker-sibling',sibling,false);
+    const sameTree=git(candidate,['commit-tree',execution.tree,'-p',H,'-m','negative: same reviewed tree with unreviewed commit identity']);
+    git(candidate,['reset','--hard',sameTree]);git(candidate,['branch','control/same-tree',sameTree]);
+    assert.notEqual(sameTree,execution.commit);assert.equal(git(candidate,['rev-parse','HEAD^{tree}']),execution.tree);
+    assert.deepEqual(git(candidate,['diff','--no-renames','--name-only',H,sameTree]).split('\n').sort(),[...RESPAWN3003_QA_PATHS].sort());
+    cli('same-tree-different-commit',sameTree,false);
+    // Optional historical controller is executed unchanged from its own path;
+    // neither candidate's altered checker nor a git replay stub is executed.
+    if(process.env.INKWAVE_RESPAWN_PAIR_OLD_VALIDATOR){
+      cli('old-validator-same-tree',sameTree,true,process.env.INKWAVE_RESPAWN_PAIR_OLD_VALIDATOR);
+      git(candidate,['reset','--hard',sibling]);cli('old-validator-altered-checker',sibling,true,process.env.INKWAVE_RESPAWN_PAIR_OLD_VALIDATOR);
+    }
+    if(process.env.INKWAVE_RESPAWN_PAIR_EVIDENCE){
+      const out=path.resolve(process.env.INKWAVE_RESPAWN_PAIR_EVIDENCE);fs.mkdirSync(out,{recursive:true});
+      fs.writeFileSync(path.join(out,'sibling-controls.json'),JSON.stringify({execution,cases},null,2)+'\n');
+      git(candidate,['bundle','create',path.join(out,'sibling-controls.bundle'),'control/altered-checker','control/same-tree','^'+H]);
+    }
+    assertRespawn3003Head(execution.commit);
+  }finally{fs.rmSync(tmp,{recursive:true,force:true});}
 });
 
 test('all source leaves, helper drift and copied public/nested extras reject without historical replay',()=>{
