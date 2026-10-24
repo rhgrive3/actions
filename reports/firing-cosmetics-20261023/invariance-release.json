@@ -1,0 +1,1280 @@
+{
+  "status": "pass",
+  "measurement": "real Chromium emitted-component Actor/Character/Physics/FX and CPU PaintSystem, fixed60 simulation, 30/60/120 display; not full Game/native camera or hardware/retail acceptance",
+  "cadenceDifferences": [
+    {
+      "case": "shooter/standing",
+      "field": "gameplaySHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    },
+    {
+      "case": "shooter/standing",
+      "field": "birthEventsSHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    },
+    {
+      "case": "shooter/standing",
+      "field": "paintWritesSHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    },
+    {
+      "case": "shooter/moving-jump",
+      "field": "gameplaySHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    },
+    {
+      "case": "shooter/moving-jump",
+      "field": "birthEventsSHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    },
+    {
+      "case": "shooter/moving-jump",
+      "field": "paintWritesSHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    },
+    {
+      "case": "splatling/moving-jump",
+      "field": "gameplaySHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    },
+    {
+      "case": "splatling/moving-jump",
+      "field": "birthEventsSHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    },
+    {
+      "case": "splatling/moving-jump",
+      "field": "paintWritesSHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    },
+    {
+      "case": "s3-shooter-heavy/standing",
+      "field": "gameplaySHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    },
+    {
+      "case": "s3-shooter-heavy/standing",
+      "field": "birthEventsSHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    },
+    {
+      "case": "s3-shooter-heavy/standing",
+      "field": "paintWritesSHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    },
+    {
+      "case": "s3-shooter-heavy/moving-jump",
+      "field": "gameplaySHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    },
+    {
+      "case": "s3-shooter-heavy/moving-jump",
+      "field": "birthEventsSHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    },
+    {
+      "case": "s3-shooter-heavy/moving-jump",
+      "field": "paintWritesSHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    },
+    {
+      "case": "s3-spinner-quick/moving-jump",
+      "field": "gameplaySHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    },
+    {
+      "case": "s3-spinner-quick/moving-jump",
+      "field": "birthEventsSHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    },
+    {
+      "case": "s3-spinner-quick/moving-jump",
+      "field": "paintWritesSHA256",
+      "status": "present in baseline and identically preserved in candidate; native birth origin differs at120Hz in this harness; cause not isolated"
+    }
+  ],
+  "cases": 24,
+  "simulationSteps": 5760,
+  "beforeContentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+  "afterContentHash": "a2bfc6219725724b37e9c6c23ddde4e3a2c47efba77499df443e30c55b3b99cc",
+  "beforeRawSHA256": "b489cc8f596d1d70ec9003068e360d3594aeedc60fe33a4b7d0742755d25ef3f",
+  "afterRawSHA256": "bb264fbee112ad484ab544e392db55dd8acc7c2608d39edd8449190e9404ce02",
+  "rows": [
+    {
+      "case": "shooter/standing/30",
+      "steps": 240,
+      "shots": 18,
+      "paintWrites": 44,
+      "counts": [
+        292,
+        0
+      ],
+      "gameplaySHA256": "79a5fb360b00a9a92864dc1af0a3d1ae972f3a0a2198a1ef8e544fc9d944f10d",
+      "birthEventsSHA256": "b113197c28b771041d63bbc46742e47195fe7df7bc6ccfb090ef937e14ebf134",
+      "paintWritesSHA256": "4d3ca0abc5ce74fc7fd411501dd7aa5529cb26f943e5de5cb48a3537a70ab39b",
+      "paintGridSHA256": "6f5d2c10378dbac288e2e1d83cbbddab8077bad5b76e4a8739696861e324b3ee",
+      "before": {
+        "resources": {
+          "geometries": 27,
+          "textures": 5
+        },
+        "render": {
+          "frame": 60,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 4,
+        "peakFxDrops": 47
+      },
+      "after": {
+        "resources": {
+          "geometries": 27,
+          "textures": 5
+        },
+        "render": {
+          "frame": 60,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 9,
+        "peakFxDrops": 47,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "shooter/standing/60",
+      "steps": 240,
+      "shots": 18,
+      "paintWrites": 44,
+      "counts": [
+        292,
+        0
+      ],
+      "gameplaySHA256": "79a5fb360b00a9a92864dc1af0a3d1ae972f3a0a2198a1ef8e544fc9d944f10d",
+      "birthEventsSHA256": "b113197c28b771041d63bbc46742e47195fe7df7bc6ccfb090ef937e14ebf134",
+      "paintWritesSHA256": "4d3ca0abc5ce74fc7fd411501dd7aa5529cb26f943e5de5cb48a3537a70ab39b",
+      "paintGridSHA256": "6f5d2c10378dbac288e2e1d83cbbddab8077bad5b76e4a8739696861e324b3ee",
+      "before": {
+        "resources": {
+          "geometries": 31,
+          "textures": 5
+        },
+        "render": {
+          "frame": 123,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 4,
+        "peakFxDrops": 47
+      },
+      "after": {
+        "resources": {
+          "geometries": 31,
+          "textures": 5
+        },
+        "render": {
+          "frame": 123,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 9,
+        "peakFxDrops": 47,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "shooter/standing/120",
+      "steps": 240,
+      "shots": 18,
+      "paintWrites": 44,
+      "counts": [
+        292,
+        0
+      ],
+      "gameplaySHA256": "39584154e4b19cdae2e63d8d2970ec7d77c1cd4e497c107f14baa0b4e4dfaa5e",
+      "birthEventsSHA256": "961efee0478dbf40a2de098e18f192e0de2d0c8d76e218097ff2c37ca01f4abd",
+      "paintWritesSHA256": "8dc2c23ce66e01bab9c0832a86846b29654eb6367fc62235d96bf50078aaf9c2",
+      "paintGridSHA256": "6f5d2c10378dbac288e2e1d83cbbddab8077bad5b76e4a8739696861e324b3ee",
+      "before": {
+        "resources": {
+          "geometries": 37,
+          "textures": 5
+        },
+        "render": {
+          "frame": 183,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 4,
+        "peakFxDrops": 47
+      },
+      "after": {
+        "resources": {
+          "geometries": 37,
+          "textures": 5
+        },
+        "render": {
+          "frame": 183,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 9,
+        "peakFxDrops": 47,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "shooter/moving-jump/30",
+      "steps": 240,
+      "shots": 18,
+      "paintWrites": 45,
+      "counts": [
+        381,
+        0
+      ],
+      "gameplaySHA256": "08d00adb4e938bd10eef1575b28ec7b843242017d2f4d927b29be966c280c596",
+      "birthEventsSHA256": "996d9394b37691b9ea1cbfea0b96d9b33dd0dc6654655fc1013e7f49e34d2ede",
+      "paintWritesSHA256": "0bb6b6c06134e69c1ad061562e4e7d24c17e7d6aab4a4c9a1ba24ce6d2c5a9a1",
+      "paintGridSHA256": "70fb7dff7917913cc86902f4269d4005afdd0a0aa9c97720771499349d61f392",
+      "before": {
+        "resources": {
+          "geometries": 36,
+          "textures": 5
+        },
+        "render": {
+          "frame": 243,
+          "calls": 21,
+          "triangles": 16064,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 4,
+        "peakFxDrops": 48
+      },
+      "after": {
+        "resources": {
+          "geometries": 36,
+          "textures": 5
+        },
+        "render": {
+          "frame": 243,
+          "calls": 21,
+          "triangles": 16064,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 10,
+        "peakFxDrops": 48,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "shooter/moving-jump/60",
+      "steps": 240,
+      "shots": 18,
+      "paintWrites": 45,
+      "counts": [
+        381,
+        0
+      ],
+      "gameplaySHA256": "08d00adb4e938bd10eef1575b28ec7b843242017d2f4d927b29be966c280c596",
+      "birthEventsSHA256": "996d9394b37691b9ea1cbfea0b96d9b33dd0dc6654655fc1013e7f49e34d2ede",
+      "paintWritesSHA256": "0bb6b6c06134e69c1ad061562e4e7d24c17e7d6aab4a4c9a1ba24ce6d2c5a9a1",
+      "paintGridSHA256": "70fb7dff7917913cc86902f4269d4005afdd0a0aa9c97720771499349d61f392",
+      "before": {
+        "resources": {
+          "geometries": 36,
+          "textures": 6
+        },
+        "render": {
+          "frame": 306,
+          "calls": 21,
+          "triangles": 16064,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 4,
+        "peakFxDrops": 48
+      },
+      "after": {
+        "resources": {
+          "geometries": 36,
+          "textures": 5
+        },
+        "render": {
+          "frame": 306,
+          "calls": 21,
+          "triangles": 16064,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 10,
+        "peakFxDrops": 48,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "shooter/moving-jump/120",
+      "steps": 240,
+      "shots": 18,
+      "paintWrites": 45,
+      "counts": [
+        381,
+        0
+      ],
+      "gameplaySHA256": "9b7592dc1a62c5a6ab6a4ac9976ebd0ff347a474b46e1811da049ac8bf24bb0d",
+      "birthEventsSHA256": "4b6ec5392ed0df110c115d9fe8877d9b129cbe96f94b1aad8d40fdcebca6971c",
+      "paintWritesSHA256": "7e0b42d3347cda017d7a398888e846a2ae728eeea2c4a34aa517f13160ef1f1d",
+      "paintGridSHA256": "70fb7dff7917913cc86902f4269d4005afdd0a0aa9c97720771499349d61f392",
+      "before": {
+        "resources": {
+          "geometries": 37,
+          "textures": 6
+        },
+        "render": {
+          "frame": 366,
+          "calls": 21,
+          "triangles": 16064,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 4,
+        "peakFxDrops": 48
+      },
+      "after": {
+        "resources": {
+          "geometries": 37,
+          "textures": 5
+        },
+        "render": {
+          "frame": 366,
+          "calls": 21,
+          "triangles": 16064,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 10,
+        "peakFxDrops": 48,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "splatling/standing/30",
+      "steps": 240,
+      "shots": 25,
+      "paintWrites": 50,
+      "counts": [
+        549,
+        0
+      ],
+      "gameplaySHA256": "0afd950526fabb863d8af0f1dc0d193b8440b49ebfb31446d6983737c4c0fa29",
+      "birthEventsSHA256": "4b2703ff9f7ae0b0f1f39228a3706ab4cd780cd3f519f6aa28de683a8fc79c23",
+      "paintWritesSHA256": "57d7d476be5fd924d4e010d422ae4b31537caf4dacdb866774909d6e92338bd5",
+      "paintGridSHA256": "6e5e3d4120161024747988350b286236cd5d95a14042b4d58d6663aec0973fc9",
+      "before": {
+        "resources": {
+          "geometries": 47,
+          "textures": 8
+        },
+        "render": {
+          "frame": 426,
+          "calls": 21,
+          "triangles": 16072,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 6,
+        "peakFxDrops": 34
+      },
+      "after": {
+        "resources": {
+          "geometries": 39,
+          "textures": 6
+        },
+        "render": {
+          "frame": 426,
+          "calls": 21,
+          "triangles": 16072,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 11,
+        "peakFxDrops": 34,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "splatling/standing/60",
+      "steps": 240,
+      "shots": 25,
+      "paintWrites": 50,
+      "counts": [
+        549,
+        0
+      ],
+      "gameplaySHA256": "0afd950526fabb863d8af0f1dc0d193b8440b49ebfb31446d6983737c4c0fa29",
+      "birthEventsSHA256": "4b2703ff9f7ae0b0f1f39228a3706ab4cd780cd3f519f6aa28de683a8fc79c23",
+      "paintWritesSHA256": "57d7d476be5fd924d4e010d422ae4b31537caf4dacdb866774909d6e92338bd5",
+      "paintGridSHA256": "6e5e3d4120161024747988350b286236cd5d95a14042b4d58d6663aec0973fc9",
+      "before": {
+        "resources": {
+          "geometries": 50,
+          "textures": 8
+        },
+        "render": {
+          "frame": 489,
+          "calls": 21,
+          "triangles": 16074,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 6,
+        "peakFxDrops": 34
+      },
+      "after": {
+        "resources": {
+          "geometries": 42,
+          "textures": 6
+        },
+        "render": {
+          "frame": 489,
+          "calls": 21,
+          "triangles": 16074,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 11,
+        "peakFxDrops": 34,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "splatling/standing/120",
+      "steps": 240,
+      "shots": 25,
+      "paintWrites": 50,
+      "counts": [
+        549,
+        0
+      ],
+      "gameplaySHA256": "0afd950526fabb863d8af0f1dc0d193b8440b49ebfb31446d6983737c4c0fa29",
+      "birthEventsSHA256": "4b2703ff9f7ae0b0f1f39228a3706ab4cd780cd3f519f6aa28de683a8fc79c23",
+      "paintWritesSHA256": "57d7d476be5fd924d4e010d422ae4b31537caf4dacdb866774909d6e92338bd5",
+      "paintGridSHA256": "6e5e3d4120161024747988350b286236cd5d95a14042b4d58d6663aec0973fc9",
+      "before": {
+        "resources": {
+          "geometries": 51,
+          "textures": 8
+        },
+        "render": {
+          "frame": 549,
+          "calls": 21,
+          "triangles": 16076,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 6,
+        "peakFxDrops": 34
+      },
+      "after": {
+        "resources": {
+          "geometries": 43,
+          "textures": 6
+        },
+        "render": {
+          "frame": 549,
+          "calls": 21,
+          "triangles": 16076,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 11,
+        "peakFxDrops": 34,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "splatling/moving-jump/30",
+      "steps": 240,
+      "shots": 25,
+      "paintWrites": 50,
+      "counts": [
+        580,
+        0
+      ],
+      "gameplaySHA256": "9d2588b644d9617ce10ecd26cdbe60e0f6ae46dd48a1757a0241b7a4e1fc52bf",
+      "birthEventsSHA256": "16b6f16a9b88828d7abe31d84707fe2ddc969db90f045dfa4552f6abfc5e12b6",
+      "paintWritesSHA256": "97c46ab30998ec7dcff1e26e35dbdf10fe4499551ef0d45ef3edc9c6aa189993",
+      "paintGridSHA256": "5f0b7a5fe3d6830dd25872f5d72a0e34ef1f149032d448682f14e1b0717a5c74",
+      "before": {
+        "resources": {
+          "geometries": 50,
+          "textures": 8
+        },
+        "render": {
+          "frame": 609,
+          "calls": 21,
+          "triangles": 16078,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 6,
+        "peakFxDrops": 38
+      },
+      "after": {
+        "resources": {
+          "geometries": 42,
+          "textures": 6
+        },
+        "render": {
+          "frame": 609,
+          "calls": 21,
+          "triangles": 16078,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 11,
+        "peakFxDrops": 38,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "splatling/moving-jump/60",
+      "steps": 240,
+      "shots": 25,
+      "paintWrites": 50,
+      "counts": [
+        580,
+        0
+      ],
+      "gameplaySHA256": "9d2588b644d9617ce10ecd26cdbe60e0f6ae46dd48a1757a0241b7a4e1fc52bf",
+      "birthEventsSHA256": "16b6f16a9b88828d7abe31d84707fe2ddc969db90f045dfa4552f6abfc5e12b6",
+      "paintWritesSHA256": "97c46ab30998ec7dcff1e26e35dbdf10fe4499551ef0d45ef3edc9c6aa189993",
+      "paintGridSHA256": "5f0b7a5fe3d6830dd25872f5d72a0e34ef1f149032d448682f14e1b0717a5c74",
+      "before": {
+        "resources": {
+          "geometries": 50,
+          "textures": 8
+        },
+        "render": {
+          "frame": 672,
+          "calls": 21,
+          "triangles": 16080,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 7,
+        "peakFxDrops": 39
+      },
+      "after": {
+        "resources": {
+          "geometries": 42,
+          "textures": 6
+        },
+        "render": {
+          "frame": 672,
+          "calls": 21,
+          "triangles": 16080,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 13,
+        "peakFxDrops": 39,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "splatling/moving-jump/120",
+      "steps": 240,
+      "shots": 25,
+      "paintWrites": 50,
+      "counts": [
+        580,
+        0
+      ],
+      "gameplaySHA256": "3993bdc8d58a49e375720aa6958d8dc2d59fa5f6635dda92b9d45f84b1e47c87",
+      "birthEventsSHA256": "bb15aecd1b1729da11e7fb963c8610ce68dd80229c60d20edc4cdb25b61075f9",
+      "paintWritesSHA256": "e7767feb647baf6d0eb45b207aae603c074a2a0ea0b978968e6ee66d568a78c4",
+      "paintGridSHA256": "5f0b7a5fe3d6830dd25872f5d72a0e34ef1f149032d448682f14e1b0717a5c74",
+      "before": {
+        "resources": {
+          "geometries": 51,
+          "textures": 8
+        },
+        "render": {
+          "frame": 732,
+          "calls": 21,
+          "triangles": 16080,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 7,
+        "peakFxDrops": 39
+      },
+      "after": {
+        "resources": {
+          "geometries": 43,
+          "textures": 6
+        },
+        "render": {
+          "frame": 732,
+          "calls": 21,
+          "triangles": 16080,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 13,
+        "peakFxDrops": 39,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "s3-shooter-heavy/standing/30",
+      "steps": 240,
+      "shots": 10,
+      "paintWrites": 36,
+      "counts": [
+        498,
+        0
+      ],
+      "gameplaySHA256": "38ea9103b0818c18bf429557605acf036beb45bb988b877a2b5263c4a229fbc1",
+      "birthEventsSHA256": "bbb48eca723dc7e3cf9b27d64eb505a73d561c0d96033507e07645876bfa415d",
+      "paintWritesSHA256": "cef0a7230c3d5868bf177ed269ef870bad97e9f022dd8c10a8332c22e6bd5f92",
+      "paintGridSHA256": "df8bd2f0f1893601ed61ac626b0cc563a61b8d8e86ea31a3a3522b982861c050",
+      "before": {
+        "resources": {
+          "geometries": 52,
+          "textures": 8
+        },
+        "render": {
+          "frame": 792,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 4,
+        "peakFxDrops": 14
+      },
+      "after": {
+        "resources": {
+          "geometries": 44,
+          "textures": 6
+        },
+        "render": {
+          "frame": 792,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 7,
+        "peakFxDrops": 14,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "s3-shooter-heavy/standing/60",
+      "steps": 240,
+      "shots": 10,
+      "paintWrites": 36,
+      "counts": [
+        498,
+        0
+      ],
+      "gameplaySHA256": "38ea9103b0818c18bf429557605acf036beb45bb988b877a2b5263c4a229fbc1",
+      "birthEventsSHA256": "bbb48eca723dc7e3cf9b27d64eb505a73d561c0d96033507e07645876bfa415d",
+      "paintWritesSHA256": "cef0a7230c3d5868bf177ed269ef870bad97e9f022dd8c10a8332c22e6bd5f92",
+      "paintGridSHA256": "df8bd2f0f1893601ed61ac626b0cc563a61b8d8e86ea31a3a3522b982861c050",
+      "before": {
+        "resources": {
+          "geometries": 57,
+          "textures": 8
+        },
+        "render": {
+          "frame": 852,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 4,
+        "peakFxDrops": 14
+      },
+      "after": {
+        "resources": {
+          "geometries": 49,
+          "textures": 6
+        },
+        "render": {
+          "frame": 852,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 7,
+        "peakFxDrops": 14,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "s3-shooter-heavy/standing/120",
+      "steps": 240,
+      "shots": 10,
+      "paintWrites": 36,
+      "counts": [
+        498,
+        0
+      ],
+      "gameplaySHA256": "db848b4ba126b76fbfecf7d5379a2f40e9da7e3e41a766da061ddd0bbf41985d",
+      "birthEventsSHA256": "35417a422381f68ea2c342c730165122ccf132ae8a46b72e0d408c3a4f6bd1e2",
+      "paintWritesSHA256": "fbed2f70f3a78f0b15c6625facd27b7b5b296ca6abbbcb58ba7aa6c3dcfdc032",
+      "paintGridSHA256": "df8bd2f0f1893601ed61ac626b0cc563a61b8d8e86ea31a3a3522b982861c050",
+      "before": {
+        "resources": {
+          "geometries": 58,
+          "textures": 8
+        },
+        "render": {
+          "frame": 912,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 4,
+        "peakFxDrops": 14
+      },
+      "after": {
+        "resources": {
+          "geometries": 50,
+          "textures": 6
+        },
+        "render": {
+          "frame": 912,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 7,
+        "peakFxDrops": 14,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "s3-shooter-heavy/moving-jump/30",
+      "steps": 240,
+      "shots": 10,
+      "paintWrites": 36,
+      "counts": [
+        535,
+        0
+      ],
+      "gameplaySHA256": "0a9f37b27018c6ea09b4e63487fa6a3c24addf79373ef0dd70b0ca668c9c132c",
+      "birthEventsSHA256": "9658e8c1e551bb2fb3572e7cfd29a7ca919b9c49d829c0c39c56e4348e532233",
+      "paintWritesSHA256": "bdeffe8142bad8f6cad45567265c2a1bf3186d4dd7857ffc5c57863c028000b5",
+      "paintGridSHA256": "1a1c8d1adc7396f47935484224754e4c25f49b822b31c8e20fd12ff83f1e0b52",
+      "before": {
+        "resources": {
+          "geometries": 57,
+          "textures": 8
+        },
+        "render": {
+          "frame": 972,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 5,
+        "peakFxDrops": 14
+      },
+      "after": {
+        "resources": {
+          "geometries": 49,
+          "textures": 6
+        },
+        "render": {
+          "frame": 972,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 8,
+        "peakFxDrops": 14,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "s3-shooter-heavy/moving-jump/60",
+      "steps": 240,
+      "shots": 10,
+      "paintWrites": 36,
+      "counts": [
+        535,
+        0
+      ],
+      "gameplaySHA256": "0a9f37b27018c6ea09b4e63487fa6a3c24addf79373ef0dd70b0ca668c9c132c",
+      "birthEventsSHA256": "9658e8c1e551bb2fb3572e7cfd29a7ca919b9c49d829c0c39c56e4348e532233",
+      "paintWritesSHA256": "bdeffe8142bad8f6cad45567265c2a1bf3186d4dd7857ffc5c57863c028000b5",
+      "paintGridSHA256": "1a1c8d1adc7396f47935484224754e4c25f49b822b31c8e20fd12ff83f1e0b52",
+      "before": {
+        "resources": {
+          "geometries": 57,
+          "textures": 8
+        },
+        "render": {
+          "frame": 1032,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 5,
+        "peakFxDrops": 14
+      },
+      "after": {
+        "resources": {
+          "geometries": 49,
+          "textures": 6
+        },
+        "render": {
+          "frame": 1032,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 8,
+        "peakFxDrops": 14,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "s3-shooter-heavy/moving-jump/120",
+      "steps": 240,
+      "shots": 10,
+      "paintWrites": 36,
+      "counts": [
+        535,
+        0
+      ],
+      "gameplaySHA256": "c3f8a05e40b212a662bf21d5392dc331d0dda2ebf3f6060d9c8852ec55c3b709",
+      "birthEventsSHA256": "c415c11d04d8ac552512481143a5b2cea91ab7acd87c5ef94f61c5dd97fc646b",
+      "paintWritesSHA256": "f0700ff26d61a82cb5d94c9fb53ea567e9bb7696834e6251723875c6cba86e93",
+      "paintGridSHA256": "1a1c8d1adc7396f47935484224754e4c25f49b822b31c8e20fd12ff83f1e0b52",
+      "before": {
+        "resources": {
+          "geometries": 58,
+          "textures": 8
+        },
+        "render": {
+          "frame": 1092,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 5,
+        "peakFxDrops": 14
+      },
+      "after": {
+        "resources": {
+          "geometries": 50,
+          "textures": 6
+        },
+        "render": {
+          "frame": 1092,
+          "calls": 21,
+          "triangles": 16068,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 8,
+        "peakFxDrops": 14,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "s3-spinner-quick/standing/30",
+      "steps": 240,
+      "shots": 23,
+      "paintWrites": 54,
+      "counts": [
+        438,
+        0
+      ],
+      "gameplaySHA256": "7c55516ba339f5e0a1db14f8f319bc192883b8b67dca104cc58b94d3c554145e",
+      "birthEventsSHA256": "37185b2b6e66f138f06d614b49c2f8aca545beb3ee75be46fa0ede49e5a5d56e",
+      "paintWritesSHA256": "082a7ff639056b76033e6b82faf2cea36f6d01c7b41c4d00f9feb7a94f64e6b4",
+      "paintGridSHA256": "51472c1860ddb2d76f26c5ae4b3cafa4c6a95324aa739b31723eda6c7028c804",
+      "before": {
+        "resources": {
+          "geometries": 60,
+          "textures": 8
+        },
+        "render": {
+          "frame": 1152,
+          "calls": 21,
+          "triangles": 16064,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 1,
+        "peakFxDrops": 11
+      },
+      "after": {
+        "resources": {
+          "geometries": 52,
+          "textures": 6
+        },
+        "render": {
+          "frame": 1152,
+          "calls": 21,
+          "triangles": 16064,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 4,
+        "peakFxDrops": 11,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "s3-spinner-quick/standing/60",
+      "steps": 240,
+      "shots": 23,
+      "paintWrites": 54,
+      "counts": [
+        438,
+        0
+      ],
+      "gameplaySHA256": "7c55516ba339f5e0a1db14f8f319bc192883b8b67dca104cc58b94d3c554145e",
+      "birthEventsSHA256": "37185b2b6e66f138f06d614b49c2f8aca545beb3ee75be46fa0ede49e5a5d56e",
+      "paintWritesSHA256": "082a7ff639056b76033e6b82faf2cea36f6d01c7b41c4d00f9feb7a94f64e6b4",
+      "paintGridSHA256": "51472c1860ddb2d76f26c5ae4b3cafa4c6a95324aa739b31723eda6c7028c804",
+      "before": {
+        "resources": {
+          "geometries": 64,
+          "textures": 8
+        },
+        "render": {
+          "frame": 1212,
+          "calls": 21,
+          "triangles": 16064,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 1,
+        "peakFxDrops": 12
+      },
+      "after": {
+        "resources": {
+          "geometries": 56,
+          "textures": 6
+        },
+        "render": {
+          "frame": 1212,
+          "calls": 21,
+          "triangles": 16064,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 5,
+        "peakFxDrops": 12,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "s3-spinner-quick/standing/120",
+      "steps": 240,
+      "shots": 23,
+      "paintWrites": 54,
+      "counts": [
+        438,
+        0
+      ],
+      "gameplaySHA256": "7c55516ba339f5e0a1db14f8f319bc192883b8b67dca104cc58b94d3c554145e",
+      "birthEventsSHA256": "37185b2b6e66f138f06d614b49c2f8aca545beb3ee75be46fa0ede49e5a5d56e",
+      "paintWritesSHA256": "082a7ff639056b76033e6b82faf2cea36f6d01c7b41c4d00f9feb7a94f64e6b4",
+      "paintGridSHA256": "51472c1860ddb2d76f26c5ae4b3cafa4c6a95324aa739b31723eda6c7028c804",
+      "before": {
+        "resources": {
+          "geometries": 65,
+          "textures": 8
+        },
+        "render": {
+          "frame": 1272,
+          "calls": 21,
+          "triangles": 16064,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 1,
+        "peakFxDrops": 12
+      },
+      "after": {
+        "resources": {
+          "geometries": 57,
+          "textures": 6
+        },
+        "render": {
+          "frame": 1272,
+          "calls": 21,
+          "triangles": 16064,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 5,
+        "peakFxDrops": 12,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "s3-spinner-quick/moving-jump/30",
+      "steps": 240,
+      "shots": 23,
+      "paintWrites": 54,
+      "counts": [
+        512,
+        0
+      ],
+      "gameplaySHA256": "f4cb686103ecf7dc4bc59f0b27a45411687cd6d512bc7b72a11abb15f20e0045",
+      "birthEventsSHA256": "b8d6692982fd2e9931f0f109e1d3d64ad638268e3fdd661db1b633764124c1e7",
+      "paintWritesSHA256": "c4667ba13fd454262f927ef9f5228f1485ad5fa86775a26274cd1cadc85d8e82",
+      "paintGridSHA256": "906882a3e142d3f90ff038c79c024e10852307951110900aae2418f0c7146502",
+      "before": {
+        "resources": {
+          "geometries": 64,
+          "textures": 8
+        },
+        "render": {
+          "frame": 1332,
+          "calls": 21,
+          "triangles": 16066,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 1,
+        "peakFxDrops": 11
+      },
+      "after": {
+        "resources": {
+          "geometries": 56,
+          "textures": 6
+        },
+        "render": {
+          "frame": 1332,
+          "calls": 21,
+          "triangles": 16066,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 5,
+        "peakFxDrops": 11,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "s3-spinner-quick/moving-jump/60",
+      "steps": 240,
+      "shots": 23,
+      "paintWrites": 54,
+      "counts": [
+        512,
+        0
+      ],
+      "gameplaySHA256": "f4cb686103ecf7dc4bc59f0b27a45411687cd6d512bc7b72a11abb15f20e0045",
+      "birthEventsSHA256": "b8d6692982fd2e9931f0f109e1d3d64ad638268e3fdd661db1b633764124c1e7",
+      "paintWritesSHA256": "c4667ba13fd454262f927ef9f5228f1485ad5fa86775a26274cd1cadc85d8e82",
+      "paintGridSHA256": "906882a3e142d3f90ff038c79c024e10852307951110900aae2418f0c7146502",
+      "before": {
+        "resources": {
+          "geometries": 64,
+          "textures": 8
+        },
+        "render": {
+          "frame": 1392,
+          "calls": 21,
+          "triangles": 16064,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 1,
+        "peakFxDrops": 12
+      },
+      "after": {
+        "resources": {
+          "geometries": 56,
+          "textures": 6
+        },
+        "render": {
+          "frame": 1392,
+          "calls": 21,
+          "triangles": 16064,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 5,
+        "peakFxDrops": 12,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    },
+    {
+      "case": "s3-spinner-quick/moving-jump/120",
+      "steps": 240,
+      "shots": 23,
+      "paintWrites": 54,
+      "counts": [
+        512,
+        0
+      ],
+      "gameplaySHA256": "87d7a21f01824afbe897ab4b4ca51e6b7584ed71bdc985463d0541332d44f593",
+      "birthEventsSHA256": "0786358f0509282d9ffe1d46bcbf9c0f37094174177e0d33b5d81dc3073c34c8",
+      "paintWritesSHA256": "573da08542e4c5a7b9ab84105be4974e29e396836965091687d6097218fcd6c6",
+      "paintGridSHA256": "906882a3e142d3f90ff038c79c024e10852307951110900aae2418f0c7146502",
+      "before": {
+        "resources": {
+          "geometries": 65,
+          "textures": 8
+        },
+        "render": {
+          "frame": 1452,
+          "calls": 21,
+          "triangles": 16064,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 1,
+        "peakFxDrops": 12
+      },
+      "after": {
+        "resources": {
+          "geometries": 57,
+          "textures": 6
+        },
+        "render": {
+          "frame": 1452,
+          "calls": 21,
+          "triangles": 16064,
+          "points": 0,
+          "lines": 0
+        },
+        "peakBlobs": 5,
+        "peakFxDrops": 12,
+        "retirement": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    }
+  ]
+}

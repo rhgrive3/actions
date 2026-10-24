@@ -1,0 +1,39 @@
+(node:2053) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ only ordinary Shooter families and their catalogue kits receive muzzle beads (1.082817ms)
+✔ real composed Shooter appends one bounded burst per birth without RNG/gameplay/paint writes (1259.857036ms)
+✔ cessation expires, switching retires, clear/reuse resets a pooled birth (829.409715ms)
+✔ stress stays within fixed 32 bursts/96 drops and writes no new GPU resources (776.662966ms)
+(node:2054) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Splatling family ownership does not claim Shooter, Dualies, Slosher, special or delayed non-shot objects (0.936145ms)
+✖ native standing/jumping Splatling gets its own compact bead and no Shooter volume/history body (1207.387034ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3379.233368
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/splatling-cosmetics.test.mjs:10:1
+✖ native standing/jumping Splatling gets its own compact bead and no Shooter volume/history body (1207.387034ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - null
+  
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/splatling-cosmetics.test.mjs:19:86)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

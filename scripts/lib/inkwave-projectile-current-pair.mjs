@@ -5,6 +5,8 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {execFileSync} from 'node:child_process';
+import {assertOutputDirectorySeparate} from './inkwave-source-admission-cli.mjs';
+import {MAIN3003_BASE,main3003Fixture,main3003Epoch,main3003Route,assertMain3003Environment,assertMain3003Head,assertMain3003Inputs,assertMain3003Artifacts} from './inkwave-main3003-firing-pair.mjs';
 
 export const CURRENT_PAIR_MODE = 'oct23-reviewed-projectile-pairs';
 export const CURRENT_PAIR_FIXTURE_SHA256 = 'adf375e9e5a53d3f7ea0724d296a4b201c68edbfc6aea44291617a7d9de20ad9';
@@ -15,6 +17,9 @@ const fixture = JSON.parse(gunzipSync(packed));
 assert.equal(fixture.schema, 1);
 assert.equal(fixture.repository, 'rhgrive3/actions');
 assert.deepEqual(fixture.routes.map(row => row.pr), [1857, 1860]);
+assert.deepEqual(main3003Fixture().roots,fixture.roots);
+assert.deepEqual(main3003Fixture().scripts,fixture.scripts);
+const sourceEpoch=epoch=>fixture.epochs[epoch]||main3003Epoch(epoch);
 const sort = rows => [...rows].sort((a,b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
 const included = relative => {
   if (fixture.scripts.includes(relative)) return true;
@@ -42,14 +47,15 @@ export function selectCurrentPair(event, eventName, repository) {
   assert.equal(pr.head.repo.full_name, fixture.repository, 'owned candidate repository');
   assert.equal(pr.base.ref, 'main', 'reviewed main baseline required');
   assert.equal(pr.head.ref, route.branch, 'exact reviewed branch required');
-  assert.ok(route.bases.includes(pr.base.sha), 'actual event baseline must be a pinned reviewed epoch');
+  const additional=main3003Route(pr.number,pr.base.sha);
+  assert.ok(route.bases.includes(pr.base.sha)||additional, 'actual event baseline must be a pinned reviewed epoch');
   assert.match(pr.head.sha ?? '', /^[0-9a-f]{40}$/, 'actual candidate immutable SHA required');
   assert.notEqual(pr.head.sha, pr.base.sha, 'separate reviewed candidate required');
-  return {...structuredClone(route), baseSha:pr.base.sha, candidateSha:pr.head.sha};
+  return {...structuredClone(route),...additional, baseSha:pr.base.sha, candidateSha:pr.head.sha};
 }
 
 export function assertCurrentPairRows(rows, epoch, hashes = true) {
-  const expected = fixture.epochs[epoch];
+  const expected = sourceEpoch(epoch);
   assert.ok(expected, 'known reviewed production epoch required');
   assert.ok(Array.isArray(rows), 'complete production inventory required');
   const actual = sort(rows), pinned = sort(expected.leaves);
@@ -110,32 +116,51 @@ export function scanCurrentPairProduction(root) {
   return sort(rows);
 }
 
-export function verifyCurrentProjectilePair({baseline,candidate,event,eventName,repository}) {
+function verifySide(root,commit,epoch,isBase,route){
+  const before=readCurrentPairGitTree(root,commit);
+  if(isBase)assert.equal(before.tree,sourceEpoch(epoch).tree,'exact reviewed baseline full tree');
+  assertCurrentPairRows(before.entries,epoch,false);
+  const rows=scanCurrentPairProduction(root);assertCurrentPairRows(rows,epoch);
+  if(route.exactMain3003){
+    assertMain3003Inputs(rows,epoch);
+    if(!isBase)assertMain3003Head(commit,args=>git(root,args));
+  }
+  assert.deepEqual(readCurrentPairGitTree(root,commit),before,'declared checkout stable during verification');
+  return {commit,tree:before.tree,sourceEpoch:epoch,productionLeaves:rows.length,inventorySha256:hash(JSON.stringify(rows))};
+}
+
+export function verifyCurrentProjectilePair({baseline,candidate,event,eventName,repository,baselineSite,candidateSite,expectedSourceBase,expectedSourceHead}) {
   const route = selectCurrentPair(event,eventName,repository);
+  if(route.exactMain3003)assertMain3003Environment(process.env);
+  if(expectedSourceBase!==undefined||expectedSourceHead!==undefined){
+    assert.equal(expectedSourceBase,route.baseSha,'explicit source-base label');
+    assert.equal(expectedSourceHead,route.sourceHead,'explicit source-head label');
+  }
   baseline = fs.realpathSync(baseline); candidate = fs.realpathSync(candidate);
   assert.notEqual(baseline,candidate,'separate actual worktrees required');
   const checkouts = [];
   for (const [root,commit,epoch,isBase] of [[baseline,route.baseSha,route.baseSha,true],[candidate,route.candidateSha,route.sourceHead,false]]) {
-    const before = readCurrentPairGitTree(root,commit);
-    if (isBase) assert.equal(before.tree,fixture.epochs[epoch].tree,'exact reviewed baseline full tree');
-    assertCurrentPairRows(before.entries,epoch,false);
-    const rows = scanCurrentPairProduction(root);
-    assertCurrentPairRows(rows,epoch);
-    assert.deepEqual(readCurrentPairGitTree(root,commit),before,'declared checkout stable during verification');
-    checkouts.push({commit,tree:before.tree,sourceEpoch:epoch,productionLeaves:rows.length,inventorySha256:hash(JSON.stringify(rows))});
+    checkouts.push(verifySide(root,commit,epoch,isBase,route));
   }
-  return {schema:1,mode:CURRENT_PAIR_MODE,pr:route.pr,repository,branch:route.branch,
+  assert.equal(Boolean(baselineSite),Boolean(candidateSite),'both build sides required');
+  let builds;
+  if(baselineSite){
+    assert.ok(route.exactMain3003,'build pins require the explicit main3003 pair');
+    assert.notEqual(fs.realpathSync(baselineSite),fs.realpathSync(candidateSite),'separate built sides');
+    builds=[assertMain3003Artifacts(baselineSite,route.baseSha),assertMain3003Artifacts(candidateSite,route.sourceHead)];
+  }
+  return {schema:1,mode:route.mode||CURRENT_PAIR_MODE,pr:route.pr,repository,branch:route.branch,
     declaredBaseCommit:route.baseSha,declaredCandidateCommit:route.candidateSha,
-    sourceBase:route.baseSha,sourceHead:route.sourceHead,fixtureSha256:CURRENT_PAIR_FIXTURE_SHA256,
-    checkouts,productionDeltas:route.deltas[route.baseSha],changes:[],writtenPaths:[],
+    sourceBase:route.baseSha,sourceHead:route.sourceHead,fixtureSha256:route.fixtureSha256||CURRENT_PAIR_FIXTURE_SHA256,
+    checkouts,...(route.exactMain3003?{historicalFixtureSha256:CURRENT_PAIR_FIXTURE_SHA256,verificationStage:builds?'source-and-build':'source-before-build',buildClosureRequired:true,builds:builds||null}:{}),productionDeltas:route.deltas[route.baseSha],changes:[],writtenPaths:[],
     scope:'Preserve the actual event base and complete pinned candidate production epoch, including paint, births, RNG, pose and network. No historical Roller, pool, paint or pose replay.',
-    limitation:'Pinned source admission only. Listed production differences remain visible. Does not establish compiled, physical-state, RNG, visual, retail or hardware equivalence; full capture and comparison remain mandatory.'};
+    limitation:route.exactMain3003?'Exact source/build inventory admission only. Does not establish physical-state, RNG, visual, retail or hardware equivalence; both required captures and comparison remain mandatory.':'Pinned source admission only. Listed production differences remain visible. Does not establish compiled, physical-state, RNG, visual, retail or hardware equivalence; full capture and comparison remain mandatory.'};
 }
 
 export function currentPairNegativeControls(route) {
   let rejected = 0;
   for (const epoch of [route.baseSha,route.sourceHead]) {
-    const rows = fixture.epochs[epoch].leaves;
+    const rows = sourceEpoch(epoch).leaves;
     for (let i = 0; i < rows.length; i++) {
       const changed = [...rows]; changed[i] = {...rows[i],sha256:'0'.repeat(64)};
       assert.throws(() => assertCurrentPairRows(changed,epoch)); rejected++;
@@ -145,4 +170,33 @@ export function currentPairNegativeControls(route) {
     }
   }
   return {kind:'all-production-leaf-and-inventory-negative-controls',rejected};
+}
+
+// Both existing required captures enforce their own built side after build.
+// The after matrix has no baseline checkout, so each side validates only its
+// own real checkout/artifacts while retaining both immutable source labels.
+export function assertCurrentPairCaptureOutputs({site,root,baseline,evidence,profile}){
+  const sources=[path.resolve(root),path.resolve(root,baseline||'.ci-baseline')];
+  // Protect existing checkout entries; CI scratch contains generated outputs.
+  const inputs=[...new Set(sources.flatMap(source=>fs.existsSync(source)?fs.readdirSync(source):[])
+    .filter(name=>name!=='.ci-scratch').concat(['.built-site/baseline','.built-site/projectiles']))];
+  for(const value of [evidence,profile].filter(Boolean)){
+    assertOutputDirectorySeparate(value,sources,inputs,sources);
+    assertOutputDirectorySeparate(value,[path.dirname(path.resolve(site))],[path.basename(path.resolve(site))],sources);
+  }
+}
+
+export function verifyCurrentPairCaptureBuild({site,mode,root,eventFile,eventName,repository,baseline,evidence,profile}){
+  if(!eventFile||eventName!=='pull_request')return null;
+  const event=JSON.parse(fs.readFileSync(eventFile,'utf8'));
+  if(event.number!==1857||event.pull_request?.head?.ref!=='fix/shooter-splatling-cosmetics-20261023')return null;
+  const route=selectCurrentPair(event,eventName,repository);if(!route.exactMain3003)return null;
+  assert.ok(['baseline','candidate'].includes(mode),'explicit capture side label');
+  assertCurrentPairCaptureOutputs({site,root,baseline,evidence,profile});
+  const isBase=mode==='baseline',epoch=isBase?MAIN3003_BASE:route.sourceHead,commit=isBase?route.baseSha:route.candidateSha;
+  const sourceRoot=isBase?path.resolve(root,baseline||'.ci-baseline'):root;
+  assertMain3003Environment(process.env);
+  const source=verifySide(sourceRoot,commit,epoch,isBase,route),build=assertMain3003Artifacts(site,epoch);
+  return {mode:route.mode,side:mode,sourceBase:route.baseSha,sourceHead:route.sourceHead,
+    declaredBaseCommit:route.baseSha,declaredCandidateCommit:route.candidateSha,fixtureSha256:route.fixtureSha256,source,build,writtenPaths:[]};
 }

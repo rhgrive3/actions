@@ -1,0 +1,22 @@
+[
+  {
+    "name": "before",
+    "inputFiles": 1420,
+    "artifacts": 2110,
+    "inputHash": "8710f36362bd7e4c59b52cf6dd8d95a2ac720ee8b8b64541e1f0aecc8c4925f5",
+    "contentHash": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+    "buildScriptSHA256": "a2814e623a81811aca5a6b5079d566ab88fabaa9b9a8d9351fadd45c25a98242",
+    "allCurrentInputsMatch": true,
+    "allArtifactBytesMatch": true
+  },
+  {
+    "name": "candidate",
+    "inputFiles": 1423,
+    "artifacts": 2116,
+    "inputHash": "9e8b33fb99224088ee00aa2fba80aef88f619b1e8e94f8cb1462b252d2154150",
+    "contentHash": "f740110d0f27536f46725d2299710bf4e01a08c0e7ddc6efba75dbe27a61c965",
+    "buildScriptSHA256": "a2814e623a81811aca5a6b5079d566ab88fabaa9b9a8d9351fadd45c25a98242",
+    "allCurrentInputsMatch": true,
+    "allArtifactBytesMatch": true
+  }
+]
