@@ -196,7 +196,18 @@ async function openGameContext({ mobile = false } = {}) {
   page.on('crash', () => report.browserDiagnostics.push({ event: 'page-crash', mobile, at: new Date().toISOString() }));
   page.on('pageerror', e => mimeErrors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') mimeErrors.push(m.text().slice(0, 1000)); });
-  page.on('requestfailed', r => mimeErrors.push(`request failed ${r.url()}: ${r.failure()?.errorText || 'unknown'}`));
+  page.on('requestfailed', r => {
+    const failure=r.failure()?.errorText || 'unknown', url=new URL(r.url());
+    const root=`/_versions/${manifest.build.revision}/`;
+    const asset=url.pathname.startsWith(root) ? url.pathname.slice(root.length) : null;
+    // A media element cancelled while the capture changes scenes can abort an
+    // authenticated local MP3 fetch. The complete file bytes were checked
+    // against the immutable site manifest at startup; preserve a diagnostic,
+    // but keep real 404s, corrupt bytes and all other network failures fatal.
+    if (failure==='net::ERR_ABORTED' && /^patches\/splatoon3\/runtime\/audio\/s3-real\/[^/]+\.mp3$/.test(asset||'') && Object.hasOwn(manifest.artifacts,asset)) {
+      report.browserDiagnostics.push({event:'verified-audio-fetch-cancelled',asset,mobile,at:new Date().toISOString()});
+    } else mimeErrors.push(`request failed ${r.url()}: ${failure}`);
+  });
   await page.addInitScript(installAudioTimingObserver);
   await page.addInitScript(installProjectileCaptureUiGate);
   await page.addInitScript(installProjectileCaptureProjection);
