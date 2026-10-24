@@ -9,6 +9,8 @@ const WIRE_MAJOR = '2';
 const START_ADMISSION_COMPAT = 'iw-gameplay-20261023-start-admission-v1';
 // Newer gameplay epochs inherit fail-closed relay START admission.
 const START_ADMISSION_SPAWN_COMPAT = 'iw-gameplay-20261023-spawn-exclusion-v1';
+// Current composed client epoch also requires the same strict START handshake.
+const START_ADMISSION_CURRENT_COMPAT = 'iw-gameplay-20261024-spawn-start-admission-v1';
 const ROOM_CODE = /^[BCEFGHJKLMNPQRTUVXYZ23456789]{5}$/;
 const COMPAT_TOKEN = /^[a-zA-Z0-9_-]{8,80}$/;
 const MAX_FRAME_BYTES = 64 * 1024;
@@ -394,7 +396,7 @@ export class RoomDurableObject {
       const payload = s.slice(2);
       const data = validRelayPayload(payload);
       if (!data || !this._admitSemantic(m, data)) return;
-      if (data.k === 'start' && (this.compat === START_ADMISSION_COMPAT || this.compat === START_ADMISSION_SPAWN_COMPAT)) {
+      if (data.k === 'start' && (this.compat === START_ADMISSION_COMPAT || this.compat === START_ADMISSION_SPAWN_COMPAT || this.compat === START_ADMISSION_CURRENT_COMPAT)) {
         // Admission and this check run synchronously in the same DO event. A
         // JOIN accepted before this point must appear once in the human roster.
         if (id !== this.hostId) return;
