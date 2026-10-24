@@ -1,3 +1,4 @@
+const TENTA_BRACKET_CORNERS = Object.freeze([[-1, -1], [1, -1], [1, 1], [-1, 1]]);
 // Splatoon 3 special-weapon effects: activation, sustain, attack, impact and end
 // for all nineteen specials (presentation only).
 //
@@ -463,6 +464,9 @@ class Director {
       h.ticks.setAttribute('d', d);
     }
     h.inner.setAttribute('transform', `rotate(${(k * 40) % 360} ${cx} ${cy})`);
+    // A single lock HUD update uses the same bracket phase for every target.
+    const bracketRadius = inside.length ? 16 + 3 * Math.sin(k * 10) : 0;
+    const bracketAngle = inside.length ? (k * 90) % 360 : 0;
     // a rotating four-corner bracket on each opponent inside the circle
     for (let i = 0; i < Math.max(inside.length, h.brackets.length); i++) {
       let b = h.brackets[i];
@@ -472,12 +476,12 @@ class Director {
         h.svg.appendChild(b);
       }
       if (i >= inside.length) { b.style.display = 'none'; continue; }
-      b.style.display = '';
+      if (b.style.display !== '') b.style.display = '';
       const [, nx, ny] = inside[i], x = cr.left - lr.left + (nx * 0.5 + 0.5) * cr.width, y = cr.top - lr.top + (0.5 - ny * 0.5) * cr.height;
-      const r = 16 + 3 * Math.sin(k * 10), e = 7;
+      const r = bracketRadius, e = 7;
       let p = '';
-      for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) p += `M${x + sx * r} ${y + sy * (r - e)}L${x + sx * r} ${y + sy * r}L${x + sx * (r - e)} ${y + sy * r}`;
-      b.setAttribute('d', p); b.setAttribute('transform', `rotate(${(k * 90) % 360} ${x} ${y})`);
+      for (const [sx, sy] of TENTA_BRACKET_CORNERS) p += `M${x + sx * r} ${y + sy * (r - e)}L${x + sx * r} ${y + sy * r}L${x + sx * (r - e)} ${y + sy * r}`;
+      b.setAttribute('d', p); b.setAttribute('transform', `rotate(${bracketAngle} ${x} ${y})`);
     }
     return true;
   }
@@ -937,9 +941,13 @@ const DIRECTORS = {
       // hidden once the salvo launches.
       const pv = a.isLocal && a.alive && t.phase !== 'launching' ? tentaMissilesLockPreview(this.api, a) : null;
       const show = !!pv, cam = this.G.camera, limit = pv?.limit || 0, inside = [];
-      if (pv && cam?.isPerspectiveCamera) for (const e of pv.targets) {
-        const q = this.v[0].copy(e.pos); q.y += 0.7; q.project(cam);
-        inside.push([e, q.x, q.y]);
+      if (pv && cam?.isPerspectiveCamera) for (let i=0;i<pv.targets.length;i++) {
+        const e=pv.targets[i],screen=pv.screen?.[i];
+        if (screen && screen[0] !== null && screen[1] !== null) inside.push([e, screen[0], screen[1]]);
+        else {
+          const q=this.v[0].copy(e.pos);q.y+=.7;q.project(cam);
+          inside.push([e,q.x,q.y]);
+        }
       }
       if (this.tentaHud(t, show, limit, inside)) return;
       // no HUD layer (headless/tests): fall back to world-space reticles over the same opponents

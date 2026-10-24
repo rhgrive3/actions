@@ -91,8 +91,9 @@ export function runtimeSplashPlan(profile,sequence) {
   // Keep the original full-sequence arithmetic at large safe-integer boundaries.
   const count=Math.floor((sequence+1)*s.count+EPS)-Math.floor(sequence*s.count+EPS);
   let plans=runtimeSplashPlans.get(profile);if(!plans){plans=[];runtimeSplashPlans.set(profile,plans);}
-  let plan=plans.find(p=>p.ordinal===ordinal&&p.count===count);
-  if(!plan){plan=Object.freeze(splashPlan(profile,sequence));plans.push(plan);}
+  let byCount=plans[ordinal];if(!byCount)byCount=plans[ordinal]=new Map();
+  let plan=byCount.get(count);
+  if(!plan){plan=Object.freeze(splashPlan(profile,sequence));byCount.set(count,plan);}
   return plan;
 }
 export function launchSpeed(profile, chargeSeconds = 0) {
