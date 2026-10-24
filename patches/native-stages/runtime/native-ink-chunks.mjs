@@ -1,23 +1,33 @@
 import * as THREE from 'three';
 
+// Reconstruct source-order runs directly into the existing GPU index array.
+function writeIdentityRange(target, out, start, end) {
+ for(let i=start;i<end;i++)target[out++]=i;
+ return out;
+}
+
 /** Rendering partition only: each original triangle appears once, with shared
  * source attributes and no clipped, simplified or regenerated positions. A
  * triangle crossing a tile boundary stays whole; its actual bounds control
  * culling. The tile size has no relation to retail collision or paint cells. */
-export function partitionNativeInk(geometry,tileSize=16){
+export function partitionNativeInk(geometry,tileSize=16,triangleTile=null){
  if(!Number.isFinite(tileSize)||tileSize<=0)throw new RangeError('Invalid native ink tile size');
  const p=geometry.getAttribute('position'),groups=new Map(),point=new THREE.Vector3();
  if(geometry.index||p.count%3)throw new Error('Native ink partition requires complete non-indexed triangles');
+ // The in-game mesh needs just the tile mapping and bounds, not index arrays.
+ const direct=triangleTile!==null;
+ if(direct&&(!(triangleTile instanceof Uint32Array)||triangleTile.length!==p.count/3))throw new TypeError('Invalid native ink triangle-tile output');
  for(let i=0;i<p.count;i+=3){
   const x=(p.getX(i)+p.getX(i+1)+p.getX(i+2))/3,y=(p.getY(i)+p.getY(i+1)+p.getY(i+2))/3,z=(p.getZ(i)+p.getZ(i+1)+p.getZ(i+2))/3;
   const key=Math.floor(x/tileSize)+','+Math.floor(y/tileSize)+','+Math.floor(z/tileSize);
-  let g=groups.get(key);if(!g){g={key,indices:[],bounds:new THREE.Box3()};groups.set(key,g);}
-  for(let j=i;j<i+3;j++){g.indices.push(j);g.bounds.expandByPoint(point.set(p.getX(j),p.getY(j),p.getZ(j)));}
+  let g=groups.get(key);if(!g){g={key,indices:direct?null:[],bounds:new THREE.Box3(),tile:groups.size};groups.set(key,g);}
+  if(direct)triangleTile[i/3]=g.tile;
+  for(let j=i;j<i+3;j++){if(!direct)g.indices.push(j);g.bounds.expandByPoint(point.set(p.getX(j),p.getY(j),p.getZ(j)));}
  }
  return [...groups.values()].map(({key,indices,bounds})=>{
   const g=new THREE.BufferGeometry();
   for(const [name,a] of Object.entries(geometry.attributes))g.setAttribute(name,a);
-  g.setIndex(new THREE.BufferAttribute(new Uint32Array(indices),1));
+  if(indices)g.setIndex(new THREE.BufferAttribute(new Uint32Array(indices),1));
   // computeBoundingSphere() would include the entire shared attribute array.
   g.boundingBox=bounds;g.boundingSphere=bounds.getBoundingSphere(new THREE.Sphere());
   // Include the corners despite floating point cancellation at the sphere edge.
@@ -66,20 +76,15 @@ export class NativeInkMesh extends THREE.Mesh {
   }
   set geometry(next) {
     if (!this._ready) { this._geometry = next; return; }
-    const chunks = partitionNativeInk(next, this.tileSize);
+    const triCount = next.getAttribute('position').count / 3;
+    const triangleTile = new Uint32Array(triCount);
+    const chunks = partitionNativeInk(next, this.tileSize,triangleTile);
     this._detachPaint();
     this._disposeChunks();
     this._geometry = next;
     this.chunks = chunks;
     this._visible = new Uint8Array(chunks.length).fill(255);
-    const triCount = next.getAttribute('position').count / 3;
-    this._triangleTile = new Uint32Array(triCount);
-    for (let tile = 0; tile < chunks.length; tile++) {
-      const ix = chunks[tile].index;
-      for (let j = 0; j < ix.count; j += 3) this._triangleTile[ix.getX(j) / 3] = tile;
-      // The per-tile index is construction-only; visibility uses triangleTile.
-      chunks[tile].setIndex(null);
-    }
+    this._triangleTile = triangleTile;
 
     // The source is non-indexed. Precompute ascending contiguous runs in
     // *source triangle order*, never in tile order: transparent overlay
@@ -98,10 +103,7 @@ export class NativeInkMesh extends THREE.Mesh {
     // Many tiny interleaved runs make subarray construction more costly than
     // the original scalar loop. Use that loop only on highly fragmented maps.
     this._fragmentedRuns = tiles.length > triCount / 4;
-    // Native TypedArray.set copies the visible original-index runs in bulk.
-    // Its memory cost is explicit and stable, with no frame-time JS arrays.
-    this._fullIndex = new Uint32Array(triCount * 3);
-    for (let i = 0; i < this._fullIndex.length; i++) this._fullIndex[i] = i;
+    // No retained full-size identity index: avoid doubling this GPU buffer.
     this._drawIndex = new THREE.BufferAttribute(new Uint32Array(triCount * 3), 1)
       .setUsage(THREE.DynamicDrawUsage);
     next.setIndex(this._drawIndex);
@@ -339,7 +341,7 @@ export class NativeInkMesh extends THREE.Mesh {
       this._fullDraw = false;
       return 0;
     }
-    const index = this._drawIndex.array, full = this._fullIndex;
+    const index = this._drawIndex.array;
     if (faces) {
       // Painted charts in visible tiles, still in source triangle order.
       const starts = this._faceStart, tileOf = this._triangleTile, visible = this._visible;
@@ -367,12 +369,12 @@ export class NativeInkMesh extends THREE.Mesh {
     }
     if (visibleCount === this.chunks.length) {
       if (!this._fullDraw) {
-        index.set(full);
+        writeIdentityRange(index,0,0,index.length);
         this._drawIndex.clearUpdateRanges();
-        this._drawIndex.addUpdateRange(0, full.length);
+        this._drawIndex.addUpdateRange(0, index.length);
         this._drawIndex.needsUpdate = true;
       }
-      this.geometry.setDrawRange(0, full.length);
+      this.geometry.setDrawRange(0, index.length);
       this._fullDraw = true;
       return visibleCount;
     }
@@ -397,19 +399,16 @@ export class NativeInkMesh extends THREE.Mesh {
           if (first === -1) { first = starts[k]; last = ends[k]; }
           else if (starts[k] === last) last = ends[k];
           else {
-            index.set(full.subarray(first, last), count);
-            count += last - first;
+            count=writeIdentityRange(index,count,first,last);
             first = starts[k]; last = ends[k];
           }
         } else if (first !== -1) {
-          index.set(full.subarray(first, last), count);
-          count += last - first;
+          count=writeIdentityRange(index,count,first,last);
           first = -1;
         }
       }
       if (first !== -1) {
-        index.set(full.subarray(first, last), count);
-        count += last - first;
+        count=writeIdentityRange(index,count,first,last);
       }
     }
     this.geometry.setDrawRange(0, count);
@@ -426,6 +425,6 @@ export class NativeInkMesh extends THREE.Mesh {
     this._disposeChunks();
     this._geometry?.dispose();
     this._geometry = null;
-    this._triangleTile = this._runTiles = this._runStarts = this._runEnds = this._fullIndex = null;
+    this._triangleTile = this._runTiles = this._runStarts = this._runEnds = null;
   }
 }

@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "canonicalSourceInputsReRead": 1420,
+  "allListedOutputArtifactsReRead": {
+    "before": 2110,
+    "after": 2110
+  },
+  "candidateInputHash": "578137eac3693d92b6432d17ac9bc4d5e93c6c3a0c943a7a3ed8578625ea09e8",
+  "candidateContentHash": "2042ffbbb14645c4f4a4db2188826b7988c4112dcebab1a14915fd2f72e77a07",
+  "builderSha256": "a2814e623a81811aca5a6b5079d566ab88fabaa9b9a8d9351fadd45c25a98242",
+  "note": "Final changes after build are tests, native probe and evidence/report files; every canonical byte was re-read and matches the normal build."
+}

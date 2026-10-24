@@ -1,0 +1,18 @@
+{
+  "status": "passed",
+  "beforeContentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+  "afterContentHash": "7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882",
+  "matchedNativeFrameSamples": 8,
+  "finalPaintCells": 1315,
+  "matchedFields": [
+    "tick",
+    "weapon",
+    "actor",
+    "pitch",
+    "main",
+    "drops",
+    "paintCells",
+    "sourceMotion"
+  ],
+  "note": "Trusted real main/mode/range input, native _frame, 60Hz simulation steps. Only presentation radius/direction differs; not Nintendo encoded frames."
+}

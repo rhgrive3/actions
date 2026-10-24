@@ -1,0 +1,420 @@
+{
+  "archiveSha256": "dc7aff4c1712951330100110aa769f9b267ff560013e7552e6c055583bfefc11",
+  "members": [
+    {
+      "path": "audio-browser-final.log",
+      "bytes": 56,
+      "sha256": "86aae1bae7a386299b962def5daada061f3ab4b778c72ba34c889f4a1d297104"
+    },
+    {
+      "path": "audio-browser.json",
+      "bytes": 4129,
+      "sha256": "697a4009578754c7dfd9c9b2f4328939ab0e0604852e00b38439a659ab2874ab"
+    },
+    {
+      "path": "audio-browser.log",
+      "bytes": 878,
+      "sha256": "fd6d2e400d9a197d2a99bee26f2027f5955bc97a3bdf382ddd1195234c0bc627"
+    },
+    {
+      "path": "audio-onset.tap",
+      "bytes": 5721,
+      "sha256": "562a6a9a63760e6d1b47c2c40b58c02217f87642ef6936eb17c9ae26731b6e45"
+    },
+    {
+      "path": "benchmark/evidence/whole-game-calibrate.json",
+      "bytes": 27190198,
+      "sha256": "beea02b48900bd7515150805472d4add2a44d9e4f937cc31ebacb3aa2a618b71"
+    },
+    {
+      "path": "benchmark/tool-identity.json",
+      "bytes": 652,
+      "sha256": "3d8e7ff69439963ebf9e4c3d84d51c50e68237990043c400765e3eb640a8c3c2"
+    },
+    {
+      "path": "benchmark.log",
+      "bytes": 5948,
+      "sha256": "546cf317471f223464251988c3c8330b793778e918204f2ce22b8d057c4c2348"
+    },
+    {
+      "path": "blob-keep.tap",
+      "bytes": 11420,
+      "sha256": "5197acd2d77ccf86e9794ae3a06593e09cc74edba6758b6fee0c352cd6534fda"
+    },
+    {
+      "path": "brella-after.tap",
+      "bytes": 803,
+      "sha256": "04cc728e2b8f546821a1eb92d209b40e878d63c0bf671605e4710c4c5412cd21"
+    },
+    {
+      "path": "brella-before.tap",
+      "bytes": 5591,
+      "sha256": "08ab148e4d289c4aee610e1c63288f44d0a9d09f6fd2532af27e39d62fbbadd2"
+    },
+    {
+      "path": "build.log",
+      "bytes": 812,
+      "sha256": "600e70bcb949be993f7339c8714e27ee1adb78bb6a5b4985e9b6e5b7e12a955f"
+    },
+    {
+      "path": "check-audio-browser.mjs",
+      "bytes": 3936,
+      "sha256": "218473f0f2c4092d20bd565c726d5eaff8e2e62316ba8faae689b10eb2aeb75e"
+    },
+    {
+      "path": "clock-browser-final/owner-clock-browser.json",
+      "bytes": 252535,
+      "sha256": "7f69a98097b47cbba565f45b02c72ac6538a3d5b82c90b972325bbbee1596d46"
+    },
+    {
+      "path": "clock-browser-final.log",
+      "bytes": 130,
+      "sha256": "7a4f5d7ff36b07d9b02356e42a3616848cfbf2004f8b8ef67a12569f9dce158c"
+    },
+    {
+      "path": "clock-browser.log",
+      "bytes": 1115,
+      "sha256": "74d9601319a56dc72c7022711b7c4c8ce2211557d9c887c12d89d257b08e7540"
+    },
+    {
+      "path": "emitted-pose-final.tap",
+      "bytes": 4996,
+      "sha256": "15b525b083f45d37e8e17cdb3361541f88f30b6a8ac6a887600e7bc326199334"
+    },
+    {
+      "path": "final-budget-after-build.log",
+      "bytes": 520,
+      "sha256": "c1cc18df3f65e0081683faf9be6b32fb89d6b6aa308414cfb6a18a6913fe737c"
+    },
+    {
+      "path": "final-budget.log",
+      "bytes": 747,
+      "sha256": "b2f9c39433b0720e3b3a68c9d9375bbf193bdecdfb2423b2e5419b9f4f6b9cd7"
+    },
+    {
+      "path": "final-build.log",
+      "bytes": 812,
+      "sha256": "3b315f123e6c2ef4c6dd431d32d9833c5652f3be926895713a6640482a3b23a0"
+    },
+    {
+      "path": "final-emitted.tap",
+      "bytes": 15491,
+      "sha256": "ce0475e975405893990d4346bcd825dea9c777455a9d4e9f302d93ac93692ce8"
+    },
+    {
+      "path": "final-identity.json",
+      "bytes": 436,
+      "sha256": "fb8a9d43cb8582524036f6ed9e6e8be4f08a8739c053bf5d872b8307a69a792b"
+    },
+    {
+      "path": "prediction-after.tap",
+      "bytes": 5581,
+      "sha256": "779d4c7c0980090032aef49c7015d9df00c0b6a4faa6a2e9a7caf0615bdad05e"
+    },
+    {
+      "path": "prediction-before.tap",
+      "bytes": 2835,
+      "sha256": "e5010abb21d40bdc98d79fde5f48cfa9b7bd4c1652883b7aedb101414bb8e080"
+    },
+    {
+      "path": "quad-browser/result.json",
+      "bytes": 48808,
+      "sha256": "12670b10331e2c85a27c0fa0a77320ca1f6847325329797e0136d4438eabe623"
+    },
+    {
+      "path": "quad-browser-diagnostic/result.json",
+      "bytes": 51251,
+      "sha256": "b66113429ca371421e7c9608971b3faa5c8a51b9fa047c34f6ed1a4a5d286829"
+    },
+    {
+      "path": "quad-browser-diagnostic.log",
+      "bytes": 2672,
+      "sha256": "4ac96ecaa838c1e2197c479461138360f185a05b1d79a27c5d7716e753c1f6be"
+    },
+    {
+      "path": "quad-browser-final/result.json",
+      "bytes": 274729,
+      "sha256": "135dc2dc73f7ba0b1acc2b20aeb47e931e75f94c5f3b781593cee5b1059cc7db"
+    },
+    {
+      "path": "quad-browser-final.log",
+      "bytes": 2182,
+      "sha256": "32f9bfd513b9e12dcc36c509d3fe92c17676dd99197f60ac06021527abcbf691"
+    },
+    {
+      "path": "quad-browser-fixed-tick/result.json",
+      "bytes": 90729,
+      "sha256": "72720b0dd568ee04f9850831ae8258656e860409eed659c8f0b27c3cc742ea5d"
+    },
+    {
+      "path": "quad-browser-fixed-tick.log",
+      "bytes": 372,
+      "sha256": "d9c71c6094b0924c0a934867fb9b2d16964e6d55af704987069aa32be4fff615"
+    },
+    {
+      "path": "quad-browser-wide/result.json",
+      "bytes": 48865,
+      "sha256": "9928931c26aa12c58a319a1944729342fc76e53ac6ee4b1175b1092b511bb6e2"
+    },
+    {
+      "path": "quad-browser-wide.log",
+      "bytes": 367,
+      "sha256": "0e3ae45d1faea3fa9db17ed81220d3d0075769e89594477264fe8401f614442f"
+    },
+    {
+      "path": "quad-browser.log",
+      "bytes": 367,
+      "sha256": "1b41ef6941bc14db91566086c7c827f6a4e25d28bc87208df1ec2b7ddb2278c0"
+    },
+    {
+      "path": "quick-after.log",
+      "bytes": 63,
+      "sha256": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b"
+    },
+    {
+      "path": "quick.log",
+      "bytes": 63,
+      "sha256": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b"
+    },
+    {
+      "path": "regressions/audio-audio-provenance.test.tap",
+      "bytes": 1534,
+      "sha256": "1127832ccd3f08a94c065ac868c08ffee000c6d7cce1a859770067c3fd08e278"
+    },
+    {
+      "path": "regressions/audio-weapon-audio.test.tap",
+      "bytes": 4302,
+      "sha256": "4dd27a258c2c5883ca149082e063597d5239e6b9074eb7e8c5183f1f986c1b1c"
+    },
+    {
+      "path": "regressions/catalogue-catalog-depletion-1130.test.tap",
+      "bytes": 1225,
+      "sha256": "7b72488fc9630c2f545e082eddf5550198c0b2f508c92284f4a478a7877a5476"
+    },
+    {
+      "path": "regressions/catalogue-catalog-flick-damage-source.test.tap",
+      "bytes": 884,
+      "sha256": "dbb8ef32efbf5f75a4338e4f296c6464aa729db66f1ecdc47ffeab992042c1bc"
+    },
+    {
+      "path": "regressions/catalogue-catalog-source-launch-1130.test.tap",
+      "bytes": 3069,
+      "sha256": "708e8a68331ff30455cd592069e7b8b7a738fcc10a04fe208870a341af508595"
+    },
+    {
+      "path": "regressions/catalogue-catalogue-session-tick-admission.test.tap",
+      "bytes": 572,
+      "sha256": "1e6ddf2f2468f26c7bbbed03b52734bb58f38bcc15b86dcc40af40f84e4fc939"
+    },
+    {
+      "path": "regressions/catalogue-catalogue-tick-admission.test.tap",
+      "bytes": 1320,
+      "sha256": "a8386c962ab7500ba1981540107292c6ea4bd84c7fbb02164d9b58b7056a4c63"
+    },
+    {
+      "path": "regressions/clock-issue-1767-session-clock.test.tap",
+      "bytes": 598,
+      "sha256": "0ede0a95351bf6e4ca1726e2f2089dfbfe04a4ce932b448b9bc8aad4ec1612ba"
+    },
+    {
+      "path": "regressions/clock-issue-1767-startup-clock.test.tap",
+      "bytes": 912,
+      "sha256": "8f232bc74f655ad1f9f452a9cfdd6cdfc8e5dd9614af6b51aae356ae143eca05"
+    },
+    {
+      "path": "regressions/clock-owner-clock-browser-relay.test.tap",
+      "bytes": 413,
+      "sha256": "c76a3d2dc0a7762ca2956853cfe202d264d738ffa35ec15347f55c4cd2fd8081"
+    },
+    {
+      "path": "regressions/clock-owner-clock-origin.test.tap",
+      "bytes": 2391,
+      "sha256": "23b216576a90a83d1c26c68943d2055a1a3c9d607da9712774269aefe8113294"
+    },
+    {
+      "path": "regressions/controls-gyro-sensitivity-cadence-725.test.tap",
+      "bytes": 1062,
+      "sha256": "3ea8a07170cc35e2d11058b50696f117914cfcc1f83087753bb67ba6ee560147"
+    },
+    {
+      "path": "regressions/controls-gyro-sensitivity-endpoints.test.tap",
+      "bytes": 1095,
+      "sha256": "fc52ca69af8870d8f2916556dd85ad37756287ce1f75f1b302826862ef3894cd"
+    },
+    {
+      "path": "regressions/controls-issue-532-dualies-dodge-distance.test.tap",
+      "bytes": 1553,
+      "sha256": "dc0c2b85a8e77c2e8b891d3e91c846fbb3f1927a2edcbd1ad110d7a615ed9f4d"
+    },
+    {
+      "path": "regressions/controls-issue-532-dualies-roll-terrain-native.test.tap",
+      "bytes": 2180,
+      "sha256": "f0dfb33a698ecdcd7ea5a16dee26f0cbba15a70ea0ec4d7959949a46b0025ef6"
+    },
+    {
+      "path": "regressions/controls-issue-890-buffered-release-native.test.tap",
+      "bytes": 1047,
+      "sha256": "f4c1d030c4344dda1d613d86334ac141ec1199a5c7b2bcd72377479c3681e581"
+    },
+    {
+      "path": "regressions/controls-issue-890-form-transition-native.test.tap",
+      "bytes": 1004,
+      "sha256": "3518dea559bc47ac4363b72c1410f14ce21d7b6d088f2626707f85f1e5bcf0f2"
+    },
+    {
+      "path": "regressions/controls-issue-890-hold-boundary-terrain-native.test.tap",
+      "bytes": 1818,
+      "sha256": "00461813342a25354b20e669e0a39d31048e49783b8ee3f5152114246941b00e"
+    },
+    {
+      "path": "regressions/controls-issue-890-jump-hold.test.tap",
+      "bytes": 1483,
+      "sha256": "cd88d7507e72c8d32042bd0cab8d151cf6ea4b3d434f822036bd6413d9e04dc4"
+    },
+    {
+      "path": "regressions/controls-issue-890-jump-surfaces-native.test.tap",
+      "bytes": 3777,
+      "sha256": "c82c783c75b03e3336226f12ffc0dd71edf1955e17077ec0cb5581791d4e41c7"
+    },
+    {
+      "path": "regressions/controls-pad-sensitivity-rate-287.test.tap",
+      "bytes": 1224,
+      "sha256": "7fae09143f05b81c03d13883a529d9263b595e4a08ae9252b8f99810ebee1c16"
+    },
+    {
+      "path": "regressions/controls-pad-sensitivity.test.tap",
+      "bytes": 709,
+      "sha256": "9ea9631f5ae8d162d13203efb854dcc1c3d0fefb6fadeeb615964ac09b5794da"
+    },
+    {
+      "path": "regressions/controls-splatling-charge-decel-1188.test.tap",
+      "bytes": 1150,
+      "sha256": "369109ebbd60b93568d9b515cd235ec5dc76c40bb0e09d07184d2e8a41aa8304"
+    },
+    {
+      "path": "regressions/motion-issue-1097-hit-reaction.test.tap",
+      "bytes": 2744,
+      "sha256": "ca9160c07c0eb7ed9af3ef1e04c13f52d3cf49242063d67f1509bc65c9dedc51"
+    },
+    {
+      "path": "regressions/motion-jump-motion.test.tap",
+      "bytes": 3320,
+      "sha256": "f775efce3ac6123f0792b39e01ea14b6b103e6410bc024dcf9956a91cd4d4f45"
+    },
+    {
+      "path": "regressions/motion-source-jump-family.test.tap",
+      "bytes": 1855,
+      "sha256": "0066e8528cddc567ac213867bc9e406ff2f99d3f1976f98ee7e7a64b80b60bf2"
+    },
+    {
+      "path": "regressions/paint-issue-79-shooter-impact-paint.test.tap",
+      "bytes": 1840,
+      "sha256": "09c016c7dcbab6a1aa42887333e0907fdcd21d960e70a2c65d26c058383e3e4c"
+    },
+    {
+      "path": "regressions/paint-issue-79-shooter-live-impact-paint.test.tap",
+      "bytes": 1021,
+      "sha256": "ba2a9864324e34ac0a928506e903894b94299dfdcc8124e395596df18e0cb1de"
+    },
+    {
+      "path": "regressions/paint-issue-992-dualies-impact-paint.test.tap",
+      "bytes": 2511,
+      "sha256": "1f9fae6e47ae3452e71588cf4e0996f9a737fe834699d17de77aaf35219d1f7f"
+    },
+    {
+      "path": "regressions/paint-issue-992-dualies-normal-paint.test.tap",
+      "bytes": 1954,
+      "sha256": "25b4d1f4a794d756cb6c3faef649a732bc648b6a9c19e1b73ce7fc81feca2728"
+    },
+    {
+      "path": "regressions/paint-issue-992-native-flight-paint.test.tap",
+      "bytes": 1383,
+      "sha256": "72b46adcf7bbf268d6c16bb89206d8bf1b7238141d5cbe11a7768a665c8f99fe"
+    },
+    {
+      "path": "regressions/paint-storm-rain-calibration.test.tap",
+      "bytes": 1309,
+      "sha256": "3108eb6ac3ca385504d76bce33ae6f48afe98806b82ac876c0b197fa84429ed6"
+    },
+    {
+      "path": "regressions/paint-storm-vertical-cutoff-735.test.tap",
+      "bytes": 1061,
+      "sha256": "4ead15e91ad8e0837a74c2162f4909bf42b759f3fe224a6e1e4985d51739abf7"
+    },
+    {
+      "path": "regressions/performance-composer-target-adapter.test.tap",
+      "bytes": 1073,
+      "sha256": "4e13ab464047d9e73949a1af91548a6243b736db4f40bc1dca39e2f95a2219fa"
+    },
+    {
+      "path": "regressions/performance-offline-offscreen-budget.test.tap",
+      "bytes": 2952,
+      "sha256": "f7c7f5845c85f67f931b699d81ef470843d4572e83a0f47216316d6a79ae03b6"
+    },
+    {
+      "path": "regressions/performance-offscreen-visual-budget.test.tap",
+      "bytes": 5053,
+      "sha256": "088385456caecaf7f637f592e309b8ada011a2a1833bea5166c478a932a9e73e"
+    },
+    {
+      "path": "regressions/performance-range-hitch-tracer.test.tap",
+      "bytes": 4011,
+      "sha256": "c2750884577558380e633b6d6cda811c8cd4914a1f806c04e3be50fdbdcfc019"
+    },
+    {
+      "path": "regressions/results.json",
+      "bytes": 29900,
+      "sha256": "74ee15e6d2de27fbfbe4efd8072fba61254cd48e377fc38110f87ff9cca9f04a"
+    },
+    {
+      "path": "regressions/weapons-issue-1431-catalog-pose-birth.test.tap",
+      "bytes": 3793,
+      "sha256": "7b34a537dcc71970d3163f44d11e01893abb04b92af7c55aac40b0b3081e7ad9"
+    },
+    {
+      "path": "regressions/weapons-issue-1431-explosher-authored-muzzle.test.tap",
+      "bytes": 53736,
+      "sha256": "1bb9315eab6625d4de37b4c488e2b6e5257efd175e026a168ac502bea96dd014"
+    },
+    {
+      "path": "regressions/weapons-issue-1431-volume-pose-connection.test.tap",
+      "bytes": 1822,
+      "sha256": "98034648ce9a9c3065b7f587a12ae7bf272c20263fbe13e94a5668e812772f35"
+    },
+    {
+      "path": "regressions/weapons-issue-1607-zipcaster-retry-boundary.test.tap",
+      "bytes": 591,
+      "sha256": "41450b8a860c635e12722db484feb1637132a43b2c36ab6d8efa2026ab8398d7"
+    },
+    {
+      "path": "regressions/weapons-issue-1813-dynamo-unit-authority-live.test.tap",
+      "bytes": 2675,
+      "sha256": "17f2fc0497a10e888513180136d9f841c50750bc07192a7a8c4fad28ffdb5c22"
+    },
+    {
+      "path": "regressions/weapons-kit-big-bubbler-contact-settlement.test.tap",
+      "bytes": 1038,
+      "sha256": "17860ba738c36221af9e175b41b05d34dc9a23ae55543ea2a7f46983838a9e17"
+    },
+    {
+      "path": "run_regressions.py",
+      "bytes": 3558,
+      "sha256": "0905bbdf8e36f86ba0d5c17b24ee47e19154a294b01c11646487400a9b9f7c61"
+    },
+    {
+      "path": "security-all.tap",
+      "bytes": 16112,
+      "sha256": "55bd997f32c38ae0de175882dd320487d47292a6d2eac1870c3b757472c3b348"
+    },
+    {
+      "path": "security.tap",
+      "bytes": 589,
+      "sha256": "f1e3cc35c888fb7ad02215e1435a81c7b0130eb64f750a787372faf8b11b0d56"
+    },
+    {
+      "path": "walk.tap",
+      "bytes": 29493,
+      "sha256": "1c80ebfc66e9c146dd339f549153af52b093cdd0156d84694d298288e472c887"
+    }
+  ]
+}

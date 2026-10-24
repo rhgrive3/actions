@@ -1,0 +1,56 @@
+name: Non-Drive queue regression
+on:
+  pull_request:
+    paths:
+      - "inkwave-public/src/**"
+      - "patches/native-stages/runtime/**"
+      - "patches/splatoon3/runtime/**"
+      - ".github/workflows/zevant-account.yml"
+      - ".github/workflows/inkwave-weapon-lod-boundaries.yml"
+      - ".github/workflows/inkwave-nondrive-queue.yml"
+      - "scripts/tests/inkwave-queue-native-compact.test.mjs"
+permissions:
+  contents: read
+jobs:
+  nondrive-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            /*
+            !/tools/inkwave-modeler/blender/
+            !/tools/inkwave-modeler/docs/
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check changed hotpaths
+        run: |
+          for file in \
+            inkwave-public/src/game/lobbySet.js \
+            inkwave-public/src/core/mobile.js \
+            inkwave-public/src/game/motion/gait-targets.js \
+            inkwave-public/src/game/motion/source-controller.js \
+            inkwave-public/src/game/motion/body-balance.js \
+            inkwave-public/src/game/inkFlight.js \
+            inkwave-public/src/net/netmatch.js \
+            inkwave-public/src/ui/hud.js \
+            patches/native-stages/runtime/source-convert.mjs \
+            patches/native-stages/runtime/source-worker.mjs \
+            patches/native-stages/runtime/native-ink-chunks.mjs \
+            patches/splatoon3/runtime/ranked/world.mjs \
+            patches/splatoon3/runtime/ranked/rainmaker.mjs \
+            patches/splatoon3/runtime/ranked/ui.mjs \
+            patches/splatoon3/runtime/audio/bank.mjs \
+            patches/splatoon3/runtime/audio/real-s3-loader.mjs \
+            patches/splatoon3/runtime/special-vfx.mjs \
+            patches/splatoon3/runtime/all-specials.mjs \
+            patches/splatoon3/runtime/main-weapon-catalog.mjs
+          do
+            node --check "$file"
+          done
+      - name: Compare native parser byte equivalence and malformed-input safety
+        run: node --test scripts/tests/inkwave-queue-native-compact.test.mjs

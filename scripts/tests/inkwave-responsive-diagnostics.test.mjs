@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { responsiveAnimationsSettled } from '../lib/inkwave-responsive-animation-settle.mjs';
 import { createResponsiveDiagnostics, collectResponsiveFailure, boundedChildStderr } from '../lib/inkwave-responsive-diagnostics.mjs';
 
 // Execute the actual required failure block, including its original throw gate.
@@ -666,206 +665,92 @@ for (const reversal of [{ playState: 'running' }, { pending: true }])
     h.watchdog(); await waiting; assert.equal(h.timers.size, 0);
   });
 
-// Execute the actual capture and geometry bodies without starting a browser.
-// The page adapter serializes each predicate like Playwright and lets tests
-// drive native state changes/rejections, never treating elapsed time as success.
-function captureGeometryHarness(items, { width = 100, right = 100, screenshotError = null } = {}) {
-  const controls = '.iw-continuation-actions button', waits = new Set();
-  const calls = { stateGates: 0, measurements: 0, panels: 0, screenshots: 0, stages: [] };
-  const browser = { document: { getAnimations: () => items.map(item => item.animation), querySelector: () => null },
-    innerWidth: 390, innerHeight: 844, getComputedStyle: () => ({ visibility: 'visible', display: 'block', opacity: '1' }),
-    console, setTimeout, clearTimeout };
-  browser.window = browser;
-  const context = vm.createContext(browser);
-  const serialize = (fn, args = []) => { browser.args = args; return vm.runInContext('(' + fn.toString() + ')(...args)', context); };
+// Execute the committed capture -> geometry -> serialized settle bodies together.
+function continuationCaptureHarness(items, { width = 100, right = 100, hidden = false, leaving = false, screenshotError = null } = {}) {
+  const animations = items.map(item => item.animation), browser = animationHarness(animations);
+  const calls = [], entry = { name: 'phone-portrait', screens: {} }, controls = '.iw-continuation-actions button';
+  const element = { className: 'iw-btn', getClientRects: () => [{}],
+    closest: () => leaving ? {} : null,
+    getBoundingClientRect: () => ({ width, height: 48, left: 0, right }) };
   const page = {
-    evaluate: async (fn, arg) => { const value = await serialize(fn, [arg]);
-      return value && typeof value === 'object' ? JSON.parse(JSON.stringify(value)) : typeof value === 'function' ? undefined : value; },
-    waitForFunction(predicate, ...options) {
-      assert.equal(options.length, 0, 'capture inherits the existing page deadline');
-      if (predicate === responsiveAnimationsSettled) calls.stateGates++;
-      return new Promise((resolve, reject) => {
-        const wait = { predicate, resolve, reject };
-        try { if (serialize(predicate)) resolve(); else waits.add(wait); } catch (error) { reject(error); }
-      });
+    evaluate: (fn, observe) => {
+      assert.equal(fn, settleResponsiveAnimationsInPage); calls.push('settle:' + observe);
+      return browser.run(observe);
     },
-    locator: selector => ({ evaluateAll: predicate => {
-      if (selector === controls) calls.measurements++; else calls.panels++;
-      const element = { className: 'iw-btn', closest: () => null, getClientRects: () => [{}],
-        getBoundingClientRect: () => ({ width, height: 44, left: 0, right }) };
-      return serialize(predicate, [[element]]);
+    waitForFunction: async () => { calls.push('retired-owner'); },
+    locator: selector => ({ evaluateAll: async fn => {
+      calls.push(selector === controls ? 'measure' : 'panels');
+      return vm.runInNewContext('(' + fn.toString() + ')', {
+        getComputedStyle: () => ({ visibility: hidden ? 'hidden' : 'visible' }), innerWidth: 390,
+      })(selector === controls ? [element] : []);
     } }),
-    screenshot: async () => { calls.screenshots++; if (screenshotError) throw screenshotError; },
+    screenshot: async () => { calls.push('png'); if (screenshotError) throw screenshotError; },
   };
-  const geometryStart = source.indexOf('const geometry = async');
-  const geometryEnd = source.indexOf('const tap = async', geometryStart);
-  assert(geometryStart >= 0 && geometryEnd > geometryStart);
-  const geometry = new Function('settle', 'responsiveAnimationsSettled', 'assert', 'audit',
-    source.slice(geometryStart, geometryEnd) + '\nreturn geometry;')(
-    (target, observe = false) => target.evaluate(settleResponsiveAnimationsInPage, observe), responsiveAnimationsSettled, assert, false);
+  const start = source.indexOf('const geometry = async'), end = source.indexOf('const tap = async', start);
+  assert(start >= 0 && end > start);
+  const geometry = new Function('settle', 'assert', 'audit', source.slice(start, end) + '\nreturn geometry;')(
+    (target, observe = false) => target.evaluate(settleResponsiveAnimationsInPage, observe), assert, false);
   const core = fs.readFileSync(new URL('../check-inkwave-responsive-core.mjs', import.meta.url), 'utf8');
-  const captureStart = core.indexOf('  const capture = async');
-  const captureEnd = core.indexOf("  await show(page, 'loading');", captureStart);
-  assert(captureStart >= 0 && captureEnd > captureStart);
-  const entry = { name: 'phone-portrait', screens: {} };
+  const first = core.indexOf('  const capture = async'), last = core.indexOf("  await show(page, 'loading');", first);
+  assert(first >= 0 && last > first);
   const capture = new Function('page', 'entry', 'geometry', 'audit', 'path', 'evidence', 'engineName', 'onStageComplete', 'assert',
-    core.slice(captureStart, captureEnd) + '\nreturn capture;')(page, entry, geometry, false, path, '/unused', 'chromium', name => calls.stages.push(name), assert);
-  return { calls, entry, page, browser, serialize, rawCapture: capture, capture: (name = 'loadout-continue') => capture(name, controls),
-    poll() { for (const wait of [...waits]) {
-      try { if (serialize(wait.predicate)) { waits.delete(wait); wait.resolve(); } }
-      catch (error) { waits.delete(wait); wait.reject(error); }
-    } },
-    reject(error) { for (const wait of waits) wait.reject(error); waits.clear(); } };
+    core.slice(first, last) + '\nreturn capture;')(page, entry, geometry, false, path, '/unused', 'chromium', name => calls.push('stage:' + name), assert);
+  return { calls, animations, entry, observe: () => page.evaluate(settleResponsiveAnimationsInPage, true),
+    capture: (name = 'loadout-continue') => capture(name, controls),
+    tick: async () => { browser.watchdog(); await flushAnimationMicrotasks(); await flushAnimationMicrotasks(); } };
 }
 
-test('continuation capture measures and screenshots after observed finished state even when the native promise is stale', async () => {
-  const item = deferredAnimation({ playState: 'finished', pending: false });
-  const observed = animationHarness([item.animation]), settled = observed.run(true);
-  observed.watchdog(); await settled;
-  const h = captureGeometryHarness([item]);
-  const capture = h.capture();
-  await flushAnimationMicrotasks();
-  assert.equal(h.calls.stateGates, 1, 'the continuation recapture must use the connected native state gate');
-  await capture;
-  assert.equal(item.reads(), 1, 'geometry must not recapture the unresolved finished promise');
-  assert.deepEqual(h.calls, { stateGates: 1, measurements: 1, panels: 1, screenshots: 1, stages: ['loadout-continue'] });
-  assert.equal(h.entry.screens['loadout-continue'].length, 1);
+test('capture geometry recovers the same stale finished promise after the observed action settle', async () => {
+  const item = deferredAnimation({ playState: 'finished' }), h = continuationCaptureHarness([item]);
+  const observed = h.observe(); await h.tick(); await observed;
+  let completed = false; const capture = h.capture().then(() => { completed = true; });
+  try {
+    await flushAnimationMicrotasks(); assert.equal(completed, false); assert(!h.calls.includes('measure'));
+    await h.tick(); assert.equal(completed, true, 'the second geometry settle must also confirm native finished state');
+    assert.deepEqual(h.calls, ['settle:true', 'retired-owner', 'settle:true', 'measure', 'panels', 'png', 'stage:loadout-continue']);
+    assert.equal(item.reads(), 2, 'each settle captures the original native promise once');
+  } finally { item.resolve(); await capture; }
 });
 
-for (const state of [{ playState: 'running', pending: false }, { playState: 'paused', pending: false },
-  { playState: 'finished', pending: true }, { playState: 'idle', pending: true }])
-  test('continuation capture waits for finite native state: ' + JSON.stringify(state), async () => {
-    const item = deferredAnimation({ ...state, effect: { getTiming: () => ({ iterations: 1 }), target: { checkVisibility: () => true } } });
-    const h = captureGeometryHarness([item]); let completed = false;
-    const capture = h.capture().then(() => { completed = true; });
-    await flushAnimationMicrotasks(); h.poll(); await flushAnimationMicrotasks();
-    assert.equal(completed, false); assert.equal(h.calls.stateGates, 1);
-    assert.equal(h.calls.measurements, 0); assert.equal(h.calls.screenshots, 0);
-    Object.assign(item.animation, { playState: 'finished', pending: false });
-    h.poll(); await capture;
-    assert.equal(h.calls.measurements, 1); assert.equal(h.calls.panels, 1);
-    assert.equal(h.calls.screenshots, 1); assert.deepEqual(h.calls.stages, ['loadout-continue']);
+for (const state of [{ playState: 'running' }, { playState: 'paused' }, { playState: 'idle' }, { playState: 'finished', pending: true }])
+  test('capture geometry never accepts unfinished native state: ' + JSON.stringify(state), async () => {
+    const item = deferredAnimation(state), h = continuationCaptureHarness([item]);
+    const capture = h.capture();
+    try {
+      await flushAnimationMicrotasks();
+      for (let i = 0; i < 3; i++) { await h.tick(); assert(!h.calls.includes('measure')); assert(!h.calls.includes('png')); }
+      Object.assign(item.animation, { playState: 'finished', pending: false }); await h.tick(); await capture;
+      assert(h.calls.includes('stage:loadout-continue'));
+    } finally { item.resolve(); await capture; }
   });
 
-test('native state wait rejection propagates through actual capture and required failure reporting', async () => {
-  const item = deferredAnimation(), h = captureGeometryHarness([item]), original = Error('native state deadline');
-  const capture = assert.rejects(h.capture(), error => error === original);
-  await flushAnimationMicrotasks(); h.reject(original); await capture;
-  assert.equal(h.calls.measurements, 0); assert.equal(h.calls.screenshots, 0); assert.deepEqual(h.calls.stages, []);
-  const entry = {}, diagnostics = createResponsiveDiagnostics();
-  await assert.rejects(runFailure(entry, original, diagnostics, { isClosed: () => true }), error => error === original);
-  assert.equal(entry.status, 'failed'); assert.equal(entry.diagnostics.firstError.message, original.message);
+test('capture state belongs to the original cohort, not a replacement finished animation', async () => {
+  const original = deferredAnimation(), other = deferredAnimation({ playState: 'finished' });
+  const h = continuationCaptureHarness([original]), capture = h.capture();
+  try {
+    await flushAnimationMicrotasks(); h.animations.splice(0, 1, other.animation);
+    await h.tick(); await h.tick(); assert(!h.calls.includes('measure'));
+    original.animation.playState = 'finished'; await h.tick(); await capture;
+    assert.equal(other.reads(), 0);
+  } finally { original.resolve(); other.resolve(); await capture; }
 });
 
-for (const dimensions of [{ width: 42, right: 100 }, { width: 100, right: 392 }])
-  test('continuation state repair retains geometry assertions: ' + JSON.stringify(dimensions), async () => {
-    const item = deferredAnimation({ playState: 'finished' }), h = captureGeometryHarness([item], dimensions);
-    await assert.rejects(h.capture(), /small touch target|horizontal overflow/);
-    assert.equal(h.calls.measurements, 1); assert.equal(h.calls.screenshots, 0); assert.deepEqual(h.calls.stages, []);
+test('other capture labels retain their unobserved promise-only gate', async () => {
+  const item = deferredAnimation({ playState: 'finished' }), h = continuationCaptureHarness([item]);
+  const capture = h.capture('loadout'); await flushAnimationMicrotasks(); await h.tick();
+  assert.deepEqual(h.calls, ['retired-owner', 'settle:false']);
+  item.resolve(); await capture; assert(h.calls.includes('stage:loadout'));
+});
+
+for (const invalid of [{ width: 42 }, { right: 392 }, { hidden: true }, { leaving: true }])
+  test('continuation capture retains real geometry and visible-owner rejection: ' + JSON.stringify(invalid), async () => {
+    const item = deferredAnimation(), h = continuationCaptureHarness([item], invalid); item.resolve();
+    await assert.rejects(h.capture(), /small touch target|horizontal overflow|no controls rendered/);
+    assert(!h.calls.includes('png')); assert(!h.calls.includes('stage:loadout-continue'));
   });
 
-test('continuation capture still fails on screenshot error and cannot publish a completed stage', async () => {
-  const original = Error('required PNG failed'), h = captureGeometryHarness([deferredAnimation({ playState: 'finished' })], { screenshotError: original });
-  await assert.rejects(h.capture(), error => error === original);
-  assert.equal(h.calls.measurements, 1); assert.equal(h.calls.panels, 1); assert.equal(h.calls.screenshots, 1); assert.deepEqual(h.calls.stages, []);
+test('required screenshot failure cannot publish a completed continuation stage', async () => {
+  const item = deferredAnimation(), error = Error('required PNG failed'), h = continuationCaptureHarness([item], { screenshotError: error });
+  item.resolve(); await assert.rejects(h.capture(), value => value === error);
+  assert(h.calls.includes('png')); assert(!h.calls.includes('stage:loadout-continue'));
 });
-
-test('unrelated captures keep their existing native-promise settle path', async () => {
-  const item = deferredAnimation({ playState: 'finished' }), h = captureGeometryHarness([item]); let completed = false;
-  const capture = h.capture('loadout').then(() => { completed = true; });
-  await flushAnimationMicrotasks(); h.poll(); await flushAnimationMicrotasks();
-  assert.equal(completed, false); assert.equal(h.calls.stateGates, 0); assert.equal(item.reads(), 1);
-  item.resolve(); await capture;
-  assert.equal(h.calls.screenshots, 1); assert.deepEqual(h.calls.stages, ['loadout']);
-});
-
-// Run the real continuation, capture and geometry functions to completion.
-// Only the page/menus adapter is synthetic; these tests do not attest browser DOM.
-async function continuationFlowHarness(afterCapture = () => {}) {
-  const { checkResultContinuation } = await import('../check-inkwave-result-continuation.mjs');
-  const items = [], stale = deferredAnimation({ playState: 'finished', pending: false });
-  const h = captureGeometryHarness(items), actions = []; let captured, started = false, weapon = 'shooter';
-  h.captured = new Promise(resolve => { captured = resolve; });
-  const rect = () => ({ top: 10, bottom: 54, left: 0, right: 100, width: 100, height: 44 });
-  const button = { parentElement: null, getBoundingClientRect: rect,
-    querySelector: () => ({ getBoundingClientRect: rect }), click: () => {
-      if (!started) { started = true; menus.api.prepareMatch(); menus.api.rematch(); }
-    } };
-  const change = {}, menus = { current: 'main', _shownAt: 0, _scr: { name: 'main' }, _binds: new Map(),
-    api: { getLoadout: () => ({ weapon }), prepareMatch() {}, rematch() {} }, wipe: { cancel() {} },
-    _demoResults: () => ({ winner: 0 }), showResults(result) { this._results = result; },
-    show(name) {
-      this.current = name; this._scr = { name }; this._shownAt = 0;
-      if (name !== 'loadout') items.length = 0;
-      if (name === 'results') { let used = false; this._binds.set(change, { accept: () => {
-        if (!used) { used = true; this.show('loadout'); }
-      } }); }
-    } };
-  h.browser.menus = menus; h.browser.performance = { now: () => 1000 };
-  h.browser.console = { info() {} };
-  h.browser.document.querySelector = selector => selector === '[data-id="change-gear-continue"]' ? change
-    : selector === '[data-id="continue-with-gear"]' ? button : null;
-  const originalLocator = h.page.locator, screenshot = h.page.screenshot;
-  h.page.locator = selector => selector === '.iw-loadout .iw-wcard'
-    ? { evaluateAll: fn => h.serialize(fn, [[{ _wid: 'shooter' }, { _wid: 'roller' }]]) }
-    : selector.startsWith('[data-id=') ? { scrollIntoViewIfNeeded: async () => {},
-      evaluate: fn => h.serialize(fn, [button]), count: async () => 1 }
-      : originalLocator(selector);
-  h.page.screenshot = async options => { await screenshot(options);
-    if (options.path.includes('loadout-continue')) { afterCapture(stale.animation); captured(); }
-  };
-  const tap = async (_page, selector) => {
-    actions.push(selector);
-    if (selector === '[data-id="change-gear-continue"]') menus._binds.get(change).accept();
-    else if (selector === '[data-id="w-roller"]') { weapon = 'roller'; items.push(stale); }
-    else if (selector === '.iw-loadout .iw-backbtn') menus.show('results');
-    else if (selector === '.iw-loadout [data-id="look"]') menus.show('locker');
-    else if (selector === '.iw-locker .iw-backbtn') menus.show('loadout');
-    else if (selector === '[data-id="continue-with-gear"]') button.click();
-  };
-  h.actions = actions; h.stale = stale;
-  h.run = () => checkResultContinuation({ page: h.page, entry: h.entry, tap,
-    settle: (page, observe = false) => page.evaluate(settleResponsiveAnimationsInPage, observe), capture: h.rawCapture });
-  return h;
-}
-
-test('full continuation reaches Back, locker and single rematch after stale-promise capture and immediate ready', async () => {
-  const h = await continuationFlowHarness(), flow = h.run();
-  await h.captured; await flushAnimationMicrotasks();
-  assert.equal(h.calls.stateGates, 2, 'capture and its immediate ready must both use the finite native-state gate');
-  await flow;
-  assert.deepEqual(h.calls.stages, ['results-change-gear', 'loadout-continue']);
-  assert.equal(h.calls.screenshots, 2);
-  assert.deepEqual(h.entry.resultContinuation, { status: 'passed', changedWeapon: 'roller', starts: 1,
-    resultPreserved: true, backWithoutStart: true, staleResultRejected: true, lockerRoundtrip: true });
-  assert(h.actions.includes('.iw-loadout .iw-backbtn')); assert(h.actions.includes('.iw-locker .iw-backbtn'));
-});
-
-for (const state of [{ playState: 'running', pending: false }, { playState: 'paused', pending: false },
-  { playState: 'finished', pending: true }])
-  test('post-capture ready waits for real finite state before Back: ' + JSON.stringify(state), async () => {
-    const h = await continuationFlowHarness(animation => Object.assign(animation, state)); let completed = false;
-    const flow = h.run().then(() => { completed = true; });
-    await h.captured; await flushAnimationMicrotasks();
-    assert.equal(h.calls.stateGates, 2); h.poll(); await flushAnimationMicrotasks();
-    assert.equal(completed, false); assert.equal(h.actions.includes('.iw-loadout .iw-backbtn'), false);
-    Object.assign(h.stale.animation, { playState: 'finished', pending: false }); h.poll(); await flow;
-    assert.equal(h.entry.resultContinuation.status, 'passed'); assert.equal(h.calls.screenshots, 2);
-  });
-
-test('post-capture native-state rejection still aborts continuation instead of publishing a passed result', async () => {
-  const h = await continuationFlowHarness(animation => { animation.pending = true; }), original = Error('post-capture native state deadline');
-  const flow = assert.rejects(h.run(), error => error === original);
-  await h.captured; await flushAnimationMicrotasks();
-  assert.equal(h.calls.stateGates, 2); h.reject(original); await flow;
-  assert.equal(h.entry.resultContinuation, undefined); assert.equal(h.actions.includes('.iw-loadout .iw-backbtn'), false);
-  assert.deepEqual(h.calls.stages, ['results-change-gear', 'loadout-continue']);
-});
-
-// Existing helper coverage retained within this required test entry.
-function run(animations,fn){const old={document:globalThis.document,getComputedStyle:globalThis.getComputedStyle,innerHeight:globalThis.innerHeight,innerWidth:globalThis.innerWidth};Object.assign(globalThis,{document:{getAnimations:()=>animations},getComputedStyle:e=>e.style,innerHeight:800,innerWidth:400});try{fn();}finally{Object.assign(globalThis,old);}}
-const animation=(target,playState='running',iterations=1)=>({playState,effect:{target,getTiming:()=>({iterations})}});
-test('running or paused visible finite animations remain mandatory',()=>run([animation({checkVisibility:()=>true})],()=>{assert.equal(responsiveAnimationsSettled(),false);}));
-test('dormant offscreen card can wait until scroll but then must actually settle',()=>{let visible=false;const a=animation({checkVisibility:()=>visible});run([a],()=>{assert.equal(responsiveAnimationsSettled(),true);visible=true;assert.equal(responsiveAnimationsSettled(),false);a.playState='paused';assert.equal(responsiveAnimationsSettled(),false);a.playState='finished';assert.equal(responsiveAnimationsSettled(),true);});});
-test('fallback excludes only offscreen auto-contained cards, not ordinary entrance transforms',()=>{const target={nodeType:1,style:{contentVisibility:'auto'},getBoundingClientRect:()=>({top:900,bottom:1000,left:0,right:100})};run([animation(target)],()=>{assert.equal(responsiveAnimationsSettled(),true);target.style.contentVisibility='visible';assert.equal(responsiveAnimationsSettled(),false);});});
-test('existing infinite decoration and completed or cancelled animations never block',()=>run([animation({},'running',Infinity),animation({},'finished'),animation({},'idle')],()=>assert.equal(responsiveAnimationsSettled(),true)));

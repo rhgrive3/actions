@@ -44,7 +44,12 @@ self.onmessage=async({data:{id,runtimeSha256,constrainedClient=false}})=>{
    const files={};for(const f of tree.tree)if(f.type==='blob'){if(f.path.startsWith('/')||f.path.split('/').some(p=>p==='..'||p===''))throw Error('Unsafe source path');files[f.path]={bytes:f.size,gitSha1:f.sha};}
    const name=stage.internal+'.mtl';if(!files[name])throw Error('Missing pinned MTL');
    const mtl=await sourceBytes(id,sourceURL(stage,name),files[name]);
-   data=convertSource(stage,new Uint8Array(obj),new TextDecoder().decode(mtl),files,p=>self.postMessage({progress:p,id}));
+   // Parse directly into the post-compaction display schema. Unpaintable,
+   // inactive source vertices still contribute to validation and bounds.
+   // This also avoids the transient full-array + packed-array peak on iPads.
+   data=convertSource(stage,new Uint8Array(obj),new TextDecoder().decode(mtl),files,
+     p=>self.postMessage({progress:p,id}),null,{compactInactiveDisplay:true});
+   // Compatibility guard for future placement/legacy paths; now normally no-op.
    data=compactInactiveDisplay(data);
    // Derived IndexedDB writes clone every large typed array before the
    // renderer takes ownership. Avoid that competing peak on small devices.

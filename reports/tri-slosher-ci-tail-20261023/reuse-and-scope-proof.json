@@ -1,0 +1,28 @@
+{
+  "base": "784615eaddd13e1cb4d9dd6bf202990a4aaa6d3f",
+  "reusedPr1853": "62d6eb3e448d68fe8a41303f344d6a88076aa338",
+  "comparedPr1860": "05eb9b8243bfba7e166600990df33ac19bbaa0c2",
+  "paths": {
+    ".github/workflows/validate-inkwave-update.yml": {
+      "beforeSha256": "4ef2dabeff98b5fdb399b77b14fdaf59cd2f2a9fdd0127ec25df6b27d6a1a9a2",
+      "afterSha256": "205b3d7e260203e0ecf76152769b0252d6a2b31aff0cdd926629fb94ea8505e2",
+      "exactPr1853Bytes": true
+    },
+    "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs": {
+      "beforeSha256": "f6a460aecf79ed69122d357f63c0340f0d6b214b09c6c594f69350d01b1fbf43",
+      "afterSha256": "5c802460fc6484208e66afcde13a461480d38d8b72ecf9b30f5db74df4d0e7c5",
+      "exactPr1853Bytes": true
+    }
+  },
+  "originalSevenJobPinsUnchanged": {
+    "validate_core": "80f5bcdbcf39f3f616c231c0cbad3eea93849fed3fb19c20e22f7c063ab47a39",
+    "patch_tests": "f4aed2dfb7766fc1497498fc2d6d7689ec90441f0747b854b07a4e631109c5b1",
+    "validate": "54ac81f9c3cfa0e1eaed643dc62b644e9658abef0b53faced3a7d47888b790f9",
+    "browser": "2d925a6bece5c03d5f5a2fefa550a622d1589e8e3ab41ac517d6d624cd93bb9c",
+    "network-opening-diagnostic": "f205a8473b3bfc0f86819f43bbe4121e4c590dda71490e363f3908db658ca767",
+    "seven_claims": "34ef0c57320a741be38b42f6e0e9eb62e8d7f0b9bbb55b6b9a091c26a828c3cd",
+    "resource_paint_continuation": "78e0d3ebf1290c9250339e8dcef35c9b60077c82fd5a99ff51da01b3c50a442b"
+  },
+  "scope": "Only independently applicable PR1853 workflow/guard files. PR1860 spawn acceptance, runtime, references QA and browser timeout/flags are not imported.",
+  "runtimeDiff": []
+}

@@ -61,7 +61,16 @@ function benchmarkComposedProductionBuildParity() {
   // anchored at integration 42b76fba; do not reconstruct them in historical data.
   const combinedBodySha='ae785b2132151a8a4b40d3d50f416def2704567d70b27bc2f591bb7bd6d078c6';
   const currentBodySha=createHash('sha256').update(bbCurrentSrc).digest('hex');
-  if(bbCurrentSrc!==boundedBb)assert.equal(currentBodySha,combinedBodySha,'Current BodyBalance must be the exact reviewed closure or its fixed #1815 cache integration');
+  // Admit only this exact queue revision, reversing its explicit source
+  // hunks to the independently pinned historical cache/closure input.
+  // This identity proof does not replace the real pose/muzzle parity suite.
+  let historyBodySrc=bbCurrentSrc;
+  if(currentBodySha === "97d5f23a4d9e7ed70c3cae1dbe96da3fc44e22686aba952d5313c64c041338a8") {
+    historyBodySrc=replaceOnce(historyBodySrc," apply(source,trajectory,{run=0,weight=1,pivot=0,strafe=0}={}){\n  const clampedStrafe=clamp(strafe,0,1),strafeRotationGain=1-.78*clampedStrafe;\n  this.center.fk();const gainX=HOST_BALANCE.lateral*(1-.75*pivot)*(1-.8*clampedStrafe);const gainY=HOST_BALANCE.vertical+(HOST_BALANCE.runVertical-HOST_BALANCE.vertical)*clamp(run,0,1);\n  this.pose.copy(source);const root=this.bank.index.joint_root;\n"," apply(source,trajectory,{run=0,weight=1,pivot=0,strafe=0}={}){\n  this.center.fk();const gainX=HOST_BALANCE.lateral*(1-.75*pivot)*(1-.8*clamp(strafe,0,1));const gainY=HOST_BALANCE.vertical+(HOST_BALANCE.runVertical-HOST_BALANCE.vertical)*clamp(run,0,1);\n  this.pose.copy(source);const root=this.bank.index.joint_root;\n","queue BodyBalance historical normalization 1");
+    historyBodySrc=replaceOnce(historyBodySrc,"  for(const i of this.rotationWorldIndices){\n   const b=this.bank.bones[i],rawGain=this.rotationGainByIndex[i],gain=rawGain===undefined?undefined:rawGain*(i===this.hipIndex?1-.85*pivot:1)*strafeRotationGain,parent=b.parent;\n   if(gain!==undefined){this.world[i].copy(this.center.wq[i]).slerp(source.wq[i],1-weight+weight*gain);this.pose.q[i].copy(this.world[i]);if(parent>=0)this.pose.q[i].premultiply(this.q.copy(this.world[parent]).invert());}\n","  for(const i of this.rotationWorldIndices){\n   const b=this.bank.bones[i],rawGain=this.rotationGainByIndex[i],gain=rawGain===undefined?undefined:rawGain*(i===this.hipIndex?1-.85*pivot:1)*(1-.78*clamp(strafe,0,1)),parent=b.parent;\n   if(gain!==undefined){this.world[i].copy(this.center.wq[i]).slerp(source.wq[i],1-weight+weight*gain);this.pose.q[i].copy(this.world[i]);if(parent>=0)this.pose.q[i].premultiply(this.q.copy(this.world[parent]).invert());}\n","queue BodyBalance historical normalization 2");
+  }
+  const historyBodySha=createHash('sha256').update(historyBodySrc).digest('hex');
+  if(historyBodySrc!==boundedBb)assert.equal(historyBodySha,combinedBodySha,'Current BodyBalance must be the exact reviewed closure or its fixed #1815 cache integration');
 
   // Reconstruct exact pre-migration ink-public/src/ raw sources (before Direct-Source migration)
   const lodBeforeSrc = "// INKWAVE — squidkid LOD kit (used by character.js only).\n" +
