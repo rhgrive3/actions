@@ -68,6 +68,9 @@ export async function buildNativeWorld(game,map,current){
   }),gpuTier,!!game.mobile?.touch);
   const textureLimit=textureCaps.maxDimension;
   const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,textureCaps);pendingTextures=textures;display=nativeDisplay(data,textures,quality);pendingTextures=null;
+  // The display owns per-object views of the source vertex/index arrays and
+  // releases them once uploaded; nothing else reads them after this point.
+  data.vertices=null;data.indices=null;
   if(!current())throw new DOMException('Aborted','AbortError');
   paint=new PaintSystem(G.renderer,level,{atlasSize:Math.min(G.renderer.capabilities.maxTextureSize,(game.mobile?.touch||gpuTier>0||['low','medium'].includes(game.settings.quality))?2048:4096),maxDensity:quality==='low'?4:8,cell:.25});
   // Compact charts use a 2-texel guard. Avoid sampling other charts through
