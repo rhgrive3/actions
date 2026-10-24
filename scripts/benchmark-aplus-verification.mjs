@@ -666,6 +666,7 @@ function benchmarkBodyBalanceSameCondition() {
   const directBbCode = fs.readFileSync(new URL('../inkwave-public/src/game/motion/body-balance.js', import.meta.url), 'utf8')
     .replace(/import \* as THREE from 'three';/, '')
     .replace(/import \{SourcePose,clamp\} from '\.\/source-bank\.js';/, '')
+    .replace(/import \{isPreparedGaitCenter\} from '\.\/locomotion-profile\.js';/, '')
     .replace(/export /g, '');
 
   class SourcePose {
@@ -740,7 +741,7 @@ function benchmarkBodyBalanceSameCondition() {
   }
 
   const LegacyBodyBalance = vm.runInNewContext(legacyBbCode + '\nBodyBalance', { THREE: THREE_STUB, SourcePose, clamp, Math, Map, Object });
-  const DirectBodyBalance = vm.runInNewContext(directBbCode + '\nBodyBalance', { THREE: THREE_STUB, SourcePose, clamp, Math, Map, Object });
+  const DirectBodyBalance = vm.runInNewContext(directBbCode + '\nBodyBalance', { THREE: THREE_STUB, SourcePose, clamp, Math, Map, Object, isPreparedGaitCenter: () => false });
 
   const lb = new LegacyBodyBalance(bank);
   const db = new DirectBodyBalance(bank);
