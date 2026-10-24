@@ -33,8 +33,12 @@ test('offline HUD effects park without losing work; resume resets the wall clock
   h.hud.setWorldPaused(false);
   assert.equal(moving.playState,'running');
   assert.equal(h.hud.paused, true);
-  assert.equal(h.rafs.size, 1);
+  assert.equal(h.rafs.size, 0, 'releasing world pause cannot wake effects still owned by debug pause');
   h.hud.paused = false;
+  assert.equal(h.rafs.size, 1, 'one effect frame resumes only after both pause owners release');
+  h.hud.paused = false;
+  h.hud.setWorldPaused(false);
+  assert.equal(h.rafs.size, 1, 'repeated releases cannot schedule a second effect frame');
   await h.advance(50);
   assert.ok(elapsed > before && elapsed - before < .11, 'no accumulated pause time enters the resumed effect');
   h.hud.setWorldPaused(true);

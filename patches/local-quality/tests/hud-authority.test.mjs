@@ -153,16 +153,19 @@ test('#425: emitted full HUD and touch modules retain quantization and authorita
     if(modules.has(file))return modules.get(file);
     const m=new vm.SourceTextModule(fs.readFileSync(file,'utf8'),{context,identifier:file,initializeImportMeta(meta){meta.url=pathToFileURL(file).href;}});modules.set(file,m);return m;
   }
+  const resolve=(spec,from)=>spec==='three'?path.join(site,'vendor/three/build/three.module.js')
+    :spec.startsWith('three/addons/')?path.join(site,'vendor/three/jsm',spec.slice('three/addons/'.length))
+    :path.resolve(path.dirname(from.identifier),spec);
   const root=load(path.join(site,'src/ui/hud.js'));
-  await root.link((spec,from)=>load(spec==='three'?path.join(site,'vendor/three/build/three.module.js'):path.resolve(path.dirname(from.identifier),spec)));
+  await root.link((spec,from)=>load(resolve(spec,from)));
   await root.evaluate();
   const r=specialRig();r.h._updSpecial=root.namespace.HUD.prototype._updSpecial;
   for(const [s,count]of [[0,0],[.47,at(.47)],[.99999,N-1],[1,N]])assert.equal(r.update(s),count);
   assert(!r.h.sp.classes.has('is-ready'));r.update(1,true);assert(r.h.sp.classes.has('is-ready'));
   assert.equal(r.update(0,false,true),0);assert.equal(r.h.flashes.filter(x=>x==='is-flare').length,1);
   const mobile=load(path.join(site,'src/core/mobile.js'));
-  await mobile.link((spec,from)=>load(spec==='three'?path.join(site,'vendor/three/build/three.module.js'):path.resolve(path.dirname(from.identifier),spec)));await mobile.evaluate();
-  const m={setHud:mobile.namespace.MobileInput.prototype.setHud,els:{special:r.h.sp,fire:r.h.sp,sub:r.h.sp},_buzz(){}};
+  await mobile.link((spec,from)=>load(resolve(spec,from)));await mobile.evaluate();
+  const m={visible:true,owner:{lastDevice:'touch'},setHud:mobile.namespace.MobileInput.prototype.setHud,els:{special:r.h.sp,fire:r.h.sp,sub:r.h.sp},_buzz(){}};
   r.h.sp.querySelectorAll=()=>r.h.spSegments;r.h.sp.style={setProperty(){}};
   for(const [s,count]of [[0,0],[.47,at(.47)],[.99999,N-1],[1,N],[0,0]]){m.setHud({special:s,ready:s===1});assert.equal(r.h.spSegments.filter(n=>n.classes.has('is-filled')).length,count);}
 });
