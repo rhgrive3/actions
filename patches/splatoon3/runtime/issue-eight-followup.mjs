@@ -46,7 +46,9 @@ export function installIssueEightFollowup({ Actor, WeaponRunner, Projectiles }) 
     const before = this.rollT || 0;
     const eligible = rollerDashClockEligible(this);
     const result = roller.call(this, dt, input, w);
-    if (!this.rolling || !eligible) this.rollT = 0;
+    // Current drum support is resolved by the wrapped call. The previous
+    // frame's held state must not fund the first unsupported-grounded tick.
+    if (!this.rolling || !eligible || this.s3RollerSuspendedHold) this.rollT = 0;
     else this.rollT = Math.min(w.rollDashTime ?? Infinity, before + Math.max(0, dt));
     return result;
   };
