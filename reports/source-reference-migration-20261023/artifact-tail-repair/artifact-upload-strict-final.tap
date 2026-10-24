@@ -1,0 +1,292 @@
+TAP version 13
+# Subtest: A+ replaces obsolete PR checks while retaining every main and manual run
+ok 1 - A+ replaces obsolete PR checks while retaining every main and manual run
+  ---
+  duration_ms: 4.036323
+  type: 'test'
+  ...
+# Subtest: required checks keep their identities and cancellation cannot skip the required Validate fan-in
+ok 2 - required checks keep their identities and cancellation cannot skip the required Validate fan-in
+  ---
+  duration_ms: 1.090381
+  type: 'test'
+  ...
+# Subtest: current sparse checkouts retain the complete input closure and historical baseline stays full
+ok 3 - current sparse checkouts retain the complete input closure and historical baseline stays full
+  ---
+  duration_ms: 2.313078
+  type: 'test'
+  ...
+# Subtest: both main-weapon event filters cover every executed test entrypoint, including negative missing-route controls
+ok 4 - both main-weapon event filters cover every executed test entrypoint, including negative missing-route controls
+  ---
+  duration_ms: 94.117548
+  type: 'test'
+  ...
+# Subtest: the excluded authoring workbench is not referenced by runtime/test/build input code
+ok 5 - the excluded authoring workbench is not referenced by runtime/test/build input code
+  ---
+  duration_ms: 254.584176
+  type: 'test'
+  ...
+# Subtest: progress is persisted and forwarded while a child is still running; failure status remains failure
+ok 6 - progress is persisted and forwarded while a child is still running; failure status remains failure
+  ---
+  duration_ms: 110.330192
+  type: 'test'
+  ...
+# Subtest: signal termination keeps already emitted progress and never reports success
+ok 7 - signal termination keeps already emitted progress and never reports success
+  ---
+  duration_ms: 108.928682
+  type: 'test'
+  ...
+# Subtest: spawn failure rejects and leaves a readable diagnostic destination
+ok 8 - spawn failure rejects and leaves a readable diagnostic destination
+  ---
+  duration_ms: 3.564116
+  type: 'test'
+  ...
+# Subtest: hosted apt mirror lists retain suites, signing keys and packages while switching only the stalled Azure URL
+ok 9 - hosted apt mirror lists retain suites, signing keys and packages while switching only the stalled Azure URL
+  ---
+  duration_ms: 168.861752
+  type: 'test'
+  ...
+# Subtest: main-weapon numerical and browser gates run on exact pushed main and relevant queued-owner changes
+ok 10 - main-weapon numerical and browser gates run on exact pushed main and relevant queued-owner changes
+  ---
+  duration_ms: 3.510056
+  type: 'test'
+  ...
+# Subtest: main-weapon trigger contract rejects missing main coverage and mutable checkout
+ok 11 - main-weapon trigger contract rejects missing main coverage and mutable checkout
+  ---
+  duration_ms: 5.257848
+  type: 'test'
+  ...
+# Subtest: integration retains immutable source and independently rebuilt artifact identity checks
+ok 12 - integration retains immutable source and independently rebuilt artifact identity checks
+  ---
+  duration_ms: 0.312892
+  type: 'test'
+  ...
+# Subtest: parallel browser families retain every final integration acceptance surface
+ok 13 - parallel browser families retain every final integration acceptance surface
+  ---
+  duration_ms: 1.605622
+  type: 'test'
+  ...
+# Subtest: all nested final integration source families trigger validation on PR and pushed main
+ok 14 - all nested final integration source families trigger validation on PR and pushed main
+  ---
+  duration_ms: 1.961858
+  type: 'test'
+  ...
+# Subtest: successful browser artifacts require validated reports and source-bound suite receipts
+ok 15 - successful browser artifacts require validated reports and source-bound suite receipts
+  ---
+  duration_ms: 0.533318
+  type: 'test'
+  ...
+# Subtest: active browser CI requires source-bound grate and painted-normal evidence from both installed engines
+ok 16 - active browser CI requires source-bound grate and painted-normal evidence from both installed engines
+  ---
+  duration_ms: 0.413311
+  type: 'test'
+  ...
+# Subtest: ancillary paint WebGL source and emitted masks are mandatory exact-head network evidence
+ok 17 - ancillary paint WebGL source and emitted masks are mandatory exact-head network evidence
+  ---
+  duration_ms: 11.141762
+  type: 'test'
+  ...
+# Subtest: compatibility failure preserves its primary error without a missing diagnostic upload
+ok 18 - compatibility failure preserves its primary error without a missing diagnostic upload
+  ---
+  duration_ms: 0.523233
+  type: 'test'
+  ...
+# Subtest: runtime verifier storage is prepared before runtime evidence tests and baseline checkout creation
+ok 19 - runtime verifier storage is prepared before runtime evidence tests and baseline checkout creation
+  ---
+  duration_ms: 0.167077
+  type: 'test'
+  ...
+# Subtest: high-quality runtime comparison is final-integration gated and preserves baseline before candidate
+ok 20 - high-quality runtime comparison is final-integration gated and preserves baseline before candidate
+  ---
+  duration_ms: 0.229549
+  type: 'test'
+  ...
+# Subtest: range and startup evidence are distinct final acceptance receipts
+ok 21 - range and startup evidence are distinct final acceptance receipts
+  ---
+  duration_ms: 0.178083
+  type: 'test'
+  ...
+# Subtest: isolated render diagnosis cannot replace full acceptance jobs or emit passing browser receipt
+ok 22 - isolated render diagnosis cannot replace full acceptance jobs or emit passing browser receipt
+  ---
+  duration_ms: 0.146666
+  type: 'test'
+  ...
+# Subtest: optional focused regressions preserve the canonical gate and publish only completed source evidence
+ok 23 - optional focused regressions preserve the canonical gate and publish only completed source evidence
+  ---
+  duration_ms: 0.147228
+  type: 'test'
+  ...
+# Subtest: worker source regressions have their pinned dependency and writable persistent storage before focused and canonical tests
+ok 24 - worker source regressions have their pinned dependency and writable persistent storage before focused and canonical tests
+  ---
+  duration_ms: 0.180817
+  type: 'test'
+  ...
+# Subtest: emitted material handoff is mandatory and runs only after a complete site build
+ok 25 - emitted material handoff is mandatory and runs only after a complete site build
+  ---
+  duration_ms: 0.114499
+  type: 'test'
+  ...
+# Subtest: emitted menu focus is mandatory in the UI shard and source-bound in its receipt
+ok 26 - emitted menu focus is mandatory in the UI shard and source-bound in its receipt
+  ---
+  duration_ms: 0.234306
+  type: 'test'
+  ...
+# Subtest: all eight patch shards report into the existing required validate gate
+ok 27 - all eight patch shards report into the existing required validate gate
+  ---
+  duration_ms: 0.504846
+  type: 'test'
+  ...
+# Subtest: emitted Bot respawn and retry regressions reuse the complete production site without replacing source coverage
+ok 28 - emitted Bot respawn and retry regressions reuse the complete production site without replacing source coverage
+  ---
+  duration_ms: 0.259794
+  type: 'test'
+  ...
+# Subtest: emitted hit-pose gate uses the built runtime and exact composed parity case
+ok 29 - emitted hit-pose gate uses the built runtime and exact composed parity case
+  ---
+  duration_ms: 0.404708
+  type: 'test'
+  ...
+# Subtest: streamed music registration contract rejects each missing standalone or parameterized group
+ok 30 - streamed music registration contract rejects each missing standalone or parameterized group
+  ---
+  duration_ms: 4.869935
+  type: 'test'
+  ...
+# Subtest: emitted streamed music gate runs all twenty-three cases on the built runtime
+ok 31 - emitted streamed music gate runs all twenty-three cases on the built runtime
+  ---
+  duration_ms: 0.484786
+  type: 'test'
+  ...
+# Subtest: context RAF diagnostic contracts remain in the required verifier regression command
+ok 32 - context RAF diagnostic contracts remain in the required verifier regression command
+  ---
+  duration_ms: 3.307877
+  type: 'test'
+  ...
+# Subtest: workflow policy negatives reject cancellation loss and failure-only or unbound shard evidence
+ok 33 - workflow policy negatives reject cancellation loss and failure-only or unbound shard evidence
+  ---
+  duration_ms: 5.433428
+  type: 'test'
+  ...
+# Subtest: completes native intro with only cinematic renders suppressed
+ok 34 - completes native intro with only cinematic renders suppressed
+  ---
+  duration_ms: 1.395371
+  type: 'test'
+  ...
+# Subtest: does not alter a genuinely playing match
+ok 35 - does not alter a genuinely playing match
+  ---
+  duration_ms: 0.222969
+  type: 'test'
+  ...
+# Subtest: rejects paused or network-attached matches even after native start
+ok 36 - rejects paused or network-attached matches even after native start
+  ---
+  duration_ms: 4.777519
+  type: 'test'
+  ...
+# Subtest: refuses attract, paused and wrong-identity matches
+ok 37 - refuses attract, paused and wrong-identity matches
+  ---
+  duration_ms: 0.611183
+  type: 'test'
+  ...
+# Subtest: restores original renderer and timer state on native frame exception
+ok 38 - restores original renderer and timer state on native frame exception
+  ---
+  duration_ms: 0.258472
+  type: 'test'
+  ...
+# Subtest: fails closed when native state never advances
+ok 39 - fails closed when native state never advances
+  ---
+  duration_ms: 0.241507
+  type: 'test'
+  ...
+# Subtest: rejects any loss of match clock during cinematic stepping
+ok 40 - rejects any loss of match clock during cinematic stepping
+  ---
+  duration_ms: 0.371679
+  type: 'test'
+  ...
+# Subtest: wall-only route retains exact-head, real build, full verifier and always evidence
+ok 41 - wall-only route retains exact-head, real build, full verifier and always evidence
+  ---
+  duration_ms: 6.864272
+  type: 'test'
+  ...
+# Subtest: all event and flag combinations isolate wall from full, network and broad render jobs
+ok 42 - all event and flag combinations isolate wall from full, network and broad render jobs
+  ---
+  duration_ms: 1.671419
+  type: 'test'
+  ...
+# Subtest: missing identity, real build, source/emitted contracts or full verifier fail closed
+ok 43 - missing identity, real build, source/emitted contracts or full verifier fail closed
+  ---
+  duration_ms: 15.008604
+  type: 'test'
+  ...
+# Subtest: scope, timeout, evidence, failure suppression and concurrency mutations are rejected
+ok 44 - scope, timeout, evidence, failure suppression and concurrency mutations are rejected
+  ---
+  duration_ms: 65.019365
+  type: 'test'
+  ...
+# Subtest: accepted Turf and network job bodies retain their original pins after exact artifact repair
+ok 45 - accepted Turf and network job bodies retain their original pins after exact artifact repair
+  ---
+  duration_ms: 6.750654
+  type: 'test'
+  ...
+# Subtest: the previously pinned broken artifact command is rejected despite its original digest
+ok 46 - the previously pinned broken artifact command is rejected despite its original digest
+  ---
+  duration_ms: 0.916885
+  type: 'test'
+  ...
+# Subtest: artifact repair cannot waive tests, paths, identity, upload errors or unrelated job edits
+ok 47 - artifact repair cannot waive tests, paths, identity, upload errors or unrelated job edits
+  ---
+  duration_ms: 10.977849
+  type: 'test'
+  ...
+1..47
+# tests 47
+# suites 0
+# pass 47
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1712.639574
