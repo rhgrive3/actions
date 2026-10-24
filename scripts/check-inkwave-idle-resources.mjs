@@ -48,6 +48,62 @@ export async function runCloudThemeSequence(measure,retain,{timers=globalThis,no
  }catch(error){trace.state='failed';trace.failurePhase=error?.phase||'clouds:'+activeTheme;trace.error=String(error);if(activeStarted!==null)trace.failedTheme={theme:activeTheme,evaluationElapsedMs:activeEvaluationElapsed??now()-activeStarted,wallElapsedMs:now()-activeStarted};throw error;}
  finally{trace.elapsedMs=now()-started;timers.clearTimeout(aggregateTimer);}
 }
+// Diagnostic memory is bounded independently of a pending browser evaluate.
+export function createResultsProgress(token,{capacity=256,detailCapacity=32,maxMessages=32769,maxDetailMessages=129,maxChars=4096}={}){
+ if(typeof token!=='string'||!token||token.length>64||!Number.isInteger(capacity)||capacity<1||capacity>512||!Number.isInteger(detailCapacity)||detailCapacity<1||detailCapacity>64||!Number.isInteger(maxMessages)||maxMessages<1||maxMessages>32769||!Number.isInteger(maxDetailMessages)||maxDetailMessages<1||maxDetailMessages>129||!Number.isInteger(maxChars)||maxChars<1||maxChars>4096)throw TypeError('Invalid results progress bounds');
+ const channel=(capacity,maxMessages)=>({ring:new Array(capacity),capacity,maxMessages,cursor:0,size:0,received:0,rejected:0,last:0,truncated:false});
+ const prefix='INKWAVE_RESULTS_WORK '+token+' ',channels={critical:channel(capacity,maxMessages),detail:channel(detailCapacity,maxDetailMessages)};let rejected=0,sealed=false;
+ const snapshot=c=>({received:c.received,rejected:c.rejected,truncated:c.truncated,capacity:c.capacity,maxMessages:c.maxMessages,events:Array.from({length:c.size},(_,i)=>c.ring[(c.cursor-c.size+i+c.capacity)%c.capacity])});
+ return {token,accept(text){
+  if(sealed)return false;if(typeof text!=='string'||!text.startsWith(prefix))return false;
+  if(text.length>maxChars){rejected++;return false;}
+  let p;try{p=JSON.parse(text.slice(prefix.length));}catch{rejected++;return false;}
+  if(!p||!['critical','detail'].includes(p.channel)||!Number.isSafeInteger(p.seq)||typeof p.producer!=='string'||p.producer.length>96||!['enter','exit','throw','limit'].includes(p.edge)||!['setup','playing','results','restoring'].includes(p.state)){rejected++;return false;}
+  const c=channels[p.channel];if(p.seq<=c.last||c.received>=c.maxMessages){c.rejected++;c.truncated||=c.received>=c.maxMessages;return false;}
+  c.last=p.seq;c.received++;c.truncated||=p.edge==='limit';c.ring[c.cursor]=p;c.cursor=(c.cursor+1)%c.capacity;c.size=Math.min(c.size+1,c.capacity);return true;
+ },seal(){sealed=true;},snapshot(){return {diagnosticOnly:true,timingScope:'observer CPU/console overhead; not FPS or GPU execution',...snapshot(channels.critical),invalidMessages:rejected,sealed,maxChars,criticalMode:'reserved frame/sample/cleanup; first128 coarse-callee edges per frame, then limit marker',detailMode:'bounded actor-edge sample; GL counters aggregated, no per-draw events',detail:snapshot(channels.detail)};}};
+}
+// One synchronous browser task: no added yield, RAF await, GPU fence or clock reset.
+export function measureResultsWork({token,maxDetailEvents=128}){
+ if(typeof token!=='string'||!token||token.length>64||!Number.isInteger(maxDetailEvents)||maxDetailEvents<1||maxDetailEvents>128)throw TypeError('Invalid results progress token/budget');
+ const G=__G,g=G.game,match=g.match,gl=G.renderer.getContext(),restore=[];
+ const beforeState=match.state,beforePaused=match.paused,started=performance.now();let counts,state='setup',frame=0,completed=0,totalCompleted=0,stateStarted=started,failed=false,failure,watchedClock,criticalInFrame=0,criticalSuppressed=0,detailSuppressed=0;
+ const sequences={critical:0,detail:0};
+ // Frame/sample/cleanup are reserved. Coarse callees get128 edges per frame,
+ // plus one explicit limit; actor detail cannot consume either budget or ring.
+ const emit=(producer,edge,channel='critical')=>{let limit=false;
+  if(channel==='detail'){const n=sequences.detail;if(n>maxDetailEvents){detailSuppressed++;return;}limit=n===maxDetailEvents;}
+  else if(!['frame','sample','cleanup'].includes(producer)){if(criticalInFrame>128){criticalSuppressed++;return;}limit=criticalInFrame++===128;}
+  if(limit){if(channel==='detail')detailSuppressed++;else criticalSuppressed++;}
+  const seq=++sequences[channel];
+  try{const c=g.s3Clock;console.info('INKWAVE_RESULTS_WORK '+token+' '+JSON.stringify({channel,seq,producer:limit?'observer':producer,edge:limit?'limit':edge,state,actualState:match.state,frame,completed,totalCompleted,dt:1/60,criticalSuppressed,detailSuppressed,elapsedMs:performance.now()-started,stateElapsedMs:performance.now()-stateStarted,clock:c?{ticks:c.ticks,accumulator:c.accumulator,advancing:c.advancing,finalTick:c.finalTick,ticked:g._s3Ticked}:null,counts:counts?{...counts}:null,presentation:{frozen:g.frozen,hidden:document.hidden,quality:G.settings?.quality,showcase:!!g.showcase?.fullFrame,skipRender:!!g._skipRender},gameTime:G.time}));}catch{/* Observation failure never replaces a native return/throw. */}
+ };
+ const invoke=(old,receiver,args,label,channel='critical')=>{emit(label,'enter',channel);let returned=false;try{const value=old.apply(receiver,args);returned=true;return value;}finally{emit(label,returned?'exit':'throw',channel);}};
+ const hook=(obj,key,label,producer=label,channel='critical')=>{const old=obj[key];if(typeof old!=='function')throw Error('Missing native work producer '+key);obj[key]=function(...args){counts[label]++;return channel==='aggregate'?old.apply(this,args):invoke(old,this,args,producer,channel);};restore.push(()=>{obj[key]=old;});};
+ const observe=(obj,key,label)=>{const old=obj?.[key];if(typeof old!=='function')return;const descriptor=Object.getOwnPropertyDescriptor(obj,key);obj[key]=function(...args){return invoke(old,this,args,label);};restore.push(()=>{if(descriptor)Object.defineProperty(obj,key,descriptor);else delete obj[key];});};
+ try{
+  for(let i=0;i<G.actors.length;i++)hook(G.actors[i],'update','actorUpdates','actor['+i+'].update','detail');
+  for(const [obj,key,label]of [[G.projectiles,'update','projectileUpdates'],[G.paint,'flush','paintFlushes'],[G.fx,'update','fxUpdates'],[g.R,'render','worldRenders']])hook(obj,key,label,key==='render'?'R.render':label);
+  for(const key of ['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced'])hook(gl,key,'gpuDrawSubmissions','gl.'+key,'aggregate');
+  for(const [obj,key,label]of [[match,'update','match.update'],[match,'updateController','controller'],[g.input,'pollPad','input.pollPad'],[g.input,'endFrame','input.endFrame'],[g,'_padMenus','padMenus'],[G.net,'update','network'],[G.paint,'advanceSimulation','paint.clock'],[G.env,'update','environment'],[g.decor,'update','decor'],[g.props,'update','props'],[g.rig,'update','camera'],[g.diorama,'update','diorama'],[g.screenfx,'update','screenfx'],[g.fxHooks,'update','fxHooks'],[G.projectiles,'syncSights','projectile.sights'],[G.projectiles,'syncVisuals','projectile.visuals'],[G.projectiles,'updateArc','projectile.arc'],[g.showcase,'update','showcase.update'],[g.showcase,'render','showcase.render'],[g,'_updateLocalLoops','audio.loops'],[g,'_updateAmbience','audio.ambience'],[G.audio,'setListener','audio.listener'],[g,'_updateHud','hud'],[g.menus,'update','menus'],[g.R.composer,'render','composer'],[G.renderer,'render','renderer']])observe(obj,key,label);
+  const sample=next=>{counts={actorUpdates:0,projectileUpdates:0,paintFlushes:0,fxUpdates:0,worldRenders:0,gpuDrawSubmissions:0};state=next;frame=completed=0;match.state=next;match.paused=false;const start=stateStarted=performance.now();emit('sample','enter');
+   for(let i=0;i<120;i++){frame=i+1;criticalInFrame=0;if(g.s3Clock&&g.s3Clock!==watchedClock){observe(g.s3Clock,'advance','clock.advance');watchedClock=g.s3Clock;}emit('frame','enter');let returned=false;try{g._frame(1/60);returned=true;completed++;totalCompleted++;}finally{emit('frame',returned?'exit':'throw');}}
+   emit('sample','exit');return {...counts,cpuSubmissionMs:performance.now()-start};
+  };
+  return {frames:120,playing:sample('playing'),results:sample('results'),measurement:'native published Game._frame producers and real WebGL submission counts; not GPU execution time or device power'};
+ }catch(error){failed=true;failure=error;throw error;}
+ finally{
+  state='restoring';emit('cleanup','enter');const errors=[];for(const close of restore.reverse())try{close();}catch(error){errors.push(error);}
+  try{match.state=beforeState;match.paused=beforePaused;}catch(error){errors.push(error);}emit('cleanup','exit');
+  if(errors.length)throw new AggregateError(failed?[failure,...errors]:errors,'Results diagnostic cleanup failed',failed?{cause:failure}:undefined);
+ }
+}
+export async function runResultsWorkDiagnostic(page,progress){
+ const listener=message=>progress.accept(message.text());let attached=false,failed=false,failure;
+ try{page.on('console',listener);attached=true;return await page.evaluate(measureResultsWork,{token:progress.token});}
+ catch(error){failed=true;failure=error;throw error;}
+ finally{progress.seal();if(attached)try{page.off('console',listener);}catch(error){if(failed)throw new AggregateError([failure,error],'Results diagnostic listener cleanup failed',{cause:failure});throw error;}}
+}
 const boundedPages=new WeakSet();
 // Playwright evaluate uses kNoTimeout, independently of setDefaultTimeout.
 // This is a host-side failure deadline, not cancellation or GPU completion proof.
@@ -86,11 +142,26 @@ export async function runIdleProbe(task,{diagnose,cleanup}){
  if(failed)throw failure;
  return value;
 }
-export function idleFailureReporter({publish,snapshot,page,screenshotPath}){
- let screenshotAttempted=false;
+// Fixed vocabulary and numeric bounds: never echo arbitrary error/event text.
+export function formatIdleFailureProgress(error,data){
+ const primary=primaryIdleFailure(error),phase=primary?.phase??data?.phase;
+ const phases=['identity','boot','audio','clouds','clouds:day','clouds:sunset','clouds:golden','clouds:aggregate','far-stage-transitions','pause','results-work','gpu-identity','cold-boot-mobile'];
+ const p=phase==='results-work'?data?.resultsWorkProgress:null,events=Array.isArray(p?.events)?p.events:[];
+ let latest,region;
+ for(let i=events.length-1;i>=Math.max(0,events.length-512);i--){const e=events[i];if(!e||typeof e!=='object'||e.producer==='cleanup')continue;latest??=e;if(e.state===latest.state&&e.frame===latest.frame&&!['frame','sample','cleanup','observer'].includes(e.producer)){region=e;break;}}
+ region??=latest;
+ const labels=['frame','sample','cleanup','observer','clock.advance','actorUpdates','projectileUpdates','paintFlushes','fxUpdates','R.render','match.update','controller','input.pollPad','input.endFrame','padMenus','network','paint.clock','environment','decor','props','camera','diorama','screenfx','fxHooks','projectile.sights','projectile.visuals','projectile.arc','showcase.update','showcase.render','audio.loops','audio.ambience','audio.listener','hud','menus','composer','renderer'];
+ const integer=(v,max)=>Number.isSafeInteger(v)&&v>=0&&v<=max?v:null;
+ const observation=(c,capacity,messages)=>({retained:Array.isArray(c?.events)?integer(c.events.length,capacity):0,capacity:integer(c?.capacity,capacity),received:integer(c?.received,messages),limit:integer(c?.maxMessages,messages),truncated:c?.truncated===true});
+ return 'INKWAVE_IDLE_FAILURE_PROGRESS '+JSON.stringify({phase:phases.includes(phase)?phase:'unknown',state:['setup','playing','results','restoring'].includes(latest?.state)?latest.state:'unknown',frame:integer(latest?.frame,120),completed:integer(latest?.completed,120),totalCompleted:integer(latest?.totalCompleted,240),sampledRegion:labels.includes(region?.producer)?region.producer:'unknown',regionEdge:['enter','exit','throw','limit'].includes(region?.edge)?region.edge:'unknown',observations:{critical:observation(p,512,32769),detail:observation(p?.detail,64,129),coarseEdgesPerFrame:128,criticalOmitted:integer(latest?.criticalSuppressed,Number.MAX_SAFE_INTEGER),detailOmitted:integer(latest?.detailSuppressed,Number.MAX_SAFE_INTEGER),gl:'counters-only'},scope:'sampled diagnostic; not GPU/FPS evidence'});
+}
+export function idleFailureReporter({publish,snapshot,page,screenshotPath,stderr=line=>console.error(line)}){
+ let screenshotAttempted=false,summaryAttempted=false;
  return async error=>{
   const primary=primaryIdleFailure(error),timedOut=primary?.code==='INKWAVE_IDLE_EVALUATION_TIMEOUT'||primary?.code==='INKWAVE_CLOUD_SEQUENCE_TIMEOUT';
-  publish({...snapshot(),status:'failed',error:error?.stack||String(error),primaryError:primary?.stack||String(primary),relatedErrors:error instanceof AggregateError?error.errors.slice(0,8).map(e=>e?.stack||String(e)):undefined,operation:timedOut?{phase:primary.phase,timeoutMs:primary.timeoutMs,code:primary.code,...(Number.isFinite(primary.elapsedMs)?{elapsedMs:primary.elapsedMs,scope:primary.scope}:{})}:undefined});
+  let available;
+  try{available=snapshot();}finally{if(!summaryAttempted){summaryAttempted=true;try{stderr(formatIdleFailureProgress(primary,available));}catch{/* Stderr observation must not replace the original failure. */}}}
+  publish({...available,status:'failed',error:error?.stack||String(error),primaryError:primary?.stack||String(primary),relatedErrors:error instanceof AggregateError?error.errors.slice(0,8).map(e=>e?.stack||String(e)):undefined,operation:timedOut?{phase:primary.phase,timeoutMs:primary.timeoutMs,code:primary.code,...(Number.isFinite(primary.elapsedMs)?{elapsedMs:primary.elapsedMs,scope:primary.scope}:{})}:undefined});
   const activePage=page();
   if(!timedOut&&activePage&&!screenshotAttempted){screenshotAttempted=true;await activePage.screenshot({path:screenshotPath}).catch(()=>{});}
  };
@@ -217,9 +288,9 @@ async function main(){
  const site=fs.realpathSync(option('--site')),output=option('--evidence-dir'),profile=option('--profile-dir');
  for(const d of [output,profile]){if(['/tmp','/var/tmp','/dev/shm'].some(p=>d===p||d.startsWith(p+'/')))throw Error('Persistent evidence required');fs.mkdirSync(d,{recursive:true});}
  const publish=r=>fs.writeFileSync(path.join(output,'idle-resources-result.json'),JSON.stringify(r,null,2)+'\n');
- let browser,server,page,identity,result;const errors=[],loaded=new Set();let phase='identity';
+ let browser,server,page,identity,result,resultsProgress;const errors=[],loaded=new Set();let phase='identity';
  publish({status:'running',phase});
- const diagnose=idleFailureReporter({publish,snapshot:()=>({phase,errors,result,loaded:[...loaded].slice(0,4096),loadedDropped:Math.max(0,loaded.size-4096),sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash}),page:()=>page,screenshotPath:path.join(output,'failure.png')});
+  const diagnose=idleFailureReporter({publish,snapshot:()=>({phase,errors,result,resultsWorkProgress:resultsProgress?.snapshot(),loaded:[...loaded].slice(0,4096),loadedDropped:Math.max(0,loaded.size-4096),sourceSha:identity?.source.sourceSha,contentHash:identity?.manifest.contentHash}),page:()=>page,screenshotPath:path.join(output,'failure.png')});
  const receipt=await runIdleProbe(async()=>{
   identity=verifyWallBuild(site,process.argv.includes('--exact-source'));
   if(process.argv.includes('--exact-source')){
@@ -301,17 +372,7 @@ async function main(){
   // CPU submission time includes JS/driver submission, not asynchronous GPU time.
   // Results still need backdrop/presentation draws, so no FPS/draw-reduction target
   // is invented. The existing browser/GL and exact-source identities remain gates.
-  phase='results-work';result.resultsWork=await page.evaluate(()=>{
-   const G=__G,g=G.game,match=g.match,gl=G.renderer.getContext(),restore=[];
-   const beforeState=match.state,beforePaused=match.paused;let counts;
-   const hook=(obj,key,label)=>{const old=obj[key];if(typeof old!=='function')throw Error('Missing native work producer '+key);obj[key]=function(...args){counts[label]++;return old.apply(this,args);};restore.push(()=>{obj[key]=old;});};
-   for(const a of G.actors)hook(a,'update','actorUpdates');
-   for(const [obj,key,label] of [[G.projectiles,'update','projectileUpdates'],[G.paint,'flush','paintFlushes'],[G.fx,'update','fxUpdates'],[g.R,'render','worldRenders']])hook(obj,key,label);
-   for(const key of ['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced'])hook(gl,key,'gpuDrawSubmissions');
-   const sample=state=>{counts={actorUpdates:0,projectileUpdates:0,paintFlushes:0,fxUpdates:0,worldRenders:0,gpuDrawSubmissions:0};match.state=state;match.paused=false;const start=performance.now();for(let i=0;i<120;i++)g._frame(1/60);return {...counts,cpuSubmissionMs:performance.now()-start};};
-   try{return {frames:120,playing:sample('playing'),results:sample('results'),measurement:'native published Game._frame producers and real WebGL submission counts; not GPU execution time or device power'};}
-   finally{restore.forEach(f=>f());match.state=beforeState;match.paused=beforePaused;}
-  });
+  phase='results-work';resultsProgress=createResultsProgress(crypto.randomUUID());result.resultsWork=await runResultsWorkDiagnostic(page,resultsProgress);
   phase='gpu-identity';result.gpu=await page.evaluate(()=>{const gl=__G.renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return {webgl:gl.getParameter(gl.VERSION),renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};});
   for(const f of ['patches/local-quality/idle-resources.mjs','patches/local-quality/music-idle.mjs'])if(![...loaded].some(p=>p.endsWith('/'+f)))throw Error('Runtime module not actually loaded: '+f);
   phase='cold-boot-mobile';
@@ -365,7 +426,7 @@ async function main(){
    throw coldError;
   } finally {try{await closeProbeOwner(coldContext,coldError);}catch(closeError){if(coldError)result.coldDiagnostic.closeError=String(closeError.errors?.at(-1)||closeError);throw closeError;}}
   result.errors=errors;const summary=validateIdleResult(result);
-  return {status:'passed',...result,summary,sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash,verifierSha256:sha(fs.readFileSync(fileURLToPath(import.meta.url))),browser:coldBrowserVersion};
+  return {status:'passed',...result,summary,resultsWorkProgress:resultsProgress?.snapshot(),sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash,verifierSha256:sha(fs.readFileSync(fileURLToPath(import.meta.url))),browser:coldBrowserVersion};
  },{
   diagnose,
   cleanup:error=>closeIdleResources(browser,server,error)
