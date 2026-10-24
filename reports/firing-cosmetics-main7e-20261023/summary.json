@@ -1,0 +1,802 @@
+{
+  "status": "candidate validated locally; PR1857 unchanged pending parent confirmation",
+  "main": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "approved": "96efc55784320dea7e27f05f14c9cbe33df7746a",
+  "qaSource": "22f3b7534ae2093aef4c2549112a85a1da09bbf3",
+  "qaOnlyBaseline": "dc526ffecbf141fd342d8c29a46ef4eb881162bb",
+  "productionCompiledAt": "9c0091eefe69d4397f543236ce3749368e87c7c0",
+  "production": [
+    {
+      "path": "scripts/inkwave-source-composition.mjs",
+      "sha": "a6dfbe6fa07a4ba54bfe316c67fb8cc8d9d4a9e9",
+      "matches": "96efc55784320dea7e27f05f14c9cbe33df7746a"
+    },
+    {
+      "path": "patches/splatoon3/firing-cosmetics-adapter.mjs",
+      "sha": "19f4236fabcdcc99fd38253a3a87f3436b026a7b",
+      "matches": "96efc55784320dea7e27f05f14c9cbe33df7746a"
+    },
+    {
+      "path": "patches/splatoon3/runtime/shooter-muzzle-droplets.mjs",
+      "sha": "523afbd9e550f2b65d2848eec89d445bac270f12",
+      "matches": "96efc55784320dea7e27f05f14c9cbe33df7746a"
+    },
+    {
+      "path": "patches/splatoon3/runtime/splatling-cosmetics.mjs",
+      "sha": "1a0909ac79aeed0e059b7730d31de3a463f6dca4",
+      "matches": "96efc55784320dea7e27f05f14c9cbe33df7746a"
+    }
+  ],
+  "qa": [
+    {
+      "path": "scripts/check-inkwave-local-references.mjs",
+      "sha": "6d8a6eb13d36bf33bb4655b3fa21219e550683e7",
+      "matches": "22f3b7534ae2093aef4c2549112a85a1da09bbf3"
+    },
+    {
+      "path": "scripts/tests/inkwave-local-references.test.mjs",
+      "sha": "24311c5d9dc055831ad1c4f1757cde93bc0d28f5",
+      "matches": "22f3b7534ae2093aef4c2549112a85a1da09bbf3"
+    }
+  ],
+  "mainPreserved": [
+    {
+      "path": "patches/splatoon3/runtime/projectile-presentation.mjs",
+      "sha": "27fdec01a3536614fb615e9b5fd3c43ebe46c871",
+      "matches": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51"
+    },
+    {
+      "path": "patches/splatoon3/runtime/area-special-vfx-clock.mjs",
+      "status": "absent in main and candidate",
+      "matches": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51"
+    },
+    {
+      "path": "patches/splatoon3/runtime/special-motion.mjs",
+      "sha": "643d89ab8f56c9378b661b4bdc5f0eceb440dc77",
+      "matches": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51"
+    },
+    {
+      "path": "patches/splatoon3/runtime/special-presentation.mjs",
+      "sha": "e15c40dc00487416c2f55ad3936b590562bec2b7",
+      "matches": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51"
+    },
+    {
+      "path": "patches/splatoon3/runtime/special-vfx.mjs",
+      "sha": "01911bf47b140ecd603d0080d065b280b37295df",
+      "matches": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51"
+    },
+    {
+      "path": "patches/local-quality/static-menu-adapter.mjs",
+      "sha": "e9ec35da5e1f96d9e312ba18f89585c0222e26cc",
+      "matches": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51"
+    },
+    {
+      "path": "patches/local-quality/tests/static-menu-art.test.mjs",
+      "sha": "46288013ecf23a02a67e4837623a6d5746d201e9",
+      "matches": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51"
+    }
+  ],
+  "buildInputsChangedOnly": [
+    "build-script/inkwave-source-composition.mjs",
+    "patch/firing-cosmetics-adapter.mjs",
+    "patch/runtime/shooter-muzzle-droplets.mjs",
+    "patch/runtime/splatling-cosmetics.mjs"
+  ],
+  "builds": [
+    {
+      "name": "before",
+      "inputFiles": 1420,
+      "artifacts": 2110,
+      "inputHash": "8710f36362bd7e4c59b52cf6dd8d95a2ac720ee8b8b64541e1f0aecc8c4925f5",
+      "contentHash": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+      "buildScriptSHA256": "a2814e623a81811aca5a6b5079d566ab88fabaa9b9a8d9351fadd45c25a98242",
+      "allCurrentInputsMatch": true,
+      "allArtifactBytesMatch": true
+    },
+    {
+      "name": "candidate",
+      "inputFiles": 1423,
+      "artifacts": 2116,
+      "inputHash": "9e8b33fb99224088ee00aa2fba80aef88f619b1e8e94f8cb1462b252d2154150",
+      "contentHash": "f740110d0f27536f46725d2299710bf4e01a08c0e7ddc6efba75dbe27a61c965",
+      "buildScriptSHA256": "a2814e623a81811aca5a6b5079d566ab88fabaa9b9a8d9351fadd45c25a98242",
+      "allCurrentInputsMatch": true,
+      "allArtifactBytesMatch": true
+    }
+  ],
+  "tests": {
+    "sourceUnique": 66,
+    "emittedUnique": 34,
+    "directSourceAndReference": 28,
+    "capacitySource": 6,
+    "capacityEmitted": 6,
+    "allFail": 0,
+    "allSkip": 0,
+    "note": "65 source/33 emitted initial suites; strengthened capacity file rerun6/6 each adds one new explicit1-slot regression"
+  },
+  "referenceProofs": {
+    "count": 13,
+    "bothRootAndVersioned": true,
+    "nineMigratedEdgeGuardRetained": true
+  },
+  "component": {
+    "status": "pass",
+    "beforeBuild": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+    "candidateBuild": "f740110d0f27536f46725d2299710bf4e01a08c0e7ddc6efba75dbe27a61c965",
+    "steps": 960,
+    "rows": [
+      {
+        "weapon": "shooter",
+        "state": "standing",
+        "hz": 60,
+        "steps": 240,
+        "shots": 18,
+        "paintWrites": 44,
+        "traceSHA256": "79a5fb360b00a9a92864dc1af0a3d1ae972f3a0a2198a1ef8e544fc9d944f10d",
+        "paintSHA256": "4d3ca0abc5ce74fc7fd411501dd7aa5529cb26f943e5de5cb48a3537a70ab39b",
+        "gridSHA256": "6f5d2c10378dbac288e2e1d83cbbddab8077bad5b76e4a8739696861e324b3ee",
+        "beforeResources": {
+          "geometries": 167,
+          "textures": 9
+        },
+        "afterResources": {
+          "geometries": 167,
+          "textures": 9
+        },
+        "afterDrain": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      },
+      {
+        "weapon": "shooter",
+        "state": "moving-jump",
+        "hz": 60,
+        "steps": 240,
+        "shots": 18,
+        "paintWrites": 45,
+        "traceSHA256": "08d00adb4e938bd10eef1575b28ec7b843242017d2f4d927b29be966c280c596",
+        "paintSHA256": "0bb6b6c06134e69c1ad061562e4e7d24c17e7d6aab4a4c9a1ba24ce6d2c5a9a1",
+        "gridSHA256": "70fb7dff7917913cc86902f4269d4005afdd0a0aa9c97720771499349d61f392",
+        "beforeResources": {
+          "geometries": 167,
+          "textures": 9
+        },
+        "afterResources": {
+          "geometries": 167,
+          "textures": 9
+        },
+        "afterDrain": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      },
+      {
+        "weapon": "splatling",
+        "state": "standing",
+        "hz": 60,
+        "steps": 240,
+        "shots": 25,
+        "paintWrites": 50,
+        "traceSHA256": "0afd950526fabb863d8af0f1dc0d193b8440b49ebfb31446d6983737c4c0fa29",
+        "paintSHA256": "57d7d476be5fd924d4e010d422ae4b31537caf4dacdb866774909d6e92338bd5",
+        "gridSHA256": "6e5e3d4120161024747988350b286236cd5d95a14042b4d58d6663aec0973fc9",
+        "beforeResources": {
+          "geometries": 173,
+          "textures": 9
+        },
+        "afterResources": {
+          "geometries": 173,
+          "textures": 9
+        },
+        "afterDrain": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      },
+      {
+        "weapon": "splatling",
+        "state": "moving-jump",
+        "hz": 60,
+        "steps": 240,
+        "shots": 25,
+        "paintWrites": 50,
+        "traceSHA256": "9d2588b644d9617ce10ecd26cdbe60e0f6ae46dd48a1757a0241b7a4e1fc52bf",
+        "paintSHA256": "97c46ab30998ec7dcff1e26e35dbdf10fe4499551ef0d45ef3edc9c6aa189993",
+        "gridSHA256": "5f0b7a5fe3d6830dd25872f5d72a0e34ef1f149032d448682f14e1b0717a5c74",
+        "beforeResources": {
+          "geometries": 173,
+          "textures": 9
+        },
+        "afterResources": {
+          "geometries": 173,
+          "textures": 9
+        },
+        "afterDrain": {
+          "rounds": 0,
+          "drops": 0,
+          "cosmetic": 0
+        }
+      }
+    ]
+  },
+  "native": [
+    {
+      "scenario": "shooter",
+      "births": true,
+      "fire": true,
+      "updateOrder": true,
+      "rng": true,
+      "rngDraws": {
+        "before": 258,
+        "after": 258
+      },
+      "gear": {
+        "loadout": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "abilityPoints": {},
+        "modifiers": {
+          "runSpeed": 1,
+          "swimSpeed": 1,
+          "inkSaverMain": 1,
+          "inkSaverSub": 1,
+          "inkRecovery": 180,
+          "inkResistance": 0.024,
+          "specialCharge": 1,
+          "specialSaver": 0.5,
+          "quickRespawn": 1,
+          "quickSuperJump": 1,
+          "subPower": 1,
+          "actionIntensify": 1,
+          "subResistance": 1,
+          "specialPower": 0,
+          "ninjaSquid": false,
+          "objectShredder": false,
+          "stealthJump": false,
+          "dropRoller": false,
+          "subMistResistance": 1,
+          "subResistanceLow": 1,
+          "subLineMarkerResistance": 1,
+          "subSprinklerResistance": 1,
+          "subMarkResistance": 1,
+          "subMineMarkResistance": 1,
+          "specialPowerAP": 0,
+          "quickRespawnReduction": 0,
+          "inkRecoverySwim": 1,
+          "inkRecoveryKid": 1,
+          "enemyMoveSpeed": 1.44,
+          "enemyActionSpeedScale": 0.5,
+          "enemyInkGrace": 0,
+          "enemyShotSpeed": 0.72,
+          "enemyDamageCap": 40,
+          "enemyDamageRate": 18,
+          "enemyJumpVelocity": 4.8,
+          "rollRetention": 0.85,
+          "surgeChargeScale": 1,
+          "runSpeedFiring": 1,
+          "actionAirSpread": 0,
+          "stormDuration": 8,
+          "stormThrowScale": 1
+        }
+      },
+      "camera": {
+        "pos": [
+          22.494810551458865,
+          1.9025296896389747,
+          -19.62255529845858
+        ],
+        "q": [
+          0,
+          0.9995500337489874,
+          -0.029995500202495647,
+          0
+        ],
+        "fov": 54.999999999999986,
+        "rig": {
+          "mode": "follow",
+          "yaw": 0,
+          "pitch": 0.06,
+          "pivotY": 1.85,
+          "dist": 4.5,
+          "curDist": 1.6254802853181207,
+          "fovKick": 0,
+          "trauma": 0,
+          "shakeScale": 1,
+          "spectate": null,
+          "path": null,
+          "baseFov": 85.56559011236283,
+          "zoom": 0,
+          "scopeK": 0,
+          "scopeUsesTrueFov": true,
+          "time": 0.7166666666666672,
+          "kick": 0,
+          "wantDist": 4.5,
+          "_lastTY": 1.85,
+          "_landSeen": 99.66666666666663,
+          "_sjWasFlight": false,
+          "_sjLandT": 99,
+          "_traumaIn": 0,
+          "shakeSeed": 83.76900285948068,
+          "_prevMode": "follow",
+          "spectateT": 0,
+          "mapOpen": false,
+          "mapK": 0,
+          "dioFlip": false,
+          "_vBase": 54.999999999999986,
+          "_vBaseFov": 85.56559011236283,
+          "_s3EnvironmentalBlackout": false,
+          "_takeoffY": 0,
+          "_vyF": 0,
+          "scopeCharge": 0,
+          "scopeFullZoom": 0,
+          "shoulder": 0.5051894485411357,
+          "cameraClearanceCorrection": 0
+        }
+      },
+      "prepared": {
+        "time": 0.7166666666666672,
+        "charT": 0.6666666666666671,
+        "ticks": 43
+      }
+    },
+    {
+      "scenario": "splatling",
+      "births": true,
+      "fire": true,
+      "updateOrder": true,
+      "rng": true,
+      "rngDraws": {
+        "before": 957,
+        "after": 957
+      },
+      "gear": {
+        "loadout": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "abilityPoints": {},
+        "modifiers": {
+          "runSpeed": 1,
+          "swimSpeed": 1,
+          "inkSaverMain": 1,
+          "inkSaverSub": 1,
+          "inkRecovery": 180,
+          "inkResistance": 0.024,
+          "specialCharge": 1,
+          "specialSaver": 0.5,
+          "quickRespawn": 1,
+          "quickSuperJump": 1,
+          "subPower": 1,
+          "actionIntensify": 1,
+          "subResistance": 1,
+          "specialPower": 0,
+          "ninjaSquid": false,
+          "objectShredder": false,
+          "stealthJump": false,
+          "dropRoller": false,
+          "subMistResistance": 1,
+          "subResistanceLow": 1,
+          "subLineMarkerResistance": 1,
+          "subSprinklerResistance": 1,
+          "subMarkResistance": 1,
+          "subMineMarkResistance": 1,
+          "specialPowerAP": 0,
+          "quickRespawnReduction": 0,
+          "inkRecoverySwim": 1,
+          "inkRecoveryKid": 1,
+          "enemyMoveSpeed": 1.44,
+          "enemyActionSpeedScale": 0.5,
+          "enemyInkGrace": 0,
+          "enemyShotSpeed": 0.72,
+          "enemyDamageCap": 40,
+          "enemyDamageRate": 18,
+          "enemyJumpVelocity": 4.8,
+          "rollRetention": 0.85,
+          "surgeChargeScale": 1,
+          "runSpeedFiring": 1,
+          "actionAirSpread": 0,
+          "stormDuration": 8,
+          "stormThrowScale": 1
+        }
+      },
+      "camera": {
+        "pos": [
+          22.66228182356312,
+          1.862520821956187,
+          -20.288569390376285
+        ],
+        "q": [
+          0,
+          0.9995500337489875,
+          -0.02999550020249565,
+          0
+        ],
+        "fov": 54.999999999999986,
+        "rig": {
+          "mode": "follow",
+          "yaw": 0,
+          "pitch": 0.06,
+          "pivotY": 1.85,
+          "dist": 4.5,
+          "curDist": 2.2926950034757976,
+          "fovKick": 0,
+          "trauma": 0,
+          "shakeScale": 1,
+          "spectate": null,
+          "path": null,
+          "baseFov": 85.56559011236283,
+          "zoom": 0,
+          "scopeK": 0,
+          "scopeUsesTrueFov": true,
+          "time": 1.649999999999999,
+          "kick": 0,
+          "wantDist": 4.5,
+          "_lastTY": 1.85,
+          "_landSeen": 100.59999999999991,
+          "_sjWasFlight": false,
+          "_sjLandT": 99,
+          "_traumaIn": 0,
+          "shakeSeed": 83.76900285948068,
+          "_prevMode": "follow",
+          "spectateT": 0,
+          "mapOpen": false,
+          "mapK": 0,
+          "dioFlip": false,
+          "_vBase": 54.999999999999986,
+          "_vBaseFov": 85.56559011236283,
+          "_s3EnvironmentalBlackout": false,
+          "_takeoffY": 0,
+          "_vyF": 0,
+          "scopeCharge": 0,
+          "scopeFullZoom": 0,
+          "shoulder": 0.33771817643687896,
+          "cameraClearanceCorrection": 0
+        }
+      },
+      "prepared": {
+        "time": 1.649999999999999,
+        "charT": 1.5999999999999992,
+        "ticks": 99
+      }
+    },
+    {
+      "scenario": "shooter-jump",
+      "births": true,
+      "fire": true,
+      "updateOrder": true,
+      "rng": true,
+      "rngDraws": {
+        "before": 259,
+        "after": 259
+      },
+      "gear": {
+        "loadout": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "abilityPoints": {},
+        "modifiers": {
+          "runSpeed": 1,
+          "swimSpeed": 1,
+          "inkSaverMain": 1,
+          "inkSaverSub": 1,
+          "inkRecovery": 180,
+          "inkResistance": 0.024,
+          "specialCharge": 1,
+          "specialSaver": 0.5,
+          "quickRespawn": 1,
+          "quickSuperJump": 1,
+          "subPower": 1,
+          "actionIntensify": 1,
+          "subResistance": 1,
+          "specialPower": 0,
+          "ninjaSquid": false,
+          "objectShredder": false,
+          "stealthJump": false,
+          "dropRoller": false,
+          "subMistResistance": 1,
+          "subResistanceLow": 1,
+          "subLineMarkerResistance": 1,
+          "subSprinklerResistance": 1,
+          "subMarkResistance": 1,
+          "subMineMarkResistance": 1,
+          "specialPowerAP": 0,
+          "quickRespawnReduction": 0,
+          "inkRecoverySwim": 1,
+          "inkRecoveryKid": 1,
+          "enemyMoveSpeed": 1.44,
+          "enemyActionSpeedScale": 0.5,
+          "enemyInkGrace": 0,
+          "enemyShotSpeed": 0.72,
+          "enemyDamageCap": 40,
+          "enemyDamageRate": 18,
+          "enemyJumpVelocity": 4.8,
+          "rollRetention": 0.85,
+          "surgeChargeScale": 1,
+          "runSpeedFiring": 1,
+          "actionAirSpread": 0,
+          "stormDuration": 8,
+          "stormThrowScale": 1
+        }
+      },
+      "camera": {
+        "pos": [
+          22.676903867692346,
+          1.8594032575428854,
+          -20.340466431006938
+        ],
+        "q": [
+          0,
+          0.9995500337489875,
+          -0.029995500202495654,
+          0
+        ],
+        "fov": 54.999999999999986,
+        "rig": {
+          "mode": "follow",
+          "yaw": 0,
+          "pitch": 0.06,
+          "pivotY": 1.85,
+          "dist": 4.5,
+          "curDist": 2.344685599107033,
+          "fovKick": 0,
+          "trauma": 0,
+          "shakeScale": 1,
+          "spectate": null,
+          "path": null,
+          "baseFov": 85.56559011236283,
+          "zoom": 0,
+          "scopeK": 0,
+          "scopeUsesTrueFov": true,
+          "time": 3.683333333333325,
+          "kick": 0,
+          "wantDist": 4.5,
+          "_lastTY": 1.85,
+          "_landSeen": 102.63333333333313,
+          "_sjWasFlight": false,
+          "_sjLandT": 99,
+          "_traumaIn": 0,
+          "shakeSeed": 83.76900285948068,
+          "_prevMode": "follow",
+          "spectateT": 0,
+          "mapOpen": false,
+          "mapK": 0,
+          "dioFlip": false,
+          "_vBase": 54.999999999999986,
+          "_vBaseFov": 85.56559011236283,
+          "_s3EnvironmentalBlackout": false,
+          "_takeoffY": 0,
+          "_vyF": 0,
+          "scopeCharge": 0,
+          "scopeFullZoom": 0,
+          "shoulder": 0.3230961323076556,
+          "cameraClearanceCorrection": 0
+        }
+      },
+      "prepared": {
+        "time": 3.683333333333325,
+        "charT": 3.6333333333333253,
+        "ticks": 221
+      }
+    },
+    {
+      "scenario": "splatling-jump",
+      "births": true,
+      "fire": true,
+      "updateOrder": true,
+      "rng": true,
+      "rngDraws": {
+        "before": 957,
+        "after": 957
+      },
+      "gear": {
+        "loadout": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "abilityPoints": {},
+        "modifiers": {
+          "runSpeed": 1,
+          "swimSpeed": 1,
+          "inkSaverMain": 1,
+          "inkSaverSub": 1,
+          "inkRecovery": 180,
+          "inkResistance": 0.024,
+          "specialCharge": 1,
+          "specialSaver": 0.5,
+          "quickRespawn": 1,
+          "quickSuperJump": 1,
+          "subPower": 1,
+          "actionIntensify": 1,
+          "subResistance": 1,
+          "specialPower": 0,
+          "ninjaSquid": false,
+          "objectShredder": false,
+          "stealthJump": false,
+          "dropRoller": false,
+          "subMistResistance": 1,
+          "subResistanceLow": 1,
+          "subLineMarkerResistance": 1,
+          "subSprinklerResistance": 1,
+          "subMarkResistance": 1,
+          "subMineMarkResistance": 1,
+          "specialPowerAP": 0,
+          "quickRespawnReduction": 0,
+          "inkRecoverySwim": 1,
+          "inkRecoveryKid": 1,
+          "enemyMoveSpeed": 1.44,
+          "enemyActionSpeedScale": 0.5,
+          "enemyInkGrace": 0,
+          "enemyShotSpeed": 0.72,
+          "enemyDamageCap": 40,
+          "enemyDamageRate": 18,
+          "enemyJumpVelocity": 4.8,
+          "rollRetention": 0.85,
+          "surgeChargeScale": 1,
+          "runSpeedFiring": 1,
+          "actionAirSpread": 0,
+          "stormDuration": 8,
+          "stormThrowScale": 1
+        }
+      },
+      "camera": {
+        "pos": [
+          22.676934313283443,
+          1.8598353933196714,
+          -20.340539838019442
+        ],
+        "q": [
+          0,
+          0.9995500337489875,
+          -0.029995500202495654,
+          0
+        ],
+        "fov": 55.02248137194415,
+        "rig": {
+          "mode": "follow",
+          "yaw": 0,
+          "pitch": 0.06,
+          "pivotY": 1.850436545490463,
+          "dist": 4.5,
+          "curDist": 2.344759138450648,
+          "fovKick": 0.02810171493020165,
+          "trauma": 0,
+          "shakeScale": 1,
+          "spectate": null,
+          "path": null,
+          "baseFov": 85.56559011236283,
+          "zoom": 0,
+          "scopeK": 0,
+          "scopeUsesTrueFov": true,
+          "time": 4.616666666666656,
+          "kick": 0,
+          "wantDist": 4.5,
+          "_lastTY": 1.85,
+          "_landSeen": 0.6500000000000004,
+          "_sjWasFlight": false,
+          "_sjLandT": 99,
+          "_traumaIn": 0,
+          "shakeSeed": 83.76900285948068,
+          "_prevMode": "follow",
+          "spectateT": 0,
+          "mapOpen": false,
+          "mapK": 0,
+          "dioFlip": false,
+          "_vBase": 54.999999999999986,
+          "_vBaseFov": 85.56559011236283,
+          "_s3EnvironmentalBlackout": false,
+          "_takeoffY": 0,
+          "_vyF": -3.522315511993197e-8,
+          "scopeCharge": 0,
+          "scopeFullZoom": 0,
+          "shoulder": 0.3230656867165565,
+          "cameraClearanceCorrection": 0
+        }
+      },
+      "prepared": {
+        "time": 4.616666666666656,
+        "charT": 4.566666666666656,
+        "ticks": 277
+      }
+    }
+  ],
+  "limits": [
+    "No Nintendo media access retried; prior CONNECT403 remains denied",
+    "No hardware GPU/thermal or retail visual parity certification",
+    "No exact-head hosted CI success claimed; candidate branch only",
+    "Unmerged Tri-Slosher PR1855 not adopted/overwritten; shared leaf equals official main"
+  ]
+}

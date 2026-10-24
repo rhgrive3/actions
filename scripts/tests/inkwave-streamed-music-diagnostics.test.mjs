@@ -60,6 +60,10 @@ test('runner keeps historical workload and failure gates after reviewed capture 
  assert.ok(runner.includes(gate));assert.ok(runner.includes("report.status = report.errors.length ? 'failed' : 'passed';"));
  let restored=runner;
  const revert=(current,prior)=>{assert.equal(restored.split(current).length,2);restored=restored.replace(current,prior);};
+ // The current-pair verifier adds only exact-build admission before the
+ // historical workload. Its own strict source/site negative controls stay active.
+ revert("import {verifyCurrentPairCaptureBuild} from './lib/inkwave-projectile-current-pair.mjs';\n", "");
+ revert("const hash = b => crypto.createHash('sha256').update(b).digest('hex');\nconst exactBuildClosure=verifyCurrentPairCaptureBuild({site,mode,root:ROOT,\n  eventFile:process.env.GITHUB_EVENT_PATH,eventName:process.env.GITHUB_EVENT_NAME,\n  repository:process.env.GITHUB_REPOSITORY,baseline:process.env.INKWAVE_REFERENCE_ROOT,evidence,profile});\nfs.mkdirSync(evidence, { recursive: true });\nfs.mkdirSync(profile, { recursive: true });\nif(exactBuildClosure)fs.writeFileSync(path.join(evidence,'main3003-build-closure.json'),JSON.stringify(exactBuildClosure,null,2)+'\\n');\n", "fs.mkdirSync(evidence, { recursive: true });\nfs.mkdirSync(profile, { recursive: true });\n\nconst hash = b => crypto.createHash('sha256').update(b).digest('hex');\n");
  // Reviewed capture-only projection setup/checks are additive. Remove each
  // exact hunk once; retain the unchanged historical workload/failure-gate hash.
  revert("import { installProjectileCaptureProjection } from './lib/inkwave-projectile-capture-projection.mjs';\n", "");

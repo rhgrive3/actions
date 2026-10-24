@@ -1,0 +1,99 @@
+(node:2016) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ early natural freefall remains horizontal; the renderer never infers vertical from airborne position (1437.274707ms)
+✔ composite reservation is atomic, reuses batches, keeps nonuniform transforms finite and culls conservatively (1058.672083ms)
+✔ all 23 supported main definitions emit classified native rounds and render without changing gameplay (1641.893986ms)
+✔ actual Dualies/Splatling births draw connected rods, preserve authority, and fall back as one effect (1041.153074ms)
+✔ native tip translations retain exact Float32 endpoints at decimal-rounding boundaries (1055.572165ms)
+✔ Slosher uses a continuous sheet and sourced tail without detached beads or camera rotation (1225.008457ms)
+✔ catalogue local and JSON-wire births keep immutable family/mode through weapon switches and pooled reuse (1257.65018ms)
+✔ Bucket, Tri-Slosher, Dread Wringer and their alternate kits share the Bucket sheet; other Sloshers keep their art (5.171106ms)
+(node:2017) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ current S3 shape renderer and history renderer never submit the same native Shooter body twice (1440.751602ms)
+✔ pinned source data keeps unknown shooter defaults distinct from explicit Splatling tails (0.261455ms)
+✔ pinned Roller DrawSizeParam stays split between horizontal and vertical sheet modes (0.247404ms)
+✔ pinned Slosher front-four and rear-five records preserve exact DrawSize, offsets, and tail bounds (0.279903ms)
+✔ fixed-size projectile history retains curved samples and has identical 30/60/120 Hz timelines (5.225849ms)
+✔ source-aware renderer assigns distinct geometry to shooter, Roller, and Slosher modes in one bounded batch (742.151824ms)
+✔ source-sized Slosher caps stay at recorded endpoints across short and long retained histories (616.408646ms)
+✔ hot render methods reuse storage and contain no per-frame allocation or gameplay RNG path (0.462569ms)
+✔ color uploads reuse stable body colors and merge pending ranges across changed and reordered slots (623.953157ms)
+✖ native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence (1166.804525ms)
+✖ native coarse 30 Hz projectile update records both actual 60 Hz physics points (959.536784ms)
+✔ final build composition renders the native nine-glob Slosher volley without changing gameplay state (1158.484763ms)
+✔ final adapter preserves native Shooter, horizontal/vertical Roller, and Slosher fingerprints (7958.523033ms)
+✔ native local and remote Slosher globs resolve to the same source unit, geometry mode, and draw radii (984.576018ms)
+✔ deferred Slosher history begins at its refreshed aerial muzzle and launch tangent (923.181577ms)
+✖ a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window (896.374226ms)
+✔ native horizontal Roller links stay inside each of two real 13-glob volleys (1006.17183ms)
+✔ horizontal liquid membranes cover actual close history after sibling heads separate, without false volley or birth joins (597.061947ms)
+✔ native horizontal Roller shared-history membranes preserve birth geometry and fixed display-cadence parity (1111.825446ms)
+✔ stalled remote Roller heads and liquid links share the same endpoint at every render alpha (1131.23587ms)
+✔ source VTF Roller owns its GPU draw when installed, with geometry fallback when absent (678.538154ms)
+✔ native VTF recipe matches the compositor for horizontal and vertical Roller, Shooter and Slosher (0.401567ms)
+(node:2024) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ real births of the seven owned families draw S3 silhouettes, skip the generic teardrop and stay read-only (1553.753754ms)
+✔ unowned families keep their existing renderer and pooled reuse never inherits a shape (1155.344913ms)
+✔ Shooter rod: blunt head, sourced tail length, torn tail only while joined to the muzzle (0.648551ms)
+✔ Splatana crescents use the sourced collider span and lead with the convex edge (964.935902ms)
+✔ charged Splatana slash is born at ShotBulletOffset_Vertical and clears a flat floor (1001.415412ms)
+✔ SWEPs muzzle splash cones and shipped SWEPs assets (0.933341ms)
+✔ the Sloshing Machine round is one spinning membrane that never reaches behind the muzzle (1020.498032ms)
+✔ offset Brella volleys keep independent native firing identities even at equal owner and birth time (1188.278647ms)
+✔ Stringer actions allocate distinct descriptor identities and both draw even at equal owner and birth time (1007.943289ms)
+✔ charged selector does not rotate Dental waves or swing sheets into the vertical plane (1046.097927ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 37
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22731.88496
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/projectile-visuals.test.mjs:455:1
+✖ native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence (1166.804525ms)
+  AssertionError [ERR_ASSERTION]: 30 Hz display drives a real Shooter-family history; kind=null, wid=splatling, age=0.5
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:474:12)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/splatoon3/tests/projectile-visuals.test.mjs:483:1
+✖ native coarse 30 Hz projectile update records both actual 60 Hz physics points (959.536784ms)
+  AssertionError [ERR_ASSERTION]: native projectile history attaches at actual shot birth
+      at run (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:492:12)
+      at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:509:18)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/splatoon3/tests/projectile-visuals.test.mjs:686:1
+✖ a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window (896.374226ms)
+  AssertionError [ERR_ASSERTION]: the native shot has a multi-frame curved history before recycling
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/projectile-visuals.test.mjs:696:10)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

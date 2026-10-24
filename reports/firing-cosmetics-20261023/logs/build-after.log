@@ -1,0 +1,13 @@
+file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940
+    if (count !== expected) throw new Error('INKWAVE network/UI queue conflict (' + rel + '): expected ' + expected + ' anchors, found ' + count + ': ' + connection.slice(0, 70));
+                                  ^
+
+Error: INKWAVE network/UI queue conflict (src/game/weapons.js): expected 1 anchors, found 0:   clear() {
+    this.projectileVisuals.clear();
+    at adaptQueueNetworkUi (file:///workspace/actions/patches/reliability/queue-network-ui-adapter.mjs:940:35)
+    at adaptBuildSource (file:///workspace/actions/scripts/inkwave-source-composition.mjs:75:65)
+    at composeSource (file:///workspace/actions/scripts/build-inkwave.mjs:94:14)
+    at file:///workspace/actions/scripts/build-inkwave.mjs:134:18
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+Node.js v24.19.0

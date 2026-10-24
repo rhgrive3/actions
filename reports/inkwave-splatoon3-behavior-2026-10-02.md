@@ -6163,6 +6163,16 @@ main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、Splatoon 3 Ver.11
 
 Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテゴリ。修正対象のBodyBalanceはその一部にすぎず、iPad上での支配要因の確定や重いフレームの完全解消とは扱わない。#1671/#1757の実機受入はOpenのまま。条件・既存PRとの重複確認・再現コマンド・証跡は[調査記録](inkwave-composed-cpu-20261023/README.md)。
 
+## 2026-10-23 Shooter muzzle / Splatling cosmetic candidate
+
+main `726e338ac256ba9609086ce65e25a68ddd99df85` の production composition を基準に、スピナーの旧 Shooter-volume の長い管を武器専用の短い滴表示へ、シューターは既存発射 FX と独立した銃口小粒へ接続する候補を追加した。両者は新規 family module と末尾 build adapter で分離し、ヒッセン・汎用粒子・native 弾・塗り・packet の実装を変更しない。source 50/50、実 minify 生成物 28/28、direct-source 20/20 が成功。seeded 24 条件の native gameplay / paint 記録比較と、ブラウザ画像・資源数・限界は [専用レポート](firing-cosmetics-20261023/README.md) に保存する。
+
+本家の対象は Splatoon 3 11.3.0 の Splattershot / Heavy Splatling。今回の .052/.72 の表示寸法や 3 粒/.14 秒は INKWAVE の仮校正であり、本家の公開・実測値ではない。参照 media の環境内取得は CONNECT 403 で拒否され、迂回していない。小粒の retail 見た目一致、最終 native pair、実機性能、公開 exact HEAD CI は専用レポートの記録を確認し、未確認を合格扱いしない。
+
+### 2026-10-23 current-main firing cosmetic candidate
+
+最新公式main `7e027ac2` と承認済み96efの発射cosmeticを別候補へ合成。production4パスは96efと同一、ヒッセン共有描画leaf・4special runtime・最新mainの静的メニュー修正を保持する。22fから参照QA2ファイルだけを採用し、9-edge負例を維持。正規minify前後build、source66/生成物34/参照等28、960stepの物理/塗り一致、実Game通常/ジャンプ4条件の発射/更新順/RNG一致、残余0/1/2枠と既存40滴保持を確認。[正確な入力・生成物・制約](firing-cosmetics-main7e-20261023/README.md)。PR1857 refは確認待ちで未更新。本家参照403・retail寸法・実機性能・公開CIを確認済みへ変更しない。
+
 ### 2026-10-23 ローラー縦振りの接地解境界（保証未成立・runtime変更なし）
 
 元の実minifyビルドから腕/握り/cylinder/kid変換を取得し、1,472件のnative床評価を最大1.3e−15程度で再現した。前姿勢を保持すると、着地40tickの床誤差0.769353、復帰49tickの床誤差0.038359が既存許容0.003を超える。49tickでは合法なZ補正1.25/1.50radの間のscalar/slerp中点が床を破るため、両端だけでは連続な合法経路を保証できない。探索admissionを広げるだけの案も1.880radの段差を残し、既存costで前軸を追う案はnative56tickまで補正が残った。新しい表示係数や巨大なruntime探索を追加せず、受入候補のruntime実装は見送った。一般の3D合法経路の不存在を断定せず、未成立の条件として保存する。[制約・負例・4/4診断テスト・実測時間](roller-ground-boundary-20261023/README.md)。本家403は再取得せず、同条件比較は未確認のまま。
