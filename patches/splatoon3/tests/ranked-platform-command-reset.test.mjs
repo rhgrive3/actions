@@ -7,7 +7,7 @@ import { rebasePlatformGame } from '../../local-quality/platform-game.mjs';
 // Real composed controller -> Actor -> NetMatch -> Transport JSON -> host
 // command admission. Only socket, scene/physics and wall time are controlled.
 const f = await fixture({ ranked: true, network: true, session: true, production: true });
-f.context.document.createElement = () => ({ dataset: {} });
+f.context.document.createElement = () => ({ dataset: {}, ownerDocument: f.context.document, getRootNode: () => f.context.document });
 f.context.document.head = { appendChild() {} }; f.context.structuredClone = structuredClone;
 f.installRanked(f);
 const stage = { id: 'ranked-platform-reset', clams: { spawns: [], goals: [[0, 0, 20], [0, 0, -20]] } };
