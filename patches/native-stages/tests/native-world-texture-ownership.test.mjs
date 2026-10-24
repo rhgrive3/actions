@@ -21,8 +21,6 @@ if(stale)assert.equal(error,undefined);else {assert.equal(error?.name,'RangeErro
 if(!stale)assert.equal(error,thrown,'original exception identity');
 const failed={name:error?.name,message:error?.message,closes,disposes,retainedTextures:textures.size};
 // Control: successfully constructed display owns textures and clears them once.
-closes=0;disposes=0;textures=new Map([['test.png',new THREE.Texture(image)]]);textures.get('test.png').addEventListener('dispose',()=>disposes++);data.manifest.objects[0].vo=0;
-// A published world releases its source vertex/index arrays; the control needs its own.
-const display=render.namespace.nativeDisplay({...data,vertices:new Float32Array(24),indices:new Uint32Array([0,1,2])},textures,'balanced');assert.equal(closes,0);assert.equal(disposes,0);assert.equal(textures.size,1);display.dispose();display.dispose();assert.equal(closes,1);assert.equal(disposes,1);assert.equal(textures.size,0);
+closes=0;disposes=0;textures=new Map([['test.png',new THREE.Texture(image)]]);textures.get('test.png').addEventListener('dispose',()=>disposes++);data.manifest.objects[0].vo=0;const display=render.namespace.nativeDisplay(data,textures,'balanced');assert.equal(closes,0);assert.equal(disposes,0);assert.equal(textures.size,1);display.dispose();display.dispose();assert.equal(closes,1);assert.equal(disposes,1);assert.equal(textures.size,0);
 
 });
