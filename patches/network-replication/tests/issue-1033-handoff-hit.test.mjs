@@ -140,7 +140,7 @@ ${methods}
   Object.assign(net, {
     myId: id, isHost: id === 'H' || id === 'C', cfg: { id: 'match-1', map: 'normal' },
     byNid: new Map(), hitNextSeq: 0, hitPending: new Map(), _pendingHits: new Map(),
-    peers: new Map(), unsubs: [],
+    peers: new Map(), unsubs: [], bossHitPending: [], // host migration clears the actual pending boss-hit queue
     match: { boss: null, follower: true, removeActor() {} },
     s: { hostId: 'H', _members: new Set(['H', 'S', 'V', 'C']), tr: {
       sendTo(to, data) { sent.push({ to, data }); return true; },
