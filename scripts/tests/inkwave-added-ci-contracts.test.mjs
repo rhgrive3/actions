@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
+import {parse} from '../../patches/loading-cache/vendor/acorn.mjs';
 const root=new URL('../../',import.meta.url);
 const read=name=>fs.readFileSync(new URL('.github/workflows/'+name,root),'utf8');
 const expression="${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}";
@@ -41,7 +42,52 @@ test('both main-weapon event filters cover every executed test entrypoint, inclu
  const covered=patterns=>entries.every(file=>patterns.some(p=>matches(p,file)));
  for(const event of['push','pull_request']){const patterns=paths(source,event);assert(covered(patterns));for(const missing of['issue-771-roller-speed-swerve','reverse-shot-release','source-posture','roller-flick-movement','roller','bomb-kit-fidelity','air-attack-acceleration','dynamo-handle-center','brella-physics','stringer-source-1130','stringer-tilt-motion']){const exact='patches/splatoon3/tests/'+missing+'.test.mjs';assert.equal(covered(patterns.filter(p=>p!==exact)),false,'missing route '+exact);}}
 });
+const sparseFixtureFile='scripts/tests/inkwave-ci-sparse-checkout.test.mjs';
+const excludedFixturePaths=['tools/inkwave-modeler/blender/large.blend','tools/inkwave-modeler/src/editor.js'];
+function assertNoAuthoringDependency(file,source){
+ let checked=source;
+ if(file===sparseFixtureFile){
+  // Only the reviewed literal data in this temporary-repository fixture is
+  // exempt. Imports, filesystem references and the rest of its code are scanned.
+  const ast=parse(source,{ecmaVersion:'latest',sourceType:'module'});
+  const bindings=ast.body.filter(n=>n.type==='VariableDeclaration'&&n.kind==='const').flatMap(n=>n.declarations);
+  const declarations=bindings.filter(n=>n.id.type==='Identifier'&&n.id.name==='excludedAuthoringFixturePaths');
+  assert.equal(declarations.length,1,'one explicit synthetic fixture declaration');
+  const declaration=declarations[0],data=declaration.init;
+  assert.equal(data?.type,'ArrayExpression','fixture paths are data, never executable expressions');
+  assert.deepEqual(data.elements.map(n=>n?.type==='Literal'?n.value:null),excludedFixturePaths);
+  const examples=bindings.find(n=>n.id.type==='Identifier'&&n.id.name==='examples')?.init;
+  const visit=(node,parent,grandparent)=>{
+   if(!node||typeof node!=='object')return;
+   if(node.type==='Identifier'&&node.name==='excludedAuthoringFixturePaths'&&node!==declaration.id){
+    const list=parent?.type==='SpreadElement'&&grandparent===examples&&examples?.type==='ArrayExpression';
+    const membership=parent?.type==='MemberExpression'&&parent.object===node&&!parent.computed&&parent.property.name==='includes'
+     &&grandparent?.type==='CallExpression'&&grandparent.callee===parent;
+    assert(list||membership,'synthetic paths cannot become an import or filesystem dependency');
+   }
+   for(const value of Object.values(node))if(Array.isArray(value)){for(const child of value)visit(child,node,parent);}else if(value&&typeof value==='object')visit(value,node,parent);
+  };
+  visit(ast);
+  checked=source.slice(0,data.start)+'[]'+source.slice(data.end);
+ }
+ assert.doesNotMatch(checked,/tools\/inkwave-modeler\//,'excluded authoring dependency in '+file);
+}
 test('the excluded authoring workbench is not referenced by runtime/test/build input code',()=>{
  const files=execFileSync('git',['ls-files','-z','inkwave-public','patches','scripts','server','tests'],{cwd:root,encoding:'utf8'}).split('\0').filter(f=>/\.(?:mjs|js|py)$/.test(f)&&f!=='scripts/tests/inkwave-added-ci-contracts.test.mjs');
- for(const file of files)assert.doesNotMatch(fs.readFileSync(new URL(file,root),'utf8'),/tools\/inkwave-modeler\//,'excluded authoring dependency in '+file);
+ for(const file of files)assertNoAuthoringDependency(file,fs.readFileSync(new URL(file,root),'utf8'));
+});
+test('synthetic sparse paths cannot hide real authoring imports or filesystem reads',()=>{
+ const source=fs.readFileSync(new URL(sparseFixtureFile,root),'utf8');
+ assertNoAuthoringDependency(sparseFixtureFile,source);
+ for(const extra of [
+  "import editor from '../../tools/inkwave-modeler/src/editor.js';",
+  "await import('../../tools/inkwave-modeler/src/editor.js');",
+  "fs.readFileSync(new URL('../../tools/inkwave-modeler/src/editor.js',import.meta.url));",
+  "fs.readFileSync('tools/inkwave-modeler/blender/large.blend');",
+  'await import(excludedAuthoringFixturePaths[1]);',
+  'fs.readFileSync(excludedAuthoringFixturePaths[0]);',
+  'fs.readFileSync(...excludedAuthoringFixturePaths);',
+ ])assert.throws(()=>assertNoAuthoringDependency(sparseFixtureFile,source+'\n'+extra));
+ assert.throws(()=>assertNoAuthoringDependency('inkwave-public/src/main.js',source),'fixture data is not a general source exemption');
+ assert.throws(()=>assertNoAuthoringDependency(sparseFixtureFile,source.replace("['tools/inkwave-modeler/blender/large.blend'","[fs.readFileSync('tools/inkwave-modeler/blender/large.blend')")),'fixture initializer cannot execute a read');
 });

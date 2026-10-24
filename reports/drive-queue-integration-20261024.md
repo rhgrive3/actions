@@ -84,3 +84,11 @@ The clam-bot record-sort diagnostic did not establish a useful general improveme
 ## Gameplay comparison limits
 
 The retail reference remains Splatoon 3 Ver.11.3.0 under the repository's existing weapon/gear and state definitions. Numerical/ownership equivalence is against INKWAVE's verified composed baseline. No new retail frame values, flight constants, controller measurements, Switch comparison, Safari/iPad performance, full remote session, power or device FPS result is inferred from the checks above. Relevant gameplay boundaries and remaining gaps are also recorded in [the behavior comparison](inkwave-splatoon3-behavior-2026-10-02.md).
+
+## Hosted-CI follow-up: fixture and measurement contracts
+
+The first PR run exposed three QA contract issues before its main checks could complete. The sparse-checkout test's synthetic workbench paths were mistaken for real production dependencies; the guard now accepts only that verified data declaration and still rejects actual imports, filesystem access, executable declarations and indirect binding misuse. Both affected source-contract suites pass all 11 local cases.
+
+The swim-entry runner required a positive gameplay RNG call count although the existing main's probe test explicitly expects zero after Three UUID generation was isolated to crypto. Real Chromium recorded zero calls on the unchanged production payload. The harness now verifies the RNG observer's identity and completion at 277 setup/tick/capture boundaries, retains count/digest equality between both sides, and rejects missing/replaced/incomplete observers. Twelve focused cases pass; all 12 before/after PNG hashes and canonical traces match. No dummy RNG calls or production changes were added.
+
+The emitted special fixture extracted only three Projectiles methods, dropping a valid minified top-level helper used by InkVac replay. It now evaluates the complete emitted weapons module in the same VM and uses the real exported Projectiles prototype, retaining the HOLD, native-birth, deduplication, pool and negative-control assertions. All eight emitted cases pass against the previously verified production output after a complete artifact-hash readback. These changes affect tests and QA only; the published runtime payload remains unchanged.

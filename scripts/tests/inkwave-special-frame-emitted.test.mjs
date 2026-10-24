@@ -1,10 +1,10 @@
 // Actual full-build output regressions. Run with node --experimental-vm-modules --test.
 // INKWAVE_BUILT_SITE is mandatory. No fallback to source or a transform is allowed.
-// VM evidence only: full emitted VFX/presentation/pool modules are evaluated with
+// VM evidence only: full emitted VFX/presentation/pool/weapons modules are evaluated with
 // dependency/renderer sinks. Private bindings are exposed with appended exports;
-// the Screen closure is exposed inside the real installer. Only native projectile
-// _new/_push/ghostProjectile are AST-extracted from emitted weapons.js, retaining
-// their emitted bodies and imported bindings. Physics/paint/metadata dependencies
+// the Screen closure is exposed inside the real installer. Native projectile
+// methods retain their real module scope and class prototype; the rendering
+// constructor is bypassed by seeding the fixture's pool. Physics/paint/metadata dependencies
 // and the network-cosmetic validator are sinks, so packet validation is NOT tested.
 // This is NOT browser/GPU/retail QA, nor complete gameplay integration.
 import test from "node:test";
@@ -91,14 +91,16 @@ class Vec {
 }
 const THREE = { Vector3: Vec, Quaternion: class {
 }, Matrix4: class {
+}, Color: class {
 } };
 async function loadModule(code, context, values = {}) {
   const tree = ast(code), mod = new vm.SourceTextModule(code, { context });
   await mod.link((spec) => {
     const imports = tree.body.filter((n) => n.type === "ImportDeclaration" && n.source.value === spec).flatMap((n) => n.specifiers);
-    const names = imports.map((n) => n.type === "ImportNamespaceSpecifier" ? "Vector3" : key(n.imported));
+    const namespace = values[spec];
+    const names = imports.flatMap((n) => n.type === "ImportNamespaceSpecifier" ? Object.keys(namespace ?? { Vector3: null }) : [key(n.imported)]);
     return new vm.SyntheticModule([...new Set(names)], function() {
-      for (const name of new Set(names)) this.setExport(name, values[name] ?? (() => {
+      for (const name of new Set(names)) this.setExport(name, namespace?.[name] ?? values[name] ?? (() => {
       }));
     }, { context });
   });
@@ -132,21 +134,18 @@ async function poolClass() {
   return (await loadModule(kit + `
 export {${cl.id.name} as TestPool};`, vm.createContext({ console }))).TestPool;
 }
-function nativeProjectiles(context, G) {
-  const tree = ast(weapons), cl = one(nodes(tree, (n) => n.type === "ClassDeclaration" && n.body.body.some((p) => key(p.key) === "_new") && n.body.body.some((p) => key(p.key) === "ghostProjectile")), "native projectiles");
-  const methods = ["_new", "_push", "ghostProjectile"].map((name) => one(cl.body.body.filter((p) => key(p.key) === name), name));
-  for (const imp of tree.body.filter((n) => n.type === "ImportDeclaration")) for (const s of imp.specifiers) {
-    if (s.type === "ImportNamespaceSpecifier") context[s.local.name] = THREE;
-    else if (key(s.imported) === "G") context[s.local.name] = G;
-    else if (key(s.imported) === "validNetworkProjectileCosmetics") context[s.local.name] = () => true;
-    else context[s.local.name] = () => {
-    };
-  }
-  vm.runInContext(`globalThis.TestProjectiles=class {${methods.map((n) => weapons.slice(n.start, n.end)).join("\n")}};`, context);
-  return context.TestProjectiles;
+async function nativeProjectiles(context, G) {
+  // Evaluate unchanged emitted bytes, including every lexical helper and
+  // module-installed wrapper. Do not reconstruct methods or minified bindings.
+  const ns = await loadModule(weapons, context, {
+    three: THREE, G, WEAPONS: {}, SPECIALS: {}, Hit: class {},
+    validNetworkProjectileCosmetics: () => true,
+  });
+  assert.equal(typeof ns.Projectiles, "function", "real emitted Projectiles export");
+  return ns.Projectiles;
 }
 async function vacFixture(mutation) {
-  const { ns, ctx } = await loadVfx(mutation), G = {}, P = nativeProjectiles(ctx, G);
+  const { ns, ctx } = await loadVfx(mutation), G = {}, P = await nativeProjectiles(ctx, G);
   class FX {
     update() {
     }
@@ -155,7 +154,7 @@ async function vacFixture(mutation) {
     setCollider() {
     }
   }
-  const fx = new FX(), system = new P();
+  const fx = new FX(), system = Object.create(P.prototype);
   Object.assign(system, { list: [], pool: [], inkFlight: { restore() {
   }, reset() {
   } }, projectileVisuals: { reset() {
