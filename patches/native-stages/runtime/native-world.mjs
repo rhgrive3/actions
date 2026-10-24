@@ -10,6 +10,7 @@ import { NativePhysics } from './native-physics.mjs';
 import { nativeDisplay,nativeInkGeometry,nativeInkMaterial } from './native-render.mjs';
 import { NativeInkMesh } from './native-ink-chunks.mjs';
 import { nativeStageTextureCaps } from './native-texture-budget.mjs';
+import { nativeGpuTier,nativeRenderCaps,nativeTextureQuality,nativeTierTextureCaps,applyNativeGpuBudget,watchNativeContextLoss } from './native-gpu-budget.mjs';
 import {sourceLoadingStatus,showNativeWorldRecovery} from './source-menu.mjs';
 
 // Snapshot keeps the previous playable world alive until every fallible
@@ -58,16 +59,17 @@ export async function buildNativeWorld(game,map,current){
   const data=await loadNativeData(map.id,signal,{constrained:!!game.mobile?.touch});if(!current())return;
   status.update('textures');
   const level=new NativeLevel(data),physics=new NativePhysics(level);
-  const quality=['high','ultra'].includes(game.settings.quality)?'high':game.settings.quality==='low'?'low':'balanced';
-  const textureCaps=nativeStageTextureCaps(data.manifest,quality,{
+  // A previous context loss on a native stage lowers this load's budget.
+  const gpuTier=nativeGpuTier(),quality=nativeTextureQuality(game.settings.quality,gpuTier,!!game.mobile?.touch);
+  const textureCaps=nativeTierTextureCaps(nativeStageTextureCaps(data.manifest,quality,{
     mobile:!!game.mobile?.touch,
     deviceMemoryGB:typeof navigator==='undefined'?null:navigator.deviceMemory,
     maxTextureSize:G.renderer.capabilities.maxTextureSize
-  });
+  }),gpuTier,!!game.mobile?.touch);
   const textureLimit=textureCaps.maxDimension;
   const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,textureCaps);pendingTextures=textures;display=nativeDisplay(data,textures,quality);pendingTextures=null;
   if(!current())throw new DOMException('Aborted','AbortError');
-  paint=new PaintSystem(G.renderer,level,{atlasSize:Math.min(G.renderer.capabilities.maxTextureSize,(game.mobile?.touch||['low','medium'].includes(game.settings.quality))?2048:4096),maxDensity:quality==='low'?4:8,cell:.25});
+  paint=new PaintSystem(G.renderer,level,{atlasSize:Math.min(G.renderer.capabilities.maxTextureSize,(game.mobile?.touch||gpuTier>0||['low','medium'].includes(game.settings.quality))?2048:4096),maxDensity:quality==='low'?4:8,cell:.25});
   // Compact charts use a 2-texel guard. Avoid sampling other charts through
   // distant mip levels; source material maps retain their normal mip chains.
   paint.texture.generateMipmaps=false;paint.texture.minFilter=THREE.LinearFilter;
@@ -83,12 +85,15 @@ export async function buildNativeWorld(game,map,current){
   level.nativePaint=paint;
   inkGeometry=nativeInkGeometry(level,paint);inkMat=nativeInkMaterial(paint,game.murals,game.texlib);
   inkMesh=new NativeInkMesh(inkGeometry,inkMat).bindPaint(paint);
-  // Compile the native-only constant-attribute variant before publication.
-  // Like actor warm-up, use the live scene only for its lighting configuration;
-  // this detached ink mesh is not rendered and no target state spans the await.
-  const inkWarmStart=performance.now();
-  await r.compileAsync(inkMesh,G.camera,G.scene);
-  shaderWarmMilliseconds+=performance.now()-inkWarmStart;
+  // Link the stage's display/ink programs now (parallel compile where
+  // available) instead of synchronously on the first battle frames. Any
+  // render target selects the composer's key: linear output, no tone map.
+  const stageWarmStart=performance.now();let stageWarmed;
+  try { r.setRenderTarget(paint.rt);stageWarmed=Promise.all([r.compileAsync(display.group,G.camera,G.scene),r.compileAsync(inkMesh,G.camera,G.scene)]); }
+  finally { r.setRenderTarget(previousTarget); }
+  await stageWarmed;
+  if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
+  const stageShaderWarmMilliseconds=performance.now()-stageWarmStart;
   status.update('navigation');await new Promise(resolve=>requestAnimationFrame(resolve));
   if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
   const navStart=performance.now(),nav=await NavGraph.createNative(level,physics,{signal,current});
@@ -99,7 +104,8 @@ export async function buildNativeWorld(game,map,current){
   // The minimap's global CURRENT is not touched until final commit.
   const minimap=new Minimap(level,paint,Math.min(3,512/Math.max(level.bounds.maxX-level.bounds.minX,level.bounds.maxZ-level.bounds.minZ)),{deferActivation:true});
   const wake=new SwimWake();
-  const nextWorld={display,level,textureProfile:{data,quality,caps:textureCaps},disposed:false,metrics:{loadMilliseconds:performance.now()-start,navMilliseconds:performance.now()-navStart,navBuild:nav.nativeBuildMetrics,shaderWarmMilliseconds,vertices:data.manifest.geometry.vertices,triangles:data.manifest.geometry.triangles,faces:level.faces.length,gridBytes:paint.grid.byteLength,atlas:paint.size,ppm:paint.ppm,textureCount:textures.size,textureLimit,quality,version1130Verified:false},
+  const gpuBudget=nativeRenderCaps({mobile:!!game.mobile?.touch,tier:gpuTier});
+  const nextWorld={display,level,gpuTier,textureProfile:{data,quality,caps:textureCaps},disposed:false,metrics:{gpuTier,gpuBudget,loadMilliseconds:performance.now()-start,navMilliseconds:performance.now()-navStart,navBuild:nav.nativeBuildMetrics,shaderWarmMilliseconds,stageShaderWarmMilliseconds,vertices:data.manifest.geometry.vertices,triangles:data.manifest.geometry.triangles,faces:level.faces.length,gridBytes:paint.grid.byteLength,atlas:paint.size,ppm:paint.ppm,textureCount:textures.size,textureLimit,quality,version1130Verified:false},
    dispose(){
     if(this.disposed)return;
     this.disposed=true;this.textureProfile=null;
@@ -115,6 +121,8 @@ export async function buildNativeWorld(game,map,current){
   game.levelMat=inkMat;game.levelMesh=inkMesh;game.grateMat=null;game.grateMesh=null;
   game.stageLightmap=null;game.props=null;
   G.scene.add(display.group,inkMesh);
+  applyNativeGpuBudget(game,G,gpuBudget);
+  watchNativeContextLoss(G.renderer.domElement,()=>!!G.level?.native);
   game.decor={group:display.group,setTeamColors(){},update(){},setNight(){},dispose(){}};
   game.swimWake=wake;game.minimap=minimap;game.nativeWorld=nextWorld;
   if(G.env?.rebuildForArena)G.env.rebuildForArena(level.bounds,game._footprint(level));
@@ -132,6 +140,7 @@ export async function buildNativeWorld(game,map,current){
     recover(()=>{if(inkMesh)G.scene?.remove?.(inkMesh);});
     // Restore pointer ownership even when a later activation/rebuild fails.
     recover(()=>restoreWorld(game,snapshot));
+    recover(()=>applyNativeGpuBudget(game,G,snapshot.nativeWorld?.metrics?.gpuBudget||null));
     recover(()=>{if(snapshot.level?.bounds && G.env?.rebuildForArena)
       G.env.rebuildForArena(snapshot.level.bounds,game._footprint(snapshot.level));});
     recover(()=>game._shadowRoots());
@@ -164,6 +173,7 @@ export async function buildNativeWorld(game,map,current){
 export function releaseNativeWorld(game){
  game._nativeAbort?.abort();
  if(!game.nativeWorld)return;
+ applyNativeGpuBudget(game,G,null);
  G.scene?.remove?.(game.levelMesh);
  game.nativeWorld.dispose();game.nativeWorld=null;game.levelMesh=null;game.levelMat=null;game.grateMesh=null;game.grateMat=null;
  game.decor=null;

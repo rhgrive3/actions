@@ -1,4 +1,5 @@
 import fs from 'node:fs';import path from 'node:path';import vm from 'node:vm';import assert from 'node:assert/strict';import{fileURLToPath,pathToFileURL}from'node:url';
+import * as nativeGpuBudget from '../runtime/native-gpu-budget.mjs';
 export const ROOT=fileURLToPath(new URL('../../../',import.meta.url));
 export const EMITTED=!!process.env.INKWAVE_BUILT_SITE;
 export const SITE=EMITTED?path.resolve(process.env.INKWAVE_BUILT_SITE):path.join(ROOT,'inkwave-public');
@@ -61,7 +62,7 @@ export async function createRecoveryFixture(fail,options={}) {
     three:{THREE:mock.THREE},ctx:{G:mock.G},paint:{PaintSystem:mock.PaintSystem},nav:{NavGraph:mock.NavGraph},minimap:{Minimap:mock.Minimap},swimWake:{SwimWake:mock.SwimWake},
     'native-load':{loadNativeData:mock.loadNativeData,loadNativeTextures:mock.loadNativeTextures},'native-level':{NativeLevel:mock.NativeLevel},'native-physics':{NativePhysics:mock.NativePhysics},
     'native-render':{nativeDisplay:mock.nativeDisplay,nativeInkGeometry:mock.nativeInkGeometry,nativeInkMaterial:mock.nativeInkMaterial},'native-ink-chunks':{NativeInkMesh:mock.NativeInkMesh},
-    'native-texture-budget':{nativeStageTextureCaps:mock.nativeStageTextureCaps},'source-menu':{sourceLoadingStatus:mock.sourceLoadingStatus,showNativeWorldRecovery:mock.showNativeWorldRecovery}
+    'native-texture-budget':{nativeStageTextureCaps:mock.nativeStageTextureCaps},'native-gpu-budget':{...nativeGpuBudget},'source-menu':{sourceLoadingStatus:mock.sourceLoadingStatus,showNativeWorldRecovery:mock.showNativeWorldRecovery}
   };imports.three=mock.THREE;
   await world.link(spec=>{const key=spec==='three'?'three':spec.split('/').pop().replace(/\.(mjs|js)$/,'');const values=imports[key];assert(values,'unexpected world dependency '+spec);return new vm.SyntheticModule(Object.keys(values),function(){for(const[k,v]of Object.entries(values))this.setExport(k,v);},{context:ctx});});await world.evaluate();
   return {build:world.namespace.buildNativeWorld,G:mock.G,game,scene,counters,oldLevel,oldPaint,oldMesh,oldWorld,oldMinimap};

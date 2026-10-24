@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {loadNativeTextures} from './native-load.mjs';
 import {nativeStageTextureCaps} from './native-texture-budget.mjs';
+import {capQuality,nativeRenderCaps,nativeTextureQuality,nativeTierTextureCaps} from './native-gpu-budget.mjs';
 
 // A texture profile is owned by one loaded data object, not just a stage name.
 // All caps matter: equal top-level size does not imply equal normal-map size.
@@ -21,21 +22,23 @@ function disposeTextures(textures){
 
 /** Keep physics, nav, actors and authoritative CPU paint when quality changes. */
 export async function applyNativeQuality(game,settings,mobile,deps){
- const {G,q,updatePaintQuality,updateEnvironmentShadowQuality,updateFXQuality}=deps,world=game.nativeWorld;
+ const {G,updatePaintQuality,updateEnvironmentShadowQuality,updateFXQuality}=deps,world=game.nativeWorld;
  if(!world)return;
+ // Keep the stage's GPU budget (and any step-down after context loss) across setting changes.
+ const tier=world.gpuTier||0,q=capQuality(deps.q,nativeRenderCaps({mobile:!!mobile?.touch,tier}));
  updatePaintQuality(game,q.paintAtlas,G,THREE);
  G.paint.texture.generateMipmaps=false;G.paint.texture.minFilter=THREE.LinearFilter;
  const ranked=G.match?.rankedWorld,face=ranked?.towerPaintFace,u=ranked?.towerInkMaterial?.uniforms;
  if(face?.atlas&&u){const a=face.atlas,S=G.paint.size;u.uPaint.value=G.paint.texture;u.uAtlasOrigin.value.set((a.x+a.pad)/S,(a.y+a.pad)/S);u.uAtlasScale.value.set(face.su*a.ppm/S,face.sv*a.ppm/S);}
  updateEnvironmentShadowQuality(G.env,q.shadowSize,game.shadowCache);updateFXQuality(G.fx,q.particles,THREE);
- const quality=['high','ultra'].includes(settings.quality)?'high':settings.quality==='low'?'low':'balanced';
+ const quality=nativeTextureQuality(settings.quality,tier,!!mobile?.touch);
  game._builtQuality=settings.quality;
  const data=world.level.data;
- const caps=nativeStageTextureCaps(data.manifest,quality,{
+ const caps=nativeTierTextureCaps(nativeStageTextureCaps(data.manifest,quality,{
   mobile:!!mobile?.touch,
   deviceMemoryGB:typeof navigator==='undefined'?null:navigator.deviceMemory,
   maxTextureSize:G.renderer.capabilities.maxTextureSize
- });
+ }),tier,!!mobile?.touch);
  world.metrics.atlas=G.paint.size;world.metrics.ppm=G.paint.ppm;
  const previous=world.qualityOperation;
  // Coalesce the same request without invalidating the current publisher.

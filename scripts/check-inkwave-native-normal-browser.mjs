@@ -72,7 +72,9 @@ try{
    finally{globalThis.OffscreenCanvas=NativeCanvas;globalThis.createImageBitmap=nativeBitmap;globalThis.fetch=nativeFetch;}
    if(error)return{counts,error};
    const texture=textures.get(file);texture.addEventListener('dispose',()=>counts.disposed++);
-   let image=texture.image,imageBytes;
+   // Dimensions are the decoded input. The candidate loader closes its
+   // ImageBitmap once uploaded, so read them before rendering.
+   let image=texture.image,imageBytes;const width=image.width,height=image.height;
    if(image.data)imageBytes=image.data;
    else{const c=new NativeCanvas(image.width,image.height),context=c.getContext('2d');context.drawImage(image,0,0);imageBytes=context.getImageData(0,0,c.width,c.height).data;}
    const material=new THREE.MeshStandardMaterial({color:0xdddddd,normalMap:texture,roughness:.7}),mesh=new THREE.Mesh(geometry,material);scene.add(mesh);renderer.render(scene,camera);
@@ -83,8 +85,8 @@ try{
    try{material.normalMap=control;material.needsUpdate=true;renderer.render(scene,camera);gl.readPixels(0,0,64,64,gl.RGBA,gl.UNSIGNED_BYTE,rendered);
     if(await digest(rendered)===renderHash)throw Error('Perturbing the normal did not change rendered output');
    }finally{control.dispose();}
-   const output={width:image.width,height:image.height,encoding:data.manifest.materials.probe.normalEncoding,imageHash:await digest(imageBytes),renderHash,renderedPixels,normalPerturbationRejected:true};
-   scene.remove(mesh);material.dispose();if(image instanceof ImageBitmap)image.close();texture.dispose();return{counts,output};
+   const output={width,height,encoding:data.manifest.materials.probe.normalEncoding,imageHash:await digest(imageBytes),renderHash,renderedPixels,normalPerturbationRejected:true};
+   scene.remove(mesh);material.dispose();if(image instanceof ImageBitmap&&image.width)image.close();texture.dispose();return{counts,output};
   };
   try{for(const[name,pixel,size,limit,abort]of cases){rows.push({name,before:await run(before,pixel,size,limit,abort),after:await run(after,pixel,size,limit,abort)});}}
   finally{globalThis.OffscreenCanvas=NativeCanvas;globalThis.createImageBitmap=nativeBitmap;globalThis.fetch=nativeFetch;geometry.dispose();renderer.dispose();}
