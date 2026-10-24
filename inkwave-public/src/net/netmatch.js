@@ -24,23 +24,6 @@ import { G, emit, on } from '../core/ctx.js';
 import { PLAYER, WEAPONS, mapNoBots } from '../config.js';
 import { BotBrain } from '../game/bots.js';
 
-// Keep the bounded sender windows in sorted order without re-sorting 60
-// samples twice per accepted packet. Match the existing replication helper.
-function pushWindowQuantile(values, ordered, value, limit = 60) {
-  if (values.length >= limit) {
-    const removed = values.shift();
-    let at = 0; while (at < ordered.length && !Object.is(ordered[at], removed)) at++;
-    ordered.copyWithin(at, at + 1); ordered.length--;
-  }
-  values.push(value);
-  let at = ordered.length; ordered.push(value);
-  while (at > 0 && ordered[at - 1] > value) { ordered[at] = ordered[at - 1]; at--; }
-  ordered[at] = value;
-}
-function windowQuantile(ordered, q) {
-  return ordered.length ? ordered[Math.min(ordered.length - 1, Math.floor(q * ordered.length))] : 0;
-}
-
 const TICK = 1 / 20;
 
 const r2 = (x) => Math.round(x * 100) / 100;
@@ -251,25 +234,11 @@ export class NetMatch {
     else p.off += (o - p.off) * 0.0025;                 // creep up slowly (clock drift / route change)
     // buffer need from the last ~3 s: how late packets run (90th percentile — a rare hiccup must not drag the delay
     // around; the playback clock rides those out) plus the sender's tick spacing (95th: its frames aren't regular)
-    const W = p.win || (p.win = { late: [], gap: [], sorted: [], lateSorted: [], gapSorted: [], ordered: true });
-    const late = o - p.off;
-    const gap = p.prevTs !== undefined ? Math.min(0.25, Math.max(0, d.ts - p.prevTs)) : TICK;
+    const W = p.win || (p.win = { late: [], gap: [], sorted: [] });
+    W.late.push(o - p.off); W.gap.push(p.prevTs !== undefined ? Math.min(0.25, Math.max(0, d.ts - p.prevTs)) : TICK);
     p.prevTs = d.ts;
-    if (W.ordered && Number.isFinite(late) && Number.isFinite(gap)) {
-      pushWindowQuantile(W.late, W.lateSorted, late);
-      pushWindowQuantile(W.gap, W.gapSorted, gap);
-      p.want = Math.min(0.3, Math.max(0.07, windowQuantile(W.gapSorted, 0.95) + windowQuantile(W.lateSorted, 0.9) + 0.012));
-    } else {
-      // Corrupt/nonfinite timing inputs must retain the legacy sort semantics.
-      W.late.push(late); W.gap.push(gap);
-      if (W.late.length > 60) { W.late.shift(); W.gap.shift(); }
-      p.want = Math.min(0.3, Math.max(0.07, quantile(W.gap, 0.95, W.sorted) + quantile(W.late, 0.9, W.sorted) + 0.012));
-      W.ordered = W.late.every(Number.isFinite) && W.gap.every(Number.isFinite);
-      if (W.ordered) {
-        W.lateSorted = W.late.slice().sort(ascending);
-        W.gapSorted = W.gap.slice().sort(ascending);
-      }
-    }
+    if (W.late.length > 60) { W.late.shift(); W.gap.shift(); }
+    p.want = Math.min(0.3, Math.max(0.07, quantile(W.gap, 0.95, W.sorted) + quantile(W.late, 0.9, W.sorted) + 0.012));
     // actors
     if (d.a) for (const s of d.a) {
       const a = this.byNid.get(s[0]);
