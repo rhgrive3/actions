@@ -12,9 +12,12 @@ const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const BROWSER_ARGS=['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader'];
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 export const IDLE_OPERATION_TIMEOUT_MS=120000;
-// Two 120-frame states share one evaluate. This expands host supervision only,
-// not a CPU/FPS/GPU performance threshold; every other evaluate stays at 120s.
-export const RESULTS_WORK_TIMEOUT_MS=240000;
+// Both 120-frame states execute real WebGL calls under per-producer console
+// instrumentation. On heavily shared CI runners the original 240s deadline
+// expired after 171/240 frames, not because a measured acceptance threshold
+// was violated. Permit 480s for complete evidence; still fail-closed on hangs.
+// No CPU/FPS/GPU acceptance threshold changes; all other evaluates remain 120s.
+export const RESULTS_WORK_TIMEOUT_MS=480000;
 export const CLOUD_SEQUENCE_TIMEOUT_MS=360000;
 export const CLOUD_THEMES=Object.freeze(['day','sunset','golden']);
 // Three sequential theme operations. This increases aggregate supervision from
