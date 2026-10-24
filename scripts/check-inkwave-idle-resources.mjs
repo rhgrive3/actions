@@ -12,6 +12,42 @@ const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const BROWSER_ARGS=['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader'];
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 export const IDLE_OPERATION_TIMEOUT_MS=120000;
+export const CLOUD_SEQUENCE_TIMEOUT_MS=360000;
+export const CLOUD_THEMES=Object.freeze(['day','sunset','golden']);
+// Three sequential theme operations. This increases aggregate supervision from
+// 120 to 360 seconds; it is not a runtime/performance improvement. Cleanup may
+// outlive a failed deadline and can never turn that failure into success.
+export async function runCloudThemeSequence(measure,retain,{timers=globalThis,now=()=>performance.now(),phase=()=>{},checkpoint=()=>{},trace={}}={}){
+ const started=now();let aggregateTimer,activeTheme=null,activeStarted=null,activeEvaluationElapsed=null;
+ Object.assign(trace,{state:'running',themeLimitMs:IDLE_OPERATION_TIMEOUT_MS,sequenceLimitMs:CLOUD_SEQUENCE_TIMEOUT_MS,themes:[],elapsedMs:0});
+ const aggregateError=()=>Object.assign(Error('Cloud sequence exceeded 360000 ms'),{name:'IdleCloudSequenceTimeoutError',code:'INKWAVE_CLOUD_SEQUENCE_TIMEOUT',phase:'clouds:aggregate',timeoutMs:CLOUD_SEQUENCE_TIMEOUT_MS,elapsedMs:now()-started,scope:'cloud-sequence',theme:activeTheme});
+ const checkOverall=()=>{if(now()-started>=CLOUD_SEQUENCE_TIMEOUT_MS)throw aggregateError();};
+ const aggregate=new Promise((_,reject)=>{aggregateTimer=timers.setTimeout(()=>reject(aggregateError()),CLOUD_SEQUENCE_TIMEOUT_MS);});
+ try{
+  for(let index=0;index<CLOUD_THEMES.length;index++){
+   checkOverall();const theme=activeTheme=CLOUD_THEMES[index];activeStarted=activeEvaluationElapsed=null;phase('clouds:'+theme);checkOverall();
+   const themeStarted=activeStarted=now();let themeTimer;
+   const themeError=()=>Object.assign(Error(`Idle evaluate exceeded 120000 ms (clouds:${theme})`),{name:'IdleEvaluationTimeoutError',code:'INKWAVE_IDLE_EVALUATION_TIMEOUT',phase:'clouds:'+theme,timeoutMs:IDLE_OPERATION_TIMEOUT_MS,elapsedMs:now()-themeStarted,scope:'cloud-theme'});
+   let row;
+   try{
+    row=await Promise.race([
+     Promise.resolve().then(()=>measure({theme,index})),
+     new Promise((_,reject)=>{themeTimer=timers.setTimeout(()=>reject(themeError()),IDLE_OPERATION_TIMEOUT_MS);}),aggregate
+    ]);
+    checkOverall();if(now()-themeStarted>=IDLE_OPERATION_TIMEOUT_MS)throw themeError();
+   }finally{timers.clearTimeout(themeTimer);}
+   if(row?.theme!==theme)throw Error('Cloud theme result is missing or out of order: '+theme);
+   const elapsedMs=activeEvaluationElapsed=now()-themeStarted;
+   // Retention is synchronous: a late evaluate result cannot run this branch
+   // after the race has failed, or overwrite a failed receipt with running.
+   const retained=retain(row,index,checkOverall);
+   if(retained&&typeof retained.then==='function'){Promise.resolve(retained).catch(()=>{});throw TypeError('Cloud artifact retention must be synchronous');}
+   checkOverall();trace.themes.push({theme,elapsedMs});trace.elapsedMs=now()-started;checkpoint(trace);checkOverall();
+  }
+  checkOverall();trace.state='complete';checkpoint(trace);checkOverall();return trace;
+ }catch(error){trace.state='failed';trace.failurePhase=error?.phase||'clouds:'+activeTheme;trace.error=String(error);if(activeStarted!==null)trace.failedTheme={theme:activeTheme,evaluationElapsedMs:activeEvaluationElapsed??now()-activeStarted,wallElapsedMs:now()-activeStarted};throw error;}
+ finally{trace.elapsedMs=now()-started;timers.clearTimeout(aggregateTimer);}
+}
 const boundedPages=new WeakSet();
 // Playwright evaluate uses kNoTimeout, independently of setDefaultTimeout.
 // This is a host-side failure deadline, not cancellation or GPU completion proof.
@@ -53,8 +89,8 @@ export async function runIdleProbe(task,{diagnose,cleanup}){
 export function idleFailureReporter({publish,snapshot,page,screenshotPath}){
  let screenshotAttempted=false;
  return async error=>{
-  const primary=primaryIdleFailure(error),timedOut=primary?.code==='INKWAVE_IDLE_EVALUATION_TIMEOUT';
-  publish({...snapshot(),status:'failed',error:error?.stack||String(error),primaryError:primary?.stack||String(primary),relatedErrors:error instanceof AggregateError?error.errors.slice(0,8).map(e=>e?.stack||String(e)):undefined,operation:timedOut?{phase:primary.phase,timeoutMs:primary.timeoutMs,code:primary.code}:undefined});
+  const primary=primaryIdleFailure(error),timedOut=primary?.code==='INKWAVE_IDLE_EVALUATION_TIMEOUT'||primary?.code==='INKWAVE_CLOUD_SEQUENCE_TIMEOUT';
+  publish({...snapshot(),status:'failed',error:error?.stack||String(error),primaryError:primary?.stack||String(primary),relatedErrors:error instanceof AggregateError?error.errors.slice(0,8).map(e=>e?.stack||String(e)):undefined,operation:timedOut?{phase:primary.phase,timeoutMs:primary.timeoutMs,code:primary.code,...(Number.isFinite(primary.elapsedMs)?{elapsedMs:primary.elapsedMs,scope:primary.scope}:{})}:undefined});
   const activePage=page();
   if(!timedOut&&activePage&&!screenshotAttempted){screenshotAttempted=true;await activePage.screenshot({path:screenshotPath}).catch(()=>{});}
  };
@@ -80,6 +116,60 @@ export function validateIdleResult(r) {
   if(!work||work.frames!==120||work.playing.actorUpdates<=0||work.playing.projectileUpdates!==120||work.playing.paintFlushes!==120||work.playing.fxUpdates!==120||work.results.actorUpdates!==0||work.results.projectileUpdates!==0||work.results.paintFlushes!==0||work.results.fxUpdates!==0||work.playing.worldRenders!==120||work.results.worldRenders!==120||[work.playing,work.results].some(v=>!Number.isFinite(v.cpuSubmissionMs)||v.cpuSubmissionMs<0||!Number.isSafeInteger(v.gpuDrawSubmissions)||v.gpuDrawSubmissions<=0))throw Error('RESULT native work comparison gate');
   if(r.errors?.length||!r.gpu?.webgl?.startsWith('WebGL 2.0')||!r.gpu.renderer)throw Error('Browser/GPU errors');
   return {cloudMiB:[10,2.5],farTransitions:4,pausedWorldRenders:'1/120',mutedSchedulerTicks:0};
+}
+// Serialized into the same page exactly three times. One QA sample target and
+// the same Game/Environment/renderer/cloud target survive between themes.
+export async function measureCloudTheme({token,theme,index}){
+ const themes=['day','sunset','golden'],key='__inkwaveIdleCloudSequence';
+ if(!token||themes[index]!==theme)throw Error('Invalid cloud theme operation');
+ let p=window[key],owned=p?.token===token,failed=false,failure,row;
+ try{
+  if(index===0){
+   if(p)throw Error('Cloud sequence already owns resources');
+   const G=__G;
+   p={token,G,game:G.game,env:G.env,renderer:G.renderer,cloudRT:G.env._cloudRT,old:G.renderer.getRenderTarget(),next:0,samples:0,bakes:0};
+   window[key]=p;owned=true;
+   const THREE=await import('three'),{refreshEnvironmentBudget}=await import(new URL('patches/local-quality/idle-resources.mjs',document.baseURI).href);
+   p.refresh=refreshEnvironmentBudget;p.scene=new THREE.Scene();p.cam=new THREE.OrthographicCamera(-1,1,1,-1,0,1);p.mat=new THREE.MeshBasicMaterial({toneMapped:false});p.quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),p.mat);p.scene.add(p.quad);
+   p.rt=new THREE.WebGLRenderTarget(256,80,{depthBuffer:false,stencilBuffer:false});
+  }
+  if(!owned||p.next!==index)throw Error('Cloud sequence owner or resource identity changed');
+  const assertOwner=()=>{if(__G!==p.G||p.G.game!==p.game||p.G.env!==p.env||p.G.renderer!==p.renderer||p.env._cloudRT!==p.cloudRT)throw Error('Cloud sequence owner or resource identity changed');};
+  assertOwner();const G=p.G,g=G.game,env=p.env,{scene,cam,mat,quad,rt,renderer,old}=p,refreshEnvironmentBudget=p.refresh;
+  const beforeSamples=p.samples,beforeBakes=p.bakes,nativeTheme=env.setTheme,descriptor=Object.getOwnPropertyDescriptor(env,'setTheme');
+  env.setTheme=function(...args){const value=nativeTheme.apply(this,args);p.bakes++;return value;};
+  try{
+   function sample(){mat.map=G.env._cloudRT.texture;mat.needsUpdate=true;renderer.setRenderTarget(rt);renderer.render(scene,cam);const a=new Uint8Array(256*80*4);renderer.readRenderTargetPixels(rt,0,0,256,80,a);renderer.setRenderTarget(old);return a;}
+   function png(a){const c=document.createElement('canvas');c.width=256;c.height=80;const x=c.getContext('2d'),im=x.createImageData(256,80);for(let y=0;y<80;y++)im.data.set(a.subarray(y*1024,(y+1)*1024),(79-y)*1024);x.putImageData(im,0,0);return c.toDataURL('image/png').split(',')[1];}
+   function setCloudTheme(theme){
+    // Redirect only the resize-triggered native bake; the independent high
+    // repeat and low refresh still execute their own complete native paths.
+    const original=env.setTheme,descriptor=Object.getOwnPropertyDescriptor(env,'setTheme');let applied=false;
+    try{env.setTheme=()=>{applied=true;return original.call(env,theme);};refreshEnvironmentBudget(env,G.settings,{touch:false});assertOwner();}
+    finally{if(descriptor)Object.defineProperty(env,'setTheme',descriptor);else delete env.setTheme;}
+    if(!applied)env.setTheme(theme);
+   }
+   G.settings.quality='high';setCloudTheme(theme);assertOwner();if(G.env.theme!==theme)throw Error("Unknown theme "+theme);const hi=sample();p.samples++;assertOwner();env.setTheme(theme);assertOwner();const repeat=sample();p.samples++;assertOwner();
+   const highBytes=G.env._cloudRT.width*G.env._cloudRT.height*8;
+   G.settings.quality='low';refreshEnvironmentBudget(env,G.settings,{touch:false});assertOwner();const lo=sample();p.samples++;assertOwner();let total=0,large=0,nonzero=0,highRepeatChanged=0;
+   for(let i=0;i<hi.length;i++){const d=Math.abs(hi[i]-lo[i]);total+=d;if(d>32)large++;if(i%4!==3&&hi[i]>0)nonzero++;if(hi[i]!==repeat[i])highRepeatChanged++;}
+   if(__G!==p.G||G.game!==p.game||G.env!==p.env||G.renderer!==p.renderer||G.env._cloudRT!==p.cloudRT)throw Error('Cloud sequence changed owners during measurement');
+   if(p.samples-beforeSamples!==3||G.settings.quality!=='low'||G.env.theme!==theme)throw Error('Cloud theme did not finish all samples in low state');
+   p.next++;
+   if(index===2&&(p.next!==3||p.samples!==9))throw Error('Incomplete cloud sequence');
+   row={theme,highBytes,lowBytes:G.env._cloudRT.width*G.env._cloudRT.height*8,meanByteError:total/hi.length,largeErrorFraction:large/hi.length,highRepeatChanged,nonzero,high:png(hi),low:png(lo),sampleCount:p.samples-beforeSamples,bakeCalls:p.bakes-beforeBakes,sequenceSamples:p.samples,sequenceBakeCalls:p.bakes,finalQuality:G.settings.quality,finalTheme:G.env.theme,identity:{sameGame:true,sameEnvironment:true,sameRenderer:true,sameCloudTarget:true,cloudTexture:p.cloudRT.texture.uuid,sampleTexture:rt.texture.uuid}};
+  }finally{if(descriptor)Object.defineProperty(env,'setTheme',descriptor);else delete env.setTheme;}
+  return row;
+ }catch(error){failed=true;failure=error;throw error;}
+ finally{
+  if(owned&&(failed||index===2)){
+   const cleanupErrors=[];
+   for(const close of [()=>p.renderer.setRenderTarget(p.old),()=>p.quad?.geometry.dispose(),()=>p.mat?.dispose(),()=>p.rt?.dispose()])try{close();}catch(error){cleanupErrors.push(error);}
+   if(!failed&&(__G!==p.G||p.G.game!==p.game||p.G.env!==p.env||p.G.renderer!==p.renderer||p.env._cloudRT!==p.cloudRT||p.G.settings.quality!=='low'||p.env.theme!=='golden'))cleanupErrors.push(Error('Cloud final state changed during cleanup'));
+   if(window[key]===p)delete window[key];
+   if(cleanupErrors.length){if(failed)throw new AggregateError([failure,...cleanupErrors],'Cloud theme failed: '+(failure?.message??String(failure))+'; cleanup also failed',{cause:failure});throw new AggregateError(cleanupErrors,'Cloud sample resource cleanup failed');}
+  }
+ }
 }
 // Serialized into the cold page. Preserve the allocation observer contract while
 // retaining its stage for failures before the public Game/debug hook exists.
@@ -164,23 +254,21 @@ async function main(){
     return {audio:{initialPlayers,initialScheduler,mutedTicks,mutedNodes,mutedPlayers,mutedScheduler,sfxPlayed,resumedTrack,toggleMaxPlayers,running:a.ctx.state==='running'}};
    }finally{m._tick=tick;a.ctx.createOscillator=osc;}
   });
-  phase='clouds';const cloudEvidence=await page.evaluate(async()=>{
-   const G=__G,g=G.game,THREE=await import('three'),{refreshEnvironmentBudget}=await import(new URL('patches/local-quality/idle-resources.mjs',document.baseURI).href);
-   const scene=new THREE.Scene(),cam=new THREE.OrthographicCamera(-1,1,1,-1,0,1),mat=new THREE.MeshBasicMaterial({toneMapped:false}),quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),mat);scene.add(quad);
-   const rt=new THREE.WebGLRenderTarget(256,80,{depthBuffer:false,stencilBuffer:false}),renderer=G.renderer,old=renderer.getRenderTarget();
-   function sample(){mat.map=G.env._cloudRT.texture;mat.needsUpdate=true;renderer.setRenderTarget(rt);renderer.render(scene,cam);const a=new Uint8Array(256*80*4);renderer.readRenderTargetPixels(rt,0,0,256,80,a);renderer.setRenderTarget(old);return a;}
-   function png(a){const c=document.createElement('canvas');c.width=256;c.height=80;const x=c.getContext('2d'),im=x.createImageData(256,80);for(let y=0;y<80;y++)im.data.set(a.subarray(y*1024,(y+1)*1024),(79-y)*1024);x.putImageData(im,0,0);return c.toDataURL('image/png').split(',')[1];}
-   const rows=[];try{for(const theme of ['day','sunset','golden']){
-    G.settings.quality='high';refreshEnvironmentBudget(G.env,G.settings,{touch:false});G.env.setTheme(theme);if(G.env.theme!==theme)throw Error("Unknown theme "+theme);const hi=sample();G.env.setTheme(theme);const repeat=sample();
-    const highBytes=G.env._cloudRT.width*G.env._cloudRT.height*8;
-    G.settings.quality='low';refreshEnvironmentBudget(G.env,G.settings,{touch:false});const lo=sample();let total=0,large=0,nonzero=0,highRepeatChanged=0;
-    for(let i=0;i<hi.length;i++){const d=Math.abs(hi[i]-lo[i]);total+=d;if(d>32)large++;if(i%4!==3&&hi[i]>0)nonzero++;if(hi[i]!==repeat[i])highRepeatChanged++;}
-    rows.push({theme,highBytes,lowBytes:G.env._cloudRT.width*G.env._cloudRT.height*8,meanByteError:total/hi.length,largeErrorFraction:large/hi.length,highRepeatChanged,nonzero,high:png(hi),low:png(lo)});
-   }}finally{renderer.setRenderTarget(old);quad.geometry.dispose();mat.dispose();rt.dispose();}
-   return rows;
-  });
-  for(const row of cloudEvidence){for(const p of ['high','low']){fs.writeFileSync(path.join(output,`cloud-${row.theme}-${p}.png`),Buffer.from(row[p],'base64'));delete row[p];}}
-  result.clouds=cloudEvidence;
+  phase='clouds';result.clouds=[];const cloudTrace=result.cloudSequence={},cloudToken=crypto.randomUUID();
+  const cloudCheckpoint=()=>publish({status:'running',phase,result,sourceSha:identity.source.sourceSha,contentHash:manifest.contentHash});
+  await runCloudThemeSequence(
+   ({theme,index})=>page.evaluate(measureCloudTheme,{token:cloudToken,theme,index}),
+   (row,index,checkOverall)=>{
+    const {high,low,...metrics}=row,saved={...metrics,artifacts:{high:null,low:null}};
+    if(index!==result.clouds.length)throw Error('Cloud artifact order changed');
+    result.clouds.push(saved);
+    for(const [name,encoded]of [['high',high],['low',low]]){
+     checkOverall();const file=`cloud-${row.theme}-${name}.png`;
+     fs.writeFileSync(path.join(output,file),Buffer.from(encoded,'base64'));saved.artifacts[name]=file;
+    }
+   },
+   {phase:value=>{phase=value;cloudCheckpoint();},checkpoint:cloudCheckpoint,trace:cloudTrace}
+  );
   phase='far-stage-transitions';result.far=await page.evaluate(async()=>{
    const G=__G,g=G.game,{MAPS}=await import(new URL('src/config.js',document.baseURI).href),env=G.env,gl=G.renderer.getContext(),deleted=new Set(),del=gl.deleteTexture.bind(gl);
    gl.deleteTexture=t=>{deleted.add(t);return del(t);};const rows=[];
