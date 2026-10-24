@@ -57,12 +57,12 @@ test('real Session rejects previous gameplay COMPAT before building or sending r
   f.G.game={settings:{},startNetMatch(){starts++;}};
   session.myId='guest';session.hostId='host';session.state='lobby';
   session.tr={sendTo(){sends++;return true;},broadcast(){sends++;return true;},close(){}};
-  await session._begin({id:'mixed-version',proto:f.PROTO,compat:'iw-gameplay-20261022-rainmaker-origin-v1',
+  await session._begin({id:'mixed-version',proto:f.PROTO,compat:'iw-gameplay-20261022-owner-clock-v1',
     mode:'turf',map:'reef',difficulty:'normal',roster:[
       {owner:'host',nid:0,bot:false,weapon:'shooter',team:0,slot:0},
       {owner:'guest',nid:1,bot:false,weapon:'shooter',team:1,slot:0},
     ]});
   assert.equal(starts,0);assert.equal(sends,0);assert.equal(session.match,null);
   assert.equal(session.state,'error');
-  assert.equal(f.COMPAT,'iw-gameplay-20261022-owner-clock-v1');
+  assert.equal(f.COMPAT,'iw-gameplay-20261023-spawn-exclusion-v1');
 });

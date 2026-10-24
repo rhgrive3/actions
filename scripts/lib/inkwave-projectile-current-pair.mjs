@@ -7,6 +7,7 @@ import {gunzipSync} from 'node:zlib';
 import {execFileSync} from 'node:child_process';
 import {assertOutputDirectorySeparate} from './inkwave-source-admission-cli.mjs';
 import {MAIN3003_BASE,main3003Fixture,main3003Epoch,main3003Route,assertMain3003Environment,assertMain3003Head,assertMain3003Inputs,assertMain3003Artifacts} from './inkwave-main3003-firing-pair.mjs';
+import {respawn3003Fixture,respawn3003Epoch,respawn3003Route,assertRespawn3003Head,assertRespawn3003Inputs,assertRespawn3003Artifacts} from './inkwave-main3003-respawn-pair.mjs';
 
 export const CURRENT_PAIR_MODE = 'oct23-reviewed-projectile-pairs';
 export const CURRENT_PAIR_FIXTURE_SHA256 = 'adf375e9e5a53d3f7ea0724d296a4b201c68edbfc6aea44291617a7d9de20ad9';
@@ -19,7 +20,13 @@ assert.equal(fixture.repository, 'rhgrive3/actions');
 assert.deepEqual(fixture.routes.map(row => row.pr), [1857, 1860]);
 assert.deepEqual(main3003Fixture().roots,fixture.roots);
 assert.deepEqual(main3003Fixture().scripts,fixture.scripts);
-const sourceEpoch=epoch=>fixture.epochs[epoch]||main3003Epoch(epoch);
+assert.deepEqual(respawn3003Fixture().roots,fixture.roots);
+assert.deepEqual(respawn3003Fixture().scripts,fixture.scripts);
+assert.deepEqual(respawn3003Epoch(MAIN3003_BASE),main3003Epoch(MAIN3003_BASE),'shared main3003 source/build pins remain identical');
+const sourceEpoch=epoch=>fixture.epochs[epoch]||main3003Epoch(epoch)||respawn3003Epoch(epoch);
+const main3003Binding=route=>route.exactRespawn3003
+  ? {head:assertRespawn3003Head,inputs:assertRespawn3003Inputs,artifacts:assertRespawn3003Artifacts}
+  : {head:assertMain3003Head,inputs:assertMain3003Inputs,artifacts:assertMain3003Artifacts};
 const sort = rows => [...rows].sort((a,b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
 const included = relative => {
   if (fixture.scripts.includes(relative)) return true;
@@ -47,10 +54,13 @@ export function selectCurrentPair(event, eventName, repository) {
   assert.equal(pr.head.repo.full_name, fixture.repository, 'owned candidate repository');
   assert.equal(pr.base.ref, 'main', 'reviewed main baseline required');
   assert.equal(pr.head.ref, route.branch, 'exact reviewed branch required');
-  const additional=main3003Route(pr.number,pr.base.sha);
+  const additional=main3003Route(pr.number,pr.base.sha)||respawn3003Route(pr.number,pr.base.sha);
   assert.ok(route.bases.includes(pr.base.sha)||additional, 'actual event baseline must be a pinned reviewed epoch');
   assert.match(pr.head.sha ?? '', /^[0-9a-f]{40}$/, 'actual candidate immutable SHA required');
   assert.notEqual(pr.head.sha, pr.base.sha, 'separate reviewed candidate required');
+  // 55c0 labels source/build inputs; the declared head is the fixed reviewed
+  // execution snapshot, including its QA bodies, rather than a same-path sibling.
+  if(additional?.exactRespawn3003)assertRespawn3003Head(pr.head.sha);
   return {...structuredClone(route),...additional, baseSha:pr.base.sha, candidateSha:pr.head.sha};
 }
 
@@ -122,8 +132,8 @@ function verifySide(root,commit,epoch,isBase,route){
   assertCurrentPairRows(before.entries,epoch,false);
   const rows=scanCurrentPairProduction(root);assertCurrentPairRows(rows,epoch);
   if(route.exactMain3003){
-    assertMain3003Inputs(rows,epoch);
-    if(!isBase)assertMain3003Head(commit,args=>git(root,args));
+    main3003Binding(route).inputs(rows,epoch);
+    if(!isBase)main3003Binding(route).head(commit,route.exactRespawn3003?root:args=>git(root,args));
   }
   assert.deepEqual(readCurrentPairGitTree(root,commit),before,'declared checkout stable during verification');
   return {commit,tree:before.tree,sourceEpoch:epoch,productionLeaves:rows.length,inventorySha256:hash(JSON.stringify(rows))};
@@ -147,7 +157,7 @@ export function verifyCurrentProjectilePair({baseline,candidate,event,eventName,
   if(baselineSite){
     assert.ok(route.exactMain3003,'build pins require the explicit main3003 pair');
     assert.notEqual(fs.realpathSync(baselineSite),fs.realpathSync(candidateSite),'separate built sides');
-    builds=[assertMain3003Artifacts(baselineSite,route.baseSha),assertMain3003Artifacts(candidateSite,route.sourceHead)];
+    builds=[main3003Binding(route).artifacts(baselineSite,route.baseSha),main3003Binding(route).artifacts(candidateSite,route.sourceHead)];
   }
   return {schema:1,mode:route.mode||CURRENT_PAIR_MODE,pr:route.pr,repository,branch:route.branch,
     declaredBaseCommit:route.baseSha,declaredCandidateCommit:route.candidateSha,
@@ -189,14 +199,16 @@ export function assertCurrentPairCaptureOutputs({site,root,baseline,evidence,pro
 export function verifyCurrentPairCaptureBuild({site,mode,root,eventFile,eventName,repository,baseline,evidence,profile}){
   if(!eventFile||eventName!=='pull_request')return null;
   const event=JSON.parse(fs.readFileSync(eventFile,'utf8'));
-  if(event.number!==1857||event.pull_request?.head?.ref!=='fix/shooter-splatling-cosmetics-20261023')return null;
+  const ownedFiring=event.number===1857&&event.pull_request?.head?.ref==='fix/shooter-splatling-cosmetics-20261023';
+  const ownedRespawn=event.number===1860&&event.pull_request?.head?.ref==='fix/respawn-enemy-exclusion-20261023';
+  if(!ownedFiring&&!ownedRespawn)return null;
   const route=selectCurrentPair(event,eventName,repository);if(!route.exactMain3003)return null;
   assert.ok(['baseline','candidate'].includes(mode),'explicit capture side label');
   assertCurrentPairCaptureOutputs({site,root,baseline,evidence,profile});
   const isBase=mode==='baseline',epoch=isBase?MAIN3003_BASE:route.sourceHead,commit=isBase?route.baseSha:route.candidateSha;
   const sourceRoot=isBase?path.resolve(root,baseline||'.ci-baseline'):root;
   assertMain3003Environment(process.env);
-  const source=verifySide(sourceRoot,commit,epoch,isBase,route),build=assertMain3003Artifacts(site,epoch);
+  const source=verifySide(sourceRoot,commit,epoch,isBase,route),build=main3003Binding(route).artifacts(site,epoch);
   return {mode:route.mode,side:mode,sourceBase:route.baseSha,sourceHead:route.sourceHead,
     declaredBaseCommit:route.baseSha,declaredCandidateCommit:route.candidateSha,fixtureSha256:route.fixtureSha256,source,build,writtenPaths:[]};
 }

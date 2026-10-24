@@ -23,6 +23,7 @@ import { adaptCameraAimControls } from '../patches/splatoon3/camera-aim-controls
 import { adaptProjectileVisuals } from '../patches/splatoon3/projectile-visual-adapter.mjs';
 import { adaptMainInkFootprints } from '../patches/splatoon3/main-ink-footprint-adapter.mjs';
 import { adaptLoadingScreen } from '../patches/local-quality/loading-screen-adapter.mjs';
+import { adaptSpawnExclusion } from '../patches/splatoon3/spawn-exclusion-adapter.mjs';
 
 // #1165: the Roller ink band must claim its seeded GPU core in the CPU turf
 // grid. Apply at build time so the upstream game snapshot remains immutable.
@@ -71,6 +72,7 @@ export function adaptBuildSource(rel, code) {
   code = adaptRollerBandParity(rel, code);
   code = adaptWeaponOpponentPalette(rel, code);
   code = adaptWeaponOpponentPreview(rel, code);
+  code = adaptSpawnExclusion(rel, code);
   const composed = adaptAddedUiMotion(rel, adaptCharacterShadowBatch(rel, adaptQueueNetworkUi(rel, adaptCombatProvenance(rel, applyZevantDisplayName(rel, adaptLoadingScreen(rel, adaptQueueNine(rel, adaptStaticMenuArt(rel, adaptCameraAimControls(rel, code), replaceOnce)))))), replaceOnce));
   return adaptFiringCosmetics(rel, composed);
 }

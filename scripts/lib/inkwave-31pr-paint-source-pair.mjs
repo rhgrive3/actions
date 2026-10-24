@@ -62,6 +62,17 @@ export const ALL_31_PRS_SOURCE_PAIR = Object.freeze({
 });
 export const ALL_31_PRS_FIXTURE_SHA256="f2cc95b94ca77450c52985f754c1b24cb3e5ad42b48c94ca05d1af9ac93ea36d";
 
+// Exact PR1860 epoch: all 13 main7e leaves equal the historical candidate.
+// Only composition/build-only admission changes; this grants no replay or parity.
+export const RESPAWN_05EB_SOURCE_PAIR = Object.freeze({
+  baseCommit: '7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51',
+  candidateCommit: '05eb9b8243bfba7e166600990df33ac19bbaa0c2',
+  blobs: Object.freeze({...Object.fromEntries(Object.entries(ALL_31_PRS_SOURCE_PAIR.blobs)
+    .map(([path,row])=>[path,Object.freeze({base:row.candidate,candidate:row.candidate})])),
+    'scripts/inkwave-source-composition.mjs': Object.freeze({base:'a61100acdd90db510fafb99d6636c8fffff1295c',candidate:'e870e95e1d3ab82ab5412888fd3ca0ba0d48fcd5'}),
+    'scripts/lib/inkwave-build-only-modules.mjs': Object.freeze({base:'5408d3598bd60d661f003f5ea0e7c02ef55e4d62',candidate:'64012e646a889ef090b8b0e21cd82d30e0670130'}),
+  })
+});
 // Additional live thirteen-leaf epoch for PR1857's reviewed firing adapter.
 // The historical fixture/paint pairs above remain immutable. This tuple is
 // source identity only: it grants no replay or gameplay/physics equivalence.

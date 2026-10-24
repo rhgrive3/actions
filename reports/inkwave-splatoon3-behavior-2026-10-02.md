@@ -6168,6 +6168,17 @@ main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、Splatoon 3 Ver.11
 参照対象は公開版の全パッチ合成後。S3 Ver.11.3.0に関する既存の未確認値は変更せず、ソースモーション（既存のWii U由来パックを含む）の中間計算だけを削減した。BodyBalanceのgain対象と祖先以外の中間world回転を省き、最終全ボーンFK・足接地・IK・銃口・移動・射撃・塗り・当たり判定・描画設定は維持する。2種の実ソースキャラクター、シューター/チャージャー/ローラーの30/60/120Hz、1260フレームで最終local/world姿勢・skin行列・接地・銃口が一致し、通常minify配信物でも同じ比較が成功。これはロジック/配信物検証であり、Nintendo実機やiPad SafariのFPS比較ではない。
 
 Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテゴリ。修正対象のBodyBalanceはその一部にすぎず、iPad上での支配要因の確定や重いフレームの完全解消とは扱わない。#1671/#1757の実機受入はOpenのまま。条件・既存PRとの重複確認・再現コマンド・証跡は[調査記録](inkwave-composed-cpu-20261023/README.md)。
+## 2026-10-23: owner-requested enemy exclusion at allied respawn
+
+Base `7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51`. Production had intentionally removed ordinary and Super Jump spawn exclusion (#807/#820/#848), while per-team pad/radius/visual barriers remained. The owner's new request explicitly restores an INKWAVE local enemy-body exclusion rule. It is **not** a claim that Splatoon 3 11.3.0 uses a universal radial force field; Nintendo's [Squid Spawn description](https://splatoon.nintendo.com/en/gameplay/) establishes selectable launch/landing, not this collision geometry. Retail/device measurements remain unverified.
+
+One opposing pad volume is tested per actor, using existing level radius and lower-height exception, swept movement and capsule clearance. Allies can exit their own pad. Authoritative bodies and remote sampled displays agree; the gameplay compatibility epoch rejects older owners. Damage/armor clocks, vertical launch, weapons, stage meshes and landing animation are outside the change. Baseline source-equivalent regressions fail 22/25; candidate source 25/25 and focused emitted/compatibility 44/44 pass. Precommit full two-context browser/real local production relay: 12 ingress cases blocked at 4.6 units, 12 allied exits at 11.106 units; original owners reach 0.016 units. These are controlled software-Chromium results, not public-network or Switch parity. Existing related baseline failures and final exact-head acceptance are recorded separately in [the scoped report](respawn-exclusion-20261023/README.md).
+
+## 2026-10-23: spawn exclusion fallback の安全な完全位置候補
+
+07a979214の独立レビューが、通常box脇の自然落下・固定1/60更新で、補正が以前のX/Zと現在のYを混ぜて本番capsuleをsolid内へ置く問題を再現した。別candidateはPhysics.bodyFitsで完全な座標を確認し、不正な補正先だけ既存の垂直進行を8回の有界検査で戻す。通常の重力・launch・味方exit、半径設定、stage mesh、landing表示は変更しない。本番Actor._resolveの既存フォーム別terrain capsuleと旧PLAYER.radiusの診断を区別して記録する。元07a・PR1860は保持し、未確定の壁横断sweep問題やSplatoon 3 11.3.0実機一致を解消済みとはしない。[再現・失敗原本・候補検証・パラメータの区別](respawn-fallback-safe-20261023/README.md)。
+
+2026-10-23 respawn candidate contract reconciliation: collision exclusion moves opposing actor origins; it adds no damage immunity inside a pad. The old native-radius Slam <max assertion and 23-column packet assumption were pre-existing fixture/contract defects. Production-composed, native-Physics component checks retain legal near/falloff attacks, LOS/friendly filtering, allied entry, launch-owned armor and existing network sidecars. Retail pad collision/damage equivalence remains unverified; details: `reports/respawn-exclusion-final-candidate-20261023/README.md`.
 
 ## 2026-10-23 Shooter muzzle / Splatling cosmetic candidate
 

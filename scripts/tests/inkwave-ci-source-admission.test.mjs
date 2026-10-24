@@ -291,6 +291,24 @@ test('closed October 23 admission suppresses legacy replay only after its succes
   assert.equal(enabled(admission,context('other','1861')),false);
 });
 
+test('closed October 23 admission suppresses legacy replay only after its successful output', () => {
+  const source = readWorkflow('inkwave-projectile-visuals.yml');
+  const admission = step(source,'Preserve the two reviewed October 23 production pairs without historical replay');
+  const replay = step(source,prepareName), pose = step(source,'Align only the reviewed character pose for exact projectile comparison');
+  for (const [branch,number] of [['fix/shooter-splatling-cosmetics-20261023','1857'],['fix/respawn-enemy-exclusion-20261023','1860']]) {
+    const c = context(branch,number);
+    assert.equal(enabled(admission,c),true);
+    for (const body of [replay,pose]) {
+      assert.equal(enabled(body,c),true,'absent success output retains the historical selector');
+      assert.equal(enabled(body,{...c,steps:{reviewed_current_pair:{outputs:{admitted:'true'}}}}),false);
+      assert.equal(enabled(body,{...c,steps:{reviewed_current_pair:{outputs:{admitted:'false'}}}}),true);
+    }
+    for (const options of [{side:'after'},{event:'workflow_dispatch'},{headRepo:'fork/actions'},{repository:'fork/actions'},{baseRef:'other'}])
+      assert.equal(enabled(admission,context(branch,number,options)),false);
+  }
+  assert.equal(enabled(admission,context('other','1861')),false);
+});
+
 test('reviewed runtime UI inventory rejects missing, unexpected and weakened routes in each shell', () => {
   const source=readWorkflow('inkwave-projectile-visuals.yml');
   const guard=reviewedPrShells[1];

@@ -101,6 +101,9 @@ on:
       - 'scripts/lib/inkwave-main3003-firing-pair.mjs'
       - 'scripts/fixtures/inkwave-main3003-firing-pair.json.gz'
       - 'scripts/tests/inkwave-main3003-firing-pair.test.mjs'
+      - 'scripts/lib/inkwave-main3003-respawn-pair.mjs'
+      - 'scripts/fixtures/inkwave-main3003-respawn-pair.json.gz'
+      - 'scripts/tests/inkwave-main3003-respawn-pair.test.mjs'
       - 'scripts/prepare-inkwave-character-pose-baseline.mjs'
       - 'scripts/lib/inkwave-character-pose-baseline.mjs'
       - 'scripts/fixtures/inkwave-character-pose-baseline.json'
@@ -232,7 +235,7 @@ jobs:
           node-version: 22
       - name: Verify fail-closed immutable workflow routes
         if: ${{ matrix.side == 'after' }}
-        run: node --test --test-concurrency=1 scripts/tests/inkwave-exact-head-workflow-routes.test.mjs scripts/tests/inkwave-main26a4-production-epoch.test.mjs scripts/tests/inkwave-runtime-ui-production-epoch.test.mjs scripts/tests/inkwave-projectile-current-pair.test.mjs scripts/tests/inkwave-main3003-firing-pair.test.mjs scripts/tests/inkwave-reviewed-special-delta-admission.test.mjs scripts/tests/inkwave-roller-pr1856-projectile-pair.test.mjs scripts/tests/inkwave-respawn1862-production-pair.test.mjs
+        run: node --test --test-concurrency=1 scripts/tests/inkwave-exact-head-workflow-routes.test.mjs scripts/tests/inkwave-main26a4-production-epoch.test.mjs scripts/tests/inkwave-runtime-ui-production-epoch.test.mjs scripts/tests/inkwave-projectile-current-pair.test.mjs scripts/tests/inkwave-main3003-firing-pair.test.mjs scripts/tests/inkwave-main3003-respawn-pair.test.mjs scripts/tests/inkwave-reviewed-special-delta-admission.test.mjs scripts/tests/inkwave-roller-pr1856-projectile-pair.test.mjs scripts/tests/inkwave-respawn1862-production-pair.test.mjs
       - name: Install pinned build and browser tools
         run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
       - name: Install Chromium

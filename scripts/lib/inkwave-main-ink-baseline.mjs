@@ -1,4 +1,4 @@
-import {ALL_31_PRS_SOURCE_PAIR,POST_30_PRS_SOURCE_PAIR} from './inkwave-31pr-paint-source-pair.mjs';
+import {ALL_31_PRS_SOURCE_PAIR,POST_30_PRS_SOURCE_PAIR,RESPAWN_05EB_SOURCE_PAIR} from './inkwave-31pr-paint-source-pair.mjs';
 import {ALL_29_PRS_SOURCE_PAIR} from './inkwave-29pr-paint-source-pair.mjs';
 import {ALL_PRS_SOURCE_PAIR} from './inkwave-23pr-paint-source-pair.mjs';
 import { createHash } from 'node:crypto';
@@ -653,7 +653,7 @@ function explicitMaine1fPair(baseline, candidate, expectedPair) {
   }};
 }
 
-function reviewedCurrentPair(baseline, candidate) {
+function reviewedCurrentPair(baseline, candidate, expectedPair) {
   // Only the complete PR1746 epoch may use this identity mode. No per-leaf
   // mixture or arbitrary equal source is admitted, and no source is replayed.
   if (MAIN_INK_BASELINE_PATHS.every(path =>
@@ -676,10 +676,14 @@ function reviewedCurrentPair(baseline, candidate) {
   const old = MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
     sha256(baseline.get(path)) === REVIEWED_CURRENT_PAIR[path].baseline &&
     sha256(candidate.get(path)) === REVIEWED_CURRENT_PAIR[path].candidate);
-  const integratedPair = [POST_30_PRS_SOURCE_PAIR, ALL_31_PRS_SOURCE_PAIR, ALL_29_PRS_SOURCE_PAIR, ALL_PRS_SOURCE_PAIR, INTEGRATION_SOURCE_PAIR, SUB_BIRTH_SOURCE_PAIR, NATIVE_SUB_CONTACT_SOURCE_PAIR, ROLLER_BAND_SOURCE_PAIR, PROJECTILE_POSE_BIRTH_PAIR, RESOLVED_SOURCE_PAIR, RESOLVED_SWIM_SOURCE_PAIR, PR1746_SOURCE_PAIR].find(pair =>
+  const integratedPair = [RESPAWN_05EB_SOURCE_PAIR, POST_30_PRS_SOURCE_PAIR, ALL_31_PRS_SOURCE_PAIR, ALL_29_PRS_SOURCE_PAIR, ALL_PRS_SOURCE_PAIR, INTEGRATION_SOURCE_PAIR, SUB_BIRTH_SOURCE_PAIR, NATIVE_SUB_CONTACT_SOURCE_PAIR, ROLLER_BAND_SOURCE_PAIR, PROJECTILE_POSE_BIRTH_PAIR, RESOLVED_SOURCE_PAIR, RESOLVED_SWIM_SOURCE_PAIR, PR1746_SOURCE_PAIR].find(pair =>
     MAIN_INK_BASELINE_PATHS.every(path => present(path) &&
       gitBlobSha1(baseline.get(path)) === pair.blobs[path].base &&
       gitBlobSha1(candidate.get(path)) === pair.blobs[path].candidate));
+  if (integratedPair === RESPAWN_05EB_SOURCE_PAIR &&
+      (baseline.size !== 13 || candidate.size !== 13 || expectedPair?.mode !== 'current-pair-with-gameplay-differences' ||
+       expectedPair.sourceBase !== integratedPair.baseCommit || expectedPair.sourceHead !== integratedPair.candidateCommit))
+    fail('respawn05eb requires exactly thirteen leaves and its explicit immutable source labels; no replay');
   const integrated = Boolean(integratedPair);
   if (!old && !integrated) {
     const path = 'patches/splatoon3/runtime/main-weapon-catalog.mjs';
@@ -730,7 +734,7 @@ export function planMainInkBaseline(baseline, candidate, expectedPair = null) {
   if ([baseline, candidate].some(sources => typeof sources.get(catalogue) === 'string' &&
       gitBlobSha1(sources.get(catalogue)) === MAIN9FE_PAINT_BLOBS[catalogue]))
     fail('main9fe paint sources require an explicitly requested comparison epoch; old/new physics cannot be replayed or called unchanged');
-  const reviewedPair = reviewedCurrentPair(baseline, candidate);
+  const reviewedPair = reviewedCurrentPair(baseline, candidate, expectedPair);
   if (expectedPair !== null) {
     if (!reviewedPair || ['mode','sourceBase','sourceHead'].some(key => reviewedPair.evidence[key] !== expectedPair[key]))
       fail('source-pair differs from explicitly requested comparison; identity cannot substitute for differing epochs');
