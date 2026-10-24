@@ -245,7 +245,7 @@ jobs:
         if: ${{ matrix.side == 'after' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && ((github.event.pull_request.number == 1856 && github.head_ref == 'fix/roller-vertical-recovery-20261023') || (github.event.pull_request.number == 1862 && github.head_ref == 'fix/respawn-weapon-state-20261023') || github.head_ref == 'inkwave/special-reviewed-main726-20261023') }}
         run: |
           case "$GITHUB_HEAD_REF" in
-            fix/roller-vertical-recovery-20261023) node --test --test-concurrency=1 scripts/tests/inkwave-roller-pr1856-projectile-pair.test.mjs ;;
+            fix/roller-vertical-recovery-20261023) node --test --test-concurrency=1 scripts/tests/inkwave-roller-pr1856-projectile-pair.test.mjs scripts/tests/inkwave-roller-pr1856-pose-pair.test.mjs ;;
             fix/respawn-weapon-state-20261023) node --test --test-concurrency=1 scripts/tests/inkwave-respawn1862-production-pair.test.mjs ;;
             inkwave/special-reviewed-main726-20261023) node --test --test-concurrency=1 scripts/tests/inkwave-reviewed-special-delta-admission.test.mjs ;;
             *) echo 'Unreviewed archive route'; exit 1 ;;
