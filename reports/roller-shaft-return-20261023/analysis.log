@@ -1,0 +1,273 @@
+{
+  "primary": {
+    "scenario": "released-edge",
+    "sameConditions": true,
+    "sameNativeGameplay": true,
+    "beforeContentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+    "candidateContentHash": "51b803d76f03599edd464f63be7f23b538fa61fc54a2e31925bca6272a21cdd4",
+    "before": {
+      "windows": {
+        "31-56": {
+          "maxStep": {
+            "tick": 31,
+            "value": 1.2789993270748106
+          },
+          "maxSpeed": {
+            "tick": 31,
+            "value": 76.73995962448863
+          },
+          "maxAcceleration": {
+            "tick": 31,
+            "value": 5148.310538856002
+          },
+          "maxScreenStep": {
+            "tick": 31,
+            "value": 144.32425529999347
+          },
+          "maxScreenAcceleration": {
+            "tick": 49,
+            "value": 485149.54017255
+          },
+          "maxAxleAngle": {
+            "tick": 49,
+            "value": 1.8973079624288955
+          },
+          "totalDistance": 7.187254935659487
+        },
+        "39-56": {
+          "maxStep": {
+            "tick": 49,
+            "value": 1.1091286239057678
+          },
+          "maxSpeed": {
+            "tick": 49,
+            "value": 66.54771743434607
+          },
+          "maxAcceleration": {
+            "tick": 49,
+            "value": 4155.844201258958
+          },
+          "maxScreenStep": {
+            "tick": 49,
+            "value": 129.74999332811768
+          },
+          "maxScreenAcceleration": {
+            "tick": 49,
+            "value": 485149.54017255
+          },
+          "maxAxleAngle": {
+            "tick": 49,
+            "value": 1.8973079624288955
+          },
+          "totalDistance": 5.124046299380309
+        },
+        "48-56": {
+          "maxStep": {
+            "tick": 49,
+            "value": 1.1091286239057678
+          },
+          "maxSpeed": {
+            "tick": 49,
+            "value": 66.54771743434607
+          },
+          "maxAcceleration": {
+            "tick": 49,
+            "value": 4155.844201258958
+          },
+          "maxScreenStep": {
+            "tick": 49,
+            "value": 129.74999332811768
+          },
+          "maxScreenAcceleration": {
+            "tick": 49,
+            "value": 485149.54017255
+          },
+          "maxAxleAngle": {
+            "tick": 49,
+            "value": 1.8973079624288955
+          },
+          "totalDistance": 4.063007994850028
+        },
+        "50-56": {
+          "maxStep": {
+            "tick": 50,
+            "value": 0.7171404111637811
+          },
+          "maxSpeed": {
+            "tick": 50,
+            "value": 43.02842466982687
+          },
+          "maxAcceleration": {
+            "tick": 50,
+            "value": 2956.1860249157908
+          },
+          "maxScreenStep": {
+            "tick": 50,
+            "value": 59.85169069428436
+          },
+          "maxScreenAcceleration": {
+            "tick": 50,
+            "value": 356558.9498499304
+          },
+          "maxAxleAngle": {
+            "tick": 51,
+            "value": 0.5373643019223416
+          },
+          "totalDistance": 2.6613871057010705
+        }
+      }
+    },
+    "candidate": {
+      "windows": {
+        "31-56": {
+          "maxStep": {
+            "tick": 31,
+            "value": 1.2789993270748106
+          },
+          "maxSpeed": {
+            "tick": 31,
+            "value": 76.73995962448863
+          },
+          "maxAcceleration": {
+            "tick": 31,
+            "value": 5148.310538856002
+          },
+          "maxScreenStep": {
+            "tick": 31,
+            "value": 144.32425529999347
+          },
+          "maxScreenAcceleration": {
+            "tick": 32,
+            "value": 447315.782323173
+          },
+          "maxAxleAngle": {
+            "tick": 31,
+            "value": 0.9823249876782552
+          },
+          "totalDistance": 7.487410735242934
+        },
+        "39-56": {
+          "maxStep": {
+            "tick": 40,
+            "value": 0.788756163066068
+          },
+          "maxSpeed": {
+            "tick": 40,
+            "value": 47.32536978396408
+          },
+          "maxAcceleration": {
+            "tick": 41,
+            "value": 2847.884028323106
+          },
+          "maxScreenStep": {
+            "tick": 51,
+            "value": 69.92351775680982
+          },
+          "maxScreenAcceleration": {
+            "tick": 49,
+            "value": 214759.76302573434
+          },
+          "maxAxleAngle": {
+            "tick": 40,
+            "value": 0.8059671533826268
+          },
+          "totalDistance": 5.424202098963756
+        },
+        "48-56": {
+          "maxStep": {
+            "tick": 53,
+            "value": 0.7231877035108851
+          },
+          "maxSpeed": {
+            "tick": 53,
+            "value": 43.39126221065311
+          },
+          "maxAcceleration": {
+            "tick": 49,
+            "value": 1959.6498645804659
+          },
+          "maxScreenStep": {
+            "tick": 51,
+            "value": 69.92351775680982
+          },
+          "maxScreenAcceleration": {
+            "tick": 49,
+            "value": 214759.76302573434
+          },
+          "maxAxleAngle": {
+            "tick": 53,
+            "value": 0.7463071784144965
+          },
+          "totalDistance": 4.363163794433475
+        },
+        "50-56": {
+          "maxStep": {
+            "tick": 53,
+            "value": 0.7231877035108851
+          },
+          "maxSpeed": {
+            "tick": 53,
+            "value": 43.39126221065311
+          },
+          "maxAcceleration": {
+            "tick": 55,
+            "value": 1810.6244480628186
+          },
+          "maxScreenStep": {
+            "tick": 51,
+            "value": 69.92351775680982
+          },
+          "maxScreenAcceleration": {
+            "tick": 50,
+            "value": 192908.61399444062
+          },
+          "maxAxleAngle": {
+            "tick": 53,
+            "value": 0.7463071784144965
+          },
+          "totalDistance": 3.816900343873256
+        }
+      }
+    },
+    "renderWork": {
+      "before": {
+        "calls": 3233,
+        "triangles": 14318378
+      },
+      "candidate": {
+        "calls": 3233,
+        "triangles": 14318378
+      }
+    }
+  },
+  "refresh": [
+    {
+      "hz": 30,
+      "nativeTicks": 66,
+      "renders": 33,
+      "zeroTickRenders": 0,
+      "nativeRowsExactlyRefreshIndependent": true
+    },
+    {
+      "hz": 60,
+      "nativeTicks": 66,
+      "renders": 66,
+      "zeroTickRenders": 0,
+      "nativeRowsExactlyRefreshIndependent": true
+    },
+    {
+      "hz": 120,
+      "nativeTicks": 66,
+      "renders": 132,
+      "zeroTickRenders": 65,
+      "nativeRowsExactlyRefreshIndependent": true
+    }
+  ],
+  "primaryPhysical": {
+    "maxGripGap": 1.3452151410634088e-15,
+    "minActualDrumVertex": 0.024644819733162293,
+    "poseAtAndAfter56ExactlyOriginal": true,
+    "rightWristTargetUnchanged": true
+  },
+  "fallbacks": 0
+}

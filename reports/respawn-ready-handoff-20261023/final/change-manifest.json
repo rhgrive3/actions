@@ -1,0 +1,23 @@
+{
+  "base": "71b5d59e53889ec712015464ae5cd30446e75565",
+  "protectedRuntime": "70814c6dfcc20868f2c5c0eb483ccdcb9b950446",
+  "runtimePath": "patches/splatoon3/runtime/weapon-handoff-motion.mjs",
+  "changedFunctions": [
+    "private spawnReturnArc: alternate display quaternion route",
+    "installWeaponHandoffMotion/handoff: bounded native-spawn landing display return and immediate action interruption",
+    "Character._applyPose wrapper: forward existing frame to handoff"
+  ],
+  "runtimeSHA256": "40bb8177375e0a9af9acf836de474773703bf8a76dad2cf8ad21ab4ab7ec0af0",
+  "runtimePatchSHA256": "deada60cab6c9a16240436b6b0e31a6293536500a844477a2f49a6ccf21b37f2",
+  "durationSource": "existing HANDOFF_FADE=0.2 and smooth weight",
+  "newPerFrameAllocations": 0,
+  "additionalHistory": "three booleans in existing WeakMap record; no arrays/transforms added",
+  "unchanged": [
+    "708 helper/roller/detail/respawn lifecycle",
+    "native action/input/timer/physics/paint/network",
+    "native torso/neck pose",
+    "geometry/hair/character/grip/IK/support implementation/recovery curves",
+    "gameplay muzzle accessors",
+    "original tests and PR/main refs"
+  ]
+}

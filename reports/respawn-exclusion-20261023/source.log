@@ -1,0 +1,35 @@
+(node:2660) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ team 0 normal walk/jump/bot cannot enter at dt=0.03333333333333333 (64.906045ms)
+✔ team 0 normal walk/jump/bot cannot enter at dt=0.016666666666666666 (34.052565ms)
+✔ team 0 normal walk/jump/bot cannot enter at dt=0.008333333333333333 (82.14922ms)
+✔ team 0 normal walk/jump/bot cannot enter at dt=0.1 (4.980904ms)
+✔ team 1 normal walk/jump/bot cannot enter at dt=0.03333333333333333 (16.190619ms)
+✔ team 1 normal walk/jump/bot cannot enter at dt=0.016666666666666666 (41.21789ms)
+✔ team 1 normal walk/jump/bot cannot enter at dt=0.008333333333333333 (49.894823ms)
+✔ team 1 normal walk/jump/bot cannot enter at dt=0.1 (4.537949ms)
+✔ team 0 allied centre/respawn/exit and reset stay free (45.678568ms)
+✔ team 1 allied centre/respawn/exit and reset stay free (39.413504ms)
+✔ team 0 high-speed complete crossing and diagonal tangency (23.396426ms)
+✔ team 1 high-speed complete crossing and diagonal tangency (30.260455ms)
+✔ centre recovery is finite; disabled/absent radii and below-pad routes are untouched (4.087842ms)
+✔ temporary protection/damage/resources and movement away from both pads are unchanged (2.074017ms)
+✔ high jump and rising through the lower height cannot bypass the volume (2.361358ms)
+✔ a correction never replaces ordinary wall collision with an overlapping capsule (2.822377ms)
+✔ real NetMatch remote application keeps interpolation outside without changing snapshot/correction (5.20185ms)
+✔ tidewater team 0: real stage collision and opposing pad volume agree (87.153177ms)
+✔ tidewater team 1: real stage collision and opposing pad volume agree (55.684065ms)
+✔ kelpline team 0: real stage collision and opposing pad volume agree (110.538851ms)
+✔ kelpline team 1: real stage collision and opposing pad volume agree (86.057858ms)
+✔ halyard team 0: real stage collision and opposing pad volume agree (91.351653ms)
+✔ halyard team 1: real stage collision and opposing pad volume agree (93.193929ms)
+✔ cargo team 0: real stage collision and opposing pad volume agree (110.401205ms)
+✔ cargo team 1: real stage collision and opposing pad volume agree (121.210929ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4605.863103

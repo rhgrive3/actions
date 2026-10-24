@@ -1,0 +1,92 @@
+(node:8287) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ early natural freefall remains horizontal; the renderer never infers vertical from airborne position (1993.553226ms)
+✔ composite reservation is atomic, reuses batches, keeps nonuniform transforms finite and culls conservatively (1562.687731ms)
+✔ all 23 supported main definitions emit classified native rounds and render without changing gameplay (1861.089385ms)
+✔ actual Dualies/Splatling births draw connected rods, preserve authority, and fall back as one effect (1237.565265ms)
+✔ native tip translations retain exact Float32 endpoints at decimal-rounding boundaries (1336.688185ms)
+✔ Slosher uses a continuous sheet and sourced tail without detached beads or camera rotation (1217.620557ms)
+✔ catalogue local and JSON-wire births keep immutable family/mode through weapon switches and pooled reuse (1413.071363ms)
+✔ Bucket, Tri-Slosher, Dread Wringer and their alternate kits share the Bucket sheet; other Sloshers keep their art (5.522268ms)
+✔ title -> main and weapon/locker panels show still art with zero attract updates or screen render (21.732339ms)
+✔ requested portrait previews retain on-demand offscreen generation, not a continuous render (0.360215ms)
+✔ only the locker draws its art and live pedestal kid into the canvas (29.653383ms)
+✔ title, real match, room, pause and results preserve the original 3D/game frame (1.531475ms)
+✔ a wipe between two art screens never draws the demo world in between (0.524482ms)
+✔ the demo canvas is hidden behind art screens and shown again before any world frame (0.64834ms)
+✔ static screens do not construct hidden 3D loadout or Online hub showcases (4.878113ms)
+✔ CSS maps exactly three generated locally hosted WebP backgrounds to the correct menu screens (373.587542ms)
+✔ CSS ownership rejects a new static lobby background and loss of existing room rules (93.66509ms)
+✔ source transform is strict, idempotence fails closed, and unrelated source is unchanged (119.788517ms)
+mixed-pool {"sharedCount":700,"retainedFallingDrops":40,"oldSplatlingParts":0,"additionalShooter":0}
+(node:8289) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ 32 Splatlings cannot evict the 40 existing late drops at saturation (2695.266372ms)
+✔ zero residual capacity preserves all existing slots and suppresses both optional cosmetics (1655.49599ms)
+✔ partial residual capacity submits only available Splatling and Shooter beads (1275.884372ms)
+✔ ordinary mixed firing keeps smaller Splatling and muzzle Shooter cosmetics in free slots (1196.778ms)
+✔ repeated full/partial/clear/reuse draws retain the fixed buffers and resources (1504.647006ms)
+wire-before-after shooter [["p",7,"shot","shooter",0,1.05,0.3,-0.01559695498212199,2.5983583585502745,135.93516796832068,0,3,0.06666666666666667,1.93,0.28,57.6,1.2,0,0,0.104,0.8,1.3,0.035,26,0.3,0,["iw-ink-flight-1","shooter",0,0.37,false],0,0,0,0.37,1,-1]]
+wire-before-after splatling [["p",7,"shot","splatling",0,1.05,0.3,-0.6954309205130039,1.80561938663641,125.3226003717545,0,3,0.13333333333333333,2.23,0.23,57.6,1.2,0,0,0.086,0.9,1.6,0.025,30,0.35,0,["iw-ink-flight-1","splatling",0,0.37,false],0,0,0,0.37,1,-1]]
+wire-before-after s3-shooter-heavy [["p",7,"shot","s3-shooter-heavy",0,1.05,0.3,-0.10138325672657165,2.8093459746020177,146.97311759852633,0,1.2,0.08333333333333333,2.57,0.24,0,0,0,0,0.075,1,0,0.006,26,0,0,{"s3Catalog":[1,"normal",0,0,0]},0,0,0,0.37,1,-1]]
+wire-before-after s3-spinner-quick [["p",7,"shot","s3-spinner-quick",0,1.05,0.3,-0.602623007942093,1.3962691777627019,89.59277054568925,0,1.2,0.13333333333333333,2.28,0.26,0,0,0,0,0.08,1,0,0.006,26,0,0,{"s3Catalog":[1,"normal",0,1,0]},0,0,0,0.37,1,-1]]
+(node:8308) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ shooter native wire bytes do not depend on cosmetic drawing (1861.51239ms)
+✔ splatling native wire bytes do not depend on cosmetic drawing (1551.531993ms)
+✔ s3-shooter-heavy native wire bytes do not depend on cosmetic drawing (1371.528653ms)
+✔ s3-spinner-quick native wire bytes do not depend on cosmetic drawing (1149.151094ms)
+(node:8315) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ current S3 shape renderer and history renderer never submit the same native Shooter body twice (1544.398407ms)
+✔ pinned source data keeps unknown shooter defaults distinct from explicit Splatling tails (0.311601ms)
+✔ pinned Roller DrawSizeParam stays split between horizontal and vertical sheet modes (0.298361ms)
+✔ pinned Slosher front-four and rear-five records preserve exact DrawSize, offsets, and tail bounds (0.270669ms)
+✔ fixed-size projectile history retains curved samples and has identical 30/60/120 Hz timelines (4.124705ms)
+✔ source-aware renderer assigns distinct geometry to shooter, Roller, and Slosher modes in one bounded batch (880.84127ms)
+✔ source-sized Slosher caps stay at recorded endpoints across short and long retained histories (704.099805ms)
+✔ hot render methods reuse storage and contain no per-frame allocation or gameplay RNG path (0.637123ms)
+✔ color uploads reuse stable body colors and merge pending ranges across changed and reordered slots (826.393529ms)
+✔ history backend unit: native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence (1148.906778ms)
+✔ history backend unit: native coarse 30 Hz projectile update records both actual 60 Hz physics points (1993.799999ms)
+✔ final build composition renders the native nine-glob Slosher volley without changing gameplay state (1124.157476ms)
+✔ final adapter preserves native Shooter, horizontal/vertical Roller, and Slosher fingerprints (7831.02429ms)
+✔ native local and remote Slosher globs resolve to the same source unit, geometry mode, and draw radii (1029.666347ms)
+✔ deferred Slosher history begins at its refreshed aerial muzzle and launch tangent (914.931979ms)
+✔ history backend unit: a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window (907.922739ms)
+✔ native horizontal Roller links stay inside each of two real 13-glob volleys (1180.452349ms)
+✔ horizontal liquid membranes cover actual close history after sibling heads separate, without false volley or birth joins (694.93212ms)
+✔ native horizontal Roller shared-history membranes preserve birth geometry and fixed display-cadence parity (1115.983535ms)
+✔ stalled remote Roller heads and liquid links share the same endpoint at every render alpha (1006.792026ms)
+✔ source VTF Roller owns its GPU draw when installed, with geometry fallback when absent (635.872823ms)
+✔ native VTF recipe matches the compositor for horizontal and vertical Roller, Shooter and Slosher (0.392994ms)
+(node:8322) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ real births of the seven owned families draw S3 silhouettes, skip the generic teardrop and stay read-only (1568.472592ms)
+✔ unowned families keep their existing renderer and pooled reuse never inherits a shape (1259.591668ms)
+✔ Shooter rod: blunt head, sourced tail length, torn tail only while joined to the muzzle (0.534908ms)
+✔ Splatana crescents use the sourced collider span and lead with the convex edge (952.786214ms)
+✔ charged Splatana slash is born at ShotBulletOffset_Vertical and clears a flat floor (966.743236ms)
+✔ SWEPs muzzle splash cones and shipped SWEPs assets (0.920642ms)
+✔ the Sloshing Machine round is one spinning membrane that never reaches behind the muzzle (1054.293234ms)
+✔ offset Brella volleys keep independent native firing identities even at equal owner and birth time (1132.00032ms)
+✔ Stringer actions allocate distinct descriptor identities and both draw even at equal owner and birth time (1106.374629ms)
+✔ charged selector does not rotate Dental waves or swing sheets into the vertical plane (1135.259037ms)
+(node:8331) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ only ordinary Shooter families and their catalogue kits receive muzzle beads (1.0981ms)
+✔ real composed Shooter appends one bounded burst per birth without RNG/gameplay/paint writes (1407.880998ms)
+✔ cessation expires, switching retires, clear/reuse resets a pooled birth (961.096836ms)
+✔ stress stays within fixed 32 bursts/96 drops and writes no new GPU resources (983.197923ms)
+(node:8345) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Splatling family ownership does not claim Shooter, Dualies, Slosher, special or delayed non-shot objects (0.927893ms)
+✔ native standing/jumping Splatling gets its own compact bead and no Shooter volume/history body (1213.55683ms)
+ℹ tests 65
+ℹ suites 0
+ℹ pass 65
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 32187.101416

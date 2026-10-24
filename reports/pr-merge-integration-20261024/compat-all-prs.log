@@ -1,0 +1,12 @@
+(node:11496) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ actual completed opening row advances native receiver after modeled delayed aim receipt; future/replay remain rejected (2786.775824ms)
+✔ real Session rejects previous gameplay COMPAT before building or sending readiness (2911.217901ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6360.034699

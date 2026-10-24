@@ -205,18 +205,8 @@ export function adaptQueueNetwork(rel, code) {
 `, rel);
   }
   if (rel === "src/net/transport.js") {
-    code = once(code, `// Fresh receiver-origin owner-clock proofs are mandatory in this gameplay epoch.
-// Earlier peers cannot provide the nonce-bound initial clock origin.
-export const COMPAT = 'iw-gameplay-20261022-owner-clock-v1';
-export const MAX_RELAY_FRAME_CHARS = 64 * 1024 + 64;
-
-`,
-      `// Fresh receiver-origin owner-clock proofs are mandatory in this gameplay epoch.
-// Earlier peers cannot provide the nonce-bound initial clock origin.
-export const COMPAT = 'iw-gameplay-20261023-start-admission-v1';
-export const MAX_RELAY_FRAME_CHARS = 64 * 1024 + 64;
-
-`, rel);
+    code = once(code, "export const COMPAT = 'iw-gameplay-20261023-spawn-exclusion-v1';",
+      "export const COMPAT = 'iw-gameplay-20261024-spawn-start-admission-v1';", rel);
   }
   if (rel === 'src/game/character-style.js') {
     code = once(code, 'const wrap = (v, n) => ((Math.round(v) % n) + n) % n;',

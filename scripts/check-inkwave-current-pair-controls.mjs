@@ -7,13 +7,21 @@ import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import {ALL_29_PRS_SOURCE_PAIR} from './lib/inkwave-29pr-paint-source-pair.mjs';
-import {ALL_31_PRS_SOURCE_PAIR,POST_30_PRS_SOURCE_PAIR} from './lib/inkwave-31pr-paint-source-pair.mjs';
+import {ALL_31_PRS_SOURCE_PAIR,POST_30_PRS_SOURCE_PAIR,RESPAWN_05EB_SOURCE_PAIR} from './lib/inkwave-31pr-paint-source-pair.mjs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { verifyDeclaredPaintSources } from './lib/inkwave-declared-paint-source-pair.mjs';
 import { QUEUE1801_IDENTICAL_PAINT_SOURCE_PAIR, QUEUE1801_PAINT_SOURCE_PAIR, MAINCEB58_PAINT_SOURCE_PAIR, MAINA350_PAINT_SOURCE_PAIR, paintSourcePaths, MAINE1F_PAINT_SOURCE_PAIR, MAIN9FE_PAINT_SOURCE_PAIR, MAIN_INK_BASELINE_PATHS, planMainInkBaseline } from './lib/inkwave-main-ink-baseline.mjs';
 
-const options = parseSourceAdmissionArgs(process.argv.slice(2), ['--baseline', '--candidate', '--receipt', '--base-sha', '--candidate-sha', '--expected-mode', '--expected-source-base', '--expected-source-head'], ['--baseline', '--candidate']);
+const options = parseSourceAdmissionArgs(process.argv.slice(2), ['--baseline', '--candidate', '--receipt', '--base-sha', '--candidate-sha', '--expected-mode', '--expected-source-base', '--expected-source-head', '--base-tree', '--candidate-tree'], ['--baseline', '--candidate']);
+// A separate four-delta contract binds actual official-event source epochs.
+if (options.get('--expected-mode') === 'main-reviewed-special-four-delta-pair') {
+  const {runReviewedSpecialDeltaCLI} = await import('./lib/inkwave-reviewed-special-delta-admission.mjs');
+  await runReviewedSpecialDeltaCLI(options, 'controls');
+  process.exit(0);
+}
+for (const flag of ['--base-tree','--candidate-tree'])
+  assert.ok(!options.has(flag), 'reviewed-delta-only argument ' + flag);
 // Separate reviewed eight-delta epoch; never treat changed production as byte-identical.
 if (options.get('--expected-mode') === 'main26a4-reviewed-runtime-ui-production-pair') {
   const {runRuntimeUIAdmissionCLI} = await import('./lib/inkwave-runtime-ui-production-epoch.mjs');
@@ -119,7 +127,8 @@ function positive() {
   const integrated29 = evidence.paint.sourceBase === ALL_29_PRS_SOURCE_PAIR.baseCommit && evidence.paint.sourceHead === ALL_29_PRS_SOURCE_PAIR.candidateCommit;
   const integrated31 = evidence.paint.sourceBase === ALL_31_PRS_SOURCE_PAIR.baseCommit && evidence.paint.sourceHead === ALL_31_PRS_SOURCE_PAIR.candidateCommit;
   const post30 = evidence.paint.sourceBase === POST_30_PRS_SOURCE_PAIR.baseCommit && evidence.paint.sourceHead === POST_30_PRS_SOURCE_PAIR.candidateCommit;
-  const expectedChanged = post30 ? 1 : integrated23 || integrated29 || integrated31 ? 9 : queue1801 ? 2 : identity ? 0 : evidence.paint.sourceBase === '95c25af145418691991a1452d4d10589754a0f1c' &&
+  const respawn05eb = evidence.paint.sourceBase === RESPAWN_05EB_SOURCE_PAIR.baseCommit && evidence.paint.sourceHead === RESPAWN_05EB_SOURCE_PAIR.candidateCommit;
+  const expectedChanged = respawn05eb ? 2 : post30 ? 1 : integrated23 || integrated29 || integrated31 ? 9 : queue1801 ? 2 : identity ? 0 : evidence.paint.sourceBase === '95c25af145418691991a1452d4d10589754a0f1c' &&
     evidence.paint.sourceHead === 'f31238a48b9d1a4af2d4f5f5f9182af777a79c83' ? 2 : 4;
   assert.equal(evidence.paint.paths.filter(row => row.originalSha256 !== row.candidateSha256).length, expectedChanged);
   for (const row of evidence.paint.paths) {

@@ -452,8 +452,9 @@ test('color uploads reuse stable body colors and merge pending ranges across cha
   runtime.dispose();
 });
 
-test('native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence', async () => {
+test('history backend unit: native fixed-step Shooter-family histories and interpolated geometry agree at 30/60/120 Hz display cadence', async () => {
   const { f, ps } = await nativeFixture(true), actor = f.make('splatling'), runtime = ps.projectileVisuals;
+  runtime.helpers.nativeShapeOwns = () => false; // Explicit backend unit, Splatling production owns a compact bead.
   actor.pos.set(0, 1, 0); actor.aimPoint.set(0, 10, 24); actor.aimDir.set(0, 0.36, 0.93).normalize();
   f.setRandom(() => 0.25);
   const results = [];
@@ -480,9 +481,10 @@ test('native fixed-step Shooter-family histories and interpolated geometry agree
   ps.disposeVisuals();
 });
 
-test('native coarse 30 Hz projectile update records both actual 60 Hz physics points', async () => {
+test('history backend unit: native coarse 30 Hz projectile update records both actual 60 Hz physics points', async () => {
   async function run(steps) {
     const { f, ps } = await nativeFixture(true), actor = f.make('splatling');
+    ps.projectileVisuals.helpers.nativeShapeOwns = () => false; // Exercise the standalone history backend.
     actor.pos.set(0, 1, 0); actor.aimPoint.set(0, 10, 24); actor.aimDir.set(0, 0.36, 0.93).normalize();
     f.setRandom(() => 0.25);
     ps.fireSplatling(actor, actor.weapon);
@@ -683,11 +685,12 @@ test('deferred Slosher history begins at its refreshed aerial muzzle and launch 
   ps.disposeVisuals();
 });
 
-test('a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window', async () => {
+test('history backend unit: a naturally recycled Splatling round detaches its curved history for exactly its sourced tail window', async () => {
   const { f, ps } = await nativeFixture(true), actor = f.make('splatling');
   actor.nid = 7; actor.owner = 'local'; actor.pos.set(0, 1, 0); actor.aimPoint.set(0, 1, 30);
   actor.aimDir.set(0, 0.1, 1).normalize(); f.setRandom(() => 0.25);
   const runtime = ps.projectileVisuals;
+  runtime.helpers.nativeShapeOwns = () => false; // The production compact Splatling does not detach rods.
   ps.fireSplatling(actor, actor.weapon);
   assert.equal(ps.list.length, 1);
   const p = ps.list[0];

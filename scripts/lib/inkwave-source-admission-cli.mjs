@@ -42,9 +42,10 @@ function resolvedPath(file) {
 const stat = file => { try { return fs.statSync(file, {bigint: true}); } catch (error) { if (error.code === 'ENOENT') return null; throw error; } };
 const within = (child, parent) => child === parent || child.startsWith(parent.endsWith(path.sep) ? parent : parent + path.sep);
 
-export function assertReceiptSeparate(receipt, roots, paths, gitRoots = roots) {
+function assertOutputSeparate(receipt, roots, paths, gitRoots, directory = false) {
   const output = resolvedPath(receipt), outputStat = stat(receipt);
-  if (outputStat) assert.ok(outputStat.isFile(), 'receipt must be a regular file, not a directory or special file');
+  if (outputStat) assert.ok(directory ? outputStat.isDirectory() : outputStat.isFile(),
+    directory ? 'capture output must be a directory' : 'receipt must be a regular file, not a directory or special file');
   for (const root of roots) for (const relative of paths) {
     const input = path.join(root, relative), resolved = resolvedPath(input), inputStat = stat(input);
     assert.ok(!within(output, resolved) && !within(resolved, output), 'receipt must not replace or overlap an input file: ' + relative);
@@ -53,7 +54,7 @@ export function assertReceiptSeparate(receipt, roots, paths, gitRoots = roots) {
   }
   // Receipts are generated outputs, never updates to shared hardlinked files.
   // This also protects a hardlink to Git metadata outside the source allowlist.
-  if (outputStat) assert.equal(outputStat.nlink, 1n, 'receipt must not overwrite a multiply-linked file');
+  if (outputStat && !directory) assert.equal(outputStat.nlink, 1n, 'receipt must not overwrite a multiply-linked file');
   const metadata = new Set([...roots, ...gitRoots].map(root => resolvedPath(path.join(root, '.git'))));
   for (const root of new Set(gitRoots)) {
     const result = spawnSync('git', ['-C', root, 'rev-parse', '--path-format=absolute', '--git-dir', '--git-common-dir'],
@@ -63,4 +64,24 @@ export function assertReceiptSeparate(receipt, roots, paths, gitRoots = roots) {
   }
   for (const directory of metadata)
     assert.ok(!within(output, directory), 'receipt must not overwrite Git metadata used by source declarations');
+  if (directory) for (const metadataPath of metadata)
+    assert.ok(!within(metadataPath, output), 'capture output must not contain Git metadata');
+}
+
+export function assertReceiptSeparate(receipt, roots, paths, gitRoots = roots) {
+  assertOutputSeparate(receipt, roots, paths, gitRoots);
+}
+
+export function assertOutputDirectorySeparate(output, roots, paths, gitRoots = roots) {
+  assertOutputSeparate(output, roots, paths, gitRoots, true);
+  const visit = file => {
+    const entry = fs.lstatSync(file, {bigint: true});
+    assert.ok(!entry.isSymbolicLink(), 'capture output subtree must not contain symlinks');
+    if (entry.isDirectory()) for (const name of fs.readdirSync(file)) visit(path.join(file, name));
+    else {
+      assert.ok(entry.isFile(), 'capture output subtree must contain only regular files');
+      assert.equal(entry.nlink, 1n, 'capture output must not overwrite a multiply-linked file');
+    }
+  };
+  if (stat(output)) visit(resolvedPath(output));
 }

@@ -1,0 +1,23 @@
+{
+  "runtimeCodeCommit": "5d9b5b408b5aab23ce2a500931b2874d5fe46d8a",
+  "contentHash": "51b803d76f03599edd464f63be7f23b538fa61fc54a2e31925bca6272a21cdd4",
+  "inputHash": "587ad7d7314c1720cdd117c0aeec7681db91d86a0a685bce7a4b3b129c4c6138",
+  "inputs": 1421,
+  "artifacts": 2112,
+  "runtimeInputs": {
+    "patches/splatoon3/runtime/roller.mjs": "8a9212454c695e6e1fb3e251b37a28b0f1c807a5bd8bdcc125fa0c75964bd121",
+    "patches/splatoon3/runtime/roller-vertical-shaft-return.mjs": "9970995021e44d08059d2b0b294326a2a79a6c2de6d2fb9a087bb0e1af136d8c"
+  },
+  "emitted": {
+    "roller.mjs": {
+      "sha256": "cb0c657492fc4433028499dd91dda38935c04958f1811fe08de16b2ab08527d8",
+      "bytes": 31011,
+      "gzipBytes": 11426
+    },
+    "roller-vertical-shaft-return.mjs": {
+      "sha256": "a62492e63f566611dd86400eb8d618159b4f8c9358bc9cdc9094343625fbaee5",
+      "bytes": 2107,
+      "gzipBytes": 898
+    }
+  }
+}

@@ -1,0 +1,79 @@
+INKWAVE network built fixture /workspace/actions/.ci-scratch/respawn-fallback-safe/site contentHash=535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008
+INKWAVE network built fixture /workspace/actions/.ci-scratch/respawn-fallback-safe/site contentHash=535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008
+(node:4978) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ actual completed opening row advances native receiver after modeled delayed aim receipt; future/replay remain rejected (971.901734ms)
+✔ real Session rejects previous gameplay COMPAT before building or sending readiness (938.292259ms)
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-fallback-safe/site contentHash=535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008
+(node:4979) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ welcome missing fails closed before lobby or heartbeat (6.31295ms)
+✔ welcome wrong-proto fails closed before lobby or heartbeat (0.941276ms)
+✔ welcome string-proto fails closed before lobby or heartbeat (0.750745ms)
+✔ welcome wrong-compat fails closed before lobby or heartbeat (0.754912ms)
+✔ welcome missing-compat fails closed before lobby or heartbeat (0.464698ms)
+✔ host START missing fails before world/readiness/GO (9.080389ms)
+✔ host START wrong-proto fails before world/readiness/GO (1.830479ms)
+✔ host START wrong-compat fails before world/readiness/GO (0.919684ms)
+✔ compatible host START builds real NetMatch and GO launches exactly once (2.737801ms)
+✔ wrong sender START is inert; migrated host owns compatibility admission (1.523626ms)
+✔ host generated START carries the shared tuple and still starts locally (4.152521ms)
+✔ cancel and rejoin discard late old welcomes without losing the new connection (2.365087ms)
+✔ malformed welcome stays inert and duplicate welcome cannot overwrite accepted identity (0.465575ms)
+✔ actual Worker welcome and host relay START reach NetMatch (29.278744ms)
+ℹ {"actualWorkerWelcome":{"proto":2,"compat":"iw-gameplay-20261023-spawn-exclusion-v1"},"hostEnvelope":true,"startProto":2,"state":"starting","actualNetMatch":true}
+✔ actual Worker welcome and host relay START reject mismatch (1.115076ms)
+ℹ {"actualWorkerWelcome":{"proto":2,"compat":"iw-gameplay-20261023-spawn-exclusion-v1"},"hostEnvelope":true,"startProto":99,"state":"error","actualNetMatch":false}
+✔ solo Turf still refuses start while solo Boss retains compatible host START (2.47318ms)
+✔ offline MockNet remains separate and never acquires a relay or NetMatch (1.131273ms)
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-fallback-safe/site contentHash=535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008
+(node:4980) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ team 0: natural zero-speed fall stays clear through real update and finish (199.390522ms)
+✔ team 1: natural zero-speed fall stays clear through real update and finish (155.741068ms)
+✔ ordinary run/terminal-fall shortened case is capsule-clear at dt=0.016666666666666666 (19.886609ms)
+✔ ordinary run/terminal-fall shortened case is capsule-clear at dt=0.03333333333333333 (6.685596ms)
+✔ ordinary run/terminal-fall shortened case is capsule-clear at dt=0.041666666666666664 (6.030066ms)
+✔ team 0: native squid terrain capsule also stays clear during the natural fall (57.405343ms)
+✔ team 1: native squid terrain capsule also stays clear during the natural fall (46.140606ms)
+✔ reported .1-second raised-box reproduction restores a complete clear position (25.362972ms)
+✔ no-exclusion negative control and its ordinary movement segment are clear (5.127645ms)
+✔ free vertical fall and upward launch outside the conflicting edge retain native Y/velocity (40.245805ms)
+✔ horizontal spawn contact above the ledge preserves ordinary vertical fall and launch (51.856357ms)
+✔ when no outside candidate fits, retain the clear native endpoint with bounded stable work (11.882285ms)
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-fallback-safe/site contentHash=535fb31503cdff1c0e78861006c721a34655c087bcce3e1c82a711b4186fe008
+(node:5000) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ team 0 normal walk/jump/bot cannot enter at dt=0.03333333333333333 (39.220058ms)
+✔ team 0 normal walk/jump/bot cannot enter at dt=0.016666666666666666 (23.827364ms)
+✔ team 0 normal walk/jump/bot cannot enter at dt=0.008333333333333333 (48.625101ms)
+✔ team 0 normal walk/jump/bot cannot enter at dt=0.1 (3.991855ms)
+✔ team 1 normal walk/jump/bot cannot enter at dt=0.03333333333333333 (10.298826ms)
+✔ team 1 normal walk/jump/bot cannot enter at dt=0.016666666666666666 (16.583099ms)
+✔ team 1 normal walk/jump/bot cannot enter at dt=0.008333333333333333 (35.03493ms)
+✔ team 1 normal walk/jump/bot cannot enter at dt=0.1 (9.711195ms)
+✔ team 0 allied centre/respawn/exit and reset stay free (22.205471ms)
+✔ team 1 allied centre/respawn/exit and reset stay free (16.927548ms)
+✔ team 0 high-speed complete crossing and diagonal tangency (10.869618ms)
+✔ team 1 high-speed complete crossing and diagonal tangency (8.936839ms)
+✔ centre recovery is finite; disabled/absent radii and below-pad routes are untouched (10.730142ms)
+✔ temporary protection/damage/resources and movement away from both pads are unchanged (1.370149ms)
+✔ high jump and rising through the lower height cannot bypass the volume (2.327383ms)
+✔ a correction never replaces ordinary wall collision with an overlapping capsule (1.657179ms)
+✔ real NetMatch remote application keeps interpolation outside without changing snapshot/correction (3.656473ms)
+✔ tidewater team 0: real stage collision and opposing pad volume agree (43.646064ms)
+✔ tidewater team 1: real stage collision and opposing pad volume agree (36.661025ms)
+✔ kelpline team 0: real stage collision and opposing pad volume agree (51.809636ms)
+✔ kelpline team 1: real stage collision and opposing pad volume agree (44.517178ms)
+✔ halyard team 0: real stage collision and opposing pad volume agree (52.719069ms)
+✔ halyard team 1: real stage collision and opposing pad volume agree (44.340566ms)
+✔ cargo team 0: real stage collision and opposing pad volume agree (60.572765ms)
+✔ cargo team 1: real stage collision and opposing pad volume agree (55.02156ms)
+ℹ tests 56
+ℹ suites 0
+ℹ pass 56
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3161.878207

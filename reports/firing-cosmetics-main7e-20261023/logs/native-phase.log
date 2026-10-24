@@ -1,0 +1,11 @@
+aligned 0 native admitted {"time":0.05,"charT":0,"clock":{"accumulator":0,"ticks":3,"advancing":false,"finalTick":true},"fxTime":0.05}
+aligned 0 shooter shots 1 RNG 258 origin [22.810483749342257,0.8956445220086903,-17.455419606347732]
+aligned 0 splatling shots 3 RNG 957 origin [22.977535490662255,0.5726523686423596,-17.424396368324512]
+aligned 0 shooter-jump shots 1 RNG 259 origin [22.80716008565593,1.185788692392651,-17.457123585780735]
+aligned 0 splatling-jump shots 3 RNG 957 origin [22.98269449957768,0.7126936696350146,-17.4368541539684]
+aligned 1 native admitted {"time":0.05,"charT":0,"clock":{"accumulator":0,"ticks":3,"advancing":false,"finalTick":true},"fxTime":0.05}
+aligned 1 shooter shots 1 RNG 258 origin [22.810483749342257,0.8956445220086903,-17.455419606347732]
+aligned 1 splatling shots 3 RNG 957 origin [22.977535490662255,0.5726523686423596,-17.424396368324512]
+aligned 1 shooter-jump shots 1 RNG 259 origin [22.80716008565593,1.185788692392651,-17.457123585780735]
+aligned 1 splatling-jump shots 3 RNG 957 origin [22.98269449957768,0.7126936696350146,-17.4368541539684]
+[{"id":"shooter","label":"shooter","birthsEqual":true,"fireEqual":true,"updateOrderEqual":true,"rngEqual":true,"firstRngMismatch":null},{"id":"splatling","label":"splatling","birthsEqual":true,"fireEqual":true,"updateOrderEqual":true,"rngEqual":true,"firstRngMismatch":null},{"id":"shooter","label":"shooter-jump","birthsEqual":true,"fireEqual":true,"updateOrderEqual":true,"rngEqual":true,"firstRngMismatch":null},{"id":"splatling","label":"splatling-jump","birthsEqual":true,"fireEqual":true,"updateOrderEqual":true,"rngEqual":true,"firstRngMismatch":null}]

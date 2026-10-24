@@ -272,6 +272,14 @@ export function installRespawnLifecycle(api, profile) {
     // spawn motion or intercept the native death/respawn countdown.
     if (!this.alive && this.s3) delete this.s3.squidSpawn;
     const spawn = this.s3?.squidSpawn;
+    // Observe genuine releases even while Squid Spawn owns the update.
+    if (spawn && this.alive && this.s3.respawnRearm) {
+      for (let i = 0; i < KEYS.length; i++) {
+        const key = KEYS[i];
+        if (!(this.s3.physicalRespawnHeld?.[key] ?? this.intent[key])) this.s3.respawnRearm.delete(key);
+      }
+      if (!this.s3.respawnRearm.size) delete this.s3.respawnRearm;
+    }
     if (spawn) {
       if (spawn.phase === 'aim') {
         spawn.wait += Number.isFinite(dt) && dt > 0 ? dt : 0;

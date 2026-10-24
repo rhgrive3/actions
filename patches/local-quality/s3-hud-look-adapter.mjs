@@ -280,8 +280,80 @@ const TANK_TUBE = `  _s3TankTube(ink, dt) {
 
 `;
 
+// Reticle feedback corrections (2026-10-23). No new retail timing/shape constants:
+// keep INKWAVE's nominal 36-damage tick geometry and 240ms fade. The old streak
+// inflation, aim-target zoom and reticle recoil were presentation embellishments,
+// not measurements of Splatoon 3. Dynamic retail matching remains an open gate.
+const RETICLE_FEEDBACK = `  _clearReticleFeedback() {
+    for (const animation of this._hitAnimations || []) animation.cancel();
+    this.hitEl?.classList.remove('is-on', 'is-heavy', 'is-weak');
+    this.killEl?.classList.remove('is-on');
+    this.ret?.classList.remove('is-hitflash', 'is-killflash');
+    if (this.hitEl) this.hitEl.style.translate = '';
+    if (this.killEl) this.killEl.style.translate = '';
+    this._lastHitDmg = 0; this._hitN = 0; this._hitT = -9;
+  }
+
+  hitMarker(kind = 'hit', feedback = null) {
+    if (this._local()?.alive === false || this._visible === false) return;
+    // Game forwards the accepted hit's damage; aim/occlusion/fire never call here.
+    // Boss HUD retains its explicit legacy damage/weak-point presentation path.
+    const damage = feedback ? feedback.damage : (this._lastHitDmg || 36);
+    this._lastHitDmg = 0;
+    if (!Number.isFinite(damage) || damage < 0 || (damage === 0 && kind !== 'kill')) return;
+    // Storm and replicated splats legitimately confirm a kill with damage=0.
+    // Show their kill cue without inventing an additional damage hit.
+    if (kind === 'kill') {
+      this.killEl.style.translate = this.ret.style.translate || '';
+      this._restart(this.killEl, 'is-on');
+    }
+    if (damage === 0) return;
+    this.hitEl.classList.remove('is-on', 'is-weak');
+    this.hitEl.classList.toggle('is-heavy', !feedback && damage >= 60);
+    this.hitEl.style.setProperty('--hs', '1.20');
+    this.hitEl.style.setProperty('--hn', '0');
+    // Snapshot the displayed guide at confirmation. Subsequent target/camera
+    // motion must not drag an already confirmed pulse to a different target.
+    this.hitEl.style.translate = this.ret.style.translate || '';
+    if (!feedback) {
+      for (const animation of this._hitAnimations || []) animation.cancel();
+      this._restart(this.hitEl, 'is-on');
+      return;
+    }
+    if (!this._hitAnimations && this.hitEl.children[0]?.animate) {
+      this._hitAnimations = Array.from(this.hitEl.children, el => el.animate([
+        { opacity: 1, transform: 'translateY(-10px) scale(1.3)' },
+        { opacity: 0, transform: 'translateY(-18px) scale(1)' }
+      ], { duration: 240, easing: 'ease-out' }));
+    } else if (this._hitAnimations) {
+      // One bounded set of four Animation objects; no node creation, forced
+      // layout or animation allocation on repeated hits or render frames.
+      for (const animation of this._hitAnimations) { animation.currentTime = 0; animation.play(); }
+    } else this._restart(this.hitEl, 'is-on');
+  }
+
+`;
+const RETICLE_CSS = `
+/* Aim acquisition and confirmed damage must not rescale the weapon's cone. */
+.iw-ret, .iw-xh.is-target .iw-ret { scale: 1; transition: color .12s, opacity .2s; }
+.iw-ret.is-hitflash, .iw-ret.is-killflash { animation: none; }
+/* The runner already settles its cone; do not chase it with a second CSS clock. */
+.iw-ret--shooter .iw-ret__tick, .iw-ret--dualies .iw-ret__tick, .iw-ret--splatling .iw-ret__tick { transition: none; }
+`;
+
 export function adaptS3HudLook(rel, code) {
+  if (rel === 'src/main.js') return once(code,
+    "        this.hud?.hitMarker(killed ? 'kill' : 'hit');",
+    "        this.hud?.hitMarker(killed ? 'kill' : 'hit', { damage });", 'accepted damage feedback payload');
   if (rel === 'src/ui/hud.js') {
+    code = section(code, "  hitMarker(kind = 'hit') {\n", '  feed(', RETICLE_FEEDBACK, 'bounded confirmed-hit feedback');
+    code = once(code, "    v = !!v;\n    if (v === this._visible) return;", "    v = !!v;\n    if (!v) this._clearReticleFeedback();\n    if (v === this._visible) return;", 'hide feedback cleanup');
+    code = once(code, '  _startMatchHud(match) {\n', '  _startMatchHud(match) {\n    this._clearReticleFeedback();\n', 'match feedback reset');
+    code = once(code, '  dispose() {\n', '  dispose() {\n    this._clearReticleFeedback();\n', 'feedback animation disposal');
+    code = once(code, '    if (victim === me) {\n', '    if (victim === me) {\n      this._clearReticleFeedback();\n', 'local splat feedback cleanup');
+    code = once(code, "if (actor && actor === this._local()) { this._clearDamageDirs();", "if (actor && actor === this._local()) { this._clearReticleFeedback(); this._clearDamageDirs();", 'respawn feedback reset');
+    code = once(code, '    if (w !== L.weapon) {\n', '    if (w !== L.weapon) {\n      this._clearReticleFeedback?.();\n', 'weapon feedback reset');
+    code = once(code, "    const w = f.weapon || 'shooter';", "    const feedbackDead = this._local()?.alive === false;\n    if (feedbackDead !== L.feedbackDead) { L.feedbackDead = feedbackDead; if (feedbackDead) this._clearReticleFeedback?.(); }\n    const w = f.weapon || 'shooter';", 'dead-frame feedback cleanup');
     code = section(code, '  _drawTank(dt, sub, low, nosub) {\n', '  // ---------------------------------------------------------------- special gauge', TANK_TUBE + S3_DRAW_TANK, 'S3 canister ink tank');
     code = once(code, '    L.fullT = ink >= 0.995 && !low && !L.aim ? (L.fullT || 0) + dt : 0;\n    const idle = L.fullT > 1.4;',
       SWIM_TANK + '    L.fullT = ink >= 0.995 && !low && !L.aim ? (L.fullT || 0) + dt : 0;\n    const idle = L.fullT > (swimTank ? 0.35 : 1.4);', 'squid-form tank anchor');
@@ -293,7 +365,7 @@ export function adaptS3HudLook(rel, code) {
     // Anchored on the common expression: the raw upstream line still carries the assist branch.
     return once(code, "isJa ? 'たおした！' : 'SPLATTED'", "isJa ? 'をたおした!' : 'SPLATTED'", 'splat bar Japanese text');
   }
-  if (rel === 'styles/hud.css') return code + HUD_CSS;
+  if (rel === 'styles/hud.css') return code + HUD_CSS + RETICLE_CSS;
   if (rel === 'styles/mobile.css') return code + MOBILE_CSS;
   return code;
 }

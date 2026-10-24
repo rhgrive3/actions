@@ -1217,7 +1217,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       ?catalogBubbleSurfaceNormalY(h,G.physics?.level):null;
     if(bubbleFaceY!==null&&h.normal&&catalogBubbleCanBounce(s.groundBounces,bubbleFaceY)) {
       const ground=bubbleFaceY>.35;
-      const bp=r.parameters.BounceGroupParam.BounceParam.find(b=>(b.UnitOrderNum??0)===d.unit)||{};
+      const bounceRows=r.parameters.BounceGroupParam.BounceParam;
+      // A bullet's source record and ordinal do not change between contacts.
+      // Invalidate when the source array or unit is replaced; use the selected
+      // row by reference so changes to its numeric fields remain observable.
+      if(s._bounceRows!==bounceRows||s._bounceUnit!==d.unit||!s._bounceParam){
+        s._bounceRows=bounceRows;s._bounceUnit=d.unit;
+        s._bounceParam=bounceRows.find(b=>(b.UnitOrderNum??0)===d.unit)||{};
+      }
+      const bp=s._bounceParam;
       // Keep the established paint owner and footprint untouched (lane ③).
       // The source's first-bounce footprint decays by 15% on each later contact.
       // Retain the existing single paint owner and do not duplicate paint events.

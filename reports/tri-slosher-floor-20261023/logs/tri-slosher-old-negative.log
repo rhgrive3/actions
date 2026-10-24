@@ -1,0 +1,47 @@
+(node:1393) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ Tri-Slosher floor drops use the Bucket visual scale and captured paint heading, without changing physical drops (924.678322ms)
+✖ real Tri-Slosher firing and CPU floor paint are identical with/without drawing and at 30/60/120Hz (714.548525ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1992.100961
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/tri-slosher-floor-visual.test.mjs:8:1
+✖ Tri-Slosher floor drops use the Bucket visual scale and captured paint heading, without changing physical drops (924.678322ms)
+  AssertionError [ERR_ASSERTION]: floor bead must use the same calibrated half width as the shared Bucket sheet
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/tri-slosher-floor-visual.test.mjs:19:12)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at patches/splatoon3/tests/tri-slosher-floor-visual.test.mjs:50:1
+✖ real Tri-Slosher firing and CPU floor paint are identical with/without drawing and at 30/60/120Hz (714.548525ms)
+  AssertionError [ERR_ASSERTION]: native admission emits exactly one first round
+  
+  9 !== 1
+  
+      at emitMainShot (file:///workspace/actions/patches/splatoon3/tests/source-fixture.mjs:173:10)
+      at volley (file:///workspace/actions/patches/splatoon3/tests/tri-slosher-floor-visual.test.mjs:39:3)
+      at async TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/tri-slosher-floor-visual.test.mjs:51:16)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 9,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

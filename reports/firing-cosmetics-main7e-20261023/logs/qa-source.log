@@ -1,0 +1,36 @@
+✔ public-source fetch is a read-only candidate workflow, never a direct-source overwrite (1.71321ms)
+✔ native catalogue sweep helper ships as a non-eager immutable runtime dependency (0.814922ms)
+✔ migrated A-star heuristic owner is the readable game source (0.2644ms)
+✔ mural atlas and world branding use directly editable source without rebuild-time rewriting (565.862641ms)
+✔ ZEVANT stage and lobby lettering is directly owned by authored game modules (1.929727ms)
+✔ level, stage map and Cargo spawn/return geometry live in game source, not Splatoon3 string patches (1.344662ms)
+✔ PropKit atlas, lifetime and rematch behavior are authored in the real module, without prototype rewriting (3.965314ms)
+✔ registered Scorch and native layouts live directly in the stage map module (0.513436ms)
+✔ native ink and catalogue sweep entry points and AABB early-outs live in real collision source (1.234476ms)
+✔ standalone native sweep keeps Node collision regression free of the full stage engine and three dependency (1.808484ms)
+✔ practice-stage registry and surface slots are authored without string adapters (0.504963ms)
+✔ source motion bank sampling and FK are directly owned by the authored module (0.777165ms)
+✔ Direct-Source migrated LOD, outfit AO, body-balance and transport compat modules require zero hotpath/compat rewrite and pass auditDirectSource (880.064283ms)
+✔ native stage Node18 fallback preserves source terrain validation before stage publication (0.273453ms)
+✔ all thirteen exact production source/site mappings retain pinned bytes and classifications (114.264355ms)
+✔ unknown, additional traversal, changed ref and changed owner are not mapped (4.174109ms)
+✔ source and target byte changes or absent target reject instead of waiving missing imports (40.930058ms)
+✔ every migrated navigation, facade and descriptor edge stays owner-bound and byte-pinned (10.048329ms)
+✔ ordinary missing, escaping local refs and runtime build-only imports remain rejected (4.310005ms)
+✔ mapped target symlinks cannot escape repository even with matching bytes (23.239938ms)
+✔ emitted proof requires exact input keys and both root/versioned artifact digests (4.760196ms)
+✔ known mappings cannot bypass pins through inkwave-public patch shadows (82.504049ms)
+✔ production grayscale lightmaps keep independently Pillow-verified exact pixels while saving space (2642.975125ms)
+✔ lossless PNG optimization is fail-closed for unexpected bytes or bit-depth (0.799588ms)
+✔ lossless PNG optimization preserves pixels from all five input row filters (16.531567ms)
+✔ exported crc32 helper matches IEEE 802.3 checksum across Node 18..22 runtimes (0.189447ms)
+✔ Pages publishes the exact workflow revision, never a moving main branch (0.711436ms)
+✔ every published gameplay patch group can trigger Pages (0.241996ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2828.055702

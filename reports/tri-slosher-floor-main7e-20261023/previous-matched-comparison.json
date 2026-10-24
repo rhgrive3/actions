@@ -1,0 +1,119 @@
+{
+  "status": "passed",
+  "fixedHead": "7b80097836e96baee170a6da8584750c9c0c1c56",
+  "beforeContentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+  "afterContentHash": "7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882",
+  "simulationFrame": 18,
+  "exactMatchedFields": [
+    "weapon",
+    "actor",
+    "pitch",
+    "main",
+    "drops",
+    "paintCells",
+    "sourceMotion",
+    "saved",
+    "style",
+    "gear",
+    "palette",
+    "teamHex",
+    "teamColors",
+    "characterColor",
+    "characterTeamUniform",
+    "bootSeed",
+    "shotSeed",
+    "simulationTime",
+    "projectileTrace",
+    "dropTrace"
+  ],
+  "cameraMaxAbsDifference": 0.0,
+  "characterRootMaxAbsDifference": 0.0,
+  "boneTransformMaxAbsDifference": 0.0,
+  "boneCount": 87,
+  "palette": {
+    "id": "cb-yellow-blue",
+    "a": "#ffd21a",
+    "b": "#2a52ff",
+    "names": [
+      "サン",
+      "シー"
+    ]
+  },
+  "style": {
+    "hair": 0,
+    "skin": 0,
+    "outfit": 0,
+    "eyes": 0,
+    "hat": 0,
+    "brows": 0
+  },
+  "weapon": "s3-slosher-diffusion",
+  "gear": [
+    {
+      "main": "none",
+      "subs": [
+        "none",
+        "none",
+        "none"
+      ]
+    },
+    {
+      "main": "none",
+      "subs": [
+        "none",
+        "none",
+        "none"
+      ]
+    },
+    {
+      "main": "none",
+      "subs": [
+        "none",
+        "none",
+        "none"
+      ]
+    }
+  ],
+  "bootSeed": "0x18550001",
+  "shotSeed": "0x18550018",
+  "paintCells": 133,
+  "matrices": 4,
+  "files": [
+    {
+      "path": "/tmp/tri-slosher-native-matched-before/sim18.png",
+      "bytes": 464412,
+      "sha256": "fef53d4abd29c1bbf2a0e2a7841140e6b89d3c9c46dfac42da7c8ec4064d0203",
+      "gitBlobSha": "ac544fd6f59d1b459135c81a2edf670e2c9c97a2"
+    },
+    {
+      "path": "/tmp/tri-slosher-native-matched-after/sim18.png",
+      "bytes": 464926,
+      "sha256": "e1dd9e1732a88d5de5bf0f7c5051ead41761729e405a78f9eb54590d11abfd2c",
+      "gitBlobSha": "d0f1d3832b678405aa78a91923a5c0c184e66381"
+    },
+    {
+      "path": "/tmp/tri-slosher-native-matched-before/native-browser.json",
+      "bytes": 45835,
+      "sha256": "be2c576c7fdb9d860d09a6812c411030b2a53bb83102ccf5bcb0dbcccd93584c",
+      "gitBlobSha": "17c0163118cace7b4fefe4d3834b4096820905dd"
+    },
+    {
+      "path": "/tmp/tri-slosher-native-matched-after/native-browser.json",
+      "bytes": 45909,
+      "sha256": "93c4c873e2c35e6275fd9d7bc4f658e6d3847c32163b52efb174142ea275084e",
+      "gitBlobSha": "4e35c6d2cc7757882361d8a490f1d14125b7a65e"
+    },
+    {
+      "path": "/tmp/check-inkwave-trislosher-native-matched.mjs",
+      "bytes": 6976,
+      "sha256": "95048ee0cf6ccca1faa7882427e151c531f0397245584b31a452a4f19b3d814f",
+      "gitBlobSha": "a2a3da5f8f353fc43a0812dd6ff0e758396ad28b"
+    }
+  ],
+  "correction": "Prior native-before/native-after images use different random palette/avatar and are NOT matched visual A/B. Their physical trace checks remain separate. Only this corrected 18F pair fixes palette, avatar/gear, camera and seeds.",
+  "limits": [
+    "No geometry or runtime edits; existing saved Rookie profile, existing ability slots and existing colorblind setting only.",
+    "These are 60Hz INKWAVE simulation frames, not Nintendo footage or encoded retail frames.",
+    "Same saved conditions and measured camera/pose do not establish identical asynchronous background animation or hardware GPU output."
+  ]
+}

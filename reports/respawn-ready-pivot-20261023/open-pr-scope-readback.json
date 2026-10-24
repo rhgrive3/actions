@@ -1,0 +1,131 @@
+{
+  "main": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "openPRs": [
+    {
+      "number": 1864,
+      "title": "perf: repair non-Drive INKWAVE optimization queue (24 fixes, isolated from #1861)",
+      "head": "27dbad5664e7cf5140dc7081737c2cf0245bbc8f",
+      "ref": "fix/non-drive-optimization-queue-20261024"
+    },
+    {
+      "number": 1863,
+      "title": "原典ステージの GPU 負荷を削減し、コンテキストロスト後は段階的に軽くする",
+      "head": "abaf7e61cfc53dc19a7dee30ec999403731807ff",
+      "ref": "ccr-77d0d1c9-6zwnhw"
+    },
+    {
+      "number": 1862,
+      "title": "fix: リスポーン着地後のローラー構え残留を解消",
+      "head": "702ce3d146043928fd4b783241105871515f9d92",
+      "ref": "fix/respawn-weapon-state-20261023"
+    },
+    {
+      "number": 1861,
+      "title": "Optimize runtime and CI from 358-ticket queue review",
+      "head": "1a17d7b4e33082cafa2ef336fe5e3c79d3ac0e10",
+      "ref": "perf/optimization-queue-20261023"
+    },
+    {
+      "number": 1860,
+      "title": "fix: 自軍リスポーン領域への敵侵入を防ぐ（CI受入未完）",
+      "head": "07a9792142564756189342a2e86d0bc3afe275ed",
+      "ref": "fix/respawn-enemy-exclusion-20261023"
+    },
+    {
+      "number": 1859,
+      "title": "fix(hud): 照準の不要な拡縮と命中マークの位置ずれを修正（本家動的照合未完）",
+      "head": "f72ccdb4b11cb76b01dd0567975924cbd6d83c60",
+      "ref": "fix/inkwave-reticle-feedback-20261023"
+    },
+    {
+      "number": 1857,
+      "title": "fix: シューター銃口小粒・スピナー飛沫の独立 cosmetic 候補",
+      "head": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c",
+      "ref": "fix/shooter-splatling-cosmetics-20261023"
+    },
+    {
+      "number": 1856,
+      "title": "experiment(roller): 縦振り回復候補を保存（後半悪化で採用不可）",
+      "head": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2",
+      "ref": "fix/roller-vertical-recovery-20261023"
+    },
+    {
+      "number": 1855,
+      "title": "fix: ヒッセン床滴の太さ・下向き表示軸を補正（本家映像比較未完）",
+      "head": "784615eaddd13e1cb4d9dd6bf202990a4aaa6d3f",
+      "ref": "codex/tri-slosher-floor-droplets-20261023"
+    },
+    {
+      "number": 1854,
+      "title": "fix: main726向け固定special runtime・QA候補を保存（最終admission/実ブラウザ/CI未完）",
+      "head": "22f3b7534ae2093aef4c2549112a85a1da09bbf3",
+      "ref": "inkwave/special-reviewed-main726-20261023"
+    },
+    {
+      "number": 1853,
+      "title": "fix(ci): 参照記録と成果物保存を修復し必須Validateの停止を解消",
+      "head": "62d6eb3e448d68fe8a41303f344d6a88076aa338",
+      "ref": "fix/reviewed-source-reference-migration-20261023"
+    },
+    {
+      "number": 1852,
+      "title": "fix: Quad初回銃口表示・Brella再送の表示更新・native足元queryの重複を修正",
+      "head": "9d075e26fcc4e78b70c6ad94958842a317048e98",
+      "ref": "fix/all-open-issues-20261023"
+    }
+  ],
+  "newlyReadPRFiles": [
+    {
+      "number": 1863,
+      "files": [
+        "patches/native-stages/runtime/native-gpu-budget.mjs",
+        "patches/native-stages/runtime/native-load.mjs",
+        "patches/native-stages/runtime/native-quality.mjs",
+        "patches/native-stages/runtime/native-world.mjs",
+        "patches/native-stages/tests/native-gpu-budget.test.mjs",
+        "patches/native-stages/tests/native-quality-queue.test.mjs",
+        "patches/native-stages/tests/native-quality-world.test.mjs",
+        "patches/native-stages/tests/native-world-cancellation.test.mjs",
+        "patches/native-stages/tests/native-world-recovery-fixture.mjs",
+        "patches/native-stages/tests/native-world-texture-ownership.test.mjs",
+        "reports/inkwave-native-gpu-budget-2026-10-23.md",
+        "reports/inkwave-splatoon3-behavior-2026-10-02.md",
+        "scripts/tests/inkwave-native-stage-publish-rollback.test.mjs"
+      ]
+    },
+    {
+      "number": 1864,
+      "files": [
+        ".github/workflows/inkwave-nondrive-queue.yml",
+        ".github/workflows/inkwave-weapon-lod-boundaries.yml",
+        ".github/workflows/zevant-account.yml",
+        "inkwave-public/src/core/mobile.js",
+        "inkwave-public/src/game/inkFlight.js",
+        "inkwave-public/src/game/lobbySet.js",
+        "inkwave-public/src/game/motion/body-balance.js",
+        "inkwave-public/src/game/motion/gait-targets.js",
+        "inkwave-public/src/game/motion/source-controller.js",
+        "inkwave-public/src/net/netmatch.js",
+        "inkwave-public/src/ui/hud.js",
+        "patches/native-stages/runtime/native-ink-chunks.mjs",
+        "patches/native-stages/runtime/source-convert.mjs",
+        "patches/native-stages/runtime/source-worker.mjs",
+        "patches/splatoon3/runtime/all-specials.mjs",
+        "patches/splatoon3/runtime/audio/bank.mjs",
+        "patches/splatoon3/runtime/audio/real-s3-loader.mjs",
+        "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+        "patches/splatoon3/runtime/ranked/rainmaker.mjs",
+        "patches/splatoon3/runtime/ranked/ui.mjs",
+        "patches/splatoon3/runtime/ranked/world.mjs",
+        "patches/splatoon3/runtime/special-vfx.mjs",
+        "reports/queue-nondrive-20261024/README.md",
+        "scripts/tests/inkwave-queue-native-compact.test.mjs"
+      ]
+    }
+  ],
+  "originalPR1862": {
+    "head": "702ce3d146043928fd4b783241105871515f9d92",
+    "updatedAt": "2026-10-23T14:41:44Z"
+  },
+  "policy": "Read-only scope inspection; no PR/main/other branch writes. New changes only QA scripts/reports. No integration with open branches."
+}

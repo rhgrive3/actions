@@ -1,0 +1,314 @@
+{
+  "status": "passed",
+  "scope": "matched native offline Game at fixed simulation steps; normal independently built versioned sites, not display FPS or real transport",
+  "beforeBuild": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+  "afterBuild": "f4e8d88d57e6d32b1de97d204628680d39b36ec23a2e586d0b73e9482cf67ac2",
+  "setup": {
+    "label": "settled",
+    "tick": 472,
+    "state": "playing",
+    "phase": null,
+    "alive": true,
+    "fire": false,
+    "physical": false,
+    "previous": false,
+    "blocked": [],
+    "grounded": true,
+    "groundHit": true,
+    "position": [
+      0.40423213662020635,
+      0,
+      -27.206810416752205
+    ],
+    "velocity": [
+      0,
+      0,
+      0
+    ],
+    "rolling": false,
+    "flick": -1,
+    "charge": 0,
+    "firing": false,
+    "ink": 100,
+    "turf": 0,
+    "shotCount": 0,
+    "paintCalls": 0,
+    "projectileCount": 0,
+    "wRoll": 0,
+    "spawnTime": 1.849998950958252,
+    "spawnPose": {
+      "family": "roller",
+      "phase": "off",
+      "age": 0.18333333730697632,
+      "weight": 0,
+      "reason": "land"
+    },
+    "anchor": [
+      -0.07999999821186066,
+      0.800000011920929,
+      0.2800000011920929
+    ],
+    "rotation": [
+      -2.5,
+      0.03999999910593033,
+      1
+    ],
+    "source": "idle",
+    "camera": {
+      "position": [
+        0.12350129995780129,
+        3.9540102270263637,
+        -31.25191896788036
+      ],
+      "quaternion": [
+        0,
+        0.9747941070689432,
+        0.22310636213174545,
+        0
+      ]
+    },
+    "seed": 477166624,
+    "palette": [
+      "a6f01a",
+      "e02cd8"
+    ]
+  },
+  "rows": [
+    {
+      "label": "death",
+      "matched": true,
+      "beforeRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ],
+      "afterRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ]
+    },
+    {
+      "label": "aim",
+      "matched": true,
+      "beforeRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ],
+      "afterRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ]
+    },
+    {
+      "label": "launch",
+      "matched": true,
+      "beforeRotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "afterRotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ]
+    },
+    {
+      "label": "flight-49",
+      "matched": true,
+      "beforeRotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "afterRotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ]
+    },
+    {
+      "label": "flight-59",
+      "matched": true,
+      "beforeRotation": [
+        0.6000000238418579,
+        -0.03999999910593033,
+        -0.03999999910593033
+      ],
+      "afterRotation": [
+        0.6000000238418579,
+        -0.03999999910593033,
+        -0.03999999910593033
+      ]
+    },
+    {
+      "label": "flight-60",
+      "matched": true,
+      "beforeRotation": [
+        0.6000000238418579,
+        -0.03999999910593033,
+        -0.03999999910593033
+      ],
+      "afterRotation": [
+        0.6000000238418579,
+        -0.03999999910593033,
+        -0.03999999910593033
+      ]
+    },
+    {
+      "label": "flight-61",
+      "matched": true,
+      "beforeRotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "afterRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ]
+    },
+    {
+      "label": "flight-67",
+      "matched": true,
+      "beforeRotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "afterRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ]
+    },
+    {
+      "label": "flight-85",
+      "matched": true,
+      "beforeRotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "afterRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ]
+    },
+    {
+      "label": "flight-110",
+      "matched": true,
+      "beforeRotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "afterRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ]
+    },
+    {
+      "label": "flight-145",
+      "matched": true,
+      "beforeRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ],
+      "afterRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ]
+    }
+  ],
+  "images": [
+    {
+      "variant": "before",
+      "filename": "flight-49.png",
+      "sha256": "c7a3761234497c9d93648a5c03bc74267023bc0bc3b9870ee6281015796e350e"
+    },
+    {
+      "variant": "after",
+      "filename": "flight-49.png",
+      "sha256": "6738ae8c5e578517588cd69f18d8c144eee0f1fe8eca4df266e82a03f9c38948"
+    },
+    {
+      "variant": "before",
+      "filename": "flight-59.png",
+      "sha256": "78421de95974b8cc225d717fff706889d031636e3f95183fbbd4838e2f1eb400"
+    },
+    {
+      "variant": "after",
+      "filename": "flight-59.png",
+      "sha256": "bb3887c498af579ad48684c05f974880baf9c4dfe8846d1886cb31c4d9a3688c"
+    },
+    {
+      "variant": "before",
+      "filename": "flight-60.png",
+      "sha256": "1617b313f08a58cabd8885c1907c07f2f91de65cde9d366d358b806588553a1c"
+    },
+    {
+      "variant": "after",
+      "filename": "flight-60.png",
+      "sha256": "2483787cec6a0efb11606f56b5bd7d47e66b896bd5a36a3b7b143be47758b701"
+    },
+    {
+      "variant": "before",
+      "filename": "flight-61.png",
+      "sha256": "461d2555d606920b9cfbe4b7ff4a0c4493452fc385c469a84736ff961534b25a"
+    },
+    {
+      "variant": "after",
+      "filename": "flight-61.png",
+      "sha256": "91d21227f52192ae9cdc6e6b6013b7234e387d19a795030e9b6cdce4146252e4"
+    },
+    {
+      "variant": "before",
+      "filename": "flight-67.png",
+      "sha256": "1c198c8eb0b38d5ff84241ea80a676d17883e120af99df67c1cd005eb2814872"
+    },
+    {
+      "variant": "after",
+      "filename": "flight-67.png",
+      "sha256": "467fa2b016c5b65d0b3e22ad9c91600d6038b6d0716e4cbac37bb95342dac2b5"
+    },
+    {
+      "variant": "before",
+      "filename": "flight-85.png",
+      "sha256": "1e1508e8db8ddbef248050fb09bd504486e2c236761bbf9aaf59b05709d1b92b"
+    },
+    {
+      "variant": "after",
+      "filename": "flight-85.png",
+      "sha256": "4cb89cc3affeb3eb578bd7b9d7c8a7ead84ae5941df159ad47b025b041bc793a"
+    },
+    {
+      "variant": "before",
+      "filename": "flight-110.png",
+      "sha256": "221ec5698f3972fb7adcc2346de1f9e0cbd99e2dccd83c47b90b2e257f102f5b"
+    },
+    {
+      "variant": "after",
+      "filename": "flight-110.png",
+      "sha256": "68eef8f1f07649cb5cef5005bde89ff03db366da2994dcb142b19dff1692c639"
+    },
+    {
+      "variant": "before",
+      "filename": "flight-145.png",
+      "sha256": "5aabb87d5498800e2e936e51fcfecdd996107a224735d28383fe7cb817edf8ce"
+    },
+    {
+      "variant": "after",
+      "filename": "flight-145.png",
+      "sha256": "f1eaeba40fbd9fa589c4aa6aba926899e32bbc62f113aa36314334f96529b06b"
+    }
+  ]
+}

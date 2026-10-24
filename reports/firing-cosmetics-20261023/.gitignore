@@ -1,0 +1,15 @@
+# Preserve uncompressed originals and intermediate local views without shipping duplicate bodies.
+/component-*/records.json
+/before/
+/component-before/*.png
+/component-after/*.png
+/component-final/*.png
+/native-before/
+/native-after/
+/native-before-seeded/
+/native-final/
+/intermediate-invariance.json
+/invariance.json
+/phase-*/[01]-records.json
+/residual-small-*/records.json
+/*budget*/budget.json

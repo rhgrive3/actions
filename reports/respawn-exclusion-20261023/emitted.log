@@ -1,0 +1,64 @@
+INKWAVE network built fixture /workspace/actions/.ci-scratch/respawn-exclusion/freeze-site contentHash=503cb83c7cf7174498be0b408473bf5d39b2a7ac1921f8b1f2e62d00ae0f260c
+INKWAVE network built fixture /workspace/actions/.ci-scratch/respawn-exclusion/freeze-site contentHash=503cb83c7cf7174498be0b408473bf5d39b2a7ac1921f8b1f2e62d00ae0f260c
+(node:2823) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ actual completed opening row advances native receiver after modeled delayed aim receipt; future/replay remain rejected (948.343962ms)
+✔ real Session rejects previous gameplay COMPAT before building or sending readiness (809.221467ms)
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/freeze-site contentHash=503cb83c7cf7174498be0b408473bf5d39b2a7ac1921f8b1f2e62d00ae0f260c
+(node:2824) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ welcome missing fails closed before lobby or heartbeat (7.183217ms)
+✔ welcome wrong-proto fails closed before lobby or heartbeat (0.688048ms)
+✔ welcome string-proto fails closed before lobby or heartbeat (1.094282ms)
+✔ welcome wrong-compat fails closed before lobby or heartbeat (0.737304ms)
+✔ welcome missing-compat fails closed before lobby or heartbeat (0.644486ms)
+✔ host START missing fails before world/readiness/GO (16.219874ms)
+✔ host START wrong-proto fails before world/readiness/GO (1.554344ms)
+✔ host START wrong-compat fails before world/readiness/GO (1.575967ms)
+✔ compatible host START builds real NetMatch and GO launches exactly once (4.664666ms)
+✔ wrong sender START is inert; migrated host owns compatibility admission (3.143803ms)
+✔ host generated START carries the shared tuple and still starts locally (5.825325ms)
+✔ cancel and rejoin discard late old welcomes without losing the new connection (1.661634ms)
+✔ malformed welcome stays inert and duplicate welcome cannot overwrite accepted identity (0.541036ms)
+✔ actual Worker welcome and host relay START reach NetMatch (51.901811ms)
+ℹ {"actualWorkerWelcome":{"proto":2,"compat":"iw-gameplay-20261023-spawn-exclusion-v1"},"hostEnvelope":true,"startProto":2,"state":"starting","actualNetMatch":true}
+✔ actual Worker welcome and host relay START reject mismatch (1.956817ms)
+ℹ {"actualWorkerWelcome":{"proto":2,"compat":"iw-gameplay-20261023-spawn-exclusion-v1"},"hostEnvelope":true,"startProto":99,"state":"error","actualNetMatch":false}
+✔ solo Turf still refuses start while solo Boss retains compatible host START (4.350697ms)
+✔ offline MockNet remains separate and never acquires a relay or NetMatch (1.719497ms)
+INKWAVE built fixture /workspace/actions/.ci-scratch/respawn-exclusion/freeze-site contentHash=503cb83c7cf7174498be0b408473bf5d39b2a7ac1921f8b1f2e62d00ae0f260c
+(node:2825) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ team 0 normal walk/jump/bot cannot enter at dt=0.03333333333333333 (53.735545ms)
+✔ team 0 normal walk/jump/bot cannot enter at dt=0.016666666666666666 (28.066446ms)
+✔ team 0 normal walk/jump/bot cannot enter at dt=0.008333333333333333 (54.469882ms)
+✔ team 0 normal walk/jump/bot cannot enter at dt=0.1 (4.889491ms)
+✔ team 1 normal walk/jump/bot cannot enter at dt=0.03333333333333333 (16.705209ms)
+✔ team 1 normal walk/jump/bot cannot enter at dt=0.016666666666666666 (26.200493ms)
+✔ team 1 normal walk/jump/bot cannot enter at dt=0.008333333333333333 (51.713126ms)
+✔ team 1 normal walk/jump/bot cannot enter at dt=0.1 (4.062105ms)
+✔ team 0 allied centre/respawn/exit and reset stay free (31.764847ms)
+✔ team 1 allied centre/respawn/exit and reset stay free (18.499595ms)
+✔ team 0 high-speed complete crossing and diagonal tangency (11.051462ms)
+✔ team 1 high-speed complete crossing and diagonal tangency (13.928959ms)
+✔ centre recovery is finite; disabled/absent radii and below-pad routes are untouched (3.894535ms)
+✔ temporary protection/damage/resources and movement away from both pads are unchanged (1.561514ms)
+✔ high jump and rising through the lower height cannot bypass the volume (2.204427ms)
+✔ a correction never replaces ordinary wall collision with an overlapping capsule (2.018922ms)
+✔ real NetMatch remote application keeps interpolation outside without changing snapshot/correction (4.050638ms)
+✔ tidewater team 0: real stage collision and opposing pad volume agree (53.723808ms)
+✔ tidewater team 1: real stage collision and opposing pad volume agree (54.95412ms)
+✔ kelpline team 0: real stage collision and opposing pad volume agree (84.888629ms)
+✔ kelpline team 1: real stage collision and opposing pad volume agree (55.040065ms)
+✔ halyard team 0: real stage collision and opposing pad volume agree (48.537247ms)
+✔ halyard team 1: real stage collision and opposing pad volume agree (56.588588ms)
+✔ cargo team 0: real stage collision and opposing pad volume agree (87.604177ms)
+✔ cargo team 1: real stage collision and opposing pad volume agree (64.525642ms)
+ℹ tests 44
+ℹ suites 0
+ℹ pass 44
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2416.067533

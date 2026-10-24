@@ -53,7 +53,7 @@ self.onmessage=async({data:{id,runtimeSha256,constrainedClient=false}})=>{
     ]);
    } catch(error) { abort?.abort(error); throw error; }
    self.postMessage({progress:'download',id,bytes:obj.byteLength,total:obj.byteLength});
-   data=convertSource(stage,new Uint8Array(obj),new TextDecoder().decode(mtl),files,p=>self.postMessage({progress:p,id}),null,{compactBVHCenters:constrained});
+   data=convertSource(stage,new Uint8Array(obj),new TextDecoder().decode(mtl),files,p=>self.postMessage({progress:p,id}),null,{compactBVHCenters:constrained,compactInactiveDisplay:true});
    data=compactInactiveDisplay(data);
    // Derived IndexedDB writes clone every large typed array before the
    // renderer takes ownership. Avoid that competing peak on small devices.

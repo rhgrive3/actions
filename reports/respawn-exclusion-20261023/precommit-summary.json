@@ -1,0 +1,566 @@
+{
+  "baseline": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "candidateBuild": "64f2d23a66f2dd07f8405142adbc9fd75bf2119f64dbe5128a703d49850c63ac",
+  "status": "passed",
+  "cases": [
+    {
+      "kind": "ingress",
+      "hz": 30,
+      "peer": 0,
+      "jump": false,
+      "team": 0,
+      "nid": 0,
+      "pad": [
+        0,
+        2.2,
+        39.2
+      ],
+      "radius": 4.2,
+      "start": [
+        -4.8500000000000005,
+        2.2,
+        39.2
+      ],
+      "minOwner": 4.6,
+      "minRemote": 4.6,
+      "ownerCrossed": false,
+      "remoteReceived": true
+    },
+    {
+      "kind": "allied-exit",
+      "hz": 30,
+      "peer": 0,
+      "jump": false,
+      "pad": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "start": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "team": 0,
+      "end": [
+        11.106000000000009,
+        1.538114285714283,
+        -39.2
+      ],
+      "displacement": 11.106000000000009
+    },
+    {
+      "kind": "ingress",
+      "hz": 30,
+      "peer": 0,
+      "jump": true,
+      "team": 0,
+      "nid": 0,
+      "pad": [
+        0,
+        2.2,
+        39.2
+      ],
+      "radius": 4.2,
+      "start": [
+        -4.8500000000000005,
+        2.2,
+        39.2
+      ],
+      "minOwner": 4.6,
+      "minRemote": 4.599999999999999,
+      "ownerCrossed": false,
+      "remoteReceived": true
+    },
+    {
+      "kind": "allied-exit",
+      "hz": 30,
+      "peer": 0,
+      "jump": true,
+      "pad": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "start": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "team": 0,
+      "end": [
+        11.106000000000009,
+        1.538114285714283,
+        -39.2
+      ],
+      "displacement": 11.106000000000009
+    },
+    {
+      "kind": "ingress",
+      "hz": 30,
+      "peer": 1,
+      "jump": false,
+      "team": 1,
+      "nid": 4,
+      "pad": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "radius": 4.2,
+      "start": [
+        -4.8500000000000005,
+        2.2,
+        -39.2
+      ],
+      "minOwner": 4.6,
+      "minRemote": 4.6,
+      "ownerCrossed": false,
+      "remoteReceived": true
+    },
+    {
+      "kind": "allied-exit",
+      "hz": 30,
+      "peer": 1,
+      "jump": false,
+      "pad": [
+        0,
+        2.2,
+        39.2
+      ],
+      "start": [
+        0,
+        2.2,
+        39.2
+      ],
+      "team": 1,
+      "end": [
+        11.106000000000009,
+        1.538114285714283,
+        39.2
+      ],
+      "displacement": 11.106000000000009
+    },
+    {
+      "kind": "ingress",
+      "hz": 30,
+      "peer": 1,
+      "jump": true,
+      "team": 1,
+      "nid": 4,
+      "pad": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "radius": 4.2,
+      "start": [
+        -4.8500000000000005,
+        2.2,
+        -39.2
+      ],
+      "minOwner": 4.6,
+      "minRemote": 4.6,
+      "ownerCrossed": false,
+      "remoteReceived": true
+    },
+    {
+      "kind": "allied-exit",
+      "hz": 30,
+      "peer": 1,
+      "jump": true,
+      "pad": [
+        0,
+        2.2,
+        39.2
+      ],
+      "start": [
+        0,
+        2.2,
+        39.2
+      ],
+      "team": 1,
+      "end": [
+        11.106000000000009,
+        1.538114285714283,
+        39.2
+      ],
+      "displacement": 11.106000000000009
+    },
+    {
+      "kind": "ingress",
+      "hz": 60,
+      "peer": 0,
+      "jump": false,
+      "team": 0,
+      "nid": 0,
+      "pad": [
+        0,
+        2.2,
+        39.2
+      ],
+      "radius": 4.2,
+      "start": [
+        -4.8500000000000005,
+        2.2,
+        39.2
+      ],
+      "minOwner": 4.6,
+      "minRemote": 4.599999999999999,
+      "ownerCrossed": false,
+      "remoteReceived": true
+    },
+    {
+      "kind": "allied-exit",
+      "hz": 60,
+      "peer": 0,
+      "jump": false,
+      "pad": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "start": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "team": 0,
+      "end": [
+        11.106000000000009,
+        1.538114285714283,
+        -39.2
+      ],
+      "displacement": 11.106000000000009
+    },
+    {
+      "kind": "ingress",
+      "hz": 60,
+      "peer": 0,
+      "jump": true,
+      "team": 0,
+      "nid": 0,
+      "pad": [
+        0,
+        2.2,
+        39.2
+      ],
+      "radius": 4.2,
+      "start": [
+        -4.8500000000000005,
+        2.2,
+        39.2
+      ],
+      "minOwner": 4.6,
+      "minRemote": 4.6,
+      "ownerCrossed": false,
+      "remoteReceived": true
+    },
+    {
+      "kind": "allied-exit",
+      "hz": 60,
+      "peer": 0,
+      "jump": true,
+      "pad": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "start": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "team": 0,
+      "end": [
+        11.106000000000009,
+        1.538114285714283,
+        -39.2
+      ],
+      "displacement": 11.106000000000009
+    },
+    {
+      "kind": "ingress",
+      "hz": 60,
+      "peer": 1,
+      "jump": false,
+      "team": 1,
+      "nid": 4,
+      "pad": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "radius": 4.2,
+      "start": [
+        -4.8500000000000005,
+        2.2,
+        -39.2
+      ],
+      "minOwner": 4.6,
+      "minRemote": 4.6,
+      "ownerCrossed": false,
+      "remoteReceived": true
+    },
+    {
+      "kind": "allied-exit",
+      "hz": 60,
+      "peer": 1,
+      "jump": false,
+      "pad": [
+        0,
+        2.2,
+        39.2
+      ],
+      "start": [
+        0,
+        2.2,
+        39.2
+      ],
+      "team": 1,
+      "end": [
+        11.106000000000009,
+        1.538114285714283,
+        39.2
+      ],
+      "displacement": 11.106000000000009
+    },
+    {
+      "kind": "ingress",
+      "hz": 60,
+      "peer": 1,
+      "jump": true,
+      "team": 1,
+      "nid": 4,
+      "pad": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "radius": 4.2,
+      "start": [
+        -4.8500000000000005,
+        2.2,
+        -39.2
+      ],
+      "minOwner": 4.6,
+      "minRemote": 4.6,
+      "ownerCrossed": false,
+      "remoteReceived": true
+    },
+    {
+      "kind": "allied-exit",
+      "hz": 60,
+      "peer": 1,
+      "jump": true,
+      "pad": [
+        0,
+        2.2,
+        39.2
+      ],
+      "start": [
+        0,
+        2.2,
+        39.2
+      ],
+      "team": 1,
+      "end": [
+        11.106000000000009,
+        1.538114285714283,
+        39.2
+      ],
+      "displacement": 11.106000000000009
+    },
+    {
+      "kind": "ingress",
+      "hz": 120,
+      "peer": 0,
+      "jump": false,
+      "team": 0,
+      "nid": 0,
+      "pad": [
+        0,
+        2.2,
+        39.2
+      ],
+      "radius": 4.2,
+      "start": [
+        -4.8500000000000005,
+        2.2,
+        39.2
+      ],
+      "minOwner": 4.6,
+      "minRemote": 4.599999999999999,
+      "ownerCrossed": false,
+      "remoteReceived": true
+    },
+    {
+      "kind": "allied-exit",
+      "hz": 120,
+      "peer": 0,
+      "jump": false,
+      "pad": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "start": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "team": 0,
+      "end": [
+        11.106000000000009,
+        1.538114285714283,
+        -39.2
+      ],
+      "displacement": 11.106000000000009
+    },
+    {
+      "kind": "ingress",
+      "hz": 120,
+      "peer": 0,
+      "jump": true,
+      "team": 0,
+      "nid": 0,
+      "pad": [
+        0,
+        2.2,
+        39.2
+      ],
+      "radius": 4.2,
+      "start": [
+        -4.8500000000000005,
+        2.2,
+        39.2
+      ],
+      "minOwner": 4.6,
+      "minRemote": 4.6,
+      "ownerCrossed": false,
+      "remoteReceived": true
+    },
+    {
+      "kind": "allied-exit",
+      "hz": 120,
+      "peer": 0,
+      "jump": true,
+      "pad": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "start": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "team": 0,
+      "end": [
+        11.106000000000009,
+        1.538114285714283,
+        -39.2
+      ],
+      "displacement": 11.106000000000009
+    },
+    {
+      "kind": "ingress",
+      "hz": 120,
+      "peer": 1,
+      "jump": false,
+      "team": 1,
+      "nid": 4,
+      "pad": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "radius": 4.2,
+      "start": [
+        -4.8500000000000005,
+        2.2,
+        -39.2
+      ],
+      "minOwner": 4.6,
+      "minRemote": 4.6,
+      "ownerCrossed": false,
+      "remoteReceived": true
+    },
+    {
+      "kind": "allied-exit",
+      "hz": 120,
+      "peer": 1,
+      "jump": false,
+      "pad": [
+        0,
+        2.2,
+        39.2
+      ],
+      "start": [
+        0,
+        2.2,
+        39.2
+      ],
+      "team": 1,
+      "end": [
+        11.010000000000009,
+        1.5682857142857114,
+        39.2
+      ],
+      "displacement": 11.010000000000009
+    },
+    {
+      "kind": "ingress",
+      "hz": 120,
+      "peer": 1,
+      "jump": true,
+      "team": 1,
+      "nid": 4,
+      "pad": [
+        0,
+        2.2,
+        -39.2
+      ],
+      "radius": 4.2,
+      "start": [
+        -4.8500000000000005,
+        2.2,
+        -39.2
+      ],
+      "minOwner": 4.6,
+      "minRemote": 4.599999999999999,
+      "ownerCrossed": false,
+      "remoteReceived": true
+    },
+    {
+      "kind": "allied-exit",
+      "hz": 120,
+      "peer": 1,
+      "jump": true,
+      "pad": [
+        0,
+        2.2,
+        39.2
+      ],
+      "start": [
+        0,
+        2.2,
+        39.2
+      ],
+      "team": 1,
+      "end": [
+        11.106000000000009,
+        1.538114285714283,
+        39.2
+      ],
+      "displacement": 11.106000000000009
+    }
+  ],
+  "wireTicks": 2392,
+  "errors": [],
+  "transport": "two browser contexts, real WebSockets, production Worker fetch/RoomDurableObject with local upgrade shim",
+  "limits": [
+    "Software Chromium; controlled native frame scheduling, not physical-device timing.",
+    "Local production relay shim, not public/deployed network or mixed-version clients."
+  ]
+}

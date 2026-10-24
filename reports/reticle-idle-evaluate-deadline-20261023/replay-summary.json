@@ -1,0 +1,16 @@
+{
+  "scope": "deterministic source component; no browser/GPU result",
+  "virtualDeadlineMs": 120000,
+  "operationPhase": "gpu-identity",
+  "order": [
+    "failed-receipt",
+    "owner-close",
+    "server-close"
+  ],
+  "timersRemaining": 0,
+  "error": {
+    "name": "IdleEvaluationTimeoutError",
+    "code": "INKWAVE_IDLE_EVALUATION_TIMEOUT",
+    "message": "Idle evaluate exceeded 120000 ms (gpu-identity)"
+  }
+}

@@ -41,12 +41,18 @@ const UI_CSS = `
 @media (max-width:560px) { .iw-ranked-hud { width:calc(100vw - 12px); gap:5px 6px; padding:5px 7px; } .iw-ranked-hud__rule { font-size:7px; letter-spacing:.08em; } .iw-ranked-hud__score { min-width:0; gap:3px; } .iw-ranked-hud__team { font-size:7px; letter-spacing:0; } .iw-ranked-hud__count { font-size:12px; } .iw-ranked-hud__penalty { font-size:7px; } .iw-ranked-hud__clock { padding:3px 5px; font-size:8px; } .iw-ranked-hud__objective { flex:1 1 calc(100% - 84px); max-width:none; font-size:7px; text-align:center; } .iw-ranked-hud__hint { font-size:7px; } .iw-ranked-judge__score { grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; } .iw-ranked-judge__team { padding:9px; } }
 `;
 
+const rankedStyleByDocument = new WeakMap();
 function addStyle() {
-  if (typeof document === 'undefined' || document.querySelector('style[data-iw-ranked-runtime]')) return;
-  const style = document.createElement('style');
+  if (typeof document === 'undefined') return;
+  const doc = document, cached = rankedStyleByDocument.get(doc);
+  if (cached?.ownerDocument === doc && cached.getRootNode() === doc && cached.tagName === 'STYLE' && cached.hasAttribute('data-iw-ranked-runtime')) return;
+  const existing = doc.querySelector('style[data-iw-ranked-runtime]');
+  if (existing) { rankedStyleByDocument.set(doc, existing); return; }
+  const style = doc.createElement('style');
   style.dataset.iwRankedRuntime = '1';
   style.textContent = UI_CSS;
-  (document.head || document.body)?.appendChild(style);
+  (doc.head || doc.body)?.appendChild(style);
+  if (style.getRootNode() === doc) rankedStyleByDocument.set(doc, style);
 }
 
 export function objectiveText(engine, G, api = {}) {

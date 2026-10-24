@@ -580,13 +580,23 @@ export class RankedWorld {
     }
   }
 
-  _collectRiderOffsets() {
+  _collectRiderOffsets(refreshLatches = false) {
     const offsets = [];
     if (!this.towerBlock) return offsets;
     const block = this.towerBlock;
     for (const actor of this.match?.actors || []) {
-      if (!actor || actor.alive === false || !actor.pos) continue;
+      if (!actor || actor.alive === false) {
+        if (refreshLatches && actor) actor._rankedOnTower = false;
+        continue;
+      }
+      if (!refreshLatches && !actor.pos) continue;
       const directContact = this._riderOnBlock(actor);
+      if (refreshLatches) {
+        if (directContact) actor._rankedOnTower = true;
+        else if (actor.grounded) actor._rankedOnTower = false;
+        else if (actor._rankedOnTower && !this._inTowerVolume(actor, true)) actor._rankedOnTower = false;
+      }
+      if (!actor.pos) continue;
       const latchedAir = !actor.grounded && actor._rankedOnTower && this._inTowerVolume(actor, true);
       if (!directContact && !latchedAir) continue;
       const rel = this._a.copy(actor.pos).sub(block.center);
@@ -597,8 +607,8 @@ export class RankedWorld {
 
   _syncTower(engine, carry = true) {
     if (this.mode !== 'tower' || !this.towerBlock) return;
-    this._refreshRideLatches();
-    const riders = carry ? this._collectRiderOffsets() : [];
+    // Capture the pre-move rider latches and offsets in one actor traversal.
+    const riders = carry ? this._collectRiderOffsets(true) : (this._refreshRideLatches(), []);
     const target = this._towerPosition(engine);
     setVec(this._position, target);
     const progress = engine?.rule?.state?.progress ?? this._towerProgress;
@@ -612,11 +622,12 @@ export class RankedWorld {
     this._forward.set(dx, 0, dz).normalize();
     this._side.set(this._forward.z, 0, -this._forward.x).normalize();
     const yaw = Math.atan2(dx, dz);
+    const cosYaw = Math.cos(yaw), sinYaw = Math.sin(yaw);
     const transformChanged = !this._towerTransformReady || !this._position.equals(this._lastPosition) || yaw !== this._towerYaw;
     this.towerBlock.center.set(this._position.x, this._position.y - 0.12, this._position.z);
-    this.towerBlock.axes[0].set(Math.cos(yaw), 0, -Math.sin(yaw));
+    this.towerBlock.axes[0].set(cosYaw, 0, -sinYaw);
     this.towerBlock.axes[1].set(0, 1, 0);
-    this.towerBlock.axes[2].set(Math.sin(yaw), 0, Math.cos(yaw));
+    this.towerBlock.axes[2].set(sinYaw, 0, cosYaw);
     if (transformChanged) updateBlockBounds(this.towerBlock);
     if (this.towerPoleBlock) {
       this.towerPoleBlock.center.set(this._position.x, this._position.y + 0.945, this._position.z);

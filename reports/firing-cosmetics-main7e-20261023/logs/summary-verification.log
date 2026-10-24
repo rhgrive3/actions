@@ -1,0 +1,45 @@
+{
+  productionPaths: 4,
+  qaPaths: 2,
+  mainLeaves: [
+    {
+      path: 'patches/splatoon3/runtime/projectile-presentation.mjs',
+      sha: '27fdec01a3536614fb615e9b5fd3c43ebe46c871',
+      matches: '7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51'
+    },
+    {
+      path: 'patches/splatoon3/runtime/area-special-vfx-clock.mjs',
+      status: 'absent in main and candidate',
+      matches: '7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51'
+    },
+    {
+      path: 'patches/splatoon3/runtime/special-motion.mjs',
+      sha: '643d89ab8f56c9378b661b4bdc5f0eceb440dc77',
+      matches: '7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51'
+    },
+    {
+      path: 'patches/splatoon3/runtime/special-presentation.mjs',
+      sha: 'e15c40dc00487416c2f55ad3936b590562bec2b7',
+      matches: '7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51'
+    },
+    {
+      path: 'patches/splatoon3/runtime/special-vfx.mjs',
+      sha: '01911bf47b140ecd603d0080d065b280b37295df',
+      matches: '7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51'
+    },
+    {
+      path: 'patches/local-quality/static-menu-adapter.mjs',
+      sha: 'e9ec35da5e1f96d9e312ba18f89585c0222e26cc',
+      matches: '7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51'
+    },
+    {
+      path: 'patches/local-quality/tests/static-menu-art.test.mjs',
+      sha: '46288013ecf23a02a67e4837623a6d5746d201e9',
+      matches: '7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51'
+    }
+  ],
+  nativeCases: 4,
+  componentSteps: 960,
+  buildBefore: 'ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30',
+  buildCandidate: 'f740110d0f27536f46725d2299710bf4e01a08c0e7ddc6efba75dbe27a61c965'
+}

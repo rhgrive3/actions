@@ -1,0 +1,94 @@
+{
+  "base": "2e2bc38661dd49655ee3b4abc491dcc8ee65e8e1",
+  "implementation": "1c3b3c9b924c86fcb2d85e91dc607278b53229df",
+  "scope": "QA only; checker plus existing gate import, no runtime or workflow change; no browser/GPU acceptance claim",
+  "logs": {
+    "focused.tap": {
+      "rawSha256": "ea6d25861e42625a1f644cfc6cef808f4affe7a2f29d78c7efb00ffe2c536fa9",
+      "counts": {
+        "tests": 46,
+        "pass": 46,
+        "fail": 0,
+        "skipped": 0
+      }
+    },
+    "focused-final.tap": {
+      "rawSha256": "a6456547d31145a971c2d61c9a9234e587fc3a6e16daa71ddd7174115322a5d6",
+      "counts": {
+        "tests": 47,
+        "pass": 47,
+        "fail": 0,
+        "skipped": 0
+      }
+    },
+    "ci-route-final.tap": {
+      "rawSha256": "ea8004548f53eeebe7fd5b5c896923b14cd1abb5857735f5d5bfd7f9d9a35701",
+      "counts": {
+        "tests": 47,
+        "pass": 47,
+        "fail": 0,
+        "skipped": 0
+      }
+    },
+    "wiring-final.tap": {
+      "rawSha256": "2b929c647e53ae15f953f80e21fc77da00b4d674b2c77920b2975172aa5520ee",
+      "counts": {
+        "tests": 48,
+        "pass": 48,
+        "fail": 0,
+        "skipped": 0
+      }
+    },
+    "old-desktop-setup-negative.tap": {
+      "rawSha256": "b03efd65aae8f33db8ce48ada3a87b8f20adc17b7420327f82a504c21c667eb2",
+      "expectedFailure": true,
+      "selectedFailure": 1,
+      "nonSelected": 13
+    }
+  },
+  "source": {
+    "scripts/check-inkwave-idle-resources.mjs": {
+      "sha256": "9b735d9e7a503aa58b4b5ed7aba6e267c6ad1acd88dade793d0fe60137f68795",
+      "blob": "65aac1e49f4bc26bf42d71bd88eb698cbef3966f"
+    },
+    "scripts/tests/inkwave-idle-evaluate-deadline.test.mjs": {
+      "sha256": "83cc9b3b91e0424325161e37c11b3a49794dcb5a2813825349c047e518ffb41d",
+      "blob": "d1ebff867f2ded07fd11cb2169344323315b8de2"
+    },
+    "scripts/tests/inkwave-idle-resources-gates.test.mjs": {
+      "sha256": "6d353c6f4b7871e43d7d5394ca825faba92526328d8d370fb3412031b3137c77",
+      "blob": "d384824f3ac170167db9ff5e3dd0a62ee77e7518"
+    }
+  },
+  "rawRoot": "/workspace/scratch/reticle-idle-deadline-20261023",
+  "rawSha256": {
+    "checker-before.mjs": "fc7eadd9f58c9eae01e5692f965ecd182cb4afabb2e8b2cd356f99e254b43a14",
+    "replay-timeout.mjs": "4b4b71a599745b8955221ff57c9865ce66f38296655b20941c0d05958218cd26",
+    "timeout-receipt.json": "01430ec42ca47d726282391a4152ab22842859f8bb279d04b6f6f5e607bc5a09",
+    "replay-summary.json": "4f05054aa976a0435884a9852079fb90b6d10397f4a4f77241019dbc9d003d95",
+    "source-preservation.json": "cf1f86318ed22bed9be9d3c994aa7e930f65f21cf9b98bdc86691aa7faf3ee44",
+    "source-preservation-final.json": "1c5da47d00b942d842be063036ff4f22ca7b25f506d2f4a20a40e3edce810c93",
+    "build-input-readback-final.json": "61ce64ec4fe5331375d15bc79e110b3fdc5fe9ba0c6acd18175348303e421f89",
+    "old-desktop-setup-negative.test.mjs": "3a0039b801f7fdd175a4eb37139b1dc20d691d998ec01478fc0a25ba5c5e1ebf"
+  },
+  "publishedSha256": {
+    "README.md": "1c8e17a9f423e78d2f136f6578a6ef60b07b19191510713953b9b29ed2e71662",
+    "audit-source.cjs": "12425c10f2dbc8e20cf797289211be1c5ab32f750e53c756fcfc0325d81a6bd2",
+    "build-input-readback-committed.json": "61ce64ec4fe5331375d15bc79e110b3fdc5fe9ba0c6acd18175348303e421f89",
+    "ci-route-final.tap.gz": "9c6d4c223c11230a96d9e6a15249543c3be29b6edbf080cfc45082f5cba8bc62",
+    "commands.txt": "03cb31d8d7245b4d341a0dedcd4c8894efc3254381526e9f75e5405eb288f3fc",
+    "focused-final.tap.gz": "25f3dda89ababe091d6c50de3ec4d0e87561142aebb716106c07c7451465fdb4",
+    "focused.tap.gz": "9ab621140450c2cbfa2e56dd675fc4838050f00fb0862ac57c3a7373803646d6",
+    "old-desktop-setup-negative.tap.gz": "6b3569dbcc0efe94244d41f60ebab8f577dd87ca7ab9f29eb20d7993bd7ff22d",
+    "replay-summary.json": "4f05054aa976a0435884a9852079fb90b6d10397f4a4f77241019dbc9d003d95",
+    "source-preservation.json": "1c5da47d00b942d842be063036ff4f22ca7b25f506d2f4a20a40e3edce810c93",
+    "timeout-receipt.json": "01430ec42ca47d726282391a4152ab22842859f8bb279d04b6f6f5e607bc5a09",
+    "wiring-final.tap.gz": "7a634582b7183c243a11dbf7e129707133dcc3be34b2e175461758634b2dca16"
+  },
+  "finalCounts": {
+    "tests": 48,
+    "pass": 48,
+    "fail": 0,
+    "skipped": 0
+  }
+}

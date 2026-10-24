@@ -414,7 +414,13 @@ export class RainmakerRule {
     let actor = null, bestDistance = Infinity;
     for (const candidate of actors) {
       if (candidate?.alive === false || !validTeam(candidate?.team) || !canCollectRainmaker(candidate) || !validId(candidate?.id)) continue;
-      const d = distance(positionOf(candidate), this.state.pos);
+      // Read ordinary immutable-in-this-tick three-value positions directly.
+      // Irregular arrays still use the original validating/copying fallback.
+      const pos = candidate.pos;
+      const direct = Array.isArray(pos) && pos.length === 3 && Object.getPrototypeOf(pos) === Array.prototype
+        && Object.hasOwn(pos, 0) && Object.hasOwn(pos, 1) && Object.hasOwn(pos, 2)
+        && finite(pos[0]) && finite(pos[1]) && finite(pos[2]);
+      const d = distance(direct ? pos : positionOf(candidate), this.state.pos);
       if (!(d <= PICKUP_RADIUS)) continue;
       if (!actor || d < bestDistance || d === bestDistance && String(candidate.id).localeCompare(String(actor.id)) < 0) {
         actor = candidate; bestDistance = d;

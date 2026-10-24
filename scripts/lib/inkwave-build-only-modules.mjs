@@ -5,6 +5,7 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/input-lens-queue-adapter.mjs',
   'patches/local-quality/settings-hud-queue-adapter.mjs',
   'patches/local-quality/world-queue-build-adapter.mjs',
+  'patches/splatoon3/spawn-exclusion-adapter.mjs',
   'patches/local-quality/added-ui-motion-adapter.mjs',
   'patches/local-quality/character-shadow-batch-adapter.mjs',
   'patches/reliability/queue-network-ui-adapter.mjs',

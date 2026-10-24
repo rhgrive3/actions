@@ -124,6 +124,19 @@ export function installSpawnPoseMotion({ Character, Actor, CHARACTER_CHANNELS: c
   if (Actor && !Object.hasOwn(Actor.prototype, INSTALLED)) {
     const reset = Actor.prototype.reset;
     Object.defineProperty(Actor.prototype, INSTALLED, { value: true });
-    Actor.prototype.reset = function (...args) { if (this.character) clear(this.character, 'reset'); return reset.apply(this, args); };
+    Actor.prototype.reset = function (...args) {
+      if (this.character) { clear(this.character, 'reset'); this.character.wRoll = 0; }
+      return reset.apply(this, args);
+    };
   }
+}
+
+// Squid Spawn still owns the body if its calibrated overlay ends in flight.
+// Once that lifecycle finishes, a retired pose yields without aging the clock.
+export function spawnMotionAllowsAction(ch, nativeEligible) {
+  const owner = ch?.actor;
+  if (owner && owner.character === ch && owner.s3?.squidSpawn) return false;
+  const s = hooks(ch)?.states.get(ch);
+  if (!s || ch.s3SpawnPoseMotionEnabled === false || ch.s3HitSpawnMotionEnabled === false) return nativeEligible;
+  return s.phase === 'off';
 }

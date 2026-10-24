@@ -1,0 +1,125 @@
+{
+  "scope": "local screenshots retained; image payloads are not published in the evidence archive",
+  "images": [
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-final/s3-maneuver-stepper-horizontal-120-0-open-first.png",
+      "sha256": "54fe7f74671d91fd62bda9723d361d47c0622472bdde7391341eaf8b086be4ee",
+      "bytes": 47911
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-final/s3-maneuver-stepper-horizontal-120-0-open-prediction.png",
+      "sha256": "df38f0611927358dcaea27881bdd5ff02a3e10155701944fc3d78e48a2475681",
+      "bytes": 50942
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-final/s3-maneuver-stepper-horizontal-120-0-open-steady.png",
+      "sha256": "ddb9dbf21be9fb388dd66289d38886954f37ff037f349541bf14eb5c3a033907",
+      "bytes": 52220
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-final/s3-maneuver-stepper-horizontal-120-0-wall-first.png",
+      "sha256": "fbea1f10c4e7b589649421d11154d3b5fc3a6d35016a0aa9507216970f4add4b",
+      "bytes": 44413
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-final/s3-maneuver-stepper-horizontal-120-0-wall-steady.png",
+      "sha256": "9656545813e7f2c5431a75cc73d6a26e4d463b5daaf1563e4c864737fef91c7f",
+      "bytes": 46211
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-final/s3-maneuver-stepper-horizontal-30-0-open-first.png",
+      "sha256": "c0028da88459797f4028929bb494ec1dfe6fdfeaddf0cd76f5de0cc453ddb232",
+      "bytes": 54179
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-final/s3-maneuver-stepper-horizontal-30-0-open-prediction.png",
+      "sha256": "fc3bbbbdc34aafa59b74c60a2a6dbb52d4957aada3329b7c98e2244344a93093",
+      "bytes": 50858
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-final/s3-maneuver-stepper-horizontal-30-0-open-steady.png",
+      "sha256": "cc913b70f6379801f30f1f79b781157d365fa2195dec6b003e129d520f029751",
+      "bytes": 56867
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-final/s3-maneuver-stepper-horizontal-30-0-wall-first.png",
+      "sha256": "ec1c13df562c7e6b46dbbf1372c4f595744906230cd75fd52c1ed80a7faacc1f",
+      "bytes": 44965
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-final/s3-maneuver-stepper-horizontal-30-0-wall-steady.png",
+      "sha256": "b11d2c8f515fad50ef8fc5ba035013a154b64a6a4bac95078ff33ea1852565ab",
+      "bytes": 46546
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-final/s3-maneuver-stepper-horizontal-60-0-open-first.png",
+      "sha256": "952ba77d6f7cf970d3e9505e21d7f10bcc56b2064f6a860515903bf82cd69404",
+      "bytes": 47930
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-final/s3-maneuver-stepper-horizontal-60-0-open-prediction.png",
+      "sha256": "bb726dbe8a545c2791b3ee6aa1f372d217650feaa657b76d1c6b4b1c9e698b3f",
+      "bytes": 50794
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-final/s3-maneuver-stepper-horizontal-60-0-open-steady.png",
+      "sha256": "4b34bba40c1e41f1ac508f82e91c2c7a4082450427796628c9f43bab298d7779",
+      "bytes": 52078
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-final/s3-maneuver-stepper-horizontal-60-0-wall-first.png",
+      "sha256": "63c4841a794f1abf10a6dfd76076b226e51c61dee6fe3bf3cf8ebce1ca0d8cae",
+      "bytes": 44333
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-final/s3-maneuver-stepper-horizontal-60-0-wall-steady.png",
+      "sha256": "7f9eda0278d7637c1c9fca409f9ac95897e06c74e1eb8f6e179e6f345d3c99a5",
+      "bytes": 46193
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-fixed-tick/s3-maneuver-stepper-horizontal-30-0-open-first.png",
+      "sha256": "c3fb53bad5d62b679e35b6f647ac13a8f9dbe1c9ead1e4cb67c680d118ebe219",
+      "bytes": 53532
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-fixed-tick/s3-maneuver-stepper-horizontal-30-0-open-prediction.png",
+      "sha256": "e72d5424ee9506953699b17d185c1714137e2461d8efa010e8a976bfdab62037",
+      "bytes": 50737
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/quad-browser-fixed-tick/s3-maneuver-stepper-horizontal-30-0-open-steady.png",
+      "sha256": "3ac31a7d5f83eeb6035574cf8a1b26bbbd1233630babf8232d9dcecdcf7940a7",
+      "bytes": 57455
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/clock-browser-final/clock-reconnect-peer-0.png",
+      "sha256": "ed79bd3d617640eb28dfaf6378e451317215c28aebb90f3470ba9b7598cd1f62",
+      "bytes": 504962
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/clock-browser-final/clock-reconnect-peer-1.png",
+      "sha256": "aba8e63e3e0b0fc716086ebd9ed85081af8972e81170499ec3cab5cb25e6332f",
+      "bytes": 499806
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/benchmark/evidence/trial-0-C.png",
+      "sha256": "63827ca217f97298c5c43a79235ca761b3256d40551402af8736914aa1e52c60",
+      "bytes": 300620
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/benchmark/evidence/trial-1-B.png",
+      "sha256": "d0186454a075af550685b4e621d0a7deedefeae97036ee98fbb461b30bd581d7",
+      "bytes": 300620
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/benchmark/evidence/trial-2-B.png",
+      "sha256": "63827ca217f97298c5c43a79235ca761b3256d40551402af8736914aa1e52c60",
+      "bytes": 300620
+    },
+    {
+      "localPath": "work/issue-resolution-20261023/benchmark/evidence/trial-3-C.png",
+      "sha256": "041a1c82bfa0b6750764d2a8ac7c4e585de8b969b186157a56b6b7d08c5986de",
+      "bytes": 300619
+    }
+  ]
+}

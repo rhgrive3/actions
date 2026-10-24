@@ -1,0 +1,15 @@
+{
+  "README.md": "7423d0d142ddd051d06343318dc7ca51cf84fdfb5c30d90842281c539efb4e4d",
+  "audit-source.cjs": "c42070b243dfc98a6c3fe1f1964cadc57c623b17fd360e72f3d4f13440f890db",
+  "logs/idle-cold.tap.gz": "c49718d0306b1f065e1fdec92402447aa284b558396f22d8704a0fe40f80e1e4",
+  "logs/official-job-120614926508.log.gz": "13553c91b626522b6c4238a2f34280cba309afaddd791d2cc7f44f71d79ee9fd",
+  "logs/old-setup-negative.tap.gz": "a66e92266948bf56fbbc17510b6e1a5ec01dad118ca07e2149eb5bc3c3130907",
+  "logs/reference.tap.gz": "f2c95a10fe5a25fe87e9a2e827fffdfa1c56388ed831bae8ba5276665f0ec2a6",
+  "logs/workflow.tap.gz": "9a72ec1f90a0bbe85d1014a89eb30704f7182f41f7343dc78b00539733e73c1f",
+  "official-error-excerpts.txt": "4e531ad614835452fdb341b1fe772fbb9646cae33591a912b3d5ac7a8dbce9e3",
+  "official-log-hashes.json": "38252652179e7754cb922d1450b95fc514bdcfb3c3252bab85a8f59b885b9bc8",
+  "old-setup-preload.mjs": "fc1d03f01f2cd30f40df0cc7a72a0d8f299f1ef2e9bc9d28c595929770fb0b33",
+  "reuse-and-scope-proof.json": "13d3ebf3fe439922c0eeb593c1ea45e36dc3a5ae43a12bcf161b117e7a186f30",
+  "source-preservation.json": "0b4ab1341608ba4d4c86cdbcb402cbf576acb3492baeccee38427d3b4a4ced73",
+  "verify-scope.cjs": "b5e83d0c02dddd32650b6a3fefef47cd90003c7feeab032d729760f92e64d743"
+}

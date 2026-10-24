@@ -162,24 +162,45 @@ test('source-connected HUD owns actual actor count/ring rather than the early sp
 });
 
 test('native NetMatch mirrors launch-owned armor; proxy stays presentation-only throughout landing', async () => {
-  const f=await fixture("export { NetMatch } from './inkwave-public/src/net/netmatch.js';");if(patched)installRespawnLifecycle(f,f.profile);
+  const f=await fixture({productionComposition:true});if(patched)installRespawnLifecycle(f,f.profile);
   installLandingStage(f); f.G.match.mode='turf';
   const a=f.make(),proxy=f.make();a.nid=1;a.slot=0;a.aimPoint.set(4,0,7);a.splat(null);a.respawn();proxy.remote=true;proxy._finishFrame=()=>{};
   assert.equal(a.s3.spawnArmor,null,'aim phase has no finite armor');
   a.intent.fire=true;a.update(1/60);a.intent.fire=false;
   assert.equal(a.s3.squidSpawn.phase,'flight');
   assert.equal(a.s3.spawnArmor.remaining,f.profile.spawnArmor.duration,'armor starts at launch');
-  const out=[],nm=Object.create(f.NetMatch.prototype);Object.assign(nm,{byNid:new Map([[1,a]]),out:[],stats:{out:0},s:{tr:{broadcast:m=>out.push(m)}}});
-  nm._sendTick();let packet=out[0].a[0];assert.equal(packet.length,23);assert.ok(packet[10]&8388608,'launch owner snapshot carries the existing armor flag');
-  let sample={x:packet[1],y:packet[2],z:packet[3],vx:0,vy:0,vz:0,yaw:0,aimYaw:0,aimPitch:0,f:packet[10],hp:100,ink:100,sp:80,turf:0,ch:0,lockT:0};
+  const out=[],nm=Object.create(f.NetMatch.prototype);Object.assign(nm,{byNid:new Map([[1,a]]),peers:new Map(),out:[],stats:{out:0},s:{tr:{broadcast:m=>out.push(m)}}});
+  nm._sendTick();let packet=out[0].a[0];
+  // #1169/#1088/hit-authority append tagged sidecars after the original
+  // 23 columns. They predate spawn exclusion; armor must not overwrite them.
+  const checkRow=()=>{
+    assert.equal(packet.length,26);
+    assert.equal(packet[0],a.nid);assert.equal(packet[21],0,'existing Super Jump clock stays at column 21');
+    assert.equal(packet[22],a.stats.specials||0,'existing special counter stays at column 22');
+    assert.equal(packet[23][0],'inkwave-adoption-v1');
+    assert.equal(packet[23][1],a.netLife||0);assert.ok(packet[23][2]>0);
+    assert.equal(packet[23][4][0],'inkwave-protection-v1');
+    assert.equal(packet[23][4][3],true,'launch protection keeps its existing managed owner');
+    const armor=a.s3.spawnArmor;
+    assert.deepEqual(Array.from(packet[23][4][4]||[]),armor?[armor.hp,armor.remaining,armor.breakRemaining]:[],'sidecar mirrors the owner armor clock without starting a second one');
+    // A post-death life carries an explicit Surge end watermark, even if
+    // this actor never surged; dropping it would admit late old-life poses.
+    assert.equal(packet[24].tag,'inkwave.s3.surge.v1');assert.equal(packet[24].life,a.netLife);
+    assert.equal(packet[24].phase,'end');assert.equal(packet[24].epoch,0);
+    assert.equal(packet[24].charge,0);assert.equal(packet[24].time,0);
+    assert.deepEqual(Array.from(packet[25]),['inkwave-hit-authority-v1',a.netLife||0,0]);
+  };
+  checkRow();assert.equal(packet[23][10][0],'inkwave-squidspawn-v1');assert.equal(packet[23][10][1],1,'adoption sidecar owns this launch flight');
+  assert.ok(packet[10]&8388608,'launch owner snapshot carries the existing armor flag');
+  let sample={x:packet[1],y:packet[2],z:packet[3],vx:0,vy:0,vz:0,yaw:0,aimYaw:0,aimPitch:0,f:packet[10],hp:100,ink:100,sp:80,turf:0,ch:0,lock:packet[20],life:a.netLife};
   proxy.net={ready:true,cur:sample,err:new f.THREE.Vector3(),prevGrounded:false,prevVy:0};nm.applyRemote(proxy,1/60);
   assert.ok(spawnProtectionRemaining(proxy)>0);assert.equal(proxy.invuln,.1,'flight invulnerability remains a separate visual flag');assert.equal(proxy.s3.spawnArmor,undefined,'visual sample cannot create proxy damage authority');
   for(let i=0;i<60&&a.s3.squidSpawn;i++)a.update(1/60);
   assert.equal(a.s3.squidSpawn,undefined);assert.ok(a.s3.spawnArmor.remaining<f.profile.spawnArmor.duration,'flight consumes the launch-owned clock');
-  nm._sendTick();packet=out.at(-1).a[0];assert.ok(packet[10]&8388608,'owner protection remains represented after touchdown');
+  nm._sendTick();packet=out.at(-1).a[0];checkRow();assert.equal(packet[23].length,10,'completed flight clears only its optional adoption extension');assert.ok(packet[10]&8388608,'owner protection remains represented after touchdown');
   assert.equal(packet[21],0,'no Super Jump clock in this live spawn');assert.equal(packet[22],a.stats.specials||0,'current special-count sidecar');assert.equal(packet[10]&262144,0);
   sample.f=packet[10];nm.applyRemote(proxy,1/60);assert.equal(proxy.invuln,0);
-  a.s3.spawnArmor=null;nm._sendTick();sample.f=out.at(-1).a[0][10];nm.applyRemote(proxy,1/60);assert.equal(spawnProtectionRemaining(proxy),0,'expired owner protection clears the proxy marker');
+  a.s3.spawnArmor=null;nm._sendTick();packet=out.at(-1).a[0];checkRow();sample.f=packet[10];nm.applyRemote(proxy,1/60);assert.equal(spawnProtectionRemaining(proxy),0,'expired owner protection clears the proxy marker');
   sample.f|=262144;nm.applyRemote(proxy,1/60);assert.equal(proxy.invuln,.1,'old generic invulnerability flag remains independent');
 });
 

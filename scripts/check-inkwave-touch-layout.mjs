@@ -9,7 +9,7 @@ import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { adaptTouchLayout, touchLayoutIdentity } from '../patches/touch-layout/adapter.mjs';
-import { installTouchLayoutDiagnostics } from './lib/inkwave-touch-layout-diagnostics.mjs';
+import { installTouchLayoutDiagnostics, touchLayoutFailureLog } from './lib/inkwave-touch-layout-diagnostics.mjs';
 
 const option = name => { const at = process.argv.indexOf(name); return at < 0 ? null : process.argv[at + 1]; };
 const repo = fileURLToPath(new URL('../', import.meta.url));
@@ -253,6 +253,7 @@ try {
       } catch (error) {
         entry.status = 'failed'; report.errors.push(`${engineName}/${name}: ${error.stack}`);
         entry.diagnostics = await page.evaluate(() => ({current:window.__touchLayoutSnapshot?.()??null,events:window.__touchLayoutEvents??[]})).catch(e=>({error:String(e).slice(0,400)}));
+        console.error(touchLayoutFailureLog(entry));
         await page.screenshot({ path: path.join(evidence, `${engineName}-${name}-failure.png`) }).catch(() => {});
       } finally { await context.close(); }
     }

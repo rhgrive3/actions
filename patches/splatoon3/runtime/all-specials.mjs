@@ -1078,24 +1078,26 @@ function doAreaImpact(rt, actor, id, state, center, seed=nextSeed(state), radius
   fxBurst(rt,actor,c,r,'impact');
   emitAction(rt,actor,id,state.serial,'impact',c,null,seed,{radius:r,damage:damage??d.damageMax});
 }
-function selectTargets(rt, actor, max=4, range=32) {
+function selectTargets(rt, actor, max=4, range=32, preview=false) {
   const dir=aimDirection(rt,actor,rt.v0), out=[];
   for(const target of rt.api.G.actors||[]) {
     if(!target.alive||target.team===actor.team||target===actor)continue;
     const offset=rt.v1.copy(target.pos).sub(actor.pos);const d=offset.length();
     if(d>range||d<.1)continue;
     const dot=offset.normalize().dot(dir);if(dot<=0)continue;
+    let x=null,y=null;
     if(actor.specialActive?.id==='tentaMissiles'){
       const ap=actorStates.get(actor)?.specialPowerAP||0,camera=rt.api.G.camera;
       if(camera?.isPerspectiveCamera){const projected=(rt._missilePreview ||= target.pos.clone()).copy(target.pos);projected.y+=.7;projected.project(camera);
         const aspect=camera.aspect||1,limit=gearCurve(ap,140,190,240)/360;
         if(projected.z< -1||Math.hypot(projected.x*aspect,projected.y)>limit)continue;
+        if(preview){x=projected.x;y=projected.y;}
       }else if(dot<.94)continue;
     }else if(dot<.94)continue;
-    out.push({actor:target,d,dot});
+    out.push(preview?{actor:target,d,dot,x,y}:{actor:target,d,dot});
   }
   out.sort((a,b)=>b.dot-a.dot||a.d-b.d);
-  return out.slice(0,max).map(x=>x.actor);
+  return out.slice(0,max).map(row=>preview?{actor:row.actor,x:row.x,y:row.y}:row.actor);
 }
 function prepareMissiles(rt, actor, state) {
   const targets=selectTargets(rt,actor,5,Infinity),origin=rt.v0.set(actor.pos.x,actor.pos.y+2.4,actor.pos.z).clone();
@@ -1278,7 +1280,11 @@ function throwChumps(rt,actor,state) {
 export function tentaMissilesLockPreview(api,actor) {
   const rt=runtimes.get(api?.Projectiles),state=actorStates.get(actor);
   if(!rt||!state||state.id!=='tentaMissiles'||!actor?.alive||actor.remote)return null;
-  return {limit:gearCurve(state.specialPowerAP||0,140,190,240)/360,targets:selectTargets(rt,actor,5,Infinity)};
+  const selected=selectTargets(rt,actor,5,Infinity,true);
+  // Preserve the public preview's Actor[] contract; VFX may reuse these
+  // coordinates, while other readers continue to receive Actor references.
+  return {limit:gearCurve(state.specialPowerAP||0,140,190,240)/360,
+    targets:selected.map(x=>x.actor),screen:selected.map(x=>[x.x,x.y])};
 }
 export function superChumpLandingPreview(api,actor) {
   const rt=runtimes.get(api?.Projectiles),state=actorStates.get(actor);
@@ -1717,7 +1723,8 @@ function updateWorld(rt,dt) {
       }
     }else if(o.kind==='screen'){
       const runStart=1,runEnd=1+560/FPS;
-      const oldScreenPos=o.lastObjectScreenPos?.clone()||o.pos.clone();
+      // Preserve the pre-move sample without allocating two vectors each fixed tick.
+      const oldScreenPos=(o._screenOldPosScratch ||= o.pos.clone()).copy(o.lastObjectScreenPos??o.pos);
       const movingSeconds=Math.max(0,Math.min(deviceAge,runEnd)-Math.max(deviceAge-dt,runStart));
       if(movingSeconds>0)o.pos.addScaledVector(o.direction,o.moveSpeed*movingSeconds);
       o.mesh?.position.copy(o.pos).setY(o.pos.y+o.height/2);
@@ -1745,7 +1752,7 @@ function updateWorld(rt,dt) {
         if(previous){previous.pos.copy(victim.pos);previous.screen.copy(o.pos);}
         else o.previous.set(victim,{pos:victim.pos.clone(),screen:o.pos.clone()});
       }
-      screenDamageObjects(rt,o,oldScreenPos,o.pos);o.lastObjectScreenPos=o.pos.clone();
+      screenDamageObjects(rt,o,oldScreenPos,o.pos);(o.lastObjectScreenPos ||= o.pos.clone()).copy(o.pos);
       paintScreenDrops(rt,o,deviceAge);
       if(!o.owner.remote&&o.age-o.lastMoveEvent>=.25){o.lastMoveEvent=o.age;o.moveCount=(o.moveCount||0)+1;emitObject(rt,o,'move');}
       if(deviceAge>=o.dur)removeWorld(rt,o,'expire');

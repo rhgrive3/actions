@@ -13,11 +13,24 @@ import { POSE_BIRTH_MAX_CONNECT, poseBirthOffset } from '../runtime/catalog-pose
 const IDS = ['s3-maneuver-stepper', 's3-slosher-washtub'];
 const EXTRA = "export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';";
 const CONTROL = 'const poseBirth = installCatalogPoseBirth(api);';
+const NO_CONNECTION = '{begin(){},attach(){},commit(){return false;},close(){},resolve(){}}';
+function emittedControl(rel, code) {
+  if (rel !== 'patches/splatoon3/runtime/main-weapon-catalog.mjs') return code;
+  // Change only this fixture's connection installer call. The original emitted
+  // files stay immutable, and all physics/RNG/ink/network code stays live.
+  const imported = code.match(/\binstallCatalogPoseBirth\s+as\s+([\w$]+)/);
+  assert.ok(imported, 'emitted connection import must be identifiable');
+  const alias = imported[1].replace(/[$]/g, '\\$&');
+  const call = new RegExp('\\b' + alias + '\\([\\w$]+\\)', 'g');
+  assert.equal([...code.matchAll(call)].length, 1, 'exactly one emitted connection installer');
+  return code.replace(call, NO_CONNECTION);
+}
 async function world({ control = false } = {}) {
   const f = await fixture({ fullRuntime: true, includeCharacter: true, productionComposition: true, realProjectiles: true, extraExports: EXTRA,
     // Test-only control: the same production composition without the connection.
     adaptRuntime: (rel, code) => control && rel === 'patches/splatoon3/runtime/main-weapon-catalog.mjs'
-      ? (assert.ok(code.includes(CONTROL)), code.replace(CONTROL, 'const poseBirth = {begin(){},attach(){},commit(){return false;},close(){},resolve(){}};')) : code });
+      ? (assert.ok(code.includes(CONTROL)), code.replace(CONTROL, 'const poseBirth = ' + NO_CONNECTION + ';')) : code,
+    adaptEmittedRuntime: control ? emittedControl : (_rel, code) => code });
   f.installMainWeaponCatalogRuntime(f.installedRuntime, f.profile);
   const { G, THREE } = f;
   G.scene = new THREE.Scene(); G.physics = new f.Physics(G.level);
@@ -56,7 +69,7 @@ function run(w, a, hz, { seconds = 2, stepProjectiles = false, before = null, on
       const hand = pre[1].distanceTo(p.start) < 1e-9 ? 1 : pre[0].distanceTo(p.start) < 1e-9 ? 0 : null;
       births.push({ n, p, hand, start: p.start.toArray(), vel: p.vel.toArray(), damage: p.damage, seed: p.seed, fxDuring,
         fx: fx.slice(fxBefore).map(r => r.pos), pre: hand === null ? null : pre[hand].toArray(),
-        post: hand === null ? null : post[hand].toArray(), offset: p._s3PoseBirthOffset ? { ...p._s3PoseBirthOffset } : null });
+        post: hand === null ? null : post[hand].toArray(), rightPost: post[0].toArray(), offset: p._s3PoseBirthOffset ? { ...p._s3PoseBirthOffset } : null });
     }
     if (stepProjectiles) { ps.update(1 / hz); onStep?.(births.slice(tick)); }
   }
@@ -111,18 +124,26 @@ test('#1431 Quad first left-hand birth is the raw carry socket; its gap is repor
   assert.ok(dist(first.start, first.pre) < 1e-12, 'physical birth stays at the emission-time socket');
 });
 
-test('#1431 predicted right-hand and obstructed births are not connected', async () => {
+test('#1431 predicted right-hand births connect display while preserving physical prediction and obstruction fallback', async () => {
   const w = await world();
+  const control = await world({ control: true });
   // Predicted aim: make the right pistol fire first from the carry pose.
   const a = actor(w, IDS[0]);
+  const b0 = actor(control, IDS[0]); b0.weaponRunner.hand = 1;
   a.weaponRunner.hand = 1;
+  w.f.setRandom(() => .37); control.f.setRandom(() => .37);
   const births = run(w, a, 60, { seconds: 1.2 });
+  const original = run(control, b0, 60, { seconds: 1.2 });
+  assert.deepEqual(plain(births), plain(original), 'physical aim prediction, velocity, damage and seeds remain unchanged');
+  assert.equal(a.ink, b0.ink, 'presentation does not change paid ink');
   const first = births[0];
   assert.equal(first.hand, null, 'aim-predicted birth is not a raw socket');
-  assert.equal(first.offset, null);
-  assert.equal(first.fxDuring, 1, 'its FX is issued immediately at the physical birth');
-  assert.ok(dist(w.fx[0].pos, first.start) < 1e-12);
+  assert.ok(first.offset, 'a verified native predicted birth connects the displayed tail');
+  assert.equal(first.fxDuring, 0, 'predicted-birth FX also waits for the actual pose');
+  assert.ok(dist(first.fx[0], first.rightPost) < 1e-9, 'first right-hand flash uses the muzzle actually drawn');
+  assert.ok(dist(first.start.map((v,i)=>v+[first.offset.x,first.offset.y,first.offset.z][i]),first.rightPost)<1e-9);
   a.weaponRunner.reset(); w.f.G.projectiles.clear(); a.character.dispose();
+  b0.weaponRunner.reset(); control.f.G.projectiles.clear(); b0.character.dispose();
   // Obstruction fallback: every segment from the chest is blocked.
   w.fx.length = 0;
   const b = actor(w, IDS[0]), G = w.f.G, raycast = G.physics.raycast;

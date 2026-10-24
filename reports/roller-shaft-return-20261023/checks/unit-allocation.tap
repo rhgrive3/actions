@@ -1,0 +1,12 @@
+✔ saved production snapshot reproduces q0/qUp and old-fails/new-passes49 without a late residual (4.48395ms)
+✔ release before/at/after back and late release capture the actual eligible sample, never a future pose (1.680721ms)
+✔ waypoint uses the real socket, world up and live scale; fixed waypoint and record storage are reused (1.366386ms)
+✔ repress, new attack, rewind, explicit cancellation, heavy and collapsed scale cannot reuse an old path (0.489941ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 357.508186

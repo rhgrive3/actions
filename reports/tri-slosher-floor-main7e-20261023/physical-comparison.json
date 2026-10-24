@@ -1,0 +1,123 @@
+{
+  "status": "passed",
+  "cases": [
+    {
+      "pitch": -20,
+      "hz": 30,
+      "ink": 94.3,
+      "peakMain": 9,
+      "peakDrops": 5,
+      "peakBlobs": 5,
+      "cells": 872,
+      "turf": 54.5,
+      "gridHash": "887197cefce7cedaaaf2f49b63022df1e6383541b2dd732b2b69c5bff34e8d67",
+      "entirePhysicalReceiptSha256": "627612884605d7ce8c24f669ce488804e2b85972e0b877d583040e5517ddb420",
+      "sourceEqualsEmittedControlEqualsEmittedCandidate": true
+    },
+    {
+      "pitch": -20,
+      "hz": 60,
+      "ink": 94.3,
+      "peakMain": 9,
+      "peakDrops": 5,
+      "peakBlobs": 5,
+      "cells": 872,
+      "turf": 54.5,
+      "gridHash": "887197cefce7cedaaaf2f49b63022df1e6383541b2dd732b2b69c5bff34e8d67",
+      "entirePhysicalReceiptSha256": "e1cbc1583761d3583501a6936d1d2c0e204cc295694683bc93ca6c29d48ddb94",
+      "sourceEqualsEmittedControlEqualsEmittedCandidate": true
+    },
+    {
+      "pitch": -20,
+      "hz": 120,
+      "ink": 94.3,
+      "peakMain": 9,
+      "peakDrops": 5,
+      "peakBlobs": 5,
+      "cells": 872,
+      "turf": 54.5,
+      "gridHash": "887197cefce7cedaaaf2f49b63022df1e6383541b2dd732b2b69c5bff34e8d67",
+      "entirePhysicalReceiptSha256": "a2c4faf3b389bd30e9d3f09fb586be36863d3afa4730e87e6344a29fd1a049ee",
+      "sourceEqualsEmittedControlEqualsEmittedCandidate": true
+    },
+    {
+      "pitch": 0,
+      "hz": 30,
+      "ink": 94.3,
+      "peakMain": 9,
+      "peakDrops": 5,
+      "peakBlobs": 5,
+      "cells": 1290,
+      "turf": 80.625,
+      "gridHash": "90d62c525398d5d4a3157c924e9e34eee85534af170706df25e049d83036c0e7",
+      "entirePhysicalReceiptSha256": "dafe387bd3f0d565083547e02f676af31e08664b99e1011ef03bda38bcad108c",
+      "sourceEqualsEmittedControlEqualsEmittedCandidate": true
+    },
+    {
+      "pitch": 0,
+      "hz": 60,
+      "ink": 94.3,
+      "peakMain": 9,
+      "peakDrops": 5,
+      "peakBlobs": 5,
+      "cells": 1290,
+      "turf": 80.625,
+      "gridHash": "90d62c525398d5d4a3157c924e9e34eee85534af170706df25e049d83036c0e7",
+      "entirePhysicalReceiptSha256": "a5d92ad52b7a182e44cab07e04da5196b5fdfdbdd2ac584af486f4a0fb3a51f8",
+      "sourceEqualsEmittedControlEqualsEmittedCandidate": true
+    },
+    {
+      "pitch": 0,
+      "hz": 120,
+      "ink": 94.3,
+      "peakMain": 9,
+      "peakDrops": 5,
+      "peakBlobs": 5,
+      "cells": 1290,
+      "turf": 80.625,
+      "gridHash": "90d62c525398d5d4a3157c924e9e34eee85534af170706df25e049d83036c0e7",
+      "entirePhysicalReceiptSha256": "9854d4ad948c103af77c7c63aecf44d5d928084a74e0ec181d5e6b8e96baad62",
+      "sourceEqualsEmittedControlEqualsEmittedCandidate": true
+    },
+    {
+      "pitch": 20,
+      "hz": 30,
+      "ink": 94.3,
+      "peakMain": 9,
+      "peakDrops": 5,
+      "peakBlobs": 5,
+      "cells": 1343,
+      "turf": 83.9375,
+      "gridHash": "0c4235631e59829128ddc4f6d60cd42e8c981788a235571435ca6060897b6f18",
+      "entirePhysicalReceiptSha256": "9c21db03ab978761b6eec170d3c00c8e15faac24a2c647bd1ef36212ad3fbb4f",
+      "sourceEqualsEmittedControlEqualsEmittedCandidate": true
+    },
+    {
+      "pitch": 20,
+      "hz": 60,
+      "ink": 94.3,
+      "peakMain": 9,
+      "peakDrops": 5,
+      "peakBlobs": 5,
+      "cells": 1343,
+      "turf": 83.9375,
+      "gridHash": "0c4235631e59829128ddc4f6d60cd42e8c981788a235571435ca6060897b6f18",
+      "entirePhysicalReceiptSha256": "6ed78ecac5edeb29eea4b8af8f510410a20a526de1dc4a762739b68d6582978f",
+      "sourceEqualsEmittedControlEqualsEmittedCandidate": true
+    },
+    {
+      "pitch": 20,
+      "hz": 120,
+      "ink": 94.3,
+      "peakMain": 9,
+      "peakDrops": 5,
+      "peakBlobs": 5,
+      "cells": 1343,
+      "turf": 83.9375,
+      "gridHash": "0c4235631e59829128ddc4f6d60cd42e8c981788a235571435ca6060897b6f18",
+      "entirePhysicalReceiptSha256": "161dd51aaa3dc682441da7466a782912ed5513f4b3c5bf6c4e84b1771cf789e0",
+      "sourceEqualsEmittedControlEqualsEmittedCandidate": true
+    }
+  ],
+  "clock": "Production FixedClock emits 60Hz simulation callbacks for 30/60/120Hz elapsed intervals. VM-owned arrays are JSON-normalized before cross-fixture comparisons."
+}

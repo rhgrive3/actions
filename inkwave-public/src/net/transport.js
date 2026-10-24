@@ -5,9 +5,9 @@
 // Major wire changes require a relay update. Bump COMPAT when gameplay,
 // authoritative rules or network schema changes; UI-only releases remain compatible.
 export const PROTO = 2;
-// Fresh receiver-origin owner-clock proofs are mandatory in this gameplay epoch.
-// Earlier peers cannot provide the nonce-bound initial clock origin.
-export const COMPAT = 'iw-gameplay-20261022-owner-clock-v1';
+// This epoch retains mandatory fresh owner-clock proofs and adds authoritative
+// spawn exclusion. Older peers must not walk through a newer peer's spawn.
+export const COMPAT = 'iw-gameplay-20261023-spawn-exclusion-v1';
 export const MAX_RELAY_FRAME_CHARS = 64 * 1024 + 64;
 
 // Where the relay lives: ?relay=… wins; a page served from this machine or the LAN talks to a local `wrangler dev`

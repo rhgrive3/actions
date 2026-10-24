@@ -1,0 +1,15 @@
+{
+  "README.md": "9bf3fc859d2ffe7437445b6f60dd3ed4d45a64383707f71fad3f43beb51c8815",
+  "build-readback-committed.json": "ebc6d7b583813f20a2611166efc7815c4f322ebf5c2820eeb056f9adf209c120",
+  "build.log": "9df74ade2f630ce93ce29378f5c60f92e2f8c3b9135735337bf0f1827e0ddbe9",
+  "commands.txt": "d62ef14ea2b0c69474aa7bf5205a16b5344c36244b57f4a3fe1bfc59cb998bc1",
+  "f72-before.tap.gz": "6105eaa592fd8acadb99278c884f0e5709259f34618fd37bfc9d4b016f2817f8",
+  "f72-ci-source-before.tap.gz": "d8432b4a9bd1ff3e186d06e338cbb0bb7bd2464e8a7460e4c2f3a2f52ef84c7d",
+  "fixed-ci-source-after.tap.gz": "e2f2a42ac0d689e257af40675b78b31411a6caf9e4282b31821b8a2fb45fb9dc",
+  "fixed-emitted-and-targeted.tap.gz": "e3587c148b60d3ba1e37bab8c4fb9364f038ce3bebf3ea74edc71c1568eb3943",
+  "fixed-targeted.tap.gz": "d0c5f8220f96fa8aee3bdc2a60836dbc5043e9beff1c3a68c124089e21327019",
+  "references-emitted.json": "ad5f553fa9f3c2f2edac254e5f873518f4391ce1bde3fde7045041a01e4c23f3",
+  "startup-budget.log": "6f4a60891c4cd5e0be308159dbc89227e5b15839bc66d4f7991512971ac92cf9",
+  "surrounding-source.tap.gz": "f03968baa3c3e2ffaaf945c0272ba05bc13dd5c78f316ed8e4d1618011fd808d",
+  "validation.json": "dcb9413766acdf864a609749884c02eedb62e2dab83374c7609c52e8d8038b59"
+}

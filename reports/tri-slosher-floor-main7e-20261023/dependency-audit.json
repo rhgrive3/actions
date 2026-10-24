@@ -1,0 +1,52 @@
+{
+  "baseMain": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "originalCandidate": "7b80097836e96baee170a6da8584750c9c0c1c56",
+  "runtimeValidatedAt": "5e95dda1e7ce1912565410a6558a50f808691419",
+  "branch": "codex/tri-slosher-floor-main7e-20261023",
+  "newMainDeltaFrom726": [
+    "patches/local-quality/static-menu-adapter.mjs",
+    "patches/local-quality/tests/static-menu-art.test.mjs"
+  ],
+  "ownRuntimePaths": [
+    "patches/splatoon3/runtime/projectile-presentation.mjs"
+  ],
+  "ownRuntimeBlob": "54f90896181bd28feefbd0bdff2c9347db03265f",
+  "unchangedProtectedPaths": {
+    "patches/splatoon3/runtime/area-special-vfx-clock.mjs": {
+      "main7e": null,
+      "candidate": null
+    },
+    "patches/splatoon3/runtime/special-motion.mjs": {
+      "main7e": "643d89ab8f56c9378b661b4bdc5f0eceb440dc77",
+      "candidate": "643d89ab8f56c9378b661b4bdc5f0eceb440dc77"
+    },
+    "patches/splatoon3/runtime/special-presentation.mjs": {
+      "main7e": "e15c40dc00487416c2f55ad3936b590562bec2b7",
+      "candidate": "e15c40dc00487416c2f55ad3936b590562bec2b7"
+    },
+    "patches/splatoon3/runtime/special-vfx.mjs": {
+      "main7e": "01911bf47b140ecd603d0080d065b280b37295df",
+      "candidate": "01911bf47b140ecd603d0080d065b280b37295df"
+    },
+    "patches/splatoon3/weapons-adapter.mjs": {
+      "main7e": "62e870ad9560e581b7ef6470ff52ee73fe441d91",
+      "candidate": "62e870ad9560e581b7ef6470ff52ee73fe441d91"
+    },
+    "patches/splatoon3/adapter.mjs": {
+      "main7e": "d0fa9907e1f3b343f21ca560fdeeddd29795b988",
+      "candidate": "d0fa9907e1f3b343f21ca560fdeeddd29795b988"
+    },
+    "scripts/inkwave-source-composition.mjs": {
+      "main7e": "a61100acdd90db510fafb99d6636c8fffff1295c",
+      "candidate": "a61100acdd90db510fafb99d6636c8fffff1295c"
+    }
+  },
+  "qaSources": {
+    "c68": "c68c9d22908d46edd283ebfb5e73759d24b7e955",
+    "c68CheckerByteIdentical": true,
+    "c68TestsPreservedOutsideAddedNineEdgeBlock": true,
+    "pr1853": "def8b30deb621d3f73ace57c7a0dd67944272f66",
+    "pr1853NineEdgeAssertionsByteIdentical": true,
+    "note": "c68 commit was cherry-picked alone; neither its unrelated special ancestors nor the 22f3 special tree were merged."
+  }
+}

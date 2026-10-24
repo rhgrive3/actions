@@ -1,0 +1,9 @@
+{
+  "jobId": 120614926508,
+  "runId": 40007622297,
+  "sourceSha": "4d6166936eaa8058a8b936053992960b510eec88",
+  "utf8Bytes": 239420,
+  "decodedUtf16Units": 239416,
+  "sha256": "2c32c43ce6783acad94f9df48f4f9a6c10d8283ac6fc91490d1e7f9efca69870",
+  "gzipRoundtripEqual": true
+}

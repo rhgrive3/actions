@@ -1,0 +1,12 @@
+[
+  {
+    "path": "patches/local-quality/static-menu-adapter.mjs",
+    "unchanged": true,
+    "sha256": "991dd8f97df2508e6ef090d9a80457d741492ab2de9537ebde328afdc62ba62f"
+  },
+  {
+    "path": "patches/local-quality/tests/static-menu-art.test.mjs",
+    "unchanged": true,
+    "sha256": "b0dee02f3edf37fb3650e5708c7bb626afedd0560a788d26aaab882f78d80ddf"
+  }
+]

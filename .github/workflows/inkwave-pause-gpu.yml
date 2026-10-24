@@ -24,6 +24,26 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify exact checkout head
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EVENT_SHA: ${{ github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          case "$EVENT_NAME" in
+            pull_request) source_sha="$PR_HEAD_SHA" ;;
+            workflow_dispatch|push) source_sha="$EVENT_SHA" ;;
+            *) echo "Unsupported checkout event" >&2; exit 1 ;;
+          esac
+          [[ "$source_sha" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid source SHA" >&2; exit 1; }
+          [[ "$EXPECTED_SHA" == "$source_sha" ]] || { echo "Checkout input does not match event head" >&2; exit 1; }
+          actual_sha="$(git rev-parse --verify HEAD)"
+          [[ "$actual_sha" == "$source_sha" ]] || { echo "Checkout HEAD does not match requested source SHA" >&2; exit 1; }
       - uses: actions/setup-node@v4
         with:
           node-version: 22
