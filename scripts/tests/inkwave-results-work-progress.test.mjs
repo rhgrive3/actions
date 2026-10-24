@@ -31,7 +31,7 @@ function fixture(options={}){
   if(match.state==='playing'){G.fx.update(dt);G.paint.flush(dt);}G.env.update(dt);g.decor.update(dt);g.rig.update(dt);G.projectiles.syncSights();G.projectiles.syncVisuals();G.projectiles.updateArc();g.showcase.update(dt);g._updateLocalLoops(dt);g._updateAmbience(dt);G.audio.setListener();g.R.render();g.showcase.render();if(match.state==='playing')g._updateHud(dt);g.menus.update(dt);g.input.endFrame();};
  for(const obj of [...G.actors,G.projectiles,G.paint,G.fx,G.env,G.audio,G.renderer,g.R,g.R.composer,g.input,g.decor,g.rig,g.showcase,g.menus,g,g.s3Clock,gl])for(const key of Reflect.ownKeys(obj))if(typeof obj[key]==='function')originals.push([obj,key,obj[key]]);
  const context={__G:G,document:{hidden:false},performance:{now:()=>{if(clockErrorOnce){clockErrorOnce=false;throw Error('diagnostic clock');}time+=options.clockStep??1;return time;}},console:{info:text=>{time+=options.emitDelayMs??0;messages.push(text);options.sink?.(text);if(options.consoleError)throw options.consoleError;}}};
- return {G,g,match,work,frames,messages,run(source=measureResultsWork.toString(),args={token:'test'}){return vm.runInNewContext('('+source+')',context)(args);},restored(){for(const [obj,key,fn]of originals)assert.equal(obj[key],fn,key);assert.equal(match.state,'intro');assert.equal(match.paused,true);assert.equal(Object.hasOwn(g.s3Clock,'advance'),false);}};
+ return {G,g,match,work,frames,messages,advanceTime:ms=>{time+=ms;},run(source=measureResultsWork.toString(),args={token:'test'}){return vm.runInNewContext('('+source+')',context)(args);},restored(){for(const [obj,key,fn]of originals)assert.equal(obj[key],fn,key);assert.equal(match.state,'intro');assert.equal(match.paused,true);assert.equal(Object.hasOwn(g.s3Clock,'advance'),false);}};
 }
 test('one synchronous evaluate preserves all240 native calls/order/dt/state and original work counts',async()=>{
  const original=fixture(),expected=original.run(baselineSource),progress=createResultsProgress('test'),f=fixture({sink:progress.accept});let calls=0,listener;
@@ -170,7 +170,7 @@ test('summary remains best effort on snapshot/publish/stderr failure and is abse
  let outputs=0;const diagnose=idleFailureReporter({snapshot:summaryData,publish:()=>assert.fail('no failure receipt on success'),page:()=>null,stderr:()=>{outputs++;}});assert.equal(await runIdleProbe(()=>42,{diagnose,cleanup:()=>{}}),42);assert.equal(outputs,0);
 });
 
-const diagnosticSamples=f=>f.messages.map(text=>JSON.parse(text.slice(text.indexOf('{')))).filter(e=>e.producer==='sample'&&e.edge==='exit');
+const diagnosticSamples=f=>f.messages.filter(text=>text.includes('"producer":"sample","edge":"exit"')).map(text=>JSON.parse(text.slice(text.indexOf('{'))));
 for(const control of [
  {name:'console only',emitDelayMs:3,drawsPerFrame:1,delays:{},renderer:0,draw:0,other:0},
  {name:'renderer body only',emitDelayMs:0,drawsPerFrame:1,delays:{'renderer.render':7},renderer:7,draw:0,other:7},
@@ -206,4 +206,120 @@ test('renderer and existing aggregate draw wrappers preserve borrowed receivers,
  f.G.renderer.render=renderer;gl.drawArrays=draw;f.g._frame=dt=>{assert.equal(f.G.renderer.render.call(receiver,17,arg),rendererReturn);assert.equal(gl.drawArrays.call(receiver,23,arg),drawReturn);return oldFrame(dt);};
  f.run();assert.equal(rendererCalls,240);assert.equal(drawCalls,240);assert.equal(f.G.renderer.render,renderer);assert.equal(gl.drawArrays,draw);
  f.G.renderer.render=oldRenderer;gl.drawArrays=oldDraw;f.g._frame=oldFrame;f.restored();
+});
+
+function nonDrawFixture({nested=false,throwValue,throws=false,...options}={}){
+ const f=fixture({clockStep:0,...options}),gl=f.G.renderer.getContext(),oldRenderer=f.G.renderer.render,oldWorld=f.g.R.render;
+ const calls=[];
+ const method=(name,delay)=>function(){calls.push([name,this===gl,Array.from(arguments)]);f.advanceTime(delay);if(throws&&name==='bufferData'&&f.match.state==='results'&&f.frames.length===239)throw throwValue;if(nested&&name==='bufferData'){gl.uniform1f(5,6);gl.drawArrays(4,0,3);}return name;};
+ const methods={compileShader:method('compileShader',2),bufferData:method('bufferData',3),bindFramebuffer:method('bindFramebuffer',4),clear:method('clear',5),getParameter:method('getParameter',6),uniform1f:method('uniform1f',7),useProgram:method('useProgram',8)};
+ const proto=Object.create(Object.getPrototypeOf(gl));proto.bufferData=methods.bufferData;Object.setPrototypeOf(gl,proto);
+ for(const [name,fn]of Object.entries(methods))if(name!=='bufferData')Object.defineProperty(gl,name,{value:fn,writable:true,configurable:true,enumerable:false});
+ const descriptors=Object.fromEntries(Object.keys(methods).map(name=>[name,Object.getOwnPropertyDescriptor(gl,name)]));
+ f.G.renderer.render=function(){gl.compileShader(1);gl.bufferData(2,3);if(!nested)gl.uniform1f(5,6);gl.clear(7);gl.getParameter(8);gl.useProgram(9);return oldRenderer.apply(this,arguments);};
+ f.g.R.render=function(){gl.bindFramebuffer(10,11);return oldWorld.apply(this,arguments);};
+ const renderer=f.G.renderer.render,world=f.g.R.render;
+ return {...f,gl,calls,methods,verifyRestored(){assert.equal(f.G.renderer.render,renderer);assert.equal(f.g.R.render,world);for(const key of Object.keys(methods)){assert.equal(gl[key],methods[key]);assert.deepEqual(Object.getOwnPropertyDescriptor(gl,key),descriptors[key]);}f.G.renderer.render=oldRenderer;f.g.R.render=oldWorld;f.restored();}};
+}
+test('opt-in non-draw attribution preserves all240 calls and separates renderer wall from outer target work',()=>{
+ const base=nonDrawFixture(),expected=base.run(baselineSource),f=nonDrawFixture(),actual=f.run(undefined,{token:'test',nonDrawGL:true});
+ assert.deepEqual(f.frames,base.frames);assert.deepEqual(f.work,base.work);assert.deepEqual(f.calls,base.calls);
+ for(const state of ['playing','results'])for(const key of ['actorUpdates','projectileUpdates','paintFlushes','fxUpdates','worldRenders','gpuDrawSubmissions'])assert.equal(actual[state][key],expected[state][key]);
+ for(const e of diagnosticSamples(f)){
+  const t=e.timing,n=t.nonDrawGL;assert.equal(n.calls,840);assert.equal(n.outerCalls,840);assert.equal(n.wallMs,4200);assert.equal(n.inRendererWallMs,3720);
+  assert.equal(t.renderer.wallMs,3720);assert.equal(t.renderer.otherWallMs,3720);assert.equal(t.draws.wallMs,0);
+  for(const [group,method,delay]of [['program','compileShader',2],['upload','bufferData',3],['target','bindFramebuffer',4],['clear','clear',5],['query','getParameter',6],['uniform','uniform1f',7],['state','useProgram',8]]){
+   const b=n.groups[group];assert.equal(b.calls,120);assert.equal(b.outerCalls,120);assert.equal(b.wallMs,120*delay);assert.equal(b.inRendererWallMs,group==='target'?0:120*delay);assert.equal(b.maxWallMs,delay);assert.equal(b.maxMethod,method);assert.equal(b.maxFrame,1);assert.equal(b.maxRendererOrdinal,group==='target'?0:1);assert.equal(b.availableMethods,1);assert(b.unavailableMethods>=0);
+  }
+ }
+ assert(f.messages.every(text=>text.length<=4096));assert(f.messages.every(text=>!JSON.parse(text.slice(text.indexOf('{'))).producer.startsWith('gl.')));assert.equal(f.frames.length,240);base.verifyRestored();f.verifyRestored();
+});
+test('non-draw instrumentation defaults off and never invokes an uncalled native query or sync',()=>{
+ const f=nonDrawFixture();for(const key of ['finish','flush','readPixels','clientWaitSync'])f.gl[key]=()=>assert.fail('observer invoked '+key);
+ f.run();for(const e of diagnosticSamples(f))assert.equal(e.timing.nonDrawGL,undefined);f.verifyRestored();
+ const enabled=nonDrawFixture();for(const key of ['finish','flush','readPixels','clientWaitSync'])enabled.gl[key]=()=>assert.fail('observer invoked '+key);
+ enabled.run(undefined,{token:'test',nonDrawGL:true});enabled.verifyRestored();
+});
+test('nested non-draw categories count calls once and exclude nested observed draws from wall attribution',()=>{
+ const f=nonDrawFixture({nested:true,delays:{'gl.drawArrays':4}});f.run(undefined,{token:'test',nonDrawGL:true});
+ for(const e of diagnosticSamples(f)){
+  const t=e.timing,n=t.nonDrawGL;assert.equal(n.calls,840);assert.equal(n.outerCalls,720);assert.equal(n.wallMs,4200);assert.equal(n.inRendererWallMs,3720);
+  assert.equal(n.groups.upload.wallMs,1200);assert.equal(n.groups.uniform.calls,120);assert.equal(n.groups.uniform.outerCalls,0);assert.equal(n.groups.uniform.wallMs,0);
+  assert.equal(t.draws.wallMs,960);assert.equal(t.renderer.otherWallMs,3720);
+ }
+ f.verifyRestored();
+});
+for(const value of [Error('native GL'),0,false,null,undefined])test('optional non-draw wrapper preserves native throw '+String(value)+' and exact descriptors',()=>{
+ const f=nonDrawFixture({throws:true,throwValue:value});let failed=false,caught;try{f.run(undefined,{token:'test',nonDrawGL:true});}catch(error){failed=true;caught=error;}
+ assert.equal(failed,true);assert.equal(caught,value);assert.equal(f.frames.length,239);f.verifyRestored();
+});
+test('optional non-draw wrapper preserves borrowed receiver, arguments and return identity',()=>{
+ const f=fixture({clockStep:0}),gl=f.G.renderer.getContext(),receiver={},arg={},returned={},oldFrame=f.g._frame;let calls=0;
+ const native=function(){assert.equal(this,receiver);assert.deepEqual(Array.from(arguments),[23,arg]);calls++;return returned;};
+ const descriptor={value:native,writable:true,configurable:true,enumerable:false};Object.defineProperty(gl,'getParameter',descriptor);
+ f.g._frame=dt=>{assert.equal(gl.getParameter.call(receiver,23,arg),returned);return oldFrame(dt);};
+ f.run(undefined,{token:'test',nonDrawGL:true});assert.equal(calls,240);assert.deepEqual(Object.getOwnPropertyDescriptor(gl,'getParameter'),descriptor);f.g._frame=oldFrame;f.restored();
+});
+test('diagnostic opt-in reaches only the existing synchronous callback; default arguments remain unchanged',async()=>{
+ for(const enabled of [false,true]){
+  const f=nonDrawFixture(),p=createResultsProgress('test');let calls=0;
+  const page={on(){},off(){},evaluate(fn,args){calls++;assert.equal(fn,measureResultsWork);assert.deepEqual(args,enabled?{token:'test',nonDrawGL:true}:{token:'test'});return Promise.resolve(f.run(fn.toString(),args));}};
+  await runResultsWorkDiagnostic(page,p,enabled?{nonDrawGL:true}:{});assert.equal(calls,1);assert.equal(f.frames.length,240);f.verifyRestored();
+ }
+ const f=fixture();assert.throws(()=>f.run(undefined,{token:'test',nonDrawGL:'yes'}),/Invalid results progress/);
+});
+test('cross-category double-count negative control is detected without altering native240-frame workload',()=>{
+ const source=measureResultsWork.toString(),mutant=source.replace('nonDrawDepth++===0&&drawDepth===0','(nonDrawDepth++,drawDepth===0)');assert.notEqual(mutant,source);
+ const f=nonDrawFixture({nested:true,delays:{'gl.drawArrays':4}});f.run(mutant,{token:'test',nonDrawGL:true});assert.equal(f.frames.length,240);
+ for(const e of diagnosticSamples(f)){assert.notEqual(e.timing.nonDrawGL.outerCalls,720);assert.notEqual(e.timing.nonDrawGL.wallMs,4200);}f.verifyRestored();
+});
+test('borrowed native forwarding negative control fails the actual receiver assertion',()=>{
+ const source=measureResultsWork.toString(),mutant=source.replace('return old.apply(this,arguments);','return old.call(gl);');assert.notEqual(mutant,source);
+ const f=fixture({clockStep:0}),gl=f.G.renderer.getContext(),receiver={},oldFrame=f.g._frame;gl.getParameter=function(){assert.equal(this,receiver,'native receiver preserved');};f.g._frame=dt=>{gl.getParameter.call(receiver,1);return oldFrame(dt);};
+ assert.throws(()=>f.run(mutant,{token:'test',nonDrawGL:true}),/native receiver preserved/);f.g._frame=oldFrame;f.restored();
+});
+
+test('sample selection preserves exact exit records while retaining every progress message',()=>{
+ const f=nonDrawFixture();f.run(undefined,{token:'test',nonDrawGL:true});
+ const before=f.messages.slice(),original=f.messages.map(text=>JSON.parse(text.slice(text.indexOf('{')))).filter(e=>e.producer==='sample'&&e.edge==='exit');
+ assert.equal(original.length,2);assert.deepEqual(diagnosticSamples(f),original);assert.deepEqual(f.messages,before);f.verifyRestored();
+});
+for(const kind of ['readonly-data','accessor','inherited-readonly'])test('non-draw wrapper preserves '+kind+' descriptors without invoking setters',()=>{
+ const f=fixture({clockStep:0}),gl=f.G.renderer.getContext(),originalRender=f.G.renderer.render;let calls=0,setters=0;
+ const native=function(a,b){assert.strictEqual(this,gl);assert.equal(a,1);assert.equal(b,2);calls++;return 17;};
+ let prototype;
+ if(kind==='inherited-readonly'){prototype=Object.create(Object.getPrototypeOf(gl));Object.defineProperty(prototype,'bufferData',{value:native,writable:false,enumerable:true,configurable:false});Object.setPrototypeOf(gl,prototype);}
+ else if(kind==='accessor')Object.defineProperty(gl,'bufferData',{get:()=>native,set:()=>{setters++;throw Error('setter must not run');},enumerable:true,configurable:true});
+ else Object.defineProperty(gl,'bufferData',{value:native,writable:false,enumerable:true,configurable:true});
+ const before=Object.getOwnPropertyDescriptor(gl,'bufferData'),inherited=prototype&&Object.getOwnPropertyDescriptor(prototype,'bufferData');
+ const render=function(...args){assert.equal(gl.bufferData(1,2),17);return originalRender.apply(this,args);};f.G.renderer.render=render;
+ f.run(measureResultsWork.toString(),{token:'test',nonDrawGL:true});assert.equal(calls,240);assert.equal(setters,0);
+ const samples=diagnosticSamples(f);assert.equal(samples.length,2);
+ for(const e of samples){assert.equal(e.timing.nonDrawGL.groups.upload.calls,120);assert.equal(e.timing.nonDrawGL.groups.upload.outerCalls,120);}
+ assert.deepEqual(Object.getOwnPropertyDescriptor(gl,'bufferData'),before);if(prototype)assert.deepEqual(Object.getOwnPropertyDescriptor(prototype,'bufferData'),inherited);assert.strictEqual(f.G.renderer.render,render);f.G.renderer.render=originalRender;f.restored();
+});
+test('unreplaceable non-draw descriptor fails setup and restores previously installed wrappers',()=>{
+ const f=fixture(),gl=f.G.renderer.getContext(),first=function(){},blocked=function(){};
+ Object.defineProperty(gl,'createProgram',{value:first,writable:false,enumerable:false,configurable:true});Object.defineProperty(gl,'bufferData',{value:blocked,writable:false,enumerable:true,configurable:false});
+ const beforeFirst=Object.getOwnPropertyDescriptor(gl,'createProgram'),beforeBlocked=Object.getOwnPropertyDescriptor(gl,'bufferData');let failed=false;
+ try{f.run(measureResultsWork.toString(),{token:'test',nonDrawGL:true});}catch(error){failed=true;assert.equal(error.name,'TypeError');}
+ assert(failed);assert.equal(f.frames.length,0);assert.deepEqual(Object.getOwnPropertyDescriptor(gl,'createProgram'),beforeFirst);assert.deepEqual(Object.getOwnPropertyDescriptor(gl,'bufferData'),beforeBlocked);f.restored();
+});
+for(const kind of ['readonly-data','accessor'])test('assignment installation negative control is rejected for '+kind,()=>{
+ const source=measureResultsWork.toString();
+ const installation="Object.defineProperty(gl,key,descriptor?('value' in descriptor?{...descriptor,value:wrapped}:{configurable:descriptor.configurable,enumerable:descriptor.enumerable,writable:true,value:wrapped}):{configurable:true,enumerable:false,writable:true,value:wrapped});";
+ assert.equal(source.split(installation).length,2);
+ const mutant=source.replace(installation,'gl[key]=wrapped;'),f=fixture({clockStep:0}),gl=f.G.renderer.getContext(),originalRender=f.G.renderer.render;
+ const native=function(){return 17;};
+ if(kind==='accessor')Object.defineProperty(gl,'bufferData',{get:()=>native,set:()=>{throw Error('setter must not run');},configurable:true});
+ else Object.defineProperty(gl,'bufferData',{value:native,writable:false,configurable:true});
+ const before=Object.getOwnPropertyDescriptor(gl,'bufferData');
+ f.G.renderer.render=function(){assert.equal(gl.bufferData(),17);return originalRender.apply(this,arguments);};
+ if(kind==='accessor')assert.throws(()=>f.run(mutant,{token:'test',nonDrawGL:true}),/setter must not run/);
+ else{
+  f.run(mutant,{token:'test',nonDrawGL:true});assert.equal(f.frames.length,240);
+  const samples=diagnosticSamples(f);assert.equal(samples.length,2);
+  for(const e of samples)assert.throws(()=>assert.equal(e.timing.nonDrawGL.groups.upload.calls,120,'instrumentation must observe native uploads'),/instrumentation must observe native uploads/);
+ }
+ assert.deepEqual(Object.getOwnPropertyDescriptor(gl,'bufferData'),before);f.G.renderer.render=originalRender;f.restored();
 });

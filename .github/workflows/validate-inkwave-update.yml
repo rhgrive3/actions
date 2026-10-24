@@ -99,6 +99,10 @@ on:
         description: With diagnostic_only and without network opening, run only native wall verification; never full acceptance
         type: boolean
         default: false
+      idle_resources_diagnostic:
+        description: With diagnostic_only, run only unchanged idle workload with GL attribution; never full acceptance
+        type: boolean
+        default: false
       deep_lifecycle:
         description: Run the full 10-cycle rematch lifecycle instead of the fast 3-cycle gate
         type: boolean
@@ -981,7 +985,7 @@ jobs:
           retention-days: 14
 
   render-diagnostic:
-    if: inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic != true
+    if: inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic != true && inputs.idle_resources_diagnostic != true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -1047,7 +1051,7 @@ jobs:
 
   network-opening-diagnostic:
     # A scoped diagnostic run is not the Validate acceptance gate.
-    if: github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true
+    if: github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true && inputs.idle_resources_diagnostic != true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -1124,9 +1128,87 @@ jobs:
           path: ${{ env.CI_STORAGE }}/evidence/combat-ceiling/
           retention-days: 14
 
+  idle-resources-diagnostic:
+    # A scoped diagnostic run is not the Validate acceptance gate.
+    if: github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.idle_resources_diagnostic == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      WORKFLOW_SHA: ${{ github.workflow_sha }}
+      CI_STORAGE: /mnt/workspace/inkwave-idle-resources-${{ github.run_id }}-${{ github.run_attempt }}
+      TMPDIR: ${{ github.workspace }}/.ci-scratch
+      TMP: ${{ github.workspace }}/.ci-scratch
+      TEMP: ${{ github.workspace }}/.ci-scratch
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.browser-cache
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/*/
+            /.github/
+            /inkwave-public/
+            /patches/
+            /scripts/
+            /server/
+            /tests/
+            /tools/
+            !/tools/inkwave-modeler/
+            /reports/
+            /docs/
+      - name: Verify immutable workflow and source identity
+        run: |
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$WORKFLOW_SHA" = "$SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prepare bounded diagnostic storage
+        run: |
+          mkdir -p .ci-scratch .built-site
+          test "$(realpath -m "$CI_STORAGE")" = "$CI_STORAGE"
+          sudo mkdir -p "$CI_STORAGE"
+          sudo chown "$(id -u):$(id -g)" "$CI_STORAGE"
+          test "$(realpath "$CI_STORAGE")" = "$CI_STORAGE"
+          mkdir -p "$CI_STORAGE/evidence/idle-resources"
+          printf 'source=%s\nworkflow=%s\n' "$SOURCE_SHA" "$WORKFLOW_SHA" > "$CI_STORAGE/evidence/idle-resources/source-identity.txt"
+          browser_tmp=/mnt/workspace/.dev-state/agent-work/cache/iwrui
+          test "$(realpath -m "$browser_tmp")" = "$browser_tmp"
+          sudo mkdir -p "$browser_tmp"
+          sudo chown "$(id -u):$(id -g)" "$browser_tmp"
+      - name: Verify isolated idle diagnostic contracts
+        run: node --test --test-concurrency=1 scripts/tests/inkwave-idle-diagnostic-workflow.test.mjs scripts/tests/inkwave-results-work-progress.test.mjs scripts/tests/inkwave-idle-evaluate-deadline.test.mjs scripts/tests/inkwave-idle-resources-gates.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs scripts/tests/inkwave-network-diagnostic-workflow.test.mjs
+      - name: Install pinned build and browser dependencies
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8
+          sudo python3 scripts/prepare-inkwave-ci-apt.py
+          npx --no-install playwright install --with-deps chromium
+      - name: Build the exact source without production overrides
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public .built-site/_site
+          git rev-parse HEAD > .built-site/_site-source-sha.txt
+          test "$(cat .built-site/_site-source-sha.txt)" = "$SOURCE_SHA"
+      - name: Diagnose unchanged native idle workload
+        env:
+          INKWAVE_IDLE_GL_DIAGNOSTICS: '1'
+        run: node scripts/check-inkwave-idle-resources.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/idle-resources" --profile-dir "$CI_STORAGE/cache/idle-resources" --exact-source
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-idle-resources-diagnostic-${{ env.SOURCE_SHA }}-${{ github.run_id }}-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: warn
+          path: ${{ env.CI_STORAGE }}/evidence/idle-resources/
+          retention-days: 14
+
   wall-render-diagnostic:
     # A scoped diagnostic run is not the Validate acceptance gate.
-    if: github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic == true
+    if: github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic == true && inputs.idle_resources_diagnostic != true
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

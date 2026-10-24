@@ -2,7 +2,21 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const file=new URL('../../.github/workflows/validate-inkwave-update.yml',import.meta.url);
-const workflow=readFileSync(file,'utf8');
+const actualWorkflow=readFileSync(file,'utf8');
+const idleExcludedConditions = ["inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic != true", "github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true", "github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic == true"];
+function canonicalIdleConditions(text) {
+ assert.equal(text.split(' && inputs.idle_resources_diagnostic != true').length,4,'exact three idle exclusions required');
+ assert.equal(text.split('inputs.idle_resources_diagnostic').length,5,'only reviewed idle predicates allowed');
+ for (const old of idleExcludedConditions) {
+  const before='    if: '+old+' && inputs.idle_resources_diagnostic != true\n';
+  assert.equal(text.split(before).length,2,'exact reviewed idle exclusion required');
+  text=text.replace(before,'    if: '+old+'\n');
+ }
+ assert.equal(text.split(' && inputs.idle_resources_diagnostic != true').length,1,'all reviewed exclusions inverted');
+ assert.equal(text.split('inputs.idle_resources_diagnostic').length,2,'only the isolated idle predicate remains');
+ return text;
+}
+const workflow=canonicalIdleConditions(actualWorkflow);
 const guard='node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs';
 const helper='scripts/tests/inkwave-opening-peer-diagnostic.test.mjs';
 const job=(text,name)=>{
@@ -75,4 +89,14 @@ test('bounded helper contracts cannot disappear from either CI route',()=>{
  for(const changed of [workflow.replace(`${guard} ${helper}`,guard),workflow.replace(`node --test scripts/tests/inkwave-combat-ceiling-placement.test.mjs ${helper}`,'node --test scripts/tests/inkwave-combat-ceiling-placement.test.mjs')]){
   assert.notEqual(changed,workflow);assert.throws(()=>verify(changed));
  }
+});
+
+test('idle exclusions reject missing, duplicated, altered and unknown conditions before canonicalization',()=>{
+ for(const old of idleExcludedConditions){
+  const exact='    if: '+old+' && inputs.idle_resources_diagnostic != true\n';
+  for(const replacement of [exact.replace(' && inputs.idle_resources_diagnostic != true',''),exact+exact,exact.replace('inputs.idle_resources_diagnostic != true','inputs.idle_resources_diagnostic == true')]){
+   const changed=actualWorkflow.replace(exact,replacement);assert.notEqual(changed,actualWorkflow);assert.throws(()=>canonicalIdleConditions(changed));
+  }
+ }
+ for(const extra of [' && inputs.idle_resources_diagnostic != true',' && inputs.idle_resources_diagnostic == false'])assert.throws(()=>canonicalIdleConditions(actualWorkflow+'\n'+extra+'\n'));
 });

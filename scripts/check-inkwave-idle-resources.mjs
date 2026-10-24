@@ -67,18 +67,28 @@ export function createResultsProgress(token,{capacity=256,detailCapacity=32,maxM
  },seal(){sealed=true;},snapshot(){return {diagnosticOnly:true,timingScope:'observer CPU/console overhead; not FPS or GPU execution',...snapshot(channels.critical),invalidMessages:rejected,sealed,maxChars,criticalMode:'reserved frame/sample/cleanup; first128 coarse-callee edges per frame, then limit marker',detailMode:'bounded actor-edge sample; GL counters aggregated, no per-draw events',detail:snapshot(channels.detail)};}};
 }
 // One synchronous browser task: no added yield, RAF await, GPU fence or clock reset.
-export function measureResultsWork({token,maxDetailEvents=128}){
- if(typeof token!=='string'||!token||token.length>64||!Number.isInteger(maxDetailEvents)||maxDetailEvents<1||maxDetailEvents>128)throw TypeError('Invalid results progress token/budget');
+export function measureResultsWork({token,maxDetailEvents=128,nonDrawGL=false}){
+ if(typeof token!=='string'||!token||token.length>64||!Number.isInteger(maxDetailEvents)||maxDetailEvents<1||maxDetailEvents>128||typeof nonDrawGL!=='boolean')throw TypeError('Invalid results progress token/budget');
  const G=__G,g=G.game,match=g.match,gl=G.renderer.getContext(),restore=[];
  const beforeState=match.state,beforePaused=match.paused,started=performance.now();let counts,state='setup',frame=0,completed=0,totalCompleted=0,stateStarted=started,failed=false,failure,watchedClock,criticalInFrame=0,criticalSuppressed=0,detailSuppressed=0;
- const sequences={critical:0,detail:0};let timing=null,rendererDepth=0,drawDepth=0,rendererOrdinal=0;
+ const sequences={critical:0,detail:0};let timing=null,rendererDepth=0,drawDepth=0,rendererOrdinal=0,nonDrawDepth=0;
  // Diagnostic wall time only. Other renderer work includes JS, other native
  // APIs, scheduling and the timing observer itself; none is GPU execution/FPS.
+ const nonDrawGroups={
+  program:['createShader','shaderSource','compileShader','createProgram','attachShader','linkProgram','validateProgram','getShaderParameter','getProgramParameter','getShaderInfoLog','getProgramInfoLog','getUniformLocation','getAttribLocation','getActiveUniform','getActiveAttrib'],
+  upload:['bufferData','bufferSubData','texImage2D','texSubImage2D','texImage3D','texSubImage3D','compressedTexImage2D','compressedTexSubImage2D','compressedTexImage3D','compressedTexSubImage3D','copyTexImage2D','copyTexSubImage2D','copyTexSubImage3D','generateMipmap','texStorage2D','texStorage3D'],
+  target:['bindFramebuffer','framebufferTexture2D','framebufferTextureLayer','framebufferRenderbuffer','blitFramebuffer','renderbufferStorage','renderbufferStorageMultisample','invalidateFramebuffer','invalidateSubFramebuffer'],
+  clear:['clear','clearBufferfv','clearBufferiv','clearBufferuiv','clearBufferfi'],
+  query:['checkFramebufferStatus','readPixels','getBufferSubData','getParameter','getError','clientWaitSync','waitSync','finish','flush','getSyncParameter','getFramebufferAttachmentParameter','getRenderbufferParameter','getBufferParameter','getTexParameter','getVertexAttrib','getVertexAttribOffset','getUniform','getQueryParameter','getInternalformatParameter'],
+  uniform:['uniform1f','uniform2f','uniform3f','uniform4f','uniform1i','uniform2i','uniform3i','uniform4i','uniform1ui','uniform2ui','uniform3ui','uniform4ui','uniform1fv','uniform2fv','uniform3fv','uniform4fv','uniform1iv','uniform2iv','uniform3iv','uniform4iv','uniform1uiv','uniform2uiv','uniform3uiv','uniform4uiv','uniformMatrix2fv','uniformMatrix3fv','uniformMatrix4fv','uniformMatrix2x3fv','uniformMatrix3x2fv','uniformMatrix2x4fv','uniformMatrix4x2fv','uniformMatrix3x4fv','uniformMatrix4x3fv'],
+  state:['useProgram','bindBuffer','bindBufferBase','bindBufferRange','bindVertexArray','bindTexture','activeTexture','bindSampler','texParameteri','texParameterf','pixelStorei','viewport','scissor','enable','disable','enableVertexAttribArray','disableVertexAttribArray','vertexAttribPointer','vertexAttribIPointer','vertexAttribDivisor','blendFunc','blendFuncSeparate','blendEquation','blendEquationSeparate','depthFunc','depthMask','colorMask','stencilFunc','stencilFuncSeparate','stencilMask','stencilMaskSeparate','stencilOp','stencilOpSeparate','cullFace','frontFace','polygonOffset','lineWidth']
+ };
+ const nonDrawBucket=key=>({calls:0,outerCalls:0,wallMs:0,inRendererWallMs:0,maxWallMs:0,maxMethod:null,maxFrame:0,maxRendererOrdinal:0,availableMethods:nonDrawGroups[key].filter(name=>typeof gl[name]==='function').length,unavailableMethods:nonDrawGroups[key].filter(name=>typeof gl[name]!=='function').length});
  const methodTiming=()=>({calls:0,outerCalls:0,wallMs:0,maxWallMs:0});
- const createTiming=()=>({diagnosticOnly:true,emitWallMs:0,clockErrors:0,renderer:{calls:0,outerCalls:0,wallMs:0,nestedEmitWallMs:0,drawCallWallMs:0,otherWallMs:0,maxWallMs:0,maxFrame:0,maxOrdinal:0},draws:{calls:0,outerCalls:0,wallMs:0,maxWallMs:0,maxMethod:null,maxFrame:0,maxRendererOrdinal:0,methods:{drawArrays:methodTiming(),drawElements:methodTiming(),drawArraysInstanced:methodTiming(),drawElementsInstanced:methodTiming()}}});
+ const createTiming=()=>({diagnosticOnly:true,emitWallMs:0,clockErrors:0,renderer:{calls:0,outerCalls:0,wallMs:0,nestedEmitWallMs:0,drawCallWallMs:0,otherWallMs:0,maxWallMs:0,maxFrame:0,maxOrdinal:0},draws:{calls:0,outerCalls:0,wallMs:0,maxWallMs:0,maxMethod:null,maxFrame:0,maxRendererOrdinal:0,methods:{drawArrays:methodTiming(),drawElements:methodTiming(),drawArraysInstanced:methodTiming(),drawElementsInstanced:methodTiming()}},...(nonDrawGL?{nonDrawGL:{diagnosticOnly:true,scope:'outermost non-draw API wall excluding nested draw wall; includes observer, wrapper and scheduling overhead; overlaps emitWallMs; never subtract from renderer.otherWallMs',calls:0,outerCalls:0,wallMs:0,inRendererWallMs:0,groups:Object.fromEntries(Object.keys(nonDrawGroups).map(key=>[key,nonDrawBucket(key)]))}}:{})});
  const timingNow=()=>{try{const value=performance.now();if(Number.isFinite(value))return value;}catch{}if(timing)timing.clockErrors++;return null;};
  const timingElapsed=start=>{const end=timingNow();if(start!==null&&end!==null&&Number.isFinite(end-start)&&end>=start)return end-start;if(timing&&start!==null&&end!==null)timing.clockErrors++;return null;};
- const timingSnapshot=()=>timing?{...timing,renderer:{...timing.renderer},draws:{...timing.draws,methods:Object.fromEntries(Object.entries(timing.draws.methods).map(([key,value])=>[key,{...value}]))}}:undefined;
+ const timingSnapshot=()=>timing?{...timing,renderer:{...timing.renderer},draws:{...timing.draws,methods:Object.fromEntries(Object.entries(timing.draws.methods).map(([key,value])=>[key,{...value}]))},...(timing.nonDrawGL?{nonDrawGL:{...timing.nonDrawGL,groups:Object.fromEntries(Object.entries(timing.nonDrawGL.groups).map(([key,value])=>[key,{...value}]))}}:{})}:undefined;
  // Frame/sample/cleanup are reserved. Coarse callees get128 edges per frame,
  // plus one explicit limit; actor detail cannot consume either budget or ring.
  const emit=(producer,edge,channel='critical')=>{const owner=timing,start=timingNow();try{let limit=false;
@@ -122,7 +132,29 @@ export function measureResultsWork({token,maxDetailEvents=128}){
   }
  };restore.push(()=>{obj[key]=old;});};
  const observe=(obj,key,label)=>{const old=obj?.[key];if(typeof old!=='function')return;const descriptor=Object.getOwnPropertyDescriptor(obj,key);obj[key]=function(...args){return invoke(old,this,args,label);};restore.push(()=>{if(descriptor)Object.defineProperty(obj,key,descriptor);else delete obj[key];});};
+ const observeNonDrawGL=(key,group)=>{
+  const old=gl[key];if(typeof old!=='function')return;
+  const descriptor=Object.getOwnPropertyDescriptor(gl,key);
+  const wrapped=function(){
+   const owner=timing,stats=owner?.nonDrawGL,bucket=stats?.groups[group],outer=nonDrawDepth++===0&&drawDepth===0;
+   const start=outer?timingNow():null,drawBefore=owner?.draws.wallMs??0,inRenderer=rendererDepth>0,ordinal=rendererOrdinal;
+   if(stats){stats.calls++;bucket.calls++;}
+   try{return old.apply(this,arguments);}
+   finally{
+    nonDrawDepth--;
+    if(outer&&stats){stats.outerCalls++;bucket.outerCalls++;const elapsed=timingElapsed(start);
+     if(elapsed!==null){const wall=Math.max(0,elapsed-(owner.draws.wallMs-drawBefore));stats.wallMs+=wall;bucket.wallMs+=wall;
+      if(inRenderer){stats.inRendererWallMs+=wall;bucket.inRendererWallMs+=wall;}
+      if(bucket.outerCalls===1||wall>bucket.maxWallMs){bucket.maxWallMs=wall;bucket.maxMethod=key;bucket.maxFrame=frame;bucket.maxRendererOrdinal=inRenderer?ordinal:0;}
+     }
+    }
+   }
+  };
+  Object.defineProperty(gl,key,descriptor?('value' in descriptor?{...descriptor,value:wrapped}:{configurable:descriptor.configurable,enumerable:descriptor.enumerable,writable:true,value:wrapped}):{configurable:true,enumerable:false,writable:true,value:wrapped});
+  restore.push(()=>{if(descriptor)Object.defineProperty(gl,key,descriptor);else delete gl[key];});
+ };
  try{
+  if(nonDrawGL)for(const [group,keys]of Object.entries(nonDrawGroups))for(const key of keys)observeNonDrawGL(key,group);
   for(let i=0;i<G.actors.length;i++)hook(G.actors[i],'update','actorUpdates','actor['+i+'].update','detail');
   for(const [obj,key,label]of [[G.projectiles,'update','projectileUpdates'],[G.paint,'flush','paintFlushes'],[G.fx,'update','fxUpdates'],[g.R,'render','worldRenders']])hook(obj,key,label,key==='render'?'R.render':label);
   for(const key of ['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced'])hook(gl,key,'gpuDrawSubmissions','gl.'+key,'aggregate');
@@ -139,9 +171,9 @@ export function measureResultsWork({token,maxDetailEvents=128}){
   if(errors.length)throw new AggregateError(failed?[failure,...errors]:errors,'Results diagnostic cleanup failed',failed?{cause:failure}:undefined);
  }
 }
-export async function runResultsWorkDiagnostic(page,progress){
+export async function runResultsWorkDiagnostic(page,progress,{nonDrawGL=false}={}){
  const listener=message=>progress.accept(message.text());let attached=false,failed=false,failure;
- try{page.on('console',listener);attached=true;return await page.evaluate(measureResultsWork,{token:progress.token});}
+ try{page.on('console',listener);attached=true;return await page.evaluate(measureResultsWork,{token:progress.token,...(nonDrawGL?{nonDrawGL:true}:{})});}
  catch(error){failed=true;failure=error;throw error;}
  finally{progress.seal();if(attached)try{page.off('console',listener);}catch(error){if(failed)throw new AggregateError([failure,error],'Results diagnostic listener cleanup failed',{cause:failure});throw error;}}
 }
@@ -414,7 +446,7 @@ async function main(){
   // CPU submission time includes JS/driver submission, not asynchronous GPU time.
   // Results still need backdrop/presentation draws, so no FPS/draw-reduction target
   // is invented. The existing browser/GL and exact-source identities remain gates.
-  phase='results-work';resultsProgress=createResultsProgress(crypto.randomUUID());result.resultsWork=await runResultsWorkDiagnostic(page,resultsProgress);
+  phase='results-work';resultsProgress=createResultsProgress(crypto.randomUUID());result.resultsWork=await runResultsWorkDiagnostic(page,resultsProgress,{nonDrawGL:process.env.INKWAVE_IDLE_GL_DIAGNOSTICS==='1'});
   phase='gpu-identity';result.gpu=await page.evaluate(()=>{const gl=__G.renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return {webgl:gl.getParameter(gl.VERSION),renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};});
   for(const f of ['patches/local-quality/idle-resources.mjs','patches/local-quality/music-idle.mjs'])if(![...loaded].some(p=>p.endsWith('/'+f)))throw Error('Runtime module not actually loaded: '+f);
   phase='cold-boot-mobile';
