@@ -1,0 +1,28 @@
+{
+  "status": "pass",
+  "matchedNormalLabels": 15,
+  "peaks": {
+    "angleDegrees": {
+      "before": 174.881224764038,
+      "after": 21.53003080266302
+    },
+    "pivotDistance": {
+      "before": 0.2531888387615761,
+      "after": 0.09348405996288281
+    },
+    "projectedWidthDelta": {
+      "before": 53.14461815771125,
+      "after": 15.06100010957212
+    },
+    "projectedHeightDelta": {
+      "before": 217.5321613456934,
+      "after": 66.00364342278293
+    }
+  },
+  "unsupportedReady": 0,
+  "firstSupportedPostUpdate": {
+    "time": 0.6166667342185974,
+    "eligible": true,
+    "fadeWeight": 0.9803240740740741
+  }
+}

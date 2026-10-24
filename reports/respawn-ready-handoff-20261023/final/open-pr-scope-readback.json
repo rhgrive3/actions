@@ -1,0 +1,92 @@
+{
+  "main": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "openPRs": [
+    {
+      "number": 1864,
+      "title": "perf: repair non-Drive INKWAVE optimization queue (24 fixes, isolated from #1861)",
+      "head": "3cef25636803033538852a802492fd8aaeaef246"
+    },
+    {
+      "number": 1863,
+      "title": "原典ステージの GPU 負荷を削減し、コンテキストロスト後は段階的に軽くする",
+      "head": "abaf7e61cfc53dc19a7dee30ec999403731807ff"
+    },
+    {
+      "number": 1862,
+      "title": "fix: リスポーン着地後のローラー構え残留を解消",
+      "head": "702ce3d146043928fd4b783241105871515f9d92"
+    },
+    {
+      "number": 1861,
+      "title": "Optimize runtime and CI from 358-ticket queue review",
+      "head": "1a17d7b4e33082cafa2ef336fe5e3c79d3ac0e10"
+    },
+    {
+      "number": 1860,
+      "title": "fix: 自軍リスポーン領域への敵侵入を防ぐ（CI受入未完）",
+      "head": "d278a495a90ff0b6067d3dd26aa4d9ce40af53d4"
+    },
+    {
+      "number": 1859,
+      "title": "fix(hud): 照準の不要な拡縮と命中マークの位置ずれを修正（本家動的照合未完）",
+      "head": "2e2bc38661dd49655ee3b4abc491dcc8ee65e8e1"
+    },
+    {
+      "number": 1857,
+      "title": "fix: シューター銃口小粒・スピナー飛沫の独立 cosmetic 候補",
+      "head": "d7fbb583de6a0bfbd7aa2b60bf77b2f631d24d7c"
+    },
+    {
+      "number": 1856,
+      "title": "experiment(roller): 縦振り回復候補を保存（後半悪化で採用不可）",
+      "head": "cf9c9d8956accac7ca6e9e9678860c1a8910c7f2"
+    },
+    {
+      "number": 1855,
+      "title": "fix: ヒッセン床滴の太さ・下向き表示軸を補正（本家映像比較未完）",
+      "head": "784615eaddd13e1cb4d9dd6bf202990a4aaa6d3f"
+    },
+    {
+      "number": 1854,
+      "title": "fix: main726向け固定special runtime・QA候補を保存（最終admission/実ブラウザ/CI未完）",
+      "head": "22f3b7534ae2093aef4c2549112a85a1da09bbf3"
+    },
+    {
+      "number": 1853,
+      "title": "fix(ci): 参照記録と成果物保存を修復し必須Validateの停止を解消",
+      "head": "62d6eb3e448d68fe8a41303f344d6a88076aa338"
+    },
+    {
+      "number": 1852,
+      "title": "fix: Quad初回銃口表示・Brella再送の表示更新・native足元queryの重複を修正",
+      "head": "9d075e26fcc4e78b70c6ad94958842a317048e98"
+    }
+  ],
+  "readCurrentPR1864Paths": [
+    ".github/workflows/inkwave-nondrive-queue.yml",
+    ".github/workflows/inkwave-weapon-lod-boundaries.yml",
+    ".github/workflows/zevant-account.yml",
+    "inkwave-public/src/core/mobile.js",
+    "inkwave-public/src/game/inkFlight.js",
+    "inkwave-public/src/game/lobbySet.js",
+    "inkwave-public/src/game/motion/body-balance.js",
+    "inkwave-public/src/game/motion/gait-targets.js",
+    "inkwave-public/src/game/motion/source-controller.js",
+    "inkwave-public/src/net/netmatch.js",
+    "inkwave-public/src/ui/hud.js",
+    "patches/native-stages/runtime/native-ink-chunks.mjs",
+    "patches/native-stages/runtime/source-convert.mjs",
+    "patches/native-stages/runtime/source-worker.mjs",
+    "patches/splatoon3/runtime/all-specials.mjs",
+    "patches/splatoon3/runtime/audio/bank.mjs",
+    "patches/splatoon3/runtime/audio/real-s3-loader.mjs",
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+    "patches/splatoon3/runtime/ranked/rainmaker.mjs",
+    "patches/splatoon3/runtime/ranked/ui.mjs",
+    "patches/splatoon3/runtime/ranked/world.mjs",
+    "patches/splatoon3/runtime/special-vfx.mjs",
+    "reports/queue-nondrive-20261024/README.md",
+    "scripts/tests/inkwave-queue-native-compact.test.mjs"
+  ],
+  "scope": "No main, PR or other branch writes. Protected main7e static-menu bytes checked; current runtime delta from71b5 only weapon-handoff-motion.mjs."
+}

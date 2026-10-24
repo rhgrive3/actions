@@ -1,0 +1,196 @@
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:111:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:128:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:130:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:156:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:188:15)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:221:17)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:222:18)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:223:18)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+(node:15107) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ 847 flat rolling unchanged on full production composition (13515.338784ms)
+✔ 847 no-stick residual keeps the drum down but stops native paint, ink drain, and damage without changing velocity (187.717972ms)
+✔ 847 airborne wall drum contact preserves rolling (11.300053ms)
+✔ 847 ledge drum void suppresses rolling while feet stay grounded (32.442406ms)
+✔ 847 support probe falls back to feet grounding without stage collision (0.485704ms)
+✔ 847 owner and remote share native contact; NetMatch drops remote damage and native hit updates survive (75.873271ms)
+✔ 847 frozen b34 roller source retains its recorded single-module identity (1.560872ms)
+✖ 847 explicit current-source admission faults expose the guarded regressions (2397.384328ms)
+ℹ Error: Test "847 explicit current-source admission faults expose the guarded regressions" at patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:262:1 generated asynchronous activity after the test ended. This activity created the error "AssertionError [ERR_ASSERTION]: counterfactual input patches/splatoon3/runtime/roller.mjs
++ actual - expected
+
++ '0ba7a5cd6edb7f178fa055bbc2c19c609f10d5ed85768f71a02c50c33db33533'
+- '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973'
+" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "847 explicit current-source admission faults expose the guarded regressions" at patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:262:1 generated asynchronous activity after the test ended. This activity created the error "AssertionError [ERR_ASSERTION]: counterfactual input patches/splatoon3/runtime/roller.mjs
++ actual - expected
+
++ '0ba7a5cd6edb7f178fa055bbc2c19c609f10d5ed85768f71a02c50c33db33533'
+- '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973'
+" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "847 explicit current-source admission faults expose the guarded regressions" at patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:262:1 generated asynchronous activity after the test ended. This activity created the error "AssertionError [ERR_ASSERTION]: counterfactual input patches/splatoon3/runtime/roller.mjs
++ actual - expected
+
++ '0ba7a5cd6edb7f178fa055bbc2c19c609f10d5ed85768f71a02c50c33db33533'
+- '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973'
+" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+✔ all thirteen exact source leaves admit without replay or a physics equality claim (142.643013ms)
+✔ missing, changed, reversed and falsely identical current tuples cannot gain admission (1643.354556ms)
+✖ all sixteen pose leaves preserve the reviewed Roller scratch difference without replay (24.032169ms)
+✔ all thirteen exact source leaves admit without replay or a physics equality claim (50.594383ms)
+✔ missing, changed, reversed and falsely identical current tuples cannot gain admission (1521.942784ms)
+✔ actual controls CLI accepts only the frozen nine-difference tuple and completes every negative control (10370.607949ms)
+✔ the subsequent batch preserves the integrated main and admits exactly its one differing source leaf (2046.203486ms)
+✖ only the sixteen pinned pose source leaves are identical after the first batch, with no replay (581.573929ms)
+✔ post30 controls CLI accepts only the frozen single-difference tuple and completes every negative control (10600.145284ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 14
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44467.201701
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:262:1
+✖ 847 explicit current-source admission faults expose the guarded regressions (2397.384328ms)
+  AssertionError [ERR_ASSERTION]: counterfactual input patches/splatoon3/runtime/roller.mjs
+  + actual - expected
+  
+  + '0ba7a5cd6edb7f178fa055bbc2c19c609f10d5ed85768f71a02c50c33db33533'
+  - '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973'
+  
+      at load (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:69:14)
+      at file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:86:36
+      at [kLink] (node:internal/vm/module:345:28)
+      at node:internal/vm/module:361:32 {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '0ba7a5cd6edb7f178fa055bbc2c19c609f10d5ed85768f71a02c50c33db33533',
+    expected: '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/tests/inkwave-23pr-paint-source-pair.test.mjs:36:1
+✖ all sixteen pose leaves preserve the reviewed Roller scratch difference without replay (24.032169ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'df2851585c5281efafb135f21e8dafa1621eb206'
+  - 'f18ba0af47efddf0be713dac17fe1d909fe27edf'
+  
+      at TestContext.<anonymous> (file:///workspace/actions/scripts/tests/inkwave-23pr-paint-source-pair.test.mjs:39:110)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'df2851585c5281efafb135f21e8dafa1621eb206',
+    expected: 'f18ba0af47efddf0be713dac17fe1d909fe27edf',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/tests/inkwave-31pr-paint-source-pair.test.mjs:77:1
+✖ only the sixteen pinned pose source leaves are identical after the first batch, with no replay (581.573929ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  ... Skipped lines
+  
+  + "import { spawnMotionAllowsAction } from './spawn-pose-motion.mjs';\n" +
+  +   "import { specialMotionAllowsAction } from './action-admission.mjs';\n" +
+  - "import { specialMotionAllowsAction } from './action-admission.mjs';\n" +
+      "import { ROLLER_DRUM } from './roller-model.mjs';\n" +
+      "import { HEAVY_ROLLER_SWING, STANDARD_ROLLER_SWING, heavyRollerSwingEnd } from './roller-heavy-swing.mjs';\n" +
+      "import { hasFullCancelGroundAttack, takeFullCancelGroundAttack } from './movement.mjs';\n" +
+      "import { rollerBubblerCandidate, applyRollerBubblerHit } from './kit-big-bubbler.mjs';\n" +
+      '// Roller-specific refinements. Timing comes from the existing gameplay profile;\n' +
+  ...
+      '  const fx = Math.sin(a.yaw), fz = Math.cos(a.yaw), rx = fz, rz = -fx;\n' +
+  +   '  const cx = a.pos.'... 65418 more characters
+  -   '  const cx = a.pos.x + fx * DRUM_FORWARD, cy = a.pos.y + ROLLER_BODY_RADIUS, cz = a.po'... 65320 more characters
+  
+      at TestContext.<anonymous> (file:///workspace/actions/scripts/tests/inkwave-31pr-paint-source-pair.test.mjs:84:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "import { spawnMotionAllowsAction } from './spawn-pose-motion.mjs';\nimport { specialMotionAllowsAction } from './action-admission.mjs';\nimport { ROLLER_DRUM } from './roller-model.mjs';\nimport { HEAVY_ROLLER_SWING, STANDARD_ROLLER_SWING, heavyRollerSwingEnd } from './roller-heavy-swing.mjs';\nimport { hasFullCancelGroundAttack, takeFullCancelGroundAttack } from './movement.mjs';\nimport { rollerBubblerCandidate, applyRollerBubblerHit } from './kit-big-bubbler.mjs';\n// Roller-specific refinements. Timing comes from the existing gameplay profile;\n// joint curves are visual calibration against Nintendo's public roller videos.\nconst EPS = 1e-10;\nconst mix = (a, b, t) => a + (b - a) * t;\nconst ease = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };\nconst READY_ANCHOR = [-.08, .80, .28];\nconst READY_ROTATION = [-2.5, .04, 1.0];\nconst ROLL_ANCHOR = [-.07, .75, .34];\nconst ROLL_ROTATION = [.36, .06, 0];\nconst ROLL_LEAN = [.14, .06, .12, .05];\nconst DRUM_LIFT = .1015 * (ROLLER_DRUM.radius - 1);\n// Vertical swing handle pitch: coil overhead, release level, follow-through.\n// local-quality's release-velocity repair reads the same angles.\nexport const VERTICAL_SWING = Object.freeze({ coil: -2.45, release: -.04, follow: .6 });\n// Read-only view for regressions; the arrays stay owned by this module.\nexport const ROLLER_POSE = Object.freeze({ READY_ANCHOR, READY_ROTATION, ROLL_ANCHOR, ROLL_ROTATION, ROLL_LEAN });\n\n// Issue #635: gates after flick release, independent of roll-stop locks.\nconst POST_SUB = { horizontal: 14 / 60, vertical: 18 / 60 };\nconst POST_SQUID = { horizontal: 15 / 60, vertical: 19 / 60 };\n\n// Issue #541: an established roll must persist as a S3 dry roll when the\n// tank depletes while ZR stays held. Separate Roller-down state from the\n// ink-gated paint/contact path. No new dry movement/audio numerics are\n// invented: reuse existing rolling speed/pose and keep dry audio muted.\nconst DRY_INK = 0.5;\n\nfunction observedLife(actor) {\n  if (Number.isSafeInteger(actor?.netLife)) return actor.netLife;\n  if (Number.isSafeInteger(actor?.net?.lastLife)) return actor.net.lastLife;\n  return null;\n}\n\nfunction resolveRollHitEpochs(runner) {\n  const epochs = runner.s3RollHitEpochs;\n  if (!epochs?.size) return;\n  for (const [victim, epoch] of epochs) {\n    const life = observedLife(victim);\n    if (!victim.alive || !victim.remote || victim.owner !== epoch.owner || life !== epoch.life) {\n      if (runner.s3PendingRollHits.has(victim)) runner.s3RollHitConfirmDisabled.add(victim);\n      runner.s3PendingRollHits.delete(victim);\n      epochs.delete(victim);\n      runner.rollHits.delete(victim);\n    }\n  }\n}\n\n// Recovered #527 admission contract: retain native buffering and current profile timing.\nexport function rollerEmergeDelay(actor, fallback) {\n  return actor.weapon.kind === 'roller' ? actor.weapon.squidFlickDelay ?? fallback : fallback;\n}\nexport function rollerFireBuffer(actor, fallback, dt) {\n  if (actor.weapon.kind !== 'roller') return fallback;\n  const delay = rollerEmergeDelay(actor, fallback);\n  const remaining = actor.form === 'squid' ? delay : Math.max(0, delay - actor.kidT);\n  return Math.max(fallback, remaining + dt);\n}\n\nexport function rollerSwingMoveSpeed(runner) {\n  const a = runner?.a, attack = runner?.s3RollerAttack;\n  if (!a || a.weapon?.kind !== 'roller' || !attack || runner.rolling || runner.lockT > 0 ||\n      runner.aimingSub || a.form === 'squid' || a.specialActive || a.superJumpState ||\n      !(attack.interval > 0) || attack.elapsed >= attack.interval - EPS) return null;\n  const speed = a.weapon.moveSpeedFiring; // 11.3.0 SwingMoveSpeed: 0.048 source units/frame * 60.\n  return Number.isFinite(speed) && speed >= 0 ? speed : null;\n}\n\nexport function rollerMode(w, vertical) {\n  return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;\n}\n\n// 847: the Splat Roller body dimensions in the pinned 11.3.0 parameter table\n// (Radius 0.4, WidthHalf 1.4). Retain the runner's existing 0.75 forward\n// offset; do not substitute paint width, damage reach, or the tuned render mesh.\nconst DRUM_FORWARD = 0.75, ROLLER_BODY_RADIUS = 0.4, ROLLER_BODY_HALF_WIDTH = 1.4;\nconst STICK_EPS = 0.01; // same deadzone as Actor._horizontal steering (mh > 0.01)\nconst CONTACT_EPS = 1e-6;\nconst WALL_BAND = 0.6; // same surface classification used by Physics.collideBody\n\nexport function rollerStickActive(a) {\n  // Remote proxies carry no authoritative stick state; the owner admits the hit\n  // and replicates it, so remotes never suppress here (no new wire fields).\n  if (a.remote) return true;\n  const mv = a.intent?.move;\n  return !!mv && Math.hypot(mv.x, mv.z) > STICK_EPS;\n}\n\n// #1122: authoritative lowered-drum contact. The 0.75 forward offset and\n// 0.4/1.4 drum dimensions are existing/pinned values above; vertical aim rotates\n// that offset in 3D instead of inventing an angle→height tuning coefficient.\nfunction segmentDistanceSq(p1, q1, p2, q2) {\n  const ux=q1.x-p1.x, uy=q1.y-p1.y, uz=q1.z-p1.z;\n  const vx=q2.x-p2.x, vy=q2.y-p2.y, vz=q2.z-p2.z;\n  const wx=p1.x-p2.x, wy=p1.y-p2.y, wz=p1.z-p2.z;\n  const a=ux*ux+uy*uy+uz*uz, b=ux*vx+uy*vy+uz*vz, cc=vx*vx+vy*vy+vz*vz;\n  const d=ux*wx+uy*wy+uz*wz, e=vx*wx+vy*wy+vz*wz, D=a*cc-b*b;\n  let sN, sD=D, tN, tD=D;\n  if (D < 1e-12) { sN=0; sD=1; tN=e; tD=cc; }\n  else {\n    sN=b*e-cc*d; tN=a*e-b*d;\n    if (sN<0) { sN=0; tN=e; tD=cc; }\n    else if (sN>sD) { sN=sD; tN=e+b; tD=cc; }\n  }\n  if (tN<0) {\n    tN=0;\n    if (-d<0) sN=0; else if (-d>a) sN=sD; else { sN=-d; sD=a; }\n  } else if (tN>tD) {\n    tN=tD;\n    if (-d+b<0) sN=0; else if (-d+b>a) sN=sD; else { sN=-d+b; sD=a; }\n  }\n  const sc=Math.abs(sN)<1e-12?0:sN/sD, tc=Math.abs(tN)<1e-12?0:tN/tD;\n  const dx=wx+sc*ux-tc*vx, dy=wy+sc*uy-tc*vy, dz=wz+sc*uz-tc*vz;\n  return dx*dx+dy*dy+dz*dz;\n}\n\nexport function rollerContactCandidate(actor, target, weapon, player) {\n  if (!actor?.pos || !target?.pos || !player) return false;\n  const yaw=Number.isFinite(actor.yaw)?actor.yaw:0;\n  const pitch=Number.isFinite(actor.aimPitch)?actor.aimPitch:0;\n  const fx=Math.sin(yaw), fz=Math.cos(yaw), rx=fz, rz=-fx;\n  const cp=Math.cos(pitch), sp=Math.sin(pitch);\n  const cx=actor.pos.x+fx*DRUM_FORWARD*cp;\n  const cy=actor.pos.y+ROLLER_BODY_RADIUS+sp*DRUM_FORWARD;\n  const cz=actor.pos.z+fz*DRUM_FORWARD*cp;\n  // WidthHalf is the sourced physical drum half-width; weapon.rollWidth is\n  // paint/gameplay reach and must not reshape the body-contact volume.\n  const half=ROLLER_BODY_HALF_WIDTH;\n  const d0={x:cx-rx*half,y:cy,z:cz-rz*half}, d1={x:cx+rx*half,y:cy,z:cz+rz*half};\n  const tr=Number.isFinite(player.radius)?player.radius:0.35;\n  const h=target.form==='squid' ? player.squidHeight : player.height;\n  const low=target.pos.y+Math.min(tr,h/2), high=target.pos.y+Math.max(Math.min(tr,h/2),h-tr);\n  const t0={x:target.pos.x,y:low,z:target.pos.z}, t1={x:target.pos.x,y:high,z:target.pos.z};\n  const rr=ROLLER_BODY_RADIUS+tr;\n  return segmentDistanceSq(d0,d1,t0,t1) <= rr*rr+CONTACT_EPS;\n}\n\nfunction rollerCapsuleTouchesBlock(start, delta, block, scratch) {\n  const axes = block.axes, center = block.center, half = block.half;\n  const p0x = (start.x - center.x) * axes[0].x + (start.y - center.y) * axes[0].y + (start.z - center.z) * axes[0].z;\n  const p0y = (start.x - center.x) * axes[1].x + (start.y - center.y) * axes[1].y + (start.z - center.z) * axes[1].z;\n  const p0z = (start.x - center.x) * axes[2].x + (start.y - center.y) * axes[2].y + (start.z - center.z) * axes[2].z;\n  const dx = delta.x * axes[0].x + delta.y * axes[0].y + delta.z * axes[0].z;\n  const dy = delta.x * axes[1].x + delta.y * axes[1].y + delta.z * axes[1].z;\n  const dz = delta.x * axes[2].x + delta.y * axes[2].y + delta.z * axes[2].z;\n  const hx = half.x, hy = half.y, hz = half.z;\n  const derivative = t => {\n    const x = p0x + dx * t, y = p0y + dy * t, z = p0z + dz * t;\n    let d = 0;\n    if (x < -hx) d += (x + hx) * dx; else if (x > hx) d += (x - hx) * dx;\n    if (y < -hy) d += (y + hy) * dy; else if (y > hy) d += (y - hy) * dy;\n    if (z < -hz) d += (z + hz) * dz; else if (z > hz) d += (z - hz) * dz;\n    return d;\n  };\n  const d0 = derivative(0), d1 = derivative(1);\n  let t = d0 >= 0 ? 0 : d1 <= 0 ? 1 : 0.5;\n  if (d0 < 0 && d1 > 0) {\n    let lo = 0, hi = 1;\n    for (let i = 0; i < 24; i++) {\n      t = (lo + hi) * 0.5;\n      if (derivative(t) < 0) lo = t; else hi = t;\n    }\n    t = (lo + hi) * 0.5;\n  }\n  const x = p0x + dx * t, y = p0y + dy * t, z = p0z + dz * t;\n  let nx = x - Math.max(-hx, Math.min(hx, x));\n  let ny = y - Math.max(-hy, Math.min(hy, y));\n  let nz = z - Math.max(-hz, Math.min(hz, z));\n  const d2 = nx * nx + ny * ny + nz * nz;\n  if (d2 > ROLLER_BODY_RADIUS * ROLLER_BODY_RADIUS + CONTACT_EPS) return false;\n  if (d2 > CONTACT_EPS) {\n    const inv = 1 / Math.sqrt(d2); nx *= inv; ny *= inv; nz *= inv;\n  } else {\n    const px = hx - Math.abs(x), py = hy - Math.abs(y), pz = hz - Math.abs(z);\n    if (px <= py && px <= pz) { nx = x < 0 ? -1 : 1; ny = nz = 0; }\n    else if (py <= pz) { ny = y < 0 ? -1 : 1; nx = nz = 0; }\n    else { nz = z < 0 ? -1 : 1; nx = ny = 0; }\n  }\n  scratch.normalY = nx * axes[0].y + ny * axes[1].y + nz * axes[2].y;\n  // Closest actual contact point on this oriented solid, not the player's feet.\n  const qx = Math.max(-hx, Math.min(hx, x)), qy = Math.max(-hy, Math.min(hy, y)), qz = Math.max(-hz, Math.min(hz, z));\n  scratch.contactPoint.x = center.x + qx * axes[0].x + qy * axes[1].x + qz * axes[2].x;\n  scratch.contactPoint.y = center.y + qx * axes[0].y + qy * axes[1].y + qz * axes[2].y;\n  scratch.contactPoint.z = center.z + qx * axes[0].z + qy * axes[1].z + qz * axes[2].z;\n  return true;\n}\n\nexport function rollerDrumSupport(a, G, scratch) {\n  const level = G?.physics?.level;\n  if (!level?.blocks || typeof level.queryBlocks !== 'function')\n    return { floor: a.grounded, wall: false, supported: a.grounded };\n  const fx = Math.sin(a.yaw), fz = Math.cos(a.yaw), rx = fz, rz = -fx;\n  const cx = a.pos."... 65418 more characters,
+    expected: "import { specialMotionAllowsAction } from './action-admission.mjs';\nimport { ROLLER_DRUM } from './roller-model.mjs';\nimport { HEAVY_ROLLER_SWING, STANDARD_ROLLER_SWING, heavyRollerSwingEnd } from './roller-heavy-swing.mjs';\nimport { hasFullCancelGroundAttack, takeFullCancelGroundAttack } from './movement.mjs';\nimport { rollerBubblerCandidate, applyRollerBubblerHit } from './kit-big-bubbler.mjs';\n// Roller-specific refinements. Timing comes from the existing gameplay profile;\n// joint curves are visual calibration against Nintendo's public roller videos.\nconst EPS = 1e-10;\nconst mix = (a, b, t) => a + (b - a) * t;\nconst ease = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };\nconst READY_ANCHOR = [-.08, .80, .28];\nconst READY_ROTATION = [-2.5, .04, 1.0];\nconst ROLL_ANCHOR = [-.07, .75, .34];\nconst ROLL_ROTATION = [.36, .06, 0];\nconst ROLL_LEAN = [.14, .06, .12, .05];\nconst DRUM_LIFT = .1015 * (ROLLER_DRUM.radius - 1);\n// Vertical swing handle pitch: coil overhead, release level, follow-through.\n// local-quality's release-velocity repair reads the same angles.\nexport const VERTICAL_SWING = Object.freeze({ coil: -2.45, release: -.04, follow: .6 });\n// Read-only view for regressions; the arrays stay owned by this module.\nexport const ROLLER_POSE = Object.freeze({ READY_ANCHOR, READY_ROTATION, ROLL_ANCHOR, ROLL_ROTATION, ROLL_LEAN });\n\n// Issue #635: gates after flick release, independent of roll-stop locks.\nconst POST_SUB = { horizontal: 14 / 60, vertical: 18 / 60 };\nconst POST_SQUID = { horizontal: 15 / 60, vertical: 19 / 60 };\n\n// Issue #541: an established roll must persist as a S3 dry roll when the\n// tank depletes while ZR stays held. Separate Roller-down state from the\n// ink-gated paint/contact path. No new dry movement/audio numerics are\n// invented: reuse existing rolling speed/pose and keep dry audio muted.\nconst DRY_INK = 0.5;\n\nfunction observedLife(actor) {\n  if (Number.isSafeInteger(actor?.netLife)) return actor.netLife;\n  if (Number.isSafeInteger(actor?.net?.lastLife)) return actor.net.lastLife;\n  return null;\n}\n\nfunction resolveRollHitEpochs(runner) {\n  const epochs = runner.s3RollHitEpochs;\n  if (!epochs?.size) return;\n  for (const [victim, epoch] of epochs) {\n    const life = observedLife(victim);\n    if (!victim.alive || !victim.remote || victim.owner !== epoch.owner || life !== epoch.life) {\n      if (runner.s3PendingRollHits.has(victim)) runner.s3RollHitConfirmDisabled.add(victim);\n      runner.s3PendingRollHits.delete(victim);\n      epochs.delete(victim);\n      runner.rollHits.delete(victim);\n    }\n  }\n}\n\n// Recovered #527 admission contract: retain native buffering and current profile timing.\nexport function rollerEmergeDelay(actor, fallback) {\n  return actor.weapon.kind === 'roller' ? actor.weapon.squidFlickDelay ?? fallback : fallback;\n}\nexport function rollerFireBuffer(actor, fallback, dt) {\n  if (actor.weapon.kind !== 'roller') return fallback;\n  const delay = rollerEmergeDelay(actor, fallback);\n  const remaining = actor.form === 'squid' ? delay : Math.max(0, delay - actor.kidT);\n  return Math.max(fallback, remaining + dt);\n}\n\nexport function rollerSwingMoveSpeed(runner) {\n  const a = runner?.a, attack = runner?.s3RollerAttack;\n  if (!a || a.weapon?.kind !== 'roller' || !attack || runner.rolling || runner.lockT > 0 ||\n      runner.aimingSub || a.form === 'squid' || a.specialActive || a.superJumpState ||\n      !(attack.interval > 0) || attack.elapsed >= attack.interval - EPS) return null;\n  const speed = a.weapon.moveSpeedFiring; // 11.3.0 SwingMoveSpeed: 0.048 source units/frame * 60.\n  return Number.isFinite(speed) && speed >= 0 ? speed : null;\n}\n\nexport function rollerMode(w, vertical) {\n  return vertical ? { ...w, flickWindup: w.verticalWindup, flickInterval: w.verticalInterval ?? w.flickInterval, flickInk: w.verticalInk } : w;\n}\n\n// 847: the Splat Roller body dimensions in the pinned 11.3.0 parameter table\n// (Radius 0.4, WidthHalf 1.4). Retain the runner's existing 0.75 forward\n// offset; do not substitute paint width, damage reach, or the tuned render mesh.\nconst DRUM_FORWARD = 0.75, ROLLER_BODY_RADIUS = 0.4, ROLLER_BODY_HALF_WIDTH = 1.4;\nconst STICK_EPS = 0.01; // same deadzone as Actor._horizontal steering (mh > 0.01)\nconst CONTACT_EPS = 1e-6;\nconst WALL_BAND = 0.6; // same surface classification used by Physics.collideBody\n\nexport function rollerStickActive(a) {\n  // Remote proxies carry no authoritative stick state; the owner admits the hit\n  // and replicates it, so remotes never suppress here (no new wire fields).\n  if (a.remote) return true;\n  const mv = a.intent?.move;\n  return !!mv && Math.hypot(mv.x, mv.z) > STICK_EPS;\n}\n\n// #1122: authoritative lowered-drum contact. The 0.75 forward offset and\n// 0.4/1.4 drum dimensions are existing/pinned values above; vertical aim rotates\n// that offset in 3D instead of inventing an angle→height tuning coefficient.\nfunction segmentDistanceSq(p1, q1, p2, q2) {\n  const ux=q1.x-p1.x, uy=q1.y-p1.y, uz=q1.z-p1.z;\n  const vx=q2.x-p2.x, vy=q2.y-p2.y, vz=q2.z-p2.z;\n  const wx=p1.x-p2.x, wy=p1.y-p2.y, wz=p1.z-p2.z;\n  const a=ux*ux+uy*uy+uz*uz, b=ux*vx+uy*vy+uz*vz, cc=vx*vx+vy*vy+vz*vz;\n  const d=ux*wx+uy*wy+uz*wz, e=vx*wx+vy*wy+vz*wz, D=a*cc-b*b;\n  let sN, sD=D, tN, tD=D;\n  if (D < 1e-12) { sN=0; sD=1; tN=e; tD=cc; }\n  else {\n    sN=b*e-cc*d; tN=a*e-b*d;\n    if (sN<0) { sN=0; tN=e; tD=cc; }\n    else if (sN>sD) { sN=sD; tN=e+b; tD=cc; }\n  }\n  if (tN<0) {\n    tN=0;\n    if (-d<0) sN=0; else if (-d>a) sN=sD; else { sN=-d; sD=a; }\n  } else if (tN>tD) {\n    tN=tD;\n    if (-d+b<0) sN=0; else if (-d+b>a) sN=sD; else { sN=-d+b; sD=a; }\n  }\n  const sc=Math.abs(sN)<1e-12?0:sN/sD, tc=Math.abs(tN)<1e-12?0:tN/tD;\n  const dx=wx+sc*ux-tc*vx, dy=wy+sc*uy-tc*vy, dz=wz+sc*uz-tc*vz;\n  return dx*dx+dy*dy+dz*dz;\n}\n\nexport function rollerContactCandidate(actor, target, weapon, player) {\n  if (!actor?.pos || !target?.pos || !player) return false;\n  const yaw=Number.isFinite(actor.yaw)?actor.yaw:0;\n  const pitch=Number.isFinite(actor.aimPitch)?actor.aimPitch:0;\n  const fx=Math.sin(yaw), fz=Math.cos(yaw), rx=fz, rz=-fx;\n  const cp=Math.cos(pitch), sp=Math.sin(pitch);\n  const cx=actor.pos.x+fx*DRUM_FORWARD*cp;\n  const cy=actor.pos.y+ROLLER_BODY_RADIUS+sp*DRUM_FORWARD;\n  const cz=actor.pos.z+fz*DRUM_FORWARD*cp;\n  // WidthHalf is the sourced physical drum half-width; weapon.rollWidth is\n  // paint/gameplay reach and must not reshape the body-contact volume.\n  const half=ROLLER_BODY_HALF_WIDTH;\n  const d0={x:cx-rx*half,y:cy,z:cz-rz*half}, d1={x:cx+rx*half,y:cy,z:cz+rz*half};\n  const tr=Number.isFinite(player.radius)?player.radius:0.35;\n  const h=target.form==='squid' ? player.squidHeight : player.height;\n  const low=target.pos.y+Math.min(tr,h/2), high=target.pos.y+Math.max(Math.min(tr,h/2),h-tr);\n  const t0={x:target.pos.x,y:low,z:target.pos.z}, t1={x:target.pos.x,y:high,z:target.pos.z};\n  const rr=ROLLER_BODY_RADIUS+tr;\n  return segmentDistanceSq(d0,d1,t0,t1) <= rr*rr+CONTACT_EPS;\n}\n\nfunction rollerCapsuleTouchesBlock(start, delta, block, scratch) {\n  const axes = block.axes, center = block.center, half = block.half;\n  const p0x = (start.x - center.x) * axes[0].x + (start.y - center.y) * axes[0].y + (start.z - center.z) * axes[0].z;\n  const p0y = (start.x - center.x) * axes[1].x + (start.y - center.y) * axes[1].y + (start.z - center.z) * axes[1].z;\n  const p0z = (start.x - center.x) * axes[2].x + (start.y - center.y) * axes[2].y + (start.z - center.z) * axes[2].z;\n  const dx = delta.x * axes[0].x + delta.y * axes[0].y + delta.z * axes[0].z;\n  const dy = delta.x * axes[1].x + delta.y * axes[1].y + delta.z * axes[1].z;\n  const dz = delta.x * axes[2].x + delta.y * axes[2].y + delta.z * axes[2].z;\n  const hx = half.x, hy = half.y, hz = half.z;\n  const derivative = t => {\n    const x = p0x + dx * t, y = p0y + dy * t, z = p0z + dz * t;\n    let d = 0;\n    if (x < -hx) d += (x + hx) * dx; else if (x > hx) d += (x - hx) * dx;\n    if (y < -hy) d += (y + hy) * dy; else if (y > hy) d += (y - hy) * dy;\n    if (z < -hz) d += (z + hz) * dz; else if (z > hz) d += (z - hz) * dz;\n    return d;\n  };\n  const d0 = derivative(0), d1 = derivative(1);\n  let t = d0 >= 0 ? 0 : d1 <= 0 ? 1 : 0.5;\n  if (d0 < 0 && d1 > 0) {\n    let lo = 0, hi = 1;\n    for (let i = 0; i < 24; i++) {\n      t = (lo + hi) * 0.5;\n      if (derivative(t) < 0) lo = t; else hi = t;\n    }\n    t = (lo + hi) * 0.5;\n  }\n  const x = p0x + dx * t, y = p0y + dy * t, z = p0z + dz * t;\n  let nx = x - Math.max(-hx, Math.min(hx, x));\n  let ny = y - Math.max(-hy, Math.min(hy, y));\n  let nz = z - Math.max(-hz, Math.min(hz, z));\n  const d2 = nx * nx + ny * ny + nz * nz;\n  if (d2 > ROLLER_BODY_RADIUS * ROLLER_BODY_RADIUS + CONTACT_EPS) return false;\n  if (d2 > CONTACT_EPS) {\n    const inv = 1 / Math.sqrt(d2); nx *= inv; ny *= inv; nz *= inv;\n  } else {\n    const px = hx - Math.abs(x), py = hy - Math.abs(y), pz = hz - Math.abs(z);\n    if (px <= py && px <= pz) { nx = x < 0 ? -1 : 1; ny = nz = 0; }\n    else if (py <= pz) { ny = y < 0 ? -1 : 1; nx = nz = 0; }\n    else { nz = z < 0 ? -1 : 1; nx = ny = 0; }\n  }\n  scratch.normalY = nx * axes[0].y + ny * axes[1].y + nz * axes[2].y;\n  // Closest actual contact point on this oriented solid, not the player's feet.\n  const qx = Math.max(-hx, Math.min(hx, x)), qy = Math.max(-hy, Math.min(hy, y)), qz = Math.max(-hz, Math.min(hz, z));\n  scratch.contactPoint.x = center.x + qx * axes[0].x + qy * axes[1].x + qz * axes[2].x;\n  scratch.contactPoint.y = center.y + qx * axes[0].y + qy * axes[1].y + qz * axes[2].y;\n  scratch.contactPoint.z = center.z + qx * axes[0].z + qy * axes[1].z + qz * axes[2].z;\n  return true;\n}\n\nexport function rollerDrumSupport(a, G, scratch) {\n  const level = G?.physics?.level;\n  if (!level?.blocks || typeof level.queryBlocks !== 'function')\n    return { floor: a.grounded, wall: false, supported: a.grounded };\n  const fx = Math.sin(a.yaw), fz = Math.cos(a.yaw), rx = fz, rz = -fx;\n  const cx = a.pos.x + fx * DRUM_FORWARD, cy = a.pos.y + ROLLER_BODY_RADIUS, cz = a.po"... 65320 more characters,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

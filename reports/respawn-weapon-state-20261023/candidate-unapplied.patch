@@ -1,0 +1,67 @@
+--- a/patches/splatoon3/runtime/spawn-pose-motion.mjs
++++ b/patches/splatoon3/runtime/spawn-pose-motion.mjs
+@@ -124,6 +124,12 @@
+   if (Actor && !Object.hasOwn(Actor.prototype, INSTALLED)) {
+     const reset = Actor.prototype.reset;
+     Object.defineProperty(Actor.prototype, INSTALLED, { value: true });
+-    Actor.prototype.reset = function (...args) { if (this.character) clear(this.character, 'reset'); return reset.apply(this, args); };
++    Actor.prototype.reset = function (...args) { if (this.character) { clear(this.character, 'reset'); this.character.wRoll = 0; } return reset.apply(this, args); };
+   }
+ }
++
++export function spawnMotionAllowsAction(ch, nativeEligible) {
++ const s=hooks(ch)?.states.get(ch);
++ if(!s||ch.s3SpawnPoseMotionEnabled===false||ch.s3HitSpawnMotionEnabled===false)return nativeEligible;
++ return s.phase==='off';
++}
+--- a/patches/splatoon3/runtime/roller.mjs
++++ b/patches/splatoon3/runtime/roller.mjs
+@@ -1,3 +1,4 @@
++import { spawnMotionAllowsAction } from './spawn-pose-motion.mjs';
+ import { specialMotionAllowsAction } from './action-admission.mjs';
+ import { ROLLER_DRUM } from './roller-model.mjs';
+ import { HEAVY_ROLLER_SWING, STANDARD_ROLLER_SWING, heavyRollerSwingEnd } from './roller-heavy-swing.mjs';
+@@ -1196,7 +1197,7 @@
+   Character.prototype._poseWeapon = function (dt, s) {
+     const available = this.weaponKind === 'roller' && this.kidForm && !this.dance && this.wSub <= .01 &&
+       (!T || (specialMotionAllowsAction(this,this.tr[T.T_LEAP] >= 1.9 && this.tr[T.T_SLAM] >= 1.4) &&
+-        this.tr[T.T_DODGE] >= this.dodgeDur && this.tr[T.T_SPAWN] >= 1.4));
++        this.tr[T.T_DODGE] >= this.dodgeDur && spawnMotionAllowsAction(this, this.tr[T.T_SPAWN] >= 1.4)));
+     // #263: once native contact/stripe authority is admitted, use the existing
+     // settled ground-contact target, not another raised-carry blend. Keep wRoll
+     // itself unchanged: gameplay cleanup and drum-spin blending read that clock.
+--- a/patches/splatoon3/runtime/roller-detail-motion.mjs
++++ b/patches/splatoon3/runtime/roller-detail-motion.mjs
+@@ -1,3 +1,4 @@
++import { spawnMotionAllowsAction } from './spawn-pose-motion.mjs';
+ import { specialMotionAllowsAction, bombMotionAllowsAction } from './action-admission.mjs';
+ // Additive detail for the public Character, installed after roller.mjs. Nintendo
+ // footage supports the motion order; these targets are INKWAVE rig calibration,
+@@ -52,7 +53,7 @@
+       || !!a?.s3?.actions?.roll || !!a?.s3?.actions?.surge
+       || !!(s?.subAim ?? r?.aimingSub) || ch.wSub > .01 || !bombMotionAllowsAction(ch,tr[T.T_THROW] >= .62)
+       || !specialMotionAllowsAction(ch,tr[T.T_LEAP] >= 1.9 && tr[T.T_SLAM] >= 1.4)
+-      || tr[T.T_DODGE] < ch.dodgeDur || tr[T.T_SPAWN] < 1.4;
++      || tr[T.T_DODGE] < ch.dodgeDur || !spawnMotionAllowsAction(ch, tr[T.T_SPAWN] >= 1.4);
+   }
+   P._updateStates = function (dt, s) {
+     const result = updateStates.call(this, dt, s);
+--- a/patches/splatoon3/runtime/respawn-lifecycle.mjs
++++ b/patches/splatoon3/runtime/respawn-lifecycle.mjs
+@@ -266,7 +266,16 @@
+     // A remote death/disconnect may bypass local splat. A corpse cannot own
+     // spawn motion or intercept the native death/respawn countdown.
+     if (!this.alive && this.s3) delete this.s3.squidSpawn;
++
+     const spawn = this.s3?.squidSpawn;
++    // Observe genuine releases even while Squid Spawn owns the update.
++    if (spawn && this.alive && this.s3.respawnRearm) {
++      for (let i = 0; i < KEYS.length; i++) {
++        const key = KEYS[i];
++        if (!(this.s3.physicalRespawnHeld?.[key] ?? this.intent[key])) this.s3.respawnRearm.delete(key);
++      }
++      if (!this.s3.respawnRearm.size) delete this.s3.respawnRearm;
++    }
+     if (spawn) {
+       if (spawn.phase === 'aim') {
+         spawn.wait += Number.isFinite(dt) && dt > 0 ? dt : 0;

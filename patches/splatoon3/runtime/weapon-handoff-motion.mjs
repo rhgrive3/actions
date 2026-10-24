@@ -15,6 +15,18 @@ const OBJECTIVE_FORM_BONES = ['spine', 'chest', 'neck', 'head', 'clavL', 'clavR'
 const BONES = ['spine', 'chest', 'neck', 'clavL', 'clavR', 'uArmL', 'uArmR', 'fArmL', 'fArmR', 'handL', 'handR'];
 const smooth = x => { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x); };
 
+// The other great-circle route to the same quaternion. Only a spawn-return
+// wrist uses it, when its midpoint raises the drum instead of sweeping it
+// through the floor. Ordinary handoffs and native attack/grip targets keep
+// their existing shortest-path interpolation.
+function spawnReturnArc(out, from, weight) {
+  const dot = out.dot(from), sign = dot > 0 ? -1 : 1;
+  const angle = Math.acos(-Math.min(1, Math.abs(dot))), sine = Math.sin(angle);
+  if (Math.abs(sine) < 1e-6) return out.slerp(from, weight);
+  const a = Math.sin((1-weight)*angle)/sine, b = sign*Math.sin(weight*angle)/sine;
+  return out.set(out.x*a+from.x*b, out.y*a+from.y*b, out.z*a+from.z*b, out.w*a+from.w*b).normalize();
+}
+
 function record(ch) { return ch?.constructor?.prototype?.[INSTALLED]; }
 /** Read-only view for regressions: null before the first sourced frame. */
 export function weaponHandoffSnapshot(ch) {
@@ -22,7 +34,7 @@ export function weaponHandoffSnapshot(ch) {
   return st ? { owner: st.owner, elapsed: st.t, duration: st.d, weight: st.w, valid: st.valid } : null;
 }
 
-export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNELS: C, G }) {
+export function installWeaponHandoffMotion({ THREE, Character, Actor, CHARACTER_CHANNELS: C, G }) {
   const proto = Character?.prototype;
   if (!proto?._applyPose || !proto?._solveLimb || !proto?._kidXform || !C) throw Error('Weapon handoff motion requires the native Character');
   if (Object.hasOwn(proto, INSTALLED)) return;
@@ -134,39 +146,71 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
     }
   }
 
-  function handoff(ch, dt) {
+  function handoff(ch, dt, frame) {
     const sm = ch.sourceMotion;
     const on = ch.s3WeaponHandoffEnabled !== false && ch.kidForm && !ch.dance && !!ch.weapon && !!sm?.active && !sm.manual && !ch._rainmakerPose;
     let st = states.get(ch);
     if (st) st.faded = false;
-    if (!on) { if (st) { st.valid = false; st.t = st.d = 0; st.w = 0; } return; }
+    if (!on) { if (st) { st.valid = false; st.t = st.d = 0; st.w = 0; st.spawning = st.spawnLanding = false; } return; }
     if (!st) states.set(ch, st = { valid: false, faded: false, owner: '', t: 0, d: 0, w: 0, time: 0, weapon: null,
       bones: BONES.map(n => ch.bones[n]), prev: BONES.map(() => new THREE.Quaternion()),
       from: BONES.map(() => new THREE.Quaternion()), raw: BONES.map(() => new THREE.Quaternion()), shown: BONES.map(() => new THREE.Quaternion()) });
     // Hidden frames skip _applyPose: a stale previous pose is not a fade source.
     if (st.valid && (st.weapon !== ch.weapon || ch.t - st.time > 0.1 || ch.t < st.time)) st.valid = false;
     const owner = sm.sourceUpper ? 'source' : 'native';
-    if (!st.valid) st.t = st.d = 0;
-    else if (st.owner !== owner) {
+    const actor = ch.actor, bound = actor?.character === ch;
+    const spawning = ch.weaponKind === 'roller' && bound && !!actor.s3?.squidSpawn;
+    const ready = ch.weaponKind === 'roller' && bound && actor.alive !== false && ch.grounded && !spawning &&
+      ch.s3SpawnPoseMotionEnabled !== false && ch.s3HitSpawnMotionEnabled !== false &&
+      !actor.intent?.fire && !actor.intent?.sub && !actor.intent?.special && !actor.intent?.jump && !actor.intent?.squid &&
+      !frame?.firing && !frame?.rolling && !(frame?.charge > 0) && !frame?.subAim && !(ch.wSub > .001) &&
+      !ch.s3RollerFlick && !actor.weaponRunner?.s3RollerAttack && !actor.weaponRunner?.dodge && !actor.specialActive && !actor.superJumpState;
+    const landed = st.valid && st.spawning && ready && owner === 'native';
+    if (!st.valid) { st.t = st.d = 0; st.spawnLanding = false; }
+    else if (st.owner !== owner || landed) {
       for (let i = 0; i < BONES.length; i++) st.from[i].copy(st.prev[i]);
-      st.t = 0; st.d = owner === 'native' ? HANDOFF_RAISE : HANDOFF_FADE;
+      st.t = 0; st.d = landed ? HANDOFF_FADE : owner === 'native' ? HANDOFF_RAISE : HANDOFF_FADE;
+      st.spawnLanding = landed;
+      st.spawnLongHand = false;
+      if (landed && ch.weapon.drum) {
+        // Choose once, with the already solved hand and existing scratch.
+        // This changes a display arc, never a native IK/grip endpoint.
+        const hand = ch.bones.handR, from = st.from[BONES.length-1];
+        ch._kidXform(hand, v3, q3); ch._kidXform(ch.weapon.drum, v4, q4);
+        v5.subVectors(v4, v3).applyQuaternion(q3.invert());
+        ch._kidXform(hand.parent, v3, q3);
+        q4.copy(hand.quaternion).slerp(from, .5);
+        spawnReturnArc(q5.copy(hand.quaternion), from, .5);
+        const low = v4.copy(v5).applyQuaternion(q4).applyQuaternion(q3).y;
+        st.spawnLongHand = v4.copy(v5).applyQuaternion(q5).applyQuaternion(q3).y > low;
+      }
     }
+    // The native ready/attack pose is already evaluated. Only its idle display
+    // handoff fades; a fresh/held attack, jump or other action owns this frame.
+    if (st.spawnLanding && !ready) { st.t = st.d = 0; st.spawnLanding = false; }
     st.w = 0;
     if (st.t < st.d) {
       st.t += Math.max(0, dt || 0);
       st.w = 1 - smooth(st.t / st.d);
       if (st.w > 1e-4) {
-        for (let i = 0; i < BONES.length; i++) { st.raw[i].copy(st.bones[i].quaternion); st.bones[i].quaternion.slerp(st.from[i], st.w); }
+        for (let i = 0; i < BONES.length; i++) {
+          st.raw[i].copy(st.bones[i].quaternion);
+          // Spawn landing keeps native torso/neck motion; reuse only the
+          // existing arm display fade and support refit, with no new solver.
+          if (st.spawnLanding && st.spawnLongHand && i === BONES.length-1) spawnReturnArc(st.bones[i].quaternion, st.from[i], st.w);
+          else if (!st.spawnLanding || i >= 3) st.bones[i].quaternion.slerp(st.from[i], st.w);
+        }
         st.faded = true;
         const err = ch.ikErr[0];
         refitSupport(ch);
         ch.ikErr[0] = err;   // presentation only: next frame's reach integration keeps its native input
         const saved = sm.renderedPose, list = ch.boneList;
-        if (saved && list) for (const b of st.bones) { const k = list.indexOf(b); if (k >= 0) saved[k].q.copy(b.quaternion); }
+        // A short spawn display return must not seed future action/body history.
+        if (saved && list && !st.spawnLanding) for (const b of st.bones) { const k = list.indexOf(b); if (k >= 0) saved[k].q.copy(b.quaternion); }
       }
     }
     for (let i = 0; i < BONES.length; i++) st.prev[i].copy(st.bones[i].quaternion);
-    st.owner = owner; st.weapon = ch.weapon; st.time = ch.t; st.valid = true;
+    st.owner = owner; st.weapon = ch.weapon; st.time = ch.t; st.valid = true; st.spawning = spawning;
   }
 
   // Interrupted source return still evaluates its canonical pose and history.
@@ -239,7 +283,7 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
       result = applyPose.call(this, dt, s);
       if (this._rainmakerPose) objectiveSupport(this);
     }
-    handoff(this, dt);
+    handoff(this, dt, s);
     return result;
   };
   // Gameplay muzzle: evaluated on the unfaded upper body (the pose every
@@ -262,4 +306,19 @@ export function installWeaponHandoffMotion({ THREE, Character, CHARACTER_CHANNEL
   };
   proto.setWeapon = function (...args) { if (this.s3RainmakerSupportPending) this._restoreRainmakerSupport(); supportStates.delete(this); formStates.delete(this); states.delete(this); return setWeapon.apply(this, args); };
   proto.dispose = function (...args) { if (this.s3RainmakerSupportPending) this._restoreRainmakerSupport(); supportStates.delete(this); formStates.delete(this); states.delete(this); return dispose.apply(this, args); };
+  const A = Actor?.prototype;
+  if (A && !Object.hasOwn(A, INSTALLED)) {
+    const reset = A.reset;
+    Object.defineProperty(A, INSTALLED, { value: true });
+    A.reset = function (...args) {
+      const ch = this.character, st = ch?.actor === this ? states.get(ch) : null;
+      if (st && (st.spawning || st.spawnLanding)) {
+        // Retire this life's display before native reset exposes the new life.
+        // Keep its unfaded native pose, never the old in-between wrist/arms.
+        if (st.faded) for (let i=0; i<BONES.length; i++) st.bones[i].quaternion.copy(st.raw[i]);
+        states.delete(ch);
+      }
+      return reset.apply(this, args);
+    };
+  }
 }

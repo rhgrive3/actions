@@ -6305,3 +6305,21 @@ main726eとの統合では、main側の新しいrelay時計・音声・capture a
 ## 2026-10-23: 原典ステージの GPU 描画負荷上限
 
 原典ステージ表示中だけ GTAO を外し、MSAA・pixelRatio に上限をかけ、コンテキストロスト後は段階的に描画負荷を下げる（[記録](inkwave-native-gpu-budget-2026-10-23.md)）。描画表現のみの変更で、歩行・泳ぎ・射撃・塗り判定・インク回復・カメラ操作のロジックは変更していない。本家 Ver.11.3.0 との既存の差分・未確認項目はそのまま。計測は Chromium + SwiftShader の WebGL 確保量の集計で、実機の GPU 落ち解消は未確認。
+
+### 2026-10-23: 復活着地直後のローラー構えと入力再受付
+
+- 対象: pinned Splatoon 3 parameter epoch 11.3.0、標準ローラー、既存avatar/gear、死亡→通常カウントダウン→Squid Spawn→発射入力を離す→着地。復活直後の押し直し・意図した長押し、他武器、native jump/superjump、remote表示も分けて検査する。
+- 再現差分: 無入力のnative runnerはrolling=false、flick=-1、発射0・塗り0だが、`roller.mjs::_poseWeapon`と`roller-detail-motion.mjs::interrupted`が終了済みspawn表示の`T_SPAWN < 1.4`だけで通常構え／有効な振り表示を遮断していた。死亡前のwRoll表示ブレンドもlife resetを越え、spawn中の実入力解除はrespawnRearmへ届かなかった。
+- 変更: `spawn-pose-motion.mjs::spawnMotionAllowsAction`が既存表示ownerの終了を読む。無効／未対応の表示は旧native timer判定を保持する。Actor.resetではwRollだけを初期化し、respawn-lifecycleは照準／飛行中の実物理入力解除を既存rearmへ反映する。native武器のwindup／cooldown／emerge gate、弾／塗り、移動、無敵、network、ローラー回復曲線／grip／接地IKは変更しない。
+- 本家の根拠・限界: [任天堂公式紹介](https://www.nintendo.com/jp/switch/av5ja/index.html)および既存の[spawn較正記録](../patches/splatoon3/reference/spawn-pose-calibration.md)を参照。本変更は既存INKWAVEの通常構えへの復帰修正で、新たな本家joint曲線や着地フレーム値を作らない。同条件の本家実機映像／精密な軌道一致は未確認のまま。
+- 検証・実際の本番build identity・通常native前後11地点・原本と中間失敗は[候補レポート](respawn-weapon-state-20261023/integration/README.md)を参照。fixed simulation／実Chromium／retail実機／公開exact HEAD CIの結果を分けて記録する。
+
+### 2026-10-23 follow-up: 未接地Squid Spawn landingの表示owner
+
+親の独立検証で、`702ce3d`はsupport消失後の未接地landing中に較正spawn表示が先に終了するとreadyを許可する回帰が見つかった。別candidateの`spawnMotionAllowsAction`は正しく結び付いたActorのactive squidSpawnをread-onlyで優先し、実支持への着地・lifecycle終了後は古い時計を待たず既存readyへ戻す。helperの実行2行だけを追加し、時計／physics／攻撃gate／grip／IK／曲線は変更しない。[元702との88点の一致、source・通常生成物の焦点回帰、exact patch/hash](respawn-spawn-owner-20261023/README.md)を保存する。PR1862は独立再確認まで更新しない。巨大に見えるreadyの最終pivot／投影の切り分けは未判定であり、モデル変更・見た目受入済みとは扱わない。
+
+追加の[通常生成物・実ブラウザ診断](respawn-ready-pivot-20261023/README.md)では、初期settledと着地後145の全記録が元mainと一致し、ドラムの実寸／scaleは一定だった。702/708の通常8地点も最終pivot・カメラまで完全一致する。61のspawn加算は0だが、既存readyが着地中の胴体／速度swayと近いカメラで投影され、145より横46.81%大きく見える。一方、60→61は174.881°の1tick切替であり、元mainの同地点13.110°、従来の遅い133→134切替153.212°より大きい。早期ready復帰による着地時の表示popは実在し、純粋な遠近だけとは扱わない。708の支持消失ケースは85更新のnative状態が702と一致し、空中ready4→0、実支持着地後の次更新で即ready、無入力発射／塗り0を確認した。これは表示原因の切り分けで、curve／geometry／grip変更や見た目／Switch実機受入を追加したものではない。PR/main判断は親の独立確認に残す。
+
+[表示復帰の別候補](respawn-ready-handoff-20261023/README.md)は708のaction許可を保持し、既存handoffの.2秒表示補間を着地直後だけ使う。.1秒案と関節最短経路の.2秒案は、後半の跳び／床抜けで不採用として原本を保存した。最終案は同じnative端点へ戻る表示回転の上側経路を選び、実IK／grip／縦横振り回復曲線／geometryを変更しない。同条件の通常生成物ブラウザで最大角度174.881→21.530°、pivot移動.253189→.093484WU、投影高さの跳び217.532→66.004px、戻り途中の実頂点床クリアランス+.138840WU以上、72／145の既存ready一致を確認。native入力・physics・全pose channel・銃口・cameraは15共通地点で完全一致し、未接地ready0・接地後action即時・無入力発射／塗り0を保持する。最終source17/17・通常生成物17/17・既存handoff13/13。これはboundedな表示候補の確認であり、Nintendo 11.3.0実機／全モーションの見た目受入ではない。PR/mainは更新せず親の独立確認に残す。
+
+[active resetの追加候補](respawn-active-reset-20261023/README.md)では、表示復帰中に他のinvalidateを挟まずActor.resetを直接呼ぶと旧weight.925926が残り、新lifeでも.84375へ進むbd5回帰をsource／通常生成物／実Gameで確認した。handoff自身の表示recordだけをnative raw姿勢へ戻して破棄し、既存resetを引数・戻り値そのまま1回呼ぶ。入力／physics／native reset本体／曲線／grip／IK／geometryは変えない。直後record=null・新life weight0、canonical／銃口／実弾／塗りと対照一致、source18/18・生成物18/18。同条件Gameのreset前5地点とnative/cameraは一致。参照QAは22fのchecker/test2葉だけを別のproduction無変更候補a042に保持し、PR1853の9-edgeを含む8/8、source／生成物13参照を通す。旧702/main7eを祖先に保持し、既存不採用案・bd5は更新せず、PR/mainは独立確認待ち。

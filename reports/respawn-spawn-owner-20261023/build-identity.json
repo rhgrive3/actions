@@ -1,0 +1,12 @@
+{
+  "inputHash": "fedfdd0c90001397b7a905d4ce4892d472c3d208f428f72a847b4c3fbcd9c8b1",
+  "contentHash": "d06bdd157e91f91b87c2e55cb6394ffdb0e85188ec81e68a875a73c7286be557",
+  "inputs": 1420,
+  "artifactBodiesVerified": 2110,
+  "runtimeSha256": "1756151408ac7e6a27ae97b4ce62044bea04d9782924928b96b7a30112663dde",
+  "protectedPathsUnchanged": [
+    "patches/splatoon3/runtime/roller.mjs",
+    "patches/splatoon3/runtime/roller-detail-motion.mjs",
+    "patches/splatoon3/runtime/respawn-lifecycle.mjs"
+  ]
+}

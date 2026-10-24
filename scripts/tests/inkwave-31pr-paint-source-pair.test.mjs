@@ -9,6 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import {ALL_31_PRS_SOURCE_PAIR as P,POST_30_PRS_SOURCE_PAIR as D,POST_30_PRS_POSE_PAIR,FIRING_31_PRS_SOURCE_EPOCH as F,FIRING_31_PRS_COMPOSITION_FIXTURE_SHA256,ALL_31_PRS_FIXTURE_SHA256 as ALL_PRS_FIXTURE_SHA256} from '../lib/inkwave-31pr-paint-source-pair.mjs';
 import {CHARACTER_POSE_PATHS,planCharacterPoseBaseline} from '../lib/inkwave-character-pose-baseline.mjs';
+import {RESPAWN_1862_POSE_PAIR as RESPAWN} from '../lib/inkwave-respawn1862-source-pair.mjs';
 import {MAIN_INK_BASELINE_PATHS as paths,planMainInkBaseline,gitBlobSha1} from '../lib/inkwave-main-ink-baseline.mjs';
 const packed=fs.readFileSync(new URL('../fixtures/inkwave-31pr-paint-source-pair.json.gz',import.meta.url));
 assert.equal(createHash('sha256').update(packed).digest('hex'),ALL_PRS_FIXTURE_SHA256);
@@ -111,13 +112,67 @@ test('only the sixteen pinned pose source leaves are identical after the first b
  assert.deepEqual([...result.sources],[...before]);
  for(const path of CHARACTER_POSE_PATHS){
   assert.equal(gitBlobSha1(before.get(path)),POST_30_PRS_POSE_PAIR.paths[path].baseline);
-  // This is the frozen historical tuple, not the newer PR1856 motion epoch.
   assert.equal(gitBlobSha1(after.get(path)),POST_30_PRS_POSE_PAIR.paths[path].candidate);
   for(const side of [0,1])for(const omit of [false,true]){
    const pair=maps();if(omit)pair[side].delete(path);else pair[side].set(path,pair[side].get(path)+' ');
    assert.throws(()=>planCharacterPoseBaseline(...pair));
   }
  }
+});
+// Keep the historical fixtures above pinned. Admit the reviewed respawn delta
+// as its own complete tuple, preserving both inputs without historical replay.
+const respawnMaps=()=>[new Map(Object.entries(fixture.post30Pose)),
+ new Map(CHARACTER_POSE_PATHS.map(p=>[p,fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]))];
+test('1862 admits exactly the reviewed sixteen-leaf main/respawn pair without replay',()=>{
+ const [before,after]=respawnMaps(),snap=[...before],subject=[...after];
+ assert.deepEqual(Object.keys(RESPAWN.paths),CHARACTER_POSE_PATHS);
+ for(const p of CHARACTER_POSE_PATHS){
+  assert.equal(gitBlobSha1(before.get(p)),RESPAWN.paths[p].baseline,p+' baseline');
+  assert.equal(gitBlobSha1(after.get(p)),RESPAWN.paths[p].candidate,p+' current source');
+ }
+ const result=planCharacterPoseBaseline(before,after);
+ assert.equal(result.pairEvidence.mode,'current-pose-pair-with-gameplay-differences');
+ assert.equal(result.pairEvidence.sourceBase,RESPAWN.sourceBase);assert.equal(result.pairEvidence.sourceHead,RESPAWN.sourceHead);
+ assert.deepEqual(result.changes,[]);assert.deepEqual([...result.sources],snap);
+ assert.deepEqual([...before],snap);assert.deepEqual([...after],subject);
+ assert.equal(result.evidence.length,16);
+ assert.deepEqual(result.evidence.filter(p=>p.originalGitBlob!==p.candidateGitBlob).map(p=>p.path),
+  ['patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/weapon-handoff-motion.mjs']);
+ for(const p of result.evidence){assert.equal(p.referenceGitBlob,p.originalGitBlob);assert.equal(p.referenceSha256,p.originalSha256);assert.equal(p.changed,false);assert.deepEqual(p.replayed,[]);}
+ assert.match(result.pairEvidence.validationLimit,/not pose or gameplay equivalence/);
+});
+test('1862 rejects every missing/altered leaf, both-side drift, reversal and partial epoch',()=>{
+ const [before,after]=respawnMaps();
+ const rejects=(b,c)=>{const snap=[...b],subject=[...c];assert.throws(()=>planCharacterPoseBaseline(b,c));assert.deepEqual([...b],snap);assert.deepEqual([...c],subject);};
+ for(const p of CHARACTER_POSE_PATHS)for(const sides of [[0],[1],[0,1]])for(const missing of [false,true]){
+  const pair=[new Map(before),new Map(after)];
+  for(const side of sides)if(missing)pair[side].delete(p);else pair[side].set(p,pair[side].get(p)+' ');
+  rejects(...pair);
+ }
+ for(const p of CHARACTER_POSE_PATHS.filter(p=>before.get(p)!==after.get(p))){
+  const b=new Map(before),c=new Map(after);c.set(p,b.get(p));rejects(b,c);
+  const mixed=new Map(before);mixed.set(p,after.get(p));rejects(mixed,after);
+ }
+ rejects(after,before);rejects(after,after);
+ // Identical historical main remains a valid, separately pinned old epoch.
+ assert.equal(planCharacterPoseBaseline(before,before).pairEvidence.mode,POST_30_PRS_POSE_PAIR.mode);
+});
+test('1862 pose CLI writes no source and preserves its prior receipt on late rejection',()=>{
+ const temp=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-respawn1862-pose-'));
+ try{
+  const [before,after]=respawnMaps(),b=path.join(temp,'base'),c=path.join(temp,'candidate'),receipt=path.join(temp,'receipt.json');
+  for(const [dir,rows]of [[b,before],[c,after]])for(const [p,s]of rows){const f=path.join(dir,p);fs.mkdirSync(path.dirname(f),{recursive:true});fs.writeFileSync(f,s);}
+  const read=dir=>new Map(CHARACTER_POSE_PATHS.map(p=>[p,fs.readFileSync(path.join(dir,p),'utf8')]));
+  const run=()=>spawnSync(process.execPath,[fileURLToPath(new URL('../prepare-inkwave-character-pose-baseline.mjs',import.meta.url)),
+   '--baseline',b,'--candidate',c,'--receipt',receipt],{encoding:'utf8',timeout:60000});
+  const positive=run();assert.equal(positive.status,0,positive.stderr);
+  const saved=fs.readFileSync(receipt,'utf8'),out=JSON.parse(saved);
+  assert.equal(out.sourceBase,RESPAWN.sourceBase);assert.equal(out.sourceHead,RESPAWN.sourceHead);
+  assert.equal(out.mode,'current-pose-pair-with-gameplay-differences');assert.deepEqual(out.writtenPaths,[]);assert.equal(out.reviewedDiffSha256,undefined);
+  assert.deepEqual([...read(b)],[...before]);assert.deepEqual([...read(c)],[...after]);
+  fs.appendFileSync(path.join(c,CHARACTER_POSE_PATHS.at(-1)),'\n// unreviewed final leaf\n');
+  const negative=run();assert.equal(negative.status,1);assert.deepEqual([...read(b)],[...before]);assert.equal(fs.readFileSync(receipt,'utf8'),saved);
+ }finally{fs.rmSync(temp,{recursive:true,force:true});}
 });
 test('post30 controls CLI accepts only the frozen single-difference tuple and completes every negative control',()=>{
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-31pr-cli-'));

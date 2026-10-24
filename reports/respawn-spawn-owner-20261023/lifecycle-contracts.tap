@@ -1,0 +1,472 @@
+TAP version 13
+# (node:6344) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: \#879 shooter: native respawn has class pose, attached grips and no gameplay edits
+ok 1 - \#879 shooter: native respawn has class pose, attached grips and no gameplay edits
+  ---
+  duration_ms: 16585.958997
+  type: 'test'
+  ...
+# Subtest: \#879 roller: native respawn has class pose, attached grips and no gameplay edits
+ok 2 - \#879 roller: native respawn has class pose, attached grips and no gameplay edits
+  ---
+  duration_ms: 396.917998
+  type: 'test'
+  ...
+# Subtest: \#879 charger: native respawn has class pose, attached grips and no gameplay edits
+ok 3 - \#879 charger: native respawn has class pose, attached grips and no gameplay edits
+  ---
+  duration_ms: 401.909086
+  type: 'test'
+  ...
+# Subtest: \#879 slosher: native respawn has class pose, attached grips and no gameplay edits
+ok 4 - \#879 slosher: native respawn has class pose, attached grips and no gameplay edits
+  ---
+  duration_ms: 555.197165
+  type: 'test'
+  ...
+# Subtest: \#879 splatling: native respawn has class pose, attached grips and no gameplay edits
+ok 5 - \#879 splatling: native respawn has class pose, attached grips and no gameplay edits
+  ---
+  duration_ms: 533.291099
+  type: 'test'
+  ...
+# Subtest: \#879 dualies: native respawn has class pose, attached grips and no gameplay edits
+ok 6 - \#879 dualies: native respawn has class pose, attached grips and no gameplay edits
+  ---
+  duration_ms: 376.777634
+  type: 'test'
+  ...
+# Subtest: \#879 blaster: native respawn has class pose, attached grips and no gameplay edits
+ok 7 - \#879 blaster: native respawn has class pose, attached grips and no gameplay edits
+  ---
+  duration_ms: 578.9255
+  type: 'test'
+  ...
+# Subtest: \#879 all families have unique calibrated target curves and documented complete timelines
+ok 8 - \#879 all families have unique calibrated target curves and documented complete timelines
+  ---
+  duration_ms: 0.351679
+  type: 'test'
+  ...
+# Subtest: \#879 local: 30/60/120 Hz renders yield identical fixed phase boundaries
+ok 9 - \#879 local: 30/60/120 Hz renders yield identical fixed phase boundaries
+  ---
+  duration_ms: 433.80946
+  type: 'test'
+  ...
+# Subtest: \#879 remote: 30/60/120 Hz renders yield identical fixed phase boundaries
+ok 10 - \#879 remote: 30/60/120 Hz renders yield identical fixed phase boundaries
+  ---
+  duration_ms: 308.099664
+  type: 'test'
+  ...
+# Subtest: \#879 remote timestamped spawn trigger selects the same class as local and needs no new packet
+ok 11 - \#879 remote timestamped spawn trigger selects the same class as local and needs no new packet
+  ---
+  duration_ms: 182.55538
+  type: 'test'
+  ...
+# Subtest: \#879 land cancels ownership and cannot revive until another spawn
+ok 12 - \#879 land cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 64.313533
+  type: 'test'
+  ...
+# Subtest: \#879 death cancels ownership and cannot revive until another spawn
+ok 13 - \#879 death cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 66.753458
+  type: 'test'
+  ...
+# Subtest: \#879 special cancels ownership and cannot revive until another spawn
+ok 14 - \#879 special cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 239.088973
+  type: 'test'
+  ...
+# Subtest: \#879 superjump cancels ownership and cannot revive until another spawn
+ok 15 - \#879 superjump cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 76.082582
+  type: 'test'
+  ...
+# Subtest: \#879 weapon cancels ownership and cannot revive until another spawn
+ok 16 - \#879 weapon cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 76.714565
+  type: 'test'
+  ...
+# Subtest: \#879 hidden cancels ownership and cannot revive until another spawn
+ok 17 - \#879 hidden cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 66.697044
+  type: 'test'
+  ...
+# Subtest: \#879 reset cancels ownership and cannot revive until another spawn
+ok 18 - \#879 reset cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 77.212596
+  type: 'test'
+  ...
+# Subtest: \#879 sub cancels ownership and cannot revive until another spawn
+ok 19 - \#879 sub cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 76.200803
+  type: 'test'
+  ...
+# Subtest: \#879 shoot cancels ownership and cannot revive until another spawn
+ok 20 - \#879 shoot cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 71.509087
+  type: 'test'
+  ...
+# Subtest: \#879 squid cancels ownership and cannot revive until another spawn
+ok 21 - \#879 squid cancels ownership and cannot revive until another spawn
+  ---
+  duration_ms: 67.496933
+  type: 'test'
+  ...
+# Subtest: \#879 spawn pose is independent from armor loss and installer is idempotent across realms
+ok 22 - \#879 spawn pose is independent from armor loss and installer is idempotent across realms
+  ---
+  duration_ms: 64.975943
+  type: 'test'
+  ...
+# Subtest: \#879 shooter: full class timeline keeps both grips and releases at its calibrated end
+ok 23 - \#879 shooter: full class timeline keeps both grips and releases at its calibrated end
+  ---
+  duration_ms: 97.595577
+  type: 'test'
+  ...
+# Subtest: \#879 roller: full class timeline keeps both grips and releases at its calibrated end
+ok 24 - \#879 roller: full class timeline keeps both grips and releases at its calibrated end
+  ---
+  duration_ms: 95.990278
+  type: 'test'
+  ...
+# Subtest: \#879 charger: full class timeline keeps both grips and releases at its calibrated end
+ok 25 - \#879 charger: full class timeline keeps both grips and releases at its calibrated end
+  ---
+  duration_ms: 104.039226
+  type: 'test'
+  ...
+# Subtest: \#879 slosher: full class timeline keeps both grips and releases at its calibrated end
+ok 26 - \#879 slosher: full class timeline keeps both grips and releases at its calibrated end
+  ---
+  duration_ms: 103.716416
+  type: 'test'
+  ...
+# Subtest: \#879 splatling: full class timeline keeps both grips and releases at its calibrated end
+ok 27 - \#879 splatling: full class timeline keeps both grips and releases at its calibrated end
+  ---
+  duration_ms: 120.356083
+  type: 'test'
+  ...
+# Subtest: \#879 dualies: full class timeline keeps both grips and releases at its calibrated end
+ok 28 - \#879 dualies: full class timeline keeps both grips and releases at its calibrated end
+  ---
+  duration_ms: 89.370576
+  type: 'test'
+  ...
+# Subtest: \#879 blaster: full class timeline keeps both grips and releases at its calibrated end
+ok 29 - \#879 blaster: full class timeline keeps both grips and releases at its calibrated end
+  ---
+  duration_ms: 101.780165
+  type: 'test'
+  ...
+# Subtest: \#879 ordinary air/jump never starts spawn and a new authoritative spawn can restart after landing
+ok 30 - \#879 ordinary air/jump never starts spawn and a new authoritative spawn can restart after landing
+  ---
+  duration_ms: 81.56664
+  type: 'test'
+  ...
+# (node:6355) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: remote shooter splat uses the same cause timing as its owner
+ok 31 - remote shooter splat uses the same cause timing as its owner
+  ---
+  duration_ms: 549.829539
+  type: 'test'
+  ...
+# Subtest: remote water splat uses the same cause timing as its owner
+ok 32 - remote water splat uses the same cause timing as its owner
+  ---
+  duration_ms: 417.006514
+  type: 'test'
+  ...
+# Subtest: remote fall splat uses the same cause timing as its owner
+ok 33 - remote fall splat uses the same cause timing as its owner
+  ---
+  duration_ms: 596.652071
+  type: 'test'
+  ...
+# Subtest: proxy respawn clears real wall Surge charge and roll armor like owner reset
+ok 34 - proxy respawn clears real wall Surge charge and roll armor like owner reset
+  ---
+  duration_ms: 594.080824
+  type: 'test'
+  ...
+# Subtest: old missing remote movement cleanup retains the prior-life Surge after native respawn
+ok 35 - old missing remote movement cleanup retains the prior-life Surge after native respawn
+  ---
+  duration_ms: 548.873043
+  type: 'test'
+  ...
+# (node:6362) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: post-splat gauge including equipped Special Saver survives Squid Spawn; initial spawn/reset still clears
+ok 36 - post-splat gauge including equipped Special Saver survives Squid Spawn; initial spawn/reset still clears
+  ---
+  duration_ms: 555.174074
+  type: 'test'
+  ...
+# Subtest: armor durability, delayed break and uncapped per-hit overflow replace binary immunity
+ok 37 - armor durability, delayed break and uncapped per-hit overflow replace binary immunity
+  ---
+  duration_ms: 462.912079
+  type: 'test'
+  ...
+# Subtest: armor clock expires at 235F, ink bypasses it, reset/death clear and generic invulnerability remains separate
+ok 38 - armor clock expires at 235F, ink bypasses it, reset/death clear and generic invulnerability remains separate
+  ---
+  duration_ms: 556.704813
+  type: 'test'
+  ...
+# Subtest: rearm blocks held Roller across actual death/respawn until release, without synthetic airborne flick
+ok 39 - rearm blocks held Roller across actual death/respawn until release, without synthetic airborne flick
+  ---
+  duration_ms: 610.092029
+  type: 'test'
+  ...
+# Subtest: all held action keys rearm independently, stale press ordering disappears, and bots are not trapped
+ok 40 - all held action keys rearm independently, stale press ordering disappears, and bots are not trapped
+  ---
+  duration_ms: 585.945091
+  type: 'test'
+  ...
+# Subtest: HUD samples final actor timer after gear wrapper, ignores independent FX time and isolates players
+ok 41 - HUD samples final actor timer after gear wrapper, ignores independent FX time and isolates players
+  ---
+  duration_ms: 550.107
+  type: 'test'
+  ...
+# Subtest: \#93 Turf Squid Spawn preserves Quick Respawn history through launch and feeds the gear-adjusted HUD timer
+ok 42 - \#93 Turf Squid Spawn preserves Quick Respawn history through launch and feeds the gear-adjusted HUD timer
+  ---
+  duration_ms: 604.634652
+  type: 'test'
+  ...
+# Subtest: 30/60/120 render schedules preserve armor and retained gauge boundaries
+ok 43 - 30/60/120 render schedules preserve armor and retained gauge boundaries
+  ---
+  duration_ms: 1768.213008
+  type: 'test'
+  ...
+# Subtest: real composed controller keeps held mouse blocked through map filtering and release re-arms it
+ok 44 - real composed controller keeps held mouse blocked through map filtering and release re-arms it
+  ---
+  duration_ms: 1167.299451
+  type: 'test'
+  ...
+# Subtest: source-connected HUD owns actual actor count/ring rather than the early splatted-event base value
+ok 45 - source-connected HUD owns actual actor count/ring rather than the early splatted-event base value
+  ---
+  duration_ms: 12.68609
+  type: 'test'
+  ...
+# Subtest: native NetMatch mirrors launch-owned armor; proxy stays presentation-only throughout landing
+ok 46 - native NetMatch mirrors launch-owned armor; proxy stays presentation-only throughout landing
+  ---
+  duration_ms: 849.058196
+  type: 'test'
+  ...
+# Subtest: a spawn hit has one armor owner even when roll/surge protection overlaps
+ok 47 - a spawn hit has one armor owner even when roll/surge protection overlaps
+  ---
+  duration_ms: 776.1619
+  type: 'test'
+  ...
+# Subtest: \#93 normal Turf battle human post-death Squid Spawn selects supported targets from camera aim and confirms via FIRE
+ok 48 - \#93 normal Turf battle human post-death Squid Spawn selects supported targets from camera aim and confirms via FIRE
+  ---
+  duration_ms: 631.865279
+  type: 'test'
+  ...
+# Subtest: \#93 height-only endpoints rejected by native Actor._resolve stay out of aim and launch
+ok 49 - \#93 height-only endpoints rejected by native Actor._resolve stay out of aim and launch
+  ---
+  duration_ms: 609.73319
+  type: 'test'
+  ...
+# Subtest: \#1005 launch-owned armor clock is consumed through Squid Spawn touchdown
+ok 50 - \#1005 launch-owned armor clock is consumed through Squid Spawn touchdown
+  ---
+  duration_ms: 583.739442
+  type: 'test'
+  ...
+# Subtest: \#93 supported touchdown uses native collision, preserves launch armor time, and adds no paint
+ok 51 - \#93 supported touchdown uses native collision, preserves launch armor time, and adds no paint
+  ---
+  duration_ms: 682.706928
+  type: 'test'
+  ...
+# Subtest: \#93 a real native Actor._resolve miss cannot award touchdown, reset armor, or paint
+ok 52 - \#93 a real native Actor._resolve miss cannot award touchdown, reset armor, or paint
+  ---
+  duration_ms: 628.740909
+  type: 'test'
+  ...
+# Subtest: Practice Range keeps immediate control and legacy respawn without Turf Squid Spawn
+ok 53 - Practice Range keeps immediate control and legacy respawn without Turf Squid Spawn
+  ---
+  duration_ms: 647.903022
+  type: 'test'
+  ...
+# Subtest: \#512 opening bots choose different deterministic and collision-supported Squid Spawn landings
+ok 54 - \#512 opening bots choose different deterministic and collision-supported Squid Spawn landings
+  ---
+  duration_ms: 678.332308
+  type: 'test'
+  ...
+# Subtest: \#512 human opening choice is still aim-owned and invalid bot landings fail closed
+ok 55 - \#512 human opening choice is still aim-owned and invalid bot landings fail closed
+  ---
+  duration_ms: 633.041974
+  type: 'test'
+  ...
+# Subtest: ci-quality-gate.yml/verify-aplus-suite: pins the same immutable PR, push or dispatch source and asserts actual checkout
+ok 56 - ci-quality-gate.yml/verify-aplus-suite: pins the same immutable PR, push or dispatch source and asserts actual checkout
+  ---
+  duration_ms: 51.29579
+  type: 'test'
+  ...
+# Subtest: ci-quality-gate.yml/verify-aplus-suite: rejects regressions to unpinned or optional identity
+ok 57 - ci-quality-gate.yml/verify-aplus-suite: rejects regressions to unpinned or optional identity
+  ---
+  duration_ms: 12.875427
+  type: 'test'
+  ...
+# Subtest: inkwave-specials-1130.yml/special-fidelity: pins the same immutable PR, push or dispatch source and asserts actual checkout
+ok 58 - inkwave-specials-1130.yml/special-fidelity: pins the same immutable PR, push or dispatch source and asserts actual checkout
+  ---
+  duration_ms: 53.737351
+  type: 'test'
+  ...
+# Subtest: inkwave-specials-1130.yml/special-fidelity: rejects regressions to unpinned or optional identity
+ok 59 - inkwave-specials-1130.yml/special-fidelity: rejects regressions to unpinned or optional identity
+  ---
+  duration_ms: 1.542853
+  type: 'test'
+  ...
+# Subtest: inkwave-specials-1130.yml/catalogue-browser: pins the same immutable PR, push or dispatch source and asserts actual checkout
+ok 60 - inkwave-specials-1130.yml/catalogue-browser: pins the same immutable PR, push or dispatch source and asserts actual checkout
+  ---
+  duration_ms: 59.709484
+  type: 'test'
+  ...
+# Subtest: inkwave-specials-1130.yml/catalogue-browser: rejects regressions to unpinned or optional identity
+ok 61 - inkwave-specials-1130.yml/catalogue-browser: rejects regressions to unpinned or optional identity
+  ---
+  duration_ms: 6.45934
+  type: 'test'
+  ...
+# Subtest: inkwave-reopened-six.yml/reopened-six: pins the same immutable PR, push or dispatch source and asserts actual checkout
+ok 62 - inkwave-reopened-six.yml/reopened-six: pins the same immutable PR, push or dispatch source and asserts actual checkout
+  ---
+  duration_ms: 49.132387
+  type: 'test'
+  ...
+# Subtest: inkwave-reopened-six.yml/reopened-six: rejects regressions to unpinned or optional identity
+ok 63 - inkwave-reopened-six.yml/reopened-six: rejects regressions to unpinned or optional identity
+  ---
+  duration_ms: 1.018001
+  type: 'test'
+  ...
+# Subtest: validate-inkwave-native-stage5.yml/contracts: pins the same immutable PR, push or dispatch source and asserts actual checkout
+ok 64 - validate-inkwave-native-stage5.yml/contracts: pins the same immutable PR, push or dispatch source and asserts actual checkout
+  ---
+  duration_ms: 46.22147
+  type: 'test'
+  ...
+# Subtest: validate-inkwave-native-stage5.yml/contracts: rejects regressions to unpinned or optional identity
+ok 65 - validate-inkwave-native-stage5.yml/contracts: rejects regressions to unpinned or optional identity
+  ---
+  duration_ms: 4.432381
+  type: 'test'
+  ...
+# Subtest: validate-inkwave-native-stage5.yml/placement-worker: pins the same immutable PR, push or dispatch source and asserts actual checkout
+ok 66 - validate-inkwave-native-stage5.yml/placement-worker: pins the same immutable PR, push or dispatch source and asserts actual checkout
+  ---
+  duration_ms: 61.506715
+  type: 'test'
+  ...
+# Subtest: validate-inkwave-native-stage5.yml/placement-worker: rejects regressions to unpinned or optional identity
+ok 67 - validate-inkwave-native-stage5.yml/placement-worker: rejects regressions to unpinned or optional identity
+  ---
+  duration_ms: 1.779095
+  type: 'test'
+  ...
+# Subtest: validate-inkwave-native-stage5.yml/source-geometry: pins the same immutable PR, push or dispatch source and asserts actual checkout
+ok 68 - validate-inkwave-native-stage5.yml/source-geometry: pins the same immutable PR, push or dispatch source and asserts actual checkout
+  ---
+  duration_ms: 41.837607
+  type: 'test'
+  ...
+# Subtest: validate-inkwave-native-stage5.yml/source-geometry: rejects regressions to unpinned or optional identity
+ok 69 - validate-inkwave-native-stage5.yml/source-geometry: rejects regressions to unpinned or optional identity
+  ---
+  duration_ms: 1.609799
+  type: 'test'
+  ...
+# Subtest: reviewed PR and explicit immutable dispatch routes select their exact epoch in both actual YAML shells
+ok 70 - reviewed PR and explicit immutable dispatch routes select their exact epoch in both actual YAML shells
+  ---
+  duration_ms: 447.955619
+  type: 'test'
+  ...
+# Subtest: reviewed runtime UI inventory rejects missing, unexpected and weakened routes in each shell
+ok 71 - reviewed runtime UI inventory rejects missing, unexpected and weakened routes in each shell
+  ---
+  duration_ms: 662.8704
+  type: 'test'
+  ...
+# Subtest: workflow policy rejects missing/changed epoch flags, unsafe selection, fallback and stale SHA declarations
+ok 72 - workflow policy rejects missing/changed epoch flags, unsafe selection, fallback and stale SHA declarations
+  ---
+  duration_ms: 2679.506881
+  type: 'test'
+  ...
+# Subtest: current-epoch tests and fixture-only changes retain mandatory source and native comparison gates
+ok 73 - current-epoch tests and fixture-only changes retain mandatory source and native comparison gates
+  ---
+  duration_ms: 3.867053
+  type: 'test'
+  ...
+# Subtest: manual projectile dispatch is immutable and rejects omitted explicit epoch without rebaselining
+ok 74 - manual projectile dispatch is immutable and rejects omitted explicit epoch without rebaselining
+  ---
+  duration_ms: 195.733121
+  type: 'test'
+  ...
+# Subtest: declared source verification binds all existing admitted leaves to real Git HEAD and rejects drift
+ok 75 - declared source verification binds all existing admitted leaves to real Git HEAD and rejects drift
+  ---
+  duration_ms: 2822.957902
+  type: 'test'
+  ...
+# Subtest: source contracts supplement A+ and the General source gate, without expanding the combined QA branch
+ok 76 - source contracts supplement A+ and the General source gate, without expanding the combined QA branch
+  ---
+  duration_ms: 1.274439
+  type: 'test'
+  ...
+1..76
+# tests 76
+# suites 0
+# pass 76
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 47491.329897

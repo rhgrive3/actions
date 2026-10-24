@@ -1,3 +1,4 @@
+import { spawnMotionAllowsAction } from './spawn-pose-motion.mjs';
 import { specialMotionAllowsAction, bombMotionAllowsAction } from './action-admission.mjs';
 // Additive detail for the public Character, installed after roller.mjs. Nintendo
 // footage supports the motion order; these targets are INKWAVE rig calibration,
@@ -52,7 +53,7 @@ export function installRollerDetailMotion({ Character, CHARACTER_CHANNELS: C, CH
       || !!a?.s3?.actions?.roll || !!a?.s3?.actions?.surge
       || !!(s?.subAim ?? r?.aimingSub) || ch.wSub > .01 || !bombMotionAllowsAction(ch,tr[T.T_THROW] >= .62)
       || !specialMotionAllowsAction(ch,tr[T.T_LEAP] >= 1.9 && tr[T.T_SLAM] >= 1.4)
-      || tr[T.T_DODGE] < ch.dodgeDur || tr[T.T_SPAWN] < 1.4;
+      || tr[T.T_DODGE] < ch.dodgeDur || !spawnMotionAllowsAction(ch, tr[T.T_SPAWN] >= 1.4);
   }
   P._updateStates = function (dt, s) {
     const result = updateStates.call(this, dt, s);

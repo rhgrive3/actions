@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "inputHash": "9bc05f146e3ecdce39ffcd242fa4102e9a78a22386a5a3b6beb46c714ead3fe9",
+  "contentHash": "424ea98e79b8c80931f4ff6d5a489d438e9255bf36cb8f2a2cc60a799c3d935f",
+  "inputBodies": 1420,
+  "emittedBodies": 2110,
+  "changedInputsVsBd5": [
+    "patch/runtime/weapon-handoff-motion.mjs"
+  ],
+  "handoffSourceSHA256": "dc507aa54dcec2aee09fcaea6dc5209b44ba0e635aa3a9d6d959f379005fb916",
+  "rebuildReason": "A new display-state reset wrapper changes the production handoff module; QA-only a042 needed no rebuild."
+}
