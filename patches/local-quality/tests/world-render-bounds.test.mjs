@@ -6,6 +6,7 @@ import { loadNative } from './prop-retention-fixture.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 const { THREE, G, SRC, PropKit, dressingFor } = await loadNative(true);
 const helpers = await import(pathToFileURL(SRC + 'src/world/render-bounds.js'));
+const { makeWaveData } = await import(pathToFileURL(SRC + 'src/world/wave-data.js'));
 const experiment = await import('./fixtures/static-source-batches.mjs');
 const { mergeGeometries } = await import('three/addons/utils/BufferGeometryUtils.js');
 const { PLAYER } = await import(pathToFileURL(SRC + 'src/config.js'));
@@ -13,9 +14,9 @@ const original = fs.readFileSync(SRC + 'src/world/environment.js', 'utf8');
 function environment(patched, trial = false) {
   let code = patched ? adaptBuildSource('src/world/environment.js', original) : original;
   if (trial) code = experiment.adaptStaticDrawCounterfactual(code);
-  const params = { ...helpers, createStaticDrawBatches: experiment.createStaticDrawBatches };
+  const params = { ...helpers, makeWaveData, createStaticDrawBatches: experiment.createStaticDrawBatches };
   const E = new Function('THREE', 'mergeGeometries', 'PLAYER', 'G', ...Object.keys(params),
-    code.replace(/^import .*;$/gm, '').replaceAll('export ', '') + '\nreturn Environment;')(THREE, mergeGeometries, PLAYER, G, ...Object.values(params));
+    code.replace(/^import .*;$/gm, '').replace(/^export \{[^\n]*\} from [^\n]*;$/gm, '').replaceAll('export ', '') + '\nreturn Environment;')(THREE, mergeGeometries, PLAYER, G, ...Object.values(params));
   const env = Object.create(E.prototype);
   Object.assign(env, { root: new THREE.Group(), bounds: { minX: -25, maxX: 25, minZ: -44, maxZ: 44 },
     footprint: [{ minX: -25, maxX: 25, minZ: -44, maxZ: 44, cx: 0, cz: 0, hx: 25, hz: 44, aligned: true }],
