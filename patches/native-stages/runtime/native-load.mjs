@@ -55,9 +55,23 @@ async function ktx2Loader(renderer){
  }
  return ktx2.loader;
 }
-async function prebuiltCompressedTexture(variant,renderer,signal){
- const {fetchVerified}=await import('./prebuilt-load.mjs');
- const bytes=await fetchVerified(variant.file,variant,signal);
+// Textures ship as whole KTX2 slices of per-stage packs. One load fetches a
+// pack once (verified) and drops it after its last listed texture is taken.
+function prebuiltPacks(stage,rows){
+ const uses=new Map(),pending=new Map();
+ for(const [file,job] of rows){const pack=stage.manifest.prebuiltTextures?.[file]?.[job.role]?.pack;if(pack)uses.set(pack,(uses.get(pack)||0)+1);}
+ const specs=new Map((stage.manifest.prebuiltTexturePacks||[]).map(p=>[p.file,p]));
+ return {async slice(variant,signal){
+  let bytes=pending.get(variant.pack);
+  if(!bytes){const spec=specs.get(variant.pack);if(!spec)throw Error('Unlisted prebuilt pack: '+variant.pack);bytes=import('./prebuilt-load.mjs').then(({fetchVerified})=>fetchVerified(spec.file,spec,signal));pending.set(variant.pack,bytes);bytes.catch(()=>pending.delete(variant.pack));}
+  const pack=await bytes;
+  const left=(uses.get(variant.pack)||1)-1;uses.set(variant.pack,left);if(left<=0)pending.delete(variant.pack);
+  if(variant.offset+variant.bytes>pack.byteLength)throw Error('Prebuilt texture outside its pack');
+  return pack.slice(variant.offset,variant.offset+variant.bytes);
+ },release(){pending.clear();}};
+}
+async function prebuiltCompressedTexture(variant,packs,renderer,signal){
+ const bytes=await packs.slice(variant,signal);
  const loader=await ktx2Loader(renderer);
  return new Promise((resolve,reject)=>loader.parse(bytes,resolve,reject));
 }
@@ -113,7 +127,7 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
  }
  let failure=null;
  const checkAbort=()=>{if(failure)throw failure;if(signal?.aborted)throw new DOMException('Aborted','AbortError');};
- let next=0;
+ let next=0;const packs=prebuiltPacks(data,rows);
  const worker=async()=>{try{while(next<rows.length){
   checkAbort();
   const [file,job]=rows[next++],{role}=job;
@@ -126,7 +140,7 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
    // at build time; the GPU receives a compressed format.
    let texture;
    try{
-    texture=await prebuiltCompressedTexture(variant,renderer,signal);checkAbort();
+    texture=await prebuiltCompressedTexture(variant,packs,renderer,signal);checkAbort();
     capMipLevels(texture,job.roleLimit);
     texture.colorSpace=['albedo','emissive'].includes(role)?THREE.SRGBColorSpace:THREE.NoColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;rememberTextureInput(texture,data,file,job);for(const alias of job.aliases)textures.set(alias,texture);texture=null;
     continue;
@@ -188,7 +202,7 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
   }finally{if(!transferred){bitmap?.close();texture?.dispose();}}
  }}catch(error){if(!failure)failure=error;throw error;}};
  // Bound concurrent full-resolution decode/upload peaks; the same images and filters are used.
-  const results=await Promise.allSettled(Array.from({length:Math.min(rows.length,textureLimit?2:quality==='high'?2:3)},worker));const failed=results.find(r=>r.status==='rejected');
+  const results=await Promise.allSettled(Array.from({length:Math.min(rows.length,textureLimit?2:quality==='high'?2:3)},worker));packs.release();const failed=results.find(r=>r.status==='rejected');
  if(failed||signal?.aborted){for(const t of new Set(textures.values()))if(!textures._nativeBorrowed.has(t)){t.image?.close?.();t.dispose();}throw failure||failed?.reason||new DOMException('Aborted','AbortError');}
  return textures;
 }

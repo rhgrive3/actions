@@ -35,15 +35,16 @@ test('paint faces round-trip exactly, including key order', () => {
 
 function fixtureRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'prebuilt-')), id = 'stage';
-  fs.mkdirSync(path.join(root, id)); fs.mkdirSync(path.join(root, 'textures'));
-  const chunk = Buffer.from(new Float32Array([1, 2, 3]).buffer), tex = Buffer.from('ktx2-bytes'), unused = Buffer.from('unused');
+  fs.mkdirSync(path.join(root, id)); fs.mkdirSync(path.join(root, 'packs'));
+  const chunk = Buffer.from(new Float32Array([1, 2, 3]).buffer), pack = Buffer.from('<ktx2-bytes>'), unused = Buffer.from('unused');
   fs.writeFileSync(path.join(root, id, 'triangles.0.bin'), chunk);
-  fs.writeFileSync(path.join(root, 'textures/a.albedo.x.ktx2'), tex);
-  fs.writeFileSync(path.join(root, 'textures/unused.ktx2'), unused);
+  fs.writeFileSync(path.join(root, 'packs/p.bin'), pack);
+  fs.writeFileSync(path.join(root, 'packs/unused.bin'), unused);
   const stage = {id, sourceSha256: 'a'.repeat(64), integritySha256: 'b'.repeat(64)};
   const record = {schema: PREBUILT_SCHEMA, id, sourceSha256: stage.sourceSha256, stageIntegritySha256: stage.integritySha256, converter: prebuiltConverterIdentity(),
     arrays: {triangles: {type: 'Float32Array', length: 3, chunks: [{file: 'triangles.0.bin', bytes: chunk.length, sha256: sha256(chunk)}]}},
-    extra: {}, manifest: {prebuiltTextures: {'textures/a.png': {albedo: {file: 'textures/a.albedo.x.ktx2', bytes: tex.length, sha256: sha256(tex)}}}}};
+    extra: {}, manifest: {prebuiltTextures: {'textures/a.png': {albedo: {pack: 'packs/p.bin', offset: 1, bytes: 10, sha256: sha256(pack.subarray(1, 11))}}},
+      prebuiltTexturePacks: [{file: 'packs/p.bin', group: 'color', bytes: pack.length, sha256: sha256(pack)}]}};
   fs.writeFileSync(path.join(root, id, 'stage.json'), JSON.stringify(record));
   return {root, stage, record};
 }
@@ -57,7 +58,11 @@ test('admission takes only current, complete records', () => {
   fs.writeFileSync(path.join(root, 'stage/stage.json'), JSON.stringify({...record, converter: {...record.converter, sha256: 'old'}}));
   assert.deepEqual(admitPrebuiltStages([stage], root).stale, ['stage'], 'converter changed');
   fs.writeFileSync(path.join(root, 'stage/stage.json'), JSON.stringify(record));
-  fs.writeFileSync(path.join(root, 'textures/a.albedo.x.ktx2'), 'tampered!!');
+  const outside = structuredClone(record); outside.manifest.prebuiltTextures['textures/a.png'].albedo.offset = 3;
+  fs.writeFileSync(path.join(root, 'stage/stage.json'), JSON.stringify(outside));
+  assert.deepEqual(admitPrebuiltStages([stage], root).missing, ['stage'], 'texture outside its pack');
+  fs.writeFileSync(path.join(root, 'stage/stage.json'), JSON.stringify(record));
+  fs.writeFileSync(path.join(root, 'packs/p.bin'), '<tampered!>!');
   assert.deepEqual(admitPrebuiltStages([stage], root).missing, ['stage'], 'payload mismatch');
   fs.writeFileSync(path.join(root, 'stage/stage.json'), 'version https://git-lfs.github.com/spec/v1\noid sha256:00\nsize 1\n');
   const lfs = admitPrebuiltStages([stage], root);
@@ -65,14 +70,14 @@ test('admission takes only current, complete records', () => {
   assert.deepEqual(admitPrebuiltStages([{...stage, id: 'absent'}], root).admitted, {});
 });
 
-test('site copy holds admitted stages and only their textures', () => {
+test('site copy holds admitted stages and only their texture packs', () => {
   const {root, stage} = fixtureRoot(), build = fs.mkdtempSync(path.join(os.tmpdir(), 'site-'));
   const admitted = admitPrebuiltStages([stage], root).admitted;
   const summary = copyPrebuiltNativeAssets(build, {prebuiltRoot: root, config: {prebuilt: {stages: admitted}}});
   assert.equal(summary.files, 3);
   assert.ok(fs.existsSync(path.join(build, 'native-prebuilt/stage/triangles.0.bin')));
-  assert.ok(fs.existsSync(path.join(build, 'native-prebuilt/textures/a.albedo.x.ktx2')));
-  assert.ok(!fs.existsSync(path.join(build, 'native-prebuilt/textures/unused.ktx2')));
+  assert.ok(fs.existsSync(path.join(build, 'native-prebuilt/packs/p.bin')));
+  assert.ok(!fs.existsSync(path.join(build, 'native-prebuilt/packs/unused.bin')));
   assert.equal(copyPrebuiltNativeAssets(build, {config: {}}), null);
 });
 
@@ -132,7 +137,7 @@ if (!vm.SourceTextModule) {
   });
 
   async function textures({ktx2Fails = false, abort = false, quality = 'balanced'} = {}) {
-    const calls = {bitmaps: 0, parsed: 0, warned: []}, signal = {aborted: false};
+    const calls = {bitmaps: 0, parsed: 0, warned: [], packs: [], slices: []}, signal = {aborted: false};
     class Texture { constructor(image) { this.image = image; } dispose() { this.disposed = true; } }
     const context = vm.createContext({Map, Blob, Uint8Array, DOMException, URL, location: {href: 'https://game.test/_versions/r/index.html'},
       console: {warn: m => calls.warned.push(m)},
@@ -140,12 +145,12 @@ if (!vm.SourceTextModule) {
     const make = values => { const m = new vm.SyntheticModule(Object.keys(values), function () { for (const [k, v] of Object.entries(values)) this.setExport(k, v); }, {context}); return m; };
     const ready = async m => { await m.link(() => { throw Error('unexpected'); }); await m.evaluate(); return m; };
     class KTX2Loader { setTranscoderPath() { return this; } detectSupport() { return this; } dispose() {}
-      parse(bytes, onLoad, onError) { calls.parsed++; if (abort) signal.aborted = true;
+      parse(bytes, onLoad, onError) { calls.parsed++; calls.slices.push(Array.from(new Uint8Array(bytes))); if (abort) signal.aborted = true;
         if (ktx2Fails) return onError(Error('transcoder unavailable'));
         onLoad({isCompressedTexture: true, image: {width: 2048, height: 2048}, mipmaps: [2048, 1024, 512, 256].map(n => ({width: n, height: n, data: new Uint8Array(1)})), dispose() {}}); } }
     const dynamic = {
       '../../../vendor/three/jsm/loaders/KTX2Loader.js': {KTX2Loader},
-      './prebuilt-load.mjs': {fetchVerified: async () => new ArrayBuffer(8)},
+      './prebuilt-load.mjs': {fetchVerified: async file => { calls.packs.push(file); return Uint8Array.from([0, 1, 2, 3, 4, 5, 6, 7]).buffer; }},
     };
     const mods = {three: {Texture, DataTexture: Texture, SRGBColorSpace: 'srgb', NoColorSpace: '', RepeatWrapping: 1000},
       './registry.mjs': {nativeStageURL: () => ''}, './build-config.mjs': {nativeStageBuild: {mode: 'browser-direct'}},
@@ -153,8 +158,9 @@ if (!vm.SourceTextModule) {
     const m = new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/native-load.mjs', import.meta.url), 'utf8'), {context,
       importModuleDynamically: async spec => ready(make(dynamic[spec]))});
     await m.link(async name => make(mods[name])); await m.evaluate();
-    const data = {manifest: {materials: {m: {albedo: 'a.png', maps: {}, channels: {}}},
-      prebuiltTextures: {'a.png': {albedo: {file: 'textures/a.albedo.k.ktx2', bytes: 8, sha256: 'x'}}}}, integrity: {}};
+    const data = {manifest: {materials: {m: {albedo: 'a.png', maps: {}, channels: {}}, n: {albedo: 'b.png', maps: {}, channels: {}}},
+      prebuiltTextures: {'a.png': {albedo: {pack: 'packs/p.bin', offset: 2, bytes: 3, sha256: 'x'}}, 'b.png': {albedo: {pack: 'packs/p.bin', offset: 5, bytes: 2, sha256: 'y'}}},
+      prebuiltTexturePacks: [{file: 'packs/p.bin', group: 'color', bytes: 8, sha256: 'z'}]}, integrity: {}};
     let result, error;
     try { result = await m.namespace.loadNativeTextures('fixture', data, {capabilities: {getMaxAnisotropy: () => 16}}, quality, signal, {maxDimension: 1024, perRole: {}}); }
     catch (e) { error = e; }
@@ -167,11 +173,14 @@ if (!vm.SourceTextModule) {
     const t = result.get('a.png');
     assert.equal(JSON.stringify([t.image, t.mipmaps.map(m => m.width)]), JSON.stringify([{width: 1024, height: 1024}, [1024, 512, 256]]));
     assert.deepEqual([t.colorSpace, t.wrapS, t.wrapT, t.anisotropy, t.needsUpdate], ['srgb', 1000, 1000, 4, true]);
+    // Both textures are slices of one pack fetched once.
+    assert.deepEqual(calls.packs, ['packs/p.bin']);
+    assert.deepEqual(calls.slices.map(x => x.join()).sort(), ['2,3,4', '5,6']);
   });
   test('a failed KTX2 texture falls back to its pinned PNG; an abort does not', async () => {
     const fallback = await textures({ktx2Fails: true});
     assert.equal(fallback.error, undefined);
-    assert.equal(fallback.calls.bitmaps, 1);
+    assert.equal(fallback.calls.bitmaps, 2);
     assert.match(fallback.calls.warned[0], /decoding source PNG/);
     assert.equal(fallback.result.get('a.png').isCompressedTexture, undefined);
     const aborted = await textures({abort: true});
@@ -179,3 +188,12 @@ if (!vm.SourceTextModule) {
     assert.equal(aborted.calls.bitmaps, 0);
   });
 }
+
+// CI scripts read `git ls-tree -r -z` with Node's default 1 MiB buffer; one
+// tracked file per texture once pushed the listing past it.
+test('committed prebuilt data stays a few hundred files', () => {
+  let listing;
+  try { listing = execFileSync('git', ['ls-files', '-z', '--', 'native-prebuilt'], {cwd: fileURLToPath(new URL('../../..', import.meta.url)), encoding: 'utf8'}); }
+  catch { return; }
+  assert.ok(listing.split('\0').filter(Boolean).length <= 800, 'pack textures instead of tracking one file each');
+});

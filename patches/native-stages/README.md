@@ -56,8 +56,8 @@ CPU の塗りは、xz ハッシュの候補を各呼び出し元の最初の y �
 2026-10-24 の所有者判断により、原典ステージの**変換済み**データを `native-prebuilt/` に Git LFS で置き、ゲームと同じオリジンから配信する。元の OBJ/MTL/PNG は置かない。リポジトリは非公開化、公開は Cloudflare（Workers Static Assets）で行う予定。
 
 - 中身はブラウザ内変換（`source-worker.mjs` の `convertSource` + `compactInactiveDisplay`）と同一。`tools/prebuild-native.mjs` が Node で同じ関数を実行し、配列は 16 MiB 以下に分割（Cloudflare の 1 ファイル 25 MiB 上限）、塗りチャートの面は列形式で保存する。
-- 画像は `loadNativeTextures` の画素推定（不透明、法線形式、粗さ/不透明度チャンネル）をビルド時に同じ計算で適用し、(画像, 役割) ごとに KTX2 UASTC へ圧縮する（`tools/prebuild_textures.py` + basisu）。法線は実行時と同じ RG→XYZ 復元後に圧縮する。
-- ランタイムは `native-prebuilt/<id>/stage.json` と各チャンクを SHA-256 で検証して読み、KTX2 は Three の KTX2Loader で端末の GPU 形式（ASTC / BC7 / ETC2）へ変換する。取得・変換に失敗した場合はステージ単位・画像単位で従来のブラウザ内変換（KiTrix）に戻る。
+- 画像は `loadNativeTextures` の画素推定（不透明、法線形式、粗さ/不透明度チャンネル）をビルド時に同じ計算で適用し、(画像, 役割) ごとに KTX2 UASTC へ圧縮する（`tools/prebuild_textures.py` + basisu）。法線は実行時と同じ RG→XYZ 復元後に圧縮する。KTX2 はステージごとに色（albedo/opacity、全品質）と詳細（normal/roughness/emissive、high のみ）のパックへまとめ、内容ハッシュ名で `native-prebuilt/packs/` に置く（1 画像 1 ファイルではリポジトリのツリーが大きくなり、CI スクリプトの `git ls-tree` 読み取りが既定バッファ 1 MiB を超えたため）。エンコード済み KTX2 は `INKWAVE_PREBUILT_WORK/ktx2/` のキャッシュに残る。
+- ランタイムは `native-prebuilt/<id>/stage.json` と各チャンク・パックを SHA-256 で検証して読み（パックは 1 回の読み込みで 1 度だけ取得し、最後の画像を切り出したら解放）、KTX2 は Three の KTX2Loader で端末の GPU 形式（ASTC / BC7 / ETC2）へ変換する。取得・変換に失敗した場合はステージ単位・画像単位で従来のブラウザ内変換（KiTrix）に戻る。
 - ビルド（`scripts/build-inkwave.mjs`）は、現在の変換器（`scripts/lib/inkwave-native-prebuilt.mjs` の対象ファイル）と審査済みステージ定義に一致し、全ペイロードのハッシュが合うステージだけを採用し、リビジョン/PWA プリキャッシュの外（サイト直下 `native-prebuilt/`）へコピーする。LFS 未取得のチェックアウト（CI など）では自動的に従来経路になる。
 
 再生成（変換器・ステージ定義・画像処理を変えたとき）:

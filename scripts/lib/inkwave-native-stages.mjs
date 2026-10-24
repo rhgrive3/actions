@@ -70,17 +70,17 @@ export function prepareNativeStageBuild(assetPath,sourceIdentity=nativeStageIden
  });
  return {root,config:{schema:1,mode:'local-prepared',baseURL:'../../_native-reference-assets/',runtimeSha256,unavailableStages:available.unavailableStages,stages}};
 }
-/** Copy admitted prebuilt stages and only the textures they reference. */
+/** Copy admitted prebuilt stages and only the texture packs they reference. */
 export function copyPrebuiltNativeAssets(build,prepared){
  const stages=prepared?.config?.prebuilt?.stages;if(!stages)return null;
- const target=path.join(build,'native-prebuilt'),textures=new Set();let bytes=0,files=0;
+ const target=path.join(build,'native-prebuilt'),packs=new Set();let bytes=0,files=0;
  for(const id of Object.keys(stages)){
   const dir=path.join(prepared.prebuiltRoot,id),record=JSON.parse(fs.readFileSync(path.join(dir,'stage.json')));
   fs.mkdirSync(path.join(target,id),{recursive:true});
   for(const file of ['stage.json',...Object.values(record.arrays).flatMap(a=>a.chunks.map(c=>c.file))]){fs.copyFileSync(path.join(dir,file),path.join(target,id,file));bytes+=fs.statSync(path.join(dir,file)).size;files++;}
-  for(const roles of Object.values(record.manifest.prebuiltTextures||{}))for(const v of Object.values(roles))textures.add(v.file);
+  for(const p of record.manifest.prebuiltTexturePacks||[])packs.add(p.file);
  }
- for(const file of textures){fs.mkdirSync(path.dirname(path.join(target,file)),{recursive:true});fs.copyFileSync(path.join(prepared.prebuiltRoot,file),path.join(target,file));bytes+=fs.statSync(path.join(target,file)).size;files++;}
+ for(const file of packs){fs.mkdirSync(path.dirname(path.join(target,file)),{recursive:true});fs.copyFileSync(path.join(prepared.prebuiltRoot,file),path.join(target,file));bytes+=fs.statSync(path.join(target,file)).size;files++;}
  return {stages:Object.keys(stages).length,files,bytes};
 }
 export function copyLocalNativeAssets(build,prepared){

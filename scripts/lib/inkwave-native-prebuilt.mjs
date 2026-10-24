@@ -38,9 +38,13 @@ export function admitPrebuiltStages(stages, root = PREBUILT_ROOT) {
     if (record.schema !== PREBUILT_SCHEMA || record.id !== s.id || record.sourceSha256 !== s.sourceSha256 ||
         record.stageIntegritySha256 !== s.integritySha256 || record.converter?.sha256 !== converter.sha256) { stale.push(s.id); continue; }
     // Every payload the runtime will verify must already match here.
+    const packs = new Map((record.manifest.prebuiltTexturePacks || []).map(p => [p.file, p]));
     const payload = [...Object.values(record.arrays).flatMap(a => a.chunks.map(c => [path.join(root, s.id, c.file), c])),
-      ...Object.values(record.manifest.prebuiltTextures || {}).flatMap(roles => Object.values(roles).map(v => [path.join(root, v.file), v]))];
-    if (!payload.every(([f, e]) => fs.existsSync(f) && fs.statSync(f).size === e.bytes && sha256(fs.readFileSync(f)) === e.sha256)) { missing.push(s.id); continue; }
+      ...[...packs.values()].map(p => [path.join(root, p.file), p])];
+    // Each texture is a whole slice of one listed pack.
+    const placed = Object.values(record.manifest.prebuiltTextures || {}).flatMap(roles => Object.values(roles))
+      .every(v => packs.has(v.pack) && Number.isSafeInteger(v.offset) && v.offset >= 0 && v.offset + v.bytes <= packs.get(v.pack).bytes);
+    if (!placed || !payload.every(([f, e]) => fs.existsSync(f) && fs.statSync(f).size === e.bytes && sha256(fs.readFileSync(f)) === e.sha256)) { missing.push(s.id); continue; }
     admitted[s.id] = {stageSha256: sha256(bytes), bytes: bytes.length};
   }
   return {admitted, stale, missing, converter};

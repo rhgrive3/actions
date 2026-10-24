@@ -137,6 +137,35 @@ function packFaces(faces) {
   return {faceF64: f64, faceI32: i32, faceTriangleOffsets: offsets, faceTriangles: ids};
 }
 
+// One file per texture made the repository tree too large for the CI scripts'
+// `git ls-tree` reads. Each stage instead gets content-addressed packs of whole
+// KTX2 files, split so colour maps (all qualities) and detail maps (high only)
+// are fetched separately.
+const TEXTURE_GROUP = {albedo: 'color', opacity: 'color', normal: 'detail', roughness: 'detail', emissive: 'detail'};
+function writeTexturePacks(cacheDir, encoded) {
+  const placed = new Map(), packs = [], packDir = path.join(OUT, 'packs');
+  fs.mkdirSync(packDir, {recursive: true});
+  for (const group of ['color', 'detail']) {
+    let parts = [], size = 0;
+    const flush = () => {
+      if (!parts.length) return;
+      const bytes = Buffer.concat(parts.map(p => p.bytes)), hash = sha256(bytes), file = `packs/${hash.slice(0, 32)}.bin`;
+      fs.writeFileSync(path.join(OUT, file), bytes);
+      packs.push({file, group, bytes: bytes.length, sha256: hash});
+      for (const p of parts) placed.get(p.name).pack = file;
+      parts = []; size = 0;
+    };
+    for (const name of [...encoded.keys()].filter(n => encoded.get(n) === group).sort()) {
+      const bytes = fs.readFileSync(path.join(cacheDir, name));
+      if (size && size + bytes.length > PREBUILT_CHUNK_BYTES) flush();
+      placed.set(name, {offset: size, bytes: bytes.length, sha256: sha256(bytes)});
+      parts.push({name, bytes}); size += bytes.length;
+    }
+    flush();
+  }
+  return {placed, packs};
+}
+
 function writeChunks(dir, name, typed) {
   const bytes = Buffer.from(typed.buffer, typed.byteOffset, typed.byteLength), chunks = [];
   for (let offset = 0, index = 0; offset < bytes.length || index === 0; offset += PREBUILT_CHUNK_BYTES, index++) {
@@ -193,25 +222,30 @@ async function prebuild(stage, catalogStage) {
       if (role === 'roughness' || role === 'opacity') m.channels[role] = info.channel;
     }
   }
-  const texDir = path.join(OUT, 'textures');
-  fs.mkdirSync(texDir, {recursive: true});
-  const prebuiltTextures = {}, encodeTasks = [];
+  // Encoded KTX2 files are a build cache; the output holds per-stage packs.
+  const cacheDir = path.join(WORK, 'ktx2');
+  fs.mkdirSync(cacheDir, {recursive: true});
+  const prebuiltTextures = {}, encodeTasks = [], encoded = new Map();
   for (const [file, roles] of uses) {
     const entry = byKey.get(keyOf(file));
     prebuiltTextures[file] = {};
     for (const role of roles) {
-      const name = `${keyOf(file)}.${role}.${encodeTag(role)}.ktx2`, target = path.join(texDir, name);
-      prebuiltTextures[file][role] = {file: 'textures/' + name, width: entry.width, height: entry.height};
-      if (!fs.existsSync(target)) encodeTasks.push(() => encode(entry.roles[role].png, role, target + '.tmp').then(() => fs.renameSync(target + '.tmp', target)));
+      const name = `${keyOf(file)}.${role}.${encodeTag(role)}.ktx2`, target = path.join(cacheDir, name);
+      prebuiltTextures[file][role] = {name, width: entry.width, height: entry.height};
+      if (!encoded.has(name)) {
+        encoded.set(name, TEXTURE_GROUP[role]);
+        if (!fs.existsSync(target)) encodeTasks.push(() => encode(entry.roles[role].png, role, target + '.tmp').then(() => fs.renameSync(target + '.tmp', target)));
+      }
     }
   }
-  console.log(`[${stage.id}] encode ${encodeTasks.length} KTX2 (${Object.values(prebuiltTextures).reduce((n, r) => n + Object.keys(r).length, 0)} variants)`);
+  console.log(`[${stage.id}] encode ${encodeTasks.length} KTX2 (${encoded.size} variants)`);
   await runPool(encodeTasks, JOBS);
+  const {placed, packs} = writeTexturePacks(cacheDir, encoded);
   for (const roles of Object.values(prebuiltTextures)) for (const variant of Object.values(roles)) {
-    const bytes = fs.readFileSync(path.join(OUT, variant.file));
-    variant.bytes = bytes.length; variant.sha256 = sha256(bytes);
+    Object.assign(variant, placed.get(variant.name)); delete variant.name;
   }
   manifest.prebuiltTextures = prebuiltTextures;
+  manifest.prebuiltTexturePacks = packs;
 
   // Typed arrays in chunks; everything else stays JSON.
   const dir = path.join(OUT, stage.id);

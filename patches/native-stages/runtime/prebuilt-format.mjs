@@ -1,6 +1,6 @@
 // Prebuilt native stage records (native-prebuilt/<id>/stage.json). Shared by
 // the build tool, the site builder and the runtime loader.
-export const PREBUILT_SCHEMA = 1;
+export const PREBUILT_SCHEMA = 2;
 // Cloudflare static assets accept at most 25 MiB per file.
 export const PREBUILT_CHUNK_BYTES = 16 * 1024 * 1024;
 // Paint-chart face columns (source-convert.mjs paintCharts push order).
