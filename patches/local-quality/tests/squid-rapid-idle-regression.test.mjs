@@ -70,3 +70,27 @@ test('rapid squid-button changes settle into genuine human and squid idle at 30/
     fixture.reset();
   }
 });
+
+test('live Actor squid-button edges recover ordinary idle after button-mashing', async () => {
+  const fixture = await sourceLoadedActorFixture({random: () => 0.4});
+  for (const sourced of [true, false]) for (const fps of [30, 60, 120]) {
+    const actor = await fixture.make(), character = actor.character;
+    if (!sourced) character.sourceMotion.setEnabled(false);
+    const dt = 1 / fps;
+    for (let i = 0; i < fps; i++) fixture.tick(actor, dt);
+    for (let tap = 0; tap < 36; tap++) {
+      actor.intent.squid = tap % 2 === 0;
+      fixture.tick(actor, dt);
+      assert.equal(actor.form, actor.intent.squid ? 'squid' : 'kid', 'input form remains immediate');
+      assert(Number.isFinite(character.kidScale) && Number.isFinite(character.sqScale));
+      assert(Math.abs(character.kidScale + character.sqScale - 1) < 1e-8);
+    }
+    actor.intent.squid = false;
+    for (let i = 0; i < fps; i++) fixture.tick(actor, dt);
+    assert.equal(actor.form, 'kid');
+    assert.equal(character.form, 'kid');
+    assert(character.kidScale > 0.999 && character.sqScale < 0.001);
+    if (sourced) assert.equal(character.sourceMotion.state, 'idle');
+    fixture.reset();
+  }
+});
