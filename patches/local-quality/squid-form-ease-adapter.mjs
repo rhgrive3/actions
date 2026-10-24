@@ -24,6 +24,22 @@ export function adaptSquidFormEase(rel,code,replaceOnce){
   code=replaceOnce(code,'      kU = t < 0.045 ? 0 : easeOut((t - 0.045) / 0.055);','      kU = 1 - sU;','fallback squid return matching silhouette exchange');
   code=replaceOnce(code,'      kU = t < 0.07 ? 1 : 1 - easeIn((t - 0.07) / 0.03);','      const diveU = clamp(t / 0.1, 0, 1);\n      const diveW = diveU * diveU * diveU * (10 + diveU * (-15 + 6 * diveU));\n      kU = (this.formFromKidScale ?? 1) * (1 - diveW);','fallback dive continuous endpoint curve');
   code=replaceOnce(code,'      sU = t < 0.045 ? 0 : easeOut((t - 0.045) / 0.035);','      sU = 1 - kU;','fallback dive matching silhouette exchange');
+  // The fallback's authored squid stretch and human squash are distinct
+  // from the silhouette weights. A partial reversal must start those shape
+  // curves at their last displayed values too, or the idle body snaps.
+  code=replaceOnce(code,
+    '    this.kidScale = kU; this.sqScale = sU; this.kidSY = kY; this.kidSXZ = kXZ; this.sqSY = sY; this.sqSXZ = sXZ; this.kidLift = lift;',
+    `    if (this.formShapeInterrupted && t < 0.065) {
+      const shapeU = clamp(t / 0.065, 0, 1);
+      const shapeW = shapeU * shapeU * (3 - 2 * shapeU);
+      kY = this.formShapeKidY + (kY - this.formShapeKidY) * shapeW;
+      kXZ = this.formShapeKidXZ + (kXZ - this.formShapeKidXZ) * shapeW;
+      sY = this.formShapeSquidY + (sY - this.formShapeSquidY) * shapeW;
+      sXZ = this.formShapeSquidXZ + (sXZ - this.formShapeSquidXZ) * shapeW;
+      lift = this.formShapeLift + (lift - this.formShapeLift) * shapeW;
+    }
+    this.kidScale = kU; this.sqScale = sU; this.kidSY = kY; this.kidSXZ = kXZ; this.sqSY = sY; this.sqSXZ = sXZ; this.kidLift = lift;`,
+    'native fallback uninterrupted stretch squash and lift at reversal');
   // Native fallback used to remap a partial reversal onto a new clock,
   // changing the visible scale immediately at dt=0. Capture the last drawn
   // silhouette instead; the gameplay form still switches without delay.
@@ -33,7 +49,13 @@ export function adaptSquidFormEase(rel,code,replaceOnce){
       if (newForm === 'kid' && prev !== 'kid') this.formT = clamp(0.06 + 0.035 * (1 - this.sqScale), 0, 0.095) * (this.sqScale < 0.999 ? 1 : 0);
       else if (newForm !== 'kid' && prev === 'kid') this.formT = this.kidScale < 0.999 ? clamp(0.07 + 0.03 * (1 - this.kidScale), 0, 0.1) : 0;
     }`,
-    `    this.formFromKidScale = this.kidScale;
+    `    this.formShapeInterrupted = this.formT < 0.45;
+    if (this.formShapeInterrupted) {
+      this.formShapeKidY = this.kidSY; this.formShapeKidXZ = this.kidSXZ;
+      this.formShapeSquidY = this.sqSY; this.formShapeSquidXZ = this.sqSXZ;
+      this.formShapeLift = this.kidLift;
+    }
+    this.formFromKidScale = this.kidScale;
     this.formPrev = this.form; this.form = newForm; this.formT = 0; this.tr[T_FORM] = 0;`,
     'native fallback zero-time reversal starts from displayed silhouette');
  }
