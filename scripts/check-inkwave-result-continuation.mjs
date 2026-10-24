@@ -17,9 +17,9 @@ export async function checkResultContinuation({page,tap,settle,capture,entry,onO
     menus.showResults(menus._demoResults());window.__continuationResult=menus._results;window.__continuationResultJSON=JSON.stringify(menus._results);
     menus.wipe.cancel();menus.show('results',{force:true,wipe:false});
   });
-  const ready=async(observed=false)=>{
+  const ready=async(observed=false,{confirmNativeFinished=false}={})=>{
     const run=(id, action)=>observed ? observe(id, action) : action();
-    await run('continuation-settle-loadout',()=>settle(page));
+    await run('continuation-settle-loadout',()=>settle(page,confirmNativeFinished));
     await run('continuation-ready-loadout',()=>page.waitForFunction(()=>performance.now()-menus._shownAt>=220&&!document.querySelector('.iw-screen.is-leaving')));
   };
   const captureAction=async(name, selector, controls)=>{
@@ -37,7 +37,8 @@ export async function checkResultContinuation({page,tap,settle,capture,entry,onO
     const different=page.locator('.iw-loadout .iw-wcard');
     const ids=await observe('continuation-list-weapons',()=>different.evaluateAll(xs=>xs.map(x=>x._wid)));const next=ids.find(id=>id!==before);assert(next);
     await observe('continuation-select-weapon',()=>tap(page,'[data-id="w-'+next+'"]'));assert.equal(await observe('continuation-verify-weapon',()=>page.evaluate(()=>menus.api.getLoadout().weapon)),next);
-    await captureAction('loadout-continue','[data-id="continue-with-gear"]','.iw-continuation-actions button');await ready();
+    // Only the demonstrated post-capture continuation ready uses native finish confirmation.
+    await captureAction('loadout-continue','[data-id="continue-with-gear"]','.iw-continuation-actions button');await ready(true,{confirmNativeFinished:true});
     await tap(page,'.iw-loadout .iw-backbtn');await page.waitForFunction(()=>menus.current==='results'&&menus._scr?.name==='results');await ready();
     assert.deepEqual(await page.evaluate(()=>__continuationCalls),[],'Back cannot start');
     await page.evaluate(()=>__oldChangeContinuation('kbm'));

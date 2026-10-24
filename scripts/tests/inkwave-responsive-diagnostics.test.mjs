@@ -664,3 +664,217 @@ for (const reversal of [{ playState: 'running' }, { pending: true }])
     Object.assign(item.animation, { playState: 'finished', pending: false });
     h.watchdog(); await waiting; assert.equal(h.timers.size, 0);
   });
+
+// Execute the committed capture -> geometry -> serialized settle bodies together.
+function continuationCaptureHarness(items, { width = 100, right = 100, hidden = false, leaving = false, screenshotError = null } = {}) {
+  const animations = items.map(item => item.animation), browser = animationHarness(animations);
+  const calls = [], entry = { name: 'phone-portrait', screens: {} }, controls = '.iw-continuation-actions button';
+  const element = { className: 'iw-btn', getClientRects: () => [{}],
+    closest: () => leaving ? {} : null,
+    getBoundingClientRect: () => ({ width, height: 48, left: 0, right }) };
+  const page = {
+    evaluate: (fn, observe) => {
+      assert.equal(fn, settleResponsiveAnimationsInPage); calls.push('settle:' + observe);
+      return browser.run(observe);
+    },
+    waitForFunction: async () => { calls.push('retired-owner'); },
+    locator: selector => ({ evaluateAll: async fn => {
+      calls.push(selector === controls ? 'measure' : 'panels');
+      return vm.runInNewContext('(' + fn.toString() + ')', {
+        getComputedStyle: () => ({ visibility: hidden ? 'hidden' : 'visible' }), innerWidth: 390,
+      })(selector === controls ? [element] : []);
+    } }),
+    screenshot: async () => { calls.push('png'); if (screenshotError) throw screenshotError; },
+  };
+  const start = source.indexOf('const geometry = async'), end = source.indexOf('const tap = async', start);
+  assert(start >= 0 && end > start);
+  const geometry = new Function('settle', 'assert', 'audit', source.slice(start, end) + '\nreturn geometry;')(
+    (target, observe = false) => target.evaluate(settleResponsiveAnimationsInPage, observe), assert, false);
+  const core = fs.readFileSync(new URL('../check-inkwave-responsive-core.mjs', import.meta.url), 'utf8');
+  const first = core.indexOf('  const capture = async'), last = core.indexOf("  await show(page, 'loading');", first);
+  assert(first >= 0 && last > first);
+  const capture = new Function('page', 'entry', 'geometry', 'audit', 'path', 'evidence', 'engineName', 'onStageComplete', 'assert',
+    core.slice(first, last) + '\nreturn capture;')(page, entry, geometry, false, path, '/unused', 'chromium', name => calls.push('stage:' + name), assert);
+  return { calls, animations, entry, observe: () => page.evaluate(settleResponsiveAnimationsInPage, true),
+    capture: (name = 'loadout-continue') => capture(name, controls),
+    tick: async () => { browser.watchdog(); await flushAnimationMicrotasks(); await flushAnimationMicrotasks(); } };
+}
+
+test('capture geometry recovers the same stale finished promise after the observed action settle', async () => {
+  const item = deferredAnimation({ playState: 'finished' }), h = continuationCaptureHarness([item]);
+  const observed = h.observe(); await h.tick(); await observed;
+  let completed = false; const capture = h.capture().then(() => { completed = true; });
+  try {
+    await flushAnimationMicrotasks(); assert.equal(completed, false); assert(!h.calls.includes('measure'));
+    await h.tick(); assert.equal(completed, true, 'the second geometry settle must also confirm native finished state');
+    assert.deepEqual(h.calls, ['settle:true', 'retired-owner', 'settle:true', 'measure', 'panels', 'png', 'stage:loadout-continue']);
+    assert.equal(item.reads(), 2, 'each settle captures the original native promise once');
+  } finally { item.resolve(); await capture; }
+});
+
+for (const state of [{ playState: 'running' }, { playState: 'paused' }, { playState: 'idle' }, { playState: 'finished', pending: true }])
+  test('capture geometry never accepts unfinished native state: ' + JSON.stringify(state), async () => {
+    const item = deferredAnimation(state), h = continuationCaptureHarness([item]);
+    const capture = h.capture();
+    try {
+      await flushAnimationMicrotasks();
+      for (let i = 0; i < 3; i++) { await h.tick(); assert(!h.calls.includes('measure')); assert(!h.calls.includes('png')); }
+      Object.assign(item.animation, { playState: 'finished', pending: false }); await h.tick(); await capture;
+      assert(h.calls.includes('stage:loadout-continue'));
+    } finally { item.resolve(); await capture; }
+  });
+
+test('capture state belongs to the original cohort, not a replacement finished animation', async () => {
+  const original = deferredAnimation(), other = deferredAnimation({ playState: 'finished' });
+  const h = continuationCaptureHarness([original]), capture = h.capture();
+  try {
+    await flushAnimationMicrotasks(); h.animations.splice(0, 1, other.animation);
+    await h.tick(); await h.tick(); assert(!h.calls.includes('measure'));
+    original.animation.playState = 'finished'; await h.tick(); await capture;
+    assert.equal(other.reads(), 0);
+  } finally { original.resolve(); other.resolve(); await capture; }
+});
+
+test('other capture labels retain their unobserved promise-only gate', async () => {
+  const item = deferredAnimation({ playState: 'finished' }), h = continuationCaptureHarness([item]);
+  const capture = h.capture('loadout'); await flushAnimationMicrotasks(); await h.tick();
+  assert.deepEqual(h.calls, ['retired-owner', 'settle:false']);
+  item.resolve(); await capture; assert(h.calls.includes('stage:loadout'));
+});
+
+for (const invalid of [{ width: 42 }, { right: 392 }, { hidden: true }, { leaving: true }])
+  test('continuation capture retains real geometry and visible-owner rejection: ' + JSON.stringify(invalid), async () => {
+    const item = deferredAnimation(), h = continuationCaptureHarness([item], invalid); item.resolve();
+    await assert.rejects(h.capture(), /small touch target|horizontal overflow|no controls rendered/);
+    assert(!h.calls.includes('png')); assert(!h.calls.includes('stage:loadout-continue'));
+  });
+
+test('required screenshot failure cannot publish a completed continuation stage', async () => {
+  const item = deferredAnimation(), error = Error('required PNG failed'), h = continuationCaptureHarness([item], { screenshotError: error });
+  item.resolve(); await assert.rejects(h.capture(), value => value === error);
+  assert(h.calls.includes('png')); assert(!h.calls.includes('stage:loadout-continue'));
+});
+
+
+// Execute the real ready helper and its committed post-capture callsite.
+function postCaptureReadyHarness(items, { shownAge = 300, leaving = false, readinessError = null } = {}) {
+  const animations = items.map(item => item.animation), browser = animationHarness(animations);
+  const calls = [], state = { shownAge, leaving }; let pendingReadiness = null;
+  const checkReadiness = () => {
+    if (!pendingReadiness) return;
+    const { fn, resolve, reject } = pendingReadiness;
+    if (readinessError) { pendingReadiness = null; reject(readinessError); return; }
+    const accepted = vm.runInNewContext('(' + fn.toString() + ')', {
+      performance: { now: () => state.shownAge }, menus: { _shownAt: 0 },
+      document: { querySelector: selector => { assert.equal(selector, '.iw-screen.is-leaving'); return state.leaving ? {} : null; } },
+    })();
+    if (accepted) { pendingReadiness = null; calls.push('ready-complete'); resolve(); }
+  };
+  const page = {
+    waitForFunction: fn => {
+      calls.push('ready-check');
+      return new Promise((resolve, reject) => { pendingReadiness = { fn, resolve, reject }; checkReadiness(); });
+    },
+  };
+  const settle = async (target, confirmNativeFinished = false) => {
+    assert.equal(target, page); calls.push('settle:' + confirmNativeFinished);
+    await browser.run(confirmNativeFinished); calls.push('settled:' + confirmNativeFinished);
+  };
+  const observe = async (id, action) => {
+    calls.push('before:' + id); const result = await action(); calls.push('after:' + id); return result;
+  };
+  const continuation = fs.readFileSync(new URL('../check-inkwave-result-continuation.mjs', import.meta.url), 'utf8');
+  const first = continuation.indexOf('  const ready=async'), last = continuation.indexOf('  const captureAction=async', first);
+  assert(first >= 0 && last > first);
+  const ready = new Function('page', 'settle', 'observe', continuation.slice(first, last) + '\nreturn ready;')(page, settle, observe);
+  const marker = "await captureAction('loadout-continue','[data-id=\"continue-with-gear\"]','.iw-continuation-actions button');";
+  const at = continuation.indexOf(marker); assert(at >= 0);
+  const call = continuation.slice(at + marker.length).match(/^await ready\([^;]*\);/)?.[0]; assert(call);
+  const afterCapture = new Function('ready', 'return async () => {' + call + '};')(ready);
+  return { calls, animations, afterCapture, ordinary: observed => ready(observed),
+    setReadiness: next => { Object.assign(state, next); checkReadiness(); },
+    tick: async () => { browser.watchdog(); await flushAnimationMicrotasks(); await flushAnimationMicrotasks(); } };
+}
+
+test('post-capture ready advances only after native finished confirmation on the committed boundary', async () => {
+  const item = deferredAnimation({ playState: 'finished' });
+  const capture = continuationCaptureHarness([item]), ready = postCaptureReadyHarness([item]);
+  const captured = capture.capture(); await flushAnimationMicrotasks(); await capture.tick(); await captured;
+  assert(capture.calls.includes('png')); assert.equal(capture.calls.at(-1), 'stage:loadout-continue');
+  let completed = false; const waiting = ready.afterCapture().then(() => { completed = true; });
+  try {
+    await flushAnimationMicrotasks(); assert.equal(completed, false); assert(!ready.calls.includes('ready-check'));
+    await ready.tick();
+    assert.equal(completed, true, 'the committed post-capture ready must confirm native finished state');
+    assert.deepEqual(ready.calls, ['before:continuation-settle-loadout', 'settle:true', 'settled:true',
+      'after:continuation-settle-loadout', 'before:continuation-ready-loadout', 'ready-check',
+      'ready-complete', 'after:continuation-ready-loadout']);
+    assert.equal(item.reads(), 2, 'capture geometry and post-capture ready each retain their own original promise');
+  } finally { item.resolve(); await waiting; }
+});
+
+for (const state of [{ playState: 'running' }, { playState: 'paused' }, { playState: 'idle' }, { playState: 'finished', pending: true }])
+  test('post-capture ready rejects unfinished native state: ' + JSON.stringify(state), async () => {
+    const item = deferredAnimation(state), h = postCaptureReadyHarness([item]); let completed = false;
+    const waiting = h.afterCapture().then(() => { completed = true; });
+    try {
+      for (let i = 0; i < 3; i++) { await h.tick(); assert.equal(completed, false); assert(!h.calls.includes('ready-check')); }
+      Object.assign(item.animation, { playState: 'finished', pending: false }); await h.tick(); await waiting;
+      assert(h.calls.includes('ready-complete'));
+    } finally { item.resolve(); await waiting; }
+  });
+
+for (const reversal of [{ playState: 'running' }, { pending: true }])
+  test('post-capture ready rechecks native state after asynchronous confirmation: ' + JSON.stringify(reversal), async () => {
+    const item = deferredAnimation({ playState: 'finished' }), h = postCaptureReadyHarness([item]); let completed = false;
+    const waiting = h.afterCapture().then(() => { completed = true; });
+    try {
+      // The state-confirmation continuation is queued before this state reversal.
+      const ticking = h.tick(); Promise.resolve().then(() => Object.assign(item.animation, reversal)); await ticking;
+      assert.equal(completed, false); assert(!h.calls.includes('ready-check'));
+      Object.assign(item.animation, { playState: 'finished', pending: false }); await h.tick(); await waiting;
+    } finally { item.resolve(); await waiting; }
+  });
+
+test('post-capture ready retains the original cohort instead of accepting a finished replacement', async () => {
+  const original = deferredAnimation(), replacement = deferredAnimation({ playState: 'finished' });
+  const h = postCaptureReadyHarness([original]); const waiting = h.afterCapture();
+  try {
+    await flushAnimationMicrotasks(); h.animations.splice(0, 1, replacement.animation);
+    await h.tick(); await h.tick(); assert(!h.calls.includes('ready-check'));
+    original.animation.playState = 'finished'; await h.tick(); await waiting; assert.equal(replacement.reads(), 0);
+  } finally { original.resolve(); replacement.resolve(); await waiting; }
+});
+
+for (const observed of [false, true]) test('ordinary ready remains promise-only even when observed: ' + observed, async () => {
+  const item = deferredAnimation({ playState: 'finished' }), h = postCaptureReadyHarness([item]); let completed = false;
+  const waiting = h.ordinary(observed).then(() => { completed = true; });
+  try {
+    await h.tick(); await h.tick(); assert.equal(completed, false);
+    assert(h.calls.includes('settle:false')); assert(!h.calls.includes('ready-check'));
+    item.resolve(); await waiting; assert(h.calls.includes('ready-complete'));
+  } finally { item.resolve(); await waiting; }
+});
+
+for (const initial of [{ shownAge: 219, leaving: false }, { shownAge: 300, leaving: true }])
+  test('post-capture ready still requires elapsed menu age and outgoing-owner retirement: ' + JSON.stringify(initial), async () => {
+    const item = deferredAnimation({ playState: 'finished' }), h = postCaptureReadyHarness([item], initial); let completed = false;
+    const waiting = h.afterCapture().then(() => { completed = true; });
+    try {
+      await h.tick(); assert.equal(completed, false); assert(h.calls.includes('ready-check')); assert(!h.calls.includes('ready-complete'));
+      h.setReadiness({ shownAge: 220, leaving: false }); await waiting; assert.equal(completed, true);
+    } finally { item.resolve(); h.setReadiness({ shownAge: 300, leaving: false }); await waiting; }
+  });
+
+test('post-capture ready preserves a readiness failure rather than publishing completion', async () => {
+  const item = deferredAnimation(), error = Error('native ready check failed');
+  const h = postCaptureReadyHarness([item], { readinessError: error }); item.resolve();
+  await assert.rejects(h.afterCapture(), value => value === error); assert(!h.calls.includes('ready-complete'));
+});
+
+test('failed required capture never reaches the committed post-capture ready', async () => {
+  const item = deferredAnimation(), error = Error('required capture failed');
+  const capture = continuationCaptureHarness([item], { screenshotError: error }), ready = postCaptureReadyHarness([item]);
+  item.resolve(); const flow = async () => { await capture.capture(); await ready.afterCapture(); };
+  await assert.rejects(flow(), value => value === error); assert.deepEqual(ready.calls, []);
+});

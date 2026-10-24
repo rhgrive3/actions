@@ -12,6 +12,9 @@ const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const BROWSER_ARGS=['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader'];
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 export const IDLE_OPERATION_TIMEOUT_MS=120000;
+// Two 120-frame states share one evaluate. This expands host supervision only,
+// not a CPU/FPS/GPU performance threshold; every other evaluate stays at 120s.
+export const RESULTS_WORK_TIMEOUT_MS=240000;
 export const CLOUD_SEQUENCE_TIMEOUT_MS=360000;
 export const CLOUD_THEMES=Object.freeze(['day','sunset','golden']);
 // Three sequential theme operations. This increases aggregate supervision from
@@ -112,14 +115,14 @@ export function boundIdleEvaluations(page,phase=()=> 'evaluate',timers=globalThi
  const evaluate=page.evaluate;
  if(typeof evaluate!=='function')throw TypeError('Idle page has no evaluate method');
  page.evaluate=async function(...args){
-  const operationPhase=phase();let timer;
+   const operationPhase=phase(),timeoutMs=operationPhase==='results-work'&&args[0]===measureResultsWork?RESULTS_WORK_TIMEOUT_MS:IDLE_OPERATION_TIMEOUT_MS;let timer;
   try{return await Promise.race([
    Promise.resolve().then(()=>evaluate.apply(this,args)),
    new Promise((_,reject)=>{timer=timers.setTimeout(()=>{
-    const error=Error(`Idle evaluate exceeded ${IDLE_OPERATION_TIMEOUT_MS} ms (${operationPhase})`);
-    Object.assign(error,{name:'IdleEvaluationTimeoutError',code:'INKWAVE_IDLE_EVALUATION_TIMEOUT',phase:operationPhase,timeoutMs:IDLE_OPERATION_TIMEOUT_MS});
+     const error=Error(`Idle evaluate exceeded ${timeoutMs} ms (${operationPhase})`);
+     Object.assign(error,{name:'IdleEvaluationTimeoutError',code:'INKWAVE_IDLE_EVALUATION_TIMEOUT',phase:operationPhase,timeoutMs});
     reject(error);
-   },IDLE_OPERATION_TIMEOUT_MS);})
+    },timeoutMs);})
   ]);}finally{timers.clearTimeout(timer);}
  };
  boundedPages.add(page);
@@ -152,8 +155,9 @@ export function formatIdleFailureProgress(error,data){
  region??=latest;
  const labels=['frame','sample','cleanup','observer','clock.advance','actorUpdates','projectileUpdates','paintFlushes','fxUpdates','R.render','match.update','controller','input.pollPad','input.endFrame','padMenus','network','paint.clock','environment','decor','props','camera','diorama','screenfx','fxHooks','projectile.sights','projectile.visuals','projectile.arc','showcase.update','showcase.render','audio.loops','audio.ambience','audio.listener','hud','menus','composer','renderer'];
  const integer=(v,max)=>Number.isSafeInteger(v)&&v>=0&&v<=max?v:null;
+ const elapsed=v=>Number.isFinite(v)&&v>=0&&v<=Number.MAX_SAFE_INTEGER?v:undefined;
  const observation=(c,capacity,messages)=>({retained:Array.isArray(c?.events)?integer(c.events.length,capacity):0,capacity:integer(c?.capacity,capacity),received:integer(c?.received,messages),limit:integer(c?.maxMessages,messages),truncated:c?.truncated===true});
- return 'INKWAVE_IDLE_FAILURE_PROGRESS '+JSON.stringify({phase:phases.includes(phase)?phase:'unknown',state:['setup','playing','results','restoring'].includes(latest?.state)?latest.state:'unknown',frame:integer(latest?.frame,120),completed:integer(latest?.completed,120),totalCompleted:integer(latest?.totalCompleted,240),sampledRegion:labels.includes(region?.producer)?region.producer:'unknown',regionEdge:['enter','exit','throw','limit'].includes(region?.edge)?region.edge:'unknown',observations:{critical:observation(p,512,32769),detail:observation(p?.detail,64,129),coarseEdgesPerFrame:128,criticalOmitted:integer(latest?.criticalSuppressed,Number.MAX_SAFE_INTEGER),detailOmitted:integer(latest?.detailSuppressed,Number.MAX_SAFE_INTEGER),gl:'counters-only'},scope:'sampled diagnostic; not GPU/FPS evidence'});
+ return 'INKWAVE_IDLE_FAILURE_PROGRESS '+JSON.stringify({phase:phases.includes(phase)?phase:'unknown',state:['setup','playing','results','restoring'].includes(latest?.state)?latest.state:'unknown',frame:integer(latest?.frame,120),completed:integer(latest?.completed,120),totalCompleted:integer(latest?.totalCompleted,240),elapsedMs:elapsed(latest?.elapsedMs),stateElapsedMs:elapsed(latest?.stateElapsedMs),gpuDrawSubmissions:integer(latest?.counts?.gpuDrawSubmissions,Number.MAX_SAFE_INTEGER)??undefined,worldRenders:integer(latest?.counts?.worldRenders,Number.MAX_SAFE_INTEGER)??undefined,sampledRegion:labels.includes(region?.producer)?region.producer:'unknown',regionEdge:['enter','exit','throw','limit'].includes(region?.edge)?region.edge:'unknown',observations:{critical:observation(p,512,32769),detail:observation(p?.detail,64,129),coarseEdgesPerFrame:128,criticalOmitted:integer(latest?.criticalSuppressed,Number.MAX_SAFE_INTEGER),detailOmitted:integer(latest?.detailSuppressed,Number.MAX_SAFE_INTEGER),gl:'counters-only'},scope:'sampled diagnostic; not GPU/FPS evidence'});
 }
 export function idleFailureReporter({publish,snapshot,page,screenshotPath,stderr=line=>console.error(line)}){
  let screenshotAttempted=false,summaryAttempted=false;
