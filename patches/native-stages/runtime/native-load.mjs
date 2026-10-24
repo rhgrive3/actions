@@ -156,9 +156,10 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
    let texture;
    try{
     texture=await prebuiltCompressedTexture(variant,packs,renderer,signal);checkAbort();
-    // Without a compressed target the transcoder returns RGBA32; the relaxed
-    // touch budget only holds for compressed output.
-    if(fallback&&!texture.isCompressedTexture)throw Error('KTX2 transcoded uncompressed');
+    // Without a compressed target KTX2Loader still returns a CompressedTexture,
+    // holding RGBA32 data in RGBAFormat; the relaxed touch budget only holds
+    // for a GPU-compressed format.
+    if(fallback&&(!texture.isCompressedTexture||texture.format===THREE.RGBAFormat))throw Error('KTX2 transcoded uncompressed');
     capMipLevels(texture,job.roleLimit);
     texture.colorSpace=['albedo','emissive'].includes(role)?THREE.SRGBColorSpace:THREE.NoColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;rememberTextureInput(texture,data,file,job);for(const alias of job.aliases)textures.set(alias,texture);texture=null;
     continue;
@@ -167,13 +168,14 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
     if(error?.name==='AbortError'||signal?.aborted||failure)throw error;
     console.warn('[native] prebuilt texture unavailable, decoding source PNG: '+variant.pack+'@'+variant.offset+' '+error.message);
    }finally{texture?.dispose();}
-   // A PNG decode keeps the uncompressed budget this load was relieved from.
-   if(fallback){
-    const allowed=fallback.quality==='high'||['albedo','opacity'].includes(role);
-    if(!allowed)continue;
-    const roleLimit=Math.min(job.roleLimit,fallback.maxDimension||Infinity,fallback.perRole?.[role]||Infinity,fallback.quality==='low'?512:fallback.quality==='high'?4096:1024);
-    if(roleLimit!==job.roleLimit)job={...job,roleLimit};
-   }
+  }
+  // Every PNG decode, including images a partial prebuilt table does not
+  // cover, keeps the uncompressed budget this load was relieved from.
+  if(fallback){
+   const allowed=fallback.quality==='high'||['albedo','opacity'].includes(role);
+   if(!allowed)continue;
+   const roleLimit=Math.min(job.roleLimit,fallback.maxDimension||Infinity,fallback.perRole?.[role]||Infinity,fallback.quality==='low'?512:fallback.quality==='high'?4096:1024);
+   if(roleLimit!==job.roleLimit)job={...job,roleLimit};
   }
   const buffer=await verified(id,file,data.integrity,signal);checkAbort();const blob=new Blob([buffer],{type:'image/png'});
   let bitmap,texture,transferred=false;

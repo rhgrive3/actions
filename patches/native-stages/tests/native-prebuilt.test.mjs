@@ -154,7 +154,7 @@ if (!vm.SourceTextModule) {
       '../../../vendor/three/jsm/loaders/KTX2Loader.js': {KTX2Loader},
       './prebuilt-load.mjs': {fetchVerified: async file => { calls.packs.push(file); return Uint8Array.from([0, 1, 2, 3, 4, 5, 6, 7]).buffer; }},
     };
-    const mods = {three: {Texture, DataTexture: Texture, SRGBColorSpace: 'srgb', NoColorSpace: '', RepeatWrapping: 1000},
+    const mods = {three: {Texture, DataTexture: Texture, SRGBColorSpace: 'srgb', NoColorSpace: '', RepeatWrapping: 1000, RGBAFormat: 1023},
       './registry.mjs': {nativeStageURL: () => ''}, './build-config.mjs': {nativeStageBuild: {mode: 'browser-direct'}},
       './source-data.mjs': {loadBrowserSource: () => {}}, './source-cache.mjs': {sourceBytes: async () => new Uint8Array(26).buffer}};
     const m = new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/native-load.mjs', import.meta.url), 'utf8'), {context,
@@ -162,12 +162,13 @@ if (!vm.SourceTextModule) {
     await m.link(async name => make(mods[name])); await m.evaluate();
     return {calls, signal, m};
   }
-  async function textures({quality = 'balanced', limit = {maxDimension: 1024, perRole: {}}, renderer = {capabilities: {getMaxAnisotropy: () => 16}}, normal = false, ...options} = {}) {
+  async function textures({quality = 'balanced', limit = {maxDimension: 1024, perRole: {}}, renderer = {capabilities: {getMaxAnisotropy: () => 16}}, normal = false, cover = null, ...options} = {}) {
     const {calls, signal, m} = await harness(options);
     const data = {manifest: {materials: {m: {albedo: 'a.png', maps: normal ? {normal: 'n.png'} : {}, channels: {}}, n: {albedo: 'b.png', maps: {}, channels: {}}},
       prebuiltTextures: {'a.png': {albedo: {pack: 'packs/p.bin', offset: 2, bytes: 3, sha256: 'x'}}, 'b.png': {albedo: {pack: 'packs/p.bin', offset: 5, bytes: 2, sha256: 'y'}}},
       prebuiltTexturePacks: [{file: 'packs/p.bin', group: 'color', bytes: 8, sha256: 'z'}]}, integrity: {}};
     if (normal) data.manifest.prebuiltTextures['n.png'] = {normal: {pack: 'packs/p.bin', offset: 0, bytes: 2, sha256: 'w'}};
+    if (cover) for (const file of Object.keys(data.manifest.prebuiltTextures)) if (!cover.includes(file)) delete data.manifest.prebuiltTextures[file];
     let result, error;
     const run = (r = renderer, s = signal) => m.namespace.loadNativeTextures('fixture', data, r, quality, s, limit);
     if (options.manual) return {calls, run, signal};
@@ -231,10 +232,21 @@ if (!vm.SourceTextModule) {
     assert.equal(failed.error, undefined);
     assert.equal(failed.result.has('n.png'), false, 'balanced fallback drops the high-only normal map');
     assert.deepEqual(failed.calls.resized, [512, 512], 'albedo PNGs decode at the fallback cap');
-    const rgba = await textures({quality: 'high', limit, parse: onLoad => onLoad({isCompressedTexture: false, image: {width: 2048, height: 2048}, mipmaps: [], dispose() {}})});
+    // KTX2Loader's RGBA32 result: a CompressedTexture whose format is RGBAFormat.
+    const rgba = await textures({quality: 'high', limit, parse: onLoad => onLoad({isCompressedTexture: true, format: 1023, image: {width: 2048, height: 2048}, mipmaps: [{width: 2048, height: 2048, data: new Uint8Array(1)}], dispose() {}})});
     assert.equal(rgba.error, undefined);
     assert.equal(rgba.calls.bitmaps, 2, 'uncompressed KTX2 output is replaced by the budgeted PNG path');
     assert.match(rgba.calls.warned[0], /transcoded uncompressed/);
+  });
+  test('images a partial prebuilt table does not cover keep the uncompressed fallback budget', async () => {
+    const limit = {maxDimension: 4096, perRole: {}, fallback: {quality: 'balanced', maxDimension: 512, perRole: {}}};
+    const partial = await textures({quality: 'high', limit, normal: true, cover: ['b.png'], parse: onLoad => onLoad(compressed())});
+    assert.equal(partial.error, undefined);
+    assert.equal(partial.result.has('n.png'), false, 'uncovered high-only normal map is dropped');
+    assert.deepEqual(partial.calls.resized, [512], 'uncovered albedo decodes at the fallback cap');
+    assert.equal(partial.result.get('b.png')?.isCompressedTexture, true, 'covered albedo stays KTX2');
+    const desktop = await textures({quality: 'high', limit: {maxDimension: 4096, perRole: {}}, normal: true, cover: ['b.png'], parse: onLoad => onLoad(compressed())});
+    assert.equal(desktop.result.has('n.png'), true, 'without a relieved budget the full profile applies');
   });
 }
 
