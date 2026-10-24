@@ -71,26 +71,64 @@ export function measureResultsWork({token,maxDetailEvents=128}){
  if(typeof token!=='string'||!token||token.length>64||!Number.isInteger(maxDetailEvents)||maxDetailEvents<1||maxDetailEvents>128)throw TypeError('Invalid results progress token/budget');
  const G=__G,g=G.game,match=g.match,gl=G.renderer.getContext(),restore=[];
  const beforeState=match.state,beforePaused=match.paused,started=performance.now();let counts,state='setup',frame=0,completed=0,totalCompleted=0,stateStarted=started,failed=false,failure,watchedClock,criticalInFrame=0,criticalSuppressed=0,detailSuppressed=0;
- const sequences={critical:0,detail:0};
+ const sequences={critical:0,detail:0};let timing=null,rendererDepth=0,drawDepth=0,rendererOrdinal=0;
+ // Diagnostic wall time only. Other renderer work includes JS, other native
+ // APIs, scheduling and the timing observer itself; none is GPU execution/FPS.
+ const methodTiming=()=>({calls:0,outerCalls:0,wallMs:0,maxWallMs:0});
+ const createTiming=()=>({diagnosticOnly:true,emitWallMs:0,clockErrors:0,renderer:{calls:0,outerCalls:0,wallMs:0,nestedEmitWallMs:0,drawCallWallMs:0,otherWallMs:0,maxWallMs:0,maxFrame:0,maxOrdinal:0},draws:{calls:0,outerCalls:0,wallMs:0,maxWallMs:0,maxMethod:null,maxFrame:0,maxRendererOrdinal:0,methods:{drawArrays:methodTiming(),drawElements:methodTiming(),drawArraysInstanced:methodTiming(),drawElementsInstanced:methodTiming()}}});
+ const timingNow=()=>{try{const value=performance.now();if(Number.isFinite(value))return value;}catch{}if(timing)timing.clockErrors++;return null;};
+ const timingElapsed=start=>{const end=timingNow();if(start!==null&&end!==null&&Number.isFinite(end-start)&&end>=start)return end-start;if(timing&&start!==null&&end!==null)timing.clockErrors++;return null;};
+ const timingSnapshot=()=>timing?{...timing,renderer:{...timing.renderer},draws:{...timing.draws,methods:Object.fromEntries(Object.entries(timing.draws.methods).map(([key,value])=>[key,{...value}]))}}:undefined;
  // Frame/sample/cleanup are reserved. Coarse callees get128 edges per frame,
  // plus one explicit limit; actor detail cannot consume either budget or ring.
- const emit=(producer,edge,channel='critical')=>{let limit=false;
+ const emit=(producer,edge,channel='critical')=>{const owner=timing,start=timingNow();try{let limit=false;
   if(channel==='detail'){const n=sequences.detail;if(n>maxDetailEvents){detailSuppressed++;return;}limit=n===maxDetailEvents;}
   else if(!['frame','sample','cleanup'].includes(producer)){if(criticalInFrame>128){criticalSuppressed++;return;}limit=criticalInFrame++===128;}
   if(limit){if(channel==='detail')detailSuppressed++;else criticalSuppressed++;}
   const seq=++sequences[channel];
-  try{const c=g.s3Clock;console.info('INKWAVE_RESULTS_WORK '+token+' '+JSON.stringify({channel,seq,producer:limit?'observer':producer,edge:limit?'limit':edge,state,actualState:match.state,frame,completed,totalCompleted,dt:1/60,criticalSuppressed,detailSuppressed,elapsedMs:performance.now()-started,stateElapsedMs:performance.now()-stateStarted,clock:c?{ticks:c.ticks,accumulator:c.accumulator,advancing:c.advancing,finalTick:c.finalTick,ticked:g._s3Ticked}:null,counts:counts?{...counts}:null,presentation:{frozen:g.frozen,hidden:document.hidden,quality:G.settings?.quality,showcase:!!g.showcase?.fullFrame,skipRender:!!g._skipRender},gameTime:G.time}));}catch{/* Observation failure never replaces a native return/throw. */}
+  try{const c=g.s3Clock;console.info('INKWAVE_RESULTS_WORK '+token+' '+JSON.stringify({channel,seq,producer:limit?'observer':producer,edge:limit?'limit':edge,state,actualState:match.state,frame,completed,totalCompleted,dt:1/60,criticalSuppressed,detailSuppressed,elapsedMs:performance.now()-started,stateElapsedMs:performance.now()-stateStarted,clock:c?{ticks:c.ticks,accumulator:c.accumulator,advancing:c.advancing,finalTick:c.finalTick,ticked:g._s3Ticked}:null,counts:counts?{...counts}:null,presentation:{frozen:g.frozen,hidden:document.hidden,quality:G.settings?.quality,showcase:!!g.showcase?.fullFrame,skipRender:!!g._skipRender},gameTime:G.time,timing:channel==='critical'&&(['frame','sample','cleanup'].includes(producer)||producer==='renderer'&&edge!=='enter')?timingSnapshot():undefined}));}catch{/* Observation failure never replaces a native return/throw. */}
+ }finally{const elapsed=timingElapsed(start);if(owner&&elapsed!==null)owner.emitWallMs+=elapsed;}
  };
- const invoke=(old,receiver,args,label,channel='critical')=>{emit(label,'enter',channel);let returned=false;try{const value=old.apply(receiver,args);returned=true;return value;}finally{emit(label,returned?'exit':'throw',channel);}};
- const hook=(obj,key,label,producer=label,channel='critical')=>{const old=obj[key];if(typeof old!=='function')throw Error('Missing native work producer '+key);obj[key]=function(...args){counts[label]++;return channel==='aggregate'?old.apply(this,args):invoke(old,this,args,producer,channel);};restore.push(()=>{obj[key]=old;});};
+ const invoke=(old,receiver,args,label,channel='critical')=>{
+  emit(label,'enter',channel);const measured=label==='renderer',outer=measured&&rendererDepth++===0,owner=timing;
+  if(measured&&owner)owner.renderer.calls++;
+  const ordinal=outer?++rendererOrdinal:rendererOrdinal,start=outer?timingNow():null,emitBefore=owner?.emitWallMs??0,drawBefore=owner?.draws.wallMs??0;let returned=false;
+  try{const value=old.apply(receiver,args);returned=true;return value;}
+  finally{
+   if(measured)rendererDepth--;
+   if(outer&&owner){const elapsed=timingElapsed(start),r=owner.renderer;r.outerCalls++;if(elapsed!==null){
+    const observer=owner.emitWallMs-emitBefore,draws=owner.draws.wallMs-drawBefore;
+    r.wallMs+=elapsed;r.nestedEmitWallMs+=observer;r.drawCallWallMs+=draws;r.otherWallMs+=Math.max(0,elapsed-observer-draws);
+    if(r.outerCalls===1||elapsed>r.maxWallMs){r.maxWallMs=elapsed;r.maxFrame=frame;r.maxOrdinal=ordinal;}
+   }}
+   emit(label,returned?'exit':'throw',channel);
+  }
+ };
+ const hook=(obj,key,label,producer=label,channel='critical')=>{const old=obj[key];if(typeof old!=='function')throw Error('Missing native work producer '+key);obj[key]=function(...args){
+  counts[label]++;if(channel!=='aggregate')return invoke(old,this,args,producer,channel);
+  // Reuse the existing draw wrapper. No per-draw event, callback or allocation.
+  const owner=timing,d=owner?.draws,m=d?.methods[key],outer=drawDepth++===0,start=outer?timingNow():null,emitBefore=owner?.emitWallMs??0;
+  if(d){d.calls++;m.calls++;}
+  try{return old.apply(this,args);}
+  finally{
+   drawDepth--;
+   if(outer&&d){const elapsed=timingElapsed(start);d.outerCalls++;m.outerCalls++;if(elapsed!==null){
+    // A test double may nest observed work. Exclude those emit intervals once,
+    // and time only the outer draw call so recursive wrappers never double count.
+    const wall=Math.max(0,elapsed-(owner.emitWallMs-emitBefore));d.wallMs+=wall;m.wallMs+=wall;
+    if(wall>m.maxWallMs)m.maxWallMs=wall;
+    if(d.outerCalls===1||wall>d.maxWallMs){d.maxWallMs=wall;d.maxMethod=key;d.maxFrame=frame;d.maxRendererOrdinal=rendererDepth?rendererOrdinal:0;}
+   }}
+  }
+ };restore.push(()=>{obj[key]=old;});};
  const observe=(obj,key,label)=>{const old=obj?.[key];if(typeof old!=='function')return;const descriptor=Object.getOwnPropertyDescriptor(obj,key);obj[key]=function(...args){return invoke(old,this,args,label);};restore.push(()=>{if(descriptor)Object.defineProperty(obj,key,descriptor);else delete obj[key];});};
  try{
   for(let i=0;i<G.actors.length;i++)hook(G.actors[i],'update','actorUpdates','actor['+i+'].update','detail');
   for(const [obj,key,label]of [[G.projectiles,'update','projectileUpdates'],[G.paint,'flush','paintFlushes'],[G.fx,'update','fxUpdates'],[g.R,'render','worldRenders']])hook(obj,key,label,key==='render'?'R.render':label);
   for(const key of ['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced'])hook(gl,key,'gpuDrawSubmissions','gl.'+key,'aggregate');
   for(const [obj,key,label]of [[match,'update','match.update'],[match,'updateController','controller'],[g.input,'pollPad','input.pollPad'],[g.input,'endFrame','input.endFrame'],[g,'_padMenus','padMenus'],[G.net,'update','network'],[G.paint,'advanceSimulation','paint.clock'],[G.env,'update','environment'],[g.decor,'update','decor'],[g.props,'update','props'],[g.rig,'update','camera'],[g.diorama,'update','diorama'],[g.screenfx,'update','screenfx'],[g.fxHooks,'update','fxHooks'],[G.projectiles,'syncSights','projectile.sights'],[G.projectiles,'syncVisuals','projectile.visuals'],[G.projectiles,'updateArc','projectile.arc'],[g.showcase,'update','showcase.update'],[g.showcase,'render','showcase.render'],[g,'_updateLocalLoops','audio.loops'],[g,'_updateAmbience','audio.ambience'],[G.audio,'setListener','audio.listener'],[g,'_updateHud','hud'],[g.menus,'update','menus'],[g.R.composer,'render','composer'],[G.renderer,'render','renderer']])observe(obj,key,label);
-  const sample=next=>{counts={actorUpdates:0,projectileUpdates:0,paintFlushes:0,fxUpdates:0,worldRenders:0,gpuDrawSubmissions:0};state=next;frame=completed=0;match.state=next;match.paused=false;const start=stateStarted=performance.now();emit('sample','enter');
-   for(let i=0;i<120;i++){frame=i+1;criticalInFrame=0;if(g.s3Clock&&g.s3Clock!==watchedClock){observe(g.s3Clock,'advance','clock.advance');watchedClock=g.s3Clock;}emit('frame','enter');let returned=false;try{g._frame(1/60);returned=true;completed++;totalCompleted++;}finally{emit('frame',returned?'exit':'throw');}}
+  const sample=next=>{counts={actorUpdates:0,projectileUpdates:0,paintFlushes:0,fxUpdates:0,worldRenders:0,gpuDrawSubmissions:0};state=next;frame=completed=0;timing=createTiming();match.state=next;match.paused=false;const start=stateStarted=performance.now();emit('sample','enter');
+   for(let i=0;i<120;i++){frame=i+1;criticalInFrame=0;rendererOrdinal=0;if(g.s3Clock&&g.s3Clock!==watchedClock){observe(g.s3Clock,'advance','clock.advance');watchedClock=g.s3Clock;}emit('frame','enter');let returned=false;try{g._frame(1/60);returned=true;completed++;totalCompleted++;}finally{emit('frame',returned?'exit':'throw');}}
    emit('sample','exit');return {...counts,cpuSubmissionMs:performance.now()-start};
   };
   return {frames:120,playing:sample('playing'),results:sample('results'),measurement:'native published Game._frame producers and real WebGL submission counts; not GPU execution time or device power'};

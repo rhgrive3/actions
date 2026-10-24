@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
-const names = ['inkwave-paint-hotpath', 'inkwave-runtime-frame-parity', 'inkwave-touch-frame-pacing'];
+const names = ['inkwave-paint-hotpath', 'inkwave-runtime-frame-parity', 'inkwave-touch-frame-pacing', 'inkwave-pause-gpu'];
 const repo = mkdtempSync(join(tmpdir(), 'inkwave-head-proof-'));
 function git(...args) {
   const result = spawnSync('git', args, { cwd: repo, encoding: 'utf8' });
@@ -69,7 +69,7 @@ for (const name of names) {
 // Verify actual test arguments in the existing core QA invocation, not mere
 // filename presence elsewhere in the workflow or patch-only shard discovery.
 const coreWorkflow = readFileSync(join(root, '.github/workflows/validate-inkwave-update.yml'), 'utf8');
-const requiredCoreTests = ["scripts/tests/inkwave-exact-checkout-head.test.mjs", "scripts/tests/inkwave-responsive-progress-summary.test.mjs"];
+const requiredCoreTests = ["scripts/tests/inkwave-exact-checkout-head.test.mjs", "scripts/tests/inkwave-responsive-progress-summary.test.mjs", "scripts/tests/inkwave-frozen-hud-capture.test.mjs", "scripts/tests/inkwave-ui-visual-probe-errors.test.mjs"];
 function assertCoreTestSelection(source) {
   const commands = [...source.matchAll(/^      - name: Verify motion verifier regressions\n        run: (.+)$/gm)];
   assert.equal(commands.length, 1, 'one existing core QA test invocation');

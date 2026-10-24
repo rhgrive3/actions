@@ -12,20 +12,25 @@ const baselineSource="()=>{\n   const G=__G,g=G.game,match=g.match,gl=G.renderer
 assert.equal(crypto.createHash('sha256').update(baselineSource).digest('hex'),'27510a169f39a0937d4d65b8b3ef93c766c0f32cfba43eb586d7ec3dc323bfed');
 const flush=async()=>{for(let i=0;i<32;i++)await Promise.resolve();};
 function fixture(options={}){
- const work=[],frames=[],messages=[],originals=[];let time=0,frame=0;
+ const work=[],frames=[],messages=[],originals=[];let time=0,frame=0,clockErrorOnce=false,renderNesting=0;
  const match={state:'intro',paused:true},G={time:0,settings:{quality:'low'},actors:[]},g={match,frozen:true,_skipRender:false};G.game=g;
- const op=(label,body=()=>{})=>function(...args){work.push([label,match.state,frame,args.map(a=>typeof a==='number'?a:typeof a)]);if(options.producer===label&&match.state===options.state&&(options.failFrame===undefined?frame%120===5:frame===options.failFrame))throw options.error;return body.apply(this,args);};
+ const op=(label,body=()=>{})=>function(...args){
+  work.push([label,match.state,frame,args.map(a=>typeof a==='number'?a:typeof a)]);time+=options.delays?.[label]??0;
+  try{if(options.producer===label&&match.state===options.state&&(options.failFrame===undefined?frame%120===5:frame===options.failFrame))throw options.error;return body.apply(this,args);}
+  finally{if(options.failClockAfterProducer===label)clockErrorOnce=true;}
+ };
  const object=(label,keys)=>Object.fromEntries(keys.map(key=>[key,op(label+'.'+key)]));
  G.actors=Array.from({length:options.actorCount??2},(_,i)=>object('actor'+i,['update']));G.projectiles=object('projectile',['update','syncSights','syncVisuals','updateArc']);G.paint=object('paint',['flush','advanceSimulation']);G.fx=object('fx',['update']);G.env=object('environment',['update']);G.audio=object('audio',['setListener']);
  const gl=object('gl',['drawArrays','drawElements','drawArraysInstanced','drawElementsInstanced']);
- G.renderer={getContext:()=>gl,render:op('renderer.render',()=>{for(let i=0;i<(options.drawsPerFrame??1);i++)gl.drawArrays(4,0,3);})};g.R={composer:{render:op('composer.render',()=>G.renderer.render())},render:op('world.render',()=>g.R.composer.render())};
+ if(options.nestedDraw)gl.drawArrays=op('gl.drawArrays',()=>gl.drawElements(4,3,5123,0));
+ G.renderer={getContext:()=>gl,render:op('renderer.render',()=>{if(options.nestedRenderer&&!renderNesting){renderNesting++;try{G.renderer.render();}finally{renderNesting--;}}for(let i=0;i<(options.drawsPerFrame??1);i++)gl.drawArrays(4,0,3);})};g.R={composer:{render:op('composer.render',()=>G.renderer.render())},render:op('world.render',()=>g.R.composer.render())};
  g.input=object('input',['pollPad','endFrame']);g.decor=object('decor',['update']);g.rig=object('camera',['update']);g.showcase={...object('showcase',['update','render']),fullFrame:false};g.menus=object('menus',['update']);g._padMenus=op('padMenus');g._updateHud=op('hud');g._updateLocalLoops=op('audio.loops');g._updateAmbience=op('audio.ambience');
  class Clock{advance(dt,tick){this.advancing=true;this.accumulator+=dt;tick();this.ticks++;this.accumulator-=dt;this.advancing=false;}}
  g.s3Clock=Object.assign(new Clock(),{ticks:7,accumulator:.005,advancing:false,finalTick:true});
  g._frame=dt=>{frame++;frames.push([match.state,dt,match.paused]);for(let i=0;i<(options.pollsPerFrame??1);i++)g.input.pollPad();g._padMenus(dt);g.s3Clock.advance(dt,()=>{G.time+=dt;G.paint.advanceSimulation(dt);if(match.state==='playing'){for(const a of G.actors)a.update(dt);G.projectiles.update(dt);}});g._s3Ticked=1;
   if(match.state==='playing'){G.fx.update(dt);G.paint.flush(dt);}G.env.update(dt);g.decor.update(dt);g.rig.update(dt);G.projectiles.syncSights();G.projectiles.syncVisuals();G.projectiles.updateArc();g.showcase.update(dt);g._updateLocalLoops(dt);g._updateAmbience(dt);G.audio.setListener();g.R.render();g.showcase.render();if(match.state==='playing')g._updateHud(dt);g.menus.update(dt);g.input.endFrame();};
  for(const obj of [...G.actors,G.projectiles,G.paint,G.fx,G.env,G.audio,G.renderer,g.R,g.R.composer,g.input,g.decor,g.rig,g.showcase,g.menus,g,g.s3Clock,gl])for(const key of Reflect.ownKeys(obj))if(typeof obj[key]==='function')originals.push([obj,key,obj[key]]);
- const context={__G:G,document:{hidden:false},performance:{now:()=>++time},console:{info:text=>{messages.push(text);options.sink?.(text);if(options.consoleError)throw options.consoleError;}}};
+ const context={__G:G,document:{hidden:false},performance:{now:()=>{if(clockErrorOnce){clockErrorOnce=false;throw Error('diagnostic clock');}time+=options.clockStep??1;return time;}},console:{info:text=>{time+=options.emitDelayMs??0;messages.push(text);options.sink?.(text);if(options.consoleError)throw options.consoleError;}}};
  return {G,g,match,work,frames,messages,run(source=measureResultsWork.toString(),args={token:'test'}){return vm.runInNewContext('('+source+')',context)(args);},restored(){for(const [obj,key,fn]of originals)assert.equal(obj[key],fn,key);assert.equal(match.state,'intro');assert.equal(match.paused,true);assert.equal(Object.hasOwn(g.s3Clock,'advance'),false);}};
 }
 test('one synchronous evaluate preserves all240 native calls/order/dt/state and original work counts',async()=>{
@@ -163,4 +168,42 @@ test('summary remains best effort on snapshot/publish/stderr failure and is abse
   assert(failed);if(stage==='stderr')assert.equal(caught,0);else assert(caught instanceof AggregateError&&caught.cause===0&&caught.errors[1]===diagnosticError);assert.equal(outputs,1);assert.equal(order.at(-1),'cleanup');
  }
  let outputs=0;const diagnose=idleFailureReporter({snapshot:summaryData,publish:()=>assert.fail('no failure receipt on success'),page:()=>null,stderr:()=>{outputs++;}});assert.equal(await runIdleProbe(()=>42,{diagnose,cleanup:()=>{}}),42);assert.equal(outputs,0);
+});
+
+const diagnosticSamples=f=>f.messages.map(text=>JSON.parse(text.slice(text.indexOf('{')))).filter(e=>e.producer==='sample'&&e.edge==='exit');
+for(const control of [
+ {name:'console only',emitDelayMs:3,drawsPerFrame:1,delays:{},renderer:0,draw:0,other:0},
+ {name:'renderer body only',emitDelayMs:0,drawsPerFrame:1,delays:{'renderer.render':7},renderer:7,draw:0,other:7},
+ {name:'native draw only',emitDelayMs:0,drawsPerFrame:3,delays:{'gl.drawArrays':5},renderer:15,draw:15,other:0},
+ {name:'mixed independent delays',emitDelayMs:2,drawsPerFrame:4,delays:{'renderer.render':7,'gl.drawArrays':3},renderer:19,draw:12,other:7},
+])test('diagnostic wall attribution separates '+control.name+' without changing the pinned workload',()=>{
+ const options={...control,clockStep:0},baseline=fixture(options),expected=baseline.run(baselineSource),p=createResultsProgress('test'),f=fixture({...options,sink:p.accept}),actual=f.run();
+ assert.deepEqual(f.work,baseline.work);assert.deepEqual(f.frames,baseline.frames);assert.equal(f.frames.length,240);assert.equal(f.G.time,baseline.G.time);assert.equal(f.g.s3Clock.ticks,247);
+ for(const state of ['playing','results'])for(const key of ['actorUpdates','projectileUpdates','paintFlushes','fxUpdates','worldRenders','gpuDrawSubmissions'])assert.equal(actual[state][key],expected[state][key]);
+ const samples=diagnosticSamples(f);assert.equal(samples.length,2);
+ for(const e of samples){const t=e.timing;assert(t.diagnosticOnly);assert.equal(t.clockErrors,0);assert.equal(t.renderer.calls,120);assert.equal(t.renderer.outerCalls,120);assert.equal(t.renderer.wallMs,120*control.renderer);assert.equal(t.renderer.drawCallWallMs,120*control.draw);assert.equal(t.renderer.otherWallMs,120*control.other);assert.equal(t.draws.wallMs,120*control.draw);assert.equal(t.draws.calls,120*control.drawsPerFrame);assert.equal(t.draws.outerCalls,t.draws.calls);assert.equal(t.renderer.nestedEmitWallMs,0);assert.equal(t.emitWallMs>0,control.emitDelayMs>0);}
+ assert.equal(p.snapshot().invalidMessages,0);assert.equal(p.snapshot().rejected,0);assert(f.messages.every(text=>text.length<=4096));assert(f.messages.every(text=>!JSON.parse(text.slice(text.indexOf('{'))).producer.startsWith('gl.')));assert.equal(Object.hasOwn(actual.playing,'timing'),false);assert.equal(Object.hasOwn(actual.results,'timing'),false);f.restored();
+});
+test('nested renderer and draw wrappers retain every call and do not double count wall intervals',()=>{
+ const options={clockStep:0,emitDelayMs:2,nestedRenderer:true,nestedDraw:true,delays:{'renderer.render':7,'gl.drawArrays':3,'gl.drawElements':5}},baseline=fixture(options),expected=baseline.run(baselineSource),f=fixture(options),actual=f.run();
+ assert.deepEqual(f.work,baseline.work);assert.deepEqual(f.frames,baseline.frames);assert.equal(actual.playing.gpuDrawSubmissions,expected.playing.gpuDrawSubmissions);
+ for(const e of diagnosticSamples(f)){const t=e.timing;assert.equal(t.renderer.calls,240);assert.equal(t.renderer.outerCalls,120);assert.equal(t.renderer.wallMs,4080);assert.equal(t.renderer.nestedEmitWallMs,480);assert.equal(t.renderer.drawCallWallMs,1920);assert.equal(t.renderer.otherWallMs,1680);assert.equal(t.draws.calls,480);assert.equal(t.draws.outerCalls,240);assert.equal(t.draws.wallMs,1920);assert.equal(t.draws.methods.drawArrays.wallMs,1920);assert.equal(t.draws.methods.drawElements.calls,240);assert.equal(t.draws.methods.drawElements.outerCalls,0);assert.equal(t.draws.methods.drawElements.wallMs,0);}
+ f.restored();
+});
+test('timing clock failures cannot replace successful calls or a native falsy draw failure',()=>{
+ for(const fail of [false,true]){
+  const p=createResultsProgress('test'),f=fixture({clockStep:0,failClockAfterProducer:'gl.drawArrays',...(fail?{producer:'gl.drawArrays',state:'results',failFrame:239,error:false}:{}),sink:p.accept});let caught,failed=false,result;
+  try{result=f.run();}catch(error){failed=true;caught=error;}
+  assert.equal(failed,fail);if(fail){assert.equal(caught,false);assert.equal(f.frames.length,239);}else{assert.equal(f.frames.length,240);assert.equal(result.playing.gpuDrawSubmissions,120);assert.equal(result.results.gpuDrawSubmissions,120);}
+  assert(p.snapshot().events.some(e=>e.timing?.clockErrors>0));f.restored();
+ }
+});
+test('renderer and existing aggregate draw wrappers preserve borrowed receivers, arguments and return values',()=>{
+ const f=fixture({clockStep:0}),gl=f.G.renderer.getContext(),oldRenderer=f.G.renderer.render,oldDraw=gl.drawArrays,oldFrame=f.g._frame;
+ const receiver={},arg={},rendererReturn={},drawReturn={};let rendererCalls=0,drawCalls=0;
+ const renderer=function(...args){if(this===receiver){assert.deepEqual(args,[17,arg]);rendererCalls++;return rendererReturn;}return oldRenderer.apply(this,args);};
+ const draw=function(...args){if(this===receiver){assert.deepEqual(args,[23,arg]);drawCalls++;return drawReturn;}return oldDraw.apply(this,args);};
+ f.G.renderer.render=renderer;gl.drawArrays=draw;f.g._frame=dt=>{assert.equal(f.G.renderer.render.call(receiver,17,arg),rendererReturn);assert.equal(gl.drawArrays.call(receiver,23,arg),drawReturn);return oldFrame(dt);};
+ f.run();assert.equal(rendererCalls,240);assert.equal(drawCalls,240);assert.equal(f.G.renderer.render,renderer);assert.equal(gl.drawArrays,draw);
+ f.G.renderer.render=oldRenderer;gl.drawArrays=oldDraw;f.g._frame=oldFrame;f.restored();
 });
