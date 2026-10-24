@@ -5,6 +5,7 @@
 // The captures are intentionally browser evidence, not the isolated geometry
 // fixtures used by the numeric weapon tests.
 import fs from 'node:fs';
+import {verifyCurrentPairCaptureBuild} from './lib/inkwave-projectile-current-pair.mjs';
 import { installProjectileCaptureProjection } from './lib/inkwave-projectile-capture-projection.mjs';
 import { captureSourceIdentity } from './lib/inkwave-capture-source-identity.mjs';
 import { observeStreamedMusic } from './lib/inkwave-streamed-music-diagnostics.mjs';
@@ -49,10 +50,13 @@ if (!['all', 'visuals', 'performance'].includes(capture)) throw new Error('--cap
 if (!['all', 'desktop', 'mobile'].includes(device)) throw new Error('--device must be all, desktop, or mobile');
 if (!fs.existsSync(path.join(site, 'index.html'))) throw new Error('Built site missing index.html: ' + site);
 if (!Number.isFinite(durationMs) || durationMs < 1000 || durationMs > 30000) throw new Error('--fire-ms must be between 1000 and 30000');
+const hash = b => crypto.createHash('sha256').update(b).digest('hex');
+const exactBuildClosure=verifyCurrentPairCaptureBuild({site,mode,root:ROOT,
+  eventFile:process.env.GITHUB_EVENT_PATH,eventName:process.env.GITHUB_EVENT_NAME,
+  repository:process.env.GITHUB_REPOSITORY,baseline:process.env.INKWAVE_REFERENCE_ROOT,evidence,profile});
 fs.mkdirSync(evidence, { recursive: true });
 fs.mkdirSync(profile, { recursive: true });
-
-const hash = b => crypto.createHash('sha256').update(b).digest('hex');
+if(exactBuildClosure)fs.writeFileSync(path.join(evidence,'main3003-build-closure.json'),JSON.stringify(exactBuildClosure,null,2)+'\n');
 const manifest = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json'), 'utf8'));
 if (hash(JSON.stringify(manifest.artifacts)) !== manifest.contentHash) throw new Error('Build artifact manifest identity mismatch');
 for (const [file, expected] of Object.entries(manifest.artifacts)) {
