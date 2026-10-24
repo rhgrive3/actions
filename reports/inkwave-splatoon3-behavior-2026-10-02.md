@@ -6168,3 +6168,6 @@ Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテ�
 Explosher CIの過去common-build診断へ任意のPR base/headを渡すと、固定364dd0の承認guardが必ず拒否する。current PR headのsource・emitted銃口回帰と、固定承認subjectでの過去A/A診断を別jobにし、承認descriptor・全input/output検査・厳密なpreflight比較は維持する。過去A/Aを現在PRの描画や性能の合格には使わない。
 
 main726eとの統合では、main側の新しいrelay時計・音声・capture admissionを保持し、既存CI修正はmainの実装へ合わせた。Brellaの旧129-row再現は、mainの新しい「actor registryより多い行を拒否」guardにより通常roomでは先に拒否される。現在の回帰はその拒否を明示確認したうえで、実Actorを登録した大きなregistryの防御stressに限ってoptional readerの128行capを通し、拒否済replayが既存snapshotを追記しないことを確認する。通常8人roomの新規exploitとは扱わない。
+## 2026-10-23: 原典ステージの GPU 描画負荷上限
+
+原典ステージ表示中だけ GTAO を外し、MSAA・pixelRatio に上限をかけ、コンテキストロスト後は段階的に描画負荷を下げる（[記録](inkwave-native-gpu-budget-2026-10-23.md)）。描画表現のみの変更で、歩行・泳ぎ・射撃・塗り判定・インク回復・カメラ操作のロジックは変更していない。本家 Ver.11.3.0 との既存の差分・未確認項目はそのまま。計測は Chromium + SwiftShader の WebGL 確保量の集計で、実機の GPU 落ち解消は未確認。
