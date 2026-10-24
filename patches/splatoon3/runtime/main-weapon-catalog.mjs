@@ -5,6 +5,7 @@ import { constrainMuzzle } from './camera-aim-controls.mjs';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst, catalogSplashNearestSlot, catalogSplashRadius } from './catalog-splash-paint.mjs';
 import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
+import { slosherIntermediateSpec } from './slosher-intermediate-paint.mjs';
 import { catalogFieldUnitCanDamage, catalogFlickSourceDamage } from './catalog-flick-damage.mjs';
 import { catalogDepletionPayment, catalogDepletedUnitCount,
   catalogDepletedUnitSpeed, catalogDepletedDescriptor } from './catalog-depletion.mjs';
@@ -18,6 +19,7 @@ import { validateCanonicalKits } from './canonical-kits.mjs';
 import { CANONICAL_KITS } from './canonical-kits-data.mjs';
 
 import { catalogueAttackRow, withObjectDamageCause } from './sub-resistance.mjs';
+import { catalogChargerPaintParameters } from './catalog-charger-paint.mjs';
 import { withBlasterSplashHit } from './audio/blaster-hit.mjs';
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { sampleSplatlingSpeed } from './splatling.mjs';
@@ -56,6 +58,15 @@ const EMPTY_LOBE_OFFSETS=Object.freeze([]),EMPTY_LOBE_OFFSET=Object.freeze({});
 const clamp = (v, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 const finite = (v, fallback) => Number.isFinite(v) ? v : fallback;
+// Stable INKWAVE body origin, taken from Projectiles._muzzle's existing
+// player-centred fallback. It is not an extracted Nintendo muzzle position.
+// Tri-Slosher's cosmetic low rim otherwise shortens the horizontal trajectory.
+const TRI_SLOSHER_ORIGIN=Object.freeze({X:0,Y:1.05,Z:.3});
+function playerLocalOrigin(actor,offset,out){
+  const yaw=Math.atan2(actor.aimDir.x,actor.aimDir.z),cy=Math.cos(yaw),sy=Math.sin(yaw);
+  const x=finite(offset.X,0),z=finite(offset.Z,0);
+  return out.set(actor.pos.x+x*cy+z*sy,actor.pos.y+finite(offset.Y,0),actor.pos.z-x*sy+z*cy);
+}
 function interpolateFields(a,b,q){
   const out={...a,...b};
   for(const key of Object.keys(out))if(Number.isFinite(a?.[key])&&Number.isFinite(b?.[key]))out[key]=lerp(a[key],b[key],q);
@@ -362,6 +373,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       s.stored = { frames:s.chargeF, paid:s.paid, remaining:finite(kp.KeepChargeFullFrame,75)/HZ };
     else if (!keep) s.stored = null;
     s.s3SwingMode = null; // interrupted main attacks must not slow unrelated actions
+    s.s3SwingInterval = null;
     s.pending = null; s.chargeF = 0; s.paid = 0; s.stream = 0; s.burst = 0; s.rounds = 0;
     slidePaint(r,s,true);
     s.roll = null; s.slip=null; s.slideRunner = null; s.rollPaint = null; s.lunge=null; s.melee=null; s.turret = 0;s.turretHeld=false;s.rolls=0;
@@ -371,6 +383,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     s.rollingFrames=0;s.rollingDash=false;
     if (s.canopy && !s.canopy.launched) { s.canopy.open = false; s.canopy.age = 0; if (s.canopy.preparing) s.canopy.preparing = false; }
     runner.charging = false; runner.streaming = false; runner.rolling = false; runner.charge = 0;
+    runner.s3RollerSuspendedHold = false;
     runner.slosh = -1;
   }
   // Turf TIME UP and the guest host-deadline gate neutralize input through
@@ -477,9 +490,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // Splatana offsets are player-local and feet-relative, independent of
     // the rendered weapon socket. Aim from the resulting collision-safe birth.
     if(offset){
-      const yaw=Math.atan2(a.aimDir.x,a.aimDir.z),cy=Math.cos(yaw),sy=Math.sin(yaw);
-      const x=finite(offset.X,0),z=finite(offset.Z,0);
-      muzzle.set(a.pos.x+(x*cy+z*sy),a.pos.y+finite(offset.Y,0),a.pos.z+(-x*sy+z*cy));
+      playerLocalOrigin(a,offset,muzzle);
       base.copy(a.pos);base.y+=a.form==='squid'?.4:1.05;
       constrainMuzzle(G.physics,base,muzzle);
     }else if(hand===null)G.projectiles._muzzle(a,muzzle);
@@ -693,8 +704,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const splash=b.SplashSpawnParam||sloshSplash?.SpawnParam||{};
     let radius=finite(paintParam.WidthHalfNear,finite(paintParam.WidthHalf,finite(paintParam.WidthHalfMin,.8)));
     if (key==='arrow') radius=stageValue(r,paintParam,'WidthHalf',frames,2.5);
-    if (r.family==='charger') radius=full?finite(paintParam.RadiusFullCharge,1):lerp(finite(paintParam.RadiusMinCharge,.9),finite(paintParam.RadiusMaxCharge,2.7),charge);
+    const chargerPaint=r.family==='charger'?catalogChargerPaintParameters(p,charge):null;
+    if (chargerPaint) radius=chargerPaint.impact;
     return {key,unit,index,charge,packet,b,m,d,c,speed,damage,life,range,radius,
+      chargerPaint,
       depth:finite(paintParam.DepthScaleMax,finite(paintParam.DepthScaleNear,1)),
       splashDropSpec:catalogSplashDropSpec(b,r.sourceActor,key),
       splashFirst:Math.max(0,finite(splash.SpawnNearestLength,1)),
@@ -736,6 +749,17 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // a Hydra's 23.5 SpawnBetweenLength otherwise left ~6-19 m dry under sustained fire.
       catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec||descriptor.splashStaggered?descriptor.splashFirst:1,dropCount:0,hit:scratch.hit,seen:scratch.seen,collisionScratch:scratch,volley:options.volley,
         index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0,sectorYaw:r.family==='roller'&&descriptor.key==='horizontal'?a.yaw:null}});
+    if(descriptor.key==='slosh'&&(r.sourceActor==='WeaponSlosherDiffusion'||r.sourceActor==='WeaponSlosherDouble')){
+      // Combination.OrderNum selects the emitting glob, not every member of
+      // the unit. Reuse the native source resolver and the already drawn seed.
+      // These paint-only drops measure horizontal travel, as the native owner.
+      const splash=slosherIntermediateSpec({fidelitySloshUnit:descriptor.packet,
+        fidelitySloshIndex:p.catalog.index,seed:p.seed});
+      p.catalog.descriptor={...descriptor,splashCount:splash?.spawnNum??0,splashHorizontal:true,
+        splashRadius:splash?.widthHalf??0,splashSpacing:splash?.spacing??0,
+        sloshFall:splash?{drawRadius:splash.drawRadius,spec:splash.drop}:null};
+      p.catalog.nextSplash=splash?.targetLength??0;p.catalog.splashTravel=0;
+    }
     // Keep the five-entry catalogue tuple readable by existing peers. Older
     // receivers ignore these named visual-only extensions on the same object.
     if(descriptor.key==='arrow')p.inkMeta.s3StringerTilt=options.bowTilt;
@@ -834,7 +858,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // A brush flings its swing from the body, not from the rendered bristles:
     // the 1F follow-up swings start from the low sweep pose, so the rendered tip
     // dropped every swing's birth from 1.6 m to 0.36 m (owner review 2026-10-18).
-    origin(a,null,key==='brush'?BRUSH_SWING_ORIGIN:null);
+    const bodyOrigin=key==='brush'?BRUSH_SWING_ORIGIN:
+      key==='slosh'&&r.sourceActor==='WeaponSlosherDiffusion'?TRI_SLOSHER_ORIGIN:null;
+    origin(a,null,bodyOrigin);
     // Roller swings leave from the shared player-relative base plus each
     // glob's sourced Spawn* offset (weapons-fidelity ROLLER_SPAWN_BASE), as the
     // native Splat Roller does -- not from the drawn drum, which the swing
@@ -923,8 +949,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         // Like the existing native Slosher owner, select ground/air speed at
         // each glob's actual birth. Retain the admitted direction, per-index
         // offset and speed draw; landing/falling does not reroll the volley.
-        if(key==='slosh'&&p?.catalog?.birthPending)
+        if(key==='slosh'&&p?.catalog?.birthPending){
           p.catalog.birthPending.sloshLaunch={direction:aim,sourceBaseSpeed:velocity,speed,liftRate};
+          if(bodyOrigin)p.catalog.birthPending.originOffset=bodyOrigin;
+        }
         // Vertical swing intermediate splashes ride the central Unit 0 glob, as on the native Splat Roller.
         if(r.family==='roller'&&key==='vertical'&&j===0&&i===0&&p&&!p.ghost)configureCatalogRollerFlight(p,group);
       }
@@ -979,7 +1007,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       ArrowAngleMid:finite(t.ArrowAngleMid,8),ArrowAngleMax:finite(t.ArrowAngleMin,0)},'ArrowAngle',frames,8);
     const desc=mode(r,'arrow',0,charge),s=state(runner),flight=addedFamilySplash(desc.b,r.family,s.arrowShotOrdinal||0);
     if(flight)Object.assign(desc,{splashDropSpec:flight.spec,splashFirst:flight.first,
-      splashSpacing:flight.spacing,splashCount:flight.count});
+      splashSpacing:flight.spacing,splashCount:flight.count,
+      splashNearest:catalogSplashNearestSlot(desc.b.SplashSpawnParam,s.arrowShotOrdinal||0)});
     origin(a);const at=muzzle.clone(), direction=dir.clone();
     const tilt=state(runner).bowTilt*RAD;
     const right=new THREE.Vector3(direction.z,0,-direction.x);
@@ -993,6 +1022,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // Separated nocks must obey the same muzzle obstruction guard.
       constrainMuzzle(G.physics,at,birth);
       spawn(a,r,desc,aim,birth,{index:i,bowTilt:s.bowTilt});
+    }
+    // Stringer's sourced nearest footprint was never connected: all arrows
+    // only carried the staggered intermediate plan. Paint once per admitted
+    // grounded volley, using WidthHalfNearest (or the shared WidthHalf).
+    // This short support query cannot project ink down from an airborne shot.
+    if(a.grounded&&!a.remote&&a.alive!==false){
+      base.copy(a.pos);base.y+=.15;
+      const h=G.physics.raycast(base,down,.4,floorHit,true),q=desc.b.SplashPaintParam;
+      if(h.hit&&h.normal.y>=.5)paint(a,h.point,finite(q?.WidthHalfNearest,q?.WidthHalf),1,null,h.face,mainInkFootprint(r));
     }
     s.arrowShotOrdinal=(s.arrowShotOrdinal||0)+1;
     notify(a,r,at,direction,charge);
@@ -1095,8 +1133,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function impactPaint(p) {
     const d=p.catalog.descriptor,q=d.b.PaintParam||{},distance=Math.hypot(p.pos.x-p.start.x,p.pos.z-p.start.z);
     const near=finite(q.WidthHalfNear,d.radius),far=finite(q.WidthHalfFar,near);
-    const middle=finite(q.WidthHalfMiddle,near),nearDistance=finite(q.DistanceXZNear,finite(q.DistanceMiddle,1.1));
-    const farDistance=finite(q.DistanceXZFar,20),t=clamp((distance-nearDistance)/Math.max(EPS,farDistance-nearDistance));
+    const brush=p.catalog.r.family==='brush';
+    const middle=finite(q.WidthHalfMiddle,near),nearDistance=finite(q.DistanceXZNear,brush?finite(q.DistanceNear,1.1):finite(q.DistanceMiddle,1.1));
+    const farDistance=finite(q.DistanceXZFar,brush?finite(q.DistanceFar,20):20),t=clamp((distance-nearDistance)/Math.max(EPS,farDistance-nearDistance));
     let width=q.WidthHalfNear!=null?lerp(distance<=nearDistance?near:middle,far,t):d.radius;
     const fall=clamp((Math.max(0,p.start.y-p.pos.y)-finite(q.ScaleStartFallDistance,1.5))/Math.max(EPS,finite(q.ScaleEndFallDistance,12)-finite(q.ScaleStartFallDistance,1.5)));
     const factor=lerp(1,finite(q.WidthDepthScaleFall,1),fall);
@@ -1287,6 +1326,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const travelBefore=s.travel;
       this.projectileVisuals?.beginPhysicsStep(p);
       const len=advance(p);
+      const splashBefore=d.splashHorizontal?s.splashTravel:travelBefore;
+      const splashLength=d.splashHorizontal?Math.hypot(p.pos.x-p.prev.x,p.pos.z-p.prev.z):len;
+      if(d.splashHorizontal)s.splashTravel+=splashLength;
       this.projectileVisuals?.recordPhysicsPoint(p,p.age-DT);
       const shapes=lobes(p);
       const bounceScale=s.r.sourceActor==='WeaponSlosherBathtub'?s.bounces:0;
@@ -1382,10 +1424,20 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           1,null,q.hit.face,mainInkFootprint(s.r),q.paintSeed);
       }
       if(!p.ghost&&s.r.family==='charger') {
-        const end=(s.linePaintEnd||=new THREE.Vector3()).copy(p.prev).lerp(p.pos,Math.min(1,stop)),spacing=Math.max(.2,d.radius*.5);
-        const sample=s.linePaintSample||=new THREE.Vector3();
-        const count=Math.ceil(p.prev.distanceTo(end)/spacing);
-        for(let i=0;i<count;i++)floorPaint(p.owner,sample.copy(p.prev).lerp(end,(i+1)/count),d.radius,1,null,mainInkFootprint(s.r));
+        const stripe=d.chargerPaint;
+        if(stripe?.interval>EPS&&len>EPS){
+          const endTravel=Math.min(s.travel,s.range,travelBefore+len*clamp(Math.min(1,stop)),
+            travelBefore+p.vel.length()*clamp(p.life-(p.age-DT),0,DT));
+          s.nextChargerPaint??=stripe.first;
+          const sample=s.linePaintSample||=new THREE.Vector3();
+          // Carry the source spacing across fixed steps. Re-dividing every
+          // segment overpainted short frames and erased Bamboo's SkipNum gaps.
+          while(s.nextChargerPaint<endTravel-EPS){
+            sample.copy(p.prev).lerp(p.pos,clamp((s.nextChargerPaint-travelBefore)/len));
+            floorPaint(p.owner,sample,stripe.width,stripe.depth/stripe.width,p.vel,mainInkFootprint(s.r));
+            s.nextChargerPaint+=stripe.interval;
+          }
+        }
       }
       if(!p.ghost&&s.brellaFlight&&s.brellaFlight.volley.next<s.brellaFlight.volley.plan.count){
         const fraction=Math.min(1,clamp(stop),clamp((p.life-(p.age-DT))/DT));
@@ -1401,14 +1453,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // keep their established projected paint rather than inventing gravity.
       // Every crossed source threshold is consumed exactly once, even when
       // multiple fit in a 60Hz frame. A head-contact boundary is exclusive.
-      if(!p.ghost&&d.splashCount>0&&s.dropCount<d.splashCount&&len>EPS){
-        const lifeTravel=travelBefore+p.vel.length()*clamp(p.life-(p.age-DT),0,DT);
-        const endTravel=Math.min(s.travel,lifeTravel,travelBefore+len*clamp(Math.min(1,stop)));
+      if(!p.ghost&&d.splashCount>0&&s.dropCount<d.splashCount&&splashLength>EPS){
+        const lifeTravel=splashBefore+(d.splashHorizontal?splashLength/DT:p.vel.length())*clamp(p.life-(p.age-DT),0,DT);
+        const endTravel=Math.min(splashBefore+splashLength,lifeTravel,splashBefore+splashLength*clamp(Math.min(1,stop)));
         let direction;
         while(s.dropCount<d.splashCount&&s.nextSplash<=endTravel+EPS){
           if(stop<=1&&s.nextSplash>=endTravel-EPS)break;
           direction ||= p.vel.clone().setY(0).normalize();
-          const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));
+          const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-splashBefore)/splashLength));
           const radius=catalogSplashRadius(d,s.dropCount);
           if(d.splashDropSpec||d.sloshFall){
             const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,
@@ -1573,8 +1625,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const sourceRadius=r.family==='roller'?rollerPaintHalfWidth(paintParam,speed):bodyRadius;
     // Roller contact ink includes the shared, explicitly visual width
     // calibration. Raw PaintParam remains intact; damage uses bodyRadius.
-    // Brushes retain their separate existing contact calibration.
-    const radius=sourceRadius*(r.family==='brush'?.25:1);
+    // Octobrush's source PaintParam is already in the same world units as its
+    // swing paint. The former extra quarter scale cut a 1.8-wide path to .45.
+    const radius=sourceRadius*(r.family==='brush'&&r.sourceActor!=='WeaponBrushNormal'?.25:1);
     // Drum/brush floor contact follows body yaw, not reticle pitch. An aimed-down
     // camera formerly pushed the ray origin below the floor and lost every mark.
     // Keep the existing 'at' for damage contact; only paint is floor-anchored.
@@ -1805,11 +1858,18 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         // Account for the different first windup: a 23F first Vincent swing
         // must not unlock a 1F follow-up immediately when that first shot emits.
         runner.cooldown=(brush?windup+communityRepeat-(s.swingCount===0?1:0)-1:windup+finite(t.PostDelayFrame,21))/HZ;
-        runner.rolling=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;s.swingCount++;
+        if (!brush) s.s3SwingInterval = runner.cooldown;
+        runner.rolling=false;runner.s3RollerSuspendedHold=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;s.swingCount++;
         if(brush)s.brushNearestOrdinal=(s.brushNearestOrdinal||0)+1;
       }
-    }else if(input.fire&&a.grounded&&!s.pending&&runner.cooldown<=EPS){runner.rolling=true;rolling(runner,r,dt);}
-    else {runner.rolling=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;}
+    }else if(input.fire&&(a.grounded||runner.rolling)&&!s.pending&&runner.cooldown<=EPS){
+      // Keep an established brush/roller-down action through a jump or a
+      // transient downhill air frame. rolling() independently requires real
+      // ground contact before paint, damage or ink cost, and clears the old
+      // stripe so landing cannot connect across the airborne path.
+      runner.rolling=true;runner.s3RollerSuspendedHold=!a.grounded;rolling(runner,r,dt);
+    }
+    else {runner.rolling=false;runner.s3RollerSuspendedHold=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;}
   }
   function slosh(runner,r,input,s) {
     if(!input.fire||runner.cooldown>EPS||s.pending)return;
@@ -1984,15 +2044,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function heldCanopyFoot(a,canopy,c,measure,wasOpen,dt){
     const radius=c.FootSplashPaintRadius,wait=c.FootSplashWaitFrame,span=c.FootSplashSpanFrame;
     // Connect only complete, explicit source rows. Normal/Wide omit the
-    // timing fields; do not invent their type defaults. A zero span is a
-    // single attempt per opening in this interpreter, not a 60Hz ink source.
+    // timing fields; do not invent their type defaults. Zero interval means
+    // no wait before the next fixed-frame attempt, not permanent retirement.
     if(![radius,wait,span].every(Number.isFinite)||radius<=0||wait<0||span<0)return;
     if(!canopy.open){canopy.footFrames=0;canopy.footNext=wait;return;}
     canopy.footFrames=wasOpen?(canopy.footFrames||0)+dt*HZ:
       clamp(canopy.age*HZ-measure.open,0,dt*HZ);
     if(!wasOpen)canopy.footNext=wait;
     while(canopy.footFrames+EPS>=(canopy.footNext??wait)){
-      canopy.footNext=span>0?(canopy.footNext??wait)+span:Infinity;
+      canopy.footNext=(canopy.footNext??wait)+Math.max(1,span);
       if(a.grounded&&!a.remote&&a.alive!==false){
         base.copy(a.pos);base.y+=.15;
         const h=G.physics.raycast(base,down,.4,floorHit,true);
@@ -2190,7 +2250,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }}
     if(r.family==='slosher')this.slosh=s.pending?Math.max(0,a.weapon.windup-s.pending.remaining):-1;
     if(a.form!=='kid'||input.sub||this.aimingSub){
-      this.rolling=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;
+      this.rolling=false;this.s3RollerSuspendedHold=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;
       s.pressed=!!input.fire;return;
     }
     if(r.family==='shooter'||r.family==='blaster')auto(this,r,input,s,dt);
@@ -2261,7 +2321,11 @@ export function releaseCatalogBirth(system, projectile, game) {
       runnerState !== birth.runnerState || (runnerState?.birthEpoch || 0) !== birth.epoch ||
       actor.nid !== birth.nid || actor.owner !== birth.peer ||
       (birth.inMatch && !game?.actors?.includes(actor))) return false;
-  system._muzzle(actor, projectile.pos);
+  if(birth.originOffset){
+    playerLocalOrigin(actor,birth.originOffset,projectile.pos);
+    projectile.prev.copy(actor.pos);projectile.prev.y+=actor.form==='squid'?.4:1.05;
+    constrainMuzzle(game.physics,projectile.prev,projectile.pos);
+  }else system._muzzle(actor, projectile.pos);
   const yaw = Number.isFinite(actor.yaw) ? actor.yaw : 0;
   const sx = Math.sin(yaw), cz = Math.cos(yaw);
   projectile.pos.x += birth.offsetX * cz + birth.offsetZ * sx;

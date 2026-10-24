@@ -785,19 +785,6 @@
       "verification": "filename-index-only"
     },
     {
-      "id": "s3-brush-normal",
-      "event": "windup",
-      "variant": 0,
-      "file": "s3-real/Wp_Brush_Move_00.mp3",
-      "gain": 1,
-      "sourceName": "Wp_Brush_Move_00.mp3",
-      "sourceFileId": "1IHc5wzC-Q2cjnKpn4irO7GverNGivSRt",
-      "sourceURL": "https://drive.google.com/file/d/1IHc5wzC-Q2cjnKpn4irO7GverNGivSRt/view",
-      "sourceVersion": "2022-extract",
-      "sourceKind": "Splatoon3-ripped-MP3",
-      "verification": "filename-index-only"
-    },
-    {
       "id": "s3-charger-quick",
       "event": "fire",
       "variant": 0,

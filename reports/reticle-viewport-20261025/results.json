@@ -1,0 +1,1542 @@
+{
+  "kind": "composed HUD component browser QA",
+  "rows": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "result": [
+        {
+          "kind": "shooter",
+          "scale": 1,
+          "art": {
+            "x": 250.328125,
+            "y": 36,
+            "width": 80,
+            "height": 80
+          },
+          "anchor": {
+            "x": 213.328125,
+            "y": 55,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 250.328125,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 250.328125,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 226.328125,
+            "y": 12,
+            "width": 12.02081298828125,
+            "height": 12.020816802978516
+          },
+          "expanded": {
+            "x": 208.0281219482422,
+            "y": 12,
+            "width": 12.02081298828125,
+            "height": 12.020816802978516
+          },
+          "twins": null,
+          "reach": null,
+          "spread": 18.3,
+          "cssSpread": 18.3,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "tank": {
+            "x": 271.828125,
+            "y": 55,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "blaster",
+          "scale": 1,
+          "art": {
+            "x": 677,
+            "y": 36,
+            "width": 80,
+            "height": 80
+          },
+          "anchor": {
+            "x": 640,
+            "y": 55,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 677,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 677,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 677,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "expanded": {
+            "x": 677,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "twins": null,
+          "reach": null,
+          "spread": 18.3,
+          "cssSpread": 18.3,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "tank": {
+            "x": 698.5,
+            "y": 55,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "dualies",
+          "scale": 1,
+          "art": {
+            "x": 1103.65625,
+            "y": 36,
+            "width": 80,
+            "height": 80
+          },
+          "anchor": {
+            "x": 1066.65625,
+            "y": 55,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 1103.65625,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 1103.65625,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 1103.65625,
+            "y": 19,
+            "width": 3,
+            "height": 11
+          },
+          "expanded": {
+            "x": 1103.65625,
+            "y": 0.7000007629394531,
+            "width": 3,
+            "height": 11
+          },
+          "twins": [
+            {
+              "x": 1167.65625,
+              "y": 0,
+              "width": 12.39990234375,
+              "height": 12.400001525878906
+            },
+            {
+              "x": 1020.4562377929688,
+              "y": 0,
+              "width": 12.4000244140625,
+              "height": 12.400001525878906
+            }
+          ],
+          "reach": null,
+          "spread": 18.3,
+          "cssSpread": 18.3,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "tank": {
+            "x": 1125.15625,
+            "y": 55,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "slosher",
+          "scale": 1,
+          "art": {
+            "x": 250.328125,
+            "y": 146,
+            "width": 80,
+            "height": 80
+          },
+          "anchor": {
+            "x": 213.328125,
+            "y": 165,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 250.328125,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 250.328125,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 250.328125,
+            "y": 129,
+            "width": 3,
+            "height": 11
+          },
+          "expanded": {
+            "x": 250.328125,
+            "y": 129,
+            "width": 3,
+            "height": 11
+          },
+          "twins": null,
+          "reach": null,
+          "spread": null,
+          "cssSpread": 0,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "tank": {
+            "x": 271.828125,
+            "y": 165,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "splatling",
+          "scale": 1,
+          "art": {
+            "x": 677,
+            "y": 146,
+            "width": 80,
+            "height": 80
+          },
+          "anchor": {
+            "x": 640,
+            "y": 165,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 677,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 677,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 725,
+            "y": 116,
+            "width": 20,
+            "height": 20
+          },
+          "expanded": {
+            "x": 737.93994140625,
+            "y": 103.06007385253906,
+            "width": 20,
+            "height": 20
+          },
+          "twins": null,
+          "reach": null,
+          "spread": 18.3,
+          "cssSpread": 18.3,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "tank": {
+            "x": 698.5,
+            "y": 165,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "charger",
+          "scale": 1,
+          "art": {
+            "x": 1103.65625,
+            "y": 146,
+            "width": 80,
+            "height": 80
+          },
+          "anchor": {
+            "x": 1066.65625,
+            "y": 165,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 1103.65625,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 1103.65625,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 1103.65625,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "expanded": {
+            "x": 1103.65625,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "twins": null,
+          "reach": [
+            64,
+            -36,
+            128,
+            36
+          ],
+          "spread": null,
+          "cssSpread": 0,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "tank": {
+            "x": 1141.15625,
+            "y": 165,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "roller",
+          "scale": 1,
+          "art": {
+            "x": 250.328125,
+            "y": 256,
+            "width": 80,
+            "height": 80
+          },
+          "anchor": {
+            "x": 213.328125,
+            "y": 275,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 250.328125,
+            "y": 256,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 250.328125,
+            "y": 256,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 250.328125,
+            "y": 256,
+            "width": 0,
+            "height": 0
+          },
+          "expanded": {
+            "x": 250.328125,
+            "y": 256,
+            "width": 0,
+            "height": 0
+          },
+          "twins": null,
+          "reach": null,
+          "spread": null,
+          "cssSpread": 0,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "tank": {
+            "x": 303.828125,
+            "y": 275,
+            "width": 17,
+            "height": 52
+          }
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 1024,
+        "height": 600
+      },
+      "result": [
+        {
+          "kind": "shooter",
+          "scale": 0.8333333333333334,
+          "art": {
+            "x": 207.65625,
+            "y": 35.999996185302734,
+            "width": 66.66665649414062,
+            "height": 66.66665649414062
+          },
+          "anchor": {
+            "x": 170.65625,
+            "y": 55,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 207.65625,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 207.65625,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 187.65625,
+            "y": 16,
+            "width": 10.017333984375,
+            "height": 10.017349243164062
+          },
+          "expanded": {
+            "x": 169.32291412353516,
+            "y": 16,
+            "width": 10.017349243164062,
+            "height": 10.017349243164062
+          },
+          "twins": null,
+          "reach": null,
+          "spread": 18.3,
+          "cssSpread": 22,
+          "transform": "matrix(0.833333, 0, 0, 0.833333, 0, 0)",
+          "tank": {
+            "x": 229.15625,
+            "y": 55,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "blaster",
+          "scale": 0.8333333333333334,
+          "art": {
+            "x": 549,
+            "y": 35.999996185302734,
+            "width": 66.6666259765625,
+            "height": 66.66665649414062
+          },
+          "anchor": {
+            "x": 512,
+            "y": 55,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 549,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 549,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 549,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "expanded": {
+            "x": 549,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "twins": null,
+          "reach": null,
+          "spread": 18.3,
+          "cssSpread": 22,
+          "transform": "matrix(0.833333, 0, 0, 0.833333, 0, 0)",
+          "tank": {
+            "x": 570.5,
+            "y": 55,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "dualies",
+          "scale": 0.8333333333333334,
+          "art": {
+            "x": 890.328125,
+            "y": 35.999996185302734,
+            "width": 66.6666259765625,
+            "height": 66.66665649414062
+          },
+          "anchor": {
+            "x": 853.328125,
+            "y": 55,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 890.328125,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 890.328125,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 890.328125,
+            "y": 21.83333396911621,
+            "width": 2.5,
+            "height": 9.166667938232422
+          },
+          "expanded": {
+            "x": 890.328125,
+            "y": 3.500001907348633,
+            "width": 2.5,
+            "height": 9.166667938232422
+          },
+          "twins": [
+            {
+              "x": 941.5281372070312,
+              "y": 6,
+              "width": 10.3333740234375,
+              "height": 10.333335876464844
+            },
+            {
+              "x": 823.7698059082031,
+              "y": 6,
+              "width": 10.33331298828125,
+              "height": 10.333335876464844
+            }
+          ],
+          "reach": null,
+          "spread": 18.3,
+          "cssSpread": 22,
+          "transform": "matrix(0.833333, 0, 0, 0.833333, 0, 0)",
+          "tank": {
+            "x": 911.828125,
+            "y": 55,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "slosher",
+          "scale": 0.8333333333333334,
+          "art": {
+            "x": 207.65625,
+            "y": 146,
+            "width": 66.66665649414062,
+            "height": 66.66665649414062
+          },
+          "anchor": {
+            "x": 170.65625,
+            "y": 165,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 207.65625,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 207.65625,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 207.65625,
+            "y": 131.83333587646484,
+            "width": 2.5,
+            "height": 9.166671752929688
+          },
+          "expanded": {
+            "x": 207.65625,
+            "y": 131.83333587646484,
+            "width": 2.5,
+            "height": 9.166671752929688
+          },
+          "twins": null,
+          "reach": null,
+          "spread": null,
+          "cssSpread": 0,
+          "transform": "matrix(0.833333, 0, 0, 0.833333, 0, 0)",
+          "tank": {
+            "x": 229.15625,
+            "y": 165,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "splatling",
+          "scale": 0.8333333333333334,
+          "art": {
+            "x": 549,
+            "y": 146,
+            "width": 66.6666259765625,
+            "height": 66.66665649414062
+          },
+          "anchor": {
+            "x": 512,
+            "y": 165,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 549,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 549,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 589,
+            "y": 121.00000762939453,
+            "width": 16.6666259765625,
+            "height": 16.666671752929688
+          },
+          "expanded": {
+            "x": 601.9635009765625,
+            "y": 108.03650283813477,
+            "width": 16.6666259765625,
+            "height": 16.666664123535156
+          },
+          "twins": null,
+          "reach": null,
+          "spread": 18.3,
+          "cssSpread": 22,
+          "transform": "matrix(0.833333, 0, 0, 0.833333, 0, 0)",
+          "tank": {
+            "x": 570.5,
+            "y": 165,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "charger",
+          "scale": 0.8333333333333334,
+          "art": {
+            "x": 890.328125,
+            "y": 146,
+            "width": 66.6666259765625,
+            "height": 66.66665649414062
+          },
+          "anchor": {
+            "x": 853.328125,
+            "y": 165,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 890.328125,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 890.328125,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 890.328125,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "expanded": {
+            "x": 890.328125,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "twins": null,
+          "reach": [
+            51.166666666666664,
+            -30,
+            102.41666666666667,
+            30
+          ],
+          "spread": null,
+          "cssSpread": 0,
+          "transform": "matrix(0.833333, 0, 0, 0.833333, 0, 0)",
+          "tank": {
+            "x": 927.828125,
+            "y": 165,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "roller",
+          "scale": 0.8333333333333334,
+          "art": {
+            "x": 207.65625,
+            "y": 256.00000762939453,
+            "width": 66.66665649414062,
+            "height": 66.66667175292969
+          },
+          "anchor": {
+            "x": 170.65625,
+            "y": 275,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 207.65625,
+            "y": 256,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 207.65625,
+            "y": 256,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 207.65625,
+            "y": 256,
+            "width": 0,
+            "height": 0
+          },
+          "expanded": {
+            "x": 207.65625,
+            "y": 256,
+            "width": 0,
+            "height": 0
+          },
+          "twins": null,
+          "reach": null,
+          "spread": null,
+          "cssSpread": 0,
+          "transform": "matrix(0.833333, 0, 0, 0.833333, 0, 0)",
+          "tank": {
+            "x": 261.15625,
+            "y": 275,
+            "width": 17,
+            "height": 52
+          }
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "result": [
+        {
+          "kind": "shooter",
+          "scale": 0.5416666666666666,
+          "art": {
+            "x": 177.65625,
+            "y": 36,
+            "width": 43.333343505859375,
+            "height": 43.333335876464844
+          },
+          "anchor": {
+            "x": 140.65625,
+            "y": 55,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 177.65625,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 177.65625,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 164.65625,
+            "y": 23,
+            "width": 6.51129150390625,
+            "height": 6.5112762451171875
+          },
+          "expanded": {
+            "x": 146.34791564941406,
+            "y": 23,
+            "width": 6.511260986328125,
+            "height": 6.5112762451171875
+          },
+          "twins": null,
+          "reach": null,
+          "spread": 18.3,
+          "cssSpread": 33.8,
+          "transform": "matrix(0.541667, 0, 0, 0.541667, 0, 0)",
+          "tank": {
+            "x": 199.15625,
+            "y": 55,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "blaster",
+          "scale": 0.5416666666666666,
+          "art": {
+            "x": 459,
+            "y": 36,
+            "width": 43.33331298828125,
+            "height": 43.333335876464844
+          },
+          "anchor": {
+            "x": 422,
+            "y": 55,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 459,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 459,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 459,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "expanded": {
+            "x": 459,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "twins": null,
+          "reach": null,
+          "spread": 18.3,
+          "cssSpread": 33.8,
+          "transform": "matrix(0.541667, 0, 0, 0.541667, 0, 0)",
+          "tank": {
+            "x": 480.5,
+            "y": 55,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "dualies",
+          "scale": 0.5416666666666666,
+          "art": {
+            "x": 740.328125,
+            "y": 36,
+            "width": 43.3333740234375,
+            "height": 43.333335876464844
+          },
+          "anchor": {
+            "x": 703.328125,
+            "y": 55,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 740.328125,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 740.328125,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 740.328125,
+            "y": 26.79166603088379,
+            "width": 1.625,
+            "height": 5.958332061767578
+          },
+          "expanded": {
+            "x": 740.328125,
+            "y": 8.483333587646484,
+            "width": 1.625,
+            "height": 5.958335876464844
+          },
+          "twins": [
+            {
+              "x": 782.5293579101562,
+              "y": 16.499998092651367,
+              "width": 6.7166748046875,
+              "height": 6.716670989990234
+            },
+            {
+              "x": 685.4681396484375,
+              "y": 16.499998092651367,
+              "width": 6.7166748046875,
+              "height": 6.716670989990234
+            }
+          ],
+          "reach": null,
+          "spread": 18.3,
+          "cssSpread": 33.8,
+          "transform": "matrix(0.541667, 0, 0, 0.541667, 0, 0)",
+          "tank": {
+            "x": 761.828125,
+            "y": 55,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "slosher",
+          "scale": 0.5416666666666666,
+          "art": {
+            "x": 177.65625,
+            "y": 146,
+            "width": 43.333343505859375,
+            "height": 43.333343505859375
+          },
+          "anchor": {
+            "x": 140.65625,
+            "y": 165,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 177.65625,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 177.65625,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 177.65625,
+            "y": 136.79166412353516,
+            "width": 1.625,
+            "height": 5.9583282470703125
+          },
+          "expanded": {
+            "x": 177.65625,
+            "y": 136.79166412353516,
+            "width": 1.625,
+            "height": 5.9583282470703125
+          },
+          "twins": null,
+          "reach": null,
+          "spread": null,
+          "cssSpread": 0,
+          "transform": "matrix(0.541667, 0, 0, 0.541667, 0, 0)",
+          "tank": {
+            "x": 199.15625,
+            "y": 165,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "splatling",
+          "scale": 0.5416666666666666,
+          "art": {
+            "x": 459,
+            "y": 146,
+            "width": 43.33331298828125,
+            "height": 43.333343505859375
+          },
+          "anchor": {
+            "x": 422,
+            "y": 165,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 459,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 459,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 485.00001525878906,
+            "y": 129.75,
+            "width": 10.833343505859375,
+            "height": 10.833343505859375
+          },
+          "expanded": {
+            "x": 497.9458312988281,
+            "y": 116.8041763305664,
+            "width": 10.83331298828125,
+            "height": 10.833328247070312
+          },
+          "twins": null,
+          "reach": null,
+          "spread": 18.3,
+          "cssSpread": 33.8,
+          "transform": "matrix(0.541667, 0, 0, 0.541667, 0, 0)",
+          "tank": {
+            "x": 480.5,
+            "y": 165,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "charger",
+          "scale": 0.5416666666666666,
+          "art": {
+            "x": 740.328125,
+            "y": 146,
+            "width": 43.3333740234375,
+            "height": 43.333343505859375
+          },
+          "anchor": {
+            "x": 703.328125,
+            "y": 165,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 740.328125,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 740.328125,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 740.328125,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "expanded": {
+            "x": 740.328125,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "twins": null,
+          "reach": [
+            42.19583333333333,
+            -19.5,
+            84.39166666666667,
+            19.5
+          ],
+          "spread": null,
+          "cssSpread": 0,
+          "transform": "matrix(0.541667, 0, 0, 0.541667, 0, 0)",
+          "tank": {
+            "x": 777.828125,
+            "y": 165,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "roller",
+          "scale": 0.5416666666666666,
+          "art": {
+            "x": 177.65625,
+            "y": 255.99999237060547,
+            "width": 43.333343505859375,
+            "height": 43.33332824707031
+          },
+          "anchor": {
+            "x": 140.65625,
+            "y": 275,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 177.65625,
+            "y": 256,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 177.65625,
+            "y": 256,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 177.65625,
+            "y": 256,
+            "width": 0,
+            "height": 0
+          },
+          "expanded": {
+            "x": 177.65625,
+            "y": 256,
+            "width": 0,
+            "height": 0
+          },
+          "twins": null,
+          "reach": null,
+          "spread": null,
+          "cssSpread": 0,
+          "transform": "matrix(0.541667, 0, 0, 0.541667, 0, 0)",
+          "tank": {
+            "x": 231.15625,
+            "y": 275,
+            "width": 17,
+            "height": 52
+          }
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "result": [
+        {
+          "kind": "shooter",
+          "scale": 1,
+          "art": {
+            "x": 102,
+            "y": 36,
+            "width": 80,
+            "height": 80
+          },
+          "anchor": {
+            "x": 65,
+            "y": 55,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 102,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 102,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 78,
+            "y": 12,
+            "width": 12.02081298828125,
+            "height": 12.020816802978516
+          },
+          "expanded": {
+            "x": 59.69999885559082,
+            "y": 12,
+            "width": 12.020809173583984,
+            "height": 12.020816802978516
+          },
+          "twins": null,
+          "reach": null,
+          "spread": 18.3,
+          "cssSpread": 18.3,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "tank": {
+            "x": 123.5,
+            "y": 55,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "blaster",
+          "scale": 1,
+          "art": {
+            "x": 232,
+            "y": 36,
+            "width": 80,
+            "height": 80
+          },
+          "anchor": {
+            "x": 195,
+            "y": 55,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 232,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 232,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 232,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "expanded": {
+            "x": 232,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "twins": null,
+          "reach": null,
+          "spread": 18.3,
+          "cssSpread": 18.3,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "tank": {
+            "x": 253.5,
+            "y": 55,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "dualies",
+          "scale": 1,
+          "art": {
+            "x": 362,
+            "y": 36,
+            "width": 80,
+            "height": 80
+          },
+          "anchor": {
+            "x": 325,
+            "y": 55,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 362,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 362,
+            "y": 36,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 362,
+            "y": 19,
+            "width": 3,
+            "height": 11
+          },
+          "expanded": {
+            "x": 362,
+            "y": 0.7000007629394531,
+            "width": 3,
+            "height": 11
+          },
+          "twins": [
+            {
+              "x": 381.5,
+              "y": -6.200000762939453,
+              "width": 12.4000244140625,
+              "height": 12.400001525878906
+            },
+            {
+              "x": 336.65000915527344,
+              "y": -6.200000762939453,
+              "width": 12.399993896484375,
+              "height": 12.400001525878906
+            }
+          ],
+          "reach": null,
+          "spread": 18.3,
+          "cssSpread": 18.3,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "tank": {
+            "x": 383.5,
+            "y": 55,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "slosher",
+          "scale": 1,
+          "art": {
+            "x": 102,
+            "y": 146,
+            "width": 80,
+            "height": 80
+          },
+          "anchor": {
+            "x": 65,
+            "y": 165,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 102,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 102,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 102,
+            "y": 129,
+            "width": 3,
+            "height": 11
+          },
+          "expanded": {
+            "x": 102,
+            "y": 129,
+            "width": 3,
+            "height": 11
+          },
+          "twins": null,
+          "reach": null,
+          "spread": null,
+          "cssSpread": 0,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "tank": {
+            "x": 123.5,
+            "y": 165,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "splatling",
+          "scale": 1,
+          "art": {
+            "x": 232,
+            "y": 146,
+            "width": 80,
+            "height": 80
+          },
+          "anchor": {
+            "x": 195,
+            "y": 165,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 232,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 232,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 280,
+            "y": 116,
+            "width": 20,
+            "height": 20
+          },
+          "expanded": {
+            "x": 292.93994140625,
+            "y": 103.06007385253906,
+            "width": 20,
+            "height": 20
+          },
+          "twins": null,
+          "reach": null,
+          "spread": 18.3,
+          "cssSpread": 18.3,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "tank": {
+            "x": 253.5,
+            "y": 165,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "charger",
+          "scale": 1,
+          "art": {
+            "x": 362,
+            "y": 146,
+            "width": 80,
+            "height": 80
+          },
+          "anchor": {
+            "x": 325,
+            "y": 165,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 362,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 362,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 362,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "expanded": {
+            "x": 362,
+            "y": 146,
+            "width": 0,
+            "height": 0
+          },
+          "twins": null,
+          "reach": [
+            19.5,
+            -42.2,
+            39,
+            42.2
+          ],
+          "spread": null,
+          "cssSpread": 0,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "tank": {
+            "x": 399.5,
+            "y": 165,
+            "width": 17,
+            "height": 52
+          }
+        },
+        {
+          "kind": "roller",
+          "scale": 1,
+          "art": {
+            "x": 102,
+            "y": 256,
+            "width": 80,
+            "height": 80
+          },
+          "anchor": {
+            "x": 65,
+            "y": 275,
+            "width": 0,
+            "height": 0
+          },
+          "ret": {
+            "x": 102,
+            "y": 256,
+            "width": 0,
+            "height": 0
+          },
+          "hit": {
+            "x": 102,
+            "y": 256,
+            "width": 0,
+            "height": 0
+          },
+          "zero": {
+            "x": 102,
+            "y": 256,
+            "width": 0,
+            "height": 0
+          },
+          "expanded": {
+            "x": 102,
+            "y": 256,
+            "width": 0,
+            "height": 0
+          },
+          "twins": null,
+          "reach": null,
+          "spread": null,
+          "cssSpread": 0,
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "tank": {
+            "x": 155.5,
+            "y": 275,
+            "width": 17,
+            "height": 52
+          }
+        }
+      ]
+    }
+  ],
+  "resized": {
+    "scale": 0.5416666666666666,
+    "sp": 33.8,
+    "raw": 18.3
+  }
+}

@@ -519,3 +519,12 @@ html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results.is-intro .iw-res__scrim::b
 :is(html.iw-touch .iw-ui, .iw-ui.is-touch) .iw-results .iw-res__btns > .iw-btn--wide { height: auto; min-height: 56px; }
 /* the key hints sit top-right on results: at the bottom they covered the end of the action row */
 html:not(.iw-touch) .iw-ui:not(.is-touch) .iw-results > .iw-prompts { top: calc(var(--u) * 2.2 + var(--sat)); bottom: auto; }
+
+/* Reference art is 1280x720. Scale only the aiming glyphs and confirmed-hit
+   feedback on shorter viewports. CSS translate remains in screen pixels;
+   projected spread, charger reach and the twin guide offsets are compensated
+   in the HUD. Health, ink tank, bomb aim and world markers retain their size. */
+.iw-ret, .iw-hit, .iw-kill {
+  transform: scale(var(--iw-reticle-scale, 1));
+  transform-origin: 0 0;
+}

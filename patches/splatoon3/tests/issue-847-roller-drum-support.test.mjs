@@ -17,13 +17,14 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.join(ROOT, 'inkwave-public');
 const FROZEN_B34_SHA256 = '52e587f60d6211054c2bad04f746471e85ebdb0295e051f797b41a0019847eb7';
 const adaptProductionSource = adaptBuildSource;
-// PR1862 changes only the spawn presentation import/admission in this Roller
-// input. All three stick/support counterfactual anchors remain exact.
+// The 2026-10-25 motion fix retains the admitted lowered pose without drum
+// support. Contact paint/damage/ink admission and all three counterfactual
+// anchors stay guarded; this pin includes the reviewed pose-only continuation.
 // Keep the prior scratch epoch checked against its immutable fixture below.
 // Prior #1726 input: 449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb.
 const HISTORICAL_ROLLER_SHA256 = '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973';
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "f76c976591eb6a1db06f030ef0ef39b2886e351a7547f7f85337ad85593d2743",
+  "patches/splatoon3/runtime/roller.mjs": "121d3ae7bb692ff351fecfe65a77704934dccb2ecde87f46ac6187b125c3a6d3",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e6e06374bc3a0a2bd6dcceafbbe16b4882b8e8d8f9e6ff39f5aeda3dc12ec64d"
 });
 const headlessPaintRenderer = () => ({
@@ -187,7 +188,7 @@ test('847 airborne wall drum contact preserves rolling', async () => {
   f.G.actors = [];
 });
 
-test('847 ledge drum void suppresses rolling while feet stay grounded', async () => {
+test('847 ledge drum void suspends contact while retaining the held lowered pose', async () => {
   const f = await production();
   // Same realm, ledge stage: floor only at x<0. Fresh actor per stage.
   const ledge = new f.Level({ bounds: { minX: -4, maxX: 4, minZ: -7, maxZ: 4 }, spawnPads: [[-3, 0, 0], [3, 0, 0]],
@@ -208,7 +209,8 @@ test('847 ledge drum void suppresses rolling while feet stay grounded', async ()
     const inkBefore = a.ink, paintBefore = f.G.paint.version;
     f.G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire: true, firePressed: false, sub: false, subReleased: false }); finishNativeFrame(f,a);
     assert.equal(a.grounded, true, 'feet stay grounded at the edge while pinned');
-    assert.equal(a.weaponRunner.rolling, false, 'unsupported drum stops contact behavior at the ledge');
+    assert.equal(a.weaponRunner.rolling, true, 'held lowered pose survives the unsupported drum');
+    assert.equal(a.weaponRunner.s3RollerSuspendedHold, true, 'unsupported drum suspends contact behavior at the ledge');
     assert.equal(a.ink, inkBefore, 'unsupported drum does not drain ink');
     assert.equal(f.G.paint.version, paintBefore, 'unsupported drum does not paint');
   } finally {

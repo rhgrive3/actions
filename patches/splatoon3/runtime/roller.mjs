@@ -381,6 +381,9 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
   on?.('hit:rejected', event => resolveRemoteContact(event, false));
   const cancelInput = WeaponRunner.prototype.cancelPendingInput;
   WeaponRunner.prototype.cancelPendingInput = function (...args) {
+    if (this.s3RollerSuspendedHold) {
+      this.rolling = false; this.s3RollerSuspendedHold = false;
+    }
     if (this.a?.weapon?.kind === 'roller' && this.flick >= 0) {
       this.flick = -1; this.s3RollerAttack = null; this.s3RollerSquidPressT = null;
       this.a.character?._s3CancelRollerFlick?.();
@@ -401,6 +404,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     this.s3RollHitConfirmDisabled = uncorrelated;
     this.s3RollStop = null;
     this.s3RollerWasDry = false; this.s3RollerPrevInk = null;
+    this.s3RollerSuspendedHold = false;
     this.s3FlickPostSub = 0; this.s3FlickPostSquid = 0;
     if (this.a.character) {
       this.a.character.s3RollerFlick = null;
@@ -423,6 +427,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     // tick even when the stripe lands exactly on the threshold.
     const prevInk = a.ink;
     const prevRollT = this.rollT;
+    const wasHeld = this.rolling === true;
     // `s3RollerPrevInk` carries the paid-roll history across ticks; `prevInk`
     // covers the natural depletion tick where the native spend crosses the
     // threshold inside this same call. Both reject a cold start at zero ink
@@ -460,6 +465,13 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     const winding = this.flick >= 0;
     const onFlickPath = starting || winding;
     const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);
+    // The lower-and-hold action survives a jump or a brief loss of drum
+    // support on a descending slope. Contact below still owns all paint,
+    // damage and ink spending; an airborne trigger cannot start a new roll.
+    const continueHold = wasHeld && inp.fire === true && !onFlickPath && this.cooldown <= .25;
+    // The native entry edge restarts contact audio and anchors the first new
+    // stripe at touchdown, never across the unpainted airborne displacement.
+    if (this.s3RollerSuspendedHold && sup?.supported) this.rolling = false;
     const stick = onFlickPath || rollerStickActive(a);
     // #1108: the drum body touching a paintable wall paints that wall while ZR is
     // held, with or without Left Stick (S3 contact paint). Stick only decides the
@@ -533,7 +545,7 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
     }
     if (state && !starting) state.elapsed += dt;
     // Presentation only: a held ZR keeps the released drum down until the roll.
-    if (state) state.holdRoll = inp.fire === true && !!a.grounded;
+    if (state) state.holdRoll = inp.fire === true;
     // #1056: if ZR was first pressed in the air, touching down in the first
     // five 60Hz frames turns that pending vertical flick into the faster
     // horizontal flick. #1041 grounded-start jump conversions stay separate.
@@ -637,6 +649,16 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
       this.s3RollerWasDry = true;
     } else if (this.rolling === true && a.ink > DRY_INK) {
       this.s3RollerWasDry = false;
+    }
+    this.s3RollerSuspendedHold = continueHold && this.rolling !== true && this.flick < 0;
+    if (this.s3RollerSuspendedHold) {
+      // Only retain the admitted action/pose. Native contact has already run
+      // with fire=false and stopped its loop, so this does not paint midair.
+      this.rolling = true;
+      if (this.lastRollPos) this.lastRollPos.copy(a.pos);
+      if (this.lastRollInkPos) this.lastRollInkPos.copy(a.pos);
+      this.rollInkChargedDistance = 0;
+      if (this.s3ContactPaint) this.s3ContactPaint.active = this.s3ContactPaint.pending = false;
     }
     this.s3RollerPrevInk = Math.max(prevInk, a.ink);
     if (state) state.rolling = this.rolling;
@@ -1208,7 +1230,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     if (this.weaponKind === 'roller') {
       // The runner owns whether the drum is rolling. A fixed 0.6s flick timer
       // otherwise delays the arms after gameplay has already resumed painting.
-      const rolling = this.kidForm && this.grounded && !this.dance && !!s.rolling;
+      const rolling = this.kidForm && !this.dance && !!s.rolling;
       this.wRoll = mix(previous, rolling ? 1 : 0, 1 - Math.exp(-(rolling ? 14 : 6) * dt));
     }
     return result;
@@ -1222,11 +1244,11 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     // itself unchanged: gameplay cleanup and drum-spin blending read that clock.
     // The same target also owns an admitted vertical-flick-to-roll handoff.
     // Airborne/recovery poses remain active until native rolling is admitted.
-    const contact = available && this.grounded && !!s.rolling, previous = this.wRoll;
+    const contact = available && this.grounded && !!s.rolling && !this._runner(s)?.s3RollerSuspendedHold, previous = this.wRoll;
     this._s3RollerContactPose = contact;
     // Follow the existing roll clock into/out of the hold; a new flick or an
     // unavailable action owns its pose instead. This is not another clock.
-    this._s3RollerGripBlend = available && this.grounded && (contact || !this.s3RollerFlick) ? previous : 0;
+    this._s3RollerGripBlend = available && (contact || !this.s3RollerFlick) ? previous : 0;
     let result;
     try { if (contact) this.wRoll = 1; result = weaponPose.call(this, dt, s); }
     finally { this.wRoll = previous; }
@@ -1268,7 +1290,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     if (!state) return flick.call(this, P, ft);
     // The released flick must not lift the same drum after its authoritative
     // roll begins. Input release/cancel before admission still uses recovery.
-    if (state.released && state.rolling && this.kidForm && this.grounded && !this.dance) return;
+    if (state.released && state.rolling && this.kidForm && !this.dance) return;
     if (!state.vertical) {
       // Torso effort and arm IK remain native, but the actual two-hand grip
       // is sampled directly from the Runner's release time instead of

@@ -1,0 +1,2923 @@
+{
+  "sourceHead": "c17a1df3679968ececa0efce8d1932aa0c4ebf27",
+  "conditions": {
+    "productionComposition": true,
+    "realProjectiles": true,
+    "cpuPaint": true,
+    "actualRenderedCharacter": false,
+    "controlledMuzzle": [
+      0,
+      1.05,
+      0.3
+    ],
+    "horizontalAim": true,
+    "flatUnpaintedFloor": true,
+    "cell": 0.25,
+    "seeds": [
+      1,
+      2,
+      3
+    ],
+    "shotsPerActor": 15,
+    "preserveShotOrdinals": true,
+    "acceptedShotsPerSample": 1,
+    "simulationHz": 60,
+    "projectileAndPaintDrainFrames": 240,
+    "retailMatchedConditions": false
+  },
+  "groups": [
+    {
+      "id": "shooter",
+      "full": false,
+      "samples": 45,
+      "meanArea": 19.631944444444443,
+      "minArea": 15.25,
+      "maxArea": 31.125
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "samples": 45,
+      "meanArea": 20.441666666666666,
+      "minArea": 19.25,
+      "maxArea": 21.3125
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "samples": 45,
+      "meanArea": 75.20555555555555,
+      "minArea": 73.5625,
+      "maxArea": 76.875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "samples": 45,
+      "meanArea": 16.227777777777778,
+      "minArea": 15.25,
+      "maxArea": 17.0625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "samples": 45,
+      "meanArea": 92.85416666666667,
+      "minArea": 90.6875,
+      "maxArea": 95.125
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "samples": 45,
+      "meanArea": 31.906944444444445,
+      "minArea": 26.0625,
+      "maxArea": 39.4375
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "samples": 45,
+      "meanArea": 25.679166666666667,
+      "minArea": 20.625,
+      "maxArea": 33.6875
+    }
+  ],
+  "records": [
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 1,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 15.5,
+      "turfGain": 15.5
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 1,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 17.0625,
+      "turfGain": 17.0625
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 1,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 17.375,
+      "turfGain": 17.375
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 1,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 29.9375,
+      "turfGain": 29.9375
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 1,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 17.375,
+      "turfGain": 17.375
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 1,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 17.3125,
+      "turfGain": 17.3125
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 1,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 17.1875,
+      "turfGain": 17.1875
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 1,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 30.8125,
+      "turfGain": 30.8125
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 1,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 15.3125,
+      "turfGain": 15.3125
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 1,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 17,
+      "turfGain": 17
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 1,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 17.3125,
+      "turfGain": 17.3125
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 1,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 30.4375,
+      "turfGain": 30.4375
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 1,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 17.25,
+      "turfGain": 17.25
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 1,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 17.4375,
+      "turfGain": 17.4375
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 1,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 17.25,
+      "turfGain": 17.25
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 2,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 15.625,
+      "turfGain": 15.625
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 2,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 17,
+      "turfGain": 17
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 2,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 17.5,
+      "turfGain": 17.5
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 2,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 29.8125,
+      "turfGain": 29.8125
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 2,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 17.3125,
+      "turfGain": 17.3125
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 2,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 17.125,
+      "turfGain": 17.125
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 2,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 17.1875,
+      "turfGain": 17.1875
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 2,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 31.125,
+      "turfGain": 31.125
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 2,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 15.375,
+      "turfGain": 15.375
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 2,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 16.9375,
+      "turfGain": 16.9375
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 2,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 17,
+      "turfGain": 17
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 2,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 30.1875,
+      "turfGain": 30.1875
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 2,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 17.375,
+      "turfGain": 17.375
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 2,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 17.375,
+      "turfGain": 17.375
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 2,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 17.25,
+      "turfGain": 17.25
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 3,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 15.25,
+      "turfGain": 15.25
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 3,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 17.1875,
+      "turfGain": 17.1875
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 3,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 17.3125,
+      "turfGain": 17.3125
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 3,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 30.5,
+      "turfGain": 30.5
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 3,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 17.3125,
+      "turfGain": 17.3125
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 3,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 17.1875,
+      "turfGain": 17.1875
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 3,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 17.3125,
+      "turfGain": 17.3125
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 3,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 30.4375,
+      "turfGain": 30.4375
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 3,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 15.3125,
+      "turfGain": 15.3125
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 3,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 17.25,
+      "turfGain": 17.25
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 3,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 17.125,
+      "turfGain": 17.125
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 3,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 30.375,
+      "turfGain": 30.375
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 3,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 17.3125,
+      "turfGain": 17.3125
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 3,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 17.3125,
+      "turfGain": 17.3125
+    },
+    {
+      "id": "shooter",
+      "full": false,
+      "seed": 3,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 17.5,
+      "turfGain": 17.5
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 1,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 19.625,
+      "turfGain": 19.625
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 1,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 21.0625,
+      "turfGain": 21.0625
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 1,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 20.375,
+      "turfGain": 20.375
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 1,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 20.875,
+      "turfGain": 20.875
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 1,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 20.25,
+      "turfGain": 20.25
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 1,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 20.25,
+      "turfGain": 20.25
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 1,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 21,
+      "turfGain": 21
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 1,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 20.125,
+      "turfGain": 20.125
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 1,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 20.1875,
+      "turfGain": 20.1875
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 1,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 20.25,
+      "turfGain": 20.25
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 1,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 20.125,
+      "turfGain": 20.125
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 1,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 20.5,
+      "turfGain": 20.5
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 1,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 20.25,
+      "turfGain": 20.25
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 1,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 19.875,
+      "turfGain": 19.875
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 1,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 20.125,
+      "turfGain": 20.125
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 2,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 19.25,
+      "turfGain": 19.25
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 2,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 20.5,
+      "turfGain": 20.5
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 2,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 21.125,
+      "turfGain": 21.125
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 2,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 21.125,
+      "turfGain": 21.125
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 2,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 20.625,
+      "turfGain": 20.625
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 2,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 20.875,
+      "turfGain": 20.875
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 2,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 20.25,
+      "turfGain": 20.25
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 2,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 20,
+      "turfGain": 20
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 2,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 20.375,
+      "turfGain": 20.375
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 2,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 20.3125,
+      "turfGain": 20.3125
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 2,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 20.8125,
+      "turfGain": 20.8125
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 2,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 20.4375,
+      "turfGain": 20.4375
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 2,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 20.1875,
+      "turfGain": 20.1875
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 2,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 20.875,
+      "turfGain": 20.875
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 2,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 20.25,
+      "turfGain": 20.25
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 3,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 20.1875,
+      "turfGain": 20.1875
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 3,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 20.1875,
+      "turfGain": 20.1875
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 3,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 20.125,
+      "turfGain": 20.125
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 3,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 20.4375,
+      "turfGain": 20.4375
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 3,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 21.3125,
+      "turfGain": 21.3125
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 3,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 20.0625,
+      "turfGain": 20.0625
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 3,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 20.1875,
+      "turfGain": 20.1875
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 3,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 20.4375,
+      "turfGain": 20.4375
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 3,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 20.1875,
+      "turfGain": 20.1875
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 3,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 21.0625,
+      "turfGain": 21.0625
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 3,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 20.875,
+      "turfGain": 20.875
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 3,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 20.875,
+      "turfGain": 20.875
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 3,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 20.875,
+      "turfGain": 20.875
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 3,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 20.75,
+      "turfGain": 20.75
+    },
+    {
+      "id": "charger",
+      "full": false,
+      "seed": 3,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 20.4375,
+      "turfGain": 20.4375
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 1,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 75.625,
+      "turfGain": 75.625
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 1,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 75.8125,
+      "turfGain": 75.8125
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 1,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 74.75,
+      "turfGain": 74.75
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 1,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 74.9375,
+      "turfGain": 74.9375
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 1,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 74.25,
+      "turfGain": 74.25
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 1,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 75.1875,
+      "turfGain": 75.1875
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 1,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 75.1875,
+      "turfGain": 75.1875
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 1,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 75.6875,
+      "turfGain": 75.6875
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 1,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 75.25,
+      "turfGain": 75.25
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 1,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 76.4375,
+      "turfGain": 76.4375
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 1,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 75.5,
+      "turfGain": 75.5
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 1,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 74.8125,
+      "turfGain": 74.8125
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 1,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 75.1875,
+      "turfGain": 75.1875
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 1,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 75.6875,
+      "turfGain": 75.6875
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 1,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 76.5,
+      "turfGain": 76.5
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 2,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 74.625,
+      "turfGain": 74.625
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 2,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 75.375,
+      "turfGain": 75.375
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 2,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 74.4375,
+      "turfGain": 74.4375
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 2,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 75.1875,
+      "turfGain": 75.1875
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 2,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 75.0625,
+      "turfGain": 75.0625
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 2,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 75,
+      "turfGain": 75
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 2,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 75.4375,
+      "turfGain": 75.4375
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 2,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 76.5,
+      "turfGain": 76.5
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 2,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 75.875,
+      "turfGain": 75.875
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 2,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 74.1875,
+      "turfGain": 74.1875
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 2,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 74,
+      "turfGain": 74
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 2,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 74.5,
+      "turfGain": 74.5
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 2,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 74.5,
+      "turfGain": 74.5
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 2,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 75.4375,
+      "turfGain": 75.4375
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 2,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 76.3125,
+      "turfGain": 76.3125
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 3,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 74.6875,
+      "turfGain": 74.6875
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 3,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 75.375,
+      "turfGain": 75.375
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 3,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 75.1875,
+      "turfGain": 75.1875
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 3,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 74.125,
+      "turfGain": 74.125
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 3,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 76.4375,
+      "turfGain": 76.4375
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 3,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 74.625,
+      "turfGain": 74.625
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 3,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 74.4375,
+      "turfGain": 74.4375
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 3,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 75,
+      "turfGain": 75
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 3,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 75.875,
+      "turfGain": 75.875
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 3,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 73.5625,
+      "turfGain": 73.5625
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 3,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 76.875,
+      "turfGain": 76.875
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 3,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 73.6875,
+      "turfGain": 73.6875
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 3,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 75.25,
+      "turfGain": 75.25
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 3,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 76.125,
+      "turfGain": 76.125
+    },
+    {
+      "id": "charger",
+      "full": true,
+      "seed": 3,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 75.75,
+      "turfGain": 75.75
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 1,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 16.5,
+      "turfGain": 16.5
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 1,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 16.6875,
+      "turfGain": 16.6875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 1,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 16.125,
+      "turfGain": 16.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 1,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 15.625,
+      "turfGain": 15.625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 1,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 16.6875,
+      "turfGain": 16.6875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 1,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 15.3125,
+      "turfGain": 15.3125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 1,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 17.0625,
+      "turfGain": 17.0625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 1,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 15.8125,
+      "turfGain": 15.8125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 1,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 17.0625,
+      "turfGain": 17.0625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 1,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 16.125,
+      "turfGain": 16.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 1,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 16.1875,
+      "turfGain": 16.1875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 1,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 16.1875,
+      "turfGain": 16.1875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 1,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 15.3125,
+      "turfGain": 15.3125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 1,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 15.8125,
+      "turfGain": 15.8125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 1,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 16.1875,
+      "turfGain": 16.1875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 2,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 15.5625,
+      "turfGain": 15.5625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 2,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 16.1875,
+      "turfGain": 16.1875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 2,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 15.8125,
+      "turfGain": 15.8125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 2,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 17.0625,
+      "turfGain": 17.0625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 2,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 16.6875,
+      "turfGain": 16.6875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 2,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 16.6875,
+      "turfGain": 16.6875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 2,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 15.25,
+      "turfGain": 15.25
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 2,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 16.1875,
+      "turfGain": 16.1875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 2,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 16.6875,
+      "turfGain": 16.6875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 2,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 16.125,
+      "turfGain": 16.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 2,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 16.125,
+      "turfGain": 16.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 2,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 16.125,
+      "turfGain": 16.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 2,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 16.5,
+      "turfGain": 16.5
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 2,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 17.0625,
+      "turfGain": 17.0625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 2,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 16.5,
+      "turfGain": 16.5
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 3,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 16.125,
+      "turfGain": 16.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 3,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 17.0625,
+      "turfGain": 17.0625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 3,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 15.5625,
+      "turfGain": 15.5625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 3,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 16.125,
+      "turfGain": 16.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 3,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 15.25,
+      "turfGain": 15.25
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 3,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 17.0625,
+      "turfGain": 17.0625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 3,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 16.125,
+      "turfGain": 16.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 3,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 16.1875,
+      "turfGain": 16.1875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 3,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 16.125,
+      "turfGain": 16.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 3,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 15.8125,
+      "turfGain": 15.8125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 3,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 16.125,
+      "turfGain": 16.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 3,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 16.125,
+      "turfGain": 16.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 3,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 16.125,
+      "turfGain": 16.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 3,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 16.5,
+      "turfGain": 16.5
+    },
+    {
+      "id": "s3-charger-long",
+      "full": false,
+      "seed": 3,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 16.6875,
+      "turfGain": 16.6875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 1,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 94.125,
+      "turfGain": 94.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 1,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 93.1875,
+      "turfGain": 93.1875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 1,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 92.0625,
+      "turfGain": 92.0625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 1,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 92.5625,
+      "turfGain": 92.5625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 1,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 92.3125,
+      "turfGain": 92.3125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 1,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 92.5625,
+      "turfGain": 92.5625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 1,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 92.875,
+      "turfGain": 92.875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 1,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 93.25,
+      "turfGain": 93.25
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 1,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 92.625,
+      "turfGain": 92.625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 1,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 94.0625,
+      "turfGain": 94.0625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 1,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 93.25,
+      "turfGain": 93.25
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 1,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 92.4375,
+      "turfGain": 92.4375
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 1,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 92.875,
+      "turfGain": 92.875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 1,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 93.3125,
+      "turfGain": 93.3125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 1,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 94.3125,
+      "turfGain": 94.3125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 2,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 92.4375,
+      "turfGain": 92.4375
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 2,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 93.125,
+      "turfGain": 93.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 2,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 92.3125,
+      "turfGain": 92.3125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 2,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 91.9375,
+      "turfGain": 91.9375
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 2,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 92.3125,
+      "turfGain": 92.3125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 2,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 93.0625,
+      "turfGain": 93.0625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 2,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 92.125,
+      "turfGain": 92.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 2,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 94.6875,
+      "turfGain": 94.6875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 2,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 92.875,
+      "turfGain": 92.875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 2,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 91.75,
+      "turfGain": 91.75
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 2,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 91.1875,
+      "turfGain": 91.1875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 2,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 92.625,
+      "turfGain": 92.625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 2,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 92.125,
+      "turfGain": 92.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 2,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 92.6875,
+      "turfGain": 92.6875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 2,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 94.125,
+      "turfGain": 94.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 3,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 92.375,
+      "turfGain": 92.375
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 3,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 93.625,
+      "turfGain": 93.625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 3,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 93.75,
+      "turfGain": 93.75
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 3,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 92,
+      "turfGain": 92
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 3,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 94.625,
+      "turfGain": 94.625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 3,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 92.5625,
+      "turfGain": 92.5625
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 3,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 92.1875,
+      "turfGain": 92.1875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 3,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 92.25,
+      "turfGain": 92.25
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 3,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 93,
+      "turfGain": 93
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 3,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 90.6875,
+      "turfGain": 90.6875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 3,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 95.125,
+      "turfGain": 95.125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 3,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 91.4375,
+      "turfGain": 91.4375
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 3,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 91.8125,
+      "turfGain": 91.8125
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 3,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 93.875,
+      "turfGain": 93.875
+    },
+    {
+      "id": "s3-charger-long",
+      "full": true,
+      "seed": 3,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 93.9375,
+      "turfGain": 93.9375
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 1,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 26.1875,
+      "turfGain": 26.1875
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 1,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 26.0625,
+      "turfGain": 26.0625
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 1,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 39.125,
+      "turfGain": 39.125
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 1,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 30.1875,
+      "turfGain": 30.1875
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 1,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 32.75,
+      "turfGain": 32.75
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 1,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 32.625,
+      "turfGain": 32.625
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 1,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 38.875,
+      "turfGain": 38.875
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 1,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 26.0625,
+      "turfGain": 26.0625
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 1,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 26.3125,
+      "turfGain": 26.3125
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 1,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 39.25,
+      "turfGain": 39.25
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 1,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 30.3125,
+      "turfGain": 30.3125
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 1,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 32.1875,
+      "turfGain": 32.1875
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 1,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 32.875,
+      "turfGain": 32.875
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 1,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 39.4375,
+      "turfGain": 39.4375
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 1,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 26.1875,
+      "turfGain": 26.1875
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 2,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 26.1875,
+      "turfGain": 26.1875
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 2,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 26.375,
+      "turfGain": 26.375
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 2,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 39.375,
+      "turfGain": 39.375
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 2,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 30.75,
+      "turfGain": 30.75
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 2,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 32.4375,
+      "turfGain": 32.4375
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 2,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 32.9375,
+      "turfGain": 32.9375
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 2,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 39.125,
+      "turfGain": 39.125
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 2,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 26.0625,
+      "turfGain": 26.0625
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 2,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 26.375,
+      "turfGain": 26.375
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 2,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 39.1875,
+      "turfGain": 39.1875
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 2,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 30.75,
+      "turfGain": 30.75
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 2,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 32.0625,
+      "turfGain": 32.0625
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 2,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 32.75,
+      "turfGain": 32.75
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 2,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 38.875,
+      "turfGain": 38.875
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 2,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 26.375,
+      "turfGain": 26.375
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 3,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 26.0625,
+      "turfGain": 26.0625
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 3,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 26.375,
+      "turfGain": 26.375
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 3,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 38.9375,
+      "turfGain": 38.9375
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 3,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 30.625,
+      "turfGain": 30.625
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 3,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 32.1875,
+      "turfGain": 32.1875
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 3,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 32.5,
+      "turfGain": 32.5
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 3,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 39.3125,
+      "turfGain": 39.3125
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 3,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 26.1875,
+      "turfGain": 26.1875
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 3,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 26.25,
+      "turfGain": 26.25
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 3,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 38.9375,
+      "turfGain": 38.9375
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 3,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 30.4375,
+      "turfGain": 30.4375
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 3,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 32.1875,
+      "turfGain": 32.1875
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 3,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 32.6875,
+      "turfGain": 32.6875
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 3,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 38.8125,
+      "turfGain": 38.8125
+    },
+    {
+      "id": "s3-shooter-first",
+      "full": false,
+      "seed": 3,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 26.25,
+      "turfGain": 26.25
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 1,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 20.625,
+      "turfGain": 20.625
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 1,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 23.4375,
+      "turfGain": 23.4375
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 1,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 25.9375,
+      "turfGain": 25.9375
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 1,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 26.6875,
+      "turfGain": 26.6875
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 1,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 26.5,
+      "turfGain": 26.5
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 1,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 33.3125,
+      "turfGain": 33.3125
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 1,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 21,
+      "turfGain": 21
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 1,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 23.5,
+      "turfGain": 23.5
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 1,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 26.25,
+      "turfGain": 26.25
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 1,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 26.6875,
+      "turfGain": 26.6875
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 1,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 26.75,
+      "turfGain": 26.75
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 1,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 33.3125,
+      "turfGain": 33.3125
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 1,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 21.1875,
+      "turfGain": 21.1875
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 1,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 23.5625,
+      "turfGain": 23.5625
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 1,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 26.25,
+      "turfGain": 26.25
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 2,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 20.625,
+      "turfGain": 20.625
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 2,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 23.5,
+      "turfGain": 23.5
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 2,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 25.9375,
+      "turfGain": 25.9375
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 2,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 26.6875,
+      "turfGain": 26.6875
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 2,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 26.6875,
+      "turfGain": 26.6875
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 2,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 33.1875,
+      "turfGain": 33.1875
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 2,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 21.0625,
+      "turfGain": 21.0625
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 2,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 23.5625,
+      "turfGain": 23.5625
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 2,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 26.3125,
+      "turfGain": 26.3125
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 2,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 26.5625,
+      "turfGain": 26.5625
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 2,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 26.75,
+      "turfGain": 26.75
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 2,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 33.6875,
+      "turfGain": 33.6875
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 2,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 20.6875,
+      "turfGain": 20.6875
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 2,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 23.5625,
+      "turfGain": 23.5625
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 2,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 26.1875,
+      "turfGain": 26.1875
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 3,
+      "ordinal": 0,
+      "acceptedShots": 1,
+      "area": 21.0625,
+      "turfGain": 21.0625
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 3,
+      "ordinal": 1,
+      "acceptedShots": 1,
+      "area": 23.625,
+      "turfGain": 23.625
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 3,
+      "ordinal": 2,
+      "acceptedShots": 1,
+      "area": 26.0625,
+      "turfGain": 26.0625
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 3,
+      "ordinal": 3,
+      "acceptedShots": 1,
+      "area": 26.8125,
+      "turfGain": 26.8125
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 3,
+      "ordinal": 4,
+      "acceptedShots": 1,
+      "area": 26.8125,
+      "turfGain": 26.8125
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 3,
+      "ordinal": 5,
+      "acceptedShots": 1,
+      "area": 33.5625,
+      "turfGain": 33.5625
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 3,
+      "ordinal": 6,
+      "acceptedShots": 1,
+      "area": 20.6875,
+      "turfGain": 20.6875
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 3,
+      "ordinal": 7,
+      "acceptedShots": 1,
+      "area": 23.4375,
+      "turfGain": 23.4375
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 3,
+      "ordinal": 8,
+      "acceptedShots": 1,
+      "area": 26.3125,
+      "turfGain": 26.3125
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 3,
+      "ordinal": 9,
+      "acceptedShots": 1,
+      "area": 26.625,
+      "turfGain": 26.625
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 3,
+      "ordinal": 10,
+      "acceptedShots": 1,
+      "area": 26.875,
+      "turfGain": 26.875
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 3,
+      "ordinal": 11,
+      "acceptedShots": 1,
+      "area": 33.3125,
+      "turfGain": 33.3125
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 3,
+      "ordinal": 12,
+      "acceptedShots": 1,
+      "area": 20.8125,
+      "turfGain": 20.8125
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 3,
+      "ordinal": 13,
+      "acceptedShots": 1,
+      "area": 23.4375,
+      "turfGain": 23.4375
+    },
+    {
+      "id": "s3-shooter-precision",
+      "full": false,
+      "seed": 3,
+      "ordinal": 14,
+      "acceptedShots": 1,
+      "area": 26.125,
+      "turfGain": 26.125
+    }
+  ]
+}

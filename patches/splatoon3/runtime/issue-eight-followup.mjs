@@ -5,7 +5,7 @@ const INSTALLED = Symbol.for('inkwave.s3.issue-eight-followup.v1');
 
 export function rollerDashClockEligible(runner) {
   const a = runner?.a, w = a?.weapon;
-  if (!a || w?.kind !== 'roller' || !runner.rolling || !a.grounded || a.form === 'squid') return false;
+  if (!a || w?.kind !== 'roller' || !runner.rolling || runner.s3RollerSuspendedHold || !a.grounded || a.form === 'squid') return false;
   const move = a.intent?.move;
   const input = Math.hypot(move?.x || 0, move?.z || 0);
   const speed = Math.hypot(a.vel?.x || 0, a.vel?.z || 0);

@@ -400,11 +400,20 @@ export function FAMILY_POSE(ch, dt, s, C) {
   }
   const cs = r.catalogState;
   let m = SWING.get(ch);
-  if (!m) SWING.set(ch, m = { count: cs.swingCount, attack: null });
+  if (!m) {
+    // A throttled/first Character frame may arrive after the input edge.
+    // Still present an in-progress attack once; never revive a finished one.
+    const active = cs.swingCount > 0 && (cs.pending || r.cooldown > 0);
+    SWING.set(ch, m = { count: cs.swingCount - (active ? 1 : 0), attack: null });
+  }
   if (cs.swingCount !== m.count) {
     const started = cs.swingCount > m.count; m.count = cs.swingCount;
     if (started && !r.a.remote) {
-      m.attack = swingRecord(r.a.weapon.catalogRecord, !r.a.grounded, Math.max(0, r.cooldown || 0));
+      // The admitted attack owns its mode. Rendering can follow a later
+      // physics tick (or a landing), so present grounding cannot reselect it.
+      const vertical = cs.s3SwingMode ? cs.s3SwingMode === 'vertical' : !r.a.grounded;
+      const interval = Number.isFinite(cs.s3SwingInterval) ? cs.s3SwingInterval : Math.max(0, r.cooldown || 0);
+      m.attack = swingRecord(r.a.weapon.catalogRecord, vertical, interval);
       ch.s3RollerFlick = m.attack;
     }
   }
@@ -420,7 +429,7 @@ export function FAMILY_POSE(ch, dt, s, C) {
   a.rolling = a.released && !!r.rolling;
   // Held ZR: the runner admits the roll when its cooldown ends, so the swing's
   // rest leads into the roll grip instead of lifting back to the carry first.
-  a.holdRoll = !r.a.remote && !!r.a.intent?.fire && !!r.a.grounded;
+  a.holdRoll = !r.a.remote && !!r.a.intent?.fire;
   if (a.elapsed >= a.interval || (a.rolling && (ch.wRoll || 0) >= 0.95)) { m.attack = null; ch.s3RollerFlick = null; }
 }
 

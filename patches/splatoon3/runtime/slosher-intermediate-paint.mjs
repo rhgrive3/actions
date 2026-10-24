@@ -38,6 +38,8 @@ export function slosherIntermediateSpec(projectile, scale = 1) {
   const rate = min + (max - min) * clamp01(Number.isFinite(projectile.seed) ? projectile.seed : .5);
   return Object.freeze({
     targetLength: rate * between * scale,
+    spacing: between * scale,
+    drawRadius: Number.isFinite(draw.DrawRadius) ? draw.DrawRadius * scale : 0,
     widthHalf: width * scale,
     depthScale: depth,
     spawnNum: Math.max(0, Math.floor(spawnNum)),

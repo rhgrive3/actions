@@ -78,20 +78,16 @@ const sourceOf = p => PROJECTILE_VISUAL_SOURCE[actorOf(p)];
 // freezes flight age. The visual timeline follows that clock without editing
 // the projectile age, integration, collision, paint or network state.
 const visualAge = p => finite(p?.age)+finite(p?.fidelityWallDrop?.frame)/HISTORY_HZ;
-// Reuse Bucket's complete drawn envelope, not just the texture. The catalogue
-// derivatives previously kept their own short/zero-offset draw radii and tails,
-// so the same atlas still appeared as separate little beads. Their trajectories,
-// unit counts, fan angles, birth delays and damage remain owned by gameplay.
+// Reuse the Bucket sheet topology while retaining each weapon's drawn source
+// envelope. Substituting Bucket's radius made Tri-Slosher/Dread Wringer heads
+// too small, and clamping their glob indices invented extra visible fragments.
 export function sharedBucketDraw(p) {
   const actor = actorOf(p);
   if (actor !== 'WeaponSlosherDiffusion' && actor !== 'WeaponSlosherDouble') return null;
-  const rear = p.catalog?.descriptor?.unit === 1;
-  return PROJECTILE_VISUAL_SOURCE.WeaponSlosherStrong.slosh[rear ? 2 : 1].drawSize;
+  return PROJECTILE_VISUAL_SOURCE[actor].slosh[p.catalog?.descriptor?.unit ?? 0]?.drawSize ?? null;
 }
 export function sharedBucketDrawIndex(p) {
-  // Bucket has four front and five rear fragments. Longer derivative streams
-  // keep the final Bucket envelope instead of extrapolating it through zero.
-  return Math.max(0,Math.min(p.catalog?.descriptor?.unit===1?4:3,p.catalog?.index??p.catalog?.descriptor?.index??0));
+  return Math.max(0,p.catalog?.index??p.catalog?.descriptor?.index??0);
 }
 export function sharedBucketTailLength(p, speed) {
   const d = sharedBucketDraw(p);

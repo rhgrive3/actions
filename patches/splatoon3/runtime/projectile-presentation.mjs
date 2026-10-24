@@ -177,7 +177,8 @@ export function appendSourcedSplashVisuals(system, mesh, shapes, inkLook, petals
     const strand=d.sourceActor==='WeaponSlosherLauncher';
     // Match the shared Bucket sheet's existing *visual* width calibration.
     // This is not a new retail draw-radius or world-unit conversion claim.
-    scale.setScalar(strand?radius*.4:tri?radius*VISUAL_WIDTH_CALIBRATION.bucket:radius);
+    const bucket=tri||d.sourceActor==='WeaponSlosherDouble';
+    scale.setScalar(strand?radius*.4:bucket?radius*VISUAL_WIDTH_CALIBRATION.bucket:radius);
     matrix.compose(d.pos,rotation,scale);
     mesh.setMatrixAt(count,matrix);mesh.setColorAt(count,d.owner.color);
     const o=count*4;

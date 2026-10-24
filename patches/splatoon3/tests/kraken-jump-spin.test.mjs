@@ -10,7 +10,7 @@ const base=process.env.KRAKEN_VFX_BASELINE;
 const candidate=new URL('../runtime/special-vfx.mjs',import.meta.url);
 async function load(file, emitted){
  let source=fs.readFileSync(file || candidate,'utf8');
- if(!file){const start=source.indexOf('      // Retail jump-spin strands:');const end=source.indexOf("      if (t.phase === 'charge')",start);assert.ok(start>0&&end>start);source=source.slice(0,start)+source.slice(end);const cleanup=' endFilaments(this, t.d.jumpRibs); t.d.jumpRibs = null;';assert.ok(source.includes(cleanup));source=source.replace(cleanup,'');}
+ if(!file){const start=source.indexOf('      // Retail jump-spin strands:');const end=source.indexOf("      const emissionTicks = nonWailVfxTicks(t.d, dt);",start);assert.ok(start>0&&end>start);source=source.slice(0,start)+source.slice(end);const cleanup=' endFilaments(this, t.d.jumpRibs); t.d.jumpRibs = null;';assert.ok(source.includes(cleanup));source=source.replace(cleanup,'');}
  source+='\nexport {Director as TestDirector, DIRECTORS as TestDirectors};';
  if(emitted) source=compactModuleStrings((await transform(adaptBuildSource('patches/splatoon3/runtime/special-vfx.mjs',source),{format:'esm',minify:true,charset:'utf8',legalComments:'inline'})).code).code;
  const context=vm.createContext({console});
@@ -38,4 +38,23 @@ for(const [label,file] of [['baseline',base],['candidate',candidate]])for(const 
  run('equal elapsed rotation at 30 60 120 Hz',()=>{let reference;for(const hz of [30,60,120]){const f=fixture();for(let i=0;i<hz;i++)step(f,1/hz);assert.ok(f.t.d.jumpRibs);const angles=f.t.d.jumpRibs.map(q=>q.ang);if(reference)angles.forEach((a,i)=>assert.ok(Math.abs(a-reference[i])<1e-10));else reference=angles;}});
  console.log(label,emitted?'production-transform':'source',passed,'pass',failed,'fail');
 }
-if(process.env.KRAKEN_VFX_RECEIPT) fs.writeFileSync(process.env.KRAKEN_VFX_RECEIPT,JSON.stringify(results,null,2));assert.equal(results.filter(r=>r.label==='candidate'&&!r.pass).length,0);assert.equal(results.filter(r=>r.label==='baseline'&&!r.pass).length,12);
+if(process.env.KRAKEN_VFX_RECEIPT) fs.writeFileSync(process.env.KRAKEN_VFX_RECEIPT,JSON.stringify(results,null,2));
+assert.equal(results.filter(r=>r.label==='candidate'&&!r.pass).length,0);
+// Delete only jump-spin ownership, retaining the shared emission clock. The old
+// deletion also removed emissionTicks and every baseline failed with a stray
+// ReferenceError, including the negative admission test that should pass.
+const missingSpinFailures=[
+ 'admitted airborne attack creates eight bounded strands',
+ 'zero dt cannot create or advance spin',
+ 'retire on contact climbing cancellation finish and charge/dash',
+ 'death recall expiry and actor retirement end all spin records',
+ 'repeated jumps respect real pool capacity and prior retirement',
+ 'equal elapsed rotation at 30 60 120 Hz',
+].sort();
+for(const emitted of [false,true]){
+ const rows=results.filter(r=>r.label==='baseline'&&r.emitted===emitted);
+ assert.equal(rows.length,7);
+ assert.deepEqual(rows.filter(r=>!r.pass).map(r=>r.name).sort(),missingSpinFailures,
+  'removing spin must fail the six ownership tests and retain negative admission');
+ assert.ok(rows.every(r=>!r.error?.includes('emissionTicks is not defined')));
+}

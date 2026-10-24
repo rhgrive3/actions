@@ -584,13 +584,15 @@ export function crabTankAttackTargetVelocity(move,yaw=0){
 // Pinned 11.3.0 WeaponSpCastle values, using this repository's existing
 // raw-distance/frame * 60 convention (reference/README.md). This aligns the
 // normal cap with profile.player.swimSpeed; retail world-scale remains unmeasured.
+// Pinned source and exact fields: reference/kraken-input-surfaces-1130.json.
 export const KRAKEN_MOVEMENT = Object.freeze({
-  speed: .192 * FPS, dashSpeed: .3 * FPS, paintSpan: 4 / FPS,
+  speed: .192 * FPS, dashSpeed: .3 * FPS, dashNoPaintSpeed: .21 * FPS,
+  dashWallSpeed: .22 * FPS, chargeTime: 35 / FPS, dashTime: 35 / FPS, paintSpan: 4 / FPS,
   paintWidth: 1.2, paintDepth: 1.2, paintOffset: .3, dashPaintOffset: .8,
 });
 export function krakenMoveSpeed(phase, chargeT=0) {
   if(phase!=='charge')return KRAKEN_MOVEMENT.speed;
-  const k=clamp(chargeT/(35/FPS),0,1);
+  const k=clamp(chargeT/KRAKEN_MOVEMENT.chargeTime,0,1);
   return KRAKEN_MOVEMENT.speed*(.2-.1*k);
 }
 // Paint only a locally contacted surface, never project an airborne Kraken
@@ -2109,7 +2111,9 @@ function activeStep(rt,actor,dt) {
     if(elapsed+1e-8>=state.duration)endSpecial(rt,actor,'duration');return;
   }
   if(state.id==='krakenRoyale'){
-    const dir=aimDirection(rt,actor,rt.v0);
+    // Damage helpers reuse rt.v0. Keep the aiming vector owned by this
+    // activation so a simultaneous airborne attack cannot rotate a charge.
+    const dir=aimDirection(rt,actor,state.aimDirection);
     if(elapsed+1e-8<1){dampForSpecial(actor,dt);state.phase='startup';s.phase=state.phase;return;}
     if(elapsed+1e-8>=state.duration){state.phase='finish';state.armor=false;s.armor=false;s.phase=state.phase;moveCombatSquid(rt,actor,dt,state,{jump:false});if(elapsed+1e-8>=state.duration+1)endSpecial(rt,actor,'duration');return;}
     if(state.phase==='startup')state.phase='active';
@@ -2120,16 +2124,32 @@ function activeStep(rt,actor,dt) {
       // The native squid collision path follows slopes and falls through
       // grates. Removing vertical velocity every tick let a Kraken dash over
       // gaps indefinitely and collide as a humanoid with elevated platforms.
-      actor._updateClimb?.(dt,true);
-      if(!actor.climbing){actor.vel.x=state.direction.x*KRAKEN_MOVEMENT.dashSpeed;actor.vel.z=state.direction.z*KRAKEN_MOVEMENT.dashSpeed;}
+      // A released dash keeps its heading even if the movement stick changes.
+      // Feed that heading into the native wall attachment path, then restore
+      // the real input for the next action. A wall dash advances upward.
+      const move=actor.intent.move,mx=move.x,my=move.y,mz=move.z;
+      if(actor.climbing)move.set(-actor.wallN.x,0,-actor.wallN.z);
+      else move.copy(state.direction);
+      try{actor._updateClimb?.(dt,true);}finally{move.set(mx,my,mz);}
+      const dashDirection=state.dashDirection;
+      if(actor.climbing){
+        dashDirection.set(0,1,0);actor.climbV=KRAKEN_MOVEMENT.dashWallSpeed;actor.vel.y=actor.climbV;
+      }else{
+        dashDirection.copy(state.direction);
+        // Dry paintable turf is still the normal floor branch; only a
+        // nonpaintable contacted face uses Dash_MoveSpeed_Floor_NoPaint.
+        const face=rt.api.G.level?.faces?.[actor.ground?.face];
+        const speed=face?.paintable===false?KRAKEN_MOVEMENT.dashNoPaintSpeed:KRAKEN_MOVEMENT.dashSpeed;
+        actor.vel.x=dashDirection.x*speed;actor.vel.z=dashDirection.z*speed;
+      }
       actor._integrate?.(dt,true,false);
       const onSurface=actor.grounded||actor.climbing;
       state.dashHits||=new Set();
       // 11.3.0 WeaponSpCastle BodyParam: CollisionDashFrontOffset=2.75,
       // CollisionDashRadiusForPlayer=1.5. Offset BOTH ends of the true
       // 3D travelled segment; never enlarge radius at the actor's feet.
-      const hitFrom=rt.v13.copy(before).addScaledVector(state.direction,2.75);
-      const hitTo=rt.v14.copy(actor.pos).addScaledVector(state.direction,2.75);
+      const hitFrom=rt.v13.copy(before).addScaledVector(dashDirection,2.75);
+      const hitTo=rt.v14.copy(actor.pos).addScaledVector(dashDirection,2.75);
       for(const victim of onSurface?rt.api.G.actors||[]:[]){
         if(!victim?.alive||victim.team===actor.team||state.dashHits.has(victim))continue;
         if(!krakenDashSweptContact(hitFrom,hitTo,victim.pos,1.5))continue;
@@ -2148,7 +2168,7 @@ function activeStep(rt,actor,dt) {
       // Public gameplay reference: an airborne/grate dash becomes the
       // 60-damage spinning attack, rather than retaining its grounded 120.
       if(!onSurface){state.phase='active';state.jumpAttack=true;state.jumpHits=new Set();}
-      else if(state.dashT+1e-8>=35/60){state.phase='active';state.dashT=0;}
+      else if(state.dashT+1e-8>=KRAKEN_MOVEMENT.dashTime){state.phase='active';state.dashT=0;}
     }else {
       const jumped=moveCombatSquid(rt,actor,dt,state,{speed:krakenMoveSpeed(state.phase,state.chargeT),ignoreEnemy:true});
       paintKrakenMove(rt,actor,state,dt,dir);
@@ -2162,13 +2182,16 @@ function activeStep(rt,actor,dt) {
       // Do not project an airborne spinning attack onto a distant lower floor.
       if(actor.grounded||actor.climbing)state.jumpAttack=false;
     }
-    if(edges.fire&&state.phase!=='dash'){
-      state.phase='charge';state.chargeT=0;state.direction.copy(dir).setY(0).normalize();state.dashHits=new Set();
+    // ZR held during transformation or the previous dash starts charging as
+    // soon as control returns. Startup samples input too, so an edge-only
+    // check discarded that hold and required an unrelated release/repress.
+    if(actor.intent.fire&&state.phase==='active'){
+      state.phase='charge';state.chargeT=dt;state.direction.copy(dir).setY(0).normalize();state.dashHits=new Set();
       actor.character?.trigger?.('special_charge');
     }else if(state.phase==='charge'){
       if(actor.intent.fire){state.chargeT+=dt;state.direction.copy(dir).setY(0).normalize();}
       if(edges.fireUp){
-        if(state.chargeT+1e-8>=35/60){state.phase='dash';state.dashT=0;actor.character?.trigger?.('special_dash');}
+        if(state.chargeT+1e-8>=KRAKEN_MOVEMENT.chargeTime){state.phase='dash';state.dashT=0;actor.character?.trigger?.('special_dash');}
         else {state.phase='active';state.chargeT=0;}
       }
     }
@@ -2200,7 +2223,7 @@ function makeState(rt,actor,id) {
   if(id==='tripleInkstrike'){state.nextMarkerStart=20/FPS;state.markerQueued=false;}
   if(id==='waveBreaker')state.phase='ready';
   if(id==='zipcaster')state.phase='ready';
-  if(id==='krakenRoyale'){state.armorHP=Infinity;state.phase='startup';state.direction=new rt.api.THREE.Vector3();}
+  if(id==='krakenRoyale'){state.armorHP=Infinity;state.phase='startup';state.direction=new rt.api.THREE.Vector3();state.aimDirection=new rt.api.THREE.Vector3();state.dashDirection=new rt.api.THREE.Vector3();}
   if(id==='killerWail'){
     state.phase='charge';state.beamPairs=[];state.nextLock=36/FPS;
   }
@@ -2361,7 +2384,7 @@ function installRuntime(api) {
     if(tail&&(api.G.time||0)>=tail.until)booyahAfterArmor.delete(this);
     const state=actorStates.get(this)||((api.G.time||0)<tail?.until?tail:null);
     if(!state||!(amount>0)||source==='ink')return damage.call(this,amount,attacker,source);
-    if(state.id==='krakenRoyale'&&state.t>=1&&state.t<state.duration)return false;
+    if(state.id==='krakenRoyale'&&state.t+1e-8>=1&&state.t+1e-8<state.duration)return false;
     if(state.id==='crabTank'&&crabRearCoreHit(this,attacker)){
       const armor=this.specialActive?.armor;
       if(this.specialActive)this.specialActive.armor=false;

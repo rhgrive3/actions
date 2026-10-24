@@ -1,3 +1,12 @@
+import { mainAudioSourceId } from './weapon-recipes.mjs';
+
+// This excerpt is a Splat Charger phrase, not a family-wide charge clock.
+// Other chargers use their own registered onset and gameplay-owned ready edge.
+export function usesSplatChargerRise(id) {
+  const source = mainAudioSourceId(id);
+  return source === 'charger' || source === 's3-charger-normalscope';
+}
+
 /**
  * Recorded Splatune 2 first-Charger phrase: start mechanical sound through
  * the first complete rising tone, stopping at the first silence.
@@ -86,7 +95,8 @@ export async function chargerRiseBuffer(ctx,{fetcher,sourceUrl,retry=false,now=D
   }).finally(()=>{clearTimeout(timer);if(state.generation===generation){state.promise=null;state.controller=null;}});
   return state.promise;
 }
-export function playChargerRise(audio,{volume=.55,pos=null}={}){
+export function playChargerRise(audio,{volume=.55,pos=null,weaponId='charger'}={}){
+  if(!usesSplatChargerRise(weaponId))return null;
   const ctx=audio?.ctx,target=audio?.sfxIn;
   const buffer=ctx?slots.get(ctx)?.buffer:null;
   if(!buffer||!target||typeof ctx.createGain!=='function'||typeof ctx.createBufferSource!=='function')return null;
