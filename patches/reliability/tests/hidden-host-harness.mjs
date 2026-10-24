@@ -23,9 +23,12 @@ const relayModule = new vm.SourceTextModule(fs.readFileSync(relaySource, 'utf8')
  // VM omits them unless explicitly provided; do not stub relay behavior.
  context: relayContext,
 });
+const sessionSource = new URL('../../../patches/reliability/session-admission.mjs', import.meta.url);
+const sessionModule = new vm.SourceTextModule(fs.readFileSync(sessionSource, 'utf8'), { identifier: sessionSource.href, context: relayContext });
 const utf8Source = new URL('../../../patches/network-replication/utf8-length.mjs', import.meta.url);
 const utf8Module = new vm.SourceTextModule(fs.readFileSync(utf8Source, 'utf8'), { identifier:utf8Source.href, context:relayContext });
 await relayModule.link((spec, from) => {
+ if (new URL(spec, from.identifier).href === sessionSource.href) return sessionModule;
  if (new URL(spec, from.identifier).href === utf8Source.href) return utf8Module;
  throw new Error('Unexpected relay dependency: ' + spec);
 });

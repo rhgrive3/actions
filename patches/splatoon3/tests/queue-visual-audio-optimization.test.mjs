@@ -6,6 +6,7 @@ import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mj
 import { AuthorizedSamplePack } from '../runtime/audio/authorized-samples.mjs';
 import { RealS3SampleLoader } from '../runtime/audio/real-s3-loader.mjs';
 import { nonWailVfxTicks } from '../runtime/nonwail-vfx-clock.mjs';
+import { areaSpecialVfxTicks } from '../runtime/area-special-vfx-clock.mjs';
 const read = rel => fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
 function method(source, cls, key, bindings = {}) {
   const ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module' });
@@ -66,7 +67,7 @@ test('actual missile frame preserves seeded 60 Hz random order and equal event t
   const frame=missile.properties.find(n=>n.key.name==='frame');
   for(const hz of [30,60,120]){
     let word=23,trials=0;const draws=[],random=()=>{trials++;return (word=(Math.imul(word,1664525)+1013904223)>>>0)/4294967296;};
-    const fn=new Function('nonWailVfxTicks','vfxRandom','SPARK','return ({'+source.slice(frame.start,frame.end)+'}).frame')(nonWailVfxTicks,random,{STREAK:0});
+    const fn=new Function('nonWailVfxTicks','areaSpecialVfxTicks','vfxRandom','SPARK','return ({'+source.slice(frame.start,frame.end)+'}).frame')(nonWailVfxTicks,areaSpecialVfxTicks,random,{STREAK:0});
     const self={v:[new Vector3()],pushRibbon(){},spark(...args){draws.push(args[0]);},hdr:()=>[1,1,1]};
     const r={d:{},vel:new Vector3(1,2,3),color:[1,1,1]},p={pos:new Vector3()};
     for(let i=0;i<hz;i++)fn.call(self,r,p,1/hz);

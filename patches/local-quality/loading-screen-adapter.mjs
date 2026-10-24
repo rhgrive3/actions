@@ -125,12 +125,7 @@ export function adaptLoadingScreen(rel, code) {
     const lineEnd = code.indexOf('\n', end) + 1;
     const version = code.slice(end, lineEnd).replace(" iw-in' }, ", "' }, ");
     if (!lineEnd || !version.trimEnd().endsWith('));')) throw new Error('INKWAVE quality patch conflict (loading screen layout): version line changed');
-    const composed = code.slice(0, start) + screen + version + code.slice(lineEnd);
-    // Preserve percent and animation ownership, but avoid repeated compositor writes.
-    return replaceOnce(composed,
-      '        fill.style.transform = `translateX(${(-100 + p * 100).toFixed(2)}%)`;',
-      '        const transform = `translateX(${(-100 + p * 100).toFixed(2)}%)`;\n        if (fill.style.transform !== transform) fill.style.transform = transform;',
-      'loading progress transform deduplication');
+    return code.slice(0, start) + screen + version + code.slice(lineEnd);
   }
   if (rel === 'styles/ui.css') {
     if (code.includes('.iw-zl ')) throw new Error('INKWAVE loading screen stylesheet applied twice');
