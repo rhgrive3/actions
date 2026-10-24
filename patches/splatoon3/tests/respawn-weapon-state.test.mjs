@@ -100,6 +100,9 @@ test('ordinary jump, superjump, weapon change, repeated death/reset and dispose 
 test('remote spawn event and sampled landing use the same ordinary ready pose without proxy paint',async()=>{
  const {f,a,ch}=await setup();a.remote=true;a.nid='remote-respawn';a.net={remoteDodgeLife:0,lastLife:0};
  const net=Object.create(f.NetMatch.prototype);net.peers=new Map();a.owner='owner';net.byNid=new Map([[a.nid,a]]);
+ // The real network paint-admission path checks authenticated membership
+ // before reading events, including presentation-only spawn/land triggers.
+ net.s={_members:new Map([['owner',{id:'owner'}]])};
  ch._netTrig=ch.trigger.bind(ch);a.grounded=a.ground.hit=false;
  f.NetMatch.prototype._play.call(net,'owner',[0,'tr',a.nid,'spawn',null]);
  for(let i=0;i<8;i++)a._finishFrame(1/60);
