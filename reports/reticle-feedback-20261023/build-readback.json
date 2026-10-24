@@ -1,0 +1,36 @@
+{
+  "builds": {
+    "before": {
+      "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+      "revision": "d0aad52ff86d0915c282be5ff1cc481fa63f7511ed765743c9d9e62f73e59f9d",
+      "inputs": 1420,
+      "artifacts": 2110,
+      "manifestArtifactDigestVerified": true
+    },
+    "after": {
+      "contentHash": "00cee6122b0ec3ed2c6b68be42151204c3f9a6c9bd034b3095f1ed87d43afb8b",
+      "revision": "97e30e0f99db538c4e7b8a0ab131478221c5b4d5f0dba2aa3c6f007c9fa02e7a",
+      "inputs": 1420,
+      "artifacts": 2110,
+      "manifestArtifactDigestVerified": true
+    }
+  },
+  "inputDelta": [
+    "local-quality/s3-hud-look-adapter.mjs"
+  ],
+  "rootOutputDelta": [
+    "index.html",
+    "patches/local-quality/ink-volume/assets/roller/manifest.json",
+    "patches/local-quality/ink-volume/assets/shooter/manifest.json",
+    "patches/local-quality/s3-hud-look-adapter.mjs",
+    "src/main.js",
+    "src/ui/hud.js",
+    "styles/hud.css",
+    "sw.js"
+  ],
+  "onlyMainChangeIsDamageForwarding": true,
+  "volumeManifestsOnlyRevisionChanged": {
+    "shooter": true,
+    "roller": true
+  }
+}

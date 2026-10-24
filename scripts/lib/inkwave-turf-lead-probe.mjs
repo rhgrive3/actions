@@ -1,3 +1,4 @@
+import { captureFrozenHud } from './inkwave-frozen-hud-capture.mjs';
 import path from 'node:path';
 import fs from 'node:fs';
 
@@ -46,7 +47,7 @@ export function inspectTurfLeadScene({name,pair,viewer}) {
 // simulation time are never changed.
 export async function probeTurfLead(page, evidence) {
   const viewport = page.viewportSize(), rows = [];
-  let phase = {name:'setup'};
+  let phase = {name:'setup'}, primaryError;
   await page.evaluate(() => {
     const G = globalThis.s3ProbeG, g = G.game;
     if (g.match.mode !== 'turf' || g.match.state !== 'playing' || !g.frozen) throw Error('Turf probe requires the frozen live UI fixture');
@@ -68,7 +69,7 @@ export async function probeTurfLead(page, evidence) {
         phase = {viewer,viewport:size,name};
         const row = await page.evaluate(inspectTurfLeadScene, {name,pair,viewer});
         rows.push(row);
-        if (name === 'ahead' || name === 'behind') await page.screenshot({path:path.join(evidence,`turf-lead-team${viewer}-${size.width}-${name}.png`),animations:'disabled',timeout:90000});
+        if (name === 'ahead' || name === 'behind') row.capture = await captureFrozenHud(page,{path:path.join(evidence,`turf-lead-team${viewer}-${size.width}-${name}.png`),animations:'disabled',timeout:90000});
       }
     }
     phase = {name:'finish-and-range-boundaries'};
@@ -86,6 +87,7 @@ export async function probeTurfLead(page, evidence) {
     });
     return {boundaries,fixture:'loaded Main -> Match -> HUD; controlled coverage/viewer/finish snapshots; Chromium computed style and PNG',rows};
   } catch (error) {
+    primaryError = error;
     const diagnostic = {phase,rows,error:error.message};
     try { await page.screenshot({path:path.join(evidence,'turf-lead-failure.png'),animations:'disabled',timeout:90000}); diagnostic.screenshot = 'turf-lead-failure.png'; }
     catch (captureError) { diagnostic.screenshotError = captureError.message; }
@@ -93,7 +95,13 @@ export async function probeTurfLead(page, evidence) {
     catch (writeError) { console.error('Turf failure diagnostic write failed: '+writeError.message); }
     throw error;
   } finally {
+    const cleanupErrors = [];
     try { await page.evaluate(() => { try { turfLeadProof.restore(); } finally { delete globalThis.turfLeadProof; } }); }
-    finally { await page.setViewportSize(viewport); }
+    catch (error) { cleanupErrors.push(error); }
+    try {
+      await page.setViewportSize(viewport);
+      await page.evaluate(() => globalThis.s3ProbeG.game.R.render());
+    } catch (error) { cleanupErrors.push(error); }
+    if (cleanupErrors.length) throw new AggregateError([...(primaryError ? [primaryError] : []), ...cleanupErrors], 'Turf capture cleanup failed' + (primaryError ? ': ' + primaryError.message : ''), {cause:primaryError});
   }
 }

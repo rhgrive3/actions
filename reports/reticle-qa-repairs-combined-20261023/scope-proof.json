@@ -1,0 +1,81 @@
+{
+  "status": "passed",
+  "base": "2e2bc38661dd49655ee3b4abc491dcc8ee65e8e1",
+  "checkedCommit": "0ffb2c4de5095c69029baf252a469c1f84517934",
+  "checkedTree": "2e69f645c66e5d2c7eddef5a605092982d1e21ba",
+  "reviewedDonor": "4d6166936eaa8058a8b936053992960b510eec88",
+  "reused": {
+    ".github/workflows/validate-inkwave-update.yml": {
+      "blob": "8972387ee7f27a2b28dacd2f657e3995be923a2b",
+      "sha256": "205b3d7e260203e0ecf76152769b0252d6a2b31aff0cdd926629fb94ea8505e2",
+      "exactReviewedDonor": true
+    },
+    "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs": {
+      "blob": "36b7c577e4e629b61e8c32c3b31c7781c5662e39",
+      "sha256": "5c802460fc6484208e66afcde13a461480d38d8b72ecf9b30f5db74df4d0e7c5",
+      "exactReviewedDonor": true
+    }
+  },
+  "originalSevenJobPinsUnchanged": {
+    "validate_core": "80f5bcdbcf39f3f616c231c0cbad3eea93849fed3fb19c20e22f7c063ab47a39",
+    "patch_tests": "f4aed2dfb7766fc1497498fc2d6d7689ec90441f0747b854b07a4e631109c5b1",
+    "validate": "54ac81f9c3cfa0e1eaed643dc62b644e9658abef0b53faced3a7d47888b790f9",
+    "browser": "2d925a6bece5c03d5f5a2fefa550a622d1589e8e3ab41ac517d6d624cd93bb9c",
+    "network-opening-diagnostic": "f205a8473b3bfc0f86819f43bbe4121e4c590dda71490e363f3908db658ca767",
+    "seven_claims": "34ef0c57320a741be38b42f6e0e9eb62e8d7f0b9bbb55b6b9a091c26a828c3cd",
+    "resource_paint_continuation": "78e0d3ebf1290c9250339e8dcef35c9b60077c82fd5a99ff51da01b3c50a442b"
+  },
+  "workflowOnlyExactTailRepair": true,
+  "changedPaths": [
+    ".github/workflows/validate-inkwave-update.yml",
+    "reports/reticle-artifact-tail-20261023/README.md",
+    "reports/reticle-artifact-tail-20261023/after.sh",
+    "reports/reticle-artifact-tail-20261023/audit-scope.mjs",
+    "reports/reticle-artifact-tail-20261023/before.sh",
+    "reports/reticle-artifact-tail-20261023/check-shell.py",
+    "reports/reticle-artifact-tail-20261023/comparison.json",
+    "reports/reticle-artifact-tail-20261023/official-core-excerpts.txt",
+    "reports/reticle-artifact-tail-20261023/old-workflow-negative.tap.gz",
+    "reports/reticle-artifact-tail-20261023/provenance.json",
+    "reports/reticle-artifact-tail-20261023/real-emitted-201.log.gz",
+    "reports/reticle-artifact-tail-20261023/scope-proof.json",
+    "reports/reticle-artifact-tail-20261023/workflow-regressions.tap.gz",
+    "reports/reticle-idle-cold-cleanup-order-20261023/README.md",
+    "reports/reticle-idle-cold-cleanup-order-20261023/build-input-readback.json",
+    "reports/reticle-idle-cold-cleanup-order-20261023/focused-50.tap.gz",
+    "reports/reticle-idle-cold-cleanup-order-20261023/old-cold-negative.tap.gz",
+    "reports/reticle-idle-cold-cleanup-order-20261023/provenance.json",
+    "reports/reticle-idle-cold-cleanup-order-20261023/source-preservation.json",
+    "reports/reticle-idle-evaluate-deadline-20261023/README.md",
+    "reports/reticle-idle-evaluate-deadline-20261023/audit-source.cjs",
+    "reports/reticle-idle-evaluate-deadline-20261023/build-input-readback-committed.json",
+    "reports/reticle-idle-evaluate-deadline-20261023/ci-route-final.tap.gz",
+    "reports/reticle-idle-evaluate-deadline-20261023/commands.txt",
+    "reports/reticle-idle-evaluate-deadline-20261023/focused-final.tap.gz",
+    "reports/reticle-idle-evaluate-deadline-20261023/focused.tap.gz",
+    "reports/reticle-idle-evaluate-deadline-20261023/old-desktop-setup-negative.tap.gz",
+    "reports/reticle-idle-evaluate-deadline-20261023/provenance.json",
+    "reports/reticle-idle-evaluate-deadline-20261023/replay-summary.json",
+    "reports/reticle-idle-evaluate-deadline-20261023/source-preservation.json",
+    "reports/reticle-idle-evaluate-deadline-20261023/timeout-receipt.json",
+    "reports/reticle-idle-evaluate-deadline-20261023/wiring-final.tap.gz",
+    "scripts/check-inkwave-idle-resources.mjs",
+    "scripts/tests/inkwave-idle-evaluate-deadline.test.mjs",
+    "scripts/tests/inkwave-idle-resources-gates.test.mjs",
+    "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs"
+  ],
+  "canonicalInputs": 1420,
+  "artifactsRehashed": 2110,
+  "contentHash": "fb5f0fab676d92749db0e02f332770530eb930b6c6d7590ec0e926dd3715c5d7",
+  "inputHash": "4de01e48cc0e2dd2ff75811f540a965b3f79ac3f9ae808e06422d5b7df1b24df",
+  "revision": "1b6e89b3322e2a53d5b1223f8567b6737a0f4b7aae399c81cca362ae35e2b61c",
+  "canonicalInputsAndBuilderEqualBase": true,
+  "referenceQaPreserved": {
+    "scripts/check-inkwave-local-references.mjs": "6d8a6eb13d36bf33bb4655b3fa21219e550683e7",
+    "scripts/tests/inkwave-local-references.test.mjs": "24311c5d9dc055831ad1c4f1757cde93bc0d28f5"
+  },
+  "browserRerun": false,
+  "freshBuild": false,
+  "hostedUploadVerified": false,
+  "externalShutdownCause": "unknown"
+}

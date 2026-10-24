@@ -1,0 +1,32 @@
+{
+  "status": "passed",
+  "base": "2e2bc38661dd49655ee3b4abc491dcc8ee65e8e1",
+  "oldTailOnlyRemovedFromRun": true,
+  "unchangedFidelitySuitePaths": 27,
+  "unchangedCommandLines": 28,
+  "oldShellExit": 127,
+  "repairedShellExit": 0,
+  "testFailurePropagates": 73,
+  "observed": [
+    {
+      "workflow": "before",
+      "stubExit": 0,
+      "shellExit": 127,
+      "stderr": "/workspace/scratch/reticle-artifact-tail-20261023/shell/before.sh: line 29: _site-launch-packets.json: command not found\n"
+    },
+    {
+      "workflow": "after",
+      "stubExit": 0,
+      "shellExit": 0,
+      "stderr": ""
+    },
+    {
+      "workflow": "after",
+      "stubExit": 73,
+      "shellExit": 73,
+      "stderr": ""
+    }
+  ],
+  "actualEmittedCommandSha256": "09179baf4f3840162ab74e50b2dce3156b9fb3d18d88880950146a86e177d4f7",
+  "scope": "Node stub checks shell shape and failure propagation; actual emitted replay is separately recorded."
+}

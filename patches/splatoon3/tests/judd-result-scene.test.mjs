@@ -195,6 +195,12 @@ test('#894 owner cancellation releases the map-backed judge through the existing
 
 for (const winner of [0, 1]) test(`#894 ${winner === 0 ? 'win' : 'loss'} judgement transitions into the existing post-battle results flow`, async () => {
   const f = await sceneFixture();
+  const pulse = { playState: 'running', cancel() { this.playState = 'idle'; } };
+  f.hud._hitAnimations = [pulse];
+  f.hud._lastHitDmg = 36;
+  f.hud.killEl = f.document.createElement('div');
+  f.hud.killEl.classList.add('is-on');
+  f.hud.setVisible(true);
   f.match.result = { coverage: [0.6, 0.4], winner };
   f.match.local.team = 0;
   const pending = f.game._judge();
@@ -211,6 +217,10 @@ for (const winner of [0, 1]) test(`#894 ${winner === 0 ? 'win' : 'loss'} judgeme
   assert.equal(f.count('podium'), 1);
   assert.equal(f.judges().length, 0, 'the overlay is released to the results flow');
   assert.equal(f.hud._fxMap.has('judge'), false);
+  assert.equal(f.hud._visible, false, 'results hide the in-match HUD');
+  assert.equal(pulse.playState, 'idle', 'results transition runs the actual reticle cleanup');
+  assert.equal(f.hud.killEl.classList.contains('is-on'), false);
+  assert.equal(f.hud._lastHitDmg, 0);
 });
 
 test('#894 the rendered scene and the shipped stylesheets agree on its classes', async () => {

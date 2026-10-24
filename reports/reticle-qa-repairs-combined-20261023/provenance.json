@@ -1,0 +1,18 @@
+{
+  "checkedImplementation": "0ffb2c4de5095c69029baf252a469c1f84517934",
+  "tests": {
+    "pass": 120,
+    "fail": 0,
+    "skip": 0
+  },
+  "freshBuild": false,
+  "browserGPU": false,
+  "originalIntermediate118TapSha256": "32e56c9c0dc3e75746e6edddc275dcbdecd06a8ed68be458ba6ba95b982dffe8",
+  "publishedSha256": {
+    "README.md": "99b2d7ff8d4fdfdc814e662b6fa6f743d9d41e3b015906e8a1c46da38c7e28da",
+    "focused-final-120.tap.gz": "383376581f3e80170ba3a3039b166cdfd75c837e755404ca713eceb3f0a03e69",
+    "scope-proof.json": "d8bad731dd442175e2bb1c02b25b5aa38aae7129dfd765f821cf2ddcbb16d973",
+    "source-identity.json": "185f0e539b302a1b7fc973d0bad1a3da7235a44eba0b6b009a7d99f786602bdd",
+    "source-preservation.json": "b69eec3f64ee00b0fbe72a31297f0b5b3417d54e9611fcc6e753c8582e71ef6c"
+  }
+}

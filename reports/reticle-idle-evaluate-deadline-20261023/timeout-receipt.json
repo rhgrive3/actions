@@ -1,0 +1,18 @@
+{
+  "phase": "later-phase",
+  "isGPUAcceptance": false,
+  "result": {
+    "completedBeforeStall": "deterministic source-component fixture"
+  },
+  "loaded": [
+    "component-only/no-browser"
+  ],
+  "status": "failed",
+  "error": "IdleEvaluationTimeoutError: Idle evaluate exceeded 120000 ms (gpu-identity)\n    at file:///workspace/reticle-idle-deadline/scripts/check-inkwave-idle-resources.mjs:27:17\n    at file:///workspace/scratch/reticle-idle-deadline-20261023/replay-timeout.mjs:13:59",
+  "primaryError": "IdleEvaluationTimeoutError: Idle evaluate exceeded 120000 ms (gpu-identity)\n    at file:///workspace/reticle-idle-deadline/scripts/check-inkwave-idle-resources.mjs:27:17\n    at file:///workspace/scratch/reticle-idle-deadline-20261023/replay-timeout.mjs:13:59",
+  "operation": {
+    "phase": "gpu-identity",
+    "timeoutMs": 120000,
+    "code": "INKWAVE_IDLE_EVALUATION_TIMEOUT"
+  }
+}

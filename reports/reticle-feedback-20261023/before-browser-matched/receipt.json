@@ -1,0 +1,20 @@
+{
+  "before": true,
+  "build": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+  "seed": 1380275273,
+  "errors": [],
+  "scenarios": [],
+  "acceptance": {
+    "component": "pending",
+    "browser": "pending",
+    "gpu": "SwiftShader only; hardware GPU and Switch unverified"
+  },
+  "status": "failed",
+  "failure": "TimeoutError: page.waitForFunction: Timeout 90000ms exceeded.",
+  "diagnostic": {
+    "title": "ZEVANT — ナワバリバトル",
+    "text": "Z\nE\nV\nA\nN\nT\nPLAY\nTurf War · Ranked · Boss Battle\nONLINE\nPlay with friends · private rooms\nLIVE\nLOADOUT\nLOCKER\nSETTINGS\nHOW TO PLAY\nCREDITS\nTurf War 4 v 4 — or team up with the bots against HULLBREAKER in a Boss Battle\nPlayer\nFRESH RECRUIT\nLV\n1\n0 / 1,150 XP\n0\nWINS\n0\nMATCHES\nNEXT RANK\nLV 5\nCURRENT LOADOUT\nSplattershot\nSHOOTER\nスプラッシュボム\nウルトラショット\nv1.0.0\nEnter\nSelect\nEsc\nTitle",
+    "menu": "main",
+    "boot": ""
+  }
+}

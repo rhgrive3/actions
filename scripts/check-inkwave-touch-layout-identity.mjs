@@ -46,7 +46,7 @@ for (const [key, expected] of Object.entries(identity.files)) {
 // this isolated negative fixture. Otherwise Node fails with ERR_MODULE_NOT_FOUND
 // before the exact-source comparison gets to reject the forged dirty overlay.
 const verifierFiles = new Set(['scripts/build-inkwave.mjs', 'scripts/check-inkwave-browser.mjs',
-  'scripts/check-inkwave-hud-authority.mjs']);
+  'scripts/check-inkwave-hud-authority.mjs', 'scripts/lib/inkwave-frozen-hud-capture.mjs']);
 const browserChecker = fs.readFileSync(path.join(repo, 'scripts/check-inkwave-browser.mjs'), 'utf8');
 for (const [, relative] of browserChecker.matchAll(/^import .* from '(\.\/lib\/[^']+\.mjs)';$/gm))
   verifierFiles.add(path.posix.join('scripts', relative));
