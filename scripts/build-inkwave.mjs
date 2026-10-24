@@ -134,8 +134,10 @@ for (const file of walk(SRC)) {
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   const ext = path.extname(file);
   // The Basis transcoder is a classic script that KTX2Loader inlines into a
-  // Worker blob; it must stay byte-identical, never an ES module.
-  if (rel.startsWith(path.join('vendor', 'three', 'jsm', 'libs', 'basis') + path.sep)) { fs.copyFileSync(file, dst); continue; }
+  // Worker blob; it must stay byte-identical, never an ES module. KTX2Loader
+  // itself also ships byte-identical, so the audio-orphan scan can seal the
+  // exact strings its Worker blob is built from (lazy: prebuilt stages only).
+  if (rel.startsWith(path.join('vendor', 'three', 'jsm', 'libs', 'basis') + path.sep) || rel === path.join('vendor', 'three', 'jsm', 'loaders', 'KTX2Loader.js')) { fs.copyFileSync(file, dst); continue; }
   if (ext === '.js' || ext === '.mjs' || ext === '.css') {
     const code = composeSource(rel, fs.readFileSync(file, 'utf8'));
     // Its asset inventory is not complete until the late overlays finish.

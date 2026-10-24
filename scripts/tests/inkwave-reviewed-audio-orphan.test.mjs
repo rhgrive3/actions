@@ -149,9 +149,30 @@ test('the vendored KTX2 transcoder worker is exempt only as its exact reviewed b
   assert.equal(decide(transcoder + '\n', transcoderPath).omit, false, 'changed transcoder bytes are scanned again');
   assert.equal(decide('new Function("x")', transcoderPath).omit, false);
 });
-test('KTX2Loader may start only its own Blob worker URL', () => {
+test('the sealed KTX2Loader may start only its one reviewed Blob worker, as its exact shipped bytes', () => {
   const loaderPath = 'vendor/three/jsm/loaders/KTX2Loader.js';
-  assert.equal(decide('class K { init() { return new Worker(this.workerSourceURL); } }', loaderPath).omit, true);
-  assert.equal(decide('class K { init() { return new Worker(this.otherURL); } }', loaderPath).omit, false);
-  assert.equal(decide('class K { init() { return new Worker(this.workerSourceURL); } }', 'src/probe.js').omit, false, 'the exemption is not global');
+  const loader = fs.readFileSync(new URL('../../inkwave-public/' + loaderPath, import.meta.url), 'utf8');
+  // The builder ships this file byte-identical, so the scan sees the vendored bytes.
+  const scan = (code, file = loaderPath) => decide(code, file).omit;
+  assert.equal(scan(loader), true, 'exact vendored loader');
+  const helper = `'/patches/splatoon3/runtime/audio/' + 'charge-' + 'hit-cue.mjs'`;
+  const mutations = {
+    'Blob body string': loader.replace("].join( '\\n' );", `'import(${JSON.stringify("/patches/splatoon3/runtime/audio/")} + "charge-" + "hit-cue.mjs");',\n\t\t\t\t].join( '\\n' );`),
+    'Blob body code': loader.replace(/(KTX2Loader\.BasisWorker = function \(\) \{)/, `$1\n\timport(${helper});`),
+    'rebound URL': loader.replace('this.workerSourceURL = URL.createObjectURL( new Blob( [ body ] ) );', `this.workerSourceURL = ${helper};`),
+    'module worker options': loader.replace('new Worker( this.workerSourceURL )', "new Worker( this.workerSourceURL, { type: 'module' } )"),
+    'SharedWorker kind': loader.replace('new Worker( this.workerSourceURL )', 'new SharedWorker( this.workerSourceURL )'),
+    'extra site': loader.replace('const worker = new Worker( this.workerSourceURL );', 'const worker = new Worker( this.workerSourceURL ); new Worker( this.workerSourceURL );'),
+  };
+  for (const [name, mutated] of Object.entries(mutations)) {
+    assert.notEqual(mutated, loader, name + ' applies');
+    assert.equal(scan(mutated), false, name + ' retains the helper');
+  }
+  assert.equal(scan(loader + '\n'), false, 'any byte change voids the seal');
+  assert.equal(scan(loader, 'src/probe.js'), false, 'the seal is bound to the loader path');
+});
+test('the builder ships KTX2Loader and the transcoder byte-identical', () => {
+  const build = fs.readFileSync(new URL('../build-inkwave.mjs', import.meta.url), 'utf8');
+  assert.match(build, /rel === path\.join\('vendor', 'three', 'jsm', 'loaders', 'KTX2Loader\.js'\)\) \{ fs\.copyFileSync\(file, dst\); continue; \}/);
+  assert.match(build, /rel\.startsWith\(path\.join\('vendor', 'three', 'jsm', 'libs', 'basis'\) \+ path\.sep\)/);
 });

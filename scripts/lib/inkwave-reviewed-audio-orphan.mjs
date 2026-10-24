@@ -25,6 +25,17 @@ const closureHashes = new Map([
 const sealedWorkerScripts = new Map([
   ['vendor/three/jsm/libs/basis/basis_transcoder.js', '8478b5b6d6b74e7d3082b89f6417321d8d1dc0307f2b30d4484bb11b441696a1'],
 ]);
+// KTX2Loader builds its transcoder Worker from strings in its own source (a
+// Blob of its worker function plus the sealed transcoder). It ships
+// byte-identical (see build-inkwave.mjs); only these exact bytes may hold the
+// single reviewed site, a one-argument `new Worker(this.workerSourceURL)`.
+// Any other content is scanned as usual.
+const sealedLoaders = new Map([
+  ['vendor/three/jsm/loaders/KTX2Loader.js', '3a3233ce3409443076d3414b78832e1405fcfac5ecb34d367365fd0781127d6c'],
+]);
+const isReviewedLoaderWorker = node => node.type === 'NewExpression' && node.callee?.type === 'Identifier' && node.callee.name === 'Worker'
+  && node.arguments.length === 1 && node.arguments[0].type === 'MemberExpression' && !node.arguments[0].computed
+  && node.arguments[0].object?.type === 'ThisExpression' && node.arguments[0].property?.name === 'workerSourceURL';
 const clean = value => JSON.parse(JSON.stringify(value, (key, item) => ['start', 'end', 'loc', 'raw'].includes(key) ? undefined : item));
 // These complete QA URL expressions were included in the current graph review.
 const reviewedURLs = new Map([
@@ -32,9 +43,6 @@ const reviewedURLs = new Map([
   ['patches/local-quality/quality-probe.mjs', ['src/config.js']],
 ].map(([file, paths]) => [file, paths.map(target => JSON.stringify(clean(parse(
   `new URL(${JSON.stringify(target)}, document.baseURI).href`, { ecmaVersion: 'latest', sourceType: 'module' }).body[0].expression)))]));
-// KTX2Loader starts its transcoder as a Blob Worker built from its own worker
-// function and the sealed transcoder script: `new Worker(this.workerSourceURL)`.
-reviewedURLs.set('vendor/three/jsm/loaders/KTX2Loader.js', [JSON.stringify(clean(parse('this.workerSourceURL', { ecmaVersion: 'latest', sourceType: 'module' }).body[0].expression))]);
 export function reviewedLoaderClosure(file, source) {
   const nodes = [], parents = new WeakMap();
   const visit = (node, parent) => { if (!node?.type) return; nodes.push(node); parents.set(node, parent);
@@ -80,8 +88,12 @@ export function reviewedAudioOrphanDecision(authoredSource, modules, composedOwn
   const sites = new Map(); let reference = null, parseFailure = null;
   for (const [file, source] of modules) {
     if (file === REVIEWED_AUDIO_ORPHAN) continue;
-    if (sealedWorkerScripts.get(file) === createHash('sha256').update(source).digest('hex')) continue;
-    let ast; try { ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module' }); }
+    const digest = createHash('sha256').update(source).digest('hex');
+    if (sealedWorkerScripts.get(file) === digest) continue;
+    const sealedLoader = sealedLoaders.get(file) === digest;
+    let reviewedLoaderSites = 0;
+    let ast;
+    try { ast = parse(source, { ecmaVersion: 'latest', sourceType: 'module' }); }
     catch { parseFailure = file; break; }
     const walk = node => {
       if (!node || typeof node !== 'object') return;
@@ -94,7 +106,8 @@ export function reviewedAudioOrphanDecision(authoredSource, modules, composedOwn
       if ((node.type === 'Identifier' && ['eval', 'Function'].includes(node.name)) || (node.type === 'Literal' && ['eval', 'Function'].includes(node.value))) reference = file + ' (unreviewed code generation)';
       const kind = node.type === 'ImportExpression' ? 'import'
         : node.type === 'NewExpression' && ['Worker', 'SharedWorker'].includes(node.callee?.name) ? 'worker' : null;
-      if (kind) {
+      if (kind && sealedLoader && isReviewedLoaderWorker(node)) reviewedLoaderSites++;
+      else if (kind) {
         const target = kind === 'import' ? node.source : node.arguments[0];
         const expression = target?.type === 'MemberExpression' && !target.computed && target.property?.name === 'href' ? target.object : target;
         const base = expression?.arguments?.[1];
@@ -108,6 +121,7 @@ export function reviewedAudioOrphanDecision(authoredSource, modules, composedOwn
       }
       for (const value of Object.values(node)) if (Array.isArray(value)) value.forEach(walk); else if (value && typeof value === 'object') walk(value);
     }; walk(ast);
+    if (sealedLoader && reviewedLoaderSites !== 1) return keep('sealed loader site count changed: ' + file);
   }
   if (parseFailure) return keep('unparsed module: ' + parseFailure);
   if (reference) return keep('module reference: ' + reference);
