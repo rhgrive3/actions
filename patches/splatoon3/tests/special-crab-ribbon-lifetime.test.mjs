@@ -55,7 +55,8 @@ function fixture(api) {
   const d = Object.create(api.Director.prototype);
   d.kit = { ribbons: pool, glowRibbons: { end() {} } }; d.tracks = new Map(); d.errors = 0;
   const actor = { alive: true, specialActive: { id: 'crabTank', pose: 'ball' } };
-  const ribbon = { pts: [[0, 0, 0, 0], [1, 0, 0, 0]], ended: false, o: { life: .5 } };
+  const samples = [[0, 0, 0, 0], [1, 0, 0, 0]];
+  const ribbon = { pts: samples.slice(), samples, head: 0, count: 2, ended: false, o: { life: .5 } };
   pool.list.push(ribbon); const track = { id: 'crabTank', d: { rollRib: ribbon } }; d.tracks.set(actor, track);
   return { d, actor, track, ribbon, pool };
 }

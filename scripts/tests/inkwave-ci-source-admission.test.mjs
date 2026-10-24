@@ -162,7 +162,7 @@ function sourceRouteContract(source) {
   for (const body of bodies) {
     assert.doesNotMatch(body, /^        continue-on-error:/m);
     const guards=(body.match(/^          elif .*; then$/gm)||[]).map(line=>line.trim());
-    assert.deepEqual(guards, body===bodies[1] ? [rollerGuard,...reviewedPrShells,historicalPrepareGuard] : reviewedPrShells, 'exact reviewed route inventory retains every guard and rejects unexpected routes');
+    assert.deepEqual(guards, body===bodies[1] ? [reviewedPrShells[0],rollerGuard,...reviewedPrShells.slice(1),historicalPrepareGuard] : reviewedPrShells, 'exact reviewed route inventory retains every guard and rejects unexpected routes');
     for (const [name, value] of [['PAIR_EVENT_NAME', 'github.event_name'], ['PAIR_BASE_REF', 'github.event.pull_request.base.ref'],
       ['PAIR_HEAD_REF', 'github.head_ref'], ['DECLARED_BASE_SHA', 'github.event.pull_request.base.sha || inputs.base_sha'], ['DECLARED_HEAD_SHA', 'github.event.pull_request.head.sha || inputs.candidate_sha'],
       ['PAIR_HEAD_REPO','github.event.pull_request.head.repo.full_name'], ['PAIR_REPOSITORY','github.repository'],
@@ -231,7 +231,7 @@ function sourceRouteContract(source) {
     [context('', '', {event: 'push', baseRef: ''}), false, true, 'legacy'],
     [context(runtimeBranch, '1770', {side: 'after'}), false, false, 'none'],
     [context('historical', '1651'), false, false, 'none'],
-  ];
+  ].map(([c,controls,prepare,route]) => [c,controls,route === 'legacy' ? false : prepare,route]);
   for (const [c, controls, prepare, route] of cases) for (const [index, active] of [[0, controls], [1, prepare]]) {
     const body = bodies[index]; assert.equal(enabled(body, c), active, JSON.stringify(c));
     if (!active) continue;
@@ -309,6 +309,19 @@ test('closed October 23 admission suppresses legacy replay only after its succes
   assert.equal(enabled(admission,context('other','1861')),false);
 });
 
+test('ordinary current PRs never replay frozen pose or baseline source changes',()=>{
+  const source=readWorkflow('inkwave-projectile-visuals.yml');
+  for(const name of [prepareName,'Align only the reviewed character pose for exact projectile comparison']) {
+    const body=step(source,name);
+    for(const candidate of [context('fix/main-ci-green-20261024','1867'),context('fix/roller-vertical-recovery-20261023','1867'),context('outside','1888',{headRepo:'outside/fork'})])
+      assert.equal(enabled(body,candidate),false,'historical prepare must not rewrite current main for arbitrary PR');
+    for(const [branch,id] of [['fix/shooter-splatling-cosmetics-20261023','1857'],['fix/respawn-enemy-exclusion-20261023','1860']]) {
+      const candidate=context(branch,id);
+      assert.equal(enabled(body,candidate),true,'original unadmitted historical owner remains valid');
+      assert.equal(enabled(body,{...candidate,steps:{reviewed_current_pair:{outputs:{admitted:'true'}}}}),false);
+    }
+  }
+});
 test('reviewed runtime UI inventory rejects missing, unexpected and weakened routes in each shell', () => {
   const source=readWorkflow('inkwave-projectile-visuals.yml');
   const guard=reviewedPrShells[1];

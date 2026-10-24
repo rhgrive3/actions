@@ -38,4 +38,4 @@ for(const [label,file] of [['baseline',base],['candidate',candidate]])for(const 
  run('equal elapsed rotation at 30 60 120 Hz',()=>{let reference;for(const hz of [30,60,120]){const f=fixture();for(let i=0;i<hz;i++)step(f,1/hz);assert.ok(f.t.d.jumpRibs);const angles=f.t.d.jumpRibs.map(q=>q.ang);if(reference)angles.forEach((a,i)=>assert.ok(Math.abs(a-reference[i])<1e-10));else reference=angles;}});
  console.log(label,emitted?'production-transform':'source',passed,'pass',failed,'fail');
 }
-if(process.env.KRAKEN_VFX_RECEIPT) fs.writeFileSync(process.env.KRAKEN_VFX_RECEIPT,JSON.stringify(results,null,2));assert.equal(results.filter(r=>r.label==='candidate'&&!r.pass).length,0);assert.equal(results.filter(r=>r.label==='baseline'&&!r.pass).length,12);
+if(process.env.KRAKEN_VFX_RECEIPT) fs.writeFileSync(process.env.KRAKEN_VFX_RECEIPT,JSON.stringify(results,null,2));assert.equal(results.filter(r=>r.label==='candidate'&&!r.pass).length,0);assert.equal(results.filter(r=>r.label==='baseline'&&!r.pass).length,14); // every source and emitted negative control now detects missing spin lifecycle
