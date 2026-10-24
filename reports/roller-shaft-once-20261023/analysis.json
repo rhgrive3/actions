@@ -1,0 +1,2682 @@
+{
+  "scope": "Actual Chromium production composition at60Hz, matching selected character/gear/palette/geometry/camera/native phase. FX particles differ across fresh/reused contexts; not whole-image pixel parity. Two specified input traces; completed30Hz and missing/failed120Hz tracked separately. INKWAVE world units and finite simulation-tick derivatives, not encoded retail frames or Nintendo acceptance.",
+  "status": "two regressions repaired; whole motion/retail/early-release acceptance open",
+  "refresh": [
+    {
+      "role": "before",
+      "scenario": "repress-edge",
+      "hz": 30,
+      "status": "passed"
+    },
+    {
+      "role": "before",
+      "scenario": "repress-edge",
+      "hz": 120,
+      "status": "not accepted",
+      "reason": "Baseline reused-context repress-edge tick65 screenshot timed out at60000ms; late-edge was not reached."
+    },
+    {
+      "role": "ecf5",
+      "scenario": "repress-edge",
+      "hz": 30,
+      "status": "not accepted",
+      "reason": "No completed actual-browser receipt; fixed-clock source/emitted success is separate."
+    },
+    {
+      "role": "ecf5",
+      "scenario": "repress-edge",
+      "hz": 120,
+      "status": "not accepted",
+      "reason": "No completed actual-browser receipt; fixed-clock source/emitted success is separate."
+    },
+    {
+      "role": "candidate",
+      "scenario": "repress-edge",
+      "hz": 30,
+      "status": "not accepted",
+      "reason": "No completed actual-browser receipt; fixed-clock source/emitted success is separate."
+    },
+    {
+      "role": "candidate",
+      "scenario": "repress-edge",
+      "hz": 120,
+      "status": "not accepted",
+      "reason": "No completed actual-browser receipt; fixed-clock source/emitted success is separate."
+    },
+    {
+      "role": "before",
+      "scenario": "late-edge",
+      "hz": 30,
+      "status": "passed"
+    },
+    {
+      "role": "before",
+      "scenario": "late-edge",
+      "hz": 120,
+      "status": "not accepted",
+      "reason": "Baseline reused-context repress-edge tick65 screenshot timed out at60000ms; late-edge was not reached."
+    },
+    {
+      "role": "ecf5",
+      "scenario": "late-edge",
+      "hz": 30,
+      "status": "not accepted",
+      "reason": "No completed actual-browser receipt; fixed-clock source/emitted success is separate."
+    },
+    {
+      "role": "ecf5",
+      "scenario": "late-edge",
+      "hz": 120,
+      "status": "not accepted",
+      "reason": "No completed actual-browser receipt; fixed-clock source/emitted success is separate."
+    },
+    {
+      "role": "candidate",
+      "scenario": "late-edge",
+      "hz": 30,
+      "status": "not accepted",
+      "reason": "No completed actual-browser receipt; fixed-clock source/emitted success is separate."
+    },
+    {
+      "role": "candidate",
+      "scenario": "late-edge",
+      "hz": 120,
+      "status": "not accepted",
+      "reason": "No completed actual-browser receipt; fixed-clock source/emitted success is separate."
+    }
+  ],
+  "knownRemaining": [
+    {
+      "release": 40,
+      "status": "not repaired; not accepted",
+      "before": {
+        "range": [
+          46,
+          58
+        ],
+        "maxStep": {
+          "tick": 49,
+          "step": 0.5417888298134396,
+          "acceleration": 1947.4085602586638,
+          "finiteJerk": 132183.21450287558
+        },
+        "maxAcceleration": {
+          "tick": 49,
+          "step": 0.5417888298134396,
+          "acceleration": 1947.4085602586638,
+          "finiteJerk": 132183.21450287558
+        },
+        "maxFiniteJerk": {
+          "tick": 50,
+          "step": 0.4584875888363668,
+          "acceleration": 1536.0612015806744,
+          "finiteJerk": 140383.96830826032
+        },
+        "totalDistance": 2.8225072580005452,
+        "ticks": [
+          {
+            "tick": 39,
+            "step": 0.0929088396440157,
+            "acceleration": 1.85677213812593,
+            "finiteJerk": 161.81612768934863
+          },
+          {
+            "tick": 40,
+            "step": 0.2546494835286699,
+            "acceleration": 1153.4042038003988,
+            "finiteJerk": 69143.11999494085
+          },
+          {
+            "tick": 41,
+            "step": 0.00295103407728581,
+            "acceleration": 923.9037034680583,
+            "finiteJerk": 123796.19012017545
+          },
+          {
+            "tick": 42,
+            "step": 0.004081356531353014,
+            "acceleration": 15.976178255861777,
+            "finiteJerk": 55180.17407781864
+          },
+          {
+            "tick": 43,
+            "step": 0.005286684951833965,
+            "acceleration": 8.64004511200954,
+            "finiteJerk": 607.7066251415071
+          },
+          {
+            "tick": 44,
+            "step": 0.006110836978331718,
+            "acceleration": 6.385724288245547,
+            "finiteJerk": 227.2648088352609
+          },
+          {
+            "tick": 45,
+            "step": 0.006863540086541639,
+            "acceleration": 4.606871577407292,
+            "finiteJerk": 110.07458909561453
+          },
+          {
+            "tick": 46,
+            "step": 0.007344282426383848,
+            "acceleration": 2.7322673502688173,
+            "finiteJerk": 114.4564370182732
+          },
+          {
+            "tick": 47,
+            "step": 0.19246436324782454,
+            "acceleration": 719.1891153274162,
+            "finiteJerk": 43271.443998347444
+          },
+          {
+            "tick": 48,
+            "step": 0.3992364174898025,
+            "acceleration": 848.8173165536039,
+            "finiteJerk": 34886.232258996664
+          },
+          {
+            "tick": 49,
+            "step": 0.5417888298134396,
+            "acceleration": 1947.4085602586638,
+            "finiteJerk": 132183.21450287558
+          },
+          {
+            "tick": 50,
+            "step": 0.4584875888363668,
+            "acceleration": 1536.0612015806744,
+            "finiteJerk": 140383.96830826032
+          },
+          {
+            "tick": 51,
+            "step": 0.465887958013998,
+            "acceleration": 1092.7805772051922,
+            "finiteJerk": 101994.29494920032
+          },
+          {
+            "tick": 52,
+            "step": 0.3732611275928342,
+            "acceleration": 800.0327579957002,
+            "finiteJerk": 75384.77126872464
+          },
+          {
+            "tick": 53,
+            "step": 0.23824965914966112,
+            "acceleration": 603.2852122837289,
+            "finiteJerk": 38621.85258918084
+          },
+          {
+            "tick": 54,
+            "step": 0.11198214431440684,
+            "acceleration": 468.39656717848345,
+            "finiteJerk": 22046.94515801209
+          },
+          {
+            "tick": 55,
+            "step": 0.030239201121926608,
+            "acceleration": 294.999278715439,
+            "finiteJerk": 12617.877765607735
+          },
+          {
+            "tick": 56,
+            "step": 0.0006382231591079196,
+            "acceleration": 106.84067222535975,
+            "finiteJerk": 11382.865115396582
+          },
+          {
+            "tick": 57,
+            "step": 0.0018128217118414164,
+            "acceleration": 8.116162083515809,
+            "finiteJerk": 5957.100341302285
+          },
+          {
+            "tick": 58,
+            "step": 0.0011146411229512835,
+            "acceleration": 2.735334729382582,
+            "finiteJerk": 650.6530726611633
+          }
+        ]
+      },
+      "ecf5": {
+        "range": [
+          46,
+          58
+        ],
+        "maxStep": {
+          "tick": 49,
+          "step": 0.5826947405649356,
+          "acceleration": 1704.1261675115545,
+          "finiteJerk": 98428.22449378076
+        },
+        "maxAcceleration": {
+          "tick": 50,
+          "step": 0.538373855685485,
+          "acceleration": 2035.259118344731,
+          "finiteJerk": 170947.4474461166
+        },
+        "maxFiniteJerk": {
+          "tick": 50,
+          "step": 0.538373855685485,
+          "acceleration": 2035.259118344731,
+          "finiteJerk": 170947.4474461166
+        },
+        "totalDistance": 2.878574701138544,
+        "ticks": [
+          {
+            "tick": 39,
+            "step": 0.0929088396440157,
+            "acceleration": 1.85677213812593,
+            "finiteJerk": 161.81612768934863
+          },
+          {
+            "tick": 40,
+            "step": 0.2546494835286699,
+            "acceleration": 1153.4042038003988,
+            "finiteJerk": 69143.11999494085
+          },
+          {
+            "tick": 41,
+            "step": 0.00295103407728581,
+            "acceleration": 923.9037034680583,
+            "finiteJerk": 123796.19012017545
+          },
+          {
+            "tick": 42,
+            "step": 0.004081356531353014,
+            "acceleration": 15.976178255861777,
+            "finiteJerk": 55180.17407781864
+          },
+          {
+            "tick": 43,
+            "step": 0.005286684951833965,
+            "acceleration": 8.64004511200954,
+            "finiteJerk": 607.7066251415071
+          },
+          {
+            "tick": 44,
+            "step": 0.006110836978331718,
+            "acceleration": 6.385724288245547,
+            "finiteJerk": 227.2648088352609
+          },
+          {
+            "tick": 45,
+            "step": 0.006863540086541639,
+            "acceleration": 4.606871577407292,
+            "finiteJerk": 110.07458909561453
+          },
+          {
+            "tick": 46,
+            "step": 0.007344282426383848,
+            "acceleration": 2.7322673502688173,
+            "finiteJerk": 114.4564370182732
+          },
+          {
+            "tick": 47,
+            "step": 0.05994099203579519,
+            "acceleration": 240.14354421036924,
+            "finiteJerk": 14550.888264548006
+          },
+          {
+            "tick": 48,
+            "step": 0.25446189159267907,
+            "acceleration": 716.7040212951558,
+            "finiteJerk": 30327.76578253842
+          },
+          {
+            "tick": 49,
+            "step": 0.5826947405649356,
+            "acceleration": 1704.1261675115545,
+            "finiteJerk": 98428.22449378076
+          },
+          {
+            "tick": 50,
+            "step": 0.538373855685485,
+            "acceleration": 2035.259118344731,
+            "finiteJerk": 170947.4474461166
+          },
+          {
+            "tick": 51,
+            "step": 0.28489859441109533,
+            "acceleration": 1295.2010512083964,
+            "finiteJerk": 141939.17158652947
+          },
+          {
+            "tick": 52,
+            "step": 0.36236614650445803,
+            "acceleration": 819.1325756626629,
+            "finiteJerk": 92603.3070158589
+          },
+          {
+            "tick": 53,
+            "step": 0.35412062979420356,
+            "acceleration": 528.2254335897803,
+            "finiteJerk": 63331.179883310986
+          },
+          {
+            "tick": 54,
+            "step": 0.2548690934367235,
+            "acceleration": 578.6719772362397,
+            "finiteJerk": 33063.64327225557
+          },
+          {
+            "tick": 55,
+            "step": 0.13646590526478083,
+            "acceleration": 492.9709226928808,
+            "finiteJerk": 24930.60574244038
+          },
+          {
+            "tick": 56,
+            "step": 0.040111106587211544,
+            "acceleration": 355.23112145776685,
+            "finiteJerk": 17623.812189060787
+          },
+          {
+            "tick": 57,
+            "step": 0.0018128217118414164,
+            "acceleration": 150.15808738823804,
+            "finiteJerk": 13479.059807132251
+          },
+          {
+            "tick": 58,
+            "step": 0.0011146411229512835,
+            "acceleration": 2.735334729382582,
+            "finiteJerk": 9138.785938934952
+          }
+        ]
+      },
+      "candidate": {
+        "range": [
+          46,
+          58
+        ],
+        "maxStep": {
+          "tick": 49,
+          "step": 0.5826947405649356,
+          "acceleration": 1704.1261675115545,
+          "finiteJerk": 98428.22449378076
+        },
+        "maxAcceleration": {
+          "tick": 50,
+          "step": 0.538373855685485,
+          "acceleration": 2035.259118344731,
+          "finiteJerk": 170947.4474461166
+        },
+        "maxFiniteJerk": {
+          "tick": 50,
+          "step": 0.538373855685485,
+          "acceleration": 2035.259118344731,
+          "finiteJerk": 170947.4474461166
+        },
+        "totalDistance": 2.878574701138544,
+        "ticks": [
+          {
+            "tick": 39,
+            "step": 0.0929088396440157,
+            "acceleration": 1.85677213812593,
+            "finiteJerk": 161.81612768934863
+          },
+          {
+            "tick": 40,
+            "step": 0.2546494835286699,
+            "acceleration": 1153.4042038003988,
+            "finiteJerk": 69143.11999494085
+          },
+          {
+            "tick": 41,
+            "step": 0.00295103407728581,
+            "acceleration": 923.9037034680583,
+            "finiteJerk": 123796.19012017545
+          },
+          {
+            "tick": 42,
+            "step": 0.004081356531353014,
+            "acceleration": 15.976178255861777,
+            "finiteJerk": 55180.17407781864
+          },
+          {
+            "tick": 43,
+            "step": 0.005286684951833965,
+            "acceleration": 8.64004511200954,
+            "finiteJerk": 607.7066251415071
+          },
+          {
+            "tick": 44,
+            "step": 0.006110836978331718,
+            "acceleration": 6.385724288245547,
+            "finiteJerk": 227.2648088352609
+          },
+          {
+            "tick": 45,
+            "step": 0.006863540086541639,
+            "acceleration": 4.606871577407292,
+            "finiteJerk": 110.07458909561453
+          },
+          {
+            "tick": 46,
+            "step": 0.007344282426383848,
+            "acceleration": 2.7322673502688173,
+            "finiteJerk": 114.4564370182732
+          },
+          {
+            "tick": 47,
+            "step": 0.05994099203579519,
+            "acceleration": 240.14354421036924,
+            "finiteJerk": 14550.888264548006
+          },
+          {
+            "tick": 48,
+            "step": 0.25446189159267907,
+            "acceleration": 716.7040212951558,
+            "finiteJerk": 30327.76578253842
+          },
+          {
+            "tick": 49,
+            "step": 0.5826947405649356,
+            "acceleration": 1704.1261675115545,
+            "finiteJerk": 98428.22449378076
+          },
+          {
+            "tick": 50,
+            "step": 0.538373855685485,
+            "acceleration": 2035.259118344731,
+            "finiteJerk": 170947.4474461166
+          },
+          {
+            "tick": 51,
+            "step": 0.28489859441109533,
+            "acceleration": 1295.2010512083964,
+            "finiteJerk": 141939.17158652947
+          },
+          {
+            "tick": 52,
+            "step": 0.36236614650445803,
+            "acceleration": 819.1325756626629,
+            "finiteJerk": 92603.3070158589
+          },
+          {
+            "tick": 53,
+            "step": 0.35412062979420356,
+            "acceleration": 528.2254335897803,
+            "finiteJerk": 63331.179883310986
+          },
+          {
+            "tick": 54,
+            "step": 0.2548690934367235,
+            "acceleration": 578.6719772362397,
+            "finiteJerk": 33063.64327225557
+          },
+          {
+            "tick": 55,
+            "step": 0.13646590526478083,
+            "acceleration": 492.9709226928808,
+            "finiteJerk": 24930.60574244038
+          },
+          {
+            "tick": 56,
+            "step": 0.040111106587211544,
+            "acceleration": 355.23112145776685,
+            "finiteJerk": 17623.812189060787
+          },
+          {
+            "tick": 57,
+            "step": 0.0018128217118414164,
+            "acceleration": 150.15808738823804,
+            "finiteJerk": 13479.059807132251
+          },
+          {
+            "tick": 58,
+            "step": 0.0011146411229512835,
+            "acceleration": 2.735334729382582,
+            "finiteJerk": 9138.785938934952
+          }
+        ]
+      }
+    },
+    {
+      "release": 46,
+      "status": "not repaired; not accepted",
+      "before": {
+        "range": [
+          46,
+          58
+        ],
+        "maxStep": {
+          "tick": 49,
+          "step": 0.5417888298134396,
+          "acceleration": 1947.4085602586638,
+          "finiteJerk": 132183.21450287558
+        },
+        "maxAcceleration": {
+          "tick": 49,
+          "step": 0.5417888298134396,
+          "acceleration": 1947.4085602586638,
+          "finiteJerk": 132183.21450287558
+        },
+        "maxFiniteJerk": {
+          "tick": 50,
+          "step": 0.4584875888363668,
+          "acceleration": 1536.0612015806744,
+          "finiteJerk": 140383.96830826032
+        },
+        "totalDistance": 2.8225072580005452,
+        "ticks": [
+          {
+            "tick": 39,
+            "step": 0.0929088396440157,
+            "acceleration": 1.85677213812593,
+            "finiteJerk": 161.81612768934863
+          },
+          {
+            "tick": 40,
+            "step": 0.2546494835286699,
+            "acceleration": 1153.4042038003988,
+            "finiteJerk": 69143.11999494085
+          },
+          {
+            "tick": 41,
+            "step": 0.00295103407728581,
+            "acceleration": 923.9037034680583,
+            "finiteJerk": 123796.19012017545
+          },
+          {
+            "tick": 42,
+            "step": 0.004081356531353014,
+            "acceleration": 15.976178255861777,
+            "finiteJerk": 55180.17407781864
+          },
+          {
+            "tick": 43,
+            "step": 0.005286684951833965,
+            "acceleration": 8.64004511200954,
+            "finiteJerk": 607.7066251415071
+          },
+          {
+            "tick": 44,
+            "step": 0.006110836978331718,
+            "acceleration": 6.385724288245547,
+            "finiteJerk": 227.2648088352609
+          },
+          {
+            "tick": 45,
+            "step": 0.006863540086541639,
+            "acceleration": 4.606871577407292,
+            "finiteJerk": 110.07458909561453
+          },
+          {
+            "tick": 46,
+            "step": 0.007344282426383848,
+            "acceleration": 2.7322673502688173,
+            "finiteJerk": 114.4564370182732
+          },
+          {
+            "tick": 47,
+            "step": 0.19246436324782454,
+            "acceleration": 719.1891153274162,
+            "finiteJerk": 43271.443998347444
+          },
+          {
+            "tick": 48,
+            "step": 0.3992364174898025,
+            "acceleration": 848.8173165536039,
+            "finiteJerk": 34886.232258996664
+          },
+          {
+            "tick": 49,
+            "step": 0.5417888298134396,
+            "acceleration": 1947.4085602586638,
+            "finiteJerk": 132183.21450287558
+          },
+          {
+            "tick": 50,
+            "step": 0.4584875888363668,
+            "acceleration": 1536.0612015806744,
+            "finiteJerk": 140383.96830826032
+          },
+          {
+            "tick": 51,
+            "step": 0.465887958013998,
+            "acceleration": 1092.7805772051922,
+            "finiteJerk": 101994.29494920032
+          },
+          {
+            "tick": 52,
+            "step": 0.3732611275928342,
+            "acceleration": 800.0327579957002,
+            "finiteJerk": 75384.77126872464
+          },
+          {
+            "tick": 53,
+            "step": 0.23824965914966112,
+            "acceleration": 603.2852122837289,
+            "finiteJerk": 38621.85258918084
+          },
+          {
+            "tick": 54,
+            "step": 0.11198214431440684,
+            "acceleration": 468.39656717848345,
+            "finiteJerk": 22046.94515801209
+          },
+          {
+            "tick": 55,
+            "step": 0.030239201121926608,
+            "acceleration": 294.999278715439,
+            "finiteJerk": 12617.877765607735
+          },
+          {
+            "tick": 56,
+            "step": 0.0006382231591079196,
+            "acceleration": 106.84067222535975,
+            "finiteJerk": 11382.865115396582
+          },
+          {
+            "tick": 57,
+            "step": 0.0018128217118414164,
+            "acceleration": 8.116162083515809,
+            "finiteJerk": 5957.100341302285
+          },
+          {
+            "tick": 58,
+            "step": 0.0011146411229512835,
+            "acceleration": 2.735334729382582,
+            "finiteJerk": 650.6530726611633
+          }
+        ]
+      },
+      "ecf5": {
+        "range": [
+          46,
+          58
+        ],
+        "maxStep": {
+          "tick": 49,
+          "step": 0.5826947405649356,
+          "acceleration": 1704.1261675115545,
+          "finiteJerk": 98428.22449378076
+        },
+        "maxAcceleration": {
+          "tick": 50,
+          "step": 0.538373855685485,
+          "acceleration": 2035.259118344731,
+          "finiteJerk": 170947.4474461166
+        },
+        "maxFiniteJerk": {
+          "tick": 50,
+          "step": 0.538373855685485,
+          "acceleration": 2035.259118344731,
+          "finiteJerk": 170947.4474461166
+        },
+        "totalDistance": 2.878574701138544,
+        "ticks": [
+          {
+            "tick": 39,
+            "step": 0.0929088396440157,
+            "acceleration": 1.85677213812593,
+            "finiteJerk": 161.81612768934863
+          },
+          {
+            "tick": 40,
+            "step": 0.2546494835286699,
+            "acceleration": 1153.4042038003988,
+            "finiteJerk": 69143.11999494085
+          },
+          {
+            "tick": 41,
+            "step": 0.00295103407728581,
+            "acceleration": 923.9037034680583,
+            "finiteJerk": 123796.19012017545
+          },
+          {
+            "tick": 42,
+            "step": 0.004081356531353014,
+            "acceleration": 15.976178255861777,
+            "finiteJerk": 55180.17407781864
+          },
+          {
+            "tick": 43,
+            "step": 0.005286684951833965,
+            "acceleration": 8.64004511200954,
+            "finiteJerk": 607.7066251415071
+          },
+          {
+            "tick": 44,
+            "step": 0.006110836978331718,
+            "acceleration": 6.385724288245547,
+            "finiteJerk": 227.2648088352609
+          },
+          {
+            "tick": 45,
+            "step": 0.006863540086541639,
+            "acceleration": 4.606871577407292,
+            "finiteJerk": 110.07458909561453
+          },
+          {
+            "tick": 46,
+            "step": 0.007344282426383848,
+            "acceleration": 2.7322673502688173,
+            "finiteJerk": 114.4564370182732
+          },
+          {
+            "tick": 47,
+            "step": 0.05994099203579519,
+            "acceleration": 240.14354421036924,
+            "finiteJerk": 14550.888264548006
+          },
+          {
+            "tick": 48,
+            "step": 0.25446189159267907,
+            "acceleration": 716.7040212951558,
+            "finiteJerk": 30327.76578253842
+          },
+          {
+            "tick": 49,
+            "step": 0.5826947405649356,
+            "acceleration": 1704.1261675115545,
+            "finiteJerk": 98428.22449378076
+          },
+          {
+            "tick": 50,
+            "step": 0.538373855685485,
+            "acceleration": 2035.259118344731,
+            "finiteJerk": 170947.4474461166
+          },
+          {
+            "tick": 51,
+            "step": 0.28489859441109533,
+            "acceleration": 1295.2010512083964,
+            "finiteJerk": 141939.17158652947
+          },
+          {
+            "tick": 52,
+            "step": 0.36236614650445803,
+            "acceleration": 819.1325756626629,
+            "finiteJerk": 92603.3070158589
+          },
+          {
+            "tick": 53,
+            "step": 0.35412062979420356,
+            "acceleration": 528.2254335897803,
+            "finiteJerk": 63331.179883310986
+          },
+          {
+            "tick": 54,
+            "step": 0.2548690934367235,
+            "acceleration": 578.6719772362397,
+            "finiteJerk": 33063.64327225557
+          },
+          {
+            "tick": 55,
+            "step": 0.13646590526478083,
+            "acceleration": 492.9709226928808,
+            "finiteJerk": 24930.60574244038
+          },
+          {
+            "tick": 56,
+            "step": 0.040111106587211544,
+            "acceleration": 355.23112145776685,
+            "finiteJerk": 17623.812189060787
+          },
+          {
+            "tick": 57,
+            "step": 0.0018128217118414164,
+            "acceleration": 150.15808738823804,
+            "finiteJerk": 13479.059807132251
+          },
+          {
+            "tick": 58,
+            "step": 0.0011146411229512835,
+            "acceleration": 2.735334729382582,
+            "finiteJerk": 9138.785938934952
+          }
+        ]
+      },
+      "candidate": {
+        "range": [
+          46,
+          58
+        ],
+        "maxStep": {
+          "tick": 49,
+          "step": 0.5826947405649356,
+          "acceleration": 1704.1261675115545,
+          "finiteJerk": 98428.22449378076
+        },
+        "maxAcceleration": {
+          "tick": 50,
+          "step": 0.538373855685485,
+          "acceleration": 2035.259118344731,
+          "finiteJerk": 170947.4474461166
+        },
+        "maxFiniteJerk": {
+          "tick": 50,
+          "step": 0.538373855685485,
+          "acceleration": 2035.259118344731,
+          "finiteJerk": 170947.4474461166
+        },
+        "totalDistance": 2.878574701138544,
+        "ticks": [
+          {
+            "tick": 39,
+            "step": 0.0929088396440157,
+            "acceleration": 1.85677213812593,
+            "finiteJerk": 161.81612768934863
+          },
+          {
+            "tick": 40,
+            "step": 0.2546494835286699,
+            "acceleration": 1153.4042038003988,
+            "finiteJerk": 69143.11999494085
+          },
+          {
+            "tick": 41,
+            "step": 0.00295103407728581,
+            "acceleration": 923.9037034680583,
+            "finiteJerk": 123796.19012017545
+          },
+          {
+            "tick": 42,
+            "step": 0.004081356531353014,
+            "acceleration": 15.976178255861777,
+            "finiteJerk": 55180.17407781864
+          },
+          {
+            "tick": 43,
+            "step": 0.005286684951833965,
+            "acceleration": 8.64004511200954,
+            "finiteJerk": 607.7066251415071
+          },
+          {
+            "tick": 44,
+            "step": 0.006110836978331718,
+            "acceleration": 6.385724288245547,
+            "finiteJerk": 227.2648088352609
+          },
+          {
+            "tick": 45,
+            "step": 0.006863540086541639,
+            "acceleration": 4.606871577407292,
+            "finiteJerk": 110.07458909561453
+          },
+          {
+            "tick": 46,
+            "step": 0.007344282426383848,
+            "acceleration": 2.7322673502688173,
+            "finiteJerk": 114.4564370182732
+          },
+          {
+            "tick": 47,
+            "step": 0.05994099203579519,
+            "acceleration": 240.14354421036924,
+            "finiteJerk": 14550.888264548006
+          },
+          {
+            "tick": 48,
+            "step": 0.25446189159267907,
+            "acceleration": 716.7040212951558,
+            "finiteJerk": 30327.76578253842
+          },
+          {
+            "tick": 49,
+            "step": 0.5826947405649356,
+            "acceleration": 1704.1261675115545,
+            "finiteJerk": 98428.22449378076
+          },
+          {
+            "tick": 50,
+            "step": 0.538373855685485,
+            "acceleration": 2035.259118344731,
+            "finiteJerk": 170947.4474461166
+          },
+          {
+            "tick": 51,
+            "step": 0.28489859441109533,
+            "acceleration": 1295.2010512083964,
+            "finiteJerk": 141939.17158652947
+          },
+          {
+            "tick": 52,
+            "step": 0.36236614650445803,
+            "acceleration": 819.1325756626629,
+            "finiteJerk": 92603.3070158589
+          },
+          {
+            "tick": 53,
+            "step": 0.35412062979420356,
+            "acceleration": 528.2254335897803,
+            "finiteJerk": 63331.179883310986
+          },
+          {
+            "tick": 54,
+            "step": 0.2548690934367235,
+            "acceleration": 578.6719772362397,
+            "finiteJerk": 33063.64327225557
+          },
+          {
+            "tick": 55,
+            "step": 0.13646590526478083,
+            "acceleration": 492.9709226928808,
+            "finiteJerk": 24930.60574244038
+          },
+          {
+            "tick": 56,
+            "step": 0.040111106587211544,
+            "acceleration": 355.23112145776685,
+            "finiteJerk": 17623.812189060787
+          },
+          {
+            "tick": 57,
+            "step": 0.0018128217118414164,
+            "acceleration": 150.15808738823804,
+            "finiteJerk": 13479.059807132251
+          },
+          {
+            "tick": 58,
+            "step": 0.0011146411229512835,
+            "acceleration": 2.735334729382582,
+            "finiteJerk": 9138.785938934952
+          }
+        ]
+      }
+    }
+  ],
+  "cases": [
+    {
+      "scenario": "repress-edge",
+      "conditions": {
+        "name": "Roller Recovery QA",
+        "seed": 3564230742,
+        "style": {
+          "hair": 0,
+          "skin": 2,
+          "outfit": 0,
+          "eyes": 0,
+          "hat": 0,
+          "brows": 0
+        },
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "palette": {
+          "id": "aqua-cherry",
+          "a": "#10d2e6",
+          "b": "#ff4150",
+          "names": [
+            "アクア",
+            "チェリー"
+          ]
+        },
+        "teamHex": [
+          "#10d2e6",
+          "#ff4150"
+        ],
+        "teamLinear": [
+          [
+            0.005181516700061659,
+            0.6444796819634361,
+            0.7912979403281551
+          ],
+          [
+            1,
+            0.05286064701616471,
+            0.08021982030622662
+          ]
+        ],
+        "actorTeam": 0,
+        "actorColor": [
+          0.005181516700061659,
+          0.6444796819634361,
+          0.7912979403281551
+        ],
+        "characterColor": [
+          0.005181516700061659,
+          0.6444796819634361,
+          0.7912979403281551
+        ],
+        "weaponId": "roller",
+        "weaponModel": "roller",
+        "weaponAppearance": "roller",
+        "geometrySha256": "b984d502777fda1948cef806a72e952639d709432fab328283ae48ab0c739f56",
+        "geometryCount": 25,
+        "sourceMotion": {
+          "status": "ready",
+          "active": true,
+          "variant": "Player00"
+        },
+        "uniforms": {
+          "uShirt": [
+            0.9046611743890203,
+            0.8879231178794776,
+            0.8387990117372213
+          ],
+          "uShorts": [
+            0.02028856305209031,
+            0.02955683443236377,
+            0.06847816983662762
+          ],
+          "uShoe": [
+            0.02028856305209031,
+            0.024157632443547246,
+            0.0343398068028541
+          ],
+          "uSole": [
+            0.9046611743890203,
+            0.8879231178794776,
+            0.8387990117372213
+          ],
+          "uSock": [
+            0.9301108583738498,
+            0.9301108583738498,
+            0.9046611743890203
+          ],
+          "uStrap": [
+            0.02955683443236377,
+            0.0343398068028541,
+            0.04666508633021928
+          ],
+          "uPattern": 0,
+          "uIris": [
+            1,
+            0.623960391667596,
+            0.04231141061442144
+          ],
+          "uIris2": [
+            1,
+            0.19461783043107173,
+            0
+          ]
+        },
+        "origin": [
+          0,
+          0,
+          0
+        ],
+        "characterTime": 1.9999999999999978,
+        "globalTime": 12.0000000000001,
+        "initialPose": [
+          0.03002041019499302,
+          -0.044005442410707474,
+          0,
+          0.07000000029802322,
+          0.055380139499902725,
+          0.08005442470312119,
+          -0.029999999329447746,
+          0,
+          -0.03956574946641922,
+          -0.012000000104308128,
+          -0.014366310089826584,
+          -0.03502381220459938,
+          -0.01980794407427311,
+          -0.2550000250339508,
+          0,
+          0,
+          0,
+          0.03502381220459938,
+          0,
+          -0.2800000011920929,
+          0.019999999552965164,
+          0,
+          0.10000000149011612,
+          0.019999999552965164,
+          0,
+          0,
+          0.17000000178813934,
+          0,
+          0,
+          -0.10000000149011612,
+          -0.6200000047683716,
+          0,
+          0,
+          -0.30000001192092896,
+          0,
+          0,
+          0,
+          0,
+          -0.2199999988079071,
+          0,
+          0,
+          0.10000000149011612,
+          0.09200000017881393,
+          0.08500000089406967,
+          -0.004000000189989805,
+          0,
+          0.10000000149011612,
+          0,
+          -0.09200000017881393,
+          0.08500000089406967,
+          -0.004000000189989805,
+          0,
+          -0.10000000149011612,
+          0,
+          -0.07999999821186066,
+          0.800000011920929,
+          0.2800000011920929,
+          -2.5,
+          0.03999999910593033,
+          1,
+          -0.699999988079071,
+          -0.550000011920929,
+          -0.44999998807907104,
+          0.699999988079071,
+          -0.550000011920929,
+          -0.44999998807907104,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0.8199999928474426,
+          1,
+          1,
+          0,
+          0,
+          0.75,
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -0.0234521571546793,
+          0.019999999552965164,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          -0.8500000834465027,
+          -0.0009602754143998027,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0.5,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngSeed": 123,
+        "settings": {
+          "sensitivity": 1,
+          "padSensitivity": 0,
+          "padInvertX": false,
+          "invertY": false,
+          "invertX": false,
+          "aimProfile": "tv",
+          "aimProfiles": {
+            "tv": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            },
+            "handheld": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            }
+          },
+          "fov": 82,
+          "quality": "low",
+          "frameRate": "auto",
+          "shadows": false,
+          "bloom": false,
+          "cameraShake": 1,
+          "showFps": false,
+          "master": 0.8,
+          "music": 0.6,
+          "sfx": 0.85,
+          "colorblind": false,
+          "minimap": false,
+          "matchLength": 180,
+          "difficulty": "normal",
+          "rumble": 1,
+          "aimAssist": 0,
+          "aimAssistMouse": false,
+          "lang": "ja",
+          "gyro": false,
+          "gyroSens": 0,
+          "gyroInvertX": false,
+          "gyroInvertY": false,
+          "touchSens": 0,
+          "fireAim": true,
+          "stickMode": "float",
+          "touchScale": 1,
+          "touchOpacity": 0.85,
+          "fovMode": "h",
+          "padSensitivityScale": "s3"
+        },
+        "renderer": {
+          "toneMapping": 7,
+          "exposure": 0.94,
+          "pixelRatio": 0.75,
+          "size": [
+            800,
+            600,
+            0
+          ],
+          "contextLost": false
+        },
+        "camera": {
+          "position": [
+            3,
+            1.8,
+            4
+          ],
+          "rotation": [
+            -0.07517789327643191,
+            0.31523329709254266,
+            0.025059297758810644,
+            0.945699891277628
+          ],
+          "projection": [
+            1.104282121995216,
+            0,
+            0,
+            0,
+            0,
+            1.4723761626602876,
+            0,
+            0,
+            0,
+            0,
+            -1.0000461549112671,
+            -1,
+            0,
+            0,
+            -0.30000692323669004,
+            0
+          ],
+          "fov": 68.36667611515183,
+          "near": 0.15,
+          "far": 6500
+        }
+      },
+      "scriptSha256": "960ff28780d232f72086e7a47142660ccf7fc7e152df1971579e697d4271f826",
+      "roles": {
+        "before": {
+          "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+          "renderFrames": 66,
+          "motion": {
+            "range": [
+              48,
+              58
+            ],
+            "maxStep": {
+              "tick": 53,
+              "step": 2.387065832611295,
+              "acceleration": 8839.513577691678,
+              "finiteJerk": 326715.1321570091
+            },
+            "maxAcceleration": {
+              "tick": 53,
+              "step": 2.387065832611295,
+              "acceleration": 8839.513577691678,
+              "finiteJerk": 326715.1321570091
+            },
+            "maxFiniteJerk": {
+              "tick": 54,
+              "step": 0.18712718744716175,
+              "acceleration": 8414.21989175846,
+              "finiteJerk": 1035215.1126124962
+            },
+            "totalDistance": 6.299650562937123,
+            "ticks": [
+              {
+                "tick": 39,
+                "step": 0.003507306043553309,
+                "acceleration": 8.470404895625997,
+                "finiteJerk": 76.50103290408956
+              },
+              {
+                "tick": 40,
+                "step": 0.788756163066068,
+                "acceleration": 2833.619891683839,
+                "finiteJerk": 169885.79564553054
+              },
+              {
+                "tick": 41,
+                "step": 0.0066289488618873115,
+                "acceleration": 2847.8840283231066,
+                "finiteJerk": 340884.55605295295
+              },
+              {
+                "tick": 42,
+                "step": 0.044016439518172946,
+                "acceleration": 148.57935489405352,
+                "finiteJerk": 177455.65617741665
+              },
+              {
+                "tick": 43,
+                "step": 0.06360205053582321,
+                "acceleration": 106.30398583830137,
+                "finiteJerk": 8985.464768542432
+              },
+              {
+                "tick": 44,
+                "step": 0.015788976587211893,
+                "acceleration": 224.2792835842203,
+                "finiteJerk": 18299.988049271826
+              },
+              {
+                "tick": 45,
+                "step": 0.02890816236540303,
+                "acceleration": 117.33861182119203,
+                "finiteJerk": 9433.923515760232
+              },
+              {
+                "tick": 46,
+                "step": 0.05162205226462158,
+                "acceleration": 116.50908333220944,
+                "finiteJerk": 8999.288899812143
+              },
+              {
+                "tick": 47,
+                "step": 0.05820820528753901,
+                "acceleration": 247.19131372718948,
+                "finiteJerk": 21153.71657592948
+              },
+              {
+                "tick": 48,
+                "step": 0.2924922652431895,
+                "acceleration": 1140.7745507090158,
+                "finiteJerk": 82912.97952383346
+              },
+              {
+                "tick": 49,
+                "step": 1.1091286239057678,
+                "acceleration": 4155.844201258958,
+                "finiteJerk": 284878.23659933364
+              },
+              {
+                "tick": 50,
+                "step": 0.7171404111637811,
+                "acceleration": 2956.1860249157908,
+                "finiteJerk": 389980.04481633427
+              },
+              {
+                "tick": 51,
+                "step": 1.29994320576976,
+                "acceleration": 7199.9734846577585,
+                "finiteJerk": 434902.4707742698
+              },
+              {
+                "tick": 52,
+                "step": 0.18034113593638187,
+                "acceleration": 4158.914603193605,
+                "finiteJerk": 681394.3895176514
+              },
+              {
+                "tick": 53,
+                "step": 2.387065832611295,
+                "acceleration": 8839.513577691678,
+                "finiteJerk": 326715.1321570091
+              },
+              {
+                "tick": 54,
+                "step": 0.18712718744716175,
+                "acceleration": 8414.21989175846,
+                "finiteJerk": 1035215.1126124962
+              },
+              {
+                "tick": 55,
+                "step": 0.06547442661213206,
+                "acceleration": 440.8406762781111,
+                "finiteJerk": 499272.3090318964
+              },
+              {
+                "tick": 56,
+                "step": 0.03661653797700308,
+                "acceleration": 146.24546575330987,
+                "finiteJerk": 19559.617130787385
+              },
+              {
+                "tick": 57,
+                "step": 0.004084506917449835,
+                "acceleration": 142.52821150281844,
+                "finiteJerk": 9440.888968810112
+              },
+              {
+                "tick": 58,
+                "step": 0.0202364293532007,
+                "acceleration": 72.32128984359468,
+                "finiteJerk": 6908.194515353093
+              }
+            ]
+          },
+          "minVertex": -0.7409968255859694,
+          "maxGripGap": 2.365476590259707e-15,
+          "constraintWindow48to58": {
+            "minVertex": 0.024644819733162293,
+            "maxGripGap": 1.2092802019272574e-15
+          },
+          "renderWork": {
+            "calls": 3211,
+            "triangles": 14284533
+          }
+        },
+        "ecf5": {
+          "contentHash": "51b803d76f03599edd464f63be7f23b538fa61fc54a2e31925bca6272a21cdd4",
+          "renderFrames": 66,
+          "motion": {
+            "range": [
+              48,
+              58
+            ],
+            "maxStep": {
+              "tick": 53,
+              "step": 2.387065832611295,
+              "acceleration": 8839.513577691678,
+              "finiteJerk": 482945.0570458491
+            },
+            "maxAcceleration": {
+              "tick": 54,
+              "step": 0.3912755655196471,
+              "acceleration": 9344.524321700952,
+              "finiteJerk": 1085487.6334917133
+            },
+            "maxFiniteJerk": {
+              "tick": 54,
+              "step": 0.3912755655196471,
+              "acceleration": 9344.524321700952,
+              "finiteJerk": 1085487.6334917133
+            },
+            "totalDistance": 5.623345976156117,
+            "ticks": [
+              {
+                "tick": 39,
+                "step": 0.003507306043553309,
+                "acceleration": 8.470404895625997,
+                "finiteJerk": 76.50103290408956
+              },
+              {
+                "tick": 40,
+                "step": 0.788756163066068,
+                "acceleration": 2833.619891683839,
+                "finiteJerk": 169885.79564553054
+              },
+              {
+                "tick": 41,
+                "step": 0.0066289488618873115,
+                "acceleration": 2847.8840283231066,
+                "finiteJerk": 340884.55605295295
+              },
+              {
+                "tick": 42,
+                "step": 0.044016439518172946,
+                "acceleration": 148.57935489405352,
+                "finiteJerk": 177455.65617741665
+              },
+              {
+                "tick": 43,
+                "step": 0.06360205053582321,
+                "acceleration": 106.30398583830137,
+                "finiteJerk": 8985.464768542432
+              },
+              {
+                "tick": 44,
+                "step": 0.015788976587211893,
+                "acceleration": 224.2792835842203,
+                "finiteJerk": 18299.988049271826
+              },
+              {
+                "tick": 45,
+                "step": 0.02890816236540303,
+                "acceleration": 117.33861182119203,
+                "finiteJerk": 9433.923515760232
+              },
+              {
+                "tick": 46,
+                "step": 0.05162205226462158,
+                "acceleration": 116.50908333220944,
+                "finiteJerk": 8999.288899812143
+              },
+              {
+                "tick": 47,
+                "step": 0.05820820528753901,
+                "acceleration": 247.19131372718948,
+                "finiteJerk": 21153.71657592948
+              },
+              {
+                "tick": 48,
+                "step": 0.2924922652431895,
+                "acceleration": 1140.7745507090158,
+                "finiteJerk": 82912.97952383346
+              },
+              {
+                "tick": 49,
+                "step": 0.25377118531702986,
+                "acceleration": 1959.649864580466,
+                "finiteJerk": 185600.34286691618
+              },
+              {
+                "tick": 50,
+                "step": 0.5603578988544862,
+                "acceleration": 1535.8554814414679,
+                "finiteJerk": 124795.33152934622
+              },
+              {
+                "tick": 51,
+                "step": 0.8604045682272602,
+                "acceleration": 4573.115328845925,
+                "finiteJerk": 332178.34364995477
+              },
+              {
+                "tick": 52,
+                "step": 0.18034113593638187,
+                "acceleration": 3168.7355331965396,
+                "finiteJerk": 446159.654149705
+              },
+              {
+                "tick": 53,
+                "step": 2.387065832611295,
+                "acceleration": 8839.513577691678,
+                "finiteJerk": 482945.0570458491
+              },
+              {
+                "tick": 54,
+                "step": 0.3912755655196471,
+                "acceleration": 9344.524321700952,
+                "finiteJerk": 1085487.6334917133
+              },
+              {
+                "tick": 55,
+                "step": 0.12653037470320247,
+                "acceleration": 1860.8863163950978,
+                "finiteJerk": 635289.7060615356
+              },
+              {
+                "tick": 56,
+                "step": 0.5467862134729746,
+                "acceleration": 1540.4167907981666,
+                "finiteJerk": 35377.91937944446
+              },
+              {
+                "tick": 57,
+                "step": 0.004084506917449835,
+                "acceleration": 1975.0026090264546,
+                "finiteJerk": 210740.13343637195
+              },
+              {
+                "tick": 58,
+                "step": 0.0202364293532007,
+                "acceleration": 72.32128984359468,
+                "finiteJerk": 116165.95302176934
+              }
+            ]
+          },
+          "minVertex": -0.7409968255859694,
+          "maxGripGap": 2.365476590259707e-15,
+          "constraintWindow48to58": {
+            "minVertex": 0.024644819733162293,
+            "maxGripGap": 1.0138386515217635e-15
+          },
+          "renderWork": {
+            "calls": 3233,
+            "triangles": 14318326
+          }
+        },
+        "candidate": {
+          "contentHash": "3a029b963c89bdd3305bf52a989afde6b2112bbee615b525bcfd99ea7833adf6",
+          "renderFrames": 66,
+          "motion": {
+            "range": [
+              48,
+              58
+            ],
+            "maxStep": {
+              "tick": 53,
+              "step": 2.387065832611295,
+              "acceleration": 8839.513577691678,
+              "finiteJerk": 482945.0570458491
+            },
+            "maxAcceleration": {
+              "tick": 53,
+              "step": 2.387065832611295,
+              "acceleration": 8839.513577691678,
+              "finiteJerk": 482945.0570458491
+            },
+            "maxFiniteJerk": {
+              "tick": 54,
+              "step": 0.18712718744716175,
+              "acceleration": 8414.21989175846,
+              "finiteJerk": 1035215.1126124962
+            },
+            "totalDistance": 4.84797197449659,
+            "ticks": [
+              {
+                "tick": 39,
+                "step": 0.003507306043553309,
+                "acceleration": 8.470404895625997,
+                "finiteJerk": 76.50103290408956
+              },
+              {
+                "tick": 40,
+                "step": 0.788756163066068,
+                "acceleration": 2833.619891683839,
+                "finiteJerk": 169885.79564553054
+              },
+              {
+                "tick": 41,
+                "step": 0.0066289488618873115,
+                "acceleration": 2847.8840283231066,
+                "finiteJerk": 340884.55605295295
+              },
+              {
+                "tick": 42,
+                "step": 0.044016439518172946,
+                "acceleration": 148.57935489405352,
+                "finiteJerk": 177455.65617741665
+              },
+              {
+                "tick": 43,
+                "step": 0.06360205053582321,
+                "acceleration": 106.30398583830137,
+                "finiteJerk": 8985.464768542432
+              },
+              {
+                "tick": 44,
+                "step": 0.015788976587211893,
+                "acceleration": 224.2792835842203,
+                "finiteJerk": 18299.988049271826
+              },
+              {
+                "tick": 45,
+                "step": 0.02890816236540303,
+                "acceleration": 117.33861182119203,
+                "finiteJerk": 9433.923515760232
+              },
+              {
+                "tick": 46,
+                "step": 0.05162205226462158,
+                "acceleration": 116.50908333220944,
+                "finiteJerk": 8999.288899812143
+              },
+              {
+                "tick": 47,
+                "step": 0.05820820528753901,
+                "acceleration": 247.19131372718948,
+                "finiteJerk": 21153.71657592948
+              },
+              {
+                "tick": 48,
+                "step": 0.2924922652431895,
+                "acceleration": 1140.7745507090158,
+                "finiteJerk": 82912.97952383346
+              },
+              {
+                "tick": 49,
+                "step": 0.25377118531702986,
+                "acceleration": 1959.649864580466,
+                "finiteJerk": 185600.34286691618
+              },
+              {
+                "tick": 50,
+                "step": 0.5603578988544862,
+                "acceleration": 1535.8554814414679,
+                "finiteJerk": 124795.33152934622
+              },
+              {
+                "tick": 51,
+                "step": 0.8604045682272602,
+                "acceleration": 4573.115328845925,
+                "finiteJerk": 332178.34364995477
+              },
+              {
+                "tick": 52,
+                "step": 0.18034113593638187,
+                "acceleration": 3168.7355331965396,
+                "finiteJerk": 446159.654149705
+              },
+              {
+                "tick": 53,
+                "step": 2.387065832611295,
+                "acceleration": 8839.513577691678,
+                "finiteJerk": 482945.0570458491
+              },
+              {
+                "tick": 54,
+                "step": 0.18712718744716175,
+                "acceleration": 8414.21989175846,
+                "finiteJerk": 1035215.1126124962
+              },
+              {
+                "tick": 55,
+                "step": 0.06547442661213206,
+                "acceleration": 440.8406762781111,
+                "finiteJerk": 499272.3090318964
+              },
+              {
+                "tick": 56,
+                "step": 0.03661653797700308,
+                "acceleration": 146.24546575330987,
+                "finiteJerk": 19559.617130787385
+              },
+              {
+                "tick": 57,
+                "step": 0.004084506917449835,
+                "acceleration": 142.52821150281844,
+                "finiteJerk": 9440.888968810112
+              },
+              {
+                "tick": 58,
+                "step": 0.0202364293532007,
+                "acceleration": 72.32128984359468,
+                "finiteJerk": 6908.194515353093
+              }
+            ]
+          },
+          "minVertex": -0.7409968255859694,
+          "maxGripGap": 2.365476590259707e-15,
+          "constraintWindow48to58": {
+            "minVertex": 0.024644819733162293,
+            "maxGripGap": 1.2092802019272574e-15
+          },
+          "renderWork": {
+            "calls": 3222,
+            "triangles": 14285833
+          }
+        }
+      }
+    },
+    {
+      "scenario": "late-edge",
+      "conditions": {
+        "name": "Roller Recovery QA",
+        "seed": 3564230742,
+        "style": {
+          "hair": 0,
+          "skin": 2,
+          "outfit": 0,
+          "eyes": 0,
+          "hat": 0,
+          "brows": 0
+        },
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "palette": {
+          "id": "aqua-cherry",
+          "a": "#10d2e6",
+          "b": "#ff4150",
+          "names": [
+            "アクア",
+            "チェリー"
+          ]
+        },
+        "teamHex": [
+          "#10d2e6",
+          "#ff4150"
+        ],
+        "teamLinear": [
+          [
+            0.005181516700061659,
+            0.6444796819634361,
+            0.7912979403281551
+          ],
+          [
+            1,
+            0.05286064701616471,
+            0.08021982030622662
+          ]
+        ],
+        "actorTeam": 0,
+        "actorColor": [
+          0.005181516700061659,
+          0.6444796819634361,
+          0.7912979403281551
+        ],
+        "characterColor": [
+          0.005181516700061659,
+          0.6444796819634361,
+          0.7912979403281551
+        ],
+        "weaponId": "roller",
+        "weaponModel": "roller",
+        "weaponAppearance": "roller",
+        "geometrySha256": "b984d502777fda1948cef806a72e952639d709432fab328283ae48ab0c739f56",
+        "geometryCount": 25,
+        "sourceMotion": {
+          "status": "ready",
+          "active": true,
+          "variant": "Player00"
+        },
+        "uniforms": {
+          "uShirt": [
+            0.9046611743890203,
+            0.8879231178794776,
+            0.8387990117372213
+          ],
+          "uShorts": [
+            0.02028856305209031,
+            0.02955683443236377,
+            0.06847816983662762
+          ],
+          "uShoe": [
+            0.02028856305209031,
+            0.024157632443547246,
+            0.0343398068028541
+          ],
+          "uSole": [
+            0.9046611743890203,
+            0.8879231178794776,
+            0.8387990117372213
+          ],
+          "uSock": [
+            0.9301108583738498,
+            0.9301108583738498,
+            0.9046611743890203
+          ],
+          "uStrap": [
+            0.02955683443236377,
+            0.0343398068028541,
+            0.04666508633021928
+          ],
+          "uPattern": 0,
+          "uIris": [
+            1,
+            0.623960391667596,
+            0.04231141061442144
+          ],
+          "uIris2": [
+            1,
+            0.19461783043107173,
+            0
+          ]
+        },
+        "origin": [
+          0,
+          0,
+          0
+        ],
+        "characterTime": 1.9999999999999978,
+        "globalTime": 12.0000000000001,
+        "initialPose": [
+          0.03002041019499302,
+          -0.044005442410707474,
+          0,
+          0.07000000029802322,
+          0.055380139499902725,
+          0.08005442470312119,
+          -0.029999999329447746,
+          0,
+          -0.03956574946641922,
+          -0.012000000104308128,
+          -0.014366310089826584,
+          -0.03502381220459938,
+          -0.01980794407427311,
+          -0.2550000250339508,
+          0,
+          0,
+          0,
+          0.03502381220459938,
+          0,
+          -0.2800000011920929,
+          0.019999999552965164,
+          0,
+          0.10000000149011612,
+          0.019999999552965164,
+          0,
+          0,
+          0.17000000178813934,
+          0,
+          0,
+          -0.10000000149011612,
+          -0.6200000047683716,
+          0,
+          0,
+          -0.30000001192092896,
+          0,
+          0,
+          0,
+          0,
+          -0.2199999988079071,
+          0,
+          0,
+          0.10000000149011612,
+          0.09200000017881393,
+          0.08500000089406967,
+          -0.004000000189989805,
+          0,
+          0.10000000149011612,
+          0,
+          -0.09200000017881393,
+          0.08500000089406967,
+          -0.004000000189989805,
+          0,
+          -0.10000000149011612,
+          0,
+          -0.07999999821186066,
+          0.800000011920929,
+          0.2800000011920929,
+          -2.5,
+          0.03999999910593033,
+          1,
+          -0.699999988079071,
+          -0.550000011920929,
+          -0.44999998807907104,
+          0.699999988079071,
+          -0.550000011920929,
+          -0.44999998807907104,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0.8199999928474426,
+          1,
+          1,
+          0,
+          0,
+          0.75,
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -0.0234521571546793,
+          0.019999999552965164,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          -0.8500000834465027,
+          -0.0009602754143998027,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0.5,
+          0,
+          0,
+          0,
+          0
+        ],
+        "rngSeed": 123,
+        "settings": {
+          "sensitivity": 1,
+          "padSensitivity": 0,
+          "padInvertX": false,
+          "invertY": false,
+          "invertX": false,
+          "aimProfile": "tv",
+          "aimProfiles": {
+            "tv": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            },
+            "handheld": {
+              "gyro": false,
+              "gyroSens": 0,
+              "padSensitivity": 0,
+              "invertY": false,
+              "invertX": false
+            }
+          },
+          "fov": 82,
+          "quality": "low",
+          "frameRate": "auto",
+          "shadows": false,
+          "bloom": false,
+          "cameraShake": 1,
+          "showFps": false,
+          "master": 0.8,
+          "music": 0.6,
+          "sfx": 0.85,
+          "colorblind": false,
+          "minimap": false,
+          "matchLength": 180,
+          "difficulty": "normal",
+          "rumble": 1,
+          "aimAssist": 0,
+          "aimAssistMouse": false,
+          "lang": "ja",
+          "gyro": false,
+          "gyroSens": 0,
+          "gyroInvertX": false,
+          "gyroInvertY": false,
+          "touchSens": 0,
+          "fireAim": true,
+          "stickMode": "float",
+          "touchScale": 1,
+          "touchOpacity": 0.85,
+          "fovMode": "h",
+          "padSensitivityScale": "s3"
+        },
+        "renderer": {
+          "toneMapping": 7,
+          "exposure": 0.94,
+          "pixelRatio": 0.75,
+          "size": [
+            800,
+            600,
+            0
+          ],
+          "contextLost": false
+        },
+        "camera": {
+          "position": [
+            3,
+            1.8,
+            4
+          ],
+          "rotation": [
+            -0.07517789327643191,
+            0.31523329709254266,
+            0.025059297758810644,
+            0.945699891277628
+          ],
+          "projection": [
+            1.104282121995216,
+            0,
+            0,
+            0,
+            0,
+            1.4723761626602876,
+            0,
+            0,
+            0,
+            0,
+            -1.0000461549112671,
+            -1,
+            0,
+            0,
+            -0.30000692323669004,
+            0
+          ],
+          "fov": 68.36667611515183,
+          "near": 0.15,
+          "far": 6500
+        }
+      },
+      "scriptSha256": "960ff28780d232f72086e7a47142660ccf7fc7e152df1971579e697d4271f826",
+      "roles": {
+        "before": {
+          "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+          "renderFrames": 66,
+          "motion": {
+            "range": [
+              48,
+              58
+            ],
+            "maxStep": {
+              "tick": 52,
+              "step": 2.1582228017515597,
+              "acceleration": 8739.756256756258,
+              "finiteJerk": 621997.9750362152
+            },
+            "maxAcceleration": {
+              "tick": 52,
+              "step": 2.1582228017515597,
+              "acceleration": 8739.756256756258,
+              "finiteJerk": 621997.9750362152
+            },
+            "maxFiniteJerk": {
+              "tick": 53,
+              "step": 0.3723785065932832,
+              "acceleration": 7343.523450286933,
+              "finiteJerk": 947473.6788395508
+            },
+            "totalDistance": 3.7506681113901075,
+            "ticks": [
+              {
+                "tick": 39,
+                "step": 0.003507306043553309,
+                "acceleration": 8.470404895625997,
+                "finiteJerk": 76.50103290408956
+              },
+              {
+                "tick": 40,
+                "step": 0.788756163066068,
+                "acceleration": 2833.619891683839,
+                "finiteJerk": 169885.79564553054
+              },
+              {
+                "tick": 41,
+                "step": 0.0066289488618873115,
+                "acceleration": 2847.8840283231066,
+                "finiteJerk": 340884.55605295295
+              },
+              {
+                "tick": 42,
+                "step": 0.044016439518172946,
+                "acceleration": 148.57935489405352,
+                "finiteJerk": 177455.65617741665
+              },
+              {
+                "tick": 43,
+                "step": 0.06360205053582321,
+                "acceleration": 106.30398583830137,
+                "finiteJerk": 8985.464768542432
+              },
+              {
+                "tick": 44,
+                "step": 0.015788976587211893,
+                "acceleration": 224.2792835842203,
+                "finiteJerk": 18299.988049271826
+              },
+              {
+                "tick": 45,
+                "step": 0.02890816236540303,
+                "acceleration": 117.33861182119203,
+                "finiteJerk": 9433.923515760232
+              },
+              {
+                "tick": 46,
+                "step": 0.05162205226462158,
+                "acceleration": 116.50908333220944,
+                "finiteJerk": 8999.288899812143
+              },
+              {
+                "tick": 47,
+                "step": 0.05820820528753901,
+                "acceleration": 247.19131372718948,
+                "finiteJerk": 21153.71657592948
+              },
+              {
+                "tick": 48,
+                "step": 0.04999598201916233,
+                "acceleration": 66.21473626037236,
+                "finiteJerk": 18733.147046689937
+              },
+              {
+                "tick": 49,
+                "step": 0.08026221262488348,
+                "acceleration": 109.02219952299302,
+                "finiteJerk": 8507.853407486338
+              },
+              {
+                "tick": 50,
+                "step": 0.10286817482285707,
+                "acceleration": 231.20767987319815,
+                "finiteJerk": 15431.3394785635
+              },
+              {
+                "tick": 51,
+                "step": 0.6734013452714147,
+                "acceleration": 2522.2815812227864,
+                "finiteJerk": 163907.24860859968
+              },
+              {
+                "tick": 52,
+                "step": 2.1582228017515597,
+                "acceleration": 8739.756256756258,
+                "finiteJerk": 621997.9750362152
+              },
+              {
+                "tick": 53,
+                "step": 0.3723785065932832,
+                "acceleration": 7343.523450286933,
+                "finiteJerk": 947473.6788395508
+              },
+              {
+                "tick": 54,
+                "step": 0.18712718744716175,
+                "acceleration": 687.315717870495,
+                "finiteJerk": 425922.3592437938
+              },
+              {
+                "tick": 55,
+                "step": 0.06547442661213206,
+                "acceleration": 440.8406762781111,
+                "finiteJerk": 18494.23889566543
+              },
+              {
+                "tick": 56,
+                "step": 0.03661653797700308,
+                "acceleration": 146.24546575330987,
+                "finiteJerk": 19559.617130787385
+              },
+              {
+                "tick": 57,
+                "step": 0.004084506917449835,
+                "acceleration": 142.52821150281844,
+                "finiteJerk": 9440.888968810112
+              },
+              {
+                "tick": 58,
+                "step": 0.0202364293532007,
+                "acceleration": 72.32128984359468,
+                "finiteJerk": 6908.194515353093
+              }
+            ]
+          },
+          "minVertex": -0.7409968255859694,
+          "maxGripGap": 2.365476590259707e-15,
+          "constraintWindow48to58": {
+            "minVertex": 0.017754479462963157,
+            "maxGripGap": 1.2092802019272574e-15
+          },
+          "renderWork": {
+            "calls": 3211,
+            "triangles": 14284827
+          }
+        },
+        "ecf5": {
+          "contentHash": "51b803d76f03599edd464f63be7f23b538fa61fc54a2e31925bca6272a21cdd4",
+          "renderFrames": 66,
+          "motion": {
+            "range": [
+              48,
+              58
+            ],
+            "maxStep": {
+              "tick": 52,
+              "step": 2.1582228017515597,
+              "acceleration": 8739.756256756258,
+              "finiteJerk": 621997.9750362152
+            },
+            "maxAcceleration": {
+              "tick": 52,
+              "step": 2.1582228017515597,
+              "acceleration": 8739.756256756258,
+              "finiteJerk": 621997.9750362152
+            },
+            "maxFiniteJerk": {
+              "tick": 53,
+              "step": 0.17145551386855745,
+              "acceleration": 8150.0366296777665,
+              "finiteJerk": 1006746.1916121306
+            },
+            "totalDistance": 4.1583297466117415,
+            "ticks": [
+              {
+                "tick": 39,
+                "step": 0.003507306043553309,
+                "acceleration": 8.470404895625997,
+                "finiteJerk": 76.50103290408956
+              },
+              {
+                "tick": 40,
+                "step": 0.788756163066068,
+                "acceleration": 2833.619891683839,
+                "finiteJerk": 169885.79564553054
+              },
+              {
+                "tick": 41,
+                "step": 0.0066289488618873115,
+                "acceleration": 2847.8840283231066,
+                "finiteJerk": 340884.55605295295
+              },
+              {
+                "tick": 42,
+                "step": 0.044016439518172946,
+                "acceleration": 148.57935489405352,
+                "finiteJerk": 177455.65617741665
+              },
+              {
+                "tick": 43,
+                "step": 0.06360205053582321,
+                "acceleration": 106.30398583830137,
+                "finiteJerk": 8985.464768542432
+              },
+              {
+                "tick": 44,
+                "step": 0.015788976587211893,
+                "acceleration": 224.2792835842203,
+                "finiteJerk": 18299.988049271826
+              },
+              {
+                "tick": 45,
+                "step": 0.02890816236540303,
+                "acceleration": 117.33861182119203,
+                "finiteJerk": 9433.923515760232
+              },
+              {
+                "tick": 46,
+                "step": 0.05162205226462158,
+                "acceleration": 116.50908333220944,
+                "finiteJerk": 8999.288899812143
+              },
+              {
+                "tick": 47,
+                "step": 0.05820820528753901,
+                "acceleration": 247.19131372718948,
+                "finiteJerk": 21153.71657592948
+              },
+              {
+                "tick": 48,
+                "step": 0.04999598201916233,
+                "acceleration": 66.21473626037236,
+                "finiteJerk": 18733.147046689937
+              },
+              {
+                "tick": 49,
+                "step": 0.08026221262488348,
+                "acceleration": 109.02219952299302,
+                "finiteJerk": 8507.853407486338
+              },
+              {
+                "tick": 50,
+                "step": 0.10286817482285707,
+                "acceleration": 231.20767987319815,
+                "finiteJerk": 15431.3394785635
+              },
+              {
+                "tick": 51,
+                "step": 0.6734013452714147,
+                "acceleration": 2522.2815812227864,
+                "finiteJerk": 163907.24860859968
+              },
+              {
+                "tick": 52,
+                "step": 2.1582228017515597,
+                "acceleration": 8739.756256756258,
+                "finiteJerk": 621997.9750362152
+              },
+              {
+                "tick": 53,
+                "step": 0.17145551386855745,
+                "acceleration": 8150.0366296777665,
+                "finiteJerk": 1006746.1916121306
+              },
+              {
+                "tick": 54,
+                "step": 0.04037334904876721,
+                "acceleration": 489.2902132011597,
+                "finiteJerk": 508646.60219479306
+              },
+              {
+                "tick": 55,
+                "step": 0.46709238035182243,
+                "acceleration": 1805.5160691544563,
+                "finiteJerk": 79194.87150853484
+              },
+              {
+                "tick": 56,
+                "step": 0.39033705058206664,
+                "acceleration": 634.2821599486402,
+                "finiteJerk": 134506.870043066
+              },
+              {
+                "tick": 57,
+                "step": 0.004084506917449835,
+                "acceleration": 1412.4076263334553,
+                "finiteJerk": 83903.80985599598
+              },
+              {
+                "tick": 58,
+                "step": 0.0202364293532007,
+                "acceleration": 72.32128984359468,
+                "finiteJerk": 82316.50572822125
+              }
+            ]
+          },
+          "minVertex": -0.7409968255859694,
+          "maxGripGap": 2.365476590259707e-15,
+          "constraintWindow48to58": {
+            "minVertex": 0.017754479462963157,
+            "maxGripGap": 8.300030970468208e-16
+          },
+          "renderWork": {
+            "calls": 3233,
+            "triangles": 14318326
+          }
+        },
+        "candidate": {
+          "contentHash": "3a029b963c89bdd3305bf52a989afde6b2112bbee615b525bcfd99ea7833adf6",
+          "renderFrames": 66,
+          "motion": {
+            "range": [
+              48,
+              58
+            ],
+            "maxStep": {
+              "tick": 52,
+              "step": 2.1582228017515597,
+              "acceleration": 8739.756256756258,
+              "finiteJerk": 621997.9750362152
+            },
+            "maxAcceleration": {
+              "tick": 52,
+              "step": 2.1582228017515597,
+              "acceleration": 8739.756256756258,
+              "finiteJerk": 621997.9750362152
+            },
+            "maxFiniteJerk": {
+              "tick": 53,
+              "step": 0.3723785065932832,
+              "acceleration": 7343.523450286933,
+              "finiteJerk": 947473.6788395508
+            },
+            "totalDistance": 3.7506681113901075,
+            "ticks": [
+              {
+                "tick": 39,
+                "step": 0.003507306043553309,
+                "acceleration": 8.470404895625997,
+                "finiteJerk": 76.50103290408956
+              },
+              {
+                "tick": 40,
+                "step": 0.788756163066068,
+                "acceleration": 2833.619891683839,
+                "finiteJerk": 169885.79564553054
+              },
+              {
+                "tick": 41,
+                "step": 0.0066289488618873115,
+                "acceleration": 2847.8840283231066,
+                "finiteJerk": 340884.55605295295
+              },
+              {
+                "tick": 42,
+                "step": 0.044016439518172946,
+                "acceleration": 148.57935489405352,
+                "finiteJerk": 177455.65617741665
+              },
+              {
+                "tick": 43,
+                "step": 0.06360205053582321,
+                "acceleration": 106.30398583830137,
+                "finiteJerk": 8985.464768542432
+              },
+              {
+                "tick": 44,
+                "step": 0.015788976587211893,
+                "acceleration": 224.2792835842203,
+                "finiteJerk": 18299.988049271826
+              },
+              {
+                "tick": 45,
+                "step": 0.02890816236540303,
+                "acceleration": 117.33861182119203,
+                "finiteJerk": 9433.923515760232
+              },
+              {
+                "tick": 46,
+                "step": 0.05162205226462158,
+                "acceleration": 116.50908333220944,
+                "finiteJerk": 8999.288899812143
+              },
+              {
+                "tick": 47,
+                "step": 0.05820820528753901,
+                "acceleration": 247.19131372718948,
+                "finiteJerk": 21153.71657592948
+              },
+              {
+                "tick": 48,
+                "step": 0.04999598201916233,
+                "acceleration": 66.21473626037236,
+                "finiteJerk": 18733.147046689937
+              },
+              {
+                "tick": 49,
+                "step": 0.08026221262488348,
+                "acceleration": 109.02219952299302,
+                "finiteJerk": 8507.853407486338
+              },
+              {
+                "tick": 50,
+                "step": 0.10286817482285707,
+                "acceleration": 231.20767987319815,
+                "finiteJerk": 15431.3394785635
+              },
+              {
+                "tick": 51,
+                "step": 0.6734013452714147,
+                "acceleration": 2522.2815812227864,
+                "finiteJerk": 163907.24860859968
+              },
+              {
+                "tick": 52,
+                "step": 2.1582228017515597,
+                "acceleration": 8739.756256756258,
+                "finiteJerk": 621997.9750362152
+              },
+              {
+                "tick": 53,
+                "step": 0.3723785065932832,
+                "acceleration": 7343.523450286933,
+                "finiteJerk": 947473.6788395508
+              },
+              {
+                "tick": 54,
+                "step": 0.18712718744716175,
+                "acceleration": 687.315717870495,
+                "finiteJerk": 425922.3592437938
+              },
+              {
+                "tick": 55,
+                "step": 0.06547442661213206,
+                "acceleration": 440.8406762781111,
+                "finiteJerk": 18494.23889566543
+              },
+              {
+                "tick": 56,
+                "step": 0.03661653797700308,
+                "acceleration": 146.24546575330987,
+                "finiteJerk": 19559.617130787385
+              },
+              {
+                "tick": 57,
+                "step": 0.004084506917449835,
+                "acceleration": 142.52821150281844,
+                "finiteJerk": 9440.888968810112
+              },
+              {
+                "tick": 58,
+                "step": 0.0202364293532007,
+                "acceleration": 72.32128984359468,
+                "finiteJerk": 6908.194515353093
+              }
+            ]
+          },
+          "minVertex": -0.7409968255859694,
+          "maxGripGap": 2.365476590259707e-15,
+          "constraintWindow48to58": {
+            "minVertex": 0.017754479462963157,
+            "maxGripGap": 1.2092802019272574e-15
+          },
+          "renderWork": {
+            "calls": 3233,
+            "triangles": 14318326
+          }
+        }
+      }
+    }
+  ]
+}

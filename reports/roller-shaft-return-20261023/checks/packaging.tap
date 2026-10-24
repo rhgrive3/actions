@@ -1,0 +1,18 @@
+✔ excluded modules have audited build-only exports; mixed runtime adapters remain shipped (179.648598ms)
+✔ runtime helper URLs retain their exports without carrying build-time source transforms (85.932379ms)
+✔ minified static ESM imports are found without whitespace and with re-exports (0.44988ms)
+✔ emitted lossless lightmaps preserve every pixel while reducing the offline snapshot (465.487453ms)
+✔ ESM minification preserves the emitted module export interface (1660.223511ms)
+✔ network identity contains only exact paths owned by its namespace (2.525456ms)
+✔ emitted identity binds every input to one canonical tracked path including S3 dodge dependencies (1089.60516ms)
+✔ emitted gameplay profile preserves all JSON values without shipping indentation (12.707239ms)
+✔ emitted worker keeps the complete runtime graph, installs, and replays verified offline bytes (2691.687132ms)
+✔ indexed worker precache decodes strictly before offline graph checks (1.631074ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6499.423845

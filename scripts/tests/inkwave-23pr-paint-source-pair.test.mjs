@@ -4,11 +4,16 @@ import fs from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {ALL_PRS_SOURCE_PAIR as P,ALL_PRS_POSE_PAIR as POSE,ALL_PRS_FIXTURE_SHA256} from '../lib/inkwave-23pr-paint-source-pair.mjs';
+import {ALL_31_PRS_FIXTURE_SHA256} from '../lib/inkwave-31pr-paint-source-pair.mjs';
+import './inkwave-roller-pr1856-pose-pair.test.mjs';
 import {CHARACTER_POSE_PATHS,planCharacterPoseBaseline} from '../lib/inkwave-character-pose-baseline.mjs';
 import {MAIN_INK_BASELINE_PATHS as paths,planMainInkBaseline,gitBlobSha1} from '../lib/inkwave-main-ink-baseline.mjs';
 const packed=fs.readFileSync(new URL('../fixtures/inkwave-23pr-paint-source-pair.json.gz',import.meta.url));
 assert.equal(createHash('sha256').update(packed).digest('hex'),ALL_PRS_FIXTURE_SHA256);
 const fixture=JSON.parse(gunzipSync(packed));
+const frozenPosePacked=fs.readFileSync(new URL('../fixtures/inkwave-31pr-paint-source-pair.json.gz',import.meta.url));
+assert.equal(createHash('sha256').update(frozenPosePacked).digest('hex'),ALL_31_PRS_FIXTURE_SHA256);
+const frozenPoseCandidate=JSON.parse(gunzipSync(frozenPosePacked)).post30Pose;
 const maps=()=>[new Map(Object.entries(fixture.baseline)),new Map(Object.entries(fixture.candidate))];
 const expected={mode:'current-pair-with-gameplay-differences',sourceBase:P.baseCommit,sourceHead:P.candidateCommit};
 test('all thirteen exact source leaves admit without replay or a physics equality claim',()=>{
@@ -34,7 +39,9 @@ test('missing, changed, reversed and falsely identical current tuples cannot gai
  for(const key of ['sourceBase','sourceHead'])assert.throws(()=>planMainInkBaseline(before,after,{...expected,[key]:'a'.repeat(40)}));
 });
 test('all sixteen pose leaves preserve the reviewed Roller scratch difference without replay',()=>{
- const read=baseline=>new Map(CHARACTER_POSE_PATHS.map(p=>[p,baseline&&fixture.poseBaseline[p]||fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
+ // Historical epoch stays frozen. Current production is checked by the exact
+ // main7e/433299 tuple above, rather than relabeling old Roller source.
+ const read=baseline=>new Map(CHARACTER_POSE_PATHS.map(p=>[p,baseline&&fixture.poseBaseline[p]||frozenPoseCandidate[p]]));
  const before=read(true),after=read(false);assert.deepEqual(Object.keys(POSE.paths),CHARACTER_POSE_PATHS);
  for(const p of CHARACTER_POSE_PATHS){assert.equal(gitBlobSha1(before.get(p)),POSE.paths[p].baseline);assert.equal(gitBlobSha1(after.get(p)),POSE.paths[p].candidate);}
  assert.equal(CHARACTER_POSE_PATHS.filter(p=>before.get(p)!==after.get(p)).length,1);

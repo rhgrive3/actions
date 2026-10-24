@@ -1,0 +1,175 @@
+(node:17717) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ horizontal flick release holds sub for 14F and squid for 15F (696.491058ms)
+✔ vertical flick release holds sub for 18F and squid for 19F (530.212763ms)
+✔ the gates are per-release and do not leak into later state (490.421555ms)
+✔ the gate does not delay a non-Roller weapon (593.850599ms)
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/roller-shaft-early/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/roller-shaft-early/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/roller-shaft-early/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:113:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/roller-shaft-early/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/roller-shaft-early/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/roller-shaft-early/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:130:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/roller-shaft-early/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/roller-shaft-early/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/roller-shaft-early/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:132:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/roller-shaft-early/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/roller-shaft-early/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/roller-shaft-early/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:158:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/roller-shaft-early/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/roller-shaft-early/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/roller-shaft-early/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:190:15)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/roller-shaft-early/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/roller-shaft-early/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/roller-shaft-early/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:223:17)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/roller-shaft-early/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/roller-shaft-early/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/roller-shaft-early/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:224:18)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/roller-shaft-early/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/roller-shaft-early/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/roller-shaft-early/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:225:18)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/roller-shaft-early/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/roller-shaft-early/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/roller-shaft-early/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:266:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/roller-shaft-early/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/roller-shaft-early/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/roller-shaft-early/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:267:13)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/roller-shaft-early/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/roller-shaft-early/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/roller-shaft-early/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:288:22)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+[INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+    at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+    at new Character (/workspace/roller-shaft-early/inkwave-public/src/game/character.js:593:39)
+    at new Actor (/workspace/roller-shaft-early/inkwave-public/src/game/actor.js:74:22)
+    at TestContext.<anonymous> (file:///workspace/roller-shaft-early/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:300:20)
+    at async Test.run (node:internal/test_runner/test:1389:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+  code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+}
+(node:17718) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ 847 flat rolling unchanged on full production composition (25764.165828ms)
+✔ 847 no-stick residual keeps the drum down but stops native paint, ink drain, and damage without changing velocity (308.913256ms)
+✔ 847 airborne wall drum contact preserves rolling (40.977971ms)
+✔ 847 ledge drum void suppresses rolling while feet stay grounded (106.720855ms)
+✔ 847 support probe falls back to feet grounding without stage collision (0.459364ms)
+✔ 847 owner and remote share native contact; NetMatch drops remote damage and native hit updates survive (75.080908ms)
+✔ 847 frozen b34 roller source retains its recorded single-module identity (0.432704ms)
+✔ 847 explicit current-source admission faults expose the guarded regressions (29140.474229ms)
+(node:17719) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ one production installer and duplicate module realms preserve hook identity; nullable previews use native IK (22117.712193ms)
+✔ horizontal startup removes the double lift in actual posed geometry while preserving gameplay and native grips (786.538114ms)
+✔ vertical release, recovery, held ground pushing and lift on a fresh attack retain native geometry and timing (934.442016ms)
+✔ 35F/42F instance timing never replays the horizontal legacy tail; gameplay clocks are unchanged (497.750863ms)
+✔ 30/60/120Hz presentation and zero elapsed pause give identical 60Hz posed bones and indexed geometry (1506.752161ms)
+✔ reset, death, sub aim, form, weapon and special interruption clear addon state without changing the runner (279.172147ms)
+✔ hide interrupts the current roller startup without cancelling its native runner (215.022229ms)
+(node:17797) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #373 horizontal/vertical actual windup holds 2.88 without changing 21/31F release or ink (1505.033232ms)
+✔ #373 independent target remains constant with gear/Flow and selected mode survives landing (990.451421ms)
+✔ #373 native actor horizontal uses fixed target and keeps acceleration, not a velocity snap (479.375041ms)
+✔ #373 hold-to-roll transition, dash, lock, reset and dry admission retain native branches (903.481906ms)
+✔ #373 fixed 60Hz traces are equal at 30/60/120 render schedules (1948.581217ms)
+✔ vertical release retains source swing speed until 56F recovery, including airborne steering (1194.497561ms)
+✔ vertical ink-release key stays upright through follow-through, never replays the horizontal flick (0.633678ms)
+(node:17804) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ held Roller lowers its hands about the same live cylinder; off-center fault is rejected (94718.284355ms)
+✔ rolling right grip advances to one third without moving the actual drum or release pose (44957.681219ms)
+✔ rolling shaft clears the torso while actual paint follows the shifted drum (33873.139315ms)
+✔ vertical lift keeps rising to the late crest instead of borrowing the horizontal overhead hold (12.151112ms)
+✔ vertical fitted grip has continuous position and velocity across crest, release, follow-through and return (0.325381ms)
+(node:17819) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ simultaneous jump and fire go through actual Actor and retain vertical mode on landing (1263.560008ms)
+✔ horizontal/vertical windups release on 21/31 elapsed ticks without an extra float tick (4709.132714ms)
+✔ jump after starting a horizontal attack keeps its selected mode; the next attack reselects (865.157655ms)
+✔ a new flick lifts the rolling drum, a held trigger resumes rolling, release stops it (860.163049ms)
+✔ dry input does not create a phantom pose or spend ink (864.934462ms)
+✔ actual projectile path retains narrow vertical paint flight and one-attack damage aggregation (825.798882ms)
+✔ actual bones and weapon rotate vertically and the drum impulse waits for gameplay release (24208.056042ms)
+✔ actual moving roller geometry and both grips stay synchronized through lift, landing, held roll and restart at 30/60/120Hz (4876.068421ms)
+✔ reset during a real Character windup cancels the legacy pose and drum impulse; form transitions do not invent an attack (980.623213ms)
+✔ Character channel/drum hooks are hash locked and fail closed (5.279407ms)
+✔ roller drum uses the measured source width; a pushed drum rests on the floor with both grips held (1654.211627ms)
+✔ post-release roll admission separates horizontal 7F vs vertical 22F at 60Hz (#517) (936.17995ms)
+✔ vertical flick does not deal roll contact damage or produce roll paint during the 22F admission delay (#517) (934.206859ms)
+✔ release input before roll admission cancels transition, and runner reset cancels rolling (#517) (987.922953ms)
+✔ post-release roll admission timing maintains parity across 30Hz, 60Hz, and 120Hz (#517) (2285.880491ms)
+✔ procedural vertical follow-through hands off to roll push pose on the exact admission tick (#517) (1014.548396ms)
+ℹ tests 47
+ℹ suites 0
+ℹ pass 47
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 185683.426078
