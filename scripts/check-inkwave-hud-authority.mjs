@@ -1,3 +1,4 @@
+import { captureFrozenHud } from './lib/inkwave-frozen-hud-capture.mjs';
 // Acceptance inside the already-loaded production app; uses actual Actor -> Game
 // HUD frames and actual native Judd DOM/FX. No replacement HUD implementation.
 import path from 'node:path';
@@ -226,7 +227,7 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
     for(const width of [1280]){
       await page.setViewportSize({width,height:width===375?812:800});
       await page.evaluate(async()=>{const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);const a=G.game.match.local;globalThis.__hudSavedSpecial=a.special;a.special=a.specialCost()*.47;G.game._updateHud(1/60);});
-      await page.screenshot({path:path.join(evidence,`special-23-segments-${width}.png`),animations:'disabled',timeout:90000});
+      (result.desktopCaptures ||= []).push(await captureFrozenHud(page,{path:path.join(evidence,`special-23-segments-${width}.png`),animations:'disabled',timeout:90000}));
       await page.evaluate(async()=>{const {G}=await import(new URL('src/core/ctx.js',document.baseURI).href);G.game.match.local.special=globalThis.__hudSavedSpecial;delete globalThis.__hudSavedSpecial;G.game._updateHud(1/60);});
     }
   } finally {if(viewport)await page.setViewportSize(viewport);}
@@ -273,7 +274,7 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
     const requireTouch=state=>{if(state.owner!=='touch'||!state.buttonVisible||!state.desktopHidden||state.segments!==23)throw Error('Touch capture lost native ownership/visibility: '+JSON.stringify(state));};
     result.touchBeforeCapture=await touchState();requireTouch(result.touchBeforeCapture);
     await page.locator('.iwm-b--special').screenshot({path:path.join(evidence,'special-23-segments-touch-button.png'),animations:'disabled',timeout:90000});
-    await page.screenshot({path:path.join(evidence,'special-23-segments-touch.png'),animations:'disabled',timeout:90000});
+    result.touchCapture = await captureFrozenHud(page,{path:path.join(evidence,'special-23-segments-touch.png'),animations:'disabled',timeout:90000});
     result.touchAfterCapture=await touchState();requireTouch(result.touchAfterCapture);
   } finally {
     await page.evaluate(async()=>{
@@ -387,7 +388,7 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
         if(sub.textContent!==t(own?'Your whole team is splatted':'The whole team is splatted'))throw Error('WIPEOUT subtitle regression');
         return {own,color,visible,label:label.textContent,subtitle:sub.textContent,sound:sounds[0],width:rect.width};
       },own);
-      await page.screenshot({path:path.join(evidence,`wipeout-${own?'own':'enemy'}-team.png`),timeout:90000});
+      row.capture = await captureFrozenHud(page,{path:path.join(evidence,`wipeout-${own?'own':'enemy'}-team.png`),timeout:90000});
       const retained=await page.locator('[data-wipeout-probe] .iw-call__txt').isVisible();
       if(!retained)throw Error('WIPEOUT probe disappeared during capture');
       result.teamWipeouts.push({...row,retained});
@@ -400,6 +401,8 @@ export async function checkHudAuthority({ page, evidence, sourceSha = null, cont
 // Narrow diagnostic entry; full HUD acceptance calls the exact same assertions.
 export async function checkUiVisualProbes({page,evidence,sourceSha=null,contentHash=null}) {
   const result={};
+  let primaryError, failed=false;
+  const secondaryErrors=[];
   // #508 display-only reticle fixture uses the loaded native HUD methods.
   // Live actors/weapon state and weapon timing are never changed.
   result.splatlingStages=[];
@@ -423,7 +426,7 @@ export async function checkUiVisualProbes({page,evidence,sourceSha=null,contentH
       await page.evaluate(async()=>{const xh=globalThis.__splatlingProbe.xh;await Promise.all(xh.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));});
       row=await page.evaluate(inspectSplatlingStages,{charge,streaming,left,first,second,settled:true});
       if(row.errors.length)throw Error('Splatling stage geometry/progress regression: '+JSON.stringify(row));
-      await page.screenshot({path:path.join(evidence,`splatling-reticle-${name}.png`),timeout:90000});
+      row.capture = await captureFrozenHud(page,{path:path.join(evidence,`splatling-reticle-${name}.png`),timeout:90000});
       result.splatlingStages.push({name,...row});
     }
     result.splatlingNegatives=[];
@@ -458,17 +461,29 @@ export async function checkUiVisualProbes({page,evidence,sourceSha=null,contentH
         await page.evaluate(async()=>{const xh=globalThis.__splatlingProbe.xh;await Promise.all(xh.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})));});
       }
       const restored=await page.evaluate(inspectAccuracyReticle);if(restored.errors.length)throw Error('reticle negative cleanup remained hidden');
-      await page.screenshot({path:path.join(evidence,`authoritative-spread-${weapon}.png`),timeout:90000});
-      result.authoritativeSpread.push({weapon,before,after,negatives});
+      const capture = await captureFrozenHud(page,{path:path.join(evidence,`authoritative-spread-${weapon}.png`),timeout:90000});
+      result.authoritativeSpread.push({weapon,before,after,negatives,capture});
     }
     fs.writeFileSync(path.join(evidence,'authoritative-spread-probe.json'),JSON.stringify({status:'passed',sourceSha,contentHash,states:result.authoritativeSpread},null,2));
     fs.writeFileSync(path.join(evidence,'splatling-reticle-probe.json'),JSON.stringify({status:'passed',sourceSha,contentHash,stages:result.splatlingStages,negatives:result.splatlingNegatives},null,2));
   } catch(error) {
-    const diagnostic=await page.evaluate(()=>globalThis.__splatlingProbe?.last||null).catch(()=>null);
-    await page.screenshot({path:path.join(evidence,'splatling-reticle-failure.png'),timeout:90000}).catch(()=>{});
-    fs.writeFileSync(path.join(evidence,'splatling-reticle-probe.json'),JSON.stringify({status:'failed',sourceSha,contentHash,error:String(error),stages:result.splatlingStages,diagnostic},null,2));
+    primaryError=error;failed=true;
+    let diagnostic=null;
+    try {diagnostic=await page.evaluate(()=>globalThis.__splatlingProbe?.last||null);}
+    catch(diagnosticError) {secondaryErrors.push(diagnosticError);}
+    try {await page.screenshot({path:path.join(evidence,'splatling-reticle-failure.png'),timeout:90000});}
+    catch(screenshotError) {secondaryErrors.push(screenshotError);}
+    try {fs.writeFileSync(path.join(evidence,'splatling-reticle-probe.json'),JSON.stringify({status:'failed',sourceSha,contentHash,error:String(error),stages:result.splatlingStages,diagnostic},null,2));}
+    catch(writeError) {secondaryErrors.push(writeError);}
     throw error;
-  } finally {await page.evaluate(()=>{const s=globalThis.__splatlingProbe;if(s){s.xh.remove();s.native.style.visibility=s.old;delete globalThis.__splatlingProbe;}});}
+  } finally {
+    try {await page.evaluate(()=>{const s=globalThis.__splatlingProbe;if(s){s.xh.remove();s.native.style.visibility=s.old;delete globalThis.__splatlingProbe;}});}
+    catch(cleanupError) {secondaryErrors.push(cleanupError);}
+    if(secondaryErrors.length){
+      if(!failed)throw secondaryErrors[0];
+      throw new AggregateError([primaryError,...secondaryErrors],'UI visual probe failed: '+String(primaryError),{cause:primaryError});
+    }
+  }
   result.winnerPodium=await checkWinnerPodium({page,evidence,sourceSha,contentHash});
   return result;
 }

@@ -1,0 +1,16 @@
+{
+  "README.md": "c8d79826a8a7dafbfaa2d7d4768982f875fb5e687ecdff0504aea125668e285d",
+  "build-readback.json": "b160247eff7c7e7d64f9cfa99cc9a4c5522b3ee4de4b8b28b35d59e5900513bb",
+  "build.log": "9df74ade2f630ce93ce29378f5c60f92e2f8c3b9135735337bf0f1827e0ddbe9",
+  "commands.txt": "4ec1b52ef439307be28c2643e01bc22e766c61c733cfafa553bc7fccb08e4d3b",
+  "compare-build.mjs": "cfa02eb90ab3c25ce10b7def675925558e906f79c766981ee5f86052dc665434",
+  "emitted.tap.gz": "84747bf07eee317b217f1e3aed19323eb4e392034e50de3ebb91f0e0fdbdb6be",
+  "focused-source.tap.gz": "025ed8c2410e57723911e9d86fab84f2b4b4c5f6322bf0de75e3a5cf21aa93a1",
+  "official-prs-before.json": "9d99c9ba7484bf442d8b3bca3d22d159f241dc266855fdbe1f090c259b2307eb",
+  "official-refs-before.txt": "c05c3bc42322870bdbc92cbb3483afb932b53a76e282bcddbe6bcc8658649699",
+  "patch-check.log": "597046e163d53f1b89b6c40ae05fcc4334e14bf20507304717e7862536df899b",
+  "raw-tap-identity.json": "fd85eea533c356a5a5c9ef7a0a343002da6a4de1efb69a3f281ffad1ba78715e",
+  "references-emitted.json": "ad5f553fa9f3c2f2edac254e5f873518f4391ce1bde3fde7045041a01e4c23f3",
+  "references-source.json": "67a4c6bc0df9978f2c7e3228f36dcadbf3af6986fd6f0a67720d888104fd8795",
+  "startup-budget.log": "6f4a60891c4cd5e0be308159dbc89227e5b15839bc66d4f7991512971ac92cf9"
+}

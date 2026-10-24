@@ -77,6 +77,11 @@ export async function fixture({ hudSource = readSource('src/ui/hud.js'), gameSou
   await config.evaluate();
   Object.assign(context, util.namespace, config.namespace);
   const hudMethods = [
+    // Current composed visibility/dispose paths call this real cleanup helper.
+    // Raw upstream has neither the calls nor the helper; do not replace it with a stub.
+    ...(hudSource.includes('this._clearReticleFeedback()')
+      ? [section(hudSource, '  _clearReticleFeedback() {', '\n  hitMarker(')]
+      : []),
     ...(hudSource.includes('  setWorldPaused(on) {')
       ? [section(hudSource, '  setWorldPaused(on) {', '\n  setVisible(v) {')]
       : []),

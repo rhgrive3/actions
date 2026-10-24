@@ -108,15 +108,42 @@ function canonicalCoreEvidence(body) {
   assert.ok(!body.includes(legacyCoreEvidenceTail), 'artifact names cannot execute as shell commands');
   return body.replace(repairedCoreEvidenceTail, legacyCoreEvidenceTail);
 }
+// c1c0 adds only these two approved QA regressions to the motion command in
+// 55399a7466c744e53b6205dfb80c9d78d2e3daeb. Require their exact location and
+// uniqueness, then remove only those arguments to recover the original pin.
+// The new digest binds the additive body; the old digest still proves that no
+// pre-existing command, failure gate, workload or unrelated job was changed.
+const approvedMotionTests = [
+  'scripts/tests/inkwave-frozen-hud-capture.test.mjs',
+  'scripts/tests/inkwave-ui-visual-probe-errors.test.mjs'
+];
+const approvedMotionArguments = ' ' + approvedMotionTests.join(' ');
+const approvedCoreHash = 'd91e7883718efdacc8b6af8431557419a747beeddc229252a23a2e012f5e0d5f';
+function canonicalCoreMotionTests(body) {
+  const marker = '      - name: Verify motion verifier regressions\n';
+  assert.equal(body.split(marker).length, 2, 'exact motion regression step required');
+  const start = body.indexOf(marker) + marker.length, end = body.indexOf('\n', start);
+  assert.ok(end >= 0, 'motion regression command must end with a newline');
+  const command = body.slice(start, end);
+  assert.ok(command.startsWith('        run: node --test '), 'motion regressions must remain a real test command');
+  assert.ok(command.endsWith(' scripts/tests/inkwave-responsive-progress-summary.test.mjs' + approvedMotionArguments), 'exact approved QA arguments must be appended to the motion command');
+  for (const file of approvedMotionTests) assert.equal(body.split(file).length, 2, file + ' must run exactly once');
+  return body.slice(0, end - approvedMotionArguments.length) + body.slice(end);
+}
 function verifyAcceptedJobs(text) {
   for(const [name, expected] of Object.entries(acceptedJobHashes)) {
     let body = job(text,name).replace(' scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs','')
       .replaceAll('          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx playwright install --with-deps', '          npx playwright install --with-deps');
-    if (name === 'validate_core') body = canonicalCoreEvidence(body);
+    if (name === 'validate_core') {
+      body = canonicalCoreEvidence(body);
+      const additiveBody = body;
+      body = canonicalCoreMotionTests(body);
+      assert.equal(createHash('sha256').update(additiveBody).digest('hex'), approvedCoreHash, 'reviewed additive core body');
+    }
     assert.equal(createHash('sha256').update(body).digest('hex'),expected,name);
   }
 }
-test('accepted Turf and network job bodies retain their original pins after exact artifact repair',()=>verifyAcceptedJobs(workflow));
+test('accepted Turf and network job bodies retain their original pins after exact artifact repair and additive QA coverage',()=>verifyAcceptedJobs(workflow));
 test('the previously pinned broken artifact command is rejected despite its original digest',()=> {
   const broken=workflow.replace(repairedCoreEvidenceTail,legacyCoreEvidenceTail);
   assert.notEqual(broken,workflow);
@@ -136,5 +163,31 @@ test('artifact repair cannot waive tests, paths, identity, upload errors or unre
     const changed=workflow.replace(before,after);
     assert.notEqual(changed,workflow,before);
     assert.throws(()=>verifyAcceptedJobs(changed),before);
+  }
+});
+
+test('approved motion coverage rejects omission, duplication, relocation and unrelated command edits',()=> {
+  const tail = ' scripts/tests/inkwave-responsive-progress-summary.test.mjs' + approvedMotionArguments + '\n';
+  for (const [before,after] of [
+    ...approvedMotionTests.map(file=>[' ' + file, '']),
+    [approvedMotionArguments, ''],
+    [approvedMotionArguments, approvedMotionArguments + approvedMotionArguments],
+    [approvedMotionArguments, ' ' + [...approvedMotionTests].reverse().join(' ')],
+    [tail, ' scripts/tests/inkwave-responsive-progress-summary.test.mjs\n      - name: Relocated QA regressions\n        run: node --test' + approvedMotionArguments + '\n'],
+    [tail, tail.trimEnd() + ' scripts/tests/unreviewed.test.mjs\n'],
+    ['scripts/tests/inkwave-responsive-progress-summary.test.mjs', 'scripts/tests/unreviewed.test.mjs'],
+    ['      - name: Verify motion verifier regressions\n        run: node --test ', '      - name: Verify motion verifier regressions\n        run: echo ']
+  ]) {
+    const changed = workflow.replace(before,after);
+    assert.notEqual(changed,workflow,before);
+    assert.throws(()=>verifyAcceptedJobs(changed),before);
+  }
+});
+test('additive QA coverage cannot authorize changes to any previously pinned job',()=> {
+  for (const name of Object.keys(acceptedJobHashes)) {
+    const marker = `  ${name}:\n`;
+    const changed = workflow.replace(marker,marker + '    continue-on-error: true\n');
+    assert.notEqual(changed,workflow,name);
+    assert.throws(()=>verifyAcceptedJobs(changed),name);
   }
 });

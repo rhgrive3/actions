@@ -1,0 +1,23 @@
+{
+  "implementation": "9aa4a6d442a4770df08e72ee6b714eccd3787570",
+  "oldCandidate": "fa79de6c2b46e7a95272b4d6363552ad64a8e0db",
+  "sourceTests": {
+    "pass": 50,
+    "fail": 0,
+    "skip": 0
+  },
+  "oldSelectedRegressions": {
+    "pass": 0,
+    "fail": 2,
+    "skip": 0,
+    "expectedFailure": true
+  },
+  "browserGPU": false,
+  "publishedSha256": {
+    "README.md": "1ddd06312003c3514b25ccdc9d641b3e1697a65757c147f949c5f496f3a69ddc",
+    "build-input-readback.json": "d3b145ac75fdb5d03857c7202d151eb6ff66702adf9407996182003fc16998d7",
+    "focused-50.tap.gz": "a53e0cbed6b6d2a60589282ca473cad9076d1a0c564436379e3a465cf954d6ee",
+    "old-cold-negative.tap.gz": "b7d50afb5f87f8342769a89bbef242ee2ca2a244445aa78fe1079c94ca2ce57e",
+    "source-preservation.json": "7d9a8a4c30f327844e3e92173659cf4dc25aa3eabeb0a7892e331c5c7661e2e7"
+  }
+}

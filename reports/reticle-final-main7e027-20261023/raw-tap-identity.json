@@ -1,0 +1,12 @@
+{
+  "focused-source.tap": {
+    "sha256": "4b3b77f0ac46e8a4209f9d17702c4bfaa9479d9d230164765b9787752342d91a",
+    "bytes": 7366,
+    "gzip": "focused-source.tap.gz"
+  },
+  "emitted.tap": {
+    "sha256": "c8ed645435fd67aab189f397fd5fe10e5cac8bea5e52ad54d1b2049e1ed4a549",
+    "bytes": 1313,
+    "gzip": "emitted.tap.gz"
+  }
+}
