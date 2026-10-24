@@ -1,0 +1,72 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import { sourceLoadedActorFixture } from '../../splatoon3/tests/source-loaded-actor-fixture.mjs';
+
+const raw = rel => fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
+
+test('production composer installs reversal-safe squid/human pose ownership', () => {
+  const motion = adaptBuildSource('src/game/motion/source-controller.js', raw('src/game/motion/source-controller.js'));
+  const character = adaptBuildSource('src/game/character.js', raw('src/game/character.js'));
+  assert.match(motion, /applyDivePose\(\)\{/);
+  assert.match(motion, /this\.returnPivotBlend=nextKid\|\|this\.returnInterrupted/);
+  assert.match(motion, /this\.squidPose\.copy\(out\)\.fk\(\)/);
+  assert.match(character, /this\.sourceMotion\?\.applyDivePose\?\.\(\)/);
+  assert.match(character, /const returnU = clamp\(t \/ 0\.15, 0, 1\)/);
+});
+
+test('rapid squid-button changes settle into genuine human and squid idle at 30/60/120 Hz', async () => {
+  const fixture = await sourceLoadedActorFixture({ random: () => 0.4 });
+  for (const sourced of [true, false]) for (const fps of [30, 60, 120]) {
+    const actor = await fixture.make();
+    const c = actor.character;
+    c.onEvent = null;
+    if (!sourced) c.sourceMotion.setEnabled(false);
+    const step = (dt = 1 / fps) => {
+      fixture.G.time += dt;
+      actor._finishFrame(dt);
+      c.root.updateMatrixWorld(true);
+    };
+    const renderedSquid = () => {
+      const mesh = c.squid.body, p = new fixture.THREE.Vector3();
+      const indices = [0, Math.floor(mesh.geometry.attributes.position.count / 2), mesh.geometry.attributes.position.count - 1];
+      return indices.flatMap(i => mesh.getVertexPosition(i, p).applyMatrix4(mesh.matrixWorld).toArray());
+    };
+    for (let i = 0; i < fps; i++) step();
+
+    for (let tap = 0; tap < 24; tap++) {
+      const before = [c.kidScale, c.sqScale], points = sourced ? renderedSquid() : null;
+      actor.form = tap % 2 === 0 ? 'squid' : 'kid';
+      actor.submerged = false;
+      step(0); // A same-frame reversal must not change the rendered shape.
+      assert(Math.abs(c.kidScale - before[0]) < 1e-8, 'kid scale continuous on reversal');
+      assert(Math.abs(c.sqScale - before[1]) < 1e-8, 'squid scale continuous on reversal');
+      if (sourced && c.sqScale > 0.001) {
+        const after = renderedSquid();
+        assert(Math.max(...after.map((v, i) => Math.abs(v - points[i]))) < 1e-6,
+          'source squid vertices remain continuous at input edge');
+      }
+      step();
+      step();
+      assert(Number.isFinite(c.kidScale) && Number.isFinite(c.sqScale));
+      assert(Math.abs(c.kidScale + c.sqScale - 1) < 1e-8, 'no missing or doubled silhouette');
+      assert(c.kidScale >= 0 && c.kidScale <= 1 && c.sqScale >= 0 && c.sqScale <= 1);
+    }
+    actor.form = 'kid';
+    for (let i = 0; i < fps; i++) step();
+    assert(c.kidScale > 0.999 && c.sqScale < 0.001, 'human idle restored');
+    if (sourced) assert.equal(c.sourceMotion.state, 'idle', 'transition clip does not latch over human idle');
+
+    actor.form = 'squid';
+    actor.submerged = false; // Dry squid idle uses Sqd_Wait rather than Sqd_Walk.
+    for (let i = 0; i < fps; i++) step();
+    assert(c.sqScale > 0.999 && c.kidScale < 0.001, 'squid idle restored');
+    if (sourced) assert.equal(c.sourceMotion.squidState, 'Sqd_Wait', 'transition clip does not latch over squid idle');
+
+    actor.form = 'kid';
+    for (let i = 0; i < fps; i++) step();
+    assert(c.kidScale > 0.999 && c.sqScale < 0.001, 'a second human idle recovers cleanly');
+    fixture.reset();
+  }
+});
