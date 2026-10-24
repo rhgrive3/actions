@@ -18,6 +18,13 @@ export const MAIN3003_QA_PATHS=Object.freeze([
   'scripts/tests/inkwave-main3003-firing-pair.test.mjs',
   'scripts/verify-inkwave-projectile-current-pair.mjs',
 ]);
+export const MAIN3003_OUTPUT_SAFETY_BASE='fda7f3b4daaf012f2001b326d5e0b71cc9cf634c';
+export const MAIN3003_OUTPUT_SAFETY_PATHS=Object.freeze([
+  'scripts/lib/inkwave-main3003-firing-pair.mjs',
+  'scripts/lib/inkwave-projectile-current-pair.mjs',
+  'scripts/lib/inkwave-source-admission-cli.mjs',
+  'scripts/tests/inkwave-main3003-firing-pair.test.mjs',
+]);
 const hash=x=>createHash('sha256').update(x).digest('hex');
 const packed=fs.readFileSync(new URL('../fixtures/inkwave-main3003-firing-pair.json.gz',import.meta.url));
 assert.equal(hash(packed),MAIN3003_FIXTURE_SHA256,'main3003 complete pair fixture pin');
@@ -48,10 +55,13 @@ export function assertMain3003Environment(env){
 // Future descendants, unrelated copied trees and additional changed paths fail.
 export function assertMain3003Head(declared,git){
   if(declared===MAIN3003_HEAD)return;
-  assert.deepEqual(git(['show','-s','--format=%P',declared]).trim().split(' '),[MAIN3003_HEAD],
+  const parents=git(['show','-s','--format=%P',declared]).trim().split(' ');
+  const safety=parents.length===1&&parents[0]===MAIN3003_OUTPUT_SAFETY_BASE;
+  const parent=safety?MAIN3003_OUTPUT_SAFETY_BASE:MAIN3003_HEAD;
+  assert.deepEqual(parents,[parent],
     'main3003 head must be fc4 or its one reviewed QA-only successor');
-  assert.deepEqual(git(['diff','--no-renames','--name-only',MAIN3003_HEAD,declared]).trim().split('\n').sort(),
-    [...MAIN3003_QA_PATHS],'exact main3003 QA successor paths');
+  assert.deepEqual(git(['diff','--no-renames','--name-only',parent,declared]).trim().split('\n').sort(),
+    [...(safety?MAIN3003_OUTPUT_SAFETY_PATHS:MAIN3003_QA_PATHS)],'exact main3003 QA successor paths');
 }
 
 export function assertMain3003Inputs(rows,epoch){

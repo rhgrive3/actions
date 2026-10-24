@@ -5,6 +5,7 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {execFileSync} from 'node:child_process';
+import {assertOutputDirectorySeparate} from './inkwave-source-admission-cli.mjs';
 import {MAIN3003_BASE,main3003Fixture,main3003Epoch,main3003Route,assertMain3003Environment,assertMain3003Head,assertMain3003Inputs,assertMain3003Artifacts} from './inkwave-main3003-firing-pair.mjs';
 
 export const CURRENT_PAIR_MODE = 'oct23-reviewed-projectile-pairs';
@@ -174,18 +175,24 @@ export function currentPairNegativeControls(route) {
 // Both existing required captures enforce their own built side after build.
 // The after matrix has no baseline checkout, so each side validates only its
 // own real checkout/artifacts while retaining both immutable source labels.
+export function assertCurrentPairCaptureOutputs({site,root,baseline,evidence,profile}){
+  const sources=[path.resolve(root),path.resolve(root,baseline||'.ci-baseline')];
+  // Protect existing checkout entries; CI scratch contains generated outputs.
+  const inputs=[...new Set(sources.flatMap(source=>fs.existsSync(source)?fs.readdirSync(source):[])
+    .filter(name=>name!=='.ci-scratch').concat(['.built-site/baseline','.built-site/projectiles']))];
+  for(const value of [evidence,profile].filter(Boolean)){
+    assertOutputDirectorySeparate(value,sources,inputs,sources);
+    assertOutputDirectorySeparate(value,[path.dirname(path.resolve(site))],[path.basename(path.resolve(site))],sources);
+  }
+}
+
 export function verifyCurrentPairCaptureBuild({site,mode,root,eventFile,eventName,repository,baseline,evidence,profile}){
   if(!eventFile||eventName!=='pull_request')return null;
   const event=JSON.parse(fs.readFileSync(eventFile,'utf8'));
   if(event.number!==1857||event.pull_request?.head?.ref!=='fix/shooter-splatling-cosmetics-20261023')return null;
   const route=selectCurrentPair(event,eventName,repository);if(!route.exactMain3003)return null;
   assert.ok(['baseline','candidate'].includes(mode),'explicit capture side label');
-  const artifactRoot=path.resolve(site);
-  for(const value of [evidence,profile].filter(Boolean)){
-    const output=path.resolve(value);
-    assert.ok(output!==artifactRoot&&!output.startsWith(artifactRoot+path.sep)&&!artifactRoot.startsWith(output+path.sep),
-      'capture outputs must be separate from pinned artifacts');
-  }
+  assertCurrentPairCaptureOutputs({site,root,baseline,evidence,profile});
   const isBase=mode==='baseline',epoch=isBase?MAIN3003_BASE:route.sourceHead,commit=isBase?route.baseSha:route.candidateSha;
   const sourceRoot=isBase?path.resolve(root,baseline||'.ci-baseline'):root;
   assertMain3003Environment(process.env);

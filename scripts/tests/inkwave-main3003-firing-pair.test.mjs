@@ -4,8 +4,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import {createHash} from 'node:crypto';
-import {MAIN3003_BASE as B,MAIN3003_HEAD as H,MAIN3003_QA_PATHS,main3003Fixture,main3003Epoch,assertMain3003Environment,assertMain3003Head,assertMain3003Inputs,assertMain3003Artifacts} from '../lib/inkwave-main3003-firing-pair.mjs';
-import {currentPairFixture,selectCurrentPair,assertCurrentPairRows,currentPairNegativeControls,verifyCurrentPairCaptureBuild} from '../lib/inkwave-projectile-current-pair.mjs';
+import {execFileSync} from 'node:child_process';
+import {MAIN3003_BASE as B,MAIN3003_HEAD as H,MAIN3003_QA_PATHS,MAIN3003_OUTPUT_SAFETY_BASE,MAIN3003_OUTPUT_SAFETY_PATHS,main3003Fixture,main3003Epoch,assertMain3003Environment,assertMain3003Head,assertMain3003Inputs,assertMain3003Artifacts} from '../lib/inkwave-main3003-firing-pair.mjs';
+import {currentPairFixture,selectCurrentPair,assertCurrentPairRows,currentPairNegativeControls,assertCurrentPairCaptureOutputs,verifyCurrentPairCaptureBuild} from '../lib/inkwave-projectile-current-pair.mjs';
 const f=main3003Fixture(),old=currentPairFixture(),hash=x=>createHash('sha256').update(x).digest('hex');
 const event=()=>({number:1857,pull_request:{number:1857,base:{ref:'main',sha:B,repo:{full_name:'rhgrive3/actions'}},head:{ref:f.branch,sha:H,repo:{full_name:'rhgrive3/actions'}}}});
 const select=e=>selectCurrentPair(e,'pull_request','rhgrive3/actions');
@@ -103,6 +104,56 @@ test('existing required captures enforce build closure before generic file reads
     const file=path.join(root,'event.json');fs.writeFileSync(file,JSON.stringify(event()));
     const args={eventFile:file,eventName:'pull_request',repository:'rhgrive3/actions',root,site:path.join(root,'site')};
     assert.throws(()=>verifyCurrentPairCaptureBuild({...args,mode:'after'}),/explicit capture side label/);
-    assert.throws(()=>verifyCurrentPairCaptureBuild({...args,mode:'candidate',evidence:args.site}),/outputs must be separate/);
+    assert.throws(()=>verifyCurrentPairCaptureBuild({...args,mode:'candidate',evidence:args.site}),/overlap an input/);
   }finally{fs.rmSync(root,{recursive:true,force:true});}
+});
+
+test('only the exact four-file output repair may directly follow frozen fda7',()=>{
+  const git=args=>args[0]==='show'?MAIN3003_OUTPUT_SAFETY_BASE:MAIN3003_OUTPUT_SAFETY_PATHS.join('\n');
+  assertMain3003Head('a'.repeat(40),git);
+  for(const paths of [MAIN3003_OUTPUT_SAFETY_PATHS.slice(1),[...MAIN3003_OUTPUT_SAFETY_PATHS,'inkwave-public/future.js']])
+    assert.throws(()=>assertMain3003Head('a'.repeat(40),args=>args[0]==='show'?MAIN3003_OUTPUT_SAFETY_BASE:paths.join('\n')));
+});
+
+test('real capture output aliases and absent nested parents cannot reach either source, build or shared Git metadata',()=>{
+  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'main3003-output-')),root=path.join(tmp,'candidate'),base=path.join(root,'.ci-baseline');
+  const make=p=>{fs.mkdirSync(p,{recursive:true});return p;};
+  try{
+    const repo=make(path.join(tmp,'repository'));
+    const git=(cwd,...args)=>execFileSync('git',['-C',cwd,...args],{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
+    git(repo,'init','--quiet');
+    git(repo,'-c','user.name=Output safety fixture','-c','user.email=fixture@example.invalid','-c','core.hooksPath=/dev/null','-c','commit.gpgSign=false','commit','--quiet','--allow-empty','-m','owned output safety fixture');
+    git(repo,'worktree','add','--quiet','--detach',root,'HEAD');git(repo,'worktree','add','--quiet','--detach',base,'HEAD');
+    const targets=[make(path.join(root,'inkwave-public')),make(path.join(base,'inkwave-public')),
+      make(path.join(root,'.built-site/baseline')),make(path.join(root,'.built-site/projectiles')),
+      git(root,'rev-parse','--path-format=absolute','--git-dir'),git(base,'rev-parse','--path-format=absolute','--git-dir'),
+      git(root,'rev-parse','--path-format=absolute','--git-common-dir')];
+    const args={root,baseline:base,site:targets[3]};
+    for(const [at,target]of targets.entries()){
+      const alias=path.join(tmp,'alias-'+at);fs.symlinkSync(target,alias);
+      for(const output of [alias,path.join(alias,'absent/deep/output')])for(const field of ['evidence','profile'])
+        assert.throws(()=>assertCurrentPairCaptureOutputs({...args,[field]:output}),/overlap an input|Git metadata/);
+      assert.equal(fs.existsSync(path.join(target,'absent')),false,'rejection creates no directory');
+    }
+    const dangling=path.join(tmp,'dangling');fs.symlinkSync(path.join(tmp,'missing-target'),dangling);
+    assert.throws(()=>assertCurrentPairCaptureOutputs({...args,evidence:path.join(dangling,'nested/output')}));
+    assertCurrentPairCaptureOutputs({...args,evidence:path.join(root,'.ci-scratch/projectile-visuals/before'),profile:path.join(tmp,'profile/new/deep')});
+    make(path.join(root,'.ci-scratch/projectile-visuals/before'));
+    assertCurrentPairCaptureOutputs({...args,evidence:path.join(root,'.ci-scratch/projectile-visuals/before'),profile:path.join(tmp,'profile/new/deep')});
+  }finally{fs.rmSync(tmp,{recursive:true,force:true});}
+});
+
+test('existing output trees reject hidden symlinks, hardlinks and non-directory ancestors without touching sources',()=>{
+  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'main3003-output-tree-'));
+  try{
+    const root=path.join(tmp,'candidate'),input=path.join(root,'inkwave-public');fs.mkdirSync(input,{recursive:true});
+    const source=path.join(input,'sentinel.js');fs.writeFileSync(source,'preserve input bytes\n');
+    const output=path.join(tmp,'output');fs.mkdirSync(output);const args={root,site:path.join(tmp,'site'),evidence:output};
+    fs.linkSync(source,path.join(output,'Preferences'));assert.throws(()=>assertCurrentPairCaptureOutputs(args),/multiply-linked/);
+    fs.unlinkSync(path.join(output,'Preferences'));fs.symlinkSync(input,path.join(output,'nested'));
+    assert.throws(()=>assertCurrentPairCaptureOutputs(args),/subtree must not contain symlinks/);fs.unlinkSync(path.join(output,'nested'));
+    fs.writeFileSync(path.join(tmp,'file-parent'),'not a directory');
+    assert.throws(()=>assertCurrentPairCaptureOutputs({...args,profile:path.join(tmp,'file-parent/absent/output')}));
+    assert.equal(fs.readFileSync(source,'utf8'),'preserve input bytes\n');assertCurrentPairCaptureOutputs(args);
+  }finally{fs.rmSync(tmp,{recursive:true,force:true});}
 });
