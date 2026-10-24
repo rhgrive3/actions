@@ -550,7 +550,7 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code,
       "    const w = f.weapon || 'shooter';",
       `    const w = f.weapon || 'shooter';
-    const reticleScale = Math.min(1, Math.max(.5, innerHeight / 720));
+    const reticleScale = Math.min(1, Math.max(.5, Math.min(innerHeight / 720, innerWidth / 1280)));
     if (reticleScale !== L.reticleScale) {
       L.reticleScale = reticleScale;
       this.xh.style.setProperty('--iw-reticle-scale', String(reticleScale));

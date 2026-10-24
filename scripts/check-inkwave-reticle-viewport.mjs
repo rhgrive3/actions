@@ -72,7 +72,7 @@ try{
    return records;
   });
   for(const row of result){
-   const scale=Math.min(1,Math.max(.5,viewport.height/720));
+   const scale=Math.min(1,Math.max(.5,Math.min(viewport.height/720,viewport.width/1280)));
    assert.equal(row.scale,scale);assert.ok(Math.abs(row.art.width-80*scale)<.03,`${row.kind}: SVG art scale`);
    assert.ok(Math.abs(row.ret.x-row.anchor.x-37)<.03&&Math.abs(row.ret.y-row.anchor.y+19)<.03,'projected guide remains in screen pixels');
    assert.ok(Math.abs(row.hit.x-row.ret.x)<.03&&Math.abs(row.hit.y-row.ret.y)<.03,'confirmed hit follows projected position');
