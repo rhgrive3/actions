@@ -192,6 +192,9 @@ test('hidden HUD loops, leaving stage pickers and the picker backdrop drift stop
   // Screens whose own leave animation runs on descendants (news, modals) keep it.
   assert.ok(selectors.every((s) => s.startsWith('.iw-hud.is-hidden') || s.startsWith('.iw-screen.is-leaving:is(.iw-ss, .iw-modesel) ')), selectors.join(' | '));
   assert.match(generated, /\.iw-ui\.is-active:is\(\[data-screen="mode"\], \[data-screen="setup"\]\) \.iw-ss__bgimg \{\n  animation: none;\n\}/);
+  // Touch pause (and screens opened from it) drop the per-frame blur over the re-presented arena.
+  assert.match(generated, /:is\(html\.iw-touch \.iw-ui, \.iw-ui\.is-touch\)\.is-ingame \* \{\n  -webkit-backdrop-filter: none;\n  backdrop-filter: none;\n\}/);
+  assert.match(rawStyle, /\.iw-pause__dim \{[^}]*backdrop-filter: blur\(7px\)/, 'desktop pause keeps its blur');
   // The HUD is only paused while hidden: the in-match rules are untouched.
   assert.match(rawStyle, /\.iw-hud\.is-hidden \{ opacity: 0; visibility: hidden;/);
   assert.match(rawStyle, /\.iw-ss__bgimg \{[^}]*animation: iw-ss-drift 26s/);

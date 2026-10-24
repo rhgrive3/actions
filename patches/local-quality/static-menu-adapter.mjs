@@ -208,6 +208,15 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
 .iw-ui.is-active:is([data-screen="mode"], [data-screen="setup"]) .iw-ss__bgimg {
   animation: none;
 }
+/* The paused arena is re-presented into the canvas every frame (WebGL does
+   not retain its drawing buffer), so the pause dim and panel blurs over it
+   are recomputed every frame too: on phones pausing a battle lost the WebGL
+   context. Touch keeps the dim gradient without the blur; the screens opened
+   from pause (.is-ingame) get the same treatment. */
+:is(html.iw-touch .iw-ui, .iw-ui.is-touch).is-ingame * {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
 /* Locker art is drawn in the canvas (locker-stage.mjs) under the live kid. */
 .iw-ui.is-active[data-screen="locker"] {
   background-color: transparent;
