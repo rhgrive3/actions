@@ -16,7 +16,7 @@ python3 patches/native-stages/tools/build-native.py --source .codex-stage-source
 INKWAVE_NATIVE_STAGE_ASSETS="$PWD/.codex-stage-sources/generated" node scripts/build-inkwave.mjs inkwave-public _site-native
 ```
 
-通常のビルドは原典アセットを同梱せず、ステージ選択で5ステージを表示する。選択後、利用者のブラウザが固定KiTrixの公開LFS media/MTL/PNGを直接取得する。OBJのSHA-256とMTL/PNGの固定Git blob SHA-1を検証し、Web Worker内で描画・衝突・チャート・マスクを変換する。元データや変換モデルをGitやPagesへ公開しない。ブラウザ内のCacheStorage/IndexedDBは各2ステージの私的なキャッシュで、保存が拒否された場合は通常取得に戻る。
+通常のビルドは原典アセットを同梱せず、ステージ選択で5ステージを表示する。選択後、利用者のブラウザが固定KiTrixの公開LFS media/MTL/PNGを直接取得する。OBJのSHA-256とMTL/PNGの固定Git blob SHA-1を検証し、Web Worker内で描画・衝突・チャート・マスクを変換する。元データをGitやPagesへ公開しない（変換済みデータは2026-10-24以降、下記「変換済みデータ」の方針で配信する）。ブラウザ内のCacheStorage/IndexedDBは各2ステージの私的なキャッシュで、保存が拒否された場合は通常取得に戻る。
 
 初回はステージごとのモデル（約40～70MB）と画像の取得が必要で、KiTrix/GitHubへの接続とGitHub APIの利用制限の影響を受ける。取得できない場合はステージ選択へ戻り、前の地形を保持する。画像未取得の初回オフライン起動は保証しない。2026-10-12の追加指示で、ステージ選択を有効にしたPR #1285のmainマージが許可された。完全再現の完成判定は別に継続する。
 
