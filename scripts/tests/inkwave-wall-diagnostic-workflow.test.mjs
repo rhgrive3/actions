@@ -152,11 +152,23 @@ function canonicalQueueCoreBody(body) {
     assert.equal(body.split(from).length,2,"queue core hunk 8 must occur exactly once");body=body.replace(from,to); }
   return body;
 }
+const originalCoreBrowserInstall = '      - name: Install pinned source regression and build tool\n        run: npm install --no-save --no-package-lock --silent esbuild@0.28.2\n';
+const reviewedCoreBrowserInstall = '      - name: Install pinned source regression and build tool\n        run: |\n          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1\n          npx --no-install playwright install --with-deps chromium\n';
+function canonicalCoreBrowserInstall(body) {
+  const next = '      - name: Prepare persistent worker regression fixtures\n';
+  assert.equal(body.split(reviewedCoreBrowserInstall + next).length, 2, 'exact reviewed browser setup and placement required');
+  assert.equal(body.split('playwright@1.62.1').length, 2, 'core browser dependency must occur once');
+  assert.equal(body.split('npx --no-install playwright install --with-deps chromium').length, 2, 'core browser installation must occur once');
+  assert.ok(body.indexOf(reviewedCoreBrowserInstall) < body.indexOf('      - name: Run requested focused source regressions\n'));
+  assert.ok(body.indexOf(reviewedCoreBrowserInstall) < body.indexOf('        run: node scripts/run-inkwave-source-remainder.mjs quality\n'));
+  return body.replace(reviewedCoreBrowserInstall, originalCoreBrowserInstall);
+}
 function verifyAcceptedJobs(text) {
   for(const [name, expected] of Object.entries(acceptedJobHashes)) {
     let body = job(text,name).replace(' scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs','')
       .replaceAll('          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx playwright install --with-deps', '          npx playwright install --with-deps');
     if (name === 'validate_core') {
+      body = canonicalCoreBrowserInstall(body);
       body = canonicalQueueCoreBody(body);
       body = canonicalCoreEvidence(body);
       const additiveBody = body;
@@ -213,4 +225,21 @@ test('additive QA coverage cannot authorize changes to any previously pinned job
     assert.notEqual(changed,workflow,name);
     assert.throws(()=>verifyAcceptedJobs(changed),name);
   }
+});
+
+test('reviewed core browser provisioning rejects missing, altered, relocated and suppressed setup',()=>{
+ const edits=[
+  [reviewedCoreBrowserInstall,originalCoreBrowserInstall],
+  ['playwright@1.62.1','playwright@1.62.0'],
+  ['npx --no-install playwright install --with-deps chromium','npx --no-install playwright install --with-deps webkit'],
+  ['npx --no-install playwright install --with-deps chromium','true # browser omitted'],
+  [reviewedCoreBrowserInstall,reviewedCoreBrowserInstall+reviewedCoreBrowserInstall],
+  [reviewedCoreBrowserInstall,reviewedCoreBrowserInstall.replace('        run: |','        if: false\n        run: |')],
+  [reviewedCoreBrowserInstall,reviewedCoreBrowserInstall.replace('        run: |','        continue-on-error: true\n        run: |')],
+  [reviewedCoreBrowserInstall,reviewedCoreBrowserInstall.replace('--with-deps chromium','--with-deps chromium || true')],
+  [reviewedCoreBrowserInstall,reviewedCoreBrowserInstall.replace('          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1\n          npx --no-install playwright install --with-deps chromium\n','          npx --no-install playwright install --with-deps chromium\n          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1\n')]
+ ];
+ for(const [before,after] of edits){const changed=workflow.replace(before,after);assert.notEqual(changed,workflow);assert.throws(()=>verifyAcceptedJobs(changed));}
+ const relocated=workflow.replace(reviewedCoreBrowserInstall,'').replace('      - name: Verify local quality regressions\n',reviewedCoreBrowserInstall+'      - name: Verify local quality regressions\n');
+ assert.notEqual(relocated,workflow);assert.throws(()=>verifyAcceptedJobs(relocated));
 });

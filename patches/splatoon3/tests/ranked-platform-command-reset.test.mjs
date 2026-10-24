@@ -1,3 +1,4 @@
+import { installRankedDocument } from './ranked-dom-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from '../../reliability/tests/controls-fixture.mjs';
@@ -7,8 +8,7 @@ import { rebasePlatformGame } from '../../local-quality/platform-game.mjs';
 // Real composed controller -> Actor -> NetMatch -> Transport JSON -> host
 // command admission. Only socket, scene/physics and wall time are controlled.
 const f = await fixture({ ranked: true, network: true, session: true, production: true });
-f.context.document.createElement = () => ({ dataset: {}, ownerDocument: f.context.document, getRootNode: () => f.context.document });
-f.context.document.head = { appendChild() {} }; f.context.structuredClone = structuredClone;
+installRankedDocument(f.context.document); f.context.structuredClone = structuredClone;
 f.installRanked(f);
 const stage = { id: 'ranked-platform-reset', clams: { spawns: [], goals: [[0, 0, 20], [0, 0, -20]] } };
 let time = 10;

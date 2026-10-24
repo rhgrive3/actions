@@ -19,7 +19,7 @@ const mode=process.env.INKWAVE_UI_LIFETIME_MINIFY==='1';
 const transformSync=mode?(await import(process.env.ESBUILD_MODULE?pathToFileURL(process.env.ESBUILD_MODULE).href:'esbuild')).transformSync:null;
 const site=process.env.INKWAVE_UI_LIFETIME_SITE;
 class El {
-  constructor(){this.children=[];this.listeners=new Map();this.style={setProperty(k,v){this[k]=v;}};this.names=new Set();this.classList={add:(...n)=>n.forEach(x=>this.names.add(x)),remove:(...n)=>n.forEach(x=>this.names.delete(x)),toggle:(n,v)=>v?this.names.add(n):this.names.delete(n),contains:n=>this.names.has(n)};}
+  constructor(){this.children=[];this.listeners=new Map();this.style={setProperty(k,v){this[k]=v;}};this.names=new Set();this.classList={contains:n=>this.names.has(String(n)),add:(...n)=>n.forEach(x=>this.names.add(x)),remove:(...n)=>n.forEach(x=>this.names.delete(x)),toggle:(n,v)=>v?this.names.add(n):this.names.delete(n)};}
   appendChild(c){if(c)this.children.push(c);return c;} append(...cs){cs.forEach(c=>this.appendChild(c));} prepend(...cs){this.children.unshift(...cs.filter(Boolean));}
   setAttribute(){} addEventListener(name, fn){const rows=this.listeners.get(name)||[];rows.push(fn);this.listeners.set(name,rows);}
   dispatch(name, event){for(const fn of this.listeners.get(name)||[])fn({preventDefault(){},stopPropagation(){},...event});} querySelector(){return new El();} querySelectorAll(){return [];} remove(){} get offsetWidth(){return 1;}
@@ -176,4 +176,13 @@ test('#685 repeated map-match disposal cannot accumulate pending Actor owners be
     const h=tapMap(f,dio,'cycle'+cycle); h.down(cycle+1,cycle%2?'pen':'touch');
     assert.equal(dio._pinTaps.size,1); h.m.dispose(); assert.equal(dio._pinTaps.size,0);
   }
+});
+
+test('DOM fixture classList contains observes exact added and removed tokens',()=>{
+  const el=new El(); assert.equal(el.classList.contains('ready'),false);
+  el.classList.add('ready','other'); assert.equal(el.classList.contains('ready'),true);
+  assert.equal(el.classList.contains('Ready'),false); assert.equal(el.classList.contains('ready other'),false);
+  el.classList.add('ready'); assert.equal(el.names.size,2);
+  el.classList.remove('ready'); assert.equal(el.classList.contains('ready'),false);
+  assert.equal(el.classList.contains('other'),true); assert.deepEqual([...el.names],['other']);
 });

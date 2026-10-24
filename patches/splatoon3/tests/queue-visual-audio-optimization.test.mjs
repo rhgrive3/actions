@@ -35,8 +35,12 @@ test('loader backoff never schedules jobs, while resident entries bypass backoff
   loader.retryAfter.set('shooter:fire',Date.now()+4000); let scheduled=0;
   loader._schedule=()=>{scheduled++;throw Error('backoff must not queue');};
   for(let i=0;i<100;i++)assert.equal((await loader.ensure('shooter','fire')).throttled,true);
-  assert.equal(scheduled,0);bank.authorized.loaded.set('shooter:fire:0',{});
+  assert.equal(scheduled,0);
+  const inFlight=Promise.resolve({loaded:1});loader.inFlight.set('shooter:fire',inFlight);
+  assert.equal(loader.ensure('shooter','fire'),inFlight);
+  loader.inFlight.delete('shooter:fire');bank.authorized.loaded.set('shooter:fire:0',{});
   assert.equal((await loader.ensure('shooter','fire')).cached,true);
+  assert.equal(scheduled,0);
 });
 test('non-Wail cosmetic clocks retain exactly sixty reference trials per second at 30/60/120 Hz and cap stalls', () => {
   for(const hz of [30,60,120]) {const r={};let trials=0;for(let i=0;i<hz*10;i++)trials+=nonWailVfxTicks(r,1/hz);assert.equal(trials,600);}
@@ -67,7 +71,7 @@ test('actual missile frame preserves seeded 60 Hz random order and equal event t
   const frame=missile.properties.find(n=>n.key.name==='frame');
   for(const hz of [30,60,120]){
     let word=23,trials=0;const draws=[],random=()=>{trials++;return (word=(Math.imul(word,1664525)+1013904223)>>>0)/4294967296;};
-    const fn=new Function('nonWailVfxTicks','areaSpecialVfxTicks','vfxRandom','SPARK','return ({'+source.slice(frame.start,frame.end)+'}).frame')(nonWailVfxTicks,areaSpecialVfxTicks,random,{STREAK:0});
+    const fn=new Function('areaSpecialVfxTicks','vfxRandom','SPARK','return ({'+source.slice(frame.start,frame.end)+'}).frame')(areaSpecialVfxTicks,random,{STREAK:0});
     const self={v:[new Vector3()],pushRibbon(){},spark(...args){draws.push(args[0]);},hdr:()=>[1,1,1]};
     const r={d:{},vel:new Vector3(1,2,3),color:[1,1,1]},p={pos:new Vector3()};
     for(let i=0;i<hz;i++)fn.call(self,r,p,1/hz);

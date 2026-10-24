@@ -9,7 +9,11 @@ const { THREE, G, SRC } = await loadNative(true);
 const K = await import(pathToFileURL(SRC + 'src/game/character-geo.js'));
 const { CS, MC, PART } = await import(pathToFileURL(SRC + 'src/game/character-mats.js'));
 const geo = adaptBuildSource('src/game/character-geo.js', fs.readFileSync(SRC + 'src/game/character-geo.js', 'utf8'));
-const builderSource = geo.slice(geo.indexOf('class BuilderAttribute {'), geo.indexOf('\n}\n\n', geo.indexOf('class Builder {')) + 2);
+const builderStart = geo.indexOf('class BuilderAttribute {');
+const builderClass = geo.indexOf('class Builder {');
+const builderEnd = geo.indexOf('\n}\n\n', builderClass);
+assert.ok(builderStart >= 0 && builderClass > builderStart && builderEnd > builderClass, 'extract the real Builder and its module-local typed attribute dependency');
+const builderSource = geo.slice(builderStart, builderEnd + 2);
 const Builder = new Function('THREE', 'V3', 'BONE_INDEX', 'const _c = new THREE.Color();\n' + builderSource + '\nreturn Builder;')(THREE, THREE.Vector3, K.BONE_INDEX);
 const source = fs.readFileSync(SRC + 'src/game/character-outfit.js', 'utf8');
 const fixture = fs.readFileSync(new URL('./fixtures/shoe-add-before-read-transform.js.txt', import.meta.url), 'utf8');
@@ -38,6 +42,13 @@ test('all five shoe detail levels preserve every geometry byte and immutable sou
     const builders = [new Builder(), new Builder()];
     baseline.addShoes(builders[0], level); candidate.addShoes(builders[1], level);
     const outputs = builders.map(b => b.build('aCloth', 'aClothPart'));
+    for (const output of outputs) {
+      assert.ok(output instanceof THREE.BufferGeometry);
+      for (const attr of [...Object.values(output.attributes), output.index]) {
+        assert.ok(attr instanceof THREE.BufferAttribute, 'builder outputs retain genuine native THREE attributes');
+        assert.equal(attr.count, attr.array.length / attr.itemSize);
+      }
+    }
     assert.deepEqual(snapshot(outputs[1]), snapshot(outputs[0]), 'positions, normals, UV, colors, callbacks, skin weights and winding: level ' + level);
     assert.deepEqual(parts.map(list => list.map(pt => snapshot(pt.geo))), before, 'shared templates stay byte immutable');
     assert.equal(clones[0], 2 * parts[0].length); assert.equal(clones[1], 0);

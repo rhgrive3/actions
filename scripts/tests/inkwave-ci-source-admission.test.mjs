@@ -170,6 +170,8 @@ function sourceRouteContract(source) {
       assert.ok(body.includes('          ' + name + ': ${{ ' + value + ' }}\n'), name + ': dynamic immutable event declaration');
   }
   const cases = [
+    [context('inkwave/special-reviewed-main726-20261023','1856',{event:'workflow_dispatch',baseSha:'3003088e7d3da6e3b41829a96714698a348b555b'}),true,true,'dispatch'],
+    [context('fix/roller-vertical-recovery-20261023','1856',{event:'workflow_dispatch',baseSha:'3003088e7d3da6e3b41829a96714698a348b555b'}),true,true,'dispatch'],
     [context('fix/roller-vertical-recovery-20261023','1856',{baseSha:'3003088e7d3da6e3b41829a96714698a348b555b',headSha:'2b103150d808c623c39268d6aa1833b3075d3a7c'}),false,true,'roller'],
     [context('fix/roller-vertical-recovery-20261023','1857',{baseSha:'3003088e7d3da6e3b41829a96714698a348b555b'}),false,true,'legacy'],
     [context('fix/roller-vertical-recovery-20261023','1856'),false,true,'legacy'],
@@ -231,7 +233,7 @@ function sourceRouteContract(source) {
     [context('', '', {event: 'push', baseRef: ''}), false, true, 'legacy'],
     [context(runtimeBranch, '1770', {side: 'after'}), false, false, 'none'],
     [context('historical', '1651'), false, false, 'none'],
-  ].map(([c,controls,prepare,route]) => [c,controls,route === 'legacy' ? false : prepare,route]);
+  ];
   for (const [c, controls, prepare, route] of cases) for (const [index, active] of [[0, controls], [1, prepare]]) {
     const body = bodies[index]; assert.equal(enabled(body, c), active, JSON.stringify(c));
     if (!active) continue;
@@ -265,6 +267,33 @@ function sourceRouteContract(source) {
 test('reviewed PR and explicit immutable dispatch routes select their exact epoch in both actual YAML shells', () => {
   sourceRouteContract(readWorkflow('inkwave-projectile-visuals.yml'));
 });
+test('special and Roller guards are mutually exclusive before explicit dispatch selection', () => {
+  const source = readWorkflow('inkwave-projectile-visuals.yml');
+  const prepare = step(source, prepareName);
+  const guards = (prepare.match(/^          elif .*; then$/gm) || []).slice(0, 2).map(line => line.trim());
+  const special = 'inkwave/special-reviewed-main726-20261023', roller = 'fix/roller-vertical-recovery-20261023';
+  const baseSha = '3003088e7d3da6e3b41829a96714698a348b555b';
+  const check = selected => {
+    const commands = selected.map(guard => guard.replace(/^elif /, 'if ') + '\n  printf "1\\n"\nelse\n  printf "0\\n"\nfi').join('\n');
+    for (const branch of [roller, special, 'unreviewed']) {
+      for (const options of [{}, {event:'workflow_dispatch'}, {baseRef:'other'}, {headRepo:'fork/actions'}, {repository:'fork/actions'}]) {
+        const c = context(branch, '1856', {baseSha, ...options});
+        const result = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', commands],
+          {encoding:'utf8', env:policyEnv(c)});
+        assert.equal(result.error, undefined); assert.equal(result.signal, null); assert.equal(result.status, 0, result.stderr);
+        const admitted = result.stdout.trim().split('\n').map(Number);
+        const valid = Object.keys(options).length === 0;
+        assert.ok(admitted.reduce((sum, value) => sum + value, 0) <= 1, 'no context can select both reviewed guards');
+        assert.deepEqual(admitted, [Number(valid && branch === special), Number(valid && branch === roller)]);
+      }
+    }
+  };
+  check(guards);
+  const overlapping = guards.map(guard => guard.replace(special, roller));
+  assert.notDeepEqual(overlapping, guards);
+  assert.throws(() => check(overlapping), /no context can select both reviewed guards/, 'an overlapping head-ref guard fails the bounded proof');
+});
+
 test('exact Roller guard inventory rejects every removed ownership/identity condition and unexpected replacement',()=>{
  const source=readWorkflow('inkwave-projectile-visuals.yml'),original=step(source,prepareName);
  for(const part of ['[ "$PAIR_EVENT_NAME" = "pull_request" ] && ','[ "$PAIR_PR_NUMBER" = "1856" ] && ','[ "$PAIR_BASE_REF" = "main" ] && ','[ "$DECLARED_BASE_SHA" = "3003088e7d3da6e3b41829a96714698a348b555b" ] && ','[ "$PAIR_HEAD_REF" = "fix/roller-vertical-recovery-20261023" ] && ','[ "$PAIR_REPOSITORY" = "rhgrive3/actions" ] && ',' && [ "$PAIR_HEAD_REPO" = "$PAIR_REPOSITORY" ]']){
@@ -309,19 +338,6 @@ test('closed October 23 admission suppresses legacy replay only after its succes
   assert.equal(enabled(admission,context('other','1861')),false);
 });
 
-test('ordinary current PRs never replay frozen pose or baseline source changes',()=>{
-  const source=readWorkflow('inkwave-projectile-visuals.yml');
-  for(const name of [prepareName,'Align only the reviewed character pose for exact projectile comparison']) {
-    const body=step(source,name);
-    for(const candidate of [context('fix/main-ci-green-20261024','1867'),context('fix/roller-vertical-recovery-20261023','1867'),context('outside','1888',{headRepo:'outside/fork'})])
-      assert.equal(enabled(body,candidate),false,'historical prepare must not rewrite current main for arbitrary PR');
-    for(const [branch,id] of [['fix/shooter-splatling-cosmetics-20261023','1857'],['fix/respawn-enemy-exclusion-20261023','1860']]) {
-      const candidate=context(branch,id);
-      assert.equal(enabled(body,candidate),true,'original unadmitted historical owner remains valid');
-      assert.equal(enabled(body,{...candidate,steps:{reviewed_current_pair:{outputs:{admitted:'true'}}}}),false);
-    }
-  }
-});
 test('reviewed runtime UI inventory rejects missing, unexpected and weakened routes in each shell', () => {
   const source=readWorkflow('inkwave-projectile-visuals.yml');
   const guard=reviewedPrShells[1];

@@ -10,7 +10,7 @@ const base=process.env.KRAKEN_VFX_BASELINE;
 const candidate=new URL('../runtime/special-vfx.mjs',import.meta.url);
 async function load(file, emitted){
  let source=fs.readFileSync(file || candidate,'utf8');
- if(!file){const start=source.indexOf('      // Retail jump-spin strands:');const end=source.indexOf("      if (t.phase === 'charge')",start);assert.ok(start>0&&end>start);source=source.slice(0,start)+source.slice(end);const cleanup=' endFilaments(this, t.d.jumpRibs); t.d.jumpRibs = null;';assert.ok(source.includes(cleanup));source=source.replace(cleanup,'');}
+ if(!file){assert.equal(source.split('      // Retail jump-spin strands:').length,2);const start=source.indexOf('      // Retail jump-spin strands:');const end=source.indexOf('      const emissionTicks = nonWailVfxTicks(t.d, dt);',start);assert.ok(start>0&&end>start);source=source.slice(0,start)+source.slice(end);const cleanup=' endFilaments(this, t.d.jumpRibs); t.d.jumpRibs = null;';assert.equal(source.split(cleanup).length,2);source=source.replace(cleanup,'');}
  source+='\nexport {Director as TestDirector, DIRECTORS as TestDirectors};';
  if(emitted) source=compactModuleStrings((await transform(adaptBuildSource('patches/splatoon3/runtime/special-vfx.mjs',source),{format:'esm',minify:true,charset:'utf8',legalComments:'inline'})).code).code;
  const context=vm.createContext({console});
@@ -25,7 +25,7 @@ const Pool=kit.namespace.RibbonPool;
 const results=[];
 for(const [label,file] of [['baseline',base],['candidate',candidate]])for(const emitted of [false,true]){
  const {TestDirector:Director,TestDirectors:directors}=await load(file,emitted);const spec=directors.krakenRoyale;
- let passed=0,failed=0;const run=(name,fn)=>{try{fn();passed++;results.push({label,emitted,name,pass:true});}catch(e){failed++;results.push({label,emitted,name,pass:false,error:e.message});}};
+ let passed=0,failed=0;const run=(name,fn)=>{try{fn();passed++;results.push({label,emitted,name,pass:true});}catch(e){failed++;results.push({label,emitted,name,pass:false,code:e.code,error:e.message});}};
  function fixture(){const ink=Object.assign(Object.create(Pool.prototype),{list:[],T:64,M:64}),glow=Object.assign(Object.create(Pool.prototype),{list:[],T:64,M:64});const d=Object.assign(Object.create(Director.prototype),{kit:{ribbons:ink,glowRibbons:glow,time:1},tracks:new Map(),errors:0,time:1,v:Array.from({length:8},()=>({x:0,y:0,z:1,set(x,y,z){Object.assign(this,{x,y,z});return this;}})),forward(){return {x:0,z:1}},ribbon(add,o){return (add?glow:ink).start(o)}});
  const a={alive:true,remote:false,pos:{x:0,y:2,z:0},grounded:false,climbing:false,specialActive:{id:'krakenRoyale'},_s3AllSpecialState:{id:'krakenRoyale',jumpAttack:true,phase:'active'}},t={id:'krakenRoyale',phase:'active',color:[1,0,0],d:{}};d.tracks.set(a,t);return {d,a,t,ink,glow};}
  const step=(f,dt=1/60)=>{spec.frame.call(f.d,f.a,f.t,dt);f.d.kit.time+=dt;};
@@ -38,4 +38,22 @@ for(const [label,file] of [['baseline',base],['candidate',candidate]])for(const 
  run('equal elapsed rotation at 30 60 120 Hz',()=>{let reference;for(const hz of [30,60,120]){const f=fixture();for(let i=0;i<hz;i++)step(f,1/hz);assert.ok(f.t.d.jumpRibs);const angles=f.t.d.jumpRibs.map(q=>q.ang);if(reference)angles.forEach((a,i)=>assert.ok(Math.abs(a-reference[i])<1e-10));else reference=angles;}});
  console.log(label,emitted?'production-transform':'source',passed,'pass',failed,'fail');
 }
-if(process.env.KRAKEN_VFX_RECEIPT) fs.writeFileSync(process.env.KRAKEN_VFX_RECEIPT,JSON.stringify(results,null,2));assert.equal(results.filter(r=>r.label==='candidate'&&!r.pass).length,0);assert.equal(results.filter(r=>r.label==='baseline'&&!r.pass).length,14); // every source and emitted negative control now detects missing spin lifecycle
+if(process.env.KRAKEN_VFX_RECEIPT) fs.writeFileSync(process.env.KRAKEN_VFX_RECEIPT,JSON.stringify(results,null,2));
+const expectedCases = [
+  'admitted airborne attack creates eight bounded strands',
+  'zero dt cannot create or advance spin',
+  'retire on contact climbing cancellation finish and charge/dash',
+  'death recall expiry and actor retirement end all spin records',
+  'nonattack normal jump remote wrong special startup grounded negatives',
+  'repeated jumps respect real pool capacity and prior retirement',
+  'equal elapsed rotation at 30 60 120 Hz',
+];
+assert.equal(results.length, 28, 'seven exact cases in both modes and both sources');
+for (const label of ['baseline', 'candidate']) for (const emitted of [false, true]) {
+  const rows = results.filter(row => row.label === label && row.emitted === emitted);
+  assert.deepEqual(rows.map(row => row.name), expectedCases, `${label}/${emitted}: exact case inventory`);
+  assert.deepEqual(rows.map(row => row.pass), expectedCases.map(name => label === 'candidate' || name === 'nonattack normal jump remote wrong special startup grounded negatives'), `${label}/${emitted}: semantic outcomes`);
+  for (const row of rows.filter(row => !row.pass)) assert.equal(row.code, 'ERR_ASSERTION', `${row.name}: negative control must fail its behavioral assertion, not setup`);
+}
+
+assert.equal(results.filter(r=>r.label==='candidate'&&!r.pass).length,0);assert.equal(results.filter(r=>r.label==='baseline'&&!r.pass).length,12);

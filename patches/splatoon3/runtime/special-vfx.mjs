@@ -1337,8 +1337,9 @@ const DIRECTORS = {
       if (consumeVfxPeriod(t, 'acc', .1)) {
         const rib = this.ribbon(true, { width: 0.1, widthTail: 0.02, color: this.hdr(t.color, 1.3, 0.8), alpha: 0.6, style: RIBBON.GLOW, life: 0.25, spacing: 0.08 });
         const y0 = rnd(1.6, 0.3), ph = rnd(TAU), r0 = rnd(1.2, 0.8), dirSign = sgn();
-        this.shell(true, 0.5, SHELL.FLASH, a.pos, 0, 0, [0, 0, 0], 0, { follow: (rec) => { const k = rec.t / rec.life, th = ph + dirSign * k * 5;
+        const carrier = this.shell(true, 0.5, SHELL.FLASH, a.pos, 0, 0, [0, 0, 0], 0, { follow: (rec) => { const k = rec.t / rec.life, th = ph + dirSign * k * 5;
           this.v[7].set(a.pos.x + Math.cos(th) * r0, a.pos.y + y0 + k * 0.8, a.pos.z + Math.sin(th) * r0); this.pushRibbon(rib, this.v[7], true); if (k > 0.98) this.kit.glowRibbons.end(rib); } });
+        carrier.onEnd = () => this.kit.glowRibbons.end(rib);
       }
     },
     event(a, e, pos, target) { if (e.action === 'marker' && pos) this.flash(pos, this.rgb(a), 0.6, 0.15); },

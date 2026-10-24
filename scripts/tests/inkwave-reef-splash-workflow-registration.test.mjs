@@ -32,7 +32,7 @@ function verify(text){
   assert.equal(text.split(fragment).length,2,'exact approved Inkjet fragment once');text=text.replace(fragment,'');
  }
  for(const fragment of additions){assert.equal(text.split(fragment).length,2,'exact owned fragment');text=text.replace(fragment,'');}
- assert.equal(createHash('sha256').update(text).digest('hex'),'6e54682aced8b71bb9c71c8bdc3fc79511dd152d030e7b5941266ebdbc1e58c7','removing the two authenticated addition sets restores every original workflow byte');
+ assert.equal(createHash('sha256').update(text).digest('hex'),'fcc27c0ab824e1827205cdb6e677732dc94a4b9f132be085e58bc112d976c756','removing the two authenticated addition sets restores every original workflow byte');
 }
 test('reviewed Reefslider source3/emitted2 and Splashdown source4/emitted4 are explicitly registered without altering prior gates',()=>verify(workflow));
 test('missing trigger, step, site, serial command or honest emitted selection rejects',()=>{

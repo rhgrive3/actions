@@ -40,11 +40,11 @@ test('composed settings screen already reads scroll geometry only after invalida
 });
 
 test('boss callout caches authored and Chromium serialized transforms and restores external writers', async t=>{
- let chromium;
- try { ({chromium}=await import('playwright')); }
- catch(error){ if(error?.code==='ERR_MODULE_NOT_FOUND' && /Cannot find package 'playwright'/.test(error.message))return t.skip('Browser harness dependency is absent in build-only job'); throw error; }
- const executablePath=process.env.CHROMIUM_EXECUTABLE || (fs.existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined);
- if(!executablePath&&!fs.existsSync(chromium.executablePath()))return t.skip('Chromium is not installed');
+ const {chromium}=await import('playwright');
+ const executablePath=process.env.CI?chromium.executablePath():(process.env.CHROMIUM_EXECUTABLE || (fs.existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined));
+ if(process.env.CI){
+  if(!fs.existsSync(executablePath))throw new Error('Required settings HUD Chromium is not installed');
+ }else if(!executablePath&&!fs.existsSync(chromium.executablePath()))return t.skip('Chromium is not installed');
  const browser=await chromium.launch({executablePath,headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
  try{const page=await browser.newPage({viewport:{width:800,height:600}});
  const result=await page.evaluate(({source,baseline})=>{

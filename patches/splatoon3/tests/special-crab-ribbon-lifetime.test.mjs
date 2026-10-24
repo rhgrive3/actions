@@ -9,6 +9,7 @@ const runtime = new URL('../runtime/', import.meta.url);
 const original = fs.readFileSync(new URL('special-vfx.mjs', runtime), 'utf8');
 const kitSource = fs.readFileSync(new URL('special-vfx-kit.mjs', runtime), 'utf8');
 const hook = 'end(a, t) { this.kit.ribbons.end(t.d.rollRib); },';
+assert.equal(original.split(hook).length, 2, 'negative control removes exactly one Crab end hook');
 
 async function load(mode, negative = false) {
   let source = negative ? original.replace(hook, '') : original;
@@ -55,9 +56,9 @@ function fixture(api) {
   const d = Object.create(api.Director.prototype);
   d.kit = { ribbons: pool, glowRibbons: { end() {} } }; d.tracks = new Map(); d.errors = 0;
   const actor = { alive: true, specialActive: { id: 'crabTank', pose: 'ball' } };
-  const samples = [[0, 0, 0, 0], [1, 0, 0, 0]];
-  const ribbon = { pts: samples.slice(), samples, head: 0, count: 2, ended: false, o: { life: .5 } };
-  pool.list.push(ribbon); const track = { id: 'crabTank', d: { rollRib: ribbon } }; d.tracks.set(actor, track);
+  const ribbon = pool.start({ life: .5 });
+  pool.push(ribbon, 0, 0, 0, 0); pool.push(ribbon, 1, 0, 0, 0);
+  const track = { id: 'crabTank', d: { rollRib: ribbon } }; d.tracks.set(actor, track);
   return { d, actor, track, ribbon, pool };
 }
 for (const mode of ['source', 'transformed']) {
