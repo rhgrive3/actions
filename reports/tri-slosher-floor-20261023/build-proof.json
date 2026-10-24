@@ -1,0 +1,22 @@
+{
+  "baseCommit": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "branch": "codex/tri-slosher-floor-droplets-20261023",
+  "runtime": "patches/splatoon3/runtime/projectile-presentation.mjs",
+  "before": {
+    "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+    "inputHash": "350b861c6d2ca16e5430ffc5b4f7e39cfbefc9df67290de1746b077ae256eb81"
+  },
+  "after": {
+    "contentHash": "7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882",
+    "inputHash": "09424915b090e12ac61cb142fb4f1b050e421cb3e9281aedb619733486e7a977"
+  },
+  "changedBuildInputs": {
+    "patch/runtime/projectile-presentation.mjs": [
+      "face871b44c8a28fa558a5878e60334c714991c2c7ee185261b84334c2032d2e",
+      "38bcf7cb73b1cd6c1f755b7b8ffcc39c2fb384fd2973f3976a2b634f05493910"
+    ]
+  },
+  "builderSha256": "a2814e623a81811aca5a6b5079d566ab88fabaa9b9a8d9351fadd45c25a98242",
+  "versions": "Node v24.19.0; browser version in browser.json",
+  "note": "Builds retained in /tmp/tri-slosher-before and /tmp/tri-slosher-after. Intermediate failed browser runs/logs retained separately; no Nintendo media was downloaded or committed."
+}

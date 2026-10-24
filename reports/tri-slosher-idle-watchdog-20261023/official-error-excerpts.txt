@@ -1,0 +1,4 @@
+2026-10-23T20:28:02.0262042Z ##[error]The runner has received a shutdown signal. This can happen when the runner service is stopped, or a manually started runner is canceled.
+2026-10-23T20:28:02.2751457Z page.evaluate: Target page, context or browser has been closed
+2026-10-23T20:28:02.2992711Z     at main (/home/runner/work/actions/actions/scripts/check-inkwave-idle-resources.mjs:168:25) {
+2026-10-23T20:28:02.8474233Z ##[error]The operation was canceled.

@@ -1,0 +1,49 @@
+from pathlib import Path
+import json,hashlib,math,subprocess
+root=Path('/tmp')
+bdir=root/'tri-slosher-main7e-native-v2-before';adir=root/'tri-slosher-main7e-native-v2-after'
+b=json.loads((bdir/'native-browser.json').read_text());a=json.loads((adir/'native-browser.json').read_text())
+assert b['status']==a['status']=='passed'
+assert len(a['frames'])==len(b['frames'])==1
+x=b['frames'][0];y=a['frames'][0]
+assert x['tick']==y['tick']==18
+exact=['weapon','actor','pitch','main','drops','paintCells','sourceMotion','saved','style','gear','palette','teamHex','teamColors','characterColor','characterTeamUniform','bootSeed','shotSeed','simulationTime','projectileTrace','dropTrace']
+for key in exact:assert x[key]==y[key],key+' mismatch'
+assert x['palette']['id']=='cb-yellow-blue'
+assert x['style']=={'hair':0,'skin':0,'outfit':0,'eyes':0,'hat':0,'brows':0}
+assert x['weapon']=='s3-slosher-diffusion'
+def maxdiff(v,w):
+    if isinstance(v,dict):
+        assert v.keys()==w.keys()
+        return max((maxdiff(v[k],w[k]) for k in v),default=0)
+    if isinstance(v,list):
+        assert len(v)==len(w)
+        return max((maxdiff(p,q) for p,q in zip(v,w)),default=0)
+    if isinstance(v,(float,int)):
+        assert math.isfinite(v) and math.isfinite(w)
+        return abs(v-w)
+    assert v==w
+    return 0
+camera=maxdiff(x['camera'],y['camera']);character=maxdiff(x['characterRoot'],y['characterRoot']);bones=maxdiff(x['bones'],y['bones'])
+assert camera<1e-8,('camera mismatch',camera)
+assert character<1e-8,('character root mismatch',character)
+assert bones<1e-8,('character bone mismatch',bones)
+assert len(x['matrices'])==len(y['matrices'])==4
+for p,q in zip(x['matrices'],y['matrices']):
+    assert p['radius']==q['radius'] and p['frames']==q['frames']
+    assert max(abs(i-j*2) for i,j in zip(p['scale'],q['scale']))<1e-6
+    assert abs(q['direction'][1])<1e-6
+    if p['frames']>0:assert p['direction'][1]<-.999999
+def filemeta(p):
+    data=p.read_bytes()
+    return {'path':str(p),'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),'gitBlobSha':hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()}
+report={'status':'passed','fixedHead':subprocess.check_output(['git','rev-parse','HEAD'],cwd='/workspace/actions',text=True).strip(),
+    'beforeContentHash':b['contentHash'],'afterContentHash':a['contentHash'],'simulationFrame':18,
+    'exactMatchedFields':exact,'cameraMaxAbsDifference':camera,'characterRootMaxAbsDifference':character,'boneTransformMaxAbsDifference':bones,
+    'boneCount':len(x['bones']),'palette':x['palette'],'style':x['style'],'weapon':x['weapon'],'gear':x['gear'],
+    'bootSeed':x['bootSeed'],'shotSeed':x['shotSeed'],'paintCells':x['paintCells'],'matrices':len(x['matrices']),
+    'files':[filemeta(bdir/'sim18.png'),filemeta(adir/'sim18.png'),filemeta(bdir/'native-browser.json'),filemeta(adir/'native-browser.json'),filemeta(Path('/workspace/actions/scripts/check-inkwave-trislosher-native-matched.mjs'))],
+    'correction':'Prior native-before/native-after images use different random palette/avatar and are NOT matched visual A/B. Their physical trace checks remain separate. Only this corrected 18F pair fixes palette, avatar/gear, camera and seeds.',
+    'limits':['No geometry or runtime edits; existing saved Rookie profile, existing ability slots and existing colorblind setting only.','These are 60Hz INKWAVE simulation frames, not Nintendo footage or encoded retail frames.','Same saved conditions and measured camera/pose do not establish identical asynchronous background animation or hardware GPU output.']}
+Path('/tmp/tri-slosher-main7e-native-comparison.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
+print(json.dumps(report,ensure_ascii=False))

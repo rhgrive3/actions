@@ -1,0 +1,241 @@
+(node:13429) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ late release with no native floor correction keeps the entire clear native carry (24284.130737ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 24719.056056
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/roller-shaft-production.test.mjs:106:1
+✖ late release with no native floor correction keeps the entire clear native carry (24284.130737ms)
+  AssertionError [ERR_ASSERTION]: clear native carry is never bent 49
+  + actual - expected
+  ... Skipped lines
+  
+    [
+      {
+        axis: [
+          0.503927698329569,
+          -0.6608864268087147,
+  ...
+        axis: [
+  +       0.23691855461187653,
+  +       0.697311599918551,
+  +       -0.6764806952897103
+  -       0.2935534772870192,
+  -       0.4646805983257231,
+  -       -0.8354030748760432
+        ],
+  +     bottom: 0.5054252521993792,
+  -     bottom: 0.857340269811661,
+        centre: [
+  +       -0.1948049745328596,
+  +       1.448605498258221,
+  +       0.8955853137719493
+  -       -0.4166381295834214,
+  -       1.5737314315490991,
+  -       0.5849717579388907
+        ],
+        floorSearch: {
+          a: 0,
+          axis: -1,
+          sign: 0,
+  ...
+        gaps: [
+  +       0,
+  +       1.7309028770377018e-16
+  -       1.1188630228279524e-16,
+  -       4.75098925995612e-16
+        ],
+        local: 50,
+        native: {
+          attack: {
+            depleted: false,
+  ...
+        axis: [
+  +       0.1910561122657689,
+  +       0.5344971270261561,
+  +       -0.8232924044145405
+  -       0.37532306021053585,
+  -       -0.027379888281725672,
+  -       -0.9264895801852705
+        ],
+  +     bottom: 0.7004357207890712,
+  -     bottom: 1.2524197487289033,
+        centre: [
+  +       -0.2701412303884718,
+  +       1.515342555008357,
+  +       0.730898512493303
+  -       -0.43021289157568987,
+  -       1.5531535440732953,
+  -       0.119736477885519
+        ],
+        floorSearch: {
+          a: 0,
+          axis: -1,
+          sign: 0,
+  ...
+        gaps: [
+  +       1.1102230246251565e-16,
+  +       2.0206364052201326e-16
+  -       2.7755575615628914e-17,
+  -       3.152427400121712e-16
+        ],
+        local: 51,
+        native: {
+          attack: {
+            depleted: false,
+  ...
+        axis: [
+  +       0.18341385798859627,
+  +       0.256856655152891,
+  +       -0.9488856703530769
+  -       0.44229425134130756,
+  -       -0.3746535911502109,
+  -       -0.8148683831568647
+        ],
+  +     bottom: 0.9960610004874704,
+  -     bottom: 0.713515216685103,
+        centre: [
+  +       -0.3677157065407278,
+  +       1.5594549562625692,
+  +       0.45748776420234294
+  -       -0.44032874008952605,
+  -       1.363343535143468,
+  -       -0.20150128373471454
+        ],
+        floorSearch: {
+          a: 0,
+          axis: -1,
+          sign: 0,
+  ...
+        gaps: [
+  +       1.1188630228279524e-16,
+  +       7.243088545993919e-16
+  -       0,
+  -       7.631521572941402e-16
+        ],
+        local: 52,
+        native: {
+          attack: {
+            depleted: false,
+  ...
+        axis: [
+  +       0.24889122810052203,
+  +       -0.10110735066500948,
+  +       -0.9632395653294755
+  -       0.48626105296712757,
+  -       -0.5480639552178779,
+  -       -0.6805704146950824
+        ],
+  +     bottom: 1.0893987092688113,
+  -     bottom: 0.36965656183838846,
+        centre: [
+  +       -0.4540594652757017,
+  +       1.4986938441311155,
+  +       0.10999825950573894
+  -       -0.44451829212254407,
+  -       1.1815665861200249,
+  -       -0.35545740911600915
+        ],
+        floorSearch: {
+          a: 0,
+          axis: -1,
+          sign: 0,
+  ...
+        gaps: [
+  +       1.249000902703301e-16,
+  +       2.387624894196368e-16
+  -       1.3877787807814457e-17,
+  -       4.3466507513761424e-16
+        ],
+        local: 53,
+        native: {
+          attack: {
+            depleted: false,
+  ...
+        axis: [
+  +       0.3677260307458733,
+  +       -0.414361695472564,
+  +       -0.8325154362755006
+  -       0.5071857483991411,
+  -       -0.6130490007644634,
+  -       -0.6057503935471242
+        ],
+  +     bottom: 0.6076983398539084,
+  -     bottom: 0.20805678343146694,
+        centre: [
+  +       -0.48538111021246466,
+  +       1.3180815047564867,
+  +       -0.19760601024308644
+  -       -0.4455279293840625,
+  -       1.0838626439690267,
+  -       -0.4101650042560552
+        ],
+        floorSearch: {
+          a: 0,
+          axis: -1,
+          sign: 0,
+  ...
+        gaps: [
+  +       5.721958498152797e-17,
+  +       1.5862013993650003e-15
+  -       0,
+  -       1.5787165486658845e-15
+        ],
+        local: 54,
+        native: {
+          attack: {
+            depleted: false,
+  ...
+        axis: [
+  +       0.47255924325393794,
+  +       -0.5829573333446705,
+  +       -0.6609451634704171
+  -       0.5128075354978602,
+  -       -0.6281163534536545,
+  -       -0.5852335243821006
+        ],
+  +     bottom: 0.27440127288894733,
+  -     bottom: 0.16231107843201842,
+        centre: [
+  +       -0.4642450940055617,
+  +       1.1308886930473592,
+  +       -0.371593510724784
+  -       -0.4455669974787821,
+  -       1.056154482392775,
+  -       -0.42227555916657183
+        ],
+        floorSearch: {
+          a: 0,
+          axis: -1,
+          sign: 0,
+  ...
+        gaps: [
+  +       1.1188630228279524e-16,
+  +       5.580527502014626e-16
+  -       5.721958498152797e-17,
+  -       6.080941944488118e-16
+        ],
+        local: 55,
+        native: {
+          attack: {
+            depleted: false,
+  
+      at eq (file:///workspace/roller-shaft-once/patches/splatoon3/tests/roller-shaft-production.test.mjs:42:30)
+      at TestContext.<anonymous> (file:///workspace/roller-shaft-once/patches/splatoon3/tests/roller-shaft-production.test.mjs:109:3)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ { tick: 0, local: 0, centre: [Array], axis: [Array], bottom: 0.11703127830609628, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 1, local: 1, centre: [Array], axis: [Array], bottom: 0.22465697238279925, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 2, local: 2, centre: [Array], axis: [Array], bottom: 0.2719125920227389, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 3, local: 3, centre: [Array], axis: [Array], bottom: 0.3094885456374935, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 4, local: 4, centre: [Array], axis: [Array], bottom: 0.3427602671040476, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 5, local: 5, centre: [Array], axis: [Array], bottom: 0.3846227138631566, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 6, local: 6, centre: [Array], axis: [Array], bottom: 0.44581831711313824, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 7, local: 7, centre: [Array], axis: [Array], bottom: 0.5333493864209709, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 8, local: 8, centre: [Array], axis: [Array], bottom: 0.6278248259063166, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 9, local: 9, centre: [Array], axis: [Array], bottom: 0.7193639167387258, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 10, local: 10, centre: [Array], axis: [Array], bottom: 0.8076377634373388, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 11, local: 11, centre: [Array], axis: [Array], bottom: 0.8922106967494416, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 12, local: 12, centre: [Array], axis: [Array], bottom: 0.9725182573852929, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 13, local: 13, centre: [Array], axis: [Array], bottom: 1.0476370472814491, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 14, local: 14, centre: [Array], axis: [Array], bottom: 1.1163240324955712, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 15, local: 15, centre: [Array], axis: [Array], bottom: 1.1774354162792933, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 16, local: 16, centre: [Array], axis: [Array], bottom: 1.229773927081665, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 17, local: 17, centre: [Array], axis: [Array], bottom: 1.2721402359959002, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 18, local: 18, centre: [Array], axis: [Array], bottom: 1.3041538913734028, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 19, local: 19, centre: [Array], axis: [Array], bottom: 1.329802612453997, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 20, local: 20, centre: [Array], axis: [Array], bottom: 1.3622637264708444, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 21, local: 21, centre: [Array], axis: [Array], bottom: 1.392545666768378, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 22, local: 22, centre: [Array], axis: [Array], bottom: 1.4177558365492318, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 23, local: 23, centre: [Array], axis: [Array], bottom: 1.4394081086661774, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 24, local: 24, centre: [Array], axis: [Array], bottom: 1.4625422012822828, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 25, local: 25, centre: [Array], axis: [Array], bottom: 1.4890546682231458, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 26, local: 26, centre: [Array], axis: [Array], bottom: 1.518239332469378, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 27, local: 27, centre: [Array], axis: [Array], bottom: 1.5502757451934213, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 28, local: 28, centre: [Array], axis: [Array], bottom: 1.7435785987220869, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 29, local: 29, centre: [Array], axis: [Array], bottom: 2.0507425832580446, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 30, local: 30, centre: [Array], axis: [Array], bottom: 1.7732282272096116, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 31, local: 31, centre: [Array], axis: [Array], bottom: 0.5920950951508182, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 32, local: 32, centre: [Array], axis: [Array], bottom: 0.2968893160949475, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 33, local: 33, centre: [Array], axis: [Array], bottom: 0.15227261348308962, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 34, local: 34, centre: [Array], axis: [Array], bottom: 0.034412757347070944, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 35, local: 35, centre: [Array], axis: [Array], bottom: -0.06108603092005471, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 36, local: 36, centre: [Array], axis: [Array], bottom: -0.10967209005951173, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 37, local: 37, centre: [Array], axis: [Array], bottom: -0.2011639961502315, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 38, local: 38, centre: [Array], axis: [Array], bottom: -0.329203048956869, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 39, local: 39, centre: [Array], axis: [Array], bottom: -0.41436997698005595, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 40, local: 40, centre: [Array], axis: [Array], bottom: -0.04958209247047618, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 41, local: 41, centre: [Array], axis: [Array], bottom: -0.029034110454266737, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 42, local: 42, centre: [Array], axis: [Array], bottom: 0.02755718677331631, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 43, local: 43, centre: [Array], axis: [Array], bottom: -0.022329287617574467, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 44, local: 44, centre: [Array], axis: [Array], bottom: -0.05033489262122881, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 45, local: 45, centre: [Array], axis: [Array], bottom: -0.044005727782529314, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 46, local: 46, centre: [Array], axis: [Array], bottom: -0.0074538543019695425, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 47, local: 47, centre: [Array], axis: [Array], bottom: -0.013944230783014655, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 48, local: 48, centre: [Array], axis: [Array], bottom: -0.04014959993815381, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 49, local: 49, centre: [Array], axis: [Array], bottom: 0.47682859367044217, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 50, local: 50, centre: [Array], axis: [Array], bottom: 0.5054252521993792, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 51, local: 51, centre: [Array], axis: [Array], bottom: 0.7004357207890712, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 52, local: 52, centre: [Array], axis: [Array], bottom: 0.9960610004874704, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 53, local: 53, centre: [Array], axis: [Array], bottom: 1.0893987092688113, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 54, local: 54, centre: [Array], axis: [Array], bottom: 0.6076983398539084, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 55, local: 55, centre: [Array], axis: [Array], bottom: 0.27440127288894733, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 56, local: 56, centre: [Array], axis: [Array], bottom: 0.16627584665228456, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 57, local: 57, centre: [Array], axis: [Array], bottom: 0.18361428445373484, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 58, local: 58, centre: [Array], axis: [Array], bottom: 0.20918555448768694, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 59, local: 59, centre: [Array], axis: [Array], bottom: 0.22427225440035148, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 60, local: 60, centre: [Array], axis: [Array], bottom: 0.19556577404911757, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 61, local: 61, centre: [Array], axis: [Array], bottom: 0.17441241186428358, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 62, local: 62, centre: [Array], axis: [Array], bottom: 0.16074214074582682, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 63, local: 63, centre: [Array], axis: [Array], bottom: 0.15421530120159865, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 64, local: 64, centre: [Array], axis: [Array], bottom: 0.15429806142990832, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 65, local: 65, centre: [Array], axis: [Array], bottom: 0.16032677474312684, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 66, local: 66, centre: [Array], axis: [Array], bottom: 0.17156161791885682, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 67, local: 67, centre: [Array], axis: [Array], bottom: 0.18723036556845052, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 68, local: 68, centre: [Array], axis: [Array], bottom: 0.20419480906516974, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 69, local: 69, centre: [Array], axis: [Array], bottom: 0.17919484290889443, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 70, local: 70, centre: [Array], axis: [Array], bottom: 0.1589984703308096, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 71, local: 71, centre: [Array], axis: [Array], bottom: 0.14362503112726566, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 72, local: 72, centre: [Array], axis: [Array], bottom: 0.1329802877848938, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 73, local: 73, centre: [Array], axis: [Array], bottom: 0.12687574044355343, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 74, local: 74, centre: [Array], axis: [Array], bottom: 0.1250462123331476, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 75, local: 75, centre: [Array], axis: [Array], bottom: 0.12716563108403145, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 76, local: 76, centre: [Array], axis: [Array], bottom: 0.13287935383701055, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 77, local: 77, centre: [Array], axis: [Array], bottom: 0.1418147271170327, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 78, local: 78, centre: [Array], axis: [Array], bottom: 0.15354495903079035, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 79, local: 79, centre: [Array], axis: [Array], bottom: 0.1676280780453484, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 80, local: 80, centre: [Array], axis: [Array], bottom: 0.18361615379151186, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 81, local: 81, centre: [Array], axis: [Array], bottom: 0.20106362898122576, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 82, local: 82, centre: [Array], axis: [Array], bottom: 0.21591461825235192, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 83, local: 83, centre: [Array], axis: [Array], bottom: 0.2068079409831568, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 84, local: 84, centre: [Array], axis: [Array], bottom: 0.19914737329772791, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 85, local: 85, centre: [Array], axis: [Array], bottom: 0.19267838536306892, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 86, local: 86, centre: [Array], axis: [Array], bottom: 0.18715277145117049, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 87, local: 87, centre: [Array], axis: [Array], bottom: 0.18233986452325723, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 88, local: 88, centre: [Array], axis: [Array], bottom: 0.1780359926473697, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 89, local: 89, centre: [Array], axis: [Array], bottom: 0.17407208476826286, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] } ],
+    expected: [ { tick: 0, local: 0, centre: [Array], axis: [Array], bottom: 0.11703127830609628, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 1, local: 1, centre: [Array], axis: [Array], bottom: 0.22465697238279925, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 2, local: 2, centre: [Array], axis: [Array], bottom: 0.2719125920227389, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 3, local: 3, centre: [Array], axis: [Array], bottom: 0.3094885456374935, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 4, local: 4, centre: [Array], axis: [Array], bottom: 0.3427602671040476, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 5, local: 5, centre: [Array], axis: [Array], bottom: 0.3846227138631566, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 6, local: 6, centre: [Array], axis: [Array], bottom: 0.44581831711313824, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 7, local: 7, centre: [Array], axis: [Array], bottom: 0.5333493864209709, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 8, local: 8, centre: [Array], axis: [Array], bottom: 0.6278248259063166, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 9, local: 9, centre: [Array], axis: [Array], bottom: 0.7193639167387258, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 10, local: 10, centre: [Array], axis: [Array], bottom: 0.8076377634373388, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 11, local: 11, centre: [Array], axis: [Array], bottom: 0.8922106967494416, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 12, local: 12, centre: [Array], axis: [Array], bottom: 0.9725182573852929, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 13, local: 13, centre: [Array], axis: [Array], bottom: 1.0476370472814491, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 14, local: 14, centre: [Array], axis: [Array], bottom: 1.1163240324955712, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 15, local: 15, centre: [Array], axis: [Array], bottom: 1.1774354162792933, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 16, local: 16, centre: [Array], axis: [Array], bottom: 1.229773927081665, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 17, local: 17, centre: [Array], axis: [Array], bottom: 1.2721402359959002, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 18, local: 18, centre: [Array], axis: [Array], bottom: 1.3041538913734028, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 19, local: 19, centre: [Array], axis: [Array], bottom: 1.329802612453997, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 20, local: 20, centre: [Array], axis: [Array], bottom: 1.3622637264708444, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 21, local: 21, centre: [Array], axis: [Array], bottom: 1.392545666768378, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 22, local: 22, centre: [Array], axis: [Array], bottom: 1.4177558365492318, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 23, local: 23, centre: [Array], axis: [Array], bottom: 1.4394081086661774, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 24, local: 24, centre: [Array], axis: [Array], bottom: 1.4625422012822828, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 25, local: 25, centre: [Array], axis: [Array], bottom: 1.4890546682231458, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 26, local: 26, centre: [Array], axis: [Array], bottom: 1.518239332469378, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 27, local: 27, centre: [Array], axis: [Array], bottom: 1.5502757451934213, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 28, local: 28, centre: [Array], axis: [Array], bottom: 1.7435785987220869, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 29, local: 29, centre: [Array], axis: [Array], bottom: 2.0507425832580446, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 30, local: 30, centre: [Array], axis: [Array], bottom: 1.7732282272096116, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 31, local: 31, centre: [Array], axis: [Array], bottom: 0.5920950951508182, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 32, local: 32, centre: [Array], axis: [Array], bottom: 0.2968893160949475, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 33, local: 33, centre: [Array], axis: [Array], bottom: 0.15227261348308962, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 34, local: 34, centre: [Array], axis: [Array], bottom: 0.034412757347070944, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 35, local: 35, centre: [Array], axis: [Array], bottom: -0.06108603092005471, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 36, local: 36, centre: [Array], axis: [Array], bottom: -0.10967209005951173, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 37, local: 37, centre: [Array], axis: [Array], bottom: -0.2011639961502315, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 38, local: 38, centre: [Array], axis: [Array], bottom: -0.329203048956869, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 39, local: 39, centre: [Array], axis: [Array], bottom: -0.41436997698005595, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 40, local: 40, centre: [Array], axis: [Array], bottom: -0.04958209247047618, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 41, local: 41, centre: [Array], axis: [Array], bottom: -0.029034110454266737, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 42, local: 42, centre: [Array], axis: [Array], bottom: 0.02755718677331631, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 43, local: 43, centre: [Array], axis: [Array], bottom: -0.022329287617574467, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 44, local: 44, centre: [Array], axis: [Array], bottom: -0.05033489262122881, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 45, local: 45, centre: [Array], axis: [Array], bottom: -0.044005727782529314, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 46, local: 46, centre: [Array], axis: [Array], bottom: -0.0074538543019695425, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 47, local: 47, centre: [Array], axis: [Array], bottom: -0.013944230783014655, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 48, local: 48, centre: [Array], axis: [Array], bottom: -0.04014959993815381, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 49, local: 49, centre: [Array], axis: [Array], bottom: 0.47682859367044217, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 50, local: 50, centre: [Array], axis: [Array], bottom: 0.857340269811661, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 51, local: 51, centre: [Array], axis: [Array], bottom: 1.2524197487289033, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 52, local: 52, centre: [Array], axis: [Array], bottom: 0.713515216685103, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 53, local: 53, centre: [Array], axis: [Array], bottom: 0.36965656183838846, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 54, local: 54, centre: [Array], axis: [Array], bottom: 0.20805678343146694, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 55, local: 55, centre: [Array], axis: [Array], bottom: 0.16231107843201842, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: [Object], native: [Object] }, { tick: 56, local: 56, centre: [Array], axis: [Array], bottom: 0.16627584665228456, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 57, local: 57, centre: [Array], axis: [Array], bottom: 0.18361428445373484, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 58, local: 58, centre: [Array], axis: [Array], bottom: 0.20918555448768694, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 59, local: 59, centre: [Array], axis: [Array], bottom: 0.22427225440035148, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 60, local: 60, centre: [Array], axis: [Array], bottom: 0.19556577404911757, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 61, local: 61, centre: [Array], axis: [Array], bottom: 0.17441241186428358, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 62, local: 62, centre: [Array], axis: [Array], bottom: 0.16074214074582682, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 63, local: 63, centre: [Array], axis: [Array], bottom: 0.15421530120159865, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 64, local: 64, centre: [Array], axis: [Array], bottom: 0.15429806142990832, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 65, local: 65, centre: [Array], axis: [Array], bottom: 0.16032677474312684, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 66, local: 66, centre: [Array], axis: [Array], bottom: 0.17156161791885682, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 67, local: 67, centre: [Array], axis: [Array], bottom: 0.18723036556845052, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 68, local: 68, centre: [Array], axis: [Array], bottom: 0.20419480906516974, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 69, local: 69, centre: [Array], axis: [Array], bottom: 0.17919484290889443, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 70, local: 70, centre: [Array], axis: [Array], bottom: 0.1589984703308096, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 71, local: 71, centre: [Array], axis: [Array], bottom: 0.14362503112726566, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 72, local: 72, centre: [Array], axis: [Array], bottom: 0.1329802877848938, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 73, local: 73, centre: [Array], axis: [Array], bottom: 0.12687574044355343, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 74, local: 74, centre: [Array], axis: [Array], bottom: 0.1250462123331476, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 75, local: 75, centre: [Array], axis: [Array], bottom: 0.12716563108403145, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 76, local: 76, centre: [Array], axis: [Array], bottom: 0.13287935383701055, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 77, local: 77, centre: [Array], axis: [Array], bottom: 0.1418147271170327, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 78, local: 78, centre: [Array], axis: [Array], bottom: 0.15354495903079035, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 79, local: 79, centre: [Array], axis: [Array], bottom: 0.1676280780453484, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 80, local: 80, centre: [Array], axis: [Array], bottom: 0.18361615379151186, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 81, local: 81, centre: [Array], axis: [Array], bottom: 0.20106362898122576, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 82, local: 82, centre: [Array], axis: [Array], bottom: 0.21591461825235192, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 83, local: 83, centre: [Array], axis: [Array], bottom: 0.2068079409831568, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 84, local: 84, centre: [Array], axis: [Array], bottom: 0.19914737329772791, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 85, local: 85, centre: [Array], axis: [Array], bottom: 0.19267838536306892, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 86, local: 86, centre: [Array], axis: [Array], bottom: 0.18715277145117049, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 87, local: 87, centre: [Array], axis: [Array], bottom: 0.18233986452325723, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 88, local: 88, centre: [Array], axis: [Array], bottom: 0.1780359926473697, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] }, { tick: 89, local: 89, centre: [Array], axis: [Array], bottom: 0.17407208476826286, pose: [Array], floorSearch: [Object], fold: [Array], gaps: [Array], presentation: null, native: [Object] } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

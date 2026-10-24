@@ -6072,6 +6072,32 @@ Dynamo/他Roller/Brushの防御object・傘・BigBubblerへ、既存impactDamage
 INKWAVEの `patches/splatoon3/runtime/catalogue.mjs` では、native `_tick` が時刻を拒否しても、到着した `ts` が過去の受入値より大きいだけで `ck` の装備を変更していた。実composed受信の1000/torpedo受入後、1014/bombがclockで拒否されても装備だけ変わる反例に対応し、native処理後のpeer.lastTsが当該message.tsへ実際に進んだ場合だけsidecarを適用する。既存membership・actor owner・life・選択値の判定は維持する。prebind/future/stale/foreign/malformedの拒否不変と正常更新、実NetSession v1 freshness proofを専用回帰で検証し、既存clock再接続群とcompiled production形式も別記する。
 
 Node22でsource全対象92case（既存clock25含む）と通常production compiled20caseを確認した。人工1GiB capでpaint-authority1fileがOOMした初回78pass＋module失敗を保全し、同一sourceを通常heapで14/14完遂して分離集計する。旧compiledの実Session v1 future反例はkitだけ変わって失敗し、新compiledは実読込20回すべてmanifest SHA一致で通過した。独立source/test reviewおよび1364Git入力・2018出力の照合、fixture境界と既存browser証拠を別sourceに維持する範囲は `reports/issue-resolution-20261022/continuation/catalogue-admitted-ticks.json` に記録した。
+
+## 2026-10-22 weapon-only source correction checkpoint
+
+比較対象はSplatoon 3 11.3.0。今回の口先補正は既存INKWAVE meshのlandmarkから導出し、Nintendoの未公開firing originを復元したとは主張しない。Explosherのgeometry/手/animation channelを維持してmuzzleを既存burner lipへ合わせる。Quadはactual native InkVolume ownerで既存poseBirthOffsetを反映し、tipは物理位置、tailは既存保持期間後にdetachする。prediction/LOS fallback/ghostを接続へ強制しない。
+
+実Actor first/steady・30/60/120Hz・上下・Tidewater open/towerでsource/FX/muzzle/actual instanceを確認する。Explosher旧/newのvelocity/damage/ink/packet/tickが同一、candidate内のbirth/contact/paintは描画rate間で同一。口先を動かすため旧/newのphysical birth/contact座標は同一とは扱わずreceiptに分ける。Quadの修正は表示経路だけでphysical/contact/paint/network ownerを維持する。完成#1277とのgeometry lineageも確認する。
+
+Dynamo/他Roller/Brushの防御object・傘・BigBubblerへ、既存impactDamageで決済したUnit/距離/volley額を渡す。Bubbler queryは純粋に保ち、採用されたcontactだけ既存倍率を1回適用する。Unit1はdamage0のまま実CPU床paintとturf creditを維持。source UnitDamageRate0のNintendo engine解釈・実機unit分離は未確認で#1813を維持する。
+
+追加7 Roller/Brushの受入はactual Actor/Runner/Projectilesの330birth/22cover/780flight条件と、actual source pose/FX/WebGLのTidewater78条件。原作全parityとは区別する。Zipcaster失敗repeatは現45F境界を実Actorで確認し、原作ShotFailedIntervalFrm20とのphase意味は未確認。Urchin private physicsは正当なpinned source生成を用い60case完走したがassetsは公開せずhash/countのみ残す。詳細はcontinuation/weapons.mdおよび各receipt。
+
+## 2026-10-23: 全29未解決 issue の継続修正
+
+比較参照は Splatoon 3 Ver.11.3.0。基準は main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64`。既存 #1833/#1842/#1845/#1846 の履歴を専用ブランチで統合し、起動時計・native地形支持・Dynamo防御物ダメージ・Explosher/Quad表示の既存修正を保持する。他の統合PRやmainは書き換えない。
+
+- **Quad初回予測銃口 (#1431):** 最初の右手射撃は `aimReady < .98` のnative補間から生まれ、従来のraw socket限定表示接続を外れていた。元の `_muzzle` と同じ補間結果に一致するQuad右手出生だけ、同tickの描画銃口へFXと弾尾を接続する。物理出生・軌道・当たり・塗り・ダメージ・乱数・インク・通信は変更しない。既存の最大接続距離・LOSを保持し、遮蔽fallback・足元offset・ghost・遅延出生は接続しない。実Actor/Runner fixtureで修正前失敗を確認し、修正後は予測の物理不変と遮蔽対照を検査する。本家の開口部位置や発射順序を復元したという意味ではない。
+- **Brella表示の受信判定 (#1814関連):** nativeが129行のpacketを受理すると、128行上限の任意表示readerは付加情報を省く。その後の1行への縮小replayはnativeが拒否しても、既存physics点と一致するため以前のsnapshotにカサ表示を追加できた。今回のnative呼出が `lastTs` を実際に進めた場合だけ任意表示を処理する。実送受信fixtureの失敗対照と正常開閉・被弾・purge・再生・life/owner境界を検査する。HP/paintの偽造を観測したという意味ではなく、#1665/#1666 の全攻撃をtrusted authorityで再現する残件を解消したとは扱わない。
+- **Chargerクリック (#1823関連):** 既存 #1821 の音源追加前commit `7c96d754` と #1827 `32eebaf9` の6音声pathのみを抽出する。HoldNoiseを繰返し加工していたループとpitch上昇を除き、実charge開始と合法charge-keep復帰で1回ずつ既存録音を再生する。nativeで2回目の復帰も再武装し、remoteの二重発音・scope・Goo Tuber partial keepの所有を保持する。追加音声バイナリはない。本家S3の持続上昇レイヤー／SLINKが未取得であることは維持する。
+
+感度、B保持ジャンプ、Splatling減速、雨、靴高、歩行・被弾・ジャンプ曲線、Bloblobber反射の未校正値は推測で確定しない。Google Driveの現資料と公開原典も再検索し、2022音源・Scratch候補・S1資料をS3 11.3.0の確定根拠に昇格させない。物理iPad性能・Switch実機・原音権利の受入は未確認。個別29件と実行結果は `reports/issue-resolution-20261023/README.md` へ記録する。
+
+## 2026-10-23 継続: #845 native足元queryの同一update内再利用、#1767統合QA
+
+- 比較基準はSplatoon 3 11.3.0。ゲームの足元判定・移動・射撃の数値は変更しない。`offline-offscreen-budget.mjs`で、長く未描画のoffline botが同じCharacter.update内で繰り返す完全同一のx/z/rootY/Physicsの問い合わせだけを再利用する。最大24件、update終了・例外時に失効し、参照Physicsも解放する。原典三角形の穴、dynamic足場、次tick、描画前catch-upは元のnative判定を保持する。
+- 実Player00モーションを待ったActor/CharacterとNativeLevel/NativePhysicsの対照で、30/60/120Hzの全210frameの姿勢・skin行列・接地・銃口が完全一致。各1秒のqueryは229→209、439→399、870→788。これは約9%の問い合わせ削減であり、実機FPSの改善測定ではない。#845全体の完了やS3のIK内部仕様の一致とは扱わない。
+- #1767のowner-clockは、オンラインpacketの保留時にだけTextEncoderを生成する。nonce・固定origin・UTF8 byte上限は維持し、offline import時に不要な依存を要求しない。既存統合PRの修正と照合した。65-kit/HUD fixtureは実bindを経由し、受理watermark/Actor bufferを確認する。音楽登録契約は追加済みの23件全件を要求し、Explosher診断fixtureは実common-build検査を通す。テストを間引かず、従来の拒否例を保持する。
 ## 2026-10-23：開始時の owner clock 固定原点と通信受け入れの限定回帰（#1767）
 
 - 対象は `5f2dcb9a69d642f9e3f450d2c96ab725f5bcd696`／QA 継続先 `90e9530bd155a0f10596819e0e4987f32aa2a04f` に対する候補。#1842 の clock-only 修正を限定採用し、受信側が生成する nonce の応答から固定原点を確定する。bind 前の snapshot は時計を確立せず、証明待ちの packet は個数・UTF-8 byte 数を制限して保留する。再応答・後続 packet で原点を更新しない。実装は `patches/network-replication/{adapter,owner-clock,snapshot-guard}.mjs`。offline import 時の不要な依存を避ける lazy TextEncoder 初期化だけを #1843 から別途採用した。
@@ -6137,6 +6163,41 @@ main `26a4db4123d23162a3dbf8a12150b1b5bc6ccf64` を基準に、Splatoon 3 Ver.11
 
 Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテゴリ。修正対象のBodyBalanceはその一部にすぎず、iPad上での支配要因の確定や重いフレームの完全解消とは扱わない。#1671/#1757の実機受入はOpenのまま。条件・既存PRとの重複確認・再現コマンド・証跡は[調査記録](inkwave-composed-cpu-20261023/README.md)。
 
+### 2026-10-23 ローラー縦振りの接地解境界（保証未成立・runtime変更なし）
+
+元の実minifyビルドから腕/握り/cylinder/kid変換を取得し、1,472件のnative床評価を最大1.3e−15程度で再現した。前姿勢を保持すると、着地40tickの床誤差0.769353、復帰49tickの床誤差0.038359が既存許容0.003を超える。49tickでは合法なZ補正1.25/1.50radの間のscalar/slerp中点が床を破るため、両端だけでは連続な合法経路を保証できない。探索admissionを広げるだけの案も1.880radの段差を残し、既存costで前軸を追う案はnative56tickまで補正が残った。新しい表示係数や巨大なruntime探索を追加せず、受入候補のruntime実装は見送った。一般の3D合法経路の不存在を断定せず、未成立の条件として保存する。[制約・負例・4/4診断テスト・実測時間](roller-ground-boundary-20261023/README.md)。本家403は再取得せず、同条件比較は未確認のまま。
+
+### 2026-10-23 基本ローラーのunheld shaft経路候補（未受入）
+
+独立レビューのgeometry由来のupright shaftを経由する球面二次経路を基本weaponId=rollerの表示wrapperだけへ実装した。back以降の最初のunheld sampleを通常solverの結果で捕捉し、今回のfixtureはt0=48、heldの46から始めない。実browserでは40・48開始点・56以降が元と一致し、49tickのdrum移動は1.109129→0.253771、48–56最大加速度は4155.844→1959.650。実vertex最低点+0.024645、grip gap最大1.35e−15、fallback0。ただし50–56移動総量は2.661387→3.816900へ増え、53tickの軸向きも大きく違うため、見た目全体・本家一致は未承認。遅い解放の開始sampleの既存jumpも未解消。他roller・grip・共有native IK・入力/runner/physics/paint/network・別担当spawn/reset/landing gateは変更しない。[候補・全区間数値・同条件画像・検査](roller-shaft-return-20261023/README.md)。既存3不採用案・a8診断・main/PRを保護し、公式参照403は再取得しない。
+
+### 2026-10-23 roller shaft-returnの同attack再arm/late carry部分修正（別候補・全体未承認）
+
+凍結ecf5の48解放→51/52再押下→53再解放でhelperがattack identityを忘れ、54/55で再captureして56に余分な戻りを加えていた。ACTIVE中断後だけ同attack再armを禁止し、新attack/初回heldを区別する。最初の通常solverに実際の非ゼロ床探索補正がないrelease49/52/55では経路を開始せずnative carryを保つ。表示helperと既存chosenAxis/chosenAを渡す1行に限定し、共有IK/grip、native入力/runner/physics/paint/network、別担当spawn/reset/landing gateは変更しない。source/実emittedの全10操作と実attack再利用追加1操作が成功、47focused/10packaging/公開raw再生も通過。60Hz実browserでは再押下51–65とlate52全66tickが元と一致した。ただしearly40/46の加速度/57減速悪化は未修復、元版reused-context120Hz最終撮影は60000ms timeout、FX粒子stream差もあり全画像pixel parityは未確認。本家映像403は再取得せず、本家一致/全体見た目/全必須CIは未完。[別候補・全区間raw・負例・失敗ログ](roller-shaft-once-20261023/README.md)。main/既存PRと全旧候補は保護する。
+
+### 2026-10-23 roller early returnのsupport control部分改善（別候補・未承認）
+
+early40/46のVM速度谷は、helper角stepが増加中でも既存alignLeft補正が抜ける接続で起きていた。実browserでは同じ速度谷は再現せず、027自体に元49の跳ねを減らす利点もあるため、early全体のnative fallbackは採らない。既存stationary follow-through key（native return weight1）で捕捉する場合だけ、qUpを現在の既存support reachへ一度投影して固定する別候補を保存した。新しいframe/角度閾値・共有IK/grip・native gameplay・lifecycleは変更しない。通常48は027の全66 native行と一致し、short repress/late49/52/55/新attack再利用を保つ。source/emitted各11、focused47、単体9、packaging10と、元/027/候補の60Hz×3操作が通過。module前に同じ乱数closureを設置するQAで各tickのFX配列/乱数stateも一致した。ただし上部背景pixel差は残る。earlyのVM速度谷・jerk/57減速の元より悪い点、実browserの最終減速、本家参照403・120Hz撮影timeout・全CIは未解消。全体受入ではない。[phase切り分け・棄却試行・同条件選択画像・raw](roller-early-condition-20261023/README.md)。027・全旧候補・main/PR1856を保護する。
+
+
+## 2026-10-23 ヒッセン床塗り用飛沫の表示補正候補
+
+ヒッセンの床滴だけ、既存Bucketの幅補正 `.5` と保存済み水平headingを表示に使う。旧表示はDrawRadius `.2/.3` を無補正で描き、最初の重力stepで表示軸を真下90度へ変えていた。本番合成 `Projectiles._drawLegacy` → `appendSourcedSplashVisuals` の当該actor分岐だけを変更。物理drop位置・速度・着地塗り・主弾・damage・ink・networkは変更しない。滴が落下する運動自体も維持する。
+
+本家の原典パラメータはSplatoon 3 11.3.0。任天堂ページの映像取得はHTTP403で停止し、同条件の本家encoded frame比較は未完。幅補正は既存INKWAVEの見た目較正であり、本家の物理発射角・メッシュ・メートル換算を確定したものではない。source29/29、本番生成物26/26、emitted塗りgolden3/3、制御Chromium10条件80instanceでbefore/afterの全物理trace・塗りが一致。通常メニューから練習場へ入ったnativeブラウザも両版成功、8点のsimulation frame比較で最終1315cellsを保持。粒子数は主弾9・床滴最大5で不変。本家見た目の最終承認と公開候補exact-head CIは別段階で、マージしない。[比較・阻害・画像・再実行記録](tri-slosher-floor-20261023/README.md)。
+
+
+## 2026-10-23 ヒッセン候補のmain7e依存照合・native画像訂正
+
+公式main7e `7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51` 比で元ヒッセンruntime blob `54f90896181bd28feefbd0bdff2c9347db03265f` だけを維持し、c68の閉じた参照QA修復とPR1853の追加9-edge拒否試験を両方保存した。special4runtimeと別担当のfiring adapterは取り込まない。source37成功/1emitted専用skip、生成物35/35、共通参照/メニュー18/18、両buildの13root/versioned参照とstartup budgetが成功。固定60Hz計測の9条件でcontrol/source/emittedの塗り・弾道・ink・damage・seed・着地が厳密一致した。
+
+旧native-before/afterの色/装備不一致を訂正し、旧画像は同条件の見た目A/Bに数えない。旧7bの訂正済みペアを保持し、新mainも同palette/Rookie/能力none/camera/seedで18Fだけ再撮影した。trusted menu入場後、freeze下の既存startMatch APIでfresh actorを作る制御replayによりcamera/87bone/物理traceが一致した。これは本家encoded frame比較ではなく、`.5` のUNSOURCED暫定校正も未承認のまま。[依存・build・測定・画像・初回失敗を含む記録](tri-slosher-floor-main7e-20261023/README.md)。PR1855 ref/mainはこの保存作業では動かさず、新候補のhosted CI成功も未主張。
+
+継続QAでは、同じ60Hzの実sole query列（各1,317,000回）をNativePhysicsで再実行するABBA×2のCPU時間が、対照平均5156ms、memo平均4796msだった。単一三角形の穴＋dynamic boxの合成地形で、問い合わせcomponentだけの約7%短縮。ゲーム全体・実機FPSへは換算しない。最初のemittedテストはbundleに存在しないnative-level leafを参照して失敗したため、配信されるengine.mjsの公開exportを使うfixtureへ直し、同一buildで成功した。時計の最新buildはcold/rematch/reconnectの3局面6方向も成功した。
+
+Explosher CIの過去common-build診断へ任意のPR base/headを渡すと、固定364dd0の承認guardが必ず拒否する。current PR headのsource・emitted銃口回帰と、固定承認subjectでの過去A/A診断を別jobにし、承認descriptor・全input/output検査・厳密なpreflight比較は維持する。過去A/Aを現在PRの描画や性能の合格には使わない。
+
+main726eとの統合では、main側の新しいrelay時計・音声・capture admissionを保持し、既存CI修正はmainの実装へ合わせた。Brellaの旧129-row再現は、mainの新しい「actor registryより多い行を拒否」guardにより通常roomでは先に拒否される。現在の回帰はその拒否を明示確認したうえで、実Actorを登録した大きなregistryの防御stressに限ってoptional readerの128行capを通し、拒否済replayが既存snapshotを追記しないことを確認する。通常8人roomの新規exploitとは扱わない。
 ## 2026-10-23: 原典ステージの GPU 描画負荷上限
 
 原典ステージ表示中だけ GTAO を外し、MSAA・pixelRatio に上限をかけ、コンテキストロスト後は段階的に描画負荷を下げる（[記録](inkwave-native-gpu-budget-2026-10-23.md)）。描画表現のみの変更で、歩行・泳ぎ・射撃・塗り判定・インク回復・カメラ操作のロジックは変更していない。本家 Ver.11.3.0 との既存の差分・未確認項目はそのまま。計測は Chromium + SwiftShader の WebGL 確保量の集計で、実機の GPU 落ち解消は未確認。

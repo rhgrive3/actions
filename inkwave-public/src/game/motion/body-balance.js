@@ -32,13 +32,14 @@ export class BodyBalance {
   this.total+=weight;
  }
  apply(source,trajectory,{run=0,weight=1,pivot=0,strafe=0}={}){
-  this.center.fk();const gainX=HOST_BALANCE.lateral*(1-.75*pivot)*(1-.8*clamp(strafe,0,1));const gainY=HOST_BALANCE.vertical+(HOST_BALANCE.runVertical-HOST_BALANCE.vertical)*clamp(run,0,1);
+  const clampedStrafe=clamp(strafe,0,1),strafeRotationGain=1-.78*clampedStrafe;
+  this.center.fk();const gainX=HOST_BALANCE.lateral*(1-.75*pivot)*(1-.8*clampedStrafe);const gainY=HOST_BALANCE.vertical+(HOST_BALANCE.runVertical-HOST_BALANCE.vertical)*clamp(run,0,1);
   this.pose.copy(source);const root=this.bank.index.joint_root;
   if(root!==undefined){const p=this.pose.p[root],m=this.center.p[root];p.set(m.x+(p.x-m.x)*(1-weight+weight*gainX),m.y+(p.y-m.y)*(1-weight+weight*gainY),m.z+(p.z-m.z)*(1-weight+weight*HOST_BALANCE.forward));}
   // Preserve the source's global counter-rotation. Scaling LOCAL rotations
   // independently destroys the head's counter-motion to its parent chest.
   for(const i of this.rotationWorldIndices){
-   const b=this.bank.bones[i],rawGain=this.rotationGainByIndex[i],gain=rawGain===undefined?undefined:rawGain*(i===this.hipIndex?1-.85*pivot:1)*(1-.78*clamp(strafe,0,1)),parent=b.parent;
+   const b=this.bank.bones[i],rawGain=this.rotationGainByIndex[i],gain=rawGain===undefined?undefined:rawGain*(i===this.hipIndex?1-.85*pivot:1)*strafeRotationGain,parent=b.parent;
    if(gain!==undefined){this.world[i].copy(this.center.wq[i]).slerp(source.wq[i],1-weight+weight*gain);this.pose.q[i].copy(this.world[i]);if(parent>=0)this.pose.q[i].premultiply(this.q.copy(this.world[parent]).invert());}
    else{this.world[i].copy(this.pose.q[i]);if(parent>=0)this.world[i].premultiply(this.world[parent]);}
   }

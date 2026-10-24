@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/tmp/compare-tri-main7e-native.py", line 11, in <module>
+    for key in exact:assert x[key]==y[key],key+' mismatch'
+                            ^^^^^^^^^^^^^^
+AssertionError: projectileTrace mismatch

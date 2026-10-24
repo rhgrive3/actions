@@ -664,3 +664,93 @@ for (const reversal of [{ playState: 'running' }, { pending: true }])
     Object.assign(item.animation, { playState: 'finished', pending: false });
     h.watchdog(); await waiting; assert.equal(h.timers.size, 0);
   });
+
+// Execute the committed capture -> geometry -> serialized settle bodies together.
+function continuationCaptureHarness(items, { width = 100, right = 100, hidden = false, leaving = false, screenshotError = null } = {}) {
+  const animations = items.map(item => item.animation), browser = animationHarness(animations);
+  const calls = [], entry = { name: 'phone-portrait', screens: {} }, controls = '.iw-continuation-actions button';
+  const element = { className: 'iw-btn', getClientRects: () => [{}],
+    closest: () => leaving ? {} : null,
+    getBoundingClientRect: () => ({ width, height: 48, left: 0, right }) };
+  const page = {
+    evaluate: (fn, observe) => {
+      assert.equal(fn, settleResponsiveAnimationsInPage); calls.push('settle:' + observe);
+      return browser.run(observe);
+    },
+    waitForFunction: async () => { calls.push('retired-owner'); },
+    locator: selector => ({ evaluateAll: async fn => {
+      calls.push(selector === controls ? 'measure' : 'panels');
+      return vm.runInNewContext('(' + fn.toString() + ')', {
+        getComputedStyle: () => ({ visibility: hidden ? 'hidden' : 'visible' }), innerWidth: 390,
+      })(selector === controls ? [element] : []);
+    } }),
+    screenshot: async () => { calls.push('png'); if (screenshotError) throw screenshotError; },
+  };
+  const start = source.indexOf('const geometry = async'), end = source.indexOf('const tap = async', start);
+  assert(start >= 0 && end > start);
+  const geometry = new Function('settle', 'assert', 'audit', source.slice(start, end) + '\nreturn geometry;')(
+    (target, observe = false) => target.evaluate(settleResponsiveAnimationsInPage, observe), assert, false);
+  const core = fs.readFileSync(new URL('../check-inkwave-responsive-core.mjs', import.meta.url), 'utf8');
+  const first = core.indexOf('  const capture = async'), last = core.indexOf("  await show(page, 'loading');", first);
+  assert(first >= 0 && last > first);
+  const capture = new Function('page', 'entry', 'geometry', 'audit', 'path', 'evidence', 'engineName', 'onStageComplete', 'assert',
+    core.slice(first, last) + '\nreturn capture;')(page, entry, geometry, false, path, '/unused', 'chromium', name => calls.push('stage:' + name), assert);
+  return { calls, animations, entry, observe: () => page.evaluate(settleResponsiveAnimationsInPage, true),
+    capture: (name = 'loadout-continue') => capture(name, controls),
+    tick: async () => { browser.watchdog(); await flushAnimationMicrotasks(); await flushAnimationMicrotasks(); } };
+}
+
+test('capture geometry recovers the same stale finished promise after the observed action settle', async () => {
+  const item = deferredAnimation({ playState: 'finished' }), h = continuationCaptureHarness([item]);
+  const observed = h.observe(); await h.tick(); await observed;
+  let completed = false; const capture = h.capture().then(() => { completed = true; });
+  try {
+    await flushAnimationMicrotasks(); assert.equal(completed, false); assert(!h.calls.includes('measure'));
+    await h.tick(); assert.equal(completed, true, 'the second geometry settle must also confirm native finished state');
+    assert.deepEqual(h.calls, ['settle:true', 'retired-owner', 'settle:true', 'measure', 'panels', 'png', 'stage:loadout-continue']);
+    assert.equal(item.reads(), 2, 'each settle captures the original native promise once');
+  } finally { item.resolve(); await capture; }
+});
+
+for (const state of [{ playState: 'running' }, { playState: 'paused' }, { playState: 'idle' }, { playState: 'finished', pending: true }])
+  test('capture geometry never accepts unfinished native state: ' + JSON.stringify(state), async () => {
+    const item = deferredAnimation(state), h = continuationCaptureHarness([item]);
+    const capture = h.capture();
+    try {
+      await flushAnimationMicrotasks();
+      for (let i = 0; i < 3; i++) { await h.tick(); assert(!h.calls.includes('measure')); assert(!h.calls.includes('png')); }
+      Object.assign(item.animation, { playState: 'finished', pending: false }); await h.tick(); await capture;
+      assert(h.calls.includes('stage:loadout-continue'));
+    } finally { item.resolve(); await capture; }
+  });
+
+test('capture state belongs to the original cohort, not a replacement finished animation', async () => {
+  const original = deferredAnimation(), other = deferredAnimation({ playState: 'finished' });
+  const h = continuationCaptureHarness([original]), capture = h.capture();
+  try {
+    await flushAnimationMicrotasks(); h.animations.splice(0, 1, other.animation);
+    await h.tick(); await h.tick(); assert(!h.calls.includes('measure'));
+    original.animation.playState = 'finished'; await h.tick(); await capture;
+    assert.equal(other.reads(), 0);
+  } finally { original.resolve(); other.resolve(); await capture; }
+});
+
+test('other capture labels retain their unobserved promise-only gate', async () => {
+  const item = deferredAnimation({ playState: 'finished' }), h = continuationCaptureHarness([item]);
+  const capture = h.capture('loadout'); await flushAnimationMicrotasks(); await h.tick();
+  assert.deepEqual(h.calls, ['retired-owner', 'settle:false']);
+  item.resolve(); await capture; assert(h.calls.includes('stage:loadout'));
+});
+
+for (const invalid of [{ width: 42 }, { right: 392 }, { hidden: true }, { leaving: true }])
+  test('continuation capture retains real geometry and visible-owner rejection: ' + JSON.stringify(invalid), async () => {
+    const item = deferredAnimation(), h = continuationCaptureHarness([item], invalid); item.resolve();
+    await assert.rejects(h.capture(), /small touch target|horizontal overflow|no controls rendered/);
+    assert(!h.calls.includes('png')); assert(!h.calls.includes('stage:loadout-continue'));
+  });
+
+test('required screenshot failure cannot publish a completed continuation stage', async () => {
+  const item = deferredAnimation(), error = Error('required PNG failed'), h = continuationCaptureHarness([item], { screenshotError: error });
+  item.resolve(); await assert.rejects(h.capture(), value => value === error);
+  assert(h.calls.includes('png')); assert(!h.calls.includes('stage:loadout-continue'));
+});

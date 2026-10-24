@@ -1,0 +1,78 @@
+{
+  "scope": "Helper-only 7x50000 repeated eligible reads; identity-copy comparison excludes IK/render/physics. GC retained heap is noisy; not total allocation or GPU performance.",
+  "source": {
+    "samples": [
+      {
+        "candidateNs": 1188.9474,
+        "baselineNs": 141.19524
+      },
+      {
+        "candidateNs": 447.09264,
+        "baselineNs": 151.80148
+      },
+      {
+        "candidateNs": 283.01844,
+        "baselineNs": 22.79826
+      },
+      {
+        "candidateNs": 743.00096,
+        "baselineNs": 22.83032
+      },
+      {
+        "candidateNs": 369.73472,
+        "baselineNs": 100.39676
+      },
+      {
+        "candidateNs": 445.90066,
+        "baselineNs": 22.30592
+      },
+      {
+        "candidateNs": 428.65138,
+        "baselineNs": 22.19014
+      }
+    ],
+    "candidateMedianNs": 445.90066,
+    "copyMedianNs": 22.83032,
+    "retainedHeapDeltaBytes": -4328,
+    "checksum": 265793.21265396435
+  },
+  "emitted": {
+    "samples": [
+      {
+        "candidateNs": 443.44754,
+        "baselineNs": 66.027
+      },
+      {
+        "candidateNs": 451.80138,
+        "baselineNs": 22.91604
+      },
+      {
+        "candidateNs": 900.02816,
+        "baselineNs": 22.91324
+      },
+      {
+        "candidateNs": 261.84782,
+        "baselineNs": 22.05114
+      },
+      {
+        "candidateNs": 250.7208,
+        "baselineNs": 23.96782
+      },
+      {
+        "candidateNs": 233.4389,
+        "baselineNs": 21.82238
+      },
+      {
+        "candidateNs": 221.62602,
+        "baselineNs": 21.17522
+      }
+    ],
+    "candidateMedianNs": 261.84782,
+    "copyMedianNs": 22.91324,
+    "retainedHeapDeltaBytes": -528,
+    "checksum": 265793.21265396435
+  },
+  "flags": {
+    "explicitGc": true
+  }
+}

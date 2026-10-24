@@ -1,0 +1,67 @@
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+(node:1712) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Tri-Slosher and Dread Wringer reuse Bucket head/rear radius, tail and native asset, including alternate kits (586.995268ms)
+✔ real FX hooks give catalogue Bucket sheets the same flight droplets and head spacing as native Bucket (637.947102ms)
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+BLOBLOBBER_ACTUAL_PITCH_TRACES {"level":{"frames":74,"reach":28.533294562208315,"contacts":[{"frame":25,"distance":12.17097465406588},{"frame":51,"distance":21.798332812473333}]},"upward":[{"deg":5,"frames":84,"reach":31.13561583407207,"contacts":[{"frame":30,"distance":14.243569028563613},{"frame":59,"distance":24.409299001320456}]},{"deg":20,"frames":119,"reach":35.84482309598065,"contacts":[{"frame":45,"distance":18.70451399546264},{"frame":85,"distance":29.47971078391295}]},{"deg":40,"frames":155,"reach":33.057672046496535,"contacts":[{"frame":61,"distance":19.25531636051409},{"frame":112,"distance":28.318977962099012}]},{"deg":75,"frames":181,"reach":11.897804141507455,"contacts":[{"frame":74,"distance":7.457309010353922},{"frame":133,"distance":10.46922081454125}]},{"deg":90,"frames":178,"reach":1.1102230246251565e-15,"contacts":[{"frame":73,"distance":1.1102230246251565e-15},{"frame":131,"distance":1.1102230246251565e-15}]}],"downward":[{"deg":-10,"frames":56,"reach":22.704202677640986,"contacts":[{"frame":16,"distance":7.804496702933686},{"frame":37,"distance":16.439097240719835}]},{"deg":-20,"frames":47,"reach":19.01805966741993,"contacts":[{"frame":9,"distance":4.351235139619818},{"frame":29,"distance":12.861665793333357}]},{"deg":-30,"frames":55,"reach":19.674650779665747,"contacts":[{"frame":6,"distance":2.4597581931860417},{"frame":32,"distance":12.716003547252381}]},{"deg":-40,"frames":68,"reach":20.361573729656033,"contacts":[{"frame":4,"distance":1.5150917647109738},{"frame":38,"distance":12.983071878958977}]},{"deg":-45,"frames":75,"reach":20.099178815863564,"contacts":[{"frame":4,"distance":1.2163927984247365},{"frame":42,"distance":13.063827307598643}]},{"deg":-60,"frames":97,"reach":16.75911912706689,"contacts":[{"frame":3,"distance":0.6364018707363703},{"frame":54,"distance":11.209217060926955}]}]}
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+(node:1713) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Tri-Slosher reuses Bucket draw radius and tail for every sheet (1.556632ms)
+✔ Bloblobber bubbles grow over five frames and shrink 25% each rebound (28.994124ms)
+✔ actual Bloblobber projectile rebounding preserves swept travel, sourced paint taper and ghost safety (600.708436ms)
+✔ long-range Shooter keeps a compact, non-collision-sized visual rod (0.23839ms)
+✔ all pinned Charger full-charge ranges are retained by the actual catalog flight (564.001194ms)
+✔ sourced falling shooter droplets reuse simulated positions without paint side-effects (838.531658ms)
+✔ Bloblobber physical launch remains level against a short ground reticle and rebounds for its whole arc (1285.127548ms)
+✔ Bloblobber actual 60Hz velocity integrator honors source 3F straight, brake and free-fall transitions (1039.49211ms)
+✔ Bloblobber small-bubble floor-normal cap preserves forward travel and wall speed (932.892072ms)
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+(node:1719) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ s3-slosher-launcher falling splash releases are clipped before free (563.88033ms)
+✔ s3-slosher-launcher falling splash releases are clipped before wall (464.393374ms)
+✔ s3-slosher-launcher falling splash releases are clipped before range (578.496568ms)
+✔ s3-slosher-launcher falling splash releases are clipped before life (710.620721ms)
+✔ s3-slosher-launcher falling splash releases are clipped before ghost (963.885936ms)
+✔ s3-slosher-bathtub falling splash releases are clipped before free (1243.513546ms)
+✔ s3-slosher-bathtub falling splash releases are clipped before wall (1271.989579ms)
+✔ s3-slosher-bathtub falling splash releases are clipped before range (759.02516ms)
+✔ s3-slosher-bathtub falling splash releases are clipped before life (542.964524ms)
+✔ s3-slosher-bathtub falling splash releases are clipped before ghost (602.585979ms)
+✔ Sloshing Machine already has an airborne 38-damage outer attack beyond its direct core (697.795987ms)
+✔ all four airborne Bloblobber bubbles own independent 32-damage attacks (468.475424ms)
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+INKWAVE built fixture /tmp/tri-slosher-after contentHash=7aff3bcc38b61be1af2d2dbe19580edee26cbbbad891a6a2dd5cf91f3a8da882
+(node:1752) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Tri-Slosher floor drops use the Bucket visual scale and captured paint heading, without changing physical drops (1467.232236ms)
+✔ real Tri-Slosher firing and CPU floor paint are identical with/without drawing and at 30/60/120Hz (4420.505076ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9343.615619
