@@ -25,7 +25,7 @@ async function room(mode = 'turf') {
         // The production relay sends its authenticated ACK before host local start;
         // this isolated two-peer fixture simulates that admission, not an optimistic start.
         if (packet.k === 'start') net._control({ t:'start_result', id:packet.id, ok:true });
-        for (const [other, peer] of peers) if (other !== id) peer._message(id, structuredClone(packet)); return true; }
+        for (const [other, peer] of peers) if (other !== id) peer._message(id, structuredClone(packet)); return true; },
       sendTo(to, packet) { peers.get(to)?._message(id, structuredClone(packet)); },
       lock(value) { locks.push(value); }, close() {} };
   }
