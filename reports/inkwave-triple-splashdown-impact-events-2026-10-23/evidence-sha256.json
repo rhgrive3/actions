@@ -1,0 +1,22 @@
+{
+  "baseline-browser.json": "87d54bd67165206ecda331e9adfa9907b2bb996fcdaf68da6d6fdddd84ef8d39",
+  "baseline-browser.log": "a45ec415339c182130bacf21cc3ae8b0952245c548f0847d7154826a735b48cb",
+  "baseline-inspection-after-clear.png": "fef363d9b74e6b130275d3bbce948e944024f9648cec84430d4a3473b11d6848",
+  "baseline-inspection-before-clear.png": "f39b607e9c148c7c3dd6a61ed81fabba71540cf9f9a87b9267767f1435df1199",
+  "build-identity.json": "86afe071c632f8b2fc27d97c2b2c989e88685da92d82ee34105f88aa6e95a7fa",
+  "build.log": "0398a25f4e3f0035bdbce291c83274ce2bfb48e4b427c146dddd3fdfa84ae64a",
+  "candidate-browser.json": "75272fb3a05aa46f4f8b22ed946fa1c132f3e39d9b546044ef99ef4e879c8f7c",
+  "candidate-browser.log": "ea7577fb72b8c83a9f5f9fa5d6a20abb13edb06ef8d40d47a85ebed97226d22a",
+  "candidate-inspection-after-clear.png": "e0e0a6acbaf535e341226950a8939e9d6889a24c8e592cc09b94741ec5a73024",
+  "candidate-inspection-before-clear.png": "ccfe2b32ed6abba51d0e6ebcac599ed2d44efe48fbd062b32e064ad456efad2c",
+  "candidate-normal-f060.png": "0cc2c08642cdfcbab40b60699a3750c27e1d6719c93132bd60489f0e9f6ed686",
+  "candidate-normal-f070.png": "34760a78e1dccf223735279c6ce457b2ca38b5be24753a675f78977c6c7c375c",
+  "candidate-normal-f087.png": "1e8bb2c6e3972e4851fc783a896eeaceebc77bfb02796325c9d139ba7126a927",
+  "controlled-browser.json": "0e36cf35a06954bea2b2964d00707049916f2bfd91b41b68fa63145619bfea7a",
+  "controlled-browser.log": "9828c4b0c082f02b327c8889a5485d77559b71e1ae8bec9e0c56c54c89c4f83b",
+  "controlled-probe-adaptation.json": "976174a3880a2401f363755c81c28bf6263fdd37e05cd6f56e3f621cec7a048d",
+  "emitted-tests.log": "c57ca841021cb3fe27e847cbb97de36d101c8ef4d7b17a0235127eed6ad1175d",
+  "negative-control.log": "1c05ddebb39868cf8cf035c3f47487d769d4153db4f2fc5fab8f4248a999715c",
+  "patch-check.log": "8daf8533b227839f8fd764a341a297183fc132ca492974937e115186e1d268e3",
+  "source-tests.log": "d86d83fa265463088dc8c49461d192c779052b47e9a149a83233017de7e51c2c"
+}

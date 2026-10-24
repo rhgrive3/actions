@@ -6180,6 +6180,100 @@ Linux Chromiumの今回のTurf条件ではCharacter更新が最大のCPUカテ�
 early40/46のVM速度谷は、helper角stepが増加中でも既存alignLeft補正が抜ける接続で起きていた。実browserでは同じ速度谷は再現せず、027自体に元49の跳ねを減らす利点もあるため、early全体のnative fallbackは採らない。既存stationary follow-through key（native return weight1）で捕捉する場合だけ、qUpを現在の既存support reachへ一度投影して固定する別候補を保存した。新しいframe/角度閾値・共有IK/grip・native gameplay・lifecycleは変更しない。通常48は027の全66 native行と一致し、short repress/late49/52/55/新attack再利用を保つ。source/emitted各11、focused47、単体9、packaging10と、元/027/候補の60Hz×3操作が通過。module前に同じ乱数closureを設置するQAで各tickのFX配列/乱数stateも一致した。ただし上部背景pixel差は残る。earlyのVM速度谷・jerk/57減速の元より悪い点、実browserの最終減速、本家参照403・120Hz撮影timeout・全CIは未解消。全体受入ではない。[phase切り分け・棄却試行・同条件選択画像・raw](roller-early-condition-20261023/README.md)。027・全旧候補・main/PR1856を保護する。
 
 
+## 2026-10-23 main726移植時の証拠スコープ
+
+以下の20,001bytesは frozen354 → private be303 の承認済み追記を原文のまま移植した履歴である。先頭の公式main726原文1,404,354bytesは一切置換していない。過去のbrowser・画像・撮影フレーム・source/build数値はそれぞれ記載された旧HEADの観察であり、新main候補のbrowser/GPU/本家映像受入へ読み替えない。対応する旧証拠一覧と今回の適用範囲は [main726 acceptance scope](special-main726-acceptance-scope-20261023.md) を参照。以下に残る初期の未実施・暫定記述も履歴として保持する。
+
+
+## 2026-10-23：キューインキ／トリプルトルネードの表示更新間隔（本家映像比較は未完了）
+
+対象は公開版の `special-vfx.mjs` の Ink Vac 吸引渦、Triple Inkstrike 着地点マーカーと3層の渦。従来は描画1回につき一定角度を足し、吸引の不透明度も1回につき20%ずつ目標へ近づけていたため、同じ経過時間でも30/60/120Hzで回転速度とフェードが変わった。既存60Hzでの見え方を基準に、保持レコードの経過時間から角度を算出し、不透明度を時間換算する。既存アセット・粒子数・描画数・ゲームプレイの発動／攻撃／塗り／当たり判定／物理／ネットワークは変更しない。Trizookaは調査のみで変更なし。
+
+再現：吸引を0.5秒続けて0.5秒解除、または着地マーカー／トルネードを0.5秒表示し、30/60/120Hzで同じ時刻の角度・不透明度を比較する。`patches/splatoon3/tests/projectile-special-vfx-clock.test.mjs` は本番 `adaptBuildSource` を通した実レシピと保持コールバックを実行するCPUテストで、4件成功。変更前の同じモジュールでは4件失敗。吸引終了時の破棄、同時刻再評価で角度が増えないことも確認。これは本番合成ソースの表示計算検証であり、ブラウザGPU映像やSwitch実機との比較の代わりではない。
+
+本家根拠と未確認：Nintendo公式 https://splatoon.nintendo.com/en/weapons/ は2026-10-23取得時に502（証明書検証失敗）で映像を取得できず、回避はしていない。既存ソースの Zephiel810 `https://youtu.be/PLxqXn_E898` の疎な時刻注記は今回のフレーム証拠として使っていない。本家バージョン、FPS、連続フレーム、入力・ギア条件は未確認。今回の角速度は既存実装の60Hz換算であってNintendoのフレーム値ではない。形状、演出の長さ、武器の動作やゲームプレイの調整は映像確認まで保留。本家フレーム一致・視覚的受入は未達。
+
+
+## 2026-10-23：スペシャル6系統の暫定ソース候補統合
+
+上記キューインキ／トリプルトルネードの表示更新間隔修正に、個別レポートの独立した表示処理修正を統合した。Crab TankとZipcasterは中断時のリボン終了、Booyah Bombは経過時間によるチャージ球回転、Wave Breakerは時間換算回転、Big Bubbler／Tacticoolerは粒子時間の端数保持、Tenta Missiles／Killer Wail 5.1は60Hz基準の粒子生成機会を保持する。ゲームプレイ時計・物理・ダメージ・塗り・入力・共有マテリアル・キャラクターは変更しない。本家フレーム比較は未完了であり、映像一致・視覚的受入は主張しない。
+
+根拠・再現・影響・未確認事項の詳細は crab-ribbon-lifecycle-20261023.md、zipcaster-trail-lifecycle-20261023.md、explosion-special-frame-evidence-2026-10-23.md、support-special-frame-cadence-2026-10-23.md、area-special-frame-review.md を参照。統合検証と制約は special-six-integration-20261023.md に集約し、既存記録・アサーションは保持した。
+
+### 2026-10-23 Ink Vac: HOLD と実弾発射のマズルを分離
+
+- 実フレーム参照: GameWith のスペシャル一覧 https://gamewith.jp/splatoon3/362075 が「キューインキ」として埋め込む https://img.gamewith.jp/common_movies/b4ead3915189fad267d90ce47225f8fb.mp4 。1280×720、符号化30fps、279フレーム、9.3秒。動画SHA-256: `9a8f0c5f5875f97276fd892bf3b57e52a0110ef0ec47b85ff8df26ba961bed57`。ゲームのバージョンは映像内で確認できず不明。符号化fpsをゲーム内部fpsとは扱わない。
+- 連続フレーム180–209（0始まり、6.000–6.967秒）を実際に画像で確認。186–188付近で吸引リングが消え、202まで構えが続く。203で広い発射ファン、205–206で白い閃光、207–209で電気状の軌跡が見える。入力時刻は不明なので、これを固定HOLD時間の根拠にはしない。
+- ソースの `beginExhale` は発射待ちのHOLDに入るだけで、実弾は別の `fireInkVacExhale` が生成する。従来のVFXはHOLD開始を発射と誤認していた。`DIRECTORS.inkVac.frame` の先行マズルを除き、実際に受理された `_push` と、そこを通らない native `ghostProjectile` の追加を観測して発射時だけ既存マズルを描く。ゲームのフェーズ、入力受付、タイマー、弾道、ダメージには変更なし。
+- 同一弾の二重観測はWeakSetで抑制。`_new` のプール再利用だけで識別をリセット。VFX clearによる既存弾の再フラッシュはしない。レンダーフレームの弾リスト初観測を発射とはみなさず、遅い描画開始で飛行中の弾にマズルを出さない。
+- CPU検証: 実際の合成VFX、native `_new` / `_push` / `ghostProjectile` のメソッド本体、kitの実際の発射メソッド本体を実行する9件の回帰テストが通過。HOLD/取消/無発射、実弾/ゴースト、重複、プール再利用、clear、無効化、別system、受理拒否を検証。既存cadence4件込み13/13。変更前VFXを渡す負例は9件中7件失敗（安全側の無発射2件のみ通過）。
+- 比較は参照映像の観察とソース/CPU検証まで。候補の実レンダー連続フレームは未取得であり、見た目の同等性・最終承認は主張しない。Nintendo/GameWithの映像・画像はゲームやPRに同梱しない。
+
+### 2026-10-23：参照動画確認後の表示処理4件
+
+キューインキ発射に加え、グレートバリアの起動中表示、テイオウイカの既存ジャンプ攻撃状態に限定した回転軌跡、スミナガシートの直立フェードを個別レビュー済み差分として統合した。詳細と正確な検証範囲は special-retail-integration-20261023.md と同文書から参照するレーン別記録に集約。候補のGPU映像との対比較は未確認であり、ゲームプレイ時間・判定・入力・モデル・共有マテリアルを変更したものではない。
+
+## 2026-10-23 Super Chump launch-direction increment (private, provisional)
+
+GameWith special compilation 362075, MP4 SHA256 `6e0759f3d32b8b5186656c7f87f0afd3ef8281e94e35e36336c273d8f38ffdfd`: independently decoded 300 distinct-adjacent images at 30 encoded FPS. Dense inspection f68–162 shows an upward launch-mouth column f76–100 and carried launcher through f151, absent f152. Native simulation FPS, version, weapon/gear and input/control lock are unverified. See `reports/chump-launch-presentation-20261023.md` for exact sequence and sources.
+
+The private candidate changes only the accepted index-zero Super Chump balloon event's existing cosmetic muzzle direction, actor aim→world up, in `runtime/special-vfx.mjs`. Reproduce by aiming horizontally/diagonally and launching: source/pool consumer now emits upward independently of landing aim. Origin, nominal vector magnitude, particle counts/pools/lifetimes/RNG, projectile count/flight, gameplay/control timers, damage and network are unchanged. Raw and transformed/minified fixture tests pass 21/21 with actual pooled consumers, old-direction negative controls, cancellation/clear/reuse and rotation checks; source gameplay timeline diagnostics pass 3/3. No browser/GPU or paired candidate render acceptance is asserted.
+
+Sustained plume, launcher hold/tilt/stow and visible decoy-emergence cadence remain unresolved: all 12 current deploy/balloon events and immediate end still share one timestamp, clearing the held-device owner. No guessed delay, extended player lock, altered projectile count/timing or cosmetic colour substitute was added. Full visual matching requires a separately grounded ownership/lifecycle design, not changing authoritative gameplay to fit a clip.
+
+## Ultra Stamp airborne device observer (2026-10-23, private candidate)
+
+The installed native action already schedules `jumpStampAt` eight ticks after an admitted jump/fire edge and keeps the later grounded `nextSwing` lockout. `stampArc` had read only the latter, omitting pre-contact motion for an already admitted airborne swing. It now observes finite `jumpStampAt` first, retaining every existing motion endpoint/window/easing and the original grounded fallback. Native cancellation, event time/count, damage, paint, movement/physics, networking, model geometry and VFX budgets are unchanged. Installed source/production-transform holder tests and exact frozen-module negative controls cover grounded-jump and airborne-fire admission, release/throw-aim cancellation, death/reset/holder reuse, grounded fallback, zero-dt and 30/60/120Hz redraw. This is an INKWAVE animation-ownership fix, not a measured retail airborne curve. The inspected GameWith ground/throw sequences do not establish matching jump input timing; paired rendered retail/current/candidate frames, native rig/collision and GPU/full-site acceptance remain unverified. See [evidence and limits](ultra-stamp-jump-presentation-20261023.md).
+
+## 2026-10-23：ウルトラショットの3発に対応する銃口発光（表示のみ）
+
+本家の既存 GameWith MP4 を実際の連続画像で確認した。60fps と符号化された source113・117・121 に別々の白い発光があり、その間は暗い銃口／インク核が見える。バージョン、ブキのキット、ギア、入力条件、ネイティブの描画・シミュレーション FPS は未確認。この4符号化フレーム間隔を新しいゲームプレイ定数として使ってはいない。
+
+変更前の `special-vfx.mjs` は `s3Trizooka.shots` の増加1回（リモートは lobe0）で、3つのリングを同時に出し、白い核も0.14秒の1回だけ出していた。既存のネイティブ処理が既に持つ0/4/8Fの各発生受理を表示側だけで観測し、リングと短い白い核を1発ずつ出すようにした。重い煙・飛沫は1斉射1回のまま。未発生・キャンセル済みの弾で発光／軌跡を先に出さず、重複観測、非表示からの復帰、プール再利用にも対応する。核の3/60秒と fadeIn0 は INKWAVE の表示調整値であり、本家の抽出値ではない。
+
+再現：ウルトラショットで1斉射、反復、遅延中の死亡・ライフ／所有者変更、ローカルと受理済みゴースト、プール再利用を比較。ソース／圧縮後の各14件、既存31件が通過。実際の合成本体 `_new/_push/ghost/update/recProj` と実際の kit 生成・birth/flush を実行し、表示オン／オフでパケット・時刻・位置・ダメージ権限が同じことを確認。衝突の `_step` 本体は決定的な無衝突スタブであるため、完全な物理検証ではない。実際の SpritePool CPU 処理で30/60/120Hzの不透明度と60Hzの発光間の隙間を確認したが、GPU／実ブラウザ／本家と同条件の完成映像比較は未実施。詳細は [比較記録](trizooka-lobe-muzzle-2026-10-23.md)。ゲームプレイ、通信の数・時刻、キャラクター、髪、モデル細部、共通シェーダーは変更しない。
+
+銃口座標について：各発光は `special-motion.mjs` のウルトラショット専用の読み取り専用アンカーで、現在のモデルの筒先を取り直す。ActorとCharacter、現在の登録モデル・種類・kidの親子関係、全祖先の可視性、ローカル座標と変換後の有限値を検証し、最新の world matrix で変換する。非表示・欠落・退役・所有者不一致・不正座標では既存 `p.start` のコピーへ戻す。ネイティブの発射座標、getMuzzle、照準、モデル姿勢は変更しない。実際の Three.js 階層で移動・反動オフセット・回転・拡縮・古い行列キャッシュとローカル／ゴーストを検証した。初回の私的候補9a6599は常に発射スナップショットを使う位置の退行があり、今回のテストで失敗するため採用せず、この修正で置き換える。最終GPU映像と本家映像の位置合わせは未確認。
+
+## 2026-10-23 Ink Vac modeled-nozzle flash alignment (private candidate)
+
+- Difference: the accepted-shot flash reused the native chest-centered breath/projectile origin, not the held model's existing nozzle socket. The native gameplay origin is shared with the calibrated intake origin and must remain unchanged. A fully composed CPU pose at actor(0,2,0) yielded native birth(0,3,0), modeled nozzle(-0.0780,2.8943,0.4956), reproducing an approximately0.5-world-unit cosmetic discrepancy without inferring its visual acceptability from source alone.
+- Narrow correction: only the Ink Vac accepted-birth flash/shock-shell anchor reads the currently visible, owned held-model nozzle. Hidden, detached, disabled, stale, dead, nonkid, other-special and absent-model cases retain the native birth fallback. The real kit clears its token before the synchronous birth: the accessor recognizes only the still-live, unretired local release state; after release retirement it refuses that stale model. No physics, damage, packet, actor/model transforms, material or getMuzzle ownership changes.
+- Source: `patches/splatoon3/runtime/special-motion.mjs` cosmetic accessor and `special-vfx.mjs:inkVacShot`; reproduction/coverage in `patches/splatoon3/tests/ink-vac-model-muzzle.test.mjs`. New CPU integration covers12yaw/elevation combinations each local/ghost, native pool reuse/dedup, absent/hidden/stale fallbacks, plus real activation→HOLD→release at30/60/120Hz. The nine earlier birth/HOLD tests remain. These are adapted native-code checks, not browser/GPU or retail-frame parity.
+- Retail/reference status: the earlier Ink Vac reference and its version/input/timing uncertainties are unchanged. No new retail timing, geometry or visual parity claim. Paired candidate browser frames, moving-actor alignment, GPU rendering and retail comparison remain unverified; detailed bounded evidence in `reports/ink-vac-model-muzzle-20261023.md`.
+
+- Independent review follow-up: require `projectile.owner.character.actor === projectile.owner` before using the cosmetic socket. A reproduced stale character alias previously borrowed a foreign live actor’s nozzle; accepted local and ghost alias regressions now fall back to their own native/wire origin. This closes a presentation robustness edge without changing the normal release window or gameplay. Removing only that identity guard produces the expected regression failure.
+
+### 同日追記：ウルトラショットの呼び出し元が期待する所有者の照合
+
+Actor A の character が、内部では別Actor Bと正常に結び付く生存中キャラクターを参照すると、従来の呼び出し元はBの筒先を借りることがあった。Trizooka専用の発光呼び出しで `a.character?.actor === a` を先に確認し、不一致なら既存の有限な `p.start` コピーへ戻す。変更はこの呼び出し元の条件1つだけで、アクセサー本体、発生時刻、弾、通信、モデルは変更しない。ローカルとゴーストの各回帰で3発のフォールバック・発射スナップショット・記録数を確認し、元のd071では外国座標 `(40,8.075,-19.598)` 対期待値 `(2,3,4)` の差で両方失敗する。修正後はソース／変換後が各16件、既存31件が通過。d071は不変の履歴として残し、このガードを最終候補に追加する。
+
+### 2026-10-23：サメライドの予告と爆発の段階分離（独立候補）
+
+本家の根拠は親の観察記録のみ（153枚・符号化30fps、f80–100に大きな後段インクシート／柱）。この担当では参照画像を直接閲覧していない。版・入力時刻・ギア・native FPSは不明。既知のGameWith HTTPSプロキシ403は別経路で迂回せず、本家一致は未達のまま。
+
+実装差分：`special-vfx.mjs` の `DIRECTORS.reefslider.phase/frame` のみ。従来はnative impact後のrecoveryでも制動予告円が残り、拡大が再開した。予告と航跡をrecoveryで終了し、予告円回転を経過時間に、発動時飛沫／制動時の発光と滴を60Hz基準の生成機会に変更。柱・シート、モデル・キャラ、攻撃・物理・通信・入力／ロック時計は不変。影響は表示のみ。描画30/60/120HzのCPU回帰と元実装で2件失敗する負例、source/emittedのゲームプレイ不変性・nativeサメライド回帰を確認。実Game/Actor/FXのChromium WebGL2撮影を通常カメラと検査カメラに分離して記録。条件・再現操作・画像・未確認点は `reports/inkwave-reefslider-visual-2026-10-23.md`。本家での爆発後表示・停止中飛沫の対比較、開けた床での形状、対戦相手の制動段階、実機負荷は未確認。
+
+
+## 2026-10-23 ウルトラチャクチの着弾イベント表示候補
+
+基準 `a4e81347906c0d60ceef76a69f476261bf8d3f86`。本体の native `impact(index=-1)` に加え、左右の既存 `impact(index=0/1)` をVFX表示の根拠にした。従来の拳リスト退出からの着弾推定は、解除・ghost表示期限切れ・remote破壊にも地面の大爆発を出した。`special-vfx.mjs` の `KIT_FX.fist.end` と `DIRECTORS.tripleSplashdown.event` のみを変更し、native発動・拳・着地時刻、攻撃値、物理、判定、通信、操作ロックは変更していない。
+
+本家については親からの観察記録「78枚、encoded 25 fps、開始時点で空中、録画f36–38中央、f42–45左右」のみ。この担当は参照未閲覧、版・入力時刻・ギア・native FPS不明。録画番号をsimulation frameへ換算せず、本家とのモーション・形状一致は未確認のまま残す。ソース25テスト、minified emitted 10テスト通過。正確な元実装を戻すnegative controlは解除／remote破壊の2件を検出した。通常画面と解除検査、再現コマンド・未確認点は [専用記録](inkwave-triple-splashdown-impact-events-2026-10-23.md) を参照。
+
+### 2026-10-23：ジェットパックの噴流接続（独立担当）
+
+固定基準 `a4e81347906c0d60ceef76a69f476261bf8d3f86` の実ゲーム画面と近接検査表示で、噴流始点が装置の開口中心から0.14〜0.59 WUずれることを確認した。`DIRECTORS.inkjet.frame()`だけで描画中のパックのworld matrixを読み、既存ノズル端へ始点を接続した。30/60/120Hzで誤差約0.005 WU、元実装を戻したnegative controlは12ケース失敗。source／emitted回帰は各55/55。native発射、イベント、位置、反動、statsは固定seedでbefore／after一致。帰還はnative superJumpのcharge／flight／着地を通常ゲーム画面と状態記録で確認し、今回変更していない。本担当は本家参照画像を直接見ておらず、連続フレーム同等性や曲線調整の完了は認定しない。根拠、検査の区別、追加参照対象は [inkjet-presentation-20261023.md](inkjet-presentation-20261023.md)。
+
+同日追補：不正なCharacter借用／detached／hiddenモデルのfixture負例を受け、Inkjetの座標取得だけに所有者・現在の装備への接続・Character階層・可視性チェックを追加した。条件外は既存actor-space fallback。local／remoteの新規10件と既存55件はsource／emitted fixture各65/65、5d4516の負例は10件失敗。通常の30/60/120Hzブラウザ検査、約0.005WUの精度、native発射／イベント記録は維持。通常発生経路の立証や本家比較の完了は主張しない。
+
+
+### main726で新たに実施した限定検証
+
+今回の実装基準は公式main `726e338ac256ba9609086ce65e25a68ddd99df85`、runtime固定 `02154df66a065a039a1519990fbabff0130304af`。raw/transform source選択回帰は履歴を含む19成功run・254test実行（重複再実行を含む）で、Triz/fist fixtureのimport不足による旧2失敗試行を削除していない。最新built sourceは `c6a75315dd9f428d674b5356e7c5e8a936039264`。Node22.23.3/esbuild0.28.2の登録direct fullbuildを新規1回実行し、1421inputs `3fbcdb527d87ae0318e1e1df3037088e8d82ae8f979d6d7cae00b9a353ce4f91`、2113出力ファイルの物理readback、deterministic startup budget、emitted VM24/24（旧8・Inkjet10・Reef2・Splash4、fail/skip0）が通過した。contentHashは `bd3d8d2715b53a842901be6457bdb777621c4290f60a2c37a1404e4f9e5d3707`。これは新mainでのCPU/ファイル検証であり、実browser・GPU・実オンライン・本家との視覚一致の証拠ではない。Vite/account buildや外部native媒体のpackagingは実行していない。
+
+新規のSplashdown radial/liquid品質、Cooler展開motion、Storm距離/contact/境界/held-release、未採用TWISTERは別候補であり、この統合には含めず完成扱いしない。既存承認済Cooler mist cadenceの履歴は新Cooler motionの完成を意味しない。source-admission新入口は別担当の未完了QAであり、この記録では許可/通過を主張しない。公開・merge・dispatchや新main実画面撮影も実施していない。
+
 ## 2026-10-23 ヒッセン床塗り用飛沫の表示補正候補
 
 ヒッセンの床滴だけ、既存Bucketの幅補正 `.5` と保存済み水平headingを表示に使う。旧表示はDrawRadius `.2/.3` を無補正で描き、最初の重力stepで表示軸を真下90度へ変えていた。本番合成 `Projectiles._drawLegacy` → `appendSourcedSplashVisuals` の当該actor分岐だけを変更。物理drop位置・速度・着地塗り・主弾・damage・ink・networkは変更しない。滴が落下する運動自体も維持する。

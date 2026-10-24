@@ -108,8 +108,9 @@ const a350Epoch = {mode:'maina350-byte-identical-paint-source-epoch',sha:'a350b6
 const epoch = {mode: 'maine1f-byte-identical-paint-source-epoch', sha: 'e1fa66ad8465bf87caaf232d51543def72c35875'};
 const runtimeUiBranch = 'inkwave/runtime-ui-acceptance-20261022';
 const runtimeUiEpoch = {mode:'main26a4-reviewed-runtime-ui-production-pair',sha:'26a4db4123d23162a3dbf8a12150b1b5bc6ccf64'};
-// Exact eight reviewed PR families: a count alone would hide missing or weaker guards.
+// Exact nine reviewed PR families: a count alone would hide missing or weaker guards.
 const reviewedPrShells = [
+  "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$PAIR_REPOSITORY\" = \"rhgrive3/actions\" ] && [ \"$PAIR_HEAD_REPO\" = \"$PAIR_REPOSITORY\" ] && [ \"$PAIR_HEAD_REF\" = \"inkwave/special-reviewed-main726-20261023\" ]; then",
   "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$DECLARED_BASE_SHA\" = \"26a4db4123d23162a3dbf8a12150b1b5bc6ccf64\" ] && [ \"$PAIR_REPOSITORY\" = \"rhgrive3/actions\" ] && [ \"$PAIR_HEAD_REPO\" = \"$PAIR_REPOSITORY\" ] && [ \"$PAIR_HEAD_REF\" = \"inkwave/runtime-ui-acceptance-20261022\" ]; then",
   "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$PAIR_HEAD_REF\" = \"fix/stringer-splatana-review-20261023\" ] && [ \"$PAIR_HEAD_REPO\" = \"$PAIR_REPOSITORY\" ] && [ -n \"$PAIR_REPOSITORY\" ]; then",
   "elif [ \"$PAIR_EVENT_NAME\" = \"pull_request\" ] && [ \"$PAIR_BASE_REF\" = \"main\" ] && [ \"$PAIR_HEAD_REF\" = \"integrate/inkwave-all-prs-20261022\" ] && [ \"$PAIR_HEAD_REPO\" = \"$PAIR_REPOSITORY\" ] && [ -n \"$PAIR_REPOSITORY\" ]; then",
@@ -273,9 +274,11 @@ test('exact Roller guard inventory rejects every removed ownership/identity cond
 
 test('reviewed runtime UI inventory rejects missing, unexpected and weakened routes in each shell', () => {
   const source=readWorkflow('inkwave-projectile-visuals.yml');
-  const guard=reviewedPrShells[0];
+  const guard=reviewedPrShells[1];
   for(const name of [controlName,prepareName]) {
     const original=step(source,name);
+    const runtimeCall=original.split("\n").find(line=>line.includes("--expected-mode "+runtimeUiEpoch.mode));
+    assert.ok(runtimeCall,"exact historical runtime UI consumer remains");
     const mutations=[
       original.replace('          '+guard+'\n',''),
       original.replace('          '+guard,'          elif [ "$PAIR_HEAD_REF" = "unreviewed" ]; then\n            false\n          '+guard),
@@ -285,8 +288,8 @@ test('reviewed runtime UI inventory rejects missing, unexpected and weakened rou
       original.replace(runtimeUiBranch,runtimeUiBranch+'-unreviewed'),
       original.replace(runtimeUiEpoch.mode,'unreviewed-runtime-ui-mode'),
       original.replace('--expected-source-base '+runtimeUiEpoch.sha,'--expected-source-base '+'f'.repeat(40)),
-      original.replace('--expected-source-head "$DECLARED_HEAD_SHA" --receipt','--expected-source-head '+runtimeUiEpoch.sha+' --receipt'),
-      original.replace('--expected-source-head "$DECLARED_HEAD_SHA" --receipt','--expected-source-head '+'2'.repeat(40)+' --receipt'),
+      original.replace(runtimeCall,runtimeCall.replace('--expected-source-head "$DECLARED_HEAD_SHA" --receipt','--expected-source-head '+runtimeUiEpoch.sha+' --receipt')),
+      original.replace(runtimeCall,runtimeCall.replace('--expected-source-head "$DECLARED_HEAD_SHA" --receipt','--expected-source-head '+'2'.repeat(40)+' --receipt')),
     ];
     for(const changed of mutations){assert.notEqual(changed,original);assert.throws(()=>sourceRouteContract(source.replace(original,changed)));}
   }
