@@ -10,9 +10,9 @@
 //   - the drawn projectile history's birth sample receives the same offset
 //     (projectile-visuals.mjs). Later history samples stay physical, so the
 //     rod joins the rendered muzzle to the physical round and still detaches.
-// Only births that ARE the raw rig socket are connected. Aim-pose prediction
-// (aimReady < 0.98), LOS / obstruction fallback, player-local offsets and
-// delayed births (born later at an already-posed socket) keep their position.
+// Raw rig births and Quad's verified native right-hand aim prediction connect
+// to the drawn socket. Physical prediction stays unchanged. LOS / obstruction
+// fallback, player-local offsets and delayed births keep their position.
 // Splatoon 3 does not publish its bullet-birth or pose order; this is an
 // INKWAVE presentation rule, not a retail measurement.
 export const POSE_BIRTH_TAG = Symbol.for('inkwave.s3.catalog-pose-birth.v1');
@@ -52,7 +52,20 @@ export function installCatalogPoseBirth({ Actor, THREE, G }) {
     e.ox = origin.x; e.oy = origin.y; e.oz = origin.z;
     const s = offset ? null : socket(actor.character, hand, raw);
     e.raw = !!s && finite(s) && s.distanceToSquared(origin) <= RAW_SOCKET_EPS2;
-    if (e.raw) { e.sx = s.x; e.sy = s.y; e.sz = s.z; }
+    // Quad's first right shot can use _muzzle's native full-aim interpolation
+    // before aimReady reaches .98. Match that exact selection, so an unrelated
+    // or collision-constrained origin cannot acquire a visual connection.
+    const ch = actor.character;
+    if (!e.raw && s && !offset && hand === 0 &&
+        actor.weapon?.catalogRecord?.id === 's3-maneuver-stepper') {
+      const weight = ch.aimReady?.();
+      if (Number.isFinite(weight) && weight >= 0 && weight < .98 &&
+          ch.getAimMuzzle?.(live, actor.aimPitch) && finite(live)) {
+        raw.lerp(live, 1 - weight);
+        e.raw = finite(raw) && raw.distanceToSquared(origin) <= RAW_SOCKET_EPS2;
+      }
+    }
+    if (e.raw) { e.sx = origin.x; e.sy = origin.y; e.sz = origin.z; }
     open = e;
   }
   // Called by spawn() for every round created from that origin.

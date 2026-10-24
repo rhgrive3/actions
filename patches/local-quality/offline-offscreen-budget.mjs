@@ -183,6 +183,7 @@ export function installOfflineOffscreenBudget(api, G) {
   proto._oobMaterialCatchUps = 0;
   proto._oobMaterialDirty = false;
   proto._oobCatchUps = 0;
+  proto._oobGroundMemoHits = 0;
   proto._oobWasBudgeted = false;
   proto._oobLastDt = 0;
   proto._oobLastState = null;
@@ -195,6 +196,20 @@ export function installOfflineOffscreenBudget(api, G) {
     };
   }
   proto._ground = function _oobGround(x, z, n) {
+    // The source contact solver can ask for the same sole/anchor more than
+    // once in one synchronous Character.update. Cache exact queries only for
+    // that call; never carry support across ticks or into render catch-up.
+    // Native triangle holes and moving support still use nativeGround.
+    const memo = this._oobGroundMemoActive && this._oobGroundMemo;
+    const y = this.root.position.y;
+    if (memo) for (let i = 0; i < memo.length; i++) {
+      const hit = memo[i];
+      if (hit.x === x && hit.z === z && hit.y === y && hit.phys === this.phys) {
+        if (n) n.copy(hit.normal);
+        this._oobGroundMemoHits++;
+        return hit.height;
+      }
+    }
     if (this._oobGroundBudget) {
       const exact = queryStaticGround(this, x, z, n, G);
       if (exact !== null) {
@@ -202,7 +217,15 @@ export function installOfflineOffscreenBudget(api, G) {
         return exact;
       }
     }
-    return nativeGround.call(this, x, z, n);
+    if (!memo || memo.length >= 24) return nativeGround.call(this, x, z, n);
+    const normal = this._oobGroundNormal || (this._oobGroundNormal = this.root.position.clone());
+    const height = nativeGround.call(this, x, z, normal);
+    const pool = this._oobGroundMemoPool || (this._oobGroundMemoPool = []);
+    const hit = pool[memo.length] || (pool[memo.length] = { normal: normal.clone() });
+    hit.x = x; hit.z = z; hit.y = y; hit.phys = this.phys; hit.height = height;
+    hit.normal.copy(normal); memo.push(hit);
+    if (n) n.copy(normal);
+    return height;
   };
   if (nativeUpdateHair) {
     proto._updateHair = function _oobUpdateHair(...args) {
@@ -243,6 +266,8 @@ export function installOfflineOffscreenBudget(api, G) {
     const feetReady = (this.feetValid && !this.replant) ||
       !!(this.sourceMotion?.active && this.sourceMotion.grounded && this.sourceMotion.activationTime >= 0.12);
     this._oobGroundBudget = budget && s?.grounded !== false && feetReady;
+    this._oobGroundMemoActive = this._oobGroundBudget && G.level?.native === true;
+    if (this._oobGroundMemoActive) (this._oobGroundMemo ||= []).length = 0;
     this._oobPoseTailSkip = budget && s?.grounded !== false && feetReady;
     this._oobTicks++;
     this._oobLastDt = dt;
@@ -258,6 +283,11 @@ export function installOfflineOffscreenBudget(api, G) {
     } finally {
       this._oobBudget = false;
       this._oobGroundBudget = false;
+      this._oobGroundMemoActive = false;
+      if (this._oobGroundMemo) {
+        for (const hit of this._oobGroundMemo) hit.phys = null;
+        this._oobGroundMemo.length = 0;
+      }
       this._oobPoseTailSkip = false;
     }
   };

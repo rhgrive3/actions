@@ -1,0 +1,312 @@
+{
+  "date": "2026-10-23 Asia/Tokyo",
+  "baseline": "26a4db4123d23162a3dbf8a12150b1b5bc6ccf64",
+  "runtimeSource": "f292a305ef7a7da2f7dffb94465717c3f55ea05b",
+  "scope": "all 29 open issues returned at task start; no unverified closure",
+  "issues": [
+    {
+      "number": 79,
+      "title": "[INKWAVE][Shooter] Splattershot impact paint still ignores floor-wall size and impact-angle rules",
+      "url": "https://github.com/rhgrive3/actions/issues/79",
+      "status": "partial-unresolved",
+      "remaining": "break/free 高度selector、原作の面積・形状比較",
+      "previousEvidence": "controls-physics.json",
+      "work": "実射撃の床・壁・角度・ターフ処理を再検証",
+      "closedByThisTask": false
+    },
+    {
+      "number": 226,
+      "title": "[INKWAVE][Paint][要検証] アメフラシRainNum=72と公開版172回の塗り呼出の対応を校正する",
+      "url": "https://github.com/rhgrive3/actions/issues/226",
+      "status": "partial-unresolved",
+      "remaining": "RainNum=72と再利用・塗り更新の対応を示す原典",
+      "previousEvidence": "controls-physics.json",
+      "work": "雨の生成候補・地面到達・paint呼出を区別した会計を再検証",
+      "closedByThisTask": false
+    },
+    {
+      "number": 287,
+      "title": "[INKWAVE][Aim] Controller sensitivity uses 0.2×–3.0× instead of Splatoon 3's −5…+5 right-stick scale",
+      "url": "https://github.com/rhgrive3/actions/issues/287",
+      "status": "partial-unresolved",
+      "remaining": "設定別の原作yaw/pitch実測。暫定曲線を本家値としない",
+      "previousEvidence": "controls-physics.json",
+      "work": "−5…+5 UI、移行、30/60/120 Hz応答を再検証",
+      "closedByThisTask": false
+    },
+    {
+      "number": 532,
+      "title": "[INKWAVE][Motion] Verify Splat Dualies 4+1 WU dodge scale, easing and glide calibration",
+      "url": "https://github.com/rhgrive3/actions/issues/532",
+      "status": "partial-unresolved",
+      "remaining": "原作のcore/glide曲線、DU/WU換算、空中の校正",
+      "previousEvidence": "controls-physics.json",
+      "work": "4+1 WU、実地形、周期別の既存roll処理を再検証",
+      "closedByThisTask": false
+    },
+    {
+      "number": 642,
+      "title": "[INKWAVE][Perf] Mobile post stack permanently pins two full-resolution RGBA16F composer buffers",
+      "url": "https://github.com/rhgrive3/actions/issues/642",
+      "status": "partial-unresolved",
+      "remaining": "物理iOS/Android GPU memory・画質・context安定性",
+      "previousEvidence": "performance.json",
+      "work": "composerのlazy allocation、解放、fallbackを再検証",
+      "closedByThisTask": false
+    },
+    {
+      "number": 725,
+      "title": "[INKWAVE][Aim] DeviceMotion gyro sensitivity spans ~1.30x-3.27x instead of Splatoon 3 measured ~1x-3x range",
+      "url": "https://github.com/rhgrive3/actions/issues/725",
+      "status": "partial-unresolved",
+      "remaining": "S3 11.3.0の中間設定と実controller/mobile sensor校正",
+      "previousEvidence": "controls-physics.json",
+      "work": "端点と低速sensor積分の周期一致を再検証",
+      "closedByThisTask": false
+    },
+    {
+      "number": 735,
+      "title": "[INKWAVE][Systems] Ink Storm can damage enemies arbitrarily far below the cloud because no vertical cutoff is enforced",
+      "url": "https://github.com/rhgrive3/actions/issues/735",
+      "status": "partial-unresolved",
+      "remaining": "原作の下方向到達距離。内部14 WUは本家値ではない",
+      "previousEvidence": "controls-physics.json",
+      "work": "内部の有限下限と24 HP/s、境界・周期対照を再検証",
+      "closedByThisTask": false
+    },
+    {
+      "number": 845,
+      "title": "[INKWAVE][Perf] Frustum-culled actors keep Character pose, foot-IK raycasts and hair simulation running every tick",
+      "url": "https://github.com/rhgrive3/actions/issues/845",
+      "status": "partial-unresolved",
+      "remaining": "pelvis/muzzle依存のnative leg/ground処理の追加最適化、実描画reentryと端末CPU受入",
+      "previousEvidence": "performance.json",
+      "work": "native triangle穴・dynamic supportを誤ってOBB支持にしない既存修正を統合し、offscreen回帰を再検証",
+      "closedByThisTask": false,
+      "continuationWork": "native足元の完全同一queryのみ同一update内で再利用。30/60/120Hz全pose/skin/接地/銃口一致、約9%query削減、問い合わせcomponentのCPU約7%短縮。全ゲーム/実機FPSは未測定。"
+    },
+    {
+      "number": 890,
+      "title": "[INKWAVE][Movement] Normal jumps ignore B hold duration so small and high jumps collapse to one arc",
+      "url": "https://github.com/rhgrive3/actions/issues/890",
+      "status": "partial-unresolved",
+      "remaining": "原作の保持閾値・頂点・上昇曲線。6F/.7は暫定モデル",
+      "previousEvidence": "controls-physics.json",
+      "work": "B保持/早離し、buffer、form、地形境界を再検証",
+      "closedByThisTask": false
+    },
+    {
+      "number": 952,
+      "title": "[INKWAVE][Motion] Heavy Splatling charge entry ignores S3 dedicated ground-deceleration curve-delay",
+      "url": "https://github.com/rhgrive3/actions/issues/952",
+      "status": "partial-unresolved",
+      "remaining": "Bias=.9/DownRt=.05の原作積分式と開始frame",
+      "previousEvidence": "motion-paint.json",
+      "work": "Heavy Splatling charge減速の現行モデル・周期一致を再検証",
+      "closedByThisTask": false
+    },
+    {
+      "number": 956,
+      "title": "[INKWAVE][Physics] Splat Charger muzzle height ignores footwear, removing S3 shoe-dependent shot origin",
+      "url": "https://github.com/rhgrive3/actions/issues/956",
+      "status": "partial-unresolved",
+      "remaining": "靴2種以上のsource model/足基準/装備時Actor高。武器の固定muzzle offsetで代用しない",
+      "previousEvidence": "controls-physics.json",
+      "work": "gear能力と物理的靴高が別の入力であること、既存原典調査と追加model viewer資料を確認",
+      "closedByThisTask": false
+    },
+    {
+      "number": 992,
+      "title": "[INKWAVE][Dualies] Verify native paint phases, droplet dynamics and height/default rules (S3 11.3.0)",
+      "url": "https://github.com/rhgrive3/actions/issues/992",
+      "status": "partial-unresolved",
+      "remaining": "原作の7位相選択・default・height合成・粒子動力学",
+      "previousEvidence": "controls-physics.json",
+      "work": "native InkFlight/独立droplet/実着弾paintを再検証",
+      "closedByThisTask": false
+    },
+    {
+      "number": 997,
+      "title": "[INKWAVE][Motion] Ordinary weak diagonal walking gait does not match Splatoon 3",
+      "url": "https://github.com/rhgrive3/actions/issues/997",
+      "status": "partial-unresolved",
+      "remaining": "S3の弱い斜め入力の同期済み足・骨盤・歩行曲線",
+      "previousEvidence": "motion-paint.json",
+      "work": "歩行clock・接地・足clearanceを再検証",
+      "closedByThisTask": false
+    },
+    {
+      "number": 1097,
+      "title": "[INKWAVE][Motion] Hit reactions use one weapon-agnostic flinch instead of Splatoon 3's weapon-class damage poses",
+      "url": "https://github.com/rhgrive3/actions/issues/1097",
+      "status": "partial-unresolved",
+      "remaining": "S3 runtime clip選択、idle/move別の関節曲線・時刻",
+      "previousEvidence": "motion-paint.json",
+      "work": "武器別hit reactionの既存実装を再検証",
+      "closedByThisTask": false
+    },
+    {
+      "number": 1116,
+      "title": "[INKWAVE][Motion] Non-shooter jumps reuse generic airborne pose despite Splatoon 3 weapon-class jump animations",
+      "url": "https://github.com/rhgrive3/actions/issues/1116",
+      "status": "partial-unresolved",
+      "remaining": "S3の実再生clipと各族の曲線。Wii U bankをS3証拠としない",
+      "previousEvidence": "motion-paint.json",
+      "work": "source-loaded武器族jump選択と既存通常jumpを再検証",
+      "closedByThisTask": false
+    },
+    {
+      "number": 1431,
+      "title": "[INKWAVE][Weapons] Quad and Explosher projectile birth/origin alignment gap",
+      "url": "https://github.com/rhgrive3/actions/issues/1431",
+      "status": "partial-unresolved",
+      "remaining": "原作のQuad開口部・frame同等性。runtimeの表示接続と原作認証は別",
+      "previousEvidence": "weapons.json",
+      "work": "既存Explosher authored lip/Quad native volume修正を統合。新たに初回右手predictionも表示接続し、物理・RNG・wire不変を検証",
+      "closedByThisTask": false
+    },
+    {
+      "number": 1434,
+      "title": "[INKWAVE][Perf] Complete calibrated whole-game crowd A/B benchmark",
+      "url": "https://github.com/rhgrive3/actions/issues/1434",
+      "status": "partial-unresolved",
+      "remaining": "厳密なpixel/workload一致を満たしてからABBA/BAAB測定。診断toolはwork内のみで本番へ入れない",
+      "previousEvidence": "performance.json",
+      "work": "固定4e8fc320 production buildに対する4 fresh-process CBBC同一版校正を実行",
+      "closedByThisTask": false
+    },
+    {
+      "number": 1565,
+      "title": "[INKWAVE][Plan] 軽量Pose Search・歩行品質・インク視認性の性能非劣化実装計画",
+      "url": "https://github.com/rhgrive3/actions/issues/1565",
+      "status": "partial-unresolved",
+      "remaining": "実機baseline/G0と非劣化測定。未評価のpose searchを本番有効化しない",
+      "previousEvidence": "motion-paint.json",
+      "work": "既存の接地・歩行・pose処理を再検証し、採用ゲートを維持",
+      "closedByThisTask": false
+    },
+    {
+      "number": 1607,
+      "title": "[INKWAVE][Specials/Investigate] Zipcaster failed-hook retry uses 45F versus 11.3.0 ShotFailedIntervalFrm=20",
+      "url": "https://github.com/rhgrive3/actions/issues/1607",
+      "status": "partial-unresolved",
+      "remaining": "原典ShotFailedIntervalFrm=20と追加phaseの対応。根拠なく45→20へ変更しない",
+      "previousEvidence": "controls-physics.json",
+      "work": "実Actor/Physicsのmiss/近床/有効壁retryを20/30/60/120 Hzで再検証。現45Fは公開実測表とも一致",
+      "closedByThisTask": false
+    },
+    {
+      "number": 1665,
+      "title": "[INKWAVE][P1/Net] Authentic actor owner can forge lethal hit packets without firing or proving collision",
+      "url": "https://github.com/rhgrive3/actions/issues/1665",
+      "status": "partial-unresolved",
+      "remaining": "未実装: trusted authorityによる全main/sub/special攻撃の生成・資源・衝突と初回spawn/移管の統合。自己申告eventを証明とみなさない",
+      "previousEvidence": "network-security.json",
+      "work": "既存のhit上限・life/owner・接触/LOS/provenance回帰を再検証。Charger実験版の残境界も確認",
+      "closedByThisTask": false,
+      "continuationWork": "別実験でtrusted初回spawnの待機・飛行・着地・最初のnative Charger発射を30/60/120Hzでreplay。全武器の必須damage gateは未完。"
+    },
+    {
+      "number": 1666,
+      "title": "[INKWAVE][P1/Boss] Authenticated guests can invent valid Boss-hit claims without weapon fire or collision",
+      "url": "https://github.com/rhgrive3/actions/issues/1666",
+      "status": "partial-unresolved",
+      "remaining": "未実装: hostの全攻撃生成とBoss弱点/無敵/接触/移管の一貫した決済。単なるpayload capでは完了しない",
+      "previousEvidence": "network-security.json",
+      "work": "Boss/crabletの既存provenance正例・拒否・lifecycle回帰を再検証",
+      "closedByThisTask": false,
+      "continuationWork": "同じprivate source replayを継続。全Boss攻撃生成・資源・衝突の統合、後続life/移管は未完。"
+    },
+    {
+      "number": 1671,
+      "title": "[INKWAVE][P0/Perf] iPad Safari native Turf falls to 5 FPS / sim 174.9ms at 60% resolution",
+      "url": "https://github.com/rhgrive3/actions/issues/1671",
+      "status": "partial-unresolved",
+      "remaining": "実iPadのnative stage profileとdominant CPU処理の等価修正・実測",
+      "previousEvidence": "performance.json",
+      "work": "30秒/4000frame/4MiB有限captureとnative支持判定修正を統合し回帰を再検証",
+      "closedByThisTask": false,
+      "continuationWork": "既存PR1851のBodyBalance計算削減はmain726eに統合済み。実機profile受入は未確認。"
+    },
+    {
+      "number": 1708,
+      "title": "[INKWAVE][Audio/Provenance] Obtain and verify native 11.3.0 sound cues for 11 post-2022 main weapons",
+      "url": "https://github.com/rhgrive3/actions/issues/1708",
+      "status": "partial-unresolved",
+      "remaining": "追加11種自身の11.3.0録音/イベント・source hash。既存別ブキ音や候補名を原音認証にしない",
+      "previousEvidence": "motion-paint.json",
+      "work": "接続Driveを再検索し2022集とScratch候補の出典を再確認。既存音声provenanceを再検証",
+      "closedByThisTask": false
+    },
+    {
+      "number": 1757,
+      "title": "[INKWAVE][P1/Perf] Turf stages still run poorly on iPad mini 6 after A+ integration",
+      "url": "https://github.com/rhgrive3/actions/issues/1757",
+      "status": "partial-unresolved",
+      "remaining": "同じiPad mini 6・通常Turf条件のbefore/after frame time・memory",
+      "previousEvidence": "performance.json",
+      "work": "既存の描画/resource/offscreen回帰を再検証",
+      "closedByThisTask": false,
+      "continuationWork": "既存PR1851のBodyBalance計算削減はmain726eに統合済み。実機Turfの前後比較は未測定。"
+    },
+    {
+      "number": 1767,
+      "title": "[INKWAVE][Bug] Delayed startup tick can leave valid owner snapshots permanently rejected",
+      "url": "https://github.com/rhgrive3/actions/issues/1767",
+      "status": "fix-verified-in-work-branch-integration-pending",
+      "remaining": "main統合済み。最新mainに対するrequired CI最終結果の確認",
+      "previousEvidence": "https://github.com/rhgrive3/actions/tree/a91137d452169baba8c2e9b0e4c7ea4f59f16a65/reports/issue-resolution-20261022/continuation/clock-native-browser.json",
+      "work": "fresh nonce owner-clock修正を統合。実2context/Worker relayでcold/rematch/reconnectの3局面6方向が成功",
+      "closedByThisTask": false,
+      "continuationWork": "修正と関連PRはmain726eへ統合済み。最新main側のCI最終結果は別途確認する。main統合前という旧記述は履歴。"
+    },
+    {
+      "number": 1789,
+      "title": "[INKWAVE][Bloblobber][Parity] Recover S3 11.3.0 native floor/slope rebound and speed-limit semantics",
+      "url": "https://github.com/rhgrive3/actions/issues/1789",
+      "status": "partial-unresolved",
+      "remaining": "原作のslope分類・BounceAfterMaxSpeed・法線/接線反発の式と実測",
+      "previousEvidence": "weapons.json",
+      "work": "Bloblobberの既存flat/down45/launch sweep回帰を再検証",
+      "closedByThisTask": false
+    },
+    {
+      "number": 1813,
+      "title": "[INKWAVE][Dynamo] Horizontal secondary unit has source UnitDamageRate=0 but catalog ignores it",
+      "url": "https://github.com/rhgrive3/actions/issues/1813",
+      "status": "partial-unresolved",
+      "remaining": "原作UnitDamageRate=0の意味とunit単独実機比較。零unitの塗りは保持",
+      "previousEvidence": "weapons.json",
+      "work": "Dynamoのpositive unitをdevice/傘/Big Bubblerで決済する既存修正を統合し実contact/CPU paintを再検証",
+      "closedByThisTask": false
+    },
+    {
+      "number": 1814,
+      "title": "[INKWAVE] S3 11.3.0 65-main-weapon behavioral parity audit and 10-gap remediation tracker",
+      "url": "https://github.com/rhgrive3/actions/issues/1814",
+      "status": "partial-unresolved",
+      "remaining": "65main完全な原作挙動認証と#1813の原典解釈。個別修正済ticketと区別",
+      "previousEvidence": "weapons.json",
+      "work": "既存catalogue source/depletion修正と受理済tick装備同期を統合。新たにBrella replayによる表示snapshot追記を修正",
+      "closedByThisTask": false
+    },
+    {
+      "number": 1823,
+      "title": "[INKWAVE][Audio][Charger] 本家の持続チャージ上昇音が未実装、HoldNoise誤ループとは別イベント",
+      "url": "https://github.com/rhgrive3/actions/issues/1823",
+      "status": "partial-unresolved",
+      "remaining": "S3固有の持続上昇音とSLINKイベント。S2録音追加なし。原作認証と混同しない",
+      "previousEvidence": "weapons.json",
+      "work": "7c96d754/32eebaf9の音源追加前6pathを抽出し、誤ったHoldNoiseループを1回の開始/keep復帰へ修正",
+      "closedByThisTask": false,
+      "continuationWork": "main側の新しい音声実装を保持。Splatune2の一時phraseは本物S3 11.3.0上昇音の出典証明には数えない。"
+    }
+  ],
+  "continuation": {
+    "mainBaseline": "726e338ac256ba9609086ce65e25a68ddd99df85",
+    "runtimeSource": "4875be37",
+    "pullRequest": "https://github.com/rhgrive3/actions/pull/1852",
+    "combatExperiment": "a8da7f29b3b7ea2af56fd08ffff679095fd764af",
+    "scope": "three remaining production leaf fixes after main integrated32 existing PRs; final integration verification in progress"
+  }
+}

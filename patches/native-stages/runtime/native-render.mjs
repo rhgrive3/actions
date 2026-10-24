@@ -60,6 +60,8 @@ function objectBoundingSphere(g,bounds){
  if(!Number.isFinite(sphere.radius))g.computeBoundingSphere();
 }
 
+function releaseArray(){this.array=null;}
+
 // Display geometry keeps exporter positions/indices/UVs. Background is culled per
 // source object. Only GPU texture representations have an explicit quality cap.
 export function nativeDisplay(data,textures,quality){
@@ -82,6 +84,9 @@ export function nativeDisplay(data,textures,quality){
   }
   const vb=new Float32Array(vertices.buffer,vertices.byteOffset+o.vo*32,o.vc*8),ib=new Uint32Array(indices.buffer,indices.byteOffset+o.io*4,o.ic),inter=new THREE.InterleavedBuffer(vb,8),g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(ib,1));objectBoundingSphere(g,m.sourceMode==='browser-direct'?o.bounds:null);
+  // Bounds are final above and nothing raycasts the display: once the GPU
+  // holds the vertices/indices, drop these CPU views (Three's disposeArray).
+  inter.onUpload(releaseArray);g.index.onUpload(releaseArray);
   const mesh=new THREE.Mesh(g,mat);
   mesh.name=o.name;
   // Keep silhouette and contact shadows: a blanket 0.75m exclusion

@@ -1,0 +1,31 @@
+{
+  "status": "passed",
+  "oldTailOnlyRemovedFromRun": true,
+  "unchangedFidelitySuitePaths": 27,
+  "unchangedCommandLines": 28,
+  "oldShellExit": 127,
+  "repairedShellExit": 0,
+  "testFailurePropagates": 73,
+  "observed": [
+    {
+      "workflow": "before",
+      "stubExit": 0,
+      "shellExit": 127,
+      "stderr": "/tmp/tri-tail-shell/before.sh: line 29: _site-launch-packets.json: command not found\n"
+    },
+    {
+      "workflow": "after",
+      "stubExit": 0,
+      "shellExit": 0,
+      "stderr": ""
+    },
+    {
+      "workflow": "after",
+      "stubExit": 73,
+      "shellExit": 73,
+      "stderr": ""
+    }
+  ],
+  "actualEmittedCommandSha256": "09179baf4f3840162ab74e50b2dce3156b9fb3d18d88880950146a86e177d4f7",
+  "scope": "Stub shell checks prove the old exit127 and unchanged argv/failure propagation; actual 201-test emitted replay is a separate run."
+}
