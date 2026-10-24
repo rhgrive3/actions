@@ -1,0 +1,335 @@
+{
+  "base": "726e338ac256ba9609086ce65e25a68ddd99df85",
+  "integratedMain": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "scope": "Local integration history before this generated report. Publication uses one clean snapshot commit with the identical final tree, parented to reviewed main; these localCommit IDs are retained as local provenance and are not claims of separately published GitHub commits. Build-input and browser identities are recorded in validation.json.",
+  "agents": [
+    {
+      "role": "motion",
+      "model": "gpt-6.1-sol",
+      "reasoningEffort": "high"
+    },
+    {
+      "role": "network",
+      "model": "gpt-6.1-sol",
+      "reasoningEffort": "high"
+    },
+    {
+      "role": "world",
+      "model": "gpt-6.1-sol",
+      "reasoningEffort": "high"
+    },
+    {
+      "role": "combat",
+      "model": "gpt-6.1-sol",
+      "reasoningEffort": "high"
+    },
+    {
+      "role": "visual_audio",
+      "model": "gpt-6.1-sol",
+      "reasoningEffort": "high"
+    },
+    {
+      "role": "build_qa",
+      "model": "gpt-6.1-sol",
+      "reasoningEffort": "high"
+    }
+  ],
+  "commits": [
+    {
+      "localCommit": "0a8fdd95da7f90bb3df7ceb5d4a073f721393838",
+      "subject": "fix(ci): verify reviewed native navigation and stage descriptor reference migration"
+    },
+    {
+      "localCommit": "72a8f7aae71cf97553b61588be7667cf541030c2",
+      "subject": "Repair dedicated QA input coverage and bound immutable source work"
+    },
+    {
+      "localCommit": "bca2167b3533fb47420a2759415f15b6d89c15a4",
+      "subject": "fix: bound relay admission and confirm atomic match starts"
+    },
+    {
+      "localCommit": "167c628d559ac61a9305f0e8fc8fb3a2c9c3e2db",
+      "subject": "perf: remove repeated combat and ranked runtime work"
+    },
+    {
+      "localCommit": "3c0cd6dc355cde9ca4e7f63d1d91c8b6d17938fa",
+      "subject": "Cover direct regression inputs in five more dedicated QA routes"
+    },
+    {
+      "localCommit": "718f7aebc5b8541fd23dd69840123b4d14e2d638",
+      "subject": "perf: trim source motion work and bound decoded asset memory"
+    },
+    {
+      "localCommit": "62fe2c7111779a8a9752436a3f3e71be05a5c27c",
+      "subject": "Optimize composed HUD, lobby, recorded audio and detached splash presentation"
+    },
+    {
+      "localCommit": "55d0efda92c3733fa00a3da0ed606c270e043b79",
+      "subject": "fix: reject oversized relay bytes and preserve unique peer identities"
+    },
+    {
+      "localCommit": "940157654480ed765e3d8226f4acdadca0a49c05",
+      "subject": "fix: unset relay auto-response with the Workers optional argument API"
+    },
+    {
+      "localCommit": "762c37eee935fcdd5b4b95763fe984bb902f8148",
+      "subject": "Cull offscreen Bubbler shells and avoid repeated mixer and roller work"
+    },
+    {
+      "localCommit": "3c4a46c8fe7613170b7c5cc06a379d1be1e3d34d",
+      "subject": "Record QA validation and reject costly cross-job build sharing"
+    },
+    {
+      "localCommit": "475715c7f12c0858f59e4c8b38edab4e35ae7a31",
+      "subject": "Limit transient HTTP retries to standard server errors"
+    },
+    {
+      "localCommit": "b9f4392f990f62549691f56f473658141c216242",
+      "subject": "Reduce world construction buffers and defer selected stage presentation"
+    },
+    {
+      "localCommit": "27d8339161e589a05955e4cc62c571b4050a61ac",
+      "subject": "perf: share character geometry kernels and native knee yaw"
+    },
+    {
+      "localCommit": "6d289bddc5c15d46d456f88486e24c23e4e0cb05",
+      "subject": "fix: release obsolete motion cache owners across bank swaps"
+    },
+    {
+      "localCommit": "cf04b61e1788dc463e8204dfa20512c32238049c",
+      "subject": "perf: reuse launch geometry and stable ranked cadence work"
+    },
+    {
+      "localCommit": "7c1cfc492d767efc9ce737ccea870f5b3c3d9d43",
+      "subject": "Stress partial audio imports across LRU eviction and cancellation"
+    },
+    {
+      "localCommit": "cf81fdd74edb742db8036865408da0375afd9374",
+      "subject": "Repair eleven QA admission and scoped-history queue items"
+    },
+    {
+      "localCommit": "6c1a8540ad38d8fa88849abda9b25f18ac8f96ca",
+      "subject": "Keep audio import review tests bound to their checkout"
+    },
+    {
+      "localCommit": "7af8576020c8a09faf45efdfb3c15cec5774ea32",
+      "subject": "Exercise both small and indexed audio import batch sizes"
+    },
+    {
+      "localCommit": "caf37e54a0d66f66f57bdd37647f8b4dd6726b92",
+      "subject": "perf: preserve live menu and audio state while reducing repeated work"
+    },
+    {
+      "localCommit": "705ae6be92dc2f06f6b7904fc6a9e5d2f68ca463",
+      "subject": "perf: reuse motion scalar kernels and squid skin bone IDs"
+    },
+    {
+      "localCommit": "92a894e257cf1d96779d737afd36cd87627fbecc",
+      "subject": "perf: reuse melee bases and remove redundant launch bookkeeping"
+    },
+    {
+      "localCommit": "126f2f5b0a650bb964363b2e14e37034d13ea443",
+      "subject": "test: preserve sparse ranked landing roster iteration"
+    },
+    {
+      "localCommit": "65c6668fdec04e476107dbb2354f6086fa753c49",
+      "subject": "Bound special ribbon sampling and reuse ranked presentation scratch"
+    },
+    {
+      "localCommit": "e014f3b1071b01c295bceb5bcf51623394d1396a",
+      "subject": "Author lobby atlas optimizations in direct-owned texture source"
+    },
+    {
+      "localCommit": "4fe99036fe504d88d582851a6f1288acd334e095",
+      "subject": "fix: bound lobby fanout and validate remote appearance before match start"
+    },
+    {
+      "localCommit": "a223c6f2024bec1036454fe22250c8bcee61f711",
+      "subject": "Watch directly executed defense, micro-surface and input tests"
+    },
+    {
+      "localCommit": "beec332322af8d7ab4877ba57ba8fffcaf5f734b",
+      "subject": "Bound world construction queries and release unused world buffers"
+    },
+    {
+      "localCommit": "021e90b1133064c4ec35c918b8ee028d44a7bbc6",
+      "subject": "Match native ink face data to the shared compact shader contract"
+    },
+    {
+      "localCommit": "60b3b12116ef623b8b6254816aa9d28ad7a792de",
+      "subject": "Share verified SW responses and in-flight startup readiness probes"
+    },
+    {
+      "localCommit": "2b0bdcb67ed469cc1a0b022e566c3b846b0c7840",
+      "subject": "Preserve edge and immutable artifact evidence for public Ranked failures"
+    },
+    {
+      "localCommit": "63e4d290ecd852dcd88e54472388ec3f1222c8e1",
+      "subject": "perf: reuse combat sweep and source envelope scratch"
+    },
+    {
+      "localCommit": "bab5ec6d40cdac048d897dcee802bf36f015835b",
+      "subject": "Reuse unchanged native profile textures with explicit ownership transfer"
+    },
+    {
+      "localCommit": "8a85af4f1bb69476b0b9abcd02227ed999f47326",
+      "subject": "Verify lazy mural preparation in direct-source ownership contract"
+    },
+    {
+      "localCommit": "0a81689e0ac87db344c197a36205e54dfb3c6b32",
+      "subject": "fix(network): fail closed on lifecycle refusals and bound liveness"
+    },
+    {
+      "localCommit": "b4e8bf6f02b83b582ad5de34fc6f7fb690a4028a",
+      "subject": "Avoid repeated preview path reads and unchanged HUD label and CSS writes"
+    },
+    {
+      "localCommit": "5ff0f8a82a82ab8187ff6212256b98b65ef5bcdb",
+      "subject": "Restore live paintability flag in legacy and native ink shaders"
+    },
+    {
+      "localCommit": "24bb12c47d6dfd53d4351f9046bfb5d1746a08cd",
+      "subject": "fix(ui): compare serialized CSS in network queue guards"
+    },
+    {
+      "localCommit": "b06045e1b7ce5e6f766f4eae2292aa77cb477213",
+      "subject": "perf: defer procedural music effects and preserve live CSS state"
+    },
+    {
+      "localCommit": "840362a0095244b53cb28b7262770a4e555e7bca",
+      "subject": "perf: reuse motion kernels and typed character builder staging"
+    },
+    {
+      "localCommit": "262fb4cd0a46c173b5feb0b5d3ae683506468307",
+      "subject": "Normalize special presentation clocks and defer inaudible one-shot spatial work"
+    },
+    {
+      "localCommit": "2c648bc482207816d8819e85491c804b681060ed",
+      "subject": "Record world queue decisions and reject paint batch pixel regression"
+    },
+    {
+      "localCommit": "470696f137e278ee97aa6b6cf1151604f715a06e",
+      "subject": "Record positive browser ink verification after contract restoration"
+    },
+    {
+      "localCommit": "b708776ed6ba5aff8f90ce635cf50b8672618606",
+      "subject": "test: preserve atlas flags in ink rendering fixtures"
+    },
+    {
+      "localCommit": "b5ae26757cc56702f619e9142f16d451c415ea4f",
+      "subject": "Bind real visual audio transformer in standalone performance harnesses"
+    },
+    {
+      "localCommit": "9aaeb8ec359ced200e495de673aa15b7a6c459f1",
+      "subject": "Reconcile thumbnail optimization under its descriptor intake ticket"
+    },
+    {
+      "localCommit": "0194fbd1162ac2eaaf81c4258a87d38a762e0517",
+      "subject": "Release idle world templates and omit redundant legacy build and paint work"
+    },
+    {
+      "localCommit": "c4cc4497a2fecafa008afe20fc682d0b83f07d2e",
+      "subject": "Preserve initial shadow-map bake order across world theme changes"
+    },
+    {
+      "localCommit": "3cf95b283f04c2935b11bd9ba4b22c0e30b856b4",
+      "subject": "fix: transfer prepared reverb ownership into lazy music graph"
+    },
+    {
+      "localCommit": "b18921da3401389d250bfc9091b28359763d5ac1",
+      "subject": "Load real relative PropKit VM dependencies in cache regression fixture"
+    },
+    {
+      "localCommit": "93ca3facd36f17daf0547831e631d7d0fe498752",
+      "subject": "Compare integrated packed flags exactly without expanding geometry diffs"
+    },
+    {
+      "localCommit": "7c94a8b31eb0ef2cfbaf0ab1b46f28dab4c8e2e2",
+      "subject": "docs: correct Fizzy flight paint source coverage claims"
+    },
+    {
+      "localCommit": "26f353e8c926d886da77c9babf1f92cc8dde00fa",
+      "subject": "Drop per-frame backdrop blur and the demo canvas behind static menu screens"
+    },
+    {
+      "localCommit": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+      "subject": "Merge pull request #1858 from rhgrive3/claude/frontend-options-crash-v2fhre"
+    },
+    {
+      "localCommit": "d6cefe4f6e7bc92319f1d4ff14171eee57abb1f9",
+      "subject": "Bound audio request lifetime and avoid idle menu and music work"
+    },
+    {
+      "localCommit": "193c6381eea7bed37568cbf994e1f5a8c02b083c",
+      "subject": "perf: reuse character surface math and converged held IK"
+    },
+    {
+      "localCommit": "b7ed6711eb1e4c8cc97c9a3a76d59bd02fe81eb1",
+      "subject": "fix(network): restore promoted lobby members and reuse attachment scratch"
+    },
+    {
+      "localCommit": "a04dad246013c4322ec5a98d93a108f59fb52ebc",
+      "subject": "perf: reuse combat beam scratch and skip redundant contact work"
+    },
+    {
+      "localCommit": "d8113a5189988f9ab31966ac3255299647b2c94d",
+      "subject": "Admit the reviewed world minimap epoch with real Canvas parity controls"
+    },
+    {
+      "localCommit": "94312ac4d223d18168f0c7bb37faad82a354de84",
+      "subject": "Cover executed QA inputs and bound source history and duplicate test work"
+    },
+    {
+      "localCommit": "2d22f788823e01c738f4d48a2e5d3a4121cc7658",
+      "subject": "Hoist world build invariants and overlap independent boot resource waits"
+    },
+    {
+      "localCommit": "eacbd9fc245e84d46e0d773f2ae73a632da68622",
+      "subject": "Prepare deterministic sea bytes in an owned module worker before world boot"
+    },
+    {
+      "localCommit": "9094bbd0a74328f61f262437115385b5cbc3ab26",
+      "subject": "Specialize native ink constant attributes and warm its explicit shader variant"
+    },
+    {
+      "localCommit": "0e80ef3946acae4cf7da2e30a923d8b8c3e5d1ff",
+      "subject": "Batch Wail speaker finishes and reuse deterministic UI presentation work"
+    },
+    {
+      "localCommit": "d0b29210435522d9c39223e444fe54545a70c7da",
+      "subject": "Record reviewed shadow source and additional queue behavior evidence"
+    },
+    {
+      "localCommit": "d4660ee62af4aba7925340c373d65e8d34e33213",
+      "subject": "Share authenticated same-role native PNG aliases with unique texture ownership"
+    },
+    {
+      "localCommit": "cf07e21c9eac93dab71ea9e42ff87e3dcc67ae12",
+      "subject": "Merge remote-tracking branch 'upstream-review/main' into optqueue/integration-20261023"
+    },
+    {
+      "localCommit": "47857625ec91c2fe4487f63639399b90a09072a5",
+      "subject": "Retain Rainmaker ray ownership after accessor override counterexample"
+    },
+    {
+      "localCommit": "dec659bce14755b6899d914b2d59340c2bc820af",
+      "subject": "docs: record rejected Rainmaker trail scratch optimization"
+    },
+    {
+      "localCommit": "d9aa097e5801ea46b59aefc862d0266b6347dd12",
+      "subject": "Amortize bounded source retention writes and close all world358 dispositions"
+    },
+    {
+      "localCommit": "e893578d219c0c26485bfb7d6baf4f7c5c0d7225",
+      "subject": "Clarify historical thumbnail subpart and separately counted new intake"
+    },
+    {
+      "localCommit": "65c382d38c5737d4046c59eab4de125fdd1f0f03",
+      "subject": "Admit the reviewed concurrent mural and wave startup phase topology"
+    },
+    {
+      "localCommit": "0528b6a6ff6d0ee220de60f7a56abc3f23568747",
+      "subject": "Bind real control admission in extracted session recovery fixture"
+    }
+  ]
+}

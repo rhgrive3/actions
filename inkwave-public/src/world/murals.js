@@ -9,7 +9,7 @@
 //                              -xLen face heights (the original rows), yLen <= 0 = full face height
 //   fx    [weather, chip]      how much the surface's paint mottling shows through / its chips + peeling cut the mural
 import * as THREE from 'three';
-import { STAGES } from './stages/data.js';
+import { STAGES, prepareStageData } from './stages/data.js';
 
 const W = 2048, RH = 256, ROWS = 4, FULL_H = 2048;
 const NAVY = '#27304d', CORAL = '#ec7a6b', TEAL = '#3fa8a2', MUSTARD = '#eec35c', CREAM = '#fbf5e8', SKY = '#7cc6e6';
@@ -22,21 +22,31 @@ const CEND = { x: 1264, y: 1696, w: 557, h: 240, m: [5.8, 2.5] };      // ferry-
 
 // the stage region (ids 4…11) and the stages that draw their own decals into it
 const STAGE_R = { x: 0, y: 1040, w: 2048, h: 1008 };
-const STAGE_MURALS = {};
-for (const [id, st] of Object.entries(STAGES)) if (st.drawMurals) STAGE_MURALS[id] = st.drawMurals;
+const stageMural = (id) => STAGES[id]?.drawMurals;
 
 export async function createMuralTexture(stageId = 'tidewater') {
-  let H = stageId === 'halyard' || STAGE_MURALS[stageId] ? FULL_H : RH * ROWS;
+  await prepareStageData(stageId);
+  let H = stageId === 'halyard' || stageMural(stageId) ? FULL_H : RH * ROWS;
   try { await Promise.all([document.fonts.load('120px "Titan One"'), document.fonts.load('800 100px Rubik')]); } catch { /* fallback font */ }
   const c = document.createElement('canvas');
   c.width = W; c.height = H;
   const g = c.getContext('2d');
   g.clearRect(0, 0, W, H);
   const font = (px) => `${px}px "Titan One", "Arial Black", sans-serif`;
-  drawBanner(g, 0, font);
-  drawChevrons(g, RH, font);
-  drawShop(g, RH * 2, font);
-  drawShipping(g, RH * 3, font);
+  const drawShared = () => {
+    drawBanner(g, 0, font);
+    drawChevrons(g, RH, font);
+    drawShop(g, RH * 2, font);
+    drawShipping(g, RH * 3, font);
+  };
+  drawShared();
+  const fontFaces = () => Array.from(document.fonts || []).filter(face => /^(?:["']?Titan One["']?|["']?Rubik["']?)$/.test(face.family));
+  const sharedFonts = fontFaces();
+  const canRedrawShared = () => {
+    const current = fontFaces();
+    return sharedFonts.some(face => /Titan One/.test(face.family)) && sharedFonts.some(face => /Rubik/.test(face.family)) &&
+      current.length === sharedFonts.length && current.every((face, i) => face === sharedFonts[i] && face.status === 'loaded');
+  };
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 8;
@@ -59,15 +69,16 @@ export async function createMuralTexture(stageId = 'tidewater') {
   let cur = null;
   // (re)draw the stage region for stage `id` and rebuild the placement table; call before building the level material
   tex.userData.setStage = (id) => {
-    const key = id === 'halyard' || STAGE_MURALS[id] ? id : 'shared';
+    const key = id === 'halyard' || stageMural(id) ? id : 'shared';
     if (key === cur) return;
     cur = key;
     const nextHeight = key === 'shared' ? RH * ROWS : FULL_H;
     if (nextHeight !== H) {
-      const shared = g.getImageData(0, 0, W, RH * ROWS);
+      const redraw = canRedrawShared();
+      const shared = redraw ? null : g.getImageData(0, 0, W, RH * ROWS);
       tex.dispose(); // WebGL allocation dimensions cannot be mutated in place.
       c.height = H = nextHeight;
-      g.putImageData(shared, 0, 0);
+      if (redraw) drawShared(); else g.putImageData(shared, 0, 0);
     }
     g.clearRect(STAGE_R.x, STAGE_R.y, STAGE_R.w, STAGE_R.h);
     const murals = [0, 1, 2, 3].map((k) => ({ rect: [0, 1, 1 - (k + 1) * RH / H, RH / H], place: [0, -8, 0, 0], fx: [0, 0] }));
@@ -75,7 +86,7 @@ export async function createMuralTexture(stageId = 'tidewater') {
     g.save();
     try {
       g.beginPath(); g.rect(STAGE_R.x, STAGE_R.y, STAGE_R.w, STAGE_R.h); g.clip();
-      list = key === 'shared' ? [] : key === 'halyard' ? halyard() : (STAGE_MURALS[key](g, { ...STAGE_R }, kit) || []);
+      list = key === 'shared' ? [] : key === 'halyard' ? halyard() : (stageMural(key)(g, { ...STAGE_R }, kit) || []);
     } catch (e) { console.error('[inkwave] stage murals failed', key, e); } finally { g.restore(); }
     for (const m of list) {
       if (!(m.id >= 4 && m.id <= 11)) { console.warn('[inkwave] mural id out of range (4…11)', key, m.id); continue; }

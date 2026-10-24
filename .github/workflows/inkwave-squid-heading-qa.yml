@@ -2,6 +2,7 @@ name: INKWAVE squid heading input native QA
 on:
   pull_request:
     paths:
+      - 'patches/splatoon3/tests/source-loaded-actor-fixture.mjs'
       - patches/local-quality/squid-motion-binding-adapter.mjs
       - patches/local-quality/tests/squid-heading-*.test.mjs
       - tools/squid-heading-qa/**

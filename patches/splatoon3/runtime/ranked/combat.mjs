@@ -148,8 +148,8 @@ export function createRankedEffects(api, match) {
     G.fx?.ring?.(p, new THREE.Vector3(0, 1, 0), G.teamColors[team], { radius, life: .6 });
     G.audio?.play?.('bomb_explode', { pos: p, volume: .7 });
     const blastFrom = shot?.from || p.clone().add(new THREE.Vector3(0, .05, 0));
-    const domeSheltered = new Set();
-    if (shot) for (const a of match.actors) if (a.alive && a.team !== team) {
+    const domeSheltered = shot && !visualOnly ? new Set() : null;
+    if (shot && !visualOnly) for (const a of match.actors) if (a.alive && a.team !== team) {
       const body = a.pos.clone().add(new THREE.Vector3(0, .7, 0));
       if (body.distanceTo(p) <= radius && (impactDomeShelters(shot.dome, blastFrom, body)
           || G.projectiles?.kitBarrierShelter?.({ owner: attacker, team, ghost: true }, blastFrom, body))) domeSheltered.add(a);
@@ -161,7 +161,7 @@ export function createRankedEffects(api, match) {
     for (const a of match.actors) if (amount > 0 && a.alive && a.team !== team) {
       const body = a.pos.clone().add(new THREE.Vector3(0, .7, 0));
       const distance = body.distanceTo(p);
-      if (distance <= radius && G.physics.los(blastFrom, body) && !rainmakerWallsBlockBlast(blastFrom, body, walls) && !domeSheltered.has(a))
+      if (distance <= radius && G.physics.los(blastFrom, body) && !rainmakerWallsBlockBlast(blastFrom, body, walls) && !domeSheltered?.has(a))
         damage(a, attacker, distance <= nearRadius ? amount : outerDamage, shot ? 'Gachihoko_BombCore' : 'GachihokoTimeUpBurst');
     }
   }
@@ -219,13 +219,14 @@ export function createRankedEffects(api, match) {
       s.vel.x = s.vel.z = 0;
     }
     const wall = G.physics.segment(s.previous, s.pos, hit, true);
-    let nearest = wall.hit ? wall.dist / Math.max(1e-9, s.previous.distanceTo(s.pos)) : 1;
+    const sweepLength=s.previous.distanceTo(s.pos);
+    let nearest = wall.hit ? wall.dist / Math.max(1e-9, sweepLength) : 1;
     const worldPoint = wall.hit ? wall.point.clone() : null;
     const probe = { owner: s.actor, team: s.team, prev: s.previous, pos: s.pos,
       vel: s.vel, damage: s.directDamage, type: 'rainmaker', wid: 'rainmaker', subId: 'Gachihoko_Bullet', s3BubblerRow: 'Gachihoko_Bullet', size: .16, ghost: !ownsDefense(s) };
     const defense = G.projectiles?.kitDefenseCandidate?.(probe);
-    let blocked = defense && defense.distance <= nearest * s.previous.distanceTo(s.pos) ? defense : null;
-    if (blocked) nearest = blocked.distance / Math.max(1e-9, s.previous.distanceTo(s.pos));
+    let blocked = defense && defense.distance <= nearest * sweepLength ? defense : null;
+    if (blocked) nearest = blocked.distance / Math.max(1e-9, sweepLength);
     let target = null;
     for (const a of match.actors) if (a.alive && a.team !== s.team) {
       const t = sphereEntryComponents(s.previous.x, s.previous.y, s.previous.z, s.pos.x, s.pos.y, s.pos.z,

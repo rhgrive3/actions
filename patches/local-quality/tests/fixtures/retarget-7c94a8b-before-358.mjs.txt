@@ -1,0 +1,32 @@
+ applyAccessories(pose,{hairTargets=null,shootBlend=0,dt=0}={}) {
+  const c=this.character;
+  const headWorldQ=this._headWorldQ||(this._headWorldQ=new THREE.Quaternion());
+  const poseHeadInvQ=this._poseHeadInvQ||(this._poseHeadInvQ=new THREE.Quaternion());
+  let headWorldReady=false,lastHead=-1;
+  const hasHairTargets=hairTargets?.total>0;
+  const ampScale=hasHairTargets?(HOST_HAIR.amplitude+(HOST_HAIR.aimAmplitude-HOST_HAIR.amplitude)*clamp(shootBlend,0,1)):0;
+  const hairAlpha=hasHairTargets?-Math.expm1(-HOST_HAIR.response*Math.max(0,dt)):0;
+  for(const e of this.accessories){
+   if(e.hair){
+    // Express hair deformation in source HEAD space. This preserves arbitrary target hair rest directions.
+    if(e.head!==lastHead){poseHeadInvQ.copy(pose.wq[e.head]).invert();lastHead=e.head;}
+    this.q.copy(poseHeadInvQ).multiply(pose.wq[e.i]);
+    if(e.restHeadRelQ)this.q.multiply(e.restHeadRelQ);
+    else{this.q3.copy(this.bank.rest.wq[e.head]).invert().multiply(this.bank.rest.wq[e.i]).invert();this.q.multiply(this.q3);}
+    if(hasHairTargets){
+     const gain=e.hairGain*ampScale;
+     this.q.identity().slerp(hairTargets.q[e.i],gain);
+     // Continuous-time response in HEAD space: suppress residual curve/clip
+     // cusps on long host strands without making hair lag behind head turns.
+     if(!e.hairReady){e.hairQ.copy(this.q);e.hairReady=true;}
+     else e.hairQ.slerp(this.q,hairAlpha);
+     this.q.copy(e.hairQ);
+    }
+    if(!headWorldReady){this._kidQuat(c.bones.head,headWorldQ);headWorldReady=true;}
+    this.q.premultiply(headWorldQ);
+   }else this.q.copy(pose.wq[e.i]).multiply(e.restSourceQ);
+   if(e.bone.parent===c.bones.head&&headWorldReady)this.q2.copy(headWorldQ);
+   else this._kidQuat(e.bone.parent,this.q2);
+   this.q2.invert().multiply(this.q);e.bone.quaternion.copy(this.q2).normalize();
+  }
+ }

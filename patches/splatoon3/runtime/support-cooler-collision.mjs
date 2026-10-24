@@ -43,14 +43,23 @@ function levelFor(system){
   for(const stand of system._s3SupportCoolers||[])if(live(stand))level.blocks.push(updateBlock(stand,level.blocks.length));
   return level;
 }
+const projectileSweepFrames=new WeakMap();
 // Public pure first-contact contract for every native/custom thrown sub owner.
 // Radius is the caller's own physical sphere, never its paint/burst radius.
 export function coolerSegmentContact(system,start,end,radius=0){
   if(!api||!system||!start?.isVector3||!end?.isVector3)return null;
   const level=levelFor(system);if(!level.blocks.length)return null;
-  const out=new api.Hit();kitSweepSphereBlocks(level,start,end,Math.max(0,radius),out);
-  if(!out.hit)return null;
-  return {distance:out.dist,point:out.point.clone(),normal:out.normal.clone(),stand:level.blocks[out.block].stand,kind:'tacticooler'};
+  let lease=projectileSweepFrames.get(system);
+  if(!lease)projectileSweepFrames.set(system,lease={depth:0,frames:[]});
+  const index=lease.depth++,out=lease.frames[index] ||= new api.Hit();
+  try {
+    kitSweepSphereBlocks(level,start,end,Math.max(0,radius),out);
+    if(!out.hit)return null;
+    return {distance:out.dist,point:out.point.clone(),normal:out.normal.clone(),stand:level.blocks[out.block].stand,kind:'tacticooler'};
+  } finally {
+    // Escaping candidates own clones; the scratch must not keep a world alive.
+    out.__level=null;if(out.__ids)out.__ids.length=0;lease.depth--;
+  }
 }
 function projectileRadius(p){
   if(p.wid==='trizooka')return selectTrizookaCollision(p).worldRadius;

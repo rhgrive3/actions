@@ -310,7 +310,7 @@ class SpritePool {
     }
     const count = this.n + 1;
     for (const a of [this.aPos, this.aDir, this.aCol, this.aPar]) { a.clearUpdateRanges(); a.addUpdateRange(0, count * 4); a.needsUpdate = true; }
-    this.mesh.geometry.instanceCount = count;this._emptyUploaded=this.n===0;
+    this.mesh.geometry.instanceCount = count;this._emptyUploaded=this.n===0;this._drawCount=this.n;
   }
   clear() { this.n = 0;this._emptyUploaded=false;this._heapValid=false;this._heapBlocked=false;if(this._evictionHeap)this._evictionHeap.length=0; }
 }
@@ -388,15 +388,21 @@ class RibbonPool {
   }
   // opts: { width, widthTail, color [r,g,b], alpha, style, life (point lifetime s), spacing (m), flat (ground-aligned) }
   start(opts) {
-    if (this.list.length >= this.T) { const old = this.list.findIndex(r => r.ended), victim=this.list[old >= 0 ? old : 0]; victim.ended=true;victim.pts.length=0;this.list.splice(old >= 0 ? old : 0, 1); }
-    const r = { pts: [], ended: false, o: { width: .2, widthTail: .6, color: [1, 1, 1], alpha: 1, style: 0, life: .6, spacing: .12, seed: vfxRandom(), ...opts } };
+    if (this.list.length >= this.T) { const old = this.list.findIndex(r => r.ended), victim=this.list[old >= 0 ? old : 0]; victim.ended=true;victim.pts.length=0;victim.samples.length=0;victim.count=0;this.list.splice(old >= 0 ? old : 0, 1); }
+    const r = { pts: [], samples: new Array(this.M), head: 0, count: 0, ended: false, o: { width: .2, widthTail: .6, color: [1, 1, 1], alpha: 1, style: 0, life: .6, spacing: .12, seed: vfxRandom(), ...opts } };
     this.list.push(r); return r;
   }
   push(r, x, y, z, now) {
     if (!r || r.ended) return;
-    const p = r.pts, last = p[p.length - 1];
+    const M=this.M,last=r.count?r.samples[(r.head+r.count-1)%M]:null;
     if (last && Math.hypot(x - last[0], y - last[1], z - last[2]) < r.o.spacing) { last[0] = x; last[1] = y; last[2] = z; last[3] = now; return; }
-    p.push([x, y, z, now]); if (p.length > this.M) p.shift();
+    let at;
+    if(r.count===M){at=r.head;r.head=(r.head+1)%M;}
+    else{at=(r.head+r.count)%M;r.count++;}
+    const point=r.samples[at]||(r.samples[at]=[0,0,0,0]);point[0]=x;point[1]=y;point[2]=z;point[3]=now;
+    // pts remains the public lifetime sentinel. Its chronological view is
+    // synchronized in the existing render scan, never shifted per sample.
+    r.pts.length=r.count;
   }
   end(r) { if (r) r.ended = true; }
   update(now, camPos) {
@@ -405,8 +411,10 @@ class RibbonPool {
     const t = this._t, s = this._s, c = this._c;
     for (let i = this.list.length - 1; i >= 0; i--) {
       const r = this.list[i];
-      while (r.pts.length && now - r.pts[0][3] > r.o.life) r.pts.shift();
-      if (r.ended && r.pts.length < 2) this.list.splice(i, 1);
+      while (r.count && now - r.samples[r.head][3] > r.o.life) { r.head=(r.head+1)%this.M; r.count--; }
+      r.pts.length=r.count;
+      for(let k=0;k<r.count;k++)r.pts[k]=r.samples[(r.head+k)%this.M];
+      if (r.ended && r.count < 2) { this.list.splice(i, 1); r.samples.length=0; }
     }
     let slot = 0;
     for (const r of this.list) {
@@ -441,10 +449,10 @@ class RibbonPool {
     }
     // keep one degenerate segment drawn (warm program); zero alpha
     if (!v) { for (let k = 0; k < 4; k++) { C[k * 4 + 3] = 0; P[k * 3] = P[k * 3 + 1] = P[k * 3 + 2] = 0; } v = 0; }
-    this.mesh.geometry.setDrawRange(0, Math.max(6, slot * (this.M - 1) * 6));this._emptyUploaded=this.list.length===0;
+    this.mesh.geometry.setDrawRange(0, Math.max(6, slot * (this.M - 1) * 6));this._emptyUploaded=this.list.length===0;this._drawCount=slot;
     for (const a of [this.pos, this.col, this.rib, this.side, this.face]) { a.clearUpdateRanges(); a.addUpdateRange(0, Math.max(1, slot) * this.M * 2 * a.itemSize); a.needsUpdate = true; }
   }
-  clear() { for (const r of this.list) { r.ended = true; r.pts.length = 0; } this.list.length = 0; this._emptyUploaded = false; }
+  clear() { for (const r of this.list) { r.ended = true; r.pts.length = 0; r.samples.length=0; r.count=0; } this.list.length = 0; this._emptyUploaded = false; }
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -763,8 +771,14 @@ class ShapePool {
     this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = extra.order ?? (additive ? 8 : 5); this.mesh.name = 'special-vfx:' + name;
     geometry.dispose?.();
   }
+  _retire(record) {
+    if (record.retired) return;
+    record.retired = true;
+    const finish = record.onEnd; record.onEnd = null;
+    if (finish) finish();
+  }
   add(life, values, follow = null) {
-    if (this.recs.length >= this.cap - 1) this.recs.shift();
+    if (this.recs.length >= this.cap - 1) this._retire(this.recs.shift());
     const rec = { v: new Float32Array(16), t: 0, life, follow, dead: false };
     rec.v.set(values);
     this.recs.push(rec);
@@ -774,7 +788,7 @@ class ShapePool {
     if(this.recs.length===0&&this._emptyUploaded)return;
     for (let i = this.recs.length - 1; i >= 0; i--) {
       const r = this.recs[i]; r.t += dt;
-      if (r.dead || (r.life > 0 && r.t >= r.life) || (r.follow && r.follow(r, dt) === false)) this.recs.splice(i, 1);
+      if (r.dead || (r.life > 0 && r.t >= r.life) || (r.follow && r.follow(r, dt) === false)) { this.recs.splice(i, 1); this._retire(r); }
     }
     const n = this.recs.length;
     for (let k = 0; k < this.buf.length; k++) {
@@ -785,9 +799,9 @@ class ShapePool {
     }
     // degenerate warm instance: alpha 0
     const col = this.buf[2].array; col[3] = 0;
-    this.mesh.geometry.instanceCount = n + 1;this._emptyUploaded=n===0;
+    this.mesh.geometry.instanceCount = n + 1;this._emptyUploaded=n===0;this._drawCount=n;
   }
-  clear() { this.recs.length = 0; this._emptyUploaded = false; }
+  clear() { for (const r of this.recs) this._retire(r); this.recs.length = 0; this._emptyUploaded = false; }
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -819,21 +833,38 @@ export class SpecialVfxKit {
     this.discs = new ShapePool(THREE, 'discs+', quad(), 96, discAttrs, DISC_VERT, DISC_FRAG, true, uT, { order: 9 }, L);
     this.inkDiscs = new ShapePool(THREE, 'discs', quad(), 48, discAttrs, DISC_VERT, DISC_FRAG, false, uT, { order: 4 }, L);
     this.pools = [this.sparks, this.puffs, this.beams, this.inkBeams, this.shells, this.inkShells, this.bands, this.inkBands, this.discs, this.inkDiscs];
-    for (const p of [...this.pools, this.ribbons, this.glowRibbons]) { this.root.add(p.mesh); excludeFromOverridePasses(p.mesh); }
+    this.allPools = [...this.pools, this.ribbons, this.glowRibbons];
+    this._restoreWarmMeshes = () => { for (const p of this.allPools) { p._warmed = false; p.mesh.visible = true; p.mesh.onAfterRender = p._warmCallback; } };
+    for (const p of this.allPools) {
+      this.root.add(p.mesh); excludeFromOverridePasses(p.mesh);
+      const mesh = p.mesh, previous = mesh.onAfterRender;
+      p._warmCallback = (...args) => {
+        previous?.apply(mesh, args);
+        const [renderer, scene] = args;
+        if (scene?.overrideMaterial) return;
+        if (!this._warmCanvas && renderer?.domElement?.addEventListener) { this._warmCanvas = renderer.domElement; this._warmCanvas.addEventListener('webglcontextrestored', this._restoreWarmMeshes); }
+        p._warmed = true; mesh.onAfterRender = previous;
+        if (!p._drawCount) mesh.visible = false;
+      };
+      mesh.onAfterRender = p._warmCallback;
+    }
   }
   update(dt, camera) {
     this.time += dt; this.uTime.value = this.time % 1000;
     for (const p of this.pools) p.update(dt);
     const cam = camera?.position || { x: 0, y: 10, z: 0 };
     this.ribbons.update(this.time, cam); this.glowRibbons.update(this.time, cam);
+    for (const p of this.allPools) p.mesh.visible = !!p._drawCount || !p._warmed;
   }
-  clear() { for (const p of [...this.pools, this.ribbons, this.glowRibbons]) p.clear(); }
+  clear() { for (const p of this.allPools) { p.clear(); p._drawCount = 0; p.mesh.visible = !p._warmed; } }
   dispose() {
+    this.clear();
+    this._warmCanvas?.removeEventListener?.('webglcontextrestored', this._restoreWarmMeshes); this._warmCanvas = null;
     this.root.removeFromParent();
     for (const p of [...this.pools, this.ribbons, this.glowRibbons]) { p.mesh.geometry.dispose(); p.mesh.material.dispose(); }
   }
   stats() {
     return { sparks: this.sparks.n, puffs: this.puffs.n, ribbons: this.ribbons.list.length + this.glowRibbons.list.length,
-      shapes: this.pools.slice(2).reduce((n, p) => n + p.recs.length, 0), draws: this.pools.length + 2 };
+      shapes: this.pools.slice(2).reduce((n, p) => n + p.recs.length, 0), draws: this.allPools.reduce((n, p) => n + Number(p.mesh.visible), 0) };
   }
 }

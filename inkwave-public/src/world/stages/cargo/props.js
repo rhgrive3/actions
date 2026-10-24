@@ -1703,6 +1703,13 @@ export function register(D, H) {
       }
     },
   };
+  // Only the last live kit releases shared procedural templates. Re-entry and
+  // same-kit rebuilds repopulate this private cache through the original recipe.
+  return () => {
+    const geometries = new Set([...TPL.values()].map(value => value?.isBufferGeometry ? value : value?.geo).filter(Boolean));
+    try { for (const geometry of geometries) geometry.dispose(); }
+    finally { TPL.clear(); }
+  };
 }
 
 

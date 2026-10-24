@@ -28,6 +28,40 @@ function walkNode(node, visitor) {
   for (const v of Object.values(node)) if (Array.isArray(v)) v.forEach(n=>walkNode(n,visitor)); else if (v && typeof v === 'object') walkNode(v,visitor);
 }
 const phaseNames = ['ui-modules','diorama-module','progress-mixing','game-audio-modules','props-module','progress-plaza','mural-generation','texture-library-module','procedural-textures','stage-build','progress-harbor','progress-swim','fx-hooks','screen-fx','net-session','progress-tuning','progress-warmup','shader-compile','progress-post-compile','warmup-frame-yield','progress-ready','readiness-dwell'];
+function reviewedBootPhases(ast, boot, awaits) {
+  const declarations=[], waveCalls=[];
+  walkNode(boot.value.body,node=>{
+    if (['FunctionExpression','ArrowFunctionExpression','FunctionDeclaration','ClassDeclaration'].includes(node.type)) return false;
+    if(node.type==='VariableDeclarator')declarations.push(node);
+    if(node.type==='CallExpression'&&node.callee.type==='MemberExpression'&&node.callee.property.name==='prewarmWaveTexture')waveCalls.push(node);
+  });
+  const topology=()=>{throw new Error('loading-cache compatibility: boot phase topology changed');};
+  let names=phaseNames;
+  if(waveCalls.length) {
+    // The reviewed concurrent epoch starts both resources before texlib and joins
+    // mural, then wave, before world construction. Resolve lexical bindings so
+    // minifier renaming cannot relabel or silently omit either join.
+    names=[...phaseNames.slice(0,6),'texture-library-module','procedural-textures','mural-generation','wave-generation',...phaseNames.slice(9)];
+    const binding=node=>node?.type==='Identifier'?declarations.find(d=>d.id.type==='Identifier'&&d.id.name===node.name)?.init:null;
+    const wave=waveCalls[0], mural=binding(awaits[8]?.argument);
+    const env=declarations.find(d=>d.init===awaits[3]&&d.id.type==='ArrayPattern')?.id.elements[2];
+    const muralAlias=ast.body.filter(n=>n.type==='ImportDeclaration'&&n.source.value==='./world/murals.js').flatMap(n=>n.specifiers).find(s=>s.imported?.name==='createMuralTexture')?.local.name;
+    const texlib=declarations.find(d=>d.init===awaits[6]&&d.id.type==='ObjectPattern')?.id.properties.find(p=>p.key.name==='createTextureLibrary')?.value;
+    const signal=wave.arguments[0]?.properties?.[0]?.value, controller=binding(signal?.object);
+    if(waveCalls.length!==1||awaits.length!==names.length||
+      awaits[6]?.argument.type!=='ImportExpression'||awaits[6].argument.source.value!=='./world/texlib.js'||
+      !texlib||awaits[7]?.argument.type!=='CallExpression'||awaits[7].argument.callee.name!==texlib.name||
+      mural?.type!=='CallExpression'||mural.callee.type!=='MemberExpression'||mural.callee.property.name!=='then'||mural.arguments.length!==2||
+      mural.callee.object.type!=='CallExpression'||mural.callee.object.callee.name!==muralAlias||!muralAlias||
+      binding(awaits[9]?.argument)!==wave||wave.callee.object.name!==env?.name||!env||
+      wave.arguments.length!==1||wave.arguments[0].type!=='ObjectExpression'||wave.arguments[0].properties.length!==1||wave.arguments[0].properties[0].key.name!=='signal'||
+      signal?.type!=='MemberExpression'||signal.property.name!=='signal'||controller?.type!=='NewExpression'||controller.callee.name!=='AbortController'||controller.arguments.length!==0||
+      awaits[10]?.argument.type!=='CallExpression'||awaits[10].argument.callee.object?.type!=='ThisExpression'||awaits[10].argument.callee.property?.name!=='_buildWorld')topology();
+  }
+  const shader=awaits[names.indexOf('shader-compile')]?.argument;
+  if(awaits.length!==names.length||shader?.type!=='CallExpression'||shader.callee.type!=='MemberExpression'||shader.callee.property.name!=='compileAsync')topology();
+  return names;
+}
 export function adaptCompiledMain(source) {
   if (source.includes('__iwStartupMeasure')) throw new Error('loading-cache adapter applied twice');
   const ast = parse(source,{ecmaVersion:'latest',sourceType:'module'});
@@ -40,7 +74,7 @@ export function adaptCompiledMain(source) {
     if (['FunctionExpression','ArrowFunctionExpression','FunctionDeclaration','ClassDeclaration'].includes(node.type)) return false;
     if (node.type==='AwaitExpression') { awaits.push(node); return false; }
   });
-  if (awaits.length!==phaseNames.length || !source.slice(awaits[17].start,awaits[17].end).includes('.compileAsync(')) throw new Error('loading-cache compatibility: boot phase topology changed');
+  const phases=reviewedBootPhases(ast,boot,awaits);
   const dwell=awaits.at(-1).argument;
   const callback=dwell.arguments?.[0];
   if (dwell.type!=='NewExpression'||dwell.callee.name!=='Promise'||callback?.type!=='ArrowFunctionExpression'||callback.params.length!==1||callback.body.type!=='CallExpression'||callback.body.callee.name!=='setTimeout'||callback.body.arguments.length!==2||callback.body.arguments[0].name!==callback.params[0].name||callback.body.arguments[1].value!==250) throw new Error('loading-cache compatibility: expected explicit 250ms ready dwell');
@@ -64,7 +98,7 @@ export function adaptCompiledMain(source) {
     const expr=awaits[i].argument;
     let text=source.slice(expr.start,expr.end);
     if(i===awaits.length-1) text=text.slice(0,timer.start-expr.start)+'0'+text.slice(timer.end-expr.start);
-    edits.push({start:expr.start,end:expr.end,text:`__iwStartupMeasure(${JSON.stringify('boot/'+phaseNames[i])},()=>(${text}))`});
+    edits.push({start:expr.start,end:expr.end,text:`__iwStartupMeasure(${JSON.stringify('boot/'+phases[i])},()=>(${text}))`});
   }
   const aliases = new Map();
   for(const imp of ast.body.filter(n=>n.type==='ImportDeclaration')) for(const spec of imp.specifiers) if(spec.imported)aliases.set(spec.local.name,spec.imported.name);
@@ -101,7 +135,7 @@ export function adaptCompiledMain(source) {
   for(const edit of edits)result=result.slice(0,edit.start)+edit.text+result.slice(edit.end);
   result=`function __iwStartupMeasure(name,run){const measure=globalThis.__inkwaveStartup?.measure;return measure?measure(name,run):run();}\n`+result;
   parse(result,{ecmaVersion:'latest',sourceType:'module'});
-  return { code:result, phases:phaseNames.map((name,i)=>({name:'boot/'+name,source:source.slice(awaits[i].start,awaits[i].end)})), removedDwellMs:250, shaderWarmupUnchanged:true, redundantLightmapQueryRemoved:true };
+  return { code:result, phases:phases.map((name,i)=>({name:'boot/'+name,source:source.slice(awaits[i].start,awaits[i].end)})), removedDwellMs:250, shaderWarmupUnchanged:true, redundantLightmapQueryRemoved:true };
 }
 export function loadingIdentity() {
   return Object.fromEntries(filesIn(LOADING_ROOT).filter(file=>!file.includes(`${path.sep}tests${path.sep}`)&&!file.endsWith('.md')).map(file=>[path.relative(LOADING_ROOT,file).split(path.sep).join('/'),hash(fs.readFileSync(file))]));

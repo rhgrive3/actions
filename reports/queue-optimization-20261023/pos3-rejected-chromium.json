@@ -1,0 +1,35 @@
+{
+  "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+  "scope": "isolated plain-vector admission kernel, not gameplay, iPad or whole-frame FPS; guards preserve accessor/subclass/custom-slice fallback, not opaque Proxy observation semantics",
+  "iterations": 1000000,
+  "baseline": [
+    29,
+    47,
+    39,
+    46.200000000186265,
+    46.39999999990687,
+    38.1999999997206,
+    59.700000000186265,
+    49.8000000002794,
+    43.5,
+    26.399999999906868,
+    40.200000000186265,
+    43.39999999990687
+  ],
+  "candidate": [
+    287.60000000009313,
+    267.39999999990687,
+    270.10000000009313,
+    246.29999999981374,
+    334,
+    277.10000000009313,
+    253.60000000009313,
+    309.1999999997206,
+    226.5,
+    233.79999999981374,
+    241.1999999997206,
+    282.60000000009313
+  ],
+  "baselineMedian": 43.5,
+  "candidateMedian": 270.10000000009313
+}

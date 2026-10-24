@@ -4,7 +4,7 @@ import crypto from 'node:crypto';
 import {adaptMinimapDirty as baseline} from '../../patches/splatoon3/tests/fixtures/minimap-dirty-before-noop.mjs';
 import {adaptMinimapDirty as candidate} from '../../patches/splatoon3/minimap-dirty-adapter.mjs';
 import {adaptMinimapResources} from '../../patches/local-quality/minimap-resource-adapter.mjs';
-// Each reviewed epoch is an indivisible four-file source set. In particular,
+// Each reviewed epoch is an indivisible source set. In particular,
 // selecting old runtime and new adapter hashes independently is not admitted.
 const COMMON_MINIMAP_PINS = Object.freeze({
  'inkwave-public/src/game/minimap.js':'ead39a1ac28c0095672394b19a2ae8d141adf1144e51f8c1b0e4f18078a21df6',
@@ -23,6 +23,17 @@ export const REVIEWED_MINIMAP_SOURCE_EPOCHS = Object.freeze([
   'patches/splatoon3/runtime/minimap-dirty.mjs':'198a17be2e83a8604283f13c0bf0092727e60fded4b7666d3b0211cd31c47015',
   'patches/splatoon3/minimap-dirty-adapter.mjs':'3045d2d49c2d7b050e46bf268f60f795d96846df8574db1eff59ee2423c9386b'
  })})
+ ,// b9f4392/beec332 preserve Float32-rounded legacy hillshade while deriving
+ // normals from static blocks and using guarded signed16 IDs. Native projection
+ // retains its normal array and selects one exact paint cell without four zero
+ // interpolation arrays. Real Canvas parity/negative controls are independently
+ // covered by inkwave-minimap-world-canvas.test.mjs; emitted comparison below stays mandatory.
+ Object.freeze({name:'library-queue-world-minimap-storage-beec332',pins:Object.freeze({...COMMON_MINIMAP_PINS,
+  'inkwave-public/src/game/minimap.js':'18a7b3711083fc5e2a0f8d3782f2ff95fcd62df4b2e6cf8f867e18c72854c493',
+  'patches/splatoon3/runtime/minimap-dirty.mjs':'198a17be2e83a8604283f13c0bf0092727e60fded4b7666d3b0211cd31c47015',
+  'patches/splatoon3/minimap-dirty-adapter.mjs':'3045d2d49c2d7b050e46bf268f60f795d96846df8574db1eff59ee2423c9386b',
+  'patches/native-stages/runtime/native-minimap.mjs':'524fd0495d155ca83b7601a5d5264bbadc1abf5b9c0e1ded7342efb7281e925e'
+ })})
 ]);
 export function assertReviewedMinimapSources(sourceHashes) {
  const epoch=REVIEWED_MINIMAP_SOURCE_EPOCHS.find(({pins})=>
@@ -38,7 +49,7 @@ export async function runMinimapCanvasProbe(page,{root,evidence,sourceSha,conten
  const sources={baseline:compose(baseline),candidate:compose(candidate)};
  const hash=s=>crypto.createHash('sha256').update(s).digest('hex');
  if(hash(read('patches/splatoon3/tests/fixtures/minimap-dirty-before-noop.mjs'))!=='6310a58e1ad59bfab2bf8af4b5dcd2327ee4b94ce0f76d913538569c5387bda1')throw Error('Baseline minimap adapter binding mismatch');
- const sourceHashes=Object.fromEntries(['inkwave-public/src/game/minimap.js','patches/splatoon3/runtime/minimap-dirty.mjs','patches/splatoon3/minimap-dirty-adapter.mjs','patches/local-quality/minimap-resource-adapter.mjs','patches/splatoon3/tests/fixtures/minimap-dirty-before-noop.mjs'].map(p=>[p,hash(fs.readFileSync(path.join(root,p)))]));
+ const sourceHashes=Object.fromEntries(['inkwave-public/src/game/minimap.js','patches/splatoon3/runtime/minimap-dirty.mjs','patches/splatoon3/minimap-dirty-adapter.mjs','patches/local-quality/minimap-resource-adapter.mjs','patches/splatoon3/tests/fixtures/minimap-dirty-before-noop.mjs','patches/native-stages/runtime/native-minimap.mjs'].map(p=>[p,hash(fs.readFileSync(path.join(root,p)))]));
  // Compare exact bytes with the build manifest's file digests; decoded UTF-8 text is only for execution.
  // Retain reviewed source pins as well as the external build-input binding.
  const sourceEpoch=assertReviewedMinimapSources(sourceHashes);
@@ -47,7 +58,8 @@ export async function runMinimapCanvasProbe(page,{root,evidence,sourceSha,conten
    'inkwave-public/src/game/minimap.js':'upstream/src/game/minimap.js',
    'patches/splatoon3/runtime/minimap-dirty.mjs':'patch/runtime/minimap-dirty.mjs',
    'patches/splatoon3/minimap-dirty-adapter.mjs':'patch/minimap-dirty-adapter.mjs',
-   'patches/local-quality/minimap-resource-adapter.mjs':'local-quality/minimap-resource-adapter.mjs'
+   'patches/local-quality/minimap-resource-adapter.mjs':'local-quality/minimap-resource-adapter.mjs',
+   'patches/native-stages/runtime/native-minimap.mjs':'native-stages/runtime/native-minimap.mjs'
  };
  for(const [file,key] of Object.entries(sourceKeys))
    if(sourceHashes[file]!==manifest.files?.[key])throw Error('Minimap source pin mismatch: '+file);

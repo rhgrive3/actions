@@ -18,10 +18,11 @@ export function adaptMotionFkHotpath(rel, code, replaceOnce) {
   if (rel === 'src/game/motion/body-balance.js') {
     // apply() reads the centre pose's WORLD rotation only for the gain bones
     // (hip..head); every other bone blends local rotations.
-    code = replaceOnce(code,
-      '  this.center.fk();const gainX=',
-      '  this.center.fk(this._centerFk??=this.bank.fkCount?.([...this.rotationGain.keys()])??true);const gainX=',
+    if(code.includes('  if(!this._soleCenter)this.center.fk();'))code = replaceOnce(code,
+      '  if(!this._soleCenter)this.center.fk();const mean=this._soleCenter||this.center;const gainX=',
+      '  if(!this._soleCenter)this.center.fk(this._centerFk??=this.bank.fkCount?.([...this.rotationGain.keys()])??true);const mean=this._soleCenter||this.center;const gainX=',
       'body balance centre FK range');
+    else code=replaceOnce(code,'  this.center.fk();const gainX=','  this.center.fk(this._centerFk??=this.bank.fkCount?.([...this.rotationGain.keys()])??true);const gainX=','legacy body balance centre FK range');
     // Without a short-step rest blend only that same range of the centre's
     // local pose is ever read; callers then pass it as `count`.
     code = replaceOnce(code,

@@ -22,7 +22,7 @@ export function inkjetVfxAdmission(director, actor) {
     }
     // Read live projectiles, not last render's round records: those can have
     // expired or been recycled before updateRounds prunes/retags them.
-    for (const p of director.G.projectiles?.list || []) {
+    for (const p of director.frameRoundCandidates?.() || director.G.projectiles?.list || []) {
       if (p?.wid === 'inkjet' && !p.dead && p.pos && p.owner) includeOwner(budget, p.owner);
     }
     const n = members.length;

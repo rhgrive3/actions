@@ -113,3 +113,16 @@ test('lobby slot occupancy is sampled once for eight anchors and direct callers 
  for(let i=0;i<8;i++){const out={};anchor.call(sc,i>>2,i&3,out,mask);assert.equal(out.vis,(mask&(1<<i))?0:1);}
  assert.equal(reads,1);anchor.call(sc,0,0,{});assert.equal(reads,2);
 });
+test('stick guards compare authored and serialized styles and repair external edits or replacement nodes',()=>{
+ const draw=method('src/core/mobile.js','_drawStick','openEditor');
+ const canonical=v=>v.replace(/-?\d+(?:\.\d+)?/g,n=>String(+n)).replace(/,0\)/,',0px)').replace(/,/g,', ');
+ const node=()=>{const values={},writes={transform:0,opacity:0};return {writes,classList:{toggle(){}},style:{get transform(){return values.transform||'';},set transform(v){writes.transform++;values.transform=canonical(v);},get opacity(){return values.opacity||'';},set opacity(v){writes.opacity++;values.opacity=String(+Number(v).toFixed(6));}}};};
+ const owner={stickEl:node(),knob:node(),dirEl:node(),_stick:{ox:20,oy:20},_stickHome:{x:20,y:20,d:40}};
+ const run=()=>draw.call(owner,true,12,0,.123456789);
+ for(let i=0;i<120;i++)run();
+ assert.deepEqual(owner.knob.writes,{transform:1,opacity:0});assert.deepEqual(owner.dirEl.writes,{transform:1,opacity:1});
+ owner.knob.style.transform='scale(2)';owner.dirEl.style.transform='scale(2)';owner.dirEl.style.opacity='0';run();
+ assert.equal(owner.knob.writes.transform,3);assert.deepEqual(owner.dirEl.writes,{transform:3,opacity:3});run();assert.equal(owner.dirEl.writes.opacity,3);
+ draw.call(owner,false);draw.call(owner,false);assert.equal(owner.dirEl.style.opacity,'0');run();assert.notEqual(owner.dirEl.style.opacity,'0');
+ owner.knob=node();owner.dirEl=node();run();assert.equal(owner.knob.writes.transform,1);assert.deepEqual(owner.dirEl.writes,{transform:1,opacity:1});
+});

@@ -1,0 +1,35 @@
+_updateInventories(engine) {
+    if (this.mode !== 'clams' || !this.smallClamResources) return;
+    const inventories = engine?.rule?.state?.inventories || {};
+    const present = new Set();
+    for (const [id, inventory] of Object.entries(inventories)) {
+      if (!inventory || !(inventory.small > 0 || inventory.power)) continue;
+      const actor = this._findActor(id);
+      if (!actor?.pos) continue;
+      present.add(id);
+      let marker = this._inventoryMarkers.get(id);
+      if (!marker) {
+        marker = new this.THREE.Group();
+        const small = createSmallClamInventory(this.THREE, this.smallClamResources);
+        const power = new this.THREE.Mesh(this.powerClamResources.geometry, this.powerClamResources.material);
+        marker.add(small, power);
+        marker.userData.smallClams = small; marker.userData.powerClam = power;
+        marker.name = `ranked-clam-inventory-${id}`;
+        this.clamsGroup.add(marker);
+        this._inventoryMarkers.set(id, marker);
+      }
+      marker.visible = true;
+      const small = marker.userData.smallClams, power = marker.userData.powerClam;
+      updateSmallClamInventory(this.THREE, small, inventory.power ? 0 : inventory.small);
+      small.visible = !inventory.power && small.count > 0;
+      power.visible = !!inventory.power;
+      // A carried clam trails behind the carrier; this is presentation only.
+      // Local visual offsets do not change rule positions or throw origins.
+      const yaw = finite(actor.yaw) ? actor.yaw : 0;
+      marker.position.set(actor.pos.x - Math.sin(yaw) * .72,
+        actor.pos.y + (inventory.power ? .34 : .16), actor.pos.z - Math.cos(yaw) * .72);
+      marker.rotation.y = yaw;
+
+    }
+    for (const [id, marker] of this._inventoryMarkers) if (!present.has(id)) marker.visible = false;
+  }

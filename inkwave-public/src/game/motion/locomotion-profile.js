@@ -4,6 +4,8 @@ import * as THREE from 'three';
 import {SourcePose,mod,clamp} from './source-bank.js';
 import {prepareRunFootPaths} from './run-foot-path.js';
 const caches=new WeakMap();
+const preparedCenters=new WeakSet();
+export const isPreparedGaitCenter=pose=>preparedCenters.has(pose);
 export const smooth5=t=>{t=clamp(t,0,1);return t*t*t*(10+t*(-15+6*t));};
 /** Longest circular low-height interval with opposing ankle travel. This
  * rejects swing islands which a height-only threshold can mislabel as stance. */
@@ -46,7 +48,7 @@ export function locomotionProfile(bank,name){
  });
  const positive=feet.map(f=>f.fittedStride).filter(v=>v>1e-6);
  for(let j=0;j<2;j++)centers[bank.index[j?'foot_R':'foot_L']].y=lowest[j];
- centerPose.fk();for(const k of hairIndices)hairMean[k].normalize();
+ centerPose.fk();preparedCenters.add(centerPose);for(const k of hairIndices)hairMean[k].normalize();
  const p={...source,feet,centers,centerPose,hairMean,runFootPaths:prepareRunFootPaths(bank,clip,runSamples),stride:positive.length?positive.reduce((a,b)=>a+b,0)/positive.length:source.stride,
   method:'host estimator: longest low-height/opposing-ankle interval; least-squares stance travel; continuous contact envelope'};
  cache.set(name,p);return p;

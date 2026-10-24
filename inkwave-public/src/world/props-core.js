@@ -15,6 +15,7 @@ import { G as propAtlasGame } from '../core/ctx.js';
 // blinking lights, bunting flags, banners) plus their shadow passes. update() touches only instance matrices/colours
 // and one time uniform; it never allocates.
 import * as THREE from 'three';
+import { Float32Staging } from './attribute-staging.js';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
 
@@ -52,7 +53,7 @@ function mulberry32(a) {
 
 // ------------------------------------------------------------------------------------------------ geometry builder
 class GB {
-  constructor() { this.p = []; this.n = []; this.uv = []; this.c = []; this.idx = []; }
+  constructor() { this.p = []; this.n = []; this.uv = new Float32Staging(2); this.c = new Float32Staging(3); this.idx = []; }
   v(x, y, z, nx, ny, nz, u = 0, v = 0, c = 1) { this.p.push(x, y, z); this.n.push(nx, ny, nz); this.uv.push(u, v); this.c.push(c, c, c); return this.p.length / 3 - 1; }
   // Triangles are auto-oriented so their winding agrees with the supplied vertex normals (all our shapes supply outward normals).
   tri(a, b, c) {
@@ -70,8 +71,8 @@ class GB {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3));
     g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3));
-    g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2));
-    g.setAttribute('color', new THREE.Float32BufferAttribute(this.c, 3));
+    g.setAttribute('uv', this.uv.attribute(THREE));
+    g.setAttribute('color', this.c.attribute(THREE));
     g.setIndex(this.idx);
     return g;
   }
@@ -136,6 +137,8 @@ function roundBox(w, h, d, r) {
 // Lathe around +Y. profile = [[r, y], ...] ordered bottom→out→up→in; `null` entries split strips (hard crease).
 function latheGeo(profile, seg, closed = false) {
   const g = new GB();
+  const cos = [], sin = [];
+  for (let k = 0; k <= seg; k++) { const ph = (k / seg) * TAU; cos.push(Math.cos(ph)); sin.push(Math.sin(ph)); }
   const strips = [[]];
   for (const p of profile) { if (p === null) strips.push([]); else strips[strips.length - 1].push(p); }
   for (const S of strips) {
@@ -151,7 +154,7 @@ function latheGeo(profile, seg, closed = false) {
     for (let i = 0; i < n; i++) {
       const ring = [];
       for (let k = 0; k <= seg; k++) {
-        const ph = (k / seg) * TAU, cs = Math.cos(ph), sn = Math.sin(ph);
+        const cs = cos[k], sn = sin[k];
         ring.push(g.v(S[i][0] * cs, S[i][1], -S[i][0] * sn, nr[i] * cs, ny[i], -nr[i] * sn, k / seg, i / (n - 1)));
       }
       rings.push(ring);
@@ -168,6 +171,8 @@ function latheGeo(profile, seg, closed = false) {
 // Tube along a polyline (parallel-transport frames). radius may be a function of t in [0,1].
 function tubeGeo(pts, radius, radial = 8, closed = false, up = null) {
   const n = pts.length, g = new GB();
+  const cos = [], sin = [];
+  for (let k = 0; k < radial; k++) { const a = (k / radial) * TAU; cos.push(Math.cos(a)); sin.push(Math.sin(a)); }
   const P = pts.map((p) => new THREE.Vector3(p[0], p[1], p[2]));
   const T = [];
   for (let i = 0; i < n; i++) {
@@ -184,7 +189,7 @@ function tubeGeo(pts, radius, radial = 8, closed = false, up = null) {
     const r = typeof radius === 'function' ? radius(i / (n - 1)) : radius;
     const ring = [];
     for (let k = 0; k < radial; k++) {
-      const a = (k / radial) * TAU, cs = Math.cos(a), sn = Math.sin(a);
+      const cs = cos[k], sn = sin[k];
       const nx = N.x * cs + Bv.x * sn, ny = N.y * cs + Bv.y * sn, nz = N.z * cs + Bv.z * sn;
       ring.push(g.v(P[i].x + nx * r, P[i].y + ny * r, P[i].z + nz * r, nx, ny, nz, k / radial, i / (n - 1)));
     }
@@ -296,10 +301,23 @@ function puffGeo(det, seed) {
   return g;
 }
 
-// Geometry template cache (CPU-side templates only; they are merged, never rendered directly).
+// Geometry template cache (merged CPU templates plus the live blink instance sphere).
 const TPL = new Map();
+// Cache-only CPU templates may be evicted only at the last live/pending kit boundary.
+// A live blink InstancedMesh can directly use a TPL sphere, so merges alone are insufficient.
+let templateUsers = 0;
+const TEMPLATE_MAX_BYTES = 8 * 1024 * 1024, TEMPLATE_MAX_ENTRIES = 256;
+function templateBytes(g) { return Object.values(g.attributes).reduce((n, a) => n + a.array.byteLength, g.index?.array.byteLength || 0); }
+function trimTemplates() {
+  if (templateUsers) return;
+  let bytes = [...TPL.values()].reduce((n, g) => n + templateBytes(g), 0);
+  for (const [key, g] of TPL) {
+    if (bytes <= TEMPLATE_MAX_BYTES && TPL.size <= TEMPLATE_MAX_ENTRIES) break;
+    bytes -= templateBytes(g); TPL.delete(key); g.dispose();
+  }
+}
 const kf = (a) => (typeof a === 'number' ? a.toFixed(4) : String(a));
-function tpl(key, fn) { let g = TPL.get(key); if (!g) { g = fn(); TPL.set(key, g); } return g; }
+function tpl(key, fn) { let g = TPL.get(key); if (!g) g = fn(); else TPL.delete(key); TPL.set(key, g); return g; }
 const G = {
   cbox: (w, h, d, r) => tpl(['cb', w, h, d, r].map(kf).join('|'), () => chamferBox(w, h, d, r)),
   rbox: (w, h, d, r) => tpl(['rb', w, h, d, r].map(kf).join('|'), () => roundBox(w, h, d, r)),
@@ -1106,8 +1124,8 @@ function mergeParts(parts) {
       const k = C ? C.getX(i) : 1, k2 = C ? C.getY(i) : 1, k3 = C ? C.getZ(i) : 1;
       colr[o] = cr * k * ao; colr[o + 1] = cg * k2 * ao; colr[o + 2] = cb * k3 * ao;
       const u = (vo + i) * 2;
-      if (p.uv) { const r = p.uv; uv[u] = r[0] + U.getX(i) * (r[2] - r[0]); uv[u + 1] = r[1] + U.getY(i) * (r[3] - r[1]); }
-      else if (p.uvs) { uv[u] = U.getX(i) * p.uvs[0]; uv[u + 1] = U.getY(i) * p.uvs[1]; }
+      if (p.uv) { const r = p.uv; uv[u] = r[0] + (U ? U.getX(i) : 0) * (r[2] - r[0]); uv[u + 1] = r[1] + (U ? U.getY(i) : 0) * (r[3] - r[1]); }
+      else if (p.uvs) { uv[u] = (U ? U.getX(i) : 0) * p.uvs[0]; uv[u + 1] = (U ? U.getY(i) : 0) * p.uvs[1]; }
       else { uv[u] = WHITE_UV[0]; uv[u + 1] = WHITE_UV[1]; }
     }
     if (g.index) {
@@ -3083,6 +3101,7 @@ const PACK_HELPERS = {
 // Registration runs synchronously only after all requested modules are available. Failed
 // registration restores both registries before a replacement world can be published.
 const REGISTERED_PACKS = new Map();
+const PACK_RESOURCES = new Map();
 const PACK_ORDER = ['marina-vessels', 'marina-dock', 'cargo', 'range'];
 const BASE_TYPES = Object.keys(D);
 function describeType(type) {
@@ -3096,13 +3115,15 @@ export function registerPropPack(id, register) {
     if (before.has(key)) throw Error(`[props] pack ${id} overrides existing type ${String(key)}`);
     target[key] = value; return true;
   } });
-  try { register(registry, PACK_HELPERS); }
+  let release;
+  try { release = register(registry, PACK_HELPERS); }
   catch (error) {
     for (const key of Object.keys(D)) if (!before.has(key)) delete D[key];
     SPIN_TEMPLATES.clear(); for (const [key, value] of spins) SPIN_TEMPLATES.set(key, value);
     throw error;
   }
   REGISTERED_PACKS.set(id, Object.keys(D).filter(key => !before.has(key)));
+  if (typeof release === 'function') PACK_RESOURCES.set(id, { types: new Set(REGISTERED_PACKS.get(id)), users: 0, release });
   const ids = [...PACK_ORDER, ...REGISTERED_PACKS.keys()].filter((key, i, all) => all.indexOf(key) === i);
   PROP_TYPES.splice(0, PROP_TYPES.length, ...BASE_TYPES.map(describeType),
     ...ids.flatMap(key => (REGISTERED_PACKS.get(key) || []).map(describeType)));
@@ -3115,6 +3136,7 @@ export function registerPropPacks(packs) {
   catch (error) {
     for (const key of Object.keys(D)) if (!keys.has(key)) delete D[key];
     SPIN_TEMPLATES.clear(); for (const [key, value] of spins) SPIN_TEMPLATES.set(key, value);
+    for (const [id, resources] of PACK_RESOURCES) if (!registered.has(id)) { resources.release(); PACK_RESOURCES.delete(id); }
     REGISTERED_PACKS.clear(); for (const [key, value] of registered) REGISTERED_PACKS.set(key, value);
     PROP_TYPES.splice(0, PROP_TYPES.length, ...descriptions);
     throw error;
@@ -3215,6 +3237,11 @@ export class PropKit {
   add(type, o = {}) {
     const def = D[type];
     if (!def) { console.warn('[props] unknown prop type', type); return { colliders: [] }; }
+    if (!this._templateLease) { this._templateLease = true; templateUsers++; }
+    for (const resources of PACK_RESOURCES.values()) if (resources.types.has(type)) {
+      const uses = this._packUses || (this._packUses = new Set());
+      if (!uses.has(resources)) { uses.add(resources); resources.users++; }
+    }
     const { pos, rotY, scale, B } = this._place(def, type, o);
     this.lastTris = B.tris;
     this.count++;
@@ -3393,6 +3420,12 @@ export class PropKit {
     this._placements = []; this._released = false;
     this._spin = []; this._blink = []; this._flags = []; this._banners = [];
     this.count = 0;
+    if (this._templateLease) { this._templateLease = false; templateUsers--; }
+    trimTemplates();
+    if (this._packUses) {
+      for (const resources of this._packUses) if (--resources.users === 0) resources.release();
+      this._packUses.clear();
+    }
   }
 
   dispose() {
@@ -3412,8 +3445,8 @@ export class PropKit {
   // Triangle count of one default instance of `type` (for budgets / docs).
   static triangles(type, opts = {}) {
     const k = new PropKit(null, { quality: opts.quality || 'high', headless: true });
-    k.add(type, opts);
-    return k.lastTris;
+    try { k.add(type, opts); return k.lastTris; }
+    finally { k.dispose(); }
   }
 }
 

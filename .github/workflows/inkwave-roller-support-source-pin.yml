@@ -2,6 +2,10 @@ name: INKWAVE roller support counterfactual source identity
 on:
   pull_request:
     paths:
+      - 'patches/splatoon3/runtime/roller.mjs'
+      - 'patches/splatoon3/runtime/roller-contact-paint.mjs'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'patches/splatoon3/tests/fixtures/roller.b34a8aaf.source.txt'
       - "patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs"
       - ".github/workflows/inkwave-roller-support-source-pin.yml"
 permissions:

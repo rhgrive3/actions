@@ -26,7 +26,7 @@ test('actual Halyard final geometry, colliders and live animation match raw, sta
   assert.deepEqual(b.kit.stats(), a.kit.stats());assert.deepEqual(anim(b.kit), anim(a.kit));
   assert.equal(disposed.size, 0);b.kit.update(1 / 60, 1);a.kit.update(1 / 60, 1);
   assert.deepEqual(b.kit._inst.map(m => hash(m.instanceMatrix.array)), a.kit._inst.map(m => hash(m.instanceMatrix.array)));
-  a.kit.dispose();b.kit.dispose();assert.equal(disposed.size, 0);
+  a.kit.dispose();b.kit.dispose();assert.ok(disposed.size > 0, 'last-user Halyard private templates now release after live instances leave');
 });
 test('same-instance rebuild and add-after-build retain exact instance counts, triangles and animation', () => {
   const { kit } = make(fixed);kit.build();

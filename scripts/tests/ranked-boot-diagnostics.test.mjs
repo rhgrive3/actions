@@ -6,7 +6,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {publicBuildIdentity,verifyPublishedSource,verifyPublicResponse} from '../lib/inkwave-public-boot-evidence.mjs';
-import {criticalBootRequest,rankedBootState,observeRankedBoot} from '../lib/ranked-boot-diagnostics.mjs';
+import {criticalBootRequest,rankedBootState,observeRankedBoot,rankedHttpFailureDetails} from '../lib/ranked-boot-diagnostics.mjs';
 const url='https://rhgrive3.github.io/actions/?relay=x';
 const moduleUrl='https://rhgrive3.github.io/actions/_versions/abc/patches/splatoon3/runtime/audio/weapon-recipes.mjs';
 function page(state={ready:true}) {const p=new EventEmitter();p.waitForFunction=async(fn,arg,options)=>{assert.equal(fn,rankedBootState);assert.equal(options.timeout,180000);assert.equal(options.polling,250,'must not depend on a renderer requestAnimationFrame');return {jsonValue:async()=>state,dispose:async()=>{p.disposed=true;}};};return p;}
@@ -94,4 +94,13 @@ test('public boot verifies fetched module bytes and separates neighboring deploy
  assert.throws(()=>verifyPublicResponse(u,Buffer.from('different'),manifest,url),/byte mismatch/);
  assert.equal(verifyPublicResponse(u.replace('/actions/','/actions-else/'),bytes,manifest,url),null);
  assert.equal(verifyPublicResponse(u.replace('rhgrive3.github.io','example.invalid'),bytes,manifest,url),null);
+});
+
+
+test('critical HTTP failures retain immutable expected hash, safe edge headers and request timing',async()=>{
+ const file='_versions/abc/patches/splatoon3/runtime/audio/weapon-recipes.mjs',sha='a'.repeat(64);
+ const r={status:()=>503,url:()=>moduleUrl,headers:()=>({'Content-Type':'text/html','X-Cache':'MISS','X-GitHub-Request-ID':'edge1','Set-Cookie':'private','Authorization':'private'}),request:()=>({resourceType:()=> 'script',timing:()=>({startTime:12,responseStart:30,responseEnd:31})})};
+ const details=rankedHttpFailureDetails(r,url,{[file]:sha});
+ assert.deepEqual(details.expectedArtifact,{file,sha256:sha});assert.deepEqual(details.responseHeaders,{'content-type':'text/html','x-cache':'MISS','x-github-request-id':'edge1'});assert.equal(details.requestTiming.responseEnd,31);
+ const p=page(),receipt={};const boot=observeRankedBoot(p,url,receipt,()=>new Promise(()=>{}),{artifacts:{[file]:sha}});p.emit('response',r);await assert.rejects(boot,/503/);assert.deepEqual(receipt.failures[0].expectedArtifact,{file,sha256:sha});assert.equal(receipt.status,'failed');
 });

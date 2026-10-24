@@ -46,7 +46,7 @@ test('Direct online world startup rejects Lemuria before network flow or world d
 });
 
 test('Direct world construction rejects unavailable source or placement before replacing authorities',async()=>{
- const method=section(main,'  async _buildWorld(map, flow = null) {','\n  // deck slabs over the sea:');
+ const method=section(main,'  async _buildWorld(map, flow = null, theme = null) {','\n  // deck slabs over the sea:');
  const sandbox=context();
  sandbox.UNAVAILABLE_NATIVE_STAGES.push({...definition,id:'placement-blocked',availability:'placement-unavailable',reason:'配置を確認できないため、現在プレイできません。'});
  const Game=vm.runInContext(`class Game {${method}};Game`,sandbox);

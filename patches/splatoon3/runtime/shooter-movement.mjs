@@ -38,11 +38,13 @@ export function shooterMovementActive(r) {
 // Read the world-space stick against the camera's aim, NOT the lagging body yaw.
 // This read-only predicate releases presentation/facing. Catalog shooters also
 // use it to select their post-shot movement gate; it never changes shot clocks.
+const RELEASE_FAMILIES = Object.freeze(['shooter', 'dualies', 'blaster', 'slosher', 'splatling']);
+
 export function reverseShotRelease(a) {
   if (!a || a.remote || a.alive === false || a.form !== 'kid' ||
       a.specialActive || a.superJumpState) return false;
   const family = a.weapon?.behaviorKind || a.weapon?.catalogRecord?.family || a.weapon?.kind;
-  if (!['shooter', 'dualies', 'blaster', 'slosher', 'splatling'].includes(family)) return false;
+  if (!RELEASE_FAMILIES.includes(family)) return false;
   const input = a.intent, r = a.weaponRunner, move = input?.move;
   if (!r || !move || input.fire || input.sub || r.aimingSub ||
       r.charging || r.streaming || r.dodge || r.lockT > 0 ||

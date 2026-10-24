@@ -29,12 +29,12 @@ export function installKitAudio(api,{listen,options}){
  function sound(a,kind,id,event,pos,volume=.7){
    if(!a||!KIT_AUDIO[kind+':'+id]?.events.includes(event))return;
    const isAlly=a!==G.local&&a.team===G.local?.team, relation=isAlly&&kind==='special'?.7:1;
-   const o=options(a,pos3(pos)||a.pos,volume*relation);if(event==='impact'||event==='explosion')o.pos=pos3(pos)||a.pos;
+   const o=options(a,pos3(pos)||a.pos,volume*relation,true);if(event==='impact'||event==='explosion')o.pos=pos3(pos)||a.pos;
    o.priority=kind==='special'?76:60;return G.audio?.playWeapon?.(kind+':'+id,event,o);
  }
  function sourceSound(a,source,pos,volume=.64){
    if(!a||!source)return null;
-   const o=options(a,pos3(pos)||a.pos,volume);o.priority=76;
+   const o=options(a,pos3(pos)||a.pos,volume,true);o.priority=76;
    return G.audio?.playWeapon?.(source,'fire',o);
  }
  function activation(a,id){if(!a||!SPECIAL_AUDIO_IDS.includes(id))return;
@@ -101,8 +101,10 @@ export function installKitAudio(api,{listen,options}){
      row.handle?.stop(.1);active.delete(this);row=null;
    }
    if(loopEvent&&this.alive&&KIT_AUDIO['special:'+id]&&(row||G.audio?._realS3Loader?.declares('special:'+id,loopEvent)!==false)){
-     if(!row){row={id,handle:G.audio?.loopWeapon?.('special:'+id,loopEvent,{...options(this,this.pos,.25),pitch:.85})};if(row.handle)active.set(this,row);}
-     row?.handle?.set({pos:this.isLocal?undefined:this.pos,volume:.25});
+     if(!row){row={id,local:!!this.isLocal,handle:G.audio?.loopWeapon?.('special:'+id,loopEvent,{...options(this,this.pos,.25),pitch:.85})};if(row.handle)active.set(this,row);}
+     // Remote positions remain live. An ownership transition still updates
+     // the handle once; stable local options already came from loop creation.
+     if(!this.isLocal||!row?.local){row?.handle?.set({pos:this.isLocal?undefined:this.pos,volume:.25});if(row)row.local=!!this.isLocal;}
    }return result;};
  listen('splatted',e=>stopActor(e?.victim));
  return {subCount:SUB_AUDIO_IDS.length,specialCount:SPECIAL_AUDIO_IDS.length,dispose(){stopAll();}};

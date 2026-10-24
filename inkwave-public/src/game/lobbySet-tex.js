@@ -10,7 +10,7 @@ export function loadSetFonts() {
   if (typeof FontFace === 'undefined') return (_fonts = Promise.resolve());
   const f = new FontFace(FONT, `url(${new URL('../../assets/fonts/TitanOne-latin.woff2', import.meta.url)})`);
   const r = new FontFace('LSRubik', `url(${new URL('../../assets/fonts/Rubik-latin.woff2', import.meta.url)})`, { weight: '400 900' });
-  return (_fonts = Promise.all([f.load(), r.load()]).then(([a, b]) => { document.fonts.add(a); document.fonts.add(b); }).catch(() => {}));
+  return (_fonts = Promise.all([f.load(), r.load()]).then(([a, b]) => { document.fonts.add(a); document.fonts.add(b); loadSetFonts.generation = (loadSetFonts.generation || 0) + 1; }).catch(() => {}));
 }
 const titan = (px) => `${px}px ${FONT}, "Arial Black", sans-serif`;
 const rubik = (px, w = 800) => `${w} ${px}px LSRubik, system-ui, sans-serif`;
@@ -73,7 +73,8 @@ export function createDecalAtlas() {
   const t = tex(c, false);
   const draw = () => { drawDecals(g); t.needsUpdate = true; };
   draw();
-  t.userData.ready = loadSetFonts().then(draw);
+  const generation = loadSetFonts.generation;
+  t.userData.ready = loadSetFonts().then(() => { if (loadSetFonts.generation !== generation) draw(); });
   return t;
 }
 function drawDecals(g) {
@@ -186,13 +187,15 @@ function drawGraffiti(g, W, H, rnd) {
     g.fillStyle = gr; g.fillText(l.ch, 0, 0);
   });
   // split band (team B) through the lower third of every letter, clipped to the glyph with source-atop
-  const tmp = canvas(W, H), t = tmp.getContext('2d');
+  const bandTop = Math.floor(H * .555) - 2, bandBottom = Math.ceil(H * .67) + 2;
+  const tmp = canvas(W, bandBottom - bandTop), t = tmp.getContext('2d');
+  t.translate(0, -bandTop);
   t.font = g.font; t.lineJoin = 'round';
   L.forEach((l) => { t.save(); t.translate(l.x + adv[0] * 0.4, l.y); t.rotate(l.r); t.scale(l.s, l.s); t.transform(1, 0, -0.18, 1, 0, 0); t.translate(-adv[0] * 0.4, 0); t.fillStyle = '#fff'; t.fillText(l.ch, 0, 0); t.restore(); });
   t.globalCompositeOperation = 'source-in';
   t.fillStyle = PB;
   t.beginPath(); t.moveTo(0, H * 0.6); for (let i = 0; i <= 20; i++) t.lineTo((W * i) / 20, H * (0.585 + 0.03 * Math.sin(i * 1.1))); t.lineTo(W, H * 0.66); for (let i = 20; i >= 0; i--) t.lineTo((W * i) / 20, H * (0.64 + 0.03 * Math.sin(i * 1.1 + 1))); t.fill();
-  g.drawImage(tmp, 0, 0);
+  g.drawImage(tmp, 0, bandTop);
   // shines
   each((l) => { g.fillStyle = PW; g.beginPath(); g.ellipse(-size * 0.02 + adv[0] * 0.18, -size * 0.52, size * 0.035, size * 0.1, -0.5, 0, 7); g.fill(); g.beginPath(); g.arc(adv[0] * 0.26, -size * 0.36, size * 0.022, 0, 7); g.fill(); });
   // drips from the letter bottoms
@@ -258,7 +261,8 @@ export function createLitAtlas() {
   const t = tex(c, true);
   const draw = () => { drawLit(g); t.needsUpdate = true; };
   draw();
-  t.userData.ready = loadSetFonts().then(draw);
+  const generation = loadSetFonts.generation;
+  t.userData.ready = loadSetFonts().then(() => { if (loadSetFonts.generation !== generation) draw(); });
   return t;
 }
 function drawLit(g) {

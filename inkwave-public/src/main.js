@@ -11,6 +11,7 @@ import { mapTheme,
   MAPS, DIFFICULTY, PLAYER, PROGRESSION, VERSION, MATCH, OFFLINE_MAPS, mapOfflineOk, mapNoBots, mapBossOk,
 } from './config.js';
 import { Level } from './world/level.js';
+import { LIGHTMAP_LAYOUTS } from './world/lightmap-assets.js';
 import { MAP_LAYOUTS } from './world/maps.js';
 import { PaintSystem } from './world/paint.js';
 import { createLevelMaterial, setLevelLamps } from './world/levelMaterial.js';
@@ -53,7 +54,17 @@ class Game {
   async boot() {
     const t0 = performance.now();
     // real top-down thumbnails for the stage cards, generated from each layout's geometry
-    for (const m of MAPS) { try { m.thumb = layoutThumbSVG(MAP_LAYOUTS[m.layout || m.id], m.theme); } catch (e) { console.warn('thumb', m.id, e); } }
+    for (const m of MAPS) Object.defineProperty(m, 'thumb', {
+      configurable: true, enumerable: true,
+      get() {
+        try {
+          const thumb = layoutThumbSVG(MAP_LAYOUTS[m.layout || m.id], m.theme);
+          Object.defineProperty(m, 'thumb', { value: thumb, writable: true, configurable: true, enumerable: true });
+          return thumb;
+        } catch (e) { console.warn('thumb', m.id, e); return undefined; }
+      },
+      set(value) { Object.defineProperty(m, 'thumb', { value, writable: true, configurable: true, enumerable: true }); },
+    });
     this.settings = G.settings = loadJSON('inkwave.settings', DEFAULT_SETTINGS);
     this.mobile = G.mobile = deviceProfile();
     // v1.1: fov became horizontal — migrate old vertical values once
@@ -216,6 +227,7 @@ class Game {
     const layoutId = map.layout || map.id;
     if (this.layoutId === layoutId) { this.mapDef = map; return; }
     if (this.levelMesh) { scene.remove(this.levelMesh, this.grateMesh); this.levelMesh.geometry.dispose(); this.grateMesh?.geometry.dispose(); this.levelMat.dispose(); this.grateMat?.dispose(); }
+    const decorTextures = this.decor?.takeStaticTextures?.();
     this.decor?.dispose?.();
     if (this.stageLightmap) { this.stageLightmap.dispose(); this.stageLightmap = null; }
     if (this.props) { this.props.dispose?.(); this.props = null; }
@@ -224,6 +236,7 @@ class Game {
     this.mapDef = map;
     const q = effectiveQuality(this.settings, this.mobile);
     // set dressing first: solid props hand back collision boxes that become part of the level (physics, nav, paint)
+    const lightmapMetadata = this._prefetchLightmapMetadata?.(layoutId);
     const colliders = [];
     if (this.PropKit) {
       try {
@@ -237,7 +250,7 @@ class Game {
     }
     const level = (G.level = new Level(MAP_LAYOUTS[layoutId], colliders));
     G.physics = new Physics(level);
-    const lightmap = await this._loadLightmap(level, layoutId);
+    const lightmap = await this._loadLightmap(level, layoutId, lightmapMetadata);
     this.stageLightmap = lightmap;
     this.murals.userData.setStage?.(layoutId);   // the mural atlas's stage decals (ids 4…11) for this layout
     G.paint = new PaintSystem(G.renderer, level, { atlasSize: q.paintAtlas, maxDensity: q.paintAtlas >= 4096 ? 30 : 18 });
@@ -253,7 +266,7 @@ class Game {
     this.grateMesh = new THREE.Mesh(gg, this.grateMat);
     this.grateMesh.receiveShadow = true; this.grateMesh.visible = gg.index.count > 0;
     scene.add(this.grateMesh);
-    this.decor = new Decor(scene, level);
+    this.decor = new Decor(scene, level, decorTextures);
     G.nav = new NavGraph(level, G.physics);
     this.minimap = new Minimap(level, G.paint);
     if (G.env?.rebuildForArena) G.env.rebuildForArena(level.bounds, this._footprint(level));
@@ -265,9 +278,22 @@ class Game {
   _shadowRoots() { this.shadowCache?.setStaticRoots([this.levelMesh, this.props?.group, this.decor?.group, G.env?.root]); }
 
   // Baked AO (tools/bake-ao.mjs). Applied only when the bake matches this exact layout.
-  async _loadLightmap(level, layoutId) {
+  _prefetchLightmapMetadata(layoutId) {
+    if (typeof LIGHTMAP_LAYOUTS !== 'undefined' && LIGHTMAP_LAYOUTS && !LIGHTMAP_LAYOUTS.includes(layoutId)) return Promise.resolve({ absent: true });
+    const meta = this._iwLightmapMetadata?.get(layoutId);
+    if (meta) return Promise.resolve({ meta });
     try {
-      const meta = await (await fetch(`assets/lightmaps/${layoutId}.json`, { cache: 'no-cache' })).json();
+      return fetch(`assets/lightmaps/${layoutId}.json`, { cache: 'no-cache' }).then(response => response.json())
+        .then(meta => ({ meta }), error => ({ error }));
+    } catch (error) { return Promise.resolve({ error }); }
+  }
+
+  async _loadLightmap(level, layoutId, pendingMetadata = null) {
+    try {
+      const prepared = pendingMetadata ? await pendingMetadata : null;
+      if (prepared?.absent) { for (const f of level.faces) f.light = null; return null; }
+      if (prepared?.error) throw prepared.error;
+      const meta = prepared ? prepared.meta : await (await fetch(`assets/lightmaps/${layoutId}.json`, { cache: 'no-cache' })).json();
       level.layoutLightmap(meta.ppm, meta.size);
       if (level.layoutHash !== meta.hash) { console.warn(`[inkwave] lightmap for ${layoutId} is stale — re-run tools/bake-ao.mjs`); level.lightSize = 0; for (const f of level.faces) f.light = null; return null; }
       const tex = await new THREE.TextureLoader().loadAsync(`assets/lightmaps/${layoutId}.png?h=${meta.hash}`);

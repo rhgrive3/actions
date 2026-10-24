@@ -6,6 +6,52 @@ export function installMusicIdle(MusicEngine, env = globalThis) {
   Object.defineProperty(P, INSTALLED, { value: true });
   const play = P.play, start = P._startTimer, tick = P._tick, dispose = P.dispose;
   const state = m => m._musicIdle || (m._musicIdle = { enabled: true, wanted: undefined });
+  function clearRetirement(s) {
+    if (s.retireTimer != null) env.clearTimeout?.(s.retireTimer);
+    s.retireTimer = null;
+    s.retireContext?.removeEventListener?.('statechange', s.retireListener);
+    s.retireContext = null; s.retireListener = null;
+  }
+  function scheduleRetirement(m) {
+    const s = state(m), ctx = m.ctx;
+    if (s.retireTimer != null) env.clearTimeout?.(s.retireTimer);
+    s.retireTimer = null;
+    let deadline = Infinity;
+    for (const p of m.players) {
+      if (p?.element && !p.disposed && p !== m._preloadedFile?.player && p._pausedAfterFade &&
+          p.element.paused && Number.isFinite(p.stopAt)) deadline = Math.min(deadline, p.stopAt);
+    }
+    if (!Number.isFinite(deadline) || !ctx || m.offline) { clearRetirement(s); return; }
+    if (ctx.state === 'closed') {
+      // A closed clock can never finish a pending deadline, and these streams
+      // have already paused. Keep current live and primed players untouched.
+      for (let i = m.players.length - 1; i >= 0; i--) {
+        const p = m.players[i];
+        if (p?.element && p !== m._preloadedFile?.player && p._pausedAfterFade && p.element.paused && Number.isFinite(p.stopAt)) {
+          p.dispose(); m.players.splice(i, 1); if (m.current === p) m.current = null;
+        }
+      }
+      clearRetirement(s); return;
+    }
+    if (s.retireContext !== ctx) {
+      clearRetirement(s);
+      s.retireContext = ctx;
+      s.retireListener = () => {
+        if (m._musicIdle !== s) return;
+        // Check only faded/paused media, without waking the note scheduler.
+        for (let i = m.players.length - 1; i >= 0; i--) m.retireStream(m.players[i]);
+        scheduleRetirement(m);
+      };
+      ctx.addEventListener?.('statechange', s.retireListener);
+    }
+    if (ctx.state === 'running' && env.setTimeout) {
+      const listener = s.retireListener;
+      s.retireTimer = env.setTimeout(() => {
+        if (m._musicIdle !== s) return;
+        s.retireTimer = null; listener();
+      }, Math.max(20, (deadline - m.now()) * 1000 + 10));
+    }
+  }
   function stopTimer(m) {
     if (m.worker) { const w = m.worker; m.worker = null; w.onmessage = w.onerror = null; w.terminate(); }
     if (m.timer != null) env.clearInterval(m.timer);
@@ -16,6 +62,7 @@ export function installMusicIdle(MusicEngine, env = globalThis) {
     if (s.enabled === enabled) return;
     s.enabled = enabled;
     if (!enabled) {
+      clearRetirement(s);
       if (s.wanted === undefined && this.current) s.wanted = { track: this.current.id, opts: { fade: 0.05 } };
       for (const p of this.players) p.dispose();
       this.players.length = 0; this.current = null;
@@ -31,10 +78,14 @@ export function installMusicIdle(MusicEngine, env = globalThis) {
   };
   P.retireStream = function (player) {
     if (!player?.element || player === this._preloadedFile?.player || !this.players.includes(player)) return false;
-    if (!player.disposed && (!player.element.paused || !Number.isFinite(player.stopAt) || this.now() < player.stopAt)) return false;
+    if (!player.disposed && (!player.element.paused || !Number.isFinite(player.stopAt) || this.now() < player.stopAt)) {
+      if (player._pausedAfterFade) scheduleRetirement(this);
+      return false;
+    }
     player.dispose();
     const at = this.players.indexOf(player); if (at >= 0) this.players.splice(at, 1);
     if (this.current === player) this.current = null;
+    scheduleRetirement(this);
     return true;
   };
   P._startTimer = function () {
@@ -51,6 +102,7 @@ export function installMusicIdle(MusicEngine, env = globalThis) {
     return result;
   };
   P.dispose = function (...args) {
+    if (this._musicIdle) clearRetirement(this._musicIdle);
     stopTimer(this); this._musicIdle = null;
     return dispose.apply(this, args);
   };

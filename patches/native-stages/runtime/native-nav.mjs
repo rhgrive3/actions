@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+const EMPTY_CELL = Object.freeze([]);
 import { PLAYER } from '../../../src/config.js';
 import { nativeClimbTransition } from './native-climb.mjs';
 import {nativeDropTransition} from './native-drop.mjs';
@@ -59,16 +60,17 @@ export function* buildNativeNavSteps(graph){
  const L=graph.level,w=L.triangleWorld,B=L.bounds,st=graph.step,walkRise=L.manifest.sourceNavigation?.highDrops?Math.min(.5,PLAYER.stepUp):.5;
  graph.x0=B.minX+st*.5;graph.z0=B.minZ+st*.5;
  graph.nx=Math.floor((B.maxX-B.minX)/st);graph.nz=Math.floor((B.maxZ-B.minZ)/st);
- graph.cells=Array.from({length:graph.nx*graph.nz},()=>[]);
+ graph.cells=new Array(graph.nx*graph.nz).fill(EMPTY_CELL);
  const top=w.nodes[4]+1,bottom=w.nodes[1]-1;
  for(let iz=0;iz<graph.nz;iz++)for(let ix=0;ix<graph.nx;ix++){
-  const x=graph.x0+ix*st,z=graph.z0+iz*st,list=graph.cells[iz*graph.nx+ix];let from=top;
+  const x=graph.x0+ix*st,z=graph.z0+iz*st;let list=EMPTY_CELL,from=top;
   for(let layer=0;layer<8&&from>bottom;layer++){
    const h=w.ray(origin.set(x,from,z),down,from-bottom,WALKABLE_RAY,rayHit);if(!h)break;
    const y=h.point.y;from=y-.2;
    if(!graph.physics.bodyFits(origin.set(x,y+.01,z),PLAYER.radius+.04,.32,PLAYER.height,false,.01))continue;
    const node={id:graph.nodes.length,x,y,z,ix,iz,nb:[],zone:-1,nativePaintable:!!(h.flags&2)&&L.data.triangleFace[h.triangle]>=0};
    for(let t=0;t<2;t++){const p=L.spawnPads[t];if(Math.hypot(x-p.x,z-p.z)<L.spawnBarrier+.6&&y>p.y-1)node.zone=t;}
+   if(list===EMPTY_CELL)graph.cells[iz*graph.nx+ix]=list=[];
    graph.nodes.push(node);list.push(node.id);
   }
   yield 'sample';

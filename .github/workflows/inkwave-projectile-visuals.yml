@@ -3,6 +3,11 @@ name: INKWAVE projectile visuals
 on:
   pull_request:
     paths:
+      - 'scripts/tests/inkwave-projectile-capture-ui.test.mjs'
+      - 'patches/splatoon3/tests/slosher-draw-size-1014.test.mjs'
+      - 'patches/splatoon3/tests/roller-draw-radius.test.mjs'
+      - 'tests/ink-flight/model.test.mjs'
+      - 'scripts/tests/inkwave-build-packaging.test.mjs'
       - 'patches/splatoon3/projectile-visual-adapter.mjs'
       - 'patches/splatoon3/runtime/projectile-visual*.mjs'
       - 'patches/splatoon3/reference/projectile-*.json'

@@ -5,12 +5,16 @@
 // Keep this wire major in step with src/net/transport.js. A room also pins the
 // client's gameplay compatibility token, not UI-only asset revisions.
 const WIRE_MAJOR = '2';
+// Older pinned rooms keep their original START exchange during relay rollouts.
+const START_ADMISSION_COMPAT = 'iw-gameplay-20261023-start-admission-v1';
 const ROOM_CODE = /^[BCEFGHJKLMNPQRTUVXYZ23456789]{5}$/;
 const COMPAT_TOKEN = /^[a-zA-Z0-9_-]{8,80}$/;
 const MAX_FRAME_BYTES = 64 * 1024;
 const FRAME_RATE = 80, FRAME_BURST = 160;
 const BYTE_RATE = 256 * 1024, BYTE_BURST = 512 * 1024;
 const MAX_BACKLOG_BYTES = 512 * 1024;
+const JOIN_RATE = 4, JOIN_BURST = 16;
+import { validNetworkAppearance } from '../../patches/reliability/session-admission.mjs';
 import { utf8ByteLength } from '../../patches/network-replication/utf8-length.mjs';
 const decoder = new TextDecoder();
 
@@ -19,7 +23,7 @@ function validRelayPayload(payload) {
   try {
     const data = JSON.parse(payload);
     return data !== null && !Array.isArray(data) &&
-      typeof data.k === 'string' && data.k.length > 0 && data.k.length <= 32;
+      typeof data.k === 'string' && data.k.length > 0 && data.k.length <= 32 ? data : false;
   } catch { return false; }
 }
 
@@ -86,15 +90,12 @@ export class RoomDurableObject {
     this.hostId = null;
     this.locked = false;
     this.compat = null;
+    this.joinBudgetAt = Date.now();
+    this.joinsLeft = JOIN_BURST;
     this.hibernationEnabled = typeof state?.acceptWebSocket === 'function';
-    if (typeof state?.setWebSocketAutoResponse === 'function') {
-      try {
-        const pair = typeof WebSocketRequestResponsePair === 'function'
-          ? new WebSocketRequestResponsePair('ping', 'pong')
-          : { request: 'ping', response: 'pong' };
-        state.setWebSocketAutoResponse(pair);
-      } catch {}
-    }
+    // Heartbeats must enter _handleMessage and spend the same frame/byte quotas.
+    // Clear a previously installed runtime auto-response after a rolling upgrade.
+    try { state.setWebSocketAutoResponse?.(); } catch {}
     this._restoreHibernatedSockets();
   }
 
@@ -109,6 +110,17 @@ export class RoomDurableObject {
       let att = null;
       try { att = ws.deserializeAttachment?.(); } catch {}
       if (!att || typeof att !== 'object' || !att.id || att.closed) continue;
+      if (this.members.has(att.id)) {
+        try { ws.serializeAttachment?.({ closed: true }); ws.close(1008, 'Duplicate member identity'); } catch {}
+        continue;
+      }
+      if (Number.isFinite(att.joinBudgetAt) && Number.isFinite(att.joinsLeft) &&
+          att.joinsLeft >= 0 && att.joinsLeft <= JOIN_BURST &&
+          (this._restoredJoinBudgetAt === undefined || att.joinBudgetAt > this._restoredJoinBudgetAt ||
+           (att.joinBudgetAt === this._restoredJoinBudgetAt && att.joinsLeft < this.joinsLeft))) {
+        this._restoredJoinBudgetAt = this.joinBudgetAt = att.joinBudgetAt;
+        this.joinsLeft = att.joinsLeft;
+      }
       if (att.compat && (!this.compat || att.isHost)) this.compat = att.compat;
       if (typeof att.locked === 'boolean' && (att.isHost || !this.hostId)) this.locked = att.locked;
       if (att.isHost && !this.hostId) this.hostId = att.id;
@@ -121,6 +133,8 @@ export class RoomDurableObject {
         framesLeft: Number.isFinite(att.framesLeft) ? att.framesLeft : FRAME_BURST,
         bytesLeft: Number.isFinite(att.bytesLeft) ? att.bytesLeft : BYTE_BURST,
         relayClock: att.relayClock === true,
+        emoteAt: Number.isFinite(att.emoteAt) ? att.emoteAt : null,
+        attachmentSnapshot: att,
       });
     }
     if (!this.hostId && this.members.size > 0) {
@@ -138,7 +152,7 @@ export class RoomDurableObject {
   _syncMemberAttachment(m) {
     if (!m || !m.ws) return;
     try {
-      m.ws.serializeAttachment?.({
+      const next = {
         id: m.id,
         name: m.name,
         joinedAt: m.joinedAt,
@@ -149,7 +163,13 @@ export class RoomDurableObject {
         locked: this.locked,
         compat: this.compat,
         relayClock: m.relayClock === true,
-      });
+        emoteAt: m.emoteAt ?? null,
+        ...(m.id === this.hostId ? { joinBudgetAt: this.joinBudgetAt, joinsLeft: this.joinsLeft } : {}),
+      };
+      const previous = m.attachmentSnapshot, keys = Object.keys(next);
+      if (previous && Object.keys(previous).length === keys.length && keys.every(key => previous[key] === next[key])) return;
+      m.ws.serializeAttachment?.(next);
+      m.attachmentSnapshot = next;
     } catch {}
   }
 
@@ -174,9 +194,11 @@ export class RoomDurableObject {
     const isCreate = url.searchParams.get('create') === '1';
 
     // Validate compatibility *before* admitting a socket, including after host migration.
-    if (this.members.size > 0 && compat !== this.compat)
+    if (!isCreate && this.members.size > 0 && compat !== this.compat)
       return new Response('Incompatible game version: refresh this tab', { status: 409 });
 
+    // Room-wide admission limits cover JOIN/LEAVE fanout, before socket allocation.
+    if (!this._admitJoin(false)) return new Response('Room reconnect limit; try again shortly', { status: 429 });
     const pair = new WebSocketPair();
     const [client, server] = Object.values(pair);
 
@@ -210,13 +232,32 @@ export class RoomDurableObject {
     }
 
     if (this.members.size === 0) this.compat = compat;
-    this.handleSession(server, name, this.hibernationEnabled, url.searchParams.get('relayClock') === '1');
+    if (this.handleSession(server, name, this.hibernationEnabled, url.searchParams.get('relayClock') === '1') === false)
+      return new Response('Could not join room; try again shortly', { status: 503 });
 
     return new Response(null, { status: 101, webSocket: client });
   }
 
+  _admitJoin(consume = true) {
+    const at = Date.now();
+    const elapsed = Math.max(0, (at - this.joinBudgetAt) / 1000);
+    this.joinsLeft = Math.min(JOIN_BURST, this.joinsLeft + elapsed * JOIN_RATE);
+    this.joinBudgetAt = at;
+    if (this.joinsLeft < 1) return false;
+    if (consume) this.joinsLeft--;
+    return true;
+  }
+
   handleSession(ws, name, useHibernation = false, relayClock = false) {
-    const id = 'p_' + Math.random().toString(36).substring(2, 9);
+    if (!this._admitJoin()) { try { ws.close(1008, 'Room reconnect limit'); } catch {} return false; }
+    // Allocate identity before accept/WELCOME/JOIN. Never overwrite an old socket.
+    let id = null;
+    for (let attempt = 0; attempt < 8; attempt++) {
+      let candidate;
+      try { candidate = 'p_' + crypto.randomUUID(); } catch { break; }
+      if (!this.members.has(candidate)) { id = candidate; break; }
+    }
+    if (!id) { try { ws.close(1013, 'Could not allocate member identity'); } catch {} return false; }
     const joinedAt = Date.now();
 
     if (useHibernation && typeof this.state?.acceptWebSocket === 'function') {
@@ -234,26 +275,38 @@ export class RoomDurableObject {
     const memberList = Array.from(this.members.values()).map(m => ({ id: m.id, name: m.name }));
     memberList.push({ id, name });
 
-    // Send welcome frame
-    ws.send(JSON.stringify({
-      t: 'welcome',
-      proto: Number(WIRE_MAJOR),
-      compat: this.compat,
-      ...(relayClock ? { relayClock: 1 } : {}),
-      id: id,
-      host: this.hostId,
-      members: memberList
-    }));
-
-    // Broadcast join frame to existing members
+    const notified = [];
+    const rejectJoin = () => {
+      try { ws.serializeAttachment?.({ closed: true }); ws.close(1013, 'Could not announce room membership'); } catch {}
+      if (this.members.size === 0 && this.hostId === id) { this.hostId = null; this.locked = false; this.compat = null; }
+      // Earlier successful JOIN recipients must undo exactly this provisional ID.
+      const undo = JSON.stringify({ t: 'leave', id, host: this.hostId });
+      for (const member of notified) if (this.members.get(member.id) === member && !relaySend(member.ws, undo)) {
+        try { member.ws.close(1013, 'Membership delivery failed'); } catch {}
+        this._cleanupMember(member.id, member.ws);
+      }
+      this._syncAttachments();
+      return false;
+    };
+    // Admission commits only if WELCOME and every current member's JOIN can be
+    // accepted locally. Any failure explicitly closes/rolls back the newcomer.
+    if (!relaySend(ws, JSON.stringify({
+      t: 'welcome', proto: Number(WIRE_MAJOR), compat: this.compat,
+      ...(relayClock ? { relayClock: 1 } : {}), id, host: this.hostId, members: memberList
+    }))) return rejectJoin();
     const joinMsg = JSON.stringify({ t: 'join', m: { id, name } });
-    for (const [_, member] of this.members) {
-      relaySend(member.ws, joinMsg);
+    for (const member of this.members.values()) {
+      if (!relaySend(member.ws, joinMsg)) {
+        try { member.ws.close(1013, 'Membership delivery failed'); } catch {}
+        this._cleanupMember(member.id, member.ws);
+        return rejectJoin();
+      }
+      notified.push(member);
     }
 
     // Admission budgets are per authenticated socket and reset on reconnect.
     const memberEntry = {
-      id, name, ws, joinedAt, relayClock,
+      id, name, ws, joinedAt, relayClock, emoteAt: null,
       budgetAt: Date.now(), framesLeft: FRAME_BURST, bytesLeft: BYTE_BURST
     };
     this.members.set(id, memberEntry);
@@ -294,6 +347,13 @@ export class RoomDurableObject {
   }
 
   _handleMessage(id, ws, rawData) {
+    if (this.members.get(id)?.ws !== ws) return;
+    // Inspect the actual view, not its backing buffer, before decoding bytes.
+    if ((rawData instanceof ArrayBuffer || ArrayBuffer.isView(rawData)) && rawData.byteLength > MAX_FRAME_BYTES) {
+      try { ws.close(1009, 'Message too large'); } catch {}
+      this._cleanupMember(id, ws);
+      return;
+    }
     let s = '';
     if (typeof rawData === 'string') s = rawData;
     else if (rawData instanceof ArrayBuffer) s = decoder.decode(rawData);
@@ -330,12 +390,38 @@ export class RoomDurableObject {
     // Broadcast message: "b|<json>"
     if (s.startsWith('b|')) {
       const payload = s.slice(2);
-      if (!validRelayPayload(payload)) return;
-      const forward = `m|${id}|${payload}`;
-      const stamped = `m|${id}|@${Date.now()}|${payload}`;
+      const data = validRelayPayload(payload);
+      if (!data || !this._admitSemantic(m, data)) return;
+      if (data.k === 'start' && this.compat === START_ADMISSION_COMPAT) {
+        // Admission and this check run synchronously in the same DO event. A
+        // JOIN accepted before this point must appear once in the human roster.
+        if (id !== this.hostId) return;
+        if (typeof data.id !== 'string' || !data.id.length || data.id.length > 64) return;
+        const humans = new Set(), nids = new Set();
+        let ok = !this.locked && data.host === id && data.proto === Number(WIRE_MAJOR) &&
+          data.compat === this.compat && Array.isArray(data.roster) &&
+          data.roster.length > 0 && data.roster.length <= 8;
+        if (ok) for (const r of data.roster) {
+          if (!r || typeof r.bot !== 'boolean' || !Number.isSafeInteger(r.nid) ||
+              r.nid < 0 || nids.has(r.nid) || !validNetworkAppearance(r.style) || (r.bot ? r.owner !== id :
+                (!this.members.has(r.owner) || humans.has(r.owner)))) { ok = false; break; }
+          nids.add(r.nid);
+          if (!r.bot) humans.add(r.owner);
+        }
+        ok = ok && humans.size === this.members.size;
+        // No start is forwarded if the host cannot receive its result.
+        if (!relaySend(ws, JSON.stringify({ t: 'start_result', id: data.id, ok }))) return;
+        if (!ok) return;
+        this.locked = true;
+        this._syncAttachments();
+      }
+      let forward, stamped;
+      const stampTime = Date.now();
       for (const [targetId, member] of this.members) {
         if (targetId !== id) {
-          if (!relaySend(member.ws, member.relayClock ? stamped : forward) && member.ws.closed) {
+          if (!relaySend(member.ws, member.relayClock
+            ? (stamped ??= `m|${id}|@${stampTime}|${payload}`)
+            : (forward ??= `m|${id}|${payload}`)) && member.ws.closed) {
             this._cleanupMember(targetId, member.ws);
           }
         }
@@ -349,21 +435,22 @@ export class RoomDurableObject {
       if (firstPipe !== -1) {
         const targetId = s.slice(2, firstPipe);
         const payload = s.slice(firstPipe + 1);
-        if (!validRelayPayload(payload) || targetId.length > 40) return;
+        const data = validRelayPayload(payload);
+        if (!data || data.k === 'start' || targetId.length > 40 || !this._admitSemantic(m, data)) return;
         const target = this.members.get(targetId);
+        let delivered = false;
         if (target) {
           const frame = target.relayClock ? `m|${id}|@${Date.now()}|${payload}` : `m|${id}|${payload}`;
-          if (!relaySend(target.ws, frame) && target.ws.closed) {
+          delivered = relaySend(target.ws, frame);
+          if (!delivered) {
+            // A throwing send is just as undeliverable as excess backlog.
+            // Publish ownership transfer before the matching negative receipt.
+            try { target.ws.close(1013, 'Delivery failed'); } catch {}
             this._cleanupMember(targetId, target.ws);
           }
-        } else {
-          // Return a delivery failure for directed combat events. Do not
-          // silently lose a hit when its owner has just disconnected.
-          let hit;
-          try { hit = JSON.parse(payload); } catch {}
-          if (hit?.k === 'hit' && Number.isInteger(hit.seq) && hit.seq >= 0)
-            relaySend(ws, `m|__relay__|${JSON.stringify({k:'hit_nack',seq:hit.seq,to:targetId})}`);
         }
+        if (!delivered && data.k === 'hit' && Number.isSafeInteger(data.seq) && data.seq >= 0)
+          relaySend(ws, `m|__relay__|${JSON.stringify({k:'hit_nack',seq:data.seq,to:targetId})}`);
       }
       return;
     }
@@ -378,6 +465,17 @@ export class RoomDurableObject {
         }
       } catch (e) {}
     }
+  }
+
+  _admitSemantic(member, data) {
+    if (data.k === 'me' && !validNetworkAppearance(data.style)) return false;
+    if (data.k !== 'emote') return true;
+    if (this.locked || !['booyah', 'wave', 'dance', 'flex'].includes(data.n)) return false;
+    const at = Date.now();
+    if (member.emoteAt !== null && at - member.emoteAt < 1300) return false;
+    member.emoteAt = at;
+    this._syncMemberAttachment(member);
+    return true;
   }
 
   _cleanupMember(id, ws) {

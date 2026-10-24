@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'package.json'
       - "inkwave-public/**"
       - "scripts/build-inkwave.mjs"
       - "scripts/check-inkwave-patches.mjs"

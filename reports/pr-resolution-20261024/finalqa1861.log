@@ -1,0 +1,27 @@
+✔ actual historical gate admits the exact independently verified cache/closure integration (3.883038ms)
+✔ arbitrary current runtime drift cannot inherit the historical identity claim (5.162942ms)
+✔ the immutable historical reference is checked independently of the current source (0.63204ms)
+✔ wall-only route retains exact-head, real build, full verifier and always evidence (3.667318ms)
+✔ all event and flag combinations isolate wall from full, network and broad render jobs (1.255639ms)
+✔ missing identity, real build, source/emitted contracts or full verifier fail closed (22.749653ms)
+✔ scope, timeout, evidence, failure suppression and concurrency mutations are rejected (8.452498ms)
+✔ queue Turf and network job bodies match the source-routing and fetch epoch (0.930554ms)
+✔ original synthetic fixture has deterministic geometry/maps and both UV sets (39.937317ms)
+✔ reject wrong identity, truncated buffers, unsafe texture URIs and invalid indices (3.343936ms)
+✔ reject NaN, wrong scene graph, hidden external buffers, skin or morph claims (1.746489ms)
+✔ scenario gate requires the exact 24 rendered cases and nonblank pixels (1.15577ms)
+✔ lifecycle gate rejects missing cycles, retained resources and skipped disposal (4.977176ms)
+✔ file server rejects directory traversal (0.372735ms)
+﹣ explicit actual candidate is optional local-only structural evidence (0.133469ms) # SKIP
+﹣ existing production build identity is optional read-only local evidence (0.089093ms) # SKIP
+✔ core planner merges named and namespace imports without aliasing duplicate exports (0.417101ms)
+✔ named-only addon scan ignores THREE diagnostic message strings (0.26886ms)
+✔ Three core SHA reconstruction uses the same post-esbuild literal compaction as the production build (7.805325ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 2
+ℹ todo 0
+ℹ duration_ms 1041.672696

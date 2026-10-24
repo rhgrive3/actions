@@ -26,8 +26,9 @@ function createPool(THREE) {
   mesh.name = 's3-crab-detached-splashes';
   mesh.count = 0; mesh.visible = false;
   mesh.castShadow = false; mesh.receiveShadow = false;
-  // Moving instances would otherwise retain an obsolete computed bound.
-  mesh.frustumCulled = false;
+  // Refreshed from accepted positions in the existing upload scan.
+  mesh.boundingSphere = new THREE.Sphere();
+  mesh.frustumCulled = true;
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(CAPACITY * 3), 3);
   mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
@@ -61,7 +62,7 @@ export function updateCrabSplashVisuals(system, game, THREE) {
     return 0;
   }
   const queue = system._s3SplashDrops;
-  let count = 0;
+  let count = 0, minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
   if (Array.isArray(queue)) {
     // Both scan work and GPU storage are bounded even for an oversized fixture.
     const limit = Math.min(queue.length, CAPACITY);
@@ -76,6 +77,8 @@ export function updateCrabSplashVisuals(system, game, THREE) {
       pool.mesh.setMatrixAt(count, pool.matrix);
       setDropColor(pool.color, drop, game);
       pool.mesh.setColorAt(count, pool.color);
+      minX = Math.min(minX, pos.x - radius); minY = Math.min(minY, pos.y - radius); minZ = Math.min(minZ, pos.z - radius);
+      maxX = Math.max(maxX, pos.x + radius); maxY = Math.max(maxY, pos.y + radius); maxZ = Math.max(maxZ, pos.z + radius);
       count++;
     }
   }
@@ -84,6 +87,8 @@ export function updateCrabSplashVisuals(system, game, THREE) {
     if (mesh.parent && mesh.parent !== scene) mesh.removeFromParent();
     mesh.count = count; mesh.visible = count > 0;
     if (count) {
+      mesh.boundingSphere.center.set((minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
+      mesh.boundingSphere.radius = Math.hypot(maxX - minX, maxY - minY, maxZ - minZ) / 2 + 1e-5;
       if (mesh.parent !== scene) scene.add(mesh);
       mesh.instanceMatrix.needsUpdate = true;
       mesh.instanceColor.needsUpdate = true;

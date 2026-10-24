@@ -94,8 +94,10 @@ export class Minimap {
   _build() {
     const W = this.w, H = this.h, N = W * H, lvl = this.level, s = this.s;
     const hgt = (this.hgt = new Float32Array(N).fill(-99));
-    const top = (this.topBlock = new Int32Array(N).fill(-1));
-    const nrm = (this.nrm = new Float32Array(N * 2));
+    // Keep the -1 sea sentinel and fall back for custom/nonsequential block IDs.
+    const BlockIds = lvl.blocks.every((b) => Number.isInteger(b.id) && b.id >= 0 && b.id <= 32767) ? Int16Array : Int32Array;
+    const top = (this.topBlock = new BlockIds(N).fill(-1));
+    this.nrm = null; // Static legacy normals are recoverable from topBlock.
     const tc = { x: 0, y: 0 };
     // 1) rasterise every solid block's top surface (ramps included) → height + owning block + normal
     for (const b of lvl.blocks) {
@@ -109,7 +111,6 @@ export class Minimap {
       if (x0 > x1) [x0, x1] = [x1, x0]; if (y0 > y1) [y0, y1] = [y1, y0];
       const px0 = Math.max(0, Math.floor(x0)), px1 = Math.min(W - 1, Math.ceil(x1)), py0 = Math.max(0, Math.floor(y0)), py1 = Math.min(H - 1, Math.ceil(y1));
       const a0 = b.axes[0], a2 = b.axes[2];
-      const cnx = this.flip ? n.x : -n.x, cny = this.flip ? n.z : -n.z;   // normal in canvas space
       for (let py = py0; py <= py1; py++) {
         const z = this._worldZ(py + 0.5);
         for (let px = px0; px <= px1; px++) {
@@ -118,7 +119,7 @@ export class Minimap {
           const dx = x - b.center.x, dy = y - 0.01 - b.center.y, dz = z - b.center.z;
           if (Math.abs(dx * a0.x + dy * a0.y + dz * a0.z) > b.half.x || Math.abs(dx * a2.x + dy * a2.y + dz * a2.z) > b.half.z) continue;
           const i = py * W + px;
-          if (y > hgt[i]) { hgt[i] = y; top[i] = b.id; nrm[i * 2] = cnx; nrm[i * 2 + 1] = cny; }
+          if (y > hgt[i]) { hgt[i] = y; top[i] = b.id; }
         }
       }
     }
@@ -214,7 +215,8 @@ export class Minimap {
         // height tint: trenches darker, raised decks lighter
         let lum = 0.9 + Math.max(-0.14, Math.min(0.16, h * 0.035));
         // hillshade for tilted surfaces (ramps)
-        const nx = nrm[i * 2], ny = nrm[i * 2 + 1];
+        const nx = lvl.native ? nrm[i * 2] : Math.fround(this.flip ? b.axes[1].x : -b.axes[1].x);
+        const ny = lvl.native ? nrm[i * 2 + 1] : Math.fround(this.flip ? b.axes[1].z : -b.axes[1].z);
         if (nx * nx + ny * ny > 0.002) lum *= 1 + (nx * Lx + ny * Ly) * 1.6;
         // soft cast shadow from taller geometry toward the light
         let sh = 0;
@@ -282,6 +284,10 @@ export class Minimap {
     for (let i = a0; i < a1; i++) {
       const k = cell[i];
       if (k < 0) { al[i] = 0; continue; }
+      if (this.level.native) {
+        const team = grid[k]; al[i] = team ? 1 : 0; tm[i] = team; tt[i] = team || 1;
+        continue;
+      }
       const sx = sxA[i], sy = syA[i];
       const g00 = grid[k], g10 = grid[k + sx], g01 = grid[k + sy], g11 = grid[k + sx + sy];
       if (g00 === g10 && g00 === g01 && g00 === g11) {           // uniform cell block: no edge here (fast path)

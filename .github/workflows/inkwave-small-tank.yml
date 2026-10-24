@@ -2,6 +2,7 @@ name: INKWAVE narrow HUD tank regression
 on:
   pull_request:
     paths:
+      - 'patches/local-quality/tests/s3-hud-look.test.mjs'
       - 'scripts/prepare-inkwave-ci-apt.py'
       - 'inkwave-public/src/ui/hud.js'
       - 'inkwave-public/styles/hud.css'
@@ -32,7 +33,6 @@ jobs:
       max-parallel: 2
       matrix:
         browser: [chromium, webkit]
-        dpr: [1, 2]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -47,13 +47,35 @@ jobs:
       - name: Negative control, normal geometry parity and resize regression
         run: node --test scripts/tests/inkwave-range-menu-entry.test.mjs patches/local-quality/tests/hud-tank-small-viewport.test.mjs patches/local-quality/tests/hud-tank-resize-observer.test.mjs patches/local-quality/tests/s3-hud-look.test.mjs
       - run: node scripts/build-inkwave.mjs inkwave-public .ci-scratch/small-tank-site
-      - name: Real ${{ matrix.browser }} small startup and resize at DPR ${{ matrix.dpr }}
+      # Separate always-run DPR steps preserve failure isolation while sharing setup/build.
+      - name: Real ${{ matrix.browser }} small startup and resize at DPR 1
+        id: dpr1
+        continue-on-error: true
         run: |
           browser_arg=""
           if [ "${{ matrix.browser }}" = "webkit" ]; then browser_arg="--webkit"; fi
-          node scripts/check-inkwave-small-tank.mjs .ci-scratch/small-tank-site .ci-scratch/small-tank-evidence $browser_arg --dpr ${{ matrix.dpr }}
+          node scripts/check-inkwave-small-tank.mjs .ci-scratch/small-tank-site .ci-scratch/small-tank-evidence/dpr1 $browser_arg --dpr 1
+      - name: Real ${{ matrix.browser }} small startup and resize at DPR 2
+        id: dpr2
+        if: ${{ !cancelled() && steps.dpr1.outcome != 'skipped' }}
+        continue-on-error: true
+        run: |
+          browser_arg=""
+          if [ "${{ matrix.browser }}" = "webkit" ]; then browser_arg="--webkit"; fi
+          node scripts/check-inkwave-small-tank.mjs .ci-scratch/small-tank-site .ci-scratch/small-tank-evidence/dpr2 $browser_arg --dpr 2
+      - name: Require both independent DPR results
+        if: ${{ !cancelled() && steps.dpr1.outcome != 'skipped' }}
+        env:
+          DPR1: ${{ steps.dpr1.outcome }}
+          DPR2: ${{ steps.dpr2.outcome }}
+        run: test "$DPR1" = success && test "$DPR2" = success
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: small-tank-browser-evidence-${{ matrix.browser }}-dpr${{ matrix.dpr }}
-          path: .ci-scratch/small-tank-evidence
+          name: small-tank-browser-evidence-${{ matrix.browser }}-dpr1
+          path: .ci-scratch/small-tank-evidence/dpr1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: small-tank-browser-evidence-${{ matrix.browser }}-dpr2
+          path: .ci-scratch/small-tank-evidence/dpr2

@@ -164,6 +164,7 @@ export class ShadowCache {
     const sd = G.env?.U?.uSunDir?.value;
     const hy = sd ? Math.max(0.2, sd.y) : 0.7;
     const hx = sd ? -sd.x / hy : 0, hz = sd ? -sd.z / hy : 0;
+    const sunHorizontalLength = Math.hypot(hx, hz);
     let n = 0;
     for (const a of actors) {
       const root = a.character?.root;
@@ -171,7 +172,7 @@ export class ShadowCache {
       const h = Math.max(0, a.pos.y + 2.2);                // height above the lowest possible ground (sea)
       const L = Math.min(18, h);
       _v.set(a.pos.x + hx * L * 0.5, a.pos.y + 0.8 - L * 0.4, a.pos.z + hz * L * 0.5);
-      _sphere.set(_v, 2.2 + Math.hypot(hx, hz) * L * 0.55 + L * 0.4);
+      _sphere.set(_v, 2.2 + sunHorizontalLength * L * 0.55 + L * 0.4);
       if (_frustum.intersectsSphere(_sphere)) continue;
       const list = a._shadowMeshes || (a._shadowMeshes = []);
       if (!list.length || list._root !== root) { list.length = 0; list._root = root; root.traverse((o) => { if ((o.isMesh || o.isInstancedMesh) && o.castShadow) list.push(o); }); }

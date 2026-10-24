@@ -6,6 +6,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {parse} from '../../loading-cache/vendor/acorn.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {normalizeViewSettings} from '../../local-quality/view-settings.mjs';
+import {sendCriticalControl} from '../../reliability/lobby-guards.mjs';
 import {
   validWeaponId, safeWeaponId, normalizeQueueProfile, settleProgression,
   validStartRoster,
@@ -198,14 +199,14 @@ test('composed NetSession rejects a missing-local START before allocating match 
   // non-native stage admission for this ordinary Turf roster fixture so that
   // missing-local rejection and READY sequencing remain the assertions.
   const C=(new Function('G','NetMatch','validStartRoster','WEAPONS','PROTO','COMPAT',
-    'nativeStageEnabled','nativeStageRuleStatus','UNAVAILABLE_NATIVE_STAGES','nativeStageCompatible',
+    'nativeStageEnabled','nativeStageRuleStatus','UNAVAILABLE_NATIVE_STAGES','nativeStageCompatible','sendCriticalControl',
     'return class NetSession {'+src+'}'))(
-    G,NetMatch,validStartRoster,weapons,PROTO,COMPAT,false,()=>null,[],cfg=>!cfg?.nativeStage);
+    G,NetMatch,validStartRoster,weapons,PROTO,COMPAT,false,()=>null,[],cfg=>!cfg?.nativeStage,sendCriticalControl);
   const make=()=>{
     const s=Object.create(C.prototype);
     s.myId='guest';s.hostId='host';s.state='lobby';s.lobby={players:[{ready:true}]};
     s.isHost=false;s._emit=()=>{};s._setState=x=>{s.state=x};
-    s.tr={sendTo:(_host,p)=>sends.push(p)};
+    s.tr={sendTo:(_host,p)=>{sends.push(p);return true;}};
     return s;
   };
   const wrong={proto:PROTO,compat:COMPAT,id:'game-1',mode:'turf',roster:[member('host',0,0,0)]};

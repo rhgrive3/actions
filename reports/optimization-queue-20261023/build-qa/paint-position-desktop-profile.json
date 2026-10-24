@@ -1,0 +1,711 @@
+{
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+  "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "scope": "Actual PaintSystem shaders, synthetic deterministic quads, 256x256 atlas; desktop diagnostic only, no iPad or game workload acceptance",
+  "rows": [
+    {
+      "count": 0,
+      "drying": true,
+      "differingChannels": 0,
+      "differingByChannel": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "maxDelta": 0,
+      "outcomes": [
+        {
+          "capacity": 0,
+          "logicalPositionBytes": 288000,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 11.800000000279397,
+              "completed": 11.900000000372529,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.2999999998137355,
+              "completed": 0.39999999990686774,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.20000000018626451,
+              "completed": 0.20000000018626451,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.20000000018626451,
+              "completed": 0.3000000002793968,
+              "renders": 1,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 0
+        },
+        {
+          "capacity": 1,
+          "logicalPositionBytes": 0,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 1.8999999999068677,
+              "completed": 1.8999999999068677,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.10000000009313226,
+              "completed": 0.10000000009313226,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.20000000018626451,
+              "completed": 0.20000000018626451,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.19999999972060323,
+              "completed": 0.19999999972060323,
+              "renders": 1,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 0
+        }
+      ]
+    },
+    {
+      "count": 1,
+      "drying": true,
+      "differingChannels": 0,
+      "differingByChannel": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "maxDelta": 0,
+      "outcomes": [
+        {
+          "capacity": 0,
+          "logicalPositionBytes": 288000,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 23.100000000093132,
+              "completed": 23.200000000186265,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.6000000000931323,
+              "completed": 0.6000000000931323,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.20000000018626451,
+              "completed": 0.20000000018626451,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.20000000018626451,
+              "completed": 0.2999999998137355,
+              "renders": 1,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 123
+        },
+        {
+          "capacity": 1,
+          "logicalPositionBytes": 0,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 7.7000000001862645,
+              "completed": 7.7000000001862645,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.19999999972060323,
+              "completed": 0.19999999972060323,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.19999999972060323,
+              "completed": 0.39999999990686774,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.2999999998137355,
+              "completed": 0.2999999998137355,
+              "renders": 1,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 123
+        }
+      ]
+    },
+    {
+      "count": 1023,
+      "drying": true,
+      "differingChannels": 0,
+      "differingByChannel": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "maxDelta": 0,
+      "outcomes": [
+        {
+          "capacity": 0,
+          "logicalPositionBytes": 288000,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 9.099999999627471,
+              "completed": 9.099999999627471,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.40000000037252903,
+              "completed": 0.40000000037252903,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.5,
+              "completed": 0.5,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.6000000000931323,
+              "completed": 0.7000000001862645,
+              "renders": 1,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 53670
+        },
+        {
+          "capacity": 1,
+          "logicalPositionBytes": 0,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 9,
+              "completed": 9,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 1.3000000002793968,
+              "completed": 1.3999999999068677,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.39999999990686774,
+              "completed": 0.39999999990686774,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.39999999990686774,
+              "completed": 0.39999999990686774,
+              "renders": 1,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 53670
+        }
+      ]
+    },
+    {
+      "count": 1024,
+      "drying": true,
+      "differingChannels": 0,
+      "differingByChannel": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "maxDelta": 0,
+      "outcomes": [
+        {
+          "capacity": 0,
+          "logicalPositionBytes": 288000,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 13.899999999906868,
+              "completed": 13.899999999906868,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.7000000001862645,
+              "completed": 0.8999999999068677,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.40000000037252903,
+              "completed": 0.40000000037252903,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.39999999990686774,
+              "completed": 0.39999999990686774,
+              "renders": 1,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 53670
+        },
+        {
+          "capacity": 1,
+          "logicalPositionBytes": 0,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 6.899999999906868,
+              "completed": 6.899999999906868,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.2999999998137355,
+              "completed": 0.39999999990686774,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.2999999998137355,
+              "completed": 0.39999999990686774,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.5,
+              "completed": 0.6000000000931323,
+              "renders": 1,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 53670
+        }
+      ]
+    },
+    {
+      "count": 1025,
+      "drying": true,
+      "differingChannels": 0,
+      "differingByChannel": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "maxDelta": 0,
+      "outcomes": [
+        {
+          "capacity": 0,
+          "logicalPositionBytes": 288000,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 5.600000000093132,
+              "completed": 5.600000000093132,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.6999999997206032,
+              "completed": 0.6999999997206032,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.3000000002793968,
+              "completed": 0.39999999990686774,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.3000000002793968,
+              "completed": 0.40000000037252903,
+              "renders": 1,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 53670
+        },
+        {
+          "capacity": 1,
+          "logicalPositionBytes": 0,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 5.7999999998137355,
+              "completed": 5.7999999998137355,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.6000000000931323,
+              "completed": 0.7000000001862645,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.10000000009313226,
+              "completed": 0.20000000018626451,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.40000000037252903,
+              "completed": 0.40000000037252903,
+              "renders": 1,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 53670
+        }
+      ]
+    },
+    {
+      "count": 6000,
+      "drying": true,
+      "differingChannels": 0,
+      "differingByChannel": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "maxDelta": 0,
+      "outcomes": [
+        {
+          "capacity": 0,
+          "logicalPositionBytes": 288000,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 6.300000000279397,
+              "completed": 6.300000000279397,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 1.5,
+              "completed": 1.5,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.7999999998137355,
+              "completed": 0.7999999998137355,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.6999999997206032,
+              "completed": 0.8999999999068677,
+              "renders": 1,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 56298
+        },
+        {
+          "capacity": 1,
+          "logicalPositionBytes": 0,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 6.800000000279397,
+              "completed": 6.800000000279397,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 1.2999999998137355,
+              "completed": 1.2999999998137355,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.8999999999068677,
+              "completed": 0.8999999999068677,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.8999999999068677,
+              "completed": 0.8999999999068677,
+              "renders": 1,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 56298
+        }
+      ]
+    },
+    {
+      "count": 6001,
+      "drying": true,
+      "differingChannels": 0,
+      "differingByChannel": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "maxDelta": 0,
+      "outcomes": [
+        {
+          "capacity": 0,
+          "logicalPositionBytes": 288000,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 37.09999999962747,
+              "completed": 37.09999999962747,
+              "renders": 2,
+              "mips": 0
+            },
+            {
+              "submit": 3.1999999997206032,
+              "completed": 3.2999999998137355,
+              "renders": 2,
+              "mips": 0
+            },
+            {
+              "submit": 1.6000000000931323,
+              "completed": 1.6000000000931323,
+              "renders": 2,
+              "mips": 0
+            },
+            {
+              "submit": 1,
+              "completed": 1.1000000000931323,
+              "renders": 2,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 56298
+        },
+        {
+          "capacity": 1,
+          "logicalPositionBytes": 0,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 40.59999999962747,
+              "completed": 40.59999999962747,
+              "renders": 2,
+              "mips": 0
+            },
+            {
+              "submit": 2.1000000000931323,
+              "completed": 2.1000000000931323,
+              "renders": 2,
+              "mips": 0
+            },
+            {
+              "submit": 1.5,
+              "completed": 1.5,
+              "renders": 2,
+              "mips": 0
+            },
+            {
+              "submit": 1.3000000002793968,
+              "completed": 1.3000000002793968,
+              "renders": 2,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 56298
+        }
+      ]
+    },
+    {
+      "count": 12000,
+      "drying": true,
+      "differingChannels": 0,
+      "differingByChannel": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "maxDelta": 0,
+      "outcomes": [
+        {
+          "capacity": 0,
+          "logicalPositionBytes": 288000,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 41.09999999962747,
+              "completed": 41.09999999962747,
+              "renders": 2,
+              "mips": 0
+            },
+            {
+              "submit": 2.3000000002793968,
+              "completed": 2.3999999999068677,
+              "renders": 2,
+              "mips": 0
+            },
+            {
+              "submit": 4.5,
+              "completed": 4.5,
+              "renders": 2,
+              "mips": 0
+            },
+            {
+              "submit": 2.900000000372529,
+              "completed": 2.900000000372529,
+              "renders": 2,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 56935
+        },
+        {
+          "capacity": 1,
+          "logicalPositionBytes": 0,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 38.5,
+              "completed": 38.5,
+              "renders": 2,
+              "mips": 0
+            },
+            {
+              "submit": 2.3999999999068677,
+              "completed": 2.3999999999068677,
+              "renders": 2,
+              "mips": 0
+            },
+            {
+              "submit": 2.099999999627471,
+              "completed": 2.099999999627471,
+              "renders": 2,
+              "mips": 0
+            },
+            {
+              "submit": 2.3999999999068677,
+              "completed": 2.5,
+              "renders": 2,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 56935
+        }
+      ]
+    },
+    {
+      "count": 1025,
+      "drying": false,
+      "differingChannels": 0,
+      "differingByChannel": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "maxDelta": 0,
+      "outcomes": [
+        {
+          "capacity": 0,
+          "logicalPositionBytes": 288000,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 3.2999999998137355,
+              "completed": 3.2999999998137355,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.7999999998137355,
+              "completed": 0.8999999999068677,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.5,
+              "completed": 0.5,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.2999999998137355,
+              "completed": 0.2999999998137355,
+              "renders": 1,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 53670
+        },
+        {
+          "capacity": 1,
+          "logicalPositionBytes": 0,
+          "logicalActiveBytes": 1680000,
+          "samples": [
+            {
+              "submit": 2.8999999999068677,
+              "completed": 2.8999999999068677,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.19999999972060323,
+              "completed": 0.19999999972060323,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.40000000037252903,
+              "completed": 0.40000000037252903,
+              "renders": 1,
+              "mips": 0
+            },
+            {
+              "submit": 0.20000000018626451,
+              "completed": 0.2999999998137355,
+              "renders": 1,
+              "mips": 0
+            }
+          ],
+          "nonzeroAlpha": 53670
+        }
+      ]
+    }
+  ],
+  "sourceSha256": "19a4172bb263aac5406fe297897302c428ee4efc1a3b5c409a69413991737342",
+  "candidateChange": "Both actual composed PaintSystems retain MAX_QUADS6000 and identical shader/flush; candidate omits only dummy position"
+}

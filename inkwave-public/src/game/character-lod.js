@@ -250,7 +250,7 @@ export function clusterDecimate(src, cell, precomputed = null) {
       if (l > 0.3 * cn[c]) { onArr[c3] = x / l; onArr[c3 + 1] = y / l; onArr[c3 + 2] = z / l; }
     }
   }
-  out.setIndex(nc > 65535 ? new THREE.Uint32BufferAttribute(tris, 1) : new THREE.Uint16BufferAttribute(tris, 1));
+  let finalIndices = tris, finalCount = nc;
   // Keep the established spatial decimation and triangle budget, but do not let a
   // neighbouring metal/print representative repaint the surviving weapon surface.
   // Split only attribute conflicts at surviving corners. Positions/normals remain
@@ -265,7 +265,8 @@ export function clusterDecimate(src, cell, precomputed = null) {
       if (same) for (let k = 0; k < sourceColor.itemSize; k++) if (sourceColor.getComponent(original, k) !== clusterColor.getComponent(cluster, k)) { same = false; break; }
       if (same) { remapped.push(cluster); continue; }
       const values = [cluster];
-      for (const name of ['aMat', 'color']) for (let k = 0; k < A[name].itemSize; k++) values.push(A[name].getComponent(original, k));
+      for (let k = 0; k < sourceMat.itemSize; k++) values.push(sourceMat.getComponent(original, k));
+      for (let k = 0; k < sourceColor.itemSize; k++) values.push(sourceColor.getComponent(original, k));
       const key = values.join(':');
       let index = splits.get(key);
       if (index === undefined) { index = nc + extras.length; splits.set(key, index); extras.push({ cluster, original }); }
@@ -281,9 +282,10 @@ export function clusterDecimate(src, cell, precomputed = null) {
         }
         out.setAttribute(name, new THREE.BufferAttribute(arr, size, old.normalized));
       }
-      out.setIndex(nc + extras.length > 65535 ? new THREE.Uint32BufferAttribute(remapped, 1) : new THREE.Uint16BufferAttribute(remapped, 1));
+      finalIndices = remapped; finalCount = nc + extras.length;
     }
   }
+  out.setIndex(finalCount > 65535 ? new THREE.Uint32BufferAttribute(finalIndices, 1) : new THREE.Uint16BufferAttribute(finalIndices, 1));
   out.userData = { ...src.userData, iwLod: 'far', cell };
   out.computeBoundingSphere();
   return out;

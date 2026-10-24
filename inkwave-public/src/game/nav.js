@@ -30,7 +30,6 @@ export class NavGraph {
     this.x0 = B.minX + st / 2; this.z0 = B.minZ + st / 2;
     this.nx = Math.floor((B.maxX - B.minX) / st); this.nz = Math.floor((B.maxZ - B.minZ) / st);
     this.cells = new Array(this.nx * this.nz);
-    const topBlocks = L.blocks.filter((b) => b.solid && b.axes[1].y > 0.6);
     const ids = [];
     for (let iz = 0; iz < this.nz; iz++) {
       for (let ix = 0; ix < this.nx; ix++) {
@@ -60,6 +59,8 @@ export class NavGraph {
         this.cells[iz * this.nx + ix] = list;
       }
     }
+    // The eight grid offsets have only two horizontal lengths.
+    const cardinalFlat = Math.hypot(1, 0) * this.step, diagonalFlat = Math.hypot(1, 1) * this.step;
     // edges
     for (const n of this.nodes) {
       for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
@@ -69,7 +70,7 @@ export class NavGraph {
         for (const mid of this.cells[jz * this.nx + jx]) {
           const m = this.nodes[mid];
           const dy = m.y - n.y;
-          const flat = Math.hypot(dx, dz) * this.step;
+          const flat = dx && dz ? diagonalFlat : cardinalFlat;
           if (Math.abs(dy) <= 0.5) {
             if (dx && dz) { // diagonal: both orthogonal neighbours must exist at similar height
               if (!this._has(n.ix + dx, n.iz, n.y) || !this._has(n.ix, n.iz + dz, n.y)) continue;
@@ -95,12 +96,22 @@ export class NavGraph {
   _clear(x, y, z) {
     const L = this.level;
     const r = PLAYER.radius + 0.08;
+    const ids = L.queryClearanceBlocks?.(x, z, r, this._clearIds || (this._clearIds = []));
+    const blocked = (px, py, pz) => {
+      _p.set(px, py, pz);
+      if (!ids) return L.pointInside(_p, 0);
+      for (const id of ids) {
+        const b = L.blocks[id];
+        if (b.solid && L.pointInBlock(b, _p, 0)) return true;
+      }
+      return false;
+    };
     // lowest probe at knee height: anything shorter is a step-up, and a 0.15 m probe clipped the surface of any ramp
     // steeper than ~17° (they got no nodes at all)
     for (const h of [0.32, 0.8, 1.4]) {
-      if (L.pointInside(_p.set(x, y + h, z), 0)) return false;
+      if (blocked(x, y + h, z)) return false;
       for (let k = 0; k < 8; k++) {
-        if (L.pointInside(_p.set(x + RING[k][0] * r, y + h, z + RING[k][1] * r), 0)) return false;
+        if (blocked(x + RING[k][0] * r, y + h, z + RING[k][1] * r)) return false;
       }
     }
     return true;
@@ -109,19 +120,20 @@ export class NavGraph {
   _prune() {
     // undirected reachability from a spawn-adjacent node using all edges both ways
     const N = this.nodes.length;
-    const adj = Array.from({ length: N }, () => []);
-    for (const n of this.nodes) for (const e of n.nb) { adj[n.id].push(e.to); adj[e.to].push(n.id); }
-    const comp = new Int32Array(N).fill(-1);
-    let best = -1, bestSize = 0, c = 0;
-    for (let i = 0; i < N; i++) {
-      if (comp[i] >= 0) continue;
-      let size = 0; const stack = [i]; comp[i] = c;
-      while (stack.length) { const k = stack.pop(); size++; for (const j of adj[k]) if (comp[j] < 0) { comp[j] = c; stack.push(j); } }
-      if (size > bestSize) { bestSize = size; best = c; }
-      c++;
+    const parent = new Int32Array(N), size = new Int32Array(N).fill(1);
+    for (let i = 0; i < N; i++) parent[i] = i;
+    const root = (id) => { while (parent[id] !== id) { parent[id] = parent[parent[id]]; id = parent[id]; } return id; };
+    for (const n of this.nodes) for (const edge of n.nb) {
+      let a = root(n.id), b = root(edge.to);
+      if (a === b) continue;
+      if (size[a] < size[b]) [a, b] = [b, a];
+      parent[b] = a; size[a] += size[b];
     }
+    // Scan in node order to preserve the old first-component tie winner.
+    let best = -1, bestSize = 0;
+    for (let i = 0; i < N; i++) { const component = root(i); if (size[component] > bestSize) { best = component; bestSize = size[component]; } }
     this.valid = new Uint8Array(N);
-    for (let i = 0; i < N; i++) this.valid[i] = comp[i] === best ? 1 : 0;
+    for (let i = 0; i < N; i++) this.valid[i] = root(i) === best ? 1 : 0;
     this.validIds = this.nodes.filter((n) => this.valid[n.id]).map((n) => n.id);
   }
 

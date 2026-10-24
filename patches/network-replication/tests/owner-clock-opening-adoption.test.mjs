@@ -52,17 +52,19 @@ test('actual completed opening row advances native receiver after modeled delaye
 
 test('real Session rejects previous gameplay COMPAT before building or sending readiness', async () => {
   const f=await fixture({productionComposition:true,includeSession:true});
+  for(const previousCompat of ['iw-gameplay-20261022-owner-clock-v1','iw-gameplay-20261023-start-admission-v1','iw-gameplay-20261023-spawn-exclusion-v1']) {
   const session=new f.NetSession();let starts=0,sends=0;
   f.G.net=session;
   f.G.game={settings:{},startNetMatch(){starts++;}};
   session.myId='guest';session.hostId='host';session.state='lobby';
   session.tr={sendTo(){sends++;return true;},broadcast(){sends++;return true;},close(){}};
-  await session._begin({id:'mixed-version',proto:f.PROTO,compat:'iw-gameplay-20261022-owner-clock-v1',
+  await session._begin({id:'mixed-version',proto:f.PROTO,compat:previousCompat,
     mode:'turf',map:'reef',difficulty:'normal',roster:[
       {owner:'host',nid:0,bot:false,weapon:'shooter',team:0,slot:0},
       {owner:'guest',nid:1,bot:false,weapon:'shooter',team:1,slot:0},
     ]});
   assert.equal(starts,0);assert.equal(sends,0);assert.equal(session.match,null);
   assert.equal(session.state,'error');
-  assert.equal(f.COMPAT,'iw-gameplay-20261023-spawn-exclusion-v1');
+  assert.equal(f.COMPAT,'iw-gameplay-20261024-spawn-start-admission-v1');
+  }
 });

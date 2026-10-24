@@ -1,6 +1,7 @@
 // Runtime guards for reports in /INKWAVE Issue Queue.
 // The shipped source is composed by the network adapter; do not mutate the
 // immutable upstream gameplay files. These functions have no browser globals.
+import { validNetworkAppearance } from '../reliability/session-admission.mjs';
 export const PROFILE_LEVEL_LIMIT = 1_000_000;
 export const PROFILE_XP_LIMIT = 1_000_000_000_000;
 
@@ -66,7 +67,7 @@ export function validStartRoster(roster, myId, weapons, mode = 'turf', hostId = 
       || (mode === 'boss' && r.team !== 0)
       || !Number.isSafeInteger(r.slot) || r.slot < 0 || r.slot >= (mode === 'boss' ? 8 : 4)
       || typeof r.owner !== 'string' || !r.owner || r.owner.length > 128
-      || typeof r.bot !== 'boolean' || !validWeaponId(r.weapon, weapons)) return false;
+      || typeof r.bot !== 'boolean' || !validWeaponId(r.weapon, weapons) || !validNetworkAppearance(r.style)) return false;
     const slotKey = r.team + ':' + r.slot;
     if (nids.has(r.nid) || slots.has(slotKey)) return false;
     nids.add(r.nid); slots.add(slotKey);

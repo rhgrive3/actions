@@ -1,0 +1,43 @@
+{
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+  "scope": "Actual Chromium module Worker versus original synchronous algorithm; raw bytes and timer liveness, no Safari/iPad or battleFPS claim",
+  "rows": [
+    {
+      "synchronousMs": 149.79999999981374,
+      "syncHeartbeats": 0,
+      "workerWallMs": 176.20000000018626,
+      "workerHeartbeats": 44,
+      "differingBytes": 0,
+      "byteLength": 262144,
+      "sha256": "5478a11031d9bce798519fc34eab36161570f87a402e015e18b9ec219296a6be"
+    },
+    {
+      "synchronousMs": 147.20000000018626,
+      "syncHeartbeats": 0,
+      "workerWallMs": 151.1000000005588,
+      "workerHeartbeats": 38,
+      "differingBytes": 0,
+      "byteLength": 262144,
+      "sha256": "5478a11031d9bce798519fc34eab36161570f87a402e015e18b9ec219296a6be"
+    },
+    {
+      "synchronousMs": 131.30000000074506,
+      "syncHeartbeats": 0,
+      "workerWallMs": 148,
+      "workerHeartbeats": 37,
+      "differingBytes": 0,
+      "byteLength": 262144,
+      "sha256": "5478a11031d9bce798519fc34eab36161570f87a402e015e18b9ec219296a6be"
+    },
+    {
+      "synchronousMs": 123.80000000074506,
+      "syncHeartbeats": 0,
+      "workerWallMs": 148.59999999962747,
+      "workerHeartbeats": 37,
+      "differingBytes": 0,
+      "byteLength": 262144,
+      "sha256": "5478a11031d9bce798519fc34eab36161570f87a402e015e18b9ec219296a6be"
+    }
+  ],
+  "baselineSourceSha256": "463ad75de7702ccdece7b48ee23b968493e57672a0a7962ee9366ea85f0446b9"
+}

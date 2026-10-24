@@ -1,0 +1,14 @@
+(node:11221) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"comparedFrames":1260,"scope":"full source-loaded transforms, skeleton, contact and muzzle; no device FPS claim"}
+✔ production-composed characters retain every final transform/muzzle at 30/60/120Hz (153896.414382ms)
+{"intermediateMultiplications":[27,1593]}
+✔ ancestor closure keeps exact balance output and generic skeleton fallback (10798.065982ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 165068.884467

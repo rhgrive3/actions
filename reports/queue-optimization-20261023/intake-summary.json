@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "intakeCount": 358,
+  "reconciledCount": 358,
+  "statusCounts": {
+    "implemented": 295,
+    "already-effective": 29,
+    "not-adopted": 30,
+    "partial": 2,
+    "unresolved": 2
+  },
+  "accountableRoleCounts": {
+    "visual_audio": 69,
+    "network": 36,
+    "combat": 75,
+    "motion": 38,
+    "world": 45,
+    "root": 37,
+    "build_qa": 58
+  },
+  "complete": true,
+  "normalizationNotes": [
+    "Every intake ID has exactly one output row. Missing role evidence remains pending; known batch305/world-transfer ownership is retained.",
+    "Delegated claims are evidence only and do not count a second resolution.",
+    "Rejected/deferred/not-justified proposals normalize to not-adopted, never implemented.",
+    "World partial registry/mural deferral retains partial despite being stored under rejected_conditional.",
+    "Original role dispositions and detailed evidence are preserved in the private reconciliation; public entries contain technical summaries only.",
+    "The earlier thumbnail optimization was a descriptor-ticket subpart in the305intake; the358intake now includes a distinct thumbnail ticket ID, reconciled separately."
+  ],
+  "partialOrUnresolved": [
+    {
+      "slug": "super-chump-preview-per-render-ground-probe-burst",
+      "accountableRole": "visual_audio",
+      "status": "partial",
+      "reasons": [
+        "Preview-only target/12positions/direction/side buffers are reused; launch remains fresh separately-owned vectors. Collision query throttling intentionally not applied: Physics/Level expose no collision revision and mutable collision state must remain visible each render. This allocation portion is fixed; query-burst portion remains constrained."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "pages-post-deploy-ranked-503-versioned-module",
+      "accountableRole": "build_qa",
+      "status": "unresolved",
+      "reasons": [
+        "unresolved historical edge503 cause; immutable HTTP/artifact diagnostics implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "ce5a114"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "fizzy-bomb-flight-splash-paint-unreachable",
+      "accountableRole": "combat",
+      "status": "unresolved",
+      "reasons": [
+        "Unresolved functional bug. Pinned Fizzy MoveParam supplies spacing2.2, radius.9/1/1.1 and width1.2/1.26/1.32 depth1.6; no flight-drop initial velocity/gravity/type defaults or authoritative release/landing rule. Dead helper instead stamps immediately via10m ray or y-1.35 fallback, ignores shape; no caller. Existing ordered ordinary native paint rows CAN replicate accepted stamps (cap3.744 exceeds these radii); rejected fizzyFlightPaint action is not itself a blocker and need not be enabled. Missing fact is authoritative flight-splash release/landing and footprint semantics, not device performance. See fizzy-final-review.md."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "defer-unselected-stage-descriptor-and-mural-modules",
+      "accountableRole": "world",
+      "status": "partial",
+      "reasons": [
+        "Partial registry/mural/placement/Range-prop graph deferral implemented. Remaining layout deferral rejected because public MAP_LAYOUTS and thumbnail callers require synchronous complete layouts; preserving that contract takes precedence over the proposed asynchronous migration. In the historical prior305 intake, cached lazy m.thumb getter was a supplemental implemented descriptor subpart without its own intake ID. Batch358 introduced a distinct thumbnail intake ID, now counted separately as already effective."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    }
+  ],
+  "pending": []
+}

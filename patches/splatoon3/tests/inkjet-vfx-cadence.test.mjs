@@ -1,3 +1,4 @@
+import { consumeVfxPeriod } from '../runtime/nonwail-vfx-clock.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -18,8 +19,8 @@ class V {
 function measure(hz, seconds=2, stall=false, cap=Infinity, initial=0) {
   let randomCalls=0;
   const random=()=>{randomCalls++;return .2;}, rnd=(a=1,b=0)=>b+random()*(a-b);
-  const recipes=sections.map(code=>new Function('inkjetVfxTicks','vfxRandom','rnd','groundBelow','clamp','SPARK','PUFF','DISC','TAU','inkjetVfxAdmission','inkjetVfxRoom',
-    'return ({'+code+'}).frame;')(inkjetVfxTicks,random,rnd,()=>0,(x,a,b)=>Math.max(a,Math.min(b,x)),{GLOW:0},{CHUNK:0,MIST:1},{SPLAT:0},Math.PI*2,inkjetVfxAdmission,inkjetVfxRoom));
+  const recipes=sections.map(code=>new Function('consumeVfxPeriod','inkjetVfxTicks','vfxRandom','rnd','groundBelow','clamp','SPARK','PUFF','DISC','TAU','inkjetVfxAdmission','inkjetVfxRoom',
+    'return ({'+code+'}).frame;')(consumeVfxPeriod,inkjetVfxTicks,random,rnd,()=>0,(x,a,b)=>Math.max(a,Math.min(b,x)),{GLOW:0},{CHUNK:0,MIST:1},{SPLAT:0},Math.PI*2,inkjetVfxAdmission,inkjetVfxRoom));
   const counts={spark:0,puff:0,drop:0,disc:0}, lives={spark:[],puff:[],drop:[],disc:[]};
   const d={kit:{sparks:{n:initial,cap},puffs:{n:initial,cap}},v:Array.from({length:8},()=>new V().set(0,0,0)),time:0,up:new V().set(0,1,0),forward:(a,v)=>v.set(0,0,1),
     setBeam(){},pushRibbon(){},hdr:c=>c};
@@ -32,11 +33,11 @@ function measure(hz, seconds=2, stall=false, cap=Infinity, initial=0) {
   for (const values of Object.values(lives)) values.sort((a,b)=>a-b);
   return {counts,lives,randomCalls};
 }
-test('Inkjet source recipes retain 60/120 Hz density while capping 30 Hz to its previous particle budget',()=>{
+test('Inkjet source recipes retain 60/120 Hz jet density and fractional-period discs while capping 30 Hz to its previous particle budget',()=>{
   const baseline=measure(60);
-  assert.deepEqual(baseline.counts,{spark:240,puff:720,drop:600,disc:15});
+  assert.deepEqual(baseline.counts,{spark:240,puff:720,drop:600,disc:16});
   assert.deepEqual(measure(120),baseline);
-  assert.deepEqual(measure(30).counts,{spark:120,puff:360,drop:300,disc:15});
+  assert.deepEqual(measure(30).counts,{spark:120,puff:360,drop:300,disc:16});
   assert.deepEqual([...new Set(baseline.lives.spark)],[.05]);
   assert.deepEqual([...new Set(baseline.lives.drop)].sort(),[.25,.45,.6]);
 });
@@ -57,7 +58,7 @@ test('Inkjet clock preserves 60 Hz, handles jitter and resets submerged carry wi
 test('Inkjet skips full pools and never exceeds a final free slot',()=>{
   for(const hz of [30,60,120]){
     const full=measure(hz,2,false,182,182);
-    assert.deepEqual(full.counts,{spark:0,puff:0,drop:0,disc:15});
+    assert.deepEqual(full.counts,{spark:0,puff:0,drop:0,disc:16});
     const last=measure(hz,2,false,182,181);
     assert.equal(last.counts.spark,1);assert.equal(last.counts.puff+last.counts.drop,1);
   }

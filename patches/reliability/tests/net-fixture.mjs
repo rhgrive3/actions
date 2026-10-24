@@ -47,9 +47,10 @@ export async function fixture({ search = '', adapt = true } = {}) {
   const transport = load('src/net/transport.js');
   const session = load('src/net/session.js');
   const admission = module(fs.readFileSync(new URL('../session-admission.mjs', import.meta.url),'utf8'));
+  const lobbyGuards = module(fs.readFileSync(new URL('../lobby-guards.mjs', import.meta.url),'utf8'));
   const outbound = module(fs.readFileSync(new URL('../../network-replication/outbound-prefix.mjs', import.meta.url),'utf8'));
   const utf8 = module(fs.readFileSync(new URL('../../network-replication/utf8-length.mjs', import.meta.url),'utf8'));
-  await session.link(spec => ({ '../core/ctx.js': core, '../config.js': config, '../game/character-style.js': style, './transport.js': transport, './netmatch.js': match, '../../patches/reliability/session-admission.mjs': admission, '../../patches/network-replication/outbound-prefix.mjs': outbound, './utf8-length.mjs': utf8, '../../patches/network-replication/utf8-length.mjs': utf8 })[spec]);
+  await session.link(spec => ({ '../core/ctx.js': core, '../config.js': config, '../game/character-style.js': style, './transport.js': transport, './netmatch.js': match, '../../patches/reliability/session-admission.mjs': admission, './session-admission.mjs': admission, '../../patches/reliability/lobby-guards.mjs': lobbyGuards, '../../patches/network-replication/outbound-prefix.mjs': outbound, './utf8-length.mjs': utf8, '../../patches/network-replication/utf8-length.mjs': utf8 })[spec]);
   await session.evaluate();
   const G = core.namespace.G;
   G.game = { netMatchGo() {} };
@@ -57,6 +58,7 @@ export async function fixture({ search = '', adapt = true } = {}) {
   return {
     net, G, sockets, timers, Transport: transport.namespace.Transport,
     PROTO: transport.namespace.PROTO, COMPAT: transport.namespace.COMPAT,
+    advance(ms) { now += ms; },
     constructionFails: () => { failConstructor = true; },
     message(socket, data) { socket.onmessage?.({ data: typeof data === 'string' ? data : JSON.stringify(data) }); },
     welcome(socket, { id = 'me', host = id, members = [...new Set([host, id])].map(id=>({id,name:'Player'})) } = {}) {

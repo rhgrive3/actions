@@ -47,7 +47,10 @@ export class SourcePose {
   }
   rest() {
     for (let i = 0; i < this.bank.bones.length; i++) {
-      const b = this.bank.bones[i]; this.raw.set([...b.scale, ...b.translation, ...b.rotation], i * STRIDE);
+      const b = this.bank.bones[i],s=b.scale,t=b.translation,r=b.rotation,j=i*STRIDE;
+      if(Array.isArray(s)&&s.length===3&&Array.isArray(t)&&t.length===3&&Array.isArray(r)&&r.length===4){
+        this.raw[j]=s[0];this.raw[j+1]=s[1];this.raw[j+2]=s[2];this.raw[j+3]=t[0];this.raw[j+4]=t[1];this.raw[j+5]=t[2];this.raw[j+6]=r[0];this.raw[j+7]=r[1];this.raw[j+8]=r[2];this.raw[j+9]=r[3];
+      }else this.raw.set([...s,...t,...r],j);
       this.flags[i] = b.flags;
     }
     return this.fromRaw('eulerXYZ');
@@ -269,6 +272,7 @@ export class SourceBank {
     }
     const back = name.includes('Back'), left = name.includes('Left'), right = name.includes('Right');
     const axis = new THREE.Vector3(left ? 1 : right ? -1 : 0, 0, left || right ? 0 : back ? -1 : 1);
+    const velocityScratch=new THREE.Vector3();
     const feet = tracks.map((p, side) => {
       if (!p.length) return {min:0,max:0,range:0,contact:[],strike:0};
       const ys = heights[side], min = Math.min(...ys), max = Math.max(...ys), range = max - min;
@@ -283,7 +287,7 @@ export class SourceBank {
       const before=[...contact];for(let i=0;i<n;i++)if(!before[i]&&before[(i+n-1)%n]&&before[(i+1)%n])contact[i]=true;
       let strike=0, best=-Infinity; const speeds=[];
       for(let i=0;i<n;i++) {
-        const j=(i+1)%n, v=p[j].clone().sub(p[i]).dot(axis)*n;
+        const j=(i+1)%n, v=velocityScratch.copy(p[j]).sub(p[i]).dot(axis)*n;
         if(contact[i]&&contact[j]&&features[side][i]===features[side][j]&&v<0)speeds.push(-v);
         if(contact[i]&&!contact[(i+n-1)%n] && p[i].dot(axis)>best){best=p[i].dot(axis);strike=i/n;}
       }
@@ -305,20 +309,42 @@ const SHA = async bytes => {
   return Array.from(new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', bytes)),
     b => b.toString(16).padStart(2, '0')).join('');
 };
-const fetchBuffer = async relative => {
-  const r = await fetch(new URL(relative, SOURCE_ASSET_ROOT()));
+const fetchBuffer = async (relative, signal) => {
+  const r = await fetch(new URL(relative, SOURCE_ASSET_ROOT()), {signal});
   if (!r.ok) throw new Error(`Motion asset ${relative}: HTTP ${r.status}`);
   return r.arrayBuffer();
 };
 async function inflateParts(partNames, expectedGzipHash, expectedBytes = undefined) {
   if (!Array.isArray(partNames) || !partNames.length || partNames.some(n=>!/^[A-Za-z0-9_.-]+$/.test(n)))
     throw new Error('Malformed motion pack part manifest');
-  const chunks = await Promise.all(partNames.map(fetchBuffer));
-  const byteLength = chunks.reduce((sum,chunk)=>sum+chunk.byteLength,0);
-  if (expectedBytes !== undefined && byteLength !== expectedBytes) throw new Error('Compressed motion asset length mismatch');
-  const merged = new Uint8Array(byteLength);
-  let offset = 0;
-  for (const chunk of chunks) { merged.set(new Uint8Array(chunk),offset); offset += chunk.byteLength; }
+  if (expectedBytes !== undefined && (!Number.isSafeInteger(expectedBytes) || expectedBytes < 0))
+    throw new Error('Compressed motion asset length mismatch');
+  // The catalog is one file without a declared length. Variant packs declare
+  // their complete compressed size, so allocate that destination only once.
+  let merged,offset=0;
+  const abort=typeof AbortController==='function'?new AbortController():null;
+  try {
+    if (expectedBytes === undefined && partNames.length === 1) {
+      merged=new Uint8Array(await fetchBuffer(partNames[0],abort?.signal));
+    } else {
+      merged=expectedBytes===undefined?null:new Uint8Array(expectedBytes);
+      const unknown=[];
+      // Two ordered parts at a time bound request bursts and transient chunks.
+      // Never retain every part alongside the complete compressed destination.
+      for(let start=0;start<partNames.length;start+=2){
+        const chunks=await Promise.all(partNames.slice(start,start+2).map(name=>fetchBuffer(name,abort?.signal)));
+        for(const chunk of chunks){
+          // Preserve the manifest's legacy unknown-size multipart catalog
+          // contract. Shipped variant packs always use the preallocated path.
+          if(!merged){unknown.push(chunk);offset+=chunk.byteLength;continue;}
+          if(offset+chunk.byteLength>expectedBytes)throw new Error('Compressed motion asset length mismatch');
+          merged.set(new Uint8Array(chunk),offset);offset+=chunk.byteLength;
+        }
+      }
+      if(!merged){merged=new Uint8Array(offset);let at=0;for(const chunk of unknown){merged.set(new Uint8Array(chunk),at);at+=chunk.byteLength;}unknown.length=0;}
+      if(expectedBytes!==undefined&&offset!==expectedBytes)throw new Error('Compressed motion asset length mismatch');
+    }
+  } catch(error) { abort?.abort(); throw error; }
   const digest = await SHA(merged.buffer);
   if (digest && expectedGzipHash && digest !== expectedGzipHash) throw new Error('Motion gzip hash mismatch');
   if (typeof DecompressionStream !== 'function') throw new Error('Browser does not support DecompressionStream(gzip)');
@@ -327,6 +353,11 @@ async function inflateParts(partNames, expectedGzipHash, expectedBytes = undefin
 }
 let manifestPromise, catalogPromise;
 const bankPromises = new Map();
+// Characters and SourcePoses own active banks strongly. Keep successful cache
+// entries weak so an unused variant's decoded floats/profiles can be collected.
+// In-flight promises still coalesce concurrent loads. Older engines retain the
+// previous bounded (three-variant) cache when WeakRef is unavailable.
+const bankRefs = typeof WeakRef === 'function' ? new Map() : null;
 function getManifest() {
   manifestPromise ||= fetch(new URL('manifest.json', SOURCE_ASSET_ROOT())).then(r=>{
     if(!r.ok) throw new Error(`Motion manifest HTTP ${r.status}`);
@@ -337,6 +368,8 @@ function getManifest() {
 }
 export function loadSourceBank(variant = 'Player00') {
   if (!['Player00', 'Player01', 'Player_Squid'].includes(variant)) return Promise.reject(new Error(`Unknown source variant ${variant}`));
+  const cached=bankRefs?.get(variant)?.deref();
+  if(cached)return Promise.resolve(cached);
   if (!bankPromises.has(variant)) {
     catalogPromise ||= getManifest().then(async m=>{
       const buffer=await inflateParts(m.catalog.parts,m.catalog.gzipSha256);
@@ -352,7 +385,9 @@ export function loadSourceBank(variant = 'Player00') {
       if(data.byteLength!==meta.byteLength)throw new Error('Source motion binary size mismatch');
       const hash=await SHA(data);
       if(hash&&hash!==meta.sha256)throw new Error('Motion binary SHA-256 mismatch');
-      return new SourceBank(meta,data);
+      const bank=new SourceBank(meta,data);
+      if(bankRefs){bankRefs.set(variant,new WeakRef(bank));bankPromises.delete(variant);}
+      return bank;
     }).catch(error=>{bankPromises.delete(variant);throw error;}));
   }
   return bankPromises.get(variant);

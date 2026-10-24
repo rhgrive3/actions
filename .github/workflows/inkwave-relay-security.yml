@@ -7,6 +7,9 @@ on:
       - "scripts/lib/inkwave-local-relay-fixture.mjs"
       - "patches/reliability/tests/relay-compatibility.test.mjs"
       - "inkwave-public/src/net/transport.js"
+      - "inkwave-public/src/net/session.js"
+      - "inkwave-public/src/net/mock.js"
+      - "patches/splatoon3/tests/source-fixture.mjs"
       - "patches/reliability/net-adapter.mjs"
       - ".github/workflows/inkwave-relay-security.yml"
   push:
@@ -16,6 +19,9 @@ on:
       - "scripts/lib/inkwave-local-relay-fixture.mjs"
       - "patches/reliability/tests/relay-compatibility.test.mjs"
       - "inkwave-public/src/net/transport.js"
+      - "inkwave-public/src/net/session.js"
+      - "inkwave-public/src/net/mock.js"
+      - "patches/splatoon3/tests/source-fixture.mjs"
       - "patches/reliability/net-adapter.mjs"
       - ".github/workflows/inkwave-relay-security.yml"
 concurrency:

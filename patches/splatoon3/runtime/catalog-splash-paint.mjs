@@ -30,13 +30,13 @@ export function catalogSplashRadius(descriptor, index) {
     descriptor.splashNearestRadius > 0 ? descriptor.splashNearestRadius : descriptor.splashRadius;
 }
 
-export function catalogSplashFirst(spawn, sequence) {
+export function catalogSplashFirst(spawn, sequence, nearestSlot) {
   const nearest = Number.isFinite(spawn?.SpawnNearestLength) ? Math.max(0, spawn.SpawnNearestLength) : 1;
   const spacing = spawn?.SpawnBetweenLength, split = spawn?.SplitNum;
   if (!Number.isSafeInteger(sequence) || sequence < 0 || !Number.isInteger(split) || split < 1 ||
       !(Number.isFinite(spacing) && spacing > 0)) return nearest;
   const ordinal = sequence % split + 1;
-  return catalogSplashNearestSlot(spawn, sequence) ? nearest : nearest + spacing * (split - ordinal) / split;
+  return (nearestSlot ?? catalogSplashNearestSlot(spawn, sequence)) ? nearest : nearest + spacing * (split - ordinal) / split;
 }
 
 import { SPLASH_SHOOTER_PAINT_DEFAULTS, SPLASH_SHOOTER_SPAWN_DEFAULTS, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';

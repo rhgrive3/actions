@@ -27,7 +27,7 @@ test('typed BVH builder matches exact original nodes/order for random, equal-cen
  let state=43;const rnd=()=>((state=Math.imul(state,1664525)+1013904223>>>0)/4294967296);
  for(const count of [0,1,12,13,24,25,99,1000,9000])for(const flat of [false,true]){
   const triangles=new Float32Array(count*9);for(let i=0;i<triangles.length;i++)triangles[i]=flat?i%3:(rnd()-.5)*100;
-  assert.deepEqual(buildSourceBVH(triangles),bvhBefore(triangles),JSON.stringify({count,flat}));
+  for(const compactCenters of [false,true])assert.deepEqual(buildSourceBVH(triangles,{compactCenters}),bvhBefore(triangles),JSON.stringify({count,flat,compactCenters}));
  }
 });
 test('collision keeps compact byte-exact outputs including the no-degenerate full-capacity fast path',()=>{

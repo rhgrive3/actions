@@ -16,6 +16,7 @@ export function withoutGeometryStorage(rel,code){
       `      _a.set(pp[i1 * 3] - pp[i0 * 3], pp[i1 * 3 + 1] - pp[i0 * 3 + 1], pp[i1 * 3 + 2] - pp[i0 * 3 + 2]);
       _b.set(pp[i2 * 3] - pp[i0 * 3], pp[i2 * 3 + 1] - pp[i0 * 3 + 1], pp[i2 * 3 + 2] - pp[i0 * 3 + 2]);`);
   code=code.replace(/B\.(\w+)\.push[234]\(/g,'B.$1.push(');
+  code=code.replace('B.fflag.finish(FlagAttribute === THREE.Int8BufferAttribute ? Int8Array : Float32Array).buffer', 'B.fflag');
   code=code.replace(/new THREE.Float32BufferAttribute\(B\.(\w+)\.finish\(Float32Array\)\.buffer, (\d)\)/g,'new THREE.Float32BufferAttribute(B.$1, $2)');
   code=code.replace(/new THREE.BufferAttribute\(B\.(\w+)\.finish\(Float32Array\), (\d)\)/g,'new THREE.Float32BufferAttribute(B.$1, $2)');
   code=code.replace(`g.setIndex(B.idx.maximum >= 65535

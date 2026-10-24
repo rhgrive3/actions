@@ -28,7 +28,7 @@ function dependencyGraph(entries,overrides){
 }
 function assertColdGraph(overrides){const graph=dependencyGraph(['src/main.js','src/world/prop-packs.js'],overrides);for(const rel of optional)assert(!graph.has(rel),'eager optional builder/facade '+rel);return graph;}
 test('the actual composed cold module graph excludes optional builders and the full compatibility facade',()=>{
- const graph=assertColdGraph();assert(graph.has('src/world/props-core.js'));assert(graph.has('src/world/props-marina-placements.js'));assert(graph.has('src/world/stages/cargo/placements.js'));
+ const graph=assertColdGraph();assert(graph.has('src/world/props-core.js'));assert(graph.has('src/world/props-marina-placements.js'));for (const rel of ['src/world/stages/cargo/placements.js', 'src/world/stages/cargo/murals.js', 'patches/practice-range/stage/props.mjs', 'patches/practice-range/stage/murals.mjs']) assert(!graph.has(rel),'unselected descriptor dependency '+rel);
  for(const entry of ['src/world/dressing.js','src/world/murals.js','src/world/prop-packs.js']){
   const mutant=new Map([[entry,read(entry)+"\nimport './props.js';\n"]]);
   assert.throws(()=>assertColdGraph(mutant),/eager optional/,'a static import through '+entry+' must fail');

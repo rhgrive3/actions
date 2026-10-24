@@ -10,13 +10,25 @@ export function rankedBootState() {
   if (shell && !shell.hidden && retry && !retry.hidden) return {failed: document.getElementById('inkwave-startup-status')?.textContent || 'Explicit startup failure'};
   return globalThis.RG?.game?.menus && RG.s3?.installed && RG.mode !== 'boot' ? {ready:true} : false;
 }
-export async function observeRankedBoot(page, url, receipt, start) {
+export function rankedHttpFailureDetails(response, documentUrl, artifacts = {}) {
+  const request = response.request(), base = new URL(documentUrl), url = new URL(response.url());
+  const relative = decodeURIComponent(url.pathname.slice(new URL('.', base).pathname.length));
+  const responseHeaders = {};
+  // Deliberately omit cookies/authorization and retain only distribution provenance.
+  const allowed = new Set(['content-type','content-length','cache-control','etag','last-modified','age','date','server','via','x-cache','x-cache-hits','x-github-request-id','x-github-edge-region','x-served-by','x-fastly-request-id']);
+  try { for (const [name,value] of Object.entries(response.headers?.() || {})) if (allowed.has(name.toLowerCase())) responseHeaders[name.toLowerCase()] = value; } catch {}
+  let requestTiming = null;
+  try { requestTiming = request.timing?.() || null; } catch {}
+  return { kind:'critical-http', status:response.status(), url:response.url(), responseHeaders, requestTiming,
+    expectedArtifact: Object.hasOwn(artifacts, relative) ? { file:relative, sha256:artifacts[relative] } : null };
+}
+export async function observeRankedBoot(page, url, receipt, start, { artifacts } = {}) {
   receipt.url=url; receipt.startedAt=new Date().toISOString(); receipt.status='starting'; receipt.failures=[];
   let rejectFailure, finished=false;
   const failure = new Promise((_, reject) => { rejectFailure=reject; });
   // Attach before navigation: a static module can fail before DOMContentLoaded.
   const fail = event => { event.observedAt=new Date().toISOString(); if(receipt.failures.length<16) receipt.failures.push(event); rejectFailure(new Error(`Ranked boot ${event.kind}: ${event.status || event.message || ''} ${event.url || ''}`)); };
-  const response = r => { if(r.status()>=400 && criticalBootRequest(r.url(),r.request().resourceType(),url)) fail({kind:'critical-http',status:r.status(),url:r.url()}); };
+  const response = r => { if(r.status()>=400 && criticalBootRequest(r.url(),r.request().resourceType(),url)) fail(rankedHttpFailureDetails(r,url,artifacts)); };
   const requestfailed = r => { if(criticalBootRequest(r.url(),r.resourceType(),url)) fail({kind:'critical-request',url:r.url(),message:r.failure()?.errorText}); };
   const pageerror = e => fail({kind:'pageerror',message:e.message});
   const crash = () => fail({kind:'browser-crash',message:'Browser renderer crashed while starting Ranked'});

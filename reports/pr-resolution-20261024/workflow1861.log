@@ -1,0 +1,52 @@
+✔ inkwave-squid-visual-qa schedules dedicated QA for each directly consumed input (2.195266ms)
+✔ zevant-account schedules dedicated QA for each directly consumed input (0.713241ms)
+✔ inkwave-relay-security schedules dedicated QA for each directly consumed input (4.415369ms)
+✔ inkwave-character-asset-qa schedules dedicated QA for each directly consumed input (0.47053ms)
+✔ inkwave-explosher-flight-glitter schedules dedicated QA for each directly consumed input (0.405253ms)
+✔ validate-inkwave-native-stage5 schedules dedicated QA for each directly consumed input (0.368679ms)
+✔ validate-inkwave-audio-v11 schedules dedicated QA for each directly consumed input (0.383251ms)
+✔ inkwave-squid-heading-qa schedules dedicated QA for each directly consumed input (0.193969ms)
+✔ inkwave-swim-entry-qa schedules dedicated QA for each directly consumed input (0.159247ms)
+✔ inkwave-roller-support-source-pin schedules dedicated QA for each directly consumed input (0.346636ms)
+✔ inkwave-object-presentation-qa schedules dedicated QA for each directly consumed input (0.698099ms)
+✔ inkwave-health-recovery-rain schedules dedicated QA for each directly consumed input (1.863473ms)
+✔ inkwave-lobby-slot-browser schedules dedicated QA for each directly consumed input (0.155011ms)
+✔ inkwave-terminal-recovery-qa schedules dedicated QA for each directly consumed input (0.384562ms)
+✔ inkwave-pause-gpu schedules dedicated QA for each directly consumed input (3.252148ms)
+✔ inkwave-small-tank schedules dedicated QA for each directly consumed input (0.258154ms)
+✔ inkwave-ink-volumes schedules dedicated QA for each directly consumed input (0.311162ms)
+✔ inkwave-reopened-six schedules dedicated QA for each directly consumed input (0.209492ms)
+✔ validate-inkwave-update schedules dedicated QA for each directly consumed input (1.515845ms)
+✔ inkwave-defense-selection schedules dedicated QA for each directly consumed input (0.210083ms)
+✔ inkwave-ink-micro-surface schedules dedicated QA for each directly consumed input (0.210814ms)
+✔ inkwave-touch-frame-pacing schedules dedicated QA for each directly consumed input (0.116894ms)
+✔ inkwave-crab-gyro schedules dedicated QA for each directly consumed input (0.343721ms)
+✔ validate-inkwave-update schedules dedicated QA for each directly consumed input (37.585369ms)
+✔ pages-inkwave schedules dedicated QA for each directly consumed input (0.35592ms)
+✔ validate-inkwave-update schedules dedicated QA for each directly consumed input (0.585822ms)
+✔ validate-inkwave-ranked schedules dedicated QA for each directly consumed input (0.361759ms)
+✔ inkwave-specials-1130 schedules dedicated QA for each directly consumed input (0.789184ms)
+✔ inkwave-projectile-visuals schedules dedicated QA for each directly consumed input (5.451521ms)
+✔ two browser jobs retain independent DPR invocations, artifact names and failing fan-in (31.223344ms)
+✔ pinned historical frame replay is manual, with both immutable refs preserved (0.343741ms)
+✔ Dynamo keeps one final always-run full evidence upload (0.166808ms)
+✔ squid baseline remains an explicit second immutable shallow tree (0.131265ms)
+✔ headgear retains six isolated shards with no enabled historical scope walker (3.218778ms)
+✔ quality history is bounded to exact endpoint trees and immutable checkout identity remains mandatory (0.231615ms)
+{"sourceSuite":"network","completed":["patches/network-replication/tests/queue-inkflight-owned-profile.test.mjs","patches/network-replication/tests/slosher-birth-sampling.test.mjs","patches/network-replication/tests/issue-1101-adoption-cooldown.test.mjs"],"remaining":1,"totalUnique":4}
+✔ all unique source files execute once while partial and emitted passes remain separate (23.768163ms)
+✔ missing, partial, conditional, duplicated or ignored early proof cannot remove a full source file (1.777315ms)
+✔ new tests are included automatically, missing declarations fail closed, child failure remains failure (417.358033ms)
+✔ wall-only route retains exact-head, real build, full verifier and always evidence (8.741986ms)
+✔ all event and flag combinations isolate wall from full, network and broad render jobs (1.443988ms)
+✔ missing identity, real build, source/emitted contracts or full verifier fail closed (48.231303ms)
+✔ scope, timeout, evidence, failure suppression and concurrency mutations are rejected (15.279022ms)
+✔ accepted Turf and network job bodies are preserved without gate weakening (1.447784ms)
+ℹ tests 43
+ℹ suites 0
+ℹ pass 43
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1242.259418

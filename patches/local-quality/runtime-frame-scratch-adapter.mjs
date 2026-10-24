@@ -5,8 +5,8 @@ import { adaptGeometryBuildStorage } from './geometry-build-storage-adapter.mjs'
 export function adaptRuntimeFrameScratch(rel, code, replaceOnce) {
   const patch=(from,to,why)=>{code=replaceOnce(code,from,to,'runtime frame scratch: '+why);};
   if (rel === 'src/main.js') {
-    patch("  async _loadLightmap(level, layoutId) {\n    try {\n      const meta = await (await fetch(`assets/lightmaps/${layoutId}.json`, { cache: 'no-cache' })).json();\n      level.layoutLightmap(meta.ppm, meta.size);\n      if (level.layoutHash !== meta.hash) { console.warn(`[inkwave] lightmap for ${layoutId} is stale — re-run tools/bake-ao.mjs`); level.lightSize = 0; for (const f of level.faces) f.light = null; return null; }\n      const tex = await new THREE.TextureLoader().loadAsync(`assets/lightmaps/${layoutId}.png?h=${meta.hash}`);\n      tex.colorSpace = THREE.NoColorSpace;\n      tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.magFilter = THREE.LinearFilter;\n      tex.anisotropy = 4;\n      return tex;\n    } catch (e) {\n      console.warn('[inkwave] no lightmap for', layoutId, e.message);\n      for (const f of level.faces) f.light = null;\n      return null;\n    }\n  }\n",
-      "  async _loadLightmap(level, layoutId) {\n    try {\n      // Retain only validated small metadata on this Game. Active worlds\n      // continue to own and dispose every GPU texture, including on touch.\n      const metadata = this._iwLightmapMetadata || (this._iwLightmapMetadata = new Map());\n      let meta = metadata.get(layoutId), cached = !!meta;\n      // One canonical fetch site also preserves the compiled cache adapter.\n      // Only a stale cached entry gets a second validation pass.\n      for (let attempt = 0; attempt < 2; attempt++) {\n        if (!meta) meta = await (await fetch(`assets/lightmaps/${layoutId}.json`, { cache: 'no-cache' })).json();\n        level.layoutLightmap(meta.ppm, meta.size);\n        if (!cached || level.layoutHash === meta.hash) break;\n        metadata.delete(layoutId); meta = null; cached = false;\n      }\n      if (level.layoutHash !== meta.hash) { console.warn(`[inkwave] lightmap for ${layoutId} is stale — re-run tools/bake-ao.mjs`); level.lightSize = 0; for (const f of level.faces) f.light = null; return null; }\n      metadata.delete(layoutId); metadata.set(layoutId, Object.freeze({ hash: meta.hash, ppm: meta.ppm, size: meta.size }));\n      while (metadata.size > 4) metadata.delete(metadata.keys().next().value);\n      const tex = await new THREE.TextureLoader().loadAsync(`assets/lightmaps/${layoutId}.png?h=${meta.hash}`);\n      tex.colorSpace = THREE.NoColorSpace;\n      tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.magFilter = THREE.LinearFilter;\n      tex.anisotropy = 4;\n      return tex;\n    } catch (e) {\n      console.warn('[inkwave] no lightmap for', layoutId, e.message);\n      for (const f of level.faces) f.light = null;\n      return null;\n    }\n  }\n", 'reuse verified bounded legacy lightmap metadata with active-world GPU ownership');
+    patch("  async _loadLightmap(level, layoutId, pendingMetadata = null) {\n    try {\n      const prepared = pendingMetadata ? await pendingMetadata : null;\n      if (prepared?.absent) { for (const f of level.faces) f.light = null; return null; }\n      if (prepared?.error) throw prepared.error;\n      const meta = prepared ? prepared.meta : await (await fetch(`assets/lightmaps/${layoutId}.json`, { cache: 'no-cache' })).json();\n      level.layoutLightmap(meta.ppm, meta.size);\n      if (level.layoutHash !== meta.hash) { console.warn(`[inkwave] lightmap for ${layoutId} is stale — re-run tools/bake-ao.mjs`); level.lightSize = 0; for (const f of level.faces) f.light = null; return null; }\n      const tex = await new THREE.TextureLoader().loadAsync(`assets/lightmaps/${layoutId}.png?h=${meta.hash}`);\n      tex.colorSpace = THREE.NoColorSpace;\n      tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.magFilter = THREE.LinearFilter;\n      tex.anisotropy = 4;\n      return tex;\n    } catch (e) {\n      console.warn('[inkwave] no lightmap for', layoutId, e.message);\n      for (const f of level.faces) f.light = null;\n      return null;\n    }\n  }\n",
+      "  async _loadLightmap(level, layoutId, pendingMetadata = null) {\n    try {\n      const prepared = pendingMetadata ? await pendingMetadata : null;\n      if (prepared?.absent) { for (const f of level.faces) f.light = null; return null; }\n      if (prepared?.error) throw prepared.error;\n      // Retain only validated small metadata on this Game. Active worlds\n      // continue to own and dispose every GPU texture, including on touch.\n      const metadata = this._iwLightmapMetadata || (this._iwLightmapMetadata = new Map());\n      let meta = metadata.get(layoutId), cached = !!meta;\n      // One canonical fetch site also preserves the compiled cache adapter.\n      // Only a stale cached entry gets a second validation pass.\n      for (let attempt = 0; attempt < 2; attempt++) {\n        if (!meta) meta = attempt === 0 && prepared ? prepared.meta : await (await fetch(`assets/lightmaps/${layoutId}.json`, { cache: 'no-cache' })).json();\n        level.layoutLightmap(meta.ppm, meta.size);\n        if (!cached || level.layoutHash === meta.hash) break;\n        metadata.delete(layoutId); meta = null; cached = false;\n      }\n      if (level.layoutHash !== meta.hash) { console.warn(`[inkwave] lightmap for ${layoutId} is stale — re-run tools/bake-ao.mjs`); level.lightSize = 0; for (const f of level.faces) f.light = null; return null; }\n      metadata.delete(layoutId); metadata.set(layoutId, Object.freeze({ hash: meta.hash, ppm: meta.ppm, size: meta.size }));\n      while (metadata.size > 4) metadata.delete(metadata.keys().next().value);\n      const tex = await new THREE.TextureLoader().loadAsync(`assets/lightmaps/${layoutId}.png?h=${meta.hash}`);\n      tex.colorSpace = THREE.NoColorSpace;\n      tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.magFilter = THREE.LinearFilter;\n      tex.anisotropy = 4;\n      return tex;\n    } catch (e) {\n      console.warn('[inkwave] no lightmap for', layoutId, e.message);\n      for (const f of level.faces) f.light = null;\n      return null;\n    }\n  }\n", 'reuse verified bounded legacy lightmap metadata with active-world GPU ownership');
 
     // Previously, a new arrow closure was allocated on *every* rAF callback.
     // Reuse a per-Game callback while dynamically resolving this._loop() each
@@ -363,7 +363,7 @@ export class PlayerController {`, 'one shared map target picker with controller-
     g.setAttribute('lightUv', new THREE.Float32BufferAttribute(B.luv, 2));
     g.setAttribute('faceUv', new THREE.Float32BufferAttribute(B.fuv, 2));
     g.setAttribute('faceData', new THREE.Float32BufferAttribute(B.fdat, 4));
-    g.setAttribute('faceFlags', new THREE.Float32BufferAttribute(B.fflag, 3));
+    g.setAttribute('faceFlags', new FlagAttribute(B.fflag, 3, false));
     g.setAttribute('faceTan', new THREE.Float32BufferAttribute(B.ftan, 3));
     g.setIndex(B.idx);
     g.computeBoundingSphere();
@@ -377,7 +377,7 @@ export class PlayerController {`, 'one shared map target picker with controller-
     g.setAttribute('lightUv', new THREE.Float32BufferAttribute(B.luv, 2)); B.luv = null;
     g.setAttribute('faceUv', new THREE.Float32BufferAttribute(B.fuv, 2)); B.fuv = null;
     g.setAttribute('faceData', new THREE.Float32BufferAttribute(B.fdat, 4)); B.fdat = null;
-    g.setAttribute('faceFlags', new THREE.Float32BufferAttribute(B.fflag, 3)); B.fflag = null;
+    g.setAttribute('faceFlags', new FlagAttribute(B.fflag, 3, false)); B.fflag = null;
     g.setAttribute('faceTan', new THREE.Float32BufferAttribute(B.ftan, 3)); B.ftan = null;
     g.setIndex(B.idx);
     g.computeBoundingSphere();
@@ -459,17 +459,29 @@ export class PlayerController {`, 'one shared map target picker with controller-
   }
   if (rel === 'src/game/character-hair.js') {
     patch('  offset(t, th, scale = 1, sec = null) {',
-      '  offset(t, th, scale = 1, sec = null) { return this.offsetInto(t, th, scale, sec, []); }\n  offsetInto(t, th, scale = 1, sec = null, out = []) {',
+      '  offset(t, th, scale = 1, sec = null) { return this.offsetInto(t, th, scale, sec, []); }\n  offsetInto(t, th, scale = 1, sec = null, out = [], basis = null) {',
       'retain public offset API with caller-owned tube output');
+    patch('    let c = Math.cos(th), s = Math.sin(th);',
+      '    let c = basis ? basis.c : Math.cos(th), s = basis ? basis.s : Math.sin(th);',
+      'reuse tube ring angle basis before section callback');
+    patch('    const ct = Math.cos(s0.tw), st = Math.sin(s0.tw);',
+      '    const ct = basis ? basis.ct : Math.cos(s0.tw), st = basis ? basis.st : Math.sin(s0.tw);',
+      'reuse tube ring twist basis');
     patch('    return [xo * ct - xb * st, xo * st + xb * ct, Math.abs(c) * s0.r * s0.flat * scale];',
       '    out[0] = xo * ct - xb * st; out[1] = xo * st + xb * ct; out[2] = Math.abs(c) * s0.r * s0.flat * scale; return out;',
       'write tube offset without a result tuple per vertex');
     patch('  const P = new V3(), T = new V3(), O = new V3(), B = new V3();\n  const ring =',
-      '  const P = new V3(), T = new V3(), O = new V3(), B = new V3(), offset = [0, 0, 0];\n  const ring =',
+      '  const P = new V3(), T = new V3(), O = new V3(), B = new V3(), offset = [0, 0, 0];\n  const cosByK = [], sinByK = [], basis = {c:0,s:0,ct:0,st:0};\n  const ring =',
       'own offset output within one tube build');
+    patch('    const sec = S.section(t);\n    for (let k = 0; k < radial; k++) {',
+      '    const sec = S.section(t);\n    const shared = S.section === TentacleSurface.prototype.section && S.offsetInto === TentacleSurface.prototype.offsetInto;\n    if(shared){basis.ct=Math.cos(sec.tw);basis.st=Math.sin(sec.tw);}\n    if(!cosByK.length)for(let k=0;k<radial;k++){const a=(k/radial)*TAU;cosByK.push(Math.cos(a));sinByK.push(Math.sin(a));}\n    for (let k = 0; k < radial; k++) {',
+      'reuse tube angle table and standard surface ring twist');
     patch('      const [x, y, h] = S.offset(t, a, scale, sec);',
-      '      const [x, y, h] = S.offsetInto(t, a, scale, sec, offset);',
+      '      basis.c=cosByK[k];basis.s=sinByK[k];\n      const [x, y, h] = shared ? S.offsetInto(t, a, scale, sec, offset, basis) : S.offsetInto(t, a, scale, sec, offset);',
       'reuse tube vertex offset output');
+    patch('      tt.push(t); cs.push(Math.cos(a)); sn.push(Math.sin(a)); th.push(Math.max(h, 0.18 * sec.r * sec.flat * scale));',
+      '      tt.push(t); cs.push(cosByK[k]); sn.push(sinByK[k]); th.push(Math.max(h, 0.18 * sec.r * sec.flat * scale));',
+      'reuse undeformed tube angle attributes');
     patch('  normal(t, th, out) {\n    const e = 1e-3;\n    const p0 = this.point(t, th, new V3());\n    const pt = this.point(t + e, th, new V3()).sub(this.point(t - e, th, new V3()));\n    const pa = this.point(t, th + e, new V3()).sub(this.point(t, th - e, new V3()));',
       '  normal(t, th, out, scratch = null) {\n    const e = 1e-3;\n    const v = scratch || [new V3(), new V3(), new V3(), new V3(), new V3()];\n    const p0 = this.point(t, th, v[0]);\n    const pt = this.point(t + e, th, v[1]).sub(this.point(t - e, th, v[2]));\n    const pa = this.point(t, th + e, v[3]).sub(this.point(t, th - e, v[4]));',
       'allow caller-owned finite difference vectors');
@@ -486,7 +498,7 @@ export class PlayerController {`, 'one shared map target picker with controller-
     patch("  const clean = list.map((g) => { const x = g.index ? g.toNonIndexed() : g; for (const k of Object.keys(x.attributes)) if (!['position', 'normal', 'color', 'uv'].includes(k)) x.deleteAttribute(k); return x; });",
       `  const clean = list.map((g) => {
     const x = new THREE.BufferGeometry();
-    for (const k of ['position', 'normal', 'color', 'uv']) if (g.attributes[k]) x.setAttribute(k, g.attributes[k]);
+    for (const k of ['position', 'normal', 'color']) if (g.attributes[k]) x.setAttribute(k, g.attributes[k]);
     if (g.index) x.setIndex(g.index);
     else { const n = g.attributes.position.count, indices = n > 65535 ? new Uint32Array(n) : new Uint16Array(n); for (let i = 0; i < n; i++) indices[i] = i; x.setIndex(new THREE.BufferAttribute(indices, 1)); }
     return x;
@@ -583,14 +595,15 @@ export class PlayerController {`, 'one shared map target picker with controller-
       const next=`this.${name} = this.${name}?.length === ${size} ? this.${name}${fill===null?'':'.fill('+fill+')'} : ${init}`;
       patch(pattern,next,'reuse legacy minimap '+name+' table across viewer flips');
     };
-    reuse('hgt','Float32Array','N','-99'); reuse('topBlock','Int32Array','N','-1');
-    reuse('nrm','Float32Array','N * 2'); reuse('pixCell','Int32Array','N','-1');
+    reuse('hgt','Float32Array','N','-99');
+    patch('this.topBlock = new BlockIds(N).fill(-1)', 'this.topBlock = this.topBlock?.length === N && this.topBlock.constructor === BlockIds ? this.topBlock.fill(-1) : new BlockIds(N).fill(-1)', 'reuse guarded minimap ID storage only with matching width');
+    reuse('pixCell','Int32Array','N','-1');
     reuse('pixFx','Uint8Array','N'); reuse('pixFy','Uint8Array','N');
     reuse('pixSx','Int8Array','N'); reuse('pixSy','Int32Array','N');
     patch('    this.owner = new Uint8Array(N);','    this.owner = this.owner?.length === N ? this.owner.fill(0) : new Uint8Array(N);','reuse legacy minimap owner table');
     // These tables are only written on admitted raster cells, so stale entries
     // must be reset exactly as freshly allocated typed arrays were.
-    for(const name of ['nrm','pixFx','pixFy','pixSx','pixSy']) {
+    for(const name of ['pixFx','pixFy','pixSx','pixSy']) {
       const size=name==='nrm'?'N * 2':'N';
       patch(`this.${name}?.length === ${size} ? this.${name} :`, `this.${name}?.length === ${size} ? this.${name}.fill(0) :`, 'zero reused minimap '+name+' table');
     }

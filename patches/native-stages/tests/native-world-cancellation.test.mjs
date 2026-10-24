@@ -36,4 +36,11 @@ test('stage shader warm-up precedes publication and an abort during it cleans th
  f.cancel();release();await p;
  assert.equal(f.counts.publish||0,0);assert.equal(f.counts.nav||0,0);assert.equal(f.counts.displayDispose,1);assert.equal(f.counts.paintDispose,1);assert.equal(f.counts.meshDispose,1);assert.equal(f.counts.materialDispose,1);
 });
+test('native stage compile rejection releases detached geometry without publication',async()=>{
+ const f=await fixture(),error=Error('native stage compile failure');f.setStageWarm(()=>Promise.reject(error));
+ const p=f.start(),rejection=assert.rejects(p,e=>e===error);await f.tick();f.warms[0].resolve();await rejection;
+ assert.equal(f.counts.nav||0,0);assert.equal(f.counts.publish||0,0);assert.equal(f.counts.meshDispose,1);
+ assert.equal(f.counts.geometryDispose,1);assert.equal(f.counts.materialDispose,1);assert.equal(f.G.renderer.target,'previous');
+});
+
 }

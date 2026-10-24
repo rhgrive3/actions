@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 
-const from = 'const before = new Set(this.list); const result = original.call(this, a, w); const group = new Map();\n      for (const p of this.list) if (!before.has(p)) {';
+const from = 'for(const p of this.list)before.add(p);\n        const result = original.call(this, a, w); const group = new Map();\n        for (const p of this.list) if (!before.has(p)) {';
 const to = 'const start = this.list.length; const result = original.call(this, a, w); const group = new Map();\n      for (let i = start; i < this.list.length; i++) { const p = this.list[i];';
 async function run(candidate, mutation, family) {
   let replaced = 0;

@@ -58,7 +58,7 @@ test('actual Fizzy ground pops spawn six harmless detached drops per stage, reta
   assert.equal(w.hits.length,0);assert.equal(w.f.G.projectiles._s3TorpedoSplashes.length,0);
   w.f.G.projectiles.clear();assert.equal(w.f.G.projectiles._s3TorpedoSplashes.length,0);
   const fresh=await world(),again=fresh.fire();for(let i=0;i<60&&!fresh.f.G.projectiles._s3TorpedoSplashes?.length;i++)fresh.step();
-  const mesh=fresh.f.G.projectiles._s3TorpedoSplashes[0]?.mesh;assert.ok(mesh);fresh.f.G.projectiles.clear();assert.equal(again.dead,true);assert.equal(mesh.parent,null);
+  const mesh=fresh.f.G.projectiles._s3TorpedoSplashes[0]?.visual?.mesh;assert.ok(mesh);fresh.f.G.projectiles.clear();assert.equal(again.dead,true);assert.equal(mesh.parent,null);
 });
 
 test('Fizzy JSON replay paints all eighteen ordinary children and three bounded cores once while ghost impacts have no authority',async()=>{

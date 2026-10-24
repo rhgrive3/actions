@@ -1,0 +1,168 @@
+{
+  "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+  "scope": "actual composed method bodies and real DOM CSSStyleDeclaration; no GPU/gameplay/device frame-time claim",
+  "rows": [
+    {
+      "kind": "downs",
+      "hz": 30,
+      "mode": "visible",
+      "frames": 93,
+      "baselineSetters": 720,
+      "candidateSetters": 80,
+      "cssMismatches": 0
+    },
+    {
+      "kind": "downs",
+      "hz": 30,
+      "mode": "hidden",
+      "frames": 93,
+      "baselineSetters": 360,
+      "candidateSetters": 4,
+      "cssMismatches": 0
+    },
+    {
+      "kind": "downs",
+      "hz": 30,
+      "mode": "transitions",
+      "frames": 93,
+      "baselineSetters": 568,
+      "candidateSetters": 96,
+      "cssMismatches": 0
+    },
+    {
+      "kind": "downs",
+      "hz": 60,
+      "mode": "visible",
+      "frames": 186,
+      "baselineSetters": 1440,
+      "candidateSetters": 152,
+      "cssMismatches": 0
+    },
+    {
+      "kind": "downs",
+      "hz": 60,
+      "mode": "hidden",
+      "frames": 186,
+      "baselineSetters": 720,
+      "candidateSetters": 4,
+      "cssMismatches": 0
+    },
+    {
+      "kind": "downs",
+      "hz": 60,
+      "mode": "transitions",
+      "frames": 186,
+      "baselineSetters": 1136,
+      "candidateSetters": 184,
+      "cssMismatches": 0
+    },
+    {
+      "kind": "downs",
+      "hz": 120,
+      "mode": "visible",
+      "frames": 372,
+      "baselineSetters": 2880,
+      "candidateSetters": 296,
+      "cssMismatches": 0
+    },
+    {
+      "kind": "downs",
+      "hz": 120,
+      "mode": "hidden",
+      "frames": 372,
+      "baselineSetters": 1440,
+      "candidateSetters": 4,
+      "cssMismatches": 0
+    },
+    {
+      "kind": "downs",
+      "hz": 120,
+      "mode": "transitions",
+      "frames": 372,
+      "baselineSetters": 2272,
+      "candidateSetters": 356,
+      "cssMismatches": 0
+    },
+    {
+      "kind": "nums",
+      "hz": 30,
+      "mode": "visible",
+      "frames": 36,
+      "baselineSetters": 372,
+      "candidateSetters": 186,
+      "cssMismatches": 0
+    },
+    {
+      "kind": "nums",
+      "hz": 30,
+      "mode": "hidden",
+      "frames": 36,
+      "baselineSetters": 186,
+      "candidateSetters": 6,
+      "cssMismatches": 0
+    },
+    {
+      "kind": "nums",
+      "hz": 30,
+      "mode": "transitions",
+      "frames": 36,
+      "baselineSetters": 312,
+      "candidateSetters": 144,
+      "cssMismatches": 0
+    },
+    {
+      "kind": "nums",
+      "hz": 60,
+      "mode": "visible",
+      "frames": 72,
+      "baselineSetters": 756,
+      "candidateSetters": 378,
+      "cssMismatches": 0
+    },
+    {
+      "kind": "nums",
+      "hz": 60,
+      "mode": "hidden",
+      "frames": 72,
+      "baselineSetters": 378,
+      "candidateSetters": 6,
+      "cssMismatches": 0
+    },
+    {
+      "kind": "nums",
+      "hz": 60,
+      "mode": "transitions",
+      "frames": 72,
+      "baselineSetters": 612,
+      "candidateSetters": 276,
+      "cssMismatches": 0
+    },
+    {
+      "kind": "nums",
+      "hz": 120,
+      "mode": "visible",
+      "frames": 144,
+      "baselineSetters": 1512,
+      "candidateSetters": 756,
+      "cssMismatches": 0
+    },
+    {
+      "kind": "nums",
+      "hz": 120,
+      "mode": "hidden",
+      "frames": 144,
+      "baselineSetters": 756,
+      "candidateSetters": 6,
+      "cssMismatches": 0
+    },
+    {
+      "kind": "nums",
+      "hz": 120,
+      "mode": "transitions",
+      "frames": 144,
+      "baselineSetters": 1212,
+      "candidateSetters": 540,
+      "cssMismatches": 0
+    }
+  ]
+}

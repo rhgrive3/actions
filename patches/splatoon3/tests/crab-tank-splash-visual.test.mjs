@@ -58,7 +58,8 @@ test('real THREE batches only marked finite Crab drops, with independent source/
     assert.equal(mesh.count, 2); assert.equal(mesh.visible, true);
     assert.equal(mesh.castShadow, false); assert.equal(mesh.receiveShadow, false);
     assert.equal(mesh.material.transparent, false); assert.equal(mesh.material.transmission, 0);
-    assert.equal(mesh.frustumCulled, false);
+    assert.equal(mesh.frustumCulled, true);
+    for (const d of [shooter, cannon]) assert.ok(mesh.boundingSphere.distanceToPoint(d.pos) <= -(d.spec.crabMode === 'cannon' ? .1 : .055), 'current visible droplets are inside refreshed bound');
     assert.equal(mesh.instanceMatrix.usage, THREE.DynamicDrawUsage);
     assert.equal(mesh.instanceColor.usage, THREE.DynamicDrawUsage);
     assert.deepEqual(transform(mesh, 0).pos.toArray(), shooter.pos.toArray());

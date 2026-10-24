@@ -693,11 +693,18 @@ export class ClamsRule {
           continue;
         }
         let actorHit = false;
+        const minX=Math.min(previous[0],next[0])-.721,maxX=Math.max(previous[0],next[0])+.721,
+          minY=Math.min(previous[1],next[1])-.721,maxY=Math.max(previous[1],next[1])+.721,
+          minZ=Math.min(previous[2],next[2])-.721,maxZ=Math.max(previous[2],next[2])+.721;
+        const bounded=Math.abs(minX)<1e9&&Math.abs(maxX)<1e9&&Math.abs(minY)<1e9&&Math.abs(maxY)<1e9&&Math.abs(minZ)<1e9&&Math.abs(maxZ)<1e9;
         for (const actor of this._actorList(frame)) {
           if (actor.alive === false || actor.id === clam.thrower) continue;
           // Use the swept contact for admission too. Rechecking the old birth
           // point loses grazing catches even at the ordinary 60Hz throw speed.
           const bodyCenter = vec(actor.pos); bodyCenter[1] += 0.9;
+          // Keep vec's validation/getter/fallback contract; reject before its
+          // several closest-point temporaries, rather than duplicating reads.
+          if(bounded&&(bodyCenter[0]<minX||bodyCenter[0]>maxX||bodyCenter[1]<minY||bodyCenter[1]>maxY||bodyCenter[2]<minZ||bodyCenter[2]>maxZ))continue;
           const contact = this._segmentClosestPoint(bodyCenter, previous, next);
           if (this._collectFromProjectile(clam, actor, frame, contact, bodyCenter)) {
             this.state.clams = this.state.clams.filter(item => item.id !== clam.id);

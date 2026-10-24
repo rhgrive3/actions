@@ -1,0 +1,38 @@
+✔ Inkjet source recipes retain 60/120 Hz jet density and fractional-period discs while capping 30 Hz to its previous particle budget (20.759185ms)
+✔ Inkjet stall catch-up advances at most two time ticks but emits at most one density tick with no backlog (0.254709ms)
+✔ Inkjet clock preserves 60 Hz, handles jitter and resets submerged carry without RNG (4.79916ms)
+✔ Inkjet skips full pools and never exceeds a final free slot (4.741804ms)
+✔ Inkjet fair actual pool bounds 30Hz actors=1 cap=182 (20.628911ms)
+✔ Inkjet fair actual pool bounds 30Hz actors=2 cap=182 (53.478956ms)
+✔ Inkjet fair actual pool bounds 30Hz actors=4 cap=182 (25.952182ms)
+✔ Inkjet fair actual pool bounds 60Hz actors=1 cap=182 (65.613238ms)
+✔ Inkjet fair actual pool bounds 60Hz actors=2 cap=182 (26.186911ms)
+✔ Inkjet fair actual pool bounds 60Hz actors=4 cap=182 (27.710758ms)
+✔ Inkjet fair actual pool bounds 120Hz actors=1 cap=182 (86.239797ms)
+✔ Inkjet fair actual pool bounds 120Hz actors=2 cap=182 (93.202507ms)
+✔ Inkjet fair actual pool bounds 120Hz actors=4 cap=182 (67.802577ms)
+✔ Inkjet fair actual pool bounds 30Hz actors=1 cap=520 (6.645016ms)
+✔ Inkjet fair actual pool bounds 30Hz actors=2 cap=520 (16.145051ms)
+✔ Inkjet fair actual pool bounds 30Hz actors=4 cap=520 (22.202643ms)
+✔ Inkjet fair actual pool bounds 60Hz actors=1 cap=520 (7.187012ms)
+✔ Inkjet fair actual pool bounds 60Hz actors=2 cap=520 (47.761148ms)
+✔ Inkjet fair actual pool bounds 60Hz actors=4 cap=520 (17.739623ms)
+✔ Inkjet fair actual pool bounds 120Hz actors=1 cap=520 (38.351079ms)
+✔ Inkjet fair actual pool bounds 120Hz actors=2 cap=520 (73.758207ms)
+✔ Inkjet fair actual pool bounds 120Hz actors=4 cap=520 (105.994628ms)
+✔ Inkjet admission reuses records, shares only free capacity, and excludes ineligible actors (2.133925ms)
+✔ Inkjet quotas exclude retired/recycled rounds and deduplicate live owners without array scans (0.34959ms)
+✔ Inkjet quota distribution reuses collected records without a second WeakMap lookup (0.700402ms)
+(node:5124) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ mid-flight clear releases external fist once and permits a new lifetime (33.410988ms)
+✔ mid-flight FX dispose releases external fist and all pool resources once (14.877265ms)
+✔ normal fist retirement and subsequent clear/dispose do not double dispose (11.712706ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1461.757867

@@ -32,6 +32,7 @@ export class SourceMotionController {
   try{
    const [bank,squidBank]=await Promise.all([loadSourceBank(variant),loadSourceBank('Player_Squid')]);
    if(this.disposed||token!==this.loadToken)return this;
+   if(this.bank!==bank)this.clearBankCaches();
    this.variant=variant;this.bank=bank;this.pose=new SourcePose(bank);this.tmp=new SourcePose(bank);this.previousPose=new SourcePose(bank);this.overlay=new SourcePose(bank);this.restGait=new SourcePose(bank);
    this.bodyBalance=new BodyBalance(bank);this.hairTargets=new HairTargets(bank);this.previousHairTargets=new HairTargets(bank);this.pivotWeight=0;this.balanceWeight=0;this.bodyPose=null;this.previousBodyPose=new SourcePose(bank);this.previousBalanceTargets={wp:bank.bones.map(()=>new THREE.Vector3())};
    this.gaitTargets=new GaitTargets(bank);this.shortTargets=new GaitTargets(bank);this.previousTargets=new GaitTargets(bank);this.targetsActive=false;
@@ -63,6 +64,11 @@ export class SourceMotionController {
   if(['shoot','slosh','flick','throw','charge_release','hit'].includes(name))this.action={name,time:0};
  }
  choose(candidates){for(const name of candidates)if(this.bank.clips.has(name))return name;throw new Error(`No source clip in ${candidates.join(', ')}`);}
+ clearBankCaches(){
+  // Pools can contain unused tail profiles whose centerPose still owns the
+  // old bank. Drop them together with bank-keyed lookup caches on a swap.
+  for(const name of ['_famTables','_famTablesBank','_dirClipsCache','_dirClipsBank','_iwDanceClips','_iwDanceBank','_sampleFkBank','_locoList','_locoPool'])this[name]=undefined;
+ }
  directionClips(family,shooting,run){
   const mode=run?'Run':'Walk',suffix=shooting?'Shoot':'Hold';
   return SIDES.map((side,index)=>{
@@ -99,8 +105,9 @@ export class SourceMotionController {
   // feet in applyBody, causing visible 60Hz shimmy. Physics remains unfiltered.
   if(this.treadmill)dist=Number(s.speed)*dt;
   const n=this.treadmill?Math.hypot(lm.x||0,lm.z||0):dist;
-  const rawX=this.treadmill?-(lm.x||0)/n:n>0?(dx*Math.cos(yaw)-dz*Math.sin(yaw))/n:0;
-  const rawZ=this.treadmill?(lm.z||0)/n:n>0?(dx*Math.sin(yaw)+dz*Math.cos(yaw))/n:1;
+  let cosYaw,sinYaw;
+  const rawX=this.treadmill?-(lm.x||0)/n:n>0?(dx*(cosYaw??=Math.cos(yaw))-dz*(sinYaw??=Math.sin(yaw)))/n:0;
+  const rawZ=this.treadmill?(lm.z||0)/n:n>0?(dx*(sinYaw??=Math.sin(yaw))+dz*(cosYaw??=Math.cos(yaw)))/n:1;
   const visualSpeed=dt>0?dist/dt:0;
   const confidence=clamp((visualSpeed-.06)/.30,0,1);
   if(n>1e-10&&confidence>0) {
@@ -228,8 +235,9 @@ this.constrainLeft=true;
     const clip=this.bank.clips.get(item.name),p=item.profile;
     // Align *measured* left contact entry, rather than assuming forward/side/back clips share frame zero.
     const frame=mod(this.phase+p.feet[0].strike,1)*clip.frames;
-    this.bank.sample(clip,frame,this.tmp,true);this.bodyBalance.add(p,item.weight);this.hairTargets.add(this.tmp,p,item.weight);this.gaitTargets.add(this.tmp,item.weight,p,mod(frame/clip.frames,1));this.shortTargets.add({wp:p.centers,wq:this.tmp.wq},item.weight);if(!total)this.pose.copy(this.tmp);else this.pose.mix(this.tmp,item.weight/(total+item.weight));total+=item.weight;
+    this.bank.sample(clip,frame,this.tmp,true);this.bodyBalance.add(p,item.weight);this.hairTargets.add(this.tmp,p,item.weight);
     const normalizedFrame=mod(frame/clip.frames,1);
+    this.gaitTargets.add(this.tmp,item.weight,p,normalizedFrame);this.shortTargets.add({wp:p.centers,wq:this.tmp.wq},item.weight);if(!total)this.pose.copy(this.tmp);else this.pose.mix(this.tmp,item.weight/(total+item.weight));total+=item.weight;
     for(let i=0;i<2;i++){
      this.contact[i]+=sampleContact(p,i,normalizedFrame)*feasibleContact(p,i,normalizedFrame,{speed:this.speed,cadenceHz,legReach:this.character.limbs.legL.a+this.character.limbs.legL.b})*item.weight;
      const f=this.bank.index['foot_'+(i?'R':'L')],t=this.bank.index['toe_'+(i?'R':'L')];

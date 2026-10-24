@@ -1,0 +1,660 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-10-23T14:23:59.220671+00:00",
+  "intake": {
+    "count": 358,
+    "implemented": 295,
+    "alreadyEffective": 29,
+    "notAdopted": 30,
+    "partial": 2,
+    "unresolved": 2,
+    "pending": 0,
+    "lastDrivePollUtc": "2026-10-23 14:23:27 UTC",
+    "newItemsAtLastPoll": 0
+  },
+  "build": {
+    "status": "passed",
+    "sourceRevision": "65c382d38c5737d4046c59eab4de125fdd1f0f03",
+    "contentHash": "045ae54adf4dbc27d5af3b6c2ff86cbae22a55c809ef50076935657885363070",
+    "inputHash": "c44acf26b47382194fd6e64c4ebb7ae777822d8e85eaa1d1be58c6fa9fef824a",
+    "revision": "af1dfbf9fb41279570b552b02d03df59c3441b650ca28ee3be282ed6a69dc8ca",
+    "optimization": "esbuild-minify",
+    "budgetStatus": "passed",
+    "initialJSBytes": 2131733,
+    "precacheBytes": 7545034,
+    "sourceReferencePins": 13,
+    "sourceReferenceStatus": "passed"
+  },
+  "checks": {
+    "standardNpmTest": {
+      "logName": "integration358-npm-final.log",
+      "logSHA256": "e9c15a6d7520f46dd95e3c52824e12093860ad8e2781a445132eea1161c7f019",
+      "tapBlocks": {
+        "tests": [
+          20,
+          18,
+          27,
+          24,
+          28
+        ],
+        "pass": [
+          20,
+          18,
+          27,
+          24,
+          28
+        ],
+        "fail": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "skipped": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "status": "passed",
+      "pythonTests": 13,
+      "additionalStandaloneChecks": [
+        "patch compatibility",
+        "source migration audit",
+        "performance-v2 AO",
+        "performance-v2 geometry",
+        "performance-v2 topology"
+      ],
+      "scope": "Final production changes except the subsequently reviewed loading adapter; loading adapter receives separate actual composed/minified tests and full production build."
+    },
+    "newOrChangedModules": {
+      "logName": "integration358-new-tests.log",
+      "logSHA256": "ccf3d67a82f26d77ca4d4f6b854f8e51884920cd36e9b554d6a0a7bf264bc308",
+      "tapBlocks": {
+        "tests": [
+          193
+        ],
+        "pass": [
+          188
+        ],
+        "fail": [
+          0
+        ],
+        "skipped": [
+          5
+        ]
+      },
+      "status": "passed-with-explicit-skips",
+      "skipReason": "Five optional extracted native-stage asset cases require INKWAVE_NATIVE_STAGE_ASSETS; actual native-only shader diagnostics are recorded separately."
+    },
+    "finalRetentionAndRanked": {
+      "logName": "integration358-retention-reviewed.log",
+      "logSHA256": "f71493514f4a089869723191e7eddc681a21626b4849942522618f88e4553117",
+      "tapBlocks": {
+        "tests": [
+          36
+        ],
+        "pass": [
+          36
+        ],
+        "fail": [
+          0
+        ],
+        "skipped": [
+          0
+        ]
+      },
+      "status": "passed"
+    },
+    "emittedNetworkUiAndOptionalPacks": {
+      "logName": "integration358-emitted-corrected.log",
+      "logSHA256": "b44cc771dadb12ca3a904070ac8bd217e75006269442cba8521c7ddd091fbc48",
+      "tapBlocks": {
+        "tests": [
+          47
+        ],
+        "pass": [
+          47
+        ],
+        "fail": [
+          0
+        ],
+        "skipped": [
+          0
+        ]
+      },
+      "status": "passed",
+      "scope": "Actual emitted fixture, composed UI guards and emitted optional-pack offline integrity; cases retain their declared source/emitted seams."
+    },
+    "loadingTopology": {
+      "logName": "integration358-loading-final.log",
+      "logSHA256": "f8efe8b00605938715d7a79c7adc350bfb300d3d7469bf2934d863c0001f002c",
+      "tapBlocks": {
+        "tests": [
+          16
+        ],
+        "pass": [
+          12
+        ],
+        "fail": [
+          0
+        ],
+        "skipped": [
+          4
+        ]
+      },
+      "status": "passed-with-explicit-skips",
+      "skipReason": "Four optional historical-baseline cases; always-run raw/composed/minified AST parity and mutated negative controls passed."
+    },
+    "recoverySourceFixture": {
+      "logName": "integration358-queue-source-corrected.log",
+      "logSHA256": "3cf9de4170571f95eb04d249f3f9a63841a4947a1143f1577934038f8632b53f",
+      "tapBlocks": {
+        "tests": [
+          7
+        ],
+        "pass": [
+          7
+        ],
+        "fail": [
+          0
+        ],
+        "skipped": [
+          0
+        ]
+      },
+      "status": "passed",
+      "repair": "Extracted session fixture imports the real sendCriticalControl and its synthetic transport returns explicit true admission."
+    },
+    "emittedTurfFinish": {
+      "status": "passed",
+      "cases": 14,
+      "failed": 0,
+      "skipped": 0,
+      "sourceSHA256": "11a269156ca1eeaebca16845cabcd4d940fde14e92c202bfad09ae62478b4765",
+      "receiptSHA256": "9d3ce677918bf59f45992774eea9b3a063bb630b8c1029408837943ae69f3368",
+      "unchangedTestBodies": true,
+      "verifiedArtifactCount": 2130,
+      "contentHash": "045ae54adf4dbc27d5af3b6c2ff86cbae22a55c809ef50076935657885363070"
+    }
+  },
+  "activeBrowser": {
+    "status": "passed",
+    "scope": "full-active",
+    "sourceRevision": "65c382d38c5737d4046c59eab4de125fdd1f0f03",
+    "contentHash": "045ae54adf4dbc27d5af3b6c2ff86cbae22a55c809ef50076935657885363070",
+    "canonicalKits": 65,
+    "verifiedResponses": 765,
+    "errors": [],
+    "consoleErrors": [],
+    "requestFailures": [],
+    "gameplay": {
+      "state": "playing",
+      "elapsedAt20Hz": 3.0000000000023874,
+      "movement": 2.7603360000000166,
+      "movementProbe": {
+        "state": "playing",
+        "paused": false,
+        "alive": true,
+        "form": "kid",
+        "grounded": true,
+        "controller": true,
+        "enabled": true,
+        "menuBlocked": false,
+        "samples": [
+          {
+            "key": "KeyW",
+            "keyPresent": true,
+            "enabled": true,
+            "menuBlocked": false,
+            "intent": [
+              0,
+              0,
+              1
+            ],
+            "vel": [
+              0,
+              0,
+              0.6
+            ],
+            "deltaAfterFirstTick": 0.010000000000001563
+          }
+        ]
+      },
+      "hp": 100,
+      "gear": [
+        {
+          "main": "runSpeed",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        }
+      ],
+      "velocityFinite": true,
+      "clockTicks": 703,
+      "paintedFloorArea": 0.625,
+      "coverage": [
+        0.00014398802830541628,
+        0
+      ]
+    },
+    "actionReliability": {
+      "before": 1,
+      "renderOnly": 1,
+      "after": 2,
+      "held": 2,
+      "jumps": 0,
+      "physicalKeyboardEvents": true,
+      "groundCollisionPinned": true
+    },
+    "minimapCanvas": {
+      "cases": [
+        {
+          "name": "wall-only",
+          "frames": 120,
+          "observedOwner": false,
+          "observedFlash": false,
+          "overlayChanged": false,
+          "hiddenStable": true,
+          "baseline": {
+            "composes": 13,
+            "rasters": 1
+          },
+          "candidate": {
+            "composes": 1,
+            "rasters": 1
+          },
+          "emitted": {
+            "composes": 1,
+            "rasters": 1
+          }
+        },
+        {
+          "name": "overlay-bomb",
+          "frames": 103,
+          "observedOwner": false,
+          "observedFlash": false,
+          "overlayChanged": true,
+          "hiddenStable": true,
+          "baseline": {
+            "composes": 33,
+            "rasters": 1
+          },
+          "candidate": {
+            "composes": 33,
+            "rasters": 1
+          },
+          "emitted": {
+            "composes": 33,
+            "rasters": 1
+          }
+        },
+        {
+          "name": "overlay-FX",
+          "frames": 102,
+          "observedOwner": false,
+          "observedFlash": false,
+          "overlayChanged": true,
+          "hiddenStable": true,
+          "baseline": {
+            "composes": 23,
+            "rasters": 1
+          },
+          "candidate": {
+            "composes": 23,
+            "rasters": 1
+          },
+          "emitted": {
+            "composes": 23,
+            "rasters": 1
+          }
+        },
+        {
+          "name": "turf-flash",
+          "frames": 102,
+          "observedOwner": true,
+          "observedFlash": true,
+          "overlayChanged": false,
+          "hiddenStable": true,
+          "baseline": {
+            "composes": 18,
+            "rasters": 4
+          },
+          "candidate": {
+            "composes": 17,
+            "rasters": 4
+          },
+          "emitted": {
+            "composes": 17,
+            "rasters": 4
+          }
+        },
+        {
+          "name": "hidden-reopen",
+          "frames": 81,
+          "observedOwner": true,
+          "observedFlash": true,
+          "overlayChanged": false,
+          "hiddenStable": true,
+          "baseline": {
+            "composes": 15,
+            "rasters": 2
+          },
+          "candidate": {
+            "composes": 15,
+            "rasters": 2
+          },
+          "emitted": {
+            "composes": 15,
+            "rasters": 2
+          }
+        }
+      ],
+      "negativeControls": {
+        "blankRejected": true,
+        "corruptionRejected": true,
+        "clockRejected": true
+      },
+      "emitted": {
+        "minimap": {
+          "path": "_versions/af1dfbf9fb41279570b552b02d03df59c3441b650ca28ee3be282ed6a69dc8ca/src/game/minimap.js",
+          "sha256": "8f244c43a475fb773d991f28627f03f000c18ca1f9ec15538be9cc26a11ef3fb"
+        },
+        "ctx": {
+          "path": "_versions/af1dfbf9fb41279570b552b02d03df59c3441b650ca28ee3be282ed6a69dc8ca/src/core/ctx.js",
+          "sha256": "1c56245ee5659b8a7149b2a5e8983509d9c4fab9029aca9b690fa7558779c855"
+        },
+        "config": {
+          "path": "_versions/af1dfbf9fb41279570b552b02d03df59c3441b650ca28ee3be282ed6a69dc8ca/src/config.js",
+          "sha256": "cf20044a165212cd874266099eccb279fe3dcb15c94aa594cae37084b83ba30a"
+        },
+        "dirty": {
+          "path": "_versions/af1dfbf9fb41279570b552b02d03df59c3441b650ca28ee3be282ed6a69dc8ca/patches/splatoon3/runtime/minimap-dirty.mjs",
+          "sha256": "d6133df98d8fbad73ccd3922c9486cabf6198f22802f1f0803b87c789cfeeb4f"
+        },
+        "three": {
+          "path": "_versions/af1dfbf9fb41279570b552b02d03df59c3441b650ca28ee3be282ed6a69dc8ca/vendor/three/build/three.module.js",
+          "sha256": "3cf683a57c4014496b2337982f84d02a8f2356ebaf4f1e926443e772dbaade41"
+        }
+      },
+      "images": [
+        "minimap-wall-only-0.png",
+        "minimap-wall-only-119.png",
+        "minimap-overlay-bomb-0.png",
+        "minimap-overlay-bomb-1.png",
+        "minimap-overlay-bomb-102.png",
+        "minimap-overlay-FX-0.png",
+        "minimap-overlay-FX-1.png",
+        "minimap-overlay-FX-101.png",
+        "minimap-turf-flash-0.png",
+        "minimap-turf-flash-flash-active.png",
+        "minimap-turf-flash-flash-cleared.png",
+        "minimap-turf-flash-101.png",
+        "minimap-hidden-reopen-0.png",
+        "minimap-hidden-reopen-flash-active.png",
+        "minimap-hidden-reopen-reopen.png",
+        "minimap-hidden-reopen-flash-cleared.png",
+        "minimap-hidden-reopen-80.png"
+      ],
+      "sourceSha": "65c382d38c5737d4046c59eab4de125fdd1f0f03",
+      "contentHash": "045ae54adf4dbc27d5af3b6c2ff86cbae22a55c809ef50076935657885363070",
+      "sourceHashes": {
+        "inkwave-public/src/game/minimap.js": "18a7b3711083fc5e2a0f8d3782f2ff95fcd62df4b2e6cf8f867e18c72854c493",
+        "patches/splatoon3/runtime/minimap-dirty.mjs": "198a17be2e83a8604283f13c0bf0092727e60fded4b7666d3b0211cd31c47015",
+        "patches/splatoon3/minimap-dirty-adapter.mjs": "3045d2d49c2d7b050e46bf268f60f795d96846df8574db1eff59ee2423c9386b",
+        "patches/local-quality/minimap-resource-adapter.mjs": "89ee10db310f4e541219edb0ee16b09d77a3a0e35cabe764a550bd3d665a5538",
+        "patches/splatoon3/tests/fixtures/minimap-dirty-before-noop.mjs": "6310a58e1ad59bfab2bf8af4b5dcd2327ee4b94ce0f76d913538569c5387bda1",
+        "patches/native-stages/runtime/native-minimap.mjs": "524fd0495d155ca83b7601a5d5264bbadc1abf5b9c0e1ded7342efb7281e925e"
+      },
+      "sourceEpoch": "library-queue-world-minimap-storage-beec332",
+      "composedHashes": {
+        "baseline": "7278f5ac2eba26fc210ca79efabe92d678ceee59a8b12f814914e287efba924a",
+        "candidate": "212238f452ee84131f5549e6a15fe9b45d5a52a55326944ac0373d046ecbe107"
+      },
+      "scope": "Synthetic real Canvas2D fixture comparing source baseline/candidate against actual versioned Minimap and dependency imports in an isolated iframe. Exact per-tick RGBA/state comparison; no whole-Game or device performance claim."
+    },
+    "resultSHA256": "1bc680d176368b67e6125cbad67a5443cbd18711c0bd72e5539920a1db16408e"
+  },
+  "integrationRepairs": [
+    "Full build rejected the added mural/wave awaits until exact23-phase alias-aware topology and missing/swapped/extra-join controls were added.",
+    "Full active browser initially rejected an unreviewed minimap source epoch; reviewed raw/native source pins and actual Canvas parity controls repair it.",
+    "Independent accessor, pixel and callback counterexamples revert or reject the unsafe candidates described in the role reports."
+  ],
+  "limitations": [
+    "Four ticket dispositions remain partial or unresolved; no claim that all requested optimizations were accepted.",
+    "Node and desktop Chromium software rendering do not establish iPad/WebKit hardware FPS or Nintendo executable parity.",
+    "The optional sea worker is not forced into cold precache; first offline boot can use the byte-identical synchronous fallback.",
+    "Hosted checks on the published final PR head are separate from these local results."
+  ],
+  "positivePaint": {
+    "status": "passed",
+    "measurementKind": "Actual emitted material pixels in desktop Chromium software rendering; positive painted-versus-empty signal required, not a performance measurement.",
+    "grate": {
+      "status": "passed",
+      "sourceRevision": "0528b6a6ff6d0ee220de60f7a56abc3f23568747",
+      "contentHash": "045ae54adf4dbc27d5af3b6c2ff86cbae22a55c809ef50076935657885363070",
+      "receiptSHA256": "582f3084481d25451a442a2425ddac8a3df7a963f2a27b19274420e27fc2cdd6",
+      "comparisons": [
+        {
+          "name": "ink-flat",
+          "paintSignalChangedPixels": 37892,
+          "difference": {
+            "pixels": 172800,
+            "changedPixels": 0,
+            "maxChannelError": 0
+          },
+          "glError": 0
+        },
+        {
+          "name": "ink-tilted",
+          "paintSignalChangedPixels": 45292,
+          "difference": {
+            "pixels": 172800,
+            "changedPixels": 0,
+            "maxChannelError": 0
+          },
+          "glError": 0
+        },
+        {
+          "name": "texlib-ink-tilted",
+          "paintSignalChangedPixels": 45092,
+          "difference": {
+            "pixels": 172800,
+            "changedPixels": 0,
+            "maxChannelError": 0
+          },
+          "glError": 0
+        }
+      ]
+    },
+    "microSurface": {
+      "status": "passed",
+      "sourceRevision": "0528b6a6ff6d0ee220de60f7a56abc3f23568747",
+      "contentHash": "045ae54adf4dbc27d5af3b6c2ff86cbae22a55c809ef50076935657885363070",
+      "receiptSHA256": "955971e38832840257404cc898bbd0b3d739387aefe2aa01ed098a3ccb0065fa",
+      "comparisons": [
+        {
+          "name": "fallback-floor-oblique-settled",
+          "paintSignalChangedPixels": 31680,
+          "difference": {
+            "changed": 7030,
+            "max": 61,
+            "mean": 0.04204861111111111
+          },
+          "glError": 0
+        },
+        {
+          "name": "fallback-floor-oblique-fresh",
+          "paintSignalChangedPixels": 31680,
+          "difference": {
+            "changed": 7488,
+            "max": 78,
+            "mean": 0.04334924768518519
+          },
+          "glError": 0
+        },
+        {
+          "name": "fallback-floor-sheen-settled",
+          "paintSignalChangedPixels": 42156,
+          "difference": {
+            "changed": 22990,
+            "max": 39,
+            "mean": 0.12313802083333333
+          },
+          "glError": 0
+        },
+        {
+          "name": "fallback-floor-sheen-fresh",
+          "paintSignalChangedPixels": 42156,
+          "difference": {
+            "changed": 21441,
+            "max": 36,
+            "mean": 0.12040075231481481
+          },
+          "glError": 0
+        },
+        {
+          "name": "fallback-wall-oblique-settled",
+          "paintSignalChangedPixels": 81821,
+          "difference": {
+            "changed": 22261,
+            "max": 59,
+            "mean": 0.2579513888888889
+          },
+          "glError": 0
+        },
+        {
+          "name": "fallback-wall-oblique-fresh",
+          "paintSignalChangedPixels": 81821,
+          "difference": {
+            "changed": 23692,
+            "max": 71,
+            "mean": 0.3011906828703704
+          },
+          "glError": 0
+        },
+        {
+          "name": "fallback-wall-sheen-settled",
+          "paintSignalChangedPixels": 31026,
+          "difference": {
+            "changed": 18618,
+            "max": 41,
+            "mean": 0.1280931712962963
+          },
+          "glError": 0
+        },
+        {
+          "name": "fallback-wall-sheen-fresh",
+          "paintSignalChangedPixels": 31026,
+          "difference": {
+            "changed": 19462,
+            "max": 39,
+            "mean": 0.1406221064814815
+          },
+          "glError": 0
+        },
+        {
+          "name": "texlib-floor-oblique-settled",
+          "paintSignalChangedPixels": 31711,
+          "difference": {
+            "changed": 13760,
+            "max": 83,
+            "mean": 0.09520543981481482
+          },
+          "glError": 0
+        },
+        {
+          "name": "texlib-floor-oblique-fresh",
+          "paintSignalChangedPixels": 31711,
+          "difference": {
+            "changed": 9132,
+            "max": 67,
+            "mean": 0.04211516203703704
+          },
+          "glError": 0
+        },
+        {
+          "name": "texlib-floor-sheen-settled",
+          "paintSignalChangedPixels": 42389,
+          "difference": {
+            "changed": 27358,
+            "max": 116,
+            "mean": 0.41704427083333334
+          },
+          "glError": 0
+        },
+        {
+          "name": "texlib-floor-sheen-fresh",
+          "paintSignalChangedPixels": 42389,
+          "difference": {
+            "changed": 23472,
+            "max": 52,
+            "mean": 0.21314091435185184
+          },
+          "glError": 0
+        },
+        {
+          "name": "texlib-wall-oblique-settled",
+          "paintSignalChangedPixels": 81797,
+          "difference": {
+            "changed": 33994,
+            "max": 62,
+            "mean": 0.593046875
+          },
+          "glError": 0
+        },
+        {
+          "name": "texlib-wall-oblique-fresh",
+          "paintSignalChangedPixels": 81797,
+          "difference": {
+            "changed": 28356,
+            "max": 72,
+            "mean": 0.3416478587962963
+          },
+          "glError": 0
+        },
+        {
+          "name": "texlib-wall-sheen-settled",
+          "paintSignalChangedPixels": 31050,
+          "difference": {
+            "changed": 19343,
+            "max": 74,
+            "mean": 0.28484519675925923
+          },
+          "glError": 0
+        },
+        {
+          "name": "texlib-wall-sheen-fresh",
+          "paintSignalChangedPixels": 31050,
+          "difference": {
+            "changed": 16529,
+            "max": 60,
+            "mean": 0.15019241898148147
+          },
+          "glError": 0
+        }
+      ]
+    }
+  }
+}

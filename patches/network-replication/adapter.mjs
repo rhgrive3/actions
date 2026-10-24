@@ -236,7 +236,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     patch('    if (this.out.length) { msg.e = this.out; this.out = []; }', '    const wf = packWipeoutTimeline(this); if (wf) msg.wf = wf;\n    replayWipeoutConfirmations(this);\n    if (this.out.length) { msg.e = this.out; this.out = []; }', 'owner wipeout history and watermark');
     patch("      case 't': this._tick(from, d); break;", "      case 't': if (d.wf) acceptWipeoutTimeline(this, from, d.wf); this._tick(from, d); break;\n      case 'wc': acceptWipeoutConfirmation(this, from, d); break;", 'authenticated wipeout protocol');
     code = "import { acceptOnlineContinuation, tickOnlineContinuation } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
-    patch('  _sendTick() {', '  _sendTick() {\n    tickOnlineContinuation(this);', 'per-player result continuation');
+    patch('  _sendTick() {', '  _sendTick() {\n    tickOnlineContinuation(this);\n    if (discardSoloTick(this, G)) { replayWipeoutConfirmations(this); return true; }', 'per-player result continuation');
     patch("      case 'wc': acceptWipeoutConfirmation(this, from, d); break;", "      case 'wc': acceptWipeoutConfirmation(this, from, d); break;\n      case 'rc': acceptOnlineContinuation(this, from, d); break;", 'continuation sender and match identity');
     patch('    this.myId = session.myId;', '    this.myId = session.myId;\n    this._matchStateAPI = { G, emit };', 'native match-state protocol context');
     patch('    this.cfg = cfg;\n    this.myId = session.myId;', '    this.cfg = cfg;\n    this._firstSplatState = firstSplatStateFor(session,cfg);\n    this._paintClockState = paintClockStateFor(session,cfg);\n    this.myId = session.myId;', 'match-scoped first-splat decision state');
@@ -2504,6 +2504,12 @@ ${bombHit}`;
       }
       aC[i4] = C[i3]; aC[i4 + 1] = C[i3 + 1]; aC[i4 + 2] = C[i3 + 2]; aC[i4 + 3] = a;`, 'puff presentation belongs to source');
 
+    // Share only per-particle immutable angle values, after network silhouette/identity anchors.
+    patch("      const cu = Math.cos(up);\n      const sz = 0.03 + rand() * 0.04;", "      const cu = Math.cos(up), sa = Math.sin(a), ca = Math.cos(a);\n      const sz = 0.03 + rand() * 0.04;", 'roller flick angle trig reuse');
+    patch("pos.x + Math.sin(a) * 0.4, pos.y + (rand() - 0.3) * 0.4, pos.z + Math.cos(a) * 0.4, Math.sin(a) * cu * sp, Math.sin(up) * sp, Math.cos(a) * cu * sp", "pos.x + sa * 0.4, pos.y + (rand() - 0.3) * 0.4, pos.z + ca * 0.4, sa * cu * sp, Math.sin(up) * sp, ca * cu * sp", 'roller flick angle trig reuse');
+    patch("      const a = yaw + (i - 1) * (sources?.[0]?.s3Vertical ? 0 : spread) * 0.35;", "      const a = yaw + (i - 1) * (sources?.[0]?.s3Vertical ? 0 : spread) * 0.35;\n      const sa = Math.sin(a), ca = Math.cos(a);", 'roller flick angle trig reuse');
+    patch("pos.x + Math.sin(a) * 0.8, pos.y + 0.2, pos.z + Math.cos(a) * 0.8, Math.sin(a) * 3, 1.0, Math.cos(a) * 3", "pos.x + sa * 0.8, pos.y + 0.2, pos.z + ca * 0.8, sa * 3, 1.0, ca * 3", 'roller flick angle trig reuse');
+
   }
   if (rel === 'src/boss/boss.js') {
     code = "import { NETWORK_BOSS_CRABLET_LIMIT, NETWORK_BOSS_CRABLET_SCENE_LIMIT, NETWORK_BOSS_CRABLET_SPAWNS_PER_SECOND } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
@@ -2676,7 +2682,7 @@ function canAllocateNetworkGhost(projectiles, actor) {
   }
   if (rel === 'src/net/netmatch.js') {
     code = "import { packPaintTick, acceptPaintTick, forgetPaintPeer } from '../../patches/splatoon3/runtime/paint-packet-codec.mjs';\n" + code;
-    code = "import { queueOutboundEvent, sendOutboundTick } from '../../patches/network-replication/outbound-prefix.mjs';\n" + code;
+    code = "import { queueOutboundEvent, sendOutboundTick, discardSoloTick } from '../../patches/network-replication/outbound-prefix.mjs';\n" + code;
     patch('this.out.push(event); return event;', 'return queueOutboundEvent(this, event, G);', 'retain bounded outbound event identity');
     patch('if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'if (this.out.length) msg.r = 2;', 'retain events until local send acceptance');
     patch('    this.s.tr?.broadcast(msg);',

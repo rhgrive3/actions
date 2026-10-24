@@ -12,11 +12,12 @@ function sameTextureProfile(a,data,quality,caps){
 }
 function disposeTextures(textures){
  if(!textures)return;
- for(const t of textures.values()){
+ for(const t of new Set(textures.values())){
+  if(textures._nativeBorrowed?.has(t))continue;
   try{t.image?.close?.();}catch{}
   try{t.dispose();}catch{}
  }
- textures.clear();
+ textures.clear();textures._nativeBorrowed?.clear();
 }
 
 /** Keep physics, nav, actors and authoritative CPU paint when quality changes. */
@@ -62,7 +63,7 @@ export async function applyNativeQuality(game,settings,mobile,deps){
    // release its bitmap before starting another full texture pipeline.
    if(previous)await previous.promise;
    if(controller.signal.aborted||game.nativeWorld!==world||world.disposed)return;
-   textures=await loadNativeTextures(world.level.layout.id,data,G.renderer,quality,controller.signal,caps);
+   textures=await loadNativeTextures(world.level.layout.id,data,G.renderer,quality,controller.signal,caps,world.display.currentTextures?.());
    if(controller.signal.aborted||game.nativeWorld!==world||world.qualityToken!==token||world.disposed)return;
    world.display.updateTextures(textures,quality);
    world.textureProfile=operation.profile;

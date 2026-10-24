@@ -1,0 +1,26 @@
+flickCurtain(pos, dir, color, spreadDeg = 50, sources = null) {
+    const col = this._color(color, this._col);
+    const paint = this.paintEffects ? F_PAINT : 0;
+    const yaw = Math.atan2(dir.x, dir.z), spread = spreadDeg * Math.PI / 180;
+    const n = Math.max(6, Math.round(30 * this.q));
+    for (let i = 0; i < n; i++) {
+      const t = (i / (n - 1)) * 2 - 1;
+      const a = yaw + t * spread * 0.55 + (rand() - 0.5) * 0.08;
+      const up = 0.35 + rand() * 0.35, sp = 6 + rand() * 5 * (1 - 0.4 * Math.abs(t));
+      const cu = Math.cos(up);
+      const sz = 0.03 + rand() * 0.04;
+      const drop = this._spawnDrop(pos.x + Math.sin(a) * 0.4, pos.y + (rand() - 0.3) * 0.4, pos.z + Math.cos(a) * 0.4, Math.sin(a) * cu * sp, Math.sin(up) * sp, Math.cos(a) * cu * sp, col, sz, 1.4, 1, 1.2, sz > 0.055 ? paint : 0);
+      if (sources?.length) bindRollerDrop(this, drop, sources[i % sources.length]);
+    }
+    this._colB.copy(col).lerp(_white, 0.4);
+    for (let i = 0; i < 3; i++) {
+      const a = yaw + (i - 1) * (sources?.[0]?.s3Vertical ? 0 : spread) * 0.35;
+      const puff = this._sprite(this.puffs, pos.x + Math.sin(a) * 0.8, pos.y + 0.2, pos.z + Math.cos(a) * 0.8, Math.sin(a) * 3, 1.0, Math.cos(a) * 3, this._colB, sources?.[0]?.s3Vertical ? 0.12 : 0.2, sources?.[0]?.s3Vertical ? 0.3 : 0.7, sources?.[0]?.s3Vertical ? 0.16 : 0.4, 0.3, 4);
+      if (sources?.length) {
+        const pool = this.puffs, source = sources[Math.floor(i * sources.length / 3)];
+        pool._netSource ||= new Array(pool.cap).fill(null);
+        pool._netGeneration ||= new Uint32Array(pool.cap);
+        pool._netSource[puff] = source; pool._netGeneration[puff] = source._qualityGeneration;
+      }
+    }
+  }

@@ -2,6 +2,13 @@ name: INKWAVE object presentation native QA
 on:
   pull_request:
     paths:
+      - 'patches/splatoon3/tests/owner-report-2026-10-18.test.mjs'
+      - 'patches/splatoon3/tests/respawn-lifecycle.test.mjs'
+      - 'patches/splatoon3/tests/remote-respawn.test.mjs'
+      - 'patches/splatoon3/tests/issue-879-spawn-pose.test.mjs'
+      - 'patches/splatoon3/tests/ranked-clams.test.mjs'
+      - 'patches/splatoon3/tests/ranked-power-clam-model.test.mjs'
+      - 'patches/splatoon3/tests/bomb-motion.test.mjs'
       - 'tools/object-presentation-qa/**'
       - 'tools/spawner-production-qa/**'
       - 'tools/rainmaker-production-qa/**'
@@ -60,8 +67,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Fetch only suite-declared immutable baseline objects
+        run: |
+          baselines="$(node --input-type=module -e "import {BASE,SUITES} from './tools/object-presentation-qa/config.mjs'; console.log([...new Set([BASE,...Object.values(SUITES).map(s=>s.beforeBase).filter(Boolean)])].join(' '))")"
+          for baseline in $baselines; do
+            [[ "$baseline" =~ ^[0-9a-f]{40}$ ]]
+            git fetch --no-tags --depth=1 origin "$baseline"
+            git cat-file -e "$baseline^{commit}"
+          done
       - name: Verify exact candidate
         run: test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
       - uses: actions/setup-node@v4

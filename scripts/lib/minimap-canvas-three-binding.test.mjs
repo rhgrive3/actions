@@ -9,7 +9,8 @@ const sourceKeys={
  'inkwave-public/src/game/minimap.js':'upstream/src/game/minimap.js',
  'patches/splatoon3/runtime/minimap-dirty.mjs':'patch/runtime/minimap-dirty.mjs',
  'patches/splatoon3/minimap-dirty-adapter.mjs':'patch/minimap-dirty-adapter.mjs',
- 'patches/local-quality/minimap-resource-adapter.mjs':'local-quality/minimap-resource-adapter.mjs'
+ 'patches/local-quality/minimap-resource-adapter.mjs':'local-quality/minimap-resource-adapter.mjs',
+ 'patches/native-stages/runtime/native-minimap.mjs':'native-stages/runtime/native-minimap.mjs'
 };
 manifest.files=Object.fromEntries(Object.entries(sourceKeys).map(([file,key])=>[key,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')]));
 async function prepared(m=manifest){let captured;await runMinimapCanvasProbe({evaluate(fn,args){captured={fn,args};throw Error('capture-only');}},{root,evidence:'/tmp',sourceSha:'controlled',contentHash:'controlled',manifest:m}).catch(e=>{if(e.message!=='capture-only')throw e;});return captured;}

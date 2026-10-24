@@ -1,0 +1,10 @@
+{
+  "sourceSha": "64bf3c7c6a6bf176d2dbdeb1f0b9642b8a708c2b",
+  "exactSourceVerification": true,
+  "sourceInputs": 1435,
+  "artifacts": 2130,
+  "inputHash": "41961e58be2d5dfc08ee91f3684e1ea97cf7eff34b447dc297efb075829e1d34",
+  "contentHash": "6051c09b4f8036007d12e4d29b9ea2178080e4610ba14928a7a78d7f3cf35cc7",
+  "artifactsIdenticalToPassingSpecialBrowser": true,
+  "sameInputFiles": false
+}

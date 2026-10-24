@@ -34,9 +34,9 @@ test('wrong sender START is inert; migrated host owns compatibility admission',a
  ws.deliver({t:'leave',id:'H',host:'J'});assert.equal(s.hostId,'J');packet(ws,'H',config({proto:99}));assert.equal(s.state,'lobby');
  packet(ws,'J',config({host:'J'}));await settle();assert.equal(starts,1);assert(s.match instanceof f.NetMatch);
 });
-test('host generated START carries the shared tuple and still starts locally',async()=>{
+test('host generated START carries the shared tuple and waits for relay acceptance',async()=>{
  const {s,ws}=await join({id:'H'});assert(s.isHost);ws.deliver({t:'join',m:{id:'G',name:'Guest'}});assert.equal(s.confirmTeams(),true);s.setMe({ready:true});packet(ws,'G',{k:'me',ready:true});assert.equal(s.canStart(),true);assert.equal(s.start(),true);await settle();const cfg=ws.sent.filter(x=>x.startsWith('b|')).map(x=>JSON.parse(x.slice(2))).find(x=>x.k==='start');
- assert(cfg);assert.equal(cfg.proto,f.PROTO);assert.equal(cfg.compat,f.COMPAT);assert.equal(starts,1);assert(s.match instanceof f.NetMatch);
+ assert(cfg);assert.equal(cfg.proto,f.PROTO);assert.equal(cfg.compat,f.COMPAT);assert.equal(starts,0);assert.equal(s.state,'lobby');ws.deliver({t:'start_result',id:cfg.id,ok:true});await settle();assert.equal(starts,1);assert(s.match instanceof f.NetMatch);
 });
 test('cancel and rejoin discard late old welcomes without losing the new connection',async()=>{
  const s=new f.NetSession();sessions.push(s);const p=s.join('BCEFG','Guest'),old=sockets.at(-1),oldHandler=old.onmessage;const reject=assert.rejects(p,{name:'AbortError'});s.leave(true);await reject;
@@ -59,15 +59,15 @@ for(const valid of [true,false])test('actual Worker welcome and host relay START
   assert.equal((await room.fetch(req(false))).status,101);const guest=[...room.members.values()][1].ws,actual=JSON.parse(guest.sent[0]);assert.equal(actual.proto,f.PROTO);assert.equal(actual.compat,f.COMPAT);
   const s=new f.NetSession();sessions.push(s);const p=s.join('BCEFG','Guest'),ws=sockets.at(-1);ws.deliver(actual);await p;
   const cfg=config({host:actual.host,proto:valid?f.PROTO:99,roster:config().roster.map((r,i)=>({...r,owner:i===0?actual.host:actual.id}))});
-  host.emit('b|'+JSON.stringify(cfg));const wire=guest.sent.at(-1);assert(wire.startsWith('m|'+actual.host+'|'));ws.deliver(wire);await settle();
-  assert.equal(starts,valid?1:0);assert.equal(s.state,valid?'starting':'error');assert.equal(s.match instanceof f.NetMatch,valid);
+  host.emit('b|'+JSON.stringify(cfg));const wire=guest.sent.at(-1);if(valid){assert(wire.startsWith('m|'+actual.host+'|'));ws.deliver(wire);}else{assert.equal(guest.sent.filter(x=>x.startsWith('m|')).length,0);assert.equal(JSON.parse(host.sent.at(-1)).ok,false);}await settle();
+  assert.equal(starts,valid?1:0);assert.equal(s.state,valid?'starting':'lobby');assert.equal(s.match instanceof f.NetMatch,valid);
   t.diagnostic(JSON.stringify({actualWorkerWelcome:{proto:actual.proto,compat:actual.compat},hostEnvelope:true,startProto:cfg.proto,state:s.state,actualNetMatch:s.match instanceof f.NetMatch}));
  }finally{for(const m of [...(room?.members.values()||[])])m.ws.close();globalThis.Response=savedResponse;if(savedPair===undefined)delete globalThis.WebSocketPair;else globalThis.WebSocketPair=savedPair;}
 });
 
 test('solo Turf still refuses start while solo Boss retains compatible host START',async()=>{
  const {s,ws}=await join({id:'H'});assert.equal(s.start(),false);assert.equal(starts,0);
- s.setSettings({mode:'boss'});assert.equal(s.start(),true);await settle();assert.equal(starts,1);
+ s.setSettings({mode:'boss'});assert.equal(s.start(),true);await settle();assert.equal(starts,0);ws.deliver({t:'start_result',id:s._pendingStart.id,ok:true});await settle();assert.equal(starts,1);
  const cfg=ws.sent.filter(x=>x.startsWith('b|')).map(x=>JSON.parse(x.slice(2))).find(x=>x.k==='start');assert.equal(cfg.mode,'boss');assert.equal(cfg.proto,f.PROTO);assert.equal(cfg.compat,f.COMPAT);
 });
 test('offline MockNet remains separate and never acquires a relay or NetMatch',async()=>{

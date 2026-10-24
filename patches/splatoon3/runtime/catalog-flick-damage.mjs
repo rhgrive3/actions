@@ -31,20 +31,21 @@ export function catalogFlickSourceDamage(damage,unit,key,frames,point,start,sect
   const table=catalogRollerDamageTable(damage,key,point,start,sectorYaw);
   if(!table)return null; // non-flick families keep existing damage law
   const distance=Math.hypot(point.x-start.x,point.y-start.y,point.z-start.z);
-  const bands=[
-    [table.DamageMaxDistance,table.DamageMaxValue],
-    [table.DamageHighDistance,table.DamageHighValue],
-    [table.DamageLowDistance,table.DamageLowValue],
-    [table.DamageMinDistance,table.DamageMinValue]
-  ].filter(([dist,value])=>Number.isFinite(dist)&&Number.isFinite(value));
-  if(!bands.length)return null;
-  let base=bands[0][1];
-  for(let i=1;i<bands.length;i++){
-    const [prevD,prevV]=bands[i-1],[nextD,nextV]=bands[i];
-    if(distance>nextD){base=nextV;continue;}
+  // Capture every field in the former array-literal order before validation.
+  const d0=table.DamageMaxDistance,v0=table.DamageMaxValue,
+    d1=table.DamageHighDistance,v1=table.DamageHighValue,
+    d2=table.DamageLowDistance,v2=table.DamageLowValue,
+    d3=table.DamageMinDistance,v3=table.DamageMinValue;
+  let have=false,base,prevD,prevV;
+  for(let i=0;i<4;i++){
+    const nextD=i===0?d0:i===1?d1:i===2?d2:d3,nextV=i===0?v0:i===1?v1:i===2?v2:v3;
+    if(!Number.isFinite(nextD)||!Number.isFinite(nextV))continue;
+    if(!have){have=true;base=nextV;prevD=nextD;prevV=nextV;continue;}
+    if(distance>nextD){base=nextV;prevD=nextD;prevV=nextV;continue;}
     const fraction=nextD>prevD?clamp((distance-prevD)/(nextD-prevD)):1;
     base=prevV+(nextV-prevV)*fraction;break;
   }
+  if(!have)return null;
   // Source per-sector depleted damage is independent of the common
   // distance and late-airtime tables; do not halve unrelated Slosher shots.
   const depletedRate=depleted&&Number.isFinite(table.DepletionDamageRate)

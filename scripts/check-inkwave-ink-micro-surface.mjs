@@ -77,6 +77,8 @@ try {
     if(!world.environment)throw Error('Production environment PMREM missing');
     const scene=new THREE.Scene();scene.background=new THREE.Color('#20242b');scene.environment=world.environment;scene.environmentIntensity=world.environmentIntensity;
     scene.add(env.sun.clone(),env.hemi.clone());scene.children[0].target=env.sun.target.clone();scene.add(scene.children[0].target);
+    // Atlas enrollment is geometry state; dry cases clear only atlas pixels.
+    for(const f of level.faces)if(f.n.y>.999)f.atlas={x:0,y:0,pad:0,ppm:1};
     const geometry=level.buildGeometry(1,block=>block.grate),idx=[];
     for(let i=0;i<geometry.index.count;i+=3){const ids=[0,1,2].map(k=>geometry.index.getX(i+k));if(ids.every(j=>geometry.attributes.normal.getY(j)>.999))idx.push(...ids);}
     if(idx.length!==6)throw Error('Fixture must contain one production floor face');
@@ -84,9 +86,11 @@ try {
     const size=64,data=new Uint8Array(size*size*4);
     const texture=new THREE.DataTexture(data,size,size);texture.magFilter=THREE.LinearFilter;texture.minFilter=THREE.LinearMipmapLinearFilter;texture.generateMipmaps=true;
     for(let i=0;i<geometry.attributes.faceData.count;i++){
-      geometry.attributes.faceData.setX(i,1);geometry.attributes.faceData.setY(i,1);
       geometry.attributes.paintUv.setXY(i,.1+geometry.attributes.faceUv.getX(i)*.25,.1+geometry.attributes.faceUv.getY(i)*.35);
     }
+    const faceData=geometry.attributes.faceData;
+    if(faceData.itemSize!==4||idx.some(i=>faceData.getY(i)!==1))throw Error('Fixture floor missing production atlas flag');
+    const savedFaceData=faceData.array.slice();
     const library=await createTextureLibrary(r,{size:128});
     if(!(library.layers.gel>=0)||!library.normal)throw Error('Actual texlib gel not loaded');
     const variants={},shaders={};
@@ -109,6 +113,7 @@ try {
     const gl=r.getContext(),debug=gl.getExtension('WEBGL_debug_renderer_info');
     const sunDirection=env.sun.position.clone().sub(env.sun.target.position).normalize();
     function setCase(lib,wall,wet,inked=true,lit=false){
+      if(!savedFaceData.every((value,index)=>Object.is(value,faceData.array[index])))throw Error('Ink cases changed face pattern or dimensions');
       for(let y=0;y<size;y++)for(let x=0;x<size;x++){
         const u=(x+.5)/size,v=(y+.5)/size,rad=Math.hypot((u-.5)*1.15,(v-.5)*1.5),edge=Math.max(0,Math.min(1,(.46-rad)/.13)),coverage=inked?edge*edge*(3-2*edge):0,i=(y*size+x)*4;
         data[i]=Math.round(255*coverage*(x<size/2?0:1));data[i+1]=Math.round(255*coverage*wet);data[i+2]=Math.round(255*coverage*.7);data[i+3]=Math.round(255*coverage);

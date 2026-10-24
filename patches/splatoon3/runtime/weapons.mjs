@@ -18,6 +18,7 @@ import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
 let api;
 const dualiesLockConfigs = new WeakMap();
 const splatlingStreamConfigs = new WeakMap();
+const creationSnapshotPools = new WeakMap();
 
 function enumerableWeaponKeys(source) {
   const keys = [], seen = new Set();
@@ -969,13 +970,19 @@ export function installWeapons(context, profile) {
         flickDrops: weapon.s3DepletionDrops ?? weapon.verticalDrops, flickSpreadDeg: weapon.verticalSpreadDeg, flickSpeed: weapon.verticalSpeed,
         flickDamageNear: weapon.verticalDamageNear, flickDamageFar: weapon.verticalDamageFar,
       };
-      const before = new Set(this.list); const result = original.call(this, a, w); const group = new Map();
-      for (const p of this.list) if (!before.has(p)) {
-        p.s3DamageGroup = group;
-        p.s3Vertical = !!a.weaponRunner.s3FlickVertical;
-        if (method === 'fireFlick') { p.grav = w.flickGravity ?? p.grav; p.drag = w.flickDrag ?? p.drag; }
-      }
-      return result;
+      let pool=creationSnapshotPools.get(this);
+      if(!pool)creationSnapshotPools.set(this,pool=[]);
+      const before=pool.pop() || new Set();
+      try {
+        for(const p of this.list)before.add(p);
+        const result = original.call(this, a, w); const group = new Map();
+        for (const p of this.list) if (!before.has(p)) {
+          p.s3DamageGroup = group;
+          p.s3Vertical = !!a.weaponRunner.s3FlickVertical;
+          if (method === 'fireFlick') { p.grav = w.flickGravity ?? p.grav; p.drag = w.flickDrag ?? p.drag; }
+        }
+        return result;
+      } finally {before.clear();if(pool.length<2)pool.push(before);}
     };
   }
   const fireDualies = Projectiles.prototype.fireDualies;
@@ -1133,9 +1140,11 @@ export function installWeapons(context, profile) {
     let length = hit.hit ? hit.dist : w.rangeMax;
     if (G.boss) { const bh = G.boss.segHit(muzzle, muzzle.clone().addScaledVector(dir, length), .1); if (bh) length = Math.min(length, bh.dist); }
     const end = muzzle.clone().addScaledVector(dir, length), result = { t: 0, dist: 0 }, victims = [];
+    let base;
     for (const e of G.actors) {
       if (!e.alive || e.team === a.team) continue;
-      const base = e.pos.clone(); base.y += e.smoothY || 0;
+      if (!base) base = e.pos.clone(); else base.copy(e.pos);
+      base.y += e.smoothY || 0;
       Physics.segmentCapsuleDist(muzzle, end, base, PLAYER.radius + .12, e.form === 'squid' ? PLAYER.squidHeight : PLAYER.height, result);
       if (result.dist < PLAYER.radius + .14) victims.push({ actor: e, distance: result.t * length });
     }

@@ -66,22 +66,27 @@ export function sampleRespawnCountdown(state, fxTime) {
   const remaining = state.actor.alive ? 0 : Math.max(0, state.actor.respawnTimer || 0);
   state.total = Math.max(state.total || 0, remaining);
   if (state.ring) {
-    state.ring.style.animation = 'none';
-    state.ring.style.strokeDashoffset = String(state.circumference * (state.total > 0 ? remaining / state.total : 0));
+    if (state._countdownRing !== state.ring) {
+      state._countdownRing = state.ring; state._countdownOffset = null;
+      state.ring.style.animation = 'none';
+    }
+    const offset = String(state.circumference * (state.total > 0 ? remaining / state.total : 0));
+    if (offset !== state._countdownOffset) { state.ring.style.strokeDashoffset = offset; state._countdownOffset = offset; }
   }
   return remaining;
 }
-function physicalHolds(input = {}) {
+function physicalHolds(input = {}, out = {}) {
   const touch = input.mobile?.active && input.mobile.root ? input.mobile : null;
-  const down = key => !!input.down?.(key), button = key => !!input.padButton?.(key), value = key => input.padValue?.(key) || 0;
-  return {
-    fire: !!input.mouse?.left || value(7) > .3 || !!touch?.down('fire'),
-    jump: down('Space') || button(0) || !!touch?.down('jump'),
-    sub: !!input.mouse?.right || down('KeyE') || button(5) || !!touch?.down('sub'),
-    special: down('KeyF') || down('KeyQ') || button(3) || button(11) || !!touch?.down('special'),
-    squid: down('ShiftLeft') || down('ShiftRight') || value(6) > .3 || !!touch?.down('squid'),
-  };
+  // Preserve polling and short-circuit order, then commit to caller-owned scratch.
+  const fire = !!input.mouse?.left || (input.padValue?.(7) || 0) > .3 || !!touch?.down('fire');
+  const jump = !!input.down?.('Space') || !!input.padButton?.(0) || !!touch?.down('jump');
+  const sub = !!input.mouse?.right || !!input.down?.('KeyE') || !!input.padButton?.(5) || !!touch?.down('sub');
+  const special = !!input.down?.('KeyF') || !!input.down?.('KeyQ') || !!input.padButton?.(3) || !!input.padButton?.(11) || !!touch?.down('special');
+  const squid = !!input.down?.('ShiftLeft') || !!input.down?.('ShiftRight') || (input.padValue?.(6) || 0) > .3 || !!touch?.down('squid');
+  out.fire = fire; out.jump = jump; out.sub = sub; out.special = special; out.squid = squid;
+  return out;
 }
+
 export function installRespawnLifecycle(api, profile) {
   const { Actor, PlayerController, G, emit } = api;
   const A = Actor.prototype;
@@ -376,7 +381,7 @@ export function installRespawnLifecycle(api, profile) {
   if (PlayerController) {
     const control = PlayerController.prototype.update;
     PlayerController.prototype.update = function (...args) {
-      this.a.s3 ||= {}; this.a.s3.physicalRespawnHeld = physicalHolds(this.input);
+      this.a.s3 ||= {}; this.a.s3.physicalRespawnHeld = physicalHolds(this.input, this.a.s3.physicalRespawnHeld);
       return control.apply(this, args);
     };
   }

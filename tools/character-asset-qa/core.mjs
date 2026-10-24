@@ -1,3 +1,4 @@
+import { adaptBuildSource } from '../../scripts/inkwave-source-composition.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -26,7 +27,7 @@ export async function expandedCore({builtFile,sourceRoot,addonRoot,browserSource
   assert.equal(full.REVISION,'186','vendored source revision');
   const baseNames=Object.keys(runtime).sort(),graph=addonGraph(addonRoot,'loaders/GLTFLoader.js'),fixtureNames=threeImports(browserSource);
   const required=[...new Set([...baseNames,...graph.names,...fixtureNames])].sort();for(const name of required)assert(name in full,'required r186 export '+name);
-  async function bundle(names){return productionCoreBytes((await esbuild.build({stdin:{contents:`export { ${names.join(', ')} } from './three.module.js';`,resolveDir:sourceRoot,sourcefile:'three-slim.js'},bundle:true,format:'esm',minify:true,charset:'utf8',legalComments:'inline',write:false,logLevel:'warning'})).outputFiles[0].contents);}
+  async function bundle(names){return productionCoreBytes((await esbuild.build({stdin:{contents:`export { ${names.join(', ')} } from './three.module.js';`,resolveDir:sourceRoot,sourcefile:'three-slim.js'},bundle:true,format:'esm',minify:true,charset:'utf8',legalComments:'inline',write:false,logLevel:'warning',plugins:[{name:'three-source-composition',setup(build){build.onLoad({filter:/\.m?js$/},args=>({loader:'js',contents:adaptBuildSource(path.relative(path.resolve(sourceRoot,'../../..'),args.path).split(path.sep).join('/'),fs.readFileSync(args.path,'utf8'))}));}}]})).outputFiles[0].contents);}
   const reconstructed=await bundle(baseNames);assert.equal(hash(reconstructed),hash(actual),'reconstructed production core must match existing bytes');
   const candidate=await bundle(required),minimalLoader=await bundle([...new Set([...baseNames,...graph.names])].sort());
   const size=b=>({rawBytes:b.byteLength,gzipBytes:gzipSync(b).byteLength,sha256:hash(b)}),base=size(actual),expanded=size(candidate),loaderOnly=size(minimalLoader);

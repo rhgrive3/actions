@@ -434,7 +434,8 @@ export function installRankedBots(api = {}) {
     // touchdown. Objective steering resumes after that physical transition.
     if (G.level?.native && this._nativeTraversalHandled) return result;
     const frame = engine.frame || { actors: [], inputs: {} };
-    const goal = engine.rule?.botGoal?.(frameActor(actor, frame), frame);
+    let rowForGoal;
+    const goal = engine.rule?.botGoal?.((rowForGoal = frameActor(actor, frame)), frame);
     if (!goal) {
       if (nativeTail && typeof oldTail === 'function') oldTail.apply(this, nativeTail);
       return result;
@@ -457,7 +458,7 @@ export function installRankedBots(api = {}) {
       && Math.hypot(enemy.pos.x - actor.pos.x, enemy.pos.z - actor.pos.z) <= 16;
     if ((refill || duel) && nativeTail
       && typeof oldTail === 'function') {
-      const row = frameActor(actor, frame);
+      const row = rowForGoal;
       const platform = point(engine.rule?.state?.position);
       const riding = towerCombat && actor.grounded && (row.onTower || platform
         && Math.abs(actor.pos.x - platform.x) <= finite(engine.stage?.tower?.halfSize, 1.4)

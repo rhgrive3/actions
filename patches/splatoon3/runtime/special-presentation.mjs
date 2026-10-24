@@ -1,3 +1,4 @@
+import { createWailSpeakerBatch, updateWailSpeakerBatch, retireWailSpeakerBatch } from './wail-speaker-batch.mjs';
 // Presentation for the thirteen all-specials actions (special-models.mjs):
 // the device each kid carries or rides while the special is active, the
 // models of their deployed objects and of their projectiles.
@@ -10,7 +11,7 @@
 // Kraken) are re-applied after every native Character.update, which itself
 // re-derives the kid's visibility each frame.
 
-import { buildSubModel, poseSubModel, isSharedGeometry } from './sub-models.mjs';
+import { buildSubModel, poseSubModel, subModelUsesSpeed, isSharedGeometry } from './sub-models.mjs';
 import { buildScreenSheet, INKSTRIKE_LID_OPEN, CRAB_TANK_GRIPS } from './special-models.mjs';
 import { specialPresentationToken } from './special-presentation-owner.mjs';
 import { WAIL_SPEAKER_POSITIONS } from './wail-speakers.mjs';
@@ -273,7 +274,7 @@ export function installSpecialModels(api) {
   const v = new THREE.Vector3(), q = new THREE.Quaternion(), fwd = new THREE.Vector3(0, 0, 1), grip = new THREE.Vector3(), pole = new THREE.Vector3();
   const leanQ = new THREE.Quaternion(), leanAxis = new THREE.Vector3(1, 0, 0), pivotA = new THREE.Vector3(), pivotB = new THREE.Vector3(), keep = new THREE.Matrix4(), inv = new THREE.Matrix4();
   const up = new THREE.Vector3(0, 1, 0), tailSpeakers = new Map(),speakerSeen=new Set();
-  const roundSeen=new WeakMap();
+  const roundSeen=new WeakMap(), worldLiveness=new WeakMap();
   let speakerMarks = new WeakMap();
   function observeSpeaker(e) {
     if (e?.id === 'killerWail' && e.actor && e.action === 'activate') { speakerMarks.delete(e.actor); return; }
@@ -325,6 +326,7 @@ export function installSpecialModels(api) {
 
   // ---- deployed objects and projectiles --------------------------------------
   function objectModel(o) {
+    if(o.kind!=='decoy'&&o.kind!=='marker'&&o.kind!=='strike'&&o.kind!=='wave'&&o.kind!=='screen')return null;
     const color = colorOf(o.owner, o.team), group = new THREE.Group();
     group.userData.s3SpecialObject = o.kind;
     const add = (id) => { const m = buildSubModel(THREE, id, inkMat(color)); if (m) group.add(m.root); return m; };
@@ -403,7 +405,17 @@ export function installSpecialModels(api) {
       if (!pres) { pres = objectModel(o); if (!pres) continue; shown.set(o, pres); }
       poseObject(o, pres, dt);
     }
-    for (const [o, pres] of shown) if (o.dead || !live.includes(o)) { disposeModel(pres.group); shown.delete(o); }
+    let liveness=worldLiveness.get(system);
+    if(!liveness){liveness={set:new Set(),busy:false};worldLiveness.set(system,liveness);}
+    const nested=liveness.busy,liveObjects=nested?new Set():liveness.set;
+    if(!nested)liveness.busy=true;
+    try {
+      for(const o of live)liveObjects.add(o);
+      // Disposal dispatches Object3D events. After the first disposal, preserve
+      // includes()'s live-list semantics if a listener mutates or re-enters it.
+      let disposed=false;
+      for(const [o,pres] of shown)if(o.dead||(disposed?!live.includes(o):!liveObjects.has(o))){disposeModel(pres.group);shown.delete(o);disposed=true;}
+    } finally {liveObjects.clear();if(!nested)liveness.busy=false;}
     // Projectiles (pooled records: key on identity + activation seed).
     const rounds = system[ROUNDS] ||= new Map(), list = system.list || [];
     let seen=roundSeen.get(system);if(!seen){seen=new Set();roundSeen.set(system,seen);}seen.clear();
@@ -460,6 +472,7 @@ export function installSpecialModels(api) {
   function retire(ch) {
     const s = states.get(ch);
     if (!s) return;
+    if (s.wailBatch) retireWailSpeakerBatch(s.wailBatch, disposeModel);
     for (const d of s.devices) disposeModel(d.holder);
     disposeModel(s.coatGroup); disposeModel(s.line); disposeModel(s.ball?.root?.parent);
     releaseWeapon(s);
@@ -483,6 +496,7 @@ export function installSpecialModels(api) {
           holder.add(m.root); holder.position.set(x, y, z); G.scene?.add?.(holder);
           s.devices.push({ spec, holder, model: m, base: [x, y, z] });
         }
+        s.wailBatch = createWailSpeakerBatch(THREE, G.scene, s.devices);
         continue;
       }
       const m = buildSubModel(THREE, spec.model, inkMat(color));
@@ -546,11 +560,13 @@ export function installSpecialModels(api) {
   function pose(ch, s, dt) {
     const a = ch.actor, state = a._s3AllSpecialState?.id === s.id ? a._s3AllSpecialState : null, t = G.time || 0;
     let hideWeapon = false, hideKid = false;
+    const poseOptions = { dt, speed: 0 }; let speedReady = false;
     for (const d of s.devices) {
       const spec = d.spec;
       if (spec.hideWeapon && (s.id !== 'killerWail' || (state?.t ?? t - s.startedAt) < 40 / 60 - 1e-8)) hideWeapon = true;
       if (spec.hideKid) hideKid = true;
-      poseSubModel(d.model, { dt, speed: Math.hypot(a.vel?.x || 0, a.vel?.z || 0) });
+      if (!speedReady && subModelUsesSpeed(d.model.id)) { poseOptions.speed = Math.hypot(a.vel?.x || 0, a.vel?.z || 0); speedReady = true; }
+      poseSubModel(d.model, poseOptions);
       if (spec.aim) d.holder.rotation.x = -(a.aimPitch || 0);
       if (spec.charge) {
         const c = clamp01(state?.charge || 0);
@@ -598,6 +614,7 @@ export function installSpecialModels(api) {
         } else if (s.ball) s.ball.root.parent.visible = false;
       }
     }
+    if (s.wailBatch) updateWailSpeakerBatch(s.wailBatch);
     // Reefslider rider (S3 footage 102.8s): crouched forward over the shark, not sitting upright. Character.update
     // rebuilds the kid transform every frame about the hips, so the lean is re-applied after it; the shark (a kid
     // child) is counter-transformed to keep its own world pose, then the hands reach the handles below.

@@ -1,0 +1,26 @@
+(node:5481) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ offline actual results offer a distinct action; online/Boss/demo/no-api excluded (2.245381ms)
+✔ native show/back preserve result-root history, no start on Back, direct loadout has no continue action (1.395095ms)
+✔ native locker roundtrip retains intent; repeated confirmation commits exactly once (0.819128ms)
+✔ new results, main exit, settings and direct reentry invalidate stale callbacks (2.141876ms)
+✔ modal, wrong screen identity and duplicate result clicks never start or install extra transitions (0.729736ms)
+✔ failed launch can retry only in original loadout; late failure does not revive an abandoned flow (1.399973ms)
+✔ returning from preview restores old actor podium without new gear or XP/result mutations (0.325734ms)
+✔ podium restoration ignores gameplay, Boss, online and other screens (0.169362ms)
+✔ actual menu API setter persists selection for next native match, old result actors remain snapshots (1.041509ms)
+✔ adapter hooks fail closed on missing/duplicate native boundaries and preserve Boss/online rematch code (13.04645ms)
+✔ production emitted helper follows identical native navigation and single-start guards (1.707791ms)
+✔ disposed menu cannot reopen from a retained result or continue callback (0.612471ms)
+✔ browser acceptance exercises desktop clicks as well as touch and hashes its new verifier (0.30214ms)
+✔ a queued result callback cannot reopen equipment after Back returns to the same result (0.596287ms)
+✔ negative control: removing the generation guard reproduces queued result reentry (1.480002ms)
+✔ wrapped result action grows with its label instead of clipping at a fixed touch height (0.211465ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 184.01215

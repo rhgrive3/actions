@@ -1,3 +1,4 @@
+import {assertSourceRemainderCoverage} from '../run-inkwave-source-remainder.mjs';
 import './inkwave-live-test-log.test.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -113,7 +114,7 @@ test('parallel browser families retain every final integration acceptance surfac
   assert.match(responsive, /processResult\.status===0/);
   assert.match(responsive, /--cases'/);
   assert.ok(workflow.includes('scripts/check-inkwave-network-comparison.mjs'));
-  assert.ok(workflow.includes('patches/network-replication/tests/*.test.mjs'));
+  assertSourceRemainderCoverage(workflow,'network');
   assert.ok(workflow.includes('patches/practice-range/tests/*.test.mjs'));
   assert.ok(workflow.includes('patches/loading-cache/tests/worker.test.mjs'));
   assert.ok(workflow.includes("REMATCH_CYCLES: ${{ inputs.deep_lifecycle == true && '10' || '3' }}"));
@@ -261,8 +262,7 @@ test('emitted material handoff is mandatory and runs only after a complete site 
   const block = workflow.slice(at, build);
   assert.ok(block.includes('INKWAVE_MATERIAL_HANDOFF_SITE: ${{ github.workspace }}/_site'));
   assert.ok(block.includes('node --experimental-vm-modules --test patches/local-quality/tests/material-handoff.test.mjs'));
-  assert.ok(workflow.includes('patches/local-quality/tests/*.test.mjs'),
-    'do not remove the original source regression gate');
+  assertSourceRemainderCoverage(workflow,'quality');
 });
 
 test('emitted menu focus is mandatory in the UI shard and source-bound in its receipt', () => {
@@ -312,7 +312,7 @@ test('emitted Bot respawn and retry regressions reuse the complete production si
   assert.ok(block.includes('run: node --experimental-vm-modules --test patches/local-quality/tests/bot-navigation-respawn.test.mjs'));
   assert.ok(!/^\s+(?:if|continue-on-error):/m.test(block), 'mandatory step without failure suppression');
   assert.ok(!block.includes('||') && !block.includes('--test-name-pattern'));
-  assert.ok(validate.includes('node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs'), 'retain all original source tests');
+  assertSourceRemainderCoverage(validate,'quality');
 });
 
 

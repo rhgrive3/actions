@@ -122,7 +122,8 @@ export function noteRankedBarrierShots(nm,from,packet,now) {
     if(keys.has(fingerprint)) continue; // a resent owner tick cannot mint another hit
     const shot=shotFromEvent(e,actor,shield);
     if(!shot) continue;
-    const count=receipts.filter(r=>r.id===shot.id && now-r.at<1).length;
+    let count=0;
+    for(let i=0,length=receipts.length;i<length;i++)if(i in receipts){const r=receipts[i];if(r.id===shot.id && now-r.at<1)count++;}
     const weapon=actor.weapon;
     const rate=Number.isFinite(weapon.fireInterval) && weapon.fireInterval>0 ? 1/weapon.fireInterval : 12;
     const burst=['roller','slosher','stringer','brush'].includes(weapon.kind) ? 10 : 1.5;

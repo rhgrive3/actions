@@ -157,7 +157,10 @@ try{
       const origin=a._s3AllSpecialState.beamPairs[0].origins[0].clone();a.intent.fire=false;a.intent.squid=true;a.intent.move.set(.5,0,0);step(30);
       const devices=ch.s3SpecialDevices();
       if(a.anim.form!=='swim'||ch.kid.visible||devices[0].holder.position.distanceTo(origin)>1e-8)throw Error('Wail native swim/anchored emitter');
-      before=render();devices.forEach(d=>d.holder.visible=false);const speakerPixels=changed(before,render());devices.forEach(d=>d.holder.visible=true);
+      const speakerBatches=scene.children.filter(o=>o.name==='killer-wail-speaker-batches');
+      if(speakerBatches.length!==1)throw Error('Wail native speaker batch missing or duplicated');
+      before=render();devices.forEach(d=>d.holder.visible=false);speakerBatches[0].visible=false;
+      const speakerPixels=changed(before,render());devices.forEach(d=>d.holder.visible=true);speakerBatches[0].visible=true;
       if(speakerPixels<50)throw Error('Wail speakers disappeared with the human rig');
       render();images.push({name:'wail-native-swim',data:renderer.domElement.toDataURL('image/png')});
       a.splat(null,'test');step();const tails=scene.children.filter(g=>g.name==='killer-wail-surviving-speaker');
@@ -228,15 +231,15 @@ try{
         const p=d.kit[key],mesh=p.mesh,oldDraw=mesh.onBeforeRender;let draws=0;
         mesh.onBeforeRender=function(...args){draws++;return oldDraw?.apply(this,args);};
         const spawn=i=>p.spawn((i%11)*.025,1.5+(i%7)*.025,0,0,0,0,10,.2,.3,1,.5,.1,1,0,{rot:0,seed:.5});
-        const verify=label=>{for(const a of [p.aPos,p.aDir,p.aCol,p.aPar]){ensure(mesh.geometry.instanceCount<=a.count,label+' attribute capacity');for(const r of a.updateRanges)ensure(r.start+r.count<=a.array.length,label+' upload bounds');}ensure(mesh.geometry.instanceCount===p.n+1,label+' reserved warm slot');ensure(p.aCol.array[3]===0,label+' warm slot transparent');const n=draws;drawVfx();ensure(draws>n,label+' actual pool draw');};
+        const verify=label=>{for(const a of [p.aPos,p.aDir,p.aCol,p.aPar]){ensure(mesh.geometry.instanceCount<=a.count,label+' attribute capacity');for(const r of a.updateRanges)ensure(r.start+r.count<=a.array.length,label+' upload bounds');}ensure(mesh.geometry.instanceCount===p.n+1,label+' reserved warm slot');ensure(p.aCol.array[3]===0,label+' warm slot transparent');const n=draws,shouldDraw=p.n>0||!p._warmed;drawVfx();if(shouldDraw)ensure(draws>n,label+' actual pool draw');else ensure(draws===n&&!mesh.visible,label+' warmed empty pool skips drawing');};
         try {
-          p.clear();p.update(1/60);drawVfx();const blank=render();
-          for(let i=0;i<p.cap;i++)spawn(i);p.update(1/60);ensure(p.n===p.cap,'full '+key);verify('saturation '+key);
+          p.clear();d.kit.update(1/60,camera);drawVfx();const blank=render();
+          for(let i=0;i<p.cap;i++)spawn(i);d.kit.update(1/60,camera);ensure(p.n===p.cap,'full '+key);verify('saturation '+key);
           const pixels=changed(blank,render());ensure(pixels>0,'visible saturated '+key);
-          spawn(999);p.update(1/60);ensure(p.n===p.cap,'bounded eviction '+key);verify('eviction '+key);
-          p.clear();p.update(1/60);ensure(p.n===0,'clear '+key);verify('empty '+key);
-          spawn(7);p.update(1/60);ensure(p.n===1,'reuse '+key);verify('reuse '+key);
-          p.clear();p.update(1/60);drawVfx();const after=memory();noGrowth(baseline,after,'pool cycle');
+          spawn(999);d.kit.update(1/60,camera);ensure(p.n===p.cap,'bounded eviction '+key);verify('eviction '+key);
+          p.clear();d.kit.update(1/60,camera);ensure(p.n===0,'clear '+key);verify('empty '+key);
+          spawn(7);d.kit.update(1/60,camera);ensure(p.n===1,'reuse '+key);verify('reuse '+key);
+          p.clear();d.kit.update(1/60,camera);drawVfx();const after=memory();noGrowth(baseline,after,'pool cycle');
           vfxResources.pool.push({quality,key,cap:p.cap,attributeCapacity:p.aPos.count,draws,pixels,baseline,after});
         } finally {mesh.onBeforeRender=oldDraw;}
       }

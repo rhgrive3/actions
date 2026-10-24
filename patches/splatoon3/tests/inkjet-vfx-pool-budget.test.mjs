@@ -1,3 +1,4 @@
+import { consumeVfxPeriod } from '../runtime/nonwail-vfx-clock.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -23,7 +24,7 @@ function runLoad(hz, actorCount, cap, seconds=2) {
  d.spark=(kind,p,vx,vy,vz,life,s0,s1,col,a,o)=>d.kit.sparks.spawn(p.x,p.y,p.z,vx,vy,vz,life,s0,s1,...col,a,kind,o);
  d.puff=(kind,p,vx,vy,vz,life,s0,s1,col,a,o)=>{admissions[current]++;return d.kit.puffs.spawn(p.x,p.y,p.z,vx,vy,vz,life,s0,s1,...col,a,kind,o);};
  d.drop=(p,vx,vy,vz,life,size,col,o={})=>d.puff(0,p,vx,vy,vz,life,size,size*.45,col,1,o);
- const recipes=sections.map(code=>new Function('inkjetVfxTicks','vfxRandom','rnd','groundBelow','clamp','SPARK','PUFF','DISC','TAU','inkjetVfxAdmission','inkjetVfxRoom','return ({'+code+'}).frame;')(inkjetVfxTicks,random,rnd,()=>0,(x,a,b)=>Math.max(a,Math.min(b,x)),{GLOW:0},{CHUNK:0,MIST:1},{SPLAT:0},Math.PI*2,inkjetVfxAdmission,inkjetVfxRoom));
+ const recipes=sections.map(code=>new Function('consumeVfxPeriod','inkjetVfxTicks','vfxRandom','rnd','groundBelow','clamp','SPARK','PUFF','DISC','TAU','inkjetVfxAdmission','inkjetVfxRoom','return ({'+code+'}).frame;')(consumeVfxPeriod,inkjetVfxTicks,random,rnd,()=>0,(x,a,b)=>Math.max(a,Math.min(b,x)),{GLOW:0},{CHUNK:0,MIST:1},{SPLAT:0},Math.PI*2,inkjetVfxAdmission,inkjetVfxRoom));
  const actors=Array.from({length:actorCount},()=>({a:{pos:new V().set(0,2,0),form:'kid',intent:{}},t:{d:{jets:[{},{}],cones:[{},{}]},color:[1,0,0]},r:{d:{ink:{}},color:[1,0,0]},p:{pos:new V().set(0,2,4)}}));
  for(const x of actors){x.a.alive=true;x.a.specialActive={id:'inkjet'};x.p.owner=x.a;}
  d.G={actors:actors.map(x=>x.a),projectiles:{list:actors.map(x=>Object.assign(x.p,{wid:'inkjet'}))}};d.rounds=new Map(actors.map(x=>[x.p,{wid:'inkjet',p:x.p}]));

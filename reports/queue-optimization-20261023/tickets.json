@@ -1,0 +1,4724 @@
+{
+  "schema": 1,
+  "intakeCount": 358,
+  "entries": [
+    {
+      "slug": "hud-offscreen-ally-markers-share-sincos",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "One cos/sin per ally boundary angle; exact production-composed coordinates verified over10000 seeded/boundary/nonfinite inputs; projection, clipping and marker writes unchanged."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "network-projectile-cosmetics-fixed-bound-tuples",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "Fixed cosmetic validation ranges are equivalent scalar checks in the same order, removing per-call tuple literals. Frozen-table candidate was slower in Node22 validator-only trials and was not selected; scalar median stayed within noise. All layer calls, exact bounds, read order and wire fields remain unchanged; boundary/getter regressions pass."
+      ],
+      "evidencePaths": [
+        "patches/network-replication/snapshot-guard.mjs",
+        "patches/network-replication/tests/queue-network-358.test.mjs"
+      ],
+      "commits": [
+        "30def29"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "bloblobber-ground-normal-reuse-square-root",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Cache unchanged normal length for its correction denominator; preserve dot-before-sqrt evaluation, division order, and exact native-vector outputs."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "152d40d"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "catalog-collision-radius-skip-zero-bounce-exponent",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Return already computed nonnegative radius only for numeric bounce===0; every other bounce input still uses original decay helper. Source parameter evaluation order preserved."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "152d40d"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "head-surface-reuse-identical-center-shape-sample",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "Reuse only first finite-difference center when clamp leaves elevation unchanged. Nose-disabled second pass still recomputes and _noseDn marker restored; raw head source untouched."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/s3-face-look-adapter.mjs"
+      ],
+      "commits": [
+        "be77cfd"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "killer-wail-hitbeam-per-pulse-set-and-constant-segment",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Per-runtime reentrant cleared Set leases; lazy scalar segment values reused on no-hit candidates and invalidated after each synchronous applyHit callback to preserve nested runtime-vector changes. Duplicate victims, callback exceptions, nested damage order tested against original function."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "152d40d"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "active-bubbler-wail-beam-set-and-probe-reuse",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Depth-leased Set/probe records with scalar assignments, original captured maximum contacts/order/ID+serial exclusions, owner clear and Set clear in finally. Actual candidate does not retain probe in its callbacks. Nested query/settlement and exception parity tests pass."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "152d40d"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "placed-sub-attachment-per-tick-validation-arrays",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "Finite checks capture x/y/z before short-circuit validation, preserving getter order; fixed frame keys are frozen once, heading scratch is attachment-owned with recursive-call isolation; suction frame record reused. Moving Tower source/ghost tests and120-step clone reduction pass."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/sub-surface-attachment.mjs",
+        "patches/splatoon3/runtime/kit-subs.mjs",
+        "patches/splatoon3/tests/sub-attachment-queue.test.mjs"
+      ],
+      "commits": [
+        "30def29"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "environment-foam-field-segment-invariants-inside-pixel-loop",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "Fullfoambytes andtexturecontract exact for5layoutbounds×2marinamodes, zero/tiny/reversed/overlap shapes; world358tests."
+      ],
+      "evidencePaths": [
+        "src/world/environment.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "environment-sea-wave-mainthread-256px-trig-prewarm",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "ActualChromiumWorker4runs exact262144RGBAbytes original; timerliveness37–44beats vs0sync, workerwalloverhead recorded;20algorithm/lifecycle/provenance tests pass."
+      ],
+      "evidencePaths": [
+        "src/world/wave-{data,prewarm,worker}.js; environment.js; mural-atlas-adapter; native-module-worker provenance"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "skip-unused-procedural-battle-score-compilation-for-streamed-mp3",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Actual fully composed MusicEngine browser recording path compiles zero scores and creates zero Players/FX; offline explicit getSong still compiles. menu-music-queue358.test.mjs and independent motion full-composition probe."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "d6cefe4"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "news-ink-wipe-cache-deterministic-splat-template",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Each expansion/contraction tween owns a seed template and reused points. Original radius multiplication/order, neck subtraction and closedCurve rounding retained.5000 exact path comparisons plusInfinity cases; zero angular trig after construction; reduced/TRY IT teardown retained. No global cache."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "network-ghost-quota-under-128-constant-time-admission",
+      "accountableRole": "network",
+      "status": "already-effective",
+      "reasons": [
+        "Production composition already invokes indexedGhostBudget for tracked native Projectiles before the legacy scan. Retain custom-store fallback: custom iterators and getter-driven list expansion invalidate a raw length bound. Actual composed quota boundary, native lifecycle and mutable fallback tests pass."
+      ],
+      "evidencePaths": [
+        "patches/network-replication/ghost-live-index.mjs",
+        "patches/network-replication/tests/queue-network-358.test.mjs"
+      ],
+      "commits": [
+        "30def29"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "gyro-world-projection-unit-gravity-normalization",
+      "accountableRole": "network",
+      "status": "not-adopted",
+      "reasons": [
+        "Actual composed native method comparison on20000 samples changes exact accumulated camera output in11044 cases (max pitch delta2.1441182163073336e-15). No demonstrated device benefit justifies changing normalization/fallback state; existing World Orientation mapping retained."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/core/gyro.js",
+        "patches/local-quality/adapter.mjs"
+      ],
+      "commits": [
+        "30def29"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-clams-batch-simultaneous-expiry-removal",
+      "accountableRole": "combat",
+      "status": "not-adopted",
+      "reasons": [
+        "Proposed end-batch filtering changes synchronous engine.event observations. Actual ClamsRule before callback snapshots [b],[] for expiring a,b; candidate snapshots [a,b],[a,b]. Preserve current per-event state mutation. Evidence batch358/ranked-snapshot-review.{mjs,json}."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "no-change-batch358"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "validate-source-reference-verifiers-absent-from-path-filters",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "0a22531"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-gate-build-input-path-filter-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "0a22531"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "shadowcache-cull-share-sun-horizontal-hypot",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "Actualculling100cases every sphere, flag, skipped count exact; onepasslocalsunhypot; noframecache."
+      ],
+      "evidencePaths": [
+        "src/core/shadowcache.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "network-combat-pose-double-slice",
+      "accountableRole": "network",
+      "status": "not-adopted",
+      "reasons": [
+        "Actual record experiment: owner lookup mutates row coordinates from0 to10; baseline stores fresh[10,0,0], single-slice candidate stores stale[0,0,0]. Preserve callback mutation/Array slice contracts; no trusted-only API added for this small optimization."
+      ],
+      "evidencePaths": [
+        "patches/network-replication/combat-provenance.mjs",
+        "patches/network-replication/tests/queue-network-358.test.mjs"
+      ],
+      "commits": [
+        "30def29"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "blaster-splash-drop-lazy-landing-order-buffer",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Allocate call-local landing list only on actual terrain contact; stable sort only2+ landings, retain compaction, paint order, delayed retirement recycling and exception-finally ownership."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "152d40d"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "catalog-roller-brush-hit-eliminate-band-arrays",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Capture original8 fields once in eager literal order; ordered scalar finite-pair scan removes band arrays/filter and preserves interpolation/depletion/unit/time rates. Actual helper15000-case Object.is differential plus getter-order test."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "152d40d"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "tentacle-tube-hoist-radial-and-twist-trigonometry",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "Per-build exact angle bases and per-ring twist feed existing offsetInto scratch. Section callback order/args retained; custom section/offsetInto methods fall back with original argument count. Public offset behavior unchanged."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/runtime-frame-scratch-adapter.mjs"
+      ],
+      "commits": [
+        "be77cfd"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "special-held-ik-break-on-unchanged-constraints",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "Break only after neither right nor left projects. Strict >, arithmetic order, final native limb solve/error path and all20 nonconvergent iterations retained."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/special-motion.mjs"
+      ],
+      "commits": [
+        "be77cfd"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "storm-cloud-avoid-discarded-native-mesh-factory",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Optional presentation factory fills original native Group and skips15 discarded Mesh+2 Material constructors. All62 native random draws retained in original sequence, records/positions/events/audio equal; factory failure retains native visuals. Unadapted host compatibility swap retained; instance buffer release remains exactly once."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs",
+        "patches/splatoon3/runtime/special-motion.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "native-texture-resize-before-full-bitmap-decode",
+      "accountableRole": "world",
+      "status": "not-adopted",
+      "reasons": [
+        "ActualChromiumdirectBlob vs original2step: pinned2048²ScorchTerrain512/1024 targets exact, but alphaNPOT2049×1025→1024×512 differs1redbyte max1/255. Global adoption rejected under exactpixels; Safari/iPad decoderRAM notmeasured; originaldecode/orientation/filters/ownership retained."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "native-source-share-byte-identical-png-aliases",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "Authenticated fivebaseOBJ+MTL active-job scan982571duplicatecompressedbyte candidates;4focused alias oldloader/normalbytes/invalidation/failuretests+94regressions pass. Git-onlypin, bytes,role,cap,encoding match; uniquehandleclose/dispose."
+      ],
+      "evidencePaths": [
+        "native-load.mjs; native-world pending cleanup alreadySet; native-render/native-quality existingSetowners"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "menu-idle-loading-interpolation-skip-settled-exp",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Actual composed menu tick parity at30/60/120Hz including nonfinite dt/state; skip settled finite exponential only. menu-music-queue358.test.mjs."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "d6cefe4"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "diorama-pin-and-cursor-skip-unchanged-dom-transforms",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Per-owner authored+actual CSSOM serialized transform states restore external overrides and replacement elements; snap compares actual class. Projections/input/snap/jump timing remain each frame. Real Chromium120 stationary invocations perform1write; external override then restore results3totalwrites, serialized translate3d(12px,30px,0px) with browser spacing."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-rainmaker-trail-reuse-vertical-ray-scratch-vectors",
+      "accountableRole": "root",
+      "status": "not-adopted",
+      "reasons": [
+        "Reverted after independent actual-block and real composed Physics review:32 ordinary/custom data-method scenarios pass, but an accessor segment override can return canonical during guard and retaining custom at call. Candidate doubles getter reads4→8 and reuses2objects for8retained references, mutating previously owned inputs. Original clones preserve4distinct stable references. Small default allocation saving17→7 does not justify observable public-method ownership change; see rainmaker-rejected.md."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "d6cefe4"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "specials-ci-seven-test-path-filter-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "0a22531"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "projectile-visual-ci-five-test-path-filter-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "0a22531"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "fx-dust-ring-reuse-particle-sincos",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Same-particle sine/cosine reused only; seeded emitted argument arrays and next RNG values match across5quality tiers and5burst sizes."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "host-migration-lobby-race-missing-new-host-player",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "A newly elected lobby host reconciles authenticated relay members before first lobby broadcast, restores missing self from validated profile and other members from safe unready defaults, preserves valid equipment, filters stale/duplicate rows. Room/transport/attempt guards prevent callbacks from mutating replacement rooms; no starting/match reconstruction."
+      ],
+      "evidencePaths": [
+        "patches/reliability/lobby-guards.mjs",
+        "patches/reliability/net-adapter.mjs",
+        "patches/reliability/queue-network-adapter.mjs",
+        "patches/reliability/tests/queue-network-358.test.mjs"
+      ],
+      "commits": [
+        "30def29"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "charger-flight-birth-avoid-redundant-private-vector-clones",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Use newly supplied helper output only when method is captured composed-native identity and returned===supplied output; overridden/custom helpers retain previous clone boundary even if they returnout. Begin job/event persistent copies unchanged. Actual native helper conformance and job-vector independence/shared output/retained-output-mutated-by-aim callback tests pass."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "152d40d"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "charger-flight-hoist-motion-clipped-fraction",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Step-local lazy clipped fraction on first coherent live-motion target; ghosts/no-motion do not evaluate it. Actual source scan comparison preserves every target endpoint including zero speed/NaN, reduces Math.min from9 to2 with8 coherent actors."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "152d40d"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "killer-wail-device-pose-repeated-hypot-and-options",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "One invocation-owned options object for device loop; lazy horizontal speed computed only if a documented consumer is encountered (autobomb/spCrabTank), zero for six Wail speakers. Every model pose clock still advances with unchanged dt clamp; source capability consumer set regression test."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/special-presentation.mjs",
+        "patches/splatoon3/runtime/sub-models.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "killer-wail-six-speaker-per-finish-instancing",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Six original holders/models/anchors/materials preserved. Five opaque compatible finish InstancedMeshes own draw submission, matrix uploads, aggregate bounds and instance buffers. Shadow/culling/layer/render-order flags retained; material/shader/visibility divergence returns individual Mesh to its original group. Centralized deduplicated material and instance retirement idempotent. Chromium SwiftShader9 emitted scenes:1/2/4/8actors ordinary+normal override30/60/120/240->5/10/20/40calls, shadow60->10, zero offscreencalls; ALL pixel readbacks identical. Physical GPU/Safari/FPS/retail acceptance unmeasured."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/special-presentation.mjs",
+        "patches/splatoon3/runtime/wail-speaker-batch.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "overlap-mural-font-load-with-texlib-shader-compile",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "Concurrentstart/resourcejoin and fontinternalawait unchanged; immediate rejection observed, proceduraltexlibfallback retained, completedtexlibreleased+waveaborted onfatalmuralfailure."
+      ],
+      "evidencePaths": [
+        "mural-atlas-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "defer-nonvisible-map-svg-thumbnail-generation",
+      "accountableRole": "world",
+      "status": "already-effective",
+      "reasons": [
+        "Earlier305descriptor subpart already implemented cached lazy getter; actualbootloop+actualSVG tests assert0eagercalls,5layouts exactstrings, onecallperread, setter and retryablefailure. Prior305mapping36unchanged."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "source-retarget-hair-share-head-transform-and-skip-dead-quaternions",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "Head/rest/response hoists were already effective; newly skip source quaternion products overwritten by identity() in hair-target branch. Source/manual fallback keeps exact existing order."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/adapter.mjs"
+      ],
+      "commits": [
+        "be77cfd"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "audio-runtime-finite3-avoid-position-array-on-sfx-events",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "All x/y/z accessors still read once in original order, with identical invalid-value outcomes; no position triple allocation. menu-music-queue358.test.mjs."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "d6cefe4"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "deferred-recorded-loop-stop-recloning-updated-options",
+      "accountableRole": "root",
+      "status": "not-adopted",
+      "reasons": [
+        "Actual composed AudioEngine plus engine.mjs deferred loop and native AudioEngine.loop/set counterexample: after the recorded loop starts, an enumerable update.volume getter returns .2/.4/.6/.8. Baseline reads4 times and schedules AudioParam gain.184 (=.8×.23); omitting the copy reads3 times and schedules.138 (=.6×.23). Preserve observable option accessors and forwarded gain; no device performance claim."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/engine.mjs",
+        "inkwave-public/src/audio/audio.js"
+      ],
+      "commits": [
+        "d6cefe4"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "menus-font-loadingdone-listener-retained-after-dispose",
+      "accountableRole": "root",
+      "status": "already-effective",
+      "reasons": [
+        "Final composed menus already removes document.fonts loadingdone and resize listeners, disconnects hover observers, cancels fit/animation jobs and guards delayed fonts.ready with _qualityDisposed; raw source audit missed downstream adapter."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "d6cefe4"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "abort-timed-out-mp3-fetch-and-prevent-late-decode",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Owned monotonic request deadline aborts fetch/body and checks before decode despite ignored signals/starved timers. Clear/new generation detaches retired scopes before synchronous abort listeners. Eleven cancellation regressions plus related66 tests pass; separate manifest header/body windows and retries retained."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "d6cefe4"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "suction-cups-share-radial-sincos-across-profile-rings",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "Lazily build exact angle table per call after first admitted cup. Clamp metric denominators once per cup, retaining division order, point/normal/skip callbacks and all output records."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/character-hair.js"
+      ],
+      "commits": [
+        "be77cfd"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "native-ink-overlay-compact-constant-vertex-channels",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "Nativeonly explicitattributevariant restoresall4livefaceData values; legacyunchanged. Chromium4floor/wallwetcontrols0differingchannels, positivepaint3195/5210pixels,0GLerrors,80→64logicalbytespervertex. Detachedvariantwarmup cancel/reject tests.45suite40pass5asset-onlyskip."
+      ],
+      "evidencePaths": [
+        "native-render.mjs; native-world.mjs; src/world/levelMaterial.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "native-source-retention-amortize-per-file-cache-ledger",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "Bounded4file/2MiB groups requestgloballock immediately, freshledgerunderlock, pending-before-body, historicalpeakscount eachreplacement, finalseal/trim; deletebarrier.24cachetests+actualChromium100→40put/20→5key-lock-estimate,20bodies exact; actual2tabs12files78bytessealed."
+      ],
+      "evidencePaths": [
+        "source-retention.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "gyro-calibration-share-rotationrate-magnitude",
+      "accountableRole": "network",
+      "status": "not-adopted",
+      "reasons": [
+        "Math.hypot argument permutations are not exactly equivalent: actual composed native calibration method changed accumulated scalars in1233 of20000 samples. Preserve calibration thresholds/history and original norms without target-device benefit evidence."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/core/gyro.js",
+        "patches/local-quality/adapter.mjs"
+      ],
+      "commits": [
+        "30def29"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ci-quality-gate-restrict-source-diff-history-fetch",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "0a22531"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "validate-core-deduplicate-ten-full-source-test-reruns",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "0a22531"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-clam-presentation-lazy-snapshot-array-on-drill",
+      "accountableRole": "combat",
+      "status": "not-adopted",
+      "reasons": [
+        "Live no-drill view changes membership during permitted synchronous Three Object3D childadded callbacks in actual _clamMarker. Callback adds b while rendering a: baseline markers[a], proposed lazy view[a,b]. Preserve snapshot; do not add trust guards or coupling to save small arrays. Evidence batch358/ranked-snapshot-review.{mjs,json}."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "no-change-batch358"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-clam-projectile-exact-aabb-contact-broadphase",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Conservative .721 swept XYZ bounds computed once per projectile substep, bounded finite segment guard; keep original vec(actor.pos) validation/getter/fallback and reject before closest-point temporaries. Actual rule full state/event/graze/invalid-vector comparison and closest-point query reductions; does not eliminate body-center copy."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "152d40d"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "hud-crosshair-cache-stable-fov-and-cone-tangents",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Existing terminal whole-spread cache improved to independent Object.is actual FOV/cone tangent keys; height remains live without trig recompute. Signed zero, NaN/infinity, roller shortcut and current numeric spread preserved. No optical behavior fixes from PR1859 included."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/added-ui-motion-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "hud-superjump-beacon-label-rewrites-on-movement",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "97f45e2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-empty-event-batch-skip-splice-and-playback",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "197 focused runtime regressions, 37 input/codec/ranked checks, 41 relay tests, 44 final control/compat tests; normal minified emitted build and tests. Critical controls fail explicitly on local send refusal; no wire ACK or device/deployed measurements claimed."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/ranked/install.mjs",
+        "patches/splatoon3/tests/ranked-added-equivalence.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-clam-basket-goal-vector-slice-churn",
+      "accountableRole": "root",
+      "status": "already-effective",
+      "reasons": [
+        "Current baseline world vec() already validates first three finite components directly and returns input, no slice in basket update; leave marker/barrier updates live."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "defense-selection-ci-two-test-path-filter-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "8258f99"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "micro-surface-ci-two-test-path-filter-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "8258f99"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "touch-frame-pacing-ci-offline-test-path-filter-gap",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "8258f99"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "bot-ai-frame-rate-dependent-random-actions",
+      "accountableRole": "combat",
+      "status": "already-effective",
+      "reasons": [
+        "Composed src/main.js calls runSimulation (portrait adapter preserves clock), FixedClock advances 60Hz, simulateMatchInterval calls Match.update which calls bot.update(dt). queue-combat-scratch tests120 calls over2s at30/60/120Hz. No probability/RNG/cadence changes."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "ba7fea2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "transport-missing-pong-heartbeat-watchdog",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "197 focused runtime regressions, 37 input/codec/ranked checks, 41 relay tests, 44 final control/compat tests; normal minified emitted build and tests. Critical controls fail explicitly on local send refusal; no wire ACK or device/deployed measurements claimed."
+      ],
+      "evidencePaths": [
+        "patches/reliability/net-adapter.mjs",
+        "patches/reliability/tests/queue-network.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "swept-world-hit-skip-fallback-length-hypot",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Move missing-queryBlocks/blocks fallback before unused dx/dy/dz/hypot. Throwing coordinate getters prove fallback no longer touches geometry; delegated segment result preserved."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "ba7fea2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "paint-codec-eliminate-per-row-header-temporary-arrays",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "197 focused runtime regressions, 37 input/codec/ranked checks, 41 relay tests, 44 final control/compat tests; normal minified emitted build and tests. Critical controls fail explicitly on local send refusal; no wire ACK or device/deployed measurements claimed."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/paint-packet-codec.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "tenta-missiles-share-ground-probes-per-projectile-update",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Per-runtime weak target cache, exact life/xyz and per-P.update epoch; missiles retain individual target vectors and velocity/age logic; descending/stale-life targets excluded."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "custom-sub-aoe-reject-distant-targets-before-vectors",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Non-wall circular blasts reject outside conservative XYZ axis bound before blast point vectors; attachment sync still occurs first; shape callback/malformed-radius/Wall paths unchanged."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "ba7fea2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "release-halyard-procedural-geometry-caches-after-stage-exit",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "da77825"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "avoid-zero-uv-staging-buffers-in-halyard-prop-builders",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "da77825"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "source-hair-targets-sparse-quaternion-storage",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "Only indexed hair bones receive owned mutable quaternions; source-index lookup and blend order unchanged."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/motion/hair-targets.js"
+      ],
+      "commits": [
+        "a82dcea"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "lazily-start-procedural-music-worker-only-when-needed",
+      "accountableRole": "root",
+      "status": "already-effective",
+      "reasons": [
+        "Existing final installMusicIdle intercepts _startTimer before any Blob/Worker creation and requires live procedural player; actual online init and recorded-only playback create zero Workers/intervals."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "settings-aim-assist-preview-cache-svg-trail-and-skip-off-gaussian",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "97f45e2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "super-chump-preview-per-render-ground-probe-burst",
+      "accountableRole": "visual_audio",
+      "status": "partial",
+      "reasons": [
+        "Preview-only target/12positions/direction/side buffers are reused; launch remains fresh separately-owned vectors. Collision query throttling intentionally not applied: Physics/Level expose no collision revision and mutable collision state must remain visible each render. This allocation portion is fixed; query-burst portion remains constrained."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-clams-hud-skip-discarded-team-inventory-aggregation",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Compute team carried total only !own && team>=0; displayed branch, translation and absent-own aggregation unchanged."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "package-manifest-changes-miss-validate-and-pages-triggers",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "8258f99"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "swim-wake-skip-trivial-candidate-sort-and-reuse-comparator",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Hoisted comparator; skip sort only for length0/1, preserving ordering/ties for every nontrivial list."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "fidelity-targets-hoist-kit-actor-radius-per-projectile",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Lazily resolve Kit Trizooka actor radius once after first surviving candidate broadphase, reuse for admitted actors in same projectile query."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "ba7fea2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "splatana-step-memoize-geometric-normalizer-by-ground-state",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Step-local ground/air normalizers key on normalized source Kd and duration; mutation differential against uncached calls preserves exact speeds."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "ba7fea2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "roller-visual-links-skip-unused-head-sampling-on-history-path",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Head history samples and distance norm run only in legacy fallback link path after history membrane and radius/capacity exits; renderer tests pass."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "ba7fea2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "toxic-mist-remote-status-extra-progress-tick",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "197 focused runtime regressions, 37 input/codec/ranked checks, 41 relay tests, 44 final control/compat tests; normal minified emitted build and tests. Critical controls fail explicitly on local send refusal; no wire ACK or device/deployed measurements claimed."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/all-subs.mjs",
+        "patches/splatoon3/tests/toxic-mist-resistance.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "killer-wail-render-fps-dependent-particle-emission",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Charging-anchor and active beam drop/nested glow/star trials consume bounded60Hz carry; beam interpolation stays render-rate based. Local seeded per-effect60Hz order preserved; global effect interleaving differs across renderHz."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/special-vfx.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "retarget-foot-ccd-avoid-per-iteration-joint-array",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "Two numeric passes retain exact lower/upper joint and updateWorldMatrix order."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/motion/retarget.js"
+      ],
+      "commits": [
+        "a82dcea"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "slosher-liquid-paired-spring-coefficient-reuse",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Source adapter shares identical underdamped coefficients for Slosher X/Z liquid channels; 2000 Float32 state comparisons exactly equal baseline independent springs."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "ba7fea2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "loading-cache-avoid-second-sha256-per-valid-asset",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "4fbb1bd"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "loading-cache-coalesce-duplicate-startup-readiness-probes",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "4fbb1bd"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "lazily-allocate-procedural-music-fx-only-on-procedural-playback",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Common recording graph stays eager. Exact procedural graph builds before Player; all IR samples at44.1/48/96kHz and topology/parameters match, lifecycle tested."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "boss-hud-callout-skip-identical-css-transform-writes",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "97f45e2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "pages-post-deploy-ranked-503-versioned-module",
+      "accountableRole": "build_qa",
+      "status": "unresolved",
+      "reasons": [
+        "unresolved historical edge503 cause; immutable HTTP/artifact diagnostics implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "ce5a114"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "tower-paint-proof-cache-static-path-metrics",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Per-history scope route metrics cache verifies path identity, length, point identity and all XYZ values; host/match/engine/epoch scoping retained; direct mutation/replacement and network Tower mine tests pass."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "ba7fea2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-minimap-pos3-avoid-valid-clam-vector-slice",
+      "accountableRole": "root",
+      "status": "not-adopted",
+      "reasons": [
+        "Rejected guarded candidate after actual Chromium kernel A/B: median43.5ms baseline versus270.1ms candidate per1M plain-vector admissions,12 ABBA repetitions. Descriptor guards needed for accessor/subclass/custom-slice fallback cost more than slice. Opaque Proxy observation equivalence also unproven. Existing small allocation retained."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "fx-spawn-flash-reuse-particle-sincos",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Drop/puff angle pairs reused; exact seeded particle argument and RNG order differential passes."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "network-start-go-control-backpressure-unchecked-failure",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "197 focused runtime regressions, 37 input/codec/ranked checks, 41 relay tests, 44 final control/compat tests; normal minified emitted build and tests. Critical controls fail explicitly on local send refusal; no wire ACK or device/deployed measurements claimed."
+      ],
+      "evidencePaths": [
+        "patches/reliability/queue-network-adapter.mjs",
+        "patches/reliability/net-adapter.mjs",
+        "patches/reliability/lobby-guards.mjs",
+        "patches/native-stages/adapter.mjs",
+        "patches/reliability/tests/queue-network.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "catalog-dualies-hoist-geometric-integration-constants",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Prepare log/denominator once per integration call. Per-slice source Kd/duration identity guards recompute on collision-callback mutation; differential matches public interval kernels, one log in steady call."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "ba7fea2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "roller-impact-avoid-transient-height-and-age-arrays",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Scalar finite checks and ordered point-reference checks remove temporary arrays while retaining finite and height semantics."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "ba7fea2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "storm-cloud-render-hz-independent-bob",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Spawn phase and per-child initial Y/local age anchor exact closed form of old60Hz sine sum; no cumulative render-rate-dependent drift. Network fixed-step composition verified; gameplay/group drift unaffected."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "native-superjump-slam-fall-vfx-emission-cadence",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Per-actor phase-keyed60Hz cosmetic trial carry cap2; phase changes clear remainder; marker and state transitions remain per render."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "retarget-cache-hair-source-chain-length-by-side",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "Per-constructor side cache evaluates each valid source chain once; missing and zero-length cases preserved."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/motion/retarget.js"
+      ],
+      "commits": [
+        "a82dcea"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "body-balance-reuse-precomputed-sole-profile-center-fk",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "WeakSet provenance permits immutable cache-built single-profile centers only. Mixed, custom, repeated positive additions and absent profiles retain original FK; local center copy/mix remains available."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/motion/body-balance.js"
+      ],
+      "commits": [
+        "a82dcea"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "propkit-bound-global-procedural-template-cache",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "da77825"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "paint-atlas-omit-unused-position-buffer",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "da77825"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "skip-redundant-primed-bgm-media-play-at-go",
+      "accountableRole": "root",
+      "status": "not-adopted",
+      "reasons": [
+        "Not adopted: one API call per START/GO offers unmeasured gain while seek/prime pending/rejection and WebKit resume can require re-requesting play. Ticket requires actual WebKit/Safari continuation A/B before adoption; unavailable here. Preserve established play/recovery, no mute-risk trade for unproven benefit."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "combat-hud-transient-overlays-skip-unchanged-opacity-and-position",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Actual DOM CSSOM18 differential scenarios, zero final CSS/class/lifetime mismatch at30/60/120Hz including external style edits; floating Boss transform continues every update."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-rainmaker-reuse-shot-sweep-length-for-defense-arbitration",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "One local sweep distance reused for wall and defense comparison; chronological arbitration unchanged; ranked combat suites pass."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "ba7fea2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "crab-gyro-ci-three-executed-test-trigger-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "8258f99"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "actor-cache-unchanged-aim-direction-trigonometry",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "Instance scalar cache checks finite yaw/pitch, signed zero and actual aimDir components. External direction edits and nonfinite inputs recompute."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/actor.js"
+      ],
+      "commits": [
+        "a82dcea"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "network-boss-move-unbounded-ring-barrel-visual-meshes",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Ingress rejects slam rings>2 or barrage barrels>7, matching phase3 maximum producer payloads; valid snapshots retain identical parameters."
+      ],
+      "evidencePaths": [
+        "patches/network-replication/snapshot-guard.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "roller-release-footprint-reuse-ground-probe-hit",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Per-system depth leases reuse Hit; reset fields before probe and clear level reference in finally; reentrant paint/throwing paint test verifies no contamination and bounded steady allocations."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "ba7fea2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "special-vfx-shape-spin-render-rate-dependence",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Default shell/disc/band rotation uses birth angle plus age*.96*spin; owner marker/strike/wave/Booyah/Vac offsets use60Hz-calibrated radians/sec; Reefslider warning uses integrated acceleration. No per-update accumulated Float32 angle error."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/special-vfx.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "angle-shooter-persistent-line-contact-broadphase",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Per-update lazy XZ segment bound rejects distant unmarked hostiles before capsule tests; bound recomputed each update so moving target and line mutations remain observable."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "ba7fea2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "run-foot-hermite-share-basis-between-feet",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "Instance basis scratch shares phase arithmetic for equal nonempty paired paths; unpaired/malformed paths retain original sampler."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/motion/run-foot-path.js"
+      ],
+      "commits": [
+        "a82dcea"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "source-bank-profile-reuse-velocity-vector-scratch",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "One invocation-local scratch for uncached profile velocity differences; stored position-track copies retained. Catalog precomputed profile hits already skip this path."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/motion/source-bank.js"
+      ],
+      "commits": [
+        "a82dcea"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "settings-scroll-fade-avoid-per-frame-layout-polling",
+      "accountableRole": "build_qa",
+      "status": "already-effective",
+      "reasons": [
+        "already resolved in composed production; independently validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "character-builder-reduce-per-vertex-staging-and-unused-face-buffers",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "Typed chunk staging uses exact final component types; face/vector buffers are lazy with backfilled defaults. Callback order, output attribute subclasses/bytes, index threshold, repeated build and add-after-build ownership preserved."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/character-geo.js"
+      ],
+      "commits": [
+        "a82dcea"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "legacy-stage-skip-empty-grate-pass-and-hidden-collider-geometry-walk",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "da77825"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "boss-audio-reuse-follow-socket-scratch",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Each loop handle retains socket Vector3, plain position and set payload; body fallback overwrites all coordinates. One-shots retain fresh position objects. No music changes."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-rainmaker-barrier-rate-proof-count-without-filter-arrays",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Captured-length receipt loop counts matching id/time without filter allocation, retaining filter sparse-hole behavior and rate ceiling."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "ba7fea2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "environment-sail-gull-reuse-orbit-sincos",
+      "accountableRole": "build_qa",
+      "status": "already-effective",
+      "reasons": [
+        "already resolved in composed production; independently validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "network-match-end-unlock-backpressure-state-split",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "197 focused runtime regressions, 37 input/codec/ranked checks, 41 relay tests, 44 final control/compat tests; normal minified emitted build and tests. Critical controls fail explicitly on local send refusal; no wire ACK or device/deployed measurements claimed."
+      ],
+      "evidencePaths": [
+        "patches/reliability/queue-network-adapter.mjs",
+        "patches/reliability/results-adapter.mjs",
+        "patches/reliability/lobby-guards.mjs",
+        "patches/local-quality/result-continuation-adapter.mjs",
+        "patches/reliability/tests/queue-network.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "roller-slosher-projectile-creation-avoid-whole-list-snapshot",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Conservative queue-permitted scratch Set alternative: per-system pool leases snapshot Sets, clears/recycles in finally. Preserves reorder/removal/reentrant original callbacks; full O(N) traversal remains because append-only contract is not established."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "ba7fea2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "source-pose-rest-avoid-per-bone-spread-arrays",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "Normal 3/3/4 array metadata uses direct Float64 writes; irregular or custom iterable shapes retain original spread/set semantics."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/motion/source-bank.js"
+      ],
+      "commits": [
+        "a82dcea"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "booyah-cheer-ribbon-orphaned-before-shell-lifetime-end",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "ShapePool exactly-once finalizers end glow ribbon on natural expiry/follow rejection/death/eviction/clear/dispose; cheer registers owner track then removes refs on retirement. Tests actual cheer event and all pool retirement paths."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/special-vfx.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "special-vfx-periodic-emission-reset-discards-frame-remainder",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Bubbler/Cooler/Inkjet/Zipcaster/TripleInkstrike/Splashdown consume threshold with fractional remainder, at most one event per update and discard full overdue intervals. Booyah full-charge stochastic star also60Hz trials."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/nonwail-vfx-clock.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "skip-idle-catalog-weapon-audio-loop-bookkeeping",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Disabled keepLoop returns before stateFor/id lookup when that event has no existing handle; existing handles still stop/delete normally."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/runtime.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "coalesce-halyard-stage-theme-far-cube-and-foam-rebakes",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "da77825",
+        "4d86ea5"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "special-vfx-idle-degenerate-warm-mesh-render-submissions",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "All12 pools keep initial visible degenerate warm draw until normal onAfterRender (override pass excluded), hide after real warm+empty, show on records, and rewarm after webglcontextrestored; listener detached on disposal."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/special-vfx-kit.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "relay-join-signal-failure-admits-ghost-member",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "197 focused runtime regressions, 37 input/codec/ranked checks, 41 relay tests, 44 final control/compat tests; normal minified emitted build and tests. Critical controls fail explicitly on local send refusal; no wire ACK or device/deployed measurements claimed."
+      ],
+      "evidencePaths": [
+        "server/src/index.js",
+        "server/tests/queue-network.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ink-flight-reuse-nohit-world-sweep-length",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Only exact captured built-in world method with level reuses no-hit sweep dist; hit/custom/no-level paths retain needed norm and custom observation order. Updated ranked composition anchor; 8-case hit/level/override test passes."
+      ],
+      "evidencePaths": [],
+      "commits": [
+        "ba7fea2"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "native-texture-overlap-bounded-fetch-and-decode",
+      "accountableRole": "build_qa",
+      "status": "not-adopted",
+      "reasons": [
+        "not adopted: no device latency/memory benefit proof for added compressed-buffer peak; existing bounded integrity/ownership retained"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "input-gamepad-poll-eliminate-per-frame-forEach-callback",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "197 focused runtime regressions, 37 input/codec/ranked checks, 41 relay tests, 44 final control/compat tests; normal minified emitted build and tests. Critical controls fail explicitly on local send refusal; no wire ACK or device/deployed measurements claimed."
+      ],
+      "evidencePaths": [
+        "patches/reliability/queue-network-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "online-results-lobby-return-ring-skip-identical-css-writes",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Compare final --f ring string, preserving timebase and return transition."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-rainmaker-rkhit-proximity-avoid-map-spread",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "object-presentation-qa-seven-test-path-filter-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "c67a523"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "health-recovery-rain-two-storm-test-path-filter-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "c67a523"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "lobby-slot-browser-fixture-test-path-filter-gap",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "c67a523"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "terminal-recovery-qa-two-test-path-filter-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "c67a523"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "showcase-inkfx-crown-bomb-splash-reuse-particle-sincos",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "bomb-motion-sub-hold-visibility-snapshot-arrays",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "special-presentation-unsupported-world-object-group-churn",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/special-presentation.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "slosher-cache-source-total-bullet-count-for-fire-and-packet-checks",
+      "accountableRole": "combat",
+      "status": "not-adopted",
+      "reasons": [
+        "Actual source has 3 mutable units. Mutation-safe cache median11.15ms vs baseline6.40ms per1m calls (Node22). slosher-count-review.{mjs,log}."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "slosher-paint-birth-avoid-14-field-packet-slice",
+      "accountableRole": "combat",
+      "status": "not-adopted",
+      "reasons": [
+        "Plain direct-loop replacement changes Array species and eager getter order. packet-slice-review.log proves species1→0 and getter reads[5,18]→[5]. Public normalization preserves subclass species; keep current contract."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "source-squid-skin-weights-cache-bone-indices",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "3530ae5"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/squid-motion-binding-adapter.mjs"
+      ],
+      "commits": [
+        "3530ae5"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "skip-unhashed-mp3-decode-input-arraybuffer-copy",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Pure unhashed file hands fetched bytes to decoder; hashed/mixed shared borrowers retain ownership copy and decode once."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "native-paint-reuse-source-mask-instead-of-inverted-dead-array",
+      "accountableRole": "world",
+      "status": "not-adopted",
+      "reasons": [
+        "Rejected immutable mask accessor migration in current API: ranked/world.mjs _installTowerPaintFace requires dead.length, typedarray.set, subarray, new-cell writes, and restoration of earlier dead array. A level.mask-only accessor omits dynamic cells and cannot preserve public mutable dead semantics. No proxy or destructive mask inversion adopted. A compatible lazy-materialized/mutable-overlay migration remains separate work requiring CPU and mode acceptance."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "native-source-share-immutable-neutral-face-colors",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "static neutral Color frozen shared; dynamic facesprivate; frozen sharedemptycells and privatepopulated arrays covered native/world tests"
+      ],
+      "evidencePaths": [
+        "native-level.mjs; native-nav.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "settings-preview-observer-retains-detached-animated-card-after-static-selection",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Clear old preview observer before setting new key; existing scheduler owns replacement lifecycle."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "static-touch-scale-opacity-settings-preview-avoid-empty-raf-tick",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Static preview returns undefined tick; animated input modes unchanged."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-clam-inventory-visibility-reuse-set-and-avoid-entries",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/ranked/world.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "pause-gpu-dedicated-ci-misses-four-input-paths",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "c67a523"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "wiper-pilot-compare-misses-build-artifact-and-source",
+      "accountableRole": "build_qa",
+      "status": "not-adopted",
+      "reasons": [
+        "audit not applicable to sole live trigger branch comparator; main helper incompatible with historical source; unchanged"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "main-skip-dormant-local-movement-audio-loop-ticks",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "saber-melee-cache-source-shape-by-weapon-and-swing",
+      "accountableRole": "combat",
+      "status": "not-adopted",
+      "reasons": [
+        "Actual geometry candidate preserving source invalidation and per-swing private range took median≈57ms vs≈8.3ms baseline per100k births (Node22). saber-cache-review.{mjs,log}."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "saber-melee-hoist-constant-yaw-basis-across-targets",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "slosher-intermediate-skip-expended-drop-step-bookkeeping",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ink-vac-remote-exhale-live-states-strong-reference-leak",
+      "accountableRole": "visual_audio",
+      "status": "already-effective",
+      "reasons": [
+        "advanceInkVacReplica fallback calls disposeInkVac(actor,{preserveGauge:true}); disposal deletes states/liveStates; explicit remote release follows same retirement path."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "network-guest-me-rate-fanout-host-quota-exhaustion",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "Node22:40 server,31 minified queue+compatibility,7 minified touch,182 respawn/start regressions; normal minified build + migration/quick checks. No real-device/deployed performance claims."
+      ],
+      "evidencePaths": [
+        "patches/reliability/lobby-guards.mjs",
+        "patches/reliability/tests/queue-network.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "source-controller-share-displacement-yaw-sincos",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "3530ae5"
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/motion/source-controller.js"
+      ],
+      "commits": [
+        "3530ae5"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "verify-recorded-mp3-checksum-before-decoding",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Each declared digest passes before shared file decoder; malformed digest never reaches decode; original combined timeout remains bounded."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "native-nav-share-empty-grid-cell-arrays",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "static neutral Color frozen shared; dynamic facesprivate; frozen sharedemptycells and privatepopulated arrays covered native/world tests"
+      ],
+      "evidencePaths": [
+        "native-level.mjs; native-nav.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "decor-drop-unused-uv-on-untextured-merged-meshes",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "world-queue-optimizations soleowner transfer/errors/finaldispose; queue-character-world expandedgeometry exact with cloth UV retained"
+      ],
+      "evidencePaths": [
+        "src/world/decor.js; src/main.js; start-adapter; runtime-frame-scratch-adapter"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "settings-look-sensitivity-preview-skip-idle-exp-and-repeat-css",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Skip exp only finite dt with equal state; transform cache handles real CSSOM normalization and external edits."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "respawn-controller-reuse-physical-holds-snapshot",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "Node22:40 server,31 minified queue+compatibility,7 minified touch,182 respawn/start regressions; normal minified build + migration/quick checks. No real-device/deployed performance claims."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/respawn-lifecycle.mjs",
+        "patches/reliability/tests/queue-network.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "squid-spawn-aim-cache-unchanged-supported-target-probes",
+      "accountableRole": "motion",
+      "status": "not-adopted",
+      "reasons": [
+        "supportedTarget executes current Actor._resolve, which consumes live body colliders and foot/rail ground state. NativePhysics delegates to mutable dynamic Physics when dynamic blocks or overridden collider methods exist (native-physics.mjs:74). No trustworthy world collision generation/static contract is available to invalidate a cached target. Preserve wait/launch/steering validation."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/respawn-lifecycle.mjs:97"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "small-tank-ci-misses-s3-hud-look-test-path",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "c67a523"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "squid-native-qa-pinned-shallow-history-fetch",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "c67a523"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "actor-share-facing-horizontal-speed-with-visual-state",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "3530ae5"
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/actor.js"
+      ],
+      "commits": [
+        "3530ae5"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "explosher-sparkles-cache-seed-invariant-hash-and-basis",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/s3-projectile-shapes.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "bloblobber-trailing-bubbles-hoist-travel-distance",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/s3-projectile-shapes.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "retarget-ground-share-paired-foot-exponential-coefficients",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "3530ae5"
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/motion/retarget.js"
+      ],
+      "commits": [
+        "3530ae5"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "kraken-dash-swept-contact-avoid-four-temporary-arrays",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/all-specials.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "network-lobby-emote-semantic-flood-fanout",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "Node22:40 server,31 minified queue+compatibility,7 minified touch,182 respawn/start regressions; normal minified build + migration/quick checks. No real-device/deployed performance claims."
+      ],
+      "evidencePaths": [
+        "patches/reliability/lobby-guards.mjs",
+        "server/src/index.js",
+        "server/tests/queue-network.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "rebind-music-singleton-on-audio-context-replacement",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Only same context and bus is idempotent; replacement disposes players/old graph, ten replacements tested."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "boss-hud-squad-reuse-team-view-buffers",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "HUD caller supplies its own two view arrays; public default retains fresh-array ownership and full traversal."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "native-source-git-blob-sha1-avoid-whole-file-clone",
+      "accountableRole": "world",
+      "status": "not-adopted",
+      "reasons": [
+        "Conditional adoption rejected: WebCrypto subtle.digest accepts one complete input and no incremental browser API or vetted browser incremental SHA1 dependency exists in this repository. Node createHash equivalence does not establish browser CPU benefit; required iPad CPU+RAM comparison unavailable. Preserve exact byte count and Git SHA1 validation before decode/cache publication."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "native-quality-reuse-unchanged-albedo-across-profiles",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "94native loader/quality/ownership tests; new exacthandle reuse, cap/dataidentity/inference/role/state/integrity mismatch authenticatedreload, abort leaves borrowedhandlesalive"
+      ],
+      "evidencePaths": [
+        "native-load.mjs; native-quality.mjs; native-render.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-clam-inventory-index-first-actor-by-id",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/ranked/world.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ink-volume-emitted-qa-build-input-trigger-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "c67a523"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "reopened-six-loading-cache-test-and-input-path-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "c67a523"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "environment-water-height-cache-postnormalized-rect-bounds",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "world-queue-optimizations: seeded145placement/color ownership, max worldposition delta2.98214e-5; sea exact positions/normals/index; normalized water boundaries exact"
+      ],
+      "evidencePaths": [
+        "src/world/environment.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "network-guest-style-schema-to-primitive-match-start-crash",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "Node22:40 server,31 minified queue+compatibility,7 minified touch,182 respawn/start regressions; normal minified build + migration/quick checks. No real-device/deployed performance claims."
+      ],
+      "evidencePaths": [
+        "patches/reliability/session-admission.mjs",
+        "patches/network-replication/queue-recovery.mjs",
+        "patches/reliability/queue-network-adapter.mjs",
+        "server/src/index.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "fizzy-bomb-flight-splash-paint-unreachable",
+      "accountableRole": "combat",
+      "status": "unresolved",
+      "reasons": [
+        "Unresolved functional bug. Pinned Fizzy MoveParam supplies spacing2.2, radius.9/1/1.1 and width1.2/1.26/1.32 depth1.6; no flight-drop initial velocity/gravity/type defaults or authoritative release/landing rule. Dead helper instead stamps immediately via10m ray or y-1.35 fallback, ignores shape; no caller. Existing ordered ordinary native paint rows CAN replicate accepted stamps (cap3.744 exceeds these radii); rejected fizzyFlightPaint action is not itself a blocker and need not be enabled. Missing fact is authoritative flight-splash release/landing and footprint semantics, not device performance. See fizzy-final-review.md."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "angular-spread-eliminate-single-use-radius-sample-closure",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "angular-launch-share-identical-pitch-cosine",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "skip-human-source-pose-while-fully-squid",
+      "accountableRole": "motion",
+      "status": "not-adopted",
+      "reasons": [
+        "Pose results remain transition state: previousBodyPose/previousPose/previousHairTargets are captured on state-key changes and subsequently blended into visible return poses; action expiration also occurs within the human block. A local skip lacks an equivalent catchup path and changes return-frame state. No demand/catchup redesign or device/render proof exists; retain behavior."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/motion/source-controller.js:227"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "skip-known-absent-practice-range-lightmap-fetch",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "actual worldqueue test verifies metadata beforeCPUprops andPNGafterexacthash; buildinventory JSON+PNGpairs discovered selectedtree; helperincluded buildidentity"
+      ],
+      "evidencePaths": [
+        "src/main.js; src/world/level.js; src/world/lightmap-assets.js; scripts/lib/inkwave-lightmap-index.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "reclaim-native-texture-bitmaps-after-safe-upload",
+      "accountableRole": "world",
+      "status": "not-adopted",
+      "reasons": [
+        "Closing sources without tested offline context restoration violates lazy reupload/quality lifecycle. Current retained sources intentionally support reconstruction; safe resource policy not established; no immediate close implemented."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "touch-release-all-noop-button-dispatch-retains-pressed-css",
+      "accountableRole": "network",
+      "status": "already-effective",
+      "reasons": [
+        "Node22:40 server,31 minified queue+compatibility,7 minified touch,182 respawn/start regressions; normal minified build + migration/quick checks. No real-device/deployed performance claims."
+      ],
+      "evidencePaths": [
+        "patches/reliability/mobile-adapter.mjs",
+        "patches/reliability/tests/touch-map-takeover.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-rainmaker-presentation-skip-unchanged-checkpoint-snapshot-copy",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/ranked/world.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "headgear-qa-six-shards-rebuild-identical-site",
+      "accountableRole": "build_qa",
+      "status": "not-adopted",
+      "reasons": [
+        "not adopted: measured large archive and six-consumer transfer; preserve parallel isolation"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "headgear-six-way-fetch-depth-zero-unneeded-history",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "c67a523"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "screenfx-hoist-idle-decay-key-list",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "relay-membership-unchanged-attachment-reserialization",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "Node22:40 server,31 minified queue+compatibility,7 minified touch,182 respawn/start regressions; normal minified build + migration/quick checks. No real-device/deployed performance claims."
+      ],
+      "evidencePaths": [
+        "server/src/index.js",
+        "server/tests/queue-network.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "special-ribbon-sample-array-churn-and-linear-shift",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/special-vfx-kit.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "catalogue-loadout-dedupe-synchronous-storage-reads-per-tick",
+      "accountableRole": "root",
+      "status": "not-adopted",
+      "reasons": [
+        "Rejected under ticket own no-intervening-write precondition. Public wrapped update and emitter callbacks can synchronously mutate same-page storage; before/after restore must observe current choices. Keep freshness; no fixed claim."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "catalog-emission-use-single-volley-map-lookup",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "source-locomotion-profile-hoist-hair-child-rest-inverse",
+      "accountableRole": "motion",
+      "status": "already-effective",
+      "reasons": [
+        "Production composition already resolves bank._hairMeta once; first child and restDir are reused outside all sample loops."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/adapter.mjs:244"
+      ],
+      "commits": [
+        "base main"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "legacy-minimap-adaptive-raster-resolution-for-mobile",
+      "accountableRole": "world",
+      "status": "not-adopted",
+      "reasons": [
+        "Changes raster resolution and fine ink/terrain visibility. Rejected under preserve appearance constraint; lossless normal/ID/zero-array removal implemented instead."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "release-cargo-procedural-template-cache-on-stage-exit",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "worldqueue tests overlapping owners +registrationrollback +glyph geometrywrapper disposal; existing PropKit7tests pass"
+      ],
+      "evidencePaths": [
+        "props-core.js; stages/cargo/props.js; prop-packs.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "news-try-it-detached-ink-wipe-raf-continues",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-minimap-reuse-objective-projection-scratch",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/ranked/ui.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "validate-four-executed-test-path-trigger-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "c67a523"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "explosher-glitter-three-test-pr-path-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "d24c7ff"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "hud-map-fit-eliminate-per-frame-closure-and-two-arrays",
+      "accountableRole": "root",
+      "status": "already-effective",
+      "reasons": [
+        "Final runtime-frame-scratch adapter already emits scalar map fit."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "relay-binary-frame-predecode-size-guard",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "Node22 actual composed runtime; server decoder spy/identity authorization; 113 weapon+special tests; no deployed/device performance claims"
+      ],
+      "evidencePaths": [
+        "server/src/index.js",
+        "server/tests/queue-network.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "full-charger-pierce-reuse-per-shot-target-base-vector",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "native-leg-ik-share-pelvis-yaw-sincos",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "439542c"
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/character.js"
+      ],
+      "commits": [
+        "439542c"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "inkjet-admission-and-special-round-duplicate-projectile-scans",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "mural-atlas-switch-avoid-eight-mib-canvas-readback",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "desktop24stagechanges0pixelmismatch; median10.10to4.85ms; guarded same loadedfontset redraw; changedfontset originalreadbackfallback"
+      ],
+      "evidencePaths": [
+        "src/world/murals.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "overlap-legacy-ao-metadata-fetch-with-propkit-build",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "actual worldqueue test verifies metadata beforeCPUprops andPNGafterexacthash; buildinventory JSON+PNGpairs discovered selectedtree; helperincluded buildidentity"
+      ],
+      "evidencePaths": [
+        "src/main.js; src/world/level.js; src/world/lightmap-assets.js; scripts/lib/inkwave-lightmap-index.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "index-verified-pcm-reuse-candidates-during-sample-import",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Transaction-local ordered PCM index preserves small-page scan, first compatible candidate and brush repair. Independent partial-import/replacement/eviction/cancel tests."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "menu-pointer-hover-skip-unchanged-css-vars",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Final custom-property string compare; current CSS values remain authoritative."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "menu-pointer-hover-invalidate-stale-layout-rect",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Shared per-menu layout epoch, ancestor-motion and font/viewport/root changes; disposal removes listeners and observers."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "tower-cache-recovery-checkpoint-route-coordinates",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "native-stage5-three-executed-test-pr-filter-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "d24c7ff"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "audio-v11-two-executed-test-pr-filter-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "d24c7ff"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "relay-member-id-collision-overwrites-host-socket",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "Node22 actual composed runtime; server decoder spy/identity authorization; 113 weapon+special tests; no deployed/device performance claims"
+      ],
+      "evidencePaths": [
+        "server/src/index.js",
+        "server/tests/queue-network.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "player-aim-assist-prune-outside-max-cone-before-trigonometry",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "big-bubbler-offscreen-shell-frustum-culling",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/kit-big-bubbler.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "arc-preview-skip-invisible-line-distance-tail",
+      "accountableRole": "root",
+      "status": "already-effective",
+      "reasons": [
+        "Final arc distance loop already bounded by live point count n."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "splatling-round-wrapper-avoid-rest-array-and-closure",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "tentacle-ringparams-two-pass-double-buffer",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "439542c"
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/character-hair.js"
+      ],
+      "commits": [
+        "439542c"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "face-ao-mouth-cavity-reuse-scratch",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "439542c"
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/character-face.js"
+      ],
+      "commits": [
+        "439542c"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "skip-unchanged-mixer-bus-gain-schedules-on-volume-settings",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "legacy-nav-batch-27-clearance-broadphase-probes",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "world-queue-optimizations: actual nodes/edges/path/tie parity; authored maps; union prune300 extra synthetic graphs; original27 clear probes retained"
+      ],
+      "evidencePaths": [
+        "src/game/nav.js; src/world/level.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "legacy-nav-union-find-avoid-transient-reverse-adjacency",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "world-queue-optimizations: actual nodes/edges/path/tie parity; authored maps; union prune300 extra synthetic graphs; original27 clear probes retained"
+      ],
+      "evidencePaths": [
+        "src/game/nav.js; src/world/level.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "hud-locked-minimap-cursor-skip-unchanged-transform-and-snap-toggle",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "WeakMap stores authored and actual CSSOM transform serialization; current class and actual style still detect external edits."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-rainmaker-reuse-carrier-lookup-within-rule-update",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "squid-heading-swim-entry-qa-miss-shared-actor-fixture-path",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "d24c7ff"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "boss-charge-share-yaw-sincos-across-body-hit-tests",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "network-boss-crablet-sample-row-reallocation",
+      "accountableRole": "network",
+      "status": "already-effective",
+      "reasons": [
+        "Node22 actual composed runtime; server decoder spy/identity authorization; 113 weapon+special tests; no deployed/device performance claims"
+      ],
+      "evidencePaths": [
+        "patches/reliability/queue-network-adapter.mjs",
+        "patches/reliability/tests/queue-network.test.mjs",
+        "patches/network-replication/outbound-prefix.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "fidelity-ghost-reuse-validated-packet-shape",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "Node22 actual composed runtime; server decoder spy/identity authorization; 113 weapon+special tests; no deployed/device performance claims"
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/weapons-fidelity.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "fidelity-roller-fallback-compute-speed-once",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "character-lod-hoist-material-attribute-pair-check",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "world-queue-optimizations actual material split attributes exact, exactly1finalindex; existing main everycheck alreadyhoisted; leftover split loop removed"
+      ],
+      "evidencePaths": [
+        "src/game/character-lod.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "native-sprinkler-projectile-candidate-vector-churn",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "legacy-minimap-derive-surface-normals-from-block-id",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "world-queue-optimizations: generated base/ink pixel buffers exact across5legacy layouts/day-dusk/both sides; guarded Int32 fallback; native direct-cell selection"
+      ],
+      "evidencePaths": [
+        "src/game/minimap.js; native-minimap.mjs; runtime-frame-scratch-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "native-minimap-drop-always-zero-bilinear-neighbor-arrays",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "world-queue-optimizations: generated base/ink pixel buffers exact across5legacy layouts/day-dusk/both sides; guarded Int32 fallback; native direct-cell selection"
+      ],
+      "evidencePaths": [
+        "src/game/minimap.js; native-minimap.mjs; runtime-frame-scratch-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "avoid-full-audio-event-reindex-on-partial-or-failed-import",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Staged changed-event index reuses untouched arrays and publishes only current successful generation; independent randomized imports."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "tower-skip-unchanged-rule-path-position-interpolation",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "roller-source-pin-ci-misses-direct-input-triggers",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "d24c7ff"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "fx-roller-flick-reuse-angle-sincos",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/network-replication/adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "network-solo-room-zero-recipient-tick-serialization",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "Node22 actual composed runtime; server decoder spy/identity authorization; 113 weapon+special tests; no deployed/device performance claims"
+      ],
+      "evidencePaths": [
+        "patches/reliability/queue-network-adapter.mjs",
+        "patches/reliability/tests/queue-network.test.mjs",
+        "patches/network-replication/outbound-prefix.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "source-sweep-ring-angle-trig-reuse",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "439542c"
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/character-geo.js"
+      ],
+      "commits": [
+        "439542c"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "all-specials-unconditional-projectile-fullscan-without-relevant-rounds",
+      "accountableRole": "combat",
+      "status": "not-adopted",
+      "reasons": [
+        "Relevant fields are publicly mutable after birth. all-specials.test.mjs:656 sets both fields on a live round; zero-count fast path cannot observe later writes without property/API changes. Keep scan."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "paint-atlas-adaptive-active-quad-buffer-capacity",
+      "accountableRole": "world",
+      "status": "not-adopted",
+      "reasons": [
+        "Rejected 1024 flush threshold: actual PaintSystem/Chromium154 deterministic GPU comparison changes wetness pixels above1024 due drying before finalbatch; more render/mipmap work. 6000 capacity and original flush boundary preserved. Lazy growth would temporarily retain old+new attributes during busyframe; no lowmemory acceptance established. See paint-capacity-desktop-profile.json."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "legacy-face-hidden-cache-spatial-cell-candidates",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "actual authored allfaces/blocks exact, hashqueries566to329; perface bounded16cache; canonical Levelguard customfallback"
+      ],
+      "evidencePaths": [
+        "src/world/level.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "settings-slider-multipointer-duplicate-handlers-and-drag-cancel",
+      "accountableRole": "root",
+      "status": "already-effective",
+      "reasons": [
+        "Existing final settings-ui-adapter already has one owner with lostcapture/blur/destroy cleanup; actual composed regression retained."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "reclaim-paused-stream-after-suspended-audio-clock",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Audio-clock retirement listener/timer parks during suspension and rechecks resume/closed contexts; music-suspended-retirement tests."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "bomb-arc-low-ink-reuse-gray-color",
+      "accountableRole": "root",
+      "status": "already-effective",
+      "reasons": [
+        "Final composed source already uses this._arcLowInkColor; no duplicate rewrite."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "catalog-visual-cache-frozen-draw-radius-per-fixed-step",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "catalog-visual-skip-mock-bucket-object-on-nonbucket-shot",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-minimap-power-carrier-index-actors",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "character-asset-qa-production-input-pr-trigger-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "538cacc"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "screenfx-lens-splat-scalar-xy-and-shared-arm-trig",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Scalar XY with exact RNG and operation order;1200 actual-method scenarios."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "slosher-drop-scale-remove-per-collision-finite-array",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "shooter-nearest-cycle-fuse-source-validation-and-slot-match",
+      "accountableRole": "combat",
+      "status": "not-adopted",
+      "reasons": [
+        "Rejected naive fusion: invalid source reads runner getter 1 time vs baseline 0. Small per-shot benefit does not justify a trusted-state API. nearest-review.{mjs,log}."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "relay-directed-hit-forward-send-failure-missing-nack",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "production composition + bounded/socket regression tests; no device or deployed Worker measurement"
+      ],
+      "evidencePaths": [
+        "server/src/index.js",
+        "server/tests/queue-network.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "skip-noop-local-special-loop-handle-set-per-tick",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Local static .25 option set omitted, remote and localness transitions preserved; actual kit audio120tick regression."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "kit-network-bubbler-replay-enum-and-roster-array-churn",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "run-foot-preparation-share-kernel-between-feet",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "659601b"
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/motion/run-foot-path.js"
+      ],
+      "commits": [
+        "659601b"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "legacy-level-pack-signed-face-flags-vertex-attribute",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "world-queue-optimizations fullgeometry exact all4faceData; noninteger/outofrange/NaNmural Float32fallback; signed Int8 nonnormalized saves466578logicalbytes"
+      ],
+      "evidencePaths": [
+        "src/world/level.js; geometry-build-storage-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "environment-sea-polar-mesh-angle-reuse-and-constant-normal-packing",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "world-queue-optimizations: seeded145placement/color ownership, max worldposition delta2.98214e-5; sea exact positions/normals/index; normalized water boundaries exact"
+      ],
+      "evidencePaths": [
+        "src/world/environment.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "menus-handlekey-hoist-navigation-lookup-literals",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Static module tables with live Shift+Tab and preserved prototype-key behavior; actual handler event traces."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-rainmaker-wall-blast-reuse-dedup-set-scratch",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "weapon-shared-review-crowd-duplicate-immutable-builds",
+      "accountableRole": "build_qa",
+      "status": "not-adopted",
+      "reasons": [
+        "not adopted: measured archive/parallelism cost; original workflow retained"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "dynamo-handle-duplicate-evidence-artifact-uploads",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "538cacc"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "showcase-lobby-fit-reuse-rounded-key-without-per-frame-string",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "relay-create-compat-collision-skips-room-code-retry",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "production composition + bounded/socket regression tests; no device or deployed Worker measurement"
+      ],
+      "evidencePaths": [
+        "server/src/index.js",
+        "server/tests/queue-network.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "roller-contact-reuse-hit-geometry-and-remove-point-literals",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "angular-bias-quantile-reuse-exponent-for-unchanged-bias",
+      "accountableRole": "root",
+      "status": "implemented",
+      "reasons": [
+        "Two-entry bias cache preserves Object.is scalar results and alternating yaw/pitch; angular-quantile-cache-parity and angular-chromium-scalar evidence."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "special-presentation-world-object-linear-liveness-check",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/special-presentation.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "source-motion-bound-part-concurrency-and-eliminate-compressed-double-buffer",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "659601b"
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/motion/source-bank.js"
+      ],
+      "commits": [
+        "659601b"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "source-motion-evict-idle-decoded-variant-banks",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "Weak successful references retain active-bank identity without manual leases; in-flight promise coalescing; no-WeakRef retains old bounded cache."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/motion/source-bank.js"
+      ],
+      "commits": [
+        "659601b"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "body-balance-hoist-leg-pair-index-lookup",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "659601b"
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/motion/body-balance.js"
+      ],
+      "commits": [
+        "659601b"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "guard-remote-weapon-kitkey-before-audio-preload",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/runtime.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "lobby-status-team-pips-avoid-repeated-roster-filter",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-bot-reuse-post-goal-frame-actor-row",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "relay-security-session-mock-fixture-trigger-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "538cacc"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "historical-material-frame-pr-rebuilds-only-pinned-commits",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "538cacc"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "relay-room-join-leave-churn-unmetered-lobby-fanout",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "production composition + bounded/socket regression tests; no device or deployed Worker measurement"
+      ],
+      "evidencePaths": [
+        "server/src/index.js",
+        "server/tests/queue-network.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "sprinkler-owner-detached-droplet-pool-and-impact-vector",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Complete owner records/vectors pooled <=maxDrops; ghost records remain fresh. Optional impact-point scratch intentionally omitted: clone preserves paint callback ownership safety."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/kit-sprinkler.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "blaster-flight-paint-reuse-immutable-source-spec-per-weapon",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "retarget-ground-hoist-speed-only-clearance-and-walk-ease",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "659601b"
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/motion/retarget.js"
+      ],
+      "commits": [
+        "659601b"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "native-source-mtl-download-overlap-with-obj",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "source-worker-overlap5tests: tree-driven MTL starts withOBJpending; failures abortsiblings; conversion onlycompleteinputs"
+      ],
+      "evidencePaths": [
+        "native-stages/runtime/source-worker.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "defer-stage-card-image-predecode-until-picker",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Remove main menu all-stage predecode. Existing setup and online picker demand preload kept, with native image fallback."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "prioritize-loop-admission-before-evicting-local-audio",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/audio-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "menus-dispose-missing-whatsnew-owned-raf-timer-teardown",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "object-presentation-qa-scoped-pinned-history-fetch",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "538cacc"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "crowd-integration-three-duplicate-candidate-builds",
+      "accountableRole": "build_qa",
+      "status": "not-adopted",
+      "reasons": [
+        "not adopted: measured archive/parallelism cost; original workflow retained"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-pose-nearlanding-lazy-allies-iterator",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "catalog-splash-reuse-nearest-slot-between-distance-and-radius",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "agent3-roller-body-overlap-avoid-finite-triple-array",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "network-boss-hit-sendto-refusal-silent-damage-loss",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "production composition + bounded/socket regression tests; no device or deployed Worker measurement"
+      ],
+      "evidencePaths": [
+        "patches/reliability/queue-network-adapter.mjs",
+        "patches/reliability/tests/queue-network.test.mjs",
+        "patches/network-replication/outbound-prefix.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "network-snapshot-fifo-splice-discard-array-allocation",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "production composition + bounded/socket regression tests; no device or deployed Worker measurement"
+      ],
+      "evidencePaths": [
+        "patches/reliability/queue-network-adapter.mjs",
+        "patches/reliability/tests/queue-network.test.mjs",
+        "patches/network-replication/outbound-prefix.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ink-vac-vortex-shader-envelope-frustum-culling",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/special-motion.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "crab-splash-instanced-batch-dynamic-frustum-bound",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/crab-tank-splash-visual.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "source-controller-reuse-normalized-clip-phase",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "659601b"
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/motion/source-controller.js"
+      ],
+      "commits": [
+        "659601b"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "gait-targets-precompute-foot-side-classification",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "659601b"
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/motion/gait-targets.js"
+      ],
+      "commits": [
+        "659601b"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "skip-throttled-real-s3-ensure-queue-during-backoff",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/real-s3-loader.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "legacy-nav-build-drop-unused-filter-and-cache-edge-distances",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "world-queue-optimizations: actual nodes/edges/path/tie parity; authored maps; union prune300 extra synthetic graphs; original27 clear probes retained"
+      ],
+      "evidencePaths": [
+        "src/game/nav.js; src/world/level.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "decor-preserve-indexed-geometry-before-merge",
+      "accountableRole": "world",
+      "status": "already-effective",
+      "reasons": [
+        "runtime-frame-scratch-adapter decor merge uses sharing BufferGeometry wrappers and sequential typed index only for nonindexed inputs; queue-character-world test verifies expanded attributes exactly and vertex savings"
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "environment-instance-far-scenery-containers",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "world-queue-optimizations: seeded145placement/color ownership, max worldposition delta2.98214e-5; sea exact positions/normals/index; normalized water boundaries exact"
+      ],
+      "evidencePaths": [
+        "src/world/environment.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "respawn-countdown-skip-repeated-svg-style-writes",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/respawn-lifecycle.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "small-tank-browser-dpr-matrix-duplicate-production-builds",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "538cacc"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "shadowcache-skip-stable-sun-shadow-signature-string",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "transport-client-utf8-frame-size-scratch",
+      "accountableRole": "network",
+      "status": "already-effective",
+      "reasons": [
+        "production composition + bounded/socket regression tests; no device or deployed Worker measurement"
+      ],
+      "evidencePaths": [
+        "patches/reliability/queue-network-adapter.mjs",
+        "patches/reliability/tests/queue-network.test.mjs",
+        "patches/network-replication/outbound-prefix.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "shot-release-hoist-per-frame-family-membership-list",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "main-knockback-eliminate-contact-finite-arrays",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "lobby-decal-lit-font-ready-avoid-redundant-full-raster",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/lobbySet-tex.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "lobby-graffiti-blue-band-crop-transient-mask-canvas",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "inkwave-public/src/game/lobbySet-tex.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "source-controller-cache-direction-clip-tables",
+      "accountableRole": "motion",
+      "status": "already-effective",
+      "reasons": [
+        "already-effective"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/adapter.mjs"
+      ],
+      "commits": [
+        "base main"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "source-squid-rig-reuse-per-apply-scratch",
+      "accountableRole": "motion",
+      "status": "already-effective",
+      "reasons": [
+        "already-effective"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/squid-motion-binding-adapter.mjs"
+      ],
+      "commits": [
+        "base main"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "tacticooler-projectile-contact-hit-allocation",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "skip-redundant-recorded-sample-lru-mru-touches",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/authorized-samples.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "wiper-rng-observation-pinned-two-commit-shallow-fetch",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "538cacc"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-objective-marker-transition-only-material-writes",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/ranked/world.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": [
+        "combat"
+      ]
+    },
+    {
+      "slug": "decor-pad-barrier-broadphase-skip-far-hypot",
+      "accountableRole": "world",
+      "status": "already-effective",
+      "reasons": [
+        "runtime-frame-scratch-adapter keeps exact hypot for in-range actors and skips safely outside axis-aligned outer glow bound"
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "catalog-paint-only-skip-discarded-defense-probes",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "relay-join-admission-start-roster-atomicity-gap",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "production composition + bounded/socket regression tests; no device or deployed Worker measurement"
+      ],
+      "evidencePaths": [
+        "server/src/index.js",
+        "server/tests/queue-network.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "special-vfx-nonwail-render-rate-stochastic-emission",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/special-vfx.mjs",
+        "patches/splatoon3/runtime/nonwail-vfx-clock.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "legacy-level-elide-unused-faceData-atlas-flag",
+      "accountableRole": "world",
+      "status": "not-adopted",
+      "reasons": [
+        "Proposal premise invalid: imported inkShading.js INK_COLOR line99 reads vFaceData.y to enable all ink. Compact change was caught in cross-review and fully restored in484ad80: legacy/native explicit vec4 [pattern,hasAtlas,su,sv], vertex passes all4; unpainted surfaces retain flag0. Frozen comparisons mix atlas/noatlas faces; Positive actual composed484ad80 Chromium verification: grate37892–45292paint/dry changedpixels over4controls, microtexlib31711; normalparity/stability0difference; QAfixture21569aa."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "legacy-minimap-use-guarded-int16-block-id-raster",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "world-queue-optimizations: generated base/ink pixel buffers exact across5legacy layouts/day-dusk/both sides; guarded Int32 fallback; native direct-cell selection"
+      ],
+      "evidencePaths": [
+        "src/game/minimap.js; native-minimap.mjs; runtime-frame-scratch-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "source-short-targets-skip-when-step-amplitude-full",
+      "accountableRole": "motion",
+      "status": "already-effective",
+      "reasons": [
+        "already-effective"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/adapter.mjs"
+      ],
+      "commits": [
+        "base main"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "bypass-weapon-bank-for-nonweapon-sfx-lookup",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "resolveWeaponSound returns null before weaponBank for nonstring/non-main names; generic registry fallback unchanged."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/engine.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "lobby-ghost-slot-avoid-identical-transform-writes",
+      "accountableRole": "visual_audio",
+      "status": "already-effective",
+      "reasons": [
+        "adaptLobbySlotTransform already gates requested normalized CSS transform and actual applied CSS transform; production composed lobby-slot-transform tests pass."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "lobby-nameplate-collision-reuse-frame-scratch",
+      "accountableRole": "visual_audio",
+      "status": "already-effective",
+      "reasons": [
+        "queue-network-ui-adapter.mjs existing plateVis/platePlaced/platePool with reentrancy guard and finally clearing."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "network-boss-crablet-next-snapshot-map-rebuild-every-render",
+      "accountableRole": "network",
+      "status": "already-effective",
+      "reasons": [
+        "production composition + bounded/socket regression tests; no device or deployed Worker measurement"
+      ],
+      "evidencePaths": [
+        "patches/reliability/queue-network-adapter.mjs",
+        "patches/reliability/tests/queue-network.test.mjs",
+        "patches/network-replication/outbound-prefix.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "validate-pinned-source-fetch-deduplicate-14-requests",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "538cacc"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-rainmaker-visual-only-blast-skip-unused-shelter-probes",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "catalog-fidelity-hoist-hotpath-family-literals",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "all-specials-blast-cause-avoid-full-projectile-spread",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "far-lod-defer-final-index-allocation-until-material-splits",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "world-queue-optimizations actual material split attributes exact, exactly1finalindex; existing main everycheck alreadyhoisted; leftover split loop removed"
+      ],
+      "evidencePaths": [
+        "src/game/character-lod.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "bypass-spatial-los-for-guaranteed-silent-remote-one-shots",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Stable Symbol-keyed runtime resolver defers LOS until actual synchronous source/base/routed playback. Loader ensure/suppressed counters/cold one-shot silence unchanged. Original input position captured separately from final panner override. Loop options eager. Source routing and load recovery differential tests pass."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/audio/engine.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "decor-transfer-static-emblem-and-flag-textures-between-legacy-stages",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "world-queue-optimizations soleowner transfer/errors/finaldispose; queue-character-world expandedgeometry exact with cloth UV retained"
+      ],
+      "evidencePaths": [
+        "src/world/decor.js; src/main.js; start-adapter; runtime-frame-scratch-adapter"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "environment-cloud-bake-scissor-yield-between-render-batches",
+      "accountableRole": "world",
+      "status": "not-adopted",
+      "reasons": [
+        "Actual day-theme Chromium154 SwiftShader isolated submit cold32.4ms/warm1.6,.6,.5ms. No demonstrated isolated >50ms cloud task here; async staging adds memory/lifecycle risk without established target benefit. iPad not measured; not claimed code-fixed."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "pause-online-stats-skip-unchanged-dom-writes",
+      "accountableRole": "visual_audio",
+      "status": "already-effective",
+      "reasons": [
+        "Already-effective terminal production adapter rows553–584 guard clock text/fraction, turf HTML, splats/deaths/special text and fraction against actual DOM values. Force classList.toggle is browser-idempotent. Differential240refresh sequences pass with lower write counts; no duplicate early patch retained."
+      ],
+      "evidencePaths": [
+        "patches/reliability/queue-network-ui-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "screenfx-superjump-flight-share-apex-cosine",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "clam-barrier-precompute-static-fragment-trigonometry",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/ranked/clam-presentation.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "squid-native-qa-production-input-and-executed-test-path-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "538cacc"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "relay-hibernation-autopong-bypasses-application-frame-quota",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "production composition + bounded/socket regression tests; no device or deployed Worker measurement"
+      ],
+      "evidencePaths": [
+        "server/src/index.js",
+        "server/tests/queue-network.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "roller-flick-propagate-sourced-unit-ordinal-instead-of-double-indexof",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "propkit-radial-lathe-tube-reuse-sincos-per-ring",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "world-queue-optimizations: exact allattributes/topology including degenerate/varyingradius; double precision positions/normals retained for decisions"
+      ],
+      "evidencePaths": [
+        "src/world/props-core.js; attribute-staging.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "propkit-core-gb-direct-typed-vertex-staging",
+      "accountableRole": "world",
+      "status": "implemented",
+      "reasons": [
+        "world-queue-optimizations: exact allattributes/topology including degenerate/varyingradius; double precision positions/normals retained for decisions"
+      ],
+      "evidencePaths": [
+        "src/world/props-core.js; attribute-staging.js"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "defer-unselected-stage-descriptor-and-mural-modules",
+      "accountableRole": "world",
+      "status": "partial",
+      "reasons": [
+        "Partial registry/mural/placement/Range-prop graph deferral implemented. Remaining layout deferral rejected because public MAP_LAYOUTS and thumbnail callers require synchronous complete layouts; preserving that contract takes precedence over the proposed asynchronous migration. In the historical prior305 intake, cached lazy m.thumb getter was a supplemental implemented descriptor subpart without its own intake ID. Batch358 introduced a distinct thumbnail intake ID, now counted separately as already effective."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "source-weapon-grip-stop-converged-16-pass-projection",
+      "accountableRole": "motion",
+      "status": "already-effective",
+      "reasons": [
+        "already-effective"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/adapter.mjs"
+      ],
+      "commits": [
+        "base main"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "all-subs-pose-input-scratch-and-nonautobomb-hypot",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "point-sensor-flight-xz-capsule-broadphase",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "charger-rise-transient-load-recovery-and-bounded-timeout",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "538cacc",
+        "6fc3e2e",
+        "53df54d"
+      ],
+      "delegatedFrom": [
+        "visual_audio"
+      ]
+    },
+    {
+      "slug": "ranked-zone-capture-cache-stamp-radius-per-face-run",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "hud-fallback-smear-canvas-eager-backing-despite-screenfx",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "zevant-workers-full-game-build-input-path-filter-gaps",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "538cacc"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "swim-wake-slot-lookup-single-pass-without-find-callbacks",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/visual-audio-queue-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "relay-broadcast-lazy-forward-stamped-envelope",
+      "accountableRole": "network",
+      "status": "implemented",
+      "reasons": [
+        "production composition + bounded/socket regression tests; no device or deployed Worker measurement"
+      ],
+      "evidencePaths": [
+        "server/src/index.js",
+        "server/tests/queue-network.test.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "main-weapon-loop-set-reuse-per-update-payload",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "torpedo-fizzy-detached-splash-per-drop-mesh-to-instanced-batch",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/splatoon3/runtime/torpedo-splashes.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "source-squid-skip-overwritten-base-yaw-quaternion",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "659601b"
+      ],
+      "evidencePaths": [
+        "patches/local-quality/squid-motion-binding-adapter.mjs"
+      ],
+      "commits": [
+        "659601b"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "native-source-bvh-recompute-center-from-aabb",
+      "accountableRole": "motion",
+      "status": "implemented",
+      "reasons": [
+        "Constrained workers only: 12 bytes/triangle less temporary capacity, CPU tradeoff measured; normal fast path retained."
+      ],
+      "evidencePaths": [
+        "patches/native-stages/runtime/source-convert.mjs"
+      ],
+      "commits": [
+        "659601b"
+      ],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "legacy-level-buildgeometry-typed-staging",
+      "accountableRole": "world",
+      "status": "already-effective",
+      "reasons": [
+        "geometry-build-storage-adapter uses chunked Float32 staging, typed index, double JS positions for original CPU winding; geometry-build-storage tests compare all layouts and instrument construction allocations"
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "cleanup-emitter-keyed-oneshot-voice-registries-on-dispose",
+      "accountableRole": "visual_audio",
+      "status": "already-effective",
+      "reasons": [
+        "queue-network-ui-adapter.mjs admits authored currentOwner and substitutes own list/emitterKey closure after audio-adapter; actual composed audio-spatial tests pass."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "hud-s3-tank-resize-callback-args-array-every-draw",
+      "accountableRole": "visual_audio",
+      "status": "implemented",
+      "reasons": [
+        "Role ledger records implementation; see roleEvidence and role source context."
+      ],
+      "evidencePaths": [
+        "patches/local-quality/s3-hud-look-adapter.mjs"
+      ],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "ranked-zone-coverage-wall-only-paint-version-skip-rescan",
+      "accountableRole": "combat",
+      "status": "implemented",
+      "reasons": [
+        "Preserving source optimization; device/browser performance and retail capture remain unmeasured."
+      ],
+      "evidencePaths": [],
+      "commits": [],
+      "delegatedFrom": []
+    },
+    {
+      "slug": "upstream-mirror-review-sparse-checkout-avoid-game-assets",
+      "accountableRole": "build_qa",
+      "status": "implemented",
+      "reasons": [
+        "implemented and locally validated"
+      ],
+      "evidencePaths": [
+        "reports/inkwave-optimization-build-qa-2026-10-23.md"
+      ],
+      "commits": [
+        "538cacc"
+      ],
+      "delegatedFrom": []
+    }
+  ],
+  "scope": "Technical dispositions and role-authored evidence summaries only; excludes private source identifiers, source URLs and attachment bodies."
+}

@@ -3064,13 +3064,14 @@ export class Character {
     B.head.quaternion.copy(_q1);
 
     // ---- legs: IK to the targets, knees toward the feet
+    let pelvisSin,pelvisCos;
     const hyw = P[HIPS + 1];
     for (let i = 0; i < 2; i++) {
       const leg = i === 0 ? this.limbs.legL : this.limbs.legR, sd = i === 0 ? 1 : -1;
       const ft = i === 0 ? this._fL : this._fR, fq = i === 0 ? this._fLq : this._fRq;
       _v1.set(0, 0, 1).applyQuaternion(fq); // foot forward
       const kn = i === 0 ? KNEEL : KNEER;
-      _pN.set(_v1.x * 0.7 + Math.sin(hyw) * 0.3 + 0.1 * sd + P[kn], 0.05 + P[kn + 1], _v1.z * 0.7 + Math.cos(hyw) * 0.3 + P[kn + 2]);
+      _pN.set(_v1.x * 0.7 + (pelvisSin??=Math.sin(hyw)) * 0.3 + 0.1 * sd + P[kn], 0.05 + P[kn + 1], _v1.z * 0.7 + (pelvisCos??=Math.cos(hyw)) * 0.3 + P[kn + 2]);
       _pT.copy(ft);
       this._solveLimb(leg, _pT, _pN, fq, 1, sd > 0 ? 2 : 3);
     }

@@ -107,6 +107,7 @@ export class TowerRule {
     this.stage = stage || {};
     this.metrics = pathMetrics(this.stage);
     this.checkpointData = [checkpoints(this.stage, 0), checkpoints(this.stage, 1)];
+    this._checkpointCoordinates = this.checkpointData.map((list,team)=>list.map(checkpoint=>routeCoordinate(team,checkpoint.progress,this.metrics)));
     this.checkpointCountBudgets = this.checkpointData.map(list => Math.min(100,
       list.reduce((sum, checkpoint) => sum + checkpoint.count * COUNT_PER_SECOND, 0)));
     this.reset();
@@ -137,12 +138,13 @@ export class TowerRule {
       overtimeElapsed: 0,
     };
     writePathPosition(this.state.position, metrics, metrics.center);
+    this._forcePathPositionRefresh = true;
     return this.state;
   }
 
   update(dt, frame) {
     dt = Math.max(0, finite(dt));
-    const metrics = this.metrics;
+    const metrics = this.metrics, previousPathDistance = this.state.pathDistance;
     const platform = this.state.position;
     const halfSize = Math.max(0.1, finite(this.stage?.tower?.halfSize, 1.4));
     const riderCounts = this.state.riders;
@@ -196,7 +198,15 @@ export class TowerRule {
 
     this.state.pathDistance = Math.max(metrics.start, Math.min(metrics.end, this.state.pathDistance));
     this.state.progress = this.state.pathDistance / metrics.total;
-    writePathPosition(this.state.position, metrics, this.state.pathDistance);
+    if (this._forcePathPositionRefresh || this.state.pathDistance !== previousPathDistance
+      || !Object.is(this._pathPositionDistance,this.state.pathDistance) || this._pathPositionMetrics !== metrics
+      || this._pathPosition !== this.state.position || !Object.is(this._pathPositionX,this.state.position[0])
+      || !Object.is(this._pathPositionY,this.state.position[1]) || !Object.is(this._pathPositionZ,this.state.position[2])) {
+      writePathPosition(this.state.position, metrics, this.state.pathDistance);
+      this._forcePathPositionRefresh = false;
+      this._pathPositionDistance=this.state.pathDistance;this._pathPositionMetrics=metrics;this._pathPosition=this.state.position;
+      this._pathPositionX=this.state.position[0];this._pathPositionY=this.state.position[1];this._pathPositionZ=this.state.position[2];
+    }
     this._recoverUnfinishedCheckpoints(dt, movedBy, metrics);
     this._updateCounts(metrics);
     this._awardPassiveSpecial(dt);
@@ -318,7 +328,7 @@ export class TowerRule {
       const list = this.checkpointData[team];
       for (let index = 0; index < list.length; index++) {
         if (this.state.checkpointCleared[team][index] || this.state.checkpointProgress[team][index] <= EPSILON) continue;
-        const marker = routeCoordinate(team, list[index].progress, metrics);
+        const marker = this._checkpointCoordinates[team][index];
         const atMarker = Math.abs(this.state.pathDistance - marker) <= 1e-5;
         if (atMarker) {
           this.state.checkpointLossSeconds[team][index] = 0;
@@ -421,6 +431,7 @@ export class TowerRule {
   restore(state) {
     this._countInputsDirty = true; this._countMemo = null;
     this.state = clone(state);
+    this._forcePathPositionRefresh = true;
     return this.state;
   }
 

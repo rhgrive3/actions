@@ -1,0 +1,20 @@
+{
+  "network": {
+    "uniquePatchFiles": 131,
+    "extraFiles": 0,
+    "earlyFullRuns": 3,
+    "oldLaterRuns": 131,
+    "newLaterRuns": 128,
+    "oldFullFileRuns": 134,
+    "newFullFileRuns": 131
+  },
+  "quality": {
+    "uniquePatchFiles": 234,
+    "extraFiles": 1,
+    "earlyFullRuns": 7,
+    "oldLaterRuns": 235,
+    "newLaterRuns": 228,
+    "oldFullFileRuns": 242,
+    "newFullFileRuns": 235
+  }
+}

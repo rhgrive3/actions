@@ -4,6 +4,25 @@ import { nativeStageBuild } from './build-config.mjs';
 import {loadBrowserSource} from './source-data.mjs';
 import {sourceBytes} from './source-cache.mjs';
 const hex=b=>Array.from(new Uint8Array(b),v=>v.toString(16).padStart(2,'0')).join('');
+// Metadata belongs to the texture, not a persistent stage cache. Only unchanged
+// colour/cutout jobs may borrow from the currently displayed profile.
+const TEXTURE_INPUTS = new WeakMap();
+const TEXTURE_STATE = ['colorSpace','wrapS','wrapT','anisotropy','minFilter','magFilter','generateMipmaps','flipY','premultiplyAlpha'];
+function inferredInputs(job) {
+ return (job.materials||[]).map(material=>({material,alpha:job.role==='albedo'?material.hasAlpha:undefined,channel:job.role==='opacity'?material.channels?.opacity:undefined}));
+}
+function canBorrowTexture(texture,data,file,job,renderer) {
+ const input=texture&&TEXTURE_INPUTS.get(texture);
+ if(!input||!['albedo','opacity'].includes(job.role)||input.data!==data||input.file!==file||input.role!==job.role||input.limit!==job.roleLimit||input.integrity!==JSON.stringify(data.integrity?.[file]))return false;
+ if(texture.image!==input.image||texture.image?.width!==input.width||texture.image?.height!==input.height)return false;
+ if(TEXTURE_STATE.some(key=>texture[key]!==input.state[key])||texture.anisotropy!==Math.min(4,renderer.capabilities.getMaxAnisotropy()))return false;
+ const inferred=inferredInputs(job);
+ return inferred.length===input.inferred.length&&inferred.every((value,i)=>value.material===input.inferred[i].material&&value.alpha===input.inferred[i].alpha&&value.channel===input.inferred[i].channel);
+}
+function rememberTextureInput(texture,data,file,job) {
+ TEXTURE_INPUTS.set(texture,{data,file,role:job.role,limit:job.roleLimit,integrity:JSON.stringify(data.integrity?.[file]),image:texture.image,width:texture.image?.width,height:texture.image?.height,state:Object.fromEntries(TEXTURE_STATE.map(key=>[key,texture[key]])),inferred:inferredInputs(job)});
+}
+
 async function verified(id,file,integrity,signal){
  if(nativeStageBuild.mode==='browser-direct')return sourceBytes(id,nativeStageURL(id,file),integrity[file],signal);
  const response=await fetch(nativeStageURL(id,file),{signal});if(!response.ok)throw Error(`Native asset ${response.status}: ${id}/${file}`);
@@ -25,10 +44,11 @@ export async function loadNativeData(id,signal,options={}){
  if(manifest.schema!==1||manifest.id!==id||data.triangles.length/9!==manifest.geometry.collisionTriangles||data.triangleFace.length!==manifest.geometry.collisionTriangles||data.mask.length!==manifest.gridCells)throw Error('Unsupported native asset schema: '+id);
  return data;
 }
-export async function loadNativeTextures(id,data,renderer,quality,signal,textureLimit){
+export async function loadNativeTextures(id,data,renderer,quality,signal,textureLimit,previousTextures=null){
  const cap=textureLimit && typeof textureLimit==='object' ? textureLimit.maxDimension : textureLimit;
  const roleCaps=textureLimit && typeof textureLimit==='object' ? textureLimit.perRole : null;
  const jobs=new Map(),textures=new Map(),limit=Math.min(cap||Infinity,quality==='low'?512:quality==='high'?4096:1024);
+ textures._nativeBorrowed=new Set();
  // A source export can contain hundreds of textures for inactive/unrendered objects.
  // nativeDisplay skips those objects; decoding their maps on a touch GPU cannot improve the image.
  // Keep old callers without an object registry compatible.
@@ -55,12 +75,27 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
    const job=jobs.get(file);if(job)(job.materials||(job.materials=[])).push(m);
   }
  }
+ // Only the authenticated browser source inventory can identify byte aliases.
+ // Role, cap and declared normal encoding retain independent decode semantics.
+ const rows=[],identical=new Map();
+ for(const [file,job] of jobs){
+  job.aliases=[file];
+  const pin=data.integrity?.[file];
+  const key=data.manifest.sourceMode==='browser-direct'&&!pin?.sha256&&/^[a-f0-9]{40}$/.test(pin?.gitSha1)&&Number.isSafeInteger(pin.bytes)&&pin.bytes>=0
+   ?JSON.stringify([pin.gitSha1,pin.bytes,job.role,job.roleLimit,job.encoding??null]):null;
+  const shared=key&&identical.get(key);
+  if(shared){shared.aliases.push(file);for(const m of job.materials||[])if(!shared.materials.includes(m))shared.materials.push(m);}
+  else{rows.push([file,job]);if(key)identical.set(key,job);}
+ }
  let failure=null;
  const checkAbort=()=>{if(failure)throw failure;if(signal?.aborted)throw new DOMException('Aborted','AbortError');};
- let next=0;const rows=[...jobs];
+ let next=0;
  const worker=async()=>{try{while(next<rows.length){
   checkAbort();
-  const [file,job]=rows[next++],{role}=job;let {encoding}=job;const buffer=await verified(id,file,data.integrity,signal);checkAbort();const blob=new Blob([buffer],{type:'image/png'});
+  const [file,job]=rows[next++],{role}=job;
+  const borrowed=previousTextures?.get(file);
+  if(canBorrowTexture(borrowed,data,file,job,renderer)){textures._nativeBorrowed.add(borrowed);for(const alias of job.aliases)textures.set(alias,borrowed);continue;}
+  let {encoding}=job;const buffer=await verified(id,file,data.integrity,signal);checkAbort();const blob=new Blob([buffer],{type:'image/png'});
   let bitmap,texture,transferred=false;
   try{
   bitmap=await createImageBitmap(blob,{imageOrientation:'flipY'});checkAbort();const ratio=Math.min(1,job.roleLimit/Math.max(bitmap.width,bitmap.height));
@@ -76,7 +111,7 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
    const matched=job.materials;
    if(role==='albedo'){
     let alpha=false;const pngType=new Uint8Array(buffer)[25];if(pngType===6||pngType===4)scanPixels(p=>{for(let i=3;i<p.length;i+=4)if(p[i]<250){alpha=true;return false;}});
-    for(const m of matched)if(m.albedo===file)m.hasAlpha=alpha;
+    for(const m of matched)if(job.aliases.includes(m.albedo))m.hasAlpha=alpha;
    }
    // Each role only consults a subset of channels. Preserve the original
    // accumulation order and exact channel threshold tests.
@@ -108,11 +143,11 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
    // These textures are never re-uploaded: quality changes build new ones.
    texture.onUpdate=t=>{t.onUpdate=null;t.image?.close?.();};
   }
-  texture.colorSpace=['albedo','emissive'].includes(role)?THREE.SRGBColorSpace:THREE.NoColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;textures.set(file,texture);transferred=true;
+  texture.colorSpace=['albedo','emissive'].includes(role)?THREE.SRGBColorSpace:THREE.NoColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;rememberTextureInput(texture,data,file,job);for(const alias of job.aliases)textures.set(alias,texture);transferred=true;
   }finally{if(!transferred){bitmap?.close();texture?.dispose();}}
  }}catch(error){if(!failure)failure=error;throw error;}};
  // Bound concurrent full-resolution decode/upload peaks; the same images and filters are used.
   const results=await Promise.allSettled(Array.from({length:Math.min(rows.length,textureLimit?2:quality==='high'?2:3)},worker));const failed=results.find(r=>r.status==='rejected');
- if(failed||signal?.aborted){for(const t of textures.values()){t.image?.close?.();t.dispose();}throw failure||failed?.reason||new DOMException('Aborted','AbortError');}
+ if(failed||signal?.aborted){for(const t of new Set(textures.values()))if(!textures._nativeBorrowed.has(t)){t.image?.close?.();t.dispose();}throw failure||failed?.reason||new DOMException('Aborted','AbortError');}
  return textures;
 }

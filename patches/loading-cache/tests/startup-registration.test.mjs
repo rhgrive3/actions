@@ -12,7 +12,7 @@ assert.equal(bootstraps?.length, 1, 'one actual bootstrap import in source or em
 const [bootstrap] = bootstraps;
 assert.equal(source.split(bootstrap).length, 2);
 
-async function fixture(register, { screen = 'title', idleCallback = true } = {}) {
+async function fixture(register, { screen = 'title', idleCallback = true, globals = {}, serviceWorker = {} } = {}) {
   const events = new Map(), idle = [], timers = new Map(), observers = [];
   const ui = { dataset: { screen } };
   const elements = {
@@ -28,7 +28,7 @@ async function fixture(register, { screen = 'title', idleCallback = true } = {})
   const context = vm.createContext({
     URL, URLSearchParams, WeakSet, Promise, MutationObserver,
     location: { href: 'https://fixture.invalid/actions/?map=cargo', search: '?map=cargo' },
-    navigator: { onLine: true, serviceWorker: { register, ready: Promise.resolve({ active: null }) } },
+    navigator: { onLine: true, serviceWorker: { register, ready: Promise.resolve({ active: null }), ...serviceWorker } },
     window: { isSecureContext: true },
     document: { getElementById: id => elements[id], querySelector: () => ui },
     performance: { now: () => 1, mark() {}, getEntriesByName: () => [] },
@@ -37,12 +37,12 @@ async function fixture(register, { screen = 'title', idleCallback = true } = {})
     requestAnimationFrame: callback => queueMicrotask(callback),
     setTimeout(callback) { timers.set(++timerId, callback); return timerId; },
     clearTimeout: id => timers.delete(id),
-    __importBootstrap: async () => {}, console
+    __importBootstrap: async () => {}, console, ...globals
   });
-  await vm.runInContext(`(async () => {${source.replace(bootstrap, 'await __importBootstrap()')}\n})()`, context);
+  await vm.runInContext(`(async () => {${source.replace(bootstrap, 'await __importBootstrap()')}\nglobalThis.__cacheProbe = cacheStatus;\n})()`, context);
   context.window.__inkwaveStartup.engineReady({});
   return {
-    ui, events, idle, timers, report: context.window.__inkwaveStartup.report,
+    ui, events, idle, timers, context, report: context.window.__inkwaveStartup.report,
     async runIdle() { assert.equal(idle.length, 1); await idle.shift()(); },
     async runTimer() {
       assert.equal(timers.size, 1);
@@ -129,4 +129,30 @@ test('timer fallback retries synchronous registration failure on an explicit onl
   f.events.get('online')(); f.events.get('online')();
   await f.runTimer();
   assert.equal(calls, 2); assert.equal(f.timers.size, 0);
+});
+
+function channels(){
+ const list=[];
+ class MessageChannel {constructor(){this.port1={closed:false,close(){this.closed=true;}};this.port2={closed:false,close(){this.closed=true;}};list.push(this);}}
+ return{MessageChannel,list,reply(index,offlineReady=true){list[index].port1.onmessage({data:{type:'INKWAVE_CACHE_STATUS',offlineReady}});}};
+}
+test('warm register and ready share one scan, while later calls recheck storage',async()=>{
+ const c=channels(),worker={postMessage(){}};
+ const f=await fixture(async()=>({active:worker,addEventListener(){}}),{globals:{MessageChannel:c.MessageChannel},serviceWorker:{ready:Promise.resolve({active:worker})}});
+ const run=f.runIdle();await tick();assert.equal(c.list.length,1);c.reply(0);await run;await tick();assert.equal(c.list.length,1);
+ const a=f.context.__cacheProbe(worker),b=f.context.__cacheProbe(worker);assert.equal(a,b);assert.equal(c.list.length,2);c.reply(1,false);await a;assert.equal(f.report.cache.offlineReady,false);
+ assert.ok(c.list.every(x=>x.port1.closed&&x.port2.closed));
+});
+test('activation refreshes an in-flight pre-activation probe; timeout permits recovery',async()=>{
+ const c=channels(),worker={postMessage(){}};
+ const f=await fixture(async()=>registration(),{globals:{MessageChannel:c.MessageChannel}});
+ const first=f.context.__cacheProbe(worker);f.context.__cacheProbe(worker,true);assert.equal(c.list.length,1);
+ c.reply(0,false);await first;assert.equal(c.list.length,2,'queued activation gets a new storage check');c.reply(1,true);assert.equal(f.report.cache.offlineReady,true);
+ const pending=f.context.__cacheProbe(worker);const [id,timeout]=[...f.timers].at(-1);f.timers.delete(id);timeout();assert.equal(await pending,null);
+ const recovered=f.context.__cacheProbe(worker);c.reply(c.list.length-1,true);await recovered;assert.equal(f.report.cache.offlineReady,true);
+});
+test('new worker identity wins over a late old-worker reply',async()=>{
+ const c=channels(),old={postMessage(){}},next={postMessage(){}};
+ const f=await fixture(async()=>registration(),{globals:{MessageChannel:c.MessageChannel}});
+ const a=f.context.__cacheProbe(old),b=f.context.__cacheProbe(next);c.reply(1,true);await b;c.reply(0,false);await a;assert.equal(f.report.cache.offlineReady,true);
 });

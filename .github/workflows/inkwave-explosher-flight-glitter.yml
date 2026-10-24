@@ -2,6 +2,9 @@ name: INKWAVE Explosher flight glitter
 on:
   pull_request:
     paths:
+      - 'patches/splatoon3/tests/s3-projectile-shapes.test.mjs'
+      - 'scripts/tests/inkwave-projectile-character-reset.test.mjs'
+      - 'patches/splatoon3/tests/projectile-visuals.test.mjs'
       - 'patches/splatoon3/runtime/s3-projectile-shapes.mjs'
       - 'patches/splatoon3/tests/explosher-flight-glitter.test.mjs'
       - 'scripts/check-inkwave-explosher-flight-glitter.mjs'

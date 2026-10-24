@@ -22,7 +22,7 @@ const END_BEFORE = 'this._netEndT = setTimeout(() => { G.netm?.sendEnd(); this.n
 const END_AFTER = [
   'this._netEndT = setTimeout(() => {',
   "      if (!resultsCurrent() || m.state !== 'results' || !net.isHost) return;",
-  '      netm.sendEnd(); this.netMatchEnd();',
+  '      if (netm.sendEnd() !== false) this.netMatchEnd();',
   '    }, 12000);',
 ].join('\n');
 
@@ -30,7 +30,7 @@ export function adaptResults(rel, code) {
   if (rel !== 'src/main.js') return code;
   code = replaceOnce(code,
     '  async netMatchEnd() {\n    if (this._netEnding) return;\n    this._netEnding = true;',
-    '  async netMatchEnd() {\n    if (this._netEnding) return;\n    const m = this.match;\n' + OWNERS + '\n    this._netEnding = true;',
+    '  async netMatchEnd() {\n    if (this._netEnding) return;\n    const m = this.match;\n' + OWNERS + '\n    if (!net?.tr || net.state === \'error\') return;\n    this._netEnding = true;',
     'room return owners');
   code = replaceOnce(code,
     "      await this._fade(1, 350);\n      this.hud?.setVisible(false);\n      this.hud?.hideSplatted?.();\n      this.showcase.hide();\n      G.mode = 'menu';\n      G.net?.endMatch();",

@@ -130,8 +130,7 @@ export function createLevelMaterial(paintTexture, atlasSize, muralTexture = null
       .replace('#include <common>', `#include <common>
 attribute vec2 paintUv;
 attribute vec2 faceUv;
-attribute vec4 faceData;
-attribute vec3 faceFlags;
+${opts.nativeInkOverlay ? 'attribute vec2 nativeFaceSize;\nattribute float nativeWall;' : 'attribute vec4 faceData;\nattribute vec3 faceFlags;'}
 attribute vec3 faceTan;
 attribute vec2 lightUv;
 varying vec2 vLightUv;
@@ -143,7 +142,7 @@ varying vec3 vFaceFlags;
 varying vec3 vWPos;
 varying vec3 vWNorm;`)
       .replace('#include <project_vertex>', `#include <project_vertex>
-vPaintUv = paintUv; vFaceUv = faceUv; vFaceData = faceData; vFaceFlags = faceFlags;
+vPaintUv = paintUv; vFaceUv = faceUv; ${opts.nativeInkOverlay ? 'vFaceData = vec4(0.0, 1.0, nativeFaceSize); vFaceFlags = vec3(nativeWall, 0.0, -1.0);' : 'vFaceData = faceData; vFaceFlags = faceFlags;'}
 vFaceTan = normalize(mat3(modelMatrix) * faceTan);
 vLightUv = lightUv;
 vWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
@@ -749,6 +748,6 @@ ${INK_EMISSIVE}`)
     mat.side = THREE.DoubleSide;
     mat.defines = { ...(mat.defines || {}), GRATE: 1 };
   }
-  mat.customProgramCacheKey = () => 'inkwave-level-v6' + (opts.grate ? '-grate' : '');
+  mat.customProgramCacheKey = () => 'inkwave-level-v6' + (opts.grate ? '-grate' : '') + (opts.nativeInkOverlay ? '-native-ink' : '');
   return mat;
 }

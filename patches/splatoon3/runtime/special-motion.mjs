@@ -439,7 +439,10 @@ function createBubblerHardware(color){
   g.userData.shell=shell;g.userData.emitter=emitter;return g;
 }
 function createVacVortex(color,length,near,far){
-  const geo=geometry('vac-vortex',()=>{const d=new THREE.CylinderGeometry(1,1,1,32,12,true);d.translate(0,.5,0);d.userData.specialShared=true;return d;});
+  const geo=geometry('vac-vortex',()=>{const d=new THREE.CylinderGeometry(1,1,1,32,12,true);d.translate(0,.5,0);
+    // GPU deformation envelope: extent <= 15 and radius <= 4.3 (kit-ink-vac).
+    d.boundingSphere=new THREE.Sphere(new THREE.Vector3(0,7.5,0),Math.hypot(7.5,4.3)+.01);
+    d.userData.specialShared=true;return d;});
   const mat=new THREE.ShaderMaterial({uniforms:{color:{value:new THREE.Color(color)},age:{value:0},near:{value:near},far:{value:far},extent:{value:length}},
     vertexShader:`uniform float near;uniform float far;uniform float extent;varying vec2 uv0;
       void main(){uv0=uv;vec3 p=position;p.xz*=mix(near,far,p.y);p.y*=extent;gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}`,
@@ -452,7 +455,7 @@ function createVacVortex(color,length,near,far){
       gl_FragColor=vec4(color*(.8+.6*rings+.4*swirl),(.04+.18*swirl+.22*rings+.06*dust)*edge);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>}`,transparent:true,depthWrite:false,side:THREE.DoubleSide});
-  const m=new THREE.Mesh(geo,mat);m.name='special:vac-vortex';m.frustumCulled=false;return m;
+  const m=new THREE.Mesh(geo,mat);m.name='special:vac-vortex';m.frustumCulled=true;return m;
 }
 function createStormCloud(color){
   const g=root('storm-cloud'),geo=geometry('storm-puff',()=>{const d=new THREE.SphereGeometry(1,20,12);d.userData.specialShared=true;return d;});
@@ -666,12 +669,14 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
     for(let side=0;side<2;side++){const limb=side?L:R;
       ch._kidXform(limb.up.parent,m.shoulders[side],m.handQ);m.shoulders[side].add(m.b.copy(limb.up.position).applyQuaternion(m.handQ));}
     for(let j=0;j<20;j++){
+      let changed=false;
       for(let side=0;side<2;side++){
         const limb=side?L:R,socket=side?g.userData.handL:g.userData.handR;
         m.a.copy(m.shoulders[side]);
         m.b.copy(socket).applyQuaternion(g.quaternion).add(g.position).sub(m.a);
-        const d=m.b.length(),radius=side?l:r;if(d>radius)g.position.addScaledVector(m.b,-(d-radius)/d);
+        const d=m.b.length(),radius=side?l:r;if(d>radius){g.position.addScaledVector(m.b,-(d-radius)/d);changed=true;}
       }
+      if(!changed)break;
     }
     for(let side=0;side<2;side++){
       const limb=side?L:R,socket=side?g.userData.handL:g.userData.handR;
@@ -778,11 +783,17 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
         const b=this.bombs[i];if(b.kind!=='storm')continue;const old=b.body,g=createStormDevice(G.teamColors[b.team],THREE);
         old.removeFromParent();old.material.dispose();b.mesh.add(g);b.body=g;
       }return result;};
+    // Native owns the cloud record, RNG, physics, events and audio; only its
+    // optional visual factory bypasses the immediately discarded old meshes.
+    pp._s3StormCloudVisualFactory=function(b){return createStormCloud(G.teamColors[b.team],THREE);};
+    // Compatibility with hosts that install this runtime on unadapted native
+    // projectiles. Composed production clouds already used the factory above.
     pp._spawnCloud=function(...args){const n=this.clouds.length,result=spawn.apply(this,args);for(let i=n;i<this.clouds.length;i++){
-        const c=this.clouds[i],old=c.group,g=createStormCloud(G.teamColors[c.team],THREE),mats=new Set();
-        old.traverse(o=>{if(o.material)mats.add(o.material);});for(const mat of mats)mat.dispose();
-        const children=[...g.children];for(const child of children)old.add(child);for(const child of [...old.children])if(!children.includes(child))old.remove(child);
-      }return result;};
+      const c=this.clouds[i],old=c.group;if(old.userData.s3StormCloudFactorySupported)continue;
+      const g=createStormCloud(G.teamColors[c.team],THREE),mats=new Set();
+      old.traverse(o=>{if(o.material)mats.add(o.material);});for(const mat of mats)mat.dispose();
+      const children=[...g.children];for(const child of children)old.add(child);for(const child of [...old.children])if(!children.includes(child))old.remove(child);
+    }return result;};
     // InstancedMesh owns a GPU matrix buffer beyond its shared geometry. The
     // native cloud owner releases materials; retire the instance buffer once.
     pp._releaseCloud=function(c,...args){const live=c?.group&&!c._released,result=release.call(this,c,...args);

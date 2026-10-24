@@ -5,6 +5,8 @@ on:
     paths: ['.github/workflows/validate-inkwave-audio-v11.yml']
   pull_request:
     paths:
+      - 'patches/splatoon3/tests/real-s3-loader-v7.test.mjs'
+      - 'patches/local-quality/tests/ipad-audio-unlock.test.mjs'
       - 'patches/splatoon3/audio-adapter.mjs'
       - 'inkwave-public/src/audio/music.js'
       - 'inkwave-public/src/audio/streamedTrack.js'

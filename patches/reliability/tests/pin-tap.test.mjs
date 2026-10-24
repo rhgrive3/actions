@@ -20,7 +20,7 @@ const composed = () => adaptQualitySource(REL, adaptReliability(REL, adaptTouchL
 
 class El {
   constructor() { this.children = []; this.listeners = new Map(); this.names = new Set(); this.style = { setProperty() {} };
-    this.classList = { add: (...n) => n.forEach(x => this.names.add(x)), remove: (...n) => n.forEach(x => this.names.delete(x)), toggle: (n, v) => v ? this.names.add(n) : this.names.delete(n) }; }
+    this.classList = { contains: n => this.names.has(n), add: (...n) => n.forEach(x => this.names.add(x)), remove: (...n) => n.forEach(x => this.names.delete(x)), toggle: (n, v) => v ? this.names.add(n) : this.names.delete(n) }; }
   addEventListener(type, fn) { const all = this.listeners.get(type) || []; all.push(fn); this.listeners.set(type, all); }
   dispatch(type, e) { for (const fn of this.listeners.get(type) || []) fn({ type, preventDefault() {}, stopPropagation() {}, ...e }); }
   appendChild(c) { this.children.push(c); return c; } insertBefore(c, before) { const i=this.children.indexOf(before); this.children.splice(i<0?this.children.length:i,0,c); return c; } prepend(c) { this.children.unshift(c); } get offsetWidth() { return 1; }

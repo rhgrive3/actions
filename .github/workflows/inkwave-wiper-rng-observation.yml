@@ -33,11 +33,16 @@ jobs:
         with:
           ref: c0938a3f84768474df91713f7b372f9d7f8fe96a
           path: work/source
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Fetch only the immutable historical reference
+        run: |
+          git -C work/source -c http.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)" fetch --no-tags --depth=1 origin 7581ca9be8cf87d253918b8abb3b8ebe728c2093
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: Verify immutable source and reference Git objects
         run: |
           test "$(git -C work/source rev-parse HEAD)" = c0938a3f84768474df91713f7b372f9d7f8fe96a

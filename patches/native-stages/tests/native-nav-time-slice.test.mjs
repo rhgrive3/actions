@@ -46,3 +46,7 @@ test('default scheduled yield aborts without waiting for a suspended animation f
   assert.equal(scheduled,1);controller.abort();await assert.rejects(pending,{name:'AbortError'});assert.equal(cancelled,1);assert.equal(g.nativeBuildMetrics,undefined);
  }finally{if(savedFrame===undefined)delete globalThis.requestAnimationFrame;else globalThis.requestAnimationFrame=savedFrame;if(savedCancel===undefined)delete globalThis.cancelAnimationFrame;else globalThis.cancelAnimationFrame=savedCancel;}
 });
+
+test('native empty cells share a frozen sentinel and populated cells remain private',()=>{
+ const g=graph(0);g.physics.bodyFits=p=>!(p.x>3&&p.x<5&&p.z>1&&p.z<5);next.buildNativeNav(g);const empty=g.cells.filter(cell=>cell.length===0),occupied=g.cells.filter(cell=>cell.length>0);assert(empty.length>1);assert.equal(new Set(empty).size,1);assert(Object.isFrozen(empty[0]));assert.equal(new Set(occupied).size,occupied.length);assert(occupied.every(cell=>!Object.isFrozen(cell)));assert.throws(()=>empty[0].push(1),TypeError);
+});

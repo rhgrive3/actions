@@ -32,9 +32,12 @@ export function rainmakerDomeBlast(api, at, from, owner, team, radius, nearRadiu
 // The existing native wall rectangle supplies geometry. The shot's actor /
 // paint authority remains the ranked host; only its owning client proposes
 // native object HP, including the guest's visual-only projectile replay.
+const wallBlastSetPool = [];
 export function rainmakerWallBlast(api, at, owner, team, radius, nearRadius, nearDamage, farDamage, impactWall = null) {
   const { G, THREE } = api, walls = [], wallHits = [];
-  const objects = new Set(G.projectiles?._s3SubObjects || []);
+  const objects = wallBlastSetPool.pop() || new Set();
+  try {
+  for (const object of G.projectiles?._s3SubObjects || []) objects.add(object);
   if (impactWall?.subId === 'splashWall') objects.add(impactWall);
   const width = ALL_SUB_SPECS.splashWall.wallWidth, height = ALL_SUB_SPECS.splashWall.wallHeight;
   for (const object of objects) {
@@ -64,6 +67,10 @@ export function rainmakerWallBlast(api, at, owner, team, radius, nearRadius, nea
     G.projectiles?.s3DamageSpecialObjects?.(source, at, radius, damageAt, 'Gachihoko_BombCore');
   }
   return walls;
+  } finally {
+    objects.clear();
+    if (wallBlastSetPool.length < 2) wallBlastSetPool.push(objects);
+  }
 }
 
 export function rainmakerWallsBlockBlast(start, end, walls) {

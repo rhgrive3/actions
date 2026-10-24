@@ -172,8 +172,7 @@ test('Cloudflare Durable Objects WebSocket Hibernation restores room state, host
     const doState = new FakeHibernatingState();
     const room1 = new RoomDurableObject(doState, {});
     assert.equal(room1.hibernationEnabled, true);
-    assert.equal(doState.autoResponse?.request, 'ping');
-    assert.equal(doState.autoResponse?.response, 'pong');
+    assert.equal(doState.autoResponse, undefined, 'heartbeats spend application quota after upgrades too');
 
     room1.compat = compatible;
     const host = new Socket();

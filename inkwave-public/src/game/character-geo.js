@@ -282,11 +282,11 @@ export function sweep(points, opts = {}) {
     const flat = flatFn(t);
     const tw = twistFn ? twistFn(t) : 0, ct = Math.cos(tw), st = Math.sin(tw);
     for (let k = 0; k < radial; k++) {
-      const th = (k / radial) * Math.PI * 2; let c = Math.cos(th), s = Math.sin(th);
+      const th = (k / radial) * Math.PI * 2, c0 = Math.cos(th), s0 = Math.sin(th); let c = c0, s = s0;
       if (section) [c, s] = section(c, s, t);
       const xo = c * r * flat, xb = s * r;
       tmp.copy(center).addScaledVector(o, xo * ct - xb * st).addScaledVector(b, xo * st + xb * ct);
-      pos.push(tmp.x, tmp.y, tmp.z); tt.push(t); cs.push(Math.cos(th)); sn.push(Math.sin(th));
+      pos.push(tmp.x, tmp.y, tmp.z); tt.push(t); cs.push(c0); sn.push(s0);
     }
   };
   const hasStart = opts.capStart !== false, hasEnd = opts.capEnd !== false;
@@ -432,8 +432,19 @@ function interpTable(keys, vals, x) {
 // Builder: concatenates parts with skin weights + per-vertex extras into one skinned geometry.
 // ------------------------------------------------------------------------------------------------
 const _c = new THREE.Color();
+// Construction attributes are never read numerically before build(): round
+// once into their final component type, without growing boxed-number arrays.
+class BuilderAttribute {
+  constructor(Type=Float32Array){this.Type=Type;this.chunks=[];this.current=null;this.offset=0;this.length=0;}
+  push(a,b,c,d){
+    const n=arguments.length;if(!n)return this.length;
+    if(n<=4&&this.current&&this.offset+n<=4096){const out=this.current,i=this.offset;out[i]=a;if(n>1)out[i+1]=b;if(n>2)out[i+2]=c;if(n>3)out[i+3]=d;this.offset+=n;this.length+=n;return this.length;}
+    for(let i=0;i<n;i++){if(!this.current||this.offset===4096){this.current=new this.Type(4096);this.chunks.push(this.current);this.offset=0;}this.current[this.offset++]=arguments[i];this.length++;}return this.length;
+  }
+  array(Type=this.Type){const out=new Type(this.length);for(let i=0;i<this.chunks.length;i++)out.set(this.chunks[i].subarray(0,Math.min(4096,this.length-i*4096)),i*4096);return out;}
+}
 class Builder {
-  constructor() { this.pos = []; this.nrm = []; this.uv = []; this.col = []; this.si = []; this.sw = []; this.ex = []; this.v3 = []; this.idx = []; this.fc = []; this.hasFc = false; }
+  constructor() { this.pos = new BuilderAttribute(); this.nrm = new BuilderAttribute(); this.uv = new BuilderAttribute(); this.col = new BuilderAttribute(); this.si = new BuilderAttribute(Uint16Array); this.sw = new BuilderAttribute(); this.ex = new BuilderAttribute(); this.v3 = null; this.idx = new BuilderAttribute(Uint32Array); this.fc = null; this.hasFc = false; }
   /** o.bone | o.weights(p,i) -> [[name,w],..] ; o.color: hex|Color|fn(p,i)->Color ; o.ex: number|fn ; o.uv: bool|fn(i)->[u,v] ; o.v3: fn(p,i)->[x,y,z] | [x,y,z] */
   add(geo, o = {}) {
     const P = geo.attributes.position, N = geo.attributes.normal, UV = geo.attributes.uv;
@@ -450,8 +461,9 @@ class Builder {
       const c = fixedCol || o.color(p, i);
       this.col.push(c.r, c.g, c.b);
       this.ex.push(typeof o.ex === 'function' ? o.ex(p, i) : (o.ex ?? 0));
-      if (fixedV3) this.v3.push(fixedV3[0], fixedV3[1], fixedV3[2]); else if (o.v3) this.v3.push(...o.v3(p, i)); else this.v3.push(0, 0, 0);
-      if (o.face) { this.fc.push(...o.face(p, i)); this.hasFc = true; } else this.fc.push(0, 0, 0, 1); // aFace (skin: lids, mouth, AO)
+      if(o.v3&&!this.v3){this.v3=new BuilderAttribute();for(let j=0;j<this.pos.length/3-1;j++)this.v3.push(0,0,0);}
+      if (fixedV3) this.v3.push(fixedV3[0], fixedV3[1], fixedV3[2]); else if (o.v3) this.v3.push(...o.v3(p, i)); else if(this.v3)this.v3.push(0, 0, 0);
+      if (o.face) { if(!this.fc){this.fc=new BuilderAttribute();for(let j=0;j<this.pos.length/3-1;j++)this.fc.push(0,0,0,1);}this.fc.push(...o.face(p, i)); this.hasFc = true; } else if(this.fc)this.fc.push(0, 0, 0, 1); // aFace (skin: lids, mouth, AO)
       if (!o.weights) { this.si.push(boneIdx, 0, 0, 0); this.sw.push(1, 0, 0, 0); continue; }
       // top-4 influences without per-vertex filter/sort allocations
       const w = o.weights(p, i);
@@ -473,16 +485,16 @@ class Builder {
   }
   build(extraName = 'aEx', v3Name = null) {
     const g = new THREE.BufferGeometry();
-    if (v3Name) g.setAttribute(v3Name, new THREE.Float32BufferAttribute(this.v3, 3));
-    g.setAttribute('position', new THREE.Float32BufferAttribute(this.pos, 3));
-    g.setAttribute('normal', new THREE.Float32BufferAttribute(this.nrm, 3));
-    g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv, 2));
-    g.setAttribute('color', new THREE.Float32BufferAttribute(this.col, 3));
-    g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(this.si, 4));
-    g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(this.sw, 4));
-    g.setAttribute(extraName, new THREE.Float32BufferAttribute(this.ex, 1));
-    if (this.hasFc) g.setAttribute('aFace', new THREE.Float32BufferAttribute(this.fc, 4));
-    g.setIndex(this.pos.length / 3 > 65535 ? new THREE.Uint32BufferAttribute(this.idx, 1) : new THREE.Uint16BufferAttribute(this.idx, 1));
+    if (v3Name) g.setAttribute(v3Name, new THREE.Float32BufferAttribute((this.v3?this.v3.array():new Float32Array(this.pos.length)).buffer, 3));
+    g.setAttribute('position', new THREE.Float32BufferAttribute(this.pos.array().buffer, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(this.nrm.array().buffer, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv.array().buffer, 2));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(this.col.array().buffer, 3));
+    g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(this.si.array().buffer, 4));
+    g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(this.sw.array().buffer, 4));
+    g.setAttribute(extraName, new THREE.Float32BufferAttribute(this.ex.array().buffer, 1));
+    if (this.hasFc) g.setAttribute('aFace', new THREE.Float32BufferAttribute(this.fc.array().buffer, 4));
+    g.setIndex(this.pos.length / 3 > 65535 ? new THREE.Uint32BufferAttribute(this.idx.array(Uint32Array).buffer, 1) : new THREE.Uint16BufferAttribute(this.idx.array(Uint16Array).buffer, 1));
     g.boundingSphere = new THREE.Sphere(new V3(0, 0.75, 0), 1.3);
     return g;
   }

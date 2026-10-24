@@ -105,17 +105,17 @@ test('Storm recovery scratch preserves LOS coordinates across actors, nesting, e
 
 test('Torpedo/Fizzy share exact geometry while individual birth colors, cap evictions and last-user disposal remain independent',()=>{
  let created=0,disposed=0,materials=0;
- class Geometry{constructor(...args){created++;this.args=args;}dispose(){disposed++;}}
- class Material{constructor(opts){materials++;this.color=opts.color.clone();}dispose(){materials--;}}
+ class Geometry extends THREE.SphereGeometry{constructor(...args){super(...args);created++;this.args=args;}dispose(){disposed++;super.dispose();}}
+ class Material extends THREE.MeshBasicMaterial{constructor(opts){super(opts);materials++;}dispose(){materials--;super.dispose();}}
  class Mesh{constructor(geometry,material){this.geometry=geometry;this.material=material;this.position=new THREE.Vector3();}}
  const scene={children:new Set(),add(m){this.children.add(m);m.parent=this;},remove(m){this.children.delete(m);m.parent=null;}};
  const api={THREE:{...THREE,SphereGeometry:Geometry,MeshBasicMaterial:Material,Mesh},G:{scene,physics:{segment(a,b,h){h.hit=false;return h;} }},Hit:class{}};
  const p={},owner={color:new THREE.Color('#ff0000'),remote:false},source={seed:42,owner,team:0,chasedTarget:true,spec:{gravity:24,splashDamage:12,splashAround:{count:8,pitchDegrees:65,velocityMin:2,velocityMax:3,paintRadius:.5}}};
- spawnTorpedoSplashes(api,p,source,new THREE.Vector3(0,5,0));assert.equal(created,1);assert.equal(materials,8);const first=p._s3TorpedoSplashes[0],shared=first.mesh.geometry;assert.deepEqual(shared.args,[.1,6,4]);
- owner.color.set('#0000ff');spawnTorpedoSplashes(api,p,source,new THREE.Vector3(0,5,0));assert.equal(created,1);assert.notEqual(first.mesh.material.color.getHex(),p._s3TorpedoSplashes.at(-1).mesh.material.color.getHex());
+ spawnTorpedoSplashes(api,p,source,new THREE.Vector3(0,5,0));assert.equal(created,1);assert.equal(materials,1);const first=p._s3TorpedoSplashes[0],shared=first.visual.mesh.geometry;assert.deepEqual(shared.args,[.1,6,4]);
+ owner.color.set('#0000ff');spawnTorpedoSplashes(api,p,source,new THREE.Vector3(0,5,0));assert.equal(created,1);assert.notEqual(first.visualColor.getHex(),p._s3TorpedoSplashes.at(-1).visualColor.getHex());
  first.pos.y=-101;first.vel.set(0,0,0);stepTorpedoSplashes(api,p,1/60,()=>assert.fail('below-world cleanup is not a burst'));assert.equal(disposed,0);assert.equal(p._s3TorpedoSplashes.length,15);
  for(let i=0;i<100;i++)spawnTorpedoSplashes(api,p,source,new THREE.Vector3(0,5,0));assert.equal(p._s3TorpedoSplashes.length,768);assert.equal(created,1);assert.equal(disposed,0);
- clearTorpedoSplashes(p);assert.equal(disposed,1);assert.equal(materials,0);assert.equal(scene.children.size,0);assert.equal(p._s3TorpedoSplashGeometry,null);
+ clearTorpedoSplashes(p);assert.equal(disposed,1);assert.equal(materials,0);assert.equal(scene.children.size,0);assert.equal(p._s3TorpedoVisuals.size,0);
  spawnTorpedoSplashes(api,p,source,new THREE.Vector3(0,5,0));assert.equal(created,2);clearTorpedoSplashes(p);assert.equal(disposed,2);
 });
 

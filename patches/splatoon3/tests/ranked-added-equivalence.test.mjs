@@ -83,10 +83,25 @@ test('actual event wrapper keeps playback and wire ordering while guests and emp
  for(const host of [false,true])for(const input of [[],[{kind:'special-gain',points:2},{kind:'zone-capture'},{kind:'rainmaker-pickup',id:'a'},{kind:'finish'}]])for(const migrate of [false,true]){
   const runs=[old,current].map(source=>{let filters=0;const events=structuredClone(input);events.filter=function(fn){filters++;return Array.prototype.filter.call(this,fn);};
    const nm={isHost:host,cfg:{id:'room'},rankedEventNext:4,_sendNow(packet){this.sent=packet;}};const G={netm:nm};
-   const match={state:'playing',ranked:{time:12,winner:null,events:{splice:()=>events},update(){}},playRankedEvents(e){this.played=[...e];if(migrate)nm.isHost=!nm.isHost;},rankedWorld:{update(){},},rankedEffects:{update(){}}};
+   const match={state:'playing',ranked:{time:12,winner:null,events:{length:input.length,splice:()=>events},update(){}},playRankedEvents(e){this.played=[...e];if(migrate)nm.isHost=!nm.isHost;},rankedWorld:{update(){},},rankedEffects:{update(){}}};
    advance(source)(G,()=>({actors:[]}),{}).call(match,1/60);return{played:match.played,time:match.time,sent:nm.sent,seq:nm.rankedEventNext,filters};});
-  assert.deepEqual({...runs[1],filters:0},{...runs[0],filters:0});assert.equal(runs[1].filters,((migrate?!host:host)&&input.length)?1:0);
+  assert.deepEqual({...runs[1],played:runs[1].played||[],filters:0},{...runs[0],filters:0});if(!input.length)assert.equal(runs[1].played,undefined);assert.equal(runs[1].filters,((migrate?!host:host)&&input.length)?1:0);
  }
+});
+
+test('empty ranked batches skip splice/playback while real batches detach before reentrant enqueue',()=>{
+ const source=fs.readFileSync(new URL('../runtime/ranked/install.mjs',import.meta.url),'utf8'),events=[];
+ let splices=0,played=0,world=0,effects=0;const splice=events.splice;
+ events.splice=function(...args){splices++;return splice.apply(this,args);};
+ const packets=[],nm={isHost:true,cfg:{id:'round'},_sendNow:p=>packets.push(p)};
+ const m={state:'playing',ranked:{events,time:10,winner:null,update(){}},
+  playRankedEvents(batch){played++;if(batch[0].kind==='lead')events.push({kind:'special-gain'});},
+  rankedWorld:{update(){world++;}},rankedEffects:{update(){effects++;}}};
+ const run=()=>advance(source)({netm:nm},()=>({actors:[]}),{}).call(m,1/60);
+ run();assert.equal(splices,0);assert.equal(played,0);assert.equal(world,1);assert.equal(effects,1);assert.equal(m.time,10);
+ events.push({kind:'lead'});run();assert.equal(splices,1);assert.equal(played,1);assert.deepEqual([...events],[{kind:'special-gain'}]);
+ assert.deepEqual(packets,[{k:'rkevent',match:'round',seq:1,events:[{kind:'lead'}]}]);
+ run();assert.equal(splices,2);assert.equal(played,2);assert.equal(events.length,0);assert.equal(packets.length,1);assert.equal(world,3);assert.equal(effects,3);
 });
 
 test('actual admission source visits prune once instead of twice at each admitted entry',()=>{

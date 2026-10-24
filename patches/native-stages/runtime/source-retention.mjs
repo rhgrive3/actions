@@ -50,21 +50,38 @@ export async function managedSourceSlot(id,prefix){
   const state=await stateFor(prefix,true);observe(state,await readRow(name));await save(state,true);await trim(state,name);await save(state);
  });
  let cache=await caches.open(name);
- const putBytes=async(url,bytes)=>lock(async()=>{
+ // Admit at most four concurrently verified files (2MiB unless one file is
+ // itself larger) while this lock is preparing its fresh ledger snapshot.
+ // The first file requests the lock immediately: no timers or added wait.
+ let admission=null;
+ const writeGroup=group=>lock(async()=>{
   const state=await stateFor(prefix),row=await readRow(name);cache=row.cache;
-  // Both ledgers become uncertain before touching a body. Cache.put replaces
-  // each record atomically; interruption can never bless an incomplete count.
+  group.accepting=false;
   observe(state,row);await save(state,true);
-  if(row.files)await cache.put(META,await envelope(row.files,true));
-  try{await cache.put(String(url),new Response(bytes));}
-  catch(error){
-   if(error?.name!=='QuotaExceededError')throw error;
-   const cold=Object.entries(state.stages).filter(([n])=>n!==name).sort((a,b)=>a[1].time-b[1].time);let written=false;
-   for(const [other]of cold){await remove(state,other);try{await cache.put(String(url),new Response(bytes));written=true;break;}catch(next){if(next?.name!=='QuotaExceededError')throw next;}}
-   if(!written)throw error;
+  // Even an unknown old record must remain uncertain if bodies reappear with
+  // the same keys; an old sealed byte count must never become valid again.
+  await cache.put(META,await envelope(row.files||{},true));
+  for(const {url,bytes} of group.entries){
+   try{await cache.put(url,new Response(bytes));}
+   catch(error){
+    if(error?.name!=='QuotaExceededError')throw error;
+    const cold=Object.entries(state.stages).filter(([n])=>n!==name).sort((a,b)=>a[1].time-b[1].time);let written=false;
+    for(const [other]of cold){await remove(state,other);try{await cache.put(url,new Response(bytes));written=true;break;}catch(next){if(next?.name!=='QuotaExceededError')throw next;}}
+    if(!written)throw error;
+   }
+   if(row.files){row.files={...row.files,[url]:bytes.byteLength};row.bytes=sizeOf(row.files);}
+   // Preserve the historical maximum even when later replacements shrink the
+   // final group size. No accounting state is reused across lock ownership.
+   observe(state,row);
   }
-  if(row.files){row.files={...row.files,[String(url)]:bytes.byteLength};row.bytes=sizeOf(row.files);await cache.put(META,await envelope(row.files));}
-  observe(state,row);await trim(state,name);await save(state);
+  if(row.files)await cache.put(META,await envelope(row.files));
+  await trim(state,name);await save(state);
  });
- return {match:url=>cache.match(url),delete:url=>lock(async()=>{const state=await stateFor(prefix);await save(state,true);return cache.delete(url);}),put:async(url,response)=>putBytes(url,await response.arrayBuffer()),_nativePut:putBytes};
+ const putBytes=(url,bytes)=>new Promise((resolve,reject)=>{
+  let group=admission,created=false;
+  if(!group?.accepting||group.entries.length>=4||group.bytes+bytes.byteLength>2*1024*1024){group=admission={accepting:true,entries:[],bytes:0};created=true;}
+  group.entries.push({url:String(url),bytes,resolve,reject});group.bytes+=bytes.byteLength;
+  if(created)writeGroup(group).then(()=>{for(const entry of group.entries)entry.resolve();},error=>{for(const entry of group.entries)entry.reject(error);}).finally(()=>{group.entries.length=0;if(admission===group)admission=null;});
+ });
+ return {match:url=>cache.match(url),delete:url=>{if(admission)admission.accepting=false;return lock(async()=>{const state=await stateFor(prefix);await save(state,true);await cache.put(META,await envelope({},true));return cache.delete(url);});},put:async(url,response)=>putBytes(url,await response.arrayBuffer()),_nativePut:putBytes};
 }

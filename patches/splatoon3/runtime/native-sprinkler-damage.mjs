@@ -100,14 +100,16 @@ export function installNativeSprinklerDamage(api){
  // actor and ranked-shield contacts, without changing other kit barriers.
  Projectiles.prototype.nativeSprinklerCandidate=function(p,start,end,best=null){
   if(!p||!start||!end||!this.bombs?.length)return best;
-  let d=null,length=0;
+  let directionReady=false,dx=0,dy=0,dz=0,length=0;
   for(const b of this.bombs||[]){
    if(!sprinkler(b)||b.s3Mode!=='sprinkling'||b.s3Destroyed||b.owner===p.owner||b.team===p.team)continue;
-   if(!d){d=end.clone().sub(start);length=d.length();if(!(length>1e-8))return best;}
+   if(!directionReady){dx=end.x-start.x;dy=end.y-start.y;dz=end.z-start.z;length=Math.sqrt(dx*dx+dy*dy+dz*dz);directionReady=true;if(!(length>1e-8))return best;}
    // Physical hitbox is INKWAVE calibration, separate from the existing 120-HP profile.
-   const radius=.42+Math.max(0,p.size||0),m=start.clone().sub(b.pos),c=m.lengthSq()-radius*radius,dot=m.dot(d),disc=dot*dot-length*length*c;
+   const radius=.42+Math.max(0,p.size||0),mx=start.x-b.pos.x,my=start.y-b.pos.y,mz=start.z-b.pos.z,
+    c=mx*mx+my*my+mz*mz-radius*radius,dot=mx*dx+my*dy+mz*dz,disc=dot*dot-length*length*c;
    if(c>0&&disc<0)continue;const t=c<=0?0:(-dot-Math.sqrt(disc))/(length*length);
-   if(t<0||t>1||best&&best.distance<=t*length)continue;const point=start.clone().addScaledVector(d,t);
+   if(t<0||t>1||best&&best.distance<=t*length)continue;const point=start.clone();
+   point.x+=dx*t;point.y+=dy*t;point.z+=dz*t;
    let settled=false;best={distance:t*length,point,normal:point.clone().sub(b.pos).normalize(),kind:'native-sprinkler',onHit:(actualDamage)=>{
     const amount=Number.isFinite(actualDamage)?actualDamage:p.damage;
     const attacker=sourceActor(p),cause=objectDamageRow(p);

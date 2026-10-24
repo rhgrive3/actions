@@ -1,11 +1,6 @@
 name: INKWAVE historical native ink material frame pilot
 on:
-  pull_request:
-    paths:
-      - "scripts/prepare-inkwave-material-baseline.mjs"
-      - "scripts/check-inkwave-material-native-frame.mjs"
-      - "scripts/check-inkwave-material-native-paired.mjs"
-      - ".github/workflows/inkwave-material-native-frame.yml"
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

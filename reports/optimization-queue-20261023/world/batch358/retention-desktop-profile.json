@@ -1,0 +1,39 @@
+{
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+  "scope": "Actual CacheStorage+WebLocks twenty concurrently verified byte bodies; operation count and wall diagnostic, not fullgame/iPad measurement",
+  "rows": [
+    {
+      "version": "before",
+      "milliseconds": 305.59999999962747,
+      "operations": {
+        "puts": 100,
+        "keys": 20,
+        "locks": 20,
+        "estimates": 20
+      },
+      "validBodies": 20,
+      "ledgerFiles": 20,
+      "ledgerBytes": 164030,
+      "pending": false
+    },
+    {
+      "version": "after",
+      "milliseconds": 92.3999999994412,
+      "operations": {
+        "puts": 40,
+        "keys": 5,
+        "locks": 5,
+        "estimates": 5
+      },
+      "validBodies": 20,
+      "ledgerFiles": 20,
+      "ledgerBytes": 164030,
+      "pending": false
+    }
+  ],
+  "crossTab": {
+    "pending": false,
+    "files": 12,
+    "bytes": 78
+  }
+}

@@ -6,8 +6,8 @@ import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 
 export const TARGET = 'patches/local-quality/squid-motion-binding-adapter.mjs';
-export const CURRENT_SHA256 = '3da54c0b8e23cf885ecb035b3f8f33f3593895c16b28b73aa7429ce015278498';
-export const REFERENCE_SHA256 = 'f975a8ef0102915d99f653ee8ea2fc423af1f3c483e97bb364810d357da0babd';
+export const CURRENT_SHA256 = "0e3fb01fd0772ffab4a279c3fa1a01de0cc924faa2552fbe3f0fb9e39488728d";
+export const REFERENCE_SHA256 = "e620be2a19fce37f92d05eda9db3713c5a9a19400723d264ed129cbee63caf11";
 export const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const gitBlob = bytes => crypto.createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');
 const git = (root,...args) => execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim();

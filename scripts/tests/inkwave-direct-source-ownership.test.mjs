@@ -47,7 +47,21 @@ test('mural atlas and world branding use directly editable source without rebuil
   const { adaptBuildSource } = await import('../inkwave-source-composition.mjs');
   assert.equal(adaptBuildSource('src/world/murals.js', murals), murals);
   assert.match(murals, /const W = 2048, RH = 256, ROWS = 4, FULL_H = 2048/);
-  assert.match(murals, /let H = stageId === 'halyard' \|\| STAGE_MURALS\[stageId\] \? FULL_H : RH \* ROWS/);
+  assert.match(murals, /const stageMural = \(id\) => STAGES\[id\]\?\.drawMurals/);
+  assert.match(murals, /let H = stageId === 'halyard' \|\| stageMural\(stageId\) \? FULL_H : RH \* ROWS/);
+  // Execute the authored initialization prefix: selected lazy descriptors must be
+  // ready before atlas sizing, including the Halyard and shared-only cases.
+  const prefix = murals.match(/export async function createMuralTexture\(stageId = 'tidewater'\) \{\n([\s\S]*?)\n  try \{ await Promise\.all/)[1];
+  let prepared = null;
+  const initialize = new Function('prepareStageData', 'stageMural', 'FULL_H', 'RH', 'ROWS',
+    `return async function(stageId) { ${prefix}; return H; }`)(
+    async id => { await Promise.resolve(); prepared = id; },
+    id => { assert.equal(prepared, id, 'descriptor preparation precedes lookup'); return ['cargo', 'range'].includes(id) ? () => {} : null; },
+    2048, 256, 4);
+  for (const [id, expected] of [['tidewater', 1024], ['kelpline', 1024], ['halyard', 2048], ['cargo', 2048], ['range', 2048]]) {
+    prepared = null;
+    assert.equal(await initialize(id), expected, id + ' atlas height');
+  }
   assert.match(murals, /tex\.dispose\(\)/);
   assert.match(murals, /strokeText\('ZEVANT', ox \+ 300, 186\)/);
   assert.match(murals, /fillText\('ZEVANT', ox \+ 294, 180\)/);

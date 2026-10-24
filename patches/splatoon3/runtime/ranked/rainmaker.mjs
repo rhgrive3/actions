@@ -240,7 +240,7 @@ export class RainmakerRule {
 
     this._applyBarrierHits(frame.barrierHits);
     this._tryPickup(actors);
-    this._updateCarrier(dt, frame, actors);
+    this._updateCarrier(dt, frame, actors, carrier);
     this._awardPassiveSpecial(dt);
     this._checkOvertimeLead();
   }
@@ -446,9 +446,9 @@ export class RainmakerRule {
     this._event('rainmaker-pickup', { id: actor.id, team: actor.team, pos: this.state.pos.slice() });
   }
 
-  _updateCarrier(dt, frame, actors) {
+  _updateCarrier(dt, frame, actors, cachedCarrier) {
     if (this.state.carrier === null) return;
-    const actor = this._findActor(actors, this.state.carrier);
+    const actor = cachedCarrier?.id === this.state.carrier ? cachedCarrier : this._findActor(actors, this.state.carrier);
     if (!actor || actor.alive === false) return;
     const team = this.state.carrierTeam;
     const pos = positionOf(actor);

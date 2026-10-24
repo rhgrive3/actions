@@ -1,0 +1,19 @@
+✔ actual rounded OBB candidate t/kind/axis/sign preserves all face/edge/corner and degenerate results (303.769114ms)
+✔ actual no-offset and Splatana lobe coordinates preserve Object.is including signed zero/nonfinite fallbacks (46.375934ms)
+✔ Wail broadphase retains the original discrete wall hits including contact bounds, unusual dimensions and zero segments (840.28151ms)
+✔ Booyah radius plan preserves ordered slope-projected tiles, repeated terrain probes and final paint/turf payloads (25.800164ms)
+✔ Toxic Mist absent state skips empty deletes while own undefined/stale properties preserve deletion semantics (2.681631ms)
+✔ Storm recovery scratch preserves LOS coordinates across actors, nesting, exceptions and changing cloud height (0.978345ms)
+✔ Torpedo/Fizzy share exact geometry while individual birth colors, cap evictions and last-user disposal remain independent (11.540672ms)
+✔ Point Sensor per-record sweep scratch resets partial capsule outputs and preserves nearest body vs terrain contact (5.479643ms)
+✔ Tacticooler flat sweeps match original motion, Tower updates and reentrant/throwing resolver while reusing private Hit records (20.655524ms)
+✔ catalog splash direction is created only for an admitted release, preserving exhaustion, threshold, head-stop and payload order (18.816899ms)
+✔ one Booyah growth builds its radius ring once while retaining six terrain projections (5.305665ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1549.389766

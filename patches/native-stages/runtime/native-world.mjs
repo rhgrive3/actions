@@ -81,7 +81,7 @@ export async function buildNativeWorld(game,map,current){
   finally { r.setRenderTarget(previousTarget);paint.dryMesh.visible=dryVisible; }
   await warmed;
   if(signal.aborted||!current())throw new DOMException('Aborted','AbortError');
-  const shaderWarmMilliseconds=performance.now()-warmStart;
+  let shaderWarmMilliseconds=performance.now()-warmStart;
   level.nativePaint=paint;
   inkGeometry=nativeInkGeometry(level,paint);inkMat=nativeInkMaterial(paint,game.murals,game.texlib);
   inkMesh=new NativeInkMesh(inkGeometry,inkMat).bindPaint(paint);
@@ -152,7 +152,7 @@ export async function buildNativeWorld(game,map,current){
   }finally{
    // A recovery exception must not bypass disposal of the detached candidate.
    // Attempt each independently, while preserving the original publication error.
-   for(const t of pendingTextures?.values()||[]){
+   for(const t of new Set(pendingTextures?.values()||[])){
     safely(()=>t.image?.close?.(),'pending image');safely(()=>t.dispose(),'pending texture');
    }
    pendingTextures?.clear();

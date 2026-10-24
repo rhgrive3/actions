@@ -32,13 +32,24 @@ export function mineTowerPaintBirthWaitScope(nm, payload) {
     && deckPoint({half}, [payload.supportX, payload.supportY, payload.supportZ]) ? s : null;
 }
 
-function canonicalPose(stage, snapshot) {
+function canonicalPose(stage, snapshot, scope) {
   const path = stage?.tower?.path, p = snapshot?.rule?.progress;
   if (snapshot?.mode !== 'tower' || snapshot.stage !== stage?.id || !safe(snapshot.revision)
       || !Number.isFinite(p) || p < 0 || p > 1 || !Array.isArray(path)
       || path.length < 2 || !path.every(vector)) return null;
-  const lengths = path.slice(1).map((b, i) => Math.hypot(...b.map((n, axis) => n - path[i][axis])));
-  const total = lengths.reduce((a, b) => a + b, 0);
+  let metrics=scope?.pathMetrics;
+  let same=!!metrics && metrics.path===path && metrics.points.length===path.length;
+  if(same)for(let i=0;i<path.length;i++){
+    if(metrics.points[i]!==path[i]){same=false;break;}
+    for(let axis=0;axis<3;axis++)if(!Object.is(metrics.values[i*3+axis],path[i][axis])){same=false;break;}
+    if(!same)break;
+  }
+  if(!same){
+    const lengths=path.slice(1).map((b,i)=>Math.hypot(...b.map((n,axis)=>n-path[i][axis])));
+    metrics={path,lengths,total:lengths.reduce((a,b)=>a+b,0),points:path.slice(),values:path.flat()};
+    if(scope)scope.pathMetrics=metrics;
+  }
+  const {lengths,total}=metrics;
   if (!(total > 0)) return null;
   let at = total * p;
   for (let i = 0; i < lengths.length; i++) {
@@ -65,7 +76,7 @@ function canonicalPose(stage, snapshot) {
 export function recordTowerHostSnapshot(nm, snapshot) {
   const s = state(nm);
   if (!s || snapshot?.revision <= s.latest) return false;
-  const pose = canonicalPose(s.engine.stage, snapshot);
+  const pose = canonicalPose(s.engine.stage, snapshot, s);
   if (!pose) return false;
   s.latest = snapshot.revision;
   s.poses.set(snapshot.revision, pose);
@@ -99,7 +110,7 @@ export function mineTowerPaintReference(nm, pos) {
   const s = state(nm), point = xyz(pos);
   if (!s || !point || nm._rankedAPI?.G.netm !== nm) return null;
   const snapshot = s.engine.snapshot(), revision = snapshot.revision;
-  const pose = canonicalPose(s.engine.stage, snapshot);
+  const pose = canonicalPose(s.engine.stage, snapshot, s);
   if (!pose || !colliderMatches(s.match.rankedWorld, pose)) return null;
   const local = localPoint(pose, point);
   if (!deckPoint(pose, local)) return null;

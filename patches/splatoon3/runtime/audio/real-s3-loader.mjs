@@ -1,4 +1,4 @@
-import { audioLoadDeadline } from './load-deadline.mjs';
+import { audioLoadScope } from './load-deadline.mjs';
 /**
  * Optional 2022 Splatoon 3 MP3 source bank. No game-owned MP3 is bundled here.
  * The user installs an authorized `s3-real` directory alongside this module.
@@ -12,15 +12,16 @@ export const FILE_MANIFEST = new URL('./real-s3-installed.json',import.meta.url)
 export const AUDIO_CACHE_BYTES=40*1024*1024;
 // WebKit requires Window.fetch's receiver. Detached references throw
 // "Can only call Window.fetch on instances of Window" even for HTTP 200 assets.
-export function sameModuleFetch(relative,fetcher=globalThis.fetch?.bind(globalThis)){
+export function sameModuleFetch(relative,fetcher=globalThis.fetch?.bind(globalThis),options){
   if(typeof relative!=='string'||!/^\.\/s3-real\/[A-Za-z0-9_.+()\-]+\.mp3$/i.test(relative))
     throw new TypeError('Invalid local real-S3 sound path');
-  return fetcher(new URL(relative,directory));
+  const url=new URL(relative,directory);
+  return options===undefined?fetcher(url):fetcher(url,options);
 }
 
 export class RealS3SampleLoader {
   constructor(bank,{fetcher=globalThis.fetch?.bind(globalThis),manifestURL=FILE_MANIFEST,assetFetcher}={}){
-    this.bank=bank;this.fetcher=fetcher;this.assetFetcher=assetFetcher||((url)=>sameModuleFetch(url,fetcher));
+    this.bank=bank;this.fetcher=fetcher;this.assetFetcher=assetFetcher||((url,options)=>sameModuleFetch(url,fetcher,options));
     this.manifestURL=manifestURL;this.manifestPromise=null;this.queue=Promise.resolve();this.inFlight=new Map();
     this.loaded=new Set();this.notMapped=new Set();this.retryAfter=new Map();this.status='uninitialized';this.errors=[];this.totalErrorCount=0;this.declaredEvents=null;this.clipsById=null;this.clipsByEvent=null;
     this.manifestRetryAt=0;this.pendingJobs=[];this.draining=false;
@@ -30,12 +31,18 @@ export class RealS3SampleLoader {
   _current(){return !this.bank.disposed && this.bank.ctx?.state!=='closed';}
   getManifest(){
     if(!this._current())return Promise.resolve(null);
-    if(!this.manifestPromise)this.manifestPromise=(async()=>{
+    if(!this.manifestPromise){
+      const scope=audioLoadScope(),scopes=this.bank.authorized._loadScopes||(this.bank.authorized._loadScopes=new Set());
+      scopes.add(scope);
+      this.manifestPromise=(async()=>{
       try{
-        const r=await audioLoadDeadline(this.fetcher(this.manifestURL));
+        const r=await scope.run(()=>this.fetcher(this.manifestURL,scope.signal?{signal:scope.signal}:undefined));
+        scope.check();
         if(!this._current())return null;
         if(!r?.ok)throw new Error('Real-S3 pack manifest unavailable ('+(r?.status||'fetch failed')+')');
-        const data=await audioLoadDeadline(r.json());
+        scope.renew();
+        const data=await scope.run(()=>r.json());
+        scope.check();
         if(!this._current())return null;
         const clips=validateAuthorizedManifest(data);
         // Never fetch arbitrary sourceDrive URLs: only same-origin local assets.
@@ -50,7 +57,8 @@ export class RealS3SampleLoader {
         this.status='ready';return {...data,clips};
       }catch(error){if(!this._current())return null;this.status='unavailable';this.declaredEvents=null;this.clipsById=null;this.clipsByEvent=null;this.manifestRetryAt=Date.now()+4000;
         this._error(error?.message||error);return null;}
-    })();
+      finally{scope.finish();scopes.delete(scope);}
+    })();}
     return this.manifestPromise;
   }
   // null means the index is still unavailable. Only an explicit false means
@@ -81,6 +89,9 @@ export class RealS3SampleLoader {
       if(!resident.length){this.notMapped.add(key);return Promise.resolve({loaded:0,missing:true});}
       if(resident.every(c=>this.bank.authorized.loaded.has(this.bank.authorized.key(c.id,c.event,c.variant)))){this.loaded.add(id);return Promise.resolve({loaded:0,cached:true});}
     }
+    // Keep resident and in-flight checks ahead of backoff: partial successful
+    // loads remain immediately usable and priority callers share queued work.
+    if(Date.now()<(this.retryAfter.get(key)||0))return Promise.resolve({loaded:0,throttled:true});
     const work=async()=>{
       if(!this._current())return {loaded:0,cancelled:true};
       const data=await this.getManifest();

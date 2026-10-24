@@ -2,6 +2,8 @@ name: INKWAVE alpha volume geometry and game rendering
 on:
   pull_request:
     paths:
+      - 'scripts/build-inkwave.mjs'
+      - 'scripts/inkwave-source-composition.mjs'
       - 'scripts/prepare-inkwave-ci-apt.py'
       - 'patches/local-quality/ink-volume/**'
       - 'patches/local-quality/ink-volume-adapter.mjs'

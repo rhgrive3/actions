@@ -780,6 +780,9 @@ const smoothstep = (x) => { const t = Math.min(1, Math.max(0, x)); return t * t 
  *  armed, warn (0..1 fuse warning), bulge (0..1), age.
  * Allocation-free.
  */
+// Keep capability next to its consumers; other model IDs need only the pose clock.
+export const subModelUsesSpeed = id => id === 'autobomb' || id === 'spCrabTank';
+
 export function poseSubModel(model, s = {}) {
   if (!model) return;
   const g = model.groups, st = model.state, dt = Number.isFinite(s.dt) ? Math.max(0, Math.min(0.25, s.dt)) : 0;

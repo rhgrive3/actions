@@ -7,7 +7,7 @@ test('native ink clips unpainted colour after evaluating shading derivatives',as
  const base=THREE.ShaderLib.physical,shader={uniforms:{},vertexShader:base.vertexShader,fragmentShader:base.fragmentShader};material.onBeforeCompile(shader);
  const clip=shader.fragmentShader.indexOf('if (texture2D(uPaint, vPaintUv).a < 0.015) discard;');
  assert(clip>shader.fragmentShader.lastIndexOf('dFdx(normal)'),'early discard makes ink edge derivatives undefined');
- assert(clip<shader.fragmentShader.indexOf('#include <opaque_fragment>'));assert.equal(shader.uniforms.uPaint.value,paint.texture);assert.deepEqual(Array.from(material.defaultAttributeValues.color),[1,1,1]);assert.deepEqual(Array.from(material.defaultAttributeValues.lightUv),[-1,-1]);material.dispose();
+ assert(clip<shader.fragmentShader.indexOf('#include <opaque_fragment>'));assert.equal(shader.uniforms.uPaint.value,paint.texture);assert.match(shader.vertexShader,/vFaceData = vec4\(0\.0, 1\.0, nativeFaceSize\)/);assert.match(shader.vertexShader,/vFaceFlags = vec3\(nativeWall, 0\.0, -1\.0\)/);assert.match(shader.fragmentShader,/if \(vFaceData\.y > 0\.5\)/);assert.doesNotMatch(shader.vertexShader,/attribute vec4 faceData/);assert.deepEqual(Array.from(material.defaultAttributeValues.color),[1,1,1]);assert.deepEqual(Array.from(material.defaultAttributeValues.lightUv),[-1,-1]);material.dispose();
 });
 
 test('native ink attributes retain source order, UVs and exact typed allocation',async()=>{
@@ -27,7 +27,7 @@ test('native ink attributes retain source order, UVs and exact typed allocation'
  const expectedPositions=[4,1,5,6,1,5,4,1,6,0,0,0,2,0,0,0,0,1];
  assert.deepEqual(Array.from(g.getAttribute('position').array),expectedPositions);
  const sizes={position:3,normal:3,paintUv:2,faceUv:2,
-  faceData:4,faceFlags:3,faceTan:3};
+  nativeFaceSize:2,nativeWall:1,faceTan:3};
  for(const [name,size] of Object.entries(sizes)){
   const attr=g.getAttribute(name);
   assert.equal(attr.count,6,name);
@@ -45,8 +45,9 @@ test('native ink attributes retain source order, UVs and exact typed allocation'
   20/128,26/128,28/128,26/128,20/128,30/128,
   4/128,6/128,12/128,6/128,4/128,10/128,
  ]);
- assert.deepEqual(Array.from(g.getAttribute('faceFlags').array),[1,0,-1,1,0,-1,1,0,-1,1,0,-1,1,0,-1,1,0,-1]);
- assert.deepEqual(Array.from(g.getAttribute('faceData').array),Array.from({length:6},()=>[0,1,8,7]).flat());
+ assert.deepEqual(Array.from(g.getAttribute('nativeWall').array),[1,1,1,1,1,1]);
+ assert.deepEqual(Array.from(g.getAttribute('nativeFaceSize').array),Array.from({length:6},()=>[8,7]).flat());
+ assert.equal(g.getAttribute('faceData'),undefined);assert.equal(g.getAttribute('faceFlags'),undefined);
  assert.equal(g.boundingSphere?.radius>0,true);
  g.dispose();
 });

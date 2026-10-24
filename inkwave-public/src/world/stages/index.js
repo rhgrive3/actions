@@ -1,3 +1,4 @@
+import { registerStageData } from './data.js';
 // Stage modules (src/world/stages/<id>/): a stage that owns its whole folder — layout.js (LAYOUT), props.js (register,
 // PLACEMENTS), surfaces.js (SURF, SURFACES) and murals.js (drawMurals). Only Cargo Terminal is built this way (ported
 // from PR #8); the original stages keep their data in maps.js / dressing.js / murals.js. Static imports: a stage that
@@ -17,3 +18,5 @@ export const STAGES = {
   cargo: { ...cargoLayout, ...cargoProps, ...cargoSurfaces, ...cargoMurals },
   range: { ...rangeLayout, ...rangeProps, ...rangeSurfaces, ...rangeMurals },
 };
+
+for (const [id, stage] of Object.entries(STAGES)) registerStageData(id, stage);

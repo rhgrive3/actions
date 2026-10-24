@@ -36,7 +36,9 @@ export function knockbackDeltaForAccel(accel) {
 
 export function blasterKnockbackSpec(raw, scale = 1, reduced = false, reducedRate = 1) {
   const k = raw?.BlastParam?.KnockBackParam;
-  if (!k || ![k.Accel, k.Distance].every(v => Number.isFinite(v) && v > 0)) return null;
+  if (!k) return null;
+  const accel = k.Accel, distance = k.Distance;
+  if (!(Number.isFinite(accel) && accel > 0 && Number.isFinite(distance) && distance > 0)) return null;
   const rate = reduced && Number.isFinite(reducedRate) && reducedRate > 0 ? reducedRate : 1;
   return { accel: k.Accel, bias: Number.isFinite(k.Bias) ? k.Bias : 1, distance: k.Distance * scale * rate };
 }
@@ -68,7 +70,7 @@ export function applyBlasterBurstKnockback(game, p, point, victim, { raw, scale 
 export function rollerContactAccel(record, myClosing, opponentClosing) {
   if (!record) return 0;
   const min = Number(record.AccelMin), max = Number(record.AccelMax);
-  if (![min, max].every(Number.isFinite) || max < min) return 0;
+  if ((!Number.isFinite(min) || !Number.isFinite(max)) || max < min) return 0;
   const accel = min + (Number(record.MyVelocityRate) || 0) * Math.max(0, myClosing)
     + (Number(record.OpponentVelocityRate) || 0) * Math.max(0, opponentClosing);
   return clamp(accel, min, max);

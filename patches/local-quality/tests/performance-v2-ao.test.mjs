@@ -1,7 +1,8 @@
+import { adaptVisualAudioQueue } from '../visual-audio-queue-adapter.mjs';
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
 const a=fs.readFileSync(new URL('../adapter.mjs',import.meta.url).pathname,'utf8');
 const s=a.indexOf('function adaptEnginePerformanceHotpaths('),e=a.indexOf('\nexport function qualityIdentity()',s);
-const hot=vm.runInNewContext(a.slice(s,e)+'\nadaptEnginePerformanceHotpaths',{});
+const hot=vm.runInNewContext(a.slice(s,e)+'\nadaptEnginePerformanceHotpaths',{ adaptVisualAudioQueue });
 const replaceOnce=(code,old,replacement,name)=>{assert.equal(code.split(old).length-1,1,name);return code.replace(old,replacement)};
 const face='    const key = (x, y, z) => (x + 1024) + (y + 1024) * 2048 + (z + 1024) * 4194304;';
 const f=hot('src/game/character-face.js',face,replaceOnce);

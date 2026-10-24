@@ -82,6 +82,9 @@ try {
       spawnPads: [[0, 0, -4], [0, 0, 4]], spawnBarrier: 1, half: [], single: [
         { kind: 'box', min: [-1.5, -.15, -1], max: [1.5, 0, 1], grate: true, pattern: 12, color: '#87969d', bevel: 0 },
       ] });
+    // Enroll the fixture's floor in paint before the production producer writes
+    // its atlas flag; painted/dry cases vary the texture, never that flag.
+    for (const f of level.faces) if (f.n.y > .999) f.atlas = { x: 0, y: 0, pad: 0, ppm: 1 };
     const native = level.buildGeometry(1, block => block.grate);
     const indices = [];
     for (let i = 0; i < native.index.count; i += 3) {
@@ -166,9 +169,16 @@ try {
     inkTexture.generateMipmaps = true; inkTexture.needsUpdate = true;
     const paintedFace = face.clone();
     for (let i = 0; i < paintedFace.attributes.faceData.count; i++) {
-      paintedFace.attributes.faceData.setX(i, 1); paintedFace.attributes.faceData.setY(i, 1);
+      paintedFace.attributes.faceData.setX(i, 1);
       paintedFace.attributes.paintUv.setXY(i, .1 + paintedFace.attributes.faceUv.getX(i) * .25, .1 + paintedFace.attributes.faceUv.getY(i) * .35);
     }
+    const faceData = paintedFace.attributes.faceData;
+    if (faceData.itemSize !== 4 || indices.some(i => faceData.getY(i) !== 1)) throw Error('Fixture floor missing production atlas flag');
+    const savedFaceData = faceData.array.slice(), paintedAtlas = atlas.slice();
+    const setInk = inked => {
+      if (inked) atlas.set(paintedAtlas); else atlas.fill(0);
+      inkTexture.needsUpdate = true;
+    };
     const library = await createTextureLibrary(renderer, { size: 64 });
     const oldNormal = 'vec3 wn = normalize(nBase - slope.x * T - slope.y * Bt);\nnormal = normalize((viewMatrix * vec4(wn, 0.0)).xyz);';
     const newNormal = /normal\s*=\s*normalize\(mat3\(viewMatrix\)\s*\*\s*\(nBase\s*-\s*slope\.x\s*\*\s*T\s*-\s*slope\.y\s*\*\s*Bt\)\)\s*\*\s*faceDirection\s*;/;
@@ -189,8 +199,7 @@ try {
         } else if (/vec3 wn\s*=\s*normalize\(nBase\s*-\s*slope\.x\s*\*\s*T\s*-\s*slope\.y\s*\*\s*Bt\)/.test(shader.fragmentShader)) independentExpression = true;
         else throw Error('Original normal reference connection missing');
       };
-      for (let i = 0; i < paintedFace.attributes.faceData.count; i++) paintedFace.attributes.faceData.setY(i, inked ? 1 : 0);
-      paintedFace.attributes.faceData.needsUpdate = true;
+      setInk(inked);
       mesh.geometry = paintedFace; mesh.rotation.set(tilted ? .41 : 0, tilted ? .17 : 0, tilted ? .29 : 0);
       camera.position.set(tilted ? 1.1 : 0, tilted ? 2.4 : 3, 3.2); camera.lookAt(0, 0, 0); camera.updateMatrixWorld();
       sun.position.set(2, 5, 3); sun.updateMatrixWorld();
@@ -203,7 +212,12 @@ try {
       };
       frontDraw(false); frontDraw(true); frontDraw(false); frontDraw(true);
       const actual = frontDraw(false), expected = frontDraw(true), again = frontDraw(false);
+      setInk(!inked);
+      const oppositeInk = frontDraw(false);
+      setInk(inked);
+      if (!savedFaceData.every((value, index) => Object.is(value, faceData.array[index]))) throw Error('Ink toggle changed face pattern or dimensions');
       frontRows.push({ name, independentExpression, useLibrary, inked, tilted,
+        paintSignal: diff(actual.pixels, oppositeInk.pixels), atlasCoveredTexels: inked ? paintedAtlas.filter((_, i) => i % 4 === 3 && paintedAtlas[i] > 0).length : 0,
         difference: diff(actual.pixels, expected.pixels), stable: diff(actual.pixels, again.pixels),
         coveredPixels: covered(actual.pixels), cost: actual.cost, referenceCost: expected.cost,
         image: actual.image, referenceImage: expected.image });
@@ -242,6 +256,8 @@ try {
   }
   for (const row of result.frontRows) {
     assert.equal(row.independentExpression, true, row.name + ' independent original normal missing');
+    assert.ok(row.paintSignal.changedPixels > 1000, row.name + ' ink atlas toggle has no visible effect');
+    assert.equal(row.atlasCoveredTexels > 0, row.inked, row.name + ' ink atlas does not match case');
     assert.equal(row.difference.changedPixels, 0, row.name + ' original FrontSide arithmetic changed pixels');
   }
   fs.writeFileSync(path.join(output, 'shader-template.glsl'), result.shader.fragmentShader); delete result.shader.fragmentShader;

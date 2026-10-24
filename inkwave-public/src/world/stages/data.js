@@ -1,14 +1,16 @@
-// Lightweight descriptor graph used by world presentation. Keep synchronous mural
-// hooks for the existing public setStage API; the large Cargo builders stay lazy.
-import * as cargoLayout from './cargo/layout.js';
-import * as cargoPlacements from './cargo/placements.js';
-import * as cargoSurfaces from './cargo/surfaces.js';
-import * as cargoMurals from './cargo/murals.js';
-import * as rangeLayout from '../../../patches/practice-range/stage/layout.mjs';
-import * as rangeProps from '../../../patches/practice-range/stage/props.mjs';
-import * as rangeSurfaces from '../../../patches/practice-range/stage/surfaces.mjs';
-import * as rangeMurals from '../../../patches/practice-range/stage/murals.mjs';
-export const STAGES = {
-  cargo: { ...cargoLayout, ...cargoPlacements, ...cargoSurfaces, ...cargoMurals },
-  range: { ...rangeLayout, ...rangeProps, ...rangeSurfaces, ...rangeMurals },
-};
+// Stage presentation is prepared before the world transaction commits. The
+// synchronous full facade registers the same descriptors for tools/legacy users.
+export const STAGES = {};
+const pending = new Map();
+export function registerStageData(id, descriptor) { STAGES[id] = descriptor; }
+export async function prepareStageData(id) {
+  if (STAGES[id] || (id !== 'cargo' && id !== 'range')) return;
+  let request = pending.get(id);
+  if (!request) {
+    request = (id === 'cargo' ? import('./cargo/data.js') : import('./range-data.js'))
+      .then(module => { registerStageData(id, module.STAGE); })
+      .finally(() => pending.delete(id));
+    pending.set(id, request);
+  }
+  await request;
+}
