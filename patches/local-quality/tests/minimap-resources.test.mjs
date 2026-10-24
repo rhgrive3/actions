@@ -56,7 +56,7 @@ function makeHarness({ minimapOff }) {
   };
   const G = { settings: state.settings, match: null, teamHex: ['#ff8a14', '#2f5bff'], projectiles: null };
   const sandbox = {
-    console, Math, JSON, Object, Array, Float32Array, Int32Array, Uint8Array, Uint8ClampedArray, Int8Array, Map, Set, Infinity,
+    console, Math, JSON, Object, Array, Float32Array, Int16Array, Int32Array, Uint8Array, Uint8ClampedArray, Int8Array, Map, Set, Infinity,
     G,
     document: { createElement: () => mkCanvas() },
     requestIdleCallback: (fn) => { state.idleFns.push(fn); return state.idleFns.length; },
@@ -189,7 +189,7 @@ test('off->on then explicit ensure builds complete native raster once; on->off c
   assert.equal(mm.flip, true);    // correct team orientation built
   for (const c of h.state.canvases) { assert.equal(c.width, 56); assert.equal(c.height, 56); }
   assert.ok(mm.hgt instanceof Float32Array && mm.hgt.length === 56 * 56);
-  assert.ok(mm.topBlock instanceof Int32Array && mm.nrm instanceof Float32Array);
+  assert.ok(mm.topBlock instanceof Int16Array && mm.nrm === null, 'compact block indices and derived normals preserve the optimized native raster');
   assert.ok(mm.pixCell instanceof Int32Array && mm.owner instanceof Uint8Array);
   const builds = h.state.fullBuilds;
   h.G.settings.minimap = false;   // OFF again: no rebuild; HUD uses tickHidden
