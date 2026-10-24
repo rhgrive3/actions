@@ -1,0 +1,40 @@
+{
+  "status": "pending parent shared-path coordination; runtime patch unapplied",
+  "base": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "branch": "fix/respawn-weapon-state-20261023",
+  "source_candidate_overlay": {
+    "tests": 8,
+    "pass": 8,
+    "fail": 0,
+    "log": "regression-source-final.tap"
+  },
+  "minified_candidate_overlay": {
+    "tests": 8,
+    "pass": 8,
+    "fail": 0,
+    "log": "regression-emitted-final.tap"
+  },
+  "minified_baseline_failure_control": {
+    "tests": 8,
+    "pass": 1,
+    "fail": 7,
+    "log": "regression-emitted-before.tap"
+  },
+  "unchanged_base_contracts": {
+    "tests": 60,
+    "pass": 60,
+    "fail": 0,
+    "log": "existing-base-contracts.tap"
+  },
+  "normal_candidate_build": false,
+  "published_candidate": false,
+  "official_candidate_readback": "not applicable: no candidate GitHub write attempted",
+  "matched_native_browser": "diagnostic versioned-module overlay; physical/input/seed/palette/camera fields match at all 11 checkpoints",
+  "runtime_paths_byte_identical_to_base": true,
+  "hashes": {
+    "patches/splatoon3/tests/respawn-weapon-state.test.mjs": "993cf99ef36d26e2530edf6f862b8ce6b5a0f93adf1864166aeb2638ddfaebaa",
+    "scripts/check-inkwave-respawn-weapon-browser.mjs": "3ef47a2f968e17ba396b5f799834cee03257e694182d30e5f0e0cb8d9cd24b90",
+    "reports/respawn-weapon-state-20261023/candidate-unapplied.patch": "585a0334aa736015b78127ba3342d9ef3a506afe06ccaf4865f3c4e34953a1c6",
+    "reports/respawn-weapon-state-20261023/candidate-transform.mjs": "d7a8ad063c4a5b6df5f7b0040002e6feb0a5d557d4188c6a77b0f7e8cbf04973"
+  }
+}

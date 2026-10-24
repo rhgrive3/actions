@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "productionBase": "bd5a517bc202021b0387393adf269f1612736e7a",
+  "contentHash": "9ad08ece7447b3c9549a1b1566f2618b833c236d57f868434232a9bf7baad26e",
+  "inputHash": "88cf436138d42e7d60f2bf269f8c51d2cd809cd5d1999a7be75bb5b3039db47c",
+  "verifiedCurrentInputs": 1420,
+  "verifiedEmittedBodies": 2110,
+  "rebuildPerformed": false,
+  "reason": "Only two QA checker/test leaves changed; neither is a production input; production and build-script inputs match every saved byte."
+}

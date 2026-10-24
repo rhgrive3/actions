@@ -1,0 +1,37 @@
+{
+  "mainRead": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "mainChangedSinceBd5Base": false,
+  "productionDeltaVsBd5": [],
+  "exactTwoQALeaves": [
+    {
+      "path": "scripts/check-inkwave-local-references.mjs",
+      "gitBlob": "6d8a6eb13d36bf33bb4655b3fa21219e550683e7",
+      "sha256": "96f0b939f7f7a13d89de9f00ee881bf8727755624f4f6194c694779c7e6c965d",
+      "bytes": 11322,
+      "source": "22f3b7534ae2093aef4c2549112a85a1da09bbf3",
+      "officialBytesMatched": true
+    },
+    {
+      "path": "scripts/tests/inkwave-local-references.test.mjs",
+      "gitBlob": "24311c5d9dc055831ad1c4f1757cde93bc0d28f5",
+      "sha256": "f451147afa18761b5267a2add04887166631b11e71e365248469e3c25a69c0f2",
+      "bytes": 8405,
+      "source": "22f3b7534ae2093aef4c2549112a85a1da09bbf3",
+      "officialBytesMatched": true
+    }
+  ],
+  "referenceTests": {
+    "pass": 8,
+    "fail": 0
+  },
+  "sourceMappings": 13,
+  "actualNormalEmittedMappings": 13,
+  "retainsPR1853MigratedEdges": 9,
+  "ancestryIncludes": [
+    "702ce3d146043928fd4b783241105871515f9d92",
+    "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+    "bd5a517bc202021b0387393adf269f1612736e7a"
+  ],
+  "PRMainUpdated": false,
+  "resetFollowup": "Separate display-state fix needed: active weight .925925926 survives direct reset and advances .84375 in first new-life native update; source and actual bd5 emitted agree. This QA-only candidate preserves that production exactly."
+}

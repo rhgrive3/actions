@@ -1,0 +1,923 @@
+{
+  "site": "/workspace/scratch/respawn-weapon-20261023/before-site",
+  "build": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+  "overlay": null,
+  "scope": "full emitted Game, offline match, deterministic native input/60Hz fixed simulation; no display FPS or transport claim",
+  "errors": [],
+  "rows": [
+    {
+      "label": "death",
+      "tick": 472,
+      "state": "playing",
+      "phase": null,
+      "alive": false,
+      "fire": false,
+      "physical": false,
+      "previous": false,
+      "blocked": [],
+      "grounded": true,
+      "groundHit": true,
+      "position": [
+        0.40423213662020635,
+        0,
+        -27.206810416752205
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ],
+      "rolling": false,
+      "flick": -1,
+      "charge": 0,
+      "firing": false,
+      "ink": 100,
+      "turf": 0,
+      "shotCount": 0,
+      "paintCalls": 0,
+      "projectileCount": 0,
+      "wRoll": 0,
+      "spawnTime": 1.849998950958252,
+      "spawnPose": {
+        "family": "roller",
+        "phase": "off",
+        "age": 0.18333333730697632,
+        "weight": 0,
+        "reason": "hidden"
+      },
+      "anchor": [
+        -0.07999999821186066,
+        0.800000011920929,
+        0.2800000011920929
+      ],
+      "rotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ],
+      "source": "idle",
+      "camera": {
+        "position": [
+          0.12350129995780129,
+          3.9540102270263637,
+          -31.25191896788036
+        ],
+        "quaternion": [
+          0,
+          0.9747941070689432,
+          0.22310636213174545,
+          0
+        ]
+      },
+      "seed": 477166624,
+      "palette": [
+        "a6f01a",
+        "e02cd8"
+      ]
+    },
+    {
+      "label": "aim",
+      "tick": 982,
+      "state": "playing",
+      "phase": "aim",
+      "alive": true,
+      "fire": false,
+      "physical": false,
+      "previous": false,
+      "blocked": [
+        "fire",
+        "jump",
+        "sub",
+        "special",
+        "squid"
+      ],
+      "grounded": true,
+      "groundHit": false,
+      "position": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ],
+      "rolling": false,
+      "flick": -1,
+      "charge": 0,
+      "firing": false,
+      "ink": 100,
+      "turf": 0,
+      "shotCount": 0,
+      "paintCalls": 0,
+      "projectileCount": 0,
+      "wRoll": 0,
+      "spawnTime": 1.849998950958252,
+      "spawnPose": {
+        "family": "roller",
+        "phase": "hold",
+        "age": 0,
+        "weight": 0,
+        "reason": null
+      },
+      "anchor": [
+        -0.07999999821186066,
+        0.800000011920929,
+        0.2800000011920929
+      ],
+      "rotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ],
+      "source": "idle",
+      "camera": {
+        "position": [
+          2.6467385240997574,
+          3.500386423986328,
+          -22.185897021791
+        ],
+        "quaternion": [
+          -0.19978934423403097,
+          0.2041277023530555,
+          0.04259896827714184,
+          0.9573930368267368
+        ]
+      },
+      "seed": 477166624,
+      "palette": [
+        "a6f01a",
+        "e02cd8"
+      ]
+    },
+    {
+      "label": "launch",
+      "tick": 984,
+      "state": "playing",
+      "phase": "flight",
+      "alive": true,
+      "fire": true,
+      "physical": false,
+      "previous": true,
+      "blocked": [
+        "fire",
+        "jump",
+        "sub",
+        "special",
+        "squid"
+      ],
+      "grounded": false,
+      "groundHit": false,
+      "position": [
+        0.9078691764006462,
+        6.7,
+        -38.578893279265465
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ],
+      "rolling": false,
+      "flick": -1,
+      "charge": 0,
+      "firing": false,
+      "ink": 100,
+      "turf": 0,
+      "shotCount": 0,
+      "paintCalls": 0,
+      "projectileCount": 0,
+      "wRoll": 0,
+      "spawnTime": 1.8833322525024414,
+      "spawnPose": {
+        "family": "roller",
+        "phase": "off",
+        "age": 0.016666666666666666,
+        "weight": 0,
+        "reason": "launched"
+      },
+      "anchor": [
+        -0.11999999731779099,
+        0.8299999833106995,
+        0.1599999964237213
+      ],
+      "rotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "source": "air",
+      "camera": {
+        "position": [
+          2.643904411306702,
+          3.5104090909548593,
+          -22.214548003046072
+        ],
+        "quaternion": [
+          -0.19970762298466166,
+          0.20594815818634413,
+          0.04301731135430455,
+          0.9570014275774702
+        ]
+      },
+      "seed": 477166624,
+      "palette": [
+        "a6f01a",
+        "e02cd8"
+      ]
+    },
+    {
+      "label": "flight-49",
+      "tick": 1033,
+      "state": "playing",
+      "phase": "flight",
+      "alive": true,
+      "fire": false,
+      "physical": false,
+      "previous": false,
+      "blocked": [
+        "fire",
+        "jump",
+        "sub",
+        "special",
+        "squid"
+      ],
+      "grounded": false,
+      "groundHit": false,
+      "position": [
+        -0.34285780621525996,
+        2.4265392103663816,
+        -31.171461241930896
+      ],
+      "velocity": [
+        -1.5315024276929545,
+        -12.395300680622947,
+        9.070324943675061
+      ],
+      "rolling": false,
+      "flick": -1,
+      "charge": 0,
+      "firing": false,
+      "ink": 100,
+      "turf": 0,
+      "shotCount": 0,
+      "paintCalls": 0,
+      "projectileCount": 0,
+      "wRoll": 0,
+      "spawnTime": 2.699998140335083,
+      "spawnPose": {
+        "family": "roller",
+        "phase": "off",
+        "age": 0.016666666666666666,
+        "weight": 0,
+        "reason": "launched"
+      },
+      "anchor": [
+        -0.11999999731779099,
+        0.8299999833106995,
+        0.1599999964237213
+      ],
+      "rotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "source": "air",
+      "camera": {
+        "position": [
+          -0.6549796132576637,
+          5.97757551852461,
+          -34.95949978994448
+        ],
+        "quaternion": [
+          0,
+          0.9747941070689432,
+          0.2231063621317455,
+          0
+        ]
+      },
+      "seed": 477166624,
+      "palette": [
+        "a6f01a",
+        "e02cd8"
+      ]
+    },
+    {
+      "label": "flight-59",
+      "tick": 1043,
+      "state": "playing",
+      "phase": "flight",
+      "alive": true,
+      "fire": false,
+      "physical": false,
+      "previous": false,
+      "blocked": [
+        "fire",
+        "jump",
+        "sub",
+        "special",
+        "squid"
+      ],
+      "grounded": false,
+      "groundHit": false,
+      "position": [
+        -0.5981082108307515,
+        0.2268057704011241,
+        -29.659740417985063
+      ],
+      "velocity": [
+        -1.5315024276929412,
+        -13.589410927261751,
+        9.070324943674848
+      ],
+      "rolling": false,
+      "flick": -1,
+      "charge": 0,
+      "firing": false,
+      "ink": 100,
+      "turf": 0,
+      "shotCount": 0,
+      "paintCalls": 0,
+      "projectileCount": 0,
+      "wRoll": 0,
+      "spawnTime": 0.1666666716337204,
+      "spawnPose": {
+        "family": "roller",
+        "phase": "flight",
+        "age": 0.1666666716337204,
+        "weight": 1,
+        "reason": null
+      },
+      "anchor": [
+        -0.11999999731779099,
+        0.8549999594688416,
+        0.13499999046325684
+      ],
+      "rotation": [
+        0.6000000238418579,
+        -0.03999999910593033,
+        -0.03999999910593033
+      ],
+      "source": "air",
+      "camera": {
+        "position": [
+          -0.916966139203526,
+          3.9920134850693425,
+          -33.46162995388539
+        ],
+        "quaternion": [
+          0,
+          0.9747941070689433,
+          0.22310636213174548,
+          0
+        ]
+      },
+      "seed": 477166624,
+      "palette": [
+        "a6f01a",
+        "e02cd8"
+      ]
+    },
+    {
+      "label": "flight-60",
+      "tick": 1044,
+      "state": "playing",
+      "phase": null,
+      "alive": true,
+      "fire": false,
+      "physical": false,
+      "previous": false,
+      "blocked": [
+        "fire",
+        "jump",
+        "sub",
+        "special",
+        "squid"
+      ],
+      "grounded": true,
+      "groundHit": true,
+      "position": [
+        -0.6236332512922984,
+        -1.1102230246251565e-16,
+        -29.508568335590493
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ],
+      "rolling": false,
+      "flick": -1,
+      "charge": 0,
+      "firing": false,
+      "ink": 100,
+      "turf": 0,
+      "shotCount": 0,
+      "paintCalls": 0,
+      "projectileCount": 0,
+      "wRoll": 0,
+      "spawnTime": 0.18333333730697632,
+      "spawnPose": {
+        "family": "roller",
+        "phase": "off",
+        "age": 0.18333333730697632,
+        "weight": 0,
+        "reason": "land"
+      },
+      "anchor": [
+        -0.11999999731779099,
+        0.8549999594688416,
+        0.13499999046325684
+      ],
+      "rotation": [
+        0.6000000238418579,
+        -0.03999999910593033,
+        -0.03999999910593033
+      ],
+      "source": "air",
+      "camera": {
+        "position": [
+          -0.9364075449571092,
+          3.8075116944876686,
+          -33.35321440543203
+        ],
+        "quaternion": [
+          0,
+          0.9747941070689432,
+          0.22310636213174545,
+          0
+        ]
+      },
+      "seed": 477166624,
+      "palette": [
+        "a6f01a",
+        "e02cd8"
+      ]
+    },
+    {
+      "label": "flight-61",
+      "tick": 1045,
+      "state": "playing",
+      "phase": null,
+      "alive": true,
+      "fire": false,
+      "physical": false,
+      "previous": false,
+      "blocked": [],
+      "grounded": true,
+      "groundHit": true,
+      "position": [
+        -0.6236332512922984,
+        0,
+        -29.508568335590493
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ],
+      "rolling": false,
+      "flick": -1,
+      "charge": 0,
+      "firing": false,
+      "ink": 100,
+      "turf": 0,
+      "shotCount": 0,
+      "paintCalls": 0,
+      "projectileCount": 0,
+      "wRoll": 0,
+      "spawnTime": 0.20000000298023224,
+      "spawnPose": {
+        "family": "roller",
+        "phase": "off",
+        "age": 0.18333333730697632,
+        "weight": 0,
+        "reason": "land"
+      },
+      "anchor": [
+        -0.11999999731779099,
+        0.8299999833106995,
+        0.1599999964237213
+      ],
+      "rotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "source": "land",
+      "camera": {
+        "position": [
+          -0.9473320147664431,
+          3.6541815796779917,
+          -33.29531032921498
+        ],
+        "quaternion": [
+          0,
+          0.9747941070689433,
+          0.2231063621317455,
+          0
+        ]
+      },
+      "seed": 477166624,
+      "palette": [
+        "a6f01a",
+        "e02cd8"
+      ]
+    },
+    {
+      "label": "flight-67",
+      "tick": 1051,
+      "state": "playing",
+      "phase": null,
+      "alive": true,
+      "fire": false,
+      "physical": false,
+      "previous": false,
+      "blocked": [],
+      "grounded": true,
+      "groundHit": true,
+      "position": [
+        -0.6236332512922984,
+        0,
+        -29.508568335590493
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ],
+      "rolling": false,
+      "flick": -1,
+      "charge": 0,
+      "firing": false,
+      "ink": 100,
+      "turf": 0,
+      "shotCount": 0,
+      "paintCalls": 0,
+      "projectileCount": 0,
+      "wRoll": 0,
+      "spawnTime": 0.30000004172325134,
+      "spawnPose": {
+        "family": "roller",
+        "phase": "off",
+        "age": 0.18333333730697632,
+        "weight": 0,
+        "reason": "land"
+      },
+      "anchor": [
+        -0.11999999731779099,
+        0.8299999833106995,
+        0.1599999964237213
+      ],
+      "rotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "source": "land",
+      "camera": {
+        "position": [
+          -0.9599728902010065,
+          3.417184035511385,
+          -33.254613729276954
+        ],
+        "quaternion": [
+          0,
+          0.9747941070689433,
+          0.22310636213174542,
+          0
+        ]
+      },
+      "seed": 477166624,
+      "palette": [
+        "a6f01a",
+        "e02cd8"
+      ]
+    },
+    {
+      "label": "flight-85",
+      "tick": 1069,
+      "state": "playing",
+      "phase": null,
+      "alive": true,
+      "fire": false,
+      "physical": false,
+      "previous": false,
+      "blocked": [],
+      "grounded": true,
+      "groundHit": true,
+      "position": [
+        -0.6236332512922984,
+        0,
+        -29.508568335590493
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ],
+      "rolling": false,
+      "flick": -1,
+      "charge": 0,
+      "firing": false,
+      "ink": 100,
+      "turf": 0,
+      "shotCount": 0,
+      "paintCalls": 0,
+      "projectileCount": 0,
+      "wRoll": 0,
+      "spawnTime": 0.6000000834465027,
+      "spawnPose": {
+        "family": "roller",
+        "phase": "off",
+        "age": 0.18333333730697632,
+        "weight": 0,
+        "reason": "land"
+      },
+      "anchor": [
+        -0.11999999731779099,
+        0.8299999833106995,
+        0.1599999964237213
+      ],
+      "rotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "source": "idle",
+      "camera": {
+        "position": [
+          -0.9445208954970622,
+          3.8315884375912863,
+          -33.370255889885925
+        ],
+        "quaternion": [
+          0,
+          0.9747941070689433,
+          0.22310636213174548,
+          0
+        ]
+      },
+      "seed": 477166624,
+      "palette": [
+        "a6f01a",
+        "e02cd8"
+      ]
+    },
+    {
+      "label": "flight-110",
+      "tick": 1094,
+      "state": "playing",
+      "phase": null,
+      "alive": true,
+      "fire": false,
+      "physical": false,
+      "previous": false,
+      "blocked": [],
+      "grounded": true,
+      "groundHit": true,
+      "position": [
+        -0.6236332512922984,
+        0,
+        -29.508568335590493
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ],
+      "rolling": false,
+      "flick": -1,
+      "charge": 0,
+      "firing": false,
+      "ink": 100,
+      "turf": 0,
+      "shotCount": 0,
+      "paintCalls": 0,
+      "projectileCount": 0,
+      "wRoll": 0,
+      "spawnTime": 1.0166664123535156,
+      "spawnPose": {
+        "family": "roller",
+        "phase": "off",
+        "age": 0.18333333730697632,
+        "weight": 0,
+        "reason": "land"
+      },
+      "anchor": [
+        -0.11999999731779099,
+        0.8299999833106995,
+        0.1599999964237213
+      ],
+      "rotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "source": "idle",
+      "camera": {
+        "position": [
+          -0.9214799474403175,
+          3.9218151317948653,
+          -33.48752234442823
+        ],
+        "quaternion": [
+          0,
+          0.9747941070689432,
+          0.2231063621317455,
+          0
+        ]
+      },
+      "seed": 477166624,
+      "palette": [
+        "a6f01a",
+        "e02cd8"
+      ]
+    },
+    {
+      "label": "flight-145",
+      "tick": 1129,
+      "state": "playing",
+      "phase": null,
+      "alive": true,
+      "fire": false,
+      "physical": false,
+      "previous": false,
+      "blocked": [],
+      "grounded": true,
+      "groundHit": true,
+      "position": [
+        -0.6236332512922984,
+        0,
+        -29.508568335590493
+      ],
+      "velocity": [
+        0,
+        0,
+        0
+      ],
+      "rolling": false,
+      "flick": -1,
+      "charge": 0,
+      "firing": false,
+      "ink": 100,
+      "turf": 0,
+      "shotCount": 0,
+      "paintCalls": 0,
+      "projectileCount": 0,
+      "wRoll": 0,
+      "spawnTime": 1.599999189376831,
+      "spawnPose": {
+        "family": "roller",
+        "phase": "off",
+        "age": 0.18333333730697632,
+        "weight": 0,
+        "reason": "land"
+      },
+      "anchor": [
+        -0.07999999821186066,
+        0.800000011920929,
+        0.2800000011920929
+      ],
+      "rotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ],
+      "source": "idle",
+      "camera": {
+        "position": [
+          -0.907923400485867,
+          3.95032238235263,
+          -33.546041784307754
+        ],
+        "quaternion": [
+          0,
+          0.9747941070689432,
+          0.2231063621317455,
+          0
+        ]
+      },
+      "seed": 477166624,
+      "palette": [
+        "a6f01a",
+        "e02cd8"
+      ]
+    }
+  ],
+  "gestures": [
+    "play",
+    "mode-turf",
+    "start"
+  ],
+  "runtimeResponses": [
+    {
+      "path": "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/roller.mjs",
+      "status": 200,
+      "sha256": "3bb6bb6f9ceeffed97b0cbaf1f2737d84fca7362b7700892070e2a0219073598"
+    },
+    {
+      "path": "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/roller-detail-motion.mjs",
+      "status": 200,
+      "sha256": "c62102b32d29792a197d76ab37f6074849f2d78efd6b02a0c8f96fc40e1f934b"
+    },
+    {
+      "path": "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+      "status": 200,
+      "sha256": "1c1bfc50619302e977e0df005d130a7c1757aac636fa6bbde93a780bf40390d4"
+    },
+    {
+      "path": "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/respawn-lifecycle.mjs",
+      "status": 200,
+      "sha256": "3efcb07ae094262be3eebc68b048662331b084fec01eb53061c74ddbb1bbfb2c"
+    },
+    {
+      "path": "/patches/splatoon3/runtime/roller.mjs",
+      "status": 200,
+      "sha256": "3bb6bb6f9ceeffed97b0cbaf1f2737d84fca7362b7700892070e2a0219073598"
+    },
+    {
+      "path": "/patches/splatoon3/runtime/respawn-lifecycle.mjs",
+      "status": 200,
+      "sha256": "3efcb07ae094262be3eebc68b048662331b084fec01eb53061c74ddbb1bbfb2c"
+    },
+    {
+      "path": "/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+      "status": 200,
+      "sha256": "1c1bfc50619302e977e0df005d130a7c1757aac636fa6bbde93a780bf40390d4"
+    }
+  ],
+  "setup": {
+    "label": "settled",
+    "tick": 472,
+    "state": "playing",
+    "phase": null,
+    "alive": true,
+    "fire": false,
+    "physical": false,
+    "previous": false,
+    "blocked": [],
+    "grounded": true,
+    "groundHit": true,
+    "position": [
+      0.40423213662020635,
+      0,
+      -27.206810416752205
+    ],
+    "velocity": [
+      0,
+      0,
+      0
+    ],
+    "rolling": false,
+    "flick": -1,
+    "charge": 0,
+    "firing": false,
+    "ink": 100,
+    "turf": 0,
+    "shotCount": 0,
+    "paintCalls": 0,
+    "projectileCount": 0,
+    "wRoll": 0,
+    "spawnTime": 1.849998950958252,
+    "spawnPose": {
+      "family": "roller",
+      "phase": "off",
+      "age": 0.18333333730697632,
+      "weight": 0,
+      "reason": "land"
+    },
+    "anchor": [
+      -0.07999999821186066,
+      0.800000011920929,
+      0.2800000011920929
+    ],
+    "rotation": [
+      -2.5,
+      0.03999999910593033,
+      1
+    ],
+    "source": "idle",
+    "camera": {
+      "position": [
+        0.12350129995780129,
+        3.9540102270263637,
+        -31.25191896788036
+      ],
+      "quaternion": [
+        0,
+        0.9747941070689432,
+        0.22310636213174545,
+        0
+      ]
+    },
+    "seed": 477166624,
+    "palette": [
+      "a6f01a",
+      "e02cd8"
+    ]
+  },
+  "servedOverrides": [],
+  "status": "captured"
+}

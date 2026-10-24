@@ -1,0 +1,65 @@
+{
+  "status": "candidate awaiting independent parent review; no PR update",
+  "base": "702ce3d146043928fd4b783241105871515f9d92",
+  "branch": "fix/respawn-spawn-owner-predicate-20261023",
+  "normalBuild": {
+    "inputHash": "fedfdd0c90001397b7a905d4ce4892d472c3d208f428f72a847b4c3fbcd9c8b1",
+    "contentHash": "d06bdd157e91f91b87c2e55cb6394ffdb0e85188ec81e68a875a73c7286be557",
+    "inputs": 1420,
+    "artifactBodiesVerified": 2110,
+    "runtimeSha256": "1756151408ac7e6a27ae97b4ce62044bea04d9782924928b96b7a30112663dde",
+    "protectedPathsUnchanged": [
+      "patches/splatoon3/runtime/roller.mjs",
+      "patches/splatoon3/runtime/roller-detail-motion.mjs",
+      "patches/splatoon3/runtime/respawn-lifecycle.mjs"
+    ]
+  },
+  "tests": {
+    "source-final": {
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "emitted-final": {
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "lifecycle-contracts": {
+      "tests": 76,
+      "pass": 76,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0
+    }
+  },
+  "failureControls": {
+    "702Source": {
+      "tests": 4,
+      "pass": 1,
+      "fail": 3
+    },
+    "702NormalEmitted": {
+      "tests": 4,
+      "pass": 1,
+      "fail": 3
+    }
+  },
+  "matchedSourceReplay": {
+    "physicsTimerLifecycleInputActionSamples": 88,
+    "prematureReadySamplesBefore": 6,
+    "prematureReadySamplesAfter": 0,
+    "firstBadY": -5.917921178423665,
+    "firstBadSpawnTime": 0.5333334803581238,
+    "lowerFloorY": -8,
+    "finalPostLandingReadySpawnTime": 0.6500000357627869
+  },
+  "originalPR1862Updated": false,
+  "newPRCreated": false,
+  "bigReadyAppearanceQuestion": "deferred; no appearance/geometry/curve/grip/IK change",
+  "patchSha256": "06e4b42d43c8e3b5dbaf4af9fc586c51572049b8a90fa9738bced34fa128d157"
+}

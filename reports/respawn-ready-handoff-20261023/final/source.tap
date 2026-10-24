@@ -1,0 +1,31 @@
+(node:12354) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native respawn ready handoff starts immediately without a one-tick half-turn, at 30/60/120 Hz (23122.684987ms)
+✔ display fade preserves every canonical channel, gameplay muzzle, native state and real shot trajectory (39859.532697ms)
+✔ missed support retains native spawn ownership, then fades only after actual supported touchdown (4379.797334ms)
+✔ ordinary jump and weapon/life reuse cannot inherit a spawn display transition (3495.263854ms)
+✔ direct remote post-touchdown presentation uses the same display return without proxy attacks (3230.142923ms)
+(node:12420) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ lost support over a lower dry floor never releases ready before native supported touchdown (26854.601629ms)
+✔ native aim and flight keep ownership; a supported landing releases ready immediately (3647.884086ms)
+✔ helper reads only its bound active local/remote lifecycle and respects reuse and reset (0.80203ms)
+✔ detached ordinary air/hold and disabled presentation retain their existing fallback and pose gates (0.20995ms)
+(node:12461) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ native no-attack respawn landing releases spawn weapon pose while its timer remains young (35857.506272ms)
+✔ held attack before death, release during spawn, and launch tap never paints after landing (7046.100989ms)
+✔ a fresh attack after native landing has its real flick pose and weapon-specific release delay (14653.617317ms)
+✔ release and fresh launch press intentionally held through landing is admitted; stale holds stay blocked (10442.38104ms)
+✔ other weapon families leave runner/animation idle, fresh input still shoots or charges (37510.089961ms)
+✔ ordinary jump, superjump, weapon change, repeated death/reset and dispose do not invent spawn action (6733.083151ms)
+✔ remote spawn event and sampled landing use the same ordinary ready pose without proxy paint (4022.074789ms)
+✔ spawn rearm observes physical release through filtered intent; disabled presentation retains its legacy gate (5753.984377ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 229775.400088

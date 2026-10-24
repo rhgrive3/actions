@@ -1,0 +1,212 @@
+{
+  "files": [
+    {
+      "path": "reports/respawn-active-reset-20261023/README.md",
+      "bytes": 4364,
+      "sha256": "129d2172f96d43996f16037915ad2d1609310a4af4b268601596d2147c3ca836"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/before-active-reset-emitted-final.tap.gz",
+      "bytes": 711,
+      "sha256": "0c85552d35565b5ecce6191f3b0d0abc7051a8796672afa380919d2f622d29ac"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/before-active-reset-emitted.tap.gz",
+      "bytes": 711,
+      "sha256": "9fd30b40ec38436790fea8185396b714c6120db93819ec2b0d572b3c21286259"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/before-active-reset-source-final.tap.gz",
+      "bytes": 713,
+      "sha256": "acbf117e1da1b59b2bf4e288d1be11133fccd55471fc60a3137e2c28474aa76c"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/before-active-reset-source.tap.gz",
+      "bytes": 711,
+      "sha256": "5e5977d1c51767da329f20019b9cc20ff60b2552ba504332b5750f6344f890ac"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/browser-after/build-manifest.json.gz",
+      "bytes": 194833,
+      "sha256": "1319c7172dd207bb2eedc42591f434ecd304661d376cf2c540749b52da7ecfbd"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/browser-after/normal-62.png",
+      "bytes": 556563,
+      "sha256": "0f43f8bf0350daf98a23d27878ca0bfe5e384be1f196cadf40dd5ac9cf89b9a8"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/browser-after/receipt.json",
+      "bytes": 247239,
+      "sha256": "e0c05825d8a35acd66920df5daf795296b7291d31d8b8c45f364dd4931539648"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/browser-after/reset-first.png",
+      "bytes": 556266,
+      "sha256": "df881b24c6e5ec90ac9fb1e39b1adfe29c2f8e8597a6d0f8a2e06af9e9d76c42"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/browser-after/reset-immediate.png",
+      "bytes": 556054,
+      "sha256": "27cfb199b52d3617dd004b248272d687c57bed08ff82f30523b8c82d7cbe7201"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/browser-after/settled.png",
+      "bytes": 568127,
+      "sha256": "c77bb952a9c7847f095c2b2924b5401061d78c5a357f212f97317f717c1a3036"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/browser-after.log.gz",
+      "bytes": 985,
+      "sha256": "0545dbbd5057da4a7518decdbdb7c0a845ae3033dd1841d4f9880f8f2ede60c8"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/browser-before/build-manifest.json.gz",
+      "bytes": 194835,
+      "sha256": "20e99f147a96ceb6a016f5e4ade0f127ae48adfe418848c6f5c1d3885a242f50"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/browser-before/normal-62.png",
+      "bytes": 556510,
+      "sha256": "231d7a5ea946865818b0dafc6467612672befa0ab1a4f7d73909d7134b01e19f"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/browser-before/receipt.json",
+      "bytes": 247387,
+      "sha256": "5c32e55dac8f587fd789f9c1c216bd7616654e28b9277c2d5f5761bdc61c8027"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/browser-before/reset-first.png",
+      "bytes": 561485,
+      "sha256": "c12bad2af71782f1884352817855427a964b702817775cc48193a1d76627f35a"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/browser-before/reset-immediate.png",
+      "bytes": 557432,
+      "sha256": "fff351d2e393f30da2c1452ab2c9a9d7574a0610096c4a7f26d28a6eb3e51bc9"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/browser-before/settled.png",
+      "bytes": 568141,
+      "sha256": "fd95bdc24b88bd7336b5a14a12d8fb4ad0142916b034ed7cd093ffe138f0df53"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/browser-before.log.gz",
+      "bytes": 894,
+      "sha256": "2d68fcdbd4d659a572f2483234912554e75fbca5ee032890c938ff84e0cf3146"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/browser-comparison.json",
+      "bytes": 5346,
+      "sha256": "6566eb5c4e000647bee2a7f61a9dfad87cf93af1ab1fdd9863aee12a2428e739"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/browser-comparison.log",
+      "bytes": 489,
+      "sha256": "2bf1623340a3cbf063eccf4b8d3b5288b2eb35db92f485bc30992a2f7c7428b4"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/build-verification.json",
+      "bytes": 538,
+      "sha256": "a647c950f731dec35689dffd8187eb07a0632374c28e3772679f44934aeef516"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/build.log.gz",
+      "bytes": 544,
+      "sha256": "b4d18a4957364ef9381ad5296dc9e0ff5b9efdf2bc3fb6cb436ebce8309a5ae7"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/current-refs.json",
+      "bytes": 311,
+      "sha256": "083c6d93fcafa62d89915d67508c9830b9e25621707b96d34b4f57b3867f9d6f"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/emitted-final.tap",
+      "bytes": 2693,
+      "sha256": "34988acd3e77151c79a5dbd1c20b9b8ea4677a9bdfdef1e55d680b2e9bfe1e20"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/emitted-references.json",
+      "bytes": 6820,
+      "sha256": "ad5f553fa9f3c2f2edac254e5f873518f4391ce1bde3fde7045041a01e4c23f3"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/first-reset-test.mjs.gz",
+      "bytes": 3134,
+      "sha256": "300f8c608bb6e127a28c23e59596693e55d35118438d1660ac02e231fd447750"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/focused-source.tap",
+      "bytes": 415,
+      "sha256": "bd4602523b539d01e0d42a725e7b2a0c669f4cb7238ea8d45c2c3b7efbbb416f"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/qa-only-official-verification.json",
+      "bytes": 727,
+      "sha256": "65b83826d51c70a793edfc52d89904e85c7202a7a9e2916a951e13aa44742cf5"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/reference-tests.tap",
+      "bytes": 911,
+      "sha256": "a743012b38aaef276b5368451a367b92ec4226fa391049bab74c4cb521aa46fb"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/runtime.patch.gz",
+      "bytes": 858,
+      "sha256": "ad6d45c19bc27f4ad1d1acdea39aff09582f28854aa5b5819584feb5bbfea5d0"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/source-final.tap",
+      "bytes": 2693,
+      "sha256": "ea08e5f00e3f9dfada379029daa739326f0d61b827bd9e5d1e3d97a4051e916f"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/source-references.json",
+      "bytes": 6834,
+      "sha256": "67a4c6bc0df9978f2c7e3228f36dcadbf3af6986fd6f0a67720d888104fd8795"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/startup-budget.log",
+      "bytes": 520,
+      "sha256": "c0e2fd5626a5193b4e79c664b8cae8b14168610e3feb42ce7ee5371e94d0bc8d"
+    },
+    {
+      "path": "reports/respawn-active-reset-20261023/verification.json",
+      "bytes": 1154,
+      "sha256": "c6a4ccbd883de432822beb4275d99fbc3b43aaa37ecd6f5ae2c86e7aa4b255e9"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-handoff-motion.mjs",
+      "bytes": 19517,
+      "sha256": "dc507aa54dcec2aee09fcaea6dc5209b44ba0e635aa3a9d6d959f379005fb916"
+    },
+    {
+      "path": "patches/splatoon3/tests/respawn-ready-handoff.test.mjs",
+      "bytes": 9386,
+      "sha256": "b8f01f3f37822de59df1fdecb3ed7837ef994f4bf9c86f6382024618c825edda"
+    },
+    {
+      "path": "scripts/check-inkwave-respawn-active-reset-browser.mjs",
+      "bytes": 12339,
+      "sha256": "17239a502ce94aa623784c97ed5bd0559a013513f6c624a6704dbe849637d7b1"
+    },
+    {
+      "path": "scripts/compare-inkwave-respawn-active-reset-browser.mjs",
+      "bytes": 4332,
+      "sha256": "587fa9b978261cc6dfa5c50aa3efa991302a362cf44f470023ed0e755b7e438a"
+    },
+    {
+      "path": "scripts/check-inkwave-local-references.mjs",
+      "bytes": 11322,
+      "sha256": "96f0b939f7f7a13d89de9f00ee881bf8727755624f4f6194c694779c7e6c965d"
+    },
+    {
+      "path": "scripts/tests/inkwave-local-references.test.mjs",
+      "bytes": 8405,
+      "sha256": "f451147afa18761b5267a2add04887166631b11e71e365248469e3c25a69c0f2"
+    }
+  ],
+  "nativeResetAndOtherProductionBytesPreserved": true,
+  "normalHandoffAndArcBodiesPreserved": true,
+  "ancestryChecksPassed": true
+}

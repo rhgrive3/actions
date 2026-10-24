@@ -53,6 +53,12 @@ on:
       - 'scripts/fixtures/inkwave-31pr-paint-source-pair.json.gz'
       - 'scripts/tests/inkwave-31pr-paint-source-pair.test.mjs'
       - 'scripts/lib/inkwave-source-admission-cli.mjs'
+      - 'scripts/lib/inkwave-projectile-current-pair.mjs'
+      - 'scripts/fixtures/inkwave-projectile-current-pair-20261023.json.gz'
+      - 'scripts/lib/inkwave-respawn1862-production-pair.mjs'
+      - 'scripts/fixtures/inkwave-respawn1862-production-pair.json.gz'
+      - 'scripts/tests/inkwave-respawn1862-production-pair.test.mjs'
+      - 'scripts/verify-inkwave-respawn1862-production-pair.mjs'
       - 'scripts/lib/inkwave-runtime-ui-production-epoch.mjs'
       - 'scripts/lib/inkwave-reviewed-special-delta-admission.mjs'
       - 'scripts/fixtures/inkwave-reviewed-special-before-sources.json.gz'
@@ -178,6 +184,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: ${{ (github.event.pull_request.number == 1862 || github.head_ref == 'fix/respawn-weapon-state-20261023') && 2 || 1 }}
       - name: Verify immutable candidate and dispatch pair
         shell: bash
         env:
@@ -218,7 +225,7 @@ jobs:
           node-version: 22
       - name: Verify fail-closed immutable workflow routes
         if: ${{ matrix.side == 'after' }}
-        run: node --test --test-concurrency=1 scripts/tests/inkwave-exact-head-workflow-routes.test.mjs scripts/tests/inkwave-main26a4-production-epoch.test.mjs scripts/tests/inkwave-runtime-ui-production-epoch.test.mjs scripts/tests/inkwave-reviewed-special-delta-admission.test.mjs scripts/tests/inkwave-roller-pr1856-projectile-pair.test.mjs
+        run: node --test scripts/tests/inkwave-exact-head-workflow-routes.test.mjs scripts/tests/inkwave-main26a4-production-epoch.test.mjs scripts/tests/inkwave-runtime-ui-production-epoch.test.mjs scripts/tests/inkwave-respawn1862-production-pair.test.mjs scripts/tests/inkwave-roller-pr1856-projectile-pair.test.mjs --test-concurrency=1 scripts/tests/inkwave-reviewed-special-delta-admission.test.mjs
       - name: Install pinned build and browser tools
         run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
       - name: Install Chromium
@@ -250,6 +257,20 @@ jobs:
           echo "INKWAVE_REFERENCE_ROOT=.ci-audio-reference" >> "$GITHUB_ENV"
           node .ci-baseline/scripts/build-inkwave.mjs .ci-baseline/inkwave-public .built-site/pristine-main
           cp .built-site/pristine-main/inkwave-build.json .ci-scratch/projectile-visuals/before/pristine-main-build.json
+      - name: Verify owned PR1862 production pair and rejection controls without replay
+        if: ${{ matrix.side == 'before' && (github.event.pull_request.number == 1862 || github.head_ref == 'fix/respawn-weapon-state-20261023') }}
+        env:
+          DECLARED_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          DECLARED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          INKWAVE_RESPAWN_PAIR_BASELINE="$INKWAVE_REFERENCE_ROOT" node --test scripts/tests/inkwave-respawn1862-production-pair.test.mjs
+          node scripts/verify-inkwave-respawn1862-production-pair.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode pr1862-main3003-f253-production-pair --expected-source-base 3003088e7d3da6e3b41829a96714698a348b555b --expected-source-head f253b8aa2e23bcb9e40805a9d389a8220ad6dbec --role controls --receipt .ci-scratch/projectile-visuals/before/respawn-production-controls.json
+      - name: Admit owned PR1862 production reference without replay
+        if: ${{ matrix.side == 'before' && (github.event.pull_request.number == 1862 || github.head_ref == 'fix/respawn-weapon-state-20261023') }}
+        env:
+          DECLARED_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          DECLARED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/verify-inkwave-respawn1862-production-pair.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --base-sha "$DECLARED_BASE_SHA" --candidate-sha "$DECLARED_HEAD_SHA" --expected-mode pr1862-main3003-f253-production-pair --expected-source-base 3003088e7d3da6e3b41829a96714698a348b555b --expected-source-head f253b8aa2e23bcb9e40805a9d389a8220ad6dbec --role prepare --receipt .ci-scratch/projectile-visuals/before/baseline-birth-adjustment.json
       - name: Bind reviewed source controls to declared immutable Git source leaves
         if: ${{ matrix.side == 'before' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.repository == 'rhgrive3/actions' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'inkwave/special-reviewed-main726-20261023') || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.base.sha == '26a4db4123d23162a3dbf8a12150b1b5bc6ccf64' && github.repository == 'rhgrive3/actions' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'inkwave/runtime-ui-acceptance-20261022') || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'inkwave/exact-head-ci-main144-20261022') || github.event.pull_request.number == 1758 || github.head_ref == 'test/inkwave-combined-qa-20261021' || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && (github.head_ref == 'inkwave/runtime-acceptance-0f3-prep-20261022' || github.head_ref == 'inkwave/runtime-acceptance-followup-20261022' || github.head_ref == 'inkwave/runtime-main-a350-integration-20261022' || github.head_ref == 'integrate/all-open-prs-20261022' || github.head_ref == 'fix/queue-30-recovery-20261022' || (github.head_ref == 'fix/stringer-splatana-review-20261023' && github.event.pull_request.head.repo.full_name == github.repository) || (github.head_ref == 'integrate/inkwave-all-prs-20261022' && github.event.pull_request.head.repo.full_name == github.repository)))) }}
         env:
@@ -291,7 +312,7 @@ jobs:
         if: ${{ matrix.side == 'before' && github.event.pull_request.base.ref == 'main' && (github.event.pull_request.base.sha == '9b0e402313686d8f8ad0f70585b01915e904e641' || ((github.event.pull_request.base.sha == 'b77b51df6a4e6683ca23a213c8ba4b0bc2f0c8ae' || (github.event.pull_request.base.sha == 'ada098a8fe5f2b9f2990f10812c01acb70bde190' || github.event.pull_request.base.sha == 'da285129eb919d094d29e6a9b388f5eeb11059e9')) && github.event.pull_request.number == 1695)) }}
         run: node scripts/check-inkwave-current-pair-controls.mjs --baseline "$INKWAVE_REFERENCE_ROOT" --candidate . --receipt .ci-scratch/projectile-visuals/before/current-pair-controls.json
       - name: Replay reviewed Roller births, pool reset and pinned paint in the main reference
-        if: ${{ matrix.side == 'before' && github.event.pull_request.number != 1651 }}
+        if: ${{ matrix.side == 'before' && github.event.pull_request.number != 1651 && github.event.pull_request.number != 1862 && github.head_ref != 'fix/respawn-weapon-state-20261023' }}
         env:
           PAIR_EVENT_NAME: ${{ github.event_name }}
           PAIR_BASE_REF: ${{ github.event.pull_request.base.ref }}

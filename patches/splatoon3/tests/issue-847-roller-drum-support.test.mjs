@@ -7,23 +7,23 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { createHash } from 'node:crypto';
+import { gunzipSync } from 'node:zlib';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import { ALL_31_PRS_FIXTURE_SHA256 } from '../../../scripts/lib/inkwave-31pr-paint-source-pair.mjs';
 import { rollerDrumSupport, rollerStickActive } from '../runtime/roller.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SRC = path.join(ROOT, 'inkwave-public');
 const FROZEN_B34_SHA256 = '52e587f60d6211054c2bad04f746471e85ebdb0295e051f797b41a0019847eb7';
 const adaptProductionSource = adaptBuildSource;
-// Refreshed after main f8c898202b61695cbc8343238934580a26b68e03 changed only
-// verticalRollerPose presentation. The stick/support mutations below are unchanged.
-// Reviewed integration changes only reentrant flick pose scratch storage;
-// all three stick/support counterfactual anchors remain exact.
+// PR1862 changes only the spawn presentation import/admission in this Roller
+// input. All three stick/support counterfactual anchors remain exact.
+// Keep the prior scratch epoch checked against its immutable fixture below.
 // Prior #1726 input: 449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb.
-// Shaft-return candidate affects unheld nonrolling presentation only; all
-// three fault anchors, historical b34 source and thresholds are unchanged.
+const HISTORICAL_ROLLER_SHA256 = '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973';
 const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
-  "patches/splatoon3/runtime/roller.mjs": "fd4e07a11b36625cc6a00a888b6bf56670b51950f8bf2102a762d57c1659dcbb",
+  "patches/splatoon3/runtime/roller.mjs": "139cf542bb9add61a15e63666bedb867025fcee96d533de2aab83d4ff06cc494",
   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e6e06374bc3a0a2bd6dcceafbbe16b4882b8e8d8f9e6ff39f5aeda3dc12ec64d"
 });
 const headlessPaintRenderer = () => ({
@@ -53,9 +53,29 @@ function exactFault(source, needle, replacement, name) {
   assert.equal(source.split(needle).length-1,1,'counterfactual anchor '+name);
   return source.replace(needle,replacement);
 }
+function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel), 'utf8')) {
+  // Fail before creating/linking any VM modules: an unreviewed input must not
+  // strand dependent link promises and reject again after the test has ended.
+  const sources = new Map();
+  for (const [rel, hash] of Object.entries(COUNTERFACTUAL_INPUT_SHA256)) {
+    const raw = read(rel);
+    assert.equal(typeof raw, 'string', 'counterfactual input '+rel);
+    assert.equal(createHash('sha256').update(raw).digest('hex'), hash, 'counterfactual input '+rel);
+    let source = adaptProductionSource(rel, raw);
+    if (rel === 'patches/splatoon3/runtime/roller.mjs') {
+      source=exactFault(source,'return !!mv && Math.hypot(mv.x, mv.z) > STICK_EPS;','return true;','roller-stick');
+      source=exactFault(source,'const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);','const sup = onFlickPath ? null : {floor:a.grounded,wall:false,supported:a.grounded};','roller-support');
+    } else {
+      source=exactFault(source,'    Math.hypot(a.intent?.move?.x || 0, a.intent?.move?.z || 0) <= 1e-9 ||\n','','physical-paint-stick');
+    }
+    sources.set(rel, source);
+  }
+  return sources;
+}
 async function production({ counterfactual = false } = {}) {
   const cacheKey = counterfactual ? 'counterfactual' : 'current';
   if (apis.has(cacheKey)) return apis.get(cacheKey);
+  const faults = counterfactual ? counterfactualSources() : null;
   const context = vm.createContext({ console, performance, URL, innerHeight: 720 });
   const modules = new Map();
   const load = (requested) => {
@@ -64,18 +84,8 @@ async function production({ counterfactual = false } = {}) {
     if (file.startsWith(path.join(ROOT, 'src') + path.sep)) file = path.join(SRC, path.relative(ROOT, file));
     if (modules.has(file)) return modules.get(file);
     const rel = file.startsWith(SRC + path.sep) ? path.relative(SRC, file) : path.relative(ROOT, file);
-    const raw = fs.readFileSync(file, 'utf8');
-    let source = adaptProductionSource(rel.split(path.sep).join('/'), raw);
-    // Exact input hashes and anchors fail closed if the owners change.
-    if (counterfactual && Object.hasOwn(COUNTERFACTUAL_INPUT_SHA256, rel))
-      assert.equal(createHash('sha256').update(raw).digest('hex'), COUNTERFACTUAL_INPUT_SHA256[rel], 'counterfactual input '+rel);
-    // Production files stay untouched.
-    if(counterfactual && rel==='patches/splatoon3/runtime/roller.mjs') {
-      source=exactFault(source,'return !!mv && Math.hypot(mv.x, mv.z) > STICK_EPS;','return true;','roller-stick');
-      source=exactFault(source,'const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);','const sup = onFlickPath ? null : {floor:a.grounded,wall:false,supported:a.grounded};','roller-support');
-    }
-    if(counterfactual && rel==='patches/splatoon3/runtime/roller-contact-paint.mjs')
-      source=exactFault(source,'    Math.hypot(a.intent?.move?.x || 0, a.intent?.move?.z || 0) <= 1e-9 ||\n','','physical-paint-stick');
+    // Faults were hash/anchor-checked before linking. Production stays untouched.
+    const source = faults?.get(rel) ?? adaptProductionSource(rel.split(path.sep).join('/'), fs.readFileSync(file, 'utf8'));
     const mod = new vm.SourceTextModule(source,
       { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
     modules.set(file, mod); return mod;
@@ -259,6 +269,27 @@ test('847 owner and remote share native contact; NetMatch drops remote damage an
 
 test('847 frozen b34 roller source retains its recorded single-module identity', () => {
   frozenRollerSource();
+});
+
+test('847 prior scratch epoch retains its historical hash independently of current source', () => {
+  const packed = fs.readFileSync(new URL('../../../scripts/fixtures/inkwave-31pr-paint-source-pair.json.gz', import.meta.url));
+  assert.equal(createHash('sha256').update(packed).digest('hex'), ALL_31_PRS_FIXTURE_SHA256);
+  const source = JSON.parse(gunzipSync(packed)).post30Pose['patches/splatoon3/runtime/roller.mjs'];
+  assert.equal(createHash('sha256').update(source).digest('hex'), HISTORICAL_ROLLER_SHA256);
+});
+
+test('847 rejects missing or modified fault inputs before VM linking and keeps exact fault anchors', () => {
+  const inputs = new Map(Object.keys(COUNTERFACTUAL_INPUT_SHA256).map(rel => [rel, fs.readFileSync(path.join(ROOT, rel), 'utf8')]));
+  for (const rel of inputs.keys()) for (const missing of [false, true]) {
+    const drift = new Map(inputs);
+    if (missing) drift.delete(rel); else drift.set(rel, drift.get(rel)+' ');
+    assert.throws(() => counterfactualSources(p => drift.get(p)), /counterfactual input/);
+  }
+  assert.throws(() => exactFault('anchor anchor', 'anchor', '', 'duplicate'), /counterfactual anchor/);
+  assert.throws(() => exactFault('other', 'anchor', '', 'missing'), /counterfactual anchor/);
+  const faults = counterfactualSources(p => inputs.get(p));
+  assert.equal(faults.size, 2);
+  for (const rel of inputs.keys()) assert.notEqual(faults.get(rel), adaptProductionSource(rel, inputs.get(rel)));
 });
 
 test('847 explicit current-source admission faults expose the guarded regressions', async () => {

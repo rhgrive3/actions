@@ -1,0 +1,252 @@
+TAP version 13
+# [INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+#     at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+#     at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+#     at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+#     at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:123:13)
+#     at async Test.run (node:internal/test_runner/test:1389:7)
+#     at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+#   code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+# }
+# [INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+#     at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+#     at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+#     at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+#     at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:140:13)
+#     at async Test.run (node:internal/test_runner/test:1389:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+#   code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+# }
+# [INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+#     at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+#     at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+#     at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+#     at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:142:13)
+#     at async Test.run (node:internal/test_runner/test:1389:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+#   code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+# }
+# [INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+#     at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+#     at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+#     at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+#     at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:168:13)
+#     at async Test.run (node:internal/test_runner/test:1389:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+#   code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+# }
+# [INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+#     at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+#     at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+#     at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+#     at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:200:15)
+#     at async Test.run (node:internal/test_runner/test:1389:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+#   code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+# }
+# [INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+#     at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+#     at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+#     at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+#     at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:233:17)
+#     at async Test.run (node:internal/test_runner/test:1389:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+#   code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+# }
+# [INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+#     at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+#     at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+#     at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+#     at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:234:18)
+#     at async Test.run (node:internal/test_runner/test:1389:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+#   code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+# }
+# [INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+#     at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+#     at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+#     at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+#     at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:235:18)
+#     at async Test.run (node:internal/test_runner/test:1389:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+#   code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+# }
+# [INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+#     at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+#     at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+#     at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+#     at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:297:13)
+#     at async Test.run (node:internal/test_runner/test:1389:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+#   code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+# }
+# [INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+#     at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+#     at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+#     at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+#     at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:298:13)
+#     at async Test.run (node:internal/test_runner/test:1389:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+#   code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+# }
+# [INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+#     at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+#     at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+#     at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+#     at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:319:22)
+#     at async Test.run (node:internal/test_runner/test:1389:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+#   code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+# }
+# [INKWAVE optional source motion] TypeError [ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING]: A dynamic import callback was not specified.
+#     at importModuleDynamicallyCallback (node:internal/modules/esm/utils:279:9)
+#     at new Character (/workspace/actions/inkwave-public/src/game/character.js:593:39)
+#     at new Actor (/workspace/actions/inkwave-public/src/game/actor.js:74:22)
+#     at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:331:20)
+#     at async Test.run (node:internal/test_runner/test:1389:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+#   code: 'ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING'
+# }
+# (node:16503) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: 847 flat rolling unchanged on full production composition
+ok 1 - 847 flat rolling unchanged on full production composition
+  ---
+  duration_ms: 13106.020237
+  type: 'test'
+  ...
+# Subtest: 847 no-stick residual keeps the drum down but stops native paint, ink drain, and damage without changing velocity
+ok 2 - 847 no-stick residual keeps the drum down but stops native paint, ink drain, and damage without changing velocity
+  ---
+  duration_ms: 160.177449
+  type: 'test'
+  ...
+# Subtest: 847 airborne wall drum contact preserves rolling
+ok 3 - 847 airborne wall drum contact preserves rolling
+  ---
+  duration_ms: 10.002753
+  type: 'test'
+  ...
+# Subtest: 847 ledge drum void suppresses rolling while feet stay grounded
+ok 4 - 847 ledge drum void suppresses rolling while feet stay grounded
+  ---
+  duration_ms: 29.298853
+  type: 'test'
+  ...
+# Subtest: 847 support probe falls back to feet grounding without stage collision
+ok 5 - 847 support probe falls back to feet grounding without stage collision
+  ---
+  duration_ms: 0.563182
+  type: 'test'
+  ...
+# Subtest: 847 owner and remote share native contact; NetMatch drops remote damage and native hit updates survive
+ok 6 - 847 owner and remote share native contact; NetMatch drops remote damage and native hit updates survive
+  ---
+  duration_ms: 27.504272
+  type: 'test'
+  ...
+# Subtest: 847 frozen b34 roller source retains its recorded single-module identity
+ok 7 - 847 frozen b34 roller source retains its recorded single-module identity
+  ---
+  duration_ms: 0.911842
+  type: 'test'
+  ...
+# Subtest: 847 prior scratch epoch retains its historical hash independently of current source
+ok 8 - 847 prior scratch epoch retains its historical hash independently of current source
+  ---
+  duration_ms: 22.529648
+  type: 'test'
+  ...
+# Subtest: 847 rejects missing or modified fault inputs before VM linking and keeps exact fault anchors
+ok 9 - 847 rejects missing or modified fault inputs before VM linking and keeps exact fault anchors
+  ---
+  duration_ms: 8.143479
+  type: 'test'
+  ...
+# Subtest: 847 explicit current-source admission faults expose the guarded regressions
+ok 10 - 847 explicit current-source admission faults expose the guarded regressions
+  ---
+  duration_ms: 13220.645384
+  type: 'test'
+  ...
+# Subtest: all thirteen exact source leaves admit without replay or a physics equality claim
+ok 11 - all thirteen exact source leaves admit without replay or a physics equality claim
+  ---
+  duration_ms: 52.576689
+  type: 'test'
+  ...
+# Subtest: missing, changed, reversed and falsely identical current tuples cannot gain admission
+ok 12 - missing, changed, reversed and falsely identical current tuples cannot gain admission
+  ---
+  duration_ms: 1134.790969
+  type: 'test'
+  ...
+# Subtest: all sixteen pose leaves preserve the reviewed Roller scratch difference without replay
+ok 13 - all sixteen pose leaves preserve the reviewed Roller scratch difference without replay
+  ---
+  duration_ms: 886.967825
+  type: 'test'
+  ...
+# Subtest: all thirteen exact source leaves admit without replay or a physics equality claim
+ok 14 - all thirteen exact source leaves admit without replay or a physics equality claim
+  ---
+  duration_ms: 48.551506
+  type: 'test'
+  ...
+# Subtest: missing, changed, reversed and falsely identical current tuples cannot gain admission
+ok 15 - missing, changed, reversed and falsely identical current tuples cannot gain admission
+  ---
+  duration_ms: 1147.893827
+  type: 'test'
+  ...
+# Subtest: actual controls CLI accepts only the frozen nine-difference tuple and completes every negative control
+ok 16 - actual controls CLI accepts only the frozen nine-difference tuple and completes every negative control
+  ---
+  duration_ms: 8635.745363
+  type: 'test'
+  ...
+# Subtest: the subsequent batch preserves the integrated main and admits exactly its one differing source leaf
+ok 17 - the subsequent batch preserves the integrated main and admits exactly its one differing source leaf
+  ---
+  duration_ms: 1023.18861
+  type: 'test'
+  ...
+# Subtest: only the sixteen pinned pose source leaves are identical after the first batch, with no replay
+ok 18 - only the sixteen pinned pose source leaves are identical after the first batch, with no replay
+  ---
+  duration_ms: 837.833319
+  type: 'test'
+  ...
+# Subtest: 1862 admits exactly the reviewed sixteen-leaf main/respawn pair without replay
+ok 19 - 1862 admits exactly the reviewed sixteen-leaf main/respawn pair without replay
+  ---
+  duration_ms: 23.280784
+  type: 'test'
+  ...
+# Subtest: 1862 rejects every missing/altered leaf, both-side drift, reversal and partial epoch
+ok 20 - 1862 rejects every missing/altered leaf, both-side drift, reversal and partial epoch
+  ---
+  duration_ms: 1332.128124
+  type: 'test'
+  ...
+# Subtest: 1862 pose CLI writes no source and preserves its prior receipt on late rejection
+ok 21 - 1862 pose CLI writes no source and preserves its prior receipt on late rejection
+  ---
+  duration_ms: 196.992971
+  type: 'test'
+  ...
+# Subtest: post30 controls CLI accepts only the frozen single-difference tuple and completes every negative control
+ok 22 - post30 controls CLI accepts only the frozen single-difference tuple and completes every negative control
+  ---
+  duration_ms: 9275.9013
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 52105.585727

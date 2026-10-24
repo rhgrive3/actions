@@ -1,0 +1,90 @@
+{
+  "parent": "6755954a13c8135bfac4102580f81f1cb553c640",
+  "mainRead": "7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51",
+  "qaPatchSHA256": "b08b768f7d060fa34fe07486e69663eb2beddccb621a398358dd2ce6b99557dd",
+  "changedQASource": {
+    "patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs": {
+      "sha256": "1d8af3d67105bc7c1e9de19555099dac35ad53330dc833169b21e2a0b62fa81d",
+      "gitBlob": "0c9572ec920e48c0c41400e081db8460fc89431a"
+    },
+    "scripts/lib/inkwave-character-pose-baseline.mjs": {
+      "sha256": "099157820199605ee8e1d50361db3ea81476555ed8c315a6fa95125fe68427ab",
+      "gitBlob": "95351f6854ab374965ef134816ade0e9fbb4f208"
+    },
+    "scripts/lib/inkwave-respawn1862-source-pair.mjs": {
+      "sha256": "672bc8c3c74bd57549f2a6fd31da8d72f089391b424df217b91a21408875d6e3",
+      "gitBlob": "d0d6e21da792dc15adff897430d37e32c21100bb"
+    },
+    "scripts/tests/inkwave-23pr-paint-source-pair.test.mjs": {
+      "sha256": "0950ee2d37d626c5e1d9ee3066ab1104a9b6ffe7d78c0cd840af7625da24f1f4",
+      "gitBlob": "039b36b0568f56596b35b0d97ae101bcd9a6d3bd"
+    },
+    "scripts/tests/inkwave-31pr-paint-source-pair.test.mjs": {
+      "sha256": "8c4d258d3e582997e428edb9250d4bbadbbb70b6092995459ed38f228d90820a",
+      "gitBlob": "7776070d20c68cf6dc06adb216c241ec854aab53"
+    }
+  },
+  "historicalPinsAndFixturesUnchanged": {
+    "scripts/fixtures/inkwave-23pr-paint-source-pair.json.gz": "4d4d2c7be476b11219dc05f02ea53101df2f4a415cde34c433de1fd5dafe82ab",
+    "scripts/fixtures/inkwave-31pr-paint-source-pair.json.gz": "f2cc95b94ca77450c52985f754c1b24cb3e5ad42b48c94ca05d1af9ac93ea36d",
+    "scripts/fixtures/inkwave-character-pose-baseline.json": "b369c661b8d6b4af56e5065df2c151db1e80d9cb36bc2fbbf81c7ab9693f6a9d",
+    "scripts/lib/inkwave-23pr-paint-source-pair.mjs": "ab4c519e3ff930679bcdd245fe4ce261c10461a0efb7bf9792b0a2cfe240d093",
+    "scripts/lib/inkwave-31pr-paint-source-pair.mjs": "05bfd00ef00f10924551534b953e010b2d3c1dcd9f1073d519e02dbfb8d01716",
+    "patches/splatoon3/tests/fixtures/roller.b34a8aaf.source.txt": "52e587f60d6211054c2bad04f746471e85ebdb0295e051f797b41a0019847eb7"
+  },
+  "tests": {
+    "focused-after.tap": {
+      "tests": 22,
+      "pass": 22,
+      "fail": 0,
+      "sha256": "a92aae580b72f86635b96732a1539b9b46eb7ca895e702679f140433a53b2129"
+    },
+    "core-acceptance-after.tap": {
+      "tests": 142,
+      "pass": 142,
+      "fail": 0,
+      "sha256": "12e4c77771ce53c4339ab583f97676fb20d78823d6c05cf2fbb4488d938da732"
+    },
+    "source-respawn.tap": {
+      "tests": 18,
+      "pass": 18,
+      "fail": 0,
+      "sha256": "20ab0cca73d82d325f74b2c7f3870ad99de12b375d7fa6bf037f2594f64795bf"
+    },
+    "emitted-respawn.tap": {
+      "tests": 18,
+      "pass": 18,
+      "fail": 0,
+      "sha256": "c73b3f486c7961638e03c38f1323aa7ff3bf6cfcf062910bd645366013b4338d"
+    }
+  },
+  "before": {
+    "existingRegressions": {
+      "tests": 17,
+      "pass": 14,
+      "fail": 3,
+      "lateRejections": 3
+    },
+    "newTestsOnOld675Planner": {
+      "tests": 3,
+      "pass": 1,
+      "fail": 2
+    }
+  },
+  "node": "v24.19.0",
+  "buildVerification": {
+    "status": "passed",
+    "inputBodies": 1420,
+    "emittedBodies": 2110,
+    "inputHash": "9bc05f146e3ecdce39ffcd242fa4102e9a78a22386a5a3b6beb46c714ead3fe9",
+    "contentHash": "424ea98e79b8c80931f4ff6d5a489d438e9255bf36cb8f2a2cc60a799c3d935f",
+    "site": "/workspace/scratch/respawn-active-reset-20261023/site",
+    "reusedNormalBuildFrom": "6755954a13c8135bfac4102580f81f1cb553c640",
+    "reason": "All QA successor changes are outside production build inputs; no rebuild or component overlay."
+  },
+  "remaining": [
+    "Parent independent review",
+    "Hosted Node22 full CI for the successor",
+    "Cancelled idle-resource stage; HUD/idle owner separately responsible"
+  ]
+}

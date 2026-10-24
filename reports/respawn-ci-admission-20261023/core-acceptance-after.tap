@@ -1,0 +1,865 @@
+TAP version 13
+# Subtest: all thirteen exact source leaves admit without replay or a physics equality claim
+ok 1 - all thirteen exact source leaves admit without replay or a physics equality claim
+  ---
+  duration_ms: 57.383632
+  type: 'test'
+  ...
+# Subtest: missing, changed, reversed and falsely identical current tuples cannot gain admission
+ok 2 - missing, changed, reversed and falsely identical current tuples cannot gain admission
+  ---
+  duration_ms: 1567.176921
+  type: 'test'
+  ...
+# Subtest: all sixteen pose leaves preserve the reviewed Roller scratch difference without replay
+ok 3 - all sixteen pose leaves preserve the reviewed Roller scratch difference without replay
+  ---
+  duration_ms: 2549.35545
+  type: 'test'
+  ...
+# Subtest: all thirteen exact source leaves admit without replay or a physics equality claim
+ok 4 - all thirteen exact source leaves admit without replay or a physics equality claim
+  ---
+  duration_ms: 85.474714
+  type: 'test'
+  ...
+# Subtest: missing, changed, reversed and falsely identical current tuples cannot gain admission
+ok 5 - missing, changed, reversed and falsely identical current tuples cannot gain admission
+  ---
+  duration_ms: 2484.668371
+  type: 'test'
+  ...
+# Subtest: actual controls CLI accepts only the frozen nine-difference tuple and completes every negative control
+ok 6 - actual controls CLI accepts only the frozen nine-difference tuple and completes every negative control
+  ---
+  duration_ms: 10583.338023
+  type: 'test'
+  ...
+# Subtest: all thirteen exact source leaves admit without replay or a physics equality claim
+ok 7 - all thirteen exact source leaves admit without replay or a physics equality claim
+  ---
+  duration_ms: 40.393737
+  type: 'test'
+  ...
+# Subtest: missing, changed, reversed and falsely identical current tuples cannot gain admission
+ok 8 - missing, changed, reversed and falsely identical current tuples cannot gain admission
+  ---
+  duration_ms: 1105.100003
+  type: 'test'
+  ...
+# Subtest: actual controls CLI accepts only the frozen nine-difference tuple and completes every negative control
+ok 9 - actual controls CLI accepts only the frozen nine-difference tuple and completes every negative control
+  ---
+  duration_ms: 9666.431585
+  type: 'test'
+  ...
+# Subtest: the subsequent batch preserves the integrated main and admits exactly its one differing source leaf
+ok 10 - the subsequent batch preserves the integrated main and admits exactly its one differing source leaf
+  ---
+  duration_ms: 1589.347791
+  type: 'test'
+  ...
+# Subtest: only the sixteen pinned pose source leaves are identical after the first batch, with no replay
+ok 11 - only the sixteen pinned pose source leaves are identical after the first batch, with no replay
+  ---
+  duration_ms: 1127.089777
+  type: 'test'
+  ...
+# Subtest: 1862 admits exactly the reviewed sixteen-leaf main/respawn pair without replay
+ok 12 - 1862 admits exactly the reviewed sixteen-leaf main/respawn pair without replay
+  ---
+  duration_ms: 18.288433
+  type: 'test'
+  ...
+# Subtest: 1862 rejects every missing/altered leaf, both-side drift, reversal and partial epoch
+ok 13 - 1862 rejects every missing/altered leaf, both-side drift, reversal and partial epoch
+  ---
+  duration_ms: 1732.004871
+  type: 'test'
+  ...
+# Subtest: 1862 pose CLI writes no source and preserves its prior receipt on late rejection
+ok 14 - 1862 pose CLI writes no source and preserves its prior receipt on late rejection
+  ---
+  duration_ms: 528.939227
+  type: 'test'
+  ...
+# Subtest: post30 controls CLI accepts only the frozen single-difference tuple and completes every negative control
+ok 15 - post30 controls CLI accepts only the frozen single-difference tuple and completes every negative control
+  ---
+  duration_ms: 9198.042266
+  type: 'test'
+  ...
+# Subtest: only the reviewed sixteen character paths and exact final source blobs are accepted
+ok 16 - only the reviewed sixteen character paths and exact final source blobs are accepted
+  ---
+  duration_ms: 24.816515
+  type: 'test'
+  ...
+# Subtest: shared-file alignment keeps independent variant additions out of the reference
+ok 17 - shared-file alignment keeps independent variant additions out of the reference
+  ---
+  duration_ms: 0.41985
+  type: 'test'
+  ...
+# Subtest: reference planning preserves unrelated physical code and supports only reviewed before/after states
+ok 18 - reference planning preserves unrelated physical code and supports only reviewed before/after states
+  ---
+  duration_ms: 0.763254
+  type: 'test'
+  ...
+# Subtest: rejects unknown candidate edits instead of resetting them
+ok 19 - rejects unknown candidate edits instead of resetting them
+  ---
+  duration_ms: 12.91858
+  type: 'test'
+  ...
+# Subtest: rejects unknown baseline edits instead of resetting them
+ok 20 - rejects unknown baseline edits instead of resetting them
+  ---
+  duration_ms: 12.460047
+  type: 'test'
+  ...
+# Subtest: late candidate rejection leaves planned new modules and previous receipt untouched
+ok 21 - late candidate rejection leaves planned new modules and previous receipt untouched
+  ---
+  duration_ms: 91.088754
+  type: 'test'
+  ...
+# Subtest: frozen PR1746 pose admission is exact, identity-preserving and rejects unknown edits
+ok 22 - frozen PR1746 pose admission is exact, identity-preserving and rejects unknown edits
+  ---
+  duration_ms: 47.720476
+  type: 'test'
+  ...
+# Subtest: old and integrated complete pose epochs remain independently identity-preserving
+ok 23 - old and integrated complete pose epochs remain independently identity-preserving
+  ---
+  duration_ms: 21.014172
+  type: 'test'
+  ...
+# Subtest: both complete pose epochs reject every missing, modified and paired-drift input
+ok 24 - both complete pose epochs reject every missing, modified and paired-drift input
+  ---
+  duration_ms: 1550.100823
+  type: 'test'
+  ...
+# Subtest: whole and partial pose epoch mixing cannot be admitted or replayed
+ok 25 - whole and partial pose epoch mixing cannot be admitted or replayed
+  ---
+  duration_ms: 80.275793
+  type: 'test'
+  ...
+# Subtest: current pose CLI writes only identity receipt and preserves it on late rejection
+ok 26 - current pose CLI writes only identity receipt and preserves it on late rejection
+  ---
+  duration_ms: 198.069986
+  type: 'test'
+  ...
+# Subtest: the subsequent weapon batch binds actual Git commits to its exact integrated-main source pair
+ok 27 - the subsequent weapon batch binds actual Git commits to its exact integrated-main source pair
+  ---
+  duration_ms: 81.636371
+  type: 'test'
+  ...
+# Subtest: relay dispatch retains checkout and both regression suites
+ok 28 - relay dispatch retains checkout and both regression suites
+  ---
+  duration_ms: 0.526149
+  type: 'test'
+  ...
+# Subtest: dispatch has five required explicit inputs and no mutable baseline fallback
+ok 29 - dispatch has five required explicit inputs and no mutable baseline fallback
+  ---
+  duration_ms: 0.905595
+  type: 'test'
+  ...
+# Subtest: frozen dispatch candidate accepts complete identities
+ok 30 - frozen dispatch candidate accepts complete identities
+  ---
+  duration_ms: 7.300723
+  type: 'test'
+  ...
+# Subtest: reject missing or mutable DISPATCH_BASE_SHA
+ok 31 - reject missing or mutable DISPATCH_BASE_SHA
+  ---
+  duration_ms: 32.59847
+  type: 'test'
+  ...
+# Subtest: reject missing or mutable DISPATCH_HEAD_SHA
+ok 32 - reject missing or mutable DISPATCH_HEAD_SHA
+  ---
+  duration_ms: 34.874541
+  type: 'test'
+  ...
+# Subtest: reject missing or mutable DISPATCH_SOURCE_BASE
+ok 33 - reject missing or mutable DISPATCH_SOURCE_BASE
+  ---
+  duration_ms: 32.892387
+  type: 'test'
+  ...
+# Subtest: reject missing or mutable DISPATCH_SOURCE_HEAD
+ok 34 - reject missing or mutable DISPATCH_SOURCE_HEAD
+  ---
+  duration_ms: 41.88211
+  type: 'test'
+  ...
+# Subtest: reject candidate mismatch and invalid mode
+ok 35 - reject candidate mismatch and invalid mode
+  ---
+  duration_ms: 26.238412
+  type: 'test'
+  ...
+# Subtest: baseline identity fails closed
+ok 36 - baseline identity fails closed
+  ---
+  duration_ms: 15.592893
+  type: 'test'
+  ...
+# Subtest: dispatch both controls and preparation receive all five immutable assertions
+ok 37 - dispatch both controls and preparation receive all five immutable assertions
+  ---
+  duration_ms: 12.728401
+  type: 'test'
+  ...
+# Subtest: existing reviewed integration PR remains bound to fixed a350 source epoch
+ok 38 - existing reviewed integration PR remains bound to fixed a350 source epoch
+  ---
+  duration_ms: 13.438629
+  type: 'test'
+  ...
+# Subtest: comparison retains complete and synthetic gates plus checkout identity
+ok 39 - comparison retains complete and synthetic gates plus checkout identity
+  ---
+  duration_ms: 15.148501
+  type: 'test'
+  ...
+# Subtest: rejected dispatch admission or preparation fails the step without legacy fallback
+ok 40 - rejected dispatch admission or preparation fails the step without legacy fallback
+  ---
+  duration_ms: 10.996044
+  type: 'test'
+  ...
+# Subtest: queue1801 dispatch preserves checkout SHA versus reviewed source-epoch distinction
+ok 41 - queue1801 dispatch preserves checkout SHA versus reviewed source-epoch distinction
+  ---
+  duration_ms: 27.614971
+  type: 'test'
+  ...
+# Subtest: queue-30 PR retains exact admission/preparation branch and all new regression triggers
+ok 42 - queue-30 PR retains exact admission/preparation branch and all new regression triggers
+  ---
+  duration_ms: 24.325749
+  type: 'test'
+  ...
+# Subtest: only owned same-repository main PR selects queue1801 identity route
+ok 43 - only owned same-repository main PR selects queue1801 identity route
+  ---
+  duration_ms: 78.67616
+  type: 'test'
+  ...
+# Subtest: the fixed 32-PR aggregate routes both source controls to the full main pair
+ok 44 - the fixed 32-PR aggregate routes both source controls to the full main pair
+  ---
+  duration_ms: 106.300843
+  type: 'test'
+  ...
+# Subtest: pinned inventory has1362 canonical inputs plus stricter1391 production superset, including builder
+ok 45 - pinned inventory has1362 canonical inputs plus stricter1391 production superset, including builder
+  ---
+  duration_ms: 6.618998
+  type: 'test'
+  ...
+# Subtest: every production leaf rejects byte drift independently, including new catalog dependencies
+ok 46 - every production leaf rejects byte drift independently, including new catalog dependencies
+  ---
+  duration_ms: 382.802396
+  type: 'test'
+  ...
+# Subtest: missing, extra, duplicate, changed Git blob and changed file mode fail closed
+ok 47 - missing, extra, duplicate, changed Git blob and changed file mode fail closed
+  ---
+  duration_ms: 12.746329
+  type: 'test'
+  ...
+# Subtest: new source epoch and actual immutable checkout declarations are distinct and mandatory
+ok 48 - new source epoch and actual immutable checkout declarations are distinct and mandatory
+  ---
+  duration_ms: 0.652771
+  type: 'test'
+  ...
+# Subtest: actual Git HEAD binding uses real temporary commits, never a mocked declared head
+ok 49 - actual Git HEAD binding uses real temporary commits, never a mocked declared head
+  ---
+  duration_ms: 57.671373
+  type: 'test'
+  ...
+# Subtest: filesystem scanner rejects symlink sources rather than following outside the worktree
+ok 50 - filesystem scanner rejects symlink sources rather than following outside the worktree
+  ---
+  duration_ms: 0.749386
+  type: 'test'
+  ...
+# Subtest: filesystem enumeration observes actual changed, missing and extra inputs while excluding QA tests
+ok 51 - filesystem enumeration observes actual changed, missing and extra inputs while excluding QA tests
+  ---
+  duration_ms: 4.864965
+  type: 'test'
+  ...
+# Subtest: both actual CLI entrypoints dispatch only the explicit new mode after strict parsing
+ok 52 - both actual CLI entrypoints dispatch only the explicit new mode after strict parsing
+  ---
+  duration_ms: 0.612933
+  type: 'test'
+  ...
+# Subtest: actual Python route skips only exact-case same-repository aggregate, never manual/fork/variants
+ok 53 - actual Python route skips only exact-case same-repository aggregate, never manual/fork/variants
+  ---
+  duration_ms: 322.849787
+  type: 'test'
+  ...
+# Subtest: all cells at all90 cadence snapshots exactly match the original Array representation
+ok 54 - all cells at all90 cadence snapshots exactly match the original Array representation
+  ---
+  duration_ms: 1896.812615
+  type: 'test'
+  ...
+# Subtest: cross-VM byte grids normalize to host storage and never alias live paint
+ok 55 - cross-VM byte grids normalize to host storage and never alias live paint
+  ---
+  duration_ms: 1.948411
+  type: 'test'
+  ...
+# Subtest: every tested single-cell corruption, including final cell, fails both representations
+ok 56 - every tested single-cell corruption, including final cell, fails both representations
+  ---
+  duration_ms: 1410.757468
+  type: 'test'
+  ...
+# Subtest: queue, landing count, turf and before-draw assertions remain exact
+ok 57 - queue, landing count, turf and before-draw assertions remain exact
+  ---
+  duration_ms: 3.141773
+  type: 'test'
+  ...
+# Subtest: non-byte grids fail closed instead of silently coercing ownership values
+ok 58 - non-byte grids fail closed instead of silently coercing ownership values
+  ---
+  duration_ms: 0.995599
+  type: 'test'
+  ...
+# Subtest: subarray offsets, grid length and cell order are not lost
+ok 59 - subarray offsets, grid length and cell order are not lost
+  ---
+  duration_ms: 1.453342
+  type: 'test'
+  ...
+# Subtest: fixed fourteen-leaf queue pair preserves both sources, exposes its two changes and never replays
+ok 60 - fixed fourteen-leaf queue pair preserves both sources, exposes its two changes and never replays
+  ---
+  duration_ms: 31.980053
+  type: 'test'
+  ...
+# Subtest: 84 paint omissions/edits and 96 pose omissions/edits reject the complete declared tuples
+ok 61 - 84 paint omissions/edits and 96 pose omissions/edits reject the complete declared tuples
+  ---
+  duration_ms: 2221.15064
+  type: 'test'
+  ...
+# Subtest: real Git-bound CLI leaves all inputs unchanged and executes all rejection controls
+ok 62 - real Git-bound CLI leaves all inputs unchanged and executes all rejection controls
+  ---
+  duration_ms: 25609.471804
+  type: 'test'
+  ...
+# Subtest: dirty input cannot replace the prior receipt even with correct declared epoch
+ok 63 - dirty input cannot replace the prior receipt even with correct declared epoch
+  ---
+  duration_ms: 357.31021
+  type: 'test'
+  ...
+# Subtest: explicit queue candidate identity preserves all fourteen paint and sixteen pose leaves
+ok 64 - explicit queue candidate identity preserves all fourteen paint and sixteen pose leaves
+  ---
+  duration_ms: 38.534149
+  type: 'test'
+  ...
+# Subtest: identity rejects 84 paint and 96 pose altered/missing leaf cases, old/mixed epochs and implicit paint mode
+ok 65 - identity rejects 84 paint and 96 pose altered/missing leaf cases, old/mixed epochs and implicit paint mode
+  ---
+  duration_ms: 1713.407559
+  type: 'test'
+  ...
+# Subtest: real distinct Git commits bind identity controls without substituting source epoch or writing inputs
+ok 66 - real distinct Git commits bind identity controls without substituting source epoch or writing inputs
+  ---
+  duration_ms: 14256.110469
+  type: 'test'
+  ...
+# Subtest: identity CLI rejects false Git SHA, wrong epochs, missing declarations and dirty source while preserving receipt
+ok 67 - identity CLI rejects false Git SHA, wrong epochs, missing declarations and dirty source while preserving receipt
+  ---
+  duration_ms: 4159.064117
+  type: 'test'
+  ...
+# {"schema":1,"status":"visibility-first-divergence","tick":0,"field":"state","A":{"tick":0,"memory":{},"census":{},"nativeRender":{"calls":1,"triangles":1,"points":0,"lines":0}},"B":{"tick":0,"memory":{},"census":{},"nativeRender":{"calls":1,"triangles":1,"points":0,"lines":0}}}
+# {"schema":1,"status":"visibility-first-divergence","tick":1,"field":"paintHash","A":{"tick":1,"memory":{},"census":{},"nativeRender":{"calls":1,"triangles":1,"points":0,"lines":0}},"B":{"tick":1,"memory":{},"census":{},"nativeRender":{"calls":1,"triangles":1,"points":0,"lines":0}}}
+# {"schema":1,"status":"visibility-first-divergence","tick":0,"field":"nativeRender.calls","A":{"tick":0,"memory":{},"census":{},"nativeRender":{"calls":1,"triangles":1,"points":0,"lines":0}},"B":{"tick":0,"memory":{},"census":{},"nativeRender":{"calls":2,"triangles":1,"points":0,"lines":0}}}
+# Subtest: workflow adds only the seven intended PR path filters and preserves exact push branch
+ok 68 - workflow adds only the seven intended PR path filters and preserves exact push branch
+  ---
+  duration_ms: 4.934053
+  type: 'test'
+  ...
+# Subtest: capture admission own diagnostic PR
+ok 69 - capture admission own diagnostic PR
+  ---
+  duration_ms: 0.360219
+  type: 'test'
+  ...
+# Subtest: capture admission unrelated PR
+ok 70 - capture admission unrelated PR
+  ---
+  duration_ms: 0.197233
+  type: 'test'
+  ...
+# Subtest: capture admission same-name fork PR
+ok 71 - capture admission same-name fork PR
+  ---
+  duration_ms: 0.207099
+  type: 'test'
+  ...
+# Subtest: capture admission missing PR branch
+ok 72 - capture admission missing PR branch
+  ---
+  duration_ms: 0.469759
+  type: 'test'
+  ...
+# Subtest: capture admission push
+ok 73 - capture admission push
+  ---
+  duration_ms: 0.210926
+  type: 'test'
+  ...
+# Subtest: capture admission manual dispatch
+ok 74 - capture admission manual dispatch
+  ---
+  duration_ms: 0.180711
+  type: 'test'
+  ...
+# Subtest: bounded is the dispatch default and both long steps require explicit manual true
+ok 75 - bounded is the dispatch default and both long steps require explicit manual true
+  ---
+  duration_ms: 1.030836
+  type: 'test'
+  ...
+# Subtest: PR checks out its exact QA head while push/dispatch use their event SHA
+ok 76 - PR checks out its exact QA head while push/dispatch use their event SHA
+  ---
+  duration_ms: 1.049857
+  type: 'test'
+  ...
+# Subtest: trigger amendment keeps pinned source, strict visibility and failure artifact preservation
+ok 77 - trigger amendment keeps pinned source, strict visibility and failure artifact preservation
+  ---
+  duration_ms: 0.593202
+  type: 'test'
+  ...
+# Subtest: binds actual new production hash without inventing an artifact identity
+ok 78 - binds actual new production hash without inventing an artifact identity
+  ---
+  duration_ms: 0.757416
+  type: 'test'
+  ...
+# Subtest: rejects old source
+ok 79 - rejects old source
+  ---
+  duration_ms: 1.987262
+  type: 'test'
+  ...
+# Subtest: rejects wrong tree
+ok 80 - rejects wrong tree
+  ---
+  duration_ms: 0.4167
+  type: 'test'
+  ...
+# Subtest: rejects already fixed before source
+ok 81 - rejects already fixed before source
+  ---
+  duration_ms: 0.26475
+  type: 'test'
+  ...
+# Subtest: rejects stale content hash
+ok 82 - rejects stale content hash
+  ---
+  duration_ms: 0.506887
+  type: 'test'
+  ...
+# Subtest: rejects input mismatch
+ok 83 - rejects input mismatch
+  ---
+  duration_ms: 0.398154
+  type: 'test'
+  ...
+# Subtest: rejects revision mismatch
+ok 84 - rejects revision mismatch
+  ---
+  duration_ms: 0.507305
+  type: 'test'
+  ...
+# Subtest: rejects wrong compiler
+ok 85 - rejects wrong compiler
+  ---
+  duration_ms: 0.250401
+  type: 'test'
+  ...
+# Subtest: rejects unminified site
+ok 86 - rejects unminified site
+  ---
+  duration_ms: 0.202899
+  type: 'test'
+  ...
+# Subtest: rejects extra overlay module
+ok 87 - rejects extra overlay module
+  ---
+  duration_ms: 1.414642
+  type: 'test'
+  ...
+# Subtest: rejects changed baseline source
+ok 88 - rejects changed baseline source
+  ---
+  duration_ms: 0.635564
+  type: 'test'
+  ...
+# Subtest: rejects changed candidate source
+ok 89 - rejects changed candidate source
+  ---
+  duration_ms: 0.419524
+  type: 'test'
+  ...
+# Subtest: rejects emitted mismatch
+ok 90 - rejects emitted mismatch
+  ---
+  duration_ms: 0.30655
+  type: 'test'
+  ...
+# Subtest: visibility prefix passes only as diagnostic, not full capture
+ok 91 - visibility prefix passes only as diagnostic, not full capture
+  ---
+  duration_ms: 4.076545
+  type: 'test'
+  ...
+# Subtest: visibility rejects RNG divergence
+ok 92 - visibility rejects RNG divergence
+  ---
+  duration_ms: 2.219394
+  type: 'test'
+  ...
+# Subtest: visibility rejects paint divergence
+ok 93 - visibility rejects paint divergence
+  ---
+  duration_ms: 1.89557
+  type: 'test'
+  ...
+# Subtest: visibility rejects resource divergence
+ok 94 - visibility rejects resource divergence
+  ---
+  duration_ms: 0.854971
+  type: 'test'
+  ...
+# Subtest: visibility rejects scissor crop
+ok 95 - visibility rejects scissor crop
+  ---
+  duration_ms: 1.289393
+  type: 'test'
+  ...
+# Subtest: visibility rejects near fade
+ok 96 - visibility rejects near fade
+  ---
+  duration_ms: 0.962336
+  type: 'test'
+  ...
+# Subtest: visibility rejects PNG tamper
+ok 97 - visibility rejects PNG tamper
+  ---
+  duration_ms: 1.669531
+  type: 'test'
+  ...
+# Subtest: visibility rejects old successful receipt
+ok 98 - visibility rejects old successful receipt
+  ---
+  duration_ms: 0.75051
+  type: 'test'
+  ...
+# Subtest: visibility rejects no visible change
+ok 99 - visibility rejects no visible change
+  ---
+  duration_ms: 1.138344
+  type: 'test'
+  ...
+# Subtest: visibility rejects missing consumed module
+ok 100 - visibility rejects missing consumed module
+  ---
+  duration_ms: 1.56513
+  type: 'test'
+  ...
+# Subtest: visibility rejects missing ambient schema
+ok 101 - visibility rejects missing ambient schema
+  ---
+  duration_ms: 0.567876
+  type: 'test'
+  ...
+# Subtest: full comparator retains tail, seed, paint, coverage and unchanged-control gates
+ok 102 - full comparator retains tail, seed, paint, coverage and unchanged-control gates
+  ---
+  duration_ms: 0.519328
+  type: 'test'
+  ...
+# Subtest: successful visibility pair emits nothing and keeps exact result and input receipts
+ok 103 - successful visibility pair emits nothing and keeps exact result and input receipts
+  ---
+  duration_ms: 7.222518
+  type: 'test'
+  ...
+# Subtest: first divergence reports exact tick and state without weakening its assertion
+ok 104 - first divergence reports exact tick and state without weakening its assertion
+  ---
+  duration_ms: 1.662266
+  type: 'test'
+  ...
+# Subtest: first divergence reports exact tick and paintHash without weakening its assertion
+ok 105 - first divergence reports exact tick and paintHash without weakening its assertion
+  ---
+  duration_ms: 0.934623
+  type: 'test'
+  ...
+# Subtest: first divergence reports exact tick and paintEvents without weakening its assertion
+ok 106 - first divergence reports exact tick and paintEvents without weakening its assertion
+  ---
+  duration_ms: 11.70744
+  type: 'test'
+  ...
+# Subtest: first divergence reports exact tick and aimTrace without weakening its assertion
+ok 107 - first divergence reports exact tick and aimTrace without weakening its assertion
+  ---
+  duration_ms: 5.275567
+  type: 'test'
+  ...
+# Subtest: first divergence reports exact tick and memory without weakening its assertion
+ok 108 - first divergence reports exact tick and memory without weakening its assertion
+  ---
+  duration_ms: 5.209185
+  type: 'test'
+  ...
+# Subtest: first divergence reports exact tick and census without weakening its assertion
+ok 109 - first divergence reports exact tick and census without weakening its assertion
+  ---
+  duration_ms: 5.889869
+  type: 'test'
+  ...
+# Subtest: first divergence reports exact tick and nativeRender.calls without weakening its assertion
+ok 110 - first divergence reports exact tick and nativeRender.calls without weakening its assertion
+  ---
+  duration_ms: 9.062059
+  type: 'test'
+  ...
+# Subtest: first divergence reports exact tick and nativeRender.triangles without weakening its assertion
+ok 111 - first divergence reports exact tick and nativeRender.triangles without weakening its assertion
+  ---
+  duration_ms: 3.706388
+  type: 'test'
+  ...
+# Subtest: first divergence reports exact tick and nativeRender.points without weakening its assertion
+ok 112 - first divergence reports exact tick and nativeRender.points without weakening its assertion
+  ---
+  duration_ms: 1.97384
+  type: 'test'
+  ...
+# Subtest: first divergence reports exact tick and nativeRender.lines without weakening its assertion
+ok 113 - first divergence reports exact tick and nativeRender.lines without weakening its assertion
+  ---
+  duration_ms: 1.084911
+  type: 'test'
+  ...
+# Subtest: first divergence reports exact tick and axes.counts without weakening its assertion
+ok 114 - first divergence reports exact tick and axes.counts without weakening its assertion
+  ---
+  duration_ms: 7.161262
+  type: 'test'
+  ...
+# Subtest: diagnostic precedes rethrow of the identical original assertion object
+ok 115 - diagnostic precedes rethrow of the identical original assertion object
+  ---
+  duration_ms: 1.301321
+  type: 'test'
+  ...
+# Subtest: diagnostic cyclic cannot hide original failure
+ok 116 - diagnostic cyclic cannot hide original failure
+  ---
+  duration_ms: 0.569153
+  type: 'test'
+  ...
+# Subtest: diagnostic bigint cannot hide original failure
+ok 117 - diagnostic bigint cannot hide original failure
+  ---
+  duration_ms: 0.239598
+  type: 'test'
+  ...
+# Subtest: diagnostic throwing-toJSON cannot hide original failure
+ok 118 - diagnostic throwing-toJSON cannot hide original failure
+  ---
+  duration_ms: 0.19471
+  type: 'test'
+  ...
+# Subtest: diagnostic throwing-sink cannot hide original failure
+ok 119 - diagnostic throwing-sink cannot hide original failure
+  ---
+  duration_ms: 0.160669
+  type: 'test'
+  ...
+# Subtest: actual pair mismatch still rejects when diagnostic delivery fails
+ok 120 - actual pair mismatch still rejects when diagnostic delivery fails
+  ---
+  duration_ms: 0.583135
+  type: 'test'
+  ...
+# Subtest: fresh first-divergence branch is PR-only, avoiding duplicate push capture
+ok 121 - fresh first-divergence branch is PR-only, avoiding duplicate push capture
+  ---
+  duration_ms: 11.145458
+  type: 'test'
+  ...
+# Subtest: handled timeout cannot pass even with status zero and passing counts
+ok 122 - handled timeout cannot pass even with status zero and passing counts
+  ---
+  duration_ms: 509.923233
+  type: 'test'
+  ...
+# Subtest: all inherited alternate input and mode selectors are removed; only declared emitted site survives
+ok 123 - all inherited alternate input and mode selectors are removed; only declared emitted site survives
+  ---
+  duration_ms: 1.473548
+  type: 'test'
+  ...
+# Subtest: altered actual runtime is rejected even when its manifest is untouched
+ok 124 - altered actual runtime is rejected even when its manifest is untouched
+  ---
+  duration_ms: 6.518147
+  type: 'test'
+  ...
+# Subtest: manifest identity drift and added undeclared payloads are rejected
+ok 125 - manifest identity drift and added undeclared payloads are rejected
+  ---
+  duration_ms: 1.959135
+  type: 'test'
+  ...
+# Subtest: source closure detects runtime, helper and inventory drift
+ok 126 - source closure detects runtime, helper and inventory drift
+  ---
+  duration_ms: 3.317422
+  type: 'test'
+  ...
+# Subtest: ignored SIGTERM is forcibly bounded and cannot pass
+ok 127 - ignored SIGTERM is forcibly bounded and cannot pass
+  ---
+  duration_ms: 510.037672
+  type: 'test'
+  ...
+# Subtest: timeout kills ordinary Node test-style descendants as well as leader
+ok 128 - timeout kills ordinary Node test-style descendants as well as leader
+  ---
+  duration_ms: 711.038432
+  type: 'test'
+  ...
+# Subtest: normal leader exit cannot leave a live descendant or hanging output pipe
+ok 129 - normal leader exit cannot leave a live descendant or hanging output pipe
+  ---
+  duration_ms: 378.00895
+  type: 'test'
+  ...
+# Subtest: actual node --test worker descendant dies at the group deadline
+ok 130 - actual node --test worker descendant dies at the group deadline
+  ---
+  duration_ms: 708.229907
+  type: 'test'
+  ...
+# Subtest: default CI executes every isolated Turf case on genuine emitted build and retains evidence
+ok 131 - default CI executes every isolated Turf case on genuine emitted build and retains evidence
+  ---
+  duration_ms: 3.072715
+  type: 'test'
+  ...
+# Subtest: Turf workflow guard rejects list-only, source-only, wrong site, optional execution and lost evidence
+ok 132 - Turf workflow guard rejects list-only, source-only, wrong site, optional execution and lost evidence
+  ---
+  duration_ms: 15.828953
+  type: 'test'
+  ...
+# Subtest: reopened-six replaces only monolithic Turf with bounded source execution and retains failure evidence
+ok 133 - reopened-six replaces only monolithic Turf with bounded source execution and retains failure evidence
+  ---
+  duration_ms: 0.424435
+  type: 'test'
+  ...
+# Subtest: default patch shard retains Turf ownership but runs bounded cases instead of the monolithic file
+ok 134 - default patch shard retains Turf ownership but runs bounded cases instead of the monolithic file
+  ---
+  duration_ms: 0.377261
+  type: 'test'
+  ...
+# Subtest: actual shard dispatch preserves ordinary files, isolated-only shards and fail-closed Turf outcomes
+ok 135 - actual shard dispatch preserves ordinary files, isolated-only shards and fail-closed Turf outcomes
+  ---
+  duration_ms: 1.258522
+  type: 'test'
+  ...
+# Subtest: shard evidence survives Turf-first failure before ordinary log creation and also retains passing receipts
+ok 136 - shard evidence survives Turf-first failure before ordinary log creation and also retains passing receipts
+  ---
+  duration_ms: 0.603115
+  type: 'test'
+  ...
+# Subtest: exact escaped selected leaf, plan and complete zero-skip summary pass
+ok 137 - exact escaped selected leaf, plan and complete zero-skip summary pass
+  ---
+  duration_ms: 1.662228
+  type: 'test'
+  ...
+# Subtest: wrong leaf, skipped or TODO leaf, wrong or duplicate plan and counts fail closed
+ok 138 - wrong leaf, skipped or TODO leaf, wrong or duplicate plan and counts fail closed
+  ---
+  duration_ms: 0.652744
+  type: 'test'
+  ...
+# Subtest: real Node exact selection runs body; zero-match file wrapper cannot pass
+ok 139 - real Node exact selection runs body; zero-match file wrapper cannot pass
+  ---
+  duration_ms: 396.838602
+  type: 'test'
+  ...
+# Subtest: runner pins explicit TAP reporter and preserves original source hash and heap
+ok 140 - runner pins explicit TAP reporter and preserves original source hash and heap
+  ---
+  duration_ms: 1.261767
+  type: 'test'
+  ...
+# Subtest: deadline kills only owned detached group; unrelated sibling stays alive
+ok 141 - deadline kills only owned detached group; unrelated sibling stays alive
+  ---
+  duration_ms: 321.696313
+  type: 'test'
+  ...
+# Subtest: output overflow and spawn failure fail closed
+ok 142 - output overflow and spawn failure fail closed
+  ---
+  duration_ms: 48.956352
+  type: 'test'
+  ...
+1..142
+# tests 142
+# suites 0
+# pass 142
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 103225.504743

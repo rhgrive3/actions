@@ -1,0 +1,124 @@
+TAP version 13
+# (node:23619) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: native respawn ready handoff starts immediately without a one-tick half-turn, at 30/60/120 Hz
+ok 1 - native respawn ready handoff starts immediately without a one-tick half-turn, at 30/60/120 Hz
+  ---
+  duration_ms: 14380.071418
+  type: 'test'
+  ...
+# Subtest: display fade preserves every canonical channel, gameplay muzzle, native state and real shot trajectory
+ok 2 - display fade preserves every canonical channel, gameplay muzzle, native state and real shot trajectory
+  ---
+  duration_ms: 15245.313091
+  type: 'test'
+  ...
+# Subtest: missed support retains native spawn ownership, then fades only after actual supported touchdown
+ok 3 - missed support retains native spawn ownership, then fades only after actual supported touchdown
+  ---
+  duration_ms: 887.375956
+  type: 'test'
+  ...
+# Subtest: ordinary jump and weapon/life reuse cannot inherit a spawn display transition
+ok 4 - ordinary jump and weapon/life reuse cannot inherit a spawn display transition
+  ---
+  duration_ms: 1007.854882
+  type: 'test'
+  ...
+# Subtest: direct remote post-touchdown presentation uses the same display return without proxy attacks
+ok 5 - direct remote post-touchdown presentation uses the same display return without proxy attacks
+  ---
+  duration_ms: 1036.148471
+  type: 'test'
+  ...
+# Subtest: direct Actor.reset during a live spawn return cannot carry its display record or pose into the new life
+ok 6 - direct Actor.reset during a live spawn return cannot carry its display record or pose into the new life
+  ---
+  duration_ms: 4181.608388
+  type: 'test'
+  ...
+# (node:23683) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: lost support over a lower dry floor never releases ready before native supported touchdown
+ok 7 - lost support over a lower dry floor never releases ready before native supported touchdown
+  ---
+  duration_ms: 13254.039333
+  type: 'test'
+  ...
+# Subtest: native aim and flight keep ownership; a supported landing releases ready immediately
+ok 8 - native aim and flight keep ownership; a supported landing releases ready immediately
+  ---
+  duration_ms: 1553.242791
+  type: 'test'
+  ...
+# Subtest: helper reads only its bound active local/remote lifecycle and respects reuse and reset
+ok 9 - helper reads only its bound active local/remote lifecycle and respects reuse and reset
+  ---
+  duration_ms: 1.683423
+  type: 'test'
+  ...
+# Subtest: detached ordinary air/hold and disabled presentation retain their existing fallback and pose gates
+ok 10 - detached ordinary air/hold and disabled presentation retain their existing fallback and pose gates
+  ---
+  duration_ms: 0.273644
+  type: 'test'
+  ...
+# (node:23695) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: native no-attack respawn landing releases spawn weapon pose while its timer remains young
+ok 11 - native no-attack respawn landing releases spawn weapon pose while its timer remains young
+  ---
+  duration_ms: 14660.410809
+  type: 'test'
+  ...
+# Subtest: held attack before death, release during spawn, and launch tap never paints after landing
+ok 12 - held attack before death, release during spawn, and launch tap never paints after landing
+  ---
+  duration_ms: 1307.873341
+  type: 'test'
+  ...
+# Subtest: a fresh attack after native landing has its real flick pose and weapon-specific release delay
+ok 13 - a fresh attack after native landing has its real flick pose and weapon-specific release delay
+  ---
+  duration_ms: 987.135046
+  type: 'test'
+  ...
+# Subtest: release and fresh launch press intentionally held through landing is admitted; stale holds stay blocked
+ok 14 - release and fresh launch press intentionally held through landing is admitted; stale holds stay blocked
+  ---
+  duration_ms: 888.003225
+  type: 'test'
+  ...
+# Subtest: other weapon families leave runner/animation idle, fresh input still shoots or charges
+ok 15 - other weapon families leave runner/animation idle, fresh input still shoots or charges
+  ---
+  duration_ms: 5636.552699
+  type: 'test'
+  ...
+# Subtest: ordinary jump, superjump, weapon change, repeated death/reset and dispose do not invent spawn action
+ok 16 - ordinary jump, superjump, weapon change, repeated death/reset and dispose do not invent spawn action
+  ---
+  duration_ms: 1641.264786
+  type: 'test'
+  ...
+# Subtest: remote spawn event and sampled landing use the same ordinary ready pose without proxy paint
+ok 17 - remote spawn event and sampled landing use the same ordinary ready pose without proxy paint
+  ---
+  duration_ms: 787.311667
+  type: 'test'
+  ...
+# Subtest: spawn rearm observes physical release through filtered intent; disabled presentation retains its legacy gate
+ok 18 - spawn rearm observes physical release through filtered intent; disabled presentation retains its legacy gate
+  ---
+  duration_ms: 932.399657
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 80905.852959

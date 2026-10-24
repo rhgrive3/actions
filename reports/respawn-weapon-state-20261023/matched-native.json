@@ -1,0 +1,184 @@
+{
+  "scope": "matched full native Game before versus review-only minified versioned module overlay; final normal candidate build is pending shared-path coordination",
+  "before": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+  "candidateBase": "ac27ae5f27169f2267a85d4bed904677d26f5e0aab10910c7181e4459f453f30",
+  "baselineStatus": "captured",
+  "candidateStatus": "captured",
+  "overrides": [
+    "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/roller.mjs",
+    "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/respawn-lifecycle.mjs",
+    "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/roller-detail-motion.mjs",
+    "/_versions/cb7ef24f23f9045331ef20718071ac71d3131f73fe89e7b2aa227790d2077558/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+    "/patches/splatoon3/runtime/roller.mjs",
+    "/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+    "/patches/splatoon3/runtime/respawn-lifecycle.mjs"
+  ],
+  "setupEqual": true,
+  "matches": [
+    {
+      "label": "death",
+      "equal": true,
+      "differences": [],
+      "beforeRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ],
+      "afterRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ]
+    },
+    {
+      "label": "aim",
+      "equal": true,
+      "differences": [],
+      "beforeRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ],
+      "afterRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ]
+    },
+    {
+      "label": "launch",
+      "equal": true,
+      "differences": [],
+      "beforeRotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "afterRotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ]
+    },
+    {
+      "label": "flight-49",
+      "equal": true,
+      "differences": [],
+      "beforeRotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "afterRotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ]
+    },
+    {
+      "label": "flight-59",
+      "equal": true,
+      "differences": [],
+      "beforeRotation": [
+        0.6000000238418579,
+        -0.03999999910593033,
+        -0.03999999910593033
+      ],
+      "afterRotation": [
+        0.6000000238418579,
+        -0.03999999910593033,
+        -0.03999999910593033
+      ]
+    },
+    {
+      "label": "flight-60",
+      "equal": true,
+      "differences": [],
+      "beforeRotation": [
+        0.6000000238418579,
+        -0.03999999910593033,
+        -0.03999999910593033
+      ],
+      "afterRotation": [
+        0.6000000238418579,
+        -0.03999999910593033,
+        -0.03999999910593033
+      ]
+    },
+    {
+      "label": "flight-61",
+      "equal": true,
+      "differences": [],
+      "beforeRotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "afterRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ]
+    },
+    {
+      "label": "flight-67",
+      "equal": true,
+      "differences": [],
+      "beforeRotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "afterRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ]
+    },
+    {
+      "label": "flight-85",
+      "equal": true,
+      "differences": [],
+      "beforeRotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "afterRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ]
+    },
+    {
+      "label": "flight-110",
+      "equal": true,
+      "differences": [],
+      "beforeRotation": [
+        0.800000011920929,
+        0.10000000149011612,
+        0
+      ],
+      "afterRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ]
+    },
+    {
+      "label": "flight-145",
+      "equal": true,
+      "differences": [],
+      "beforeRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ],
+      "afterRotation": [
+        -2.5,
+        0.03999999910593033,
+        1
+      ]
+    }
+  ]
+}

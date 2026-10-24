@@ -1,0 +1,794 @@
+{
+  "status": "pass",
+  "scope": "Matched native offline Game at fixed60Hz; source/build/browser evidence, no FPS/transport/retail/visual-acceptance claim",
+  "builds": [
+    {
+      "name": "browser-before",
+      "contentHash": "d06bdd157e91f91b87c2e55cb6394ffdb0e85188ec81e68a875a73c7286be557",
+      "inputHash": "fedfdd0c90001397b7a905d4ce4892d472c3d208f428f72a847b4c3fbcd9c8b1",
+      "inputCount": 1420,
+      "artifactCount": 2110,
+      "runtimeResponses": [
+        {
+          "path": "/_versions/a5ebc35d4144c9b5fd6a8d268da7c3e4a17cc29ec60ee3700dffb62f22b27dad/patches/splatoon3/runtime/roller.mjs",
+          "status": 200,
+          "sha256": "5f8d7c69c100759cf9408d0ef9a31969469a365a1473aa2dd04dbdc4072ef826"
+        },
+        {
+          "path": "/_versions/a5ebc35d4144c9b5fd6a8d268da7c3e4a17cc29ec60ee3700dffb62f22b27dad/patches/splatoon3/runtime/roller-detail-motion.mjs",
+          "status": 200,
+          "sha256": "8ecafe227f5d40dc0e1581f907a55695797a962529c3573dfe81990c58516ac2"
+        },
+        {
+          "path": "/_versions/a5ebc35d4144c9b5fd6a8d268da7c3e4a17cc29ec60ee3700dffb62f22b27dad/patches/splatoon3/runtime/respawn-lifecycle.mjs",
+          "status": 200,
+          "sha256": "b61a139346626b5fbe1fc5dd01f49a23faf3f57ef7adafb51a179ca2618bb99f"
+        },
+        {
+          "path": "/_versions/a5ebc35d4144c9b5fd6a8d268da7c3e4a17cc29ec60ee3700dffb62f22b27dad/patches/splatoon3/runtime/weapon-handoff-motion.mjs",
+          "status": 200,
+          "sha256": "c00e022c53b7c2c94ed923d1c7a2894a4c28196fbdd1696e7e48f10087c48fdc"
+        },
+        {
+          "path": "/_versions/a5ebc35d4144c9b5fd6a8d268da7c3e4a17cc29ec60ee3700dffb62f22b27dad/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+          "status": 200,
+          "sha256": "3f86060768bc6d76516345e080c0c9abc68cc8794243f939040af92e0aeb9427"
+        }
+      ]
+    },
+    {
+      "name": "browser-after",
+      "contentHash": "9ad08ece7447b3c9549a1b1566f2618b833c236d57f868434232a9bf7baad26e",
+      "inputHash": "88cf436138d42e7d60f2bf269f8c51d2cd809cd5d1999a7be75bb5b3039db47c",
+      "inputCount": 1420,
+      "artifactCount": 2110,
+      "runtimeResponses": [
+        {
+          "path": "/_versions/f219ffc2f3f739430130f1fa08bf9e7756a4d360a682d5639074eb8b0491bc80/patches/splatoon3/runtime/roller.mjs",
+          "status": 200,
+          "sha256": "5f8d7c69c100759cf9408d0ef9a31969469a365a1473aa2dd04dbdc4072ef826"
+        },
+        {
+          "path": "/_versions/f219ffc2f3f739430130f1fa08bf9e7756a4d360a682d5639074eb8b0491bc80/patches/splatoon3/runtime/respawn-lifecycle.mjs",
+          "status": 200,
+          "sha256": "b61a139346626b5fbe1fc5dd01f49a23faf3f57ef7adafb51a179ca2618bb99f"
+        },
+        {
+          "path": "/_versions/f219ffc2f3f739430130f1fa08bf9e7756a4d360a682d5639074eb8b0491bc80/patches/splatoon3/runtime/weapon-handoff-motion.mjs",
+          "status": 200,
+          "sha256": "a5a94f7a375be667dc8a3a426c1c9c168f6bc0a5d2700f4be7bbc43728e259a1"
+        },
+        {
+          "path": "/_versions/f219ffc2f3f739430130f1fa08bf9e7756a4d360a682d5639074eb8b0491bc80/patches/splatoon3/runtime/roller-detail-motion.mjs",
+          "status": 200,
+          "sha256": "8ecafe227f5d40dc0e1581f907a55695797a962529c3573dfe81990c58516ac2"
+        },
+        {
+          "path": "/_versions/f219ffc2f3f739430130f1fa08bf9e7756a4d360a682d5639074eb8b0491bc80/patches/splatoon3/runtime/spawn-pose-motion.mjs",
+          "status": 200,
+          "sha256": "3f86060768bc6d76516345e080c0c9abc68cc8794243f939040af92e0aeb9427"
+        }
+      ]
+    }
+  ],
+  "inputDifference": [
+    "patch/runtime/weapon-handoff-motion.mjs"
+  ],
+  "canonicalFieldsCompared": [
+    "tick",
+    "position",
+    "velocity",
+    "alive",
+    "grounded",
+    "groundHit",
+    "phase",
+    "spawnTime",
+    "spawnPose",
+    "ink",
+    "turf",
+    "rolling",
+    "flick",
+    "fire",
+    "physical",
+    "previous",
+    "shotCount",
+    "paintCalls",
+    "projectiles",
+    "gameplayMuzzle",
+    "pose",
+    "layers",
+    "body",
+    "root",
+    "kid",
+    "chest",
+    "camera",
+    "seed",
+    "palette",
+    "geometry"
+  ],
+  "matchedNormalLabels": [
+    "settled",
+    "normal-59",
+    "normal-60",
+    "normal-61",
+    "normal-62",
+    "normal-63",
+    "normal-64",
+    "normal-65",
+    "normal-66",
+    "normal-67",
+    "normal-68",
+    "normal-72",
+    "normal-133",
+    "normal-134",
+    "normal-145"
+  ],
+  "oldSteps": [
+    {
+      "from": 60,
+      "to": 61,
+      "angleDegrees": 174.881224764038,
+      "pivotDistance": 0.2531888387615761,
+      "projectedWidthDelta": 53.14461815771125,
+      "projectedHeightDelta": 217.5321613456934,
+      "weight": 0
+    },
+    {
+      "from": 61,
+      "to": 62,
+      "angleDegrees": 1.331109455911802,
+      "pivotDistance": 0.018632149395328566,
+      "projectedWidthDelta": 4.796902354591367,
+      "projectedHeightDelta": 4.162808889878136,
+      "weight": 0
+    },
+    {
+      "from": 62,
+      "to": 63,
+      "angleDegrees": 1.9413851046107398,
+      "pivotDistance": 0.04590164246884748,
+      "projectedWidthDelta": 1.27220698520469,
+      "projectedHeightDelta": 0.22715268690166113,
+      "weight": 0
+    },
+    {
+      "from": 63,
+      "to": 64,
+      "angleDegrees": 2.8427902645739045,
+      "pivotDistance": 0.07986946430158456,
+      "projectedWidthDelta": 1.3281528434788186,
+      "projectedHeightDelta": 4.79030651094439,
+      "weight": 0
+    },
+    {
+      "from": 64,
+      "to": 65,
+      "angleDegrees": 2.421897561294539,
+      "pivotDistance": 0.06172067345322103,
+      "projectedWidthDelta": 2.2201786305829216,
+      "projectedHeightDelta": 5.146039940611104,
+      "weight": 0
+    },
+    {
+      "from": 65,
+      "to": 66,
+      "angleDegrees": 2.0345773754315006,
+      "pivotDistance": 0.047411704899905954,
+      "projectedWidthDelta": 2.710640596737818,
+      "projectedHeightDelta": 5.297671943906892,
+      "weight": 0
+    },
+    {
+      "from": 66,
+      "to": 67,
+      "angleDegrees": 1.2965009053434038,
+      "pivotDistance": 0.025160852944712472,
+      "projectedWidthDelta": 2.53560148159238,
+      "projectedHeightDelta": 3.635653357308229,
+      "weight": 0
+    },
+    {
+      "from": 67,
+      "to": 68,
+      "angleDegrees": 1.6881172710892638,
+      "pivotDistance": 0.019024381476470127,
+      "projectedWidthDelta": 2.3823254145640647,
+      "projectedHeightDelta": 1.6082969223847954,
+      "weight": 0
+    }
+  ],
+  "newSteps": [
+    {
+      "from": 60,
+      "to": 61,
+      "angleDegrees": 6.04058601189892,
+      "pivotDistance": 0.03011419937760953,
+      "projectedWidthDelta": 2.405439765785303,
+      "projectedHeightDelta": 6.6504715850932214,
+      "weight": 0.9803240740740741
+    },
+    {
+      "from": 61,
+      "to": 62,
+      "angleDegrees": 10.453611870173207,
+      "pivotDistance": 0.0196522766397828,
+      "projectedWidthDelta": 2.8380320791472116,
+      "projectedHeightDelta": 2.5320550803826123,
+      "weight": 0.9259259259259259
+    },
+    {
+      "from": 62,
+      "to": 63,
+      "angleDegrees": 14.52551650765995,
+      "pivotDistance": 0.053303914150642895,
+      "projectedWidthDelta": 2.512222294121244,
+      "projectedHeightDelta": 3.912345860707518,
+      "weight": 0.84375
+    },
+    {
+      "from": 63,
+      "to": 64,
+      "angleDegrees": 17.07444803702453,
+      "pivotDistance": 0.09348405996288281,
+      "projectedWidthDelta": 2.341326098587274,
+      "projectedHeightDelta": 3.6271583595383277,
+      "weight": 0.7407407407407407
+    },
+    {
+      "from": 64,
+      "to": 65,
+      "angleDegrees": 19.327746935420617,
+      "pivotDistance": 0.08721386039928651,
+      "projectedWidthDelta": 3.7862648873879436,
+      "projectedHeightDelta": 1.203387132290004,
+      "weight": 0.6238425925925926
+    },
+    {
+      "from": 65,
+      "to": 66,
+      "angleDegrees": 20.24593313769513,
+      "pivotDistance": 0.08061791993274833,
+      "projectedWidthDelta": 6.074623721566724,
+      "projectedHeightDelta": 13.423167604361886,
+      "weight": 0.5000000000000001
+    },
+    {
+      "from": 66,
+      "to": 67,
+      "angleDegrees": 20.314666423219695,
+      "pivotDistance": 0.06115915115353157,
+      "projectedWidthDelta": 9.651275918568018,
+      "projectedHeightDelta": 20.022315945586136,
+      "weight": 0.37615740740740755
+    },
+    {
+      "from": 67,
+      "to": 68,
+      "angleDegrees": 21.53003080266302,
+      "pivotDistance": 0.031307462112579655,
+      "projectedWidthDelta": 15.06100010957212,
+      "projectedHeightDelta": 66.00364342278293,
+      "weight": 0.2592592592592593
+    },
+    {
+      "from": 68,
+      "to": 69,
+      "angleDegrees": 18.909200851239696,
+      "pivotDistance": 0.01939966460816989,
+      "projectedWidthDelta": 9.118555592158799,
+      "projectedHeightDelta": 65.6465522648231,
+      "weight": 0.15625
+    },
+    {
+      "from": 69,
+      "to": 70,
+      "angleDegrees": 15.08681478623628,
+      "pivotDistance": 0.01253877481927155,
+      "projectedWidthDelta": 1.4790750540732347,
+      "projectedHeightDelta": 44.00464315669737,
+      "weight": 0.07407407407407418
+    },
+    {
+      "from": 70,
+      "to": 71,
+      "angleDegrees": 9.984959622588056,
+      "pivotDistance": 0.014700158434607143,
+      "projectedWidthDelta": 6.287107558349305,
+      "projectedHeightDelta": 19.449837827196234,
+      "weight": 0.01967592592592604
+    },
+    {
+      "from": 71,
+      "to": 72,
+      "angleDegrees": 3.6518967187989353,
+      "pivotDistance": 0.020359260007128916,
+      "projectedWidthDelta": 3.350152425173576,
+      "projectedHeightDelta": 5.2772495360260905,
+      "weight": 0
+    },
+    {
+      "from": 72,
+      "to": 73,
+      "angleDegrees": 0.25888869756484945,
+      "pivotDistance": 0.02326584773578136,
+      "projectedWidthDelta": 0.3509528048903121,
+      "projectedHeightDelta": 0.7225610624931846,
+      "weight": 0
+    },
+    {
+      "from": 73,
+      "to": 74,
+      "angleDegrees": 0.5381933723208381,
+      "pivotDistance": 0.021936803685802864,
+      "projectedWidthDelta": 0.15424721301110367,
+      "projectedHeightDelta": 0.393891174085752,
+      "weight": 0
+    }
+  ],
+  "peaks": {
+    "angleDegrees": {
+      "before": 174.881224764038,
+      "after": 21.53003080266302
+    },
+    "pivotDistance": {
+      "before": 0.2531888387615761,
+      "after": 0.09348405996288281
+    },
+    "projectedWidthDelta": {
+      "before": 53.14461815771125,
+      "after": 15.06100010957212
+    },
+    "projectedHeightDelta": {
+      "before": 217.5321613456934,
+      "after": 66.00364342278293
+    }
+  },
+  "supportedFloorClearance": [
+    {
+      "frame": 61,
+      "minY": 0.1388399166803918,
+      "floor": 0
+    },
+    {
+      "frame": 62,
+      "minY": 0.2320339715205122,
+      "floor": 0
+    },
+    {
+      "frame": 63,
+      "minY": 0.3808344993747391,
+      "floor": 0
+    },
+    {
+      "frame": 64,
+      "minY": 0.5737299124564357,
+      "floor": 0
+    },
+    {
+      "frame": 65,
+      "minY": 0.867648182271541,
+      "floor": 0
+    },
+    {
+      "frame": 66,
+      "minY": 1.1982130831096303,
+      "floor": 0
+    },
+    {
+      "frame": 67,
+      "minY": 1.5116658130522374,
+      "floor": 0
+    },
+    {
+      "frame": 68,
+      "minY": 1.5495036059320233,
+      "floor": 0
+    },
+    {
+      "frame": 69,
+      "minY": 1.2408339302999059,
+      "floor": 0
+    },
+    {
+      "frame": 70,
+      "minY": 0.9133950825684952,
+      "floor": 0
+    },
+    {
+      "frame": 71,
+      "minY": 0.6772290363726667,
+      "floor": 0
+    },
+    {
+      "frame": 72,
+      "minY": 0.5981129389708995,
+      "floor": 0
+    },
+    {
+      "frame": 73,
+      "minY": 0.6111409948196314,
+      "floor": 0
+    },
+    {
+      "frame": 74,
+      "minY": 0.6283752499741716,
+      "floor": 0
+    }
+  ],
+  "dimensions": {
+    "settled": {
+      "before": {
+        "pivotQuaternion": [
+          0.8008954505458511,
+          -0.48366518321766616,
+          -0.22687694476421558,
+          -0.27048349260617516
+        ],
+        "pivotPosition": [
+          0.3070481712514252,
+          0.626385083990827,
+          -26.896220703432448
+        ],
+        "pixels": [
+          223.16888669478618,
+          240.64625471920232
+        ],
+        "intrinsicSize": [
+          2.089520215988159,
+          0.43197852373123347,
+          0.43197852373122814
+        ],
+        "handoff": {
+          "owner": "native",
+          "elapsed": 0,
+          "duration": 0,
+          "weight": 0,
+          "valid": true
+        }
+      },
+      "after": {
+        "pivotQuaternion": [
+          0.8008954505458511,
+          -0.48366518321766616,
+          -0.22687694476421558,
+          -0.27048349260617516
+        ],
+        "pivotPosition": [
+          0.3070481712514252,
+          0.626385083990827,
+          -26.896220703432448
+        ],
+        "pixels": [
+          223.16888669478618,
+          240.64625471920232
+        ],
+        "intrinsicSize": [
+          2.089520215988159,
+          0.43197852373123347,
+          0.43197852373122814
+        ],
+        "handoff": {
+          "owner": "native",
+          "elapsed": 0.21666666666666665,
+          "duration": 0.2,
+          "weight": 0,
+          "valid": true
+        }
+      }
+    },
+    "normal-60": {
+      "before": {
+        "pivotQuaternion": [
+          0.16972796223965428,
+          -0.14622830566047235,
+          0.1820989429930725,
+          0.9574182348474713
+        ],
+        "pivotPosition": [
+          -0.7569063324985139,
+          0.8593553455130044,
+          -29.468805978889264
+        ],
+        "pixels": [
+          188.1875248890687,
+          68.15549727084903
+        ],
+        "intrinsicSize": [
+          2.08952021598816,
+          0.4319785237312316,
+          0.43197852373123524
+        ],
+        "handoff": {
+          "owner": "native",
+          "elapsed": 0,
+          "duration": 0,
+          "weight": 0,
+          "valid": true
+        }
+      },
+      "after": {
+        "pivotQuaternion": [
+          0.16972796223965428,
+          -0.14622830566047235,
+          0.1820989429930725,
+          0.9574182348474713
+        ],
+        "pivotPosition": [
+          -0.7569063324985139,
+          0.8593553455130044,
+          -29.468805978889264
+        ],
+        "pixels": [
+          188.1875248890687,
+          68.15549727084903
+        ],
+        "intrinsicSize": [
+          2.08952021598816,
+          0.4319785237312316,
+          0.43197852373123524
+        ],
+        "handoff": {
+          "owner": "native",
+          "elapsed": 0,
+          "duration": 0,
+          "weight": 0,
+          "valid": true
+        }
+      }
+    },
+    "normal-61": {
+      "before": {
+        "pivotQuaternion": [
+          0.7893022475739142,
+          -0.5490890877938056,
+          -0.11857723009381618,
+          -0.24787613064555453
+        ],
+        "pivotPosition": [
+          -0.7406312251981468,
+          0.7485601502071578,
+          -29.24172860517507
+        ],
+        "pixels": [
+          241.33214304677995,
+          285.6876586165424
+        ],
+        "intrinsicSize": [
+          2.089520215988161,
+          0.4319785237312326,
+          0.4319785237312317
+        ],
+        "handoff": {
+          "owner": "native",
+          "elapsed": 0,
+          "duration": 0,
+          "weight": 0,
+          "valid": true
+        }
+      },
+      "after": {
+        "pivotQuaternion": [
+          0.19118491608681706,
+          -0.09813479380387034,
+          0.18177222932873238,
+          0.9595711264678669
+        ],
+        "pivotPosition": [
+          -0.7543943962782509,
+          0.8464127256636732,
+          -29.44173119778183
+        ],
+        "pixels": [
+          190.592964654854,
+          61.505025685755804
+        ],
+        "intrinsicSize": [
+          2.089520215988159,
+          0.4319785237312326,
+          0.43197852373123524
+        ],
+        "handoff": {
+          "owner": "native",
+          "elapsed": 0.016666666666666666,
+          "duration": 0.2,
+          "weight": 0.9803240740740741,
+          "valid": true
+        }
+      }
+    },
+    "normal-63": {
+      "before": {
+        "pivotQuaternion": [
+          0.7825236614235934,
+          -0.5444619554602136,
+          -0.13028855892575378,
+          -0.27247530123243097
+        ],
+        "pivotPosition": [
+          -0.7486941237269387,
+          0.6952054814064088,
+          -29.207387686511815
+        ],
+        "pixels": [
+          247.401252386576,
+          289.6233148195189
+        ],
+        "intrinsicSize": [
+          2.0895202159881596,
+          0.4319785237312336,
+          0.43197852373123535
+        ],
+        "handoff": {
+          "owner": "native",
+          "elapsed": 0,
+          "duration": 0,
+          "weight": 0,
+          "valid": true
+        }
+      },
+      "after": {
+        "pivotQuaternion": [
+          0.02327083907817613,
+          0.02516263609445369,
+          0.24308290389594017,
+          0.9693998203150715
+        ],
+        "pivotPosition": [
+          -0.7579306912871462,
+          0.7998795197959956,
+          -29.38641153951301
+        ],
+        "pixels": [
+          195.94321902812246,
+          67.94942662684593
+        ],
+        "intrinsicSize": [
+          2.0895202159881587,
+          0.4319785237312317,
+          0.4319785237312317
+        ],
+        "handoff": {
+          "owner": "native",
+          "elapsed": 0.05,
+          "duration": 0.2,
+          "weight": 0.84375,
+          "valid": true
+        }
+      }
+    },
+    "normal-66": {
+      "before": {
+        "pivotQuaternion": [
+          0.7661413342457204,
+          -0.5313823180226109,
+          -0.1647481293622256,
+          -0.32174266413510005
+        ],
+        "pivotPosition": [
+          -0.7634273880995418,
+          0.523144558259476,
+          -29.13086068806495
+        ],
+        "pixels": [
+          241.14228031577645,
+          274.3892964240565
+        ],
+        "intrinsicSize": [
+          2.089520215988157,
+          0.4319785237312316,
+          0.43197852373123513
+        ],
+        "handoff": {
+          "owner": "native",
+          "elapsed": 0,
+          "duration": 0,
+          "weight": 0,
+          "valid": true
+        }
+      },
+      "after": {
+        "pivotQuaternion": [
+          -0.3638866881016101,
+          0.25659058333284834,
+          0.3575502883820573,
+          0.8209175001455735
+        ],
+        "pivotPosition": [
+          -0.7729822798461896,
+          0.6096885965496652,
+          -29.20849442160679
+        ],
+        "pixels": [
+          208.1454337356644,
+          56.95003024973237
+        ],
+        "intrinsicSize": [
+          2.0895202159881605,
+          0.43197852373123513,
+          0.43197852373123335
+        ],
+        "handoff": {
+          "owner": "native",
+          "elapsed": 0.09999999999999999,
+          "duration": 0.2,
+          "weight": 0.5000000000000001,
+          "valid": true
+        }
+      }
+    },
+    "normal-145": {
+      "before": {
+        "pivotQuaternion": [
+          0.6641434188333305,
+          -0.6423264874793465,
+          -0.1413409293108208,
+          -0.3554615934308149
+        ],
+        "pivotPosition": [
+          -0.7593163181513937,
+          0.6730620627502887,
+          -29.208490721136418
+        ],
+        "pixels": [
+          164.3884599740986,
+          275.0710935426713
+        ],
+        "intrinsicSize": [
+          2.0895202159881627,
+          0.4319785237312317,
+          0.43197852373123524
+        ],
+        "handoff": {
+          "owner": "native",
+          "elapsed": 0,
+          "duration": 0,
+          "weight": 0,
+          "valid": true
+        }
+      },
+      "after": {
+        "pivotQuaternion": [
+          0.6641434188333305,
+          -0.6423264874793465,
+          -0.1413409293108208,
+          -0.3554615934308149
+        ],
+        "pivotPosition": [
+          -0.7593163181513937,
+          0.6730620627502887,
+          -29.208490721136418
+        ],
+        "pixels": [
+          164.3884599740986,
+          275.0710935426713
+        ],
+        "intrinsicSize": [
+          2.0895202159881627,
+          0.4319785237312317,
+          0.43197852373123524
+        ],
+        "handoff": {
+          "owner": "native",
+          "elapsed": 0.21666666666666665,
+          "duration": 0.2,
+          "weight": 0,
+          "valid": true
+        }
+      }
+    }
+  },
+  "unsupportedNativePoints": 25,
+  "unsupportedReady": 0,
+  "firstSupportedPostUpdate": {
+    "time": 0.6166667342185974,
+    "eligible": true,
+    "fadeWeight": 0.9803240740740741
+  },
+  "noInput": {
+    "shots": 0,
+    "paintCalls": 0,
+    "turf": 0,
+    "ink": 100
+  },
+  "settledDisplayExact": true
+}
