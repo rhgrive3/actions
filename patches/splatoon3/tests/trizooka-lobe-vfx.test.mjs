@@ -14,6 +14,8 @@ const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
 const vfxPath=process.env.TRIZOOKA_VFX_SOURCE;
 const source=vfxPath?fs.readFileSync(vfxPath,'utf8'):read('../runtime/special-vfx.mjs');
 const native=adaptBuildSource('src/game/weapons.js',read('../../../inkwave-public/src/game/weapons.js'));
+const nativeScalarHelpers=native.slice(native.indexOf('function _assignWeaponQueueRound0('),native.indexOf('export class Projectiles {'));
+assert.ok(nativeScalarHelpers.startsWith('function _assignWeaponQueueRound0('),'exact scalar builder must be exported by the composed source');
 const methods=native.slice(native.indexOf('  _new() {'),native.indexOf('  ghostBomb('));
 const update=native.slice(native.indexOf('  update(dt) {'),native.indexOf('  // High-angle /'));
 const net=adaptBuildSource('src/net/netmatch.js',read('../../../inkwave-public/src/net/netmatch.js'));
@@ -50,7 +52,7 @@ function fixture({enabled=true,reject=false,nested=false,terminal=false,programS
   let code=adaptBuildSource('patches/splatoon3/runtime/special-vfx.mjs',programSource)
     .replace(/^import .*;\n/gm,'').replace(/^export default .*;$/gm,'').replace(/^export /gm,'');
   code+='\nglobalThis.api={Director,DIRECTORS,ROUND_FX,installSpecialVfx,directors};';
-  code+='\nclass NativeProjectiles{'+methods+update+'};globalThis.P=NativeProjectiles;';
+  code+='\n'+nativeScalarHelpers+'\nclass NativeProjectiles{'+methods+update+'};globalThis.P=NativeProjectiles;';
   code+='\nclass NativeNet{'+rec+'};globalThis.N=NativeNet;';
   code+='\nfunction installNativeBirth(Projectiles){'+birth+'};globalThis.installNativeBirth=installNativeBirth;';
   if(process.env.TRIZOOKA_VFX_ESBUILD) code=compactModuleStrings(createRequire(import.meta.url)(process.env.TRIZOOKA_VFX_ESBUILD).transformSync(code,{loader:'js',minify:true,charset:'utf8'}).code).code;
@@ -157,7 +159,8 @@ test('actual sprite pool keeps brief cores visible at 30/60/120 Hz and leaves da
   if(process.env.TRIZOOKA_VFX_ESBUILD)program=createRequire(import.meta.url)(process.env.TRIZOOKA_VFX_ESBUILD).transformSync(program,{loader:'js',minify:true}).code;
   const context=vm.createContext({vfxRandom:()=>.25,TAU:Math.PI*2});vm.runInContext(program,context);
   function pool(){const p=Object.create(context.SpritePool.prototype);Object.assign(p,{cap:8,n:0,S:23,p:new Float32Array(8*23),additive:true,mesh:{geometry:{}}});
-    for(const name of ['aPos','aDir','aCol','aPar'])p[name]={array:new Float32Array(9*4),clearUpdateRanges(){},addUpdateRange(){}};return p;}
+    for(const name of ['aPos','aDir','aCol','aPar'])p[name]={array:new Float32Array(9*4),clearUpdateRanges(){},addUpdateRange(){}};
+    p.updateAttributes=[p.aPos,p.aDir,p.aCol,p.aPar];return p;}
   const first=fixture();first.volley();const core=first.flashes[0];assert.equal(core.options.fadeIn,0);
   for(const hz of [30,60,120]){const p=pool();p.spawn(0,0,0,0,0,0,core.life,core.s0,core.s1,...core.c,core.alpha,2,core.options);p.update(1/hz);assert.ok(p.n>0&&p.aCol.array[7]>.4,`${hz}Hz first draw remains visibly opaque`);}
   const p=pool(),samples=[];
