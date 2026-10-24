@@ -1,0 +1,1450 @@
+{
+  "sourceHead": "6755954a13c8135bfac4102580f81f1cb553c640",
+  "jobs": [
+    {
+      "job": 120560901852,
+      "url": "https://github.com/rhgrive3/actions/actions/runs/39996193183/job/120560901852",
+      "fullLogWorkspacePath": "/workspace/scratch/respawn-ci-admission-20261023/job-120560901852.log.gz",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install pinned patch test dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify gameplay patch contracts and regressions (shard 3)",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 8
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 16
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ],
+      "excerpts": [
+        {
+          "line": 3906,
+          "text": "2026-10-23T19:17:48.6901413Z   ..."
+        },
+        {
+          "line": 3907,
+          "text": "2026-10-23T19:17:48.6902148Z # Subtest: 847 explicit current-source admission faults expose the guarded regressions"
+        },
+        {
+          "line": 3908,
+          "text": "2026-10-23T19:17:48.6903415Z not ok 476 - 847 explicit current-source admission faults expose the guarded regressions"
+        },
+        {
+          "line": 3909,
+          "text": "2026-10-23T19:17:48.6904356Z   ---"
+        },
+        {
+          "line": 3910,
+          "text": "2026-10-23T19:17:48.6904890Z   duration_ms: 711.420346"
+        },
+        {
+          "line": 3911,
+          "text": "2026-10-23T19:17:48.6905701Z   type: 'test'"
+        },
+        {
+          "line": 3912,
+          "text": "2026-10-23T19:17:48.6906874Z   location: '/home/runner/work/actions/actions/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:262:1'"
+        },
+        {
+          "line": 3913,
+          "text": "2026-10-23T19:17:48.6908117Z   failureType: 'testCodeFailure'"
+        },
+        {
+          "line": 3914,
+          "text": "2026-10-23T19:17:48.6908789Z   error: |-"
+        },
+        {
+          "line": 3915,
+          "text": "2026-10-23T19:17:48.6909530Z     counterfactual input patches/splatoon3/runtime/roller.mjs"
+        },
+        {
+          "line": 3916,
+          "text": "2026-10-23T19:17:48.6910337Z     + actual - expected"
+        },
+        {
+          "line": 3917,
+          "text": "2026-10-23T19:17:48.6910900Z     "
+        },
+        {
+          "line": 3918,
+          "text": "2026-10-23T19:17:48.6911817Z     + '0ba7a5cd6edb7f178fa055bbc2c19c609f10d5ed85768f71a02c50c33db33533'"
+        },
+        {
+          "line": 3919,
+          "text": "2026-10-23T19:17:48.6912980Z     - '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973'"
+        },
+        {
+          "line": 3920,
+          "text": "2026-10-23T19:17:48.6913805Z     "
+        },
+        {
+          "line": 3921,
+          "text": "2026-10-23T19:17:48.6914318Z   code: 'ERR_ASSERTION'"
+        },
+        {
+          "line": 3922,
+          "text": "2026-10-23T19:17:48.6914968Z   name: 'AssertionError'"
+        },
+        {
+          "line": 3923,
+          "text": "2026-10-23T19:17:48.6916008Z   expected: '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973'"
+        },
+        {
+          "line": 3930,
+          "text": "2026-10-23T19:17:48.6923738Z     node:internal/vm/module:346:32"
+        },
+        {
+          "line": 3931,
+          "text": "2026-10-23T19:17:48.6924380Z   ..."
+        },
+        {
+          "line": 3932,
+          "text": "2026-10-23T19:17:48.6929649Z # Error: Test \"847 explicit current-source admission faults expose the guarded regressions\" at patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:262:1 generated asynchronous activity after the test ended. This activity created the error \"AssertionError [ERR_ASSERTION]: counterfactual input patches/splatoon3/runtime/roller.mjs\\\\n+ actual - expected\\\\n\\\\n+ '0ba7a5cd6edb7f178fa055bbc2c19c609f10d5ed85768f71a02c50c33db33533'\\\\n- '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973'\\\\n\" and would have caused the test to fail, but instead triggered an unhandledRejection event."
+        },
+        {
+          "line": 3933,
+          "text": "2026-10-23T19:17:48.6938770Z # Error: Test \"847 explicit current-source admission faults expose the guarded regressions\" at patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:262:1 generated asynchronous activity after the test ended. This activity created the error \"AssertionError [ERR_ASSERTION]: counterfactual input patches/splatoon3/runtime/roller.mjs\\\\n+ actual - expected\\\\n\\\\n+ '0ba7a5cd6edb7f178fa055bbc2c19c609f10d5ed85768f71a02c50c33db33533'\\\\n- '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973'\\\\n\" and would have caused the test to fail, but instead triggered an unhandledRejection event."
+        },
+        {
+          "line": 3934,
+          "text": "2026-10-23T19:17:48.6947582Z # Error: Test \"847 explicit current-source admission faults expose the guarded regressions\" at patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs:262:1 generated asynchronous activity after the test ended. This activity created the error \"AssertionError [ERR_ASSERTION]: counterfactual input patches/splatoon3/runtime/roller.mjs\\\\n+ actual - expected\\\\n\\\\n+ '0ba7a5cd6edb7f178fa055bbc2c19c609f10d5ed85768f71a02c50c33db33533'\\\\n- '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973'\\\\n\" and would have caused the test to fail, but instead triggered an unhandledRejection event."
+        },
+        {
+          "line": 3935,
+          "text": "2026-10-23T19:17:48.6952242Z # (node:3047) ExperimentalWarning: VM Modules is an experimental feature and might change at any time"
+        },
+        {
+          "line": 3936,
+          "text": "2026-10-23T19:17:48.6953684Z # (Use `node --trace-warnings ...` to show where the warning was created)"
+        },
+        {
+          "line": 3937,
+          "text": "2026-10-23T19:17:48.6955725Z # Subtest: \\#883 grounded Dualies use signed horizontal deviation up to 2°, not a 2D cone"
+        },
+        {
+          "line": 3938,
+          "text": "2026-10-23T19:17:48.6957381Z ok 477 - \\#883 grounded Dualies use signed horizontal deviation up to 2°, not a 2D cone"
+        },
+        {
+          "line": 3939,
+          "text": "2026-10-23T19:17:48.6958426Z   ---"
+        },
+        {
+          "line": 3940,
+          "text": "2026-10-23T19:17:48.6959078Z   duration_ms: 331.752462"
+        },
+        {
+          "line": 7892,
+          "text": "2026-10-23T19:28:50.0272403Z # suites 0"
+        },
+        {
+          "line": 7893,
+          "text": "2026-10-23T19:28:50.0272758Z # pass 938"
+        },
+        {
+          "line": 7894,
+          "text": "2026-10-23T19:28:50.0273097Z # fail 1"
+        },
+        {
+          "line": 7895,
+          "text": "2026-10-23T19:28:50.0273393Z # cancelled 0"
+        },
+        {
+          "line": 7896,
+          "text": "2026-10-23T19:28:50.0273675Z # skipped 4"
+        },
+        {
+          "line": 7897,
+          "text": "2026-10-23T19:28:50.0273931Z # todo 0"
+        },
+        {
+          "line": 7898,
+          "text": "2026-10-23T19:28:50.0274478Z # duration_ms 966494.903834"
+        },
+        {
+          "line": 7899,
+          "text": "2026-10-23T19:28:50.0365802Z not ok 476 - 847 explicit current-source admission faults expose the guarded regressions"
+        },
+        {
+          "line": 7900,
+          "text": "2026-10-23T19:28:50.0366622Z   ---"
+        },
+        {
+          "line": 7901,
+          "text": "2026-10-23T19:28:50.0366985Z   duration_ms: 711.420346"
+        },
+        {
+          "line": 7902,
+          "text": "2026-10-23T19:28:50.0367387Z   type: 'test'"
+        }
+      ]
+    },
+    {
+      "job": 120574973106,
+      "url": "https://github.com/rhgrive3/actions/actions/runs/39996193183/job/120574973106",
+      "fullLogWorkspacePath": "/workspace/scratch/respawn-ci-admission-20261023/job-120574973106.log.gz",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Verify immutable checkout identity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify scoped network diagnostic workflow contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Install pinned source regression and build tool",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Prepare persistent worker regression fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Prepare persistent focused test evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9
+        },
+        {
+          "name": "Run requested focused source regressions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11
+        },
+        {
+          "name": "Verify queued InkFlight and catalogue bot liveness fixes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Verify paint ownership and frozen-host P0 regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Verify source session admission and finite view settings",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Verify claimed room startup and gyro health regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Verify modal controller and pending Pointer Lock lifetimes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Verify PR1172 Slosher and Ink Vac regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Verify source-loaded actual Actor Ink Vac presentation ownership",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Verify PR1172 updated wire contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        },
+        {
+          "name": "Verify PR1171 seven-issue and composition regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Verify six follow-up INKWAVE regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Verify eight additional INKWAVE regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Verify finish authority, adoption and portrait regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        },
+        {
+          "name": "Verify source-sampled direction-aware humanoid gait",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24
+        },
+        {
+          "name": "Verify source-bank torso, weapon carry and squid-to-human transitions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25
+        },
+        {
+          "name": "Verify PR1077 additional seven regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26
+        },
+        {
+          "name": "Diagnose nine-way walk contact regression",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27
+        },
+        {
+          "name": "Verify gameplay patch compatibility and numeric contract",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 28
+        },
+        {
+          "name": "Verify source-guided ink flight model",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 29
+        },
+        {
+          "name": "Verify nine queued critical INKWAVE fixes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 30
+        },
+        {
+          "name": "Verify immutable audio cancellation accounting",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 31
+        },
+        {
+          "name": "Verify cancelled native texture ownership",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 32
+        },
+        {
+          "name": "Verify cancelled native world preparation and async stage fencing",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 33
+        },
+        {
+          "name": "Verify native BVH query lifetime and collision parity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 34
+        },
+        {
+          "name": "Verify source OBJ pattern cache semantics",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 35
+        },
+        {
+          "name": "Verify deterministic network replication",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 36
+        },
+        {
+          "name": "Verify remote combat provenance and equipped hit ceilings",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 37
+        },
+        {
+          "name": "Compare authoritative and reconstructed attacks",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 38
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 39
+        },
+        {
+          "name": "Verify local quality regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 40
+        },
+        {
+          "name": "Verify migrated direct game source ownership",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 41
+        },
+        {
+          "name": "Verify platform lifecycle smoke regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 42
+        },
+        {
+          "name": "Verify movement physics smoke regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 43
+        },
+        {
+          "name": "Verify practice range measurement, rules and battle isolation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 44
+        },
+        {
+          "name": "Verify loading/cache regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 45
+        },
+        {
+          "name": "Prepare persistent runtime verifier fixtures",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 46
+        },
+        {
+          "name": "Verify motion verifier regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 47
+        },
+        {
+          "name": "Verify aggregate QA acceptance guards",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 48
+        },
+        {
+          "name": "Verify pinned primary numerical sources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 49
+        },
+        {
+          "name": "Verify completed weapon source mirror",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 50
+        },
+        {
+          "name": "Compare every catalog record with its pinned numerical source",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 51
+        },
+        {
+          "name": "Verify pinned Sub/Special numerical sources",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 52
+        },
+        {
+          "name": "Check JavaScript syntax",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 53
+        },
+        {
+          "name": "Check local module and stylesheet references",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 54
+        },
+        {
+          "name": "Verify projectile UI admission and boolean gate contracts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 55
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 56
+        },
+        {
+          "name": "Verify patched site at the checkout commit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 57
+        },
+        {
+          "name": "Verify all Turf finish cases on emitted site",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 58
+        },
+        {
+          "name": "Retain bounded Turf finish evidence",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 59
+        },
+        {
+          "name": "Verify emitted Charger grip reach and protected trajectory",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 60
+        },
+        {
+          "name": "Verify emitted Boss positive-proof admission and PvP zero knockback",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 61
+        },
+        {
+          "name": "Verify exact emitted owner-bound launch packets and ghosts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 62
+        },
+        {
+          "name": "Verify emitted Bot navigation respawn and retry state",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 63
+        },
+        {
+          "name": "Verify emitted sourced weapon holds and gameplay muzzle ownership",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 64
+        },
+        {
+          "name": "Verify emitted hit-pose finite feet and gameplay muzzle parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 65
+        },
+        {
+          "name": "Verify emitted streamed music teardown and suspended recovery",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 66
+        },
+        {
+          "name": "Verify existing Ballpoint glass in the same emitted build",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 67
+        },
+        {
+          "name": "Verify real emitted material handoff ownership and cancellation",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 68
+        },
+        {
+          "name": "Verify emitted motion caches against frozen baselines",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 69
+        },
+        {
+          "name": "Verify actual built codec and authenticated JSON transport",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 70
+        },
+        {
+          "name": "Verify emitted Tenacity lock and passive ownership",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 71
+        },
+        {
+          "name": "Verify emitted health HUD stability and visibility composition",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 72
+        },
+        {
+          "name": "Verify emitted native BVH query lifetime and collision parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 73
+        },
+        {
+          "name": "Verify emitted tap gesture continuity and practice range feedback",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 74
+        },
+        {
+          "name": "Verify emitted ranked input and network lifetime",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 75
+        },
+        {
+          "name": "Verify emitted paint ownership and frozen-host P0 regressions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 76
+        },
+        {
+          "name": "Verify emitted session admission and finite view settings",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 77
+        },
+        {
+          "name": "Verify emitted active aim-profile sensor transitions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 78
+        },
+        {
+          "name": "Verify emitted special audio match disposal",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 79
+        },
+        {
+          "name": "Verify emitted queue hardening and native catalogue wire compatibility",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 80
+        },
+        {
+          "name": "Verify emitted modal controller and Pointer Lock lifetimes",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 81
+        },
+        {
+          "name": "Verify emitted explicit Turf Map and gyro transport",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 82
+        },
+        {
+          "name": "Verify emitted empty Bubbler beam lifecycle",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 83
+        },
+        {
+          "name": "Verify exact owned rectangle scans against production build",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 84
+        },
+        {
+          "name": "Verify built piece-local paint ownership against the immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 85
+        },
+        {
+          "name": "Verify local paint order deduplication lifetime against built site",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 86
+        },
+        {
+          "name": "Verify emitted source-backed inertia, launch, charge and hurtbox behavior",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 87
+        },
+        {
+          "name": "Verify built weapons fidelity measurements and packet parity",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 88
+        },
+        {
+          "name": "Verify emitted sub and special fidelity boundaries",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 89
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 176
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 177
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 178
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 179
+        }
+      ],
+      "excerpts": [
+        {
+          "line": 24800,
+          "text": "2026-10-23T20:00:19.6082284Z   ..."
+        },
+        {
+          "line": 24801,
+          "text": "2026-10-23T20:00:19.6087926Z # Subtest: all sixteen pose leaves preserve the reviewed Roller scratch difference without replay"
+        },
+        {
+          "line": 24802,
+          "text": "2026-10-23T20:00:19.6096944Z not ok 3 - all sixteen pose leaves preserve the reviewed Roller scratch difference without replay"
+        },
+        {
+          "line": 24803,
+          "text": "2026-10-23T20:00:19.6097980Z   ---"
+        },
+        {
+          "line": 24804,
+          "text": "2026-10-23T20:00:19.6099499Z   duration_ms: 4.489248"
+        },
+        {
+          "line": 24805,
+          "text": "2026-10-23T20:00:19.6100006Z   type: 'test'"
+        },
+        {
+          "line": 24806,
+          "text": "2026-10-23T20:00:19.6101003Z   location: '/home/runner/work/actions/actions/scripts/tests/inkwave-23pr-paint-source-pair.test.mjs:36:1'"
+        },
+        {
+          "line": 24807,
+          "text": "2026-10-23T20:00:19.6102077Z   failureType: 'testCodeFailure'"
+        },
+        {
+          "line": 24808,
+          "text": "2026-10-23T20:00:19.6102578Z   error: |-"
+        },
+        {
+          "line": 24809,
+          "text": "2026-10-23T20:00:19.6103251Z     Expected values to be strictly equal:"
+        },
+        {
+          "line": 24810,
+          "text": "2026-10-23T20:00:19.6103956Z     + actual - expected"
+        },
+        {
+          "line": 24870,
+          "text": "2026-10-23T20:00:36.0061796Z   ..."
+        },
+        {
+          "line": 24871,
+          "text": "2026-10-23T20:00:36.0170061Z # Subtest: only the sixteen pinned pose source leaves are identical after the first batch, with no replay"
+        },
+        {
+          "line": 24872,
+          "text": "2026-10-23T20:00:36.0187816Z not ok 11 - only the sixteen pinned pose source leaves are identical after the first batch, with no replay"
+        },
+        {
+          "line": 24873,
+          "text": "2026-10-23T20:00:36.0193532Z   ---"
+        },
+        {
+          "line": 24874,
+          "text": "2026-10-23T20:00:36.0194234Z   duration_ms: 121.474402"
+        },
+        {
+          "line": 24875,
+          "text": "2026-10-23T20:00:36.0194718Z   type: 'test'"
+        },
+        {
+          "line": 24876,
+          "text": "2026-10-23T20:00:36.0195936Z   location: '/home/runner/work/actions/actions/scripts/tests/inkwave-31pr-paint-source-pair.test.mjs:77:1'"
+        },
+        {
+          "line": 24877,
+          "text": "2026-10-23T20:00:36.0196977Z   failureType: 'testCodeFailure'"
+        },
+        {
+          "line": 24878,
+          "text": "2026-10-23T20:00:36.0197457Z   error: |-"
+        },
+        {
+          "line": 24879,
+          "text": "2026-10-23T20:00:36.0197907Z     Expected values to be strictly equal:"
+        },
+        {
+          "line": 24880,
+          "text": "2026-10-23T20:00:36.0198450Z     + actual - expected"
+        },
+        {
+          "pattern": "Verify aggregate QA acceptance guards",
+          "found": false
+        }
+      ]
+    },
+    {
+      "job": 120574973230,
+      "url": "https://github.com/rhgrive3/actions/actions/runs/39996193183/job/120574973230",
+      "fullLogWorkspacePath": "/workspace/scratch/respawn-ci-admission-20261023/job-120574973230.log.gz",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify immutable site for this browser shard",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Cache pinned browser executables",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Prepare workspace storage and browser",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Verify emitted renderer and Input resource lifetimes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Verify PR1171 rendered reticle and GPU paint parity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Verify emitted menu focus lifecycle",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11
+        },
+        {
+          "name": "Verify startup snapshot clock recovery in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 12
+        },
+        {
+          "name": "Verify native touch gesture continuity in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 13
+        },
+        {
+          "name": "Verify minimap observation symmetry and strict failure controls",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Verify active browser behavior and loaded artifact bytes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Verify both teams wait and launch together at match start",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Verify queued native Showcase weapon selection across render rates",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Verify emitted BVH query equivalence and work reduction in Chromium",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Verify native normal browser pixels bound to production sources",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        },
+        {
+          "name": "Compare emitted motion caches with the frozen baseline in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Verify mobile post depth allocation and exact pixels in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Verify grate orientation and painted level normals in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Verify browser movement speed across directions and native firing/rolling transitions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        },
+        {
+          "name": "Capture current native Charger paint events for source and emitted redraw",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 24
+        },
+        {
+          "name": "Verify exact ancillary paint hashes and canonical GPU masks",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 25
+        },
+        {
+          "name": "Verify exact paint masks, ordered scan and local order lifetime in WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 26
+        },
+        {
+          "name": "Verify two-player network trajectories and rendered FX",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 27
+        },
+        {
+          "name": "Verify two-player replication with 100 ms ordered delivery delay",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 28
+        },
+        {
+          "name": "Verify neutral combat QA placement contracts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 29
+        },
+        {
+          "name": "Verify fixed-origin owner clock regressions",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 30
+        },
+        {
+          "name": "Verify real Actor hit ceiling before proof and hit ID consumption",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 31
+        },
+        {
+          "name": "Verify existing special models, grips, shaders and GPU retirement",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 32
+        },
+        {
+          "name": "Verify rendered walking contacts and transitions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 33
+        },
+        {
+          "name": "Verify rendered sub, Flow and weapon detail transitions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 34
+        },
+        {
+          "name": "Verify seven weapon models and source-loaded attack grip ownership",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 35
+        },
+        {
+          "name": "Verify existing Ballpoint gallery in the current exact-head build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 36
+        },
+        {
+          "name": "Verify Flow response lifetime and late-error receipts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 37
+        },
+        {
+          "name": "Verify Flow geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 38
+        },
+        {
+          "name": "Verify wall geometry through actual GTAO and GPU disposal",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 39
+        },
+        {
+          "name": "Verify depth-only shadows and effective reflection budgets on WebGL",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 40
+        },
+        {
+          "name": "Verify idle music and paused/render-target resources",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "number": 41
+        },
+        {
+          "name": "Profile runtime at immutable baseline",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 42
+        },
+        {
+          "name": "Preserve completed baseline runtime evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 43
+        },
+        {
+          "name": "Profile candidate runtime and compare repeated evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 44
+        },
+        {
+          "name": "Verify catalog audio graph coordinator contracts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 45
+        },
+        {
+          "name": "Verify built Brella aperture and visible detached flight",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 46
+        },
+        {
+          "name": "Verify the complete installed motion catalog",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 47
+        },
+        {
+          "name": "Verify PR1172 volley and vortex in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 48
+        },
+        {
+          "name": "Verify remote combat trust boundaries in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 49
+        },
+        {
+          "name": "Verify room startup and gyro health in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 50
+        },
+        {
+          "name": "Verify touch layout in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 51
+        },
+        {
+          "name": "Verify built input and lifecycle modules in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 52
+        },
+        {
+          "name": "Verify native lifecycle start, gesture and atomic snapshot guards",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 53
+        },
+        {
+          "name": "Verify repeated battle → results → menu lifecycle and the untimed Practice Range",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 54
+        },
+        {
+          "name": "Reject forged touch and reliability source identities",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 55
+        },
+        {
+          "name": "Verify the practice range in Chromium and WebKit (desktop + phone + tablet)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 56
+        },
+        {
+          "name": "Verify responsive menus in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 57
+        },
+        {
+          "name": "Measure cold, warm, PWA restart and offline startup in Chromium",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 58
+        },
+        {
+          "name": "Verify failed module recovery across deployments in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 59
+        },
+        {
+          "name": "Bind passing browser evidence to the tested commit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 60
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 61
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 62
+        },
+        {
+          "name": "Post Cache pinned browser executables",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 121
+        },
+        {
+          "name": "Post Cache verified npm tarballs",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 122
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 123
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 124
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 125
+        }
+      ],
+      "excerpts": [
+        {
+          "line": 2314,
+          "text": "2026-10-23T19:35:19.9712062Z ##[endgroup]"
+        },
+        {
+          "line": 2315,
+          "text": "2026-10-23T19:35:22.0083030Z {\"status\":\"passed\",\"sourceSha\":\"6755954a13c8135bfac4102580f81f1cb553c640\",\"contentHash\":\"424ea98e79b8c80931f4ff6d5a489d438e9255bf36cb8f2a2cc60a799c3d935f\",\"summary\":{\"shadowPixelEqualScenarios\":9,\"removedColorMiB\":[16,64],\"touchReflectionCalls\":\"3/6 frames\",\"contextRestore\":true},\"evidence\":\"/mnt/workspace/inkwave-ci-39996193183-1-active/evidence/resources/resource-render-result.json\"}"
+        },
+        {
+          "line": 2316,
+          "text": "2026-10-23T19:35:22.0264339Z ##[group]Run node scripts/check-inkwave-idle-resources.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/idle-resources\" --profile-dir \"$CI_STORAGE/cache/idle-resources\" --exact-source"
+        },
+        {
+          "line": 2317,
+          "text": "2026-10-23T19:35:22.0265092Z \u001b[36;1mnode scripts/check-inkwave-idle-resources.mjs --site .built-site/_site --evidence-dir \"$CI_STORAGE/evidence/idle-resources\" --profile-dir \"$CI_STORAGE/cache/idle-resources\" --exact-source\u001b[0m"
+        },
+        {
+          "line": 2318,
+          "text": "2026-10-23T19:35:22.0319565Z shell: /usr/bin/bash -e {0}"
+        },
+        {
+          "line": 2319,
+          "text": "2026-10-23T19:35:22.0319716Z env:"
+        },
+        {
+          "line": 2320,
+          "text": "2026-10-23T19:35:22.0319863Z   SOURCE_SHA: 6755954a13c8135bfac4102580f81f1cb553c640"
+        },
+        {
+          "line": 2321,
+          "text": "2026-10-23T19:35:22.0320158Z   FOCUSED_EVIDENCE_DIR: /mnt/workspace/.dev-state/agent-work/evidence/inkwave-focused-39996193183-1"
+        },
+        {
+          "line": 2322,
+          "text": "2026-10-23T19:35:22.0320525Z   INKWAVE_TEST_SCRATCH: /mnt/workspace/.dev-state/agent-work/scratch/inkwave-worker-39996193183-1"
+        },
+        {
+          "line": 2323,
+          "text": "2026-10-23T19:35:22.0320786Z   RUNTIME_PERFORMANCE: false"
+        },
+        {
+          "line": 2324,
+          "text": "2026-10-23T19:35:22.0320964Z   REMATCH_CYCLES: 3"
+        },
+        {
+          "line": 2330,
+          "text": "2026-10-23T19:35:22.0322200Z   CI_STORAGE: /mnt/workspace/inkwave-ci-39996193183-1-active"
+        },
+        {
+          "line": 2331,
+          "text": "2026-10-23T19:35:22.0322390Z ##[endgroup]"
+        },
+        {
+          "line": 2332,
+          "text": "2026-10-23T19:41:47.1947854Z ##[error]The runner has received a shutdown signal. This can happen when the runner service is stopped, or a manually started runner is canceled."
+        },
+        {
+          "line": 2333,
+          "text": "2026-10-23T19:41:47.8804069Z page.evaluate: Target page, context or browser has been closed"
+        },
+        {
+          "line": 2334,
+          "text": "2026-10-23T19:41:47.8806509Z Browser logs:"
+        },
+        {
+          "line": 2335,
+          "text": "2026-10-23T19:41:47.8806686Z "
+        },
+        {
+          "line": 2336,
+          "text": "2026-10-23T19:41:47.8818634Z <launching> /home/runner/work/actions/actions/.browser-cache/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,BlockOriginHeaderModificationOnRedirect,Translate,AutoDeElevate,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --disable-updater-scheduler --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --disable-dev-shm-usage --use-angle=swiftshader --enable-unsafe-swiftshader --user-data-dir=/mnt/workspace/inkwave-ci-39996193183-1-active/cache/idle-resources --remote-debugging-pipe about:blank"
+        },
+        {
+          "line": 2337,
+          "text": "2026-10-23T19:41:47.8833846Z <launched> pid=7130"
+        },
+        {
+          "line": 2338,
+          "text": "2026-10-23T19:41:47.8838582Z [pid=7130][err] [1023/193522.807982:WARNING:media/gpu/vaapi/vaapi_wrapper.cc:1655] drmGetDevices2() has not found any devices"
+        },
+        {
+          "line": 2339,
+          "text": "2026-10-23T19:41:47.8842169Z [pid=7130][err] [1023/193522.815796:WARNING:sandbox/policy/linux/sandbox_linux.cc:405] InitializeSandbox() called with multiple threads in process gpu-process."
+        },
+        {
+          "line": 2340,
+          "text": "2026-10-23T19:41:47.8850149Z [pid=7130][err] [1023/193524.611932:INFO:CONSOLE:6] \"THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported.\", source: http://127.0.0.1:34423/_versions/8efbad1b2104eea52efd0b8599a3270e15aa8503356393a16f6867a55054d6bb/vendor/three/build/three.module.js (6)"
+        },
+        {
+          "line": 2341,
+          "text": "2026-10-23T19:41:47.8853594Z [pid=7130][err] [1023/193545.314616:WARNING:media/audio/linux/audio_manager_linux.cc:53] Falling back to ALSA for audio output. PulseAudio is not available or could not be initialized."
+        },
+        {
+          "line": 2373,
+          "text": "2026-10-23T19:41:47.8951363Z [pid=7130][err] [1023/194130.095422:WARNING:services/audio/sync_reader.cc:178] (log cap reached, suppressing further logs)"
+        },
+        {
+          "line": 2374,
+          "text": "2026-10-23T19:41:47.8951805Z [pid=7130] <gracefully close start>"
+        },
+        {
+          "line": 2375,
+          "text": "2026-10-23T19:41:47.8954214Z     at main (/home/runner/work/actions/actions/scripts/check-inkwave-idle-resources.mjs:168:25) {"
+        },
+        {
+          "line": 2376,
+          "text": "2026-10-23T19:41:47.8956831Z   log: []"
+        },
+        {
+          "line": 2377,
+          "text": "2026-10-23T19:41:47.8960113Z }"
+        },
+        {
+          "line": 2378,
+          "text": "2026-10-23T19:41:48.0488345Z ##[error]The operation was canceled."
+        },
+        {
+          "line": 2379,
+          "text": "2026-10-23T19:41:48.1698567Z Cleaning up orphan processes"
+        },
+        {
+          "line": 2380,
+          "text": "2026-10-23T19:41:48.2971716Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/cache@v4, actions/checkout@v4, actions/download-artifact@v4, actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/"
+        },
+        {
+          "line": 2381,
+          "text": ""
+        }
+      ]
+    }
+  ]
+}

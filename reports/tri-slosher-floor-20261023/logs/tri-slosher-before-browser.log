@@ -1,0 +1,12 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.evaluate: TypeError: THREE.GridHelper is not a constructor
+    at eval (eval at evaluate (:311:30), <anonymous>:15:16)
+    at async <anonymous>:337:30
+    at /workspace/actions/scripts/check-inkwave-trislosher-floor-browser.mjs:38:14 {
+  log: []
+}
+
+Node.js v24.19.0

@@ -1,0 +1,20 @@
+2026-10-23T18:37:44.6787374Z 1..201
+2026-10-23T18:37:44.6787843Z # tests 201
+2026-10-23T18:37:44.6788256Z # suites 0
+2026-10-23T18:37:44.6788663Z # pass 201
+2026-10-23T18:37:44.6789064Z # fail 0
+2026-10-23T18:37:44.6789466Z # cancelled 0
+2026-10-23T18:37:44.6790159Z # skipped 0
+2026-10-23T18:37:44.6790552Z # todo 0
+2026-10-23T18:37:44.6791010Z # duration_ms 119499.759696
+2026-10-23T18:37:44.6850847Z /home/runner/work/_temp/fcdaa01e-68ce-45e4-83cc-14e0c0a0c675.sh: line 29: _site-launch-packets.json: command not found
+2026-10-23T18:37:44.6867300Z ##[error]Process completed with exit code 127.
+2026-10-23T18:37:44.6982897Z Post job cleanup.
+2026-10-23T18:37:44.7853131Z [command]/usr/bin/git version
+2026-10-23T18:37:44.7898874Z git version 2.55.0
+2026-10-23T18:35:06.5837850Z ##[error]The runner has received a shutdown signal. This can happen when the runner service is stopped, or a manually started runner is canceled.
+2026-10-23T18:35:07.4962132Z page.evaluate: Target page, context or browser has been closed
+2026-10-23T18:35:07.4964425Z Browser logs:
+2026-10-23T18:35:07.4964623Z 
+2026-10-23T18:35:07.5112679Z     at main (/home/runner/work/actions/actions/scripts/check-inkwave-idle-resources.mjs:168:25) {
+2026-10-23T18:35:07.7127620Z ##[error]The operation was canceled.

@@ -1,0 +1,9 @@
+✔ published raw reproduces whole48–58 browser regressions and retains open120Hz/early-release gates (94.485205ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 158.949311

@@ -1,0 +1,22 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('.iw-ui [data-id="play"]')[22m
+[2m    - locator resolved to <button type="button" tabindex="-1" data-id="play" data-nav="button" class="iw-btn iw-btn--menu iw-btn--xl iw-btn--primary iw-in iw-in--left is-focus">…</button>[22m
+[2m  - attempting click action[22m
+[2m    - waiting for element to be visible, enabled and stable[22m
+
+    at /workspace/actions/scripts/check-inkwave-respawn-weapon-browser.mjs:25:158 {
+  log: [
+    `  - waiting for locator('.iw-ui [data-id="play"]')`,
+    '    - locator resolved to <button type="button" tabindex="-1" data-id="play" data-nav="button" class="iw-btn iw-btn--menu iw-btn--xl iw-btn--primary iw-in iw-in--left is-focus">…</button>',
+    '  - attempting click action',
+    '    - waiting for element to be visible, enabled and stable'
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v24.19.0

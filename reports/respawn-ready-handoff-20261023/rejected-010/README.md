@@ -1,0 +1,7 @@
+# Rejected 0.1s display prototype
+
+Not an accepted fix. It reused HANDOFF_RAISE for the spawn arm display. Native/action channels stayed immediate and source4 + actual emitted16 passed before stronger extra harness assertions were added. Matched normal browser output preserved all canonical fields and settled145, but the late transition retained a47.594-degree step and146.68px height jump.60→61 improved174.881→16.070 degrees; later peak pivot translation=.135027WU versus old landing=.253189WU. It fails the planned half-peak visual checks. Do not adopt it.
+
+The first comparison incorrectly included the unchanged59→60 physical travel in its peak window. Its script/log are retained; the actual60→68 figures above independently show the remaining failure. The final comparator will compare the display return beginning60→61, leaving native flight movement unchanged. No acceptance bound is lowered.
+
+Raw PNGs, receipts, full build identities, runtime/test prototypes, failed harnesses and partial neighbor suite are preserved. Early test harness failures handled absent disabled state and circular paint owner references; a later stationary held attack assertion required paint where that fixture had no new moving stripe. The strengthened90-frame source test includes movement after45 updates and passes exact output/shot/paint equality. The rejected candidate broad neighbor suite was intentionally stopped after this browser failure; its partial output is not a passing whole-suite result. No hosted CI/transport/FPS/retail/visual acceptance is claimed.

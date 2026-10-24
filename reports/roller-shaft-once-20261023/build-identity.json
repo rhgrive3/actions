@@ -1,0 +1,34 @@
+{
+  "before": {
+    "runtimeCodeCommit": "726e338ac256ba9609086ce65e25a68ddd99df85",
+    "contentHash": "caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100",
+    "inputHash": "350b861c6d2ca16e5430ffc5b4f7e39cfbefc9df67290de1746b077ae256eb81",
+    "manifestSha256": "6a8c82a5d5dc29a458902e3982424e97eb39c099dc85f0aaa568244b266456e7",
+    "runtimeInputSha256": {},
+    "runtimeOutputSha256": {
+      "patches/splatoon3/runtime/roller.mjs": "3bb6bb6f9ceeffed97b0cbaf1f2737d84fca7362b7700892070e2a0219073598"
+    }
+  },
+  "ecf5": {
+    "runtimeCodeCommit": "5d9b5b408b5aab23ce2a500931b2874d5fe46d8a",
+    "contentHash": "51b803d76f03599edd464f63be7f23b538fa61fc54a2e31925bca6272a21cdd4",
+    "inputHash": "587ad7d7314c1720cdd117c0aeec7681db91d86a0a685bce7a4b3b129c4c6138",
+    "manifestSha256": "eb36b56e79265c320145da75ad7e95be45ff1636ed13417dd5e6c00916daeee6",
+    "runtimeInputSha256": {},
+    "runtimeOutputSha256": {
+      "patches/splatoon3/runtime/roller.mjs": "cb0c657492fc4433028499dd91dda38935c04958f1811fe08de16b2ab08527d8",
+      "patches/splatoon3/runtime/roller-vertical-shaft-return.mjs": "a62492e63f566611dd86400eb8d618159b4f8c9358bc9cdc9094343625fbaee5"
+    }
+  },
+  "candidate": {
+    "runtimeCodeCommit": "1c449d63b719a00c35775a60ecd0eae6438f4fd0",
+    "contentHash": "3a029b963c89bdd3305bf52a989afde6b2112bbee615b525bcfd99ea7833adf6",
+    "inputHash": "e0250cea35c5ca753d1c8ae4701470015c7c6520ca4c242d14c5fb620054e9a9",
+    "manifestSha256": "08e85f5879aad6f56b60c78dc6b08f9801ed93b9a95038d0b4e703c12b9f2814",
+    "runtimeInputSha256": {},
+    "runtimeOutputSha256": {
+      "patches/splatoon3/runtime/roller.mjs": "b9f650d36f021cb337709361a85f110b870af20cdd15afade17b5f83d2a801c0",
+      "patches/splatoon3/runtime/roller-vertical-shaft-return.mjs": "f8eefe2da28de2e2f873515a34eb85b1690990e3cb0ce378c5921e2a9f8058ca"
+    }
+  }
+}

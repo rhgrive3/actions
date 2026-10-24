@@ -1,0 +1,259 @@
+{
+  "files": [
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/before-floor-emitted.tap.gz",
+      "bytes": 611,
+      "sha256": "8486c0a4b8412de67015ebe4eaac492d8bf1a2813634204a32b65044d6158763"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/before-floor-source.tap.gz",
+      "bytes": 611,
+      "sha256": "11fad38a0a4ae6fbfa4f8d1ff472603013e10939f86562e0354fad4cdacae909"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/before-handoff-source.mjs.gz",
+      "bytes": 5418,
+      "sha256": "ac4507a937b65d16202a12390f554316e3aeff4b38ef930e03f96e6c1afe695c"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/before-vertices-emitted.tap.gz",
+      "bytes": 634,
+      "sha256": "00ea23e92472cc5ff4b0820b683529f7f09e4bd32e0fce64ca2683f824f60868"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/before-vertices-source.mjs.gz",
+      "bytes": 770,
+      "sha256": "73d11fb69fc00e3b2bde39e3bd0366e771fc0ebb1b64e4f97f51ddacb72a06ad"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/before-vertices-source.tap.gz",
+      "bytes": 663,
+      "sha256": "09ca2f4ab349a3ae7160cccfa22447ab171d1d725f67dbaef0cdd458a8220639"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-after/build-manifest.json.gz",
+      "bytes": 194835,
+      "sha256": "20e99f147a96ceb6a016f5e4ade0f127ae48adfe418848c6f5c1d3885a242f50"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-after/miss-air.png",
+      "bytes": 347404,
+      "sha256": "9173cde6130dae54d572575b95f7a412f21e780a1c4c918465b53f2703b98478"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-after/miss-post.png",
+      "bytes": 358070,
+      "sha256": "9e9a54d628eff28902d525f9d3e6947d046f5dd1d6649aed5c52f1a6616f7ec1"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-after/normal-145.png",
+      "bytes": 558855,
+      "sha256": "9bdd742d82e9b6b7fbb69fc3c0bdd83d30ce7e4665c6894f3f2f9dce7a78a85e"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-after/normal-60.png",
+      "bytes": 564699,
+      "sha256": "15b4502f857aeb7f09bbe326fad892e454b177cfa8c07d27d780a3f63c5d85ec"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-after/normal-61.png",
+      "bytes": 559106,
+      "sha256": "dcfd1fa16ac424121296bd433f89c0e73aba42053cce0ac7d1e3cf7fcb9d170c"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-after/normal-63.png",
+      "bytes": 560760,
+      "sha256": "2a7f53b19c94d489d300006349bef91c719e12e5ef9a87854afa5d7b82a6d3bb"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-after/normal-66.png",
+      "bytes": 558596,
+      "sha256": "fc59ecb18290394879d2d6d437a04f13d66c35c920ca2087e128198e77de9d18"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-after/normal-72.png",
+      "bytes": 547001,
+      "sha256": "982a7e663c7896242b11dedea34fcc6cb27a0ec80359d3e752ae9bd05a87b2e7"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-after/receipt.json",
+      "bytes": 778276,
+      "sha256": "8b7a709de14308eaa676a1f9106e3f2d4a83dee874d977f33c3901c518d57872"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-after/settled.png",
+      "bytes": 568126,
+      "sha256": "aa1880caef33d0afe571ceace3c63d89de2f85a3fdc1f76d8cb7a0f9068a9146"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-after.log.gz",
+      "bytes": 2462,
+      "sha256": "9f439af087cb2c64470b95cadd9167fff173c7c3f819f5d080b8fb1f4ce752a8"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-before/build-manifest.json.gz",
+      "bytes": 194831,
+      "sha256": "ca70bba2d412bc488e5cc835669b304237e50a47dac21e43bd96b67d9626c2d7"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-before/normal-145.png",
+      "bytes": 558918,
+      "sha256": "1e92a8b3fbf74ef8d9af78841428e216211243e2096978340403d0b65fbf50dd"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-before/normal-60.png",
+      "bytes": 567070,
+      "sha256": "961e5da6dd84d873ab814e211aef373de8eceebc6f54eddd5f0168912ce52d45"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-before/normal-61.png",
+      "bytes": 559140,
+      "sha256": "b603ecdf080df12544f57f7f718dd69364852a6131949ea959ea341803a450de"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-before/normal-63.png",
+      "bytes": 556933,
+      "sha256": "5d503348349b14886770ec7750ba6df5d46c5991a3be2d0adc065acf0d7a15b0"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-before/normal-66.png",
+      "bytes": 555044,
+      "sha256": "bf186800293a6f540778c924d6890d390cd15dfcd7c51df5c468e2dbec326a41"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-before/receipt.json",
+      "bytes": 456503,
+      "sha256": "91f0f3408e247dd4bcb5c718b3eda1f50c9795ee8aa31230bc46eda96b810621"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/browser-before/settled.png",
+      "bytes": 568136,
+      "sha256": "660770da68e8e0a91cafbe470e76ea4f18b6d008d2a264bfd3fecd44153e3963"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/build-verification.json",
+      "bytes": 403,
+      "sha256": "9f4a364b0d9907767c83e11159a469b9127a9fc0944cc4545c45c8b5a0e4705e"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/build.log.gz",
+      "bytes": 544,
+      "sha256": "57504c7b80084921c6a0922be6b71de45d44d2fc8c996c98e4694cf15cd49926"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/change-manifest.json",
+      "bytes": 1160,
+      "sha256": "88d5869182aeadea7d260f032e27563e342823771e397d2f874ac363574482f1"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/comparison.json",
+      "bytes": 20573,
+      "sha256": "682e181a49d1c7eac085d7faee920b9b0eb90c2a023ce01c6e302f5a2bcf6815"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/comparison.log",
+      "bytes": 628,
+      "sha256": "a51e193aaebd946fe8d268b2e48848d988bee5619e283ed11930c4472fc7a06d"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/emitted.tap",
+      "bytes": 2567,
+      "sha256": "9a2f2d8bba4d01c4cd0d553aa12674d8842411d9eb5e439aeb0a7212efe9b27d"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/intermediates/conservative-box-test.mjs.gz",
+      "bytes": 2530,
+      "sha256": "e134f3a8d37a4cf9589d0ca60b0357e9b142b7ab812489682889ef2e996ba84c"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/intermediates/emitted-final.tap.gz",
+      "bytes": 1468,
+      "sha256": "46653db02dd1ac69b280920fef812612724a818f813480e931c03214972053e3"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/intermediates/rejected010-complete-emitted-gameplay-final.tap.gz",
+      "bytes": 297,
+      "sha256": "b26de109fda734ec483cb545511b069c8650446901d541f0e22fe18a474b499c"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/intermediates/rejected010-complete-source-gameplay-final.tap.gz",
+      "bytes": 300,
+      "sha256": "10e4f95ffdf7b31ac7e11f547cf222f3630c7982aa867d21d7e8694064629e09"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/intermediates/source-final.tap.gz",
+      "bytes": 1470,
+      "sha256": "8207afcbde477aa8f0d7702228b63b389edd0871212f93c87589b3b3af708630"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/intermediates/source-floor-probe.log.gz",
+      "bytes": 961,
+      "sha256": "55923d95be08988e8467ed7b35c7185f01456fc6ef8a8dbbf8a6576fb0e490e0"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/intermediates/source-floor-probe.mjs.gz",
+      "bytes": 591,
+      "sha256": "d3bb5f49680e9cdc666bef64c04d574174536ac37c2eb307b61646793f906ad1"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/runtime.patch.gz",
+      "bytes": 2630,
+      "sha256": "cc2dde49f7d01d2a7c44b13bd995918e24dd73da40f427220207a0b228b543c0"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/source.tap",
+      "bytes": 2570,
+      "sha256": "abdb04d59580a9a115c09a73fe11de8602fc93138829181e474851251f53641b"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/startup-budget.log",
+      "bytes": 520,
+      "sha256": "5c6cc22a5786b8eb9b83a6c8b197fa3fc419aa2f288f741c060ca8fbeaed4291"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/verification.json",
+      "bytes": 1319,
+      "sha256": "61b34a3f8636bb28c2e00a3e8d04080a06484627c75e8daf899e0d7d293e308f"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/weapon-hold.tap",
+      "bytes": 1669,
+      "sha256": "af96e71df077c01b36bcfd7a42df01ad60e44bb20bdc3479c709f4c3c4087f75"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/README.md",
+      "bytes": 9908,
+      "sha256": "18bc161cd9e5bcdcec37101cd267dd08f11593bc8321419340e0c7d5f272f31a"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-handoff-motion.mjs",
+      "bytes": 18844,
+      "sha256": "40bb8177375e0a9af9acf836de474773703bf8a76dad2cf8ad21ab4ab7ec0af0"
+    },
+    {
+      "path": "patches/splatoon3/tests/respawn-ready-handoff.test.mjs",
+      "bytes": 7644,
+      "sha256": "dcc485b559a2e47d3557508b4eefb7a3a7bd4e4a6953cb9a7521a50c687b2c65"
+    },
+    {
+      "path": "scripts/check-inkwave-respawn-ready-handoff-browser.mjs",
+      "bytes": 13879,
+      "sha256": "bc88bf60287794ffb7051bf0acd625a4ce7396c9d36aa70b860af060d2aa36b5"
+    },
+    {
+      "path": "scripts/compare-inkwave-respawn-ready-handoff-browser.mjs",
+      "bytes": 6084,
+      "sha256": "6fe83a6312f149bcd9073636dbf5149b15fbb7b324da078122a596ffa0a1d152"
+    },
+    {
+      "path": ".github/workflows/inkwave-object-presentation-qa.yml",
+      "bytes": 13215,
+      "sha256": "4cdd00b0659020b5fd184e0575b345ac390bf237019b7238de32d38cfd09112a"
+    },
+    {
+      "path": "reports/respawn-ready-handoff-20261023/final/open-pr-scope-readback.json",
+      "bytes": 3838,
+      "sha256": "d454f11e3996f63511ca9517c670df8871cb536c7f176aa9ef3f2a28721614c3"
+    }
+  ]
+}

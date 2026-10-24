@@ -1,0 +1,73 @@
+{
+  "status": "passed",
+  "base": "4d6166936eaa8058a8b936053992960b510eec88",
+  "donor": "2d164d063050c15266febcb6af88109938f26701",
+  "donorFiles": [
+    {
+      "path": "scripts/check-inkwave-idle-resources.mjs",
+      "donorBlob": "bc5ad497b0b2d3e5f21e792d9c0ced0608b822d9",
+      "sha256": "d9aad10cc522dd787b9197c62df03d480b834767462c1b878bf317dfd5d09ef8",
+      "byteIdentical": true
+    },
+    {
+      "path": "scripts/tests/inkwave-idle-evaluate-deadline.test.mjs",
+      "donorBlob": "0dcb6fe498086c81a2c5218347ca7cd8f451274f",
+      "sha256": "4ead7b8e44d847da60f585020845679237fcc1510824a294f82d5b50528de5f6",
+      "byteIdentical": true
+    },
+    {
+      "path": "scripts/tests/inkwave-idle-resources-gates.test.mjs",
+      "donorBlob": "d384824f3ac170167db9ff5e3dd0a62ee77e7518",
+      "sha256": "6d353c6f4b7871e43d7d5394ca825faba92526328d8d370fb3412031b3137c77",
+      "byteIdentical": true
+    }
+  ],
+  "preservedFiles": [
+    {
+      "path": ".github/workflows/validate-inkwave-update.yml",
+      "blob": "8972387ee7f27a2b28dacd2f657e3995be923a2b",
+      "sha256": "205b3d7e260203e0ecf76152769b0252d6a2b31aff0cdd926629fb94ea8505e2",
+      "byteUnchanged": true
+    },
+    {
+      "path": "scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs",
+      "blob": "36b7c577e4e629b61e8c32c3b31c7781c5662e39",
+      "sha256": "5c802460fc6484208e66afcde13a461480d38d8b72ecf9b30f5db74df4d0e7c5",
+      "byteUnchanged": true
+    },
+    {
+      "path": "patches/splatoon3/runtime/projectile-presentation.mjs",
+      "blob": "54f90896181bd28feefbd0bdff2c9347db03265f",
+      "sha256": "38bcf7cb73b1cd6c1f755b7b8ffcc39c2fb384fd2973f3976a2b634f05493910",
+      "byteUnchanged": true
+    },
+    {
+      "path": "scripts/check-inkwave-local-references.mjs",
+      "blob": "6d8a6eb13d36bf33bb4655b3fa21219e550683e7",
+      "sha256": "96f0b939f7f7a13d89de9f00ee881bf8727755624f4f6194c694779c7e6c965d",
+      "byteUnchanged": true
+    },
+    {
+      "path": "scripts/tests/inkwave-local-references.test.mjs",
+      "blob": "5b82188787f117dbf52258e7dec838b1ccbda189",
+      "sha256": "62e1db729424fb55bb2aad4abb7923804e3d6016832c1d497ad8b298ca4f797c",
+      "byteUnchanged": true
+    }
+  ],
+  "nonReportDelta": [
+    "scripts/check-inkwave-idle-resources.mjs",
+    "scripts/tests/inkwave-idle-evaluate-deadline.test.mjs",
+    "scripts/tests/inkwave-idle-resources-gates.test.mjs"
+  ],
+  "build": {
+    "freshBuild": false,
+    "site": "/tmp/tri-slosher-main7e-after",
+    "contentHash": "2042ffbbb14645c4f4a4db2188826b7988c4112dcebab1a14915fd2f72e77a07",
+    "inputHash": "578137eac3693d92b6432d17ac9bc4d5e93c6c3a0c943a7a3ed8578625ea09e8",
+    "builderSha256": "a2814e623a81811aca5a6b5079d566ab88fabaa9b9a8d9351fadd45c25a98242",
+    "canonicalInputsRead": 1420,
+    "emittedArtifactsRead": 2110,
+    "allHashesMatch": true,
+    "qaChangesOutsideCanonicalInputs": true
+  }
+}

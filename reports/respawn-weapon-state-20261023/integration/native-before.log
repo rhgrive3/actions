@@ -1,0 +1,13 @@
+menu play
+menu mode-turf
+native match created
+opening spawn completed
+native death/countdown/launch completed
+flight-49 {"phase":"flight","grounded":false,"rolling":false,"rotation":[0.800000011920929,0.10000000149011612,0]}
+flight-59 {"phase":"flight","grounded":false,"rolling":false,"rotation":[0.6000000238418579,-0.03999999910593033,-0.03999999910593033]}
+flight-60 {"phase":null,"grounded":true,"rolling":false,"rotation":[0.6000000238418579,-0.03999999910593033,-0.03999999910593033]}
+flight-61 {"phase":null,"grounded":true,"rolling":false,"rotation":[0.800000011920929,0.10000000149011612,0]}
+flight-67 {"phase":null,"grounded":true,"rolling":false,"rotation":[0.800000011920929,0.10000000149011612,0]}
+flight-85 {"phase":null,"grounded":true,"rolling":false,"rotation":[0.800000011920929,0.10000000149011612,0]}
+flight-110 {"phase":null,"grounded":true,"rolling":false,"rotation":[0.800000011920929,0.10000000149011612,0]}
+flight-145 {"phase":null,"grounded":true,"rolling":false,"rotation":[-2.5,0.03999999910593033,1]}

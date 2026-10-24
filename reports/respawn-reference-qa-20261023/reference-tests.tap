@@ -1,0 +1,16 @@
+✔ all thirteen exact production source/site mappings retain pinned bytes and classifications (112.416481ms)
+✔ unknown, additional traversal, changed ref and changed owner are not mapped (4.872744ms)
+✔ source and target byte changes or absent target reject instead of waiving missing imports (22.530284ms)
+✔ every migrated navigation, facade and descriptor edge stays owner-bound and byte-pinned (11.018173ms)
+✔ ordinary missing, escaping local refs and runtime build-only imports remain rejected (4.676541ms)
+✔ mapped target symlinks cannot escape repository even with matching bytes (20.157485ms)
+✔ emitted proof requires exact input keys and both root/versioned artifact digests (12.956965ms)
+✔ known mappings cannot bypass pins through inkwave-public patch shadows (86.326932ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 468.546288

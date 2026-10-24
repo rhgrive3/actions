@@ -1,0 +1,243 @@
+{
+  "status": "pass",
+  "scope": "Matched real offline Game with direct Actor.reset in an active display return; no preceding jump/weapon/hide invalidation, fixed60Hz input, no FPS/transport/retail acceptance claim",
+  "changedInputs": [
+    "patch/runtime/weapon-handoff-motion.mjs"
+  ],
+  "builds": [
+    {
+      "inputHash": "88cf436138d42e7d60f2bf269f8c51d2cd809cd5d1999a7be75bb5b3039db47c",
+      "contentHash": "9ad08ece7447b3c9549a1b1566f2618b833c236d57f868434232a9bf7baad26e",
+      "inputs": 1420,
+      "artifacts": 2110
+    },
+    {
+      "inputHash": "9bc05f146e3ecdce39ffcd242fa4102e9a78a22386a5a3b6beb46c714ead3fe9",
+      "contentHash": "424ea98e79b8c80931f4ff6d5a489d438e9255bf36cb8f2a2cc60a799c3d935f",
+      "inputs": 1420,
+      "artifacts": 2110
+    }
+  ],
+  "unchangedPreResetLabels": [
+    "settled",
+    "normal-59",
+    "normal-60",
+    "normal-61",
+    "normal-62"
+  ],
+  "canonicalResetFields": [
+    "tick",
+    "position",
+    "velocity",
+    "alive",
+    "grounded",
+    "groundHit",
+    "phase",
+    "spawnTime",
+    "spawnPose",
+    "eligible",
+    "ink",
+    "turf",
+    "rolling",
+    "flick",
+    "fire",
+    "physical",
+    "previous",
+    "shotCount",
+    "paintCalls",
+    "projectiles",
+    "gameplayMuzzle",
+    "pose",
+    "channels",
+    "layers",
+    "body",
+    "root",
+    "kid",
+    "chest",
+    "camera",
+    "seed",
+    "palette",
+    "geometry"
+  ],
+  "before": {
+    "normal-62": {
+      "handoff": {
+        "owner": "native",
+        "elapsed": 0.03333333333333333,
+        "duration": 0.2,
+        "weight": 0.9259259259259259,
+        "valid": true
+      },
+      "pivot": [
+        0.1199377336790368,
+        -0.04718835491994328,
+        0.20478907588112666,
+        0.9702832749252355
+      ],
+      "position": [
+        -0.6236332512922984,
+        0,
+        -29.508568335590493
+      ],
+      "grounded": true,
+      "drumMinY": 0.2320339715205122
+    },
+    "reset-immediate": {
+      "handoff": {
+        "owner": "native",
+        "elapsed": 0.03333333333333333,
+        "duration": 0.2,
+        "weight": 0.9259259259259259,
+        "valid": true
+      },
+      "pivot": [
+        0.1199377336790368,
+        -0.04718835491994328,
+        0.20478907588112666,
+        0.9702832749252355
+      ],
+      "position": [
+        -0.6236332512922984,
+        0,
+        -29.508568335590493
+      ],
+      "grounded": false,
+      "drumMinY": 0.2320339715205122
+    },
+    "reset-first": {
+      "handoff": {
+        "owner": "native",
+        "elapsed": 0.05,
+        "duration": 0.2,
+        "weight": 0.84375,
+        "valid": true
+      },
+      "pivot": [
+        0.02327083907817613,
+        0.02516263609445369,
+        0.24308290389594017,
+        0.9693998203150715
+      ],
+      "position": [
+        -0.6236332512922984,
+        0,
+        -29.508568335590493
+      ],
+      "grounded": true,
+      "drumMinY": 0.3808344993747391
+    },
+    "reset-settled": {
+      "handoff": {
+        "owner": "native",
+        "elapsed": 0.21666666666666665,
+        "duration": 0.2,
+        "weight": 0,
+        "valid": true
+      },
+      "pivot": [
+        0.7669368345596551,
+        -0.5646863633306726,
+        -0.11834323289540903,
+        -0.28094853993544616
+      ],
+      "position": [
+        -0.6236332512922984,
+        0,
+        -29.508568335590493
+      ],
+      "grounded": true,
+      "drumMinY": 0.5236345874516943
+    }
+  },
+  "after": {
+    "normal-62": {
+      "handoff": {
+        "owner": "native",
+        "elapsed": 0.03333333333333333,
+        "duration": 0.2,
+        "weight": 0.9259259259259259,
+        "valid": true
+      },
+      "pivot": [
+        0.1199377336790368,
+        -0.04718835491994328,
+        0.20478907588112666,
+        0.9702832749252355
+      ],
+      "position": [
+        -0.6236332512922984,
+        0,
+        -29.508568335590493
+      ],
+      "grounded": true,
+      "drumMinY": 0.2320339715205122
+    },
+    "reset-immediate": {
+      "handoff": null,
+      "pivot": [
+        0.7864530202032703,
+        -0.5475128373707093,
+        -0.12230631128158904,
+        -0.25838441545132057
+      ],
+      "position": [
+        -0.6236332512922984,
+        0,
+        -29.508568335590493
+      ],
+      "grounded": false,
+      "drumMinY": 0.5720571914985503
+    },
+    "reset-first": {
+      "handoff": {
+        "owner": "native",
+        "elapsed": 0,
+        "duration": 0,
+        "weight": 0,
+        "valid": true
+      },
+      "pivot": [
+        0.7825236614235934,
+        -0.5444619554602136,
+        -0.13028855892575378,
+        -0.27247530123243097
+      ],
+      "position": [
+        -0.6236332512922984,
+        0,
+        -29.508568335590493
+      ],
+      "grounded": true,
+      "drumMinY": 0.5927351676451935
+    },
+    "reset-settled": {
+      "handoff": {
+        "owner": "native",
+        "elapsed": 0,
+        "duration": 0,
+        "weight": 0,
+        "valid": true
+      },
+      "pivot": [
+        0.7669368345596551,
+        -0.5646863633306726,
+        -0.11834323289540903,
+        -0.28094853993544616
+      ],
+      "position": [
+        -0.6236332512922984,
+        0,
+        -29.508568335590493
+      ],
+      "grounded": true,
+      "drumMinY": 0.5236345874516943
+    }
+  },
+  "noInput": {
+    "shot": 0,
+    "paint": 0,
+    "turf": 0,
+    "ink": 100
+  },
+  "settledExistingDisplayExact": true
+}

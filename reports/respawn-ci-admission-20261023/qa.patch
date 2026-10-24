@@ -1,0 +1,324 @@
+diff --git a/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs b/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs
+index 4860af044..0c9572ec9 100644
+--- a/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs
++++ b/patches/splatoon3/tests/issue-847-roller-drum-support.test.mjs
+@@ -7,21 +7,23 @@ import fs from 'node:fs';
+ import path from 'node:path';
+ import vm from 'node:vm';
+ import { createHash } from 'node:crypto';
++import { gunzipSync } from 'node:zlib';
+ import { fileURLToPath, pathToFileURL } from 'node:url';
+ import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
++import { ALL_31_PRS_FIXTURE_SHA256 } from '../../../scripts/lib/inkwave-31pr-paint-source-pair.mjs';
+ import { rollerDrumSupport, rollerStickActive } from '../runtime/roller.mjs';
+ 
+ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
+ const SRC = path.join(ROOT, 'inkwave-public');
+ const FROZEN_B34_SHA256 = '52e587f60d6211054c2bad04f746471e85ebdb0295e051f797b41a0019847eb7';
+ const adaptProductionSource = adaptBuildSource;
+-// Refreshed after main f8c898202b61695cbc8343238934580a26b68e03 changed only
+-// verticalRollerPose presentation. The stick/support mutations below are unchanged.
+-// Reviewed integration changes only reentrant flick pose scratch storage;
+-// all three stick/support counterfactual anchors remain exact.
++// PR1862 changes only the spawn presentation import/admission in this Roller
++// input. All three stick/support counterfactual anchors remain exact.
++// Keep the prior scratch epoch checked against its immutable fixture below.
+ // Prior #1726 input: 449b10b1eb3127fc86b302115698058aa166b617dc0a9bc35d48e0c73eaed2fb.
++const HISTORICAL_ROLLER_SHA256 = '4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973';
+ const COUNTERFACTUAL_INPUT_SHA256 = Object.freeze({
+-  "patches/splatoon3/runtime/roller.mjs": "4332009c699ebbabf9ac1f701ed46e932fe293d47254d0e4530712c0d6bfd973",
++  "patches/splatoon3/runtime/roller.mjs": "0ba7a5cd6edb7f178fa055bbc2c19c609f10d5ed85768f71a02c50c33db33533",
+   "patches/splatoon3/runtime/roller-contact-paint.mjs": "e6e06374bc3a0a2bd6dcceafbbe16b4882b8e8d8f9e6ff39f5aeda3dc12ec64d"
+ });
+ const headlessPaintRenderer = () => ({
+@@ -51,9 +53,29 @@ function exactFault(source, needle, replacement, name) {
+   assert.equal(source.split(needle).length-1,1,'counterfactual anchor '+name);
+   return source.replace(needle,replacement);
+ }
++function counterfactualSources(read = rel => fs.readFileSync(path.join(ROOT, rel), 'utf8')) {
++  // Fail before creating/linking any VM modules: an unreviewed input must not
++  // strand dependent link promises and reject again after the test has ended.
++  const sources = new Map();
++  for (const [rel, hash] of Object.entries(COUNTERFACTUAL_INPUT_SHA256)) {
++    const raw = read(rel);
++    assert.equal(typeof raw, 'string', 'counterfactual input '+rel);
++    assert.equal(createHash('sha256').update(raw).digest('hex'), hash, 'counterfactual input '+rel);
++    let source = adaptProductionSource(rel, raw);
++    if (rel === 'patches/splatoon3/runtime/roller.mjs') {
++      source=exactFault(source,'return !!mv && Math.hypot(mv.x, mv.z) > STICK_EPS;','return true;','roller-stick');
++      source=exactFault(source,'const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);','const sup = onFlickPath ? null : {floor:a.grounded,wall:false,supported:a.grounded};','roller-support');
++    } else {
++      source=exactFault(source,'    Math.hypot(a.intent?.move?.x || 0, a.intent?.move?.z || 0) <= 1e-9 ||\n','','physical-paint-stick');
++    }
++    sources.set(rel, source);
++  }
++  return sources;
++}
+ async function production({ counterfactual = false } = {}) {
+   const cacheKey = counterfactual ? 'counterfactual' : 'current';
+   if (apis.has(cacheKey)) return apis.get(cacheKey);
++  const faults = counterfactual ? counterfactualSources() : null;
+   const context = vm.createContext({ console, performance, URL, innerHeight: 720 });
+   const modules = new Map();
+   const load = (requested) => {
+@@ -62,18 +84,8 @@ async function production({ counterfactual = false } = {}) {
+     if (file.startsWith(path.join(ROOT, 'src') + path.sep)) file = path.join(SRC, path.relative(ROOT, file));
+     if (modules.has(file)) return modules.get(file);
+     const rel = file.startsWith(SRC + path.sep) ? path.relative(SRC, file) : path.relative(ROOT, file);
+-    const raw = fs.readFileSync(file, 'utf8');
+-    let source = adaptProductionSource(rel.split(path.sep).join('/'), raw);
+-    // Exact input hashes and anchors fail closed if the owners change.
+-    if (counterfactual && Object.hasOwn(COUNTERFACTUAL_INPUT_SHA256, rel))
+-      assert.equal(createHash('sha256').update(raw).digest('hex'), COUNTERFACTUAL_INPUT_SHA256[rel], 'counterfactual input '+rel);
+-    // Production files stay untouched.
+-    if(counterfactual && rel==='patches/splatoon3/runtime/roller.mjs') {
+-      source=exactFault(source,'return !!mv && Math.hypot(mv.x, mv.z) > STICK_EPS;','return true;','roller-stick');
+-      source=exactFault(source,'const sup = onFlickPath ? null : rollerDrumSupport(a, G, scratch);','const sup = onFlickPath ? null : {floor:a.grounded,wall:false,supported:a.grounded};','roller-support');
+-    }
+-    if(counterfactual && rel==='patches/splatoon3/runtime/roller-contact-paint.mjs')
+-      source=exactFault(source,'    Math.hypot(a.intent?.move?.x || 0, a.intent?.move?.z || 0) <= 1e-9 ||\n','','physical-paint-stick');
++    // Faults were hash/anchor-checked before linking. Production stays untouched.
++    const source = faults?.get(rel) ?? adaptProductionSource(rel.split(path.sep).join('/'), fs.readFileSync(file, 'utf8'));
+     const mod = new vm.SourceTextModule(source,
+       { context, identifier: file, initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
+     modules.set(file, mod); return mod;
+@@ -259,6 +271,27 @@ test('847 frozen b34 roller source retains its recorded single-module identity',
+   frozenRollerSource();
+ });
+ 
++test('847 prior scratch epoch retains its historical hash independently of current source', () => {
++  const packed = fs.readFileSync(new URL('../../../scripts/fixtures/inkwave-31pr-paint-source-pair.json.gz', import.meta.url));
++  assert.equal(createHash('sha256').update(packed).digest('hex'), ALL_31_PRS_FIXTURE_SHA256);
++  const source = JSON.parse(gunzipSync(packed)).post30Pose['patches/splatoon3/runtime/roller.mjs'];
++  assert.equal(createHash('sha256').update(source).digest('hex'), HISTORICAL_ROLLER_SHA256);
++});
++
++test('847 rejects missing or modified fault inputs before VM linking and keeps exact fault anchors', () => {
++  const inputs = new Map(Object.keys(COUNTERFACTUAL_INPUT_SHA256).map(rel => [rel, fs.readFileSync(path.join(ROOT, rel), 'utf8')]));
++  for (const rel of inputs.keys()) for (const missing of [false, true]) {
++    const drift = new Map(inputs);
++    if (missing) drift.delete(rel); else drift.set(rel, drift.get(rel)+' ');
++    assert.throws(() => counterfactualSources(p => drift.get(p)), /counterfactual input/);
++  }
++  assert.throws(() => exactFault('anchor anchor', 'anchor', '', 'duplicate'), /counterfactual anchor/);
++  assert.throws(() => exactFault('other', 'anchor', '', 'missing'), /counterfactual anchor/);
++  const faults = counterfactualSources(p => inputs.get(p));
++  assert.equal(faults.size, 2);
++  for (const rel of inputs.keys()) assert.notEqual(faults.get(rel), adaptProductionSource(rel, inputs.get(rel)));
++});
++
+ test('847 explicit current-source admission faults expose the guarded regressions', async () => {
+   const f = await production({ counterfactual:true });
+   const a = new f.Actor({ team: 0, name: 'r847main', isLocal: true, weapon: 'roller', CharacterClass: f.Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } });
+diff --git a/scripts/lib/inkwave-character-pose-baseline.mjs b/scripts/lib/inkwave-character-pose-baseline.mjs
+index cc2c372f2..95351f685 100644
+--- a/scripts/lib/inkwave-character-pose-baseline.mjs
++++ b/scripts/lib/inkwave-character-pose-baseline.mjs
+@@ -1,5 +1,6 @@
+ import {POST_30_PRS_POSE_PAIR} from './inkwave-31pr-paint-source-pair.mjs';
+ import {ALL_PRS_POSE_PAIR} from './inkwave-23pr-paint-source-pair.mjs';
++import {RESPAWN_1862_POSE_PAIR} from './inkwave-respawn1862-source-pair.mjs';
+ import assert from 'node:assert/strict';
+ import fs from 'node:fs';
+ import { createHash } from 'node:crypto';
+@@ -549,7 +550,7 @@ function currentPosePair(baseline, candidate) {
+     })),
+   };
+ 
+-  const pair = [POST_30_PRS_POSE_PAIR, ALL_PRS_POSE_PAIR, QUEUE1801_IDENTICAL_POSE_PAIR, QUEUE1801_POSE_PAIR, OCT22_INTEGRATION_POSE_PAIR, CURRENT_POSE_PAIR, RESOLVED_POSE_PAIR, PR1746_POSE_PAIR].find(pair => CHARACTER_POSE_PATHS.every(path =>
++  const pair = [RESPAWN_1862_POSE_PAIR, POST_30_PRS_POSE_PAIR, ALL_PRS_POSE_PAIR, QUEUE1801_IDENTICAL_POSE_PAIR, QUEUE1801_POSE_PAIR, OCT22_INTEGRATION_POSE_PAIR, CURRENT_POSE_PAIR, RESOLVED_POSE_PAIR, PR1746_POSE_PAIR].find(pair => CHARACTER_POSE_PATHS.every(path =>
+     typeof baseline.get(path) === 'string' && typeof candidate.get(path) === 'string' &&
+     blob(baseline.get(path)) === pair.paths[path].baseline &&
+     blob(candidate.get(path)) === pair.paths[path].candidate));
+diff --git a/scripts/tests/inkwave-23pr-paint-source-pair.test.mjs b/scripts/tests/inkwave-23pr-paint-source-pair.test.mjs
+index 641d115c7..039b36b05 100644
+--- a/scripts/tests/inkwave-23pr-paint-source-pair.test.mjs
++++ b/scripts/tests/inkwave-23pr-paint-source-pair.test.mjs
+@@ -4,11 +4,17 @@ import fs from 'node:fs';
+ import {gunzipSync} from 'node:zlib';
+ import {createHash} from 'node:crypto';
+ import {ALL_PRS_SOURCE_PAIR as P,ALL_PRS_POSE_PAIR as POSE,ALL_PRS_FIXTURE_SHA256} from '../lib/inkwave-23pr-paint-source-pair.mjs';
++import {ALL_31_PRS_FIXTURE_SHA256} from '../lib/inkwave-31pr-paint-source-pair.mjs';
+ import {CHARACTER_POSE_PATHS,planCharacterPoseBaseline} from '../lib/inkwave-character-pose-baseline.mjs';
+ import {MAIN_INK_BASELINE_PATHS as paths,planMainInkBaseline,gitBlobSha1} from '../lib/inkwave-main-ink-baseline.mjs';
+ const packed=fs.readFileSync(new URL('../fixtures/inkwave-23pr-paint-source-pair.json.gz',import.meta.url));
+ assert.equal(createHash('sha256').update(packed).digest('hex'),ALL_PRS_FIXTURE_SHA256);
+ const fixture=JSON.parse(gunzipSync(packed));
++// The complete historical candidate is already frozen here. Current source has
++// subsequent reviewed pose changes and must not stand in for this old epoch.
++const posePacked=fs.readFileSync(new URL('../fixtures/inkwave-31pr-paint-source-pair.json.gz',import.meta.url));
++assert.equal(createHash('sha256').update(posePacked).digest('hex'),ALL_31_PRS_FIXTURE_SHA256);
++const historicalPose=JSON.parse(gunzipSync(posePacked)).post30Pose;
+ const maps=()=>[new Map(Object.entries(fixture.baseline)),new Map(Object.entries(fixture.candidate))];
+ const expected={mode:'current-pair-with-gameplay-differences',sourceBase:P.baseCommit,sourceHead:P.candidateCommit};
+ test('all thirteen exact source leaves admit without replay or a physics equality claim',()=>{
+@@ -34,7 +40,7 @@ test('missing, changed, reversed and falsely identical current tuples cannot gai
+  for(const key of ['sourceBase','sourceHead'])assert.throws(()=>planMainInkBaseline(before,after,{...expected,[key]:'a'.repeat(40)}));
+ });
+ test('all sixteen pose leaves preserve the reviewed Roller scratch difference without replay',()=>{
+- const read=baseline=>new Map(CHARACTER_POSE_PATHS.map(p=>[p,baseline&&fixture.poseBaseline[p]||fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]));
++ const read=baseline=>new Map(CHARACTER_POSE_PATHS.map(p=>[p,baseline&&fixture.poseBaseline[p]||historicalPose[p]]));
+  const before=read(true),after=read(false);assert.deepEqual(Object.keys(POSE.paths),CHARACTER_POSE_PATHS);
+  for(const p of CHARACTER_POSE_PATHS){assert.equal(gitBlobSha1(before.get(p)),POSE.paths[p].baseline);assert.equal(gitBlobSha1(after.get(p)),POSE.paths[p].candidate);}
+  assert.equal(CHARACTER_POSE_PATHS.filter(p=>before.get(p)!==after.get(p)).length,1);
+diff --git a/scripts/tests/inkwave-31pr-paint-source-pair.test.mjs b/scripts/tests/inkwave-31pr-paint-source-pair.test.mjs
+index 0b94d50d5..7776070d2 100644
+--- a/scripts/tests/inkwave-31pr-paint-source-pair.test.mjs
++++ b/scripts/tests/inkwave-31pr-paint-source-pair.test.mjs
+@@ -9,6 +9,7 @@ import {fileURLToPath} from 'node:url';
+ import {spawnSync} from 'node:child_process';
+ import {ALL_31_PRS_SOURCE_PAIR as P,POST_30_PRS_SOURCE_PAIR as D,POST_30_PRS_POSE_PAIR,ALL_31_PRS_FIXTURE_SHA256 as ALL_PRS_FIXTURE_SHA256} from '../lib/inkwave-31pr-paint-source-pair.mjs';
+ import {CHARACTER_POSE_PATHS,planCharacterPoseBaseline} from '../lib/inkwave-character-pose-baseline.mjs';
++import {RESPAWN_1862_POSE_PAIR as RESPAWN} from '../lib/inkwave-respawn1862-source-pair.mjs';
+ import {MAIN_INK_BASELINE_PATHS as paths,planMainInkBaseline,gitBlobSha1} from '../lib/inkwave-main-ink-baseline.mjs';
+ const packed=fs.readFileSync(new URL('../fixtures/inkwave-31pr-paint-source-pair.json.gz',import.meta.url));
+ assert.equal(createHash('sha256').update(packed).digest('hex'),ALL_PRS_FIXTURE_SHA256);
+@@ -81,13 +82,68 @@ test('only the sixteen pinned pose source leaves are identical after the first b
+  assert.deepEqual([...result.sources],[...before]);
+  for(const path of CHARACTER_POSE_PATHS){
+   assert.equal(gitBlobSha1(before.get(path)),POST_30_PRS_POSE_PAIR.paths[path].baseline);
+-  assert.equal(fs.readFileSync(new URL('../../'+path,import.meta.url),'utf8'),after.get(path));
++  assert.equal(gitBlobSha1(after.get(path)),POST_30_PRS_POSE_PAIR.paths[path].candidate);
+   for(const side of [0,1])for(const omit of [false,true]){
+    const pair=maps();if(omit)pair[side].delete(path);else pair[side].set(path,pair[side].get(path)+' ');
+    assert.throws(()=>planCharacterPoseBaseline(...pair));
+   }
+  }
+ });
++// Keep the historical fixtures above pinned. Admit the reviewed respawn delta
++// as its own complete tuple, preserving both inputs without historical replay.
++const respawnMaps=()=>[new Map(Object.entries(fixture.post30Pose)),
++ new Map(CHARACTER_POSE_PATHS.map(p=>[p,fs.readFileSync(new URL('../../'+p,import.meta.url),'utf8')]))];
++test('1862 admits exactly the reviewed sixteen-leaf main/respawn pair without replay',()=>{
++ const [before,after]=respawnMaps(),snap=[...before],subject=[...after];
++ assert.deepEqual(Object.keys(RESPAWN.paths),CHARACTER_POSE_PATHS);
++ for(const p of CHARACTER_POSE_PATHS){
++  assert.equal(gitBlobSha1(before.get(p)),RESPAWN.paths[p].baseline,p+' baseline');
++  assert.equal(gitBlobSha1(after.get(p)),RESPAWN.paths[p].candidate,p+' current source');
++ }
++ const result=planCharacterPoseBaseline(before,after);
++ assert.equal(result.pairEvidence.mode,'current-pose-pair-with-gameplay-differences');
++ assert.equal(result.pairEvidence.sourceBase,RESPAWN.sourceBase);assert.equal(result.pairEvidence.sourceHead,RESPAWN.sourceHead);
++ assert.deepEqual(result.changes,[]);assert.deepEqual([...result.sources],snap);
++ assert.deepEqual([...before],snap);assert.deepEqual([...after],subject);
++ assert.equal(result.evidence.length,16);
++ assert.deepEqual(result.evidence.filter(p=>p.originalGitBlob!==p.candidateGitBlob).map(p=>p.path),
++  ['patches/splatoon3/runtime/roller.mjs','patches/splatoon3/runtime/weapon-handoff-motion.mjs']);
++ for(const p of result.evidence){assert.equal(p.referenceGitBlob,p.originalGitBlob);assert.equal(p.referenceSha256,p.originalSha256);assert.equal(p.changed,false);assert.deepEqual(p.replayed,[]);}
++ assert.match(result.pairEvidence.validationLimit,/not pose or gameplay equivalence/);
++});
++test('1862 rejects every missing/altered leaf, both-side drift, reversal and partial epoch',()=>{
++ const [before,after]=respawnMaps();
++ const rejects=(b,c)=>{const snap=[...b],subject=[...c];assert.throws(()=>planCharacterPoseBaseline(b,c));assert.deepEqual([...b],snap);assert.deepEqual([...c],subject);};
++ for(const p of CHARACTER_POSE_PATHS)for(const sides of [[0],[1],[0,1]])for(const missing of [false,true]){
++  const pair=[new Map(before),new Map(after)];
++  for(const side of sides)if(missing)pair[side].delete(p);else pair[side].set(p,pair[side].get(p)+' ');
++  rejects(...pair);
++ }
++ for(const p of CHARACTER_POSE_PATHS.filter(p=>before.get(p)!==after.get(p))){
++  const b=new Map(before),c=new Map(after);c.set(p,b.get(p));rejects(b,c);
++  const mixed=new Map(before);mixed.set(p,after.get(p));rejects(mixed,after);
++ }
++ rejects(after,before);rejects(after,after);
++ // Identical historical main remains a valid, separately pinned old epoch.
++ assert.equal(planCharacterPoseBaseline(before,before).pairEvidence.mode,POST_30_PRS_POSE_PAIR.mode);
++});
++test('1862 pose CLI writes no source and preserves its prior receipt on late rejection',()=>{
++ const temp=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-respawn1862-pose-'));
++ try{
++  const [before,after]=respawnMaps(),b=path.join(temp,'base'),c=path.join(temp,'candidate'),receipt=path.join(temp,'receipt.json');
++  for(const [dir,rows]of [[b,before],[c,after]])for(const [p,s]of rows){const f=path.join(dir,p);fs.mkdirSync(path.dirname(f),{recursive:true});fs.writeFileSync(f,s);}
++  const read=dir=>new Map(CHARACTER_POSE_PATHS.map(p=>[p,fs.readFileSync(path.join(dir,p),'utf8')]));
++  const run=()=>spawnSync(process.execPath,[fileURLToPath(new URL('../prepare-inkwave-character-pose-baseline.mjs',import.meta.url)),
++   '--baseline',b,'--candidate',c,'--receipt',receipt],{encoding:'utf8',timeout:60000});
++  const positive=run();assert.equal(positive.status,0,positive.stderr);
++  const saved=fs.readFileSync(receipt,'utf8'),out=JSON.parse(saved);
++  assert.equal(out.sourceBase,RESPAWN.sourceBase);assert.equal(out.sourceHead,RESPAWN.sourceHead);
++  assert.equal(out.mode,'current-pose-pair-with-gameplay-differences');assert.deepEqual(out.writtenPaths,[]);assert.equal(out.reviewedDiffSha256,undefined);
++  assert.deepEqual([...read(b)],[...before]);assert.deepEqual([...read(c)],[...after]);
++  fs.appendFileSync(path.join(c,CHARACTER_POSE_PATHS.at(-1)),'\n// unreviewed final leaf\n');
++  const negative=run();assert.equal(negative.status,1);assert.deepEqual([...read(b)],[...before]);assert.equal(fs.readFileSync(receipt,'utf8'),saved);
++ }finally{fs.rmSync(temp,{recursive:true,force:true});}
++});
+ test('post30 controls CLI accepts only the frozen single-difference tuple and completes every negative control',()=>{
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-31pr-cli-'));
+  try{
+diff --git a/scripts/lib/inkwave-respawn1862-source-pair.mjs b/scripts/lib/inkwave-respawn1862-source-pair.mjs
+new file mode 100644
+index 000000000..d0d6e21da
+--- /dev/null
++++ b/scripts/lib/inkwave-respawn1862-source-pair.mjs
+@@ -0,0 +1,73 @@
++// Exact reviewed PR1862 source pair. Historical pose epochs stay immutable.
++// These sixteen leaves differ only in Roller admission and the display handoff.
++// This is source identity, not native/visual equivalence or permission to replay.
++export const RESPAWN_1862_POSE_PAIR = Object.freeze({
++  sourceBase: '7e027ac2ff7eea31c04155e0ee1e0d3e5604ed51',
++  sourceHead: '6755954a13c8135bfac4102580f81f1cb553c640',
++  paths: Object.freeze(Object.fromEntries(Object.entries({
++  "patches/splatoon3/adapter.mjs": {
++    "baseline": "d0fa9907e1f3b343f21ca560fdeeddd29795b988",
++    "candidate": "d0fa9907e1f3b343f21ca560fdeeddd29795b988"
++  },
++  "patches/splatoon3/body-proportion-adapter.mjs": {
++    "baseline": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf",
++    "candidate": "fb7fd54c6b6c1f9ae8b4013b03e152e30a5194cf"
++  },
++  "patches/splatoon3/runtime/body-proportion.mjs": {
++    "baseline": "5d7dfb8103b4375379ccb9c8fda53e615d00adff",
++    "candidate": "5d7dfb8103b4375379ccb9c8fda53e615d00adff"
++  },
++  "patches/splatoon3/runtime/idle-motion.mjs": {
++    "baseline": "06d276d899aa764df7e75d41612f7ca1ec22953b",
++    "candidate": "06d276d899aa764df7e75d41612f7ca1ec22953b"
++  },
++  "patches/splatoon3/runtime/install.mjs": {
++    "baseline": "56b9b99fbb79d8650e7e132fd187f1514f27c62d",
++    "candidate": "56b9b99fbb79d8650e7e132fd187f1514f27c62d"
++  },
++  "patches/splatoon3/runtime/roller.mjs": {
++    "baseline": "f18ba0af47efddf0be713dac17fe1d909fe27edf",
++    "candidate": "df2851585c5281efafb135f21e8dafa1621eb206"
++  },
++  "patches/splatoon3/runtime/source-posture.mjs": {
++    "baseline": "a31d8224d129665917632ee7083c4081de5803a4",
++    "candidate": "a31d8224d129665917632ee7083c4081de5803a4"
++  },
++  "patches/splatoon3/upstream-lock.json": {
++    "baseline": "03e146de050c40a3d10807f424b2513006972cd0",
++    "candidate": "03e146de050c40a3d10807f424b2513006972cd0"
++  },
++  "patches/splatoon3/runtime/weapon-handoff-motion.mjs": {
++    "baseline": "32e456e3a80302621b6d7ca73f3ce8c5bf1f6e7f",
++    "candidate": "267763bb5ad147ea56f8cd326672492fb8c19ba8"
++  },
++  "patches/splatoon3/runtime/weapon-models/brushes.mjs": {
++    "baseline": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2",
++    "candidate": "b2caf7fc704bc177a6c73f0e1c8baca163a052a2"
++  },
++  "patches/splatoon3/runtime/weapon-models/family-holds.mjs": {
++    "baseline": "91a672123486114f9849de61509c6ee6ec96363f",
++    "candidate": "91a672123486114f9849de61509c6ee6ec96363f"
++  },
++  "patches/splatoon3/runtime/weapon-models/kit.mjs": {
++    "baseline": "3ab94f55c299b56485880ede17b92d5150101f7d",
++    "candidate": "3ab94f55c299b56485880ede17b92d5150101f7d"
++  },
++  "patches/splatoon3/runtime/weapon-models/registry.mjs": {
++    "baseline": "7f651d20395cb8b2622ca0dcd9180019b7533ce1",
++    "candidate": "7f651d20395cb8b2622ca0dcd9180019b7533ce1"
++  },
++  "patches/splatoon3/runtime/weapon-models/stringers.mjs": {
++    "baseline": "ba2e3856064aed3a3bcb0d74c97bad0921d5c94e",
++    "candidate": "ba2e3856064aed3a3bcb0d74c97bad0921d5c94e"
++  },
++  "patches/splatoon3/runtime/weapon-models/variants-milk-followup.mjs": {
++    "baseline": "9f68724343748037145c552937025d74ac5df8b9",
++    "candidate": "9f68724343748037145c552937025d74ac5df8b9"
++  },
++  "patches/splatoon3/weapon-catalog-adapter.mjs": {
++    "baseline": "55582fd6109ff814ed107577db74b990d755a926",
++    "candidate": "55582fd6109ff814ed107577db74b990d755a926"
++  }
++}).map(([path, row]) => [path, Object.freeze(row)]))),
++});

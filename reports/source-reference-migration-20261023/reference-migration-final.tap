@@ -1,0 +1,231 @@
+TAP version 13
+# INKWAVE built fixture /workspace/actions-current/work/issue-final-20261023/site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-current/work/issue-final-20261023/site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-current/work/issue-final-20261023/site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-current/work/issue-final-20261023/site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-current/work/issue-final-20261023/site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# {"scenario":"Kelpline seven bots / 30 seconds / CPU 60Hz","escaped":7}
+# INKWAVE built fixture /workspace/actions-current/work/issue-final-20261023/site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-current/work/issue-final-20261023/site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# {"scenario":"no available route, 120 ticks each","paintGoalScans":3,"refillScans":2,"formerScansPerMode":120}
+# INKWAVE built fixture /workspace/actions-current/work/issue-final-20261023/site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-current/work/issue-final-20261023/site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-current/work/issue-final-20261023/site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-current/work/issue-final-20261023/site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# INKWAVE built fixture /workspace/actions-current/work/issue-final-20261023/site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# (node:13961) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Kelpline: actual Actor/Brain leaves the dry trench beneath the bridge at 30Hz
+ok 1 - Kelpline: actual Actor/Brain leaves the dry trench beneath the bridge at 30Hz
+  ---
+  duration_ms: 2039.534023
+  type: 'test'
+  ...
+# Subtest: Kelpline: actual Actor/Brain leaves the dry trench beneath the bridge at 60Hz
+ok 2 - Kelpline: actual Actor/Brain leaves the dry trench beneath the bridge at 60Hz
+  ---
+  duration_ms: 2100.476082
+  type: 'test'
+  ...
+# Subtest: Kelpline: actual Actor/Brain leaves the dry trench beneath the bridge at 120Hz
+ok 3 - Kelpline: actual Actor/Brain leaves the dry trench beneath the bridge at 120Hz
+  ---
+  duration_ms: 2390.344348
+  type: 'test'
+  ...
+# Subtest: negative control: the former sea-height test strands the same actual Actor for 10 seconds
+ok 4 - negative control: the former sea-height test strands the same actual Actor for 10 seconds
+  ---
+  duration_ms: 1750.499053
+  type: 'test'
+  ...
+# Subtest: seven live bots spread from under the real bridge instead of staying at its centre
+ok 5 - seven live bots spread from under the real bridge instead of staying at its centre
+  ---
+  duration_ms: 4122.13856
+  type: 'test'
+  ...
+# Subtest: combat uses the path for an enemy on another floor; same-floor close combat still closes distance
+ok 6 - combat uses the path for an enemy on another floor; same-floor close combat still closes distance
+  ---
+  duration_ms: 1271.378816
+  type: 'test'
+  ...
+# Subtest: failed/empty paint routes and dry refill scans respect their retry timers
+ok 7 - failed/empty paint routes and dry refill scans respect their retry timers
+  ---
+  duration_ms: 1350.554275
+  type: 'test'
+  ...
+# Subtest: goal shortlist tries a reachable alternative and never repeats the same failed ID in one decision
+ok 8 - goal shortlist tries a reachable alternative and never repeats the same failed ID in one decision
+  ---
+  duration_ms: 1271.81739
+  type: 'test'
+  ...
+# Subtest: Kelpline grate bridge is crossed in human form using actual ground/collision
+ok 9 - Kelpline grate bridge is crossed in human form using actual ground/collision
+  ---
+  duration_ms: 1545.727214
+  type: 'test'
+  ...
+# Subtest: dry/enemy/nonpaintable walls reject squid approach; friendly paint permits it and human jump remains
+ok 10 - dry/enemy/nonpaintable walls reject squid approach; friendly paint permits it and human jump remains
+  ---
+  duration_ms: 828.550121
+  type: 'test'
+  ...
+# Subtest: waypoint recovery cannot skip a wall or change floors; open same-floor recovery is allowed
+ok 11 - waypoint recovery cannot skip a wall or change floors; open same-floor recovery is allowed
+  ---
+  duration_ms: 530.749486
+  type: 'test'
+  ...
+# Subtest: guarded transformer rejects partial/repeated inputs and composes with the native owners
+ok 12 - guarded transformer rejects partial/repeated inputs and composes with the native owners
+  ---
+  duration_ms: 47.015228
+  type: 'test'
+  ...
+# INKWAVE built fixture /workspace/actions-current/work/issue-final-20261023/site contentHash=24be9651e9e1e798888677f6fed55269f41819cd0e6814c61ca82e082efc0026
+# {"scope":"exact source/emitted A* component; no hardware/FPS claim","queries":600,"nontrivialPaths":108,"before":67603,"after":50792,"reduction":0.24867239619543513,"extraScratchBytes":9224}
+# {"graph":"block","nodes":400,"queries":100,"nontrivialPaths":97,"before":10041,"after":7706,"reduction":0.23254655910765865,"extraScratchBytes":3200}
+# {"graph":"source-triangle native","nodes":400,"queries":100,"nontrivialPaths":97,"before":8523,"after":6760,"reduction":0.20685204740114982,"extraScratchBytes":3200}
+# (node:13968) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: heuristic optimization is owned by readable source, not applied by a build-time patch
+ok 13 - heuristic optimization is owned by readable source, not applied by a build-time patch
+  ---
+  duration_ms: 20.364319
+  type: 'test'
+  ...
+# Subtest: 600 layered A* routes preserve paths, costs, ties, iteration limits and edge callback order
+ok 14 - 600 layered A* routes preserve paths, costs, ties, iteration limits and edge callback order
+  ---
+  duration_ms: 342.47544
+  type: 'test'
+  ...
+# Subtest: actual block and source-triangle native graph builders retain their complete route results
+ok 15 - actual block and source-triangle native graph builders retain their complete route results
+  ---
+  duration_ms: 145.034378
+  type: 'test'
+  ...
+# Subtest: repeated goals, resized graphs and interrupted edge filters never reuse another search heuristic
+ok 16 - repeated goals, resized graphs and interrupted edge filters never reuse another search heuristic
+  ---
+  duration_ms: 6.921618
+  type: 'test'
+  ...
+# Subtest: time sliced native construction matches frozen source graph order, layers, edges, costs and spawn closure
+ok 17 - time sliced native construction matches frozen source graph order, layers, edges, costs and spawn closure
+  ---
+  duration_ms: 189.462613
+  type: 'test'
+  ...
+# Subtest: interleaved detached builders cannot overwrite each other ray scratch or partial state
+ok 18 - interleaved detached builders cannot overwrite each other ray scratch or partial state
+  ---
+  duration_ms: 58.548281
+  type: 'test'
+  ...
+# Subtest: cancel signal at navigation yield prevents resume and completion
+ok 19 - cancel signal at navigation yield prevents resume and completion
+  ---
+  duration_ms: 1.050963
+  type: 'test'
+  ...
+# Subtest: cancel generation at navigation yield prevents resume and completion
+ok 20 - cancel generation at navigation yield prevents resume and completion
+  ---
+  duration_ms: 0.229239
+  type: 'test'
+  ...
+# Subtest: default scheduled yield aborts without waiting for a suspended animation frame
+ok 21 - default scheduled yield aborts without waiting for a suspended animation frame
+  ---
+  duration_ms: 0.44664
+  type: 'test'
+  ...
+# Subtest: all thirteen exact production source/site mappings retain pinned bytes and classifications
+ok 22 - all thirteen exact production source/site mappings retain pinned bytes and classifications
+  ---
+  duration_ms: 59.187395
+  type: 'test'
+  ...
+# Subtest: unknown, additional traversal, changed ref and changed owner are not mapped
+ok 23 - unknown, additional traversal, changed ref and changed owner are not mapped
+  ---
+  duration_ms: 0.48079
+  type: 'test'
+  ...
+# Subtest: source and target byte changes or absent target reject instead of waiving missing imports
+ok 24 - source and target byte changes or absent target reject instead of waiving missing imports
+  ---
+  duration_ms: 3.171046
+  type: 'test'
+  ...
+# Subtest: every migrated navigation, facade and descriptor edge stays owner-bound and byte-pinned
+ok 25 - every migrated navigation, facade and descriptor edge stays owner-bound and byte-pinned
+  ---
+  duration_ms: 6.08384
+  type: 'test'
+  ...
+# Subtest: ordinary missing, escaping local refs and runtime build-only imports remain rejected
+ok 26 - ordinary missing, escaping local refs and runtime build-only imports remain rejected
+  ---
+  duration_ms: 1.895001
+  type: 'test'
+  ...
+# Subtest: mapped target symlinks cannot escape repository even with matching bytes
+ok 27 - mapped target symlinks cannot escape repository even with matching bytes
+  ---
+  duration_ms: 1.764787
+  type: 'test'
+  ...
+# Subtest: emitted proof requires exact input keys and both root/versioned artifact digests
+ok 28 - emitted proof requires exact input keys and both root/versioned artifact digests
+  ---
+  duration_ms: 3.305054
+  type: 'test'
+  ...
+# Subtest: known mappings cannot bypass pins through inkwave-public patch shadows
+ok 29 - known mappings cannot bypass pins through inkwave-public patch shadows
+  ---
+  duration_ms: 12.03132
+  type: 'test'
+  ...
+# startup runtime: 10367 -> 10367 bytes
+# Subtest: the actual composed cold module graph excludes optional builders and the full compatibility facade
+ok 30 - the actual composed cold module graph excludes optional builders and the full compatibility facade
+  ---
+  duration_ms: 4088.317871
+  type: 'test'
+  ...
+# Subtest: public PropKit facade retains the exact original named exports and both owners remain direct source
+ok 31 - public PropKit facade retains the exact original named exports and both owners remain direct source
+  ---
+  duration_ms: 31.397266
+  type: 'test'
+  ...
+# Subtest: real loading preparation preserves the public facade closure offline without installing unrelated orphans
+ok 32 - real loading preparation preserves the public facade closure offline without installing unrelated orphans
+  ---
+  duration_ms: 415.465249
+  type: 'test'
+  ...
+# Subtest: emitted optional packs remain integrity-checked and offline-ready without eager HTML hints
+ok 33 - emitted optional packs remain integrity-checked and offline-ready without eager HTML hints
+  ---
+  duration_ms: 7.374929
+  type: 'test'
+  ...
+1..33
+# tests 33
+# suites 0
+# pass 33
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 26152.370005

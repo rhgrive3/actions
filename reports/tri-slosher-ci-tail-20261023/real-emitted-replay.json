@@ -1,0 +1,17 @@
+{
+  "siteContentHash": "2042ffbbb14645c4f4a4db2188826b7988c4112dcebab1a14915fd2f72e77a07",
+  "siteInputHash": "578137eac3693d92b6432d17ac9bc4d5e93c6c3a0c943a7a3ed8578625ea09e8",
+  "inputsReRead": 1420,
+  "artifactsReRead": 2110,
+  "reusedPr1853ExtractedShellByteEqual": true,
+  "commandSha256": "09179baf4f3840162ab74e50b2dce3156b9fb3d18d88880950146a86e177d4f7",
+  "cwd": "/workspace/actions/.ci-scratch/tri-tail-784-201",
+  "actualShellExit": 0,
+  "tests": 201,
+  "pass": 201,
+  "fail": 0,
+  "skip": 0,
+  "nodeVersion": "v24.19.0",
+  "freshBuild": false,
+  "note": "Existing exact784 canonical build re-read (1420 inputs, 2110 outputs). The new workflow/guard/report files are not canonical build inputs. Hosted upload remains unverified."
+}

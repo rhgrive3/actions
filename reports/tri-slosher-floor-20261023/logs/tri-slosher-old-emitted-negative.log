@@ -1,0 +1,33 @@
+INKWAVE built fixture /tmp/tri-slosher-before contentHash=caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100
+INKWAVE built fixture /tmp/tri-slosher-before contentHash=caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100
+INKWAVE built fixture /tmp/tri-slosher-before contentHash=caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100
+INKWAVE built fixture /tmp/tri-slosher-before contentHash=caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100
+INKWAVE built fixture /tmp/tri-slosher-before contentHash=caa80f320098ca6b8d4cbedd4b8f6ca2b8652663cfb120412abf8dfb78f4d100
+(node:1955) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✖ Tri-Slosher floor drops use the Bucket visual scale and captured paint heading, without changing physical drops (536.227419ms)
+✔ real Tri-Slosher firing and CPU floor paint are identical with/without drawing and at 30/60/120Hz (1981.057839ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2916.906807
+
+✖ failing tests:
+
+test at patches/splatoon3/tests/tri-slosher-floor-visual.test.mjs:8:1
+✖ Tri-Slosher floor drops use the Bucket visual scale and captured paint heading, without changing physical drops (536.227419ms)
+  AssertionError [ERR_ASSERTION]: floor bead must use the same calibrated half width as the shared Bucket sheet
+      at TestContext.<anonymous> (file:///workspace/actions/patches/splatoon3/tests/tri-slosher-floor-visual.test.mjs:19:12)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

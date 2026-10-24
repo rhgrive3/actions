@@ -1,0 +1,26 @@
+[
+  {
+    "job": 120560901852,
+    "fullLogWorkspacePath": "/workspace/scratch/respawn-ci-admission-20261023/job-120560901852.log.gz",
+    "uncompressedBytes": 646761,
+    "sha256": "b635710317695c4ec498657891c0717925e9002fa9bd83b59ba6bc662a7ff49b",
+    "gzipBytes": 103759,
+    "gzipSha256": "ad96bcb38719cf262199eb8f58ec12d18e717132e7da5470bbe43e78fefd34d4"
+  },
+  {
+    "job": 120574973106,
+    "fullLogWorkspacePath": "/workspace/scratch/respawn-ci-admission-20261023/job-120574973106.log.gz",
+    "uncompressedBytes": 2051861,
+    "sha256": "37507decff88011adf8df81b7b73743ebd5696281ade979a3bfa3e02cb0e15e1",
+    "gzipBytes": 389648,
+    "gzipSha256": "7fea399d62258e653b626a1fcccbd3f59b4d0a852625dc24bb62d704866b3b72"
+  },
+  {
+    "job": 120574973230,
+    "fullLogWorkspacePath": "/workspace/scratch/respawn-ci-admission-20261023/job-120574973230.log.gz",
+    "uncompressedBytes": 239725,
+    "sha256": "f26eefec6555c9742236c964a906f3c50ccab23895f31b704d931decaac3d8d4",
+    "gzipBytes": 46938,
+    "gzipSha256": "4149588bd960af48aedd75e0d1a51f1324ee3fcf40d28c3b09af6cd6fd8ed009"
+  }
+]
