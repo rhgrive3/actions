@@ -905,6 +905,21 @@
       "durationSeconds": 15.98694
     },
     {
+      "id": "s3-brush-normal",
+      "event": "windup",
+      "variant": 0,
+      "file": "s3-real/Wp_Brush_Move_00.mp3",
+      "gain": 1,
+      "sourceName": "Wp_Brush_Move_00.mp3",
+      "sourceFileId": "1IHc5wzC-Q2cjnKpn4irO7GverNGivSRt",
+      "sourceURL": "https://drive.google.com/file/d/1IHc5wzC-Q2cjnKpn4irO7GverNGivSRt/view",
+      "sourceVersion": "2022-extract",
+      "sourceKind": "Splatoon3-ripped-MP3",
+      "verification": "locally-decoded-mp3",
+      "sha256": "3c6901301e960a01bf62d7a345866ee085613ba4db2ac3b85577797c947dde9e",
+      "durationSeconds": 15.98694
+    },
+    {
       "id": "s3-charger-quick",
       "event": "fire",
       "variant": 0,

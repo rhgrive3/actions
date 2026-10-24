@@ -47,7 +47,8 @@ test('Octobrush isolated swings never start the 15.99 second movement recording'
   assert.ok(f.calls.some(c=>c.id===a.weapon.id&&c.event==='fire'),'actual swing sound retained');
   for(const name of ['real-s3-samples.json','real-s3-installed.json']){
     const {clips}=JSON.parse(fs.readFileSync(new URL('../runtime/audio/'+name,import.meta.url)));
-    assert.equal(clips.filter(c=>c.id===a.weapon.id&&c.event==='windup').length,0);
+    assert.equal(clips.filter(c=>c.id===a.weapon.id&&c.event==='windup').length,1,
+      'immutable source manifest retains recorded motion clip; gameplay must not play it for a swing');
     assert.ok(clips.some(c=>c.id===a.weapon.id&&c.event==='roll'&&c.file.endsWith('Wp_Brush_Move_00.mp3')),
       'contact movement retains its original loop');
     assert.equal(clips.filter(c=>c.id===a.weapon.id&&c.event==='fire').length,4);
