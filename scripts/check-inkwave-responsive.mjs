@@ -100,7 +100,8 @@ const show = async (page, name) => {
 };
 const settle = async (page, observe = false) => page.evaluate(settleResponsiveAnimationsInPage, observe);
 const geometry = async (page, selector, label) => {
-  await settle(page);
+  // This continuation recapture can encounter the same stale finish promises.
+  await settle(page, label === 'loadout-continue');
   const controls = page.locator(selector);
   const measurements = await controls.evaluateAll((els) => els.filter((el) => el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden' && !el.closest('.is-leaving')).map((el) => {
     const r = el.getBoundingClientRect();

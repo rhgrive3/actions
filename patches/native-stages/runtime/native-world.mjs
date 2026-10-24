@@ -130,6 +130,9 @@ export async function buildNativeWorld(game,map,current){
   if(!current()||signal.aborted)throw new DOMException('Aborted','AbortError');
   minimap.activate();wake.reset();
   committed=true;
+  // Once published, the display alone holds views of the source vertex/index
+  // arrays and releases them as they upload. A failed attempt keeps its input.
+  data.vertices=null;data.indices=null;
   disposeOldWorld(game,snapshot);
  }catch(error){
   const recoveryErrors=[];
