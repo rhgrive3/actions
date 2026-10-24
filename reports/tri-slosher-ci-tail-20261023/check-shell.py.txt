@@ -1,0 +1,34 @@
+from pathlib import Path
+import subprocess,os,json,hashlib
+root=Path('/tmp/tri-tail-shell');root.mkdir(exist_ok=True)
+def extract(p):
+    lines=Path(p).read_text().splitlines(keepends=True)
+    marker='      - name: Verify emitted sub and special fidelity boundaries\n'
+    start=lines.index(marker)+1
+    assert lines[start]=='        run: |\n'
+    body=[]
+    for line in lines[start+1:]:
+        if line.strip() and not line.startswith('          '):break
+        body.append(line[10:] if line.startswith('          ') else line)
+    return ''.join(body)
+before=extract('/tmp/tri-tail-before.yml');after=extract('/tmp/tri-tail-after.yml')
+assert before==after+'  _site-launch-packets.json\nretention-days: 14\n'
+assert len(after.splitlines())==28
+assert len([x for x in after.splitlines() if 'patches/' in x])==27
+for name,text in [('before',before),('after',after)]:
+    (root/(name+'.sh')).write_text(text)
+    subprocess.run(['/bin/bash','-n',str(root/(name+'.sh'))],check=True)
+fake=root/'fake-bin';fake.mkdir(exist_ok=True)
+node=fake/'node';node.write_text('#!/bin/bash\nprintf "%s\\n" "$@" >> "$NODE_CALL_LOG"\nexit "${NODE_STUB_STATUS:-0}"\n');node.chmod(0o755)
+observed=[]
+for name,status,expected in [('before',0,127),('after',0,0),('after',73,73)]:
+    log=root/(name+'-'+str(status)+'.argv');log.write_text('')
+    env={**os.environ,'PATH':str(fake)+':'+os.environ['PATH'],'NODE_CALL_LOG':str(log),'NODE_STUB_STATUS':str(status)}
+    p=subprocess.run(['/bin/bash','--noprofile','--norc','-e','-o','pipefail',str(root/(name+'.sh'))],env=env,cwd=root,capture_output=True,text=True)
+    (root/(name+'-'+str(status)+'.stderr')).write_text(p.stderr)
+    assert p.returncode==expected,(name,status,p.returncode,p.stderr)
+    observed.append({'workflow':name,'stubExit':status,'shellExit':p.returncode,'stderr':p.stderr})
+assert (root/'before-0.argv').read_bytes()==(root/'after-0.argv').read_bytes()==(root/'after-73.argv').read_bytes()
+result={'status':'passed','oldTailOnlyRemovedFromRun':True,'unchangedFidelitySuitePaths':27,'unchangedCommandLines':28,'oldShellExit':127,'repairedShellExit':0,'testFailurePropagates':73,'observed':observed,'actualEmittedCommandSha256':hashlib.sha256(after.encode()).hexdigest(),
+        'scope':'Stub shell checks prove the old exit127 and unchanged argv/failure propagation; actual 201-test emitted replay is a separate run.'}
+(root/'comparison.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))
