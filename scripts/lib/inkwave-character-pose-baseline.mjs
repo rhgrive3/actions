@@ -1,5 +1,6 @@
 import {POST_30_PRS_POSE_PAIR} from './inkwave-31pr-paint-source-pair.mjs';
 import {ALL_PRS_POSE_PAIR} from './inkwave-23pr-paint-source-pair.mjs';
+import {ROLLER_PR1856_POSE_PAIR,ROLLER_PR1856_HELPER_PATH} from './inkwave-roller-pr1856-pose-pair.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -520,6 +521,26 @@ export const QUEUE1801_IDENTICAL_POSE_PAIR = Object.freeze({
   })]))),
 });
 function currentPosePair(baseline, candidate) {
+  const rollerPath='patches/splatoon3/runtime/roller.mjs',rollerPair=ROLLER_PR1856_POSE_PAIR;
+  const isRollerCandidate=text=>typeof text==='string'&&blob(text)===rollerPair.paths[rollerPath].candidate;
+  if(isRollerCandidate(baseline.get(rollerPath))||isRollerCandidate(candidate.get(rollerPath))||
+      baseline.get(ROLLER_PR1856_HELPER_PATH)!=null||candidate.get(ROLLER_PR1856_HELPER_PATH)!=null){
+    // The new imported helper is part of this exact tuple. Its absence in main
+    // must be observed, never filled with the candidate's implementation.
+    for(const [path,pins]of Object.entries(rollerPair.paths))for(const [map,key]of [[baseline,'baseline'],[candidate,'candidate']]){
+      assert(map.has(path),path+': missing observed Roller source');
+      const text=map.get(path);
+      if(pins[key]===null)assert.equal(text,null,path+': reviewed main must not contain the candidate helper');
+      else {assert.equal(typeof text,'string',path+': missing Roller source');assert.equal(blob(text),pins[key],path+': unreviewed Roller source tuple');}
+    }
+    return {sources:new Map(baseline),changes:[],pairEvidence:{
+      mode:rollerPair.mode,sourceBase:rollerPair.sourceBase,sourceHead:rollerPair.sourceHead,
+      scope:'Preserve exact main7e and433299 pose source, including the absent/new shaft-return helper, without replay. Native-state and image comparisons remain independent.',
+      validationLimit:'Source identity only; this is not pose or gameplay equivalence.'
+    },evidence:Object.keys(rollerPair.paths).map(path=>({path,mode:'roller-pr1856-pinned-pose-source-pair',
+      originalGitBlob:rollerPair.paths[path].baseline,referenceGitBlob:rollerPair.paths[path].baseline,candidateGitBlob:rollerPair.paths[path].candidate,
+      originalSha256:baseline.get(path)===null?null:poseSourceSha256(baseline.get(path)),referenceSha256:baseline.get(path)===null?null:poseSourceSha256(baseline.get(path)),candidateSha256:poseSourceSha256(candidate.get(path)),changed:false,replayed:[]}))};
+  }
   const epoch = [
     { blobs: OCT21_PR1746_POSE_MAIN_BLOBS, source: 'f31238a48b9d1a4af2d4f5f5f9182af777a79c83' },
     { blobs: OCT21_POSE_MAIN_BLOBS, source: 'ad4cc54cf5fbba65635ec0929a1da901c8c619db' },

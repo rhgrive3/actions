@@ -1,0 +1,7 @@
+{
+  "scope": "512 sampled intermediate constraint snapshots with linear positions/scales and shortest quaternion interpolation; not a global proof or retail comparison",
+  "samples": 512,
+  "minFloor": 0.003846515474361878,
+  "maxLeftReachError": 0,
+  "maxRightReachError": 0
+}

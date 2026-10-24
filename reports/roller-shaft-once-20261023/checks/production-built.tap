@@ -1,0 +1,22 @@
+INKWAVE built fixture /workspace/actions/.roller-recovery/shaft-once/site contentHash=3a029b963c89bdd3305bf52a989afde6b2112bbee615b525bcfd99ea7833adf6
+INKWAVE built fixture /workspace/actions/.roller-recovery/shaft-once/site contentHash=3a029b963c89bdd3305bf52a989afde6b2112bbee615b525bcfd99ea7833adf6
+(node:14108) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ production fixed-tick return improves49, preserves40/start/end and all native gameplay/paint (30349.480947ms)
+✔ release before/at/after back, late release and repress preserve native gates and paint without a delayed tail (18985.186057ms)
+✔ held rolling, horizontal and Carbon/Dynamo/Flingza keep the complete original output (9779.792472ms)
+✔ 30/60/120Hz plus repeated reset/reuse retain identical real poses, clocks, per-weapon timings and paint (12989.948854ms)
+✔ active return is discarded through existing reset, display cancellation and form interruption (6310.509665ms)
+✔ native CPU paint receives identical physical stamp inputs after release and repress (3735.87137ms)
+✔ repressing into native ground contact abandons carry without worsening the switch (2032.09861ms)
+✔ sub aim and throw interrupt the active visual return while native sub admission stays original (2136.5661ms)
+✔ same-attack repress never recaptures a late return; protect54/55 and deceleration through58 (1852.903353ms)
+✔ late release with no native floor correction keeps the entire clear native carry (4999.969422ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 94283.8562

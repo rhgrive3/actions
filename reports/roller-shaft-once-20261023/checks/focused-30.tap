@@ -1,0 +1,46 @@
+(node:14374) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ horizontal flick release holds sub for 14F and squid for 15F (731.970347ms)
+✔ vertical flick release holds sub for 18F and squid for 19F (633.365533ms)
+✔ the gates are per-release and do not leak into later state (539.732526ms)
+✔ the gate does not delay a non-Roller weapon (587.598746ms)
+(node:14375) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ #373 horizontal/vertical actual windup holds 2.88 without changing 21/31F release or ink (1278.046972ms)
+✔ #373 independent target remains constant with gear/Flow and selected mode survives landing (1362.704094ms)
+✔ #373 native actor horizontal uses fixed target and keeps acceleration, not a velocity snap (582.118237ms)
+✔ #373 hold-to-roll transition, dash, lock, reset and dry admission retain native branches (618.285886ms)
+✔ #373 fixed 60Hz traces are equal at 30/60/120 render schedules (1566.997476ms)
+✔ vertical release retains source swing speed until 56F recovery, including airborne steering (890.164396ms)
+✔ vertical ink-release key stays upright through follow-through, never replays the horizontal flick (0.82736ms)
+(node:14381) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ held Roller lowers its hands about the same live cylinder; off-center fault is rejected (62767.172724ms)
+✔ rolling right grip advances to one third without moving the actual drum or release pose (39173.67767ms)
+✔ rolling shaft clears the torso while actual paint follows the shifted drum (25006.342649ms)
+(node:14395) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ simultaneous jump and fire go through actual Actor and retain vertical mode on landing (726.958182ms)
+✔ horizontal/vertical windups release on 21/31 elapsed ticks without an extra float tick (3447.224695ms)
+✔ jump after starting a horizontal attack keeps its selected mode; the next attack reselects (499.648953ms)
+✔ a new flick lifts the rolling drum, a held trigger resumes rolling, release stops it (471.36625ms)
+✔ dry input does not create a phantom pose or spend ink (559.5188ms)
+✔ actual projectile path retains narrow vertical paint flight and one-attack damage aggregation (481.36531ms)
+✔ actual bones and weapon rotate vertically and the drum impulse waits for gameplay release (14237.14689ms)
+✔ actual moving roller geometry and both grips stay synchronized through lift, landing, held roll and restart at 30/60/120Hz (3508.874746ms)
+✔ reset during a real Character windup cancels the legacy pose and drum impulse; form transitions do not invent an attack (555.99391ms)
+✔ Character channel/drum hooks are hash locked and fail closed (2.748333ms)
+✔ roller drum uses the measured source width; a pushed drum rests on the floor with both grips held (749.836303ms)
+✔ post-release roll admission separates horizontal 7F vs vertical 22F at 60Hz (#517) (446.994094ms)
+✔ vertical flick does not deal roll contact damage or produce roll paint during the 22F admission delay (#517) (415.530587ms)
+✔ release input before roll admission cancels transition, and runner reset cancels rolling (#517) (441.510709ms)
+✔ post-release roll admission timing maintains parity across 30Hz, 60Hz, and 120Hz (#517) (1277.401592ms)
+✔ procedural vertical follow-through hands off to roll push pose on the exact admission tick (#517) (447.508187ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 128542.98305

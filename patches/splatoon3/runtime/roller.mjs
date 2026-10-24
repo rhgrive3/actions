@@ -1,4 +1,5 @@
 import { specialMotionAllowsAction } from './action-admission.mjs';
+import { createVerticalShaftReturn } from './roller-vertical-shaft-return.mjs';
 import { ROLLER_DRUM } from './roller-model.mjs';
 import { HEAVY_ROLLER_SWING, STANDARD_ROLLER_SWING, heavyRollerSwingEnd } from './roller-heavy-swing.mjs';
 import { hasFullCancelGroundAttack, takeFullCancelGroundAttack } from './movement.mjs';
@@ -809,6 +810,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   // fixes the drum axis and projects the paired wrist targets into both reach
   // spheres, retaining the authored sockets and gameplay hit volume.
   const solve = Character.prototype._solveLimb, bounds = new WeakMap();
+  const shaftReturn = createVerticalShaftReturn();
   const restoreRightGrip = c => {
     const w = c.weapon;
     if (w?.def?.modelId === 'roller' && w.off && w.pivot && w.def.inHand) {
@@ -911,7 +913,10 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       // A held special replaces the roller with its own two-hand prop. Its
       // wrist targets must use the native solver, never roller drum alignment.
       this.kidForm && !this.dance && !this.actor?.specialActive && !!orientation && weight > .999 && !this.P[C.SPIN];
-    if (!isRightRoller) return solve.call(this, limb, target, pole, orientation, weight, index);
+    if (!isRightRoller) {
+      if (limb === this.limbs.armR) shaftReturn.clear(this);
+      return solve.call(this, limb, target, pole, orientation, weight, index);
+    }
     const d = this.weapon.def, arms = this.limbs, rollFold = this.weapon.fold;
     if (!rightOrigin) {
       rightOrigin = target.clone(); rightParentQ = orientation.clone();
@@ -1034,8 +1039,21 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       const groundError = contacting ? Math.max(0,-.003-floor,floor-.025) : Math.max(0,-.002-floor);
       return groundError;
     };
-    bestQ.copy(orientation);
+    // The ordinary roller's unheld return follows a geometry-derived upright
+    // shaft waypoint. Start by retaining this frame's normal solved result;
+    // subsequent samples still pass the unchanged reach/floor evaluator.
+    const attack = this.s3RollerFlick;
+    const shaftPose = shaftReturn(this, attack, orientation, d.handR.quat, this.kid,
+      this.actor?.weaponId === 'roller' && attack?.vertical && attack.released &&
+      !attack.rolling && attack.holdRoll !== true && this.actor?.intent?.fire !== true && !contacting);
+    bestQ.copy(shaftPose || orientation);
     let bestGroundError = evaluate(bestQ);
+    if (shaftPose && bestGroundError > .003) {
+      // Safety fallback is an explicit failed path sample, never evidence of
+      // continuity. Preserve the original solver and its existing budget.
+      shaftReturn.reject(this);
+      bestQ.copy(orientation); bestGroundError = evaluate(bestQ);
+    }
     if (contacting) bestPoint.copy(target);
     // A roll surface must sit near the floor; a windup must never clip it.
     // Search purely in orientation, so the right hand remains the pivot and
@@ -1155,6 +1173,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       const scale = delta.length();
       if (scale > 1e-4) target.addScaledVector(axis, -.09 * rollBlend / scale);
     }
+    shaftReturn.capture(this, bestQ, d.handR.quat, this.kid, chosenAxis, chosenA, alignLeft);
     orientation.copy(bestQ);
     return solve.call(this, limb, target, pole, orientation, weight, index);
   };

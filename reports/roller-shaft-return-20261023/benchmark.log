@@ -1,0 +1,28 @@
+{
+  scope: 'Helper-only 7x50000 repeated eligible reads; identity-copy comparison excludes IK/render/physics. GC retained heap is noisy; not total allocation or GPU performance.',
+  source: {
+    samples: [
+      [Object], [Object],
+      [Object], [Object],
+      [Object], [Object],
+      [Object]
+    ],
+    candidateMedianNs: 445.90066,
+    copyMedianNs: 22.83032,
+    retainedHeapDeltaBytes: -4328,
+    checksum: 265793.21265396435
+  },
+  emitted: {
+    samples: [
+      [Object], [Object],
+      [Object], [Object],
+      [Object], [Object],
+      [Object]
+    ],
+    candidateMedianNs: 261.84782,
+    copyMedianNs: 22.91324,
+    retainedHeapDeltaBytes: -528,
+    checksum: 265793.21265396435
+  },
+  flags: { explicitGc: true }
+}
