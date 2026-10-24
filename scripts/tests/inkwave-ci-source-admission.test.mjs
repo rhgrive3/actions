@@ -309,6 +309,19 @@ test('closed October 23 admission suppresses legacy replay only after its succes
   assert.equal(enabled(admission,context('other','1861')),false);
 });
 
+test('ordinary current PRs never replay frozen pose or baseline source changes',()=>{
+  const source=readWorkflow('inkwave-projectile-visuals.yml');
+  for(const name of [prepareName,'Align only the reviewed character pose for exact projectile comparison']) {
+    const body=step(source,name);
+    for(const candidate of [context('fix/main-ci-green-20261024','1867'),context('fix/roller-vertical-recovery-20261023','1867'),context('outside','1888',{headRepo:'outside/fork'})])
+      assert.equal(enabled(body,candidate),false,'historical prepare must not rewrite current main for arbitrary PR');
+    for(const [branch,id] of [['fix/shooter-splatling-cosmetics-20261023','1857'],['fix/respawn-enemy-exclusion-20261023','1860']]) {
+      const candidate=context(branch,id);
+      assert.equal(enabled(body,candidate),true,'original unadmitted historical owner remains valid');
+      assert.equal(enabled(body,{...candidate,steps:{reviewed_current_pair:{outputs:{admitted:'true'}}}}),false);
+    }
+  }
+});
 test('reviewed runtime UI inventory rejects missing, unexpected and weakened routes in each shell', () => {
   const source=readWorkflow('inkwave-projectile-visuals.yml');
   const guard=reviewedPrShells[1];
