@@ -88,7 +88,8 @@ test('#1039 composed host Ready is reachable after confirmation and starts the a
     const launch = r.packets.find(p=>p.packet.k==='start').packet;
     assert.deepEqual(launch.roster.map(p=>[p.owner,p.team]), [['host',0],['guest',1]]);
     assert.equal(r.host._startCfg.id, r.guest._startCfg.id);
-    assert.equal(r.locks[0], true);
+    assert.deepEqual(r.locks, [], 'relay owns the atomic START lock, not the client Transport');
+    assert.equal(r.host._pendingStart, null, 'authenticated START acknowledgement retires the pending request');
   } finally { r.close(); }
 });
 
