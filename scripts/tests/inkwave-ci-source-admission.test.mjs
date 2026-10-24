@@ -171,8 +171,8 @@ function sourceRouteContract(source) {
   }
   const cases = [
     [context('fix/roller-vertical-recovery-20261023','1856',{baseSha:'3003088e7d3da6e3b41829a96714698a348b555b',headSha:'2b103150d808c623c39268d6aa1833b3075d3a7c'}),false,true,'roller'],
-    [context('fix/roller-vertical-recovery-20261023','1857',{baseSha:'3003088e7d3da6e3b41829a96714698a348b555b'}),false,true,'legacy'],
-    [context('fix/roller-vertical-recovery-20261023','1856'),false,true,'legacy'],
+    [context('fix/roller-vertical-recovery-20261023','1857',{baseSha:'3003088e7d3da6e3b41829a96714698a348b555b'}),false,false,'none'],
+    [context('fix/roller-vertical-recovery-20261023','1856'),false,false,'none'],
     [context(allPrBranch,'1843'),true,true,'allpr'],
     [context(stringerBranch,'1850'),true,true,'stringer'],
     [context(stringerBranch+'-foreign','1850'),false,true,'legacy'],
