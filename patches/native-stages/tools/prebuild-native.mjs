@@ -156,7 +156,8 @@ async function prebuild(stage, catalogStage) {
   const obj = fs.readFileSync(fetchPinned(stage, objFile, {sha256: stage.sourceSha256}));
   const mtl = fs.readFileSync(fetchPinned(stage, mtlFile, files[mtlFile]), 'utf8');
   console.log(`[${stage.id}] convert`);
-  let data = convertSource(catalogStage, new Uint8Array(obj.buffer, obj.byteOffset, obj.byteLength), mtl, files);
+  // Same options as source-worker.mjs on an unconstrained client.
+  let data = convertSource(catalogStage, new Uint8Array(obj.buffer, obj.byteOffset, obj.byteLength), mtl, files, () => {}, null, {compactBVHCenters: false, compactInactiveDisplay: true});
   data = compactInactiveDisplay(data);
   const manifest = data.manifest;
   // Paint-chart faces are ~0.5 KB of JSON each (33 MB on Brinewater). Store
