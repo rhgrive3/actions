@@ -108,6 +108,8 @@ concurrency:
   cancel-in-progress: ${{ !(inputs.diagnostic_only == true && (inputs.network_opening_diagnostic == true || inputs.wall_render_diagnostic == true)) }}
 permissions:
   contents: read
+  checks: read
+  statuses: read
 env:
   SOURCE_SHA: ${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
   FOCUSED_EVIDENCE_DIR: /mnt/workspace/.dev-state/agent-work/evidence/inkwave-focused-${{ github.run_id }}-${{ github.run_attempt }}
@@ -555,7 +557,8 @@ jobs:
           retention-days: 14
   # The test-file set is partitioned across isolated, independent machines.
   patch_tests:
-    if: inputs.diagnostic_only != true
+    # Default GitHub full-suite behavior unless explicitly offloaded.
+    if: ${{ inputs.diagnostic_only != true && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
@@ -620,9 +623,31 @@ jobs:
           retention-days: 14
 
   # Required /validate passes only when core and all eight regression shards pass.
+  circleci_offload_gate:
+    # Refuse stale/partial/unrelated CircleCI results. Native perf branches stay on GitHub.
+    if: ${{ (vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
+    needs: validate_core
+    runs-on: ubuntu-latest
+    timeout-minutes: 85
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Require nine CircleCI lane outcomes on the exact PR source commit
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          node --test scripts/tests/inkwave-circleci-offload-gate.test.mjs
+          node scripts/ci/check-circleci-offload.mjs
+
   validate:
     if: ${{ always() && inputs.diagnostic_only != true }}
-    needs: [validate_core, patch_tests]
+    needs: [validate_core, patch_tests, circleci_offload_gate]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -630,14 +655,23 @@ jobs:
         env:
           CORE_RESULT: ${{ needs.validate_core.result }}
           PATCH_RESULT: ${{ needs.patch_tests.result }}
+          CIRCLECI_RESULT: ${{ needs.circleci_offload_gate.result }}
+          OFFLOAD_ACTIVE: ${{ vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration' }}
         run: |
-          printf 'validate_core=%s patch_tests=%s\n' "$CORE_RESULT" "$PATCH_RESULT"
+          printf 'validate_core=%s patch_tests=%s circleci=%s offload=%s\n' "$CORE_RESULT" "$PATCH_RESULT" "$CIRCLECI_RESULT" "$OFFLOAD_ACTIVE"
           test "$CORE_RESULT" = success
-          test "$PATCH_RESULT" = success
+          if [ "$OFFLOAD_ACTIVE" = true ]; then
+            test "$PATCH_RESULT" = skipped
+            test "$CIRCLECI_RESULT" = success
+          else
+            test "$PATCH_RESULT" = success
+            test "$CIRCLECI_RESULT" = skipped
+          fi
 
   browser:
     needs: build_site
-    if: inputs.diagnostic_only != true
+    # No offload until CircleCI is connected and enabled.
+    if: ${{ inputs.diagnostic_only != true && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
