@@ -35,7 +35,29 @@ import { adaptQualitySource, replaceOnce } from '../patches/local-quality/adapte
 import { adaptMotionFkHotpath } from '../patches/local-quality/motion-fk-hotpath-adapter.mjs';
 
 function benchmarkComposedProductionBuildParity() {
-  const lodAfterSrc = fs.readFileSync(new URL('../inkwave-public/src/game/character-lod.js', import.meta.url), 'utf8');
+  const lodCurrentSrc = fs.readFileSync(new URL('../inkwave-public/src/game/character-lod.js', import.meta.url), 'utf8');
+  // Keep this historical A+ migration identity pinned to the reviewed parent.
+  // Later #1861 queue work avoids intermediate draw-index buffers and keeps
+  // every live runtime improvement. The benchmark must not mislabel that
+  // separately tested later optimization as a failed historical migration.
+  let lodAfterSrc = replaceOnce(lodCurrentSrc,
+    '  let finalIndices = tris, finalCount = nc;',
+    '  out.setIndex(nc > 65535 ? new THREE.Uint32BufferAttribute(tris, 1) : new THREE.Uint16BufferAttribute(tris, 1));',
+    'historical Lod index allocation');
+  lodAfterSrc = replaceOnce(lodAfterSrc,
+    "      for (let k = 0; k < sourceMat.itemSize; k++) values.push(sourceMat.getComponent(original, k));\n      for (let k = 0; k < sourceColor.itemSize; k++) values.push(sourceColor.getComponent(original, k));",
+    "      for (const name of ['aMat', 'color']) for (let k = 0; k < A[name].itemSize; k++) values.push(A[name].getComponent(original, k));",
+    'historical Lod attribute iteration');
+  lodAfterSrc = replaceOnce(lodAfterSrc,
+    '      finalIndices = remapped; finalCount = nc + extras.length;',
+    '      out.setIndex(nc + extras.length > 65535 ? new THREE.Uint32BufferAttribute(remapped, 1) : new THREE.Uint16BufferAttribute(remapped, 1));',
+    'historical Lod split index allocation');
+  lodAfterSrc = replaceOnce(lodAfterSrc,
+    '  out.setIndex(finalCount > 65535 ? new THREE.Uint32BufferAttribute(finalIndices, 1) : new THREE.Uint16BufferAttribute(finalIndices, 1));\n',
+    '', 'historical Lod final index allocation');
+  const historicalLodBytes = Buffer.from(lodAfterSrc);
+  assert.equal(createHash('sha1').update('blob '+historicalLodBytes.length+'\0').update(historicalLodBytes).digest('hex'),
+    'ac2bbba478608abc5ce626a0372958528a096c00','immutable reviewed pre-queue Lod source');
   const outfitAfterSrc = fs.readFileSync(new URL('../inkwave-public/src/game/character-outfit.js', import.meta.url), 'utf8');
   // The migration proved an identity, not a permanent ban on later runtime
   // work. Freeze that historical BodyBalance pair at main26a4, and admit only
@@ -644,6 +666,7 @@ function benchmarkBodyBalanceSameCondition() {
   const directBbCode = fs.readFileSync(new URL('../inkwave-public/src/game/motion/body-balance.js', import.meta.url), 'utf8')
     .replace(/import \* as THREE from 'three';/, '')
     .replace(/import \{SourcePose,clamp\} from '\.\/source-bank\.js';/, '')
+    .replace(/import \{isPreparedGaitCenter\} from '\.\/locomotion-profile\.js';/, '')
     .replace(/export /g, '');
 
   class SourcePose {
@@ -718,7 +741,7 @@ function benchmarkBodyBalanceSameCondition() {
   }
 
   const LegacyBodyBalance = vm.runInNewContext(legacyBbCode + '\nBodyBalance', { THREE: THREE_STUB, SourcePose, clamp, Math, Map, Object });
-  const DirectBodyBalance = vm.runInNewContext(directBbCode + '\nBodyBalance', { THREE: THREE_STUB, SourcePose, clamp, Math, Map, Object });
+  const DirectBodyBalance = vm.runInNewContext(directBbCode + '\nBodyBalance', { THREE: THREE_STUB, SourcePose, clamp, Math, Map, Object, isPreparedGaitCenter: () => false });
 
   const lb = new LegacyBodyBalance(bank);
   const db = new DirectBodyBalance(bank);
