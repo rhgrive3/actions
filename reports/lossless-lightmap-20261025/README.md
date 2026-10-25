@@ -25,9 +25,9 @@ an exhaustive PNG-spec scorer, including ties and changing winners.
 
 For the five shipped images, candidate scratch allocations fall from 40,960
 buffers to 10. A nine-round measurement rotates the order of baseline,
-buffer-reuse-only control and the final implementation. Median time for the
+buffer-reuse-only control and the pruned encoder. Median time for the
 five complete encodes was 1551.45 / 1522.83 / 1393.34 ms respectively: about
-10.2% less elapsed CPU workload time for the final candidate in this local run.
+10.2% less elapsed time for the pruned encoder in this local run.
 Raw samples are in `isolated-variants.json`. An earlier run concurrent with
 other builds measured 1578.63 → 1586.96 ms and is retained separately in
 `parallel-comparison.json`; timing under shared load is noisy.
