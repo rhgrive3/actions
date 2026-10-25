@@ -102,8 +102,22 @@ test('editor relayout cancels its stale drag without resyncing gyro or losing th
   const f = fixture(), draft = { fire: { x: .8 } };
   f.mobile.editing = true; f.mobile.layout = draft; f.mobile._edit = { pts: new Map([[9, {}]]) };
   f.mobile.resetPointers = function() { f.counts.reset++; this._edit = null; };
-  f.layout({ type: 'resize' }); f.drain();
+  f.env.innerHeight = 900; f.layout({ type: 'resize' }); f.drain();
   assert.equal(f.mobile._edit, null); assert.equal(f.mobile.layout, draft);
   assert.equal(f.mobile.editing, true); assert.equal(f.counts.reset, 1);
   assert.equal(f.counts.resync, 0); assert.equal(f.counts.layout, 1);
+});
+
+test('same-size WebKit resize keeps a live editor gesture; a real size change or rotation still cancels it', () => {
+  const f = fixture(), edit = { pts: new Map([[9, {}]]) };
+  f.mobile.editing = true; f.mobile._edit = edit;
+  f.mobile.resetPointers = function() { f.counts.reset++; this._edit = null; };
+  f.layout({ type: 'resize' }); f.drain();
+  assert.equal(f.mobile._edit, edit); assert.equal(f.counts.reset, 0); assert.equal(f.counts.layout, 1);
+  f.env.visualViewport = { width: 768, height: 700, scale: 1 }; f.layout({ type: 'resize' }); f.drain();
+  assert.equal(f.mobile._edit, null); assert.equal(f.counts.reset, 1); assert.equal(f.counts.layout, 2);
+  f.mobile._edit = edit; f.layout({ type: 'resize' }); f.drain();
+  assert.equal(f.mobile._edit, edit); assert.equal(f.counts.reset, 1);
+  f.env.orientation = 90; f.env.screen = { orientation: { angle: 90 }, width: 1024, height: 768 }; f.layout({ type: 'orientationchange' });
+  assert.equal(f.mobile._edit, null); assert.equal(f.counts.reset, 2); assert.equal(f.counts.resync, 1);
 });

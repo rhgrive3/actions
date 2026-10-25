@@ -7,9 +7,16 @@ export function physicalOrientation(env) {
   return width > 0 && height > 0 ? `screen:${width >= height}` : null;
 }
 
+// WebKit can dispatch a redundant resize (for example right after pointerdown)
+// with unchanged layout and visual viewports; it must not drop a live gesture.
+export function viewportKey(env) {
+  const visual = env.visualViewport;
+  return [env.innerWidth, env.innerHeight, visual?.width ?? env.innerWidth, visual?.height ?? env.innerHeight, visual?.scale ?? 1].join(':');
+}
+
 export function createTouchRelayout(mobile, env = globalThis) {
   const signal = mobile._abort.signal;
-  let orientation = physicalOrientation(env), frame = null, unknownRotationPending = false;
+  let orientation = physicalOrientation(env), viewport = viewportKey(env), frame = null, unknownRotationPending = false;
   const cancel = () => {
     if (frame !== null) env.cancelAnimationFrame(frame);
     frame = null; unknownRotationPending = false;
@@ -17,15 +24,16 @@ export function createTouchRelayout(mobile, env = globalThis) {
   signal.addEventListener('abort', cancel, { once: true });
   return event => {
     if (signal.aborted || mobile._destroyed) return;
-    const current = physicalOrientation(env);
+    const current = physicalOrientation(env), size = viewportKey(env);
     const rotated = current !== orientation || (current === null &&
       (event?.type === 'orientationchange' || event?.type === 'change') && !unknownRotationPending);
-    orientation = current;
+    const resized = size !== viewport;
+    orientation = current; viewport = size;
     if (rotated) {
       if (current === null) unknownRotationPending = true;
       mobile.gyro.resync();
       mobile.resetPointers();
-    } else if (mobile.editing) {
+    } else if (mobile.editing && (resized || event?.type !== 'resize')) {
       // Editor drags use viewport-relative anchors; retain the draft but discard
       // that gesture when its geometry changes, as the existing editor requires.
       mobile.resetPointers();
