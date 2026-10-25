@@ -79,11 +79,11 @@ test('Brella shares four cached quadrant SVGs which counterrotate only the inher
   const glyphs=profiles.brella.spreadTickSvgs;
   assert(Object.isFrozen(glyphs));assert.equal(glyphs.length,4);
   assert.equal(profiles.brella.states.idle.spreadTickSvgs,glyphs);
-  const paths=['M-10 -10V-20L0 -30H10','M10 -10V-20L0 -30H-10','M-10 10V20L0 30H10','M10 10V20L0 30H-10'];
+  const paths=['M-46 -10V-20L-36 -30H-26','M46 -10V-20L36 -30H26','M-46 10V20L-36 30H-26','M46 10V20L36 30H26'];
   glyphs.forEach((svg,i)=>{
     assert(svg.includes(paths[i]),'TL/TR/BL/BR glyph order '+i);
-    assert.match(svg,/viewBox="-16 -40 32 80"/);
-    assert.match(svg,/width="32" height="80"/);assert.match(svg,/left:-16px;top:-40px/);
+    assert.match(svg,/viewBox="-52 -40 104 80"/);
+    assert.match(svg,/width="104" height="80"/);assert.match(svg,/left:-52px;top:-40px/);
     assert.match(svg,/rotate\(calc\(0deg - var\(--iw-angle,\s*0deg\)\)\)/);
     assert.doesNotMatch(svg,/var\(--sp|--iw-cx|--iw-cy|stroke-dasharray:(?!none)/);
   });

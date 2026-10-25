@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {BASELINE_SHA,CASES,VIEWPORTS,reticleCrop,assertSnapshot,pace,sha256,browserLaunchOptions,settleCamera,inspectCaptureSurface,assertSurfaceInvariant,pngDimensions} from '../check-inkwave-reticle-visual-review.mjs';
+import {BASELINE_SHA,CASES,VIEWPORTS,reticleCrop,assertSnapshot,pace,sha256,browserLaunchOptions,settleCamera,inspectCaptureSurface,assertSurfaceInvariant,pngDimensions,
+  SPLATLING_CASES,SPLATLING_PHASES,captureMatrix,splatlingPhaseReady,assertSplatlingCapture,untilSplatling} from '../check-inkwave-reticle-visual-review.mjs';
 
 const source=fs.readFileSync(new URL('../check-inkwave-reticle-visual-review.mjs',import.meta.url),'utf8');
 const workflow=fs.readFileSync(new URL('../../.github/workflows/inkwave-reticle-visual-review.yml',import.meta.url),'utf8');
@@ -86,7 +87,7 @@ test('render-only surface redraw drains GPU without changing clock/pose/charge a
   let renders=0,finishes=0;
   const G={time:1,match:{time:2,stateT:3},local:{weaponId:'roller',pos:vec(),weaponRunner:{charge:.5,chargeT:.5,charging:true}},camera:{position:vec(),quaternion:vec(),fov:55,aspect:16/9},
     renderer:{domElement:{isConnected:true,width:960,height:540,getBoundingClientRect:()=>box},getPixelRatio:()=>.75,getContext:()=>({finish:()=>finishes++,isContextLost:()=>false})}};
-  const g={frozen:true,R:{render:()=>renders++}};
+  const g={frozen:true,R:{render:()=>renders++},hud:{_L:{splatFirst:1,splatSecond:.5}}};
   globalThis.window={__G:G,__inkwave:g};
   // Browser globals read by the evaluator are supplied as test-only DOM doubles.
   const saved={innerWidth:globalThis.innerWidth,innerHeight:globalThis.innerHeight,devicePixelRatio:globalThis.devicePixelRatio,document:globalThis.document};
@@ -96,9 +97,54 @@ test('render-only surface redraw drains GPU without changing clock/pose/charge a
     assert.equal(renders,1);assert.equal(finishes,1);assertSurfaceInvariant(before,after);
     assert.throws(()=>assertSurfaceInvariant(before,{...after,state:{...after.state,charge:.6}}));
     assert.throws(()=>assertSurfaceInvariant(before,{...after,state:{...after.state,clock:[9]}}));
+    assert.throws(()=>assertSurfaceInvariant(before,{...after,state:{...after.state,streaming:true,streamElapsed:.5}}));
     g.R.render=()=>G.time++;
     assert.throws(()=>inspectCaptureSurface({redraw:true}),/advanced native clock, pose or charge/);
   } finally {globalThis.window=oldWindow;globalThis.getComputedStyle=oldStyle;Object.assign(globalThis,saved);}
+});
+test('affected next suite is explicitly bounded desktop-only, retaining unchanged default first-four matrix',()=>{
+  assert.deepEqual(captureMatrix().cases,CASES);assert.deepEqual(captureMatrix().viewports,VIEWPORTS);
+  const m=captureMatrix(['--suite=affected-brella-splatling','--viewport=desktop']);
+  assert.equal(m.screenshotStateCount,19);assert.equal(m.viewports.length,1);assert.equal(m.viewports[0].name,'desktop');
+  assert.deepEqual(m.cases.map(c=>c.id),['s3-shelter-normal','s3-spinner-serein','s3-spinner-downpour','charger']);
+  assert.equal(m.cases.at(-1).idleOnly,true);
+  assert.deepEqual(SPLATLING_CASES.map(c=>c.switchAt),['full','stream-second']);
+  assert.throws(()=>captureMatrix(['--suite=affected-brella-splatling']));
+  assert.throws(()=>captureMatrix(['--suite=all-weapons']));
+  assert.match(source,/invuln:a\.invuln,ink:a\.ink,fullT:/);
+  assert.match(source,/shield:\{classes:/);assert.match(source,/tank:\{classes:/);
+});
+function splatRow(c,phase,before=false) {
+  const values={idle:[0,0,0,false,false],'first-ready':[.01,1,0,true,false],'second-charging':[.6,1,.5,true,false],
+    full:[1,1,1,true,false],'stream-second':[0,1,.5,false,true],'stream-first':[0,.5,0,false,true],depleted:[0,0,0,false,false],'switch-back':[0,0,0,false,false]};
+  const [charge,first,second,charging,streaming]=values[phase];
+  return {...row(c,phase,before),charge,first,second,charging,streaming,chargeT:1,
+    visible:!['idle','depleted','switch-back'].includes(phase),classes:streaming?['iw-ret--splatling','is-streaming']:['iw-ret--splatling'],
+    handlesAttached:true,offsets:[first,second].map(v=>Number((100*(1-v)).toFixed(2))),profiles:[],cornerCount:before?0:4,
+    angles:['45deg','135deg','225deg','315deg'].map(a=>'--a:'+a),catalogId:c.id,streamTime:2,streamElapsed:.5};
+}
+test('Splatling authoritative two-stage/stream/depleted phases retain hidden idle and attached native rings',()=>{
+  for(const c of SPLATLING_CASES)for(const before of [true,false])for(const phase of [...SPLATLING_PHASES,'switch-back']) {
+    const state=splatRow(c,phase,before);assert(splatlingPhaseReady(state,phase));assertSplatlingCapture(state,c,phase,{before});assertSnapshot(state,c,phase,before);
+  }
+  const c=SPLATLING_CASES[0],stream=splatRow(c,'stream-second');
+  assert(!splatlingPhaseReady(stream,'depleted'),'raw zero charge cannot pass while streaming');
+  assert(!splatlingPhaseReady({...stream,streaming:false,first:1,second:0},'depleted'));
+  for(const patch of [{cornerCount:8},{handlesAttached:false},{angles:['--a: 45deg']},{offsets:[0,100]},{visible:false},{catalogId:'splatling'}])
+    assert.throws(()=>assertSplatlingCapture({...stream,...patch},c,'stream-second'));
+  assert.equal(splatRow(c,'depleted').chargeT,1,'chargeT is observed, not incorrectly required to clear');
+});
+test('Ballpoint one-frame first stage waits native gauges, not generic normalized .35 charge',async()=>{
+  let reads=0;
+  const c=SPLATLING_CASES[1],page={evaluate:async(fn,arg)=>{
+    if(typeof arg==='number')return;
+    reads++;return splatRow(c,reads===1?'idle':'first-ready');
+  }};
+  assert.equal(await untilSplatling(page,'first-ready',4),2);
+  assert(splatlingPhaseReady(splatRow(c,'first-ready'),'first-ready'));
+  assert(splatRow(c,'first-ready').charge<.35);
+  await assert.rejects(untilSplatling({evaluate:async(fn,arg)=>typeof arg==='number'?undefined:splatRow(c,'idle')},'full',2),/phase deadline/);
+  assert.match(source,/fallback\.cornerCount,0/);assert.match(source,/no old second ring in native fallback/);
 });
 test('physical PNG dimensions are explicit, rejecting non-PNG bytes rather than assuming CSS scale',()=>{
   const bytes=Buffer.alloc(24);Buffer.from([137,80,78,71,13,10,26,10]).copy(bytes);bytes.writeUInt32BE(720,16);bytes.writeUInt32BE(600,20);

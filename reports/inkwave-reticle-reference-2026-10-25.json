@@ -2,7 +2,10 @@
   "schemaVersion": 1,
   "module": "patches/local-quality/weapon-reticle-geometry.mjs",
   "accuracy": "Reference-guided approximate geometry; not pixel-perfect retail parity.",
-  "referenceBaseline": { "width": 1280, "height": 720 },
+  "referenceBaseline": {
+    "width": 1280,
+    "height": 720
+  },
   "imagesBundled": false,
   "referenceInspection": "Actual pixels inspected locally with view_image; media files stay outside the deliverable.",
   "profiles": [
@@ -21,73 +24,178 @@
         "diagonalHalfExtentX": 4,
         "diagonalHalfExtentY": 4
       },
-      "states": ["idle"],
-      "limits": ["Reference establishes this silhouette, not a pixel-perfect profile for every Roller or range condition."]
+      "states": [
+        "idle"
+      ],
+      "limits": [
+        "Reference establishes this silhouette, not a pixel-perfect profile for every Roller or range condition."
+      ]
     },
     {
       "id": "brella-reference-720p",
       "activation": "active",
       "family": "brella",
       "source": "https://img.altema.jp/splatoon3/parashe_4.gif",
-      "localReferences": ["reticle-reference-melee/brella-sequence0.jpg", "reticle-reference-melee/brella-sequence10.jpg", "reticle-reference-melee/brella-sequence20.jpg", "reticle-reference-melee/brella-sequence30.jpg"],
+      "localReferences": [
+        "reticle-reference-melee/brella-sequence0.jpg",
+        "reticle-reference-melee/brella-sequence10.jpg",
+        "reticle-reference-melee/brella-sequence20.jpg",
+        "reticle-reference-melee/brella-sequence30.jpg"
+      ],
       "observed": "Center circle plus four solid chamfered/octagonal corner brackets. Brackets remain solid while the same weapon holds and launches its canopy.",
       "geometry": {
         "circleRadius": 13,
         "cornerBoundsAbsX": 70,
         "cornerBoundsAbsY": 54,
-        "topLeftPolyline": [[-70, -35], [-70, -44], [-61, -53], [-51, -53]]
+        "topLeftPolyline": [
+          [
+            -70,
+            -35
+          ],
+          [
+            -70,
+            -44
+          ],
+          [
+            -61,
+            -53
+          ],
+          [
+            -51,
+            -53
+          ]
+        ]
       },
-      "states": ["idle"],
+      "states": [
+        "idle"
+      ],
       "statePolicy": "Same solid silhouette irrespective of canopy presentation. The current seam does not distinguish launched from closed; no new classifier is invented.",
-      "implementationPolicy": "Active overlay contains only the circle and dot. A frozen spreadTickSvgs array decorates the four existing authoritative spread tick nodes in TL,TR,BL,BR order; no duplicate static corner frame remains. Top-left path is M-10 -10V-20L0 -30H10, mirrored for the other quadrants. Compared with the initial local glyph, top artwork shifts 20 baseline pixels upward and bottom artwork 20 downward. Parent centers stay at y +/-24, so outer artwork reaches approximately +/-54, supported by brella-sequence0.jpg. The larger 32x80 centered glyph viewBox fits this purely vertical artwork correction. Child SVG counterrotation cancels composed CSS --iw-angle; parent --iw-cx/--iw-cy transforms, horizontal x positions, original node order and horizontal --sp movement remain untouched. Historical absolute reference coordinates above document observation, not a claim of pixel-perfect full placement.",
-      "limits": ["Destroyed/recovery states and exact per-model dimensions remain unverified; no dashed canopy state is fabricated. Final actual-HUD comparison is still needed; this child-artwork baseline correction alone does not establish retail parity."]
+      "implementationPolicy": "A frozen spreadTickSvgs array decorates the existing four authoritative spread tick nodes in TL,TR,BL,BR order. Matched production captures on 8bfe6a00 showed a narrow horizontal outer extent +/-34 at --sp:0 versus inspected reference approximately +/-70. The corrected child path is M-46 -10V-20L-36 -30H-26, mirrored for other quadrants, in a centered104x80 viewport. Parent centers remain x +/-24 plus native horizontal --sp, y +/-24; child outer extents46/30 produce approximately70/54 at zero spread. Only child artwork moves, keeping authoritative parent transforms, node order, spread, color and visibility unchanged. This correction requires its own actual capture before visual acceptance.",
+      "limits": [
+        "Destroyed/recovery states and exact per-model dimensions remain unverified; no dashed canopy state is fabricated. Final actual-HUD comparison is still needed; this child-artwork baseline correction alone does not establish retail parity."
+      ]
     },
     {
       "id": "wiper-reference-720p",
       "activation": "active",
       "family": "splatana",
-      "catalogRecordIds": ["s3-saber-lite"],
+      "catalogRecordIds": [
+        "s3-saber-lite"
+      ],
       "source": "https://img.altema.jp/splatoon3/drive_1.gif",
-      "localReferences": ["reticle-reference-melee/wiper-sequence-grid.jpg"],
+      "localReferences": [
+        "reticle-reference-melee/wiper-sequence-grid.jpg"
+      ],
       "referenceScope": "Wiper identity and geometry are supported only by drive_1.gif and its extracted sequence grid. The separately named practice JPEG has unverified identity and is not evidence for this profile.",
       "observed": "A horizontal comb at idle changes to a vertical comb while charging and returns to horizontal on release. No circular progress gauge is visible.",
-      "sequenceSeconds": { "horizontalIdle": 1.46, "verticalChargeStart": 1.67, "verticalChargeEnd": 2.09, "attack": 2.23, "horizontalReturn": 2.37 },
+      "sequenceSeconds": {
+        "horizontalIdle": 1.46,
+        "verticalChargeStart": 1.67,
+        "verticalChargeEnd": 2.09,
+        "attack": 2.23,
+        "horizontalReturn": 2.37
+      },
       "geometry": {
         "circleRadius": 8,
-        "idleTickAbsX": [14, 20, 26],
+        "idleTickAbsX": [
+          14,
+          20,
+          26
+        ],
         "idleTickHeight": 14,
-        "chargeBarAbsY": [15, 25, 35, 45],
+        "chargeBarAbsY": [
+          15,
+          25,
+          35,
+          45
+        ],
         "chargeBarWidth": 26
       },
-      "states": ["idle", "charging", "full"],
+      "states": [
+        "idle",
+        "charging",
+        "full"
+      ],
       "statePolicy": "charging must be the authoritative boolean true; otherwise idle wins even when a stale charge value remains. Full uses the same cached charge SVG.",
-      "limits": ["Exact full-charge timing, progress-color rule and final full-charge color are not established. Shape-only replacement inherits the existing native color owner, including target/feedback cues; no new palette or retail color-parity claim is introduced."]
+      "limits": [
+        "Exact full-charge timing, progress-color rule and final full-charge color are not established. Shape-only replacement inherits the existing native color owner, including target/feedback cues; no new palette or retail color-parity claim is introduced."
+      ]
     },
     {
       "id": "stamper-reference-720p",
       "activation": "active",
       "family": "splatana",
-      "catalogRecordIds": ["s3-saber-normal"],
-      "sources": ["https://img.game8.jp/7223786/900eb256c292592c89f3e88f8336bce0.mp4/show", "https://img.game8.jp/7223792/3e42cbdace89dc084927a5bb559169ed.jpg/poster", "https://img.game8.jp/7223786/900eb256c292592c89f3e88f8336bce0.jpg/poster"],
+      "catalogRecordIds": [
+        "s3-saber-normal"
+      ],
+      "sources": [
+        "https://img.game8.jp/7223786/900eb256c292592c89f3e88f8336bce0.mp4/show",
+        "https://img.game8.jp/7223792/3e42cbdace89dc084927a5bb559169ed.jpg/poster",
+        "https://img.game8.jp/7223786/900eb256c292592c89f3e88f8336bce0.jpg/poster"
+      ],
       "sourcePage": "https://game8.jp/splatoon3/480124",
-      "localReferences": ["reticle-reference-melee/stamper-idle.jpg", "reticle-reference-melee/stamper-fire.jpg", "reticle-reference-melee/stamper-comb-grid.png", "reticle-reference-melee/stamper-seq-grid.jpg"],
+      "localReferences": [
+        "reticle-reference-melee/stamper-idle.jpg",
+        "reticle-reference-melee/stamper-fire.jpg",
+        "reticle-reference-melee/stamper-comb-grid.png",
+        "reticle-reference-melee/stamper-seq-grid.jpg"
+      ],
       "observed": "Own same-weapon Stamper video shows four vertical idle ticks per side, a column of four horizontal charge bars above and below the center circle, and the horizontal idle comb restored on release. Charge outer bars visibly narrow. This is a separate silhouette from Wiper, not borrowed geometry.",
-      "nativeReferenceSize": { "width": 768, "height": 432 },
+      "nativeReferenceSize": {
+        "width": 768,
+        "height": 432
+      },
       "geometry": {
         "circleRadius": 8,
-        "idleTickAbsX": [18, 27, 36, 45],
+        "idleTickAbsX": [
+          18,
+          27,
+          36,
+          45
+        ],
         "idleTickHeight": 14,
-        "chargeBarAbsY": [16, 27, 38, 49],
-        "chargeBarWidthsInnerToOuter": [30, 26, 22, 18]
+        "chargeBarAbsY": [
+          16,
+          27,
+          38,
+          49
+        ],
+        "chargeBarWidthsInnerToOuter": [
+          30,
+          26,
+          22,
+          18
+        ]
       },
       "activationPolicy": "Active only for base catalogRecord.id s3-saber-normal; own verified sequence establishes the idle/charge/release silhouette, with approximate normalized dimensions.",
-      "states": ["idle", "charging", "full"],
-      "limits": ["Normalized positions, bar widths and taper are approximate, not pixel-perfect. Static charged bars do not establish dynamic charge progress/fill fidelity. Exact full-charge color/timing and flashes remain unverified and no new color/progress/flash mapping is fabricated."]
+      "states": [
+        "idle",
+        "charging",
+        "full"
+      ],
+      "limits": [
+        "Normalized positions, bar widths and taper are approximate, not pixel-perfect. Static charged bars do not establish dynamic charge progress/fill fidelity. Exact full-charge color/timing and flashes remain unverified and no new color/progress/flash mapping is fabricated."
+      ]
     }
   ],
   "excluded": [
-    { "catalogRecordId": "s3-saber-heavy", "reason": "Decavitator geometry has not been verified; do not generalize from Wiper/Stamper." },
-    { "families": ["shooter", "blaster", "dualies", "slosher", "splatling", "charger", "stringer", "brush"], "reason": "No new confirmed geometry profile implemented in this module; preserve legacy fallback." }
+    {
+      "catalogRecordId": "s3-saber-heavy",
+      "reason": "Decavitator geometry has not been verified; do not generalize from Wiper/Stamper."
+    },
+    {
+      "families": [
+        "shooter",
+        "blaster",
+        "dualies",
+        "slosher",
+        "splatling",
+        "charger",
+        "stringer",
+        "brush"
+      ],
+      "reason": "No new confirmed geometry profile implemented in this module; preserve legacy fallback."
+    }
   ],
   "implementationConstraints": [
     "Only presentation records are read; no physics, RNG, clocks, gameplay source parameters or weapon mutation.",
@@ -104,5 +212,18 @@
     "svgStructure": "all eight cached state SVG strings plus four Brella spread glyphs parse as XML with centered bounds, visible overflow and solid primitive styles; central SVGs reset transforms, quadrant glyphs counterrotate composed CSS --iw-angle",
     "browserVisualQa": "not run successfully: Chromium aborted before page creation because process_singleton socket() was not permitted; no browser screenshot produced",
     "retailPixelParity": "not established"
+  },
+  "captureEvidence": {
+    "runId": 40220814572,
+    "head": "8bfe6a00bb24737064928b03edf3768053cd890e",
+    "artifactId": 12609652634,
+    "artifactSha256": "60c51f1f981d7f2772f40f23b4d3df89e1c78cb1118abf7b0a079e3e2dcb81e6",
+    "result": "Actual baseline and candidate capture/DOM-state checks passed;42 screenshot states and4 switch rows each; no page errors. Not full CI or retail parity.",
+    "remaining": [
+      "Brella horizontal correction and new Splatling module are later local changes, not certified by this run.",
+      "Splatana charge-fill/progress semantics remain unverified.",
+      "Mobile range telemetry obscures some upper reticle artwork; no clean mobile fidelity claim.",
+      "Stringer and Brush remain native fallback; no invented projected guides."
+    ]
   }
 }

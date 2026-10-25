@@ -24,7 +24,8 @@ after(cleanup);
 // Remove only this invocation's own mkdtemp directory in that case as well.
 process.once('exit',cleanup);
 const changed=new Set(['patches/splatoon3/weapon-catalog-adapter.mjs',
-  ...['presentation','geometry','installer'].map(n=>`patches/local-quality/weapon-reticle-${n}.mjs`)]);
+  ...['presentation','geometry','installer'].map(n=>`patches/local-quality/weapon-reticle-${n}.mjs`),
+  'patches/local-quality/splatling-reticle-corners.mjs']);
 const copied=new Set();let verified=0;
 const blob=bytes=>crypto.createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
 function copyModule(rel){
@@ -52,17 +53,19 @@ const baselineCompose=externalBaseline
 const read=rel=>{const name='inkwave-public/'+rel,bytes=fs.readFileSync(path.join(baseline,name));
   if(official)assert.equal(blob(bytes),official[name],name);return bytes.toString();};
 const source=adaptBuildSource('src/ui/hud.js',read('src/ui/hud.js'));
+const composedCss=adaptBuildSource('styles/hud.css',read('styles/hud.css'));
 const ast=parse(source,{sourceType:'module',ecmaVersion:'latest'});
 const declaration=ast.body.map(n=>n.declaration||n).find(n=>n.type==='ClassDeclaration'&&n.id.name==='HUD');
 assert(declaration,'actual fully composed HUD class');
 const {installWeaponReticlePresentation}=await import(pathToFileURL(path.join(overlay,'patches/local-quality/weapon-reticle-installer.mjs')));
+const {installSplatlingReticleCorners,SPLATLING_RETICLE_CORNER_CSS}=await import(pathToFileURL(path.join(overlay,'patches/local-quality/splatling-reticle-corners.mjs')));
 const {applyShotGuide}=await import(pathToFileURL(path.join(baseline,'patches/splatoon3/runtime/weapons-fidelity.mjs')));
 const {selectedSub,selectedSubCost}=await import(pathToFileURL(path.join(baseline,'patches/splatoon3/runtime/kit-composition.mjs')));
 const {updateSplatlingStages}=await import(pathToFileURL(path.join(baseline,'patches/local-quality/splatling-reticle.mjs')));
 const {chargerScopeFactor}=await import(pathToFileURL(path.join(baseline,'inkwave-public/src/game/chargerTuning.js')));
 // Reuse only the existing test DOM plumbing, never a copied production HUD method.
-const fixtureSource=fs.readFileSync(new URL('./weapon-reticle-installer.test.mjs',import.meta.url),'utf8');
-const fixtureStart=fixtureSource.indexOf('class Style {'),fixtureEnd=fixtureSource.indexOf('const catalog=',fixtureStart);
+const fixtureSource=fs.readFileSync(new URL('./splatling-reticle-corners.test.mjs',import.meta.url),'utf8');
+const fixtureStart=fixtureSource.indexOf('class Style {'),fixtureEnd=fixtureSource.indexOf('const runtime=',fixtureStart);
 assert(fixtureStart>=0&&fixtureEnd>fixtureStart);
 const {Element}=Function('assert',fixtureSource.slice(fixtureStart,fixtureEnd)+'return {Element};')(assert);
 const catalog=(family,id)=>({id,kind:'catalog',behaviorKind:family,catalogRecord:{id,family},chargeTime:1,special:'slam'});
@@ -70,12 +73,28 @@ const WEAPONS={shooter:{id:'shooter',kind:'shooter'},roller:{id:'roller',kind:'r
   brella:catalog('brella','brella'),wiper:catalog('splatana','s3-saber-lite'),stamper:catalog('splatana','s3-saber-normal'),
   decavitator:catalog('splatana','s3-saber-heavy'),stringer:catalog('stringer','stringer'),
   charger:{id:'charger',kind:'charger',scoped:true,chargeTime:1},splatling:{id:'splatling',kind:'splatling',chargeTime:1}};
+const runtime=path.join(baseline,'patches/splatoon3/runtime');
+const {MAIN_WEAPON_CATALOG}=await import(pathToFileURL(path.join(runtime,'main-weapon-catalog-data.mjs')));
+const {ALTERNATE_WEAPON_KITS}=await import(pathToFileURL(path.join(runtime,'alternate-weapon-kits-data.mjs')));
+const {registerAlternateWeaponKits}=await import(pathToFileURL(path.join(runtime,'alternate-weapon-kits.mjs')));
+const registered={};
+for(const record of MAIN_WEAPON_CATALOG.records){
+  registered[record.id]={id:record.id,kind:record.legacy||'catalog',behaviorKind:record.family,
+    modelKind:record.modelKind,catalogRecord:record,chargeTime:(record.parameters.WeaponParam?.ChargeFrame_Second??60)/60};
+}
+const kitSubs={},kitSpecials={};for(const kit of ALTERNATE_WEAPON_KITS){kitSubs[kit.sub]={};kitSpecials[kit.special]={};}
+registerAlternateWeaponKits({WEAPONS:registered,WEAPON_ORDER:Object.keys(registered),SUB:kitSubs,SPECIALS:kitSpecials,LANG:'en'});
+const spinnerIds=Object.keys(registered).filter(id=>registered[id].catalogRecord?.family==='splatling');
+for(const id of spinnerIds)WEAPONS[id]=registered[id];
+// Sub-chip display plumbing only; this reticle test does not measure sub costs.
+const displaySubs={bomb:{id:'bomb',inkCost:70,name:'Bomb'}};
+for(const id of Object.keys(kitSubs))displaySubs[id]={id,inkCost:70,name:id};
 function rig(){
   const runner={charge:0,chargeT:0,charging:false,streaming:false},actor={alive:true,form:'kid',invuln:0,weaponRunner:runner,weapon:WEAPONS.shooter};
   const G={match:{local:actor},camera:null};
-  const values={G,WEAPONS,SUB:{bomb:{id:'bomb',inkCost:70,name:'Bomb'}},SUB_ICONS:{bomb:''},PLAYER:{respawnTime:5},MATCH:{},
+  const values={G,WEAPONS,SUB:displaySubs,SUB_ICONS:{bomb:''},PLAYER:{respawnTime:5},MATCH:{},
     clamp:(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),innerWidth:1280,innerHeight:720,
-    applyShotGuide,selectedSub,selectedSubCost,updateSplatlingStages,chargerScopeFactor,installWeaponReticlePresentation,
+    applyShotGuide,selectedSub,selectedSubCost,updateSplatlingStages,chargerScopeFactor,installWeaponReticlePresentation,installSplatlingReticleCorners,
     specialIcon:()=>'',t:x=>x,on:()=>()=>{},removeEventListener(){},cancelAnimationFrame(){}};
   const bindings={...values};let executable=source;
   for(const n of [...ast.body].reverse()){
@@ -103,10 +122,13 @@ test('candidate hook composes once after HUD class and does not change main/play
   assert.equal(imports.length,1);
   const calls=ast.body.filter(n=>n.type==='ExpressionStatement'&&n.expression.type==='CallExpression'&&n.expression.callee.name==='installWeaponReticlePresentation');
   assert.equal(calls.length,1);assert(calls[0].start>declaration.end);
+  assert.equal(ast.body.filter(n=>n.type==='ImportDeclaration'&&n.source.value.endsWith('/splatling-reticle-corners.mjs')).length,1);
+  const cornerCalls=ast.body.filter(n=>n.type==='ExpressionStatement'&&n.expression.type==='CallExpression'&&n.expression.callee.name==='installSplatlingReticleCorners');
+  assert.equal(cornerCalls.length,1);assert(cornerCalls[0].start>declaration.end);
   const assertNoHook=code=>{
     const module=parse(code,{sourceType:'module',ecmaVersion:'latest'});
-    assert(!module.body.some(n=>n.type==='ImportDeclaration'&&n.source.value.includes('weapon-reticle-installer.mjs')),'non-HUD installer import');
-    assert(!module.body.some(n=>n.type==='ExpressionStatement'&&n.expression.type==='CallExpression'&&n.expression.callee.name==='installWeaponReticlePresentation'),'non-HUD installer call');
+    assert(!module.body.some(n=>n.type==='ImportDeclaration'&&/weapon-reticle-installer|splatling-reticle-corners/.test(n.source.value)),'non-HUD installer import');
+    assert(!module.body.some(n=>n.type==='ExpressionStatement'&&n.expression.type==='CallExpression'&&['installWeaponReticlePresentation','installSplatlingReticleCorners'].includes(n.expression.callee.name)),'non-HUD installer call');
   };
   for(const rel of ['src/main.js','src/game/player.js','src/game/bots.js']){
     const raw=read(rel),output=adaptBuildSource(rel,raw);assertNoHook(output);
@@ -114,6 +136,50 @@ test('candidate hook composes once after HUD class and does not change main/play
     assert.throws(()=>assertNoHook("import { installWeaponReticlePresentation } from './weapon-reticle-installer.mjs';\n"+output),/non-HUD installer import/);
     assert.throws(()=>assertNoHook(output+'\ninstallWeaponReticlePresentation(HUD, WEAPONS);'),/non-HUD installer call/);
   }
+});
+
+test('actual compiled Splatling CSS uses more-specific class-only border suppression without changing raw-angle owners',()=>{
+  assert.equal(composedCss.split(SPLATLING_RETICLE_CORNER_CSS).length-1,1,'CSS export is actually installed once');
+  const specificity=s=>(s.match(/\.[a-z_-][\w-]*|\[[^\]]+\]/gi)||[]).length;
+  const selector=SPLATLING_RETICLE_CORNER_CSS.split('{')[0];assert.equal(specificity(selector),4);
+  const native=[...composedCss.matchAll(/(\.iw-ret--splatling \.iw-ret__tick\[style\*="--a:[^"]+"\]) \{([^}]+)\}/g)];
+  assert.equal(native.length,4);
+  for(const [,rule,body]of native){assert.equal(specificity(rule),3);assert.match(body,/border-(?:top|right|bottom|left)-width: 2px/);}
+  assert.match(SPLATLING_RETICLE_CORNER_CSS,/border-width: 0;/);
+  assert.match(composedCss,/--iw-x: calc\(58px \+ var\(--sp, 0\) \* 0\.7071px\)/);
+  assert.match(composedCss,/--iw-y: calc\(40px \+ var\(--sp, 0\) \* 0\.7071px\)/);
+});
+
+test('actual compiled Splatling updater supports all fourteen registered IDs with unchanged two-ring stages and literal selectors',()=>{
+  assert.equal(spinnerIds.length,14,'six actual base records plus eight registered kits');
+  const before=JSON.stringify(WEAPONS);
+  for(const id of spinnerIds){
+    const f=rig(),weapon=WEAPONS[id],record=weapon.catalogRecord;
+    f.draw(id);assert.equal(f.h._L.weapon,id);assert.equal(f.h._L.kind,'splatling');assert.equal(f.overlay(),undefined);
+    const handles=[f.h._chargeEl,f.h._chargeSecond],ticks=f.h.ret.querySelectorAll('.iw-ret__tick');
+    assert.equal(ticks.length,4);assert.equal(f.h.ret.querySelectorAll('.iw-ret__splatling-corner').length,4,id);
+    assert.deepEqual(ticks.map(t=>t.attrs.style),['--a:45deg','--a:135deg','--a:225deg','--a:315deg']);
+    const tickWrites=ticks.map(t=>t.style.writes.length),rawStyles=ticks.map(t=>t.attrs.style),children=[...f.h.ret.children];
+    const ratio=record.parameters.WeaponParam.ChargeFrame_First/record.parameters.WeaponParam.ChargeFrame_Second;
+    for(const [charge,offsets]of [[0,['100.00','100.00']],[ratio,['0.00','100.00']],[1,['0.00','0.00']]]){
+      Object.assign(f.runner,{charging:true,charge});f.draw(id,charge);
+      assert.equal(f.h._chargeEl,handles[0]);assert.equal(f.h._chargeSecond,handles[1]);
+      assert(handles.every(n=>f.h.ret.contains(n)));assert.deepEqual(handles.map(n=>n.style.strokeDashoffset),offsets,id+' charge='+charge);
+      assert.equal(f.h.ret.style.getPropertyValue('--sp'),'18.3');
+    }
+    const params=record.parameters,last=(params.WeaponFullChargeParam?.MaxShootingFrame_Second??params.WeaponParam.MaxShootingFrame_Second)/60;
+    Object.assign(f.runner,{charging:false,charge:0,streaming:true,catalogState:{id:record.id,streamTime:last,streamElapsed:0}});
+    if(record.legacy)Object.assign(f.runner,{burstT:last,burstDur:last});
+    f.draw(id,0);assert.equal(f.h.ret.classList.contains('is-idle'),false);assert(f.h.ret.classList.contains('is-streaming'));
+    assert.deepEqual(handles.map(n=>n.style.strokeDashoffset),['0.00','0.00'],id+' initial paid full stream');
+    f.actor.form='squid';f.draw(id,0);assert.equal(f.h.ret.style.visibility,'hidden');
+    f.actor.form='kid';f.runner.streaming=false;f.draw(id,0);assert.equal(f.h.ret.style.visibility,'');assert(f.h.ret.classList.contains('is-idle'));
+    assert.deepEqual(handles.map(n=>n.style.strokeDashoffset),['100.00','100.00'],id+' stream-ended empty rings');
+    assert.deepEqual([...f.h.ret.children],children);assert.deepEqual(ticks.map(t=>t.style.writes.length),tickWrites);
+    assert.deepEqual(ticks.map(t=>t.attrs.style),rawStyles,'no CSSOM reserialization of native angle selectors');
+    assert(ticks.every(t=>t.classList.contains('iw-reticle-splatling-chamfer')&&t.children.length===1));
+  }
+  assert.equal(JSON.stringify(WEAPONS),before,'no weapon/catalog/kit mutation');
 });
 
 test('actual installed updater switches active families, holds native charge handles, and restores unknown fallback',()=>{

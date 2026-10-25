@@ -1,3 +1,5 @@
+import { SPLATLING_RETICLE_CORNER_CSS } from '../local-quality/splatling-reticle-corners.mjs';
+
 // Build-only catalog bridge: weapon IDs identify entries, while kind/modelKind
 // select the shared visuals. Upstream sources remain locked and unmodified.
 function replaceOnce(code, before, after, label) {
@@ -17,6 +19,7 @@ function replaceAllExpected(code, before, after, expected, label) {
 }
 
 export function adaptWeaponCatalog(rel, code) {
+  if (rel === 'styles/hud.css') return code + '\n' + SPLATLING_RETICLE_CORNER_CSS;
   if (rel === 'src/game/weapons.js') {
     // Consume the remaining fixed-step time of newly born catalog splashes
     // before native draw copies their positions into the visible instance
@@ -137,8 +140,9 @@ export function adaptWeaponCatalog(rel, code) {
       'HUD weapon reticle behavior family');
     // Install after the final composed HUD class is evaluated. Gameplay family
     // mapping and all existing source-composition anchors remain untouched.
-    return "import { installWeaponReticlePresentation } from '../../patches/local-quality/weapon-reticle-installer.mjs';\n" + code +
-      "\ninstallWeaponReticlePresentation(HUD, WEAPONS);\n";
+    return "import { installWeaponReticlePresentation } from '../../patches/local-quality/weapon-reticle-installer.mjs';\n" +
+      "import { installSplatlingReticleCorners } from '../../patches/local-quality/splatling-reticle-corners.mjs';\n" + code +
+      "\ninstallWeaponReticlePresentation(HUD, WEAPONS);\ninstallSplatlingReticleCorners(HUD, WEAPONS);\n";
   }
 
   if (rel === 'src/main.js') {

@@ -59,7 +59,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node --test scripts/tests/inkwave-reticle-visual-review.test.mjs patches/local-quality/tests/weapon-reticle-presentation.test.mjs patches/local-quality/tests/weapon-reticle-geometry.test.mjs patches/local-quality/tests/weapon-reticle-installer.test.mjs patches/local-quality/tests/weapon-reticle-composition.test.mjs 2>&1 | tee "$EVIDENCE/focused-tests.log"
+          node --test scripts/tests/inkwave-reticle-visual-review.test.mjs patches/local-quality/tests/weapon-reticle-presentation.test.mjs patches/local-quality/tests/weapon-reticle-geometry.test.mjs patches/local-quality/tests/weapon-reticle-installer.test.mjs patches/local-quality/tests/weapon-reticle-composition.test.mjs patches/local-quality/tests/splatling-reticle-corners.test.mjs 2>&1 | tee "$EVIDENCE/focused-tests.log"
       - name: Check out immutable main comparison
         uses: actions/checkout@v4
         with:
@@ -84,7 +84,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SOURCE_SHA="$BASELINE_SHA" node scripts/check-inkwave-reticle-visual-review.mjs "$RUNNER_TEMP/reticle-baseline-site" "$EVIDENCE/baseline" --before 2>&1 | tee "$EVIDENCE/baseline-capture.log"
+          SOURCE_SHA="$BASELINE_SHA" node scripts/check-inkwave-reticle-visual-review.mjs "$RUNNER_TEMP/reticle-baseline-site" "$EVIDENCE/baseline" --before --suite=affected-brella-splatling --viewport=desktop 2>&1 | tee "$EVIDENCE/baseline-capture.log"
       - name: Capture actual candidate game and assert installed DOM/state
         if: always() && steps.production-build.outcome == 'success'
         id: candidate-capture
@@ -93,7 +93,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
-          node scripts/check-inkwave-reticle-visual-review.mjs "$RUNNER_TEMP/reticle-candidate-site" "$EVIDENCE/candidate" 2>&1 | tee "$EVIDENCE/candidate-capture.log"
+          node scripts/check-inkwave-reticle-visual-review.mjs "$RUNNER_TEMP/reticle-candidate-site" "$EVIDENCE/candidate" --suite=affected-brella-splatling --viewport=desktop 2>&1 | tee "$EVIDENCE/candidate-capture.log"
       - name: State narrow result, not full CI or retail equivalence
         if: always() && steps.baseline-capture.outcome == 'success' && steps.candidate-capture.outcome == 'success'
         shell: bash
@@ -107,13 +107,17 @@ jobs:
           const after=JSON.parse(fs.readFileSync(root+'/candidate/receipt.json'));
           assert.equal(before.status,'baseline-recorded');assert.equal(after.status,'passed');
           assert.equal(before.sourceSha,process.env.BASELINE_SHA);assert.equal(after.sourceSha,process.env.SOURCE_SHA);
+          assert.equal(after.coverage.suite,'affected-brella-splatling');
+          assert.equal(after.coverage.expectedScreenshotStates,19);
+          assert.deepEqual(before.coverage.actualWeapons,after.coverage.actualWeapons);
           assert.equal(before.scenarios.length,after.scenarios.length);
           const pairs=after.scenarios.filter(s=>s.files).map(s=>{
             const other=before.scenarios.find(b=>b.viewportName===s.viewportName&&b.weaponId===s.weaponId&&b.phase===s.phase);
             assert(other?.files);return {viewport:s.viewportName,weaponId:s.weaponId,phase:s.phase,before:other.files,after:s.files};
           });
-          fs.writeFileSync(root+'/comparison-index.json',JSON.stringify({baselineSha:before.sourceSha,candidateSha:after.sourceSha,baselineContentHash:before.contentHash,candidateContentHash:after.contentHash,pairs,retailParity:'unverified',fullAcceptance:false},null,2));
-          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'Actual production reticle browser captures and focused DOM/state assertions passed. Inspect paired reticle crops and full frames in the artifact. Desktop 1280×720 DPR1 is the 720p reference view; mobile 844×390 DPR3 is additional coverage, not reference equality. Software GPU only; Nintendo pixel/behavior parity and full CI remain unverified.\n');
+          assert.equal(pairs.length,19);
+          fs.writeFileSync(root+'/comparison-index.json',JSON.stringify({baselineSha:before.sourceSha,candidateSha:after.sourceSha,baselineContentHash:before.contentHash,candidateContentHash:after.contentHash,coverage:after.coverage,pairs,retailParity:'unverified',fullAcceptance:false},null,2));
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,'Affected desktop-only production reticle gate passed: corrected Brella (4 states), Nautilus and Ballpoint (7 native two-stage/stream/depleted states each), native charger idle (1 state); 19 paired states/head at 1280×720 DPR1. Full-hold Nautilus and active-stream Ballpoint interruption/rebuild assertions are metadata-only. Prior first-four/mobile evidence is not rerun or broadened; new Splatling mobile coverage is unverified. Software GPU only; Nintendo pixel/behavior parity and full CI remain unverified.\n');
           NODE
       - name: Preserve screenshots, hidden diagnostics, logs even on failure
         if: always()

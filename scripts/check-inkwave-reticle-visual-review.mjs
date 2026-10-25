@@ -21,6 +21,24 @@ export const CASES = Object.freeze([
   {name:'tri-stringer-fallback',id:'s3-stringer-normal',profile:null,kind:'charger',idleOnly:true},
   {name:'octobrush-fallback',id:'s3-brush-normal',profile:null,kind:'roller',idleOnly:true},
 ]);
+export const SPLATLING_CASES=Object.freeze([
+  Object.freeze({name:'nautilus',id:'s3-spinner-serein',kind:'splatling',profile:null,splatling:true,switchAt:'full'}),
+  Object.freeze({name:'ballpoint',id:'s3-spinner-downpour',kind:'splatling',profile:null,splatling:true,switchAt:'stream-second'}),
+]);
+export const SPLATLING_PHASES=Object.freeze(['idle','first-ready','second-charging','full','stream-second','stream-first','depleted']);
+export function captureMatrix(flags=[]) {
+  const suite=flags.find(f=>f.startsWith('--suite='))?.slice(8)||'first-four';
+  const viewport=flags.find(f=>f.startsWith('--viewport='))?.slice(11)||'all';
+  assert(['first-four','affected-brella-splatling'].includes(suite),'unknown capture suite');
+  assert(['all','desktop','mobile'].includes(viewport),'unknown capture viewport');
+  // New affected coverage is explicitly desktop-only and bounded. The prior
+  // first-four/mobile acceptance matrix remains the default, unchanged.
+  if(suite==='affected-brella-splatling')assert.equal(viewport,'desktop','affected suite requires explicit --viewport=desktop; new Splatling mobile is unverified');
+  return {suite,viewports:VIEWPORTS.filter(v=>viewport==='all'||v.name===viewport),
+    cases:suite==='first-four'?CASES:[CASES.find(c=>c.name==='brella'),...SPLATLING_CASES,
+      {...CASES.find(c=>c.name==='native-charger-fallback'),idleOnly:true}],
+    screenshotStateCount:suite==='affected-brella-splatling'?19:null};
+}
 export const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 export function pngDimensions(bytes) {
   assert(bytes.length>=24&&bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])),'complete PNG header required');
@@ -43,7 +61,7 @@ export function assertSnapshot(row, scenario, phase, before=false) {
   assert.equal(row.kind,scenario.kind,'native update kind remains authoritative');
   assert(row.retConnected,'actual reticle must be connected');
   assert(row.hudVisible,'native HUD must be active');
-  const nativeIdle=scenario.kind==='charger'&&(before||!scenario.profile)&&['idle','release','switch-back'].includes(phase);
+  const nativeIdle=(scenario.kind==='charger'&&(before||!scenario.profile)||scenario.kind==='splatling')&&['idle','release','depleted','switch-back'].includes(phase);
   assert.equal(row.visible,!nativeIdle,'retain native idle visibility gate; supported Splatana profile is visible');
   assert(row.rect.width>=0 && row.rect.height>=0,'finite reticle bounds');
   if(!before)assert.equal(row.installed,true,'production HUD installer is active');
@@ -60,6 +78,43 @@ export function assertSnapshot(row, scenario, phase, before=false) {
   if(phase==='idle'||phase==='release'||phase==='switch-back')assert(!row.charging && row.charge===0,'real release/reset');
   if(!before && scenario.name==='brella')assert.equal(row.decoratedSpreadTicks,4,'all four native spread ticks retain decorations');
   if(!before && scenario.profile && scenario.kind==='charger')assert(!row.classes.includes('iw-ret--charger'),'no inherited charger visual selector');
+  if(scenario.splatling)assertSplatlingCapture(row,scenario,phase,{before});
+}
+const near=(a,b)=>Number.isFinite(a)&&Math.abs(a-b)<=1e-7;
+export function splatlingPhaseReady(row,phase) {
+  if(!Number.isFinite(row.charge)||!Number.isFinite(row.first)||!Number.isFinite(row.second))return false;
+  const hold=row.charging&&!row.streaming,stream=row.streaming&&!row.charging;
+  if(['idle','depleted','switch-back'].includes(phase))return !row.charging&&!row.streaming&&row.charge===0&&near(row.first,0)&&near(row.second,0);
+  if(phase==='first-ready')return hold&&near(row.first,1)&&row.second>=0&&row.second<=.05;
+  if(phase==='second-charging')return hold&&near(row.first,1)&&row.second>=.35&&row.second<=.65;
+  if(phase==='full')return hold&&row.charge>=1&&near(row.first,1)&&near(row.second,1);
+  if(phase==='stream-second')return stream&&row.charge===0&&row.second>=.25&&row.second<=.75;
+  if(phase==='stream-first')return stream&&row.charge===0&&row.first>0&&near(row.second,0);
+  return false;
+}
+export function assertSplatlingCapture(row,scenario,phase,{before=false}={}) {
+  assert.equal(row.weaponId,scenario.id);assert.equal(row.hudWeapon,scenario.id);assert.equal(row.kind,'splatling');
+  assert(splatlingPhaseReady(row,phase),'actual native two-stage Splatling phase: '+phase);
+  assert(row.handlesAttached,'both native charge ring handles remain attached');
+  assert(row.offsets.every((offset,i)=>near(offset,Number((100*(1-[row.first,row.second][i])).toFixed(2)))),'both native offsets agree with real stage gauges');
+  assert.equal(row.visible,!['idle','depleted','switch-back'].includes(phase),'native Splatling idle/depleted hidden');
+  assert.equal(row.classes.includes('is-streaming'),row.streaming,'native streaming class');
+  assert.equal(row.profiles.length,0,'corners are not replacement geometry profiles');
+  assert.equal(row.cornerCount,before?0:4,'exactly four candidate-only native-tick decorations');
+  assert.equal(row.angles.length,4);
+  assert(['45deg','135deg','225deg','315deg'].every(angle=>row.angles.some(raw=>raw?.includes('--a:'+angle))),'native raw quadrant selector text survives');
+  if(row.streaming)assert(row.catalogId===scenario.id&&Number.isFinite(row.streamTime)&&row.streamTime>0&&Number.isFinite(row.streamElapsed),'stream uses actual catalogue duration and elapsed time');
+}
+export function readSplatlingPhase() {
+  const a=window.__G.local,h=window.__inkwave.hud,r=a.weaponRunner;
+  return {charge:r.charge,charging:r.charging===true,streaming:r.streaming===true,first:h._L.splatFirst,second:h._L.splatSecond};
+}
+export async function untilSplatling(page,phase,maxFrames=480) {
+  for(let frames=1;frames<=maxFrames;frames++) {
+    await pace(page);
+    if(splatlingPhaseReady(await page.evaluate(readSplatlingPhase),phase))return frames;
+  }
+  throw Error('Actual Splatling phase deadline: '+phase);
 }
 
 // Freeze the scheduler only; advance the actual game once per native RAF. Never
@@ -107,7 +162,9 @@ export function inspectCaptureSurface({redraw=false}={}) {
   if(!g.frozen||!m||!r.domElement.isConnected)throw Error('Capture requires frozen native game surface');
   const state=()=>({clock:[G.time,m.time,m.stateT,g.s3Clock?.ticks],weaponId:a.weaponId,
     actorPosition:a.pos.toArray(),cameraPosition:G.camera.position.toArray(),cameraQuaternion:G.camera.quaternion.toArray(),fov:G.camera.fov,aspect:G.camera.aspect,
-    charge:a.weaponRunner.charge||0,chargeT:a.weaponRunner.chargeT||0,charging:a.weaponRunner.charging===true,
+    charge:a.weaponRunner.charge||0,chargeT:a.weaponRunner.chargeT||0,charging:a.weaponRunner.charging===true,streaming:a.weaponRunner.streaming===true,
+    streamTime:a.weaponRunner.catalogState?.streamTime??null,streamElapsed:a.weaponRunner.catalogState?.streamElapsed??null,
+    streamUsed:a.weaponRunner.catalogState?.streamUsed??null,first:g.hud._L.splatFirst??null,second:g.hud._L.splatSecond??null,
     bowTilt:a.weaponRunner.catalogState?.bowTilt||0});
   const before=state(),started=performance.now();
   if(redraw){g.R.render();r.getContext().finish();}
@@ -143,6 +200,16 @@ async function readSnapshot(page) {
       xhClasses:[...h.xh.classList],effectiveOpacity,ancestors,color:style.color,
       inRange:crosshair?.inRange??null,onTarget:crosshair?.onTarget??null,muzzleBlock:crosshair?.muzzleBlock??null,
       classes:[...r.classList],rect:rect.toJSON(),charge:runner.charge||0,charging:runner.charging===true,
+      streaming:runner.streaming===true,first:h._L.splatFirst??null,second:h._L.splatSecond??null,
+      offsets:[h._chargeEl,h._chargeSecond].map(el=>el?Number.parseFloat(el.style.strokeDashoffset):null),
+      handlesAttached:[h._chargeEl,h._chargeSecond].every(el=>!!el?.isConnected&&r.contains(el)),
+      cornerCount:r.querySelectorAll('.iw-ret__splatling-corner').length,
+      angles:[...r.querySelectorAll(':scope > .iw-ret__tick')].map(el=>el.getAttribute('style')),
+      catalogId:runner.catalogState?.id??null,streamTime:runner.catalogState?.streamTime??null,
+      streamElapsed:runner.catalogState?.streamElapsed??null,streamUsed:runner.catalogState?.streamUsed??null,streamLimit:runner.catalogState?.streamLimit??null,
+      invuln:a.invuln,ink:a.ink,fullT:h._L.fullT??0,
+      shield:{classes:[...h.shield.classList],opacity:getComputedStyle(h.shield).opacity,visibility:getComputedStyle(h.shield).visibility},
+      tank:{classes:[...h.tank.classList],opacity:getComputedStyle(h.tank).opacity,visibility:getComputedStyle(h.tank).visibility,level:h._tank?.level??null},
       profiles:[...r.querySelectorAll('[data-iw-reticle-presentation-profile]')].map(n=>n.dataset.iwReticlePresentationProfile),
       profileArtwork:[...r.querySelectorAll('[data-iw-reticle-presentation-profile]')].map(n=>({display:getComputedStyle(n).display,bounds:n.getBoundingClientRect().toJSON()})),
       decoratedSpreadTicks:r.querySelectorAll('.iw-ret__tick > .iw-reticle-presentation-spread-tick').length,
@@ -165,7 +232,7 @@ async function readSnapshot(page) {
 export async function main(argv=process.argv.slice(2)) {
   const [siteArg,outArg,...flags]=argv;
   assert(siteArg&&outArg,'Usage: node scripts/check-inkwave-reticle-visual-review.mjs SITE OUTPUT [--before]');
-  const before=flags.includes('--before'),site=fs.realpathSync(siteArg),out=path.resolve(outArg);
+  const before=flags.includes('--before'),site=fs.realpathSync(siteArg),out=path.resolve(outArg),matrix=captureMatrix(flags);
   const sourceSha=process.env.SOURCE_SHA;
   assert(/^[a-f0-9]{40}$/.test(sourceSha||''),'SOURCE_SHA must pin the checked-out commit');
   if(before)assert.equal(sourceSha,BASELINE_SHA);
@@ -181,7 +248,10 @@ export async function main(argv=process.argv.slice(2)) {
     assert.equal(sha256(bytes),build.artifacts[relative],'emitted identity: '+relative);
   }
   const receipt={schema:1,before,sourceSha,contentHash:build.contentHash,inputHash:build.inputHash,
-    probeSha256:sha256(script),build:build.build,viewports:VIEWPORTS,scenarios:[],errors:[],status:'running',
+    probeSha256:sha256(script),build:build.build,viewports:matrix.viewports,scenarios:[],errors:[],status:'running',
+    coverage:{suite:matrix.suite,actualWeapons:matrix.cases.map(c=>c.id),expectedScreenshotStates:matrix.screenshotStateCount,
+      splatlingMobile:matrix.suite==='affected-brella-splatling'?'not covered in this affected desktop gate':'not part of the unchanged first-four matrix',
+      switches:matrix.suite==='affected-brella-splatling'?'Nautilus full hold + Ballpoint active stream interrupted through native charger fallback; metadata-only':'original Wiper/native charger switch-back'},
     scope:'Actual production range/HUD DOM and browser screenshots; software GPU only. Reference-guided approximation, NOT Nintendo pixel/behavior parity or full CI.',
     captureProtocol:{browser:process.env.CHROMIUM_PATH?'custom-executable':'chromium-full-headless',scale:'device',screenshotDeadlineMs:20000,nativeRenderOnly:true,animations:'unchanged'},
     comparison:'Pair same viewport/weapon/phase crop against immutable main; retail reference review is separate, not certified by this gate.'};
@@ -204,7 +274,7 @@ export async function main(argv=process.argv.slice(2)) {
     const {enterRangeFromMenu}=await import('./lib/inkwave-range-menu-entry.mjs');
     browser=await chromium.launch(browserLaunchOptions(process.env.CHROMIUM_PATH));
     receipt.browserVersion=browser.version();write();
-    for(const view of VIEWPORTS) {
+    for(const view of matrix.viewports) {
       const context=await browser.newContext({viewport:{width:view.width,height:view.height},deviceScaleFactor:view.deviceScaleFactor,hasTouch:view.touch,isMobile:view.touch});
       page=await context.newPage();
       page.on('pageerror',error=>{receipt.errors.push({viewport:view.name,error:String(error)});write();});
@@ -221,7 +291,7 @@ export async function main(argv=process.argv.slice(2)) {
         // Native spawn resets fixed-clock interpolation; direct pos writes did not.
         a.spawnAt(a.pos.clone().set(-14.6,.04,0),0);g.rig.yaw=0;g.rig.pitch=-.12;g.rig.follow(a,true);
       });
-      for(const scenario of CASES) {
+      for(const scenario of matrix.cases) {
         console.log(view.name,scenario.id,'start');
         await page.evaluate(async id=>{
           const g=window.__inkwave;g.debug.fire(false);window.__G.match.range.setWeapon(id);
@@ -255,6 +325,29 @@ export async function main(argv=process.argv.slice(2)) {
         };
         await capture('idle');
         if(scenario.idleOnly)continue;
+        if(scenario.splatling) {
+          await page.evaluate(()=>window.__inkwave.debug.fire(true));
+          for(const phase of ['first-ready','second-charging','full']){await untilSplatling(page,phase);await capture(phase);}
+          await page.evaluate(()=>window.__inkwave.debug.fire(false));
+          for(const phase of ['stream-second','stream-first','depleted']){await untilSplatling(page,phase);await capture(phase);}
+          // A bounded representative interruption: full hold on Nautilus, an
+          // active nonzero stream on Ballpoint. No additional PNGs or inferred
+          // charge state; use the real input, runner and selection API.
+          await page.evaluate(()=>window.__inkwave.debug.fire(true));await untilSplatling(page,'full');
+          if(scenario.switchAt==='stream-second'){await page.evaluate(()=>window.__inkwave.debug.fire(false));await untilSplatling(page,'stream-second');}
+          const interrupted=await readSnapshot(page);assertSnapshot(interrupted,scenario,scenario.switchAt,before);
+          receipt.scenarios.push({...interrupted,viewportName:view.name,phase:'switch-interrupted-'+scenario.switchAt,sourceSha,contentHash:build.contentHash});write();
+          await page.evaluate(()=>{window.__inkwave.debug.fire(false);window.__G.match.range.setWeapon('charger');});await pace(page,2);
+          const fallback=await readSnapshot(page),native=CASES.find(c=>c.name==='native-charger-fallback');
+          assertSnapshot(fallback,native,'switch-back',before);
+          assert.equal(fallback.cornerCount,0,'no old Splatling corners in native fallback');
+          assert.equal(await page.evaluate(()=>window.__inkwave.hud.ret.querySelectorAll('.iw-ret__charge-second').length),0,'no old second ring in native fallback');
+          receipt.scenarios.push({...fallback,viewportName:view.name,phase:'switch-native-from-'+scenario.name,sourceSha,contentHash:build.contentHash});write();
+          await page.evaluate(id=>window.__G.match.range.setWeapon(id),scenario.id);await pace(page,2);
+          const restored=await readSnapshot(page);assertSnapshot(restored,scenario,'switch-back',before);
+          receipt.scenarios.push({...restored,viewportName:view.name,phase:'switch-back',sourceSha,contentHash:build.contentHash});write();
+          continue;
+        }
         await page.evaluate(()=>window.__inkwave.debug.fire(true));
         if(scenario.charge) {
           await until(page,()=>{const r=window.__G.local.weaponRunner;return r.charging&&r.charge>=.35&&r.charge<1;},scenario.id+' partial charge after native display delay');
@@ -274,7 +367,7 @@ export async function main(argv=process.argv.slice(2)) {
       }
       // Return from unsupported native charger to Wiper, then native charger:
       // stale DOM/profile restoration is exercised via the real selection API.
-      for(const name of ['wiper','native-charger-fallback']) {
+      for(const name of matrix.suite==='first-four'?['wiper','native-charger-fallback']:[]) {
         const scenario=CASES.find(row=>row.name===name);
         await page.evaluate(id=>window.__G.match.range.setWeapon(id),scenario.id);await pace(page,2);
         const row=await readSnapshot(page);assertSnapshot(row,scenario,'switch-back',before);
@@ -283,6 +376,7 @@ export async function main(argv=process.argv.slice(2)) {
       assert.deepEqual(receipt.errors,[],'uncaught browser errors');
       await context.close();page=null;
     }
+    if(matrix.screenshotStateCount!=null)assert.equal(receipt.scenarios.filter(s=>s.files).length,matrix.screenshotStateCount,'exact bounded affected screenshot coverage');
     receipt.status=before?'baseline-recorded':'passed';
   } catch(error) {
     receipt.status='failed';receipt.failure=String(error.stack||error);

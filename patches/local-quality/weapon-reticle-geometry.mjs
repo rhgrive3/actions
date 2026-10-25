@@ -22,12 +22,15 @@ const BRELLA_SVG = svg('brella-reference-720p', ring(13) + DOT);
 // Reference corners reach approximately y +/-54 at 720p. Existing parent
 // centers are y +/-24, so move only the child artwork another 20px outward;
 // its own 10px corner extent supplies the remaining reference silhouette.
-const brellaSpreadTickSvg = (quadrant, path) => `<svg xmlns="http://www.w3.org/2000/svg" class="iw-reticle-presentation-spread-tick iw-reticle-presentation-spread-tick-${quadrant}" viewBox="-16 -40 32 80" width="32" height="80" aria-hidden="true" focusable="false" style="position:absolute;left:-16px;top:-40px;width:32px;height:80px;overflow:visible;transform:rotate(calc(0deg - var(--iw-angle, 0deg)));transform-origin:50% 50%;pointer-events:none">${line('spread-corner', path)}</svg>`;
+// Matched production captures at --sp:0 exposed a narrow +/-34px frame;
+// native 720p corners reach +/-70px. Move only child X another36px outward,
+// preserving the live parent horizontal spread and its authoritative owners.
+const brellaSpreadTickSvg = (quadrant, path) => `<svg xmlns="http://www.w3.org/2000/svg" class="iw-reticle-presentation-spread-tick iw-reticle-presentation-spread-tick-${quadrant}" viewBox="-52 -40 104 80" width="104" height="80" aria-hidden="true" focusable="false" style="position:absolute;left:-52px;top:-40px;width:104px;height:80px;overflow:visible;transform:rotate(calc(0deg - var(--iw-angle, 0deg)));transform-origin:50% 50%;pointer-events:none">${line('spread-corner', path)}</svg>`;
 const BRELLA_SPREAD_TICK_SVGS = Object.freeze([
-  brellaSpreadTickSvg('tl', 'M-10 -10V-20L0 -30H10'),
-  brellaSpreadTickSvg('tr', 'M10 -10V-20L0 -30H-10'),
-  brellaSpreadTickSvg('bl', 'M-10 10V20L0 30H10'),
-  brellaSpreadTickSvg('br', 'M10 10V20L0 30H-10'),
+  brellaSpreadTickSvg('tl', 'M-46 -10V-20L-36 -30H-26'),
+  brellaSpreadTickSvg('tr', 'M46 -10V-20L36 -30H26'),
+  brellaSpreadTickSvg('bl', 'M-46 10V20L-36 30H-26'),
+  brellaSpreadTickSvg('br', 'M46 10V20L36 30H26'),
 ]);
 const WIPER_IDLE_BODY = ring(8) +
   line('idle-ticks', 'M-26 -7V7 M-20 -7V7 M-14 -7V7 M14 -7V7 M20 -7V7 M26 -7V7');
