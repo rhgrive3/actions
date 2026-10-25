@@ -865,7 +865,7 @@ test('bind, disposal, and the production session close path retire hit state bef
   lost.S.net.bind({ actors: [], boss: null });
   lost.S.net.sendHit(lost.S.attacker, lost.S.victim, 36, 'shooter');
   const SessionHarness = new Function('G', 'MAPS', 'MATCH', 'TEAM', 'mapNoBots',
-    `return class SessionHarness { ${methodFrom(sessionSource, '_closed')} ${methodFrom(sessionSource, 'leave')} ${methodFrom(sessionSource, '_blankLobby')} }`)
+    `return class SessionHarness { ${methodFrom(sessionSource, '_cancelStartRequest')} ${methodFrom(sessionSource, '_closed')} ${methodFrom(sessionSource, 'leave')} ${methodFrom(sessionSource, '_blankLobby')} }`)
     (lost.S.G, [{ id: 'tidewater' }], { defaultDuration: 180 }, 4, mapNoBots);
   const aborted = [];
   const session = Object.assign(new SessionHarness(), {

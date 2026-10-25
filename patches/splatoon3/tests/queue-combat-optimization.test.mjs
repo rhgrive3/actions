@@ -88,7 +88,7 @@ test('catalogue Bucket sharing still handles dynamic source accessors conservati
   let reads=0;
   const record={family:'slosher',get sourceActor(){reads++;return 'WeaponSlosherDouble';}};
   const spec=catalogVisualSpec(record,{b:{},unit:1},5);
-  assert.ok(reads>0);assert.equal(spec.style,'sheet');assert.equal(spec.index,4);
+  assert.ok(reads>0);assert.equal(spec.style,'sheet');assert.equal(spec.index,5,'source fifth fragment ordinal is not silently clamped to four');
   assert.equal(catalogVisualSpec({family:'shooter',sourceActor:'WeaponShooterNormal'},{c:{}}).style,'rod');
 });
 

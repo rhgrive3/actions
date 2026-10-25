@@ -288,7 +288,8 @@ test('Kraken Royale charges while held, starts its 35F dash on release, and supp
  a._updateSpecial(1/60);assert.ok(hits.some(h=>h[1]===victim&&h[2]===120&&h[3]==='krakenRoyale'),'charge dash uses its attack path and owner hit routing');
 
  const cancel=f.make();equip(cancel,'krakenRoyale');f.G.actors.push(cancel);ready(cancel);deployInput(cancel,f);
- for(let i=0;i<34;i++)cancel._updateSpecial(1/60);cancel.intent.fire=false;cancel._updateSpecial(1/60);
+ for(let i=0;i<33;i++)cancel._updateSpecial(1/60); // press tick + 33 held ticks = 34F
+ cancel.intent.fire=false;cancel._updateSpecial(1/60);
  assert.equal(cancel._s3AllSpecialState.phase,'active','release before35F cancels the charged attack');
 });
 

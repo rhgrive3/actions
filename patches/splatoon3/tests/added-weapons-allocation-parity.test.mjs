@@ -178,7 +178,7 @@ test('catalog splash direction is created only for an admitted release, preservi
   const rows=[],g={EPS:1e-9,DT:1/60,HZ:60,clamp:(v,lo=0,hi=1)=>Math.max(lo,Math.min(hi,v)),G:{},catalogSplashRadius,mainInkFootprint:()=>({width:.3}),
    spawnSplashDrop(_g,o){rows.push(['drop',o.from.toArray(),o.direction.toArray(),o.radius,o.salt,o.catchUpSeconds]);return {};},
    floorPaint(_a,from,radius,depth,direction){rows.push(['floor',from.toArray(),radius,depth,direction.toArray()]);}};
-  const fn=compile('function advance(p,s,d,travelBefore,len,stop){'+kernel+'}',['advance'],g).advance;
+  const fn=compile('function advance(p,s,d,travelBefore,len,stop){const splashBefore=d.splashHorizontal?s.splashTravel:travelBefore;const splashLength=d.splashHorizontal?Math.hypot(p.pos.x-p.prev.x,p.pos.z-p.prev.z):len;'+kernel+'}',['advance'],g).advance;
   let clones=0;const vel=new THREE.Vector3(0,0,60);vel.clone=function(){clones++;return new THREE.Vector3().copy(this);};
   const p={ghost:config.ghost,vel,prev:new THREE.Vector3(0,5,0),pos:new THREE.Vector3(0,5,1),life:1,age:1/60,owner:{},team:0,seed:7};
   const s={dropCount:config.used,nextSplash:config.next,travel:1,carry:0,r:{}},d={splashCount:config.count,splashSpacing:.2,splashDropSpec:config.falling?{}:null,depth:1};
