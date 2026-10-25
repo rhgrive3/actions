@@ -9,7 +9,7 @@ const { THREE, G, SRC } = await loadNative(true);
 const K = await import(pathToFileURL(SRC + 'src/game/character-geo.js'));
 const { CS, MC, PART } = await import(pathToFileURL(SRC + 'src/game/character-mats.js'));
 const geo = adaptBuildSource('src/game/character-geo.js', fs.readFileSync(SRC + 'src/game/character-geo.js', 'utf8'));
-const builderSource = geo.slice(geo.indexOf('class Builder {'), geo.indexOf('\n}\n\n', geo.indexOf('class Builder {')) + 2);
+const builderSource = geo.slice(geo.indexOf('class BuilderAttribute {'), geo.indexOf('\n}\n\n', geo.indexOf('class Builder {')) + 2);
 const Builder = new Function('THREE', 'V3', 'BONE_INDEX', 'const _c = new THREE.Color();\n' + builderSource + '\nreturn Builder;')(THREE, THREE.Vector3, K.BONE_INDEX);
 const source = fs.readFileSync(SRC + 'src/game/character-outfit.js', 'utf8');
 const fixture = fs.readFileSync(new URL('./fixtures/shoe-add-before-read-transform.js.txt', import.meta.url), 'utf8');
