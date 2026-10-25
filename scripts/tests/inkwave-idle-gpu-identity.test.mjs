@@ -37,5 +37,5 @@ test('main captures actual desktop identity before workload and verifies its lif
  const capture=source.indexOf('page.evaluate(captureIdleGpuIdentity)'),audio=source.indexOf("phase='audio'"),work=source.indexOf('await runResultsWorkDiagnostic('),verify=source.indexOf('await runIdleGpuContextDiagnostic(page,gpuTrace,verifyIdleGpuContext)'),retire=source.indexOf('await retireDesktopForCold(');
  assert(capture>=0&&capture<audio&&audio<work&&work<verify&&verify<retire);
  assert(!source.includes('getParameter('));
- assert.match(source.slice(work,verify),/publish\(\{status:'running',phase,result,resultsWorkProgress:resultsProgress.snapshot\(\)/);
+ assert.match(source.slice(work,verify),/publish\(\{status:'running',phase,result,resultsWorkProgress:(?:resultsProgress\.snapshot\(\)|completedProgress)/);
 });
