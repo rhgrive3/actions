@@ -12,7 +12,12 @@ const own='scripts/tests/inkwave-reef-splash-workflow-registration.test.mjs';
 const titles=['Verify Reefslider and Splashdown CI registration','Reviewed Reefslider and Splashdown source regressions','Reviewed Reefslider and Splashdown emitted-site regressions'];
 const additions=["      - 'patches/splatoon3/tests/reefslider-visual-lifecycle.test.mjs'\n      - 'patches/splatoon3/tests/triple-splashdown-impact-vfx.test.mjs'\n      - 'scripts/tests/inkwave-reef-splash-workflow-registration.test.mjs'\n", "      - name: Verify Reefslider and Splashdown CI registration\n        run: node --test scripts/tests/inkwave-reef-splash-workflow-registration.test.mjs\n", "      - name: Reviewed Reefslider and Splashdown source regressions\n        run: |\n          set -e\n          node --experimental-vm-modules --experimental-global-webcrypto --test --test-concurrency=1 patches/splatoon3/tests/reefslider-visual-lifecycle.test.mjs\n          node --experimental-vm-modules --experimental-global-webcrypto --test --test-concurrency=1 patches/splatoon3/tests/triple-splashdown-impact-vfx.test.mjs\n", "      - name: Reviewed Reefslider and Splashdown emitted-site regressions\n        run: |\n          set -e\n          INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --experimental-global-webcrypto --test --test-concurrency=1 --test-name-pattern='arming warning|death, interruption' patches/splatoon3/tests/reefslider-visual-lifecycle.test.mjs\n          INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --experimental-global-webcrypto --test --test-concurrency=1 patches/splatoon3/tests/triple-splashdown-impact-vfx.test.mjs\n"];
 function step(text,name){const marker='      - name: '+name+'\n';assert.equal(text.split(marker).length,2,name+' once');return text.split(marker)[1].split(/\n      - /)[0];}
+const extractionRegression="            scripts/tests/inkwave-special-frame-extraction.test.mjs \\\n";
 function verify(text){
+ assert.equal(text.split(extractionRegression).length,2,'exact added extraction regression once');
+ assert.ok(fs.existsSync(new URL('scripts/tests/inkwave-special-frame-extraction.test.mjs',root)));
+ assert.ok(step(text,'Special source and transformed fixture regressions (not emitted-site coverage)').includes(extractionRegression.trimEnd()),'extraction regression stays in transformed-source step');
+ text=text.replace(extractionRegression,'');
  for(const p of [...files,own]){assert.equal(text.split("      - '"+p+"'").length,2,p+' explicit trigger once');assert.ok(fs.existsSync(new URL(p,root)));}
  assert.equal(step(text,titles[0]).trim(),'run: node --test '+own);
  const source=step(text,titles[1]),emitted=step(text,titles[2]);
@@ -58,4 +63,8 @@ test('composed Inkjet additions are exact, singular and do not permit unrelated 
  }
  assert.throws(()=>verify(workflow.replace('esbuild@0.28.2','esbuild@0.28.3')),'unrelated existing gate edit');
  assert.throws(()=>verify(workflow.replace('  catalogue-browser:\n','  catalogue-browser:\n    continue-on-error: true\n')),'job failure masking');
+});
+
+test('extraction regression is additive, singular and cannot mask prior gates',()=>{
+ for(const changed of [workflow.replace(extractionRegression,''),workflow.replace(extractionRegression,extractionRegression+extractionRegression),workflow.replace(extractionRegression,extractionRegression.replace('extraction.test','missing.test')),workflow.replace(extractionRegression,extractionRegression.trimEnd()+' || true\n')])assert.throws(()=>verify(changed));
 });
