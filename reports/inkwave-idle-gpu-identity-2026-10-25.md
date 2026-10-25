@@ -86,8 +86,8 @@ comparison ledger is unaffected. No model editing/comparison or Discord work.
 - At the parent's explicit follow-up request, pushed dedicated candidate branch
   `fix/inkwave-idle-gpu-probe-20261025` and read it back through GitHub connector
   at `7ae14508f746828ef7def6ebb95600ccd8cff1fc` (code commit 6890cd67 plus evidence).
-  **Candidate full browser verification is in progress**, on that committed
-  verifier in a fresh profile. No PR-head/main update, PR creation, workflow
+  Candidate full browser verification subsequently **passed**, on that committed
+  verifier in a fresh profile (see final result below). No PR-head/main update, PR creation, workflow
   dispatch or rerun performed. Parent owns integration. Official CI is required.
 
 Full local evidence: `/workspace/inkwave-idle-evidence/` (original logs, build log,
@@ -126,3 +126,35 @@ An attempted shell timing invocation for the candidate initially failed because
 `/usr/bin/time` is absent (no verifier execution). It was replaced with Bash's
 `time`; this changes no browser or verifier options. The candidate then runs
 sequentially after baseline, using a fresh profile and the same artifact.
+
+## Final candidate result
+
+**PASS**, all gates, exact-source, tested source SHA
+`7ae14508f746828ef7def6ebb95600ccd8cff1fc`, system Chromium 154.0.8037.57,
+Playwright 1.62.1, same production contentHash as baseline/CI. The subsequent
+commits only record evidence; the verifier bytes are identical to code commit
+`6890cd67a8fc6287ab986bfca4595371013fbbd7`. Shell wall time: 449.954 seconds.
+Playing/results each render 120 frames; actor updates 960/0; projectiles,
+paint and FX 120/0; GPU submissions 15429/12290; CPU submission 78293.1/90943.7 ms.
+The unchanged test does not seed all game randomness; the differing playing
+submission count is recorded, not described as a performance improvement.
+All 15226 critical diagnostic events were accepted, with no rejected/invalid
+events or truncation. GPU context validation, desktop retirement, fresh mobile
+boot and the final acceptance checks all passed. The original build and this
+candidate both passed locally, so this establishes preservation of acceptance,
+not reproduction or proven resolution of the CI shutdown.
+
+Read-only filesystem observation retained the results checkpoint at Unix
+1792909103.1919954 and cold-profile directory creation at 1792909124.7469265:
+about 21.55 seconds for context verification plus desktop retirement and cold
+launch initialization together. This is not an isolated GPU-query timing.
+See `inkwave-idle-gpu-identity-local-results-2026-10-25.json` for both receipts'
+hashes, full workload counters, final diagnostics and exact identities.
+
+Remaining blocker: the CI-pinned Chromium 151.0.7922.34 download from
+cdn.playwright.dev was denied with HTTP 403 `Domain forbidden`. That action
+did not install the browser; no bypass was attempted. Exact CI-runtime
+reproduction and proof of the shutdown cause remain unconfirmed. The parent's
+single final successor PR will supply official integration CI; this task did
+not launch it or modify #1869/main. GitHub readback confirmed zero workflows
+for the initial candidate push at 7ae14508f.

@@ -1,0 +1,342 @@
+{
+  "scope": "local system Chromium only; not CI-pinned browser acceptance or performance proof",
+  "runs": [
+    {
+      "name": "b57-system",
+      "receiptSha256": "3e39b0f45b2866eca160f827a4921024a09f9f31281b240ec51c2da6a23b328e",
+      "status": "passed",
+      "sourceSha": "b57ccf044c42ffb7016664ee45599942c19e74c4",
+      "contentHash": "88f5ee899779516d21d02b8a033bc722a684bdeb515d44b95f2077259afde209",
+      "verifierSha256": "b47e6168eb05096105f8b9ef855944870bfde6018c068ec8c35169ed04a38a05",
+      "browser": "154.0.8037.57",
+      "summary": {
+        "cloudMiB": [
+          10,
+          2.5
+        ],
+        "farTransitions": 4,
+        "pausedWorldRenders": "1/120",
+        "mutedSchedulerTicks": 0
+      },
+      "resultsWork": {
+        "frames": 120,
+        "playing": {
+          "actorUpdates": 960,
+          "projectileUpdates": 120,
+          "paintFlushes": 120,
+          "fxUpdates": 120,
+          "worldRenders": 120,
+          "gpuDrawSubmissions": 15579,
+          "cpuSubmissionMs": 76437.89999999997
+        },
+        "results": {
+          "actorUpdates": 0,
+          "projectileUpdates": 0,
+          "paintFlushes": 0,
+          "fxUpdates": 0,
+          "worldRenders": 120,
+          "gpuDrawSubmissions": 12290,
+          "cpuSubmissionMs": 81495.5
+        },
+        "measurement": "native published Game._frame producers and real WebGL submission counts; not GPU execution time or device power"
+      },
+      "gpu": {
+        "webgl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+      },
+      "coldBoot": {
+        "quality": "high",
+        "touch": true,
+        "gamePublishedAtAllocation": false,
+        "marina": true,
+        "cloud": [
+          1024,
+          320
+        ],
+        "farSize": 256,
+        "cloudId": "46cff317-2835-4102-b03a-ec8b37a27372",
+        "farId": "9ee6a8c0-0750-4242-b158-8eb5aedaf56e",
+        "sameTargetsAfterBoot": true
+      },
+      "errors": [],
+      "diagnostics": {
+        "received": 15226,
+        "capacity": 256,
+        "truncated": false,
+        "rejected": 0,
+        "invalidMessages": 0,
+        "sealed": true
+      },
+      "cleanup": {
+        "channel": "critical",
+        "seq": 15226,
+        "producer": "cleanup",
+        "edge": "exit",
+        "state": "restoring",
+        "actualState": "playing",
+        "frame": 120,
+        "completed": 120,
+        "totalCompleted": 240,
+        "dt": 0.016666666666666666,
+        "criticalSuppressed": 0,
+        "detailSuppressed": 1792,
+        "elapsedMs": 157934.8,
+        "stateElapsedMs": 81496.09999999998,
+        "clock": {
+          "ticks": 639,
+          "accumulator": 0,
+          "advancing": false,
+          "finalTick": true,
+          "ticked": 1
+        },
+        "counts": {
+          "actorUpdates": 0,
+          "projectileUpdates": 0,
+          "paintFlushes": 0,
+          "fxUpdates": 0,
+          "worldRenders": 120,
+          "gpuDrawSubmissions": 12290
+        },
+        "presentation": {
+          "frozen": true,
+          "hidden": false,
+          "quality": "low",
+          "showcase": false,
+          "skipRender": false
+        },
+        "gameTime": 8.566666666666672,
+        "timing": {
+          "diagnosticOnly": true,
+          "emitWallMs": 1147.600000000326,
+          "clockErrors": 0,
+          "renderer": {
+            "calls": 530,
+            "outerCalls": 530,
+            "wallMs": 79767.90000000055,
+            "nestedEmitWallMs": 0,
+            "drawCallWallMs": 4964.800000000338,
+            "otherWallMs": 74803.10000000021,
+            "maxWallMs": 3562.2999999999884,
+            "maxFrame": 68,
+            "maxOrdinal": 1
+          },
+          "draws": {
+            "calls": 12290,
+            "outerCalls": 12290,
+            "wallMs": 4964.800000000338,
+            "maxWallMs": 2669.7000000000116,
+            "maxMethod": "drawElements",
+            "maxFrame": 107,
+            "maxRendererOrdinal": 1,
+            "methods": {
+              "drawArrays": {
+                "calls": 3650,
+                "outerCalls": 3650,
+                "wallMs": 939.2999999999302,
+                "maxWallMs": 420.3999999999651
+              },
+              "drawElements": {
+                "calls": 6840,
+                "outerCalls": 6840,
+                "wallMs": 4022.9000000004307,
+                "maxWallMs": 2669.7000000000116
+              },
+              "drawArraysInstanced": {
+                "calls": 720,
+                "outerCalls": 720,
+                "wallMs": 0.6999999998952262,
+                "maxWallMs": 0.1000000000349246
+              },
+              "drawElementsInstanced": {
+                "calls": 1080,
+                "outerCalls": 1080,
+                "wallMs": 1.9000000000814907,
+                "maxWallMs": 0.9000000000232831
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "candidate-system",
+      "receiptSha256": "334b09026771b2bc39f8b46850eb934e9de1cbb913c3605d841ac7f0df7aa6c2",
+      "status": "passed",
+      "sourceSha": "7ae14508f746828ef7def6ebb95600ccd8cff1fc",
+      "contentHash": "88f5ee899779516d21d02b8a033bc722a684bdeb515d44b95f2077259afde209",
+      "verifierSha256": "38ecd78556719ebb87e2cdf6982138a43430299d72381f60e2aacf6f9746b93a",
+      "browser": "154.0.8037.57",
+      "summary": {
+        "cloudMiB": [
+          10,
+          2.5
+        ],
+        "farTransitions": 4,
+        "pausedWorldRenders": "1/120",
+        "mutedSchedulerTicks": 0
+      },
+      "resultsWork": {
+        "frames": 120,
+        "playing": {
+          "actorUpdates": 960,
+          "projectileUpdates": 120,
+          "paintFlushes": 120,
+          "fxUpdates": 120,
+          "worldRenders": 120,
+          "gpuDrawSubmissions": 15429,
+          "cpuSubmissionMs": 78293.09999999998
+        },
+        "results": {
+          "actorUpdates": 0,
+          "projectileUpdates": 0,
+          "paintFlushes": 0,
+          "fxUpdates": 0,
+          "worldRenders": 120,
+          "gpuDrawSubmissions": 12290,
+          "cpuSubmissionMs": 90943.69999999995
+        },
+        "measurement": "native published Game._frame producers and real WebGL submission counts; not GPU execution time or device power"
+      },
+      "gpu": {
+        "webgl": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+      },
+      "coldBoot": {
+        "quality": "high",
+        "touch": true,
+        "gamePublishedAtAllocation": false,
+        "marina": true,
+        "cloud": [
+          1024,
+          320
+        ],
+        "farSize": 256,
+        "cloudId": "36617e8c-c14e-4c21-905e-9381e0d04817",
+        "farId": "6befce79-ebb2-4323-b999-42108c59486f",
+        "sameTargetsAfterBoot": true
+      },
+      "errors": [],
+      "diagnostics": {
+        "received": 15226,
+        "capacity": 256,
+        "truncated": false,
+        "rejected": 0,
+        "invalidMessages": 0,
+        "sealed": true
+      },
+      "cleanup": {
+        "channel": "critical",
+        "seq": 15226,
+        "producer": "cleanup",
+        "edge": "exit",
+        "state": "restoring",
+        "actualState": "playing",
+        "frame": 120,
+        "completed": 120,
+        "totalCompleted": 240,
+        "dt": 0.016666666666666666,
+        "criticalSuppressed": 0,
+        "detailSuppressed": 1792,
+        "elapsedMs": 169238.30000000005,
+        "stateElapsedMs": 90944.30000000005,
+        "clock": {
+          "ticks": 639,
+          "accumulator": 0,
+          "advancing": false,
+          "finalTick": true,
+          "ticked": 1
+        },
+        "counts": {
+          "actorUpdates": 0,
+          "projectileUpdates": 0,
+          "paintFlushes": 0,
+          "fxUpdates": 0,
+          "worldRenders": 120,
+          "gpuDrawSubmissions": 12290
+        },
+        "presentation": {
+          "frozen": true,
+          "hidden": false,
+          "quality": "low",
+          "showcase": false,
+          "skipRender": false
+        },
+        "gameTime": 8.566666666666672,
+        "timing": {
+          "diagnosticOnly": true,
+          "emitWallMs": 1187.5999999991618,
+          "clockErrors": 0,
+          "renderer": {
+            "calls": 530,
+            "outerCalls": 530,
+            "wallMs": 88951.69999999972,
+            "nestedEmitWallMs": 0,
+            "drawCallWallMs": 483.2999999993481,
+            "otherWallMs": 88468.40000000037,
+            "maxWallMs": 4039.20000000007,
+            "maxFrame": 80,
+            "maxOrdinal": 1
+          },
+          "draws": {
+            "calls": 12290,
+            "outerCalls": 12290,
+            "wallMs": 483.2999999993481,
+            "maxWallMs": 139.5,
+            "maxMethod": "drawElements",
+            "maxFrame": 93,
+            "maxRendererOrdinal": 1,
+            "methods": {
+              "drawArrays": {
+                "calls": 3650,
+                "outerCalls": 3650,
+                "wallMs": 4.499999999883585,
+                "maxWallMs": 0.5
+              },
+              "drawElements": {
+                "calls": 6840,
+                "outerCalls": 6840,
+                "wallMs": 279.6999999994878,
+                "maxWallMs": 139.5
+              },
+              "drawArraysInstanced": {
+                "calls": 720,
+                "outerCalls": 720,
+                "wallMs": 143.79999999993015,
+                "maxWallMs": 73.90000000002328
+              },
+              "drawElementsInstanced": {
+                "calls": 1080,
+                "outerCalls": 1080,
+                "wallMs": 55.300000000046566,
+                "maxWallMs": 54
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "candidateShellWallSeconds": 449.954,
+  "candidatePhaseObservations": [
+    {
+      "phase": "clouds:golden",
+      "observedUnix": 1792909068.3563278,
+      "receiptMtime": 1792908906.3023014
+    },
+    {
+      "phase": "results-work",
+      "observedUnix": 1792909103.5250263,
+      "receiptMtime": 1792909103.1919954
+    },
+    {
+      "phase": "cold-profile",
+      "observedUnix": 1792909124.8268127,
+      "directoryMtime": 1792909124.7469265
+    },
+    {
+      "phase": "passed",
+      "observedUnix": 1792909166.196147,
+      "receiptMtime": 1792909165.8793225
+    }
+  ]
+}
