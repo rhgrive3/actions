@@ -1,3 +1,6 @@
+import { toxicMistScale } from './toxic-mist.mjs';
+import { brushRollIgnoresEnemyInk } from './brush-roll-ink.mjs';
+import { paintCatalogBlasterBurst } from './catalog-blaster-paint.mjs';
 import { brellaPelletSpeed, canopyEntry, withProjectileHitGeometry, validProjectileHitGeometry } from './brella-physics.mjs';
 import { familyDescription } from './content-language.mjs';
 import { usesBucketSlosherSheet } from './projectile-visuals.mjs';
@@ -410,7 +413,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if (this.a.intent?.squid && !this.a.intent.fire && !s?.roll && !s?.lunge && !s?.pending && !s?.melee && !((this.a.weapon.catalogRecord.family==='splatana'||this.a.weapon.catalogRecord.family==='dualies')&&s?.stop>EPS)) return false;
     return !!(s && (s.pending || s.melee || s.chargeF>0 || s.stream>0 || s.roll || s.lunge || s.stop>EPS));
   };
-  R.moveSpeed = function() {
+  function catalogMoveSpeed() {
     const w = this.a.weapon;
     if (!w.catalogRecord) return legacyMove.call(this);
     const s = this.catalogState, r = w.catalogRecord, p = r.parameters, t = weaponParam(r);
@@ -453,6 +456,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       return lerp(finite(t.MoveSpeed,.086),finite(p.VariableShotParam?.MoveSpeed,.05),
         clamp((s.streamElapsed*HZ-30)/finite(p.VariableShotParam?.VariableInterpolatedFrame,10)))*HZ*mod;
     return this.firingT>0 || s?.pending || s?.stream>0 ? w.moveSpeedFiring*mod : PLAYER.runSpeed*(this.a.grounded?(this.a.s3?.modifiers?.runSpeed??1):1);
+  }
+  R.moveSpeed = function() {
+    // installAllSubs already wraps the legacy owner. The catalogue replaces
+    // that method, so it must apply the same live Mist scale itself, exactly
+    // once after selecting its source action speed (including roll/charge).
+    if(!this.a.weapon.catalogRecord)return legacyMove.call(this);
+    return catalogMoveSpeed.call(this)*toxicMistScale(this.a);
   };
   function pay(runner, amount, recover = runner.a.weapon.inkRecoverStop) {
     const a = runner.a;
@@ -1062,7 +1072,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const a=bands[i-1],b=bands[i];return lerp(a.Damage,b.Damage,clamp((distance-a.Distance)/(b.Distance-a.Distance)))/10;
     }return 0;
   }
-  function explosion(system,p,descriptor,skip=null) {
+  function explosion(system,p,descriptor,skip=null,contact=null) {
     const bands=descriptor?.DistanceDamage||[];
     let radius=0;for(const band of bands)radius=Math.max(radius,band.Distance);
     if(p.ghost){
@@ -1076,7 +1086,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     const paintRadius=finite(descriptor?.PaintRadius,0)||finite(p.catalog.descriptor.b.BlasterBurstParam?.SplashDropPaintRadius,0);
     const inkDirection=p.catalog.inkDirection||p.vel.clone().setY(0).normalize();
-    if(p.catalog.r.family==='stringer'){
+    if(p.catalog.r.family==='blaster'){
+      paintCatalogBlasterBurst(G,p,skip!==null||contact!==null,contact);
+    }else if(p.catalog.r.family==='stringer'){
       // A lodged arrow may be on a wall. A downward-only floor probe discarded
       // its detonation paint there; use the explicit blast centre offset and
       // the existing multi-surface sphere footprint, including nearby floor.
@@ -1090,11 +1102,19 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(p.catalog.r.family==='stringer')damageCentre.y+=finite(descriptor?.DamageOffsetY,0);
     const area={...p,type:'area'},cause=catalogueAttackRow(area);
     const damageAt=d=>damageBands(bands,d);
+    // Contact bursts are smaller and half as strong against players. Match
+    // the native Blaster's established compressed-band/0.1 HP model; exact
+    // retail interior interpolation remains unverified. Object/boss damage
+    // retains its independent owner, as in the native implementation.
+    const reduced=p.catalog.r.family==='blaster'&&(skip!==null||contact!==null);
+    const playerRadiusRate=reduced?finite(p.catalog.descriptor.b.BlasterBurstParam?.ShotCollisionHitRadiusRate,1):1;
+    const playerRadius=radius*playerRadiusRate;
     for(const a of G.actors||[])if(a.alive&&a.team!==p.team){
       if(a===skip)continue;
       base.copy(a.pos);base.y+=.7;const distance=base.distanceTo(damageCentre);
-      if(distance>radius||!G.physics.los(damageCentre,base))continue;
-      const damage=damageBands(bands,distance);if(damage>0)withObjectDamageCause(area,()=>withBlasterSplashHit(p.owner,()=>system.applyHit(p.owner,a,damage,p.wid)));
+      if(distance>playerRadius||!G.physics.los(damageCentre,base))continue;
+      const raw=damageBands(bands,distance/playerRadiusRate);
+      const damage=reduced?Math.floor((raw*.5+EPS)*10)/10:raw;if(damage>0)withObjectDamageCause(area,()=>withBlasterSplashHit(p.owner,()=>system.applyHit(p.owner,a,damage,p.wid)));
     }
     system.s3DamageSubObjects?.(area,damageCentre,radius,damageAt,cause);
     system.s3DamageSpecialObjects?.(area,damageCentre,radius,damageAt,cause);
@@ -1226,7 +1246,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(p.ghost&&r.sourceActor!=='WeaponSlosherBathtub'&&d.key!=='arrow')return true;
     const at=h.point||p.pos;
     if(startCatalogWallDrop(system,p,h,CATALOG_WALL_DROP[r.id]))return true;
-    if(r.family==='blaster'){p.pos.copy(at);explosion(system,p,d.b.BlastParam);return true;}
+    if(r.family==='blaster'){p.pos.copy(at);explosion(system,p,d.b.BlastParam,null,h);return true;}
     if(d.key==='arrow') {
       const det=d.b.DetonationParam,frames=d.charge*chargeFrames(r);
       // The common parameter struct also contains a DetonationParam for LACT,
@@ -1618,15 +1638,16 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const paintParam=body.PaintParam||{},paintMax=finite(paintParam.WidthHalfMax,.9);
     const paintSpeedMin=finite(paintParam.SpeedMin,0)*HZ,paintSpeedMax=finite(paintParam.SpeedMax,max/HZ)*HZ;
     // Rollers share documented sparse defaults with the native runner.
-    // Brushes retain their separate established width calibration.
+    // Brushes use their own source half-width without a second scale factor.
     const bodyRadius=lerp(finite(paintParam.WidthHalfMin,paintMax),paintMax,
       paintSpeedMax>paintSpeedMin?clamp((speed-paintSpeedMin)/(paintSpeedMax-paintSpeedMin)):1);
     const sourceRadius=r.family==='roller'?rollerPaintHalfWidth(paintParam,speed):bodyRadius;
     // Roller contact ink includes the shared, explicitly visual width
     // calibration. Raw PaintParam remains intact; damage uses bodyRadius.
-    // Octobrush's source PaintParam is already in the same world units as its
-    // swing paint. The former extra quarter scale cut a 1.8-wide path to .45.
-    const radius=sourceRadius*(r.family==='brush'&&r.sourceActor!=='WeaponBrushNormal'?.25:1);
+    // All three Brush source PaintParams use the same world-unit convention.
+    // A leftover quarter scale made Inkbrush/Painbrush narrower than Octobrush
+    // despite Painbrush's larger explicit half-width (1.3 versus .9).
+    const radius=sourceRadius;
     // Drum/brush floor contact follows body yaw, not reticle pitch. An aimed-down
     // camera formerly pushed the ray origin below the floor and lost every mark.
     // Keep the existing 'at' for damage contact; only paint is floor-anchored.
@@ -1955,6 +1976,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(this.weapon.catalogRecord&&motion){
       if(motion===s.lunge)saberStepSpeed(motion,dt,this.grounded); // retail slide-ground state is not recovered
       this.vel.x=motion.direction.x*motion.speed;this.vel.z=motion.direction.z*motion.speed;return;}
+    if(args[1]&&brushRollIgnoresEnemyInk(this))args[1]=false;
     return nativeHorizontal.call(this,dt,...args);
   };
   const launchedCanopies = new Set();

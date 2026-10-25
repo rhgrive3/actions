@@ -8,6 +8,10 @@ import {execFileSync} from 'node:child_process';
 const site=path.resolve(process.argv[2]||'_site');
 const reportPath=process.argv[3];
 const procedural=process.argv.includes('--procedural');
+const weaponsIndex=process.argv.indexOf('--weapons');
+const selectedWeapons=weaponsIndex<0?null:process.argv[weaponsIndex+1]?.split(',');
+const rollingWeapons=['roller','s3-roller-compact','s3-roller-heavy','s3-roller-hunter','s3-roller-wide','s3-brush-mini','s3-brush-normal','s3-brush-heavy'];
+if(weaponsIndex>=0&&(!selectedWeapons||!selectedWeapons.length||new Set(selectedWeapons).size!==selectedWeapons.length||selectedWeapons.some(id=>!rollingWeapons.includes(id))))throw Error('Expected unique rolling weapon IDs after --weapons');
 const baselineIndex=process.argv.indexOf('--baseline-roller');
 const baselineRoller=baselineIndex<0?null:execFileSync('git',['show',process.argv[baselineIndex+1]+':patches/splatoon3/runtime/roller.mjs']);
 const build=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'),'utf8'));
@@ -30,7 +34,7 @@ try{
     args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader']});
   const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`http://127.0.0.1:${server.address().port}/probe`);
-  const result=await page.evaluate(async({procedural})=>{
+  const result=await page.evaluate(async({procedural,selectedWeapons})=>{
     const profile=await fetch('/patches/splatoon3/profile.json').then(r=>r.json());
     const {install}=await import('/patches/splatoon3/runtime/install.mjs');
     const api=install(profile);
@@ -55,7 +59,7 @@ try{
     };
 
     const {FixedClock}=await import('/patches/splatoon3/runtime/clock.mjs');
-    const ids=['roller','s3-roller-compact','s3-roller-heavy','s3-roller-hunter','s3-roller-wide','s3-brush-mini','s3-brush-normal','s3-brush-heavy'];
+    const ids=selectedWeapons||['roller','s3-roller-compact','s3-roller-heavy','s3-roller-hunter','s3-roller-wide','s3-brush-mini','s3-brush-normal','s3-brush-heavy'];
     const rows=[];const saved=Math.random;Math.random=()=>.37;
     try{for(const id of ids)for(const movement of [{label:'forward',x:0,z:1},{label:'backward',x:0,z:-1},{label:'right',x:1,z:0},{label:'left',x:-1,z:0},{label:'diagonal-right',x:Math.SQRT1_2,z:Math.SQRT1_2},{label:'diagonal-left',x:-Math.SQRT1_2,z:Math.SQRT1_2},{label:'back-diagonal-right',x:Math.SQRT1_2,z:-Math.SQRT1_2},{label:'back-diagonal-left',x:-Math.SQRT1_2,z:-Math.SQRT1_2}]){let reference;
       for(const hz of [30,60,120]){
@@ -116,10 +120,11 @@ try{
         });
         if(!events.length||!headingSamples||poseSamples.length<10||!G.paint.counts[0])throw Error(id+' missing grounded trail');
         // Roller paint endpoints come from 11.3.0, independently of mesh size.
-        // Brushes retain their separate existing calibration.
+        // All three Brush widths are pinned 11.3.0 BodyParam.PaintParam half-widths.
         const maxHalf=({roller:2.8,'s3-roller-compact':2.2,'s3-roller-heavy':3.4,'s3-roller-hunter':2.6,
-          's3-roller-wide':3.4,'s3-brush-mini':.15,'s3-brush-normal':.225,'s3-brush-heavy':.325})[id];
+          's3-roller-wide':3.4,'s3-brush-mini':.6,'s3-brush-normal':.9,'s3-brush-heavy':1.3})[id];
         if(!events.some(e=>e.footprint==='ink-contact')||events.filter(e=>e.footprint==='ink-contact').some(e=>e.radius>maxHalf+1e-10))throw Error(id+' oversized contact stamp');
+        if(id.startsWith('s3-brush-')&&events.filter(e=>e.footprint==='ink-contact').some(e=>Math.abs(e.radius-maxHalf)>1e-10))throw Error(id+' lost source contact width');
         // A camera-only turn must not steer the drum while the stick is held.
         const held=a.yaw;a.aimYaw=a.yaw+Math.PI/2;a.aimDir.set(Math.sin(a.aimYaw),0,Math.cos(a.aimYaw));
         for(let n=0;n<120;n++){a.ink=100;a.update(1/120);}
@@ -145,9 +150,9 @@ try{
       if(yawDelta>3*Math.PI/180||lateralDelta>.05)throw Error(JSON.stringify({id:row.id,hz:row.hz,yawDegrees:row.maxYawDeltaDegrees,lateralDelta}));
     }
     return {realCharacter:true,realPhysics:true,cpuPaint:true,hardwareParity:false,checks:rows.map(({poseSamples,...r})=>({...r,settledPoseSamples:poseSamples.length,maxGripL:Math.max(...poseSamples.map(p=>p.gripL)),maxGripR:Math.max(...poseSamples.map(p=>p.gripR)),minBottom:poseSamples[0].bottom==null?null:Math.min(...poseSamples.map(p=>p.bottom)),maxBottom:poseSamples[0].bottom==null?null:Math.max(...poseSamples.map(p=>p.bottom))}))};
-  },{procedural});
+  },{procedural,selectedWeapons});
   if(errors.length)throw Error(errors.join('\n'));
-  const report={procedural,build:build.contentHash,browser:browser.version(),baselineRoller:baselineIndex<0?null:process.argv[baselineIndex+1],...result,errors};
+  const report={procedural,selectedWeapons,build:build.contentHash,browser:browser.version(),baselineRoller:baselineIndex<0?null:process.argv[baselineIndex+1],...result,errors};
   if(reportPath){fs.mkdirSync(path.dirname(path.resolve(reportPath)),{recursive:true});fs.writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n');}
   console.log(JSON.stringify({cases:result.checks.length,realCharacter:true,realPhysics:true,errors}));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
