@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const source=fs.readFileSync(new URL('../../../inkwave-public/src/core/mobile.js',import.meta.url),'utf8');
-const start=source.indexOf('    const relayout = () => {');
+const start=source.indexOf('    const viewportKey = () => {');
 const end=source.indexOf("    window.addEventListener('resize', relayout",start);
 assert.ok(start>0&&end>start,'test must exercise current production relayout body');
 const relayoutCode=source.slice(start,end);
@@ -19,7 +19,8 @@ function rig(){
  const frames=new Map();let next=1,cancelled=[];
  const requestAnimationFrame=cb=>{const id=next++;frames.set(id,cb);return id;};
  const cancelAnimationFrame=id=>{cancelled.push(id);frames.delete(id);};
- const ctx={requestAnimationFrame,cancelAnimationFrame,document:{documentElement:{classList:{remove(){}}}}};
+ const ctx={requestAnimationFrame,cancelAnimationFrame,innerWidth:800,innerHeight:600,
+  window:{visualViewport:{width:800,height:600,scale:1}},document:{documentElement:{classList:{remove(){}}}}};
  const make=vm.runInNewContext('(function(){\n'+relayoutCode+'\nreturn relayout;})',ctx);
  const destroy=vm.runInNewContext('('+rawDestroy+')',ctx);
  const register=vm.runInNewContext('(function(){\n'+setup+'\n})',ctx);
@@ -28,15 +29,39 @@ function rig(){
   resetPointers(){counts.reset++;},_layoutAll(){counts.layout++;if(this.editing)counts.coordinates++;},
   editing:true,root:{remove(){counts.removed++;}}};
  register.call(obj);
- return {counts,frames,cancelled,obj,relayout:make.call(obj),destroy:()=>destroy.call(obj)};
+ return {counts,frames,cancelled,obj,ctx,relayout:make.call(obj),destroy:()=>destroy.call(obj)};
 }
 test('three native viewport events coalesce to one layout but all cancel gestures and resync gyro',()=>{
- const x=rig();x.relayout();x.relayout();x.relayout();
+ const x=rig();x.ctx.innerWidth=900;x.relayout({type:'resize'});x.relayout({type:'orientationchange'});x.relayout({type:'change'});
  assert.deepEqual([x.counts.reset,x.counts.resync,x.frames.size,x.counts.layout],[3,3,1,0]);
  const done=[...x.frames.values()][0];x.frames.clear();done();
  assert.equal(x.counts.layout,1);assert.equal(x.counts.coordinates,1);
  x.relayout();assert.equal(x.frames.size,1);for(const f of x.frames.values())f();
  assert.equal(x.counts.layout,2);
+});
+test('unchanged resize preserves live gestures and schedules no layout',()=>{
+ const x=rig();
+ for(let i=0;i<3;i++)x.relayout({type:'resize'});
+ assert.deepEqual([x.counts.reset,x.counts.resync,x.frames.size,x.counts.layout],[0,0,0,0]);
+});
+for(const dimension of ['innerWidth','innerHeight','width','height','scale'])test(`changed ${dimension} cancels immediately and duplicate resize preserves the new gesture`,()=>{
+ const x=rig();
+ if(dimension.startsWith('inner'))x.ctx[dimension]++;
+ else x.ctx.window.visualViewport[dimension]++;
+ x.relayout({type:'resize'});
+ assert.deepEqual([x.counts.reset,x.counts.resync,x.frames.size,x.counts.layout],[1,1,1,0]);
+ x.relayout({type:'resize'});
+ assert.deepEqual([x.counts.reset,x.counts.resync,x.frames.size,x.counts.layout],[1,1,1,0]);
+ const done=[...x.frames.values()][0];x.frames.clear();done();
+ assert.equal(x.counts.layout,1);assert.equal(x.counts.coordinates,1);
+});
+test('missing visual viewport falls back to layout dimensions',()=>{
+ const x=rig();delete x.ctx.window.visualViewport;
+ x.relayout({type:'resize'});
+ assert.equal(x.counts.reset,0);
+ x.ctx.innerHeight++;
+ x.relayout({type:'resize'});
+ assert.deepEqual([x.counts.reset,x.counts.resync,x.frames.size],[1,1,1]);
 });
 test('destroy cancels a pending viewport animation and disallows stale callbacks',()=>{
  const x=rig();x.relayout();const [[id,callback]]=[...x.frames];

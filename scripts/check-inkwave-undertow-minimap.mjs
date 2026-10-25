@@ -14,8 +14,14 @@ const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless
 const errors=[],result={status:'running',errors};
 try{
  const page=await browser.newPage({viewport:{width:960,height:640}});page.on('pageerror',e=>errors.push(e.message));
+ page.on('console',message=>{if(message.type()==='error')console.error('browser:',message.text());});
+ page.on('requestfailed',request=>console.error('requestfailed:',request.url(),request.failure()?.errorText));
+ page.on('response',response=>{if(response.status()>=400)console.error('http:',response.status(),response.url());});
  await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true,musicVolume:0,audioVolume:0})));
  await page.goto('http://127.0.0.1:'+server.address().port+'/?map=undertow',{waitUntil:'domcontentloaded'});
+ // The loading shell may navigate before the actual game is constructed.
+ // Bind the probe only in the game document, after that navigation settles.
+ await page.waitForFunction(()=>globalThis.__inkwave?.menus||document.getElementById('boot-error')?.textContent,null,{timeout:180000});
  await page.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);
  await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});
  assert.equal(await page.locator('#boot-error').textContent(),'');

@@ -25,6 +25,8 @@ try {
   page.on('pageerror', e => result.errors.push(e.message));
   await page.addInitScript(() => localStorage.setItem('inkwave.settings', JSON.stringify({ quality: 'low', shadows: false, bloom: false, minimap: true, musicVolume: 0, audioVolume: 0 })));
   await page.goto('http://127.0.0.1:' + server.address().port + '/?map=hammerhead', { waitUntil: 'domcontentloaded' });
+  // Bind in the actual game document, after any loading-shell navigation.
+  await page.waitForFunction(() => globalThis.__inkwave?.menus || document.getElementById('boot-error')?.textContent, null, { timeout: 180000 });
   await page.evaluate(async () => globalThis.NG = (await import(new URL('src/core/ctx.js', document.baseURI))).G);
   await page.waitForFunction(() => NG.game?.menus && NG.mode !== 'boot' || document.getElementById('boot-error')?.textContent, null, { timeout: 180000 });
   assert.equal(await page.locator('#boot-error').textContent(), '');

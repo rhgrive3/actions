@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "sourceCommit": "f5a82ada9f50db26e82feb72d9181ee90d304ee9",
+  "sourceCommit": "354f1c50955d60be5d3bc29c6f3712be505548f8",
   "files": {
     "src/fx/fx.js": "4f73310a0d6d190601a29811eb39548f223b68226c2d8581ea9e3388e6e0cb90",
     "index.html": "13e4485f3974f806a1672e60200d6c86efd419a1cd41b18c9aa3e9cbf461a580",
@@ -21,7 +21,7 @@
     "src/game/character.js": "ff6a8a7bd7ac1c441464598ebff1af94fead2514893f96ea39b41f86634a6221",
     "src/game/character-weapons.js": "aa6f865e329016aff6efac127ee69dd288b046a911f89189466a4f18c68f5f89",
     "src/net/netmatch.js": "b9ae0235b623c463f04f075dd1bbc305b15add3595dc8e776837e18caa9555d8",
-    "src/core/mobile.js": "b22456fd45f74580d38b0cf40de15ee2ef670fbbb9f9043badc2c3d323ce6400",
+    "src/core/mobile.js": "746bcbc064a37a0c6904aaad952a95de40db32f0e50f8b0742304af1e503702a",
     "src/game/cameraRig.js": "46a8beabfaab8bdaf00ea1e11df4ee907d71279b419f5533500ce45aa98c24d1",
     "src/game/motion/retarget.js": "f2a465cce04e66cb9fc3aad3dfe2cf78d7245a6f054ba76d3727d3944e2222bd",
     "src/game/motion/source-controller.js": "bd5e5dd15228d9554a3559111086d3e066cdae73b1d113d3db6adbe6cfb768e3",
