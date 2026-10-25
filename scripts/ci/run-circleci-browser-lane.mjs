@@ -115,7 +115,7 @@ function run() {
     GITHUB_WORKSPACE: process.cwd(),
     GITHUB_RUN_ID: process.env.CIRCLE_WORKFLOW_ID || 'circleci',
     GITHUB_RUN_ATTEMPT: '1',
-    GITHUB_EVENT_NAME: 'pull_request',
+    GITHUB_EVENT_NAME: process.env.CIRCLE_PULL_REQUEST ? 'pull_request' : 'push',
     REMATCH_CYCLES: process.env.REMATCH_CYCLES || '3',
     RUNTIME_PERFORMANCE: 'false',
   };
