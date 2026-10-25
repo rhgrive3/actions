@@ -4,9 +4,16 @@ import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { loadNative } from './prop-retention-fixture.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import { parse } from '../../loading-cache/vendor/acorn.mjs';
+function moduleBody(code) {
+  const edits = parse(code, {ecmaVersion:'latest',sourceType:'module'}).body.flatMap(node =>
+    node.type === 'ImportDeclaration' || node.type === 'ExportAllDeclaration' ? [[node.start,node.end]] :
+    node.type === 'ExportNamedDeclaration' ? [[node.start,node.declaration?.start ?? node.end]] : []);
+  for (const [start,end] of edits.reverse()) code=code.slice(0,start)+code.slice(end);
+  return code;
+}
 const { THREE, G, SRC, PropKit, dressingFor } = await loadNative(true);
 const helpers = await import(pathToFileURL(SRC + 'src/world/render-bounds.js'));
-const { makeWaveData } = await import(pathToFileURL(SRC + 'src/world/wave-data.js'));
 const experiment = await import('./fixtures/static-source-batches.mjs');
 const { mergeGeometries } = await import('three/addons/utils/BufferGeometryUtils.js');
 const { PLAYER } = await import(pathToFileURL(SRC + 'src/config.js'));
@@ -14,9 +21,9 @@ const original = fs.readFileSync(SRC + 'src/world/environment.js', 'utf8');
 function environment(patched, trial = false) {
   let code = patched ? adaptBuildSource('src/world/environment.js', original) : original;
   if (trial) code = experiment.adaptStaticDrawCounterfactual(code);
-  const params = { ...helpers, makeWaveData, createStaticDrawBatches: experiment.createStaticDrawBatches };
+  const params = { ...helpers, createStaticDrawBatches: experiment.createStaticDrawBatches };
   const E = new Function('THREE', 'mergeGeometries', 'PLAYER', 'G', ...Object.keys(params),
-    code.replace(/^import .*;$/gm, '').replace(/^export \{[^\n]*\} from [^\n]*;$/gm, '').replaceAll('export ', '') + '\nreturn Environment;')(THREE, mergeGeometries, PLAYER, G, ...Object.values(params));
+    moduleBody(code) + '\nreturn Environment;')(THREE, mergeGeometries, PLAYER, G, ...Object.values(params));
   const env = Object.create(E.prototype);
   Object.assign(env, { root: new THREE.Group(), bounds: { minX: -25, maxX: 25, minZ: -44, maxZ: 44 },
     footprint: [{ minX: -25, maxX: 25, minZ: -44, maxZ: 44, cx: 0, cz: 0, hx: 25, hz: 44, aligned: true }],
@@ -27,10 +34,32 @@ function bufferSnapshot(geo) {
   return Object.fromEntries([...Object.entries(geo.attributes).map(([key, attr]) => [key, Buffer.from(attr.array.buffer, attr.array.byteOffset, attr.array.byteLength)]),
     ['index', geo.index ? Buffer.from(geo.index.array.buffer, geo.index.array.byteOffset, geo.index.array.byteLength) : null]]);
 }
-function verifyRanges(root) {
+function verifyNativeChildren(root, original, viewCount = 0) {
+  const children = root.children.slice(viewCount);
+  assert.equal(children.length, original.children.length, 'native scenery children survive partitioning');
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i], before = original.children[i];
+    assert.equal(child.name, before.name);
+    assert.equal(child.isInstancedMesh, before.isInstancedMesh);
+    assert.equal(child.count, before.count);
+    assert.deepEqual(bufferSnapshot(child.geometry), bufferSnapshot(before.geometry));
+    assert.deepEqual(child.position.toArray(), before.position.toArray());
+    assert.deepEqual(child.quaternion.toArray(), before.quaternion.toArray());
+    assert.deepEqual(child.scale.toArray(), before.scale.toArray());
+    assert.deepEqual(child.instanceMatrix?.array, before.instanceMatrix?.array);
+    assert.deepEqual(child.instanceColor?.array, before.instanceColor?.array);
+    assert.equal(child.material, root.material, 'native child retains its parent material owner');
+    assert.equal(child.frustumCulled, before.frustumCulled);
+    assert.equal(child.children.length, before.children.length);
+  }
+}
+function verifyRanges(root, original) {
+  const viewCount = root.isGroup ? root.children.length - original.children.length : 0;
+  verifyNativeChildren(root, original, viewCount);
   if (!root.isGroup) return 1;
+  assert.equal(viewCount, 4, 'partitioned source has exactly four draw views');
   let start = 0;
-  for (const child of root.children) {
+  for (const child of root.children.slice(0, viewCount)) {
     assert.equal(child.geometry.index, root.geometry.index);
     assert.equal(child.geometry.drawRange.start, start);
     start += child.geometry.drawRange.count;
@@ -39,7 +68,7 @@ function verifyRanges(root) {
     assert.equal(child.boundingSphere, root.geometry.boundingSphere, 'same original renderer sort centre');
   }
   assert.equal(start, root.geometry.index?.count ?? root.geometry.attributes.position.count);
-  return root.children.length;
+  return viewCount;
 }
 function assertVerticesEnclosed(mesh, time, kind = '') {
   const p = mesh.geometry.attributes.position, matrix = new THREE.Matrix4(), v = new THREE.Vector3();
@@ -70,7 +99,8 @@ test('real scenery preserves source bytes/RNG; the rejected static trial alone c
   for (const name of ['terrain', 'staticScenery', 'city']) {
     assert.deepEqual(bufferSnapshot(after[name].geometry), bufferSnapshot(before[name].geometry));
     assert.deepEqual(bufferSnapshot(trial[name].geometry), bufferSnapshot(before[name].geometry));
-    counts[name] = verifyRanges(trial[name]);
+    verifyNativeChildren(after[name], before[name]);
+    counts[name] = verifyRanges(trial[name], before[name]);
     assert.equal(after[name].isMesh,true,'production retains its original material bucket');
     assert.equal(after[name].isGroup,undefined,'rejected static partitions never enter production');
     const g = after[name].geometry;g.computeBoundingSphere();
@@ -122,4 +152,12 @@ test('range policy keeps transparent, small and spatially unhelpful buckets as o
   assert.equal(experiment.createStaticDrawBatches(geo, new THREE.MeshBasicMaterial()).isMesh, true);
   const big = new THREE.SphereGeometry(3, 64, 32);
   assert.equal(experiment.createStaticDrawBatches(big, new THREE.MeshBasicMaterial({ transparent: true })).isMesh, true);
+});
+
+test('module fixture removes only parsed import/export syntax and preserves implementation text',()=>{
+  const code="import {\n remote\n} from './remote.js';\nexport { prewarmWaveTexture } from './wave-prewarm.js';\nexport * from './another.js';\nexport const text = 'export remains literal';\nexport class Environment { value() { return text; } }\nexport { text as alias };";
+  const body=moduleBody(code); const E=new Function(body+'\nreturn Environment;')();
+  assert.equal(new E().value(),'export remains literal');
+  assert.ok(body.includes("class Environment { value() { return text; } }"));
+  assert.throws(()=>new Function(code.replace(/^import .*;$/gm,'').replaceAll('export ','')),SyntaxError);
 });
