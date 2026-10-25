@@ -10,7 +10,7 @@
     "artifactCount": 2174,
     "mismatches": []
   },
-  "npmTest": "running",
+  "npmTest": "passed",
   "browser": {
     "cases": 72,
     "errors": [],
@@ -50,9 +50,13 @@
       "bytes": 6924
     },
     "final-paint.tap": {
+      "tests": 45,
+      "pass": 45,
+      "fail": 0,
+      "skipped": 0,
       "artifact": "logs/final-paint.tap",
-      "sha256": "23da529caf12d3694f51875124722741cd1f76a2522bb2f96283bb1b6558c9fa",
-      "bytes": 4069
+      "sha256": "21041acc3406dfe7e461fc26c7e00c46914b071e786c9065ed2bea4f46b953e3",
+      "bytes": 5516
     },
     "mist-after.tap": {
       "tests": 31,
@@ -92,18 +96,23 @@
       "bytes": 520
     },
     "npm-test.log": {
-      "tests": 20,
-      "pass": 20,
+      "tests": 77,
+      "pass": 77,
       "fail": 0,
       "skipped": 0,
       "artifact": "logs/npm-test.log",
-      "sha256": "f7c07d5de3bb85621578b79917b5746928d976a7df3caa2ff310cc86c0913852",
-      "bytes": 7748
+      "sha256": "84af8e8c88bd6f31e768c9491706603b8fc6dbcca53430141b2811b3304fad5d",
+      "bytes": 37699
     },
     "rolling-browser.log": {
       "artifact": "logs/rolling-browser.log",
       "sha256": "e739cfe3e1d81b55bbaa5e60435844680915d1939d05f83b2b77320e16685afa",
       "bytes": 621
+    },
+    "rolling-browser-baseline.log": {
+      "artifact": "logs/rolling-browser-baseline.log",
+      "sha256": "37da552b8c0b359077613e206514958c8d2ad1d0b1a0eb5aeb9a00c21e2c3917",
+      "bytes": 622
     }
   }
 }

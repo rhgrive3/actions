@@ -37,3 +37,25 @@
 ✔ launched Brella paints a bounded trail, stops at terrain and cannot project from a high ledge at 30Hz (3600.530385ms)
 ✔ launched Brella paints a bounded trail, stops at terrain and cannot project from a high ledge at 60Hz (5227.312174ms)
 ✔ launched Brella paints a bounded trail, stops at terrain and cannot project from a high ledge at 120Hz (13257.393014ms)
+(node:3738) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ multiple splash thresholds in one fixed step emit at their distance rather than at the endpoint (15266.980441ms)
+✔ a collision retains earlier splash releases but emits no splash beyond the obstruction (3370.232866ms)
+✔ splash exactly at head-impact distance is suppressed (no double stamp) (3521.181828ms)
+✔ remote ghost contact emits no authoritative splash (2348.339193ms)
+✔ falling catalog projectiles release from the explicit source distance for their SplitNum slot (1336.082264ms)
+✔ release distances stop at range/lifetime {"range":2.5} (2085.062783ms)
+✔ release distances stop at range/lifetime {"life":0.004166666666666667} (1829.391659ms)
+✔ release distances stop at range/lifetime {"range":2.5,"life":0.004166666666666667} (2334.230458ms)
+(node:3806) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ grounded drum-support loss earns no dash time on the discovery tick at 30/60/120 Hz (2203.903806ms)
+✔ all existing airborne held movement values stay unchanged for five Rollers and three Brushes (33.548804ms)
+ℹ tests 45
+ℹ suites 0
+ℹ pass 45
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 257826.47043

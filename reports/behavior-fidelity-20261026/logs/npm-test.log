@@ -203,3 +203,416 @@ INKWAVE quick checks OK: upstream compatible; reference 11.3.0
 ✔ motion optimization is guarded, composed and excluded from browser payloads (82.129605ms)
 ✔ FK instrumentation preserves the range; the old argument-dropping wrapper is rejected (2.693453ms)
 {"fixture":"held Roller release with awaited source banks; no rendered-motion claim","hz":120,"frames":156,"supportFrames":50,"maxGap":2.2591401799415137e-15,"release":{"frame":150,"advance":0,"gap":9.511095073011754e-16},"rangedCalls":[0,559]}
+{"fixture":"real source-loaded Character; exact before/after, not device FPS","compared":1164,"states":["idle","move","air","land","ToSquid","ToHuman"],"clips":32,"fkBefore":21882,"fkAfter":20084,"fkBonesBefore":1410712,"fkBonesAfter":1076593,"reduction":0.23684423184888204,"callReduction":0.08216799195685953}
+✔ real source motion preserves every frame at 30/60/120 Hz and irregular/paused ticks (240482.075043ms)
+{"scope":"exact source/emitted A* component; no hardware/FPS claim","queries":600,"nontrivialPaths":108,"before":67603,"after":50792,"reduction":0.24867239619543513,"extraScratchBytes":9224}
+{"graph":"block","nodes":400,"queries":100,"nontrivialPaths":97,"before":10041,"after":7706,"reduction":0.23254655910765865,"extraScratchBytes":3200}
+{"graph":"source-triangle native","nodes":400,"queries":100,"nontrivialPaths":97,"before":8523,"after":6760,"reduction":0.20685204740114982,"extraScratchBytes":3200}
+(node:3859) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ heuristic optimization is owned by readable source, not applied by a build-time patch (4.42872ms)
+✔ 600 layered A* routes preserve paths, costs, ties, iteration limits and edge callback order (373.601056ms)
+✔ actual block and source-triangle native graph builders retain their complete route results (152.860585ms)
+✔ repeated goals, resized graphs and interrupted edge filters never reuse another search heuristic (5.397634ms)
+{"scope":"all original packed motion data, exact Float64 poses","variants":3,"clips":548,"poses":69744,"rangedPoses":13919}
+{"scope":"Player00 WalkHold_Nrml, 360 sampled frames","sinBefore":36360,"sinAfter":26667,"reduction":0.2665841584158416}
+(node:3887) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ source bank is directly authored and the pre-migration oracle is frozen (29.354908ms)
+✔ every shipped clip keeps exact raw, local and world poses through seeks, loops and alternating output poses (120303.400443ms)
+✔ rotation keys preserve negative zero, quaternion normalization, mode changes, FK ranges and overwritten outputs (385.423762ms)
+✔ unanimated rotations and coherent playback avoid exact trigonometry and key searches (355.666719ms)
+✔ native CanvasTexture source is constrained for LOW/touch and preserves desktop studio detail (74.221554ms)
+✔ quality and mobile handoff dispose old GPU allocation once, resize retained source, and redraw without compounding scale (25.866794ms)
+✔ atlas scaling preserves native material bindings, logical UVs, geometry and colliders at the same detail tier (32.759424ms)
+✔ actual Halyard final geometry, colliders and live animation match raw, static sources are released (1374.348658ms)
+✔ same-instance rebuild and add-after-build retain exact instance counts, triangles and animation (1540.105307ms)
+✔ clear/rematch rebuild has bounded placement and animation records; headless accounting stays available (1084.668313ms)
+✔ pending PR183 Practice dressing remains isolated and banner instances survive repeated build (220.801545ms)
+(node:4146) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ production composer installs reversal-safe squid/human pose ownership (66.994185ms)
+✔ rapid squid-button changes settle into genuine human and squid idle at 30/60/120 Hz (30589.567078ms)
+✔ live Actor squid-button edges recover ordinary idle after button-mashing (28134.878477ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 429650.199992
+{"status":"PASS","AOFaceKeyOverflow":"distinct","AOBodyKeyOverflow":"distinct","generatedCode":"compiles"}
+{
+  "status": "PASS",
+  "clusterGeoComparisons": 9,
+  "farGeometryComparisons": 3,
+  "verified": "position, normal, skin attributes, material/color corner split attributes, triangle index order and metadata are bit-identical on synthetic meshes"
+}
+{
+  "status": "PASS",
+  "cases": 11,
+  "metrics": {
+    "random cell=0.018": {
+      "vertices": 9000,
+      "clusters": 9000,
+      "triangles": 3000
+    },
+    "random cell=0.034": {
+      "vertices": 9000,
+      "clusters": 9000,
+      "triangles": 3000
+    },
+    "random cell=0.07": {
+      "vertices": 9000,
+      "clusters": 9000,
+      "triangles": 3000
+    },
+    "random cell=0.2": {
+      "vertices": 9000,
+      "clusters": 9000,
+      "triangles": 3000
+    },
+    "attribute overflow and distant points": {
+      "vertices": 6,
+      "clusters": 6,
+      "triangles": 2
+    },
+    "two-sided normal split": {
+      "vertices": 2,
+      "clusters": 2,
+      "triangles": 0
+    },
+    "interleaved attribute fallback": {
+      "vertices": 2,
+      "clusters": 2,
+      "triangles": 0
+    },
+    "normalized attribute fallback": {
+      "vertices": 2,
+      "clusters": 2,
+      "triangles": 0
+    },
+    "oriented triangle preservation": {
+      "vertices": 3,
+      "clusters": 3,
+      "triangles": 2
+    },
+    "oversized geometry safe hash growth": {
+      "vertices": 135000,
+      "clusters": 135000,
+      "triangles": 45000
+    },
+    "ring": "All 5 tested progress states match the original geometry positions within 1e-7 world units"
+  }
+}
+
+> inkwave-workspace@1.0.0 test:relay
+> node --test server/tests/relay-security.test.mjs server/tests/relay-clock-receipts.test.mjs server/tests/local-relay-fixture.test.mjs server/tests/browser-relay-fixture.test.mjs server/tests/issue-1033-relay-hit-nack.test.mjs
+
+✔ check-inkwave-ranked-browser real callback preserves admission, positive latency, and trace observations; relayClock=false (88.766184ms)
+✔ check-inkwave-native-camera-basis real callback preserves admission, positive latency, and trace observations; relayClock=false (6.011677ms)
+✔ check-inkwave-native-online real callback preserves admission, positive latency, and trace observations; relayClock=false (8.276084ms)
+✔ check-inkwave-native-catalogue-online real callback preserves admission, positive latency, and trace observations; relayClock=false (12.868185ms)
+✔ check-inkwave-native-mahi-browser real callback preserves admission, positive latency, and trace observations; relayClock=false (11.089566ms)
+✔ check-inkwave-lemuria-unavailable real callback preserves admission, positive latency, and trace observations; relayClock=false (5.873027ms)
+✔ check-inkwave-room-gyro real callback preserves admission, positive latency, and trace observations; relayClock=false (10.430468ms)
+✔ check-inkwave-volley-vortex real callback preserves admission, positive latency, and trace observations; relayClock=false (6.747731ms)
+✔ check-five-shooter-network real callback preserves admission, positive latency, and trace observations; relayClock=false (8.69498ms)
+✔ check-inkwave-network-browser real callback preserves admission, positive latency, and trace observations; relayClock=false (9.459766ms)
+✔ check-inkwave-network-browser real callback preserves admission, positive latency, and trace observations; relayClock=true (6.200563ms)
+Live/removed owner hit delivery and relay negative-ACK pass
+✔ server/tests/issue-1033-relay-hit-nack.test.mjs (46.728455ms)
+✔ Node shim restores all globals synchronously and uses real fetch admission across simultaneous joins (43.15014ms)
+✔ production lock/full/not-found and oversize close still operate through the shim (4.310156ms)
+✔ delayed welcome and dropped connecting socket retain cleanup without a global leak (0.614321ms)
+✔ explicit source Worker is used and thrown fetch restores platform globals (0.599556ms)
+✔ delay classifier preserves native stamped lobby/READY and delays only unchanged tick envelopes (2.150277ms)
+✔ relay timestamp is opt-in, authenticated out of band, and compatible with legacy recipients (7.98754ms)
+✔ hibernation preserves each recipient capability without changing legacy frames (0.672169ms)
+✔ pre-upgrade admission refuses invalid paths and methods without allocating any room object (30.391764ms)
+✔ only the current host can lock or unlock, including host handoff and stale sockets (3.175726ms)
+✔ broadcast and directed packets require bounded, recognized JSON envelopes (1.246049ms)
+✔ sender quotas stop bursts, while routine 20 Hz updates still fan out (3.635891ms)
+✔ backpressured recipients are not fed an unbounded queue (0.342897ms)
+✔ failed LEAVE recipients are removed and survivors finish on the final host, including synchronous close reentry (1.335646ms)
+✔ membership failure cleanup remains complete when close itself throws (0.377069ms)
+✔ incompatible peers rejected before WebSocketPair allocation (1.262445ms)
+✔ Cloudflare Durable Objects WebSocket Hibernation restores room state, host authority, lock state, and rate-limit budgets across DO eviction (3.369789ms)
+✔ WebSocket Hibernation handles ArrayBuffer binary frames, directed hit_nack after disconnect, and ignores corrupted attachments (0.976087ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 617.65022
+
+> inkwave-workspace@1.0.0 test:account
+> node --test account/tests/*.test.mjs
+
+✔ stages every chunk from the Vite manifest and reports its hashes (4.569582ms)
+✔ refuses a manifest without the entry or with unsafe paths (0.622347ms)
+✔ injects one low-priority module script before </body> (0.329694ms)
+✔ shared rules accept good input and name each problem (0.981058ms)
+✔ register creates the account and a hardened session cookie (56.744462ms)
+✔ a browser-session sign-in has no Max-Age and the token is stored hashed (4.381194ms)
+✔ register validates every field with stable error codes (8.478477ms)
+✔ login ids are unique case-insensitively (5.516549ms)
+✔ login accepts any letter case and rejects bad credentials identically (9.401339ms)
+✔ repeated failures lock the login id, even for the right password (16.013962ms)
+✔ mutations need the client header and a trusted Origin (1.754415ms)
+✔ extra origins get credentialed CORS (5.34639ms)
+✔ logout ends the session and clears the cookie (4.584797ms)
+✔ display name changes are validated and saved (5.024609ms)
+✔ password change verifies the current one and signs out other devices (15.399903ms)
+✔ device list marks the current session and can revoke others (10.902762ms)
+✔ account deletion needs the typed login id and the password (12.295745ms)
+✔ registration can be closed and sign-ups are limited per network (14.846878ms)
+✔ Turnstile is enforced on sign-up when configured (6.070109ms)
+✔ old hashes are upgraded to the configured iteration count at sign-in (10.689559ms)
+✔ persistent sessions slide forward and expire when idle (4.871824ms)
+✔ the daily cron purges expired sessions (3.026826ms)
+✔ non-API paths are static assets; unknown API paths are JSON errors (2.771235ms)
+✔ player icon and background are validated and saved (8.985932ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 369.946246
+
+> inkwave-workspace@1.0.0 test:backup
+> python3 -m unittest discover -s tools/backup/tests -p "test_*.py" -v
+
+test_executable_mode_only_changes_still_need_no_payload (test_auto_delta_kinds.AutoDeltaKindTests.test_executable_mode_only_changes_still_need_no_payload) ... ok
+test_same_bytes_directory_link_becomes_regular_file (test_auto_delta_kinds.AutoDeltaKindTests.test_same_bytes_directory_link_becomes_regular_file) ... ok
+test_same_bytes_regular_file_becomes_directory_link (test_auto_delta_kinds.AutoDeltaKindTests.test_same_bytes_regular_file_becomes_directory_link) ... ok
+test_unchanged_symlinks_still_need_no_payload (test_auto_delta_kinds.AutoDeltaKindTests.test_unchanged_symlinks_still_need_no_payload) ... ok
+test_01_apply_aplus_patch_action_status_conflict_755_mode_symlink_rollback (test_backup_and_restore.BackupAndRestoreTestSuite.test_01_apply_aplus_patch_action_status_conflict_755_mode_symlink_rollback)
+Mandatory Fix 1 & 3: action/status unification, zero overwrite of existing files, 755 mode & symlink rollback. ... {
+  "status": "CONFLICT_ABORTED",
+  "conflicts_count": 1,
+  "conflicts": [
+    {
+      "path": "added_tool.py",
+      "action": "added",
+      "reason": "Target file already exists for 'added' entry with different content",
+      "expected_old": null,
+      "actual": "b34272436e938fef3356b0231095f47b7bf6ef02dd682d5a7b153e06ef1266b1"
+    }
+  ],
+  "files_written": 0
+}
+{
+  "status": "CONFLICT_ABORTED",
+  "conflicts_count": 1,
+  "conflicts": [
+    {
+      "path": "config.txt",
+      "action": "modified",
+      "reason": "Target file has local modifications or diverged baseline SHA-256",
+      "expected_old": [
+        "14c43837eefc14853da4e8d5ee2d1fe60919de350a0f6734ad43f0eed16f02e1"
+      ],
+      "actual": "75c1512ff0e47edae4657cab027a35dd1bed4200cfe5eca46cb80972374ff48d"
+    }
+  ],
+  "files_written": 0
+}
+ok
+test_02_real_drive_85_step_chain_compatibility_and_roundtrip (test_backup_and_restore.BackupAndRestoreTestSuite.test_02_real_drive_85_step_chain_compatibility_and_roundtrip)
+Mandatory Fix 2 & 4: Full round-trip using real Drive format (pack-full, 85-step chain, interrupted pending, consolidate, prune, restore). ... ok
+test_03_gas_v3_and_python_93_and_95_step_chain_interoperability (test_backup_and_restore.BackupAndRestoreTestSuite.test_03_gas_v3_and_python_93_and_95_step_chain_interoperability)
+Mandatory Fix 2: Execute INKWAVE_GAS_AutoSync_v3.gs in Node VM against an 85-step chain. ... ok
+test_04_abnormal_and_boundary_cases (test_backup_and_restore.BackupAndRestoreTestSuite.test_04_abnormal_and_boundary_cases)
+Verify path traversal rejection, mismatched action/status rejection, and corrupt chunk detection. ... ok
+test_auto_delta_add_retarget_and_delete_directory_links (test_directory_symlinks.DirectorySymlinkTests.test_auto_delta_add_retarget_and_delete_directory_links) ... ok
+test_auto_delta_replaces_directory_link_with_file_and_back (test_directory_symlinks.DirectorySymlinkTests.test_auto_delta_replaces_directory_link_with_file_and_back) ... ok
+test_direct_overlay_removes_deleted_directory_symlink (test_directory_symlinks.DirectorySymlinkTests.test_direct_overlay_removes_deleted_directory_symlink) ... ok
+test_scan_and_full_restore_preserve_links_without_following_targets (test_directory_symlinks.DirectorySymlinkTests.test_scan_and_full_restore_preserve_links_without_following_targets) ... ok
+test_verification_rejects_unexpected_directory_symlink (test_directory_symlinks.DirectorySymlinkTests.test_verification_rejects_unexpected_directory_symlink) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.158s
+
+OK
+{
+  "status": "CHECK_OK",
+  "files_ready": 4,
+  "already_applied": 0,
+  "conflicts_overridden": 0
+}
+{
+  "status": "APPLIED_OK",
+  "files_applied": 4,
+  "backup_dir": ".aplus-backup/latest"
+}
+{
+  "status": "ALREADY_APPLIED",
+  "files_verified": 4
+}
+{
+  "status": "APPLIED_OK",
+  "files_applied": 4,
+  "backup_dir": ".aplus-backup/latest"
+}
+ROLLBACK SUCCESS: restored 3 modified file(s) and removed 1 added file(s).
+
+> inkwave-workspace@1.0.0 test:queue-recovery
+> node --test patches/local-quality/tests/queue-30-lifecycle.test.mjs patches/local-quality/tests/queue-30-audio.test.mjs patches/local-quality/tests/queue-30-ribbons.test.mjs patches/local-quality/tests/special-vfx-zero-drag-parity.test.mjs patches/local-quality/tests/lobby-reflection-lifecycle.test.mjs
+
+✔ normal planar reflection preserves target, renderer flags, visibility and HDR sizing (2.146274ms)
+✔ failure injection never retains hidden children or renderer state; error propagates (0.692928ms)
+✔ HIGH/LOW/MEDIUM cycles free GPU targets exactly once and rebind fresh textures (2.209769ms)
+✔ error precedence: successful pass restores target and enables reflection (1.832526ms)
+✔ error precedence: render-only failure keeps exact error identity and cause (0.291969ms)
+✔ error precedence: sole restoration failure is not swallowed (0.43581ms)
+✔ error precedence: simultaneous failures retain primary identity/cause, including falsy throws (0.563176ms)
+✔ error precedence: nested callback is guarded and mixed visibility/flags survive (0.211614ms)
+✔ nested reflection restores the active cube face and mip level (0.466736ms)
+✔ restoration failure preserves the original render error and restores object flags (0.778303ms)
+✔ restoration failure after a successful pass propagates and leaves reflection disabled (0.325404ms)
+✔ real-S3 manifest builds stable id and event indices and ignores blocked cold jobs on full resident hits (6.888916ms)
+✔ audio staging reuses one file decode across two events and evicts all shared PCM references together (3.283461ms)
+✔ outbound idle ticks do not mutate queue or change packet shape (5.341041ms)
+✔ outbound event prefix retains exact references and synchronous appended suffix (1.451708ms)
+✔ rejected outbound sends retain every event without consuming a prefix (2.293636ms)
+✔ known nav node goals cache the exact nearest result on repeated pathing (4.820202ms)
+✔ static shadow-render exception always restores dynamic actor castShadow (2.022203ms)
+✔ cloud bake restores renderer and target-scissor state after strip draw failure (3.17429ms)
+✔ Turf TIME UP retires host bot and local pending weapons but not remote ghosts (1.642194ms)
+✔ catalogue pending windups are cancelled with the pre-existing weapon hook (4.671124ms)
+✔ short ribbon writes all padded slots without recomputing visible normals or leaving stale alpha (6.275137ms)
+✔ pool saturation marks evicted ribbons ended; retained stale handles cannot allocate (0.433443ms)
+✔ empty RibbonPool retains one warm upload and reinitializes after clearing (0.767907ms)
+✔ idle ShapePool preserves warmed instancing without 4 redundant uploads per frame (1.213526ms)
+✔ Triple Inkstrike retires its ribbon at kit dt=0.008333333333333333 without idle uploads (39.395162ms)
+✔ Triple Inkstrike retires its ribbon at kit dt=0.1 without idle uploads (13.151469ms)
+✔ Triple Inkstrike retires its ribbon at kit dt=0.5 without idle uploads (7.970903ms)
+✔ Triple Inkstrike ends its ribbon when its carrier retires by capacity (8.977235ms)
+✔ Triple Inkstrike ends its ribbon when its carrier retires by dead (7.948937ms)
+✔ Triple Inkstrike ends its ribbon when its carrier retires by follow-false (8.462205ms)
+✔ Triple Inkstrike ends its ribbon when its carrier retires by shell-clear (11.367581ms)
+✔ Triple Inkstrike ends its ribbon when its carrier retires by kit-clear (10.561522ms)
+✔ Triple Inkstrike ends its ribbon when its carrier retires by dispose (5.702931ms)
+✔ Triple Inkstrike cancellation preserves transient carriers and still retires them at expiry (7.753237ms)
+✔ Triple Inkstrike pre-expiry geometry, points and RNG are unchanged at dt=0.008333333333333333 (233.415268ms)
+✔ Triple Inkstrike pre-expiry geometry, points and RNG are unchanged at dt=0.1 (32.103646ms)
+✔ production SpritePool preserves the old Float32 state for zero/nonzero drag and finite/nonfinite dt (16.499993ms)
+✔ zero-drag repeated finite ticks keep all renderer attributes and object identity stable (11.872018ms)
+✔ idle SpritePool uploads its warm buffer once and re-uploads on active-to-idle transition (0.992721ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1494.900914
+
+> inkwave-workspace@1.0.0 test:memory
+> node --experimental-vm-modules --experimental-global-webcrypto --max-old-space-size=768 --test --test-concurrency=1 patches/local-quality/tests/hidden-showcase-retirement.test.mjs patches/local-quality/tests/portrait-target-lifetime.test.mjs patches/local-quality/tests/portrait-work.test.mjs patches/local-quality/tests/resource-budget.test.mjs patches/local-quality/tests/music-dispose-resources.test.mjs patches/local-quality/tests/music-lazy-fx.test.mjs patches/local-quality/tests/idle-resources.test.mjs patches/local-quality/tests/pause-gpu.test.mjs patches/local-quality/tests/static-menu-art.test.mjs patches/local-quality/tests/composer-target-adapter.test.mjs scripts/tests/inkwave-static-menu-gpu-budget.test.mjs
+
+✔ #642 baseline: native Three EffectComposer clones both targets in its constructor (2.995852ms)
+✔ #642 adapter changes only the full production renderer composition and round-trips (134.783256ms)
+✔ #642 lazy native pair keeps HDR across resize, hidden release and offscreen render (2.839089ms)
+✔ #642 quality rebuild disposes the old native pair and preserves the new sample choice (0.928767ms)
+✔ the composed static gate reproduces a permanently retained locker kid before the new retirement connection (4.997113ms)
+✔ quick Locker return preserves the native fade-resume kid and a later return rebuilds normally (1.059858ms)
+✔ a sequence of Locker exits retires exactly the departed characters without idle ticking (1.864655ms)
+✔ hidden fade matches native teardown time and then parks at 30Hz (0.824498ms)
+✔ hidden fade matches native teardown time and then parks at 60Hz (0.674015ms)
+✔ hidden fade matches native teardown time and then parks at 120Hz (0.626888ms)
+✔ zero-time and frozen frames do not advance hidden fades or force a fresh Locker entry (0.502109ms)
+✔ shader warm-up and live portrait owners keep their shadow attachments until safe (0.586801ms)
+✔ visible Locker, room, results and real match frames retain their original owners (1.677685ms)
+(node:4394) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ cloud and far budgets are explicit for every effective device/quality tier (2.17656ms)
+✔ actual Environment cloud target and uniform obey budget, strips cover complete target (99.860902ms)
+✔ budget refresh resizes and rebakes once only, preserves texture reference and no depth/mips (91.152843ms)
+✔ actual far target releases once on exit, clears sampler and recreates for re-entry at budget (96.466532ms)
+✔ #938 actual planar reflection target releases once on marina exit, clears sampler, recreates on re-entry; LOW never allocates (167.971573ms)
+✔ #938 releaseReflection tolerates an environment that never allocated the target (0.253164ms)
+✔ native music plays/pumps when audible, mute owns no scheduler/players, SFX context stays running (140.558468ms)
+✔ actual audio pre-init zero never pumps music and leaves SFX callable; unmute honors latest track (180.676115ms)
+✔ #366 actual audio master zero idles music although music volume stays nonzero; context stays running; restore resumes latest track (125.992513ms)
+✔ #366 persisted master zero never starts music after unlock; repeated master toggles keep one bounded scheduler (155.962133ms)
+✔ interval fallback idles and restarts without duplicate timers (107.820621ms)
+✔ paused backdrop draws once, invalidates on resize/quality/context restore/stage and stays live online (1.554054ms)
+✔ actual composed Game._frame skips only offline paused world; UI/net/input remain live (25.941543ms)
+✔ unpatched public negative controls retain 10 MiB cloud and music work when zero (103.758487ms)
+✔ muted track requests retain null and director remapping; every installed track can restart (144.09736ms)
+✔ context restoration invalidates paused backdrop even with no RAF during loss; canvas listeners stay bounded (0.605426ms)
+(node:4401) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ baseline disposed music retains its disconnected graph and complete impulse through the singleton (276.961643ms)
+✔ composed music disposal releases graph references and IR at 44100Hz without closing the SFX context (248.639001ms)
+✔ composed music disposal releases graph references and IR at 48000Hz without closing the SFX context (246.608897ms)
+✔ composed music disposal releases graph references and IR at 96000Hz without closing the SFX context (374.628489ms)
+✔ disposing and reinitializing music restores the identical lazy graph and every impulse sample (143.26191ms)
+✔ disposing before lazy FX construction releases a prepared IR without allocating a ConvolverNode (81.457302ms)
+(node:4408) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ actual lazy music FX preserves node topology, parameters and every deterministic IR sample (1509.409925ms)
+✔ procedural play builds sends before Player, and replacement context owns a fresh lazy graph (175.728542ms)
+✔ online init and recorded-only requests never create a procedural Worker (104.786579ms)
+✔ full composition transfers the existing prepared IR into lazy FX and releases the pending owner (166.968482ms)
+(node:4415) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ offline HUD effects park without losing work; resume resets the wall clock and keeps debug pause independent (34.121884ms)
+✔ the production frame freezes HUD updates only offline and refreshes with zero dt after invalidation (1.090551ms)
+✔ pause snapshot refresh stays live online but never reparses identical offline stats (263.607977ms)
+✔ composed Renderer retains a finished WebGL pause frame and releases it after resume (2.687523ms)
+(node:4422) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Locker exit retires staged readback targets after success (215.535827ms)
+✔ Locker exit retires staged readback targets after rejection (1.547509ms)
+✔ an active staged portrait keeps existing targets until its canceled next stage retires (0.736428ms)
+✔ canceling the only queued portrait lets the native release owner finish at the next staged queue pass (0.395134ms)
+✔ a surviving queued portrait defers release and receives unchanged native pose work (2.095382ms)
+(node:4429) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ cold portrait jobs reuse one character, stage 14 updates outside render callbacks and keep distinct requests (205.370759ms)
+✔ cancellation before staged work keeps the native no-waiter skip behavior (0.266634ms)
+✔ canceling an active idle stage stops its next step and dispose retires the pool (0.641701ms)
+✔ native composed Character keeps style snapshots in weak keys across repeated rig refreshes (12978.845701ms)
+✔ native Showcase requeues staged portraits across Results at prepare, pose, and pre-render boundaries (13.364092ms)
+✔ staged update and render errors clear prepared and active Character references (2.223677ms)
+✔ late staged readback delivers the callback but cannot refill an expired cache epoch (0.782179ms)
+(node:4436) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ 10000 attract splats retain zero history; normal match timestamps/references survive until disposal (210.867196ms)
+✔ mixed portrait sizes obey pixel and entry ceilings; eviction releases only cached source storage (7.219722ms)
+✔ native portrait request/cache hit/cancel and late readbacks retain independent current-style copies (2.25727ms)
+✔ effective quality preserves desktop and explicitly reduces touch reflection size/cadence/actors (0.565647ms)
+✔ reflection cadence forces quality/resize/re-enable/clock-reset updates without stale matrix edits (0.273012ms)
+✔ all five native resource connections compose strictly and new runtime files enter build identity (62.357037ms)
+✔ portrait callback navigation cannot invalidate the source before remaining UI copies (1.604575ms)
+✔ title -> main and weapon/locker panels show still art with zero attract updates or screen render (3.007005ms)
+✔ requested portrait previews retain on-demand offscreen generation, not a continuous render (0.703487ms)
+✔ only the locker draws its art and live pedestal kid into the canvas (42.819389ms)
+✔ title, real match, room, pause and results preserve the original 3D/game frame (1.892931ms)
+✔ a wipe between two art screens never draws the demo world in between (0.494566ms)
+✔ the demo canvas is hidden behind art screens and shown again before any world frame (0.724897ms)
+✔ static screens do not construct hidden 3D loadout or Online hub showcases (1.282411ms)
+✔ CSS maps exactly three generated locally hosted WebP backgrounds to the correct menu screens (198.641736ms)
+✔ CSS ownership rejects a new static lobby background and loss of existing room rules (72.797613ms)
+✔ source transform is strict, idempotence fails closed, and unrelated source is unchanged (25.80853ms)
+✔ offline and network match exits do not build 8 unseen bots under static art (75.457687ms)
+✔ loadout retains all real selectable weapons while offscreen mobile SVGs are deferred (271.880906ms)
+✔ one catalogue hydrator serves touch, pad and mouse while equip-only decoration stays lazy (200.37838ms)
+✔ lazy composer frees the native GPU targets once and rebuilds with the same passes (1.728025ms)
+✔ deferred weapon card uses the precise upstream-composed catalogue icon and fails closed on ambiguity (164.880243ms)
+ℹ tests 77
+ℹ suites 0
+ℹ pass 77
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 26901.242539
