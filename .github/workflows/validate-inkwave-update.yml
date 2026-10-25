@@ -636,6 +636,21 @@ jobs:
         with:
           ref: ${{ env.SOURCE_SHA }}
           persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/*/
+            /.github/
+            /inkwave-public/
+            /patches/
+            /scripts/
+            /server/
+            /tests/
+            /tools/
+            !/tools/inkwave-modeler/
+            /reports/
+            /docs/
       - uses: actions/setup-node@v4
         with:
           node-version: 22
