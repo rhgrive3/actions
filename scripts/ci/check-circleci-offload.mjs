@@ -20,9 +20,9 @@ export const REQUIRED_LANES = [
   'browser-startup'
 ];
 
-export function statusLaneName(context) {
+export function statusLaneName(context, providerTrusted = false) {
   const name = String(context || '');
-  if (!/circleci/i.test(name)) return null;
+  if (!providerTrusted && !/circleci/i.test(name)) return null;
   for (const lane of REQUIRED_LANES) {
     // Accept both GitHub OAuth-style 'ci/circleci: browser-active' and
     // CircleCI GitHub-App checks with a job/workflow prefix.
@@ -40,7 +40,7 @@ export function summarizeCircleCI(checkRuns, statuses, sha) {
   for (const check of checkRuns) {
     if (check.head_sha && check.head_sha !== sha) continue;
     if (!/circleci/i.test(check.app?.slug || '') && !/circleci/i.test(check.name || '')) continue;
-    const lane = statusLaneName(check.name) || (
+    const lane = statusLaneName(check.name, /circleci/i.test(check.app?.slug || '')) || (
       /circleci/i.test(check.app?.slug || '') ?
         REQUIRED_LANES.find(x => String(check.name || '').trim() === x) : null
     );
