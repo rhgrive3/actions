@@ -104,6 +104,17 @@ export function installMusicIdle(MusicEngine, env = globalThis) {
   P.dispose = function (...args) {
     if (this._musicIdle) clearRetirement(this._musicIdle);
     stopTimer(this); this._musicIdle = null;
-    return dispose.apply(this, args);
+    const result = dispose.apply(this, args);
+    // Disconnecting stops processing but does not release the node's context
+    // or the ConvolverNode's impulse. The music singleton outlives this graph.
+    for (const node of this._nodes || []) {
+      if (node && 'buffer' in node) {
+        try { node.buffer = null; } catch { /* an already closed graph stays retired */ }
+      }
+    }
+    if (this._nodes) this._nodes.length = 0;
+    this.mix = this.out = this.dlyIn = this.revIn = this.dA = this.dB = null;
+    this._preparedMusicImpulse = null;
+    return result;
   };
 }

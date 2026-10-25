@@ -51,6 +51,7 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
       // The lazy composer recreates its targets before the next real 3D frame.
       this.R?.releasePausedFrame?.();
       this.R?.composer?.releaseInactiveTargets?.();
+      if (artScreen !== 'locker') this.showcase?.retireHiddenStudio?.(dt);
       if (artScreen !== 'locker' && this.showcase?._rt) {
         this.showcase._rt.dispose(); this.showcase._rt = null;
       }

@@ -12,6 +12,9 @@ function fixture(rate) {
     const make = f.ctx[method];
     f.ctx[method] = (...args) => {
       const n = make(...args), row = {method,args,edges:[],node:n};
+      // Non-filter nodes have no type. Avoid the generic audio double creating
+      // a fresh callable AudioParam proxy when the graph observer reads it.
+      n.type = undefined;
       nodes.push(row);
       n.connect = other => row.edges.push(nodes.findIndex(x=>x.node===other));
       if (method === 'createConvolver') Object.defineProperty(n,'buffer',{get:()=>buffers.at(-1),set:value=>buffers.push(value),configurable:true});

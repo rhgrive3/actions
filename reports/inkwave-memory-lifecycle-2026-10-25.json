@@ -1,0 +1,325 @@
+{
+  "base": "410ddaf4023b313c59cb1046a3e203cf0d5e0b49",
+  "sourceSHA256": {
+    "package.json": "1f8b6669e931277114d72f81bef7eb907d847814bdc803eb92484f37a6428a79",
+    "patches/local-quality/music-idle.mjs": "6612ecf890d905a517b4c16540e44cb3c444a2cde1652abe035ee2f62a8be251",
+    "patches/local-quality/portrait-work.mjs": "da0add619aaf1a8a5848216b4e81d2fdf4ee235d1b1e8ee72c22f91ad07cb7fd",
+    "patches/local-quality/showcase-shadow-adapter.mjs": "ba5e7b9a83271f1654f5d09df63b8a77d6b250b95857f7ead1c513188fa2589e",
+    "patches/local-quality/showcase-shadow.mjs": "21da626bc76b52b01adc02e845b01566c8a3fb5a5546d3fbae6364fce4e86d85",
+    "patches/local-quality/static-menu-adapter.mjs": "7404408a70fd25f4afb99d3d92fe91d493859b96b3c1edbef716b361ba5edee2",
+    "patches/local-quality/tests/music-lazy-fx.test.mjs": "e7fa7ab644c340bbe166d7d44ffab8fffe4e9e64445137c370025e0a1e3e510b",
+    "patches/local-quality/tests/hidden-showcase-retirement.test.mjs": "dc1cc924e2d713280e9136343d52382668da90b7b1432f7d1cdd9e0b29b498c9",
+    "patches/local-quality/tests/music-dispose-resources.test.mjs": "f15bb9b52b048f11e118686a4d0165ac695c2fd8b2061fbde3d1542ca13fb088",
+    "patches/local-quality/tests/portrait-target-lifetime.test.mjs": "1a5b7d824c794122a67c146bee38792b2a62b3778e53a4e933ce7b71ed043cc2"
+  },
+  "builds": {
+    "before": {
+      "revision": "bba181ca2c7e7e159d45902707add7beca274649742ab7b267be96be4052effa",
+      "contentHash": "01214cf1aa0e89b5ec17a8872647232dcf4b99e9a893cf5c678e54b4a45de4d0"
+    },
+    "after": {
+      "revision": "27eed9eda56cc3f450d54ee0f014a43d2a2a8b894148e16ecbaf7cff32c103b2",
+      "contentHash": "308296ea5112b2c35735f77bd99142aef28d59105a0e2967a4fa1ad2635e1e1e"
+    }
+  },
+  "validation": {
+    "combinedCommand": "npm run test:memory",
+    "combined": {
+      "files": 11,
+      "pass": 77,
+      "fail": 0,
+      "skip": 0
+    },
+    "independentReview": {
+      "pass": 23,
+      "fail": 0,
+      "skip": 0
+    },
+    "audioFocused": {
+      "files": 8,
+      "pass": 49,
+      "fail": 0,
+      "skip": 0
+    },
+    "countsOverlap": true
+  },
+  "browser": {
+    "browser": "154.0.8037.57",
+    "runs": [
+      {
+        "label": "before",
+        "site": "/workspace/scratch/memory-parallel-baseline",
+        "errors": [],
+        "cycles": [
+          {
+            "open": {
+              "mode": "locker",
+              "chars": 1,
+              "stage": true,
+              "pool": true
+            },
+            "exited": {
+              "mode": null,
+              "chars": 1,
+              "fade": 0.2,
+              "stage": true
+            },
+            "idle": {
+              "chars": 1,
+              "fade": 0.2,
+              "stage": true,
+              "portraitTargets": [
+                true,
+                true
+              ],
+              "pendingRelease": true,
+              "job": false,
+              "task": false,
+              "flight": 0,
+              "liveQueue": 0,
+              "shadow": false,
+              "pool": true,
+              "textures": 27,
+              "geometries": 273,
+              "mode": "menu"
+            }
+          },
+          {
+            "open": {
+              "mode": "locker",
+              "chars": 1,
+              "stage": true,
+              "pool": true
+            },
+            "exited": {
+              "mode": null,
+              "chars": 1,
+              "fade": 0.2,
+              "stage": true
+            },
+            "idle": {
+              "chars": 1,
+              "fade": 0.2,
+              "stage": true,
+              "portraitTargets": [
+                true,
+                true
+              ],
+              "pendingRelease": true,
+              "job": false,
+              "task": false,
+              "flight": 0,
+              "liveQueue": 0,
+              "shadow": false,
+              "pool": true,
+              "textures": 28,
+              "geometries": 274,
+              "mode": "menu"
+            }
+          },
+          {
+            "open": {
+              "mode": "locker",
+              "chars": 1,
+              "stage": true,
+              "pool": true
+            },
+            "exited": {
+              "mode": null,
+              "chars": 1,
+              "fade": 0.2,
+              "stage": true
+            },
+            "idle": {
+              "chars": 1,
+              "fade": 0.2,
+              "stage": true,
+              "portraitTargets": [
+                true,
+                true
+              ],
+              "pendingRelease": true,
+              "job": false,
+              "task": false,
+              "flight": 0,
+              "liveQueue": 0,
+              "shadow": false,
+              "pool": true,
+              "textures": 28,
+              "geometries": 274,
+              "mode": "menu"
+            }
+          }
+        ]
+      },
+      {
+        "label": "after",
+        "site": "/workspace/scratch/memory-parallel-site",
+        "errors": [],
+        "cycles": [
+          {
+            "open": {
+              "mode": "locker",
+              "chars": 1,
+              "stage": true,
+              "pool": true
+            },
+            "exited": {
+              "mode": null,
+              "chars": 0,
+              "fade": 0,
+              "stage": false
+            },
+            "idle": {
+              "chars": 0,
+              "fade": 0,
+              "stage": false,
+              "portraitTargets": [
+                false,
+                false
+              ],
+              "pendingRelease": false,
+              "job": false,
+              "task": false,
+              "flight": 0,
+              "liveQueue": 0,
+              "shadow": false,
+              "pool": true,
+              "textures": 24,
+              "geometries": 270,
+              "mode": "menu"
+            }
+          },
+          {
+            "open": {
+              "mode": "locker",
+              "chars": 1,
+              "stage": true,
+              "pool": true
+            },
+            "exited": {
+              "mode": null,
+              "chars": 0,
+              "fade": 0,
+              "stage": false
+            },
+            "idle": {
+              "chars": 0,
+              "fade": 0,
+              "stage": false,
+              "portraitTargets": [
+                false,
+                false
+              ],
+              "pendingRelease": false,
+              "job": false,
+              "task": false,
+              "flight": 0,
+              "liveQueue": 0,
+              "shadow": false,
+              "pool": true,
+              "textures": 25,
+              "geometries": 271,
+              "mode": "menu"
+            }
+          },
+          {
+            "open": {
+              "mode": "locker",
+              "chars": 1,
+              "stage": true,
+              "pool": true
+            },
+            "exited": {
+              "mode": null,
+              "chars": 0,
+              "fade": 0,
+              "stage": false
+            },
+            "idle": {
+              "chars": 0,
+              "fade": 0,
+              "stage": false,
+              "portraitTargets": [
+                false,
+                false
+              ],
+              "pendingRelease": false,
+              "job": false,
+              "task": false,
+              "flight": 0,
+              "liveQueue": 0,
+              "shadow": false,
+              "pool": true,
+              "textures": 25,
+              "geometries": 271,
+              "mode": "menu"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "audio": {
+    "scope": "MusicEngine.dispose only: drop disconnected graph/context references and Convolver impulse; live/muted playback behavior unchanged",
+    "retainedGraphNodesBefore": 17,
+    "retainedGraphNodesAfter": 0,
+    "impulseBytesBySampleRate": {
+      "44100": 776160,
+      "48000": 844800,
+      "96000": 1689600
+    },
+    "byteScope": "computed PCM storage size, not device/process memory measurement",
+    "tests": {
+      "files": 8,
+      "pass": 49,
+      "fail": 0,
+      "skip": 0
+    },
+    "baselineFixtureRepair": {
+      "oldCodeOldFixture": "1 failed topology comparison, 3 pass",
+      "oldCodeExplicitNativeTypeFixture": "4 pass, original topology/parameters/every IR sample checks preserved"
+    },
+    "sourceSHA256": {
+      "patches/local-quality/music-idle.mjs": "6612ecf890d905a517b4c16540e44cb3c444a2cde1652abe035ee2f62a8be251",
+      "patches/local-quality/tests/music-dispose-resources.test.mjs": "f15bb9b52b048f11e118686a4d0165ac695c2fd8b2061fbde3d1542ca13fb088",
+      "patches/local-quality/tests/music-lazy-fx.test.mjs": "e7fa7ab644c340bbe166d7d44ffab8fffe4e9e64445137c370025e0a1e3e510b"
+    },
+    "evidenceSHA256": {
+      "audio-lifetime-final-tests.log": "014fe366fde3b94aae2eb9e9855255b4868f925341c961f2a83e6f2dc3aca863",
+      "audio-lifetime-baseline-lazy.log": "9276bcc51c85af0c44981a09af7142b3f172a6430afbb7cf1048912baae47128",
+      "audio-lifetime-baseline-lazy-fixed-fixture.log": "bd28229218ff76bec7e25f16313e8b152df82196acd7e13dfe4dc3c2529c87cf"
+    }
+  },
+  "startupBudget": {
+    "status": "passed",
+    "revision": "27eed9eda56cc3f450d54ee0f014a43d2a2a8b894148e16ecbaf7cff32c103b2",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 78161,
+    "initialJSBytes": 2051736,
+    "criticalHTMLBytes": 24090,
+    "precacheCount": 538,
+    "precacheBytes": 7570894,
+    "workerBytes": 87434,
+    "declaredBytes": 15817784,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "evidenceSHA256": {
+    "parallel-memory-tests.log": "f0284391ddb0b76d3ded3be4e7dfad4397719d12c371c46912a097fb0bc265aa",
+    "parallel-memory-build.log": "ef2ca5549f32d82d2bb76d30ab685f2f9f7b56853ef691a2cb970a631f904c5f",
+    "parallel-memory-browser.log": "60eb89defeffb2150e7f9bf5b3a945a4ba01cc48d00209d3378b25a725b5f8b9",
+    "parallel-memory-independent-review.log": "02411e35894048b4e74e88d07217581ec0501f028d7e0866d843a4d3bc9cf5ee",
+    "portrait-target-before.log": "1542f9fd27a8c961478d84666a35d74e03f900ac6d03ef5a3b7d40b34e0f0e68",
+    "portrait-target-after.log": "0e7b249e178ac4b7cf730517f38038e6c68e5a4c61592bb10b69d6828817a9e2",
+    "portrait-lifetime-tests.log": "b779ec54d360d4af0957ff6594b37a98b37404bf1014f7d2126a903fc7e0e89a",
+    "hidden-showcase-related-tests.log": "7d4a452cf39ccf5a1caf8659d9890d69d0569aca9909add96831d59f55f6d8ca",
+    "audio-lifetime-final-tests.log": "014fe366fde3b94aae2eb9e9855255b4868f925341c961f2a83e6f2dc3aca863",
+    "audio-lifetime-baseline-lazy.log": "9276bcc51c85af0c44981a09af7142b3f172a6430afbb7cf1048912baae47128",
+    "audio-lifetime-baseline-lazy-fixed-fixture.log": "bd28229218ff76bec7e25f16313e8b152df82196acd7e13dfe4dc3c2529c87cf",
+    "parallel-memory-browser-initial-failure.log": "1e2451dfd0b5f155bab125cd27b8f88ec925f1d9542d5e15aa0258c622404f1c"
+  },
+  "initialBrowserAttempt": "Stopped before candidate execution because the fixed 2-second portrait wait expired; repeated with completion conditions and a 45-second deadline, preserving resource assertions."
+}
