@@ -28,13 +28,25 @@ try{
   return {cpuGridUnchanged:true,trianglePositionsUnchanged:true,authoritiesRetained:true,finalAtlas:paint.size,textureCount:g.nativeWorld.metrics.textureCount};
  });console.log('quality passed');
  // Reject a corrupt asset while retaining the current stage and its resources.
+ const corruptionRoute=await p.evaluate(async failureId=>{
+  const {nativeStageBuild:build}=await import(new URL('patches/native-stages/runtime/build-config.mjs',document.baseURI));
+  const entry=build.prebuilt?.stages?.[failureId];
+  if(!entry)return '**/_native-reference-assets/'+failureId+'/vertices.bin';
+  const stageURL=new URL(build.prebuilt.baseURL+failureId+'/stage.json',document.baseURI),response=await fetch(stageURL);
+  if(!response.ok)throw Error('Corruption probe stage manifest HTTP '+response.status);
+  const bytes=await response.arrayBuffer(),digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
+  if(bytes.byteLength!==entry.bytes||digest!==entry.stageSha256)throw Error('Corruption probe stage manifest integrity mismatch');
+  const record=JSON.parse(new TextDecoder().decode(bytes)),chunk=record.arrays?.vertices?.chunks?.[0];
+  if(record.id!==failureId||!chunk?.file||!(chunk.bytes>4))throw Error('Corruption probe vertex chunk missing');
+  return new URL(chunk.file,stageURL).href;
+ },failureId);
  let corruptRequests=0;
- await p.route('**/_native-reference-assets/'+failureId+'/vertices.bin',route=>{corruptRequests++;return route.fulfill({status:200,body:Buffer.alloc(4),contentType:'application/octet-stream'});});
+ await p.route(corruptionRoute,route=>{corruptRequests++;return route.fulfill({status:200,body:Buffer.alloc(4),contentType:'application/octet-stream'});});
  result.failureRollback=await p.evaluate(async({failureId,singleStage})=>{
   const G=NG,g=G.game,{MAPS}=await import(new URL('src/config.js',document.baseURI)),level=G.level,paint=G.paint,display=g.nativeWorld.display;let rejected=false;
   try{const map=MAPS.find(m=>m.id===failureId);if(singleStage){const {buildNativeWorld}=await import(new URL('patches/native-stages/runtime/engine.mjs',document.baseURI));await buildNativeWorld(g,map,()=>true);}else await g._buildWorld(map);}catch(e){globalThis.nativeLifecycleError=e.message;rejected=/integrity mismatch/.test(e.message);}
   return {rejected,levelRetained:G.level===level,paintRetained:G.paint===paint,displayRetained:g.nativeWorld.display===display};
- },{failureId,singleStage});result.corruptionProbe={requests:corruptRequests,error:await p.evaluate(()=>globalThis.nativeLifecycleError||null)};assert(corruptRequests>0,'corruption route was never exercised');assert(Object.values(result.failureRollback).every(Boolean));await p.unroute('**/_native-reference-assets/'+failureId+'/vertices.bin');console.log('rollback passed');
+ },{failureId,singleStage});result.corruptionProbe={route:corruptionRoute,requests:corruptRequests,error:await p.evaluate(()=>globalThis.nativeLifecycleError||null)};assert(corruptRequests>0,'corruption route was never exercised');assert(Object.values(result.failureRollback).every(Boolean));await p.unroute(corruptionRoute);console.log('rollback passed');
  result.singleStageSeam=singleStage?'Production buildNativeWorld helper reloads detached assets; user same-map start legitimately retains its live world.':undefined;
  result.cancellation=await p.evaluate(async({failureId,lastId,singleStage})=>{
   const G=NG,g=G.game,{MAPS}=await import(new URL('src/config.js',document.baseURI));
