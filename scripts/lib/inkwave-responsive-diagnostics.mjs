@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { parseResponsiveAnimations } from './inkwave-responsive-animation-diagnostics.mjs';
 
 // Fixed harness IDs only; never persist selector, weapon ID, page text or errors here.
-const operationIds = new Set(['continuation-read-callback', 'continuation-tap-change', 'continuation-wait-loadout', 'continuation-settle-loadout', 'continuation-ready-loadout', 'continuation-read-weapon', 'continuation-list-weapons', 'continuation-select-weapon', 'continuation-verify-weapon', 'continuation-scroll-action', 'continuation-settle-action', 'continuation-visible-action', 'continuation-label-action', 'continuation-capture-action']);
+const operationIds = new Set(['setup-stage-count', 'setup-stage-read-id', 'setup-stage-scroll', 'setup-stage-tap', 'setup-stage-verify-id', 'setup-stage-settle', 'setup-stage-name', 'setup-stage-caption', 'setup-repeat-read-id', 'setup-repeat-scroll', 'setup-repeat-tap', 'setup-repeat-verify-id', 'setup-dusk-tap', 'setup-dusk-verify', 'setup-loadout-tap', 'setup-loadout-wait', 'setup-loadout-show', 'setup-loadout-capture', 'continuation-read-callback', 'continuation-tap-change', 'continuation-wait-loadout', 'continuation-settle-loadout', 'continuation-ready-loadout', 'continuation-read-weapon', 'continuation-list-weapons', 'continuation-select-weapon', 'continuation-verify-weapon', 'continuation-scroll-action', 'continuation-settle-action', 'continuation-visible-action', 'continuation-label-action', 'continuation-capture-action']);
 export const responsiveOperationId = value => operationIds.has(value) ? value : null;
 
 // Bounded evidence only. No browser retry, deadline, or acceptance changes.

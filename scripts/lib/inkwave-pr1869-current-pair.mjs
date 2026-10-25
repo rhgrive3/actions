@@ -29,6 +29,11 @@ export const CONTROL_PATHS=Object.freeze([
  'scripts/tests/inkwave-results-work-progress.test.mjs',
  'scripts/tests/inkwave-streamed-music-diagnostics.test.mjs',
  'scripts/verify-inkwave-pr1869-current-pair.mjs',
+ 'scripts/check-inkwave-local-references.mjs',
+ 'scripts/tests/inkwave-local-references.test.mjs',
+ 'scripts/check-inkwave-responsive-core.mjs',
+ 'scripts/lib/inkwave-responsive-diagnostics.mjs',
+ 'scripts/tests/inkwave-responsive-diagnostics.test.mjs',
 ]);
 export const PAINT_PATHS=Object.freeze([
  'patches/network-replication/adapter.mjs','patches/network-replication/slosher-paint-admission.mjs',
