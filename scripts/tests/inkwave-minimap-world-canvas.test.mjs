@@ -1,9 +1,21 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import crypto from 'node:crypto';
 import {parse} from '../../patches/loading-cache/vendor/acorn.mjs';import {geometryFixture} from '../../patches/local-quality/tests/geometry-build-fixture.mjs';
+import { assertReviewedMinimapSources, REVIEWED_MINIMAP_SOURCE_EPOCHS } from '../lib/minimap-canvas-probe.mjs';
 const raw=fs.readFileSync(new URL('../../inkwave-public/src/game/minimap.js',import.meta.url),'utf8'),frozen=JSON.parse(fs.readFileSync(new URL('../../patches/local-quality/tests/fixtures/world-queue/baseline.json',import.meta.url)))['game/minimap.js'];
 let previous=raw;for(const [name,body]of Object.entries(frozen)){const ast=parse(previous,{ecmaVersion:'latest',sourceType:'module'}),klass=ast.body.find(n=>n.type==='ExportNamedDeclaration'&&n.declaration?.id?.name==='Minimap').declaration,node=klass.body.body.find(n=>n.key.name===name);previous=previous.slice(0,node.start)+body+previous.slice(node.end);}
 const digest=x=>crypto.createHash('sha256').update(x).digest('hex');
 test('independent pre-world minimap oracle reconstructs the already-reviewed source pin',()=>assert.equal(digest(previous),'ead39a1ac28c0095672394b19a2ae8d141adf1144e51f8c1b0e4f18078a21df6'));
+test('sliced native minimap source epoch remains exact and rejects mixed or edited source sets',()=>{
+ const sourcePaths=['inkwave-public/src/game/minimap.js','patches/local-quality/minimap-resource-adapter.mjs','patches/splatoon3/runtime/minimap-dirty.mjs','patches/splatoon3/minimap-dirty-adapter.mjs','patches/native-stages/runtime/native-minimap.mjs'];
+ const pins=Object.fromEntries(sourcePaths.map(file=>[file,digest(fs.readFileSync(new URL('../../'+file,import.meta.url)))]));
+ assert.equal(assertReviewedMinimapSources(pins),'library-queue-world-minimap-sliced-native-20261025');
+ const old=REVIEWED_MINIMAP_SOURCE_EPOCHS.find(e=>e.name==='library-queue-world-minimap-storage-beec332');
+ assert.ok(old,'previous reviewed native renderer remains admissible');
+ const native='patches/native-stages/runtime/native-minimap.mjs';
+ assert.equal(assertReviewedMinimapSources({...pins,[native]:old.pins[native]}),old.name);
+ assert.throws(()=>assertReviewedMinimapSources({...pins,[native]:'0'.repeat(64)}),/source pin mismatch/);
+ assert.throws(()=>assertReviewedMinimapSources({...pins,['patches/splatoon3/runtime/minimap-dirty.mjs']:'0'.repeat(64)}),/source pin mismatch/);
+});
 test('Chromium Canvas2D retains legacy base and native nearest-cell ink pixels for reviewed world storage',async t=>{
  const {chromium}=await import('playwright'),executablePath=process.env.CHROMIUM_EXECUTABLE||(fs.existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined);
  if(!executablePath&&!fs.existsSync(chromium.executablePath()))return t.skip('Chromium is not installed');
