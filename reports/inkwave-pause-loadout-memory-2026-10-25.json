@@ -1,0 +1,779 @@
+{
+  "base": "7f863ea2d65671abd1453fdae1b61de00f1d10e2",
+  "sourceSHA256": {
+    "patches/local-quality/pause-frame-retention.mjs": "2a79c220405a63bff427e00f93a7394d49ed949473337098a81aecb096078ba5",
+    "patches/local-quality/static-menu-adapter.mjs": "ad415fea6fcc66e109659b5b36bfc53ab79aff6eca0ac88521e9f7120700f75f",
+    "patches/local-quality/tests/pause-gpu.test.mjs": "bf1016a99fb212de008f7c177b09926a2cfbdf3f8b8db9f3bfccced23a8011af",
+    "scripts/tests/inkwave-static-menu-gpu-budget.test.mjs": "896564dac8d55fa1e0c6498b711fb881dc10ab84774fc48b514e1fd34b6d29ea"
+  },
+  "builds": {
+    "before": {
+      "contentHash": "9a9c81663997ac2abd88c4ff454b35beef1aca74b4423414df7cae055aed1a93",
+      "revision": "eaf00d23251a6ebbc05203647a490eda5c81f7c404de989737d9bf142fac439f"
+    },
+    "after": {
+      "contentHash": "01214cf1aa0e89b5ec17a8872647232dcf4b99e9a893cf5c678e54b4a45de4d0",
+      "revision": "bba181ca2c7e7e159d45902707add7beca274649742ab7b267be96be4052effa"
+    }
+  },
+  "localTests": {
+    "node": "24.19.0",
+    "files": 11,
+    "pass": 97,
+    "fail": 0,
+    "skip": 0
+  },
+  "browser": "154.0.8037.57",
+  "measurementScope": "Chromium/SwiftShader allocation counts, not device memory bytes or retail performance",
+  "game": {
+    "before": [
+      {
+        "touch": true,
+        "errors": [],
+        "pause": [],
+        "menu": [
+          {
+            "input": "touch",
+            "buildMs": 266.20000000001164,
+            "initial": {
+              "cards": 161,
+              "svgs": 547,
+              "blobs": 32,
+              "icons": 32,
+              "nodes": 5523,
+              "deferred": 129,
+              "visibleMissing": []
+            }
+          },
+          {
+            "input": "pad",
+            "buildMs": 176.40000000002328,
+            "initial": {
+              "cards": 161,
+              "svgs": 805,
+              "blobs": 161,
+              "icons": 161,
+              "nodes": 7305,
+              "deferred": 0,
+              "visibleMissing": []
+            }
+          },
+          {
+            "input": "kbm",
+            "buildMs": 222.70000000001164,
+            "initial": {
+              "cards": 161,
+              "svgs": 805,
+              "blobs": 161,
+              "icons": 161,
+              "nodes": 7305,
+              "deferred": 0,
+              "visibleMissing": []
+            }
+          }
+        ]
+      },
+      {
+        "touch": false,
+        "errors": [],
+        "pause": [
+          {
+            "playing": {
+              "textures": 36,
+              "geometries": 292,
+              "composer": true,
+              "snapshot": false,
+              "state": "playing",
+              "time": 179.19999999999936
+            },
+            "paused": {
+              "textures": 37,
+              "geometries": 292,
+              "composer": true,
+              "snapshot": true,
+              "state": "playing",
+              "time": 179.19999999999936
+            },
+            "stable": {
+              "textures": 37,
+              "geometries": 292,
+              "composer": true,
+              "snapshot": true,
+              "state": "playing",
+              "time": 179.19999999999936
+            },
+            "resumed": {
+              "textures": 36,
+              "geometries": 292,
+              "composer": true,
+              "snapshot": false,
+              "state": "playing",
+              "time": 179.18333333333268
+            },
+            "resumeMs": 122.59999999997672,
+            "clockUnchanged": true,
+            "samePixels": true,
+            "captured": {
+              "hash": 3504831547,
+              "width": 750,
+              "height": 525
+            },
+            "presented": {
+              "hash": 3504831547,
+              "width": 750,
+              "height": 525
+            }
+          },
+          {
+            "playing": {
+              "textures": 36,
+              "geometries": 292,
+              "composer": true,
+              "snapshot": false,
+              "state": "playing",
+              "time": 179.166666666666
+            },
+            "paused": {
+              "textures": 37,
+              "geometries": 292,
+              "composer": true,
+              "snapshot": true,
+              "state": "playing",
+              "time": 179.166666666666
+            },
+            "stable": {
+              "textures": 37,
+              "geometries": 292,
+              "composer": true,
+              "snapshot": true,
+              "state": "playing",
+              "time": 179.166666666666
+            },
+            "resumed": {
+              "textures": 36,
+              "geometries": 292,
+              "composer": true,
+              "snapshot": false,
+              "state": "playing",
+              "time": 179.14999999999932
+            },
+            "resumeMs": 123.20000000001164,
+            "clockUnchanged": true,
+            "samePixels": true,
+            "captured": {
+              "hash": 2481934322,
+              "width": 750,
+              "height": 525
+            },
+            "presented": {
+              "hash": 2481934322,
+              "width": 750,
+              "height": 525
+            }
+          },
+          {
+            "playing": {
+              "textures": 36,
+              "geometries": 292,
+              "composer": true,
+              "snapshot": false,
+              "state": "playing",
+              "time": 179.13333333333264
+            },
+            "paused": {
+              "textures": 37,
+              "geometries": 292,
+              "composer": true,
+              "snapshot": true,
+              "state": "playing",
+              "time": 179.13333333333264
+            },
+            "stable": {
+              "textures": 37,
+              "geometries": 292,
+              "composer": true,
+              "snapshot": true,
+              "state": "playing",
+              "time": 179.13333333333264
+            },
+            "resumed": {
+              "textures": 36,
+              "geometries": 292,
+              "composer": true,
+              "snapshot": false,
+              "state": "playing",
+              "time": 179.11666666666596
+            },
+            "resumeMs": 220.70000000001164,
+            "clockUnchanged": true,
+            "samePixels": true,
+            "captured": {
+              "hash": 2396976635,
+              "width": 750,
+              "height": 525
+            },
+            "presented": {
+              "hash": 2396976635,
+              "width": 750,
+              "height": 525
+            }
+          }
+        ],
+        "menu": [
+          {
+            "input": "touch",
+            "buildMs": 352.3999999999651,
+            "initial": {
+              "cards": 161,
+              "svgs": 523,
+              "blobs": 20,
+              "icons": 20,
+              "nodes": 5367,
+              "deferred": 141,
+              "visibleMissing": [
+                "s3-shooter-short-01",
+                "s3-shooter-first",
+                "s3-shooter-first-01",
+                "s3-shooter-precision"
+              ]
+            }
+          },
+          {
+            "input": "pad",
+            "buildMs": 709.7999999999884,
+            "initial": {
+              "cards": 161,
+              "svgs": 805,
+              "blobs": 161,
+              "icons": 161,
+              "nodes": 7305,
+              "deferred": 0,
+              "visibleMissing": []
+            }
+          },
+          {
+            "input": "kbm",
+            "buildMs": 622.2000000000116,
+            "initial": {
+              "cards": 161,
+              "svgs": 805,
+              "blobs": 161,
+              "icons": 161,
+              "nodes": 7305,
+              "deferred": 0,
+              "visibleMissing": []
+            }
+          }
+        ]
+      }
+    ],
+    "after": [
+      {
+        "touch": true,
+        "errors": [],
+        "pause": [],
+        "menu": [
+          {
+            "input": "touch",
+            "buildMs": 155.5,
+            "initial": {
+              "cards": 161,
+              "svgs": 516,
+              "blobs": 1,
+              "icons": 32,
+              "nodes": 5461,
+              "deferred": 129,
+              "visibleMissing": []
+            }
+          },
+          {
+            "input": "pad",
+            "buildMs": 191.90000000002328,
+            "initial": {
+              "cards": 161,
+              "svgs": 516,
+              "blobs": 1,
+              "icons": 32,
+              "nodes": 5460,
+              "deferred": 129,
+              "visibleMissing": []
+            }
+          },
+          {
+            "input": "kbm",
+            "buildMs": 236.69999999995343,
+            "initial": {
+              "cards": 161,
+              "svgs": 516,
+              "blobs": 1,
+              "icons": 32,
+              "nodes": 5460,
+              "deferred": 129,
+              "visibleMissing": []
+            }
+          }
+        ]
+      },
+      {
+        "touch": false,
+        "errors": [],
+        "pause": [
+          {
+            "playing": {
+              "textures": 36,
+              "geometries": 286,
+              "composer": true,
+              "snapshot": false,
+              "state": "playing",
+              "time": 179.19999999999936
+            },
+            "paused": {
+              "textures": 35,
+              "geometries": 285,
+              "composer": false,
+              "snapshot": true,
+              "state": "playing",
+              "time": 179.19999999999936
+            },
+            "stable": {
+              "textures": 35,
+              "geometries": 286,
+              "composer": false,
+              "snapshot": true,
+              "state": "playing",
+              "time": 179.19999999999936
+            },
+            "resumed": {
+              "textures": 36,
+              "geometries": 286,
+              "composer": true,
+              "snapshot": false,
+              "state": "playing",
+              "time": 179.18333333333268
+            },
+            "resumeMs": 97.59999999997672,
+            "clockUnchanged": true,
+            "samePixels": true,
+            "captured": {
+              "hash": 2966098137,
+              "width": 750,
+              "height": 525
+            },
+            "presented": {
+              "hash": 2966098137,
+              "width": 750,
+              "height": 525
+            }
+          },
+          {
+            "playing": {
+              "textures": 36,
+              "geometries": 286,
+              "composer": true,
+              "snapshot": false,
+              "state": "playing",
+              "time": 179.166666666666
+            },
+            "paused": {
+              "textures": 35,
+              "geometries": 285,
+              "composer": false,
+              "snapshot": true,
+              "state": "playing",
+              "time": 179.166666666666
+            },
+            "stable": {
+              "textures": 35,
+              "geometries": 286,
+              "composer": false,
+              "snapshot": true,
+              "state": "playing",
+              "time": 179.166666666666
+            },
+            "resumed": {
+              "textures": 36,
+              "geometries": 286,
+              "composer": true,
+              "snapshot": false,
+              "state": "playing",
+              "time": 179.14999999999932
+            },
+            "resumeMs": 91.60000000009313,
+            "clockUnchanged": true,
+            "samePixels": true,
+            "captured": {
+              "hash": 2074271002,
+              "width": 750,
+              "height": 525
+            },
+            "presented": {
+              "hash": 2074271002,
+              "width": 750,
+              "height": 525
+            }
+          },
+          {
+            "playing": {
+              "textures": 36,
+              "geometries": 286,
+              "composer": true,
+              "snapshot": false,
+              "state": "playing",
+              "time": 179.13333333333264
+            },
+            "paused": {
+              "textures": 35,
+              "geometries": 285,
+              "composer": false,
+              "snapshot": true,
+              "state": "playing",
+              "time": 179.13333333333264
+            },
+            "stable": {
+              "textures": 35,
+              "geometries": 286,
+              "composer": false,
+              "snapshot": true,
+              "state": "playing",
+              "time": 179.13333333333264
+            },
+            "resumed": {
+              "textures": 36,
+              "geometries": 286,
+              "composer": true,
+              "snapshot": false,
+              "state": "playing",
+              "time": 179.11666666666596
+            },
+            "resumeMs": 66.5,
+            "clockUnchanged": true,
+            "samePixels": true,
+            "captured": {
+              "hash": 2970138608,
+              "width": 750,
+              "height": 525
+            },
+            "presented": {
+              "hash": 2970138608,
+              "width": 750,
+              "height": 525
+            }
+          }
+        ],
+        "menu": [
+          {
+            "input": "touch",
+            "buildMs": 499.9000000000233,
+            "initial": {
+              "cards": 161,
+              "svgs": 504,
+              "blobs": 1,
+              "icons": 20,
+              "nodes": 5329,
+              "deferred": 141,
+              "visibleMissing": [
+                "s3-shooter-short-01",
+                "s3-shooter-first",
+                "s3-shooter-first-01",
+                "s3-shooter-precision"
+              ]
+            }
+          },
+          {
+            "input": "pad",
+            "buildMs": 408.9000000000233,
+            "initial": {
+              "cards": 161,
+              "svgs": 504,
+              "blobs": 1,
+              "icons": 20,
+              "nodes": 5328,
+              "deferred": 141,
+              "visibleMissing": [
+                "s3-shooter-short-01",
+                "s3-shooter-first",
+                "s3-shooter-first-01",
+                "s3-shooter-precision"
+              ]
+            }
+          },
+          {
+            "input": "kbm",
+            "buildMs": 468.19999999995343,
+            "initial": {
+              "cards": 161,
+              "svgs": 504,
+              "blobs": 1,
+              "icons": 20,
+              "nodes": 5328,
+              "deferred": 141,
+              "visibleMissing": [
+                "s3-shooter-short-01",
+                "s3-shooter-first",
+                "s3-shooter-first-01",
+                "s3-shooter-precision"
+              ]
+            }
+          }
+        ],
+        "resize": {
+          "width": 660,
+          "height": 495,
+          "canvasWidth": 660,
+          "canvasHeight": 495,
+          "composer": false
+        },
+        "settings": {
+          "copies": 1,
+          "snapshot": true,
+          "composer": false
+        }
+      }
+    ]
+  },
+  "uiFixture": {
+    "scope": "real 161-weapon menu and native browser clicks; missing sub/special display metadata stubbed; no gameplay acceptance",
+    "cases": [
+      {
+        "variant": "baseline",
+        "touch": true,
+        "input": "touch",
+        "before": {
+          "cards": 161,
+          "blobs": 20,
+          "icons": 20,
+          "nodes": 2241,
+          "visibleMissing": [],
+          "firstBlob": "b160cc54c4e1eb39869e21e1cec8d3fe6911e43746eb082ec54f2e1cf1de8282"
+        },
+        "equipped": {
+          "id": "s3-saber-heavy-01",
+          "card": "s3-saber-heavy-01",
+          "blob": "89a46c23ee3ecfcfff2e7ef5488623297322c395b7e2dde40147948a8b7f76fc",
+          "icon": "63eccc9bed83c06b5ad2a88e6a81430b0b8cdd295111a8c9bab380a5cefcf403"
+        },
+        "errors": []
+      },
+      {
+        "variant": "baseline",
+        "touch": true,
+        "input": "pad",
+        "before": {
+          "cards": 161,
+          "blobs": 161,
+          "icons": 161,
+          "nodes": 4180,
+          "visibleMissing": [],
+          "firstBlob": "b160cc54c4e1eb39869e21e1cec8d3fe6911e43746eb082ec54f2e1cf1de8282"
+        },
+        "equipped": {
+          "id": "s3-saber-heavy-01",
+          "card": "s3-saber-heavy-01",
+          "blob": "89a46c23ee3ecfcfff2e7ef5488623297322c395b7e2dde40147948a8b7f76fc",
+          "icon": "63eccc9bed83c06b5ad2a88e6a81430b0b8cdd295111a8c9bab380a5cefcf403"
+        },
+        "errors": []
+      },
+      {
+        "variant": "baseline",
+        "touch": true,
+        "input": "kbm",
+        "before": {
+          "cards": 161,
+          "blobs": 161,
+          "icons": 161,
+          "nodes": 4180,
+          "visibleMissing": [],
+          "firstBlob": "b160cc54c4e1eb39869e21e1cec8d3fe6911e43746eb082ec54f2e1cf1de8282"
+        },
+        "equipped": {
+          "id": "s3-saber-heavy-01",
+          "card": "s3-saber-heavy-01",
+          "blob": "89a46c23ee3ecfcfff2e7ef5488623297322c395b7e2dde40147948a8b7f76fc",
+          "icon": "63eccc9bed83c06b5ad2a88e6a81430b0b8cdd295111a8c9bab380a5cefcf403"
+        },
+        "errors": []
+      },
+      {
+        "variant": "baseline",
+        "touch": false,
+        "input": "touch",
+        "before": {
+          "cards": 161,
+          "blobs": 20,
+          "icons": 20,
+          "nodes": 2241,
+          "visibleMissing": [],
+          "firstBlob": "b160cc54c4e1eb39869e21e1cec8d3fe6911e43746eb082ec54f2e1cf1de8282"
+        },
+        "equipped": {
+          "id": "s3-saber-heavy-01",
+          "card": "s3-saber-heavy-01",
+          "blob": "89a46c23ee3ecfcfff2e7ef5488623297322c395b7e2dde40147948a8b7f76fc",
+          "icon": "63eccc9bed83c06b5ad2a88e6a81430b0b8cdd295111a8c9bab380a5cefcf403"
+        },
+        "errors": []
+      },
+      {
+        "variant": "baseline",
+        "touch": false,
+        "input": "pad",
+        "before": {
+          "cards": 161,
+          "blobs": 161,
+          "icons": 161,
+          "nodes": 4180,
+          "visibleMissing": [],
+          "firstBlob": "b160cc54c4e1eb39869e21e1cec8d3fe6911e43746eb082ec54f2e1cf1de8282"
+        },
+        "equipped": {
+          "id": "s3-saber-heavy-01",
+          "card": "s3-saber-heavy-01",
+          "blob": "89a46c23ee3ecfcfff2e7ef5488623297322c395b7e2dde40147948a8b7f76fc",
+          "icon": "63eccc9bed83c06b5ad2a88e6a81430b0b8cdd295111a8c9bab380a5cefcf403"
+        },
+        "errors": []
+      },
+      {
+        "variant": "baseline",
+        "touch": false,
+        "input": "kbm",
+        "before": {
+          "cards": 161,
+          "blobs": 161,
+          "icons": 161,
+          "nodes": 4180,
+          "visibleMissing": [],
+          "firstBlob": "b160cc54c4e1eb39869e21e1cec8d3fe6911e43746eb082ec54f2e1cf1de8282"
+        },
+        "equipped": {
+          "id": "s3-saber-heavy-01",
+          "card": "s3-saber-heavy-01",
+          "blob": "89a46c23ee3ecfcfff2e7ef5488623297322c395b7e2dde40147948a8b7f76fc",
+          "icon": "63eccc9bed83c06b5ad2a88e6a81430b0b8cdd295111a8c9bab380a5cefcf403"
+        },
+        "errors": []
+      },
+      {
+        "variant": "after-site",
+        "touch": true,
+        "input": "touch",
+        "before": {
+          "cards": 161,
+          "blobs": 1,
+          "icons": 20,
+          "nodes": 2203,
+          "visibleMissing": [],
+          "firstBlob": "b160cc54c4e1eb39869e21e1cec8d3fe6911e43746eb082ec54f2e1cf1de8282"
+        },
+        "equipped": {
+          "id": "s3-saber-heavy-01",
+          "card": "s3-saber-heavy-01",
+          "blob": "89a46c23ee3ecfcfff2e7ef5488623297322c395b7e2dde40147948a8b7f76fc",
+          "icon": "63eccc9bed83c06b5ad2a88e6a81430b0b8cdd295111a8c9bab380a5cefcf403"
+        },
+        "errors": []
+      },
+      {
+        "variant": "after-site",
+        "touch": true,
+        "input": "pad",
+        "before": {
+          "cards": 161,
+          "blobs": 1,
+          "icons": 20,
+          "nodes": 2203,
+          "visibleMissing": [],
+          "firstBlob": "b160cc54c4e1eb39869e21e1cec8d3fe6911e43746eb082ec54f2e1cf1de8282"
+        },
+        "equipped": {
+          "id": "s3-saber-heavy-01",
+          "card": "s3-saber-heavy-01",
+          "blob": "89a46c23ee3ecfcfff2e7ef5488623297322c395b7e2dde40147948a8b7f76fc",
+          "icon": "63eccc9bed83c06b5ad2a88e6a81430b0b8cdd295111a8c9bab380a5cefcf403"
+        },
+        "errors": []
+      },
+      {
+        "variant": "after-site",
+        "touch": true,
+        "input": "kbm",
+        "before": {
+          "cards": 161,
+          "blobs": 1,
+          "icons": 20,
+          "nodes": 2203,
+          "visibleMissing": [],
+          "firstBlob": "b160cc54c4e1eb39869e21e1cec8d3fe6911e43746eb082ec54f2e1cf1de8282"
+        },
+        "equipped": {
+          "id": "s3-saber-heavy-01",
+          "card": "s3-saber-heavy-01",
+          "blob": "89a46c23ee3ecfcfff2e7ef5488623297322c395b7e2dde40147948a8b7f76fc",
+          "icon": "63eccc9bed83c06b5ad2a88e6a81430b0b8cdd295111a8c9bab380a5cefcf403"
+        },
+        "errors": []
+      },
+      {
+        "variant": "after-site",
+        "touch": false,
+        "input": "touch",
+        "before": {
+          "cards": 161,
+          "blobs": 1,
+          "icons": 20,
+          "nodes": 2203,
+          "visibleMissing": [],
+          "firstBlob": "b160cc54c4e1eb39869e21e1cec8d3fe6911e43746eb082ec54f2e1cf1de8282"
+        },
+        "equipped": {
+          "id": "s3-saber-heavy-01",
+          "card": "s3-saber-heavy-01",
+          "blob": "89a46c23ee3ecfcfff2e7ef5488623297322c395b7e2dde40147948a8b7f76fc",
+          "icon": "63eccc9bed83c06b5ad2a88e6a81430b0b8cdd295111a8c9bab380a5cefcf403"
+        },
+        "errors": []
+      },
+      {
+        "variant": "after-site",
+        "touch": false,
+        "input": "pad",
+        "before": {
+          "cards": 161,
+          "blobs": 1,
+          "icons": 24,
+          "nodes": 2247,
+          "visibleMissing": [],
+          "firstBlob": "b160cc54c4e1eb39869e21e1cec8d3fe6911e43746eb082ec54f2e1cf1de8282"
+        },
+        "equipped": {
+          "id": "s3-saber-heavy-01",
+          "card": "s3-saber-heavy-01",
+          "blob": "89a46c23ee3ecfcfff2e7ef5488623297322c395b7e2dde40147948a8b7f76fc",
+          "icon": "63eccc9bed83c06b5ad2a88e6a81430b0b8cdd295111a8c9bab380a5cefcf403"
+        },
+        "errors": []
+      },
+      {
+        "variant": "after-site",
+        "touch": false,
+        "input": "kbm",
+        "before": {
+          "cards": 161,
+          "blobs": 1,
+          "icons": 24,
+          "nodes": 2247,
+          "visibleMissing": [],
+          "firstBlob": "b160cc54c4e1eb39869e21e1cec8d3fe6911e43746eb082ec54f2e1cf1de8282"
+        },
+        "equipped": {
+          "id": "s3-saber-heavy-01",
+          "card": "s3-saber-heavy-01",
+          "blob": "89a46c23ee3ecfcfff2e7ef5488623297322c395b7e2dde40147948a8b7f76fc",
+          "icon": "63eccc9bed83c06b5ad2a88e6a81430b0b8cdd295111a8c9bab380a5cefcf403"
+        },
+        "errors": []
+      }
+    ]
+  }
+}

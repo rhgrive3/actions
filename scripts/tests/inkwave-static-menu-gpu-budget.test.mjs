@@ -49,6 +49,42 @@ test('loadout retains all real selectable weapons while offscreen mobile SVGs ar
   assert.match(css, /\.iw-wcard\[data-art-deferred="1"\]/);
 });
 
+test('one catalogue hydrator serves touch, pad and mouse while equip-only decoration stays lazy', () => {
+  const menus = composed('src/ui/menus.js');
+  assert.match(menus, /const lazyWeaponArt = n > 20 && typeof IntersectionObserver !== 'undefined';/);
+  assert.match(menus, /html: deferArt \? '' : id === equipped \? splatSVG/);
+  assert.match(menus, /materializeArt\(c\);\n        restartAnim\(c, 'is-pick'\);/);
+  const start = menus.indexOf('    const materializeArt = (card) => {');
+  const end = menus.indexOf('\n    let weaponArtObserver', start);
+  assert.ok(start >= 0 && end > start);
+  const hydrate = new Function('Ws', 'splatSVG', 'weaponIcon', menus.slice(start, end) + '\nreturn materializeArt;')(
+    { test: { id: 'test' } }, opts => 'blob-' + opts.seed, id => 'icon-' + id);
+  const card = (deferred, equipped) => {
+    const blob = { firstChild: null }, icon = {};
+    Object.defineProperty(blob, 'innerHTML', { set(value) { this.firstChild = { value }; } });
+    return { _wid: 'test', _weaponArtIndex: 23, _artDeferred: deferred, dataset: { artDeferred: '1' },
+      classList: { contains: () => equipped.value },
+      querySelector: selector => selector.endsWith('__blob') ? blob : icon, blob, icon };
+  };
+  for (const deferred of [false, true]) {
+    const equipped = { value: false }, c = card(deferred, equipped);
+    hydrate(c);
+    assert.equal(c.blob.firstChild, null, 'scroll/focus cannot allocate invisible equip decoration');
+    if (deferred) assert.equal(c.icon.innerHTML, 'icon-test', 'deferred icon uses the composed catalogue ID');
+    assert.equal(c._artDeferred, false);
+    equipped.value = true;
+    hydrate(c);
+    const blob = c.blob.firstChild;
+    assert.equal(blob.value, 'blob-109', 'equipping eagerly creates the identical seeded artwork');
+    hydrate(c);
+    assert.equal(c.blob.firstChild, blob, 'refocus/re-equip reuses existing art');
+    equipped.value = false;
+    hydrate(c);
+    assert.equal(c.blob.firstChild, blob, 'old equip decoration survives the original shrinking transition');
+  }
+  hydrate(null);
+});
+
 test('lazy composer frees the native GPU targets once and rebuilds with the same passes', () => {
   const allocated = [];
   let releases = 0;
