@@ -1,0 +1,1104 @@
+TAP version 13
+# Subtest: GPU identity survives queued draws without another synchronous query (extension true)
+ok 1 - GPU identity survives queued draws without another synchronous query (extension true)
+  ---
+  duration_ms: 25.166972
+  type: 'test'
+  ...
+# Subtest: GPU identity survives queued draws without another synchronous query (extension false)
+ok 2 - GPU identity survives queued draws without another synchronous query (extension false)
+  ---
+  duration_ms: 2.1863
+  type: 'test'
+  ...
+# Subtest: cached identity cannot admit a lost context
+ok 3 - cached identity cannot admit a lost context
+  ---
+  duration_ms: 3.274175
+  type: 'test'
+  ...
+# Subtest: cached identity cannot admit a lost without event context
+ok 4 - cached identity cannot admit a lost without event context
+  ---
+  duration_ms: 7.712233
+  type: 'test'
+  ...
+# Subtest: cached identity cannot admit a restored context
+ok 5 - cached identity cannot admit a restored context
+  ---
+  duration_ms: 1.301698
+  type: 'test'
+  ...
+# Subtest: cached identity cannot admit a replaced context
+ok 6 - cached identity cannot admit a replaced context
+  ---
+  duration_ms: 13.734726
+  type: 'test'
+  ...
+# Subtest: an already lost context fails before recording identity
+ok 7 - an already lost context fails before recording identity
+  ---
+  duration_ms: 1.573714
+  type: 'test'
+  ...
+# Subtest: main captures actual desktop identity before workload and verifies its lifetime before retirement
+ok 8 - main captures actual desktop identity before workload and verifies its lifetime before retirement
+  ---
+  duration_ms: 0.988067
+  type: 'test'
+  ...
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"gpu-identity","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"gpu-identity","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"gpu-identity","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"gpu-identity","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"gpu-identity","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"gpu-identity","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"gpu-identity","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"gpu-identity","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"gpu-identity","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"cold-boot-mobile","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"cold-boot-mobile","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:sunset","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:sunset","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:aggregate","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:aggregate","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:sunset","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:day","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# INKWAVE_IDLE_FAILURE_PROGRESS {"phase":"clouds:golden","state":"unknown","frame":null,"completed":null,"totalCompleted":null,"sampledRegion":"unknown","regionEdge":"unknown","observations":{"critical":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"detail":{"retained":0,"capacity":null,"received":null,"limit":null,"truncated":false},"coarseEdgesPerFrame":128,"criticalOmitted":null,"detailOmitted":null,"gl":"counters-only"},"scope":"sampled diagnostic; not GPU/FPS evidence"}
+# Subtest: ordinary success returns the exact value after cleanup, clears its timer and never diagnoses
+ok 9 - ordinary success returns the exact value after cleanup, clears its timer and never diagnoses
+  ---
+  duration_ms: 28.115347
+  type: 'test'
+  ...
+# Subtest: ordinary asynchronous evaluate failure keeps its identity and diagnostics precede cleanup
+ok 10 - ordinary asynchronous evaluate failure keeps its identity and diagnostics precede cleanup
+  ---
+  duration_ms: 11.626259
+  type: 'test'
+  ...
+# Subtest: ordinary synchronous evaluate failure keeps its identity and diagnostics precede cleanup
+ok 11 - ordinary synchronous evaluate failure keeps its identity and diagnostics precede cleanup
+  ---
+  duration_ms: 0.699996
+  type: 'test'
+  ...
+# Subtest: never-resolving evaluate rejects at the existing 120 seconds, writes available evidence, then cleans up
+ok 12 - never-resolving evaluate rejects at the existing 120 seconds, writes available evidence, then cleans up
+  ---
+  duration_ms: 40.615199
+  type: 'test'
+  ...
+# Subtest: late evaluate resolve after timeout cannot overwrite the failed receipt
+ok 13 - late evaluate resolve after timeout cannot overwrite the failed receipt
+  ---
+  duration_ms: 12.219742
+  type: 'test'
+  ...
+# Subtest: late evaluate reject after timeout cannot overwrite the failed receipt
+ok 14 - late evaluate reject after timeout cannot overwrite the failed receipt
+  ---
+  duration_ms: 0.865137
+  type: 'test'
+  ...
+# Subtest: timeout remains primary if cleanup also fails; the server is still closed and both errors are recorded
+ok 15 - timeout remains primary if cleanup also fails; the server is still closed and both errors are recorded
+  ---
+  duration_ms: 1.168385
+  type: 'test'
+  ...
+# Subtest: cleanup failure after an ordinary pass fails the probe instead of committing success
+ok 16 - cleanup failure after an ordinary pass fails the probe instead of committing success
+  ---
+  duration_ms: 1.063101
+  type: 'test'
+  ...
+# Subtest: diagnostic write failure cannot erase the original error or prevent cleanup
+ok 17 - diagnostic write failure cannot erase the original error or prevent cleanup
+  ---
+  duration_ms: 9.45912
+  type: 'test'
+  ...
+# Subtest: browser and server cleanup failures retain the operation error in order
+ok 18 - browser and server cleanup failures retain the operation error in order
+  ---
+  duration_ms: 2.608983
+  type: 'test'
+  ...
+# Subtest: guarding the same page twice does not nest deadlines or invoke evaluate twice
+ok 19 - guarding the same page twice does not nest deadlines or invoke evaluate twice
+  ---
+  duration_ms: 13.146844
+  type: 'test'
+  ...
+# Subtest: falsy thrown values remain failures and cyclic error causes cannot hang reporting
+ok 20 - falsy thrown values remain failures and cyclic error causes cannot hang reporting
+  ---
+  duration_ms: 0.349454
+  type: 'test'
+  ...
+# Subtest: actual cold route retains the original evaluation timeout instead of a later navigation error
+ok 21 - actual cold route retains the original evaluation timeout instead of a later navigation error
+  ---
+  duration_ms: 16.439583
+  type: 'test'
+  ...
+# Subtest: actual desktop setup bounds its first evaluate, rather than only setting Playwright default timeout
+ok 22 - actual desktop setup bounds its first evaluate, rather than only setting Playwright default timeout
+  ---
+  duration_ms: 11.291474
+  type: 'test'
+  ...
+# Subtest: actual cold timeout persists observations before ordinary browser cleanup
+ok 23 - actual cold timeout persists observations before ordinary browser cleanup
+  ---
+  duration_ms: 32.173321
+  type: 'test'
+  ...
+# Subtest: actual cold timeout persists observations before failing browser cleanup
+ok 24 - actual cold timeout persists observations before failing browser cleanup
+  ---
+  duration_ms: 1.384977
+  type: 'test'
+  ...
+# Subtest: three sequential119999ms operations get independent deadlines and report aggregate359997ms
+ok 25 - three sequential119999ms operations get independent deadlines and report aggregate359997ms
+  ---
+  duration_ms: 26.747966
+  type: 'test'
+  ...
+# Subtest: day remains pending119999ms and fails at120000ms without later operations
+ok 26 - day remains pending119999ms and fails at120000ms without later operations
+  ---
+  duration_ms: 15.511874
+  type: 'test'
+  ...
+# Subtest: sunset remains pending119999ms and fails at120000ms without later operations
+ok 27 - sunset remains pending119999ms and fails at120000ms without later operations
+  ---
+  duration_ms: 17.702024
+  type: 'test'
+  ...
+# Subtest: golden remains pending119999ms and fails at120000ms without later operations
+ok 28 - golden remains pending119999ms and fails at120000ms without later operations
+  ---
+  duration_ms: 41.581596
+  type: 'test'
+  ...
+# Subtest: second-theme original failure keeps first artifacts, emits failure before cleanup and never retries
+ok 29 - second-theme original failure keeps first artifacts, emits failure before cleanup and never retries
+  ---
+  duration_ms: 18.79351
+  type: 'test'
+  ...
+# Subtest: aggregate cap stops golden before its own120seconds and preserves both earlier themes
+ok 30 - aggregate cap stops golden before its own120seconds and preserves both earlier themes
+  ---
+  duration_ms: 10.243962
+  type: 'test'
+  ...
+# Subtest: all rows and artifacts cannot become success if synchronous retention reaches the aggregate boundary
+ok 31 - all rows and artifacts cannot become success if synchronous retention reaches the aggregate boundary
+  ---
+  duration_ms: 15.364912
+  type: 'test'
+  ...
+# Subtest: cleanup failure preserves a theme failure and never deletes already saved evidence
+ok 32 - cleanup failure preserves a theme failure and never deletes already saved evidence
+  ---
+  duration_ms: 8.724959
+  type: 'test'
+  ...
+# Subtest: an artifact write failure preserves the first image and original error without starting another theme
+ok 33 - an artifact write failure preserves the first image and original error without starting another theme
+  ---
+  duration_ms: 11.905583
+  type: 'test'
+  ...
+# Subtest: wrong ordered result fails before retention rather than using a partial-success fallback
+ok 34 - wrong ordered result fails before retention rather than using a partial-success fallback
+  ---
+  duration_ms: 30.813098
+  type: 'test'
+  ...
+# Subtest: actual browser routine retains nine independent native bakes/samples and shared owners; alreadyHigh=false
+ok 35 - actual browser routine retains nine independent native bakes/samples and shared owners; alreadyHigh=false
+  ---
+  duration_ms: 533.989523
+  type: 'test'
+  ...
+# Subtest: actual browser routine retains nine independent native bakes/samples and shared owners; alreadyHigh=true
+ok 36 - actual browser routine retains nine independent native bakes/samples and shared owners; alreadyHigh=true
+  ---
+  duration_ms: 469.910223
+  type: 'test'
+  ...
+# Subtest: actual second-theme sample failure preserves the native error and releases shared QA resources once
+ok 37 - actual second-theme sample failure preserves the native error and releases shared QA resources once
+  ---
+  duration_ms: 146.431133
+  type: 'test'
+  ...
+# Subtest: a replaced Game is rejected rather than restarted or accepted under the same sequence
+ok 38 - a replaced Game is rejected rather than restarted or accepted under the same sequence
+  ---
+  duration_ms: 154.380097
+  type: 'test'
+  ...
+# Subtest: actual day read falsy throw 0 preserves failure and disposes once
+ok 39 - actual day read falsy throw 0 preserves failure and disposes once
+  ---
+  duration_ms: 14.944502
+  type: 'test'
+  ...
+# Subtest: actual day read falsy throw 0 preserves failure and disposes once with cleanup error
+ok 40 - actual day read falsy throw 0 preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 11.847061
+  type: 'test'
+  ...
+# Subtest: actual day read falsy throw false preserves failure and disposes once
+ok 41 - actual day read falsy throw false preserves failure and disposes once
+  ---
+  duration_ms: 2.983227
+  type: 'test'
+  ...
+# Subtest: actual day read falsy throw false preserves failure and disposes once with cleanup error
+ok 42 - actual day read falsy throw false preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 11.429247
+  type: 'test'
+  ...
+# Subtest: actual day read falsy throw null preserves failure and disposes once
+ok 43 - actual day read falsy throw null preserves failure and disposes once
+  ---
+  duration_ms: 11.169616
+  type: 'test'
+  ...
+# Subtest: actual day read falsy throw null preserves failure and disposes once with cleanup error
+ok 44 - actual day read falsy throw null preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 38.89018
+  type: 'test'
+  ...
+# Subtest: actual day read falsy throw undefined preserves failure and disposes once
+ok 45 - actual day read falsy throw undefined preserves failure and disposes once
+  ---
+  duration_ms: 19.119298
+  type: 'test'
+  ...
+# Subtest: actual day read falsy throw undefined preserves failure and disposes once with cleanup error
+ok 46 - actual day read falsy throw undefined preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 8.875644
+  type: 'test'
+  ...
+# Subtest: actual golden read falsy throw 0 preserves failure and disposes once
+ok 47 - actual golden read falsy throw 0 preserves failure and disposes once
+  ---
+  duration_ms: 282.686897
+  type: 'test'
+  ...
+# Subtest: actual golden read falsy throw 0 preserves failure and disposes once with cleanup error
+ok 48 - actual golden read falsy throw 0 preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 231.136747
+  type: 'test'
+  ...
+# Subtest: actual golden read falsy throw false preserves failure and disposes once
+ok 49 - actual golden read falsy throw false preserves failure and disposes once
+  ---
+  duration_ms: 314.808141
+  type: 'test'
+  ...
+# Subtest: actual golden read falsy throw false preserves failure and disposes once with cleanup error
+ok 50 - actual golden read falsy throw false preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 321.2886
+  type: 'test'
+  ...
+# Subtest: actual golden read falsy throw null preserves failure and disposes once
+ok 51 - actual golden read falsy throw null preserves failure and disposes once
+  ---
+  duration_ms: 266.682807
+  type: 'test'
+  ...
+# Subtest: actual golden read falsy throw null preserves failure and disposes once with cleanup error
+ok 52 - actual golden read falsy throw null preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 281.299999
+  type: 'test'
+  ...
+# Subtest: actual golden read falsy throw undefined preserves failure and disposes once
+ok 53 - actual golden read falsy throw undefined preserves failure and disposes once
+  ---
+  duration_ms: 315.987199
+  type: 'test'
+  ...
+# Subtest: actual golden read falsy throw undefined preserves failure and disposes once with cleanup error
+ok 54 - actual golden read falsy throw undefined preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 362.168676
+  type: 'test'
+  ...
+# Subtest: actual day resize falsy throw 0 preserves failure and disposes once
+ok 55 - actual day resize falsy throw 0 preserves failure and disposes once
+  ---
+  duration_ms: 15.699473
+  type: 'test'
+  ...
+# Subtest: actual day resize falsy throw 0 preserves failure and disposes once with cleanup error
+ok 56 - actual day resize falsy throw 0 preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 15.053065
+  type: 'test'
+  ...
+# Subtest: actual day resize falsy throw false preserves failure and disposes once
+ok 57 - actual day resize falsy throw false preserves failure and disposes once
+  ---
+  duration_ms: 2.435285
+  type: 'test'
+  ...
+# Subtest: actual day resize falsy throw false preserves failure and disposes once with cleanup error
+ok 58 - actual day resize falsy throw false preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 15.056212
+  type: 'test'
+  ...
+# Subtest: actual day resize falsy throw null preserves failure and disposes once
+ok 59 - actual day resize falsy throw null preserves failure and disposes once
+  ---
+  duration_ms: 14.998719
+  type: 'test'
+  ...
+# Subtest: actual day resize falsy throw null preserves failure and disposes once with cleanup error
+ok 60 - actual day resize falsy throw null preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 47.812548
+  type: 'test'
+  ...
+# Subtest: actual day resize falsy throw undefined preserves failure and disposes once
+ok 61 - actual day resize falsy throw undefined preserves failure and disposes once
+  ---
+  duration_ms: 11.875917
+  type: 'test'
+  ...
+# Subtest: actual day resize falsy throw undefined preserves failure and disposes once with cleanup error
+ok 62 - actual day resize falsy throw undefined preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 8.553432
+  type: 'test'
+  ...
+# Subtest: actual golden resize falsy throw 0 preserves failure and disposes once
+ok 63 - actual golden resize falsy throw 0 preserves failure and disposes once
+  ---
+  duration_ms: 334.124781
+  type: 'test'
+  ...
+# Subtest: actual golden resize falsy throw 0 preserves failure and disposes once with cleanup error
+ok 64 - actual golden resize falsy throw 0 preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 357.117105
+  type: 'test'
+  ...
+# Subtest: actual golden resize falsy throw false preserves failure and disposes once
+ok 65 - actual golden resize falsy throw false preserves failure and disposes once
+  ---
+  duration_ms: 303.441076
+  type: 'test'
+  ...
+# Subtest: actual golden resize falsy throw false preserves failure and disposes once with cleanup error
+ok 66 - actual golden resize falsy throw false preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 240.973418
+  type: 'test'
+  ...
+# Subtest: actual golden resize falsy throw null preserves failure and disposes once
+ok 67 - actual golden resize falsy throw null preserves failure and disposes once
+  ---
+  duration_ms: 256.590721
+  type: 'test'
+  ...
+# Subtest: actual golden resize falsy throw null preserves failure and disposes once with cleanup error
+ok 68 - actual golden resize falsy throw null preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 284.307696
+  type: 'test'
+  ...
+# Subtest: actual golden resize falsy throw undefined preserves failure and disposes once
+ok 69 - actual golden resize falsy throw undefined preserves failure and disposes once
+  ---
+  duration_ms: 263.113422
+  type: 'test'
+  ...
+# Subtest: actual golden resize falsy throw undefined preserves failure and disposes once with cleanup error
+ok 70 - actual golden resize falsy throw undefined preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 255.313858
+  type: 'test'
+  ...
+# Subtest: actual day theme falsy throw 0 preserves failure and disposes once
+ok 71 - actual day theme falsy throw 0 preserves failure and disposes once
+  ---
+  duration_ms: 4.454123
+  type: 'test'
+  ...
+# Subtest: actual day theme falsy throw 0 preserves failure and disposes once with cleanup error
+ok 72 - actual day theme falsy throw 0 preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 3.549402
+  type: 'test'
+  ...
+# Subtest: actual day theme falsy throw false preserves failure and disposes once
+ok 73 - actual day theme falsy throw false preserves failure and disposes once
+  ---
+  duration_ms: 3.327053
+  type: 'test'
+  ...
+# Subtest: actual day theme falsy throw false preserves failure and disposes once with cleanup error
+ok 74 - actual day theme falsy throw false preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 3.754941
+  type: 'test'
+  ...
+# Subtest: actual day theme falsy throw null preserves failure and disposes once
+ok 75 - actual day theme falsy throw null preserves failure and disposes once
+  ---
+  duration_ms: 3.98327
+  type: 'test'
+  ...
+# Subtest: actual day theme falsy throw null preserves failure and disposes once with cleanup error
+ok 76 - actual day theme falsy throw null preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 8.443026
+  type: 'test'
+  ...
+# Subtest: actual day theme falsy throw undefined preserves failure and disposes once
+ok 77 - actual day theme falsy throw undefined preserves failure and disposes once
+  ---
+  duration_ms: 5.183305
+  type: 'test'
+  ...
+# Subtest: actual day theme falsy throw undefined preserves failure and disposes once with cleanup error
+ok 78 - actual day theme falsy throw undefined preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 3.54679
+  type: 'test'
+  ...
+# Subtest: actual golden theme falsy throw 0 preserves failure and disposes once
+ok 79 - actual golden theme falsy throw 0 preserves failure and disposes once
+  ---
+  duration_ms: 195.173761
+  type: 'test'
+  ...
+# Subtest: actual golden theme falsy throw 0 preserves failure and disposes once with cleanup error
+ok 80 - actual golden theme falsy throw 0 preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 291.839918
+  type: 'test'
+  ...
+# Subtest: actual golden theme falsy throw false preserves failure and disposes once
+ok 81 - actual golden theme falsy throw false preserves failure and disposes once
+  ---
+  duration_ms: 385.049597
+  type: 'test'
+  ...
+# Subtest: actual golden theme falsy throw false preserves failure and disposes once with cleanup error
+ok 82 - actual golden theme falsy throw false preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 193.462395
+  type: 'test'
+  ...
+# Subtest: actual golden theme falsy throw null preserves failure and disposes once
+ok 83 - actual golden theme falsy throw null preserves failure and disposes once
+  ---
+  duration_ms: 146.835518
+  type: 'test'
+  ...
+# Subtest: actual golden theme falsy throw null preserves failure and disposes once with cleanup error
+ok 84 - actual golden theme falsy throw null preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 356.752284
+  type: 'test'
+  ...
+# Subtest: actual golden theme falsy throw undefined preserves failure and disposes once
+ok 85 - actual golden theme falsy throw undefined preserves failure and disposes once
+  ---
+  duration_ms: 437.678168
+  type: 'test'
+  ...
+# Subtest: actual golden theme falsy throw undefined preserves failure and disposes once with cleanup error
+ok 86 - actual golden theme falsy throw undefined preserves failure and disposes once with cleanup error
+  ---
+  duration_ms: 427.990341
+  type: 'test'
+  ...
+# Subtest: selector performs one native call and restores exact descriptor; own=false,high=false
+ok 87 - selector performs one native call and restores exact descriptor; own=false,high=false
+  ---
+  duration_ms: 2.378939
+  type: 'test'
+  ...
+# Subtest: selector restores exact descriptor after falsy resize exception; own=false,high=false
+ok 88 - selector restores exact descriptor after falsy resize exception; own=false,high=false
+  ---
+  duration_ms: 29.241993
+  type: 'test'
+  ...
+# Subtest: selector restores exact descriptor after falsy theme exception; own=false,high=false
+ok 89 - selector restores exact descriptor after falsy theme exception; own=false,high=false
+  ---
+  duration_ms: 19.077976
+  type: 'test'
+  ...
+# Subtest: selector performs one native call and restores exact descriptor; own=false,high=true
+ok 90 - selector performs one native call and restores exact descriptor; own=false,high=true
+  ---
+  duration_ms: 2.059603
+  type: 'test'
+  ...
+# Subtest: selector restores exact descriptor after falsy theme exception; own=false,high=true
+ok 91 - selector restores exact descriptor after falsy theme exception; own=false,high=true
+  ---
+  duration_ms: 14.341075
+  type: 'test'
+  ...
+# Subtest: selector performs one native call and restores exact descriptor; own=true,high=false
+ok 92 - selector performs one native call and restores exact descriptor; own=true,high=false
+  ---
+  duration_ms: 1.770021
+  type: 'test'
+  ...
+# Subtest: selector restores exact descriptor after falsy resize exception; own=true,high=false
+ok 93 - selector restores exact descriptor after falsy resize exception; own=true,high=false
+  ---
+  duration_ms: 34.444575
+  type: 'test'
+  ...
+# Subtest: selector restores exact descriptor after falsy theme exception; own=true,high=false
+ok 94 - selector restores exact descriptor after falsy theme exception; own=true,high=false
+  ---
+  duration_ms: 2.307479
+  type: 'test'
+  ...
+# Subtest: selector performs one native call and restores exact descriptor; own=true,high=true
+ok 95 - selector performs one native call and restores exact descriptor; own=true,high=true
+  ---
+  duration_ms: 17.941611
+  type: 'test'
+  ...
+# Subtest: selector restores exact descriptor after falsy theme exception; own=true,high=true
+ok 96 - selector restores exact descriptor after falsy theme exception; own=true,high=true
+  ---
+  duration_ms: 2.325287
+  type: 'test'
+  ...
+# Subtest: changed repeat remains observable and fails the unchanged real cloud gate
+ok 97 - changed repeat remains observable and fails the unchanged real cloud gate
+  ---
+  duration_ms: 385.550377
+  type: 'test'
+  ...
+# Subtest: visible low-quality error remains observable and fails the unchanged real cloud gate
+ok 98 - visible low-quality error remains observable and fails the unchanged real cloud gate
+  ---
+  duration_ms: 110.861767
+  type: 'test'
+  ...
+# Subtest: wrong allocation dimensions remains observable and fails the unchanged real cloud gate
+ok 99 - wrong allocation dimensions remains observable and fails the unchanged real cloud gate
+  ---
+  duration_ms: 138.51075
+  type: 'test'
+  ...
+# Subtest: actual native setTheme still invokes cloud, PMREM and far paths for all nine bakes
+ok 100 - actual native setTheme still invokes cloud, PMREM and far paths for all nine bakes
+  ---
+  duration_ms: 134.357131
+  type: 'test'
+  ...
+# Subtest: one synchronous evaluate preserves all240 native calls/order/dt/state and original work counts
+ok 101 - one synchronous evaluate preserves all240 native calls/order/dt/state and original work counts
+  ---
+  duration_ms: 364.005482
+  type: 'test'
+  ...
+# Subtest: native playing throw Error: native is exact and observation restores methods/state
+ok 102 - native playing throw Error: native is exact and observation restores methods/state
+  ---
+  duration_ms: 4.381025
+  type: 'test'
+  ...
+# Subtest: native playing throw 0 is exact and observation restores methods/state
+ok 103 - native playing throw 0 is exact and observation restores methods/state
+  ---
+  duration_ms: 3.799379
+  type: 'test'
+  ...
+# Subtest: native playing throw false is exact and observation restores methods/state
+ok 104 - native playing throw false is exact and observation restores methods/state
+  ---
+  duration_ms: 26.72273
+  type: 'test'
+  ...
+# Subtest: native playing throw null is exact and observation restores methods/state
+ok 105 - native playing throw null is exact and observation restores methods/state
+  ---
+  duration_ms: 36.854212
+  type: 'test'
+  ...
+# Subtest: native playing throw undefined is exact and observation restores methods/state
+ok 106 - native playing throw undefined is exact and observation restores methods/state
+  ---
+  duration_ms: 9.093221
+  type: 'test'
+  ...
+# Subtest: native results throw Error: native is exact and observation restores methods/state
+ok 107 - native results throw Error: native is exact and observation restores methods/state
+  ---
+  duration_ms: 286.072953
+  type: 'test'
+  ...
+# Subtest: native results throw 0 is exact and observation restores methods/state
+ok 108 - native results throw 0 is exact and observation restores methods/state
+  ---
+  duration_ms: 233.716694
+  type: 'test'
+  ...
+# Subtest: native results throw false is exact and observation restores methods/state
+ok 109 - native results throw false is exact and observation restores methods/state
+  ---
+  duration_ms: 260.75708
+  type: 'test'
+  ...
+# Subtest: native results throw null is exact and observation restores methods/state
+ok 110 - native results throw null is exact and observation restores methods/state
+  ---
+  duration_ms: 250.260289
+  type: 'test'
+  ...
+# Subtest: native results throw undefined is exact and observation restores methods/state
+ok 111 - native results throw undefined is exact and observation restores methods/state
+  ---
+  duration_ms: 622.335982
+  type: 'test'
+  ...
+# Subtest: observation emission failure cannot replace a native falsy throw
+ok 112 - observation emission failure cannot replace a native falsy throw
+  ---
+  duration_ms: 20.230798
+  type: 'test'
+  ...
+# Subtest: partial observer installation failure restores existing hooks and original state
+ok 113 - partial observer installation failure restores existing hooks and original state
+  ---
+  duration_ms: 9.581723
+  type: 'test'
+  ...
+# Subtest: detail cap is independent of reserved progress and never reduces native workload
+ok 114 - detail cap is independent of reserved progress and never reduces native workload
+  ---
+  duration_ms: 899.07756
+  type: 'test'
+  ...
+# Subtest: 100 draws/frame and high actor counts exhaust only detail, retain all240 frames and exact counters
+ok 115 - 100 draws/frame and high actor counts exhaust only detail, retain all240 frames and exact counters
+  ---
+  duration_ms: 1213.573572
+  type: 'test'
+  ...
+# Subtest: detail exhaustion cannot hide a late native failure or the pending render entry before it
+ok 116 - detail exhaustion cannot hide a late native failure or the pending render entry before it
+  ---
+  duration_ms: 309.008693
+  type: 'test'
+  ...
+# Subtest: sampled actor and aggregate GL wrappers preserve falsy native failures after detail exhaustion
+ok 117 - sampled actor and aggregate GL wrappers preserve falsy native failures after detail exhaustion
+  ---
+  duration_ms: 1128.839576
+  type: 'test'
+  ...
+# Subtest: repeated coarse callees have a per-frame cap; reserved frame/state progress continues afterwards
+ok 118 - repeated coarse callees have a per-frame cap; reserved frame/state progress continues afterwards
+  ---
+  duration_ms: 1455.395401
+  type: 'test'
+  ...
+# Subtest: collector has bounded memory/message size and rejects malformed/spoofed/out-of-order input
+ok 119 - collector has bounded memory/message size and rejects malformed/spoofed/out-of-order input
+  ---
+  duration_ms: 1.156774
+  type: 'test'
+  ...
+# Subtest: the unchanged comparison can finish after120 and before480 seconds under one host deadline
+ok 120 - the unchanged comparison can finish after120 and before480 seconds under one host deadline
+  ---
+  duration_ms: 272.050842
+  type: 'test'
+  ...
+# Subtest: other phases and unrelated callbacks retain120-second supervision even with a results-work label
+ok 121 - other phases and unrelated callbacks retain120-second supervision even with a results-work label
+  ---
+  duration_ms: 5.097702
+  type: 'test'
+  ...
+# Subtest: one480-second comparison deadline retains progress before ordinary cleanup and ignores late completion
+ok 122 - one480-second comparison deadline retains progress before ordinary cleanup and ignores late completion
+  ---
+  duration_ms: 4.512608
+  type: 'test'
+  ...
+# Subtest: one480-second comparison deadline retains progress before failing cleanup and ignores late completion
+ok 123 - one480-second comparison deadline retains progress before failing cleanup and ignores late completion
+  ---
+  duration_ms: 1.416032
+  type: 'test'
+  ...
+# Subtest: listener cleanup error retains the exact original falsy evaluate failure as cause
+ok 124 - listener cleanup error retains the exact original falsy evaluate failure as cause
+  ---
+  duration_ms: 0.240302
+  type: 'test'
+  ...
+# Subtest: stderr summary is compact, allowlisted and does not echo tokens, URLs, traces or stale-phase progress
+ok 125 - stderr summary is compact, allowlisted and does not echo tokens, URLs, traces or stale-phase progress
+  ---
+  duration_ms: 0.653523
+  type: 'test'
+  ...
+# Subtest: summary scans at most512 critical entries and emits no full event arrays
+ok 126 - summary scans at most512 critical entries and emits no full event arrays
+  ---
+  duration_ms: 10.134589
+  type: 'test'
+  ...
+# Subtest: numeric failure summary preserves already-captured clock and submission counters
+ok 127 - numeric failure summary preserves already-captured clock and submission counters
+  ---
+  duration_ms: 0.325165
+  type: 'test'
+  ...
+# Subtest: numeric failure summary omits malformed or out-of-bound times and counters
+ok 128 - numeric failure summary omits malformed or out-of-bound times and counters
+  ---
+  duration_ms: 0.782453
+  type: 'test'
+  ...
+# Subtest: numeric failure summary preserves zero and remains bounded at largest admitted values
+ok 129 - numeric failure summary preserves zero and remains bounded at largest admitted values
+  ---
+  duration_ms: 2.832736
+  type: 'test'
+  ...
+# Subtest: summary precedes cleanup, occurs once across cleanup failure, and leaves failed JSON and original cause intact
+ok 130 - summary precedes cleanup, occurs once across cleanup failure, and leaves failed JSON and original cause intact
+  ---
+  duration_ms: 1.017618
+  type: 'test'
+  ...
+# Subtest: summary remains best effort on snapshot/publish/stderr failure and is absent on ordinary success
+ok 131 - summary remains best effort on snapshot/publish/stderr failure and is absent on ordinary success
+  ---
+  duration_ms: 0.572092
+  type: 'test'
+  ...
+# Subtest: diagnostic wall attribution separates console only without changing the pinned workload
+ok 132 - diagnostic wall attribution separates console only without changing the pinned workload
+  ---
+  duration_ms: 522.669272
+  type: 'test'
+  ...
+# Subtest: diagnostic wall attribution separates renderer body only without changing the pinned workload
+ok 133 - diagnostic wall attribution separates renderer body only without changing the pinned workload
+  ---
+  duration_ms: 370.005495
+  type: 'test'
+  ...
+# Subtest: diagnostic wall attribution separates native draw only without changing the pinned workload
+ok 134 - diagnostic wall attribution separates native draw only without changing the pinned workload
+  ---
+  duration_ms: 617.388344
+  type: 'test'
+  ...
+# Subtest: diagnostic wall attribution separates mixed independent delays without changing the pinned workload
+ok 135 - diagnostic wall attribution separates mixed independent delays without changing the pinned workload
+  ---
+  duration_ms: 590.798833
+  type: 'test'
+  ...
+# Subtest: nested renderer and draw wrappers retain every call and do not double count wall intervals
+ok 136 - nested renderer and draw wrappers retain every call and do not double count wall intervals
+  ---
+  duration_ms: 534.658832
+  type: 'test'
+  ...
+# Subtest: timing clock failures cannot replace successful calls or a native falsy draw failure
+ok 137 - timing clock failures cannot replace successful calls or a native falsy draw failure
+  ---
+  duration_ms: 1034.757456
+  type: 'test'
+  ...
+# Subtest: renderer and existing aggregate draw wrappers preserve borrowed receivers, arguments and return values
+ok 138 - renderer and existing aggregate draw wrappers preserve borrowed receivers, arguments and return values
+  ---
+  duration_ms: 137.562588
+  type: 'test'
+  ...
+# Subtest: GPU identity survives queued draws without another synchronous query (extension true)
+ok 139 - GPU identity survives queued draws without another synchronous query (extension true)
+  ---
+  duration_ms: 3.023058
+  type: 'test'
+  ...
+# Subtest: GPU identity survives queued draws without another synchronous query (extension false)
+ok 140 - GPU identity survives queued draws without another synchronous query (extension false)
+  ---
+  duration_ms: 1.463713
+  type: 'test'
+  ...
+# Subtest: cached identity cannot admit a lost context
+ok 141 - cached identity cannot admit a lost context
+  ---
+  duration_ms: 1.192039
+  type: 'test'
+  ...
+# Subtest: cached identity cannot admit a lost without event context
+ok 142 - cached identity cannot admit a lost without event context
+  ---
+  duration_ms: 1.620316
+  type: 'test'
+  ...
+# Subtest: cached identity cannot admit a restored context
+ok 143 - cached identity cannot admit a restored context
+  ---
+  duration_ms: 0.849497
+  type: 'test'
+  ...
+# Subtest: cached identity cannot admit a replaced context
+ok 144 - cached identity cannot admit a replaced context
+  ---
+  duration_ms: 0.87186
+  type: 'test'
+  ...
+# Subtest: an already lost context fails before recording identity
+ok 145 - an already lost context fails before recording identity
+  ---
+  duration_ms: 1.004279
+  type: 'test'
+  ...
+# Subtest: main captures actual desktop identity before workload and verifies its lifetime before retirement
+ok 146 - main captures actual desktop identity before workload and verifies its lifetime before retirement
+  ---
+  duration_ms: 1.251575
+  type: 'test'
+  ...
+# Subtest: acceptance schema can represent all required observations, not a GPU claim
+ok 147 - acceptance schema can represent all required observations, not a GPU claim
+  ---
+  duration_ms: 0.375618
+  type: 'test'
+  ...
+# Subtest: rejects missing RESULT evidence
+ok 148 - rejects missing RESULT evidence
+  ---
+  duration_ms: 0.23585
+  type: 'test'
+  ...
+# Subtest: rejects RESULT simulation continues
+ok 149 - rejects RESULT simulation continues
+  ---
+  duration_ms: 0.584024
+  type: 'test'
+  ...
+# Subtest: rejects RESULT paint keeps flushing
+ok 150 - rejects RESULT paint keeps flushing
+  ---
+  duration_ms: 0.146809
+  type: 'test'
+  ...
+# Subtest: rejects RESULT presentation freezes
+ok 151 - rejects RESULT presentation freezes
+  ---
+  duration_ms: 0.120428
+  type: 'test'
+  ...
+# Subtest: rejects missing GPU submission counts
+ok 152 - rejects missing GPU submission counts
+  ---
+  duration_ms: 0.06846
+  type: 'test'
+  ...
+# Subtest: rejects invalid CPU comparison
+ok 153 - rejects invalid CPU comparison
+  ---
+  duration_ms: 0.068955
+  type: 'test'
+  ...
+# Subtest: rejects late mobile budget
+ok 154 - rejects late mobile budget
+  ---
+  duration_ms: 0.054951
+  type: 'test'
+  ...
+# Subtest: rejects oversized cold cloud
+ok 155 - rejects oversized cold cloud
+  ---
+  duration_ms: 1.769208
+  type: 'test'
+  ...
+# Subtest: rejects oversized cold cube
+ok 156 - rejects oversized cold cube
+  ---
+  duration_ms: 0.16508
+  type: 'test'
+  ...
+# Subtest: rejects late replacement hides cold budget
+ok 157 - rejects late replacement hides cold budget
+  ---
+  duration_ms: 0.412509
+  type: 'test'
+  ...
+# Subtest: rejects missing cloud theme
+ok 158 - rejects missing cloud theme
+  ---
+  duration_ms: 0.073584
+  type: 'test'
+  ...
+# Subtest: rejects NaN appearance
+ok 159 - rejects NaN appearance
+  ---
+  duration_ms: 0.381702
+  type: 'test'
+  ...
+# Subtest: rejects banding outlier
+ok 160 - rejects banding outlier
+  ---
+  duration_ms: 0.081466
+  type: 'test'
+  ...
+# Subtest: rejects blank clouds
+ok 161 - rejects blank clouds
+  ---
+  duration_ms: 0.056626
+  type: 'test'
+  ...
+# Subtest: rejects unallocated cube
+ok 162 - rejects unallocated cube
+  ---
+  duration_ms: 0.054496
+  type: 'test'
+  ...
+# Subtest: rejects stale sampler
+ok 163 - rejects stale sampler
+  ---
+  duration_ms: 0.105107
+  type: 'test'
+  ...
+# Subtest: rejects duplicate dispose
+ok 164 - rejects duplicate dispose
+  ---
+  duration_ms: 0.057811
+  type: 'test'
+  ...
+# Subtest: rejects paused CPU work
+ok 165 - rejects paused CPU work
+  ---
+  duration_ms: 0.054246
+  type: 'test'
+  ...
+# Subtest: rejects paused rendering
+ok 166 - rejects paused rendering
+  ---
+  duration_ms: 0.054725
+  type: 'test'
+  ...
+# Subtest: rejects frozen online
+ok 167 - rejects frozen online
+  ---
+  duration_ms: 0.055533
+  type: 'test'
+  ...
+# Subtest: rejects music wakeup
+ok 168 - rejects music wakeup
+  ---
+  duration_ms: 0.050934
+  type: 'test'
+  ...
+# Subtest: rejects muted voices
+ok 169 - rejects muted voices
+  ---
+  duration_ms: 0.283225
+  type: 'test'
+  ...
+# Subtest: rejects silent SFX
+ok 170 - rejects silent SFX
+  ---
+  duration_ms: 0.078749
+  type: 'test'
+  ...
+# Subtest: active suite invokes exact-source probe and binds its successful evidence, preserving other families
+ok 171 - active suite invokes exact-source probe and binds its successful evidence, preserving other families
+  ---
+  duration_ms: 4.057502
+  type: 'test'
+  ...
+1..171
+# tests 171
+# suites 0
+# pass 171
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 22363.121281

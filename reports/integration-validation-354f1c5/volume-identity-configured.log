@@ -1,0 +1,14 @@
+(node:2773) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ both shipped default packs retain every source VTF byte and all 34 decoded RGBA frames (6232.581358ms)
+✔ ordinary FX construction loads both bundled names without configuration, then releases readiness (7712.673497ms)
+✔ gzip reader rejects corrupt streams, unsupported codecs and an expanded-size overflow (82.982328ms)
+✔ default binary cache reuses verified bytes offline, repairs corruption and evicts the prior slot version (844.425056ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19255.653697

@@ -1,0 +1,16 @@
+requestfailed: https://media.githubusercontent.com/media/kirakira-dev/KiTrix/0611f51b35c9736ee986fb2218461e2585b7875e/stages/Vss_Temple01/Vss_Temple01.obj net::ERR_TUNNEL_CONNECTION_FAILED
+requestfailed: https://raw.githubusercontent.com/kirakira-dev/KiTrix/0611f51b35c9736ee986fb2218461e2585b7875e/stages/Vss_Temple01/Vss_Temple01.mtl net::ERR_ABORTED
+browser: Error: Failed to fetch
+    at o.onmessage (http://127.0.0.1:39463/_versions/2087bbc340265f979bc5cfa8eb644e4f5c42f5d82a246698f87e8584f53e9c54/patches/native-stages/runtime/engine.mjs:3:28054)
+browser: [inkwave] startup Error: Failed to fetch
+    at o.onmessage (http://127.0.0.1:39463/_versions/2087bbc340265f979bc5cfa8eb644e4f5c42f5d82a246698f87e8584f53e9c54/patches/native-stages/runtime/engine.mjs:3:28054)
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.waitForFunction: Target page, context or browser has been closed
+    at /workspace/actions/scripts/check-inkwave-undertow-minimap.mjs:24:13 {
+  log: []
+}
+
+Node.js v24.19.0

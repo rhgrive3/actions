@@ -1,0 +1,15 @@
+native prebuilt: payload absent or unverified for scorch, hagglefish, inkblot, mako, brinewater, airport, barnacle, bluefin, crableg, eeltail, flounder, hammerhead, humpback, manta, mincemeat, museum, robo, shipshape, sturgeon, umami, undertow, urchin, wahoo (git lfs pull?) — browser conversion is used
+lightmap cargo.png: 220594 -> 168115 bytes (same pixels)
+lightmap halyard.png: 63401 -> 54085 bytes (same pixels)
+lightmap kelpline.png: 153108 -> 121155 bytes (same pixels)
+lightmap range.png: 161986 -> 112128 bytes (same pixels)
+lightmap tidewater.png: 149335 -> 119063 bytes (same pixels)
+three.js: 184 of 444 exports kept · 2071 KB → 603 KB (gzip diagnostics disabled)
+reviewed audio helper: omitted (reviewed current orphan; no literal reference)
+startup runtime: 11489 -> 6062 bytes
+patch: splatoon3+quality+range · build 4873d9591851
+JS transforms (excludes replaced Three inputs): 4841 KB → 2909 KB  (gzip diagnostics disabled; set INKWAVE_BUILD_REPORT_GZIP=1)
+CSS: 478 KB → 402 KB
+repeated module strings: saved 30372 bytes total, 30119 in the offline precache
+modulepreload: 145 modules (372 deferred, all precached)
+lossless lightmaps: 173878 bytes saved with identical decoded pixels

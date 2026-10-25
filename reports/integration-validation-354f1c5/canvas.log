@@ -1,0 +1,97 @@
+TAP version 13
+# Subtest: all roles receive one snapshot per tick and identical PNG/base readback counts
+ok 1 - all roles receive one snapshot per tick and identical PNG/base readback counts
+  ---
+  duration_ms: 25.585068
+  type: 'test'
+  ...
+# Subtest: single emitted byte difference at frame21 fails with actual/expected retained
+ok 2 - single emitted byte difference at frame21 fails with actual/expected retained
+  ---
+  duration_ms: 38.710725
+  type: 'test'
+  ...
+# Subtest: state-only difference is not waived by equal pixels
+ok 3 - state-only difference is not waived by equal pixels
+  ---
+  duration_ms: 1.211732
+  type: 'test'
+  ...
+# Subtest: hidden canvas mutation still fails
+ok 4 - hidden canvas mutation still fails
+  ---
+  duration_ms: 1.453919
+  type: 'test'
+  ...
+# Subtest: failure saves bound receipt then throws and iframe removal remains unconditional
+ok 5 - failure saves bound receipt then throws and iframe removal remains unconditional
+  ---
+  duration_ms: 1.704133
+  type: 'test'
+  ...
+# Subtest: exact emitted Three dependency and iframe map precede isolated module imports
+ok 6 - exact emitted Three dependency and iframe map precede isolated module imports
+  ---
+  duration_ms: 189.64544
+  type: 'test'
+  ...
+# Subtest: old missing-map behavior rejects the bare Three import
+ok 7 - old missing-map behavior rejects the bare Three import
+  ---
+  duration_ms: 113.358639
+  type: 'test'
+  ...
+# Subtest: missing or foreign-revision Three rejects before page evaluation
+ok 8 - missing or foreign-revision Three rejects before page evaluation
+  ---
+  duration_ms: 74.054263
+  type: 'test'
+  ...
+# Subtest: served Three corruption rejects before isolated module import and cleans frame
+ok 9 - served Three corruption rejects before isolated module import and cleans frame
+  ---
+  duration_ms: 82.207431
+  type: 'test'
+  ...
+# Subtest: missing or changed source manifest inputs reject before evaluating the page
+ok 10 - missing or changed source manifest inputs reject before evaluating the page
+  ---
+  duration_ms: 118.968911
+  type: 'test'
+  ...
+# (node:2933) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: independent pre-world minimap oracle reconstructs the already-reviewed source pin
+ok 11 - independent pre-world minimap oracle reconstructs the already-reviewed source pin
+  ---
+  duration_ms: 3.429272
+  type: 'test'
+  ...
+# Subtest: abortable native minimap source epoch remains exact and rejects mixed or edited source sets
+ok 12 - abortable native minimap source epoch remains exact and rejects mixed or edited source sets
+  ---
+  duration_ms: 2.488886
+  type: 'test'
+  ...
+# Subtest: abortable scheduling retains the reviewed native raster and support generator bytes
+ok 13 - abortable scheduling retains the reviewed native raster and support generator bytes
+  ---
+  duration_ms: 0.530762
+  type: 'test'
+  ...
+# Subtest: Chromium Canvas2D retains legacy base and native nearest-cell ink pixels for reviewed world storage
+ok 14 - Chromium Canvas2D retains legacy base and native nearest-cell ink pixels for reviewed world storage
+  ---
+  duration_ms: 29793.715983
+  type: 'test'
+  ...
+# {"browser":"154.0.8037.57","legacyCases":40,"nativeFrames":90,"covered":612620,"rampNegative":true,"inkNegative":true}
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 35560.943265

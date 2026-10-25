@@ -1,0 +1,390 @@
+TAP version 13
+# (node:5689) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: mobile overlay requires unique anchors, permits either layout order, and ignores other files
+ok 1 - mobile overlay requires unique anchors, permits either layout order, and ignores other files
+  ---
+  duration_ms: 49.107798
+  type: 'test'
+  ...
+# Subtest: raw negative controls reproduce left-gap aim, pending reset edges, stale target and cancellation edge
+ok 2 - raw negative controls reproduce left-gap aim, pending reset edges, stale target and cancellation edge
+  ---
+  duration_ms: 26.99536
+  type: 'test'
+  ...
+# Subtest: left-gap drag at 420 never acquires aim after crossing right (layout=false)
+ok 3 - left-gap drag at 420 never acquires aim after crossing right (layout=false)
+  ---
+  duration_ms: 32.016846
+  type: 'test'
+  ...
+# Subtest: left-gap drag at 450 never acquires aim after crossing right (layout=false)
+ok 4 - left-gap drag at 450 never acquires aim after crossing right (layout=false)
+  ---
+  duration_ms: 37.409344
+  type: 'test'
+  ...
+# Subtest: left-gap drag at 499 never acquires aim after crossing right (layout=false)
+ok 5 - left-gap drag at 499 never acquires aim after crossing right (layout=false)
+  ---
+  duration_ms: 21.777526
+  type: 'test'
+  ...
+# Subtest: right-start look owns its entire drag across center (layout=false)
+ok 6 - right-start look owns its entire drag across center (layout=false)
+  ---
+  duration_ms: 16.799468
+  type: 'test'
+  ...
+# Subtest: left stick and second left finger stay movement-only (layout=false)
+ok 7 - left stick and second left finger stay movement-only (layout=false)
+  ---
+  duration_ms: 23.103186
+  type: 'test'
+  ...
+# Subtest: fixed-stick left upper area never aims; right area does (layout=false)
+ok 8 - fixed-stick left upper area never aims; right area does (layout=false)
+  ---
+  duration_ms: 17.578788
+  type: 'test'
+  ...
+# Subtest: FIRE default retains hold and aim through capture outside button and across center (layout=false)
+ok 9 - FIRE default retains hold and aim through capture outside button and across center (layout=false)
+  ---
+  duration_ms: 23.030025
+  type: 'test'
+  ...
+# Subtest: simultaneous move, FIRE and ordinary look keep independent ownership (layout=false)
+ok 10 - simultaneous move, FIRE and ordinary look keep independent ownership (layout=false)
+  ---
+  duration_ms: 29.492674
+  type: 'test'
+  ...
+# Subtest: fireAim=false disables button aim and preserves hold plus ordinary look (layout=false)
+ok 11 - fireAim=false disables button aim and preserves hold plus ordinary look (layout=false)
+  ---
+  duration_ms: 44.379562
+  type: 'test'
+  ...
+# Subtest: relocated/resized FIRE, SQUID and SUB retain deliberate button aim in left half (layout=false)
+ok 12 - relocated/resized FIRE, SQUID and SUB retain deliberate button aim in left half (layout=false)
+  ---
+  duration_ms: 26.870101
+  type: 'test'
+  ...
+# Subtest: editor drag moves/resizes controls without gameplay fire or look (layout=false)
+ok 13 - editor drag moves/resizes controls without gameplay fire or look (layout=false)
+  ---
+  duration_ms: 10.324687
+  type: 'test'
+  ...
+# Subtest: left-gap drag at 420 never acquires aim after crossing right (layout=true)
+ok 14 - left-gap drag at 420 never acquires aim after crossing right (layout=true)
+  ---
+  duration_ms: 22.235917
+  type: 'test'
+  ...
+# Subtest: left-gap drag at 450 never acquires aim after crossing right (layout=true)
+ok 15 - left-gap drag at 450 never acquires aim after crossing right (layout=true)
+  ---
+  duration_ms: 46.809217
+  type: 'test'
+  ...
+# Subtest: left-gap drag at 499 never acquires aim after crossing right (layout=true)
+ok 16 - left-gap drag at 499 never acquires aim after crossing right (layout=true)
+  ---
+  duration_ms: 16.789009
+  type: 'test'
+  ...
+# Subtest: right-start look owns its entire drag across center (layout=true)
+ok 17 - right-start look owns its entire drag across center (layout=true)
+  ---
+  duration_ms: 21.520306
+  type: 'test'
+  ...
+# Subtest: left stick and second left finger stay movement-only (layout=true)
+ok 18 - left stick and second left finger stay movement-only (layout=true)
+  ---
+  duration_ms: 14.136682
+  type: 'test'
+  ...
+# Subtest: fixed-stick left upper area never aims; right area does (layout=true)
+ok 19 - fixed-stick left upper area never aims; right area does (layout=true)
+  ---
+  duration_ms: 42.505184
+  type: 'test'
+  ...
+# Subtest: FIRE default retains hold and aim through capture outside button and across center (layout=true)
+ok 20 - FIRE default retains hold and aim through capture outside button and across center (layout=true)
+  ---
+  duration_ms: 20.916215
+  type: 'test'
+  ...
+# Subtest: simultaneous move, FIRE and ordinary look keep independent ownership (layout=true)
+ok 21 - simultaneous move, FIRE and ordinary look keep independent ownership (layout=true)
+  ---
+  duration_ms: 29.000947
+  type: 'test'
+  ...
+# Subtest: fireAim=false disables button aim and preserves hold plus ordinary look (layout=true)
+ok 22 - fireAim=false disables button aim and preserves hold plus ordinary look (layout=true)
+  ---
+  duration_ms: 39.155045
+  type: 'test'
+  ...
+# Subtest: relocated/resized FIRE, SQUID and SUB retain deliberate button aim in left half (layout=true)
+ok 23 - relocated/resized FIRE, SQUID and SUB retain deliberate button aim in left half (layout=true)
+  ---
+  duration_ms: 36.427294
+  type: 'test'
+  ...
+# Subtest: editor drag moves/resizes controls without gameplay fire or look (layout=true)
+ok 24 - editor drag moves/resizes controls without gameplay fire or look (layout=true)
+  ---
+  duration_ms: 37.250693
+  type: 'test'
+  ...
+# Subtest: right-half boundary is determined at down and mouse remains excluded from gameplay
+ok 25 - right-half boundary is determined at down and mouse remains excluded from gameplay
+  ---
+  duration_ms: 28.62073
+  type: 'test'
+  ...
+# Subtest: pointercancel discards a pending hold edge without ghost firing
+ok 26 - pointercancel discards a pending hold edge without ghost firing
+  ---
+  duration_ms: 21.963573
+  type: 'test'
+  ...
+# Subtest: pointercancel preserves a separate released quick tap and same-button held finger
+ok 27 - pointercancel preserves a separate released quick tap and same-button held finger
+  ---
+  duration_ms: 14.726055
+  type: 'test'
+  ...
+# Subtest: lostpointercapture discards a pending hold edge without ghost firing
+ok 28 - lostpointercapture discards a pending hold edge without ghost firing
+  ---
+  duration_ms: 12.379708
+  type: 'test'
+  ...
+# Subtest: lostpointercapture preserves a separate released quick tap and same-button held finger
+ok 29 - lostpointercapture preserves a separate released quick tap and same-button held finger
+  ---
+  duration_ms: 21.953442
+  type: 'test'
+  ...
+# Subtest: pointerup quick tap survives lostcapture and next render opportunity until endFrame
+ok 30 - pointerup quick tap survives lostcapture and next render opportunity until endFrame
+  ---
+  duration_ms: 36.067427
+  type: 'test'
+  ...
+# Subtest: hold survives edge consumption; later cancellation cannot erase a new legitimate tap
+ok 31 - hold survives edge consumption; later cancellation cannot erase a new legitimate tap
+  ---
+  duration_ms: 13.040154
+  type: 'test'
+  ...
+# Subtest: resetPointers cancels all touch edges, old target, look deltas and held pointers
+ok 32 - resetPointers cancels all touch edges, old target, look deltas and held pointers
+  ---
+  duration_ms: 32.427598
+  type: 'test'
+  ...
+# Subtest: reset cancels all touch edges, old target, look deltas and held pointers
+ok 33 - reset cancels all touch edges, old target, look deltas and held pointers
+  ---
+  duration_ms: 44.176916
+  type: 'test'
+  ...
+# Subtest: blur cancels all touch edges, old target, look deltas and held pointers
+ok 34 - blur cancels all touch edges, old target, look deltas and held pointers
+  ---
+  duration_ms: 23.52478
+  type: 'test'
+  ...
+# Subtest: hidden cancels all touch edges, old target, look deltas and held pointers
+ok 35 - hidden cancels all touch edges, old target, look deltas and held pointers
+  ---
+  duration_ms: 21.407456
+  type: 'test'
+  ...
+# Subtest: device cancels all touch edges, old target, look deltas and held pointers
+ok 36 - device cancels all touch edges, old target, look deltas and held pointers
+  ---
+  duration_ms: 20.858237
+  type: 'test'
+  ...
+# Subtest: resize cancels all touch edges, old target, look deltas and held pointers
+ok 37 - resize cancels all touch edges, old target, look deltas and held pointers
+  ---
+  duration_ms: 41.895679
+  type: 'test'
+  ...
+# Subtest: hide cancels all touch edges, old target, look deltas and held pointers
+ok 38 - hide cancels all touch edges, old target, look deltas and held pointers
+  ---
+  duration_ms: 23.736045
+  type: 'test'
+  ...
+# Subtest: unchanged resize preserves live full-MobileInput gestures and pending actions
+ok 39 - unchanged resize preserves live full-MobileInput gestures and pending actions
+  ---
+  duration_ms: 25.652913
+  type: 'test'
+  ...
+# Subtest: resetPointers/resize/device-hide preserve the map toggle while discarding stale targets
+ok 40 - resetPointers/resize/device-hide preserve the map toggle while discarding stale targets
+  ---
+  duration_ms: 21.278559
+  type: 'test'
+  ...
+# Subtest: opening map cancels gameplay gestures but redundant map-open does not erase a legitimate target
+ok 41 - opening map cancels gameplay gestures but redundant map-open does not erase a legitimate target
+  ---
+  duration_ms: 61.704683
+  type: 'test'
+  ...
+# Subtest: map toggle edge, pause and gyro buttons keep their explicit action priority
+ok 42 - map toggle edge, pause and gyro buttons keep their explicit action priority
+  ---
+  duration_ms: 23.983231
+  type: 'test'
+  ...
+# Subtest: touch layout positions, scales and settings remain numerically identical
+ok 43 - touch layout positions, scales and settings remain numerically identical
+  ---
+  duration_ms: 75.201692
+  type: 'test'
+  ...
+# Subtest: relocated floating joystick retains right-half priority and never changes into look
+ok 44 - relocated floating joystick retains right-half priority and never changes into look
+  ---
+  duration_ms: 29.98672
+  type: 'test'
+  ...
+# Subtest: right swipe, FIRE drag and stick output keep the existing numerical response
+ok 45 - right swipe, FIRE drag and stick output keep the existing numerical response
+  ---
+  duration_ms: 78.114467
+  type: 'test'
+  ...
+# Subtest: \#925 negative control: native PAUSE and MAP commit on pointerdown and cannot be cancelled
+ok 46 - \#925 negative control: native PAUSE and MAP commit on pointerdown and cannot be cancelled
+  ---
+  duration_ms: 21.097151
+  type: 'test'
+  ...
+# Subtest: \#925 PAUSE pointerdown + pointercancel never pauses, repeated notifications are idempotent
+ok 47 - \#925 PAUSE pointerdown + pointercancel never pauses, repeated notifications are idempotent
+  ---
+  duration_ms: 65.630463
+  type: 'test'
+  ...
+# Subtest: \#925 MAP pointerdown + pointercancel leaves the map closed; a minimap tap cancels the same way
+ok 48 - \#925 MAP pointerdown + pointercancel leaves the map closed; a minimap tap cancels the same way
+  ---
+  duration_ms: 17.596272
+  type: 'test'
+  ...
+# Subtest: \#925 PAUSE pointerdown + lostpointercapture never pauses, repeated notifications are idempotent
+ok 49 - \#925 PAUSE pointerdown + lostpointercapture never pauses, repeated notifications are idempotent
+  ---
+  duration_ms: 17.943606
+  type: 'test'
+  ...
+# Subtest: \#925 MAP pointerdown + lostpointercapture leaves the map closed; a minimap tap cancels the same way
+ok 50 - \#925 MAP pointerdown + lostpointercapture leaves the map closed; a minimap tap cancels the same way
+  ---
+  duration_ms: 34.098531
+  type: 'test'
+  ...
+# Subtest: \#925 a completed tap commits exactly once and the lostpointercapture that follows adds nothing
+ok 51 - \#925 a completed tap commits exactly once and the lostpointercapture that follows adds nothing
+  ---
+  duration_ms: 30.66874
+  type: 'test'
+  ...
+# Subtest: \#925 cancelling or lifting pointer B never cancels or commits pointer A's tap; drift past the slop is not a tap
+ok 52 - \#925 cancelling or lifting pointer B never cancels or commits pointer A's tap; drift past the slop is not a tap
+  ---
+  duration_ms: 34.782659
+  type: 'test'
+  ...
+# Subtest: \#925 a reset between down and up (blur, rotation, device change) drops the pending tap
+ok 53 - \#925 a reset between down and up (blur, rotation, device change) drops the pending tap
+  ---
+  duration_ms: 99.901029
+  type: 'test'
+  ...
+# Subtest: \#925 the held controls and GYRO are unchanged: FIRE/JUMP still latch on pointerdown, GYRO still toggles on its tap
+ok 54 - \#925 the held controls and GYRO are unchanged: FIRE/JUMP still latch on pointerdown, GYRO still toggles on its tap
+  ---
+  duration_ms: 19.52252
+  type: 'test'
+  ...
+# Subtest: \#936 held fire + pointercancel is reported cancelled once; ordinary pointerup and trailing lostpointercapture are not
+ok 55 - \#936 held fire + pointercancel is reported cancelled once; ordinary pointerup and trailing lostpointercapture are not
+  ---
+  duration_ms: 18.834132
+  type: 'test'
+  ...
+# Subtest: \#936 held fire + lostpointercapture is reported cancelled once; ordinary pointerup and trailing lostpointercapture are not
+ok 56 - \#936 held fire + lostpointercapture is reported cancelled once; ordinary pointerup and trailing lostpointercapture are not
+  ---
+  duration_ms: 27.17765
+  type: 'test'
+  ...
+# Subtest: \#936 held sub + pointercancel is reported cancelled once; ordinary pointerup and trailing lostpointercapture are not
+ok 57 - \#936 held sub + pointercancel is reported cancelled once; ordinary pointerup and trailing lostpointercapture are not
+  ---
+  duration_ms: 22.62819
+  type: 'test'
+  ...
+# Subtest: \#936 held sub + lostpointercapture is reported cancelled once; ordinary pointerup and trailing lostpointercapture are not
+ok 58 - \#936 held sub + lostpointercapture is reported cancelled once; ordinary pointerup and trailing lostpointercapture are not
+  ---
+  duration_ms: 47.758764
+  type: 'test'
+  ...
+# Subtest: \#936 cancelling one of two fingers on a button keeps the hold; a new press supersedes an earlier cancel
+ok 59 - \#936 cancelling one of two fingers on a button keeps the hold; a new press supersedes an earlier cancel
+  ---
+  duration_ms: 39.106205
+  type: 'test'
+  ...
+# Subtest: \#936 resets that drop a hold (blur, hide, opening the map) report it cancelled; a tap-only reset does not
+ok 60 - \#936 resets that drop a hold (blur, hide, opening the map) report it cancelled; a tap-only reset does not
+  ---
+  duration_ms: 176.789478
+  type: 'test'
+  ...
+# Subtest: current main event compaction and the earlier splice owner converge; mixed or drifted owners fail closed
+ok 61 - current main event compaction and the earlier splice owner converge; mixed or drifted owners fail closed
+  ---
+  duration_ms: 570.455922
+  type: 'test'
+  ...
+# Subtest: Input retains the earlier platform listener owner and rejects unknown or doubled constructors
+ok 62 - Input retains the earlier platform listener owner and rejects unknown or doubled constructors
+  ---
+  duration_ms: 35.139221
+  type: 'test'
+  ...
+# Subtest: current main completed voices use the qualified emitter owner and allocation-free safe stopAll
+ok 63 - current main completed voices use the qualified emitter owner and allocation-free safe stopAll
+  ---
+  duration_ms: 43.247836
+  type: 'test'
+  ...
+1..63
+# tests 63
+# suites 0
+# pass 63
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2766.217472
