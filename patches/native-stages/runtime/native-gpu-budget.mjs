@@ -37,7 +37,7 @@ export function nativeRenderCaps({ mobile = false, tier = 0 } = {}) {
   if (!mobile) caps.pixelRatio = 1.25;
   if (tier >= 1) Object.assign(caps, { msaa: 0, bloom: false, pixelRatio: 1, shadowSize: 2048, paintAtlas: 2048 });
   if (tier >= 2) Object.assign(caps, { pixelRatio: 0.75, shadowSize: 1024 });
-  return caps;
+  return Object.freeze(caps);
 }
 
 // Touch devices start one texture step lower: High loads ~520 source maps
@@ -84,7 +84,17 @@ export function nativeTextureProfile({ settingsQuality, tier = 0, touch = false,
   return { quality, caps: { ...caps, fallback }, textureTouch: false };
 }
 
-const capKey = caps => Object.keys(caps).sort().map(k => k + '=' + caps[k]).join(',');
+// Renderer.q is read on frame paths. Native caps are immutable, so build their
+// canonical key once instead of allocating/sorting an array on every read.
+// Ad-hoc mutable caps retain their existing value-based behaviour.
+const frozenCapKeys = new WeakMap();
+const capKey = caps => {
+  let key = frozenCapKeys.get(caps);
+  if (key !== undefined) return key;
+  key = Object.keys(caps).sort().map(k => k + '=' + caps[k]).join(',');
+  if (Object.isFrozen(caps)) frozenCapKeys.set(caps, key);
+  return key;
+};
 const capped = new WeakMap();
 
 /** Same object for the same input: Renderer compares quality by identity. */

@@ -461,6 +461,9 @@ try {
     // Desktop Chromium has no touch-capability media flag. Install the actual
     // mobile control DOM once, then drive its real public setHud via Game.
     if(!mobile.els)mobile._install();
+    // The optimized MobileInput defers hidden desktop updates until it is shown.
+    // Exercise the real visible/editing HUD path rather than inspecting dormant DOM.
+    const wasEditing=mobile.editing;mobile.editing=true;
     const key='inkwave.splatoon3.gear.v1',saved=localStorage.getItem(key),wid=a.weaponId,rows=[];
     const update=hud.update,draw=hud._drawTank;let frame,mark;
     hud.update=function(dt,f){frame=f;return update.call(this,dt,f);};
@@ -480,7 +483,7 @@ try {
         }
       }
     } finally {
-      hud.update=update;hud._drawTank=draw;
+      hud.update=update;hud._drawTank=draw;mobile.editing=wasEditing;
       if(saved==null)localStorage.removeItem(key);else localStorage.setItem(key,saved);
       a.intent.sub=false;a.setWeapon(wid);a.ink=100;
     }

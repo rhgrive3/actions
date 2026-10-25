@@ -2,6 +2,19 @@ name: INKWAVE composed CPU regression
 on:
   pull_request:
     paths:
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'patches/splatoon3/tests/source-loaded-actor-fixture.mjs'
+      - 'patches/splatoon3/tests/source-fixture.mjs'
+      - 'patches/splatoon3/tests/fixture-cache.mjs'
+      - 'patches/loading-cache/vendor/acorn.mjs'
+      - 'inkwave-public/src/game/motion/locomotion-profile.js'
+      - 'inkwave-public/src/game/motion/source-bank.js'
+      - 'inkwave-public/src/game/motion/run-foot-path.js'
+      - 'scripts/build-inkwave.mjs'
+      - 'scripts/lib/inkwave-runtime-evidence.mjs'
+      - 'scripts/check-inkwave-patches.mjs'
+      - 'scripts/check-inkwave-startup-budget.mjs'
+      - 'patches/local-quality/tests/motion-fk-hotpath.test.mjs'
       - 'inkwave-public/src/game/motion/body-balance.js'
       - 'patches/local-quality/tests/body-balance-work*'
       - 'patches/local-quality/tests/fixtures/motion-balance/**'
@@ -27,6 +40,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/tools/inkwave-modeler/blender/
+            !/tools/inkwave-modeler/docs/
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

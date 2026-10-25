@@ -108,6 +108,8 @@ concurrency:
   cancel-in-progress: ${{ !(inputs.diagnostic_only == true && (inputs.network_opening_diagnostic == true || inputs.wall_render_diagnostic == true)) }}
 permissions:
   contents: read
+  checks: read
+  statuses: read
 env:
   SOURCE_SHA: ${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
   FOCUSED_EVIDENCE_DIR: /mnt/workspace/.dev-state/agent-work/evidence/inkwave-focused-${{ github.run_id }}-${{ github.run_attempt }}
@@ -197,7 +199,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.npm/_cacache
-          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/validate-inkwave-update.yml') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-esbuild0282-playwright1621-ws8-${{ hashFiles('package.json', 'package-lock.json') }}
+      - name: Prove CircleCI offload command parity and fail-closed SHA gate
+        run: node --test scripts/tests/inkwave-circleci-browser-lane.test.mjs scripts/tests/inkwave-circleci-offload-gate.test.mjs
       - name: Verify scoped network diagnostic workflow contracts
         run: node --test scripts/tests/inkwave-network-diagnostic-workflow.test.mjs scripts/tests/inkwave-opening-peer-diagnostic.test.mjs scripts/tests/inkwave-owner-clock-diagnostic.test.mjs scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs
       - name: Install pinned source regression and build tool
@@ -557,7 +561,8 @@ jobs:
           retention-days: 14
   # The test-file set is partitioned across isolated, independent machines.
   patch_tests:
-    if: inputs.diagnostic_only != true
+    # Default GitHub full-suite behavior unless explicitly offloaded.
+    if: ${{ inputs.diagnostic_only != true && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
@@ -601,7 +606,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.npm/_cacache
-          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/validate-inkwave-update.yml') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-esbuild0282-playwright1621-ws8-${{ hashFiles('package.json', 'package-lock.json') }}
       - name: Install pinned patch test dependencies
         run: npm install --no-save --no-package-lock --silent esbuild@0.28.2
       - name: Prepare persistent worker regression fixtures
@@ -622,9 +627,46 @@ jobs:
           retention-days: 14
 
   # Required /validate passes only when core and all eight regression shards pass.
+  circleci_offload_gate:
+    # Refuse stale/partial/unrelated CircleCI results. Native perf branches stay on GitHub.
+    if: ${{ (vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
+    needs: validate_core
+    runs-on: ubuntu-latest
+    timeout-minutes: 85
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/*/
+            /.github/
+            /inkwave-public/
+            /patches/
+            /scripts/
+            /server/
+            /tests/
+            /tools/
+            !/tools/inkwave-modeler/
+            /reports/
+            /docs/
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Require exact-SHA CircleCI final DAG or full workflow acceptance
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          node --test scripts/tests/inkwave-circleci-offload-gate.test.mjs
+          node scripts/ci/check-circleci-offload.mjs
+
   validate:
     if: ${{ always() && inputs.diagnostic_only != true }}
-    needs: [validate_core, patch_tests]
+    needs: [validate_core, patch_tests, circleci_offload_gate]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -632,14 +674,23 @@ jobs:
         env:
           CORE_RESULT: ${{ needs.validate_core.result }}
           PATCH_RESULT: ${{ needs.patch_tests.result }}
+          CIRCLECI_RESULT: ${{ needs.circleci_offload_gate.result }}
+          OFFLOAD_ACTIVE: ${{ vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration' }}
         run: |
-          printf 'validate_core=%s patch_tests=%s\n' "$CORE_RESULT" "$PATCH_RESULT"
+          printf 'validate_core=%s patch_tests=%s circleci=%s offload=%s\n' "$CORE_RESULT" "$PATCH_RESULT" "$CIRCLECI_RESULT" "$OFFLOAD_ACTIVE"
           test "$CORE_RESULT" = success
-          test "$PATCH_RESULT" = success
+          if [ "$OFFLOAD_ACTIVE" = true ]; then
+            test "$PATCH_RESULT" = skipped
+            test "$CIRCLECI_RESULT" = success
+          else
+            test "$PATCH_RESULT" = success
+            test "$CIRCLECI_RESULT" = skipped
+          fi
 
   browser:
     needs: build_site
-    if: inputs.diagnostic_only != true
+    # No offload until CircleCI is connected and enabled.
+    if: ${{ inputs.diagnostic_only != true && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
@@ -694,7 +745,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.npm/_cacache
-          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/validate-inkwave-update.yml') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-esbuild0282-playwright1621-ws8-${{ hashFiles('package.json', 'package-lock.json') }}
       - uses: actions/download-artifact@v4
         with:
           name: inkwave-patched-site-${{ env.SOURCE_SHA }}
@@ -1010,7 +1061,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.npm/_cacache
-          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/validate-inkwave-update.yml') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-esbuild0282-playwright1621-ws8-${{ hashFiles('package.json', 'package-lock.json') }}
       - name: Prepare persistent diagnostic storage and exact source
         run: |
           [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
@@ -1238,7 +1289,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.npm/_cacache
-          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/validate-inkwave-update.yml') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-esbuild0282-playwright1621-ws8-${{ hashFiles('package.json', 'package-lock.json') }}
       - name: Install build and browser dependencies
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
@@ -1313,7 +1364,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.npm/_cacache
-          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/validate-inkwave-update.yml') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-esbuild0282-playwright1621-ws8-${{ hashFiles('package.json', 'package-lock.json') }}
       - name: Verify the seven claimed resource, paint and continuation fixes
         run: |
           node --experimental-vm-modules --test patches/splatoon3/tests/trizooka-enemy-ink.test.mjs patches/splatoon3/tests/slam-damage-state.test.mjs patches/splatoon3/tests/surge-wall-launch-armor.test.mjs patches/splatoon3/tests/partial-surge-armor-current.test.mjs patches/splatoon3/tests/surge-auto-continuation.test.mjs patches/splatoon3/tests/charger-wall-drop.test.mjs patches/splatoon3/tests/disconnected-main-projectiles.test.mjs patches/network-replication/tests/wipeout-owner-history.test.mjs patches/splatoon3/tests/online-continuation.test.mjs patches/local-quality/tests/result-continuation.test.mjs patches/local-quality/tests/continuation-gear-flow.test.mjs patches/splatoon3/tests/roll-surge-batch.test.mjs

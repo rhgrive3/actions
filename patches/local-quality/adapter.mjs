@@ -95,6 +95,9 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'queue-extra-world-adapter.mjs',
+  'queue-extra-decor-adapter.mjs',
+  'queue-ui-20261025-adapter.mjs', 'queue-extra-weapons-fx-adapter.mjs',
   'world-queue-build-adapter.mjs', 'settings-hud-queue-adapter.mjs',
   'character-shadow-batch-adapter.mjs', 'character-shadow-batch.mjs',
   'ink-micro-surface-adapter.mjs',

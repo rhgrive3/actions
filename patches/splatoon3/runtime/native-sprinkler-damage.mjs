@@ -84,6 +84,9 @@ export function installNativeSprinklerDamage(api){
  const play=NetMatch.prototype._play;
  NetMatch.prototype._play=function(from,event){
   if(event?.[1]!=='b')return play.call(this,from,event);
+  // Current native envelopes carry their identity verbatim through kit replay.
+  // Unknown/legacy shapes retain the original identity-snapshot path.
+  if(event.length===16&&(event[3]!=='bomb'||event[11]!=='sprinkler'))return play.call(this,from,event);
   const a=this.byNid?.get(event[2]);
   if(!a?.remote||a.owner!==from)return play.call(this,from,event);
   // Composed bomb wrappers may evict/replace existing entries: retain identity

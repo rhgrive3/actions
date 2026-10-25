@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { fixture } from '../../reliability/tests/hud-fixture.mjs';
+import { createLazyComposerTarget } from '../composer-target-adapter.mjs';
 const read = rel => fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
 const composed = rel => adaptBuildSource(rel, read(rel));
 const hudSource = composed('src/ui/hud.js'), gameSource = composed('src/main.js');
@@ -77,8 +78,8 @@ test('composed Renderer retains a finished WebGL pause frame and releases it aft
   assert.match(gameSource, /releasePausedFrame\?\.\(\)/);
   const retention = fs.readFileSync(new URL('../pause-frame-retention.mjs', import.meta.url), 'utf8')
     .replace(/^import .*;\s*$/gm, '').replace('export function installPausedFrameRetention', 'function installPausedFrameRetention');
-  const record = { copies: 0, draws: 0, disposed: 0 };
-  let width = 320, height = 200, lost = false, target = null;
+  const record = { copies: 0, draws: 0, disposed: 0, pairs: 0, released: 0 };
+  let width = 320, height = 200, lost = false, target = null, copyFails = false;
   class Vector2 { set(x, y) { this.x = x; this.y = y; return this; } }
   class FramebufferTexture {
     constructor(w, h) { this.image = { width: w, height: h }; }
@@ -98,15 +99,28 @@ test('composed Renderer retains a finished WebGL pause frame and releases it aft
     getDrawingBufferSize: v => v.set(width, height),
     getRenderTarget: () => target,
     setRenderTarget(v) { target = v; },
-    copyFramebufferToTexture(texture) { assert.equal(texture.image.width, width); record.copies++; },
+    copyFramebufferToTexture(texture) {
+      assert.equal(texture.image.width, width);
+      if (copyFails) throw Error('copy unavailable');
+      record.copies++;
+    },
     autoClear: false,
   };
+  const pass = { enabled: true };
+  owner.composer = createLazyComposerTarget(() => {
+    record.pairs++;
+    return { addPass(p) { assert.equal(p, pass); }, render() {}, dispose() { record.released++; } };
+  });
+  owner.composer.addPass(pass);
+  owner.composer.render();
   assert.equal(owner.presentPausedFrame(), false, 'no uncaptured frame is reused');
   assert.equal(owner.capturePausedFrame(), true);
   assert.equal(record.copies, 1);
+  assert.equal(record.released, 1, 'a successful capture retires the unused native target pair');
   for (let i = 0; i < 120; i++) assert.equal(owner.presentPausedFrame(), true);
   assert.equal(record.draws, 120, 'one cheap present per frame rather than a composer pass');
   assert.equal(record.copies, 1, 'no extra frame capture in steady pause');
+  assert.equal(record.pairs, 1, 'presenting the snapshot cannot recreate HDR/MSAA targets');
   assert.equal(owner.renderer.autoClear, false, 'renderer state is restored after blits');
   width++;
   assert.equal(owner.presentPausedFrame(), false, 'resize rejects a stale snapshot');
@@ -119,4 +133,17 @@ test('composed Renderer retains a finished WebGL pause frame and releases it aft
   assert.equal(owner._pauseSnapshot, null, 'resume releases full-resolution GPU texture');
   assert.equal(owner.presentPausedFrame(), false);
   assert.ok(record.disposed >= 3, 'every superseded snapshot was disposed');
+  owner.composer.render();
+  assert.equal(record.pairs, 2, 'resume lazily recreates exactly one pair with the original pass');
+  assert.equal(owner.composer.passes[0], pass);
+  copyFails = true;
+  assert.equal(owner.capturePausedFrame(), false);
+  assert.equal(record.released, 1, 'failed capture retains the full-render fallback targets');
+  assert.equal(owner._pauseSnapshot, null);
+  copyFails = false;
+  owner.composer.renderToScreen = false;
+  assert.equal(owner.capturePausedFrame(), true);
+  assert.equal(record.released, 1, 'an explicitly offscreen composer keeps its attachments');
+  owner.releasePausedFrame();
+  owner.composer.dispose();
 });

@@ -159,11 +159,16 @@ void main(){
   vec2 p = mat2(ca, -sa, sa, ca) * vUv;
   float r = length(p), a = 0.0; vec3 col = vCol.rgb;
   if (kind == 0 || kind == 3) {        // smoke / dust: billowy edge, darker belly, fades and thins with age
+    // Four noise octaves sum to < 1, so the edge cannot reach this bound.
+    // No derivatives are used in this branch: reject empty billboard corners
+    // before evaluating the sixteen noise hashes per FBM sample.
+    if (r > 1.0 - vPar.z * 0.25) discard;
     float n = sxFbm(p * 1.7 + vPar.w * 31.0 + vec2(0.0, uTime * 0.15));
     float edge = 0.62 + 0.38 * n - vPar.z * 0.25;
     a = 1.0 - smoothstep(edge - 0.32, edge, r);
     col *= 0.78 + 0.32 * (p.y * 0.5 + 0.5) + 0.12 * n;
   } else if (kind == 1) {              // ink mist: soft, slightly lumpy
+    if (r >= 1.0) discard; // noise is nonnegative and can only shrink the edge
     float n = sxNoise(p * 3.0 + vPar.w * 13.0);
     a = (1.0 - smoothstep(0.25, 1.0, r + n * 0.18)) * 0.8;
   } else if (kind == 4) {              // ink petal (S3 footage 83.0s/96.8s): a pointed leaf of glossy ink, team colour at the
@@ -185,6 +190,7 @@ void main(){
     return;
   } else {                             // ink chunk: a glossy liquid drop, round when slow and a teardrop (head leading)
     // when stretched along its velocity; shaded exactly like the game's droplets (sxInk)
+    if (vCol.a < 0.03) discard; // per-instance fade, before noise/coverage/lighting
     float st = vStretch, L = 1.0 + st;
     vec2 P = vec2(vUv.x, vUv.y * L);                                   // quad units: x radius 1, y half-length L
     float an = atan(P.y - st, P.x);
@@ -203,7 +209,6 @@ void main(){
     vec2 bx = vec2(vAx.y, -vAx.x);   // the same side axis the vertex shader used
     vec3 n = normalize(vec3(bx * q.x + vAx * q.y, z + 0.05));
     col = sxInk(vCol.rgb, n, vec3(0.0, 0.0, 1.0), 1.0);
-    if (vCol.a < 0.03) discard;
     gl_FragColor = vec4(col, a);
     ${OUT}
     return;
@@ -288,11 +293,17 @@ class SpritePool {
     this._heapValid=false;this._heapBlocked=false;
     const p = this.p, S = this.S;
     if(this.n===0&&this._emptyUploaded)return;
+    // A burst's adjacent particles share drag. Reuse only this update's last
+    // exact factor; keep non-finite time and NaN rates on the original path.
+    const finiteTime = Number.isFinite(dt);
+    let lastDrag = NaN, lastDragFactor = 0;
     for (let j = this.n - 1; j >= 0; j--) {
       const i = j * S; p[i + 6] += dt;
       if (p[i + 6] >= p[i + 7]) { this._kill(j); continue; }
       // Exact zero drag needs no exponential for finite dt; preserve NaN for non-finite time deltas.
-      const drag = p[i + 10] === 0 && Number.isFinite(dt) ? 1 : Math.exp(-p[i + 10] * dt);
+      const rate = p[i + 10];
+      const drag = finiteTime && rate === lastDrag ? lastDragFactor
+        : (lastDrag = rate, lastDragFactor = rate === 0 && finiteTime ? 1 : Math.exp(-rate * dt));
       p[i + 3] *= drag; p[i + 5] *= drag; p[i + 4] = p[i + 4] * drag - p[i + 11] * dt + p[i + 22] * dt;
       p[i] += p[i + 3] * dt; p[i + 1] += p[i + 4] * dt; p[i + 2] += p[i + 5] * dt; p[i + 17] += p[i + 18] * dt;
     }
@@ -390,7 +401,7 @@ class RibbonPool {
   // opts: { width, widthTail, color [r,g,b], alpha, style, life (point lifetime s), spacing (m), flat (ground-aligned) }
   start(opts) {
     if (this.list.length >= this.T) { const old = this.list.findIndex(r => r.ended), victim=this.list[old >= 0 ? old : 0]; victim.ended=true;victim.pts.length=0;victim.samples.length=0;victim.count=0;this.list.splice(old >= 0 ? old : 0, 1); }
-    const r = { pts: [], samples: new Array(this.M), head: 0, count: 0, ended: false, o: { width: .2, widthTail: .6, color: [1, 1, 1], alpha: 1, style: 0, life: .6, spacing: .12, seed: vfxRandom(), ...opts } };
+    const r = { pts: [], samples: new Array(this.M), head: 0, count: 0, viewDirty: true, ended: false, o: { width: .2, widthTail: .6, color: [1, 1, 1], alpha: 1, style: 0, life: .6, spacing: .12, seed: vfxRandom(), ...opts } };
     this.list.push(r); return r;
   }
   push(r, x, y, z, now) {
@@ -403,7 +414,7 @@ class RibbonPool {
     const point=r.samples[at]||(r.samples[at]=[0,0,0,0]);point[0]=x;point[1]=y;point[2]=z;point[3]=now;
     // pts remains the public lifetime sentinel. Its chronological view is
     // synchronized in the existing render scan, never shifted per sample.
-    r.pts.length=r.count;
+    r.pts.length=r.count;r.viewDirty=true;
   }
   end(r) { if (r) r.ended = true; }
   update(now, camPos) {
@@ -412,24 +423,19 @@ class RibbonPool {
     const t = this._t, s = this._s, c = this._c;
     for (let i = this.list.length - 1; i >= 0; i--) {
       const r = this.list[i];
-      while (r.count && now - r.samples[r.head][3] > r.o.life) { r.head=(r.head+1)%this.M; r.count--; }
-      r.pts.length=r.count;
-      for(let k=0;k<r.count;k++)r.pts[k]=r.samples[(r.head+k)%this.M];
+      while (r.count && now - r.samples[r.head][3] > r.o.life) { r.head=(r.head+1)%this.M; r.count--;r.viewDirty=true; }
+      if(r.viewDirty){
+        r.pts.length=r.count;
+        for(let k=0;k<r.count;k++)r.pts[k]=r.samples[(r.head+k)%this.M];
+        r.viewDirty=false;
+      }
       if (r.ended && r.count < 2) { this.list.splice(i, 1); r.samples.length=0; }
     }
     let slot = 0;
     for (const r of this.list) {
       const p = r.pts, n = p.length; if (n < 2) continue;
       const base = slot * this.M * 2; slot++;
-      for (let k = 0; k < this.M; k++) {
-        if(k>=n){
-          const src=base+(n-1)*2;
-          for(let side=0;side<2;side++){
-            const vi=base+k*2+side,from=src+side;
-            for(let c=0;c<3;c++){P[vi*3+c]=P[from*3+c];SD[vi*3+c]=SD[from*3+c];FC[vi*3+c]=FC[from*3+c];}
-            for(let c=0;c<4;c++){C[vi*4+c]=C[from*4+c];R[vi*4+c]=R[from*4+c];}C[vi*4+3]=0;
-          }continue;
-        }
+      for (let k = 0, active = Math.min(n, this.M); k < active; k++) {
         const j = Math.min(n - 1, k), q = p[n - 1 - j];                 // head first
         const qa = p[Math.max(0, n - 2 - j)], qb = p[Math.min(n - 1, n - j)];
         t.set(qb[0] - qa[0], qb[1] - qa[1], qb[2] - qa[2]); if (t.lengthSq() < 1e-10) t.set(0, 1, 0); t.normalize();
@@ -445,6 +451,20 @@ class RibbonPool {
           R[vi * 4] = along; R[vi * 4 + 1] = sg; R[vi * 4 + 2] = r.o.style; R[vi * 4 + 3] = r.o.seed;
           SD[vi * 3] = s.x; SD[vi * 3 + 1] = s.y; SD[vi * 3 + 2] = s.z; FC[vi * 3] = c.x; FC[vi * 3 + 1] = c.y; FC[vi * 3 + 2] = c.z;
         }
+      }
+      // Padded vertices repeat the last live pair with zero alpha. Seed that
+      // pair once, then double the already padded block with native copies.
+      // This preserves every Float32 slot without per-point JS field loops.
+      const at = base + n * 2, tail = (this.M - n) * 2;
+      for (let copied = 0; copied < tail;) {
+        const count = Math.min(copied || 2, tail - copied), from = copied ? at : at - 2, to = at + copied;
+        P.copyWithin(to * 3, from * 3, (from + count) * 3);
+        SD.copyWithin(to * 3, from * 3, (from + count) * 3);
+        FC.copyWithin(to * 3, from * 3, (from + count) * 3);
+        C.copyWithin(to * 4, from * 4, (from + count) * 4);
+        R.copyWithin(to * 4, from * 4, (from + count) * 4);
+        if (!copied) C[to * 4 + 3] = C[(to + 1) * 4 + 3] = 0;
+        copied += count;
       }
       v = slot;
     }

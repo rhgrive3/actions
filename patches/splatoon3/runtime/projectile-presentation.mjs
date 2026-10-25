@@ -122,8 +122,10 @@ export function catalogBubbleSurfaceNormalY(hit,level){
 export function catalogBubbleCanBounce(groundBounces,normalY){
   return normalY<=.35||groundBounces<2;
 }
+const BUBBLE_RADIUS_SCALE=Object.freeze(Array.from({length:9},(_,n)=>Math.pow(.75,n)));
 export function catalogBubbleRadiusScale(totalBounces){
-  return Math.pow(.75,Math.max(0,Math.floor(totalBounces||0)));
+  const n=Math.max(0,Math.floor(totalBounces||0));
+  return n<=8?BUBBLE_RADIUS_SCALE[n]:Math.pow(.75,n);
 }
 
 // The small bubbles' sourced BounceAfterMaxSpeed bounds the speed away from

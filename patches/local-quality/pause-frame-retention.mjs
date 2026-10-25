@@ -54,6 +54,10 @@ export function installPausedFrameRetention(Renderer) {
       }
       // GPU->GPU framebuffer copy, performed before the browser composites/clears it.
       r.copyFramebufferToTexture(snapshot);
+      // The finished frame is now independent of the composer's HDR/MSAA pair.
+      // Reuse its existing lazy-target lifecycle; keep pass objects/shaders and
+      // all gameplay resources so the next real render restores the same stack.
+      if (this.composer?.renderToScreen !== false) this.composer?.releaseInactiveTargets?.();
       return true;
     } catch {
       this.releasePausedFrame();

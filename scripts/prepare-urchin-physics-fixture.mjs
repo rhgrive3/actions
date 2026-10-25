@@ -45,9 +45,16 @@ assert.equal(integrity['indices.bin'].sha256,row.sourceIndexSha256);
 const bytes=fs.readFileSync(path.join(input,'manifest.json'));integrity['manifest.json']={bytes:bytes.length,sha256:hash(bytes)};
 assertTerrainReceipt(integrity,row.derivedFiles);
 const actual=validateNativeGeometry(data);for(const [key,value] of Object.entries(actual))assert.equal(value,row[key],'Audit count '+key);
-// No source or numeric buffer copies: same-job audited bytes remain private.
+// Private regular files satisfy the production prepared-asset contract. Copy
+// only the audited numeric payload and verify the copy against that receipt.
 fs.mkdirSync(path.join(out,'urchin'),{recursive:true});
-for(const file of files)fs.symlinkSync(path.join(input,file),path.join(out,'urchin',file));
+for(const file of files){
+ const target=path.join(out,'urchin',file);
+ fs.copyFileSync(path.join(input,file),target,fs.constants.COPYFILE_EXCL);
+ const copied=fs.readFileSync(target);
+ assert.equal(copied.length,integrity[file].bytes,'Copied fixture size '+file);
+ assert.equal(hash(copied),integrity[file].sha256,'Copied fixture digest '+file);
+}
 fs.writeFileSync(path.join(out,'urchin','integrity.json'),JSON.stringify(integrity));
 fs.writeFileSync(path.join(out,'catalog.json'),JSON.stringify({schema:1,sourceCommit:SOURCE_COMMIT,physicsOnly:true,stages:[definition]}));
 fs.writeFileSync(path.join(out,'PHYSICS-ONLY.txt'),'Private QA fixture. Genuine source-derived numeric geometry only. Textures are absent. Never build, bundle, render or publish this package.\n');

@@ -122,6 +122,10 @@ test('production Three bundle retains all vendor composition and native UUID RNG
 
 const builtSite = process.env.INKWAVE_BUILT_SITE;
 test('full-site emitted Three UUIDs use native crypto without gameplay draws', { skip: !builtSite }, async () => {
+  assert(!fs.existsSync(path.join(builtSite, THREE_REL + 'three.core.js')), 'full production staging must never retain the split core');
+  const identity = JSON.parse(fs.readFileSync(path.join(builtSite, 'inkwave-build.json'), 'utf8'));
+  assert(!Object.keys(identity.artifacts).some(file => file.endsWith('/three.core.js')), 'raw core must not enter the versioned artifact inventory');
+  assert(!fs.readFileSync(path.join(builtSite, 'index.html'), 'utf8').includes('vendor/three/build/three.core.js'), 'raw core must not become an eager request');
   const THREE = await importText(fs.readFileSync(path.join(builtSite, THREE_REL + 'three.module.js'), 'utf8'));
   const present = nativeAllocation(THREE, true);
   assert.equal(present.allocationDraws, 0);

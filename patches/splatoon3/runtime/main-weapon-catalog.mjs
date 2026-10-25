@@ -1525,14 +1525,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const before=this.list.length,result=ghost.call(this,a,e);
     const p=this.list.length>before?this.list[this.list.length-1]:result;
     const r=RECORDS.get(e[4]),meta=e[27]?.s3Catalog;
-    const allowed=['normal','blaster-jump','variable','turret','horizontal','vertical','brush','slosh','pellet','arrow','saber-horizontal','saber-vertical'];
     const maxTilt=finite(r?.parameters.spl__WeaponStringerParam?.ShotParam?.BowTiltDegreeMax,90);
     const namedTilt=Object.hasOwn(e[27]||{},'s3StringerTilt');
     const hasTilt=namedTilt||Array.isArray(meta)&&meta.length===6;
     const tilt=namedTilt?e[27].s3StringerTilt:meta?.[5];
     const layout=Array.isArray(meta)&&(meta.length===5||meta.length===6)&&(!hasTilt||
       r?.family==='stringer'&&meta[1]==='arrow'&&Number.isFinite(tilt)&&tilt>=0&&tilt<=maxTilt);
-    if(p&&r&&!r.legacy&&layout&&meta[0]===1&&allowed.includes(meta[1])&&
+    if(p&&r&&!r.legacy&&layout&&meta[0]===1&&GHOST_CATALOG_SHOT_MODES.includes(meta[1])&&
       Number.isSafeInteger(meta[2])&&meta[2]>=0&&meta[2]<30&&Number.isFinite(meta[3])&&meta[3]>=0&&meta[3]<=1){
       try {
         const source=mode(r,meta[1],meta[2],meta[3]);
@@ -2352,3 +2351,6 @@ export function releaseCatalogBirth(system, projectile, game) {
   game?.netm?.recProj?.(projectile);
   return true;
 }
+
+// Receiver modes are private immutable validation data, never exposed to callers.
+const GHOST_CATALOG_SHOT_MODES=Object.freeze(['normal','blaster-jump','variable','turret','horizontal','vertical','brush','slosh','pellet','arrow','saber-horizontal','saber-vertical']);

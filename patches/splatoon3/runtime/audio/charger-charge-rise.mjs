@@ -53,7 +53,7 @@ export async function chargerRiseBuffer(ctx,{fetcher,sourceUrl,retry=false,now=D
   const state=stateFor(ctx);
   if(state.buffer)return state.buffer;
   if(state.promise)return state.promise;
-  const fetchAudio=fetcher||(typeof fetch==='function'?fetch:null);
+  const fetchAudio=fetcher||(typeof globalThis.fetch==='function'?globalThis.fetch.bind(globalThis):null);
   const assetURL=recordedChargerURL(sourceUrl);
   if(!fetchAudio||!assetURL)return null;
   if(state.error&&(!retry||!state.retryable||state.attempts>=MAX_ATTEMPTS||now()<state.retryAfter))return null;
@@ -77,7 +77,7 @@ export async function chargerRiseBuffer(ctx,{fetcher,sourceUrl,retry=false,now=D
     if(state.generation!==generation||slots.get(ctx)!==state||controller?.signal.aborted||ctx.state==='closed')return null;
     if(!(bytes instanceof ArrayBuffer)||bytes.byteLength<10000||bytes.byteLength>512*1024)
       throw new ChargerLoadError('invalid recorded Charger audio payload');
-    const buffer=await ctx.decodeAudioData(bytes.slice(0));
+    const buffer=await ctx.decodeAudioData(bytes);
     if(!buffer||!Number.isFinite(buffer.duration)||
        buffer.duration<RECORDED_CHARGER_FIRST.minimumDecodedSeconds||
        buffer.duration>3||

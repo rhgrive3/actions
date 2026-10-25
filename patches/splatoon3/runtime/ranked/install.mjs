@@ -82,7 +82,9 @@ export function installRanked(context) {
         for (const a of this.actors) if (a.team === e.team && a.alive && !a.remote && !a.specialActive && !specialGaugeLocked(a)) a.special = Math.min(a.specialCost(), a.special + e.points / (a.s3?.modifiers?.specialCharge || 1));
       }
       this.rankedEffects.event(e, visualOnly);
-      if (['lead', 'checkpoint', 'tower-capture', 'zone-capture', 'clam-score', 'overtime'].includes(e.kind)) {
+      const kind = e.kind;
+      if (kind === 'lead' || kind === 'checkpoint' || kind === 'tower-capture'
+        || kind === 'zone-capture' || kind === 'clam-score' || kind === 'overtime') {
         api.emit('ranked:event', { match: this, ...e });
         if (e.kind !== 'clam-score') G.audio?.play?.(e.kind === 'overtime' ? 'ui_confirm' : 'splat_small', { volume: .6 });
       }
@@ -137,7 +139,8 @@ export function installRanked(context) {
     // the previous tick here, so a turn-and-throw/shot must use the new angles.
     const yaw = Number.isFinite(this.aimYaw) ? this.aimYaw : this.yaw;
     const pitch = Number.isFinite(this.aimPitch) ? this.aimPitch : 0;
-    const aim = [Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)];
+    const cosPitch = Math.cos(pitch);
+    const aim = [Math.sin(yaw) * cosPitch, Math.sin(pitch), Math.cos(yaw) * cosPitch];
     // Reject at the same pre-update recovery boundary as sub preparation,
     // before either the local command or follower wire latch can retain it.
     if (m.mode === 'clams' && catalogSplatanaThrowBlocked(this)) this.intent.throw = false;

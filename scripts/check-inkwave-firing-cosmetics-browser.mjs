@@ -52,7 +52,33 @@ try {
   page.on('requestfailed', r=>console.log('requestfailed',r.url(),r.failure()));
   await page.addInitScript(()=>{try{localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,colorblind:true}));localStorage.setItem('inkwave.profile',JSON.stringify({name:'Cosmetic QA',weapon:'shooter',style:{hair:0,skin:2,outfit:0,eyes:0,hat:0,brows:0}}));}catch{}let s=null;const nativeRandom=Math.random;window.seedFiring=n=>s=n;Math.random=()=>{if(s===null)return nativeRandom();s^=s<<13;s^=s>>>17;s^=s<<5;return(s>>>0)/4294967296;};});
   await page.goto(base + '/?range&skipTitle');
-  try { await page.waitForFunction(() => window.__G?.match?.range && window.__G.match.state === 'playing', null, { timeout: 240000 }); } catch(e) {await page.screenshot({path:path.join(out,'startup-failure.png')}); fs.writeFileSync(path.join(out,'startup-failure.json'),JSON.stringify(await page.evaluate(()=>({text:document.body.innerText,G:!!window.__G,game:!!window.__inkwave,match:window.__G?.match?.state})),null,2));throw e;}
+  try { await page.waitForFunction(() => window.__G?.match?.range && window.__G.match.state === 'playing', null, { timeout: 240000 }); }
+  catch (error) {
+    // Capture the predicate's actual owners before screenshot work can advance
+    // startup. opts.range is admission; match.range is the installed session.
+    const diagnostic = await page.evaluate(() => {
+      const G = window.__G, game = window.__inkwave, match = G?.match, session = match?.range;
+      return {
+        text: document.body.innerText.slice(0, 8000), G: !!G, game: !!game, match: match?.state,
+        url: location.href, baseURI: document.baseURI, visibility: document.visibilityState,
+        mode: G?.mode, map: game?.mapDef?.id, layout: game?.layoutId,
+        opts: match ? { range: match.opts?.range, noBots: match.opts?.noBots, mode: match.opts?.mode } : null,
+        attract: match?.attract, range: typeof session, hasRangeSession: !!session,
+        sessionMethods: session ? ['update', 'updateHud', 'presentStart', 'dispose'].filter(key => typeof session[key] === 'function') : [],
+        sameMatchOwner: !!match && match === game?.match, gameMatchState: game?.match?.state,
+        gameHasRangeSession: !!game?.match?.range,
+        predicate: !!(session && match.state === 'playing'),
+        bootError: document.getElementById('boot-error')?.textContent,
+        startupStatus: document.getElementById('inkwave-startup-status')?.textContent,
+        perf: { now: performance.now(), timeOrigin: performance.timeOrigin, bootMs: game?.bootMs,
+          navigation: performance.getEntriesByType('navigation')[0]?.toJSON?.(),
+          memory: performance.memory ? { usedJSHeapSize: performance.memory.usedJSHeapSize, totalJSHeapSize: performance.memory.totalJSHeapSize } : null },
+      };
+    }).catch(failure => ({ diagnosticError: String(failure) }));
+    fs.writeFileSync(path.join(out, 'startup-failure.json'), JSON.stringify({ error: String(error), ...diagnostic }, null, 2));
+    await page.screenshot({ path: path.join(out, 'startup-failure.png') }).catch(failure => console.error('startup screenshot:', String(failure)));
+    throw error;
+  }
   await page.evaluate(() => {
     const G = window.__G, g = window.__inkwave; g.debug.freeze(); g.debug.freezeBots();
     window.shapeSpawn = G.local.pos.clone().set(23, G.local.pos.y, -18);

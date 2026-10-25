@@ -1,14 +1,16 @@
 import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import {fileURLToPath} from 'node:url';
+import {verifyRandomObservation} from './probe.mjs';
 import {verifyIdentityPair,CURRENT_SHA256,REFERENCE_SHA256} from './reference.mjs';
 const changed='patches/splatoon3/runtime/swim-motion.mjs';
 const presentation=new Set(['swimYaw','heading','mantle','pivotQuaternion','skinned','previousSkinnedHeading','headingStep']);
 export function compareSwimEntryReceipts(before,after,head){
  assert.match(head,/^[0-9a-f]{40}$/);assert.equal(before.sourceSha,head);assert.equal(after.sourceSha,head);assert.equal(before.expect,'baseline');assert.equal(after.expect,'candidate');
  for(const r of [before,after]){
-  assert.equal(r.status,'rendered-awaiting-visual-review');assert.equal(r.browserRun,true);assert.equal(r.sourceBankAwaited,true);assert.equal(r.expectedFrames,12);assert.equal(r.images.length,12);assert.equal(r.screenshots.length,12);assert.equal(r.rows.length,4);assert.equal(r.errors.length,0);assert.equal(r.blocked.length,0);assert.equal(new Set(r.images.map(x=>x.name)).size,12);assert.equal(r.simulationTicks,73);assert.equal(r.randomCalls>0,true);assert.match(r.randomValuesHash,/^[0-9a-f]{64}$/);assert.match(r.canonicalTraceHash,/^[0-9a-f]{64}$/);
+  assert.equal(r.status,'rendered-awaiting-visual-review');assert.equal(r.browserRun,true);assert.equal(r.sourceBankAwaited,true);assert.equal(r.expectedFrames,12);assert.equal(r.images.length,12);assert.equal(r.screenshots.length,12);assert.equal(r.rows.length,4);assert.equal(r.errors.length,0);assert.equal(r.blocked.length,0);assert.equal(new Set(r.images.map(x=>x.name)).size,12);assert.equal(r.simulationTicks,73);verifyRandomObservation(r);assert.match(r.canonicalTraceHash,/^[0-9a-f]{64}$/);
   assert.deepEqual(r.rows.map(x=>x.simulationFrame),[28,29,72,73]);for(const x of r.rows){assert.equal(x.sourceStatus,'ready');assert.equal(x.sourceActive,true);assert.equal(x.active,true);assert.deepEqual(x.input,{kind:'normalized-mobile-stick',moveX:-.02,moveY:0,squid:true});assert.equal(x.skinned.mantle.every(Number.isFinite),true);}
  }
  for(const key of ['browserVersion','seed','tickSeconds','canonicalTraceHash','randomCalls','randomValuesHash'])assert.equal(before[key],after[key],key);
+ assert.deepEqual(before.randomObservation,after.randomObservation,'same complete seeded observation');
  verifyIdentityPair(before.sourceIdentity,after.sourceIdentity,head);
  assert.equal(before.authoredHashes[changed],REFERENCE_SHA256);assert.equal(after.authoredHashes[changed],CURRENT_SHA256);
  for(const r of [before,after]){assert.equal(r.threeExportContract?.status,'passed');assert.equal(r.buildInputHashes?.['patch/runtime/swim-motion.mjs'],r.authoredHashes[changed]);}

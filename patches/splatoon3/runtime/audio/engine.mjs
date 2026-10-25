@@ -172,7 +172,8 @@ export function installWeaponAudioEngine(Engine){
       // Never start a synthesized substitute for a known MP3. A cold fetch,
       // failed response, or LRU eviction may delay the real sample, but must
       // not change an already-recorded main's timbre into INKWAVE PCM.
-      loader?.ensure(id,event);
+      if(loader?.declares(id,event)===false)loader.notMapped?.add(`${id}:${event}`);
+      else loader?.ensure(id,event);
       const mainAttack=!id.includes(':')&&/^fire(?:_[a-z0-9]+)?$/.test(event);
       // The S3 catalog can emit fire_full/fire_alt even when the 2022 source
       // only recorded fire (notably Spinners at full charge). Prefer the real
@@ -221,7 +222,7 @@ export function installWeaponAudioEngine(Engine){
       // A pending loop counts as active to avoid duplicate registration. A
       // failed fetch does not: active gameplay may retry after loader backoff.
       get playing(){return !stopped&&!failed&&(actual?actual.playing!==false:true);},
-      set(update={}){if(stopped)return;currentOptions={...currentOptions,...update};actual?.set?.(update);},
+      set(update={}){if(stopped)return;if(!actual)currentOptions={...currentOptions,...update};actual?.set?.(update);},
       stop(fade=.15){if(stopped)return;stopped=true;actual?.stop?.(fade);actual=null;},
     };
     if(!loader){failed=true;return handle;}

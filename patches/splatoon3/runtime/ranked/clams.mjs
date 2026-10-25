@@ -402,17 +402,24 @@ export class ClamsRule {
   }
 
   _processPickups(frame) {
-    const actors = this._actorList(frame).filter(actor => actor.alive !== false && canCollectClam(actor));
     const depth = this._pickupDepth || 0, snapshots = this._pickupSnapshots || (this._pickupSnapshots = []);
-    const field = snapshots[depth] || (snapshots[depth] = []);
-    this._pickupDepth = depth + 1; field.length = this.state.clams.length;
-    for (let i = 0; i < field.length; i++) field[i] = this.state.clams[i];
+    const buffers = this._pickupActorBuffers || (this._pickupActorBuffers = []);
+    const actors = buffers[depth] || (buffers[depth] = []), field = snapshots[depth] || (snapshots[depth] = []);
+    this._pickupDepth = depth + 1;
     try {
+      const source = this._actorList(frame), length = source.length;
+      for (let i = 0; i < length; i++) if (i in source) {
+        const actor = source[i];
+        if (actor.alive !== false && canCollectClam(actor)) actors.push(actor);
+      }
+      if (actors.length === 0) return;
+      field.length = this.state.clams.length;
+      for (let i = 0; i < field.length; i++) field[i] = this.state.clams[i];
       for (const clam of field) {
         if (!clam.grounded) continue;
         for (const actor of actors) if (this._pickup(clam, actor, frame)) break;
       }
-    } finally { field.length = 0; this._pickupDepth = depth; }
+    } finally { field.length = 0; actors.length = 0; this._pickupDepth = depth; }
   }
 
   _throw(actor, input, frame) {

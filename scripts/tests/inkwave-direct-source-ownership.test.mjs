@@ -293,12 +293,72 @@ test('Direct-Source migrated LOD, outfit AO, body-balance and transport compat m
 
 // Regression for the 2026-10-21 A+ rebase: preserve the real terrain-source
 // contract while adding the Node 18 import.meta.dirname fallback.
-test('native stage Node18 fallback preserves source terrain validation before stage publication', () => {
-  const src = fs.readFileSync(new URL('../lib/inkwave-native-stages.mjs', import.meta.url), 'utf8');
+test('native stage Node18 fallback preserves source terrain validation before stage publication', async t => {
+  const helperURL = new URL('../lib/inkwave-native-stages.mjs', import.meta.url);
+  const src = fs.readFileSync(helperURL, 'utf8');
   assert.match(src, /import \{assertSourceTerrainObjects\} from '\.\.\/\.\.\/patches\/native-stages\/runtime\/source-terrain-contract\.mjs'/);
-  assert.match(src, /fileURLToPath\(new URL\("\.", import\.meta\.url\)\)/);
-  const read = src.indexOf("const manifest=JSON.parse(fs.readFileSync(path.join(root,s.id,'manifest.json')))");
-  const validate = src.indexOf('assertSourceTerrainObjects(manifest);', read);
-  const publish = src.indexOf('return {...definition,integritySha256:', read);
-  assert.ok(read >= 0 && validate > read && publish > validate, 'terrain validation must precede playable stage publication');
+  assert.match(src, /fileURLToPath\(new URL\(\"\.\", import\.meta\.url\)\)/);
+  const path = await import('node:path'), os = await import('node:os');
+  const {fileURLToPath} = await import('node:url');
+  const catalog = await import('../../patches/native-stages/runtime/source-catalog.mjs');
+  const {assertSourceTerrainObjects} = await import('../../patches/native-stages/runtime/source-terrain-contract.mjs');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'native-terrain-ownership-'));
+  t.after(() => fs.rmSync(root, {recursive: true, force: true}));
+  const definition = catalog.BASE_SOURCE_STAGES[0], dir = path.join(root, definition.id);
+  fs.mkdirSync(dir);
+  fs.writeFileSync(path.join(root, 'catalog.json'), JSON.stringify({schema: 1, sourceCommit: catalog.SOURCE_COMMIT, stages: [definition]}));
+  const hash = bytes => createHash('sha256').update(bytes).digest('hex');
+  const manifest = {id: definition.id, objects: [{name: 'Fld_Ground', material: 'GroundGrass', active: true, collidable: true}]};
+  const save = (value, seal = true) => {
+    const bytes = JSON.stringify(value);
+    fs.writeFileSync(path.join(dir, 'manifest.json'), bytes);
+    if (seal) fs.writeFileSync(path.join(dir, 'integrity.json'), JSON.stringify({'manifest.json': {bytes: Buffer.byteLength(bytes), sha256: hash(bytes)}}));
+  };
+  // Execute the actual authored helper, not a restated implementation. Resolve
+  // import.meta with dirname absent, as on Node 18; inject its real terrain
+  // contract and local catalog while keeping browser/prebuilt paths unused.
+  const compile = source => {
+    let validations = 0;
+    const body = source.replace(/^import .+;$/gm, '').replace(/^export /gm, '').replace(/import\.meta/g, 'moduleMeta');
+    const prepare = new Function('fs', 'path', 'crypto', 'fileURLToPath', 'moduleMeta',
+      'BASE_SOURCE_STAGES', 'SOURCE_RECIPE', 'SOURCE_COMMIT', 'assertSourceTerrainObjects', 'PREBUILT_ROOT', 'admitPrebuiltStages',
+      body + '\nreturn prepareNativeStageBuild;')(fs, path, {createHash}, fileURLToPath, {url: helperURL.href},
+      catalog.BASE_SOURCE_STAGES, catalog.SOURCE_RECIPE, catalog.SOURCE_COMMIT,
+      value => { validations++; return assertSourceTerrainObjects(value); }, null,
+      () => { throw Error('local terrain fixture must not enter prebuilt admission'); });
+    return {prepare, validations: () => validations};
+  };
+  const exercise = candidate => {
+    save(manifest);
+    const count = candidate.validations(), prepared = candidate.prepare(root, {});
+    assert.equal(candidate.validations(), count + 1, 'terrain validation must precede playable stage publication');
+    assert.equal(prepared.config.mode, 'local-prepared');
+    assert.equal(prepared.config.stages[0].integritySha256, hash(fs.readFileSync(path.join(dir, 'integrity.json'))));
+    const invalid = {...manifest, objects: [{...manifest.objects[0], collidable: false}]};
+    save(invalid); // Valid hashes cannot authorize structurally excluded ground.
+    assert.throws(() => candidate.prepare(root, {}), /Native structural ground excluded from collision/);
+    save(manifest);
+    save(invalid, false); // Unauthenticated bytes must fail before terrain use.
+    const beforeTamper = candidate.validations();
+    assert.throws(() => candidate.prepare(root, {}), /Native build integrity mismatch/);
+    assert.equal(candidate.validations(), beforeTamper, 'terrain must use only the integrity-checked manifest');
+  };
+  exercise(compile(src));
+  // Invalidate each real boundary in turn: neither a comment/string match nor
+  // a validator placed after an unreachable publication return can pass.
+  const mutations = [
+    source => source.replace('assertSourceTerrainObjects(manifest);', ''),
+    source => source.replace('assertSourceTerrainObjects(manifest);', '').replace(
+      'return {...definition,integritySha256:hash(checked.raw),version1130Verified:false};',
+      'return {...definition,integritySha256:hash(checked.raw),version1130Verified:false}; assertSourceTerrainObjects(manifest);'),
+    source => source.replace('if(bytes.length!==expected.bytes||hash(bytes)!==expected.sha256)', 'if(false)'),
+    source => source.replace('const checked=checkedPreparedFiles(root,s.id),manifest=checked.manifest;',
+      "const checked={raw:fs.readFileSync(path.join(root,s.id,'integrity.json'))},manifest=JSON.parse(fs.readFileSync(path.join(root,s.id,'manifest.json')));"),
+  ];
+  for (const mutate of mutations) {
+    const changed = mutate(src);
+    assert.notEqual(changed, src, 'negative mutation must modify the actual helper');
+    const candidate = compile(changed); // Syntax errors are not mutation evidence.
+    assert.throws(() => exercise(candidate), {name: 'AssertionError'});
+  }
 });

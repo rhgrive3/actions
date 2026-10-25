@@ -2,6 +2,26 @@ name: INKWAVE paint hotpath parity
 on:
   pull_request:
     paths:
+      - 'inkwave-public/src/config.js'
+      - 'inkwave-public/src/core/device.js'
+      - 'inkwave-public/src/core/gyro.js'
+      - 'inkwave-public/src/fx/fx.js'
+      - 'inkwave-public/src/fx/fxHooks.js'
+      - 'inkwave-public/src/ui/menu-art.js'
+      - 'inkwave-public/src/world/inkShading.js'
+      - 'inkwave-public/src/world/levelMaterial.js'
+      - 'inkwave-public/src/world/paint.js'
+      - 'inkwave-public/vendor/three/build/three.module.js'
+      - 'patches/reliability/adapter.mjs'
+      - 'patches/splatoon3/runtime/walk.mjs'
+      - 'patches/touch-layout/adapter.mjs'
+      - 'scripts/check-inkwave-browser.mjs'
+      - 'scripts/check-inkwave-flow-render.mjs'
+      - 'scripts/check-inkwave-motion-catalog.mjs'
+      - 'scripts/check-inkwave-touch-layout-identity.mjs'
+      - 'scripts/check-inkwave-wall-render.mjs'
+      - 'patches/splatoon3/adapter.mjs'
+      - 'scripts/inkwave-source-composition.mjs'
       - "patches/local-quality/**"
       - "scripts/lib/inkwave-build-only-modules.mjs"
       - ".github/workflows/inkwave-paint-hotpath.yml"
@@ -19,6 +39,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/tools/inkwave-modeler/blender/
+            !/tools/inkwave-modeler/docs/
       - name: Verify exact checkout head
         shell: bash
         env:

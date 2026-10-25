@@ -75,7 +75,19 @@ try{
   const frames=async n=>{for(let i=0;i<n;i++){await Promise.all(pages.map(p=>p.evaluate(()=>step())));await Promise.all(pages.map(p=>p.evaluate(()=>new Promise(r=>setTimeout(r,0)))));}};
   // Settle longer than the receiver's 1.2 s lag-compensation window, so an
   // earlier placement is no longer a legal past pose of the victim.
-  const reset=async(victimX=0,victimZ=10)=>{await Promise.all(pages.map(p=>p.evaluate(([x,z])=>{place(x,z);G.actors[1].hp=100;wall=false;},[victimX,victimZ])));await frames(80);};
+  const reset=async(victimX=0,victimZ=10)=>{
+    // A wall-rejected claim can remain deferred for 0.95 s. Keep the OLD
+    // environment intact until it expires; opening the wall first would turn
+    // scenario C's old claim into damage during scenario D's setup.
+    const hp=await guest.evaluate(()=>G.local.hp);
+    await frames(80);
+    assert.equal(await guest.evaluate(()=>G.local.hp),hp,'old scenario cannot gain a late admitted hit while draining');
+    const pending=await Promise.all(pages.map(p=>p.evaluate(()=>[...(G.netm._combatProvenance?.pending.values()||[])].reduce((n,items)=>n+items.length,0))));
+    assert.deepEqual(pending,[0,0],'old claims must expire before changing collision or restoring HP');
+    await Promise.all(pages.map(p=>p.evaluate(([x,z])=>{place(x,z);G.actors[1].hp=100;wall=false;},[victimX,victimZ])));
+    await frames(80);
+    assert.equal(await guest.evaluate(()=>G.local.hp),100,'new scenario starts without inherited damage');
+  };
   await frames(12);
 
   // A. Genuine round in the open: the victim loses exactly what the owner sent.

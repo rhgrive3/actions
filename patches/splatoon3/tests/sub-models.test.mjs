@@ -29,7 +29,12 @@ test('every sub model builds from shared geometry within the triangle budget, wi
     const m = buildSubModel(T, id, ink);
     assert.ok(m?.root?.isGroup, `${id} builds`);
     const list = meshes(m.root);
-    const tris = list.reduce((n, x) => n + x.geometry.index.count / 3, 0);
+    const tris = list.reduce((n, x) => {
+      const geometry = x.geometry;
+      const vertices = geometry.index ? geometry.index.count : geometry.getAttribute('position')?.count;
+      assert.ok(Number.isInteger(vertices) && vertices % 3 === 0, `${id}: complete indexed or non-indexed triangles`);
+      return n + vertices / 3;
+    }, 0);
     assert.ok(tris > 300 && tris < 8000, `${id}: ${tris} triangles`);
     assert.ok(list.every(x => isSharedGeometry(x.geometry)), `${id}: geometry shared across instances`);
     assert.ok(m.inkMeshes.every(x => x.material === ink), `${id}: the team ink material is used as given`);

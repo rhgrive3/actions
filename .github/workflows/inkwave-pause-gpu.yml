@@ -13,6 +13,8 @@ on:
       - "scripts/lib/inkwave-pause-baseline-contract.mjs"
       - "scripts/tests/inkwave-pause-baseline-contract.test.mjs"
       - ".github/workflows/inkwave-pause-gpu.yml"
+      - 'inkwave-public/src/main.js'
+      - 'inkwave-public/src/core/renderer.js'
 permissions:
   contents: read
 concurrency:

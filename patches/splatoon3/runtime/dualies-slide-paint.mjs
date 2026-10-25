@@ -30,6 +30,20 @@ function stampSeedPrefix(id, token) {
   return seed;
 }
 
+function stampSlidePoint(runtime,point){
+  const {game,state,weapon,half,actor}=runtime;
+    state.from.copy(point).setY(point.y + .35);
+    const hit = game.physics.raycast(state.from, state.down, 1.2 * (weapon.rollPaintWorldScale || 1), state.hit, true);
+    if (!hit?.hit || hit.normal.y <= .55) return;
+    state.sample.copy(hit.point).addScaledVector(hit.normal, SURFACE_OFFSET);
+    const painted = game.paint.splat(state.sample, (runtime.radius??=slideStampRadius(half)), actor.team, {
+      kind: 'roll', stretch: state.direction, stretchAmt: 0, claimOwner: actor,
+      seed: (Math.imul(state.seedPrefix ^ state.index++,16777619)>>>0)/4294967296
+    });
+    if (Number.isFinite(painted)) runtime.area += painted;
+    (state.lastStamp||=point.clone()).copy(point);
+  }
+
 export function paintDualiesSlide(game, runner, weapon, ending = false) {
   const actor = runner?.a, dodge = runner?.dodge;
   const half = weapon?.rollPaintWidthHalf;
@@ -52,47 +66,37 @@ export function paintDualiesSlide(game, runner, weapon, ending = false) {
   state.direction.copy(direction).setY(0).normalize();
   const id=actor.nid??'local',token=state.token??0;
   if(state.seedId!==id||state.seedToken!==token){state.seedId=id;state.seedToken=token;state.seedPrefix=stampSeedPrefix(id,token);}
-  let area = 0;
-  const stamp = point => {
-    state.from.copy(point).setY(point.y + .35);
-    const hit = game.physics.raycast(state.from, state.down, 1.2 * (weapon.rollPaintWorldScale || 1), state.hit, true);
-    if (!hit?.hit || hit.normal.y <= .55) return;
-    state.sample.copy(hit.point).addScaledVector(hit.normal, SURFACE_OFFSET);
-    const painted = game.paint.splat(state.sample, slideStampRadius(half), actor.team, {
-      kind: 'roll', stretch: state.direction, stretchAmt: 0, claimOwner: actor,
-      seed: (Math.imul(state.seedPrefix ^ state.index++,16777619)>>>0)/4294967296
-    });
-    if (Number.isFinite(painted)) area += painted;
-    (state.lastStamp||=point.clone()).copy(point);
-  };
+  const runtime=(state.stampRuntime||=([]))[depth]||=( {} );
+  if(!Object.is(runtime.half,half))runtime.radius=undefined;
+  runtime.game=game;runtime.state=state;runtime.weapon=weapon;runtime.half=half;runtime.actor=actor;runtime.area=0;
   if (!actor.grounded) {
     state.connected = false; state.initial = null; state.carry = 0; state.last.copy(actor.pos);
     return 0;
   }
   if (!state.connected) {
     state.connected = true; state.carry = 0; state.last.copy(state.initial ?? actor.pos);
-    state.initial = null; stamp(state.last);
+    state.initial = null; stampSlidePoint(runtime,state.last);
   }
   {
     const distance = state.last.distanceTo(actor.pos), spacing = half * .5;
     // A discontinuous teleport must not paint a bridge across the map.
     if (distance > Math.max(20 * (weapon.rollPaintWorldScale || 1), half * 12)) {
-      state.carry = 0; stamp(actor.pos);
+      state.carry = 0; stampSlidePoint(runtime,actor.pos);
     } else if (distance > EPS) {
       let along = spacing - state.carry;
       for (; along <= distance + EPS; along += spacing) {
         const point = stampPoint.copy(state.last).lerp(actor.pos, Math.min(1, along / distance));
-        stamp(point);
+        stampSlidePoint(runtime,point);
       }
       state.carry = (state.carry + distance) % spacing;
       if (state.carry < EPS || spacing - state.carry < EPS) state.carry = 0;
     }
     state.last.copy(actor.pos);
   }
-  if (ending && (!state.lastStamp || state.lastStamp.distanceToSquared(actor.pos) > EPS * EPS)) stamp(actor.pos);
-  if (area) actor.addTurf(area);
-  return area;
-  }finally{state.stampDepth=depth;}
+  if (ending && (!state.lastStamp || state.lastStamp.distanceToSquared(actor.pos) > EPS * EPS)) stampSlidePoint(runtime,actor.pos);
+  if (runtime.area) actor.addTurf(runtime.area);
+  return runtime.area;
+  }finally{const runtime=state.stampRuntime?.[depth];if(runtime){runtime.game=runtime.state=runtime.weapon=runtime.actor=null;}state.stampDepth=depth;}
 }
 
 export function installDualiesSlidePaint({ WeaponRunner, WEAPONS, G }, profile) {

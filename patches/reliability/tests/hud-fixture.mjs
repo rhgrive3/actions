@@ -77,6 +77,11 @@ export async function fixture({ hudSource = readSource('src/ui/hud.js'), gameSou
   await config.evaluate();
   Object.assign(context, util.namespace, config.namespace);
   const hudMethods = [
+    // Composed HUD pause accessors own cancellation and resume scheduling.
+    // Keep their real implementation; raw upstream still uses its plain field.
+    ...(hudSource.includes('  get paused() {')
+      ? [section(hudSource, '  get paused() {', '\n  // ================================================================ public')]
+      : []),
     // Current composed visibility/dispose paths call this real cleanup helper.
     // Raw upstream has neither the calls nor the helper; do not replace it with a stub.
     ...(hudSource.includes('this._clearReticleFeedback()')

@@ -158,7 +158,7 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
       const runner = this.weaponRunner;
       const family=this.weapon?.catalogRecord?.family;
       const candidate=family==='splatling'||(!family&&this.weapon?.kind==='splatling')||runner?.charging;
-      const before = candidate ? Math.hypot(this.vel.x, this.vel.z) : 0;
+      const beforeX=candidate?this.vel.x:0,beforeZ=candidate?this.vel.z:0;
       const value = horizontal.call(this, dt, squid, onEnemy, ...rest);
       if (runner?.s3SplatlingChargeDecel) runner.s3SplatlingChargeDecel = undefined;
       if(!candidate)return value;
@@ -167,6 +167,7 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
           !runner?.charging || runner.streaming || runner.dodge || (runner.lockT || 0) > 0) return value;
       const move = this.intent?.move, input = move ? Math.min(1, Math.hypot(move.x, move.z)) : 0;
       if (input < .01) return value;
+      const before=Math.hypot(beforeX,beforeZ);
       const target = runner.moveSpeed() * input, after = Math.hypot(this.vel.x, this.vel.z);
       if (!(before > target + 1e-9) || !(after > 1e-9)) return value;
       const modeled = Math.max(target, before * Math.pow(1 - chargeDownRate, dt * 60));

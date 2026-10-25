@@ -42,3 +42,12 @@ test('custom projection caller keeps complete support rebuilds',()=>{
 test('source faces share one immutable neutral color while dynamic/object colors keep independent owners',()=>{
  const a=makeLevel(false),b=makeLevel(false);assert.equal(a.faces[0].color,a.faces[1].color);assert.equal(a.faces[0].color,b.faces[0].color);assert(Object.isFrozen(a.faces[0].color));assert.equal(a.blocks[0].color,a.faces[0].color);assert.notEqual(a.blocks[a.faces.length].color,a.faces[0].color);assert.notEqual(a.blocks[a.faces.length].color,a.blocks[a.faces.length+1].color);assert.equal(a.faces[0].color.getHexString(),'bfc3c6');
 });
+
+const buildAsync=new Function('THREE',source.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+'\nreturn buildNativeMinimapAsync;')(THREE);
+test('sliced first raster matches synchronous support and cancellation never publishes a partial raster',async()=>{
+ const level=makeLevel(true),asyncMap=makeMap(level,11,9),syncMap=makeMap(level,11,9);build(syncMap,true);await buildAsync(asyncMap,true,{budgetMilliseconds:0});assert.deepEqual(snapshot(asyncMap),snapshot(syncMap));assert.equal(asyncMap._built,true);
+ const stopped=makeMap(level,11,9),controller=new AbortController();controller.abort();await assert.rejects(buildAsync(stopped,true,{signal:controller.signal}),{name:'AbortError'});assert.equal(stopped._built,false);assert.equal(stopped.draws,0);
+});
+test('same-size full rebuilds reuse every support raster owner and erase stale values',()=>{
+ const map=makeMap(makeLevel(false),5,4);build(map,true);const arrays=Object.fromEntries(['hgt','topBlock','nrm','pixCell','owner'].map(key=>[key,map[key]]));for(const array of Object.values(arrays))array.fill(19);map.level.invalidateMinimapSupport();build(map,true);for(const [key,array]of Object.entries(arrays))assert.equal(map[key],array);const control=makeMap(map.level,5,4);build(control,true);assert.deepEqual(snapshot(map),snapshot(control));
+});

@@ -96,7 +96,8 @@ export function capsuleEntry(from, to, base, actorRadius, height, bulletRadius) 
   const dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z;
   const nearY = Math.max(lo, Math.min(hi, from.y));
   if (ox * ox + oz * oz + (from.y - nearY) ** 2 <= r * r) return 0;
-  let best = Math.min(sphereEntry(ox, from.y - lo, oz, dx, dy, dz, r), sphereEntry(ox, from.y - hi, oz, dx, dy, dz, r));
+  const lower = sphereEntry(ox, from.y - lo, oz, dx, dy, dz, r);
+  let best = Object.is(lo,hi) ? lower : Math.min(lower, sphereEntry(ox, from.y - hi, oz, dx, dy, dz, r));
   const a = dx * dx + dz * dz, b = ox * dx + oz * dz, c = ox * ox + oz * oz - r * r, disc = b * b - a * c;
   if (a > EPS && disc >= 0) {
     const t = (-b - Math.sqrt(disc)) / a, y = from.y + dy * t;

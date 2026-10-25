@@ -32,7 +32,10 @@ function world(id, adopt) {
   } else {
     const kind = { waveBreaker: 'wave', splattercolorScreen: 'screen', superChump: 'decoy', tripleInkstrike: 'marker' }[id];
     const p = { id, action: 'deploy', kind, activation: 1, object: 1, seed: 1, pos: [0, 0, 0], target: [0, 0, 1],
-      phase: 'active', age: 0, landedAt: 0, duration: 10, radius: 20, specialPowerAP: 0, hp: 480, waveFrame: 160 / 60 };
+      phase: 'active', age: 0, landedAt: 0,
+      ...({waveBreaker:{duration:6,radius:20,hp:480},splattercolorScreen:{duration:10,radius:15,hp:0},
+        superChump:{duration:5,radius:7,hp:60},tripleInkstrike:{duration:2,radius:7,hp:0}}[id]),
+      specialPowerAP: 0, waveFrame: 160 / 60 };
     n._play('A', [1, 'ac', 'special', 7, 0, p]);
     ghost = G.projectiles._s3AllSpecialObjects.find(o => o.owner === owner);
     assert.ok(ghost?.remote, 'control: native catalogue replay created the special replica');

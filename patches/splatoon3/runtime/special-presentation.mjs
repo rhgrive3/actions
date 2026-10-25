@@ -561,6 +561,7 @@ export function installSpecialModels(api) {
     const a = ch.actor, state = a._s3AllSpecialState?.id === s.id ? a._s3AllSpecialState : null, t = G.time || 0;
     let hideWeapon = false, hideKid = false;
     const poseOptions = { dt, speed: 0 }; let speedReady = false;
+    let speakerDeployAge = NaN, speakerDeploy = 0, speakerYaw, speakerSin = 0, speakerCos = 1, speakerGlow;
     for (const d of s.devices) {
       const spec = d.spec;
       if (spec.hideWeapon && (s.id !== 'killerWail' || (state?.t ?? t - s.startedAt) < 40 / 60 - 1e-8)) hideWeapon = true;
@@ -577,7 +578,10 @@ export function installSpecialModels(api) {
       if (spec.speakers) {
         // Deploy: the six speakers fly out of the kid's back and pop to size, then bob;
         // each laser tick kicks the cone back (S3 footage, Killer Wail 5.1 activation).
-        const M = SPECIAL_DEVICE_MOTION.speakers, age = t - s.startedAt, k = easeOutBack(age / M.deploy), i = s.devices.indexOf(d);
+        const M = SPECIAL_DEVICE_MOTION.speakers, age = t - s.startedAt, i = s.devices.indexOf(d);
+        const deployAge = age / M.deploy;
+        if (deployAge !== speakerDeployAge) { speakerDeployAge = deployAge; speakerDeploy = easeOutBack(deployAge); }
+        const k = speakerDeploy;
         const laserAge = t - (a._s3SpecialMarks?.laser ?? -99), firing = a.specialActive?.phase === 'laser' || laserAge < 0.2;
         const recoil = kick(laserAge - (i % 3) * 0.012, 22) * M.recoil;
         const pair = state?.beamPairs?.find(p => p.index === Math.floor(i / 2));
@@ -592,13 +596,17 @@ export function installSpecialModels(api) {
           d.holder.visible = pair ? (state.t <= pair.until + 1e-8) : t - mark.at <= 5 / 60 + .1;
         } else {
           v.set(d.base[0] * k, 1.1 + (d.base[1] - 1.1) * k + Math.sin(t * 3 + d.base[0] * 2) * .05 * k, d.base[2] - .25 * (1 - k) - recoil);
-          v.applyAxisAngle(up, a.aimYaw ?? a.yaw ?? 0);
+          // Equal inputs within this pose share the two trig results. Restore
+          // all quaternion components at use, even after a nested model call.
+          const yaw = a.aimYaw ?? a.yaw ?? 0;
+          if (!Object.is(yaw, speakerYaw)) { speakerYaw = yaw; speakerSin = Math.sin(yaw / 2); speakerCos = Math.cos(yaw / 2); }
+          v.applyQuaternion(q.set(up.x * speakerSin, up.y * speakerSin, up.z * speakerSin, speakerCos));
           d.holder.position.copy(a.pos).add(v);
           d.holder.rotation.set(-(a.aimPitch || 0) + recoil * 2, (a.yaw || 0) + (1 - clamp01(k)) * (d.base[0] > 0 ? 1.2 : -1.2), 0);
           d.holder.visible = true;
         }
         d.holder.scale.setScalar(spec.scale * (0.15 + 0.85 * clamp01(k)) * (1 + recoil * 1.2));
-        const m = d.model.materials?.get('ink'); if (m?.emissiveIntensity != null) m.emissiveIntensity = firing ? 0.5 + 0.4 * Math.sin(t * 30) : 0.08 + 0.5 * kick(age, 4);
+        const m = d.model.materials?.get('ink'); if (m?.emissiveIntensity != null) m.emissiveIntensity = firing ? (speakerGlow ??= 0.5 + 0.4 * Math.sin(t * 30)) : 0.08 + 0.5 * kick(age, 4);
       }
       animateDevice(a, s, d, spec, state, t, dt);
       if (spec.crab) {

@@ -201,6 +201,10 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
     const count=bitmap.width*bitmap.height;let mean2=0,unorm=0,signed=0;
     scanPixels(p=>{for(let i=0;i<p.length;i+=4){
      mean2+=p[i+2];
+     // All remaining blue samples are non-negative. Once this sum reaches
+     // the full image's pixel count, RGB is certain; no further readback or
+     // RG-encoding scores can change the original mean-blue threshold.
+     if(mean2>=count)return false;
      const x=p[i]/127.5-1,y=p[i+1]/127.5-1;
      const sx=(p[i]>127?p[i]-256:p[i])/127,sy=(p[i+1]>127?p[i+1]-256:p[i+1])/127;
      unorm+=x*x+y*y>1.02;signed+=sx*sx+sy*sy>1.02;
@@ -216,7 +220,9 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
   }
   if(role==='normal'&&['rg-reconstruct-z','unorm-rg','signed-byte-rg'].includes(encoding)){
    const pixels=readPixels();
-   for(let i=0;i<pixels.length;i+=4){let x=encoding==='signed-byte-rg'?Math.max(-1,(pixels[i]>127?pixels[i]-256:pixels[i])/127):pixels[i]/127.5-1,y=encoding==='signed-byte-rg'?Math.max(-1,(pixels[i+1]>127?pixels[i+1]-256:pixels[i+1])/127):pixels[i+1]/127.5-1;const len=Math.hypot(x,y);if(len>.95){x*=.95/len;y*=.95/len;}pixels[i]=Math.round((x*.5+.5)*255);pixels[i+1]=Math.round((y*.5+.5)*255);pixels[i+2]=Math.round((Math.sqrt(Math.max(0,1-x*x-y*y))*.5+.5)*255);pixels[i+3]=255;}
+   // Interior normals never need radial clamping. Use a conservative squared
+   // bound below .95*.95, keeping Math.hypot and its rounding at the boundary.
+   for(let i=0;i<pixels.length;i+=4){let x=encoding==='signed-byte-rg'?Math.max(-1,(pixels[i]>127?pixels[i]-256:pixels[i])/127):pixels[i]/127.5-1,y=encoding==='signed-byte-rg'?Math.max(-1,(pixels[i+1]>127?pixels[i+1]-256:pixels[i+1])/127):pixels[i+1]/127.5-1;if(x*x+y*y>.9){const len=Math.hypot(x,y);if(len>.95){x*=.95/len;y*=.95/len;}}pixels[i]=Math.round((x*.5+.5)*255);pixels[i+1]=Math.round((y*.5+.5)*255);pixels[i+2]=Math.round((Math.sqrt(Math.max(0,1-x*x-y*y))*.5+.5)*255);pixels[i+3]=255;}
    texture=new THREE.DataTexture(pixels,bitmap.width,bitmap.height);texture.generateMipmaps=true;texture.minFilter=THREE.LinearMipmapLinearFilter;texture.onUpdate=t=>{t.onUpdate=null;t.image.data=null;};bitmap.close();bitmap=null;
   }else{
    texture=new THREE.Texture(bitmap);

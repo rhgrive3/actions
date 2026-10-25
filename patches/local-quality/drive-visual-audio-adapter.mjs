@@ -284,7 +284,7 @@ const CHANGES = [
 ];
 const MARKER = "// Drive visual/audio queue 20261024\n";
 export function adaptDriveVisualAudio(rel, code) {
-  if (code.startsWith(MARKER)) return code;
+  if (code.includes(MARKER)) return code;
   let changed = false;
   for (const [file, before, after, label, expected] of CHANGES) {
     if (file !== rel) continue;

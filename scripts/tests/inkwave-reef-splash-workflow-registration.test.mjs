@@ -13,7 +13,36 @@ const titles=['Verify Reefslider and Splashdown CI registration','Reviewed Reefs
 const additions=["      - 'patches/splatoon3/tests/reefslider-visual-lifecycle.test.mjs'\n      - 'patches/splatoon3/tests/triple-splashdown-impact-vfx.test.mjs'\n      - 'scripts/tests/inkwave-reef-splash-workflow-registration.test.mjs'\n", "      - name: Verify Reefslider and Splashdown CI registration\n        run: node --test scripts/tests/inkwave-reef-splash-workflow-registration.test.mjs\n", "      - name: Reviewed Reefslider and Splashdown source regressions\n        run: |\n          set -e\n          node --experimental-vm-modules --experimental-global-webcrypto --test --test-concurrency=1 patches/splatoon3/tests/reefslider-visual-lifecycle.test.mjs\n          node --experimental-vm-modules --experimental-global-webcrypto --test --test-concurrency=1 patches/splatoon3/tests/triple-splashdown-impact-vfx.test.mjs\n", "      - name: Reviewed Reefslider and Splashdown emitted-site regressions\n        run: |\n          set -e\n          INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --experimental-global-webcrypto --test --test-concurrency=1 --test-name-pattern='arming warning|death, interruption' patches/splatoon3/tests/reefslider-visual-lifecycle.test.mjs\n          INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --experimental-global-webcrypto --test --test-concurrency=1 patches/splatoon3/tests/triple-splashdown-impact-vfx.test.mjs\n"];
 function step(text,name){const marker='      - name: '+name+'\n';assert.equal(text.split(marker).length,2,name+' once');return text.split(marker)[1].split(/\n      - /)[0];}
 const extractionRegression="            scripts/tests/inkwave-special-frame-extraction.test.mjs \\\n";
+// The separately reviewed #1870 batch preserves all 22 native browser cases.
+// Authenticate and invert only its exact hunks before the unchanged whole-file pin.
+const reviewedBatchHunks = [
+  {
+    "before": "",
+    "after": "      - 'scripts/tests/inkwave-splashdown-batch.test.mjs'\n",
+    "afterSha256": "911590790b395310466c5a43ad4cdf146c2238c24099280235bbf9a8e2d0952f"
+  },
+  {
+    "before": "",
+    "after": "      - name: Verify isolated browser batch contract\n        run: node --test scripts/tests/inkwave-splashdown-batch.test.mjs\n",
+    "afterSha256": "890447515b95d2534ed60938bf768782b89e944023a4ff0953cb920903a4d312"
+  },
+  {
+    "before": "      - name: Check actual catalogue activation with and without optional VFX\n        run: node scripts/check-inkwave-splashdown-browser.mjs --site _site --evidence-dir .ci-scratch/splashdown-browser\n      - name: Probe emitted Inkjet presentation on SwiftShader (candidate only)\n        run: |\n          for hz in 30 60 120; do\n            for actors in 1 2 4; do\n              for layout in near mixed; do\n                node scripts/check-inkwave-splashdown-browser.mjs --site _site --inkjet --hz \"$hz\" --actors \"$actors\" --layout \"$layout\" --evidence-dir \".ci-scratch/splashdown-browser/inkjet/${hz}hz-${actors}p-${layout}\"\n              done\n            done\n          done\n      - name: Verify native Inkjet terminal contacts and remote ghosts\n        env:\n          EXPECTED_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}\n          NODE_OPTIONS: --max-old-space-size=768\n        run: |\n          proof=.ci-scratch/splashdown-browser/inkjet-terminal-source-proof.json\n          python3 scripts/generate-inkwave-source-proof.py --source-root . --git-head --expected-head \"$EXPECTED_SOURCE_SHA\" --output \"$proof\"\n          proof_sha256=\"$(sha256sum \"$proof\" | cut -d' ' -f1)\"\n          for hz in 30 60 120; do\n            node scripts/check-inkwave-splashdown-browser.mjs --site _site --inkjet-terminals --hz \"$hz\" --source-root . --source-proof \"$proof\" --expected-proof-sha256 \"$proof_sha256\" --evidence-dir \".ci-scratch/splashdown-browser/inkjet-terminal/${hz}hz\"\n          done\n",
+    "after": "      - name: Run isolated special browser batch\n        env:\n          EXPECTED_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}\n          NODE_OPTIONS: --max-old-space-size=768\n        run: |\n          set -euo pipefail\n          proof=.ci-scratch/splashdown-browser/inkjet-terminal-source-proof.json\n          python3 scripts/generate-inkwave-source-proof.py --source-root . --git-head --expected-head \"$EXPECTED_SOURCE_SHA\" --output \"$proof\"\n          proof_sha256=\"$(sha256sum \"$proof\" | cut -d' ' -f1)\"\n          node scripts/check-inkwave-splashdown-browser.mjs --site _site --batch --source-root . --source-proof \"$proof\" --expected-proof-sha256 \"$proof_sha256\" --evidence-dir .ci-scratch/splashdown-browser\n",
+    "afterSha256": "555c1ac48392d21901ccf87a52d40d9c3ea846e73e12cf54d536a27f13afca57"
+  }
+];
+function canonicalReviewedBatch(text) {
+ for(const {before,after,afterSha256} of reviewedBatchHunks) {
+  assert.equal(createHash('sha256').update(after).digest('hex'),afterSha256,'reviewed batch fragment bytes');
+  assert.equal(text.split(after).length,2,'exact reviewed browser batch hunk once');
+  text=text.replace(after,before);
+ }
+ return text;
+}
+
 function verify(text){
+ text=canonicalReviewedBatch(text);
  assert.equal(text.split(extractionRegression).length,2,'exact added extraction regression once');
  assert.ok(fs.existsSync(new URL('scripts/tests/inkwave-special-frame-extraction.test.mjs',root)));
  assert.ok(step(text,'Special source and transformed fixture regressions (not emitted-site coverage)').includes(extractionRegression.trimEnd()),'extraction regression stays in transformed-source step');
@@ -67,4 +96,10 @@ test('composed Inkjet additions are exact, singular and do not permit unrelated 
 
 test('extraction regression is additive, singular and cannot mask prior gates',()=>{
  for(const changed of [workflow.replace(extractionRegression,''),workflow.replace(extractionRegression,extractionRegression+extractionRegression),workflow.replace(extractionRegression,extractionRegression.replace('extraction.test','missing.test')),workflow.replace(extractionRegression,extractionRegression.trimEnd()+' || true\n')])assert.throws(()=>verify(changed));
+});
+
+test('reviewed browser batch composition cannot waive, duplicate or modify its mandatory acceptance hunks',()=>{
+ for(const {after} of reviewedBatchHunks)for(const changed of [workflow.replace(after,''),workflow.replace(after,after+after),workflow.replace(after,after.replace(/[^\s]/,'X'))]){
+  assert.notEqual(changed,workflow);assert.throws(()=>verify(changed));
+ }
 });

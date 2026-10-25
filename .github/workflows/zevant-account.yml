@@ -12,6 +12,7 @@ on:
       - "scripts/lib/**"
       - "scripts/check-inkwave-startup-budget.mjs"
       - "scripts/lib/inkwave-account-bundle.mjs"
+      - "scripts/tests/inkwave-account-ci-scope.test.mjs"
       - ".github/workflows/zevant-account.yml"
   push:
     branches: [main]
@@ -26,9 +27,13 @@ on:
       - "scripts/lib/**"
       - "scripts/check-inkwave-startup-budget.mjs"
       - "scripts/lib/inkwave-account-bundle.mjs"
+      - "scripts/tests/inkwave-account-ci-scope.test.mjs"
       - ".github/workflows/zevant-account.yml"
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   account:
     runs-on: ubuntu-latest
@@ -47,15 +52,27 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Classify exact account test-only changes
+        id: scope
+        env:
+          ACCOUNT_CI_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          ACCOUNT_CI_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          node --test scripts/tests/inkwave-account-ci-scope.test.mjs
+          node scripts/lib/inkwave-account-ci-scope.mjs
       - name: Account API and bundle tests
         run: node --test account/tests/*.test.mjs
       - name: Install build tools
+        if: steps.scope.outputs.test_only != 'true'
         run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 vite@8.3.3
       - name: Production build (vite build → dist/)
+        if: steps.scope.outputs.test_only != 'true'
         run: npx vite build
       - name: Startup budget gate on the Workers output
+        if: steps.scope.outputs.test_only != 'true'
         run: node scripts/check-inkwave-startup-budget.mjs dist
       - name: Account entry is wired into the revisioned site
+        if: steps.scope.outputs.test_only != 'true'
         run: |
           entry="$(node -e "const b=require('./dist/inkwave-build.json').build.account; if(!b) process.exit(1); console.log(b.entry)")"
           grep -q "src=\"./${entry}\"" dist/index.html
@@ -63,6 +80,7 @@ jobs:
           test -f "dist/_versions/${revision}/${entry}"
           test -f dist/_headers
       - name: Validate the Worker configuration (no deploy)
+        if: steps.scope.outputs.test_only != 'true'
         working-directory: account
         run: |
           npm install --no-audit --no-fund --no-package-lock

@@ -55,6 +55,15 @@ function snapshot(c, from='a') {
 }
 function play(c,from,row) {c.nm._peer(from);c.nm._play(from,wire(row));}
 
+test('paint callbacks that remove authority cannot advance its causal clock from a cached precheck',async()=>{
+ const sender=await client('a'),observer=await client('c');
+ const e=wire(stamp(sender));e._netPeer='a';
+ observer.nm._paintClockState.clock=0;
+ let calls=0;observer.f.G.paint={splat(){calls++;observer.session._members.delete('a');}};
+ assert.equal(observer.nm._applyRemoteSplatEvent(e),true);
+ assert.equal(calls,1);assert.equal(observer.nm._paintClockState.clock,0,'post-apply authority revalidation still rejects the departed sender');
+});
+
 test('#522 exact owner actor applies once and unknown or cosmetic local ink never enters turf',async()=>{
  const a=await client('a'),c=await client('c');
  const before=snapshot(a);

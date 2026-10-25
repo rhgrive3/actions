@@ -79,7 +79,8 @@ export function renderSound(recipe,event='fire',variant=0,sampleRate=48000) {
       out[idx%n]+=amp*Math.sin(phase)*(1-Math.exp(-t/.0008))*Math.exp(-t/dur);}
   }
   let mean=0;for(const x of out)mean+=x;mean/=n;
-  let peak=0;for(let i=0;i<n;i++){out[i]=Math.tanh((out[i]-mean)*drive)/Math.tanh(drive);peak=Math.max(peak,Math.abs(out[i]));}
+  const tanhDrive=Math.tanh(drive);
+  let peak=0;for(let i=0;i<n;i++){out[i]=Math.tanh((out[i]-mean)*drive)/tanhDrive;peak=Math.max(peak,Math.abs(out[i]));}
   const gain=.76/Math.max(.76,peak);for(let i=0;i<n;i++)out[i]*=gain;
   if(loop){
     // Overlap tail into head, then remove overlap. Boundary uses adjacent source samples.

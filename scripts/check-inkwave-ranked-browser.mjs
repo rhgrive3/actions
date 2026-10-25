@@ -181,7 +181,13 @@ async function checkRankedRemoteContactGear(host, guest, save) {
   assert(wire.f&(1<<28));assert(wire.f&16);assert(wire.f&256);assert(suspended.audioTime>supported.audioTime);
   assert(suspended.realRollLoops.some(h=>h.stops>0),'real supported loop was stopped');
   phase('suspended-owner-to-remote',{wire,remote:suspended});
-  await place(host,lane.supported,lane.yaw);await setInput(host,true,['KeyS']);
+  // Recovery must re-admit native contact and a real remote live loop at rest
+  // before the bounded movement pulse. Relay/interpolation delay must not
+  // consume that pulse while the remote is still observing suspension.
+  await place(host,lane.supported,lane.yaw);await setInput(host,true);
+  await host.waitForFunction(()=>RG.match.local.grounded&&RG.match.local.weaponRunner.rolling&&!RG.match.local.weaponRunner.s3RollerSuspendedHold,null,timeout);
+  await guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s?.held&&s.grounded&&!s.suspended&&!(s.f&(1<<28))&&s.near&&s.rollLoop&&s.audioState==='running'&&s.realRollLoops.some(h=>h.playing&&h.registered);},identities[0].nid,timeout);
+  await setInput(host,true,['KeyS']);
   const recovered=await snapshot(guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s?.held&&s.grounded&&!s.suspended&&!(s.f&(1<<28))&&s.rollLoop&&s.realRollLoops.some(h=>h.playing&&h.registered&&h.volume>0)?s:false;},identities[0].nid,timeout));
   phase('recovered-real-audio',{remote:recovered});await setInput(host,false);
   await guest.waitForFunction(nid=>{const s=__rankedReplication.read(nid);return s&&!s.held&&!s.suspended&&s.near&&s.audioState==='running'&&!(s.f&(1<<28))&&!s.rollLoop&&s.realRollLoops.every(h=>!h.playing);},identities[0].nid,timeout);
@@ -206,7 +212,22 @@ async function checkRankedRemoteContactGear(host, guest, save) {
   await gearState(false,true);await equip(true);await gearState(true,true);
   await setInput(guest,false);await gearState(true,false);
   receipt.status='passed';save(receipt);return receipt;
- }catch(error){receipt.status='failed';receipt.error=error?.stack||String(error);save(receipt);throw error;}
+ }catch(error){
+  receipt.status='failed';receipt.error=error?.stack||String(error);
+  receipt.failureAfter=receipt.phases.at(-1)?.name??'initialization';
+  // Capture before finally restores actors and stops voices. Diagnostics are
+  // observational only and must neither replace the original failure nor
+  // turn a closed/unreadable page into a successful acceptance receipt.
+  receipt.failureState=await Promise.all(pages.map(async(p,index)=>{
+   try{return {context:index,...await p.evaluate(nid=>{
+    const G=globalThis.RG,a=G?.match?.local,s=globalThis.__rankedReplication;
+    return {local:a?{nid:a.nid,alive:a.alive,grounded:a.grounded,held:!!a.weaponRunner?.rolling,suspended:a.weaponRunner?.s3RollerSuspendedHold===true,
+     position:a.pos?.toArray()??null,velocity:a.vel?.toArray()??null,ink:a.ink}:null,
+     remote:s&&nid!=null?s.read(nid):null,wire:s?.wire?.at(-1)??null};
+   },identities?.[0]?.nid)};}catch(diagnosticError){return {context:index,diagnosticError:diagnosticError?.message||String(diagnosticError)};}
+  }));
+  save(receipt);throw error;
+ }
  finally{
   const cleanupErrors=[];receipt.restoration=[];
   for(const [index,p]of pages.entries())try{receipt.restoration.push(await p.evaluate(frozen=>{

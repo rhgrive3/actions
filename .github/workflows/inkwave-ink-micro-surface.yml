@@ -2,6 +2,18 @@ name: INKWAVE ink micro surface QA
 on:
   pull_request:
     paths:
+      - 'inkwave-public/src/config.js'
+      - 'inkwave-public/src/world/inkShading.js'
+      - 'inkwave-public/src/world/levelMaterial.js'
+      - 'inkwave-public/src/world/paint.js'
+      - 'inkwave-public/src/world/texlib.js'
+      - 'inkwave-public/vendor/three/build/three.module.js'
+      - 'patches/local-quality/paint-hotpath-adapter.mjs'
+      - 'scripts/build-inkwave.mjs'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'scripts/lib/inkwave-build-only-modules.mjs'
+      - 'scripts/lib/inkwave-runtime-evidence.mjs'
+      - 'scripts/tests/inkwave-workflow-inputs.test.mjs'
       - 'patches/local-quality/tests/grate-normal.test.mjs'
       - 'patches/local-quality/tests/paint-hotpath.test.mjs'
       - "patches/local-quality/ink-micro-surface-adapter.mjs"
@@ -25,6 +37,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Verify direct QA input trigger coverage
+        run: node --test scripts/tests/inkwave-workflow-inputs.test.mjs
       - run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.51.1
       - run: npx playwright install --with-deps chromium
       - name: Source regressions

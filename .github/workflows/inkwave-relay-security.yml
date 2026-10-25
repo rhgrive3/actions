@@ -12,6 +12,10 @@ on:
       - "patches/splatoon3/tests/source-fixture.mjs"
       - "patches/reliability/net-adapter.mjs"
       - ".github/workflows/inkwave-relay-security.yml"
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'patches/splatoon3/adapter.mjs'
+      - 'patches/reliability/adapter.mjs'
+      - 'patches/network-replication/adapter.mjs'
   push:
     branches: [main]
     paths:
@@ -24,6 +28,10 @@ on:
       - "patches/splatoon3/tests/source-fixture.mjs"
       - "patches/reliability/net-adapter.mjs"
       - ".github/workflows/inkwave-relay-security.yml"
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'patches/splatoon3/adapter.mjs'
+      - 'patches/reliability/adapter.mjs'
+      - 'patches/network-replication/adapter.mjs'
 concurrency:
   # Cancel obsolete PR-head checks; keep every main push and manually dispatched run.
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}

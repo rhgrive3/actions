@@ -366,7 +366,9 @@ export function installRespawnLifecycle(api, profile) {
         return;
       }
     }
-    const blocked = this.s3?.respawnRearm, saved = [];
+    const blocked = this.s3?.respawnRearm;
+    if (!this.alive || !blocked) return update.call(this, dt);
+    const saved = [];
     if (this.alive && blocked) {
       for (const key of blocked) {
         const held = this.s3.physicalRespawnHeld?.[key] ?? this.intent[key];

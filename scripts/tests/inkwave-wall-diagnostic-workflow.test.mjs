@@ -10,6 +10,7 @@ const job = (text, name) => {
   return end < 0 ? rest : rest.slice(0, end);
 };
 const condition = (text, name) => job(text, name).match(/^    if: (.+)$/m)?.[1];
+const nativeOffloadCondition = "${{ inputs.diagnostic_only != true && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}";
 const guard = 'node --test scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs';
 const source = 'node --experimental-vm-modules --test patches/splatoon3/tests/wall-render-gates.test.mjs patches/splatoon3/tests/wall-render-production-contract.test.mjs';
 const emitted = 'INKWAVE_BUILT_SITE=.built-site/_site node --experimental-vm-modules --test patches/splatoon3/tests/wall-render-production-contract.test.mjs';
@@ -19,7 +20,8 @@ function verify(text) {
   assert.equal(condition(text, 'wall-render-diagnostic'), "github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic == true");
   assert.equal(condition(text, 'render-diagnostic'), 'inputs.diagnostic_only == true && inputs.network_opening_diagnostic != true && inputs.wall_render_diagnostic != true');
   assert.equal(condition(text, 'network-opening-diagnostic'), "github.event_name == 'workflow_dispatch' && inputs.diagnostic_only == true && inputs.network_opening_diagnostic == true");
-  for (const name of ['validate_core','patch_tests','browser','seven_claims','resource_paint_continuation']) assert.equal(condition(text,name), 'inputs.diagnostic_only != true');
+  for (const name of ['validate_core','seven_claims','resource_paint_continuation']) assert.equal(condition(text,name), 'inputs.diagnostic_only != true');
+  for (const name of ['patch_tests','browser']) assert.equal(condition(text,name), nativeOffloadCondition);
   assert.equal(condition(text,'validate'), '${{ always() && inputs.diagnostic_only != true }}');
   assert.ok(text.includes("inputs.wall_render_diagnostic == true && '-wall-render-diagnostic' || ''"));
   assert.ok(text.includes('cancel-in-progress: ${{ !(inputs.diagnostic_only == true && (inputs.network_opening_diagnostic == true || inputs.wall_render_diagnostic == true)) }}'));
@@ -48,6 +50,7 @@ function verify(text) {
   return true;
 }
 function evaluate(expression, c) {
+  if (expression === nativeOffloadCondition) return c.diagnostic_only !== true && !(c.offload === true && c.event === 'pull_request' && !['inkwave/runtime-performance-ui','inkwave/final-nine-way-integration'].includes(c.head_ref));
   return expression.split(' && ').every(term=> {
     if(term === "github.event_name == 'workflow_dispatch'") return c.event === 'workflow_dispatch';
     const match = term.match(/^inputs\.(diagnostic_only|network_opening_diagnostic|wall_render_diagnostic) (==|!=) true$/);
@@ -57,8 +60,8 @@ function evaluate(expression, c) {
 }
 test('wall-only route retains exact-head, real build, full verifier and always evidence', ()=>verify(workflow));
 test('all event and flag combinations isolate wall from full, network and broad render jobs', ()=> {
-  for(const event of ['workflow_dispatch','push','pull_request']) for(const diagnostic_only of [false,true]) for(const network_opening_diagnostic of [false,true]) for(const wall_render_diagnostic of [false,true]) {
-    const c={event,diagnostic_only,network_opening_diagnostic,wall_render_diagnostic};
+  for(const event of ['workflow_dispatch','push','pull_request']) for(const diagnostic_only of [false,true]) for(const network_opening_diagnostic of [false,true]) for(const wall_render_diagnostic of [false,true]) for(const offload of [false,true]) for(const head_ref of ['topic','inkwave/runtime-performance-ui','inkwave/final-nine-way-integration']) {
+    const c={event,diagnostic_only,network_opening_diagnostic,wall_render_diagnostic,offload,head_ref};
     const wall=evaluate(condition(workflow,'wall-render-diagnostic'),c);
     assert.equal(wall,event==='workflow_dispatch' && diagnostic_only && !network_opening_diagnostic && wall_render_diagnostic);
     if(wall) for(const name of ['validate_core','patch_tests','browser','network-opening-diagnostic','render-diagnostic','seven_claims','resource_paint_continuation']) assert.equal(evaluate(condition(workflow,name),c),false,name);
@@ -163,9 +166,77 @@ function canonicalCoreBrowserInstall(body) {
   assert.ok(body.indexOf(reviewedCoreBrowserInstall) < body.indexOf('        run: node scripts/run-inkwave-source-remainder.mjs quality\n'));
   return body.replace(reviewedCoreBrowserInstall, originalCoreBrowserInstall);
 }
+// Exact reviewed CircleCI changes are inverted before the unchanged historical
+// job pins. Each hunk is mandatory and singular; unrelated edits still fail.
+const reviewedCircleHunks = {
+  "validate_core": [
+    {
+      "before": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/validate-inkwave-update.yml') }}\n",
+      "after": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-esbuild0282-playwright1621-ws8-${{ hashFiles('package.json', 'package-lock.json') }}\n      - name: Prove CircleCI offload command parity and fail-closed SHA gate\n        run: node --test scripts/tests/inkwave-circleci-browser-lane.test.mjs scripts/tests/inkwave-circleci-offload-gate.test.mjs\n"
+    }
+  ],
+  "patch_tests": [
+    {
+      "before": "    if: inputs.diagnostic_only != true\n",
+      "after": "    # Default GitHub full-suite behavior unless explicitly offloaded.\n    if: ${{ inputs.diagnostic_only != true && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}\n"
+    },
+    {
+      "before": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/validate-inkwave-update.yml') }}\n",
+      "after": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-esbuild0282-playwright1621-ws8-${{ hashFiles('package.json', 'package-lock.json') }}\n"
+    }
+  ],
+  "validate": [
+    {
+      "before": "    needs: [validate_core, patch_tests]\n",
+      "after": "    needs: [validate_core, patch_tests, circleci_offload_gate]\n"
+    },
+    {
+      "before": "",
+      "after": "          CIRCLECI_RESULT: ${{ needs.circleci_offload_gate.result }}\n          OFFLOAD_ACTIVE: ${{ vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration' }}\n"
+    },
+    {
+      "before": "          printf 'validate_core=%s patch_tests=%s\\n' \"$CORE_RESULT\" \"$PATCH_RESULT\"\n",
+      "after": "          printf 'validate_core=%s patch_tests=%s circleci=%s offload=%s\\n' \"$CORE_RESULT\" \"$PATCH_RESULT\" \"$CIRCLECI_RESULT\" \"$OFFLOAD_ACTIVE\"\n"
+    },
+    {
+      "before": "          test \"$PATCH_RESULT\" = success\n",
+      "after": "          if [ \"$OFFLOAD_ACTIVE\" = true ]; then\n            test \"$PATCH_RESULT\" = skipped\n            test \"$CIRCLECI_RESULT\" = success\n          else\n            test \"$PATCH_RESULT\" = success\n            test \"$CIRCLECI_RESULT\" = skipped\n          fi\n"
+    }
+  ],
+  "browser": [
+    {
+      "before": "    if: inputs.diagnostic_only != true\n",
+      "after": "    # No offload until CircleCI is connected and enabled.\n    if: ${{ inputs.diagnostic_only != true && !(vars.INKWAVE_CIRCLECI_OFFLOAD == 'enabled' && github.event_name == 'pull_request' && github.head_ref != 'inkwave/runtime-performance-ui' && github.head_ref != 'inkwave/final-nine-way-integration') }}\n"
+    },
+    {
+      "before": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/validate-inkwave-update.yml') }}\n",
+      "after": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-esbuild0282-playwright1621-ws8-${{ hashFiles('package.json', 'package-lock.json') }}\n"
+    }
+  ],
+  "seven_claims": [
+    {
+      "before": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/validate-inkwave-update.yml') }}\n",
+      "after": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-esbuild0282-playwright1621-ws8-${{ hashFiles('package.json', 'package-lock.json') }}\n"
+    }
+  ],
+  "resource_paint_continuation": [
+    {
+      "before": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-${{ hashFiles('package.json', 'package-lock.json', '.github/workflows/validate-inkwave-update.yml') }}\n",
+      "after": "          key: ${{ runner.os }}-${{ runner.arch }}-node22-npm-esbuild0282-playwright1621-ws8-${{ hashFiles('package.json', 'package-lock.json') }}\n"
+    }
+  ]
+};
+function canonicalCircleAdditions(body,name) {
+ for(const {before,after} of reviewedCircleHunks[name] || []) {
+  assert.equal(body.split(after).length,2,name+' exact CircleCI hunk once');
+  body=body.replace(after,before);
+ }
+ return body;
+}
+
 function verifyAcceptedJobs(text) {
   for(const [name, expected] of Object.entries(acceptedJobHashes)) {
-    let body = job(text,name).replace(' scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs','')
+    let body = canonicalCircleAdditions(job(text,name),name).replace(' scripts/tests/inkwave-wall-diagnostic-workflow.test.mjs','')
       .replaceAll('          sudo python3 scripts/prepare-inkwave-ci-apt.py\n          npx playwright install --with-deps', '          npx playwright install --with-deps');
     if (name === 'validate_core') {
       body = canonicalCoreBrowserInstall(body);

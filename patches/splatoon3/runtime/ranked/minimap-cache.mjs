@@ -86,6 +86,7 @@ function snapshot(out,minimap,engine,G) {
 export function objectiveOverlayChanged(minimap,engine,G) {
   if (engine?.mode !== 'tower') routes.delete(minimap);
   let c=overlays.get(minimap);
+  if (!engine && !c?.hadRanked) return false;
   if(!c){c={previous:[],next:[],initialized:false};overlays.set(minimap,c);}
   snapshot(c.next,minimap,engine,G);
   let changed=!c.initialized||c.next.length!==c.previous.length;

@@ -60,8 +60,9 @@ function verifySettingsBrowserConsumers(p,u,s){
  assert.ok(build.indexOf(pagesBrowserSetup)<build.indexOf('node --experimental-vm-modules --test patches/local-quality/tests/*.test.mjs'));
  assert.ok(core.indexOf(coreBrowserSetup)<core.indexOf('      - name: Run requested focused source regressions'));
  assert.ok(core.indexOf(coreBrowserSetup)<core.indexOf('node scripts/run-inkwave-source-remainder.mjs quality'));
- assert.doesNotMatch(shards,/playwright|chromium/);
- assert.ok(u.includes('    needs: [validate_core, patch_tests]'));
+ // Tarball cache keys may identify all tools; CPU shard executable steps may not provision browsers.
+ assert.doesNotMatch(shards.replace(/^          key: .*\n/gm,''),/playwright|chromium/);
+ assert.ok(u.includes('    needs: [validate_core, patch_tests, circleci_offload_gate]'));
  assert.doesNotMatch(p.slice(p.indexOf('      - name: Verify deployed ranked modes')),/npm install|npx .*playwright install/);
  assert.ok(p.includes('node scripts/check-inkwave-ranked-browser.mjs _site reports/ranked-public-browser'));
  assert.ok(s.includes("const executablePath=process.env.CI?chromium.executablePath():"));

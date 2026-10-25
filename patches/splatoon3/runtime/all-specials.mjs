@@ -1,3 +1,4 @@
+import {validSpecialWorldPayload,admitsRemoteWorldBirth} from './special-world-payload.mjs';
 // Additional Splatoon 3 special actions for the public INKWAVE runtime.
 //
 // Reference: Leanny/splat3 11.3.0 tables at 7280ff9cde8bb1c5dcef46c700c326471584d2e6,
@@ -405,25 +406,42 @@ function paintDiskCentres(radius){
     const count=6*2**Math.max(0,Math.ceil(Math.log2((2*Math.PI*maxCentre/spacing)/6)));for(let i=0;i<count;i++){const angle=2*Math.PI*i/count;centres.push([Math.cos(angle)*maxCentre,Math.sin(angle)*maxCentre]);}}
   return centres;
 }
-function paintDiskLayout(rt, point, radius, plan = null) {
+function paintDiskLayout(rt, point, radius, plan = null, cache = null) {
   // Tile in the nearby contact plane. Keeping every tile at the same world Y
   // leaves large holes on slopes; projecting each tile from above can instead
   // jump between disconnected floors. The short probe avoids both mistakes.
   const normal=rt.up.clone(), from=point.clone();from.y+=.25;
   const contact=rt.api.G.physics?.raycast?.(from,rt.down,.5,rt.hit,true);
   if(contact?.hit&&contact.normal?.y>.4)normal.copy(contact.normal).normalize();
+  // Always probe again: moving floors and synchronous paint callbacks can
+  // change the contact plane without changing the physics object identity.
+  // Only the deterministic tiling work is retained by this blast object.
+  const centres=plan || paintDiskCentres(radius);
+  if(cache?.layout&&cache.plan===centres&&Object.is(cache.radius,radius)&&
+     Object.is(cache.x,point.x)&&Object.is(cache.y,point.y)&&Object.is(cache.z,point.z)&&
+     Object.is(cache.nx,normal.x)&&Object.is(cache.ny,normal.y)&&Object.is(cache.nz,normal.z)&&
+     cache.samples.length===centres.length*2){
+    let same=true;
+    for(let i=0;i<centres.length;i++)if(!Object.is(cache.samples[i*2],centres[i][0])||!Object.is(cache.samples[i*2+1],centres[i][1])){same=false;break;}
+    if(same){rt.v4.set(cache.lastX,cache.lastY,cache.lastZ);return cache.layout;}
+  }
   const tangent=new rt.api.THREE.Vector3(1,0,0).addScaledVector(normal,-normal.x).normalize();
   const bitangent=new rt.api.THREE.Vector3().crossVectors(tangent,normal).normalize();
   // A constant-radius stamp must remain inside the nominal source disk.
   // An outer ring closes lattice scallops without placing stamp centres near R.
   // Reuse one mask seed so the R=3.74 transition cannot union unrelated shapes.
-  const centres=plan || paintDiskCentres(radius);
   const seen=new Set(),tiles=[];
   for(const [x,z]of centres){
     const at=rt.v4.copy(point).addScaledVector(tangent,x).addScaledVector(bitangent,z);at.set(q2(at.x),q2(at.y),q2(at.z));
     const key=at.x+','+at.y+','+at.z;if(seen.has(key))continue;seen.add(key);tiles.push({x,z,key});
   }
-  return {tangent,bitangent,tiles};
+  const layout={tangent,bitangent,tiles};
+  if(cache){
+    const samples=[];for(const [x,z]of centres)samples.push(x,z);
+    Object.assign(cache,{layout,plan:centres,radius,x:point.x,y:point.y,z:point.z,nx:normal.x,ny:normal.y,nz:normal.z,
+      samples,lastX:rt.v4.x,lastY:rt.v4.y,lastZ:rt.v4.z});
+  }
+  return layout;
 }
 function paintDiskTile(rt,actor,point,layout,tile,maskSeed){
   const at=rt.v4.copy(point).addScaledVector(layout.tangent,tile.x).addScaledVector(layout.bitangent,tile.z);
@@ -431,11 +449,11 @@ function paintDiskTile(rt,actor,point,layout,tile,maskSeed){
   const got=rt.api.G.paint.splat(at,MAX_STAMP_RADIUS,actor.team,{seed:maskSeed,claimOwner:actor,claimMode:'no-special'});
   return finite(got)?got:0;
 }
-function paintDisk(rt, actor, point, radius, seed, maskSeed = seedUnit(seed,0), alreadyPainted = null, plan = null) {
+function paintDisk(rt, actor, point, radius, seed, maskSeed = seedUnit(seed,0), alreadyPainted = null, plan = null, layoutCache = null) {
   if (radius <= MAX_STAMP_RADIUS) return paintStamp(rt, actor, point, radius, seed);
   // Cluster ordinary network-admissible stamps; do not emit one over-limit paint
   // row, which the public replication owner correctly rejects.
-  const layout=paintDiskLayout(rt,point,radius,plan);let area=0;
+  const layout=paintDiskLayout(rt,point,radius,plan,layoutCache);let area=0;
   for(const tile of layout.tiles){if(alreadyPainted?.has(tile.key))continue;area+=paintDiskTile(rt,actor,point,layout,tile,maskSeed);}
   if (area > 0) actor.addTurfNoSpecial?.(area);
   return area;
@@ -447,7 +465,8 @@ function paintBooyahGrowth(rt,object,paintFrame,paintRadius,seed){
   if(!object.paintDiskPlan||object.paintDiskPlan.radius!==paintRadius)
     object.paintDiskPlan={radius:paintRadius,centres:paintDiskCentres(paintRadius)};
   const plan=object.paintDiskPlan.centres;
-  const layout=paintDiskLayout(rt,object.pos,paintRadius,plan),maskSeed=seedUnit(seed,0),limit=growthRadius-MAX_STAMP_RADIUS;
+  const layoutCache=object.paintDiskLayoutCache||={};
+  const layout=paintDiskLayout(rt,object.pos,paintRadius,plan,layoutCache),maskSeed=seedUnit(seed,0),limit=growthRadius-MAX_STAMP_RADIUS;
   let area=0;
   for(const tile of layout.tiles){
     if(object.paintDiskTiles.has(tile.key)||Math.hypot(tile.x,tile.z)>limit+1e-8)continue;
@@ -455,7 +474,7 @@ function paintBooyahGrowth(rt,object,paintFrame,paintRadius,seed){
   }
   if(area>0)object.owner.addTurfNoSpecial?.(area);
   object.paintFrame=paintFrame;object.paintedRadius=growthRadius;
-  if(paintFrame===6)paintDisk(rt,object.owner,object.pos,paintRadius,seed,maskSeed,object.paintDiskTiles,plan);
+  if(paintFrame===6)paintDisk(rt,object.owner,object.pos,paintRadius,seed,maskSeed,object.paintDiskTiles,plan,layoutCache);
   return area;
 }
 function paintCross(rt,actor,point,radius,checkLength,seed) {
@@ -518,8 +537,8 @@ function specialObjectRadius(rt,attack,center,radius,damageAt,cause=null,include
   if(includeSubs)rt.system?.s3DamageSubObjects?.(attack,center,radius,damageAt,cause);
 }
 function damageRadius(rt, actor, id, center, near, far, radius, source = id, once = null, objectCause = source) {
-  const G = rt.api.G, applied = [];
-  if (actor.remote || !G.projectiles?.applyHit) return applied;
+  const G = rt.api.G;
+  if (actor.remote || !G.projectiles?.applyHit) return;
   for (const victim of G.actors || []) {
     if (!victim?.alive || victim.team === actor.team || victim === actor || once?.has(victim)) continue;
     const dx = victim.pos.x - center.x, dy = victim.pos.y + .75 - center.y, dz = victim.pos.z - center.z;
@@ -530,15 +549,15 @@ function damageRadius(rt, actor, id, center, near, far, radius, source = id, onc
     const damage = d <= radius * .45 ? near : near + (far - near) * t;
     if (damage > 0) {
       G.projectiles.applyHit(actor, victim, damage, source);
-      once?.add(victim); applied.push(victim);
+      once?.add(victim);
     }
   }
   specialObjectRadius(rt,actor,center,radius,d=>d<=radius*.45?near:near+(far-near)*clamp(d/Math.max(radius,1e-6),0,1),objectCause);
-  return applied;
 }
+const STAMP_SWING_BANDS=Object.freeze([Object.freeze([4,40])]),CRAB_BODY_BANDS=Object.freeze([Object.freeze([1.45,40])]),KRAKEN_JUMP_BANDS=Object.freeze([Object.freeze([2.65,60])]);
 function damageBandRadius(rt, actor, center, bands, radius, source, once = null, height = 2.8, objectCause = source) {
-  const G = rt.api.G, applied = [];
-  if (actor.remote || !G.projectiles?.applyHit) return applied;
+  const G = rt.api.G;let hitCount=0;
+  if (actor.remote || !G.projectiles?.applyHit) return hitCount;
   for (const victim of G.actors || []) {
     if (!victim?.alive || victim.team === actor.team || victim === actor || once?.has(victim)) continue;
     const point = rt.v6.set(victim.pos.x, victim.pos.y + .75, victim.pos.z);
@@ -546,12 +565,12 @@ function damageBandRadius(rt, actor, center, bands, radius, source, once = null,
     if (d > radius || Math.abs(point.y - center.y) > height) continue;
     if (G.physics?.los && !G.physics.los(center, point)) continue;
     const amount = bands.find(([r]) => d <= r)?.[1] ?? 0;
-    if (amount > 0) { G.projectiles.applyHit(actor, victim, amount, source); once?.add(victim); applied.push(victim); }
+    if (amount > 0) { G.projectiles.applyHit(actor, victim, amount, source); once?.add(victim); hitCount++; }
   }
   specialObjectRadius(rt,actor,center,radius,d=>{
     return d > radius ? 0 : bands.find(([r]) => d <= r)?.[1] ?? 0;
   },objectCause);
-  return applied;
+  return hitCount;
 }
 // 11.3.0 WeaponSpCastle.BodyParam.CollisionDashRadiusForPlayer = 1.5.
 // Test against the whole travel segment, not just the centre of one frame.
@@ -632,8 +651,8 @@ function moveActor(rt, actor, dt, state, { speed = null, squid = true, jump = tr
   }else {
     const cap = speed * (move ? Math.min(1, Math.hypot(move.x,move.z)) : 0);
     const yaw = Math.atan2(move?.x || 0, move?.z || 0);
-    if (cap > .01) { actor.vel.x += (Math.sin(yaw)*cap-actor.vel.x) * (1-Math.exp(-8*dt)); actor.vel.z += (Math.cos(yaw)*cap-actor.vel.z) * (1-Math.exp(-8*dt)); }
-    else { actor.vel.x *= Math.exp(-5*dt); actor.vel.z *= Math.exp(-5*dt); }
+    if (cap > .01) { const alpha=1-Math.exp(-8*dt); actor.vel.x += (Math.sin(yaw)*cap-actor.vel.x) * alpha; actor.vel.z += (Math.cos(yaw)*cap-actor.vel.z) * alpha; }
+    else { const drag=Math.exp(-5*dt); actor.vel.x *= drag; actor.vel.z *= drag; }
   }
   let jumped = false;
   if (jump && actor.intent?.jump && actor.grounded && !state._jumpHeld) {
@@ -650,7 +669,7 @@ function moveActor(rt, actor, dt, state, { speed = null, squid = true, jump = tr
   state._jumpHeld = !!actor.intent?.jump;
 }
 function dampForSpecial(actor, dt, gravity = 25) {
-  actor.vel.x *= Math.exp(-6*dt); actor.vel.z *= Math.exp(-6*dt);
+  const drag=Math.exp(-6*dt); actor.vel.x *= drag; actor.vel.z *= drag;
   const py = actor.pos.y;
   if (!actor.grounded) actor.vel.y = Math.max(-36, actor.vel.y - gravity * dt);
   else actor.vel.y = 0;
@@ -1194,7 +1213,7 @@ function zipImpact(rt,actor,state){
   const impactSeed=nextSeed(state),point=groundAt(rt,state.zipTarget,rt.v1);
   paintStamp(rt,actor,point,1.4,impactSeed);paintSpecialChannels(rt,actor,point,specialPaintParams('zipcaster',state.abilityPoints||0),impactSeed);
   fxBurst(rt,actor,state.zipTarget,5.25,'hit');
-  emitAction(rt,actor,'zipcaster',state.serial,'hookImpact',state.zipTarget,null,nextSeed(state),{targets:victimHits.length,index:state.zips});
+  emitAction(rt,actor,'zipcaster',state.serial,'hookImpact',state.zipTarget,null,nextSeed(state),{targets:victimHits,index:state.zips});
 }
 // WeaponSpSkewer 11.3.0 per-frame MoveAcc=MoveBrk=.031; top speed=.405.
 // A change of frame rate must not change the distance travelled in source ticks.
@@ -1246,14 +1265,26 @@ function inkstrikeDamage(rt,o){
     if(inside(object.pos))specialObjectDamage(rt,o.owner,object,37.5,'tripleInkstrike',o.pos);
   rt.system?.s3DamageSubObjects?.(o.owner,o.pos,Math.hypot(o.currentRadius,20),(_d,object)=>inside(object?.pos)?37.5:0,'tripleInkstrike',{pierceLOS:true});
 }
+// These circles contain only deterministic numerical directions. Contact
+// points, normals and terrain queries are still sampled at every use.
+function specialCirclePoints(count,rotation=0,xScale=1,zScale=1){
+  const points=[];
+  for(let i=0;i<count;i++){
+    const angle=i/count*Math.PI*2+rotation;
+    points.push(Math.cos(angle)*xScale,Math.sin(angle)*zScale);
+  }
+  return Object.freeze(points);
+}
+let inkstrikePaintCircle=null;
 function inkstrikePaint(rt,o,elapsed){
   if(o.owner.remote)return;
   // Raw BlastParam: PaintSpanFrame2, radius.5->7 over50F. The Wiki measures
   // floor reach +1.5/-1.2 trial lines. Preserve the existing20-point footprint
   // calibration, but never substitute damage radius7.7 or an unbounded floor.
   const radius=.5+6.5*clamp(elapsed/(50/FPS),0,1),stamp=Math.min(.78,radius),ring=radius-stamp,n=ring>0?20:1;
+  const circle=n===20?(inkstrikePaintCircle ||= specialCirclePoints(20)):null;
   for(let i=0;i<n;i++){
-    const angle=i/n*Math.PI*2,from=(o._inkstrikeProbe ||= new rt.api.THREE.Vector3()).set(o.pos.x+Math.cos(angle)*ring,o.pos.y+7.5,o.pos.z+Math.sin(angle)*ring);
+    const from=(o._inkstrikeProbe ||= new rt.api.THREE.Vector3()).set(o.pos.x+(circle?circle[i*2]:1)*ring,o.pos.y+7.5,o.pos.z+(circle?circle[i*2+1]:0)*ring);
     const hit=rt.api.G.physics?.raycast?.(from,rt.down,13.5,rt.hit,true);let point=null;
     if(hit?.hit&&hit.normal?.y>.4&&hit.point.y>=o.pos.y-6-1e-8&&hit.point.y<=o.pos.y+7.5+1e-8)point=(o._inkstrikePoint ||= new rt.api.THREE.Vector3()).copy(hit.point).addScaledVector(hit.normal,.08);
     else {const floor=rt.api.G.level?.groundHeight?.(from.x,from.z,from.y);
@@ -1307,9 +1338,11 @@ function chumpLandingPlan(rt,actor,state,out=null){
   groundAt(rt,target,target);
   const count=12,positions=out?out.positions:[],rotation=seedUnit(state.seed,17)*Math.PI*2;
   const direction=(out?out.direction.copy(target):target.clone()).sub(actor.pos).setY(0).normalize(),side=out?out.side.set(direction.z,0,-direction.x):new rt.api.THREE.Vector3(direction.z,0,-direction.x);
+  let ellipse=state.chumpEllipse;
+  if(!ellipse||!Object.is(ellipse.rotation,rotation))ellipse=state.chumpEllipse=Object.freeze({rotation,points:specialCirclePoints(count,rotation,17.5,10)});
   for(let i=0;i<count;i++){
-    const angle=(i/count)*Math.PI*2+rotation,pos=out?positions[i].copy(target):target.clone();
-    pos.addScaledVector(side,Math.cos(angle)*17.5).addScaledVector(direction,Math.sin(angle)*10);
+    const pos=out?positions[i].copy(target):target.clone();
+    pos.addScaledVector(side,ellipse.points[i*2]).addScaledVector(direction,ellipse.points[i*2+1]);
     groundAt(rt,pos,pos);
     // Public gameplay: decoys do not select a landing point outside the map.
     // Keep this deterministic preview/launch fallback inside the valid target;
@@ -1382,8 +1415,10 @@ function updateWaveFront(rt,o) {
   if(radius>0){
     for(const victim of rt.api.G.actors||[]){
       if(!victim?.alive||victim.team===o.team||o.seen.has(victim))continue;
-      const dx=victim.pos.x-o.pos.x,dz=victim.pos.z-o.pos.z,d=Math.hypot(dx,dz);
-      if(d<previous-.75||d>radius+.75)continue;
+      const dx=victim.pos.x-o.pos.x,dz=victim.pos.z-o.pos.z,outer=radius+.75;
+      if((Math.abs(dx)>outer||Math.abs(dz)>outer)&&!Number.isNaN(dx)&&!Number.isNaN(dz))continue;
+      const d=Math.hypot(dx,dz);
+      if(d<previous-.75||d>outer)continue;
       // WaveParam's vertical range selects TERRAIN surfaces. The attack is
       // their intersection with the expanding cylinder, not an airborne
       // cylinder: a normal jump must clear the ground wave. Retain the
@@ -1400,7 +1435,9 @@ function updateWaveFront(rt,o) {
     o.objectSeen ||= new Set();
     for(const object of rt.system?._s3AllSpecialObjects||[]){
       if(object.dead||!(object.hp>0)||object.owner?.team===o.team||o.objectSeen.has(object))continue;
-      const dx=object.pos.x-o.pos.x,dz=object.pos.z-o.pos.z,d=Math.hypot(dx,dz),r=object.collisionRadius||.72;
+      const dx=object.pos.x-o.pos.x,dz=object.pos.z-o.pos.z,r=object.collisionRadius||.72,outer=radius+r;
+      if(Number.isFinite(outer)&&Number.isFinite(r)&&r>=0&&!Number.isNaN(dx)&&!Number.isNaN(dz)&&(Math.abs(dx)>outer+Math.max(1,outer)*1e-12||Math.abs(dz)>outer+Math.max(1,outer)*1e-12))continue;
+      const d=Math.hypot(dx,dz);
       if(d+r<previous||d-r>radius)continue;
       if(rt.api.G.physics?.los&&!rt.api.G.physics.los(o.pos,object.pos))continue;
       o.objectSeen.add(object);
@@ -1474,7 +1511,7 @@ function stampSwing(rt,actor,state,jump=false) {
       rt.api.G.projectiles.applyHit(actor,victim,100,'ultraStamp');direct.add(victim);
     }
   }
-  damageBandRadius(rt,actor,center,[[4,40]],4,'ultraStamp',direct,jump?3.5:3,'UltraStamp_Swing');
+  damageBandRadius(rt,actor,center,STAMP_SWING_BANDS,4,'ultraStamp',direct,jump?3.5:3,'UltraStamp_Swing');
   paintStamp(rt,actor,groundAt(rt,center,rt.v2),.55,nextSeed(state));
   fxBurst(rt,actor,center,4,'hit');
   emitAction(rt,actor,'ultraStamp',state.serial,jump?'jumpSwing':'swing',actor.pos,center,nextSeed(state),{index:state.swings++});
@@ -1682,11 +1719,12 @@ function updateWorld(rt,dt) {
     }else if(o.kind==='wave'){
       if(o.mesh)o.mesh.material.emissiveIntensity=.18+.4*Math.sin(o.age*9);
       const frame=deviceAge*FPS+1e-8,markRatio=frame<4?0:frame<10?.19+.21*(frame-4)/6:frame<18?.4+.215*(frame-10)/8:.615;
+      const markRadius=o.maxRadius*markRatio,probeBound=Math.max(markRadius,1.2)+1e-9;
       o.contactTimes ||= new Map();
       for(const victim of rt.api.G.actors||[]){
         if(!victim?.alive||victim.team===o.team)continue;
-        const dx=victim.pos.x-o.pos.x,dz=victim.pos.z-o.pos.z,dy=victim.pos.y-o.pos.y,d=Math.abs(dx)>Math.max(o.maxRadius*markRatio,1.2)+1e-9||Math.abs(dz)>Math.max(o.maxRadius*markRatio,1.2)+1e-9?Infinity:Math.hypot(dx,dz);
-        if(frame<=57+1e-8&&d<=o.maxRadius*markRatio&&dy>=-5.2&&dy<=2.8){
+        const dx=victim.pos.x-o.pos.x,dz=victim.pos.z-o.pos.z,dy=victim.pos.y-o.pos.y,d=Math.abs(dx)>probeBound||Math.abs(dz)>probeBound?Infinity:Math.hypot(dx,dz);
+        if(frame<=57+1e-8&&d<=markRadius&&dy>=-5.2&&dy<=2.8){
           victim.s3 ||= {};victim.s3.revealedUntil ||= {};
           // Detection has source radius records through57F; MarkingFrame45
           // is the applied status duration, not an early detector cutoff.
@@ -2019,7 +2057,7 @@ function activeStep(rt,actor,dt) {
       const progress=clamp((elapsed-state.fireStart)/(90/60),0,1),interval=12-8*Math.pow(progress,.2);
       state.nextShot=elapsed+interval/60;
     }
-    if(rolling&&elapsed>=state.nextBody){state.nextBody=elapsed+.45;const c=actor.pos.clone();c.y+=.75;withObjectDamageCause(actor,()=>damageBandRadius(rt,actor,c,[[1.45,40]],1.45,'crabTank',null,2.8,'Chariot_Body'),'Chariot_Body');}
+    if(rolling&&elapsed>=state.nextBody){state.nextBody=elapsed+.45;const c=actor.pos.clone();c.y+=.75;withObjectDamageCause(actor,()=>damageBandRadius(rt,actor,c,CRAB_BODY_BANDS,1.45,'crabTank',null,2.8,'Chariot_Body'),'Chariot_Body');}
     if(elapsed+1e-8>=state.duration){state.phase='finish';state.finishUntil=state.duration+25/60;crabBall(rt,actor,state,false);moveActor(rt,actor,dt,state,{speed:0,squid:false,jump:false});}return;
   }
   if(state.id==='reefslider'){
@@ -2177,7 +2215,7 @@ function activeStep(rt,actor,dt) {
     }
     if(state.jumpAttack){
       const center=rt.v0.copy(actor.pos);center.y+=.65;
-      damageBandRadius(rt,actor,center,[[2.65,60]],2.65,'krakenRoyale',state.jumpHits||(state.jumpHits=new Set()),3);
+      damageBandRadius(rt,actor,center,KRAKEN_JUMP_BANDS,2.65,'krakenRoyale',state.jumpHits||(state.jumpHits=new Set()),3);
       // The movement branch above owns contact-gated paint for jumps too.
       // Do not project an airborne spinning attack onto a distant lower floor.
       if(actor.grounded||actor.climbing)state.jumpAttack=false;
@@ -2691,6 +2729,8 @@ export function replaySpecial(api,event) {
     ||!Array.isArray(event.pos)||event.pos.length!==3||!event.pos.every(finite))return false;
   if(event.target!==undefined&&(!Array.isArray(event.target)||event.target.length!==3||!event.target.every(finite)))return false;
   if(event.tick!==undefined&&(!Number.isSafeInteger(event.tick)||event.tick<0||event.tick>1e9))return false;
+  // Validate before the replay ledger and before any mesh/device allocation.
+  if(!validSpecialWorldPayload(event)||!admitsRemoteWorldBirth((rt.system||api.G.projectiles)?._s3AllSpecialObjects||[],actor,event))return false;
   let cheerOwner=null,cheerState=null;
   if(event.action==='cheer'){
     if(event.id!=='booyahBomb'||!Number.isSafeInteger(event.ownerNid)||!Number.isSafeInteger(event.ownerLife)||event.ownerLife<0)return false;

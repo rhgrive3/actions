@@ -1,17 +1,21 @@
-import test from 'node:test';import assert from 'node:assert/strict';
+import test from 'node:test';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';
 import {sourceLoadedActorFixture} from '../../patches/splatoon3/tests/source-loaded-actor-fixture.mjs';
-import {collectHeadingFrames} from './probe.mjs';
+import {collectHeadingFrames,verifyRandomObservation} from './probe.mjs';
 const KEYS=['actors','level','physics','paint','match','rig','projectiles','time','camera','mode','settings','teamColors'];
 test('native heading QA uses actual input and restores global state even when capture fails',async()=>{
  const f=await sourceLoadedActorFixture({random:()=>Math.random(),transform:process.env.INKWAVE_BUILT_SITE?()=>{throw Error('emitted heading test cannot use authored-source adaptation');}:undefined}),saved=Object.fromEntries(KEYS.map(k=>[k,f.G[k]])),children=[...f.G.scene.children],rows=[],originalUpdate=f.Character.prototype._updateSquid;
- const result=await collectHeadingFrames(f,({row})=>rows.push(row));
+ const originalRandom=Math.random,result=await collectHeadingFrames(f,({row})=>rows.push(row));assert.equal(verifyRandomObservation(result),true);assert.equal(Math.random,originalRandom);
  assert.equal(result.simulationTicks,360);assert.equal(result.randomCalls,0,'source-only movement and cosmetic RNG do not consume gameplay randomness');assert.match(result.canonicalTraceHash,/^[a-f0-9]{64}$/);assert.match(result.sourceHeadingTraceHash,/^[a-f0-9]{64}$/);assert.equal(result.bankContract.status,'existing-bank-response-verified');assert.equal(result.bankContract.advances,152);assert.equal(result.bankContract.precision,1e-8);assert.equal(result.rows.length,4);assert.equal(result.sourceBankAwaited,true);assert.deepEqual(rows.map(r=>r.name),['dry-right-12','swim-right-12','swim-right-60','swim-stop-120']);
  // A bent Sqd_ToSquid surface is not the straight head-bone chord. Do not
  // assert their pitch equality; paired receipts preserve each surface measurement.
  for(const r of rows){assert(Math.abs(Math.atan2(Math.sin(r.skinned.heading-r.heading),Math.cos(r.skinned.heading-r.heading)))<1e-6,'actual drawn mantle follows full source axis');assert([...r.skinned.mantle,...r.skinned.width,r.skinned.pitch,r.skinned.roll].every(Number.isFinite));}
  for(const r of rows.slice(0,2)){assert(r.heading>0&&r.heading<=Math.PI/2,'normal-input first dive cannot pass its +X target');assert.deepEqual(r.inputKeys,['ShiftLeft','KeyA']);}
  for(const k of KEYS)assert.equal(f.G[k],saved[k]);assert.equal(f.Character.prototype._updateSquid,originalUpdate);assert.equal(f.G.scene.children.length,children.length);for(let i=0;i<children.length;i++)assert.equal(f.G.scene.children[i],children[i]);
- await assert.rejects(()=>collectHeadingFrames(f,()=>{throw Error('capture fault');}),/capture fault/);for(const k of KEYS)assert.equal(f.G[k],saved[k]);assert.equal(f.Character.prototype._updateSquid,originalUpdate);assert.equal(f.G.scene.children.length,children.length);for(let i=0;i<children.length;i++)assert.equal(f.G.scene.children[i],children[i]);f.reset();
+ await assert.rejects(()=>collectHeadingFrames(f,()=>{throw Error('capture fault');}),/capture fault/);for(const k of KEYS)assert.equal(f.G[k],saved[k]);assert.equal(f.Character.prototype._updateSquid,originalUpdate);assert.equal(f.G.scene.children.length,children.length);for(let i=0;i<children.length;i++)assert.equal(f.G.scene.children[i],children[i]);
+ // A replaced observer is rejected even when the production case draws nothing.
+ await assert.rejects(()=>collectHeadingFrames(f,()=>{Math.random=()=>.5;}),/RNG instrumentation replaced at afterCapture/);assert.equal(Math.random,originalRandom);
+ // One deliberately invoked test callback call independently checks the counter.
+ let observed;const control=await collectHeadingFrames(f,()=>{if(observed===undefined)observed=Math.random();});assert.equal(observed,.4);assert.equal(control.randomCalls,1);assert.equal(control.randomValuesHash,createHash('sha256').update(JSON.stringify([.4])).digest('hex'));assert.equal(verifyRandomObservation(control),true);assert.equal(Math.random,originalRandom);f.reset();
 });
 
 test('actual Actor probe rejects a wrong bank coefficient and an extra drawn pivot tilt',async()=>{

@@ -1,0 +1,40 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import {parse} from '../../loading-cache/vendor/acorn.mjs';import * as THREE from '../../../inkwave-public/vendor/three/build/three.module.js';import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';import {catalogBubbleRadiusScale} from '../runtime/projectile-presentation.mjs';import {createInkSheets} from '../runtime/s3-ink-sheets.mjs';
+const before=JSON.parse(fs.readFileSync(new URL('./fixtures/queue-extra-weapons-before.json',import.meta.url))).functions;
+const cache=new Map();function source(base){if(!cache.has(base))cache.set(base,fs.readFileSync(new URL('../runtime/'+base+'.mjs',import.meta.url),'utf8'));return cache.get(base);}
+function fn(base,key){let result;const s=source(base);function walk(n){if(!n||typeof n!=='object')return;if(n.type==='FunctionDeclaration'&&n.id.name===key){result=s.slice(n.start,n.end);return;}for(const v of Object.values(n))if(Array.isArray(v))v.forEach(walk);else if(v&&typeof v==='object')walk(v);}walk(parse(s,{ecmaVersion:'latest',sourceType:'module'}));assert.ok(result);return result;}
+const compile=(s,b={})=>new Function(...Object.keys(b),'return ('+s+')')(...Object.values(b));const rnd=()=>{let x=27;return()=>((x=Math.imul(x,1664525)+1013904223)>>>0)/4294967296;};
+
+test('Fidelity packet marker scan preserves all getter reads, canonical packet fields and rejection',()=>{
+ function build(old){const symbol=Symbol(),bindings={NORMALIZED_PROJECTILE_PACKET:symbol,api:{WEAPONS:{roller:{kind:'roller'},shooter:{kind:'shooter'}}},rawWeapon:()=>({WideSwingUnitGroupParam:{Unit:[{}]},VerticalSwingUnitGroupParam:{Unit:[{}]}})};for(const key of ['projectilePacketShape','copyProjectilePacketProperties','normalizedProjectilePacketValid','prepareFidelityProjectilePacket'])bindings[key]=compile(old?before['weapons-fidelity.'+key]:fn('weapons-fidelity',key),bindings);return bindings;}
+ const a=build(true),b=build(false);for(let length=0;length<42;length++)for(let flags=0;flags<32;flags++)for(const weapon of ['roller','shooter']){
+  function run(bind){const reads=[],packet=Array.from({length},()=>0);packet[4]=weapon;if(length>27)packet[27]=0;if(length>30)packet[30]=0;packet.transport='same';for(let i=0;i<5;i++)if(flags&(1<<i))packet[i+31]=true;
+   const event=new Proxy(packet,{get(target,key,receiver){reads.push(String(key));return Reflect.get(target,key,receiver);}});const result=bind.prepareFidelityProjectilePacket(event);return{reads,result:result&&{values:Array.from(result),transport:result.transport,depleted:result[bind.NORMALIZED_PROJECTILE_PACKET].depleted}};}
+  assert.deepEqual(run(b),run(a));
+ }
+});
+test('Dualies discarded pre-update return preserves every state effect and second snapshot',()=>{
+ for(const hz of [30,60,120])for(const mode of ['local','remote-clock','remote-fallback'])for(let i=0;i<100;i++){
+  function run(old){const state={phase:null,progress:0,blockedRoll:null},runner={dodge:i%3?{t:i*.001,dur:.45}:null,lockT:i%2?.2:0,s3Turret:false},actor={remote:mode!=='local',weaponRunner:runner};const character={grounded:i%4!==0,tr:[i*.003],dodgeDur:.4,_runner:()=>runner,_owner:()=>actor};const presentation=mode==='remote-clock'?{phase:'roll',progress:i/100,clock:{}}:null;
+   const prepare=compile(old?before['dualies-motion.prepare']:fn('dualies-motion','prepare'),{state:()=>state,remoteDodgePresentation:()=>presentation,allowed:()=>i%5!==0,clamp01:n=>Math.max(0,Math.min(1,n)),T:{T_DODGE:0}});const first=prepare(character,{},!(!old));const stateBefore={...state};if(runner.dodge)runner.dodge.t+=1/hz;const second=prepare(character,{});return{stateBefore,after:{...state},second:{active:second.active,d:second.d,phase:second.s.phase,progress:second.s.progress},discarded:first===undefined};}
+  const a=run(true),b=run(false);assert.deepEqual(b.stateBefore,a.stateBefore);assert.deepEqual(b.after,a.after);assert.deepEqual(b.second,a.second);assert.equal(b.discarded,true);
+ }
+});
+test('Bloblobber cached integer scales preserve exact all-range numeric behavior',()=>{
+ const original=compile(before['projectile-presentation.catalogBubbleRadiusScale']);for(const n of [undefined,null,false,0,-0,1,2,8,8.9,9,10,1000,-10,NaN,Infinity,-Infinity,'3','not-a-number'])assert.ok(Object.is(catalogBubbleRadiusScale(n),original(n)),String(n));for(let i=0;i<10000;i++)assert.ok(Object.is(catalogBubbleRadiusScale(i/13-30),original(i/13-30)));
+});
+test('special band hit count retains original callback order and observed Zipcaster count',()=>{
+ const after=compile(fn('all-specials','damageBandRadius'),{specialObjectRadius:(...args)=>{args[0].rows.push(['objects',args[4](1)]);}}),old=compile(before['all-specials.damageBandRadius'],{specialObjectRadius:(...args)=>{args[0].rows.push(['objects',args[4](1)]);}});
+ for(const remote of [false,true])for(const radius of [0,1.45,2.65,4,NaN])for(const height of [0,2.8,3]){
+  function run(f){const rows=[],actor={team:0,remote},victims=[0,1,2,4,10].map(x=>({alive:true,team:1,pos:new THREE.Vector3(x,0,0)})),once=new Set();const rt={rows,v6:new THREE.Vector3(),api:{G:{actors:victims,physics:{los:(_a,p)=>{rows.push(['los',...p.toArray()]);return true;}},projectiles:{applyHit:(_a,v,d,s)=>rows.push(['hit',victims.indexOf(v),d,s])}}}};const result=f(rt,actor,new THREE.Vector3(),[[1.45,40],[2.65,60]],radius,'special',once,height);return{count:Array.isArray(result)?result.length:result,rows,once:[...once].map(v=>victims.indexOf(v))};}assert.deepEqual(run(after),run(old));
+ }
+ assert.match(source('all-specials'),/targets:victimHits,index:state.zips/);assert.doesNotMatch(source('all-specials'),/targets:victimHits\.length/);
+});
+test('coincident squid endcaps preserve actual capsuleEntry outputs and omit only identical sphere work',()=>{
+ const path='src/game/inkCollision.js',raw=fs.readFileSync(new URL('../../../inkwave-public/'+path,import.meta.url),'utf8'),adapted=adaptBuildSource(path,raw);function funcs(s){const a=parse(s,{ecmaVersion:'latest',sourceType:'module'}).body.map(x=>x.declaration||x);const sphere=a.find(n=>n.id?.name==='sphereEntry'),capsule=a.find(n=>n.id?.name==='capsuleEntry');return{sphere:compile(s.slice(sphere.start,sphere.end),{EPS:1e-10}),capsule:s.slice(capsule.start,capsule.end)};}
+ const a={sphere:compile(before['inkCollision.sphereEntry'],{EPS:1e-10}),capsule:before['inkCollision.capsuleEntry']},b=funcs(adapted),random=rnd();let oldCalls=0,newCalls=0;const fa=compile(a.capsule,{EPS:1e-10,sphereEntry:(...p)=>{oldCalls++;return a.sphere(...p);}}),fb=compile(b.capsule,{EPS:1e-10,sphereEntry:(...p)=>{newCalls++;return b.sphere(...p);}});
+ for(const hz of [30,60,120])for(let i=0;i<6000;i++){const from=new THREE.Vector3((random()-.5)*3,(random()-.5)*3,(random()-.5)*3),to=from.clone().add(new THREE.Vector3((random()-.5)*5,(random()-.5)*5,(random()-.5)*5)),base=new THREE.Vector3(),height=i%2?.55:1.45;assert.ok(Object.is(fb(from,to,base,.38,height,.1),fa(from,to,base,.38,height,.1)));}assert.ok(newCalls<oldCalls);
+});
+test('ink sheet upload lists retain the exact real Three attributes and upload ranges',()=>{
+ const sheets=createInkSheets(THREE,new THREE.Scene(),{nearDither:'',rim:''});for(const hz of [30,60,120])for(let i=0;i<hz;i++){const t=i/hz;if(i%7===0)sheets.add('slash-h',new THREE.Vector3(1,2,3),new THREE.Vector3(0,0,1),new THREE.Color(.2,.4,.6),.5,t);if(i%11===0)sheets.drill(new THREE.Vector3(1,2,3),new THREE.Vector3(0,0,1),new THREE.Color(.2,.4,.6),.4,t,1.2);sheets.draw(t,new THREE.Vector3());for(const mesh of [sheets.mesh,sheets.drillMesh])if(mesh.count){for(const name of mesh===sheets.mesh?['aSheetA','aSheetB']:['aDrill'])assert.deepEqual(mesh.geometry.attributes[name].updateRanges,[{start:0,count:mesh.count*4}]);assert.deepEqual(mesh.instanceMatrix.updateRanges,[{start:0,count:mesh.count*16}]);}}
+ const text=source('s3-ink-sheets');assert.match(text,/sheetAttrs=Object.freeze\(\[a,b\]\)/);assert.match(text,/upload\(mesh, n, sheetAttrs, 4\)/);assert.match(text,/upload\(drillMesh, nd, drillAttrs, 4\)/);sheets.dispose();
+});

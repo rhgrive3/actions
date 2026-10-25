@@ -28,10 +28,13 @@ export function sphereEntryComponents(sx, sy, sz, ex, ey, ez, cx, cy, cz, radius
   return t >= 0 && t <= 1 ? t : null;
 }
 
-function impactDomeShelters(dome, start, end) {
+function impactDomeShelters(dome, start, end, Vector3) {
   if (!dome) return false;
   const enters = (center, radius) => start.distanceToSquared(center) > radius * radius
-    && sphereEntry(start.toArray(), end.toArray(), center.toArray(), radius) !== null;
+    && (start instanceof Vector3 && end instanceof Vector3 && center instanceof Vector3 &&
+      start.toArray === Vector3.prototype.toArray && end.toArray === Vector3.prototype.toArray && center.toArray === Vector3.prototype.toArray
+      ? sphereEntryComponents(start.x,start.y,start.z,end.x,end.y,end.z,center.x,center.y,center.z,radius)
+      : sphereEntry(start.toArray(), end.toArray(), center.toArray(), radius)) !== null;
   const field = dome.center.clone(); field.y += dome.emitterY;
   return enters(dome.center, dome.radius) || dome.ignited && enters(field, BIG_BUBBLER_RAW.fieldCollisionRadius);
 }
@@ -42,13 +45,18 @@ export function installRankedCombat(api) {
   P.rankedBarrierCandidate = function (p) {
     const m = G.match, s = m?.ranked?.rule.state;
     if (m?.mode !== 'rainmaker' || !s?.barrier?.active || !p?.prev || !p?.pos) return null;
-    const center = [...s.pos]; center[1] += 1;
+    const scalar = p.prev instanceof THREE.Vector3 && p.pos instanceof THREE.Vector3 &&
+      p.prev.toArray === THREE.Vector3.prototype.toArray && p.pos.toArray === THREE.Vector3.prototype.toArray;
+    const center = scalar ? null : [...s.pos];
+    if (center) center[1] += 1;
+    const cx = scalar ? s.pos[0] : center[0], cy = scalar ? s.pos[1] + 1 : center[1], cz = scalar ? s.pos[2] : center[2];
     const radius = 1.5 + 1.2 * Math.abs(s.barrier.balance || 0) / (s.barrier.max || 1000);
-    const t = sphereEntry(p.prev.toArray(), p.pos.toArray(), center, radius + (p.size || 0));
+    const t = scalar ? sphereEntryComponents(p.prev.x,p.prev.y,p.prev.z,p.pos.x,p.pos.y,p.pos.z,cx,cy,cz,radius + (p.size || 0))
+      : sphereEntry(p.prev.toArray(), p.pos.toArray(), center, radius + (p.size || 0));
     if (t === null) return null;
     const distance = t * p.prev.distanceTo(p.pos);
     const point = p.prev.clone().lerp(p.pos, t);
-    return { distance, point, normal: point.clone().sub(new THREE.Vector3(...center)).normalize(),
+    return { distance, point, normal: point.clone().sub(new THREE.Vector3(cx,cy,cz)).normalize(),
       onHit: actualDamage => {
         // Keep remote and paint-only ghost projectiles in the same visual
         // collision ordering, but only the authoritative local owner may
@@ -151,7 +159,7 @@ export function createRankedEffects(api, match) {
     const domeSheltered = shot && !visualOnly ? new Set() : null;
     if (shot && !visualOnly) for (const a of match.actors) if (a.alive && a.team !== team) {
       const body = a.pos.clone().add(new THREE.Vector3(0, .7, 0));
-      if (body.distanceTo(p) <= radius && (impactDomeShelters(shot.dome, blastFrom, body)
+      if (body.distanceTo(p) <= radius && (impactDomeShelters(shot.dome, blastFrom, body, THREE.Vector3)
           || G.projectiles?.kitBarrierShelter?.({ owner: attacker, team, ghost: true }, blastFrom, body))) domeSheltered.add(a);
     }
     const walls = shot ? rainmakerWallBlast(api, p, attacker, team, radius, nearRadius, amount, outerDamage, shot.impactWall) : [];

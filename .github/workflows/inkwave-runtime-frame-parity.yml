@@ -2,6 +2,45 @@ name: INKWAVE allocation-only frame parity
 on:
   pull_request:
     paths:
+      - 'inkwave-public/src/config.js'
+      - 'inkwave-public/src/core/device.js'
+      - 'inkwave-public/src/core/gyro.js'
+      - 'inkwave-public/src/fx/fx.js'
+      - 'inkwave-public/src/fx/fxHooks.js'
+      - 'inkwave-public/src/game/motion/source-bank.js'
+      - 'inkwave-public/src/game/motion/source-controller.js'
+      - 'inkwave-public/src/main.js'
+      - 'inkwave-public/src/ui/hud.js'
+      - 'inkwave-public/src/ui/menu-art.js'
+      - 'inkwave-public/src/world/environment.js'
+      - 'inkwave-public/src/world/inkShading.js'
+      - 'inkwave-public/src/world/level.js'
+      - 'inkwave-public/src/world/levelMaterial.js'
+      - 'inkwave-public/src/world/paint.js'
+      - 'patches/local-quality/adapter.mjs'
+      - 'patches/local-quality/gyro-permission.mjs'
+      - 'patches/local-quality/gyro.mjs'
+      - 'patches/local-quality/menu-preview.mjs'
+      - 'patches/local-quality/platform-lifecycle.mjs'
+      - 'patches/local-quality/roller-motion.mjs'
+      - 'patches/local-quality/roller-visual.mjs'
+      - 'patches/local-quality/runtime-frame-scratch-adapter.mjs'
+      - 'patches/local-quality/screen-angle.mjs'
+      - 'patches/local-quality/surface.mjs'
+      - 'patches/local-quality/tests/hud-hotpath.test.mjs'
+      - 'patches/local-quality/tests/quality.test.mjs'
+      - 'patches/local-quality/tests/runtime-frame-scratch.test.mjs'
+      - 'patches/reliability/adapter.mjs'
+      - 'patches/splatoon3/adapter.mjs'
+      - 'patches/splatoon3/runtime/walk.mjs'
+      - 'patches/touch-layout/adapter.mjs'
+      - 'scripts/check-inkwave-browser.mjs'
+      - 'scripts/check-inkwave-flow-render.mjs'
+      - 'scripts/check-inkwave-motion-catalog.mjs'
+      - 'scripts/check-inkwave-touch-layout-identity.mjs'
+      - 'scripts/check-inkwave-wall-render.mjs'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'scripts/tests/inkwave-workflow-inputs.test.mjs'
       - "patches/local-quality/**"
       - "scripts/lib/inkwave-build-only-modules.mjs"
       - ".github/workflows/inkwave-runtime-frame-parity.yml"
@@ -19,6 +58,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # All build/test inputs remain; the offline modeler is not consumed.
+          sparse-checkout: |
+            /*
+            !/tools/inkwave-modeler/
+          sparse-checkout-cone-mode: false
       - name: Verify exact checkout head
         shell: bash
         env:
@@ -40,5 +84,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Verify direct QA input trigger coverage
+        run: node --test scripts/tests/inkwave-workflow-inputs.test.mjs
       - name: Verify real Game._loop and Environment reflection sequence parity
         run: node --experimental-vm-modules --test patches/local-quality/tests/runtime-frame-scratch.test.mjs patches/local-quality/tests/hud-hotpath.test.mjs patches/local-quality/tests/quality.test.mjs

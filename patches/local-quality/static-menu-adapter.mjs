@@ -51,6 +51,7 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
       // The lazy composer recreates its targets before the next real 3D frame.
       this.R?.releasePausedFrame?.();
       this.R?.composer?.releaseInactiveTargets?.();
+      if (artScreen !== 'locker') this.showcase?.retireHiddenStudio?.(dt);
       if (artScreen !== 'locker' && this.showcase?._rt) {
         this.showcase._rt.dispose(); this.showcase._rt = null;
       }
@@ -105,25 +106,25 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
       '        if (sc && sc.showHub) safeCall(() => sc.showHub(this._style(), (G.teamColors && G.teamColors[0]) || this._accent()[0], this._loadout().weapon, G.teamColors?.[1]));',
       '        if (sc) safeCall(() => sc.hide?.());',
       'online hub keeps network flow, drops invisible LobbySet construction');
-    // The mobile weapon catalogue is a scroll list, not 70 simultaneous SVG
-    // compositing surfaces. Build all real buttons synchronously (selection,
+    // Large weapon catalogues scroll with touch, a pad or a mouse. Build all
+    // real buttons synchronously (selection,
     // keyboard navigation and order unchanged), but hydrate offscreen art only
     // when it approaches the viewport.
     code = replaceOnce(code,
       "    const cards = order.map((id, i) => {\n      const w = Ws[id];",
-      "    const lazyWeaponArt = this._input === 'touch' && n > 20 && typeof IntersectionObserver !== 'undefined';\n    const cards = order.map((id, i) => {\n      const w = Ws[id];\n      const deferArt = lazyWeaponArt && i >= 20;",
-      'touch weapon art lazy eligibility');
+      "    const lazyWeaponArt = n > 20 && typeof IntersectionObserver !== 'undefined';\n    const cards = order.map((id, i) => {\n      const w = Ws[id];\n      const deferArt = lazyWeaponArt && i >= 20;",
+      'scrolling weapon art lazy eligibility independent of input device');
     // The lobby modal contains the same weapon-card SVG template. Limit these
     // exact-match anchors to the primary loadout grid, never the modal.
-    const gridStart = code.indexOf("    const lazyWeaponArt = this._input === 'touch'");
+    const gridStart = code.indexOf('    const lazyWeaponArt = n > 20');
     const gridEnd = code.indexOf("    // ---- detail panel", gridStart);
     if (gridStart < 0 || gridEnd <= gridStart)
       throw new Error('INKWAVE quality patch conflict (static loadout grid scope)');
     let grid = code.slice(gridStart, gridEnd);
     grid = replaceOnce(grid,
       "        h('span', { class: 'iw-wcard__blob', html: splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 }) }),",
-      "        h('span', { class: 'iw-wcard__blob', html: deferArt ? '' : splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 }) }),",
-      'defer offscreen blob SVG in primary grid');
+      "        h('span', { class: 'iw-wcard__blob', html: deferArt ? '' : id === equipped ? splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 }) : '' }),",
+      'generate primary grid equip decorations only when displayed');
     const icon = deferPrimaryWeaponIcon(grid, replaceOnce);
     grid = icon.grid;
     code = code.slice(0, gridStart) + grid + code.slice(gridEnd);
@@ -133,8 +134,12 @@ export function adaptStaticMenuArt(rel, code, replaceOnce) {
       'deferred card ownership');
     code = replaceOnce(code,
       "    // ---- detail panel\n    const kind =",
-      "    const materializeArt = (card) => {\n      if (!card?._artDeferred) return;\n      const id = card._wid, i = card._weaponArtIndex, w = Ws[id];\n      card.querySelector('.iw-wcard__blob').innerHTML = splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 });\n      card.querySelector('.iw-wcard__icon').innerHTML = " + icon.hydration + ";\n      card._artDeferred = false; delete card.dataset.artDeferred;\n    };\n    let weaponArtObserver = null;\n\n    // ---- detail panel\n    const kind =",
+      "    const materializeArt = (card) => {\n      if (!card) return;\n      const id = card._wid, i = card._weaponArtIndex, w = Ws[id];\n      const blob = card.querySelector('.iw-wcard__blob');\n      if (card.classList.contains('is-equipped') && !blob.firstChild) blob.innerHTML = splatSVG({ seed: 40 + i * 3, cls: 'iw-fa', r: 58, arms: 8, drops: 0 });\n      if (!card._artDeferred) return;\n      card.querySelector('.iw-wcard__icon').innerHTML = " + icon.hydration + ";\n      card._artDeferred = false; delete card.dataset.artDeferred;\n    };\n    let weaponArtObserver = null;\n\n    // ---- detail panel\n    const kind =",
       'hydrate approaching weapon card');
+    code = replaceOnce(code,
+      "        cards.forEach((x) => x.classList.toggle('is-equipped', x === c));\n        restartAnim(c, 'is-pick');",
+      "        cards.forEach((x) => x.classList.toggle('is-equipped', x === c));\n        materializeArt(c);\n        restartAnim(c, 'is-pick');",
+      'equip decoration exists before its unchanged entrance animation');
     code = replaceOnce(code,
       "      onFocus: (f) => {\n        if (f._wid && f._wid !== shown) render(f._wid);",
       "      onFocus: (f) => {\n        if (f._wid) materializeArt(f);\n        if (f._wid && f._wid !== shown) render(f._wid);",
