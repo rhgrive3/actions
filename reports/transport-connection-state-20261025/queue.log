@@ -1,0 +1,55 @@
+(node:932) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ exact UTF8 byte quota matches TextEncoder for BMP, astral, isolated surrogate and randomized strings (7.55128ms)
+✔ remote idle audio avoids distance probes but always stops a previously playing handle (67.363309ms)
+✔ remote Charger release retires its recorded phrase and rearms the next onset without idle probes (1.41219ms)
+✔ menu stick repeats in elapsed seconds at 30Hz (41.887337ms)
+✔ menu stick repeats in elapsed seconds at 60Hz (1.369416ms)
+✔ menu stick repeats in elapsed seconds at 120Hz (1.57274ms)
+✔ transport backpressure rejects before invoking user JSON hooks, and remains guarded during serialization (2.167644ms)
+✔ projection output slots remain independent and behind-camera behavior is unchanged (97.412423ms)
+✔ covered lobby freezes hidden attract paint but continues network and menu input (0.935955ms)
+✔ final composed transforms remain syntax-valid and reject accidental duplicate application (212.798828ms)
+✔ explicit Input disposal retires only its global listeners and mobile owner, once (1.389435ms)
+✔ stream starvation arithmetic lands on the same bar, step, note times and RNG consumption as iterative advance (5.893136ms)
+✔ Boss successor lookup and interpolated crab rows reuse storage without mutating accepted history (1.408144ms)
+✔ lobby glows keep animated matrices live but upload unchanged colors only once (1.357167ms)
+✔ lobby slot occupancy is sampled once for eight anchors and direct callers retain live fallback (1.182986ms)
+✔ stick guards compare authored and serialized styles and repair external edits or replacement nodes (1.544618ms)
+(node:933) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ refused Boss packets recover in exact sequence order and accepted packets are never retried (1.8125ms)
+✔ Boss pending ledger is bounded and retires on life, host, transport, owner, death, or match changes (1.107542ms)
+✔ Boss local refusal retry limits are independent of 30/60/120Hz rendering (0.372509ms)
+✔ suspended actor and Boss FIFOs retain the newest forty accepted timestamps without splice (18.653939ms)
+✔ Boss interpolation caches immutable next rows and clears them when interpolation has no successor (0.947803ms)
+✔ confirmed solo host discards combat backlog before actor/codec packing and resumes cleanly with a peer (6.466536ms)
+✔ production transport byte admission equals TextEncoder at UTF8 boundaries and isolated surrogates (9.661581ms)
+✔ host waits for matching relay START result, rejects stale ACK, and can retry after membership rejection (5.317ms)
+✔ unconfirmed START timeout and reconnect retire pending result callbacks (4.57698ms)
+✔ guest me flood coalesces the latest values and cannot update an active match lobby (4.98371ms)
+✔ client emotes admit legal names once per sender at 1.3 seconds and clean up departed senders (4.411822ms)
+✔ appearance values are checked at me, lobby and roster admission without coercing nested JSON (5.62992ms)
+✔ physical respawn holds reuse per-actor scratch while preserving every input poll and property order (2.157328ms)
+✔ actual eight-member relay and guarded session cannot exhaust host quota from 80 guest me updates (7.730654ms)
+✔ heartbeat watchdog detects an unanswered OPEN socket once and gives suspended timers a fresh deadline (4.315237ms)
+✔ START backlog cannot advance the host alone and retires timers on explicit failure (4.099342ms)
+✔ START closed cannot advance the host alone and retires timers on explicit failure (4.187706ms)
+✔ START throw cannot advance the host alone and retires timers on explicit failure (4.173655ms)
+✔ GO backlog cannot advance the host alone and retires timers on explicit failure (3.921266ms)
+✔ GO closed cannot advance the host alone and retires timers on explicit failure (7.501139ms)
+✔ GO throw cannot advance the host alone and retires timers on explicit failure (3.856528ms)
+✔ UNLOCK backlog cannot advance the host alone and retires timers on explicit failure (4.239043ms)
+✔ UNLOCK closed cannot advance the host alone and retires timers on explicit failure (3.890649ms)
+✔ UNLOCK throw cannot advance the host alone and retires timers on explicit failure (3.943709ms)
+✔ res refusal aborts the current production match once and never reports local delivery (0.516535ms)
+✔ end refusal aborts the current production match once and never reports local delivery (0.125448ms)
+✔ new host reconciles room admission only after its round has completed (8.0543ms)
+ℹ tests 43
+ℹ suites 0
+ℹ pass 43
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1342.338134

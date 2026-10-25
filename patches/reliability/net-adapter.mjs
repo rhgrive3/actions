@@ -346,8 +346,11 @@ NetMatch.prototype.dispose = function(...args) {
 `, `  /** Resolves with welcome; explicit cancellation rejects with an AbortError. */
   connect(code, name, create) {
     this.close();
+    this.rtt = 0;
     return new Promise((resolve, reject) => {
       let settled = false, timer = null, ws;
+      // TCP ordering belongs to this connection, not other rooms or retries.
+      let lastDelivery = 0;
       const delayed = new Set();
       const current = () => this.ws === ws;
       const done = (fn, value) => {
@@ -408,8 +411,8 @@ NetMatch.prototype.dispose = function(...args) {
       };
       ws.onmessage = !SIM ? handle : (ev) => {
         if (!current()) return;
-        const t = Math.max(performance.now() + SIM.lag + Math.random() * SIM.jit + (Math.random() < SIM.spike ? 250 : 0), SIM.last);
-        SIM.last = t;
+        const t = Math.max(performance.now() + SIM.lag + Math.random() * SIM.jit + (Math.random() < SIM.spike ? 250 : 0), lastDelivery);
+        lastDelivery = t;
         const id = setTimeout(() => { delayed.delete(id); handle(ev); }, t - performance.now());
         delayed.add(id);
       };
