@@ -78,6 +78,18 @@ jobs:
           key: inkwave-node22-esbuild-v1-{{ checksum "package.json" }}
           paths:
             - ~/.npm/_cacache
+      - run:
+          name: Cache pinned Chromium and WebKit executables once for all seven lanes
+          no_output_timeout: 20m
+          command: |
+            set -euo pipefail
+            npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 ws@8
+            export PLAYWRIGHT_BROWSERS_PATH="$PWD/.browser-cache"
+            npx playwright install chromium webkit
+      - save_cache:
+          key: inkwave-pw-1.62.1-linux-v1-{{ checksum "package.json" }}
+          paths:
+            - .browser-cache
       - persist_to_workspace:
           root: .
           paths:
@@ -106,6 +118,9 @@ jobs:
       - restore_cache:
           keys:
             - inkwave-node22-esbuild-v1-{{ checksum "package.json" }}
+      - restore_cache:
+          keys:
+            - inkwave-pw-1.62.1-linux-v1-{{ checksum "package.json" }}
       - run:
           name: Install pinned browsers and native Linux dependencies
           no_output_timeout: 20m
