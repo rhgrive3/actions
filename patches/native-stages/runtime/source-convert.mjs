@@ -28,15 +28,20 @@ class BufferBuilder{
  finish(){return this.array.slice(0,this.length);}
 }
 function lines(text,visit){
- // Decode complete UTF-8 lines without retaining a second full-sized string.
+ // Decode bounded UTF-8 chunks without retaining a second full-sized string.
+ // Streaming carries split code points; only unfinished lines cross chunks.
  if(typeof text!=='string'){
-  const bytes=text instanceof Uint8Array?text:new Uint8Array(text),decoder=new TextDecoder('utf-8',{ignoreBOM:true});let start=0;
-  while(start<bytes.length){
-   const newline=bytes.indexOf(10,start),end=newline<0?bytes.length:newline;
-   let line=decoder.decode(bytes.subarray(start,end));
-   if(start===0&&line.charCodeAt(0)===0xfeff)line=line.slice(1);
-   visit(line.trimEnd());start=end+1;
+  const bytes=text instanceof Uint8Array?text:new Uint8Array(text),decoder=new TextDecoder('utf-8',{ignoreBOM:true});let pending='',first=true;
+  for(let start=0;start<bytes.length;start+=65536){
+   const end=Math.min(start+65536,bytes.length),chunk=decoder.decode(bytes.subarray(start,end),{stream:end<bytes.length});let at=0,newline;
+   while((newline=chunk.indexOf('\n',at))!==-1){
+    let line=pending+chunk.slice(at,newline);pending='';
+    if(first&&line.charCodeAt(0)===0xfeff)line=line.slice(1);first=false;
+    visit(line.trimEnd());at=newline+1;
+   }
+   pending+=chunk.slice(at);
   }
+  if(pending){if(first&&pending.charCodeAt(0)===0xfeff)pending=pending.slice(1);visit(pending.trimEnd());}
   return;
  }
  let start=0;while(start<text.length){let end=text.indexOf('\n',start);if(end<0)end=text.length;visit(text.slice(start,end).trimEnd());start=end+1;}

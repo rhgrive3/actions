@@ -88,6 +88,10 @@ export function nativeDisplay(data,textures,quality){
   // holds the vertices/indices, drop these CPU views (Three's disposeArray).
   inter.onUpload(releaseArray);g.index.onUpload(releaseArray);
   const mesh=new THREE.Mesh(g,mat);
+  // Exporter positions are already baked; these per-object local transforms
+  // stay identity. Skip hundreds of unchanged matrix compositions per frame,
+  // while retaining matrixWorld updates for transforms of the parent group.
+  mesh.matrixAutoUpdate=false;
   mesh.name=o.name;
   // Keep silhouette and contact shadows: a blanket 0.75m exclusion
   // erased visible railings, poles and gameplay landmarks.
