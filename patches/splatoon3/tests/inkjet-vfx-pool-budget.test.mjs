@@ -18,6 +18,8 @@ function runLoad(hz, actorCount, cap, seconds=2) {
  let evictions=0;
  const pool=(capacity)=>{const p=Object.create(Pool.prototype);Object.assign(p,{cap:capacity,n:0,S:23,p:new Float32Array(capacity*23),mesh:{geometry:{}},additive:false});
   for(const key of ['aPos','aDir','aCol','aPar'])p[key]={array:new Float32Array((capacity+1)*4),clearUpdateRanges(){},addUpdateRange(){}};
+  // Match the production SpritePool constructor's retained attribute iterable.
+  p.updateAttributes=[p.aPos,p.aDir,p.aCol,p.aPar];
   p._evict=()=>{evictions++;throw Error('Inkjet caused eviction');};return p;};
  const d={kit:{sparks:pool(900),puffs:pool(cap)},v:Array.from({length:8},()=>new V().set(0,0,0)),time:0,up:new V().set(0,1,0),forward:(a,v)=>v.set(0,0,1),setBeam(){},pushRibbon(){},hdr:c=>c,disc(){}};
  let current=0;const admissions=Array(actorCount).fill(0);

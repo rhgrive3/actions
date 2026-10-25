@@ -121,7 +121,8 @@ test('#1134 Charger actor candidates are clipped strictly before the nearest def
   assert.equal(chargerActorBeforeStop(0.5, 10, 5), false, 'equal-distance defense wins the tie');
   assert.equal(chargerActorBeforeStop(0.6, 10, 5), false);
   const code = readPatch('patches/splatoon3/runtime/weapons-charger-flight.mjs');
-  assert.ok(code.includes('if(chargerActorBeforeStop(t,length,distance))actors.push'));
+  assert.ok(code.includes('if(chargerActorBeforeStop(t,length,distance)){'), 'strict defense clipping still gates each actor');
+  assert.ok(code.includes('row.actor=actor;row.d=t*length;actors.push(row);'), 'pooled hit-candidate rows preserve ordered actor and distance');
   assert.ok(code.indexOf('const defense=system.kitDefenseCandidate') < code.indexOf('const actors=job.hitCandidates'),
     'defense stop distance is resolved before actor candidates are admitted');
 });
